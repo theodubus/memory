@@ -1,0 +1,31 @@
+fn verifie(n: u64) {
+    assert_eq!(n, 20);
+}
+
+#[test]
+fn perft_un() {
+    verifie(perft(1));
+}
+
+#[test]
+#[ignore]
+fn lent() {
+    assert!(lourd());
+}
+
+#[test]
+#[ignore = "release seulement : six secondes en debug"]
+fn lent_mais_motive() {
+    assert!(lourd());
+}
+
+#[test]
+fn rien() {
+    let s = "{ accolade dans une chaîne";
+    calcule(s);
+}
+
+#[test]
+fn tautologie() {
+    assert_eq!(f(x), f(x));
+}

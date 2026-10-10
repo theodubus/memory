@@ -1,0 +1,20 @@
+class T(unittest.TestCase):
+    def aide(self, x):
+        self.assertEqual(x, 4)
+
+    def test_via_aide(self):
+        self.aide(double(2))
+
+    @unittest.skip
+    def test_saute(self):
+        assert double(1) == 2
+
+    @unittest.skip("lent en CI")
+    def test_saute_motive(self):
+        assert double(1) == 2
+
+    def test_vide(self):
+        double(3)  # aucune assertion
+
+    def test_tauto(self):
+        assert double(3) == double(3)

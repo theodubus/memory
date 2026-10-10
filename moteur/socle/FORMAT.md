@@ -1,0 +1,170 @@
+# Format de la mémoire
+
+La mémoire est un ensemble de fichiers markdown en cinq couches, plus la file
+des demandes humaines. Un script sait la lire : sans cela, aucun contrôle
+automatique ne serait possible. Ce document fait foi pour le format ; le code
+qui le lit est `socle/memoire.py`, les contrôles sont listés par
+`python3 .socle/socle checks`.
+
+## Emplacements
+
+```text
+memoire/
+  canonique.md            faits vérifiés, avec statut et preuve
+  actif.md                chantier en cours, prochaines étapes
+  backlog.md              sujets à traiter, avec statut et origine
+  decisions/ADR-0001-*.md une décision par fichier
+  journal/2026-10.md      un fichier par mois, une entrée par événement
+  demandes/D-0001-*.md    une demande de décision humaine par fichier
+  demandes/D-0001-*.reponse.toml   la réponse de l'humain, et elle seule
+  archives/               documents archivés tels quels (cadrage…), non lus par les contrôles
+  prive/                  zone privée, même arborescence (jalon 7)
+```
+
+## En-tête
+
+La première ligne non vide de chaque fichier déclare sa couche et sa zone.
+L'emplacement impose la couche ; la zone est celle de l'emplacement
+(`publique` sous `memoire/`, `privee` sous `memoire/prive/`).
+
+```markdown
+<!-- socle: couche=canonique zone=publique -->
+```
+
+## Entrées
+
+Une entrée est un titre qui commence par son identifiant, suivi d'une ligne
+de métadonnées (une ou plusieurs lignes `>` consécutives), puis d'un corps
+libre qui court jusqu'au titre suivant de même niveau ou de niveau supérieur.
+
+```markdown
+## F-0007 — Le bench à profondeur 7 explore 70 452 nœuds
+
+> statut : mesuré · preuve : cmd:`cargo run --release -- bench 7` · date : 2026-10-10
+
+Mesuré sur le binaire de base ; le chiffre change avec l'arbre de recherche.
+```
+
+Les métadonnées sont des paires `clé : valeur` séparées par un point médian
+(`·`). Les clés s'écrivent sans souci des accents ni des majuscules
+(`Réfutation` et `refutation` se valent).
+
+### Identifiants
+
+| Couche | Forme | Exemple |
+| --- | --- | --- |
+| Canonique | `F-` et quatre chiffres | `F-0007` |
+| Backlog | `B-` et quatre chiffres | `B-0012` |
+| Décisions | `ADR-` et quatre chiffres | `ADR-0003` |
+| Demandes | `D-` et quatre chiffres | `D-0004` |
+| Journal | `J-` date et lettre | `J-2026-10-10-A` |
+
+Dans la zone privée, l'identifiant prend un `P` devant (`PF-0001`,
+`PJ-2026-10-10-A`) : un fichier public qui en cite un est une fuite, et le
+contrôle la voit même sans accès à la zone privée. Un identifiant se calcule
+(`socle next-id`, `socle new`), il ne se devine pas. Il est défini une seule
+fois ; toute mention ailleurs doit mener à une définition.
+
+### Références
+
+Une valeur de métadonnée, ou le texte, peut citer :
+
+| Forme | Vérifiée en CI |
+| --- | --- |
+| `commit:3f2a9c1` | l'objet existe dans le dépôt (historique complet) |
+| `fichier:src/x.rs`, `fichier:src/x.rs:12`, `fichier:doc.md#ancre` | le chemin existe |
+| ``cmd:`cargo test, puis bench` `` ou `cmd:tools/verify.sh` | le script existe s'il est un chemin du dépôt |
+| `url:https://…` | jamais suivie : aucun service externe |
+| `F-0007`, `J-2026-10-10-A`… | l'entrée existe |
+
+Les liens markdown relatifs et leurs ancres, et les chemins du dépôt cités
+entre accents graves, sont vérifiés aussi. Un bloc de code clôturé porte des
+exemples : rien n'y est vérifié.
+
+## Couches
+
+### Canonique — `F-`
+
+| Statut | Exigence |
+| --- | --- |
+| `mesuré` | `preuve` : commit, fichier, commande ou entrée qui la porte |
+| `supposé` | rien ; `source` dit d'où vient le fait |
+| `réfuté` | titre barré `~~…~~`, corps conservé, `refutation` vers la mesure |
+| `validé` | `validation : D-NNNN`, une demande à laquelle l'humain a répondu `valider` |
+
+Un fait ne s'efface pas : il se barre, ou s'archive dans le journal (voir
+plus bas). Modifié, il porte une référence de preuve qu'il n'avait pas.
+
+### Actif
+
+Réécrit librement, borné par son budget. Il ne définit aucun identifiant :
+un identifiant est stable, l'actif ne l'est pas. Il renvoie aux entrées du
+backlog et du journal.
+
+### Décisions — `ADR-`
+
+Un fichier par décision, nommé d'après son identifiant. Statuts : `proposée`,
+`acceptée`, `rejetée`, `abandonnée`, `remplacée` (avec
+`remplacée-par : ADR-NNNN`). Ajout seul : seuls le statut et ses métadonnées
+changent ensuite, selon les passages proposée → acceptée, rejetée ou
+abandonnée, et acceptée → remplacée ou abandonnée.
+
+### Journal — `J-`
+
+Un fichier par mois (`AAAA-MM.md`), une entrée par événement, datée par son
+identifiant. Ajout seul : une entrée publiée ne change plus, sauf pour
+recevoir à sa suite une archive.
+
+### Backlog — `B-`
+
+Statuts : `ouvert`, `en-cours`, `bloqué`, `fait`, `abandonné`. Toute entrée
+a une `origine` (entrée de journal, commit, demande) ; une entrée close
+(`fait`, `abandonné`) a une `ref` vers ce qui l'a close. `socle archive`
+déplace les entrées closes dans une entrée de journal datée, en sous-titres :
+
+```markdown
+## J-2026-10-12-A — Backlog clos archivé
+
+### B-0003 — Corriger le lien mort du README
+
+> statut : fait · origine : J-2026-10-10-A · ref : commit:3f2a9c1
+```
+
+Un sujet ou un fait archivé reste défini, donc toute référence vers lui
+reste vivante.
+
+### Demandes — `D-`
+
+Un fichier par demande, titre `# D-NNNN — <la décision, en une phrase>`, et
+sept sections de niveau deux : `Décision demandée`, `Contexte`, `Éléments
+cités`, `Options`, `Conséquences`, `Recommandation`, `Réponses possibles`.
+
+- « Éléments cités » décrit en clair, en au moins cinq mots, chaque
+  identifiant interne de la demande (identifiants de mémoire, SHA, numéros de
+  PR, et les motifs que le projet déclare) : `- B-0012 — le lien mort du
+  README signalé par la CI`.
+- « Options » dit l'effort, le risque et la réversibilité ; « Conséquences »
+  ce qui se passe si l'humain valide, refuse, ne répond pas ;
+  « Recommandation » sépare le vérifié du supposé.
+- « Réponses possibles » est une liste `` - `valeur` — sens `` qui propose
+  `contexte-insuffisant`.
+
+La réponse vit dans `<demande>.reponse.toml`, écrite par l'humain seul
+(`socle answer`) :
+
+```toml
+reponse = "valider"
+texte = "ok, mais garder l'ancien plafond une semaine"
+par = "Théo"
+date = "2026-10-11"
+empreinte = "sha256:…"   # le texte exact de la demande au moment de la réponse
+```
+
+L'état de la demande se dérive de la réponse : en attente, répondue, renvoyée
+(`contexte-insuffisant` : l'agent la réécrit en une nouvelle demande),
+retirée (métadonnée `retirée : <raison>`). Une demande répondue est gelée.
+
+## Ordre d'autorité
+
+En cas de conflit : le code et les tests, puis la mémoire canonique, puis le
+journal.

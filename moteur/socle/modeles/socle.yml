@@ -1,0 +1,34 @@
+# Posé par l'installeur du socle (fichier protégé) : ne pas le modifier à la
+# main, relancer l'installeur.
+#
+# Seule la CI est incontournable (principe 3) : elle exécute toutes les
+# capacités de l'adaptateur, tous les contrôles contre la base de la pull
+# request, et l'auto-test du socle par injection de défauts.
+name: Socle
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  socle:
+    name: Socle — verify, contrôles, auto-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Tout l'historique : les contrôles comparent à la base et vérifient
+          # que chaque commit cité existe.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+@@ETAPES_ADAPTATEUR@@
+      - name: Socle
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: python3 .socle/socle ci --base "$BASE"
