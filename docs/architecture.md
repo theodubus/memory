@@ -20,7 +20,7 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 
 | Module | Rôle |
 | --- | --- |
-| `cli.py` | les commandes : `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `answer`, `approve`, `install`, `selftest`, `fingerprint`, `mutation-verdict`, `archive`, `checks` |
+| `cli.py` | les commandes : `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `prive`, `answer`, `approve`, `install`, `selftest`, `fingerprint`, `mutation-verdict`, `archive`, `checks` |
 | `memoire.py` | lecture des cinq couches : en-têtes, entrées, identifiants, métadonnées, références |
 | `demandes.py` | le contrat des demandes, son lint, les réponses humaines gelées |
 | `contexte.py` | le registre des contrôles, leurs étages, la base de comparaison, le mode adoption |
@@ -32,6 +32,7 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 | `hooks.py` | les points d'entrée des hooks de l'agent et de git, la trace |
 | `etat.py` | l'état dérivé |
 | `humain.py` | ce qui revient à l'humain, et la lecture du dernier message de l'agent pour le récap |
+| `prive.py` | la mémoire privée : modes compagnon et chiffré, verrou, accès, contrôles `prive.*` |
 | `liens.py` | le permalien d'un fichier ou d'une entrée ; les liens d'un message que l'humain ne pourra pas suivre |
 | `verification.py` | le contrat `verify` : les capacités de l'adaptateur |
 | `mutation.py` | le verdict de mutation contre les plafonds |
@@ -54,6 +55,10 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 | Journal et décisions en ajout seul ; fait jamais effacé | `memoire.ajout-seul` | agent, git, CI |
 | Mémoire en retard sur le code : fin de tour refusée | `memoire.retard` | agent |
 | Le privé ne fuit pas dans le public (identifiants) | `memoire.prive` | agent, git, CI |
+| Mémoire privée en dépôt compagnon : rien de privé dans le dépôt public, verrou à jour | `prive.verrou`, `socle prive verrouiller`, `socle prive extraire` | agent, git, CI |
+| Mémoire privée chiffrée : rien de commité en clair, filtre en place | `prive.chiffre` | agent, git, CI |
+| Mémoire privée indisponible : signal explicite, jamais en silence | `prive.acces`, état dérivé au démarrage | agent, git, CI |
+| Journaux de CI sans contenu privé | masquage des constats de la zone privée à l'étage CI ; `socle prive recuperer` n'écrit ni l'adresse ni la sortie de git | CI |
 | Contrat des demandes : huit champs (les sept du cadrage et « Où regarder », avec un lien vers chaque document à lire), contexte d'au moins soixante mots, aucun identifiant nu | `demandes.contrat`, hook `pre-tool-use` | agent, git, CI |
 | Décision archivée avec le texte exact | `demandes.reponses` (empreinte de la demande) | agent, git, CI |
 | `AGENTS.md` fait foi, `CLAUDE.md` l'importe | `instructions.source-unique` | agent, git, CI |
@@ -115,7 +120,8 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 
 ## Ce qui n'est pas fait
 
-Le backlog le tient : jalons 6 à 9, mémoire privée, empreinte comparée à la
+Le backlog le tient : jalons 8 et 9, les pièces du jalon 7 qui attendent un
+arbitrage humain (D-0006, D-0007, D-0008), empreinte comparée à la
 version publiée, workflow de mutation générique. Les limites connues des contrôles y sont aussi :
 chemins qui n'existent que dans une rustine, copie non marquée d'une valeur
 qui n'est qu'un avertissement.

@@ -114,3 +114,14 @@ politique (point 4) vise une publication, qu'un dépôt local n'est pas.
 Ne refuser que si la destination est distante, ou garder le refus et le
 dire dans sa raison ; à arbitrer, le refus large est le plus sûr.
 
+## B-0019 — Accepter la nouvelle étape du workflow de CI de ce dépôt
+
+> statut : ouvert · origine : J-2026-10-10-Y · pour : humain · lu : backlog@8f720178
+
+Le gabarit du workflow de CI gagne une étape qui récupère la mémoire privée
+en mode compagnon ; elle ne tourne qu'avec un verrou, que ce dépôt n'a pas.
+Chaque régénération des instructions de ce dépôt réécrit aussi son workflow,
+qui est protégé, et l'agent doit retirer cette réécriture. À faire par
+Théo : régénérer en mode amont (la commande `install` de `AGENTS.md`, avec
+`--mode amont`), puis approuver le seul fichier `.github/workflows/socle.yml`
+par la commande d'approbation réservée à l'humain, et commiter.

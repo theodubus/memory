@@ -18,7 +18,7 @@ memoire/
   demandes/D-0001-*.md    une demande de décision humaine par fichier
   demandes/D-0001-*.reponse.toml   la réponse de l'humain, et elle seule
   archives/               documents archivés tels quels (cadrage…), non lus par les contrôles
-  prive/                  zone privée, même arborescence (jalon 7)
+  prive/                  zone privée, même arborescence (voir « La zone privée »)
 ```
 
 ## En-tête
@@ -182,6 +182,39 @@ empreinte = "sha256:…"   # le texte exact de la demande au moment de la répon
 L'état de la demande se dérive de la réponse : en attente, répondue, renvoyée
 (`contexte-insuffisant` : l'agent la réécrit en une nouvelle demande),
 retirée (métadonnée `retirée : <raison>`). Une demande répondue est gelée.
+
+## La zone privée
+
+Une mémoire privée est une option, choisie par l'humain dans la politique
+(`[private] mode`). Elle vit sous `memoire/prive/`, avec la même
+arborescence, les mêmes formats, statuts et contrôles, et les mêmes budgets
+de taille que la zone publique ; ses identifiants prennent un `P` devant.
+Le privé peut citer le public, jamais l'inverse.
+
+| Mode | Où vit la mémoire privée | Ce que le moteur vérifie |
+| --- | --- | --- |
+| `compagnon` | le clone d'un dépôt privé dans `memoire/prive/`, que le dépôt public ignore | aucun fichier privé n'est commité dans le dépôt public ; le verrou `.socle/prive.lock` désigne le commit du dépôt privé qui va avec chaque commit public ; rien de privé ne reste hors commit |
+| `chiffre` | dans le dépôt public, chiffrée par un filtre git (git-crypt ou équivalent) | aucun fichier privé n'est commité en clair ; un filtre couvre `memoire/prive/` dans `.gitattributes` |
+
+Le moteur ne connaît pas l'outil de chiffrement : un fichier privé est
+lisible quand sa première ligne porte l'en-tête du socle, chiffré sinon.
+
+**Indisponible.** Sans le clone du dépôt privé, ou sans la clé, la mémoire
+privée est indisponible : l'état dérivé l'écrit au démarrage, et les
+contrôles qui en dépendent le signalent, sans passer en silence. Un fichier
+privé chiffré ici compte pour absent : il n'est ni lu ni jugé.
+
+**Le verrou** (mode compagnon) s'écrit par `socle prive verrouiller`, une
+fois les changements privés commités dans le dépôt privé ;
+`socle prive extraire` remet la mémoire privée au commit du verrou, après un
+retour à un ancien commit du code. En CI, `socle prive recuperer` la clone au
+verrou avec les secrets `SOCLE_PRIVE_DEPOT` et `SOCLE_PRIVE_CLE`.
+
+**En CI**, le journal d'un dépôt public est public : un constat de la zone
+privée n'y montre ni son texte ni son chemin.
+
+**Le contenu nouveau est privé par défaut** quand une mémoire privée existe :
+`socle new` l'écrit sous `memoire/prive/`, sauf `--public`.
 
 ## Lecture prouvée
 

@@ -54,7 +54,9 @@ class Contexte:
     @cached_property
     def fichiers(self) -> list[str]:
         if self.tete is None:
-            return outils.fichiers_courants(self.racine)
+            # Le clone du dépôt privé (mode compagnon) est ignoré par git,
+            # mais c'est de la mémoire : les contrôles la lisent.
+            return sorted(set(outils.fichiers_courants(self.racine)) | set(memoire.fichiers_compagnon(self.racine)))
         return outils.fichiers_a(self.racine, self.tete)
 
     @cached_property
@@ -62,9 +64,14 @@ class Contexte:
         return outils.fichiers_a(self.racine, self.base) if self.base else []
 
     def lire(self, chemin: str) -> str | None:
+        """Le texte d'un fichier de la tête ; un fichier privé chiffré ici
+        n'a pas de texte lisible, les contrôles le prennent pour absent."""
         cle = ("t", chemin)
         if cle not in self._cache:
-            self._cache[cle] = outils.lire_a(self.racine, self.tete, chemin)
+            texte = outils.lire_a(self.racine, self.tete, chemin)
+            if memoire.est_prive(chemin) and not memoire.lisible(texte):
+                texte = None
+            self._cache[cle] = texte
         return self._cache[cle]
 
     def lire_base(self, chemin: str) -> str | None:
@@ -151,7 +158,7 @@ def executer(ctx: Contexte, ids: list[str] | None = None):
     from socle.rapport import Rapport  # import local : pas de cycle
 
     # Les modules de contrôles s'enregistrent à l'import.
-    from socle import controles_cliquet, controles_docs, controles_memoire, controles_tests  # noqa: F401
+    from socle import controles_cliquet, controles_docs, controles_memoire, controles_tests, prive  # noqa: F401
 
     from socle.rapport import AVERTISSEMENT, ERREUR
 
@@ -177,4 +184,11 @@ def executer(ctx: Contexte, ids: list[str] | None = None):
                 if constat.gravite == ERREUR:
                     constat.gravite = AVERTISSEMENT
                     constat.message = "(adoption) " + constat.message
+    # En CI, le journal d'un dépôt public est public : un constat de la zone
+    # privée n'y montre ni son texte ni son chemin, seulement qu'il existe.
+    if ctx.etage == "ci" and ctx.projet.pol("private", "mode"):
+        for constat in rapport.constats:
+            if constat.chemin and memoire.est_prive(constat.chemin):
+                constat.message = "constat masqué : zone privée (relancer les contrôles là où elle se lit)"
+                constat.chemin, constat.ligne = memoire.DOSSIER_PRIVE + "/…", None
     return rapport

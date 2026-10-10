@@ -66,8 +66,9 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
     except Exception as e:
         lignes.append(f"ce qui revient à l'humain : incalculable ({type(e).__name__}: {e})")
     lignes += _hooks(racine)
-    lignes.append("mémoire privée : non configurée (mode public seul)" if not projet.pol("private", "mode")
-                  else _prive(racine, projet))
+    from socle import prive
+
+    lignes.append(prive.ligne_etat(projet))
     lignes.append("vérifier : `python3 .socle/socle verify --rapide` (tout : sans `--rapide`)")
     if contenus:
         for chemin in ("memoire/actif.md", "memoire/canonique.md"):
@@ -169,10 +170,3 @@ def _hooks(racine) -> list[str]:
     dernier = " ".join(lignes[-1].split("\t")[:2])
     return [f"hooks    : {len(lignes)} déclenchement(s) tracé(s), dernier : {dernier}"]
 
-
-def _prive(racine, projet) -> str:
-    mode = projet.pol("private", "mode")
-    if (racine / config.MEMOIRE / "prive").is_dir():
-        return f"mémoire privée : disponible (mode {mode})"
-    return (f"mémoire privée : INDISPONIBLE (mode {mode}) — les contrôles qui l'exigent le signalent ; "
-            "ne pas conclure sur ce qui en dépend")

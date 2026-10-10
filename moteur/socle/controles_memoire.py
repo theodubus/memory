@@ -22,8 +22,7 @@ TRANSITIONS_ADR = {
 }
 
 
-def est_prive(chemin: str) -> bool:
-    return chemin.startswith(config.MEMOIRE + "/prive/")
+est_prive = memoire.est_prive
 
 
 # --------------------------------------------------------------------------
@@ -404,8 +403,12 @@ def budgets(ctx, r):
     """Chaque couche et le fichier d'instructions ont un plafond de taille."""
     budgets = ctx.projet.gf("budgets", defaut={}) or {}
     couverts = set()
+    # La zone privée suit les budgets de la zone publique : mêmes formats,
+    # mêmes contrôles (cadrage, règles de classement, point 5).
+    miroirs = {c: c.replace(memoire.DOSSIER_PRIVE + "/", config.MEMOIRE + "/", 1) for c in ctx.fichiers if est_prive(c)}
     for motif, b in budgets.items():
-        for chemin in outils.filtrer(ctx.fichiers, [motif]):
+        vises = set(outils.filtrer(ctx.fichiers, [motif])) | {c for c, m in miroirs.items() if outils.correspond(m, [motif])}
+        for chemin in sorted(vises):
             couverts.add(chemin)
             texte = ctx.lire(chemin) or ""
             octets = len(texte.encode("utf-8"))

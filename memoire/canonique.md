@@ -16,15 +16,16 @@ Le test parcourt chaque module du moteur et refuse tout import qui n'est ni
 `socle` ni dans `sys.stdlib_module_names` ; il vérifie aussi que le code
 s'analyse en syntaxe 3.11.
 
-## F-0002 — Chaque défaut injecté du cadrage est attrapé par le contrôle prévu, sauf la mémoire privée
+## F-0002 — Chaque défaut injecté du cadrage est attrapé par le contrôle prévu
 
-> statut : mesuré · preuve : fichier:tests/test_autotest.py · date : 2026-10-10
+> statut : mesuré · preuve : fichier:tests/test_autotest.py, J-2026-10-10-Y · date : 2026-10-10
 
 `python3 .socle/socle selftest` injecte les défauts du tableau du cadrage,
-et d'autres, dans un projet jetable, par les vrais points d'entrée (hooks de
-l'agent, hook git, commande de CI). Chacun est attrapé par le contrôle
-attendu ; les témoins sains passent. « Mémoire privée non accessible » est
-déclaré non couvert avant le jalon 7, jamais en silence.
+et d'autres, dans des projets jetables, par les vrais points d'entrée (hooks
+de l'agent, hook git, commande de CI). Chacun est attrapé par le contrôle
+attendu ; les témoins sains passent. « Mémoire privée non accessible »,
+déclaré non couvert jusqu'au jalon 7, l'est désormais, dans les deux modes
+de mémoire privée.
 
 ## F-0003 — Les hooks d'un `.claude/settings.json` écrit en cours de session sont chargés dès l'appel d'outil suivant
 

@@ -73,5 +73,13 @@ keep_branches = []
 # ouverte du cadrage) : aucune au-delà des règles ordinaires.
 allowed = []
 
+# Mémoire privée, au choix (`memoire/prive/`, même format que le reste) :
+# - "compagnon" : un dépôt privé cloné dans `memoire/prive/`, ignoré ici ; le
+#   verrou `.socle/prive.lock` dit à quel commit privé correspond chaque commit
+#   public (`socle prive verrouiller`). En CI, les secrets SOCLE_PRIVE_DEPOT et
+#   SOCLE_PRIVE_CLE (clé de déploiement) le récupèrent.
+# - "chiffre" : les fichiers privés commités chiffrés par un filtre git
+#   (git-crypt ou équivalent) ; `.gitattributes` : `memoire/prive/** filter=…`.
+# Sans accès, la mémoire privée est signalée indisponible, jamais sautée.
 # [private]
-# mode = "compagnon"   # ou "chiffre" — jalon 7
+# mode = "compagnon"

@@ -55,6 +55,38 @@ STATUTS = {
 BACKLOG_CLOS = {"fait", "abandonne"}
 
 
+# La zone privée (jalon 7) : même arborescence, sous `memoire/prive/`.
+DOSSIER_PRIVE = f"{config.MEMOIRE}/prive"
+
+
+def est_prive(chemin: str) -> bool:
+    return chemin.startswith(DOSSIER_PRIVE + "/")
+
+
+def lisible(texte: str | None) -> bool:
+    """Un fichier de mémoire se lit en clair quand sa première ligne non vide
+    porte l'en-tête du socle ; chiffré, il ne se lit pas."""
+    for ligne in (texte or "").splitlines():
+        if ligne.strip():
+            return bool(ENTETE_FICHIER.search(ligne))
+    return False
+
+
+def fichiers_compagnon(racine: Path) -> list[str]:
+    """Les fichiers du clone du dépôt privé (mode compagnon), que le dépôt
+    public ignore : `git ls-files` ne les voit pas."""
+    import os
+
+    p = racine / DOSSIER_PRIVE
+    if not (p / ".git").exists():
+        return []
+    res = []
+    for dossier, sous, noms in os.walk(p):
+        sous[:] = [s for s in sous if s != ".git"]
+        res += [str((Path(dossier) / n).relative_to(racine)).replace(os.sep, "/") for n in noms]
+    return sorted(res)
+
+
 def id_valide(type_: str, num: str) -> bool:
     if type_ == "J":
         return bool(NUM_JOURNAL.match(num))
@@ -279,20 +311,25 @@ class Memoire:
     racine: Path
     rev: str | None
     fichiers: dict[str, FichierMemoire] = field(default_factory=dict)
+    illisibles: list[str] = field(default_factory=list)  # privés, chiffrés ici
 
     @classmethod
     def charger(cls, racine: Path, rev: str | None = None) -> "Memoire":
         mem = cls(racine=racine, rev=rev)
         if rev is None:
-            chemins = outils.fichiers_courants(racine)
+            chemins = sorted(set(outils.fichiers_courants(racine)) | set(fichiers_compagnon(racine)))
         else:
             chemins = outils.fichiers_a(racine, rev)
         for c in chemins:
             if couche_attendue(c) is None:
                 continue
             texte = outils.lire_a(racine, rev, c)
-            if texte is not None:
-                mem.fichiers[c] = analyser(c, texte)
+            if texte is None:
+                continue
+            if est_prive(c) and not lisible(texte):
+                mem.illisibles.append(c)
+                continue
+            mem.fichiers[c] = analyser(c, texte)
         return mem
 
     def entrees(self, type_: str | None = None):

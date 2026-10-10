@@ -32,6 +32,8 @@ Un identifiant se calcule (`python3 .socle/socle new <type> "titre"`), il ne
 se devine pas. En cas de conflit, l'ordre d'autorité est : le code et les
 tests, puis la mémoire canonique, puis le journal.
 
+**Mémoire privée**, si la politique en choisit une (`[private] mode`) : le contenu nouveau va dans la zone privée, memoire/prive/ (`socle new` le fait par défaut), et rien de privé ne se recopie en public, ni un identifiant `P…`, ni son contenu, ni dans un message de commit, une pull request ou un commentaire. En mode compagnon, un changement privé se commite dans le dépôt privé, puis `socle prive verrouiller`. Indisponible (l'état le dit), on ne conclut pas sur ce qui en dépend.
+
 ### Politique d'autonomie (`.socle/politique.toml`, modifiée par l'humain seul)
 
 1. **Assouplir un garde-fou** (`.socle/garde-fous.toml`) exige une demande validée ; durcir est libre.

@@ -129,23 +129,27 @@ def cmd_new(args) -> int:
     mem = memoire.Memoire.charger(racine)
     type_ = TYPES_CLI[args.type]
     jour = date.today().isoformat()
-    ident = mem.prochain_id(type_, date=jour)
+    # Avec une mémoire privée, le contenu nouveau est privé par défaut
+    # (cadrage, règles de classement, point 3).
+    prive = getattr(args, "private", False) or (bool(projet.pol("private", "mode")) and not getattr(args, "public", False))
+    ident = mem.prochain_id(type_, prive=prive, date=jour)
     titre = args.title
-    zone = "publique"
+    zone = "privee" if prive else "publique"
+    dossier = racine / (memoire.DOSSIER_PRIVE if prive else config.MEMOIRE)
     if type_ == "F":
-        chemin = racine / "memoire/canonique.md"
+        chemin = dossier / "canonique.md"
         bloc = f"\n## {ident} — {titre}\n\n> statut : supposé · source : <d'où vient ce fait>\n\n<le fait, et ce qui le prouverait>\n"
-        _ajouter(chemin, bloc)
+        _ajouter(chemin, bloc, "canonique", zone)
     elif type_ == "B":
         # Le backlog s'affiche avant d'y ajouter : un doublon se voit ici.
         _afficher_index(mem, "backlog")
-        chemin = racine / "memoire/backlog.md"
+        chemin = dossier / "backlog.md"
         lu = memoire.empreinte_index(mem, "backlog")
         bloc = (f"\n## {ident} — {titre}\n\n> statut : ouvert · origine : <J-… ou commit:… où le sujet est apparu>"
                 f" · lu : backlog@{lu}\n\n<ce qu'il faut faire, et pourquoi>\n")
-        _ajouter(chemin, bloc)
+        _ajouter(chemin, bloc, "backlog", zone)
     elif type_ == "J":
-        chemin = racine / f"memoire/journal/{jour[:7]}.md"
+        chemin = dossier / f"journal/{jour[:7]}.md"
         if not chemin.is_file():
             chemin.parent.mkdir(parents=True, exist_ok=True)
             chemin.write_text(f"<!-- socle: couche=journal zone={zone} -->\n# Journal — {jour[:7]}\n", encoding="utf-8")
@@ -154,7 +158,8 @@ def cmd_new(args) -> int:
         # Les décisions s'affichent avant d'en ajouter une : on ne rouvre pas
         # une décision prise sans fait nouveau.
         _afficher_index(mem, "decisions")
-        chemin = racine / f"memoire/decisions/{ident}-{_slug(titre)}.md"
+        chemin = dossier / f"decisions/{ident}-{_slug(titre)}.md"
+        chemin.parent.mkdir(parents=True, exist_ok=True)
         chemin.write_text(
             f"<!-- socle: couche=decisions zone={zone} -->\n# {ident} — {titre}\n\n"
             f"> statut : proposée · date : {jour} · lu : decisions@{memoire.empreinte_index(mem, 'decisions')}"
@@ -164,14 +169,22 @@ def cmd_new(args) -> int:
     else:
         from socle.modeles import gabarit
 
-        chemin = racine / f"memoire/demandes/{ident}-{_slug(titre)}.md"
-        chemin.write_text(gabarit("demande.md").format(id=ident, titre=titre, date=jour), encoding="utf-8")
+        chemin = dossier / f"demandes/{ident}-{_slug(titre)}.md"
+        chemin.parent.mkdir(parents=True, exist_ok=True)
+        texte = gabarit("demande.md").format(id=ident, titre=titre, date=jour)
+        chemin.write_text(texte.replace("zone=publique", f"zone={zone}", 1), encoding="utf-8")
     print(f"{ident}\t{chemin.relative_to(racine)}")
     return 0
 
 
-def _ajouter(chemin: Path, bloc: str):
-    texte = chemin.read_text(encoding="utf-8") if chemin.is_file() else ""
+def _ajouter(chemin: Path, bloc: str, couche: str | None = None, zone: str = "publique"):
+    """Ajoute une entrée au fichier ; un fichier neuf reçoit d'abord son
+    en-tête."""
+    if chemin.is_file():
+        texte = chemin.read_text(encoding="utf-8")
+    else:
+        chemin.parent.mkdir(parents=True, exist_ok=True)
+        texte = f"<!-- socle: couche={couche} zone={zone} -->\n" if couche else ""
     chemin.write_text(texte.rstrip("\n") + "\n" + bloc, encoding="utf-8")
 
 
@@ -204,6 +217,42 @@ def cmd_show(args) -> int:
             elif d:
                 print(f"\n--- {d.statut} ---")
     return code
+
+
+def cmd_prive(args) -> int:
+    """Le dépôt privé du mode compagnon et son verrou."""
+    from socle import prive
+
+    projet = _projet(args)
+    racine = projet.racine
+    if args.action == "etat":
+        print(prive.ligne_etat(projet))
+        return 0
+    if prive.mode(projet) != "compagnon":
+        print("le verrou n'existe qu'en mode compagnon (`[private] mode` de la politique)", file=sys.stderr)
+        return 1
+    if args.action == "recuperer":
+        return prive.recuperer(projet)
+    sha = prive.commit_compagnon(racine)
+    if sha is None:
+        print(f"dépôt privé absent de `{prive.DOSSIER}/` : le cloner d'abord", file=sys.stderr)
+        return 1
+    if args.action == "verrouiller":
+        modifies = prive.compagnon_modifie(racine)
+        if modifies:
+            print(f"{len(modifies)} changement(s) privé(s) sans commit : les commiter dans le dépôt privé d'abord",
+                  file=sys.stderr)
+            return 1
+        prive.ecrire_verrou(racine, sha)
+        print(f"verrou : {sha[:10]} — à commiter avec le reste (`{prive.VERROU}`)")
+        return 0
+    verrou = prive.lire_verrou(racine)
+    if verrou is None:
+        print("pas de verrou à extraire", file=sys.stderr)
+        return 1
+    outils.git(prive.depot_compagnon(racine), "checkout", "-q", "--detach", verrou)
+    print(f"mémoire privée remise au verrou : {verrou[:10]}")
+    return 0
 
 
 def cmd_url(args) -> int:
@@ -394,12 +443,19 @@ def main(argv=None) -> int:
     s = sp.add_parser("new", help="ajoute une entrée squelette avec son identifiant")
     s.add_argument("type", choices=sorted(TYPES_CLI))
     s.add_argument("title")
+    zone = s.add_mutually_exclusive_group()
+    zone.add_argument("--private", action="store_true", help="dans la mémoire privée (défaut quand elle existe)")
+    zone.add_argument("--public", action="store_true", help="dans la mémoire publique, même quand une mémoire privée existe")
     s.set_defaults(f=cmd_new)
 
     s = sp.add_parser("show", help="afficher une entrée de mémoire, avec son empreinte, ou un index")
     s.add_argument("ids", nargs="*")
     s.add_argument("--index", choices=("decisions", "backlog"), help="l'index des décisions ou du backlog ouvert")
     s.set_defaults(f=cmd_show)
+
+    s = sp.add_parser("prive", help="mémoire privée : état, verrou du dépôt compagnon")
+    s.add_argument("action", choices=("etat", "verrouiller", "extraire", "recuperer"))
+    s.set_defaults(f=cmd_prive)
 
     s = sp.add_parser("url", help="le permalien d'un fichier ou d'une entrée, à donner à l'humain")
     s.add_argument("cibles", nargs="+", metavar="chemin|ID")
