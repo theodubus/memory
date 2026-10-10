@@ -77,3 +77,15 @@ du balayage par l'API GitHub. 4 min 31 s dans le conteneur.
 
 Le check « Socle — verify, contrôles, auto-test » est requis sur `main`.
 Porte du jalon 5 franchie.
+
+## Le second langage
+
+## F-0010 — Avec l'adaptateur `python-pytest`, la chaîne du socle tourne sur un projet Python jetable, et chaque défaut injecté y est attrapé
+
+> statut : mesuré · preuve : J-2026-10-10-W · date : 2026-10-10
+
+Installation, `socle ci`, balayage mutmut et verdict contre le plafond ; un
+test sans assertion, un test supprimé, une fonction publique sans test, un
+correctif sans test et des tests affaiblis sont refusés chacun par le
+contrôle prévu. Porte du jalon 6, au prix de deux corrections du moteur que
+le journal détaille.

@@ -38,7 +38,7 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 | `empreinte.py` | l'empreinte du moteur |
 | `installeur.py` | installation, mise à jour, adoption |
 | `autotest.py` | l'injection de défauts dans un projet jetable |
-| `adaptateurs/` | Rust (extrait de chess) et Python, maintenus ; ce qu'est un adaptateur : `moteur/socle/adaptateurs/README.md` |
+| `adaptateurs/` | Rust (extrait de chess), Python sous `unittest`, Python sous `pytest` avec `mutmut` (jalon 6), maintenus ; ce qu'est un adaptateur : `moteur/socle/adaptateurs/README.md` |
 | `modeles/` | les gabarits posés par l'installeur |
 
 ## Exigences du cadrage et contrôles qui les appliquent

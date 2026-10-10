@@ -5,14 +5,6 @@ Les sujets à traiter. Chacun a un statut (ouvert, en cours, bloqué, fait,
 abandonné) et une origine ; un sujet clos porte la référence de ce qui l'a
 clos, puis s'archive dans le journal (`python3 .socle/socle archive`).
 
-## B-0001 — Jalon 6 : second adaptateur sur un projet jetable, langage dynamique
-
-> statut : ouvert · origine : fichier:memoire/archives/cadrage-2026-10-10.md
-
-L'adaptateur Python existe et sert à ce dépôt ; il reste à l'éprouver sur un
-projet jetable avec un outil de mutation (mutmut), dont le lecteur de
-résultats est écrit mais jamais exécuté. Porte : noyau inchangé.
-
 ## B-0002 — Jalon 7 : mémoire privée, en dépôt compagnon et chiffrée, et contrôles de fuite
 
 > statut : ouvert · origine : fichier:memoire/archives/cadrage-2026-10-10.md
@@ -101,4 +93,24 @@ Vu en écrivant le module des liens : la docstring du lecteur de la mémoire
 dit que le format est décrit dans un document de `docs/` qui n'existe pas ;
 c'est `moteur/socle/FORMAT.md` qui fait foi. Aucun contrôle ne lit les
 chemins cités dans les docstrings du code.
+
+## B-0017 — Deux fonctions calculent l'ancre GitHub d'un titre
+
+> statut : ouvert · origine : J-2026-10-10-V · lu : backlog@5630c7c0
+
+`liens.ancre`, écrite pour les permaliens, refait ce que fait déjà `slug`
+dans `controles_memoire.py`, qui vérifie les ancres des liens de la mémoire.
+Deux copies divergeront : n'en garder qu'une, que les deux modules
+appellent.
+
+
+## B-0018 — Le hook refuse un push vers la branche par défaut d'un dépôt local jetable
+
+> statut : ouvert · origine : J-2026-10-10-W · lu : backlog@85e18aaf
+
+Au jalon 6, le hook de l'agent a refusé `git push origin main` vers le
+dépôt d'origine d'un projet jetable, un simple dossier local : la
+politique (point 4) vise une publication, qu'un dépôt local n'est pas.
+Ne refuser que si la destination est distante, ou garder le refus et le
+dire dans sa raison ; à arbitrer, le refus large est le plus sûr.
 

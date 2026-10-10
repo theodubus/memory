@@ -19,7 +19,8 @@ comme dans n'importe quel projet.
 - `moteur/socle/` — le moteur : lecture de la mémoire, contrôles, hooks,
   installeur, auto-test. `moteur/socle/FORMAT.md` fait foi pour le format de
   la mémoire.
-- `moteur/socle/adaptateurs/` — les adaptateurs maintenus (Rust, Python).
+- `moteur/socle/adaptateurs/` — les adaptateurs maintenus (Rust, Python sous
+  `unittest`, Python sous `pytest`).
 - `moteur/socle/modeles/` — les gabarits que l'installeur pose dans un projet.
 - `tests/` — les tests du moteur (`unittest`), dont l'auto-test complet par
   injection de défauts.
