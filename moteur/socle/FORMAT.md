@@ -119,7 +119,10 @@ recevoir à sa suite une archive.
 
 Statuts : `ouvert`, `en-cours`, `bloqué`, `fait`, `abandonné`. Toute entrée
 a une `origine` (entrée de journal, commit, demande) ; une entrée close
-(`fait`, `abandonné`) a une `ref` vers ce qui l'a close. `socle archive`
+(`fait`, `abandonné`) a une `ref` vers ce qui l'a close. Une action que seul
+l'humain peut faire porte `pour : humain` : elle figure dans « ce qui revient
+à l'humain », dans l'état et dans le récap de fin d'intervention, jusqu'à ce
+qu'elle soit close. `socle archive`
 déplace les entrées closes dans une entrée de journal datée, en sous-titres :
 
 ```markdown

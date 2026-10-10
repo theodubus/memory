@@ -5,15 +5,16 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-Jalons 1 à 5 faits ; Théo a validé les quatre portes et décisions dans la
-conversation (J-2026-10-10-J), consignées avec leur citation (ADR-0006).
+Jalons 1 à 5 faits, leurs portes franchies. La pull request qui les fait
+entrer dans `main` est ouverte : theodubus/memory#2.
 
-- Les cinq portes sont franchies ; la dernière, GitHub qui refuse une pull
-  request défectueuse, le 10 oct. (F-0009).
+- Ajouté à la demande de Théo (J-2026-10-10-M) : ce qui revient à l'humain,
+  calculé et exigé en fin d'intervention (ADR-0007) ; l'index des décisions
+  dans l'état et `socle show <ID>` pour lire la mémoire à la demande.
 
 ## Prochaines étapes
 
-- Corriger l'emplacement de la trace des hooks pour les worktrees (B-0015).
-- Jalon 8 : installation réelle sur chess (B-0003), le format étant accepté.
+- Suivre la pull request jusqu'à sa fusion.
+- Jalon 8 : installation réelle sur chess (B-0003).
 - Concevoir l'obligation d'un test pour du code nouveau (B-0014).
-- Puis jalon 6 sur un projet jetable (B-0001).
+- Corriger l'emplacement de la trace des hooks pour les worktrees (B-0015).

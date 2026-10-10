@@ -167,6 +167,32 @@ def _ajouter(chemin: Path, bloc: str):
     chemin.write_text(texte.rstrip("\n") + "\n" + bloc, encoding="utf-8")
 
 
+def cmd_show(args) -> int:
+    """Une entrée de mémoire par son identifiant, où qu'elle soit (archivée
+    comprise) ; pour une demande, sa réponse aussi."""
+    from socle import demandes, memoire
+
+    projet = _projet(args)
+    code = 0
+    for ident in args.ids:
+        e = memoire.Memoire.charger(projet.racine).entree(ident)
+        if e is None:
+            print(f"{ident} : aucune entrée de ce nom dans la mémoire", file=sys.stderr)
+            code = 1
+            continue
+        lieu = f"{e.fichier}:{e.ligne}" + (f", archivée dans {e.parent}" if e.parent else "")
+        print(f"--- {ident} ({lieu}) ---")
+        print(e.texte)
+        if e.type == "D":
+            d = next((d for d in demandes.toutes(projet.racine) if d.id == ident), None)
+            if d and d.chemin_reponse:
+                print(f"\n--- réponse ({d.chemin_reponse}) : {d.statut} ---")
+                print((projet.racine / d.chemin_reponse).read_text(encoding="utf-8").rstrip())
+            elif d:
+                print(f"\n--- {d.statut} ---")
+    return code
+
+
 def cmd_answer(args) -> int:
     """L'humain répond lui-même, ou l'agent relaie (`--relayed`) une réponse
     donnée dans la conversation, en citant son texte exact (ADR-0006)."""
@@ -330,6 +356,10 @@ def main(argv=None) -> int:
     s.add_argument("type", choices=sorted(TYPES_CLI))
     s.add_argument("title")
     s.set_defaults(f=cmd_new)
+
+    s = sp.add_parser("show", help="afficher une entrée de mémoire par son identifiant")
+    s.add_argument("ids", nargs="+")
+    s.set_defaults(f=cmd_show)
 
     s = sp.add_parser("answer", help="répondre à une demande, ou relayer la réponse donnée dans la conversation")
     s.add_argument("request")

@@ -20,7 +20,7 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 
 | Module | Rôle |
 | --- | --- |
-| `cli.py` | les commandes : `state`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `answer`, `approve`, `install`, `selftest`, `fingerprint`, `mutation-verdict`, `archive`, `checks` |
+| `cli.py` | les commandes : `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `answer`, `approve`, `install`, `selftest`, `fingerprint`, `mutation-verdict`, `archive`, `checks` |
 | `memoire.py` | lecture des cinq couches : en-têtes, entrées, identifiants, métadonnées, références |
 | `demandes.py` | le contrat des demandes, son lint, les réponses humaines gelées |
 | `contexte.py` | le registre des contrôles, leurs étages, la base de comparaison, le mode adoption |
@@ -31,6 +31,7 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 | `tests_lecture.py` | extraction des fonctions de test selon l'adaptateur ; transitivité des assertions |
 | `hooks.py` | les points d'entrée des hooks de l'agent et de git, la trace |
 | `etat.py` | l'état dérivé |
+| `humain.py` | ce qui revient à l'humain, et la lecture du dernier message de l'agent pour le récap |
 | `verification.py` | le contrat `verify` : les capacités de l'adaptateur |
 | `mutation.py` | le verdict de mutation contre les plafonds |
 | `empreinte.py` | l'empreinte du moteur |
@@ -70,7 +71,8 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 | Action irréversible ou externe refusée | hook `pre-tool-use` | agent |
 | Anti-fabrication | hook `pre-tool-use` : SHA complété de tête, identifiant ou commit inventé | agent |
 | Échec répété : arrêt et escalade | hook `stop`, `max_attempts` de la politique | agent |
-| État dérivé au démarrage et après compactage | `socle state`, hook `session-start` | agent |
+| État dérivé au démarrage et après compactage, avec l'index des décisions | `socle state`, hook `session-start` ; `socle show <ID>` pour lire une entrée à la demande | agent |
+| Ce qui revient à l'humain, dit à chaque fin d'intervention qui a agi | `humain.py` (demandes en attente, backlog `pour : humain`, branches distantes supprimables), hook `stop` | agent |
 | Auto-tests par injection de défauts | `socle selftest`, dans `socle ci` | CI |
 
 ## Les choix qui ne sont pas dans le cadrage

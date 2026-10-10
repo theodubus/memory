@@ -187,8 +187,18 @@ def etage_ci(a: Atelier, c: Path, message: str = "essai", env=None) -> str:
     return "" if r.returncode == 0 else r.stdout + r.stderr
 
 
-def etage_stop(a: Atelier, c: Path) -> str:
-    r = a.socle(c, "hook", "stop", entree=json.dumps({"session_id": "autotest", "stop_hook_active": False}))
+def etage_stop(a: Atelier, c: Path, dernier_message: str | None = None) -> str:
+    """Le hook de fin de tour. Avec `dernier_message`, un transcript au format
+    de Claude Code lui donne le dernier message de l'agent à lire."""
+    entree = {"session_id": "autotest", "stop_hook_active": False}
+    if dernier_message is not None:
+        transcript = c.parent / f"{c.name}-transcript.jsonl"
+        transcript.write_text("\n".join(json.dumps(x, ensure_ascii=False) for x in (
+            {"type": "user", "message": {"role": "user", "content": "fais le travail"}},
+            {"type": "assistant", "message": {"role": "assistant", "content": [{"type": "text", "text": dernier_message}]}},
+        )) + "\n")
+        entree["transcript_path"] = str(transcript)
+    r = a.socle(c, "hook", "stop", entree=json.dumps(entree))
     if not r.stdout.strip():
         return ""
     sortie = json.loads(r.stdout)
@@ -477,6 +487,11 @@ def _cas() -> list[Cas]:
         ajouter(c, ".github/workflows/nuit.yml", "name: Nuit\non: [push]\njobs: {}\n")
         return etage_git(a, c)
 
+    @defaut("fin-sans-recap", "fin d'intervention sans dire ce qui revient à l'humain", "agent", "récap")
+    def _(a, c):
+        maj_memoire(c, "Travail du tour.")
+        return etage_stop(a, c, "J'ai mis à jour le chantier actif. Tout passe.")
+
     @defaut("memoire-en-retard", "code changé sans mise à jour de la mémoire", "agent", "memoire.retard")
     def _(a, c):
         remplacer(c, "calc.py", "return FACTEUR * x", "return x * FACTEUR")
@@ -555,6 +570,16 @@ def _temoins() -> list[tuple[str, Callable]]:
             return r.stdout + r.stderr
         maj_memoire(c, "Refonte validée dans la conversation.")
         return etage_ci(a, c)
+
+    @temoin("une fin d'intervention avec sa ligne « Pour toi : » passe le hook de fin de tour")
+    def _(a, c):
+        maj_memoire(c, "Travail du tour.")
+        return etage_stop(a, c, "J'ai mis à jour le chantier actif. Tout passe.\n\nPour toi : rien.")
+
+    @temoin("une fin de tour sans travail n'exige pas de récap")
+    def _(a, c):
+        etage_stop(a, c, "Pour toi : rien.")  # retient l'état de l'arbre
+        return etage_stop(a, c, "Réponse à une question, sans rien changer.")
 
     @temoin("une tautologie voulue, raison écrite, passe le commit")
     def _(a, c):
@@ -636,6 +661,7 @@ RAISONS_AGENT = {
     "fichier protégé": "est protégé par la politique",
     "commande humaine": "ne répond jamais à la place de l'humain",
     "où regarder": "« Où regarder » doit donner un lien",
+    "récap": "« Pour toi : »",
 }
 
 

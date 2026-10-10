@@ -58,12 +58,28 @@ l'agent consigne sa réponse, sans jamais la choisir, avec le texte exact :
 `python3 .socle/socle answer D-NNNN <réponse> --relayed --by <nom> --quote-file <fichier>`,
 et la recopie au journal. Une demande répondue est gelée.
 
+### Lire la mémoire à la demande
+
+Le démarrage n'injecte que l'état, le chantier actif et les faits. Le reste
+se lit quand il sert, sans attendre qu'on le demande :
+
+- un identifiant cité (`F-`, `B-`, `ADR-`, `D-`, `J-`) se lit avant de
+  s'appuyer dessus : `python3 .socle/socle show <ID>` ;
+- avant une décision de conception, l'index des décisions de l'état dit si
+  elle est déjà prise : on ne la rouvre pas sans fait nouveau ;
+- avant d'ouvrir un sujet, le backlog (`memoire/backlog.md`) dit s'il existe
+  déjà ;
+- pour savoir pourquoi une chose est ainsi, chercher dans le journal
+  (`grep -rn "<mot>" memoire/journal/`).
+
 ### Avant de conclure
 
 - `python3 .socle/socle verify --rapide` passe (le hook `Stop` le vérifie) ; `verify` exécute tout.
 - Si du code a changé, la mémoire aussi : chantier actif, journal, backlog.
 - Si du code associé à une doc a changé (`[[docmap]]` des garde-fous), la doc change dans le même travail, ou un commit porte le trailer `Dispense-doc: <raison>`.
 - Un correctif (sujet `fix:` ou trailer `Corrige: B-NNNN`) livre un test qui échoue sur le commit parent.
+- Une action que seul l'humain peut faire (refusée par le hook, réglage d'un service, fichier qu'il détient) va au backlog avec `pour : humain`.
+- **Toute intervention qui a agi se termine par un récap, puis une ligne `Pour toi :`** qui liste ce qui revient à l'humain — décisions en attente, actions à faire — ou « rien ». L'état (`socle state`) calcule cette liste ; le hook `Stop` refuse de conclure sans elle. Si l'agent attend quelque chose (une CI, un match), il dit quoi et jusqu'à quand.
 
 ### Ne jamais
 
