@@ -423,7 +423,7 @@ def budgets(ctx, r):
 def date_derniere_modif(ctx, chemin: str) -> float | None:
     if ctx.tete is None and chemin in ctx._cache.setdefault("sales", _sales(ctx)):
         return time.time()
-    rev = ctx.tete or "HEAD"
+    rev = ctx.rev_commit
     if not outils.a_des_commits(ctx.racine):
         return time.time()
     sortie = outils.git(ctx.racine, "log", "-1", "--format=%ct", rev, "--", chemin, check=False).strip()

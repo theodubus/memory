@@ -55,13 +55,6 @@ Aujourd'hui, la CI compare le moteur au verrou local. Le cadrage demande la
 comparaison avec la version publiée, que le verrou seul ne garantit pas si
 moteur et verrou changent ensemble.
 
-## B-0007 — Le hook pre-commit contrôle l'arbre de travail, pas l'index
-
-> statut : ouvert · origine : J-2026-10-10-E
-
-Un commit partiel peut être jugé sur des fichiers qu'il ne contient pas. La
-CI, elle, juge le commit réel.
-
 ## B-0008 — Les chemins qui n'existent que dans une rustine sont pris pour des liens morts
 
 > statut : ouvert · origine : J-2026-10-10-F
@@ -112,13 +105,3 @@ publique ajoutée ou modifiée est nommée par au moins un test », avec une
 dispense motivée comme pour la doc ; et, quand l'agent découvre en route du
 code existant sans test, la règle de l'écrire tout de suite s'il est dans le
 périmètre, sinon de l'inscrire au backlog.
-
-## B-0015 — La trace des hooks ignore les worktrees git
-
-> statut : ouvert · origine : J-2026-10-10-L
-
-Les hooks de l'agent écrivent la trace dans `.socle/trace/` du dépôt
-principal ; un commit fait dans un autre worktree la cherche dans le sien, ne
-la trouve pas, et part avec `Socle-Hooks: aucun` — la CI le refuse. Placer la
-trace dans le répertoire git commun (`git rev-parse --git-common-dir`),
-partagé par tous les worktrees, avec un défaut injecté dans l'auto-test.

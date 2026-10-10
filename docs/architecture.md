@@ -83,7 +83,11 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
   chemin et l'empreinte du fichier protégé. **L'humain répond dans la
   conversation**, et l'agent consigne la réponse avec sa citation exacte
   (`ADR-0006`).
-- **La trace des hooks voyage dans les commits** (`ADR-0005`).
+- **La trace des hooks voyage dans les commits** (`ADR-0005`). Elle vit
+  dans le répertoire git commun (`.git/socle/hooks.log`), partagé par tous
+  les worktrees du dépôt.
+- **Le hook avant commit juge l'index**, figé en arbre par `git write-tree` :
+  ce qui sera commité, pas ce qui est sur disque.
 - **Le cliquet compare la base et la tête clé par clé**, avec un sens par
   clé : plus bas est plus strict pour un budget, plus long pour une
   couverture, plus court pour une liste d'exclusions. Une clé inconnue qui
@@ -102,7 +106,7 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 ## Ce qui n'est pas fait
 
 Le backlog le tient : jalons 6 à 9, mémoire privée, empreinte comparée à la
-version publiée, workflow de mutation générique, hook pre-commit sur l'index
-plutôt que sur l'arbre. Les limites connues des contrôles y sont aussi :
+version publiée, workflow de mutation générique, test exigé pour du code
+nouveau. Les limites connues des contrôles y sont aussi :
 chemins qui n'existent que dans une rustine, copie non marquée d'une valeur
 qui n'est qu'un avertissement.

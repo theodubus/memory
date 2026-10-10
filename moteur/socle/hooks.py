@@ -55,7 +55,7 @@ COMMANDES_HUMAINES = re.compile(
 
 def tracer(racine: Path, evenement: str, session: str = "", source: str = ""):
     try:
-        p = racine / config.TRACE
+        p = config.chemin_trace(racine)
         p.parent.mkdir(parents=True, exist_ok=True)
         horodatage = datetime.now().astimezone().isoformat(timespec="seconds")
         with p.open("a", encoding="utf-8") as f:
@@ -397,10 +397,9 @@ def stop(projet: config.Projet, entree: dict) -> int:
 def _appels_externes(racine: Path, session: str) -> bool:
     """Un outil externe (`mcp__…` : pull request, commentaire…) a-t-il été
     appelé depuis la fin de tour précédente de cette session ?"""
-    trace = racine / config.TRACE
-    if not trace.is_file() or not session:
+    if not session:
         return False
-    lignes = [l.split("\t") for l in trace.read_text(encoding="utf-8", errors="replace").splitlines()]
+    lignes = [l.split("\t") for l in config.lire_trace(racine)]
     siennes = [l for l in lignes if len(l) >= 4 and l[2] == session]
     stops = [i for i, l in enumerate(siennes) if l[1] == "Stop"]
     debut = stops[-2] + 1 if len(stops) >= 2 else 0
@@ -464,7 +463,11 @@ def git_pre_commit(projet: config.Projet) -> int:
 
     tracer(projet.racine, "git-pre-commit")
     base = outils.base_de_travail(projet.racine)
-    ctx = contexte.Contexte(projet, etage="git", base=base, tete=None, rapide=True)
+    # On juge ce qui sera commité : l'index, figé en arbre par `write-tree`,
+    # et non les fichiers sur disque, qui peuvent cacher un défaut indexé ou
+    # en montrer un qui ne sera pas commité (B-0007).
+    index = outils.git(projet.racine, "write-tree", check=False).strip() or None
+    ctx = contexte.Contexte(projet, etage="git", base=base, tete=index, rapide=True)
     rapport = contexte.executer(ctx)
     if not rapport.reussi:
         rapport.afficher("socle — contrôles avant commit", flux=sys.stderr)
@@ -476,10 +479,7 @@ def git_pre_commit(projet: config.Projet) -> int:
 def compter_session(racine: Path) -> str:
     """`SessionStart=1 PreToolUse=12 Stop=3` pour la session la plus récente
     de la trace ; `aucun` sans trace."""
-    trace = racine / config.TRACE
-    if not trace.is_file():
-        return "aucun"
-    lignes = [l.split("\t") for l in trace.read_text(encoding="utf-8", errors="replace").splitlines() if l.strip()]
+    lignes = [l.split("\t") for l in config.lire_trace(racine)]
     agent = [l for l in lignes if len(l) >= 3 and l[1] in ("SessionStart", "PreToolUse", "Stop")]
     if not agent:
         return "aucun"

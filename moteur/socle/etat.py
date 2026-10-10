@@ -163,10 +163,9 @@ def _demandes(racine) -> list[str]:
 
 
 def _hooks(racine) -> list[str]:
-    trace = racine / config.TRACE
-    if not trace.is_file() or not trace.read_text(encoding="utf-8", errors="replace").strip():
+    lignes = config.lire_trace(racine)
+    if not lignes:
         return ["hooks    : aucune trace — ils n'ont encore jamais tiré dans ce clone"]
-    lignes = trace.read_text(encoding="utf-8", errors="replace").strip().splitlines()
     dernier = " ".join(lignes[-1].split("\t")[:2])
     return [f"hooks    : {len(lignes)} déclenchement(s) tracé(s), dernier : {dernier}"]
 

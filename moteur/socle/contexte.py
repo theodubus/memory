@@ -98,11 +98,18 @@ class Contexte:
         return outils.fichiers_changes(self.racine, self.base, self.tete)
 
     @cached_property
+    def rev_commit(self) -> str:
+        """Le commit de la tête. La tête peut être un arbre (l'index, au hook
+        pre-commit) : son historique est alors celui de HEAD."""
+        if self.tete and outils.rev_existe(self.racine, self.tete):
+            return self.tete
+        return "HEAD"
+
+    @cached_property
     def commits(self) -> list[dict]:
         if not outils.a_des_commits(self.racine):
             return []
-        tete = self.tete or "HEAD"
-        return outils.commits(self.racine, self.base, tete)
+        return outils.commits(self.racine, self.base, self.rev_commit)
 
     @cached_property
     def validations(self) -> list[demandes.Demande]:

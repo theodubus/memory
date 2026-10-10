@@ -548,6 +548,14 @@ def _cas() -> list[Cas]:
                 f"> statut : ouvert · origine : {a.journal}\n\nPour l'essai.\n")
         return etage_git(a, c)
 
+    @defaut("defaut-indexe-masque", "défaut indexé, corrigé seulement sur disque", "git", "memoire.references")
+    def _(a, c):
+        ajouter(c, "docs/calc.md", "Voir F-0099.\n")
+        a.git(c, "add", "docs/calc.md")
+        remplacer(c, "docs/calc.md", "Voir F-0099.\n", "")  # corrigé sur disque, pas dans l'index
+        r = a.run(c, "git", "commit", "-q", "-m", "essai")
+        return "" if r.returncode == 0 else r.stdout + r.stderr
+
     @defaut("memoire-en-retard", "code changé sans mise à jour de la mémoire", "agent", "memoire.retard")
     def _(a, c):
         remplacer(c, "calc.py", "return FACTEUR * x", "return x * FACTEUR")
@@ -646,6 +654,32 @@ def _temoins() -> list[tuple[str, Callable]]:
         ajouter(c, "memoire/backlog.md", "\n## B-0002 — Ajouter une fonction quadruple\n\n"
                 f"> statut : ouvert · origine : {a.journal} · lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n")
         return etage_git(a, c)
+
+    @temoin("un commit d'agent fait dans un autre worktree porte la trace des hooks et passe la CI")
+    def _(a, c):
+        # Les hooks de l'agent tirent dans le dépôt principal…
+        entree = {"session_id": "autotest-wt", "source": "startup"}
+        a.socle(c, "hook", "session-start", entree=json.dumps(entree))
+        a.socle(c, "hook", "pre-tool-use", entree=json.dumps({**entree, "tool_name": "Bash", "tool_input": {"command": "ls"}}))
+        # … et le commit se fait dans un autre worktree, comme la pull request
+        # de démonstration (B-0015).
+        wt = c.parent / f"{c.name}-wt"
+        a.git(c, "worktree", "add", "-q", "-b", "autre", str(wt))
+        maj_memoire(wt, "Travail fait dans un autre worktree.")
+        r = a.commit(wt, "Travail d'agent\n\nCo-Authored-By: Claude <noreply@anthropic.com>", verifier=True,
+                     env={"CLAUDECODE": "1"})
+        if r.returncode != 0:
+            return r.stdout + r.stderr
+        r = a.socle(wt, "check", "--stage", "ci", "--base", "origin/main")
+        return "" if r.returncode == 0 else r.stdout + r.stderr
+
+    @temoin("un défaut sur disque mais pas dans l'index ne bloque pas le commit de ce qui est indexé")
+    def _(a, c):
+        maj_memoire(c, "Seul ce changement est indexé.")
+        a.git(c, "add", "memoire/actif.md")
+        ajouter(c, "docs/calc.md", "Voir F-0099.\n")  # en cours, non indexé
+        r = a.run(c, "git", "commit", "-q", "-m", "essai")
+        return "" if r.returncode == 0 else r.stdout + r.stderr
 
     @temoin("une tautologie voulue, raison écrite, passe le commit")
     def _(a, c):

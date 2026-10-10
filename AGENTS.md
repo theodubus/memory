@@ -151,7 +151,7 @@ refusée ; il faut relire l'entrée. `socle new` pose l'empreinte de l'index.
 | `.claude/settings.json` | hooks de Claude Code : `SessionStart` (état dérivé), `PreToolUse` (refus), `Stop` (contrôles de fin de tour) |
 | `.socle/git-hooks/` | hooks git : `pre-commit` (contrôles rapides), `prepare-commit-msg` (trailer `Socle-Hooks`), `pre-push` (`verify --rapide`) |
 | `.github/workflows/socle.yml` | CI : capacités de l'adaptateur, tous les contrôles contre la base, auto-test du socle |
-| `.socle/trace/hooks.log` | trace locale de chaque hook qui tire, non versionnée |
+| `.git/socle/hooks.log` | trace locale de chaque hook qui tire, non versionnée, commune à tous les worktrees du dépôt |
 
 Liste des contrôles : `python3 .socle/socle checks`.
 
