@@ -97,3 +97,5 @@ version publiée, workflow de mutation générique, hook pre-commit sur l'index
 plutôt que sur l'arbre. Les limites connues des contrôles y sont aussi :
 chemins qui n'existent que dans une rustine, copie non marquée d'une valeur
 qui n'est qu'un avertissement.
+
+Voir F-0042 pour le détail.
