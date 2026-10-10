@@ -214,7 +214,32 @@ verrou avec les secrets `SOCLE_PRIVE_DEPOT` et `SOCLE_PRIVE_CLE`.
 privée n'y montre ni son texte ni son chemin.
 
 **Le contenu nouveau est privé par défaut** quand une mémoire privée existe :
-`socle new` l'écrit sous `memoire/prive/`, sauf `--public`.
+`socle new` l'écrit sous `memoire/prive/`, sauf `--public`. Les demandes
+font exception : elles ne sont privées, réponses comprises, que si l'humain
+l'a choisi (`[private] requests = true`), car il doit pouvoir les lire là où
+il lit ; en mode chiffré, GitHub n'en montre que le chiffré, et l'agent les
+donne en entier dans la conversation.
+
+**La liste des termes privés** (`memoire/prive/termes.txt`) nomme ce qui ne
+doit jamais paraître en public : un terme par ligne, `#` pour un
+commentaire, `re:` devant une expression régulière ; la recherche ignore la
+casse et les accents et ne prend que des mots entiers. Sa première ligne
+est `# socle: termes privés`. L'agent y ajoute librement
+(`socle prive terme <terme>`) ; en retirer un exige une demande validée qui
+cite la liste et son empreinte nouvelle. Un terme trouvé n'est jamais
+réécrit, seulement désigné par son rang dans la liste.
+
+**Les fuites** se cherchent à trois étages : le hook de l'agent (écritures
+hors de la zone privée, messages de commit, pull requests et commentaires),
+le hook git du message de commit, et la CI (fichiers publics modifiés,
+messages des commits).
+
+**La relecture avant publication** se règle par projet
+(`[private] review`) : `aucune`, `chaque-push` ou `lots`. Avec les deux
+dernières, un push vers le dépôt public attend que l'humain ait relu le
+commit qui part : il le dit (`socle relu`), ou l'agent relaie son accord
+donné dans la conversation, avec son texte exact
+(`socle relu --relayed --by <nom> --quote-file <fichier>`).
 
 ## Lecture prouvée
 

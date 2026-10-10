@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0008-le-hook-de-claude-code-doit-il-aussi-chercher-les.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-10-10"
+canal = "conversation"
+citation = "D0008 oui je valide en plus du hook de la CI"
+empreinte = "sha256:41926c2286970a0847d2ee4f415e06f0b8aa8f93f5b3201891c552c23a80556a"

@@ -28,7 +28,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from socle import config, demandes, memoire, outils
+from socle import config, demandes, memoire, outils, prive
 
 OUTILS_ECRITURE = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 IRREVERSIBLES_BASH = [
@@ -47,10 +47,15 @@ IRREVERSIBLES_OUTILS = [
 # Une INVOCATION de `answer` ou `approve`, par le lanceur ou par `-m socle` —
 # pas un texte qui les nomme (un heredoc de documentation les cite souvent).
 COMMANDES_HUMAINES = re.compile(
-    r"(?:^|[;&|(]\s*|\s)(?:\S*/)?(?:python3?\s+)?\S*\.socle/socle(?:\s+--root\s+\S+)?\s+(answer|approve)\b"
-    r"|-m\s+socle(?:\s+--root\s+\S+)?\s+(answer|approve)\b",
+    r"(?:^|[;&|(]\s*|\s)(?:\S*/)?(?:python3?\s+)?\S*\.socle/socle(?:\s+--root\s+\S+)?\s+(answer|approve|relu)\b"
+    r"|-m\s+socle(?:\s+--root\s+\S+)?\s+(answer|approve|relu)\b",
     re.M,
 )
+# Ce qui part hors du dépôt par le shell : un message de commit, un tag, une
+# pull request ou un commentaire par `gh`. Ce qui vise le dépôt privé n'est
+# pas une publication.
+PUBLIE_BASH = re.compile(r"\bgit\s+(?:-C\s+\S+\s+)?(?:commit|tag)\b|\bgh\s+(?:pr|issue|release|api)\b")
+PUSH_BASH = re.compile(r"\bgit\s+(?:-C\s+\S+\s+)?push\b")
 
 
 def tracer(racine: Path, evenement: str, session: str = "", source: str = ""):
@@ -300,16 +305,24 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
                               "c'est une action que l'humain doit faire lui-même, l'inscrire au backlog avec "
                               "`pour : humain`. Puis continuer sur autre chose.")
         m = COMMANDES_HUMAINES.search(cmd)
-        if m and (m.group(1) or m.group(2)) != "answer":
+        if m and (m.group(1) or m.group(2)) == "approve":
             return _refus("`socle approve` est réservé à l'humain : il valide ses propres changements protégés.")
         if m and not (re.search(r"--relayed\b", cmd) and re.search(r"--quote(-file)?\b", cmd)):
             return _refus("l'agent ne répond jamais à la place de l'humain. Il ne peut que relayer une réponse "
                           "donnée dans la conversation : `socle answer D-NNNN <réponse> --relayed --by <nom> "
-                          "--quote-file <texte exact>` (ADR-0006).")
+                          "--quote-file <texte exact>` (ADR-0006), ou `socle relu --relayed --by <nom> "
+                          "--quote-file <texte exact>` pour une relecture avant publication.")
+        faute = _fuite_bash(projet, cmd)
+        if faute:
+            return _refus(faute)
         cible = ecriture_protegee(projet, cmd)
         if cible:
             return _refus(f"écriture d'un fichier protégé ({cible}) par le shell : seul l'humain modifie "
                           "la politique, les hooks, la CI et le moteur (relance de l'installeur).")
+
+    faute = _fuite_outil(projet, outil, args)
+    if faute:
+        return _refus(faute)
 
     if outil in OUTILS_ECRITURE:
         rel = _relatif(racine, args.get("file_path") or args.get("notebook_path") or "")
@@ -337,6 +350,59 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
     if faute:
         return _refus(faute)
     return 0
+
+
+# --------------------------------------------------------------------------
+# Fuites de la mémoire privée (D-0008) : le hook de l'agent voit, avant
+# qu'elles partent, les écritures et les publications que ni les hooks git ni
+# la CI ne voient à temps (une description de pull request, un commentaire).
+# --------------------------------------------------------------------------
+
+
+def _vers_le_prive(racine: Path, cmd: str) -> bool:
+    return bool(re.search(r"(?:-C|cd)\s+(?:\S*/)?" + re.escape(prive.DOSSIER), cmd))
+
+
+def _fuites_dans(projet: config.Projet, texte: str) -> str | None:
+    t = prive.termes(projet)
+    trouve = prive.fuites(texte, t.liste)
+    if not trouve:
+        return None
+    return ("fuite de la mémoire privée : " + ", ".join(trouve[:5]) + ". Une écriture publique ne cite ni "
+            "identifiant privé ni terme de la liste privée : reformuler sans eux (politique, mémoire privée).")
+
+
+def _fuite_bash(projet: config.Projet, cmd: str) -> str | None:
+    if prive.mode(projet) is None or _vers_le_prive(projet.racine, cmd):
+        return None
+    if PUSH_BASH.search(cmd):
+        tete = outils.git(projet.racine, "rev-parse", "HEAD", check=False).strip()
+        refus = prive.publication_refusee(projet, [tete])
+        if refus:
+            return refus
+    if PUBLIE_BASH.search(cmd):
+        return _fuites_dans(projet, cmd)
+    return None
+
+
+def _fuite_outil(projet: config.Projet, outil: str, args: dict) -> str | None:
+    if prive.mode(projet) is None:
+        return None
+    if outil.startswith("mcp__"):
+        return _fuites_dans(projet, json.dumps(args, ensure_ascii=False))
+    if outil in OUTILS_ECRITURE:
+        rel = _relatif(projet.racine, args.get("file_path") or args.get("notebook_path") or "")
+        if not rel or prive.est_prive(rel):
+            return None
+        avant, apres = contenu_apres(projet.racine, outil, args, rel)
+        if apres is None:
+            return None
+        # Seul ce qui s'ajoute compte : une fuite plus ancienne ne bloque pas
+        # chaque écriture suivante du même fichier.
+        anciennes = set((avant or "").splitlines())
+        ajout = "\n".join(l for l in apres.splitlines() if l not in anciennes)
+        return _fuites_dans(projet, ajout)
+    return None
 
 
 # --------------------------------------------------------------------------
@@ -542,10 +608,35 @@ def git_prepare_commit_msg(projet: config.Projet, fichier: str, source: str = ""
     return 0
 
 
+def git_commit_msg(projet: config.Projet, fichier: str = "") -> int:
+    """Le message d'un commit public ne cite ni identifiant privé ni terme de
+    la liste privée : le seul étage, hors de l'agent, qui le voit avant le
+    commit (D-0008)."""
+    tracer(projet.racine, "git-commit-msg")
+    if prive.mode(projet) is None or not fichier:
+        return 0
+    try:
+        brut = Path(fichier).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return 0
+    message = "\n".join(l for l in brut.splitlines() if not l.startswith("#"))
+    faute = _fuites_dans(projet, message)
+    if faute:
+        print(f"socle — commit refusé : {faute}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def git_pre_push(projet: config.Projet) -> int:
     from socle import contexte, verification
 
     tracer(projet.racine, "git-pre-push")
+    # Les commits qui partent : `<réf locale> <sha local> <réf distante> <sha distant>` par ligne.
+    lignes = [] if sys.stdin is None or sys.stdin.isatty() else sys.stdin.read().splitlines()
+    refus = prive.publication_refusee(projet, [l.split()[1] for l in lignes if len(l.split()) >= 2])
+    if refus:
+        print(f"socle — push refusé : {refus}", file=sys.stderr)
+        return 1
     base = outils.base_de_travail(projet.racine)
     ctx = contexte.Contexte(projet, etage="git", base=base, tete=None, rapide=True)
     rapport = contexte.executer(ctx)

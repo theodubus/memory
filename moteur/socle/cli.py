@@ -99,6 +99,8 @@ def cmd_hook(args) -> int:
         return hooks.git_prepare_commit_msg(projet, *args.rest[:2])
     if evt == "git-pre-push":
         return hooks.git_pre_push(projet)
+    if evt == "git-commit-msg":
+        return hooks.git_commit_msg(projet, *args.rest[:1])
     print(f"hook inconnu : {evt}", file=sys.stderr)
     return 2
 
@@ -131,7 +133,11 @@ def cmd_new(args) -> int:
     jour = date.today().isoformat()
     # Avec une mémoire privée, le contenu nouveau est privé par défaut
     # (cadrage, règles de classement, point 3).
-    prive = getattr(args, "private", False) or (bool(projet.pol("private", "mode")) and not getattr(args, "public", False))
+    # Une demande ne devient privée que si l'humain l'a choisi (`[private] requests`) :
+    # il doit pouvoir la lire là où il lit.
+    defaut = projet.pol("private", "requests", defaut=False) if type_ == "D" else True
+    prive = getattr(args, "private", False) or (
+        bool(projet.pol("private", "mode")) and bool(defaut) and not getattr(args, "public", False))
     ident = mem.prochain_id(type_, prive=prive, date=jour)
     titre = args.title
     zone = "privee" if prive else "publique"
@@ -228,6 +234,13 @@ def cmd_prive(args) -> int:
     if args.action == "etat":
         print(prive.ligne_etat(projet))
         return 0
+    if args.action == "terme":
+        if prive.mode(projet) is None or not args.terme:
+            print("`socle prive terme <terme>` : une mémoire privée, et un terme", file=sys.stderr)
+            return 1
+        ajoute = prive.ajouter_terme(projet, " ".join(args.terme))
+        print("terme ajouté à la liste privée" if ajoute else "terme déjà dans la liste privée")
+        return 0
     if prive.mode(projet) != "compagnon":
         print("le verrou n'existe qu'en mode compagnon (`[private] mode` de la politique)", file=sys.stderr)
         return 1
@@ -252,6 +265,25 @@ def cmd_prive(args) -> int:
         return 1
     outils.git(prive.depot_compagnon(racine), "checkout", "-q", "--detach", verrou)
     print(f"mémoire privée remise au verrou : {verrou[:10]}")
+    return 0
+
+
+def cmd_relu(args) -> int:
+    """L'humain a relu ce qui part vers le dépôt public (D-0006) : il le dit
+    lui-même, ou l'agent relaie son accord donné dans la conversation, avec
+    son texte exact."""
+    from socle import prive
+
+    projet = _projet(args)
+    citation = Path(args.quote_file).read_text(encoding="utf-8") if args.quote_file else (args.quote or "")
+    if args.relayed and (not args.by or len(citation.strip()) < 2):
+        print("refus : une relecture relayée nomme l'humain (--by) et cite son texte exact (--quote-file)",
+              file=sys.stderr)
+        return 2
+    sha = outils.git(projet.racine, "rev-parse", args.rev).strip()
+    prive.noter_relecture(projet.racine, sha, args.by or _auteur(projet),
+                          "conversation" if args.relayed else "terminal", citation)
+    print(f"relu : {sha[:10]} peut partir vers le dépôt public")
     return 0
 
 
@@ -454,8 +486,17 @@ def main(argv=None) -> int:
     s.set_defaults(f=cmd_show)
 
     s = sp.add_parser("prive", help="mémoire privée : état, verrou du dépôt compagnon")
-    s.add_argument("action", choices=("etat", "verrouiller", "extraire", "recuperer"))
+    s.add_argument("action", choices=("etat", "verrouiller", "extraire", "recuperer", "terme"))
+    s.add_argument("terme", nargs="*", help="avec `terme` : le terme à ajouter à la liste privée")
     s.set_defaults(f=cmd_prive)
+
+    s = sp.add_parser("relu", help="(humain, ou relayé) ce qui part vers le dépôt public a été relu")
+    s.add_argument("--rev", default="HEAD")
+    s.add_argument("--by")
+    s.add_argument("--relayed", action="store_true", help="accord donné par l'humain dans la conversation")
+    s.add_argument("--quote")
+    s.add_argument("--quote-file")
+    s.set_defaults(f=cmd_relu)
 
     s = sp.add_parser("url", help="le permalien d'un fichier ou d'une entrée, à donner à l'humain")
     s.add_argument("cibles", nargs="+", metavar="chemin|ID")

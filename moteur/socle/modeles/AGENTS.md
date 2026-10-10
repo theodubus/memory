@@ -32,7 +32,7 @@ Un identifiant se calcule (`python3 .socle/socle new <type> "titre"`), il ne
 se devine pas. En cas de conflit, l'ordre d'autorité est : le code et les
 tests, puis la mémoire canonique, puis le journal.
 
-**Mémoire privée**, si la politique en choisit une (`[private] mode`) : le contenu nouveau va dans la zone privée, memoire/prive/ (`socle new` le fait par défaut), et rien de privé ne se recopie en public, ni un identifiant `P…`, ni son contenu, ni dans un message de commit, une pull request ou un commentaire. En mode compagnon, un changement privé se commite dans le dépôt privé, puis `socle prive verrouiller`. Indisponible (l'état le dit), on ne conclut pas sur ce qui en dépend.
+**Mémoire privée**, si la politique en choisit une (`[private] mode`) : le contenu nouveau va dans la zone privée, memoire/prive/ (`socle new` le fait par défaut), et rien de privé ne se recopie en public, ni un identifiant `P…`, ni son contenu, ni dans un message de commit, une pull request ou un commentaire. En mode compagnon, un changement privé se commite dans le dépôt privé, puis `socle prive verrouiller`. Un nom privé nouveau (une idée, un client) s'ajoute à la liste des termes privés (`socle prive terme <terme>`) ; seul l'humain en retire. Si la politique exige une relecture avant publication (`[private] review`), montrer à l'humain ce qui part, puis consigner son accord avec son texte exact (`socle relu --relayed --by <nom> --quote-file <fichier>`) : à chaque push, ou par lots. Une demande privée chiffrée ne se lit pas sur GitHub : la donner en entier dans la conversation. Indisponible (l'état le dit), on ne conclut pas sur ce qui en dépend.
 
 ### Politique d'autonomie (`.socle/politique.toml`, modifiée par l'humain seul)
 
@@ -103,7 +103,7 @@ refusée ; il faut relire l'entrée. `socle new` pose l'empreinte de l'index.
 | Où | Quoi |
 | --- | --- |
 | `.claude/settings.json` | hooks de Claude Code : `SessionStart` (état dérivé), `PreToolUse` (refus), `Stop` (contrôles de fin de tour) |
-| `.socle/git-hooks/` | hooks git : `pre-commit` (contrôles rapides), `prepare-commit-msg` (trailer `Socle-Hooks`), `pre-push` (`verify --rapide`) |
+| `.socle/git-hooks/` | hooks git : `pre-commit` (contrôles rapides), `prepare-commit-msg` (trailer `Socle-Hooks`), `commit-msg` (fuites de la mémoire privée), `pre-push` (`verify --rapide`, relecture avant publication) |
 | `.github/workflows/socle.yml` | CI : capacités de l'adaptateur, tous les contrôles contre la base, auto-test du socle |
 | `.git/socle/hooks.log` | trace locale de chaque hook qui tire, non versionnée, commune à tous les worktrees du dépôt |
 

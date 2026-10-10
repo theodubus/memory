@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0007-qui-tient-la-liste-des-termes-prives-et-sous-quell.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-10-10"
+canal = "conversation"
+citation = "D0007 agent ajoute, seul humain retire"
+empreinte = "sha256:658b85516e544622f6b0a384b48b4076fd43d24dbe0da1f2de683202ae36214e"

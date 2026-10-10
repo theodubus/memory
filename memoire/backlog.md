@@ -5,16 +5,6 @@ Les sujets à traiter. Chacun a un statut (ouvert, en cours, bloqué, fait,
 abandonné) et une origine ; un sujet clos porte la référence de ce qui l'a
 clos, puis s'archive dans le journal (`python3 .socle/socle archive`).
 
-## B-0002 — Jalon 7 : mémoire privée, en dépôt compagnon et chiffrée, et contrôles de fuite
-
-> statut : ouvert · origine : fichier:memoire/archives/cadrage-2026-10-10.md
-
-Déjà en place : les identifiants privés préfixés de `P`, refusés dans tout
-fichier public même sans accès à la zone privée. Restent les deux modes, le
-verrou du dépôt compagnon, la liste de termes refusés, le signal « mémoire
-privée indisponible » éprouvé par l'auto-test, et les arbitrages sur les
-fuites listés par le cadrage.
-
 ## B-0003 — Jalon 8 : initialisation depuis un cadrage, depuis rien ou depuis un dépôt existant
 
 > statut : ouvert · origine : fichier:memoire/archives/cadrage-2026-10-10.md
@@ -103,7 +93,6 @@ dans `controles_memoire.py`, qui vérifie les ancres des liens de la mémoire.
 Deux copies divergeront : n'en garder qu'une, que les deux modules
 appellent.
 
-
 ## B-0018 — Le hook refuse un push vers la branche par défaut d'un dépôt local jetable
 
 > statut : ouvert · origine : J-2026-10-10-W · lu : backlog@85e18aaf
@@ -118,10 +107,13 @@ dire dans sa raison ; à arbitrer, le refus large est le plus sûr.
 
 > statut : ouvert · origine : J-2026-10-10-Y · pour : humain · lu : backlog@8f720178
 
-Le gabarit du workflow de CI gagne une étape qui récupère la mémoire privée
-en mode compagnon ; elle ne tourne qu'avec un verrou, que ce dépôt n'a pas.
-Chaque régénération des instructions de ce dépôt réécrit aussi son workflow,
-qui est protégé, et l'agent doit retirer cette réécriture. À faire par
-Théo : régénérer en mode amont (la commande `install` de `AGENTS.md`, avec
-`--mode amont`), puis approuver le seul fichier `.github/workflows/socle.yml`
-par la commande d'approbation réservée à l'humain, et commiter.
+Les gabarits gagnent deux fichiers protégés que ce dépôt n'a pas encore :
+une étape du workflow de CI qui récupère la mémoire privée en mode
+compagnon (inerte sans verrou), et le hook git `commit-msg`, qui cherche les
+fuites de mémoire privée dans le message de commit (sans effet sans mémoire
+privée). Chaque régénération des instructions de ce dépôt les pose, et
+l'agent doit les retirer de son travail. À faire par Théo : régénérer en
+mode amont, approuver les deux fichiers (`.github/workflows/socle.yml` et
+le hook `commit-msg` de `.socle/git-hooks/`) par la commande d'approbation
+réservée à l'humain, puis commiter ; la procédure exacte est dans la
+conversation du 2026-10-10.

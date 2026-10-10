@@ -99,6 +99,8 @@ def lien(projet: config.Projet, cible: str) -> tuple[str | None, str]:
         if e.niveau > 1:  # une entrée parmi d'autres : son ancre
             m = memoire.TITRE_RE.match(e.texte.splitlines()[0])
             suffixe = "#" + quote(ancre(m["reste"] if m else e.titre), safe="-_")
+    if memoire.est_prive(chemin):
+        return _lien_prive(projet, chemin, suffixe)
     sha = commit_pousse(racine)
     if not sha:
         return None, "rien n'est poussé : pousser d'abord"
@@ -113,6 +115,25 @@ def lien(projet: config.Projet, cible: str) -> tuple[str | None, str]:
         if outils.git(racine, "hash-object", "--", chemin, check=False).strip() != pousse:
             avertissement = f"{chemin} : la version locale n'est pas poussée, le lien montre la version poussée"
     return url, avertissement
+
+
+def _lien_prive(projet: config.Projet, chemin: str, suffixe: str) -> tuple[str | None, str]:
+    """Mode compagnon : le permalien dans le dépôt privé, que l'humain lit sur
+    GitHub. Mode chiffré : aucun, GitHub n'en montre que le chiffré."""
+    from socle import prive
+
+    if prive.mode(projet) != "compagnon":
+        return None, (f"{chemin} est chiffré sur GitHub, où l'humain ne peut pas le lire : le lui donner en entier "
+                      "dans la conversation")
+    depot = prive.depot_compagnon(projet.racine)
+    web = depuis_distant(outils.git(depot, "remote", "get-url", "origin", check=False).strip()) if depot else None
+    sha = commit_pousse(depot) if depot else None
+    if not web or not sha:
+        return None, "dépôt privé non cloné, sans adresse web, ou rien n'y est poussé"
+    interne = chemin[len(prive.DOSSIER) + 1:]
+    if not outils.git(depot, "cat-file", "-t", f"{sha}:{interne}", check=False).strip():
+        return None, f"{chemin} n'est pas dans la version poussée du dépôt privé : y pousser d'abord"
+    return f"{web}/blob/{sha}/{quote(interne)}{suffixe}", ""
 
 
 # --------------------------------------------------------------------------
@@ -200,6 +221,10 @@ def problemes(projet: config.Projet, message: str) -> tuple[list[str], list[str]
         for d in demandes.toutes(racine):
             if d.reponse is not None or d.statut != "en attente" or not d.id:
                 continue
-            if re.search(rf"(?<![\w-]){re.escape(d.id)}(?![\w-])", texte) and not any(d.chemin in u for u in cibles):
+            if memoire.est_prive(d.chemin) and lien(projet, d.chemin)[0] is None:
+                continue  # chiffrée sur GitHub : donnée en entier dans la conversation
+            # Une demande privée se lie dans le dépôt privé, sans `memoire/prive/`.
+            chemin = d.chemin[len(memoire.DOSSIER_PRIVE) + 1:] if memoire.est_prive(d.chemin) else d.chemin
+            if re.search(rf"(?<![\w-]){re.escape(d.id)}(?![\w-])", texte) and not any(chemin in u for u in cibles):
                 sans_lien.append(d.id)
     return morts, sans_lien

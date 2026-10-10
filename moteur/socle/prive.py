@@ -18,6 +18,7 @@ pas en silence.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -27,6 +28,12 @@ from socle.contexte import controle
 DOSSIER = memoire.DOSSIER_PRIVE
 VERROU = f"{config.DOSSIER}/prive.lock"
 MODES = ("compagnon", "chiffre")
+# La liste des termes qui ne doivent jamais paraître en public (D-0007) :
+# l'agent y ajoute librement, seul l'humain en retire.
+TERMES = f"{DOSSIER}/termes.txt"
+ENTETE_TERMES = "# socle: termes privés"
+# La relecture humaine avant publication (D-0006) : au choix de l'humain.
+RELECTURES = ("aucune", "chaque-push", "lots")
 
 
 def mode(projet: config.Projet) -> str | None:
@@ -109,6 +116,137 @@ def recuperer(projet: config.Projet) -> int:
     return 0
 
 
+def lire_prive(projet: config.Projet, rev: str | None, chemin: str) -> str | None:
+    """Le texte en clair d'un fichier privé, tel qu'il était à une révision du
+    dépôt public (`None` : l'arbre de travail). En mode compagnon, la
+    révision publique désigne, par son verrou, un commit du dépôt privé ; en
+    mode chiffré, git applique le filtre de déchiffrement s'il le peut."""
+    import subprocess
+
+    racine = projet.racine
+    m = mode(projet)
+    if rev is None or m not in MODES:
+        return outils.lire_a(racine, None, chemin) if m in MODES else None
+    if m == "compagnon":
+        depot, verrou = depot_compagnon(racine), lire_verrou(racine, rev)
+        if depot is None or not verrou:
+            return None
+        r = subprocess.run(["git", "show", f"{verrou}:{chemin[len(DOSSIER) + 1:]}"], cwd=depot, capture_output=True)
+    else:
+        r = subprocess.run(["git", "cat-file", "--filters", f"{rev}:{chemin}"], cwd=racine, capture_output=True)
+    return r.stdout.decode("utf-8", errors="replace") if r.returncode == 0 else None
+
+
+@dataclass
+class Termes:
+    liste: list[str]
+    disponible: bool
+    texte: str = ""
+
+
+def termes(projet: config.Projet, rev: str | None = None) -> Termes:
+    """La liste des termes privés : un par ligne, `#` pour un commentaire,
+    `re:` devant une expression régulière. Illisible ici (chiffrée, ou le
+    dépôt privé absent), elle est indisponible, jamais vide en silence."""
+    m = mode(projet)
+    if m is None:
+        return Termes([], True)
+    texte = lire_prive(projet, rev, TERMES)
+    if texte is None:
+        dispo = (depot_compagnon(projet.racine) is not None) if m == "compagnon" else (
+            rev is not None or not (projet.racine / TERMES).is_file())
+        return Termes([], dispo)
+    if not texte.lstrip().startswith(ENTETE_TERMES):
+        return Termes([], False)
+    liste = [l.strip() for l in texte.splitlines() if l.strip() and not l.lstrip().startswith("#")]
+    return Termes(liste, True, texte)
+
+
+def ajouter_terme(projet: config.Projet, terme: str) -> bool:
+    """Ajoute un terme à la liste (libre : cela durcit le contrôle). Faux
+    s'il y était déjà."""
+    p = projet.racine / TERMES
+    actuels = termes(projet)
+    if terme.strip() in actuels.liste:
+        return False
+    texte = actuels.texte or f"{ENTETE_TERMES} — un par ligne, `re:` pour une expression régulière.\n"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(texte.rstrip("\n") + "\n" + terme.strip() + "\n", encoding="utf-8")
+    return True
+
+
+def fuites(texte: str, liste: list[str], identifiants: bool = True) -> list[str]:
+    """Ce qu'un texte public laisse fuir du privé. Le terme trouvé n'est
+    jamais réécrit : la réponse ne donne que son rang dans la liste."""
+    res = []
+    if identifiants:
+        vus = []
+        for m in memoire.ID_RE.finditer(texte):
+            if m["prive"] and memoire.id_valide(m["type"], m["num"]) and m.group(0) not in vus:
+                vus.append(m.group(0))
+        res += [f"identifiant privé `{i}`" for i in vus]
+    norme = outils.sans_accents(texte).lower()
+    for i, terme in enumerate(liste, 1):
+        if terme.startswith("re:"):
+            try:
+                trouve = re.search(terme[3:], texte, re.I)
+            except re.error:
+                res.append(f"terme privé n°{i} : expression régulière invalide")
+                continue
+        else:
+            t = outils.sans_accents(terme).lower()
+            trouve = re.search(rf"(?<!\w){re.escape(t)}(?!\w)", norme)
+        if trouve:
+            res.append(f"terme privé n°{i} de la liste")
+    return res
+
+
+def relecture(projet: config.Projet) -> str | None:
+    """Le mode de relecture avant publication choisi par l'humain, ou `None`
+    s'il n'en a pas choisi."""
+    r = projet.pol("private", "review")
+    return str(r) if r else None
+
+
+def fichier_relectures(racine: Path) -> Path:
+    """Les publications relues, dans le répertoire git commun : un état
+    local, comme la trace des hooks."""
+    return config.chemin_trace(racine).parent / "relectures.log"
+
+
+def relue(racine: Path, sha: str) -> bool:
+    p = fichier_relectures(racine)
+    if not p.is_file():
+        return False
+    return any(l.split("\t", 1)[0] == sha for l in p.read_text(encoding="utf-8").splitlines())
+
+
+def noter_relecture(racine: Path, sha: str, par: str, canal: str, citation: str):
+    import json
+    from datetime import datetime
+
+    p = fichier_relectures(racine)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    quand = datetime.now().astimezone().isoformat(timespec="seconds")
+    with p.open("a", encoding="utf-8") as f:
+        f.write(f"{sha}\t{quand}\t{par}\t{canal}\t{json.dumps(citation, ensure_ascii=False)}\n")
+
+
+def publication_refusee(projet: config.Projet, shas: list[str]) -> str | None:
+    """Pourquoi pousser ces commits vers le dépôt public attend une
+    relecture humaine, ou `None`."""
+    r = relecture(projet)
+    if mode(projet) is None or r in (None, "aucune"):
+        return None
+    manquants = [s for s in shas if s and not set(s) <= {"0"} and not relue(projet.racine, s)]
+    if not manquants:
+        return None
+    return (f"relecture avant publication (politique : {r}) : {manquants[0][:10]} n'a pas été relu. Montrer à "
+            "l'humain ce qui part (diff, messages de commit), puis consigner son accord avec son texte exact : "
+            "`socle relu --relayed --by <nom> --quote-file <fichier>`. "
+            + ("Une relecture à chaque push." if r == "chaque-push" else "Une relecture par lot de commits."))
+
+
 @dataclass
 class Acces:
     disponible: bool
@@ -183,6 +321,12 @@ def controle_acces(ctx, r):
     a = acces(ctx.projet, ctx.memoire.illisibles if ctx.tete is None else None)
     if not a.disponible:
         r.indisponible("prive.acces", f"mémoire privée indisponible : {a.raison}")
+    rel = relecture(ctx.projet)
+    if rel is None:
+        r.avertir("prive.acces", "relecture avant publication non choisie (`[private] review` : "
+                  f"{', '.join(RELECTURES)}) : aucune n'est exigée", config.POLITIQUE)
+    elif rel not in RELECTURES:
+        r.erreur("prive.acces", f"relecture « {rel} » inconnue (attendu : {', '.join(RELECTURES)})", config.POLITIQUE)
 
 
 @controle("prive.verrou")
@@ -231,3 +375,54 @@ def controle_chiffre(ctx, r):
         if attribut.strip().endswith(": unspecified") or not attribut.strip():
             r.erreur("prive.chiffre", f"aucun filtre de chiffrement ne couvre `{DOSSIER}/` "
                      f"(`.gitattributes` : `{DOSSIER}/** filter=…`)", ".gitattributes")
+
+
+@controle("prive.fuites")
+def controle_fuites(ctx, r):
+    """Aucun terme de la liste privée dans un fichier public modifié, et ni
+    terme ni identifiant privé dans un message de commit. Le terme trouvé
+    n'est jamais écrit : le journal de la CI est public."""
+    if mode(ctx.projet) is None:
+        return
+    lt = termes(ctx.projet, ctx.tete)
+    if not lt.disponible:
+        r.indisponible("prive.fuites", "liste des termes privés illisible ici : seuls les identifiants privés "
+                       "sont cherchés")
+    moteur = ctx.projet.dossier_moteur.rstrip("/") + "/"
+    presents = set(ctx.fichiers)
+    for c in ctx.changes:
+        if c not in presents or est_prive(c) or c.startswith((moteur, config.ARCHIVES + "/")):
+            continue
+        texte = ctx.lire(c)
+        if texte is None or "\0" in texte[:4096]:
+            continue
+        for f in fuites(texte, lt.liste, identifiants=False):
+            r.erreur("prive.fuites", f"fuite de la mémoire privée : {f}", c)
+    for commit in ctx.commits:
+        for f in fuites(commit["message"], lt.liste):
+            r.erreur("prive.fuites", f"fuite de la mémoire privée dans le message du commit {commit['sha'][:10]} : {f}")
+
+
+@controle("prive.termes", base=True)
+def controle_termes(ctx, r):
+    """Ajouter un terme à la liste privée est libre ; en retirer un exige une
+    demande validée qui cite la liste et son empreinte nouvelle (D-0007)."""
+    if mode(ctx.projet) is None:
+        return
+    avant, apres = termes(ctx.projet, ctx.base), termes(ctx.projet, ctx.tete)
+    if not (avant.disponible and apres.disponible):
+        r.indisponible("prive.termes", "liste des termes privés illisible ici : retraits non vérifiables")
+        return
+    retires = [x for x in avant.liste if x not in apres.liste]
+    if not retires:
+        return
+    from socle.controles_cliquet import _valide_par
+
+    cite = "sha256:" + outils.sha256(apres.texte)[:16]
+    d = _valide_par(ctx, TERMES, cite)
+    if d:
+        r.avertir("prive.termes", f"{len(retires)} terme(s) retiré(s), validé par {d.id}", TERMES)
+    else:
+        r.erreur("prive.termes", f"{len(retires)} terme(s) retiré(s) de la liste privée sans validation humaine : "
+                 f"une demande validée doit citer `{TERMES}` et `{cite}`", TERMES)
+

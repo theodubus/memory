@@ -89,4 +89,5 @@ au jalon 9, sur un agent réel.
 - `valider` — relecture par lots sur une branche non publiée, active par défaut avec une mémoire privée.
 - `chaque-push` — relecture obligatoire avant chaque push vers le dépôt public.
 - `aucune` — pas de relecture obligatoire ; les contrôles automatiques seuls.
+- `au-choix` — les trois options restent possibles ; l'humain choisit la sienne par projet, dans la politique. Ajoutée après coup : c'est la réponse que Théo a donnée, et que la demande ne proposait pas.
 - `contexte-insuffisant` — la demande revient à l'agent, qui la réécrit en une demande qui la remplace.

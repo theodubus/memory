@@ -20,7 +20,7 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 
 | Module | Rôle |
 | --- | --- |
-| `cli.py` | les commandes : `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `prive`, `answer`, `approve`, `install`, `selftest`, `fingerprint`, `mutation-verdict`, `archive`, `checks` |
+| `cli.py` | les commandes : `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `prive`, `relu`, `answer`, `approve`, `install`, `selftest`, `fingerprint`, `mutation-verdict`, `archive`, `checks` |
 | `memoire.py` | lecture des cinq couches : en-têtes, entrées, identifiants, métadonnées, références |
 | `demandes.py` | le contrat des demandes, son lint, les réponses humaines gelées |
 | `contexte.py` | le registre des contrôles, leurs étages, la base de comparaison, le mode adoption |
@@ -58,6 +58,10 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 | Mémoire privée en dépôt compagnon : rien de privé dans le dépôt public, verrou à jour | `prive.verrou`, `socle prive verrouiller`, `socle prive extraire` | agent, git, CI |
 | Mémoire privée chiffrée : rien de commité en clair, filtre en place | `prive.chiffre` | agent, git, CI |
 | Mémoire privée indisponible : signal explicite, jamais en silence | `prive.acces`, état dérivé au démarrage | agent, git, CI |
+| Liste des termes privés : ajout libre, retrait sur validation humaine (D-0007) | `prive.termes`, `socle prive terme` | agent, git, CI |
+| Aucun terme privé ni identifiant privé dans ce qui se publie (D-0008) | `prive.fuites` ; hook `pre-tool-use` (écritures, `git commit`, `gh`, outils `mcp__`) ; hook git `commit-msg` | agent, git, CI |
+| Relecture humaine avant publication, au choix de l'humain : aucune, à chaque push, par lots (D-0006) | hook `pre-tool-use` sur `git push`, hook git `pre-push`, `socle relu` | agent, git |
+| Demandes et réponses privées, sur décision de l'humain (`[private] requests`) | `socle new`, réponses privées protégées comme les publiques | agent, git, CI |
 | Journaux de CI sans contenu privé | masquage des constats de la zone privée à l'étage CI ; `socle prive recuperer` n'écrit ni l'adresse ni la sortie de git | CI |
 | Contrat des demandes : huit champs (les sept du cadrage et « Où regarder », avec un lien vers chaque document à lire), contexte d'au moins soixante mots, aucun identifiant nu | `demandes.contrat`, hook `pre-tool-use` | agent, git, CI |
 | Décision archivée avec le texte exact | `demandes.reponses` (empreinte de la demande) | agent, git, CI |
@@ -120,8 +124,7 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 
 ## Ce qui n'est pas fait
 
-Le backlog le tient : jalons 8 et 9, les pièces du jalon 7 qui attendent un
-arbitrage humain (D-0006, D-0007, D-0008), empreinte comparée à la
+Le backlog le tient : jalons 8 et 9, empreinte comparée à la
 version publiée, workflow de mutation générique. Les limites connues des contrôles y sont aussi :
 chemins qui n'existent que dans une rustine, copie non marquée d'une valeur
 qui n'est qu'un avertissement.

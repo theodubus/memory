@@ -185,12 +185,14 @@ class Atelier:
             return o
         self.git(self.dossier, "clone", "-q", *(x for cle in self.filtre() for x in ("-c", cle)), str(self.origine), str(o))
         pol = o / ".socle/politique.toml"
-        pol.write_text(pol.read_text() + f'\n[private]\nmode = "{mode}"\n')
+        relecture = 'review = "lots"\n' if mode == "compagnon" else ""
+        pol.write_text(pol.read_text() + f'\n[private]\nmode = "{mode}"\n' + relecture)
         if mode == "compagnon":
             depot = self.dossier / "prive-origine"
             if not depot.is_dir():
                 (depot / "journal").mkdir(parents=True)
                 (depot / "canonique.md").write_text(CANONIQUE_PRIVEE)
+                (depot / "termes.txt").write_text("# socle: termes privés\nMistral\n")
                 self.git(depot, "init", "-q", "-b", "main")
                 self.git(depot, "add", "-A")
                 self.git(depot, "commit", "-q", "-m", "mémoire privée d'essai")
@@ -540,6 +542,45 @@ def _cas() -> list[Cas]:
         maj_memoire(c)
         return etage_git(a, c)
 
+    @defaut("fuite-terme", "terme de la liste privée écrit dans un fichier public", "git", "prive.fuites")
+    def _(a, c):
+        c = a.clone_prive("compagnon")
+        ajouter(c, "docs/calc.md", "Le module servira au projet Mistral.\n")
+        return etage_git(a, c)
+
+    @defaut("fuite-message", "identifiant privé dans un message de commit", "git", "fuite")
+    def _(a, c):
+        c = a.clone_prive("compagnon")
+        maj_memoire(c, "Travail du tour.")
+        a.git(c, "add", "-A")
+        r = a.run(c, "git", "commit", "-q", "-m", "Avancer vers " + "P" + "F-0001")
+        return "" if r.returncode == 0 else r.stdout + r.stderr
+
+    @defaut("fuite-ecriture-agent", "l'agent écrit un terme privé dans un fichier public", "agent", "fuite")
+    def _(a, c):
+        c = a.clone_prive("compagnon")
+        return etage_outil(a, c, "Write", {"file_path": str(c / "docs/notes.md"), "content": "Projet Mistral.\n"})
+
+    @defaut("fuite-pull-request", "description de pull request qui cite un identifiant privé", "agent", "fuite")
+    def _(a, c):
+        c = a.clone_prive("compagnon")
+        return etage_outil(a, c, "mcp__github__create_pull_request",
+                           {"title": "Essai", "body": "Voir " + "P" + "F-0001 pour le contexte."})
+
+    @defaut("terme-retire", "terme retiré de la liste privée sans validation humaine", "git", "prive.termes")
+    def _(a, c):
+        c = a.clone_prive("compagnon")
+        (c / "memoire/prive/termes.txt").write_text("# socle: termes privés\n")
+        a.git(c / "memoire/prive", "commit", "-q", "-am", "retrait")
+        a.socle(c, "prive", "verrouiller")
+        maj_memoire(c, "Liste privée raccourcie.")
+        return etage_git(a, c)
+
+    @defaut("publication-sans-relecture", "push vers le dépôt public sans relecture humaine", "agent", "relecture")
+    def _(a, c):
+        c = a.clone_prive("compagnon")
+        return etage_outil(a, c, "Bash", {"command": "git push origin travail"})
+
     @defaut("prive-en-clair", "fichier privé commité en clair, sans filtre de chiffrement", "git", "prive.chiffre")
     def _(a, c):
         c = a.clone_prive("chiffre", cle=False)
@@ -818,6 +859,28 @@ def _temoins() -> list[tuple[str, Callable]]:
             sortie = "le fichier privé est commité en clair"
         return sortie
 
+    @temoin("ajouter un terme à la liste privée est libre : le commit et la CI passent")
+    def _(a, c):
+        c = a.clone_prive("compagnon")
+        r = a.socle(c, "prive", "terme", "Zephyr")
+        a.git(c / "memoire/prive", "commit", "-q", "-am", "un terme de plus")
+        a.socle(c, "prive", "verrouiller")
+        maj_memoire(c, "Un terme privé de plus.")
+        return (r.stderr if r.returncode else "") or etage_git(a, c) or etage_ci(a, c)
+
+    @temoin("un push relu par l'humain, son accord relayé avec son texte exact, passe le hook de l'agent")
+    def _(a, c):
+        c = a.clone_prive("compagnon")
+        (c / "accord.txt").write_text("ok, tu peux publier")
+        commande = "python3 .socle/" + "socle relu --relayed --by Théo --quote-file accord.txt"
+        refus = etage_outil(a, c, "Bash", {"command": commande})
+        if refus:
+            return refus
+        r = a.socle(c, "relu", "--relayed", "--by", "Théo", "--quote-file", "accord.txt")
+        if r.returncode:
+            return r.stdout + r.stderr
+        return etage_outil(a, c, "Bash", {"command": "git push origin travail"})
+
     @temoin("sans la clé (une CI de fork), la mémoire privée est indisponible et rien n'échoue")
     def _(a, c):
         c = a.clone_prive("chiffre", cle=False)
@@ -963,6 +1026,8 @@ RAISONS_AGENT = {
     "liens": "liens que l'humain ne pourra pas suivre",
     "lien de demande": "sans son lien",
     "signal indisponible": "mémoire privée : INDISPONIBLE",
+    "fuite": "fuite de la mémoire privée",
+    "relecture": "relecture avant publication",
 }
 
 

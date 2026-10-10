@@ -81,5 +81,10 @@ allowed = []
 # - "chiffre" : les fichiers privés commités chiffrés par un filtre git
 #   (git-crypt ou équivalent) ; `.gitattributes` : `memoire/prive/** filter=…`.
 # Sans accès, la mémoire privée est signalée indisponible, jamais sautée.
+# Relecture humaine avant chaque publication vers le dépôt public :
+# "aucune", "chaque-push" ou "lots" (D-0006 du socle : au choix de l'humain).
+# Demandes et réponses privées : `requests = true` (publiques par défaut).
 # [private]
 # mode = "compagnon"
+# review = "lots"
+# requests = false
