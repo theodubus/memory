@@ -141,6 +141,23 @@ def fichiers_changes(racine: Path, base: str | None, tete: str | None = None) ->
     return sorted(n for n in sortie.split("\0") if n)
 
 
+HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", re.M)
+
+
+def lignes_changees(racine: Path, base: str | None, tete: str | None, chemin: str) -> set[int] | None:
+    """Les lignes de `chemin`, dans la tête, ajoutées ou modifiées depuis
+    `base` ; une suppression marque la ligne qui la suit. `None` : le fichier
+    n'existait pas dans la base, tout y est nouveau."""
+    if not base or lire_a(racine, base, chemin) is None:
+        return None
+    args = ["diff", "-U0", "--no-color", "--no-ext-diff", base] + ([tete] if tete else []) + ["--", chemin]
+    res = set()
+    for m in HUNK.finditer(git(racine, *args, check=False)):
+        debut, n = int(m.group(1)), int(m.group(2) or 1)
+        res |= set(range(debut, debut + n)) if n else {debut + 1}
+    return res
+
+
 def branche_par_defaut(racine: Path) -> str | None:
     """`origin/main`, `origin/master`, ou ce que pointe `origin/HEAD`."""
     r = subprocess.run(

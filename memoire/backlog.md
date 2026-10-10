@@ -93,15 +93,12 @@ demande. Fréquence à décider (question ouverte du cadrage).
 une copie non marquée de la valeur courante : elle pourrait être une
 coïncidence. Mesurer les faux positifs avant de durcir.
 
-## B-0014 — Exiger un test pour du code nouveau, et pour du code existant qu'on découvre non testé
+## B-0016 — La docstring de memoire.py renvoie à un document de format qui n'existe pas
 
-> statut : ouvert · origine : J-2026-10-10-J
+> statut : ouvert · origine : fichier:moteur/socle/memoire.py · lu : backlog@ad031cf1
 
-Demandé par Théo. Le cadrage ne l'impose pas : il exige un test de
-régression pour un correctif, et compte sur la mutation pour voir le code
-qu'aucun test ne vérifie — or la mutation est hebdomadaire et absente pour
-Python. À concevoir : un contrôle sur le diff, par exemple « une fonction
-publique ajoutée ou modifiée est nommée par au moins un test », avec une
-dispense motivée comme pour la doc ; et, quand l'agent découvre en route du
-code existant sans test, la règle de l'écrire tout de suite s'il est dans le
-périmètre, sinon de l'inscrire au backlog.
+Vu en écrivant le module des liens : la docstring du lecteur de la mémoire
+dit que le format est décrit dans un document de `docs/` qui n'existe pas ;
+c'est `moteur/socle/FORMAT.md` qui fait foi. Aucun contrôle ne lit les
+chemins cités dans les docstrings du code.
+

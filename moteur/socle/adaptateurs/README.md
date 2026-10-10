@@ -47,10 +47,15 @@ fichiers [rust.toml](rust.toml) et [python.toml](python.toml) font foi.
 | Reconnaître un test désactivé | `#[ignore]` | `@unittest.skip` | `tests.creux` : désactivé sans raison écrite, refusé |
 | Rejouer un test sur le commit d'avant | `cargo test` d'un fichier de `tests/` | `unittest` d'un module | `tests.regression` |
 | Mesurer la mutation | `cargo-mutants` | absente pour l'instant | `mutation.couverture`, `socle mutation-verdict` |
+| Dire quel code doit être testé, et quelles fonctions sont privées | `src/`, `fn` sans `pub` | hors `tests/`, `def _…` | `tests.code-teste` : une fonction publique ajoutée ou modifiée est nommée par un test |
 
 La mutation consiste à modifier le code exprès (changer un `+` en `-`, un
 `<` en `<=`) et à vérifier qu'un test au moins échoue. Un « mutant » qui
 survit montre du code qu'aucun test ne vérifie vraiment.
+
+Un projet installé avant qu'une section existe hérite de celle de
+l'adaptateur maintenu du même langage, venue avec le moteur : c'est le cas de
+la section `[code]`.
 
 ## Une capacité absente se déclare
 

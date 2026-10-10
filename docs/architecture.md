@@ -26,7 +26,7 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 | `contexte.py` | le registre des contrôles, leurs étages, la base de comparaison, le mode adoption |
 | `controles_memoire.py` | format, références, fuite d'identifiants privés, preuves, backlog, budgets, péremption, retard, ajout seul, demandes, source unique des instructions |
 | `controles_docs.py` | outillage documenté, valeurs liées, correspondance code ↔ doc, refus des copies |
-| `controles_tests.py` | capacités de l'adaptateur, tests creux, valeurs attendues, régression rejouée sur le parent, couverture de mutation |
+| `controles_tests.py` | capacités de l'adaptateur, tests creux, valeurs attendues, régression rejouée sur le parent, couverture de mutation, code nouveau nommé par un test |
 | `controles_cliquet.py` | cliquet des garde-fous, fichiers protégés, empreinte du moteur, configuration et trace des hooks |
 | `tests_lecture.py` | extraction des fonctions de test selon l'adaptateur ; transitivité des assertions |
 | `hooks.py` | les points d'entrée des hooks de l'agent et de git, la trace |
@@ -65,6 +65,7 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 | Tests creux | `tests.creux` (sur le diff aux étages agent et git) | agent, git, CI |
 | Test supprimé, valeur attendue changée | `tests.attendus` | agent, git, CI |
 | Correctif avec test de régression rejoué sur le parent | `tests.regression` | CI |
+| Code nouveau ou modifié testé : une fonction publique est nommée par un test, ou dispensée nommément avec sa raison (`Dispense-test:`) | `tests.code-teste` (pas au commit : le hook ne voit pas la dispense) | agent, CI |
 | Mutation : plafond par module, cliquet | `mutation.couverture`, `socle mutation-verdict` | agent, git, CI ; verdict hebdomadaire |
 | Rien ne s'affaiblit en silence | `cliquet.garde-fous`, `protege.fichiers` | agent, git, CI |
 | Moteur et politique non altérés | `moteur.empreinte`, `protege.fichiers` | agent, git, CI |
@@ -101,6 +102,10 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 - **Les liens donnés à l'humain sont des permaliens** (`ADR-0010`) : au
   commit poussé, pas à la branche, qui disparaît à la fusion ; vérifiés par
   le hook de fin de tour, que l'agent ait agi ou non.
+- **Une fonction publique ajoutée ou modifiée est nommée par un test**
+  (`ADR-0011`), au sens littéral : son nom figure dans un test. Une fonction
+  privée en est exemptée, une dispense la nomme avec sa raison ; la qualité
+  des assertions reste l'affaire de la mutation.
 - **Mode adoption** : à l'installation sur un projet existant, les budgets
   sont fixés au niveau actuel et les contrôles en échec passent en
   avertissement (`[adoption] warn_only`), liste dont on ne retire que pour
@@ -111,7 +116,6 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 ## Ce qui n'est pas fait
 
 Le backlog le tient : jalons 6 à 9, mémoire privée, empreinte comparée à la
-version publiée, workflow de mutation générique, test exigé pour du code
-nouveau. Les limites connues des contrôles y sont aussi :
+version publiée, workflow de mutation générique. Les limites connues des contrôles y sont aussi :
 chemins qui n'existent que dans une rustine, copie non marquée d'une valeur
 qui n'est qu'un avertissement.

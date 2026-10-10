@@ -56,6 +56,14 @@ replacement = "capacité `mutation`"
 command = "cargo test {test_args}"
 test_paths = ["tests/*.rs", "*/tests/*.rs"]
 
+[code]
+# Le code dont une fonction publique, ajoutée ou modifiée, doit être nommée
+# par un test (`tests.code-teste`) : une fonction sans `pub` est privée, elle
+# se teste par les fonctions publiques qui l'appellent ; les aides d'un
+# module `tests` le sont donc aussi.
+paths = ["**/src/**/*.rs", "src/**/*.rs"]
+private = '^\s*(?:async\s+)?(?:unsafe\s+)?fn\s'
+
 [tests]
 paths = ["**/tests/**/*.rs", "tests/**/*.rs", "**/src/**/*.rs", "src/**/*.rs"]
 function = '^\s*(?:pub(?:\([^)]*\))?\s+)?(?:async\s+)?(?:unsafe\s+)?fn\s+(\w+)'

@@ -568,6 +568,13 @@ def _cas() -> list[Cas]:
         pousser(a, c)
         return etage_stop(a, c, "J'ai posé la demande D-0001.\n\nPour toi : répondre à D-0001.\nEnsuite : rien.")
 
+    @defaut("fonction-sans-test", "fonction publique ajoutée sans test qui la nomme", "ci", "tests.code-teste")
+    def _(a, c):
+        ajouter(c, "calc.py", "\n\ndef triple(x):\n    return 3 * x\n")
+        ajouter(c, "docs/calc.md", "`triple` multiplie par trois.\n")
+        maj_memoire(c, "Ajout de triple.")
+        return etage_ci(a, c)
+
     @defaut("decision-sans-lecture", "décision ajoutée sans avoir consulté l'index des décisions", "git", "memoire.lectures")
     def _(a, c):
         f1 = f"F-0001@{empreinte(a, c, 'F-0001')}"
@@ -691,6 +698,22 @@ def _temoins() -> list[tuple[str, Callable]]:
             return r.stdout + r.stderr
         return etage_stop(a, c, "J'ai posé la demande D-0001, sur le module `calc.py` et sa doc `docs/calc.md`.\n\n"
                           + r.stdout + "\nPour toi : répondre à D-0001.\nEnsuite : rien.")
+
+    @temoin("une fonction ajoutée avec le test qui la nomme passe la CI")
+    def _(a, c):
+        ajouter(c, "calc.py", "\n\ndef triple(x):\n    return 3 * x\n")
+        ajouter(c, "docs/calc.md", "`triple` multiplie par trois.\n")
+        ajouter(c, "tests/test_calc.py", "    def test_triple(self):\n        from calc import triple\n"
+                "        self.assertEqual(triple(2), 6)\n")
+        maj_memoire(c, "Ajout de triple, avec son test.")
+        return etage_ci(a, c)
+
+    @temoin("une fonction privée, ou publique et dispensée avec sa raison, passe la CI")
+    def _(a, c):
+        ajouter(c, "calc.py", "\n\ndef _aide(x):\n    return x\n\n\ndef triple(x):\n    return 3 * _aide(x)\n")
+        ajouter(c, "docs/calc.md", "`triple` multiplie par trois.\n")
+        maj_memoire(c, "Ajout de triple, dispensée.")
+        return etage_ci(a, c, "Ajout de triple\n\nDispense-test: triple — appelée par l'interface, testée de bout en bout")
 
     @temoin("une fin de tour sans travail n'exige pas de récap")
     def _(a, c):
