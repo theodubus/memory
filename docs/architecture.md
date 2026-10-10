@@ -20,7 +20,7 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 
 | Module | Rôle |
 | --- | --- |
-| `cli.py` | les commandes : `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `prive`, `relu`, `answer`, `approve`, `install`, `selftest`, `fingerprint`, `mutation-verdict`, `archive`, `checks` |
+| `cli.py` | les commandes : `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `prive`, `relu`, `answer`, `approve`, `install`, `init`, `selftest`, `fingerprint`, `mutation-verdict`, `archive`, `checks` |
 | `memoire.py` | lecture des cinq couches : en-têtes, entrées, identifiants, métadonnées, références |
 | `demandes.py` | le contrat des demandes, son lint, les réponses humaines gelées |
 | `contexte.py` | le registre des contrôles, leurs étages, la base de comparaison, le mode adoption |
@@ -37,7 +37,9 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 | `verification.py` | le contrat `verify` : les capacités de l'adaptateur |
 | `mutation.py` | le verdict de mutation contre les plafonds |
 | `empreinte.py` | l'empreinte du moteur |
-| `installeur.py` | installation, mise à jour, adoption |
+| `installeur.py` | installation, mise à jour, adoption ; adaptateur déduit du dépôt ; mémoire privée posée à l'installation ; diff de politique à la mise à jour |
+| `migrations.py` | les migrations de format, appliquées dans l'ordre à la mise à jour |
+| `initialisation.py` | les trois entrées d'initialisation : document archivé tel quel, audit du dépôt en lecture seule, questions de départ |
 | `autotest.py` | l'injection de défauts dans un projet jetable |
 | `adaptateurs/` | Rust (extrait de chess), Python sous `unittest`, Python sous `pytest` avec `mutmut` (jalon 6), maintenus ; ce qu'est un adaptateur : `moteur/socle/adaptateurs/README.md` |
 | `modeles/` | les gabarits posés par l'installeur |
@@ -86,6 +88,9 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 | Ce qui revient à l'humain et la suite, dits à chaque fin d'intervention qui a agi (lignes « Pour toi : » et « Ensuite : ») | `humain.py` (demandes en attente, backlog `pour : humain`, branches distantes supprimables, prochaines étapes du chantier actif), hook `stop` | agent |
 | Des liens que l'humain peut suivre : permaliens au commit poussé, aucun lien relatif ni chemin inexistant, chaque demande en attente avec son lien | `liens.py`, `socle url`, hook `stop` | agent |
 | Lire avant de décider, prouvé par l'empreinte de la version lue | `memoire.lectures` ; hook `pre-tool-use` (empreinte périmée ou inventée) ; `socle show`, `socle new` | agent, git, CI |
+| Installation en une commande, adaptateur déduit du dépôt, mémoire privée choisie à l'installation | `socle install --adapter auto [--private …]` | — |
+| Mise à jour : moteur remplacé, formats migrés, diff de politique montré pour validation humaine | `socle install` relancé, `migrations.py` | — |
+| Initialisation depuis un cadrage, rien, un dépôt existant, ou les deux : rien d'inventé, questions plafonnées avec leurs défauts | `socle init`, demande de départ au contrat, `memoire.preuves` | agent, git, CI |
 | Auto-tests par injection de défauts | `socle selftest`, dans `socle ci` | CI |
 
 ## Les choix qui ne sont pas dans le cadrage
@@ -124,7 +129,7 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 
 ## Ce qui n'est pas fait
 
-Le backlog le tient : jalons 8 et 9, empreinte comparée à la
+Le backlog le tient : jalon 9, empreinte comparée à la
 version publiée, workflow de mutation générique. Les limites connues des contrôles y sont aussi :
 chemins qui n'existent que dans une rustine, copie non marquée d'une valeur
 qui n'est qu'un avertissement.

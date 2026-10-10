@@ -33,7 +33,8 @@ comme dans n'importe quel projet.
 python3 .socle/socle verify --rapide     # compilation, tests, contrôles
 python3 .socle/socle ci                  # tout, dont l'auto-test
 python3 .socle/socle selftest --verbose  # les défauts injectés, un par un
-python3 .socle/socle install --target ../projet --adapter rust --owner @moi
+python3 .socle/socle install --target ../projet --adapter auto --owner @moi
+python3 .socle/socle init --cadrage cadrage.md --depot   # dans le projet installé
 ```
 
 ## Règles propres à ce dépôt

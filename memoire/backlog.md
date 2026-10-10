@@ -5,15 +5,6 @@ Les sujets à traiter. Chacun a un statut (ouvert, en cours, bloqué, fait,
 abandonné) et une origine ; un sujet clos porte la référence de ce qui l'a
 clos, puis s'archive dans le journal (`python3 .socle/socle archive`).
 
-## B-0003 — Jalon 8 : initialisation depuis un cadrage, depuis rien ou depuis un dépôt existant
-
-> statut : ouvert · origine : fichier:memoire/archives/cadrage-2026-10-10.md
-
-L'installeur pose déjà le dispositif, gère l'adoption et se relance. Restent
-les trois entrées d'initialisation et leur confrontation, les questions
-plafonnées, les migrations de format scriptées, l'affichage du diff de
-politique à la mise à jour. Attend D-0002.
-
 ## B-0004 — Jalon 9 : banc d'évaluation sur un agent réel
 
 > statut : ouvert · origine : fichier:memoire/archives/cadrage-2026-10-10.md

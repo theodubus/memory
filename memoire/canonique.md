@@ -90,3 +90,11 @@ test sans assertion, un test supprimé, une fonction publique sans test, un
 correctif sans test et des tests affaiblis sont refusés chacun par le
 contrôle prévu. Porte du jalon 6, au prix de deux corrections du moteur que
 le journal détaille.
+
+## F-0011 — Sur des copies locales, l'initialisation réussit depuis chacune des entrées, et l'installation sur chess se fait sans merge
+
+> statut : mesuré · preuve : J-2026-10-10-AC, fichier:tests/test_initialisation.py · date : 2026-10-10
+
+Rien, un cadrage seul, chess seul, chess avec un cadrage : `check --stage ci`
+passe après `socle init`. L'installation sur une copie de chess, adaptateur
+détecté et mode adoption, prend trois secondes. Porte du jalon 8.

@@ -388,7 +388,20 @@ def cmd_install(args) -> int:
         adoption=args.adoption,
         mode=args.mode,
         source=Path(__file__).resolve().parent.parent,
+        prive=args.private,
+        relecture=args.review,
+        demandes_privees=args.private_requests,
+        filtre=args.filter,
     )
+
+
+def cmd_init(args) -> int:
+    """L'initialisation : un document de cadrage, rien, un dépôt existant, ou
+    le document et le dépôt ensemble."""
+    from socle import initialisation
+
+    projet = _projet(args)
+    return initialisation.initialiser(projet, Path(args.cadrage).resolve() if args.cadrage else None, args.depot)
 
 
 def cmd_selftest(args) -> int:
@@ -520,11 +533,21 @@ def main(argv=None) -> int:
 
     s = sp.add_parser("install", help="installer ou mettre à jour le socle dans un projet")
     s.add_argument("--target", default=".")
-    s.add_argument("--adapter", required=True, help="nom d'un adaptateur maintenu (rust, python) ou chemin d'un .toml")
+    s.add_argument("--adapter", required=True,
+                   help="`auto` (déduit du dépôt), un adaptateur maintenu (rust, python, python-pytest) ou le chemin d'un .toml")
     s.add_argument("--owner", default="", help="propriétaire pour CODEOWNERS, ex. @theodubus")
     s.add_argument("--adoption", action="store_true", help="projet existant : plafonds au niveau actuel")
     s.add_argument("--mode", choices=(config.MODE_PROJET, config.MODE_AMONT), default=config.MODE_PROJET)
+    s.add_argument("--private", choices=("compagnon", "chiffre"), help="mémoire privée, et son mode")
+    s.add_argument("--review", choices=("aucune", "chaque-push", "lots"), help="relecture humaine avant publication")
+    s.add_argument("--private-requests", action="store_true", help="demandes et réponses dans la mémoire privée")
+    s.add_argument("--filter", default="git-crypt", help="mode chiffré : le nom du filtre git de l'outil")
     s.set_defaults(f=cmd_install)
+
+    s = sp.add_parser("init", help="initialiser la mémoire depuis un cadrage, rien, ou le dépôt existant")
+    s.add_argument("--cadrage", help="le document de cadrage, archivé tel quel")
+    s.add_argument("--depot", action="store_true", help="auditer le dépôt existant, en lecture seule")
+    s.set_defaults(f=cmd_init)
 
     s = sp.add_parser("selftest", help="injecte des défauts connus et vérifie qu'ils sont attrapés")
     s.add_argument("--verbose", action="store_true")
