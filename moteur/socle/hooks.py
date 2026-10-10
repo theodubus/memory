@@ -274,9 +274,13 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
             if re.search(m, cmd):
                 return _refus(f"commande irréversible ou externe : « {cmd.strip()[:200]} » — validation humaine "
                               "requise (politique, point 4). Émettre une demande `D-NNNN` et continuer sur autre chose.")
-        if COMMANDES_HUMAINES.search(cmd):
-            return _refus("`socle answer` et `socle approve` sont réservés à l'humain : une réponse écrite "
-                          "par l'agent ne validerait rien (politique, points 5 et 8).")
+        m = COMMANDES_HUMAINES.search(cmd)
+        if m and (m.group(1) or m.group(2)) != "answer":
+            return _refus("`socle approve` est réservé à l'humain : il valide ses propres changements protégés.")
+        if m and not (re.search(r"--relayed\b", cmd) and re.search(r"--quote(-file)?\b", cmd)):
+            return _refus("l'agent ne répond jamais à la place de l'humain. Il ne peut que relayer une réponse "
+                          "donnée dans la conversation : `socle answer D-NNNN <réponse> --relayed --by <nom> "
+                          "--quote-file <texte exact>` (ADR-0006).")
         cible = ecriture_protegee(projet, cmd)
         if cible:
             return _refus(f"écriture d'un fichier protégé ({cible}) par le shell : seul l'humain modifie "

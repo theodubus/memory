@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0002-valider-le-format-et-l-arborescence.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-10-10"
+canal = "conversation"
+citation = "D0002 ok je valide l'arborescence ainsi que le 1 fichier par demande"
+empreinte = "sha256:45e68b70e41c183cb62c300326b790b8d2bbb1231961a36c1729207708e762e8"

@@ -245,6 +245,8 @@ def verifier_reponse(d: Demande) -> list[str]:
         fautes.append("réponse sans champ `reponse`")
     elif r not in d.reponses_possibles():
         fautes.append(f"réponse `{r}` absente des réponses possibles de la demande")
+    if d.reponse.get("canal") == "conversation" and len(str(d.reponse.get("citation", "")).strip()) < 2:
+        fautes.append("réponse relayée depuis la conversation sans la citation exacte de l'humain")
     attendue = d.reponse.get("empreinte", "")
     if attendue != "sha256:" + outils.sha256(d.texte):
         fautes.append(
@@ -254,23 +256,44 @@ def verifier_reponse(d: Demande) -> list[str]:
     return fautes
 
 
-def ecrire_reponse(racine: Path, d: Demande, reponse: str, texte: str, par: str, date: str) -> str:
-    """Écrit la réponse humaine. Refuse une réponse hors des réponses possibles."""
+CANAUX = ("terminal", "conversation")
+
+
+def ecrire_reponse(racine: Path, d: Demande, reponse: str, texte: str, par: str, date: str,
+                   canal: str = "terminal", citation: str = "") -> str:
+    """Écrit la réponse humaine. Refuse une réponse hors des réponses possibles.
+
+    Deux canaux (ADR-0006). `terminal` : l'humain lance lui-même
+    `socle answer`. `conversation` : l'humain a répondu dans le chat, et
+    l'agent consigne sa réponse ; il doit alors en citer le texte exact, qui
+    reste dans le fichier, visible à la relecture du diff."""
     if reponse not in d.reponses_possibles():
         raise ValueError(
             f"`{reponse}` n'est pas une réponse possible : {', '.join(d.reponses_possibles())}"
         )
     if d.reponse is not None:
         raise ValueError(f"{d.id} a déjà une réponse ({d.chemin_reponse})")
+    if canal not in CANAUX:
+        raise ValueError(f"canal inconnu : {canal}")
+    if canal == "conversation" and len(citation.strip()) < 2:
+        raise ValueError("une réponse relayée cite le texte exact de l'humain (--quote ou --quote-file)")
     cr = chemin_reponse(d.chemin)
+    entete = (
+        "# Réponse humaine donnée dans la conversation, consignée par l'agent avec\n"
+        "# le texte exact de l'humain (`citation`). Relue avec le diff.\n"
+        if canal == "conversation" else
+        "# Réponse humaine, écrite par l'humain lui-même (`socle answer`).\n"
+    )
     contenu = (
-        "# Réponse humaine — écrite par `socle repondre`, jamais par l'agent.\n"
-        f"# Elle porte sur le texte exact de {Path(d.chemin).name}, dont l'empreinte suit.\n"
+        entete
+        + f"# Elle porte sur le texte exact de {Path(d.chemin).name}, dont l'empreinte suit.\n"
         f"reponse = {_toml_str(reponse)}\n"
         f"texte = {_toml_str(texte)}\n"
         f"par = {_toml_str(par)}\n"
         f"date = {_toml_str(date)}\n"
-        f"empreinte = {_toml_str('sha256:' + outils.sha256(d.texte))}\n"
+        f"canal = {_toml_str(canal)}\n"
+        + (f"citation = {_toml_str(citation.strip())}\n" if canal == "conversation" else "")
+        + f"empreinte = {_toml_str('sha256:' + outils.sha256(d.texte))}\n"
     )
     (racine / cr).write_text(contenu, encoding="utf-8")
     return cr

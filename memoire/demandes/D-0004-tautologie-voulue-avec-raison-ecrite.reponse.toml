@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0004-tautologie-voulue-avec-raison-ecrite.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-10-10"
+canal = "conversation"
+citation = "D004 je valide l'exception"
+empreinte = "sha256:ca17efd2145ae6e295396996ff4d39b2cc3034af3135d078a4c89aae251c4bd6"

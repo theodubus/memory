@@ -103,8 +103,10 @@ seul), où regarder (un lien vers chaque document à lire, et quoi y vérifier),
 options (effort, risque, réversibilité),
 conséquences (si l'humain valide, refuse, ne répond pas), recommandation
 (vérifié séparé du supposé), réponses possibles dont `contexte-insuffisant`.
-Le lint refuse une demande incomplète. L'humain répond par
-`python3 .socle/socle answer D-NNNN <réponse>` ; une demande répondue est gelée.
+Le lint refuse une demande incomplète. L'humain répond dans la conversation ;
+l'agent consigne sa réponse, sans jamais la choisir, avec le texte exact :
+`python3 .socle/socle answer D-NNNN <réponse> --relayed --by <nom> --quote-file <fichier>`,
+et la recopie au journal. Une demande répondue est gelée.
 
 ### Avant de conclure
 
@@ -117,7 +119,7 @@ Le lint refuse une demande incomplète. L'humain répond par
 
 - compléter un SHA de tête, inventer un identifiant ou une référence : le hook les refuse ;
 - écrire dans un fichier protégé (politique, adaptateur, verrou du moteur, hooks, CI, réponses humaines) ;
-- lancer `socle answer` ou `socle approve`, réservés à l'humain ;
+- répondre à la place de l'humain (`socle answer` sans `--relayed` ni citation), ou lancer `socle approve`, réservé à l'humain ;
 - contourner un hook (`--no-verify`) : la CI exécute tout, et rien ne la contourne.
 
 ### Ce qui tourne tout seul

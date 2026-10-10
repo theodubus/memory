@@ -28,6 +28,11 @@ class TestCommandesHumaines(unittest.TestCase):
         self.assertTrue(hooks.COMMANDES_HUMAINES.search(f"python3 {LANCEUR} answer D-0001 valider"))
         self.assertTrue(hooks.COMMANDES_HUMAINES.search("PYTHONPATH=moteur python3 -m socle approve --text x"))
 
+    def test_relais_avec_citation_permis(self):
+        cmd = f"python3 {LANCEUR} answer D-0001 valider --relayed --by Théo --quote-file /tmp/c.txt"
+        m = hooks.COMMANDES_HUMAINES.search(cmd)
+        self.assertEqual(m.group(1), "answer")  # reconnu ; le hook le laisse passer grâce à --relayed et --quote
+
     def test_citation_acceptee(self):
         self.assertIsNone(hooks.COMMANDES_HUMAINES.search("grep -n 'socle answer' AGENTS.md"))
 

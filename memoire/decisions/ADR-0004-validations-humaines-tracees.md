@@ -1,7 +1,7 @@
 <!-- socle: couche=decisions zone=publique -->
 # ADR-0004 — Une validation humaine est une réponse ajoutée qui cite ce qu'elle valide
 
-> statut : acceptée · date : 2026-10-10 · source : J-2026-10-10-B
+> statut : remplacée · date : 2026-10-10 · source : J-2026-10-10-B · remplacée-par : ADR-0006
 
 ## Contexte
 

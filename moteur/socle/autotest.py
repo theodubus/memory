@@ -453,10 +453,15 @@ def _cas() -> list[Cas]:
     def _(a, c):
         return etage_outil(a, c, "Write", {"file_path": str(c / "memoire/demandes/D-0001-x.reponse.toml"), "content": 'reponse = "valider"\n'})
 
-    @defaut("agent-repond", "l'agent lance `socle answer`", "agent", "commande humaine")
+    @defaut("agent-repond", "l'agent répond à la place de l'humain", "agent", "commande humaine")
     def _(a, c):
         lanceur = ".socle/" + "socle"  # en deux morceaux : ce fichier n'est pas une invocation
         return etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} answer D-0001 valider"})
+
+    @defaut("relais-sans-citation", "réponse relayée sans le texte exact de l'humain", "agent", "commande humaine")
+    def _(a, c):
+        lanceur = ".socle/" + "socle"
+        return etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} answer D-0001 valider --relayed --by Théo"})
 
     @defaut("copie", "paragraphe copié dans deux fichiers", "git", "docs.copie")
     def _(a, c):
@@ -534,6 +539,22 @@ def _temoins() -> list[tuple[str, Callable]]:
     @temoin("une demande complète passe le hook de l'agent")
     def _(a, c):
         return etage_outil(a, c, "Write", {"file_path": str(c / "memoire/demandes/D-0001-refactor.md"), "content": DEMANDE_BONNE})
+
+    @temoin("une réponse donnée dans la conversation, relayée avec sa citation, passe le hook et la CI")
+    def _(a, c):
+        (c / "memoire/demandes/D-0001-refactor.md").write_text(DEMANDE_BONNE)
+        (c / "citation.txt").write_text("ok, refonds d'abord")
+        lanceur = ".socle/" + "socle"
+        commande = f"python3 {lanceur} answer D-0001 valider --relayed --by Théo --quote-file citation.txt"
+        refus = etage_outil(a, c, "Bash", {"command": commande})
+        if refus:
+            return refus
+        r = a.socle(c, "answer", "D-0001", "valider", "--relayed", "--by", "Théo", "--quote-file", "citation.txt")
+        (c / "citation.txt").unlink()
+        if r.returncode != 0:
+            return r.stdout + r.stderr
+        maj_memoire(c, "Refonte validée dans la conversation.")
+        return etage_ci(a, c)
 
     @temoin("une tautologie voulue, raison écrite, passe le commit")
     def _(a, c):
@@ -613,7 +634,7 @@ RAISONS_AGENT = {
     "anti-fabrication": "SHA fabriqué",
     "politique point 4": "politique, point 4",
     "fichier protégé": "est protégé par la politique",
-    "commande humaine": "réservés à l'humain",
+    "commande humaine": "ne répond jamais à la place de l'humain",
     "où regarder": "« Où regarder » doit donner un lien",
 }
 

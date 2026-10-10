@@ -159,14 +159,20 @@ révélée impossible à trancher pour l'humain.
 - « Réponses possibles » est une liste `` - `valeur` — sens `` qui propose
   `contexte-insuffisant`.
 
-La réponse vit dans `<demande>.reponse.toml`, écrite par l'humain seul
-(`socle answer`) :
+La réponse vit dans `<demande>.reponse.toml`. L'humain répond dans la
+conversation, et l'agent consigne sa réponse avec le texte exact
+(`socle answer D-NNNN <réponse> --relayed --by <nom> --quote-file <fichier>`,
+`canal = "conversation"`) ; ou l'humain la lance lui-même au terminal
+(`canal = "terminal"`). L'agent ne choisit jamais la réponse : il relaie
+celle que l'humain a écrite, citation à l'appui.
 
 ```toml
 reponse = "valider"
 texte = "ok, mais garder l'ancien plafond une semaine"
 par = "Théo"
 date = "2026-10-11"
+canal = "conversation"
+citation = "ok pour 5, mais garde l'ancien plafond une semaine"   # texte exact de l'humain
 empreinte = "sha256:…"   # le texte exact de la demande au moment de la réponse
 ```
 

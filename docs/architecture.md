@@ -77,7 +77,9 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 
 - **Une validation humaine est une réponse ajoutée dans la plage, qui cite ce
   qu'elle valide** (`ADR-0004`) : la clé assouplie, le nom du test, ou le
-  chemin et l'empreinte du fichier protégé.
+  chemin et l'empreinte du fichier protégé. **L'humain répond dans la
+  conversation**, et l'agent consigne la réponse avec sa citation exacte
+  (`ADR-0006`).
 - **La trace des hooks voyage dans les commits** (`ADR-0005`).
 - **Le cliquet compare la base et la tête clé par clé**, avec un sens par
   clé : plus bas est plus strict pour un budget, plus long pour une
@@ -88,7 +90,7 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
   avertissement (`[adoption] warn_only`), liste dont on ne retire que pour
   durcir.
 - **Une tautologie voulue passe avec sa raison écrite** (`socle: voulu —`),
-  en attente de validation (`D-0004`).
+  validé par Théo (`D-0004`).
 
 ## Ce qui n'est pas fait
 

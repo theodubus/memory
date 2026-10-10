@@ -168,7 +168,8 @@ def _ajouter(chemin: Path, bloc: str):
 
 
 def cmd_answer(args) -> int:
-    """Réservé à l'humain : le hook de l'agent refuse cette commande."""
+    """L'humain répond lui-même, ou l'agent relaie (`--relayed`) une réponse
+    donnée dans la conversation, en citant son texte exact (ADR-0006)."""
     from socle import demandes
 
     projet = _projet(args)
@@ -177,11 +178,19 @@ def cmd_answer(args) -> int:
         print(f"demande introuvable : {args.request}", file=sys.stderr)
         return 2
     d = cible[0]
-    print(d.texte)
-    print("\n" + "=" * 72)
+    citation = args.quote or ""
+    if args.quote_file:
+        citation = Path(args.quote_file).read_text(encoding="utf-8")
+    if args.relayed and not args.by:
+        print("refus : une réponse relayée nomme l'humain qui l'a donnée (--by)", file=sys.stderr)
+        return 2
+    if not args.relayed:
+        print(d.texte)
+        print("\n" + "=" * 72)
     try:
         chemin = demandes.ecrire_reponse(projet.racine, d, args.answer, args.text or "", args.by or _auteur(projet),
-                                         date.today().isoformat())
+                                         date.today().isoformat(),
+                                         canal="conversation" if args.relayed else "terminal", citation=citation)
     except ValueError as e:
         print(f"refus : {e}", file=sys.stderr)
         return 2
@@ -322,11 +331,14 @@ def main(argv=None) -> int:
     s.add_argument("title")
     s.set_defaults(f=cmd_new)
 
-    s = sp.add_parser("answer", help="(humain) répondre à une demande")
+    s = sp.add_parser("answer", help="répondre à une demande, ou relayer la réponse donnée dans la conversation")
     s.add_argument("request")
     s.add_argument("answer")
     s.add_argument("--text", default="")
     s.add_argument("--by")
+    s.add_argument("--relayed", action="store_true", help="réponse donnée par l'humain dans la conversation")
+    s.add_argument("--quote", help="texte exact de l'humain (avec --relayed)")
+    s.add_argument("--quote-file", help="fichier qui contient le texte exact de l'humain")
     s.set_defaults(f=cmd_answer)
 
     s = sp.add_parser("approve", help="(humain) valider son propre changement protégé ou assoupli")
