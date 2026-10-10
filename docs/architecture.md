@@ -52,7 +52,7 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 | Journal et décisions en ajout seul ; fait jamais effacé | `memoire.ajout-seul` | agent, git, CI |
 | Mémoire en retard sur le code : fin de tour refusée | `memoire.retard` | agent |
 | Le privé ne fuit pas dans le public (identifiants) | `memoire.prive` | agent, git, CI |
-| Contrat des demandes, aucun identifiant nu | `demandes.contrat`, hook `pre-tool-use` | agent, git, CI |
+| Contrat des demandes : huit champs (les sept du cadrage et « Où regarder », avec un lien vers chaque document à lire), contexte d'au moins soixante mots, aucun identifiant nu | `demandes.contrat`, hook `pre-tool-use` | agent, git, CI |
 | Décision archivée avec le texte exact | `demandes.reponses` (empreinte de la demande) | agent, git, CI |
 | `AGENTS.md` fait foi, `CLAUDE.md` l'importe | `instructions.source-unique` | agent, git, CI |
 | Valeurs dupliquées liées à leur source | `docs.valeurs` | agent, git, CI |

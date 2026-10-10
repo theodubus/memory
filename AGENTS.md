@@ -96,9 +96,11 @@ tests, puis la mémoire canonique, puis le journal.
 ### Demandes de décision humaine
 
 Une demande est lue quand le contexte est perdu : elle se suffit à elle-même.
-`python3 .socle/socle new request "<décision>"` pose le squelette des sept
-champs : décision demandée, contexte, éléments cités (chacun décrit en clair,
-jamais un identifiant seul), options (effort, risque, réversibilité),
+`python3 .socle/socle new request "<décision>"` pose le squelette des huit
+champs : décision demandée, contexte (le problème lui-même, résumé sur place,
+pas un renvoi), éléments cités (chacun décrit en clair, jamais un identifiant
+seul), où regarder (un lien vers chaque document à lire, et quoi y vérifier),
+options (effort, risque, réversibilité),
 conséquences (si l'humain valide, refuse, ne répond pas), recommandation
 (vérifié séparé du supposé), réponses possibles dont `contexte-insuffisant`.
 Le lint refuse une demande incomplète. L'humain répond par

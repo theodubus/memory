@@ -15,6 +15,10 @@ L'humain approuve un changement qu'il a fait lui-même sur un garde-fou ou un fi
 
 {elements}
 
+## Où regarder
+
+Le diff du commit qui porte cette demande ; les fichiers et clés cités ci-dessus, voir [le format des demandes](../../.socle/moteur/socle/FORMAT.md).
+
 ## Options
 
 Approuver garde le changement : effort nul, risque porté par l'humain, réversible par un nouveau changement approuvé. Ne pas approuver laisse la CI refuser le changement, ce qui est réversible et sans effort.

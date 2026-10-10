@@ -1,7 +1,7 @@
 """Le contrat des demandes de décision humaine.
 
 Une demande en file est lue quand le contexte est perdu : elle doit se suffire
-à elle-même. Le lint vérifie ce qu'un script peut vérifier — les sept champs,
+à elle-même. Le lint vérifie ce qu'un script peut vérifier — les huit champs,
 et qu'aucun identifiant interne n'y paraisse sans description. La qualité de
 l'explication, elle, ne se contrôle pas : la réponse `contexte-insuffisant`
 renvoie la demande à l'agent, et ce renvoi reste consigné dans la réponse.
@@ -25,6 +25,7 @@ SECTIONS = {
     "decision-demandee": "Décision demandée",
     "contexte": "Contexte",
     "elements-cites": "Éléments cités",
+    "ou-regarder": "Où regarder",
     "options": "Options",
     "consequences": "Conséquences",
     "recommandation": "Recommandation",
@@ -43,6 +44,10 @@ MOTIFS_INTERNES = [
 ]
 MOTS_DESCRIPTION_MIN = 5
 SECTION_MIN = 15
+# Une demande lue une semaine plus tard, sans le projet en tête : le contexte
+# raconte, il ne résume pas en une ligne (retour de Théo, J-2026-10-10-I).
+MOTS_CONTEXTE_MIN = 60
+LIEN = re.compile(r"\]\([^)\s]+\)|https?://\S+")
 # Un trou du gabarit : `<texte avec des espaces>`, hors commentaire HTML.
 TROU = re.compile(r"<(?!!--)[^<>\n]*\s[^<>\n]*>")
 
@@ -166,6 +171,15 @@ def linter(d: Demande, projet: config.Projet) -> list[str]:
             # Le gabarit porte les mots que le lint cherche : un trou laissé
             # tel quel passerait pour une section remplie.
             fautes.append(f"section « {titre} » : texte du gabarit laissé tel quel ({TROU.search(contenu).group(0)[:40]}…)")
+
+    contexte = d.sections.get("contexte", "")
+    if contexte and len(re.findall(r"[^\W\d_]{2,}", contexte)) < MOTS_CONTEXTE_MIN:
+        fautes.append(f"« Contexte » trop court : moins de {MOTS_CONTEXTE_MIN} mots ne suffisent pas à "
+                      "quelqu'un qui n'a pas ouvert le projet depuis une semaine")
+    regarder = d.sections.get("ou-regarder", "")
+    if "ou-regarder" in d.sections and not LIEN.search(regarder):
+        fautes.append("« Où regarder » doit donner un lien vers chaque document ou passage à lire, "
+                      "et dire ce qu'il faut y vérifier")
 
     norm = {k: outils.cle(v).replace("-", " ") for k, v in d.sections.items()}
     opts = norm.get("options", "")

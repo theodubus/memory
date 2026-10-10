@@ -136,8 +136,18 @@ reste vivante.
 ### Demandes — `D-`
 
 Un fichier par demande, titre `# D-NNNN — <la décision, en une phrase>`, et
-sept sections de niveau deux : `Décision demandée`, `Contexte`, `Éléments
-cités`, `Options`, `Conséquences`, `Recommandation`, `Réponses possibles`.
+huit sections de niveau deux : `Décision demandée`, `Contexte`, `Éléments
+cités`, `Où regarder`, `Options`, `Conséquences`, `Recommandation`,
+`Réponses possibles`. Les sept champs du cadrage, plus « Où regarder »,
+ajouté après qu'une première série de demandes, conformes au lint, s'est
+révélée impossible à trancher pour l'humain.
+
+- « Contexte » raconte, en au moins soixante mots : la tâche, ce qui a
+  déclenché la question, et le problème lui-même — un extrait de code, la
+  règle en cause. Si la décision porte sur un contenu (un inventaire, un
+  format), elle le résume sur place.
+- « Où regarder » donne un lien (relatif ou URL) vers chaque document ou
+  passage à lire pour décider, et dit ce qu'il faut y vérifier.
 
 - « Éléments cités » décrit en clair, en au moins cinq mots, chaque
   identifiant interne de la demande (identifiants de mémoire, SHA, numéros de

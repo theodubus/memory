@@ -16,8 +16,10 @@ humaines attendent en file.
 - Jalon 4, garde-fous et auto-test : chaque défaut injecté est attrapé
   (F-0002) ; une échappatoire attend sa validation (D-0004).
 - Jalon 5, hooks et CI : en service sur ce dépôt et sur GitHub
-  (J-2026-10-10-G) ; la vraie porte attend la protection de branche
-  (D-0003).
+  (J-2026-10-10-G) ; `main` est protégée, la vraie porte attend le check
+  exigé et l'accord pour une pull request de démonstration (D-0003).
+- Les quatre demandes ont été réécrites après le retour de Théo
+  (J-2026-10-10-I), et le contrat des demandes durci en conséquence.
 
 ## Prochaines étapes
 

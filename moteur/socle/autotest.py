@@ -225,6 +225,55 @@ def maj_memoire(c: Path, texte: str = "Travail en cours sur l'essai."):
 # Les défauts du cadrage, puis quelques autres
 # --------------------------------------------------------------------------
 
+DEMANDE_BONNE = """<!-- socle: couche=demandes zone=publique -->
+# D-0001 — Faut-il refondre le module de calcul avant d'ajouter la fonction triple ?
+
+> date : 2026-10-10
+
+## Décision demandée
+
+Refondre le module de calcul avant d'y ajouter la fonction triple, ou ajouter
+la fonction telle quelle.
+
+## Contexte
+
+Le backlog demande une fonction triple dans le module de calcul. Le module ne
+contient aujourd'hui qu'une fonction, double, qui multiplie son argument par
+une constante du module. Ajouter triple sur le même modèle dupliquerait cette
+logique ; une refonte introduirait une fonction générique qui multiplie par
+un facteur donné, dont double et triple deviendraient deux cas. La refonte
+touche une fonction publique, donc tout appelant existant.
+
+## Éléments cités
+
+- B-0001 — le sujet du backlog qui demande d'ajouter une fonction triple au module.
+
+## Où regarder
+
+- Le module : [calc.py](../../calc.py), fonction `double` ; ce qu'il faut voir : qu'elle est seule et publique.
+
+## Options
+
+Refondre : effort d'une heure, risque faible sur les appelants, réversible.
+Ajouter tel quel : effort de dix minutes, risque nul, réversible.
+
+## Conséquences
+
+Si tu valides, je refonds puis j'ajoute ; si tu refuses, j'ajoute tel quel ;
+sans réponse, j'ajoute tel quel et je note la refonte au backlog.
+
+## Recommandation
+
+Ajouter tel quel. Vérifié : un seul appelant. Supposé : que d'autres
+facteurs ne viendront pas.
+
+## Réponses possibles
+
+- `valider` — je refonds d'abord.
+- `refuser` — j'ajoute tel quel.
+- `contexte-insuffisant` — je réécris la demande.
+"""
+
 DEMANDE_NUE = """<!-- socle: couche=demandes zone=publique -->
 # D-0001 — Valider le refactor du module de calcul
 
@@ -336,6 +385,11 @@ def _cas() -> list[Cas]:
     @defaut("demande-identifiant-nu", "demande humaine avec identifiant nu", "agent", "demandes.contrat")
     def _(a, c):
         return etage_outil(a, c, "Write", {"file_path": str(c / "memoire/demandes/D-0001-refactor.md"), "content": DEMANDE_NUE})
+
+    @defaut("demande-sans-lien", "demande qui ne dit pas où regarder", "agent", "où regarder")
+    def _(a, c):
+        sans = DEMANDE_BONNE.replace("[calc.py](../../calc.py)", "le module")
+        return etage_outil(a, c, "Write", {"file_path": str(c / "memoire/demandes/D-0001-refactor.md"), "content": sans})
 
     @defaut("budget-depasse", "couche de mémoire au-delà de son budget", "git", "memoire.budgets")
     def _(a, c):
@@ -479,10 +533,7 @@ def _temoins() -> list[tuple[str, Callable]]:
 
     @temoin("une demande complète passe le hook de l'agent")
     def _(a, c):
-        bonne = DEMANDE_NUE.replace("Je propose un refactor du code évoqué en B-0001, tu valides ?",
-                                    "Faut-il refondre le module de calcul avant d'ajouter la fonction triple ?")
-        bonne = bonne.replace("Voir le backlog.", "- B-0001 — le sujet du backlog qui demande d'ajouter une fonction triple au module.")
-        return etage_outil(a, c, "Write", {"file_path": str(c / "memoire/demandes/D-0001-refactor.md"), "content": bonne})
+        return etage_outil(a, c, "Write", {"file_path": str(c / "memoire/demandes/D-0001-refactor.md"), "content": DEMANDE_BONNE})
 
     @temoin("une tautologie voulue, raison écrite, passe le commit")
     def _(a, c):
@@ -563,6 +614,7 @@ RAISONS_AGENT = {
     "politique point 4": "politique, point 4",
     "fichier protégé": "est protégé par la politique",
     "commande humaine": "réservés à l'humain",
+    "où regarder": "« Où regarder » doit donner un lien",
 }
 
 

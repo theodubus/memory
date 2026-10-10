@@ -1,3 +1,4 @@
+import re
 import unittest
 from pathlib import Path
 
@@ -17,6 +18,15 @@ Relever le plafond de mutants survivants de search.rs de 3 à 5.
 ## Contexte
 
 Le balayage hebdomadaire signale deux survivants nouveaux depuis le commit cité.
+Un survivant est une modification du code que tous les tests acceptent : ici,
+deux changements de la marge d'élagage de la recherche, qui ne modifient aucun
+coup sur les positions des tests mais pourraient changer la force de jeu. Le
+plafond actuel de trois survivants pour ce fichier a été mesuré le mois dernier
+et il casse désormais, ce qui bloque la CI hebdomadaire jusqu'à décision.
+
+## Où regarder
+
+- Le journal du balayage : [le verdict](https://exemple.org/verdict), section « survivants de search.rs ».
 
 ## Éléments cités
 
@@ -71,6 +81,15 @@ class TestContrat(unittest.TestCase):
         self.assertEqual(demandes.linter(_demande(texte), self.projet), [])
         self.projet.garde_fous = {"requests": {"internal_id_patterns": [r"\b[A-Z]\d{1,3}\b"]}}
         self.assertTrue(any("A13" in f for f in demandes.linter(_demande(texte), self.projet)))
+
+    def test_sans_lien_ou_regarder_refuse(self):
+        texte = CONFORME.replace("[le verdict](https://exemple.org/verdict)", "le verdict")
+        self.assertTrue(any("Où regarder" in f for f in demandes.linter(_demande(texte), self.projet)))
+
+    def test_contexte_d_une_ligne_refuse(self):
+        texte = re.sub(r"## Contexte\n\n.*?\n\n## ", "## Contexte\n\nDeux survivants nouveaux.\n\n## ",
+                       CONFORME, flags=re.S)
+        self.assertTrue(any("Contexte » trop court" in f for f in demandes.linter(_demande(texte), self.projet)))
 
     def test_champs_manquants(self):
         texte = CONFORME.split("## Conséquences")[0]
