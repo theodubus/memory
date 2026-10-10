@@ -321,8 +321,12 @@ def lectures(ctx, r):
                 continue
             soi = _entree_englobante(mem, chemin, ligne)
             sauf = {soi.id} if soi else set()
+            # Les entrées du même index ajoutées après celle qui cite : elle
+            # ne pouvait pas les lire, et elles ne périment pas sa lecture.
+            apres = {n for n in nouveaux if soi and defs[n][0].type == soi.type and n > soi.id}
             permises = {
                 memoire.empreinte_index(mem, index, sauf),
+                memoire.empreinte_index(mem, index, sauf | apres),
                 memoire.empreinte_index(mem, index, sauf | nouveaux),
                 memoire.empreinte_index(base, index),
             }
