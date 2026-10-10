@@ -65,6 +65,21 @@ class TestAnalyse(unittest.TestCase):
         self.assertEqual(memoire.couche_attendue("memoire/notes.md"), "inconnue")
 
 
+class TestLectureProuvee(unittest.TestCase):
+    def test_l_empreinte_suit_le_texte(self):
+        a = memoire.analyser("memoire/canonique.md", CANONIQUE).entrees[0]
+        b = memoire.analyser("memoire/canonique.md", CANONIQUE.replace("binaire de base", "binaire AVX2")).entrees[0]
+        self.assertRegex(memoire.empreinte_entree(a), r"^[0-9a-f]{8}$")
+        self.assertNotEqual(memoire.empreinte_entree(a), memoire.empreinte_entree(b))
+        espaces = memoire.analyser("memoire/canonique.md", CANONIQUE.replace("base.", "base.   ")).entrees[0]
+        self.assertEqual(memoire.empreinte_entree(a), memoire.empreinte_entree(espaces))
+
+    def test_citations(self):
+        texte = "Voir ADR-0003@0a1b2c3d, F-0001 (sans empreinte) et lu : decisions@deadbeef.\n```\nF-0002@11111111\n```"
+        self.assertEqual(memoire.citations(texte), [("ADR-0003", "0a1b2c3d", 1)])
+        self.assertEqual(memoire.citations_index(texte), [("decisions", "deadbeef", 1)])
+
+
 class TestReferences(unittest.TestCase):
     def test_types_de_reference(self):
         refs = memoire.references("commit:3f2a9c1, fichier:src/x.rs:12 ; J-2026-10-10-A et url:https://exemple.org")

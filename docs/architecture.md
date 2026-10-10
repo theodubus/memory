@@ -20,24 +20,25 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 
 | Module | Rôle |
 | --- | --- |
-| `cli.py` | les commandes : `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `answer`, `approve`, `install`, `selftest`, `fingerprint`, `mutation-verdict`, `archive`, `checks` |
+| `cli.py` | les commandes : `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `answer`, `approve`, `install`, `selftest`, `fingerprint`, `mutation-verdict`, `archive`, `checks` |
 | `memoire.py` | lecture des cinq couches : en-têtes, entrées, identifiants, métadonnées, références |
 | `demandes.py` | le contrat des demandes, son lint, les réponses humaines gelées |
 | `contexte.py` | le registre des contrôles, leurs étages, la base de comparaison, le mode adoption |
 | `controles_memoire.py` | format, références, fuite d'identifiants privés, preuves, backlog, budgets, péremption, retard, ajout seul, demandes, source unique des instructions |
 | `controles_docs.py` | outillage documenté, valeurs liées, correspondance code ↔ doc, refus des copies |
-| `controles_tests.py` | capacités de l'adaptateur, tests creux, valeurs attendues, régression rejouée sur le parent, couverture de mutation |
+| `controles_tests.py` | capacités de l'adaptateur, tests creux, valeurs attendues, régression rejouée sur le parent, couverture de mutation, code nouveau nommé par un test |
 | `controles_cliquet.py` | cliquet des garde-fous, fichiers protégés, empreinte du moteur, configuration et trace des hooks |
 | `tests_lecture.py` | extraction des fonctions de test selon l'adaptateur ; transitivité des assertions |
 | `hooks.py` | les points d'entrée des hooks de l'agent et de git, la trace |
 | `etat.py` | l'état dérivé |
 | `humain.py` | ce qui revient à l'humain, et la lecture du dernier message de l'agent pour le récap |
+| `liens.py` | le permalien d'un fichier ou d'une entrée ; les liens d'un message que l'humain ne pourra pas suivre |
 | `verification.py` | le contrat `verify` : les capacités de l'adaptateur |
 | `mutation.py` | le verdict de mutation contre les plafonds |
 | `empreinte.py` | l'empreinte du moteur |
 | `installeur.py` | installation, mise à jour, adoption |
 | `autotest.py` | l'injection de défauts dans un projet jetable |
-| `adaptateurs/` | Rust (extrait de chess) et Python, maintenus |
+| `adaptateurs/` | Rust (extrait de chess) et Python, maintenus ; ce qu'est un adaptateur : `moteur/socle/adaptateurs/README.md` |
 | `modeles/` | les gabarits posés par l'installeur |
 
 ## Exigences du cadrage et contrôles qui les appliquent
@@ -64,6 +65,7 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 | Tests creux | `tests.creux` (sur le diff aux étages agent et git) | agent, git, CI |
 | Test supprimé, valeur attendue changée | `tests.attendus` | agent, git, CI |
 | Correctif avec test de régression rejoué sur le parent | `tests.regression` | CI |
+| Code nouveau ou modifié testé : une fonction publique est nommée par un test, ou dispensée nommément avec sa raison (`Dispense-test:`) | `tests.code-teste` (pas au commit : le hook ne voit pas la dispense) | agent, CI |
 | Mutation : plafond par module, cliquet | `mutation.couverture`, `socle mutation-verdict` | agent, git, CI ; verdict hebdomadaire |
 | Rien ne s'affaiblit en silence | `cliquet.garde-fous`, `protege.fichiers` | agent, git, CI |
 | Moteur et politique non altérés | `moteur.empreinte`, `protege.fichiers` | agent, git, CI |
@@ -72,7 +74,9 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 | Anti-fabrication | hook `pre-tool-use` : SHA complété de tête, identifiant ou commit inventé | agent |
 | Échec répété : arrêt et escalade | hook `stop`, `max_attempts` de la politique | agent |
 | État dérivé au démarrage et après compactage, avec l'index des décisions | `socle state`, hook `session-start` ; `socle show <ID>` pour lire une entrée à la demande | agent |
-| Ce qui revient à l'humain, dit à chaque fin d'intervention qui a agi | `humain.py` (demandes en attente, backlog `pour : humain`, branches distantes supprimables), hook `stop` | agent |
+| Ce qui revient à l'humain et la suite, dits à chaque fin d'intervention qui a agi (lignes « Pour toi : » et « Ensuite : ») | `humain.py` (demandes en attente, backlog `pour : humain`, branches distantes supprimables, prochaines étapes du chantier actif), hook `stop` | agent |
+| Des liens que l'humain peut suivre : permaliens au commit poussé, aucun lien relatif ni chemin inexistant, chaque demande en attente avec son lien | `liens.py`, `socle url`, hook `stop` | agent |
+| Lire avant de décider, prouvé par l'empreinte de la version lue | `memoire.lectures` ; hook `pre-tool-use` (empreinte périmée ou inventée) ; `socle show`, `socle new` | agent, git, CI |
 | Auto-tests par injection de défauts | `socle selftest`, dans `socle ci` | CI |
 
 ## Les choix qui ne sont pas dans le cadrage
@@ -82,11 +86,26 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
   chemin et l'empreinte du fichier protégé. **L'humain répond dans la
   conversation**, et l'agent consigne la réponse avec sa citation exacte
   (`ADR-0006`).
-- **La trace des hooks voyage dans les commits** (`ADR-0005`).
+- **La trace des hooks voyage dans les commits** (`ADR-0005`). Elle vit
+  dans le répertoire git commun (`.git/socle/hooks.log`), partagé par tous
+  les worktrees du dépôt.
+- **Le hook avant commit juge l'index**, figé en arbre par `git write-tree` :
+  ce qui sera commité, pas ce qui est sur disque.
 - **Le cliquet compare la base et la tête clé par clé**, avec un sens par
   clé : plus bas est plus strict pour un budget, plus long pour une
   couverture, plus court pour une liste d'exclusions. Une clé inconnue qui
   change est un assouplissement jusqu'à preuve du contraire.
+- **Lecture prouvée** (`ADR-0008`) : une entrée citée `ID@empreinte` l'a été
+  dans cette version ; une décision, une demande ou un sujet de backlog
+  nouveaux doivent le faire. La preuve porte sur l'accès au texte, pas sur
+  sa compréhension.
+- **Les liens donnés à l'humain sont des permaliens** (`ADR-0010`) : au
+  commit poussé, pas à la branche, qui disparaît à la fusion ; vérifiés par
+  le hook de fin de tour, que l'agent ait agi ou non.
+- **Une fonction publique ajoutée ou modifiée est nommée par un test**
+  (`ADR-0011`), au sens littéral : son nom figure dans un test. Une fonction
+  privée en est exemptée, une dispense la nomme avec sa raison ; la qualité
+  des assertions reste l'affaire de la mutation.
 - **Mode adoption** : à l'installation sur un projet existant, les budgets
   sont fixés au niveau actuel et les contrôles en échec passent en
   avertissement (`[adoption] warn_only`), liste dont on ne retire que pour
@@ -97,7 +116,6 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 ## Ce qui n'est pas fait
 
 Le backlog le tient : jalons 6 à 9, mémoire privée, empreinte comparée à la
-version publiée, workflow de mutation générique, hook pre-commit sur l'index
-plutôt que sur l'arbre. Les limites connues des contrôles y sont aussi :
+version publiée, workflow de mutation générique. Les limites connues des contrôles y sont aussi :
 chemins qui n'existent que dans une rustine, copie non marquée d'une valeur
 qui n'est qu'un avertissement.

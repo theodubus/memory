@@ -114,13 +114,19 @@ Le démarrage n'injecte que l'état, le chantier actif et les faits. Le reste
 se lit quand il sert, sans attendre qu'on le demande :
 
 - un identifiant cité (`F-`, `B-`, `ADR-`, `D-`, `J-`) se lit avant de
-  s'appuyer dessus : `python3 .socle/socle show <ID>` ;
+  s'appuyer dessus : `python3 .socle/socle show <ID>`, qui donne aussi son
+  empreinte ;
 - avant une décision de conception, l'index des décisions de l'état dit si
   elle est déjà prise : on ne la rouvre pas sans fait nouveau ;
-- avant d'ouvrir un sujet, le backlog (`memoire/backlog.md`) dit s'il existe
-  déjà ;
+- avant d'ouvrir un sujet, le backlog (`socle show --index backlog`) dit
+  s'il existe déjà ;
 - pour savoir pourquoi une chose est ainsi, chercher dans le journal
   (`grep -rn "<mot>" memoire/journal/`).
+
+La lecture se prouve : une décision, une demande ou un sujet de backlog
+nouveaux citent ce qu'ils ont lu avec son empreinte (`ADR-NNNN@xxxxxxxx`,
+`lu : decisions@…`, `lu : backlog@…`). Une empreinte périmée ou inventée est
+refusée ; il faut relire l'entrée. `socle new` pose l'empreinte de l'index.
 
 ### Avant de conclure
 
@@ -128,8 +134,10 @@ se lit quand il sert, sans attendre qu'on le demande :
 - Si du code a changé, la mémoire aussi : chantier actif, journal, backlog.
 - Si du code associé à une doc a changé (`[[docmap]]` des garde-fous), la doc change dans le même travail, ou un commit porte le trailer `Dispense-doc: <raison>`.
 - Un correctif (sujet `fix:` ou trailer `Corrige: B-NNNN`) livre un test qui échoue sur le commit parent.
+- Une fonction publique ajoutée ou modifiée est nommée par au moins un test, ou un commit la dispense nommément avec sa raison (`Dispense-test: f, g — <raison>`). Du code existant découvert sans test : le test s'écrit tout de suite s'il est dans le périmètre du travail, sinon un sujet va au backlog.
 - Une action que seul l'humain peut faire (refusée par le hook, réglage d'un service, fichier qu'il détient) va au backlog avec `pour : humain`.
-- **Toute intervention qui a agi se termine par un récap, puis une ligne `Pour toi :`** qui liste ce qui revient à l'humain — décisions en attente, actions à faire — ou « rien ». L'état (`socle state`) calcule cette liste ; le hook `Stop` refuse de conclure sans elle. Si l'agent attend quelque chose (une CI, un match), il dit quoi et jusqu'à quand.
+- **Toute intervention qui a agi se termine par un récap, puis deux lignes** : `Pour toi :` — ce qui revient à l'humain, décisions en attente et actions à faire, ou « rien » —, et `Ensuite :` — la suite proposée (prochain jalon, ce qu'il reste à faire avant), et ce que l'agent attend s'il attend quelque chose (une CI, un match : quoi, et jusqu'à quand). L'état calcule ce qui revient à l'humain ; le hook `Stop` refuse de conclure sans les deux lignes.
+- **Un fichier à lire se donne par son lien** : l'humain lit dans la conversation ou sur GitHub, pas dans le conteneur de l'agent. `python3 .socle/socle url <chemin|ID>` donne le permalien, une fois le fichier poussé ; une demande en attente citée sans son lien, un lien relatif, ou un chemin entre accents graves qui n'existe pas dans le dépôt font refuser la fin du tour. Un chemin d'un autre dépôt s'écrit `depot:chemin`.
 
 ### Ne jamais
 
@@ -145,7 +153,7 @@ se lit quand il sert, sans attendre qu'on le demande :
 | `.claude/settings.json` | hooks de Claude Code : `SessionStart` (état dérivé), `PreToolUse` (refus), `Stop` (contrôles de fin de tour) |
 | `.socle/git-hooks/` | hooks git : `pre-commit` (contrôles rapides), `prepare-commit-msg` (trailer `Socle-Hooks`), `pre-push` (`verify --rapide`) |
 | `.github/workflows/socle.yml` | CI : capacités de l'adaptateur, tous les contrôles contre la base, auto-test du socle |
-| `.socle/trace/hooks.log` | trace locale de chaque hook qui tire, non versionnée |
+| `.git/socle/hooks.log` | trace locale de chaque hook qui tire, non versionnée, commune à tous les worktrees du dépôt |
 
 Liste des contrôles : `python3 .socle/socle checks`.
 

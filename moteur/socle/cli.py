@@ -137,8 +137,12 @@ def cmd_new(args) -> int:
         bloc = f"\n## {ident} — {titre}\n\n> statut : supposé · source : <d'où vient ce fait>\n\n<le fait, et ce qui le prouverait>\n"
         _ajouter(chemin, bloc)
     elif type_ == "B":
+        # Le backlog s'affiche avant d'y ajouter : un doublon se voit ici.
+        _afficher_index(mem, "backlog")
         chemin = racine / "memoire/backlog.md"
-        bloc = f"\n## {ident} — {titre}\n\n> statut : ouvert · origine : <J-… ou commit:… où le sujet est apparu>\n\n<ce qu'il faut faire, et pourquoi>\n"
+        lu = memoire.empreinte_index(mem, "backlog")
+        bloc = (f"\n## {ident} — {titre}\n\n> statut : ouvert · origine : <J-… ou commit:… où le sujet est apparu>"
+                f" · lu : backlog@{lu}\n\n<ce qu'il faut faire, et pourquoi>\n")
         _ajouter(chemin, bloc)
     elif type_ == "J":
         chemin = racine / f"memoire/journal/{jour[:7]}.md"
@@ -147,10 +151,14 @@ def cmd_new(args) -> int:
             chemin.write_text(f"<!-- socle: couche=journal zone={zone} -->\n# Journal — {jour[:7]}\n", encoding="utf-8")
         _ajouter(chemin, f"\n## {ident} — {titre}\n\n<ce qui s'est passé, avec ses références>\n")
     elif type_ == "ADR":
+        # Les décisions s'affichent avant d'en ajouter une : on ne rouvre pas
+        # une décision prise sans fait nouveau.
+        _afficher_index(mem, "decisions")
         chemin = racine / f"memoire/decisions/{ident}-{_slug(titre)}.md"
         chemin.write_text(
             f"<!-- socle: couche=decisions zone={zone} -->\n# {ident} — {titre}\n\n"
-            f"> statut : proposée · date : {jour}\n\n## Contexte\n\n<ce qui oblige à décider>\n\n"
+            f"> statut : proposée · date : {jour} · lu : decisions@{memoire.empreinte_index(mem, 'decisions')}"
+            "\n\n## Contexte\n\n<ce qui oblige à décider>\n\n"
             "## Décision\n\n<ce qui est décidé>\n\n## Conséquences\n\n<ce que ça change, et comment le défaire>\n",
             encoding="utf-8")
     else:
@@ -173,15 +181,20 @@ def cmd_show(args) -> int:
     from socle import demandes, memoire
 
     projet = _projet(args)
+    mem = memoire.Memoire.charger(projet.racine)
     code = 0
+    if args.index:
+        _afficher_index(mem, args.index)
     for ident in args.ids:
-        e = memoire.Memoire.charger(projet.racine).entree(ident)
+        e = mem.entree(ident)
         if e is None:
             print(f"{ident} : aucune entrée de ce nom dans la mémoire", file=sys.stderr)
             code = 1
             continue
         lieu = f"{e.fichier}:{e.ligne}" + (f", archivée dans {e.parent}" if e.parent else "")
-        print(f"--- {ident} ({lieu}) ---")
+        # L'empreinte s'imprime avec le texte : la citer (`ID@empreinte`)
+        # montre qu'on a lu cette version-là (ADR-0008).
+        print(f"--- {ident}@{memoire.empreinte_entree(e)} ({lieu}) ---")
         print(e.texte)
         if e.type == "D":
             d = next((d for d in demandes.toutes(projet.racine) if d.id == ident), None)
@@ -191,6 +204,32 @@ def cmd_show(args) -> int:
             elif d:
                 print(f"\n--- {d.statut} ---")
     return code
+
+
+def cmd_url(args) -> int:
+    """Le permalien d'un fichier ou d'une entrée, à donner à l'humain : il
+    lit sur GitHub, pas dans le conteneur de l'agent (ADR-0010)."""
+    from socle import liens
+
+    projet = _projet(args)
+    code = 0
+    for cible in args.cibles:
+        url, avertissement = liens.lien(projet, cible)
+        if avertissement:
+            print(f"{cible} : {avertissement}", file=sys.stderr)
+        if url is None:
+            code = 1
+            continue
+        print(f"[{cible}]({url})")
+    return code
+
+
+def _afficher_index(mem, index: str):
+    from socle import memoire
+
+    print(f"--- index {index}@{memoire.empreinte_index(mem, index)} — à citer `lu : {index}@…` ---")
+    lignes = memoire.lignes_index(mem, index)
+    print("\n".join(lignes) if lignes else "(vide)")
 
 
 def cmd_answer(args) -> int:
@@ -357,9 +396,14 @@ def main(argv=None) -> int:
     s.add_argument("title")
     s.set_defaults(f=cmd_new)
 
-    s = sp.add_parser("show", help="afficher une entrée de mémoire par son identifiant")
-    s.add_argument("ids", nargs="+")
+    s = sp.add_parser("show", help="afficher une entrée de mémoire, avec son empreinte, ou un index")
+    s.add_argument("ids", nargs="*")
+    s.add_argument("--index", choices=("decisions", "backlog"), help="l'index des décisions ou du backlog ouvert")
     s.set_defaults(f=cmd_show)
+
+    s = sp.add_parser("url", help="le permalien d'un fichier ou d'une entrée, à donner à l'humain")
+    s.add_argument("cibles", nargs="+", metavar="chemin|ID")
+    s.set_defaults(f=cmd_url)
 
     s = sp.add_parser("answer", help="répondre à une demande, ou relayer la réponse donnée dans la conversation")
     s.add_argument("request")

@@ -10,7 +10,9 @@ montré qu'il peut échouer.
 - `mutation.couverture` : tout module qui porte du code a un plafond de
                        mutants survivants ;
 - `adaptateur.capacites` : chaque capacité est déclarée, ou absente avec sa
-                       raison et son contrôle de remplacement.
+                       raison et son contrôle de remplacement ;
+- `tests.code-teste` : une fonction publique ajoutée ou modifiée est nommée
+                       par au moins un test, ou dispensée avec sa raison.
 """
 
 from __future__ import annotations
@@ -19,6 +21,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import tomllib
 from collections import Counter
 from pathlib import Path
 
@@ -161,6 +164,100 @@ def attendus(ctx, r):
             else:
                 r.erreur("tests.attendus", f"assertion changée ou retirée dans `{a.nom}` : « {exemple} » — "
                          "valeur attendue modifiée sans spécification ni validation humaine", b.fichier, b.ligne)
+
+
+# `Dispense-test: f, g — raison` : les fonctions nommées, puis pourquoi
+# aucun test ne les nomme.
+DISPENSE_TEST = re.compile(r"^(?P<noms>[\w.]+(?:\s*,\s*[\w.]+)*)\s+[—–-]+\s+(?P<raison>\S.{9,})$")
+
+
+def config_code(projet) -> tuple[list, list, str | None]:
+    """(chemins, exclusions, motif d'une fonction privée) du code soumis à
+    `tests.code-teste`. La section `[code]` de l'adaptateur du projet ; à
+    défaut, celle de l'adaptateur maintenu du même langage, venue avec le
+    moteur ; à défaut, les sources hors fichiers de test, toute fonction
+    comptant comme publique."""
+    code = projet.adaptateur.get("code")
+    if code is None:
+        from socle import installeur
+
+        maintenu = installeur.ADAPTATEURS / f"{projet.adaptateur.get('language', '')}.toml"
+        if maintenu.is_file():
+            code = tomllib.loads(maintenu.read_text(encoding="utf-8")).get("code")
+    if code and "paths" in code:
+        return code.get("paths", []), code.get("exclude", []), code.get("private")
+    return projet.adaptateur.get("sources", []), (cfg_tests(projet) or {}).get("paths", []), None
+
+
+def dispenses_tests(ctx, r) -> set[str]:
+    noms = set()
+    for c in ctx.commits:
+        for v in outils.trailers(c["message"]).get("dispense-test", []):
+            m = DISPENSE_TEST.match(v.strip())
+            if not m:
+                r.erreur("tests.code-teste", f"dispense illisible dans le commit {c['sha'][:7]} : « {v.strip()} » — "
+                         "forme attendue : `Dispense-test: f, g — <raison d'au moins dix caractères>`")
+                continue
+            noms |= {n.strip() for n in m["noms"].split(",")}
+    return noms
+
+
+def _externes(fns: list[tests_lecture.Fonction]) -> list[tests_lecture.Fonction]:
+    """Les fonctions qui ne sont pas imbriquées dans une autre : une
+    fonction locale compte pour celle qui la contient."""
+    res, fin = [], 0
+    for f in sorted(fns, key=lambda f: f.ligne):
+        if f.ligne > fin:
+            res.append(f)
+            fin = f.fin
+    return res
+
+
+@controle("tests.code-teste", etages=("agent", "ci"), base=True)
+def code_teste(ctx, r):
+    """Une fonction publique ajoutée ou modifiée est nommée par au moins un
+    test — ou une dispense motivée la nomme (`Dispense-test: f — <raison>`).
+
+    Pas à l'étage git : le hook pre-commit ne voit pas le message du commit,
+    donc pas la dispense qu'il porte."""
+    cfg = cfg_tests(ctx.projet)
+    if cfg is None:
+        r.indisponible("tests.code-teste", "adaptateur sans `[tests]` : fonctions illisibles")
+        return
+    chemins, exclus, prive = config_code(ctx.projet)
+    prive_re = re.compile(prive) if prive else None
+    presents = set(ctx.fichiers)
+    code = outils.filtrer([c for c in ctx.changes if c in presents], chemins, exclus)
+    if not code:
+        return
+    # Ce que les tests nomment : tout le texte d'un fichier de test qui n'est
+    # pas du code ; le corps des seules fonctions de test d'un fichier qui en
+    # est (les tests unitaires de Rust vivent dans les sources).
+    nommes = []
+    for f in fichiers_tests(ctx, ctx.fichiers):
+        texte = ctx.lire(f) or ""
+        if outils.filtrer([f], chemins, exclus):
+            nommes += [fn.corps for fn in tests_lecture.extraire(texte, f, cfg) if fn.est_test]
+        else:
+            nommes.append(texte)
+    nommes = "\n".join(nommes)
+    dispenses = dispenses_tests(ctx, r)
+    for chemin in code:
+        texte = ctx.lire(chemin) or ""
+        lignes_texte = texte.splitlines()
+        changees = outils.lignes_changees(ctx.racine, ctx.base, ctx.tete, chemin)
+        avant = {f.nom for f in tests_lecture.extraire(ctx.lire_base(chemin) or "", chemin, cfg)}
+        for f in _externes(tests_lecture.extraire(texte, chemin, cfg)):
+            if f.est_test or (prive_re and prive_re.match(lignes_texte[f.ligne - 1])):
+                continue
+            if changees is not None and not any(f.ligne <= l <= f.fin for l in changees):
+                continue
+            if f.nom in dispenses or re.search(rf"(?<![\w]){re.escape(f.nom)}(?![\w])", nommes):
+                continue
+            quoi = "modifiée" if f.nom in avant else "ajoutée"
+            r.erreur("tests.code-teste", f"fonction `{f.nom}` {quoi}, qu'aucun test ne nomme : écrire le test qui "
+                     f"l'appelle, ou la dispenser par un trailer de commit `Dispense-test: {f.nom} — <raison>`",
+                     chemin, f.ligne)
 
 
 def est_correctif(projet, message: str) -> bool:

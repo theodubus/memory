@@ -24,7 +24,7 @@ GARDE_FOUS = ".socle/garde-fous.toml"
 ADAPTATEUR = ".socle/adaptateur.toml"
 LANCEUR = ".socle/socle"
 GIT_HOOKS = ".socle/git-hooks"
-TRACE = ".socle/trace/hooks.log"
+TRACE = ".socle/trace/hooks.log"  # ancien emplacement, et hors dépôt git
 COMPTEUR_STOP = ".socle/trace/stop-echecs"
 MEMOIRE = "memoire"
 ARCHIVES = "memoire/archives"
@@ -32,6 +32,30 @@ INSTRUCTIONS = "AGENTS.md"
 
 MODE_AMONT = "amont"   # le dépôt qui fabrique le moteur : il le modifie
 MODE_PROJET = "projet"  # un projet qui l'utilise : le moteur y est immuable
+
+
+def chemin_trace(racine: Path) -> Path:
+    """La trace des hooks vit dans le répertoire git commun
+    (`.git/socle/hooks.log`), que partagent tous les worktrees du dépôt : les
+    hooks de l'agent y écrivent depuis le dépôt principal, et le hook git d'un
+    commit fait dans un autre worktree y lit la même trace (B-0015). Hors
+    dépôt git, l'ancien emplacement."""
+    import subprocess
+
+    r = subprocess.run(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+                       cwd=racine, capture_output=True, text=True)
+    if r.returncode == 0 and r.stdout.strip():
+        return Path(r.stdout.strip()) / "socle" / "hooks.log"
+    return racine / TRACE
+
+
+def lire_trace(racine: Path) -> list[str]:
+    """Les lignes de la trace, l'ancien emplacement d'abord s'il en reste."""
+    lignes = []
+    for p in dict.fromkeys([racine / TRACE, chemin_trace(racine)]):
+        if p.is_file():
+            lignes += [l for l in p.read_text(encoding="utf-8", errors="replace").splitlines() if l.strip()]
+    return lignes
 
 
 def lire_toml(texte: str | None) -> dict:

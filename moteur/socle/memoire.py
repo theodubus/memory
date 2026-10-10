@@ -336,3 +336,61 @@ def _lettres():
     for a in alphabet:
         for b in alphabet:
             yield a + b
+
+
+# --------------------------------------------------------------------------
+# Lecture prouvée (ADR-0008)
+# --------------------------------------------------------------------------
+#
+# Une entrée a une empreinte : les huit premiers caractères du SHA-256 de son
+# texte. Citer `ADR-0003@1a2b3c4d`, c'est montrer qu'on a eu sous les yeux
+# CETTE version de l'entrée : l'empreinte ne s'obtient qu'en la lisant
+# (`socle show`), et elle change dès que l'entrée change. Un index — la liste
+# des décisions, celle du backlog ouvert — a la sienne, `decisions@…` ou
+# `backlog@…`, qui prouve qu'on a consulté l'ensemble avant d'y ajouter.
+# Ça ne prouve pas qu'on a compris ; ça prouve qu'on a lu, et quelle version.
+
+CITATION_RE = re.compile(
+    r"(?<![\w-])(?P<id>P?(?:ADR|F|B|D|J)-\d{4}(?:-\d{2}-\d{2}-[A-Z]{1,2})?)@(?P<empreinte>[0-9a-f]{8})(?![\w-])"
+)
+INDEX_RE = re.compile(r"(?<![\w-])(?P<index>decisions|backlog)@(?P<empreinte>[0-9a-f]{8})(?![\w-])")
+INDEX_TYPES = {"decisions": "ADR", "backlog": "B"}
+
+
+def empreinte_entree(e: Entree) -> str:
+    texte = "\n".join(l.rstrip() for l in e.texte.strip().splitlines())
+    return outils.sha256(texte)[:8]
+
+
+def lignes_index(mem: "Memoire", index: str, sauf: set[str] = frozenset()) -> list[str]:
+    """Une ligne par entrée : décisions en vigueur ou non, backlog non clos."""
+    type_ = INDEX_TYPES[index]
+    res = []
+    for e in mem.entrees(type_):
+        if e.archivee or e.id in sauf:
+            continue
+        if index == "backlog" and e.statut in BACKLOG_CLOS:
+            continue
+        res.append(f"{e.id} — {e.titre} ({e.statut})")
+    return sorted(res)
+
+
+def empreinte_index(mem: "Memoire", index: str, sauf: set[str] = frozenset()) -> str:
+    return outils.sha256("\n".join(lignes_index(mem, index, sauf)))[:8]
+
+
+def citations(texte: str) -> list[tuple[str, str, int]]:
+    """(identifiant, empreinte, ligne) des citations `ID@empreinte`, hors code clôturé."""
+    res = []
+    for i, ligne, code in lignes_hors_code(texte):
+        if not code:
+            res += [(m["id"], m["empreinte"], i) for m in CITATION_RE.finditer(ligne)]
+    return res
+
+
+def citations_index(texte: str) -> list[tuple[str, str, int]]:
+    res = []
+    for i, ligne, code in lignes_hors_code(texte):
+        if not code:
+            res += [(m["index"], m["empreinte"], i) for m in INDEX_RE.finditer(ligne)]
+    return res

@@ -41,6 +41,15 @@ command = "python3 -m unittest {test_args}"
 test_arg = "{module}"
 test_paths = ["tests/test_*.py", "tests/**/test_*.py"]
 
+[code]
+# Le code dont une fonction publique, ajoutée ou modifiée, doit être nommée
+# par un test (`tests.code-teste`). Une fonction dont la ligne de définition
+# répond à `private` en est exemptée : elle se teste par les fonctions
+# publiques qui l'appellent.
+paths = ["**/*.py"]
+exclude = ["tests/**", "**/test_*.py", "**/*_test.py", "**/conftest.py", "setup.py"]
+private = '^\s*(?:async\s+)?def\s+_'
+
 [tests]
 paths = ["tests/**/test_*.py", "**/test_*.py", "**/*_test.py"]
 function = '^\s*(?:async\s+)?def\s+(\w+)\s*\('

@@ -285,6 +285,75 @@ def prive(ctx, r):
 
 
 # --------------------------------------------------------------------------
+# Lecture prouvée (ADR-0008)
+# --------------------------------------------------------------------------
+
+
+def _entree_englobante(mem: memoire.Memoire, chemin: str, ligne: int) -> memoire.Entree | None:
+    f = mem.fichiers.get(chemin)
+    if f is None:
+        return None
+    dedans = [e for e in f.entrees if e.ligne <= ligne <= e.ligne + e.texte.count("\n")]
+    return max(dedans, key=lambda e: e.ligne) if dedans else None
+
+
+@controle("memoire.lectures", base=True)
+def lectures(ctx, r):
+    """Une citation `ID@empreinte` ajoutée désigne la version actuelle de
+    l'entrée ; une décision, une demande ou un sujet de backlog nouveaux
+    prouvent ce qu'ils ont lu avant d'être écrits."""
+    mem, base = ctx.memoire, ctx.memoire_base
+    defs = mem.definitions()
+    nouveaux = set(defs) - set(base.definitions())
+    for chemin, texte in sorted(textes_scannes(ctx).items()):
+        avant = ctx.lire_base(chemin) or ""
+        deja = {(i, h) for i, h, _ in memoire.citations(avant)}
+        for ident, h, ligne in memoire.citations(texte):
+            if (ident, h) in deja or ident not in defs:
+                continue
+            if memoire.empreinte_entree(defs[ident][0]) != h:
+                r.erreur("memoire.lectures", f"`{ident}@{h}` ne correspond pas à la version actuelle de {ident} "
+                         f"(lue avant un changement, ou inventée) : la relire, `python3 .socle/socle show {ident}`, "
+                         "et citer l'empreinte affichée", chemin, ligne)
+        deja_i = {(i, h) for i, h, _ in memoire.citations_index(avant)}
+        for index, h, ligne in memoire.citations_index(texte):
+            if (index, h) in deja_i:
+                continue
+            soi = _entree_englobante(mem, chemin, ligne)
+            sauf = {soi.id} if soi else set()
+            # Les entrées du même index ajoutées après celle qui cite : elle
+            # ne pouvait pas les lire, et elles ne périment pas sa lecture.
+            apres = {n for n in nouveaux if soi and defs[n][0].type == soi.type and n > soi.id}
+            permises = {
+                memoire.empreinte_index(mem, index, sauf),
+                memoire.empreinte_index(mem, index, sauf | apres),
+                memoire.empreinte_index(mem, index, sauf | nouveaux),
+                memoire.empreinte_index(base, index),
+            }
+            if h not in permises:
+                r.erreur("memoire.lectures", f"`{index}@{h}` ne correspond à aucune version récente de l'index : "
+                         f"le relire, `python3 .socle/socle show --index {index}`, et citer l'empreinte affichée",
+                         chemin, ligne)
+
+    # Ce que les entrées nouvelles doivent prouver avoir lu.
+    for ident in sorted(nouveaux):
+        e = defs[ident][0]
+        if e.archivee:
+            continue
+        if e.type == "ADR" and not any(i == "decisions" for i, _, _ in memoire.citations_index(e.texte)):
+            r.erreur("memoire.lectures", f"décision nouvelle `{ident}` sans `lu : decisions@…` : consulter l'index "
+                     "des décisions avant d'en ajouter une (`socle show --index decisions`)", e.fichier, e.ligne)
+        if e.type == "B" and not any(i == "backlog" for i, _, _ in memoire.citations_index(e.texte)):
+            r.erreur("memoire.lectures", f"sujet nouveau `{ident}` sans `lu : backlog@…` : consulter le backlog avant "
+                     "d'y ajouter, pour ne pas dupliquer (`socle show --index backlog`)", e.fichier, e.ligne)
+        if e.type in ("ADR", "D"):
+            prouves = {i for i, _, _ in memoire.citations(e.texte)}
+            for cite in sorted({i for i, _ in memoire.mentions(e.texte)} - prouves - {ident}):
+                r.erreur("memoire.lectures", f"`{ident}` s'appuie sur `{cite}` sans montrer l'avoir lu : citer "
+                         f"`{cite}@<empreinte>`, l'empreinte que donne `socle show {cite}`", e.fichier, e.ligne)
+
+
+# --------------------------------------------------------------------------
 # Preuves, backlog
 # --------------------------------------------------------------------------
 
@@ -358,7 +427,7 @@ def budgets(ctx, r):
 def date_derniere_modif(ctx, chemin: str) -> float | None:
     if ctx.tete is None and chemin in ctx._cache.setdefault("sales", _sales(ctx)):
         return time.time()
-    rev = ctx.tete or "HEAD"
+    rev = ctx.rev_commit
     if not outils.a_des_commits(ctx.racine):
         return time.time()
     sortie = outils.git(ctx.racine, "log", "-1", "--format=%ct", rev, "--", chemin, check=False).strip()

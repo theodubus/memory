@@ -67,14 +67,15 @@ class TestDernierMessage(unittest.TestCase):
             {"type": "assistant", "message": {"content": [{"type": "text", "text": "ancien"}]}},
             {"type": "user", "message": {"content": [{"type": "tool_result", "content": "x"}]}},
             {"type": "assistant", "message": {"content": [{"type": "tool_use", "name": "Bash"}]}},
-            {"type": "assistant", "message": {"content": [{"type": "text", "text": "Fait.\n\nPour toi : rien."}]}},
+            {"type": "assistant", "message": {"content": [{"type": "text", "text": "Fait.\n\nPour toi : rien.\nEnsuite : B-0001."}]}},
         ])
         message = humain.dernier_message(p)
-        self.assertEqual(message, "Fait.\n\nPour toi : rien.")
-        self.assertTrue(humain.a_un_recap(config.Projet(racine=Path(".")), message))
+        self.assertEqual(message, "Fait.\n\nPour toi : rien.\nEnsuite : B-0001.")
+        self.assertEqual(humain.recap_manquant(config.Projet(racine=Path(".")), message), [])
 
     def test_sans_recap(self):
-        self.assertFalse(humain.a_un_recap(config.Projet(racine=Path(".")), "Fait. Rien à signaler pour toi."))
+        manque = humain.recap_manquant(config.Projet(racine=Path(".")), "Fait. Rien à signaler pour toi.")
+        self.assertEqual(manque, ["Pour toi :", "Ensuite :"])
 
     def test_transcript_illisible(self):
         self.assertIsNone(humain.dernier_message(Path("/inexistant/t.jsonl")))

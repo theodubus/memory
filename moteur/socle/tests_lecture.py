@@ -23,6 +23,7 @@ class Fonction:
     corps: str
     est_test: bool = False
     lignes_corps: list[str] = field(default_factory=list)
+    fin: int = 0  # dernière ligne de la fonction, 1 pour la première du fichier
 
 
 def _sans_litteraux(ligne: str) -> str:
@@ -103,11 +104,11 @@ def extraire(texte: str, fichier: str, cfg: dict) -> list[Fonction]:
                 break
             j -= 1
         if cfg.get("block", "braces") == "indent":
-            corps, _ = _bloc_indentation(lignes, i)
+            corps, fin = _bloc_indentation(lignes, i)
         else:
-            corps, _ = _bloc_accolades(lignes, i)
+            corps, fin = _bloc_accolades(lignes, i)
         f = Fonction(nom=nom, fichier=fichier, ligne=i + 1, attributs=attributs,
-                     corps="\n".join(corps), lignes_corps=corps)
+                     corps="\n".join(corps), lignes_corps=corps, fin=fin + 1)
         f.est_test = bool(
             (marque_attr and any(marque_attr.search(a) for a in attributs))
             or (marque_nom and marque_nom.search(nom))

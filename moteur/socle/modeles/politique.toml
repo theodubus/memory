@@ -54,12 +54,19 @@ claude_code = true
 markers = ['(?im)^co-authored-by:.*\bclaude\b', '(?im)^socle-agent:']
 
 [human]
+# L'adresse web du dépôt, pour les permaliens donnés à l'humain (`socle url`).
+# Absente, elle se déduit du dépôt `origin` ; à régler quand `origin` est un
+# relais ou un dossier local.
+# repo_url = "https://github.com/organisation/projet"
 # Branches distantes jamais proposées à la suppression, même contenues dans la
 # branche par défaut (celles d'un autre agent, par exemple).
 keep_branches = []
-# La ligne qui ouvre, en fin d'intervention, la liste de ce qui revient à
-# l'humain ; le hook Stop la cherche dans le dernier message de l'agent.
-# recap_marker = '(?im)^[\W_]*pour toi\s*:'
+# Les lignes qu'un récap de fin d'intervention doit contenir ; le hook Stop
+# les cherche dans le dernier message de l'agent (par défaut « Pour toi : »
+# et « Ensuite : »).
+# [human.recap_markers]
+# "Pour toi :" = '(?im)^[\W_]*pour toi\s*:'
+# "Ensuite :" = '(?im)^[\W_]*ensuite\s*:'
 
 [unattended]
 # Catégories d'actions permises en exécution sans surveillance (question

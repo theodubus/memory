@@ -55,13 +55,6 @@ Aujourd'hui, la CI compare le moteur au verrou local. Le cadrage demande la
 comparaison avec la version publiée, que le verrou seul ne garantit pas si
 moteur et verrou changent ensemble.
 
-## B-0007 — Le hook pre-commit contrôle l'arbre de travail, pas l'index
-
-> statut : ouvert · origine : J-2026-10-10-E
-
-Un commit partiel peut être jugé sur des fichiers qu'il ne contient pas. La
-CI, elle, juge le commit réel.
-
 ## B-0008 — Les chemins qui n'existent que dans une rustine sont pris pour des liens morts
 
 > statut : ouvert · origine : J-2026-10-10-F
@@ -100,25 +93,12 @@ demande. Fréquence à décider (question ouverte du cadrage).
 une copie non marquée de la valeur courante : elle pourrait être une
 coïncidence. Mesurer les faux positifs avant de durcir.
 
-## B-0014 — Exiger un test pour du code nouveau, et pour du code existant qu'on découvre non testé
+## B-0016 — La docstring de memoire.py renvoie à un document de format qui n'existe pas
 
-> statut : ouvert · origine : J-2026-10-10-J
+> statut : ouvert · origine : fichier:moteur/socle/memoire.py · lu : backlog@ad031cf1
 
-Demandé par Théo. Le cadrage ne l'impose pas : il exige un test de
-régression pour un correctif, et compte sur la mutation pour voir le code
-qu'aucun test ne vérifie — or la mutation est hebdomadaire et absente pour
-Python. À concevoir : un contrôle sur le diff, par exemple « une fonction
-publique ajoutée ou modifiée est nommée par au moins un test », avec une
-dispense motivée comme pour la doc ; et, quand l'agent découvre en route du
-code existant sans test, la règle de l'écrire tout de suite s'il est dans le
-périmètre, sinon de l'inscrire au backlog.
+Vu en écrivant le module des liens : la docstring du lecteur de la mémoire
+dit que le format est décrit dans un document de `docs/` qui n'existe pas ;
+c'est `moteur/socle/FORMAT.md` qui fait foi. Aucun contrôle ne lit les
+chemins cités dans les docstrings du code.
 
-## B-0015 — La trace des hooks ignore les worktrees git
-
-> statut : ouvert · origine : J-2026-10-10-L
-
-Les hooks de l'agent écrivent la trace dans `.socle/trace/` du dépôt
-principal ; un commit fait dans un autre worktree la cherche dans le sien, ne
-la trouve pas, et part avec `Socle-Hooks: aucun` — la CI le refuse. Placer la
-trace dans le répertoire git commun (`git rev-parse --git-common-dir`),
-partagé par tous les worktrees, avec un défaut injecté dans l'auto-test.
