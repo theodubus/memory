@@ -25,7 +25,7 @@ import tomllib
 from collections import Counter
 from pathlib import Path
 
-from socle import outils, tests_lecture
+from socle import config, outils, tests_lecture
 from socle.contexte import controle
 
 CAPACITES = ("format", "lint", "build", "tests", "mutation", "coverage", "regression")
@@ -184,9 +184,12 @@ def config_code(projet) -> tuple[list, list, str | None]:
         maintenu = installeur.ADAPTATEURS / f"{projet.adaptateur.get('language', '')}.toml"
         if maintenu.is_file():
             code = tomllib.loads(maintenu.read_text(encoding="utf-8")).get("code")
+    # Le dossier du socle n'est jamais du code du projet : le moteur y est
+    # installé, immuable, et ses fonctions ne sont pas celles du projet.
+    socle = [f"{config.DOSSIER}/**"]
     if code and "paths" in code:
-        return code.get("paths", []), code.get("exclude", []), code.get("private")
-    return projet.adaptateur.get("sources", []), (cfg_tests(projet) or {}).get("paths", []), None
+        return code.get("paths", []), code.get("exclude", []) + socle, code.get("private")
+    return projet.adaptateur.get("sources", []), (cfg_tests(projet) or {}).get("paths", []) + socle, None
 
 
 def dispenses_tests(ctx, r) -> set[str]:
