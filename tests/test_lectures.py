@@ -111,3 +111,23 @@ class TestCitationsDeLaPlage(unittest.TestCase):
         controles_memoire.lectures(ctx, r)
         self.assertEqual(len(r.erreurs()), 1)
         self.assertIn("B-0001@0badc0de", r.erreurs()[0].message)
+
+    def test_une_citation_neuve_d_une_version_perimee_est_refusee(self):
+        # La version de B-0001 citée a existé dans la plage, mais la citation
+        # est écrite maintenant, après la clôture : elle a lu une version
+        # qui n'était plus la bonne.
+        mem = memoire.Memoire.charger(self.racine, self.base)
+        ancienne = memoire.empreinte_entree(mem.entree("B-0001"))
+        journal = self.racine / "memoire/journal/2026-10.md"
+        journal.parent.mkdir(parents=True)
+        journal.write_text("<!-- socle: couche=journal zone=publique -->\n# Journal\n\n"
+                           f"## J-2026-10-10-A — Constat\n\nVoir B-0001@{ancienne}.\n")
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="ci", base=self.base, tete=None)
+        r = Rapport()
+        controles_memoire.lectures(ctx, r)
+        self.assertEqual(len(r.erreurs()), 1, [c.message for c in r.erreurs()])
+        self.assertIn(f"B-0001@{ancienne}", r.erreurs()[0].message)
+
+
+if __name__ == "__main__":
+    unittest.main()
