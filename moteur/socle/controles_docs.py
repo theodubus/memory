@@ -139,10 +139,13 @@ def dispenses(ctx) -> list[str]:
     return res
 
 
-@controle("docs.correspondance", base=True)
+@controle("docs.correspondance", etages=("agent", "ci"), base=True)
 def correspondance(ctx, r):
     """Si du code change, la doc qui lui est associée change aussi — ou une
-    dispense écrite et motivée l'accompagne (`Dispense-doc: <raison>`)."""
+    dispense écrite et motivée l'accompagne (`Dispense-doc: <raison>`).
+
+    Pas à l'étage git : le hook pre-commit ne voit pas le message du commit,
+    donc pas la dispense qu'il porte."""
     table = ctx.projet.gf("docmap", defaut=[]) or []
     if not table:
         return

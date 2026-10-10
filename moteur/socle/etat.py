@@ -106,7 +106,8 @@ def _git(racine, projet) -> list[str]:
 
 def _memoire(mem: memoire.Memoire, projet) -> list[str]:
     faits = Counter(e.statut or "?" for e in mem.entrees("F") if not e.archivee)
-    detail = ", ".join(f"{n} {s}" for s, n in sorted(faits.items()))
+    libelles = {"mesure": "mesuré(s)", "suppose": "supposé(s)", "refute": "réfuté(s)", "valide": "validé(s)"}
+    detail = ", ".join(f"{n} {libelles.get(s, s)}" for s, n in sorted(faits.items()))
     adrs = list(mem.entrees("ADR"))
     journal = sorted((e.id for e in mem.entrees("J")), key=lambda i: i.lstrip("P"))
     res = [

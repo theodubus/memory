@@ -124,3 +124,9 @@ command = "cargo run --release --bin shallowred -- bench 4"
 name = "deux binaires, le même arbre"
 command = "tools/binaires.sh dist"
 timeout = 5400
+
+# Dans chess:tools/verify.sh complet, pas dans sa CI : l'auto-test de ses
+# propres hooks, qui restent en place à côté de ceux du socle.
+[[steps]]
+name = "hooks de chess"
+command = "tools/verify-hooks.sh"

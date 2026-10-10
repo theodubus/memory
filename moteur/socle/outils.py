@@ -152,6 +152,14 @@ def branche_par_defaut(racine: Path) -> str | None:
     for nom in ("origin/main", "origin/master", "main", "master"):
         if rev_existe(racine, nom):
             return nom
+    # Un dépôt neuf n'a parfois encore que sa branche de travail : ce qui est
+    # déjà poussé sert alors de base, plutôt que pas de base du tout.
+    r = subprocess.run(
+        ["git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"],
+        cwd=racine, capture_output=True, text=True,
+    )
+    if r.returncode == 0 and r.stdout.strip():
+        return r.stdout.strip()
     return None
 
 

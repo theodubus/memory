@@ -57,7 +57,7 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 | `AGENTS.md` fait foi, `CLAUDE.md` l'importe | `instructions.source-unique` | agent, git, CI |
 | Valeurs dupliquées liées à leur source | `docs.valeurs` | agent, git, CI |
 | Outillage documenté | `docs.outillage` | agent, git, CI |
-| Correspondance code ↔ doc, dispense motivée | `docs.correspondance` | agent, git, CI |
+| Correspondance code ↔ doc, dispense motivée | `docs.correspondance` (pas au commit : le hook ne voit pas le message, donc pas la dispense) | agent, CI |
 | Pas de copie | `docs.copie` | agent, git, CI |
 | Capacité absente déclarée avec remplacement | `adaptateur.capacites` | agent, git, CI |
 | Tests creux | `tests.creux` (sur le diff aux étages agent et git) | agent, git, CI |

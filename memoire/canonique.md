@@ -63,3 +63,10 @@ D-0001.
 
 Avancé à l'initialisation pour justifier le refus explicite du lanceur sous
 3.11 ; non vérifié sur une machine Apple.
+
+## F-0008 — Avec l'adaptateur proposé, `socle verify` exécute la CI de chess et tout passe
+
+> statut : mesuré · preuve : J-2026-10-10-H · date : 2026-10-10
+
+Hors les jobs multi-systèmes, le job indicatif de toolchain et le contrôle
+du balayage par l'API GitHub. 4 min 31 s dans le conteneur.
