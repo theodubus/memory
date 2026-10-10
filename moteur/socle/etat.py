@@ -59,6 +59,12 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
         lignes += _demandes(racine)
     except Exception as e:
         lignes.append(f"demandes : illisibles ({type(e).__name__}: {e})")
+    try:
+        from socle import humain
+
+        lignes += humain.texte(humain.a_faire(projet))
+    except Exception as e:
+        lignes.append(f"ce qui revient à l'humain : incalculable ({type(e).__name__}: {e})")
     lignes += _hooks(racine)
     lignes.append("mémoire privée : non configurée (mode public seul)" if not projet.pol("private", "mode")
                   else _prive(racine, projet))
@@ -114,6 +120,13 @@ def _memoire(mem: memoire.Memoire, projet) -> list[str]:
         f"mémoire  : {sum(faits.values())} fait(s) ({detail or 'aucun'}) · {len(adrs)} décision(s) · "
         f"journal : {len(journal)} entrée(s), dernière {journal[-1] if journal else '—'}"
     ]
+    # L'index des décisions, que le cadrage prévoit : une ligne par décision
+    # en vigueur, à lire en entier (`socle show ADR-NNNN`) avant d'en rouvrir une.
+    vigueur = [e for e in adrs if e.statut in ("acceptee", "proposee")]
+    if vigueur:
+        res.append("décisions en vigueur (lire par `python3 .socle/socle show ADR-NNNN`) :")
+        for e in vigueur:
+            res.append(f"  {e.id} — {e.titre}{' (proposée)' if e.statut == 'proposee' else ''}")
     backlog = [e for e in mem.entrees("B") if not e.archivee]
     par = Counter(e.statut for e in backlog)
     res.append(

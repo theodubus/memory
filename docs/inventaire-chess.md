@@ -40,6 +40,7 @@ une question posée dans la demande de validation, pas une correction.
 | `chess:engine/tests/bench_reference.rs` | Un chiffre de la doc confronté au binaire, dans TOUS les fichiers | Contrôle `docs.valeurs` : marqueur dans la doc, source fichier ou commande, avertissement sur une copie non marquée |
 | `chess:engine/tests/pieges_fermes.rs` | Chaque piège archivé nomme un dispositif qui existe | Généralisé par les références vivantes (`fichier:`, chemins cités) et par la preuve exigée d'un fait mesuré |
 | `chess:tools/etat-test.sh`, `chess:tools/ref-test.sh` et les autres `*-test.sh` | Une branche de refus qui ne sert qu'en cas de catastrophe s'éprouve sur des dépôts fabriqués | Le principe de l'auto-test : `socle selftest` injecte chaque défaut connu dans un clone jetable, avec un `origin` |
+| La ligne « branches à faire supprimer par Théo » de `chess:tools/etat.sh`, et la consigne de `chess:CLAUDE.md` de dire à chaque récap ce qui revient à Théo | Les actions que seul l'humain peut faire, calculées quand elles se calculent | Classée d'abord « spécifique », à tort (`J-2026-10-10-M`) : « ce qui revient à l'humain », dans l'état et dans la ligne `Pour toi :` que le hook de fin de tour exige |
 | Section « Ce qui compte comme preuve » de `chess:CLAUDE.md` | Une table affirmation → preuve exigée | Le statut « mesuré » et sa `preuve` obligatoire |
 | Section « Ce qui tourne tout seul » de `chess:CLAUDE.md` | La table des dispositifs automatiques | La section du socle dans `AGENTS.md`, régénérée par l'installeur |
 | Le texte barré `<s>…</s>` dans `chess:CLAUDE.md` | Une affirmation fausse se garde, barrée | Le fait réfuté, barré et conservé |
@@ -55,8 +56,8 @@ une question posée dans la demande de validation, pas une correction.
 - Les rustines de `chess:tools/attic/` et leur table d'applicabilité :
   spécifique, mais le principe (une affirmation vérifiable est vérifiée) est
   celui de `docs.valeurs`.
-- L'exclusion des branches `codex/…` et la ligne « branches à faire supprimer
-  par Théo » de `chess:tools/etat.sh` : propres au flux de ce dépôt.
+- L'exclusion des branches `codex/…` de `chess:tools/etat.sh` : propre au flux
+  de ce dépôt (le socle la permet par `[human] keep_branches`).
 - `chess:tools/balayage-vivant.sh` (le cliquet de mutation ne peut pas signaler
   sa propre absence) : générique, mais il dépend de l'API GitHub. Reporté au
   backlog avec le workflow de mutation générique.

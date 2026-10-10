@@ -167,8 +167,35 @@ def _ajouter(chemin: Path, bloc: str):
     chemin.write_text(texte.rstrip("\n") + "\n" + bloc, encoding="utf-8")
 
 
+def cmd_show(args) -> int:
+    """Une entrée de mémoire par son identifiant, où qu'elle soit (archivée
+    comprise) ; pour une demande, sa réponse aussi."""
+    from socle import demandes, memoire
+
+    projet = _projet(args)
+    code = 0
+    for ident in args.ids:
+        e = memoire.Memoire.charger(projet.racine).entree(ident)
+        if e is None:
+            print(f"{ident} : aucune entrée de ce nom dans la mémoire", file=sys.stderr)
+            code = 1
+            continue
+        lieu = f"{e.fichier}:{e.ligne}" + (f", archivée dans {e.parent}" if e.parent else "")
+        print(f"--- {ident} ({lieu}) ---")
+        print(e.texte)
+        if e.type == "D":
+            d = next((d for d in demandes.toutes(projet.racine) if d.id == ident), None)
+            if d and d.chemin_reponse:
+                print(f"\n--- réponse ({d.chemin_reponse}) : {d.statut} ---")
+                print((projet.racine / d.chemin_reponse).read_text(encoding="utf-8").rstrip())
+            elif d:
+                print(f"\n--- {d.statut} ---")
+    return code
+
+
 def cmd_answer(args) -> int:
-    """Réservé à l'humain : le hook de l'agent refuse cette commande."""
+    """L'humain répond lui-même, ou l'agent relaie (`--relayed`) une réponse
+    donnée dans la conversation, en citant son texte exact (ADR-0006)."""
     from socle import demandes
 
     projet = _projet(args)
@@ -177,11 +204,19 @@ def cmd_answer(args) -> int:
         print(f"demande introuvable : {args.request}", file=sys.stderr)
         return 2
     d = cible[0]
-    print(d.texte)
-    print("\n" + "=" * 72)
+    citation = args.quote or ""
+    if args.quote_file:
+        citation = Path(args.quote_file).read_text(encoding="utf-8")
+    if args.relayed and not args.by:
+        print("refus : une réponse relayée nomme l'humain qui l'a donnée (--by)", file=sys.stderr)
+        return 2
+    if not args.relayed:
+        print(d.texte)
+        print("\n" + "=" * 72)
     try:
         chemin = demandes.ecrire_reponse(projet.racine, d, args.answer, args.text or "", args.by or _auteur(projet),
-                                         date.today().isoformat())
+                                         date.today().isoformat(),
+                                         canal="conversation" if args.relayed else "terminal", citation=citation)
     except ValueError as e:
         print(f"refus : {e}", file=sys.stderr)
         return 2
@@ -322,11 +357,18 @@ def main(argv=None) -> int:
     s.add_argument("title")
     s.set_defaults(f=cmd_new)
 
-    s = sp.add_parser("answer", help="(humain) répondre à une demande")
+    s = sp.add_parser("show", help="afficher une entrée de mémoire par son identifiant")
+    s.add_argument("ids", nargs="+")
+    s.set_defaults(f=cmd_show)
+
+    s = sp.add_parser("answer", help="répondre à une demande, ou relayer la réponse donnée dans la conversation")
     s.add_argument("request")
     s.add_argument("answer")
     s.add_argument("--text", default="")
     s.add_argument("--by")
+    s.add_argument("--relayed", action="store_true", help="réponse donnée par l'humain dans la conversation")
+    s.add_argument("--quote", help="texte exact de l'humain (avec --relayed)")
+    s.add_argument("--quote-file", help="fichier qui contient le texte exact de l'humain")
     s.set_defaults(f=cmd_answer)
 
     s = sp.add_parser("approve", help="(humain) valider son propre changement protégé ou assoupli")

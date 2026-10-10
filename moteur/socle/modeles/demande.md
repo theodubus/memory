@@ -15,6 +15,10 @@
 
 <Chaque élément cité, décrit en clair sur place : jamais un identifiant seul.>
 
+## Où regarder
+
+<Un lien vers chaque document ou passage à lire pour décider, et ce qu'il faut y vérifier. Si la décision porte sur un contenu, le résumer aussi ici.>
+
 ## Options
 
 <Pour chaque option : ce qu'elle change concrètement, l'effort, le risque, la réversibilité.>

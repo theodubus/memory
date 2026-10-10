@@ -119,7 +119,10 @@ recevoir à sa suite une archive.
 
 Statuts : `ouvert`, `en-cours`, `bloqué`, `fait`, `abandonné`. Toute entrée
 a une `origine` (entrée de journal, commit, demande) ; une entrée close
-(`fait`, `abandonné`) a une `ref` vers ce qui l'a close. `socle archive`
+(`fait`, `abandonné`) a une `ref` vers ce qui l'a close. Une action que seul
+l'humain peut faire porte `pour : humain` : elle figure dans « ce qui revient
+à l'humain », dans l'état et dans le récap de fin d'intervention, jusqu'à ce
+qu'elle soit close. `socle archive`
 déplace les entrées closes dans une entrée de journal datée, en sous-titres :
 
 ```markdown
@@ -136,8 +139,18 @@ reste vivante.
 ### Demandes — `D-`
 
 Un fichier par demande, titre `# D-NNNN — <la décision, en une phrase>`, et
-sept sections de niveau deux : `Décision demandée`, `Contexte`, `Éléments
-cités`, `Options`, `Conséquences`, `Recommandation`, `Réponses possibles`.
+huit sections de niveau deux : `Décision demandée`, `Contexte`, `Éléments
+cités`, `Où regarder`, `Options`, `Conséquences`, `Recommandation`,
+`Réponses possibles`. Les sept champs du cadrage, plus « Où regarder »,
+ajouté après qu'une première série de demandes, conformes au lint, s'est
+révélée impossible à trancher pour l'humain.
+
+- « Contexte » raconte, en au moins soixante mots : la tâche, ce qui a
+  déclenché la question, et le problème lui-même — un extrait de code, la
+  règle en cause. Si la décision porte sur un contenu (un inventaire, un
+  format), elle le résume sur place.
+- « Où regarder » donne un lien (relatif ou URL) vers chaque document ou
+  passage à lire pour décider, et dit ce qu'il faut y vérifier.
 
 - « Éléments cités » décrit en clair, en au moins cinq mots, chaque
   identifiant interne de la demande (identifiants de mémoire, SHA, numéros de
@@ -149,14 +162,20 @@ cités`, `Options`, `Conséquences`, `Recommandation`, `Réponses possibles`.
 - « Réponses possibles » est une liste `` - `valeur` — sens `` qui propose
   `contexte-insuffisant`.
 
-La réponse vit dans `<demande>.reponse.toml`, écrite par l'humain seul
-(`socle answer`) :
+La réponse vit dans `<demande>.reponse.toml`. L'humain répond dans la
+conversation, et l'agent consigne sa réponse avec le texte exact
+(`socle answer D-NNNN <réponse> --relayed --by <nom> --quote-file <fichier>`,
+`canal = "conversation"`) ; ou l'humain la lance lui-même au terminal
+(`canal = "terminal"`). L'agent ne choisit jamais la réponse : il relaie
+celle que l'humain a écrite, citation à l'appui.
 
 ```toml
 reponse = "valider"
 texte = "ok, mais garder l'ancien plafond une semaine"
 par = "Théo"
 date = "2026-10-11"
+canal = "conversation"
+citation = "ok pour 5, mais garde l'ancien plafond une semaine"   # texte exact de l'humain
 empreinte = "sha256:…"   # le texte exact de la demande au moment de la réponse
 ```
 

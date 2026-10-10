@@ -1,7 +1,7 @@
 <!-- socle: couche=decisions zone=publique -->
 # ADR-0003 — Arborescence du socle et format de la mémoire
 
-> statut : proposée · date : 2026-10-10 · source : J-2026-10-10-B
+> statut : acceptée · date : 2026-10-10 · source : J-2026-10-10-B · validation : D-0002
 
 ## Contexte
 

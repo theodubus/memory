@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0003-proteger-la-branche-par-defaut.md, dont l'empreinte suit.
+reponse = "valider"
+texte = "Check requis ajouté sur main ; pull request de démonstration autorisée."
+par = "Théo"
+date = "2026-10-10"
+canal = "conversation"
+citation = "D0003 c'est ajouté\n\noui je t'autorise à ouvrir une pr defectueuse, montrer que ça bloque et la fermer"
+empreinte = "sha256:52720a4c964aa3339e37f6bcc5468990c27ce8a2c4012433d544b0a9bc185e35"

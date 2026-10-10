@@ -273,10 +273,16 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
         for m in projet.pol("irreversible", "bash", defaut=IRREVERSIBLES_BASH):
             if re.search(m, cmd):
                 return _refus(f"commande irréversible ou externe : « {cmd.strip()[:200]} » — validation humaine "
-                              "requise (politique, point 4). Émettre une demande `D-NNNN` et continuer sur autre chose.")
-        if COMMANDES_HUMAINES.search(cmd):
-            return _refus("`socle answer` et `socle approve` sont réservés à l'humain : une réponse écrite "
-                          "par l'agent ne validerait rien (politique, points 5 et 8).")
+                              "requise (politique, point 4). Si c'est une décision, émettre une demande `D-NNNN` ; si "
+                              "c'est une action que l'humain doit faire lui-même, l'inscrire au backlog avec "
+                              "`pour : humain`. Puis continuer sur autre chose.")
+        m = COMMANDES_HUMAINES.search(cmd)
+        if m and (m.group(1) or m.group(2)) != "answer":
+            return _refus("`socle approve` est réservé à l'humain : il valide ses propres changements protégés.")
+        if m and not (re.search(r"--relayed\b", cmd) and re.search(r"--quote(-file)?\b", cmd)):
+            return _refus("l'agent ne répond jamais à la place de l'humain. Il ne peut que relayer une réponse "
+                          "donnée dans la conversation : `socle answer D-NNNN <réponse> --relayed --by <nom> "
+                          "--quote-file <texte exact>` (ADR-0006).")
         cible = ecriture_protegee(projet, cmd)
         if cible:
             return _refus(f"écriture d'un fichier protégé ({cible}) par le shell : seul l'humain modifie "
@@ -347,7 +353,7 @@ def stop(projet: config.Projet, entree: dict) -> int:
 
     if rapport.reussi:
         compteur.unlink(missing_ok=True)
-        return 0
+        return exiger_recap(projet, entree)
     essais = int(compteur.read_text().strip() or 0) + 1 if compteur.is_file() else 1
     compteur.parent.mkdir(parents=True, exist_ok=True)
     compteur.write_text(str(essais))
@@ -361,6 +367,61 @@ def stop(projet: config.Projet, entree: dict) -> int:
         return 0
     print(json.dumps({"decision": "block", "reason": (
         f"Les contrôles échouent (tentative {essais}/{projet.maximum_tentatives()}) : corriger avant de conclure.\n\n" + texte
+    )}, ensure_ascii=False))
+    return 0
+
+
+def _appels_externes(racine: Path, session: str) -> bool:
+    """Un outil externe (`mcp__…` : pull request, commentaire…) a-t-il été
+    appelé depuis la fin de tour précédente de cette session ?"""
+    trace = racine / config.TRACE
+    if not trace.is_file() or not session:
+        return False
+    lignes = [l.split("\t") for l in trace.read_text(encoding="utf-8", errors="replace").splitlines()]
+    siennes = [l for l in lignes if len(l) >= 4 and l[2] == session]
+    stops = [i for i, l in enumerate(siennes) if l[1] == "Stop"]
+    debut = stops[-2] + 1 if len(stops) >= 2 else 0
+    return any(l[1] == "PreToolUse" and l[3].startswith("mcp__") for l in siennes[debut:])
+
+
+def exiger_recap(projet: config.Projet, entree: dict) -> int:
+    """Un tour où l'agent a agi se termine par un récap et une ligne
+    `Pour toi :` — ce qui revient à l'humain, ou « rien » (ADR-0007)."""
+    from socle import humain
+
+    racine = projet.racine
+    fichier = racine / ".socle/trace/derniere-fin-de-tour"
+    marque = _empreinte_arbre(racine) if outils.a_des_commits(racine) else ""
+    a_agi = (not fichier.is_file() or fichier.read_text().strip() != marque
+             or _appels_externes(racine, entree.get("session_id", "")))
+
+    def retenir():
+        fichier.parent.mkdir(parents=True, exist_ok=True)
+        fichier.write_text(marque)
+
+    if not a_agi:
+        return 0
+    chemin = entree.get("transcript_path")
+    message = humain.dernier_message(Path(chemin)) if chemin else None
+    if message is None:
+        retenir()
+        print(json.dumps({"systemMessage": "récap de fin d'intervention non vérifiable : transcript illisible"},
+                         ensure_ascii=False))
+        return 0
+    if humain.a_un_recap(projet, message):
+        retenir()
+        return 0
+    if entree.get("stop_hook_active"):
+        retenir()
+        print(json.dumps({"systemMessage": "fin d'intervention sans ligne « Pour toi : », malgré un rappel"},
+                         ensure_ascii=False))
+        return 0
+    liste = "\n".join(humain.texte(humain.a_faire(projet)))
+    print(json.dumps({"decision": "block", "reason": (
+        "Tu as agi pendant ce tour : termine ton message par un récap de ce qui a été fait, puis une ligne "
+        "« Pour toi : » qui liste ce qui revient à l'humain — décisions, actions qu'il est seul à pouvoir faire — "
+        "ou « rien ». Si tu attends quelque chose (une CI, un match), dis quoi et jusqu'à quand.\n\n"
+        "Calculé maintenant :\n" + liste
     )}, ensure_ascii=False))
     return 0
 

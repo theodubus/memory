@@ -96,13 +96,31 @@ tests, puis la mémoire canonique, puis le journal.
 ### Demandes de décision humaine
 
 Une demande est lue quand le contexte est perdu : elle se suffit à elle-même.
-`python3 .socle/socle new request "<décision>"` pose le squelette des sept
-champs : décision demandée, contexte, éléments cités (chacun décrit en clair,
-jamais un identifiant seul), options (effort, risque, réversibilité),
+`python3 .socle/socle new request "<décision>"` pose le squelette des huit
+champs : décision demandée, contexte (le problème lui-même, résumé sur place,
+pas un renvoi), éléments cités (chacun décrit en clair, jamais un identifiant
+seul), où regarder (un lien vers chaque document à lire, et quoi y vérifier),
+options (effort, risque, réversibilité),
 conséquences (si l'humain valide, refuse, ne répond pas), recommandation
 (vérifié séparé du supposé), réponses possibles dont `contexte-insuffisant`.
-Le lint refuse une demande incomplète. L'humain répond par
-`python3 .socle/socle answer D-NNNN <réponse>` ; une demande répondue est gelée.
+Le lint refuse une demande incomplète. L'humain répond dans la conversation ;
+l'agent consigne sa réponse, sans jamais la choisir, avec le texte exact :
+`python3 .socle/socle answer D-NNNN <réponse> --relayed --by <nom> --quote-file <fichier>`,
+et la recopie au journal. Une demande répondue est gelée.
+
+### Lire la mémoire à la demande
+
+Le démarrage n'injecte que l'état, le chantier actif et les faits. Le reste
+se lit quand il sert, sans attendre qu'on le demande :
+
+- un identifiant cité (`F-`, `B-`, `ADR-`, `D-`, `J-`) se lit avant de
+  s'appuyer dessus : `python3 .socle/socle show <ID>` ;
+- avant une décision de conception, l'index des décisions de l'état dit si
+  elle est déjà prise : on ne la rouvre pas sans fait nouveau ;
+- avant d'ouvrir un sujet, le backlog (`memoire/backlog.md`) dit s'il existe
+  déjà ;
+- pour savoir pourquoi une chose est ainsi, chercher dans le journal
+  (`grep -rn "<mot>" memoire/journal/`).
 
 ### Avant de conclure
 
@@ -110,12 +128,14 @@ Le lint refuse une demande incomplète. L'humain répond par
 - Si du code a changé, la mémoire aussi : chantier actif, journal, backlog.
 - Si du code associé à une doc a changé (`[[docmap]]` des garde-fous), la doc change dans le même travail, ou un commit porte le trailer `Dispense-doc: <raison>`.
 - Un correctif (sujet `fix:` ou trailer `Corrige: B-NNNN`) livre un test qui échoue sur le commit parent.
+- Une action que seul l'humain peut faire (refusée par le hook, réglage d'un service, fichier qu'il détient) va au backlog avec `pour : humain`.
+- **Toute intervention qui a agi se termine par un récap, puis une ligne `Pour toi :`** qui liste ce qui revient à l'humain — décisions en attente, actions à faire — ou « rien ». L'état (`socle state`) calcule cette liste ; le hook `Stop` refuse de conclure sans elle. Si l'agent attend quelque chose (une CI, un match), il dit quoi et jusqu'à quand.
 
 ### Ne jamais
 
 - compléter un SHA de tête, inventer un identifiant ou une référence : le hook les refuse ;
 - écrire dans un fichier protégé (politique, adaptateur, verrou du moteur, hooks, CI, réponses humaines) ;
-- lancer `socle answer` ou `socle approve`, réservés à l'humain ;
+- répondre à la place de l'humain (`socle answer` sans `--relayed` ni citation), ou lancer `socle approve`, réservé à l'humain ;
 - contourner un hook (`--no-verify`) : la CI exécute tout, et rien ne la contourne.
 
 ### Ce qui tourne tout seul

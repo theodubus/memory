@@ -53,6 +53,14 @@ claude_code = true
 # trace de ses hooks (`Socle-Hooks:`).
 markers = ['(?im)^co-authored-by:.*\bclaude\b', '(?im)^socle-agent:']
 
+[human]
+# Branches distantes jamais proposées à la suppression, même contenues dans la
+# branche par défaut (celles d'un autre agent, par exemple).
+keep_branches = []
+# La ligne qui ouvre, en fin d'intervention, la liste de ce qui revient à
+# l'humain ; le hook Stop la cherche dans le dernier message de l'agent.
+# recap_marker = '(?im)^[\W_]*pour toi\s*:'
+
 [unattended]
 # Catégories d'actions permises en exécution sans surveillance (question
 # ouverte du cadrage) : aucune au-delà des règles ordinaires.

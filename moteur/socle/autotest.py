@@ -187,8 +187,18 @@ def etage_ci(a: Atelier, c: Path, message: str = "essai", env=None) -> str:
     return "" if r.returncode == 0 else r.stdout + r.stderr
 
 
-def etage_stop(a: Atelier, c: Path) -> str:
-    r = a.socle(c, "hook", "stop", entree=json.dumps({"session_id": "autotest", "stop_hook_active": False}))
+def etage_stop(a: Atelier, c: Path, dernier_message: str | None = None) -> str:
+    """Le hook de fin de tour. Avec `dernier_message`, un transcript au format
+    de Claude Code lui donne le dernier message de l'agent à lire."""
+    entree = {"session_id": "autotest", "stop_hook_active": False}
+    if dernier_message is not None:
+        transcript = c.parent / f"{c.name}-transcript.jsonl"
+        transcript.write_text("\n".join(json.dumps(x, ensure_ascii=False) for x in (
+            {"type": "user", "message": {"role": "user", "content": "fais le travail"}},
+            {"type": "assistant", "message": {"role": "assistant", "content": [{"type": "text", "text": dernier_message}]}},
+        )) + "\n")
+        entree["transcript_path"] = str(transcript)
+    r = a.socle(c, "hook", "stop", entree=json.dumps(entree))
     if not r.stdout.strip():
         return ""
     sortie = json.loads(r.stdout)
@@ -224,6 +234,55 @@ def maj_memoire(c: Path, texte: str = "Travail en cours sur l'essai."):
 # --------------------------------------------------------------------------
 # Les défauts du cadrage, puis quelques autres
 # --------------------------------------------------------------------------
+
+DEMANDE_BONNE = """<!-- socle: couche=demandes zone=publique -->
+# D-0001 — Faut-il refondre le module de calcul avant d'ajouter la fonction triple ?
+
+> date : 2026-10-10
+
+## Décision demandée
+
+Refondre le module de calcul avant d'y ajouter la fonction triple, ou ajouter
+la fonction telle quelle.
+
+## Contexte
+
+Le backlog demande une fonction triple dans le module de calcul. Le module ne
+contient aujourd'hui qu'une fonction, double, qui multiplie son argument par
+une constante du module. Ajouter triple sur le même modèle dupliquerait cette
+logique ; une refonte introduirait une fonction générique qui multiplie par
+un facteur donné, dont double et triple deviendraient deux cas. La refonte
+touche une fonction publique, donc tout appelant existant.
+
+## Éléments cités
+
+- B-0001 — le sujet du backlog qui demande d'ajouter une fonction triple au module.
+
+## Où regarder
+
+- Le module : [calc.py](../../calc.py), fonction `double` ; ce qu'il faut voir : qu'elle est seule et publique.
+
+## Options
+
+Refondre : effort d'une heure, risque faible sur les appelants, réversible.
+Ajouter tel quel : effort de dix minutes, risque nul, réversible.
+
+## Conséquences
+
+Si tu valides, je refonds puis j'ajoute ; si tu refuses, j'ajoute tel quel ;
+sans réponse, j'ajoute tel quel et je note la refonte au backlog.
+
+## Recommandation
+
+Ajouter tel quel. Vérifié : un seul appelant. Supposé : que d'autres
+facteurs ne viendront pas.
+
+## Réponses possibles
+
+- `valider` — je refonds d'abord.
+- `refuser` — j'ajoute tel quel.
+- `contexte-insuffisant` — je réécris la demande.
+"""
 
 DEMANDE_NUE = """<!-- socle: couche=demandes zone=publique -->
 # D-0001 — Valider le refactor du module de calcul
@@ -337,6 +396,11 @@ def _cas() -> list[Cas]:
     def _(a, c):
         return etage_outil(a, c, "Write", {"file_path": str(c / "memoire/demandes/D-0001-refactor.md"), "content": DEMANDE_NUE})
 
+    @defaut("demande-sans-lien", "demande qui ne dit pas où regarder", "agent", "où regarder")
+    def _(a, c):
+        sans = DEMANDE_BONNE.replace("[calc.py](../../calc.py)", "le module")
+        return etage_outil(a, c, "Write", {"file_path": str(c / "memoire/demandes/D-0001-refactor.md"), "content": sans})
+
     @defaut("budget-depasse", "couche de mémoire au-delà de son budget", "git", "memoire.budgets")
     def _(a, c):
         ajouter(c, "memoire/actif.md", "\n" + ("Une ligne de remplissage pour dépasser le budget. " * 200) + "\n")
@@ -399,10 +463,15 @@ def _cas() -> list[Cas]:
     def _(a, c):
         return etage_outil(a, c, "Write", {"file_path": str(c / "memoire/demandes/D-0001-x.reponse.toml"), "content": 'reponse = "valider"\n'})
 
-    @defaut("agent-repond", "l'agent lance `socle answer`", "agent", "commande humaine")
+    @defaut("agent-repond", "l'agent répond à la place de l'humain", "agent", "commande humaine")
     def _(a, c):
         lanceur = ".socle/" + "socle"  # en deux morceaux : ce fichier n'est pas une invocation
         return etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} answer D-0001 valider"})
+
+    @defaut("relais-sans-citation", "réponse relayée sans le texte exact de l'humain", "agent", "commande humaine")
+    def _(a, c):
+        lanceur = ".socle/" + "socle"
+        return etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} answer D-0001 valider --relayed --by Théo"})
 
     @defaut("copie", "paragraphe copié dans deux fichiers", "git", "docs.copie")
     def _(a, c):
@@ -417,6 +486,11 @@ def _cas() -> list[Cas]:
     def _(a, c):
         ajouter(c, ".github/workflows/nuit.yml", "name: Nuit\non: [push]\njobs: {}\n")
         return etage_git(a, c)
+
+    @defaut("fin-sans-recap", "fin d'intervention sans dire ce qui revient à l'humain", "agent", "récap")
+    def _(a, c):
+        maj_memoire(c, "Travail du tour.")
+        return etage_stop(a, c, "J'ai mis à jour le chantier actif. Tout passe.")
 
     @defaut("memoire-en-retard", "code changé sans mise à jour de la mémoire", "agent", "memoire.retard")
     def _(a, c):
@@ -479,10 +553,33 @@ def _temoins() -> list[tuple[str, Callable]]:
 
     @temoin("une demande complète passe le hook de l'agent")
     def _(a, c):
-        bonne = DEMANDE_NUE.replace("Je propose un refactor du code évoqué en B-0001, tu valides ?",
-                                    "Faut-il refondre le module de calcul avant d'ajouter la fonction triple ?")
-        bonne = bonne.replace("Voir le backlog.", "- B-0001 — le sujet du backlog qui demande d'ajouter une fonction triple au module.")
-        return etage_outil(a, c, "Write", {"file_path": str(c / "memoire/demandes/D-0001-refactor.md"), "content": bonne})
+        return etage_outil(a, c, "Write", {"file_path": str(c / "memoire/demandes/D-0001-refactor.md"), "content": DEMANDE_BONNE})
+
+    @temoin("une réponse donnée dans la conversation, relayée avec sa citation, passe le hook et la CI")
+    def _(a, c):
+        (c / "memoire/demandes/D-0001-refactor.md").write_text(DEMANDE_BONNE)
+        (c / "citation.txt").write_text("ok, refonds d'abord")
+        lanceur = ".socle/" + "socle"
+        commande = f"python3 {lanceur} answer D-0001 valider --relayed --by Théo --quote-file citation.txt"
+        refus = etage_outil(a, c, "Bash", {"command": commande})
+        if refus:
+            return refus
+        r = a.socle(c, "answer", "D-0001", "valider", "--relayed", "--by", "Théo", "--quote-file", "citation.txt")
+        (c / "citation.txt").unlink()
+        if r.returncode != 0:
+            return r.stdout + r.stderr
+        maj_memoire(c, "Refonte validée dans la conversation.")
+        return etage_ci(a, c)
+
+    @temoin("une fin d'intervention avec sa ligne « Pour toi : » passe le hook de fin de tour")
+    def _(a, c):
+        maj_memoire(c, "Travail du tour.")
+        return etage_stop(a, c, "J'ai mis à jour le chantier actif. Tout passe.\n\nPour toi : rien.")
+
+    @temoin("une fin de tour sans travail n'exige pas de récap")
+    def _(a, c):
+        etage_stop(a, c, "Pour toi : rien.")  # retient l'état de l'arbre
+        return etage_stop(a, c, "Réponse à une question, sans rien changer.")
 
     @temoin("une tautologie voulue, raison écrite, passe le commit")
     def _(a, c):
@@ -562,7 +659,9 @@ RAISONS_AGENT = {
     "anti-fabrication": "SHA fabriqué",
     "politique point 4": "politique, point 4",
     "fichier protégé": "est protégé par la politique",
-    "commande humaine": "réservés à l'humain",
+    "commande humaine": "ne répond jamais à la place de l'humain",
+    "où regarder": "« Où regarder » doit donner un lien",
+    "récap": "« Pour toi : »",
 }
 
 
