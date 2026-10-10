@@ -13,6 +13,7 @@ n'a pas tourné : il casse, il ne passe pas pour une couverture parfaite.
 
 from __future__ import annotations
 
+import re
 from collections import Counter
 from pathlib import Path
 
@@ -37,22 +38,33 @@ def lire_cargo_mutants(dossier: Path) -> dict[str, Counter]:
     return res
 
 
+# Ce que mutmut prouve d'un mutant. Un statut absent d'ici ne prouve pas le
+# mutant attrapé (`not checked`, un balayage interrompu, un statut nouveau) :
+# il compte comme survivant, et casse au lieu de passer.
+STATUTS_MUTMUT = {"killed": "attrapes", "caught by type check": "attrapes", "timeout": "expires",
+                  "suspicious": "expires", "segfault": "expires", "skipped": "inviables"}
+NOM_MUTMUT = re.compile(r"^(?P<module>[\w.]+?)\.x[_ǁ].*__mutmut_\d+$")
+
+
 def lire_mutmut(dossier: Path) -> dict[str, Counter]:
-    """`mutmut results` redirigé dans `mutmut-results.txt` : une ligne par
-    mutant, `module.chemin.x_nom__mutmut_N: statut`."""
+    """La sortie de `mutmut results --all true` redirigée dans
+    `mutmut-results.txt` (sans `--all`, les mutants attrapés manquent, et un
+    module tout attrapé passerait pour jamais balayé) : une ligne par mutant,
+    `paquet.module.x_fonction__mutmut_N: statut`, ou `xǁClasseǁméthode` pour
+    une méthode. Le nom ne dit pas où vit le fichier : le mutant compte pour
+    chaque chemin possible (module, `__init__.py` d'un paquet, sous `src/`),
+    et le verdict ne lit que celui du plafond."""
     res: dict[str, Counter] = {}
-    correspondance = {"survived": "survivants", "killed": "attrapes", "timeout": "expires",
-                      "suspicious": "expires", "no tests": "survivants", "skipped": "inviables"}
     for f in sorted(dossier.rglob("mutmut-results.txt")):
         for ligne in f.read_text(encoding="utf-8", errors="replace").splitlines():
-            if ":" not in ligne:
+            nom, _, statut = ligne.rpartition(":")
+            m = NOM_MUTMUT.match(nom.strip())
+            if not m:
                 continue
-            nom, statut = ligne.rsplit(":", 1)
-            issue = correspondance.get(statut.strip())
-            if issue is None:
-                continue
-            module = nom.strip().split(".x_")[0].replace(".", "/") + ".py"
-            res.setdefault(module, Counter())[issue] += 1
+            issue = STATUTS_MUTMUT.get(statut.strip(), "survivants")
+            chemin = m["module"].replace(".", "/")
+            for module in (f"{chemin}.py", f"{chemin}/__init__.py", f"src/{chemin}.py", f"src/{chemin}/__init__.py"):
+                res.setdefault(module, Counter())[issue] += 1
     return res
 
 
