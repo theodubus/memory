@@ -21,7 +21,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from socle import config, demandes, memoire, outils
+from socle import config, demandes, liens, memoire, outils
 
 # Les lignes qu'un récap de fin d'intervention doit contenir : ce qui revient
 # à l'humain, puis la suite (ADR-0007, complété par ADR-0009).
@@ -35,6 +35,7 @@ MARQUEURS_RECAP = {
 class Element:
     genre: str  # « décision » ou « action »
     quoi: str
+    lien: str = ""  # où l'humain le lit, quand c'est un fichier poussé
 
 
 def branches_a_supprimer(projet: config.Projet) -> list[str]:
@@ -63,7 +64,8 @@ def a_faire(projet: config.Projet) -> list[Element]:
     res = []
     for d in demandes.toutes(projet.racine):
         if d.reponse is None and d.statut == "en attente" and d.entree:
-            res.append(Element("décision", f"{d.id} — {d.entree.titre}"))
+            url, _ = liens.lien(projet, d.chemin)
+            res.append(Element("décision", f"{d.id} — {d.entree.titre}", url or "(pas encore poussée : pas de lien)"))
     mem = memoire.Memoire.charger(projet.racine)
     for e in mem.entrees("B"):
         if e.archivee or e.statut in memoire.BACKLOG_CLOS:
@@ -81,6 +83,8 @@ def texte(elements: list[Element]) -> list[str]:
     lignes = [f"ce qui revient à l'humain : {len(elements)}"]
     for e in elements:
         lignes.append(f"  {e.genre} : {e.quoi}")
+        if e.lien:
+            lignes.append(f"    {e.lien}")
     return lignes
 
 

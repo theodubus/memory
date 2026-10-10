@@ -20,7 +20,7 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 
 | Module | Rôle |
 | --- | --- |
-| `cli.py` | les commandes : `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `answer`, `approve`, `install`, `selftest`, `fingerprint`, `mutation-verdict`, `archive`, `checks` |
+| `cli.py` | les commandes : `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `answer`, `approve`, `install`, `selftest`, `fingerprint`, `mutation-verdict`, `archive`, `checks` |
 | `memoire.py` | lecture des cinq couches : en-têtes, entrées, identifiants, métadonnées, références |
 | `demandes.py` | le contrat des demandes, son lint, les réponses humaines gelées |
 | `contexte.py` | le registre des contrôles, leurs étages, la base de comparaison, le mode adoption |
@@ -32,12 +32,13 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 | `hooks.py` | les points d'entrée des hooks de l'agent et de git, la trace |
 | `etat.py` | l'état dérivé |
 | `humain.py` | ce qui revient à l'humain, et la lecture du dernier message de l'agent pour le récap |
+| `liens.py` | le permalien d'un fichier ou d'une entrée ; les liens d'un message que l'humain ne pourra pas suivre |
 | `verification.py` | le contrat `verify` : les capacités de l'adaptateur |
 | `mutation.py` | le verdict de mutation contre les plafonds |
 | `empreinte.py` | l'empreinte du moteur |
 | `installeur.py` | installation, mise à jour, adoption |
 | `autotest.py` | l'injection de défauts dans un projet jetable |
-| `adaptateurs/` | Rust (extrait de chess) et Python, maintenus |
+| `adaptateurs/` | Rust (extrait de chess) et Python, maintenus ; ce qu'est un adaptateur : `moteur/socle/adaptateurs/README.md` |
 | `modeles/` | les gabarits posés par l'installeur |
 
 ## Exigences du cadrage et contrôles qui les appliquent
@@ -73,6 +74,7 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 | Échec répété : arrêt et escalade | hook `stop`, `max_attempts` de la politique | agent |
 | État dérivé au démarrage et après compactage, avec l'index des décisions | `socle state`, hook `session-start` ; `socle show <ID>` pour lire une entrée à la demande | agent |
 | Ce qui revient à l'humain et la suite, dits à chaque fin d'intervention qui a agi (lignes « Pour toi : » et « Ensuite : ») | `humain.py` (demandes en attente, backlog `pour : humain`, branches distantes supprimables, prochaines étapes du chantier actif), hook `stop` | agent |
+| Des liens que l'humain peut suivre : permaliens au commit poussé, aucun lien relatif ni chemin inexistant, chaque demande en attente avec son lien | `liens.py`, `socle url`, hook `stop` | agent |
 | Lire avant de décider, prouvé par l'empreinte de la version lue | `memoire.lectures` ; hook `pre-tool-use` (empreinte périmée ou inventée) ; `socle show`, `socle new` | agent, git, CI |
 | Auto-tests par injection de défauts | `socle selftest`, dans `socle ci` | CI |
 
@@ -96,6 +98,9 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
   dans cette version ; une décision, une demande ou un sujet de backlog
   nouveaux doivent le faire. La preuve porte sur l'accès au texte, pas sur
   sa compréhension.
+- **Les liens donnés à l'humain sont des permaliens** (`ADR-0010`) : au
+  commit poussé, pas à la branche, qui disparaît à la fusion ; vérifiés par
+  le hook de fin de tour, que l'agent ait agi ou non.
 - **Mode adoption** : à l'installation sur un projet existant, les budgets
   sont fixés au niveau actuel et les contrôles en échec passent en
   avertissement (`[adoption] warn_only`), liste dont on ne retire que pour

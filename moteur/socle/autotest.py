@@ -139,6 +139,10 @@ class Atelier:
         ident = journal.read_text().split("## ", 2)[1].split(" ", 1)[0]
         self._ajouter(origine / "memoire/canonique.md", CANONIQUE_ESSAI)
         self._ajouter(origine / "memoire/backlog.md", BACKLOG_ESSAI.format(journal=ident))
+        # L'origine est un dossier local : l'adresse web où l'humain lirait
+        # se règle dans la politique, comme pour un relais.
+        pol = origine / ".socle/politique.toml"
+        pol.write_text(pol.read_text().replace("[human]\n", f'[human]\nrepo_url = "{DEPOT_ESSAI}"\n', 1))
         self.journal = ident
         self.git(origine, "add", "-A")
         r = self.run(origine, "git", "commit", "-q", "-m", "Projet d'essai")
@@ -256,6 +260,20 @@ Le fait {fait} établit que `double` multiplie par une constante.
 
 Toute nouvelle multiplication passe par la même constante.
 """
+
+
+DEPOT_ESSAI = "https://github.com/essai/calc"
+RECAP = "\n\nPour toi : rien.\nEnsuite : rien."
+
+
+def pousser(a: Atelier, c: Path, message: str = "essai"):
+    """Commit et push de la branche de travail vers l'origine d'essai, sous
+    le nom du clone : les cas partagent la même origine."""
+    if a.run(c, "git", "status", "--porcelain").stdout.strip():
+        r = a.commit(c, message)
+        if r.returncode != 0:
+            raise RuntimeError(r.stderr)
+    a.git(c, "push", "-q", "--no-verify", "-u", "origin", f"travail:{c.name}")
 
 
 def maj_memoire(c: Path, texte: str = "Travail en cours sur l'essai."):
@@ -528,6 +546,28 @@ def _cas() -> list[Cas]:
         maj_memoire(c, "Travail du tour.")
         return etage_stop(a, c, "J'ai mis à jour le chantier actif.\n\nPour toi : rien.")
 
+    @defaut("chemin-inexistant", "chemin donné à l'humain qui n'existe pas dans le dépôt", "agent", "liens")
+    def _(a, c):
+        maj_memoire(c, "Travail du tour.")
+        return etage_stop(a, c, "La doc est dans `docs/calcul.md`." + RECAP)
+
+    @defaut("lien-relatif", "lien relatif, que l'humain ne peut pas suivre hors du conteneur", "agent", "liens")
+    def _(a, c):
+        return etage_stop(a, c, "Voir [la doc](docs/calc.md)." + RECAP)
+
+    @defaut("lien-non-pousse", "permalien vers un fichier absent de la version poussée", "agent", "liens")
+    def _(a, c):
+        ajouter(c, "docs/nouveau.md", "# Nouveau\n")
+        sha = a.git(c, "rev-parse", "origin/main").strip()
+        return etage_stop(a, c, f"Voir [la doc]({DEPOT_ESSAI}/blob/{sha}/docs/nouveau.md)." + RECAP)
+
+    @defaut("demande-sans-lien", "demande en attente citée sans son lien", "agent", "lien de demande")
+    def _(a, c):
+        (c / "memoire/demandes/D-0001-refactor.md").write_text(demande_bonne(a, c))
+        maj_memoire(c, "Demande D-0001 posée.")
+        pousser(a, c)
+        return etage_stop(a, c, "J'ai posé la demande D-0001.\n\nPour toi : répondre à D-0001.\nEnsuite : rien.")
+
     @defaut("decision-sans-lecture", "décision ajoutée sans avoir consulté l'index des décisions", "git", "memoire.lectures")
     def _(a, c):
         f1 = f"F-0001@{empreinte(a, c, 'F-0001')}"
@@ -640,6 +680,17 @@ def _temoins() -> list[tuple[str, Callable]]:
         maj_memoire(c, "Travail du tour.")
         return etage_stop(a, c, "J'ai mis à jour le chantier actif. Tout passe.\n\nPour toi : rien.\n"
                           "Ensuite : le sujet suivant du backlog.")
+
+    @temoin("des liens que l'humain peut suivre passent le hook de fin de tour")
+    def _(a, c):
+        (c / "memoire/demandes/D-0001-refactor.md").write_text(demande_bonne(a, c))
+        maj_memoire(c, "Demande D-0001 posée.")
+        pousser(a, c)
+        r = a.socle(c, "url", "D-0001", "docs/calc.md")
+        if r.returncode != 0:
+            return r.stdout + r.stderr
+        return etage_stop(a, c, "J'ai posé la demande D-0001, sur le module `calc.py` et sa doc `docs/calc.md`.\n\n"
+                          + r.stdout + "\nPour toi : répondre à D-0001.\nEnsuite : rien.")
 
     @temoin("une fin de tour sans travail n'exige pas de récap")
     def _(a, c):
@@ -763,6 +814,8 @@ RAISONS_AGENT = {
     "où regarder": "« Où regarder » doit donner un lien",
     "récap": "pas Pour toi :",
     "suite": "pas Ensuite :",
+    "liens": "liens que l'humain ne pourra pas suivre",
+    "lien de demande": "sans son lien",
 }
 
 

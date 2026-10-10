@@ -54,6 +54,10 @@ claude_code = true
 markers = ['(?im)^co-authored-by:.*\bclaude\b', '(?im)^socle-agent:']
 
 [human]
+# L'adresse web du dépôt, pour les permaliens donnés à l'humain (`socle url`).
+# Absente, elle se déduit du dépôt `origin` ; à régler quand `origin` est un
+# relais ou un dossier local.
+# repo_url = "https://github.com/organisation/projet"
 # Branches distantes jamais proposées à la suppression, même contenues dans la
 # branche par défaut (celles d'un autre agent, par exemple).
 keep_branches = []

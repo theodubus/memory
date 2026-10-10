@@ -407,9 +407,11 @@ def _appels_externes(racine: Path, session: str) -> bool:
 
 
 def exiger_recap(projet: config.Projet, entree: dict) -> int:
-    """Un tour où l'agent a agi se termine par un récap et une ligne
-    `Pour toi :` — ce qui revient à l'humain, ou « rien » (ADR-0007)."""
-    from socle import humain
+    """Un tour où l'agent a agi se termine par un récap et deux lignes,
+    `Pour toi :` et `Ensuite :` (ADR-0007, ADR-0009). Tout dernier message,
+    qu'il ait agi ou non, ne donne que des liens que l'humain peut suivre
+    (ADR-0010)."""
+    from socle import humain, liens
 
     racine = projet.racine
     fichier = racine / ".socle/trace/derniere-fin-de-tour"
@@ -421,35 +423,52 @@ def exiger_recap(projet: config.Projet, entree: dict) -> int:
         fichier.parent.mkdir(parents=True, exist_ok=True)
         fichier.write_text(marque)
 
-    if not a_agi:
-        return 0
     chemin = entree.get("transcript_path")
     message = humain.dernier_message(Path(chemin)) if chemin else None
     if message is None:
-        retenir()
-        print(json.dumps({"systemMessage": "récap de fin d'intervention non vérifiable : transcript illisible"},
-                         ensure_ascii=False))
+        if a_agi:
+            retenir()
+            print(json.dumps({"systemMessage": "récap de fin d'intervention non vérifiable : transcript illisible"},
+                             ensure_ascii=False))
         return 0
-    manque = humain.recap_manquant(projet, message)
-    if not manque:
-        retenir()
+    manque = humain.recap_manquant(projet, message) if a_agi else []
+    morts, sans_lien = liens.problemes(projet, message)
+    if not (manque or morts or sans_lien):
+        if a_agi:
+            retenir()
         return 0
     if entree.get("stop_hook_active"):
-        retenir()
-        print(json.dumps({"systemMessage": f"fin d'intervention sans {' ni '.join(manque)}, malgré un rappel"},
+        if a_agi:
+            retenir()
+        defauts = ([f"sans {' ni '.join(manque)}"] if manque else []) + (
+            [f"{len(morts) + len(sans_lien)} lien(s) que l'humain ne pourra pas suivre"] if morts or sans_lien else [])
+        print(json.dumps({"systemMessage": f"fin d'intervention {', '.join(defauts)}, malgré un rappel"},
                          ensure_ascii=False))
         return 0
-    liste = "\n".join(humain.texte(humain.a_faire(projet)))
-    suite = humain.prochaines_etapes(projet) or "(le chantier actif n'a pas de section « Prochaines étapes »)"
-    print(json.dumps({"decision": "block", "reason": (
-        f"Tu as agi pendant ce tour, et ton dernier message n'a pas {' ni '.join(manque)}. Termine par un récap "
-        "de ce qui a été fait, puis :\n"
-        "- « Pour toi : » ce qui revient à l'humain — décisions, actions qu'il est seul à pouvoir faire — ou « rien » ;\n"
-        "- « Ensuite : » la suite proposée (prochain jalon, ce qu'il reste à faire avant), et ce que tu attends, "
-        "s'il y a lieu (une CI, un match : quoi, et jusqu'à quand).\n\n"
-        "Ce qui revient à l'humain, calculé maintenant :\n" + liste
-        + "\n\nProchaines étapes, selon le chantier actif :\n" + suite
-    )}, ensure_ascii=False))
+    raisons = []
+    if manque:
+        liste = "\n".join(humain.texte(humain.a_faire(projet)))
+        suite = humain.prochaines_etapes(projet) or "(le chantier actif n'a pas de section « Prochaines étapes »)"
+        raisons.append(
+            f"Tu as agi pendant ce tour, et ton dernier message n'a pas {' ni '.join(manque)}. Termine par un récap "
+            "de ce qui a été fait, puis :\n"
+            "- « Pour toi : » ce qui revient à l'humain — décisions, actions qu'il est seul à pouvoir faire — ou « rien » ;\n"
+            "- « Ensuite : » la suite proposée (prochain jalon, ce qu'il reste à faire avant), et ce que tu attends, "
+            "s'il y a lieu (une CI, un match : quoi, et jusqu'à quand).\n\n"
+            "Ce qui revient à l'humain, calculé maintenant :\n" + liste
+            + "\n\nProchaines étapes, selon le chantier actif :\n" + suite)
+    if morts:
+        raisons.append(
+            "Ton dernier message contient des liens que l'humain ne pourra pas suivre : il lit dans la conversation "
+            "ou sur GitHub, pas dans ton conteneur.\n" + "\n".join(f"- {m}" for m in morts)
+            + "\nDonne un fichier par son permalien (`socle url <chemin|ID>`, après le push) ; n'écris entre accents "
+            "graves que des chemins qui existent dans ce dépôt, et ceux d'un autre dépôt sous la forme `depot:chemin`.")
+    if sans_lien:
+        raisons.append(
+            f"Ton dernier message cite {', '.join(sans_lien)}, en attente de l'humain, sans son lien : "
+            "il doit pouvoir l'ouvrir d'un clic. Ajoute la sortie de `socle url "
+            + " ".join(sans_lien) + "`.")
+    print(json.dumps({"decision": "block", "reason": "\n\n".join(raisons)}, ensure_ascii=False))
     return 0
 
 

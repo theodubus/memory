@@ -206,6 +206,24 @@ def cmd_show(args) -> int:
     return code
 
 
+def cmd_url(args) -> int:
+    """Le permalien d'un fichier ou d'une entrée, à donner à l'humain : il
+    lit sur GitHub, pas dans le conteneur de l'agent (ADR-0010)."""
+    from socle import liens
+
+    projet = _projet(args)
+    code = 0
+    for cible in args.cibles:
+        url, avertissement = liens.lien(projet, cible)
+        if avertissement:
+            print(f"{cible} : {avertissement}", file=sys.stderr)
+        if url is None:
+            code = 1
+            continue
+        print(f"[{cible}]({url})")
+    return code
+
+
 def _afficher_index(mem, index: str):
     from socle import memoire
 
@@ -382,6 +400,10 @@ def main(argv=None) -> int:
     s.add_argument("ids", nargs="*")
     s.add_argument("--index", choices=("decisions", "backlog"), help="l'index des décisions ou du backlog ouvert")
     s.set_defaults(f=cmd_show)
+
+    s = sp.add_parser("url", help="le permalien d'un fichier ou d'une entrée, à donner à l'humain")
+    s.add_argument("cibles", nargs="+", metavar="chemin|ID")
+    s.set_defaults(f=cmd_url)
 
     s = sp.add_parser("answer", help="répondre à une demande, ou relayer la réponse donnée dans la conversation")
     s.add_argument("request")
