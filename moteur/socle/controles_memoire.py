@@ -304,13 +304,35 @@ def lectures(ctx, r):
     mem, base = ctx.memoire, ctx.memoire_base
     defs = mem.definitions()
     nouveaux = set(defs) - set(base.definitions())
+    # Une citation vaut pour la version qu'elle a lue : celle d'un commit de
+    # la plage suffit, même si l'entrée a changé depuis (une demande répondue
+    # est gelée, et ne peut plus suivre). Calculé seulement au besoin.
+    historique: list[memoire.Memoire] = []
+
+    def versions() -> list[memoire.Memoire]:
+        if not historique:
+            historique.append(base)
+            historique.extend(memoire.Memoire.charger(ctx.racine, c["sha"]) for c in ctx.commits)
+        return historique
+
+    def lue_dans_la_plage(ident: str, h: str) -> bool:
+        return any((e := m.entree(ident)) is not None and memoire.empreinte_entree(e) == h for m in versions())
+
+    def index_de_la_plage(index: str, soi) -> set[str]:
+        res = set()
+        for m in versions():
+            apres_m = {n for n in m.definitions() if soi and m.definitions()[n][0].type == soi.type and n > soi.id}
+            res |= {memoire.empreinte_index(m, index, {soi.id} if soi else set()),
+                    memoire.empreinte_index(m, index, ({soi.id} if soi else set()) | apres_m)}
+        return res
+
     for chemin, texte in sorted(textes_scannes(ctx).items()):
         avant = ctx.lire_base(chemin) or ""
         deja = {(i, h) for i, h, _ in memoire.citations(avant)}
         for ident, h, ligne in memoire.citations(texte):
             if (ident, h) in deja or ident not in defs:
                 continue
-            if memoire.empreinte_entree(defs[ident][0]) != h:
+            if memoire.empreinte_entree(defs[ident][0]) != h and not lue_dans_la_plage(ident, h):
                 r.erreur("memoire.lectures", f"`{ident}@{h}` ne correspond pas à la version actuelle de {ident} "
                          f"(lue avant un changement, ou inventée) : la relire, `python3 .socle/socle show {ident}`, "
                          "et citer l'empreinte affichée", chemin, ligne)
@@ -329,7 +351,7 @@ def lectures(ctx, r):
                 memoire.empreinte_index(mem, index, sauf | nouveaux),
                 memoire.empreinte_index(base, index),
             }
-            if h not in permises:
+            if h not in permises and h not in index_de_la_plage(index, soi):
                 r.erreur("memoire.lectures", f"`{index}@{h}` ne correspond à aucune version récente de l'index : "
                          f"le relire, `python3 .socle/socle show --index {index}`, et citer l'empreinte affichée",
                          chemin, ligne)

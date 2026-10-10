@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -60,3 +61,53 @@ class TestLecturesSuccessives(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestCitationsDeLaPlage(unittest.TestCase):
+    """Une citation écrite plus tôt sur la branche vaut pour la version
+    qu'elle a lue, même si l'entrée citée change ensuite : une demande
+    répondue est gelée et ne pourrait pas suivre."""
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-plage-"))
+        git(self.racine, "init", "-q", "-b", "main")
+        (self.racine / "memoire/decisions").mkdir(parents=True)
+        (self.racine / "memoire/backlog.md").write_text(
+            "<!-- socle: couche=backlog zone=publique -->\n# Backlog\n\n"
+            "## B-0001 — Un sujet\n\n> statut : ouvert · origine : fichier:memoire/backlog.md\n")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "base")
+        self.base = git(self.racine, "rev-parse", "HEAD").strip()
+        mem = memoire.Memoire.charger(self.racine)
+        b1 = memoire.empreinte_entree(mem.entree("B-0001"))
+        lu = memoire.empreinte_index(mem, "decisions")
+        (self.racine / "memoire/decisions/ADR-0001-une.md").write_text(
+            adr(1, f" · lu : decisions@{lu}").replace("La décision 1.", f"Elle s'appuie sur B-0001@{b1}."))
+        backlog = self.racine / "memoire/backlog.md"
+        lu_b = memoire.empreinte_index(mem, "backlog")
+        backlog.write_text(backlog.read_text() + f"\n## B-0002 — Un autre\n\n> statut : ouvert · origine : fichier:memoire/backlog.md · lu : backlog@{lu_b}\n")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "décision et sujet")
+        # Ensuite, B-0001 se clôt : son texte et l'index du backlog changent.
+        backlog.write_text(backlog.read_text().replace("statut : ouvert · origine : fichier:memoire/backlog.md\n",
+                                                       "statut : fait · origine : fichier:memoire/backlog.md · ref : ADR-0001\n", 1))
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "clôture")
+
+    def tearDown(self):
+        shutil.rmtree(self.racine, ignore_errors=True)
+
+    def test_les_citations_restent_valides(self):
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="ci", base=self.base, tete=None)
+        r = Rapport()
+        controles_memoire.lectures(ctx, r)
+        self.assertEqual([c.message for c in r.erreurs()], [])
+
+    def test_une_empreinte_qui_n_a_jamais_existe_reste_refusee(self):
+        adr_ = self.racine / "memoire/decisions/ADR-0001-une.md"
+        adr_.write_text(re.sub(r"B-0001@[0-9a-f]{8}", "B-0001@0badc0de", adr_.read_text()))
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="ci", base=self.base, tete=None)
+        r = Rapport()
+        controles_memoire.lectures(ctx, r)
+        self.assertEqual(len(r.erreurs()), 1)
+        self.assertIn("B-0001@0badc0de", r.erreurs()[0].message)
