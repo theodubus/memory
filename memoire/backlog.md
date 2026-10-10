@@ -99,3 +99,13 @@ demande. Fréquence à décider (question ouverte du cadrage).
 `docs.valeurs` refuse une valeur marquée fausse, mais ne fait qu'avertir sur
 une copie non marquée de la valeur courante : elle pourrait être une
 coïncidence. Mesurer les faux positifs avant de durcir.
+
+## B-0013 — Répondre à une demande depuis GitHub, sans terminal
+
+> statut : ouvert · origine : J-2026-10-10-G
+
+Aujourd'hui, une réponse s'écrit par `socle answer` dans un clone : l'agent
+ne peut pas le faire à la place de l'humain (son hook le refuse, et une
+réponse écrite par lui ne prouverait rien). Pour qui travaille depuis
+l'application ou GitHub, un canal par revue de pull request ou commentaire,
+dont l'auteur est vérifié par la CI, éviterait le terminal.
