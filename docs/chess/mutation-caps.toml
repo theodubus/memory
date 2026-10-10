@@ -1,0 +1,17 @@
+# Plafonds de mutation PROPOSÉS pour chess, repris tels quels de
+# chess:.github/mutation-baseline.txt (mesurés, jamais estimés). Ils iraient
+# dans `[mutation.caps]` de .socle/garde-fous.toml à l'installation ; chaque
+# raison renvoie à la section « Pourquoi ces plafonds ne sont pas zéro » de ce
+# fichier, qui reste la source tant qu'elle n'est pas migrée.
+
+[mutation.caps]
+"engine/src/position.rs" = { max = 0 }
+"engine/src/uci.rs" = { max = 0 }
+"engine/src/tt.rs" = { max = 6, reason = "chess:.github/mutation-baseline.txt, tt.rs" }
+"engine/src/main.rs" = { max = 0 }
+"engine/src/perft.rs" = { max = 1, reason = "chess:.github/mutation-baseline.txt, perft.rs" }
+"engine/src/bench.rs" = { max = 2, reason = "chess:.github/mutation-baseline.txt, bench.rs" }
+"engine/src/see.rs" = { max = 2, reason = "chess:.github/mutation-baseline.txt, see.rs" }
+"engine/src/nnue.rs" = { max = 1, reason = "chess:.github/mutation-baseline.txt, nnue.rs" }
+"engine/src/search.rs" = { max = 47, reason = "valeurs et équivalents jugés par le SPRT — chess:.github/mutation-baseline.txt, search.rs" }
+"engine/src/eval.rs" = { max = 104, reason = "valeurs d'évaluation jugées par le SPRT — chess:.github/mutation-baseline.txt, eval.rs" }

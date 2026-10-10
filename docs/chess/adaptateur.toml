@@ -1,0 +1,126 @@
+# Adaptateur PROPOSÉ pour chess — à valider par Théo à l'installation.
+#
+# L'adaptateur Rust maintenu (moteur/socle/adaptateurs/rust.toml), plus les
+# étapes propres à chess, reprises une à une de chess:tools/verify.sh et de
+# chess:.github/workflows/ci.yml. Avec lui, `socle verify` exécute ce que la CI
+# de chess exécute (porte du jalon 3, voir docs/chess/README.md).
+
+language = "rust"
+name = "Rust (cargo) — chess"
+maintained = false
+sources = ["engine/src/**/*.rs", "tools/src/**/*.rs", "tools/nnue-train/src/**/*.rs"]
+
+ci_setup = """
+      - name: Toolchain Rust
+        run: |
+          rustup show active-toolchain
+          rustc --version && cargo --version
+"""
+
+[capabilities.format]
+command = "cargo fmt --all -- --check"
+fast = true
+
+[capabilities.lint]
+command = "cargo clippy --all-targets --all-features -- -D warnings"
+fast = true
+
+[capabilities.build]
+absent = "couverte par `lint` : clippy compile toutes les cibles, tests compris"
+replacement = "capacité `lint`"
+
+[capabilities.tests]
+command = "cargo test --workspace"
+fast = true
+
+[capabilities.mutation]
+# Comme chess:.github/workflows/mutation.yml : un fichier par job, `--profile
+# mutants` (release sans LTO), `tools/` exclu à dessein.
+tool = "cargo-mutants"
+command = "cargo mutants --file {module} --profile mutants -j 2"
+modules = ["engine/src/*.rs"]
+has_code = '\bfn\b'
+parser = "cargo-mutants"
+
+[capabilities.coverage]
+absent = "signal secondaire ; chess juge par la mutation et par le SPRT"
+replacement = "capacité `mutation`"
+
+[capabilities.regression]
+command = "cargo test --release {test_args}"
+test_arg = "--test {stem}"
+test_paths = ["engine/tests/*.rs"]
+
+[tests]
+paths = ["engine/tests/*.rs", "engine/src/**/*.rs", "tools/src/**/*.rs"]
+function = '^\s*(?:pub(?:\([^)]*\))?\s+)?(?:async\s+)?(?:unsafe\s+)?fn\s+(\w+)'
+attribute = '^\s*#\['
+comment = '^\s*//'
+marker_attribute = '#\[(?:\w+::)*test\b'
+block = "braces"
+assertion = '\b(?:assert|assert_eq|assert_ne|debug_assert\w*|panic|unreachable|assert_matches)!|#\[should_panic'
+ignore = '#\[ignore\b'
+ignore_reason = '#\[ignore\s*=\s*"[^"]{3,}"\s*\]'
+tautology = [
+  'assert(?:_eq)?!\(\s*([^,()]+(?:\([^()]*\))?)\s*(?:,|==)\s*\1\s*[,)]',
+  'assert!\(\s*true\s*\)',
+]
+
+# Étapes propres à chess, dans l'ordre de chess:tools/verify.sh.
+[[steps]]
+name = "verdict de mutation (auto-test)"
+command = ".github/mutation-verdict-test.sh"
+fast = true
+
+[[steps]]
+name = "références de mesure"
+command = "tools/ref-test.sh"
+fast = true
+
+[[steps]]
+name = "mise en commun"
+command = "tools/mettre-en-commun-test.sh"
+fast = true
+
+[[steps]]
+name = "paires"
+command = "tools/paires-test.sh"
+fast = true
+
+[[steps]]
+name = "plis appariés"
+command = "tools/plis-test.sh"
+fast = true
+
+[[steps]]
+name = "balayage vivant"
+command = "tools/balayage-vivant-test.sh"
+fast = true
+
+[[steps]]
+name = "état calculé, branches"
+command = "tools/etat-test.sh"
+fast = true
+
+[[steps]]
+name = "deux binaires, la comparaison"
+command = "tools/binaires-test.sh"
+fast = true
+
+[[steps]]
+name = "tests (release)"
+command = "cargo test --workspace --release"
+
+[[steps]]
+name = "critères d'acceptation"
+command = "cargo test --workspace --release -- --ignored"
+timeout = 5400
+
+[[steps]]
+name = "bench"
+command = "cargo run --release --bin shallowred -- bench 4"
+
+[[steps]]
+name = "deux binaires, le même arbre"
+command = "tools/binaires.sh dist"
+timeout = 5400
