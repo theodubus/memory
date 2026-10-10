@@ -70,3 +70,10 @@ Avancé à l'initialisation pour justifier le refus explicite du lanceur sous
 
 Hors les jobs multi-systèmes, le job indicatif de toolchain et le contrôle
 du balayage par l'API GitHub. 4 min 31 s dans le conteneur.
+
+## F-0009 — GitHub refuse de fusionner dans `main` une pull request dont la CI du socle échoue
+
+> statut : mesuré · preuve : J-2026-10-10-L · date : 2026-10-10
+
+Le check « Socle — verify, contrôles, auto-test » est requis sur `main`.
+Porte du jalon 5 franchie.
