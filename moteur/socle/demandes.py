@@ -39,7 +39,7 @@ RENVOI = "contexte-insuffisant"
 # d'autres (`requests.internal_id_patterns`), comme les codes de chantier.
 MOTIFS_INTERNES = [
     memoire.ID_RE.pattern,
-    r"(?<![\w/.-])(?=[0-9a-f]*[a-f])(?=[0-9a-f]*\d)[0-9a-f]{7,40}(?![\w-])",
+    r"(?<![\w/.@-])(?=[0-9a-f]*[a-f])(?=[0-9a-f]*\d)[0-9a-f]{7,40}(?![\w-])",  # pas une empreinte `ID@…`
     r"(?<![\w&])#\d+\b",
 ]
 MOTS_DESCRIPTION_MIN = 5

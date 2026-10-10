@@ -72,7 +72,8 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 | Anti-fabrication | hook `pre-tool-use` : SHA complété de tête, identifiant ou commit inventé | agent |
 | Échec répété : arrêt et escalade | hook `stop`, `max_attempts` de la politique | agent |
 | État dérivé au démarrage et après compactage, avec l'index des décisions | `socle state`, hook `session-start` ; `socle show <ID>` pour lire une entrée à la demande | agent |
-| Ce qui revient à l'humain, dit à chaque fin d'intervention qui a agi | `humain.py` (demandes en attente, backlog `pour : humain`, branches distantes supprimables), hook `stop` | agent |
+| Ce qui revient à l'humain et la suite, dits à chaque fin d'intervention qui a agi (lignes « Pour toi : » et « Ensuite : ») | `humain.py` (demandes en attente, backlog `pour : humain`, branches distantes supprimables, prochaines étapes du chantier actif), hook `stop` | agent |
+| Lire avant de décider, prouvé par l'empreinte de la version lue | `memoire.lectures` ; hook `pre-tool-use` (empreinte périmée ou inventée) ; `socle show`, `socle new` | agent, git, CI |
 | Auto-tests par injection de défauts | `socle selftest`, dans `socle ci` | CI |
 
 ## Les choix qui ne sont pas dans le cadrage
@@ -87,6 +88,10 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
   clé : plus bas est plus strict pour un budget, plus long pour une
   couverture, plus court pour une liste d'exclusions. Une clé inconnue qui
   change est un assouplissement jusqu'à preuve du contraire.
+- **Lecture prouvée** (`ADR-0008`) : une entrée citée `ID@empreinte` l'a été
+  dans cette version ; une décision, une demande ou un sujet de backlog
+  nouveaux doivent le faire. La preuve porte sur l'accès au texte, pas sur
+  sa compréhension.
 - **Mode adoption** : à l'installation sur un projet existant, les budgets
   sont fixés au niveau actuel et les contrôles en échec passent en
   avertissement (`[adoption] warn_only`), liste dont on ne retire que pour

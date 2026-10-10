@@ -183,6 +183,27 @@ L'état de la demande se dérive de la réponse : en attente, répondue, renvoy�
 (`contexte-insuffisant` : l'agent la réécrit en une nouvelle demande),
 retirée (métadonnée `retirée : <raison>`). Une demande répondue est gelée.
 
+## Lecture prouvée
+
+Chaque entrée a une empreinte, les huit premiers caractères du SHA-256 de
+son texte ; chaque index aussi (`decisions@…` pour toutes les décisions,
+`backlog@…` pour le backlog ouvert). `socle show <ID>` et
+`socle show --index decisions|backlog` les impriment avec le texte.
+
+Citer `ADR-NNNN@xxxxxxxx`, c'est montrer qu'on a lu cette version-là. Une
+citation ajoutée doit désigner la version actuelle de l'entrée, ou de l'index
+tel qu'il était au début du travail ; sinon elle est périmée ou inventée, et
+refusée. Elle est obligatoire :
+
+- dans une décision nouvelle : `lu : decisions@…`, et chaque entrée citée
+  avec son empreinte ;
+- dans une demande nouvelle : chaque entrée citée avec son empreinte ;
+- dans un sujet de backlog nouveau : `lu : backlog@…`.
+
+`socle new adr` et `socle new backlog` affichent l'index concerné et posent
+son empreinte dans le squelette. Une citation ancienne n'est pas revérifiée
+quand l'entrée change ensuite : elle dit ce qui a été lu à l'époque.
+
 ## Ordre d'autorité
 
 En cas de conflit : le code et les tests, puis la mémoire canonique, puis le

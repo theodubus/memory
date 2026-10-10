@@ -23,7 +23,12 @@ from pathlib import Path
 
 from socle import config, demandes, memoire, outils
 
-MARQUEUR_RECAP = r"(?im)^[\W_]*pour toi\s*:"
+# Les lignes qu'un récap de fin d'intervention doit contenir : ce qui revient
+# à l'humain, puis la suite (ADR-0007, complété par ADR-0009).
+MARQUEURS_RECAP = {
+    "Pour toi :": r"(?im)^[\W_]*pour toi\s*:",
+    "Ensuite :": r"(?im)^[\W_]*ensuite\s*:",
+}
 
 
 @dataclass
@@ -104,6 +109,14 @@ def dernier_message(transcript: Path) -> str | None:
     return None
 
 
-def a_un_recap(projet: config.Projet, message: str) -> bool:
-    motif = projet.pol("human", "recap_marker", defaut=MARQUEUR_RECAP)
-    return bool(re.search(motif, message))
+def recap_manquant(projet: config.Projet, message: str) -> list[str]:
+    """Les lignes du récap absentes du message ; vide, le récap est complet."""
+    marqueurs = projet.pol("human", "recap_markers", defaut=MARQUEURS_RECAP)
+    return [nom for nom, motif in marqueurs.items() if not re.search(motif, message)]
+
+
+def prochaines_etapes(projet: config.Projet) -> str:
+    """La section « Prochaines étapes » du chantier actif, telle qu'écrite."""
+    texte = outils.lire_a(projet.racine, None, "memoire/actif.md") or ""
+    m = re.search(r"^##\s+Prochaines étapes\s*$(.*?)(?=^##\s|\Z)", texte, re.M | re.S)
+    return m.group(1).strip() if m else ""

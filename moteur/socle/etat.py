@@ -122,11 +122,14 @@ def _memoire(mem: memoire.Memoire, projet) -> list[str]:
     ]
     # L'index des décisions, que le cadrage prévoit : une ligne par décision
     # en vigueur, à lire en entier (`socle show ADR-NNNN`) avant d'en rouvrir une.
-    vigueur = [e for e in adrs if e.statut in ("acceptee", "proposee")]
-    if vigueur:
-        res.append("décisions en vigueur (lire par `python3 .socle/socle show ADR-NNNN`) :")
-        for e in vigueur:
-            res.append(f"  {e.id} — {e.titre}{' (proposée)' if e.statut == 'proposee' else ''}")
+    # Toutes, rejetées et remplacées comprises : on ne rouvre pas non plus une
+    # décision écartée. L'empreinte de l'index se cite dans une décision
+    # nouvelle (`lu : decisions@…`, ADR-0008).
+    lignes_index = memoire.lignes_index(mem, "decisions")
+    if lignes_index:
+        res.append(f"décisions, index decisions@{memoire.empreinte_index(mem, 'decisions')} "
+                   "(une en entier : `python3 .socle/socle show ADR-NNNN`) :")
+        res += [f"  {l}" for l in lignes_index]
     backlog = [e for e in mem.entrees("B") if not e.archivee]
     par = Counter(e.statut for e in backlog)
     res.append(

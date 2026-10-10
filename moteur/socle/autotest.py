@@ -15,6 +15,7 @@ comme dans la vraie vie : la base des contrôles est `origin/main`.
 from __future__ import annotations
 
 import json
+import re
 import os
 import shutil
 import subprocess
@@ -227,6 +228,36 @@ def remplacer(c: Path, rel: str, avant: str, apres: str):
     p.write_text(t.replace(avant, apres, 1))
 
 
+def empreinte(a: Atelier, c: Path, cible: str) -> str:
+    """L'empreinte d'une entrée ou d'un index, lue comme l'agent la lit :
+    dans la sortie de `socle show`."""
+    args = ["show", "--index", cible] if cible in ("decisions", "backlog") else ["show", cible]
+    sortie = a.socle(c, *args).stdout
+    m = re.search(rf"{re.escape(cible)}@([0-9a-f]{{8}})", sortie)
+    if not m:
+        raise RuntimeError(f"pas d'empreinte pour {cible} : {sortie[:200]}")
+    return m.group(1)
+
+
+def demande_bonne(a: Atelier, c: Path) -> str:
+    return DEMANDE_BONNE.replace("- B-0001 —", f"- B-0001@{empreinte(a, c, 'B-0001')} —")
+
+
+ADR_ESSAI = """<!-- socle: couche=decisions zone=publique -->
+# ADR-0001 — Garder une seule fonction de multiplication
+
+> statut : acceptée · date : 2026-10-10{lu}
+
+## Contexte
+
+Le fait {fait} établit que `double` multiplie par une constante.
+
+## Décision
+
+Toute nouvelle multiplication passe par la même constante.
+"""
+
+
 def maj_memoire(c: Path, texte: str = "Travail en cours sur l'essai."):
     remplacer(c, "memoire/actif.md", "## En cours\n\nRien pour l'instant.", f"## En cours\n\n{texte}")
 
@@ -398,7 +429,7 @@ def _cas() -> list[Cas]:
 
     @defaut("demande-sans-lien", "demande qui ne dit pas où regarder", "agent", "où regarder")
     def _(a, c):
-        sans = DEMANDE_BONNE.replace("[calc.py](../../calc.py)", "le module")
+        sans = demande_bonne(a, c).replace("[calc.py](../../calc.py)", "le module")
         return etage_outil(a, c, "Write", {"file_path": str(c / "memoire/demandes/D-0001-refactor.md"), "content": sans})
 
     @defaut("budget-depasse", "couche de mémoire au-delà de son budget", "git", "memoire.budgets")
@@ -492,6 +523,31 @@ def _cas() -> list[Cas]:
         maj_memoire(c, "Travail du tour.")
         return etage_stop(a, c, "J'ai mis à jour le chantier actif. Tout passe.")
 
+    @defaut("fin-sans-suite", "fin d'intervention qui ne dit pas la suite", "agent", "suite")
+    def _(a, c):
+        maj_memoire(c, "Travail du tour.")
+        return etage_stop(a, c, "J'ai mis à jour le chantier actif.\n\nPour toi : rien.")
+
+    @defaut("decision-sans-lecture", "décision ajoutée sans avoir consulté l'index des décisions", "git", "memoire.lectures")
+    def _(a, c):
+        f1 = f"F-0001@{empreinte(a, c, 'F-0001')}"
+        ajouter(c, "memoire/decisions/ADR-0001-une-seule-multiplication.md", ADR_ESSAI.format(lu="", fait=f1))
+        return etage_git(a, c)
+
+    @defaut("citation-perimee", "entrée citée dans une version qu'elle n'a plus", "git", "memoire.lectures")
+    def _(a, c):
+        perimee = empreinte(a, c, "F-0001")
+        remplacer(c, "memoire/canonique.md", "Le test unitaire l'établit.", "Le test unitaire l'établit, sur deux cas.")
+        ajouter(c, "memoire/journal/" + a.journal[2:9] + ".md",
+                f"\n## {a.journal[:-1]}B — Constat\n\nVoir F-0001@{perimee}.\n")
+        return etage_git(a, c)
+
+    @defaut("backlog-sans-lecture", "sujet ajouté au backlog sans l'avoir consulté", "git", "memoire.lectures")
+    def _(a, c):
+        ajouter(c, "memoire/backlog.md", "\n## B-0002 — Ajouter une fonction quadruple\n\n"
+                f"> statut : ouvert · origine : {a.journal}\n\nPour l'essai.\n")
+        return etage_git(a, c)
+
     @defaut("memoire-en-retard", "code changé sans mise à jour de la mémoire", "agent", "memoire.retard")
     def _(a, c):
         remplacer(c, "calc.py", "return FACTEUR * x", "return x * FACTEUR")
@@ -553,11 +609,11 @@ def _temoins() -> list[tuple[str, Callable]]:
 
     @temoin("une demande complète passe le hook de l'agent")
     def _(a, c):
-        return etage_outil(a, c, "Write", {"file_path": str(c / "memoire/demandes/D-0001-refactor.md"), "content": DEMANDE_BONNE})
+        return etage_outil(a, c, "Write", {"file_path": str(c / "memoire/demandes/D-0001-refactor.md"), "content": demande_bonne(a, c)})
 
     @temoin("une réponse donnée dans la conversation, relayée avec sa citation, passe le hook et la CI")
     def _(a, c):
-        (c / "memoire/demandes/D-0001-refactor.md").write_text(DEMANDE_BONNE)
+        (c / "memoire/demandes/D-0001-refactor.md").write_text(demande_bonne(a, c))
         (c / "citation.txt").write_text("ok, refonds d'abord")
         lanceur = ".socle/" + "socle"
         commande = f"python3 {lanceur} answer D-0001 valider --relayed --by Théo --quote-file citation.txt"
@@ -571,15 +627,25 @@ def _temoins() -> list[tuple[str, Callable]]:
         maj_memoire(c, "Refonte validée dans la conversation.")
         return etage_ci(a, c)
 
-    @temoin("une fin d'intervention avec sa ligne « Pour toi : » passe le hook de fin de tour")
+    @temoin("une fin d'intervention avec « Pour toi : » et « Ensuite : » passe le hook de fin de tour")
     def _(a, c):
         maj_memoire(c, "Travail du tour.")
-        return etage_stop(a, c, "J'ai mis à jour le chantier actif. Tout passe.\n\nPour toi : rien.")
+        return etage_stop(a, c, "J'ai mis à jour le chantier actif. Tout passe.\n\nPour toi : rien.\n"
+                          "Ensuite : le sujet suivant du backlog.")
 
     @temoin("une fin de tour sans travail n'exige pas de récap")
     def _(a, c):
-        etage_stop(a, c, "Pour toi : rien.")  # retient l'état de l'arbre
+        etage_stop(a, c, "Pour toi : rien.\nEnsuite : rien.")  # retient l'état de l'arbre
         return etage_stop(a, c, "Réponse à une question, sans rien changer.")
+
+    @temoin("une décision qui prouve ses lectures passe le commit")
+    def _(a, c):
+        lu = f" · lu : decisions@{empreinte(a, c, 'decisions')}"
+        f1 = f"F-0001@{empreinte(a, c, 'F-0001')}"
+        ajouter(c, "memoire/decisions/ADR-0001-une-seule-multiplication.md", ADR_ESSAI.format(lu=lu, fait=f1))
+        ajouter(c, "memoire/backlog.md", "\n## B-0002 — Ajouter une fonction quadruple\n\n"
+                f"> statut : ouvert · origine : {a.journal} · lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n")
+        return etage_git(a, c)
 
     @temoin("une tautologie voulue, raison écrite, passe le commit")
     def _(a, c):
@@ -661,7 +727,8 @@ RAISONS_AGENT = {
     "fichier protégé": "est protégé par la politique",
     "commande humaine": "ne répond jamais à la place de l'humain",
     "où regarder": "« Où regarder » doit donner un lien",
-    "récap": "« Pour toi : »",
+    "récap": "pas Pour toi :",
+    "suite": "pas Ensuite :",
 }
 
 
