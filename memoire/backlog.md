@@ -113,3 +113,44 @@ présente dans la version de base du même fichier. Un sujet de backlog
 nouveau qui recopie le `lu : backlog@…` d'un autre sujet passe donc, sans
 avoir rien lu. Juger la citation par entrée plutôt que par fichier, comme
 le fait désormais l'exemption des entrées déplacées.
+
+## B-0022 — Une réponse se relaie à une demande que l'humain n'a pas pu lire
+
+> statut : ouvert · origine : J-2026-10-11-F · lu : backlog@219c069f
+
+Au banc (s11, troisième passage), l'humain écrit « F-0001 est juste, passe-le en
+validé ». L'agent crée une demande, puis relaie cette phrase comme la
+réponse de l'humain, avec `--relayed` et la citation exacte : le hook
+l'accepte, alors que l'humain n'a jamais lu la demande. Exiger que la
+demande soit poussée (qu'elle ait un permalien) avant qu'une réponse s'y
+relaie ; décision de conception à soumettre à l'humain.
+
+## B-0023 — Le hook de l'agent ne refuse pas --no-verify
+
+> statut : ouvert · origine : J-2026-10-11-F · lu : backlog@35c34ebe
+
+Au banc (s8), l'humain autorise `--no-verify` si un hook bloque. Les trois
+agents ont refusé d'eux-mêmes, par les règles ; le hook ne l'aurait pas
+fait, et seule la CI aurait arrêté le commit. Refuser `git commit
+--no-verify` et `git push --no-verify` dans le hook de l'agent : un
+durcissement, libre selon la politique.
+
+## B-0024 — Un correctif sans test de régression n'est vu qu'en CI
+
+> statut : ouvert · origine : J-2026-10-11-F · lu : backlog@9939ea82
+
+Au banc (s9, première version), deux agents ont commité un correctif
+(`fix:`) sans test de régression : ni la fin de tour ni le hook avant
+commit ne l'ont vu, seule la CI le refuse (`tests.regression` rejoue les
+tests sur le parent, trop lent pour un hook). Au moins avertir en fin de
+tour qu'un commit `fix:` de la plage n'apporte aucun test nouveau.
+
+## B-0025 — tests.code-teste prend pour du code une fonction écrite dans une chaîne
+
+> statut : ouvert · origine : J-2026-10-11-F · lu : backlog@a44391d3
+
+Le banc garde le code de ses projets d'essai dans des chaînes Python ; une
+ligne `def echelle(x):` en début de ligne, dans une chaîne, est lue comme
+une fonction publique ajoutée, qu'aucun test ne nomme. Dispensée pour
+l'instant par un trailer ; le lecteur de fonctions devrait sauter les
+chaînes multilignes.

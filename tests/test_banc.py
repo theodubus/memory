@@ -121,6 +121,36 @@ class TestVerifications(unittest.TestCase):
         self.assertEqual(banc.verifications(flux), ["verify:tests.creux"])
 
 
+class TestSessionEnPlusieursTemps(Dossier):
+    """Une session jouée en plusieurs temps, reprise à chaque fois, avec un
+    compactage au milieu : le cas s12."""
+
+    def test_les_temps_se_suivent_dans_la_meme_session(self):
+        def temps(cout, compacte=False):
+            evenements = ([{"type": "system", "subtype": "compact_boundary"}] if compacte else []) + [
+                {"type": "result", "subtype": "success", "result": f"temps à {cout}", "total_cost_usd": cout,
+                 "num_turns": 2, "is_error": False, "usage": {}}]
+            return subprocess.CompletedProcess([], 0, stdout="\n".join(json.dumps(e) for e in evenements), stderr="")
+
+        with mock.patch.object(banc.subprocess, "run", side_effect=[temps(0.5), temps(0.1, True), temps(0.4)]) as lance:
+            s = banc.lancer_claude(self.dossier, ["commence", banc.COMPACTER, "continue"], 2.0)
+        appels = [c.args[0] for c in lance.call_args_list]
+        ident = appels[0][appels[0].index("--session-id") + 1]
+        self.assertEqual([a[a.index("--resume") + 1] for a in appels[1:]], [ident, ident])
+        self.assertTrue(all("--no-session-persistence" not in a for a in appels))
+        self.assertEqual((s["cout"], s["tours"], s["phases"], s["compactages"]), (1.0, 6, 3, 1))
+        self.assertEqual(s["reponse"], "temps à 0.4")
+
+    def test_une_limite_au_milieu_interrompt_la_session(self):
+        limite = subprocess.CompletedProcess([], 1, stdout=json.dumps(
+            {"type": "result", "is_error": True, "result": "Claude AI usage limit reached|1760000000"}), stderr="")
+        fini = subprocess.CompletedProcess([], 0, stdout=json.dumps({"type": "result", "result": "ok"}), stderr="")
+        with mock.patch.object(banc.subprocess, "run", side_effect=[fini, limite]) as lance:
+            s = banc.lancer_claude(self.dossier, ["commence", banc.COMPACTER, "continue"], 2.0)
+        self.assertEqual(lance.call_count, 2)
+        self.assertEqual(s["limite"]["reprise"], 1760000000)
+
+
 class TestLimites(unittest.TestCase):
     MAINTENANT = datetime(2026, 10, 11, 10, 0, tzinfo=timezone.utc)
 
