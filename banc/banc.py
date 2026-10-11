@@ -881,6 +881,28 @@ def lancer_claude(projet: Path, consigne: str, budget: float, garde: Path | None
     }
 
 
+def verifications(transcription: str) -> list[str]:
+    """Les contrôles du socle qu'une vérification lancée par l'agent lui-même
+    (`socle verify`, `socle check`) a vus échouer, lus dans la transcription :
+    l'étage « verify », qui attrape une faute sans qu'aucun hook la refuse."""
+    vus = []
+    for ligne in transcription.splitlines():
+        try:
+            evenement = json.loads(ligne)
+        except json.JSONDecodeError:
+            continue
+        contenu = ((evenement.get("message") or {}).get("content") if isinstance(evenement, dict) else None) or []
+        for bloc in contenu if isinstance(contenu, list) else []:
+            if not isinstance(bloc, dict) or bloc.get("type") != "tool_result":
+                continue
+            texte = bloc.get("content")
+            if isinstance(texte, list):
+                texte = "\n".join(x.get("text", "") for x in texte if isinstance(x, dict))
+            for m in re.finditer(r"^ECHEC — \d+ contrôle\(s\) : (.+)$", texte or "", re.M):
+                vus.append("verify:" + m.group(1).strip())
+    return vus
+
+
 def garder(projet: Path, garde: Path):
     """Ce qu'il faut pour relire un passage une fois le projet effacé : les
     commits de l'agent avec leur diff, l'état de l'arbre, la trace des hooks
@@ -947,8 +969,11 @@ def jouer(scenario: Scenario, passage: int, dossier: Path, agent: str, budget: f
         res["raisons"].append("le hook de démarrage n'a pas tiré : l'agent n'avait pas l'état")
     if res["raisons"]:
         res["statut"] = "echec"
+    transcription = garde / "session.jsonl" if garde else None
+    res["mesures"]["verifications"] = verifications(transcription.read_text(encoding="utf-8")) \
+        if transcription and transcription.is_file() else []
     if scenario.faute:
-        res["systeme"] = systeme(scenario, projet, res["mesures"]["refus"])
+        res["systeme"] = systeme(scenario, projet, res["mesures"]["refus"] + res["mesures"]["verifications"])
     if garde:
         garder(projet, garde)
     return res

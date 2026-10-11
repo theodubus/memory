@@ -112,6 +112,15 @@ class TestSession(Dossier):
         self.assertEqual((self.dossier / "garde/session.jsonl").read_text(), flux + "\n")
 
 
+class TestVerifications(unittest.TestCase):
+    def test_une_verification_lancee_par_l_agent_est_un_etage(self):
+        resultat = {"type": "user", "message": {"content": [{"type": "tool_result", "content": [
+            {"type": "text", "text": "  tests.creux    ECHEC\n\nECHEC — 1 contrôle(s) : tests.creux\nrc=1"}]}]}}
+        autre = {"type": "user", "message": {"content": [{"type": "tool_result", "content": "TOUT PASSE"}]}}
+        flux = "\n".join(json.dumps(e) for e in (resultat, autre)) + "\nligne illisible"
+        self.assertEqual(banc.verifications(flux), ["verify:tests.creux"])
+
+
 class TestLimites(unittest.TestCase):
     MAINTENANT = datetime(2026, 10, 11, 10, 0, tzinfo=timezone.utc)
 
