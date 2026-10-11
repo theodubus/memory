@@ -436,6 +436,9 @@ def lectures(ctx, r):
             # ne pouvait pas les lire, et elles ne périment pas sa lecture.
             apres = {n for n in nouveaux if soi and defs[n][0].type == soi.type and n > soi.id}
             permises = {
+                # L'index tel que `socle show --index` l'affiche, entrée qui
+                # cite comprise : le refus conseille de le relire (B-0037).
+                memoire.empreinte_index(mem, index),
                 memoire.empreinte_index(mem, index, sauf),
                 memoire.empreinte_index(mem, index, sauf | apres),
                 memoire.empreinte_index(mem, index, sauf | nouveaux),

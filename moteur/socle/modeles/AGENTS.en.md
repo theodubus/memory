@@ -68,7 +68,9 @@ exact text:
 `python3 .socle/socle answer D-NNNN <answer> --relayed --by <name> --quote-file <file>`,
 and copies it into the journal. An answered request is frozen. An answer is
 only relayed to a request pushed as is: the human must have been able to
-read it.
+read it. A test whose expected value changes while waiting for such a
+request, which names it, may stay changed in the tree at the end of the
+turn; it is only committed after the answer.
 
 ### Reading the memory on demand
 

@@ -84,5 +84,52 @@ class TestValeurAttendue(unittest.TestCase):
         self.assertTrue(any("spécification changée par l'humain" in a for a in avertissements), avertissements)
 
 
+
+class TestEnAttenteDeLHumain(TestValeurAttendue):
+    """B-0033 : une valeur attendue changée, que nomme une demande en attente
+    poussée telle quelle, ne bloque pas la fin du tour ; le commit et la CI
+    attendent toujours la réponse de l'humain."""
+
+    DEMANDE = ("<!-- socle: couche=demandes zone=publique -->\n# D-0001 — Le facteur passe à 3 ?\n\n"
+               "> date : 2026-10-11\n\n## Décision demandée\n\nValider que `test_double` attende 6.\n")
+
+    def setUp(self):
+        super().setUp()
+        origine = self.racine.parent / (self.racine.name + "-origine.git")
+        git(self.racine.parent, "init", "-q", "--bare", str(origine))
+        self.addCleanup(shutil.rmtree, origine, ignore_errors=True)
+        git(self.racine, "remote", "add", "origin", str(origine))
+        pol = self.racine / ".socle/policy.toml"
+        pol.write_text(pol.read_text().replace("[human]\n", '[human]\nrepo_url = "https://github.com/x/y"\n', 1))
+        self.commit("Adresse du dépôt")
+        self.ecrire("memory/requests/D-0001-facteur.md", self.DEMANDE)
+        self.commit("La demande")
+
+    def pousser(self):
+        git(self.racine, "push", "-q", "--no-verify", "-u", "origin", "main")
+
+    def test_une_demande_poussee_laisse_finir_le_tour(self):
+        from socle import demandes
+
+        self.pousser()
+        d = next(x for x in demandes.toutes(self.racine) if x.id == "D-0001")
+        self.assertIsNone(demandes.illisible(config.Projet.charger(self.racine), d))
+        self.ecrire("tests/test_calc.py", TEST.format(attendu=6))
+        erreurs, avertissements = self.erreurs("agent")
+        self.assertEqual(erreurs, [])
+        self.assertTrue(any("en attente de D-0001" in a for a in avertissements), avertissements)
+
+    def test_une_demande_non_poussee_ne_suffit_pas(self):
+        self.ecrire("tests/test_calc.py", TEST.format(attendu=6))
+        erreurs, _ = self.erreurs("agent")
+        self.assertEqual(len(erreurs), 1, erreurs)
+
+    def test_la_ci_attend_toujours_la_reponse(self):
+        self.pousser()
+        self.ecrire("tests/test_calc.py", TEST.format(attendu=6))
+        self.commit("Le test suit")
+        erreurs, _ = self.erreurs("ci")
+        self.assertEqual(len(erreurs), 1, erreurs)
+
 if __name__ == "__main__":
     unittest.main()

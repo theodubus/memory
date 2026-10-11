@@ -123,6 +123,9 @@ l'agent consigne sa réponse, sans jamais la choisir, avec le texte exact :
 `python3 .socle/socle answer D-NNNN <réponse> --relayed --by <nom> --quote-file <fichier>`,
 et la recopie au journal. Une demande répondue est gelée. Une réponse ne se
 relaie qu'à une demande poussée telle quelle : l'humain doit avoir pu la lire.
+Un test dont la valeur attendue change en attendant une telle demande, qui le
+nomme, peut rester changé dans l'arbre à la fin du tour ; il ne se commite
+qu'après la réponse.
 
 ### Lire la mémoire à la demande
 

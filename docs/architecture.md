@@ -89,7 +89,7 @@ comparent le même fichier sous ses deux noms.
 | Pas de copie | `docs.copie` | agent, git, CI |
 | Capacité absente déclarée avec remplacement | `adaptateur.capacites` | agent, git, CI |
 | Tests creux | `tests.creux` (sur le diff aux étages agent et git) | agent, git, CI |
-| Test supprimé, valeur attendue changée | `tests.attendus` | agent, git, CI |
+| Test supprimé, valeur attendue changée ; à la fin du tour, en attente d'une demande poussée qui nomme le test, un avertissement (B-0033) | `tests.attendus` | agent, git, CI |
 | Correctif avec test de régression rejoué sur le parent | `tests.regression` | CI |
 | Code nouveau ou modifié testé : une fonction publique est nommée par un test, ou dispensée nommément avec sa raison (`Dispense-test:`) | `tests.code-teste` (pas au commit : le hook ne voit pas la dispense) | agent, CI |
 | Mutation : plafond par module, cliquet | `mutation.couverture`, `socle mutation-verdict` | agent, git, CI ; verdict hebdomadaire |

@@ -345,6 +345,13 @@ DEPOT_ESSAI = "https://github.com/essai/calc"
 RECAP = "\n\nPour toi : rien.\nEnsuite : rien."
 
 
+def _demande_nommant_le_test(a: "Atelier", c: Path) -> str:
+    """Une demande au contrat qui nomme `test_double`, pour en changer la
+    valeur attendue (B-0033)."""
+    return demande_bonne(a, c).replace(
+        "## Où regarder", "- `test_double` — le test du module, qui attend le double de deux.\n\n## Où regarder", 1)
+
+
 def pousser(a: Atelier, c: Path, message: str = "essai"):
     """Commit et push de la branche de travail vers l'origine d'essai, sous
     le nom du clone : les cas partagent la même origine."""
@@ -646,6 +653,15 @@ def _cas() -> list[Cas]:
         remplacer(c, "tests/test_calc.py", "self.assertEqual(double(2), 4)", "self.assertEqual(double(2), 4.0)")
         maj_memoire(c)
         return etage_ci(a, c, MESSAGE_AGENT)
+
+    @defaut("valeur-attendue-demande-non-poussee", "valeur attendue changée sous une demande que l'humain n'a pas "
+            "pu lire, faute d'être poussée", "agent", "tests.attendus")
+    def _(a, c):
+        ajouter(c, "memory/requests/D-0001-refactor.md", _demande_nommant_le_test(a, c))
+        a.commit(c, "La demande, commitée mais pas poussée")
+        remplacer(c, "tests/test_calc.py", "self.assertEqual(double(2), 4)", "self.assertEqual(double(2), 4.0)")
+        maj_memoire(c)
+        return etage_stop(a, c, "J'ai changé le test en attendant la réponse." + RECAP)
 
     @defaut("test-supprime", "test supprimé sans validation", "ci", "tests.attendus")
     def _(a, c):
@@ -954,6 +970,17 @@ def _temoins() -> list[tuple[str, Callable]]:
                   "<the fact, and what would prove it>", "> status : measured · proof : file:calc.py\n\nRead in the code.")
         remplacer(c, "memory/active.md", "## In progress\n\nNothing yet.", "## In progress\n\nA first fact.")
         return etage_git(a, c) or etage_ci(a, c)
+
+    @temoin("une valeur attendue changée sous une demande en attente, poussée : le tour finit, le commit attend")
+    def _(a, c):
+        ajouter(c, "memory/requests/D-0001-refactor.md", _demande_nommant_le_test(a, c))
+        pousser(a, c, "La demande")
+        remplacer(c, "tests/test_calc.py", "self.assertEqual(double(2), 4)", "self.assertEqual(double(2), 4.0)")
+        maj_memoire(c)
+        sortie = etage_stop(a, c, "J'ai changé le test en attendant la réponse." + RECAP)
+        if sortie:
+            return sortie
+        return "" if etage_git(a, c) else "le commit d'une valeur attendue en attente de validation passe"
 
     @temoin("un push relu par l'humain, son accord relayé avec son texte exact, passe le hook de l'agent")
     def _(a, c):

@@ -370,22 +370,10 @@ def cmd_answer(args) -> int:
 
 def demande_illisible(projet, d) -> str | None:
     """Pourquoi l'humain n'a pas pu lire la demande telle qu'elle est (B-0022),
-    ou `None`. Au banc, un agent a écrit une demande puis y a relayé une phrase
-    que l'humain avait dite avant qu'elle existe. Une demande chiffrée ne se
-    lit pas sur GitHub : l'agent la donne en entier dans la conversation."""
-    from socle import liens, memoire, prive
+    ou `None` : `demandes.illisible`."""
+    from socle import demandes
 
-    if memoire.est_prive(d.chemin) and prive.mode(projet) == "chiffre":
-        return None
-    url, avertissement = liens.lien(projet, d.chemin)
-    if url is None:
-        return avertissement
-    if memoire.est_prive(d.chemin):
-        return None  # le dépôt privé : `lien` a vérifié qu'elle y est poussée
-    sha = liens.commit_pousse(projet.racine)
-    if outils.lire_a(projet.racine, sha, d.chemin) != (projet.racine / d.chemin).read_text(encoding="utf-8"):
-        return "la version poussée diffère de la version locale"
-    return None
+    return demandes.illisible(projet, d)
 
 
 def _auteur(projet) -> str:

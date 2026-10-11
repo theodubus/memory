@@ -130,6 +130,22 @@ def _justifie(ctx, nom: str) -> str | None:
     return None
 
 
+def _en_attente(ctx, nom: str) -> str | None:
+    """À la fin du tour seulement (étage agent), une demande en attente,
+    poussée telle quelle, qui nomme le test (B-0033) : le travail qui attend
+    la réponse de l'humain peut rester dans l'arbre, au lieu d'être remisé
+    hors de la mémoire. Le commit et la CI le refusent toujours."""
+    from socle import demandes
+
+    if ctx.etage != "agent":
+        return None
+    for d in ctx.demandes:
+        if (d.id and d.reponse is None and d.entree is not None and "retiree" not in d.entree.meta
+                and nom in d.texte and demandes.illisible(ctx.projet, d) is None):
+            return d.id
+    return None
+
+
 def _specs_nommant(ctx, nom: str) -> list[str]:
     """Les spécifications changées dans la plage qui nomment le test."""
     specs = ctx.projet.gf("tests", "spec_paths", defaut=[ctx.projet.chemins.decisions + "/**"])
@@ -176,8 +192,12 @@ def attendus(ctx, r):
             if re.sub(r"\s+", " ", a.corps) in par_corps:
                 continue  # déplacé tel quel
             pourquoi = _justifie(ctx, a.nom)
+            attente = None if pourquoi else _en_attente(ctx, a.nom)
             if pourquoi:
                 r.avertir("tests.attendus", f"test `{a.nom}` supprimé ({pourquoi})", a.fichier, a.ligne)
+            elif attente:
+                r.avertir("tests.attendus", f"test `{a.nom}` supprimé, en attente de {attente} : le tour peut finir, "
+                          "le commit et la CI attendent la réponse de l'humain", a.fichier, a.ligne)
             else:
                 r.erreur("tests.attendus", f"test `{a.nom}` supprimé sans validation humaine ni changement de "
                          "spécification qui le nomme" + _note_agent(ctx, a.nom), a.fichier, a.ligne)
@@ -187,9 +207,13 @@ def attendus(ctx, r):
         disparues = av - ap
         if disparues:
             pourquoi = _justifie(ctx, a.nom)
+            attente = None if pourquoi else _en_attente(ctx, a.nom)
             exemple = next(iter(disparues))
             if pourquoi:
                 r.avertir("tests.attendus", f"assertion changée dans `{a.nom}` ({pourquoi})", b.fichier, b.ligne)
+            elif attente:
+                r.avertir("tests.attendus", f"assertion changée dans `{a.nom}`, en attente de {attente} : le tour "
+                          "peut finir, le commit et la CI attendent la réponse de l'humain", b.fichier, b.ligne)
             else:
                 r.erreur("tests.attendus", f"assertion changée ou retirée dans `{a.nom}` : « {exemple} » — "
                          "valeur attendue modifiée sans spécification ni validation humaine" + _note_agent(ctx, a.nom),

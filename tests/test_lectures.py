@@ -59,6 +59,53 @@ class TestLecturesSuccessives(unittest.TestCase):
         self.assertIn("decisions@0badc0de", erreurs[0])
 
 
+class TestIndexAffiche(unittest.TestCase):
+    """B-0037 : un sujet nouveau cite l'index qu'il a lu ; si un autre sujet
+    se clôt ensuite, le refus conseille de relire l'index par
+    `socle show --index backlog` et d'en citer l'empreinte. Cet index compte
+    déjà le sujet qui cite : son empreinte doit être acceptée."""
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-index-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        git(self.racine, "init", "-q", "-b", "main")
+        self.backlog = self.racine / "memory/backlog.md"
+        self.backlog.parent.mkdir(parents=True)
+        self.backlog.write_text("<!-- socle: couche=backlog zone=publique -->\n# Backlog\n\n## B-0001 — Un sujet\n\n"
+                                "> statut : ouvert · origine : fichier:memory/backlog.md\n")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "base")
+        self.base = git(self.racine, "rev-parse", "HEAD").strip()
+        # Un sujet ajouté sur la branche, puis un autre qui lit l'index d'alors.
+        lu0 = memoire.empreinte_index(memoire.Memoire.charger(self.racine), "backlog")
+        self.backlog.write_text(self.backlog.read_text() + "\n## B-0002 — Un sujet de la branche\n\n> statut : "
+                                f"ouvert · origine : fichier:memory/backlog.md · lu : backlog@{lu0}\n")
+        lu = memoire.empreinte_index(memoire.Memoire.charger(self.racine), "backlog")
+        self.backlog.write_text(self.backlog.read_text() + "\n## B-0003 — Un sujet nouveau\n\n> statut : ouvert · "
+                                f"origine : fichier:memory/backlog.md · lu : backlog@{lu}\n")
+        # B-0001 se clôt après la lecture : l'index que B-0002 citait change.
+        self.backlog.write_text(self.backlog.read_text().replace(
+            "> statut : ouvert · origine : fichier:memory/backlog.md\n",
+            "> statut : fait · origine : fichier:memory/backlog.md · ref : fichier:memory/backlog.md\n", 1))
+        self.perimee = lu
+
+    def erreurs(self) -> list[str]:
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="agent", base=self.base, tete=None)
+        r = Rapport()
+        controles_memoire.lectures(ctx, r)
+        return [c.message for c in r.erreurs("memoire.lectures")]
+
+    def test_l_empreinte_perimee_est_refusee(self):
+        erreurs = self.erreurs()
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertIn(f"backlog@{self.perimee}", erreurs[0])
+
+    def test_l_empreinte_que_le_refus_conseille_est_acceptee(self):
+        affichee = memoire.empreinte_index(memoire.Memoire.charger(self.racine), "backlog")
+        self.backlog.write_text(self.backlog.read_text().replace(f"backlog@{self.perimee}", f"backlog@{affichee}"))
+        self.assertEqual(self.erreurs(), [])
+
+
 class TestArchivage(unittest.TestCase):
     """Un sujet clos s'archive dans le journal avec sa preuve de lecture : la
     même entrée, déplacée, n'a pas à relire un index qui a changé depuis."""

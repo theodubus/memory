@@ -225,7 +225,7 @@ approuver par l'humain ; à faire tôt, avant que d'autres projets s'installent.
 
 ## B-0033 — Un travail qui attend la validation d'une valeur attendue ne peut ni se commiter ni rester dans l'arbre en fin de tour
 
-> statut : ouvert · origine : J-2026-10-11-J · lu : backlog@f05f130c
+> statut : fait · origine : J-2026-10-11-J · lu : backlog@f05f130c · ref : J-2026-10-11-R
 
 Constaté en faisant B-0032 : le renommage des chemins change la valeur
 attendue de quatorze tests. Le point 2 de la politique exige une demande
@@ -282,7 +282,7 @@ la première est `socle install` relancée en mode amont.
 
 ## B-0037 — Le conseil du refus d'une empreinte d'index périmée mène à une empreinte refusée
 
-> statut : ouvert · origine : J-2026-10-11-N · lu : backlog@e6ba5929
+> statut : fait · origine : J-2026-10-11-N · lu : backlog@e6ba5929 · ref : J-2026-10-11-R
 
 Constaté en ouvrant B-0036 : un sujet de backlog cite l'index qu'il a lu ;
 si l'index change ensuite (un autre sujet clos), le refus conseille
