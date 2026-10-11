@@ -5,15 +5,15 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-Jalon 9 (B-0004). Quatre bancs réels, 45 sessions : les six scénarios du
-cadrage passent ; aucune faute tentante n'est passée à travers ; un
-chantier repris après un compactage court, sur un résumé faux, ou après un
-compactage automatique de fin de longue session, est tenu (F-0012 à
-F-0017). B-0004 attend la validation de Théo.
+Jalon 9 validé par Théo et clos (J-2026-10-11-J) : les neuf jalons du
+cadrage sont faits. Le point 2 de la politique est durci (ADR-0017) : une
+valeur attendue ne change que sur une demande validée ou une spécification
+écrite par l'humain.
 
 ## Prochaines étapes
 
-1. Théo valide, ou non, la porte du jalon 9.
-2. La question de politique de s9, détaillée à Théo : une ADR écrite par
-   l'agent suffit-elle pour changer une valeur attendue ? En attente.
-3. Les défauts que le banc a montrés : B-0022 à B-0028.
+1. Les défauts que le banc a montrés, B-0022 à B-0028, en commençant par
+   B-0028 (écrire en mémoire une consigne dite dans la conversation) et
+   B-0022 (relayer une réponse à une demande que l'humain n'a pas lue).
+2. Pour plus tard, à la demande de Théo : B-0029 à B-0032 (privé couche par
+   couche, autres adaptateurs, langue de la mémoire, chemins en anglais).

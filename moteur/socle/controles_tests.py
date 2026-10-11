@@ -113,22 +113,44 @@ def creux(ctx, r):
 
 
 def _justifie(ctx, nom: str) -> str | None:
-    """Une validation humaine ou un changement de spécification qui nomme le test."""
+    """Une validation humaine, ou une spécification que l'humain a changée et
+    qui nomme le test (politique, point 2, option B tranchée par Théo,
+    ADR-0017) : une spécification que l'agent écrit dans le même travail ne
+    l'autorise pas à changer le test."""
     for d in ctx.validations:
         if nom in d.texte:
             return f"validé par {d.id}"
-    specs = ctx.projet.gf("tests", "spec_paths", defaut=["memoire/decisions/**"])
-    for c in outils.filtrer(ctx.changes, specs):
-        texte = ctx.lire(c) or ""
-        if nom in texte and nom not in (ctx.lire_base(c) or ""):
-            return f"spécification changée : {c}"
+    for c in _specs_nommant(ctx, nom):
+        if _ecrite_par_l_humain(ctx, c, nom):
+            return f"spécification changée par l'humain : {c}"
     return None
+
+
+def _specs_nommant(ctx, nom: str) -> list[str]:
+    """Les spécifications changées dans la plage qui nomment le test."""
+    specs = ctx.projet.gf("tests", "spec_paths", defaut=["memoire/decisions/**"])
+    return [c for c in outils.filtrer(ctx.changes, specs)
+            if nom in (ctx.lire(c) or "") and nom not in (ctx.lire_base(c) or "")]
+
+
+def _ecrite_par_l_humain(ctx, chemin: str, nom: str) -> bool:
+    """La mention du test est commitée, et aucun commit d'agent de la plage
+    n'a touché la spécification : une écriture en cours est celle de
+    l'agent qui travaille."""
+    from socle.controles_cliquet import est_agent
+
+    if nom not in (outils.lire_a(ctx.racine, ctx.rev_commit, chemin) or ""):
+        return False
+    plage = ctx.rev_commit if ctx.base in (None, outils.ARBRE_VIDE) else f"{ctx.base}..{ctx.rev_commit}"
+    touches = set(outils.git(ctx.racine, "log", "--format=%H", plage, "--", chemin, check=False).split())
+    return not any(c["sha"] in touches and est_agent(ctx.projet, c["message"]) for c in ctx.commits)
 
 
 @controle("tests.attendus", base=True)
 def attendus(ctx, r):
-    """Supprimer un test ou changer une valeur attendue exige un changement de
-    spécification qui le nomme, ou une validation humaine (politique, point 2)."""
+    """Supprimer un test ou changer une valeur attendue exige une validation
+    humaine, ou un changement de spécification qui le nomme, fait par
+    l'humain (politique, point 2)."""
     cfg = cfg_tests(ctx.projet)
     if cfg is None:
         r.indisponible("tests.attendus", "adaptateur sans `[tests]`")
@@ -151,7 +173,8 @@ def attendus(ctx, r):
             if pourquoi:
                 r.avertir("tests.attendus", f"test `{a.nom}` supprimé ({pourquoi})", a.fichier, a.ligne)
             else:
-                r.erreur("tests.attendus", f"test `{a.nom}` supprimé sans validation humaine ni changement de spécification qui le nomme", a.fichier, a.ligne)
+                r.erreur("tests.attendus", f"test `{a.nom}` supprimé sans validation humaine ni changement de "
+                         "spécification qui le nomme" + _note_agent(ctx, a.nom), a.fichier, a.ligne)
             continue
         av = Counter(l.strip() for l in a.lignes_corps if assertion.search(l))
         ap = Counter(l.strip() for l in b.lignes_corps if assertion.search(l))
@@ -163,7 +186,16 @@ def attendus(ctx, r):
                 r.avertir("tests.attendus", f"assertion changée dans `{a.nom}` ({pourquoi})", b.fichier, b.ligne)
             else:
                 r.erreur("tests.attendus", f"assertion changée ou retirée dans `{a.nom}` : « {exemple} » — "
-                         "valeur attendue modifiée sans spécification ni validation humaine", b.fichier, b.ligne)
+                         "valeur attendue modifiée sans spécification ni validation humaine" + _note_agent(ctx, a.nom),
+                         b.fichier, b.ligne)
+
+
+def _note_agent(ctx, nom: str) -> str:
+    specs = _specs_nommant(ctx, nom)
+    if not specs:
+        return ""
+    return (f" ; la spécification {specs[0]} le nomme, mais elle est écrite par l'agent : elle ne suffit pas "
+            "(politique, point 2). Poser une demande à l'humain, ou qu'il change lui-même la spécification")
 
 
 # `Dispense-test: f, g — raison` : les fonctions nommées, puis pourquoi

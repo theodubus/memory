@@ -5,13 +5,6 @@ Les sujets à traiter. Chacun a un statut (ouvert, en cours, bloqué, fait,
 abandonné) et une origine ; un sujet clos porte la référence de ce qui l'a
 clos, puis s'archive dans le journal (`python3 .socle/socle archive`).
 
-## B-0004 — Jalon 9 : banc d'évaluation sur un agent réel
-
-> statut : ouvert · origine : fichier:memoire/archives/cadrage-2026-10-10.md
-
-Les six scénarios du cadrage et les métriques : part des défauts attrapés par
-étage, faux positifs, durée de `verify`, coût en jetons du démarrage.
-
 ## B-0005 — Workflow de mutation hebdomadaire générique, et alerte quand il cesse de tourner
 
 > statut : ouvert · origine : J-2026-10-10-D
@@ -187,3 +180,56 @@ plus qu'au résumé, et un second compactage ou une session neuve les aurait
 perdues. Les instructions du socle ne le demandent pas. Ajouter au gabarit
 d'AGENTS.md : une consigne qui vaut au-delà du tour s'écrit dans la
 mémoire avant de continuer.
+
+## B-0029 — Choisir couche par couche ce qui est privé, et y basculer l'existant
+
+> statut : ouvert · origine : J-2026-10-11-J · lu : backlog@1eb11b2e
+
+Demandé par Théo : pouvoir mettre en privé, au-delà des demandes, tout ce
+qui touche aux décisions et à la stratégie interne. L'essentiel existe : avec
+une mémoire privée (`[private] mode`), tout contenu nouveau va par défaut
+dans la zone privée, sauf les demandes (`[private] requests`). Manquent : un
+choix couche par couche (par exemple les décisions et le journal privés, les
+faits publics), et une commande qui bascule en privé des entrées publiques
+existantes, en réécrivant les renvois et sans rien laisser dans
+l'historique public qu'une réécriture ne corrige pas (à dire à l'humain).
+
+## B-0030 — Des adaptateurs pour d'autres langages courants
+
+> statut : ouvert · origine : J-2026-10-11-J · lu : backlog@d2bc3f03
+
+Demandé par Théo : plus que Rust et Python. Candidats, avec leurs outils de
+test et de mutation usuels : JavaScript et TypeScript (npm, vitest ou jest,
+Stryker), Go (go test, gremlins ou go-mutesting), Java et Kotlin (Maven ou
+Gradle, JUnit, PIT), C# (dotnet test, Stryker.NET), Ruby (RSpec, mutant), PHP
+(PHPUnit, Infection). Chacun avec ses marqueurs de détection pour
+l'installeur (package.json, go.mod, pom.xml ou build.gradle, *.csproj,
+Gemfile, composer.json) et un projet jetable qui prouve la chaîne, comme
+pour `python-pytest` (jalon 6).
+
+## B-0031 — La langue de la mémoire au choix du projet
+
+> statut : ouvert · origine : J-2026-10-11-J · lu : backlog@a2722fbd
+
+Demandé par Théo : proposer l'anglais ou une autre langue pour la mémoire.
+Tout est en français aujourd'hui : les mots-clés du format (statuts, champs
+des entrées, sections des demandes), les gabarits, les messages des
+contrôles et de la CLI. Piste : des clés internes fixes, un vocabulaire par
+langue que le lecteur accepte selon la langue du projet (réglée dans la
+politique), un catalogue de messages, et une migration qui traduit les
+mots-clés d'une mémoire existante, pas son contenu. Effort important mais
+mécanique ; plus simple une fois B-0032 fait.
+
+## B-0032 — Des noms de fichiers et de dossiers en anglais pour tous les projets
+
+> statut : ouvert · origine : J-2026-10-11-J · lu : backlog@487629e3
+
+Demandé par Théo : des noms de dossiers et de fichiers en anglais pour
+tous les projets, quelle que soit la langue de la mémoire (`memory/`,
+`canonical.md`, `active.md`, `requests/`, `policy.toml`, `guardrails.toml`…).
+Avis de l'agent : bonne idée. Un chemin est un identifiant, et ADR-0002 veut
+les identifiants en anglais ; un seul jeu de chemins évite d'en traduire par
+langue et découple B-0031 ; les permaliens déjà donnés restent valides,
+puisqu'ils visent un commit. Coût : une migration de format (le cadre
+existe, `migrations.py`), dont le renommage de fichiers protégés, à
+approuver par l'humain ; à faire tôt, avant que d'autres projets s'installent.

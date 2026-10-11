@@ -37,7 +37,7 @@ tests, puis la mémoire canonique, puis le journal.
 ### Politique d'autonomie (`.socle/politique.toml`, modifiée par l'humain seul)
 
 1. **Assouplir un garde-fou** (`.socle/garde-fous.toml`) exige une demande validée ; durcir est libre.
-2. **Supprimer un test ou changer une valeur attendue** exige une spécification changée qui nomme le test, ou une demande validée.
+2. **Supprimer un test ou changer une valeur attendue** exige une demande validée, ou une spécification que l'humain a lui-même changée et qui nomme le test ; une ADR écrite par l'agent ne suffit pas.
 3. **Décision de conception** : réversible et mesurable, l'agent décide et écrit une ADR ; coûteuse à défaire, demande.
 4. **Action irréversible ou externe** (force-push, push sur la branche par défaut, publication, suppression distante, dépense) : toujours une demande. Le hook la refuse.
 5. **Mémoire** : ajout seul ; « réfuté » exige une référence de mesure ; « validé » ne s'écrit qu'après la réponse de l'humain.

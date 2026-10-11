@@ -330,6 +330,17 @@ Toute nouvelle multiplication passe par la même constante.
 """
 
 
+MESSAGE_AGENT = ("Travail d'agent\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nSocle-Agent: claude-code\n"
+                 "Socle-Hooks: SessionStart=1 PreToolUse=4 Stop=1")
+
+
+def _adr_test_double(a: "Atelier", c: Path) -> str:
+    """Une décision qui nomme le test `test_double`, et prouve ses lectures."""
+    return ("<!-- socle: couche=decisions zone=publique -->\n# ADR-0001 — Le test de double compare à un flottant\n\n"
+            f"> statut : acceptée · date : 2026-10-10 · lu : decisions@{empreinte(a, c, 'decisions')}\n\n"
+            "## Décision\n\n`test_double` compare désormais le résultat à un flottant.\n")
+
+
 DEPOT_ESSAI = "https://github.com/essai/calc"
 RECAP = "\n\nPour toi : rien.\nEnsuite : rien."
 
@@ -609,6 +620,14 @@ def _cas() -> list[Cas]:
         remplacer(c, "tests/test_calc.py", "self.assertEqual(double(2), 4)", "self.assertEqual(double(2), 4.0)")
         return etage_git(a, c)
 
+    @defaut("valeur-attendue-adr-agent", "valeur attendue changée sous une ADR que l'agent écrit lui-même", "ci",
+            "tests.attendus")
+    def _(a, c):
+        ajouter(c, "memoire/decisions/ADR-0001-test-double.md", _adr_test_double(a, c))
+        remplacer(c, "tests/test_calc.py", "self.assertEqual(double(2), 4)", "self.assertEqual(double(2), 4.0)")
+        maj_memoire(c)
+        return etage_ci(a, c, MESSAGE_AGENT)
+
     @defaut("test-supprime", "test supprimé sans validation", "ci", "tests.attendus")
     def _(a, c):
         remplacer(c, "tests/test_calc.py", "    def test_double(self):\n        self.assertEqual(double(2), 4)\n",
@@ -779,6 +798,14 @@ def _temoins() -> list[tuple[str, Callable]]:
         maj_memoire(c, "Commit d'agent avec hooks.")
         return etage_ci(a, c, "Travail d'agent\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n"
                         "Socle-Agent: claude-code\nSocle-Hooks: SessionStart=1 PreToolUse=4 Stop=1")
+
+    @temoin("une valeur attendue changée sous une spécification que l'humain a commitée passe la CI")
+    def _(a, c):
+        ajouter(c, "memoire/decisions/ADR-0001-test-double.md", _adr_test_double(a, c))
+        a.commit(c, "Spécification : test_double compare à un flottant")  # un commit de l'humain
+        remplacer(c, "tests/test_calc.py", "self.assertEqual(double(2), 4)", "self.assertEqual(double(2), 4.0)")
+        maj_memoire(c)
+        return etage_ci(a, c, MESSAGE_AGENT)
 
     @temoin("durcir un garde-fou est libre")
     def _(a, c):
