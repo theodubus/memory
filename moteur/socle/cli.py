@@ -359,6 +359,28 @@ def cmd_approve(args) -> int:
     mem = memoire.Memoire.charger(racine)
     ident = mem.prochain_id("D")
     jour = date.today().isoformat()
+    # La raison peut citer des entrées : elles se citent avec leur empreinte,
+    # comme dans toute demande nouvelle (ADR-0008). Une entrée qui n'existe
+    # pas ici, ou un fichier qui n'existe ni ici ni au dernier commit, arrête
+    # tout avant d'écrire.
+    inconnus = []
+
+    def citer(m) -> str:
+        e = mem.entree(m.group(0)) if memoire.decouper_id(m.group(0)) else None
+        if e is None:
+            inconnus.append(m.group(0))
+            return m.group(0)
+        return f"{m.group(0)}@{memoire.empreinte_entree(e)}"
+
+    raison = re.sub(memoire.ID_RE.pattern + r"(?!@)", citer, args.text)
+    absents = [f for f in args.files or [] if not (racine / f).is_file()
+               and not outils.git_reussit(racine, "cat-file", "-e", f"HEAD:{f}")]
+    if inconnus or absents:
+        for i in inconnus:
+            print(f"refus : la raison cite {i}, qui n'existe pas dans cette mémoire", file=sys.stderr)
+        for f in absents:
+            print(f"refus : {f} n'existe ni ici ni au dernier commit : rien à approuver", file=sys.stderr)
+        return 2
     cites = []
     for f in args.files or []:
         p = racine / f
@@ -369,7 +391,8 @@ def cmd_approve(args) -> int:
     if not cites:
         print("rien à approuver : --files ou --keys", file=sys.stderr)
         return 2
-    texte = gabarit("approbation.md").format(id=ident, date=jour, raison=args.text, elements="\n".join(cites))
+    texte = gabarit("approbation.md").format(id=ident, date=jour, raison=raison, elements="\n".join(cites),
+                                             moteur=projet.dossier_moteur)
     chemin = racine / f"memoire/demandes/{ident}-approbation-humaine.md"
     chemin.write_text(texte, encoding="utf-8")
     d = demandes.charger(racine, None, str(chemin.relative_to(racine)), texte)
