@@ -154,3 +154,24 @@ ligne `def echelle(x):` en début de ligne, dans une chaîne, est lue comme
 une fonction publique ajoutée, qu'aucun test ne nomme. Dispensée pour
 l'instant par un trailer ; le lecteur de fonctions devrait sauter les
 chaînes multilignes.
+
+## B-0026 — Sur un projet sans aucun test, verify échoue
+
+> statut : ouvert · origine : J-2026-10-11-G · lu : backlog@c462bb86
+
+Vu au banc (s6, premier passage : l'initialisation depuis un cadrage seul)
+et reproduit sur un projet installé vide : `socle verify` échoue sur
+`verify.tests`, parce que `unittest` rend le code 5 quand il ne trouve
+aucun test. Un projet qui commence n'a pas encore de test : l'adaptateur
+devrait traiter « aucun test » comme un avertissement, pas comme un échec.
+Le juge de s6 ne regardait que les contrôles, pas `verify`.
+
+## B-0027 — Sans adresse de dépôt, l'agent ne sait pas quel lien mettre dans une demande
+
+> statut : ouvert · origine : J-2026-10-11-G · lu : backlog@3cbd3c76
+
+Au banc, huit premiers jets de demande sur onze ont été refusés pour « Où
+regarder » sans lien (s4, s5, s9, s11) : sans `[human] repo_url` ni push, `socle
+url` échoue, et l'agent écrit des chemins nus. Un lien relatif depuis la
+demande (`../../calc.py`) passe le contrat ; le refus, ou le squelette de
+`socle new request`, devrait le dire.

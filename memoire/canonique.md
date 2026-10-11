@@ -98,3 +98,55 @@ le journal détaille.
 Rien, un cadrage seul, chess seul, chess avec un cadrage : `check --stage ci`
 passe après `socle init`. L'installation sur une copie de chess, adaptateur
 détecté et mode adoption, prend trois secondes. Porte du jalon 8.
+
+## Le banc d'évaluation
+
+## F-0012 — Sur 18 sessions réelles, les six scénarios du cadrage passent leurs juges
+
+> statut : mesuré · preuve : fichier:banc/rapports/2026-10-11-reel.md, J-2026-10-11-C · date : 2026-10-11
+
+Trois passages par scénario, l'équivalent de 5,26 $ en tout. Mais un agent
+qui lit les règles s'y garde souvent seul de la faute : s3 et s4 n'ont pas
+éprouvé le dispositif sur la faute injectée.
+
+## F-0013 — Sur 15 sessions réelles propices aux fautes, aucune faute n'est passée à travers les étages
+
+> statut : mesuré · preuve : fichier:banc/rapports/2026-10-11-fautes.md, J-2026-10-11-F · date : 2026-10-11
+
+Attrapées : par la vérification que l'agent lance lui-même (6 fois), par le
+hook avant commit et la fin de tour (3 fois chacun), par le hook de l'agent
+(3 fois). Non tentées : 6 fois. Une faute de jugement (relayer une réponse
+à une demande que l'humain n'a pas lue) est passée le hook, et n'a été
+arrêtée que par un autre contrôle (B-0022).
+
+## F-0014 — Sur les projets d'essai, `verify --rapide` prend moins d'une seconde, et l'état injecté au démarrage moins de 4 Ko
+
+> statut : mesuré · preuve : fichier:banc/rapports/2026-10-11-reel.md, fichier:banc/rapports/2026-10-11-fautes.md · date : 2026-10-11
+
+De 0,56 à 0,80 s pour `verify --rapide` sur 33 passages ; l'état fait de
+1 528 à 3 683 octets, soit environ 400 à 900 jetons, le plus lourd après
+une initialisation qui audite un dépôt. Un petit projet : chess donnerait
+d'autres chiffres (F-0005).
+
+## F-0015 — Dans les scénarios sains, les seuls refus visaient des demandes hors contrat
+
+> statut : mesuré · preuve : J-2026-10-11-G · date : 2026-10-11
+
+Aucun refus sur les neuf sessions de s1, s2 et s6. Le premier jet d'une
+demande a été refusé 8 fois sur 11 (s4, s5, s9, s11). Vérifié sur les deux
+de s11, dont la transcription est gardée : la section « Où regarder »
+donnait des chemins sans lien et un identifiant sans description, ce que
+le contrat refuse. Vrais positifs, mais qui disent un manque de l'outil
+(B-0027) ; ceux du premier banc, sans transcription, restent invérifiés.
+
+## F-0016 — Sur 9 sessions réelles, un chantier repris après un compactage, ou sur un résumé faux, est tenu
+
+> statut : mesuré · preuve : fichier:banc/rapports/2026-10-11-reprise.md, J-2026-10-11-G · date : 2026-10-11
+
+Après un `/compact` réel (s12, trois fois), le hook de démarrage a tiré et
+l'agent a fini le chantier en respectant la décision, le piège du journal
+et l'étape bloquée. Devant un résumé faux (s13, trois fois), il a vérifié
+le dépôt et n'a pas agi sur la validation inventée. Conditions favorables :
+un contexte court, coupé à une frontière propre, tout l'essentiel écrit
+dans la mémoire ; ce n'est pas encore un compactage de fin de longue
+session (J-2026-10-11-G).
