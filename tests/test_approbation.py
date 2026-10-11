@@ -22,8 +22,11 @@ MOTEUR = Path(__file__).resolve().parent.parent / "moteur"
 
 
 def git(cwd, *args):
-    env = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t",
-           "GIT_COMMITTER_EMAIL": "t@t", "GIT_CONFIG_NOSYSTEM": "1", "HOME": str(cwd)}
+    # Sans `CLAUDECODE` : un commit de ces tests est celui d'un humain, même
+    # lancé depuis une session d'agent, dont le hook git le marquerait.
+    env = {**{k: v for k, v in os.environ.items() if k != "CLAUDECODE"}, "GIT_AUTHOR_NAME": "t",
+           "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t",
+           "GIT_CONFIG_NOSYSTEM": "1", "HOME": str(cwd)}
     return subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True, env=env).stdout
 
 
@@ -64,6 +67,29 @@ class TestApprobation(unittest.TestCase):
         self.assertEqual(cli.fichiers_a_approuver(config.Projet.charger(self.racine)), [])
         demande = next((self.racine / "memory/requests").glob("D-*-approbation-humaine.md")).read_text()
         self.assertIn("`.github/workflows/socle.yml`", demande)
+
+    def test_l_etat_rappelle_l_approbation_jusqu_au_commit_suivant_de_l_agent(self):
+        """B-0034, P7 : Théo a approuvé D-0012 dans son terminal, et ne
+        retrouvait pas ce numéro dans la conversation : l'état le liste à
+        l'agent, qui le cite, jusqu'à son commit suivant."""
+        from socle import etat, humain
+
+        git(self.racine, "commit", "-qm", "travail\n\nCo-Authored-By: Claude <noreply@anthropic.com>", "--allow-empty",
+            "--no-verify")
+        projet = config.Projet.charger(self.racine)
+        self.assertIsNotNone(humain.dernier_commit_agent(projet))
+        self.assertEqual(humain.fait_par_l_humain(projet), [])
+        self.assertEqual(self.approuver(".github/workflows/socle.yml")[0], 0)
+        faits = humain.fait_par_l_humain(projet)
+        self.assertEqual(len(faits), 1)
+        self.assertIn("D-0001 — ", faits[0].quoi)
+        self.assertIn("écrit par l'humain lui-même depuis le dernier commit de l'agent : 1",
+                      etat.calculer(projet, contenus=False))
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "approbation", "--no-verify")  # un commit de l'humain
+        self.assertEqual(len(humain.fait_par_l_humain(projet)), 1)
+        git(self.racine, "commit", "-qm", "suite\n\nSocle-Agent: claude-code", "--allow-empty", "--no-verify")
+        self.assertEqual(humain.fait_par_l_humain(projet), [])
 
     def test_sans_liste_ni_confirmation_rien_n_est_approuve(self):
         erreurs = io.StringIO()

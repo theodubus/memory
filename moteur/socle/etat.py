@@ -65,6 +65,18 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
         lignes += humain.texte(humain.a_faire(projet))
     except Exception as e:
         lignes.append(f"ce qui revient à l'humain : incalculable ({type(e).__name__}: {e})")
+    try:
+        from socle import humain
+
+        faits = humain.fait_par_l_humain(projet)
+        if faits:
+            lignes.append(f"écrit par l'humain lui-même depuis le dernier commit de l'agent : {len(faits)} "
+                          "— à lui citer, avec le lien")
+            for e in faits:
+                lignes.append(f"  {e.genre} : {e.quoi}")
+                lignes.append(f"    {e.lien}")
+    except Exception as e:
+        lignes.append(f"ce que l'humain a écrit lui-même : incalculable ({type(e).__name__}: {e})")
     lignes += _hooks(racine)
     from socle import prive
 

@@ -82,6 +82,41 @@ def a_faire(projet: config.Projet) -> list[Element]:
     return res
 
 
+def dernier_commit_agent(projet: config.Projet, profondeur: int = 500) -> str | None:
+    """Le dernier commit de l'agent, en remontant depuis HEAD."""
+    from socle.controles_cliquet import est_agent
+
+    if not outils.a_des_commits(projet.racine):
+        return None
+    sortie = outils.git(projet.racine, "log", f"-{profondeur}", "--format=%H%x00%B%x1e", "HEAD", check=False)
+    for bloc in sortie.split("\x1e"):
+        sha, _, message = bloc.strip("\n").partition("\0")
+        if sha and est_agent(projet, message):
+            return sha
+    return None
+
+
+def fait_par_l_humain(projet: config.Projet) -> list[Element]:
+    """Les réponses que l'humain a écrites lui-même (`socle answer` dans son
+    terminal, une approbation de ses changements protégés), depuis le dernier
+    commit de l'agent, commitées ou non : l'agent ne les a pas vues passer,
+    et l'humain ne connaît pas toujours le numéro que la commande a donné
+    (B-0034, P7)."""
+    depuis = dernier_commit_agent(projet)
+    res = []
+    for d in demandes.toutes(projet.racine):
+        if d.reponse is None or d.reponse.get("canal") != "terminal" or not d.chemin_reponse:
+            continue
+        if depuis and outils.git_reussit(projet.racine, "cat-file", "-e", f"{depuis}:{d.chemin_reponse}"):
+            continue
+        r = d.reponse
+        quoi = (f"{d.id} — {d.entree.titre if d.entree else d.chemin} : « {r.get('reponse', '')} »"
+                f" ({', '.join(x for x in (str(r.get('par', '')), str(r.get('date', ''))) if x)})")
+        url, _ = liens.lien(projet, d.chemin)
+        res.append(Element("réponse", quoi, url or "(pas encore poussée : pas de lien)"))
+    return res
+
+
 def texte(elements: list[Element]) -> list[str]:
     if not elements:
         return ["ce qui revient à l'humain : rien"]

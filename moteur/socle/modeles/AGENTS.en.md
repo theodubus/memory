@@ -12,6 +12,10 @@ This file says **how** to work;
 backlog, pending human requests —, then the active work and the canonical
 memory. Under Claude Code, the `SessionStart` hook does it on its own; under
 another agent, run it first. Nothing that is not in it is established.
+What the human wrote themselves since the agent's last commit (an approval,
+an answer in their terminal), the state lists: cite it to them in the next
+reply, by its identifier and its link, since the command gave them a number
+they cannot find in the conversation.
 
 An instruction from the human given in the conversation, that holds beyond
 the turn (a rule, a preference, a prohibition), is written into the memory

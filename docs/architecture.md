@@ -43,7 +43,7 @@ comparent le même fichier sous ses deux noms.
 | `tests_lecture.py` | extraction des fonctions de test selon l'adaptateur (blocs à accolades, indentés ou fermés par `end`) ; transitivité des assertions |
 | `hooks.py` | les points d'entrée des hooks de l'agent et de git, la trace, dont chaque refus et l'étage qui l'a prononcé |
 | `etat.py` | l'état dérivé |
-| `humain.py` | ce qui revient à l'humain, et la lecture du dernier message de l'agent pour le récap |
+| `humain.py` | ce qui revient à l'humain ; ce qu'il a écrit lui-même depuis le dernier commit de l'agent (approbations, réponses de son terminal), que l'état liste pour que l'agent le cite ; la lecture du dernier message de l'agent pour le récap |
 | `prive.py` | la mémoire privée : modes compagnon et chiffré, verrou, accès, couches privées par défaut, bascule d'une entrée publique, contrôles `prive.*` |
 | `liens.py` | le permalien d'un fichier ou d'une entrée ; les liens d'un message que l'humain ne pourra pas suivre |
 | `verification.py` | le contrat `verify` : les capacités de l'adaptateur |

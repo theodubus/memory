@@ -69,6 +69,10 @@ Ce fichier dit **comment** travailler ;
 backlog, demandes humaines en attente —, puis le chantier actif et la mémoire
 canonique. Sous Claude Code, le hook `SessionStart` le fait seul ; sous un
 autre agent, le lancer d'abord. Rien de ce qui n'y figure pas n'est acquis.
+Ce que l'humain a écrit lui-même depuis le dernier commit de l'agent (une
+approbation, une réponse dans son terminal), l'état le liste : le lui citer
+dans la réponse suivante, par son identifiant et son lien, puisque la
+commande lui a donné un numéro qu'il ne retrouve pas dans la conversation.
 
 Une consigne de l'humain donnée dans la conversation, qui vaut au-delà du tour
 (une règle, une préférence, une interdiction), s'écrit dans la mémoire avant de
