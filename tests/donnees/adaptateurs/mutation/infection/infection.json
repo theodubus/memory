@@ -1,0 +1,5 @@
+{"stats": {"totalMutantsCount": 5}, "killed": [{"mutator": {"originalFilePath": "/ailleurs/projet/src/Calc.php"}}],
+ "escaped": [{"mutator": {"originalFilePath": "/ailleurs/projet/src/Calc.php"}}],
+ "uncovered": [{"mutator": {"originalFilePath": "/ailleurs/projet/src/Calc.php"}}],
+ "timeouted": [{"mutator": {"originalFilePath": "/ailleurs/projet/src/Calc.php"}}],
+ "errored": [], "syntaxErrors": [], "ignored": []}

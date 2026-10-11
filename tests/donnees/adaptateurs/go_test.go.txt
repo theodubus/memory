@@ -1,0 +1,24 @@
+package calc
+
+import "testing"
+
+func TestDouble(t *testing.T) {
+	if Double(2) != 4 {
+		t.Errorf("Double(2) = %d, want 4 {", Double(2))
+	}
+}
+
+func TestRien(t *testing.T) {
+	_ = Double(2)
+}
+
+func TestPlusTard(t *testing.T) {
+	t.Skip()
+	if Double(3) != 6 {
+		t.Fatal("non")
+	}
+}
+
+func aide(t *testing.T) {
+	t.Helper()
+}

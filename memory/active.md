@@ -5,21 +5,19 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-B-0030, cinq adaptateurs de plus (JavaScript et TypeScript, Go, Java, Ruby,
-PHP) : fait et éprouvé sur leurs vrais outils par un banc, mais pas commité.
-Le test qui figeait la liste des trois adaptateurs maintenus change de
-valeur attendue : D-0013, poussée, demande à Théo de le valider. En
-attendant, tout le travail (adaptateurs, lecteurs de mutation, banc, tests,
-décision, journal, fait mesuré, deux sujets nouveaux) est remisé dans
-`git stash` (« B-0030 travail, attend D-0013 ») : les hooks refusent de le
-commiter ou de le laisser dans l'arbre (B-0033).
+B-0030 fait (ADR-0021, J-2026-10-11-Q, F-0018) : cinq adaptateurs de plus,
+éprouvés par `banc/adaptateurs.py` ; Théo a validé la liste attendue de huit
+adaptateurs (D-0013).
+
+Consigne de Théo, texte exact : « ok pour B0033 et B0037 d'abord » : ces
+deux sujets passent avant le parcours de l'utilisateur et la documentation.
 
 ## Prochaines étapes
 
-1. À la réponse de Théo sur D-0013 : la consigner (`socle answer
-   --relayed`), restaurer le stash, commiter avec la dispense de test
-   d'`eprouver` (il lance les vrais outils ; le banc l'exerce), `socle ci`,
-   pousser.
-2. Les sujets que Théo a ouverts pour plus tard : B-0035 (la documentation
-   du projet), précédé de B-0034 (le parcours de l'utilisateur) ; puis
-   B-0033, B-0037 et B-0038.
+1. B-0033 : en fin de tour, un test nommé par une demande en attente,
+   poussée telle quelle, ne bloque plus ; le commit et la CI refusent
+   toujours.
+2. B-0037 : le conseil du refus d'une empreinte d'index périmée doit mener
+   à une empreinte acceptée.
+3. Puis B-0034 (le parcours de l'utilisateur) et B-0035 (la documentation),
+   et plus tard B-0038, B-0039, B-0040.

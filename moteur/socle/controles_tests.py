@@ -96,8 +96,12 @@ def creux(ctx, r):
     raison = re.compile(cfg["ignore_reason"]) if cfg.get("ignore_reason") else None
     tautos = [re.compile(t) for t in cfg.get("tautology", [])]
     for f in [f for f in toutes if f.fichier in cibles and f.est_test]:
-        desactive = ignore and any(ignore.search(a) for a in f.attributs)
-        if desactive and not (raison and any(raison.search(a) for a in f.attributs)):
+        # Un test se désactive par un attribut (`#[ignore]`, `@Disabled`), sur
+        # la ligne qui le définit (`test.skip(…)`, `xit "…"`) ou dans son corps
+        # (`t.Skip(…)`, `markTestSkipped(…)`).
+        marques = [*f.attributs, f.entete, *f.lignes_corps]
+        desactive = ignore and any(ignore.search(a) for a in marques)
+        if desactive and not (raison and any(raison.search(a) for a in marques)):
             r.erreur("tests.creux", f"test `{f.nom}` désactivé sans raison écrite", f.fichier, f.ligne)
         if not tests_lecture.affirme(f, assertion, aides):
             r.erreur("tests.creux", f"test `{f.nom}` sans assertion : il passe sans rien mesurer", f.fichier, f.ligne)
@@ -155,7 +159,9 @@ def attendus(ctx, r):
     if cfg is None:
         r.indisponible("tests.attendus", "adaptateur sans `[tests]`")
         return
-    assertion = re.compile(cfg.get("assertion", r"assert"))
+    # Les lignes qui portent une valeur attendue : les assertions, et ce que
+    # l'adaptateur y ajoute (`expected` : en Go, la condition `if got != 4`).
+    assertion = re.compile(cfg.get("expected") or cfg.get("assertion", r"assert"))
     changes = set(ctx.changes)
     avant_fichiers = [c for c in fichiers_tests(ctx, ctx.fichiers_base) if c in changes]
     if not avant_fichiers:
@@ -337,12 +343,17 @@ def regression(ctx, r):
 
 def commande_regression(cap: dict, tests: list[str]) -> str:
     """Remplit `{files}`, `{stems}` et `{test_args}` (un `test_arg` par
-    fichier, où `{file}`, `{stem}` et `{module}` se remplacent)."""
+    fichier, où `{file}`, `{stem}`, `{module}` et `{dir}`, son dossier, se
+    remplacent ; un même argument ne se répète pas)."""
     gabarit = cap.get("test_arg", "--test {stem}")
     args = []
     for t in tests:
         module = t[: -len(Path(t).suffix)].replace("/", ".") if Path(t).suffix else t.replace("/", ".")
-        args.append(gabarit.replace("{file}", t).replace("{stem}", Path(t).stem).replace("{module}", module))
+        dossier = str(Path(t).parent) if str(Path(t).parent) != "." else ""
+        arg = (gabarit.replace("{file}", t).replace("{stem}", Path(t).stem).replace("{module}", module)
+               .replace("{dir}", dossier))
+        if arg not in args:
+            args.append(arg)
     return (
         cap["command"]
         .replace("{files}", " ".join(tests))
@@ -359,6 +370,17 @@ def _executer_superpose(ctx, rev: str, rev_tests: str, tests: list[str], cap: di
     try:
         if not outils.git_reussit(ctx.racine, "worktree", "add", "--detach", str(arbre), rev):
             return None
+        # Les dépendances installées, que git ignore (`node_modules`, `vendor`) :
+        # le worktree les partage avec l'arbre de travail au lieu de les
+        # réinstaller (`shared` de la capacité), ou les copie (`copied`) quand
+        # leur chargeur résout les liens : l'autoload de Composer chargerait
+        # sinon le code de l'arbre de travail, pas celui du parent.
+        for d in cap.get("shared", []):
+            if (ctx.racine / d).exists() and not (arbre / d).exists():
+                (arbre / d).symlink_to(ctx.racine / d, target_is_directory=(ctx.racine / d).is_dir())
+        for d in cap.get("copied", []):
+            if (ctx.racine / d).is_dir() and not (arbre / d).exists():
+                shutil.copytree(ctx.racine / d, arbre / d, symlinks=True)
         for t in tests:
             contenu = outils.lire_a(ctx.racine, rev_tests, t)
             cible = arbre / t
@@ -382,7 +404,9 @@ def couverture_mutation(ctx, r):
         return  # absence déclarée : `adaptateur.capacites` en répond
     caps = ctx.projet.gf("mutation", "caps", defaut={}) or {}
     porte = re.compile(cap.get("has_code", r"."))
-    modules = outils.filtrer(ctx.fichiers, cap.get("modules", []))
+    # `modules_exclude` : ce que l'outil ne mute pas (les tests de Go vivent à
+    # côté du code qu'ils testent).
+    modules = outils.filtrer(ctx.fichiers, cap.get("modules", []), cap.get("modules_exclude", []))
     for m in modules:
         if m not in caps and porte.search(ctx.lire(m) or ""):
             r.erreur("mutation.couverture", "module hors du cliquet de mutation : lui mesurer un plafond "

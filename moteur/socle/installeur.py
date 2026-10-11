@@ -53,11 +53,23 @@ def charger_adaptateur(nom: str) -> tuple[str, str]:
     return q.read_text(encoding="utf-8"), nom
 
 
+# Le fichier qui dit le langage d'un dépôt, et l'adaptateur maintenu qui va
+# avec ; le premier trouvé l'emporte.
+MARQUEURS_LANGAGE = (
+    (("Cargo.toml",), "rust"),
+    (("pyproject.toml", "setup.py", "setup.cfg"), "python"),
+    (("go.mod",), "go"),
+    (("pom.xml",), "java"),
+    (("Gemfile",), "ruby"),
+    (("composer.json",), "php"),
+    (("package.json",), "javascript"),
+)
+
+
 def detecter_langage(cible: Path) -> str | None:
-    if (cible / "Cargo.toml").is_file():
-        return "rust"
-    if any((cible / f).is_file() for f in ("pyproject.toml", "setup.py", "setup.cfg")):
-        return "python"
+    for fichiers, langage in MARQUEURS_LANGAGE:
+        if any((cible / f).is_file() for f in fichiers):
+            return langage
     return None
 
 
@@ -122,8 +134,10 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
     if adaptateur == "auto":
         detecte = detecter_adaptateur(cible)
         if detecte is None:
-            print("refus : langage non détecté (ni Cargo.toml, ni fichier Python) : le demander à l'humain, "
-                  "puis `--adapter <rust|python|python-pytest>` ou le chemin d'un .toml", file=sys.stderr)
+            connus = "|".join(sorted(x.stem for x in ADAPTATEURS.glob("*.toml")))
+            print("refus : langage non détecté (aucun de Cargo.toml, pyproject.toml, go.mod, pom.xml, Gemfile, "
+                  "composer.json, package.json, ni fichier Python) : le demander à l'humain, "
+                  f"puis `--adapter <{connus}>` ou le chemin d'un .toml", file=sys.stderr)
             return 2
         adaptateur = detecte
     texte_adaptateur, nom_adaptateur = charger_adaptateur(adaptateur)

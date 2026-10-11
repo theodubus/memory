@@ -19,14 +19,15 @@ comme dans n'importe quel projet.
 - `moteur/socle/` — le moteur : lecture de la mémoire, contrôles, hooks,
   installeur, auto-test. `moteur/socle/FORMAT.md` fait foi pour le format de
   la mémoire.
-- `moteur/socle/adaptateurs/` — les adaptateurs maintenus (Rust, Python sous
-  `unittest`, Python sous `pytest`).
+- `moteur/socle/adaptateurs/` — les adaptateurs maintenus : Rust, Python sous
+  `unittest` et sous `pytest`, JavaScript et TypeScript, Go, Java, Ruby, PHP.
 - `moteur/socle/modeles/` — les gabarits que l'installeur pose dans un projet.
 - `tests/` — les tests du moteur (`unittest`), dont l'auto-test complet par
   injection de défauts.
 - `docs/` — l'architecture et l'inventaire de `chess`.
-- `banc/` — le banc d'évaluation sur un agent réel, ses six scénarios et
-  leurs juges (`docs/banc.md`).
+- `banc/` — le banc d'évaluation sur un agent réel, ses scénarios et leurs
+  juges (`docs/banc.md`), et le banc des adaptateurs, chacun éprouvé sur un
+  projet jetable de son langage (`banc/adaptateurs.py`).
 - `memory/` — la mémoire de ce projet, au format du socle.
 
 ## Commandes
@@ -36,6 +37,7 @@ python3 .socle/socle verify --rapide     # compilation, tests, contrôles
 python3 .socle/socle ci                  # tout, dont l'auto-test
 python3 .socle/socle selftest --verbose  # les défauts injectés, un par un
 python3 banc/banc.py --agent simule      # le banc, sur un agent simulé
+python3 banc/adaptateurs.py              # les adaptateurs, sur leurs vrais outils
 python3 .socle/socle install --target ../projet --adapter auto --owner @moi
 python3 .socle/socle init --cadrage cadrage.md --depot   # dans le projet installé
 ```

@@ -1,0 +1,3 @@
+{"go_module": "example.com/calc", "files": [{"file_name": "calc.go", "mutations": [
+  {"type": "ARITHMETIC_BASE", "status": "KILLED", "line": 5}, {"type": "CONDITIONALS_BOUNDARY", "status": "LIVED", "line": 14},
+  {"type": "CONDITIONALS_NEGATION", "status": "NOT COVERED", "line": 14}, {"type": "INVERT_NEGATIVES", "status": "TIMED OUT", "line": 9}]}]}

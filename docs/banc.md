@@ -161,3 +161,19 @@ Le rapport compte les interruptions et l'attente, à part des résultats.
 Le banc partage les limites du compte avec la session qui le lance : il
 tourne détaché, et c'est lui, pas cette session, qui attend la remise à
 zéro.
+
+## Le banc des adaptateurs
+
+Un second banc, sans agent : `banc/adaptateurs.py` éprouve chaque
+adaptateur ajouté par B-0030 (JavaScript et TypeScript, Go, Java, Ruby,
+PHP) sur un projet jetable de son langage, avec ses vrais outils de tests et
+de mutation. Il vérifie que le projet sain passe, que chaque faute de test
+est refusée par le contrôle attendu, que la régression se rejoue sur le
+parent, et que le verdict de mutation casse sous le plafond mesuré. Ce qu'il
+éprouve, et ce qu'il a trouvé, est décrit avec les adaptateurs
+(`moteur/socle/adaptateurs/README.md`).
+
+```sh
+python3 banc/adaptateurs.py                          # les cinq langages
+python3 banc/adaptateurs.py --langages go --garder   # un seul, projet gardé
+```

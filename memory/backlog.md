@@ -185,7 +185,7 @@ pendants privés.
 
 ## B-0030 — Des adaptateurs pour d'autres langages courants
 
-> statut : ouvert · origine : J-2026-10-11-J · lu : backlog@d2bc3f03
+> statut : fait · origine : J-2026-10-11-J · lu : backlog@d2bc3f03 · ref : J-2026-10-11-Q
 
 Demandé par Théo : plus que Rust et Python. Candidats, avec leurs outils de
 test et de mutation usuels : JavaScript et TypeScript (npm, vitest ou jest,
@@ -304,3 +304,22 @@ garde-fous, le texte d'une approbation. Un catalogue de messages par
 langue, choisi par `[memory] language` ; les messages des hooks sont lus
 par l'agent, ceux de l'installeur et des questions de départ par l'humain,
 à traduire en premier.
+
+## B-0039 — Éprouver sur GitHub les étapes de CI que posent les cinq adaptateurs nouveaux
+
+> statut : ouvert · origine : J-2026-10-11-Q · lu : backlog@7813094e
+
+Chaque adaptateur nouveau ajoute au workflow de CI ses étapes
+d'installation (Node, Go, Java, Ruby, PHP avec pcov, et leurs dépendances).
+Le banc des adaptateurs les a éprouvés ici, pas dans un workflow GitHub :
+ces étapes sont supposées. Les éprouver sur un dépôt jetable de chaque
+langage, poussé sur GitHub, avec le workflow que pose l'installeur.
+
+## B-0040 — Un adaptateur C# (dotnet test, Stryker.NET), à éprouver là où dotnet existe
+
+> statut : ouvert · origine : J-2026-10-11-Q · lu : backlog@30534ad0
+
+Théo voulait les langages courants ; C# en est, mais dotnet n'est pas dans
+ce conteneur, et un adaptateur non éprouvé ne se maintient pas. Écrire
+l'adaptateur (`dotnet test`, Stryker.NET et son rapport JSON) et le
+passer au banc des adaptateurs là où dotnet existe.

@@ -1,0 +1,22 @@
+require_relative "../lib/calc"
+
+RSpec.describe Calc do
+  it "multiplie par deux" do
+    expect(Calc.double(2)).to eq(4)
+  end
+
+  it "ne mesure rien" do
+    if true
+      Calc.double(2)
+    end
+  end
+
+  xit "plus tard" do
+    expect(Calc.triple(2)).to eq(6)
+  end
+
+  it "attend, avec sa raison" do
+    skip "la spécification attend"
+    expect(Calc.triple(2)).to eq(6)
+  end
+end

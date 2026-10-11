@@ -1,0 +1,9 @@
+export function double(x) {
+  return 2 * x;
+}
+
+export const triple = (x) => 3 * x;
+
+function aide(x) {
+  return x + 1;
+}

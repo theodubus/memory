@@ -160,3 +160,13 @@ consignes noyées dedans ; le compactage est tombé seul, vers 107 000 jetons
 ramenés à 3 500, au milieu de la première étape. Le résumé a gardé les trois
 consignes à chaque fois, et le code final les respecte, piège compris. Mais
 une session sur trois n'en a écrit qu'une dans la mémoire (B-0028).
+
+## F-0018 — Les cinq adaptateurs nouveaux passent les douze étapes de leur banc
+
+> statut : mesuré · preuve : fichier:banc/rapports/2026-10-11-adaptateurs.md, cmd:`python3 banc/adaptateurs.py` · source : J-2026-10-11-Q
+
+JavaScript et TypeScript, Go, Java, Ruby et PHP, chacun sur un projet
+jetable avec ses vrais outils : 60 étapes sur 60. Chaque faute de test est
+refusée par le contrôle attendu, la régression se rejoue sur le parent, et
+le verdict de mutation casse sous le plafond mesuré. Mesuré dans ce
+conteneur, pas sur GitHub (B-0039).

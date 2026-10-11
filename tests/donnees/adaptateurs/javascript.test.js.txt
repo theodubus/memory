@@ -1,0 +1,21 @@
+import { describe, expect, test } from "vitest";
+import { double, triple } from "../src/calc.js";
+
+describe("calc", () => {
+  test("double multiplie par deux", () => {
+    expect(double(2)).toBe(4);
+  });
+
+  test.skip("triple, plus tard — raison : la spécification attend", () => {
+    expect(triple(2)).toBe(6);
+  });
+
+  it("ne mesure rien", () => {
+    const x = "{ pas une accolade }";
+    double(x);
+  });
+
+  test.skip("sans dire pourquoi", () => {
+    expect(1).toBe(1);
+  });
+});

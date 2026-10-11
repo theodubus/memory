@@ -1,0 +1,9 @@
+module Calc
+  def self.double(x)
+    2 * x
+  end
+
+  private def aide(x)
+    x + 1
+  end
+end

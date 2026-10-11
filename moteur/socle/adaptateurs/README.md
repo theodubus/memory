@@ -34,12 +34,15 @@ mais il ne verrait rien des tests.
 
 ## Ce qu'il contient
 
-Trois adaptateurs sont maintenus. Ce sont des extraits : les fichiers
-[rust.toml](rust.toml), [python.toml](python.toml) et
-[python-pytest.toml](python-pytest.toml) font foi. Les deux adaptateurs
-Python ne diffèrent que par le lanceur de tests et la mutation : `python`
-s'en tient à la bibliothèque standard (`unittest`), sans mutation ;
-`python-pytest` prend pytest et mutmut, qui exige pytest.
+Huit adaptateurs sont maintenus. Le tableau ci-dessous compare les trois
+premiers ; celui de la section « Cinq langages de plus » compare les autres.
+Ce sont des extraits : les fichiers font foi, [rust.toml](rust.toml),
+[python.toml](python.toml), [python-pytest.toml](python-pytest.toml),
+[javascript.toml](javascript.toml), [go.toml](go.toml),
+[java.toml](java.toml), [ruby.toml](ruby.toml) et [php.toml](php.toml). Les
+deux adaptateurs Python ne diffèrent que par le lanceur de tests et la
+mutation : `python` s'en tient à la bibliothèque standard (`unittest`), sans
+mutation ; `python-pytest` prend pytest et mutmut, qui exige pytest.
 
 | Ce que le moteur demande | Rust (repris de chess) | Python (`unittest`) | Python (`pytest`) | Qui s'en sert |
 | --- | --- | --- | --- | --- |
@@ -74,7 +77,7 @@ fournit).
 
 - Les adaptateurs maintenus sont dans ce dossier.
 - L'installeur copie celui qu'on choisit (`socle install --adapter rust`)
-  dans le projet, sous `.socle/adaptateur.toml`. Le projet y ajoute ses
+  dans le projet, sous `.socle/adapter.toml`. Le projet y ajoute ses
   étapes propres, par exemple un banc de performance, et y nomme ce qui lui
   est propre : sous `python-pytest`, les modules soumis à la mutation, quand
   son paquet n'est pas sous `src/`.
@@ -82,7 +85,7 @@ fournit).
   remplacerait la commande des tests par une commande qui réussit toujours
   rendrait tous les contrôles de tests aveugles.
 - Ce dépôt est lui-même écrit en Python : son
-  [adaptateur](../../../.socle/adaptateur.toml) est l'adaptateur Python.
+  [adaptateur](../../../.socle/adapter.toml) est l'adaptateur Python.
   Le socle ne marche donc pas que pour Rust : il tourne en Python ici, à
   chaque commit.
 
@@ -91,7 +94,25 @@ fournit).
 On écrit un nouveau fichier, avec les mêmes clés ; le moteur ne change pas.
 Une seule exception : si l'outil de mutation du langage est nouveau, le
 moteur doit apprendre à lire ses résultats (`moteur/socle/mutation.py`, une
-fonction par outil ; il en connaît deux, `cargo-mutants` et `mutmut`).
+fonction par outil ; il en connaît sept : `cargo-mutants`, `mutmut`,
+`stryker`, `gremlins`, `pit`, `mutant` et `infection`). Puis on l'éprouve
+sur un projet jetable, comme le fait `banc/adaptateurs.py` pour les cinq
+derniers.
+
+Les clés qui décrivent un langage, toutes facultatives sauf `function` :
+
+| Clé | Ce qu'elle dit | Exemple |
+| --- | --- | --- |
+| `function` | une fonction ou un test ; le premier groupe trouvé est son nom | `^\s*func\s+(\w+)` |
+| `marker_attribute`, `marker_name`, `marker_line` | ce qui fait un test : un attribut au-dessus, son nom, ou sa ligne | `#[test]`, `^test`, `test("…", …)` |
+| `block` | la forme d'un bloc : `braces`, `indent` ou `end` | `end` pour Ruby |
+| `strings`, `line_comment` | les littéraux et le commentaire de fin de ligne, où une accolade ne compte pas | chaînes entre accents graves de JavaScript |
+| `assertion` | ce qui affirme ; un test sans assertion est creux | `\bexpect\s*\(` |
+| `expected` | les lignes qui portent une valeur attendue, si ce ne sont pas les assertions | en Go, `if got != 4 {` |
+| `ignore`, `ignore_reason` | un test désactivé, et sa raison écrite ; lus sur ses attributs, sa ligne et son corps | `t.Skip()` |
+| `shared`, `copied` (régression) | les dépendances installées que le worktree de la régression lie ou copie | `node_modules`, `vendor` |
+| `modules_exclude` (mutation) | ce que l'outil ne mute pas | `**/*_test.go` |
+| `test_arg` (régression) | un argument par test rejoué ; `{file}`, `{stem}`, `{module}` ou `{dir}` | `./{dir}` en Go |
 
 ## Le jalon 6 : un second langage, éprouvé
 
@@ -109,3 +130,36 @@ lecteur des résultats de `mutmut`, propre à cet outil, qui n'avait jamais
 tourné, et `tests.code-teste`, qui prenait le moteur installé dans `.socle/`
 pour du code du projet, ce que seul un projet Python pouvait montrer. Le
 journal (J-2026-10-10-W) en garde le détail.
+
+## Cinq langages de plus (B-0030)
+
+À la demande de Théo, cinq adaptateurs de plus, chacun avec l'outil de tests
+et l'outil de mutation les plus courants de son langage :
+
+| Ce que le moteur demande | JavaScript, TypeScript | Go | Java | Ruby | PHP |
+| --- | --- | --- | --- | --- | --- |
+| Lancer les tests | `vitest` | `go test` | Maven, JUnit 5 | RSpec | PHPUnit |
+| Vérifier le code | absent : les tests chargent chaque module | `go vet`, `go build` | `javac` | `ruby -wc` | `php -l` |
+| Vérifier le formatage | absent : relecture du diff | `gofmt` | absent | absent | absent |
+| Reconnaître un test | `test("…")`, `it("…")` | `func TestX` | `@Test` | `it "…" do` | `function testX`, `#[Test]` |
+| Reconnaître un test désactivé | `test.skip`, `xit` | `t.Skip` | `@Disabled` | `xit`, `skip` | `markTestSkipped` |
+| Rejouer un test sur le commit d'avant | `vitest` d'un fichier | `go test` de son paquet | `-Dtest=` de sa classe | `rspec` d'un fichier | `phpunit` d'un fichier |
+| Mesurer la mutation | Stryker | gremlins | PIT | mutant | Infection |
+| Dire quelles fonctions sont privées | non exportées | nom en minuscule | sans `public` | `private def` | `private`, `protected` |
+
+Chaque outil de mutation lit la configuration du projet : `stryker.config.json`,
+la section PIT du `pom.xml`, `mutant.yml`, `infection.json5` ; gremlins n'en
+demande pas. Infection exige un pilote de couverture (pcov ou xdebug).
+
+Le banc `banc/adaptateurs.py` éprouve les cinq sur un projet jetable de leur
+langage, avec leurs vrais outils : le projet sain passe `socle verify` ; un
+test sans assertion, un test désactivé sans raison, une valeur attendue
+changée et une fonction publique sans test sont refusés par le contrôle
+attendu ; un correctif passe avec son test de régression, rejoué sur le
+parent, et il est refusé sans ; le balayage de mutation se lit, et son
+verdict passe au plafond mesuré et casse en dessous. Le premier passage a
+montré deux défauts, corrigés : en PHP, le lien vers `vendor` faisait
+charger à Composer le code de l'arbre de travail dans le worktree de la
+régression (d'où `copied`), et la commande de mutant devinait mal ses
+sujets (d'où `mutant.yml`). Les étapes de CI que chaque adaptateur ajoute
+au workflow n'ont tourné qu'ici, pas encore sur GitHub.

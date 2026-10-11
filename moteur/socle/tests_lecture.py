@@ -1,11 +1,15 @@
 """Lecture des fonctions de test, paramétrée par l'adaptateur.
 
 Le moteur ne connaît aucun langage : l'adaptateur déclare la forme d'une
-fonction (`function`), d'un attribut (`attribute`), ce qui marque un test
-(`marker_attribute`, `marker_name`), la forme d'un bloc (`braces` ou
-`indent`) et ce qui compte comme assertion. Le moteur fournit seulement les
-deux mécanismes génériques : l'extraction d'un bloc et la transitivité des
-assertions (un test qui appelle une aide qui affirme, affirme).
+fonction (`function`, dont le premier groupe trouvé est le nom), d'un
+attribut (`attribute`), ce qui marque un test (`marker_attribute`,
+`marker_name`, ou `marker_line` sur la ligne qui le définit, pour
+`test("…", …)` ou `it "…" do`), la forme d'un bloc (`braces`, `indent` ou
+`end`), ses littéraux (`strings`) et ses commentaires de fin de ligne
+(`line_comment`), et ce qui compte comme assertion. Le moteur fournit
+seulement les mécanismes génériques : l'extraction d'un bloc et la
+transitivité des assertions (un test qui appelle une aide qui affirme,
+affirme).
 """
 
 from __future__ import annotations
@@ -24,19 +28,26 @@ class Fonction:
     est_test: bool = False
     lignes_corps: list[str] = field(default_factory=list)
     fin: int = 0  # dernière ligne de la fonction, 1 pour la première du fichier
+    entete: str = ""  # la ligne qui la définit
 
 
-def _sans_litteraux(ligne: str) -> str:
-    ligne = re.sub(r'"(?:\\.|[^"\\])*"', '""', ligne)
-    ligne = re.sub(r"'(?:\\.|[^'\\])'", "''", ligne)
-    return re.sub(r"//.*$", "", ligne)
+# Les littéraux et le commentaire de fin de ligne, par défaut ceux de Rust :
+# une accolade dans une chaîne ne compte pas.
+LITTERAUX = r'"(?:\\.|[^"\\])*"' + r"|'(?:\\.|[^'\\])'"
+COMMENTAIRE = r"//.*$"
 
 
-def _bloc_accolades(lignes: list[str], i: int) -> tuple[list[str], int]:
+def _sans_litteraux(ligne: str, litteraux: str = LITTERAUX, commentaire: str = COMMENTAIRE) -> str:
+    ligne = re.sub(litteraux, '""', ligne)
+    return re.sub(commentaire, "", ligne) if commentaire else ligne
+
+
+def _bloc_accolades(lignes: list[str], i: int, litteraux: str = LITTERAUX,
+                    commentaire: str = COMMENTAIRE) -> tuple[list[str], int]:
     """Le corps entre la première accolade et sa fermante, signature exclue."""
     profondeur, debut = 0, None
     for j in range(i, len(lignes)):
-        for c in _sans_litteraux(lignes[j]):
+        for c in _sans_litteraux(lignes[j], litteraux, commentaire):
             if c == ";" and debut is None:
                 return [], j  # déclaration sans corps
             if c == "{":
@@ -55,6 +66,25 @@ def _couper(bloc: list[str]) -> list[str]:
         return bloc
     premiere = bloc[0].split("{", 1)[1] if "{" in bloc[0] else ""
     return ([premiere] if premiere.strip() else []) + bloc[1:]
+
+
+# Un bloc fermé par `end` (Ruby, Lua, Elixir…) : ce qui l'ouvre, en tête de
+# ligne ou en `do` de fin de ligne ; ce qui le ferme.
+OUVRE_FIN = re.compile(r"^\s*(?:def|class|module|if|unless|while|until|case|begin|for|function)\b"
+                       r"|\bdo\s*(?:\|[^|]*\|)?\s*$")
+FERME_FIN = re.compile(r"\bend\b")
+
+
+def _bloc_fin(lignes: list[str], i: int, litteraux: str = LITTERAUX,
+              commentaire: str = COMMENTAIRE) -> tuple[list[str], int]:
+    """Le corps d'un bloc ouvert sur la ligne `i` et fermé par son `end`."""
+    profondeur = 0
+    for j in range(i, len(lignes)):
+        ligne = _sans_litteraux(lignes[j], litteraux, commentaire)
+        profondeur += len(OUVRE_FIN.findall(ligne)) - len(FERME_FIN.findall(ligne))
+        if profondeur <= 0:
+            return lignes[i + 1 : j], j
+    return lignes[i + 1 :], len(lignes) - 1
 
 
 def _bloc_indentation(lignes: list[str], i: int) -> tuple[list[str], int]:
@@ -86,13 +116,17 @@ def extraire(texte: str, fichier: str, cfg: dict) -> list[Fonction]:
     comm_re = re.compile(cfg["comment"]) if cfg.get("comment") else None
     marque_attr = re.compile(cfg["marker_attribute"]) if cfg.get("marker_attribute") else None
     marque_nom = re.compile(cfg["marker_name"]) if cfg.get("marker_name") else None
+    marque_ligne = re.compile(cfg["marker_line"]) if cfg.get("marker_line") else None
+    litteraux, commentaire = cfg.get("strings", LITTERAUX), cfg.get("line_comment", COMMENTAIRE)
     lignes = texte.splitlines()
     res = []
     for i, ligne in enumerate(lignes):
         m = fn_re.match(ligne)
         if not m:
             continue
-        nom = m.group(1)
+        nom = next((g for g in m.groups() if g), None) if m.groups() else m.group(0)
+        if not nom:
+            continue
         attributs, j = [], i - 1
         while j >= 0:
             l = lignes[j]
@@ -103,15 +137,19 @@ def extraire(texte: str, fichier: str, cfg: dict) -> list[Fonction]:
             else:
                 break
             j -= 1
-        if cfg.get("block", "braces") == "indent":
+        bloc = cfg.get("block", "braces")
+        if bloc == "indent":
             corps, fin = _bloc_indentation(lignes, i)
+        elif bloc == "end":
+            corps, fin = _bloc_fin(lignes, i, litteraux, commentaire)
         else:
-            corps, fin = _bloc_accolades(lignes, i)
+            corps, fin = _bloc_accolades(lignes, i, litteraux, commentaire)
         f = Fonction(nom=nom, fichier=fichier, ligne=i + 1, attributs=attributs,
-                     corps="\n".join(corps), lignes_corps=corps, fin=fin + 1)
+                     corps="\n".join(corps), lignes_corps=corps, fin=fin + 1, entete=ligne)
         f.est_test = bool(
             (marque_attr and any(marque_attr.search(a) for a in attributs))
             or (marque_nom and marque_nom.search(nom))
+            or (marque_ligne and marque_ligne.search(ligne))
         )
         res.append(f)
     return res
