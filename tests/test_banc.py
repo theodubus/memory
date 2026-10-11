@@ -68,6 +68,26 @@ class TestJuges(Dossier):
         self.assertEqual(m["refus"], [])
 
 
+class TestCompactageRealiste(Dossier):
+    """s14 : un long compte rendu où trois consignes sont noyées, et la mesure
+    de ce que l'agent en a écrit dans la mémoire."""
+
+    def test_le_compte_rendu_noie_les_trois_consignes(self):
+        texte = banc.compte_rendu(1, cible=40_000)
+        places = [texte.find(c) for c in banc.CONSIGNES_S14.values()]
+        self.assertTrue(all(p > 0 for p in places))
+        self.assertEqual(places, sorted(places))
+        self.assertGreater(len(texte), 40_000)
+        self.assertEqual(texte, banc.compte_rendu(1, cible=40_000))
+
+    def test_les_consignes_ecrites_ne_comptent_que_ce_que_l_agent_ajoute(self):
+        s14 = next(s for s in banc.SCENARIOS if s.id == "s14")
+        bon = banc.jouer(s14, 1, self.dossier / "bon", "simule", 0, bon=True)
+        fautif = banc.jouer(s14, 1, self.dossier / "fautif", "simule", 0, bon=False)
+        self.assertEqual(banc.consignes_ecrites(Path(bon["projet"])), ["negatifs", "commits", "double"])
+        self.assertEqual(banc.consignes_ecrites(Path(fautif["projet"])), [])
+
+
 class TestSysteme(Dossier):
     """Le verdict du dispositif, à part de celui de l'agent."""
 
@@ -141,6 +161,30 @@ class TestSessionEnPlusieursTemps(Dossier):
         self.assertEqual((s["cout"], s["tours"], s["phases"], s["compactages"]), (1.0, 6, 3, 1))
         self.assertEqual(s["reponse"], "temps à 0.4")
 
+    def test_le_compactage_force_saute_quand_la_session_s_est_compactee_seule(self):
+        auto = subprocess.CompletedProcess([], 0, stdout="\n".join(json.dumps(e) for e in (
+            {"type": "system", "subtype": "compact_boundary", "compact_metadata": {"trigger": "auto"}},
+            {"type": "result", "result": "un", "total_cost_usd": 1.0, "num_turns": 9})), stderr="")
+        fini = subprocess.CompletedProcess([], 0, stdout=json.dumps({"type": "result", "result": "deux"}), stderr="")
+        with mock.patch.object(banc.subprocess, "run", side_effect=[auto, fini]) as lance:
+            s = banc.lancer_claude(self.dossier, ["long", banc.COMPACTER_SI_BESOIN, "suite"], 3.0)
+        self.assertEqual(lance.call_count, 2)
+        self.assertNotIn(banc.COMPACTER, lance.call_args_list[1].args[0])
+        self.assertEqual((s["compactages"], s["compactages_auto"]), (1, 1))
+
+    def test_une_consigne_longue_passe_par_l_entree_standard_avec_une_fenetre_reduite(self):
+        longue = "réunion " * 20_000
+        fini = subprocess.CompletedProcess([], 0, stdout=json.dumps({"type": "result", "result": "ok"}), stderr="")
+        with mock.patch.object(banc.subprocess, "run", return_value=fini) as lance:
+            banc.lancer_claude(self.dossier, [longue, "suite"], 3.0, autocompact="100k")
+        premier, second = lance.call_args_list
+        self.assertNotIn(longue, premier.args[0])
+        self.assertEqual(premier.kwargs["input"], longue)
+        self.assertIn("suite", second.args[0])
+        self.assertIsNone(second.kwargs["input"])
+        self.assertEqual(premier.args[0][premier.args[0].index("--autocompact") + 1], "100k")
+        self.assertEqual(premier.kwargs["env"]["CLAUDE_AUTOCOMPACT_PCT_OVERRIDE"], "80")
+
     def test_une_limite_au_milieu_interrompt_la_session(self):
         limite = subprocess.CompletedProcess([], 1, stdout=json.dumps(
             {"type": "result", "is_error": True, "result": "Claude AI usage limit reached|1760000000"}), stderr="")
@@ -195,7 +239,7 @@ class TestReprise(Dossier):
         self.appels = 0
 
     def session(self, limites: int):
-        def lancer(projet, consigne, budget, garde=None):
+        def lancer(projet, consigne, budget, garde=None, autocompact=None):
             self.appels += 1
             if self.appels <= limites:
                 return {"code": 1, "duree": 1, "reponse": "", "cout": 0, "tours": 1, "usage": None,

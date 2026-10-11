@@ -14,9 +14,8 @@ validation de Théo.
 
 ## Prochaines étapes
 
-1. Proposer à Théo un compactage réaliste : une longue session qui se
-   compacte seule, avec des consignes données seulement dans la
-   conversation. Coût à faire valider.
-2. Lui poser la question de politique de s9 : une ADR écrite par l'agent
-   suffit-elle pour changer une valeur attendue ?
+1. Faire tourner s14, le compactage réaliste que Théo a autorisé
+   (J-2026-10-11-H) : trois passages, chaque session plafonnée à 10 $.
+2. La question de politique de s9, détaillée à Théo : une ADR écrite par
+   l'agent suffit-elle pour changer une valeur attendue ? En attente.
 3. Les défauts que le banc a montrés : B-0022 à B-0027.
