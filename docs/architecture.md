@@ -32,7 +32,8 @@ comparent le même fichier sous ses deux noms.
 
 | Module | Rôle |
 | --- | --- |
-| `cli.py` | les commandes : `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `prive`, `relu`, `answer`, `approve`, `install`, `init`, `selftest`, `fingerprint`, `mutation-verdict`, `archive`, `checks` |
+| `cli.py` | les commandes, rangées par public dans l'aide (l'humain, l'agent, les hooks et la CI) : `aide`, `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `prive`, `relu`, `answer`, `approve`, `install`, `init`, `selftest`, `fingerprint`, `mutation-verdict`, `archive`, `checks` ; sans commande, l'aide de l'humain |
+| `AIDE.md` | le guide de l'humain, source unique : ses gestes, chacun avec sa commande ; `socle aide` l'affiche |
 | `memoire.py` | lecture des cinq couches : en-têtes, entrées, identifiants, métadonnées, références |
 | `demandes.py` | le contrat des demandes, son lint, les réponses humaines gelées |
 | `contexte.py` | le registre des contrôles, leurs étages, la base de comparaison, le mode adoption |

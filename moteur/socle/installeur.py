@@ -543,4 +543,5 @@ def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str]) -> list[str
     etapes.append(f'commiter puis pousser : `git add -A && git commit -m "{message}" && git push`')
     etapes.append("ouvrir l'agent dans le projet : il lit l'état au démarrage"
                   + ("" if mise_a_jour else ", et te pose les questions de départ dans la conversation"))
+    etapes.append("ensuite, tes gestes, chacun avec sa commande : `python3 .socle/socle aide`")
     return etapes

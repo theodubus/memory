@@ -192,3 +192,32 @@ class TestRapportCourt(unittest.TestCase):
             self.assertEqual(cli.cmd_check(ns), 1)
         self.assertIn("… et 2 autre(s) contrôle(s)", flux.getvalue())
         self.assertNotIn("a.sain", flux.getvalue())
+
+
+class TestAide(unittest.TestCase):
+    """B-0034, P6 : l'humain trouve son chemin sans lire `AGENTS.md`."""
+
+    def test_sans_commande_l_aide_de_l_humain(self):
+        with contextlib.redirect_stdout(io.StringIO()) as flux:
+            self.assertEqual(cli.main(["--root", "."]), 0)
+        self.assertIn("pour l'humain :", flux.getvalue())
+        self.assertIn("approve", flux.getvalue())
+        self.assertNotIn("pour l'agent", flux.getvalue())
+
+    def test_chaque_commande_dans_un_seul_groupe(self):
+        p, aides = cli.analyseur()
+        ranges = [n for noms in cli.GROUPES.values() for n in noms]
+        self.assertEqual(sorted(ranges), sorted(aides))
+        self.assertIn("pour l'agent :", cli.aide_groupee(aides))
+
+    def test_cmd_aide_et_ses_commandes_existent(self):
+        import re
+
+        with contextlib.redirect_stdout(io.StringIO()) as flux:
+            self.assertEqual(cli.cmd_aide(argparse.Namespace()), 0)
+        guide = flux.getvalue()
+        self.assertIn("Le socle, côté humain", guide)
+        _, aides = cli.analyseur()
+        citees = set(re.findall(r"(?:\.socle/socle|-m socle) ([a-z-]+)", guide))
+        self.assertTrue(citees)
+        self.assertEqual(citees - set(aides), set())

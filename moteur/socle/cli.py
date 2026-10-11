@@ -540,12 +540,45 @@ def cmd_checks(args) -> int:
     return 0
 
 
-def main(argv=None) -> int:
-    p = argparse.ArgumentParser(prog="socle", description=f"socle {VERSION} — mémoire, documentation et tests fiables")
-    p.add_argument("--root", help="racine du projet (défaut : le dépôt git courant)")
-    sp = p.add_subparsers(dest="cmd", required=True)
+# Les commandes par public (B-0034, P6) : l'humain en a peu, l'agent
+# davantage, le reste sert aux hooks, à la CI et au moteur lui-même.
+GROUPES = {
+    "pour l'humain": ["aide", "install", "init", "state", "answer", "approve", "relu"],
+    "pour l'agent": ["new", "show", "url", "verify", "check", "next-id", "prive", "mutation-verdict", "archive",
+                     "checks"],
+    "internes (hooks, CI, moteur)": ["hook", "ci", "selftest", "fingerprint"],
+}
 
-    s = sp.add_parser("state", help="état dérivé, injecté au démarrage de session")
+
+def aide_groupee(aides: dict[str, str], groupes: list[str] | None = None) -> str:
+    """Les commandes rangées par public, une ligne chacune."""
+    lignes = []
+    for groupe, noms in GROUPES.items():
+        if groupes is not None and groupe not in groupes:
+            continue
+        lignes.append(f"{groupe} :")
+        lignes += [f"  {n:<17} {aides.get(n, '')}" for n in noms]
+        lignes.append("")
+    return "\n".join(lignes).rstrip()
+
+
+def cmd_aide(args) -> int:
+    print((Path(__file__).resolve().parent / "AIDE.md").read_text(encoding="utf-8").rstrip())
+    return 0
+
+
+def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
+    """L'analyseur de la ligne de commande, et l'aide d'une ligne de chaque
+    commande."""
+    p = argparse.ArgumentParser(prog="socle", description=f"socle {VERSION} — mémoire, documentation et tests fiables",
+                                formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--root", help="racine du projet (défaut : le dépôt git courant)")
+    sp = p.add_subparsers(dest="cmd", required=True, metavar="<commande>")
+
+    s = sp.add_parser("aide", help="le guide de l'humain : ses gestes, chacun avec sa commande")
+    s.set_defaults(f=cmd_aide)
+
+    s = sp.add_parser("state", help="où en est le projet, calculé à chaque fois (injecté au démarrage de l'agent)")
     s.add_argument("--short", action="store_true", help="sans le contenu de l'actif et du canonique")
     s.set_defaults(f=cmd_state)
 
@@ -597,7 +630,7 @@ def main(argv=None) -> int:
                    "avec `basculer` : l'identifiant de l'entrée publique à basculer dans la mémoire privée")
     s.set_defaults(f=cmd_prive)
 
-    s = sp.add_parser("relu", help="(humain, ou relayé) ce qui part vers le dépôt public a été relu")
+    s = sp.add_parser("relu", help="tu as relu ce qui part vers le dépôt public ; l'agent y relaie ton accord (--relayed)")
     s.add_argument("--rev", default="HEAD")
     s.add_argument("--by")
     s.add_argument("--relayed", action="store_true", help="accord donné par l'humain dans la conversation")
@@ -609,7 +642,7 @@ def main(argv=None) -> int:
     s.add_argument("cibles", nargs="+", metavar="chemin|ID")
     s.set_defaults(f=cmd_url)
 
-    s = sp.add_parser("answer", help="répondre à une demande, ou relayer la réponse donnée dans la conversation")
+    s = sp.add_parser("answer", help="répondre à une demande ; l'agent y relaie (--relayed) ta réponse donnée dans la conversation")
     s.add_argument("request")
     s.add_argument("answer")
     s.add_argument("--text", default="")
@@ -619,7 +652,7 @@ def main(argv=None) -> int:
     s.add_argument("--quote-file", help="fichier qui contient le texte exact de l'humain")
     s.set_defaults(f=cmd_answer)
 
-    s = sp.add_parser("approve", help="(humain) valider son propre changement protégé ou assoupli")
+    s = sp.add_parser("approve", help="(humain seul) approuver tes changements protégés ; sans --files, ceux qui ont changé")
     s.add_argument("--files", nargs="*")
     s.add_argument("--keys", nargs="*")
     s.add_argument("--text", required=True)
@@ -628,8 +661,10 @@ def main(argv=None) -> int:
 
     s = sp.add_parser("install", help="installer ou mettre à jour le socle dans un projet")
     s.add_argument("--target", default=".")
-    s.add_argument("--adapter", required=True,
-                   help="`auto` (déduit du dépôt), un adaptateur maintenu (rust, python, python-pytest) ou le chemin d'un .toml")
+    s.add_argument("--adapter", default="auto",
+                   help="`auto`, le défaut (déduit du dépôt), un adaptateur maintenu ("
+                   + ", ".join(sorted(x.stem for x in (Path(__file__).resolve().parent / "adaptateurs").glob("*.toml")))
+                   + ") ou le chemin d'un .toml")
     s.add_argument("--owner", default="", help="propriétaire pour CODEOWNERS, ex. @theodubus")
     s.add_argument("--adoption", action="store_true", help="projet existant : plafonds au niveau actuel")
     s.add_argument("--mode", choices=(config.MODE_PROJET, config.MODE_AMONT), default=config.MODE_PROJET)
@@ -666,5 +701,22 @@ def main(argv=None) -> int:
     s = sp.add_parser("checks", help="liste des contrôles")
     s.set_defaults(f=cmd_checks)
 
+    # L'aide liste les commandes par public, au lieu de la liste d'argparse.
+    aides = {a.dest: a.help for a in sp._choices_actions}
+    sp._choices_actions.clear()
+    p.epilog = aide_groupee(aides)
+    return p, aides
+
+
+def main(argv=None) -> int:
+    p, aides = analyseur()
+    argv = sys.argv[1:] if argv is None else argv
+    # Le lanceur passe `--root <racine>` devant ce que l'humain a tapé.
+    if not [x for i, x in enumerate(argv) if x != "--root" and (i == 0 or argv[i - 1] != "--root")]:
+        # Sans commande : l'aide courte, celle de l'humain.
+        print(f"socle {VERSION} — mémoire, documentation et tests fiables\n")
+        print(aide_groupee(aides, ["pour l'humain"]))
+        print("\nLe guide : `python3 .socle/socle aide` ; toutes les commandes : `python3 .socle/socle --help`.")
+        return 0
     args = p.parse_args(argv)
     return args.f(args)
