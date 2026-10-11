@@ -42,4 +42,4 @@ toucher.
 - `docs/architecture.md` — où chaque exigence du cadrage est appliquée.
 - `moteur/socle/FORMAT.md` — le format de la mémoire.
 - `docs/inventaire-chess.md` — ce qui vient du dépôt chess.
-- `memoire/archives/cadrage-2026-10-10.md` — le cadrage fondateur, tel quel.
+- `memory/archives/cadrage-2026-10-10.md` — le cadrage fondateur, tel quel.

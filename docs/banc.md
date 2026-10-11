@@ -3,7 +3,7 @@
 L'auto-test (`socle selftest`) prouve que chaque contrôle attrape le défaut
 qu'on lui injecte. Le banc mesure autre chose : ce que fait un **agent
 réel** équipé du socle. Il joue les six scénarios du cadrage
-(`memoire/archives/cadrage-2026-10-10.md`, section « Auto-tests du
+(`memory/archives/cadrage-2026-10-10.md`, section « Auto-tests du
 dispositif et banc d'évaluation ») avec Claude Code en mode non interactif,
 sur des projets jetables. Le script est `banc/banc.py`.
 

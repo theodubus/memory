@@ -2,19 +2,19 @@
 #
 # Protégée par CODEOWNERS et la branche protégée ; le hook PreToolUse refuse
 # que l'agent l'écrive ; la CI refuse tout changement sans demande validée qui
-# cite son empreinte nouvelle (`socle approve --files .socle/politique.toml`
+# cite son empreinte nouvelle (`socle approve --files .socle/policy.toml`
 # pour un changement fait par l'humain lui-même).
 #
 # Les huit points arbitrés du cadrage. Ceux qu'un script peut appliquer le
 # sont ici ; les autres sont écrits dans AGENTS.md.
-#   1. Assouplir un garde-fou        → cliquet de .socle/garde-fous.toml
+#   1. Assouplir un garde-fou        → cliquet de .socle/guardrails.toml
 #   2. Supprimer ou affaiblir un test → contrôle `tests.attendus`
 #   3. Décision de conception         → ADR ; demande si coûteuse à défaire
 #   4. Action irréversible ou externe → [irreversible] ci-dessous
 #   5. Écriture en mémoire            → contrôles `memoire.*`
 #   6. Débordement de périmètre       → backlog
 #   7. Échec répété                   → max_attempts
-#   8. Canal de validation            → memoire/demandes/, contrat des demandes
+#   8. Canal de validation            → memory/requests/, contrat des demandes
 
 version = 1
 
@@ -27,16 +27,16 @@ init_questions_max = 7
 [protected]
 # Seul l'humain les modifie ; l'installeur pose les hooks, la CI et le moteur.
 paths = [
-  ".socle/politique.toml",
-  ".socle/adaptateur.toml",
-  ".socle/moteur.lock",
-  ".socle/moteur/**",
+  ".socle/policy.toml",
+  ".socle/adapter.toml",
+  ".socle/engine.lock",
+  ".socle/engine/**",
   ".socle/socle",
   ".socle/git-hooks/**",
   ".claude/settings.json",
   ".github/workflows/socle.yml",
   ".github/CODEOWNERS",
-  "memoire/demandes/*.reponse.toml",
+  "memory/requests/*.answer.toml",
 ]
 
 [irreversible]

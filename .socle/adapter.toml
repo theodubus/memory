@@ -2,7 +2,7 @@
 #
 # Volontairement sans dépendance par défaut : `unittest` et `compileall` sont
 # dans la bibliothèque standard. Un projet qui utilise pytest, ruff ou mypy
-# remplace les commandes dans sa copie (`.socle/adaptateur.toml`), qui est
+# remplace les commandes dans sa copie (`.socle/adapter.toml`), qui est
 # ensuite protégée.
 
 language = "python"

@@ -15,12 +15,12 @@ code = []
 # et le fichier d'instructions en ont un ; au-delà, archiver dans le journal.
 [budgets]
 "AGENTS.md" = { max_bytes = 16000 }
-"memoire/canonique.md" = { max_bytes = 16000 }
-"memoire/actif.md" = { max_bytes = 6000 }
-"memoire/backlog.md" = { max_bytes = 24000 }
-"memoire/journal/*.md" = { max_bytes = 80000 }
-"memoire/decisions/*.md" = { max_bytes = 10000 }
-"memoire/demandes/*.md" = { max_bytes = 12000 }
+"memory/canonical.md" = { max_bytes = 16000 }
+"memory/active.md" = { max_bytes = 6000 }
+"memory/backlog.md" = { max_bytes = 24000 }
+"memory/journal/*.md" = { max_bytes = 80000 }
+"memory/decisions/*.md" = { max_bytes = 10000 }
+"memory/requests/*.md" = { max_bytes = 12000 }
 
 [staleness]
 # Un chantier actif inchangé depuis plus longtemps est signalé (avertissement).
@@ -63,7 +63,7 @@ internal_id_patterns = []
 [tests]
 # Un changement de ces fichiers qui nomme un test justifie qu'on change ses
 # valeurs attendues (changement de spécification).
-spec_paths = ["memoire/decisions/**"]
+spec_paths = ["memory/decisions/**"]
 
 [mutation.caps]
 # Plafond de mutants survivants par module, avec sa raison quand il n'est pas

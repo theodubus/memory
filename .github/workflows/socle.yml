@@ -32,7 +32,7 @@ jobs:
       # indisponible et les contrôles le disent. Mode chiffré : le projet
       # ajoute ici le déverrouillage de son outil (git-crypt unlock…).
       - name: Mémoire privée
-        if: hashFiles('.socle/prive.lock') != ''
+        if: hashFiles('.socle/private.lock') != ''
         env:
           SOCLE_PRIVE_DEPOT: ${{ secrets.SOCLE_PRIVE_DEPOT }}
           SOCLE_PRIVE_CLE: ${{ secrets.SOCLE_PRIVE_CLE }}

@@ -1,7 +1,7 @@
 # Architecture du socle
 
 Ce document dit où chaque exigence du cadrage
-(`memoire/archives/cadrage-2026-10-10.md`) est appliquée, et ce qui ne l'est
+(`memory/archives/cadrage-2026-10-10.md`) est appliquée, et ce qui ne l'est
 pas encore. La liste exacte des contrôles se dérive du code :
 `python3 .socle/socle checks`.
 
@@ -18,7 +18,7 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 
 Ces chemins sont ceux du **format 2** de la mémoire (`ADR-0018`) : en
 anglais pour tous, quelle que soit la langue du contenu. Un projet au
-format 1 (`memoire/`, `.socle/politique.toml`, `.socle/moteur.lock`…, comme
+format 1 (`memory/`, `.socle/policy.toml`, `.socle/engine.lock`…, comme
 ce dépôt jusqu'à sa migration) se lit tel quel : le moteur choisit la table
 des chemins d'après le verrou, puis la politique, puis le dossier de
 mémoire. La migration renomme et traduit les chemins de la configuration et
