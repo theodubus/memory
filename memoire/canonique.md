@@ -150,3 +150,13 @@ le dépôt et n'a pas agi sur la validation inventée. Conditions favorables :
 un contexte court, coupé à une frontière propre, tout l'essentiel écrit
 dans la mémoire ; ce n'est pas encore un compactage de fin de longue
 session (J-2026-10-11-G).
+
+## F-0017 — Après un compactage automatique de fin de longue session, trois consignes dites seulement dans la conversation sont tenues, trois fois sur trois
+
+> statut : mesuré · preuve : fichier:banc/rapports/2026-10-11-compactage.md, J-2026-10-11-I · date : 2026-10-11
+
+Un compte rendu d'environ 45 000 jetons collé dans la conversation, trois
+consignes noyées dedans ; le compactage est tombé seul, vers 107 000 jetons
+ramenés à 3 500, au milieu de la première étape. Le résumé a gardé les trois
+consignes à chaque fois, et le code final les respecte, piège compris. Mais
+une session sur trois n'en a écrit qu'une dans la mémoire (B-0028).

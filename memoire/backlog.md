@@ -175,3 +175,15 @@ regarder » sans lien (s4, s5, s9, s11) : sans `[human] repo_url` ni push, `socl
 url` échoue, et l'agent écrit des chemins nus. Un lien relatif depuis la
 demande (`../../calc.py`) passe le contrat ; le refus, ou le squelette de
 `socle new request`, devrait le dire.
+
+## B-0028 — Une consigne de l'humain dite dans la conversation n'est pas tenue d'aller en mémoire
+
+> statut : ouvert · origine : J-2026-10-11-I · lu : backlog@d485b5d7
+
+Au banc (s14), trois consignes de l'humain n'existaient que dans la
+conversation. Le résumé du compactage les a gardées, mais une session sur
+trois n'en a écrit qu'une dans la mémoire : les deux autres ne tenaient
+plus qu'au résumé, et un second compactage ou une session neuve les aurait
+perdues. Les instructions du socle ne le demandent pas. Ajouter au gabarit
+d'AGENTS.md : une consigne qui vaut au-delà du tour s'écrit dans la
+mémoire avant de continuer.
