@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
-from socle import config, memoire, outils
+from socle import config, langue, memoire, outils
 from socle.modeles import gabarit
 
 
@@ -142,6 +142,7 @@ def initialiser(projet: config.Projet, cadrage: Path | None = None, depot: bool 
         print("refus : le socle n'est pas installé ici (`socle install` d'abord)")
         return 2
     jour = date.today().isoformat()
+    lg = langue.du_projet(projet)
     mem = memoire.Memoire.charger(racine)
     entrees = " et ".join(x for x in (
         "un document de cadrage" if cadrage else "", "un dépôt existant" if depot else "") if x) or "rien du tout"
@@ -153,9 +154,9 @@ def initialiser(projet: config.Projet, cadrage: Path | None = None, depot: bool 
         ident = mem.prochain_id("J", date=jour)
         cli._ajouter(racine / projet.chemins.journal / f"{jour[:7]}.md",
                      f"\n## {ident} — Document de cadrage archivé tel quel\n\n"
-                     f"> type : initialisation · ref : fichier:{archive} · empreinte : {emp}\n\n"
+                     f"{langue.meta(lg, type='initialisation', ref=langue.ref_fichier(archive, lg))} · empreinte : {emp}\n\n"
                      "Archivé sans réécriture. Ce qu'il affirme entre dans la mémoire en « supposé », avec ce "
-                     "fichier pour source, jusqu'à validation humaine.\n", "journal")
+                     "fichier pour source, jusqu'à validation humaine.\n", langue.entete_fichier("journal", "publique", lg))
         sortie.append(f"document archivé : {archive} ({emp[:23]}…), journal {ident}")
         mem = memoire.Memoire.charger(racine)
 
@@ -164,10 +165,11 @@ def initialiser(projet: config.Projet, cadrage: Path | None = None, depot: bool 
         premier = int(mem.prochain_id("F").split("-")[1])
         bloc = ""
         for k, f in enumerate(faits):
-            bloc += (f"\n## F-{premier + k:04d} — {f.titre}\n\n> statut : mesuré · preuve : fichier:{f.preuve} · "
-                     f"source : audit d'initialisation · date : {jour}\n")
+            bloc += (f"\n## F-{premier + k:04d} — {f.titre}\n\n"
+                     + langue.meta(lg, "F", statut="mesure", preuve=langue.ref_fichier(f.preuve, lg),
+                                   source="audit d'initialisation", date=jour) + "\n")
         if bloc:
-            cli._ajouter(racine / projet.chemins.canonique, bloc, "canonique")
+            cli._ajouter(racine / projet.chemins.canonique, bloc, langue.entete_fichier("canonique", "publique", lg))
         sortie.append(f"audit du dépôt en lecture seule : {len(faits)} fait(s) mesuré(s), chacun avec son fichier")
         mem = memoire.Memoire.charger(racine)
 

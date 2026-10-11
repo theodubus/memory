@@ -11,7 +11,7 @@ import subprocess
 import time
 from functools import lru_cache
 
-from socle import config, demandes, memoire, outils
+from socle import config, demandes, langue, memoire, outils
 from socle.contexte import controle
 
 TYPE_DE_COUCHE = {v: k for k, v in memoire.TYPES.items()}
@@ -92,7 +92,8 @@ def _format_entrees(r, chemin, f, couche, prive):
             # Ni titre ni texte propres : ce sont eux qui sont privés (B-0029).
             if prive:
                 r.erreur("memoire.format", f"`{e.id}` : seule une entrée publique se bascule", chemin, e.ligne)
-            if e.titre != memoire.TITRE_BASCULEE or _norm(e.corps) not in ("", _norm(memoire.TEXTE_BASCULEE)):
+            if e.titre not in langue.textes("titre-basculee") or \
+                    _norm(e.corps) not in {"", *(_norm(x) for x in langue.textes("texte-basculee"))}:
                 r.erreur("memoire.format", f"`{e.id}` basculée garde un titre ou un texte : seuls « "
                          f"{memoire.TITRE_BASCULEE} » et « {memoire.TEXTE_BASCULEE} » restent en public", chemin, e.ligne)
             continue

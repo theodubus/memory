@@ -20,18 +20,11 @@ import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from socle import config, memoire, outils
+from socle import config, langue, memoire, outils
 
-SECTIONS = {
-    "decision-demandee": "Décision demandée",
-    "contexte": "Contexte",
-    "elements-cites": "Éléments cités",
-    "ou-regarder": "Où regarder",
-    "options": "Options",
-    "consequences": "Conséquences",
-    "recommandation": "Recommandation",
-    "reponses-possibles": "Réponses possibles",
-}
+# Les sections et les réponses, sous leurs clés internes ; elles s'écrivent
+# dans la langue de la mémoire du projet (B-0031).
+SECTIONS = {k: v["fr"] for k, v in langue.SECTIONS.items()}
 REPONSE_POSITIVE = "valider"
 RENVOI = "contexte-insuffisant"
 
@@ -74,15 +67,20 @@ class Demande:
                 return "retirée"
             return "en attente"
         r = str(self.reponse.get("reponse", ""))
-        return "renvoyée" if r == RENVOI else f"répondue : {r}"
+        return "renvoyée" if langue.reponse(r) == RENVOI else f"répondue : {r}"
 
     @property
     def validee(self) -> bool:
-        return self.reponse is not None and self.reponse.get("reponse") == REPONSE_POSITIVE
+        return self.reponse is not None and langue.reponse(str(self.reponse.get("reponse", ""))) == REPONSE_POSITIVE
 
     def reponses_possibles(self) -> list[str]:
         bloc = self.sections.get("reponses-possibles", "")
         return re.findall(r"^\s*[-*]\s+`([^`]+)`", bloc, flags=re.M)
+
+    def accepte(self, reponse: str) -> bool:
+        """Une réponse possible, telle qu'écrite ou dans une autre langue
+        (`approve` pour `valider`)."""
+        return langue.reponse(reponse) in {langue.reponse(p) for p in self.reponses_possibles()}
 
 
 def chemin_reponse(chemin_demande: str) -> str:
@@ -95,7 +93,7 @@ def decouper_sections(texte: str) -> dict[str, str]:
     for _, ligne, code in memoire.lignes_hors_code(texte):
         m = None if code else re.match(r"^##\s+(.*?)\s*#*\s*$", ligne)
         if m and not ligne.startswith("###"):
-            courante = outils.cle(m[1])
+            courante = langue.section(m[1])
             res.setdefault(courante, [])
             continue
         if courante is not None:
@@ -190,26 +188,27 @@ def linter(d: Demande, projet: config.Projet) -> list[str]:
 
     norm = {k: outils.cle(v).replace("-", " ") for k, v in d.sections.items()}
     opts = norm.get("options", "")
-    for mot, quoi in (("effort", "l'effort"), ("risque", "le risque"), ("reversib", "la réversibilité")):
-        if "options" in d.sections and mot not in opts:
+    for indice, quoi in (("effort", "l'effort"), ("risque", "le risque"), ("reversibilite", "la réversibilité")):
+        if "options" in d.sections and not any(x in opts for x in langue.INDICES[indice]):
             fautes.append(f"« Options » doit dire {quoi} de chaque option")
     cons = norm.get("consequences", "")
     if "consequences" in d.sections:
-        if "valid" not in cons:
+        if not any(x in cons for x in langue.INDICES["si-valide"]):
             fautes.append("« Conséquences » doit dire ce qui se passe si l'humain valide")
-        if "refus" not in cons:
+        if not any(x in cons for x in langue.INDICES["si-refuse"]):
             fautes.append("« Conséquences » doit dire ce qui se passe si l'humain refuse")
-        if not re.search(r"sans reponse|pas de reponse|ne repond|aucune reponse", cons):
+        if not any(x in cons for x in langue.INDICES["sans-reponse"]):
             fautes.append("« Conséquences » doit dire ce qui se passe sans réponse")
     rec = norm.get("recommandation", "")
-    if "recommandation" in d.sections and not ("verifie" in rec and "suppose" in rec):
+    if "recommandation" in d.sections and not (any(x in rec for x in langue.INDICES["verifie"])
+                                               and any(x in rec for x in langue.INDICES["suppose"])):
         fautes.append("« Recommandation » doit séparer ce qui est vérifié de ce qui est supposé")
 
     possibles = d.reponses_possibles()
     if "reponses-possibles" in d.sections:
         if len(possibles) < 2:
             fautes.append("« Réponses possibles » : au moins deux réponses, en liste `- \\`valeur\\` — sens`")
-        if RENVOI not in possibles:
+        if RENVOI not in {langue.reponse(x) for x in possibles}:
             fautes.append(f"« Réponses possibles » doit proposer `{RENVOI}`")
 
     # Aucun identifiant interne sans description, dans la même demande.
@@ -250,7 +249,7 @@ def verifier_reponse(d: Demande) -> list[str]:
     r = d.reponse.get("reponse")
     if not r:
         fautes.append("réponse sans champ `reponse`")
-    elif r not in d.reponses_possibles():
+    elif not d.accepte(str(r)):
         fautes.append(f"réponse `{r}` absente des réponses possibles de la demande")
     if d.reponse.get("canal") == "conversation" and len(str(d.reponse.get("citation", "")).strip()) < 2:
         fautes.append("réponse relayée depuis la conversation sans la citation exacte de l'humain")
@@ -274,7 +273,7 @@ def ecrire_reponse(racine: Path, d: Demande, reponse: str, texte: str, par: str,
     `socle answer`. `conversation` : l'humain a répondu dans le chat, et
     l'agent consigne sa réponse ; il doit alors en citer le texte exact, qui
     reste dans le fichier, visible à la relecture du diff."""
-    if reponse not in d.reponses_possibles():
+    if not d.accepte(reponse):
         raise ValueError(
             f"`{reponse}` n'est pas une réponse possible : {', '.join(d.reponses_possibles())}"
         )

@@ -50,6 +50,7 @@ comparent le même fichier sous ses deux noms.
 | `mutation.py` | le verdict de mutation contre les plafonds |
 | `empreinte.py` | l'empreinte du moteur |
 | `installeur.py` | installation, mise à jour, adoption ; adaptateur déduit du dépôt ; mémoire privée posée à l'installation ; diff de politique à la mise à jour |
+| `langue.py` | la langue de la mémoire : le vocabulaire du format par langue, ramené à des clés internes à la lecture, et celui du projet à l'écriture |
 | `config.py` | la configuration du projet et les deux tables de chemins (formats 1 et 2), choisie par projet et par révision |
 | `migrations.py` | les migrations de format, appliquées dans l'ordre à la mise à jour ; du format 1 au 2, le renommage des chemins |
 | `initialisation.py` | les trois entrées d'initialisation : document archivé tel quel, audit du dépôt en lecture seule, questions de départ |
@@ -102,7 +103,7 @@ comparent le même fichier sous ses deux noms.
 | Ce qui revient à l'humain et la suite, dits à chaque fin d'intervention qui a agi (lignes « Pour toi : » et « Ensuite : ») | `humain.py` (demandes en attente, backlog `pour : humain`, branches distantes supprimables, prochaines étapes du chantier actif), hook `stop` | agent |
 | Des liens que l'humain peut suivre : permaliens au commit poussé, aucun lien relatif ni chemin inexistant, chaque demande en attente avec son lien | `liens.py`, `socle url`, hook `stop` | agent |
 | Lire avant de décider, prouvé par l'empreinte de la version lue | `memoire.lectures` ; hook `pre-tool-use` (empreinte périmée ou inventée) ; `socle show`, `socle new` | agent, git, CI |
-| Installation en une commande, adaptateur déduit du dépôt, mémoire privée choisie à l'installation | `socle install --adapter auto [--private …]` | — |
+| Installation en une commande, adaptateur déduit du dépôt, mémoire privée et langue de la mémoire choisies à l'installation | `socle install --adapter auto [--private …] [--language en]` | — |
 | Mise à jour : moteur remplacé, formats migrés, diff de politique montré pour validation humaine | `socle install` relancé, `migrations.py` ; en CI, base lue sous les noms de la tête | — |
 | Initialisation depuis un cadrage, rien, un dépôt existant, ou les deux : rien d'inventé, questions plafonnées avec leurs défauts | `socle init`, demande de départ au contrat, `memoire.preuves` | agent, git, CI |
 | Auto-tests par injection de défauts | `socle selftest`, dans `socle ci` | CI |
@@ -156,6 +157,10 @@ comparent le même fichier sous ses deux noms.
 - **Les chemins d'un projet sont en anglais** (`ADR-0018`), au format 2 de
   la mémoire ; le format 1 reste lu, et la migration ne réécrit pas la
   mémoire.
+- **La mémoire s'écrit dans la langue du projet et se lit dans toutes**
+  (`ADR-0020`) : le moteur ramène chaque mot-clé à une clé interne, une
+  mémoire existante n'a rien à réécrire, et les messages du moteur restent
+  en français.
 - **Une tautologie voulue passe avec sa raison écrite** (`socle: voulu —`),
   validé par Théo (`D-0004`).
 

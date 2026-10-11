@@ -25,13 +25,13 @@ import tomllib
 from collections import Counter
 from pathlib import Path
 
-from socle import config, outils, tests_lecture
+from socle import config, langue, outils, tests_lecture
 from socle.contexte import controle
 
 CAPACITES = ("format", "lint", "build", "tests", "mutation", "coverage", "regression")
 # `f(x) == f(x)` est creux… sauf dans un test de déterminisme, qui appelle
 # deux fois pour comparer. La raison s'écrit, comme pour un test désactivé.
-VOULU = re.compile(r"socle\s*:\s*voulu\s*[—–:-]\s*\S.{2,}", re.I)
+VOULU = re.compile(r"socle\s*:\s*(?:voulu|intended)\s*[—–:-]\s*\S.{2,}", re.I)
 FIX_DEFAUT = r"(?i)^(fix|corrige|correctif|correction)\b"
 
 
@@ -227,7 +227,7 @@ def config_code(projet) -> tuple[list, list, str | None]:
 def dispenses_tests(ctx, r) -> set[str]:
     noms = set()
     for c in ctx.commits:
-        for v in outils.trailers(c["message"]).get("dispense-test", []):
+        for v in langue.trailers(c["message"]).get("dispense-test", []):
             m = DISPENSE_TEST.match(v.strip())
             if not m:
                 r.erreur("tests.code-teste", f"dispense illisible dans le commit {c['sha'][:7]} : « {v.strip()} » — "

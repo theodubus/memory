@@ -587,6 +587,12 @@ def _cas() -> list[Cas]:
         maj_memoire(c, "Liste privée raccourcie.")
         return etage_git(a, c)
 
+    @defaut("clos-sans-ref-en-anglais", "sujet « done » sans référence, écrit en anglais", "git", "memoire.backlog")
+    def _(a, c):
+        remplacer(c, "memory/backlog.md", "> statut : ouvert", "> status : done")
+        maj_memoire(c)
+        return etage_git(a, c)
+
     @defaut("bascule-sans-copie", "entrée publique « basculée » sans copie privée qui la reprenne", "git",
             "memoire.ajout-seul")
     def _(a, c):
@@ -928,6 +934,26 @@ def _temoins() -> list[tuple[str, Callable]]:
         a.socle(c, "prive", "verrouiller")
         maj_memoire(c, "Sujet basculé dans la mémoire privée.")
         return etage_stop(a, c) or etage_git(a, c) or etage_ci(a, c)
+
+    @temoin("une mémoire en anglais : ses entrées, écrites par `socle new`, passent le commit et la CI")
+    def _(a, c):
+        o = a.dossier / "origine-en"
+        o.mkdir()
+        a.git(o, "init", "-q", "-b", "main")
+        (o / "calc.py").write_text(CALC)
+        r = a.run(o, sys.executable, "-c", "import sys; sys.path.insert(0, sys.argv[1]); from socle.cli import main; "
+                  "sys.exit(main(sys.argv[2:]))", str(a.moteur), "install", "--target", ".", "--adapter", "python",
+                  "--owner", "@essai", "--language", "en")
+        if r.returncode != 0:
+            return r.stdout + r.stderr
+        a.git(o, "add", "-A")
+        a.git(o, "commit", "-q", "--no-verify", "-m", "Project in English")
+        c = a.clone(o)
+        a.socle(c, "new", "fact", "Double doubles")
+        remplacer(c, "memory/canonical.md", "> status : assumed · source : <where this fact comes from>\n\n"
+                  "<the fact, and what would prove it>", "> status : measured · proof : file:calc.py\n\nRead in the code.")
+        remplacer(c, "memory/active.md", "## In progress\n\nNothing yet.", "## In progress\n\nA first fact.")
+        return etage_git(a, c) or etage_ci(a, c)
 
     @temoin("un push relu par l'humain, son accord relayé avec son texte exact, passe le hook de l'agent")
     def _(a, c):

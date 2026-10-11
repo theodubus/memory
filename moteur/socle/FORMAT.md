@@ -287,6 +287,85 @@ commit qui part : il le dit (`socle relu`), ou l'agent relaie son accord
 donné dans la conversation, avec son texte exact
 (`socle relu --relayed --by <nom> --quote-file <fichier>`).
 
+## Langue de la mémoire
+
+La mémoire s'écrit dans la langue du projet, `[memory] language` de la
+politique : `fr` (le défaut) ou `en`, choisie à l'installation
+(`socle install --language en`). Elle décide des mots-clés du format et des
+gabarits que posent l'installeur et `socle new` : champs, statuts, en-têtes,
+sections et réponses des demandes, section du socle d'`AGENTS.md`, lignes du
+récap (`For you:` et `Next:` en anglais). Le contenu des entrées est écrit
+par l'agent, dans la langue que les instructions du projet lui donnent.
+
+**La lecture accepte toutes les langues**, quelle que soit celle du projet :
+le moteur ramène chaque mot à sa clé interne. Une mémoire en ajout seul
+garde les mots avec lesquels elle a été écrite ; un projet qui change de
+langue n'a rien à réécrire, et ses entrées nouvelles prennent les mots de la
+nouvelle. Les trailers de commit ont leurs deux noms (`Dispense-test` ou
+`Waive-test`, `Dispense-doc` ou `Waive-doc`, `Corrige` ou `Fixes`), comme le
+marqueur d'une tautologie voulue (`socle: voulu —` ou `socle: intended —`).
+Les messages du moteur restent en français.
+
+| Clé interne | Français | Anglais |
+| --- | --- | --- |
+| champ `statut` | statut | status |
+| champ `preuve` | preuve | proof |
+| champ `source` | source | source |
+| champ `refutation` | réfutation | refutation |
+| champ `validation` | validation | validation |
+| champ `origine` | origine | origin |
+| champ `ref` | ref | ref |
+| champ `lu` | lu | read |
+| champ `pour` | pour | for |
+| champ `date` | date | date |
+| champ `type` | type | type |
+| champ `remplacee-par` | remplacée-par | superseded-by |
+| champ `bloque` | bloque | blocks |
+| champ `retiree` | retirée | withdrawn |
+| champ `reformulee` | reformulée | reworded |
+| champ `basculee` | basculée | made-private |
+| champ `depuis` | depuis | from |
+| statut F `mesure` | mesuré | measured |
+| statut F `suppose` | supposé | assumed |
+| statut F `refute` | réfuté | refuted |
+| statut F `valide` | validé | validated |
+| statut B `ouvert` | ouvert | open |
+| statut B `en-cours` | en cours | in progress |
+| statut B `bloque` | bloqué | blocked |
+| statut B `fait` | fait | done |
+| statut B `abandonne` | abandonné | abandoned |
+| statut ADR `proposee` | proposée | proposed |
+| statut ADR `acceptee` | acceptée | accepted |
+| statut ADR `remplacee` | remplacée | superseded |
+| statut ADR `rejetee` | rejetée | rejected |
+| statut ADR `abandonnee` | abandonnée | abandoned |
+| valeur `humain` | humain | human |
+| en-tête `couche` | couche | layer |
+| en-tête `zone` | zone | zone |
+| couche `canonique` | canonique | canonical |
+| couche `actif` | actif | active |
+| couche `decisions` | decisions | decisions |
+| couche `journal` | journal | journal |
+| couche `backlog` | backlog | backlog |
+| couche `demandes` | demandes | requests |
+| zone `publique` | publique | public |
+| zone `privee` | privee | private |
+| référence `commit` | commit | commit |
+| référence `fichier` | fichier | file |
+| référence `cmd` | cmd | cmd |
+| référence `url` | url | url |
+| section `decision-demandee` | Décision demandée | Decision requested |
+| section `contexte` | Contexte | Context |
+| section `elements-cites` | Éléments cités | Cited elements |
+| section `ou-regarder` | Où regarder | Where to look |
+| section `options` | Options | Options |
+| section `consequences` | Conséquences | Consequences |
+| section `recommandation` | Recommandation | Recommendation |
+| section `reponses-possibles` | Réponses possibles | Possible answers |
+| réponse `valider` | valider | approve |
+| réponse `refuser` | refuser | reject |
+| réponse `contexte-insuffisant` | contexte-insuffisant | insufficient-context |
+
 ## Lecture prouvée
 
 Chaque entrée a une empreinte, les huit premiers caractères du SHA-256 de

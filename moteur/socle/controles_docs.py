@@ -12,7 +12,7 @@ import re
 import subprocess
 from collections import defaultdict
 
-from socle import config, memoire, outils
+from socle import config, langue, memoire, outils
 from socle.contexte import controle
 
 MARQUEUR_VALEUR = re.compile(
@@ -133,7 +133,7 @@ def _motif_libre(v: str) -> re.Pattern:
 def dispenses(ctx) -> list[str]:
     res = []
     for c in ctx.commits:
-        for v in outils.trailers(c["message"]).get("dispense-doc", []):
+        for v in langue.trailers(c["message"]).get("dispense-doc", []):
             if len(v.strip()) >= 15:
                 res.append(v.strip())
     return res

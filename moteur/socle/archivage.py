@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from socle import config, memoire
+from socle import config, langue, memoire
 
 
 def archiver_backlog(projet: config.Projet) -> int:
@@ -22,6 +22,7 @@ def archiver_backlog(projet: config.Projet) -> int:
         print("aucun sujet clos à archiver")
         return 0
     jour = date.today().isoformat()
+    lg = langue.du_projet(projet)
     mem = memoire.Memoire.charger(racine)
     ident = mem.prochain_id("J", date=jour)
     blocs = []
@@ -36,9 +37,11 @@ def archiver_backlog(projet: config.Projet) -> int:
     journal = racine / ch.journal / f"{jour[:7]}.md"
     if not journal.is_file():
         journal.parent.mkdir(parents=True, exist_ok=True)
-        journal.write_text(f"<!-- socle: couche=journal zone=publique -->\n# Journal — {jour[:7]}\n", encoding="utf-8")
+        journal.write_text(f"{langue.entete_fichier('journal', 'publique', lg)}\n"
+                           f"# {langue.mot(langue.TEXTES, 'titre-journal', lg)} — {jour[:7]}\n", encoding="utf-8")
     ids = ", ".join(e.id for e in clos)
-    entree = f"\n## {ident} — Backlog clos archivé : {ids}\n\n" + "\n\n".join(blocs) + "\n"
+    titre = langue.mot(langue.TEXTES, "archive-backlog", lg)
+    entree = f"\n## {ident} — {titre} : {ids}\n\n" + "\n\n".join(blocs) + "\n"
     journal.write_text(journal.read_text(encoding="utf-8").rstrip("\n") + "\n" + entree, encoding="utf-8")
     print(f"{len(clos)} sujet(s) archivé(s) dans {ident} ({journal.relative_to(racine)})")
     return 0

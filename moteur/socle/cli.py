@@ -12,7 +12,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
-from socle import VERSION, config, outils
+from socle import VERSION, config, langue, outils
 
 
 def _projet(args) -> config.Projet:
@@ -147,55 +147,55 @@ def cmd_new(args) -> int:
     zone = "privee" if prive else "publique"
     ch = projet.chemins
     lieu = (lambda c: racine / ch.dans_prive(c)) if prive else (lambda c: racine / c)
+    # La langue de la mémoire du projet (B-0031) : les mots-clés et les
+    # gabarits s'écrivent dans la sienne.
+    lg = langue.du_projet(projet)
+    squelette = langue.SQUELETTES[lg].get(type_, "")
     if type_ == "F":
         chemin = lieu(ch.canonique)
-        bloc = f"\n## {ident} — {titre}\n\n> statut : supposé · source : <d'où vient ce fait>\n\n<le fait, et ce qui le prouverait>\n"
-        _ajouter(chemin, bloc, "canonique", zone)
+        _ajouter(chemin, f"\n## {ident} — {titre}\n\n{squelette}\n", langue.entete_fichier("canonique", zone, lg))
     elif type_ == "B":
         # Le backlog s'affiche avant d'y ajouter : un doublon se voit ici.
         _afficher_index(mem, "backlog")
         chemin = lieu(ch.backlog)
-        lu = memoire.empreinte_index(mem, "backlog")
-        bloc = (f"\n## {ident} — {titre}\n\n> statut : ouvert · origine : <J-… ou commit:… où le sujet est apparu>"
-                f" · lu : backlog@{lu}\n\n<ce qu'il faut faire, et pourquoi>\n")
-        _ajouter(chemin, bloc, "backlog", zone)
+        bloc = squelette.format(lu=memoire.empreinte_index(mem, "backlog"))
+        _ajouter(chemin, f"\n## {ident} — {titre}\n\n{bloc}\n", langue.entete_fichier("backlog", zone, lg))
     elif type_ == "J":
         chemin = lieu(ch.journal) / f"{jour[:7]}.md"
         if not chemin.is_file():
             chemin.parent.mkdir(parents=True, exist_ok=True)
-            chemin.write_text(f"<!-- socle: couche=journal zone={zone} -->\n# Journal — {jour[:7]}\n", encoding="utf-8")
-        _ajouter(chemin, f"\n## {ident} — {titre}\n\n<ce qui s'est passé, avec ses références>\n")
+            chemin.write_text(f"{langue.entete_fichier('journal', zone, lg)}\n"
+                              f"# {langue.mot(langue.TEXTES, 'titre-journal', lg)} — {jour[:7]}\n", encoding="utf-8")
+        _ajouter(chemin, f"\n## {ident} — {titre}\n\n{squelette}\n")
     elif type_ == "ADR":
         # Les décisions s'affichent avant d'en ajouter une : on ne rouvre pas
         # une décision prise sans fait nouveau.
         _afficher_index(mem, "decisions")
         chemin = lieu(ch.decisions) / f"{ident}-{_slug(titre)}.md"
         chemin.parent.mkdir(parents=True, exist_ok=True)
-        chemin.write_text(
-            f"<!-- socle: couche=decisions zone={zone} -->\n# {ident} — {titre}\n\n"
-            f"> statut : proposée · date : {jour} · lu : decisions@{memoire.empreinte_index(mem, 'decisions')}"
-            "\n\n## Contexte\n\n<ce qui oblige à décider>\n\n"
-            "## Décision\n\n<ce qui est décidé>\n\n## Conséquences\n\n<ce que ça change, et comment le défaire>\n",
-            encoding="utf-8")
+        bloc = squelette.format(date=jour, lu=memoire.empreinte_index(mem, "decisions"))
+        chemin.write_text(f"{langue.entete_fichier('decisions', zone, lg)}\n# {ident} — {titre}\n\n{bloc}\n",
+                          encoding="utf-8")
     else:
         from socle.modeles import gabarit
 
         chemin = lieu(ch.demandes) / f"{ident}-{_slug(titre)}.md"
         chemin.parent.mkdir(parents=True, exist_ok=True)
-        texte = gabarit("demande.md").format(id=ident, titre=titre, date=jour)
-        chemin.write_text(texte.replace("zone=publique", f"zone={zone}", 1), encoding="utf-8")
+        texte = gabarit("demande.md", lg).format(id=ident, titre=titre, date=jour)
+        entete = texte.split("\n", 1)[0]
+        chemin.write_text(texte.replace(entete, langue.entete_fichier("demandes", zone, lg), 1), encoding="utf-8")
     print(f"{ident}\t{chemin.relative_to(racine)}")
     return 0
 
 
-def _ajouter(chemin: Path, bloc: str, couche: str | None = None, zone: str = "publique"):
+def _ajouter(chemin: Path, bloc: str, entete: str | None = None):
     """Ajoute une entrée au fichier ; un fichier neuf reçoit d'abord son
     en-tête."""
     if chemin.is_file():
         texte = chemin.read_text(encoding="utf-8")
     else:
         chemin.parent.mkdir(parents=True, exist_ok=True)
-        texte = f"<!-- socle: couche={couche} zone={zone} -->\n" if couche else ""
+        texte = f"{entete}\n" if entete else ""
     chemin.write_text(texte.rstrip("\n") + "\n" + bloc, encoding="utf-8")
 
 
@@ -425,22 +425,27 @@ def cmd_approve(args) -> int:
         for f in absents:
             print(f"refus : {f} n'existe ni ici ni au dernier commit : rien à approuver", file=sys.stderr)
         return 2
+    lg = langue.du_projet(projet)
+    en = lg == "en"
     cites = []
     for f in args.files or []:
         p = racine / f
-        cites.append(f"- `{f}` — fichier protégé modifié par l'humain lui-même ; empreinte nouvelle "
-                     f"`{empreinte.courte(empreinte.fichier(p)) if p.is_file() else 'supprimé'}`.")
+        nouvelle = empreinte.courte(empreinte.fichier(p)) if p.is_file() else ("deleted" if en else "supprimé")
+        cites.append(f"- `{f}` — protected file changed by the human themselves; new fingerprint `{nouvelle}`."
+                     if en else f"- `{f}` — fichier protégé modifié par l'humain lui-même ; empreinte nouvelle "
+                     f"`{nouvelle}`.")
     for k in args.keys or []:
-        cites.append(f"- `{k}` — clé des garde-fous assouplie par l'humain lui-même, en connaissance de cause.")
+        cites.append(f"- `{k}` — guardrail key loosened by the human themselves, knowingly." if en else
+                     f"- `{k}` — clé des garde-fous assouplie par l'humain lui-même, en connaissance de cause.")
     if not cites:
         print("rien à approuver : --files ou --keys", file=sys.stderr)
         return 2
-    texte = gabarit("approbation.md").format(id=ident, date=jour, raison=raison, elements="\n".join(cites),
-                                             moteur=projet.dossier_moteur)
+    texte = gabarit("approbation.md", lg).format(id=ident, date=jour, raison=raison, elements="\n".join(cites),
+                                                 moteur=projet.dossier_moteur)
     chemin = racine / projet.chemins.demandes / f"{ident}-approbation-humaine.md"
     chemin.write_text(texte, encoding="utf-8")
     d = demandes.charger(racine, None, str(chemin.relative_to(racine)), texte)
-    demandes.ecrire_reponse(racine, d, "valider", args.text, _auteur(projet), jour)
+    demandes.ecrire_reponse(racine, d, langue.mot(langue.REPONSES, "valider", lg), args.text, _auteur(projet), jour)
     print(f"{ident} écrite et validée : {chemin.relative_to(racine)}")
     return 0
 
@@ -459,6 +464,7 @@ def cmd_install(args) -> int:
         relecture=args.review,
         demandes_privees=args.private_requests,
         filtre=args.filter,
+        langue_memoire=getattr(args, "language", None),
     )
 
 
@@ -610,6 +616,8 @@ def main(argv=None) -> int:
     s.add_argument("--review", choices=("aucune", "chaque-push", "lots"), help="relecture humaine avant publication")
     s.add_argument("--private-requests", action="store_true", help="demandes et réponses dans la mémoire privée")
     s.add_argument("--filter", default="git-crypt", help="mode chiffré : le nom du filtre git de l'outil")
+    s.add_argument("--language", choices=("fr", "en"),
+                   help="langue de la mémoire d'un projet neuf : mots-clés et gabarits (défaut : fr)")
     s.set_defaults(f=cmd_install)
 
     s = sp.add_parser("init", help="initialiser la mémoire depuis un cadrage, rien, ou le dépôt existant")

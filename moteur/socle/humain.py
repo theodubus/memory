@@ -21,13 +21,18 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from socle import config, demandes, liens, memoire, outils
+from socle import config, demandes, langue, liens, memoire, outils
 
 # Les lignes qu'un récap de fin d'intervention doit contenir : ce qui revient
 # à l'humain, puis la suite (ADR-0007, complété par ADR-0009).
 MARQUEURS_RECAP = {
     "Pour toi :": r"(?im)^[\W_]*pour toi\s*:",
     "Ensuite :": r"(?im)^[\W_]*ensuite\s*:",
+}
+# Les mêmes, quand la mémoire du projet est en anglais (B-0031).
+MARQUEURS_RECAP_EN = {
+    "For you:": r"(?im)^[\W_]*for you\s*:",
+    "Next:": r"(?im)^[\W_]*next\s*:",
 }
 
 
@@ -70,7 +75,7 @@ def a_faire(projet: config.Projet) -> list[Element]:
     for e in mem.entrees("B"):
         if e.archivee or e.statut in memoire.BACKLOG_CLOS:
             continue
-        if outils.cle(memoire.nettoyer(e.meta.get("pour", ""))) == "humain":
+        if langue.valeur(memoire.nettoyer(e.meta.get("pour", ""))) == "humain":
             res.append(Element("action", f"{e.id} — {e.titre}"))
     for b in branches_a_supprimer(projet):
         res.append(Element("action", f"supprimer la branche distante `{b}`, déjà contenue dans la branche par défaut"))
@@ -115,12 +120,13 @@ def dernier_message(transcript: Path) -> str | None:
 
 def recap_manquant(projet: config.Projet, message: str) -> list[str]:
     """Les lignes du récap absentes du message ; vide, le récap est complet."""
-    marqueurs = projet.pol("human", "recap_markers", defaut=MARQUEURS_RECAP)
+    defaut = MARQUEURS_RECAP_EN if langue.du_projet(projet) == "en" else MARQUEURS_RECAP
+    marqueurs = projet.pol("human", "recap_markers", defaut=defaut)
     return [nom for nom, motif in marqueurs.items() if not re.search(motif, message)]
 
 
 def prochaines_etapes(projet: config.Projet) -> str:
     """La section « Prochaines étapes » du chantier actif, telle qu'écrite."""
     texte = outils.lire_a(projet.racine, None, projet.chemins.actif) or ""
-    m = re.search(r"^##\s+Prochaines étapes\s*$(.*?)(?=^##\s|\Z)", texte, re.M | re.S)
+    m = re.search(r"^##\s+(?:Prochaines étapes|Next steps)\s*$(.*?)(?=^##\s|\Z)", texte, re.M | re.S)
     return m.group(1).strip() if m else ""

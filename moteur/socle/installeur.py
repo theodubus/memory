@@ -26,7 +26,7 @@ import tomllib
 from datetime import date
 from pathlib import Path
 
-from socle import VERSION, config, empreinte, outils
+from socle import VERSION, config, empreinte, langue, outils
 from socle.modeles import DOSSIER as MODELES, gabarit
 
 ADAPTATEURS = Path(__file__).resolve().parent / "adaptateurs"
@@ -90,6 +90,12 @@ def politique_privee(texte: str, mode: str, relecture: str | None, demandes: boo
     return texte[:debut] + bloc + texte[fin:]
 
 
+def politique_langue(texte: str, lg: str) -> str:
+    """La politique du gabarit, avec la langue de la mémoire choisie à
+    l'installation au lieu de son exemple en commentaire (B-0031)."""
+    return texte.replace('# [memory]\n# language = "fr"\n', f'[memory]\nlanguage = "{lg}"\n', 1)
+
+
 def diff_politique(cible: Path) -> list[str]:
     """Ce qui sépare la politique du projet de celle du gabarit de cette
     version : affiché à la mise à jour, jamais appliqué. La politique est à
@@ -105,7 +111,8 @@ def diff_politique(cible: Path) -> list[str]:
 
 def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bool = False,
               mode: str = config.MODE_PROJET, source: Path | None = None, prive: str | None = None,
-              relecture: str | None = None, demandes_privees: bool = False, filtre: str = "git-crypt") -> int:
+              relecture: str | None = None, demandes_privees: bool = False, filtre: str = "git-crypt",
+              langue_memoire: str | None = None) -> int:
     from socle import migrations
 
     if not outils.est_depot(cible):
@@ -180,6 +187,12 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
     politique = gabarit("politique.toml")
     if prive:
         politique = politique_privee(politique, prive, relecture, demandes_privees)
+    if langue_memoire and not (cible / ch.politique).is_file():
+        politique = politique_langue(politique, langue_memoire)
+    # La langue de la mémoire : celle choisie ici pour un projet neuf, sinon
+    # celle que sa politique dit déjà.
+    lg = langue_memoire if langue_memoire and not (cible / ch.politique).is_file() else (
+        langue.du_projet(config.Projet.charger(cible)) if (cible / ch.politique).is_file() else "fr")
     if ancien and (cible / ch.politique).is_file():
         ecart = diff_politique(cible)
         if ecart:
@@ -202,7 +215,7 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
     for nom, lieu in (("canonique.md", ch.canonique), ("actif.md", ch.actif), ("backlog.md", ch.backlog)):
         p = cible / lieu
         if not p.is_file():
-            _ecrire(p, gabarit(f"memoire/{nom}"))
+            _ecrire(p, gabarit(f"memoire/{nom}", lg))
     for lieu in (ch.decisions, ch.demandes):
         d = cible / lieu
         d.mkdir(parents=True, exist_ok=True)
@@ -213,14 +226,15 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
         from socle import memoire
 
         ident = memoire.Memoire.charger(cible).prochain_id("J", date=jour)
-        _ecrire(jdir / f"{jour[:7]}.md", gabarit("memoire/journal.md")
+        _ecrire(jdir / f"{jour[:7]}.md", gabarit("memoire/journal.md", lg)
                 .replace("@@MOIS@@", jour[:7]).replace("@@ID@@", ident).replace("@@VERSION@@", VERSION)
                 .replace("@@ADAPTATEUR@@", nom_adaptateur)
-                .replace("@@ADOPTION@@", ", en mode adoption" if adoption else ""))
+                .replace("@@ADOPTION@@", ("" if not adoption else ", in adoption mode" if lg == "en"
+                                          else ", en mode adoption")))
         journal.append(f"mémoire initiale posée, journal ouvert par {ident}")
 
     # 5. Les instructions : AGENTS.md fait foi, CLAUDE.md l'importe.
-    journal += _instructions(cible, dossier_moteur)
+    journal += _instructions(cible, dossier_moteur, lg)
 
     # 6. Hooks de l'agent, hooks git, CI, CODEOWNERS, .gitignore.
     journal += _settings(cible)
@@ -256,11 +270,11 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
     return _audit(cible)
 
 
-def _instructions(cible: Path, dossier_moteur: str) -> list[str]:
+def _instructions(cible: Path, dossier_moteur: str, lg: str = "fr") -> list[str]:
     res = []
     agents = cible / config.INSTRUCTIONS
     claude = cible / "CLAUDE.md"
-    section = (gabarit("AGENTS.md").replace("@@VERSION@@", VERSION).replace("@@MOTEUR@@", dossier_moteur))
+    section = (gabarit("AGENTS.md", lg).replace("@@VERSION@@", VERSION).replace("@@MOTEUR@@", dossier_moteur))
     socle = section.split("@@SECTION_PROJET@@", 1)[1].strip("\n")
     bloc = f"{DEBUT_SOCLE}\n\n{socle}\n\n{FIN_SOCLE}\n"
     if not agents.is_file() and claude.is_file() and claude.read_text(encoding="utf-8").strip() != "@AGENTS.md":

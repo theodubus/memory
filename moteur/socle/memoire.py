@@ -18,7 +18,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from socle import config, outils
+from socle import config, langue, outils
 
 TYPES = {
     "F": "canonique",
@@ -57,8 +57,8 @@ BACKLOG_CLOS = {"fait", "abandonne"}
 # Une entrée publique basculée dans la mémoire privée (B-0029) : elle garde
 # son identifiant, pour que les renvois restent valides, et perd son titre et
 # son texte, repris par une copie privée qui cite `depuis : <identifiant>`.
-TITRE_BASCULEE = "Entrée basculée dans la mémoire privée"
-TEXTE_BASCULEE = "Son contenu est dans la mémoire privée."
+TITRE_BASCULEE = langue.TEXTES["titre-basculee"]["fr"]
+TEXTE_BASCULEE = langue.TEXTES["texte-basculee"]["fr"]
 
 
 # La mémoire et sa zone privée (jalon 7, même arborescence), sous leurs noms
@@ -182,7 +182,7 @@ def parser_meta(lignes: list[str]) -> dict[str, str]:
         k = outils.cle(k)
         if not k or " " in k:
             continue
-        meta[k] = v.strip()
+        meta[langue.champ(k)] = v.strip()
     return meta
 
 
@@ -197,7 +197,7 @@ def nettoyer(valeur: str) -> str:
 # Une forme entre accents graves commence sans espace : sinon « `commit:` et
 # la suite » se lirait comme une référence qui court jusqu'au prochain accent.
 REF_RE = re.compile(
-    r"(?P<type>commit|fichier|cmd|url):(?:`(?P<entre>[^`\s][^`]*)`|(?P<nu>[^\s,;`]+))"
+    r"(?P<type>commit|fichier|file|cmd|url):(?:`(?P<entre>[^`\s][^`]*)`|(?P<nu>[^\s,;`]+))"
 )
 
 
@@ -205,7 +205,7 @@ def references(valeur: str) -> list[tuple[str, str]]:
     """[(type, cible)] : types `commit`, `fichier`, `cmd`, `url`, `id`."""
     res = []
     for m in REF_RE.finditer(valeur):
-        res.append((m["type"], (m["entre"] or m["nu"]).strip()))
+        res.append((langue.reference(m["type"]), (m["entre"] or m["nu"]).strip()))
     sans_refs = REF_RE.sub(" ", valeur)
     for m in ID_RE.finditer(sans_refs):
         if id_valide(m["type"], m["num"]):
@@ -230,7 +230,8 @@ class Entree:
 
     @property
     def statut(self) -> str:
-        return outils.cle(nettoyer(self.meta.get("statut", "")))
+        """Sous sa clé interne, quelle que soit la langue où il est écrit."""
+        return langue.statut(self.type, nettoyer(self.meta.get("statut", "")))
 
     def refs(self, *cles: str) -> list[tuple[str, str]]:
         res = []
@@ -292,8 +293,8 @@ def analyser(chemin: str, texte: str) -> FichierMemoire:
             if m:
                 for paire in m["corps"].split():
                     if "=" in paire:
-                        k, v = paire.split("=", 1)
-                        f.entete[k.strip()] = outils.cle(v)
+                        k, v = langue.entete(*paire.split("=", 1))
+                        f.entete[k] = v
                 f.couche = f.entete.get("couche")
                 f.zone = f.entete.get("zone")
             break

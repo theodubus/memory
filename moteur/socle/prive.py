@@ -22,7 +22,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from socle import config, memoire, outils
+from socle import config, langue, memoire, outils
 from socle.contexte import controle
 
 
@@ -532,27 +532,28 @@ def basculer(projet: config.Projet, ident: str, jour: str) -> list[str]:
         raise ValueError(f"`{ident}` archive {', '.join(enfants)}, que d'autres entrées citent peut-être : "
                          "leurs renvois publics ne survivraient pas à la bascule")
     nouvel = mem.prochain_id(e.type, prive=True, date=e.id[2:12] if e.type == "J" else None)
-    copie = _copie_privee(e, nouvel)
+    lg = langue.du_projet(projet)
+    copie = _copie_privee(e, nouvel, lg)
     fichier = mem.fichiers[e.fichier]
     if e.type == "ADR":
         nom = e.fichier.rsplit("/", 1)[-1]
         prive_rel = ch.dans_prive(f"{ch.decisions}/{nouvel}{nom[len(ident):]}")
-        _ecrire(racine / prive_rel, f"<!-- socle: couche=decisions zone=privee -->\n{copie}\n")
+        _ecrire(racine / prive_rel, f"{langue.entete_fichier('decisions', 'privee', lg)}\n{copie}\n")
         public_rel = f"{ch.decisions}/{ident}-basculee.md"
-        _ecrire(racine / public_rel, f"<!-- socle: couche=decisions zone=publique -->\n{_pierre(e, jour)}\n")
+        _ecrire(racine / public_rel, f"{langue.entete_fichier('decisions', 'publique', lg)}\n{_pierre(e, jour, lg)}\n")
         (racine / e.fichier).unlink()
     else:
         prive_rel = ch.dans_prive(e.fichier)
         cible = racine / prive_rel
         if not cible.is_file():
             titre = fichier.texte.split("\n# ", 1)[1].split("\n", 1)[0] if "\n# " in fichier.texte else fichier.couche
-            _ecrire(cible, f"<!-- socle: couche={fichier.couche} zone=privee -->\n# {titre}\n")
+            _ecrire(cible, f"{langue.entete_fichier(fichier.couche, 'privee', lg)}\n# {titre}\n")
         cible.write_text(cible.read_text(encoding="utf-8").rstrip("\n") + "\n\n" + copie + "\n", encoding="utf-8")
         public_rel = e.fichier
         texte = (racine / e.fichier).read_text(encoding="utf-8")
         if e.texte not in texte:
             raise ValueError(f"`{ident}` : son texte ne se retrouve pas tel quel dans {e.fichier}")
-        (racine / e.fichier).write_text(texte.replace(e.texte, _pierre(e, jour), 1), encoding="utf-8")
+        (racine / e.fichier).write_text(texte.replace(e.texte, _pierre(e, jour, lg), 1), encoding="utf-8")
     res = [f"{ident} → {nouvel} : son titre et son texte sont dans {prive_rel}",
            f"en public, {public_rel} ne garde de {ident} que l'identifiant : les renvois restent valides",
            "l'historique public garde l'ancien texte : seule une réécriture de l'historique, publiée en "
@@ -563,7 +564,7 @@ def basculer(projet: config.Projet, ident: str, jour: str) -> list[str]:
     return res
 
 
-def _copie_privee(e: memoire.Entree, nouvel: str) -> str:
+def _copie_privee(e: memoire.Entree, nouvel: str, lg: str) -> str:
     """L'entrée sous son identifiant privé, qui cite celle qu'elle reprend."""
     lignes = e.texte.splitlines()
     lignes[0] = lignes[0].replace(e.id, nouvel, 1)
@@ -573,16 +574,16 @@ def _copie_privee(e: memoire.Entree, nouvel: str) -> str:
     if j < len(lignes) and lignes[j].lstrip().startswith(">"):
         while j + 1 < len(lignes) and lignes[j + 1].lstrip().startswith(">"):
             j += 1
-        lignes[j] = lignes[j].rstrip() + f" · depuis : {e.id}"
+        lignes[j] = lignes[j].rstrip() + " · " + langue.meta(lg, depuis=e.id)[2:]
     else:
-        lignes[1:1] = ["", f"> depuis : {e.id}"]
+        lignes[1:1] = ["", langue.meta(lg, depuis=e.id)]
     return "\n".join(lignes)
 
 
-def _pierre(e: memoire.Entree, jour: str) -> str:
+def _pierre(e: memoire.Entree, jour: str, lg: str) -> str:
     """Ce qui reste en public d'une entrée basculée."""
-    return (f"{'#' * e.niveau} {e.id} — {memoire.TITRE_BASCULEE}\n\n> basculée : {jour}\n\n"
-            f"{memoire.TEXTE_BASCULEE}")
+    return (f"{'#' * e.niveau} {e.id} — {langue.mot(langue.TEXTES, 'titre-basculee', lg)}\n\n"
+            f"{langue.meta(lg, basculee=jour)}\n\n{langue.mot(langue.TEXTES, 'texte-basculee', lg)}")
 
 
 def _ecrire(p: Path, texte: str):
