@@ -112,7 +112,7 @@ class TestReprise(Dossier):
             subprocess.run([sys.executable, str(projet / ".socle/socle"), "hook", "session-start"], cwd=projet,
                            input=json.dumps({"session_id": "essai", "source": "startup"}), capture_output=True,
                            text=True, env=banc.env_neuf())
-            return {"code": 0, "duree": 1, "reponse": banc.s1_simuler(projet, True, 1), "cout": 0.1, "tours": 3,
+            return {"code": 0, "duree": 1, "reponse": banc._s1_simuler(projet, True, 1), "cout": 0.1, "tours": 3,
                     "usage": None, "sous_type": "success", "erreur": False, "limite": None, "stderr": ""}
         return lancer
 

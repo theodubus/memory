@@ -84,5 +84,86 @@ class TestTraceDesRefus(unittest.TestCase):
         self.assertEqual(hooks.compter_session(racine), "SessionStart=0 PreToolUse=1 Stop=0")
 
 
+class TestTraceDesRefusDeFinDeTourEtDeGit(unittest.TestCase):
+    """`stop`, `exiger_recap` et `git_pre_commit` notent leur refus, avec
+    ce qui a échoué, dans un projet où le socle est installé."""
+
+    FAUX = "\n## F-0001 — Un fait sans preuve\n\n> statut : mesuré\n"
+
+    @classmethod
+    def setUpClass(cls):
+        import contextlib
+        import io
+        import subprocess
+        import tempfile
+        from pathlib import Path
+
+        from socle import installeur
+
+        cls.racine = Path(tempfile.mkdtemp(prefix="socle-trace-"))
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=cls.racine, check=True)
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(cls.racine, "python", "@essai", source=Path(__file__).resolve().parent.parent / "moteur")
+        cls.canonique = cls.racine / "memoire/canonique.md"
+        cls.sain = cls.canonique.read_text()
+
+    def setUp(self):
+        from socle import config
+
+        self.addCleanup(self.canonique.write_text, self.sain)
+        self.projet = config.Projet.charger(self.racine)
+
+    def dernier_refus(self) -> list[str]:
+        from socle import config
+
+        return [l.split("\t") for l in config.lire_trace(self.racine) if "\tRefus\t" in l][-1]
+
+    def appeler(self, f, *args) -> str:
+        import contextlib
+        import io
+
+        with contextlib.redirect_stdout(io.StringIO()) as sortie, contextlib.redirect_stderr(io.StringIO()):
+            f(*args)
+        return sortie.getvalue()
+
+    def test_stop_trace_les_controles_en_echec(self):
+        self.canonique.write_text(self.sain + self.FAUX)
+        self.assertIn('"block"', self.appeler(hooks.stop, self.projet, {"session_id": "t"}))
+        refus = self.dernier_refus()
+        self.assertEqual(refus[2], "t")
+        self.assertTrue(refus[3].startswith("Stop:"))
+        self.assertIn("memoire.preuves", refus[3].split(":", 1)[1].split(","))
+
+    def test_exiger_recap_trace_le_recap_manquant(self):
+        import json
+        import tempfile
+        from pathlib import Path
+
+        transcript = Path(tempfile.mkdtemp()) / "t.jsonl"
+        transcript.write_text(json.dumps({"type": "assistant", "message": {"content": "Fait."}}))
+        sortie = self.appeler(hooks.exiger_recap, self.projet, {"session_id": "r", "transcript_path": str(transcript)})
+        self.assertIn('"block"', sortie)
+        self.assertEqual(self.dernier_refus()[2:], ["r", "Stop:recap"])
+
+    def test_git_pre_commit_trace_les_controles_en_echec(self):
+        import subprocess
+
+        self.canonique.write_text(self.sain + self.FAUX)
+        subprocess.run(["git", "add", "-A"], cwd=self.racine, check=True)
+        self.addCleanup(subprocess.run, ["git", "reset", "-q"], cwd=self.racine)
+        self.assertEqual(self.code(hooks.git_pre_commit), 1)
+        refus = self.dernier_refus()
+        self.assertEqual(refus[1], "Refus")
+        self.assertTrue(refus[3].startswith("git-pre-commit:"))
+        self.assertIn("memoire.preuves", refus[3])
+
+    def code(self, f) -> int:
+        import contextlib
+        import io
+
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            return f(self.projet)
+
+
 if __name__ == "__main__":
     unittest.main()
