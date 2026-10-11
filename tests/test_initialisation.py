@@ -66,15 +66,15 @@ class TestMemoirePriveeALInstallation(Base):
     def test_compagnon_sans_clone_le_dit(self):
         self.racine = depot({"calc.py": "x = 1\n"})
         code, sortie = installer(self.racine, prive="compagnon", relecture="lots", demandes_privees=True)
-        politique = (self.racine / config.POLITIQUE).read_text()
+        politique = (self.racine / config.FORMAT_ACTUEL.politique).read_text()
         self.assertIn('[private]\nmode = "compagnon"\nreview = "lots"\nrequests = true\n', politique)
-        self.assertIn("memoire/prive/", (self.racine / ".gitignore").read_text())
+        self.assertIn("memory/private/", (self.racine / ".gitignore").read_text())
         self.assertIn("dépôt privé absent", sortie)
 
     def test_chiffre_pose_le_filtre(self):
         self.racine = depot({"calc.py": "x = 1\n"})
         code, sortie = installer(self.racine, prive="chiffre", filtre="git-crypt")
-        self.assertIn("memoire/prive/** filter=git-crypt", (self.racine / ".gitattributes").read_text())
+        self.assertIn("memory/private/** filter=git-crypt", (self.racine / ".gitattributes").read_text())
         self.assertIn("filtre « git-crypt » non configuré", sortie)
 
     def test_la_politique_du_gabarit_reecrite(self):
@@ -89,10 +89,10 @@ class TestMiseAJour(Base):
         installer(self.racine)
 
     def test_le_verrou_note_le_format(self):
-        self.assertIn(f"format = {migrations.FORMAT}", (self.racine / config.LOCK).read_text())
+        self.assertIn(f"format = {migrations.FORMAT}", (self.racine / config.FORMAT_ACTUEL.lock).read_text())
 
     def test_la_politique_changee_est_montree_jamais_ecrasee(self):
-        p = self.racine / config.POLITIQUE
+        p = self.racine / config.FORMAT_ACTUEL.politique
         p.write_text(p.read_text().replace("max_attempts = 3", "max_attempts = 5"))
         self.assertTrue(installeur.diff_politique(self.racine))
         code, sortie = installer(self.racine)
@@ -126,7 +126,7 @@ class TestEntrees(Base):
         questions = initialisation.questions_de_depart(self.charger(), None, False)
         self.assertEqual(len(questions), 5)
         self.assertTrue(all(q.defaut and q.effet for q in questions))
-        d = next((self.racine / "memoire/demandes").glob("D-0001-*.md")).read_text()
+        d = next((self.racine / "memory/requests").glob("D-0001-*.md")).read_text()
         self.assertIn("Défaut : aucun", d)
         self.assertIn("Ce qui revient maintenant à l'agent", flux.getvalue())
 
@@ -143,9 +143,9 @@ class TestEntrees(Base):
                 initialisation.initialiser(self.charger(), cadrage=doc)
         finally:
             doc.unlink()
-        journal = next((self.racine / "memoire/journal").glob("*.md")).read_text()
+        journal = next((self.racine / "memory/journal").glob("*.md")).read_text()
         self.assertIn("Document de cadrage archivé tel quel", journal)
-        demande = next((self.racine / "memoire/demandes").glob("D-*.md")).read_text()
+        demande = next((self.racine / "memory/requests").glob("D-*.md")).read_text()
         self.assertIn("celui du document de cadrage", demande)
 
     def test_depot_seulement_du_verifiable(self):
@@ -179,6 +179,6 @@ class TestCommandes(Base):
         projet = config.Projet.charger(self.racine)
         texte = initialisation.demande_de_depart(projet, "D-0009", initialisation.questions_de_depart(projet, None, True),
                                                  None, "un dépôt existant")
-        d = demandes.charger(self.racine, None, "memoire/demandes/D-0009-questions-de-depart.md", texte)
+        d = demandes.charger(self.racine, None, "memory/requests/D-0009-questions-de-depart.md", texte)
         self.assertEqual(demandes.linter(d, projet), [])
         self.assertEqual(d.reponses_possibles(), ["defauts", "reponses", "contexte-insuffisant"])

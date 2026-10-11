@@ -49,7 +49,7 @@ class TestAdoption(unittest.TestCase):
         claude = (self.racine / "CLAUDE.md").read_text()
         self.assertTrue(claude.startswith(CLAUDE.rstrip("\n")))
         self.assertIn(installeur.DEBUT_SOCLE, claude)
-        self.assertIn('"CLAUDE.md" = { max_bytes =', (self.racine / ".socle/garde-fous.toml").read_text())
+        self.assertIn('"CLAUDE.md" = { max_bytes =', (self.racine / ".socle/guardrails.toml").read_text())
 
     def test_relance_regenere_la_section_sans_la_dupliquer(self):
         self.racine = depot({"app.py": "print('ok')\n"})

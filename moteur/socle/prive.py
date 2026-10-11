@@ -25,12 +25,23 @@ from pathlib import Path
 from socle import config, memoire, outils
 from socle.contexte import controle
 
-DOSSIER = memoire.DOSSIER_PRIVE
-VERROU = f"{config.DOSSIER}/prive.lock"
+
+
+def dossier(racine: Path, rev: str | None = None) -> str:
+    """La zone privée du projet, sous le nom de son format."""
+    return config.chemins(racine, rev).prive
+
+
+def fichier_verrou(racine: Path, rev: str | None = None) -> str:
+    return config.chemins(racine, rev).prive_lock
+
+
+def fichier_termes(racine: Path, rev: str | None = None) -> str:
+    return config.chemins(racine, rev).termes
+
 MODES = ("compagnon", "chiffre")
 # La liste des termes qui ne doivent jamais paraître en public (D-0007) :
 # l'agent y ajoute librement, seul l'humain en retire.
-TERMES = f"{DOSSIER}/termes.txt"
 ENTETE_TERMES = "# socle: termes privés"
 # La relecture humaine avant publication (D-0006) : au choix de l'humain.
 RELECTURES = ("aucune", "chaque-push", "lots")
@@ -46,7 +57,7 @@ lisible = memoire.lisible
 
 
 def depot_compagnon(racine: Path) -> Path | None:
-    p = racine / DOSSIER
+    p = racine / dossier(racine)
     return p if (p / ".git").exists() else None
 
 
@@ -67,7 +78,7 @@ def compagnon_modifie(racine: Path) -> list[str]:
 def lire_verrou(racine: Path, rev: str | None = None) -> str | None:
     import tomllib
 
-    texte = outils.lire_a(racine, rev, VERROU)
+    texte = outils.lire_a(racine, rev, fichier_verrou(racine, rev))
     if not texte:
         return None
     try:
@@ -77,7 +88,7 @@ def lire_verrou(racine: Path, rev: str | None = None) -> str | None:
 
 
 def ecrire_verrou(racine: Path, sha: str):
-    (racine / VERROU).write_text(
+    (racine / fichier_verrou(racine)).write_text(
         "# Le commit du dépôt privé qui correspond à ce commit public (mode compagnon).\n"
         "# Écrit par `socle prive verrouiller`, jamais à la main.\n"
         f'commit = "{sha}"\n', encoding="utf-8")
@@ -100,14 +111,14 @@ def recuperer(projet: config.Projet) -> int:
         print("mémoire privée : indisponible ici, sans clé de déploiement (pull request d'un fork ?)")
         return 0
     if verrou is None:
-        print(f"mémoire privée : pas de verrou ({VERROU})")
+        print(f"mémoire privée : pas de verrou ({fichier_verrou(racine)})")
         return 1
     with tempfile.TemporaryDirectory() as tmp:
         fichier = Path(tmp) / "cle"
         fichier.write_text(cle.strip() + "\n", encoding="utf-8")
         fichier.chmod(0o600)
         env = {**os.environ, "GIT_SSH_COMMAND": f"ssh -i {fichier} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"}
-        cible = racine / DOSSIER
+        cible = racine / dossier(racine)
         for args in (["clone", "-q", "--no-checkout", depot, str(cible)], ["-C", str(cible), "checkout", "-q", verrou]):
             if subprocess.run(["git", *args], cwd=racine, env=env, capture_output=True).returncode != 0:
                 print(f"mémoire privée : récupération impossible (étape `git {args[0] if args[0] != '-C' else 'checkout'}`)")
@@ -131,7 +142,7 @@ def lire_prive(projet: config.Projet, rev: str | None, chemin: str) -> str | Non
         depot, verrou = depot_compagnon(racine), lire_verrou(racine, rev)
         if depot is None or not verrou:
             return None
-        r = subprocess.run(["git", "show", f"{verrou}:{chemin[len(DOSSIER) + 1:]}"], cwd=depot, capture_output=True)
+        r = subprocess.run(["git", "show", f"{verrou}:{memoire.hors_zone_privee(chemin)}"], cwd=depot, capture_output=True)
     else:
         r = subprocess.run(["git", "cat-file", "--filters", f"{rev}:{chemin}"], cwd=racine, capture_output=True)
     return r.stdout.decode("utf-8", errors="replace") if r.returncode == 0 else None
@@ -151,10 +162,10 @@ def termes(projet: config.Projet, rev: str | None = None) -> Termes:
     m = mode(projet)
     if m is None:
         return Termes([], True)
-    texte = lire_prive(projet, rev, TERMES)
+    texte = lire_prive(projet, rev, fichier_termes(projet.racine, rev))
     if texte is None:
         dispo = (depot_compagnon(projet.racine) is not None) if m == "compagnon" else (
-            rev is not None or not (projet.racine / TERMES).is_file())
+            rev is not None or not (projet.racine / fichier_termes(projet.racine)).is_file())
         return Termes([], dispo)
     if not texte.lstrip().startswith(ENTETE_TERMES):
         return Termes([], False)
@@ -165,7 +176,7 @@ def termes(projet: config.Projet, rev: str | None = None) -> Termes:
 def ajouter_terme(projet: config.Projet, terme: str) -> bool:
     """Ajoute un terme à la liste (libre : cela durcit le contrôle). Faux
     s'il y était déjà."""
-    p = projet.racine / TERMES
+    p = projet.racine / fichier_termes(projet.racine)
     actuels = termes(projet)
     if terme.strip() in actuels.liste:
         return False
@@ -260,7 +271,7 @@ def acces(projet: config.Projet, illisibles: list[str] | None = None) -> Acces:
     if m == "compagnon":
         sha = commit_compagnon(racine)
         if sha is None:
-            return Acces(False, f"le dépôt privé n'est pas cloné dans `{DOSSIER}/`")
+            return Acces(False, f"le dépôt privé n'est pas cloné dans `{dossier(racine)}/`")
         verrou = lire_verrou(racine)
         if verrou and verrou != sha:
             return Acces(True, f"disponible, mais au commit {sha[:10]} et non au verrou {verrou[:10]} "
@@ -311,12 +322,12 @@ def controle_acces(ctx, r):
     if m is None:
         commites = [c for c in outils.fichiers_a(ctx.racine, arbre_commite(ctx)) if est_prive(c)]
         if commites:
-            r.erreur("prive.acces", f"{len(commites)} fichier(s) sous `{DOSSIER}/` commité(s) sans mode de mémoire "
+            r.erreur("prive.acces", f"{len(commites)} fichier(s) sous `{dossier(ctx.racine)}/` commité(s) sans mode de mémoire "
                      "privée : ils sont publics. Choisir un mode (`[private] mode` de la politique) ou les déplacer",
                      commites[0])
         return
     if m not in MODES:
-        r.erreur("prive.acces", f"mode de mémoire privée « {m} » inconnu (attendu : {', '.join(MODES)})", config.POLITIQUE)
+        r.erreur("prive.acces", f"mode de mémoire privée « {m} » inconnu (attendu : {', '.join(MODES)})", ctx.projet.chemins.politique)
         return
     a = acces(ctx.projet, ctx.memoire.illisibles if ctx.tete is None else None)
     if not a.disponible:
@@ -324,9 +335,9 @@ def controle_acces(ctx, r):
     rel = relecture(ctx.projet)
     if rel is None:
         r.avertir("prive.acces", "relecture avant publication non choisie (`[private] review` : "
-                  f"{', '.join(RELECTURES)}) : aucune n'est exigée", config.POLITIQUE)
+                  f"{', '.join(RELECTURES)}) : aucune n'est exigée", ctx.projet.chemins.politique)
     elif rel not in RELECTURES:
-        r.erreur("prive.acces", f"relecture « {rel} » inconnue (attendu : {', '.join(RELECTURES)})", config.POLITIQUE)
+        r.erreur("prive.acces", f"relecture « {rel} » inconnue (attendu : {', '.join(RELECTURES)})", ctx.projet.chemins.politique)
 
 
 @controle("prive.verrou")
@@ -339,12 +350,13 @@ def controle_verrou(ctx, r):
     for c in outils.fichiers_a(ctx.racine, arbre):
         if est_prive(c):
             r.erreur("prive.verrou", f"fichier privé commité dans le dépôt public : il appartient au dépôt privé, "
-                     f"que `{DOSSIER}/` clone (le retirer de l'index)", c)
+                     f"que `{dossier(ctx.racine)}/` clone (le retirer de l'index)", c)
     # Le verrou de la tête jugée ; en fin de tour, celui de l'arbre de
     # travail, qui sera commité.
     verrou = lire_verrou(ctx.racine, ctx.tete)
     if verrou is None:
-        r.erreur("prive.verrou", "mode compagnon sans verrou : `socle prive verrouiller`", VERROU)
+        r.erreur("prive.verrou", "mode compagnon sans verrou : `socle prive verrouiller`",
+                 fichier_verrou(ctx.racine))
         return
     sha = commit_compagnon(ctx.racine)
     if sha is None:
@@ -353,10 +365,10 @@ def controle_verrou(ctx, r):
     modifies = compagnon_modifie(ctx.racine)
     if modifies and ctx.etage != "ci":
         r.erreur("prive.verrou", f"{len(modifies)} changement(s) de la mémoire privée hors de tout commit du dépôt "
-                 "privé : les y commiter, puis `socle prive verrouiller`", DOSSIER)
+                 "privé : les y commiter, puis `socle prive verrouiller`", dossier(ctx.racine))
     if sha != verrou:
         r.erreur("prive.verrou", f"le verrou désigne {verrou[:10]}, le dépôt privé est à {sha[:10]} : "
-                 "`socle prive verrouiller` pour l'avancer, ou `socle prive extraire` pour y revenir", VERROU)
+                 "`socle prive verrouiller` pour l'avancer, ou `socle prive extraire` pour y revenir", fichier_verrou(ctx.racine))
 
 
 @controle("prive.chiffre")
@@ -371,10 +383,11 @@ def controle_chiffre(ctx, r):
             r.erreur("prive.chiffre", "fichier privé commité EN CLAIR : le filtre de chiffrement n'a pas tourné. "
                      "Retirer le commit avant tout push ; si c'est poussé, l'historique public l'a gardé", c)
     if outils.est_depot(ctx.racine):
-        attribut = outils.git(ctx.racine, "check-attr", "filter", "--", f"{DOSSIER}/canonique.md", check=False)
+        attribut = outils.git(ctx.racine, "check-attr", "filter", "--", ctx.projet.chemins.dans_prive(ctx.projet.chemins.canonique), check=False)
         if attribut.strip().endswith(": unspecified") or not attribut.strip():
-            r.erreur("prive.chiffre", f"aucun filtre de chiffrement ne couvre `{DOSSIER}/` "
-                     f"(`.gitattributes` : `{DOSSIER}/** filter=…`)", ".gitattributes")
+            zone = dossier(ctx.racine)
+            r.erreur("prive.chiffre", f"aucun filtre de chiffrement ne couvre `{zone}/` "
+                     f"(`.gitattributes` : `{zone}/** filter=…`)", ".gitattributes")
 
 
 @controle("prive.fuites")
@@ -391,7 +404,7 @@ def controle_fuites(ctx, r):
     moteur = ctx.projet.dossier_moteur.rstrip("/") + "/"
     presents = set(ctx.fichiers)
     for c in ctx.changes:
-        if c not in presents or est_prive(c) or c.startswith((moteur, config.ARCHIVES + "/")):
+        if c not in presents or est_prive(c) or c.startswith((moteur, ctx.projet.chemins.archives + "/")):
             continue
         texte = ctx.lire(c)
         if texte is None or "\0" in texte[:4096]:
@@ -419,10 +432,11 @@ def controle_termes(ctx, r):
     from socle.controles_cliquet import _valide_par
 
     cite = "sha256:" + outils.sha256(apres.texte)[:16]
-    d = _valide_par(ctx, TERMES, cite)
+    termes_ici = fichier_termes(ctx.racine)
+    d = _valide_par(ctx, termes_ici, cite)
     if d:
-        r.avertir("prive.termes", f"{len(retires)} terme(s) retiré(s), validé par {d.id}", TERMES)
+        r.avertir("prive.termes", f"{len(retires)} terme(s) retiré(s), validé par {d.id}", termes_ici)
     else:
         r.erreur("prive.termes", f"{len(retires)} terme(s) retiré(s) de la liste privée sans validation humaine : "
-                 f"une demande validée doit citer `{TERMES}` et `{cite}`", TERMES)
+                 f"une demande validée doit citer `{termes_ici}` et `{cite}`", termes_ici)
 

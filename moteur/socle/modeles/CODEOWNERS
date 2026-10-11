@@ -3,4 +3,4 @@
 /.socle/ @@OWNER@@
 /.claude/settings.json @@OWNER@@
 /.github/ @@OWNER@@
-/memoire/demandes/*.reponse.toml @@OWNER@@
+/memory/requests/*.answer.toml @@OWNER@@

@@ -71,7 +71,7 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
     lignes.append(prive.ligne_etat(projet))
     lignes.append("vérifier : `python3 .socle/socle verify --rapide` (tout : sans `--rapide`)")
     if contenus:
-        for chemin in ("memoire/actif.md", "memoire/canonique.md"):
+        for chemin in (projet.chemins.actif, projet.chemins.canonique):
             texte = outils.lire_a(racine, None, chemin)
             if texte is not None:
                 lignes.append("")
@@ -101,7 +101,7 @@ def _git(racine, projet) -> list[str]:
             changes = outils.fichiers_changes(racine, base)
             code = outils.filtrer(changes, projet.chemins_code())
             docs = [c for c in changes if c.endswith(".md")]
-            mem = [c for c in changes if c.startswith(config.MEMOIRE + "/")]
+            mem = [c for c in changes if memoire.est_memoire(c)]
             res.append(f"depuis la base : {len(code)} fichier(s) de code, {len(docs)} de doc, {len(mem)} de mémoire")
             if code and not mem:
                 res.append("  ^ du code a changé et la mémoire non : la fin de tour le refusera")
@@ -141,7 +141,7 @@ def _memoire(mem: memoire.Memoire, projet) -> list[str]:
         for e in [e for e in backlog if e.statut == statut][:8]:
             res.append(f"  {libelle} : {e.id} — {e.titre}")
     jours = projet.gf("staleness", "active_days", defaut=7)
-    t = outils.git(mem.racine, "log", "-1", "--format=%ct", "--", "memoire/actif.md", check=False).strip() \
+    t = outils.git(mem.racine, "log", "-1", "--format=%ct", "--", config.chemins(mem.racine).actif, check=False).strip() \
         if outils.a_des_commits(mem.racine) else ""
     if t:
         age = (time.time() - float(t)) / 86400

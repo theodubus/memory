@@ -1,34 +1,132 @@
 """Le projet tel que le socle le voit : sa racine et ses quatre fichiers.
 
-- `.socle/moteur.lock`     — version et empreinte du moteur (installeur seul) ;
-- `.socle/politique.toml`  — politique d'autonomie (humain seul) ;
-- `.socle/adaptateur.toml` — capacités du langage (validé par l'humain) ;
-- `.socle/garde-fous.toml` — seuils et couverture des contrôles (cliquet :
+- `.socle/engine.lock`     — version et empreinte du moteur (installeur seul) ;
+- `.socle/policy.toml`     — politique d'autonomie (humain seul) ;
+- `.socle/adapter.toml`    — capacités du langage (validé par l'humain) ;
+- `.socle/guardrails.toml` — seuils et couverture des contrôles (cliquet :
   durcir est libre, assouplir exige une demande validée).
 
-Les clés sont en anglais, les commentaires et messages en français.
+Les chemins sont en anglais depuis le format 2 de la mémoire (B-0032) : un
+projet au format 1 garde ses noms français (`memoire/`, `politique.toml`…)
+jusqu'à sa migration, et le moteur lit les deux. Les clés sont en anglais,
+les commentaires et messages en français.
 """
 
 from __future__ import annotations
 
 import tomllib
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
 
 from socle import outils
 
 DOSSIER = ".socle"
-LOCK = ".socle/moteur.lock"
-POLITIQUE = ".socle/politique.toml"
-GARDE_FOUS = ".socle/garde-fous.toml"
-ADAPTATEUR = ".socle/adaptateur.toml"
 LANCEUR = ".socle/socle"
 GIT_HOOKS = ".socle/git-hooks"
 TRACE = ".socle/trace/hooks.log"  # ancien emplacement, et hors dépôt git
 COMPTEUR_STOP = ".socle/trace/stop-echecs"
-MEMOIRE = "memoire"
-ARCHIVES = "memoire/archives"
 INSTRUCTIONS = "AGENTS.md"
+
+
+@dataclass(frozen=True)
+class Chemins:
+    """Où vivent les fichiers d'un projet, selon le format de sa mémoire."""
+
+    format: int
+    memoire: str
+    canonique: str
+    actif: str
+    backlog: str
+    decisions: str
+    journal: str
+    demandes: str
+    archives: str
+    prive: str
+    termes: str
+    reponse: str  # le suffixe d'une réponse humaine, à côté de sa demande
+    lock: str
+    politique: str
+    garde_fous: str
+    adaptateur: str
+    prive_lock: str
+    moteur: str  # le dossier du moteur installé
+
+    def dans_prive(self, chemin: str) -> str:
+        """Le miroir d'un chemin de la mémoire dans la zone privée."""
+        return self.prive + chemin[len(self.memoire):] if chemin.startswith(self.memoire + "/") else chemin
+
+
+FORMAT_1 = Chemins(1, "memoire", "memoire/canonique.md", "memoire/actif.md", "memoire/backlog.md",
+                   "memoire/decisions", "memoire/journal", "memoire/demandes", "memoire/archives", "memoire/prive",
+                   "memoire/prive/termes.txt", ".reponse.toml", ".socle/moteur.lock", ".socle/politique.toml",
+                   ".socle/garde-fous.toml", ".socle/adaptateur.toml", ".socle/prive.lock", ".socle/moteur")
+FORMAT_2 = Chemins(2, "memory", "memory/canonical.md", "memory/active.md", "memory/backlog.md",
+                   "memory/decisions", "memory/journal", "memory/requests", "memory/archives", "memory/private",
+                   "memory/private/terms.txt", ".answer.toml", ".socle/engine.lock", ".socle/policy.toml",
+                   ".socle/guardrails.toml", ".socle/adapter.toml", ".socle/private.lock", ".socle/engine")
+FORMATS = {1: FORMAT_1, 2: FORMAT_2}
+FORMAT_ACTUEL = FORMAT_2
+
+# Le renommage du format 1 au format 2, segment par segment, selon où le
+# segment se trouve : sous `.socle/`, ou dans la mémoire.
+_SOCLE_1_2 = {"moteur.lock": "engine.lock", "politique.toml": "policy.toml", "garde-fous.toml": "guardrails.toml",
+              "adaptateur.toml": "adapter.toml", "prive.lock": "private.lock", "moteur": "engine"}
+_MEMOIRE_1_2 = {"canonique.md": "canonical.md", "actif.md": "active.md", "demandes": "requests",
+                "prive": "private", "termes.txt": "terms.txt"}
+
+
+def traduire(chemin: str, vers: int = 2) -> str:
+    """Un chemin (ou un motif) d'un format dans l'autre ; inchangé s'il
+    n'appartient ni à `.socle/` ni à la mémoire."""
+    socle, mem = _SOCLE_1_2, _MEMOIRE_1_2
+    racine_de, racine_vers = ("memoire", "memory") if vers == 2 else ("memory", "memoire")
+    suffixe_de, suffixe_vers = (".reponse.toml", ".answer.toml") if vers == 2 else (".answer.toml", ".reponse.toml")
+    if vers != 2:
+        socle, mem = {v: k for k, v in socle.items()}, {v: k for k, v in mem.items()}
+    parts = chemin.split("/")
+    if parts[0] == DOSSIER and len(parts) > 1:
+        parts[1] = socle.get(parts[1], parts[1])
+    elif parts[0] == racine_de:
+        parts[0] = racine_vers
+        for i in range(1, len(parts)):
+            parts[i] = mem.get(parts[i], parts[i])
+        if parts[-1].endswith(suffixe_de):
+            parts[-1] = parts[-1][: -len(suffixe_de)] + suffixe_vers
+    else:
+        return chemin
+    return "/".join(parts)
+
+
+def sous_le_format(chemin: str, vers: int) -> str:
+    """Le nom qu'un chemin prend au format `vers`, même s'il mêle les deux
+    (un lien relatif `../demandes/…` lu depuis `memory/journal/`)."""
+    return traduire(traduire(chemin, vers=3 - vers), vers=vers)
+
+
+def chemins(racine: Path, rev: str | None = None) -> Chemins:
+    """Le format d'un projet à une révision (l'arbre de travail par défaut) :
+    le nom de son verrou le dit ; sans verrou, celui de sa politique, puis de
+    son dossier de mémoire ; sans rien, le format actuel."""
+    return _chemins(str(racine), rev)
+
+
+@lru_cache(maxsize=256)
+def _chemins(racine: str, rev: str | None) -> Chemins:
+    for nom in ("lock", "politique"):
+        for f in (FORMAT_2, FORMAT_1):
+            if outils.lire_a(Path(racine), rev, getattr(f, nom)) is not None:
+                return f
+    for f in (FORMAT_2, FORMAT_1):
+        if (Path(racine) / f.memoire).is_dir() if rev is None else \
+                outils.git(Path(racine), "cat-file", "-t", f"{rev}:{f.memoire}", check=False).strip() == "tree":
+            return f
+    return FORMAT_ACTUEL
+
+
+def oublier_formats():
+    """À appeler quand un format change sur disque (installation, migration)."""
+    _chemins.cache_clear()
 
 MODE_AMONT = "amont"   # le dépôt qui fabrique le moteur : il le modifie
 MODE_PROJET = "projet"  # un projet qui l'utilise : le moteur y est immuable
@@ -71,6 +169,7 @@ def charger_toml(racine: Path, chemin: str, rev: str | None = None) -> dict:
 @dataclass
 class Projet:
     racine: Path
+    chemins: Chemins = FORMAT_ACTUEL
     lock: dict = field(default_factory=dict)
     politique: dict = field(default_factory=dict)
     garde_fous: dict = field(default_factory=dict)
@@ -80,12 +179,12 @@ class Projet:
     @classmethod
     def charger(cls, racine: Path | None = None, rev: str | None = None) -> "Projet":
         racine = outils.trouver_racine(racine)
-        p = cls(racine=racine)
+        p = cls(racine=racine, chemins=chemins(racine, rev))
         for attr, chemin in (
-            ("lock", LOCK),
-            ("politique", POLITIQUE),
-            ("garde_fous", GARDE_FOUS),
-            ("adaptateur", ADAPTATEUR),
+            ("lock", p.chemins.lock),
+            ("politique", p.chemins.politique),
+            ("garde_fous", p.chemins.garde_fous),
+            ("adaptateur", p.chemins.adaptateur),
         ):
             try:
                 setattr(p, attr, charger_toml(racine, chemin, rev))
@@ -104,7 +203,7 @@ class Projet:
     @property
     def dossier_moteur(self) -> str:
         """Le répertoire qui contient le paquet `socle`."""
-        return self.lock.get("engine_dir", ".socle/moteur")
+        return self.lock.get("engine_dir", self.chemins.moteur)
 
     # --- garde-fous -----------------------------------------------------
 
@@ -134,7 +233,7 @@ class Projet:
     def exclusions_docs(self) -> list[str]:
         """Ce qui n'est pas de la documentation du projet : les archives
         (gardées telles quelles) et le moteur (ses gabarits et son format)."""
-        return [ARCHIVES + "/**", self.dossier_moteur.rstrip("/") + "/**"] + list(
+        return [self.chemins.archives + "/**", self.dossier_moteur.rstrip("/") + "/**"] + list(
             self.gf("references", "exclude", defaut=[])
         )
 
@@ -142,12 +241,12 @@ class Projet:
         res = list(self.pol("protected", "paths", defaut=[]))
         # La zone privée suit les règles de la zone publique : une réponse
         # humaine privée est protégée comme une réponse publique.
-        res += [MEMOIRE + "/prive/" + m[len(MEMOIRE) + 1:] for m in res
-                if m.startswith(MEMOIRE + "/") and not m.startswith(MEMOIRE + "/prive/")]
+        ch = self.chemins
+        res += [ch.dans_prive(m) for m in res if m.startswith(ch.memoire + "/") and not m.startswith(ch.prive + "/")]
         if self.mode == MODE_AMONT:
             # Dans le dépôt amont, le moteur EST la source : le protéger
             # empêcherait de le fabriquer.
-            res = [m for m in res if not m.startswith(".socle/moteur/")]
+            res = [m for m in res if not m.startswith(ch.moteur + "/")]
         return res
 
     def maximum_tentatives(self) -> int:

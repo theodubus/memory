@@ -60,8 +60,21 @@ class Contexte:
         return outils.fichiers_a(self.racine, self.tete)
 
     @cached_property
+    def format_base(self) -> config.Chemins | None:
+        return config.chemins(self.racine, self.base) if self.base else None
+
+    @cached_property
+    def migre(self) -> bool:
+        """La plage change le format de la mémoire (B-0032) : la base se lit
+        alors sous les noms de la tête."""
+        return self.format_base is not None and self.format_base.format != self.projet.chemins.format
+
+    @cached_property
     def fichiers_base(self) -> list[str]:
-        return outils.fichiers_a(self.racine, self.base) if self.base else []
+        res = outils.fichiers_a(self.racine, self.base) if self.base else []
+        if self.migre:
+            res = [config.traduire(c, vers=self.projet.chemins.format) for c in res]
+        return res
 
     def lire(self, chemin: str) -> str | None:
         """Le texte d'un fichier de la tête ; un fichier privé chiffré ici
@@ -79,7 +92,8 @@ class Contexte:
             return None
         cle = ("b", chemin)
         if cle not in self._cache:
-            self._cache[cle] = outils.lire_a(self.racine, self.base, chemin)
+            lieu = config.traduire(chemin, vers=self.format_base.format) if self.migre else chemin
+            self._cache[cle] = outils.lire_a(self.racine, self.base, lieu)
         return self._cache[cle]
 
     @cached_property
@@ -190,5 +204,5 @@ def executer(ctx: Contexte, ids: list[str] | None = None):
         for constat in rapport.constats:
             if constat.chemin and memoire.est_prive(constat.chemin):
                 constat.message = "constat masqué : zone privée (relancer les contrôles là où elle se lit)"
-                constat.chemin, constat.ligne = memoire.DOSSIER_PRIVE + "/…", None
+                constat.chemin, constat.ligne = ctx.projet.chemins.prive + "/…", None
     return rapport

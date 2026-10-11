@@ -42,7 +42,7 @@ class TestCodeTeste(unittest.TestCase):
         self.racine = Path(tempfile.mkdtemp(prefix="socle-code-teste-"))
         git(self.racine, "init", "-q", "-b", "main")
         (self.racine / ".socle").mkdir()
-        shutil.copy(ADAPTATEUR, self.racine / ".socle/adaptateur.toml")
+        shutil.copy(ADAPTATEUR, self.racine / ".socle/adapter.toml")
         (self.racine / "calc.py").write_text(CALC)
         (self.racine / "tests").mkdir()
         (self.racine / "tests/test_calc.py").write_text(TEST_CALC)
@@ -114,13 +114,13 @@ class TestCodeTeste(unittest.TestCase):
         self.assertIn("`double_tout`", erreurs[0])
 
     def test_le_moteur_installe_n_est_pas_du_code_du_projet(self):
-        moteur = self.racine / ".socle/moteur/socle"
+        moteur = self.racine / ".socle/engine/socle"
         moteur.mkdir(parents=True)
         (moteur / "outils.py").write_text("def git(*args):\n    return args\n")
         self.assertEqual(self.verifier(), [])
 
     def test_section_code_de_l_adaptateur_maintenu_a_defaut(self):
-        adaptateur = self.racine / ".socle/adaptateur.toml"
+        adaptateur = self.racine / ".socle/adapter.toml"
         texte = adaptateur.read_text()
         debut, fin = texte.index("[code]"), texte.index("[tests]")
         adaptateur.write_text(texte[:debut] + texte[fin:])

@@ -56,9 +56,9 @@ class TestJuges(Dossier):
             with self.subTest(passage=passage):
                 self.assertEqual(self.jouer(s6, passage, True)["statut"], "passe")
         projet = self.dossier / "s6-3-True/s6-p3"
-        self.assertTrue((projet / "memoire/archives/cadrage-calc.md").is_file())
+        self.assertTrue((projet / "memory/archives/cadrage-calc.md").is_file())
         # L'audit du dépôt : des faits mesurés, chacun avec son fichier.
-        self.assertIn("statut : mesuré · preuve : fichier:README.md", (projet / "memoire/canonique.md").read_text())
+        self.assertIn("statut : mesuré · preuve : fichier:README.md", (projet / "memory/canonical.md").read_text())
 
     def test_les_mesures_sont_relevees(self):
         r = self.jouer(banc.SCENARIOS[0], 1, True)

@@ -96,7 +96,7 @@ def diff_politique(cible: Path) -> list[str]:
     l'humain."""
     import difflib
 
-    p = cible / config.POLITIQUE
+    p = cible / config.chemins(cible).politique
     if not p.is_file():
         return []
     projet, gab = p.read_text(encoding="utf-8").splitlines(), gabarit("politique.toml").splitlines()
@@ -120,7 +120,8 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
             return 2
         adaptateur = detecte
     texte_adaptateur, nom_adaptateur = charger_adaptateur(adaptateur)
-    ancien = config.Projet.charger(cible).lock if (cible / config.LOCK).is_file() else {}
+    config.oublier_formats()
+    ancien = config.Projet.charger(cible).lock if (cible / config.chemins(cible).lock).is_file() else {}
     try:
         tomllib.loads(texte_adaptateur)
     except tomllib.TOMLDecodeError as e:
@@ -134,12 +135,14 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
         except RuntimeError as e:
             print(f"refus : {e}", file=sys.stderr)
             return 2
+        config.oublier_formats()
+    ch = config.FORMAT_ACTUEL
 
     # 1. Le moteur, remplacé en bloc.
     if mode == config.MODE_AMONT:
         dossier_moteur = str(source.relative_to(cible)) if source.is_relative_to(cible) else "moteur"
     else:
-        dossier_moteur = ".socle/moteur"
+        dossier_moteur = ch.moteur
         dest = cible / dossier_moteur / "socle"
         if dest.exists():
             shutil.rmtree(dest)
@@ -151,7 +154,7 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
     # une empreinte figée y changerait à chaque modification du moteur, et
     # ferait de chacune un changement de fichier protégé.
     if mode == config.MODE_AMONT:
-        _ecrire(cible / config.LOCK, (
+        _ecrire(cible / ch.lock, (
             "# Verrou du moteur — écrit par l'installeur, jamais à la main.\n"
             "# Mode amont : ce dépôt fabrique le moteur, dont l'empreinte n'est pas figée ici.\n"
             f'mode = "{mode}"\n'
@@ -161,7 +164,7 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
         journal.append(f"verrou en mode amont : le moteur est la source, sous {dossier_moteur}/socle")
     else:
         calculee, n = empreinte.calculer(cible, dossier_moteur)
-        _ecrire(cible / config.LOCK, (
+        _ecrire(cible / ch.lock, (
             "# Verrou du moteur — écrit par l'installeur, jamais à la main.\n"
             "# La CI recalcule l'empreinte ; un moteur altéré dans le projet fait échouer `moteur.empreinte`.\n"
             f'version = "{VERSION}"\n'
@@ -177,15 +180,15 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
     politique = gabarit("politique.toml")
     if prive:
         politique = politique_privee(politique, prive, relecture, demandes_privees)
-    if ancien and (cible / config.POLITIQUE).is_file():
+    if ancien and (cible / ch.politique).is_file():
         ecart = diff_politique(cible)
         if ecart:
             journal.append("la politique du projet diffère du gabarit de cette version ; rien n'est écrit, "
                            "elle est à l'humain — à relire :\n      " + "\n      ".join(ecart))
     for nom, contenu in (
-        (config.POLITIQUE, politique),
-        (config.ADAPTATEUR, texte_adaptateur),
-        (config.GARDE_FOUS, gabarit("garde-fous.toml")),
+        (ch.politique, politique),
+        (ch.adaptateur, texte_adaptateur),
+        (ch.garde_fous, gabarit("garde-fous.toml")),
     ):
         p = cible / nom
         if p.is_file():
@@ -196,16 +199,16 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
 
     # 4. La mémoire initiale.
     jour = date.today().isoformat()
-    for nom in ("canonique.md", "actif.md", "backlog.md"):
-        p = cible / config.MEMOIRE / nom
+    for nom, lieu in (("canonique.md", ch.canonique), ("actif.md", ch.actif), ("backlog.md", ch.backlog)):
+        p = cible / lieu
         if not p.is_file():
             _ecrire(p, gabarit(f"memoire/{nom}"))
-    for sous in ("decisions", "demandes"):
-        d = cible / config.MEMOIRE / sous
+    for lieu in (ch.decisions, ch.demandes):
+        d = cible / lieu
         d.mkdir(parents=True, exist_ok=True)
         if not any(d.iterdir()):
             _ecrire(d / ".gitkeep", "")
-    jdir = cible / config.MEMOIRE / "journal"
+    jdir = cible / ch.journal
     if not jdir.is_dir() or not any(jdir.glob("*.md")):
         from socle import memoire
 
@@ -361,24 +364,25 @@ def _prive(cible: Path, mode: str, filtre: str) -> list[str]:
     from socle import prive
 
     res = []
+    zone = prive.dossier(cible)
     if mode == "compagnon":
         p = cible / ".gitignore"
         texte = p.read_text(encoding="utf-8") if p.is_file() else ""
-        if f"{prive.DOSSIER}/" not in texte.splitlines():
-            p.write_text(texte.rstrip("\n") + f"\n# Le clone du dépôt privé (mémoire privée)\n{prive.DOSSIER}/\n",
+        if f"{zone}/" not in texte.splitlines():
+            p.write_text(texte.rstrip("\n") + f"\n# Le clone du dépôt privé (mémoire privée)\n{zone}/\n",
                          encoding="utf-8")
         sha = prive.commit_compagnon(cible)
         if sha:
             prive.ecrire_verrou(cible, sha)
             res.append(f"mémoire privée (compagnon) : dépôt privé trouvé, verrou à {sha[:10]}")
         else:
-            res.append(f"!! mémoire privée (compagnon) : dépôt privé absent — le cloner dans {prive.DOSSIER}/ "
+            res.append(f"!! mémoire privée (compagnon) : dépôt privé absent — le cloner dans {zone}/ "
                        "(avec au moins un commit), puis `socle prive verrouiller`")
     else:
         p = cible / ".gitattributes"
         texte = p.read_text(encoding="utf-8") if p.is_file() else ""
-        ligne = f"{prive.DOSSIER}/** filter={filtre} diff={filtre}"
-        if not any(l.startswith(f"{prive.DOSSIER}/**") for l in texte.splitlines()):
+        ligne = f"{zone}/** filter={filtre} diff={filtre}"
+        if not any(l.startswith(f"{zone}/**") for l in texte.splitlines()):
             p.write_text(texte.rstrip("\n") + ("\n" if texte.strip() else "") + ligne + "\n", encoding="utf-8")
         if outils.git(cible, "config", "--get", f"filter.{filtre}.clean", check=False).strip():
             res.append(f"mémoire privée (chiffrée) : filtre « {filtre} » configuré")
@@ -394,7 +398,7 @@ def _adopter(cible: Path) -> list[str]:
     avertissement, liste d'où l'on ne retire que pour durcir."""
     from socle import contexte
 
-    gf = cible / config.GARDE_FOUS
+    gf = cible / config.chemins(cible).garde_fous
     texte = gf.read_text(encoding="utf-8")
     res = []
     claude = cible / "CLAUDE.md"

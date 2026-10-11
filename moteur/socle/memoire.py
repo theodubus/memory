@@ -55,12 +55,49 @@ STATUTS = {
 BACKLOG_CLOS = {"fait", "abandonne"}
 
 
-# La zone privée (jalon 7) : même arborescence, sous `memoire/prive/`.
-DOSSIER_PRIVE = f"{config.MEMOIRE}/prive"
+# La mémoire et sa zone privée (jalon 7, même arborescence), sous leurs noms
+# des deux formats : un chemin se reconnaît quel que soit le format du projet.
+DOSSIERS = tuple(f.memoire for f in config.FORMATS.values())
+DOSSIERS_PRIVES = tuple(f.prive for f in config.FORMATS.values())
+SUFFIXES_REPONSE = tuple(f.reponse for f in config.FORMATS.values())
+
+
+def est_memoire(chemin: str) -> bool:
+    return chemin.startswith(tuple(d + "/" for d in DOSSIERS))
 
 
 def est_prive(chemin: str) -> bool:
-    return chemin.startswith(DOSSIER_PRIVE + "/")
+    return chemin.startswith(tuple(d + "/" for d in DOSSIERS_PRIVES))
+
+
+def est_reponse(chemin: str) -> bool:
+    """Une réponse humaine, à côté de sa demande."""
+    return est_memoire(chemin) and chemin.endswith(SUFFIXES_REPONSE)
+
+
+def demande_de_reponse(chemin: str) -> str:
+    """Le chemin de la demande à laquelle répond un fichier de réponse."""
+    for s in SUFFIXES_REPONSE:
+        if chemin.endswith(s):
+            return chemin[: -len(s)] + ".md"
+    return chemin
+
+
+def chemins_de(chemin: str) -> config.Chemins:
+    """Le format auquel appartient un chemin de la mémoire."""
+    for f in config.FORMATS.values():
+        if chemin.startswith(f.memoire + "/"):
+            return f
+    return config.FORMAT_ACTUEL
+
+
+def hors_zone_privee(chemin: str) -> str:
+    """Un chemin de la zone privée, relatif à elle (son chemin dans le dépôt
+    privé) ; inchangé hors de la zone privée."""
+    for d in DOSSIERS_PRIVES:
+        if chemin.startswith(d + "/"):
+            return chemin[len(d) + 1:]
+    return chemin
 
 
 def lisible(texte: str | None) -> bool:
@@ -77,7 +114,7 @@ def fichiers_compagnon(racine: Path) -> list[str]:
     public ignore : `git ls-files` ne les voit pas."""
     import os
 
-    p = racine / DOSSIER_PRIVE
+    p = racine / config.chemins(racine).prive
     if not (p / ".git").exists():
         return []
     res = []
@@ -212,20 +249,20 @@ class FichierMemoire:
 
 
 def couche_attendue(chemin: str) -> str | None:
-    """La couche que l'emplacement impose. `None` : pas un fichier de mémoire."""
-    m = config.MEMOIRE
-    if not chemin.startswith(m + "/") or not chemin.endswith(".md"):
+    """La couche que l'emplacement impose. `None` : pas un fichier de mémoire.
+    Les couches gardent leurs noms internes, quel que soit le nom du fichier."""
+    if not est_memoire(chemin) or not chemin.endswith(".md"):
         return None
-    rel = chemin[len(m) + 1 :]
-    if rel.startswith("archives/") or rel == "README.md":
+    f = chemins_de(chemin)
+    if est_prive(chemin):  # la zone privée (jalon 7) reprend la même arborescence
+        chemin = f.memoire + "/" + hors_zone_privee(chemin)
+    if chemin.startswith(f.archives + "/") or chemin == f.memoire + "/README.md":
         return None
-    # La zone privée (jalon 7) reprend la même arborescence sous `prive/`.
-    if rel.startswith("prive/"):
-        rel = rel[len("prive/") :]
-    if rel in ("canonique.md", "actif.md", "backlog.md"):
-        return rel[:-3]
-    for couche in ("decisions", "journal", "demandes"):
-        if rel.startswith(couche + "/") and "/" not in rel[len(couche) + 1 :]:
+    for couche, lieu in (("canonique", f.canonique), ("actif", f.actif), ("backlog", f.backlog)):
+        if chemin == lieu:
+            return couche
+    for couche, lieu in (("decisions", f.decisions), ("journal", f.journal), ("demandes", f.demandes)):
+        if chemin.startswith(lieu + "/") and "/" not in chemin[len(lieu) + 1:]:
             return couche
     return "inconnue"
 

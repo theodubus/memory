@@ -121,6 +121,6 @@ def recap_manquant(projet: config.Projet, message: str) -> list[str]:
 
 def prochaines_etapes(projet: config.Projet) -> str:
     """La section « Prochaines étapes » du chantier actif, telle qu'écrite."""
-    texte = outils.lire_a(projet.racine, None, "memoire/actif.md") or ""
+    texte = outils.lire_a(projet.racine, None, projet.chemins.actif) or ""
     m = re.search(r"^##\s+Prochaines étapes\s*$(.*?)(?=^##\s|\Z)", texte, re.M | re.S)
     return m.group(1).strip() if m else ""

@@ -1,6 +1,6 @@
 """Rien ne s'affaiblit en silence (principe 5).
 
-- `cliquet.garde-fous` : tout assouplissement de `.socle/garde-fous.toml`
+- `cliquet.garde-fous` : tout assouplissement des garde-fous (`.socle/guardrails.toml`)
   par rapport à la base exige une demande validée dans la plage, qui cite la
   clé assouplie. Durcir est libre.
 - `protege.fichiers` : un fichier protégé par la politique ne change qu'avec
@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import re
 
-from socle import config, empreinte, outils
+from socle import config, empreinte, memoire, outils
 from socle.contexte import controle
 
 ABSENT = object()
@@ -140,15 +140,30 @@ def cliquet(ctx, r):
     avant = ctx.projet_base.garde_fous if ctx.projet_base else {}
     if not avant:
         return  # installation : rien à comparer
+    if ctx.migre:  # une migration de format renomme les chemins, elle n'assouplit rien
+        avant = traduire_profond(avant, ctx.projet.chemins.format)
     for cle, pourquoi in assouplissements(avant, ctx.projet.garde_fous, set(ctx.fichiers)):
         d = _valide_par(ctx, cle)
         if d:
-            r.avertir("cliquet.garde-fous", f"assouplissement validé par {d.id} : {cle} — {pourquoi}", config.GARDE_FOUS)
+            r.avertir("cliquet.garde-fous", f"assouplissement validé par {d.id} : {cle} — {pourquoi}",
+                      ctx.projet.chemins.garde_fous)
         else:
             r.erreur("cliquet.garde-fous", f"assouplissement sans validation humaine : {cle} — {pourquoi}. "
                      f"Émettre une demande qui cite `{cle}` ; elle couvrira ce changement une fois validée",
-                     config.GARDE_FOUS)
+                     ctx.projet.chemins.garde_fous)
 
+
+
+def traduire_profond(valeur, vers: int):
+    """Les garde-fous d'un format dans l'autre : chaque chemin, clé ou
+    valeur, sous son nom du format `vers`."""
+    if isinstance(valeur, dict):
+        return {traduire_profond(k, vers): traduire_profond(v, vers) for k, v in valeur.items()}
+    if isinstance(valeur, list):
+        return [traduire_profond(v, vers) for v in valeur]
+    if isinstance(valeur, str):
+        return config.traduire(valeur, vers=vers)
+    return valeur
 
 @controle("protege.fichiers", base=True)
 def proteges(ctx, r):
@@ -162,7 +177,7 @@ def proteges(ctx, r):
         return
     motifs = set(ctx.projet.chemins_proteges()) | set(ctx.projet_base.chemins_proteges())
     for c in outils.filtrer(ctx.changes, sorted(motifs)):
-        if c.endswith(".reponse.toml"):
+        if memoire.est_reponse(c):
             continue  # les réponses sont le mécanisme de validation lui-même
         if ctx.projet.mode == config.MODE_AMONT and c.startswith(ctx.projet.dossier_moteur + "/socle/"):
             continue
@@ -197,7 +212,7 @@ def moteur(ctx, r):
     elif calculee != attendue:
         r.erreur("moteur.empreinte", f"moteur altéré : empreinte {empreinte.courte(calculee)}, "
                  f"le verrou attend {empreinte.courte(str(attendue))}. Relancer l'installeur, jamais réparer à la main",
-                 config.LOCK)
+                 ctx.projet.chemins.lock)
 
 
 HOOKS_REQUIS = ("SessionStart", "PreToolUse", "Stop")
@@ -245,7 +260,7 @@ def trace(ctx, r):
     for c in ctx.commits:
         if len(c["parents"]) != 1 or not est_agent(ctx.projet, c["message"]):
             continue
-        if outils.lire_a(ctx.racine, c["parents"][0], config.LOCK) is None:
+        if all(outils.lire_a(ctx.racine, c["parents"][0], f.lock) is None for f in config.FORMATS.values()):
             continue  # le socle n'était pas encore installé
         sujet = c["message"].strip().splitlines()[0]
         valeurs = outils.trailers(c["message"]).get("socle-hooks")

@@ -36,8 +36,8 @@ class Question:
 
 
 def archiver_cadrage(racine: Path, document: Path) -> tuple[str, str]:
-    """Le document, copié tel quel sous `memoire/archives/`, et son empreinte."""
-    dest = racine / config.ARCHIVES / document.name
+    """Le document, copié tel quel dans les archives de la mémoire, et son empreinte."""
+    dest = racine / config.chemins(racine).archives / document.name
     dest.parent.mkdir(parents=True, exist_ok=True)
     if document.resolve() != dest.resolve():
         shutil.copyfile(document, dest)
@@ -48,7 +48,7 @@ def auditer_depot(projet: config.Projet) -> list[Fait]:
     """Ce que le dépôt prouve par ses fichiers : langage, tests, CI, docs."""
     racine = projet.racine
     fichiers = [f for f in outils.fichiers_courants(racine)
-                if not f.startswith((config.DOSSIER + "/", config.MEMOIRE + "/", ".claude/"))]
+                if not f.startswith((config.DOSSIER + "/", ".claude/")) and not memoire.est_memoire(f)]
     faits = []
     if "Cargo.toml" in fichiers:
         faits.append(Fait("Le projet se construit avec cargo (Rust)", "Cargo.toml"))
@@ -125,7 +125,7 @@ def demande_de_depart(projet: config.Projet, ident: str, questions: list[Questio
     if cadrage:
         cite = (f"- Le document de cadrage, archivé tel quel sous `{cadrage}` : ce que le projet veut, d'où "
                 "l'agent tire les faits « supposés » et le backlog de départ.")
-        lien = f"- Le document de cadrage : [{Path(cadrage).name}](../{Path(cadrage).relative_to(config.MEMOIRE)})."
+        lien = f"- Le document de cadrage : [{Path(cadrage).name}](../{Path(cadrage).relative_to(projet.chemins.memoire)})."
     else:
         cite = "- Aucun élément de la mémoire : le projet commence, et ces questions en posent le départ."
         lien = "- Les instructions du projet : [AGENTS.md](../../AGENTS.md), section de la politique d'autonomie."
@@ -151,7 +151,7 @@ def initialiser(projet: config.Projet, cadrage: Path | None = None, depot: bool 
     if cadrage:
         archive, emp = archiver_cadrage(racine, cadrage)
         ident = mem.prochain_id("J", date=jour)
-        cli._ajouter(racine / config.MEMOIRE / f"journal/{jour[:7]}.md",
+        cli._ajouter(racine / projet.chemins.journal / f"{jour[:7]}.md",
                      f"\n## {ident} — Document de cadrage archivé tel quel\n\n"
                      f"> type : initialisation · ref : fichier:{archive} · empreinte : {emp}\n\n"
                      "Archivé sans réécriture. Ce qu'il affirme entre dans la mémoire en « supposé », avec ce "
@@ -167,13 +167,13 @@ def initialiser(projet: config.Projet, cadrage: Path | None = None, depot: bool 
             bloc += (f"\n## F-{premier + k:04d} — {f.titre}\n\n> statut : mesuré · preuve : fichier:{f.preuve} · "
                      f"source : audit d'initialisation · date : {jour}\n")
         if bloc:
-            cli._ajouter(racine / config.MEMOIRE / "canonique.md", bloc, "canonique")
+            cli._ajouter(racine / projet.chemins.canonique, bloc, "canonique")
         sortie.append(f"audit du dépôt en lecture seule : {len(faits)} fait(s) mesuré(s), chacun avec son fichier")
         mem = memoire.Memoire.charger(racine)
 
     qs = questions_de_depart(projet, archive, depot)
     ident = mem.prochain_id("D")
-    chemin = racine / config.MEMOIRE / f"demandes/{ident}-questions-de-depart.md"
+    chemin = racine / projet.chemins.demandes / f"{ident}-questions-de-depart.md"
     chemin.parent.mkdir(parents=True, exist_ok=True)
     chemin.write_text(demande_de_depart(projet, ident, qs, archive, entrees), encoding="utf-8")
     sortie.append(f"questions de départ : {ident}, {len(qs)} question(s), chacune avec son défaut")

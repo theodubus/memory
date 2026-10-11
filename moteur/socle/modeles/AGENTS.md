@@ -2,7 +2,7 @@
 
 ## Socle : mémoire, documentation et tests
 
-Ce dépôt utilise le socle (version et empreinte : `.socle/moteur.lock`).
+Ce dépôt utilise le socle (version et empreinte : `.socle/engine.lock`).
 Ce fichier dit **comment** travailler ;
 **où en est le projet** se calcule, et ne s'écrit jamais à la main.
 
@@ -19,16 +19,16 @@ continuer : au chantier actif si elle touche le travail en cours, sinon au
 journal, avec son texte exact. Le résumé d'un compactage ne la garde pas
 toujours, et une session neuve n'a que la mémoire.
 
-### La mémoire, dans `memoire/`
+### La mémoire, dans `memory/`
 
 | Couche | Où | Règle |
 | --- | --- | --- |
-| Canonique | `memoire/canonique.md` | faits avec statut et preuve ; ne change qu'avec une preuve nouvelle |
-| Actif | `memoire/actif.md` | chantier en cours, prochaines étapes ; réécrit, borné |
-| Décisions | `memoire/decisions/` | une ADR par fichier ; seul son statut change ensuite |
-| Journal | `memoire/journal/` | une entrée datée par événement ; ajout seul |
-| Backlog | `memoire/backlog.md` | sujets avec statut et origine ; clos avec une référence |
-| Demandes | `memoire/demandes/` | décisions humaines en file, au contrat ci-dessous |
+| Canonique | `memory/canonical.md` | faits avec statut et preuve ; ne change qu'avec une preuve nouvelle |
+| Actif | `memory/active.md` | chantier en cours, prochaines étapes ; réécrit, borné |
+| Décisions | `memory/decisions/` | une ADR par fichier ; seul son statut change ensuite |
+| Journal | `memory/journal/` | une entrée datée par événement ; ajout seul |
+| Backlog | `memory/backlog.md` | sujets avec statut et origine ; clos avec une référence |
+| Demandes | `memory/requests/` | décisions humaines en file, au contrat ci-dessous |
 
 Une entrée : `## F-NNNN — titre`, puis une ligne `> statut : mesuré · preuve : commit:<sha>`.
 Statuts d'un fait : `mesuré` (avec `preuve`), `supposé`, `réfuté` (titre barré,
@@ -38,11 +38,11 @@ Un identifiant se calcule (`python3 .socle/socle new <type> "titre"`), il ne
 se devine pas. En cas de conflit, l'ordre d'autorité est : le code et les
 tests, puis la mémoire canonique, puis le journal.
 
-**Mémoire privée**, si la politique en choisit une (`[private] mode`) : le contenu nouveau va dans la zone privée, memoire/prive/ (`socle new` le fait par défaut), et rien de privé ne se recopie en public, ni un identifiant `P…`, ni son contenu, ni dans un message de commit, une pull request ou un commentaire. En mode compagnon, un changement privé se commite dans le dépôt privé, puis `socle prive verrouiller`. Un nom privé nouveau (une idée, un client) s'ajoute à la liste des termes privés (`socle prive terme <terme>`) ; seul l'humain en retire. Si la politique exige une relecture avant publication (`[private] review`), montrer à l'humain ce qui part, puis consigner son accord avec son texte exact (`socle relu --relayed --by <nom> --quote-file <fichier>`) : à chaque push, ou par lots. Une demande privée chiffrée ne se lit pas sur GitHub : la donner en entier dans la conversation. Indisponible (l'état le dit), on ne conclut pas sur ce qui en dépend.
+**Mémoire privée**, si la politique en choisit une (`[private] mode`) : le contenu nouveau va dans la zone privée, memory/private/ (`socle new` le fait par défaut), et rien de privé ne se recopie en public, ni un identifiant `P…`, ni son contenu, ni dans un message de commit, une pull request ou un commentaire. En mode compagnon, un changement privé se commite dans le dépôt privé, puis `socle prive verrouiller`. Un nom privé nouveau (une idée, un client) s'ajoute à la liste des termes privés (`socle prive terme <terme>`) ; seul l'humain en retire. Si la politique exige une relecture avant publication (`[private] review`), montrer à l'humain ce qui part, puis consigner son accord avec son texte exact (`socle relu --relayed --by <nom> --quote-file <fichier>`) : à chaque push, ou par lots. Une demande privée chiffrée ne se lit pas sur GitHub : la donner en entier dans la conversation. Indisponible (l'état le dit), on ne conclut pas sur ce qui en dépend.
 
-### Politique d'autonomie (`.socle/politique.toml`, modifiée par l'humain seul)
+### Politique d'autonomie (`.socle/policy.toml`, modifiée par l'humain seul)
 
-1. **Assouplir un garde-fou** (`.socle/garde-fous.toml`) exige une demande validée ; durcir est libre.
+1. **Assouplir un garde-fou** (`.socle/guardrails.toml`) exige une demande validée ; durcir est libre.
 2. **Supprimer un test ou changer une valeur attendue** exige une demande validée, ou une spécification que l'humain a lui-même changée et qui nomme le test ; une ADR écrite par l'agent ne suffit pas.
 3. **Décision de conception** : réversible et mesurable, l'agent décide et écrit une ADR ; coûteuse à défaire, demande.
 4. **Action irréversible ou externe** (force-push, push sur la branche par défaut, publication, suppression distante, dépense) : toujours une demande. Le hook la refuse.
@@ -80,7 +80,7 @@ se lit quand il sert, sans attendre qu'on le demande :
 - avant d'ouvrir un sujet, le backlog (`socle show --index backlog`) dit
   s'il existe déjà ;
 - pour savoir pourquoi une chose est ainsi, chercher dans le journal
-  (`grep -rn "<mot>" memoire/journal/`).
+  (`grep -rn "<mot>" memory/journal/`).
 
 La lecture se prouve : une décision, une demande ou un sujet de backlog
 nouveaux citent ce qu'ils ont lu avec son empreinte (`ADR-NNNN@xxxxxxxx`,

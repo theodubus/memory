@@ -141,21 +141,22 @@ def cmd_new(args) -> int:
     ident = mem.prochain_id(type_, prive=prive, date=jour)
     titre = args.title
     zone = "privee" if prive else "publique"
-    dossier = racine / (memoire.DOSSIER_PRIVE if prive else config.MEMOIRE)
+    ch = projet.chemins
+    lieu = (lambda c: racine / ch.dans_prive(c)) if prive else (lambda c: racine / c)
     if type_ == "F":
-        chemin = dossier / "canonique.md"
+        chemin = lieu(ch.canonique)
         bloc = f"\n## {ident} — {titre}\n\n> statut : supposé · source : <d'où vient ce fait>\n\n<le fait, et ce qui le prouverait>\n"
         _ajouter(chemin, bloc, "canonique", zone)
     elif type_ == "B":
         # Le backlog s'affiche avant d'y ajouter : un doublon se voit ici.
         _afficher_index(mem, "backlog")
-        chemin = dossier / "backlog.md"
+        chemin = lieu(ch.backlog)
         lu = memoire.empreinte_index(mem, "backlog")
         bloc = (f"\n## {ident} — {titre}\n\n> statut : ouvert · origine : <J-… ou commit:… où le sujet est apparu>"
                 f" · lu : backlog@{lu}\n\n<ce qu'il faut faire, et pourquoi>\n")
         _ajouter(chemin, bloc, "backlog", zone)
     elif type_ == "J":
-        chemin = dossier / f"journal/{jour[:7]}.md"
+        chemin = lieu(ch.journal) / f"{jour[:7]}.md"
         if not chemin.is_file():
             chemin.parent.mkdir(parents=True, exist_ok=True)
             chemin.write_text(f"<!-- socle: couche=journal zone={zone} -->\n# Journal — {jour[:7]}\n", encoding="utf-8")
@@ -164,7 +165,7 @@ def cmd_new(args) -> int:
         # Les décisions s'affichent avant d'en ajouter une : on ne rouvre pas
         # une décision prise sans fait nouveau.
         _afficher_index(mem, "decisions")
-        chemin = dossier / f"decisions/{ident}-{_slug(titre)}.md"
+        chemin = lieu(ch.decisions) / f"{ident}-{_slug(titre)}.md"
         chemin.parent.mkdir(parents=True, exist_ok=True)
         chemin.write_text(
             f"<!-- socle: couche=decisions zone={zone} -->\n# {ident} — {titre}\n\n"
@@ -175,7 +176,7 @@ def cmd_new(args) -> int:
     else:
         from socle.modeles import gabarit
 
-        chemin = dossier / f"demandes/{ident}-{_slug(titre)}.md"
+        chemin = lieu(ch.demandes) / f"{ident}-{_slug(titre)}.md"
         chemin.parent.mkdir(parents=True, exist_ok=True)
         texte = gabarit("demande.md").format(id=ident, titre=titre, date=jour)
         chemin.write_text(texte.replace("zone=publique", f"zone={zone}", 1), encoding="utf-8")
@@ -248,7 +249,7 @@ def cmd_prive(args) -> int:
         return prive.recuperer(projet)
     sha = prive.commit_compagnon(racine)
     if sha is None:
-        print(f"dépôt privé absent de `{prive.DOSSIER}/` : le cloner d'abord", file=sys.stderr)
+        print(f"dépôt privé absent de `{prive.dossier(projet.racine)}/` : le cloner d'abord", file=sys.stderr)
         return 1
     if args.action == "verrouiller":
         modifies = prive.compagnon_modifie(racine)
@@ -257,7 +258,7 @@ def cmd_prive(args) -> int:
                   file=sys.stderr)
             return 1
         prive.ecrire_verrou(racine, sha)
-        print(f"verrou : {sha[:10]} — à commiter avec le reste (`{prive.VERROU}`)")
+        print(f"verrou : {sha[:10]} — à commiter avec le reste (`{prive.fichier_verrou(projet.racine)}`)")
         return 0
     verrou = prive.lire_verrou(racine)
     if verrou is None:
@@ -421,7 +422,7 @@ def cmd_approve(args) -> int:
         return 2
     texte = gabarit("approbation.md").format(id=ident, date=jour, raison=raison, elements="\n".join(cites),
                                              moteur=projet.dossier_moteur)
-    chemin = racine / f"memoire/demandes/{ident}-approbation-humaine.md"
+    chemin = racine / projet.chemins.demandes / f"{ident}-approbation-humaine.md"
     chemin.write_text(texte, encoding="utf-8")
     d = demandes.charger(racine, None, str(chemin.relative_to(racine)), texte)
     demandes.ecrire_reponse(racine, d, "valider", args.text, _auteur(projet), jour)

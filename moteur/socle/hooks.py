@@ -370,7 +370,8 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
 
 
 def _vers_le_prive(racine: Path, cmd: str) -> bool:
-    return bool(re.search(r"(?:-C|cd)\s+(?:\S*/)?" + re.escape(prive.DOSSIER), cmd))
+    zones = "|".join(re.escape(d) for d in memoire.DOSSIERS_PRIVES)
+    return bool(re.search(r"(?:-C|cd)\s+(?:\S*/)?(?:" + zones + ")", cmd))
 
 
 def _fuites_dans(projet: config.Projet, texte: str) -> str | None:

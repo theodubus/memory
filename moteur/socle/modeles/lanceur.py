@@ -15,11 +15,14 @@ from pathlib import Path  # noqa: E402
 
 ici = Path(__file__).resolve().parent
 racine = ici.parent
-try:
-    verrou = tomllib.loads((ici / "moteur.lock").read_text(encoding="utf-8"))
-except FileNotFoundError:
-    verrou = {}
-sys.path.insert(0, str(racine / verrou.get("engine_dir", ".socle/moteur")))
+# Le verrou porte son nom du format de la mémoire : `engine.lock`, ou
+# `moteur.lock` dans un projet qui n'est pas encore migré.
+verrou, defaut = {}, ".socle/engine"
+for nom, dossier in (("engine.lock", ".socle/engine"), ("moteur.lock", ".socle/moteur")):
+    if (ici / nom).is_file():
+        verrou, defaut = tomllib.loads((ici / nom).read_text(encoding="utf-8")), dossier
+        break
+sys.path.insert(0, str(racine / verrou.get("engine_dir", defaut)))
 
 from socle.cli import main  # noqa: E402
 

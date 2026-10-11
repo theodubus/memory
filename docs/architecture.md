@@ -9,12 +9,24 @@ pas encore. La liste exacte des contrôles se dérive du code :
 
 | Pièce | Où, dans un projet | Qui la modifie |
 | --- | --- | --- |
-| Moteur immuable | dans un projet, .socle/moteur/socle/ (ici, la source : `moteur/socle/`), lanceur `.socle/socle`, verrou `.socle/moteur.lock` | l'installeur seul ; la CI vérifie l'empreinte |
-| Fichiers du projet | `memoire/`, `.socle/politique.toml`, `.socle/adaptateur.toml`, `.socle/garde-fous.toml` | le projet, selon la politique |
+| Moteur immuable | dans un projet, .socle/engine/socle/ (ici, la source : `moteur/socle/`), lanceur `.socle/socle`, verrou .socle/engine.lock | l'installeur seul ; la CI vérifie l'empreinte |
+| Fichiers du projet | memory/, .socle/policy.toml, .socle/adapter.toml, .socle/guardrails.toml | le projet, selon la politique |
 | Étages d'application | `.claude/settings.json`, `.socle/git-hooks/`, `.github/workflows/socle.yml`, `.github/CODEOWNERS` | l'installeur ; fichiers protégés |
 
 Les trois étages appellent le même moteur : `python3 .socle/socle hook …`
 pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
+
+Ces chemins sont ceux du **format 2** de la mémoire (`ADR-0018`) : en
+anglais pour tous, quelle que soit la langue du contenu. Un projet au
+format 1 (`memoire/`, `.socle/politique.toml`, `.socle/moteur.lock`…, comme
+ce dépôt jusqu'à sa migration) se lit tel quel : le moteur choisit la table
+des chemins d'après le verrou, puis la politique, puis le dossier de
+mémoire. La migration renomme et traduit les chemins de la configuration et
+de la documentation, jamais la mémoire, qui est en ajout seul : un ancien
+chemin cité dans une entrée gelée reste une référence valide, et une ancre
+écrite avant le renommage aussi. En CI, la plage qui migre lit la base sous
+les noms de la tête, pour que le cliquet, l'ajout seul et les références
+comparent le même fichier sous ses deux noms.
 
 ## Le moteur, module par module
 
@@ -38,7 +50,8 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 | `mutation.py` | le verdict de mutation contre les plafonds |
 | `empreinte.py` | l'empreinte du moteur |
 | `installeur.py` | installation, mise à jour, adoption ; adaptateur déduit du dépôt ; mémoire privée posée à l'installation ; diff de politique à la mise à jour |
-| `migrations.py` | les migrations de format, appliquées dans l'ordre à la mise à jour |
+| `config.py` | la configuration du projet et les deux tables de chemins (formats 1 et 2), choisie par projet et par révision |
+| `migrations.py` | les migrations de format, appliquées dans l'ordre à la mise à jour ; du format 1 au 2, le renommage des chemins |
 | `initialisation.py` | les trois entrées d'initialisation : document archivé tel quel, audit du dépôt en lecture seule, questions de départ |
 | `autotest.py` | l'injection de défauts dans un projet jetable |
 | `adaptateurs/` | Rust (extrait de chess), Python sous `unittest`, Python sous `pytest` avec `mutmut` (jalon 6), maintenus ; ce qu'est un adaptateur : `moteur/socle/adaptateurs/README.md` |
@@ -89,7 +102,7 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 | Des liens que l'humain peut suivre : permaliens au commit poussé, aucun lien relatif ni chemin inexistant, chaque demande en attente avec son lien | `liens.py`, `socle url`, hook `stop` | agent |
 | Lire avant de décider, prouvé par l'empreinte de la version lue | `memoire.lectures` ; hook `pre-tool-use` (empreinte périmée ou inventée) ; `socle show`, `socle new` | agent, git, CI |
 | Installation en une commande, adaptateur déduit du dépôt, mémoire privée choisie à l'installation | `socle install --adapter auto [--private …]` | — |
-| Mise à jour : moteur remplacé, formats migrés, diff de politique montré pour validation humaine | `socle install` relancé, `migrations.py` | — |
+| Mise à jour : moteur remplacé, formats migrés, diff de politique montré pour validation humaine | `socle install` relancé, `migrations.py` ; en CI, base lue sous les noms de la tête | — |
 | Initialisation depuis un cadrage, rien, un dépôt existant, ou les deux : rien d'inventé, questions plafonnées avec leurs défauts | `socle init`, demande de départ au contrat, `memoire.preuves` | agent, git, CI |
 | Auto-tests par injection de défauts | `socle selftest`, dans `socle ci` | CI |
 
@@ -134,6 +147,9 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 - **Les demandes échappent au refus des copies** (`ADR-0016`) : une demande se
   lit seule, son contexte recopié sur place, et elle est gelée une fois
   répondue ; deux approbations du même gabarit ne bloquent plus un commit.
+- **Les chemins d'un projet sont en anglais** (`ADR-0018`), au format 2 de
+  la mémoire ; le format 1 reste lu, et la migration ne réécrit pas la
+  mémoire.
 - **Une tautologie voulue passe avec sa raison écrite** (`socle: voulu —`),
   validé par Théo (`D-0004`).
 

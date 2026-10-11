@@ -51,7 +51,7 @@ class TestBranchesASupprimer(unittest.TestCase):
         self.assertEqual(humain.branches_a_supprimer(self.projet), ["fusionnee"])
 
     def test_elles_apparaissent_dans_ce_qui_revient_a_l_humain(self):
-        (self.clone / "memoire").mkdir()
+        (self.clone / "memory").mkdir()
         quoi = [e.quoi for e in humain.a_faire(self.projet)]
         self.assertTrue(any("`fusionnee`" in q for q in quoi), quoi)
 

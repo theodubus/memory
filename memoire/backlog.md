@@ -171,6 +171,18 @@ faits publics), et une commande qui bascule en privé des entrées publiques
 existantes, en réécrivant les renvois et sans rien laisser dans
 l'historique public qu'une réécriture ne corrige pas (à dire à l'humain).
 
+Précisé par Théo (J-2026-10-11-N) : n'importe quelle couche doit pouvoir
+être privée, backlog et faits compris, et une couche publique par défaut
+doit pouvoir porter des entrées privées au détail, choisies dans la
+conversation (par exemple des décisions publiques, sauf certaines). Ce qui
+existe : `socle new <type> --private` ou `--public` choisit la zone entrée
+par entrée, pour tout type, dès qu'une mémoire privée existe ; une réponse
+privée est protégée comme une publique. Ce qui manque, outre les défauts
+par couche et la bascule : une règle dans les instructions de l'agent pour
+qu'une consigne « celle-ci en privé » donne `--private` ; et l'état du
+démarrage n'injecte que le chantier actif et les faits publics, pas leurs
+pendants privés.
+
 ## B-0030 — Des adaptateurs pour d'autres langages courants
 
 > statut : ouvert · origine : J-2026-10-11-J · lu : backlog@d2bc3f03
@@ -228,3 +240,30 @@ Piste : à la fin de tour seulement, un refus de `tests.attendus` dont le
 test est nommé par une demande en attente, poussée telle quelle, devient
 un constat « en attente de la demande » ; le commit et la CI refusent
 toujours.
+
+## B-0034 — Le parcours de l'utilisateur, de l'installation à l'usage courant, rendu simple
+
+> statut : ouvert · origine : J-2026-10-11-N · lu : backlog@22423b8f
+
+Demandé par Théo : avant d'écrire la documentation du socle (B-0035),
+travailler le parcours de l'utilisateur pour que le socle soit simple à
+mettre en place et à utiliser. À examiner : ce que l'humain doit taper,
+lire ou décider, de l'installation (choix de l'adaptateur, de la mémoire
+privée, du propriétaire) à l'initialisation, puis au travail courant
+(répondre à une demande, approuver un fichier protégé, relire avant
+publication, migrer à une mise à jour) ; ce qui peut se déduire ou se faire
+seul ; les messages d'erreur qui ne disent pas quoi faire. Mesurer le
+parcours sur une installation neuve, et noter chaque étape qui demande à
+l'humain de lire le code.
+
+## B-0035 — La documentation du projet : ce que fait le socle, comment il est fait, comment l'installer et s'en servir
+
+> statut : ouvert · origine : J-2026-10-11-N · lu : backlog@e7973e14
+
+Demandé par Théo : une documentation du projet qui dise ce que fait le
+socle, comment il est structuré et fait, comment le mettre en place et
+s'en servir. Aujourd'hui, ce savoir est éclaté entre les instructions de
+l'agent, l'architecture, le format de la mémoire et le banc, écrits pour
+l'agent ou pour qui fabrique le socle, pas pour qui l'installe. À faire
+après le parcours de l'utilisateur (B-0034), pour documenter un parcours
+déjà simplifié plutôt que l'actuel.

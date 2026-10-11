@@ -130,7 +130,7 @@ def _lien_prive(projet: config.Projet, chemin: str, suffixe: str) -> tuple[str |
     sha = commit_pousse(depot) if depot else None
     if not web or not sha:
         return None, "dépôt privé non cloné, sans adresse web, ou rien n'y est poussé"
-    interne = chemin[len(prive.DOSSIER) + 1:]
+    interne = memoire.hors_zone_privee(chemin)
     if not outils.git(depot, "cat-file", "-t", f"{sha}:{interne}", check=False).strip():
         return None, f"{chemin} n'est pas dans la version poussée du dépôt privé : y pousser d'abord"
     return f"{web}/blob/{sha}/{quote(interne)}{suffixe}", ""
@@ -223,8 +223,8 @@ def problemes(projet: config.Projet, message: str) -> tuple[list[str], list[str]
                 continue
             if memoire.est_prive(d.chemin) and lien(projet, d.chemin)[0] is None:
                 continue  # chiffrée sur GitHub : donnée en entier dans la conversation
-            # Une demande privée se lie dans le dépôt privé, sans `memoire/prive/`.
-            chemin = d.chemin[len(memoire.DOSSIER_PRIVE) + 1:] if memoire.est_prive(d.chemin) else d.chemin
+            # Une demande privée se lie dans le dépôt privé, sans le préfixe de la zone privée.
+            chemin = memoire.hors_zone_privee(d.chemin)
             if re.search(rf"(?<![\w-]){re.escape(d.id)}(?![\w-])", texte) and not any(chemin in u for u in cibles):
                 sans_lien.append(d.id)
     return morts, sans_lien

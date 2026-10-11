@@ -54,7 +54,7 @@ Refuser. Vérifié : les deux mutants changent un seuil d'élagage. Supposé : q
 
 
 def _demande(texte):
-    return demandes.Demande(chemin="memoire/demandes/D-0004-plafond.md", texte=texte,
+    return demandes.Demande(chemin="memory/requests/D-0004-plafond.md", texte=texte,
                             entree=demandes.memoire.analyser("x.md", texte).entrees[0],
                             sections=demandes.decouper_sections(texte))
 

@@ -68,10 +68,10 @@ class TestCommandes(unittest.TestCase):
         source.mkdir()
         git(source, "init", "-q", "-b", "main")
         (source / ".socle").mkdir()
-        (source / ".socle/politique.toml").write_text(f'[human]\nrepo_url = "{DEPOT}"\n')
+        (source / ".socle/policy.toml").write_text(f'[human]\nrepo_url = "{DEPOT}"\n')
         (source / "calc.py").write_text("def double(x):\n    return 2 * x\n")
-        for chemin, texte in (("memoire/backlog.md", BACKLOG), ("memoire/actif.md", ACTIF),
-                              ("memoire/decisions/ADR-0001-une-seule-constante.md", ADR)):
+        for chemin, texte in (("memory/backlog.md", BACKLOG), ("memory/active.md", ACTIF),
+                              ("memory/decisions/ADR-0001-une-seule-constante.md", ADR)):
             (source / chemin).parent.mkdir(parents=True, exist_ok=True)
             (source / chemin).write_text(texte)
         git(source, "add", "-A")
@@ -89,7 +89,7 @@ class TestCommandes(unittest.TestCase):
         attendue = memoire.empreinte_entree(mem.entree("B-0001"))
         code, texte = sortie(cli.cmd_show, root=str(self.racine), ids=["B-0001"], index=None)
         self.assertEqual(code, 0)
-        self.assertIn(f"--- B-0001@{attendue} (memoire/backlog.md:4) ---", texte)
+        self.assertIn(f"--- B-0001@{attendue} (memory/backlog.md:4) ---", texte)
         code, texte = sortie(cli.cmd_show, root=str(self.racine), ids=["B-0099"], index="backlog")
         self.assertEqual(code, 1)
         self.assertIn(f"index backlog@{memoire.empreinte_index(mem, 'backlog')}", texte)
@@ -98,7 +98,7 @@ class TestCommandes(unittest.TestCase):
         mem = memoire.Memoire.charger(self.racine)
         self.assertEqual(memoire.lignes_index(mem, "backlog"), ["B-0001 — Ajouter une fonction triple (ouvert)"])
         avant = memoire.empreinte_index(mem, "backlog")
-        p = self.racine / "memoire/backlog.md"
+        p = self.racine / "memory/backlog.md"
         p.write_text(p.read_text().replace("statut : ouvert", "statut : fait · ref : fichier:calc.py"))
         mem = memoire.Memoire.charger(self.racine)
         self.assertEqual(memoire.lignes_index(mem, "backlog"), [])
@@ -107,15 +107,15 @@ class TestCommandes(unittest.TestCase):
     def test_url_donne_le_permalien(self):
         code, texte = sortie(cli.cmd_url, root=str(self.racine), cibles=["B-0001", "ADR-0001", "absent.md"])
         self.assertEqual(code, 1)
-        self.assertIn(f"[B-0001]({DEPOT}/blob/{self.pousse}/memoire/backlog.md#b-0001--ajouter-une-fonction-triple)", texte)
-        self.assertIn(f"[ADR-0001]({DEPOT}/blob/{self.pousse}/memoire/decisions/ADR-0001-une-seule-constante.md)", texte)
+        self.assertIn(f"[B-0001]({DEPOT}/blob/{self.pousse}/memory/backlog.md#b-0001--ajouter-une-fonction-triple)", texte)
+        self.assertIn(f"[ADR-0001]({DEPOT}/blob/{self.pousse}/memory/decisions/ADR-0001-une-seule-constante.md)", texte)
         self.assertNotIn("absent.md", texte)
 
     def test_new_adr_prouve_la_lecture_de_l_index(self):
         mem = memoire.Memoire.charger(self.racine)
         code, texte = sortie(cli.cmd_new, root=str(self.racine), type="adr", title="Garder la constante")
         self.assertEqual(code, 0)
-        adr = (self.racine / "memoire/decisions/ADR-0002-garder-la-constante.md").read_text()
+        adr = (self.racine / "memory/decisions/ADR-0002-garder-la-constante.md").read_text()
         self.assertIn(f"lu : decisions@{memoire.empreinte_index(mem, 'decisions')}", adr)
 
     def test_prochaines_etapes_du_chantier_actif(self):

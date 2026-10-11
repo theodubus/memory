@@ -29,7 +29,7 @@ class TestLecturesSuccessives(unittest.TestCase):
     def setUp(self):
         self.racine = Path(tempfile.mkdtemp(prefix="socle-lectures-"))
         git(self.racine, "init", "-q", "-b", "main")
-        self.decisions = self.racine / "memoire/decisions"
+        self.decisions = self.racine / "memory/decisions"
         self.decisions.mkdir(parents=True)
         (self.decisions / "ADR-0001-une.md").write_text(adr(1, ""))
         git(self.racine, "add", "-A")
@@ -69,15 +69,15 @@ class TestArchivage(unittest.TestCase):
         self.archivage = archivage
         self.racine = Path(tempfile.mkdtemp(prefix="socle-archivage-"))
         git(self.racine, "init", "-q", "-b", "main")
-        backlog = self.racine / "memoire/backlog.md"
+        backlog = self.racine / "memory/backlog.md"
         backlog.parent.mkdir(parents=True)
         backlog.write_text("<!-- socle: couche=backlog zone=publique -->\n# Backlog\n")
         lu = memoire.empreinte_index(memoire.Memoire.charger(self.racine), "backlog")
         backlog.write_text(backlog.read_text() + "\n## B-0001 — Un sujet\n\n> statut : ouvert · origine : "
-                           f"fichier:memoire/backlog.md · lu : backlog@{lu}\n")
+                           f"fichier:memory/backlog.md · lu : backlog@{lu}\n")
         lu2 = memoire.empreinte_index(memoire.Memoire.charger(self.racine), "backlog")
         backlog.write_text(backlog.read_text() + "\n## B-0002 — Un autre sujet, qui change l'index\n\n> statut : "
-                           f"ouvert · origine : fichier:memoire/backlog.md · lu : backlog@{lu2}\n")
+                           f"ouvert · origine : fichier:memory/backlog.md · lu : backlog@{lu2}\n")
         git(self.racine, "add", "-A")
         git(self.racine, "commit", "-qm", "base")
         self.base = git(self.racine, "rev-parse", "HEAD").strip()
@@ -93,30 +93,30 @@ class TestArchivage(unittest.TestCase):
         return [c.message for c in r.erreurs("memoire.lectures")]
 
     def test_un_sujet_archive_garde_sa_lecture(self):
-        backlog = self.racine / "memoire/backlog.md"
+        backlog = self.racine / "memory/backlog.md"
         backlog.write_text(backlog.read_text().replace(
-            "> statut : ouvert · origine : fichier:memoire/backlog.md · lu : backlog@" + self.lu,
-            "> statut : fait · origine : fichier:memoire/backlog.md · lu : backlog@" + self.lu + " · ref : B-0002"))
+            "> statut : ouvert · origine : fichier:memory/backlog.md · lu : backlog@" + self.lu,
+            "> statut : fait · origine : fichier:memory/backlog.md · lu : backlog@" + self.lu + " · ref : B-0002"))
         import contextlib
         import io
 
         with contextlib.redirect_stdout(io.StringIO()):
             self.archivage.archiver_backlog(config.Projet.charger(self.racine))
-        journal = next((self.racine / "memoire/journal").glob("*.md")).read_text()
+        journal = next((self.racine / "memory/journal").glob("*.md")).read_text()
         self.assertIn(f"backlog@{self.lu}", journal)
         self.assertEqual(self.erreurs(), [])
 
     def creer_puis_archiver(self, lu: str):
         """Un sujet créé sur la branche (commité), puis un autre qui change
         l'index, puis le premier clos et archivé au journal."""
-        backlog = self.racine / "memoire/backlog.md"
+        backlog = self.racine / "memory/backlog.md"
         backlog.write_text(backlog.read_text() + "\n## B-0003 — Créé sur la branche\n\n> statut : ouvert · origine : "
-                           f"fichier:memoire/backlog.md · lu : backlog@{lu}\n")
+                           f"fichier:memory/backlog.md · lu : backlog@{lu}\n")
         git(self.racine, "add", "-A")
         git(self.racine, "commit", "-qm", "B-0003")
         lu4 = memoire.empreinte_index(memoire.Memoire.charger(self.racine), "backlog")
         backlog.write_text(backlog.read_text() + "\n## B-0004 — Un de plus\n\n> statut : ouvert · origine : "
-                           f"fichier:memoire/backlog.md · lu : backlog@{lu4}\n")
+                           f"fichier:memory/backlog.md · lu : backlog@{lu4}\n")
         git(self.racine, "add", "-A")
         git(self.racine, "commit", "-qm", "B-0004")
         backlog.write_text(backlog.read_text().replace(f"lu : backlog@{lu}\n", f"lu : backlog@{lu} · ref : B-0004\n")
@@ -140,7 +140,7 @@ class TestArchivage(unittest.TestCase):
         self.assertIn("backlog@0badc0de", erreurs[0])
 
     def test_une_lecture_recopiee_dans_une_autre_entree_reste_refusee(self):
-        journal = self.racine / "memoire/journal/2026-10.md"
+        journal = self.racine / "memory/journal/2026-10.md"
         journal.parent.mkdir(parents=True)
         journal.write_text("<!-- socle: couche=journal zone=publique -->\n# Journal — 2026-10\n\n"
                            "## J-2026-10-11-A — Une entrée qui recopie une vieille lecture\n\n"
@@ -161,26 +161,26 @@ class TestCitationsDeLaPlage(unittest.TestCase):
     def setUp(self):
         self.racine = Path(tempfile.mkdtemp(prefix="socle-plage-"))
         git(self.racine, "init", "-q", "-b", "main")
-        (self.racine / "memoire/decisions").mkdir(parents=True)
-        (self.racine / "memoire/backlog.md").write_text(
+        (self.racine / "memory/decisions").mkdir(parents=True)
+        (self.racine / "memory/backlog.md").write_text(
             "<!-- socle: couche=backlog zone=publique -->\n# Backlog\n\n"
-            "## B-0001 — Un sujet\n\n> statut : ouvert · origine : fichier:memoire/backlog.md\n")
+            "## B-0001 — Un sujet\n\n> statut : ouvert · origine : fichier:memory/backlog.md\n")
         git(self.racine, "add", "-A")
         git(self.racine, "commit", "-qm", "base")
         self.base = git(self.racine, "rev-parse", "HEAD").strip()
         mem = memoire.Memoire.charger(self.racine)
         b1 = memoire.empreinte_entree(mem.entree("B-0001"))
         lu = memoire.empreinte_index(mem, "decisions")
-        (self.racine / "memoire/decisions/ADR-0001-une.md").write_text(
+        (self.racine / "memory/decisions/ADR-0001-une.md").write_text(
             adr(1, f" · lu : decisions@{lu}").replace("La décision 1.", f"Elle s'appuie sur B-0001@{b1}."))
-        backlog = self.racine / "memoire/backlog.md"
+        backlog = self.racine / "memory/backlog.md"
         lu_b = memoire.empreinte_index(mem, "backlog")
-        backlog.write_text(backlog.read_text() + f"\n## B-0002 — Un autre\n\n> statut : ouvert · origine : fichier:memoire/backlog.md · lu : backlog@{lu_b}\n")
+        backlog.write_text(backlog.read_text() + f"\n## B-0002 — Un autre\n\n> statut : ouvert · origine : fichier:memory/backlog.md · lu : backlog@{lu_b}\n")
         git(self.racine, "add", "-A")
         git(self.racine, "commit", "-qm", "décision et sujet")
         # Ensuite, B-0001 se clôt : son texte et l'index du backlog changent.
-        backlog.write_text(backlog.read_text().replace("statut : ouvert · origine : fichier:memoire/backlog.md\n",
-                                                       "statut : fait · origine : fichier:memoire/backlog.md · ref : ADR-0001\n", 1))
+        backlog.write_text(backlog.read_text().replace("statut : ouvert · origine : fichier:memory/backlog.md\n",
+                                                       "statut : fait · origine : fichier:memory/backlog.md · ref : ADR-0001\n", 1))
         git(self.racine, "add", "-A")
         git(self.racine, "commit", "-qm", "clôture")
 
@@ -194,7 +194,7 @@ class TestCitationsDeLaPlage(unittest.TestCase):
         self.assertEqual([c.message for c in r.erreurs()], [])
 
     def test_une_empreinte_qui_n_a_jamais_existe_reste_refusee(self):
-        adr_ = self.racine / "memoire/decisions/ADR-0001-une.md"
+        adr_ = self.racine / "memory/decisions/ADR-0001-une.md"
         adr_.write_text(re.sub(r"B-0001@[0-9a-f]{8}", "B-0001@0badc0de", adr_.read_text()))
         ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="ci", base=self.base, tete=None)
         r = Rapport()
@@ -208,7 +208,7 @@ class TestCitationsDeLaPlage(unittest.TestCase):
         # qui n'était plus la bonne.
         mem = memoire.Memoire.charger(self.racine, self.base)
         ancienne = memoire.empreinte_entree(mem.entree("B-0001"))
-        journal = self.racine / "memoire/journal/2026-10.md"
+        journal = self.racine / "memory/journal/2026-10.md"
         journal.parent.mkdir(parents=True)
         journal.write_text("<!-- socle: couche=journal zone=publique -->\n# Journal\n\n"
                            f"## J-2026-10-10-A — Constat\n\nVoir B-0001@{ancienne}.\n")

@@ -146,16 +146,16 @@ class Atelier:
         # avant, l'audit d'installation la refuserait, à raison.
         (origine / "docs").mkdir()
         (origine / "docs/calc.md").write_text(DOC_CALC)
-        gf = origine / ".socle/garde-fous.toml"
+        gf = origine / ".socle/guardrails.toml"
         texte = gf.read_text().replace('[mutation.caps]\n', '[mutation.caps]\n"calc.py" = { max = 0 }\n')
         gf.write_text(texte + GARDE_FOUS_ESSAI)
-        journal = sorted((origine / "memoire/journal").glob("*.md"))[0]
+        journal = sorted((origine / "memory/journal").glob("*.md"))[0]
         ident = journal.read_text().split("## ", 2)[1].split(" ", 1)[0]
-        self._ajouter(origine / "memoire/canonique.md", CANONIQUE_ESSAI)
-        self._ajouter(origine / "memoire/backlog.md", BACKLOG_ESSAI.format(journal=ident))
+        self._ajouter(origine / "memory/canonical.md", CANONIQUE_ESSAI)
+        self._ajouter(origine / "memory/backlog.md", BACKLOG_ESSAI.format(journal=ident))
         # L'origine est un dossier local : l'adresse web où l'humain lirait
         # se règle dans la politique, comme pour un relais.
-        pol = origine / ".socle/politique.toml"
+        pol = origine / ".socle/policy.toml"
         pol.write_text(pol.read_text().replace("[human]\n", f'[human]\nrepo_url = "{DEPOT_ESSAI}"\n', 1))
         self.journal = ident
         self.git(origine, "add", "-A")
@@ -184,26 +184,26 @@ class Atelier:
         if o.is_dir():
             return o
         self.git(self.dossier, "clone", "-q", *(x for cle in self.filtre() for x in ("-c", cle)), str(self.origine), str(o))
-        pol = o / ".socle/politique.toml"
+        pol = o / ".socle/policy.toml"
         relecture = 'review = "lots"\n' if mode == "compagnon" else ""
         pol.write_text(pol.read_text() + f'\n[private]\nmode = "{mode}"\n' + relecture)
         if mode == "compagnon":
             depot = self.dossier / "prive-origine"
             if not depot.is_dir():
                 (depot / "journal").mkdir(parents=True)
-                (depot / "canonique.md").write_text(CANONIQUE_PRIVEE)
-                (depot / "termes.txt").write_text("# socle: termes privés\nMistral\n")
+                (depot / "canonical.md").write_text(CANONIQUE_PRIVEE)
+                (depot / "terms.txt").write_text("# socle: termes privés\nMistral\n")
                 self.git(depot, "init", "-q", "-b", "main")
                 self.git(depot, "add", "-A")
                 self.git(depot, "commit", "-q", "-m", "mémoire privée d'essai")
             (o / ".gitignore").write_text(((o / ".gitignore").read_text() if (o / ".gitignore").is_file() else "")
-                                          + "memoire/prive/\n")
+                                          + "memory/private/\n")
             sha = self.git(depot, "rev-parse", "HEAD").strip()
-            (o / ".socle/prive.lock").write_text(f'commit = "{sha}"\n')
+            (o / ".socle/private.lock").write_text(f'commit = "{sha}"\n')
         else:
-            (o / ".gitattributes").write_text("memoire/prive/** filter=essai\n")
-            (o / "memoire/prive").mkdir(parents=True)
-            (o / "memoire/prive/canonique.md").write_text(CANONIQUE_PRIVEE)
+            (o / ".gitattributes").write_text("memory/private/** filter=essai\n")
+            (o / "memory/private").mkdir(parents=True)
+            (o / "memory/private/canonical.md").write_text(CANONIQUE_PRIVEE)
         self.git(o, "add", "-A")
         self.git(o, "commit", "-q", "--no-verify", "-m", f"Mémoire privée, mode {mode}")
         return o
@@ -222,7 +222,7 @@ class Atelier:
         o = self.origine_privee(mode)
         c = self.clone(o, self.filtre() if mode == "chiffre" and cle else ())
         if mode == "compagnon" and compagnon:
-            self.git(c, "clone", "-q", str(self.dossier / "prive-origine"), "memoire/prive")
+            self.git(c, "clone", "-q", str(self.dossier / "prive-origine"), "memory/private")
         return c
 
     def commit(self, c: Path, message: str, verifier: bool = False, env=None):
@@ -356,7 +356,7 @@ def pousser(a: Atelier, c: Path, message: str = "essai"):
 
 
 def maj_memoire(c: Path, texte: str = "Travail en cours sur l'essai."):
-    remplacer(c, "memoire/actif.md", "## En cours\n\nRien pour l'instant.", f"## En cours\n\n{texte}")
+    remplacer(c, "memory/active.md", "## En cours\n\nRien pour l'instant.", f"## En cours\n\n{texte}")
 
 
 # --------------------------------------------------------------------------
@@ -490,12 +490,12 @@ def _cas() -> list[Cas]:
 
     @defaut("plafond-releve", "plafond de mutation relevé", "ci", "cliquet.garde-fous")
     def _(a, c):
-        remplacer(c, ".socle/garde-fous.toml", '"calc.py" = { max = 0 }', '"calc.py" = { max = 3, reason = "équivalents" }')
+        remplacer(c, ".socle/guardrails.toml", '"calc.py" = { max = 0 }', '"calc.py" = { max = 3, reason = "équivalents" }')
         return etage_ci(a, c)
 
     @defaut("budget-releve", "budget de mémoire relevé", "ci", "cliquet.garde-fous")
     def _(a, c):
-        remplacer(c, ".socle/garde-fous.toml", '"memoire/actif.md" = { max_bytes = 6000 }', '"memoire/actif.md" = { max_bytes = 60000 }')
+        remplacer(c, ".socle/guardrails.toml", '"memory/active.md" = { max_bytes = 6000 }', '"memory/active.md" = { max_bytes = 60000 }')
         return etage_ci(a, c)
 
     @defaut("correctif-sans-test", "correctif sans test de régression", "ci", "tests.regression")
@@ -512,26 +512,26 @@ def _cas() -> list[Cas]:
 
     @defaut("moteur-altere", "moteur altéré dans le projet", "ci", "moteur.empreinte")
     def _(a, c):
-        ajouter(c, ".socle/moteur/socle/outils.py", "# retouche locale\n")
+        ajouter(c, ".socle/engine/socle/outils.py", "# retouche locale\n")
         return etage_ci(a, c)
 
     @defaut("politique-alteree", "politique altérée sans validation", "ci", "protege.fichiers")
     def _(a, c):
-        remplacer(c, ".socle/politique.toml", "max_attempts = 3", "max_attempts = 30")
+        remplacer(c, ".socle/policy.toml", "max_attempts = 3", "max_attempts = 30")
         return etage_ci(a, c)
 
     @defaut("demande-identifiant-nu", "demande humaine avec identifiant nu", "agent", "demandes.contrat")
     def _(a, c):
-        return etage_outil(a, c, "Write", {"file_path": str(c / "memoire/demandes/D-0001-refactor.md"), "content": DEMANDE_NUE})
+        return etage_outil(a, c, "Write", {"file_path": str(c / "memory/requests/D-0001-refactor.md"), "content": DEMANDE_NUE})
 
     @defaut("demande-sans-lien", "demande qui ne dit pas où regarder", "agent", "où regarder")
     def _(a, c):
         sans = demande_bonne(a, c).replace("[calc.py](../../calc.py)", "le module")
-        return etage_outil(a, c, "Write", {"file_path": str(c / "memoire/demandes/D-0001-refactor.md"), "content": sans})
+        return etage_outil(a, c, "Write", {"file_path": str(c / "memory/requests/D-0001-refactor.md"), "content": sans})
 
     @defaut("budget-depasse", "couche de mémoire au-delà de son budget", "git", "memoire.budgets")
     def _(a, c):
-        ajouter(c, "memoire/actif.md", "\n" + ("Une ligne de remplissage pour dépasser le budget. " * 200) + "\n")
+        ajouter(c, "memory/active.md", "\n" + ("Une ligne de remplissage pour dépasser le budget. " * 200) + "\n")
         return etage_git(a, c)
 
     @defaut("identifiant-prive", "identifiant privé dans un fichier public", "git", "memoire.prive")
@@ -548,8 +548,8 @@ def _cas() -> list[Cas]:
     @defaut("verrou-perime", "mémoire privée commitée sans avancer le verrou", "git", "prive.verrou")
     def _(a, c):
         c = a.clone_prive("compagnon")
-        ajouter(c, "memoire/prive/canonique.md", "\nPrécision privée.\n")
-        a.git(c / "memoire/prive", "commit", "-q", "-am", "précision")
+        ajouter(c, "memory/private/canonical.md", "\nPrécision privée.\n")
+        a.git(c / "memory/private", "commit", "-q", "-am", "précision")
         maj_memoire(c)
         return etage_git(a, c)
 
@@ -581,8 +581,8 @@ def _cas() -> list[Cas]:
     @defaut("terme-retire", "terme retiré de la liste privée sans validation humaine", "git", "prive.termes")
     def _(a, c):
         c = a.clone_prive("compagnon")
-        (c / "memoire/prive/termes.txt").write_text("# socle: termes privés\n")
-        a.git(c / "memoire/prive", "commit", "-q", "-am", "retrait")
+        (c / "memory/private/terms.txt").write_text("# socle: termes privés\n")
+        a.git(c / "memory/private", "commit", "-q", "-am", "retrait")
         a.socle(c, "prive", "verrouiller")
         maj_memoire(c, "Liste privée raccourcie.")
         return etage_git(a, c)
@@ -595,24 +595,24 @@ def _cas() -> list[Cas]:
     @defaut("prive-en-clair", "fichier privé commité en clair, sans filtre de chiffrement", "git", "prive.chiffre")
     def _(a, c):
         c = a.clone_prive("chiffre", cle=False)
-        ajouter(c, "memoire/prive/journal/2026-10.md", "<!-- socle: couche=journal zone=privee -->\n# Journal privé\n")
+        ajouter(c, "memory/private/journal/2026-10.md", "<!-- socle: couche=journal zone=privee -->\n# Journal privé\n")
         return etage_git(a, c)
 
     @defaut("backlog-clos-sans-ref", "entrée de backlog close sans référence", "git", "memoire.backlog")
     def _(a, c):
-        remplacer(c, "memoire/backlog.md", "> statut : ouvert", "> statut : fait")
+        remplacer(c, "memory/backlog.md", "> statut : ouvert", "> statut : fait")
         return etage_git(a, c)
 
     # Au-delà du tableau du cadrage.
 
     @defaut("journal-reecrit", "entrée de journal réécrite", "git", "memoire.ajout-seul")
     def _(a, c):
-        remplacer(c, f"memoire/journal/{a.journal[2:9]}.md", "Le rapport d'installation", "Le compte rendu d'installation")
+        remplacer(c, f"memory/journal/{a.journal[2:9]}.md", "Le rapport d'installation", "Le compte rendu d'installation")
         return etage_git(a, c)
 
     @defaut("fait-efface", "fait canonique effacé", "git", "memoire.ajout-seul")
     def _(a, c):
-        remplacer(c, "memoire/canonique.md", CANONIQUE_ESSAI.strip(), "")
+        remplacer(c, "memory/canonical.md", CANONIQUE_ESSAI.strip(), "")
         return etage_git(a, c)
 
     @defaut("valeur-attendue", "valeur attendue changée sans spécification", "git", "tests.attendus")
@@ -623,7 +623,7 @@ def _cas() -> list[Cas]:
     @defaut("valeur-attendue-adr-agent", "valeur attendue changée sous une ADR que l'agent écrit lui-même", "ci",
             "tests.attendus")
     def _(a, c):
-        ajouter(c, "memoire/decisions/ADR-0001-test-double.md", _adr_test_double(a, c))
+        ajouter(c, "memory/decisions/ADR-0001-test-double.md", _adr_test_double(a, c))
         remplacer(c, "tests/test_calc.py", "self.assertEqual(double(2), 4)", "self.assertEqual(double(2), 4.0)")
         maj_memoire(c)
         return etage_ci(a, c, MESSAGE_AGENT)
@@ -636,7 +636,7 @@ def _cas() -> list[Cas]:
 
     @defaut("valide-sans-demande", "fait passé à « validé » par l'agent", "agent", "memoire.preuves")
     def _(a, c):
-        p = c / "memoire/canonique.md"
+        p = c / "memory/canonical.md"
         nouveau = p.read_text().replace("> statut : mesuré · preuve : fichier:tests/test_calc.py", "> statut : validé")
         return etage_outil(a, c, "Write", {"file_path": str(p), "content": nouveau})
 
@@ -652,7 +652,7 @@ def _cas() -> list[Cas]:
 
     @defaut("reponse-par-agent", "l'agent écrit une réponse humaine", "agent", "fichier protégé")
     def _(a, c):
-        return etage_outil(a, c, "Write", {"file_path": str(c / "memoire/demandes/D-0001-x.reponse.toml"), "content": 'reponse = "valider"\n'})
+        return etage_outil(a, c, "Write", {"file_path": str(c / "memory/requests/D-0001-x.answer.toml"), "content": 'reponse = "valider"\n'})
 
     @defaut("agent-repond", "l'agent répond à la place de l'humain", "agent", "commande humaine")
     def _(a, c):
@@ -667,7 +667,7 @@ def _cas() -> list[Cas]:
     @defaut("relais-demande-non-lue", "réponse relayée à une demande que l'humain n'a pas pu lire", "agent",
             "demande non lue")
     def _(a, c):
-        (c / "memoire/demandes/D-0001-refactor.md").write_text(demande_bonne(a, c))
+        (c / "memory/requests/D-0001-refactor.md").write_text(demande_bonne(a, c))
         (c / "citation.txt").write_text("ok, refonds d'abord")
         r = a.socle(c, "answer", "D-0001", "valider", "--relayed", "--by", "Théo", "--quote-file", "citation.txt")
         return "" if r.returncode == 0 else r.stdout + r.stderr
@@ -713,7 +713,7 @@ def _cas() -> list[Cas]:
 
     @defaut("demande-sans-lien", "demande en attente citée sans son lien", "agent", "lien de demande")
     def _(a, c):
-        (c / "memoire/demandes/D-0001-refactor.md").write_text(demande_bonne(a, c))
+        (c / "memory/requests/D-0001-refactor.md").write_text(demande_bonne(a, c))
         maj_memoire(c, "Demande D-0001 posée.")
         pousser(a, c)
         return etage_stop(a, c, "J'ai posé la demande D-0001.\n\nPour toi : répondre à D-0001.\nEnsuite : rien.")
@@ -728,20 +728,20 @@ def _cas() -> list[Cas]:
     @defaut("decision-sans-lecture", "décision ajoutée sans avoir consulté l'index des décisions", "git", "memoire.lectures")
     def _(a, c):
         f1 = f"F-0001@{empreinte(a, c, 'F-0001')}"
-        ajouter(c, "memoire/decisions/ADR-0001-une-seule-multiplication.md", ADR_ESSAI.format(lu="", fait=f1))
+        ajouter(c, "memory/decisions/ADR-0001-une-seule-multiplication.md", ADR_ESSAI.format(lu="", fait=f1))
         return etage_git(a, c)
 
     @defaut("citation-perimee", "entrée citée dans une version qu'elle n'a plus", "git", "memoire.lectures")
     def _(a, c):
         perimee = empreinte(a, c, "F-0001")
-        remplacer(c, "memoire/canonique.md", "Le test unitaire l'établit.", "Le test unitaire l'établit, sur deux cas.")
-        ajouter(c, "memoire/journal/" + a.journal[2:9] + ".md",
+        remplacer(c, "memory/canonical.md", "Le test unitaire l'établit.", "Le test unitaire l'établit, sur deux cas.")
+        ajouter(c, "memory/journal/" + a.journal[2:9] + ".md",
                 f"\n## {a.journal[:-1]}B — Constat\n\nVoir F-0001@{perimee}.\n")
         return etage_git(a, c)
 
     @defaut("backlog-sans-lecture", "sujet ajouté au backlog sans l'avoir consulté", "git", "memoire.lectures")
     def _(a, c):
-        ajouter(c, "memoire/backlog.md", "\n## B-0002 — Ajouter une fonction quadruple\n\n"
+        ajouter(c, "memory/backlog.md", "\n## B-0002 — Ajouter une fonction quadruple\n\n"
                 f"> statut : ouvert · origine : {a.journal}\n\nPour l'essai.\n")
         return etage_git(a, c)
 
@@ -809,7 +809,7 @@ def _temoins() -> list[tuple[str, Callable]]:
 
     @temoin("une valeur attendue changée sous une spécification que l'humain a commitée passe la CI")
     def _(a, c):
-        ajouter(c, "memoire/decisions/ADR-0001-test-double.md", _adr_test_double(a, c))
+        ajouter(c, "memory/decisions/ADR-0001-test-double.md", _adr_test_double(a, c))
         a.commit(c, "Spécification : test_double compare à un flottant")  # un commit de l'humain
         remplacer(c, "tests/test_calc.py", "self.assertEqual(double(2), 4)", "self.assertEqual(double(2), 4.0)")
         maj_memoire(c)
@@ -817,16 +817,16 @@ def _temoins() -> list[tuple[str, Callable]]:
 
     @temoin("durcir un garde-fou est libre")
     def _(a, c):
-        remplacer(c, ".socle/garde-fous.toml", '"memoire/actif.md" = { max_bytes = 6000 }', '"memoire/actif.md" = { max_bytes = 5000 }')
+        remplacer(c, ".socle/guardrails.toml", '"memory/active.md" = { max_bytes = 6000 }', '"memory/active.md" = { max_bytes = 5000 }')
         return etage_ci(a, c)
 
     @temoin("une demande complète passe le hook de l'agent")
     def _(a, c):
-        return etage_outil(a, c, "Write", {"file_path": str(c / "memoire/demandes/D-0001-refactor.md"), "content": demande_bonne(a, c)})
+        return etage_outil(a, c, "Write", {"file_path": str(c / "memory/requests/D-0001-refactor.md"), "content": demande_bonne(a, c)})
 
     @temoin("une réponse donnée dans la conversation, relayée avec sa citation, passe le hook et la CI")
     def _(a, c):
-        (c / "memoire/demandes/D-0001-refactor.md").write_text(demande_bonne(a, c))
+        (c / "memory/requests/D-0001-refactor.md").write_text(demande_bonne(a, c))
         pousser(a, c)  # l'humain la lit, puis répond dans la conversation
         (c / "citation.txt").write_text("ok, refonds d'abord")
         lanceur = ".socle/" + "socle"
@@ -849,7 +849,7 @@ def _temoins() -> list[tuple[str, Callable]]:
 
     @temoin("des liens que l'humain peut suivre passent le hook de fin de tour")
     def _(a, c):
-        (c / "memoire/demandes/D-0001-refactor.md").write_text(demande_bonne(a, c))
+        (c / "memory/requests/D-0001-refactor.md").write_text(demande_bonne(a, c))
         maj_memoire(c, "Demande D-0001 posée.")
         pousser(a, c)
         r = a.socle(c, "url", "D-0001", "docs/calc.md")
@@ -877,8 +877,8 @@ def _temoins() -> list[tuple[str, Callable]]:
     @temoin("mode compagnon : une entrée privée commitée et verrouillée passe la fin de tour, le commit et la CI")
     def _(a, c):
         c = a.clone_prive("compagnon")
-        ajouter(c, "memoire/prive/canonique.md", "\n## PF-0002 — Une seconde idée privée\n\n> statut : supposé · source : PF-0001\n")
-        a.git(c / "memoire/prive", "commit", "-q", "-am", "seconde idée")
+        ajouter(c, "memory/private/canonical.md", "\n## PF-0002 — Une seconde idée privée\n\n> statut : supposé · source : PF-0001\n")
+        a.git(c / "memory/private", "commit", "-q", "-am", "seconde idée")
         r = a.socle(c, "prive", "verrouiller")
         if r.returncode != 0:
             return r.stdout + r.stderr
@@ -888,10 +888,10 @@ def _temoins() -> list[tuple[str, Callable]]:
     @temoin("mode chiffré : une entrée privée part chiffrée et passe le commit et la CI")
     def _(a, c):
         c = a.clone_prive("chiffre")
-        ajouter(c, "memoire/prive/canonique.md", "\n## PF-0002 — Une seconde idée privée\n\n> statut : supposé · source : PF-0001\n")
+        ajouter(c, "memory/private/canonical.md", "\n## PF-0002 — Une seconde idée privée\n\n> statut : supposé · source : PF-0001\n")
         maj_memoire(c, "Mémoire privée avancée.")
         sortie = etage_git(a, c) or etage_ci(a, c)
-        if not sortie and not a.git(c, "show", "HEAD:memoire/prive/canonique.md").startswith("ESSAI:"):
+        if not sortie and not a.git(c, "show", "HEAD:memory/private/canonical.md").startswith("ESSAI:"):
             sortie = "le fichier privé est commité en clair"
         return sortie
 
@@ -899,7 +899,7 @@ def _temoins() -> list[tuple[str, Callable]]:
     def _(a, c):
         c = a.clone_prive("compagnon")
         r = a.socle(c, "prive", "terme", "Zephyr")
-        a.git(c / "memoire/prive", "commit", "-q", "-am", "un terme de plus")
+        a.git(c / "memory/private", "commit", "-q", "-am", "un terme de plus")
         a.socle(c, "prive", "verrouiller")
         maj_memoire(c, "Un terme privé de plus.")
         return (r.stderr if r.returncode else "") or etage_git(a, c) or etage_ci(a, c)
@@ -929,14 +929,14 @@ def _temoins() -> list[tuple[str, Callable]]:
     @temoin("en CI, un constat de la zone privée échoue sans montrer son contenu")
     def _(a, c):
         c = a.clone_prive("compagnon")
-        remplacer(c, "memoire/prive/canonique.md", "statut : supposé", "statut : inventé")
-        a.git(c / "memoire/prive", "commit", "-q", "-am", "statut faux")
+        remplacer(c, "memory/private/canonical.md", "statut : supposé", "statut : inventé")
+        a.git(c / "memory/private", "commit", "-q", "-am", "statut faux")
         a.socle(c, "prive", "verrouiller")
         maj_memoire(c, "Statut privé faux.")
         sortie = etage_ci(a, c)
         if not sortie:
             return "la CI passe malgré un statut inconnu dans la zone privée"
-        if "Mistral" in sortie or "inventé" in sortie or "canonique.md" in sortie:
+        if "Mistral" in sortie or "inventé" in sortie or "canonical.md" in sortie:
             return "la CI montre le contenu de la zone privée :\n" + sortie
         return ""
 
@@ -949,8 +949,8 @@ def _temoins() -> list[tuple[str, Callable]]:
     def _(a, c):
         lu = f" · lu : decisions@{empreinte(a, c, 'decisions')}"
         f1 = f"F-0001@{empreinte(a, c, 'F-0001')}"
-        ajouter(c, "memoire/decisions/ADR-0001-une-seule-multiplication.md", ADR_ESSAI.format(lu=lu, fait=f1))
-        ajouter(c, "memoire/backlog.md", "\n## B-0002 — Ajouter une fonction quadruple\n\n"
+        ajouter(c, "memory/decisions/ADR-0001-une-seule-multiplication.md", ADR_ESSAI.format(lu=lu, fait=f1))
+        ajouter(c, "memory/backlog.md", "\n## B-0002 — Ajouter une fonction quadruple\n\n"
                 f"> statut : ouvert · origine : {a.journal} · lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n")
         return etage_git(a, c)
 
@@ -975,7 +975,7 @@ def _temoins() -> list[tuple[str, Callable]]:
     @temoin("un défaut sur disque mais pas dans l'index ne bloque pas le commit de ce qui est indexé")
     def _(a, c):
         maj_memoire(c, "Seul ce changement est indexé.")
-        a.git(c, "add", "memoire/actif.md")
+        a.git(c, "add", "memory/active.md")
         ajouter(c, "docs/calc.md", "Voir F-0099.\n")  # en cours, non indexé
         r = a.run(c, "git", "commit", "-q", "-m", "essai")
         return "" if r.returncode == 0 else r.stdout + r.stderr

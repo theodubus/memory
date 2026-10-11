@@ -62,17 +62,17 @@ def capacites(ctx, r):
     """Aucune capacité n'est omise en silence : déclarée, ou absente avec sa
     raison et son contrôle de remplacement."""
     if not ctx.projet.adaptateur:
-        r.erreur("adaptateur.capacites", "aucun adaptateur (`.socle/adaptateur.toml`)")
+        r.erreur("adaptateur.capacites", f"aucun adaptateur (`{ctx.projet.chemins.adaptateur}`)")
         return
     caps = ctx.projet.adaptateur.get("capabilities", {})
     for nom in CAPACITES:
         c = caps.get(nom)
         if c is None:
-            r.erreur("adaptateur.capacites", f"capacité « {nom} » non déclarée : une commande, ou `absent` + `replacement`", ".socle/adaptateur.toml")
+            r.erreur("adaptateur.capacites", f"capacité « {nom} » non déclarée : une commande, ou `absent` + `replacement`", ctx.projet.chemins.adaptateur)
         elif "command" not in c and not ("absent" in c and "replacement" in c):
-            r.erreur("adaptateur.capacites", f"capacité « {nom} » : ni `command`, ni `absent` avec `replacement`", ".socle/adaptateur.toml")
+            r.erreur("adaptateur.capacites", f"capacité « {nom} » : ni `command`, ni `absent` avec `replacement`", ctx.projet.chemins.adaptateur)
     if cfg_tests(ctx.projet) is None:
-        r.erreur("adaptateur.capacites", "section `[tests]` sans `function` : les tests creux ne peuvent pas être détectés", ".socle/adaptateur.toml")
+        r.erreur("adaptateur.capacites", "section `[tests]` sans `function` : les tests creux ne peuvent pas être détectés", ctx.projet.chemins.adaptateur)
 
 
 @controle("tests.creux")
@@ -128,7 +128,7 @@ def _justifie(ctx, nom: str) -> str | None:
 
 def _specs_nommant(ctx, nom: str) -> list[str]:
     """Les spécifications changées dans la plage qui nomment le test."""
-    specs = ctx.projet.gf("tests", "spec_paths", defaut=["memoire/decisions/**"])
+    specs = ctx.projet.gf("tests", "spec_paths", defaut=[ctx.projet.chemins.decisions + "/**"])
     return [c for c in outils.filtrer(ctx.changes, specs)
             if nom in (ctx.lire(c) or "") and nom not in (ctx.lire_base(c) or "")]
 
@@ -389,6 +389,6 @@ def couverture_mutation(ctx, r):
                      "(`[mutation.caps]` des garde-fous), depuis un arbre vert", m)
     for m in caps:
         if m not in ctx.fichiers:
-            r.erreur("mutation.couverture", f"le cliquet nomme `{m}`, qui n'existe pas", ".socle/garde-fous.toml")
+            r.erreur("mutation.couverture", f"le cliquet nomme `{m}`, qui n'existe pas", ctx.projet.chemins.garde_fous)
         elif "reason" not in caps[m] and caps[m].get("max", 0) > 0:
-            r.erreur("mutation.couverture", f"plafond non nul sans raison écrite pour `{m}`", ".socle/garde-fous.toml")
+            r.erreur("mutation.couverture", f"plafond non nul sans raison écrite pour `{m}`", ctx.projet.chemins.garde_fous)

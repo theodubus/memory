@@ -6,7 +6,8 @@ et qu'aucun identifiant interne n'y paraisse sans description. La qualité de
 l'explication, elle, ne se contrôle pas : la réponse `contexte-insuffisant`
 renvoie la demande à l'agent, et ce renvoi reste consigné dans la réponse.
 
-Une réponse vit à côté de la demande, dans `<demande>.reponse.toml`, et
+Une réponse vit à côté de la demande, dans `<demande>.answer.toml`
+(`<demande>.reponse.toml` au format 1 de la mémoire), et
 seul l'humain l'écrit (`socle repondre`). Elle porte l'empreinte du texte
 exact auquel l'humain a répondu : la demande est gelée dès qu'elle a une
 réponse.
@@ -85,7 +86,7 @@ class Demande:
 
 
 def chemin_reponse(chemin_demande: str) -> str:
-    return chemin_demande[: -len(".md")] + ".reponse.toml"
+    return chemin_demande[: -len(".md")] + memoire.chemins_de(chemin_demande).reponse
 
 
 def decouper_sections(texte: str) -> dict[str, str]:

@@ -104,7 +104,7 @@ class TestTraceDesRefusDeFinDeTourEtDeGit(unittest.TestCase):
         subprocess.run(["git", "init", "-q", "-b", "main"], cwd=cls.racine, check=True)
         with contextlib.redirect_stdout(io.StringIO()):
             installeur.installer(cls.racine, "python", "@essai", source=Path(__file__).resolve().parent.parent / "moteur")
-        cls.canonique = cls.racine / "memoire/canonique.md"
+        cls.canonique = cls.racine / "memory/canonical.md"
         cls.sain = cls.canonique.read_text()
 
     def setUp(self):

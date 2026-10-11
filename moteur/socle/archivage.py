@@ -10,12 +10,13 @@ from socle import config, memoire
 
 def archiver_backlog(projet: config.Projet) -> int:
     racine = projet.racine
-    chemin = racine / "memoire/backlog.md"
+    ch = config.chemins(racine)
+    chemin = racine / ch.backlog
     if not chemin.is_file():
         print("pas de backlog")
         return 0
     texte = chemin.read_text(encoding="utf-8")
-    f = memoire.analyser("memoire/backlog.md", texte)
+    f = memoire.analyser(ch.backlog, texte)
     clos = [e for e in f.entrees if e.type == "B" and e.statut in memoire.BACKLOG_CLOS and e.refs("ref")]
     if not clos:
         print("aucun sujet clos à archiver")
@@ -32,7 +33,7 @@ def archiver_backlog(projet: config.Projet) -> int:
         texte = texte.replace(e.texte, "", 1)
     texte = "\n".join(l for l in _sans_vides_multiples(texte.splitlines())).rstrip("\n") + "\n"
     chemin.write_text(texte, encoding="utf-8")
-    journal = racine / f"memoire/journal/{jour[:7]}.md"
+    journal = racine / ch.journal / f"{jour[:7]}.md"
     if not journal.is_file():
         journal.parent.mkdir(parents=True, exist_ok=True)
         journal.write_text(f"<!-- socle: couche=journal zone=publique -->\n# Journal — {jour[:7]}\n", encoding="utf-8")

@@ -33,7 +33,7 @@ class TestApprobation(unittest.TestCase):
         (self.racine / "calc.py").write_text("x = 1\n")
         with contextlib.redirect_stdout(io.StringIO()):
             installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
-        with open(self.racine / "memoire/backlog.md", "a") as f:
+        with open(self.racine / "memory/backlog.md", "a") as f:
             f.write("\n## B-0001 — Accepter le workflow\n\n> statut : ouvert · origine : fichier:calc.py · pour : humain\n")
         git(self.racine, "add", "-A")
         git(self.racine, "commit", "-qm", "installation", "--no-verify")
@@ -53,7 +53,7 @@ class TestApprobation(unittest.TestCase):
     def test_la_demande_ecrite_passe_les_controles_de_la_memoire(self):
         code, _ = self.approuver(".github/workflows/socle.yml")
         self.assertEqual(code, 0)
-        demande = next((self.racine / "memoire/demandes").glob("D-*-approbation-humaine.md")).read_text()
+        demande = next((self.racine / "memory/requests").glob("D-*-approbation-humaine.md")).read_text()
         b1 = memoire.empreinte_entree(memoire.Memoire.charger(self.racine).entree("B-0001"))
         self.assertIn(f"B-0001@{b1}", demande)
         self.assertIn(f"(../../{config.Projet.charger(self.racine).dossier_moteur}/socle/FORMAT.md)", demande)
@@ -68,7 +68,7 @@ class TestApprobation(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("cite B-0099", erreurs)
         self.assertIn("rien à approuver", erreurs)
-        self.assertEqual(list((self.racine / "memoire/demandes").glob("D-*-approbation-humaine.md")), [])
+        self.assertEqual(list((self.racine / "memory/requests").glob("D-*-approbation-humaine.md")), [])
 
 
     def test_deux_approbations_sur_une_branche_ne_sont_pas_des_copies(self):
@@ -78,10 +78,10 @@ class TestApprobation(unittest.TestCase):
         from socle import controles_docs
 
         self.assertEqual(self.approuver(".github/workflows/socle.yml")[0], 0)
-        verrou = self.racine / ".socle/moteur.lock"
+        verrou = self.racine / ".socle/engine.lock"
         verrou.write_text(verrou.read_text() + "# format noté\n")
-        self.assertEqual(self.approuver(".socle/moteur.lock", texte="Le verrou change (B-0001)")[0], 0)
-        self.assertEqual(len(list((self.racine / "memoire/demandes").glob("D-*-approbation-humaine.md"))), 2)
+        self.assertEqual(self.approuver(".socle/engine.lock", texte="Le verrou change (B-0001)")[0], 0)
+        self.assertEqual(len(list((self.racine / "memory/requests").glob("D-*-approbation-humaine.md"))), 2)
         ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="git", base=self.base)
         r = Rapport()
         controles_docs.copie(ctx, r)

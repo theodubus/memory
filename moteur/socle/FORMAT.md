@@ -9,23 +9,42 @@ qui le lit est `socle/memoire.py`, les contrôles sont listés par
 ## Emplacements
 
 ```text
-memoire/
-  canonique.md            faits vérifiés, avec statut et preuve
-  actif.md                chantier en cours, prochaines étapes
+memory/
+  canonical.md            faits vérifiés, avec statut et preuve
+  active.md               chantier en cours, prochaines étapes
   backlog.md              sujets à traiter, avec statut et origine
   decisions/ADR-0001-*.md une décision par fichier
   journal/2026-10.md      un fichier par mois, une entrée par événement
-  demandes/D-0001-*.md    une demande de décision humaine par fichier
-  demandes/D-0001-*.reponse.toml   la réponse de l'humain, et elle seule
+  requests/D-0001-*.md    une demande de décision humaine par fichier
+  requests/D-0001-*.answer.toml   la réponse de l'humain, et elle seule
   archives/               documents archivés tels quels (cadrage…), non lus par les contrôles
-  prive/                  zone privée, même arborescence (voir « La zone privée »)
+  private/                zone privée, même arborescence (voir « La zone privée »)
 ```
+
+Ce sont les noms du **format 2**, en anglais pour tous les projets quelle que
+soit la langue de la mémoire (B-0032) ; la configuration du socle suit
+(`.socle/policy.toml`, `.socle/guardrails.toml`, `.socle/adapter.toml`,
+`.socle/engine.lock`, `.socle/private.lock`, le moteur sous `.socle/engine/`).
+
+**Le format 1** avait des noms français : `memoire/`, `canonique.md`,
+`actif.md`, `demandes/`, `prive/`, `termes.txt`, `*.reponse.toml`,
+`.socle/politique.toml`, `.socle/garde-fous.toml`, `.socle/adaptateur.toml`,
+`.socle/moteur.lock`, `.socle/prive.lock`, `.socle/moteur/`. Le moteur lit
+les deux : le nom du verrou (à défaut, de la politique, puis du dossier de
+mémoire) dit le format d'un projet. La mise à jour par l'installeur migre un
+projet au format 1 : elle renomme ses fichiers (`git mv`) et traduit les
+chemins de sa configuration et de sa documentation, mais ne réécrit pas la
+mémoire — le journal est en ajout seul, une demande répondue est gelée. Les
+anciens chemins, et les ancres de titres qui en citent, y restent valides
+par alias. La CI d'une plage qui migre lit la base sous les noms de la tête.
+Les couches gardent leurs noms internes (`canonique`, `actif`, `demandes`…)
+dans l'en-tête des fichiers : c'est le vocabulaire du format, pas un chemin.
 
 ## En-tête
 
 La première ligne non vide de chaque fichier déclare sa couche et sa zone.
 L'emplacement impose la couche ; la zone est celle de l'emplacement
-(`publique` sous `memoire/`, `privee` sous `memoire/prive/`).
+(`publique` sous `memory/`, `privee` sous `memory/private/`).
 
 ```markdown
 <!-- socle: couche=canonique zone=publique -->
@@ -162,7 +181,7 @@ révélée impossible à trancher pour l'humain.
 - « Réponses possibles » est une liste `` - `valeur` — sens `` qui propose
   `contexte-insuffisant`.
 
-La réponse vit dans `<demande>.reponse.toml`. L'humain répond dans la
+La réponse vit dans `<demande>.answer.toml`. L'humain répond dans la
 conversation, et l'agent consigne sa réponse avec le texte exact
 (`socle answer D-NNNN <réponse> --relayed --by <nom> --quote-file <fichier>`,
 `canal = "conversation"`) ; ou l'humain la lance lui-même au terminal
@@ -186,15 +205,15 @@ retirée (métadonnée `retirée : <raison>`). Une demande répondue est gelée.
 ## La zone privée
 
 Une mémoire privée est une option, choisie par l'humain dans la politique
-(`[private] mode`). Elle vit sous `memoire/prive/`, avec la même
+(`[private] mode`). Elle vit sous `memory/private/`, avec la même
 arborescence, les mêmes formats, statuts et contrôles, et les mêmes budgets
 de taille que la zone publique ; ses identifiants prennent un `P` devant.
 Le privé peut citer le public, jamais l'inverse.
 
 | Mode | Où vit la mémoire privée | Ce que le moteur vérifie |
 | --- | --- | --- |
-| `compagnon` | le clone d'un dépôt privé dans `memoire/prive/`, que le dépôt public ignore | aucun fichier privé n'est commité dans le dépôt public ; le verrou `.socle/prive.lock` désigne le commit du dépôt privé qui va avec chaque commit public ; rien de privé ne reste hors commit |
-| `chiffre` | dans le dépôt public, chiffrée par un filtre git (git-crypt ou équivalent) | aucun fichier privé n'est commité en clair ; un filtre couvre `memoire/prive/` dans `.gitattributes` |
+| `compagnon` | le clone d'un dépôt privé dans `memory/private/`, que le dépôt public ignore | aucun fichier privé n'est commité dans le dépôt public ; le verrou `.socle/private.lock` désigne le commit du dépôt privé qui va avec chaque commit public ; rien de privé ne reste hors commit |
+| `chiffre` | dans le dépôt public, chiffrée par un filtre git (git-crypt ou équivalent) | aucun fichier privé n'est commité en clair ; un filtre couvre `memory/private/` dans `.gitattributes` |
 
 Le moteur ne connaît pas l'outil de chiffrement : un fichier privé est
 lisible quand sa première ligne porte l'en-tête du socle, chiffré sinon.
@@ -214,13 +233,13 @@ verrou avec les secrets `SOCLE_PRIVE_DEPOT` et `SOCLE_PRIVE_CLE`.
 privée n'y montre ni son texte ni son chemin.
 
 **Le contenu nouveau est privé par défaut** quand une mémoire privée existe :
-`socle new` l'écrit sous `memoire/prive/`, sauf `--public`. Les demandes
+`socle new` l'écrit sous `memory/private/`, sauf `--public`. Les demandes
 font exception : elles ne sont privées, réponses comprises, que si l'humain
 l'a choisi (`[private] requests = true`), car il doit pouvoir les lire là où
 il lit ; en mode chiffré, GitHub n'en montre que le chiffré, et l'agent les
 donne en entier dans la conversation.
 
-**La liste des termes privés** (`memoire/prive/termes.txt`) nomme ce qui ne
+**La liste des termes privés** (`memory/private/terms.txt`) nomme ce qui ne
 doit jamais paraître en public : un terme par ligne, `#` pour un
 commentaire, `re:` devant une expression régulière ; la recherche ignore la
 casse et les accents et ne prend que des mots entiers. Sa première ligne

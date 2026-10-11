@@ -14,7 +14,6 @@ from functools import lru_cache
 from socle import config, demandes, memoire, outils
 from socle.contexte import controle
 
-FICHIERS_REQUIS = ("memoire/canonique.md", "memoire/actif.md", "memoire/backlog.md")
 TYPE_DE_COUCHE = {v: k for k, v in memoire.TYPES.items()}
 TRANSITIONS_ADR = {
     ("proposee", "acceptee"), ("proposee", "rejetee"), ("proposee", "abandonnee"),
@@ -33,7 +32,7 @@ est_prive = memoire.est_prive
 @controle("memoire.format")
 def format_memoire(ctx, r):
     """En-têtes, couches, identifiants, statuts : la mémoire se lit par script."""
-    for requis in FICHIERS_REQUIS:
+    for requis in (ctx.projet.chemins.canonique, ctx.projet.chemins.actif, ctx.projet.chemins.backlog):
         if requis not in ctx.fichiers:
             r.erreur("memoire.format", "fichier de mémoire requis absent", requis)
     for chemin, f in sorted(ctx.memoire.fichiers.items()):
@@ -130,7 +129,24 @@ def ancres(texte: str) -> set[str]:
 
 
 def _existe(ctx, chemin: str) -> bool:
+    """Le chemin existe, sous son nom ou sous celui que la migration du
+    format lui a donné : le journal et les demandes gelées gardent les
+    anciens chemins, qui restent valides (B-0032)."""
     chemin = chemin.strip("/")
+    if _existe_tel_quel(ctx, chemin):
+        return True
+    alias = config.sous_le_format(chemin, ctx.projet.chemins.format)
+    return alias != chemin and _existe_tel_quel(ctx, alias)
+
+
+def _alias(ctx, chemin: str) -> str:
+    """Le chemin tel qu'il existe : le sien, ou son nom au format du projet."""
+    if _existe_tel_quel(ctx, chemin.strip("/")):
+        return chemin
+    return config.sous_le_format(chemin, ctx.projet.chemins.format)
+
+
+def _existe_tel_quel(ctx, chemin: str) -> bool:
     if chemin in ctx._cache.setdefault("ensemble", set(ctx.fichiers)) or chemin == "":
         return True
     dossiers = ctx._cache.get("dossiers")
@@ -240,10 +256,23 @@ def _verifier_lien(ctx, chemin_doc: str, dossier: str, cible: str) -> str | None
     else:
         cible_n = chemin_doc
     if ancre and cible_n.endswith(".md"):
-        texte = ctx.lire(cible_n)
-        if texte is not None and ancre not in ancres(texte):
+        texte = ctx.lire(_alias(ctx, cible_n))
+        if texte is not None and ancre not in ancres(texte) and ancre_au_format_2(ancre) not in ancres(texte):
             return f"ancre morte : {cible}"
     return None
+
+
+# Les titres qui citent un chemin renommé au format 2 changent d'ancre : une
+# ancre ancienne, dans une demande gelée ou le journal, reste valide.
+_ANCRES_RENOMMEES = [(slug(getattr(config.FORMAT_1, a)), slug(getattr(config.FORMAT_2, a)))
+                     for a in ("politique", "garde_fous", "adaptateur", "lock", "prive_lock")]
+
+
+def ancre_au_format_2(ancre: str) -> str:
+    """Une ancre de titre écrite avant la migration, sous son nom au format 2."""
+    for avant, apres in _ANCRES_RENOMMEES:
+        ancre = ancre.replace(avant, apres)
+    return re.sub(r"(?<![\w])memoire(?![\w])", "memory", ancre)
 
 
 def _verifier_chemin_cite(ctx, jeton: str) -> str | None:
@@ -273,7 +302,7 @@ def prive(ctx, r):
     jamais le privé."""
     moteur = ctx.projet.dossier_moteur.rstrip("/") + "/"
     for chemin in ctx.fichiers:
-        if est_prive(chemin) or chemin.startswith((config.ARCHIVES + "/", moteur)):
+        if est_prive(chemin) or chemin.startswith((ctx.projet.chemins.archives + "/", moteur)):
             continue
         texte = ctx.lire(chemin)
         if texte is None or "\0" in texte[:4096] or len(texte) > 2_000_000:
@@ -447,7 +476,8 @@ def budgets(ctx, r):
     couverts = set()
     # La zone privée suit les budgets de la zone publique : mêmes formats,
     # mêmes contrôles (cadrage, règles de classement, point 5).
-    miroirs = {c: c.replace(memoire.DOSSIER_PRIVE + "/", config.MEMOIRE + "/", 1) for c in ctx.fichiers if est_prive(c)}
+    ch = ctx.projet.chemins
+    miroirs = {c: ch.memoire + "/" + memoire.hors_zone_privee(c) for c in ctx.fichiers if est_prive(c)}
     for motif, b in budgets.items():
         vises = set(outils.filtrer(ctx.fichiers, [motif])) | {c for c, m in miroirs.items() if outils.correspond(m, [motif])}
         for chemin in sorted(vises):
@@ -490,7 +520,7 @@ def _sales(ctx) -> set[str]:
 def peremption(ctx, r):
     """Un chantier actif qui ne bouge plus est signalé — un avertissement, pas un échec."""
     jours = ctx.projet.gf("staleness", "active_days", defaut=7)
-    chemin = "memoire/actif.md"
+    chemin = ctx.projet.chemins.actif
     if chemin not in ctx.fichiers:
         return
     t = date_derniere_modif(ctx, chemin)
@@ -507,8 +537,9 @@ def retard(ctx, r):
     if not ctx.projet.gf("memory", "require_update_on_code_change", defaut=True):
         return
     code = outils.filtrer(ctx.changes, ctx.projet.chemins_code())
-    if code and not any(c.startswith(config.MEMOIRE + "/") for c in ctx.changes):
-        r.erreur("memoire.retard", f"{len(code)} fichier(s) de code changé(s) depuis la base et aucun de `memoire/` : "
+    if code and not any(memoire.est_memoire(c) for c in ctx.changes):
+        r.erreur("memoire.retard", f"{len(code)} fichier(s) de code changé(s) depuis la base et aucun de "
+                 f"`{ctx.projet.chemins.memoire}/` : "
                  "mettre à jour le chantier actif ou le journal avant de conclure")
 
 
@@ -573,7 +604,7 @@ def ajout_seul(ctx, r):
             if b is None:
                 r.erreur("memoire.ajout-seul", f"demande `{ident}` supprimée (la retirer : `retirée : <raison>` dans ses métadonnées)", a.fichier, a.ligne)
 
-    reponses_base = {c for c in ctx.fichiers_base if c.endswith(".reponse.toml")}
+    reponses_base = {c for c in ctx.fichiers_base if memoire.est_reponse(c)}
     for c in sorted(reponses_base):
         if ctx.lire(c) != ctx.lire_base(c):
             r.erreur("memoire.ajout-seul", "réponse humaine modifiée ou supprimée : elle est définitive", c)
@@ -607,8 +638,8 @@ def reponses(ctx, r):
         for faute in demandes.verifier_reponse(d):
             r.erreur("demandes.reponses", faute, d.chemin_reponse or d.chemin)
     for c in ctx.fichiers:
-        if c.endswith(".reponse.toml") and c.startswith(config.MEMOIRE + "/"):
-            if c[: -len(".reponse.toml")] + ".md" not in ctx.fichiers:
+        if memoire.est_reponse(c):
+            if memoire.demande_de_reponse(c) not in ctx.fichiers:
                 r.erreur("demandes.reponses", "réponse sans demande", c)
 
 

@@ -61,7 +61,7 @@ class TestValeurAttendue(unittest.TestCase):
         return [c.message for c in r.erreurs("tests.attendus")], [c.message for c in r.constats if c.gravite == "avertissement"]
 
     def test_une_adr_de_l_agent_ne_justifie_pas_le_changement(self):
-        self.ecrire("memoire/decisions/ADR-0001-facteur.md", ADR)
+        self.ecrire("memory/decisions/ADR-0001-facteur.md", ADR)
         self.ecrire("tests/test_calc.py", TEST.format(attendu=6))
         self.commit("Le facteur passe à 3" + AGENT)
         erreurs, _ = self.erreurs()
@@ -69,13 +69,13 @@ class TestValeurAttendue(unittest.TestCase):
         self.assertIn("écrite par l'agent", erreurs[0])
 
     def test_une_adr_en_cours_d_ecriture_ne_justifie_pas_non_plus(self):
-        self.ecrire("memoire/decisions/ADR-0001-facteur.md", ADR)
+        self.ecrire("memory/decisions/ADR-0001-facteur.md", ADR)
         self.ecrire("tests/test_calc.py", TEST.format(attendu=6))
         erreurs, _ = self.erreurs("agent")
         self.assertEqual(len(erreurs), 1, erreurs)
 
     def test_une_specification_commitee_par_l_humain_justifie_le_changement(self):
-        self.ecrire("memoire/decisions/ADR-0001-facteur.md", ADR)
+        self.ecrire("memory/decisions/ADR-0001-facteur.md", ADR)
         self.commit("Le facteur passe à 3, décidé par Théo")
         self.ecrire("tests/test_calc.py", TEST.format(attendu=6))
         self.commit("Le test suit le facteur" + AGENT)

@@ -12,7 +12,7 @@ import re
 import subprocess
 from collections import defaultdict
 
-from socle import config, outils
+from socle import config, memoire, outils
 from socle.contexte import controle
 
 MARQUEUR_VALEUR = re.compile(
@@ -81,14 +81,14 @@ def valeurs(ctx, r):
     sources: dict[str, str | None] = {}
     for nom, decl in decls.items():
         if not nom:
-            r.erreur("docs.valeurs", "valeur déclarée sans `name`", config.GARDE_FOUS)
+            r.erreur("docs.valeurs", "valeur déclarée sans `name`", ctx.projet.chemins.garde_fous)
             continue
         if "command" in decl and ctx.rapide and not decl.get("fast", False):
             sources[nom] = None
             continue
         v, err = valeur_source(ctx, decl)
         if err:
-            r.erreur("docs.valeurs", f"`{nom}` : {err}", config.GARDE_FOUS)
+            r.erreur("docs.valeurs", f"`{nom}` : {err}", ctx.projet.chemins.garde_fous)
         sources[nom] = v
 
     cites = defaultdict(int)
@@ -112,7 +112,7 @@ def valeurs(ctx, r):
             continue
         motif = _motif_libre(v)
         for chemin, texte in docs.items():
-            if chemin.startswith(config.MEMOIRE + "/journal/"):
+            if memoire.couche_attendue(chemin) == "journal":
                 continue  # le journal consigne des valeurs passées, pas des copies
             nu = MARQUEUR_VALEUR.sub(" ", texte)
             for m in motif.finditer(nu):
@@ -195,7 +195,8 @@ def copie(ctx, r):
     se ressemblent forcément (B-0019)."""
     minimum = ctx.projet.gf("nocopy", "min_chars", defaut=200)
     exclus = ctx.projet.exclusions_docs() + list(ctx.projet.gf("nocopy", "exclude", defaut=[])) + [
-        f"{config.MEMOIRE}/demandes/**", f"{config.MEMOIRE}/prive/demandes/**"]
+        f"{f.demandes}/**" for f in config.FORMATS.values()] + [
+        f"{f.dans_prive(f.demandes)}/**" for f in config.FORMATS.values()]
     vus: dict[str, list[tuple[str, int]]] = defaultdict(list)
     for chemin, texte in ctx.textes(["**/*.md"], exclus).items():
         for debut, p in paragraphes(texte):
