@@ -59,6 +59,63 @@ class TestLecturesSuccessives(unittest.TestCase):
         self.assertIn("decisions@0badc0de", erreurs[0])
 
 
+class TestArchivage(unittest.TestCase):
+    """Un sujet clos s'archive dans le journal avec sa preuve de lecture : la
+    même entrée, déplacée, n'a pas à relire un index qui a changé depuis."""
+
+    def setUp(self):
+        from socle import archivage
+
+        self.archivage = archivage
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-archivage-"))
+        git(self.racine, "init", "-q", "-b", "main")
+        backlog = self.racine / "memoire/backlog.md"
+        backlog.parent.mkdir(parents=True)
+        backlog.write_text("<!-- socle: couche=backlog zone=publique -->\n# Backlog\n")
+        lu = memoire.empreinte_index(memoire.Memoire.charger(self.racine), "backlog")
+        backlog.write_text(backlog.read_text() + "\n## B-0001 — Un sujet\n\n> statut : ouvert · origine : "
+                           f"fichier:memoire/backlog.md · lu : backlog@{lu}\n")
+        lu2 = memoire.empreinte_index(memoire.Memoire.charger(self.racine), "backlog")
+        backlog.write_text(backlog.read_text() + "\n## B-0002 — Un autre sujet, qui change l'index\n\n> statut : "
+                           f"ouvert · origine : fichier:memoire/backlog.md · lu : backlog@{lu2}\n")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "base")
+        self.base = git(self.racine, "rev-parse", "HEAD").strip()
+        self.lu = lu
+
+    def tearDown(self):
+        shutil.rmtree(self.racine, ignore_errors=True)
+
+    def erreurs(self) -> list[str]:
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="ci", base=self.base, tete=None)
+        r = Rapport()
+        controles_memoire.lectures(ctx, r)
+        return [c.message for c in r.erreurs("memoire.lectures")]
+
+    def test_un_sujet_archive_garde_sa_lecture(self):
+        backlog = self.racine / "memoire/backlog.md"
+        backlog.write_text(backlog.read_text().replace(
+            "> statut : ouvert · origine : fichier:memoire/backlog.md · lu : backlog@" + self.lu,
+            "> statut : fait · origine : fichier:memoire/backlog.md · lu : backlog@" + self.lu + " · ref : B-0002"))
+        import contextlib
+        import io
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.archivage.archiver_backlog(config.Projet.charger(self.racine))
+        journal = next((self.racine / "memoire/journal").glob("*.md")).read_text()
+        self.assertIn(f"backlog@{self.lu}", journal)
+        self.assertEqual(self.erreurs(), [])
+
+    def test_une_lecture_recopiee_dans_une_autre_entree_reste_refusee(self):
+        journal = self.racine / "memoire/journal/2026-10.md"
+        journal.parent.mkdir(parents=True)
+        journal.write_text("<!-- socle: couche=journal zone=publique -->\n# Journal — 2026-10\n\n"
+                           "## J-2026-10-11-A — Une entrée qui recopie une vieille lecture\n\n"
+                           f"> type : décision · ref : B-0002 · lu : backlog@{self.lu}\n")
+        erreurs = self.erreurs()
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertIn(f"backlog@{self.lu}", erreurs[0])
+
 if __name__ == "__main__":
     unittest.main()
 

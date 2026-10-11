@@ -113,7 +113,8 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 - **Lecture prouvée** (`ADR-0008`) : une entrée citée `ID@empreinte` l'a été
   dans cette version ; une décision, une demande ou un sujet de backlog
   nouveaux doivent le faire. La preuve porte sur l'accès au texte, pas sur
-  sa compréhension.
+  sa compréhension. Une entrée qui change de fichier, un sujet clos archivé
+  au journal, garde sa preuve sans relire.
 - **Les liens donnés à l'humain sont des permaliens** (`ADR-0010`) : au
   commit poussé, pas à la branche, qui disparaît à la fusion ; vérifiés par
   le hook de fin de tour, que l'agent ait agi ou non.

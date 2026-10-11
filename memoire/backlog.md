@@ -94,17 +94,22 @@ politique (point 4) vise une publication, qu'un dépôt local n'est pas.
 Ne refuser que si la destination est distante, ou garder le refus et le
 dire dans sa raison ; à arbitrer, le refus large est le plus sûr.
 
-## B-0019 — Accepter la nouvelle étape du workflow de CI de ce dépôt
+## B-0020 — Une référence suivie d'un point ou d'une parenthèse est lue avec eux
 
-> statut : ouvert · origine : J-2026-10-10-Y · pour : humain · lu : backlog@8f720178
+> statut : ouvert · origine : J-2026-10-11-D · lu : backlog@c360de10
 
-Les gabarits gagnent deux fichiers protégés que ce dépôt n'a pas encore :
-une étape du workflow de CI qui récupère la mémoire privée en mode
-compagnon (inerte sans verrou), et le hook git `commit-msg`, qui cherche les
-fuites de mémoire privée dans le message de commit (sans effet sans mémoire
-privée). Chaque régénération des instructions de ce dépôt les pose, et
-l'agent doit les retirer de son travail. À faire par Théo : régénérer en
-mode amont, approuver les deux fichiers (`.github/workflows/socle.yml` et
-le hook `commit-msg` de `.socle/git-hooks/`) par la commande d'approbation
-réservée à l'humain, puis commiter ; la procédure exacte est dans la
-conversation du 2026-10-10.
+`memoire.references` lit une référence de commit suivie d'une parenthèse
+fermante ou d'un point final avec cette ponctuation, et refuse un SHA
+pourtant valide. Deux fois déjà, l'agent a dû
+reformuler sa phrase. La fin d'une référence devrait exclure la ponctuation
+finale, comme le font les liens Markdown.
+
+## B-0021 — Une preuve de lecture recopiée d'une autre entrée du même fichier passe
+
+> statut : ouvert · origine : J-2026-10-11-D · lu : backlog@8003fd30
+
+Vu en corrigeant l'archivage : `memoire.lectures` ignore une citation déjà
+présente dans la version de base du même fichier. Un sujet de backlog
+nouveau qui recopie le `lu : backlog@…` d'un autre sujet passe donc, sans
+avoir rien lu. Juger la citation par entrée plutôt que par fichier, comme
+le fait désormais l'exemption des entrées déplacées.

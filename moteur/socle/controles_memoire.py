@@ -334,11 +334,18 @@ def lectures(ctx, r):
                 return True
         return False
 
+    def deplacee(chemin: str, ligne: int, citation: str) -> bool:
+        """La même entrée portait déjà cette citation à la base : elle a changé
+        de fichier (un sujet clos archivé au journal), sans rien relire."""
+        soi = _entree_englobante(mem, chemin, ligne)
+        avant = base.definitions().get(soi.id) if soi else None
+        return bool(avant) and citation in avant[0].texte
+
     for chemin, texte in sorted(textes_scannes(ctx).items()):
         avant = ctx.lire_base(chemin) or ""
         deja = {(i, h) for i, h, _ in memoire.citations(avant)}
         for ident, h, ligne in memoire.citations(texte):
-            if (ident, h) in deja or ident not in defs:
+            if (ident, h) in deja or ident not in defs or deplacee(chemin, ligne, f"{ident}@{h}"):
                 continue
             if memoire.empreinte_entree(defs[ident][0]) != h and not lue_dans_la_plage(chemin, ident, h):
                 r.erreur("memoire.lectures", f"`{ident}@{h}` ne correspond pas à la version actuelle de {ident} "
@@ -346,7 +353,7 @@ def lectures(ctx, r):
                          "et citer l'empreinte affichée", chemin, ligne)
         deja_i = {(i, h) for i, h, _ in memoire.citations_index(avant)}
         for index, h, ligne in memoire.citations_index(texte):
-            if (index, h) in deja_i:
+            if (index, h) in deja_i or deplacee(chemin, ligne, f"{index}@{h}"):
                 continue
             soi = _entree_englobante(mem, chemin, ligne)
             sauf = {soi.id} if soi else set()
