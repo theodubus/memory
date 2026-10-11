@@ -71,5 +71,21 @@ class TestApprobation(unittest.TestCase):
         self.assertEqual(list((self.racine / "memoire/demandes").glob("D-*-approbation-humaine.md")), [])
 
 
+    def test_deux_approbations_sur_une_branche_ne_sont_pas_des_copies(self):
+        """Le cas de B-0019 : une approbation pour le workflow et le hook, une
+        autre pour le verrou ; le gabarit les fait se ressembler, et
+        `docs.copie` refusait le commit."""
+        from socle import controles_docs
+
+        self.assertEqual(self.approuver(".github/workflows/socle.yml")[0], 0)
+        verrou = self.racine / ".socle/moteur.lock"
+        verrou.write_text(verrou.read_text() + "# format noté\n")
+        self.assertEqual(self.approuver(".socle/moteur.lock", texte="Le verrou change (B-0001)")[0], 0)
+        self.assertEqual(len(list((self.racine / "memoire/demandes").glob("D-*-approbation-humaine.md"))), 2)
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="git", base=self.base)
+        r = Rapport()
+        controles_docs.copie(ctx, r)
+        self.assertEqual([c.message for c in r.erreurs()], [])
+
 if __name__ == "__main__":
     unittest.main()

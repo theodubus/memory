@@ -187,9 +187,15 @@ def paragraphes(texte: str):
 
 @controle("docs.copie")
 def copie(ctx, r):
-    """Un même contenu dans deux fichiers est une copie qui divergera : refusé."""
+    """Un même contenu dans deux fichiers est une copie qui divergera : refusé.
+
+    Sauf dans les demandes : le contrat veut qu'une demande se lise seule,
+    son contexte résumé sur place plutôt que renvoyé ailleurs, et elle est
+    gelée une fois répondue. Deux approbations écrites par le même gabarit
+    se ressemblent forcément (B-0019)."""
     minimum = ctx.projet.gf("nocopy", "min_chars", defaut=200)
-    exclus = ctx.projet.exclusions_docs() + list(ctx.projet.gf("nocopy", "exclude", defaut=[]))
+    exclus = ctx.projet.exclusions_docs() + list(ctx.projet.gf("nocopy", "exclude", defaut=[])) + [
+        f"{config.MEMOIRE}/demandes/**", f"{config.MEMOIRE}/prive/demandes/**"]
     vus: dict[str, list[tuple[str, int]]] = defaultdict(list)
     for chemin, texte in ctx.textes(["**/*.md"], exclus).items():
         for debut, p in paragraphes(texte):

@@ -125,6 +125,9 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
   sont fixés au niveau actuel et les contrôles en échec passent en
   avertissement (`[adoption] warn_only`), liste dont on ne retire que pour
   durcir.
+- **Les demandes échappent au refus des copies** (`ADR-0016`) : une demande se
+  lit seule, son contexte recopié sur place, et elle est gelée une fois
+  répondue ; deux approbations du même gabarit ne bloquent plus un commit.
 - **Une tautologie voulue passe avec sa raison écrite** (`socle: voulu —`),
   validé par Théo (`D-0004`).
 
