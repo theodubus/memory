@@ -518,14 +518,18 @@ def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str]) -> list[str
     if "protege.fichiers" in echecs:
         etapes.append("approuver les fichiers protégés que la mise à jour a changés (la liste s'affiche, "
                       f'à confirmer) : `python3 .socle/socle approve --text "Mise à jour du socle {VERSION}"`')
-    autres = [c for c in echecs if c != "protege.fichiers"]
+    mode = prive.mode(projet)
+    sans_compagnon = mode == "compagnon" and not prive.commit_compagnon(cible)
+    # Le verrou d'un dépôt compagnon pas encore en place : l'étape qui le
+    # met en place le règle, pas une correction ni l'adoption.
+    autres = [c for c in echecs if c != "protege.fichiers" and not (sans_compagnon and c == "prive.verrou")]
     if autres:
         etapes.append(f"{len(autres)} contrôle(s) en échec ci-dessus ({', '.join(autres)}) : les corriger, "
                       "ou relancer l'installation avec `--adoption`, qui les passe en avertissement sur l'existant")
-    mode = prive.mode(projet)
-    if mode == "compagnon" and not prive.commit_compagnon(cible):
+    if sans_compagnon:
         etapes.append("mettre en place le dépôt privé (créé vide sur GitHub, privé) : clone, premier commit, "
-                      "verrou, clé de déploiement, puis les deux gestes sur GitHub, avec leurs liens : "
+                      "verrou (ce qui règle `prive.verrou`), clé de déploiement, puis les deux gestes sur "
+                      "GitHub, avec leurs liens : "
                       "`python3 .socle/socle prive installer --depot <adresse du dépôt privé>`")
     elif mode and mode != "compagnon":
         filtre = "git-crypt"

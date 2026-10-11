@@ -391,8 +391,13 @@ def controle_verrou(ctx, r):
     # travail, qui sera commité.
     verrou = lire_verrou(ctx.racine, ctx.tete)
     if verrou is None:
-        r.erreur("prive.verrou", "mode compagnon sans verrou : `socle prive verrouiller`",
-                 fichier_verrou(ctx.racine))
+        if commit_compagnon(ctx.racine) is None:
+            # Rien n'est encore en place : c'est à l'humain (B-0034, P5).
+            r.erreur("prive.verrou", "mode compagnon sans dépôt privé ni verrou : sa mise en place revient à "
+                     "l'humain, `prive installer --depot <adresse du dépôt privé>`", fichier_verrou(ctx.racine))
+        else:
+            r.erreur("prive.verrou", "mode compagnon sans verrou : `socle prive verrouiller`",
+                     fichier_verrou(ctx.racine))
         return
     sha = commit_compagnon(ctx.racine)
     if sha is None:

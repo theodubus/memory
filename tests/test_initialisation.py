@@ -70,7 +70,11 @@ class TestMemoirePriveeALInstallation(Base):
         self.assertIn('[private]\nmode = "compagnon"\nreview = "lots"\nrequests = true\n', politique)
         self.assertIn("memory/private/", (self.racine / ".gitignore").read_text())
         self.assertIn("dépôt privé absent", sortie)
-        self.assertIn("mettre en place le dépôt privé", sortie.split("Et maintenant :")[1])
+        etapes = sortie.split("Et maintenant :")[1]
+        self.assertIn("mettre en place le dépôt privé", etapes)
+        # Son verrou manque, mais ni une correction ni l'adoption n'y peuvent rien.
+        self.assertNotIn("--adoption", etapes)
+        self.assertIn("sa mise en place revient à l'humain", sortie)
 
     def test_chiffre_pose_le_filtre(self):
         self.racine = depot({"calc.py": "x = 1\n"})
