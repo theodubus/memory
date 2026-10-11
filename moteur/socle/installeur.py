@@ -207,6 +207,21 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
     # celle que sa politique dit déjà.
     lg = langue_memoire if langue_memoire and not (cible / ch.politique).is_file() else (
         langue.du_projet(config.Projet.charger(cible)) if (cible / ch.politique).is_file() else "fr")
+    # Une mémoire privée demandée sur un projet déjà installé : la politique
+    # existe et se garde, mais c'est l'humain qui lance la commande, et sans
+    # sa section la mémoire privée resterait « non configurée » (B-0034, P4).
+    # Une section déjà là est un choix fait : elle ne se réécrit pas.
+    p_pol = cible / ch.politique
+    if prive and p_pol.is_file():
+        texte_pol = p_pol.read_text(encoding="utf-8")
+        if not re.search(r"(?m)^\[private\]\s*$", texte_pol):
+            if "# [private]\n" in texte_pol:
+                texte_pol = politique_privee(texte_pol, prive, relecture, demandes_privees)
+            else:
+                texte_pol = politique_privee(texte_pol.rstrip("\n") + "\n\n# [private]\n", prive, relecture,
+                                             demandes_privees)
+            p_pol.write_text(texte_pol, encoding="utf-8")
+            journal.append(f"mémoire privée ajoutée à la politique ({prive}) : un changement protégé, à approuver")
     if ancien and (cible / ch.politique).is_file():
         ecart = diff_politique(cible)
         if ecart:

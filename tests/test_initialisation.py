@@ -100,6 +100,20 @@ class TestMiseAJour(Base):
         self.assertIn("+max_attempts = 3", sortie)
         self.assertIn("max_attempts = 5", p.read_text())
 
+    def test_la_memoire_privee_s_ajoute_a_un_projet_installe(self):
+        """P4 du relevé du parcours (B-0034) : l'option annonçait la mémoire
+        privée sans écrire la politique, qui la laissait non configurée."""
+        code, sortie = installer(self.racine, prive="compagnon", relecture="lots")
+        politique = (self.racine / config.FORMAT_ACTUEL.politique).read_text()
+        self.assertIn('[private]\nmode = "compagnon"\nreview = "lots"\nrequests = false\n', politique)
+        self.assertIn("mémoire privée ajoutée à la politique", sortie)
+        self.assertEqual(config.Projet.charger(self.racine).pol("private", "mode"), "compagnon")
+
+    def test_une_memoire_privee_deja_choisie_n_est_pas_reecrite(self):
+        installer(self.racine, prive="chiffre")
+        installer(self.racine, prive="compagnon")
+        self.assertEqual(config.Projet.charger(self.racine).pol("private", "mode"), "chiffre")
+
     def test_les_migrations_s_appliquent_dans_l_ordre(self):
         faites = []
         avant = dict(migrations.MIGRATIONS), migrations.FORMAT
