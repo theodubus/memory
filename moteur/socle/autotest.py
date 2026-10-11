@@ -699,6 +699,17 @@ def _cas() -> list[Cas]:
         lanceur = ".socle/" + "socle"  # en deux morceaux : ce fichier n'est pas une invocation
         return etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} answer D-0001 valider"})
 
+    @defaut("agent-approuve", "l'agent approuve lui-même un changement protégé", "agent", "commande de l'humain seul")
+    def _(a, c):
+        lanceur = ".socle/" + "socle"
+        return etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} approve --text 'mise à jour' --oui"})
+
+    @defaut("agent-installe-compagnon", "l'agent met en place le dépôt compagnon (pousse, crée une clé)", "agent",
+            "commande de l'humain seul")
+    def _(a, c):
+        lanceur = ".socle/" + "socle"
+        return etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} prive " + "installer --depot git@h:o/p.git"})
+
     @defaut("relais-sans-citation", "réponse relayée sans le texte exact de l'humain", "agent", "commande humaine")
     def _(a, c):
         lanceur = ".socle/" + "socle"
@@ -1081,6 +1092,11 @@ def _temoins() -> list[tuple[str, Callable]]:
     def _(a, c):
         return etage_outil(a, c, "Bash", {"command": "grep -n 'socle answer' AGENTS.md"})
 
+    @temoin("l'agent verrouille la mémoire privée : seule sa mise en place est réservée à l'humain")
+    def _(a, c):
+        lanceur = ".socle/" + "socle"
+        return etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} prive verrouiller"})
+
     @temoin("une écriture ordinaire passe le hook de l'agent")
     def _(a, c):
         return etage_outil(a, c, "Edit", {"file_path": str(c / "docs/calc.md"), "old_string": "# Calcul", "new_string": "# Le calcul"})
@@ -1147,6 +1163,7 @@ RAISONS_AGENT = {
     "politique point 4": "politique, point 4",
     "fichier protégé": "est protégé par la politique",
     "commande humaine": "ne répond jamais à la place de l'humain",
+    "commande de l'humain seul": "est réservé à l'humain",
     "où regarder": "« Où regarder » doit donner un lien",
     "récap": "pas Pour toi :",
     "suite": "pas Ensuite :",

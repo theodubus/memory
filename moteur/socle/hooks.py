@@ -51,6 +51,10 @@ COMMANDES_HUMAINES = re.compile(
     r"|-m\s+socle(?:\s+--root\s+\S+)?\s+(answer|approve|relu)\b",
     re.M,
 )
+# La mise en place du dépôt compagnon pousse vers le dépôt privé et crée une
+# clé de déploiement : un geste de l'humain (B-0034, P5).
+INSTALLER_PRIVE = re.compile(
+    r"(?:\.socle/socle|-m\s+socle)(?:\s+--root\s+\S+)?\s+prive\s+installer\b")
 # Ce qui part hors du dépôt par le shell : un message de commit, un tag, une
 # pull request ou un commentaire par `gh`. Ce qui vise le dépôt privé n'est
 # pas une publication.
@@ -314,6 +318,9 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
                              "requise (politique, point 4). Si c'est une décision, émettre une demande `D-NNNN` ; si "
                              "c'est une action que l'humain doit faire lui-même, l'inscrire au backlog avec "
                              "`pour : humain`. Puis continuer sur autre chose.")
+        if INSTALLER_PRIVE.search(cmd):
+            return refus("`socle prive installer` est réservé à l'humain : il pousse vers le dépôt privé et crée "
+                         "une clé de déploiement (politique, point 4). L'inscrire au backlog avec `pour : humain`.")
         m = COMMANDES_HUMAINES.search(cmd)
         if m and (m.group(1) or m.group(2)) == "approve":
             return refus("`socle approve` est réservé à l'humain : il valide ses propres changements protégés.")

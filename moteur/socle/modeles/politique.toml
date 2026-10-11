@@ -77,7 +77,8 @@ allowed = []
 # - "compagnon" : un dépôt privé cloné dans `memory/private/`, ignoré ici ; le
 #   verrou `.socle/private.lock` dit à quel commit privé correspond chaque commit
 #   public (`socle prive verrouiller`). En CI, les secrets SOCLE_PRIVE_DEPOT et
-#   SOCLE_PRIVE_CLE (clé de déploiement) le récupèrent.
+#   SOCLE_PRIVE_CLE (clé de déploiement) le récupèrent. `socle prive installer
+#   --depot <adresse>` met tout en place, et dit les deux gestes sur GitHub.
 # - "chiffre" : les fichiers privés commités chiffrés par un filtre git
 #   (git-crypt ou équivalent) ; `.gitattributes` : `memory/private/** filter=…`.
 # Sans accès, la mémoire privée est signalée indisponible, jamais sautée.

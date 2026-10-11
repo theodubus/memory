@@ -5,15 +5,18 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-B-0034, le parcours de l'utilisateur : Théo a validé la recommandation du
-relevé (D-0014). Je fais P1 à P4 et P6 à P9, puis P5, chacune éprouvée sur
-une installation neuve ; P10 attendra sa propre demande.
+B-0035, la documentation du projet : ce que fait le socle, comment il est
+fait, comment l'installer et s'en servir. Le parcours simplifié (B-0034,
+fait) en donne la base : le guide de l'humain (`moteur/socle/AIDE.md`) et
+le README.
 
 ## Prochaines étapes
 
-1. P1 à P4 et P6 à P9 faits (J-2026-10-11-U). Reste P5 : le mode
-   compagnon guidé (`socle prive installer`), vers lequel « Et maintenant »
-   et le guide renverront ; puis la suite donnée dans `docs/parcours.md`,
-   et B-0034 clos.
-2. Puis B-0035, la documentation, et B-0041, la passe de recul que Théo a
-   demandée.
+1. B-0035 : la documentation, à partir du guide, du README et de
+   `docs/architecture.md`.
+2. Puis B-0041, la passe de recul que Théo a demandée ; ses premiers
+   constats sont au journal (J-2026-10-11-V). Son résultat se soumet à
+   Théo avant d'être fait.
+3. Plus tard : B-0038 (les textes du moteur dans la langue du projet, dont
+   le guide), B-0039, B-0040 ; B-0042 attend sa propre demande. La pull
+   request, quand Théo la demandera.

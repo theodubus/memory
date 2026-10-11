@@ -443,8 +443,8 @@ def _prive(cible: Path, mode: str, filtre: str) -> list[str]:
             prive.ecrire_verrou(cible, sha)
             res.append(f"mémoire privée (compagnon) : dépôt privé trouvé, verrou à {sha[:10]}")
         else:
-            res.append(f"!! mémoire privée (compagnon) : dépôt privé absent — le cloner dans {zone}/ "
-                       "(avec au moins un commit), puis `socle prive verrouiller`")
+            res.append("!! mémoire privée (compagnon) : dépôt privé absent — le mettre en place : "
+                       "`python3 .socle/socle prive installer --depot <adresse du dépôt privé>`")
     else:
         p = cible / ".gitattributes"
         texte = p.read_text(encoding="utf-8") if p.is_file() else ""
@@ -524,8 +524,9 @@ def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str]) -> list[str
                       "ou relancer l'installation avec `--adoption`, qui les passe en avertissement sur l'existant")
     mode = prive.mode(projet)
     if mode == "compagnon" and not prive.commit_compagnon(cible):
-        etapes.append(f"mettre en place le dépôt privé : le cloner dans {prive.dossier(cible)}/ (avec au moins "
-                      "un commit), puis `python3 .socle/socle prive verrouiller`")
+        etapes.append("mettre en place le dépôt privé (créé vide sur GitHub, privé) : clone, premier commit, "
+                      "verrou, clé de déploiement, puis les deux gestes sur GitHub, avec leurs liens : "
+                      "`python3 .socle/socle prive installer --depot <adresse du dépôt privé>`")
     elif mode and mode != "compagnon":
         filtre = "git-crypt"
         attributs = cible / ".gitattributes"

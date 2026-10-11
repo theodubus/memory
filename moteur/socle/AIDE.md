@@ -29,6 +29,18 @@ La commande finit par « Et maintenant » : tes étapes suivantes, dans
 l'ordre, chacune avec sa commande. Une mise à jour relance la même commande
 depuis le clone à jour du socle.
 
+En mode compagnon, la mémoire privée vit dans un second dépôt, privé. Crée-le
+vide sur GitHub, puis :
+
+```sh
+python3 .socle/socle prive installer --depot <adresse du dépôt privé>
+```
+
+Elle le clone, y fait le premier commit, écrit le verrou et crée une clé de
+déploiement ; elle finit par les deux gestes qui restent sur GitHub (la clé
+en clé de déploiement du dépôt privé, deux secrets dans le dépôt public),
+avec le lien de chaque page.
+
 ### 2. Décrire le projet
 
 ```sh

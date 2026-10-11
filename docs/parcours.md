@@ -59,3 +59,23 @@ Chacune avec son effort, ce qu'elle change, et si elle se défait.
 
 Recommandation : P1 à P4 et P6 à P9 maintenant, P5 ensuite, P10 plus tard et
 par une demande à part, puisqu'elle publie un paquet.
+
+## Suite donnée
+
+Théo a validé la recommandation (D-0014). Chaque proposition retenue a été
+éprouvée sur une installation neuve, d'un projet Python sous pytest ; le
+détail est au journal (J-2026-10-11-U, J-2026-10-11-V).
+
+| # | Ce qui a été fait | Étapes du parcours |
+| --- | --- | --- |
+| P1 | le code existant entre « à mesurer » au cliquet de mutation ; un avertissement, et `socle mutation-verdict --poser` écrit le plafond mesuré | l'installation finit verte ; l'étape 3 disparaît |
+| P2 | l'audit et les hooks git ne montrent que ce qui échoue, avertit ou n'a pas pu s'exécuter ; l'installation finit par « Et maintenant », `init` par « Pour toi » ; un commit refusé pour des fichiers protégés rappelle l'approbation | l'installation tient en 28 lignes au lieu de 56 ; les étapes 4 et 6 se lisent seules |
+| P3 | l'approbation sans `--files` liste les fichiers protégés changés et les approuve sur confirmation | l'étape 8 tient en une commande, que « Et maintenant » donne |
+| P4 | `--private` sur un projet installé écrit la section de la politique qui manque | le défaut de l'étape 9 |
+| P5 | `socle prive installer --depot <adresse>` : clone, premier commit poussé, verrou, clé de déploiement, puis les deux gestes sur GitHub avec leurs liens | l'étape 10 passe de six gestes à un, plus deux sur GitHub |
+| P6 | le guide de l'humain, `moteur/socle/AIDE.md`, affiché par `socle aide` ; l'aide rangée par public ; `socle` seul donne celle de l'humain ; `--adapter auto` par défaut | l'humain trouve son chemin sans lire `AGENTS.md` |
+| P7 | l'état liste ce que l'humain a écrit lui-même depuis le dernier commit de l'agent, que l'agent lui cite | la question sur D-0012 ne se pose plus |
+| P8 | le README commence par le parcours simplifié, et renvoie au guide | l'entrée du dépôt dit vrai |
+| P9 | le hook `commit-msg` avertit, sans refuser, d'une fonction publique sans test ni dispense | l'étape 11 ne surprend plus |
+| P10 | pas faite : une publication externe, qui attend sa propre demande (B-0042) | — |
+

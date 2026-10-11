@@ -444,3 +444,84 @@ class TestLienPrive(Chiffre):
         url, raison = liens.lien(config.Projet.charger(self.racine), "memory/private/canonical.md")
         self.assertIsNone(url)
         self.assertIn("chiffré sur GitHub", raison)
+
+
+class TestInstallerCompagnon(unittest.TestCase):
+    """B-0034, P5 : le mode compagnon mis en place d'un geste, sur un dépôt
+    privé fabriqué (un dépôt nu, vide) ; `ssh-keygen` est simulé."""
+
+    CLE = '#!/bin/sh\nwhile [ $# -gt 0 ]; do [ "$1" = "-f" ] && f="$2"; shift; done\n' \
+          'echo "CLE PRIVEE D ESSAI" > "$f"; echo "ssh-ed25519 AAAA essai" > "$f.pub"\n'
+
+    def setUp(self):
+        from socle import installeur
+
+        self.dossier = Path(tempfile.mkdtemp(prefix="socle-compagnon-"))
+        self.racine = self.dossier / "public"
+        self.racine.mkdir()
+        git(self.racine, "init", "-q", "-b", "main")
+        (self.racine / "calc.py").write_text("x = 1\n")
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(self.racine, "python", "@essai", prive="compagnon",
+                                 source=Path(__file__).resolve().parent.parent / "moteur")
+        self.nu = self.dossier / "prive.git"
+        git(self.dossier, "init", "-q", "--bare", "-b", "main", str(self.nu))
+        outils = self.dossier / "bin"
+        outils.mkdir()
+        (outils / "ssh-keygen").write_text(self.CLE)
+        (outils / "ssh-keygen").chmod(0o755)
+        self.env = {"PATH": f"{outils}{os.pathsep}{os.environ['PATH']}", "GIT_AUTHOR_NAME": "t",
+                    "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"}
+
+    def tearDown(self):
+        shutil.rmtree(self.dossier, ignore_errors=True)
+
+    def installer(self):
+        from unittest import mock
+
+        with mock.patch.dict(os.environ, self.env):
+            return prive.installer_compagnon(config.Projet.charger(self.racine), str(self.nu))
+
+    def test_un_geste_puis_les_deux_secrets(self):
+        code, lignes = self.installer()
+        self.assertEqual(code, 0, lignes)
+        sortie = "\n".join(lignes)
+        sha = git(self.nu, "rev-parse", "main").strip()
+        self.assertEqual(prive.lire_verrou(self.racine), sha)
+        self.assertIn("memory/private/", (self.racine / ".gitignore").read_text())
+        self.assertIn(f"SOCLE_PRIVE_DEPOT = {self.nu}", sortie)
+        cle = config.chemin_trace(self.racine).parent / "prive-deploiement"
+        self.assertTrue(cle.is_file() and Path(f"{cle}.pub").is_file())
+        self.assertIn(f"SOCLE_PRIVE_CLE   = le contenu de {cle}", sortie)
+        self.assertNotIn("CLE PRIVEE", sortie)
+        self.assertTrue(prive.acces(config.Projet.charger(self.racine)).disponible)
+        # Relancée, elle ne refait rien de ce qui est fait.
+        code, lignes = self.installer()
+        self.assertEqual(code, 0, lignes)
+        self.assertIn("dépôt privé déjà cloné", lignes[0])
+        self.assertEqual(prive.lire_verrou(self.racine), sha)
+
+    def test_hors_mode_compagnon_refus(self):
+        pol = self.racine / ".socle/policy.toml"
+        pol.write_text(pol.read_text().replace('mode = "compagnon"', 'mode = "chiffre"'))
+        code, lignes = self.installer()
+        self.assertEqual(code, 1)
+        self.assertIn("ne choisit pas le mode compagnon", lignes[0])
+
+    def test_gestes_github_avec_leurs_pages(self):
+        gestes = "\n".join(prive.gestes_github("https://github.com/o/prive", "https://github.com/o/public",
+                                               Path("/x/cle")))
+        self.assertIn("https://github.com/o/prive/settings/keys/new", gestes)
+        self.assertIn("https://github.com/o/public/settings/secrets/actions/new", gestes)
+        self.assertIn("SOCLE_PRIVE_DEPOT = git@github.com:o/prive.git", gestes)
+        self.assertIn("gh repo deploy-key add /x/cle.pub --repo o/prive", gestes)
+
+    def test_adresse_ssh_pour_la_ci(self):
+        self.assertEqual(prive.adresse_ssh("https://github.com/o/prive"), "git@github.com:o/prive.git")
+        self.assertEqual(prive.adresse_ssh("https://github.com/o/prive.git"), "git@github.com:o/prive.git")
+        self.assertEqual(prive.adresse_ssh("git@github.com:o/prive.git"), "git@github.com:o/prive.git")
+
+    def test_le_hook_la_refuse_a_l_agent(self):
+        commande = " ".join(("python3", ".socle/socle", "prive", "installer", "--depot", "x"))
+        self.assertTrue(hooks.INSTALLER_PRIVE.search(commande))
+        self.assertFalse(hooks.INSTALLER_PRIVE.search(commande.replace("installer --depot x", "verrouiller")))

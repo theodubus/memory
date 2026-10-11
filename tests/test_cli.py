@@ -206,7 +206,7 @@ class TestAide(unittest.TestCase):
 
     def test_chaque_commande_dans_un_seul_groupe(self):
         p, aides = cli.analyseur()
-        ranges = [n for noms in cli.GROUPES.values() for n in noms]
+        ranges = [n for noms in cli.GROUPES.values() for n in noms if n not in cli.SOUS_COMMANDES]
         self.assertEqual(sorted(ranges), sorted(aides))
         self.assertIn("pour l'agent :", cli.aide_groupee(aides))
 

@@ -110,7 +110,7 @@ must be read again. `socle new` puts in the index fingerprint.
 
 - complete a head SHA, invent an identifier or a reference: the hook refuses them;
 - write to a protected file (policy, adapter, engine lock, hooks, CI, human answers);
-- answer on the human's behalf (`socle answer` without `--relayed` and a quote), or run `socle approve`, which is for the human only;
+- answer on the human's behalf (`socle answer` without `--relayed` and a quote), or run `socle approve` or `socle prive installer`, which are for the human only;
 - bypass a hook (`--no-verify`): the CI runs everything, and nothing bypasses it.
 
 ### What runs on its own

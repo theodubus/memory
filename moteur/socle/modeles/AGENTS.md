@@ -109,7 +109,7 @@ refusée ; il faut relire l'entrée. `socle new` pose l'empreinte de l'index.
 
 - compléter un SHA de tête, inventer un identifiant ou une référence : le hook les refuse ;
 - écrire dans un fichier protégé (politique, adaptateur, verrou du moteur, hooks, CI, réponses humaines) ;
-- répondre à la place de l'humain (`socle answer` sans `--relayed` ni citation), ou lancer `socle approve`, réservé à l'humain ;
+- répondre à la place de l'humain (`socle answer` sans `--relayed` ni citation), ou lancer `socle approve` ou `socle prive installer`, réservés à l'humain ;
 - contourner un hook (`--no-verify`) : la CI exécute tout, et rien ne la contourne.
 
 ### Ce qui tourne tout seul

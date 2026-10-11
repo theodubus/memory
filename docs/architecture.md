@@ -45,7 +45,7 @@ comparent le même fichier sous ses deux noms.
 | `hooks.py` | les points d'entrée des hooks de l'agent et de git, la trace, dont chaque refus et l'étage qui l'a prononcé |
 | `etat.py` | l'état dérivé |
 | `humain.py` | ce qui revient à l'humain ; ce qu'il a écrit lui-même depuis le dernier commit de l'agent (approbations, réponses de son terminal), que l'état liste pour que l'agent le cite ; la lecture du dernier message de l'agent pour le récap |
-| `prive.py` | la mémoire privée : modes compagnon et chiffré, verrou, accès, couches privées par défaut, bascule d'une entrée publique, contrôles `prive.*` |
+| `prive.py` | la mémoire privée : modes compagnon et chiffré, verrou, accès, couches privées par défaut, bascule d'une entrée publique, contrôles `prive.*` ; la mise en place du dépôt compagnon, réservée à l'humain |
 | `liens.py` | le permalien d'un fichier ou d'une entrée ; les liens d'un message que l'humain ne pourra pas suivre |
 | `verification.py` | le contrat `verify` : les capacités de l'adaptateur |
 | `mutation.py` | le verdict de mutation contre les plafonds ; un lecteur par outil (cargo-mutants, mutmut, Stryker, gremlins, PIT, mutant, Infection) ; un module « à mesurer » reçoit son plafond mesuré (`--poser`) |

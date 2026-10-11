@@ -246,6 +246,13 @@ def cmd_prive(args) -> int:
         ajoute = prive.ajouter_terme(projet, " ".join(args.terme))
         print("terme ajouté à la liste privée" if ajoute else "terme déjà dans la liste privée")
         return 0
+    if args.action == "installer":
+        if not args.depot:
+            print("`socle prive installer --depot <adresse du dépôt privé>`", file=sys.stderr)
+            return 1
+        code, lignes = prive.installer_compagnon(projet, args.depot)
+        print("\n".join(lignes), file=sys.stderr if code else sys.stdout)
+        return code
     if args.action == "basculer":
         if len(args.terme) != 1:
             print("`socle prive basculer <ID>` : l'identifiant d'une entrée publique", file=sys.stderr)
@@ -543,11 +550,15 @@ def cmd_checks(args) -> int:
 # Les commandes par public (B-0034, P6) : l'humain en a peu, l'agent
 # davantage, le reste sert aux hooks, à la CI et au moteur lui-même.
 GROUPES = {
-    "pour l'humain": ["aide", "install", "init", "state", "answer", "approve", "relu"],
+    "pour l'humain": ["aide", "install", "init", "state", "answer", "approve", "relu", "prive installer"],
     "pour l'agent": ["new", "show", "url", "verify", "check", "next-id", "prive", "mutation-verdict", "archive",
                      "checks"],
     "internes (hooks, CI, moteur)": ["hook", "ci", "selftest", "fingerprint"],
 }
+
+
+# Une sous-commande que l'aide range à part de sa commande.
+SOUS_COMMANDES = {"prive installer": "(humain seul) mettre en place le dépôt privé du mode compagnon : --depot <adresse>"}
 
 
 def aide_groupee(aides: dict[str, str], groupes: list[str] | None = None) -> str:
@@ -557,7 +568,7 @@ def aide_groupee(aides: dict[str, str], groupes: list[str] | None = None) -> str
         if groupes is not None and groupe not in groupes:
             continue
         lignes.append(f"{groupe} :")
-        lignes += [f"  {n:<17} {aides.get(n, '')}" for n in noms]
+        lignes += [f"  {n:<17} {aides.get(n) or SOUS_COMMANDES.get(n, '')}" for n in noms]
         lignes.append("")
     return "\n".join(lignes).rstrip()
 
@@ -624,10 +635,12 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
     s.add_argument("--index", choices=("decisions", "backlog"), help="l'index des décisions ou du backlog ouvert")
     s.set_defaults(f=cmd_show)
 
-    s = sp.add_parser("prive", help="mémoire privée : état, verrou du dépôt compagnon, termes, bascule")
-    s.add_argument("action", choices=("etat", "verrouiller", "extraire", "recuperer", "terme", "basculer"))
+    s = sp.add_parser("prive", help="mémoire privée : état, verrou du dépôt compagnon, termes, bascule ; "
+                      "`installer` (humain seul) met en place le dépôt compagnon")
+    s.add_argument("action", choices=("etat", "installer", "verrouiller", "extraire", "recuperer", "terme", "basculer"))
     s.add_argument("terme", nargs="*", help="avec `terme` : le terme à ajouter à la liste privée ; "
                    "avec `basculer` : l'identifiant de l'entrée publique à basculer dans la mémoire privée")
+    s.add_argument("--depot", help="avec `installer` (humain seul) : l'adresse du dépôt privé, cloné et mis en place")
     s.set_defaults(f=cmd_prive)
 
     s = sp.add_parser("relu", help="tu as relu ce qui part vers le dépôt public ; l'agent y relaie ton accord (--relayed)")
