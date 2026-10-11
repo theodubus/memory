@@ -2,3 +2,4 @@
 # Mode amont : ce dépôt fabrique le moteur, dont l'empreinte n'est pas figée ici.
 mode = "amont"
 engine_dir = "moteur"
+format = 1

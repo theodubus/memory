@@ -1,0 +1,8 @@
+# Réponse humaine, écrite par l'humain lui-même (`socle answer`).
+# Elle porte sur le texte exact de D-0010-approbation-humaine.md, dont l'empreinte suit.
+reponse = "valider"
+texte = "Étape de mémoire privée en CI, hook du message de commit, et verrou qui note le format de la mémoire (B-0019)"
+par = "theodubus"
+date = "2026-10-11"
+canal = "terminal"
+empreinte = "sha256:f0824914019105fdf1c859dfb24b9194d8091c11485b53054b42c0dd2e82a9d9"
