@@ -40,6 +40,15 @@ class TestJuges(Dossier):
                 fautif = self.jouer(s, 1, False)
                 self.assertEqual(fautif["statut"], "echec")
                 self.assertTrue(fautif["raisons"])
+                if s.faute:
+                    # La faute livrée par l'agent fautif est arrêtée par la CI ;
+                    # le bon agent ne la tente pas.
+                    self.assertEqual(bon["systeme"]["verdict"], "non tentée")
+                    self.assertEqual(fautif["systeme"]["verdict"], "arrêtée par la CI", fautif["systeme"])
+
+    def test_les_suites_couvrent_chaque_scenario_une_fois(self):
+        ids = ",".join(banc.SUITES.values()).split(",")
+        self.assertEqual(sorted(ids), sorted(s.id for s in banc.SCENARIOS))
 
     def test_le_scenario_6_change_d_entree_a_chaque_passage(self):
         s6 = next(s for s in banc.SCENARIOS if s.id == "s6")
@@ -57,6 +66,50 @@ class TestJuges(Dossier):
         self.assertTrue(m["verify"]["ok"])
         self.assertGreater(m["etat_octets"], 500)
         self.assertEqual(m["refus"], [])
+
+
+class TestSysteme(Dossier):
+    """Le verdict du dispositif, à part de celui de l'agent."""
+
+    def setUp(self):
+        super().setUp()
+        self.projet = banc.jouer(banc.SCENARIOS[0], 1, self.dossier / "s1", "simule", 0)["projet"]
+
+    def scenario(self, faute):
+        return banc.Scenario("sx", "essai", None, None, None, None, faute=lambda p: faute, signes=r"tests\.creux")
+
+    def test_une_faute_que_rien_n_arrete_passe_a_travers(self):
+        v = banc.systeme(self.scenario("une faute que les contrôles ne voient pas"), Path(self.projet), [])
+        self.assertEqual(v["verdict"], "passée à travers")
+
+    def test_une_faute_corrigee_apres_un_refus_est_attrapee(self):
+        v = banc.systeme(self.scenario(None), Path(self.projet), ["Stop:tests.creux", "PreToolUse:Bash — autre"])
+        self.assertEqual((v["verdict"], v["etages"]), ("attrapée", ["Stop"]))
+
+    def test_garder_ce_qu_il_faut_pour_relire_un_passage(self):
+        garde = self.dossier / "garde"
+        banc.garder(Path(self.projet), garde)
+        self.assertIn("--- git status ---", (garde / "commits.txt").read_text())
+        self.assertTrue((garde / "trace.tsv").is_file())
+
+
+class TestSession(Dossier):
+    """La session lancée : sa transcription entière gardée, son résultat lu
+    dans le dernier événement."""
+
+    def test_lancer_claude_lit_le_resultat_et_garde_la_transcription(self):
+        flux = "\n".join(json.dumps(e) for e in (
+            {"type": "system", "subtype": "init"},
+            {"type": "assistant", "message": {"content": [{"type": "text", "text": "…"}]}},
+            {"type": "result", "subtype": "success", "result": "Fait.\nPour toi : rien.", "total_cost_usd": 0.2,
+             "num_turns": 4, "is_error": False, "usage": {"output_tokens": 9}}))
+        fini = subprocess.CompletedProcess([], 0, stdout=flux + "\n", stderr="")
+        with mock.patch.object(banc.subprocess, "run", return_value=fini) as lance:
+            s = banc.lancer_claude(self.dossier, "consigne", 2.0, self.dossier / "garde")
+        self.assertIn("stream-json", lance.call_args.args[0])
+        self.assertEqual((s["cout"], s["tours"], s["limite"]), (0.2, 4, None))
+        self.assertTrue(s["reponse"].startswith("Fait."))
+        self.assertEqual((self.dossier / "garde/session.jsonl").read_text(), flux + "\n")
 
 
 class TestLimites(unittest.TestCase):
@@ -103,7 +156,7 @@ class TestReprise(Dossier):
         self.appels = 0
 
     def session(self, limites: int):
-        def lancer(projet, consigne, budget):
+        def lancer(projet, consigne, budget, garde=None):
             self.appels += 1
             if self.appels <= limites:
                 return {"code": 1, "duree": 1, "reponse": "", "cout": 0, "tours": 1, "usage": None,
