@@ -28,6 +28,16 @@ jobs:
         with:
           python-version: "3.12"
 @@ETAPES_ADAPTATEUR@@
+      # Mode compagnon : la mémoire privée, au commit du verrou, avec une clé
+      # de déploiement. Sans les secrets (pull request d'un fork), elle reste
+      # indisponible et les contrôles le disent. Mode chiffré : le projet
+      # ajoute ici le déverrouillage de son outil (git-crypt unlock…).
+      - name: Mémoire privée
+        if: hashFiles('.socle/prive.lock') != ''
+        env:
+          SOCLE_PRIVE_DEPOT: ${{ secrets.SOCLE_PRIVE_DEPOT }}
+          SOCLE_PRIVE_CLE: ${{ secrets.SOCLE_PRIVE_CLE }}
+        run: python3 .socle/socle prive recuperer
       - name: Socle
         env:
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}

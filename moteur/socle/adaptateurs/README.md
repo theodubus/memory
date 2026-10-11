@@ -34,20 +34,24 @@ mais il ne verrait rien des tests.
 
 ## Ce qu'il contient
 
-Les deux adaptateurs maintenus, côte à côte. Ce sont des extraits : les
-fichiers [rust.toml](rust.toml) et [python.toml](python.toml) font foi.
+Trois adaptateurs sont maintenus. Ce sont des extraits : les fichiers
+[rust.toml](rust.toml), [python.toml](python.toml) et
+[python-pytest.toml](python-pytest.toml) font foi. Les deux adaptateurs
+Python ne diffèrent que par le lanceur de tests et la mutation : `python`
+s'en tient à la bibliothèque standard (`unittest`), sans mutation ;
+`python-pytest` prend pytest et mutmut, qui exige pytest.
 
-| Ce que le moteur demande | Rust (repris de chess) | Python | Qui s'en sert |
-| --- | --- | --- | --- |
-| Lancer les tests | `cargo test` | `unittest` | `socle verify`, hook de fin de tour, CI |
-| Vérifier le code | `clippy` | compilation de chaque fichier | idem |
-| Vérifier le formatage | `cargo fmt` | absent : relecture du diff | idem |
-| Reconnaître une fonction de test | `fn` sous `#[test]` | `def test…` | `tests.creux`, `tests.attendus` |
-| Reconnaître une assertion | `assert!`, `assert_eq!`… | `assert`, `self.assert…` | `tests.creux` : un test sans assertion est refusé |
-| Reconnaître un test désactivé | `#[ignore]` | `@unittest.skip` | `tests.creux` : désactivé sans raison écrite, refusé |
-| Rejouer un test sur le commit d'avant | `cargo test` d'un fichier de `tests/` | `unittest` d'un module | `tests.regression` |
-| Mesurer la mutation | `cargo-mutants` | absente pour l'instant | `mutation.couverture`, `socle mutation-verdict` |
-| Dire quel code doit être testé, et quelles fonctions sont privées | `src/`, `fn` sans `pub` | hors `tests/`, `def _…` | `tests.code-teste` : une fonction publique ajoutée ou modifiée est nommée par un test |
+| Ce que le moteur demande | Rust (repris de chess) | Python (`unittest`) | Python (`pytest`) | Qui s'en sert |
+| --- | --- | --- | --- | --- |
+| Lancer les tests | `cargo test` | `unittest` | `pytest` | `socle verify`, hook de fin de tour, CI |
+| Vérifier le code | `clippy` | compilation de chaque fichier | idem | idem |
+| Vérifier le formatage | `cargo fmt` | absent : relecture du diff | idem | idem |
+| Reconnaître une fonction de test | `fn` sous `#[test]` | `def test…` | idem | `tests.creux`, `tests.attendus` |
+| Reconnaître une assertion | `assert!`, `assert_eq!`… | `assert`, `self.assert…` | `assert`, `pytest.raises` | `tests.creux` : un test sans assertion est refusé |
+| Reconnaître un test désactivé | `#[ignore]` | `@unittest.skip` | `@pytest.mark.skip`, `xfail` | `tests.creux` : désactivé sans raison écrite, refusé |
+| Rejouer un test sur le commit d'avant | `cargo test` d'un fichier de `tests/` | `unittest` d'un module | `pytest` d'un fichier | `tests.regression` |
+| Mesurer la mutation | `cargo-mutants` | absente | `mutmut` | `mutation.couverture`, `socle mutation-verdict` |
+| Dire quel code doit être testé, et quelles fonctions sont privées | `src/`, `fn` sans `pub` | hors `tests/`, `def _…` | idem | `tests.code-teste` : une fonction publique ajoutée ou modifiée est nommée par un test |
 
 La mutation consiste à modifier le code exprès (changer un `+` en `-`, un
 `<` en `<=`) et à vérifier qu'un test au moins échoue. Un « mutant » qui
@@ -63,14 +67,17 @@ Chaque capacité est soit une commande, soit déclarée absente avec ce qui la
 remplace. Rien ne manque en silence : le contrôle `adaptateur.capacites`
 refuse une capacité ni fournie ni déclarée. L'adaptateur Python déclare ainsi
 le formatage absent (la bibliothèque standard n'a pas de formateur) et la
-mutation absente (l'outil n'est pas encore éprouvé, voir plus bas).
+mutation absente (mutmut exige pytest : l'adaptateur `python-pytest` la
+fournit).
 
 ## Où il vit
 
 - Les adaptateurs maintenus sont dans ce dossier.
 - L'installeur copie celui qu'on choisit (`socle install --adapter rust`)
   dans le projet, sous `.socle/adaptateur.toml`. Le projet y ajoute ses
-  étapes propres, par exemple un banc de performance.
+  étapes propres, par exemple un banc de performance, et y nomme ce qui lui
+  est propre : sous `python-pytest`, les modules soumis à la mutation, quand
+  son paquet n'est pas sous `src/`.
 - Ce fichier est **protégé** : seul l'humain le modifie. Un agent qui
   remplacerait la commande des tests par une commande qui réussit toujours
   rendrait tous les contrôles de tests aveugles.
@@ -86,10 +93,19 @@ Une seule exception : si l'outil de mutation du langage est nouveau, le
 moteur doit apprendre à lire ses résultats (`moteur/socle/mutation.py`, une
 fonction par outil ; il en connaît deux, `cargo-mutants` et `mutmut`).
 
-## Ce qui reste à prouver : le jalon 6
+## Le jalon 6 : un second langage, éprouvé
 
-L'adaptateur Python sert tous les jours à ce dépôt, mais sans mutation, et le
-lecteur des résultats de `mutmut` (l'outil de mutation de Python) est écrit
-sans avoir jamais tourné. Le jalon 6 installe le socle sur un petit projet
-Python jetable, avec `mutmut`, et fait tourner toute la chaîne. Sa porte :
-aucune ligne du moteur ne change pour y arriver.
+Le jalon 6 a installé le socle, avec l'adaptateur `python-pytest`, sur un
+petit projet Python jetable (un convertisseur de chiffres romains testé sous
+pytest), et fait tourner toute la chaîne : vérification, contrôles, CI,
+balayage `mutmut` et verdict contre le plafond. Un test sans assertion, un
+test supprimé, une fonction publique sans test, un correctif sans test de
+régression et des tests affaiblis jusqu'à laisser survivre des mutants y ont
+chacun été attrapés.
+
+La porte demandait que le moteur ne change pas. Les contrôles, la mémoire et
+les hooks n'ont pas changé ; deux corrections ont été nécessaires : le
+lecteur des résultats de `mutmut`, propre à cet outil, qui n'avait jamais
+tourné, et `tests.code-teste`, qui prenait le moteur installé dans `.socle/`
+pour du code du projet, ce que seul un projet Python pouvait montrer. Le
+journal (J-2026-10-10-W) en garde le détail.

@@ -120,12 +120,18 @@ def charger(racine: Path, rev: str | None, chemin: str, texte: str) -> Demande:
 
 
 def toutes(racine: Path, rev: str | None = None) -> list[Demande]:
-    chemins = outils.fichiers_courants(racine) if rev is None else outils.fichiers_a(racine, rev)
+    """Les demandes, privées comprises quand elles se lisent : celles du clone
+    du dépôt privé, ou déchiffrées ; une demande privée chiffrée ici n'est
+    pas lue."""
+    if rev is None:
+        chemins = set(outils.fichiers_courants(racine)) | set(memoire.fichiers_compagnon(racine))
+    else:
+        chemins = outils.fichiers_a(racine, rev)
     res = []
     for c in sorted(chemins):
         if memoire.couche_attendue(c) == "demandes":
             texte = outils.lire_a(racine, rev, c)
-            if texte is not None:
+            if texte is not None and not (memoire.est_prive(c) and not memoire.lisible(texte)):
                 res.append(charger(racine, rev, c, texte))
     return res
 

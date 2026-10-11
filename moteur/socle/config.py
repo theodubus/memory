@@ -140,6 +140,10 @@ class Projet:
 
     def chemins_proteges(self) -> list[str]:
         res = list(self.pol("protected", "paths", defaut=[]))
+        # La zone privée suit les règles de la zone publique : une réponse
+        # humaine privée est protégée comme une réponse publique.
+        res += [MEMOIRE + "/prive/" + m[len(MEMOIRE) + 1:] for m in res
+                if m.startswith(MEMOIRE + "/") and not m.startswith(MEMOIRE + "/prive/")]
         if self.mode == MODE_AMONT:
             # Dans le dépôt amont, le moteur EST la source : le protéger
             # empêcherait de le fabriquer.

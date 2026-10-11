@@ -24,9 +24,8 @@ class TestInjection(unittest.TestCase):
     def test_chaque_defaut_est_attrape_et_chaque_temoin_passe(self):
         rapport = autotest.executer()
         self.assertTrue(rapport.reussi, rapport.texte())
-        # Le cas « mémoire privée » n'est pas couvert avant le jalon 7, et le dit.
-        self.assertEqual([c.controle for c in rapport.constats if c.gravite == "indisponible"],
-                         ["autotest.memoire-privee-absente"])
+        # Depuis le jalon 7, aucun défaut du cadrage n'est déclaré non couvert.
+        self.assertEqual([c.controle for c in rapport.constats if c.gravite == "indisponible"], [])
 
 
 if __name__ == "__main__":

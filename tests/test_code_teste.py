@@ -113,6 +113,12 @@ class TestCodeTeste(unittest.TestCase):
         self.assertEqual(len(erreurs), 1, erreurs)
         self.assertIn("`double_tout`", erreurs[0])
 
+    def test_le_moteur_installe_n_est_pas_du_code_du_projet(self):
+        moteur = self.racine / ".socle/moteur/socle"
+        moteur.mkdir(parents=True)
+        (moteur / "outils.py").write_text("def git(*args):\n    return args\n")
+        self.assertEqual(self.verifier(), [])
+
     def test_section_code_de_l_adaptateur_maintenu_a_defaut(self):
         adaptateur = self.racine / ".socle/adaptateur.toml"
         texte = adaptateur.read_text()
@@ -125,6 +131,7 @@ class TestCodeTeste(unittest.TestCase):
         adaptateur.write_text(adaptateur.read_text().replace('language = "python"', 'language = "inconnu"'))
         chemins, exclus, prive = controles_tests.config_code(config.Projet.charger(self.racine))
         self.assertEqual(chemins, ["**/*.py"])
+        self.assertIn(".socle/**", exclus)
         self.assertIsNone(prive)
 
     def test_lignes_changees(self):

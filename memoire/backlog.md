@@ -5,33 +5,6 @@ Les sujets à traiter. Chacun a un statut (ouvert, en cours, bloqué, fait,
 abandonné) et une origine ; un sujet clos porte la référence de ce qui l'a
 clos, puis s'archive dans le journal (`python3 .socle/socle archive`).
 
-## B-0001 — Jalon 6 : second adaptateur sur un projet jetable, langage dynamique
-
-> statut : ouvert · origine : fichier:memoire/archives/cadrage-2026-10-10.md
-
-L'adaptateur Python existe et sert à ce dépôt ; il reste à l'éprouver sur un
-projet jetable avec un outil de mutation (mutmut), dont le lecteur de
-résultats est écrit mais jamais exécuté. Porte : noyau inchangé.
-
-## B-0002 — Jalon 7 : mémoire privée, en dépôt compagnon et chiffrée, et contrôles de fuite
-
-> statut : ouvert · origine : fichier:memoire/archives/cadrage-2026-10-10.md
-
-Déjà en place : les identifiants privés préfixés de `P`, refusés dans tout
-fichier public même sans accès à la zone privée. Restent les deux modes, le
-verrou du dépôt compagnon, la liste de termes refusés, le signal « mémoire
-privée indisponible » éprouvé par l'auto-test, et les arbitrages sur les
-fuites listés par le cadrage.
-
-## B-0003 — Jalon 8 : initialisation depuis un cadrage, depuis rien ou depuis un dépôt existant
-
-> statut : ouvert · origine : fichier:memoire/archives/cadrage-2026-10-10.md
-
-L'installeur pose déjà le dispositif, gère l'adoption et se relance. Restent
-les trois entrées d'initialisation et leur confrontation, les questions
-plafonnées, les migrations de format scriptées, l'affichage du diff de
-politique à la mise à jour. Attend D-0002.
-
 ## B-0004 — Jalon 9 : banc d'évaluation sur un agent réel
 
 > statut : ouvert · origine : fichier:memoire/archives/cadrage-2026-10-10.md
@@ -102,3 +75,36 @@ dit que le format est décrit dans un document de `docs/` qui n'existe pas ;
 c'est `moteur/socle/FORMAT.md` qui fait foi. Aucun contrôle ne lit les
 chemins cités dans les docstrings du code.
 
+## B-0017 — Deux fonctions calculent l'ancre GitHub d'un titre
+
+> statut : ouvert · origine : J-2026-10-10-V · lu : backlog@5630c7c0
+
+`liens.ancre`, écrite pour les permaliens, refait ce que fait déjà `slug`
+dans `controles_memoire.py`, qui vérifie les ancres des liens de la mémoire.
+Deux copies divergeront : n'en garder qu'une, que les deux modules
+appellent.
+
+## B-0018 — Le hook refuse un push vers la branche par défaut d'un dépôt local jetable
+
+> statut : ouvert · origine : J-2026-10-10-W · lu : backlog@85e18aaf
+
+Au jalon 6, le hook de l'agent a refusé `git push origin main` vers le
+dépôt d'origine d'un projet jetable, un simple dossier local : la
+politique (point 4) vise une publication, qu'un dépôt local n'est pas.
+Ne refuser que si la destination est distante, ou garder le refus et le
+dire dans sa raison ; à arbitrer, le refus large est le plus sûr.
+
+## B-0019 — Accepter la nouvelle étape du workflow de CI de ce dépôt
+
+> statut : ouvert · origine : J-2026-10-10-Y · pour : humain · lu : backlog@8f720178
+
+Les gabarits gagnent deux fichiers protégés que ce dépôt n'a pas encore :
+une étape du workflow de CI qui récupère la mémoire privée en mode
+compagnon (inerte sans verrou), et le hook git `commit-msg`, qui cherche les
+fuites de mémoire privée dans le message de commit (sans effet sans mémoire
+privée). Chaque régénération des instructions de ce dépôt les pose, et
+l'agent doit les retirer de son travail. À faire par Théo : régénérer en
+mode amont, approuver les deux fichiers (`.github/workflows/socle.yml` et
+le hook `commit-msg` de `.socle/git-hooks/`) par la commande d'approbation
+réservée à l'humain, puis commiter ; la procédure exacte est dans la
+conversation du 2026-10-10.

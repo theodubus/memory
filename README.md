@@ -22,14 +22,19 @@ Python 3.11 ou plus récent, dans un dépôt git :
 
 ```sh
 git clone https://github.com/theodubus/memory /tmp/socle
-PYTHONPATH=/tmp/socle/moteur python3 -m socle install --target . --adapter rust --owner @moi
-# projet existant : ajouter --adoption
+PYTHONPATH=/tmp/socle/moteur python3 -m socle install --target . --adapter auto --owner @moi
+# projet existant : ajouter --adoption ; mémoire privée : --private compagnon|chiffre
+python3 .socle/socle init --cadrage cadrage.md --depot   # l'une, l'autre, les deux, ou rien
 python3 .socle/socle state
 python3 .socle/socle verify --rapide
 ```
 
-Adaptateurs maintenus : `rust`, `python` ; un autre langage se déclare dans
-un fichier `.toml` passé à `--adapter`.
+`--adapter auto` choisit l'adaptateur d'après le dépôt. Adaptateurs
+maintenus : `rust`, `python` (`unittest`), `python-pytest` (pytest et
+mutmut) ; un autre langage se déclare dans un fichier `.toml` passé à
+`--adapter`. Relancer l'installeur met le socle à jour : il remplace le
+moteur, migre les formats, et montre le diff de la politique sans la
+toucher.
 
 ## Lire la suite
 

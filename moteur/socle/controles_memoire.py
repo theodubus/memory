@@ -22,8 +22,7 @@ TRANSITIONS_ADR = {
 }
 
 
-def est_prive(chemin: str) -> bool:
-    return chemin.startswith(config.MEMOIRE + "/prive/")
+est_prive = memoire.est_prive
 
 
 # --------------------------------------------------------------------------
@@ -305,13 +304,43 @@ def lectures(ctx, r):
     mem, base = ctx.memoire, ctx.memoire_base
     defs = mem.definitions()
     nouveaux = set(defs) - set(base.definitions())
+    # Une citation vaut pour la version qu'elle a lue : celle de l'entrée au
+    # commit de la plage où la citation est apparue, même si l'entrée a changé
+    # depuis (une demande répondue est gelée, et ne peut plus suivre). Une
+    # citation encore hors de tout commit lit la version actuelle. Calculé
+    # seulement au besoin.
+    historique: list[tuple[str, memoire.Memoire]] = []
+
+    def commits_ou_parait(chemin: str, citation: str) -> list[memoire.Memoire]:
+        if not historique:
+            historique.extend((c["sha"], memoire.Memoire.charger(ctx.racine, c["sha"])) for c in ctx.commits)
+        res = []
+        for sha, m in historique:
+            texte_c = m.fichiers[chemin].texte if chemin in m.fichiers else outils.lire_a(ctx.racine, sha, chemin)
+            if texte_c and citation in texte_c:
+                res.append(m)
+                break  # la première apparition : la version alors lue
+        return res
+
+    def lue_dans_la_plage(chemin: str, ident: str, h: str) -> bool:
+        return any((e := m.entree(ident)) is not None and memoire.empreinte_entree(e) == h
+                   for m in commits_ou_parait(chemin, f"{ident}@{h}"))
+
+    def index_de_la_plage(chemin: str, index: str, h: str, soi) -> bool:
+        for m in commits_ou_parait(chemin, f"{index}@{h}"):
+            apres_m = {n for n in m.definitions() if soi and m.definitions()[n][0].type == soi.type and n > soi.id}
+            sauf = {soi.id} if soi else set()
+            if h in (memoire.empreinte_index(m, index, sauf), memoire.empreinte_index(m, index, sauf | apres_m)):
+                return True
+        return False
+
     for chemin, texte in sorted(textes_scannes(ctx).items()):
         avant = ctx.lire_base(chemin) or ""
         deja = {(i, h) for i, h, _ in memoire.citations(avant)}
         for ident, h, ligne in memoire.citations(texte):
             if (ident, h) in deja or ident not in defs:
                 continue
-            if memoire.empreinte_entree(defs[ident][0]) != h:
+            if memoire.empreinte_entree(defs[ident][0]) != h and not lue_dans_la_plage(chemin, ident, h):
                 r.erreur("memoire.lectures", f"`{ident}@{h}` ne correspond pas à la version actuelle de {ident} "
                          f"(lue avant un changement, ou inventée) : la relire, `python3 .socle/socle show {ident}`, "
                          "et citer l'empreinte affichée", chemin, ligne)
@@ -330,7 +359,7 @@ def lectures(ctx, r):
                 memoire.empreinte_index(mem, index, sauf | nouveaux),
                 memoire.empreinte_index(base, index),
             }
-            if h not in permises:
+            if h not in permises and not index_de_la_plage(chemin, index, h, soi):
                 r.erreur("memoire.lectures", f"`{index}@{h}` ne correspond à aucune version récente de l'index : "
                          f"le relire, `python3 .socle/socle show --index {index}`, et citer l'empreinte affichée",
                          chemin, ligne)
@@ -404,8 +433,12 @@ def budgets(ctx, r):
     """Chaque couche et le fichier d'instructions ont un plafond de taille."""
     budgets = ctx.projet.gf("budgets", defaut={}) or {}
     couverts = set()
+    # La zone privée suit les budgets de la zone publique : mêmes formats,
+    # mêmes contrôles (cadrage, règles de classement, point 5).
+    miroirs = {c: c.replace(memoire.DOSSIER_PRIVE + "/", config.MEMOIRE + "/", 1) for c in ctx.fichiers if est_prive(c)}
     for motif, b in budgets.items():
-        for chemin in outils.filtrer(ctx.fichiers, [motif]):
+        vises = set(outils.filtrer(ctx.fichiers, [motif])) | {c for c, m in miroirs.items() if outils.correspond(m, [motif])}
+        for chemin in sorted(vises):
             couverts.add(chemin)
             texte = ctx.lire(chemin) or ""
             octets = len(texte.encode("utf-8"))

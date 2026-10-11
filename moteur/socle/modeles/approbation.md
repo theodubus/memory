@@ -17,7 +17,7 @@ L'humain approuve un changement qu'il a fait lui-même sur un garde-fou ou un fi
 
 ## Où regarder
 
-Le diff du commit qui porte cette demande ; les fichiers et clés cités ci-dessus, voir [le format des demandes](../../.socle/moteur/socle/FORMAT.md).
+Le diff du commit qui porte cette demande ; les fichiers et clés cités ci-dessus, voir [le format des demandes](../../{moteur}/socle/FORMAT.md).
 
 ## Options
 

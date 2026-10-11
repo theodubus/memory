@@ -61,19 +61,79 @@ def detecter_langage(cible: Path) -> str | None:
     return None
 
 
+def detecter_adaptateur(cible: Path) -> str | None:
+    """L'adaptateur maintenu qui convient au dépôt, déduit de ses fichiers ;
+    `None` si rien ne le dit : la question revient alors à l'humain."""
+    langage = detecter_langage(cible)
+    fichiers = outils.fichiers_courants(cible)
+    if langage is None and any(f.endswith(".py") for f in fichiers):
+        langage = "python"
+    if langage != "python":
+        return langage
+    indices = [f for f in fichiers if f.endswith("conftest.py") or f in ("pytest.ini", "tox.ini")]
+    for f in [f for f in fichiers if f in ("pyproject.toml", "setup.cfg") or f.startswith("requirements")]:
+        if "pytest" in (cible / f).read_text(encoding="utf-8", errors="replace"):
+            indices.append(f)
+    return "python-pytest" if indices else "python"
+
+
+def politique_privee(texte: str, mode: str, relecture: str | None, demandes: bool) -> str:
+    """La politique du gabarit, avec la mémoire privée choisie à
+    l'installation au lieu de son exemple en commentaire."""
+    bloc = f'[private]\nmode = "{mode}"\n'
+    if relecture:
+        bloc += f'review = "{relecture}"\n'
+    bloc += f"requests = {'true' if demandes else 'false'}\n"
+    debut = texte.index("# [private]\n")
+    fin = texte.find("\n\n", debut)
+    fin = len(texte) if fin == -1 else fin + 1
+    return texte[:debut] + bloc + texte[fin:]
+
+
+def diff_politique(cible: Path) -> list[str]:
+    """Ce qui sépare la politique du projet de celle du gabarit de cette
+    version : affiché à la mise à jour, jamais appliqué. La politique est à
+    l'humain."""
+    import difflib
+
+    p = cible / config.POLITIQUE
+    if not p.is_file():
+        return []
+    projet, gab = p.read_text(encoding="utf-8").splitlines(), gabarit("politique.toml").splitlines()
+    return list(difflib.unified_diff(projet, gab, "politique du projet", "gabarit de cette version", lineterm=""))
+
+
 def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bool = False,
-              mode: str = config.MODE_PROJET, source: Path | None = None) -> int:
+              mode: str = config.MODE_PROJET, source: Path | None = None, prive: str | None = None,
+              relecture: str | None = None, demandes_privees: bool = False, filtre: str = "git-crypt") -> int:
+    from socle import migrations
+
     if not outils.est_depot(cible):
         print(f"refus : {cible} n'est pas un dépôt git", file=sys.stderr)
         return 2
     source = source or Path(__file__).resolve().parent.parent
+    if adaptateur == "auto":
+        detecte = detecter_adaptateur(cible)
+        if detecte is None:
+            print("refus : langage non détecté (ni Cargo.toml, ni fichier Python) : le demander à l'humain, "
+                  "puis `--adapter <rust|python|python-pytest>` ou le chemin d'un .toml", file=sys.stderr)
+            return 2
+        adaptateur = detecte
     texte_adaptateur, nom_adaptateur = charger_adaptateur(adaptateur)
+    ancien = config.Projet.charger(cible).lock if (cible / config.LOCK).is_file() else {}
     try:
         tomllib.loads(texte_adaptateur)
     except tomllib.TOMLDecodeError as e:
         print(f"refus : adaptateur « {nom_adaptateur} » illisible : {e}", file=sys.stderr)
         return 2
-    journal = []
+    journal = [f"adaptateur : {nom_adaptateur}" + (" (détecté)" if adaptateur != nom_adaptateur else "")]
+    if ancien:
+        journal.append(f"mise à jour : moteur {ancien.get('version', 'amont')} → {VERSION}")
+        try:
+            journal += migrations.migrer(cible, int(ancien.get("format", 1)))
+        except RuntimeError as e:
+            print(f"refus : {e}", file=sys.stderr)
+            return 2
 
     # 1. Le moteur, remplacé en bloc.
     if mode == config.MODE_AMONT:
@@ -96,6 +156,7 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
             "# Mode amont : ce dépôt fabrique le moteur, dont l'empreinte n'est pas figée ici.\n"
             f'mode = "{mode}"\n'
             f'engine_dir = "{dossier_moteur}"\n'
+            f"format = {migrations.FORMAT}\n"
         ))
         journal.append(f"verrou en mode amont : le moteur est la source, sous {dossier_moteur}/socle")
     else:
@@ -108,12 +169,21 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
             f'engine_dir = "{dossier_moteur}"\n'
             f'fingerprint = "{calculee}"\n'
             f"files = {n}\n"
+            f"format = {migrations.FORMAT}\n"
         ))
         journal.append(f"verrou : {empreinte.courte(calculee)} sur {n} fichiers")
 
     # 3. Les fichiers du projet : posés s'ils manquent, jamais écrasés.
+    politique = gabarit("politique.toml")
+    if prive:
+        politique = politique_privee(politique, prive, relecture, demandes_privees)
+    if ancien and (cible / config.POLITIQUE).is_file():
+        ecart = diff_politique(cible)
+        if ecart:
+            journal.append("la politique du projet diffère du gabarit de cette version ; rien n'est écrit, "
+                           "elle est à l'humain — à relire :\n      " + "\n      ".join(ecart))
     for nom, contenu in (
-        (config.POLITIQUE, gabarit("politique.toml")),
+        (config.POLITIQUE, politique),
         (config.ADAPTATEUR, texte_adaptateur),
         (config.GARDE_FOUS, gabarit("garde-fous.toml")),
     ):
@@ -163,6 +233,8 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
             gabarit("socle.yml").replace("@@ETAPES_ADAPTATEUR@@\n", setup.strip("\n") + "\n" if setup.strip() else ""))
     journal += _codeowners(cible, proprietaire)
     journal += _gitignore(cible)
+    if prive:
+        journal += _prive(cible, prive, filtre)
 
     # 7. La trace : l'installation se voit dans `Socle-Hooks` d'une session
     # en cours (SessionStart a tiré avant que le hook n'existe).
@@ -281,6 +353,40 @@ def _gitignore(cible: Path) -> list[str]:
         p.write_text(existant.rstrip("\n") + ("\n\n" if existant.strip() else "") + "\n".join(manquantes) + "\n",
                      encoding="utf-8")
     return []
+
+
+def _prive(cible: Path, mode: str, filtre: str) -> list[str]:
+    """La mémoire privée : le clone du dépôt privé et son verrou, ou le
+    filtre de chiffrement ; puis l'accès, vérifié."""
+    from socle import prive
+
+    res = []
+    if mode == "compagnon":
+        p = cible / ".gitignore"
+        texte = p.read_text(encoding="utf-8") if p.is_file() else ""
+        if f"{prive.DOSSIER}/" not in texte.splitlines():
+            p.write_text(texte.rstrip("\n") + f"\n# Le clone du dépôt privé (mémoire privée)\n{prive.DOSSIER}/\n",
+                         encoding="utf-8")
+        sha = prive.commit_compagnon(cible)
+        if sha:
+            prive.ecrire_verrou(cible, sha)
+            res.append(f"mémoire privée (compagnon) : dépôt privé trouvé, verrou à {sha[:10]}")
+        else:
+            res.append(f"!! mémoire privée (compagnon) : dépôt privé absent — le cloner dans {prive.DOSSIER}/ "
+                       "(avec au moins un commit), puis `socle prive verrouiller`")
+    else:
+        p = cible / ".gitattributes"
+        texte = p.read_text(encoding="utf-8") if p.is_file() else ""
+        ligne = f"{prive.DOSSIER}/** filter={filtre} diff={filtre}"
+        if not any(l.startswith(f"{prive.DOSSIER}/**") for l in texte.splitlines()):
+            p.write_text(texte.rstrip("\n") + ("\n" if texte.strip() else "") + ligne + "\n", encoding="utf-8")
+        if outils.git(cible, "config", "--get", f"filter.{filtre}.clean", check=False).strip():
+            res.append(f"mémoire privée (chiffrée) : filtre « {filtre} » configuré")
+        else:
+            res.append(f"!! mémoire privée (chiffrée) : filtre « {filtre} » non configuré ici — l'initialiser "
+                       f"(`{filtre} init`, ou l'équivalent de l'outil) avant d'écrire du privé ; `prive.chiffre` "
+                       "refusera tout fichier privé commité en clair")
+    return res
 
 
 def _adopter(cible: Path) -> list[str]:

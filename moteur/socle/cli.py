@@ -99,6 +99,8 @@ def cmd_hook(args) -> int:
         return hooks.git_prepare_commit_msg(projet, *args.rest[:2])
     if evt == "git-pre-push":
         return hooks.git_pre_push(projet)
+    if evt == "git-commit-msg":
+        return hooks.git_commit_msg(projet, *args.rest[:1])
     print(f"hook inconnu : {evt}", file=sys.stderr)
     return 2
 
@@ -129,23 +131,31 @@ def cmd_new(args) -> int:
     mem = memoire.Memoire.charger(racine)
     type_ = TYPES_CLI[args.type]
     jour = date.today().isoformat()
-    ident = mem.prochain_id(type_, date=jour)
+    # Avec une mémoire privée, le contenu nouveau est privé par défaut
+    # (cadrage, règles de classement, point 3).
+    # Une demande ne devient privée que si l'humain l'a choisi (`[private] requests`) :
+    # il doit pouvoir la lire là où il lit.
+    defaut = projet.pol("private", "requests", defaut=False) if type_ == "D" else True
+    prive = getattr(args, "private", False) or (
+        bool(projet.pol("private", "mode")) and bool(defaut) and not getattr(args, "public", False))
+    ident = mem.prochain_id(type_, prive=prive, date=jour)
     titre = args.title
-    zone = "publique"
+    zone = "privee" if prive else "publique"
+    dossier = racine / (memoire.DOSSIER_PRIVE if prive else config.MEMOIRE)
     if type_ == "F":
-        chemin = racine / "memoire/canonique.md"
+        chemin = dossier / "canonique.md"
         bloc = f"\n## {ident} — {titre}\n\n> statut : supposé · source : <d'où vient ce fait>\n\n<le fait, et ce qui le prouverait>\n"
-        _ajouter(chemin, bloc)
+        _ajouter(chemin, bloc, "canonique", zone)
     elif type_ == "B":
         # Le backlog s'affiche avant d'y ajouter : un doublon se voit ici.
         _afficher_index(mem, "backlog")
-        chemin = racine / "memoire/backlog.md"
+        chemin = dossier / "backlog.md"
         lu = memoire.empreinte_index(mem, "backlog")
         bloc = (f"\n## {ident} — {titre}\n\n> statut : ouvert · origine : <J-… ou commit:… où le sujet est apparu>"
                 f" · lu : backlog@{lu}\n\n<ce qu'il faut faire, et pourquoi>\n")
-        _ajouter(chemin, bloc)
+        _ajouter(chemin, bloc, "backlog", zone)
     elif type_ == "J":
-        chemin = racine / f"memoire/journal/{jour[:7]}.md"
+        chemin = dossier / f"journal/{jour[:7]}.md"
         if not chemin.is_file():
             chemin.parent.mkdir(parents=True, exist_ok=True)
             chemin.write_text(f"<!-- socle: couche=journal zone={zone} -->\n# Journal — {jour[:7]}\n", encoding="utf-8")
@@ -154,7 +164,8 @@ def cmd_new(args) -> int:
         # Les décisions s'affichent avant d'en ajouter une : on ne rouvre pas
         # une décision prise sans fait nouveau.
         _afficher_index(mem, "decisions")
-        chemin = racine / f"memoire/decisions/{ident}-{_slug(titre)}.md"
+        chemin = dossier / f"decisions/{ident}-{_slug(titre)}.md"
+        chemin.parent.mkdir(parents=True, exist_ok=True)
         chemin.write_text(
             f"<!-- socle: couche=decisions zone={zone} -->\n# {ident} — {titre}\n\n"
             f"> statut : proposée · date : {jour} · lu : decisions@{memoire.empreinte_index(mem, 'decisions')}"
@@ -164,14 +175,22 @@ def cmd_new(args) -> int:
     else:
         from socle.modeles import gabarit
 
-        chemin = racine / f"memoire/demandes/{ident}-{_slug(titre)}.md"
-        chemin.write_text(gabarit("demande.md").format(id=ident, titre=titre, date=jour), encoding="utf-8")
+        chemin = dossier / f"demandes/{ident}-{_slug(titre)}.md"
+        chemin.parent.mkdir(parents=True, exist_ok=True)
+        texte = gabarit("demande.md").format(id=ident, titre=titre, date=jour)
+        chemin.write_text(texte.replace("zone=publique", f"zone={zone}", 1), encoding="utf-8")
     print(f"{ident}\t{chemin.relative_to(racine)}")
     return 0
 
 
-def _ajouter(chemin: Path, bloc: str):
-    texte = chemin.read_text(encoding="utf-8") if chemin.is_file() else ""
+def _ajouter(chemin: Path, bloc: str, couche: str | None = None, zone: str = "publique"):
+    """Ajoute une entrée au fichier ; un fichier neuf reçoit d'abord son
+    en-tête."""
+    if chemin.is_file():
+        texte = chemin.read_text(encoding="utf-8")
+    else:
+        chemin.parent.mkdir(parents=True, exist_ok=True)
+        texte = f"<!-- socle: couche={couche} zone={zone} -->\n" if couche else ""
     chemin.write_text(texte.rstrip("\n") + "\n" + bloc, encoding="utf-8")
 
 
@@ -204,6 +223,68 @@ def cmd_show(args) -> int:
             elif d:
                 print(f"\n--- {d.statut} ---")
     return code
+
+
+def cmd_prive(args) -> int:
+    """Le dépôt privé du mode compagnon et son verrou."""
+    from socle import prive
+
+    projet = _projet(args)
+    racine = projet.racine
+    if args.action == "etat":
+        print(prive.ligne_etat(projet))
+        return 0
+    if args.action == "terme":
+        if prive.mode(projet) is None or not args.terme:
+            print("`socle prive terme <terme>` : une mémoire privée, et un terme", file=sys.stderr)
+            return 1
+        ajoute = prive.ajouter_terme(projet, " ".join(args.terme))
+        print("terme ajouté à la liste privée" if ajoute else "terme déjà dans la liste privée")
+        return 0
+    if prive.mode(projet) != "compagnon":
+        print("le verrou n'existe qu'en mode compagnon (`[private] mode` de la politique)", file=sys.stderr)
+        return 1
+    if args.action == "recuperer":
+        return prive.recuperer(projet)
+    sha = prive.commit_compagnon(racine)
+    if sha is None:
+        print(f"dépôt privé absent de `{prive.DOSSIER}/` : le cloner d'abord", file=sys.stderr)
+        return 1
+    if args.action == "verrouiller":
+        modifies = prive.compagnon_modifie(racine)
+        if modifies:
+            print(f"{len(modifies)} changement(s) privé(s) sans commit : les commiter dans le dépôt privé d'abord",
+                  file=sys.stderr)
+            return 1
+        prive.ecrire_verrou(racine, sha)
+        print(f"verrou : {sha[:10]} — à commiter avec le reste (`{prive.VERROU}`)")
+        return 0
+    verrou = prive.lire_verrou(racine)
+    if verrou is None:
+        print("pas de verrou à extraire", file=sys.stderr)
+        return 1
+    outils.git(prive.depot_compagnon(racine), "checkout", "-q", "--detach", verrou)
+    print(f"mémoire privée remise au verrou : {verrou[:10]}")
+    return 0
+
+
+def cmd_relu(args) -> int:
+    """L'humain a relu ce qui part vers le dépôt public (D-0006) : il le dit
+    lui-même, ou l'agent relaie son accord donné dans la conversation, avec
+    son texte exact."""
+    from socle import prive
+
+    projet = _projet(args)
+    citation = Path(args.quote_file).read_text(encoding="utf-8") if args.quote_file else (args.quote or "")
+    if args.relayed and (not args.by or len(citation.strip()) < 2):
+        print("refus : une relecture relayée nomme l'humain (--by) et cite son texte exact (--quote-file)",
+              file=sys.stderr)
+        return 2
+    sha = outils.git(projet.racine, "rev-parse", args.rev).strip()
+    prive.noter_relecture(projet.racine, sha, args.by or _auteur(projet),
+                          "conversation" if args.relayed else "terminal", citation)
+    print(f"relu : {sha[:10]} peut partir vers le dépôt public")
+    return 0
 
 
 def cmd_url(args) -> int:
@@ -278,6 +359,28 @@ def cmd_approve(args) -> int:
     mem = memoire.Memoire.charger(racine)
     ident = mem.prochain_id("D")
     jour = date.today().isoformat()
+    # La raison peut citer des entrées : elles se citent avec leur empreinte,
+    # comme dans toute demande nouvelle (ADR-0008). Une entrée qui n'existe
+    # pas ici, ou un fichier qui n'existe ni ici ni au dernier commit, arrête
+    # tout avant d'écrire.
+    inconnus = []
+
+    def citer(m) -> str:
+        e = mem.entree(m.group(0)) if memoire.decouper_id(m.group(0)) else None
+        if e is None:
+            inconnus.append(m.group(0))
+            return m.group(0)
+        return f"{m.group(0)}@{memoire.empreinte_entree(e)}"
+
+    raison = re.sub(memoire.ID_RE.pattern + r"(?!@)", citer, args.text)
+    absents = [f for f in args.files or [] if not (racine / f).is_file()
+               and not outils.git_reussit(racine, "cat-file", "-e", f"HEAD:{f}")]
+    if inconnus or absents:
+        for i in inconnus:
+            print(f"refus : la raison cite {i}, qui n'existe pas dans cette mémoire", file=sys.stderr)
+        for f in absents:
+            print(f"refus : {f} n'existe ni ici ni au dernier commit : rien à approuver", file=sys.stderr)
+        return 2
     cites = []
     for f in args.files or []:
         p = racine / f
@@ -288,7 +391,8 @@ def cmd_approve(args) -> int:
     if not cites:
         print("rien à approuver : --files ou --keys", file=sys.stderr)
         return 2
-    texte = gabarit("approbation.md").format(id=ident, date=jour, raison=args.text, elements="\n".join(cites))
+    texte = gabarit("approbation.md").format(id=ident, date=jour, raison=raison, elements="\n".join(cites),
+                                             moteur=projet.dossier_moteur)
     chemin = racine / f"memoire/demandes/{ident}-approbation-humaine.md"
     chemin.write_text(texte, encoding="utf-8")
     d = demandes.charger(racine, None, str(chemin.relative_to(racine)), texte)
@@ -307,7 +411,20 @@ def cmd_install(args) -> int:
         adoption=args.adoption,
         mode=args.mode,
         source=Path(__file__).resolve().parent.parent,
+        prive=args.private,
+        relecture=args.review,
+        demandes_privees=args.private_requests,
+        filtre=args.filter,
     )
+
+
+def cmd_init(args) -> int:
+    """L'initialisation : un document de cadrage, rien, un dépôt existant, ou
+    le document et le dépôt ensemble."""
+    from socle import initialisation
+
+    projet = _projet(args)
+    return initialisation.initialiser(projet, Path(args.cadrage).resolve() if args.cadrage else None, args.depot)
 
 
 def cmd_selftest(args) -> int:
@@ -394,12 +511,28 @@ def main(argv=None) -> int:
     s = sp.add_parser("new", help="ajoute une entrée squelette avec son identifiant")
     s.add_argument("type", choices=sorted(TYPES_CLI))
     s.add_argument("title")
+    zone = s.add_mutually_exclusive_group()
+    zone.add_argument("--private", action="store_true", help="dans la mémoire privée (défaut quand elle existe)")
+    zone.add_argument("--public", action="store_true", help="dans la mémoire publique, même quand une mémoire privée existe")
     s.set_defaults(f=cmd_new)
 
     s = sp.add_parser("show", help="afficher une entrée de mémoire, avec son empreinte, ou un index")
     s.add_argument("ids", nargs="*")
     s.add_argument("--index", choices=("decisions", "backlog"), help="l'index des décisions ou du backlog ouvert")
     s.set_defaults(f=cmd_show)
+
+    s = sp.add_parser("prive", help="mémoire privée : état, verrou du dépôt compagnon")
+    s.add_argument("action", choices=("etat", "verrouiller", "extraire", "recuperer", "terme"))
+    s.add_argument("terme", nargs="*", help="avec `terme` : le terme à ajouter à la liste privée")
+    s.set_defaults(f=cmd_prive)
+
+    s = sp.add_parser("relu", help="(humain, ou relayé) ce qui part vers le dépôt public a été relu")
+    s.add_argument("--rev", default="HEAD")
+    s.add_argument("--by")
+    s.add_argument("--relayed", action="store_true", help="accord donné par l'humain dans la conversation")
+    s.add_argument("--quote")
+    s.add_argument("--quote-file")
+    s.set_defaults(f=cmd_relu)
 
     s = sp.add_parser("url", help="le permalien d'un fichier ou d'une entrée, à donner à l'humain")
     s.add_argument("cibles", nargs="+", metavar="chemin|ID")
@@ -423,11 +556,21 @@ def main(argv=None) -> int:
 
     s = sp.add_parser("install", help="installer ou mettre à jour le socle dans un projet")
     s.add_argument("--target", default=".")
-    s.add_argument("--adapter", required=True, help="nom d'un adaptateur maintenu (rust, python) ou chemin d'un .toml")
+    s.add_argument("--adapter", required=True,
+                   help="`auto` (déduit du dépôt), un adaptateur maintenu (rust, python, python-pytest) ou le chemin d'un .toml")
     s.add_argument("--owner", default="", help="propriétaire pour CODEOWNERS, ex. @theodubus")
     s.add_argument("--adoption", action="store_true", help="projet existant : plafonds au niveau actuel")
     s.add_argument("--mode", choices=(config.MODE_PROJET, config.MODE_AMONT), default=config.MODE_PROJET)
+    s.add_argument("--private", choices=("compagnon", "chiffre"), help="mémoire privée, et son mode")
+    s.add_argument("--review", choices=("aucune", "chaque-push", "lots"), help="relecture humaine avant publication")
+    s.add_argument("--private-requests", action="store_true", help="demandes et réponses dans la mémoire privée")
+    s.add_argument("--filter", default="git-crypt", help="mode chiffré : le nom du filtre git de l'outil")
     s.set_defaults(f=cmd_install)
+
+    s = sp.add_parser("init", help="initialiser la mémoire depuis un cadrage, rien, ou le dépôt existant")
+    s.add_argument("--cadrage", help="le document de cadrage, archivé tel quel")
+    s.add_argument("--depot", action="store_true", help="auditer le dépôt existant, en lecture seule")
+    s.set_defaults(f=cmd_init)
 
     s = sp.add_parser("selftest", help="injecte des défauts connus et vérifie qu'ils sont attrapés")
     s.add_argument("--verbose", action="store_true")

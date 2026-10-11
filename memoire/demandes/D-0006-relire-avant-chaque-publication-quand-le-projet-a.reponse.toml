@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0006-relire-avant-chaque-publication-quand-le-projet-a.md, dont l'empreinte suit.
+reponse = "au-choix"
+texte = ""
+par = "Théo"
+date = "2026-10-10"
+canal = "conversation"
+citation = "D0006 je veux garder les 3 possibles, décision de l'humain"
+empreinte = "sha256:63f0d8d16cf743b7ea73142ccd0d08808d15c92bdf1fc3ea0338f7cea3100487"
