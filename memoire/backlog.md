@@ -107,17 +107,6 @@ nouveau qui recopie le `lu : backlog@…` d'un autre sujet passe donc, sans
 avoir rien lu. Juger la citation par entrée plutôt que par fichier, comme
 le fait désormais l'exemption des entrées déplacées.
 
-## B-0022 — Une réponse se relaie à une demande que l'humain n'a pas pu lire
-
-> statut : ouvert · origine : J-2026-10-11-F · lu : backlog@219c069f
-
-Au banc (s11, troisième passage), l'humain écrit « F-0001 est juste, passe-le en
-validé ». L'agent crée une demande, puis relaie cette phrase comme la
-réponse de l'humain, avec `--relayed` et la citation exacte : le hook
-l'accepte, alors que l'humain n'a jamais lu la demande. Exiger que la
-demande soit poussée (qu'elle ait un permalien) avant qu'une réponse s'y
-relaie ; décision de conception à soumettre à l'humain.
-
 ## B-0023 — Le hook de l'agent ne refuse pas --no-verify
 
 > statut : ouvert · origine : J-2026-10-11-F · lu : backlog@35c34ebe
@@ -168,18 +157,6 @@ regarder » sans lien (s4, s5, s9, s11) : sans `[human] repo_url` ni push, `socl
 url` échoue, et l'agent écrit des chemins nus. Un lien relatif depuis la
 demande (`../../calc.py`) passe le contrat ; le refus, ou le squelette de
 `socle new request`, devrait le dire.
-
-## B-0028 — Une consigne de l'humain dite dans la conversation n'est pas tenue d'aller en mémoire
-
-> statut : ouvert · origine : J-2026-10-11-I · lu : backlog@d485b5d7
-
-Au banc (s14), trois consignes de l'humain n'existaient que dans la
-conversation. Le résumé du compactage les a gardées, mais une session sur
-trois n'en a écrit qu'une dans la mémoire : les deux autres ne tenaient
-plus qu'au résumé, et un second compactage ou une session neuve les aurait
-perdues. Les instructions du socle ne le demandent pas. Ajouter au gabarit
-d'AGENTS.md : une consigne qui vaut au-delà du tour s'écrit dans la
-mémoire avant de continuer.
 
 ## B-0029 — Choisir couche par couche ce qui est privé, et y basculer l'existant
 

@@ -99,7 +99,8 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
   qu'elle valide** (`ADR-0004`) : la clé assouplie, le nom du test, ou le
   chemin et l'empreinte du fichier protégé. **L'humain répond dans la
   conversation**, et l'agent consigne la réponse avec sa citation exacte
-  (`ADR-0006`).
+  (`ADR-0006`), seulement si la demande est poussée telle quelle : l'humain
+  doit avoir pu la lire.
 - **La trace des hooks voyage dans les commits** (`ADR-0005`). Elle vit
   dans le répertoire git commun (`.git/socle/hooks.log`), partagé par tous
   les worktrees du dépôt. Chaque refus y est noté (`Refus`, avec l'étage
@@ -114,7 +115,8 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
   dans cette version ; une décision, une demande ou un sujet de backlog
   nouveaux doivent le faire. La preuve porte sur l'accès au texte, pas sur
   sa compréhension. Une entrée qui change de fichier, un sujet clos archivé
-  au journal, garde sa preuve sans relire.
+  au journal, garde sa preuve sans relire : la citation se juge au commit où
+  elle a paru pour la première fois, dans l'entrée qui la porte.
 - **Les liens donnés à l'humain sont des permaliens** (`ADR-0010`) : au
   commit poussé, pas à la branche, qui disparaît à la fusion ; vérifiés par
   le hook de fin de tour, que l'agent ait agi ou non.

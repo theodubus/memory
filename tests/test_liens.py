@@ -109,5 +109,63 @@ class TestLiensDuDepot(unittest.TestCase):
         self.assertEqual(liens.problemes(self.projet, message), ([], []))
 
 
+class TestDemandeLue(unittest.TestCase):
+    """B-0022 : une réponse ne se relaie qu'à une demande que l'humain a pu
+    lire, poussée telle qu'elle est."""
+
+    def setUp(self):
+        self.dossier = Path(tempfile.mkdtemp(prefix="socle-relais-"))
+        self.addCleanup(shutil.rmtree, self.dossier, ignore_errors=True)
+        origine = self.dossier / "origine.git"
+        git(self.dossier, "init", "-q", "--bare", str(origine))
+        self.racine = self.dossier / "projet"
+        (self.racine / ".socle").mkdir(parents=True)
+        git(self.racine, "init", "-q", "-b", "main")
+        (self.racine / ".socle/politique.toml").write_text(f'[human]\nrepo_url = "{DEPOT}"\n')
+        self.demande = self.racine / "memoire/demandes/D-0001-essai.md"
+        self.demande.parent.mkdir(parents=True)
+        self.demande.write_text("<!-- socle: couche=demandes zone=publique -->\n# D-0001 — Essai ?\n")
+        git(self.racine, "remote", "add", "origin", str(origine))
+        self.projet = config.Projet.charger(self.racine)
+
+    def illisible(self):
+        from socle import cli, demandes
+
+        d = next(x for x in demandes.toutes(self.racine) if x.id == "D-0001")
+        return cli.demande_illisible(self.projet, d)
+
+    def pousser(self):
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "demande")
+        git(self.racine, "push", "-q", "-u", "origin", "main")
+
+    def test_une_demande_jamais_poussee_n_a_pas_pu_etre_lue(self):
+        self.assertIn("pousser", self.illisible())
+
+    def test_une_demande_poussee_telle_quelle_a_pu_etre_lue(self):
+        self.pousser()
+        self.assertIsNone(self.illisible())
+
+    def test_cmd_answer_refuse_de_relayer_une_reponse_a_une_demande_non_lue(self):
+        import argparse
+        import contextlib
+        import io
+
+        from socle import cli
+
+        (self.racine / "citation.txt").write_text("oui")
+        args = argparse.Namespace(root=str(self.racine), request="D-0001", answer="valider", text="", by="Théo",
+                                  relayed=True, quote=None, quote_file=str(self.racine / "citation.txt"))
+        erreurs = io.StringIO()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(erreurs):
+            self.assertEqual(cli.cmd_answer(args), 2)
+        self.assertIn("n'a pas pu être lue par l'humain", erreurs.getvalue())
+        self.assertEqual(list(self.demande.parent.glob("*.reponse.toml")), [])
+
+    def test_une_demande_changee_depuis_le_push_n_est_pas_celle_qu_il_a_lue(self):
+        self.pousser()
+        self.demande.write_text(self.demande.read_text() + "\nUn ajout après coup.\n")
+        self.assertIn("diffère", self.illisible())
+
 if __name__ == "__main__":
     unittest.main()

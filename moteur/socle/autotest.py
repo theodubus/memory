@@ -664,6 +664,14 @@ def _cas() -> list[Cas]:
         lanceur = ".socle/" + "socle"
         return etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} answer D-0001 valider --relayed --by Théo"})
 
+    @defaut("relais-demande-non-lue", "réponse relayée à une demande que l'humain n'a pas pu lire", "agent",
+            "demande non lue")
+    def _(a, c):
+        (c / "memoire/demandes/D-0001-refactor.md").write_text(demande_bonne(a, c))
+        (c / "citation.txt").write_text("ok, refonds d'abord")
+        r = a.socle(c, "answer", "D-0001", "valider", "--relayed", "--by", "Théo", "--quote-file", "citation.txt")
+        return "" if r.returncode == 0 else r.stdout + r.stderr
+
     @defaut("copie", "paragraphe copié dans deux fichiers", "git", "docs.copie")
     def _(a, c):
         p = ("Ce paragraphe décrit en détail la manière dont le module de calcul multiplie ses entrées "
@@ -819,6 +827,7 @@ def _temoins() -> list[tuple[str, Callable]]:
     @temoin("une réponse donnée dans la conversation, relayée avec sa citation, passe le hook et la CI")
     def _(a, c):
         (c / "memoire/demandes/D-0001-refactor.md").write_text(demande_bonne(a, c))
+        pousser(a, c)  # l'humain la lit, puis répond dans la conversation
         (c / "citation.txt").write_text("ok, refonds d'abord")
         lanceur = ".socle/" + "socle"
         commande = f"python3 {lanceur} answer D-0001 valider --relayed --by Théo --quote-file citation.txt"
@@ -1055,6 +1064,7 @@ RAISONS_AGENT = {
     "signal indisponible": "mémoire privée : INDISPONIBLE",
     "fuite": "fuite de la mémoire privée",
     "relecture": "relecture avant publication",
+    "demande non lue": "n'a pas pu être lue par l'humain",
 }
 
 

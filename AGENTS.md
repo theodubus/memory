@@ -68,6 +68,12 @@ backlog, demandes humaines en attente —, puis le chantier actif et la mémoire
 canonique. Sous Claude Code, le hook `SessionStart` le fait seul ; sous un
 autre agent, le lancer d'abord. Rien de ce qui n'y figure pas n'est acquis.
 
+Une consigne de l'humain donnée dans la conversation, qui vaut au-delà du tour
+(une règle, une préférence, une interdiction), s'écrit dans la mémoire avant de
+continuer : au chantier actif si elle touche le travail en cours, sinon au
+journal, avec son texte exact. Le résumé d'un compactage ne la garde pas
+toujours, et une session neuve n'a que la mémoire.
+
 ### La mémoire, dans `memoire/`
 
 | Couche | Où | Règle |
@@ -113,7 +119,8 @@ conséquences (si l'humain valide, refuse, ne répond pas), recommandation
 Le lint refuse une demande incomplète. L'humain répond dans la conversation ;
 l'agent consigne sa réponse, sans jamais la choisir, avec le texte exact :
 `python3 .socle/socle answer D-NNNN <réponse> --relayed --by <nom> --quote-file <fichier>`,
-et la recopie au journal. Une demande répondue est gelée.
+et la recopie au journal. Une demande répondue est gelée. Une réponse ne se
+relaie qu'à une demande poussée telle quelle : l'humain doit avoir pu la lire.
 
 ### Lire la mémoire à la demande
 

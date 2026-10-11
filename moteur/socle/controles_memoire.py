@@ -311,23 +311,27 @@ def lectures(ctx, r):
     # seulement au besoin.
     historique: list[tuple[str, memoire.Memoire]] = []
 
-    def commits_ou_parait(chemin: str, citation: str) -> list[memoire.Memoire]:
+    def commits_ou_parait(chemin: str, citation: str, soi=None) -> list[memoire.Memoire]:
+        """Le commit de la plage où la citation paraît pour la première fois :
+        dans ce fichier, ou dans l'entrée qui la porte, où qu'elle soit alors
+        (un sujet créé puis archivé au journal sur la même branche)."""
         if not historique:
             historique.extend((c["sha"], memoire.Memoire.charger(ctx.racine, c["sha"])) for c in ctx.commits)
         res = []
         for sha, m in historique:
             texte_c = m.fichiers[chemin].texte if chemin in m.fichiers else outils.lire_a(ctx.racine, sha, chemin)
-            if texte_c and citation in texte_c:
+            porteuse = m.entree(soi.id) if soi else None
+            if (texte_c and citation in texte_c) or (porteuse is not None and citation in porteuse.texte):
                 res.append(m)
                 break  # la première apparition : la version alors lue
         return res
 
-    def lue_dans_la_plage(chemin: str, ident: str, h: str) -> bool:
+    def lue_dans_la_plage(chemin: str, ident: str, h: str, soi=None) -> bool:
         return any((e := m.entree(ident)) is not None and memoire.empreinte_entree(e) == h
-                   for m in commits_ou_parait(chemin, f"{ident}@{h}"))
+                   for m in commits_ou_parait(chemin, f"{ident}@{h}", soi))
 
     def index_de_la_plage(chemin: str, index: str, h: str, soi) -> bool:
-        for m in commits_ou_parait(chemin, f"{index}@{h}"):
+        for m in commits_ou_parait(chemin, f"{index}@{h}", soi):
             apres_m = {n for n in m.definitions() if soi and m.definitions()[n][0].type == soi.type and n > soi.id}
             sauf = {soi.id} if soi else set()
             if h in (memoire.empreinte_index(m, index, sauf), memoire.empreinte_index(m, index, sauf | apres_m)):
@@ -347,7 +351,8 @@ def lectures(ctx, r):
         for ident, h, ligne in memoire.citations(texte):
             if (ident, h) in deja or ident not in defs or deplacee(chemin, ligne, f"{ident}@{h}"):
                 continue
-            if memoire.empreinte_entree(defs[ident][0]) != h and not lue_dans_la_plage(chemin, ident, h):
+            if memoire.empreinte_entree(defs[ident][0]) != h and \
+                    not lue_dans_la_plage(chemin, ident, h, _entree_englobante(mem, chemin, ligne)):
                 r.erreur("memoire.lectures", f"`{ident}@{h}` ne correspond pas à la version actuelle de {ident} "
                          f"(lue avant un changement, ou inventée) : la relire, `python3 .socle/socle show {ident}`, "
                          "et citer l'empreinte affichée", chemin, ligne)

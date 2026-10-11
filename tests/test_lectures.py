@@ -106,6 +106,39 @@ class TestArchivage(unittest.TestCase):
         self.assertIn(f"backlog@{self.lu}", journal)
         self.assertEqual(self.erreurs(), [])
 
+    def creer_puis_archiver(self, lu: str):
+        """Un sujet créé sur la branche (commité), puis un autre qui change
+        l'index, puis le premier clos et archivé au journal."""
+        backlog = self.racine / "memoire/backlog.md"
+        backlog.write_text(backlog.read_text() + "\n## B-0003 — Créé sur la branche\n\n> statut : ouvert · origine : "
+                           f"fichier:memoire/backlog.md · lu : backlog@{lu}\n")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "B-0003")
+        lu4 = memoire.empreinte_index(memoire.Memoire.charger(self.racine), "backlog")
+        backlog.write_text(backlog.read_text() + "\n## B-0004 — Un de plus\n\n> statut : ouvert · origine : "
+                           f"fichier:memoire/backlog.md · lu : backlog@{lu4}\n")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "B-0004")
+        backlog.write_text(backlog.read_text().replace(f"lu : backlog@{lu}\n", f"lu : backlog@{lu} · ref : B-0004\n")
+                           .replace("## B-0003 — Créé sur la branche\n\n> statut : ouvert",
+                                    "## B-0003 — Créé sur la branche\n\n> statut : fait"))
+        import contextlib
+        import io
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.archivage.archiver_backlog(config.Projet.charger(self.racine))
+
+    def test_un_sujet_cree_puis_archive_sur_la_branche_garde_sa_lecture(self):
+        lu = memoire.empreinte_index(memoire.Memoire.charger(self.racine), "backlog")
+        self.creer_puis_archiver(lu)
+        self.assertEqual(self.erreurs(), [])
+
+    def test_une_lecture_inventee_reste_refusee_meme_archivee(self):
+        self.creer_puis_archiver("0badc0de")
+        erreurs = self.erreurs()
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertIn("backlog@0badc0de", erreurs[0])
+
     def test_une_lecture_recopiee_dans_une_autre_entree_reste_refusee(self):
         journal = self.racine / "memoire/journal/2026-10.md"
         journal.parent.mkdir(parents=True)
