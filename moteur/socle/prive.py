@@ -45,6 +45,12 @@ MODES = ("compagnon", "chiffre")
 ENTETE_TERMES = "# socle: termes privés"
 # La relecture humaine avant publication (D-0006) : au choix de l'humain.
 RELECTURES = ("aucune", "chaque-push", "lots")
+# Les couches dont le contenu nouveau peut être privé par défaut (B-0029) ; le
+# chantier actif, réécrit à la main, n'a pas d'entrée à placer.
+COUCHES_PRIVABLES = ("canonique", "backlog", "decisions", "journal", "demandes")
+# Les entrées qu'une bascule déplace : une demande se lit là où l'humain lit,
+# elle se retire et se pose à nouveau en privé.
+BASCULABLES = ("F", "B", "J", "ADR")
 
 
 def mode(projet: config.Projet) -> str | None:
@@ -300,6 +306,36 @@ def ligne_etat(projet: config.Projet) -> str:
             "signalent ; ne pas conclure sur ce qui en dépend")
 
 
+def memoire_privee(ctx) -> memoire.Memoire | None:
+    """La mémoire privée telle qu'elle est à la tête jugée : l'arbre de
+    travail, ou, à une révision, le dépôt privé au commit du verrou (mode
+    compagnon) et les fichiers déchiffrés par le filtre (mode chiffré).
+    `None` : elle ne se lit pas ici."""
+    projet, racine = ctx.projet, ctx.racine
+    if ctx.tete is None:
+        return ctx.memoire if acces(projet, ctx.memoire.illisibles).disponible else None
+    m = mode(projet)
+    if m == "compagnon":
+        depot, verrou = depot_compagnon(racine), lire_verrou(racine, ctx.tete)
+        if depot is None or not verrou:
+            return None
+        noms = outils.git(depot, "ls-tree", "-r", "--name-only", verrou, check=False).splitlines()
+        chemins = [f"{dossier(racine, ctx.tete)}/{n}" for n in noms]
+    elif m == "chiffre":
+        chemins = [c for c in ctx.fichiers if est_prive(c)]
+    else:
+        return None
+    res = memoire.Memoire(racine=racine, rev=ctx.tete)
+    for c in chemins:
+        if memoire.couche_attendue(c) is None:
+            continue
+        texte = lire_prive(projet, ctx.tete, c)
+        if texte is None or not lisible(texte):
+            return None
+        res.fichiers[c] = memoire.analyser(c, texte)
+    return res
+
+
 def arbre_commite(ctx) -> str | None:
     """Ce qui est, ou sera, commité : la tête jugée, ou l'index."""
     if ctx.tete:
@@ -440,3 +476,115 @@ def controle_termes(ctx, r):
         r.erreur("prive.termes", f"{len(retires)} terme(s) retiré(s) de la liste privée sans validation humaine : "
                  f"une demande validée doit citer `{termes_ici}` et `{cite}`", termes_ici)
 
+
+
+# --------------------------------------------------------------------------
+# Couche par couche, entrée par entrée (B-0029)
+# --------------------------------------------------------------------------
+
+
+def couches_privees(projet: config.Projet) -> set[str]:
+    """Les couches dont le contenu nouveau est privé par défaut : celles que
+    la politique nomme (`[private] layers`) ; à défaut, toutes sauf les
+    demandes, que `[private] requests` rend privées. Aucune sans mémoire
+    privée."""
+    if mode(projet) is None:
+        return set()
+    choix = projet.pol("private", "layers")
+    if choix is None:
+        return set(COUCHES_PRIVABLES[:-1]) | ({"demandes"} if projet.pol("private", "requests", defaut=False) else set())
+    return {outils.cle(c) for c in choix} & set(COUCHES_PRIVABLES)
+
+
+def couches_inconnues(projet: config.Projet) -> list[str]:
+    """Les noms de `[private] layers` qui ne désignent aucune couche."""
+    return [c for c in projet.pol("private", "layers", defaut=[]) or [] if outils.cle(c) not in COUCHES_PRIVABLES]
+
+
+def basculer(projet: config.Projet, ident: str, jour: str) -> list[str]:
+    """Bascule une entrée publique dans la mémoire privée : une copie privée,
+    sous un identifiant privé, en reprend le titre et le texte et cite
+    `depuis : <identifiant>` ; l'entrée publique garde son identifiant, pour
+    que les renvois restent valides, et perd son titre et son texte. Refuse
+    ce qu'elle ne sait pas déplacer sans casser un renvoi. Rend ce qu'il faut
+    dire à l'humain."""
+    racine, ch = projet.racine, projet.chemins
+    if mode(projet) is None:
+        raise ValueError("aucune mémoire privée dans la politique (`[private] mode`) : rien où basculer")
+    a = acces(projet)
+    if not a.disponible:
+        raise ValueError(f"mémoire privée indisponible : {a.raison}")
+    mem = memoire.Memoire.charger(racine)
+    e = mem.entree(ident)
+    if e is None:
+        raise ValueError(f"`{ident}` ne désigne aucune entrée de la mémoire")
+    if e.prive or e.basculee:
+        raise ValueError(f"`{ident}` est déjà privée")
+    if e.type == "D":
+        raise ValueError("une demande se lit là où l'humain lit : la retirer (`retirée : <raison>` dans ses "
+                         "métadonnées) et en poser une privée (`socle new request \"…\" --private`)")
+    if e.type not in BASCULABLES:
+        raise ValueError(f"`{ident}` : seuls un fait, un sujet, une entrée de journal ou une décision se basculent")
+    if e.archivee:
+        raise ValueError(f"`{ident}` est archivée dans `{e.parent}` : c'est cette entrée de journal qui se bascule")
+    enfants = [x.id for x in mem.entrees() if x.parent == ident]
+    if enfants:
+        raise ValueError(f"`{ident}` archive {', '.join(enfants)}, que d'autres entrées citent peut-être : "
+                         "leurs renvois publics ne survivraient pas à la bascule")
+    nouvel = mem.prochain_id(e.type, prive=True, date=e.id[2:12] if e.type == "J" else None)
+    copie = _copie_privee(e, nouvel)
+    fichier = mem.fichiers[e.fichier]
+    if e.type == "ADR":
+        nom = e.fichier.rsplit("/", 1)[-1]
+        prive_rel = ch.dans_prive(f"{ch.decisions}/{nouvel}{nom[len(ident):]}")
+        _ecrire(racine / prive_rel, f"<!-- socle: couche=decisions zone=privee -->\n{copie}\n")
+        public_rel = f"{ch.decisions}/{ident}-basculee.md"
+        _ecrire(racine / public_rel, f"<!-- socle: couche=decisions zone=publique -->\n{_pierre(e, jour)}\n")
+        (racine / e.fichier).unlink()
+    else:
+        prive_rel = ch.dans_prive(e.fichier)
+        cible = racine / prive_rel
+        if not cible.is_file():
+            titre = fichier.texte.split("\n# ", 1)[1].split("\n", 1)[0] if "\n# " in fichier.texte else fichier.couche
+            _ecrire(cible, f"<!-- socle: couche={fichier.couche} zone=privee -->\n# {titre}\n")
+        cible.write_text(cible.read_text(encoding="utf-8").rstrip("\n") + "\n\n" + copie + "\n", encoding="utf-8")
+        public_rel = e.fichier
+        texte = (racine / e.fichier).read_text(encoding="utf-8")
+        if e.texte not in texte:
+            raise ValueError(f"`{ident}` : son texte ne se retrouve pas tel quel dans {e.fichier}")
+        (racine / e.fichier).write_text(texte.replace(e.texte, _pierre(e, jour), 1), encoding="utf-8")
+    res = [f"{ident} → {nouvel} : son titre et son texte sont dans {prive_rel}",
+           f"en public, {public_rel} ne garde de {ident} que l'identifiant : les renvois restent valides",
+           "l'historique public garde l'ancien texte : seule une réécriture de l'historique, publiée en "
+           "écrasant la branche, l'efface ; c'est à l'humain de la faire : le lui dire",
+           "un nom qui doit rester privé partout s'ajoute à la liste des termes : `socle prive terme <terme>`"]
+    if mode(projet) == "compagnon":
+        res.append("mode compagnon : commiter la copie dans le dépôt privé, puis `socle prive verrouiller`")
+    return res
+
+
+def _copie_privee(e: memoire.Entree, nouvel: str) -> str:
+    """L'entrée sous son identifiant privé, qui cite celle qu'elle reprend."""
+    lignes = e.texte.splitlines()
+    lignes[0] = lignes[0].replace(e.id, nouvel, 1)
+    j = 1
+    while j < len(lignes) and not lignes[j].strip():
+        j += 1
+    if j < len(lignes) and lignes[j].lstrip().startswith(">"):
+        while j + 1 < len(lignes) and lignes[j + 1].lstrip().startswith(">"):
+            j += 1
+        lignes[j] = lignes[j].rstrip() + f" · depuis : {e.id}"
+    else:
+        lignes[1:1] = ["", f"> depuis : {e.id}"]
+    return "\n".join(lignes)
+
+
+def _pierre(e: memoire.Entree, jour: str) -> str:
+    """Ce qui reste en public d'une entrée basculée."""
+    return (f"{'#' * e.niveau} {e.id} — {memoire.TITRE_BASCULEE}\n\n> basculée : {jour}\n\n"
+            f"{memoire.TEXTE_BASCULEE}")
+
+
+def _ecrire(p: Path, texte: str):
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(texte, encoding="utf-8")

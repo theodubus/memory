@@ -44,7 +44,7 @@ comparent le même fichier sous ses deux noms.
 | `hooks.py` | les points d'entrée des hooks de l'agent et de git, la trace, dont chaque refus et l'étage qui l'a prononcé |
 | `etat.py` | l'état dérivé |
 | `humain.py` | ce qui revient à l'humain, et la lecture du dernier message de l'agent pour le récap |
-| `prive.py` | la mémoire privée : modes compagnon et chiffré, verrou, accès, contrôles `prive.*` |
+| `prive.py` | la mémoire privée : modes compagnon et chiffré, verrou, accès, couches privées par défaut, bascule d'une entrée publique, contrôles `prive.*` |
 | `liens.py` | le permalien d'un fichier ou d'une entrée ; les liens d'un message que l'humain ne pourra pas suivre |
 | `verification.py` | le contrat `verify` : les capacités de l'adaptateur |
 | `mutation.py` | le verdict de mutation contre les plafonds |
@@ -77,6 +77,7 @@ comparent le même fichier sous ses deux noms.
 | Aucun terme privé ni identifiant privé dans ce qui se publie (D-0008) | `prive.fuites` ; hook `pre-tool-use` (écritures, `git commit`, `gh`, outils `mcp__`) ; hook git `commit-msg` | agent, git, CI |
 | Relecture humaine avant publication, au choix de l'humain : aucune, à chaque push, par lots (D-0006) | hook `pre-tool-use` sur `git push`, hook git `pre-push`, `socle relu` | agent, git |
 | Demandes et réponses privées, sur décision de l'humain (`[private] requests`) | `socle new`, réponses privées protégées comme les publiques | agent, git, CI |
+| Le privé choisi couche par couche (`[private] layers`) et entrée par entrée ; une entrée publique existante basculée en privé sans casser un renvoi ni rien effacer | `socle new --private/--public`, `socle prive basculer` ; `memoire.format` (l'entrée publique ne garde que son identifiant), `memoire.ajout-seul` (une copie privée reprend son texte) | agent, git, CI |
 | Journaux de CI sans contenu privé | masquage des constats de la zone privée à l'étage CI ; `socle prive recuperer` n'écrit ni l'adresse ni la sortie de git | CI |
 | Contrat des demandes : huit champs (les sept du cadrage et « Où regarder », avec un lien vers chaque document à lire), contexte d'au moins soixante mots, aucun identifiant nu | `demandes.contrat`, hook `pre-tool-use` | agent, git, CI |
 | Décision archivée avec le texte exact | `demandes.reponses` (empreinte de la demande) | agent, git, CI |
@@ -147,6 +148,11 @@ comparent le même fichier sous ses deux noms.
 - **Les demandes échappent au refus des copies** (`ADR-0016`) : une demande se
   lit seule, son contexte recopié sur place, et elle est gelée une fois
   répondue ; deux approbations du même gabarit ne bloquent plus un commit.
+- **Une entrée basculée dans la mémoire privée garde son identifiant en
+  public** (`ADR-0019`), sans titre ni texte : les renvois restent valides
+  sans réécrire les entrées gelées, et la copie privée qui cite
+  `depuis : <ID>` prouve que rien n'est effacé. L'historique public garde
+  l'ancien texte ; le réécrire revient à l'humain.
 - **Les chemins d'un projet sont en anglais** (`ADR-0018`), au format 2 de
   la mémoire ; le format 1 reste lu, et la migration ne réécrit pas la
   mémoire.

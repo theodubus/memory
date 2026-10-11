@@ -88,3 +88,8 @@ allowed = []
 # mode = "compagnon"
 # review = "lots"
 # requests = false
+# Couches dont le contenu nouveau est privé par défaut ; sans ce réglage,
+# toutes sauf les demandes. Une entrée précise se place par `--private` ou
+# `--public`, et une entrée publique existante se bascule par
+# `socle prive basculer <ID>`.
+# layers = ["canonique", "backlog", "decisions", "journal"]

@@ -160,7 +160,7 @@ demande (`../../calc.py`) passe le contrat ; le refus, ou le squelette de
 
 ## B-0029 — Choisir couche par couche ce qui est privé, et y basculer l'existant
 
-> statut : ouvert · origine : J-2026-10-11-J · lu : backlog@1eb11b2e
+> statut : fait · origine : J-2026-10-11-J · lu : backlog@1eb11b2e · ref : J-2026-10-11-O
 
 Demandé par Théo : pouvoir mettre en privé, au-delà des demandes, tout ce
 qui touche aux décisions et à la stratégie interne. L'essentiel existe : avec
@@ -270,7 +270,7 @@ déjà simplifié plutôt que l'actuel.
 
 ## B-0036 — Migrer ce dépôt au format 2 de la mémoire
 
-> statut : ouvert · origine : J-2026-10-11-N · pour : humain · lu : backlog@e7557122
+> statut : fait · origine : J-2026-10-11-N · pour : humain · lu : backlog@e7557122 · ref : commit:bba48a6
 
 Ce dépôt est encore au format 1 de la mémoire (chemins en français). Sa
 migration au format 2 renomme six fichiers protégés (CODEOWNERS, le

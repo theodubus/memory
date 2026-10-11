@@ -88,6 +88,14 @@ def _format_entrees(r, chemin, f, couche, prive):
             date = e.id.lstrip("P")[2:12]
             if not nom.startswith(date[:7]):
                 r.erreur("memoire.format", f"`{e.id}` est daté hors du mois de son fichier", chemin, e.ligne)
+        if e.basculee:
+            # Ni titre ni texte propres : ce sont eux qui sont privés (B-0029).
+            if prive:
+                r.erreur("memoire.format", f"`{e.id}` : seule une entrée publique se bascule", chemin, e.ligne)
+            if e.titre != memoire.TITRE_BASCULEE or _norm(e.corps) not in ("", _norm(memoire.TEXTE_BASCULEE)):
+                r.erreur("memoire.format", f"`{e.id}` basculée garde un titre ou un texte : seuls « "
+                         f"{memoire.TITRE_BASCULEE} » et « {memoire.TEXTE_BASCULEE} » restent en public", chemin, e.ligne)
+            continue
         statuts = memoire.STATUTS.get(e.type)
         if statuts is not None:
             if not e.statut:
@@ -136,14 +144,32 @@ def _existe(ctx, chemin: str) -> bool:
     if _existe_tel_quel(ctx, chemin):
         return True
     alias = config.sous_le_format(chemin, ctx.projet.chemins.format)
-    return alias != chemin and _existe_tel_quel(ctx, alias)
+    if alias != chemin and _existe_tel_quel(ctx, alias):
+        return True
+    return _basculee(ctx, alias) is not None
+
+
+def _basculee(ctx, chemin: str) -> str | None:
+    """Le fichier qui remplace celui d'une décision basculée dans la mémoire
+    privée (`ADR-0003-basculee.md` pour `ADR-0003-un-titre.md`, B-0029)."""
+    dossier, _, nom = chemin.rpartition("/")
+    m = re.match(r"^(ADR-\d{4})-.+\.md$", nom)
+    if not m or not memoire.est_memoire(chemin):
+        return None
+    remplacant = f"{dossier}/{m[1]}-{BASCULEE}.md"
+    return remplacant if remplacant != chemin and _existe_tel_quel(ctx, remplacant) else None
+
+
+BASCULEE = "basculee"
 
 
 def _alias(ctx, chemin: str) -> str:
-    """Le chemin tel qu'il existe : le sien, ou son nom au format du projet."""
+    """Le chemin tel qu'il existe : le sien, son nom au format du projet, ou
+    celui du fichier qui remplace une décision basculée."""
     if _existe_tel_quel(ctx, chemin.strip("/")):
         return chemin
-    return config.sous_le_format(chemin, ctx.projet.chemins.format)
+    alias = config.sous_le_format(chemin, ctx.projet.chemins.format)
+    return alias if _existe_tel_quel(ctx, alias) else (_basculee(ctx, alias) or alias)
 
 
 def _existe_tel_quel(ctx, chemin: str) -> bool:
@@ -256,10 +282,18 @@ def _verifier_lien(ctx, chemin_doc: str, dossier: str, cible: str) -> str | None
     else:
         cible_n = chemin_doc
     if ancre and cible_n.endswith(".md"):
-        texte = ctx.lire(_alias(ctx, cible_n))
-        if texte is not None and ancre not in ancres(texte) and ancre_au_format_2(ancre) not in ancres(texte):
+        lieu = _alias(ctx, cible_n)
+        texte = ctx.lire(lieu)
+        if texte is not None and ancre not in ancres(texte) and ancre_au_format_2(ancre) not in ancres(texte) \
+                and not _ancre_basculee(ctx, lieu, ancre):
             return f"ancre morte : {cible}"
     return None
+
+
+def _ancre_basculee(ctx, chemin: str, ancre: str) -> bool:
+    """L'ancre d'une entrée basculée, écrite quand elle avait encore son titre."""
+    f = ctx.memoire.fichiers.get(chemin)
+    return f is not None and any(e.basculee and ancre.startswith(slug(e.id) + "--") for e in f.entrees)
 
 
 # Les titres qui citent un chemin renommé au format 2 changent d'ancre : une
@@ -369,10 +403,16 @@ def lectures(ctx, r):
 
     def deplacee(chemin: str, ligne: int, citation: str) -> bool:
         """La même entrée portait déjà cette citation à la base : elle a changé
-        de fichier (un sujet clos archivé au journal), sans rien relire."""
+        de fichier (un sujet clos archivé au journal), sans rien relire ; ou
+        la copie privée d'une entrée basculée la reprend (B-0029)."""
         soi = _entree_englobante(mem, chemin, ligne)
-        avant = base.definitions().get(soi.id) if soi else None
-        return bool(avant) and citation in avant[0].texte
+        if soi is None:
+            return False
+        for ident in (soi.id, *soi.depuis):
+            avant = base.definitions().get(ident)
+            if avant and citation in avant[0].texte:
+                return True
+        return False
 
     for chemin, texte in sorted(textes_scannes(ctx).items()):
         avant = ctx.lire_base(chemin) or ""
@@ -410,6 +450,8 @@ def lectures(ctx, r):
         e = defs[ident][0]
         if e.archivee:
             continue
+        if e.depuis and all(d in defs and defs[d][0].basculee for d in e.depuis):
+            continue  # la copie privée d'une entrée basculée : ce n'est pas une entrée nouvelle (B-0029)
         if e.type == "ADR" and not any(i == "decisions" for i, _, _ in memoire.citations_index(e.texte)):
             r.erreur("memoire.lectures", f"décision nouvelle `{ident}` sans `lu : decisions@…` : consulter l'index "
                      "des décisions avant d'en ajouter une (`socle show --index decisions`)", e.fichier, e.ligne)
@@ -458,6 +500,8 @@ def preuves(ctx, r):
 def backlog(ctx, r):
     """Chaque sujet a une origine ; un sujet clos a une référence."""
     for e in ctx.memoire.entrees("B"):
+        if e.basculee:
+            continue
         if not e.refs("origine"):
             r.erreur("memoire.backlog", f"`{e.id}` sans `origine` (entrée de journal, commit ou demande)", e.fichier, e.ligne)
         if e.statut in memoire.BACKLOG_CLOS and not e.refs("ref"):
@@ -566,6 +610,14 @@ def ajout_seul(ctx, r):
     for ident, defs in avant.items():
         a = defs[0]
         b = apres.get(ident, [None])[0]
+        if a.basculee:
+            if b is None or not b.basculee or _norm(a.texte) != _norm(b.texte):
+                r.erreur("memoire.ajout-seul", f"`{ident}` basculée dans la mémoire privée : elle reste telle quelle",
+                         (b or a).fichier, (b or a).ligne)
+            continue
+        if b is not None and b.basculee:
+            _bascule(ctx, r, a, b)
+            continue
         if a.type == "J":
             if b is None:
                 r.erreur("memoire.ajout-seul", f"entrée de journal `{ident}` supprimée (le journal est en ajout seul)", a.fichier, a.ligne)
@@ -608,6 +660,26 @@ def ajout_seul(ctx, r):
     for c in sorted(reponses_base):
         if ctx.lire(c) != ctx.lire_base(c):
             r.erreur("memoire.ajout-seul", "réponse humaine modifiée ou supprimée : elle est définitive", c)
+
+
+def _bascule(ctx, r, a: memoire.Entree, b: memoire.Entree):
+    """Une entrée publique basculée dans la mémoire privée (B-0029) : une copie
+    privée qui cite `depuis : <identifiant>` en reprend le texte, sans quoi la
+    bascule serait un effacement."""
+    from socle import prive
+
+    privee = prive.memoire_privee(ctx) if prive.mode(ctx.projet) else None
+    if privee is None and prive.mode(ctx.projet):
+        r.avertir("memoire.ajout-seul", f"`{a.id}` basculée : sa copie privée ne se lit pas ici", b.fichier, b.ligne)
+        return
+    copies = [e for e in privee.entrees() if e.prive and a.id in e.depuis] if privee else []
+    if not copies:
+        r.erreur("memoire.ajout-seul", f"`{a.id}` basculée sans copie privée qui la reprenne (`depuis : {a.id}`) : "
+                 "son contenu serait perdu ; `socle prive basculer` fait les deux", b.fichier, b.ligne)
+        return
+    if not any(_norm(a.corps) in _norm(c.corps) and a.titre == c.titre for c in copies):
+        r.erreur("memoire.ajout-seul", f"`{a.id}` basculée : sa copie privée n'en reprend ni le titre ni le texte",
+                 b.fichier, b.ligne)
 
 
 def _seulement_ajouts(avant: str, apres: str) -> bool:

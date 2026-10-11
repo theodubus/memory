@@ -124,7 +124,7 @@ def _slug(titre: str) -> str:
 
 
 def cmd_new(args) -> int:
-    from socle import memoire
+    from socle import memoire, prive as zone_privee
 
     projet = _projet(args)
     racine = projet.racine
@@ -132,12 +132,16 @@ def cmd_new(args) -> int:
     type_ = TYPES_CLI[args.type]
     jour = date.today().isoformat()
     # Avec une mémoire privée, le contenu nouveau est privé par défaut
-    # (cadrage, règles de classement, point 3).
-    # Une demande ne devient privée que si l'humain l'a choisi (`[private] requests`) :
-    # il doit pouvoir la lire là où il lit.
-    defaut = projet.pol("private", "requests", defaut=False) if type_ == "D" else True
-    prive = getattr(args, "private", False) or (
-        bool(projet.pol("private", "mode")) and bool(defaut) and not getattr(args, "public", False))
+    # (cadrage, règles de classement, point 3), couche par couche selon la
+    # politique (`[private] layers`, B-0029). Une demande ne devient privée que
+    # si l'humain l'a choisi : il doit pouvoir la lire là où il lit. Une
+    # consigne de l'humain sur une entrée précise se dit par `--private` ou
+    # `--public`.
+    for nom in zone_privee.couches_inconnues(projet):
+        print(f"`[private] layers` : « {nom} » n'est pas une couche "
+              f"({', '.join(zone_privee.COUCHES_PRIVABLES)})", file=sys.stderr)
+    defaut = memoire.TYPES[type_] in zone_privee.couches_privees(projet)
+    prive = getattr(args, "private", False) or (defaut and not getattr(args, "public", False))
     ident = mem.prochain_id(type_, prive=prive, date=jour)
     titre = args.title
     zone = "privee" if prive else "publique"
@@ -227,7 +231,7 @@ def cmd_show(args) -> int:
 
 
 def cmd_prive(args) -> int:
-    """Le dépôt privé du mode compagnon et son verrou."""
+    """La mémoire privée : état, termes, bascule d'une entrée, dépôt compagnon et son verrou."""
     from socle import prive
 
     projet = _projet(args)
@@ -241,6 +245,17 @@ def cmd_prive(args) -> int:
             return 1
         ajoute = prive.ajouter_terme(projet, " ".join(args.terme))
         print("terme ajouté à la liste privée" if ajoute else "terme déjà dans la liste privée")
+        return 0
+    if args.action == "basculer":
+        if len(args.terme) != 1:
+            print("`socle prive basculer <ID>` : l'identifiant d'une entrée publique", file=sys.stderr)
+            return 1
+        try:
+            lignes = prive.basculer(projet, args.terme[0], date.today().isoformat())
+        except ValueError as e:
+            print(f"refus : {e}", file=sys.stderr)
+            return 1
+        print("\n".join(lignes))
         return 0
     if prive.mode(projet) != "compagnon":
         print("le verrou n'existe qu'en mode compagnon (`[private] mode` de la politique)", file=sys.stderr)
@@ -550,9 +565,10 @@ def main(argv=None) -> int:
     s.add_argument("--index", choices=("decisions", "backlog"), help="l'index des décisions ou du backlog ouvert")
     s.set_defaults(f=cmd_show)
 
-    s = sp.add_parser("prive", help="mémoire privée : état, verrou du dépôt compagnon")
-    s.add_argument("action", choices=("etat", "verrouiller", "extraire", "recuperer", "terme"))
-    s.add_argument("terme", nargs="*", help="avec `terme` : le terme à ajouter à la liste privée")
+    s = sp.add_parser("prive", help="mémoire privée : état, verrou du dépôt compagnon, termes, bascule")
+    s.add_argument("action", choices=("etat", "verrouiller", "extraire", "recuperer", "terme", "basculer"))
+    s.add_argument("terme", nargs="*", help="avec `terme` : le terme à ajouter à la liste privée ; "
+                   "avec `basculer` : l'identifiant de l'entrée publique à basculer dans la mémoire privée")
     s.set_defaults(f=cmd_prive)
 
     s = sp.add_parser("relu", help="(humain, ou relayé) ce qui part vers le dépôt public a été relu")

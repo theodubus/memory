@@ -232,12 +232,39 @@ verrou avec les secrets `SOCLE_PRIVE_DEPOT` et `SOCLE_PRIVE_CLE`.
 **En CI**, le journal d'un dépôt public est public : un constat de la zone
 privée n'y montre ni son texte ni son chemin.
 
-**Le contenu nouveau est privé par défaut** quand une mémoire privée existe :
-`socle new` l'écrit sous `memory/private/`, sauf `--public`. Les demandes
-font exception : elles ne sont privées, réponses comprises, que si l'humain
-l'a choisi (`[private] requests = true`), car il doit pouvoir les lire là où
-il lit ; en mode chiffré, GitHub n'en montre que le chiffré, et l'agent les
-donne en entier dans la conversation.
+**Le contenu nouveau est privé par défaut** quand une mémoire privée existe,
+couche par couche : `[private] layers` nomme les couches dont `socle new`
+écrit les entrées sous `memory/private/` (`canonique`, `backlog`,
+`decisions`, `journal`, `demandes`). Sans ce réglage, toutes le sont sauf
+les demandes, qui ne sont privées, réponses comprises, que si l'humain l'a
+choisi (`[private] requests = true`), car il doit pouvoir les lire là où il
+lit ; en mode chiffré, GitHub n'en montre que le chiffré, et l'agent les
+donne en entier dans la conversation. Entrée par entrée, `--private` ou
+`--public` l'emporte sur la couche : c'est ainsi qu'une consigne de
+l'humain (« celle-ci en privé ») s'applique.
+
+**Une entrée publique se bascule** dans la mémoire privée
+(`socle prive basculer <ID>`) : un fait, un sujet, une entrée de journal ou
+une décision. Une copie privée, sous un identifiant privé, en reprend le
+titre et le texte et cite `depuis : <ID>`. L'entrée publique garde son
+identifiant, pour que les renvois restent valides, et rien d'autre :
+
+```markdown
+## B-0005 — Entrée basculée dans la mémoire privée
+
+> basculée : 2026-10-12
+
+Son contenu est dans la mémoire privée.
+```
+
+Le fichier d'une décision basculée prend le nom `ADR-NNNN-basculee.md` ;
+les liens vers son ancien nom, et les ancres vers l'ancien titre d'une
+entrée basculée, restent valides. Une entrée basculée ne change plus ;
+une bascule sans copie privée qui reprenne son texte est un effacement, et
+l'ajout seul la refuse. Une demande ne se bascule pas : elle se retire et se
+pose à nouveau en privé ; une entrée de journal qui archive des sujets non
+plus. L'historique public garde l'ancien texte : seule une réécriture de
+l'historique l'efface, et c'est à l'humain de la faire.
 
 **La liste des termes privés** (`memory/private/terms.txt`) nomme ce qui ne
 doit jamais paraître en public : un terme par ligne, `#` pour un

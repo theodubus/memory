@@ -54,6 +54,12 @@ STATUTS = {
 }
 BACKLOG_CLOS = {"fait", "abandonne"}
 
+# Une entrée publique basculée dans la mémoire privée (B-0029) : elle garde
+# son identifiant, pour que les renvois restent valides, et perd son titre et
+# son texte, repris par une copie privée qui cite `depuis : <identifiant>`.
+TITRE_BASCULEE = "Entrée basculée dans la mémoire privée"
+TEXTE_BASCULEE = "Son contenu est dans la mémoire privée."
+
 
 # La mémoire et sa zone privée (jalon 7, même arborescence), sous leurs noms
 # des deux formats : un chemin se reconnaît quel que soit le format du projet.
@@ -236,6 +242,16 @@ class Entree:
     @property
     def archivee(self) -> bool:
         return self.parent is not None
+
+    @property
+    def basculee(self) -> bool:
+        """Une entrée publique dont le contenu est passé dans la mémoire privée."""
+        return "basculee" in self.meta
+
+    @property
+    def depuis(self) -> list[str]:
+        """Les entrées publiques que cette copie privée reprend."""
+        return [c for t, c in self.refs("depuis") if t == "id"]
 
 
 @dataclass
@@ -441,7 +457,7 @@ def lignes_index(mem: "Memoire", index: str, sauf: set[str] = frozenset()) -> li
     type_ = INDEX_TYPES[index]
     res = []
     for e in mem.entrees(type_):
-        if e.archivee or e.id in sauf:
+        if e.archivee or e.basculee or e.id in sauf:
             continue
         if index == "backlog" and e.statut in BACKLOG_CLOS:
             continue

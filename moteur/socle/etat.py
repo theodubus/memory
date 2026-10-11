@@ -71,8 +71,14 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
     lignes.append(prive.ligne_etat(projet))
     lignes.append("vérifier : `python3 .socle/socle verify --rapide` (tout : sans `--rapide`)")
     if contenus:
-        for chemin in (projet.chemins.actif, projet.chemins.canonique):
+        # Le chantier actif et les faits, publics puis privés (B-0029) : une
+        # mémoire privée lisible ici en fait partie, illisible elle est
+        # signalée plus haut.
+        ch = projet.chemins
+        for chemin in (ch.actif, ch.canonique, ch.dans_prive(ch.actif), ch.dans_prive(ch.canonique)):
             texte = outils.lire_a(racine, None, chemin)
+            if texte is not None and memoire.est_prive(chemin) and not memoire.lisible(texte):
+                continue
             if texte is not None:
                 lignes.append("")
                 lignes.append(f"--- {chemin} ---")

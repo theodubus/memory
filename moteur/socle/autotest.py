@@ -587,6 +587,19 @@ def _cas() -> list[Cas]:
         maj_memoire(c, "Liste privée raccourcie.")
         return etage_git(a, c)
 
+    @defaut("bascule-sans-copie", "entrée publique « basculée » sans copie privée qui la reprenne", "git",
+            "memoire.ajout-seul")
+    def _(a, c):
+        c = a.clone_prive("compagnon")
+        backlog = c / "memory/backlog.md"
+        texte = backlog.read_text()
+        debut = texte.index("## B-0001")
+        fin = texte.find("\n## ", debut + 1)
+        backlog.write_text(texte[:debut] + "## B-0001 — Entrée basculée dans la mémoire privée\n\n"
+                           "> basculée : 2026-10-11\n" + (texte[fin:] if fin >= 0 else ""))
+        maj_memoire(c, "Sujet rendu privé.")
+        return etage_git(a, c)
+
     @defaut("publication-sans-relecture", "push vers le dépôt public sans relecture humaine", "agent", "relecture")
     def _(a, c):
         c = a.clone_prive("compagnon")
@@ -903,6 +916,18 @@ def _temoins() -> list[tuple[str, Callable]]:
         a.socle(c, "prive", "verrouiller")
         maj_memoire(c, "Un terme privé de plus.")
         return (r.stderr if r.returncode else "") or etage_git(a, c) or etage_ci(a, c)
+
+    @temoin("mode compagnon : un sujet public basculé dans la mémoire privée passe la fin de tour, le commit et la CI")
+    def _(a, c):
+        c = a.clone_prive("compagnon")
+        r = a.socle(c, "prive", "basculer", "B-0001")
+        if r.returncode != 0:
+            return r.stdout + r.stderr
+        a.git(c / "memory/private", "add", "-A")
+        a.git(c / "memory/private", "commit", "-q", "-m", "B-0001 basculé")
+        a.socle(c, "prive", "verrouiller")
+        maj_memoire(c, "Sujet basculé dans la mémoire privée.")
+        return etage_stop(a, c) or etage_git(a, c) or etage_ci(a, c)
 
     @temoin("un push relu par l'humain, son accord relayé avec son texte exact, passe le hook de l'agent")
     def _(a, c):
