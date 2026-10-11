@@ -31,8 +31,10 @@ python3 .socle/socle verify --rapide
 
 `--adapter auto` choisit l'adaptateur d'après le dépôt. Adaptateurs
 maintenus : `rust`, `python` (`unittest`), `python-pytest` (pytest et
-mutmut) ; un autre langage se déclare dans un fichier `.toml` passé à
-`--adapter`. Relancer l'installeur met le socle à jour : il remplace le
+mutmut), `javascript` (vitest et Stryker), `go` (go test et gremlins),
+`java` (Maven, JUnit 5 et PIT), `ruby` (RSpec et mutant), `php` (PHPUnit et
+Infection) ; un autre langage se déclare dans un fichier `.toml` passé à
+`--adapter`. `--language en` tient la mémoire en anglais. Relancer l'installeur met le socle à jour : il remplace le
 moteur, migre les formats, et montre le diff de la politique sans la
 toucher.
 
@@ -40,6 +42,7 @@ toucher.
 
 - `AGENTS.md` — comment travailler dans ce dépôt, et ce que le socle impose.
 - `docs/architecture.md` — où chaque exigence du cadrage est appliquée.
+- `docs/parcours.md` — le parcours de l'utilisateur, relevé, et ce qui le simplifiera.
 - `moteur/socle/FORMAT.md` — le format de la mémoire.
 - `docs/inventaire-chess.md` — ce qui vient du dépôt chess.
 - `memory/archives/cadrage-2026-10-10.md` — le cadrage fondateur, tel quel.
