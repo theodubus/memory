@@ -210,3 +210,21 @@ langue et découple B-0031 ; les permaliens déjà donnés restent valides,
 puisqu'ils visent un commit. Coût : une migration de format (le cadre
 existe, `migrations.py`), dont le renommage de fichiers protégés, à
 approuver par l'humain ; à faire tôt, avant que d'autres projets s'installent.
+
+## B-0033 — Un travail qui attend la validation d'une valeur attendue ne peut ni se commiter ni rester dans l'arbre en fin de tour
+
+> statut : ouvert · origine : J-2026-10-11-J · lu : backlog@f05f130c
+
+Constaté en faisant B-0032 : le renommage des chemins change la valeur
+attendue de quatorze tests. Le point 2 de la politique exige une demande
+validée qui les nomme ; la demande est posée et poussée. Mais en attendant
+la réponse, le travail ne peut pas se commiter (le hook avant commit
+refuse), et il ne peut pas rester dans l'arbre : le hook de fin de tour
+refuse de conclure tant que les contrôles échouent, puis demande
+d'escalader après trois tentatives. L'agent doit remiser son travail
+(`git stash`), hors de la mémoire et à la merci du conteneur. La politique
+dit pourtant « mettre la demande en file, travailler sur autre chose ».
+Piste : à la fin de tour seulement, un refus de `tests.attendus` dont le
+test est nommé par une demande en attente, poussée telle quelle, devient
+un constat « en attente de la demande » ; le commit et la CI refusent
+toujours.
