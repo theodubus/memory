@@ -70,6 +70,7 @@ class TestMemoirePriveeALInstallation(Base):
         self.assertIn('[private]\nmode = "compagnon"\nreview = "lots"\nrequests = true\n', politique)
         self.assertIn("memory/private/", (self.racine / ".gitignore").read_text())
         self.assertIn("dépôt privé absent", sortie)
+        self.assertIn("mettre en place le dépôt privé", sortie.split("Et maintenant :")[1])
 
     def test_chiffre_pose_le_filtre(self):
         self.racine = depot({"calc.py": "x = 1\n"})
@@ -81,6 +82,33 @@ class TestMemoirePriveeALInstallation(Base):
         texte = installeur.politique_privee(gabarit("politique.toml"), "chiffre", None, False)
         self.assertIn('[private]\nmode = "chiffre"\nrequests = false\n', texte)
         self.assertNotIn("# [private]", texte)
+
+
+class TestInstallationVerte(Base):
+    def test_le_code_existant_entre_a_mesurer_et_l_installation_finit_verte(self):
+        """B-0034, P1 : sur un projet qui a déjà du code, l'installation
+        finissait en échec, faute de plafond de mutation."""
+        self.racine = depot({"pyproject.toml": "[tool.pytest.ini_options]\n", "src/calc.py": "def f():\n    return 1\n"})
+        code, sortie = installer(self.racine, "python-pytest")
+        self.assertEqual(code, 0, sortie)
+        self.assertIn('"src/calc.py" = { pending = true }',
+                      (self.racine / config.FORMAT_ACTUEL.garde_fous).read_text())
+
+    def test_l_installation_dit_quoi_faire_ensuite(self):
+        """B-0034, P2 : l'audit ne montre que ce qui échoue ou avertit, puis
+        les étapes de l'humain, dans l'ordre, chacune avec sa commande."""
+        self.racine = depot({"calc.py": "x = 1\n"})
+        code, sortie = installer(self.racine)
+        self.assertRegex(sortie, r"… et \d+ autre\(s\) contrôle\(s\) sans rien à signaler")
+        etapes = sortie.split("Et maintenant :")[1].strip().splitlines()
+        self.assertIn("socle init --cadrage", etapes[0])
+        self.assertIn("git commit", etapes[1])
+        self.assertIn("ouvrir l'agent", etapes[2])
+
+    def test_garde_fous_initiaux_sans_mutation(self):
+        texte = installeur.garde_fous_initiaux(depot({"calc.py": "def f():\n    return 1\n"}),
+                                               (MOTEUR / "socle/adaptateurs/python.toml").read_text())
+        self.assertNotIn("pending = true }", texte)
 
 
 class TestMiseAJour(Base):
@@ -114,6 +142,13 @@ class TestMiseAJour(Base):
         installer(self.racine, prive="compagnon")
         self.assertEqual(config.Projet.charger(self.racine).pol("private", "mode"), "chiffre")
 
+    def test_une_mise_a_jour_propose_d_abord_l_approbation(self):
+        etapes = installeur.et_maintenant(self.racine, True, ["protege.fichiers", "docs.liens"])
+        self.assertIn("socle approve --text", etapes[0])
+        self.assertIn("1 contrôle(s) en échec ci-dessus (docs.liens)", etapes[1])
+        self.assertIn('git commit -m "Mettre à jour le socle', etapes[2])
+        self.assertFalse(any("socle init" in e for e in etapes))
+
     def test_les_migrations_s_appliquent_dans_l_ordre(self):
         faites = []
         avant = dict(migrations.MIGRATIONS), migrations.FORMAT
@@ -143,6 +178,9 @@ class TestEntrees(Base):
         d = next((self.racine / "memory/requests").glob("D-0001-*.md")).read_text()
         self.assertIn("Défaut : aucun", d)
         self.assertIn("Ce qui revient maintenant à l'agent", flux.getvalue())
+        humain = flux.getvalue().split("Pour toi :")[1].split("Ce qui revient")[0]
+        self.assertIn("la demande D-0001 doit être sur GitHub", humain)
+        self.assertEqual(len(initialisation.pour_toi("D-0042")), 3)
 
     def test_cadrage_archive_tel_quel(self):
         self.racine = depot({})

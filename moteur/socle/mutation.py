@@ -184,7 +184,11 @@ LECTEURS = {"cargo-mutants": lire_cargo_mutants, "mutmut": lire_mutmut, "stryker
             "gremlins": lire_gremlins, "pit": lire_pit, "mutant": lire_mutant, "infection": lire_infection}
 
 
-def verdict(projet: config.Projet, dossier: Path) -> Rapport:
+def verdict(projet: config.Projet, dossier: Path, poser: bool = False) -> Rapport:
+    """Les survivants de chaque module du plafond, confrontés à son plafond.
+    Un module « à mesurer » (`pending`) n'a pas encore de plafond : son compte
+    se dit, et `poser` l'écrit dans les garde-fous, ce qui durcit le cliquet
+    (B-0034, P1)."""
     r = Rapport()
     ident = "mutation.verdict"
     r.execute(ident)
@@ -204,17 +208,43 @@ def verdict(projet: config.Projet, dossier: Path) -> Rapport:
         r.erreur(ident, "plafond vide : rien à comparer — un vert ici serait silencieux")
         return r
     resultats = lecteur(dossier)
-    total = 0
+    mesures = {}
     for module, p in plafonds.items():
         c = resultats.get(module)
+        if p.get("pending"):
+            if not c:
+                r.avertir(ident, f"{module} : à mesurer, et pas encore balayé")
+                continue
+            mesures[module] = c["survivants"]
+            r.avertir(ident, f"{module} : à mesurer — {c['survivants']} survivant(s) ; "
+                      + ("plafond posé" if poser else "`--poser` l'écrit comme plafond"))
+            continue
         if not c:
             r.erreur(ident, f"{module} : aucun résultat — le balayage n'a pas tourné sur ce module")
             continue
         n = c["survivants"]
-        total += n
         if n > p.get("max", 0):
             r.erreur(ident, f"{module} : {n} survivant(s) pour un plafond de {p.get('max', 0)} — du code a cessé "
                      "d'être couvert. Corriger les tests, ou demander à relever le plafond (raison écrite).")
         elif n < p.get("max", 0):
             r.avertir(ident, f"{module} : {n} survivant(s) sous le plafond {p.get('max', 0)} — resserrer le plafond")
+    if poser and mesures:
+        poser_plafonds(projet, mesures)
     return r
+
+
+def poser_plafonds(projet: config.Projet, mesures: dict[str, int]):
+    """Remplace, dans les garde-fous, l'entrée « à mesurer » de chaque module
+    par son plafond mesuré, avec sa raison quand il n'est pas nul."""
+    import json
+    from datetime import date
+
+    p = projet.racine / projet.chemins.garde_fous
+    lignes = p.read_text(encoding="utf-8").splitlines()
+    for module, n in mesures.items():
+        cle = json.dumps(module, ensure_ascii=False)
+        valeur = (f'{{ max = {n}, reason = "mesuré le {date.today().isoformat()} : {n} survivant(s)" }}' if n
+                  else "{ max = 0 }")
+        lignes = [f"{cle} = {valeur}" if re.match(rf"^\s*{re.escape(cle)}\s*=\s*\{{[^}}]*\bpending\b", l) else l
+                  for l in lignes]
+    p.write_text("\n".join(lignes) + "\n", encoding="utf-8")

@@ -56,6 +56,24 @@ class TestCliquet(unittest.TestCase):
         self.assertTrue(assouplissements(BASE, retire, modules_existants={"src/a.rs"}))
         self.assertEqual(assouplissements(BASE, retire, modules_existants=set()), [])
 
+    def test_un_module_a_mesurer_puis_mesure(self):
+        """B-0034, P1 : un module « à mesurer » entre au cliquet sans
+        l'assouplir ; recevoir son plafond le durcit ; un module mesuré remis
+        « à mesurer » perd son plafond, ce qui assouplit."""
+        a_mesurer = changer()
+        a_mesurer["mutation"]["caps"]["src/b.rs"] = {"pending": True}
+        self.assertEqual(assouplissements(BASE, a_mesurer), [])
+        mesure = changer()
+        mesure["mutation"]["caps"]["src/b.rs"] = {"max": 2, "reason": "mesuré"}
+        self.assertEqual(assouplissements(a_mesurer, mesure), [])
+        remis = changer()
+        remis["mutation"]["caps"]["src/a.rs"] = {"pending": True}
+        self.assertEqual([c for c, _ in assouplissements(BASE, remis, modules_existants={"src/a.rs"})],
+                         ['mutation.caps."src/a.rs".max'])
+        repasse = changer()
+        repasse["mutation"]["caps"]["src/b.rs"] = {"pending": False}
+        self.assertEqual([c for c, _ in assouplissements(repasse, a_mesurer)], ['mutation.caps."src/b.rs".pending'])
+
     def test_exclusion_ajoutee_et_booleen_desactive(self):
         apres = changer(nocopy__exclude=["docs/**"], memory__require_update_on_code_change=False)
         cles = sorted(c for c, _ in assouplissements(BASE, apres))

@@ -500,6 +500,11 @@ def _cas() -> list[Cas]:
         remplacer(c, ".socle/guardrails.toml", '"calc.py" = { max = 0 }', '"calc.py" = { max = 3, reason = "équivalents" }')
         return etage_ci(a, c)
 
+    @defaut("plafond-remis-a-mesurer", "plafond de mutation remis « à mesurer »", "ci", "cliquet.garde-fous")
+    def _(a, c):
+        remplacer(c, ".socle/guardrails.toml", '"calc.py" = { max = 0 }', '"calc.py" = { pending = true }')
+        return etage_ci(a, c)
+
     @defaut("budget-releve", "budget de mémoire relevé", "ci", "cliquet.garde-fous")
     def _(a, c):
         remplacer(c, ".socle/guardrails.toml", '"memory/active.md" = { max_bytes = 6000 }', '"memory/active.md" = { max_bytes = 60000 }')
@@ -853,6 +858,14 @@ def _temoins() -> list[tuple[str, Callable]]:
     @temoin("durcir un garde-fou est libre")
     def _(a, c):
         remplacer(c, ".socle/guardrails.toml", '"memory/active.md" = { max_bytes = 6000 }', '"memory/active.md" = { max_bytes = 5000 }')
+        return etage_ci(a, c)
+
+    @temoin("un module nouveau entre au cliquet de mutation « à mesurer » : la CI passe")
+    def _(a, c):
+        ajouter(c, "unites.py", "CENTIMES = 100\n")
+        remplacer(c, ".socle/guardrails.toml", '"calc.py" = { max = 0 }',
+                  '"calc.py" = { max = 0 }\n"unites.py" = { pending = true }')
+        maj_memoire(c, "Un module de constantes, à mesurer.")
         return etage_ci(a, c)
 
     @temoin("une demande complète passe le hook de l'agent")

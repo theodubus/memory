@@ -75,8 +75,11 @@ class Rapport:
                 vus.append(c.controle)
         return vus
 
-    def texte(self, titre: str | None = None) -> str:
+    def texte(self, titre: str | None = None, court: bool = False) -> str:
+        """Le rapport, contrôle par contrôle ; `court` n'en montre que ce qui
+        échoue, avertit ou n'a pas pu s'exécuter, et compte le reste (B-0034, P2)."""
         lignes = []
+        tus = 0
         if titre:
             lignes.append(titre)
             lignes.append("")
@@ -97,10 +100,15 @@ class Rapport:
                 etat = "ok (avertissement)"
             else:
                 etat = "ok"
+            if court and not (erreurs or avert or indispo):
+                tus += 1
+                continue
             lignes.append(f"  {nom:<34} {etat}")
             for c in erreurs + avert + indispo:
                 marque = {ERREUR: "|", AVERTISSEMENT: "!", INDISPONIBLE: "?"}[c.gravite]
                 lignes.append(f"      {marque} {c.en_ligne()}")
+        if court and tus:
+            lignes.append(f"  … et {tus} autre(s) contrôle(s) sans rien à signaler")
         lignes.append("")
         if self.reussi:
             lignes.append("TOUT PASSE")
@@ -109,5 +117,5 @@ class Rapport:
             lignes.append(f"ECHEC — {len(echecs)} contrôle(s) : {', '.join(echecs)}")
         return "\n".join(lignes)
 
-    def afficher(self, titre: str | None = None, flux=None):
-        print(self.texte(titre), file=flux or sys.stdout)
+    def afficher(self, titre: str | None = None, flux=None, court: bool = False):
+        print(self.texte(titre, court), file=flux or sys.stdout)

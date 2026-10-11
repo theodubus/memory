@@ -48,7 +48,7 @@ def cmd_check(args) -> int:
     ids = [i.strip() for i in args.only.split(",")] if args.only else None
     rapport = contexte.executer(ctx, ids)
     titre = f"socle {VERSION} — contrôles, étage {args.stage}" + (f", base {base[:10]}" if base else ", sans base")
-    rapport.afficher(titre)
+    rapport.afficher(titre, court=getattr(args, "court", False))
     return 0 if rapport.reussi else 1
 
 
@@ -376,6 +376,20 @@ def demande_illisible(projet, d) -> str | None:
     return demandes.illisible(projet, d)
 
 
+def fichiers_a_approuver(projet) -> list[str]:
+    """Les fichiers protégés changés depuis le dernier commit, que rien ne
+    valide encore : ceux que `socle approve` approuverait (B-0034, P3)."""
+    from socle import contexte
+    from socle.controles_cliquet import proteges
+    from socle.rapport import Rapport
+
+    if not outils.a_des_commits(projet.racine):
+        return []
+    r = Rapport()
+    proteges(contexte.Contexte(projet, etage="agent", base="HEAD"), r)
+    return sorted({c.chemin for c in r.erreurs("protege.fichiers") if c.chemin})
+
+
 def _auteur(projet) -> str:
     return outils.git(projet.racine, "config", "user.name", check=False).strip() or "humain"
 
@@ -388,6 +402,23 @@ def cmd_approve(args) -> int:
 
     projet = _projet(args)
     racine = projet.racine
+    if not args.files and not getattr(args, "keys", None):
+        # Sans liste : les fichiers protégés que l'humain vient de changer,
+        # montrés avant d'être approuvés (B-0034, P3).
+        args.files = fichiers_a_approuver(projet)
+        if not args.files:
+            print("rien à approuver : aucun fichier protégé changé depuis le dernier commit")
+            return 0
+        print(f"{len(args.files)} fichier(s) protégé(s) changé(s) depuis le dernier commit :")
+        for f in args.files:
+            print(f"  - {f}")
+        if not getattr(args, "oui", False):
+            if not sys.stdin.isatty():
+                print("refus : confirmer par `--oui`, ou nommer les fichiers par `--files`", file=sys.stderr)
+                return 2
+            if input("Les approuver ? [o/N] ").strip().lower() not in ("o", "oui", "y", "yes"):
+                print("rien n'est approuvé")
+                return 1
     mem = memoire.Memoire.charger(racine)
     ident = mem.prochain_id("D")
     jour = date.today().isoformat()
@@ -488,7 +519,7 @@ def cmd_fingerprint(args) -> int:
 def cmd_mutation_verdict(args) -> int:
     from socle import mutation
 
-    rapport = mutation.verdict(_projet(args), Path(args.results))
+    rapport = mutation.verdict(_projet(args), Path(args.results), poser=getattr(args, "poser", False))
     rapport.afficher(f"socle {VERSION} — verdict de mutation")
     return 0 if rapport.reussi else 1
 
@@ -524,6 +555,7 @@ def main(argv=None) -> int:
     s.add_argument("--rev", help="révision contrôlée (défaut : l'arbre de travail)")
     s.add_argument("--only", help="liste de contrôles, séparés par des virgules")
     s.add_argument("--fast", action="store_true", help="sans les contrôles lents")
+    s.add_argument("--court", action="store_true", help="ne montrer que ce qui échoue ou avertit")
     s.set_defaults(f=cmd_check)
 
     s = sp.add_parser("verify", help="le contrat verify : capacités de l'adaptateur puis contrôles")
@@ -591,6 +623,7 @@ def main(argv=None) -> int:
     s.add_argument("--files", nargs="*")
     s.add_argument("--keys", nargs="*")
     s.add_argument("--text", required=True)
+    s.add_argument("--oui", action="store_true", help="sans --files : approuver sans demander confirmation")
     s.set_defaults(f=cmd_approve)
 
     s = sp.add_parser("install", help="installer ou mettre à jour le socle dans un projet")
@@ -623,6 +656,8 @@ def main(argv=None) -> int:
 
     s = sp.add_parser("mutation-verdict", help="survivants d'un balayage contre les plafonds")
     s.add_argument("results")
+    s.add_argument("--poser", action="store_true",
+                   help="écrire le plafond mesuré des modules « à mesurer » dans les garde-fous")
     s.set_defaults(f=cmd_mutation_verdict)
 
     s = sp.add_parser("archive", help="archive les sujets clos du backlog dans le journal")

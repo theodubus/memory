@@ -102,6 +102,26 @@ def politique_privee(texte: str, mode: str, relecture: str | None, demandes: boo
     return texte[:debut] + bloc + texte[fin:]
 
 
+def garde_fous_initiaux(cible: Path, texte_adaptateur: str) -> str:
+    """Les garde-fous du gabarit, avec chaque module qui porte déjà du code
+    posé « à mesurer » au cliquet de mutation : une installation sur un
+    projet existant finit verte, et le premier balayage pose les plafonds
+    mesurés (B-0034, P1)."""
+    texte = gabarit("garde-fous.toml")
+    cap = tomllib.loads(texte_adaptateur).get("capabilities", {}).get("mutation", {})
+    if "command" not in cap:
+        return texte
+    porte = re.compile(cap.get("has_code", r"."))
+    fichiers = [f for f in outils.fichiers_courants(cible) if not f.startswith(config.DOSSIER + "/")]
+    modules = [m for m in outils.filtrer(fichiers, cap.get("modules", []), cap.get("modules_exclude", []))
+               if porte.search(outils.lire_a(cible, None, m) or "")]
+    if not modules:
+        return texte
+    entrees = "".join(f"{json.dumps(m, ensure_ascii=False)} = {{ pending = true }}\n" for m in sorted(modules))
+    exemple = '# "src/lib.rs" = { max = 0 }\n'
+    return texte.replace(exemple, exemple + entrees, 1)
+
+
 def politique_langue(texte: str, lg: str) -> str:
     """La politique du gabarit, avec la langue de la mémoire choisie à
     l'installation au lieu de son exemple en commentaire (B-0031)."""
@@ -230,7 +250,7 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
     for nom, contenu in (
         (ch.politique, politique),
         (ch.adaptateur, texte_adaptateur),
-        (ch.garde_fous, gabarit("garde-fous.toml")),
+        (ch.garde_fous, garde_fous_initiaux(cible, texte_adaptateur)),
     ):
         p = cible / nom
         if p.is_file():
@@ -296,7 +316,11 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
     for l in journal:
         print(f"  - {l}")
     print("\nAudit :")
-    return _audit(cible)
+    code, echecs = _audit(cible)
+    print("\nEt maintenant :")
+    for i, etape in enumerate(et_maintenant(cible, bool(ancien), echecs), 1):
+        print(f"  {i}. {etape}")
+    return code
 
 
 def _instructions(cible: Path, dossier_moteur: str, lg: str = "fr") -> list[str]:
@@ -472,6 +496,51 @@ def _adopter(cible: Path) -> list[str]:
     return res
 
 
-def _audit(cible: Path) -> int:
-    r = subprocess.run([sys.executable, str(cible / config.LANCEUR), "check", "--stage", "ci"], cwd=cible)
-    return r.returncode
+def _audit(cible: Path) -> tuple[int, list[str]]:
+    """Les contrôles de la CI, en bref : ce qui échoue ou avertit. Rend le
+    code de sortie et les contrôles en échec."""
+    r = subprocess.run([sys.executable, str(cible / config.LANCEUR), "check", "--stage", "ci", "--court"],
+                       cwd=cible, capture_output=True, text=True)
+    print(r.stdout, end="")
+    if r.stderr:
+        print(r.stderr, end="", file=sys.stderr)
+    m = re.search(r"(?m)^ECHEC — \d+ contrôle\(s\) : (.+)$", r.stdout)
+    return r.returncode, [c.strip() for c in m.group(1).split(",")] if m else []
+
+
+def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str]) -> list[str]:
+    """Ce qui reste à l'humain après l'installation, dans l'ordre où le
+    faire (B-0034, P2) : chaque étape avec sa commande."""
+    from socle import prive
+
+    projet = config.Projet.charger(cible)
+    etapes = []
+    if "protege.fichiers" in echecs:
+        etapes.append("approuver les fichiers protégés que la mise à jour a changés (la liste s'affiche, "
+                      f'à confirmer) : `python3 .socle/socle approve --text "Mise à jour du socle {VERSION}"`')
+    autres = [c for c in echecs if c != "protege.fichiers"]
+    if autres:
+        etapes.append(f"{len(autres)} contrôle(s) en échec ci-dessus ({', '.join(autres)}) : les corriger, "
+                      "ou relancer l'installation avec `--adoption`, qui les passe en avertissement sur l'existant")
+    mode = prive.mode(projet)
+    if mode == "compagnon" and not prive.commit_compagnon(cible):
+        etapes.append(f"mettre en place le dépôt privé : le cloner dans {prive.dossier(cible)}/ (avec au moins "
+                      "un commit), puis `python3 .socle/socle prive verrouiller`")
+    elif mode and mode != "compagnon":
+        filtre = "git-crypt"
+        attributs = cible / ".gitattributes"
+        if attributs.is_file():
+            m = re.search(rf"(?m)^{re.escape(prive.dossier(cible))}/\*\* filter=(\S+)", attributs.read_text(encoding="utf-8"))
+            filtre = m.group(1) if m else filtre
+        if not outils.git(cible, "config", "--get", f"filter.{filtre}.clean", check=False).strip():
+            etapes.append(f"initialiser le filtre de chiffrement « {filtre} » (`{filtre} init`, ou l'équivalent "
+                          "de l'outil) avant d'écrire du privé")
+    demandes = cible / projet.chemins.demandes
+    if not mise_a_jour and not (demandes.is_dir() and any(demandes.glob("D-*.md"))):
+        etapes.append("décrire le projet à l'agent : `python3 .socle/socle init --cadrage <document> --depot` "
+                      "(sans document : `--depot` seul ; un dépôt vide : sans option)")
+    message = f"Mettre à jour le socle {VERSION}" if mise_a_jour else f"Installer le socle {VERSION}"
+    etapes.append(f'commiter puis pousser : `git add -A && git commit -m "{message}" && git push`')
+    etapes.append("ouvrir l'agent dans le projet : il lit l'état au démarrage"
+                  + ("" if mise_a_jour else ", et te pose les questions de départ dans la conversation"))
+    return etapes

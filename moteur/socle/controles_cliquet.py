@@ -22,14 +22,16 @@ from socle.contexte import controle
 ABSENT = object()
 
 # (motif de clé, sens) — `bas` : plus petit est plus strict ; `vrai` : vrai
-# est plus strict ; `inclus` : une liste plus courte est plus stricte (des
-# exclusions) ; `couvre` : une liste plus longue est plus stricte (une
-# couverture).
+# est plus strict ; `faux` : faux ou absent est plus strict (un module « à
+# mesurer » qui reçoit son plafond) ; `inclus` : une liste plus courte est
+# plus stricte (des exclusions) ; `couvre` : une liste plus longue est plus
+# stricte (une couverture).
 REGLES = [
     (("budgets", "*", "max_bytes|max_lines"), "bas"),
     (("staleness", "active_days"), "bas"),
     (("mutation", "caps", "*", "max"), "bas"),
     (("mutation", "caps", "*", "reason"), "libre"),
+    (("mutation", "caps", "*", "pending"), "faux"),
     (("nocopy", "min_chars"), "bas"),
     (("nocopy", "exclude"), "inclus"),
     (("references", "exclude"), "inclus"),
@@ -86,13 +88,15 @@ def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | Non
         if sens == "libre":
             continue
         if va is ABSENT:
-            if sens in ("bas", "vrai", "couvre") or (sens == "inclus" and not vb):
+            if sens in ("bas", "vrai", "couvre", "faux") or (sens == "inclus" and not vb):
                 continue  # un seuil ou une couverture qui apparaît durcit
             res.append((cle, f"clé ajoutée : {vb!r}"))
             continue
         if vb is ABSENT:
             if chemin[:2] == ("mutation", "caps") and modules_existants is not None and chemin[2] not in modules_existants:
                 continue  # le module a disparu : son plafond avec lui
+            if sens == "faux":
+                continue  # « à mesurer » qui disparaît : le plafond mesuré le remplace
             res.append((cle, f"seuil retiré (valait {va!r})"))
             continue
         if sens == "bas" and isinstance(va, (int, float)) and isinstance(vb, (int, float)):
@@ -100,6 +104,9 @@ def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | Non
                 res.append((cle, f"{va} → {vb}"))
         elif sens == "vrai":
             if va and not vb:
+                res.append((cle, f"{va} → {vb}"))
+        elif sens == "faux":
+            if vb and not va:
                 res.append((cle, f"{va} → {vb}"))
         elif sens == "couvre":
             retires = set(va or []) - set(vb or [])

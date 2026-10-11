@@ -433,8 +433,14 @@ def couverture_mutation(ctx, r):
     modules = outils.filtrer(ctx.fichiers, cap.get("modules", []), cap.get("modules_exclude", []))
     for m in modules:
         if m not in caps and porte.search(ctx.lire(m) or ""):
-            r.erreur("mutation.couverture", "module hors du cliquet de mutation : lui mesurer un plafond "
-                     "(`[mutation.caps]` des garde-fous), depuis un arbre vert", m)
+            r.erreur("mutation.couverture", "module hors du cliquet de mutation : l'y poser à mesurer "
+                     f"(`\"{m}\" = {{ pending = true }}` sous `[mutation.caps]` des garde-fous), puis le mesurer "
+                     "par un balayage (`socle mutation-verdict <résultats> --poser`)", m)
+        elif m in caps and caps[m].get("pending"):
+            # À mesurer (B-0034, P1) : un avertissement, jusqu'au premier
+            # balayage, qui pose le plafond mesuré.
+            r.avertir("mutation.couverture", "module à mesurer : lancer le balayage de mutation "
+                      f"(`{cap.get('command', '…')}`), puis `socle mutation-verdict <résultats> --poser`", m)
     for m in caps:
         if m not in ctx.fichiers:
             r.erreur("mutation.couverture", f"le cliquet nomme `{m}`, qui n'existe pas", ctx.projet.chemins.garde_fous)

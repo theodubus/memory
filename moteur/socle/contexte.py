@@ -45,6 +45,9 @@ class Contexte:
     base: str | None = None
     tete: str | None = None  # None : l'arbre de travail
     rapide: bool = False
+    # Le message du commit en cours d'écriture (hook commit-msg) : il compte
+    # comme le dernier commit de la plage, ses trailers avec lui.
+    message: str | None = None
     _cache: dict = field(default_factory=dict)
 
     @property
@@ -128,9 +131,10 @@ class Contexte:
 
     @cached_property
     def commits(self) -> list[dict]:
-        if not outils.a_des_commits(self.racine):
-            return []
-        return outils.commits(self.racine, self.base, self.rev_commit)
+        res = outils.commits(self.racine, self.base, self.rev_commit) if outils.a_des_commits(self.racine) else []
+        if self.message is not None:
+            res.append({"sha": "en-cours", "parents": [], "message": self.message})
+        return res
 
     @cached_property
     def validations(self) -> list[demandes.Demande]:

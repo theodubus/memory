@@ -182,5 +182,21 @@ def initialiser(projet: config.Projet, cadrage: Path | None = None, depot: bool 
 
     for l in sortie:
         print(f"  - {l}")
+    print("\nPour toi :")
+    for i, etape in enumerate(pour_toi(ident), 1):
+        print(f"  {i}. {etape}")
     print("\n" + gabarit("initialisation.md"))
     return 0
+
+
+def pour_toi(ident: str) -> list[str]:
+    """Ce qui revient à l'humain après `init`, avant la part de l'agent,
+    écrite pour lui (B-0034, P2)."""
+    return [
+        f'commiter puis pousser : `git add -A && git commit -m "Initialiser la mémoire" && git push` '
+        f"(la demande {ident} doit être sur GitHub pour que tu puisses la lire)",
+        "ouvrir l'agent dans le projet : il relit les questions de départ et te les pose dans la conversation, "
+        "avec leur lien",
+        "y répondre dans la conversation, une ligne par question ou « défauts » : l'agent consigne ta réponse "
+        "telle quelle",
+    ]

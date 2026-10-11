@@ -47,9 +47,9 @@ comparent le même fichier sous ses deux noms.
 | `prive.py` | la mémoire privée : modes compagnon et chiffré, verrou, accès, couches privées par défaut, bascule d'une entrée publique, contrôles `prive.*` |
 | `liens.py` | le permalien d'un fichier ou d'une entrée ; les liens d'un message que l'humain ne pourra pas suivre |
 | `verification.py` | le contrat `verify` : les capacités de l'adaptateur |
-| `mutation.py` | le verdict de mutation contre les plafonds ; un lecteur par outil (cargo-mutants, mutmut, Stryker, gremlins, PIT, mutant, Infection) |
+| `mutation.py` | le verdict de mutation contre les plafonds ; un lecteur par outil (cargo-mutants, mutmut, Stryker, gremlins, PIT, mutant, Infection) ; un module « à mesurer » reçoit son plafond mesuré (`--poser`) |
 | `empreinte.py` | l'empreinte du moteur |
-| `installeur.py` | installation, mise à jour, adoption ; adaptateur déduit du dépôt ; mémoire privée posée à l'installation ; diff de politique à la mise à jour |
+| `installeur.py` | installation, mise à jour, adoption ; adaptateur déduit du dépôt ; mémoire privée posée à l'installation, ou ajoutée à un projet installé ; diff de politique à la mise à jour ; le code existant entre « à mesurer » au cliquet de mutation ; un audit court, puis « Et maintenant », les étapes de l'humain avec leur commande |
 | `langue.py` | la langue de la mémoire : le vocabulaire du format par langue, ramené à des clés internes à la lecture, et celui du projet à l'écriture |
 | `config.py` | la configuration du projet et les deux tables de chemins (formats 1 et 2), choisie par projet et par révision |
 | `migrations.py` | les migrations de format, appliquées dans l'ordre à la mise à jour ; du format 1 au 2, le renommage des chemins |
@@ -91,8 +91,8 @@ comparent le même fichier sous ses deux noms.
 | Tests creux | `tests.creux` (sur le diff aux étages agent et git) | agent, git, CI |
 | Test supprimé, valeur attendue changée ; à la fin du tour, en attente d'une demande poussée qui nomme le test, un avertissement (B-0033) | `tests.attendus` | agent, git, CI |
 | Correctif avec test de régression rejoué sur le parent | `tests.regression` | CI |
-| Code nouveau ou modifié testé : une fonction publique est nommée par un test, ou dispensée nommément avec sa raison (`Dispense-test:`) | `tests.code-teste` (pas au commit : le hook ne voit pas la dispense) | agent, CI |
-| Mutation : plafond par module, cliquet | `mutation.couverture`, `socle mutation-verdict` | agent, git, CI ; verdict hebdomadaire |
+| Code nouveau ou modifié testé : une fonction publique est nommée par un test, ou dispensée nommément avec sa raison (`Dispense-test:`) | `tests.code-teste` ; au commit, un avertissement du hook `commit-msg`, le premier qui voit la dispense (B-0034, P9) | agent, CI ; avertissement au commit |
+| Mutation : plafond par module, cliquet ; un module pas encore balayé y entre « à mesurer » (un avertissement), et le premier verdict pose son plafond | `mutation.couverture`, `socle mutation-verdict --poser` | agent, git, CI ; verdict hebdomadaire |
 | Rien ne s'affaiblit en silence | `cliquet.garde-fous`, `protege.fichiers` | agent, git, CI |
 | Moteur et politique non altérés | `moteur.empreinte`, `protege.fichiers` | agent, git, CI |
 | Hooks chargés et déclenchés | `hooks.configuration`, `hooks.trace` (trailer `Socle-Hooks`) | CI |

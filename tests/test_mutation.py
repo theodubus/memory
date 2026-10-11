@@ -52,6 +52,65 @@ if __name__ == "__main__":
     unittest.main()
 
 
+class TestAMesurer(unittest.TestCase):
+    """B-0034, P1 : un module « à mesurer » n'a pas de plafond ; le verdict
+    dit son compte, et `poser` l'écrit dans les garde-fous."""
+
+    GARDE_FOUS = '[mutation.caps]\n"src/eval.rs" = { pending = true }\n"src/tt.rs" = { pending = true }\n'
+
+    def setUp(self):
+        self.dossier = Path(tempfile.mkdtemp())
+        out = self.dossier / "eval/mutants.out"
+        out.mkdir(parents=True)
+        (out / "missed.txt").write_text("src/eval.rs:10:5: replace + with -\n")
+        (out / "caught.txt").write_text("src/tt.rs:3:1: replace y\n")
+        (self.dossier / ".socle").mkdir()
+        (self.dossier / ".socle/guardrails.toml").write_text(self.GARDE_FOUS)
+
+    def tearDown(self):
+        shutil.rmtree(self.dossier)
+
+    def projet(self):
+        import tomllib
+
+        p = projet(tomllib.loads((self.dossier / ".socle/guardrails.toml").read_text())["mutation"]["caps"])
+        p.racine = self.dossier
+        return p
+
+    def test_un_module_a_mesurer_ne_casse_pas(self):
+        r = mutation.verdict(self.projet(), self.dossier)
+        self.assertTrue(r.reussi)
+        self.assertTrue(any("src/eval.rs : à mesurer — 1 survivant(s)" in c.message for c in r.constats))
+
+    def test_poser_ecrit_le_plafond_mesure(self):
+        mutation.verdict(self.projet(), self.dossier, poser=True)
+        texte = (self.dossier / ".socle/guardrails.toml").read_text()
+        self.assertIn('"src/tt.rs" = { max = 0 }', texte)
+        self.assertRegex(texte, r'"src/eval.rs" = \{ max = 1, reason = "mesuré le [\d-]+ : 1 survivant\(s\)" \}')
+        self.assertTrue(mutation.verdict(self.projet(), self.dossier).reussi)
+
+    def test_cmd_mutation_verdict_avec_poser(self):
+        import argparse
+        import io
+        from contextlib import redirect_stdout
+        from unittest import mock
+
+        from socle import cli
+
+        with mock.patch.object(cli, "_projet", return_value=self.projet()), redirect_stdout(io.StringIO()) as flux:
+            code = cli.cmd_mutation_verdict(argparse.Namespace(results=str(self.dossier), poser=True))
+        self.assertEqual(code, 0, flux.getvalue())
+        self.assertIn("plafond posé", flux.getvalue())
+        self.assertIn('"src/tt.rs" = { max = 0 }', (self.dossier / ".socle/guardrails.toml").read_text())
+
+    def test_poser_plafonds_ne_touche_que_les_modules_a_mesurer(self):
+        gf = self.dossier / ".socle/guardrails.toml"
+        gf.write_text(self.GARDE_FOUS + '"src/x.rs" = { max = 4, reason = "équivalents" }\n')
+        mutation.poser_plafonds(self.projet(), {"src/eval.rs": 0, "src/x.rs": 0})
+        self.assertIn('"src/x.rs" = { max = 4, reason = "équivalents" }', gf.read_text())
+        self.assertIn('"src/eval.rs" = { max = 0 }', gf.read_text())
+
+
 class TestMutmut(unittest.TestCase):
     """La sortie réelle de `mutmut results --all true` sur le projet jetable
     du jalon 6 (`tests/donnees/mutmut-results.txt`), puis les cas qu'il

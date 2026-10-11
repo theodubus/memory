@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
 from socle import cli, config, contexte, controles_memoire, installeur, memoire
@@ -49,6 +50,29 @@ class TestApprobation(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(erreurs):
             code = cli.cmd_approve(argparse.Namespace(root=str(self.racine), files=list(fichiers), keys=None, text=texte))
         return code, erreurs.getvalue()
+
+    def test_sans_liste_les_fichiers_changes_se_trouvent_seuls(self):
+        """B-0034, P3 : une mise à jour faisait recopier à l'humain chaque
+        fichier protégé changé dans `--files`."""
+        self.assertEqual(cli.fichiers_a_approuver(config.Projet.charger(self.racine)), [".github/workflows/socle.yml"])
+        sortie = io.StringIO()
+        with contextlib.redirect_stdout(sortie), contextlib.redirect_stderr(io.StringIO()):
+            code = cli.cmd_approve(argparse.Namespace(root=str(self.racine), files=None, keys=None,
+                                                      text="Mise à jour du socle", oui=True))
+        self.assertEqual(code, 0)
+        self.assertIn("  - .github/workflows/socle.yml", sortie.getvalue())
+        self.assertEqual(cli.fichiers_a_approuver(config.Projet.charger(self.racine)), [])
+        demande = next((self.racine / "memory/requests").glob("D-*-approbation-humaine.md")).read_text()
+        self.assertIn("`.github/workflows/socle.yml`", demande)
+
+    def test_sans_liste_ni_confirmation_rien_n_est_approuve(self):
+        erreurs = io.StringIO()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(erreurs), \
+                unittest.mock.patch("sys.stdin", io.StringIO("")):
+            code = cli.cmd_approve(argparse.Namespace(root=str(self.racine), files=None, keys=None, text="x"))
+        self.assertEqual(code, 2)
+        self.assertIn("--oui", erreurs.getvalue())
+        self.assertEqual(list((self.racine / "memory/requests").glob("D-*-approbation-humaine.md")), [])
 
     def test_la_demande_ecrite_passe_les_controles_de_la_memoire(self):
         code, _ = self.approuver(".github/workflows/socle.yml")

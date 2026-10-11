@@ -570,7 +570,11 @@ def git_pre_commit(projet: config.Projet) -> int:
     rapport = contexte.executer(ctx)
     if not rapport.reussi:
         tracer_refus(projet.racine, "git-pre-commit", ",".join(rapport.controles_en_echec()))
-        rapport.afficher("socle — contrôles avant commit", flux=sys.stderr)
+        rapport.afficher("socle — contrôles avant commit", flux=sys.stderr, court=True)
+        if "protege.fichiers" in rapport.controles_en_echec():
+            print("\nFichiers protégés : si c'est l'humain qui les a changés (une mise à jour du socle, sa "
+                  "politique), `python3 .socle/socle approve --text "<raison>"` les liste et les approuve — réservé à l'humain ; "
+                  "l'agent, lui, ouvre une demande.", file=sys.stderr)
         print("\nCommit refusé. `git commit --no-verify` contourne ce hook, jamais la CI.", file=sys.stderr)
         return 1
     return 0
@@ -626,21 +630,50 @@ def git_prepare_commit_msg(projet: config.Projet, fichier: str, source: str = ""
 def git_commit_msg(projet: config.Projet, fichier: str = "") -> int:
     """Le message d'un commit public ne cite ni identifiant privé ni terme de
     la liste privée : le seul étage, hors de l'agent, qui le voit avant le
-    commit (D-0008)."""
+    commit (D-0008). Il avertit aussi d'une fonction que la CI refusera faute
+    de test ou de dispense (B-0034, P9)."""
     tracer(projet.racine, "git-commit-msg")
-    if prive.mode(projet) is None or not fichier:
+    if not fichier:
         return 0
     try:
         brut = Path(fichier).read_text(encoding="utf-8", errors="replace")
     except OSError:
         return 0
     message = "\n".join(l for l in brut.splitlines() if not l.startswith("#"))
-    faute = _fuites_dans(projet, message)
+    faute = _fuites_dans(projet, message) if prive.mode(projet) is not None else None
     if faute:
         tracer_refus(projet.racine, "git-commit-msg", "fuite")
         print(f"socle — commit refusé : {faute}", file=sys.stderr)
         return 1
+    avertissement = code_sans_test(projet, message)
+    if avertissement:
+        print(avertissement, file=sys.stderr)
     return 0
+
+
+def code_sans_test(projet: config.Projet, message: str) -> str | None:
+    """Une fonction publique que ni un test ni une dispense ne nomme : la CI
+    refusera le commit (`tests.code-teste`). Le hook commit-msg, le premier
+    étage qui voit le message et ses dispenses, le dit sans refuser : un
+    humain qui commite son code l'apprend ici, pas en CI (B-0034, P9)."""
+    from socle import contexte, controles_tests
+    from socle.rapport import Rapport
+
+    base = outils.base_de_travail(projet.racine)
+    index = outils.git(projet.racine, "write-tree", check=False).strip() or None
+    ctx = contexte.Contexte(projet, etage="git", base=base, tete=index, rapide=True, message=message)
+    r = Rapport()
+    try:
+        controles_tests.code_teste(ctx, r)
+    except Exception:  # un avertissement ne bloque jamais un commit
+        return None
+    erreurs = r.erreurs("tests.code-teste")
+    if not erreurs:
+        return None
+    return ("socle — avertissement : la CI refusera ce commit (`tests.code-teste`) :\n"
+            + "\n".join(f"  ! {c.en_ligne()}" for c in erreurs)
+            + "\nLe commit passe ici. Écrire le test dans un commit suivant, ou amender ce message "
+            "(`git commit --amend`) avec la dispense.")
 
 
 def git_pre_push(projet: config.Projet) -> int:
@@ -660,6 +693,6 @@ def git_pre_push(projet: config.Projet) -> int:
     verification.executer_etapes(projet, True, rapport)
     if not rapport.reussi:
         tracer_refus(projet.racine, "git-pre-push", ",".join(rapport.controles_en_echec()))
-        rapport.afficher("socle — vérification avant push", flux=sys.stderr)
+        rapport.afficher("socle — vérification avant push", flux=sys.stderr, court=True)
         return 1
     return 0

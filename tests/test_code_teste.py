@@ -155,3 +155,31 @@ class TestCodeTeste(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+    def test_le_hook_avertit_sans_refuser(self):
+        """B-0034, P9 : le hook commit-msg, qui voit le message et ses
+        dispenses, avertit sans refuser de ce que la CI refusera."""
+        import io
+        from contextlib import redirect_stderr
+
+        from socle import hooks
+
+        self.ajouter_triple()
+        git(self.racine, "add", "-A")
+        projet = config.Projet.charger(self.racine)
+        message = self.racine / "MESSAGE"
+        message.write_text("Ajout de triple\n")
+        with redirect_stderr(io.StringIO()) as flux:
+            self.assertEqual(hooks.git_commit_msg(projet, str(message)), 0)
+        self.assertIn("la CI refusera ce commit", flux.getvalue())
+        self.assertIn("fonction `triple` ajoutée", flux.getvalue())
+
+    def test_code_sans_test_lit_la_dispense_du_message(self):
+        from socle import hooks
+
+        self.ajouter_triple()
+        git(self.racine, "add", "-A")
+        projet = config.Projet.charger(self.racine)
+        self.assertIn("triple", hooks.code_sans_test(projet, "Ajout de triple\n"))
+        self.assertIsNone(hooks.code_sans_test(
+            projet, "Ajout de triple\n\nDispense-test: triple — appelée par l'interface seulement\n"))

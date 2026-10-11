@@ -11,7 +11,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import cli, config, hooks, humain, liens, memoire
+from socle import cli, config, hooks, humain, liens, memoire, rapport
 
 DEPOT = "https://github.com/essai/memoire"
 
@@ -147,3 +147,48 @@ class TestCommandes(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestRapportCourt(unittest.TestCase):
+    """B-0034, P2 : le rapport court, pour l'humain, ne montre que ce qui
+    échoue, avertit ou n'a pas pu s'exécuter."""
+
+    def test_seul_ce_qui_signale_quelque_chose(self):
+        r = rapport.Rapport()
+        for nom in ("a.sain", "b.sain", "c.avertit", "d.echoue", "e.indisponible"):
+            r.execute(nom)
+        r.avertir("c.avertit", "à surveiller")
+        r.erreur("d.echoue", "cassé")
+        r.indisponible("e.indisponible", "outil absent")
+        court = r.texte(court=True)
+        for nom in ("c.avertit", "d.echoue", "e.indisponible"):
+            self.assertIn(nom, court)
+        self.assertNotIn("a.sain", court)
+        self.assertIn("… et 2 autre(s) contrôle(s) sans rien à signaler", court)
+        self.assertIn("ECHEC — 1 contrôle(s) : d.echoue", court)
+        self.assertIn("a.sain", r.texte())
+
+    def rapport(self):
+        r = rapport.Rapport()
+        for nom in ("a.sain", "b.sain", "d.echoue"):
+            r.execute(nom)
+        r.erreur("d.echoue", "cassé")
+        return r
+
+    def test_afficher_court_sur_un_flux(self):
+        flux = io.StringIO()
+        self.rapport().afficher("titre", flux=flux, court=True)
+        self.assertIn("… et 2 autre(s) contrôle(s) sans rien à signaler", flux.getvalue())
+
+    def test_cmd_check_court(self):
+        from unittest import mock
+
+        from socle import contexte
+
+        ns = argparse.Namespace(stage="ci", base=None, rev=None, fast=False, only=None, court=True)
+        with mock.patch.object(cli, "_projet"), mock.patch.object(cli, "_base", return_value=None), \
+                mock.patch.object(contexte, "executer", return_value=self.rapport()), \
+                contextlib.redirect_stdout(io.StringIO()) as flux:
+            self.assertEqual(cli.cmd_check(ns), 1)
+        self.assertIn("… et 2 autre(s) contrôle(s)", flux.getvalue())
+        self.assertNotIn("a.sain", flux.getvalue())
