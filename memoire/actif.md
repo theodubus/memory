@@ -5,15 +5,13 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-Jalons 6, 7 et 8 faits (J-2026-10-10-W, J-2026-10-10-AA, J-2026-10-10-AC) :
-l'adaptateur `python-pytest`, la mémoire privée et ses contrôles de fuite,
-l'installeur avec ses entrées d'initialisation et sa mise à jour
-(ADR-0012 à ADR-0015).
+Jalon 9 (B-0004) : le banc est prêt et éprouvé sur l'agent simulé
+(J-2026-10-11-B). Théo a validé 18 sessions réelles (D-0009) : six
+scénarios, trois passages, chacune plafonnée à l'équivalent de 2 dollars.
 
 ## Prochaines étapes
 
-1. Jalon 9 : banc d'évaluation sur un agent réel (B-0004) ; attend la
-   réponse de Théo à D-0009, reformulée. Sans réponse, préparer le banc et
-   le faire tourner sur un agent simulé.
-2. B-0019, par Théo, une fois la pull request des jalons 6 à 8 fusionnée :
-   approuver le workflow de CI et le hook `commit-msg`.
+1. Lancer le vrai banc, détaché, avec attente sur les limites d'usage et un
+   réveil programmé ; puis recopier le rapport au journal, en tirer les
+   faits mesurés, et clore B-0004 si les six scénarios passent.
+2. B-0019, par Théo : approuver le verrou du moteur, commiter, fusionner.

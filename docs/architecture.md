@@ -29,7 +29,7 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 | `controles_tests.py` | capacités de l'adaptateur, tests creux, valeurs attendues, régression rejouée sur le parent, couverture de mutation, code nouveau nommé par un test |
 | `controles_cliquet.py` | cliquet des garde-fous, fichiers protégés, empreinte du moteur, configuration et trace des hooks |
 | `tests_lecture.py` | extraction des fonctions de test selon l'adaptateur ; transitivité des assertions |
-| `hooks.py` | les points d'entrée des hooks de l'agent et de git, la trace |
+| `hooks.py` | les points d'entrée des hooks de l'agent et de git, la trace, dont chaque refus et l'étage qui l'a prononcé |
 | `etat.py` | l'état dérivé |
 | `humain.py` | ce qui revient à l'humain, et la lecture du dernier message de l'agent pour le récap |
 | `prive.py` | la mémoire privée : modes compagnon et chiffré, verrou, accès, contrôles `prive.*` |
@@ -102,7 +102,8 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
   (`ADR-0006`).
 - **La trace des hooks voyage dans les commits** (`ADR-0005`). Elle vit
   dans le répertoire git commun (`.git/socle/hooks.log`), partagé par tous
-  les worktrees du dépôt.
+  les worktrees du dépôt. Chaque refus y est noté (`Refus`, avec l'étage
+  et ce qui a refusé) : le banc d'évaluation y lit quel étage attrape quoi.
 - **Le hook avant commit juge l'index**, figé en arbre par `git write-tree` :
   ce qui sera commité, pas ce qui est sur disque.
 - **Le cliquet compare la base et la tête clé par clé**, avec un sens par
@@ -128,6 +129,9 @@ pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
   validé par Théo (`D-0004`).
 
 ## Ce qui n'est pas fait
+
+Le banc d'évaluation du jalon 9 (`docs/banc.md`) mesure ce que fait un agent
+réel équipé du socle ; ses résultats vont au journal.
 
 Le backlog le tient : jalon 9, empreinte comparée à la
 version publiée, workflow de mutation générique. Les limites connues des contrôles y sont aussi :

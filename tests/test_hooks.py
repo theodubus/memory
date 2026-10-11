@@ -54,5 +54,35 @@ class TestTrailer(unittest.TestCase):
         self.assertEqual(hooks.compter_session(racine), "SessionStart=1 PreToolUse=1 Stop=1")
 
 
+
+class TestTraceDesRefus(unittest.TestCase):
+    """Chaque refus d'un hook laisse dans la trace son étage et ce qui a
+    refusé : le banc d'évaluation y compte les défauts attrapés par étage."""
+
+    def test_un_refus_du_hook_de_l_agent_est_trace(self):
+        import contextlib
+        import io
+        import subprocess
+        import tempfile
+        from pathlib import Path
+
+        from socle import config
+
+        racine = Path(tempfile.mkdtemp())
+        subprocess.run(["git", "init", "-q"], cwd=racine, check=True)
+        projet = config.Projet.charger(racine)
+        entree = {"session_id": "s", "tool_name": "Bash", "tool_input": {"command": "git push --force origin main"}}
+        with contextlib.redirect_stdout(io.StringIO()) as sortie:
+            hooks.pre_tool_use(projet, entree)
+        self.assertIn('"deny"', sortie.getvalue())
+        refus = [l.split("\t") for l in config.lire_trace(racine) if "\tRefus\t" in l]
+        self.assertEqual(len(refus), 1)
+        self.assertEqual(refus[0][2], "s")
+        self.assertTrue(refus[0][3].startswith("PreToolUse:Bash — "))
+        hooks.tracer_refus(racine, "git-pre-commit", "tests.creux,memoire.references")
+        self.assertTrue(config.lire_trace(racine)[-1].endswith("\tRefus\t\tgit-pre-commit:tests.creux,memoire.references"))
+        self.assertEqual(hooks.compter_session(racine), "SessionStart=0 PreToolUse=1 Stop=0")
+
+
 if __name__ == "__main__":
     unittest.main()

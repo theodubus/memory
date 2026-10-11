@@ -25,6 +25,8 @@ comme dans n'importe quel projet.
 - `tests/` — les tests du moteur (`unittest`), dont l'auto-test complet par
   injection de défauts.
 - `docs/` — l'architecture et l'inventaire de `chess`.
+- `banc/` — le banc d'évaluation sur un agent réel, ses six scénarios et
+  leurs juges (`docs/banc.md`).
 - `memoire/` — la mémoire de ce projet, au format du socle.
 
 ## Commandes
@@ -33,6 +35,7 @@ comme dans n'importe quel projet.
 python3 .socle/socle verify --rapide     # compilation, tests, contrôles
 python3 .socle/socle ci                  # tout, dont l'auto-test
 python3 .socle/socle selftest --verbose  # les défauts injectés, un par un
+python3 banc/banc.py --agent simule      # le banc, sur un agent simulé
 python3 .socle/socle install --target ../projet --adapter auto --owner @moi
 python3 .socle/socle init --cadrage cadrage.md --depot   # dans le projet installé
 ```

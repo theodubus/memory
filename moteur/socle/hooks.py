@@ -69,6 +69,12 @@ def tracer(racine: Path, evenement: str, session: str = "", source: str = ""):
         pass  # une trace manquante se voit dans le trailer ; un hook qui casse bloquerait tout
 
 
+def tracer_refus(racine: Path, etage: str, quoi: str, session: str = ""):
+    """Un refus d'un hook, dans la trace : `Refus` et, en source, l'étage et
+    ce qui a refusé. Le banc d'évaluation y lit quel étage attrape quoi."""
+    tracer(racine, "Refus", session, f"{etage}:{' '.join(quoi.split())[:160]}")
+
+
 def lire_entree() -> dict:
     try:
         brut = sys.stdin.read()
@@ -290,65 +296,69 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
     args = entree.get("tool_input") or {}
     tracer(racine, "PreToolUse", entree.get("session_id", ""), outil)
 
+    def refus(raison: str) -> int:
+        tracer_refus(racine, "PreToolUse", f"{outil} — {raison}", entree.get("session_id", ""))
+        return _refus(raison)
+
     motifs_outils = projet.pol("irreversible", "tools", defaut=IRREVERSIBLES_OUTILS)
     for m in motifs_outils:
         if re.fullmatch(m, outil):
-            return _refus(f"action externe ou irréversible ({outil}) : validation humaine requise "
-                          "(politique, point 4). Émettre une demande, travailler sur autre chose en attendant.")
+            return refus(f"action externe ou irréversible ({outil}) : validation humaine requise "
+                         "(politique, point 4). Émettre une demande, travailler sur autre chose en attendant.")
 
     if outil == "Bash":
         cmd = args.get("command", "")
         for m in projet.pol("irreversible", "bash", defaut=IRREVERSIBLES_BASH):
             if re.search(m, cmd):
-                return _refus(f"commande irréversible ou externe : « {cmd.strip()[:200]} » — validation humaine "
-                              "requise (politique, point 4). Si c'est une décision, émettre une demande `D-NNNN` ; si "
-                              "c'est une action que l'humain doit faire lui-même, l'inscrire au backlog avec "
-                              "`pour : humain`. Puis continuer sur autre chose.")
+                return refus(f"commande irréversible ou externe : « {cmd.strip()[:200]} » — validation humaine "
+                             "requise (politique, point 4). Si c'est une décision, émettre une demande `D-NNNN` ; si "
+                             "c'est une action que l'humain doit faire lui-même, l'inscrire au backlog avec "
+                             "`pour : humain`. Puis continuer sur autre chose.")
         m = COMMANDES_HUMAINES.search(cmd)
         if m and (m.group(1) or m.group(2)) == "approve":
-            return _refus("`socle approve` est réservé à l'humain : il valide ses propres changements protégés.")
+            return refus("`socle approve` est réservé à l'humain : il valide ses propres changements protégés.")
         if m and not (re.search(r"--relayed\b", cmd) and re.search(r"--quote(-file)?\b", cmd)):
-            return _refus("l'agent ne répond jamais à la place de l'humain. Il ne peut que relayer une réponse "
-                          "donnée dans la conversation : `socle answer D-NNNN <réponse> --relayed --by <nom> "
-                          "--quote-file <texte exact>` (ADR-0006), ou `socle relu --relayed --by <nom> "
-                          "--quote-file <texte exact>` pour une relecture avant publication.")
+            return refus("l'agent ne répond jamais à la place de l'humain. Il ne peut que relayer une réponse "
+                         "donnée dans la conversation : `socle answer D-NNNN <réponse> --relayed --by <nom> "
+                         "--quote-file <texte exact>` (ADR-0006), ou `socle relu --relayed --by <nom> "
+                         "--quote-file <texte exact>` pour une relecture avant publication.")
         faute = _fuite_bash(projet, cmd)
         if faute:
-            return _refus(faute)
+            return refus(faute)
         cible = ecriture_protegee(projet, cmd)
         if cible:
-            return _refus(f"écriture d'un fichier protégé ({cible}) par le shell : seul l'humain modifie "
-                          "la politique, les hooks, la CI et le moteur (relance de l'installeur).")
+            return refus(f"écriture d'un fichier protégé ({cible}) par le shell : seul l'humain modifie "
+                         "la politique, les hooks, la CI et le moteur (relance de l'installeur).")
 
     faute = _fuite_outil(projet, outil, args)
     if faute:
-        return _refus(faute)
+        return refus(faute)
 
     if outil in OUTILS_ECRITURE:
         rel = _relatif(racine, args.get("file_path") or args.get("notebook_path") or "")
         if rel and outils.correspond(rel, projet.chemins_proteges()):
-            return _refus(f"`{rel}` est protégé par la politique : seul l'humain le modifie (CODEOWNERS), "
-                          "ou l'installeur pour les hooks, la CI et le moteur. Proposer le changement par une demande.")
+            return refus(f"`{rel}` est protégé par la politique : seul l'humain le modifie (CODEOWNERS), "
+                         "ou l'installeur pour les hooks, la CI et le moteur. Proposer le changement par une demande.")
         if rel and rel.endswith(".md"):
             avant, apres = contenu_apres(racine, outil, args, rel)
             if apres is not None:
                 fautes = references_inventees(projet, rel, avant, apres)
                 if fautes:
-                    return _refus("référence inventée — " + " ; ".join(fautes[:5]))
+                    return refus("référence inventée — " + " ; ".join(fautes[:5]))
                 faute = statut_valide_ajoute(rel, avant, apres, projet)
                 if faute:
-                    return _refus(faute)
+                    return refus(faute)
                 if memoire.couche_attendue(rel) == "demandes":
                     d = demandes.charger(racine, None, rel, apres)
                     if d.reponse is None:
                         fautes = demandes.linter(d, projet)
                         if fautes:
-                            return _refus("demande hors contrat (elle doit se lire sans le projet en tête) — "
+                            return refus("demande hors contrat (elle doit se lire sans le projet en tête) — "
                                           + " ; ".join(fautes[:8]))
 
     faute = sha_fabrique(racine, json.dumps(args, ensure_ascii=False))
     if faute:
-        return _refus(faute)
+        return refus(faute)
     return 0
 
 
@@ -454,6 +464,7 @@ def stop(projet: config.Projet, entree: dict) -> int:
             "Écrire une demande `D-NNNN` qui résume l'échec, ce qui a été tenté et ce qui est supposé, "
             "puis s'arrêter.\n\n" + texte)}, ensure_ascii=False))
         return 0
+    tracer_refus(racine, "Stop", ",".join(rapport.controles_en_echec()), entree.get("session_id", ""))
     print(json.dumps({"decision": "block", "reason": (
         f"Les contrôles échouent (tentative {essais}/{projet.maximum_tentatives()}) : corriger avant de conclure.\n\n" + texte
     )}, ensure_ascii=False))
@@ -534,6 +545,8 @@ def exiger_recap(projet: config.Projet, entree: dict) -> int:
             f"Ton dernier message cite {', '.join(sans_lien)}, en attente de l'humain, sans son lien : "
             "il doit pouvoir l'ouvrir d'un clic. Ajoute la sortie de `socle url "
             + " ".join(sans_lien) + "`.")
+    tracer_refus(racine, "Stop", ",".join(x for x, oui in (("recap", manque), ("liens", morts), ("lien-de-demande", sans_lien))
+                                         if oui), entree.get("session_id", ""))
     print(json.dumps({"decision": "block", "reason": "\n\n".join(raisons)}, ensure_ascii=False))
     return 0
 
@@ -555,6 +568,7 @@ def git_pre_commit(projet: config.Projet) -> int:
     ctx = contexte.Contexte(projet, etage="git", base=base, tete=index, rapide=True)
     rapport = contexte.executer(ctx)
     if not rapport.reussi:
+        tracer_refus(projet.racine, "git-pre-commit", ",".join(rapport.controles_en_echec()))
         rapport.afficher("socle — contrôles avant commit", flux=sys.stderr)
         print("\nCommit refusé. `git commit --no-verify` contourne ce hook, jamais la CI.", file=sys.stderr)
         return 1
@@ -622,6 +636,7 @@ def git_commit_msg(projet: config.Projet, fichier: str = "") -> int:
     message = "\n".join(l for l in brut.splitlines() if not l.startswith("#"))
     faute = _fuites_dans(projet, message)
     if faute:
+        tracer_refus(projet.racine, "git-commit-msg", "fuite")
         print(f"socle — commit refusé : {faute}", file=sys.stderr)
         return 1
     return 0
@@ -635,6 +650,7 @@ def git_pre_push(projet: config.Projet) -> int:
     lignes = [] if sys.stdin is None or sys.stdin.isatty() else sys.stdin.read().splitlines()
     refus = prive.publication_refusee(projet, [l.split()[1] for l in lignes if len(l.split()) >= 2])
     if refus:
+        tracer_refus(projet.racine, "git-pre-push", "relecture")
         print(f"socle — push refusé : {refus}", file=sys.stderr)
         return 1
     base = outils.base_de_travail(projet.racine)
@@ -642,6 +658,7 @@ def git_pre_push(projet: config.Projet) -> int:
     rapport = contexte.executer(ctx)
     verification.executer_etapes(projet, True, rapport)
     if not rapport.reussi:
+        tracer_refus(projet.racine, "git-pre-push", ",".join(rapport.controles_en_echec()))
         rapport.afficher("socle — vérification avant push", flux=sys.stderr)
         return 1
     return 0
