@@ -12,8 +12,8 @@ l'installeur avec ses entrées d'initialisation et sa mise à jour
 
 ## Prochaines étapes
 
-1. Jalon 9 : banc d'évaluation sur un agent réel (B-0004) ; la dépense
-   attend la réponse de Théo à D-0009. Sans réponse, préparer le banc et le
-   faire tourner sur un agent simulé.
-2. B-0019, par Théo, une fois la pull request de ces jalons fusionnée :
+1. Jalon 9 : banc d'évaluation sur un agent réel (B-0004) ; attend la
+   réponse de Théo à D-0009, reformulée. Sans réponse, préparer le banc et
+   le faire tourner sur un agent simulé.
+2. B-0019, par Théo, une fois la pull request des jalons 6 à 8 fusionnée :
    approuver le workflow de CI et le hook `commit-msg`.
