@@ -256,6 +256,13 @@ seul ; les messages d'erreur qui ne disent pas quoi faire. Mesurer le
 parcours sur une installation neuve, et noter chaque étape qui demande à
 l'humain de lire le code.
 
+Constaté par Théo (J-2026-10-11-R) : sa propre approbation de la migration
+a créé une demande, D-0012, écrite et validée d'un seul geste par
+`socle approve`. Son numéro n'a paru que dans la sortie de son terminal, et
+jamais dans la conversation ; il s'est demandé s'il l'avait validée. Ce que
+l'humain fait lui-même devrait lui être rappelé par son nom, et l'agent le
+citer au tour suivant.
+
 ## B-0035 — La documentation du projet : ce que fait le socle, comment il est fait, comment l'installer et s'en servir
 
 > statut : ouvert · origine : J-2026-10-11-N · lu : backlog@e7973e14
