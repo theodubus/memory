@@ -211,7 +211,7 @@ mécanique ; plus simple une fois B-0032 fait.
 
 ## B-0032 — Des noms de fichiers et de dossiers en anglais pour tous les projets
 
-> statut : ouvert · origine : J-2026-10-11-J · lu : backlog@487629e3
+> statut : fait · origine : J-2026-10-11-J · lu : backlog@487629e3 · ref : J-2026-10-11-N
 
 Demandé par Théo : des noms de dossiers et de fichiers en anglais pour
 tous les projets, quelle que soit la langue de la mémoire (`memory/`,
@@ -267,3 +267,27 @@ l'agent, l'architecture, le format de la mémoire et le banc, écrits pour
 l'agent ou pour qui fabrique le socle, pas pour qui l'installe. À faire
 après le parcours de l'utilisateur (B-0034), pour documenter un parcours
 déjà simplifié plutôt que l'actuel.
+
+## B-0036 — Migrer ce dépôt au format 2 de la mémoire
+
+> statut : ouvert · origine : J-2026-10-11-N · pour : humain · lu : backlog@e7557122
+
+Ce dépôt est encore au format 1 de la mémoire (chemins en français). Sa
+migration au format 2 renomme six fichiers protégés (CODEOWNERS, le
+workflow de CI, l'adaptateur, le verrou du moteur, la politique et le
+lanceur) : seul Théo peut les approuver. Répétée sur une copie du commit qui
+livre le format 2 : seul le refus des fichiers protégés reste avant
+approbation. Les trois commandes sont dans la conversation du 2026-10-11 ;
+la première est `socle install` relancée en mode amont.
+
+## B-0037 — Le conseil du refus d'une empreinte d'index périmée mène à une empreinte refusée
+
+> statut : ouvert · origine : J-2026-10-11-N · lu : backlog@e6ba5929
+
+Constaté en ouvrant B-0036 : un sujet de backlog cite l'index qu'il a lu ;
+si l'index change ensuite (un autre sujet clos), le refus conseille
+`socle show --index backlog` et l'empreinte affichée. Mais cet index
+compte déjà le sujet qui cite, et le contrôle des lectures ne l'accepte
+que sans lui : le conseil suivi mène à un second refus. Corriger l'un ou
+l'autre : accepter aussi l'index qui compte l'entrée citante, ou faire
+afficher l'empreinte sans elle.

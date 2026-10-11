@@ -7,9 +7,10 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 B-0032, les chemins en anglais (feu vert de Théo pour B-0029 à B-0032) :
 fait et commité (ADR-0018, J-2026-10-11-N), après la validation par Théo
-des valeurs attendues que le renommage change (D-0011). Ce dépôt reste au
-format 1 : Théo le migre lui-même, la migration renommant des fichiers
-protégés.
+des valeurs attendues que le renommage change (D-0011), et clos. Ce dépôt
+reste au format 1 : Théo le migre lui-même (B-0036), la migration renommant
+des fichiers protégés ; avant de commiter quoi que ce soit après sa
+migration, tirer son commit.
 
 ## Prochaines étapes
 
