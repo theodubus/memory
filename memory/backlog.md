@@ -330,3 +330,17 @@ Théo voulait les langages courants ; C# en est, mais dotnet n'est pas dans
 ce conteneur, et un adaptateur non éprouvé ne se maintient pas. Écrire
 l'adaptateur (`dotnet test`, Stryker.NET et son rapport JSON) et le
 passer au banc des adaptateurs là où dotnet existe.
+
+## B-0041 — Une passe sur tout le code, avec du recul sur la technique et sur ce que l'outil doit faire
+
+> statut : ouvert · origine : J-2026-10-11-T · lu : backlog@5dcd4e94
+
+Demandé par Théo, texte exact : « une passe de ta part sur tout le code et
+prendre du recul pour voir ce qu'on pourrait modifier/ajouter (que ce soit
+sur des points techniques ou alors de façon beaucoup plus macro sur le
+fonctionnement lui même en réfléchissant à ce que l'outil est censé
+faire) ». Deux niveaux : relire le moteur module par module (dette,
+duplications, ce qui ne sert plus, ce qui manque de tests ou de clarté) ;
+puis repartir du cadrage et des mesures du banc pour juger si le socle
+atteint son but, et ce qui changerait le plus pour l'humain et l'agent. Le
+résultat se soumet à Théo, comme le relevé du parcours, avant d'être fait.

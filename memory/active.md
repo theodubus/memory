@@ -5,15 +5,14 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-B-0034, le parcours de l'utilisateur. Consigne de Théo, texte exact : « ok
-pour B0034 comme tu proposes » : mesurer le parcours actuel sur une
-installation neuve, puis lui soumettre le relevé et les propositions de
-simplification avant de les faire. Relevé fait (J-2026-10-11-S) ; les
-propositions attendent son choix (D-0014).
+B-0034, le parcours de l'utilisateur : Théo a validé la recommandation du
+relevé (D-0014). Je fais P1 à P4 et P6 à P9, puis P5, chacune éprouvée sur
+une installation neuve ; P10 attendra sa propre demande.
 
 ## Prochaines étapes
 
-1. À la réponse de Théo sur D-0014 : faire les propositions choisies, chacune
-   éprouvée sur une installation neuve.
-2. Puis B-0035, la documentation, qui décrira le parcours simplifié.
-3. Plus tard : B-0038, B-0039, B-0040.
+1. P4 (le défaut de `--private` sur un projet installé), P1 (une
+   installation verte), P3 (approuver d'un geste), P2 (« et maintenant »),
+   P9, P7, P6 et P8 ; puis P5 (le mode compagnon guidé).
+2. Puis B-0035, la documentation, et B-0041, la passe de recul que Théo a
+   demandée.
