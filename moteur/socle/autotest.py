@@ -552,6 +552,13 @@ def _cas() -> list[Cas]:
         remplacer(c, ".socle/policy.toml", "max_attempts = 3", "max_attempts = 30")
         return etage_ci(a, c)
 
+    @defaut("test-renomme", "fichier de test renommé hors des chemins de test : ses tests disparaissent", "ci",
+            "tests.attendus")
+    def _(a, c):
+        a.git(c, "mv", "tests/test_calc.py", "tests/calc_verifications.py")
+        maj_memoire(c, "Tests rangés.")
+        return etage_ci(a, c)
+
     @defaut("protege-renomme", "fichier protégé renommé : son ancien chemin disparaît", "ci", "protege.fichiers")
     def _(a, c):
         a.git(c, "mv", ".github/workflows/socle.yml", "ancien-socle.yml")
