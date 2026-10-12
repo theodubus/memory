@@ -217,6 +217,47 @@ class TestChiffre(Chiffre):
         self.assertIsNone(ctx.lire("memory/private/canonical.md"))
         self.assertIn("memory/private/canonical.md", ctx.fichiers)
 
+    def test_la_liste_des_termes_dechiffree_est_lisible(self):
+        """B-0044, L3 : la liste des termes n'a pas l'en-tête d'un fichier de
+        mémoire ; déchiffrée, elle rendait la mémoire « indisponible »."""
+        projet = config.Projet.charger(self.racine)
+        self.assertTrue(prive.ajouter_terme(projet, "Mistral"))
+        self.commit()
+        self.assertTrue(prive.acces(projet).disponible, prive.acces(projet).raison)
+        self.assertEqual(prive.termes(projet, "HEAD").liste, ["Mistral"])
+
+    def test_la_liste_des_termes_commitee_en_clair(self):
+        """B-0044, L3 : sans filtre, la liste partait en clair sans que
+        `prive.chiffre` la voie."""
+        (self.racine / ".gitattributes").write_text("memory/private/canonical.md filter=essai\n")
+        prive.ajouter_terme(config.Projet.charger(self.racine), "Mistral")
+        git(self.racine, "add", "-A")
+        erreurs = verifier(self.racine, prive.controle_chiffre).erreurs()
+        self.assertIn("memory/private/terms.txt", [c.chemin for c in erreurs])
+
+    def test_rien_ne_s_ecrit_a_l_aveugle_sans_la_cle(self):
+        """B-0044, L3 : sans la clé, un terme ajouté écrasait la liste
+        chiffrée, et `socle new` écrivait une entrée privée au numéro deviné,
+        en clair à la suite du fichier chiffré."""
+        projet = config.Projet.charger(self.racine)
+        prive.ajouter_terme(projet, "Mistral")
+        self.commit()
+        termes = self.racine / "memory/private/terms.txt"
+        chiffre = git(self.racine, "show", "HEAD:memory/private/terms.txt")
+        termes.write_text(chiffre)
+        canonique = self.racine / "memory/private/canonical.md"
+        canonique.write_text(git(self.racine, "show", "HEAD:memory/private/canonical.md"))
+        with self.assertRaises(RuntimeError):
+            prive.ajouter_terme(projet, "Zephyr")
+        self.assertEqual(termes.read_text(), chiffre)
+        avant = canonique.read_text()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()) as erreurs:
+            code = cli.cmd_new(argparse.Namespace(root=str(self.racine), type="fact", title="Un fait",
+                                                  private=False, public=False))
+        self.assertEqual(code, 2)
+        self.assertIn("mémoire privée indisponible", erreurs.getvalue())
+        self.assertEqual(canonique.read_text(), avant)
+
     def test_commite_en_clair_sans_filtre(self):
         (self.racine / ".gitattributes").write_text("")
         (self.racine / "memory/private/journal").mkdir()

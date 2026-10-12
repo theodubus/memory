@@ -44,6 +44,9 @@ ENTETE_ENTREE = re.compile(
     r"^(?P<id>P?(?:ADR|F|B|D|J)-[\d-]+[A-Z]{0,2})\s*[—–-]\s*(?P<titre>.+)$"
 )
 ENTETE_FICHIER = re.compile(r"<!--\s*socle\s*:(?P<corps>.*?)-->")
+# La liste des termes privés n'est pas un fichier de mémoire : son en-tête est
+# celui d'un texte brut, et la dit lisible comme l'autre.
+ENTETE_TERMES = "# socle: termes privés"
 CLOTURE_CODE = re.compile(r"^\s*(```|~~~)")
 
 # Statuts lisibles par machine, sous leur forme canonique (sans accents).
@@ -108,10 +111,11 @@ def hors_zone_privee(chemin: str) -> str:
 
 def lisible(texte: str | None) -> bool:
     """Un fichier de mémoire se lit en clair quand sa première ligne non vide
-    porte l'en-tête du socle ; chiffré, il ne se lit pas."""
+    porte l'en-tête du socle ; chiffré, il ne se lit pas. La liste des termes
+    privés se reconnaît au sien (B-0044, L3)."""
     for ligne in (texte or "").splitlines():
         if ligne.strip():
-            return bool(ENTETE_FICHIER.search(ligne))
+            return bool(ENTETE_FICHIER.search(ligne)) or ligne.lstrip().startswith(ENTETE_TERMES)
     return False
 
 

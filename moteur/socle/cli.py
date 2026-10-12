@@ -142,6 +142,13 @@ def cmd_new(args) -> int:
               f"({', '.join(zone_privee.COUCHES_PRIVABLES)})", file=sys.stderr)
     defaut = memoire.TYPES[type_] in zone_privee.couches_privees(projet)
     prive = getattr(args, "private", False) or (defaut and not getattr(args, "public", False))
+    acces = zone_privee.acces(projet, mem.illisibles) if prive else None
+    if acces is not None and not acces.disponible:
+        # Sans elle, l'identifiant se devinerait, et le texte clair
+        # s'accolerait à un fichier chiffré (B-0044, L3).
+        print(f"refus : mémoire privée indisponible ({acces.raison}) ; une entrée privée ne s'écrit pas à "
+              "l'aveugle. `--public` si elle peut être publique, sinon attendre l'accès.", file=sys.stderr)
+        return 2
     ident = mem.prochain_id(type_, prive=prive, date=jour)
     titre = args.title
     zone = "privee" if prive else "publique"
@@ -247,7 +254,11 @@ def cmd_prive(args) -> int:
         if prive.mode(projet) is None or not args.terme:
             print("`socle prive terme <terme>` : une mémoire privée, et un terme", file=sys.stderr)
             return 1
-        ajoute = prive.ajouter_terme(projet, " ".join(args.terme))
+        try:
+            ajoute = prive.ajouter_terme(projet, " ".join(args.terme))
+        except RuntimeError as e:
+            print(f"refus : {e}", file=sys.stderr)
+            return 2
         print("terme ajouté à la liste privée" if ajoute else "terme déjà dans la liste privée")
         return 0
     if args.action == "installer":

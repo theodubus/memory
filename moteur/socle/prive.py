@@ -42,7 +42,7 @@ def fichier_termes(racine: Path, rev: str | None = None) -> str:
 MODES = ("compagnon", "chiffre")
 # La liste des termes qui ne doivent jamais paraître en public (D-0007) :
 # l'agent y ajoute librement, seul l'humain en retire.
-ENTETE_TERMES = "# socle: termes privés"
+ENTETE_TERMES = memoire.ENTETE_TERMES
 # La relecture humaine avant publication (D-0006) : au choix de l'humain.
 RELECTURES = ("aucune", "chaque-push", "lots")
 # Les couches dont le contenu nouveau peut être privé par défaut (B-0029) ; le
@@ -181,9 +181,14 @@ def termes(projet: config.Projet, rev: str | None = None) -> Termes:
 
 def ajouter_terme(projet: config.Projet, terme: str) -> bool:
     """Ajoute un terme à la liste (libre : cela durcit le contrôle). Faux
-    s'il y était déjà."""
+    s'il y était déjà. Une liste illisible ici (chiffrée sans la clé, dépôt
+    privé absent) n'est pas réécrite : elle serait écrasée (B-0044, L3)."""
     p = projet.racine / fichier_termes(projet.racine)
     actuels = termes(projet)
+    if not actuels.disponible or (p.is_file() and not actuels.texte):
+        raise RuntimeError(f"liste des termes privés illisible ici (`{fichier_termes(projet.racine)}`) : "
+                           "le terme n'est pas ajouté, la liste serait écrasée. "
+                           + acces(projet).raison)
     if terme.strip() in actuels.liste:
         return False
     texte = actuels.texte or f"{ENTETE_TERMES} — un par ligne, `re:` pour une expression régulière.\n"
