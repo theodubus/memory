@@ -218,7 +218,10 @@ Le privé peut citer le public, jamais l'inverse.
 | `chiffre` | dans le dépôt public, chiffrée par un filtre git (git-crypt ou équivalent) | aucun fichier privé n'est commité en clair ; un filtre couvre `memory/private/` dans `.gitattributes` |
 
 Le moteur ne connaît pas l'outil de chiffrement : un fichier privé est
-lisible quand sa première ligne porte l'en-tête du socle, chiffré sinon.
+lisible quand sa première ligne porte l'en-tête du socle (celui de la
+mémoire, ou `# socle: termes privés` pour la liste des termes), chiffré
+sinon. Sans accès à la mémoire privée, rien n'y est écrit : ni une entrée
+(`socle new`), ni un terme.
 
 **Indisponible.** Sans le clone du dépôt privé, ou sans la clé, la mémoire
 privée est indisponible : l'état dérivé l'écrit au démarrage, et les
@@ -271,16 +274,24 @@ l'historique l'efface, et c'est à l'humain de la faire.
 **La liste des termes privés** (`memory/private/terms.txt`) nomme ce qui ne
 doit jamais paraître en public : un terme par ligne, `#` pour un
 commentaire, `re:` devant une expression régulière ; la recherche ignore la
-casse et les accents et ne prend que des mots entiers. Sa première ligne
+casse et les accents, trouve les mots d'un terme séparés par n'importe quels
+séparateurs ou par rien (`acme corp`, `acme_corp`, `AcmeCorp`), et ne prend
+que des mots entiers (une frontière : un séparateur, un passage
+minuscule-majuscule ou lettre-chiffre). Sa première ligne
 est `# socle: termes privés`. L'agent y ajoute librement
 (`socle prive terme <terme>`) ; en retirer un exige une demande validée qui
 cite la liste et son empreinte nouvelle. Un terme trouvé n'est jamais
 réécrit, seulement désigné par son rang dans la liste.
 
 **Les fuites** se cherchent à trois étages : le hook de l'agent (écritures
-hors de la zone privée, messages de commit, pull requests et commentaires),
-le hook git du message de commit, et la CI (fichiers publics modifiés,
-messages des commits).
+hors de la zone privée et noms des fichiers nouveaux, messages de commit,
+pull requests et commentaires, y compris le texte qu'une commande publie
+depuis un fichier, noms des branches créées ou poussées), les hooks git
+(message de commit, nom de la branche poussée), et la CI (fichiers publics
+modifiés et noms des nouveaux, archives comprises, messages des commits,
+nom de la branche). Un identifiant privé se cherche aussi dans les blocs de
+code d'un fichier public. Avec une mémoire privée, le document de cadrage
+s'archive dans sa zone.
 
 **La relecture avant publication** se règle par projet
 (`[private] review`) : `aucune`, `chaque-push` ou `lots`. Avec les deux
