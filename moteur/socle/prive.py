@@ -353,11 +353,38 @@ def memoire_privee(ctx) -> memoire.Memoire | None:
         chemins = [c for c in ctx.fichiers if est_prive(c)]
     else:
         return None
-    res = memoire.Memoire(racine=racine, rev=ctx.tete)
+    return _lire_zone(projet, ctx.tete, chemins)
+
+
+def memoire_privee_a(projet: config.Projet, rev: str) -> memoire.Memoire | None:
+    """La mémoire privée à une révision du dépôt public, la base d'une plage :
+    vide quand elle n'existait pas encore, `None` quand elle existait mais ne
+    se lit pas ici. Sans elle, « ajout seul » ne la protégeait pas (B-0044,
+    L3)."""
+    racine = projet.racine
+    m = mode(projet)
+    if m == "compagnon":
+        verrou = lire_verrou(racine, rev)
+        if not verrou:
+            return memoire.Memoire(racine=racine, rev=rev)
+        depot = depot_compagnon(racine)
+        if depot is None or not outils.git_reussit(depot, "cat-file", "-e", f"{verrou}^{{commit}}"):
+            return None
+        noms = outils.git(depot, "ls-tree", "-r", "--name-only", verrou, check=False).splitlines()
+        chemins = [f"{dossier(racine, rev)}/{n}" for n in noms]
+    elif m == "chiffre":
+        chemins = [c for c in outils.fichiers_a(racine, rev) if est_prive(c)]
+    else:
+        return None
+    return _lire_zone(projet, rev, chemins)
+
+
+def _lire_zone(projet: config.Projet, rev: str, chemins: list[str]) -> memoire.Memoire | None:
+    res = memoire.Memoire(racine=projet.racine, rev=rev)
     for c in chemins:
         if memoire.couche_attendue(c) is None:
             continue
-        texte = lire_prive(projet, ctx.tete, c)
+        texte = lire_prive(projet, rev, c)
         if texte is None or not lisible(texte):
             return None
         res.fichiers[c] = memoire.analyser(c, texte)

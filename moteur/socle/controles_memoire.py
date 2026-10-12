@@ -620,9 +620,26 @@ def _norm(t: str) -> str:
 @controle("memoire.ajout-seul", base=True)
 def ajout_seul(ctx, r):
     """Journal et décisions en ajout seul ; un fait ne disparaît pas, ne change
-    qu'avec une nouvelle preuve, et se barre quand il est réfuté."""
-    avant = ctx.memoire_base.definitions()
-    apres = ctx.memoire.definitions()
+    qu'avec une nouvelle preuve, et se barre quand il est réfuté. La mémoire
+    privée aussi, relue à la base (B-0044, L3)."""
+    from socle import prive
+
+    _comparer(ctx, r, ctx.memoire_base.definitions(), ctx.memoire.definitions())
+    if prive.mode(ctx.projet):
+        avant, apres = prive.memoire_privee_a(ctx.projet, ctx.base), prive.memoire_privee(ctx)
+        if avant is None or apres is None:
+            r.indisponible("memoire.ajout-seul", "mémoire privée illisible ici : son ajout seul n'est pas vérifié")
+        else:
+            _comparer(ctx, r, {i: d for i, d in avant.definitions().items() if i.startswith("P")},
+                      apres.definitions())
+
+    reponses_base = {c for c in ctx.fichiers_base if memoire.est_reponse(c)}
+    for c in sorted(reponses_base):
+        if ctx.lire(c) != ctx.lire_base(c):
+            r.erreur("memoire.ajout-seul", "réponse humaine modifiée ou supprimée : elle est définitive", c)
+
+
+def _comparer(ctx, r, avant: dict, apres: dict):
     for ident, defs in avant.items():
         a = defs[0]
         b = apres.get(ident, [None])[0]
@@ -671,11 +688,6 @@ def ajout_seul(ctx, r):
         elif a.type == "D":
             if b is None:
                 r.erreur("memoire.ajout-seul", f"demande `{ident}` supprimée (la retirer : `retirée : <raison>` dans ses métadonnées)", a.fichier, a.ligne)
-
-    reponses_base = {c for c in ctx.fichiers_base if memoire.est_reponse(c)}
-    for c in sorted(reponses_base):
-        if ctx.lire(c) != ctx.lire_base(c):
-            r.erreur("memoire.ajout-seul", "réponse humaine modifiée ou supprimée : elle est définitive", c)
 
 
 def _bascule(ctx, r, a: memoire.Entree, b: memoire.Entree):

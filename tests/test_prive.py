@@ -122,6 +122,22 @@ class TestCompagnon(Compagnon):
         self.assertIn(f"{P}F-0001", memoire.Memoire.charger(self.racine).definitions())
         self.assertEqual(verifier(self.racine, prive.controle_verrou).erreurs(), [])
 
+    def test_ajout_seul_relit_la_memoire_privee_a_la_base(self):
+        """B-0044, L3 : la mémoire privée n'était jamais relue à la base, et
+        un fait privé effacé passait « ajout seul »."""
+        from socle import controles_memoire
+
+        base = git(self.racine, "rev-parse", "HEAD").strip()
+        projet = config.Projet.charger(self.racine)
+        self.assertIn(f"{P}F-0001", prive.memoire_privee_a(projet, base).definitions())
+        (self.prive / "canonical.md").write_text(ENTETE)
+        ctx = contexte.Contexte(projet, etage="agent", base=base)
+        r = Rapport()
+        controles_memoire.ajout_seul(ctx, r)
+        self.assertEqual([c.message for c in r.erreurs()],
+                         [f"fait `{P}F-0001` effacé : un fait se barre (réfuté) ou s'archive dans le journal, "
+                          "jamais ne disparaît"])
+
     def test_verrou_perime(self):
         (self.prive / "canonical.md").write_text(FAIT_PRIVE + "\nUne précision.\n")
         self.commit(self.prive, "précision")
