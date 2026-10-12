@@ -68,6 +68,32 @@ class TestTrailer(unittest.TestCase):
 
 
 
+class TestPrepareCommitMsg(unittest.TestCase):
+    """Les trailers d'un commit d'agent : au bon endroit, avec la trace de la
+    session qui commite, et sans remonter le diff de `git commit -v`."""
+
+    def test_trailers_sans_le_diff_de_commit_v(self):
+        import os
+        import tempfile
+        from pathlib import Path
+        from unittest import mock
+
+        from socle import config
+
+        racine = Path(tempfile.mkdtemp())
+        message = racine / "MSG"
+        message.write_text("Sujet du commit\n\n# Un commentaire de git\n"
+                           "# ------------------------ >8 ------------------------\n"
+                           "diff --git a/x b/x\n+une ligne\n")
+        with mock.patch.dict(os.environ, {"CLAUDECODE": "1", "CLAUDE_CODE_SESSION_ID": "sans-hooks"}):
+            self.assertEqual(hooks.git_prepare_commit_msg(config.Projet(racine=racine), str(message)), 0)
+        texte = message.read_text()
+        haut, bas = texte.split("# ------------------------ >8", 1)
+        self.assertIn("Socle-Hooks: SessionStart=0 PreToolUse=0 Stop=0", haut)
+        self.assertNotIn("diff --git", haut)
+        self.assertIn("diff --git", bas)
+
+
 class TestTraceDesRefus(unittest.TestCase):
     """Chaque refus d'un hook laisse dans la trace son étage et ce qui a
     refusé : le banc d'évaluation y compte les défauts attrapés par étage."""

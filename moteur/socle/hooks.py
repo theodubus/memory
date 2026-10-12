@@ -761,21 +761,24 @@ def git_prepare_commit_msg(projet: config.Projet, fichier: str, source: str = ""
     message = p.read_text(encoding="utf-8")
     if re.search(r"(?im)^socle-hooks:", message):
         return 0
-    corps = message.rstrip("\n")
+    # Sous la ligne de coupe de `git commit -v`, le diff : git l'ôte du
+    # message, il reste tel quel en bas, hors de ce qu'on réordonne.
+    coupe = re.search(r"(?m)^# -+ >8 -+$", message)
+    corps, bas = (message[:coupe.start()], message[coupe.start():]) if coupe else (message, "")
     lignes = [
         "Socle-Agent: claude-code",
         f"Socle-Hooks: {compter_session(projet.racine, os.environ.get('CLAUDE_CODE_SESSION_ID'))}",
     ]
     # Les trailers vont dans le dernier paragraphe, avant les commentaires.
     contenu, commentaires = [], []
-    for l in corps.splitlines():
+    for l in corps.rstrip("\n").splitlines():
         (commentaires if l.startswith("#") else contenu).append(l)
     texte = "\n".join(contenu).rstrip()
     sep = "\n" if outils.trailers(texte) else "\n\n"
     nouveau = texte + sep + "\n".join(lignes) + "\n"
     if commentaires:
         nouveau += "\n" + "\n".join(commentaires) + "\n"
-    p.write_text(nouveau, encoding="utf-8")
+    p.write_text(nouveau + bas, encoding="utf-8")
     return 0
 
 
