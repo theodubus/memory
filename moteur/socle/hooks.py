@@ -533,6 +533,56 @@ def _fuites_dans(projet: config.Projet, texte: str) -> str | None:
             "identifiant privé ni terme de la liste privée : reformuler sans eux (politique, mémoire privée).")
 
 
+# Les options qui publient le contenu d'un fichier (corps d'une pull request,
+# notes d'une version, message de commit) : il part comme s'il était écrit
+# dans la commande (B-0044, L3).
+OPTIONS_FICHIER = {"--body-file", "--notes-file", "--file", "-F", "--field", "-f", "--raw-field"}
+
+
+def textes_publies(racine: Path, simples: list) -> list[str]:
+    """Ce que les commandes `git` et `gh` publient depuis un fichier :
+    `--body-file x`, `-F x`, et `gh api -F champ=@x`."""
+    res = []
+    for c in simples:
+        if c.programme not in ("git", "gh"):
+            continue
+        api = c.programme == "gh" and c.argv[1:2] == ["api"]
+        for i, x in enumerate(c.argv[1:], 1):
+            nom, egal, valeur = x.partition("=") if x.startswith("--") else (x, "", "")
+            if nom not in OPTIONS_FICHIER:
+                continue
+            if not egal:
+                valeur = c.argv[i + 1] if i + 1 < len(c.argv) else ""
+            if api or nom in ("--field", "-f", "--raw-field"):
+                if "=@" not in valeur:
+                    continue  # un champ écrit dans la commande, déjà lu avec elle
+                valeur = valeur.split("=@", 1)[1]
+            if valeur in ("", "-"):
+                continue
+            chemin = Path(os.path.expanduser(c.chemin(valeur)))
+            try:
+                res.append((chemin if chemin.is_absolute() else racine / chemin).read_text(
+                    encoding="utf-8", errors="replace")[:1_000_000])
+            except OSError:
+                continue
+    return res
+
+
+def _noms_publies(racine: Path, simples: list) -> list[str]:
+    """Les noms de branche qu'une commande crée ou pousse : publiés eux
+    aussi (B-0044, L3)."""
+    res = []
+    for c in simples:
+        if c.programme != "git":
+            continue
+        sous, reste = commandes.git_sous_commande(c.argv)
+        if sous in ("push", "checkout", "switch", "branch"):
+            res += commandes.options_et_arguments(reste)[1]
+        if sous == "push":
+            res.append(outils.git(racine, "rev-parse", "--abbrev-ref", "HEAD", check=False).strip())
+    return res
+
+
 def _fuite_bash(projet: config.Projet, cmd: str) -> str | None:
     if prive.mode(projet) is None or _vers_le_prive(projet.racine, cmd):
         return None
@@ -541,9 +591,11 @@ def _fuite_bash(projet: config.Projet, cmd: str) -> str | None:
         refus = prive.publication_refusee(projet, [tete])
         if refus:
             return refus
+    simples = commandes.analyser(cmd)
+    publie = _noms_publies(projet.racine, simples)
     if PUBLIE_BASH.search(cmd):
-        return _fuites_dans(projet, cmd)
-    return None
+        publie += [cmd] + textes_publies(projet.racine, simples)
+    return _fuites_dans(projet, "\n".join(publie)) if publie else None
 
 
 def _fuite_outil(projet: config.Projet, outil: str, args: dict) -> str | None:
@@ -559,10 +611,11 @@ def _fuite_outil(projet: config.Projet, outil: str, args: dict) -> str | None:
         if apres is None:
             return None
         # Seul ce qui s'ajoute compte : une fuite plus ancienne ne bloque pas
-        # chaque écriture suivante du même fichier.
+        # chaque écriture suivante du même fichier. Le nom d'un fichier
+        # nouveau est publié comme son contenu (B-0044, L3).
         anciennes = set((avant or "").splitlines())
         ajout = "\n".join(l for l in apres.splitlines() if l not in anciennes)
-        return _fuites_dans(projet, ajout)
+        return _fuites_dans(projet, (rel + "\n" if avant is None else "") + ajout)
     return None
 
 
@@ -872,6 +925,15 @@ def git_pre_push(projet: config.Projet) -> int:
     tracer(projet.racine, "git-pre-push")
     # Les commits qui partent : `<réf locale> <sha local> <réf distante> <sha distant>` par ligne.
     lignes = [] if sys.stdin is None or sys.stdin.isatty() else sys.stdin.read().splitlines()
+    if prive.mode(projet):
+        # Le nom de la branche distante est publié lui aussi (B-0044, L3).
+        noms = [l.split()[2].removeprefix("refs/heads/") for l in lignes if len(l.split()) >= 4]
+        trouve = prive.fuites("\n".join(noms), prive.termes(projet).liste)
+        if trouve:
+            tracer_refus(projet.racine, "git-pre-push", "fuite")
+            print(f"socle — push refusé : fuite de la mémoire privée dans le nom de la branche : {', '.join(trouve)}",
+                  file=sys.stderr)
+            return 1
     refus = prive.publication_refusee(projet, [l.split()[1] for l in lignes if len(l.split()) >= 2])
     if refus:
         tracer_refus(projet.racine, "git-pre-push", "relecture")

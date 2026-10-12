@@ -18,6 +18,7 @@ pas en silence.
 
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -207,7 +208,7 @@ def fuites(texte: str, liste: list[str], identifiants: bool = True) -> list[str]
             if m["prive"] and memoire.id_valide(m["type"], m["num"]) and m.group(0) not in vus:
                 vus.append(m.group(0))
         res += [f"identifiant privé `{i}`" for i in vus]
-    norme = outils.sans_accents(texte).lower()
+    norme = outils.sans_accents(texte)
     for i, terme in enumerate(liste, 1):
         if terme.startswith("re:"):
             try:
@@ -216,11 +217,33 @@ def fuites(texte: str, liste: list[str], identifiants: bool = True) -> list[str]
                 res.append(f"terme privé n°{i} : expression régulière invalide")
                 continue
         else:
-            t = outils.sans_accents(terme).lower()
-            trouve = re.search(rf"(?<!\w){re.escape(t)}(?!\w)", norme)
+            trouve = _terme_present(terme, norme)
         if trouve:
             res.append(f"terme privé n°{i} de la liste")
     return res
+
+
+def _terme_present(terme: str, texte: str) -> bool:
+    """Le terme, sous ses variantes d'écriture (B-0044, L3) : casse et
+    accents ignorés, ses mots séparés par n'importe quels séparateurs ou par
+    rien (`acme corp`, `acme_corp`, `AcmeCorp`, coupé en fin de ligne d'un
+    commentaire). Il commence et finit sur une frontière de mot : un
+    séparateur, un passage minuscule-majuscule, ou lettre-chiffre."""
+    mots = re.findall(r"[^\W_]+", outils.sans_accents(terme))
+    if not mots:
+        return False
+    for m in re.finditer(r"[\W_]*".join(re.escape(x) for x in mots), texte, re.I):
+        if _frontiere(texte, m.start() - 1, m.start()) and _frontiere(texte, m.end() - 1, m.end()):
+            return True
+    return False
+
+
+def _frontiere(texte: str, i: int, j: int) -> bool:
+    """Une frontière de mot entre les caractères `i` et `j` du texte."""
+    if i < 0 or j >= len(texte) or not texte[i].isalnum() or not texte[j].isalnum():
+        return True
+    a, b = texte[i], texte[j]
+    return a.isdigit() != b.isdigit() or (a.islower() and b.isupper())
 
 
 def relecture(projet: config.Projet) -> str | None:
@@ -448,10 +471,14 @@ def controle_fuites(ctx, r):
         r.indisponible("prive.fuites", "liste des termes privés illisible ici : seuls les identifiants privés "
                        "sont cherchés")
     moteur = ctx.projet.dossier_moteur.rstrip("/") + "/"
-    presents = set(ctx.fichiers)
+    presents, anciens = set(ctx.fichiers), set(ctx.fichiers_base)
     for c in ctx.changes:
         if c not in presents or est_prive(c) or c.startswith(moteur):
             continue
+        if c not in anciens:
+            # Le nom d'un fichier nouveau est publié comme son contenu.
+            for f in fuites(c, lt.liste):
+                r.erreur("prive.fuites", f"fuite de la mémoire privée dans le nom du fichier : {f}", c)
         texte = ctx.lire(c)
         if texte is None or "\0" in texte[:4096]:
             continue
@@ -460,6 +487,9 @@ def controle_fuites(ctx, r):
     for commit in ctx.commits:
         for f in fuites(commit["message"], lt.liste):
             r.erreur("prive.fuites", f"fuite de la mémoire privée dans le message du commit {commit['sha'][:10]} : {f}")
+    branche = os.environ.get("GITHUB_HEAD_REF") or os.environ.get("GITHUB_REF_NAME") if ctx.etage == "ci" else None
+    for f in fuites(branche or "", lt.liste):
+        r.erreur("prive.fuites", f"fuite de la mémoire privée dans le nom de la branche : {f}")
 
 
 @controle("prive.termes", base=True)

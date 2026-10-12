@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
 from socle import cli, config, contexte, etat, hooks, liens, memoire, prive
@@ -384,6 +385,60 @@ class TestTermes(Compagnon):
         self.assertEqual([(c.chemin, c.ligne) for c in erreurs], [("notes.md", 4)])
         erreurs = self.rapport(prive.controle_fuites).erreurs()
         self.assertEqual([c.chemin for c in erreurs], ["memory/archives/cadrage.md"])
+
+    def test_un_terme_sous_ses_variantes(self):
+        """B-0044, L3 : un terme n'était trouvé que mot pour mot."""
+        liste = ["Acme Corp"]
+        for texte in ("acme_corp", "AcmeCorp", "ACME-CORP", "la société Acme\n# Corp", "MyAcmeCorpClient",
+                      "acme.corp2", "Àcmé Corp"):
+            with self.subTest(texte):
+                self.assertEqual(prive.fuites(texte, liste, identifiants=False), ["terme privé n°1 de la liste"])
+        for texte in ("acmecorporation", "macme corp", "acme", "ACMECORPS"):
+            with self.subTest(texte):
+                self.assertEqual(prive.fuites(texte, liste, identifiants=False), [])
+
+    def test_le_nom_d_un_fichier_ou_d_une_branche(self):
+        """B-0044, L3 : un nom de fichier ou de branche publiait le terme
+        sans qu'aucun contrôle le lise."""
+        (self.racine / "docs").mkdir()
+        (self.racine / "docs/plan-mistral.md").write_text("Un plan.\n")
+        self.commit()
+        erreurs = [c for c in self.rapport(prive.controle_fuites).erreurs()]
+        self.assertEqual([(c.chemin, "nom du fichier" in c.message) for c in erreurs], [("docs/plan-mistral.md", True)])
+        self.enterContext(unittest.mock.patch.dict(os.environ, {"GITHUB_HEAD_REF": "travail-mistral"}))
+        messages = [c.message for c in self.rapport(prive.controle_fuites, etage="ci").erreurs()]
+        self.assertTrue(any("nom de la branche" in m for m in messages), messages)
+
+    def test_le_hook_lit_les_noms_et_les_fichiers_publies(self):
+        """B-0044, L3 : le corps d'une pull request passé par un fichier hors
+        du dépôt n'était pas lu, ni un nom de branche ou de fichier nouveau."""
+        projet = config.Projet.charger(self.racine)
+        corps = self.dossier / "corps.md"
+        corps.write_text("Avance sur Mistral.\n")
+
+        def decide(outil, args):
+            flux = io.StringIO()
+            with contextlib.redirect_stdout(flux):
+                hooks.pre_tool_use(projet, {"session_id": "t", "tool_name": outil, "tool_input": args})
+            return "fuite de la mémoire privée" in flux.getvalue()
+
+        self.assertTrue(decide("Bash", {"command": f"gh pr create --title Essai --body-file {corps}"}))
+        self.assertTrue(decide("Bash", {"command": f"cd /tmp && gh api repos/o/r/issues -F body=@{corps}"}))
+        self.assertTrue(decide("Bash", {"command": "git checkout -b travail-mistral"}))
+        self.assertTrue(decide("Write", {"file_path": str(self.racine / "docs/mistral.md"), "content": "x\n"}))
+        self.assertFalse(decide("Bash", {"command": "gh pr create --title Essai --body-file /inexistant"}))
+        self.assertFalse(decide("Bash", {"command": "git checkout -b travail"}))
+        self.assertEqual(hooks.textes_publies(self.racine, hooks.commandes.analyser(f"git commit -F {corps}")),
+                         ["Avance sur Mistral.\n"])
+
+    def test_le_hook_avant_push_lit_le_nom_de_la_branche(self):
+        projet = config.Projet.charger(self.racine)
+        tete = git(self.racine, "rev-parse", "HEAD").strip()
+        with unittest.mock.patch("sys.stdin", io.StringIO(f"refs/heads/x {tete} refs/heads/mistral-x {'0' * 40}\n")), \
+                contextlib.redirect_stderr(io.StringIO()) as flux:
+            self.assertEqual(hooks.git_pre_push(projet), 1)
+        self.assertIn("nom de la branche", flux.getvalue())
+        self.assertNotIn("Mistral", flux.getvalue())
 
     def test_retirer_un_terme_exige_l_humain(self):
         texte = (self.prive / "terms.txt").read_text().replace("Mistral\n", "")
