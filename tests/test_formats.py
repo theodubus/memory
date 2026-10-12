@@ -159,6 +159,26 @@ class TestMigration(Projet):
             f(ctx, r)
         self.assertEqual([c.message for c in r.erreurs()], [])
 
+    def test_un_fichier_protege_deplace_par_la_migration_est_juge_sous_son_nom_nouveau(self):
+        """B-0044, L2 : depuis que les renommages donnent leurs deux chemins,
+        l'ancien nom d'un fichier protégé migré passait pour supprimé sans
+        validation, même quand l'humain avait validé le nom nouveau."""
+        self.vers_format_1()
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "format 1", "--no-verify")
+        base = git(self.racine, "rev-parse", "HEAD").strip()
+        migrations.migrer(self.racine, 1)
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "migration", "--no-verify")
+        config.oublier_formats()
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="ci", base=base, tete="HEAD")
+        r = Rapport()
+        controles_cliquet.proteges(ctx, r)
+        refuses = {c.chemin for c in r.erreurs()}
+        self.assertIn(".socle/policy.toml", refuses)
+        self.assertFalse(refuses & {".socle/politique.toml", ".socle/adaptateur.toml", ".socle/moteur.lock"}, refuses)
+        self.assertIn(".socle/politique.toml", {c.chemin for c in r.constats if c.gravite != "erreur"})
+
     def test_la_migration_garde_la_memoire_pas_encore_commitee(self):
         """B-0044, L1 : `git mv -k` sautait en silence un fichier non suivi,
         puis le dossier de l'ancien format était supprimé avec lui."""

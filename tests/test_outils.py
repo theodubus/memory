@@ -48,3 +48,21 @@ class TestBaseDeTravail(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestRenommages(unittest.TestCase):
+    """B-0044, L2 : un renommage ne gardait que le nouveau nom ; un fichier
+    protégé ou un test renommés passaient tous les étages."""
+
+    def test_un_renommage_donne_ses_deux_chemins(self):
+        racine = Path(tempfile.mkdtemp(prefix="socle-renommage-"))
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        git(racine, "init", "-q", "-b", "main")
+        (racine / "politique.toml").write_text("max = 3\n" * 20)
+        git(racine, "add", "-A")
+        git(racine, "commit", "-qm", "base")
+        base = git(racine, "rev-parse", "HEAD").strip()
+        git(racine, "mv", "politique.toml", "ancienne.toml")
+        self.assertEqual(outils.fichiers_changes(racine, base), ["ancienne.toml", "politique.toml"])
+        git(racine, "commit", "-qm", "renommage")
+        self.assertEqual(outils.fichiers_changes(racine, base, "HEAD"), ["ancienne.toml", "politique.toml"])

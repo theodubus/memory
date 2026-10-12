@@ -182,13 +182,23 @@ def proteges(ctx, r):
             r.avertir("protege.fichiers", f"installation du socle : {len(installes)} fichier(s) protégé(s) posé(s) — "
                       "la politique par défaut est celle du cadrage")
         return
-    motifs = set(ctx.projet.chemins_proteges()) | set(ctx.projet_base.chemins_proteges())
-    for c in outils.filtrer(ctx.changes, sorted(motifs)):
+    motifs = sorted(set(ctx.projet.chemins_proteges()) | set(ctx.projet_base.chemins_proteges()))
+
+    def existe(chemin: str) -> bool:
+        return (ctx.racine / chemin).is_file() if ctx.tete is None else ctx.lire(chemin) is not None
+
+    for c in outils.filtrer(ctx.changes, motifs):
         if memoire.est_reponse(c):
             continue  # les réponses sont le mécanisme de validation lui-même
         if ctx.projet.mode == config.MODE_AMONT and c.startswith(ctx.projet.dossier_moteur + "/socle/"):
             continue
-        present = (ctx.racine / c).is_file() if ctx.tete is None else ctx.lire(c) is not None
+        present = existe(c)
+        nouveau = config.traduire(c, vers=ctx.projet.chemins.format) if ctx.migre and not present else c
+        if nouveau != c and outils.correspond(nouveau, motifs) and existe(nouveau):
+            # Déplacé par la migration du format : le fichier est jugé sous
+            # son nom nouveau, protégé lui aussi, et non comme une suppression.
+            r.avertir("protege.fichiers", f"déplacé vers `{nouveau}` par la migration du format", c)
+            continue
         if present and ctx.tete is None:
             cite = empreinte.courte(empreinte.fichier(ctx.racine / c))
         elif present:

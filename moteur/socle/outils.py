@@ -127,7 +127,7 @@ def fichiers_changes(racine: Path, base: str | None, tete: str | None = None) ->
     base = base or ARBRE_VIDE
     if tete is None:
         if a_des_commits(racine):
-            sortie = git(racine, "diff", "--name-only", "-z", base)
+            sortie = git(racine, "diff", "--name-only", "--no-renames", "-z", base)
         else:
             sortie = ""
         noms = {n for n in sortie.split("\0") if n}
@@ -137,7 +137,7 @@ def fichiers_changes(racine: Path, base: str | None, tete: str | None = None) ->
             indexes = git(racine, "ls-files", "-z", "--cached")
             noms |= {n for n in indexes.split("\0") if n}
         return sorted(noms)
-    sortie = git(racine, "diff", "--name-only", "-z", base, tete)
+    sortie = git(racine, "diff", "--name-only", "--no-renames", "-z", base, tete)
     return sorted(n for n in sortie.split("\0") if n)
 
 

@@ -539,6 +539,11 @@ def _cas() -> list[Cas]:
         remplacer(c, ".socle/policy.toml", "max_attempts = 3", "max_attempts = 30")
         return etage_ci(a, c)
 
+    @defaut("protege-renomme", "fichier protégé renommé : son ancien chemin disparaît", "ci", "protege.fichiers")
+    def _(a, c):
+        a.git(c, "mv", ".github/workflows/socle.yml", "ancien-socle.yml")
+        return etage_ci(a, c)
+
     @defaut("protege-au-commit", "fichier protégé changé, commité sans validation", "git", "protege.fichiers")
     def _(a, c):
         remplacer(c, ".socle/policy.toml", "max_attempts = 3", "max_attempts = 30")
