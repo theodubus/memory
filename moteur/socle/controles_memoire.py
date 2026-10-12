@@ -341,17 +341,19 @@ def _verifier_chemin_cite(ctx, jeton: str) -> str | None:
 @controle("memoire.prive")
 def prive(ctx, r):
     """Aucun identifiant privé dans un fichier public : le public ne référence
-    jamais le privé."""
+    jamais le privé. Un bloc de code et une archive sont publics comme le
+    reste (B-0044, L3)."""
     moteur = ctx.projet.dossier_moteur.rstrip("/") + "/"
     for chemin in ctx.fichiers:
-        if est_prive(chemin) or chemin.startswith((ctx.projet.chemins.archives + "/", moteur)):
+        if est_prive(chemin) or chemin.startswith(moteur):
             continue
         texte = ctx.lire(chemin)
         if texte is None or "\0" in texte[:4096] or len(texte) > 2_000_000:
             continue
-        for ident, ligne in memoire.mentions(texte):
-            if ident.startswith("P"):
-                r.erreur("memoire.prive", f"identifiant privé `{ident}` dans un fichier public", chemin, ligne)
+        for ligne, contenu in enumerate(texte.splitlines(), start=1):
+            for m in memoire.ID_RE.finditer(contenu):
+                if m["prive"] and memoire.id_valide(m["type"], m["num"]):
+                    r.erreur("memoire.prive", f"identifiant privé `{m.group(0)}` dans un fichier public", chemin, ligne)
 
 
 # --------------------------------------------------------------------------

@@ -450,7 +450,7 @@ def controle_fuites(ctx, r):
     moteur = ctx.projet.dossier_moteur.rstrip("/") + "/"
     presents = set(ctx.fichiers)
     for c in ctx.changes:
-        if c not in presents or est_prive(c) or c.startswith((moteur, ctx.projet.chemins.archives + "/")):
+        if c not in presents or est_prive(c) or c.startswith(moteur):
             continue
         texte = ctx.lire(c)
         if texte is None or "\0" in texte[:4096]:

@@ -370,6 +370,21 @@ class TestTermes(Compagnon):
         self.assertIn("terme privé n°1", erreurs[0])
         self.assertIn(f"identifiant privé `{P}F-0001`", erreurs[1])
 
+    def test_un_bloc_de_code_et_une_archive_sont_publics(self):
+        """B-0044, L3 : un identifiant privé dans un bloc de code d'un fichier
+        public passait le commit et la CI, et une archive publique échappait
+        au contrôle des termes."""
+        from socle import controles_memoire
+
+        (self.racine / "notes.md").write_text(f"Exemple :\n\n```\nvoir {P}F-0001\n```\n")
+        (self.racine / "memory/archives").mkdir(parents=True, exist_ok=True)
+        (self.racine / "memory/archives/cadrage.md").write_text("Le projet Mistral.\n")
+        self.commit()
+        erreurs = self.rapport(controles_memoire.prive).erreurs()
+        self.assertEqual([(c.chemin, c.ligne) for c in erreurs], [("notes.md", 4)])
+        erreurs = self.rapport(prive.controle_fuites).erreurs()
+        self.assertEqual([c.chemin for c in erreurs], ["memory/archives/cadrage.md"])
+
     def test_retirer_un_terme_exige_l_humain(self):
         texte = (self.prive / "terms.txt").read_text().replace("Mistral\n", "")
         (self.prive / "terms.txt").write_text(texte)
