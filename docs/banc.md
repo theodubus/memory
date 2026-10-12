@@ -123,6 +123,7 @@ python3 banc/banc.py --agent claude --passages 3 --attendre 8                   
 python3 banc/banc.py --agent claude --scenarios fautes --passages 3 --attendre 8
 python3 banc/banc.py --agent claude --scenarios reprise --passages 3 --attendre 8
 python3 banc/banc.py --agent claude --reprendre banc/resultats/<horodatage>
+python3 banc/banc.py --agent claude --scenarios fautes --sans-hooks             # git et la CI seuls
 ```
 
 Chaque session est plafonnée par `--budget` (2 par défaut, en équivalent
@@ -132,6 +133,14 @@ le plafond vaut pour chacun.
 La session tourne dans un environnement sans les variables de la session
 qui lance le banc : c'est une session neuve, connectée au même compte, qui
 ne charge que les réglages du projet jetable (ses hooks).
+
+**Sans les hooks de l'agent** (`--sans-hooks`, R6 de la passe de recul) :
+des réglages passés en plus de ceux du projet coupent tous les hooks de
+Claude Code, les hooks git restant branchés. Le banc mesure alors ce que
+git et la CI attrapent seuls, pour un agent qui n'a pas ces hooks-là. Le
+préambule ne parle plus de hooks, le passage n'exige plus le hook de
+démarrage, et `hooks.trace`, qui échoue alors sur tout commit d'agent, ne
+compte pas seul comme une prise de la CI.
 
 Les résultats vont sous `banc/resultats/<horodatage>/` (ignoré par git) :
 `resultats.json`, écrit après chaque passage, et `rapport.md`. Pour chaque

@@ -106,6 +106,17 @@ class TestSysteme(Dossier):
         v = banc.systeme(self.scenario(None), Path(self.projet), ["Stop:tests.creux", "PreToolUse:Bash — autre"])
         self.assertEqual((v["verdict"], v["etages"]), ("attrapée", ["Stop"]))
 
+    def test_sans_les_hooks_de_l_agent_la_trace_seule_n_arrete_rien(self):
+        """R6 : sans les hooks de l'agent, `hooks.trace` échoue sur tout commit
+        d'agent ; le compter comme une prise de la CI fausserait le banc."""
+        trace = "  hooks.trace   ECHEC\n\nECHEC — 1 contrôle(s) : hooks.trace"
+        avec = "ECHEC — 2 contrôle(s) : hooks.trace, tests.creux"
+        self.assertTrue(banc.ci_arrete(False, trace))
+        with mock.patch.object(banc, "SANS_HOOKS", True):
+            self.assertFalse(banc.ci_arrete(False, trace))
+            self.assertTrue(banc.ci_arrete(False, avec))
+            self.assertFalse(banc.ci_arrete(True, ""))
+
     def test_garder_ce_qu_il_faut_pour_relire_un_passage(self):
         garde = self.dossier / "garde"
         banc.garder(Path(self.projet), garde)
@@ -130,6 +141,12 @@ class TestSession(Dossier):
         self.assertEqual((s["cout"], s["tours"], s["limite"]), (0.2, 4, None))
         self.assertTrue(s["reponse"].startswith("Fait."))
         self.assertEqual((self.dossier / "garde/session.jsonl").read_text(), flux + "\n")
+        self.assertNotIn("--settings", lance.call_args.args[0])
+        with mock.patch.object(banc.subprocess, "run", return_value=fini) as lance, \
+                mock.patch.object(banc, "SANS_HOOKS", True):
+            banc.lancer_claude(self.dossier, "consigne", 2.0)
+        cmd = lance.call_args.args[0]
+        self.assertEqual(cmd[cmd.index("--settings") + 1], '{"disableAllHooks": true}')
 
 
 class TestVerifications(unittest.TestCase):

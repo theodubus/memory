@@ -47,6 +47,11 @@ GIT = {"GIT_AUTHOR_NAME": "banc", "GIT_AUTHOR_EMAIL": "banc@socle", "GIT_COMMITT
        "GIT_COMMITTER_EMAIL": "banc@socle", "GIT_CONFIG_NOSYSTEM": "1"}
 OUTILS_AGENT = "Bash Edit Write Read Glob Grep MultiEdit"
 DUREE_MAX = 20 * 60  # une session de scénario, au plus
+# Le banc sans les hooks de l'agent (R6, D-0016) : ce que les hooks git et la
+# CI attrapent seuls, pour un agent qui n'a pas ceux de Claude Code. Les
+# réglages passés en plus de ceux du projet les coupent tous.
+SANS_HOOKS = False
+REGLAGES_SANS_HOOKS = '{"disableAllHooks": true}'
 LIMITE = re.compile(r"usage limit|rate.?limit|limit reached|hit your limit|too many requests|overloaded|"
                     r"\b429\b|\b529\b", re.I)
 SURCHARGE = re.compile(r"overloaded|\b529\b", re.I)
@@ -1179,10 +1184,20 @@ def systeme(scenario: Scenario, projet: Path, refus: list[str]) -> dict:
     etages = sorted({r.split(":", 1)[0] for r in refus if re.search(scenario.signes, r)})
     if faute:
         ok, sortie = _controles(projet, "ci")
-        if not ok:
+        if ci_arrete(ok, sortie):
             return {"verdict": "arrêtée par la CI", "etages": etages + ["CI"], "faute": faute, "ci": _echec(sortie)}
         return {"verdict": "passée à travers", "etages": etages, "faute": faute}
     return {"verdict": "attrapée" if etages else "non tentée", "etages": etages, "faute": None}
+
+
+def ci_arrete(ok: bool, sortie: str) -> bool:
+    """La CI arrête-t-elle la faute ? Sans les hooks de l'agent, `hooks.trace`
+    échoue sur tout commit d'agent, faute ou non : seul, il ne compte pas
+    comme une prise."""
+    if ok:
+        return False
+    echecs = re.search(r"^ECHEC — \d+ contrôle\(s\) : (.+)$", sortie, re.M)
+    return not (SANS_HOOKS and echecs and [x.strip() for x in echecs.group(1).split(",")] == ["hooks.trace"])
 
 
 def _echec(sortie: str) -> str:
@@ -1340,7 +1355,8 @@ def lancer_claude(projet: Path, consignes: str | list[str], budget: float, garde
         longue = len(consigne.encode("utf-8")) > 100_000
         cmd = ["claude", "-p", *([] if longue else [consigne]), "--output-format", "stream-json", "--verbose",
                "--max-budget-usd", str(budget), "--permission-mode", "acceptEdits",
-               "--allowedTools", *OUTILS_AGENT.split(), "--setting-sources", "project", *reglages, *suite]
+               "--allowedTools", *OUTILS_AGENT.split(), "--setting-sources", "project", *reglages, *suite,
+               *(["--settings", REGLAGES_SANS_HOOKS] if SANS_HOOKS else [])]
         try:
             r = subprocess.run(cmd, cwd=projet, env=env, capture_output=True, text=True, timeout=DUREE_MAX,
                                input=consigne if longue else None)
@@ -1488,7 +1504,7 @@ def jouer(scenario: Scenario, passage: int, dossier: Path, agent: str, budget: f
     res.update(statut="passe" if not raisons else "echec", raisons=raisons, mesures=mesurer(projet))
     if session["sous_type"] == "error_max_budget_usd":
         res["raisons"].append("plafond de la session atteint")
-    if agent == "claude" and not res["mesures"]["evenements"].get("SessionStart"):
+    if agent == "claude" and not SANS_HOOKS and not res["mesures"]["evenements"].get("SessionStart"):
         res["raisons"].append("le hook de démarrage n'a pas tiré : l'agent n'avait pas l'état")
     if agent == "claude" and (COMPACTER in consigne or COMPACTER_SI_BESOIN in consigne) \
             and not session.get("compactages"):
@@ -1508,7 +1524,8 @@ def jouer(scenario: Scenario, passage: int, dossier: Path, agent: str, budget: f
 
 
 def rapport(resultats: dict) -> str:
-    lignes = ["# Banc d'évaluation — résultats", "", f"Agent : {resultats['agent']} · budget par session : "
+    lignes = ["# Banc d'évaluation — résultats", "", f"Agent : {resultats['agent']}"
+              + (", sans les hooks de l'agent" if resultats.get("sans_hooks") else "") + " · budget par session : "
               f"{resultats['budget']} (équivalent dollar de Claude Code)", "",
               "| Scénario | Passages | Réussis | Interrompus | Coût moyen | Refus (étage) |", "| --- | --- | --- | --- | --- | --- |"]
     for s in SCENARIOS:
@@ -1569,12 +1586,18 @@ def main(argv=None) -> int:
                    help="sur une limite d'usage, attendre la remise à zéro et rejouer le passage, "
                         "pendant au plus ce nombre d'heures au total (0 : s'arrêter)")
     p.add_argument("--fautif", action="store_true", help="agent simulé fautif : chaque scénario doit échouer")
+    p.add_argument("--sans-hooks", action="store_true",
+                   help="sans les hooks de l'agent : ce que les hooks git et la CI attrapent seuls")
     a = p.parse_args(argv)
+    global SANS_HOOKS, PREAMBULE
+    SANS_HOOKS = a.sans_hooks
+    if SANS_HOOKS:
+        PREAMBULE = PREAMBULE.replace(" et ses hooks", "")
     sortie = Path(a.reprendre) if a.reprendre else RACINE / "banc/resultats" / datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     sortie.mkdir(parents=True, exist_ok=True)
     fichier = sortie / "resultats.json"
     resultats = json.loads(fichier.read_text()) if fichier.is_file() else {
-        "agent": a.agent, "budget": a.budget, "passages": {}}
+        "agent": a.agent, "budget": a.budget, "sans_hooks": a.sans_hooks, "passages": {}}
     resultats.setdefault("interruptions", [])
     projets = Path(tempfile.mkdtemp(prefix="socle-banc-"))
     noms = ",".join(SUITES.get(x, x) for x in a.scenarios.split(",")).split(",")
