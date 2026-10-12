@@ -13,11 +13,11 @@ un compte rendu à Théo à la fin de chaque lot.
 
 ## Prochaines étapes
 
-1. R6 : l'historique du projet d'échecs dans la copie, poussé par Théo (le
-   hook refuse ce push à l'agent, B-0048) ; puis y installer
-   le socle en adoption, y faire cinq tâches tirées de son backlog, une
-   session chacune, et relever chaque refus ; puis ajouter au banc un mode
-   sans les hooks de l'agent, et le faire tourner.
+1. R6 : le socle est installé en adoption sur la branche `socle-adoption`
+   de la copie (J-2026-10-12-O). Suite : cinq tâches, que Théo choisit
+   (le projet d'échecs n'a pas de backlog), une session chacune, et le
+   relevé de chaque refus ; puis un mode sans les hooks de l'agent au banc,
+   et le banc.
 2. Puis L5, L6 (une demande), R2 et L7.
 3. B-0047 (D-0017 validée) : le backlog en un fichier par sujet, avec les
    noms anglais (B-0045) dans une seule migration, avant B-0046.

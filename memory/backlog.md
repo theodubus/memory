@@ -281,4 +281,15 @@ Mesuré à R6, sur un clone du projet d'échecs : l'installeur garde
 CLAUDE.md comme source (35 fichiers du projet le nomment) et y ajoute la
 section du socle, mais le contrôle exige AGENTS.md et un CLAUDE.md réduit à
 `@AGENTS.md`. En adoption, c'est un avertissement à tort, et permanent. Le
-contrôle doit accepter la source que l'installeur a choisie.
+contrôle doit accepter la source que l'installeur a choisie. Le `.gitignore`
+posé dans ce cas renvoie lui aussi à AGENTS.md, absent.
+
+## B-0050 — Un commit d'agent sans aucun hook de l'agent n'est vu qu'en CI
+
+> statut : ouvert · origine : <J-… ou commit:… où le sujet est apparu> · lu : backlog@c11291ba
+
+Mesuré à R6 : un commit fait dans la copie du projet d'échecs, depuis une
+session ouverte dans ce dépôt, porte `Socle-Hooks: SessionStart=0
+PreToolUse=0 Stop=0` ; les hooks de l'agent n'y ont jamais tiré, et rien ne
+le dit avant la CI. Le hook `commit-msg` pourrait avertir dès le commit
+quand un commit d'agent ne compte aucun hook.
