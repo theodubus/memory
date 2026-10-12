@@ -38,7 +38,7 @@ comparent le même fichier sous ses deux noms.
 | `memoire.py` | lecture des cinq couches : en-têtes, entrées, identifiants, métadonnées, références |
 | `demandes.py` | le contrat des demandes, son lint, les réponses humaines gelées |
 | `contexte.py` | le registre des contrôles, leurs étages, la base de comparaison, le mode adoption |
-| `controles_memoire.py` | format, références, fuite d'identifiants privés, preuves, backlog, budgets, péremption, retard, ajout seul, demandes, source unique des instructions |
+| `controles_memoire.py` | format, références, fuite d'identifiants privés (blocs de code et archives compris), preuves, backlog, budgets, péremption, retard, ajout seul (la mémoire privée relue à la base, B-0044, L3), demandes, source unique des instructions |
 | `controles_docs.py` | outillage documenté, valeurs liées, correspondance code ↔ doc, refus des copies |
 | `controles_tests.py` | capacités de l'adaptateur, tests creux, valeurs attendues, régression rejouée sur le parent, couverture de mutation, code nouveau nommé par un test |
 | `controles_cliquet.py` | cliquet des garde-fous, fichiers protégés (un renommage compte ses deux chemins ; le déplacement d'une migration de format se juge sous le nom nouveau), empreinte du moteur, configuration et trace des hooks |
@@ -47,7 +47,7 @@ comparent le même fichier sous ses deux noms.
 | `commandes.py` | le découpage d'une commande shell en commandes simples, par `shlex` : séparateurs, redirections, `cd` suivi, `bash -c` et `eval` ouverts, préfixes (`env`, `sudo`, `python -m`) retirés ; le corps d'un heredoc n'est que du texte |
 | `etat.py` | l'état dérivé ; si GitHub exige la CI du socle avant de fusionner sur la branche par défaut (ensemble de règles ou protection classique, lus par `gh`), sinon une action de l'humain avec le lien de la page (B-0044, L2, R1) |
 | `humain.py` | ce qui revient à l'humain ; ce qu'il a écrit lui-même depuis le dernier commit de l'agent (approbations, réponses de son terminal), que l'état liste pour que l'agent le cite ; la lecture du dernier message de l'agent pour le récap |
-| `prive.py` | la mémoire privée : modes compagnon et chiffré, verrou, accès, couches privées par défaut, bascule d'une entrée publique, contrôles `prive.*` ; la mise en place du dépôt compagnon, réservée à l'humain |
+| `prive.py` | la mémoire privée : modes compagnon et chiffré, verrou, accès, couches privées par défaut, bascule d'une entrée publique, contrôles `prive.*` ; un terme privé cherché sous ses variantes d'écriture, dans le contenu, les noms de fichier et de branche ; rien d'écrit sans accès ; la mémoire privée lue à une révision ; la mise en place du dépôt compagnon, réservée à l'humain |
 | `liens.py` | le permalien d'un fichier ou d'une entrée ; les liens d'un message que l'humain ne pourra pas suivre |
 | `verification.py` | le contrat `verify` : les capacités de l'adaptateur |
 | `mutation.py` | le verdict de mutation contre les plafonds ; un lecteur par outil (cargo-mutants, mutmut, Stryker, gremlins, PIT, mutant, Infection) ; un module « à mesurer » reçoit son plafond mesuré (`--poser`) |
@@ -78,7 +78,8 @@ comparent le même fichier sous ses deux noms.
 | Mémoire privée chiffrée : rien de commité en clair, filtre en place | `prive.chiffre` | agent, git, CI |
 | Mémoire privée indisponible : signal explicite, jamais en silence | `prive.acces`, état dérivé au démarrage | agent, git, CI |
 | Liste des termes privés : ajout libre, retrait sur validation humaine (D-0007) | `prive.termes`, `socle prive terme` | agent, git, CI |
-| Aucun terme privé ni identifiant privé dans ce qui se publie (D-0008) | `prive.fuites` ; hook `pre-tool-use` (écritures, `git commit`, `gh`, outils `mcp__`) ; hook git `commit-msg` | agent, git, CI |
+| Aucun terme privé ni identifiant privé dans ce qui se publie (D-0008), un terme sous ses variantes (`acme_corp`, `AcmeCorp`, coupé en fin de ligne) | `prive.fuites` (contenus, noms des fichiers nouveaux, nom de la branche en CI) ; hook `pre-tool-use` (écritures et noms de fichier, `git commit`, `gh` et les fichiers qu'ils publient par `--body-file` ou `-F`, branches créées ou poussées, outils `mcp__`) ; hook git `commit-msg` ; hook git `pre-push` (nom de la branche distante) | agent, git, CI |
+| Le cadrage, d'où viennent les termes privés, archivé dans la zone privée quand elle existe | `socle init --cadrage` | — |
 | Relecture humaine avant publication, au choix de l'humain : aucune, à chaque push, par lots (D-0006) | hook `pre-tool-use` sur `git push`, hook git `pre-push`, `socle relu` | agent, git |
 | Demandes et réponses privées, sur décision de l'humain (`[private] requests`) | `socle new`, réponses privées protégées comme les publiques | agent, git, CI |
 | Le privé choisi couche par couche (`[private] layers`) et entrée par entrée ; une entrée publique existante basculée en privé sans casser un renvoi ni rien effacer | `socle new --private/--public`, `socle prive basculer` ; `memoire.format` (l'entrée publique ne garde que son identifiant), `memoire.ajout-seul` (une copie privée reprend son texte) | agent, git, CI |

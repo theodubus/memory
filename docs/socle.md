@@ -99,10 +99,14 @@ verrou commité dit quel commit va avec chaque commit public ; ou des
 fichiers commités chiffrés par un filtre git. La politique choisit les
 couches privées par défaut, et l'humain peut placer une entrée précise d'un
 côté ou de l'autre. Les contrôles vérifient qu'aucun identifiant ni terme
-privé ne fuit dans ce qui se publie (fichiers, messages de commit, pull
-requests), et, si l'humain l'a choisi, qu'il a relu ce qui part avant
-chaque push. Sans accès à la zone privée, elle est dite indisponible :
-jamais sautée en silence.
+privé ne fuit dans ce qui se publie (fichiers et leurs noms, messages de
+commit, branches, pull requests), un terme sous ses variantes d'écriture
+compris, et, si l'humain l'a choisi, qu'il a relu ce qui part avant chaque
+push. Sans accès à la zone privée, elle est dite indisponible : jamais
+sautée en silence, et rien n'y est écrit à l'aveugle. Le mode chiffré est
+le moins éprouvé des deux : il dépend d'un filtre que le socle ne pose pas
+(git-crypt ou un équivalent), et ses tests n'emploient qu'un filtre
+d'essai ; le mode compagnon est le plus sûr.
 
 **Langue.** La mémoire s'écrit en français ou en anglais, au choix du
 projet, et se lit dans les deux.
