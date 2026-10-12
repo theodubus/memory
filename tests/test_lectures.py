@@ -171,6 +171,30 @@ class TestArchivage(unittest.TestCase):
         self.assertIn(f"backlog@{self.lu}", journal)
         self.assertEqual(self.erreurs(), [])
 
+    def test_un_sujet_archive_garde_ses_sous_titres_et_son_ancre(self):
+        """B-0044, L1 : seul le titre du sujet descendait d'un niveau ; son
+        sous-titre devenait un frère et quittait l'entrée, et un lien vers
+        l'ancre du sujet dans le backlog mourait à l'archivage."""
+        backlog = self.racine / "memory/backlog.md"
+        backlog.write_text(backlog.read_text().replace(
+            "> statut : ouvert · origine : fichier:memory/backlog.md · lu : backlog@" + self.lu + "\n",
+            "> statut : fait · origine : fichier:memory/backlog.md · lu : backlog@" + self.lu + " · ref : B-0002\n"
+            "\nRésumé.\n\n### Détails\n\nLe détail du sujet.\n"))
+        (self.racine / "LISEZMOI.md").write_text("Voir [le sujet](memory/backlog.md#b-0001--un-sujet).\n")
+        import contextlib
+        import io
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.archivage.archiver_backlog(config.Projet.charger(self.racine))
+        mem = memoire.Memoire.charger(self.racine)
+        archive = mem.entree("B-0001")
+        self.assertTrue(archive.archivee)
+        self.assertIn("Le détail du sujet.", archive.texte)
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="agent", tete=None)
+        r = Rapport()
+        controles_memoire.references(ctx, r)
+        self.assertEqual([c.message for c in r.erreurs()], [])
+
     def creer_puis_archiver(self, lu: str):
         """Un sujet créé sur la branche (commité), puis un autre qui change
         l'index, puis le premier clos et archivé au journal."""

@@ -3,9 +3,12 @@ identifiant, pour que toute référence vers lui reste vivante."""
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from socle import config, langue, memoire
+
+TITRE = re.compile(r"^#{1,5} ")
 
 
 def archiver_backlog(projet: config.Projet) -> int:
@@ -27,9 +30,10 @@ def archiver_backlog(projet: config.Projet) -> int:
     ident = mem.prochain_id("J", date=jour)
     blocs = []
     for e in clos:
-        # Le sujet descend d'un niveau : il devient un sous-titre de l'entrée.
-        lignes = e.texte.splitlines()
-        lignes[0] = "#" * (e.niveau + 1) + lignes[0][e.niveau:]
+        # Le sujet descend d'un niveau, sous-titres compris (hors des blocs de
+        # code) : il devient un sous-titre de l'entrée, et les siens le
+        # restent au lieu de devenir ses frères (B-0044, L1).
+        lignes = [("#" + l if not code and TITRE.match(l) else l) for _, l, code in memoire.lignes_hors_code(e.texte)]
         blocs.append("\n".join(lignes))
         texte = texte.replace(e.texte, "", 1)
     texte = "\n".join(l for l in _sans_vides_multiples(texte.splitlines())).rstrip("\n") + "\n"

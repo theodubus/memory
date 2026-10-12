@@ -153,7 +153,8 @@ déplace les entrées closes dans une entrée de journal datée, en sous-titres 
 ```
 
 Un sujet ou un fait archivé reste défini, donc toute référence vers lui
-reste vivante.
+reste vivante. Ses propres sous-titres descendent d'un niveau avec lui, et
+un lien écrit vers son ancre dans le backlog reste valide.
 
 ### Demandes — `D-`
 

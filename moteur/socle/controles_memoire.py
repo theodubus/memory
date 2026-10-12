@@ -286,15 +286,20 @@ def _verifier_lien(ctx, chemin_doc: str, dossier: str, cible: str) -> str | None
         lieu = _alias(ctx, cible_n)
         texte = ctx.lire(lieu)
         if texte is not None and ancre not in ancres(texte) and ancre_au_format_2(ancre) not in ancres(texte) \
-                and not _ancre_basculee(ctx, lieu, ancre):
+                and not _ancre_deplacee(ctx, lieu, ancre):
             return f"ancre morte : {cible}"
     return None
 
 
-def _ancre_basculee(ctx, chemin: str, ancre: str) -> bool:
-    """L'ancre d'une entrée basculée, écrite quand elle avait encore son titre."""
+def _ancre_deplacee(ctx, chemin: str, ancre: str) -> bool:
+    """L'ancre d'une entrée qui a quitté ce fichier, écrite avant : une entrée
+    basculée en privé, qui n'a plus son titre ; ou un sujet du backlog
+    archivé au journal (B-0044, L1)."""
     f = ctx.memoire.fichiers.get(chemin)
-    return f is not None and any(e.basculee and ancre.startswith(slug(e.id) + "--") for e in f.entrees)
+    if f is not None and any(e.basculee and ancre.startswith(slug(e.id) + "--") for e in f.entrees):
+        return True
+    return chemin == ctx.projet.chemins.backlog and any(
+        e.archivee and ancre.startswith(slug(e.id) + "--") for e in ctx.memoire.entrees("B"))
 
 
 # Les titres qui citent un chemin renommé au format 2 changent d'ancre : une
