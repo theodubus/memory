@@ -153,9 +153,6 @@ class TestCodeTeste(unittest.TestCase):
         self.assertEqual(contexte.Contexte(projet, base=self.base, tete=tete).rev_commit, tete)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
     def test_le_hook_avertit_sans_refuser(self):
         """B-0034, P9 : le hook commit-msg, qui voit le message et ses
         dispenses, avertit sans refuser de ce que la CI refusera."""
@@ -222,3 +219,7 @@ class TestPlagePoussee(unittest.TestCase):
 
         projet = config.Projet.charger(self.racine)
         self.assertEqual(hooks.plage_poussee(projet, [f"refs/heads/x {self.tete} refs/heads/x {'0' * 40}"]).constats, [])
+
+
+if __name__ == "__main__":
+    unittest.main()

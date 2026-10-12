@@ -228,10 +228,6 @@ class TestChiffre(Chiffre):
         self.assertTrue(any("aucun filtre de chiffrement" in m for m in messages), messages)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class TestRecuperation(Base):
     """En CI : le dépôt privé, au commit du verrou, ou indisponible sans clé."""
 
@@ -525,3 +521,7 @@ class TestInstallerCompagnon(unittest.TestCase):
         commande = " ".join(("python3", ".socle/socle", "prive", "installer", "--depot", "x"))
         self.assertTrue(hooks.INSTALLER_PRIVE.search(commande))
         self.assertFalse(hooks.INSTALLER_PRIVE.search(commande.replace("installer --depot x", "verrouiller")))
+
+
+if __name__ == "__main__":
+    unittest.main()

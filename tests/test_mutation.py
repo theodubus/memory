@@ -78,10 +78,6 @@ class TestCouverture(unittest.TestCase):
         self.assertEqual(self.verifier({}, {"src/vide.rs": "// rien\n"}).constats, [])
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class TestAMesurer(unittest.TestCase):
     """B-0034, P1 : un module « à mesurer » n'a pas de plafond ; le verdict
     dit son compte, et `poser` l'écrit dans les garde-fous."""
@@ -179,3 +175,7 @@ class TestMutmut(unittest.TestCase):
         self.assertEqual(res["romains.py"]["survivants"], 1)
         self.assertEqual(res["romains/__init__.py"]["attrapes"], 1)
         self.assertEqual(res["src/romains/__init__.py"]["survivants"], 1)
+
+
+if __name__ == "__main__":
+    unittest.main()
