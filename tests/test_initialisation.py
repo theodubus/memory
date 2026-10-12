@@ -205,6 +205,34 @@ class TestEntrees(Base):
         demande = next((self.racine / "memory/requests").glob("D-*.md")).read_text()
         self.assertIn("celui du document de cadrage", demande)
 
+    def test_un_second_cadrage_n_ecrase_pas_le_premier(self):
+        """B-0044, L1 : l'archive « telle quelle » était écrasée par un second
+        document du même nom, et un nom avec une espace cassait sa référence."""
+        self.racine = depot({})
+        installer(self.racine)
+        dossier = Path(tempfile.mkdtemp(prefix="socle-cadrages-"))
+        self.addCleanup(shutil.rmtree, dossier, ignore_errors=True)
+        doc = dossier / "mon cadrage.md"
+        doc.write_text("# Premier\n")
+        premiere, emp1 = initialisation.archiver_cadrage(self.racine, doc)
+        self.assertNotIn(" ", premiere)
+        self.assertEqual(initialisation.archiver_cadrage(self.racine, doc), (premiere, emp1))
+        doc.write_text("# Second\n")
+        seconde, emp2 = initialisation.archiver_cadrage(self.racine, doc)
+        self.assertNotEqual(seconde, premiere)
+        self.assertEqual((self.racine / premiere).read_text(), "# Premier\n")
+        self.assertEqual((self.racine / seconde).read_text(), "# Second\n")
+
+    def test_la_demande_de_depart_renvoie_au_fichier_d_instructions_qui_existe(self):
+        """Quand l'installeur garde CLAUDE.md, lu par le projet, le lien vers
+        AGENTS.md était mort."""
+        self.racine = depot({"CLAUDE.md": "# Projet\n", "tests/test_doc.py": "open('CLAUDE.md').read()\n"})
+        installer(self.racine)
+        projet = self.charger()
+        texte = initialisation.demande_de_depart(projet, "D-0009", initialisation.questions_de_depart(projet, None, False),
+                                                 None, "rien du tout")
+        self.assertIn("[CLAUDE.md](../../CLAUDE.md)", texte)
+
     def test_depot_seulement_du_verifiable(self):
         self.racine = depot({"pyproject.toml": "[project]\n", "README.md": "# Projet\n",
                              ".github/workflows/ci.yml": "name: CI\n",

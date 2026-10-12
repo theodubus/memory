@@ -13,6 +13,7 @@ source est « supposé ».
 
 from __future__ import annotations
 
+import re
 import shutil
 from dataclasses import dataclass
 from datetime import date
@@ -36,10 +37,22 @@ class Question:
 
 
 def archiver_cadrage(racine: Path, document: Path) -> tuple[str, str]:
-    """Le document, copié tel quel dans les archives de la mémoire, et son empreinte."""
-    dest = racine / config.chemins(racine).archives / document.name
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    if document.resolve() != dest.resolve():
+    """Le document, copié tel quel dans les archives de la mémoire, et son
+    empreinte. Son nom perd ses espaces (une référence `fichier:` n'en a pas) ;
+    un document différent du même nom prend un suffixe au lieu d'écraser
+    l'archive, et le même document se retrouve tel quel (B-0044, L1)."""
+    dossier = racine / config.chemins(racine).archives
+    dossier.mkdir(parents=True, exist_ok=True)
+    nom = re.sub(r"\s+", "-", document.name.strip())
+    base, ext = (nom.rsplit(".", 1)[0], "." + nom.rsplit(".", 1)[1]) if "." in nom else (nom, "")
+    emp = outils.empreinte_fichier(document)
+    for n in range(1, 1000):
+        dest = dossier / (nom if n == 1 else f"{base}-{n}{ext}")
+        if dest.resolve() == document.resolve() or not dest.exists():
+            break
+        if outils.empreinte_fichier(dest) == emp:
+            break  # le même document, déjà archivé
+    if document.resolve() != dest.resolve() and not dest.exists():
         shutil.copyfile(document, dest)
     return str(dest.relative_to(racine)), "sha256:" + outils.empreinte_fichier(dest)
 
@@ -128,7 +141,10 @@ def demande_de_depart(projet: config.Projet, ident: str, questions: list[Questio
         lien = f"- Le document de cadrage : [{Path(cadrage).name}](../{Path(cadrage).relative_to(projet.chemins.memoire)})."
     else:
         cite = "- Aucun élément de la mémoire : le projet commence, et ces questions en posent le départ."
-        lien = "- Les instructions du projet : [AGENTS.md](../../AGENTS.md), section de la politique d'autonomie."
+        # Le fichier d'instructions qui existe : l'installeur garde CLAUDE.md
+        # quand le projet le lit par son nom.
+        instr = config.INSTRUCTIONS if (projet.racine / config.INSTRUCTIONS).is_file() else "CLAUDE.md"
+        lien = f"- Les instructions du projet : [{instr}](../../{instr}), section de la politique d'autonomie."
     return gabarit("questions-de-depart.md").format(
         id=ident, date=date.today().isoformat(), entrees=entrees, n=len(questions), plafond=plafond,
         questions="\n".join(lignes), elements=cite, lien=lien)
