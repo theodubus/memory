@@ -150,6 +150,13 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
     if not outils.est_depot(cible):
         print(f"refus : {cible} n'est pas un dépôt git", file=sys.stderr)
         return 2
+    haut = outils.git(cible, "rev-parse", "--show-toplevel", check=False).strip()
+    if haut and Path(haut).resolve() != cible.resolve():
+        # Les hooks git (core.hooksPath) et le workflow de CI ne se lisent
+        # qu'à la racine du dépôt : posés plus bas, ils ne tireraient pas.
+        print(f"refus : {cible} n'est pas la racine du dépôt git ({haut}) ; le socle s'installe à la racine",
+              file=sys.stderr)
+        return 2
     source = source or Path(__file__).resolve().parent.parent
     if adaptateur == "auto":
         detecte = detecter_adaptateur(cible)

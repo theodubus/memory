@@ -99,3 +99,16 @@ class TestRelance(unittest.TestCase):
         installer(self.racine)
         gf = tomllib.loads((self.racine / ".socle/guardrails.toml").read_text())
         self.assertEqual(sorted(gf["adoption"]["warn_only"]), ["docs.copie", "memoire.references"])
+
+    def test_un_sous_dossier_d_un_depot_est_refuse(self):
+        """Les hooks git et le workflow de CI ne vivent qu'à la racine du
+        dépôt : posés plus bas, ils ne tiraient pas, sans un mot."""
+        from contextlib import redirect_stderr
+
+        self.racine = depot({"services/api/app.py": "print('ok')\n"})
+        flux = io.StringIO()
+        with redirect_stdout(flux), redirect_stderr(flux):
+            code = installeur.installer(self.racine / "services/api", "python", "@essai", source=MOTEUR)
+        self.assertEqual(code, 2)
+        self.assertIn("racine du dépôt", flux.getvalue())
+        self.assertFalse((self.racine / "services/api/.socle").exists())
