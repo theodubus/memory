@@ -23,38 +23,27 @@ from __future__ import annotations
 
 import json
 import os
+import posixpath
 import re
 import sys
 from datetime import datetime
 from pathlib import Path
 
-from socle import config, demandes, memoire, outils, prive
+from socle import commandes, config, demandes, memoire, outils, prive
 
 OUTILS_ECRITURE = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
-IRREVERSIBLES_BASH = [
-    r"\bgit\s+push\b[^\n;&|]*\s(--force\b|-f\b|--force-with-lease\b|--mirror\b|--delete\b|-d\b|\+\S)",
-    r"\bgit\s+push\b[^\n;&|]*\s(\S+:)?(main|master)\s*($|[;&|])",
-    r"\bgit\s+push\b[^\n;&|]*\s--tags\b",
-    r"\bgit\s+reset\s+--hard\b",
-    r"\bgit\s+filter-(branch|repo)\b",
-    r"\b(npm|cargo|twine|gem|poetry|uv|pnpm|yarn)\s+publish\b",
-    r"\bgh\s+(pr\s+merge|release\s+(create|delete)|repo\s+(delete|create|edit))\b",
-    r"\brm\s+-[a-zA-Z]*r[a-zA-Z]*\s+(/|~|\$HOME)(\s|$)",
-]
+# Ce que le moteur refuse se juge sur chaque commande simple, découpée
+# (`commandes.analyser`), pas sur le texte : voir `irreversible`. La
+# politique peut AJOUTER des motifs (`[irreversible] bash`), appliqués à
+# chaque commande simple ; elle ne retire rien à ceux du moteur (B-0044, L2).
+IRREVERSIBLES_BASH: list[str] = []
 IRREVERSIBLES_OUTILS = [
-    r"mcp__github__(merge_pull_request|delete_file|create_repository|fork_repository|create_release|push_files)",
+    r"mcp__github__(merge_pull_request|delete_file|create_repository|fork_repository|create_release|push_files"
+    r"|create_or_update_file|enable_pr_auto_merge)",
 ]
-# Une INVOCATION de `answer` ou `approve`, par le lanceur ou par `-m socle` —
-# pas un texte qui les nomme (un heredoc de documentation les cite souvent).
-COMMANDES_HUMAINES = re.compile(
-    r"(?:^|[;&|(]\s*|\s)(?:\S*/)?(?:python3?\s+)?\S*\.socle/socle(?:\s+--root\s+\S+)?\s+(answer|approve|relu)\b"
-    r"|-m\s+socle(?:\s+--root\s+\S+)?\s+(answer|approve|relu)\b",
-    re.M,
-)
-# La mise en place du dépôt compagnon pousse vers le dépôt privé et crée une
-# clé de déploiement : un geste de l'humain (B-0034, P5).
-INSTALLER_PRIVE = re.compile(
-    r"(?:\.socle/socle|-m\s+socle)(?:\s+--root\s+\S+)?\s+prive\s+installer\b")
+# Les réglages de Claude Code commandent ses hooks : un réglage local peut
+# les couper tous. Seul l'humain les modifie, où qu'ils soient.
+REGLAGES_AGENT = re.compile(r"(^|/)\.claude/settings(\.local)?\.json$")
 # Ce qui part hors du dépôt par le shell : un message de commit, un tag, une
 # pull request ou un commentaire par `gh`. Ce qui vise le dépôt privé n'est
 # pas une publication.
@@ -247,51 +236,186 @@ def statut_valide_ajoute(rel: str, avant: str | None, apres: str, projet) -> str
     return None
 
 
-ECRIVAINS = {"rm", "mv", "truncate", "chmod", "touch", "install", "ln", "unlink", "shred"}
+ECRIVAINS = {"rm", "mv", "truncate", "chmod", "chown", "touch", "unlink", "shred", "tee"}
+
+
+def ecrits(c: commandes.Commande) -> list[str]:
+    """Les chemins qu'une commande simple écrit, rapportés au dossier de
+    départ : ses redirections, les arguments de `rm`, `mv`, `touch`…, la
+    destination de `cp`, les fichiers d'un `sed -i` ou d'un `perl -i`, et ce
+    que `git rm`, `git mv`, `git restore` ou `git checkout -- …` réécrivent.
+    Exécuter ou lire un fichier n'est pas l'écrire."""
+    res = list(c.redirige)
+    nom = c.programme
+    options, args = commandes.options_et_arguments(c.argv[1:])
+    if nom in ECRIVAINS:
+        res += args
+    elif nom in ("cp", "ln", "install", "rsync") and args:
+        res.append(args[-1])
+    elif nom in ("sed", "perl") and commandes.drapeau(options, "i", ("--in-place",)):
+        res += args if any(o in ("-e", "-f", "--expression", "--file") for o in options) else args[1:]
+    elif nom == "dd":
+        res += [a[3:] for a in c.argv[1:] if a.startswith("of=")]
+    elif nom == "git":
+        sous, reste = commandes.git_sous_commande(c.argv)
+        if sous in ("rm", "mv", "restore", "clean"):
+            res += commandes.options_et_arguments(reste)[1]
+        elif sous == "checkout" and "--" in reste:
+            res += reste[reste.index("--") + 1:]
+    return [c.chemin(x) for x in res if x]
 
 
 def cibles_ecrites(cmd: str) -> list[str]:
-    """Les chemins qu'une commande shell écrit : cibles de `>`, `>>` et
-    `tee`, arguments de `rm`, `mv`, `touch`…, destination de `cp`, fichiers
-    d'un `sed -i` ou d'un `perl -i`. Exécuter ou lire un fichier n'est pas
-    l'écrire. Heuristique : un `cd` dans la commande n'est pas suivi."""
-    import shlex
-
-    cibles = []
-    for m in re.finditer(r"(?<![0-9&])>{1,2}\s*([^\s;&|<>()]+)", cmd):
-        cibles.append(m.group(1))
-    for simple in re.split(r"&&|\|\||[;|\n]", cmd):
-        try:
-            mots = shlex.split(simple, comments=True)
-        except ValueError:
-            mots = simple.split()
-        while mots and re.fullmatch(r"\w+=\S*", mots[0]):
-            mots.pop(0)  # affectations d'environnement
-        if mots and mots[0] in ("sudo", "command", "exec"):
-            mots.pop(0)
-        if not mots:
-            continue
-        nom = mots[0].rsplit("/", 1)[-1]
-        args = [a for a in mots[1:] if not a.startswith("-") and not re.match(r"^\d*>", a)]
-        if nom in ECRIVAINS or nom == "tee":
-            cibles += args
-        elif nom == "cp" and args:
-            cibles.append(args[-1])
-        elif nom in ("sed", "perl") and any(re.match(r"^-[a-zA-Z]*i", a) for a in mots[1:]):
-            cibles += args[1:]
-        elif nom == "dd":
-            cibles += [a[3:] for a in mots[1:] if a.startswith("of=")]
-    return cibles
+    """Les chemins qu'une commande shell écrit, toutes commandes simples
+    confondues."""
+    return [x for c in commandes.analyser(cmd) for x in ecrits(c)]
 
 
 def ecriture_protegee(projet: config.Projet, cmd: str) -> str | None:
-    """Le chemin protégé qu'une commande shell écrit, s'il y en a un."""
+    """Le chemin protégé qu'une commande shell écrit, s'il y en a un : un
+    fichier protégé, ou un dossier qui en contient (`rm -rf .socle`)."""
     motifs = projet.chemins_proteges()
+    suivis = None
     for jeton in cibles_ecrites(cmd):
         rel = _relatif(projet.racine, jeton.strip("'\""))
-        if rel and outils.correspond(rel, motifs):
+        if rel is None:
+            continue
+        if outils.correspond(rel, motifs):
             return rel
+        if suivis is None:
+            suivis = outils.fichiers_courants(projet.racine)
+        prefixe = "" if rel in ("", ".") else rel.rstrip("/") + "/"
+        touche = next((f for f in suivis if f.startswith(prefixe) and outils.correspond(f, motifs)), None)
+        if touche:
+            return f"{rel or '.'}/ (dont {touche})"
     return None
+
+
+def _branches_protegees(racine: Path) -> set[str]:
+    defaut = outils.branche_par_defaut(racine) or ""
+    return {"main", "master", defaut.split("/", 1)[-1]} - {""}
+
+
+def irreversible(racine: Path, c: commandes.Commande) -> str | None:
+    """L'action irréversible ou externe qu'une commande simple lance
+    (politique, point 4), dite en clair ; `None` sinon."""
+    nom, argv = c.programme, c.argv
+    if nom == "git":
+        sous, reste = commandes.git_sous_commande(argv)
+        options, args = commandes.options_et_arguments(reste)
+        if sous == "push":
+            if commandes.drapeau(options, "f", ("--force", "--force-with-lease", "--force-if-includes")):
+                return "push forcé"
+            if commandes.drapeau(options, "d", ("--delete", "--prune")):
+                return "suppression d'une branche distante"
+            if commandes.drapeau(options, "", ("--mirror", "--all", "--tags")):
+                return "push de toutes les références"
+            refs = args[1:]
+            if any(r.startswith("+") for r in refs):
+                return "push forcé (+)"
+            if any(r.startswith(":") for r in refs):
+                return "suppression d'une branche distante"
+            cibles = [r.split(":", 1)[-1].removeprefix("refs/heads/") for r in refs] or \
+                [outils.git(racine, "rev-parse", "--abbrev-ref", "HEAD", check=False).strip()]
+            protegee = next((x for x in cibles if x in _branches_protegees(racine)), None)
+            return f"push sur la branche par défaut ({protegee})" if protegee else None
+        if sous == "reset" and "--hard" in options:
+            return "git reset --hard"
+        if sous in ("filter-branch", "filter-repo"):
+            return f"git {sous}"
+        return None
+    if nom in ("npm", "cargo", "poetry", "uv", "pnpm", "yarn") and "publish" in argv[1:3]:
+        return f"{nom} publish"
+    if (nom, argv[1:2]) in (("twine", ["upload"]), ("gem", ["push"])):
+        return f"{nom} {argv[1]}"
+    if nom == "gh":
+        sous = tuple(argv[1:3])
+        if sous == ("pr", "merge") \
+                or (sous[:1] == ("release",) and sous[1:] in (("create",), ("delete",), ("edit",))) \
+                or (sous[:1] == ("repo",) and sous[1:] in (("create",), ("delete",), ("edit",), ("rename",),
+                                                          ("archive",))) \
+                or (sous[:1] == ("secret",) and sous[1:] in (("set",), ("delete",))):
+            return "gh " + " ".join(sous)
+        if sous[:1] == ("api",):
+            for i, a in enumerate(argv):
+                if a in ("-X", "--method") and i + 1 < len(argv):
+                    methode = argv[i + 1]
+                elif a.startswith("--method="):
+                    methode = a.split("=", 1)[1]
+                elif a.startswith("-X") and len(a) > 2:
+                    methode = a[2:]
+                else:
+                    continue
+                if methode.upper() in ("DELETE", "PUT", "PATCH"):
+                    return f"gh api {methode.upper()}"
+    if nom == "rm":
+        options, args = commandes.options_et_arguments(argv[1:])
+        if commandes.drapeau(options, "r", ("--recursive",)) or commandes.drapeau(options, "R"):
+            for a in args:
+                cible = c.chemin(a).rstrip("/")
+                if a.rstrip("/*") in ("", "~", "$HOME") or cible == ".git" or cible.endswith("/.git"):
+                    return f"rm -r {a}"
+    return None
+
+
+def commande_humaine(c: commandes.Commande) -> tuple[str, list[str]] | None:
+    """Une commande du socle réservée à l'humain (`answer`, `approve`,
+    `relu`, `prive installer`), quel que soit le chemin du lanceur (entre
+    guillemets, après un `cd`, par `python3 -m socle`) : son nom et ses
+    arguments ; `None` sinon."""
+    argv = c.argv
+    if not argv:
+        return None
+
+    def lanceur(chemin: str) -> bool:
+        return posixpath.normpath(c.chemin(chemin)).endswith(".socle/socle") or chemin.endswith(".socle/socle")
+
+    if re.fullmatch(r"python[\d.]*", c.programme):
+        reste = argv[1:]
+        while reste and reste[0].startswith("-"):
+            reste = reste[1:]
+        if not reste or not lanceur(reste[0]):
+            return None
+        reste = reste[1:]
+    elif c.programme == "socle" or lanceur(argv[0]):
+        reste = argv[1:]
+    else:
+        return None
+    while reste and (reste[0] == "--root" or reste[0].startswith("--root=")):
+        reste = reste[2:] if reste[0] == "--root" else reste[1:]
+    if reste[:2] == ["prive", "installer"]:
+        return "prive installer", reste
+    if reste and reste[0] in ("answer", "approve", "relu"):
+        return reste[0], reste
+    return None
+
+
+class _Repere:
+    """L'interface d'une expression régulière (`search`), gardée pour les
+    appelants d'avant le découpage des commandes : elle trouve une
+    INVOCATION, pas un texte qui la nomme."""
+
+    def __init__(self, noms: tuple[str, ...]):
+        self.noms = noms
+
+    def search(self, cmd: str):
+        for c in commandes.analyser(cmd):
+            h = commande_humaine(c)
+            if h and h[0] in self.noms:
+                return _Trouve(h[0])
+        return None
+
+
+class _Trouve:
+    def __init__(self, nom: str):
+        self.nom = nom
+
+    def group(self, *_):
+        return self.nom
+
+
+COMMANDES_HUMAINES = _Repere(("answer", "approve", "relu"))
+INSTALLER_PRIVE = _Repere(("prive installer",))
 
 
 def pre_tool_use(projet: config.Projet, entree: dict) -> int:
@@ -312,26 +436,41 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
 
     if outil == "Bash":
         cmd = args.get("command", "")
-        for m in projet.pol("irreversible", "bash", defaut=IRREVERSIBLES_BASH):
-            if re.search(m, cmd):
-                return refus(f"commande irréversible ou externe : « {cmd.strip()[:200]} » — validation humaine "
-                             "requise (politique, point 4). Si c'est une décision, émettre une demande `D-NNNN` ; si "
-                             "c'est une action que l'humain doit faire lui-même, l'inscrire au backlog avec "
-                             "`pour : humain`. Puis continuer sur autre chose.")
-        if INSTALLER_PRIVE.search(cmd):
-            return refus("`socle prive installer` est réservé à l'humain : il pousse vers le dépôt privé et crée "
-                         "une clé de déploiement (politique, point 4). L'inscrire au backlog avec `pour : humain`.")
-        m = COMMANDES_HUMAINES.search(cmd)
-        if m and (m.group(1) or m.group(2)) == "approve":
-            return refus("`socle approve` est réservé à l'humain : il valide ses propres changements protégés.")
-        if m and not (re.search(r"--relayed\b", cmd) and re.search(r"--quote(-file)?\b", cmd)):
-            return refus("l'agent ne répond jamais à la place de l'humain. Il ne peut que relayer une réponse "
-                         "donnée dans la conversation : `socle answer D-NNNN <réponse> --relayed --by <nom> "
-                         "--quote-file <texte exact>` (ADR-0006), ou `socle relu --relayed --by <nom> "
-                         "--quote-file <texte exact>` pour une relecture avant publication.")
+        # Chaque commande simple, découpée : ce qu'elle lance, pas le texte
+        # qu'elle cite (un heredoc, un message de commit).
+        simples = commandes.analyser(cmd)
+        en_plus = projet.pol("irreversible", "bash", defaut=IRREVERSIBLES_BASH) or []
+        for c in simples:
+            action = irreversible(racine, c) or next(
+                (" ".join(c.argv)[:120] for m in en_plus if re.search(m, " ".join(c.argv))), None)
+            if action:
+                return refus(f"commande irréversible ou externe ({action}) : « {cmd.strip()[:200]} » — validation "
+                             "humaine requise (politique, point 4). Si c'est une décision, émettre une demande "
+                             "`D-NNNN` ; si c'est une action que l'humain doit faire lui-même, l'inscrire au backlog "
+                             "avec `pour : humain`. Puis continuer sur autre chose.")
+            h = commande_humaine(c)
+            if h and h[0] == "prive installer":
+                return refus("`socle prive installer` est réservé à l'humain : il pousse vers le dépôt privé et "
+                             "crée une clé de déploiement (politique, point 4). L'inscrire au backlog avec "
+                             "`pour : humain`.")
+            if h and h[0] == "approve":
+                return refus("`socle approve` est réservé à l'humain : il valide ses propres changements protégés.")
+            # Les drapeaux du relais se cherchent dans la commande elle-même,
+            # pas ailleurs dans le texte.
+            relais = "--relayed" in h[1] and any(x.split("=", 1)[0] in ("--quote", "--quote-file") for x in h[1]) \
+                if h else True
+            if not relais:
+                return refus("l'agent ne répond jamais à la place de l'humain. Il ne peut que relayer une réponse "
+                             "donnée dans la conversation : `socle answer D-NNNN <réponse> --relayed --by <nom> "
+                             "--quote-file <texte exact>` (ADR-0006), ou `socle relu --relayed --by <nom> "
+                             "--quote-file <texte exact>` pour une relecture avant publication.")
         faute = _fuite_bash(projet, cmd)
         if faute:
             return refus(faute)
+        reglage = next((x for c in simples for x in ecrits(c) if REGLAGES_AGENT.search(x)), None)
+        if reglage:
+            return refus(f"`{reglage}` : les réglages de Claude Code commandent ses hooks, seul l'humain les "
+                         "modifie (un réglage local peut les couper tous).")
         cible = ecriture_protegee(projet, cmd)
         if cible:
             return refus(f"écriture d'un fichier protégé ({cible}) par le shell : seul l'humain modifie "
@@ -342,7 +481,11 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
         return refus(faute)
 
     if outil in OUTILS_ECRITURE:
-        rel = _relatif(racine, args.get("file_path") or args.get("notebook_path") or "")
+        chemin = args.get("file_path") or args.get("notebook_path") or ""
+        if REGLAGES_AGENT.search(chemin.replace(os.sep, "/")):
+            return refus(f"`{chemin}` : les réglages de Claude Code commandent ses hooks, seul l'humain les "
+                         "modifie (un réglage local peut les couper tous).")
+        rel = _relatif(racine, chemin)
         if rel and outils.correspond(rel, projet.chemins_proteges()):
             return refus(f"`{rel}` est protégé par la politique : seul l'humain le modifie (CODEOWNERS), "
                          "ou l'installeur pour les hooks, la CI et le moteur. Proposer le changement par une demande.")

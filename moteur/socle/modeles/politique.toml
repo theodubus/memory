@@ -40,9 +40,12 @@ paths = [
 ]
 
 [irreversible]
-# Point 4 : refusés par le hook PreToolUse sans validation humaine. Vide, la
-# liste par défaut du moteur s'applique ; la remplacer ici la remplace.
-# bash = ['\bgit\s+push\b.*--force', ...]
+# Point 4 : refusés par le hook PreToolUse sans validation humaine. Le moteur
+# juge lui-même chaque commande shell, découpée en commandes simples (push
+# forcé ou sur la branche par défaut, publication, suppression distante…) ;
+# `bash` AJOUTE des motifs, appliqués à chaque commande simple, et ne retire
+# rien. `tools` remplace la liste des outils externes du moteur.
+# bash = ['\bterraform\s+apply\b', ...]
 # tools = ['mcp__github__merge_pull_request', ...]
 
 [agents]
