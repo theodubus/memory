@@ -333,7 +333,7 @@ passer au banc des adaptateurs là où dotnet existe.
 
 ## B-0041 — Une passe sur tout le code, avec du recul sur la technique et sur ce que l'outil doit faire
 
-> statut : ouvert · origine : J-2026-10-11-T · lu : backlog@5dcd4e94
+> statut : fait · origine : J-2026-10-11-T · lu : backlog@5dcd4e94 · ref : J-2026-10-12-F
 
 Demandé par Théo, texte exact : « une passe de ta part sur tout le code et
 prendre du recul pour voir ce qu'on pourrait modifier/ajouter (que ce soit
@@ -367,3 +367,56 @@ validation ancienne y couvre une assertion réécrite. Deux pushes de B-0034
 sont passés en local et ont échoué en CI. À faire : que le hook avant push
 juge aussi la plage qui part (du sha distant au sha local, qu'il reçoit sur
 son entrée), comme la CI le fera.
+
+## B-0044 — Les lots de la passe de recul, dans l'ordre validé (D-0015)
+
+> statut : en-cours · origine : J-2026-10-12-F · lu : backlog@19253d8c
+
+Les lots du relevé de la passe de recul (`docs/recul.md`, section 3), dans
+l'ordre que Théo a validé : L1, les pertes de données et la casse à
+l'installation ; L2, les contournements du hook de l'agent, le hook par
+découpage en arguments, les commandes humaines refusées sous un agent, la
+branche protégée ; L3, la mémoire privée ; L4, l'auto-test (chaque contrôle
+et chaque refus vus échouer) ; R6, le projet d'échecs pour de vrai, qui
+demandera sa propre décision ; L5, les contrôles qui laissent passer et
+les refus à tort ; puis L6 (la fin de tour, qui change un fichier protégé :
+une demande), R2 (le workflow de mutation, B-0005) et L7 (la dette).
+Chaque correctif avec un test qui échoue sur le code d'avant ; un compte
+rendu à Théo à la fin de chaque lot.
+
+## B-0045 — Des noms de fichiers et de dossiers sont encore en français
+
+> statut : ouvert · origine : J-2026-10-12-F · lu : backlog@19253d8c
+
+Signalé par Théo, texte exact : « Certains noms fichiers/dossier de base
+sont encore en français-> backlog à corriger ». La migration du format 2
+(B-0032) n'a renommé que les chemins de la mémoire et de la configuration
+d'un projet. Restent en français : les dossiers et modules du moteur
+(`moteur/`, `modeles/`, `adaptateurs/`, `controles_*.py`, `prive.py`,
+`memoire.py`…), les gabarits (`garde-fous.toml`, `politique.toml`,
+`modeles/memoire/canonique.md`…), le dossier `banc/`, les marqueurs locaux
+d'un projet (sous `.socle/trace/`, et la clé de déploiement du mode
+compagnon), et, contre ADR-0002 qui veut les commandes en anglais, des
+commandes et des options : `aide`, `prive` et ses actions, `relu`,
+`--rapide`, `--court`, `--poser`, `--oui`, `--cadrage`, `--depot` — dont
+quatre ajoutées par moi pour B-0034. À faire : un inventaire complet, des
+noms anglais, d'anciens noms de commandes gardés le temps d'une version,
+et une migration pour ce qui vit dans les projets.
+
+## B-0046 — La documentation à refaire : séparer l'outil de sa fabrication, et la rendre intuitive
+
+> statut : ouvert · origine : J-2026-10-12-F · lu : backlog@19253d8c
+
+Signalé par Théo, texte exact : « la doc mélange la doc/tests relatif au
+repo (ce qui permet de construire l'outil de cadrage) et l'outil de cadrage
+lui meme, + la doc est pas intuitive pour comprendre ni installer, à refaire
+(si c'est pas clair en quoi c'est pas bien pour toi, tu pourra me demander
+> backlog) ». Ce que j'en comprends : le README et `docs/` mêlent la
+documentation du socle, pour qui l'installe et s'en sert, et le matériel
+de sa fabrication dans ce dépôt (architecture, bancs, relevés,
+inventaire de `chess`) ; il faut les séparer, et réécrire la première pour
+qu'elle se comprenne et s'installe sans effort : ce que c'est en un
+paragraphe, l'installation en quelques commandes qui marchent telles
+quelles, une première session, l'usage courant, puis la référence. Avant
+de commencer, vérifier cette lecture avec Théo, et lui demander où il
+s'est perdu. Reprend B-0035, clos trop tôt.
