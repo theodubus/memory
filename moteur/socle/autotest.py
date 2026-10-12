@@ -539,6 +539,11 @@ def _cas() -> list[Cas]:
         remplacer(c, ".socle/policy.toml", "max_attempts = 3", "max_attempts = 30")
         return etage_ci(a, c)
 
+    @defaut("protege-au-commit", "fichier protégé changé, commité sans validation", "git", "protege.fichiers")
+    def _(a, c):
+        remplacer(c, ".socle/policy.toml", "max_attempts = 3", "max_attempts = 30")
+        return etage_git(a, c)
+
     @defaut("demande-identifiant-nu", "demande humaine avec identifiant nu", "agent", "demandes.contrat")
     def _(a, c):
         return etage_outil(a, c, "Write", {"file_path": str(c / "memory/requests/D-0001-refactor.md"), "content": DEMANDE_NUE})
@@ -1217,7 +1222,10 @@ RAISONS_AGENT = {
 def _attrape_par(cas: Cas, sortie: str) -> bool:
     """Le défaut est-il attrapé par le contrôle ATTENDU ? Le rapport liste
     tous les contrôles exécutés, réussis compris : seule la ligne de synthèse
-    `ECHEC — n contrôle(s) : …` dit lesquels ont échoué."""
+    `ECHEC — n contrôle(s) : …` dit lesquels ont échoué. Un étage ou un
+    contrôle qui plante n'attrape rien : il refuse par accident."""
+    if "Traceback (most recent call last)" in sortie or "le contrôle a planté" in sortie:
+        return False
     if cas.controle in RAISONS_AGENT:
         return RAISONS_AGENT[cas.controle] in sortie
     for ligne in sortie.splitlines():

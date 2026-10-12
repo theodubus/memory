@@ -91,6 +91,19 @@ class TestApprobation(unittest.TestCase):
         git(self.racine, "commit", "-qm", "suite\n\nSocle-Agent: claude-code", "--allow-empty", "--no-verify")
         self.assertEqual(humain.fait_par_l_humain(projet), [])
 
+    def test_le_commit_refuse_rappelle_l_approbation_sans_planter(self):
+        """Le rappel de l'approbation, ajouté au refus du hook avant commit
+        (B-0034, P2), levait une NameError : ses guillemets fermaient la
+        chaîne. L'humain recevait une trace au lieu de la consigne."""
+        from socle import hooks
+
+        git(self.racine, "add", "-A")
+        with contextlib.redirect_stderr(io.StringIO()) as flux:
+            code = hooks.git_pre_commit(config.Projet.charger(self.racine))
+        self.assertEqual(code, 1)
+        self.assertIn('approve --text "<raison>"', flux.getvalue())
+        self.assertIn("Commit refusé", flux.getvalue())
+
     def test_sans_liste_ni_confirmation_rien_n_est_approuve(self):
         erreurs = io.StringIO()
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(erreurs), \

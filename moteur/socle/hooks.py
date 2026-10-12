@@ -580,7 +580,7 @@ def git_pre_commit(projet: config.Projet) -> int:
         rapport.afficher("socle — contrôles avant commit", flux=sys.stderr, court=True)
         if "protege.fichiers" in rapport.controles_en_echec():
             print("\nFichiers protégés : si c'est l'humain qui les a changés (une mise à jour du socle, sa "
-                  "politique), `python3 .socle/socle approve --text "<raison>"` les liste et les approuve — réservé à l'humain ; "
+                  "politique), `python3 .socle/socle approve --text \"<raison>\"` les liste et les approuve — réservé à l'humain ; "
                   "l'agent, lui, ouvre une demande.", file=sys.stderr)
         print("\nCommit refusé. `git commit --no-verify` contourne ce hook, jamais la CI.", file=sys.stderr)
         return 1
