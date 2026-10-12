@@ -105,6 +105,24 @@ class TestIndexAffiche(unittest.TestCase):
         self.backlog.write_text(self.backlog.read_text().replace(f"backlog@{self.perimee}", f"backlog@{affichee}"))
         self.assertEqual(self.erreurs(), [])
 
+    def test_l_index_affiche_reste_bon_quand_un_sujet_s_ajoute_apres(self):
+        """Le cas de B-0042 : il cite l'index affiché, lui compris ; B-0043,
+        ajouté ensuite, ne périme pas sa lecture, commitée ou non."""
+        affichee = memoire.empreinte_index(memoire.Memoire.charger(self.racine), "backlog")
+        self.backlog.write_text(self.backlog.read_text().replace(f"backlog@{self.perimee}", f"backlog@{affichee}"))
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "B-0003")
+        lu = memoire.empreinte_index(memoire.Memoire.charger(self.racine), "backlog")
+        self.backlog.write_text(self.backlog.read_text() + "\n## B-0004 — Un sujet plus tard\n\n> statut : ouvert · "
+                                f"origine : fichier:memory/backlog.md · lu : backlog@{lu}\n")
+        self.assertEqual(self.erreurs(), [])
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "B-0004")
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="ci", base=self.base, tete="HEAD")
+        r = Rapport()
+        controles_memoire.lectures(ctx, r)
+        self.assertEqual([c.message for c in r.erreurs("memoire.lectures")], [])
+
 
 class TestArchivage(unittest.TestCase):
     """Un sujet clos s'archive dans le journal avec sa preuve de lecture : la

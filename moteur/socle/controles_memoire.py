@@ -398,7 +398,9 @@ def lectures(ctx, r):
         for m in commits_ou_parait(chemin, f"{index}@{h}", soi):
             apres_m = {n for n in m.definitions() if soi and m.definitions()[n][0].type == soi.type and n > soi.id}
             sauf = {soi.id} if soi else set()
-            if h in (memoire.empreinte_index(m, index, sauf), memoire.empreinte_index(m, index, sauf | apres_m)):
+            # L'index lu, sans l'entrée qui cite ou tel qu'affiché, elle
+            # comprise (B-0037), et sans ce qui s'est ajouté après elle.
+            if h in {memoire.empreinte_index(m, index, x | y) for x in (set(), sauf) for y in (set(), apres_m)}:
                 return True
         return False
 
@@ -439,6 +441,7 @@ def lectures(ctx, r):
                 # L'index tel que `socle show --index` l'affiche, entrée qui
                 # cite comprise : le refus conseille de le relire (B-0037).
                 memoire.empreinte_index(mem, index),
+                memoire.empreinte_index(mem, index, apres),
                 memoire.empreinte_index(mem, index, sauf),
                 memoire.empreinte_index(mem, index, sauf | apres),
                 memoire.empreinte_index(mem, index, sauf | nouveaux),
