@@ -13,7 +13,8 @@ un compte rendu à Théo à la fin de chaque lot.
 
 ## Prochaines étapes
 
-1. R6 : pousser l'historique du projet d'échecs dans la copie, y installer
+1. R6 : l'historique du projet d'échecs dans la copie, poussé par Théo (le
+   hook refuse ce push à l'agent, B-0048) ; puis y installer
    le socle en adoption, y faire cinq tâches tirées de son backlog, une
    session chacune, et relever chaque refus ; puis ajouter au banc un mode
    sans les hooks de l'agent, et le faire tourner.
