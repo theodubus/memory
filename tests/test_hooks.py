@@ -94,6 +94,20 @@ class TestPrepareCommitMsg(unittest.TestCase):
         self.assertIn("diff --git", bas)
 
 
+class TestSousUnAgent(unittest.TestCase):
+    def test_sous_un_agent(self):
+        import contextlib
+        import io
+        import os
+        from unittest import mock
+
+        with mock.patch.dict(os.environ, {"CLAUDECODE": "1"}), contextlib.redirect_stderr(io.StringIO()):
+            self.assertTrue(hooks.sous_un_agent("`socle approve`"))
+        with mock.patch.dict(os.environ):
+            os.environ.pop("CLAUDECODE", None)
+            self.assertFalse(hooks.sous_un_agent("`socle approve`"))
+
+
 class TestTraceDesRefus(unittest.TestCase):
     """Chaque refus d'un hook laisse dans la trace son étage et ce qui a
     refusé : le banc d'évaluation y compte les défauts attrapés par étage."""

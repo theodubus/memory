@@ -751,6 +751,17 @@ def compter_session(racine: Path, session: str | None = None) -> str:
     return " ".join(f"{k}={v}" for k, v in compte.items())
 
 
+def sous_un_agent(geste: str) -> bool:
+    """Défense en profondeur (B-0044, L2) : une commande réservée à l'humain
+    refuse de tourner dans une session d'agent, que le hook l'ait reconnue
+    ou non. Le dit, et rend vrai."""
+    if not os.environ.get("CLAUDECODE"):
+        return False
+    print(f"refus : {geste} est réservé à l'humain, et cette commande tourne dans une session d'agent "
+          "(CLAUDECODE) — l'humain la lance dans son propre terminal", file=sys.stderr)
+    return True
+
+
 def git_prepare_commit_msg(projet: config.Projet, fichier: str, source: str = "") -> int:
     """Sur un commit fait dans une session d'agent (`CLAUDECODE` dans
     l'environnement), ajoute `Socle-Agent` et `Socle-Hooks`."""

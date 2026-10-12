@@ -12,7 +12,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
-from socle import VERSION, config, langue, outils
+from socle import VERSION, config, hooks, langue, outils
 
 
 def _projet(args) -> config.Projet:
@@ -251,6 +251,8 @@ def cmd_prive(args) -> int:
         print("terme ajouté à la liste privée" if ajoute else "terme déjà dans la liste privée")
         return 0
     if args.action == "installer":
+        if hooks.sous_un_agent("`socle prive installer`"):
+            return 2
         if not args.depot:
             print("`socle prive installer --depot <adresse du dépôt privé>`", file=sys.stderr)
             return 1
@@ -302,6 +304,8 @@ def cmd_relu(args) -> int:
     from socle import prive
 
     projet = _projet(args)
+    if not args.relayed and hooks.sous_un_agent("dire relu sans --relayed"):
+        return 2
     citation = Path(args.quote_file).read_text(encoding="utf-8") if args.quote_file else (args.quote or "")
     if args.relayed and (not args.by or len(citation.strip()) < 2):
         print("refus : une relecture relayée nomme l'humain (--by) et cite son texte exact (--quote-file)",
@@ -357,6 +361,8 @@ def cmd_answer(args) -> int:
     if args.relayed and not args.by:
         print("refus : une réponse relayée nomme l'humain qui l'a donnée (--by)", file=sys.stderr)
         return 2
+    if not args.relayed and hooks.sous_un_agent("répondre sans --relayed"):
+        return 2
     if args.relayed:
         pourquoi = demande_illisible(projet, d)
         if pourquoi:
@@ -411,6 +417,8 @@ def cmd_approve(args) -> int:
     from socle import demandes, empreinte, memoire
     from socle.modeles import gabarit
 
+    if hooks.sous_un_agent("`socle approve`"):
+        return 2
     projet = _projet(args)
     racine = projet.racine
     if not args.files and not getattr(args, "keys", None):

@@ -32,6 +32,9 @@ def git(cwd, *args):
 
 class TestApprobation(unittest.TestCase):
     def setUp(self):
+        # Ces tests jouent l'humain : hors de toute session d'agent.
+        self.enterContext(unittest.mock.patch.dict(os.environ))
+        os.environ.pop("CLAUDECODE", None)
         self.racine = Path(tempfile.mkdtemp(prefix="socle-approbation-"))
         git(self.racine, "init", "-q", "-b", "main")
         (self.racine / "calc.py").write_text("x = 1\n")
@@ -103,6 +106,15 @@ class TestApprobation(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn('approve --text "<raison>"', flux.getvalue())
         self.assertIn("Commit refusé", flux.getvalue())
+
+    def test_sous_un_agent_l_approbation_refuse(self):
+        """B-0044, L2 : défense en profondeur, au cas où le hook ne la
+        reconnaîtrait pas (un lanceur écrit autrement)."""
+        os.environ["CLAUDECODE"] = "1"
+        code, erreurs = self.approuver(".github/workflows/socle.yml")
+        self.assertEqual(code, 2)
+        self.assertIn("réservé à l'humain", erreurs)
+        self.assertFalse(list((self.racine / "memory/requests").glob("D-*.md")))
 
     def test_sans_liste_ni_confirmation_rien_n_est_approuve(self):
         erreurs = io.StringIO()
