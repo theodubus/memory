@@ -294,3 +294,48 @@ PreToolUse=0 Stop=0` ; les hooks de l'agent n'y ont jamais tiré, et rien ne
 le dit avant le push : le hook avant push de la copie l'a refusé ensuite
 (`hooks.trace`), comme la CI. Le hook `commit-msg` pourrait avertir dès le
 commit quand un commit d'agent ne compte aucun hook.
+
+## B-0051 — tests.regression refuse à tort un correctif Rust testé dans son module
+
+> statut : ouvert · origine : J-2026-10-12-Q · lu : backlog@104e7a14
+
+Mesuré à R6, tâche 4 : l'agent corrige un défaut de `chess` et écrit son
+test de régression dans le module, comme le projet le fait partout ; la
+CI du socle refuse le correctif (« aucun fichier de tests/*.rs ajouté ou
+modifié »), alors que le hook avant push l'avait laissé passer (B-0024).
+L'adaptateur Rust n'accepte qu'un test d'intégration, parce qu'un test du
+module voyage avec le code et ne se pose pas seul sur le commit d'avant.
+Pistes : rejouer sur le parent le seul diff du module de tests ; dire la
+règle à l'agent dès le commit d'un `fix:`.
+
+## B-0052 — La forme depot:chemin échappe au contrôle des références
+
+> statut : ouvert · origine : J-2026-10-12-Q · lu : backlog@2a6691e4
+
+Mesuré à R6, tâche 1 : pour des fichiers qu'une rustine crée, l'agent a
+écrit `<rustine>.patch:<chemin>`, sur le modèle de `depot:chemin`, et le
+contrôle des références les a laissés passer sans rien vérifier. Le geste
+était juste (il a ajouté au projet le test qui vérifie ces chemins), mais
+n'importe quelle chaîne `x:chemin` échappe ainsi au contrôle. Ne laisser
+passer que les dépôts connus, ou le dire.
+
+## B-0053 — Deux branches parallèles calculent les mêmes identifiants
+
+> statut : ouvert · origine : J-2026-10-12-Q · lu : backlog@4f28165c
+
+Mesuré à R6 : cinq branches parties du même commit ont chacune pris
+`B-0001` et `J-2026-10-12-C` pour des entrées différentes ; leur fusion les
+heurtera. `socle new` calcule l'identifiant sur l'arbre de la branche, qui
+ne voit pas les autres. À trancher avec B-0047 (un fichier par sujet) :
+numéroter à la fusion, ou des identifiants que deux branches ne peuvent pas
+prendre ensemble.
+
+## B-0054 — Deux états au démarrage quand le projet a déjà le sien
+
+> statut : ouvert · origine : J-2026-10-12-Q · lu : backlog@a1cd520a
+
+Mesuré à R6 : le projet d'échecs a déjà son état au démarrage
+(`chess:tools/etat.sh`), et l'installeur ajoute celui du socle ; chaque
+session en reçoit deux, qui se recoupent (branche, commits non fusionnés,
+ce qui revient à l'humain). L'installeur pourrait le signaler, et la
+documentation dire comment n'en garder qu'un.
