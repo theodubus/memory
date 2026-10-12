@@ -221,3 +221,20 @@ class TestAide(unittest.TestCase):
         citees = set(re.findall(r"(?:\.socle/socle|-m socle) ([a-z-]+)", guide))
         self.assertTrue(citees)
         self.assertEqual(citees - set(aides), set())
+
+
+class TestChecks(unittest.TestCase):
+    def test_cmd_checks_liste_tous_les_controles_executes(self):
+        """`socle checks` oubliait les contrôles de la mémoire privée, que
+        l'exécution charge : la liste n'était pas celle qui tourne. Dans un
+        interpréteur neuf, où aucun autre module ne les a déjà chargés."""
+        import sys
+
+        from socle import contexte
+
+        moteur = Path(cli.__file__).resolve().parent.parent
+        sortie = subprocess.run([sys.executable, "-c", "from socle.cli import cmd_checks; cmd_checks(None)"],
+                                env={**os.environ, "PYTHONPATH": str(moteur)}, capture_output=True, text=True).stdout
+        listes = {l.split()[0] for l in sortie.splitlines() if l.strip()}
+        self.assertIn("prive.verrou", listes)
+        self.assertEqual(listes, set(contexte.charger_controles()))

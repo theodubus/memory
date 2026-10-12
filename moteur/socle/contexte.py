@@ -172,13 +172,19 @@ def selectionner(etage: str, ids: list[str] | None = None, rapide: bool = False)
     return res
 
 
-def executer(ctx: Contexte, ids: list[str] | None = None):
-    from socle.rapport import Rapport  # import local : pas de cycle
-
-    # Les modules de contrôles s'enregistrent à l'import.
+def charger_controles() -> dict[str, Controle]:
+    """Tous les contrôles : leurs modules s'enregistrent à l'import. Une
+    seule liste, pour que `socle checks` et l'exécution voient les mêmes."""
     from socle import controles_cliquet, controles_docs, controles_memoire, controles_tests, prive  # noqa: F401
 
+    return REGISTRE
+
+
+def executer(ctx: Contexte, ids: list[str] | None = None):
+    from socle.rapport import Rapport  # import local : pas de cycle
     from socle.rapport import AVERTISSEMENT, ERREUR
+
+    charger_controles()
 
     rapport = Rapport()
     for chemin, erreur in ctx.projet.erreurs_config:

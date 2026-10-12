@@ -539,9 +539,8 @@ def cmd_archive(args) -> int:
 
 def cmd_checks(args) -> int:
     from socle import contexte
-    from socle import controles_cliquet, controles_docs, controles_memoire, controles_tests  # noqa: F401
 
-    for c in contexte.REGISTRE.values():
+    for c in contexte.charger_controles().values():
         premiere = c.doc.splitlines()[0] if c.doc else ""
         print(f"{c.id:<28} {','.join(c.etages):<12} {'base ' if c.base else '     '}{'lent ' if c.lent else '     '}{premiere}")
     return 0
