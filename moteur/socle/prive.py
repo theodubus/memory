@@ -185,11 +185,10 @@ def ajouter_terme(projet: config.Projet, terme: str) -> bool:
     s'il y était déjà. Une liste illisible ici (chiffrée sans la clé, dépôt
     privé absent) n'est pas réécrite : elle serait écrasée (B-0044, L3)."""
     p = projet.racine / fichier_termes(projet.racine)
-    actuels = termes(projet)
-    if not actuels.disponible or (p.is_file() and not actuels.texte):
-        raise RuntimeError(f"liste des termes privés illisible ici (`{fichier_termes(projet.racine)}`) : "
-                           "le terme n'est pas ajouté, la liste serait écrasée. "
-                           + acces(projet).raison)
+    actuels, ouverte = termes(projet), acces(projet)
+    if not ouverte.disponible or not actuels.disponible or (p.is_file() and not actuels.texte):
+        raise RuntimeError(f"liste des termes privés illisible ici (`{fichier_termes(projet.racine)}`) : le "
+                           f"terme n'est pas ajouté à l'aveugle, la liste serait écrasée ({ouverte.raison})")
     if terme.strip() in actuels.liste:
         return False
     texte = actuels.texte or f"{ENTETE_TERMES} — un par ligne, `re:` pour une expression régulière.\n"

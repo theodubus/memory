@@ -608,6 +608,72 @@ def _cas() -> list[Cas]:
         ajouter(c, "docs/calc.md", "Le module servira au projet Mistral.\n")
         return etage_git(a, c)
 
+    @defaut("fuite-variante", "terme privé écrit sous une variante (collé, souligné)", "agent", "fuite")
+    def _(a, c):
+        c = a.clone_prive("compagnon")
+        return etage_outil(a, c, "Write", {"file_path": str(c / "docs/notes.md"), "content": "Le client mistral_api.\n"})
+
+    @defaut("fuite-nom-de-fichier", "terme privé dans le nom d'un fichier public", "git", "prive.fuites")
+    def _(a, c):
+        c = a.clone_prive("compagnon")
+        ajouter(c, "docs/plan-mistral.md", "Un plan.\n")
+        return etage_git(a, c)
+
+    @defaut("fuite-archive", "document archivé en public qui cite un terme privé", "git", "prive.fuites")
+    def _(a, c):
+        c = a.clone_prive("compagnon")
+        ajouter(c, "memory/archives/cadrage.md", "Le projet Mistral.\n")
+        return etage_git(a, c)
+
+    @defaut("fuite-branche", "terme privé dans le nom d'une branche créée", "agent", "fuite")
+    def _(a, c):
+        c = a.clone_prive("compagnon")
+        return etage_outil(a, c, "Bash", {"command": "git switch -c essai-mistral"})
+
+    @defaut("fuite-corps-par-fichier", "corps de pull request passé par un fichier hors du dépôt", "agent", "fuite")
+    def _(a, c):
+        c = a.clone_prive("compagnon")
+        corps = a.dossier / f"corps-{c.name}.md"
+        corps.write_text("Avance sur Mistral.\n")
+        return etage_outil(a, c, "Bash", {"command": f"gh pr create --title Essai --body-file {corps}"})
+
+    @defaut("prive-dans-un-bloc-de-code", "identifiant privé dans un bloc de code d'un fichier public", "ci",
+            "memoire.prive")
+    def _(a, c):
+        ajouter(c, "docs/calc.md", "\n```\nvoir " + "P" + "F-0001\n```\n")
+        return etage_ci(a, c)
+
+    @defaut("prive-efface", "fait privé effacé de la mémoire privée", "ci", "memoire.ajout-seul")
+    def _(a, c):
+        c = a.clone_prive("compagnon")
+        p = c / "memory/private/canonical.md"
+        p.write_text(p.read_text().split("\n## ")[0] + "\n")
+        a.git(c / "memory/private", "commit", "-q", "-am", "effacement")
+        sha = a.git(c / "memory/private", "rev-parse", "HEAD").strip()
+        (c / ".socle/private.lock").write_text(f'commit = "{sha}"\n')
+        maj_memoire(c)
+        return etage_ci(a, c)
+
+    @defaut("termes-en-clair", "liste des termes privés commitée en clair", "git", "prive.chiffre")
+    def _(a, c):
+        c = a.clone_prive("chiffre")
+        (c / ".gitattributes").write_text("memory/private/canonical.md filter=essai\n")
+        (c / "memory/private/terms.txt").write_text("# socle: termes privés\nMistral\n")
+        return etage_git(a, c)
+
+    @defaut("terme-a-l-aveugle", "terme ajouté sans accès à la mémoire privée", "agent", "écriture à l'aveugle")
+    def _(a, c):
+        c = a.clone_prive("chiffre", cle=False)
+        r = a.socle(c, "prive", "terme", "Zephyr")
+        return "" if r.returncode == 0 else r.stdout + r.stderr
+
+    @defaut("entree-privee-a-l-aveugle", "entrée privée écrite sans accès à la mémoire privée", "agent",
+            "écriture à l'aveugle")
+    def _(a, c):
+        c = a.clone_prive("chiffre", cle=False)
+        r = a.socle(c, "new", "fact", "Un fait")
+        return "" if r.returncode == 0 else r.stdout + r.stderr
+
     @defaut("fuite-message", "identifiant privé dans un message de commit", "git", "fuite")
     def _(a, c):
         c = a.clone_prive("compagnon")
@@ -985,6 +1051,13 @@ def _temoins() -> list[tuple[str, Callable]]:
                 return f"{commande} : {refus}"
         return ""
 
+    @temoin("un mot proche d'un terme privé, sans l'être, passe le commit")
+    def _(a, c):
+        c = a.clone_prive("compagnon")
+        ajouter(c, "docs/calc.md", "Un vent mistralien souffle sur le module.\n")
+        maj_memoire(c, "Une phrase de plus.")
+        return etage_git(a, c)
+
     @temoin("une demande complète passe le hook de l'agent")
     def _(a, c):
         return etage_outil(a, c, "Write", {"file_path": str(c / "memory/requests/D-0001-refactor.md"), "content": demande_bonne(a, c)})
@@ -1286,6 +1359,7 @@ RAISONS_AGENT = {
     "commande humaine": "ne répond jamais à la place de l'humain",
     "commande de l'humain seul": "est réservé à l'humain",
     "écriture protégée": "par le shell : seul l'humain",
+    "écriture à l'aveugle": "à l'aveugle",
     "réglage de l'agent": "les réglages de Claude Code commandent ses hooks",
     "où regarder": "« Où regarder » doit donner un lien",
     "récap": "pas Pour toi :",
