@@ -53,6 +53,19 @@ class TestTrailer(unittest.TestCase):
         trace.write_text("t\tSessionStart\ts\t\nt\tPreToolUse\ts\tBash\nt\tStop\ts\t\n")
         self.assertEqual(hooks.compter_session(racine), "SessionStart=1 PreToolUse=1 Stop=1")
 
+    def test_la_session_qui_commite_et_non_la_plus_recente(self):
+        """B-0044, L2 : une session dont les hooks sont coupés empruntait la
+        trace d'une session plus ancienne, et sa trace avait l'air saine."""
+        import tempfile
+        from pathlib import Path
+
+        racine = Path(tempfile.mkdtemp())
+        trace = racine / ".socle/trace/hooks.log"
+        trace.parent.mkdir(parents=True)
+        trace.write_text("t\tSessionStart\tvieille\t\nt\tPreToolUse\tvieille\tBash\n")
+        self.assertEqual(hooks.compter_session(racine, "sans-hooks"), "SessionStart=0 PreToolUse=0 Stop=0")
+        self.assertEqual(hooks.compter_session(racine, "vieille"), "SessionStart=1 PreToolUse=1 Stop=0")
+
 
 
 class TestTraceDesRefus(unittest.TestCase):

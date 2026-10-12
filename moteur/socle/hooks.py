@@ -730,14 +730,16 @@ def git_pre_commit(projet: config.Projet) -> int:
     return 0
 
 
-def compter_session(racine: Path) -> str:
-    """`SessionStart=1 PreToolUse=12 Stop=3` pour la session la plus récente
-    de la trace ; `aucun` sans trace."""
+def compter_session(racine: Path, session: str | None = None) -> str:
+    """`SessionStart=1 PreToolUse=12 Stop=3` pour la session donnée, ou à
+    défaut la plus récente de la trace ; `aucun` sans trace. Le commit d'une
+    session dont les hooks sont coupés compte ainsi zéro, au lieu d'emprunter
+    la trace d'une session plus ancienne (B-0044, L2)."""
     lignes = [l.split("\t") for l in config.lire_trace(racine)]
     agent = [l for l in lignes if len(l) >= 3 and l[1] in ("SessionStart", "PreToolUse", "Stop")]
-    if not agent:
+    if not agent and not session:
         return "aucun"
-    session = next((l[2] for l in reversed(agent) if l[2]), "")
+    session = session or next((l[2] for l in reversed(agent) if l[2]), "")
     de_la_session = [l for l in agent if l[2] == session]
     compte = {e: sum(1 for l in de_la_session if l[1] == e) for e in ("SessionStart", "PreToolUse", "Stop")}
     if compte["SessionStart"] == 0:
@@ -762,7 +764,7 @@ def git_prepare_commit_msg(projet: config.Projet, fichier: str, source: str = ""
     corps = message.rstrip("\n")
     lignes = [
         "Socle-Agent: claude-code",
-        f"Socle-Hooks: {compter_session(projet.racine)}",
+        f"Socle-Hooks: {compter_session(projet.racine, os.environ.get('CLAUDE_CODE_SESSION_ID'))}",
     ]
     # Les trailers vont dans le dernier paragraphe, avant les commentaires.
     contenu, commentaires = [], []
