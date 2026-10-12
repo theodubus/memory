@@ -354,3 +354,16 @@ l'humain clone le dépôt du socle et lance l'installeur par `PYTHONPATH`. Un
 paquet installable par pip, qui fournit la commande `socle`, ferait
 disparaître cette étape. C'est une publication externe : Théo l'a mise à
 part dans sa réponse à D-0014, elle attend sa propre demande.
+
+## B-0043 — Le hook avant push juge contre la branche par défaut, la CI contre le push précédent
+
+> statut : ouvert · origine : J-2026-10-12-A · lu : backlog@79c52d86
+
+La CI d'un push juge la plage de ce push (`github.event.before`), alors que
+le hook avant push et `verify` jugent contre la divergence avec la branche
+par défaut. Sur une branche longue, la seconde plage est plus large : une
+dispense d'un commit ancien y couvre une fonction modifiée plus tard, une
+validation ancienne y couvre une assertion réécrite. Deux pushes de B-0034
+sont passés en local et ont échoué en CI. À faire : que le hook avant push
+juge aussi la plage qui part (du sha distant au sha local, qu'il reçoit sur
+son entrée), comme la CI le fera.

@@ -48,6 +48,36 @@ class TestVerdict(unittest.TestCase):
         self.assertFalse(mutation.verdict(projet({"src/eval.rs": {"max": 9}}, parser="?"), self.dossier).reussi)
 
 
+class TestCouverture(unittest.TestCase):
+    """`mutation.couverture` : un module qui porte du code est au cliquet ; un
+    module « à mesurer » n'y est qu'un avertissement (B-0034, P1)."""
+
+    def verifier(self, caps, sources):
+        from types import SimpleNamespace
+
+        from socle.controles_tests import couverture_mutation
+        from socle.rapport import Rapport
+
+        p = projet(caps)
+        p.adaptateur["capabilities"]["mutation"].update(modules=["src/**/*.rs"], has_code=r"\bfn\b")
+        ctx = SimpleNamespace(projet=p, fichiers=list(sources), lire=sources.get)
+        r = Rapport()
+        couverture_mutation(ctx, r)
+        return r
+
+    def test_hors_du_cliquet_casse(self):
+        r = self.verifier({}, {"src/eval.rs": "fn f() {}\n"})
+        self.assertIn("module hors du cliquet", r.erreurs()[0].message)
+
+    def test_a_mesurer_avertit(self):
+        r = self.verifier({"src/eval.rs": {"pending": True}}, {"src/eval.rs": "fn f() {}\n"})
+        self.assertTrue(r.reussi)
+        self.assertIn("module à mesurer", r.constats[0].message)
+
+    def test_sans_code_rien(self):
+        self.assertEqual(self.verifier({}, {"src/vide.rs": "// rien\n"}).constats, [])
+
+
 if __name__ == "__main__":
     unittest.main()
 
