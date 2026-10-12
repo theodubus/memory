@@ -255,6 +255,13 @@ def etage_ci(a: Atelier, c: Path, message: str = "essai", env=None) -> str:
     return "" if r.returncode == 0 else r.stdout + r.stderr
 
 
+def etage_push(a: Atelier, c: Path, hooks: bool = True) -> str:
+    """Le hook pre-push, sur un push réel vers l'origine : rend la sortie s'il
+    refuse. Chaque clone pousse sur sa branche : l'origine est partagée."""
+    r = a.run(c, "git", "push", "-q", *([] if hooks else ["--no-verify"]), "origin", f"HEAD:refs/heads/essai-{c.name}")
+    return "" if r.returncode == 0 else r.stdout + r.stderr
+
+
 def etage_stop(a: Atelier, c: Path, dernier_message: str | None = None) -> str:
     """Le hook de fin de tour. Avec `dernier_message`, un transcript au format
     de Claude Code lui donne le dernier message de l'agent à lire."""
@@ -776,6 +783,22 @@ def _cas() -> list[Cas]:
         maj_memoire(c, "Ajout de triple.")
         return etage_ci(a, c)
 
+    @defaut("plage-poussee", "fonction modifiée sans test, couverte seulement par une dispense déjà poussée", "git",
+            "tests.code-teste")
+    def _(a, c):
+        # Contre la branche par défaut, la dispense du premier commit couvre
+        # `triple` ; la plage du second push, celle que la CI jugera, non (B-0043).
+        ajouter(c, "calc.py", "\n\ndef triple(x):\n    return 3 * x\n")
+        ajouter(c, "docs/calc.md", "`triple` multiplie par trois.\n")
+        maj_memoire(c, "Ajout de triple, dispensée.")
+        a.commit(c, "Ajout de triple\n\nDispense-test: triple — appelée par l'interface, testée de bout en bout")
+        etage_push(a, c, hooks=False)
+        remplacer(c, "calc.py", "return 3 * x", "return x * 3")
+        remplacer(c, "docs/calc.md", "`triple` multiplie par trois.", "`triple` multiplie par trois, à droite.")
+        remplacer(c, "memory/active.md", "Ajout de triple, dispensée.", "Triple, réécrite.")
+        a.commit(c, "Triple réécrite")
+        return etage_push(a, c)
+
     @defaut("decision-sans-lecture", "décision ajoutée sans avoir consulté l'index des décisions", "git", "memoire.lectures")
     def _(a, c):
         f1 = f"F-0001@{empreinte(a, c, 'F-0001')}"
@@ -925,6 +948,21 @@ def _temoins() -> list[tuple[str, Callable]]:
                 "        self.assertEqual(triple(2), 6)\n")
         maj_memoire(c, "Ajout de triple, avec son test.")
         return etage_ci(a, c)
+
+    @temoin("deux pushes sains de suite passent le hook avant push, qui juge la plage de chacun")
+    def _(a, c):
+        ajouter(c, "calc.py", "\n\ndef triple(x):\n    return 3 * x\n")
+        ajouter(c, "docs/calc.md", "`triple` multiplie par trois.\n")
+        ajouter(c, "tests/test_calc.py", "    def test_triple(self):\n        from calc import triple\n"
+                "        self.assertEqual(triple(2), 6)\n")
+        maj_memoire(c, "Ajout de triple, avec son test.")
+        a.commit(c, "Ajout de triple")
+        refus = etage_push(a, c)
+        if refus:
+            return refus
+        remplacer(c, "docs/calc.md", "`triple` multiplie par trois.", "`triple` multiplie par trois, toujours.")
+        a.commit(c, "La doc de triple")
+        return etage_push(a, c)
 
     @temoin("une fonction privée, ou publique et dispensée avec sa raison, passe la CI")
     def _(a, c):

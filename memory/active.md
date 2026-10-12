@@ -15,8 +15,6 @@ demande, avant d'être fait.
 
 1. B-0041 : la relecture du moteur, puis le recul sur le fonctionnement ;
    un relevé, puis une demande.
-2. B-0043 si la passe de recul ne l'absorbe pas : le hook avant push juge
-   la plage que la CI jugera.
-3. Plus tard : B-0038 (les textes du moteur dans la langue du projet, dont
+2. Plus tard : B-0038 (les textes du moteur dans la langue du projet, dont
    le guide), B-0039, B-0040 ; B-0042 attend sa propre demande. La pull
    request, quand Théo la demandera.

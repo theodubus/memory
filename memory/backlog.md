@@ -357,7 +357,7 @@ part dans sa réponse à D-0014, elle attend sa propre demande.
 
 ## B-0043 — Le hook avant push juge contre la branche par défaut, la CI contre le push précédent
 
-> statut : ouvert · origine : J-2026-10-12-A · lu : backlog@79c52d86
+> statut : fait · origine : J-2026-10-12-A · lu : backlog@79c52d86 · ref : J-2026-10-12-C
 
 La CI d'un push juge la plage de ce push (`github.event.before`), alors que
 le hook avant push et `verify` jugent contre la divergence avec la branche

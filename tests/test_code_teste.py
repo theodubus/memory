@@ -183,3 +183,42 @@ if __name__ == "__main__":
         self.assertIn("triple", hooks.code_sans_test(projet, "Ajout de triple\n"))
         self.assertIsNone(hooks.code_sans_test(
             projet, "Ajout de triple\n\nDispense-test: triple — appelée par l'interface seulement\n"))
+
+
+class TestPlagePoussee(unittest.TestCase):
+    """B-0043 : le hook avant push juge aussi la plage qui part, celle que la
+    CI du push jugera ; contre la base, une dispense plus ancienne de la
+    branche couvrait une fonction modifiée depuis."""
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-plage-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        git(self.racine, "init", "-q", "-b", "main")
+        (self.racine / ".socle").mkdir()
+        shutil.copy(ADAPTATEUR, self.racine / ".socle/adapter.toml")
+        (self.racine / "calc.py").write_text(CALC)
+        (self.racine / "tests").mkdir()
+        (self.racine / "tests/test_calc.py").write_text(TEST_CALC)
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "base")
+        with open(self.racine / "calc.py", "a") as f:
+            f.write("\n\ndef triple(x):\n    return 3 * x\n")
+        git(self.racine, "commit", "-qam", "triple\n\nDispense-test: triple — appelée par l'interface seulement")
+        self.poussee = git(self.racine, "rev-parse", "HEAD").strip()
+        (self.racine / "calc.py").write_text((self.racine / "calc.py").read_text().replace("3 * x", "x * 3"))
+        git(self.racine, "commit", "-qam", "triple réécrite")
+        self.tete = git(self.racine, "rev-parse", "HEAD").strip()
+
+    def test_la_plage_qui_part_est_jugee(self):
+        from socle import hooks
+
+        projet = config.Projet.charger(self.racine)
+        r = hooks.plage_poussee(projet, [f"refs/heads/x {self.tete} refs/heads/x {self.poussee}"])
+        self.assertEqual(r.controles_en_echec(), ["tests.code-teste"])
+        self.assertIn("fonction `triple` modifiée", r.erreurs()[0].message)
+
+    def test_une_branche_neuve_n_a_pas_de_plage(self):
+        from socle import hooks
+
+        projet = config.Projet.charger(self.racine)
+        self.assertEqual(hooks.plage_poussee(projet, [f"refs/heads/x {self.tete} refs/heads/x {'0' * 40}"]).constats, [])

@@ -123,7 +123,10 @@ comparent le même fichier sous ses deux noms.
   les worktrees du dépôt. Chaque refus y est noté (`Refus`, avec l'étage
   et ce qui a refusé) : le banc d'évaluation y lit quel étage attrape quoi.
 - **Le hook avant commit juge l'index**, figé en arbre par `git write-tree` :
-  ce qui sera commité, pas ce qui est sur disque.
+  ce qui sera commité, pas ce qui est sur disque. **Le hook avant push juge
+  aussi la plage qui part** (B-0043), du commit distant au commit local :
+  c'est celle que la CI du push jugera, plus étroite que la divergence avec
+  la branche par défaut.
 - **Le cliquet compare la base et la tête clé par clé**, avec un sens par
   clé : plus bas est plus strict pour un budget, plus long pour une
   couverture, plus court pour une liste d'exclusions. Une clé inconnue qui

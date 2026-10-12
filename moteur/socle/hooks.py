@@ -683,6 +683,30 @@ def code_sans_test(projet: config.Projet, message: str) -> str | None:
             "(`git commit --amend`) avec la dispense.")
 
 
+def plage_poussee(projet: config.Projet, lignes: list[str]):
+    """Les contrôles qui comparent à une base, sur la plage qui part : du
+    commit distant au commit local de chaque référence déjà présente en
+    face. C'est la plage que la CI d'un push jugera ; contre la branche par
+    défaut, une dispense ou une validation plus anciennes de la branche
+    couvraient ce qu'elle refusera (B-0043)."""
+    from socle import contexte
+    from socle.rapport import Rapport
+
+    rapport = Rapport()
+    contexte.charger_controles()
+    ids = [c.id for c in contexte.selectionner("ci", rapide=True) if c.base]
+    for l in lignes:
+        morceaux = l.split()
+        if len(morceaux) < 4:
+            continue
+        local, distant = morceaux[1], morceaux[3]
+        if set(local) == {"0"} or set(distant) == {"0"} or not outils.rev_existe(projet.racine, distant):
+            continue  # une branche neuve, une suppression, ou un distant qu'on n'a pas : rien à comparer
+        ctx = contexte.Contexte(projet, etage="ci", base=distant, tete=local, rapide=True)
+        rapport.fusionner(contexte.executer(ctx, ids))
+    return rapport
+
+
 def git_pre_push(projet: config.Projet) -> int:
     from socle import contexte, verification
 
@@ -697,6 +721,9 @@ def git_pre_push(projet: config.Projet) -> int:
     base = outils.base_de_travail(projet.racine)
     ctx = contexte.Contexte(projet, etage="git", base=base, tete=None, rapide=True)
     rapport = contexte.executer(ctx)
+    for constat in plage_poussee(projet, lignes).constats:
+        if constat not in rapport.constats:
+            rapport.constats.append(constat)
     verification.executer_etapes(projet, True, rapport)
     if not rapport.reussi:
         tracer_refus(projet.racine, "git-pre-push", ",".join(rapport.controles_en_echec()))
