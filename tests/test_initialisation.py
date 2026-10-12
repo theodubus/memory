@@ -154,6 +154,15 @@ class TestMiseAJour(Base):
         self.assertIn('git commit -m "Mettre à jour le socle', etapes[2])
         self.assertFalse(any("socle init" in e for e in etapes))
 
+    def test_une_installation_dit_de_proteger_la_branche(self):
+        """B-0044, L2 (R1) : rien ne disait à l'humain d'exiger la CI avant
+        de fusionner, sans quoi une CI rouge n'empêche rien."""
+        etapes = installeur.et_maintenant(self.racine, False, [])
+        protection = next(e for e in etapes if "protéger la branche par défaut" in e)
+        self.assertIn("« Socle — verify, contrôles, auto-test »", protection)
+        self.assertLess(etapes.index(protection), len(etapes) - 1)
+        self.assertFalse(any("protéger la branche" in e for e in installeur.et_maintenant(self.racine, True, [])))
+
     def test_les_migrations_s_appliquent_dans_l_ordre(self):
         faites = []
         avant = dict(migrations.MIGRATIONS), migrations.FORMAT

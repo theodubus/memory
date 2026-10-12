@@ -9,6 +9,7 @@ en moins, jamais par un code non nul.
 
 from __future__ import annotations
 
+import re
 import shutil
 import subprocess
 import time
@@ -41,6 +42,68 @@ def _ligne_ci(racine, branche) -> str:
     return f"{r.get('workflowName')} : {r.get('conclusion') or r.get('status')} sur {r.get('headSha', '')[:7]}"
 
 
+def _gh_json(racine, chemin: str):
+    """Une réponse de l'API de GitHub par `gh`, ou `None`."""
+    import json
+
+    try:
+        p = subprocess.run(["gh", "api", chemin], cwd=racine, capture_output=True, text=True, timeout=5)
+        return json.loads(p.stdout) if p.returncode == 0 else None
+    except (subprocess.TimeoutExpired, OSError, ValueError):
+        return None
+
+
+def nom_de_la_ci(projet: config.Projet) -> str:
+    """Le nom du travail de la CI du socle, tel que GitHub l'exige."""
+    texte = outils.lire_a(projet.racine, None, ".github/workflows/socle.yml") or ""
+    m = re.search(r"(?m)^ {4}name:\s*(.+?)\s*$", texte)
+    return m.group(1).strip("'\"") if m else "Socle"
+
+
+def ci_exigee(projet: config.Projet) -> tuple[bool | None, str]:
+    """La CI du socle est-elle exigée avant de fusionner sur la branche par
+    défaut, par un ensemble de règles ou une protection de branche de
+    GitHub ? Sans elle, une CI rouge n'empêche pas de fusionner : la
+    garantie « seule la CI est incontournable » tombe (R1 de la passe de
+    recul). `None` quand on ne peut pas le savoir, avec la raison ; sinon
+    le nom de la branche, et si la revue des propriétaires du code est
+    exigée aussi."""
+    from socle import liens
+
+    url = liens.url_depot(projet) or ""
+    if not url.startswith("https://github.com/"):
+        return None, "dépôt hors de GitHub"
+    nom = (outils.branche_par_defaut(projet.racine) or "").removeprefix("origin/")
+    if not nom:
+        return None, "aucune branche par défaut connue"
+    if not shutil.which("gh"):
+        return None, "gh absent"
+    depot = url.removeprefix("https://github.com/")
+    regles = _gh_json(projet.racine, f"repos/{depot}/rules/branches/{nom}")
+    branche = _gh_json(projet.racine, f"repos/{depot}/branches/{nom}")
+    if not isinstance(regles, list) or not isinstance(branche, dict):
+        return None, "gh non authentifié, ou réponse illisible"
+    ci = nom_de_la_ci(projet)
+    exigees = [c.get("context") for r in regles if r.get("type") == "required_status_checks"
+               for c in (r.get("parameters") or {}).get("required_status_checks", [])]
+    classique = ((branche.get("protection") or {}).get("required_status_checks") or {})
+    if classique.get("enforcement_level", "off") != "off":
+        exigees += classique.get("contexts", []) + [c.get("context") for c in classique.get("checks", [])]
+    revue = any((r.get("parameters") or {}).get("require_code_owner_review") for r in regles
+                if r.get("type") == "pull_request")
+    return ci in exigees, nom + (" ; revue des propriétaires du code exigée" if revue else
+                                 " ; revue des propriétaires du code non exigée")
+
+
+def page_protection(projet: config.Projet) -> str | None:
+    """La page des réglages de GitHub où l'humain pose ses ensembles de
+    règles (rulesets)."""
+    from socle import liens
+
+    url = liens.url_depot(projet) or ""
+    return f"{url}/settings/rules" if url.startswith("https://github.com/") else None
+
+
 def calculer(projet: config.Projet, contenus: bool = True) -> str:
     racine = projet.racine
     lignes = []
@@ -62,7 +125,20 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
     try:
         from socle import humain
 
-        lignes += humain.texte(humain.a_faire(projet))
+        elements = humain.a_faire(projet)
+        exigee, detail = ci_exigee(projet)
+        nom = detail.split(" ; ")[0]
+        if exigee is False:
+            elements.append(humain.Element(
+                "action", f"protéger la branche `{nom}` : y exiger la CI « {nom_de_la_ci(projet)} » avant toute "
+                "fusion, et la revue des propriétaires du code (CODEOWNERS)", page_protection(projet) or ""))
+        if exigee:
+            lignes.append(f"branche  : {detail.replace(' ; ', ' — CI du socle exigée avant fusion ; ', 1)}")
+        elif exigee is False:
+            lignes.append(f"branche  : {nom} — CI du socle NON exigée : une CI rouge n'empêche pas de fusionner")
+        else:
+            lignes.append(f"branche  : protection inconnue ({detail})")
+        lignes += humain.texte(elements)
     except Exception as e:
         lignes.append(f"ce qui revient à l'humain : incalculable ({type(e).__name__}: {e})")
     try:

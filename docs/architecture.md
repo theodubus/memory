@@ -45,7 +45,7 @@ comparent le même fichier sous ses deux noms.
 | `tests_lecture.py` | extraction des fonctions de test selon l'adaptateur (blocs à accolades, indentés ou fermés par `end`) ; transitivité des assertions |
 | `hooks.py` | les points d'entrée des hooks de l'agent et de git, la trace, dont chaque refus et l'étage qui l'a prononcé ; chaque commande shell de l'agent jugée commande simple par commande simple : écriture d'un fichier protégé ou d'un réglage de Claude Code, commande réservée à l'humain, push forcé ou vers la branche par défaut, publication, suppression distante (B-0044, L2) |
 | `commandes.py` | le découpage d'une commande shell en commandes simples, par `shlex` : séparateurs, redirections, `cd` suivi, `bash -c` et `eval` ouverts, préfixes (`env`, `sudo`, `python -m`) retirés ; le corps d'un heredoc n'est que du texte |
-| `etat.py` | l'état dérivé |
+| `etat.py` | l'état dérivé ; si GitHub exige la CI du socle avant de fusionner sur la branche par défaut (ensemble de règles ou protection classique, lus par `gh`), sinon une action de l'humain avec le lien de la page (B-0044, L2, R1) |
 | `humain.py` | ce qui revient à l'humain ; ce qu'il a écrit lui-même depuis le dernier commit de l'agent (approbations, réponses de son terminal), que l'état liste pour que l'agent le cite ; la lecture du dernier message de l'agent pour le récap |
 | `prive.py` | la mémoire privée : modes compagnon et chiffré, verrou, accès, couches privées par défaut, bascule d'une entrée publique, contrôles `prive.*` ; la mise en place du dépôt compagnon, réservée à l'humain |
 | `liens.py` | le permalien d'un fichier ou d'une entrée ; les liens d'un message que l'humain ne pourra pas suivre |
@@ -98,6 +98,7 @@ comparent le même fichier sous ses deux noms.
 | Mutation : plafond par module, cliquet ; un module pas encore balayé y entre « à mesurer » (un avertissement), et le premier verdict pose son plafond | `mutation.couverture`, `socle mutation-verdict --poser` | agent, git, CI ; verdict hebdomadaire |
 | Rien ne s'affaiblit en silence | `cliquet.garde-fous`, `protege.fichiers` | agent, git, CI |
 | Moteur et politique non altérés | `moteur.empreinte`, `protege.fichiers` | agent, git, CI |
+| Seule la CI est incontournable : GitHub l'exige avant toute fusion | une étape de « Et maintenant » à l'installation ; la ligne `branche` de l'état, et une action de l'humain quand elle n'est pas exigée | GitHub |
 | Hooks chargés et déclenchés | `hooks.configuration`, `hooks.trace` (trailer `Socle-Hooks`) | CI |
 | Action irréversible ou externe refusée | hook `pre-tool-use` | agent |
 | Anti-fabrication | hook `pre-tool-use` : SHA complété de tête, identifiant ou commit inventé | agent |

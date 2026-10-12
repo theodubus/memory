@@ -110,7 +110,8 @@ projet, et se lit dans les deux.
 ## L'état dérivé
 
 `python3 .socle/socle state` imprime où en est le projet : le commit et la
-branche, ce qui n'est pas fusionné, l'état de la CI, l'index des décisions,
+branche, ce qui n'est pas fusionné, l'état de la CI et si GitHub l'exige
+avant de fusionner, l'index des décisions,
 le backlog, les demandes en attente, ce qui revient à l'humain, ce que
 l'humain a écrit lui-même depuis le dernier commit de l'agent, l'accès à la
 mémoire privée ; puis le chantier actif et les faits. Sous Claude Code, le
@@ -252,7 +253,10 @@ Chaque refus dit ce qu'il a vu et comment en sortir. Les plus courants :
 | push refusé, relecture | la politique exige la relecture de l'humain | l'humain relit ce qui part, l'agent consigne son accord |
 
 Un hook peut se contourner en local (`--no-verify`) ; la CI exécute tout,
-et l'agent n'a pas le droit de le faire.
+et l'agent n'a pas le droit de le faire. La CI n'arrête rien d'elle-même :
+une CI rouge n'empêche de fusionner que si GitHub l'exige, par un ensemble
+de règles (ou une protection) de la branche par défaut. L'installation le
+dit à l'humain, et l'état dit si c'est fait.
 
 ## Ce qui n'est pas fait
 

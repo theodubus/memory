@@ -41,6 +41,13 @@ déploiement ; elle finit par les deux gestes qui restent sur GitHub (la clé
 en clé de déploiement du dépôt privé, deux secrets dans le dépôt public),
 avec le lien de chaque page.
 
+Après le premier push, protège la branche par défaut sur GitHub : dans les
+réglages du dépôt, « Rules », un ensemble de règles qui exige la CI du
+socle (« Socle — verify, contrôles, auto-test ») et la revue des
+propriétaires du code avant toute fusion. Sans lui, une CI rouge n'empêche
+pas de fusionner. `socle state` dit si la CI est exigée, et te le rappelle
+sinon.
+
 ### 2. Décrire le projet
 
 ```sh

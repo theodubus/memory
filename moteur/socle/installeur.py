@@ -612,5 +612,13 @@ def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str]) -> list[str
     etapes.append(f'commiter puis pousser : `git add -A && git commit -m "{message}" && git push`')
     etapes.append("ouvrir l'agent dans le projet : il lit l'état au démarrage"
                   + ("" if mise_a_jour else ", et te pose les questions de départ dans la conversation"))
+    if not mise_a_jour:
+        from socle import etat
+
+        page = etat.page_protection(projet)
+        etapes.append("après ce premier push, protéger la branche par défaut : un ensemble de règles qui y exige "
+                      f"la CI « {etat.nom_de_la_ci(projet)} » et la revue des propriétaires du code"
+                      + (f" ({page})" if page else " (réglages du dépôt)")
+                      + " ; sans lui, une CI rouge n'empêche pas de fusionner, et `socle state` le signale")
     etapes.append("ensuite, tes gestes, chacun avec sa commande : `python3 .socle/socle aide`")
     return etapes
