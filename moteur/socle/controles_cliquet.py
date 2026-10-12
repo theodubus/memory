@@ -75,6 +75,18 @@ def _regle(chemin: tuple[str, ...]) -> str | None:
     return None
 
 
+MESURE = re.compile(r"mesuré le \d{4}-\d{2}-\d{2} : (\d+) survivant")
+
+
+def _mesure(apres: dict, chemin: tuple[str, ...], plafond) -> bool:
+    """Un plafond qui apparaît vient de la mesure : nul (le plus strict), ou
+    avec la raison qu'écrit `mutation-verdict --poser`, au même compte."""
+    if plafond == 0:
+        return True
+    m = MESURE.search(str(apres.get(chemin[:-1] + ("reason",), "")))
+    return bool(m) and int(m.group(1)) == plafond
+
+
 def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | None = None) -> list[tuple[str, str]]:
     """[(clé citable, explication)] des assouplissements de `avant` à `apres`."""
     res = []
@@ -88,6 +100,9 @@ def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | Non
         if sens == "libre":
             continue
         if va is ABSENT:
+            if chemin[:2] == ("mutation", "caps") and chemin[-1] == "max" and not _mesure(b, chemin, vb):
+                res.append((cle, f"plafond {vb!r} écrit sans la mesure que pose `mutation-verdict --poser`"))
+                continue
             if sens in ("bas", "vrai", "couvre", "faux") or (sens == "inclus" and not vb):
                 continue  # un seuil ou une couverture qui apparaît durcit
             res.append((cle, f"clé ajoutée : {vb!r}"))
@@ -119,10 +134,23 @@ def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | Non
         else:
             res.append((cle, f"changement non classé : {va!r} → {vb!r}"))
 
-    code_avant = {g for l in avant.get("docmap", []) for g in l.get("code", [])}
-    code_apres = {g for l in apres.get("docmap", []) for g in l.get("code", [])}
-    for g in sorted(code_avant - code_apres):
-        res.append((f"docmap {json.dumps(g, ensure_ascii=False)}", "correspondance code ↔ doc retirée"))
+    # Chaque correspondance exige, quand son code change, l'une de ses docs :
+    # une doc de plus à la liste rend l'exigence plus facile à satisfaire.
+    apres_docmap = [(set(l.get("code", [])), set(l.get("docs", []))) for l in apres.get("docmap", [])]
+    vus = set()
+    for ligne in avant.get("docmap", []):
+        docs = set(ligne.get("docs", []))
+        for g in ligne.get("code", []):
+            candidates = [d for c, d in apres_docmap if g in c]
+            cle = f"docmap {json.dumps(g, ensure_ascii=False)}"
+            if cle in vus or any(d <= docs for d in candidates):
+                continue
+            vus.add(cle)
+            if not candidates:
+                res.append((cle, "correspondance code ↔ doc retirée"))
+            else:
+                ajoutees = min((d - docs for d in candidates), key=len)
+                res.append((cle, f"docs ajoutées à la correspondance : {sorted(ajoutees)}"))
     vals_avant = {v.get("name"): v for v in avant.get("values", [])}
     vals_apres = {v.get("name"): v for v in apres.get("values", [])}
     for nom, decl in vals_avant.items():

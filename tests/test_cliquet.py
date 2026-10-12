@@ -64,7 +64,7 @@ class TestCliquet(unittest.TestCase):
         a_mesurer["mutation"]["caps"]["src/b.rs"] = {"pending": True}
         self.assertEqual(assouplissements(BASE, a_mesurer), [])
         mesure = changer()
-        mesure["mutation"]["caps"]["src/b.rs"] = {"max": 2, "reason": "mesuré"}
+        mesure["mutation"]["caps"]["src/b.rs"] = {"max": 2, "reason": "mesuré le 2026-10-12 : 2 survivant(s)"}
         self.assertEqual(assouplissements(a_mesurer, mesure), [])
         remis = changer()
         remis["mutation"]["caps"]["src/a.rs"] = {"pending": True}
@@ -73,6 +73,37 @@ class TestCliquet(unittest.TestCase):
         repasse = changer()
         repasse["mutation"]["caps"]["src/b.rs"] = {"pending": False}
         self.assertEqual([c for c, _ in assouplissements(repasse, a_mesurer)], ['mutation.caps."src/b.rs".pending'])
+
+    def test_un_plafond_ecrit_a_la_main(self):
+        """B-0044, L2 : un module « à mesurer » recevait n'importe quel
+        plafond écrit à la main, que le cliquet prenait pour un durcissement."""
+        a_mesurer = changer()
+        a_mesurer["mutation"]["caps"]["src/b.rs"] = {"pending": True}
+        invente = changer()
+        invente["mutation"]["caps"]["src/b.rs"] = {"max": 40, "reason": "mesuré"}
+        self.assertEqual([c for c, _ in assouplissements(a_mesurer, invente)], ['mutation.caps."src/b.rs".max'])
+        faux_compte = changer()
+        faux_compte["mutation"]["caps"]["src/b.rs"] = {"max": 40, "reason": "mesuré le 2026-10-12 : 2 survivant(s)"}
+        self.assertTrue(assouplissements(a_mesurer, faux_compte))
+        nul = changer()
+        nul["mutation"]["caps"]["src/b.rs"] = {"max": 0}
+        self.assertEqual(assouplissements(a_mesurer, nul), [])
+
+    def test_docs_ajoutees_a_une_correspondance(self):
+        """B-0044, L2 : une doc de plus dans une correspondance rend son
+        exigence plus facile à satisfaire ; une correspondance de plus sur le
+        même code la durcit."""
+        elargie = changer()
+        elargie["docmap"][0]["docs"].append("README.md")
+        (cle, pourquoi), = assouplissements(BASE, elargie)
+        self.assertEqual(cle, 'docmap "src/**"')
+        self.assertIn("README.md", pourquoi)
+        doublee = changer()
+        doublee["docmap"].append({"code": ["src/**"], "docs": ["docs/b.md"]})
+        self.assertEqual(assouplissements(BASE, doublee), [])
+        resserree = changer()
+        resserree["docmap"][0]["docs"] = []
+        self.assertEqual(assouplissements(BASE, resserree), [])
 
     def test_exclusion_ajoutee_et_booleen_desactive(self):
         apres = changer(nocopy__exclude=["docs/**"], memory__require_update_on_code_change=False)

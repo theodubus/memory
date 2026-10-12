@@ -69,5 +69,6 @@ spec_paths = ["memory/decisions/**"]
 # Plafond de mutants survivants par module, avec sa raison quand il n'est pas
 # nul. Mesuré, jamais estimé : un module pas encore balayé y entre « à
 # mesurer » (`pending = true`, posé par l'installeur pour le code qui existe
-# déjà), et `socle mutation-verdict <résultats> --poser` écrit sa valeur.
+# déjà), et `socle mutation-verdict <résultats> --poser` écrit sa valeur ;
+# un plafond non nul écrit sans sa raison de mesure assouplit le cliquet.
 # "src/lib.rs" = { max = 0 }

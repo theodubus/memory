@@ -41,9 +41,10 @@ comparent le même fichier sous ses deux noms.
 | `controles_memoire.py` | format, références, fuite d'identifiants privés, preuves, backlog, budgets, péremption, retard, ajout seul, demandes, source unique des instructions |
 | `controles_docs.py` | outillage documenté, valeurs liées, correspondance code ↔ doc, refus des copies |
 | `controles_tests.py` | capacités de l'adaptateur, tests creux, valeurs attendues, régression rejouée sur le parent, couverture de mutation, code nouveau nommé par un test |
-| `controles_cliquet.py` | cliquet des garde-fous, fichiers protégés, empreinte du moteur, configuration et trace des hooks |
+| `controles_cliquet.py` | cliquet des garde-fous, fichiers protégés (un renommage compte ses deux chemins ; le déplacement d'une migration de format se juge sous le nom nouveau), empreinte du moteur, configuration et trace des hooks |
 | `tests_lecture.py` | extraction des fonctions de test selon l'adaptateur (blocs à accolades, indentés ou fermés par `end`) ; transitivité des assertions |
-| `hooks.py` | les points d'entrée des hooks de l'agent et de git, la trace, dont chaque refus et l'étage qui l'a prononcé |
+| `hooks.py` | les points d'entrée des hooks de l'agent et de git, la trace, dont chaque refus et l'étage qui l'a prononcé ; chaque commande shell de l'agent jugée commande simple par commande simple : écriture d'un fichier protégé ou d'un réglage de Claude Code, commande réservée à l'humain, push forcé ou vers la branche par défaut, publication, suppression distante (B-0044, L2) |
+| `commandes.py` | le découpage d'une commande shell en commandes simples, par `shlex` : séparateurs, redirections, `cd` suivi, `bash -c` et `eval` ouverts, préfixes (`env`, `sudo`, `python -m`) retirés ; le corps d'un heredoc n'est que du texte |
 | `etat.py` | l'état dérivé |
 | `humain.py` | ce qui revient à l'humain ; ce qu'il a écrit lui-même depuis le dernier commit de l'agent (approbations, réponses de son terminal), que l'état liste pour que l'agent le cite ; la lecture du dernier message de l'agent pour le récap |
 | `prive.py` | la mémoire privée : modes compagnon et chiffré, verrou, accès, couches privées par défaut, bascule d'une entrée publique, contrôles `prive.*` ; la mise en place du dépôt compagnon, réservée à l'humain |
@@ -122,6 +123,17 @@ comparent le même fichier sous ses deux noms.
   dans le répertoire git commun (`.git/socle/hooks.log`), partagé par tous
   les worktrees du dépôt. Chaque refus y est noté (`Refus`, avec l'étage
   et ce qui a refusé) : le banc d'évaluation y lit quel étage attrape quoi.
+  Le trailer compte la session qui commite, pas la plus récente : une
+  session aux hooks coupés compte zéro, et la CI la refuse (B-0044, L2).
+- **Le hook de l'agent juge ce qu'une commande fait, pas le texte qu'elle
+  cite** (B-0044, L2) : découpée en commandes simples, chacune jugée par
+  son programme et ses arguments. Un message de commit, un heredoc ou un
+  `grep` qui citent une commande dangereuse passent ; un lanceur entre
+  guillemets, un `cd` préalable ou des drapeaux groupés ne la cachent plus.
+  Les réglages de Claude Code (`.claude/settings*.json`, où qu'ils soient)
+  ne s'écrivent pas par l'agent, et les commandes réservées à l'humain
+  refusent d'elles-mêmes de tourner sous un agent, en défense derrière le
+  hook.
 - **Le hook avant commit juge l'index**, figé en arbre par `git write-tree` :
   ce qui sera commité, pas ce qui est sur disque. **Le hook avant push juge
   aussi la plage qui part** (B-0043), du commit distant au commit local :
@@ -130,7 +142,11 @@ comparent le même fichier sous ses deux noms.
 - **Le cliquet compare la base et la tête clé par clé**, avec un sens par
   clé : plus bas est plus strict pour un budget, plus long pour une
   couverture, plus court pour une liste d'exclusions. Une clé inconnue qui
-  change est un assouplissement jusqu'à preuve du contraire.
+  change est un assouplissement jusqu'à preuve du contraire. Une doc
+  ajoutée à une correspondance code ↔ doc assouplit (l'exigence est plus
+  facile à satisfaire) ; un plafond de mutation qui apparaît vient de la
+  mesure : nul, ou avec la raison qu'écrit `mutation-verdict --poser`, au
+  même compte (B-0044, L2).
 - **Lecture prouvée** (`ADR-0008`) : une entrée citée `ID@empreinte` l'a été
   dans cette version ; une décision, une demande ou un sujet de backlog
   nouveaux doivent le faire. La preuve porte sur l'accès au texte, pas sur
