@@ -506,10 +506,17 @@ def _adopter(cible: Path) -> list[str]:
     en_echec = [c for c in rapport.controles_en_echec() if c != "config"]
     if en_echec:
         texte = gf.read_text(encoding="utf-8").rstrip("\n")
-        texte += ("\n\n[adoption]\n# Contrôles en échec sur l'existant, passés en avertissement. En retirer un\n"
-                  "# durcit (libre) ; en ajouter un assouplit (demande validée).\n"
-                  f"warn_only = {json.dumps(en_echec)}\n")
-        gf.write_text(texte, encoding="utf-8")
+        deja = projet.gf("adoption", "warn_only", defaut=None)
+        if deja is not None:
+            # Une adoption déjà faite : sa liste se complète à sa place, une
+            # seconde table `[adoption]` rendrait le fichier illisible.
+            liste = json.dumps(list(deja) + [c for c in en_echec if c not in deja])
+            texte = re.sub(r"(?ms)^(warn_only\s*=\s*)\[[^\]]*\]", lambda m: m.group(1) + liste, texte, count=1)
+        else:
+            texte += ("\n\n[adoption]\n# Contrôles en échec sur l'existant, passés en avertissement. En retirer un\n"
+                      "# durcit (libre) ; en ajouter un assouplit (demande validée).\n"
+                      f"warn_only = {json.dumps(en_echec)}")
+        gf.write_text(texte + "\n", encoding="utf-8")
         res.append(f"adoption : {len(en_echec)} contrôle(s) en avertissement : {', '.join(en_echec)}")
     return res
 

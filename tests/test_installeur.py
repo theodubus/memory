@@ -85,3 +85,17 @@ class TestRelance(unittest.TestCase):
         installer(self.racine, adoption=False)
         self.assertEqual((self.racine / "CLAUDE.md").read_text().strip(), "@AGENTS.md")
         self.assertIn("Règle propre à Claude : répondre bref.", (self.racine / "AGENTS.md").read_text())
+
+    def test_une_seconde_adoption_complete_la_liste(self):
+        """Elle écrivait une seconde table `[adoption]` : les garde-fous ne se
+        lisaient plus."""
+        import tomllib
+
+        self.racine = depot({"app.py": "print('ok')\n", "LISEZMOI.md": "Voir [la suite](absent.md).\n"})
+        installer(self.racine)
+        paragraphe = "Un long paragraphe recopié tel quel dans deux fichiers du projet, " * 4 + "\n"
+        (self.racine / "a.md").write_text(paragraphe)
+        (self.racine / "b.md").write_text(paragraphe)
+        installer(self.racine)
+        gf = tomllib.loads((self.racine / ".socle/guardrails.toml").read_text())
+        self.assertEqual(sorted(gf["adoption"]["warn_only"]), ["docs.copie", "memoire.references"])
