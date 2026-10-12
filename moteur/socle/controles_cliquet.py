@@ -207,7 +207,8 @@ def proteges(ctx, r):
 def moteur(ctx, r):
     """Le moteur du projet est celui que l'installeur a posé."""
     if not ctx.projet.installe:
-        r.erreur("moteur.empreinte", "socle non installé : `.socle/moteur.lock` absent")
+        r.erreur("moteur.empreinte", f"socle non installé : `{ctx.projet.chemins.lock}` absent (commité ? un "
+                 ".gitignore du projet peut l'écarter)")
         return
     if ctx.projet.mode == config.MODE_AMONT:
         r.indisponible("moteur.empreinte", "mode amont : ce dépôt fabrique le moteur, son empreinte n'est pas figée")

@@ -1,7 +1,7 @@
 """L'empreinte du moteur : rien ne s'altère en silence.
 
 L'empreinte couvre le paquet `socle` (hors caches) et le lanceur. Elle est
-enregistrée dans `.socle/moteur.lock` à l'installation, et la CI la recalcule.
+enregistrée dans le verrou du moteur (`.socle/engine.lock`) à l'installation, et la CI la recalcule.
 Un moteur modifié dans le projet ne se répare pas à la main : on relance
 l'installeur, et le diff passe par une demande validée.
 """
@@ -16,9 +16,12 @@ from socle import config
 
 def fichiers_moteur(racine: Path, dossier_moteur: str) -> list[Path]:
     paquet = racine / dossier_moteur / "socle"
+    # Ni les caches, ni les fichiers cachés (un `.DS_Store` du clone source) :
+    # l'installeur ne les copie pas, un clone frais ne les a pas.
     res = [
         p for p in paquet.rglob("*")
         if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"
+        and not any(x.startswith(".") for x in p.relative_to(paquet).parts)
     ]
     lanceur = racine / config.LANCEUR
     if lanceur.is_file():

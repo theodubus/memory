@@ -200,7 +200,7 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
         else:
             if dest.exists():
                 shutil.rmtree(dest)
-            shutil.copytree(source / "socle", dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+            shutil.copytree(source / "socle", dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc", ".*"))
             journal.append(f"moteur {VERSION} copié dans {dossier_moteur}/socle")
     _ecrire(cible / config.LANCEUR, gabarit("lanceur.py"), executable=True)
 
@@ -312,6 +312,10 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
             gabarit("socle.yml").replace("@@ETAPES_ADAPTATEUR@@\n", setup.strip("\n") + "\n" if setup.strip() else ""))
     journal += _codeowners(cible, proprietaire)
     journal += _gitignore(cible)
+    journal += _non_ignores(cible, [config.LANCEUR, ch.lock, ch.politique, ch.adaptateur, ch.garde_fous,
+                                    f"{config.GIT_HOOKS}/pre-commit", ".github/workflows/socle.yml",
+                                    ".claude/settings.json", config.INSTRUCTIONS, "CLAUDE.md", ch.canonique,
+                                    f"{dossier_moteur}/socle/cli.py"])
     if prive:
         journal += _prive(cible, prive, filtre)
 
@@ -448,6 +452,34 @@ def _gitignore(cible: Path) -> list[str]:
         p.write_text(existant.rstrip("\n") + ("\n\n" if existant.strip() else "") + "\n".join(manquantes) + "\n",
                      encoding="utf-8")
     return []
+
+
+def _non_ignores(cible: Path, chemins: list[str]) -> list[str]:
+    """Ce que le socle pose ne doit pas être ignoré par le `.gitignore` du
+    projet (un `*.lock` gardait le verrou hors des commits) : une exception
+    s'ajoute pour chaque fichier ignoré, et ce qu'elle ne suffit pas à
+    rendre (un dossier parent ignoré) se dit (B-0044, L1)."""
+    def ignores() -> list[str]:
+        presents = [c for c in chemins if (cible / c).exists()]
+        if not presents:
+            return []
+        r = subprocess.run(["git", "check-ignore", "--no-index", "--stdin"], cwd=cible, input="\n".join(presents),
+                           capture_output=True, text=True)
+        return [l for l in r.stdout.splitlines() if l.strip()]
+
+    pris = ignores()
+    if not pris:
+        return []
+    p = cible / ".gitignore"
+    texte = p.read_text(encoding="utf-8") if p.is_file() else ""
+    p.write_text(texte.rstrip("\n") + "\n\n# Le socle : ses fichiers se commitent\n"
+                 + "\n".join(f"!/{c}" for c in pris) + "\n", encoding="utf-8")
+    restes = ignores()
+    res = [f".gitignore : {len(pris) - len(restes)} fichier(s) du socle n'y sont plus ignorés"]
+    if restes:
+        res.append(f"!! encore ignorés par le .gitignore du projet, un dossier parent sans doute : {', '.join(restes)} "
+                   "— à rendre à la main, sans quoi ils ne seront pas commités")
+    return res
 
 
 def _prive(cible: Path, mode: str, filtre: str) -> list[str]:

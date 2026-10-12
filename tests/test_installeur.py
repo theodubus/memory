@@ -112,3 +112,29 @@ class TestRelance(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("racine du dépôt", flux.getvalue())
         self.assertFalse((self.racine / "services/api/.socle").exists())
+
+    def test_ce_que_le_socle_pose_n_est_pas_ignore_par_le_projet(self):
+        """Un `*.lock` du projet empêchait de commiter le verrou du moteur : un
+        clone frais disait le socle non installé."""
+        self.racine = depot({".gitignore": "*.lock\n", "app.py": "print('ok')\n"})
+        installer(self.racine, adoption=False)
+        ignore = subprocess.run(["git", "check-ignore", "-q", ".socle/engine.lock"], cwd=self.racine)
+        self.assertEqual(ignore.returncode, 1)
+
+    def test_un_fichier_cache_n_entre_pas_dans_l_empreinte(self):
+        """Un `.DS_Store` du clone source était copié et compté : un clone
+        frais, sans lui, disait le moteur altéré."""
+        from socle import config, empreinte
+
+        source = Path(tempfile.mkdtemp(prefix="socle-source-"))
+        self.addCleanup(shutil.rmtree, source, ignore_errors=True)
+        shutil.copytree(MOTEUR / "socle", source / "socle", ignore=shutil.ignore_patterns("__pycache__"))
+        (source / "socle/.DS_Store").write_bytes(b"\0\1")
+        self.racine = depot({"app.py": "print('ok')\n"})
+        with redirect_stdout(io.StringIO()):
+            installeur.installer(self.racine, "python", "@essai", source=source)
+        self.assertFalse((self.racine / ".socle/engine/socle/.DS_Store").exists())
+        (self.racine / ".socle/engine/socle/.DS_Store").write_bytes(b"\0\2")
+        verrou = config.Projet.charger(self.racine).lock
+        self.assertEqual(empreinte.calculer(self.racine, ".socle/engine")[0], verrou["fingerprint"])
+        self.assertFalse(any(p.name == ".DS_Store" for p in empreinte.fichiers_moteur(self.racine, ".socle/engine")))
