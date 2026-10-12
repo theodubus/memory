@@ -62,3 +62,26 @@ class TestAdoption(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestRelance(unittest.TestCase):
+    """B-0044, L1 : relancer l'installeur ne perd rien."""
+
+    def tearDown(self):
+        shutil.rmtree(self.racine, ignore_errors=True)
+
+    def test_relancee_depuis_le_projet_elle_garde_son_moteur(self):
+        """La source était aussi la destination : supprimée avant la copie."""
+        self.racine = depot({"app.py": "print('ok')\n"})
+        installer(self.racine, adoption=False)
+        with redirect_stdout(io.StringIO()) as flux:
+            installeur.installer(self.racine, "python", "@essai", source=self.racine / ".socle/engine")
+        self.assertTrue((self.racine / ".socle/engine/socle/cli.py").is_file())
+        self.assertIn("moteur déjà en place", flux.getvalue())
+
+    def test_un_claude_md_propre_au_projet_passe_dans_agents_md(self):
+        """Il était remplacé par la seule ligne d'import dès qu'AGENTS.md existait."""
+        self.racine = depot({"AGENTS.md": "# Projet\n", "CLAUDE.md": "Règle propre à Claude : répondre bref.\n"})
+        installer(self.racine, adoption=False)
+        self.assertEqual((self.racine / "CLAUDE.md").read_text().strip(), "@AGENTS.md")
+        self.assertIn("Règle propre à Claude : répondre bref.", (self.racine / "AGENTS.md").read_text())

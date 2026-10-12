@@ -185,10 +185,16 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
     else:
         dossier_moteur = ch.moteur
         dest = cible / dossier_moteur / "socle"
-        if dest.exists():
-            shutil.rmtree(dest)
-        shutil.copytree(source / "socle", dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-        journal.append(f"moteur {VERSION} copié dans {dossier_moteur}/socle")
+        if dest.exists() and dest.resolve() == (source / "socle").resolve():
+            # Lancé depuis le projet lui-même : la source est la destination,
+            # et la supprimer avant la copie effaçait le moteur (B-0044, L1).
+            journal.append(f"moteur déjà en place dans {dossier_moteur}/socle (installeur lancé depuis le projet) : "
+                           "conservé ; pour une autre version, lancer l'installeur depuis le clone du socle")
+        else:
+            if dest.exists():
+                shutil.rmtree(dest)
+            shutil.copytree(source / "socle", dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+            journal.append(f"moteur {VERSION} copié dans {dossier_moteur}/socle")
     _ecrire(cible / config.LANCEUR, gabarit("lanceur.py"), executable=True)
 
     # 2. Le verrou et son empreinte. En mode amont, le moteur est la source :
@@ -354,6 +360,18 @@ def _instructions(cible: Path, dossier_moteur: str, lg: str = "fr") -> list[str]
         res.append("AGENTS.md posé")
     else:
         res.append(_section_dans(agents, bloc))
+    # Un CLAUDE.md qui dit autre chose que l'import : son contenu, propre au
+    # projet, passe dans AGENTS.md, qui fait foi, au lieu d'être écrasé.
+    ancien = claude.read_text(encoding="utf-8") if claude.is_file() else ""
+    propre = "\n".join(l for l in ancien.splitlines() if l.strip() != "@AGENTS.md").strip()
+    if propre:
+        texte = agents.read_text(encoding="utf-8")
+        ajout = f"## Repris de CLAUDE.md\n\n{propre}\n\n"
+        texte = (texte.replace(DEBUT_SOCLE, ajout + DEBUT_SOCLE, 1) if DEBUT_SOCLE in texte
+                 else texte.rstrip("\n") + "\n\n" + ajout)
+        agents.write_text(texte, encoding="utf-8")
+        res.append("le contenu de CLAUDE.md, propre au projet, est repris dans AGENTS.md, qui fait foi ; "
+                   "CLAUDE.md n'importe plus qu'AGENTS.md")
     claude.write_text("@AGENTS.md\n", encoding="utf-8")
     return res
 
