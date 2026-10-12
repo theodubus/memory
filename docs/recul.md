@@ -231,3 +231,12 @@ Recommandation : L1, L2 et L3 d'abord, dans cet ordre, chaque constat avec
 un test qui échoue sur le code actuel ; puis L4, pour que tout ce qui
 précède soit vu échouer ; puis R6, la vraie mesure, avant L5, que ses
 résultats aideront à prioriser ; L6, R2 et L7 ensuite.
+
+## Suite donnée
+
+Théo a validé l'ordre recommandé (D-0015) ; le sujet B-0044 suit les lots.
+
+| Lot | Fait | Journal |
+| --- | --- | --- |
+| L1 | tout le lot | J-2026-10-12-G |
+| L2 | tout le lot, dont R1 et R3 : la branche par défaut de ce dépôt exige déjà la CI par un ensemble de règles, sans revue des propriétaires du code | J-2026-10-12-H |
