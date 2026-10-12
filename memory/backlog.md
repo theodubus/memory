@@ -265,7 +265,7 @@ citer au tour suivant.
 
 ## B-0035 — La documentation du projet : ce que fait le socle, comment il est fait, comment l'installer et s'en servir
 
-> statut : ouvert · origine : J-2026-10-11-N · lu : backlog@e7973e14
+> statut : fait · origine : J-2026-10-11-N · lu : backlog@e7973e14 · ref : J-2026-10-12-B
 
 Demandé par Théo : une documentation du projet qui dise ce que fait le
 socle, comment il est structuré et fait, comment le mettre en place et

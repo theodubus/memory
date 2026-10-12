@@ -2,7 +2,8 @@
 
 Ce document dit où chaque exigence du cadrage
 (`memory/archives/cadrage-2026-10-10.md`) est appliquée, et ce qui ne l'est
-pas encore. La liste exacte des contrôles se dérive du code :
+pas encore. Il s'adresse à qui fabrique le socle ; pour le comprendre
+sans entrer dans le code, `docs/socle.md`. La liste exacte des contrôles se dérive du code :
 `python3 .socle/socle checks`.
 
 ## Les trois pièces

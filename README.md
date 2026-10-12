@@ -46,6 +46,7 @@ sans la toucher.
 
 ## Lire la suite
 
+- `docs/socle.md` — ce que fait le socle et comment il est fait : la mémoire, les contrôles, les trois étages, la politique, les demandes, et que faire quand un contrôle refuse.
 - `moteur/socle/AIDE.md` — le guide de l'humain : ses gestes, chacun avec sa commande.
 - `AGENTS.md` — comment travailler dans ce dépôt, et ce que le socle impose.
 - `docs/architecture.md` — où chaque exigence du cadrage est appliquée.
