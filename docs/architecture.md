@@ -57,7 +57,7 @@ comparent le même fichier sous ses deux noms.
 | `config.py` | la configuration du projet et les deux tables de chemins (formats 1 et 2), choisie par projet et par révision |
 | `migrations.py` | les migrations de format, appliquées dans l'ordre à la mise à jour ; du format 1 au 2, le renommage des chemins |
 | `initialisation.py` | les trois entrées d'initialisation : document archivé tel quel, audit du dépôt en lecture seule, questions de départ |
-| `autotest.py` | l'injection de défauts dans un projet jetable |
+| `autotest.py` | l'injection de défauts dans un projet jetable : chaque contrôle du registre et chaque refus reconnu en ont au moins un (un test l'exige, ou une exemption écrite), une mutation factice exerce le cliquet de mutation, et des témoins vérifient qu'un changement validé par l'humain passe (B-0044, L4) |
 | `adaptateurs/` | Rust (extrait de chess), Python sous `unittest`, Python sous `pytest` avec `mutmut` (jalon 6), JavaScript et TypeScript, Go, Java, Ruby et PHP (B-0030, éprouvés par `banc/adaptateurs.py`), maintenus ; ce qu'est un adaptateur : `moteur/socle/adaptateurs/README.md` |
 | `modeles/` | les gabarits posés par l'installeur |
 

@@ -46,7 +46,8 @@ python3 .socle/socle init --cadrage cadrage.md --depot   # dans le projet instal
 
 - **Tout contrôle nouveau a son défaut injecté** dans `moteur/socle/autotest.py`,
   et un témoin sain qui passe : un garde-fou qu'on n'a jamais vu échouer ne
-  prouve rien. L'auto-test a trouvé cinq contrôles muets à sa première
+  prouve rien. `tests/test_autotest.py` l'exige de chaque contrôle du
+  registre et de chaque refus reconnu. L'auto-test a trouvé cinq contrôles muets à sa première
   exécution (`J-2026-10-10-E`).
 - **Le moteur ne connaît ni langage ni agent** : ce qui dépend du langage va
   dans un adaptateur, ce qui dépend de l'agent dans les hooks.

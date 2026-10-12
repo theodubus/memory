@@ -229,7 +229,10 @@ de même forme. Le détail : `moteur/socle/adaptateurs/README.md`.
 un chaque défaut connu (une référence morte, un test tautologique, un seuil
 relâché, une réponse écrite par l'agent…), et vérifie que le contrôle
 prévu l'attrape à l'étage prévu ; des témoins sains vérifient qu'un travail
-correct passe. La CI le lance à chaque push. Un garde-fou ajouté sans son
+correct passe, et qu'un changement validé par l'humain (un seuil relâché,
+un fichier protégé, une valeur attendue) passe aussi. Chaque contrôle et
+chaque refus du hook en ont au moins un défaut, ce qu'un test exige. La CI
+le lance à chaque push. Un garde-fou ajouté sans son
 défaut injecté n'est pas accepté dans ce dépôt.
 
 Deux bancs mesurent le reste : le banc d'évaluation fait travailler un

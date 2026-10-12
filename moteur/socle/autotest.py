@@ -15,8 +15,8 @@ comme dans la vraie vie : la base des contrôles est `origin/main`.
 from __future__ import annotations
 
 import json
-import re
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -367,6 +367,45 @@ def pousser(a: Atelier, c: Path, message: str = "essai"):
         if r.returncode != 0:
             raise RuntimeError(r.stderr)
     a.git(c, "push", "-q", "--no-verify", "-u", "origin", f"travail:{c.name}")
+
+
+def tous_refuses(a: Atelier, c: Path, essais: list[tuple[str, dict]]) -> str:
+    """Chaque appel doit être refusé par le hook de l'agent : leurs raisons,
+    ou le premier qui passe, sans raison, pour que le défaut se dise non
+    attrapé."""
+    raisons = []
+    for outil, args in essais:
+        refus = etage_outil(a, c, outil, args)
+        if not refus:
+            return f"passé sans refus : {outil} {json.dumps(args, ensure_ascii=False)[:200]}"
+        raisons.append(refus)
+    return "\n".join(raisons)
+
+
+# Une mutation factice (B-0044, L4) : l'adaptateur du projet d'essai n'a pas
+# de mutation, et `mutation.couverture` ne s'y exerçait jamais. Le balayage
+# se simule par une sortie de mutmut écrite à la main.
+MUTATION_FACTICE = """[capabilities.mutation]
+command = "python3 -c pass"
+parser = "mutmut"
+modules = ["*.py"]
+
+"""
+
+
+def avec_mutation(c: Path):
+    p = c / ".socle/adapter.toml"
+    t = p.read_text()
+    debut = t.index("[capabilities.mutation]")
+    fin = t.index("\n[", debut) + 1
+    p.write_text(t[:debut] + MUTATION_FACTICE + t[fin:])
+
+
+def balayage(c: Path, lignes: str) -> Path:
+    d = c.parent / f"{c.name}-mutants"
+    d.mkdir(exist_ok=True)
+    (d / "mutmut-results.txt").write_text(lignes)
+    return d
 
 
 def maj_memoire(c: Path, texte: str = "Travail en cours sur l'essai."):
@@ -821,6 +860,103 @@ def _cas() -> list[Cas]:
         return etage_outil(a, c, "Write", {"file_path": str(c / ".claude/settings.local.json"),
                                            "content": '{"disableAllHooks": true}\n'})
 
+    @defaut("irreversibles-tous", "chaque forme d'action irréversible ou externe", "agent", "politique point 4")
+    def _(a, c):
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "git push --delete origin travail", "git push origin +travail", "git push --mirror origin",
+            "git reset --hard HEAD~1", "git filter-branch --tree-filter true HEAD", "npm publish",
+            "cargo publish", "twine upload dist/*", "gem push essai.gem", "gh pr merge 1 --squash",
+            "gh release create v1", "gh repo delete o/r --yes", "gh secret set JETON", "gh api --method=PUT repos/o/r",
+            "rm -rf ~/", "rm -r -f .git")])
+
+    @defaut("outils-externes", "chaque outil externe d'écriture", "agent", "politique point 4")
+    def _(a, c):
+        return tous_refuses(a, c, [("mcp__github__" + x, {"owner": "o", "repo": "r"}) for x in (
+            "merge_pull_request", "delete_file", "create_repository", "fork_repository", "create_release",
+            "push_files", "create_or_update_file", "enable_pr_auto_merge")])
+
+    @defaut("reference-inventee", "référence à une entrée qui n'existe pas", "agent", "référence inventée")
+    def _(a, c):
+        p = c / "docs/calc.md"
+        return etage_outil(a, c, "Write", {"file_path": str(p), "content": p.read_text() + "\nVoir F-0099.\n"})
+
+    @defaut("echecs-repetes", "contrôles rouges trois tours de suite, sans escalade", "agent", "escalade")
+    def _(a, c):
+        remplacer(c, "calc.py", "return FACTEUR * x", "return x * FACTEUR")
+        maj_memoire(c)
+        sortie = ""
+        for _ in range(3):
+            r = a.socle(c, "hook", "stop", entree=json.dumps({"session_id": "autotest", "stop_hook_active": False}))
+            sortie = r.stdout
+        return sortie
+
+    @defaut("validation-ecrite-en-ci", "fait « validé » commité sans réponse de l'humain", "ci", "memoire.preuves")
+    def _(a, c):
+        remplacer(c, "memory/canonical.md", "> statut : mesuré · preuve : fichier:tests/test_calc.py", "> statut : validé")
+        return etage_ci(a, c)
+
+    @defaut("demande-incomplete-en-ci", "demande hors contrat commitée", "ci", "demandes.contrat")
+    def _(a, c):
+        (c / "memory/requests/D-0001-refactor.md").write_text(DEMANDE_NUE)
+        return etage_ci(a, c)
+
+    @defaut("capacite-sans-remplacement", "capacité absente sans son remplacement", "ci", "adaptateur.capacites")
+    def _(a, c):
+        p = c / ".socle/adapter.toml"
+        p.write_text(re.sub(r'(?m)^replacement = "capacité `mutation`.*\n', "", p.read_text()))
+        return etage_ci(a, c)
+
+    @defaut("reponse-a-une-demande-changee", "demande réécrite après sa réponse", "ci", "demandes.reponses")
+    def _(a, c):
+        ajouter(c, ".github/CODEOWNERS", "# une ligne de plus\n")
+        r = a.socle(c, "approve", "--text", "Une ligne de plus", "--oui")
+        if r.returncode != 0:
+            raise RuntimeError(r.stdout + r.stderr)
+        pousser(a, c)
+        d = next((c / "memory/requests").glob("D-*-approbation-humaine.md"))
+        d.write_text(d.read_text().replace("## Options", "Une phrase glissée après coup.\n\n## Options", 1))
+        return etage_ci(a, c)
+
+    @defaut("hooks-non-declares", "hooks de l'agent retirés de ses réglages", "ci", "hooks.configuration")
+    def _(a, c):
+        (c / ".claude/settings.json").write_text('{"hooks": {}}\n')
+        return etage_ci(a, c)
+
+    @defaut("instructions-copiees", "CLAUDE.md qui recopie des instructions", "ci", "instructions.source-unique")
+    def _(a, c):
+        (c / "CLAUDE.md").write_text("@AGENTS.md\n\nToujours répondre en anglais.\n")
+        return etage_ci(a, c)
+
+    @defaut("memoire-sans-entete", "fichier de mémoire sans son en-tête", "ci", "memoire.format")
+    def _(a, c):
+        p = c / "memory/backlog.md"
+        p.write_text(p.read_text().split("\n", 1)[1])
+        return etage_ci(a, c)
+
+    @defaut("chantier-perime", "chantier actif qui ne bouge plus", "ci", "memoire.peremption")
+    def _(a, c):
+        maj_memoire(c)
+        a.commit(c, "essai", env={"GIT_AUTHOR_DATE": "2000-01-01T00:00:00Z", "GIT_COMMITTER_DATE": "2000-01-01T00:00:00Z"})
+        return a.socle(c, "check", "--stage", "ci", "--base", "origin/main").stdout
+
+    @defaut("prive-sans-mode", "fichiers privés commités sans mode de mémoire privée", "git", "prive.acces")
+    def _(a, c):
+        ajouter(c, "memory/private/canonical.md", CANONIQUE_PRIVEE)
+        return etage_git(a, c)
+
+    @defaut("module-hors-cliquet", "module de code hors du cliquet de mutation", "ci", "mutation.couverture")
+    def _(a, c):
+        avec_mutation(c)
+        ajouter(c, "unites.py", "CENTIMES = 100\n")
+        maj_memoire(c, "Un module de constantes.")
+        return etage_ci(a, c)
+
+    @defaut("mutants-survivants", "survivants de mutation au-delà du plafond", "ci", "mutation.verdict")
+    def _(a, c):
+        avec_mutation(c)
+        r = a.socle(c, "mutation-verdict", str(balayage(c, "calc.x_double__mutmut_1: survived\n")))
+        return "" if r.returncode == 0 else r.stdout + r.stderr
+
     @defaut("reponse-par-agent", "l'agent écrit une réponse humaine", "agent", "fichier protégé")
     def _(a, c):
         return etage_outil(a, c, "Write", {"file_path": str(c / "memory/requests/D-0001-x.answer.toml"), "content": 'reponse = "valider"\n'})
@@ -1057,6 +1193,38 @@ def _temoins() -> list[tuple[str, Callable]]:
         ajouter(c, "docs/calc.md", "Un vent mistralien souffle sur le module.\n")
         maj_memoire(c, "Une phrase de plus.")
         return etage_git(a, c)
+
+    @temoin("un balayage de mutation sous le plafond passe le verdict")
+    def _(a, c):
+        avec_mutation(c)
+        r = a.socle(c, "mutation-verdict", str(balayage(c, "calc.x_double__mutmut_1: killed\n")))
+        return "" if r.returncode == 0 else r.stdout + r.stderr
+
+    @temoin("un garde-fou assoupli par l'humain, qui l'approuve, passe la CI")
+    def _(a, c):
+        remplacer(c, ".socle/guardrails.toml", '"memory/active.md" = { max_bytes = 6000 }',
+                  '"memory/active.md" = { max_bytes = 9000 }')
+        r = a.socle(c, "approve", "--keys", 'budgets."memory/active.md".max_bytes', "--text", "Plus de place")
+        return (r.stdout + r.stderr) if r.returncode != 0 else etage_ci(a, c)
+
+    @temoin("un fichier protégé changé par l'humain, qui l'approuve, passe la CI")
+    def _(a, c):
+        ajouter(c, ".github/CODEOWNERS", "# une ligne de plus\n")
+        r = a.socle(c, "approve", "--text", "Une ligne de plus", "--oui")
+        return (r.stdout + r.stderr) if r.returncode != 0 else etage_ci(a, c)
+
+    @temoin("une valeur attendue changée sous une demande validée par l'humain passe la CI")
+    def _(a, c):
+        (c / "memory/requests/D-0001-refactor.md").write_text(_demande_nommant_le_test(a, c))
+        pousser(a, c)
+        (c / "citation.txt").write_text("oui, compare à un flottant")
+        r = a.socle(c, "answer", "D-0001", "valider", "--relayed", "--by", "Théo", "--quote-file", "citation.txt")
+        if r.returncode != 0:
+            return r.stdout + r.stderr
+        (c / "citation.txt").unlink()
+        remplacer(c, "tests/test_calc.py", "self.assertEqual(double(2), 4)", "self.assertEqual(double(2), 4.0)")
+        maj_memoire(c)
+        return etage_ci(a, c)
 
     @temoin("une demande complète passe le hook de l'agent")
     def _(a, c):
@@ -1350,6 +1518,10 @@ def executer(projet=None, bavard: bool = False) -> Rapport:
 
 # Le hook PreToolUse ne nomme pas de contrôle : il rend sa raison, qu'on
 # reconnaît à ces mots.
+# Les contrôles du registre qu'aucun défaut injecté n'éprouve, chacun avec
+# sa raison écrite : un test exige que tout autre en ait un (B-0044, L4).
+SANS_DEFAUT: dict[str, str] = {}
+
 RAISONS_AGENT = {
     "demandes.contrat": "demande hors contrat",
     "memoire.preuves": "sans demande validée par l'humain",
@@ -1360,6 +1532,9 @@ RAISONS_AGENT = {
     "commande de l'humain seul": "est réservé à l'humain",
     "écriture protégée": "par le shell : seul l'humain",
     "écriture à l'aveugle": "à l'aveugle",
+    "référence inventée": "référence inventée",
+    "escalade": "ARRÊT ET ESCALADE",
+    "memoire.peremption": "chantier actif inchangé depuis",
     "réglage de l'agent": "les réglages de Claude Code commandent ses hooks",
     "où regarder": "« Où regarder » doit donner un lien",
     "récap": "pas Pour toi :",
@@ -1380,10 +1555,13 @@ def _attrape_par(cas: Cas, sortie: str) -> bool:
     contrôle qui plante n'attrape rien : il refuse par accident."""
     if "Traceback (most recent call last)" in sortie or "le contrôle a planté" in sortie:
         return False
-    if cas.controle in RAISONS_AGENT:
-        return RAISONS_AGENT[cas.controle] in sortie
+    # Un rapport d'étage d'abord : un contrôle que le hook de l'agent nomme
+    # aussi (`memoire.preuves`, `demandes.contrat`) s'attrape en CI par sa
+    # ligne de synthèse, pas par la phrase de son refus (B-0044, L4).
     for ligne in sortie.splitlines():
         if ligne.startswith("ECHEC — ") and " : " in ligne:
-            echecs = [x.strip() for x in ligne.split(" : ", 1)[1].split(",")]
-            return cas.controle in echecs
+            if cas.controle in [x.strip() for x in ligne.split(" : ", 1)[1].split(",")]:
+                return True
+    if cas.controle in RAISONS_AGENT:
+        return RAISONS_AGENT[cas.controle] in sortie
     return False
