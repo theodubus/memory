@@ -159,6 +159,19 @@ class TestMigration(Projet):
             f(ctx, r)
         self.assertEqual([c.message for c in r.erreurs()], [])
 
+    def test_la_migration_garde_la_memoire_pas_encore_commitee(self):
+        """B-0044, L1 : `git mv -k` sautait en silence un fichier non suivi,
+        puis le dossier de l'ancien format était supprimé avec lui."""
+        self.vers_format_1()
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "format 1", "--no-verify")
+        (self.racine / "memoire/journal/2026-11.md").write_text("<!-- socle: couche=journal zone=publique -->\n")
+        (self.racine / "memoire/decisions/ADR-0001-choix.md").write_text("# ADR-0001 — Un choix\n")
+        migrations.migrer(self.racine, 1)
+        self.assertTrue((self.racine / "memory/journal/2026-11.md").is_file())
+        self.assertTrue((self.racine / "memory/decisions/ADR-0001-choix.md").is_file())
+        self.assertFalse((self.racine / "memoire").exists())
+
     def test_l_ancien_chemin_d_une_entree_gelee_reste_valide(self):
         journal = next((self.racine / "memory/journal").glob("*.md"))
         journal.write_text(journal.read_text() + "\nVoir `memoire/actif.md` et fichier:memoire/backlog.md ici\n")

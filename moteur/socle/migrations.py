@@ -39,15 +39,21 @@ def _vers_format_2(cible: Path) -> list[str]:
     est gelée, et les anciens chemins qu'elles citent restent valides par
     alias."""
     res = []
-    suivis = set(outils.fichiers_courants(cible)) if outils.est_depot(cible) else set()
+    # Les fichiers suivis par git, et eux seuls : un fichier pas encore
+    # commité se déplace à la main, sans quoi `git mv` le laisserait derrière.
+    suivis = set(outils.git(cible, "ls-files", "-z", check=False).split("\0")) - {""} \
+        if outils.est_depot(cible) else set()
 
     def deplacer(de: str, vers: str):
         a, b = cible / de, cible / vers
         if not a.exists() and not a.is_symlink():
             return
+        if b.exists():
+            raise RuntimeError(f"migration arrêtée : {vers} existe déjà, {de} n'y est pas déplacé — "
+                               "fusionner les deux à la main, puis relancer")
         b.parent.mkdir(parents=True, exist_ok=True)
         if de in suivis:
-            outils.git(cible, "mv", "-k", de, vers)
+            outils.git(cible, "mv", de, vers)
         else:
             shutil.move(str(a), str(b))
 
@@ -92,7 +98,12 @@ def _vers_format_2(cible: Path) -> list[str]:
             for n in noms:
                 rel = str((Path(dossier) / n).relative_to(cible)).replace(os.sep, "/")
                 deplacer(rel, config.traduire(rel, vers=2))
-        shutil.rmtree(memoire_1, ignore_errors=True)
+        # L'ancien dossier ne se supprime que vide : un fichier resté là est
+        # une perte, pas un reste.
+        restes = [str(Path(d, n).relative_to(cible)) for d, _, noms in os.walk(memoire_1) for n in noms]
+        if restes:
+            raise RuntimeError("migration arrêtée : des fichiers restent dans memoire/ — " + ", ".join(restes[:5]))
+        shutil.rmtree(memoire_1)
         res.append("memoire/ → memory/ (canonical.md, active.md, requests/, private/, *.answer.toml)")
 
     # 3. Les chemins cités par la configuration et la documentation ; ni la
