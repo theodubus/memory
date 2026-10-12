@@ -242,3 +242,4 @@ Théo a validé l'ordre recommandé (D-0015) ; le sujet B-0044 suit les lots.
 | L2 | tout le lot, dont R1 et R3 : la branche par défaut de ce dépôt exige déjà la CI par un ensemble de règles, sans revue des propriétaires du code | J-2026-10-12-H |
 | L3 | tout le lot, et R7 : le guide dit que le mode chiffré est le moins éprouvé | J-2026-10-12-I |
 | L4 | tout le lot : chaque contrôle et chaque refus ont leur défaut injecté, ce qu'un test exige ; mutation factice ; témoins de changements validés | J-2026-10-12-J |
+| R6 | sur une copie du projet d'échecs (D-0016) : installation en adoption, cinq tâches sans un refus pendant les sessions, un refus à tort en CI, le banc sans les hooks de l'agent ; huit constats, relevé dans `docs/essai-chess.md` | J-2026-10-12-R |
