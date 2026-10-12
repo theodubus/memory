@@ -720,6 +720,34 @@ def _cas() -> list[Cas]:
     def _(a, c):
         return etage_outil(a, c, "Bash", {"command": "git push --force origin travail"})
 
+    @defaut("push-force-groupe", "push forcé caché dans des drapeaux groupés", "agent", "politique point 4")
+    def _(a, c):
+        return etage_outil(a, c, "Bash", {"command": "git -C . push -fu origin travail"})
+
+    @defaut("push-refspec-defaut", "push vers la branche par défaut par une référence complète", "agent",
+            "politique point 4")
+    def _(a, c):
+        return etage_outil(a, c, "Bash", {"command": "git push origin HEAD:refs/heads/main"})
+
+    @defaut("suppression-distante-api", "branche distante supprimée par l'API de GitHub", "agent", "politique point 4")
+    def _(a, c):
+        return etage_outil(a, c, "Bash", {"command": "gh api -X DELETE repos/o/r/git/refs/heads/travail"})
+
+    @defaut("protege-par-le-shell", "fichier protégé écrit par une redirection du shell", "agent", "écriture protégée")
+    def _(a, c):
+        return etage_outil(a, c, "Bash", {"command": "cd .socle && echo 'max_attempts = 99' 1>> policy.toml"})
+
+    @defaut("protege-dossier-shell", "dossier qui contient des fichiers protégés déplacé par le shell", "agent",
+            "écriture protégée")
+    def _(a, c):
+        return etage_outil(a, c, "Bash", {"command": "mv .github /tmp/github-de-cote"})
+
+    @defaut("reglage-local-agent", "l'agent coupe ses hooks par un réglage local de Claude Code", "agent",
+            "réglage de l'agent")
+    def _(a, c):
+        return etage_outil(a, c, "Write", {"file_path": str(c / ".claude/settings.local.json"),
+                                           "content": '{"disableAllHooks": true}\n'})
+
     @defaut("reponse-par-agent", "l'agent écrit une réponse humaine", "agent", "fichier protégé")
     def _(a, c):
         return etage_outil(a, c, "Write", {"file_path": str(c / "memory/requests/D-0001-x.answer.toml"), "content": 'reponse = "valider"\n'})
@@ -733,6 +761,12 @@ def _cas() -> list[Cas]:
     def _(a, c):
         lanceur = ".socle/" + "socle"
         return etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} approve --text 'mise à jour' --oui"})
+
+    @defaut("agent-repond-cache", "l'agent répond à la place de l'humain, lanceur entre guillemets après un cd",
+            "agent", "commande humaine")
+    def _(a, c):
+        return etage_outil(a, c, "Bash", {"command": 'cd .socle && python3 "socle" answer D-0001 valider; '
+                                                     "echo --relayed --quote-file x"})
 
     @defaut("agent-installe-compagnon", "l'agent met en place le dépôt compagnon (pousse, crée une clé)", "agent",
             "commande de l'humain seul")
@@ -932,6 +966,17 @@ def _temoins() -> list[tuple[str, Callable]]:
                   '"calc.py" = { max = 0 }\n"unites.py" = { max = 2, reason = "mesuré le 2026-10-12 : 2 survivant(s)" }')
         maj_memoire(c, "Un module de constantes, mesuré.")
         return etage_ci(a, c)
+
+    @temoin("une commande qui ne fait que citer une action refusée passe le hook de l'agent")
+    def _(a, c):
+        lanceur = ".socle/" + "socle"
+        for commande in (f'git commit -m "doc: ne jamais lancer python3 {lanceur} answer D-0001 valider"',
+                         "cat > docs/regles.md <<'EOF'\nInterdit : git push --force, rm -rf /.\nEOF",
+                         "grep -rn 'push --force' docs/", "git push -u origin travail"):
+            refus = etage_outil(a, c, "Bash", {"command": commande})
+            if refus:
+                return f"{commande} : {refus}"
+        return ""
 
     @temoin("une demande complète passe le hook de l'agent")
     def _(a, c):
@@ -1233,6 +1278,8 @@ RAISONS_AGENT = {
     "fichier protégé": "est protégé par la politique",
     "commande humaine": "ne répond jamais à la place de l'humain",
     "commande de l'humain seul": "est réservé à l'humain",
+    "écriture protégée": "par le shell : seul l'humain",
+    "réglage de l'agent": "les réglages de Claude Code commandent ses hooks",
     "où regarder": "« Où regarder » doit donner un lien",
     "récap": "pas Pour toi :",
     "suite": "pas Ensuite :",
