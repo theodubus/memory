@@ -116,6 +116,9 @@ class TestSysteme(Dossier):
             self.assertFalse(banc.ci_arrete(False, trace))
             self.assertTrue(banc.ci_arrete(False, avec))
             self.assertFalse(banc.ci_arrete(True, ""))
+            sortie = subprocess.CompletedProcess([], 1, stdout=trace, stderr="")
+            with mock.patch.object(banc, "socle", return_value=sortie):
+                self.assertTrue(banc._controles(Path(self.projet), "ci")[0])
 
     def test_garder_ce_qu_il_faut_pour_relire_un_passage(self):
         garde = self.dossier / "garde"
