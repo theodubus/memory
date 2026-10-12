@@ -66,8 +66,10 @@ def _format_entrees(r, chemin, f, couche, prive):
                      "un identifiant stable vit dans une couche durable", chemin, e.ligne)
         return
     attendu = TYPE_DE_COUCHE[couche]
-    if couche == "journal" and not re.match(r"^\d{4}-\d{2}\.md$", nom):
-        r.erreur("memoire.format", "un fichier de journal se nomme `AAAA-MM.md`", chemin)
+    # `AAAA-MM.md`, puis `AAAA-MM-2.md`… quand le mois dépasse son budget (ADR-0022).
+    if couche == "journal" and not re.match(r"^\d{4}-\d{2}(?:-[2-9]|-[1-9]\d+)?\.md$", nom):
+        r.erreur("memoire.format", "un fichier de journal se nomme `AAAA-MM.md`, ou `AAAA-MM-N.md` quand le mois "
+                 "continue (N à partir de 2)", chemin)
     premiers = [e for e in f.entrees if e.parent is None]
     if couche in ("decisions", "demandes"):
         if len(premiers) != 1:

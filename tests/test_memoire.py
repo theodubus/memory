@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 
 from socle import memoire, outils
 
@@ -109,3 +110,30 @@ class TestMotifs(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestFichierJournal(unittest.TestCase):
+    """ADR-0022 : un mois dont le fichier atteindrait son budget continue dans
+    le suivant, au lieu de bloquer tout commit qui ajoute au journal."""
+
+    def test_le_mois_continue_dans_un_second_fichier(self):
+        import tempfile
+
+        dossier = Path(tempfile.mkdtemp(prefix="socle-journal-"))
+        self.addCleanup(__import__("shutil").rmtree, dossier, ignore_errors=True)
+        self.assertEqual(memoire.fichier_journal(dossier, "2026-10", 100, 20).name, "2026-10.md")
+        (dossier / "2026-10.md").write_text("x" * 90)
+        self.assertEqual(memoire.fichier_journal(dossier, "2026-10", None, 20).name, "2026-10.md")
+        self.assertEqual(memoire.fichier_journal(dossier, "2026-10", 100, 5).name, "2026-10.md")
+        self.assertEqual(memoire.fichier_journal(dossier, "2026-10", 100, 20).name, "2026-10-2.md")
+        (dossier / "2026-10-2.md").write_text("y")
+        # Le mois a continué : on n'écrit plus dans le premier, même s'il a de la place.
+        self.assertEqual(memoire.fichier_journal(dossier, "2026-10", 100, 5).name, "2026-10-2.md")
+
+    def test_le_budget_d_un_fichier_vient_des_garde_fous(self):
+        from socle import config
+
+        p = config.Projet(racine=Path("."))
+        p.garde_fous = {"budgets": {"memory/journal/*.md": {"max_bytes": 100}}}
+        self.assertEqual(p.budget_octets("memory/journal/2026-10.md"), 100)
+        self.assertIsNone(p.budget_octets("memory/active.md"))

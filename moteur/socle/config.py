@@ -207,6 +207,16 @@ class Projet:
 
     # --- garde-fous -----------------------------------------------------
 
+    def budget_octets(self, chemin: str) -> int | None:
+        """Le plafond de taille, en octets, que les garde-fous donnent à ce
+        chemin ; `None` sans plafond."""
+        from socle import outils
+
+        for motif, b in (self.gf("budgets", defaut={}) or {}).items():
+            if outils.correspond(chemin, [motif]) and "max_bytes" in b:
+                return int(b["max_bytes"])
+        return None
+
     def gf(self, *chemin, defaut=None):
         noeud = self.garde_fous
         for c in chemin:

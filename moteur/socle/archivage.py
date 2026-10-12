@@ -38,14 +38,15 @@ def archiver_backlog(projet: config.Projet) -> int:
         texte = texte.replace(e.texte, "", 1)
     texte = "\n".join(l for l in _sans_vides_multiples(texte.splitlines())).rstrip("\n") + "\n"
     chemin.write_text(texte, encoding="utf-8")
-    journal = racine / ch.journal / f"{jour[:7]}.md"
+    ids = ", ".join(e.id for e in clos)
+    titre = langue.mot(langue.TEXTES, "archive-backlog", lg)
+    entree = f"\n## {ident} — {titre} : {ids}\n\n" + "\n\n".join(blocs) + "\n"
+    journal = memoire.fichier_journal(racine / ch.journal, jour[:7], projet.budget_octets(f"{ch.journal}/{jour[:7]}.md"),
+                                      len(entree.encode("utf-8")))
     if not journal.is_file():
         journal.parent.mkdir(parents=True, exist_ok=True)
         journal.write_text(f"{langue.entete_fichier('journal', 'publique', lg)}\n"
                            f"# {langue.mot(langue.TEXTES, 'titre-journal', lg)} — {jour[:7]}\n", encoding="utf-8")
-    ids = ", ".join(e.id for e in clos)
-    titre = langue.mot(langue.TEXTES, "archive-backlog", lg)
-    entree = f"\n## {ident} — {titre} : {ids}\n\n" + "\n\n".join(blocs) + "\n"
     journal.write_text(journal.read_text(encoding="utf-8").rstrip("\n") + "\n" + entree, encoding="utf-8")
     print(f"{len(clos)} sujet(s) archivé(s) dans {ident} ({journal.relative_to(racine)})")
     return 0

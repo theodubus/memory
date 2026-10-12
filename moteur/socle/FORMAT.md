@@ -132,7 +132,8 @@ abandonnée, et acceptée → remplacée ou abandonnée.
 
 Un fichier par mois (`AAAA-MM.md`), une entrée par événement, datée par son
 identifiant. Ajout seul : une entrée publiée ne change plus, sauf pour
-recevoir à sa suite une archive.
+recevoir à sa suite une archive. Un mois dont le fichier atteindrait son
+budget continue dans `AAAA-MM-2.md`, puis `AAAA-MM-3.md` (ADR-0022).
 
 ### Backlog — `B-`
 

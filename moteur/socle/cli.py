@@ -161,12 +161,16 @@ def cmd_new(args) -> int:
         bloc = squelette.format(lu=memoire.empreinte_index(mem, "backlog"))
         _ajouter(chemin, f"\n## {ident} — {titre}\n\n{bloc}\n", langue.entete_fichier("backlog", zone, lg))
     elif type_ == "J":
-        chemin = lieu(ch.journal) / f"{jour[:7]}.md"
+        bloc = f"\n## {ident} — {titre}\n\n{squelette}\n"
+        dossier = lieu(ch.journal)
+        # Le squelette grandira : de la marge, pour que l'entrée remplie tienne.
+        chemin = memoire.fichier_journal(dossier, jour[:7], projet.budget_octets(f"{ch.journal}/{jour[:7]}.md"),
+                                         len(bloc.encode("utf-8")) + 2000)
         if not chemin.is_file():
             chemin.parent.mkdir(parents=True, exist_ok=True)
             chemin.write_text(f"{langue.entete_fichier('journal', zone, lg)}\n"
                               f"# {langue.mot(langue.TEXTES, 'titre-journal', lg)} — {jour[:7]}\n", encoding="utf-8")
-        _ajouter(chemin, f"\n## {ident} — {titre}\n\n{squelette}\n")
+        _ajouter(chemin, bloc)
     elif type_ == "ADR":
         # Les décisions s'affichent avant d'en ajouter une : on ne rouvre pas
         # une décision prise sans fait nouveau.

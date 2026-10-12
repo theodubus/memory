@@ -168,7 +168,8 @@ def initialiser(projet: config.Projet, cadrage: Path | None = None, depot: bool 
     if cadrage:
         archive, emp = archiver_cadrage(racine, cadrage)
         ident = mem.prochain_id("J", date=jour)
-        cli._ajouter(racine / projet.chemins.journal / f"{jour[:7]}.md",
+        cli._ajouter(memoire.fichier_journal(racine / projet.chemins.journal, jour[:7],
+                                             projet.budget_octets(f"{projet.chemins.journal}/{jour[:7]}.md"), 2000),
                      f"\n## {ident} — Document de cadrage archivé tel quel\n\n"
                      f"{langue.meta(lg, type='initialisation', ref=langue.ref_fichier(archive, lg))} · empreinte : {emp}\n\n"
                      "Archivé sans réécriture. Ce qu'il affirme entre dans la mémoire en « supposé », avec ce "

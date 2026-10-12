@@ -143,6 +143,20 @@ def decouper_id(ident: str) -> tuple[bool, str, str] | None:
     return bool(m["prive"]), m["type"], m["num"]
 
 
+def fichier_journal(dossier: Path, mois: str, budget: int | None = None, ajout: int = 0) -> Path:
+    """Le fichier du journal où écrire une entrée de `ajout` octets : celui du
+    mois (`AAAA-MM.md`), puis `AAAA-MM-2.md`, `AAAA-MM-3.md`… quand le
+    précédent dépasserait son budget. Le journal est en ajout seul : un
+    fichier plein ne se vide pas, le mois continue dans le suivant (ADR-0022)."""
+    n = 1
+    while True:
+        p = dossier / (f"{mois}.md" if n == 1 else f"{mois}-{n}.md")
+        suivant = dossier / f"{mois}-{n + 1}.md"
+        if not suivant.is_file() and (not p.is_file() or budget is None or p.stat().st_size + ajout <= budget):
+            return p
+        n += 1
+
+
 def lignes_hors_code(texte: str):
     """(numéro de ligne, ligne, dans_un_bloc_de_code) pour chaque ligne."""
     dedans = False
