@@ -36,12 +36,15 @@ class Question:
     effet: str  # ce que le défaut change
 
 
-def archiver_cadrage(racine: Path, document: Path) -> tuple[str, str]:
+def archiver_cadrage(racine: Path, document: Path, prive: bool = False) -> tuple[str, str]:
     """Le document, copié tel quel dans les archives de la mémoire, et son
     empreinte. Son nom perd ses espaces (une référence `fichier:` n'en a pas) ;
     un document différent du même nom prend un suffixe au lieu d'écraser
-    l'archive, et le même document se retrouve tel quel (B-0044, L1)."""
-    dossier = racine / config.chemins(racine).archives
+    l'archive, et le même document se retrouve tel quel (B-0044, L1). Avec
+    une mémoire privée, il s'archive dans sa zone : c'est de lui que viennent
+    les termes privés (B-0044, L3)."""
+    ch = config.chemins(racine)
+    dossier = racine / (ch.dans_prive(ch.archives) if prive else ch.archives)
     dossier.mkdir(parents=True, exist_ok=True)
     nom = re.sub(r"\s+", "-", document.name.strip())
     base, ext = (nom.rsplit(".", 1)[0], "." + nom.rsplit(".", 1)[1]) if "." in nom else (nom, "")
@@ -151,7 +154,7 @@ def demande_de_depart(projet: config.Projet, ident: str, questions: list[Questio
 
 
 def initialiser(projet: config.Projet, cadrage: Path | None = None, depot: bool = False) -> int:
-    from socle import cli
+    from socle import cli, prive
 
     racine = projet.racine
     if not projet.installe:
@@ -166,14 +169,22 @@ def initialiser(projet: config.Projet, cadrage: Path | None = None, depot: bool 
 
     archive = None
     if cadrage:
-        archive, emp = archiver_cadrage(racine, cadrage)
-        ident = mem.prochain_id("J", date=jour)
-        cli._ajouter(memoire.fichier_journal(racine / projet.chemins.journal, jour[:7],
+        en_prive = prive.mode(projet) is not None
+        if en_prive and not prive.acces(projet).disponible:
+            print(f"refus : avec une mémoire privée, le cadrage s'archive dans sa zone, indisponible ici "
+                  f"({prive.acces(projet).raison}) ; la mettre en place d'abord")
+            return 2
+        archive, emp = archiver_cadrage(racine, cadrage, prive=en_prive)
+        journal_prive = en_prive and "journal" in prive.couches_privees(projet)
+        ident = mem.prochain_id("J", prive=journal_prive, date=jour)
+        journal = projet.chemins.dans_prive(projet.chemins.journal) if journal_prive else projet.chemins.journal
+        cli._ajouter(memoire.fichier_journal(racine / journal, jour[:7],
                                              projet.budget_octets(f"{projet.chemins.journal}/{jour[:7]}.md"), 2000),
                      f"\n## {ident} — Document de cadrage archivé tel quel\n\n"
                      f"{langue.meta(lg, type='initialisation', ref=langue.ref_fichier(archive, lg))} · empreinte : {emp}\n\n"
                      "Archivé sans réécriture. Ce qu'il affirme entre dans la mémoire en « supposé », avec ce "
-                     "fichier pour source, jusqu'à validation humaine.\n", langue.entete_fichier("journal", "publique", lg))
+                     "fichier pour source, jusqu'à validation humaine.\n",
+                     langue.entete_fichier("journal", "privee" if journal_prive else "publique", lg))
         sortie.append(f"document archivé : {archive} ({emp[:23]}…), journal {ident}")
         mem = memoire.Memoire.charger(racine)
 

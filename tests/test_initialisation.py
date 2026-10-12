@@ -214,6 +214,23 @@ class TestEntrees(Base):
         demande = next((self.racine / "memory/requests").glob("D-*.md")).read_text()
         self.assertIn("celui du document de cadrage", demande)
 
+    def test_avec_une_memoire_privee_le_cadrage_s_archive_en_prive(self):
+        """B-0044, L3 : le cadrage, d'où viennent les termes privés, était
+        archivé en public même avec une mémoire privée."""
+        self.racine = depot({})
+        installer(self.racine, prive="chiffre")
+        dossier = Path(tempfile.mkdtemp(prefix="socle-cadrages-"))
+        self.addCleanup(shutil.rmtree, dossier, ignore_errors=True)
+        doc = dossier / "cadrage.md"
+        doc.write_text("# Cadrage\n\nLe projet Mistral.\n")
+        with redirect_stdout(io.StringIO()):
+            self.assertEqual(initialisation.initialiser(self.charger(), cadrage=doc), 0)
+        self.assertEqual((self.racine / "memory/private/archives/cadrage.md").read_text(), doc.read_text())
+        self.assertFalse((self.racine / "memory/archives/cadrage.md").exists())
+        journal = next((self.racine / "memory/private/journal").glob("*.md")).read_text()
+        self.assertIn("zone=privee", journal)
+        self.assertIn(f"## {'P'}J-", journal)
+
     def test_un_second_cadrage_n_ecrase_pas_le_premier(self):
         """B-0044, L1 : l'archive « telle quelle » était écrasée par un second
         document du même nom, et un nom avec une espace cassait sa référence."""
