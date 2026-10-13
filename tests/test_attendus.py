@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from collections import Counter
 from pathlib import Path
 
 from socle import config, contexte, controles_tests, installeur
@@ -121,6 +122,62 @@ class TestValeurAttendue(unittest.TestCase):
         self.commit("La valeur change" + AGENT)
         erreurs, _ = self.erreurs()
         self.assertEqual(len(erreurs), 1, erreurs)
+
+
+
+class TestValeursHorsDesAssertions(unittest.TestCase):
+    """ADR-0024 : une valeur attendue placée hors de la ligne d'assertion
+    (une variable, une constante, une aide) changeait sans bruit. Rien ne la
+    distingue d'une donnée de test : elle est dite, pas refusée."""
+
+    TEST = ("import unittest\n\nfrom calc import double\n\nATTENDU = {constante}\n\n\n"
+            "def verifier(x):\n    assert x == {aide}\n\n\nclass T(unittest.TestCase):\n"
+            "    def test_double(self):\n        attendu = {variable}\n        self.assertEqual(double(2), attendu)\n\n"
+            "    def test_constante(self):\n        self.assertEqual(double(2), ATTENDU)\n\n"
+            "    def test_aide(self):\n        verifier(double(2))\n")
+    VALEURS = {"constante": 4, "aide": 4, "variable": 4}
+
+    def setUp(self):
+        TestValeurAttendue.setUp(self)
+        self.ecrire("tests/test_calc.py", self.TEST.format(**self.VALEURS))
+        TestValeurAttendue.commit(self, "Les trois formes")
+        self.base = git(self.racine, "rev-parse", "HEAD").strip()
+
+    ecrire = TestValeurAttendue.ecrire
+    erreurs = TestValeurAttendue.erreurs
+
+    def changer(self, **valeurs) -> tuple[list[str], list[str]]:
+        self.ecrire("tests/test_calc.py", self.TEST.format(**{**self.VALEURS, **valeurs}))
+        TestValeurAttendue.commit(self, "Une valeur change" + AGENT)
+        return self.erreurs()
+
+    def test_une_variable(self):
+        erreurs, avertissements = self.changer(variable=5)
+        self.assertEqual(erreurs, [])
+        self.assertTrue(any("hors des assertions" in a and "`test_double`" in a for a in avertissements), avertissements)
+
+    def test_une_constante_et_une_aide(self):
+        erreurs, avertissements = self.changer(constante=5, aide=5)
+        self.assertEqual(erreurs, [])
+        texte = " ".join(avertissements)
+        self.assertIn("`test_aide`", texte)
+        self.assertIn("`test_constante`", texte)
+        self.assertNotIn("`test_double`", texte)
+
+    def test_rien_ne_change(self):
+        self.ecrire("tests/test_calc.py", self.TEST.format(**self.VALEURS) + "\n    def test_zero(self):\n"
+                    "        self.assertEqual(double(0), 0)\n")
+        TestValeurAttendue.commit(self, "Un test de plus" + AGENT)
+        self.assertEqual(self.erreurs(), ([], []))
+
+    def test_les_litteraux(self):
+        import tomllib
+
+        from socle import tests_lecture
+
+        cfg = tomllib.loads((installeur.ADAPTATEURS / "python.toml").read_text())["tests"]
+        self.assertEqual(tests_lecture.litteraux('x = 4  # 5\ny = "a b"\nf(x1, 2.5, True)\n"""9"""\n', cfg),
+                         Counter({"4": 1, '"a b"': 1, "2.5": 1, "True": 1}))
 
 
 class TestEnAttenteDeLHumain(TestValeurAttendue):

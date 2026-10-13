@@ -94,7 +94,7 @@ comparent le même fichier sous ses deux noms.
 | Pas de copie | `docs.copie` | agent, git, CI |
 | Capacité absente déclarée avec remplacement | `adaptateur.capacites` | agent, git, CI |
 | Tests creux, lus hors de leurs commentaires ; une aide qui affirme vient des tests, jamais du code de production ; un groupe de tests désactivé hors de tout test exige sa raison | `tests.creux` (sur le diff aux étages agent et git) | agent, git, CI |
-| Test supprimé, valeur attendue changée ; à la fin du tour, en attente d'une demande poussée qui nomme le test, un avertissement (B-0033) ; une assertion se lit entière, sur toutes ses lignes et normalisée hors des littéraux, et des tests homonymes s'apparient dans l'ordre du fichier | `tests.attendus` | agent, git, CI |
+| Test supprimé, valeur attendue changée ; à la fin du tour, en attente d'une demande poussée qui nomme le test, un avertissement (B-0033) ; une assertion se lit entière, sur toutes ses lignes et normalisée hors des littéraux, et des tests homonymes s'apparient dans l'ordre du fichier ; une valeur changée hors des assertions (variable, constante, aide) est dite, pas refusée (ADR-0024) | `tests.attendus` | agent, git, CI |
 | Correctif avec test de régression rejoué sur le parent, où il échoue sans y manquer de se charger (`load_error`) ; un test écrit dans le module qu'il teste (Rust) s'y rejoue avec ses seules lignes de test, le code du parent gardé (B-0051) | `tests.regression` | CI |
 | Code nouveau ou modifié testé : une fonction publique est nommée par un test, hors de ses commentaires, ou dispensée nommément avec sa raison (`Dispense-test:`) | `tests.code-teste` ; au commit, un avertissement du hook `commit-msg`, le premier qui voit la dispense (B-0034, P9) | agent, CI ; avertissement au commit |
 | Mutation : plafond par module, cliquet ; un module pas encore balayé y entre « à mesurer » (un avertissement), et le premier verdict pose son plafond, relu après écriture (un plafond qu'il ne sait pas écrire est dit) | `mutation.couverture`, `socle mutation-verdict --poser` | agent, git, CI ; verdict hebdomadaire |
@@ -177,6 +177,10 @@ comparent le même fichier sous ses deux noms.
 - **Une valeur attendue ne change que sur une spécification écrite par
   l'humain** (`ADR-0017`), ou sur une demande validée : une ADR que l'agent
   écrit dans le même travail ne l'autorise pas à changer un test.
+  Hors des assertions, une valeur changée est signalée sans être refusée
+  (`ADR-0024`) : rien ne distingue une donnée de test d'une valeur
+  attendue, et le refus mesuré sur la migration de format frappait 34
+  tests à tort.
 - **Les demandes échappent au refus des copies** (`ADR-0016`) : une demande se
   lit seule, son contexte recopié sur place, et elle est gelée une fois
   répondue ; deux approbations du même gabarit ne bloquent plus un commit.

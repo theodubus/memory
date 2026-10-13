@@ -240,35 +240,91 @@ def attendus(ctx, r):
         else:
             paires += [(a, min(nouveaux, key=lambda b: sum((valeurs(a) - valeurs(b)).values()), default=None))
                        for a in anciens]
+    def signaler(nom, fichier, ligne, quoi, faute):
+        pourquoi = _justifie(ctx, nom)
+        attente = None if pourquoi else _en_attente(ctx, nom)
+        if pourquoi:
+            r.avertir("tests.attendus", f"{quoi} ({pourquoi})", fichier, ligne)
+        elif attente:
+            r.avertir("tests.attendus", f"{quoi}, en attente de {attente} : le tour peut finir, le commit et la CI "
+                      "attendent la réponse de l'humain", fichier, ligne)
+        else:
+            r.erreur("tests.attendus", faute + _note_agent(ctx, nom), fichier, ligne)
+
+    hors: dict[str, list[tuple[str, str]]] = {}
+
+    def lits(f) -> Counter:
+        return tests_lecture.litteraux("\n".join([*f.attributs, f.entete, f.corps]), cfg)
+
     for a, b in paires:
         if b is None:
             if re.sub(r"\s+", " ", a.corps) in par_corps:
                 continue  # déplacé tel quel
-            pourquoi = _justifie(ctx, a.nom)
-            attente = None if pourquoi else _en_attente(ctx, a.nom)
-            if pourquoi:
-                r.avertir("tests.attendus", f"test `{a.nom}` supprimé ({pourquoi})", a.fichier, a.ligne)
-            elif attente:
-                r.avertir("tests.attendus", f"test `{a.nom}` supprimé, en attente de {attente} : le tour peut finir, "
-                          "le commit et la CI attendent la réponse de l'humain", a.fichier, a.ligne)
-            else:
-                r.erreur("tests.attendus", f"test `{a.nom}` supprimé sans validation humaine ni changement de "
-                         "spécification qui le nomme" + _note_agent(ctx, a.nom), a.fichier, a.ligne)
+            signaler(a.nom, a.fichier, a.ligne, f"test `{a.nom}` supprimé",
+                     f"test `{a.nom}` supprimé sans validation humaine ni changement de spécification qui le nomme")
             continue
         disparues = valeurs(a) - valeurs(b)
         if disparues:
-            pourquoi = _justifie(ctx, a.nom)
-            attente = None if pourquoi else _en_attente(ctx, a.nom)
             exemple = tests_lecture.enonces(a.lignes_corps, assertion, cfg)[next(iter(disparues))][0]
-            if pourquoi:
-                r.avertir("tests.attendus", f"assertion changée dans `{a.nom}` ({pourquoi})", b.fichier, b.ligne)
-            elif attente:
-                r.avertir("tests.attendus", f"assertion changée dans `{a.nom}`, en attente de {attente} : le tour "
-                          "peut finir, le commit et la CI attendent la réponse de l'humain", b.fichier, b.ligne)
-            else:
-                r.erreur("tests.attendus", f"assertion changée ou retirée dans `{a.nom}` : « {exemple} » — "
-                         "valeur attendue modifiée sans spécification ni validation humaine" + _note_agent(ctx, a.nom),
-                         b.fichier, b.ligne)
+            signaler(a.nom, b.fichier, b.ligne, f"assertion changée dans `{a.nom}`",
+                     f"assertion changée ou retirée dans `{a.nom}` : « {exemple} » — valeur attendue modifiée sans "
+                     "spécification ni validation humaine")
+            continue
+        # Une valeur attendue vit aussi hors de la ligne d'assertion : une
+        # variable, une table, un paramètre. Rien ne la distingue d'une
+        # donnée de test : elle est dite, pas refusée (ADR-0024).
+        valeurs_parties = lits(a) - lits(b)
+        if valeurs_parties and not _justifie(ctx, a.nom):
+            hors.setdefault(b.fichier, []).append((b.nom, next(iter(valeurs_parties))))
+    _attendus_hors_tests(ctx, cfg, avant_fichiers, [b for _, b in paires if b is not None], hors)
+    for fichier, liste in sorted(hors.items()):
+        noms = sorted({n for n, _ in liste})
+        r.avertir("tests.attendus", f"valeurs changées hors des assertions dans {len(noms)} test(s) — "
+                  f"{', '.join(f'`{n}`' for n in noms[:5])}{' …' if len(noms) > 5 else ''} (« {liste[0][1][:40]} ») : "
+                  "si l'une est une valeur attendue (une variable, une table, un paramètre, une constante), "
+                  "la changer exige une validation humaine (politique, point 2)", fichier)
+
+
+def _attendus_hors_tests(ctx, cfg, chemins, apres, hors):
+    """Une valeur des fichiers de test hors de tout test (une constante, une
+    aide qui affirme) : retirée ou changée, elle compte pour chaque test qui
+    nomme sa constante ou son aide. Dans un fichier de code, seules ses
+    lignes de test comptent : le module de tests de Rust, jamais le code de
+    production (ADR-0024)."""
+    chemins_code, exclus_code, _ = config_code(ctx.projet)
+
+    def reste(texte, chemin) -> list[str]:
+        lignes = texte.splitlines()
+        tests = [(f.debut - 1, f.fin) for f in tests_lecture.extraire(texte, chemin, cfg) if f.est_test]
+        dedans = tests_lecture.zones_de_test(texte, chemin, cfg) if outils.filtrer([chemin], chemins_code, exclus_code) \
+            else [(0, len(lignes))]
+        return [l if any(d <= i < e for d, e in dedans) and not any(d <= i < e for d, e in tests) else ""
+                for i, l in enumerate(lignes)]
+
+    for chemin in chemins:
+        avant, maintenant = ctx.lire_base(chemin), ctx.lire(chemin)
+        if avant is None or maintenant is None:
+            continue
+        lignes_avant = reste(avant, chemin)
+        parties = tests_lecture.litteraux("\n".join(lignes_avant), cfg) - \
+            tests_lecture.litteraux("\n".join(reste(maintenant, chemin)), cfg)
+        if not parties:
+            continue
+        aides = [f for f in tests_lecture.extraire(avant, chemin, cfg) if not f.est_test]
+        # Chaque ligne qui portait une valeur disparue : la même valeur peut
+        # vivre dans une constante et dans une aide.
+        for i, valeur in [(k, v) for k, l in enumerate(lignes_avant)
+                          for v in parties if v in tests_lecture.litteraux(l, cfg)]:
+            m = re.match(r"^\s*(?:(?:pub|const|let|var|static|final|export|private|public)\s+)*([A-Za-z_]\w*)\s*"
+                         r"(?::[^=]*)?=(?!=)", lignes_avant[i])
+            englobante = next((f.nom for f in aides if f.debut - 1 <= i < f.fin), None)
+            nom = englobante or (m.group(1) if m else None)
+            touches = [b for b in apres if b.fichier == chemin and nom and _nomme(b.corps, nom)]
+            if not touches:
+                continue  # une valeur qu'aucun test ne nomme n'en est pas une valeur attendue
+            for b in touches:
+                if not _justifie(ctx, b.nom):
+                    hors.setdefault(b.fichier, []).append((b.nom, valeur))
 
 
 def _note_agent(ctx, nom: str) -> str:

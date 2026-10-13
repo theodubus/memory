@@ -243,3 +243,4 @@ Théo a validé l'ordre recommandé (D-0015) ; le sujet B-0044 suit les lots.
 | L3 | tout le lot, et R7 : le guide dit que le mode chiffré est le moins éprouvé | J-2026-10-12-I |
 | L4 | tout le lot : chaque contrôle et chaque refus ont leur défaut injecté, ce qu'un test exige ; mutation factice ; témoins de changements validés | J-2026-10-12-J |
 | R6 | sur une copie du projet d'échecs (D-0016) : installation en adoption, cinq tâches sans un refus pendant les sessions, un refus à tort en CI, le banc sans les hooks de l'agent ; huit constats, relevé dans `docs/essai-chess.md` | J-2026-10-12-R |
+| L5 | les sections D, E et F, et les trois constats de R6 qui en relevaient (B-0051, B-0049, B-0052) ; la deuxième ligne de E était réglée par L2 ; les deux choix de conception : la lecture prouvée en une seule fonction (ADR-0023), une valeur attendue hors des assertions dite sans être refusée (ADR-0024) | J-2026-10-13-A à J-2026-10-13-K |

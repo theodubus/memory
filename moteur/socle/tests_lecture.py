@@ -17,6 +17,7 @@ affirme).
 from __future__ import annotations
 
 import re
+from collections import Counter
 from dataclasses import dataclass, field
 
 
@@ -195,6 +196,20 @@ def sans_commentaires(texte: str, cfg: dict) -> str:
             continue
         res.append(fin.sub(lambda m: m.group(1) or "", ligne) if fin else ligne)
     return "\n".join(res)
+
+
+# Les mots qui sont des valeurs, dans tous les langages des adaptateurs.
+MOTS_VALEURS = r"\b(?:true|false|True|False|None|nil|null)\b"
+NOMBRE = r"(?<![\w.])-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?(?![\w.])"
+
+
+def litteraux(texte: str, cfg: dict) -> Counter:
+    """Les valeurs écrites dans un texte, hors de ses commentaires : chaînes,
+    nombres, booléens et nul, chacune autant de fois qu'elle y figure. Une
+    valeur attendue vit aussi hors de la ligne d'assertion : dans une
+    variable, une table, un paramètre (ADR-0024)."""
+    motif = re.compile(f"({cfg.get('strings', LITTERAUX)})|({NOMBRE})|({MOTS_VALEURS})")
+    return Counter(m.group(0) for m in motif.finditer(sans_commentaires(texte, cfg)))
 
 def enonces(lignes: list[str], debut: re.Pattern, cfg: dict) -> dict[str, list[str]]:
     """Les énoncés qui commencent sur une ligne de `debut` (une assertion), en
