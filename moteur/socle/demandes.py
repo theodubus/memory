@@ -315,11 +315,17 @@ def _toml_str(s: str) -> str:
 
 def validations_ajoutees(racine: Path, base: str | None, tete: str | None) -> list[Demande]:
     """Les demandes validées par une réponse AJOUTÉE dans la plage : une vieille
-    validation ne couvre pas un assouplissement nouveau."""
-    deja = {d.chemin_reponse for d in toutes(racine, base) if d.reponse is not None} if base else set()
+    validation ne couvre pas un assouplissement nouveau. Une demande se
+    reconnaît à son identifiant, qui ne change pas quand une migration
+    renomme son fichier et celui de sa réponse (relevé de la passe de
+    recul, D)."""
+    def cle(d: Demande) -> str:
+        return d.id or d.chemin_reponse or d.chemin
+
+    deja = {cle(d) for d in toutes(racine, base) if d.reponse is not None} if base else set()
     return [
         d for d in toutes(racine, tete)
-        if d.validee and d.chemin_reponse not in deja and not verifier_reponse(d)
+        if d.validee and cle(d) not in deja and not verifier_reponse(d)
     ]
 
 

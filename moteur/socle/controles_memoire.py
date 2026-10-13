@@ -52,6 +52,11 @@ def format_memoire(ctx, r):
         elif f.zone != zone_lieu:
             r.erreur("memoire.format", f"zone déclarée « {f.zone} » dans un emplacement « {zone_lieu} »", chemin, 1)
         _format_entrees(r, chemin, f, attendue, zone_lieu == "privee")
+        # Un titre mal formé fait disparaître l'entrée de toute lecture
+        # (relevé de la passe de recul, D).
+        for ligne, titre in f.illisibles:
+            r.erreur("memoire.format", f"titre d'entrée illisible : « {titre[:60]} » — l'entrée n'est pas lue ; "
+                     "forme attendue : `## J-AAAA-MM-JJ-X — titre`", chemin, ligne)
 
     for ident, defs in ctx.memoire.definitions().items():
         if len(defs) > 1:
@@ -638,8 +643,16 @@ def retard(ctx, r):
 
 
 def _corps_sans_meta(e: memoire.Entree) -> str:
+    """Le texte de l'entrée sans son titre ni sa ligne de métadonnées, celle
+    qui suit le titre. Une citation du corps en fait partie : la réécrire,
+    c'est réécrire la décision (relevé de la passe de recul, D)."""
     lignes = e.texte.splitlines()[1:]
-    return "\n".join(l for l in lignes if not l.lstrip().startswith(">")).strip()
+    j = 0
+    while j < len(lignes) and not lignes[j].strip():
+        j += 1
+    while j < len(lignes) and lignes[j].lstrip().startswith(">"):
+        j += 1
+    return "\n".join(lignes[j:]).strip()
 
 
 def _norm(t: str) -> str:
@@ -741,8 +754,10 @@ def _bascule(ctx, r, a: memoire.Entree, b: memoire.Entree):
 
 def _seulement_ajouts(avant: str, apres: str) -> bool:
     """Une entrée de journal qui reçoit une archive imbriquée à la suite de son
-    texte reste en ajout seul."""
-    return _norm(apres).startswith(_norm(avant))
+    texte reste en ajout seul ; un ajout commence sur une ligne nouvelle,
+    jamais au milieu d'une phrase (relevé de la passe de recul, D)."""
+    a, b = _norm(avant), _norm(apres)
+    return b == a or b.startswith(a + "\n")
 
 
 # --------------------------------------------------------------------------

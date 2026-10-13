@@ -192,6 +192,25 @@ class TestMigration(Projet):
         self.assertTrue((self.racine / "memory/decisions/ADR-0001-choix.md").is_file())
         self.assertFalse((self.racine / "memoire").exists())
 
+    def test_une_validation_d_avant_la_migration_n_est_pas_nouvelle(self):
+        """Relevé de la passe de recul, D : la migration renomme la réponse,
+        et l'ancienne validation comptait comme ajoutée dans la plage."""
+        texte = ("<!-- socle: couche=demandes zone=publique -->\n# D-0001 — Relever un plafond\n\n"
+                 "> date : 2026-10-10\n\n## Réponses possibles\n\n- `valider` — oui.\n- `refuser` — non.\n")
+        (self.racine / "memory/requests/D-0001-plafond.md").write_text(texte)
+        d = next(x for x in demandes.toutes(self.racine) if x.id == "D-0001")
+        demandes.ecrire_reponse(self.racine, d, "valider", "oui", "Théo", "2026-10-10")
+        self.vers_format_1()
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "format 1", "--no-verify")
+        base = git(self.racine, "rev-parse", "HEAD").strip()
+        self.assertEqual([x.id for x in demandes.validations_ajoutees(self.racine, None, "HEAD")], ["D-0001"])
+        migrations.migrer(self.racine, 1)
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "migration", "--no-verify")
+        config.oublier_formats()
+        self.assertEqual(demandes.validations_ajoutees(self.racine, base, "HEAD"), [])
+
     def test_l_ancien_chemin_d_une_entree_gelee_reste_valide(self):
         journal = next((self.racine / "memory/journal").glob("*.md"))
         journal.write_text(journal.read_text() + "\nVoir `memoire/actif.md` et fichier:memoire/backlog.md ici\n")

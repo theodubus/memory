@@ -814,6 +814,11 @@ def _cas() -> list[Cas]:
 
     # Au-delà du tableau du cadrage.
 
+    @defaut("titre-d-entree-illisible", "entrée de journal au titre mal formé, que rien ne lit", "git", "memoire.format")
+    def _(a, c):
+        ajouter(c, f"memory/journal/{a.journal[2:9]}.md", f"\n## {a.journal[:12]} Sans sa lettre ni son tiret\n\nTexte.\n")
+        return etage_git(a, c)
+
     @defaut("journal-reecrit", "entrée de journal réécrite", "git", "memoire.ajout-seul")
     def _(a, c):
         remplacer(c, f"memory/journal/{a.journal[2:9]}.md", "Le rapport d'installation", "Le compte rendu d'installation")

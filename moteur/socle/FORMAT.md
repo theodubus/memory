@@ -127,15 +127,17 @@ backlog et du journal.
 
 Un fichier par décision, nommé d'après son identifiant. Statuts : `proposée`,
 `acceptée`, `rejetée`, `abandonnée`, `remplacée` (avec
-`remplacée-par : ADR-NNNN`). Ajout seul : seuls le statut et ses métadonnées
-changent ensuite, selon les passages proposée → acceptée, rejetée ou
+`remplacée-par : ADR-NNNN`). Ajout seul : seuls le statut et sa ligne de métadonnées
+changent ensuite (une citation du corps en fait partie, et ne se réécrit pas), selon les passages proposée → acceptée, rejetée ou
 abandonnée, et acceptée → remplacée ou abandonnée.
 
 ### Journal — `J-`
 
 Un fichier par mois (`AAAA-MM.md`), une entrée par événement, datée par son
-identifiant. Ajout seul : une entrée publiée ne change plus, sauf pour
-recevoir à sa suite une archive. Un mois dont le fichier atteindrait son
+identifiant. Un titre qui commence comme une entrée sans en être une
+lisible (`## J-2026-10-10 sans sa lettre`) est refusé : l'entrée ne serait lue
+nulle part. Ajout seul : une entrée publiée ne change plus, sauf pour
+recevoir à sa suite, sur une ligne nouvelle, une archive. Un mois dont le fichier atteindrait son
 budget continue dans `AAAA-MM-2.md`, puis `AAAA-MM-3.md` (ADR-0022).
 
 ### Backlog — `B-`

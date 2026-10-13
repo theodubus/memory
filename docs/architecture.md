@@ -65,13 +65,13 @@ comparent le même fichier sous ses deux noms.
 
 | Exigence | Contrôle ou mécanisme | Étages |
 | --- | --- | --- |
-| Format parsable, identifiants stables, statuts | `memoire.format` | agent, git, CI |
+| Format parsable, identifiants stables, statuts ; un titre qui commence comme une entrée sans en être une lisible est refusé | `memoire.format` | agent, git, CI |
 | Toute référence vérifiée, lien mort refusé ; une référence nue s'arrête avant sa ponctuation finale, un lien se lit décodé (B-0020) ; un chemin d'un autre dépôt (`depot:chemin`) n'est admis sans avertissement que si le dépôt est déclaré dans `[references] repos`, ce que seul l'humain valide (B-0052) | `memoire.references`, `cliquet.garde-fous` | agent, git, CI |
 | Fait mesuré avec preuve, réfuté barré, validé par l'humain | `memoire.preuves`, hook `pre-tool-use` | agent, git, CI |
 | Backlog : origine, clôture avec référence | `memoire.backlog` | agent, git, CI |
 | Budgets de taille | `memoire.budgets` | agent, git, CI |
 | Péremption de l'actif (avertissement) | `memoire.peremption` | agent, git, CI |
-| Journal et décisions en ajout seul ; fait jamais effacé | `memoire.ajout-seul` | agent, git, CI |
+| Journal et décisions en ajout seul (une citation d'une décision comprise, un ajout au journal sur une ligne nouvelle) ; fait jamais effacé ; une validation se reconnaît à son identifiant, migration comprise | `memoire.ajout-seul` | agent, git, CI |
 | Mémoire en retard sur le code : fin de tour refusée | `memoire.retard` | agent |
 | Le privé ne fuit pas dans le public (identifiants) | `memoire.prive` | agent, git, CI |
 | Mémoire privée en dépôt compagnon : rien de privé dans le dépôt public, verrou à jour | `prive.verrou`, `socle prive verrouiller`, `socle prive extraire` | agent, git, CI |

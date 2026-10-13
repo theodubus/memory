@@ -43,6 +43,8 @@ TITRE_RE = re.compile(r"^(?P<niveau>#{1,6})\s+(?P<reste>.*?)\s*#*\s*$")
 ENTETE_ENTREE = re.compile(
     r"^(?P<id>P?(?:ADR|F|B|D|J)-[\d-]+[A-Z]{0,2})\s*[—–-]\s*(?P<titre>.+)$"
 )
+# Un titre qui commence comme une entrée, lisible ou non.
+TITRE_D_ENTREE = re.compile(r"^P?(?:ADR|F|B|D|J)-\d")
 ENTETE_FICHIER = re.compile(r"<!--\s*socle\s*:(?P<corps>.*?)-->")
 # La liste des termes privés n'est pas un fichier de mémoire : son en-tête est
 # celui d'un texte brut, et la dit lisible comme l'autre.
@@ -296,6 +298,9 @@ class FichierMemoire:
     zone: str | None = None
     entete: dict[str, str] = field(default_factory=dict)
     entrees: list[Entree] = field(default_factory=list)
+    # Les titres qui commencent comme une entrée sans en être une lisible
+    # (`## J-2026-10-10 titre`) : (ligne, titre). L'entrée n'est pas lue.
+    illisibles: list[tuple[int, str]] = field(default_factory=list)
 
 
 def couche_attendue(chemin: str) -> str | None:
@@ -352,10 +357,10 @@ def analyser(chemin: str, texte: str) -> FichierMemoire:
         while pile and pile[-1].niveau >= niveau:
             pile.pop()
         m = ENTETE_ENTREE.match(reste)
-        if not m:
-            continue
-        morceaux = decouper_id(m["id"])
+        morceaux = decouper_id(m["id"]) if m else None
         if morceaux is None:
+            if TITRE_D_ENTREE.match(reste):
+                f.illisibles.append((i, reste))
             continue
         prive, type_, _ = morceaux
         titre = m["titre"].strip()
