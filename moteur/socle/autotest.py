@@ -418,6 +418,40 @@ def avec_mutation(c: Path):
     p.write_text(t[:debut] + MUTATION_FACTICE + t[fin:])
 
 
+# `gh`, simulé : l'état du workflow de mutation et sa dernière exécution,
+# d'hier (B-0005).
+GH_FACTICE = """#!{python}
+import json, sys
+from datetime import datetime, timedelta, timezone
+chemin = sys.argv[2] if sys.argv[1:2] == ["api"] else ""
+hier = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+if chemin.endswith("/actions/workflows/socle-mutation.yml"):
+    print(json.dumps({{"state": "{etat}", "created_at": "2026-01-01T00:00:00Z"}}))
+elif "/actions/workflows/socle-mutation.yml/runs?" in chemin:
+    print(json.dumps({{"workflow_runs": [{{"created_at": hier}}]}}))
+else:
+    sys.exit(1)
+"""
+
+
+def _balayage_planifie(a: "Atelier", c: Path, etat: str) -> dict:
+    """Le projet d'essai avec un balayage planifié, posé à la base : la
+    mutation factice, son workflow et la doc qui le nomme. Rend
+    l'environnement où `gh`, simulé, dit l'état du workflow."""
+    avec_mutation(c)
+    (c / ".github/workflows/socle-mutation.yml").write_text('name: Socle — mutation\non:\n  schedule:\n'
+                                                            '    - cron: "23 2 * * 2"\n')
+    ajouter(c, "docs/calc.md", "\nLe balayage de mutation, chaque semaine : `socle-mutation.yml`.\n")
+    a.commit(c, "balayage planifié")
+    a.git(c, "update-ref", "refs/remotes/origin/main", "HEAD")
+    outils_ = c.parent / f"{c.name}-bin"
+    outils_.mkdir()
+    gh = outils_ / "gh"
+    gh.write_text(GH_FACTICE.format(python=sys.executable, etat=etat))
+    gh.chmod(0o755)
+    return {"PATH": f"{outils_}{os.pathsep}{a.env.get('PATH', '')}"}
+
+
 def balayage(c: Path, lignes: str) -> Path:
     d = c.parent / f"{c.name}-mutants"
     d.mkdir(exist_ok=True)
@@ -1015,6 +1049,12 @@ def _cas() -> list[Cas]:
         maj_memoire(c, "Un module de constantes.")
         return etage_ci(a, c)
 
+    @defaut("balayage-endormi", "balayage de mutation planifié endormi par GitHub", "ci", "mutation.vivante")
+    def _(a, c):
+        env = _balayage_planifie(a, c, "disabled_inactivity")
+        r = a.socle(c, "check", "--stage", "ci", "--base", "origin/main", env=env)
+        return "" if r.returncode == 0 else r.stdout + r.stderr
+
     @defaut("mutants-survivants", "survivants de mutation au-delà du plafond", "ci", "mutation.verdict")
     def _(a, c):
         avec_mutation(c)
@@ -1284,6 +1324,17 @@ def _temoins() -> list[tuple[str, Callable]]:
         ajouter(c, "docs/calc.md", "Un vent mistralien souffle sur le module.\n")
         maj_memoire(c, "Une phrase de plus.")
         return etage_git(a, c)
+
+    @temoin("un balayage de mutation planifié qui tourne passe la CI")
+    def _(a, c):
+        env = _balayage_planifie(a, c, "active")
+        r = a.socle(c, "check", "--stage", "ci", "--base", "origin/main", env=env)
+        if r.returncode != 0:
+            return r.stdout + r.stderr
+        # Lu et vivant, pas indisponible : sinon ce témoin passerait sans
+        # rien prouver.
+        ligne = next((l.split() for l in r.stdout.splitlines() if l.strip().startswith("mutation.vivante")), [])
+        return "" if ligne[-1:] == ["ok"] else f"mutation.vivante, attendu « ok » : {r.stdout}"
 
     @temoin("un balayage de mutation sous le plafond passe le verdict")
     def _(a, c):

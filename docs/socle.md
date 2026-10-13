@@ -58,6 +58,9 @@ memory/               la mémoire du projet
 AGENTS.md             les instructions de l'agent ; CLAUDE.md l'importe
 .claude/settings.json les hooks de Claude Code
 .github/workflows/socle.yml   la CI
+.github/workflows/socle-mutation.yml   le balayage de mutation hebdomadaire,
+                      quand l'adaptateur en déclare un et que le projet n'en
+                      lance pas déjà un
 .github/CODEOWNERS    l'humain, propriétaire de la politique, des hooks et de la CI
 ```
 
@@ -142,7 +145,11 @@ Par famille :
   qui échoue sur le commit d'avant.
 - **La mutation** : chaque module qui porte du code a un plafond de mutants
   survivants, mesuré, qui ne peut que baisser. Un module pas encore balayé y
-  entre « à mesurer ».
+  entre « à mesurer ». Le balayage tourne chaque semaine sur GitHub
+  (`socle mutation-run`, posé par l'installeur) ; une issue s'ouvre quand le
+  cliquet casse, et la CI dit, à chaque push, quand il cesse de tourner :
+  GitHub endort les workflows planifiés d'un dépôt public après soixante
+  jours sans activité.
 - **Ce qui ne doit pas s'affaiblir** : le cliquet des seuils, les fichiers
   protégés, l'empreinte du moteur, la configuration des hooks et leur trace
   dans chaque commit de l'agent.
@@ -256,7 +263,8 @@ Chaque refus dit ce qu'il a vu et comment en sortir. Les plus courants :
 | `memoire.retard`, en fin de tour | du code a changé et la mémoire non | mettre à jour le chantier actif, le journal ou le backlog |
 | fin de tour refusée, « Pour toi : » | le dernier message de l'agent n'a pas son récap | finir par le récap et les deux lignes |
 | `prive.verrou` | le verrou du dépôt compagnon manque ou retarde | `socle prive verrouiller` ; rien en place : `socle prive installer --depot <adresse>`, par l'humain |
-| `mutation.couverture` | un module qui porte du code n'a pas de plafond | l'y poser « à mesurer », puis `socle mutation-verdict <résultats> --poser` |
+| `mutation.couverture` | un module qui porte du code n'a pas de plafond | l'y poser « à mesurer », puis `socle mutation-run --poser`, ou recopier le plafond qu'imprime le dernier balayage planifié |
+| `mutation.vivante`, en CI | le balayage planifié est endormi, ou ne tourne plus depuis quinze jours | le réactiver dans l'onglet Actions de GitHub et le lancer à la main : c'est à l'humain, et l'état le lui dit |
 | push refusé, relecture | la politique exige la relecture de l'humain | l'humain relit ce qui part, l'agent consigne son accord |
 
 Un hook peut se contourner en local (`--no-verify`) ; la CI exécute tout,
@@ -267,7 +275,7 @@ dit à l'humain, et l'état dit si c'est fait.
 
 ## Ce qui n'est pas fait
 
-Le backlog le tient (`python3 .socle/socle show --index backlog`) : un
-workflow de mutation hebdomadaire générique, l'empreinte du moteur comparée
+Le backlog le tient (`python3 .socle/socle show --index backlog`) :
+l'empreinte du moteur comparée
 à la version publiée, un paquet installable par pip, les textes du moteur
 dans la langue du projet, et les limites connues des contrôles.

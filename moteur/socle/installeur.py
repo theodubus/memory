@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import re
 import shutil
 import stat
@@ -26,7 +27,7 @@ import tomllib
 from datetime import date
 from pathlib import Path
 
-from socle import VERSION, config, empreinte, langue, outils
+from socle import VERSION, config, empreinte, langue, mutation, outils
 from socle.modeles import DOSSIER as MODELES, gabarit
 
 ADAPTATEURS = Path(__file__).resolve().parent / "adaptateurs"
@@ -100,6 +101,24 @@ def politique_privee(texte: str, mode: str, relecture: str | None, demandes: boo
     fin = texte.find("\n\n", debut)
     fin = len(texte) if fin == -1 else fin + 1
     return texte[:debut] + bloc + texte[fin:]
+
+
+def _balayage_planifie(cible: Path, texte_adaptateur: str) -> tuple[bool, str]:
+    """(poser, ce qu'en dit le journal) : le workflow de mutation se pose
+    quand l'adaptateur déclare un balayage, sauf si un workflow du projet
+    le lance déjà (B-0005) ; celui du socle, déjà posé, se met à jour."""
+    cap = tomllib.loads(texte_adaptateur).get("capabilities", {}).get("mutation", {})
+    if "command" not in cap:
+        return False, ""
+    flux = sorted(str(p.relative_to(cible)).replace(os.sep, "/") for p in (cible / ".github/workflows").glob("*")
+                  if p.is_file()) if (cible / ".github/workflows").is_dir() else []
+    if mutation.WORKFLOW in flux:
+        return True, ""
+    autre = mutation.workflow_de_balayage(cap, flux, lambda f: outils.lire_a(cible, None, f), sauf_le_sien=True)
+    if autre:
+        return False, (f"balayage de mutation : `{autre}` le lance déjà, le socle n'en pose pas un second ; "
+                       "la CI vérifie qu'il tourne encore")
+    return True, f"balayage de mutation hebdomadaire posé : {mutation.WORKFLOW}"
 
 
 def garde_fous_initiaux(cible: Path, texte_adaptateur: str) -> str:
@@ -296,7 +315,8 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
         journal.append(f"mémoire initiale posée, journal ouvert par {ident}")
 
     # 5. Les instructions : AGENTS.md fait foi, CLAUDE.md l'importe.
-    journal += _instructions(cible, dossier_moteur, lg)
+    balayage, motif = _balayage_planifie(cible, texte_adaptateur)
+    journal += _instructions(cible, dossier_moteur, lg, balayage)
 
     # 6. Hooks de l'agent, hooks git, CI, CODEOWNERS, .gitignore.
     journal += _settings(cible)
@@ -308,12 +328,20 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
     else:
         journal.append("!! core.hooksPath pointe ailleurs : hooks git NON branchés")
     setup = tomllib.loads(texte_adaptateur).get("ci_setup", "")
-    _ecrire(cible / ".github/workflows/socle.yml",
-            gabarit("socle.yml").replace("@@ETAPES_ADAPTATEUR@@\n", setup.strip("\n") + "\n" if setup.strip() else ""))
+    etapes = setup.strip("\n") + "\n" if setup.strip() else ""
+    _ecrire(cible / ".github/workflows/socle.yml", gabarit("socle.yml").replace("@@ETAPES_ADAPTATEUR@@\n", etapes))
+    if balayage:
+        installation = tomllib.loads(texte_adaptateur).get("capabilities", {}).get("mutation", {}).get("install", "")
+        # En bloc littéral : la commande peut porter ce que YAML lirait autrement.
+        etape = (f"      - name: Outil de mutation\n        run: |\n          {installation}\n" if installation else "")
+        _ecrire(cible / mutation.WORKFLOW, gabarit("mutation.yml").replace("@@ETAPES_ADAPTATEUR@@\n", etapes)
+                .replace("@@INSTALLATION@@\n", etape))
+    if motif:
+        journal.append(motif)
     journal += _codeowners(cible, proprietaire)
     journal += _gitignore(cible)
     journal += _non_ignores(cible, [config.LANCEUR, ch.lock, ch.politique, ch.adaptateur, ch.garde_fous,
-                                    f"{config.GIT_HOOKS}/pre-commit", ".github/workflows/socle.yml",
+                                    f"{config.GIT_HOOKS}/pre-commit", ".github/workflows/socle.yml", mutation.WORKFLOW,
                                     ".claude/settings.json", config.INSTRUCTIONS, "CLAUDE.md", ch.canonique,
                                     f"{dossier_moteur}/socle/cli.py"])
     if prive:
@@ -340,11 +368,23 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
     return code
 
 
-def _instructions(cible: Path, dossier_moteur: str, lg: str = "fr") -> list[str]:
+# La ligne qui nomme le balayage planifié, là où l'installeur le pose : un
+# chemin cité qui n'existe pas serait refusé.
+LIGNE_MUTATION = {
+    "fr": "| `.github/workflows/socle-mutation.yml` | balayage de mutation, chaque semaine : les survivants de chaque "
+          "module contre son plafond ; une issue s'ouvre quand le cliquet casse, et la CI dit quand il cesse de "
+          "tourner |\n",
+    "en": "| `.github/workflows/socle-mutation.yml` | weekly mutation sweep: each module's survivors against its cap; "
+          "an issue opens when the ratchet breaks, and the CI says when it stops running |\n",
+}
+
+
+def _instructions(cible: Path, dossier_moteur: str, lg: str = "fr", balayage: bool = False) -> list[str]:
     res = []
     agents = cible / config.INSTRUCTIONS
     claude = cible / "CLAUDE.md"
-    section = (gabarit("AGENTS.md", lg).replace("@@VERSION@@", VERSION).replace("@@MOTEUR@@", dossier_moteur))
+    section = (gabarit("AGENTS.md", lg).replace("@@VERSION@@", VERSION).replace("@@MOTEUR@@", dossier_moteur)
+               .replace("@@LIGNE_MUTATION@@\n", LIGNE_MUTATION.get(lg, LIGNE_MUTATION["fr"]) if balayage else ""))
     socle = section.split("@@SECTION_PROJET@@", 1)[1].strip("\n")
     bloc = f"{DEBUT_SOCLE}\n\n{socle}\n\n{FIN_SOCLE}\n"
     if not agents.is_file() and claude.is_file() and claude.read_text(encoding="utf-8").strip() != "@AGENTS.md":

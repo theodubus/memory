@@ -37,10 +37,12 @@ fast = true
 
 [capabilities.mutation]
 # Hebdomadaire en CI, pas à chaque commit : le coût par commit serait absurde,
-# la dérive est lente. Le verdict compare les survivants au plafond des
-# garde-fous (`socle mutation-verdict`).
+# la dérive est lente. `socle mutation-run` lance la commande une fois par
+# module du plafond, chacune dans son dossier `{output}`, puis compare les
+# survivants au plafond des garde-fous ; `install` pose l'outil sur le runner.
 tool = "cargo-mutants"
-command = "cargo mutants --file {module} -j 2"
+command = "cargo mutants --file {module} -j 2 --output {output}"
+install = "cargo install cargo-mutants --locked"
 modules = ["src/*.rs", "*/src/*.rs"]
 has_code = '\bfn\b'
 parser = "cargo-mutants"

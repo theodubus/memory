@@ -120,6 +120,7 @@ must be read again. `socle new` puts in the index fingerprint.
 | `.claude/settings.json` | Claude Code hooks: `SessionStart` (derived state), `PreToolUse` (refusals), `Stop` (end-of-turn checks) |
 | `.socle/git-hooks/` | git hooks: `pre-commit` (fast checks), `prepare-commit-msg` (`Socle-Hooks` trailer), `commit-msg` (private memory leaks; a function with neither test nor waiver, as a warning), `pre-push` (`verify --rapide`, the pushed range judged as the CI will judge it, review before publication) |
 | `.github/workflows/socle.yml` | CI: adapter capabilities, all checks against the base, socle self-test |
+@@LIGNE_MUTATION@@
 | `.git/socle/hooks.log` | local trace of every hook that fires, not versioned, shared by all worktrees of the repository |
 
 List of checks: `python3 .socle/socle checks`.

@@ -9,13 +9,26 @@ hausse, jamais (`chess:.github/mutation-verdict.sh`).
 Les lecteurs de résultats sont propres à chaque outil ; l'adaptateur nomme le
 sien (`parser`). Un module du plafond sans aucun résultat est un balayage qui
 n'a pas tourné : il casse, il ne passe pas pour une couverture parfaite.
+
+Le balayage lui-même (`balayer`) lance la commande de l'adaptateur, module
+par module quand elle nomme `{module}`, puis rend le verdict : c'est ce que
+fait chaque semaine le workflow que pose l'installeur. Et parce qu'un
+cliquet ne peut pas signaler sa propre absence, `vivacite` dit quand ce
+workflow cesse de tourner (`chess:tools/balayage-vivant.sh`, B-0005).
 """
 
 from __future__ import annotations
 
+import json
 import re
+import shlex
+import shutil
+import subprocess
+import sys
 from collections import Counter
+from datetime import datetime, timezone
 from pathlib import Path
+from typing import Callable
 
 from socle import config
 from socle.rapport import Rapport
@@ -277,3 +290,173 @@ def poser_plafonds(projet: config.Projet, mesures: dict[str, int]) -> list[str]:
     except tomllib.TOMLDecodeError:
         return list(mesures)
     return [m for m, n in mesures.items() if caps.get(m, {}).get("pending") or caps.get(m, {}).get("max") != n]
+
+# --------------------------------------------------------------------------
+# Le balayage, puis son verdict
+# --------------------------------------------------------------------------
+
+# Les sorties d'un balayage module par module : sous la trace, ignorée par
+# git, donc hors de la copie de l'arbre que fait l'outil pour chaque mutant.
+SORTIES = ".socle/trace/mutation"
+
+
+def commandes_de_balayage(projet: config.Projet) -> tuple[list[str], Path | None, str | None]:
+    """(commandes, dossier des résultats, faute). Une commande qui nomme
+    `{module}` se lance une fois par module du plafond, chacune dans son
+    propre dossier `{output}` : sans lui, chaque balayage écraserait le
+    précédent, et le verdict ne lirait que le dernier."""
+    cap = projet.adaptateur.get("capabilities", {}).get("mutation", {})
+    commande = cap.get("command")
+    if not commande:
+        return [], None, f"capacité absente : {cap.get('absent', 'non déclarée')}"
+    if "{module}" not in commande:
+        return [commande.replace("{output}", ".")], projet.racine, None
+    if "{output}" not in commande:
+        return [], None, ("la commande de l'adaptateur balaie module par module sans `{output}` : chaque "
+                          "balayage écraserait le précédent ; y ajouter l'option de l'outil qui choisit son "
+                          "dossier de sortie, `{output}` en valeur")
+    modules = sorted(projet.gf("mutation", "caps", defaut={}) or {})
+    if not modules:
+        return [], None, "plafond vide : aucun module à balayer"
+    dossier = projet.racine / SORTIES
+    return [commande.replace("{module}", shlex.quote(m)).replace("{output}", shlex.quote(str(dossier / f"{k:03d}")))
+            for k, m in enumerate(modules)], dossier, None
+
+
+def balayer(projet: config.Projet, poser: bool = False, flux=None) -> Rapport:
+    """Lance le balayage de l'adaptateur, puis rend son verdict. Le code de
+    sortie de l'outil ne décide rien (des survivants le font souvent échouer) :
+    le verdict lit ses résultats, et un module sans résultat casse. Sans
+    `flux`, la sortie de l'outil passe telle quelle, au fil du balayage."""
+    r = Rapport()
+    ident = "mutation.balayage"
+    r.execute(ident)
+    commandes, dossier, faute = commandes_de_balayage(projet)
+    if faute:
+        (r.indisponible if faute.startswith("capacité absente") else r.erreur)(ident, faute)
+        return r
+    if dossier != projet.racine:
+        shutil.rmtree(dossier, ignore_errors=True)
+        dossier.mkdir(parents=True)
+    for c in commandes:
+        print(f"$ {c}", file=flux or sys.stdout, flush=True)
+        if flux is None:
+            subprocess.run(c, shell=True, cwd=projet.racine)
+        else:
+            p = subprocess.run(c, shell=True, cwd=projet.racine, capture_output=True, text=True)
+            flux.write(p.stdout + p.stderr)
+    r.fusionner(verdict(projet, dossier, poser))
+    return r
+
+
+# --------------------------------------------------------------------------
+# Le workflow planifié, et sa vivacité
+# --------------------------------------------------------------------------
+
+WORKFLOW = ".github/workflows/socle-mutation.yml"
+# Ce qui, dans un workflow, désigne l'outil de mutation d'un adaptateur : un
+# projet qui balaie déjà (le projet d'échecs) n'en reçoit pas un second.
+MARQUES_OUTIL = {"cargo-mutants": r"\bcargo[ -]mutants\b", "mutmut": r"\bmutmut\b", "stryker": r"\bstryker\b",
+                 "gremlins": r"\bgremlins\b", "pit": r"\bpitest\b", "mutant": r"\bmutant\s+run\b",
+                 "infection": r"\binfection\b"}
+# GitHub endort les workflows planifiés d'un dépôt public après soixante
+# jours sans activité. Quinze jours laissent passer un balayage hebdomadaire
+# manqué, pas deux.
+SEUIL_JOURS = 15
+
+
+def workflow_de_balayage(cap: dict, fichiers: list[str], lire: Callable[[str], str | None],
+                         sauf_le_sien: bool = False) -> str | None:
+    """Le workflow qui lance le balayage : celui du socle, sinon un workflow
+    du projet qui nomme son outil de mutation."""
+    if not sauf_le_sien and WORKFLOW in fichiers:
+        return WORKFLOW
+    marque = MARQUES_OUTIL.get(cap.get("parser", ""))
+    if marque is None:
+        return None
+    for f in sorted(fichiers):
+        if (re.fullmatch(r"\.github/workflows/[^/]+\.ya?ml", f) and f not in (WORKFLOW, ".github/workflows/socle.yml")
+                and re.search(marque, lire(f) or "")):
+            return f
+    return None
+
+
+def _date(texte: str) -> datetime:
+    d = datetime.fromisoformat(texte.replace("Z", "+00:00"))
+    return d if d.tzinfo else d.replace(tzinfo=timezone.utc)
+
+
+def vivacite(etat: str | None, derniere: str | None, cree: str | None,
+             maintenant: datetime | None = None) -> tuple[str | None, str]:
+    """(niveau, message) d'après l'état du workflow que rend GitHub, la date
+    de sa dernière exécution achevée et celle où il est apparu. Le niveau
+    vaut `erreur`, `avertir` ou `None` (il tourne)."""
+    maintenant = maintenant or datetime.now(timezone.utc)
+    if etat != "active":
+        return "erreur", (f"le workflow est « {etat} » : GitHub endort les workflows planifiés d'un dépôt public "
+                          "après soixante jours sans activité, et plus rien ne mesure le cliquet. Le réactiver "
+                          "(Actions → le workflow → Enable workflow), puis le lancer à la main")
+    if derniere is None:
+        age = (maintenant - _date(cree)).days if cree else 0
+        if age > SEUIL_JOURS:
+            return "erreur", (f"aucun balayage en {age} jours d'existence du workflow : son cron ne part pas. "
+                              "Le lancer à la main, et chercher pourquoi")
+        return "avertir", "pas encore de balayage : le premier part au prochain créneau du cron, ou à la main"
+    age = (maintenant - _date(derniere)).days
+    if age > SEUIL_JOURS:
+        return "erreur", (f"dernier balayage il y a {age} jours ({derniere[:10]}) : le workflow est actif mais ne "
+                          "tourne plus. Le lancer à la main, et chercher pourquoi son cron ne part plus")
+    return None, f"dernier balayage il y a {age} jour(s)"
+
+
+def _gh_api(racine: Path, chemin: str) -> tuple[object | None, str]:
+    """(réponse, faute) de l'API de GitHub par `gh` ; la faute vaut `404`
+    quand la ressource n'existe pas."""
+    try:
+        p = subprocess.run(["gh", "api", chemin], cwd=racine, capture_output=True, text=True, timeout=10)
+    except (subprocess.TimeoutExpired, OSError) as e:
+        return None, type(e).__name__
+    if p.returncode != 0:
+        return None, "404" if "404" in p.stderr else (p.stderr.strip().splitlines() or ["gh a échoué"])[-1]
+    try:
+        return json.loads(p.stdout), ""
+    except ValueError:
+        return None, "réponse illisible"
+
+
+def etat_du_balayage(projet: config.Projet, fichiers: list[str],
+                     lire: Callable[[str], str | None]) -> tuple[str | None, str, str | None, str | None]:
+    """(niveau, message, workflow, page) : le balayage planifié tourne-t-il
+    encore ? Le niveau vaut `erreur`, `avertir`, `indisponible`, ou `None`
+    quand il tourne, ou quand l'adaptateur ne déclare pas de mutation."""
+    from socle import liens
+
+    cap = projet.adaptateur.get("capabilities", {}).get("mutation", {})
+    if "command" not in cap:
+        return None, "", None, None
+    flux = workflow_de_balayage(cap, fichiers, lire)
+    if flux is None:
+        return "erreur", (f"aucun workflow ne lance le balayage de mutation : le cliquet ne se mesure jamais. "
+                          f"Relancer l'installeur, qui pose `{WORKFLOW}`"), None, None
+    url = liens.url_depot(projet) or ""
+    if not url.startswith("https://github.com/"):
+        return "indisponible", "dépôt hors de GitHub : la vivacité du balayage ne s'y lit pas", flux, None
+    if not shutil.which("gh"):
+        return "indisponible", "gh absent : la vivacité du balayage ne se lit pas", flux, None
+    depot, nom = url.removeprefix("https://github.com/"), flux.rsplit("/", 1)[-1]
+    page = f"{url}/actions/workflows/{nom}"
+    wf, faute = _gh_api(projet.racine, f"repos/{depot}/actions/workflows/{nom}")
+    if faute == "404":
+        return "avertir", f"`{nom}` n'est pas encore sur la branche par défaut : GitHub ne le planifie qu'une fois fusionné", flux, page
+    if not isinstance(wf, dict):
+        return "indisponible", (f"API de GitHub injoignable ({faute}) : dans la CI, il faut `GH_TOKEN` et le droit "
+                                "`actions: read`"), flux, page
+    if wf.get("state") != "active":
+        # Endormi : ses exécutions n'y changent rien.
+        return (*vivacite(wf.get("state"), None, None), flux, page)
+    runs, faute = _gh_api(projet.racine, f"repos/{depot}/actions/workflows/{nom}/runs?per_page=1&status=completed")
+    if not isinstance(runs, dict):
+        return "indisponible", f"exécutions du balayage illisibles ({faute})", flux, page
+    derniere = next(iter(runs.get("workflow_runs") or []), {}).get("created_at")
+    niveau, message = vivacite(wf.get("state"), derniere, wf.get("created_at"))
+    return niveau, message, flux, page

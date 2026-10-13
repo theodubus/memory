@@ -603,14 +603,31 @@ def couverture_mutation(ctx, r):
         if m not in caps and porte.search(ctx.lire(m) or ""):
             r.erreur("mutation.couverture", "module hors du cliquet de mutation : l'y poser à mesurer "
                      f"(`\"{m}\" = {{ pending = true }}` sous `[mutation.caps]` des garde-fous), puis le mesurer "
-                     "par un balayage (`socle mutation-verdict <résultats> --poser`)", m)
+                     "par un balayage (`socle mutation-run --poser`)", m)
         elif m in caps and caps[m].get("pending"):
             # À mesurer (B-0034, P1) : un avertissement, jusqu'au premier
             # balayage, qui pose le plafond mesuré.
-            r.avertir("mutation.couverture", "module à mesurer : lancer le balayage de mutation "
-                      f"(`{cap.get('command', '…')}`), puis `socle mutation-verdict <résultats> --poser`", m)
+            r.avertir("mutation.couverture", "module à mesurer : lancer le balayage de mutation et poser son "
+                      "plafond (`socle mutation-run --poser`), ou recopier celui du dernier balayage planifié", m)
     for m in caps:
         if m not in ctx.fichiers:
             r.erreur("mutation.couverture", f"le cliquet nomme `{m}`, qui n'existe pas", ctx.projet.chemins.garde_fous)
         elif "reason" not in caps[m] and caps[m].get("max", 0) > 0:
             r.erreur("mutation.couverture", f"plafond non nul sans raison écrite pour `{m}`", ctx.projet.chemins.garde_fous)
+
+
+@controle("mutation.vivante", etages=("ci",))
+def vivante(ctx, r):
+    """Le balayage de mutation planifié tourne encore. GitHub endort les
+    workflows planifiés d'un dépôt public après soixante jours sans activité,
+    et le verdict ne peut pas signaler sa propre absence : ce contrôle tourne
+    à chaque push, quand le code bouge (B-0005, `chess:tools/balayage-vivant.sh`)."""
+    from socle import mutation
+
+    niveau, message, flux, _ = mutation.etat_du_balayage(ctx.projet, ctx.fichiers, ctx.lire)
+    if niveau == "erreur":
+        r.erreur("mutation.vivante", message, flux)
+    elif niveau == "avertir":
+        r.avertir("mutation.vivante", message, flux)
+    elif niveau == "indisponible":
+        r.indisponible("mutation.vivante", message)

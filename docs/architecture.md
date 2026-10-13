@@ -12,7 +12,7 @@ sans entrer dans le code, `docs/socle.md`. La liste exacte des contrôles se dé
 | --- | --- | --- |
 | Moteur immuable | dans un projet, .socle/engine/socle/ (ici, la source : `moteur/socle/`), lanceur `.socle/socle`, verrou .socle/engine.lock | l'installeur seul ; la CI vérifie l'empreinte |
 | Fichiers du projet | memory/, .socle/policy.toml, .socle/adapter.toml, .socle/guardrails.toml | le projet, selon la politique |
-| Étages d'application | `.claude/settings.json`, `.socle/git-hooks/`, `.github/workflows/socle.yml`, `.github/CODEOWNERS` | l'installeur ; fichiers protégés |
+| Étages d'application | `.claude/settings.json`, `.socle/git-hooks/`, `.github/workflows/socle.yml` (et le balayage de mutation hebdomadaire, quand l'adaptateur en déclare un), `.github/CODEOWNERS` | l'installeur ; fichiers protégés |
 
 Les trois étages appellent le même moteur : `python3 .socle/socle hook …`
 pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
@@ -33,7 +33,7 @@ comparent le même fichier sous ses deux noms.
 
 | Module | Rôle |
 | --- | --- |
-| `cli.py` | les commandes, rangées par public dans l'aide (l'humain, l'agent, les hooks et la CI) : `aide`, `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `prive`, `relu`, `answer`, `approve`, `install`, `init`, `selftest`, `fingerprint`, `mutation-verdict`, `archive`, `checks` ; sans commande, l'aide de l'humain |
+| `cli.py` | les commandes, rangées par public dans l'aide (l'humain, l'agent, les hooks et la CI) : `aide`, `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `prive`, `relu`, `answer`, `approve`, `install`, `init`, `selftest`, `fingerprint`, `mutation-verdict`, `mutation-run`, `archive`, `checks` ; sans commande, l'aide de l'humain |
 | `AIDE.md` | le guide de l'humain, source unique : ses gestes, chacun avec sa commande ; `socle aide` l'affiche |
 | `memoire.py` | lecture des cinq couches : en-têtes, entrées, identifiants, métadonnées, références |
 | `demandes.py` | le contrat des demandes, son lint, les réponses humaines gelées |
@@ -51,7 +51,7 @@ comparent le même fichier sous ses deux noms.
 | `prive.py` | la mémoire privée : modes compagnon et chiffré, verrou, accès, couches privées par défaut, bascule d'une entrée publique, contrôles `prive.*` ; un terme privé cherché sous ses variantes d'écriture, dans le contenu, les noms de fichier et de branche ; rien d'écrit sans accès ; la mémoire privée lue à une révision ; la mise en place du dépôt compagnon, réservée à l'humain |
 | `liens.py` | le permalien d'un fichier ou d'une entrée ; les liens d'un message que l'humain ne pourra pas suivre |
 | `verification.py` | le contrat `verify` : les capacités de l'adaptateur |
-| `mutation.py` | le verdict de mutation contre les plafonds ; un lecteur par outil (cargo-mutants, mutmut, Stryker, gremlins, PIT, mutant, Infection) ; un module « à mesurer » reçoit son plafond mesuré (`--poser`) |
+| `mutation.py` | le balayage de l'adaptateur, module par module quand sa commande en nomme un, puis le verdict contre les plafonds ; un lecteur par outil (cargo-mutants, mutmut, Stryker, gremlins, PIT, mutant, Infection) ; un module « à mesurer » reçoit son plafond mesuré (`--poser`) ; la vivacité du workflow planifié, lue par l'API de GitHub |
 | `empreinte.py` | l'empreinte du moteur |
 | `installeur.py` | installation, mise à jour, adoption ; adaptateur déduit du dépôt ; mémoire privée posée à l'installation, ou ajoutée à un projet installé ; diff de politique à la mise à jour ; le code existant entre « à mesurer » au cliquet de mutation ; un audit court, puis « Et maintenant », les étapes de l'humain avec leur commande ; ne s'installe qu'à la racine du dépôt ; relancé, il ne perd rien : le moteur reste en place s'il est lancé depuis le projet, un CLAUDE.md propre au projet passe dans AGENTS.md, une seconde adoption complète sa liste, et ce que le .gitignore du projet écarterait reçoit une exception (B-0044, L1) |
 | `langue.py` | la langue de la mémoire : le vocabulaire du format par langue, ramené à des clés internes à la lecture, et celui du projet à l'écriture |
@@ -98,6 +98,7 @@ comparent le même fichier sous ses deux noms.
 | Correctif avec test de régression rejoué sur le parent, où il échoue sans y manquer de se charger (`load_error`) ; un test écrit dans le module qu'il teste (Rust) s'y rejoue avec ses seules lignes de test, le code du parent gardé (B-0051) | `tests.regression` | CI |
 | Code nouveau ou modifié testé : une fonction publique est nommée par un test, hors de ses commentaires, ou dispensée nommément avec sa raison (`Dispense-test:`) | `tests.code-teste` ; au commit, un avertissement du hook `commit-msg`, le premier qui voit la dispense (B-0034, P9) | agent, CI ; avertissement au commit |
 | Mutation : plafond par module, cliquet ; un module pas encore balayé y entre « à mesurer » (un avertissement), et le premier verdict pose son plafond, relu après écriture (un plafond qu'il ne sait pas écrire est dit) | `mutation.couverture`, `socle mutation-verdict --poser` | agent, git, CI ; verdict hebdomadaire |
+| Le balayage tourne : un workflow hebdomadaire, posé par l'installeur sauf si le projet en lance déjà un, lance la commande de l'adaptateur (module par module, chacun dans son dossier `{output}`), rend le verdict et ouvre une issue quand le cliquet casse ; un workflow endormi par GitHub, ou qui ne tourne plus depuis quinze jours, casse la CI et revient à l'humain dans l'état (B-0005) | `socle mutation-run`, `mutation.vivante`, la ligne `mutation` de l'état | CI ; chaque semaine |
 | Rien ne s'affaiblit en silence | `cliquet.garde-fous`, `protege.fichiers` | agent, git, CI |
 | Moteur et politique non altérés | `moteur.empreinte`, `protege.fichiers` | agent, git, CI |
 | Seule la CI est incontournable : GitHub l'exige avant toute fusion | une étape de « Et maintenant » à l'installation ; la ligne `branche` de l'état, et une action de l'humain quand elle n'est pas exigée | GitHub |

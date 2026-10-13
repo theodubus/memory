@@ -95,6 +95,20 @@ def ci_exigee(projet: config.Projet) -> tuple[bool | None, str]:
                                  " ; revue des propriétaires du code non exigée")
 
 
+def _balayage(projet: config.Projet, elements: list) -> list[str]:
+    """La ligne du balayage de mutation planifié, quand l'adaptateur en
+    déclare un ; endormi ou arrêté, le réveiller revient à l'humain."""
+    from socle import humain, mutation
+
+    niveau, message, _, page = mutation.etat_du_balayage(
+        projet, outils.fichiers_courants(projet.racine), lambda f: outils.lire_a(projet.racine, None, f))
+    if not message:
+        return []
+    if niveau == "erreur":
+        elements.append(humain.Element("action", f"remettre en marche le balayage de mutation : {message}", page or ""))
+    return [f"mutation : {message}"]
+
+
 def page_protection(projet: config.Projet) -> str | None:
     """La page des réglages de GitHub où l'humain pose ses ensembles de
     règles (rulesets)."""
@@ -132,6 +146,7 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
             elements.append(humain.Element(
                 "action", f"protéger la branche `{nom}` : y exiger la CI « {nom_de_la_ci(projet)} » avant toute "
                 "fusion, et la revue des propriétaires du code (CODEOWNERS)", page_protection(projet) or ""))
+        lignes += _balayage(projet, elements)
         if exigee:
             lignes.append(f"branche  : {detail.replace(' ; ', ' — CI du socle exigée avant fusion ; ', 1)}")
         elif exigee is False:

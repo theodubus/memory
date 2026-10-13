@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
-from socle import config, langue, memoire, outils
+from socle import config, langue, memoire, mutation, outils
 from socle.modeles import gabarit
 
 
@@ -86,9 +86,10 @@ def auditer_depot(projet: config.Projet) -> list[Fait]:
             premier = sorted(par_fichier)[0]
             faits.append(Fait(f"Le dépôt a {sum(par_fichier.values())} fonction(s) de test, dans "
                               f"{len(par_fichier)} fichier(s), dont `{premier}`", premier))
-    # La CI du socle n'est pas celle du projet : l'installeur vient de la poser.
+    # La CI du socle et son balayage de mutation ne sont pas ceux du projet :
+    # l'installeur vient de les poser.
     for ci in sorted(f for f in fichiers if f.startswith(".github/workflows/") and f.endswith((".yml", ".yaml"))
-                     and f != ".github/workflows/socle.yml"):
+                     and f not in (".github/workflows/socle.yml", mutation.WORKFLOW)):
         faits.append(Fait(f"Une CI GitHub existe : `{ci.rsplit('/', 1)[1]}`", ci))
     for doc in ("README.md", "README", "README.rst"):
         if doc in fichiers:

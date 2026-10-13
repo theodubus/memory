@@ -60,7 +60,8 @@ une question posée dans la demande de validation, pas une correction.
   de ce dépôt (le socle la permet par `[human] keep_branches`).
 - `chess:tools/balayage-vivant.sh` (le cliquet de mutation ne peut pas signaler
   sa propre absence) : générique, mais il dépend de l'API GitHub. Reporté au
-  backlog avec le workflow de mutation générique.
+  backlog avec le workflow de mutation générique, puis repris par
+  `mutation.vivante` et le workflow que pose l'installeur (B-0005).
 
 ## Ce que `chess` n'a pas et que le socle ajoute
 

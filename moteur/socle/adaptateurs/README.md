@@ -53,7 +53,7 @@ mutation ; `python-pytest` prend pytest et mutmut, qui exige pytest.
 | Reconnaître une assertion | `assert!`, `assert_eq!`… | `assert`, `self.assert…` | `assert`, `pytest.raises` | `tests.creux` : un test sans assertion est refusé |
 | Reconnaître un test désactivé | `#[ignore]` | `@unittest.skip` | `@pytest.mark.skip`, `xfail` | `tests.creux` : désactivé sans raison écrite, refusé |
 | Rejouer un test sur le commit d'avant | `cargo test` d'un fichier de `tests/`, ou d'un test de son module par son nom | `unittest` d'un module | `pytest` d'un fichier | `tests.regression` |
-| Mesurer la mutation | `cargo-mutants` | absente | `mutmut` | `mutation.couverture`, `socle mutation-verdict` |
+| Mesurer la mutation | `cargo-mutants` | absente | `mutmut` | `mutation.couverture`, `socle mutation-run`, `socle mutation-verdict` |
 | Dire quel code doit être testé, et quelles fonctions sont privées | `src/`, `fn` sans `pub` | hors `tests/`, `def _…` | idem | `tests.code-teste` : une fonction publique ajoutée ou modifiée est nommée par un test |
 
 La mutation consiste à modifier le code exprès (changer un `+` en `-`, un
@@ -113,6 +113,8 @@ Les clés qui décrivent un langage, toutes facultatives sauf `function` :
 | `ignore`, `ignore_reason` | un test désactivé, et sa raison écrite ; lus sur ses attributs, sa ligne et son corps | `t.Skip()` |
 | `shared`, `copied` (régression) | les dépendances installées que le worktree de la régression lie ou copie | `node_modules`, `vendor` |
 | `modules_exclude` (mutation) | ce que l'outil ne mute pas | `**/*_test.go` |
+| `command` (mutation) | le balayage ; avec `{module}`, il se lance une fois par module du plafond, et `{output}` lui donne son propre dossier de résultats, sans quoi chaque module écraserait le précédent | `cargo mutants --file {module} --output {output}` |
+| `install` (mutation) | ce qui pose l'outil sur le runner du balayage hebdomadaire, quand rien d'autre ne le fait | `cargo install cargo-mutants --locked` |
 | `test_arg` (régression) | un argument par test rejoué ; `{file}`, `{stem}`, `{module}` ou `{dir}` | `./{dir}` en Go |
 | `load_error` (régression) | ce qui, dans la sortie, dit que le test ne s'est pas chargé sur le parent : il y échoue pour une autre raison que le défaut | `\[build failed\]` en Go |
 | `module_command` (régression) | la commande qui lance, par leurs noms (`{names}`), des tests écrits dans le module qu'ils testent ; sur le parent, seules leurs lignes de test s'appliquent | `cargo test --workspace -- {names}` |

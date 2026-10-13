@@ -565,6 +565,14 @@ def cmd_mutation_verdict(args) -> int:
     return 0 if rapport.reussi else 1
 
 
+def cmd_mutation_run(args) -> int:
+    from socle import mutation
+
+    rapport = mutation.balayer(_projet(args), poser=getattr(args, "poser", False))
+    rapport.afficher(f"socle {VERSION} — balayage de mutation")
+    return 0 if rapport.reussi else 1
+
+
 def cmd_archive(args) -> int:
     from socle import archivage
 
@@ -584,8 +592,8 @@ def cmd_checks(args) -> int:
 # davantage, le reste sert aux hooks, à la CI et au moteur lui-même.
 GROUPES = {
     "pour l'humain": ["aide", "install", "init", "state", "answer", "approve", "relu", "prive installer"],
-    "pour l'agent": ["new", "show", "url", "verify", "check", "next-id", "prive", "mutation-verdict", "archive",
-                     "checks"],
+    "pour l'agent": ["new", "show", "url", "verify", "check", "next-id", "prive", "mutation-verdict", "mutation-run",
+                     "archive", "checks"],
     "internes (hooks, CI, moteur)": ["hook", "ci", "selftest", "fingerprint"],
 }
 
@@ -742,6 +750,11 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
     s.add_argument("--poser", action="store_true",
                    help="écrire le plafond mesuré des modules « à mesurer » dans les garde-fous")
     s.set_defaults(f=cmd_mutation_verdict)
+
+    s = sp.add_parser("mutation-run", help="lance le balayage de mutation de l'adaptateur, puis son verdict")
+    s.add_argument("--poser", action="store_true",
+                   help="écrire le plafond mesuré des modules « à mesurer » dans les garde-fous")
+    s.set_defaults(f=cmd_mutation_run)
 
     s = sp.add_parser("archive", help="archive les sujets clos du backlog dans le journal")
     s.set_defaults(f=cmd_archive)
