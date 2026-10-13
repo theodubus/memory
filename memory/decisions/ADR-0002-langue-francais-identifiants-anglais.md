@@ -1,7 +1,7 @@
 <!-- socle: couche=decisions zone=publique -->
 # ADR-0002 — Contenu en français, identifiants en anglais
 
-> statut : acceptée · date : 2026-10-10 · source : J-2026-10-10-C
+> statut : remplacée · date : 2026-10-10 · source : J-2026-10-10-C · remplacée-par : ADR-0027
 
 ## Contexte
 
