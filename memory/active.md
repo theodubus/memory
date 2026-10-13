@@ -5,11 +5,13 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-B-0044, les lots de la passe de recul, dans l'ordre que Théo a validé
-(D-0015). L1 à L5, R6, R2 et L7 faits (J-2026-10-12-G à J, J-2026-10-12-R,
-J-2026-10-13-A à K, J-2026-10-13-P, J-2026-10-13-Q) ; L6 attend D-0019.
-Chaque correctif avec un test qui échoue sur le code d'avant, un compte
-rendu à Théo à la fin de chaque lot.
+Les noms anglais (B-0045), au périmètre que Théo a choisi (D-0021,
+`fichiers`) : commandes, options, dossiers, gabarits et modules passent en
+anglais, les anciens noms de commandes et d'options gardés une version ;
+les fonctions gardent leurs noms français, et ADR-0002 est corrigée en ce
+sens. Les assertions qui nomment un module changent : une demande les
+nommera avant de les committer. Le dossier du moteur de ce dépôt est
+écrit dans son verrou, protégé : à Théo.
 
 ## Consignes en cours
 
@@ -18,17 +20,8 @@ rendu à Théo à la fin de chaque lot.
 
 ## Prochaines étapes
 
-1. L6 : la part du moteur faite (J-2026-10-13-O) ; D-0019 en attente de
-   Théo, pour sortir le banc et l'auto-test complet des étapes rapides de
-   ce dépôt. R2 et L7 faits (J-2026-10-13-P, J-2026-10-13-Q).
-2. B-0047 (D-0017 validée, ADR-0025) : le format 3 se lit, s'écrit et se
-   migre, ce dépôt y est passé, et les tests ne dépendent plus du format
-   (J-2026-10-13-R, J-2026-10-13-S). La bascule des installations neuves
-   attend D-0020 : la constante `FORMAT_ACTUEL` et `migrations.FORMAT` à
-   3, et le test qui affirme le format d'un projet neuf. B-0053 fait
-   (ADR-0026). Les noms anglais (B-0045) : rien de versionné dans un
-   projet, donc pas de migration ; leur périmètre attend D-0021
-   (J-2026-10-13-T).
-3. Plus tard : B-0046 (la documentation à refaire, à clarifier d'abord avec
-   Théo), B-0038, B-0039, B-0040 ; B-0042 attend sa propre demande. La
-   pull request, quand Théo la demandera.
+1. B-0045 : la liste des renommages, puis la demande qui nomme les tests
+   dont les assertions changent.
+2. Plus tard : B-0046 (la documentation à refaire, que Théo reprendra plus
+   tard, J-2026-10-13-U), B-0038, B-0039, B-0040 ; B-0042 attend sa
+   propre demande. La pull request, quand Théo la demandera.

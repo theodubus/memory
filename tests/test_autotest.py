@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from socle import autotest
+from socle import autotest, verification
 
 
 class TestAttribution(unittest.TestCase):
@@ -66,12 +66,15 @@ class TestAtelierPartage(unittest.TestCase):
 
 
 AUTOTEST_ENSUITE = bool(os.environ.get(autotest.ENSUITE))
+ETAPES_RAPIDES = bool(os.environ.get(verification.RAPIDE))
 
 
 class TestInjection(unittest.TestCase):
     # `socle ci` lance l'auto-test lui-même, juste après la suite de tests :
-    # il ne tourne pas deux fois (L6).
+    # il ne tourne pas deux fois (L6). Trop long pour une fin de tour, il
+    # attend la CI (D-0019).
     @unittest.skipIf(AUTOTEST_ENSUITE, "lancé juste après par la même CI, qui ne le joue pas deux fois")
+    @unittest.skipIf(ETAPES_RAPIDES, "trop long pour une fin de tour : la CI le joue à chaque push")
     def test_chaque_defaut_est_attrape_et_chaque_temoin_passe(self):
         rapport = autotest.executer()
         self.assertTrue(rapport.reussi, rapport.texte())

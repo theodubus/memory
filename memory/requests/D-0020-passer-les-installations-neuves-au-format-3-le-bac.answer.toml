@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0020-passer-les-installations-neuves-au-format-3-le-bac.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-10-13"
+canal = "conversation"
+citation = "D0019 en gros ça serait décaler des tests qu'on fair a chaque tour plutot en CI pour gagner du temps ? Si c'est ça ok je valide \n\nD0020 ok je valide\n\nD0021 ok je valide ta recommandation (ce qu'on tape et les noms des fichiers)\n\nOn verra plus tard pour la doc, sauf si tu as besoin maintenant"
+empreinte = "sha256:0a15fed74984648116c61ddaa9b05a0a0c71ebdd8e04afa6f86b657b7ae13201"

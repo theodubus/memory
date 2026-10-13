@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
 from socle import config, installeur, outils, verification
@@ -57,6 +58,17 @@ class TestEtapesRapides(unittest.TestCase):
         (self.racine / "neuf.py").write_text("y = 1\n")
         self.assertTrue(self.lancer())
         self.assertEqual(self.fois(), 3)
+
+    def test_les_etapes_rapides_le_disent_a_leurs_commandes(self):
+        # D-0019 : un test trop long pour une fin de tour se met de côté
+        # quand la variable est posée ; toutes les étapes, en CI, la retirent.
+        projet = config.Projet.charger(self.racine)
+        projet.adaptateur["capabilities"] = {"tests": {
+            "command": f"echo \"${{{verification.RAPIDE}:-absente}}\" >> {self.compte}", "fast": True}}
+        verification.executer_etapes(projet, True, Rapport())
+        with unittest.mock.patch.dict("os.environ", {verification.RAPIDE: "1"}):
+            verification.executer_etapes(projet, False, Rapport())
+        self.assertEqual(self.compte.read_text().split(), ["1", "absente"])
 
     def test_un_echec_ne_se_memorise_pas(self):
         self.code = 1

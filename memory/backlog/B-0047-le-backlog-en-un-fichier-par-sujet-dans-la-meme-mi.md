@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0047 — Le backlog en un fichier par sujet, dans la même migration que les noms anglais (D-0017)
 
-> statut : en-cours · origine : J-2026-10-12-L · lu : backlog@19253d8c
+> statut : fait · origine : J-2026-10-12-L · lu : backlog@19253d8c · ref : J-2026-10-13-V
 
 Validé par Théo (D-0017) : un fichier par sujet dans un dossier backlog de
 la mémoire, son pendant privé, plus d'archivage des sujets clos au journal,

@@ -64,6 +64,13 @@ Un projet installé avant qu'une section existe hérite de celle de
 l'adaptateur maintenu du même langage, venue avec le moteur : c'est le cas de
 la section `[code]`.
 
+Une étape marquée `fast = true` tourne à la fin de chaque tour, avant
+chaque push et quand l'agent lance `verify --rapide` ; la CI les lance
+toutes. Pendant les étapes rapides, le moteur pose la variable
+`SOCLE_RAPIDE` : un test trop long pour une fin de tour s'y met de côté,
+avec sa raison écrite, et la CI le joue toujours (D-0019). Sous `unittest` :
+`@unittest.skipIf(os.environ.get("SOCLE_RAPIDE"), "…")`.
+
 ## Une capacité absente se déclare
 
 Chaque capacité est soit une commande, soit déclarée absente avec ce qui la

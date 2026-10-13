@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0019-sortir-le-banc-et-l-auto-test-complet-des-etapes-r.md, dont l'empreinte suit.
+reponse = "convention"
+texte = ""
+par = "Théo"
+date = "2026-10-13"
+canal = "conversation"
+citation = "D0019 en gros ça serait décaler des tests qu'on fair a chaque tour plutot en CI pour gagner du temps ? Si c'est ça ok je valide \n\nD0020 ok je valide\n\nD0021 ok je valide ta recommandation (ce qu'on tape et les noms des fichiers)\n\nOn verra plus tard pour la doc, sauf si tu as besoin maintenant"
+empreinte = "sha256:630cba0c4b8beff8c559aa7c8d440e39c04628fe60d3affc900f9b1185a9434e"

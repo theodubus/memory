@@ -58,9 +58,19 @@ def etapes(projet: config.Projet, rapide: bool) -> list[tuple[str, dict]]:
     return res
 
 
+# Posée pendant les étapes rapides (D-0019) : un test trop long pour une fin
+# de tour s'y met de côté, avec sa raison écrite, et la CI, qui lance toutes
+# les étapes sans elle, le joue toujours.
+RAPIDE = "SOCLE_RAPIDE"
+
+
 def executer_etapes(projet: config.Projet, rapide: bool, rapport: Rapport, flux=None):
     env = dict(os.environ)
     env.setdefault("LC_ALL", "C.UTF-8")
+    if rapide:
+        env[RAPIDE] = "1"
+    else:
+        env.pop(RAPIDE, None)
     for nom, c in etapes(projet, rapide):
         ident = f"verify.{nom}"
         rapport.execute(ident)

@@ -24,9 +24,7 @@ memory/
 Ce sont les emplacements du **format 3** (ADR-0025) : ceux du format 2, sauf
 le backlog, qui y était un seul fichier, `backlog.md`. Le moteur lit les
 deux ; la forme du backlog, fichier ou dossier, dit lequel. La mise à jour
-découpe le fichier unique, un fichier par sujet (voir « Backlog »). Pour
-l'heure, une installation neuve pose encore le format 2 : elle passera au 3
-quand l'humain aura validé les tests qui fixent le format d'un projet neuf.
+découpe le fichier unique, un fichier par sujet (voir « Backlog »).
 
 Les noms du **format 2** sont en anglais pour tous les projets quelle que
 soit la langue de la mémoire (B-0032) ; la configuration du socle suit

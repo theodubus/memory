@@ -175,6 +175,11 @@ comparent le même fichier sous ses deux noms.
 - **L'auto-test tourne sur plusieurs fils**, un clone par cas (de 76 à 33
   secondes sur quatre cœurs), et une seule fois en CI : `socle ci` le lance
   lui-même, et le test de ce dépôt qui le joue lui cède alors la place.
+- **Ce qui est trop long pour une fin de tour attend la CI** (D-0019) : le
+  moteur pose `SOCLE_RAPIDE` pendant les étapes rapides, et un test peut
+  s'y mettre de côté, avec sa raison écrite ; la CI, qui lance toutes les
+  étapes, le joue toujours. Ce dépôt y met le banc et l'auto-test complet :
+  sa suite rapide passe de 290 à 143 secondes (mesuré le 13 octobre).
 - **Les liens donnés à l'humain sont des permaliens** (`ADR-0010`) : au
   commit poussé, pas à la branche, qui disparaît à la fusion ; vérifiés par
   le hook de fin de tour, que l'agent ait agi ou non.

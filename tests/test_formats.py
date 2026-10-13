@@ -114,8 +114,9 @@ class Projet(unittest.TestCase):
 
 
 class TestDetection(Projet):
-    def test_un_projet_neuf_est_au_format_2(self):
-        self.assertEqual(config.chemins(self.racine), config.FORMAT_2)
+    def test_un_projet_neuf_est_au_format_3(self):
+        # Le backlog en un fichier par sujet (D-0020).
+        self.assertEqual(config.chemins(self.racine), config.FORMAT_3)
         self.assertTrue((self.racine / ".socle/engine.lock").is_file())
         self.assertTrue((self.racine / "memory/canonical.md").is_file())
         self.assertEqual(prive.dossier(self.racine), "memory/private")

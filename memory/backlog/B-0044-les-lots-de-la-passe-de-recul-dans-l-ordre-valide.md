@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0044 — Les lots de la passe de recul, dans l'ordre validé (D-0015)
 
-> statut : en-cours · origine : J-2026-10-12-F · lu : backlog@19253d8c
+> statut : fait · origine : J-2026-10-12-F · lu : backlog@19253d8c · ref : J-2026-10-13-V
 
 Les lots du relevé de la passe de recul (`docs/recul.md`, section 3), dans
 l'ordre que Théo a validé : L1, les pertes de données et la casse à

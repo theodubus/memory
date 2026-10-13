@@ -77,10 +77,8 @@ FORMAT_2 = Chemins(2, "memory", "memory/canonical.md", "memory/active.md", "memo
 # un fichier par sujet (ADR-0025).
 FORMAT_3 = replace(FORMAT_2, format=3, backlog="memory/backlog")
 FORMATS = {1: FORMAT_1, 2: FORMAT_2, 3: FORMAT_3}
-# Le format d'une installation neuve. Il passe à 3 quand l'humain aura
-# validé les tests qui fixent le format 2 d'un projet neuf (politique,
-# point 2) : le format 3 se lit, s'écrit et se migre déjà.
-FORMAT_ACTUEL = FORMAT_2
+# Le format d'une installation neuve (D-0020).
+FORMAT_ACTUEL = FORMAT_3
 
 # Le renommage du format 1 au format 2, segment par segment, selon où le
 # segment se trouve : sous `.socle/`, ou dans la mémoire.

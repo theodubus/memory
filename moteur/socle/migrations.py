@@ -182,10 +182,8 @@ def _vers_format_3(cible: Path) -> list[str]:
 
 
 # Version courante du format. Une migration `MIGRATIONS[n]` fait passer un
-# projet du format n au format n + 1, et rend ce qu'elle a fait. Le format 3
-# se lit et se migre ; il devient celui des installations quand `FORMAT`
-# passe à 3, avec `config.FORMAT_ACTUEL`.
-FORMAT = 2
+# projet du format n au format n + 1, et rend ce qu'elle a fait.
+FORMAT = 3
 MIGRATIONS: dict[int, Callable[[Path], list[str]]] = {1: _vers_format_2, 2: _vers_format_3}
 
 

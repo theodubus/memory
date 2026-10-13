@@ -4,6 +4,7 @@ passage est rejoué après la remise à zéro, sur un projet neuf."""
 
 import importlib.util
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -13,12 +14,20 @@ from datetime import datetime, timezone
 from pathlib import Path
 from unittest import mock
 
+from socle import verification
+
 RACINE = Path(__file__).resolve().parent.parent
 _spec = importlib.util.spec_from_file_location("banc", RACINE / "banc/banc.py")
 banc = sys.modules["banc"] = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(banc)
 
 
+# Le banc joue des sessions entières sur des projets jetables : trop long
+# pour une fin de tour, il attend la CI (D-0019).
+ETAPES_RAPIDES = bool(os.environ.get(verification.RAPIDE))
+
+
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une fin de tour : la CI le joue à chaque push")
 class Dossier(unittest.TestCase):
     def setUp(self):
         self.dossier = Path(tempfile.mkdtemp(prefix="socle-test-banc-"))
