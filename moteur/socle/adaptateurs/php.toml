@@ -81,7 +81,7 @@ strings = '''"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*\''''
 line_comment = '(?://|#(?!\[)).*$'
 assertion = '\$this->assert\w+\(|\b(?:self|static)::assert\w+\(|\$this->expectException\w*\(|\bfail\s*\('
 ignore = '''\$this->markTest(?:Skipped|Incomplete)\b|#\[(?:\\?PHPUnit\\Framework\\Attributes\\)?Group\(\s*['"]skip'''
-ignore_reason = '''markTest(?:Skipped|Incomplete)\(\s*['"][^'"]{3,}'''
+ignore_reason = '''markTest(?:Skipped|Incomplete)\(\s*(?:"[^"]{3,}|'[^']{3,})'''
 tautology = [
   'assert(?:Same|Equals)\(\s*([^,()]+(?:\([^()]*\))?)\s*,\s*\1\s*\)',
   'assertTrue\(\s*true\s*\)',

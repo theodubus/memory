@@ -158,11 +158,17 @@ comparent le même fichier sous ses deux noms.
   sa compréhension. Une entrée qui change de fichier, un sujet clos archivé
   au journal, garde sa preuve sans relire : la citation se juge au commit où
   elle a paru pour la première fois, dans l'entrée qui la porte.
-- **La fin de tour ne recompile que si l'arbre a bougé** depuis la dernière
-  vérification réussie : son empreinte est HEAD, le diff et le contenu des
-  fichiers non suivis, pas seulement leurs noms. Le compteur de ses échecs
-  (politique, point 7) appartient à sa session : une session nouvelle ne
-  commence pas à l'escalade.
+- **Une vérification réussie se mémorise** (L6) : les étapes rapides de
+  l'adaptateur ne se relancent pas sur un arbre où elles ont déjà toutes
+  passé, que ce soit la vérification que l'agent lance (`verify --rapide`,
+  `--refaire` pour forcer), la fin de tour ou le hook avant push. L'empreinte
+  de l'arbre est HEAD, le diff et le contenu des fichiers non suivis. La
+  marque est locale, donc falsifiable : la CI, elle, refait tout. Le
+  compteur des échecs de la fin de tour (politique, point 7) appartient à sa
+  session : une session nouvelle ne commence pas à l'escalade.
+- **L'auto-test tourne sur plusieurs fils**, un clone par cas (de 76 à 33
+  secondes sur quatre cœurs), et une seule fois en CI : `socle ci` le lance
+  lui-même, et le test de ce dépôt qui le joue lui cède alors la place.
 - **Les liens donnés à l'humain sont des permaliens** (`ADR-0010`) : au
   commit poussé, pas à la branche, qui disparaît à la fusion ; vérifiés par
   le hook de fin de tour, que l'agent ait agi ou non.

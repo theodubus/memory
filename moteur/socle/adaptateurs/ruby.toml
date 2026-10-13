@@ -85,7 +85,7 @@ line_comment = '#(?!\{).*$'
 assertion = '\bexpect\s*[({]|\.to\b|\.not_to\b|\bis_expected\b|\bshould\b|\bassert\w*\b'
 ignore = '^\s*x(?:it|specify|describe|context)\b|^\s*(?:skip|pending)\b'
 # Un exemple désactivé dit pourquoi : `skip "raison"`, `pending "raison"`.
-ignore_reason = '''^\s*(?:skip|pending)\s*\(?\s*['"][^'"]{3,}'''
+ignore_reason = '''^\s*(?:skip|pending)\s*\(?\s*(?:"[^"]{3,}|'[^']{3,})'''
 tautology = [
   'expect\(\s*([^()]+?)\s*\)\.to\s+eq\(?\s*\1\s*\)?\s*$',
   'expect\(\s*true\s*\)\.to\s+(?:be|eq)\(?\s*true\s*\)?',

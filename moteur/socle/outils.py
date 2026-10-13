@@ -121,6 +121,18 @@ def lire_a(racine: Path, rev: str | None, chemin: str) -> str | None:
     return r.stdout.decode("utf-8", errors="replace")
 
 
+def empreinte_arbre(racine: Path) -> str:
+    """Ce qu'une vérification a vu : HEAD, le diff courant, et le contenu des
+    fichiers non suivis, pas seulement leurs noms : un fichier nouveau
+    modifié après une vérification réussie la rend caduque."""
+    tete = git(racine, "rev-parse", "HEAD", check=False).strip()
+    diff = git(racine, "diff", "HEAD", check=False)
+    autres = git(racine, "ls-files", "--others", "--exclude-standard", check=False)
+    contenus = subprocess.run(["git", "hash-object", "--stdin-paths"], cwd=racine, input=autres,
+                              capture_output=True, text=True).stdout if autres.strip() else ""
+    return sha256(tete + diff + autres + contenus)
+
+
 def lire_plusieurs(racine: Path, rev: str, chemins: list[str]) -> dict[str, str | None]:
     """Le contenu de plusieurs fichiers à une révision, en un seul processus
     git (`cat-file --batch`) au lieu d'un `git show` par fichier ; `None`

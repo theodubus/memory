@@ -84,6 +84,14 @@ class TestPython(unittest.TestCase):
         self.assertTrue(tests_lecture.affirme(self.par_nom["test_via_aide"], self.assertion, self.aides))
         self.assertFalse(tests_lecture.affirme(self.par_nom["test_vide"], self.assertion, self.aides))
 
+    def test_une_raison_apres_une_condition_qui_appelle(self):
+        # L6 : `skipIf(os.environ.get(X), "raison")` passait pour sans raison.
+        raison = re.compile(self.c["ignore_reason"])
+        self.assertTrue(raison.search("@unittest.skipIf(os.environ.get(X), 'la CI le lance')"))
+        self.assertFalse(raison.search("@unittest.skipIf(os.environ.get(X))"))
+        # Une raison entre guillemets doubles qui contient une apostrophe.
+        self.assertTrue(raison.search("@unittest.skip(\"l'API est en panne\")"))
+
     def test_enonces_entiers_et_normalises(self):
         lignes = ["x = 1", "self.assertEqual(", "    double(2),", "    4,", ")", "assert y // 2 == 'a b'"]
         enonces = tests_lecture.enonces(lignes, self.assertion, self.c)

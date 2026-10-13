@@ -69,7 +69,7 @@ block = "indent"
 strings = '''"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*\''''
 assertion = '\bassert\b|\bself\.assert\w+\(|\bself\.fail\(|\bpytest\.raises\b|\bwith\s+self\.assertRaises'
 ignore = '@(?:unittest\.)?skip\b|@(?:unittest\.)?skipIf\b|@(?:unittest\.)?skipUnless\b|@pytest\.mark\.skip(?:if)?\b|@unittest\.expectedFailure'
-ignore_reason = '''@\S*skip\w*\(\s*(?:[^,)]+,\s*)?(?:reason\s*=\s*)?["'][^"']{3,}'''
+ignore_reason = '''@\S*skip\w*\(\s*(?:(?:[^,()]|\([^()]*\))+,\s*)?(?:reason\s*=\s*)?(?:"[^"]{3,}|'[^']{3,})'''
 tautology = [
   '\bassert\s+(\S+(?:\([^()]*\))?)\s*==\s*\1\s*$',
   '\bassert\s+True\s*$',

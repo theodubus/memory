@@ -155,7 +155,7 @@ Par famille :
 | Étage | Quand | Ce qu'il fait |
 | --- | --- | --- |
 | L'agent (hooks de Claude Code) | au démarrage, avant chaque outil, à la fin de chaque tour | injecte l'état ; refuse une action irréversible, l'écriture d'un fichier protégé, une réponse à la place de l'humain, une référence ou un SHA inventés, une fuite du privé ; refuse de conclure tant que les contrôles échouent, que la mémoire est en retard sur le code, ou que le dernier message n'a pas son récap (« Pour toi : », « Ensuite : ») et des liens que l'humain peut suivre |
-| git | à chaque commit et à chaque push | juge ce qui sera commité (l'index) avec les contrôles rapides ; trace les hooks de l'agent dans le commit ; refuse une fuite dans le message ; avertit d'une fonction sans test ; avant le push, exécute `verify --rapide`, juge la plage qui part comme la CI du push la jugera, et, si elle est choisie, exige la relecture de l'humain |
+| git | à chaque commit et à chaque push | juge ce qui sera commité (l'index) avec les contrôles rapides ; trace les hooks de l'agent dans le commit ; refuse une fuite dans le message ; avertit d'une fonction sans test ; avant le push, exécute `verify --rapide` (ses étapes, seulement si elles n'ont pas déjà passé sur cet arbre), juge la plage qui part comme la CI du push la jugera, et, si elle est choisie, exige la relecture de l'humain |
 | La CI | à chaque push et pull request | exécute tout, contre la base : les capacités de l'adaptateur, tous les contrôles, et l'auto-test du socle |
 
 Le même moteur sert les trois étages. Un autre agent que Claude Code n'a

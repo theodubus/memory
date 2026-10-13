@@ -78,6 +78,11 @@ class TestCreux(Projet):
         self.ecrire("tests/aides.py", "def verifier(x):\n    assert x == 4\n")
         self.assertEqual(self.creux("    def test_double(self):\n        verifier(double(2))\n"), [])
 
+    def test_un_skip_cite_dans_une_chaine_ne_desactive_pas(self):
+        # L6 : un test qui parle d'un `skip` dans une chaîne passait pour désactivé.
+        corps = "    def test_double(self):\n        self.assertNotIn(\"@unittest.skip\", texte(double(2)))\n"
+        self.assertEqual(self.creux(corps), [])
+
     def test_un_groupe_desactive_sans_raison(self):
         corps = "    def test_double(self):\n        self.assertEqual(double(2), 4)\n"
         self.ecrire("tests/test_calc.py", TEST.format(corps=corps).replace("class T", "@unittest.skip\nclass T"))

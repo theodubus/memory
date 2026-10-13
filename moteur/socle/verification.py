@@ -11,11 +11,36 @@ from __future__ import annotations
 import os
 import subprocess
 
-from socle import config
+from socle import config, outils
 from socle.rapport import Rapport
 
 ORDRE = ("format", "lint", "build", "tests")
 LIGNES_SORTIE = 120
+# L'empreinte du dernier arbre sur lequel les étapes rapides ont toutes passé.
+MARQUE = ".socle/trace/derniere-verification"
+
+
+def etapes_rapides(projet: config.Projet, rapport: Rapport, flux=None, refaire: bool = False) -> bool:
+    """Les étapes rapides de l'adaptateur, sauf si elles ont déjà toutes passé
+    sur cet arbre exact (HEAD, diff, fichiers non suivis et leur contenu) : la
+    vérification que l'agent lance, la fin de tour et le hook avant push ne
+    paient pas trois fois la même compilation (L6, mesuré sur un projet Rust
+    à la copie du projet d'échecs). La CI, elle, refait tout. Rend vrai si
+    elles ont tourné."""
+    racine = projet.racine
+    marque = outils.empreinte_arbre(racine) if outils.a_des_commits(racine) else ""
+    fichier = racine / MARQUE
+    if marque and not refaire and fichier.is_file() and fichier.read_text().strip() == marque:
+        if flux:
+            print("  … étapes rapides déjà passées sur cet arbre exact : non relancées (`--refaire` pour les "
+                  "relancer)", file=flux, flush=True)
+        return False
+    avant = len(rapport.erreurs())
+    executer_etapes(projet, True, rapport, flux)
+    if marque and not any(c.controle.startswith("verify.") for c in rapport.erreurs()[avant:]):
+        fichier.parent.mkdir(parents=True, exist_ok=True)
+        fichier.write_text(marque)
+    return True
 
 
 def etapes(projet: config.Projet, rapide: bool) -> list[tuple[str, dict]]:

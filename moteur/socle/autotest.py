@@ -21,11 +21,19 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
 from socle.rapport import Rapport
+
+# Les fils de l'auto-test : un clone chacun, au plus quatre (L6).
+FILS = min(4, os.cpu_count() or 1)
+# Posée par `socle ci` pendant la suite de tests, quand il lance l'auto-test
+# juste après : le test qui le joue lui cède la place.
+ENSUITE = "SOCLE_AUTOTEST_ENSUITE"
 
 CALC = '''"""Calculs du projet d'essai."""
 
@@ -112,6 +120,9 @@ class Atelier:
             "GIT_CONFIG_NOSYSTEM": "1", "HOME": str(self.dossier),
         })
         self.n = 0
+        # Les cas tournent sur plusieurs fils (L6) : le compteur des clones
+        # et les origines privées, préparées une fois, sont partagés.
+        self._verrou = threading.RLock()
 
     def run(self, cwd: Path, *args, entree: str | None = None, env: dict | None = None):
         e = dict(self.env)
@@ -169,8 +180,9 @@ class Atelier:
         p.write_text(p.read_text().rstrip("\n") + "\n" + bloc)
 
     def clone(self, origine: Path | None = None, config: tuple[str, ...] = ()) -> Path:
-        self.n += 1
-        c = self.dossier / f"cas-{self.n:02d}"
+        with self._verrou:
+            self.n += 1
+            c = self.dossier / f"cas-{self.n:02d}"
         options = [x for cle in config for x in ("-c", cle)]
         self.git(self.dossier, "clone", "-q", *options, str(origine or self.origine), str(c))
         self.git(c, "config", "core.hooksPath", ".socle/git-hooks")
@@ -180,6 +192,10 @@ class Atelier:
     def origine_privee(self, mode: str) -> Path:
         """Une origine d'essai avec une mémoire privée, préparée une fois par
         mode : le projet d'essai, plus la politique qui choisit le mode."""
+        with self._verrou:
+            return self._origine_privee(mode)
+
+    def _origine_privee(self, mode: str) -> Path:
         o = self.dossier / f"origine-{mode}"
         if o.is_dir():
             return o
@@ -212,8 +228,9 @@ class Atelier:
         """Le « chiffrement » d'essai : un filtre git réversible, comme
         git-crypt en pose un ; le moteur ne connaît pas l'outil."""
         f = self.dossier / "filtre.py"
-        if not f.is_file():
-            f.write_text(FILTRE_ESSAI)
+        with self._verrou:
+            if not f.is_file():
+                f.write_text(FILTRE_ESSAI)
         return (f"filter.essai.clean={sys.executable} {f} clean", f"filter.essai.smudge={sys.executable} {f} smudge")
 
     def clone_prive(self, mode: str, cle: bool = True, compagnon: bool = True) -> Path:
@@ -1556,27 +1573,37 @@ def executer(projet=None, bavard: bool = False) -> Rapport:
             r.execute("autotest")
             r.erreur("autotest", f"projet d'essai impossible à préparer : {e}")
             return r
-        for nom, f in _temoins():
-            ident = "autotest.temoins"
-            r.execute(ident)
+        # Chaque cas dans son clone, sur plusieurs fils : l'auto-test passe de
+        # 76 à moins de 40 secondes sur quatre cœurs (L6). Le rapport garde
+        # l'ordre des cas.
+        taches = [(nom, f, None) for nom, f in _temoins()] + [(None, None, cas) for cas in _cas()]
+
+        def jouer(tache):
+            nom, f, cas = tache
             c = a.clone()
             try:
-                sortie = f(a, c)
+                return (f or cas.fonction)(a, c), None
             except Exception as e:
-                sortie = f"le témoin a planté : {type(e).__name__}: {e}"
-            if sortie:
-                r.erreur(ident, f"témoin en échec — {nom} : un contrôle crie sur un cas sain\n        "
-                         + "\n        ".join(sortie.strip().splitlines()[-25:]))
-            elif bavard:
-                print(f"  témoin ok : {nom}", file=sys.stderr)
-        for cas in _cas():
+                return None, e
+
+        with ThreadPoolExecutor(max_workers=FILS) as fils:
+            resultats = list(fils.map(jouer, taches))
+        for (nom, f, cas), (sortie, panne) in zip(taches, resultats):
+            if cas is None:
+                ident = "autotest.temoins"
+                r.execute(ident)
+                if panne is not None:
+                    sortie = f"le témoin a planté : {type(panne).__name__}: {panne}"
+                if sortie:
+                    r.erreur(ident, f"témoin en échec — {nom} : un contrôle crie sur un cas sain\n        "
+                             + "\n        ".join(sortie.strip().splitlines()[-25:]))
+                elif bavard:
+                    print(f"  témoin ok : {nom}", file=sys.stderr)
+                continue
             ident = f"autotest.{cas.id}"
             r.execute(ident)
-            c = a.clone()
-            try:
-                sortie = cas.fonction(a, c)
-            except Exception as e:
-                r.erreur(ident, f"{cas.defaut} : injection impossible — {type(e).__name__}: {e}")
+            if panne is not None:
+                r.erreur(ident, f"{cas.defaut} : injection impossible — {type(panne).__name__}: {panne}")
                 continue
             if not sortie:
                 r.erreur(ident, f"DÉFAUT NON ATTRAPÉ : {cas.defaut} (attendu : {cas.controle}, étage {cas.etage})")

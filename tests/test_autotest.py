@@ -1,3 +1,4 @@
+import os
 import unittest
 
 from socle import autotest
@@ -43,7 +44,34 @@ class TestCouverture(unittest.TestCase):
         self.assertEqual(sorted(set(autotest.RAISONS_AGENT) - couverts), [])
 
 
+class TestAtelierPartage(unittest.TestCase):
+    """L6 : les cas tournent sur plusieurs fils ; une origine privée se
+    prépare une fois, et chaque clone a son propre dossier."""
+
+    def test_une_origine_privee_se_prepare_une_fois_sur_plusieurs_fils(self):
+        from concurrent.futures import ThreadPoolExecutor
+        from pathlib import Path
+
+        import socle
+
+        a = autotest.Atelier(Path(socle.__file__).resolve().parent.parent, False)
+        self.addCleanup(a.nettoyer)
+        a.preparer()
+        with ThreadPoolExecutor(max_workers=4) as fils:
+            origines = list(fils.map(lambda _: a.origine_privee("chiffre"), range(4)))
+            clones = list(fils.map(lambda _: a.clone(), range(4)))
+        self.assertEqual(len(set(origines)), 1)
+        self.assertEqual(len(set(clones)), 4)
+        self.assertTrue((origines[0] / "memory/private/canonical.md").is_file())
+
+
+AUTOTEST_ENSUITE = bool(os.environ.get(autotest.ENSUITE))
+
+
 class TestInjection(unittest.TestCase):
+    # `socle ci` lance l'auto-test lui-même, juste après la suite de tests :
+    # il ne tourne pas deux fois (L6).
+    @unittest.skipIf(AUTOTEST_ENSUITE, "lancé juste après par la même CI, qui ne le joue pas deux fois")
     def test_chaque_defaut_est_attrape_et_chaque_temoin_passe(self):
         rapport = autotest.executer()
         self.assertTrue(rapport.reussi, rapport.texte())

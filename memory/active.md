@@ -10,11 +10,16 @@ B-0044, les lots de la passe de recul, dans l'ordre que Théo a validé
 J-2026-10-13-A à K). Suivant : L6. Chaque correctif avec un test qui
 échoue sur le code d'avant, un compte rendu à Théo à la fin de chaque lot.
 
+## Consignes en cours
+
+- Une attente annoncée dans le récap (CI, banc, match) s'accompagne d'un
+  réveil programmé pour y revenir (Théo, J-2026-10-13-N).
+
 ## Prochaines étapes
 
-1. L6, la fin de tour : une demande, puisqu'elle change l'adaptateur
-   protégé de ce dépôt ; R6 en donne la mesure. Une demande aussi pour
-   déclarer le projet d'échecs comme dépôt cité (B-0052).
+1. L6, la fin de tour : mesurer, faire ce qui relève du moteur, et une
+   demande pour ce qui change l'adaptateur protégé de ce dépôt ; R6 en
+   donne la mesure sur un projet Rust.
 2. Puis R2 (le workflow de mutation, B-0005) et L7.
 3. B-0047 (D-0017 validée) : le backlog en un fichier par sujet, avec les
    noms anglais (B-0045) dans une seule migration, avant B-0046 ; il règle

@@ -25,7 +25,6 @@ import json
 import os
 import posixpath
 import re
-import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -624,16 +623,8 @@ def _fuite_outil(projet: config.Projet, outil: str, args: dict) -> str | None:
 
 
 def _empreinte_arbre(racine: Path) -> str:
-    """Ce que la dernière vérification réussie a vu : HEAD, le diff courant,
-    et le contenu des fichiers non suivis, pas seulement leurs noms : un
-    fichier nouveau modifié après une vérification réussie la rend caduque
-    (relevé de la passe de recul, F)."""
-    tete = outils.git(racine, "rev-parse", "HEAD", check=False).strip()
-    diff = outils.git(racine, "diff", "HEAD", check=False)
-    autres = outils.git(racine, "ls-files", "--others", "--exclude-standard", check=False)
-    contenus = subprocess.run(["git", "hash-object", "--stdin-paths"], cwd=racine, input=autres,
-                              capture_output=True, text=True).stdout if autres.strip() else ""
-    return outils.sha256(tete + diff + autres + contenus)
+    """L'arbre tel qu'une vérification l'a vu (`outils.empreinte_arbre`)."""
+    return outils.empreinte_arbre(racine)
 
 
 def stop(projet: config.Projet, entree: dict) -> int:
@@ -647,17 +638,11 @@ def stop(projet: config.Projet, entree: dict) -> int:
     ctx = contexte.Contexte(projet, etage="agent", base=base, tete=None, rapide=True)
     rapport = contexte.executer(ctx)
 
-    # Les capacités rapides de l'adaptateur, seulement si l'arbre a bougé
-    # depuis la dernière vérification réussie : inutile de payer une
-    # compilation pour un tour qui n'a touché que de la documentation.
-    deja = racine / ".socle/trace/derniere-verification"
-    marque = _empreinte_arbre(racine) if outils.a_des_commits(racine) else ""
-    code = outils.filtrer(ctx.changes, projet.chemins_code())
-    if code and (not deja.is_file() or deja.read_text().strip() != marque):
-        verification.executer_etapes(projet, True, rapport)
-        if rapport.reussi and marque:
-            deja.parent.mkdir(parents=True, exist_ok=True)
-            deja.write_text(marque)
+    # Les capacités rapides de l'adaptateur, seulement si du code a changé, et
+    # pas sur un arbre où elles ont déjà passé (la vérification que l'agent
+    # vient de lancer) : inutile de payer une compilation de plus.
+    if outils.filtrer(ctx.changes, projet.chemins_code()):
+        verification.etapes_rapides(projet, rapport)
 
     if rapport.reussi:
         compteur.unlink(missing_ok=True)
@@ -960,7 +945,7 @@ def git_pre_push(projet: config.Projet) -> int:
     for constat in plage_poussee(projet, lignes).constats:
         if constat not in rapport.constats:
             rapport.constats.append(constat)
-    verification.executer_etapes(projet, True, rapport)
+    verification.etapes_rapides(projet, rapport)
     if not rapport.reussi:
         tracer_refus(projet.racine, "git-pre-push", ",".join(rapport.controles_en_echec()))
         rapport.afficher("socle — vérification avant push", flux=sys.stderr, court=True)

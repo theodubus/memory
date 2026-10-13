@@ -112,8 +112,12 @@ def creux(ctx, r):
         # Un test se désactive par un attribut (`#[ignore]`, `@Disabled`), sur
         # la ligne qui le définit (`test.skip(…)`, `xit "…"`) ou dans son corps
         # (`t.Skip(…)`, `markTestSkipped(…)`).
+        # Dans le corps, la marque se cherche hors des chaînes : un test qui
+        # parle d'un `skip` ne se désactive pas (L6).
+        litteraux = cfg.get("strings", tests_lecture.LITTERAUX)
+        corps_nu = [re.sub(litteraux, '""', l) for l in f.lignes_corps]
         marques = [*f.attributs, f.entete, *f.lignes_corps]
-        desactive = ignore and any(ignore.search(a) for a in marques)
+        desactive = ignore and any(ignore.search(a) for a in [*f.attributs, f.entete, *corps_nu])
         if desactive and not (raison and any(raison.search(a) for a in marques)):
             r.erreur("tests.creux", f"test `{f.nom}` désactivé sans raison écrite", f.fichier, f.ligne)
         if not tests_lecture.affirme(f, assertion, aides, cfg):
@@ -136,8 +140,10 @@ def creux(ctx, r):
     for chemin in cibles:
         texte = ctx.lire(chemin) or ""
         dedans = [(f.debut - 1, f.fin) for f in tests_lecture.extraire(texte, chemin, cfg) if f.est_test]
+        litteraux = cfg.get("strings", tests_lecture.LITTERAUX)
         for i, ligne in enumerate(texte.splitlines()):
-            if not ignore.search(ligne) or (comm and comm.match(ligne)) or any(d <= i < e for d, e in dedans):
+            if not ignore.search(re.sub(litteraux, '""', ligne)) or (comm and comm.match(ligne)) \
+                    or any(d <= i < e for d, e in dedans):
                 continue
             if not (raison and raison.search(ligne)):
                 r.erreur("tests.creux", f"groupe de tests désactivé sans raison écrite : « {ligne.strip()[:80]} »",

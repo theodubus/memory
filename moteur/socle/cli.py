@@ -7,6 +7,7 @@ français. Toute commande de contrôle rend un code de sortie : 0 si tout passe.
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import sys
 from datetime import date
@@ -59,7 +60,10 @@ def cmd_verify(args) -> int:
     projet = _projet(args)
     base = _base(projet, args.base)
     rapport = Rapport()
-    verification.executer_etapes(projet, args.fast, rapport, flux=sys.stderr)
+    if args.fast:
+        verification.etapes_rapides(projet, rapport, flux=sys.stderr, refaire=args.refaire)
+    else:
+        verification.executer_etapes(projet, False, rapport, flux=sys.stderr)
     etage = "git" if args.fast else "ci"
     rapport.fusionner(contexte.executer(contexte.Contexte(projet, etage=etage, base=base, rapide=args.fast)))
     mode = "rapide" if args.fast else "complète"
@@ -74,7 +78,14 @@ def cmd_ci(args) -> int:
     projet = _projet(args)
     base = _base(projet, args.base)
     rapport = Rapport()
-    verification.executer_etapes(projet, False, rapport, flux=sys.stderr)
+    # L'auto-test tourne une fois, ici, pas aussi dans la suite de tests du
+    # projet qui le contient (ce dépôt) : il valait 87 secondes de CI (L6).
+    if not args.no_selftest:
+        os.environ[autotest.ENSUITE] = "1"
+    try:
+        verification.executer_etapes(projet, False, rapport, flux=sys.stderr)
+    finally:
+        os.environ.pop(autotest.ENSUITE, None)
     rapport.fusionner(contexte.executer(contexte.Contexte(projet, etage="ci", base=base)))
     if not args.no_selftest:
         rapport.fusionner(autotest.executer(projet, bavard=False))
@@ -626,6 +637,8 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
 
     s = sp.add_parser("verify", help="le contrat verify : capacités de l'adaptateur puis contrôles")
     s.add_argument("--fast", "--rapide", action="store_true", dest="fast")
+    s.add_argument("--refaire", "--redo", action="store_true", dest="refaire",
+                   help="relancer les étapes rapides même si elles ont déjà passé sur cet arbre exact")
     s.add_argument("--base")
     s.set_defaults(f=cmd_verify)
 
