@@ -136,6 +136,27 @@ class TestAMesurer(unittest.TestCase):
         self.assertIn('"src/x.rs" = { max = 4, reason = "équivalents" }', gf.read_text())
         self.assertIn('"src/eval.rs" = { max = 0 }', gf.read_text())
 
+    def test_poser_les_autres_formes_de_cle(self):
+        """Relevé de la passe de recul, F : une clé entre guillemets simples,
+        ou une table, était annoncée posée sans être écrite."""
+        import tomllib
+
+        gf = self.dossier / ".socle/guardrails.toml"
+        gf.write_text("[mutation.caps]\n'src/eval.rs' = { pending = true }\n\n"
+                      '[mutation.caps."src/tt.rs"]\npending = true\nreason = "pas encore balayé"\n')
+        self.assertEqual(mutation.poser_plafonds(self.projet(), {"src/eval.rs": 1, "src/tt.rs": 0}), [])
+        caps = tomllib.loads(gf.read_text())["mutation"]["caps"]
+        self.assertEqual(caps["src/eval.rs"]["max"], 1)
+        self.assertEqual(caps["src/tt.rs"], {"max": 0})
+
+    def test_un_plafond_non_ecrit_est_dit(self):
+        gf = self.dossier / ".socle/guardrails.toml"
+        gf.write_text('[mutation]\ncaps = { "src/eval.rs" = { pending = true }, "src/tt.rs" = { pending = true } }\n')
+        self.assertEqual(sorted(mutation.poser_plafonds(self.projet(), {"src/eval.rs": 1, "src/tt.rs": 0})),
+                         ["src/eval.rs", "src/tt.rs"])
+        r = mutation.verdict(self.projet(), self.dossier, poser=True)
+        self.assertTrue(any("plafond annoncé mais non écrit" in c.message for c in r.erreurs()))
+
 
 class TestMutmut(unittest.TestCase):
     """La sortie réelle de `mutmut results --all true` sur le projet jetable
@@ -175,6 +196,14 @@ class TestMutmut(unittest.TestCase):
         self.assertEqual(res["romains.py"]["survivants"], 1)
         self.assertEqual(res["romains/__init__.py"]["attrapes"], 1)
         self.assertEqual(res["src/romains/__init__.py"]["survivants"], 1)
+
+    def test_un_module_qui_commence_par_x(self):
+        """Relevé de la passe de recul, F : `pkg.x_util.x_f` comptait pour
+        `pkg`, coupé au premier `.x_`."""
+        (self.dossier / "mutmut-results.txt").write_text("    pkg.x_util.x_f__mutmut_1: survived\n")
+        res = mutation.lire_mutmut(self.dossier)
+        self.assertEqual(res["pkg/x_util.py"]["survivants"], 1)
+        self.assertNotIn("pkg.py", res)
 
 
 if __name__ == "__main__":

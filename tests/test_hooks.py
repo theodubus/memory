@@ -94,6 +94,32 @@ class TestPrepareCommitMsg(unittest.TestCase):
         self.assertIn("diff --git", bas)
 
 
+class TestCommitMsg(unittest.TestCase):
+    def test_le_diff_de_commit_v_n_est_pas_lu_comme_le_message(self):
+        """Une dispense écrite dans le message reste lue quand `git commit -v`
+        met le diff en bas (relevé de la passe de recul, F)."""
+        import contextlib
+        import io
+        import tempfile
+        from pathlib import Path
+        from unittest import mock
+
+        from socle import config
+
+        racine = Path(tempfile.mkdtemp())
+        message = racine / "MSG"
+        message.write_text("Sujet\n\nDispense-test: f — une raison assez longue\n"
+                           "# ------------------------ >8 ------------------------\n"
+                           "diff --git a/x b/x\n+une ligne\n")
+        vus = []
+        with mock.patch.object(hooks, "code_sans_test", lambda projet, m: vus.append(m)), \
+                contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(hooks.git_commit_msg(config.Projet(racine=racine), str(message)), 0)
+        self.assertEqual(len(vus), 1)
+        self.assertNotIn("diff --git", vus[0])
+        self.assertIn("Dispense-test", vus[0])
+
+
 class TestSousUnAgent(unittest.TestCase):
     def test_sous_un_agent(self):
         import contextlib
@@ -186,6 +212,35 @@ class TestTraceDesRefusDeFinDeTourEtDeGit(unittest.TestCase):
         self.assertEqual(refus[2], "t")
         self.assertTrue(refus[3].startswith("Stop:"))
         self.assertIn("memoire.preuves", refus[3].split(":", 1)[1].split(","))
+
+    def test_le_compteur_d_echecs_appartient_a_sa_session(self):
+        """Relevé de la passe de recul, F : une session nouvelle escaladait
+        dès son premier échec, sur le compte d'une autre."""
+        from socle import config
+
+        compteur = self.racine / config.COMPTEUR_STOP
+        self.addCleanup(compteur.unlink, missing_ok=True)
+        self.canonique.write_text(self.sain + self.FAUX)
+        self.appeler(hooks.stop, self.projet, {"session_id": "a"})
+        self.assertIn("tentative 2/", self.appeler(hooks.stop, self.projet, {"session_id": "a"}))
+        self.assertIn("tentative 1/", self.appeler(hooks.stop, self.projet, {"session_id": "b"}))
+        self.assertIn("tentative 2/", self.appeler(hooks.stop, self.projet, {"session_id": "b"}))
+
+    def test_l_empreinte_voit_le_contenu_d_un_fichier_non_suivi(self):
+        """Relevé de la passe de recul, F : seuls les noms des fichiers non
+        suivis comptaient ; une vérification réussie restait valable après
+        qu'on les avait changés."""
+        import subprocess
+
+        subprocess.run(["git", "add", "-A"], cwd=self.racine, check=True)
+        subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "base", "--no-verify"],
+                       cwd=self.racine, check=True)
+        nouveau = self.racine / "nouveau.py"
+        self.addCleanup(nouveau.unlink, missing_ok=True)
+        nouveau.write_text("x = 1\n")
+        avant = hooks._empreinte_arbre(self.racine)
+        nouveau.write_text("x = 2\n")
+        self.assertNotEqual(hooks._empreinte_arbre(self.racine), avant)
 
     def test_exiger_recap_trace_le_recap_manquant(self):
         import json

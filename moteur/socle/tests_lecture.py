@@ -47,12 +47,20 @@ def _sans_litteraux(ligne: str, litteraux: str = LITTERAUX, commentaire: str = C
 
 def _bloc_accolades(lignes: list[str], i: int, litteraux: str = LITTERAUX,
                     commentaire: str = COMMENTAIRE) -> tuple[list[str], int]:
-    """Le corps entre la première accolade et sa fermante, signature exclue."""
-    profondeur, debut = 0, None
+    """Le corps entre la première accolade et sa fermante, signature exclue.
+    Sans accolade avant la fin de l'instruction (un `;` hors de toute
+    parenthèse ou crochet : `fn f(x: [u8; 4]) {` en a un dedans), le corps est
+    l'instruction elle-même : une flèche sans accolades de JavaScript
+    (relevé de la passe de recul, F)."""
+    profondeur, debut, parentheses = 0, None, 0
     for j in range(i, len(lignes)):
         for c in _sans_litteraux(lignes[j], litteraux, commentaire):
-            if c == ";" and debut is None:
-                return [], j  # déclaration sans corps
+            if debut is None and c in "([":
+                parentheses += 1
+            elif debut is None and c in ")]":
+                parentheses -= 1
+            if c == ";" and debut is None and parentheses <= 0:
+                return lignes[i : j + 1], j  # une instruction, sans bloc
             if c == "{":
                 profondeur += 1
                 if debut is None:
@@ -74,7 +82,10 @@ def _couper(bloc: list[str]) -> list[str]:
 # Un bloc fermé par `end` (Ruby, Lua, Elixir…) : ce qui l'ouvre, en tête de
 # ligne ou en `do` de fin de ligne ; ce qui le ferme.
 OUVRE_FIN = re.compile(r"^\s*(?:def|class|module|if|unless|while|until|case|begin|for|function)\b"
-                       r"|\bdo\s*(?:\|[^|]*\|)?\s*$")
+                       r"|\bdo\s*(?:\|[^|]*\|)?\s*$"
+                       # `r = if a … end` : une expression ouvre aussi un bloc
+                       # (relevé de la passe de recul, F).
+                       r"|(?:[=(,]|\|\||&&|\breturn)\s*(?:if|unless|case|begin|while|until)\b")
 FERME_FIN = re.compile(r"\bend\b")
 
 
@@ -94,10 +105,16 @@ def _bloc_indentation(lignes: list[str], i: int) -> tuple[list[str], int]:
     retrait = len(lignes[i]) - len(lignes[i].lstrip())
     res, fin = [], i
     j = i + 1
-    # La signature peut continuer sur plusieurs lignes jusqu'au `:`.
+    # La signature peut continuer sur plusieurs lignes jusqu'au `:` ; un
+    # corps écrit sur la même ligne (`def test_x(self): …`) est le seul corps
+    # (relevé de la passe de recul, F).
     while j < len(lignes) and j - i < 20:
-        if re.sub(r"\s+#.*$", "", lignes[j - 1]).rstrip().endswith(":"):
+        signature = re.sub(r"\s+#.*$", "", lignes[j - 1]).rstrip()
+        if signature.endswith(":"):
             break
+        une_ligne = re.search(r"\)\s*(?:->[^:]*)?:\s*(\S.*)$", signature)
+        if une_ligne:
+            return [une_ligne.group(1)], j - 1
         j += 1
     for k in range(j, len(lignes)):
         l = lignes[k]

@@ -43,7 +43,10 @@ def lire_cargo_mutants(dossier: Path) -> dict[str, Counter]:
 # il compte comme survivant, et casse au lieu de passer.
 STATUTS_MUTMUT = {"killed": "attrapes", "caught by type check": "attrapes", "timeout": "expires",
                   "suspicious": "expires", "segfault": "expires", "skipped": "inviables"}
-NOM_MUTMUT = re.compile(r"^(?P<module>[\w.]+?)\.x[_ǁ].*__mutmut_\d+$")
+# Le module est tout ce qui précède le dernier `.x_` ou `.xǁ` : le nom de la
+# fonction n'a pas de point, et un module peut commencer par `x_` (relevé de
+# la passe de recul, F).
+NOM_MUTMUT = re.compile(r"^(?P<module>[\w.]+)\.x[_ǁ][^.]*__mutmut_\d+$")
 
 
 def lire_mutmut(dossier: Path) -> dict[str, Counter]:
@@ -229,22 +232,48 @@ def verdict(projet: config.Projet, dossier: Path, poser: bool = False) -> Rappor
         elif n < p.get("max", 0):
             r.avertir(ident, f"{module} : {n} survivant(s) sous le plafond {p.get('max', 0)} — resserrer le plafond")
     if poser and mesures:
-        poser_plafonds(projet, mesures)
+        for module in poser_plafonds(projet, mesures):
+            r.erreur(ident, f"{module} : plafond annoncé mais non écrit — la forme de sa clé dans "
+                     f"`{projet.chemins.garde_fous}` n'est pas reconnue ; l'écrire à la main")
     return r
 
 
-def poser_plafonds(projet: config.Projet, mesures: dict[str, int]):
+def poser_plafonds(projet: config.Projet, mesures: dict[str, int]) -> list[str]:
     """Remplace, dans les garde-fous, l'entrée « à mesurer » de chaque module
-    par son plafond mesuré, avec sa raison quand il n'est pas nul."""
+    par son plafond mesuré, avec sa raison quand il n'est pas nul. La clé
+    s'écrit entre guillemets doubles ou simples, en table en ligne ou en
+    table ; rend les modules dont le plafond n'a pas pu s'écrire, relu après
+    coup (relevé de la passe de recul, F)."""
     import json
+    import tomllib
     from datetime import date
 
     p = projet.racine / projet.chemins.garde_fous
     lignes = p.read_text(encoding="utf-8").splitlines()
     for module, n in mesures.items():
         cle = json.dumps(module, ensure_ascii=False)
-        valeur = (f'{{ max = {n}, reason = "mesuré le {date.today().isoformat()} : {n} survivant(s)" }}' if n
-                  else "{ max = 0 }")
-        lignes = [f"{cle} = {valeur}" if re.match(rf"^\s*{re.escape(cle)}\s*=\s*\{{[^}}]*\bpending\b", l) else l
-                  for l in lignes]
+        cles = rf"(?:{re.escape(cle)}|'{re.escape(module)}')"
+        raison = f'"mesuré le {date.today().isoformat()} : {n} survivant(s)"'
+        valeur = f"{{ max = {n}, reason = {raison} }}" if n else "{ max = 0 }"
+        en_ligne = re.compile(rf"^\s*{cles}\s*=\s*\{{[^}}]*\bpending\b")
+        en_table = re.compile(rf"^\s*\[\s*mutation\s*\.\s*caps\s*\.\s*{cles}\s*\]\s*$")
+        res, dans = [], False
+        for l in lignes:
+            if en_ligne.match(l):
+                l = f"{cle} = {valeur}"
+            elif en_table.match(l):
+                dans = True
+            elif l.lstrip().startswith("["):
+                dans = False
+            elif dans and re.match(r"^\s*pending\s*=", l):
+                l = f"max = {n}" + (f"\nreason = {raison}" if n else "")
+            elif dans and re.match(r"^\s*reason\s*=", l):
+                continue  # la raison de l'attente cède à celle de la mesure
+            res.append(l)
+        lignes = "\n".join(res).splitlines()
     p.write_text("\n".join(lignes) + "\n", encoding="utf-8")
+    try:
+        caps = tomllib.loads(p.read_text(encoding="utf-8")).get("mutation", {}).get("caps", {})
+    except tomllib.TOMLDecodeError:
+        return list(mesures)
+    return [m for m, n in mesures.items() if caps.get(m, {}).get("pending") or caps.get(m, {}).get("max") != n]

@@ -25,6 +25,7 @@ import json
 import os
 import posixpath
 import re
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -625,11 +626,16 @@ def _fuite_outil(projet: config.Projet, outil: str, args: dict) -> str | None:
 
 
 def _empreinte_arbre(racine: Path) -> str:
-    """Ce que la dernière vérification réussie a vu : HEAD et le diff courant."""
+    """Ce que la dernière vérification réussie a vu : HEAD, le diff courant,
+    et le contenu des fichiers non suivis, pas seulement leurs noms : un
+    fichier nouveau modifié après une vérification réussie la rend caduque
+    (relevé de la passe de recul, F)."""
     tete = outils.git(racine, "rev-parse", "HEAD", check=False).strip()
     diff = outils.git(racine, "diff", "HEAD", check=False)
     autres = outils.git(racine, "ls-files", "--others", "--exclude-standard", check=False)
-    return outils.sha256(tete + diff + autres)
+    contenus = subprocess.run(["git", "hash-object", "--stdin-paths"], cwd=racine, input=autres,
+                              capture_output=True, text=True).stdout if autres.strip() else ""
+    return outils.sha256(tete + diff + autres + contenus)
 
 
 def stop(projet: config.Projet, entree: dict) -> int:
@@ -638,6 +644,7 @@ def stop(projet: config.Projet, entree: dict) -> int:
     racine = projet.racine
     tracer(racine, "Stop", entree.get("session_id", ""))
     compteur = racine / config.COMPTEUR_STOP
+    session = entree.get("session_id", "")
     base = outils.base_de_travail(racine)
     ctx = contexte.Contexte(projet, etage="agent", base=base, tete=None, rapide=True)
     rapport = contexte.executer(ctx)
@@ -657,9 +664,15 @@ def stop(projet: config.Projet, entree: dict) -> int:
     if rapport.reussi:
         compteur.unlink(missing_ok=True)
         return exiger_recap(projet, entree)
-    essais = int(compteur.read_text().strip() or 0) + 1 if compteur.is_file() else 1
+    # Le compteur appartient à sa session : une session nouvelle ne commence
+    # pas à l'escalade sur les échecs d'une autre (relevé de la passe de
+    # recul, F).
+    cle = session or "-"
+    precedent = compteur.read_text().split() if compteur.is_file() else []
+    essais = int(precedent[0]) + 1 if len(precedent) == 2 and precedent[1] == cle and \
+        precedent[0].isdigit() else 1
     compteur.parent.mkdir(parents=True, exist_ok=True)
-    compteur.write_text(str(essais))
+    compteur.write_text(f"{essais} {cle}")
     texte = rapport.texte("contrôles de fin de tour (`socle check --stage agent`)")
     if essais >= projet.maximum_tentatives():
         compteur.unlink(missing_ok=True)
@@ -858,6 +871,10 @@ def git_commit_msg(projet: config.Projet, fichier: str = "") -> int:
         brut = Path(fichier).read_text(encoding="utf-8", errors="replace")
     except OSError:
         return 0
+    # Sous la ligne de coupe de `git commit -v`, le diff : il ne fait pas
+    # partie du message.
+    coupe = re.search(r"(?m)^# -+ >8 -+$", brut)
+    brut = brut[:coupe.start()] if coupe else brut
     message = "\n".join(l for l in brut.splitlines() if not l.startswith("#"))
     faute = _fuites_dans(projet, message) if prive.mode(projet) is not None else None
     if faute:

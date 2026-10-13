@@ -103,5 +103,34 @@ class TestPython(unittest.TestCase):
         self.assertTrue(any(m.search(l) for m in motifs for l in lignes))
 
 
+class TestFormesCourantes(unittest.TestCase):
+    """Relevé de la passe de recul, F : quatre formes courantes cassaient la
+    lecture des tests ; chacune avec un témoin creux, qui le reste."""
+
+    def lire(self, langage, texte) -> dict[str, bool]:
+        c = cfg(langage)
+        assertion = re.compile(c["assertion"])
+        return {f.nom: tests_lecture.affirme(f, assertion, set(), c)
+                for f in tests_lecture.extraire(texte, "x", c) if f.est_test}
+
+    def test_un_type_tableau_dans_la_signature_rust(self):
+        texte = "#[test]\nfn sig(x: [u8; 4]) {\n    assert_eq!(x[0], 1);\n}\n#[test]\nfn vide() {\n    f();\n}\n"
+        self.assertEqual(self.lire("rust", texte), {"sig": True, "vide": False})
+
+    def test_une_fleche_sans_accolades_en_javascript(self):
+        texte = 'test("un", () => expect(f()).toBe(1));\ntest("vide", () => f());\n'
+        self.assertEqual(self.lire("javascript", texte), {"un": True, "vide": False})
+
+    def test_une_expression_if_end_en_ruby(self):
+        texte = ('it "calcule" do\n  r = if a\n    1\n  else\n    2\n  end\n  expect(r).to eq(1)\nend\n'
+                 'it "vide" do\n  f\nend\n')
+        self.assertEqual(self.lire("ruby", texte), {"calcule": True, "vide": False})
+
+    def test_un_test_python_sur_une_ligne(self):
+        texte = ("class T(unittest.TestCase):\n    def test_un(self): self.assertEqual(f(), 1)\n"
+                 "    def test_vide(self): f()\n    def test_deux(self):\n        self.assertEqual(g(), 2)\n")
+        self.assertEqual(self.lire("python", texte), {"test_un": True, "test_vide": False, "test_deux": True})
+
+
 if __name__ == "__main__":
     unittest.main()

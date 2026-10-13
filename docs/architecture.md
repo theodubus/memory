@@ -96,7 +96,7 @@ comparent le même fichier sous ses deux noms.
 | Test supprimé, valeur attendue changée ; à la fin du tour, en attente d'une demande poussée qui nomme le test, un avertissement (B-0033) ; une assertion se lit entière, sur toutes ses lignes et normalisée hors des littéraux, et des tests homonymes s'apparient dans l'ordre du fichier | `tests.attendus` | agent, git, CI |
 | Correctif avec test de régression rejoué sur le parent, où il échoue sans y manquer de se charger (`load_error`) ; un test écrit dans le module qu'il teste (Rust) s'y rejoue avec ses seules lignes de test, le code du parent gardé (B-0051) | `tests.regression` | CI |
 | Code nouveau ou modifié testé : une fonction publique est nommée par un test, hors de ses commentaires, ou dispensée nommément avec sa raison (`Dispense-test:`) | `tests.code-teste` ; au commit, un avertissement du hook `commit-msg`, le premier qui voit la dispense (B-0034, P9) | agent, CI ; avertissement au commit |
-| Mutation : plafond par module, cliquet ; un module pas encore balayé y entre « à mesurer » (un avertissement), et le premier verdict pose son plafond | `mutation.couverture`, `socle mutation-verdict --poser` | agent, git, CI ; verdict hebdomadaire |
+| Mutation : plafond par module, cliquet ; un module pas encore balayé y entre « à mesurer » (un avertissement), et le premier verdict pose son plafond, relu après écriture (un plafond qu'il ne sait pas écrire est dit) | `mutation.couverture`, `socle mutation-verdict --poser` | agent, git, CI ; verdict hebdomadaire |
 | Rien ne s'affaiblit en silence | `cliquet.garde-fous`, `protege.fichiers` | agent, git, CI |
 | Moteur et politique non altérés | `moteur.empreinte`, `protege.fichiers` | agent, git, CI |
 | Seule la CI est incontournable : GitHub l'exige avant toute fusion | une étape de « Et maintenant » à l'installation ; la ligne `branche` de l'état, et une action de l'humain quand elle n'est pas exigée | GitHub |
@@ -155,6 +155,11 @@ comparent le même fichier sous ses deux noms.
   sa compréhension. Une entrée qui change de fichier, un sujet clos archivé
   au journal, garde sa preuve sans relire : la citation se juge au commit où
   elle a paru pour la première fois, dans l'entrée qui la porte.
+- **La fin de tour ne recompile que si l'arbre a bougé** depuis la dernière
+  vérification réussie : son empreinte est HEAD, le diff et le contenu des
+  fichiers non suivis, pas seulement leurs noms. Le compteur de ses échecs
+  (politique, point 7) appartient à sa session : une session nouvelle ne
+  commence pas à l'escalade.
 - **Les liens donnés à l'humain sont des permaliens** (`ADR-0010`) : au
   commit poussé, pas à la branche, qui disparaît à la fusion ; vérifiés par
   le hook de fin de tour, que l'agent ait agi ou non.
