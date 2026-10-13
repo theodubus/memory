@@ -227,6 +227,7 @@ def references(ctx, r):
     """Tout identifiant, commit, fichier, lien ou chemin cité existe."""
     defs = ctx.memoire.definitions()
     prive_dispo = any(est_prive(c) for c in ctx.memoire.fichiers)
+    autres: dict[str, list[tuple[str, int, str]]] = {}
     for chemin, texte in sorted(textes_scannes(ctx).items()):
         dossier = chemin.rsplit("/", 1)[0] if "/" in chemin else ""
         for ident, ligne in memoire.mentions(texte):
@@ -253,6 +254,15 @@ def references(ctx, r):
                 faute = _verifier_chemin_cite(ctx, m.group(1))
                 if faute:
                     r.erreur("memoire.references", faute, chemin, i)
+                depot = depot_non_declare(ctx, m.group(1))
+                if depot:
+                    autres.setdefault(depot, []).append((chemin, i, m.group(1)))
+    # Un avertissement par dépôt, au premier endroit qui le cite.
+    for depot, ou in sorted(autres.items()):
+        chemin, i, jeton = ou[0]
+        r.avertir("memoire.references", f"`{jeton}` : dépôt « {depot} » non déclaré, {len(ou)} chemin(s) cité(s) "
+                  "que rien ne vérifie ; un dépôt cité se déclare dans `[references] repos` des garde-fous, ce que "
+                  "seul l'humain valide", chemin, i)
 
 
 def verifier_ref(ctx, type_: str, cible: str) -> str | None:
@@ -315,6 +325,22 @@ def ancre_au_format_2(ancre: str) -> str:
     for avant, apres in _ANCRES_RENOMMEES:
         ancre = ancre.replace(avant, apres)
     return re.sub(r"(?<![\w])memoire(?![\w])", "memory", ancre)
+
+
+# Ce qui précède `:` sans désigner un dépôt : un schéma d'URL, un type de
+# référence de la mémoire, une révision de git (`HEAD:chemin`).
+SCHEMAS = {"http", "https", "ftp", "file", "mailto", "ssh", "git", "data", "commit", "fichier", "cmd", "url"}
+REVISION = re.compile(r"^(?:[A-Z_]*HEAD|[0-9a-f]{7,40})(?:[~^]\d*)*$")
+
+
+def depot_non_declare(ctx, jeton: str) -> str | None:
+    """Le dépôt d'un `depot:chemin` cité, s'il n'est pas déclaré dans
+    `[references] repos` des garde-fous : son chemin n'est vérifié nulle
+    part, et n'importe quelle chaîne `x:chemin` passerait (B-0052)."""
+    m = re.match(r"^([A-Za-z0-9][\w.+-]*):([^:\s]*/[^\s]*|[^:\s/]+\.\w+)$", jeton.strip())
+    if not m or m.group(1).lower() in SCHEMAS or m.group(2).startswith("//") or REVISION.match(m.group(1)):
+        return None
+    return None if m.group(1) in ctx.projet.gf("references", "repos", defaut=[]) else m.group(1)
 
 
 def _verifier_chemin_cite(ctx, jeton: str) -> str | None:

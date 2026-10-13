@@ -564,6 +564,12 @@ def _cas() -> list[Cas]:
         remplacer(c, ".socle/guardrails.toml", 'docs = ["docs/calc.md"]', 'docs = ["docs/calc.md", "README.md"]')
         return etage_ci(a, c)
 
+    @defaut("depot-declare", "autre dépôt déclaré sans validation, pour que ses chemins échappent au contrôle",
+            "ci", "cliquet.garde-fous")
+    def _(a, c):
+        remplacer(c, ".socle/guardrails.toml", "repos = []", 'repos = ["x.patch"]')
+        return etage_ci(a, c)
+
     @defaut("budget-releve", "budget de mémoire relevé", "ci", "cliquet.garde-fous")
     def _(a, c):
         remplacer(c, ".socle/guardrails.toml", '"memory/active.md" = { max_bytes = 6000 }', '"memory/active.md" = { max_bytes = 60000 }')
@@ -1175,6 +1181,12 @@ def _temoins() -> list[tuple[str, Callable]]:
                   "self.assertEqual(\n            double(2),\n            4,\n        )")
         maj_memoire(c, "Test reformaté.")
         return etage_ci(a, c, MESSAGE_AGENT)
+
+    @temoin("un chemin d'un autre dépôt, non déclaré, est signalé sans refus (B-0052)")
+    def _(a, c):
+        remplacer(c, "memory/active.md", "## En cours\n\nRien pour l'instant.",
+                  "## En cours\n\nLe modèle vient de `chess:tools/etat.sh`.")
+        return etage_ci(a, c)
 
     @temoin("durcir un garde-fou est libre")
     def _(a, c):

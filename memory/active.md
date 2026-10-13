@@ -8,14 +8,14 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 B-0044, les lots de la passe de recul, dans l'ordre que Théo a validé
 (D-0015). L1 à L4 faits (J-2026-10-12-G à J-2026-10-12-J), R6 fait sur une
 copie du projet d'échecs (J-2026-10-12-R, relevé `docs/essai-chess.md`).
-Suivant : L5. Chaque correctif avec un test qui échoue sur le code d'avant,
+L5 en cours. Chaque correctif avec un test qui échoue sur le code d'avant,
 un compte rendu à Théo à la fin de chaque lot.
 
 ## Prochaines étapes
 
-1. L5, en commençant par les refus à tort que R6 a mesurés : B-0051
-   (J-2026-10-13-A) et B-0049 (J-2026-10-13-C) faits, la ligne E-1 du
-   relevé aussi (J-2026-10-13-B) ; puis B-0052 (`depot:chemin`) ; puis les sections D, E et F du relevé, et les
+1. L5 : les trois constats de R6 faits, B-0051, B-0049 et B-0052
+   (J-2026-10-13-A, C et D), et la première ligne de la section E du
+   relevé (J-2026-10-13-B) ; puis les sections D, E et F du relevé, et les
    deux choix de conception, chacun avec sa décision écrite.
 2. Puis L6 (une demande ; R6 en donne la mesure), R2 et L7.
 3. B-0047 (D-0017 validée) : le backlog en un fichier par sujet, avec les

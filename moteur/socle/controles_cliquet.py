@@ -35,6 +35,7 @@ REGLES = [
     (("nocopy", "min_chars"), "bas"),
     (("nocopy", "exclude"), "inclus"),
     (("references", "exclude"), "inclus"),
+    (("references", "repos"), "inclus"),
     (("references", "scan"), "couvre"),
     (("tooling", "paths"), "couvre"),
     (("memory", "code"), "couvre"),

@@ -30,6 +30,10 @@ active_days = 7
 # Fichiers où chaque identifiant, lien et chemin cité doit exister.
 scan = ["**/*.md"]
 exclude = []
+# Les autres dépôts cités sous la forme `depot:chemin`, dont le chemin ne se
+# vérifie pas ici ; un dépôt non déclaré est signalé. En ajouter un est un
+# assouplissement : une décision humaine.
+repos = []
 
 [tooling]
 # Tout fichier qui correspond doit être nommé dans un document.

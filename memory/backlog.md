@@ -310,7 +310,7 @@ règle à l'agent dès le commit d'un `fix:`.
 
 ## B-0052 — La forme depot:chemin échappe au contrôle des références
 
-> statut : ouvert · origine : J-2026-10-12-Q · lu : backlog@2a6691e4
+> statut : fait · origine : J-2026-10-12-Q · lu : backlog@2a6691e4 · ref : J-2026-10-13-D
 
 Mesuré à R6, tâche 1 : pour des fichiers qu'une rustine crée, l'agent a
 écrit `<rustine>.patch:<chemin>`, sur le modèle de `depot:chemin`, et le
