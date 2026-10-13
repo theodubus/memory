@@ -94,7 +94,7 @@ comparent le même fichier sous ses deux noms.
 | Capacité absente déclarée avec remplacement | `adaptateur.capacites` | agent, git, CI |
 | Tests creux | `tests.creux` (sur le diff aux étages agent et git) | agent, git, CI |
 | Test supprimé, valeur attendue changée ; à la fin du tour, en attente d'une demande poussée qui nomme le test, un avertissement (B-0033) | `tests.attendus` | agent, git, CI |
-| Correctif avec test de régression rejoué sur le parent | `tests.regression` | CI |
+| Correctif avec test de régression rejoué sur le parent ; un test écrit dans le module qu'il teste (Rust) s'y rejoue avec ses seules lignes de test, le code du parent gardé (B-0051) | `tests.regression` | CI |
 | Code nouveau ou modifié testé : une fonction publique est nommée par un test, ou dispensée nommément avec sa raison (`Dispense-test:`) | `tests.code-teste` ; au commit, un avertissement du hook `commit-msg`, le premier qui voit la dispense (B-0034, P9) | agent, CI ; avertissement au commit |
 | Mutation : plafond par module, cliquet ; un module pas encore balayé y entre « à mesurer » (un avertissement), et le premier verdict pose son plafond | `mutation.couverture`, `socle mutation-verdict --poser` | agent, git, CI ; verdict hebdomadaire |
 | Rien ne s'affaiblit en silence | `cliquet.garde-fous`, `protege.fichiers` | agent, git, CI |

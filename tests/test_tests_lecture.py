@@ -57,6 +57,20 @@ class TestRust(unittest.TestCase):
         self.assertTrue(any(m.search(corps) for m in motifs))
         self.assertFalse(any(m.search(self.par_nom["lent"].corps) for m in motifs))
 
+    def test_zones_de_test_du_module(self):
+        # Le module de tests entier, ses aides comprises ; un test hors du
+        # module, depuis son commentaire et son attribut.
+        texte = ("pub fn double(x: i32) -> i32 {\n    2 * x\n}\n\n// hors module\n#[test]\nfn seul() {\n"
+                 "    assert_eq!(double(1), 2);\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n"
+                 "    fn aide() -> i32 { 3 }\n\n    #[test]\n    fn trois() {\n        assert_eq!(double(aide()), 6);\n"
+                 "    }\n}\n")
+        lignes = texte.splitlines()
+        zones = sorted(tests_lecture.zones_de_test(texte, "x", cfg("rust")))
+        self.assertEqual([lignes[d:f] for d, f in zones][:2],
+                         [lignes[4:9], lignes[10:21]])
+        self.assertEqual(lignes[10], "#[cfg(test)]")
+        self.assertEqual(lignes[20], "}")
+
 
 class TestPython(unittest.TestCase):
     def setUp(self):

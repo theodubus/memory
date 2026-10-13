@@ -6,7 +6,9 @@ attribut (`attribute`), ce qui marque un test (`marker_attribute`,
 `marker_name`, ou `marker_line` sur la ligne qui le définit, pour
 `test("…", …)` ou `it "…" do`), la forme d'un bloc (`braces`, `indent` ou
 `end`), ses littéraux (`strings`) et ses commentaires de fin de ligne
-(`line_comment`), et ce qui compte comme assertion. Le moteur fournit
+(`line_comment`), ce qui ouvre un module de tests dans un fichier de code
+(`test_module`, le `#[cfg(test)]` de Rust), et ce qui compte comme
+assertion. Le moteur fournit
 seulement les mécanismes génériques : l'extraction d'un bloc et la
 transitivité des assertions (un test qui appelle une aide qui affirme,
 affirme).
@@ -29,6 +31,7 @@ class Fonction:
     lignes_corps: list[str] = field(default_factory=list)
     fin: int = 0  # dernière ligne de la fonction, 1 pour la première du fichier
     entete: str = ""  # la ligne qui la définit
+    debut: int = 0  # première ligne, attributs et commentaires au-dessus compris
 
 
 # Les littéraux et le commentaire de fin de ligne, par défaut ceux de Rust :
@@ -145,7 +148,7 @@ def extraire(texte: str, fichier: str, cfg: dict) -> list[Fonction]:
         else:
             corps, fin = _bloc_accolades(lignes, i, litteraux, commentaire)
         f = Fonction(nom=nom, fichier=fichier, ligne=i + 1, attributs=attributs,
-                     corps="\n".join(corps), lignes_corps=corps, fin=fin + 1, entete=ligne)
+                     corps="\n".join(corps), lignes_corps=corps, fin=fin + 1, entete=ligne, debut=j + 2)
         f.est_test = bool(
             (marque_attr and any(marque_attr.search(a) for a in attributs))
             or (marque_nom and marque_nom.search(nom))
@@ -153,6 +156,30 @@ def extraire(texte: str, fichier: str, cfg: dict) -> list[Fonction]:
         )
         res.append(f)
     return res
+
+
+
+def zones_de_test(texte: str, fichier: str, cfg: dict) -> list[tuple[int, int]]:
+    """Les lignes de test d'un fichier, comptées depuis zéro, fin exclue :
+    chaque fonction de test, attributs et commentaires au-dessus compris, et
+    chaque module de tests (`test_module`) en entier, ses aides comprises."""
+    zones = [(f.debut - 1, f.fin) for f in extraire(texte, fichier, cfg) if f.est_test]
+    if not cfg.get("test_module"):
+        return zones
+    ouvre = re.compile(cfg["test_module"])
+    litteraux, commentaire = cfg.get("strings", LITTERAUX), cfg.get("line_comment", COMMENTAIRE)
+    lignes = texte.splitlines()
+    for i, ligne in enumerate(lignes):
+        if ouvre.search(ligne):
+            bloc = cfg.get("block", "braces")
+            if bloc == "indent":
+                fin = _bloc_indentation(lignes, i)[1]
+            elif bloc == "end":
+                fin = _bloc_fin(lignes, i, litteraux, commentaire)[1]
+            else:
+                fin = _bloc_accolades(lignes, i, litteraux, commentaire)[1]
+            zones.append((i, fin + 1))
+    return zones
 
 
 def aides_qui_affirment(fonctions: list[Fonction], assertion: re.Pattern) -> set[str]:

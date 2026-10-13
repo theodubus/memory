@@ -297,7 +297,7 @@ commit quand un commit d'agent ne compte aucun hook.
 
 ## B-0051 — tests.regression refuse à tort un correctif Rust testé dans son module
 
-> statut : ouvert · origine : J-2026-10-12-Q · lu : backlog@104e7a14
+> statut : fait · origine : J-2026-10-12-Q · lu : backlog@104e7a14 · ref : J-2026-10-13-A
 
 Mesuré à R6, tâche 4 : l'agent corrige un défaut de `chess` et écrit son
 test de régression dans le module, comme le projet le fait partout ; la

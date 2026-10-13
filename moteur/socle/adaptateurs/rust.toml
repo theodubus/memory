@@ -50,11 +50,13 @@ absent = "signal secondaire, jamais un garde-fou : la mutation mesure ce que la 
 replacement = "capacité `mutation`"
 
 [capabilities.regression]
-# Les tests d'intégration vivent dans `tests/` : on peut les poser sur le
-# commit parent sans y apporter le correctif. Un test unitaire dans `src/`
-# voyagerait avec le code, donc il ne prouve rien ici.
+# Un test d'intégration, dans `tests/`, se pose tel quel sur le commit
+# parent. Un test unitaire vit dans le module qu'il teste : sur le parent ne
+# s'appliquent que ses lignes de test (`[tests] test_module` et les
+# fonctions de test), puis `module_command` le lance par son nom (B-0051).
 command = "cargo test {test_args}"
 test_paths = ["tests/*.rs", "*/tests/*.rs"]
+module_command = "cargo test --workspace -- {names}"
 
 [code]
 # Le code dont une fonction publique, ajoutée ou modifiée, doit être nommée
@@ -70,6 +72,7 @@ function = '^\s*(?:pub(?:\([^)]*\))?\s+)?(?:async\s+)?(?:unsafe\s+)?fn\s+(\w+)'
 attribute = '^\s*#\['
 comment = '^\s*//'
 marker_attribute = '#\[(?:\w+::)*test\b'
+test_module = '^\s*#\[cfg\(test\)\]'
 block = "braces"
 assertion = '\b(?:assert|assert_eq|assert_ne|debug_assert\w*|panic|unreachable|assert_matches)!|#\[should_panic'
 ignore = '#\[ignore\b'

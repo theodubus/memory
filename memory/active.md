@@ -13,9 +13,9 @@ un compte rendu à Théo à la fin de chaque lot.
 
 ## Prochaines étapes
 
-1. L5, en commençant par les refus à tort que R6 a mesurés : B-0051
-   (`tests.regression` en Rust), B-0049 (la source des instructions),
-   B-0052 (`depot:chemin`) ; puis les sections D, E et F du relevé, et les
+1. L5, en commençant par les refus à tort que R6 a mesurés : B-0051 fait
+   (J-2026-10-13-A), puis B-0049 (la source des instructions), B-0052
+   (`depot:chemin`) ; puis les sections D, E et F du relevé, et les
    deux choix de conception, chacun avec sa décision écrite.
 2. Puis L6 (une demande ; R6 en donne la mesure), R2 et L7.
 3. B-0047 (D-0017 validée) : le backlog en un fichier par sujet, avec les

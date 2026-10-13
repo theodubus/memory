@@ -349,20 +349,64 @@ def regression(ctx, r):
         sujet = c["message"].strip().splitlines()[0]
         touches = outils.fichiers_changes(ctx.racine, parent, sha)
         tests = [t for t in outils.filtrer(touches, motifs) if outils.lire_a(ctx.racine, sha, t) is not None]
-        if not tests:
+        if tests:
+            fichiers = {t: outils.lire_a(ctx.racine, sha, t) or "" for t in tests}
+            commande = commande_regression(cap, tests)
+        else:
+            # Un test écrit dans le module du code (B-0051, mesuré à R6) :
+            # sur le parent, le seul changement de ses fonctions de test.
+            fichiers, noms = tests_du_module(ctx, parent, sha, [t for t in touches if t not in tests])
+            commande = cap["module_command"].replace("{names}", " ".join(noms)) \
+                if noms and "module_command" in cap else None
+        if commande is None:
+            ailleurs = " ; ni test changé dans un module de code" if "module_command" in cap else ""
             r.erreur("tests.regression", f"correctif sans test de régression : {sha[:10]} « {sujet} » "
-                     f"(aucun fichier de {', '.join(motifs)} ajouté ou modifié)")
+                     f"(aucun fichier de {', '.join(motifs)} ajouté ou modifié{ailleurs})")
             continue
-        code_parent = _executer_superpose(ctx, parent, sha, tests, cap)
+        code_parent = _executer_superpose(ctx, parent, fichiers, commande, cap)
         if code_parent is None:
             r.erreur("tests.regression", f"{sha[:10]} : impossible de préparer le commit parent")
             continue
         if code_parent == 0:
             r.erreur("tests.regression", f"{sha[:10]} « {sujet} » : son test passe déjà sur le parent — il ne prouve pas le correctif")
             continue
-        code = _executer_superpose(ctx, sha, sha, tests, cap)
+        code = _executer_superpose(ctx, sha, {}, commande, cap)
         if code != 0:
             r.erreur("tests.regression", f"{sha[:10]} « {sujet} » : son test de régression échoue sur le correctif lui-même")
+
+
+def tests_du_module(ctx, parent: str, sha: str, chemins: list[str]) -> tuple[dict[str, str], list[str]]:
+    """Les fichiers de code où le correctif ajoute ou change des fonctions de
+    test (Rust les écrit dans le module qu'elles testent) : pour chacun, sa
+    version du parent où ne s'applique que ce qui touche les lignes de test,
+    et les noms de ces fonctions. Un changement qui touche une ligne de test
+    et du code à la fois s'applique en entier : il ne se sépare pas."""
+    import difflib
+
+    cfg = cfg_tests(ctx.projet)
+    if cfg is None:
+        return {}, []
+    fichiers, noms = {}, []
+    for chemin in outils.filtrer(chemins, cfg.get("paths", []), cfg.get("exclude", [])):
+        avant, apres = outils.lire_a(ctx.racine, parent, chemin), outils.lire_a(ctx.racine, sha, chemin)
+        if avant is None or apres is None:
+            continue
+        anciens = {f.nom: (f.attributs, f.corps) for f in tests_lecture.extraire(avant, chemin, cfg) if f.est_test}
+        changes = [f.nom for f in tests_lecture.extraire(apres, chemin, cfg)
+                   if f.est_test and anciens.get(f.nom) != (f.attributs, f.corps)]
+        if not changes:
+            continue
+        zones = tests_lecture.zones_de_test(apres, chemin, cfg)
+        a, b = avant.splitlines(keepends=True), apres.splitlines(keepends=True)
+        res = []
+        for op, i1, i2, j1, j2 in difflib.SequenceMatcher(None, a, b, autojunk=False).get_opcodes():
+            # Une suppression pure est dedans si elle tombe entre deux lignes
+            # de la même zone.
+            dedans = any(debut < j2 and j1 < fin if j2 > j1 else debut < j1 < fin for debut, fin in zones)
+            res += b[j1:j2] if op == "equal" or dedans else a[i1:i2]
+        fichiers[chemin] = "".join(res)
+        noms += [n for n in changes if n not in noms]
+    return fichiers, noms
 
 
 def commande_regression(cap: dict, tests: list[str]) -> str:
@@ -386,9 +430,9 @@ def commande_regression(cap: dict, tests: list[str]) -> str:
     )
 
 
-def _executer_superpose(ctx, rev: str, rev_tests: str, tests: list[str], cap: dict) -> int | None:
-    """Exécute les tests de `rev_tests` sur l'arbre de `rev`, dans un worktree
-    jetable. Rend le code de sortie."""
+def _executer_superpose(ctx, rev: str, fichiers: dict[str, str], commande: str, cap: dict) -> int | None:
+    """Exécute `commande` sur l'arbre de `rev`, où `fichiers` (chemin, texte)
+    sont posés par-dessus, dans un worktree jetable. Rend le code de sortie."""
     atelier = Path(tempfile.mkdtemp(prefix="socle-regression-"))
     arbre = atelier / "arbre"
     try:
@@ -405,12 +449,10 @@ def _executer_superpose(ctx, rev: str, rev_tests: str, tests: list[str], cap: di
         for d in cap.get("copied", []):
             if (ctx.racine / d).is_dir() and not (arbre / d).exists():
                 shutil.copytree(ctx.racine / d, arbre / d, symlinks=True)
-        for t in tests:
-            contenu = outils.lire_a(ctx.racine, rev_tests, t)
+        for t, contenu in fichiers.items():
             cible = arbre / t
             cible.parent.mkdir(parents=True, exist_ok=True)
-            cible.write_text(contenu or "", encoding="utf-8")
-        commande = commande_regression(cap, tests)
+            cible.write_text(contenu, encoding="utf-8")
         p = subprocess.run(commande, shell=True, cwd=arbre, capture_output=True, text=True,
                            timeout=cap.get("timeout", 1800))
         return p.returncode
