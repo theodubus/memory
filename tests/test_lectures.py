@@ -310,3 +310,103 @@ class TestCitationsDeLaPlage(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestLectureUnifiee(unittest.TestCase):
+    """ADR-0023, relevé de la passe de recul : une lecture d'index recopiée
+    d'un sujet plus ancien du même fichier passait (D) ; et la CI, jugeant
+    depuis une base plus ancienne que le hook avant push, refusait l'index
+    lu au milieu de la plage (E)."""
+
+    ENTETE = "<!-- socle: couche=backlog zone=publique -->\n# Backlog\n"
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-unifiee-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        git(self.racine, "init", "-q", "-b", "main")
+        self.backlog = self.racine / "memory/backlog.md"
+        self.backlog.parent.mkdir(parents=True)
+        self.backlog.write_text(self.ENTETE + self.sujet(1, ""))
+        self.b0 = self.commit("base")
+
+    @staticmethod
+    def sujet(n: int, lu: str, statut: str = "ouvert") -> str:
+        return f"\n## B-{n:04d} — Sujet {n}\n\n> statut : {statut} · origine : fichier:memory/backlog.md{lu}\n"
+
+    def index(self) -> str:
+        return memoire.empreinte_index(memoire.Memoire.charger(self.racine), "backlog")
+
+    def commit(self, message) -> str:
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", message)
+        return git(self.racine, "rev-parse", "HEAD").strip()
+
+    def erreurs(self, base) -> list[str]:
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="ci", base=base, tete="HEAD")
+        r = Rapport()
+        controles_memoire.lectures(ctx, r)
+        return [c.message for c in r.erreurs("memoire.lectures")]
+
+    def test_une_lecture_recopiee_d_un_sujet_plus_ancien_est_refusee(self):
+        vieux = self.index()
+        self.backlog.write_text(self.backlog.read_text() + self.sujet(2, f" · lu : backlog@{vieux}"))
+        base = self.commit("B-0002, après lecture")
+        self.backlog.write_text(self.backlog.read_text() + self.sujet(3, f" · lu : backlog@{vieux}"))
+        self.commit("B-0003, lecture recopiée")
+        erreurs = self.erreurs(base)
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertIn(f"backlog@{vieux}", erreurs[0])
+
+    def test_le_verdict_ne_retrecit_pas_avec_une_base_plus_ancienne(self):
+        self.backlog.write_text(self.backlog.read_text() + self.sujet(2, f" · lu : backlog@{self.index()}"))
+        c1 = self.commit("B-0002")
+        lu = self.index()  # lu après le push de c1
+        texte = self.backlog.read_text().replace("statut : ouvert · origine : fichier:memory/backlog.md\n",
+                                                 "statut : abandonné · origine : fichier:memory/backlog.md\n", 1)
+        self.backlog.write_text(texte + self.sujet(3, f" · lu : backlog@{lu}"))
+        self.commit("B-0001 abandonné, B-0003")
+        self.assertEqual(self.erreurs(c1), [])       # le hook avant push
+        self.assertEqual(self.erreurs(self.b0), [])  # la CI, depuis la branche par défaut
+
+    def test_le_hook_juge_la_recopie_comme_le_controle(self):
+        from socle import hooks
+
+        vieux = self.index()
+        self.backlog.write_text(self.backlog.read_text() + self.sujet(2, f" · lu : backlog@{vieux}"))
+        self.commit("B-0002, après lecture")
+        avant = self.backlog.read_text()
+        projet = config.Projet.charger(self.racine)
+        fautes = hooks.references_inventees(projet, "memory/backlog.md", avant,
+                                            avant + self.sujet(3, f" · lu : backlog@{vieux}"))
+        self.assertTrue(any(f"backlog@{vieux}" in f for f in fautes), fautes)
+        self.assertEqual(hooks.references_inventees(projet, "memory/backlog.md", avant,
+                                                    avant + self.sujet(3, f" · lu : backlog@{self.index()}")), [])
+
+
+class TestModuleLectures(TestLectureUnifiee):
+    """Les fonctions de `socle.lectures`, appelées directement."""
+
+    def test_les_fonctions(self):
+        from socle import lectures
+
+        lu0 = self.index()
+        self.backlog.write_text(self.backlog.read_text() + self.sujet(2, f" · lu : backlog@{lu0}"))
+        c1 = self.commit("B-0002")
+        mem = memoire.Memoire.charger(self.racine)
+        plage = lectures.Plage(self.racine, memoire.Memoire.charger(self.racine, self.b0), mem, [c1])
+        lignes = self.backlog.read_text().splitlines()
+        ligne = lambda titre: next(i for i, l in enumerate(lignes, start=1) if l.startswith(titre)) + 2
+        soi = lectures.entree_englobante(mem, "memory/backlog.md", ligne("## B-0002"))
+        self.assertEqual(soi.id, "B-0002")
+        self.assertEqual(plage.parution("memory/backlog.md", f"backlog@{lu0}", soi), 0)
+        self.assertEqual(plage.changeant("B"), [c1])
+        self.assertTrue(lectures.index_lu(plage, "memory/backlog.md", soi, "backlog", lu0))
+        self.assertFalse(lectures.index_lu(plage, "memory/backlog.md", soi, "backlog", "0badc0de"))
+        b1 = memoire.empreinte_entree(mem.entree("B-0001"))
+        self.assertTrue(lectures.entree_lue(plage, "memory/backlog.md", soi, "B-0001", b1))
+        self.assertFalse(lectures.entree_lue(plage, "memory/backlog.md", soi, "B-0001", "0badc0de"))
+        base = memoire.Memoire.charger(self.racine, c1)
+        self.assertTrue(lectures.deja_citee(soi, f"backlog@{lu0}", base, ""))
+        autre = lectures.entree_englobante(mem, "memory/backlog.md", ligne("## B-0001"))
+        self.assertFalse(lectures.deja_citee(autre, f"backlog@{lu0}", base, ""))
+        self.assertTrue(lectures.deja_citee(None, f"backlog@{lu0}", base, f"lu : backlog@{lu0}"))

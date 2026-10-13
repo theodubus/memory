@@ -395,102 +395,34 @@ def prive(ctx, r):
 # --------------------------------------------------------------------------
 
 
-def _entree_englobante(mem: memoire.Memoire, chemin: str, ligne: int) -> memoire.Entree | None:
-    f = mem.fichiers.get(chemin)
-    if f is None:
-        return None
-    dedans = [e for e in f.entrees if e.ligne <= ligne <= e.ligne + e.texte.count("\n")]
-    return max(dedans, key=lambda e: e.ligne) if dedans else None
-
-
 @controle("memoire.lectures", base=True)
 def lectures(ctx, r):
-    """Une citation `ID@empreinte` ajoutée désigne la version actuelle de
-    l'entrée ; une décision, une demande ou un sujet de backlog nouveaux
-    prouvent ce qu'ils ont lu avant d'être écrits."""
+    """Une citation `ID@empreinte` ou `index@empreinte` ajoutée désigne une
+    version que l'agent a pu lire (`socle.lectures`, ADR-0023) ; une
+    décision, une demande ou un sujet de backlog nouveaux prouvent ce qu'ils
+    ont lu avant d'être écrits."""
+    from socle import lectures as lp
+
     mem, base = ctx.memoire, ctx.memoire_base
     defs = mem.definitions()
     nouveaux = set(defs) - set(base.definitions())
-    # Une citation vaut pour la version qu'elle a lue : celle de l'entrée au
-    # commit de la plage où la citation est apparue, même si l'entrée a changé
-    # depuis (une demande répondue est gelée, et ne peut plus suivre). Une
-    # citation encore hors de tout commit lit la version actuelle. Calculé
-    # seulement au besoin.
-    historique: list[tuple[str, memoire.Memoire]] = []
-
-    def commits_ou_parait(chemin: str, citation: str, soi=None) -> list[memoire.Memoire]:
-        """Le commit de la plage où la citation paraît pour la première fois :
-        dans ce fichier, ou dans l'entrée qui la porte, où qu'elle soit alors
-        (un sujet créé puis archivé au journal sur la même branche)."""
-        if not historique:
-            historique.extend((c["sha"], memoire.Memoire.charger(ctx.racine, c["sha"])) for c in ctx.commits)
-        res = []
-        for sha, m in historique:
-            texte_c = m.fichiers[chemin].texte if chemin in m.fichiers else outils.lire_a(ctx.racine, sha, chemin)
-            porteuse = m.entree(soi.id) if soi else None
-            if (texte_c and citation in texte_c) or (porteuse is not None and citation in porteuse.texte):
-                res.append(m)
-                break  # la première apparition : la version alors lue
-        return res
-
-    def lue_dans_la_plage(chemin: str, ident: str, h: str, soi=None) -> bool:
-        return any((e := m.entree(ident)) is not None and memoire.empreinte_entree(e) == h
-                   for m in commits_ou_parait(chemin, f"{ident}@{h}", soi))
-
-    def index_de_la_plage(chemin: str, index: str, h: str, soi) -> bool:
-        for m in commits_ou_parait(chemin, f"{index}@{h}", soi):
-            apres_m = {n for n in m.definitions() if soi and m.definitions()[n][0].type == soi.type and n > soi.id}
-            sauf = {soi.id} if soi else set()
-            # L'index lu, sans l'entrée qui cite ou tel qu'affiché, elle
-            # comprise (B-0037), et sans ce qui s'est ajouté après elle.
-            if h in {memoire.empreinte_index(m, index, x | y) for x in (set(), sauf) for y in (set(), apres_m)}:
-                return True
-        return False
-
-    def deplacee(chemin: str, ligne: int, citation: str) -> bool:
-        """La même entrée portait déjà cette citation à la base : elle a changé
-        de fichier (un sujet clos archivé au journal), sans rien relire ; ou
-        la copie privée d'une entrée basculée la reprend (B-0029)."""
-        soi = _entree_englobante(mem, chemin, ligne)
-        if soi is None:
-            return False
-        for ident in (soi.id, *soi.depuis):
-            avant = base.definitions().get(ident)
-            if avant and citation in avant[0].texte:
-                return True
-        return False
+    plage = lp.Plage(ctx.racine, base, mem, [c["sha"] for c in ctx.commits])
 
     for chemin, texte in sorted(textes_scannes(ctx).items()):
         avant = ctx.lire_base(chemin) or ""
-        deja = {(i, h) for i, h, _ in memoire.citations(avant)}
         for ident, h, ligne in memoire.citations(texte):
-            if (ident, h) in deja or ident not in defs or deplacee(chemin, ligne, f"{ident}@{h}"):
+            soi = lp.entree_englobante(mem, chemin, ligne)
+            if ident not in defs or lp.deja_citee(soi, f"{ident}@{h}", base, avant):
                 continue
-            if memoire.empreinte_entree(defs[ident][0]) != h and \
-                    not lue_dans_la_plage(chemin, ident, h, _entree_englobante(mem, chemin, ligne)):
+            if not lp.entree_lue(plage, chemin, soi, ident, h):
                 r.erreur("memoire.lectures", f"`{ident}@{h}` ne correspond pas à la version actuelle de {ident} "
                          f"(lue avant un changement, ou inventée) : la relire, `python3 .socle/socle show {ident}`, "
                          "et citer l'empreinte affichée", chemin, ligne)
-        deja_i = {(i, h) for i, h, _ in memoire.citations_index(avant)}
         for index, h, ligne in memoire.citations_index(texte):
-            if (index, h) in deja_i or deplacee(chemin, ligne, f"{index}@{h}"):
+            soi = lp.entree_englobante(mem, chemin, ligne)
+            if lp.deja_citee(soi, f"{index}@{h}", base, avant):
                 continue
-            soi = _entree_englobante(mem, chemin, ligne)
-            sauf = {soi.id} if soi else set()
-            # Les entrées du même index ajoutées après celle qui cite : elle
-            # ne pouvait pas les lire, et elles ne périment pas sa lecture.
-            apres = {n for n in nouveaux if soi and defs[n][0].type == soi.type and n > soi.id}
-            permises = {
-                # L'index tel que `socle show --index` l'affiche, entrée qui
-                # cite comprise : le refus conseille de le relire (B-0037).
-                memoire.empreinte_index(mem, index),
-                memoire.empreinte_index(mem, index, apres),
-                memoire.empreinte_index(mem, index, sauf),
-                memoire.empreinte_index(mem, index, sauf | apres),
-                memoire.empreinte_index(mem, index, sauf | nouveaux),
-                memoire.empreinte_index(base, index),
-            }
-            if h not in permises and not index_de_la_plage(chemin, index, h, soi):
+            if not lp.index_lu(plage, chemin, soi, index, h):
                 r.erreur("memoire.lectures", f"`{index}@{h}` ne correspond à aucune version récente de l'index : "
                          f"le relire, `python3 .socle/socle show --index {index}`, et citer l'empreinte affichée",
                          chemin, ligne)

@@ -38,6 +38,7 @@ comparent le même fichier sous ses deux noms.
 | `memoire.py` | lecture des cinq couches : en-têtes, entrées, identifiants, métadonnées, références |
 | `demandes.py` | le contrat des demandes, son lint, les réponses humaines gelées |
 | `contexte.py` | le registre des contrôles, leurs étages, la base de comparaison, le mode adoption |
+| `lectures.py` | la lecture prouvée, une seule fonction pour le contrôle et le hook (ADR-0023) |
 | `controles_memoire.py` | format, références, fuite d'identifiants privés (blocs de code et archives compris), preuves, backlog, budgets, péremption, retard, ajout seul (la mémoire privée relue à la base, B-0044, L3), demandes, source unique des instructions |
 | `controles_docs.py` | outillage documenté, valeurs liées, correspondance code ↔ doc, refus des copies |
 | `controles_tests.py` | capacités de l'adaptateur, tests creux, valeurs attendues, régression rejouée sur le parent, couverture de mutation, code nouveau nommé par un test |
@@ -149,9 +150,11 @@ comparent le même fichier sous ses deux noms.
   facile à satisfaire) ; un plafond de mutation qui apparaît vient de la
   mesure : nul, ou avec la raison qu'écrit `mutation-verdict --poser`, au
   même compte (B-0044, L2).
-- **Lecture prouvée** (`ADR-0008`) : une entrée citée `ID@empreinte` l'a été
-  dans cette version ; une décision, une demande ou un sujet de backlog
-  nouveaux doivent le faire. La preuve porte sur l'accès au texte, pas sur
+- **Lecture prouvée** (`ADR-0008`, `ADR-0023`) : une entrée citée
+  `ID@empreinte` l'a été dans cette version, l'actuelle ou celle du commit
+  où la citation paraît ; un index, dans une version de la plage ; une
+  décision, une demande ou un sujet de backlog nouveaux doivent le faire.
+  Le contrôle et le hook appellent la même fonction. La preuve porte sur l'accès au texte, pas sur
   sa compréhension. Une entrée qui change de fichier, un sujet clos archivé
   au journal, garde sa preuve sans relire : la citation se juge au commit où
   elle a paru pour la première fois, dans l'entrée qui la porte.

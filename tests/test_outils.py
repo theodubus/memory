@@ -66,3 +66,20 @@ class TestRenommages(unittest.TestCase):
         self.assertEqual(outils.fichiers_changes(racine, base), ["ancienne.toml", "politique.toml"])
         git(racine, "commit", "-qm", "renommage")
         self.assertEqual(outils.fichiers_changes(racine, base, "HEAD"), ["ancienne.toml", "politique.toml"])
+
+
+class TestLirePlusieurs(unittest.TestCase):
+    def test_le_meme_contenu_que_fichier_par_fichier(self):
+        racine = Path(tempfile.mkdtemp(prefix="socle-lire-"))
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        git(racine, "init", "-q", "-b", "main")
+        (racine / "a.md").write_text("é\nune ligne\n")
+        (racine / "vide.md").write_text("")
+        (racine / "d").mkdir()
+        (racine / "d/b.md").write_text("b" * 70000)
+        git(racine, "add", "-A")
+        git(racine, "commit", "-qm", "base")
+        chemins = ["a.md", "absent.md", "d", "vide.md", "d/b.md"]
+        lus = outils.lire_plusieurs(racine, "HEAD", chemins)
+        self.assertEqual(lus, {c: outils.lire_a(racine, "HEAD", c) if c != "d" else None for c in chemins})
+        self.assertEqual(lus["vide.md"], "")

@@ -121,6 +121,30 @@ def lire_a(racine: Path, rev: str | None, chemin: str) -> str | None:
     return r.stdout.decode("utf-8", errors="replace")
 
 
+def lire_plusieurs(racine: Path, rev: str, chemins: list[str]) -> dict[str, str | None]:
+    """Le contenu de plusieurs fichiers à une révision, en un seul processus
+    git (`cat-file --batch`) au lieu d'un `git show` par fichier ; `None`
+    pour un fichier absent."""
+    if not chemins or rev == ARBRE_VIDE:
+        return {c: None for c in chemins}
+    entree = "".join(f"{rev}:{c}\n" for c in chemins).encode("utf-8")
+    sortie = subprocess.run(["git", "cat-file", "--batch"], cwd=racine, input=entree, capture_output=True).stdout
+    res, i = {}, 0
+    for c in chemins:
+        fin = sortie.index(b"\n", i)
+        entete = sortie[i:fin].split()
+        i = fin + 1
+        if len(entete) != 3 or entete[1] != b"blob":
+            res[c] = None
+            if len(entete) == 3:
+                i += int(entete[2]) + 1
+            continue
+        taille = int(entete[2])
+        res[c] = sortie[i:i + taille].decode("utf-8", errors="replace")
+        i += taille + 1
+    return res
+
+
 def fichiers_changes(racine: Path, base: str | None, tete: str | None = None) -> list[str]:
     """Chemins changés entre `base` et `tete`. `tete=None` : l'arbre de
     travail, non suivis compris."""

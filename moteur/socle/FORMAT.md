@@ -392,9 +392,11 @@ son texte ; chaque index aussi (`decisions@…` pour toutes les décisions,
 `socle show --index decisions|backlog` les impriment avec le texte.
 
 Citer `ADR-NNNN@xxxxxxxx`, c'est montrer qu'on a lu cette version-là. Une
-citation ajoutée doit désigner la version actuelle de l'entrée, ou de l'index
-tel qu'il était au début du travail ; sinon elle est périmée ou inventée, et
-refusée. Elle est obligatoire :
+citation ajoutée doit désigner la version actuelle de l'entrée, ou celle du
+commit où la citation a paru ; une citation d'index, une version de l'index
+dans la plage du travail, de sa base à l'arbre (ADR-0023). Sinon elle est
+périmée ou inventée, et refusée ; recopiée d'une autre entrée, elle se juge
+comme une lecture neuve. Elle est obligatoire :
 
 - dans une décision nouvelle : `lu : decisions@…`, et chaque entrée citée
   avec son empreinte ;

@@ -177,32 +177,30 @@ def sha_fabrique(racine: Path, texte: str) -> str | None:
 
 def references_inventees(projet: config.Projet, rel: str, avant: str | None, apres: str) -> list[str]:
     """Les références que cette écriture AJOUTE et qui ne mènent nulle part."""
+    from socle import lectures as lp
+
     fautes = []
+    mem_avant = memoire.Memoire.charger(projet.racine)
     mem = memoire.Memoire.charger(projet.racine)
-    avant_defs = set(mem.definitions())
-    index_avant = {i: {memoire.empreinte_index(mem, i)} for i in memoire.INDEX_TYPES}
-    # Comme `memoire.lectures` : l'index lu au début du travail (à la base)
-    # reste valable, même si l'agent y a ajouté depuis.
-    base = outils.base_de_travail(projet.racine)
-    if base:
-        mem_base = memoire.Memoire.charger(projet.racine, base)
-        for i in index_avant:
-            index_avant[i].add(memoire.empreinte_index(mem_base, i))
     if memoire.couche_attendue(rel) not in (None, "inconnue"):
         mem.fichiers[rel] = memoire.analyser(rel, apres)
     defs = mem.definitions()
-    # Lecture prouvée (ADR-0008) : une empreinte citée est celle de la version
-    # actuelle. Le refus ne donne pas la bonne : elle s'obtient en relisant.
-    deja = {(i, h) for i, h, _ in memoire.citations(avant or "")}
+    # Lecture prouvée (ADR-0008), par la même fonction que `memoire.lectures`
+    # (ADR-0023) : la base du travail, ses commits et l'arbre. Le refus ne
+    # donne pas la bonne empreinte : elle s'obtient en relisant.
+    base = outils.base_de_travail(projet.racine)
+    commits = outils.git(projet.racine, "rev-list", "--reverse", f"{base}..HEAD", check=False).split() if base else []
+    plage = lp.Plage(projet.racine, memoire.Memoire.charger(projet.racine, base) if base else None, mem, commits)
     for ident, h, ligne in memoire.citations(apres):
-        if (ident, h) not in deja and ident in defs and memoire.empreinte_entree(defs[ident][0]) != h:
+        soi = lp.entree_englobante(mem, rel, ligne)
+        if ident in defs and not lp.deja_citee(soi, f"{ident}@{h}", mem_avant, avant or "") \
+                and not lp.entree_lue(plage, rel, soi, ident, h):
             fautes.append(f"`{ident}@{h}` (ligne {ligne}) n'est pas l'empreinte de la version actuelle de {ident} : "
                           f"la relire, `python3 .socle/socle show {ident}`")
-    nouveaux = set(defs) - avant_defs
-    deja_i = {(i, h) for i, h, _ in memoire.citations_index(avant or "")}
     for index, h, ligne in memoire.citations_index(apres):
-        permises = index_avant[index] | {memoire.empreinte_index(mem, index, nouveaux)}
-        if (index, h) not in deja_i and h not in permises:
+        soi = lp.entree_englobante(mem, rel, ligne)
+        if not lp.deja_citee(soi, f"{index}@{h}", mem_avant, avant or "") \
+                and not lp.index_lu(plage, rel, soi, index, h):
             fautes.append(f"`{index}@{h}` (ligne {ligne}) n'est l'empreinte d'aucune version récente de l'index : "
                           f"le relire, `python3 .socle/socle show --index {index}`")
     deja = {i for i, _ in memoire.mentions(avant or "")}

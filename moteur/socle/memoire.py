@@ -412,10 +412,12 @@ class Memoire:
             chemins = sorted(set(outils.fichiers_courants(racine)) | set(fichiers_compagnon(racine)))
         else:
             chemins = outils.fichiers_a(racine, rev)
+        chemins = [c for c in chemins if couche_attendue(c) is not None]
+        # À une révision, tous les fichiers d'un coup : un `git show` par
+        # fichier coûtait l'essentiel de la lecture prouvée (ADR-0023).
+        textes = outils.lire_plusieurs(racine, rev, chemins) if rev is not None else {}
         for c in chemins:
-            if couche_attendue(c) is None:
-                continue
-            texte = outils.lire_a(racine, rev, c)
+            texte = textes.get(c) if rev is not None else outils.lire_a(racine, rev, c)
             if texte is None:
                 continue
             if est_prive(c) and not lisible(texte):
