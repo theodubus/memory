@@ -39,7 +39,7 @@ class TestApprobation(unittest.TestCase):
         git(self.racine, "init", "-q", "-b", "main")
         (self.racine / "calc.py").write_text("x = 1\n")
         with contextlib.redirect_stdout(io.StringIO()):
-            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR, format_memoire=2)
         with open(self.racine / "memory/backlog.md", "a") as f:
             f.write("\n## B-0001 — Accepter le workflow\n\n> statut : ouvert · origine : fichier:calc.py · pour : humain\n")
         git(self.racine, "add", "-A")

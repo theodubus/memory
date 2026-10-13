@@ -3,13 +3,16 @@ La migration du format 2 découpe le fichier unique, sans rien perdre, et se
 relance sans dommage ; ce qui le lisait (création d'un sujet, liens,
 archivage, bascule, état) suit."""
 
-import io
 import contextlib
+import io
+import shutil
+import tempfile
 import unittest
+from pathlib import Path
 
-from socle import archivage, config, controles_cliquet, contexte, etat, memoire, migrations
+from socle import archivage, autotest, config, controles_cliquet, contexte, etat, installeur, memoire, migrations
 from socle.rapport import Rapport
-from tests.test_bascule import P, Projet, git
+from tests.test_bascule import MOTEUR, P, Projet, git
 
 DEUX_SUJETS = """
 ## B-0002 — Un sujet détaillé
@@ -104,6 +107,40 @@ class TestApresLaMigration(Format3):
         self.assertIn("depuis : B-0001", copie)
         self.assertEqual(self.erreurs(), [])
 
+
+
+class TestInstallation(unittest.TestCase):
+    def test_une_installation_au_format_3(self):
+        racine = Path(tempfile.mkdtemp(prefix="socle-format-3-"))
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        git(racine, "init", "-q", "-b", "main")
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(racine, "python", "@essai", source=MOTEUR, format_memoire=3)
+        config.oublier_formats()
+        self.assertEqual(config.chemins(racine).format, 3)
+        self.assertTrue((racine / "memory/backlog/.gitkeep").is_file())
+        self.assertFalse((racine / "memory/backlog.md").exists())
+        self.assertIn("format = 3", (racine / ".socle/engine.lock").read_text())
+        gf = (racine / ".socle/guardrails.toml").read_text()
+        self.assertIn('"memory/backlog/*.md" = { max_bytes = 8000 }', gf)
+        self.assertNotIn('"memory/backlog.md"', gf)
+        self.assertIn("| `memory/backlog/` |", (racine / "AGENTS.md").read_text())
+        # L'auto-test et le banc ajoutent un sujet dans l'un ou l'autre format.
+        autotest.ajouter_sujet(racine, "\n## B-0001 — Un sujet\n\n> statut : ouvert · origine : fichier:calc.py\n")
+        self.assertEqual((racine / "memory/backlog/B-0001-un-sujet.md").read_text(),
+                         "<!-- socle: couche=backlog zone=publique -->\n# B-0001 — Un sujet\n\n"
+                         "> statut : ouvert · origine : fichier:calc.py\n")
+
+    def test_un_sujet_de_plus_au_format_2(self):
+        racine = Path(tempfile.mkdtemp(prefix="socle-format-2-"))
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        git(racine, "init", "-q", "-b", "main")
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(racine, "python", "@essai", source=MOTEUR, format_memoire=2)
+        config.oublier_formats()
+        autotest.ajouter_sujet(racine, "\n## B-0001 — Un sujet\n\n> statut : ouvert · origine : fichier:calc.py\n")
+        self.assertTrue((racine / "memory/backlog.md").read_text().endswith(
+            "\n## B-0001 — Un sujet\n\n> statut : ouvert · origine : fichier:calc.py\n"))
 
 if __name__ == "__main__":
     unittest.main()

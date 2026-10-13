@@ -163,7 +163,7 @@ class Atelier:
         journal = sorted((origine / "memory/journal").glob("*.md"))[0]
         ident = journal.read_text().split("## ", 2)[1].split(" ", 1)[0]
         self._ajouter(origine / "memory/canonical.md", CANONIQUE_ESSAI)
-        self._ajouter(origine / "memory/backlog.md", BACKLOG_ESSAI.format(journal=ident))
+        ajouter_sujet(origine, BACKLOG_ESSAI.format(journal=ident))
         # L'origine est un dossier local : l'adresse web où l'humain lirait
         # se règle dans la politique, comme pour un relais.
         pol = origine / ".socle/policy.toml"
@@ -466,18 +466,41 @@ def _collision(a: "Atelier", c: Path) -> str:
     base de la CI."""
     point = a.git(c, "rev-parse", "HEAD").strip()
 
-    def sujet(titre: str):
-        ajouter(c, "memory/backlog.md", f"\n## B-0002 — {titre}\n\n> statut : ouvert · origine : {a.journal} · "
+    def prendre(titre: str):
+        ajouter_sujet(c, f"\n## B-0002 — {titre}\n\n> statut : ouvert · origine : {a.journal} · "
                 f"lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n")
 
     a.git(c, "switch", "-q", "-c", "autre")
-    sujet("Documenter le module")
+    prendre("Documenter le module")
     a.commit(c, "un sujet sur une autre branche")
     a.git(c, "update-ref", "refs/remotes/origin/main", "HEAD")
     a.git(c, "switch", "-q", "travail")
-    sujet("Ajouter une fonction quadruple")
+    prendre("Ajouter une fonction quadruple")
     a.commit(c, "un sujet ici")
     return point
+
+
+def ajouter_sujet(c: Path, bloc: str):
+    """Un sujet de plus au backlog, écrit comme dans le fichier unique
+    (`## B-… — titre`, ses métadonnées, son corps) : à sa suite au format 2,
+    dans son propre fichier au format 3, son titre remonté d'un niveau
+    (ADR-0025)."""
+    from socle import config, memoire, outils
+
+    ch = config.chemins(c)
+    if not ch.backlog_en_dossier:
+        ajouter(c, ch.backlog, bloc)
+        return
+    m = re.match(r"\s*## (B-\d{4}) — (.+)", bloc)
+    outils.ecrire(c / ch.backlog / f"{m[1]}-{memoire.nom_de_fichier(m[2])}.md",
+                  "<!-- socle: couche=backlog zone=publique -->\n" + bloc.strip("\n").replace("## ", "# ", 1) + "\n")
+
+
+def _sujet(c: Path, ident: str) -> str:
+    """Le fichier qui porte un sujet du backlog, quel que soit le format."""
+    from socle import memoire
+
+    return memoire.Memoire.charger(c).entree(ident).fichier
 
 
 def maj_memoire(c: Path, texte: str = "Travail en cours sur l'essai."):
@@ -851,7 +874,7 @@ def _cas() -> list[Cas]:
 
     @defaut("clos-sans-ref-en-anglais", "sujet « done » sans référence, écrit en anglais", "git", "memoire.backlog")
     def _(a, c):
-        remplacer(c, "memory/backlog.md", "> statut : ouvert", "> status : done")
+        remplacer(c, _sujet(c, "B-0001"), "> statut : ouvert", "> status : done")
         maj_memoire(c)
         return etage_git(a, c)
 
@@ -859,12 +882,12 @@ def _cas() -> list[Cas]:
             "memoire.ajout-seul")
     def _(a, c):
         c = a.clone_prive("compagnon")
-        backlog = c / "memory/backlog.md"
-        texte = backlog.read_text()
-        debut = texte.index("## B-0001")
-        fin = texte.find("\n## ", debut + 1)
-        backlog.write_text(texte[:debut] + "## B-0001 — Entrée basculée dans la mémoire privée\n\n"
-                           "> basculée : 2026-10-11\n" + (texte[fin:] if fin >= 0 else ""))
+        from socle import memoire
+
+        e = memoire.Memoire.charger(c).entree("B-0001")
+        backlog = c / e.fichier
+        backlog.write_text(backlog.read_text().replace(e.texte, f"{'#' * e.niveau} B-0001 — Entrée basculée dans "
+                                                       "la mémoire privée\n\n> basculée : 2026-10-11\n", 1))
         maj_memoire(c, "Sujet rendu privé.")
         return etage_git(a, c)
 
@@ -881,7 +904,7 @@ def _cas() -> list[Cas]:
 
     @defaut("backlog-clos-sans-ref", "entrée de backlog close sans référence", "git", "memoire.backlog")
     def _(a, c):
-        remplacer(c, "memory/backlog.md", "> statut : ouvert", "> statut : fait")
+        remplacer(c, _sujet(c, "B-0001"), "> statut : ouvert", "> statut : fait")
         return etage_git(a, c)
 
     # Au-delà du tableau du cadrage.
@@ -1048,7 +1071,7 @@ def _cas() -> list[Cas]:
 
     @defaut("memoire-sans-entete", "fichier de mémoire sans son en-tête", "ci", "memoire.format")
     def _(a, c):
-        p = c / "memory/backlog.md"
+        p = c / _sujet(c, "B-0001")
         p.write_text(p.read_text().split("\n", 1)[1])
         return etage_ci(a, c)
 
@@ -1211,7 +1234,7 @@ def _cas() -> list[Cas]:
 
     @defaut("backlog-sans-lecture", "sujet ajouté au backlog sans l'avoir consulté", "git", "memoire.lectures")
     def _(a, c):
-        ajouter(c, "memory/backlog.md", "\n## B-0002 — Ajouter une fonction quadruple\n\n"
+        ajouter_sujet(c, "\n## B-0002 — Ajouter une fonction quadruple\n\n"
                 f"> statut : ouvert · origine : {a.journal}\n\nPour l'essai.\n")
         return etage_git(a, c)
 
@@ -1592,7 +1615,7 @@ def _temoins() -> list[tuple[str, Callable]]:
         lu = f" · lu : decisions@{empreinte(a, c, 'decisions')}"
         f1 = f"F-0001@{empreinte(a, c, 'F-0001')}"
         ajouter(c, "memory/decisions/ADR-0001-une-seule-multiplication.md", ADR_ESSAI.format(lu=lu, fait=f1))
-        ajouter(c, "memory/backlog.md", "\n## B-0002 — Ajouter une fonction quadruple\n\n"
+        ajouter_sujet(c, "\n## B-0002 — Ajouter une fonction quadruple\n\n"
                 f"> statut : ouvert · origine : {a.journal} · lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n")
         return etage_git(a, c)
 

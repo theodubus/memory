@@ -57,7 +57,8 @@ class Projet(unittest.TestCase):
         git(self.racine, "init", "-q", "-b", "main")
         (self.racine / "calc.py").write_text("def double(x):\n    return 2 * x\n")
         with contextlib.redirect_stdout(io.StringIO()):
-            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+            # Le backlog en un fichier ; le format 3 a ses tests (`test_format_3`).
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR, format_memoire=2)
         pol = self.racine / ".socle/policy.toml"
         pol.write_text(pol.read_text() + "\n[private]\n" + self.prive_)
         journal = next((self.racine / "memory/journal").glob("*.md"))

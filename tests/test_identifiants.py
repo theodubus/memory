@@ -10,7 +10,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import cli, config, contexte, controles_memoire, identifiants, installeur, memoire, migrations
+from socle import cli, config, contexte, controles_memoire, identifiants, installeur, memoire
 from socle.rapport import Rapport
 from tests.test_bascule import P, git
 
@@ -34,9 +34,7 @@ class Depot(unittest.TestCase):
         git(self.racine, "init", "-q", "-b", "main")
         (self.racine / "calc.py").write_text("x = 1\n")
         with contextlib.redirect_stdout(io.StringIO()):
-            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
-        if self.format_3:
-            migrations._vers_format_3(self.racine)
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR, format_memoire=3 if self.format_3 else 2)
         git(self.racine, "add", "-A")
         git(self.racine, "commit", "-qm", "installation", "--no-verify")
         git(self.racine, "remote", "add", "origin", str(origine))

@@ -164,10 +164,9 @@ def _projet_calc(dossier: Path, nom: str, avec_socle: bool = True) -> Path:
     gf.write_text(gf.read_text() + autotest.GARDE_FOUS_ESSAI)
     mem = memoire.Memoire.charger(p)
     journal = next(iter(sorted(e.id for e in mem.entrees("J"))))
-    for chemin, bloc in (("memory/canonical.md", autotest.CANONIQUE_ESSAI),
-                         ("memory/backlog.md", autotest.BACKLOG_ESSAI.format(journal=journal))):
-        f = p / chemin
-        f.write_text(f.read_text().rstrip("\n") + "\n" + bloc)
+    f = p / "memory/canonical.md"
+    f.write_text(f.read_text().rstrip("\n") + "\n" + autotest.CANONIQUE_ESSAI)
+    autotest.ajouter_sujet(p, autotest.BACKLOG_ESSAI.format(journal=journal))
     ecrire(p, "memory/active.md", ACTIF)
     return p
 
@@ -866,14 +865,14 @@ def _projet_chantier(dossier: Path, nom: str, fonctions: tuple[str, ...] = ("qua
                        "`__all__` disparaît\n\n> type : incident · ref : fichier:calc.py\n\n`triple` a d'abord été "
                        "ajoutée sans entrer dans `__all__` : `from calc import *` ne la voyait pas, et un utilisateur "
                        "l'a perdue. Toute fonction publique nouvelle entre dans `__all__`.\n")
-    b = p / "memory/backlog.md"
-    b.write_text(b.read_text().replace("> statut : ouvert · origine : " + memoire.Memoire.charger(p).entree("B-0001")
-                                       .meta.get("origine", ""), "> statut : fait · origine : "
-                                       + memoire.Memoire.charger(p).entree("B-0001").meta.get("origine", "")
-                                       + " · ref : fichier:calc.py", 1).rstrip("\n") + "\n"
-                 + "".join(f"\n## B-{n:04d} — {titre}\n\n> statut : {statut} · origine : fichier:memory/actif.md\n"
-                           for n, titre, statut in [(2 + i, f"Ajouter `{f}`", "ouvert") for i, f in enumerate(fonctions)]
-                           + [(2 + len(fonctions), "Rendre FACTEUR configurable", "bloqué")]))
+    premier = memoire.Memoire.charger(p).entree("B-0001")
+    b = p / premier.fichier
+    origine = premier.meta.get("origine", "")
+    b.write_text(b.read_text().replace(f"> statut : ouvert · origine : {origine}",
+                                       f"> statut : fait · origine : {origine} · ref : fichier:calc.py", 1))
+    for n, titre, statut in [(2 + i, f"Ajouter `{f}`", "ouvert") for i, f in enumerate(fonctions)] \
+            + [(2 + len(fonctions), "Rendre FACTEUR configurable", "bloqué")]:
+        autotest.ajouter_sujet(p, f"\n## B-{n:04d} — {titre}\n\n> statut : {statut} · origine : fichier:memory/actif.md\n")
     ecrire(p, "memory/active.md", _actif_chantier(fonctions, jour))
     ecrire(p, "memory/requests/D-0001-facteur-configurable.md", _demande_simulee(
         p, "Rendre FACTEUR configurable par une variable d'environnement ?",

@@ -113,12 +113,18 @@ def _balayage_planifie(cible: Path, texte_adaptateur: str) -> tuple[bool, str]:
     return True, f"balayage de mutation hebdomadaire posé : {mutation.WORKFLOW}"
 
 
-def garde_fous_initiaux(cible: Path, texte_adaptateur: str) -> str:
+def garde_fous_initiaux(cible: Path, texte_adaptateur: str, ch: config.Chemins = config.FORMAT_ACTUEL) -> str:
     """Les garde-fous du gabarit, avec chaque module qui porte déjà du code
     posé « à mesurer » au cliquet de mutation : une installation sur un
     projet existant finit verte, et le premier balayage pose les plafonds
-    mesurés (B-0034, P1)."""
-    texte = gabarit("garde-fous.toml")
+    mesurés (B-0034, P1). Le plafond du backlog suit sa forme : un fichier
+    unique, ou un plafond par sujet (ADR-0025)."""
+    from socle import migrations
+
+    texte = re.sub(rf'(?m)^"{re.escape(config.FORMAT_3.backlog)}/\*\.md" = \{{[^}}]*\}}|'
+                   rf'^"{re.escape(config.FORMAT_2.backlog)}" = \{{[^}}]*\}}',
+                   f'"{ch.backlog}/*.md" = {{ max_bytes = {migrations.BUDGET_SUJET} }}' if ch.backlog_en_dossier
+                   else f'"{ch.backlog}" = {{ max_bytes = 24000 }}', gabarit("garde-fous.toml"))
     cap = tomllib.loads(texte_adaptateur).get("capabilities", {}).get("mutation", {})
     if "command" not in cap:
         return texte
@@ -164,11 +170,8 @@ def _refus_cible(cible: Path) -> str | None:
     return None
 
 
-def _poser_moteur(cible: Path, mode: str, source: Path) -> tuple[str, list[str]]:
+def _poser_moteur(cible: Path, mode: str, source: Path, ch: config.Chemins) -> tuple[str, list[str]]:
     """Le moteur, remplacé en bloc, et son verrou ; rend le dossier du moteur."""
-    from socle import migrations
-
-    ch = config.FORMAT_ACTUEL
     journal = []
     # 1. Le moteur, remplacé en bloc.
     if mode == config.MODE_AMONT:
@@ -197,7 +200,7 @@ def _poser_moteur(cible: Path, mode: str, source: Path) -> tuple[str, list[str]]
             "# Mode amont : ce dépôt fabrique le moteur, dont l'empreinte n'est pas figée ici.\n"
             f'mode = "{mode}"\n'
             f'engine_dir = "{dossier_moteur}"\n'
-            f"format = {migrations.FORMAT}\n"
+            f"format = {ch.format}\n"
         ))
         journal.append(f"verrou en mode amont : le moteur est la source, sous {dossier_moteur}/socle")
     else:
@@ -210,7 +213,7 @@ def _poser_moteur(cible: Path, mode: str, source: Path) -> tuple[str, list[str]]
             f'engine_dir = "{dossier_moteur}"\n'
             f'fingerprint = "{calculee}"\n'
             f"files = {n}\n"
-            f"format = {migrations.FORMAT}\n"
+            f"format = {ch.format}\n"
         ))
         journal.append(f"verrou : {empreinte.courte(calculee)} sur {n} fichiers")
 
@@ -219,10 +222,9 @@ def _poser_moteur(cible: Path, mode: str, source: Path) -> tuple[str, list[str]]
 
 def _poser_configuration(cible: Path, texte_adaptateur: str, ancien: dict, prive: str | None,
                          relecture: str | None, demandes_privees: bool,
-                         langue_memoire: str | None) -> tuple[str, list[str]]:
+                         langue_memoire: str | None, ch: config.Chemins) -> tuple[str, list[str]]:
     """La politique, l'adaptateur et les garde-fous, posés s'ils manquent ;
     rend la langue de la mémoire."""
-    ch = config.FORMAT_ACTUEL
     journal = []
     politique = gabarit("politique.toml")
     if prive:
@@ -256,7 +258,7 @@ def _poser_configuration(cible: Path, texte_adaptateur: str, ancien: dict, prive
     for nom, contenu in (
         (ch.politique, politique),
         (ch.adaptateur, texte_adaptateur),
-        (ch.garde_fous, garde_fous_initiaux(cible, texte_adaptateur)),
+        (ch.garde_fous, garde_fous_initiaux(cible, texte_adaptateur, ch)),
     ):
         p = cible / nom
         if p.is_file():
@@ -268,9 +270,8 @@ def _poser_configuration(cible: Path, texte_adaptateur: str, ancien: dict, prive
     return lg, journal
 
 
-def _poser_memoire(cible: Path, lg: str, nom_adaptateur: str, adoption: bool) -> list[str]:
+def _poser_memoire(cible: Path, lg: str, nom_adaptateur: str, adoption: bool, ch: config.Chemins) -> list[str]:
     """La mémoire initiale : chaque couche absente, et le journal ouvert."""
-    ch = config.FORMAT_ACTUEL
     journal = []
     jour = date.today().isoformat()
     # Au format 3, le backlog est un dossier, un fichier par sujet (ADR-0025).
@@ -300,10 +301,9 @@ def _poser_memoire(cible: Path, lg: str, nom_adaptateur: str, adoption: bool) ->
 
 
 def _poser_etages(cible: Path, texte_adaptateur: str, dossier_moteur: str, proprietaire: str,
-                  balayage: bool, motif: str) -> list[str]:
+                  balayage: bool, motif: str, ch: config.Chemins) -> list[str]:
     """Les étages d'application : hooks de l'agent, hooks git, CI, balayage
     de mutation, CODEOWNERS, .gitignore."""
-    ch = config.FORMAT_ACTUEL
     journal = []
     journal += _settings(cible)
     for h in (MODELES / "git-hooks").iterdir():
@@ -336,8 +336,13 @@ def _poser_etages(cible: Path, texte_adaptateur: str, dossier_moteur: str, propr
 def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bool = False,
               mode: str = config.MODE_PROJET, source: Path | None = None, prive: str | None = None,
               relecture: str | None = None, demandes_privees: bool = False, filtre: str = "git-crypt",
-              langue_memoire: str | None = None) -> int:
+              langue_memoire: str | None = None, format_memoire: int | None = None) -> int:
+    """Installe ou met à jour le socle dans `cible`. `format_memoire` : le
+    format de la mémoire, l'actuel par défaut ; un test qui porte sur un
+    format antérieur le fixe."""
     from socle import migrations
+
+    ch = config.FORMATS[format_memoire or migrations.FORMAT]
 
     refus = _refus_cible(cible)
     if refus:
@@ -365,30 +370,30 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
     if ancien:
         journal.append(f"mise à jour : moteur {ancien.get('version', 'amont')} → {VERSION}")
         try:
-            journal += migrations.migrer(cible, int(ancien.get("format", 1)))
+            journal += migrations.migrer(cible, int(ancien.get("format", 1)), ch.format)
         except RuntimeError as e:
             print(f"refus : {e}", file=sys.stderr)
             return 2
         config.oublier_formats()
 
     # 1. Le moteur, remplacé en bloc, et son verrou.
-    dossier_moteur, poses = _poser_moteur(cible, mode, source)
+    dossier_moteur, poses = _poser_moteur(cible, mode, source, ch)
     journal += poses
 
     # 2. Les fichiers du projet : posés s'ils manquent, jamais écrasés.
     lg, poses = _poser_configuration(cible, texte_adaptateur, ancien, prive, relecture, demandes_privees,
-                                     langue_memoire)
+                                     langue_memoire, ch)
     journal += poses
 
     # 3. La mémoire initiale.
-    journal += _poser_memoire(cible, lg, nom_adaptateur, adoption)
+    journal += _poser_memoire(cible, lg, nom_adaptateur, adoption, ch)
 
     # 4. Les instructions : AGENTS.md fait foi, CLAUDE.md l'importe.
     balayage, motif = _balayage_planifie(cible, texte_adaptateur)
-    journal += _instructions(cible, dossier_moteur, lg, balayage)
+    journal += _instructions(cible, dossier_moteur, lg, balayage, ch)
 
     # 5. Les étages d'application.
-    journal += _poser_etages(cible, texte_adaptateur, dossier_moteur, proprietaire, balayage, motif)
+    journal += _poser_etages(cible, texte_adaptateur, dossier_moteur, proprietaire, balayage, motif, ch)
     if prive:
         journal += _prive(cible, prive, filtre)
 
@@ -424,11 +429,16 @@ LIGNE_MUTATION = {
 }
 
 
-def _instructions(cible: Path, dossier_moteur: str, lg: str = "fr", balayage: bool = False) -> list[str]:
+def _instructions(cible: Path, dossier_moteur: str, lg: str = "fr", balayage: bool = False,
+                  ch: config.Chemins = config.FORMAT_ACTUEL) -> list[str]:
     res = []
     agents = cible / config.INSTRUCTIONS
     claude = cible / "CLAUDE.md"
+    # Le backlog sous la forme du format installé : un fichier, ou un dossier
+    # (ADR-0025) ; un chemin cité qui n'existe pas serait refusé.
+    backlog = ch.backlog + ("/" if ch.backlog_en_dossier else "")
     section = (gabarit("AGENTS.md", lg).replace("@@VERSION@@", VERSION).replace("@@MOTEUR@@", dossier_moteur)
+               .replace("@@BACKLOG@@", backlog)
                .replace("@@LIGNE_MUTATION@@\n", LIGNE_MUTATION.get(lg, LIGNE_MUTATION["fr"]) if balayage else ""))
     socle = section.split("@@SECTION_PROJET@@", 1)[1].strip("\n")
     bloc = f"{DEBUT_SOCLE}\n\n{socle}\n\n{FIN_SOCLE}\n"

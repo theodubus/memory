@@ -22,10 +22,10 @@ rendu à Théo à la fin de chaque lot.
    Théo, pour sortir le banc et l'auto-test complet des étapes rapides de
    ce dépôt. R2 et L7 faits (J-2026-10-13-P, J-2026-10-13-Q).
 2. B-0047 (D-0017 validée, ADR-0025) : le format 3 se lit, s'écrit et se
-   migre, et ce dépôt y est passé (J-2026-10-13-R). Reste : rendre les
-   préparations de tests indépendantes du format, puis une demande qui
-   nomme les tests dont la valeur attendue change quand les installations
-   neuves passent au format 3, et la bascule après la réponse. B-0053 fait
+   migre, ce dépôt y est passé, et les tests ne dépendent plus du format
+   (J-2026-10-13-R, J-2026-10-13-S). La bascule des installations neuves
+   attend D-0020 : la constante `FORMAT_ACTUEL` et `migrations.FORMAT` à
+   3, et le test qui affirme le format d'un projet neuf. B-0053 fait
    (ADR-0026). Les noms anglais (B-0045) : rien de versionné dans un
    projet, donc pas de migration ; leur inventaire et leur demande à part.
 3. Plus tard : B-0046 (la documentation à refaire, à clarifier d'abord avec

@@ -147,7 +147,8 @@ class ProjetAnglais(unittest.TestCase):
         git(self.racine, "init", "-q", "-b", "main")
         (self.racine / "calc.py").write_text("def double(x):\n    return 2 * x\n")
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-            installeur.installer(self.racine, "python", "@essai", source=MOTEUR, langue_memoire="en")
+            # Le backlog en un fichier : ce que ces tests lisent (ADR-0025).
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR, langue_memoire="en", format_memoire=2)
         git(self.racine, "add", "-A")
         git(self.racine, "commit", "-qm", "base", "--no-verify")
         self.base = git(self.racine, "rev-parse", "HEAD").strip()
