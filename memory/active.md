@@ -17,10 +17,10 @@ J-2026-10-13-A à K). Suivant : L6. Chaque correctif avec un test qui
 
 ## Prochaines étapes
 
-1. L6, la fin de tour : mesurer, faire ce qui relève du moteur, et une
-   demande pour ce qui change l'adaptateur protégé de ce dépôt ; R6 en
-   donne la mesure sur un projet Rust.
-2. Puis R2 (le workflow de mutation, B-0005) et L7.
+1. L6 : la part du moteur faite (J-2026-10-13-O) ; D-0019 en attente de
+   Théo, pour sortir le banc et l'auto-test complet des étapes rapides de
+   ce dépôt. En attendant, R2 (le workflow de mutation, B-0005).
+2. Puis L7.
 3. B-0047 (D-0017 validée) : le backlog en un fichier par sujet, avec les
    noms anglais (B-0045) dans une seule migration, avant B-0046 ; il règle
    aussi les identifiants que deux branches prennent ensemble (B-0053).
