@@ -160,6 +160,25 @@ def extraire(texte: str, fichier: str, cfg: dict) -> list[Fonction]:
 
 
 
+
+def sans_commentaires(texte: str, cfg: dict) -> str:
+    """Le texte sans ses commentaires : les lignes de commentaire
+    (`comment`), les commentaires de bloc (`block_comment` : `/* … */`, une
+    docstring de Python) et de fin de ligne (`line_comment`, s'il est
+    déclaré), les littéraux gardés. Un mot cité en commentaire n'appelle rien
+    ni n'affirme rien (relevé de la passe de recul, D)."""
+    litteraux = cfg.get("strings", LITTERAUX)
+    if cfg.get("block_comment"):
+        texte = re.sub(f"(?:{cfg['block_comment']})|({litteraux})", lambda m: m.group(1) or "", texte)
+    comm_re = re.compile(cfg["comment"]) if cfg.get("comment") else None
+    fin = re.compile(f"({litteraux})|(?:{cfg['line_comment']})") if cfg.get("line_comment") else None
+    res = []
+    for ligne in texte.splitlines():
+        if comm_re and comm_re.match(ligne):
+            continue
+        res.append(fin.sub(lambda m: m.group(1) or "", ligne) if fin else ligne)
+    return "\n".join(res)
+
 def enonces(lignes: list[str], debut: re.Pattern, cfg: dict) -> dict[str, list[str]]:
     """Les énoncés qui commencent sur une ligne de `debut` (une assertion), en
     entier : prolongés tant qu'une parenthèse ou un crochet reste ouvert, et
@@ -209,16 +228,20 @@ def zones_de_test(texte: str, fichier: str, cfg: dict) -> list[tuple[int, int]]:
     return zones
 
 
-def aides_qui_affirment(fonctions: list[Fonction], assertion: re.Pattern) -> set[str]:
-    """Les fonctions non-tests qui affirment, directement ou par une autre aide."""
-    aides = {f.nom for f in fonctions if not f.est_test and assertion.search(f.corps)}
+def aides_qui_affirment(fonctions: list[Fonction], assertion: re.Pattern, cfg: dict | None = None) -> set[str]:
+    """Les fonctions non-tests qui affirment, directement ou par une autre
+    aide ; hors de leurs commentaires quand la configuration est donnée."""
+    def corps(f):
+        return sans_commentaires(f.corps, cfg) if cfg else f.corps
+
+    aides = {f.nom for f in fonctions if not f.est_test and assertion.search(corps(f))}
     for _ in range(5):
         appel = _appel_re(aides)
         if appel is None:
             break
         nouvelles = {
             f.nom for f in fonctions
-            if not f.est_test and f.nom not in aides and appel.search(f.corps)
+            if not f.est_test and f.nom not in aides and appel.search(corps(f))
         }
         if not nouvelles:
             break
@@ -232,8 +255,11 @@ def _appel_re(noms: set[str]) -> re.Pattern | None:
     return re.compile(r"\b(?:" + "|".join(re.escape(n) for n in sorted(noms)) + r")\s*[(!]")
 
 
-def affirme(f: Fonction, assertion: re.Pattern, aides: set[str]) -> bool:
-    if assertion.search(f.corps) or any(assertion.search(a) for a in f.attributs):
+def affirme(f: Fonction, assertion: re.Pattern, aides: set[str], cfg: dict | None = None) -> bool:
+    """Le test affirme, directement ou par une aide qui affirme ; hors de ses
+    commentaires quand la configuration du langage est donnée."""
+    corps = sans_commentaires(f.corps, cfg) if cfg else f.corps
+    if assertion.search(corps) or any(assertion.search(a) for a in f.attributs):
         return True
     appel = _appel_re(aides - {f.nom})
-    return bool(appel and appel.search(f.corps))
+    return bool(appel and appel.search(corps))

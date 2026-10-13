@@ -67,6 +67,9 @@ exclude = ["vendor/**"]
 function = '^\s*(?:(?:public|protected|private|static|final|abstract)\s+)*function\s+(\w+)\s*\('
 attribute = '^\s*(?:#\[|\*|/\*\*)'
 comment = '^\s*(?://|#(?!\[))'
+# Un commentaire de bloc (une docstring en Python) : un mot qui y figure
+# n'appelle ni n'affirme rien.
+block_comment = '''/\*[\s\S]*?\*/'''
 marker_name = '^test'
 marker_attribute = '#\[(?:\\?PHPUnit\\Framework\\Attributes\\)?Test\b|@test\b'
 block = "braces"

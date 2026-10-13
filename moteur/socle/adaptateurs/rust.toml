@@ -71,6 +71,10 @@ paths = ["**/tests/**/*.rs", "tests/**/*.rs", "**/src/**/*.rs", "src/**/*.rs"]
 function = '^\s*(?:pub(?:\([^)]*\))?\s+)?(?:async\s+)?(?:unsafe\s+)?fn\s+(\w+)'
 attribute = '^\s*#\['
 comment = '^\s*//'
+# Un commentaire de bloc (une docstring en Python) : un mot qui y figure
+# n'appelle ni n'affirme rien.
+block_comment = '''/\*[\s\S]*?\*/'''
+line_comment = '//.*$'
 marker_attribute = '#\[(?:\w+::)*test\b'
 test_module = '^\s*#\[cfg\(test\)\]'
 block = "braces"

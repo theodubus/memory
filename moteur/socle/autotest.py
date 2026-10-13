@@ -541,6 +541,16 @@ def _cas() -> list[Cas]:
         remplacer(c, "tests/test_calc.py", "    def test_double", "    @unittest.skip\n    def test_double")
         return etage_git(a, c)
 
+    @defaut("assertion-en-commentaire", "test dont la seule assertion est en commentaire", "git", "tests.creux")
+    def _(a, c):
+        ajouter(c, "tests/test_calc.py", "    def test_rien(self):\n        double(3)  # self.assertEqual(double(3), 6)\n")
+        return etage_git(a, c)
+
+    @defaut("groupe-desactive", "classe de tests entière désactivée sans raison écrite", "git", "tests.creux")
+    def _(a, c):
+        remplacer(c, "tests/test_calc.py", "class TestCalc", "@unittest.skip\nclass TestCalc")
+        return etage_git(a, c)
+
     @defaut("plafond-releve", "plafond de mutation relevé", "ci", "cliquet.garde-fous")
     def _(a, c):
         remplacer(c, ".socle/guardrails.toml", '"calc.py" = { max = 0 }', '"calc.py" = { max = 3, reason = "équivalents" }')

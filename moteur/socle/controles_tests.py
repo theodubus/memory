@@ -87,11 +87,24 @@ def creux(ctx, r):
     cibles = tous if ctx.etage == "ci" or not ctx.base else fichiers_tests(ctx, ctx.changes)
     cibles = [c for c in cibles if c in set(ctx.fichiers)]
     # Les aides se cherchent dans TOUS les fichiers de test et de source : une
-    # aide qui affirme peut vivre ailleurs que le test qui l'appelle.
+    # aide qui affirme peut vivre ailleurs que le test qui l'appelle. Mais
+    # dans un fichier de code, seulement dans ses lignes de test (le module
+    # de tests de Rust) : un `assert` du code de production n'affirme rien
+    # pour le test qui l'appelle (relevé de la passe de recul, D).
     sources = outils.filtrer(ctx.fichiers, ctx.projet.adaptateur.get("sources", []))
     toutes = fonctions(ctx, sorted(set(tous) | set(sources)))
     assertion = re.compile(cfg.get("assertion", r"assert"))
-    aides = tests_lecture.aides_qui_affirment(toutes, assertion)
+    chemins_code, exclus_code, _ = config_code(ctx.projet)
+    zones: dict[str, list[tuple[int, int]]] = {}
+
+    def de_test(f) -> bool:
+        if not outils.filtrer([f.fichier], chemins_code, exclus_code):
+            return True
+        if f.fichier not in zones:
+            zones[f.fichier] = tests_lecture.zones_de_test(ctx.lire(f.fichier) or "", f.fichier, cfg)
+        return any(d <= f.ligne - 1 < e for d, e in zones[f.fichier])
+
+    aides = tests_lecture.aides_qui_affirment([f for f in toutes if de_test(f)], assertion, cfg)
     ignore = re.compile(cfg["ignore"]) if cfg.get("ignore") else None
     raison = re.compile(cfg["ignore_reason"]) if cfg.get("ignore_reason") else None
     tautos = [re.compile(t) for t in cfg.get("tautology", [])]
@@ -103,7 +116,7 @@ def creux(ctx, r):
         desactive = ignore and any(ignore.search(a) for a in marques)
         if desactive and not (raison and any(raison.search(a) for a in marques)):
             r.erreur("tests.creux", f"test `{f.nom}` désactivé sans raison écrite", f.fichier, f.ligne)
-        if not tests_lecture.affirme(f, assertion, aides):
+        if not tests_lecture.affirme(f, assertion, aides, cfg):
             r.erreur("tests.creux", f"test `{f.nom}` sans assertion : il passe sans rien mesurer", f.fichier, f.ligne)
         for k, ligne in enumerate(f.lignes_corps):
             precedente = f.lignes_corps[k - 1] if k else ""
@@ -114,6 +127,28 @@ def creux(ctx, r):
                     r.erreur("tests.creux", f"assertion tautologique dans `{f.nom}` : « {ligne.strip()} » — "
                              "si elle est voulue (déterminisme), l'écrire : commentaire `socle: voulu — <raison>`",
                              f.fichier, f.ligne + k + 1)
+    # Un groupe entier se désactive hors de tout test : une classe sous
+    # `@unittest.skip`, un `describe.skip`, un `@Disabled` de classe, un
+    # `skip` dans un `before` (relevé de la passe de recul, D).
+    if ignore is None:
+        return
+    comm = re.compile(cfg["comment"]) if cfg.get("comment") else None
+    for chemin in cibles:
+        texte = ctx.lire(chemin) or ""
+        dedans = [(f.debut - 1, f.fin) for f in tests_lecture.extraire(texte, chemin, cfg) if f.est_test]
+        for i, ligne in enumerate(texte.splitlines()):
+            if not ignore.search(ligne) or (comm and comm.match(ligne)) or any(d <= i < e for d, e in dedans):
+                continue
+            if not (raison and raison.search(ligne)):
+                r.erreur("tests.creux", f"groupe de tests désactivé sans raison écrite : « {ligne.strip()[:80]} »",
+                         chemin, i + 1)
+
+
+def _nomme(texte: str, nom: str) -> bool:
+    """Le nom y est, en mot entier : une validation qui nomme
+    `test_double_negatif` ne vaut pas pour `test_double` (relevé de la passe
+    de recul, D)."""
+    return bool(re.search(rf"(?<![\w]){re.escape(nom)}(?![\w])", texte))
 
 
 def _justifie(ctx, nom: str) -> str | None:
@@ -122,7 +157,7 @@ def _justifie(ctx, nom: str) -> str | None:
     ADR-0017) : une spécification que l'agent écrit dans le même travail ne
     l'autorise pas à changer le test."""
     for d in ctx.validations:
-        if nom in d.texte:
+        if _nomme(d.texte, nom):
             return f"validé par {d.id}"
     for c in _specs_nommant(ctx, nom):
         if _ecrite_par_l_humain(ctx, c, nom):
@@ -141,7 +176,7 @@ def _en_attente(ctx, nom: str) -> str | None:
         return None
     for d in ctx.demandes:
         if (d.id and d.reponse is None and d.entree is not None and "retiree" not in d.entree.meta
-                and nom in d.texte and demandes.illisible(ctx.projet, d) is None):
+                and _nomme(d.texte, nom) and demandes.illisible(ctx.projet, d) is None):
             return d.id
     return None
 
@@ -150,7 +185,7 @@ def _specs_nommant(ctx, nom: str) -> list[str]:
     """Les spécifications changées dans la plage qui nomment le test."""
     specs = ctx.projet.gf("tests", "spec_paths", defaut=[ctx.projet.chemins.decisions + "/**"])
     return [c for c in outils.filtrer(ctx.changes, specs)
-            if nom in (ctx.lire(c) or "") and nom not in (ctx.lire_base(c) or "")]
+            if _nomme(ctx.lire(c) or "", nom) and not _nomme(ctx.lire_base(c) or "", nom)]
 
 
 def _ecrite_par_l_humain(ctx, chemin: str, nom: str) -> bool:
@@ -159,7 +194,7 @@ def _ecrite_par_l_humain(ctx, chemin: str, nom: str) -> bool:
     l'agent qui travaille."""
     from socle.controles_cliquet import est_agent
 
-    if nom not in (outils.lire_a(ctx.racine, ctx.rev_commit, chemin) or ""):
+    if not _nomme(outils.lire_a(ctx.racine, ctx.rev_commit, chemin) or "", nom):
         return False
     plage = ctx.rev_commit if ctx.base in (None, outils.ARBRE_VIDE) else f"{ctx.base}..{ctx.rev_commit}"
     touches = set(outils.git(ctx.racine, "log", "--format=%H", plage, "--", chemin, check=False).split())
@@ -317,10 +352,12 @@ def code_teste(ctx, r):
     nommes = []
     for f in fichiers_tests(ctx, ctx.fichiers):
         texte = ctx.lire(f) or ""
+        # Hors des commentaires : y citer une fonction ne la teste pas.
         if outils.filtrer([f], chemins, exclus):
-            nommes += [fn.corps for fn in tests_lecture.extraire(texte, f, cfg) if fn.est_test]
+            nommes += [tests_lecture.sans_commentaires(fn.corps, cfg)
+                       for fn in tests_lecture.extraire(texte, f, cfg) if fn.est_test]
         else:
-            nommes.append(texte)
+            nommes.append(tests_lecture.sans_commentaires(texte, cfg))
     nommes = "\n".join(nommes)
     dispenses = dispenses_tests(ctx, r)
     for chemin in code:

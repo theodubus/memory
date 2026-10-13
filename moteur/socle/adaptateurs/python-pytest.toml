@@ -74,6 +74,10 @@ paths = ["tests/**/test_*.py", "**/test_*.py", "**/*_test.py"]
 function = '^\s*(?:async\s+)?def\s+(\w+)\s*\('
 attribute = '^\s*@'
 comment = '^\s*#'
+# Un commentaire de bloc (une docstring en Python) : un mot qui y figure
+# n'appelle ni n'affirme rien.
+block_comment = "\"\"\"[\\s\\S]*?\"\"\"|'''[\\s\\S]*?'''"
+line_comment = '#.*$'
 marker_name = '^test'
 block = "indent"
 # Les littéraux, où un blanc compte dans une assertion (`tests.attendus`).

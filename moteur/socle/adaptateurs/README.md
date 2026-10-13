@@ -107,6 +107,7 @@ Les clés qui décrivent un langage, toutes facultatives sauf `function` :
 | `marker_attribute`, `marker_name`, `marker_line` | ce qui fait un test : un attribut au-dessus, son nom, ou sa ligne | `#[test]`, `^test`, `test("…", …)` |
 | `block` | la forme d'un bloc : `braces`, `indent` ou `end` | `end` pour Ruby |
 | `strings`, `line_comment` | les littéraux et le commentaire de fin de ligne, où une accolade ne compte pas | chaînes entre accents graves de JavaScript |
+| `block_comment` | un commentaire de bloc, ou une docstring : un mot qui y figure n'affirme ni n'appelle rien | `/\*[\s\S]*?\*/` |
 | `assertion` | ce qui affirme ; un test sans assertion est creux | `\bexpect\s*\(` |
 | `expected` | les lignes qui portent une valeur attendue, si ce ne sont pas les assertions | en Go, `if got != 4 {` |
 | `ignore`, `ignore_reason` | un test désactivé, et sa raison écrite ; lus sur ses attributs, sa ligne et son corps | `t.Skip()` |

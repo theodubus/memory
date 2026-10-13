@@ -70,6 +70,9 @@ paths = ["src/test/java/**/*.java", "**/src/test/java/**/*.java"]
 function = '''^\s*(?:(?:public|protected|private|static|final|synchronized|abstract|default|native)\s+)*(?:<[^>]+>\s+)?(?!(?:if|for|while|switch|catch|return|new|else|throw|try|do)\b)[\w.$]+(?:<[^;=]*>)?(?:\[\])*\s+(\w+)\s*\([^;]*$'''
 attribute = '^\s*@'
 comment = '^\s*(?://|/?\*)'
+# Un commentaire de bloc (une docstring en Python) : un mot qui y figure
+# n'appelle ni n'affirme rien.
+block_comment = '''/\*[\s\S]*?\*/'''
 marker_attribute = '@(?:org\.junit\.jupiter\.api\.)?(?:Test|ParameterizedTest|RepeatedTest|TestFactory|TestTemplate)\b'
 block = "braces"
 line_comment = '//.*$'

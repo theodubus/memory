@@ -64,6 +64,9 @@ paths = ["**/*_test.go"]
 exclude = ["vendor/**"]
 function = '^\s*func\s+(?:\([^)]*\)\s*)?(\w+)\s*(?:\[[^\]]*\])?\s*\('
 comment = '^\s*//'
+# Un commentaire de bloc (une docstring en Python) : un mot qui y figure
+# n'appelle ni n'affirme rien.
+block_comment = '''/\*[\s\S]*?\*/'''
 marker_name = '^(?:Test|Example|Fuzz)'
 block = "braces"
 strings = '''"(?:\\.|[^"\\])*"|`[^`]*`|'(?:\\.|[^'\\])*\''''

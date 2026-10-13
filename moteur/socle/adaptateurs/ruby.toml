@@ -71,6 +71,9 @@ exclude = ["vendor/**"]
 # Une méthode, ou un exemple RSpec, `it "…" do`, dont la description est le nom.
 function = '''^\s*(?:private\s+|protected\s+)?def\s+(?:self\.)?([\w?!=]+)|^\s*(?:it|specify|example|xit|xspecify|fit)\s*\(?\s*['"]([^'"]+)['"]'''
 comment = '^\s*#'
+# Un commentaire de bloc (une docstring en Python) : un mot qui y figure
+# n'appelle ni n'affirme rien.
+block_comment = '''(?m:^=begin\b[\s\S]*?^=end\b)'''
 marker_line = '^\s*(?:it|specify|example|xit|xspecify|fit)\b'
 block = "end"
 strings = '''"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*\''''

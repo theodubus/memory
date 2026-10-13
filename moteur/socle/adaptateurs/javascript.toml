@@ -76,6 +76,9 @@ exclude = ["node_modules/**"]
 # `test("…", …)` ou `it("…", …)`, dont la description est le nom.
 function = '''^\s*(?:export\s+(?:default\s+)?)?(?:async\s+)?function\s*\*?\s*(\w+)\s*\(|^\s*(?:export\s+)?(?:const|let)\s+(\w+)\s*=\s*(?:async\s+)?(?:function\b|\([^)]*\)\s*=>|\w+\s*=>)|^\s*(?:test|it)(?:\.\w+)?\s*\(\s*['"`]([^'"`]+)['"`]'''
 comment = '^\s*//'
+# Un commentaire de bloc (une docstring en Python) : un mot qui y figure
+# n'appelle ni n'affirme rien.
+block_comment = '''/\*[\s\S]*?\*/'''
 marker_line = '^\s*(?:test|it)(?:\.\w+)?\s*\('
 block = "braces"
 strings = '''"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`'''
