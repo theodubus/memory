@@ -27,6 +27,9 @@ GIT_HOOKS = ".socle/git-hooks"
 TRACE = ".socle/trace/hooks.log"  # ancien emplacement, et hors dépôt git
 COMPTEUR_STOP = ".socle/trace/stop-echecs"
 INSTRUCTIONS = "AGENTS.md"
+# Ce qui ouvre la section du socle dans le fichier d'instructions : AGENTS.md,
+# ou CLAUDE.md quand l'installeur l'a gardé comme source (B-0049).
+DEBUT_SOCLE = "<!-- socle:debut — section posée par l'installeur, régénérée à chaque mise à jour -->"
 
 
 @dataclass(frozen=True)

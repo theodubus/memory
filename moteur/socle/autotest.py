@@ -927,6 +927,12 @@ def _cas() -> list[Cas]:
         (c / "CLAUDE.md").write_text("@AGENTS.md\n\nToujours répondre en anglais.\n")
         return etage_ci(a, c)
 
+    @defaut("instructions-absentes", "AGENTS.md supprimé, CLAUDE.md sans la section du socle", "ci",
+            "instructions.source-unique")
+    def _(a, c):
+        a.run(c, "git", "rm", "-q", "AGENTS.md")
+        return etage_ci(a, c)
+
     @defaut("memoire-sans-entete", "fichier de mémoire sans son en-tête", "ci", "memoire.format")
     def _(a, c):
         p = c / "memory/backlog.md"
@@ -1154,6 +1160,14 @@ def _temoins() -> list[tuple[str, Callable]]:
         remplacer(c, "tests/test_calc.py", "self.assertEqual(double(2), 4)", "self.assertEqual(double(2), 4.0)")
         maj_memoire(c)
         return etage_ci(a, c, MESSAGE_AGENT)
+
+    @temoin("CLAUDE.md gardé comme seule source, avec la section du socle, passe la CI (B-0049)")
+    def _(a, c):
+        a.run(c, "git", "rm", "-q", "CLAUDE.md")
+        a.run(c, "git", "mv", "AGENTS.md", "CLAUDE.md")
+        remplacer(c, ".socle/guardrails.toml", '"AGENTS.md" = { max_bytes = 16000 }',
+                  '"AGENTS.md" = { max_bytes = 16000 }\n"CLAUDE.md" = { max_bytes = 16000 }')
+        return etage_ci(a, c)
 
     @temoin("une assertion reformatée à valeur égale passe la CI (relevé de recul, E)")
     def _(a, c):

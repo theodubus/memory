@@ -30,7 +30,7 @@ from socle import VERSION, config, empreinte, langue, outils
 from socle.modeles import DOSSIER as MODELES, gabarit
 
 ADAPTATEURS = Path(__file__).resolve().parent / "adaptateurs"
-DEBUT_SOCLE = "<!-- socle:debut — section posée par l'installeur, régénérée à chaque mise à jour -->"
+DEBUT_SOCLE = config.DEBUT_SOCLE
 FIN_SOCLE = "<!-- socle:fin -->"
 
 
@@ -446,8 +446,15 @@ def _codeowners(cible: Path, proprietaire: str) -> list[str]:
 def _gitignore(cible: Path) -> list[str]:
     p = cible / ".gitignore"
     existant = p.read_text(encoding="utf-8") if p.is_file() else ""
-    voulues = ["# Trace locale des hooks du socle (voir AGENTS.md)", "/.socle/trace/", "__pycache__/"]
-    manquantes = [l for l in voulues if l not in existant.splitlines()]
+    # Le commentaire renvoie au fichier d'instructions qui fait foi : CLAUDE.md
+    # quand l'installeur l'a gardé (B-0049) ; celui d'une installation
+    # antérieure compte, quel que soit le fichier qu'il nomme.
+    source = config.INSTRUCTIONS if (cible / config.INSTRUCTIONS).is_file() else "CLAUDE.md"
+    lignes = existant.splitlines()
+    commentaire = "# Trace locale des hooks du socle"
+    voulues = [f"{commentaire} (voir {source})", "/.socle/trace/", "__pycache__/"]
+    manquantes = [l for l in voulues if l not in lignes
+                  and not (l.startswith(commentaire) and any(e.startswith(commentaire) for e in lignes))]
     if manquantes:
         p.write_text(existant.rstrip("\n") + ("\n\n" if existant.strip() else "") + "\n".join(manquantes) + "\n",
                      encoding="utf-8")

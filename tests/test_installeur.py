@@ -7,7 +7,8 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 
-from socle import installeur
+from socle import config, contexte, controles_memoire, installeur
+from socle.rapport import Rapport
 
 MOTEUR = Path(__file__).resolve().parent.parent / "moteur"
 CLAUDE = "# Projet\n\nLes instructions du projet, écrites avant le socle.\n"
@@ -27,6 +28,13 @@ def depot(fichiers: dict[str, str]) -> Path:
 def installer(racine: Path, adoption=True):
     with redirect_stdout(io.StringIO()):
         installeur.installer(racine, "python", "@essai", adoption=adoption, source=MOTEUR)
+
+
+def erreurs_instructions(racine: Path) -> list[str]:
+    ctx = contexte.Contexte(config.Projet.charger(racine), etage="agent")
+    r = Rapport()
+    controles_memoire.source_unique(ctx, r)
+    return [c.message for c in r.erreurs("instructions.source-unique")]
 
 
 class TestAdoption(unittest.TestCase):
@@ -50,6 +58,21 @@ class TestAdoption(unittest.TestCase):
         self.assertTrue(claude.startswith(CLAUDE.rstrip("\n")))
         self.assertIn(installeur.DEBUT_SOCLE, claude)
         self.assertIn('"CLAUDE.md" = { max_bytes =', (self.racine / ".socle/guardrails.toml").read_text())
+
+    def test_claude_md_garde_fait_foi_seul(self):
+        # B-0049, mesuré à R6 : le contrôle exigeait AGENTS.md, que
+        # l'installeur n'avait pas posé, et le .gitignore y renvoyait.
+        self.racine = depot({"CLAUDE.md": CLAUDE, "tests/test_doc.py": "open('CLAUDE.md').read()\n",
+                             ".gitignore": "# Trace locale des hooks du socle (voir AGENTS.md)\n"})
+        installer(self.racine)
+        self.assertEqual(erreurs_instructions(self.racine), [])
+        gitignore = (self.racine / ".gitignore").read_text()
+        self.assertEqual(gitignore.count("# Trace locale des hooks du socle"), 1, gitignore)
+        (self.racine / ".gitignore").unlink()
+        installer(self.racine)
+        self.assertIn("(voir CLAUDE.md)", (self.racine / ".gitignore").read_text())
+        (self.racine / "CLAUDE.md").write_text(CLAUDE)  # sans la section du socle
+        self.assertEqual(len(erreurs_instructions(self.racine)), 1)
 
     def test_relance_regenere_la_section_sans_la_dupliquer(self):
         self.racine = depot({"app.py": "print('ok')\n"})

@@ -745,9 +745,16 @@ def reponses(ctx, r):
 
 @controle("instructions.source-unique")
 def source_unique(ctx, r):
-    """`AGENTS.md` fait foi ; `CLAUDE.md` l'importe en une ligne."""
+    """Un seul fichier d'instructions fait foi : `AGENTS.md`, que `CLAUDE.md`
+    importe en une ligne ; ou, sans `AGENTS.md`, `CLAUDE.md` qui porte la
+    section du socle, quand l'installeur l'a gardé parce que le projet le
+    nomme (B-0049)."""
     if config.INSTRUCTIONS not in ctx.fichiers:
-        r.erreur("instructions.source-unique", "AGENTS.md absent : c'est le fichier d'instructions qui fait foi")
+        if "CLAUDE.md" in ctx.fichiers and config.DEBUT_SOCLE in (ctx.lire("CLAUDE.md") or ""):
+            return
+        r.erreur("instructions.source-unique", "AGENTS.md absent, et CLAUDE.md ne porte pas la section du socle : "
+                 "aucun fichier d'instructions ne fait foi")
+        return
     if "CLAUDE.md" in ctx.fichiers:
         texte = (ctx.lire("CLAUDE.md") or "").strip()
         if texte != "@AGENTS.md":

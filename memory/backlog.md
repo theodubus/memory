@@ -275,7 +275,7 @@ la branche) la laisse passer au hook, une fois. Voisin de B-0018.
 
 ## B-0049 — instructions.source-unique exige AGENTS.md quand l'installeur a gardé CLAUDE.md comme source
 
-> statut : ouvert · origine : J-2026-10-12-M · lu : backlog@ca384505
+> statut : fait · origine : J-2026-10-12-M · lu : backlog@ca384505 · ref : J-2026-10-13-C
 
 Mesuré à R6, sur un clone du projet d'échecs : l'installeur garde
 CLAUDE.md comme source (35 fichiers du projet le nomment) et y ajoute la
