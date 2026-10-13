@@ -79,10 +79,10 @@ class Plage:
         return self._changeants[type_]
 
     def _changeant(self, type_: str) -> list[str]:
-        # Les décisions vivent une par fichier : leur dossier entier, pour
-        # celles ajoutées en route ; chaque chemin sous ses deux noms, d'un
-        # format de la mémoire à l'autre.
-        lieux = {(c.rsplit("/", 1)[0] if type_ == "ADR" else c) for m in (self.courante, self.base) if m is not None
+        # Les décisions, et les sujets du backlog au format 3, vivent un par
+        # fichier : leur dossier entier, pour ceux ajoutés en route ; chaque
+        # chemin sous ses deux noms, d'un format de la mémoire à l'autre.
+        lieux = {memoire.dossier_propre(c) or c for m in (self.courante, self.base) if m is not None
                  for c, f in m.fichiers.items() if any(e.type == type_ for e in f.entrees)}
         lieux = sorted(lieux | {config.traduire(c, vers=v) for c in lieux for v in (1, 2)})
         if not lieux:

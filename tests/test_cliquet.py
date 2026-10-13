@@ -56,6 +56,15 @@ class TestCliquet(unittest.TestCase):
         self.assertTrue(assouplissements(BASE, retire, modules_existants={"src/a.rs"}))
         self.assertEqual(assouplissements(BASE, retire, modules_existants=set()), [])
 
+    def test_le_budget_d_un_fichier_disparu_se_retire(self):
+        # ADR-0025 : le backlog en un fichier devient un dossier, et le
+        # budget du fichier unique part avec lui ; celui d'un fichier qui
+        # existe ne se retire pas.
+        retire = changer()
+        del retire["budgets"]["memoire/actif.md"]
+        self.assertTrue(assouplissements(BASE, retire, modules_existants={"memoire/actif.md"}))
+        self.assertEqual(assouplissements(BASE, retire, modules_existants={"memoire/autre.md"}), [])
+
     def test_un_module_a_mesurer_puis_mesure(self):
         """B-0034, P1 : un module « à mesurer » entre au cliquet sans
         l'assouplir ; recevoir son plafond le durcit ; un module mesuré remis

@@ -77,7 +77,10 @@ def a_faire(projet: config.Projet) -> list[Element]:
         if e.archivee or e.statut in memoire.BACKLOG_CLOS:
             continue
         if langue.valeur(memoire.nettoyer(e.meta.get("pour", ""))) == "humain":
-            res.append(Element("action", f"{e.id} — {e.titre}"))
+            # Le lien du sujet, où vit son mode d'emploi : commandes,
+            # résultats attendus (ADR-0025).
+            url, _ = liens.lien(projet, e.id)
+            res.append(Element("action", f"{e.id} — {e.titre}", url or "(pas encore poussé : pas de lien)"))
     for b in branches_a_supprimer(projet):
         res.append(Element("action", f"supprimer la branche distante `{b}`, déjà contenue dans la branche par défaut"))
     return res

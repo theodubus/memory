@@ -15,7 +15,7 @@ les commentaires et messages en français.
 from __future__ import annotations
 
 import tomllib
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from functools import lru_cache
 from pathlib import Path
 
@@ -55,6 +55,11 @@ class Chemins:
     prive_lock: str
     moteur: str  # le dossier du moteur installé
 
+    @property
+    def backlog_en_dossier(self) -> bool:
+        """Au format 3, un fichier par sujet dans un dossier (ADR-0025)."""
+        return not self.backlog.endswith(".md")
+
     def dans_prive(self, chemin: str) -> str:
         """Le miroir d'un chemin de la mémoire dans la zone privée."""
         return self.prive + chemin[len(self.memoire):] if chemin.startswith(self.memoire + "/") else chemin
@@ -68,7 +73,13 @@ FORMAT_2 = Chemins(2, "memory", "memory/canonical.md", "memory/active.md", "memo
                    "memory/decisions", "memory/journal", "memory/requests", "memory/archives", "memory/private",
                    "memory/private/terms.txt", ".answer.toml", ".socle/engine.lock", ".socle/policy.toml",
                    ".socle/guardrails.toml", ".socle/adapter.toml", ".socle/private.lock", ".socle/engine")
-FORMATS = {1: FORMAT_1, 2: FORMAT_2}
+# Le format 3 garde les noms du format 2 ; le backlog y devient un dossier,
+# un fichier par sujet (ADR-0025).
+FORMAT_3 = replace(FORMAT_2, format=3, backlog="memory/backlog")
+FORMATS = {1: FORMAT_1, 2: FORMAT_2, 3: FORMAT_3}
+# Le format d'une installation neuve. Il passe à 3 quand l'humain aura
+# validé les tests qui fixent le format 2 d'un projet neuf (politique,
+# point 2) : le format 3 se lit, s'écrit et se migre déjà.
 FORMAT_ACTUEL = FORMAT_2
 
 # Le renommage du format 1 au format 2, segment par segment, selon où le
@@ -81,7 +92,9 @@ _MEMOIRE_1_2 = {"canonique.md": "canonical.md", "actif.md": "active.md", "demand
 
 def traduire(chemin: str, vers: int = 2) -> str:
     """Un chemin (ou un motif) d'un format dans l'autre ; inchangé s'il
-    n'appartient ni à `.socle/` ni à la mémoire."""
+    n'appartient ni à `.socle/` ni à la mémoire. Les noms changent du
+    format 1 au 2 ; le format 3 garde ceux du 2."""
+    vers = 2 if vers >= 2 else 1
     socle, mem = _SOCLE_1_2, _MEMOIRE_1_2
     racine_de, racine_vers = ("memoire", "memory") if vers == 2 else ("memory", "memoire")
     suffixe_de, suffixe_vers = (".reponse.toml", ".answer.toml") if vers == 2 else (".answer.toml", ".reponse.toml")
@@ -104,7 +117,7 @@ def traduire(chemin: str, vers: int = 2) -> str:
 def sous_le_format(chemin: str, vers: int) -> str:
     """Le nom qu'un chemin prend au format `vers`, même s'il mêle les deux
     (un lien relatif `../demandes/…` lu depuis `memory/journal/`)."""
-    return traduire(traduire(chemin, vers=3 - vers), vers=vers)
+    return traduire(traduire(chemin, vers=1 if vers >= 2 else 2), vers=vers)
 
 
 def chemins(racine: Path, rev: str | None = None) -> Chemins:
@@ -119,12 +132,21 @@ def _chemins(racine: str, rev: str | None) -> Chemins:
     for nom in ("lock", "politique"):
         for f in (FORMAT_2, FORMAT_1):
             if outils.lire_a(Path(racine), rev, getattr(f, nom)) is not None:
-                return f
+                return _forme_du_backlog(Path(racine), rev, f)
     for f in (FORMAT_2, FORMAT_1):
         if (Path(racine) / f.memoire).is_dir() if rev is None else \
                 outils.git(Path(racine), "cat-file", "-t", f"{rev}:{f.memoire}", check=False).strip() == "tree":
-            return f
+            return _forme_du_backlog(Path(racine), rev, f)
     return FORMAT_ACTUEL
+
+
+def _forme_du_backlog(racine: Path, rev: str | None, f: Chemins) -> Chemins:
+    """Les noms anglais disent le format 2 ou le 3 ; la forme du backlog les
+    départage : un fichier unique au format 2, un dossier au 3. Le verrou
+    d'un dépôt dont la mémoire a migré peut retarder (ADR-0025)."""
+    if f is FORMAT_2 and outils.lire_a(racine, rev, FORMAT_2.backlog) is None:
+        return FORMAT_3
+    return f
 
 
 def oublier_formats():

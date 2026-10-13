@@ -273,11 +273,13 @@ def _poser_memoire(cible: Path, lg: str, nom_adaptateur: str, adoption: bool) ->
     ch = config.FORMAT_ACTUEL
     journal = []
     jour = date.today().isoformat()
-    for nom, lieu in (("canonique.md", ch.canonique), ("actif.md", ch.actif), ("backlog.md", ch.backlog)):
+    # Au format 3, le backlog est un dossier, un fichier par sujet (ADR-0025).
+    unique = () if ch.backlog_en_dossier else (("backlog.md", ch.backlog),)
+    for nom, lieu in (("canonique.md", ch.canonique), ("actif.md", ch.actif)) + unique:
         p = cible / lieu
         if not p.is_file():
             outils.ecrire(p, gabarit(f"memoire/{nom}", lg))
-    for lieu in (ch.decisions, ch.demandes):
+    for lieu in (ch.decisions, ch.demandes) + ((ch.backlog,) if ch.backlog_en_dossier else ()):
         d = cible / lieu
         d.mkdir(parents=True, exist_ok=True)
         if not any(d.iterdir()):

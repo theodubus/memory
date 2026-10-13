@@ -102,6 +102,23 @@ def chemins_de(chemin: str) -> config.Chemins:
     return config.FORMAT_ACTUEL
 
 
+def dossier_propre(chemin: str) -> str | None:
+    """Le dossier d'un fichier qui porte une seule entrée (une décision, une
+    demande, un sujet du backlog au format 3) ; `None` pour un fichier qui en
+    porte plusieurs."""
+    if couche_attendue(chemin) in ("decisions", "demandes") or \
+            couche_attendue(chemin) == "backlog" and not chemin.endswith("/backlog.md"):
+        return chemin.rsplit("/", 1)[0]
+    return None
+
+
+def nom_de_fichier(titre: str) -> str:
+    """Le titre d'une entrée qui a son propre fichier (décision, demande,
+    sujet du backlog au format 3), réduit pour son nom : `ADR-0003-<ceci>.md`."""
+    s = re.sub(r"[^a-z0-9]+", "-", outils.sans_accents(titre).lower()).strip("-")
+    return s[:50].rstrip("-") or "sans-titre"
+
+
 def hors_zone_privee(chemin: str) -> str:
     """Un chemin de la zone privée, relatif à elle (son chemin dans le dépôt
     privé) ; inchangé hors de la zone privée."""
@@ -316,7 +333,10 @@ def couche_attendue(chemin: str) -> str | None:
     for couche, lieu in (("canonique", f.canonique), ("actif", f.actif), ("backlog", f.backlog)):
         if chemin == lieu:
             return couche
-    for couche, lieu in (("decisions", f.decisions), ("journal", f.journal), ("demandes", f.demandes)):
+    # Le backlog en dossier (format 3, ADR-0025), sous le même nom que le
+    # fichier unique, sans son extension.
+    for couche, lieu in (("backlog", f.backlog.removesuffix(".md")), ("decisions", f.decisions),
+                         ("journal", f.journal), ("demandes", f.demandes)):
         if chemin.startswith(lieu + "/") and "/" not in chemin[len(lieu) + 1:]:
             return couche
     return "inconnue"
@@ -442,23 +462,30 @@ class Memoire:
         defs = self.definitions().get(ident)
         return defs[0] if defs else None
 
-    def prochain_id(self, type_: str, prive: bool = False, date: str | None = None) -> str:
+    def prochain_id(self, type_: str, prive: bool = False, date: str | None = None,
+                    pris_ailleurs: set[str] = frozenset()) -> str:
         """Le prochain identifiant libre d'un type. Calculé, jamais deviné :
-        deux sessions qui devinent tombent sur le même."""
-        prefixe = ("P" if prive else "") + type_ + "-"
-        pris = set(self.definitions())
-        if type_ == "J":
-            if date is None:
-                raise ValueError("un identifiant de journal exige une date")
-            for lettre in _lettres():
-                cand = f"{prefixe}{date}-{lettre}"
-                if cand not in pris:
-                    return cand
-        n = 1 + max(
-            (int(i[len(prefixe):]) for i in pris if i.startswith(prefixe) and i[len(prefixe):].isdigit()),
-            default=0,
-        )
-        return f"{prefixe}{n:04d}"
+        deux sessions qui devinent tombent sur le même. `pris_ailleurs` : ceux
+        que d'autres branches ont déjà pris (ADR-0026)."""
+        return prochain_libre(type_, set(self.definitions()) | set(pris_ailleurs), prive, date)
+
+
+def prochain_libre(type_: str, pris: set[str], prive: bool = False, date: str | None = None) -> str:
+    """Le premier identifiant d'un type que `pris` ne contient pas : le
+    numéro qui suit le plus grand, ou la lettre suivante du jour."""
+    prefixe = ("P" if prive else "") + type_ + "-"
+    if type_ == "J":
+        if date is None:
+            raise ValueError("un identifiant de journal exige une date")
+        for lettre in _lettres():
+            cand = f"{prefixe}{date}-{lettre}"
+            if cand not in pris:
+                return cand
+    n = 1 + max(
+        (int(i[len(prefixe):]) for i in pris if i.startswith(prefixe) and i[len(prefixe):].isdigit()),
+        default=0,
+    )
+    return f"{prefixe}{n:04d}"
 
 
 def _lettres():

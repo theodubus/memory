@@ -21,9 +21,13 @@ rendu à Théo à la fin de chaque lot.
 1. L6 : la part du moteur faite (J-2026-10-13-O) ; D-0019 en attente de
    Théo, pour sortir le banc et l'auto-test complet des étapes rapides de
    ce dépôt. R2 et L7 faits (J-2026-10-13-P, J-2026-10-13-Q).
-2. B-0047 (D-0017 validée) : le backlog en un fichier par sujet, avec les
-   noms anglais (B-0045) dans une seule migration, avant B-0046 ; il règle
-   aussi les identifiants que deux branches prennent ensemble (B-0053).
+2. B-0047 (D-0017 validée, ADR-0025) : le format 3 se lit, s'écrit et se
+   migre, et ce dépôt y est passé (J-2026-10-13-R). Reste : rendre les
+   préparations de tests indépendantes du format, puis une demande qui
+   nomme les tests dont la valeur attendue change quand les installations
+   neuves passent au format 3, et la bascule après la réponse. B-0053 fait
+   (ADR-0026). Les noms anglais (B-0045) : rien de versionné dans un
+   projet, donc pas de migration ; leur inventaire et leur demande à part.
 3. Plus tard : B-0046 (la documentation à refaire, à clarifier d'abord avec
    Théo), B-0038, B-0039, B-0040 ; B-0042 attend sa propre demande. La
    pull request, quand Théo la demandera.

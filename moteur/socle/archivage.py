@@ -14,6 +14,9 @@ TITRE = re.compile(r"^#{1,5} ")
 def archiver_backlog(projet: config.Projet) -> int:
     racine = projet.racine
     ch = config.chemins(racine)
+    if ch.backlog_en_dossier:
+        print("format 3 : un sujet clos reste dans son fichier, rien ne s'archive (ADR-0025)")
+        return 0
     chemin = racine / ch.backlog
     if not chemin.is_file():
         print("pas de backlog")

@@ -33,7 +33,7 @@ comparent le même fichier sous ses deux noms.
 
 | Module | Rôle |
 | --- | --- |
-| `cli.py` | les commandes, rangées par public dans l'aide (l'humain, l'agent, les hooks et la CI) : `aide`, `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `prive`, `relu`, `answer`, `approve`, `install`, `init`, `selftest`, `fingerprint`, `mutation-verdict`, `mutation-run`, `archive`, `checks` ; sans commande, l'aide de l'humain |
+| `cli.py` | les commandes, rangées par public dans l'aide (l'humain, l'agent, les hooks et la CI) : `aide`, `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `prive`, `relu`, `answer`, `approve`, `install`, `init`, `selftest`, `fingerprint`, `mutation-verdict`, `mutation-run`, `renumber`, `archive`, `checks` ; sans commande, l'aide de l'humain |
 | `AIDE.md` | le guide de l'humain, source unique : ses gestes, chacun avec sa commande ; `socle aide` l'affiche |
 | `memoire.py` | lecture des cinq couches : en-têtes, entrées, identifiants, métadonnées, références |
 | `demandes.py` | le contrat des demandes, son lint, les réponses humaines gelées |
@@ -50,6 +50,7 @@ comparent le même fichier sous ses deux noms.
 | `humain.py` | ce qui revient à l'humain ; ce qu'il a écrit lui-même depuis le dernier commit de l'agent (approbations, réponses de son terminal), que l'état liste pour que l'agent le cite ; la lecture du dernier message de l'agent pour le récap |
 | `prive.py` | la mémoire privée : modes compagnon et chiffré, verrou, accès, couches privées par défaut, contrôles `prive.*` ; un terme privé cherché sous ses variantes d'écriture, dans le contenu, les noms de fichier et de branche ; rien d'écrit sans accès ; la mémoire privée lue à une révision |
 | `bascule.py` | la bascule d'une entrée publique dans la mémoire privée (`socle prive basculer`) |
+| `identifiants.py` | les identifiants que deux branches prennent ensemble : ceux des branches distantes, la collision avec la branche par défaut, la renumérotation (ADR-0026) |
 | `prive_installation.py` | la mise en place du dépôt compagnon, réservée à l'humain (`socle prive installer`) |
 | `liens.py` | le permalien d'un fichier ou d'une entrée ; les liens d'un message que l'humain ne pourra pas suivre |
 | `verification.py` | le contrat `verify` : les capacités de l'adaptateur |
@@ -89,6 +90,8 @@ comparent le même fichier sous ses deux noms.
 | Journaux de CI sans contenu privé | masquage des constats de la zone privée à l'étage CI ; `socle prive recuperer` n'écrit ni l'adresse ni la sortie de git | CI |
 | Contrat des demandes : huit champs (les sept du cadrage et « Où regarder », avec un lien vers chaque document à lire), contexte d'au moins soixante mots, aucun identifiant nu | `demandes.contrat`, hook `pre-tool-use` | agent, git, CI |
 | Décision archivée avec le texte exact | `demandes.reponses` (empreinte de la demande) | agent, git, CI |
+| Un identifiant ne se définit qu'une fois, même entre deux branches : `socle new` saute ceux des branches distantes ; celui que la branche par défaut a pris aussi depuis la divergence est dit avant la fusion, et se renumérote (ADR-0026) | `socle new`, `memoire.collisions`, `socle renumber` | agent, git, CI |
+| Le backlog en un fichier par sujet (format 3), un plafond par sujet, rien d'archivé ; un lien vers l'ancre d'un sujet dans l'ancien fichier unique reste valide ; une action humaine donnée avec le lien de son sujet (ADR-0025) | `memoire.format`, `memoire.budgets`, `memoire.references`, la migration 2 → 3, l'état | agent, git, CI |
 | `AGENTS.md` fait foi, `CLAUDE.md` l'importe ; ou, sans `AGENTS.md`, `CLAUDE.md` que l'installeur a gardé parce que le projet le nomme, et qui porte la section du socle (B-0049) | `instructions.source-unique` | agent, git, CI |
 | Valeurs dupliquées liées à leur source ; `3,5` vaut `3.5`, pas `35` | `docs.valeurs` | agent, git, CI |
 | Outillage documenté | `docs.outillage` | agent, git, CI |

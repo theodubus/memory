@@ -12,7 +12,7 @@ qui le lit est `socle/memoire.py`, les contrôles sont listés par
 memory/
   canonical.md            faits vérifiés, avec statut et preuve
   active.md               chantier en cours, prochaines étapes
-  backlog.md              sujets à traiter, avec statut et origine
+  backlog/B-0001-*.md     un sujet à traiter par fichier, avec statut et origine (format 3)
   decisions/ADR-0001-*.md une décision par fichier
   journal/2026-10.md      un fichier par mois, une entrée par événement
   requests/D-0001-*.md    une demande de décision humaine par fichier
@@ -21,7 +21,14 @@ memory/
   private/                zone privée, même arborescence (voir « La zone privée »)
 ```
 
-Ce sont les noms du **format 2**, en anglais pour tous les projets quelle que
+Ce sont les emplacements du **format 3** (ADR-0025) : ceux du format 2, sauf
+le backlog, qui y était un seul fichier, `backlog.md`. Le moteur lit les
+deux ; la forme du backlog, fichier ou dossier, dit lequel. La mise à jour
+découpe le fichier unique, un fichier par sujet (voir « Backlog »). Pour
+l'heure, une installation neuve pose encore le format 2 : elle passera au 3
+quand l'humain aura validé les tests qui fixent le format d'un projet neuf.
+
+Les noms du **format 2** sont en anglais pour tous les projets quelle que
 soit la langue de la mémoire (B-0032) ; la configuration du socle suit
 (`.socle/policy.toml`, `.socle/guardrails.toml`, `.socle/adapter.toml`,
 `.socle/engine.lock`, `.socle/private.lock`, le moteur sous `.socle/engine/`).
@@ -147,8 +154,31 @@ Statuts : `ouvert`, `en-cours`, `bloqué`, `fait`, `abandonné`. Toute entrée
 a une `origine` (entrée de journal, commit, demande) ; une entrée close
 (`fait`, `abandonné`) a une `ref` vers ce qui l'a close. Une action que seul
 l'humain peut faire porte `pour : humain` : elle figure dans « ce qui revient
-à l'humain », dans l'état et dans le récap de fin d'intervention, jusqu'à ce
-qu'elle soit close. `socle archive`
+à l'humain », dans l'état et dans le récap de fin d'intervention, avec le
+lien de son sujet, où vit son mode d'emploi (commandes, résultats attendus),
+jusqu'à ce qu'elle soit close.
+
+Au format 3 (ADR-0025), un sujet par fichier, nommé comme une décision
+(`B-0001-<titre court>.md`), sous un titre de niveau un :
+
+```markdown
+<!-- socle: couche=backlog zone=publique -->
+# B-0001 — Un sujet détaillé
+
+> statut : ouvert · origine : J-2026-10-12-A
+
+Son corps, libre, avec ses sous-titres (`## Les commandes`…).
+```
+
+Chaque sujet a son plafond (`"memory/backlog/*.md"` dans `[budgets]`). Un
+sujet clos reste dans son fichier : rien ne s'archive. La migration depuis
+le format 2 remonte chaque sujet d'un niveau de titre, sous-titres compris,
+et un lien écrit vers l'ancre d'un sujet dans `backlog.md` reste valide
+tant que le sujet existe. Une bascule en privé copie le fichier sous
+`private/backlog/`, et un fichier public garde l'identifiant, comme pour
+une décision.
+
+Au format 2, le backlog est un seul fichier, `backlog.md`, et `socle archive`
 déplace les entrées closes dans une entrée de journal datée, en sous-titres :
 
 ```markdown

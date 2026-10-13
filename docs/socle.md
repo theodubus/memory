@@ -260,6 +260,7 @@ Chaque refus dit ce qu'il a vu et comment en sortir. Les plus courants :
 | `tests.regression`, en CI | un correctif sans test qui échoue sur le commit d'avant | écrire ce test |
 | `docs.correspondance` | du code associé à une doc a changé sans elle | changer la doc, ou `Dispense-doc: <raison>` dans le commit qui change ce code |
 | `memoire.lectures` | une empreinte citée ne correspond plus | relire l'entrée ou l'index (`socle show`), citer l'empreinte affichée |
+| `memoire.collisions` | un identifiant que la branche a pris, la branche par défaut l'a pris aussi depuis, pour une autre entrée | `socle renumber <ID>`, qui donne le prochain libre et le reporte |
 | `memoire.retard`, en fin de tour | du code a changé et la mémoire non | mettre à jour le chantier actif, le journal ou le backlog |
 | fin de tour refusée, « Pour toi : » | le dernier message de l'agent n'a pas son récap | finir par le récap et les deux lignes |
 | `prive.verrou` | le verrou du dépôt compagnon manque ou retarde | `socle prive verrouiller` ; rien en place : `socle prive installer --depot <adresse>`, par l'humain |

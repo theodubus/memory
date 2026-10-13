@@ -459,6 +459,27 @@ def balayage(c: Path, lignes: str) -> Path:
     return d
 
 
+def _collision(a: "Atelier", c: Path) -> str:
+    """La branche par défaut avance, dans ce clone seulement, avec un B-0002
+    pris par une autre branche ; la branche de travail, partie d'avant, prend
+    B-0002 pour un autre sujet (ADR-0026). Rend le point de divergence, la
+    base de la CI."""
+    point = a.git(c, "rev-parse", "HEAD").strip()
+
+    def sujet(titre: str):
+        ajouter(c, "memory/backlog.md", f"\n## B-0002 — {titre}\n\n> statut : ouvert · origine : {a.journal} · "
+                f"lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n")
+
+    a.git(c, "switch", "-q", "-c", "autre")
+    sujet("Documenter le module")
+    a.commit(c, "un sujet sur une autre branche")
+    a.git(c, "update-ref", "refs/remotes/origin/main", "HEAD")
+    a.git(c, "switch", "-q", "travail")
+    sujet("Ajouter une fonction quadruple")
+    a.commit(c, "un sujet ici")
+    return point
+
+
 def maj_memoire(c: Path, texte: str = "Travail en cours sur l'essai."):
     remplacer(c, "memory/active.md", "## En cours\n\nRien pour l'instant.", f"## En cours\n\n{texte}")
 
@@ -1183,6 +1204,11 @@ def _cas() -> list[Cas]:
                 f"\n## {a.journal[:-1]}B — Constat\n\nVoir F-0001@{perimee}.\n")
         return etage_git(a, c)
 
+    @defaut("identifiant-pris-deux-fois", "identifiant que la branche par défaut a pris aussi", "ci", "memoire.collisions")
+    def _(a, c):
+        r = a.socle(c, "check", "--stage", "ci", "--base", _collision(a, c))
+        return "" if r.returncode == 0 else r.stdout + r.stderr
+
     @defaut("backlog-sans-lecture", "sujet ajouté au backlog sans l'avoir consulté", "git", "memoire.lectures")
     def _(a, c):
         ajouter(c, "memory/backlog.md", "\n## B-0002 — Ajouter une fonction quadruple\n\n"
@@ -1550,6 +1576,16 @@ def _temoins() -> list[tuple[str, Callable]]:
     def _(a, c):
         etage_stop(a, c, "Pour toi : rien.\nEnsuite : rien.")  # retient l'état de l'arbre
         return etage_stop(a, c, "Réponse à une question, sans rien changer.")
+
+    @temoin("un identifiant renuméroté après une collision passe la CI")
+    def _(a, c):
+        point = _collision(a, c)
+        r = a.socle(c, "renumber", "B-0002")
+        if r.returncode != 0:
+            return r.stdout + r.stderr
+        a.commit(c, "renuméroté")
+        r = a.socle(c, "check", "--stage", "ci", "--base", point)
+        return "" if r.returncode == 0 else r.stdout + r.stderr
 
     @temoin("une décision qui prouve ses lectures passe le commit")
     def _(a, c):

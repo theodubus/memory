@@ -130,10 +130,63 @@ def _vers_format_2(cible: Path) -> list[str]:
     return res
 
 
+# Ce qui ouvre un titre markdown ; un sujet devenu fichier remonte d'un niveau.
+TITRE = re.compile(r"^##+ ")
+# Le plafond d'un sujet du backlog, une fois chacun dans son fichier.
+BUDGET_SUJET = 8000
+
+
+def _vers_format_3(cible: Path) -> list[str]:
+    """ADR-0025 : le backlog devient un dossier, un fichier par sujet, dans
+    la zone publique et dans la zone privée. Chaque sujet garde son texte, ses
+    titres remontés d'un niveau ; le fichier unique est retiré, et son plafond
+    devient un plafond par sujet. Rien à faire là où le backlog est déjà un
+    dossier : la migration se relance sans dommage."""
+    from socle import memoire
+
+    res = []
+    f2, f3 = config.FORMAT_2, config.FORMAT_3
+    suivis = set(outils.git(cible, "ls-files", "-z", check=False).split("\0")) - {""} \
+        if outils.est_depot(cible) else set()
+    for unique, dossier in ((f2.backlog, f3.backlog), (f2.dans_prive(f2.backlog), f3.dans_prive(f3.backlog))):
+        p = cible / unique
+        if not p.is_file():
+            continue
+        texte = p.read_text(encoding="utf-8")
+        if not memoire.lisible(texte):
+            raise RuntimeError(f"migration arrêtée : {unique} est chiffré ici ; le déchiffrer, puis relancer")
+        f = memoire.analyser(unique, texte)
+        entete = texte.splitlines()[0] if memoire.ENTETE_FICHIER.search(texte.splitlines()[0] if texte else "") \
+            else "<!-- socle: couche=backlog zone=publique -->"
+        sujets = [e for e in f.entrees if e.type == "B" and e.niveau == 2]
+        for e in sujets:
+            lignes = [(l[1:] if not code and TITRE.match(l) else l) for _, l, code in memoire.lignes_hors_code(e.texte)]
+            nom = f"{e.id}-{memoire.nom_de_fichier(e.titre)}.md"
+            outils.ecrire(cible / dossier / nom, entete + "\n" + "\n".join(lignes).rstrip("\n") + "\n")
+        if unique in suivis:
+            outils.git(cible, "rm", "-q", unique)
+            outils.git(cible, "add", "--", dossier)
+        else:
+            p.unlink()
+        res.append(f"{unique} → {dossier}/ : {len(sujets)} sujet(s), un fichier chacun")
+    gf = cible / f2.garde_fous
+    if gf.is_file():
+        texte = gf.read_text(encoding="utf-8")
+        neuf = re.sub(rf'(?m)^(["\']){re.escape(f2.backlog)}\1\s*=\s*\{{[^}}]*\}}',
+                      f'"{f3.backlog}/*.md" = {{ max_bytes = {BUDGET_SUJET} }}', texte)
+        if neuf != texte:
+            gf.write_text(neuf, encoding="utf-8")
+            res.append(f"plafond du backlog : {BUDGET_SUJET} octets par sujet")
+    config.oublier_formats()
+    return res
+
+
 # Version courante du format. Une migration `MIGRATIONS[n]` fait passer un
-# projet du format n au format n + 1, et rend ce qu'elle a fait.
+# projet du format n au format n + 1, et rend ce qu'elle a fait. Le format 3
+# se lit et se migre ; il devient celui des installations quand `FORMAT`
+# passe à 3, avec `config.FORMAT_ACTUEL`.
 FORMAT = 2
-MIGRATIONS: dict[int, Callable[[Path], list[str]]] = {1: _vers_format_2}
+MIGRATIONS: dict[int, Callable[[Path], list[str]]] = {1: _vers_format_2, 2: _vers_format_3}
 
 
 def migrer(cible: Path, depuis: int, jusqua: int | None = None) -> list[str]:

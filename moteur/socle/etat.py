@@ -244,7 +244,8 @@ def _memoire(mem: memoire.Memoire, projet) -> list[str]:
     par = Counter(e.statut for e in backlog)
     res.append(
         f"backlog  : {par.get('ouvert', 0)} ouvert(s), {par.get('en-cours', 0)} en cours, "
-        f"{par.get('bloque', 0)} bloqué(s), {par.get('fait', 0) + par.get('abandonne', 0)} clos à archiver"
+        f"{par.get('bloque', 0)} bloqué(s), {par.get('fait', 0) + par.get('abandonne', 0)} clos"
+        + ("" if projet.chemins.backlog_en_dossier else " à archiver")
     )
     for statut, libelle in (("en-cours", "en cours"), ("bloque", "bloqué")):
         for e in [e for e in backlog if e.statut == statut][:8]:

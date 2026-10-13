@@ -56,6 +56,22 @@ class TestBranchesASupprimer(unittest.TestCase):
         quoi = [e.quoi for e in humain.a_faire(self.projet)]
         self.assertTrue(any("`fusionnee`" in q for q in quoi), quoi)
 
+    def test_une_action_humaine_vient_avec_le_lien_de_son_sujet(self):
+        # ADR-0025 : le mode d'emploi d'une action humaine (commandes,
+        # résultats attendus) vit dans son sujet, que l'état donne par son lien.
+        sujet = self.clone / "memory/backlog/B-0001-entrainer-le-reseau.md"
+        sujet.parent.mkdir(parents=True)
+        sujet.write_text("<!-- socle: couche=backlog zone=publique -->\n# B-0001 — Entraîner le réseau\n\n"
+                         "> statut : ouvert · origine : fichier:f · pour : humain\n")
+        git(self.clone, "add", "-A")
+        git(self.clone, "commit", "-qm", "sujet")
+        git(self.clone, "push", "-q", "-u", "origin", "travail")
+        self.projet.politique = {"human": {"repo_url": "https://github.com/essai/calc"}}
+        actions = [e for e in humain.a_faire(self.projet) if e.quoi.startswith("B-0001")]
+        self.assertEqual([e.quoi for e in actions], ["B-0001 — Entraîner le réseau"])
+        self.assertTrue(actions[0].lien.startswith("https://github.com/essai/calc/blob/"), actions[0].lien)
+        self.assertIn("/memory/backlog/B-0001-entrainer-le-reseau.md", actions[0].lien)
+
 
 FAUX_GH = """#!/usr/bin/env python3
 import os, sys

@@ -129,11 +129,6 @@ def cmd_next_id(args) -> int:
 TYPES_CLI = {"fact": "F", "backlog": "B", "adr": "ADR", "journal": "J", "request": "D"}
 
 
-def _slug(titre: str) -> str:
-    s = re.sub(r"[^a-z0-9]+", "-", outils.sans_accents(titre).lower()).strip("-")
-    return s[:50].rstrip("-") or "sans-titre"
-
-
 def cmd_new(args) -> int:
     from socle import memoire, prive as zone_privee
 
@@ -160,7 +155,10 @@ def cmd_new(args) -> int:
         print(f"refus : mémoire privée indisponible ({acces.raison}) ; une entrée privée ne s'écrit pas à "
               "l'aveugle. `--public` si elle peut être publique, sinon attendre l'accès.", file=sys.stderr)
         return 2
-    ident = mem.prochain_id(type_, prive=prive, date=jour)
+    from socle import identifiants
+
+    # Ceux que les branches distantes ont déjà pris aussi (ADR-0026).
+    ident = mem.prochain_id(type_, prive=prive, date=jour, pris_ailleurs=identifiants.pris_ailleurs(racine, type_))
     titre = args.title
     zone = "privee" if prive else "publique"
     ch = projet.chemins
@@ -175,9 +173,14 @@ def cmd_new(args) -> int:
     elif type_ == "B":
         # Le backlog s'affiche avant d'y ajouter : un doublon se voit ici.
         _afficher_index(mem, "backlog")
-        chemin = lieu(ch.backlog)
         bloc = squelette.format(lu=memoire.empreinte_index(mem, "backlog"))
-        _ajouter(chemin, f"\n## {ident} — {titre}\n\n{bloc}\n", langue.entete_fichier("backlog", zone, lg))
+        if ch.backlog_en_dossier:
+            # Un fichier par sujet, comme une décision (ADR-0025).
+            chemin = lieu(ch.backlog) / f"{ident}-{memoire.nom_de_fichier(titre)}.md"
+            outils.ecrire(chemin, f"{langue.entete_fichier('backlog', zone, lg)}\n# {ident} — {titre}\n\n{bloc}\n")
+        else:
+            chemin = lieu(ch.backlog)
+            _ajouter(chemin, f"\n## {ident} — {titre}\n\n{bloc}\n", langue.entete_fichier("backlog", zone, lg))
     elif type_ == "J":
         bloc = f"\n## {ident} — {titre}\n\n{squelette}\n"
         dossier = lieu(ch.journal)
@@ -193,7 +196,7 @@ def cmd_new(args) -> int:
         # Les décisions s'affichent avant d'en ajouter une : on ne rouvre pas
         # une décision prise sans fait nouveau.
         _afficher_index(mem, "decisions")
-        chemin = lieu(ch.decisions) / f"{ident}-{_slug(titre)}.md"
+        chemin = lieu(ch.decisions) / f"{ident}-{memoire.nom_de_fichier(titre)}.md"
         chemin.parent.mkdir(parents=True, exist_ok=True)
         bloc = squelette.format(date=jour, lu=memoire.empreinte_index(mem, "decisions"))
         chemin.write_text(f"{langue.entete_fichier('decisions', zone, lg)}\n# {ident} — {titre}\n\n{bloc}\n",
@@ -201,7 +204,7 @@ def cmd_new(args) -> int:
     else:
         from socle.modeles import gabarit
 
-        chemin = lieu(ch.demandes) / f"{ident}-{_slug(titre)}.md"
+        chemin = lieu(ch.demandes) / f"{ident}-{memoire.nom_de_fichier(titre)}.md"
         chemin.parent.mkdir(parents=True, exist_ok=True)
         texte = gabarit("demande.md", lg).format(id=ident, titre=titre, date=jour)
         entete = texte.split("\n", 1)[0]
@@ -577,6 +580,18 @@ def cmd_mutation_run(args) -> int:
     return 0 if rapport.reussi else 1
 
 
+def cmd_renumber(args) -> int:
+    from socle import identifiants
+
+    try:
+        lignes = identifiants.renumeroter(_projet(args), args.id)
+    except ValueError as e:
+        print(f"refus : {e}", file=sys.stderr)
+        return 1
+    print("\n".join(lignes))
+    return 0
+
+
 def cmd_archive(args) -> int:
     from socle import archivage
 
@@ -597,7 +612,7 @@ def cmd_checks(args) -> int:
 GROUPES = {
     "pour l'humain": ["aide", "install", "init", "state", "answer", "approve", "relu", "prive installer"],
     "pour l'agent": ["new", "show", "url", "verify", "check", "next-id", "prive", "mutation-verdict", "mutation-run",
-                     "archive", "checks"],
+                     "renumber", "archive", "checks"],
     "internes (hooks, CI, moteur)": ["hook", "ci", "selftest", "fingerprint"],
 }
 
@@ -759,6 +774,10 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
     s.add_argument("--poser", action="store_true",
                    help="écrire le plafond mesuré des modules « à mesurer » dans les garde-fous")
     s.set_defaults(f=cmd_mutation_run)
+
+    s = sp.add_parser("renumber", help="donne le prochain identifiant libre à une entrée qu'une autre branche a prise aussi")
+    s.add_argument("id")
+    s.set_defaults(f=cmd_renumber)
 
     s = sp.add_parser("archive", help="archive les sujets clos du backlog dans le journal")
     s.set_defaults(f=cmd_archive)

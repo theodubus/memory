@@ -33,7 +33,9 @@ est_prive = memoire.est_prive
 @controle("memoire.format")
 def format_memoire(ctx, r):
     """En-têtes, couches, identifiants, statuts : la mémoire se lit par script."""
-    for requis in (ctx.projet.chemins.canonique, ctx.projet.chemins.actif, ctx.projet.chemins.backlog):
+    ch = ctx.projet.chemins
+    # Au format 3, le backlog est un dossier, qu'aucun sujet ne rend requis.
+    for requis in (ch.canonique, ch.actif) + (() if ch.backlog_en_dossier else (ch.backlog,)):
         if requis not in ctx.fichiers:
             r.erreur("memoire.format", "fichier de mémoire requis absent", requis)
     for chemin, f in sorted(ctx.memoire.fichiers.items()):
@@ -148,14 +150,22 @@ def _existe(ctx, chemin: str) -> bool:
     alias = config.sous_le_format(chemin, ctx.projet.chemins.format)
     if alias != chemin and _existe_tel_quel(ctx, alias):
         return True
-    return _basculee(ctx, alias) is not None
+    return _basculee(ctx, alias) is not None or _backlog_unique(ctx, alias)
+
+
+def _backlog_unique(ctx, chemin: str) -> bool:
+    """Le backlog en un fichier, cité avant que le format 3 n'en fasse un
+    dossier : le journal et les demandes gelées le citent encore (ADR-0025)."""
+    return ctx.projet.chemins.backlog_en_dossier and chemin in (config.FORMAT_2.backlog,
+                                                                 config.FORMAT_2.dans_prive(config.FORMAT_2.backlog))
 
 
 def _basculee(ctx, chemin: str) -> str | None:
     """Le fichier qui remplace celui d'une décision basculée dans la mémoire
-    privée (`ADR-0003-basculee.md` pour `ADR-0003-un-titre.md`, B-0029)."""
+    privée (`ADR-0003-basculee.md` pour `ADR-0003-un-titre.md`, B-0029), ou
+    d'un sujet du backlog au format 3 (ADR-0025)."""
     dossier, _, nom = chemin.rpartition("/")
-    m = re.match(r"^(ADR-\d{4})-.+\.md$", nom)
+    m = re.match(r"^((?:ADR|B)-\d{4})-.+\.md$", nom)
     if not m or not memoire.est_memoire(chemin):
         return None
     remplacant = f"{dossier}/{m[1]}-{BASCULEE}.md"
@@ -299,6 +309,12 @@ def _verifier_lien(ctx, chemin_doc: str, dossier: str, cible: str) -> str | None
         cible_n = chemin_doc
     if ancre and cible_n.endswith(".md"):
         lieu = _alias(ctx, cible_n)
+        if _backlog_unique(ctx, lieu):
+            # L'ancre d'un sujet du fichier unique vaut tant que le sujet
+            # existe, dans son fichier ou archivé au journal.
+            if not any(ancre.startswith(liens.ancre(e.id) + "--") for e in ctx.memoire.entrees("B")):
+                return f"ancre morte : {cible}"
+            return None
         texte = ctx.lire(lieu)
         if texte is not None and ancre not in ancres(texte) and ancre_au_format_2(ancre) not in ancres(texte) \
                 and not _ancre_deplacee(ctx, lieu, ancre):
@@ -491,6 +507,20 @@ def preuves(ctx, r):
                 d = par_id.get(c)
                 if d is None or not d.validee:
                     r.erreur("memoire.preuves", f"`{e.id}` cite `{c}`, qui n'a pas de réponse « valider »", e.fichier, e.ligne)
+
+
+@controle("memoire.collisions", base=True)
+def collisions(ctx, r):
+    """Un identifiant que la branche définit et que la branche par défaut a
+    pris aussi depuis leur divergence, pour une autre entrée, serait défini
+    deux fois à la fusion (ADR-0026) : dit avant, avec la commande qui répare."""
+    from socle import identifiants
+
+    bases = identifiants.bases_a_comparer(ctx.racine, ctx.base)
+    for ident, ici, la_bas in identifiants.collisions(ctx.racine, ctx.tete, ctx.memoire, bases):
+        r.erreur("memoire.collisions", f"`{ident}` est pris aussi sur la branche par défaut, depuis que cette branche "
+                 f"s'en est séparée, pour « {la_bas.titre} » : à la fusion, il serait défini deux fois. "
+                 f"`python3 .socle/socle renumber {ident}` lui donne le prochain libre et le reporte", ici.fichier, ici.ligne)
 
 
 @controle("memoire.backlog")

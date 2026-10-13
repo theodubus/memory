@@ -89,7 +89,9 @@ def _mesure(apres: dict, chemin: tuple[str, ...], plafond) -> bool:
 
 
 def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | None = None) -> list[tuple[str, str]]:
-    """[(clé citable, explication)] des assouplissements de `avant` à `apres`."""
+    """[(clé citable, explication)] des assouplissements de `avant` à `apres`.
+    `modules_existants` : les fichiers de l'arbre jugé ; le seuil d'un fichier
+    disparu se retire avec lui."""
     res = []
     a, b = aplatir(avant), aplatir(apres)
     for chemin in sorted(set(a) | set(b)):
@@ -111,6 +113,9 @@ def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | Non
         if vb is ABSENT:
             if chemin[:2] == ("mutation", "caps") and modules_existants is not None and chemin[2] not in modules_existants:
                 continue  # le module a disparu : son plafond avec lui
+            if chemin[0] == "budgets" and modules_existants is not None \
+                    and not outils.filtrer(modules_existants, [chemin[1]]):
+                continue  # plus aucun fichier sous ce motif : son budget ne couvrait plus rien (ADR-0025)
             if sens == "faux":
                 continue  # « à mesurer » qui disparaît : le plafond mesuré le remplace
             res.append((cle, f"seuil retiré (valait {va!r})"))
