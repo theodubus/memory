@@ -255,7 +255,7 @@ s'est perdu. Reprend B-0035, clos trop tôt.
 
 ## B-0047 — Le backlog en un fichier par sujet, dans la même migration que les noms anglais (D-0017)
 
-> statut : ouvert · origine : J-2026-10-12-L · lu : backlog@19253d8c
+> statut : en-cours · origine : J-2026-10-12-L · lu : backlog@19253d8c
 
 Validé par Théo (D-0017) : un fichier par sujet dans un dossier backlog de
 la mémoire, son pendant privé, plus d'archivage des sujets clos au journal,
@@ -324,7 +324,7 @@ passer que les dépôts connus, ou le dire.
 
 ## B-0053 — Deux branches parallèles calculent les mêmes identifiants
 
-> statut : ouvert · origine : J-2026-10-12-Q · lu : backlog@4f28165c
+> statut : en-cours · origine : J-2026-10-12-Q · lu : backlog@4f28165c
 
 Mesuré à R6 : cinq branches parties du même commit ont chacune pris
 `B-0001` et `J-2026-10-12-C` pour des entrées différentes ; leur fusion les
