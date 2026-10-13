@@ -1,7 +1,7 @@
 <!-- socle: couche=demandes zone=publique -->
 # D-0018 — Déclarer le projet d'échecs comme dépôt cité
 
-> date : 2026-10-13
+> date : 2026-10-13 · retirée : sans objet ; un dépôt que le projet lie par son adresse est désormais connu sans réglage, et ce dépôt lie déjà le projet d'échecs
 
 ## Décision demandée
 

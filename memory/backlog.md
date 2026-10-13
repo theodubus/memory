@@ -261,7 +261,10 @@ Validé par Théo (D-0017) : un fichier par sujet dans un dossier backlog de
 la mémoire, son pendant privé, plus d'archivage des sujets clos au journal,
 un plafond par sujet ; dans la même migration de format que B-0045, après
 les lots de la passe de recul et R6, avant B-0046. Commence par la
-décision qui remplace ADR-0003 pour le backlog.
+décision qui remplace ADR-0003 pour le backlog. Avec elle, une action
+humaine (`pour : humain`) donnée dans « Pour toi » et dans l'état avec le
+lien vers son sujet, où vit son mode d'emploi : commandes, résultats
+attendus (J-2026-10-13-L).
 
 ## B-0048 — Une action externe validée par une demande reste refusée par le hook
 
@@ -339,3 +342,20 @@ Mesuré à R6 : le projet d'échecs a déjà son état au démarrage
 session en reçoit deux, qui se recoupent (branche, commits non fusionnés,
 ce qui revient à l'humain). L'installeur pourrait le signaler, et la
 documentation dire comment n'en garder qu'un.
+
+## B-0055 — Un mode multi-agent : un agent maître qui tient la mémoire et répartit les tâches
+
+> statut : ouvert · origine : J-2026-10-13-L · lu : backlog@74e54c44
+
+Demandé par Théo (texte exact au journal) : un agent maître qui tient la
+mémoire, envoie des sous-agents sur les tâches, décide pour chacune du
+niveau d'effort et du modèle, et leur donne le contexte dont elles ont
+besoin ; réfléchir d'abord à la meilleure architecture. Ce qu'elle doit
+régler, au moins : le moteur ne connaît aucun agent, donc l'orchestration
+vit côté agent (hooks, gabarits d'instructions), le moteur ne fournissant
+que le contexte d'une tâche (état, chantier, entrées citées avec leurs
+empreintes) et les contrôles du travail rendu ; les écritures en mémoire
+de sous-agents parallèles, qui prendraient les mêmes identifiants (B-0053) ;
+le travail de chacun dans son worktree, jugé par les mêmes contrôles avant
+d'être repris ; et la règle de choix de l'effort et du modèle, à mesurer au
+banc plutôt qu'à supposer.

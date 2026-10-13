@@ -100,7 +100,8 @@ Une référence nue s'arrête avant la ponctuation qui la suit : le point
 final, la parenthèse qui la referme. Les liens markdown relatifs et leurs
 ancres, décodés (`%20`), et les chemins du dépôt cités entre accents graves,
 sont vérifiés aussi ; un chemin d'un autre dépôt s'écrit `depot:chemin`, le
-dépôt déclaré dans `[references] repos` des garde-fous. Un bloc de code
+dépôt lié quelque part dans le projet par son adresse, ou, à défaut, déclaré
+dans `[references] repos` des garde-fous. Un bloc de code
 clôturé porte des exemples : rien n'y est vérifié.
 
 ## Couches

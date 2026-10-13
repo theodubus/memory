@@ -234,7 +234,9 @@ def references(ctx, r):
     defs = ctx.memoire.definitions()
     prive_dispo = any(est_prive(c) for c in ctx.memoire.fichiers)
     autres: dict[str, list[tuple[str, int, str]]] = {}
-    for chemin, texte in sorted(textes_scannes(ctx).items()):
+    textes = textes_scannes(ctx)
+    connus = depots_connus(ctx, textes.values())
+    for chemin, texte in sorted(textes.items()):
         dossier = chemin.rsplit("/", 1)[0] if "/" in chemin else ""
         for ident, ligne in memoire.mentions(texte):
             if ident.startswith("P"):
@@ -260,15 +262,15 @@ def references(ctx, r):
                 faute = _verifier_chemin_cite(ctx, m.group(1))
                 if faute:
                     r.erreur("memoire.references", faute, chemin, i)
-                depot = depot_non_declare(ctx, m.group(1))
+                depot = depot_non_declare(ctx, m.group(1), connus)
                 if depot:
                     autres.setdefault(depot, []).append((chemin, i, m.group(1)))
     # Un avertissement par dépôt, au premier endroit qui le cite.
     for depot, ou in sorted(autres.items()):
         chemin, i, jeton = ou[0]
         r.avertir("memoire.references", f"`{jeton}` : dépôt « {depot} » non déclaré, {len(ou)} chemin(s) cité(s) "
-                  "que rien ne vérifie ; un dépôt cité se déclare dans `[references] repos` des garde-fous, ce que "
-                  "seul l'humain valide", chemin, i)
+                  "que rien ne vérifie, et aucune adresse du projet ne le lie : un lien vers ce dépôt le fait "
+                  "connaître ; sinon ce n'est pas un dépôt, et la forme `x:chemin` ne lui convient pas", chemin, i)
 
 
 def verifier_ref(ctx, type_: str, cible: str) -> str | None:
@@ -341,14 +343,34 @@ SCHEMAS = {"http", "https", "ftp", "file", "mailto", "ssh", "git", "data", "comm
 REVISION = re.compile(r"^(?:[A-Z_]*HEAD|[0-9a-f]{7,40})(?:[~^]\d*)*$")
 
 
-def depot_non_declare(ctx, jeton: str) -> str | None:
-    """Le dépôt d'un `depot:chemin` cité, s'il n'est pas déclaré dans
-    `[references] repos` des garde-fous : son chemin n'est vérifié nulle
-    part, et n'importe quelle chaîne `x:chemin` passerait (B-0052)."""
+# Un dépôt que le projet lie par son adresse : `https://hôte/propriétaire/dépôt`,
+# ou `git@hôte:propriétaire/dépôt.git`.
+DEPOT_LIE = re.compile(r"(?:\bhttps?://[\w.-]+\.[A-Za-z]{2,}(?::\d+)?/|\bgit@[\w.-]+:)[\w.-]+/([\w.-]+?)(?:\.git)?"
+                       r"(?=[/#?\s)\]>\"'`]|$)")
+
+
+def depots_connus(ctx, textes) -> set[str]:
+    """Les dépôts que le projet connaît déjà, sans réglage : ceux qu'il lie
+    par leur adresse, dans les textes lus ou dans `.gitmodules`, et ceux que
+    les garde-fous déclarent (`[references] repos`), pour un dépôt qu'aucune
+    adresse ne nomme. L'outil s'adapte au projet : il ne demande pas ce que
+    le projet dit déjà (Théo, J-2026-10-13-L)."""
+    connus = set(ctx.projet.gf("references", "repos", defaut=[]) or [])
+    for texte in [*textes, ctx.lire(".gitmodules") or ""]:
+        connus |= {m.group(1).rstrip(".") for m in DEPOT_LIE.finditer(texte)}  # une adresse en fin de phrase
+    return connus
+
+
+def depot_non_declare(ctx, jeton: str, connus: set[str] | None = None) -> str | None:
+    """Le dépôt d'un `depot:chemin` cité, si le projet ne le connaît pas
+    (`depots_connus`) : son chemin n'est vérifié nulle part, et n'importe
+    quelle chaîne `x:chemin` passerait (B-0052)."""
     m = re.match(r"^([A-Za-z0-9][\w.+-]*):([^:\s]*/[^\s]*|[^:\s/]+\.\w+)$", jeton.strip())
     if not m or m.group(1).lower() in SCHEMAS or m.group(2).startswith("//") or REVISION.match(m.group(1)):
         return None
-    return None if m.group(1) in ctx.projet.gf("references", "repos", defaut=[]) else m.group(1)
+    if connus is None:
+        connus = set(ctx.projet.gf("references", "repos", defaut=[]) or [])
+    return None if m.group(1) in connus else m.group(1)
 
 
 def _verifier_chemin_cite(ctx, jeton: str) -> str | None:

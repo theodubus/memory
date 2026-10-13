@@ -67,7 +67,7 @@ comparent le même fichier sous ses deux noms.
 | Exigence | Contrôle ou mécanisme | Étages |
 | --- | --- | --- |
 | Format parsable, identifiants stables, statuts ; un titre qui commence comme une entrée sans en être une lisible est refusé | `memoire.format` | agent, git, CI |
-| Toute référence vérifiée, lien mort refusé ; une référence nue s'arrête avant sa ponctuation finale, un lien se lit décodé (B-0020) ; un chemin d'un autre dépôt (`depot:chemin`) n'est admis sans avertissement que si le dépôt est déclaré dans `[references] repos`, ce que seul l'humain valide (B-0052) | `memoire.references`, `cliquet.garde-fous` | agent, git, CI |
+| Toute référence vérifiée, lien mort refusé ; une référence nue s'arrête avant sa ponctuation finale, un lien se lit décodé (B-0020) ; un chemin d'un autre dépôt (`depot:chemin`) n'est admis sans avertissement que si le projet lie ce dépôt par son adresse, ou, à défaut, le déclare dans `[references] repos`, ce que seul l'humain valide (B-0052) | `memoire.references`, `cliquet.garde-fous` | agent, git, CI |
 | Fait mesuré avec preuve, réfuté barré, validé par l'humain | `memoire.preuves`, hook `pre-tool-use` | agent, git, CI |
 | Backlog : origine, clôture avec référence | `memoire.backlog` | agent, git, CI |
 | Budgets de taille | `memoire.budgets` | agent, git, CI |
