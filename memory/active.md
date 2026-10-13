@@ -27,7 +27,8 @@ rendu à Théo à la fin de chaque lot.
    attend D-0020 : la constante `FORMAT_ACTUEL` et `migrations.FORMAT` à
    3, et le test qui affirme le format d'un projet neuf. B-0053 fait
    (ADR-0026). Les noms anglais (B-0045) : rien de versionné dans un
-   projet, donc pas de migration ; leur inventaire et leur demande à part.
+   projet, donc pas de migration ; leur périmètre attend D-0021
+   (J-2026-10-13-T).
 3. Plus tard : B-0046 (la documentation à refaire, à clarifier d'abord avec
    Théo), B-0038, B-0039, B-0040 ; B-0042 attend sa propre demande. La
    pull request, quand Théo la demandera.
