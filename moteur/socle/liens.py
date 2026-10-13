@@ -169,7 +169,14 @@ def _rev_poussee(racine, ref: str) -> str | None:
             return ref
         return None
     distante = f"refs/remotes/origin/{ref}"
-    return distante if outils.rev_existe(racine, distante) else None
+    if outils.rev_existe(racine, distante):
+        return distante
+    # Une étiquette : publiée si une branche distante contient son commit.
+    etiquette = f"refs/tags/{ref}"
+    if outils.rev_existe(racine, etiquette) and outils.git(
+            racine, "branch", "-r", "--contains", f"{etiquette}^{{commit}}", check=False).strip():
+        return etiquette
+    return None
 
 
 def url_morte(racine, depot: str, url: str) -> str | None:

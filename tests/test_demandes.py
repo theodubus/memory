@@ -97,6 +97,14 @@ class TestContrat(unittest.TestCase):
         self.assertTrue(any("Conséquences" in f for f in fautes))
         self.assertTrue(any("Réponses possibles" in f for f in fautes))
 
+    def test_une_comparaison_ou_du_code_cite_ne_sont_pas_des_trous(self):
+        # Relevé de la passe de recul, E : « < 5 » ou un extrait de code
+        # étaient pris pour un trou du gabarit.
+        texte = CONFORME.replace("Supposé : qu'aucun test",
+                                 "Si le compte reste < 5 et > 2, ou a <= b, `git log <a b>` le montre. Supposé : qu'aucun test")
+        fautes = demandes.linter(_demande(texte), self.projet)
+        self.assertFalse(any("gabarit laissé" in f for f in fautes), fautes)
+
     def test_le_gabarit_brut_ne_passe_pas(self):
         texte = MODELE.format(id="D-0004", titre="Choisir le format des fichiers de politique", date="2026-10-10")
         fautes = demandes.linter(_demande(texte), self.projet)

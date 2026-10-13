@@ -128,6 +128,12 @@ class TestCommandes(unittest.TestCase):
         self.assertIn("n'existe pas", liens.url_morte(self.racine, DEPOT, f"{DEPOT}/blob/main/triple.py"))
         self.assertIn("inconnue", liens.url_morte(self.racine, DEPOT, f"{DEPOT}/blob/travail/calc.py"))
 
+    def test_un_lien_vers_une_etiquette(self):
+        # Relevé de la passe de recul, E : un lien vers une étiquette était mort.
+        git(self.racine, "tag", "v1", "origin/main")
+        self.assertIsNone(liens.url_morte(self.racine, DEPOT, f"{DEPOT}/blob/v1/calc.py"))
+        self.assertIn("n'existe pas", liens.url_morte(self.racine, DEPOT, f"{DEPOT}/blob/v1/triple.py"))
+
     def test_trace_commune_aux_worktrees(self):
         autre = self.dossier / "autre"
         git(self.racine, "worktree", "add", "-q", "-b", "autre", str(autre))

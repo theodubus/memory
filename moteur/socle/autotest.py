@@ -1188,6 +1188,12 @@ def _temoins() -> list[tuple[str, Callable]]:
                   "## En cours\n\nLe modèle vient de `chess:tools/etat.sh`.")
         return etage_ci(a, c)
 
+    @temoin("une référence de commit en fin de phrase passe la CI (B-0020)")
+    def _(a, c):
+        sha = a.run(c, "git", "rev-parse", "HEAD").stdout.strip()
+        maj_memoire(c, f"Repris de l'essai (commit:{sha}).")
+        return etage_ci(a, c)
+
     @temoin("durcir un garde-fou est libre")
     def _(a, c):
         remplacer(c, ".socle/guardrails.toml", '"memory/active.md" = { max_bytes = 6000 }', '"memory/active.md" = { max_bytes = 5000 }')

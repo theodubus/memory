@@ -96,9 +96,12 @@ Une valeur de métadonnée, ou le texte, peut citer :
 | `url:https://…` | jamais suivie : aucun service externe |
 | `F-0007`, `J-2026-10-10-A`… | l'entrée existe |
 
-Les liens markdown relatifs et leurs ancres, et les chemins du dépôt cités
-entre accents graves, sont vérifiés aussi. Un bloc de code clôturé porte des
-exemples : rien n'y est vérifié.
+Une référence nue s'arrête avant la ponctuation qui la suit : le point
+final, la parenthèse qui la referme. Les liens markdown relatifs et leurs
+ancres, décodés (`%20`), et les chemins du dépôt cités entre accents graves,
+sont vérifiés aussi ; un chemin d'un autre dépôt s'écrit `depot:chemin`, le
+dépôt déclaré dans `[references] repos` des garde-fous. Un bloc de code
+clôturé porte des exemples : rien n'y est vérifié.
 
 ## Couches
 

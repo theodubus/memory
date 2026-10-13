@@ -219,11 +219,26 @@ REF_RE = re.compile(
 )
 
 
+def sans_ponctuation_finale(cible: str) -> str:
+    """Une référence nue en fin de phrase, ou entre parenthèses, sans le point
+    ou la parenthèse qui la suit (B-0020) ; une parenthèse ouverte dans la
+    référence garde sa fermante."""
+    while cible:
+        fin = cible[-1]
+        if fin in ".:!?»\"'" or (fin == ")" and cible.count(")") > cible.count("(")) \
+                or (fin == "]" and cible.count("]") > cible.count("[")):
+            cible = cible[:-1]
+        else:
+            break
+    return cible
+
+
 def references(valeur: str) -> list[tuple[str, str]]:
     """[(type, cible)] : types `commit`, `fichier`, `cmd`, `url`, `id`."""
     res = []
     for m in REF_RE.finditer(valeur):
-        res.append((langue.reference(m["type"]), (m["entre"] or m["nu"]).strip()))
+        cible = m["entre"] if m["entre"] else sans_ponctuation_finale(m["nu"])
+        res.append((langue.reference(m["type"]), cible.strip()))
     sans_refs = REF_RE.sub(" ", valeur)
     for m in ID_RE.finditer(sans_refs):
         if id_valide(m["type"], m["num"]):

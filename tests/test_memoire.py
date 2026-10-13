@@ -87,6 +87,12 @@ class TestReferences(unittest.TestCase):
         self.assertEqual(refs, [("commit", "3f2a9c1"), ("fichier", "src/x.rs:12"),
                                 ("url", "https://exemple.org"), ("id", "J-2026-10-10-A")])
 
+    def test_la_ponctuation_finale_n_est_pas_dans_la_reference(self):
+        # B-0020 : un SHA suivi d'un point ou d'une parenthèse était refusé.
+        refs = memoire.references("(commit:3f2a9c1). Voir fichier:docs/a_(b).md, puis fichier:src/x.rs:12.")
+        self.assertEqual(refs, [("commit", "3f2a9c1"), ("fichier", "docs/a_(b).md"), ("fichier", "src/x.rs:12")])
+        self.assertEqual(memoire.sans_ponctuation_finale("3f2a9c1)."), "3f2a9c1")
+
     def test_accent_grave_fermant_n_ouvre_pas_de_reference(self):
         self.assertEqual(memoire.references("les références `commit:` et aux identifiants `x`"), [])
 

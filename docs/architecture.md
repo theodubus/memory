@@ -66,7 +66,7 @@ comparent le même fichier sous ses deux noms.
 | Exigence | Contrôle ou mécanisme | Étages |
 | --- | --- | --- |
 | Format parsable, identifiants stables, statuts | `memoire.format` | agent, git, CI |
-| Toute référence vérifiée, lien mort refusé ; un chemin d'un autre dépôt (`depot:chemin`) n'est admis sans avertissement que si le dépôt est déclaré dans `[references] repos`, ce que seul l'humain valide (B-0052) | `memoire.references`, `cliquet.garde-fous` | agent, git, CI |
+| Toute référence vérifiée, lien mort refusé ; une référence nue s'arrête avant sa ponctuation finale, un lien se lit décodé (B-0020) ; un chemin d'un autre dépôt (`depot:chemin`) n'est admis sans avertissement que si le dépôt est déclaré dans `[references] repos`, ce que seul l'humain valide (B-0052) | `memoire.references`, `cliquet.garde-fous` | agent, git, CI |
 | Fait mesuré avec preuve, réfuté barré, validé par l'humain | `memoire.preuves`, hook `pre-tool-use` | agent, git, CI |
 | Backlog : origine, clôture avec référence | `memoire.backlog` | agent, git, CI |
 | Budgets de taille | `memoire.budgets` | agent, git, CI |
@@ -87,7 +87,7 @@ comparent le même fichier sous ses deux noms.
 | Contrat des demandes : huit champs (les sept du cadrage et « Où regarder », avec un lien vers chaque document à lire), contexte d'au moins soixante mots, aucun identifiant nu | `demandes.contrat`, hook `pre-tool-use` | agent, git, CI |
 | Décision archivée avec le texte exact | `demandes.reponses` (empreinte de la demande) | agent, git, CI |
 | `AGENTS.md` fait foi, `CLAUDE.md` l'importe ; ou, sans `AGENTS.md`, `CLAUDE.md` que l'installeur a gardé parce que le projet le nomme, et qui porte la section du socle (B-0049) | `instructions.source-unique` | agent, git, CI |
-| Valeurs dupliquées liées à leur source | `docs.valeurs` | agent, git, CI |
+| Valeurs dupliquées liées à leur source ; `3,5` vaut `3.5`, pas `35` | `docs.valeurs` | agent, git, CI |
 | Outillage documenté | `docs.outillage` | agent, git, CI |
 | Correspondance code ↔ doc, dispense motivée | `docs.correspondance` (pas au commit : le hook ne voit pas le message, donc pas la dispense) | agent, CI |
 | Pas de copie | `docs.copie` | agent, git, CI |

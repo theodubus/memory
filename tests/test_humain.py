@@ -146,6 +146,11 @@ class TestDernierMessage(unittest.TestCase):
         manque = humain.recap_manquant(config.Projet(racine=Path(".")), "Fait. Rien à signaler pour toi.")
         self.assertEqual(manque, ["Pour toi :", "Ensuite :"])
 
+    def test_recap_en_gras(self):
+        # Relevé de la passe de recul, E : « **Pour toi** : » n'était pas reconnu.
+        message = "Fait.\n\n**Pour toi** : rien.\n__Ensuite__ : B-0001."
+        self.assertEqual(humain.recap_manquant(config.Projet(racine=Path(".")), message), [])
+
     def test_transcript_illisible(self):
         self.assertIsNone(humain.dernier_message(Path("/inexistant/t.jsonl")))
 

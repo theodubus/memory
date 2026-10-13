@@ -10,6 +10,7 @@ import re
 import subprocess
 import time
 from functools import lru_cache
+from urllib.parse import unquote
 
 from socle import config, demandes, langue, memoire, outils
 from socle.contexte import controle
@@ -287,7 +288,9 @@ def verifier_ref(ctx, type_: str, cible: str) -> str | None:
 def _verifier_lien(ctx, chemin_doc: str, dossier: str, cible: str) -> str | None:
     if re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", cible) or cible.startswith("//"):
         return None  # URL : jamais suivie, aucun service externe
-    chemin, _, ancre = cible.partition("#")
+    # Un lien s'écrit encodé (`%20` pour une espace, `%C3%A9` pour un « é ») :
+    # il désigne le chemin et l'ancre décodés (B-0020).
+    chemin, _, ancre = (unquote(x) for x in cible.partition("#"))
     if chemin:
         cible_n = _normaliser_chemin(dossier, chemin)
         if not _existe(ctx, cible_n) and not _ignore(ctx.racine, cible_n):

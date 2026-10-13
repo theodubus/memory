@@ -38,11 +38,17 @@ def outillage(ctx, r):
 
 
 def normaliser_valeur(v: str) -> str:
-    """`70 452`, `70 452`, `70,452` et `70452` se valent."""
+    """`70 452`, `70 452`, `70,452` et `70452` se valent : un séparateur de
+    milliers précède trois chiffres. `3,5` et `3.5` se valent aussi, et ne
+    valent pas `35` : une virgule ou un point devant un autre nombre de
+    chiffres est décimal."""
     v = re.sub(r"<[^>]+>|[`*_]", "", v)
     v = v.strip()
-    if re.fullmatch(r"[\d\s  .,]+", v):
-        return re.sub(r"[\s  ,]", "", v)
+    if re.fullmatch(r"\d{1,3}(?:[\s  .,]\d{3})+|\d+", v):
+        return re.sub(r"[\s  .,]", "", v)
+    m = re.fullmatch(r"(\d{1,3}(?:[\s  ]\d{3})*|\d+)[.,](\d+)", v)
+    if m:
+        return re.sub(r"[\s  ]", "", m.group(1)) + "." + m.group(2)
     return re.sub(r"\s+", " ", v)
 
 
@@ -124,9 +130,14 @@ def valeurs(ctx, r):
 def _motif_libre(v: str) -> re.Pattern:
     n = normaliser_valeur(v)
     if n.isdigit():
-        # Les chiffres, avec n'importe quels séparateurs de milliers.
-        corps = r"[\s  ,.]?".join(re.escape(c) for c in n)
-        return re.compile(rf"(?<![\d.,]){corps}(?![\d])")
+        # Les chiffres, un séparateur permis seulement devant un groupe de trois.
+        corps = "".join((r"[\s  ,.]?" if k and (len(n) - k) % 3 == 0 else "") + re.escape(c)
+                        for k, c in enumerate(n))
+        return re.compile(rf"(?<![\d.,]){corps}(?![\d]|[.,]\d)")
+    if re.fullmatch(r"\d+\.\d+", n):
+        # Un décimal, à la virgule ou au point.
+        entier, dec = n.split(".")
+        return re.compile(rf"(?<![\d.,]){re.escape(entier)}[.,]{re.escape(dec)}(?![\d])")
     return re.compile(re.escape(n))
 
 

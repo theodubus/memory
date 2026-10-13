@@ -42,8 +42,11 @@ SECTION_MIN = 15
 # raconte, il ne résume pas en une ligne (retour de Théo, J-2026-10-10-I).
 MOTS_CONTEXTE_MIN = 60
 LIEN = re.compile(r"\]\([^)\s]+\)|https?://\S+")
-# Un trou du gabarit : `<texte avec des espaces>`, hors commentaire HTML.
-TROU = re.compile(r"<(?!!--)[^<>\n]*\s[^<>\n]*>")
+# Un trou du gabarit : `<texte avec des espaces>`, hors commentaire HTML ;
+# collé à ses chevrons, pour qu'une comparaison (« < 5 », « a <= b ») n'en
+# soit pas un. Le code cité, entre accents graves, est un exemple.
+TROU = re.compile(r"<(?!!--)[^\s<>=][^<>\n]*\s[^<>\n]*[^\s<>=-]>")
+CODE_CITE = re.compile(r"```.*?```|`[^`\n]*`", re.S)
 
 
 @dataclass
@@ -172,10 +175,11 @@ def linter(d: Demande, projet: config.Projet) -> list[str]:
             fautes.append(f"section « {titre} » absente")
         elif len(re.sub(r"\s+", " ", contenu)) < SECTION_MIN:
             fautes.append(f"section « {titre} » vide ou trop courte")
-        elif TROU.search(contenu):
+        elif TROU.search(CODE_CITE.sub(" ", contenu)):
             # Le gabarit porte les mots que le lint cherche : un trou laissé
             # tel quel passerait pour une section remplie.
-            fautes.append(f"section « {titre} » : texte du gabarit laissé tel quel ({TROU.search(contenu).group(0)[:40]}…)")
+            trou = TROU.search(CODE_CITE.sub(" ", contenu)).group(0)
+            fautes.append(f"section « {titre} » : texte du gabarit laissé tel quel ({trou[:40]}…)")
 
     contexte = d.sections.get("contexte", "")
     if contexte and len(re.findall(r"[^\W\d_]{2,}", contexte)) < MOTS_CONTEXTE_MIN:

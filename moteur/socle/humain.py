@@ -24,15 +24,16 @@ from pathlib import Path
 from socle import config, demandes, langue, liens, memoire, outils
 
 # Les lignes qu'un récap de fin d'intervention doit contenir : ce qui revient
-# à l'humain, puis la suite (ADR-0007, complété par ADR-0009).
+# à l'humain, puis la suite (ADR-0007, complété par ADR-0009) ; en gras
+# (`**Pour toi** :`) aussi.
 MARQUEURS_RECAP = {
-    "Pour toi :": r"(?im)^[\W_]*pour toi\s*:",
-    "Ensuite :": r"(?im)^[\W_]*ensuite\s*:",
+    "Pour toi :": r"(?im)^[\W_]*pour toi[\s*_]*:",
+    "Ensuite :": r"(?im)^[\W_]*ensuite[\s*_]*:",
 }
 # Les mêmes, quand la mémoire du projet est en anglais (B-0031).
 MARQUEURS_RECAP_EN = {
-    "For you:": r"(?im)^[\W_]*for you\s*:",
-    "Next:": r"(?im)^[\W_]*next\s*:",
+    "For you:": r"(?im)^[\W_]*for you[\s*_]*:",
+    "Next:": r"(?im)^[\W_]*next[\s*_]*:",
 }
 
 
