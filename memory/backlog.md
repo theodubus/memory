@@ -61,7 +61,7 @@ coïncidence. Mesurer les faux positifs avant de durcir.
 
 ## B-0016 — La docstring de memoire.py renvoie à un document de format qui n'existe pas
 
-> statut : ouvert · origine : fichier:moteur/socle/memoire.py · lu : backlog@ad031cf1
+> statut : fait · origine : fichier:moteur/socle/memoire.py · lu : backlog@ad031cf1 · ref : J-2026-10-13-Q
 
 Vu en écrivant le module des liens : la docstring du lecteur de la mémoire
 dit que le format est décrit dans un document de `docs/` qui n'existe pas ;
@@ -70,7 +70,7 @@ chemins cités dans les docstrings du code.
 
 ## B-0017 — Deux fonctions calculent l'ancre GitHub d'un titre
 
-> statut : ouvert · origine : J-2026-10-10-V · lu : backlog@5630c7c0
+> statut : fait · origine : J-2026-10-10-V · lu : backlog@5630c7c0 · ref : J-2026-10-13-Q
 
 `liens.ancre`, écrite pour les permaliens, refait ce que fait déjà `slug`
 dans `controles_memoire.py`, qui vérifie les ancres des liens de la mémoire.

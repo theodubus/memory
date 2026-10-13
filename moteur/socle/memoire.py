@@ -1,6 +1,6 @@
-"""Lecture de la mémoire : cinq couches de markdown qu'un script sait lire.
+"""Lecture de la mémoire : six couches de markdown qu'un script sait lire.
 
-Le format est décrit dans `docs/format-memoire.md`. En bref :
+Le format est décrit dans `moteur/socle/FORMAT.md`. En bref :
 
 - chaque fichier de mémoire commence par `<!-- socle: couche=… zone=… -->` ;
 - une entrée est un titre `## <ID> — <titre>`, suivi d'une ligne de

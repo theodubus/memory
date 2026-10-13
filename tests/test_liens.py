@@ -35,6 +35,20 @@ class TestAdresses(unittest.TestCase):
                          "j-2026-10-10-p--backlog-clos--b-0007-b-0015")
         self.assertEqual(liens.ancre("`socle` « x » — a.b"), "socle--x---ab")
 
+    def test_une_seule_ancre_pour_les_liens_et_leur_controle(self):
+        # B-0017 : deux copies divergeaient. L'une gardait les soulignés du
+        # gras, que GitHub ne rend pas ; l'autre perdait l'accent décomposé.
+        from socle import controles_memoire
+
+        self.assertEqual(liens.ancre("B-0017 — __Deux__ **fonctions**"), "b-0017--deux-fonctions")
+        self.assertEqual(liens.ancre("Cafe\u0301 noir"), "cafe\u0301-noir")
+        self.assertFalse(hasattr(controles_memoire, "slug"), "la copie du contrôle est retirée")
+        # Les ancres d'un fichier, comme le contrôle des liens les voit : un
+        # titre répété prend le suffixe de GitHub, un titre en code n'en est pas un.
+        self.assertEqual(controles_memoire.ancres("## B-0017 — __Deux__\n\n## B-0017 — __Deux__\n"
+                                                  "```\n## pas un titre\n```\n"),
+                         {"b-0017--deux", "b-0017--deux-1"})
+
     def test_ce_qui_ressemble_a_un_chemin(self):
         self.assertEqual(liens.ressemble_a_un_chemin("moteur/socle/liens.py"), "moteur/socle/liens.py")
         self.assertEqual(liens.ressemble_a_un_chemin("tests/test_humain.py:65"), "tests/test_humain.py")

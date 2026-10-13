@@ -14,7 +14,7 @@ import unittest
 import unittest.mock
 from pathlib import Path
 
-from socle import cli, config, contexte, etat, hooks, liens, memoire, prive
+from socle import cli, config, contexte, etat, hooks, liens, memoire, prive, prive_installation
 from socle.demandes import ecrire_reponse
 from socle.demandes import toutes as demandes_toutes
 from socle.rapport import Rapport
@@ -603,7 +603,7 @@ class TestInstallerCompagnon(unittest.TestCase):
         from unittest import mock
 
         with mock.patch.dict(os.environ, self.env):
-            return prive.installer_compagnon(config.Projet.charger(self.racine), str(self.nu))
+            return prive_installation.installer_compagnon(config.Projet.charger(self.racine), str(self.nu))
 
     def test_un_geste_puis_les_deux_secrets(self):
         code, lignes = self.installer()
@@ -632,7 +632,7 @@ class TestInstallerCompagnon(unittest.TestCase):
         self.assertIn("ne choisit pas le mode compagnon", lignes[0])
 
     def test_gestes_github_avec_leurs_pages(self):
-        gestes = "\n".join(prive.gestes_github("https://github.com/o/prive", "https://github.com/o/public",
+        gestes = "\n".join(prive_installation.gestes_github("https://github.com/o/prive", "https://github.com/o/public",
                                                Path("/x/cle")))
         self.assertIn("https://github.com/o/prive/settings/keys/new", gestes)
         self.assertIn("https://github.com/o/public/settings/secrets/actions/new", gestes)

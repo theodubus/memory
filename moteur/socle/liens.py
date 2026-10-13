@@ -64,10 +64,11 @@ def depuis_distant(distant: str) -> str | None:
 
 
 def ancre(titre: str) -> str:
-    """L'ancre que GitHub donne à un titre : en minuscules, sans
-    ponctuation, les espaces changés en tirets (« B-0014 — Exiger » donne
-    `b-0014--exiger`)."""
-    t = titre.strip().lower()
+    """L'ancre que GitHub donne à un titre : son texte rendu (sans accents
+    graves ni marques de gras), en minuscules, sans ponctuation, les espaces
+    changés en tirets (« B-0014 — Exiger » donne `b-0014--exiger`). Seule
+    copie : les liens de la mémoire se vérifient avec elle (B-0017)."""
+    t = re.sub(r"`|\*\*|__", "", titre.strip().lower())
     t = "".join(c for c in t if c in " -_" or unicodedata.category(c)[0] in "LNM")
     return t.replace(" ", "-")
 

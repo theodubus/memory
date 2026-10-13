@@ -37,6 +37,19 @@ def erreurs_instructions(racine: Path) -> list[str]:
     return [c.message for c in r.erreurs("instructions.source-unique")]
 
 
+class TestAdaptateur(unittest.TestCase):
+    def test_un_adaptateur_maintenu_ou_un_fichier(self):
+        texte, nom = installeur.charger_adaptateur("rust")
+        self.assertEqual(nom, "rust")
+        self.assertIn("cargo-mutants", texte)
+        d = Path(tempfile.mkdtemp(prefix="socle-adaptateur-"))
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        (d / "maison.toml").write_text('name = "maison"\n', encoding="utf-8")
+        self.assertEqual(installeur.charger_adaptateur(str(d / "maison.toml")), ('name = "maison"\n', "maison"))
+        with self.assertRaises(SystemExit):
+            installeur.charger_adaptateur("cobol")
+
+
 class TestAdoption(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.racine, ignore_errors=True)

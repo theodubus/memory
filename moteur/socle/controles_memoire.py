@@ -12,7 +12,7 @@ import time
 from functools import lru_cache
 from urllib.parse import unquote
 
-from socle import config, demandes, langue, memoire, outils
+from socle import config, demandes, langue, liens, memoire, outils
 from socle.contexte import controle
 
 TYPE_DE_COUCHE = {v: k for k, v in memoire.TYPES.items()}
@@ -124,13 +124,6 @@ CODE_EN_LIGNE = re.compile(r"`([^`\n]+)`")
 INTERDITS_CHEMIN = set("*?[]{}<>$|~\"' =,;()")
 
 
-def slug(titre: str) -> str:
-    """L'ancre que GitHub donne à un titre."""
-    t = re.sub(r"`|\*\*|__", "", titre.strip().lower())
-    t = re.sub(r"[^\w\- ]", "", t)
-    return t.replace(" ", "-")
-
-
 def ancres(texte: str) -> set[str]:
     res, vus = set(), {}
     for _, ligne, code in memoire.lignes_hors_code(texte):
@@ -138,7 +131,7 @@ def ancres(texte: str) -> set[str]:
             continue
         m = memoire.TITRE_RE.match(ligne)
         if m:
-            s = slug(m["reste"])
+            s = liens.ancre(m["reste"])
             n = vus.get(s, 0)
             res.add(s if n == 0 else f"{s}-{n}")
             vus[s] = n + 1
@@ -318,15 +311,15 @@ def _ancre_deplacee(ctx, chemin: str, ancre: str) -> bool:
     basculée en privé, qui n'a plus son titre ; ou un sujet du backlog
     archivé au journal (B-0044, L1)."""
     f = ctx.memoire.fichiers.get(chemin)
-    if f is not None and any(e.basculee and ancre.startswith(slug(e.id) + "--") for e in f.entrees):
+    if f is not None and any(e.basculee and ancre.startswith(liens.ancre(e.id) + "--") for e in f.entrees):
         return True
     return chemin == ctx.projet.chemins.backlog and any(
-        e.archivee and ancre.startswith(slug(e.id) + "--") for e in ctx.memoire.entrees("B"))
+        e.archivee and ancre.startswith(liens.ancre(e.id) + "--") for e in ctx.memoire.entrees("B"))
 
 
 # Les titres qui citent un chemin renommé au format 2 changent d'ancre : une
 # ancre ancienne, dans une demande gelée ou le journal, reste valide.
-_ANCRES_RENOMMEES = [(slug(getattr(config.FORMAT_1, a)), slug(getattr(config.FORMAT_2, a)))
+_ANCRES_RENOMMEES = [(liens.ancre(getattr(config.FORMAT_1, a)), liens.ancre(getattr(config.FORMAT_2, a)))
                      for a in ("politique", "garde_fous", "adaptateur", "lock", "prive_lock")]
 
 
@@ -721,7 +714,7 @@ def _seulement_ajouts(avant: str, apres: str) -> bool:
 
 @controle("demandes.contrat")
 def contrat(ctx, r):
-    """Toute demande en attente est autonome : sept champs, aucun identifiant nu."""
+    """Toute demande en attente est autonome : huit champs, aucun identifiant nu."""
     for d in ctx.demandes:
         if d.reponse is not None:
             continue  # gelée : elle a été lintée quand elle a été écrite

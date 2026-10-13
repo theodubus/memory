@@ -20,7 +20,6 @@ import math
 import os
 import re
 import shutil
-import stat
 import subprocess
 import sys
 import tomllib
@@ -33,13 +32,6 @@ from socle.modeles import DOSSIER as MODELES, gabarit
 ADAPTATEURS = Path(__file__).resolve().parent / "adaptateurs"
 DEBUT_SOCLE = config.DEBUT_SOCLE
 FIN_SOCLE = "<!-- socle:fin -->"
-
-
-def _ecrire(chemin: Path, texte: str, executable: bool = False):
-    chemin.parent.mkdir(parents=True, exist_ok=True)
-    chemin.write_text(texte, encoding="utf-8")
-    if executable:
-        chemin.chmod(chemin.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
 
 def charger_adaptateur(nom: str) -> tuple[str, str]:
@@ -160,51 +152,24 @@ def diff_politique(cible: Path) -> list[str]:
     return list(difflib.unified_diff(projet, gab, "politique du projet", "gabarit de cette version", lineterm=""))
 
 
-def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bool = False,
-              mode: str = config.MODE_PROJET, source: Path | None = None, prive: str | None = None,
-              relecture: str | None = None, demandes_privees: bool = False, filtre: str = "git-crypt",
-              langue_memoire: str | None = None) -> int:
-    from socle import migrations
-
+def _refus_cible(cible: Path) -> str | None:
+    """Pourquoi le socle ne s'installe pas là, ou `None`."""
     if not outils.est_depot(cible):
-        print(f"refus : {cible} n'est pas un dépôt git", file=sys.stderr)
-        return 2
+        return f"{cible} n'est pas un dépôt git"
     haut = outils.git(cible, "rev-parse", "--show-toplevel", check=False).strip()
     if haut and Path(haut).resolve() != cible.resolve():
         # Les hooks git (core.hooksPath) et le workflow de CI ne se lisent
         # qu'à la racine du dépôt : posés plus bas, ils ne tireraient pas.
-        print(f"refus : {cible} n'est pas la racine du dépôt git ({haut}) ; le socle s'installe à la racine",
-              file=sys.stderr)
-        return 2
-    source = source or Path(__file__).resolve().parent.parent
-    if adaptateur == "auto":
-        detecte = detecter_adaptateur(cible)
-        if detecte is None:
-            connus = "|".join(sorted(x.stem for x in ADAPTATEURS.glob("*.toml")))
-            print("refus : langage non détecté (aucun de Cargo.toml, pyproject.toml, go.mod, pom.xml, Gemfile, "
-                  "composer.json, package.json, ni fichier Python) : le demander à l'humain, "
-                  f"puis `--adapter <{connus}>` ou le chemin d'un .toml", file=sys.stderr)
-            return 2
-        adaptateur = detecte
-    texte_adaptateur, nom_adaptateur = charger_adaptateur(adaptateur)
-    config.oublier_formats()
-    ancien = config.Projet.charger(cible).lock if (cible / config.chemins(cible).lock).is_file() else {}
-    try:
-        tomllib.loads(texte_adaptateur)
-    except tomllib.TOMLDecodeError as e:
-        print(f"refus : adaptateur « {nom_adaptateur} » illisible : {e}", file=sys.stderr)
-        return 2
-    journal = [f"adaptateur : {nom_adaptateur}" + (" (détecté)" if adaptateur != nom_adaptateur else "")]
-    if ancien:
-        journal.append(f"mise à jour : moteur {ancien.get('version', 'amont')} → {VERSION}")
-        try:
-            journal += migrations.migrer(cible, int(ancien.get("format", 1)))
-        except RuntimeError as e:
-            print(f"refus : {e}", file=sys.stderr)
-            return 2
-        config.oublier_formats()
-    ch = config.FORMAT_ACTUEL
+        return f"{cible} n'est pas la racine du dépôt git ({haut}) ; le socle s'installe à la racine"
+    return None
 
+
+def _poser_moteur(cible: Path, mode: str, source: Path) -> tuple[str, list[str]]:
+    """Le moteur, remplacé en bloc, et son verrou ; rend le dossier du moteur."""
+    from socle import migrations
+
+    ch = config.FORMAT_ACTUEL
+    journal = []
     # 1. Le moteur, remplacé en bloc.
     if mode == config.MODE_AMONT:
         dossier_moteur = str(source.relative_to(cible)) if source.is_relative_to(cible) else "moteur"
@@ -221,13 +186,13 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
                 shutil.rmtree(dest)
             shutil.copytree(source / "socle", dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc", ".*"))
             journal.append(f"moteur {VERSION} copié dans {dossier_moteur}/socle")
-    _ecrire(cible / config.LANCEUR, gabarit("lanceur.py"), executable=True)
+    outils.ecrire(cible / config.LANCEUR, gabarit("lanceur.py"), executable=True)
 
     # 2. Le verrou et son empreinte. En mode amont, le moteur est la source :
     # une empreinte figée y changerait à chaque modification du moteur, et
     # ferait de chacune un changement de fichier protégé.
     if mode == config.MODE_AMONT:
-        _ecrire(cible / ch.lock, (
+        outils.ecrire(cible / ch.lock, (
             "# Verrou du moteur — écrit par l'installeur, jamais à la main.\n"
             "# Mode amont : ce dépôt fabrique le moteur, dont l'empreinte n'est pas figée ici.\n"
             f'mode = "{mode}"\n'
@@ -237,7 +202,7 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
         journal.append(f"verrou en mode amont : le moteur est la source, sous {dossier_moteur}/socle")
     else:
         calculee, n = empreinte.calculer(cible, dossier_moteur)
-        _ecrire(cible / ch.lock, (
+        outils.ecrire(cible / ch.lock, (
             "# Verrou du moteur — écrit par l'installeur, jamais à la main.\n"
             "# La CI recalcule l'empreinte ; un moteur altéré dans le projet fait échouer `moteur.empreinte`.\n"
             f'version = "{VERSION}"\n'
@@ -249,7 +214,16 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
         ))
         journal.append(f"verrou : {empreinte.courte(calculee)} sur {n} fichiers")
 
-    # 3. Les fichiers du projet : posés s'ils manquent, jamais écrasés.
+    return dossier_moteur, journal
+
+
+def _poser_configuration(cible: Path, texte_adaptateur: str, ancien: dict, prive: str | None,
+                         relecture: str | None, demandes_privees: bool,
+                         langue_memoire: str | None) -> tuple[str, list[str]]:
+    """La politique, l'adaptateur et les garde-fous, posés s'ils manquent ;
+    rend la langue de la mémoire."""
+    ch = config.FORMAT_ACTUEL
+    journal = []
     politique = gabarit("politique.toml")
     if prive:
         politique = politique_privee(politique, prive, relecture, demandes_privees)
@@ -288,40 +262,50 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
         if p.is_file():
             journal.append(f"{nom} existe : conservé (comparer au gabarit à la main si besoin)")
         else:
-            _ecrire(p, contenu)
+            outils.ecrire(p, contenu)
             journal.append(f"{nom} posé")
 
-    # 4. La mémoire initiale.
+    return lg, journal
+
+
+def _poser_memoire(cible: Path, lg: str, nom_adaptateur: str, adoption: bool) -> list[str]:
+    """La mémoire initiale : chaque couche absente, et le journal ouvert."""
+    ch = config.FORMAT_ACTUEL
+    journal = []
     jour = date.today().isoformat()
     for nom, lieu in (("canonique.md", ch.canonique), ("actif.md", ch.actif), ("backlog.md", ch.backlog)):
         p = cible / lieu
         if not p.is_file():
-            _ecrire(p, gabarit(f"memoire/{nom}", lg))
+            outils.ecrire(p, gabarit(f"memoire/{nom}", lg))
     for lieu in (ch.decisions, ch.demandes):
         d = cible / lieu
         d.mkdir(parents=True, exist_ok=True)
         if not any(d.iterdir()):
-            _ecrire(d / ".gitkeep", "")
+            outils.ecrire(d / ".gitkeep", "")
     jdir = cible / ch.journal
     if not jdir.is_dir() or not any(jdir.glob("*.md")):
         from socle import memoire
 
         ident = memoire.Memoire.charger(cible).prochain_id("J", date=jour)
-        _ecrire(jdir / f"{jour[:7]}.md", gabarit("memoire/journal.md", lg)
+        outils.ecrire(jdir / f"{jour[:7]}.md", gabarit("memoire/journal.md", lg)
                 .replace("@@MOIS@@", jour[:7]).replace("@@ID@@", ident).replace("@@VERSION@@", VERSION)
                 .replace("@@ADAPTATEUR@@", nom_adaptateur)
                 .replace("@@ADOPTION@@", ("" if not adoption else ", in adoption mode" if lg == "en"
                                           else ", en mode adoption")))
         journal.append(f"mémoire initiale posée, journal ouvert par {ident}")
 
-    # 5. Les instructions : AGENTS.md fait foi, CLAUDE.md l'importe.
-    balayage, motif = _balayage_planifie(cible, texte_adaptateur)
-    journal += _instructions(cible, dossier_moteur, lg, balayage)
+    return journal
 
-    # 6. Hooks de l'agent, hooks git, CI, CODEOWNERS, .gitignore.
+
+def _poser_etages(cible: Path, texte_adaptateur: str, dossier_moteur: str, proprietaire: str,
+                  balayage: bool, motif: str) -> list[str]:
+    """Les étages d'application : hooks de l'agent, hooks git, CI, balayage
+    de mutation, CODEOWNERS, .gitignore."""
+    ch = config.FORMAT_ACTUEL
+    journal = []
     journal += _settings(cible)
     for h in (MODELES / "git-hooks").iterdir():
-        _ecrire(cible / config.GIT_HOOKS / h.name, h.read_text(encoding="utf-8"), executable=True)
+        outils.ecrire(cible / config.GIT_HOOKS / h.name, h.read_text(encoding="utf-8"), executable=True)
     if outils.git(cible, "config", "--get", "core.hooksPath", check=False).strip() in ("", config.GIT_HOOKS):
         outils.git(cible, "config", "core.hooksPath", config.GIT_HOOKS)
         journal.append("hooks git branchés (core.hooksPath)")
@@ -329,12 +313,12 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
         journal.append("!! core.hooksPath pointe ailleurs : hooks git NON branchés")
     setup = tomllib.loads(texte_adaptateur).get("ci_setup", "")
     etapes = setup.strip("\n") + "\n" if setup.strip() else ""
-    _ecrire(cible / ".github/workflows/socle.yml", gabarit("socle.yml").replace("@@ETAPES_ADAPTATEUR@@\n", etapes))
+    outils.ecrire(cible / ".github/workflows/socle.yml", gabarit("socle.yml").replace("@@ETAPES_ADAPTATEUR@@\n", etapes))
     if balayage:
         installation = tomllib.loads(texte_adaptateur).get("capabilities", {}).get("mutation", {}).get("install", "")
         # En bloc littéral : la commande peut porter ce que YAML lirait autrement.
         etape = (f"      - name: Outil de mutation\n        run: |\n          {installation}\n" if installation else "")
-        _ecrire(cible / mutation.WORKFLOW, gabarit("mutation.yml").replace("@@ETAPES_ADAPTATEUR@@\n", etapes)
+        outils.ecrire(cible / mutation.WORKFLOW, gabarit("mutation.yml").replace("@@ETAPES_ADAPTATEUR@@\n", etapes)
                 .replace("@@INSTALLATION@@\n", etape))
     if motif:
         journal.append(motif)
@@ -344,16 +328,75 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
                                     f"{config.GIT_HOOKS}/pre-commit", ".github/workflows/socle.yml", mutation.WORKFLOW,
                                     ".claude/settings.json", config.INSTRUCTIONS, "CLAUDE.md", ch.canonique,
                                     f"{dossier_moteur}/socle/cli.py"])
+    return journal
+
+
+def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bool = False,
+              mode: str = config.MODE_PROJET, source: Path | None = None, prive: str | None = None,
+              relecture: str | None = None, demandes_privees: bool = False, filtre: str = "git-crypt",
+              langue_memoire: str | None = None) -> int:
+    from socle import migrations
+
+    refus = _refus_cible(cible)
+    if refus:
+        print(f"refus : {refus}", file=sys.stderr)
+        return 2
+    source = source or Path(__file__).resolve().parent.parent
+    if adaptateur == "auto":
+        detecte = detecter_adaptateur(cible)
+        if detecte is None:
+            connus = "|".join(sorted(x.stem for x in ADAPTATEURS.glob("*.toml")))
+            print("refus : langage non détecté (aucun de Cargo.toml, pyproject.toml, go.mod, pom.xml, Gemfile, "
+                  "composer.json, package.json, ni fichier Python) : le demander à l'humain, "
+                  f"puis `--adapter <{connus}>` ou le chemin d'un .toml", file=sys.stderr)
+            return 2
+        adaptateur = detecte
+    texte_adaptateur, nom_adaptateur = charger_adaptateur(adaptateur)
+    config.oublier_formats()
+    ancien = config.Projet.charger(cible).lock if (cible / config.chemins(cible).lock).is_file() else {}
+    try:
+        tomllib.loads(texte_adaptateur)
+    except tomllib.TOMLDecodeError as e:
+        print(f"refus : adaptateur « {nom_adaptateur} » illisible : {e}", file=sys.stderr)
+        return 2
+    journal = [f"adaptateur : {nom_adaptateur}" + (" (détecté)" if adaptateur != nom_adaptateur else "")]
+    if ancien:
+        journal.append(f"mise à jour : moteur {ancien.get('version', 'amont')} → {VERSION}")
+        try:
+            journal += migrations.migrer(cible, int(ancien.get("format", 1)))
+        except RuntimeError as e:
+            print(f"refus : {e}", file=sys.stderr)
+            return 2
+        config.oublier_formats()
+
+    # 1. Le moteur, remplacé en bloc, et son verrou.
+    dossier_moteur, poses = _poser_moteur(cible, mode, source)
+    journal += poses
+
+    # 2. Les fichiers du projet : posés s'ils manquent, jamais écrasés.
+    lg, poses = _poser_configuration(cible, texte_adaptateur, ancien, prive, relecture, demandes_privees,
+                                     langue_memoire)
+    journal += poses
+
+    # 3. La mémoire initiale.
+    journal += _poser_memoire(cible, lg, nom_adaptateur, adoption)
+
+    # 4. Les instructions : AGENTS.md fait foi, CLAUDE.md l'importe.
+    balayage, motif = _balayage_planifie(cible, texte_adaptateur)
+    journal += _instructions(cible, dossier_moteur, lg, balayage)
+
+    # 5. Les étages d'application.
+    journal += _poser_etages(cible, texte_adaptateur, dossier_moteur, proprietaire, balayage, motif)
     if prive:
         journal += _prive(cible, prive, filtre)
 
-    # 7. La trace : l'installation se voit dans `Socle-Hooks` d'une session
+    # 6. La trace : l'installation se voit dans `Socle-Hooks` d'une session
     # en cours (SessionStart a tiré avant que le hook n'existe).
     from socle.hooks import tracer
 
     tracer(cible, "Install", "", VERSION)
 
-    # 8. Adoption : budgets au niveau actuel, contrôles en échec en avertissement.
+    # 7. Adoption : budgets au niveau actuel, contrôles en échec en avertissement.
     if adoption:
         journal += _adopter(cible)
 
@@ -468,7 +511,7 @@ def _settings(cible: Path) -> list[str]:
         existants[:] = [b for b in existants
                         if not any(".socle/socle hook" in h.get("command", "") for h in b.get("hooks", []))]
         existants.extend(blocs)
-    _ecrire(p, json.dumps(conf, ensure_ascii=False, indent=2) + "\n")
+    outils.ecrire(p, json.dumps(conf, ensure_ascii=False, indent=2) + "\n")
     return ["hooks de Claude Code déclarés dans .claude/settings.json"]
 
 
@@ -479,7 +522,7 @@ def _codeowners(cible: Path, proprietaire: str) -> list[str]:
     lignes = gabarit("CODEOWNERS").replace("@@OWNER@@", proprietaire).splitlines()
     existant = p.read_text(encoding="utf-8").splitlines() if p.is_file() else []
     ajout = [l for l in lignes if l not in existant]
-    _ecrire(p, "\n".join(existant + ajout).strip("\n") + "\n")
+    outils.ecrire(p, "\n".join(existant + ajout).strip("\n") + "\n")
     return [f"CODEOWNERS : {proprietaire} sur la politique, les hooks et la CI"]
 
 
@@ -490,14 +533,9 @@ def _gitignore(cible: Path) -> list[str]:
     # quand l'installeur l'a gardé (B-0049) ; celui d'une installation
     # antérieure compte, quel que soit le fichier qu'il nomme.
     source = config.INSTRUCTIONS if (cible / config.INSTRUCTIONS).is_file() else "CLAUDE.md"
-    lignes = existant.splitlines()
     commentaire = "# Trace locale des hooks du socle"
-    voulues = [f"{commentaire} (voir {source})", "/.socle/trace/", "__pycache__/"]
-    manquantes = [l for l in voulues if l not in lignes
-                  and not (l.startswith(commentaire) and any(e.startswith(commentaire) for e in lignes))]
-    if manquantes:
-        p.write_text(existant.rstrip("\n") + ("\n\n" if existant.strip() else "") + "\n".join(manquantes) + "\n",
-                     encoding="utf-8")
+    deja = any(l.startswith(commentaire) for l in existant.splitlines())
+    outils.ajouter_lignes(p, ["/.socle/trace/", "__pycache__/"], "" if deja else f"{commentaire} (voir {source})")
     return []
 
 
@@ -517,10 +555,7 @@ def _non_ignores(cible: Path, chemins: list[str]) -> list[str]:
     pris = ignores()
     if not pris:
         return []
-    p = cible / ".gitignore"
-    texte = p.read_text(encoding="utf-8") if p.is_file() else ""
-    p.write_text(texte.rstrip("\n") + "\n\n# Le socle : ses fichiers se commitent\n"
-                 + "\n".join(f"!/{c}" for c in pris) + "\n", encoding="utf-8")
+    outils.ajouter_lignes(cible / ".gitignore", [f"!/{c}" for c in pris], "# Le socle : ses fichiers se commitent")
     restes = ignores()
     res = [f".gitignore : {len(pris) - len(restes)} fichier(s) du socle n'y sont plus ignorés"]
     if restes:
@@ -537,11 +572,7 @@ def _prive(cible: Path, mode: str, filtre: str) -> list[str]:
     res = []
     zone = prive.dossier(cible)
     if mode == "compagnon":
-        p = cible / ".gitignore"
-        texte = p.read_text(encoding="utf-8") if p.is_file() else ""
-        if f"{zone}/" not in texte.splitlines():
-            p.write_text(texte.rstrip("\n") + f"\n# Le clone du dépôt privé (mémoire privée)\n{zone}/\n",
-                         encoding="utf-8")
+        outils.ajouter_lignes(cible / ".gitignore", [f"{zone}/"], "# Le clone du dépôt privé (mémoire privée)")
         sha = prive.commit_compagnon(cible)
         if sha:
             prive.ecrire_verrou(cible, sha)

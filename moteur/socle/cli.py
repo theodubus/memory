@@ -278,7 +278,9 @@ def cmd_prive(args) -> int:
         if not args.depot:
             print("`socle prive installer --depot <adresse du dépôt privé>`", file=sys.stderr)
             return 1
-        code, lignes = prive.installer_compagnon(projet, args.depot)
+        from socle import prive_installation
+
+        code, lignes = prive_installation.installer_compagnon(projet, args.depot)
         print("\n".join(lignes), file=sys.stderr if code else sys.stdout)
         return code
     if args.action == "basculer":
@@ -286,7 +288,9 @@ def cmd_prive(args) -> int:
             print("`socle prive basculer <ID>` : l'identifiant d'une entrée publique", file=sys.stderr)
             return 1
         try:
-            lignes = prive.basculer(projet, args.terme[0], date.today().isoformat())
+            from socle import bascule
+
+            lignes = bascule.basculer(projet, args.terme[0], date.today().isoformat())
         except ValueError as e:
             print(f"refus : {e}", file=sys.stderr)
             return 1

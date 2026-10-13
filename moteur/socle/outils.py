@@ -11,6 +11,7 @@ import codecs
 import hashlib
 import os
 import re
+import stat
 import subprocess
 import unicodedata
 from functools import lru_cache
@@ -315,6 +316,29 @@ def sha256(donnees: bytes | str) -> str:
     if isinstance(donnees, str):
         donnees = donnees.encode("utf-8")
     return hashlib.sha256(donnees).hexdigest()
+
+
+def ecrire(chemin: Path, texte: str, executable: bool = False):
+    """Écrit un fichier en UTF-8, ses dossiers créés au besoin."""
+    chemin.parent.mkdir(parents=True, exist_ok=True)
+    chemin.write_text(texte, encoding="utf-8")
+    if executable:
+        chemin.chmod(chemin.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+
+def ajouter_lignes(chemin: Path, lignes: list[str], commentaire: str = "") -> list[str]:
+    """Ajoute à la fin d'un fichier de configuration (`.gitignore`…) les
+    lignes qui n'y sont pas encore, sous un commentaire qui dit pourquoi,
+    séparées de ce qui précède par une ligne vide ; rend celles qu'il a
+    ajoutées. Rien ne change si toutes y sont."""
+    texte = chemin.read_text(encoding="utf-8") if chemin.is_file() else ""
+    presentes = set(texte.splitlines())
+    manquantes = [l for l in lignes if l not in presentes]
+    if manquantes:
+        bloc = ([commentaire] if commentaire else []) + manquantes
+        chemin.write_text(texte.rstrip("\n") + ("\n\n" if texte.strip() else "") + "\n".join(bloc) + "\n",
+                          encoding="utf-8")
+    return manquantes
 
 
 def empreinte_fichier(chemin: Path) -> str:

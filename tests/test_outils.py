@@ -68,6 +68,34 @@ class TestRenommages(unittest.TestCase):
         self.assertEqual(outils.fichiers_changes(racine, base, "HEAD"), ["ancienne.toml", "politique.toml"])
 
 
+class TestEcrire(unittest.TestCase):
+    """Les écritures de fichiers, en une copie (L7) : l'installeur et la
+    mémoire privée avaient chacun la leur, et quatre ajouts au `.gitignore`
+    se faisaient à la main."""
+
+    def setUp(self):
+        self.d = Path(tempfile.mkdtemp(prefix="socle-ecrire-"))
+        self.addCleanup(shutil.rmtree, self.d, ignore_errors=True)
+
+    def test_ecrire_cree_les_dossiers_et_rend_executable(self):
+        p = self.d / "a/b/hook"
+        outils.ecrire(p, "#!/bin/sh\n", executable=True)
+        self.assertEqual(p.read_text(), "#!/bin/sh\n")
+        self.assertTrue(os.access(p, os.X_OK))
+        outils.ecrire(self.d / "simple.txt", "x")
+        self.assertFalse(os.access(self.d / "simple.txt", os.X_OK))
+
+    def test_ajouter_lignes_seulement_les_manquantes(self):
+        p = self.d / ".gitignore"
+        self.assertEqual(outils.ajouter_lignes(p, ["a/", "b/"], "# pourquoi"), ["a/", "b/"])
+        self.assertEqual(p.read_text(), "# pourquoi\na/\nb/\n")
+        p.write_text(p.read_text() + "c/\n")
+        self.assertEqual(outils.ajouter_lignes(p, ["b/", "d/"], "# encore"), ["d/"])
+        self.assertEqual(p.read_text(), "# pourquoi\na/\nb/\nc/\n\n# encore\nd/\n")
+        self.assertEqual(outils.ajouter_lignes(p, ["a/", "d/"], "# rien"), [])
+        self.assertNotIn("# rien", p.read_text())
+
+
 class TestLirePlusieurs(unittest.TestCase):
     def test_le_meme_contenu_que_fichier_par_fichier(self):
         racine = Path(tempfile.mkdtemp(prefix="socle-lire-"))
