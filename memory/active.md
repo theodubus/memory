@@ -5,13 +5,13 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-Les noms anglais (B-0045), au périmètre que Théo a choisi (D-0021,
-`fichiers`) : commandes, options, dossiers, gabarits et modules passent en
-anglais, les anciens noms de commandes et d'options gardés une version ;
-les fonctions gardent leurs noms français, et ADR-0002 est corrigée en ce
-sens. Les assertions qui nomment un module changent : une demande les
-nommera avant de les committer. Le dossier du moteur de ce dépôt est
-écrit dans son verrou, protégé : à Théo.
+Les noms anglais (B-0045, ADR-0027) : faits dans l'arbre de travail —
+commandes et options (anciens noms acceptés une version), dossiers
+`engine/`, `bench/`, modules et gabarits, les fonctions gardant leurs noms
+français. Le cliquet, le code testé et les références suivent un
+renommage. Quatre tests dont une assertion nomme un ancien nom attendent
+D-0022 ; le travail se commite avec eux, après la réponse. Le verrou et la
+CI de ce dépôt seront à Théo.
 
 ## Consignes en cours
 
@@ -20,8 +20,13 @@ nommera avant de les committer. Le dossier du moteur de ce dépôt est
 
 ## Prochaines étapes
 
-1. B-0045 : la liste des renommages, puis la demande qui nomme les tests
-   dont les assertions changent.
-2. Plus tard : B-0046 (la documentation à refaire, que Théo reprendra plus
+1. À la réponse à D-0022 : la consigner, commiter le renommage et les
+   tests, pousser, clore B-0045.
+2. Juste après, le tri des vieux sujets du backlog, à la demande de Théo :
+   « y'a pas mal de vieux éléments qu'on traine dans la backlog depuis
+   longtemps, est ce qu'il y en a des périmés ou des qui se traitent
+   n'importe quand et sont rapides ? Si oui tu peux t'en occuper juste
+   apres ».
+3. Plus tard : B-0046 (la documentation à refaire, que Théo reprendra plus
    tard, J-2026-10-13-U), B-0038, B-0039, B-0040 ; B-0042 attend sa
    propre demande. La pull request, quand Théo la demandera.
