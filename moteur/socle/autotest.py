@@ -1155,6 +1155,13 @@ def _temoins() -> list[tuple[str, Callable]]:
         maj_memoire(c)
         return etage_ci(a, c, MESSAGE_AGENT)
 
+    @temoin("une assertion reformatée à valeur égale passe la CI (relevé de recul, E)")
+    def _(a, c):
+        remplacer(c, "tests/test_calc.py", "self.assertEqual(double(2), 4)",
+                  "self.assertEqual(\n            double(2),\n            4,\n        )")
+        maj_memoire(c, "Test reformaté.")
+        return etage_ci(a, c, MESSAGE_AGENT)
+
     @temoin("durcir un garde-fou est libre")
     def _(a, c):
         remplacer(c, ".socle/guardrails.toml", '"memory/active.md" = { max_bytes = 6000 }', '"memory/active.md" = { max_bytes = 5000 }')

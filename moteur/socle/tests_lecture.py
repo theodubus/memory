@@ -159,6 +159,33 @@ def extraire(texte: str, fichier: str, cfg: dict) -> list[Fonction]:
 
 
 
+
+def enonces(lignes: list[str], debut: re.Pattern, cfg: dict) -> dict[str, list[str]]:
+    """Les énoncés qui commencent sur une ligne de `debut` (une assertion), en
+    entier : prolongés tant qu'une parenthèse ou un crochet reste ouvert, et
+    normalisés hors des littéraux (blancs retirés, virgule finale ôtée) ;
+    pour chacun, sa première ligne, autant de fois qu'il vient. Une assertion
+    reformatée garde son énoncé ; une valeur écrite sur une ligne de
+    continuation en fait partie."""
+    # Les commentaires restent : le commentaire par défaut, `//`, est une
+    # division en Python, et l'ôter cacherait une valeur.
+    litteraux = cfg.get("strings", LITTERAUX)
+    blancs = re.compile(f"({litteraux})|\\s+")
+    res: dict[str, list[str]] = {}
+    for i, ligne in enumerate(lignes):
+        if not debut.search(ligne):
+            continue
+        morceaux, profondeur = [], 0
+        for suite in lignes[i : i + 50]:
+            nu = re.sub(litteraux, '""', suite)
+            morceaux.append(suite)
+            profondeur += nu.count("(") + nu.count("[") - nu.count(")") - nu.count("]")
+            if profondeur <= 0:
+                break
+        texte = blancs.sub(lambda m: m.group(1) or "", " ".join(morceaux))
+        res.setdefault(re.sub(r",(?=[)\]])", "", texte), []).append(ligne.strip())
+    return res
+
 def zones_de_test(texte: str, fichier: str, cfg: dict) -> list[tuple[int, int]]:
     """Les lignes de test d'un fichier, comptées depuis zéro, fin exclue :
     chaque fonction de test, attributs et commentaires au-dessus compris, et

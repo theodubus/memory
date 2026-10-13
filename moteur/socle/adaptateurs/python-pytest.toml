@@ -76,6 +76,8 @@ attribute = '^\s*@'
 comment = '^\s*#'
 marker_name = '^test'
 block = "indent"
+# Les littéraux, où un blanc compte dans une assertion (`tests.attendus`).
+strings = '''"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*\''''
 assertion = '\bassert\b|\bself\.assert\w+\(|\bself\.fail\(|\bpytest\.raises\b|\bwith\s+self\.assertRaises'
 ignore = '@(?:unittest\.)?skip\b|@(?:unittest\.)?skipIf\b|@(?:unittest\.)?skipUnless\b|@pytest\.mark\.(?:skip(?:if)?|xfail)\b|@unittest\.expectedFailure'
 ignore_reason = '''@\S*skip\w*\(\s*(?:[^,)]+,\s*)?(?:reason\s*=\s*)?["'][^"']{3,}'''

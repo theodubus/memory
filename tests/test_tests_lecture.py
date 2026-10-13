@@ -84,6 +84,12 @@ class TestPython(unittest.TestCase):
         self.assertTrue(tests_lecture.affirme(self.par_nom["test_via_aide"], self.assertion, self.aides))
         self.assertFalse(tests_lecture.affirme(self.par_nom["test_vide"], self.assertion, self.aides))
 
+    def test_enonces_entiers_et_normalises(self):
+        lignes = ["x = 1", "self.assertEqual(", "    double(2),", "    4,", ")", "assert y // 2 == 'a b'"]
+        enonces = tests_lecture.enonces(lignes, self.assertion, self.c)
+        self.assertEqual(enonces, {"self.assertEqual(double(2),4)": ["self.assertEqual("],
+                                   "asserty//2=='a b'": ["assert y // 2 == 'a b'"]})
+
     def test_skip(self):
         ignore, raison = re.compile(self.c["ignore"]), re.compile(self.c["ignore_reason"])
         nu, motive = self.par_nom["test_saute"], self.par_nom["test_saute_motive"]

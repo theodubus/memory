@@ -22,7 +22,7 @@ import shutil
 import subprocess
 import tempfile
 import tomllib
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 
 from socle import config, langue, outils, tests_lecture
@@ -184,10 +184,28 @@ def attendus(ctx, r):
         return
     avant = [f for f in fonctions(ctx, avant_fichiers, rev_tete=False) if f.est_test]
     apres_tous = [f for f in fonctions(ctx, fichiers_tests(ctx, ctx.fichiers)) if f.est_test]
-    par_cle = {(f.fichier, f.nom): f for f in apres_tous}
     par_corps = {re.sub(r"\s+", " ", f.corps) for f in apres_tous}
-    for a in avant:
-        b = par_cle.get((a.fichier, a.nom))
+
+    def valeurs(f) -> Counter:
+        return Counter({k: len(v) for k, v in tests_lecture.enonces(f.lignes_corps, assertion, cfg).items()})
+
+    # Des tests homonymes dans un fichier (deux classes) s'apparient dans
+    # l'ordre où ils viennent, à nombre égal ; sinon chacun avec celui qui
+    # lui retire le moins d'assertions.
+    groupes_avant, groupes_apres = defaultdict(list), defaultdict(list)
+    for f in avant:
+        groupes_avant[(f.fichier, f.nom)].append(f)
+    for f in apres_tous:
+        groupes_apres[(f.fichier, f.nom)].append(f)
+    paires = []
+    for cle, anciens in groupes_avant.items():
+        nouveaux = groupes_apres.get(cle, [])
+        if len(nouveaux) == len(anciens):
+            paires += zip(anciens, nouveaux)
+        else:
+            paires += [(a, min(nouveaux, key=lambda b: sum((valeurs(a) - valeurs(b)).values()), default=None))
+                       for a in anciens]
+    for a, b in paires:
         if b is None:
             if re.sub(r"\s+", " ", a.corps) in par_corps:
                 continue  # déplacé tel quel
@@ -202,13 +220,11 @@ def attendus(ctx, r):
                 r.erreur("tests.attendus", f"test `{a.nom}` supprimé sans validation humaine ni changement de "
                          "spécification qui le nomme" + _note_agent(ctx, a.nom), a.fichier, a.ligne)
             continue
-        av = Counter(l.strip() for l in a.lignes_corps if assertion.search(l))
-        ap = Counter(l.strip() for l in b.lignes_corps if assertion.search(l))
-        disparues = av - ap
+        disparues = valeurs(a) - valeurs(b)
         if disparues:
             pourquoi = _justifie(ctx, a.nom)
             attente = None if pourquoi else _en_attente(ctx, a.nom)
-            exemple = next(iter(disparues))
+            exemple = tests_lecture.enonces(a.lignes_corps, assertion, cfg)[next(iter(disparues))][0]
             if pourquoi:
                 r.avertir("tests.attendus", f"assertion changée dans `{a.nom}` ({pourquoi})", b.fichier, b.ligne)
             elif attente:

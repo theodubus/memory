@@ -83,6 +83,44 @@ class TestValeurAttendue(unittest.TestCase):
         self.assertEqual(erreurs, [])
         self.assertTrue(any("spécification changée par l'humain" in a for a in avertissements), avertissements)
 
+    # Le relevé de la passe de recul, section E (vécu en CI le 2026-10-12) :
+    # deux tests homonymes dans deux classes, ou une assertion reformatée à
+    # valeur égale, se lisaient comme une valeur attendue changée.
+    HOMONYMES = ("import unittest\n\nfrom calc import double\n\n\nclass A(unittest.TestCase):\n"
+                 "    def test_double(self):\n        self.assertEqual(double(2), 4)\n\n\n"
+                 "class B(unittest.TestCase):\n    def test_double(self):\n        self.assertEqual(double(3), 6)\n")
+
+    def test_deux_homonymes_s_apparient_dans_l_ordre(self):
+        self.ecrire("tests/test_calc.py", self.HOMONYMES)
+        self.commit("Deux classes")
+        base, self.base = self.base, git(self.racine, "rev-parse", "HEAD").strip()
+        self.ecrire("tests/test_calc.py", self.HOMONYMES + "\n    def test_zero(self):\n"
+                    "        self.assertEqual(double(0), 0)\n")
+        self.commit("Un test de plus" + AGENT)
+        self.assertEqual(self.erreurs()[0], [])
+        self.ecrire("tests/test_calc.py", self.HOMONYMES.replace("double(3), 6", "double(3), 7"))
+        self.commit("Une valeur changée" + AGENT)
+        erreurs, _ = self.erreurs()
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertIn("self.assertEqual(double(3), 6)", erreurs[0])
+        self.base = base
+
+    def test_une_assertion_reformatee_garde_sa_valeur(self):
+        self.ecrire("tests/test_calc.py", TEST.format(attendu=4).replace(
+            "self.assertEqual(double(2), 4)", "self.assertEqual(\n            double(2),\n            4,\n        )"))
+        self.commit("Reformaté" + AGENT)
+        self.assertEqual(self.erreurs()[0], [])
+
+    def test_une_valeur_sur_une_ligne_de_continuation_compte(self):
+        multi = TEST.format(attendu=4).replace("self.assertEqual(double(2), 4)",
+                                               "self.assertEqual(\n            double(2),\n            {v},\n        )")
+        self.ecrire("tests/test_calc.py", multi.format(v=4))
+        self.commit("Sur trois lignes")
+        self.base = git(self.racine, "rev-parse", "HEAD").strip()
+        self.ecrire("tests/test_calc.py", multi.format(v=5))
+        self.commit("La valeur change" + AGENT)
+        erreurs, _ = self.erreurs()
+        self.assertEqual(len(erreurs), 1, erreurs)
 
 
 class TestEnAttenteDeLHumain(TestValeurAttendue):
