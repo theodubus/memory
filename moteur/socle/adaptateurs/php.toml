@@ -55,6 +55,10 @@ copied = ["vendor"]
 command = "vendor/bin/phpunit {test_args}"
 test_arg = "{file}"
 test_paths = ["tests/**/*Test.php"]
+# Ce qui, dans la sortie, dit que le test ne s'est pas chargé sur le parent (une
+# compilation cassée, un import manquant) : il y échoue pour une autre raison
+# que le défaut corrigé.
+load_error = 'PHP Parse error|Parse error:|PHP Fatal error'
 
 [code]
 paths = ["src/**/*.php", "app/**/*.php", "lib/**/*.php"]

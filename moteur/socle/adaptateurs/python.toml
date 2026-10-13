@@ -40,6 +40,10 @@ replacement = "capacité `mutation`, ou son remplacement"
 command = "python3 -m unittest {test_args}"
 test_arg = "{module}"
 test_paths = ["tests/test_*.py", "tests/**/test_*.py"]
+# Ce qui, dans la sortie, dit que le test ne s'est pas chargé sur le parent (une
+# compilation cassée, un import manquant) : il y échoue pour une autre raison
+# que le défaut corrigé.
+load_error = '(?m)^(?:ImportError|ModuleNotFoundError|SyntaxError|IndentationError)\b'
 
 [code]
 # Le code dont une fonction publique, ajoutée ou modifiée, doit être nommée

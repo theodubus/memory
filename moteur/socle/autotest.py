@@ -592,6 +592,26 @@ def _cas() -> list[Cas]:
         maj_memoire(c, "Correctif de `double` sur les chaînes.")
         return etage_ci(a, c, "fix: double accepte une chaîne")
 
+    @defaut("regression-qui-ne-se-charge-pas", "test de régression qui échoue sur le parent faute de s'y charger",
+            "ci", "tests.regression")
+    def _(a, c):
+        remplacer(c, "calc.py", "return FACTEUR * x", "return FACTEUR * int(x)")
+        ajouter(c, "calc.py", "\n\ndef triple(x):\n    return 3 * x\n")
+        remplacer(c, "docs/calc.md", "la\nconstante", "la constante\nentière")
+        (c / "tests/test_regression.py").write_text(TEST_REGRESSION.replace("from calc import double",
+                                                                             "from calc import double, triple"))
+        maj_memoire(c, "Correctif de `double` sur les chaînes.")
+        return etage_ci(a, c, "fix: double accepte une chaîne")
+
+    @defaut("dispense-d-un-autre-commit", "code sans sa doc, couvert par la dispense d'un autre commit", "ci",
+            "docs.correspondance")
+    def _(a, c):
+        maj_memoire(c, "Un renommage interne.")
+        a.commit(c, "Renommage\n\nDispense-doc: un renommage interne, rien de visible à documenter")
+        remplacer(c, "calc.py", "return FACTEUR * x", "return x * FACTEUR")
+        remplacer(c, "memory/active.md", "Un renommage interne.", "Un renommage, puis le calcul retouché.")
+        return etage_ci(a, c, "Le calcul retouché")
+
     @defaut("hook-jamais-tire", "hook de l'agent absent ou jamais tiré", "ci", "hooks.trace")
     def _(a, c):
         maj_memoire(c, "Commit d'agent sans hooks.")

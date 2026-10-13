@@ -114,6 +114,7 @@ Les clés qui décrivent un langage, toutes facultatives sauf `function` :
 | `shared`, `copied` (régression) | les dépendances installées que le worktree de la régression lie ou copie | `node_modules`, `vendor` |
 | `modules_exclude` (mutation) | ce que l'outil ne mute pas | `**/*_test.go` |
 | `test_arg` (régression) | un argument par test rejoué ; `{file}`, `{stem}`, `{module}` ou `{dir}` | `./{dir}` en Go |
+| `load_error` (régression) | ce qui, dans la sortie, dit que le test ne s'est pas chargé sur le parent : il y échoue pour une autre raison que le défaut | `\[build failed\]` en Go |
 | `module_command` (régression) | la commande qui lance, par leurs noms (`{names}`), des tests écrits dans le module qu'ils testent ; sur le parent, seules leurs lignes de test s'appliquent | `cargo test --workspace -- {names}` |
 | `test_module` | ce qui ouvre un module de tests dans un fichier de code : ses aides suivent le test sur le parent | `#[cfg(test)]` |
 

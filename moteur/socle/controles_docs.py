@@ -150,10 +150,23 @@ def dispenses(ctx) -> list[str]:
     return res
 
 
+def fichiers_dispenses(ctx) -> dict[str, str]:
+    """{fichier : raison} : les fichiers que change un commit qui porte une
+    dispense de doc motivée."""
+    res = {}
+    for c in ctx.commits:
+        raisons = [v.strip() for v in langue.trailers(c["message"]).get("dispense-doc", []) if len(v.strip()) >= 15]
+        if raisons and c["parents"]:
+            for f in outils.fichiers_changes(ctx.racine, c["parents"][0], c["sha"]):
+                res.setdefault(f, raisons[0])
+    return res
+
+
 @controle("docs.correspondance", etages=("agent", "ci"), base=True)
 def correspondance(ctx, r):
     """Si du code change, la doc qui lui est associée change aussi — ou une
-    dispense écrite et motivée l'accompagne (`Dispense-doc: <raison>`).
+    dispense écrite et motivée l'accompagne (`Dispense-doc: <raison>`), qui
+    ne vaut que pour le code de son propre commit.
 
     Pas à l'étage git : le hook pre-commit ne voit pas le message du commit,
     donc pas la dispense qu'il porte."""
@@ -161,7 +174,7 @@ def correspondance(ctx, r):
     if not table:
         return
     changes = ctx.changes
-    motifs_dispense = dispenses(ctx)
+    dispenses = fichiers_dispenses(ctx)
     for ligne in table:
         code = outils.filtrer(changes, ligne.get("code", []))
         if not code:
@@ -169,14 +182,18 @@ def correspondance(ctx, r):
         docs = outils.filtrer(changes, ligne.get("docs", []))
         if docs:
             continue
-        if motifs_dispense:
-            r.avertir("docs.correspondance", f"{len(code)} fichier(s) de code sans doc associée, dispensé : « {motifs_dispense[0]} »")
+        # Une dispense couvre le code du commit qui la porte, pas toute la
+        # plage ni toute la table (relevé de la passe de recul, D).
+        restants = [c for c in code if c not in dispenses]
+        if not restants:
+            r.avertir("docs.correspondance", f"{len(code)} fichier(s) de code sans doc associée, dispensé : "
+                      f"« {dispenses[code[0]]} »")
             continue
         r.erreur(
             "docs.correspondance",
-            f"code changé sans sa doc associée : {', '.join(code[:5])}{' …' if len(code) > 5 else ''} → "
+            f"code changé sans sa doc associée : {', '.join(restants[:5])}{' …' if len(restants) > 5 else ''} → "
             f"mettre à jour {' ou '.join(ligne.get('docs', []))}, ou motiver une dispense "
-            "par un trailer de commit `Dispense-doc: <raison>`",
+            "par un trailer de commit `Dispense-doc: <raison>`, dans le commit qui change ce code",
         )
 
 

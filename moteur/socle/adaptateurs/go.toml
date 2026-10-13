@@ -51,6 +51,10 @@ replacement = "capacité `mutation`"
 command = "go test {test_args}"
 test_arg = "./{dir}"
 test_paths = ["**/*_test.go"]
+# Ce qui, dans la sortie, dit que le test ne s'est pas chargé sur le parent (une
+# compilation cassée, un import manquant) : il y échoue pour une autre raison
+# que le défaut corrigé.
+load_error = '\[(?:build|setup) failed\]'
 
 [code]
 paths = ["**/*.go"]

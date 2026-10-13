@@ -99,7 +99,7 @@ must be read again. `socle new` puts in the index fingerprint.
 
 - `python3 .socle/socle verify --rapide` passes (the `Stop` hook checks it); `verify` runs everything.
 - If code changed, the memory did too: active work, journal, backlog.
-- If code tied to a doc changed (`[[docmap]]` in the guardrails), the doc changes in the same work, or a commit carries the trailer `Waive-doc: <reason>`.
+- If code tied to a doc changed (`[[docmap]]` in the guardrails), the doc changes in the same work, or the commit that changes this code carries the trailer `Waive-doc: <reason>`, which covers that commit only.
 - A fix (subject `fix:` or trailer `Fixes: B-NNNN`) delivers a test that fails on the parent commit.
 - A public function added or changed is named by at least one test, or a commit waives it by name with its reason (`Waive-test: f, g — <reason>`). Existing code found without tests: the test is written right away if it is within the scope of the work, otherwise a topic goes to the backlog.
 - An action only the human can take (refused by the hook, a service setting, a file they hold) goes to the backlog with `for : human`.

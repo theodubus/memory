@@ -112,5 +112,43 @@ class TestTestDuModule(unittest.TestCase):
         self.assertIn("ni test changé dans un module de code", erreurs[0])
 
 
+class TestChargement(unittest.TestCase):
+    """Relevé de la passe de recul, D : un test de régression qui échoue sur
+    le parent parce qu'il ne s'y charge pas (un import manquant) ne prouve
+    rien du défaut ; il faisait foi."""
+
+    def setUp(self):
+        TestTestDuModule.setUp(self)
+        (self.racine / "tests").mkdir()
+
+    def erreurs(self) -> list[str]:
+        import tomllib
+
+        projet = config.Projet.charger(self.racine)
+        maintenu = tomllib.loads((installeur.ADAPTATEURS / "python.toml").read_text(encoding="utf-8"))
+        projet.adaptateur["capabilities"]["regression"] = maintenu["capabilities"]["regression"]
+        r = Rapport()
+        controles_tests.regression(contexte.Contexte(projet, etage="ci", base=self.base, tete="HEAD"), r)
+        return [c.message for c in r.erreurs("tests.regression")]
+
+    def corriger(self, test):
+        (self.racine / "calc.py").write_text(CALC.replace("2 * x", "2 * int(x)") + "\n\ndef triple(x):\n    return 3 * x\n")
+        (self.racine / "tests/test_calc.py").write_text(test)
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "fix: double accepte une chaîne", "--no-verify")
+
+    def test_un_test_qui_ne_se_charge_pas_sur_le_parent_ne_prouve_rien(self):
+        self.corriger("import unittest\n\nfrom calc import double, triple\n\n\nclass T(unittest.TestCase):\n"
+                      "    def test_chaine(self):\n        self.assertEqual(double(\"3\"), 6)\n")
+        erreurs = self.erreurs()
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertIn("ne se charge pas sur le parent", erreurs[0])
+
+    def test_un_test_qui_echoue_sur_le_defaut_fait_foi(self):
+        self.corriger("import unittest\n\nfrom calc import double\n\n\nclass T(unittest.TestCase):\n"
+                      "    def test_chaine(self):\n        self.assertEqual(double(\"3\"), 6)\n")
+        self.assertEqual(self.erreurs(), [])
+
+
 if __name__ == "__main__":
     unittest.main()

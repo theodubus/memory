@@ -416,14 +416,24 @@ def regression(ctx, r):
             r.erreur("tests.regression", f"correctif sans test de régression : {sha[:10]} « {sujet} » "
                      f"(aucun fichier de {', '.join(motifs)} ajouté ou modifié{ailleurs})")
             continue
-        code_parent = _executer_superpose(ctx, parent, fichiers, commande, cap)
-        if code_parent is None:
+        sur_parent = _executer_superpose(ctx, parent, fichiers, commande, cap)
+        if sur_parent is None:
             r.erreur("tests.regression", f"{sha[:10]} : impossible de préparer le commit parent")
             continue
+        code_parent, sortie = sur_parent
         if code_parent == 0:
             r.erreur("tests.regression", f"{sha[:10]} « {sujet} » : son test passe déjà sur le parent — il ne prouve pas le correctif")
             continue
-        code = _executer_superpose(ctx, sha, {}, commande, cap)
+        # Un test qui ne se charge pas sur le parent (une compilation cassée,
+        # un import manquant) y échoue pour une autre raison que le défaut
+        # (relevé de la passe de recul, D).
+        chargement = re.search(cap["load_error"], sortie) if cap.get("load_error") else None
+        if chargement:
+            r.erreur("tests.regression", f"{sha[:10]} « {sujet} » : son test ne se charge pas sur le parent "
+                     f"(« {chargement.group(0).strip()[:80]} ») : il y échoue pour une autre raison que le défaut. "
+                     "L'écrire contre ce qui existe déjà sur le parent")
+            continue
+        code = (_executer_superpose(ctx, sha, {}, commande, cap) or (None, ""))[0]
         if code != 0:
             r.erreur("tests.regression", f"{sha[:10]} « {sujet} » : son test de régression échoue sur le correctif lui-même")
 
@@ -483,9 +493,10 @@ def commande_regression(cap: dict, tests: list[str]) -> str:
     )
 
 
-def _executer_superpose(ctx, rev: str, fichiers: dict[str, str], commande: str, cap: dict) -> int | None:
+def _executer_superpose(ctx, rev: str, fichiers: dict[str, str], commande: str, cap: dict) -> tuple[int, str] | None:
     """Exécute `commande` sur l'arbre de `rev`, où `fichiers` (chemin, texte)
-    sont posés par-dessus, dans un worktree jetable. Rend le code de sortie."""
+    sont posés par-dessus, dans un worktree jetable. Rend le code de sortie
+    et la sortie."""
     atelier = Path(tempfile.mkdtemp(prefix="socle-regression-"))
     arbre = atelier / "arbre"
     try:
@@ -508,7 +519,7 @@ def _executer_superpose(ctx, rev: str, fichiers: dict[str, str], commande: str, 
             cible.write_text(contenu, encoding="utf-8")
         p = subprocess.run(commande, shell=True, cwd=arbre, capture_output=True, text=True,
                            timeout=cap.get("timeout", 1800))
-        return p.returncode
+        return p.returncode, p.stdout + p.stderr
     finally:
         outils.git_reussit(ctx.racine, "worktree", "remove", "--force", str(arbre))
         shutil.rmtree(atelier, ignore_errors=True)

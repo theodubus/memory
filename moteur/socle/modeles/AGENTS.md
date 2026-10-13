@@ -98,7 +98,7 @@ refusée ; il faut relire l'entrée. `socle new` pose l'empreinte de l'index.
 
 - `python3 .socle/socle verify --rapide` passe (le hook `Stop` le vérifie) ; `verify` exécute tout.
 - Si du code a changé, la mémoire aussi : chantier actif, journal, backlog.
-- Si du code associé à une doc a changé (`[[docmap]]` des garde-fous), la doc change dans le même travail, ou un commit porte le trailer `Dispense-doc: <raison>`.
+- Si du code associé à une doc a changé (`[[docmap]]` des garde-fous), la doc change dans le même travail, ou le commit qui change ce code porte le trailer `Dispense-doc: <raison>`, qui ne vaut que pour lui.
 - Un correctif (sujet `fix:` ou trailer `Corrige: B-NNNN`) livre un test qui échoue sur le commit parent.
 - Une fonction publique ajoutée ou modifiée est nommée par au moins un test, ou un commit la dispense nommément avec sa raison (`Dispense-test: f, g — <raison>`). Du code existant découvert sans test : le test s'écrit tout de suite s'il est dans le périmètre du travail, sinon un sujet va au backlog.
 - Une action que seul l'humain peut faire (refusée par le hook, réglage d'un service, fichier qu'il détient) va au backlog avec `pour : humain`.

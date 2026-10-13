@@ -59,6 +59,10 @@ shared = ["node_modules"]
 command = "npx vitest run {test_args}"
 test_arg = "{file}"
 test_paths = ["**/*.test.js", "**/*.test.ts", "**/*.test.mjs", "**/*.spec.js", "**/*.spec.ts"]
+# Ce qui, dans la sortie, dit que le test ne s'est pas chargé sur le parent (une
+# compilation cassée, un import manquant) : il y échoue pour une autre raison
+# que le défaut corrigé.
+load_error = 'Cannot find module|ERR_MODULE_NOT_FOUND|SyntaxError:|Failed to load url|Test suite failed to run'
 
 [code]
 # Une fonction qu'un module n'exporte pas est privée : elle se teste par les
