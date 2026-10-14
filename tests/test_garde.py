@@ -63,6 +63,10 @@ REFUS = [
                                                          "content": '{"disableAllHooks": true}'})),
     ("réglages de l'utilisateur, hors du dépôt", ("Write", {"file_path": "/root/.claude/settings.json",
                                                            "content": "{}"})),
+    ("commit qui saute les hooks", B(f"{G} commit -q -m x --no-verify")),
+    ("commit -n, drapeaux groupés", B(f"{G} commit -qnm x")),
+    ("push qui saute les hooks, par -C .", B(f"{G} -C . {P} --no-verify origin travail")),
+    ("merge qui saute les hooks", B(f"{G} merge --no-verify travail")),
     ("outil GitHub qui commite sans hook", ("mcp__github__create_or_update_file", {"path": "x", "branch": "main"})),
 ]
 
@@ -75,6 +79,10 @@ PASSE = [
     ("commit qui cite rm -rf /", B(f'{G} commit -m "doc: interdire rm -rf / dans les scripts"')),
     ("heredoc python qui cite push --force", B(f"cat > /tmp/x.py <<'EOF'\nCAS = ['{G} {P} --force origin travail']\nEOF")),
     ("push de la branche de travail", B(f"{G} {P} -u origin travail")),
+    ("commit sans hooks dans un dépôt jetable, après cd", B(f"cd /tmp/jetable && {G} commit -q -m x --no-verify")),
+    ("commit sans hooks dans un dépôt jetable, par -C", B(f"{G} -C /tmp/jetable commit -q -m x --no-verify")),
+    ("commit dont le message cite le drapeau", B(f'{G} commit -m "doc: jamais --no-verify"')),
+    ("push -n, à blanc", B(f"{G} {P} -n origin travail")),
     ("push vers une branche de maintenance", B(f"{G} {P} origin maintenance-x")),
     ("push d'une branche nommée main-fix", B(f"{G} {P} origin main-fix")),
     ("relais avec sa citation", B(f"python3 {L} answer D-0001 valider --relayed --by Théo --quote-file /tmp/c.txt")),
@@ -122,6 +130,16 @@ class TestGarde(unittest.TestCase):
         for nom, (outil, args) in PASSE:
             with self.subTest(nom):
                 self.assertEqual(self.decide(outil, args), "passe")
+
+    def test_le_contournement_se_juge_sur_le_depot_vise(self):
+        # B-0023 : le dossier de départ de la commande décide du dépôt visé.
+        nv = "--no-" + "verify"
+        commit, = commandes.analyser(f"{G} commit -q -m x {nv}")
+        self.assertEqual(hooks.contournement(self.racine, commit), f"git commit {nv}")
+        self.assertEqual(hooks.contournement(self.racine, commit, str(self.racine / "tests")), f"git commit {nv}")
+        self.assertIsNone(hooks.contournement(self.racine, commit, "/tmp"))
+        a_blanc, = commandes.analyser(f"{G} {P} -n origin travail")
+        self.assertIsNone(hooks.contournement(self.racine, a_blanc))
 
     def test_ecriture_protegee_d_un_dossier(self):
         self.assertIn(".socle/", hooks.ecriture_protegee(self.projet, "rm -rf .socle"))

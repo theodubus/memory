@@ -120,6 +120,37 @@ class TestCommitMsg(unittest.TestCase):
         self.assertIn("Dispense-test", vus[0])
 
 
+class TestHooksAbsents(unittest.TestCase):
+    """B-0050 : un commit d'agent dont aucun hook de l'agent n'a tiré n'était
+    vu qu'en CI ; le hook commit-msg le dit dès le commit, sans refuser."""
+
+    def message(self, trace: str, agent: bool = True) -> str:
+        return ("Sujet\n\n" + ("Co-Authored-By: Claude <noreply@anthropic.com>\n" if agent else "")
+                + f"Socle-Hooks: {trace}\n")
+
+    def test_un_commit_d_agent_sans_hook_de_l_agent(self):
+        import contextlib
+        import io
+        import tempfile
+        from pathlib import Path
+        from unittest import mock
+
+        from socle import config
+
+        projet = config.Projet(racine=Path(tempfile.mkdtemp()))
+        avert = hooks.hooks_absents(projet, self.message("SessionStart=0 PreToolUse=0 Stop=0"))
+        self.assertIn("la CI le refusera (`hooks.trace`)", avert)
+        self.assertIsNone(hooks.hooks_absents(projet, self.message("SessionStart=1 PreToolUse=4 Stop=1")))
+        self.assertIsNone(hooks.hooks_absents(projet, self.message("SessionStart=0 PreToolUse=0 Stop=0", agent=False)))
+        # Par le hook lui-même : un avertissement, jamais un refus.
+        fichier = projet.racine / "MSG"
+        fichier.write_text(self.message("SessionStart=0 PreToolUse=0 Stop=0"))
+        with mock.patch.object(hooks, "code_sans_test", lambda projet, m: None), \
+                contextlib.redirect_stderr(io.StringIO()) as erreurs:
+            self.assertEqual(hooks.git_commit_msg(projet, str(fichier)), 0)
+        self.assertIn("sans aucun hook de l'agent", erreurs.getvalue())
+
+
 class TestSousUnAgent(unittest.TestCase):
     def test_sous_un_agent(self):
         import contextlib

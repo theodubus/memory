@@ -357,6 +357,31 @@ def irreversible(racine: Path, c: commandes.Commande) -> str | None:
     return None
 
 
+def contournement(racine: Path, c: commandes.Commande, depart: str | None = None) -> str | None:
+    """Un `git commit`, `git merge` ou `git push` qui saute les hooks du
+    dépôt du projet (`--no-verify`, ou `-n` pour un commit), dit en clair ;
+    `None` sinon, et pour un autre dépôt, désigné par `-C` ou après un `cd`
+    (un dépôt jetable) : seuls les hooks du projet y sont en jeu (B-0023)."""
+    if c.programme != "git":
+        return None
+    sous, reste = commandes.git_sous_commande(c.argv)
+    if sous not in ("commit", "merge", "push"):
+        return None
+    options, _ = commandes.options_et_arguments(reste)
+    if not commandes.drapeau(options, "n" if sous == "commit" else "", ("--no-verify",)):
+        return None
+    globales = c.argv[1:len(c.argv) - len(reste) - 1]
+    dossier = next((globales[i + 1] for i, x in enumerate(globales[:-1]) if x == "-C"), ".")
+    cible = Path(c.chemin(dossier)).expanduser()
+    if not cible.is_absolute():
+        cible = Path(depart or racine) / cible
+    try:
+        cible.resolve().relative_to(racine.resolve())
+    except ValueError:
+        return None
+    return f"git {sous} --no-verify"
+
+
 def commande_humaine(c: commandes.Commande) -> tuple[str, list[str]] | None:
     """Une commande du socle réservée à l'humain (`answer`, `approve`,
     `reviewed`, `private install`), quel que soit le chemin du lanceur (entre
@@ -449,6 +474,11 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
                              "humaine requise (politique, point 4). Si c'est une décision, émettre une demande "
                              "`D-NNNN` ; si c'est une action que l'humain doit faire lui-même, l'inscrire au backlog "
                              "avec `pour : humain`. Puis continuer sur autre chose.")
+            saut = contournement(racine, c, entree.get("cwd"))
+            if saut:
+                return refus(f"`{saut}` contourne les hooks du projet : la CI exécute tout, et rien ne la "
+                             "contourne. Corriger ce que le hook refuse ; s'il refuse à tort, l'inscrire au backlog "
+                             "et le dire à l'humain.")
             h = commande_humaine(c)
             if h and h[0] == "private install":
                 return refus("`socle private install` est réservé à l'humain : il pousse vers le dépôt privé et "
@@ -867,10 +897,30 @@ def git_commit_msg(projet: config.Projet, fichier: str = "") -> int:
         tracer_refus(projet.racine, "git-commit-msg", "fuite")
         print(f"socle — commit refusé : {faute}", file=sys.stderr)
         return 1
-    avertissement = code_sans_test(projet, message)
-    if avertissement:
-        print(avertissement, file=sys.stderr)
+    for avertissement in (code_sans_test(projet, message), hooks_absents(projet, message)):
+        if avertissement:
+            print(avertissement, file=sys.stderr)
     return 0
+
+
+def hooks_absents(projet: config.Projet, message: str) -> str | None:
+    """Un commit d'agent dont la trace ne compte aucun PreToolUse : les hooks
+    de l'agent n'ont pas tiré pendant sa session, et la CI refusera le commit
+    (`hooks.trace`). Le hook commit-msg, qui voit la trace que le hook
+    précédent vient d'écrire, le dit dès le commit, sans refuser (B-0050)."""
+    from socle import checks_ratchet as controles_cliquet
+
+    if not controles_cliquet.est_agent(projet, message):
+        return None
+    valeurs = outils.trailers(message).get("socle-hooks")
+    if not valeurs:
+        return None
+    tirs = controles_cliquet.lire_trailer_hooks(valeurs[-1]).get("PreToolUse", "0")
+    if tirs.isdigit() and int(tirs) >= 1:
+        return None
+    return ("socle — avertissement : commit d'agent sans aucun hook de l'agent pendant sa session "
+            f"(`Socle-Hooks: {valeurs[-1]}`) : la CI le refusera (`hooks.trace`). Ouvrir la session de l'agent "
+            "dans le dépôt du projet, où ses hooks se chargent (`.claude/settings.json`).")
 
 
 def code_sans_test(projet: config.Projet, message: str) -> str | None:

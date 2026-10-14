@@ -111,14 +111,14 @@ must be read again. `socle new` puts in the index fingerprint.
 - complete a head SHA, invent an identifier or a reference: the hook refuses them;
 - write to a protected file (policy, adapter, engine lock, hooks, CI, human answers);
 - answer on the human's behalf (`socle answer` without `--relayed` and a quote), or run `socle approve` or `socle private install`, which are for the human only;
-- bypass a hook (`--no-verify`): the CI runs everything, and nothing bypasses it.
+- bypass a hook (`--no-verify`): the agent's hook refuses it on the project's repository, and the CI runs everything.
 
 ### What runs on its own
 
 | Where | What |
 | --- | --- |
 | `.claude/settings.json` | Claude Code hooks: `SessionStart` (derived state), `PreToolUse` (refusals), `Stop` (end-of-turn checks) |
-| `.socle/git-hooks/` | git hooks: `pre-commit` (fast checks), `prepare-commit-msg` (`Socle-Hooks` trailer), `commit-msg` (private memory leaks; a function with neither test nor waiver, as a warning), `pre-push` (`verify --fast`, the pushed range judged as the CI will judge it, review before publication) |
+| `.socle/git-hooks/` | git hooks: `pre-commit` (fast checks), `prepare-commit-msg` (`Socle-Hooks` trailer), `commit-msg` (private memory leaks; a function with neither test nor waiver, an agent commit without any agent hook, as warnings), `pre-push` (`verify --fast`, the pushed range judged as the CI will judge it, review before publication) |
 | `.github/workflows/socle.yml` | CI: adapter capabilities, all checks against the base, socle self-test |
 @@LIGNE_MUTATION@@
 | `.git/socle/hooks.log` | local trace of every hook that fires, not versioned, shared by all worktrees of the repository |

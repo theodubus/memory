@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0050 — Un commit d'agent sans aucun hook de l'agent n'est vu qu'en CI
 
-> statut : ouvert · origine : <J-… ou commit:… où le sujet est apparu> · lu : backlog@c11291ba
+> statut : fait · origine : J-2026-10-12-O · lu : backlog@c11291ba · ref : J-2026-10-14-D
 
 Mesuré à R6 : un commit fait dans la copie du projet d'échecs, depuis une
 session ouverte dans ce dépôt, porte `Socle-Hooks: SessionStart=0

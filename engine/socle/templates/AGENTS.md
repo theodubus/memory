@@ -110,14 +110,14 @@ refusée ; il faut relire l'entrée. `socle new` pose l'empreinte de l'index.
 - compléter un SHA de tête, inventer un identifiant ou une référence : le hook les refuse ;
 - écrire dans un fichier protégé (politique, adaptateur, verrou du moteur, hooks, CI, réponses humaines) ;
 - répondre à la place de l'humain (`socle answer` sans `--relayed` ni citation), ou lancer `socle approve` ou `socle private install`, réservés à l'humain ;
-- contourner un hook (`--no-verify`) : la CI exécute tout, et rien ne la contourne.
+- contourner un hook (`--no-verify`) : le hook de l'agent le refuse sur le dépôt du projet, et la CI exécute tout.
 
 ### Ce qui tourne tout seul
 
 | Où | Quoi |
 | --- | --- |
 | `.claude/settings.json` | hooks de Claude Code : `SessionStart` (état dérivé), `PreToolUse` (refus), `Stop` (contrôles de fin de tour) |
-| `.socle/git-hooks/` | hooks git : `pre-commit` (contrôles rapides), `prepare-commit-msg` (trailer `Socle-Hooks`), `commit-msg` (fuites de la mémoire privée ; une fonction sans test ni dispense, en avertissement), `pre-push` (`verify --fast`, la plage qui part jugée comme la CI la jugera, relecture avant publication) |
+| `.socle/git-hooks/` | hooks git : `pre-commit` (contrôles rapides), `prepare-commit-msg` (trailer `Socle-Hooks`), `commit-msg` (fuites de la mémoire privée ; une fonction sans test ni dispense, un commit d'agent sans hook de l'agent, en avertissement), `pre-push` (`verify --fast`, la plage qui part jugée comme la CI la jugera, relecture avant publication) |
 | `.github/workflows/socle.yml` | CI : capacités de l'adaptateur, tous les contrôles contre la base, auto-test du socle |
 @@LIGNE_MUTATION@@
 | `.git/socle/hooks.log` | trace locale de chaque hook qui tire, non versionnée, commune à tous les worktrees du dépôt |

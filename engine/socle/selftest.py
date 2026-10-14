@@ -1119,6 +1119,16 @@ def _cas() -> list[Cas]:
         lanceur = ".socle/" + "socle"
         return etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} approve --text 'mise à jour' --yes"})
 
+    @defaut("agent-saute-les-hooks", "l'agent commite en sautant les hooks du projet", "agent",
+            "contournement d'un hook")
+    def _(a, c):
+        return etage_outil(a, c, "Bash", {"command": "git add -A && git commit -q -m essai --" + "no-verify"})
+
+    @defaut("agent-saute-les-hooks-cache", "l'agent pousse en sautant les hooks, par -C vers le projet", "agent",
+            "contournement d'un hook")
+    def _(a, c):
+        return etage_outil(a, c, "Bash", {"command": f"git -C {c} push --" + "no-verify origin HEAD"})
+
     @defaut("agent-repond-cache", "l'agent répond à la place de l'humain, lanceur entre guillemets après un cd",
             "agent", "commande humaine")
     def _(a, c):
@@ -1293,6 +1303,10 @@ def _temoins() -> list[tuple[str, Callable]]:
         (c / "tests/test_regression.py").write_text(TEST_REGRESSION)
         maj_memoire(c, "Correctif de `double` sur les chaînes, avec son test.")
         return etage_ci(a, c, "fix: double accepte une chaîne")
+
+    @temoin("un commit sans hooks dans un dépôt jetable, hors du projet, passe le hook de l'agent")
+    def _(a, c):
+        return etage_outil(a, c, "Bash", {"command": "cd /tmp/jetable && git commit -q -m x --" + "no-verify"})
 
     @temoin("un commit d'agent qui porte la trace de ses hooks passe la CI")
     def _(a, c):
@@ -1741,6 +1755,7 @@ RAISONS_AGENT = {
     "fichier protégé": "est protégé par la politique",
     "commande humaine": "ne répond jamais à la place de l'humain",
     "commande de l'humain seul": "est réservé à l'humain",
+    "contournement d'un hook": "contourne les hooks du projet",
     "écriture protégée": "par le shell : seul l'humain",
     "écriture à l'aveugle": "à l'aveugle",
     "référence inventée": "référence inventée",
