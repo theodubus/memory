@@ -833,6 +833,21 @@ def compter_session(racine: Path, session: str | None = None) -> str:
     return " ".join(f"{k}={v}" for k, v in compte.items())
 
 
+def compter_depuis_le_commit(racine: Path, session: str | None = None) -> str:
+    """`PreToolUse=3` : les passages du filtre de l'agent depuis le commit
+    précédent du dépôt (sa ligne `git-prepare-commit-msg` dans la trace),
+    pour la session donnée ou, à défaut, la plus récente depuis. La commande
+    qui commite passe elle-même par le filtre : des hooks chargés en comptent
+    toujours au moins un. Le compte de toute la session ne voit pas des hooks
+    qui cessent de tirer en cours de route (B-0058)."""
+    lignes = [l.split("\t") for l in config.lire_trace(racine)]
+    debut = next((i + 1 for i in range(len(lignes) - 1, -1, -1)
+                  if len(lignes[i]) >= 2 and lignes[i][1] == "git-prepare-commit-msg"), 0)
+    filtre = [l for l in lignes[debut:] if len(l) >= 3 and l[1] == "PreToolUse"]
+    session = session or next((l[2] for l in reversed(filtre) if l[2]), "")
+    return f"PreToolUse={sum(1 for l in filtre if l[2] == session)}"
+
+
 def sous_un_agent(geste: str) -> bool:
     """Défense en profondeur (B-0044, L2) : une commande réservée à l'humain
     refuse de tourner dans une session d'agent, que le hook l'ait reconnue
@@ -846,7 +861,10 @@ def sous_un_agent(geste: str) -> bool:
 
 def git_prepare_commit_msg(projet: config.Projet, fichier: str, source: str = "") -> int:
     """Sur un commit fait dans une session d'agent (`CLAUDECODE` dans
-    l'environnement), ajoute `Socle-Agent` et `Socle-Hooks`."""
+    l'environnement), ajoute `Socle-Agent`, `Socle-Hooks` et
+    `Socle-Hooks-Since-Commit`."""
+    # Le compte depuis le commit précédent se lit avant de tracer celui-ci.
+    depuis = compter_depuis_le_commit(projet.racine, os.environ.get("CLAUDE_CODE_SESSION_ID"))
     tracer(projet.racine, "git-prepare-commit-msg")
     if not os.environ.get("CLAUDECODE") or source in ("merge", "squash"):
         return 0
@@ -861,6 +879,7 @@ def git_prepare_commit_msg(projet: config.Projet, fichier: str, source: str = ""
     lignes = [
         "Socle-Agent: claude-code",
         f"Socle-Hooks: {compter_session(projet.racine, os.environ.get('CLAUDE_CODE_SESSION_ID'))}",
+        f"Socle-Hooks-Since-Commit: {depuis}",
     ]
     # Les trailers vont dans le dernier paragraphe, avant les commentaires.
     contenu, commentaires = [], []
@@ -941,12 +960,20 @@ def hooks_absents(projet: config.Projet, message: str) -> str | None:
     valeurs = outils.trailers(message).get("socle-hooks")
     if not valeurs:
         return None
+    conseil = ("Ouvrir la session de l'agent dans le dépôt du projet, où ses hooks se chargent "
+               "(`.claude/settings.json`).")
     tirs = controles_cliquet.lire_trailer_hooks(valeurs[-1]).get("PreToolUse", "0")
+    if not tirs.isdigit() or int(tirs) < 1:
+        return ("socle — avertissement : commit d'agent sans aucun hook de l'agent pendant sa session "
+                f"(`Socle-Hooks: {valeurs[-1]}`) : la CI le refusera (`hooks.trace`). " + conseil)
+    # B-0058 : des hooks qui ont tiré en début de session, puis plus du tout.
+    depuis = outils.trailers(message).get("socle-hooks-since-commit")
+    tirs = controles_cliquet.lire_trailer_hooks(depuis[-1]).get("PreToolUse", "0") if depuis else "1"
     if tirs.isdigit() and int(tirs) >= 1:
         return None
-    return ("socle — avertissement : commit d'agent sans aucun hook de l'agent pendant sa session "
-            f"(`Socle-Hooks: {valeurs[-1]}`) : la CI le refusera (`hooks.trace`). Ouvrir la session de l'agent "
-            "dans le dépôt du projet, où ses hooks se chargent (`.claude/settings.json`).")
+    return ("socle — avertissement : commit d'agent sans aucun hook de l'agent depuis le commit précédent "
+            f"(`Socle-Hooks-Since-Commit: {depuis[-1]}`) : ses hooks ont cessé de tirer en cours de session, "
+            "et la CI le refusera (`hooks.trace`). " + conseil)
 
 
 def code_sans_test(projet: config.Projet, message: str) -> str | None:

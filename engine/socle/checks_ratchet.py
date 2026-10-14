@@ -333,7 +333,9 @@ def est_agent(projet, message: str) -> bool:
 def trace(ctx, r):
     """Chaque commit d'agent porte la trace des hooks qui ont tiré pendant sa
     session (`Socle-Hooks:`, ajouté par le hook git). Absente, ou sans
-    PreToolUse : les hooks n'ont jamais été chargés."""
+    PreToolUse : les hooks n'ont jamais été chargés. Et depuis le commit
+    précédent (`Socle-Hooks-Since-Commit:`) : sans PreToolUse, ils ont cessé
+    de tirer en cours de session (B-0058)."""
     for c in ctx.commits:
         if len(c["parents"]) != 1 or not est_agent(ctx.projet, c["message"]):
             continue
@@ -346,8 +348,14 @@ def trace(ctx, r):
                      "les hooks git n'ont pas tourné (`git config core.hooksPath .socle/git-hooks`)")
             continue
         t = lire_trailer_hooks(valeurs[-1])
+        depuis = outils.trailers(c["message"]).get("socle-hooks-since-commit")
+        n = lire_trailer_hooks(depuis[-1]).get("PreToolUse", "0") if depuis else "1"
         if not t.get("PreToolUse", "0").isdigit() or int(t.get("PreToolUse", "0")) < 1:
             r.erreur("hooks.trace", f"{c['sha'][:10]} « {sujet} » : aucun PreToolUse n'a tiré pendant la session — "
                      "les hooks de l'agent n'étaient pas chargés")
+        elif not n.isdigit() or int(n) < 1:
+            # B-0058 : le compte de la session garde les tirs d'avant l'arrêt.
+            r.erreur("hooks.trace", f"{c['sha'][:10]} « {sujet} » : aucun PreToolUse n'a tiré depuis le commit "
+                     "précédent — les hooks de l'agent ont cessé d'être chargés en cours de session")
         if t.get("SessionStart") == "0":
             r.erreur("hooks.trace", f"{c['sha'][:10]} « {sujet} » : le hook SessionStart n'a jamais tiré pendant la session")

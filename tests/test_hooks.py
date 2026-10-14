@@ -67,6 +67,29 @@ class TestTrailer(unittest.TestCase):
         self.assertEqual(hooks.compter_session(racine, "sans-hooks"), "SessionStart=0 PreToolUse=0 Stop=0")
         self.assertEqual(hooks.compter_session(racine, "vieille"), "SessionStart=1 PreToolUse=1 Stop=0")
 
+    def test_le_compte_depuis_le_commit_precedent(self):
+        """B-0058 : des hooks qui cessent de tirer en cours de session
+        gardaient le compte de leurs tirs d'avant, et la trace avait l'air
+        saine ; depuis le commit précédent, elle compte zéro."""
+        import tempfile
+        from pathlib import Path
+
+        racine = Path(tempfile.mkdtemp())
+        trace = racine / ".socle/trace/hooks.log"
+        trace.parent.mkdir(parents=True)
+        trace.write_text("t\tSessionStart\ts\t\nt\tPreToolUse\ts\tBash\nt\tPreToolUse\ts\tBash\n")
+        # Sans commit précédent : toute la trace de la session.
+        self.assertEqual(hooks.compter_depuis_le_commit(racine, "s"), "PreToolUse=2")
+        with trace.open("a") as f:
+            f.write("t\tgit-prepare-commit-msg\t\t\nt\tStop\ts\t\nt\tPreToolUse\tautre\tBash\n")
+        self.assertEqual(hooks.compter_depuis_le_commit(racine, "s"), "PreToolUse=0")
+        self.assertEqual(hooks.compter_session(racine, "s"), "SessionStart=1 PreToolUse=2 Stop=1")
+        # Sans session connue : la plus récente depuis le commit précédent.
+        self.assertEqual(hooks.compter_depuis_le_commit(racine), "PreToolUse=1")
+        with trace.open("a") as f:
+            f.write("t\tPreToolUse\ts\tBash\n")
+        self.assertEqual(hooks.compter_depuis_le_commit(racine, "s"), "PreToolUse=1")
+
 
 
 class TestPrepareCommitMsg(unittest.TestCase):
@@ -93,6 +116,30 @@ class TestPrepareCommitMsg(unittest.TestCase):
         self.assertIn("Socle-Hooks: SessionStart=0 PreToolUse=0 Stop=0", haut)
         self.assertNotIn("diff --git", haut)
         self.assertIn("diff --git", bas)
+
+    def test_le_compte_depuis_le_commit_se_lit_avant_de_tracer_celui_ci(self):
+        """B-0058 : le commit compte les tirs depuis le précédent, et non
+        depuis sa propre ligne de trace, qui le rendrait toujours nul."""
+        import os
+        import tempfile
+        from pathlib import Path
+        from unittest import mock
+
+        from socle import config
+
+        racine = Path(tempfile.mkdtemp())
+        projet = config.Projet(racine=racine)
+        hooks.tracer(racine, "PreToolUse", "s", "Bash")
+        premier, second = racine / "MSG1", racine / "MSG2"
+        premier.write_text("Premier\n")
+        second.write_text("Second\n")
+        with mock.patch.dict(os.environ, {"CLAUDECODE": "1", "CLAUDE_CODE_SESSION_ID": "s"}):
+            hooks.git_prepare_commit_msg(projet, str(premier))
+            hooks.git_prepare_commit_msg(projet, str(second))
+        self.assertIn("Socle-Hooks: SessionStart=0 PreToolUse=1 Stop=0\nSocle-Hooks-Since-Commit: PreToolUse=1",
+                      premier.read_text())
+        self.assertIn("Socle-Hooks: SessionStart=0 PreToolUse=1 Stop=0\nSocle-Hooks-Since-Commit: PreToolUse=0",
+                      second.read_text())
 
 
 class TestCommitMsg(unittest.TestCase):
@@ -150,6 +197,22 @@ class TestHooksAbsents(unittest.TestCase):
                 contextlib.redirect_stderr(io.StringIO()) as erreurs:
             self.assertEqual(hooks.git_commit_msg(projet, str(fichier)), 0)
         self.assertIn("sans aucun hook de l'agent", erreurs.getvalue())
+
+    def test_des_hooks_arretes_depuis_le_commit_precedent(self):
+        """B-0058 : des tirs en début de session, plus aucun depuis."""
+        import tempfile
+        from pathlib import Path
+
+        from socle import config
+
+        projet = config.Projet(racine=Path(tempfile.mkdtemp()))
+        session = "SessionStart=1 PreToolUse=4 Stop=1"
+        avert = hooks.hooks_absents(projet, self.message(session) + "Socle-Hooks-Since-Commit: PreToolUse=0\n")
+        self.assertIn("depuis le commit précédent", avert)
+        self.assertIn("la CI le refusera (`hooks.trace`)", avert)
+        self.assertIsNone(hooks.hooks_absents(projet, self.message(session) + "Socle-Hooks-Since-Commit: PreToolUse=1\n"))
+        # Un commit d'avant ce compte ne le porte pas : rien à en dire.
+        self.assertIsNone(hooks.hooks_absents(projet, self.message(session)))
 
 
 class TestCorrectifSansTest(Projet):

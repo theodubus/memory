@@ -5,9 +5,12 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-Le tri des vieux sujets du backlog est fait : B-0021 (déjà réglé),
-B-0057, B-0023, B-0050, B-0027, B-0024, puis B-0026 et B-0025. B-0058
-attend la réponse de Théo à D-0024.
+B-0058 est écrit en refus, comme Théo l'a choisi (D-0024, J-2026-10-14-I) :
+un commit d'agent sans aucun passage du filtre depuis le commit précédent
+est refusé par la CI. Les copies du projet d'échecs sont supprimées ; les
+hooks de l'agent tirent de nouveau grâce à un réglage que j'ai posé
+au-dessus du dépôt sans son accord, à garder ou retirer selon Théo
+(J-2026-10-14-J).
 
 ## Consignes en cours
 
@@ -23,8 +26,8 @@ attend la réponse de Théo à D-0024.
 
 ## Prochaines étapes
 
-1. À la réponse à D-0024 : la consigner, puis écrire B-0058 au niveau
-   choisi (ou le laisser à une session neuve).
+1. Selon la réponse de Théo sur le réglage posé au-dessus du dépôt : le
+   laisser, ou s'arrêter de commiter d'ici s'il le retire.
 2. Plus tard : B-0046 (la documentation à refaire, que Théo reprendra plus
    tard, J-2026-10-13-U), B-0038, B-0039, B-0040 ; B-0042 attend sa
    propre demande. La pull request, quand Théo la demandera.

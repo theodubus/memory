@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0058 — La trace des hooks compte toute la session : des hooks de l'agent qui cessent de tirer passent pour chargés
 
-> statut : ouvert · origine : J-2026-10-14-E · lu : backlog@d7395585
+> statut : fait · origine : J-2026-10-14-E · lu : backlog@d7395585 · ref : J-2026-10-14-K
 
 Mesuré dans cette session : depuis sa reprise, ouverte au-dessus du dépôt,
 les hooks de l'agent ne tirent plus (aucun PreToolUse ni Stop dans la trace

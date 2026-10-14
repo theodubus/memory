@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0024-refuser-ou-seulement-signaler-un-commit-d-agent-fa.md, dont l'empreinte suit.
+reponse = "refuser"
+texte = ""
+par = "Théo"
+date = "2026-10-14"
+canal = "conversation"
+citation = "D0024\nOn peut pas juste refuser tout court et toi dans cette session tu supprimes les autres dossiers devenus inutiles et te place dans memory ?\nJ'ai l'impression que ta reco vise uniquement a exempter ce cas mais laisse au passage une régression"
+empreinte = "sha256:8cf9eee9c8356d35666a3fdaac9482b37b049ed9dc55e53b18cf7004ed8d5897"

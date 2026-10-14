@@ -712,6 +712,13 @@ def _cas() -> list[Cas]:
         maj_memoire(c, "Commit d'agent sans hooks.")
         return etage_ci(a, c, "Travail d'agent\n\nCo-Authored-By: Claude <noreply@anthropic.com>")
 
+    @defaut("hooks-arretes-en-session", "hooks de l'agent arrêtés depuis le commit précédent", "ci", "hooks.trace")
+    def _(a, c):
+        maj_memoire(c, "Commit d'agent après l'arrêt de ses hooks.")
+        return etage_ci(a, c, "Travail d'agent\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n"
+                        "Socle-Agent: claude-code\nSocle-Hooks: SessionStart=1 PreToolUse=4 Stop=1\n"
+                        "Socle-Hooks-Since-Commit: PreToolUse=0")
+
     @defaut("moteur-altere", "moteur altéré dans le projet", "ci", "moteur.empreinte")
     def _(a, c):
         ajouter(c, ".socle/engine/socle/utils.py", "# retouche locale\n")
@@ -1312,7 +1319,8 @@ def _temoins() -> list[tuple[str, Callable]]:
     def _(a, c):
         maj_memoire(c, "Commit d'agent avec hooks.")
         return etage_ci(a, c, "Travail d'agent\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n"
-                        "Socle-Agent: claude-code\nSocle-Hooks: SessionStart=1 PreToolUse=4 Stop=1")
+                        "Socle-Agent: claude-code\nSocle-Hooks: SessionStart=1 PreToolUse=4 Stop=1\n"
+                        "Socle-Hooks-Since-Commit: PreToolUse=2")
 
     @temoin("une valeur attendue changée sous une spécification que l'humain a commitée passe la CI")
     def _(a, c):
