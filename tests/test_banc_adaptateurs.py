@@ -1,4 +1,4 @@
-"""Le banc des adaptateurs (`banc/adaptateurs.py`) : ses projets jetables
+"""Le banc des adaptateurs (`bench/adapters.py`) : ses projets jetables
 sont cohérents avec leurs adaptateurs, sans lancer les outils, que le banc
 lui-même exige."""
 
@@ -10,10 +10,10 @@ import unittest
 from pathlib import Path
 
 RACINE = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(RACINE / "banc"))
+sys.path.insert(0, str(RACINE / "bench"))
 
-import adaptateurs as banc  # noqa: E402
-from socle import installeur, outils  # noqa: E402
+import adapters as banc  # noqa: E402
+from socle import installer as installeur, utils as outils  # noqa: E402
 
 
 def adaptateur(nom: str) -> dict:

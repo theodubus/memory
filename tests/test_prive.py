@@ -14,10 +14,11 @@ import unittest
 import unittest.mock
 from pathlib import Path
 
-from socle import cli, config, contexte, etat, hooks, liens, memoire, prive, prive_installation
-from socle.demandes import ecrire_reponse
-from socle.demandes import toutes as demandes_toutes
-from socle.rapport import Rapport
+from socle import (cli, config, context as contexte, state as etat, hooks, links as liens, memory as memoire,
+                   private as prive, private_setup as prive_installation)
+from socle.requests import ecrire_reponse
+from socle.requests import toutes as demandes_toutes
+from socle.report import Rapport
 
 P = "P"  # un identifiant privé en clair dans ce fichier public serait une fuite
 ENTETE = "<!-- socle: couche=canonique zone=privee -->\n# Mémoire canonique privée\n"
@@ -125,7 +126,7 @@ class TestCompagnon(Compagnon):
     def test_ajout_seul_relit_la_memoire_privee_a_la_base(self):
         """B-0044, L3 : la mémoire privée n'était jamais relue à la base, et
         un fait privé effacé passait « ajout seul »."""
-        from socle import controles_memoire
+        from socle import checks_memory as controles_memoire
 
         base = git(self.racine, "rev-parse", "HEAD").strip()
         projet = config.Projet.charger(self.racine)
@@ -172,11 +173,11 @@ class TestCompagnon(Compagnon):
         nouveau = self.commit(self.prive, "précision")
         flux = io.StringIO()
         with contextlib.redirect_stdout(flux), contextlib.redirect_stderr(io.StringIO()):
-            self.assertEqual(cli.cmd_prive(argparse.Namespace(root=str(self.racine), action="verrouiller")), 0)
+            self.assertEqual(cli.cmd_prive(argparse.Namespace(root=str(self.racine), action="lock")), 0)
         self.assertEqual(prive.lire_verrou(self.racine), nouveau)
         prive.ecrire_verrou(self.racine, self.sha)
         with contextlib.redirect_stdout(flux), contextlib.redirect_stderr(io.StringIO()):
-            self.assertEqual(cli.cmd_prive(argparse.Namespace(root=str(self.racine), action="extraire")), 0)
+            self.assertEqual(cli.cmd_prive(argparse.Namespace(root=str(self.racine), action="extract")), 0)
         self.assertEqual(prive.commit_compagnon(self.racine), self.sha)
 
     def test_le_contenu_nouveau_est_prive_par_defaut(self):
@@ -391,7 +392,7 @@ class TestTermes(Compagnon):
         """B-0044, L3 : un identifiant privé dans un bloc de code d'un fichier
         public passait le commit et la CI, et une archive publique échappait
         au contrôle des termes."""
-        from socle import controles_memoire
+        from socle import checks_memory as controles_memoire
 
         (self.racine / "notes.md").write_text(f"Exemple :\n\n```\nvoir {P}F-0001\n```\n")
         (self.racine / "memory/archives").mkdir(parents=True, exist_ok=True)
@@ -577,7 +578,7 @@ class TestInstallerCompagnon(unittest.TestCase):
           'echo "CLE PRIVEE D ESSAI" > "$f"; echo "ssh-ed25519 AAAA essai" > "$f.pub"\n'
 
     def setUp(self):
-        from socle import installeur
+        from socle import installer as installeur
 
         self.dossier = Path(tempfile.mkdtemp(prefix="socle-compagnon-"))
         self.racine = self.dossier / "public"
@@ -586,7 +587,7 @@ class TestInstallerCompagnon(unittest.TestCase):
         (self.racine / "calc.py").write_text("x = 1\n")
         with contextlib.redirect_stdout(io.StringIO()):
             installeur.installer(self.racine, "python", "@essai", prive="compagnon",
-                                 source=Path(__file__).resolve().parent.parent / "moteur")
+                                 source=Path(__file__).resolve().parent.parent / "engine")
         self.nu = self.dossier / "prive.git"
         git(self.dossier, "init", "-q", "--bare", "-b", "main", str(self.nu))
         outils = self.dossier / "bin"

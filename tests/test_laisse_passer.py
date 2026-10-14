@@ -13,10 +13,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import config, contexte, controles_tests, installeur, tests_lecture
-from socle.rapport import Rapport
+from socle import (config, context as contexte, checks_tests as controles_tests, installer as installeur,
+                   tests_reader as tests_lecture)
+from socle.report import Rapport
 
-MOTEUR = Path(__file__).resolve().parent.parent / "moteur"
+MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 CALC = "def double(x):\n    return 2 * x\n"
 TEST = "import unittest\n\nfrom calc import double\n\n\nclass T(unittest.TestCase):\n{corps}"
 AGENT = "\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nSocle-Agent: claude-code"

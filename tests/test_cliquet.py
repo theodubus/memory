@@ -1,6 +1,6 @@
 import unittest
 
-from socle.controles_cliquet import assouplissements
+from socle.checks_ratchet import assouplissements
 
 BASE = {
     "budgets": {"memoire/actif.md": {"max_bytes": 6000}},

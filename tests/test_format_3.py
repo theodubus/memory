@@ -10,8 +10,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import archivage, autotest, config, controles_cliquet, contexte, etat, installeur, memoire, migrations
-from socle.rapport import Rapport
+from socle import (archive as archivage, selftest as autotest, config, checks_ratchet as controles_cliquet,
+                   context as contexte, state as etat, installer as installeur, memory as memoire, migrations)
+from socle.report import Rapport
 from tests.test_bascule import MOTEUR, P, Projet, git
 
 DEUX_SUJETS = """

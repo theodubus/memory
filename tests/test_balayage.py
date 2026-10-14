@@ -15,10 +15,11 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from socle import config, contexte, controles_tests, installeur, mutation, outils
-from socle.rapport import Rapport
+from socle import (config, context as contexte, checks_tests as controles_tests, installer as installeur, mutation,
+                   utils as outils)
+from socle.report import Rapport
 
-MOTEUR = Path(__file__).resolve().parent.parent / "moteur"
+MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 MAINTENANT = datetime(2026, 10, 13, 12, tzinfo=timezone.utc)
 
 
@@ -303,7 +304,7 @@ class TestInstallation(unittest.TestCase):
         flux = (self.racine / mutation.WORKFLOW).read_text()
         self.assertIn("run: |\n          cargo install cargo-mutants --locked\n", flux)
         self.assertIn("rustup show active-toolchain", flux)
-        self.assertIn("python3 .socle/socle mutation-run --poser", flux)
+        self.assertIn("python3 .socle/socle mutation-run --record", flux)
         self.assertNotIn("@@", flux)
         self.assertIn("`.github/workflows/socle-mutation.yml`", (self.racine / "AGENTS.md").read_text())
         self.assertIn(mutation.WORKFLOW, journal)

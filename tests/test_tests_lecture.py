@@ -3,9 +3,9 @@ import tomllib
 import unittest
 from pathlib import Path
 
-from socle import tests_lecture
+from socle import tests_reader as tests_lecture
 
-ADAPTATEURS = Path(__file__).resolve().parent.parent / "moteur/socle/adaptateurs"
+ADAPTATEURS = Path(__file__).resolve().parent.parent / "engine/socle/adapters"
 
 
 def cfg(langage):

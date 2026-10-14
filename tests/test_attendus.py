@@ -13,10 +13,10 @@ import unittest
 from collections import Counter
 from pathlib import Path
 
-from socle import config, contexte, controles_tests, installeur
-from socle.rapport import Rapport
+from socle import config, context as contexte, checks_tests as controles_tests, installer as installeur
+from socle.report import Rapport
 
-MOTEUR = Path(__file__).resolve().parent.parent / "moteur"
+MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 TEST = "import unittest\n\nfrom calc import double\n\n\nclass T(unittest.TestCase):\n" \
        "    def test_double(self):\n        self.assertEqual(double(2), {attendu})\n"
 ADR = ("<!-- socle: couche=decisions zone=publique -->\n# ADR-0001 — Le facteur passe à 3\n\n"
@@ -173,7 +173,7 @@ class TestValeursHorsDesAssertions(unittest.TestCase):
     def test_les_litteraux(self):
         import tomllib
 
-        from socle import tests_lecture
+        from socle import tests_reader as tests_lecture
 
         cfg = tomllib.loads((installeur.ADAPTATEURS / "python.toml").read_text())["tests"]
         self.assertEqual(tests_lecture.litteraux('x = 4  # 5\ny = "a b"\nf(x1, 2.5, True)\n"""9"""\n', cfg),
@@ -204,7 +204,7 @@ class TestEnAttenteDeLHumain(TestValeurAttendue):
         git(self.racine, "push", "-q", "--no-verify", "-u", "origin", "main")
 
     def test_une_demande_poussee_laisse_finir_le_tour(self):
-        from socle import demandes
+        from socle import requests as demandes
 
         self.pousser()
         d = next(x for x in demandes.toutes(self.racine) if x.id == "D-0001")

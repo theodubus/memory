@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import outils
+from socle import utils as outils
 
 
 def git(cwd, *args):

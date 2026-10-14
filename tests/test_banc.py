@@ -17,7 +17,7 @@ from unittest import mock
 from socle import verification
 
 RACINE = Path(__file__).resolve().parent.parent
-_spec = importlib.util.spec_from_file_location("banc", RACINE / "banc/banc.py")
+_spec = importlib.util.spec_from_file_location("banc", RACINE / "bench/bench.py")
 banc = sys.modules["banc"] = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(banc)
 

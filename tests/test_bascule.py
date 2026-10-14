@@ -11,10 +11,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import cli, config, contexte, controles_memoire, etat, installeur, memoire, prive
-from socle.rapport import Rapport
+from socle import (cli, config, context as contexte, checks_memory as controles_memoire, state as etat,
+                   installer as installeur, memory as memoire, private as prive)
+from socle.report import Rapport
 
-MOTEUR = Path(__file__).resolve().parent.parent / "moteur"
+MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 # Un identifiant privé ne s'écrit pas en clair dans un fichier public.
 P = "P"
 SUJET = """

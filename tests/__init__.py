@@ -4,4 +4,4 @@ pour que `python3 -m unittest discover -s tests -t .` marche sans réglage."""
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "moteur"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "engine"))

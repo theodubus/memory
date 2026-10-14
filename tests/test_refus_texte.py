@@ -10,11 +10,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import config, contexte, controles_memoire, installeur
-from socle.controles_docs import _motif_libre, normaliser_valeur
-from socle.rapport import Rapport
+from socle import config, context as contexte, checks_memory as controles_memoire, installer as installeur
+from socle.checks_docs import _motif_libre, normaliser_valeur
+from socle.report import Rapport
 
-MOTEUR = Path(__file__).resolve().parent.parent / "moteur"
+MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 
 
 class TestReferencesEcrites(unittest.TestCase):

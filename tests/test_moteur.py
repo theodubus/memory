@@ -4,7 +4,7 @@ import sys
 import unittest
 from pathlib import Path
 
-MOTEUR = Path(__file__).resolve().parent.parent / "moteur/socle"
+MOTEUR = Path(__file__).resolve().parent.parent / "engine/socle"
 DEPOT = MOTEUR.parent.parent
 
 
@@ -49,7 +49,7 @@ class TestDocstrings(unittest.TestCase):
         mémoire renvoyait à un document de format qui n'a jamais existé
         (B-0016). Un chemin du dépôt cité entre accents graves existe."""
         # `memory/` décrit la mémoire de n'importe quel projet, pas celle-ci.
-        racines = ("docs", "moteur", "tests", "banc")
+        racines = ("docs", "engine", "tests", "bench")
         morts = []
         for p in sorted(MOTEUR.rglob("*.py")):
             arbre = ast.parse(p.read_text(encoding="utf-8"))

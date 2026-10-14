@@ -15,10 +15,11 @@ import unittest
 import unittest.mock
 from pathlib import Path
 
-from socle import cli, config, contexte, controles_memoire, installeur, memoire
-from socle.rapport import Rapport
+from socle import (cli, config, context as contexte, checks_memory as controles_memoire, installer as installeur,
+                   memory as memoire)
+from socle.report import Rapport
 
-MOTEUR = Path(__file__).resolve().parent.parent / "moteur"
+MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 
 
 def git(cwd, *args):
@@ -75,7 +76,7 @@ class TestApprobation(unittest.TestCase):
         """B-0034, P7 : Théo a approuvé D-0012 dans son terminal, et ne
         retrouvait pas ce numéro dans la conversation : l'état le liste à
         l'agent, qui le cite, jusqu'à son commit suivant."""
-        from socle import etat, humain
+        from socle import state as etat, human as humain
 
         git(self.racine, "commit", "-qm", "travail\n\nCo-Authored-By: Claude <noreply@anthropic.com>", "--allow-empty",
             "--no-verify")
@@ -122,7 +123,7 @@ class TestApprobation(unittest.TestCase):
                 unittest.mock.patch("sys.stdin", io.StringIO("")):
             code = cli.cmd_approve(argparse.Namespace(root=str(self.racine), files=None, keys=None, text="x"))
         self.assertEqual(code, 2)
-        self.assertIn("--oui", erreurs.getvalue())
+        self.assertIn("--yes", erreurs.getvalue())
         self.assertEqual(list((self.racine / "memory/requests").glob("D-*-approbation-humaine.md")), [])
 
     def test_la_demande_ecrite_passe_les_controles_de_la_memoire(self):
@@ -150,7 +151,7 @@ class TestApprobation(unittest.TestCase):
         """Le cas de B-0019 : une approbation pour le workflow et le hook, une
         autre pour le verrou ; le gabarit les fait se ressembler, et
         `docs.copie` refusait le commit."""
-        from socle import controles_docs
+        from socle import checks_docs as controles_docs
 
         self.assertEqual(self.approuver(".github/workflows/socle.yml")[0], 0)
         verrou = self.racine / ".socle/engine.lock"

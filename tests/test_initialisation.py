@@ -11,10 +11,10 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 
-from socle import config, initialisation, installeur, memoire, migrations
-from socle.modeles import gabarit
+from socle import config, initialization as initialisation, installer as installeur, memory as memoire, migrations
+from socle.templates import gabarit
 
-MOTEUR = Path(__file__).resolve().parent.parent / "moteur"
+MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 
 
 def depot(fichiers: dict[str, str]) -> Path:
@@ -84,7 +84,7 @@ class TestMemoirePriveeALInstallation(Base):
         self.assertIn("filtre « git-crypt » non configuré", sortie)
 
     def test_la_politique_du_gabarit_reecrite(self):
-        texte = installeur.politique_privee(gabarit("politique.toml"), "chiffre", None, False)
+        texte = installeur.politique_privee(gabarit("policy.toml"), "chiffre", None, False)
         self.assertIn('[private]\nmode = "chiffre"\nrequests = false\n', texte)
         self.assertNotIn("# [private]", texte)
 
@@ -106,13 +106,13 @@ class TestInstallationVerte(Base):
         code, sortie = installer(self.racine)
         self.assertRegex(sortie, r"… et \d+ autre\(s\) contrôle\(s\) sans rien à signaler")
         etapes = sortie.split("Et maintenant :")[1].strip().splitlines()
-        self.assertIn("socle init --cadrage", etapes[0])
+        self.assertIn("socle init --brief", etapes[0])
         self.assertIn("git commit", etapes[1])
         self.assertIn("ouvrir l'agent", etapes[2])
 
     def test_garde_fous_initiaux_sans_mutation(self):
         texte = installeur.garde_fous_initiaux(depot({"calc.py": "def f():\n    return 1\n"}),
-                                               (MOTEUR / "socle/adaptateurs/python.toml").read_text())
+                                               (MOTEUR / "socle/adapters/python.toml").read_text())
         self.assertNotIn("pending = true }", texte)
 
 
@@ -278,7 +278,7 @@ class TestCommandes(Base):
     def test_install_puis_init_par_la_ligne_de_commande(self):
         import argparse
 
-        from socle import cli, demandes
+        from socle import cli, requests as demandes
 
         self.racine = depot({"calc.py": "x = 1\n"})
         ns = argparse.Namespace(target=str(self.racine), adapter="auto", owner="@essai", adoption=False,

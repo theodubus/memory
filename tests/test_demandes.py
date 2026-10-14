@@ -2,9 +2,9 @@ import re
 import unittest
 from pathlib import Path
 
-from socle import config, demandes
+from socle import config, requests as demandes
 
-MODELE = (Path(__file__).resolve().parent.parent / "moteur/socle/modeles/demande.md").read_text(encoding="utf-8")
+MODELE = (Path(__file__).resolve().parent.parent / "engine/socle/templates/request.md").read_text(encoding="utf-8")
 
 CONFORME = """<!-- socle: couche=demandes zone=publique -->
 # D-0004 — Faut-il relever le plafond de mutants de search.rs de 3 à 5 ?

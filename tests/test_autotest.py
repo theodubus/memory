@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from socle import autotest, verification
+from socle import selftest as autotest, verification
 
 
 class TestAttribution(unittest.TestCase):
@@ -33,7 +33,7 @@ class TestCouverture(unittest.TestCase):
     injecté, et un garde-fou qu'on n'a jamais vu échouer ne prouve rien."""
 
     def test_chaque_controle_a_son_defaut_injecte_ou_sa_raison(self):
-        from socle import contexte
+        from socle import context as contexte
 
         couverts = {c.controle for c in autotest._cas()}
         self.assertEqual(sorted(set(contexte.charger_controles()) - couverts - set(autotest.SANS_DEFAUT)), [])

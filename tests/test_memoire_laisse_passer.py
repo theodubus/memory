@@ -12,10 +12,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import config, contexte, controles_memoire, installeur
-from socle.rapport import Rapport
+from socle import config, context as contexte, checks_memory as controles_memoire, installer as installeur
+from socle.report import Rapport
 
-MOTEUR = Path(__file__).resolve().parent.parent / "moteur"
+MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 ADR = ("<!-- socle: couche=decisions zone=publique -->\n# ADR-0001 — Une seule constante\n\n"
        "> statut : acceptée · date : 2026-10-10\n\n## Décision\n\n> Le facteur vit dans `FACTEUR`.\n\nRien d'autre.\n")
 JOURNAL = ("<!-- socle: couche=journal zone=publique -->\n# Journal — 2026-10\n\n"

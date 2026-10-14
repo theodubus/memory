@@ -7,10 +7,10 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 
-from socle import config, contexte, controles_memoire, installeur
-from socle.rapport import Rapport
+from socle import config, context as contexte, checks_memory as controles_memoire, installer as installeur
+from socle.report import Rapport
 
-MOTEUR = Path(__file__).resolve().parent.parent / "moteur"
+MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 CLAUDE = "# Projet\n\nLes instructions du projet, écrites avant le socle.\n"
 
 
@@ -160,7 +160,7 @@ class TestRelance(unittest.TestCase):
     def test_un_fichier_cache_n_entre_pas_dans_l_empreinte(self):
         """Un `.DS_Store` du clone source était copié et compté : un clone
         frais, sans lui, disait le moteur altéré."""
-        from socle import config, empreinte
+        from socle import config, fingerprint as empreinte
 
         source = Path(tempfile.mkdtemp(prefix="socle-source-"))
         self.addCleanup(shutil.rmtree, source, ignore_errors=True)

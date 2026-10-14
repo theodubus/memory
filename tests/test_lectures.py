@@ -6,8 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import config, contexte, controles_memoire, memoire
-from socle.rapport import Rapport
+from socle import config, context as contexte, checks_memory as controles_memoire, memory as memoire
+from socle.report import Rapport
 
 
 def git(cwd, *args):
@@ -129,7 +129,7 @@ class TestArchivage(unittest.TestCase):
     même entrée, déplacée, n'a pas à relire un index qui a changé depuis."""
 
     def setUp(self):
-        from socle import archivage
+        from socle import archive as archivage
 
         self.archivage = archivage
         self.racine = Path(tempfile.mkdtemp(prefix="socle-archivage-"))
@@ -387,7 +387,7 @@ class TestModuleLectures(TestLectureUnifiee):
     """Les fonctions de `socle.lectures`, appelées directement."""
 
     def test_les_fonctions(self):
-        from socle import lectures
+        from socle import readings as lectures
 
         lu0 = self.index()
         self.backlog.write_text(self.backlog.read_text() + self.sujet(2, f" · lu : backlog@{lu0}"))

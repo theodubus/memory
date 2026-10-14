@@ -7,7 +7,7 @@ import unittest
 import unittest.mock
 from pathlib import Path
 
-from socle import config, humain
+from socle import config, human as humain
 
 
 def git(cwd, *args):
@@ -90,7 +90,7 @@ class TestCiExigee(unittest.TestCase):
     n'exige rien ; c'est un ensemble de règles qui exige la CI."""
 
     def setUp(self):
-        from socle import etat
+        from socle import state as etat
 
         self.etat = etat
         self.dossier = Path(tempfile.mkdtemp(prefix="socle-protection-"))

@@ -11,7 +11,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import cli, config, hooks, humain, liens, memoire, rapport
+from socle import cli, config, hooks, human as humain, links as liens, memory as memoire, report as rapport
 
 DEPOT = "https://github.com/essai/memoire"
 
@@ -189,7 +189,7 @@ class TestRapportCourt(unittest.TestCase):
     def test_cmd_check_court(self):
         from unittest import mock
 
-        from socle import contexte
+        from socle import context as contexte
 
         ns = argparse.Namespace(stage="ci", base=None, rev=None, fast=False, only=None, court=True)
         with mock.patch.object(cli, "_projet"), mock.patch.object(cli, "_base", return_value=None), \
@@ -236,7 +236,7 @@ class TestChecks(unittest.TestCase):
         interpréteur neuf, où aucun autre module ne les a déjà chargés."""
         import sys
 
-        from socle import contexte
+        from socle import context as contexte
 
         moteur = Path(cli.__file__).resolve().parent.parent
         sortie = subprocess.run([sys.executable, "-c", "from socle.cli import cmd_checks; cmd_checks(None)"],

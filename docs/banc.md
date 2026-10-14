@@ -5,7 +5,7 @@ qu'on lui injecte. Le banc mesure autre chose : ce que fait un **agent
 réel** équipé du socle. Il joue les six scénarios du cadrage
 (`memory/archives/cadrage-2026-10-10.md`, section « Auto-tests du
 dispositif et banc d'évaluation ») avec Claude Code en mode non interactif,
-sur des projets jetables. Le script est `banc/banc.py`.
+sur des projets jetables. Le script est `bench/bench.py`.
 
 ## Les six scénarios
 
@@ -107,7 +107,7 @@ second échouer ; `tests/test_banc.py` le vérifie à chaque `verify`.
   de refuser). Sur un scénario fautif (s3, s4), ils disent quel étage a
   attrapé la faute ; sur un scénario sain, un refus est un faux positif
   probable, à lire ;
-- **la durée de `socle verify --rapide`** sur le projet obtenu ;
+- **la durée de `socle verify --fast`** sur le projet obtenu ;
 - **la taille de l'état injecté au démarrage** (`socle state`), en octets ;
 - **ce que la session a consommé**, en équivalent dollar calculé par
   Claude Code, et son nombre de tours ;
@@ -117,13 +117,13 @@ second échouer ; `tests/test_banc.py` le vérifie à chaque `verify`.
 ## Le lancer
 
 ```sh
-python3 banc/banc.py --agent simule                       # gratuit : éprouve les juges
-python3 banc/banc.py --agent simule --fautif              # chaque scénario doit échouer
-python3 banc/banc.py --agent claude --passages 3 --attendre 8                    # les six du cadrage
-python3 banc/banc.py --agent claude --scenarios fautes --passages 3 --attendre 8
-python3 banc/banc.py --agent claude --scenarios reprise --passages 3 --attendre 8
-python3 banc/banc.py --agent claude --reprendre banc/resultats/<horodatage>
-python3 banc/banc.py --agent claude --scenarios fautes --sans-hooks             # git et la CI seuls
+python3 bench/bench.py --agent simule                       # gratuit : éprouve les juges
+python3 bench/bench.py --agent simule --fautif              # chaque scénario doit échouer
+python3 bench/bench.py --agent claude --passages 3 --attendre 8                    # les six du cadrage
+python3 bench/bench.py --agent claude --scenarios fautes --passages 3 --attendre 8
+python3 bench/bench.py --agent claude --scenarios reprise --passages 3 --attendre 8
+python3 bench/bench.py --agent claude --reprendre bench/results/<horodatage>
+python3 bench/bench.py --agent claude --scenarios fautes --sans-hooks             # git et la CI seuls
 ```
 
 Chaque session est plafonnée par `--budget` (2 par défaut, en équivalent
@@ -142,12 +142,12 @@ préambule ne parle plus de hooks, le passage n'exige plus le hook de
 démarrage, et `hooks.trace`, qui échoue alors sur tout commit d'agent, ne
 compte pas seul comme une prise de la CI.
 
-Les résultats vont sous `banc/resultats/<horodatage>/` (ignoré par git) :
+Les résultats vont sous `bench/results/<horodatage>/` (ignoré par git) :
 `resultats.json`, écrit après chaque passage, et `rapport.md`. Pour chaque
 passage, `passages/<scénario>-p<n>/` garde de quoi le relire une fois le
 projet effacé : la transcription entière de la session, les commits de
 l'agent avec leur diff, la trace des hooks et les demandes posées. Le
-rapport et les résultats d'un banc réel se recopient sous `banc/rapports/`,
+rapport et les résultats d'un banc réel se recopient sous `bench/reports/`,
 et l'analyse va au journal.
 
 ## Les limites d'usage
@@ -173,16 +173,16 @@ zéro.
 
 ## Le banc des adaptateurs
 
-Un second banc, sans agent : `banc/adaptateurs.py` éprouve chaque
+Un second banc, sans agent : `bench/adapters.py` éprouve chaque
 adaptateur ajouté par B-0030 (JavaScript et TypeScript, Go, Java, Ruby,
 PHP) sur un projet jetable de son langage, avec ses vrais outils de tests et
 de mutation. Il vérifie que le projet sain passe, que chaque faute de test
 est refusée par le contrôle attendu, que la régression se rejoue sur le
 parent, et que le verdict de mutation casse sous le plafond mesuré. Ce qu'il
 éprouve, et ce qu'il a trouvé, est décrit avec les adaptateurs
-(`moteur/socle/adaptateurs/README.md`).
+(`engine/socle/adapters/README.md`).
 
 ```sh
-python3 banc/adaptateurs.py                          # les cinq langages
-python3 banc/adaptateurs.py --langages go --garder   # un seul, projet gardé
+python3 bench/adapters.py                          # les cinq langages
+python3 bench/adapters.py --langages go --garder   # un seul, projet gardé
 ```

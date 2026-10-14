@@ -12,10 +12,10 @@ import unittest
 import unittest.mock
 from pathlib import Path
 
-from socle import config, installeur, outils, verification
-from socle.rapport import Rapport
+from socle import config, installer as installeur, utils as outils, verification
+from socle.report import Rapport
 
-MOTEUR = Path(__file__).resolve().parent.parent / "moteur"
+MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 
 
 class TestEtapesRapides(unittest.TestCase):
@@ -86,7 +86,7 @@ class TestAutotestUneFois(unittest.TestCase):
         import os
         from unittest import mock
 
-        from socle import autotest, cli, contexte
+        from socle import selftest as autotest, cli, context as contexte
 
         vus = []
         with mock.patch.object(cli, "_projet", return_value=mock.Mock()), \
@@ -106,7 +106,7 @@ class TestAutotestUneFois(unittest.TestCase):
         import argparse
         from unittest import mock
 
-        from socle import cli, contexte
+        from socle import cli, context as contexte
 
         appels = []
         with mock.patch.object(cli, "_projet", return_value=mock.Mock()), \

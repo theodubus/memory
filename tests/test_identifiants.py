@@ -10,11 +10,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import cli, config, contexte, controles_memoire, identifiants, installeur, memoire
-from socle.rapport import Rapport
+from socle import (cli, config, context as contexte, checks_memory as controles_memoire, identifiers as identifiants,
+                   installer as installeur, memory as memoire)
+from socle.report import Rapport
 from tests.test_bascule import P, git
 
-MOTEUR = Path(__file__).resolve().parent.parent / "moteur"
+MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 SUJET = "\n## {id} — {titre}\n\n> statut : ouvert · origine : fichier:calc.py\n"
 
 

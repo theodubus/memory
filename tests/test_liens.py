@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import config, liens
+from socle import config, links as liens
 
 DEPOT = "https://github.com/essai/calc"
 
@@ -38,7 +38,7 @@ class TestAdresses(unittest.TestCase):
     def test_une_seule_ancre_pour_les_liens_et_leur_controle(self):
         # B-0017 : deux copies divergeaient. L'une gardait les soulignés du
         # gras, que GitHub ne rend pas ; l'autre perdait l'accent décomposé.
-        from socle import controles_memoire
+        from socle import checks_memory as controles_memoire
 
         self.assertEqual(liens.ancre("B-0017 — __Deux__ **fonctions**"), "b-0017--deux-fonctions")
         self.assertEqual(liens.ancre("Cafe\u0301 noir"), "cafe\u0301-noir")
@@ -143,7 +143,7 @@ class TestDemandeLue(unittest.TestCase):
         self.projet = config.Projet.charger(self.racine)
 
     def illisible(self):
-        from socle import cli, demandes
+        from socle import cli, requests as demandes
 
         d = next(x for x in demandes.toutes(self.racine) if x.id == "D-0001")
         return cli.demande_illisible(self.projet, d)

@@ -74,26 +74,26 @@ spec_paths = ["memory/decisions/**"]
 
 [[docmap]]
 # Le format de la mémoire : son lecteur et sa spécification changent ensemble.
-code = ["moteur/socle/memoire.py", "moteur/socle/demandes.py", "moteur/socle/archivage.py"]
-docs = ["moteur/socle/FORMAT.md"]
+code = ["engine/socle/memory.py", "engine/socle/requests.py", "engine/socle/archive.py"]
+docs = ["engine/socle/FORMAT.md"]
 
 [[docmap]]
 # Les contrôles, les hooks, l'installeur et les adaptateurs : l'architecture
 # dit où chaque exigence du cadrage est appliquée.
 code = [
-  "moteur/socle/controles_*.py", "moteur/socle/hooks.py", "moteur/socle/contexte.py",
-  "moteur/socle/verification.py", "moteur/socle/mutation.py", "moteur/socle/etat.py",
-  "moteur/socle/installeur.py", "moteur/socle/empreinte.py", "moteur/socle/autotest.py",
-  "moteur/socle/tests_lecture.py", "moteur/socle/adaptateurs/*.toml",
+  "engine/socle/checks_*.py", "engine/socle/hooks.py", "engine/socle/context.py",
+  "engine/socle/verification.py", "engine/socle/mutation.py", "engine/socle/state.py",
+  "engine/socle/installer.py", "engine/socle/fingerprint.py", "engine/socle/selftest.py",
+  "engine/socle/tests_reader.py", "engine/socle/adapters/*.toml",
 ]
 docs = ["docs/architecture.md"]
 
 [[docmap]]
 # Les gabarits posés dans les projets : la section du socle d'AGENTS.md les décrit.
-code = ["moteur/socle/modeles/*.toml", "moteur/socle/modeles/*.yml", "moteur/socle/modeles/*.json", "moteur/socle/modeles/git-hooks/*"]
-docs = ["moteur/socle/modeles/AGENTS.md", "docs/architecture.md"]
+code = ["engine/socle/templates/*.toml", "engine/socle/templates/*.yml", "engine/socle/templates/*.json", "engine/socle/templates/git-hooks/*"]
+docs = ["engine/socle/templates/AGENTS.md", "docs/architecture.md"]
 
 [[values]]
 name = "version"
-file = "moteur/socle/__init__.py"
+file = "engine/socle/__init__.py"
 regex = 'VERSION = "([^"]+)"'

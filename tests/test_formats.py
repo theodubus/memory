@@ -12,10 +12,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import config, contexte, controles_cliquet, controles_memoire, demandes, installeur, memoire, migrations, prive
-from socle.rapport import Rapport
+from socle import (config, context as contexte, checks_ratchet as controles_cliquet, checks_memory as controles_memoire,
+                   requests as demandes, installer as installeur, memory as memoire, migrations, private as prive)
+from socle.report import Rapport
 
-MOTEUR = Path(__file__).resolve().parent.parent / "moteur"
+MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 
 
 def git(cwd, *args):

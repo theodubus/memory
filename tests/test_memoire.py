@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from socle import memoire, outils
+from socle import memory as memoire, utils as outils
 
 CANONIQUE = """<!-- socle: couche=canonique zone=publique -->
 # Mémoire canonique

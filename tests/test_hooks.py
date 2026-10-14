@@ -177,12 +177,12 @@ class TestTraceDesRefusDeFinDeTourEtDeGit(unittest.TestCase):
         import tempfile
         from pathlib import Path
 
-        from socle import installeur
+        from socle import installer as installeur
 
         cls.racine = Path(tempfile.mkdtemp(prefix="socle-trace-"))
         subprocess.run(["git", "init", "-q", "-b", "main"], cwd=cls.racine, check=True)
         with contextlib.redirect_stdout(io.StringIO()):
-            installeur.installer(cls.racine, "python", "@essai", source=Path(__file__).resolve().parent.parent / "moteur")
+            installeur.installer(cls.racine, "python", "@essai", source=Path(__file__).resolve().parent.parent / "engine")
         cls.canonique = cls.racine / "memory/canonical.md"
         cls.sain = cls.canonique.read_text()
 

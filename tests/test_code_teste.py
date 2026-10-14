@@ -5,10 +5,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import config, contexte, controles_tests, outils
-from socle.rapport import Rapport
+from socle import config, context as contexte, checks_tests as controles_tests, utils as outils
+from socle.report import Rapport
 
-ADAPTATEUR = Path(__file__).resolve().parent.parent / "moteur/socle/adaptateurs/python.toml"
+ADAPTATEUR = Path(__file__).resolve().parent.parent / "engine/socle/adapters/python.toml"
 
 CALC = """FACTEUR = 2
 

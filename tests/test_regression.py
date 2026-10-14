@@ -13,10 +13,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import config, contexte, controles_tests, installeur
-from socle.rapport import Rapport
+from socle import config, context as contexte, checks_tests as controles_tests, installer as installeur
+from socle.report import Rapport
 
-MOTEUR = Path(__file__).resolve().parent.parent / "moteur"
+MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 CALC = """def double(x):
     return 2 * x
 

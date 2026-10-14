@@ -10,7 +10,7 @@ sans entrer dans le code, `docs/socle.md`. La liste exacte des contrôles se dé
 
 | Pièce | Où, dans un projet | Qui la modifie |
 | --- | --- | --- |
-| Moteur immuable | dans un projet, .socle/engine/socle/ (ici, la source : `moteur/socle/`), lanceur `.socle/socle`, verrou .socle/engine.lock | l'installeur seul ; la CI vérifie l'empreinte |
+| Moteur immuable | dans un projet, .socle/engine/socle/ (ici, la source : `engine/socle/`), lanceur `.socle/socle`, verrou .socle/engine.lock | l'installeur seul ; la CI vérifie l'empreinte |
 | Fichiers du projet | memory/, .socle/policy.toml, .socle/adapter.toml, .socle/guardrails.toml | le projet, selon la politique |
 | Étages d'application | `.claude/settings.json`, `.socle/git-hooks/`, `.github/workflows/socle.yml` (et le balayage de mutation hebdomadaire, quand l'adaptateur en déclare un), `.github/CODEOWNERS` | l'installeur ; fichiers protégés |
 
@@ -33,37 +33,37 @@ comparent le même fichier sous ses deux noms.
 
 | Module | Rôle |
 | --- | --- |
-| `cli.py` | les commandes, rangées par public dans l'aide (l'humain, l'agent, les hooks et la CI) : `aide`, `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `prive`, `relu`, `answer`, `approve`, `install`, `init`, `selftest`, `fingerprint`, `mutation-verdict`, `mutation-run`, `renumber`, `archive`, `checks` ; sans commande, l'aide de l'humain |
-| `AIDE.md` | le guide de l'humain, source unique : ses gestes, chacun avec sa commande ; `socle aide` l'affiche |
-| `memoire.py` | lecture des cinq couches : en-têtes, entrées, identifiants, métadonnées, références |
-| `demandes.py` | le contrat des demandes, son lint, les réponses humaines gelées |
-| `contexte.py` | le registre des contrôles, leurs étages, la base de comparaison, le mode adoption |
-| `lectures.py` | la lecture prouvée, une seule fonction pour le contrôle et le hook (ADR-0023) |
-| `controles_memoire.py` | format, références, fuite d'identifiants privés (blocs de code et archives compris), preuves, backlog, budgets, péremption, retard, ajout seul (la mémoire privée relue à la base, B-0044, L3), demandes, source unique des instructions |
-| `controles_docs.py` | outillage documenté, valeurs liées, correspondance code ↔ doc, refus des copies |
-| `controles_tests.py` | capacités de l'adaptateur, tests creux, valeurs attendues, régression rejouée sur le parent, couverture de mutation, code nouveau nommé par un test |
-| `controles_cliquet.py` | cliquet des garde-fous, fichiers protégés (un renommage compte ses deux chemins ; le déplacement d'une migration de format se juge sous le nom nouveau), empreinte du moteur, configuration et trace des hooks |
-| `tests_lecture.py` | extraction des fonctions de test selon l'adaptateur (blocs à accolades, indentés ou fermés par `end`) ; transitivité des assertions |
+| `cli.py` | les commandes, rangées par public dans l'aide (l'humain, l'agent, les hooks et la CI) : `help`, `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `private`, `reviewed`, `answer`, `approve`, `install`, `init`, `selftest`, `fingerprint`, `mutation-verdict`, `mutation-run`, `renumber`, `archive`, `checks` ; sans commande, l'aide de l'humain ; les anciens noms français (`aide`, `prive`, `relu`, `--oui`…) restent acceptés une version, lus sous leur nom anglais par la ligne de commande comme par le hook (ADR-0027) |
+| `HELP.md` | le guide de l'humain, source unique : ses gestes, chacun avec sa commande ; `socle help` l'affiche |
+| `memory.py` | lecture des cinq couches : en-têtes, entrées, identifiants, métadonnées, références |
+| `requests.py` | le contrat des demandes, son lint, les réponses humaines gelées |
+| `context.py` | le registre des contrôles, leurs étages, la base de comparaison, le mode adoption |
+| `readings.py` | la lecture prouvée, une seule fonction pour le contrôle et le hook (ADR-0023) |
+| `checks_memory.py` | format, références (un chemin cité par une couche gelée vaut s'il a existé dans l'historique, ADR-0027), fuite d'identifiants privés (blocs de code et archives compris), preuves, backlog, budgets, péremption, retard, ajout seul (la mémoire privée relue à la base, B-0044, L3), demandes, source unique des instructions |
+| `checks_docs.py` | outillage documenté, valeurs liées, correspondance code ↔ doc, refus des copies |
+| `checks_tests.py` | capacités de l'adaptateur, tests creux, valeurs attendues, régression rejouée sur le parent, couverture de mutation, code nouveau nommé par un test (un fichier renommé se compare à son ancien nom) |
+| `checks_ratchet.py` | cliquet des garde-fous (une correspondance ou une valeur liée qui suit ses fichiers renommés n'assouplit rien, ADR-0027), fichiers protégés (un renommage compte ses deux chemins ; le déplacement d'une migration de format se juge sous le nom nouveau), empreinte du moteur, configuration et trace des hooks |
+| `tests_reader.py` | extraction des fonctions de test selon l'adaptateur (blocs à accolades, indentés ou fermés par `end`) ; transitivité des assertions |
 | `hooks.py` | les points d'entrée des hooks de l'agent et de git, la trace, dont chaque refus et l'étage qui l'a prononcé ; chaque commande shell de l'agent jugée commande simple par commande simple : écriture d'un fichier protégé ou d'un réglage de Claude Code, commande réservée à l'humain, push forcé ou vers la branche par défaut, publication, suppression distante (B-0044, L2) |
-| `commandes.py` | le découpage d'une commande shell en commandes simples, par `shlex` : séparateurs, redirections, `cd` suivi, `bash -c` et `eval` ouverts, préfixes (`env`, `sudo`, `python -m`) retirés ; le corps d'un heredoc n'est que du texte |
-| `etat.py` | l'état dérivé ; si GitHub exige la CI du socle avant de fusionner sur la branche par défaut (ensemble de règles ou protection classique, lus par `gh`), sinon une action de l'humain avec le lien de la page (B-0044, L2, R1) |
-| `humain.py` | ce qui revient à l'humain ; ce qu'il a écrit lui-même depuis le dernier commit de l'agent (approbations, réponses de son terminal), que l'état liste pour que l'agent le cite ; la lecture du dernier message de l'agent pour le récap |
-| `prive.py` | la mémoire privée : modes compagnon et chiffré, verrou, accès, couches privées par défaut, contrôles `prive.*` ; un terme privé cherché sous ses variantes d'écriture, dans le contenu, les noms de fichier et de branche ; rien d'écrit sans accès ; la mémoire privée lue à une révision |
-| `bascule.py` | la bascule d'une entrée publique dans la mémoire privée (`socle prive basculer`) |
-| `identifiants.py` | les identifiants que deux branches prennent ensemble : ceux des branches distantes, la collision avec la branche par défaut, la renumérotation (ADR-0026) |
-| `prive_installation.py` | la mise en place du dépôt compagnon, réservée à l'humain (`socle prive installer`) |
-| `liens.py` | le permalien d'un fichier ou d'une entrée ; les liens d'un message que l'humain ne pourra pas suivre |
+| `commands.py` | le découpage d'une commande shell en commandes simples, par `shlex` : séparateurs, redirections, `cd` suivi, `bash -c` et `eval` ouverts, préfixes (`env`, `sudo`, `python -m`) retirés ; le corps d'un heredoc n'est que du texte |
+| `state.py` | l'état dérivé ; si GitHub exige la CI du socle avant de fusionner sur la branche par défaut (ensemble de règles ou protection classique, lus par `gh`), sinon une action de l'humain avec le lien de la page (B-0044, L2, R1) |
+| `human.py` | ce qui revient à l'humain ; ce qu'il a écrit lui-même depuis le dernier commit de l'agent (approbations, réponses de son terminal), que l'état liste pour que l'agent le cite ; la lecture du dernier message de l'agent pour le récap |
+| `private.py` | la mémoire privée : modes compagnon et chiffré, verrou, accès, couches privées par défaut, contrôles `prive.*` ; un terme privé cherché sous ses variantes d'écriture, dans le contenu, les noms de fichier et de branche ; rien d'écrit sans accès ; la mémoire privée lue à une révision |
+| `move.py` | la bascule d'une entrée publique dans la mémoire privée (`socle private move`) |
+| `identifiers.py` | les identifiants que deux branches prennent ensemble : ceux des branches distantes, la collision avec la branche par défaut, la renumérotation (ADR-0026) |
+| `private_setup.py` | la mise en place du dépôt compagnon, réservée à l'humain (`socle private install`) |
+| `links.py` | le permalien d'un fichier ou d'une entrée ; les liens d'un message que l'humain ne pourra pas suivre |
 | `verification.py` | le contrat `verify` : les capacités de l'adaptateur |
-| `mutation.py` | le balayage de l'adaptateur, module par module quand sa commande en nomme un, puis le verdict contre les plafonds ; un lecteur par outil (cargo-mutants, mutmut, Stryker, gremlins, PIT, mutant, Infection) ; un module « à mesurer » reçoit son plafond mesuré (`--poser`) ; la vivacité du workflow planifié, lue par l'API de GitHub |
-| `empreinte.py` | l'empreinte du moteur |
-| `installeur.py` | installation, mise à jour, adoption ; adaptateur déduit du dépôt ; mémoire privée posée à l'installation, ou ajoutée à un projet installé ; diff de politique à la mise à jour ; le code existant entre « à mesurer » au cliquet de mutation ; un audit court, puis « Et maintenant », les étapes de l'humain avec leur commande ; ne s'installe qu'à la racine du dépôt ; relancé, il ne perd rien : le moteur reste en place s'il est lancé depuis le projet, un CLAUDE.md propre au projet passe dans AGENTS.md, une seconde adoption complète sa liste, et ce que le .gitignore du projet écarterait reçoit une exception (B-0044, L1) ; le format de la mémoire en paramètre, l'actuel par défaut, que fixe un test qui porte sur un format antérieur, et la ligne du backlog des instructions et son plafond qui le suivent (ADR-0025) |
-| `langue.py` | la langue de la mémoire : le vocabulaire du format par langue, ramené à des clés internes à la lecture, et celui du projet à l'écriture |
+| `mutation.py` | le balayage de l'adaptateur, module par module quand sa commande en nomme un, puis le verdict contre les plafonds ; un lecteur par outil (cargo-mutants, mutmut, Stryker, gremlins, PIT, mutant, Infection) ; un module « à mesurer » reçoit son plafond mesuré (`--record`) ; la vivacité du workflow planifié, lue par l'API de GitHub |
+| `fingerprint.py` | l'empreinte du moteur |
+| `installer.py` | installation, mise à jour, adoption ; adaptateur déduit du dépôt ; mémoire privée posée à l'installation, ou ajoutée à un projet installé ; diff de politique à la mise à jour ; le code existant entre « à mesurer » au cliquet de mutation ; un audit court, puis « Et maintenant », les étapes de l'humain avec leur commande ; ne s'installe qu'à la racine du dépôt ; relancé, il ne perd rien : le moteur reste en place s'il est lancé depuis le projet, un CLAUDE.md propre au projet passe dans AGENTS.md, une seconde adoption complète sa liste, et ce que le .gitignore du projet écarterait reçoit une exception (B-0044, L1) ; le format de la mémoire en paramètre, l'actuel par défaut, que fixe un test qui porte sur un format antérieur, et la ligne du backlog des instructions et son plafond qui le suivent (ADR-0025) |
+| `language.py` | la langue de la mémoire : le vocabulaire du format par langue, ramené à des clés internes à la lecture, et celui du projet à l'écriture |
 | `config.py` | la configuration du projet et les deux tables de chemins (formats 1 et 2), choisie par projet et par révision |
 | `migrations.py` | les migrations de format, appliquées dans l'ordre à la mise à jour ; du format 1 au 2, le renommage des chemins |
-| `initialisation.py` | les trois entrées d'initialisation : document archivé tel quel, audit du dépôt en lecture seule, questions de départ |
-| `autotest.py` | l'injection de défauts dans un projet jetable : chaque contrôle du registre et chaque refus reconnu en ont au moins un (un test l'exige, ou une exemption écrite), une mutation factice exerce le cliquet de mutation, et des témoins vérifient qu'un changement validé par l'humain passe (B-0044, L4) ; un sujet s'y ajoute dans l'un ou l'autre format du backlog (ADR-0025) |
-| `adaptateurs/` | Rust (extrait de chess), Python sous `unittest`, Python sous `pytest` avec `mutmut` (jalon 6), JavaScript et TypeScript, Go, Java, Ruby et PHP (B-0030, éprouvés par `banc/adaptateurs.py`), maintenus ; ce qu'est un adaptateur : `moteur/socle/adaptateurs/README.md` |
-| `modeles/` | les gabarits posés par l'installeur |
+| `initialization.py` | les trois entrées d'initialisation : document archivé tel quel, audit du dépôt en lecture seule, questions de départ |
+| `selftest.py` | l'injection de défauts dans un projet jetable : chaque contrôle du registre et chaque refus reconnu en ont au moins un (un test l'exige, ou une exemption écrite), une mutation factice exerce le cliquet de mutation, et des témoins vérifient qu'un changement validé par l'humain passe (B-0044, L4) ; un sujet s'y ajoute dans l'un ou l'autre format du backlog (ADR-0025) |
+| `adapters/` | Rust (extrait de chess), Python sous `unittest`, Python sous `pytest` avec `mutmut` (jalon 6), JavaScript et TypeScript, Go, Java, Ruby et PHP (B-0030, éprouvés par `bench/adapters.py`), maintenus ; ce qu'est un adaptateur : `engine/socle/adapters/README.md` |
+| `templates/` | les gabarits posés par l'installeur |
 
 ## Exigences du cadrage et contrôles qui les appliquent
 
@@ -78,16 +78,16 @@ comparent le même fichier sous ses deux noms.
 | Journal et décisions en ajout seul (une citation d'une décision comprise, un ajout au journal sur une ligne nouvelle) ; fait jamais effacé ; une validation se reconnaît à son identifiant, migration comprise | `memoire.ajout-seul` | agent, git, CI |
 | Mémoire en retard sur le code : fin de tour refusée | `memoire.retard` | agent |
 | Le privé ne fuit pas dans le public (identifiants) | `memoire.prive` | agent, git, CI |
-| Mémoire privée en dépôt compagnon : rien de privé dans le dépôt public, verrou à jour | `prive.verrou`, `socle prive verrouiller`, `socle prive extraire` | agent, git, CI |
+| Mémoire privée en dépôt compagnon : rien de privé dans le dépôt public, verrou à jour | `prive.verrou`, `socle private lock`, `socle private extract` | agent, git, CI |
 | Mémoire privée chiffrée : rien de commité en clair, filtre en place | `prive.chiffre` | agent, git, CI |
 | Mémoire privée indisponible : signal explicite, jamais en silence | `prive.acces`, état dérivé au démarrage | agent, git, CI |
-| Liste des termes privés : ajout libre, retrait sur validation humaine (D-0007) | `prive.termes`, `socle prive terme` | agent, git, CI |
+| Liste des termes privés : ajout libre, retrait sur validation humaine (D-0007) | `prive.termes`, `socle private term` | agent, git, CI |
 | Aucun terme privé ni identifiant privé dans ce qui se publie (D-0008), un terme sous ses variantes (`acme_corp`, `AcmeCorp`, coupé en fin de ligne) | `prive.fuites` (contenus, noms des fichiers nouveaux, nom de la branche en CI) ; hook `pre-tool-use` (écritures et noms de fichier, `git commit`, `gh` et les fichiers qu'ils publient par `--body-file` ou `-F`, branches créées ou poussées, outils `mcp__`) ; hook git `commit-msg` ; hook git `pre-push` (nom de la branche distante) | agent, git, CI |
-| Le cadrage, d'où viennent les termes privés, archivé dans la zone privée quand elle existe | `socle init --cadrage` | — |
-| Relecture humaine avant publication, au choix de l'humain : aucune, à chaque push, par lots (D-0006) | hook `pre-tool-use` sur `git push`, hook git `pre-push`, `socle relu` | agent, git |
+| Le cadrage, d'où viennent les termes privés, archivé dans la zone privée quand elle existe | `socle init --brief` | — |
+| Relecture humaine avant publication, au choix de l'humain : aucune, à chaque push, par lots (D-0006) | hook `pre-tool-use` sur `git push`, hook git `pre-push`, `socle reviewed` | agent, git |
 | Demandes et réponses privées, sur décision de l'humain (`[private] requests`) | `socle new`, réponses privées protégées comme les publiques | agent, git, CI |
-| Le privé choisi couche par couche (`[private] layers`) et entrée par entrée ; une entrée publique existante basculée en privé sans casser un renvoi ni rien effacer | `socle new --private/--public`, `socle prive basculer` ; `memoire.format` (l'entrée publique ne garde que son identifiant), `memoire.ajout-seul` (une copie privée reprend son texte) | agent, git, CI |
-| Journaux de CI sans contenu privé | masquage des constats de la zone privée à l'étage CI ; `socle prive recuperer` n'écrit ni l'adresse ni la sortie de git | CI |
+| Le privé choisi couche par couche (`[private] layers`) et entrée par entrée ; une entrée publique existante basculée en privé sans casser un renvoi ni rien effacer | `socle new --private/--public`, `socle private move` ; `memoire.format` (l'entrée publique ne garde que son identifiant), `memoire.ajout-seul` (une copie privée reprend son texte) | agent, git, CI |
+| Journaux de CI sans contenu privé | masquage des constats de la zone privée à l'étage CI ; `socle private recover` n'écrit ni l'adresse ni la sortie de git | CI |
 | Contrat des demandes : huit champs (les sept du cadrage et « Où regarder », avec un lien vers chaque document à lire), contexte d'au moins soixante mots, aucun identifiant nu | `demandes.contrat`, hook `pre-tool-use` | agent, git, CI |
 | Décision archivée avec le texte exact | `demandes.reponses` (empreinte de la demande) | agent, git, CI |
 | Un identifiant ne se définit qu'une fois, même entre deux branches : `socle new` saute ceux des branches distantes ; celui que la branche par défaut a pris aussi depuis la divergence est dit avant la fusion, et se renumérote (ADR-0026) | `socle new`, `memoire.collisions`, `socle renumber` | agent, git, CI |
@@ -102,7 +102,7 @@ comparent le même fichier sous ses deux noms.
 | Test supprimé, valeur attendue changée ; à la fin du tour, en attente d'une demande poussée qui nomme le test, un avertissement (B-0033) ; une assertion se lit entière, sur toutes ses lignes et normalisée hors des littéraux, et des tests homonymes s'apparient dans l'ordre du fichier ; une valeur changée hors des assertions (variable, constante, aide) est dite, pas refusée (ADR-0024) | `tests.attendus` | agent, git, CI |
 | Correctif avec test de régression rejoué sur le parent, où il échoue sans y manquer de se charger (`load_error`) ; un test écrit dans le module qu'il teste (Rust) s'y rejoue avec ses seules lignes de test, le code du parent gardé (B-0051) | `tests.regression` | CI |
 | Code nouveau ou modifié testé : une fonction publique est nommée par un test, hors de ses commentaires, ou dispensée nommément avec sa raison (`Dispense-test:`) | `tests.code-teste` ; au commit, un avertissement du hook `commit-msg`, le premier qui voit la dispense (B-0034, P9) | agent, CI ; avertissement au commit |
-| Mutation : plafond par module, cliquet ; un module pas encore balayé y entre « à mesurer » (un avertissement), et le premier verdict pose son plafond, relu après écriture (un plafond qu'il ne sait pas écrire est dit) | `mutation.couverture`, `socle mutation-verdict --poser` | agent, git, CI ; verdict hebdomadaire |
+| Mutation : plafond par module, cliquet ; un module pas encore balayé y entre « à mesurer » (un avertissement), et le premier verdict pose son plafond, relu après écriture (un plafond qu'il ne sait pas écrire est dit) | `mutation.couverture`, `socle mutation-verdict --record` | agent, git, CI ; verdict hebdomadaire |
 | Le balayage tourne : un workflow hebdomadaire, posé par l'installeur sauf si le projet en lance déjà un, lance la commande de l'adaptateur (module par module, chacun dans son dossier `{output}`), rend le verdict et ouvre une issue quand le cliquet casse ; un workflow endormi par GitHub, ou qui ne tourne plus depuis quinze jours, casse la CI et revient à l'humain dans l'état (B-0005) | `socle mutation-run`, `mutation.vivante`, la ligne `mutation` de l'état | CI ; chaque semaine |
 | Rien ne s'affaiblit en silence | `cliquet.garde-fous`, `protege.fichiers` | agent, git, CI |
 | Moteur et politique non altérés | `moteur.empreinte`, `protege.fichiers` | agent, git, CI |
@@ -112,8 +112,8 @@ comparent le même fichier sous ses deux noms.
 | Anti-fabrication | hook `pre-tool-use` : SHA complété de tête, identifiant ou commit inventé | agent |
 | Échec répété : arrêt et escalade | hook `stop`, `max_attempts` de la politique | agent |
 | État dérivé au démarrage et après compactage, avec l'index des décisions | `socle state`, hook `session-start` ; `socle show <ID>` pour lire une entrée à la demande | agent |
-| Ce qui revient à l'humain et la suite, dits à chaque fin d'intervention qui a agi (lignes « Pour toi : » et « Ensuite : ») | `humain.py` (demandes en attente, backlog `pour : humain`, branches distantes supprimables, prochaines étapes du chantier actif), hook `stop` | agent |
-| Des liens que l'humain peut suivre : permaliens au commit poussé, aucun lien relatif ni chemin inexistant, chaque demande en attente avec son lien | `liens.py`, `socle url`, hook `stop` | agent |
+| Ce qui revient à l'humain et la suite, dits à chaque fin d'intervention qui a agi (lignes « Pour toi : » et « Ensuite : ») | `human.py` (demandes en attente, backlog `pour : humain`, branches distantes supprimables, prochaines étapes du chantier actif), hook `stop` | agent |
+| Des liens que l'humain peut suivre : permaliens au commit poussé, aucun lien relatif ni chemin inexistant, chaque demande en attente avec son lien | `links.py`, `socle url`, hook `stop` | agent |
 | Lire avant de décider, prouvé par l'empreinte de la version lue | `memoire.lectures` ; hook `pre-tool-use` (empreinte périmée ou inventée) ; `socle show`, `socle new` | agent, git, CI |
 | Installation en une commande, adaptateur déduit du dépôt, mémoire privée et langue de la mémoire choisies à l'installation | `socle install --adapter auto [--private …] [--language en]` | — |
 | Mise à jour : moteur remplacé, formats migrés, diff de politique montré pour validation humaine | `socle install` relancé, `migrations.py` ; en CI, base lue sous les noms de la tête | — |
@@ -154,7 +154,7 @@ comparent le même fichier sous ses deux noms.
   change est un assouplissement jusqu'à preuve du contraire. Une doc
   ajoutée à une correspondance code ↔ doc assouplit (l'exigence est plus
   facile à satisfaire) ; un plafond de mutation qui apparaît vient de la
-  mesure : nul, ou avec la raison qu'écrit `mutation-verdict --poser`, au
+  mesure : nul, ou avec la raison qu'écrit `mutation-verdict --record`, au
   même compte (B-0044, L2).
 - **Lecture prouvée** (`ADR-0008`, `ADR-0023`) : une entrée citée
   `ID@empreinte` l'a été dans cette version, l'actuelle ou celle du commit
@@ -166,8 +166,8 @@ comparent le même fichier sous ses deux noms.
   elle a paru pour la première fois, dans l'entrée qui la porte.
 - **Une vérification réussie se mémorise** (L6) : les étapes rapides de
   l'adaptateur ne se relancent pas sur un arbre où elles ont déjà toutes
-  passé, que ce soit la vérification que l'agent lance (`verify --rapide`,
-  `--refaire` pour forcer), la fin de tour ou le hook avant push. L'empreinte
+  passé, que ce soit la vérification que l'agent lance (`verify --fast`,
+  `--redo` pour forcer), la fin de tour ou le hook avant push. L'empreinte
   de l'arbre est HEAD, le diff et le contenu des fichiers non suivis. La
   marque est locale, donc falsifiable : la CI, elle, refait tout. Le
   compteur des échecs de la fin de tour (politique, point 7) appartient à sa
@@ -213,6 +213,12 @@ comparent le même fichier sous ses deux noms.
   (`ADR-0020`) : le moteur ramène chaque mot-clé à une clé interne, une
   mémoire existante n'a rien à réécrire, et les messages du moteur restent
   en français.
+- **Ce qu'on tape et ce qu'on voit dans l'arborescence est en anglais, le
+  code se lit en français** (`ADR-0027`) : commandes, options, dossiers,
+  modules et gabarits portent des noms anglais, les anciens noms de
+  commandes et d'options restent acceptés une version, un module s'importe
+  sous son nom français ; les noms des tests et de la documentation ne
+  changent pas, et la mémoire gelée garde les chemins d'avant.
 - **Une tautologie voulue passe avec sa raison écrite** (`socle: voulu —`),
   validé par Théo (`D-0004`).
 

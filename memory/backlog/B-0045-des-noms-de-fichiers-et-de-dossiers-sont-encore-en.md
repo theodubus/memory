@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0045 — Des noms de fichiers et de dossiers sont encore en français
 
-> statut : ouvert · origine : J-2026-10-12-F · lu : backlog@19253d8c
+> statut : fait · origine : J-2026-10-12-F · lu : backlog@19253d8c · ref : J-2026-10-14-A
 
 Signalé par Théo, texte exact : « Certains noms fichiers/dossier de base
 sont encore en français-> backlog à corriger ». La migration du format 2

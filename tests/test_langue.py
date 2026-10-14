@@ -11,11 +11,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import (archivage, cli, config, contexte, controles_memoire, demandes, humain, installeur, langue,
-                   memoire)
-from socle.rapport import Rapport
+from socle import (archive as archivage, cli, config, context as contexte, checks_memory as controles_memoire,
+                   requests as demandes, human as humain, installer as installeur, language as langue,
+                   memory as memoire)
+from socle.report import Rapport
 
-MOTEUR = Path(__file__).resolve().parent.parent / "moteur"
+MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 DEMANDE = """<!-- socle: layer=requests zone=public -->
 # D-0001 — Choose the rounding mode of the calculator
 
@@ -98,7 +99,7 @@ class TestVocabulaire(unittest.TestCase):
     def test_les_trailers_et_la_tautologie_voulue_en_anglais(self):
         message = "Add triple\n\nWaive-test: triple — called by the interface, tested end to end\nFixes: B-0001"
         self.assertEqual(set(langue.trailers(message)), {"dispense-test", "corrige"})
-        from socle.controles_tests import VOULU
+        from socle.checks_tests import VOULU
         self.assertTrue(VOULU.search("# socle: intended — double is deterministic"))
 
     def test_ce_que_le_moteur_ecrit_dans_chaque_langue(self):
@@ -116,9 +117,9 @@ class TestVocabulaire(unittest.TestCase):
                          {"statut": "open", "origine": "J-2026-10-11-A", "pour": "human"})
 
     def test_la_politique_d_un_projet_neuf_dit_sa_langue(self):
-        from socle.modeles import gabarit
+        from socle.templates import gabarit
 
-        texte = installeur.politique_langue(gabarit("politique.toml"), "en")
+        texte = installeur.politique_langue(gabarit("policy.toml"), "en")
         self.assertIn('[memory]\nlanguage = "en"', texte)
         self.assertNotIn('# language = "fr"', texte)
 
@@ -231,7 +232,7 @@ class TestProjetAnglais(ProjetAnglais):
         self.assertEqual(humain.recap_manquant(self.projet, "Done."), ["For you:", "Next:"])
 
     def test_une_dispense_de_doc_en_anglais(self):
-        from socle import controles_docs
+        from socle import checks_docs as controles_docs
 
         (self.racine / "calc.py").write_text("def double(x):\n    return 2 * x  # inchangé\n")
         git(self.racine, "add", "-A")

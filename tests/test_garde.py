@@ -12,9 +12,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import commandes, config, hooks, installeur
+from socle import commands as commandes, config, hooks, installer as installeur
 
-MOTEUR = Path(__file__).resolve().parent.parent / "moteur"
+MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 # En morceaux : ce fichier ne lance rien, il ne fait que citer.
 L = ".socle/" + "socle"
 G = "gi" + "t"

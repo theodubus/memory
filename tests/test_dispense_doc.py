@@ -11,10 +11,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import config, contexte, controles_docs, installeur
-from socle.rapport import Rapport
+from socle import config, context as contexte, checks_docs as controles_docs, installer as installeur
+from socle.report import Rapport
 
-MOTEUR = Path(__file__).resolve().parent.parent / "moteur"
+MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 DISPENSE = "\n\nDispense-doc: un renommage interne, rien de visible à documenter"
 
 

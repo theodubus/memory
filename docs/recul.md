@@ -13,7 +13,7 @@ les contrôles de tests et les adaptateurs ; l'installeur, la mémoire privée,
 la configuration et la ligne de commande ; l'auto-test et la couverture.
 Le recul sur le fonctionnement part du cadrage
 (`memory/archives/cadrage-2026-10-10.md`) et des rapports des bancs
-(`banc/rapports/`). Les constats marqués **(v)** ont été revérifiés à la
+(`bench/reports/`). Les constats marqués **(v)** ont été revérifiés à la
 main en écrivant ce relevé ; les autres reposent sur l'essai du relecteur.
 
 **Déjà corrigé.** Deux constats visaient du code livré la veille pour le
@@ -65,7 +65,7 @@ Ce que le recul ajoute :
 - **R2. La mutation ne tourne nulle part (v).** Le cadrage en fait la
   réponse principale au problème 3. Proposition : un workflow hebdomadaire
   posé par l'installeur, qui lance la commande de l'adaptateur puis
-  `socle mutation-verdict --poser`, et une alerte quand il cesse de
+  `socle mutation-verdict --record`, et une alerte quand il cesse de
   tourner (B-0005).
 - **R3. Le hook de l'agent juge le texte brut de la commande.** Sur 40 cas
   essayés, 25 contournements simples passent (lanceur entre guillemets,
@@ -107,74 +107,74 @@ Ce que le recul ajoute :
 
 | Constat | Où |
 | --- | --- |
-| La migration du format 1 au format 2 efface les fichiers de mémoire pas encore commités : `git mv -k` les saute, puis le dossier est supprimé **(v)** | `moteur/socle/migrations.py` |
-| L'installation relancée depuis le projet (`python3 .socle/socle install`) efface son propre moteur : la source est la destination, supprimée avant la copie **(v)** ; le message de `prive installer` conseille justement cette commande | `moteur/socle/installeur.py` |
-| Un CLAUDE.md existant est remplacé par la seule ligne d'import dès qu'un AGENTS.md existe, à chaque mise à jour | `moteur/socle/installeur.py` |
-| Relancer `--adoption` écrit une seconde table `[adoption]` : les garde-fous deviennent illisibles | `moteur/socle/installeur.py` |
-| Installé dans un sous-dossier d'un dépôt, les hooks git ne tirent pas et le workflow est posé où GitHub ne le lit pas, sans message | `moteur/socle/installeur.py`, `moteur/socle/outils.py` |
-| Un `*.lock` du .gitignore du projet empêche de commiter le verrou ; un fichier parasite du clone source entre dans l'empreinte | `moteur/socle/installeur.py`, `moteur/socle/empreinte.py` |
-| Un second `init --cadrage` écrase l'archive « telle quelle » ; un nom avec espace casse la référence | `moteur/socle/initialisation.py` |
-| L'archivage du backlog tronque une entrée qui a des sous-titres et casse ses ancres | `moteur/socle/archivage.py` |
+| La migration du format 1 au format 2 efface les fichiers de mémoire pas encore commités : `git mv -k` les saute, puis le dossier est supprimé **(v)** | `engine/socle/migrations.py` |
+| L'installation relancée depuis le projet (`python3 .socle/socle install`) efface son propre moteur : la source est la destination, supprimée avant la copie **(v)** ; le message de `private install` conseille justement cette commande | `engine/socle/installer.py` |
+| Un CLAUDE.md existant est remplacé par la seule ligne d'import dès qu'un AGENTS.md existe, à chaque mise à jour | `engine/socle/installer.py` |
+| Relancer `--adoption` écrit une seconde table `[adoption]` : les garde-fous deviennent illisibles | `engine/socle/installer.py` |
+| Installé dans un sous-dossier d'un dépôt, les hooks git ne tirent pas et le workflow est posé où GitHub ne le lit pas, sans message | `engine/socle/installer.py`, `engine/socle/utils.py` |
+| Un `*.lock` du .gitignore du projet empêche de commiter le verrou ; un fichier parasite du clone source entre dans l'empreinte | `engine/socle/installer.py`, `engine/socle/fingerprint.py` |
+| Un second `init --brief` écrase l'archive « telle quelle » ; un nom avec espace casse la référence | `engine/socle/initialization.py` |
+| L'archivage du backlog tronque une entrée qui a des sous-titres et casse ses ancres | `engine/socle/archive.py` |
 
 ### B. Contournements des garde-fous par l'agent
 
 | Constat | Où |
 | --- | --- |
-| Un réglage local de Claude Code, écrit par l'agent, coupe tous ses hooks ; la trace des hooks compte une session ancienne, et la CI ne voit rien | `moteur/socle/hooks.py`, gabarit de la politique |
-| Réponse ou approbation à la place de l'humain : lanceur entre guillemets, `cd .socle`, drapeaux cherchés dans toute la commande **(v)** | `moteur/socle/hooks.py`, `moteur/socle/cli.py` |
-| Pushes irréversibles qui passent : `-C`, `-c`, `-fu`, `:branche`, `HEAD:refs/heads/main` ; motifs morts (`twine publish`, `gem publish`) ; `gh api -X DELETE` ; deux outils GitHub d'écriture | `moteur/socle/hooks.py` |
-| Un renommage efface le chemin d'origine des fichiers changés : un fichier protégé ou un test renommés passent tous les étages | `moteur/socle/outils.py` |
-| Un fichier protégé s'écrit par le shell (`git rm`, `mv` d'un dossier, `1>`, `sed --in-place`…), et ce refus n'a pas de défaut injecté | `moteur/socle/hooks.py` |
-| Le cliquet ne voit ni l'élargissement des docs d'une correspondance code ↔ doc, ni un plafond de mutation inventé à la main | `moteur/socle/controles_cliquet.py` |
+| Un réglage local de Claude Code, écrit par l'agent, coupe tous ses hooks ; la trace des hooks compte une session ancienne, et la CI ne voit rien | `engine/socle/hooks.py`, gabarit de la politique |
+| Réponse ou approbation à la place de l'humain : lanceur entre guillemets, `cd .socle`, drapeaux cherchés dans toute la commande **(v)** | `engine/socle/hooks.py`, `engine/socle/cli.py` |
+| Pushes irréversibles qui passent : `-C`, `-c`, `-fu`, `:branche`, `HEAD:refs/heads/main` ; motifs morts (`twine publish`, `gem publish`) ; `gh api -X DELETE` ; deux outils GitHub d'écriture | `engine/socle/hooks.py` |
+| Un renommage efface le chemin d'origine des fichiers changés : un fichier protégé ou un test renommés passent tous les étages | `engine/socle/utils.py` |
+| Un fichier protégé s'écrit par le shell (`git rm`, `mv` d'un dossier, `1>`, `sed --in-place`…), et ce refus n'a pas de défaut injecté | `engine/socle/hooks.py` |
+| Le cliquet ne voit ni l'élargissement des docs d'une correspondance code ↔ doc, ni un plafond de mutation inventé à la main | `engine/socle/checks_ratchet.py` |
 
 ### C. Fuites possibles de la mémoire privée
 
 | Constat | Où |
 | --- | --- |
-| Les termes privés ne se trouvent que mot pour mot : « acme_corp », « AcmeCorp », un terme coupé en fin de ligne, un nom de fichier ou de branche passent | `moteur/socle/prive.py`, `moteur/socle/hooks.py` |
-| En mode chiffré, la liste des termes part en clair quand le filtre manque, et rend la mémoire « indisponible » quand il est là | `moteur/socle/prive.py` |
-| Le cadrage est archivé en public même avec une mémoire privée, et les archives échappent au contrôle des fuites | `moteur/socle/initialisation.py`, `moteur/socle/prive.py` |
-| Ajouter un terme à une liste illisible l'écrase | `moteur/socle/prive.py` |
-| `socle new` écrit une entrée privée quand la mémoire privée est indisponible : identifiant deviné, texte clair accolé au fichier chiffré | `moteur/socle/cli.py`, `moteur/socle/memoire.py` |
-| Un identifiant privé dans un bloc de code d'un fichier public n'est attrapé ni au commit ni en CI | `moteur/socle/controles_memoire.py` |
-| Le corps d'une pull request écrit dans un fichier hors du dépôt, puis passé par `--body-file`, n'est pas lu | `moteur/socle/hooks.py` |
-| La mémoire privée n'est jamais relue à une révision : « ajout seul » ne la protège pas | `moteur/socle/memoire.py`, `moteur/socle/controles_memoire.py` |
+| Les termes privés ne se trouvent que mot pour mot : « acme_corp », « AcmeCorp », un terme coupé en fin de ligne, un nom de fichier ou de branche passent | `engine/socle/private.py`, `engine/socle/hooks.py` |
+| En mode chiffré, la liste des termes part en clair quand le filtre manque, et rend la mémoire « indisponible » quand il est là | `engine/socle/private.py` |
+| Le cadrage est archivé en public même avec une mémoire privée, et les archives échappent au contrôle des fuites | `engine/socle/initialization.py`, `engine/socle/private.py` |
+| Ajouter un terme à une liste illisible l'écrase | `engine/socle/private.py` |
+| `socle new` écrit une entrée privée quand la mémoire privée est indisponible : identifiant deviné, texte clair accolé au fichier chiffré | `engine/socle/cli.py`, `engine/socle/memory.py` |
+| Un identifiant privé dans un bloc de code d'un fichier public n'est attrapé ni au commit ni en CI | `engine/socle/checks_memory.py` |
+| Le corps d'une pull request écrit dans un fichier hors du dépôt, puis passé par `--body-file`, n'est pas lu | `engine/socle/hooks.py` |
+| La mémoire privée n'est jamais relue à une révision : « ajout seul » ne la protège pas | `engine/socle/memory.py`, `engine/socle/checks_memory.py` |
 
 ### D. Contrôles qui laissent passer
 
 | Constat | Où |
 | --- | --- |
-| Une valeur attendue placée hors de la ligne d'assertion (assertion sur plusieurs lignes, variable, constante, tables de Go, paramètres) change sans bruit | `moteur/socle/controles_tests.py` |
-| Un test sans assertion passe si un commentaire, une docstring ou du code de production contient « assert » | `moteur/socle/tests_lecture.py` |
-| Un groupe entier de tests se désactive sans raison (classe, `describe.skip`, `@Disabled`) | `moteur/socle/controles_tests.py`, adaptateurs |
-| Un test de régression qui échoue sur le parent pour une mauvaise raison (import manquant) fait foi | `moteur/socle/controles_tests.py` |
-| Des noms cherchés comme sous-chaînes : un commentaire suffit à « tester » une fonction, une validation qui nomme `test_double_negatif` couvre `test_double` | `moteur/socle/controles_tests.py` |
-| Une seule `Dispense-doc` couvre toute la plage et toute la table de correspondance | `moteur/socle/controles_docs.py` |
-| Une lecture d'index recopiée d'un sujet plus ancien du même fichier passe | `moteur/socle/controles_memoire.py`, `moteur/socle/hooks.py` |
-| Une décision se réécrit dans ses lignes en citation ; le journal accepte un ajout au milieu d'une phrase ; un titre mal formé fait disparaître l'entrée | `moteur/socle/controles_memoire.py`, `moteur/socle/memoire.py` |
-| Pendant une migration, une ancienne validation compte comme nouvelle | `moteur/socle/demandes.py` |
+| Une valeur attendue placée hors de la ligne d'assertion (assertion sur plusieurs lignes, variable, constante, tables de Go, paramètres) change sans bruit | `engine/socle/checks_tests.py` |
+| Un test sans assertion passe si un commentaire, une docstring ou du code de production contient « assert » | `engine/socle/tests_reader.py` |
+| Un groupe entier de tests se désactive sans raison (classe, `describe.skip`, `@Disabled`) | `engine/socle/checks_tests.py`, adaptateurs |
+| Un test de régression qui échoue sur le parent pour une mauvaise raison (import manquant) fait foi | `engine/socle/checks_tests.py` |
+| Des noms cherchés comme sous-chaînes : un commentaire suffit à « tester » une fonction, une validation qui nomme `test_double_negatif` couvre `test_double` | `engine/socle/checks_tests.py` |
+| Une seule `Dispense-doc` couvre toute la plage et toute la table de correspondance | `engine/socle/checks_docs.py` |
+| Une lecture d'index recopiée d'un sujet plus ancien du même fichier passe | `engine/socle/checks_memory.py`, `engine/socle/hooks.py` |
+| Une décision se réécrit dans ses lignes en citation ; le journal accepte un ajout au milieu d'une phrase ; un titre mal formé fait disparaître l'entrée | `engine/socle/checks_memory.py`, `engine/socle/memory.py` |
+| Pendant une migration, une ancienne validation compte comme nouvelle | `engine/socle/requests.py` |
 
 ### E. Refus à tort et friction
 
 | Constat | Où |
 | --- | --- |
-| Une assertion reformatée à valeur égale, ou deux tests homonymes dans deux classes, sont lus comme une valeur attendue changée (vécu en CI le 2026-10-12) | `moteur/socle/controles_tests.py` |
-| Un texte qui cite une commande dangereuse ou réservée est refusé comme si elle était lancée (vécu plusieurs fois pendant B-0034) | `moteur/socle/hooks.py` |
-| Le verdict des lectures prouvées dépend de la base choisie | `moteur/socle/controles_memoire.py` |
-| Le lint d'une demande prend un extrait de code ou un « < 5 » pour un trou du gabarit | `moteur/socle/demandes.py` |
-| Une référence suivie d'un point ou d'une parenthèse, ou un lien avec `%20`, est déclarée morte (B-0020) | `moteur/socle/memoire.py` |
-| « **Pour toi** : » en gras n'est pas reconnu comme récap ; un lien vers une étiquette est déclaré mort | `moteur/socle/humain.py`, `moteur/socle/liens.py` |
-| La virgule décimale française confond 3,5 et 35 | `moteur/socle/controles_docs.py` |
+| Une assertion reformatée à valeur égale, ou deux tests homonymes dans deux classes, sont lus comme une valeur attendue changée (vécu en CI le 2026-10-12) | `engine/socle/checks_tests.py` |
+| Un texte qui cite une commande dangereuse ou réservée est refusé comme si elle était lancée (vécu plusieurs fois pendant B-0034) | `engine/socle/hooks.py` |
+| Le verdict des lectures prouvées dépend de la base choisie | `engine/socle/checks_memory.py` |
+| Le lint d'une demande prend un extrait de code ou un « < 5 » pour un trou du gabarit | `engine/socle/requests.py` |
+| Une référence suivie d'un point ou d'une parenthèse, ou un lien avec `%20`, est déclarée morte (B-0020) | `engine/socle/memory.py` |
+| « **Pour toi** : » en gras n'est pas reconnu comme récap ; un lien vers une étiquette est déclaré mort | `engine/socle/human.py`, `engine/socle/links.py` |
+| La virgule décimale française confond 3,5 et 35 | `engine/socle/checks_docs.py` |
 
 ### F. Autres défauts
 
 | Constat | Où |
 | --- | --- |
-| L'empreinte de l'arbre, qui décide de relancer les tests en fin de tour, ignore le contenu des fichiers non suivis | `moteur/socle/hooks.py` |
-| Le compteur d'échecs de fin de tour survit d'une session à l'autre : la nouvelle session escalade dès son premier échec | `moteur/socle/hooks.py` |
-| `prepare-commit-msg` met le diff de `git commit -v` dans le message | `moteur/socle/hooks.py` |
-| `mutation-verdict --poser` annonce un plafond qu'il n'écrit pas pour certaines formes de clé ; mutmut lit mal un module dont le nom commence par `x_` | `moteur/socle/mutation.py` |
-| La lecture des tests par motifs casse sur des formes courantes : une flèche sans accolades en JavaScript, `if … end` en Ruby, un type `[u8; 4]` en Rust, un test Python sur une ligne | `moteur/socle/tests_lecture.py`, adaptateurs |
+| L'empreinte de l'arbre, qui décide de relancer les tests en fin de tour, ignore le contenu des fichiers non suivis | `engine/socle/hooks.py` |
+| Le compteur d'échecs de fin de tour survit d'une session à l'autre : la nouvelle session escalade dès son premier échec | `engine/socle/hooks.py` |
+| `prepare-commit-msg` met le diff de `git commit -v` dans le message | `engine/socle/hooks.py` |
+| `mutation-verdict --record` annonce un plafond qu'il n'écrit pas pour certaines formes de clé ; mutmut lit mal un module dont le nom commence par `x_` | `engine/socle/mutation.py` |
+| La lecture des tests par motifs casse sur des formes courantes : une flèche sans accolades en JavaScript, `if … end` en Ruby, un type `[u8; 4]` en Rust, un test Python sur une ligne | `engine/socle/tests_reader.py`, adaptateurs |
 
 ### G. L'auto-test
 
@@ -204,7 +204,7 @@ Ce que le recul ajoute :
 
 ### I. Dette
 
-- `installer()` fait 180 lignes et six métiers ; `prive.py` (700 lignes)
+- `installer()` fait 180 lignes et six métiers ; `private.py` (700 lignes)
   mêle chemins, verrou, termes, fuites, relecture, quatre contrôles, bascule
   et mise en place.
 - Doublons : la règle des index permis (contrôle et hook), le calcul d'une
@@ -246,4 +246,4 @@ Théo a validé l'ordre recommandé (D-0015) ; le sujet B-0044 suit les lots.
 | L5 | les sections D, E et F, et les trois constats de R6 qui en relevaient (B-0051, B-0049, B-0052) ; la deuxième ligne de E était réglée par L2 ; les deux choix de conception : la lecture prouvée en une seule fonction (ADR-0023), une valeur attendue hors des assertions dite sans être refusée (ADR-0024) | J-2026-10-13-A à J-2026-10-13-K |
 | L6 | une vérification réussie se mémorise, l'auto-test tourne sur quatre fils et une seule fois en CI ; le banc et l'auto-test complet attendent la CI (D-0019) : la suite rapide passe de 290 à 143 secondes | J-2026-10-13-O, J-2026-10-13-V |
 | R2 | le balayage de mutation hebdomadaire, posé par l'installeur sauf quand le projet en lance déjà un, et `mutation.vivante`, qui casse la CI quand il cesse de tourner (B-0005) | J-2026-10-13-P |
-| L7 | `installer()` en étapes nommées ; la bascule et la mise en place du dépôt compagnon hors de `prive.py`, dont les contrôles restent (des tests les nomment dans leurs assertions) ; l'ancre, l'écriture d'un fichier et l'ajout au `.gitignore` en une copie ; les docstrings périmées, et un test des chemins qu'elles citent | J-2026-10-13-Q |
+| L7 | `installer()` en étapes nommées ; la bascule et la mise en place du dépôt compagnon hors de `private.py`, dont les contrôles restent (des tests les nomment dans leurs assertions) ; l'ancre, l'écriture d'un fichier et l'ajout au `.gitignore` en une copie ; les docstrings périmées, et un test des chemins qu'elles citent | J-2026-10-13-Q |

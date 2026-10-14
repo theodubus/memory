@@ -7,8 +7,8 @@ import tomllib
 import unittest
 from pathlib import Path
 
-from socle import installeur, mutation, tests_lecture
-from socle.controles_tests import CAPACITES, commande_regression
+from socle import installer as installeur, mutation, tests_reader as tests_lecture
+from socle.checks_tests import CAPACITES, commande_regression
 
 EXEMPLE = Path(__file__).parent / "donnees/exemple-pytest.py.txt"
 DONNEES = Path(__file__).parent / "donnees/adaptateurs"

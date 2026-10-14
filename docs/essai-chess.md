@@ -35,7 +35,7 @@ branche `socle-adoption` et une branche par tâche.
 | Remplir la copie | refusé à l'agent : le hook refuse un push vers `main`, même validé par D-0016 ; fait par Théo (B-0048) |
 | Installer en adoption | `TOUT PASSE`, adaptateur Rust détecté ; CLAUDE.md gardé comme source (35 fichiers du projet le nomment), la section du socle ajoutée ; les hooks du projet gardés, ceux du socle ajoutés ; dix modules « à mesurer » ; trois contrôles en avertissement sur l'existant |
 | Un contrôle à tort | `instructions.source-unique` exige AGENTS.md alors que l'installeur a gardé CLAUDE.md, et le `.gitignore` posé y renvoie (B-0049) |
-| Initialiser | `socle init --depot` : dix faits mesurés, quatre questions de départ, auxquelles Théo répond « défauts » |
+| Initialiser | `socle init --repo` : dix faits mesurés, quatre questions de départ, auxquelles Théo répond « défauts » |
 | Commiter depuis une autre session | refusé par le hook avant push de la copie : un commit d'agent sans aucun hook de l'agent de la copie (B-0050) ; refait par une session ouverte dans la copie, sans refus |
 | La CI du projet | rouge partout, `main` de la copie compris : son contrôle du balayage de mutation exige un workflow qui n'a jamais tourné dans un dépôt neuf ; propre à la copie |
 
@@ -72,7 +72,7 @@ tâche a son entrée de journal, les débordements vont au backlog.
 
 ## Le banc sans les hooks de l'agent
 
-`python3 banc/banc.py --agent claude --sans-hooks`, quatorze scénarios, un
+`python3 bench/bench.py --agent claude --sans-hooks`, quatorze scénarios, un
 passage chacun, 2 $ par session : les hooks de Claude Code coupés, les
 hooks git branchés. Il mesure ce que git et la CI attrapent seuls, pour un
 agent qui n'aurait pas ces hooks-là. Total : 8,44 $, une interruption par

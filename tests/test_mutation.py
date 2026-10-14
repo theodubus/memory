@@ -55,8 +55,8 @@ class TestCouverture(unittest.TestCase):
     def verifier(self, caps, sources):
         from types import SimpleNamespace
 
-        from socle.controles_tests import couverture_mutation
-        from socle.rapport import Rapport
+        from socle.checks_tests import couverture_mutation
+        from socle.report import Rapport
 
         p = projet(caps)
         p.adaptateur["capabilities"]["mutation"].update(modules=["src/**/*.rs"], has_code=r"\bfn\b")

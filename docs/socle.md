@@ -2,8 +2,8 @@
 
 Ce document explique le socle à qui l'installe ou veut le comprendre. Les
 gestes de l'humain, chacun avec sa commande, sont dans le guide
-(`moteur/socle/AIDE.md`, affiché par `python3 .socle/socle aide`) ; le
-format exact de la mémoire, dans `moteur/socle/FORMAT.md` ; la
+(`engine/socle/HELP.md`, affiché par `python3 .socle/socle help`) ; le
+format exact de la mémoire, dans `engine/socle/FORMAT.md` ; la
 correspondance entre chaque exigence du cadrage et le contrôle qui
 l'applique, dans `docs/architecture.md`.
 
@@ -162,7 +162,7 @@ Par famille :
 | Étage | Quand | Ce qu'il fait |
 | --- | --- | --- |
 | L'agent (hooks de Claude Code) | au démarrage, avant chaque outil, à la fin de chaque tour | injecte l'état ; refuse une action irréversible, l'écriture d'un fichier protégé, une réponse à la place de l'humain, une référence ou un SHA inventés, une fuite du privé ; refuse de conclure tant que les contrôles échouent, que la mémoire est en retard sur le code, ou que le dernier message n'a pas son récap (« Pour toi : », « Ensuite : ») et des liens que l'humain peut suivre |
-| git | à chaque commit et à chaque push | juge ce qui sera commité (l'index) avec les contrôles rapides ; trace les hooks de l'agent dans le commit ; refuse une fuite dans le message ; avertit d'une fonction sans test ; avant le push, exécute `verify --rapide` (ses étapes, seulement si elles n'ont pas déjà passé sur cet arbre), juge la plage qui part comme la CI du push la jugera, et, si elle est choisie, exige la relecture de l'humain |
+| git | à chaque commit et à chaque push | juge ce qui sera commité (l'index) avec les contrôles rapides ; trace les hooks de l'agent dans le commit ; refuse une fuite dans le message ; avertit d'une fonction sans test ; avant le push, exécute `verify --fast` (ses étapes, seulement si elles n'ont pas déjà passé sur cet arbre), juge la plage qui part comme la CI du push la jugera, et, si elle est choisie, exige la relecture de l'humain |
 | La CI | à chaque push et pull request | exécute tout, contre la base : les capacités de l'adaptateur, tous les contrôles, et l'auto-test du socle |
 
 Le même moteur sert les trois étages. Un autre agent que Claude Code n'a
@@ -228,7 +228,7 @@ tests et ses fonctions publiques. Une capacité absente se déclare, avec ce
 qui la remplace. Huit sont maintenus et éprouvés sur un projet jetable de
 leur langage : Rust, Python sous `unittest` et sous pytest, JavaScript et
 TypeScript, Go, Java, Ruby, PHP. Un autre langage se décrit dans un fichier
-de même forme. Le détail : `moteur/socle/adaptateurs/README.md`.
+de même forme. Le détail : `engine/socle/adapters/README.md`.
 
 ## L'auto-test et les bancs
 
@@ -245,7 +245,7 @@ défaut injecté n'est pas accepté dans ce dépôt.
 Deux bancs mesurent le reste : le banc d'évaluation fait travailler un
 agent réel sur des scénarios propices aux erreurs, et dit quel étage
 attrape quoi (`docs/banc.md`) ; le banc des adaptateurs éprouve chacun sur
-les vrais outils de son langage (`banc/adaptateurs.py`).
+les vrais outils de son langage (`bench/adapters.py`).
 
 ## Quand un contrôle refuse
 
@@ -263,8 +263,8 @@ Chaque refus dit ce qu'il a vu et comment en sortir. Les plus courants :
 | `memoire.collisions` | un identifiant que la branche a pris, la branche par défaut l'a pris aussi depuis, pour une autre entrée | `socle renumber <ID>`, qui donne le prochain libre et le reporte |
 | `memoire.retard`, en fin de tour | du code a changé et la mémoire non | mettre à jour le chantier actif, le journal ou le backlog |
 | fin de tour refusée, « Pour toi : » | le dernier message de l'agent n'a pas son récap | finir par le récap et les deux lignes |
-| `prive.verrou` | le verrou du dépôt compagnon manque ou retarde | `socle prive verrouiller` ; rien en place : `socle prive installer --depot <adresse>`, par l'humain |
-| `mutation.couverture` | un module qui porte du code n'a pas de plafond | l'y poser « à mesurer », puis `socle mutation-run --poser`, ou recopier le plafond qu'imprime le dernier balayage planifié |
+| `prive.verrou` | le verrou du dépôt compagnon manque ou retarde | `socle private lock` ; rien en place : `socle private install --repo <adresse>`, par l'humain |
+| `mutation.couverture` | un module qui porte du code n'a pas de plafond | l'y poser « à mesurer », puis `socle mutation-run --record`, ou recopier le plafond qu'imprime le dernier balayage planifié |
 | `mutation.vivante`, en CI | le balayage planifié est endormi, ou ne tourne plus depuis quinze jours | le réactiver dans l'onglet Actions de GitHub et le lancer à la main : c'est à l'humain, et l'état le lui dit |
 | push refusé, relecture | la politique exige la relecture de l'humain | l'humain relit ce qui part, l'agent consigne son accord |
 
