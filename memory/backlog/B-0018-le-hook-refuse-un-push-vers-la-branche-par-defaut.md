@@ -8,3 +8,7 @@ dépôt d'origine d'un projet jetable, un simple dossier local : la
 politique (point 4) vise une publication, qu'un dépôt local n'est pas.
 Ne refuser que si la destination est distante, ou garder le refus et le
 dire dans sa raison ; à arbitrer, le refus large est le plus sûr.
+
+D-0026, réponse de Théo `rien` (J-2026-10-14-V) : le refus d'un push vers un
+dossier local reste. Le sujet reste ouvert avec B-0048, qui garde la
+réponse exacte et dit quoi noter si le refus devient bloquant.

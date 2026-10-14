@@ -8,3 +8,9 @@ dans la copie, et le hook refuse quand même `git push … main:main`, faute
 de savoir qu'une validation existe. Le push revient alors à l'humain, même
 validé. Piste : une demande validée qui nomme l'action exacte (le dépôt et
 la branche) la laisse passer au hook, une fois. Voisin de B-0018.
+
+D-0026, réponse de Théo `rien` (J-2026-10-14-V) : « rien pour l'instant, on
+se le garde en tete et on voit si ça finit par etre bloquant ». Le sujet
+reste ouvert pour cela : chaque refus nouveau d'une action validée se note
+ici, avec sa date. Seule option qui garderait le geste de l'humain pour
+preuve, si le refus devient bloquant : une fois, après sa fusion sur `main`.

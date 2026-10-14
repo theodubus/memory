@@ -40,16 +40,20 @@ MESSAGES: dict[str, str] = {
         "force push (+)",
     "push sur la branche par défaut ({protegee})":
         "push to the default branch ({protegee})",
-    "action externe ou irréversible ({outil}) : validation humaine requise (politique, point 4). Émettre une "
-    "demande, travailler sur autre chose en attendant.":
-        "external or irreversible action ({outil}): human approval required (policy, rule 4). Open a request, work "
-        "on something else meanwhile.",
-    "commande irréversible ou externe ({action}) : « {commande} » — validation humaine requise (politique, point 4). "
-    "Si c'est une décision, émettre une demande `D-NNNN` ; si c'est une action que l'humain doit faire lui-même, "
-    "l'inscrire au backlog avec `pour : humain`. Puis continuer sur autre chose.":
-        "irreversible or external command ({action}): “{commande}” — human approval required (policy, rule 4). If it "
-        "is a decision, open a request `D-NNNN`; if it is an action the human must do themselves, add it to the "
-        "backlog with `for : human`. Then go on with something else.",
+    "action externe ou irréversible ({outil}) : validation humaine requise (politique, point 4), et une demande "
+    "validée ne la débloque pas : l'action revient à l'humain. Émettre une demande, travailler sur autre "
+    "chose en attendant.":
+        "external or irreversible action ({outil}): human approval required (policy, rule 4), and an approved "
+        "request does not unlock it: the action falls to the human. Open a request, work on something "
+        "else meanwhile.",
+    "commande irréversible ou externe ({action}) : « {commande} » — validation humaine requise (politique, point 4), "
+    "et une demande validée ne la débloque pas : l'action revient à l'humain. Si c'est une décision, "
+    "émettre une demande `D-NNNN` ; une fois l'action décidée, l'inscrire au backlog avec `pour : humain`, sa "
+    "commande exacte, où la lancer et ce qu'elle doit produire. Puis continuer sur autre chose.":
+        "irreversible or external command ({action}): “{commande}” — human approval required (policy, rule 4), and "
+        "an approved request does not unlock it: the action falls to the human. If it is a decision, open "
+        "a request `D-NNNN`; once the action is decided, add it to the backlog with `for : human`, its exact "
+        "command, where to run it and what it must produce. Then go on with something else.",
     "`{saut}` contourne les hooks du projet : la CI exécute tout, et rien ne la contourne. Corriger ce que le hook "
     "refuse ; s'il refuse à tort, l'inscrire au backlog et le dire à l'humain.":
         "`{saut}` bypasses the project's hooks: the CI runs everything, and nothing bypasses it. Fix what the hook "

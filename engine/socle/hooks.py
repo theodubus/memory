@@ -463,7 +463,8 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
     for m in motifs_outils:
         if re.fullmatch(m, outil):
             return refus(trad("action externe ou irréversible ({outil}) : validation humaine requise (politique, "
-                              "point 4). Émettre une demande, travailler sur autre chose en attendant.", outil=outil))
+                              "point 4), et une demande validée ne la débloque pas : l'action revient à "
+                              "l'humain. Émettre une demande, travailler sur autre chose en attendant.", outil=outil))
 
     if outil == "Bash":
         cmd = args.get("command", "")
@@ -476,9 +477,11 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
                 (" ".join(c.argv)[:120] for m in en_plus if re.search(m, " ".join(c.argv))), None)
             if action:
                 return refus(trad("commande irréversible ou externe ({action}) : « {commande} » — validation humaine "
-                                  "requise (politique, point 4). Si c'est une décision, émettre une demande "
-                                  "`D-NNNN` ; si c'est une action que l'humain doit faire lui-même, l'inscrire au "
-                                  "backlog avec `pour : humain`. Puis continuer sur autre chose.",
+                                  "requise (politique, point 4), et une demande validée ne la débloque pas : "
+                                  "l'action revient à l'humain. Si c'est une décision, émettre une demande "
+                                  "`D-NNNN` ; une fois l'action décidée, l'inscrire au backlog avec `pour : humain`, "
+                                  "sa commande exacte, où la lancer et ce qu'elle doit produire. Puis continuer sur "
+                                  "autre chose.",
                                   action=action, commande=cmd.strip()[:200]))
             saut = contournement(racine, c, entree.get("cwd"))
             if saut:

@@ -8,15 +8,13 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 L'ordre validé par Théo (J-2026-10-14-Q) : B-0060, fait (J-2026-10-14-R) ;
 la demande de B-0039 en parallèle ; puis B-0048 avec B-0018 ; puis B-0059.
 
-D-0025 est validée, réponse `public` (J-2026-10-14-S), mais suspendue
-avant tout push : chaque projet jetable contient le moteur, et `memory` est
-privé (J-2026-10-14-U). D-0027 demande à Théo de rendre le dépôt d'essai
-privé, ou d'accepter la publication. L'essai ira dans une session à part,
-qui ajoute ce dépôt ; celle-ci reste sur `memory` seul.
+D-0027 est répondue `publier` (J-2026-10-14-V) : l'essai de la CI des
+adaptateurs part dans `theodubus/tests`, public, moteur compris, depuis une
+session à part qui ajoute ce dépôt ; celle-ci reste sur `memory` seul.
 
-D-0026 est réécrite après les questions de Théo (J-2026-10-14-T) : une
-réponse relayée ne prouve rien, seule sa fusion le ferait ; recommandation :
-rien, pour l'instant. Elle attend sa réponse.
+D-0026 est répondue `rien` : le refus reste, son message est plus clair ;
+B-0048 et B-0018 restent ouverts, « on se le garde en tete et on voit si
+ça finit par etre bloquant ».
 
 ## Consignes en cours
 
@@ -39,11 +37,10 @@ rien, pour l'instant. Elle attend sa réponse.
 
 ## Prochaines étapes
 
-1. D-0027 puis D-0025 : sur la réponse de Théo, lancer la session à part
-   qui pousse les cinq projets jetables, lire leur CI, corriger les étapes
-   fausses ; puis clore B-0039.
-2. D-0026 : relayer la réponse de Théo avec son texte exact.
-3. Dans l'ordre validé : B-0059 (ce qui reste en français dans un projet
+1. L'essai de la CI des adaptateurs : la session à part pousse les cinq
+   projets jetables et rapporte leur CI ; corriger ici les étapes
+   fausses, puis clore B-0039 et dire à Théo qu'il peut supprimer le dépôt.
+2. Dans l'ordre validé : B-0059 (ce qui reste en français dans un projet
    anglais).
-4. Plus tard : B-0046 (que Théo reprendra), B-0040 (dotnet absent d'ici) ;
+3. Plus tard : B-0046 (que Théo reprendra), B-0040 (dotnet absent d'ici) ;
    B-0042 attend sa propre demande.

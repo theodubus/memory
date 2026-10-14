@@ -153,6 +153,21 @@ class TestGarde(unittest.TestCase):
             subprocess.run(["git", "checkout", "-q", "travail"], cwd=self.racine, check=True)
         self.assertEqual(self.decide(*B(f"{G} {P}")), "passe")
 
+    def test_le_refus_d_une_action_externe_la_rend_a_l_humain(self):
+        # D-0026 : une demande validée ne débloque pas l'action ; le refus le
+        # dit, et demande la commande exacte pour l'humain.
+        for outil, args in (B(f"{G} {P} origin main"), ("mcp__github__merge_pull_request", {})):
+            with self.subTest(outil):
+                flux = io.StringIO()
+                with contextlib.redirect_stdout(flux):
+                    hooks.pre_tool_use(self.projet, {"session_id": "garde", "tool_name": outil, "tool_input": args})
+                self.assertIn("une demande validée ne la débloque pas", flux.getvalue())
+        flux = io.StringIO()
+        with contextlib.redirect_stdout(flux):
+            hooks.pre_tool_use(self.projet, {"session_id": "garde", "tool_name": "Bash",
+                                             "tool_input": {"command": f"{G} {P} origin main"}})
+        self.assertIn("sa commande exacte", flux.getvalue())
+
 
 class TestDecoupage(unittest.TestCase):
     def test_analyser_suit_separateurs_redirections_et_cd(self):
