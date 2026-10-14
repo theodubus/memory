@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0060 — Une session de l'agent qui démarre hors de la racine du projet travaille sans ses hooks, et ne s'en aperçoit qu'au commit
 
-> statut : ouvert · origine : J-2026-10-14-O · lu : backlog@c716992e
+> statut : fait · origine : J-2026-10-14-O · lu : backlog@c716992e · ref : J-2026-10-14-R
 
 Demandé par Théo, à ne pas corriger maintenant. Son texte exact :
 

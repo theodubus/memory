@@ -125,6 +125,17 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
     racine = projet.racine
     lignes = []
     nom = racine.name
+    from socle import hooks
+    from socle.checks_ratchet import REMEDE_HOOKS
+
+    if hooks.hooks_non_charges(projet):
+        # En tête, avant tout le reste : rien de ce qui suit n'est protégé
+        # par les hooks de l'agent (B-0060).
+        lignes.append(trad("!! LES HOOKS DE L'AGENT NE SONT PAS CHARGÉS dans cette session : la trace n'a aucun "
+                           "SessionStart pour elle. Ni le filtre des commandes, ni les contrôles de fin de tour, "
+                           "ni l'état au démarrage ne tournent. Le dire à l'humain avant tout travail. {remede}",
+                           remede=trad(REMEDE_HOOKS)))
+        lignes.append("")
     lignes.append(trad("== {nom} — état dérivé par `socle state`, rien de recopié ==", nom=nom))
     try:
         lignes += _git(racine, projet)

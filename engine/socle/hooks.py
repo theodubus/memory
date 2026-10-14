@@ -807,6 +807,15 @@ def git_pre_commit(projet: config.Projet) -> int:
     from socle import context as contexte
 
     tracer(projet.racine, "git-pre-commit")
+    sans_filtre = filtre_absent(projet)
+    if sans_filtre:
+        from socle.checks_ratchet import REMEDE_HOOKS
+
+        tracer_refus(projet.racine, "git-pre-commit", "hooks.filtre")
+        print(trad("socle — commit refusé : commit d'agent sans aucun passage du filtre de l'agent depuis le "
+                   "commit précédent (`{depuis}`) : ses hooks ne sont pas chargés. {remede}", depuis=sans_filtre,
+                   remede=trad(REMEDE_HOOKS)), file=sys.stderr)
+        return 1
     base = outils.base_de_travail(projet.racine)
     # On juge ce qui sera commité : l'index, figé en arbre par `write-tree`,
     # et non les fichiers sur disque, qui peuvent cacher un défaut indexé ou
@@ -860,6 +869,31 @@ def compter_depuis_le_commit(racine: Path, session: str | None = None) -> str:
     filtre = [l for l in lignes[debut:] if len(l) >= 3 and l[1] == "PreToolUse"]
     session = session or next((l[2] for l in reversed(filtre) if l[2]), "")
     return f"PreToolUse={sum(1 for l in filtre if l[2] == session)}"
+
+
+def hooks_non_charges(projet: config.Projet) -> bool:
+    """Sous Claude Code (`CLAUDECODE`), la trace n'a aucun SessionStart pour
+    la session courante (`CLAUDE_CODE_SESSION_ID`) : ses hooks ne sont pas
+    chargés, la session ayant démarré hors de la racine du projet (B-0060).
+    Faux hors d'un agent, sans identifiant de session, ou quand la politique
+    n'outille pas Claude Code."""
+    session = os.environ.get("CLAUDE_CODE_SESSION_ID")
+    if not os.environ.get("CLAUDECODE") or not session or not projet.pol("agents", "claude_code", defaut=True):
+        return False
+    lignes = [l.split("\t") for l in config.lire_trace(projet.racine)]
+    return not any(len(l) >= 3 and l[1] == "SessionStart" and l[2] == session for l in lignes)
+
+
+def filtre_absent(projet: config.Projet) -> str | None:
+    """Un commit d'agent (`CLAUDECODE`) sans aucun passage du filtre de
+    l'agent depuis le commit précédent : le compte (`PreToolUse=0`), à
+    refuser dès le hook avant commit, au lieu du seul avertissement du
+    message de commit (B-0060). `None` sinon. La commande qui commite passe
+    elle-même par le filtre : des hooks chargés en comptent au moins un."""
+    if not os.environ.get("CLAUDECODE") or not projet.pol("agents", "claude_code", defaut=True):
+        return None
+    depuis = compter_depuis_le_commit(projet.racine, os.environ.get("CLAUDE_CODE_SESSION_ID"))
+    return depuis if depuis == "PreToolUse=0" else None
 
 
 def sous_un_agent(geste: str) -> bool:
@@ -974,8 +1008,7 @@ def hooks_absents(projet: config.Projet, message: str) -> str | None:
     valeurs = outils.trailers(message).get("socle-hooks")
     if not valeurs:
         return None
-    conseil = trad("Ouvrir la session de l'agent dans le dépôt du projet, où ses hooks se chargent "
-                   "(`.claude/settings.json`).")
+    conseil = trad(controles_cliquet.REMEDE_HOOKS)
     tirs = controles_cliquet.lire_trailer_hooks(valeurs[-1]).get("PreToolUse", "0")
     if not tirs.isdigit() or int(tirs) < 1:
         return (trad("socle — avertissement : commit d'agent sans aucun hook de l'agent pendant sa session "

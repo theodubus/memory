@@ -17,7 +17,7 @@ import json
 import re
 
 from socle import config, fingerprint as empreinte, memory as memoire, utils as outils
-from socle.messages import trad
+from socle.messages import a_traduire, trad
 from socle.context import controle
 
 ABSENT = object()
@@ -333,6 +333,16 @@ def lire_trailer_hooks(valeur: str) -> dict[str, str]:
     return res
 
 
+# Le remède quand les hooks de l'agent ne sont pas chargés : Claude Code ne
+# les lit que dans le dossier où la session démarre (B-0060). L'agent ne
+# pose jamais lui-même un réglage pour les rétablir (J-2026-10-14-J).
+REMEDE_HOOKS = a_traduire(
+    "Claude Code ne lit ses hooks que dans le dossier où la session démarre : relancer la session depuis la "
+    "racine du projet ; dans une session à plusieurs dépôts, ouvrir une session sur ce dépôt seul. L'agent "
+    "n'écrit jamais lui-même un réglage de Claude Code pour les rétablir : il le dit à l'humain, et ne pousse "
+    "rien.")
+
+
 def est_agent(projet, message: str) -> bool:
     marqueurs = projet.pol("agents", "markers", defaut=[r"(?im)^co-authored-by:.*\bclaude\b", r"(?im)^socle-agent:"])
     return any(re.search(m, message) for m in marqueurs)
@@ -362,13 +372,14 @@ def trace(ctx, r):
         n = lire_trailer_hooks(depuis[-1]).get("PreToolUse", "0") if depuis else "1"
         if not t.get("PreToolUse", "0").isdigit() or int(t.get("PreToolUse", "0")) < 1:
             r.erreur("hooks.trace", trad("{sha} « {sujet} » : aucun PreToolUse n'a tiré pendant la session — "
-                                         "les hooks de l'agent n'étaient pas chargés",
-                                         sha=c['sha'][:10], sujet=sujet))
+                                         "les hooks de l'agent n'étaient pas chargés. {remede}",
+                                         sha=c['sha'][:10], sujet=sujet, remede=trad(REMEDE_HOOKS)))
         elif not n.isdigit() or int(n) < 1:
             # B-0058 : le compte de la session garde les tirs d'avant l'arrêt.
             r.erreur("hooks.trace", trad("{sha} « {sujet} » : aucun PreToolUse n'a tiré depuis le commit "
                                          "précédent — les hooks de l'agent ont cessé d'être chargés en cours "
-                                         "de session", sha=c['sha'][:10], sujet=sujet))
+                                         "de session. {remede}", sha=c['sha'][:10], sujet=sujet,
+                                         remede=trad(REMEDE_HOOKS)))
         if t.get("SessionStart") == "0":
             r.erreur("hooks.trace", trad("{sha} « {sujet} » : le hook SessionStart n'a jamais tiré pendant la "
                                          "session", sha=c['sha'][:10], sujet=sujet))

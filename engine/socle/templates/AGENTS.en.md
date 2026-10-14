@@ -17,6 +17,12 @@ an answer in their terminal), the state lists: cite it to them in the next
 reply, by its identifier and its link, since the command gave them a number
 they cannot find in the conversation.
 
+If the state was not injected when a Claude Code session started, the
+agent's hooks are not loaded: the session started outside the project root.
+Tell the human before any work, and push nothing; `socle state` also shows
+it at the top, and the pre-commit hook then refuses the commit. Never write a
+Claude Code setting yourself to restore the hooks.
+
 An instruction from the human given in the conversation, that holds beyond
 the turn (a rule, a preference, a prohibition), is written into the memory
 before going on: in the active work if it concerns the work in progress,

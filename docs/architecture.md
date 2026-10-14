@@ -108,7 +108,7 @@ comparent le même fichier sous ses deux noms.
 | Rien ne s'affaiblit en silence | `cliquet.garde-fous`, `protege.fichiers` | agent, git, CI |
 | Moteur et politique non altérés | `moteur.empreinte`, `protege.fichiers` | agent, git, CI |
 | Seule la CI est incontournable : GitHub l'exige avant toute fusion | une étape de « Et maintenant » à l'installation ; la ligne `branche` de l'état, et une action de l'humain quand elle n'est pas exigée | GitHub |
-| Hooks chargés et déclenchés | `hooks.configuration`, `hooks.trace` (trailers `Socle-Hooks`, sur la session, et `Socle-Hooks-Since-Commit`, depuis le commit précédent, B-0058) ; au commit, un avertissement du hook `commit-msg` pour un commit d'agent sans hook de l'agent (B-0050) | git, CI |
+| Hooks chargés et déclenchés | `hooks.configuration`, `hooks.trace` (trailers `Socle-Hooks`, sur la session, et `Socle-Hooks-Since-Commit`, depuis le commit précédent, B-0058) ; au commit, un avertissement du hook `commit-msg` pour un commit d'agent sans hook de l'agent (B-0050) ; plus tôt, pour une session de Claude Code démarrée hors de la racine du projet (B-0060) : l'état l'annonce en tête quand la trace n'a aucun `SessionStart` pour la session, et le hook `pre-commit` refuse un commit d'agent sans passage du filtre depuis le commit précédent ; chaque remède dit de relancer la session à la racine, ou sur le dépôt seul, et jamais de poser soi-même un réglage de Claude Code | démarrage, git, CI |
 | Action irréversible ou externe refusée | hook `pre-tool-use` | agent |
 | Anti-fabrication | hook `pre-tool-use` : SHA complété de tête, identifiant ou commit inventé | agent |
 | Échec répété : arrêt et escalade | hook `stop`, `max_attempts` de la politique | agent |

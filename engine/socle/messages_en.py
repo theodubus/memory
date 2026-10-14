@@ -153,8 +153,6 @@ MESSAGES: dict[str, str] = {
         "socle — warning: this fix adds or changes no test ({liste}): the CI will refuse it (`tests.regression`), "
         "for lack of a test that fails on the previous commit. Add it to this commit (`git commit --amend`), as long "
         "as it is not pushed.",
-    "Ouvrir la session de l'agent dans le dépôt du projet, où ses hooks se chargent (`.claude/settings.json`).":
-        "Open the agent's session in the project's repository, where its hooks load (`.claude/settings.json`).",
     "socle — avertissement : commit d'agent sans aucun hook de l'agent pendant sa session (`Socle-Hooks: {valeurs}`) "
     ": la CI le refusera (`hooks.trace`). ":
         "socle — warning: agent commit without any agent hook during its session (`Socle-Hooks: {valeurs}`): the CI "
@@ -734,12 +732,6 @@ MESSAGES: dict[str, str] = {
     "core.hooksPath .socle/git-hooks`)":
         "{sha} “{sujet}”: agent commit without a `Socle-Hooks` trailer — the git hooks did not run (`git config "
         "core.hooksPath .socle/git-hooks`)",
-    "{sha} « {sujet} » : aucun PreToolUse n'a tiré pendant la session — les hooks de l'agent n'étaient pas chargés":
-        "{sha} “{sujet}”: no PreToolUse fired during the session — the agent's hooks were not loaded",
-    "{sha} « {sujet} » : aucun PreToolUse n'a tiré depuis le commit précédent — les hooks de l'agent ont cessé "
-    "d'être chargés en cours de session":
-        "{sha} “{sujet}”: no PreToolUse fired since the previous commit — the agent's hooks stopped being loaded "
-        "during the session",
     "{sha} « {sujet} » : le hook SessionStart n'a jamais tiré pendant la session":
         "{sha} “{sujet}”: the SessionStart hook never fired during the session",
     "aucun adaptateur (`{adaptateur}`)":
@@ -1713,4 +1705,27 @@ MESSAGES: dict[str, str] = {
         "injection impossible: “{avant}” missing from {rel}",
     "pas d'empreinte pour {cible} : {sortie}":
         "no fingerprint for {cible}: {sortie}",
+    "Claude Code ne lit ses hooks que dans le dossier où la session démarre : relancer la session depuis la racine "
+    "du projet ; dans une session à plusieurs dépôts, ouvrir une session sur ce dépôt seul. L'agent n'écrit jamais "
+    "lui-même un réglage de Claude Code pour les rétablir : il le dit à l'humain, et ne pousse rien.":
+        "Claude Code only reads its hooks in the folder where the session starts: restart the session from the "
+        "project root; in a session with several repositories, open a session on this repository alone. The agent "
+        "never writes a Claude Code setting itself to restore them: it tells the human, and pushes nothing.",
+    "{sha} « {sujet} » : aucun PreToolUse n'a tiré pendant la session — les hooks de l'agent n'étaient pas chargés. "
+    "{remede}":
+        "{sha} “{sujet}”: no PreToolUse fired during the session — the agent's hooks were not loaded. {remede}",
+    "{sha} « {sujet} » : aucun PreToolUse n'a tiré depuis le commit précédent — les hooks de l'agent ont cessé "
+    "d'être chargés en cours de session. {remede}":
+        "{sha} “{sujet}”: no PreToolUse fired since the previous commit — the agent's hooks stopped being loaded "
+        "during the session. {remede}",
+    "socle — commit refusé : commit d'agent sans aucun passage du filtre de l'agent depuis le commit précédent "
+    "(`{depuis}`) : ses hooks ne sont pas chargés. {remede}":
+        "socle — commit refused: agent commit without any pass of the agent's filter since the previous commit "
+        "(`{depuis}`): its hooks are not loaded. {remede}",
+    "!! LES HOOKS DE L'AGENT NE SONT PAS CHARGÉS dans cette session : la trace n'a aucun SessionStart pour elle. Ni "
+    "le filtre des commandes, ni les contrôles de fin de tour, ni l'état au démarrage ne tournent. Le dire à "
+    "l'humain avant tout travail. {remede}":
+        "!! THE AGENT'S HOOKS ARE NOT LOADED in this session: the trace has no SessionStart for it. Neither the "
+        "command filter, nor the end-of-turn checks, nor the state at startup run. Tell the human before any work. "
+        "{remede}",
 }

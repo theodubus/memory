@@ -9,11 +9,9 @@ La pull request #6 est fusionnée (J-2026-10-14-Q). Théo valide l'ordre de
 la suite (« Ok je valide ton ordre ») : B-0060 maintenant, la demande de
 B-0039 en parallèle, puis B-0048 avec B-0018, puis B-0059.
 
-B-0060, les quatre corrections de Théo : l'état avertit quand les hooks de
-l'agent ne sont pas chargés, le hook avant commit refuse un commit d'agent
-sans passage du filtre depuis le précédent, une consigne dans AGENTS.md,
-et un remède qui distingue les cas. Chaque contrôle nouveau a son défaut
-injecté et son témoin sain dans l'auto-test.
+B-0060 est fait (J-2026-10-14-R) : l'état avertit en tête quand les hooks
+de l'agent ne sont pas chargés, et le hook avant commit refuse un commit
+d'agent sans passage du filtre depuis le précédent.
 
 ## Consignes en cours
 
@@ -31,7 +29,7 @@ injecté et son témoin sain dans l'auto-test.
 
 1. D-0025, la demande de B-0039, est posée : attendre la réponse de Théo,
    et la relayer avec son texte exact.
-2. B-0060, puis le pousser et regarder la CI.
+2. Pousser B-0060 et regarder la CI.
 3. Ensuite, dans l'ordre validé : B-0048 avec B-0018 (une demande
    d'abord), puis B-0059. Plus tard : B-0046 (que Théo reprendra), B-0040
    (dotnet absent d'ici) ; B-0042 attend sa propre demande.

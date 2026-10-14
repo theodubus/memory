@@ -142,6 +142,63 @@ class TestPrepareCommitMsg(unittest.TestCase):
                       second.read_text())
 
 
+class TestHooksNonCharges(unittest.TestCase):
+    """B-0060 : une session de Claude Code démarrée hors de la racine du
+    projet n'a pas ses hooks ; l'état le dit, le hook avant commit refuse."""
+
+    def setUp(self):
+        import shutil
+        import tempfile
+        from pathlib import Path
+
+        from socle import config
+
+        self.racine = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        self.projet = config.Projet(racine=self.racine)
+
+    def sous(self, **env):
+        import os
+        from unittest import mock
+
+        base = {k: v for k, v in os.environ.items() if not k.startswith("CLAUDE")}
+        return mock.patch.dict(os.environ, {**base, **env}, clear=True)
+
+    def test_hooks_non_charges_sans_session_start_pour_la_session(self):
+        hooks.tracer(self.racine, "SessionStart", "autre", "startup")
+        with self.sous(CLAUDECODE="1", CLAUDE_CODE_SESSION_ID="s"):
+            self.assertTrue(hooks.hooks_non_charges(self.projet))
+        hooks.tracer(self.racine, "SessionStart", "s", "startup")
+        with self.sous(CLAUDECODE="1", CLAUDE_CODE_SESSION_ID="s"):
+            self.assertFalse(hooks.hooks_non_charges(self.projet))
+
+    def test_hors_d_un_agent_ou_sans_session_rien_n_est_dit(self):
+        with self.sous():
+            self.assertFalse(hooks.hooks_non_charges(self.projet))
+        with self.sous(CLAUDECODE="1"):
+            self.assertFalse(hooks.hooks_non_charges(self.projet))
+
+    def test_filtre_absent_depuis_le_commit_precedent(self):
+        with self.sous(CLAUDECODE="1", CLAUDE_CODE_SESSION_ID="s"):
+            self.assertEqual(hooks.filtre_absent(self.projet), "PreToolUse=0")
+            hooks.tracer(self.racine, "PreToolUse", "s", "Bash")
+            self.assertIsNone(hooks.filtre_absent(self.projet))
+            hooks.tracer(self.racine, "git-prepare-commit-msg")
+            self.assertEqual(hooks.filtre_absent(self.projet), "PreToolUse=0")
+        with self.sous():
+            self.assertIsNone(hooks.filtre_absent(self.projet))
+
+    def test_le_hook_avant_commit_refuse_sans_passage_du_filtre(self):
+        import contextlib
+        import io
+
+        sortie = io.StringIO()
+        with self.sous(CLAUDECODE="1", CLAUDE_CODE_SESSION_ID="s"), contextlib.redirect_stderr(sortie):
+            self.assertEqual(hooks.git_pre_commit(self.projet), 1)
+        self.assertIn("commit d'agent sans aucun passage du filtre", sortie.getvalue())
+        self.assertIn("relancer la session depuis la racine du projet", sortie.getvalue())
+
+
 class TestCommitMsg(unittest.TestCase):
     def test_le_diff_de_commit_v_n_est_pas_lu_comme_le_message(self):
         """Une dispense écrite dans le message reste lue quand `git commit -v`

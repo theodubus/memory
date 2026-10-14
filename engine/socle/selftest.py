@@ -722,6 +722,23 @@ def _cas() -> list[Cas]:
                         "Socle-Agent: claude-code\nSocle-Hooks: SessionStart=1 PreToolUse=4 Stop=1\n"
                         "Socle-Hooks-Since-Commit: PreToolUse=0")
 
+    # B-0060 : une session d'agent démarrée hors de la racine du projet n'a
+    # pas ses hooks ; l'état le dit en tête, le hook avant commit refuse.
+    @defaut("hooks-non-charges", "session d'agent démarrée hors de la racine : ses hooks ne sont pas chargés",
+            "agent", "hooks non chargés")
+    def _(a, c):
+        r = a.socle(c, "state", "--short", env={"CLAUDECODE": "1", "CLAUDE_CODE_SESSION_ID": "sans-hooks"})
+        return "\n".join(l for l in r.stdout.splitlines() if l.startswith("!!"))
+
+    @defaut("commit-sans-filtre", "commit d'agent sans passage du filtre depuis le précédent", "git",
+            "commit sans filtre")
+    def _(a, c):
+        maj_memoire(c, "Commit d'agent sans hooks chargés.")
+        a.git(c, "add", "-A")
+        r = a.run(c, "git", "commit", "-q", "-m", "essai",
+                  env={"CLAUDECODE": "1", "CLAUDE_CODE_SESSION_ID": "sans-hooks"})
+        return "" if r.returncode == 0 else r.stdout + r.stderr
+
     @defaut("moteur-altere", "moteur altéré dans le projet", "ci", "moteur.empreinte")
     def _(a, c):
         ajouter(c, ".socle/engine/socle/utils.py", "# retouche locale\n")
@@ -1662,6 +1679,22 @@ def _temoins() -> list[tuple[str, Callable]]:
         r = a.socle(wt, "check", "--stage", "ci", "--base", "origin/main")
         return "" if r.returncode == 0 else r.stdout + r.stderr
 
+    @temoin("une session d'agent dont le hook de démarrage a tiré : l'état n'avertit pas")
+    def _(a, c):
+        a.socle(c, "hook", "session-start", entree=json.dumps({"session_id": "avec-hooks", "source": "startup"}))
+        r = a.socle(c, "state", "--short", env={"CLAUDECODE": "1", "CLAUDE_CODE_SESSION_ID": "avec-hooks"})
+        return "\n".join(l for l in r.stdout.splitlines() if l.startswith("!!"))
+
+    @temoin("un commit d'agent dont le filtre a tiré depuis le commit précédent passe le hook avant commit")
+    def _(a, c):
+        a.socle(c, "hook", "pre-tool-use", entree=json.dumps(
+            {"session_id": "avec-filtre", "tool_name": "Bash", "tool_input": {"command": "git commit -m essai"}}))
+        maj_memoire(c, "Commit d'agent, ses hooks chargés.")
+        a.git(c, "add", "-A")
+        r = a.run(c, "git", "commit", "-q", "-m", "essai",
+                  env={"CLAUDECODE": "1", "CLAUDE_CODE_SESSION_ID": "avec-filtre"})
+        return "" if r.returncode == 0 else r.stdout + r.stderr
+
     @temoin("un défaut sur disque mais pas dans l'index ne bloque pas le commit de ce qui est indexé")
     def _(a, c):
         maj_memoire(c, "Seul ce changement est indexé.")
@@ -1785,6 +1818,8 @@ RAISONS_AGENT = {
     "fuite": "fuite de la mémoire privée",
     "relecture": "relecture avant publication",
     "demande non lue": "n'a pas pu être lue par l'humain",
+    "hooks non chargés": "LES HOOKS DE L'AGENT NE SONT PAS CHARGÉS",
+    "commit sans filtre": "commit d'agent sans aucun passage du filtre",
 }
 
 

@@ -17,6 +17,13 @@ approbation, une réponse dans son terminal), l'état le liste : le lui citer
 dans la réponse suivante, par son identifiant et son lien, puisque la
 commande lui a donné un numéro qu'il ne retrouve pas dans la conversation.
 
+Si l'état n'a pas été injecté au démarrage d'une session de Claude Code, les
+hooks de l'agent ne sont pas chargés : la session a démarré hors de la racine
+du projet. Le dire à l'humain avant tout travail, et ne rien pousser ;
+`socle state` l'affiche aussi en tête, et le hook avant commit refuse alors
+le commit. Ne jamais écrire soi-même un réglage de Claude Code pour rétablir
+les hooks.
+
 Une consigne de l'humain donnée dans la conversation, qui vaut au-delà du tour
 (une règle, une préférence, une interdiction), s'écrit dans la mémoire avant de
 continuer : au chantier actif si elle touche le travail en cours, sinon au
