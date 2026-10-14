@@ -767,7 +767,7 @@ def git_pre_commit(projet: config.Projet) -> int:
     # On juge ce qui sera commité : l'index, figé en arbre par `write-tree`,
     # et non les fichiers sur disque, qui peuvent cacher un défaut indexé ou
     # en montrer un qui ne sera pas commité (B-0007).
-    index = outils.git(projet.racine, "write-tree", check=False).strip() or None
+    index = outils.arbre_de_l_index(projet.racine)
     ctx = contexte.Contexte(projet, etage="git", base=base, tete=index, rapide=True)
     rapport = contexte.executer(ctx)
     if not rapport.reussi:
@@ -882,7 +882,7 @@ def code_sans_test(projet: config.Projet, message: str) -> str | None:
     from socle.report import Rapport
 
     base = outils.base_de_travail(projet.racine)
-    index = outils.git(projet.racine, "write-tree", check=False).strip() or None
+    index = outils.arbre_de_l_index(projet.racine)
     ctx = contexte.Contexte(projet, etage="git", base=base, tete=index, rapide=True, message=message)
     r = Rapport()
     try:

@@ -98,6 +98,8 @@ def cmd_hook(args) -> int:
 
     projet = _projet(args)
     evt = args.event
+    if evt.startswith("git-"):
+        outils.isoler_du_hook(projet.racine)
     if evt == "session-start":
         return hooks.session_start(projet, hooks.lire_entree())
     if evt == "pre-tool-use":

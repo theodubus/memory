@@ -395,7 +395,7 @@ def arbre_commite(ctx) -> str | None:
         return ctx.tete
     if not outils.est_depot(ctx.racine):
         return None
-    return outils.git(ctx.racine, "write-tree", check=False).strip() or None
+    return outils.arbre_de_l_index(ctx.racine)
 
 
 # --------------------------------------------------------------------------

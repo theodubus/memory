@@ -42,6 +42,38 @@ def git(racine: Path, *args: str, check: bool = True, entree: str | None = None)
     return r.stdout
 
 
+# Ce par quoi git désigne un dépôt à ses commandes. Git le passe à ses hooks,
+# en chemin absolu depuis un worktree secondaire : hérité par les tests du
+# projet ou par git dans un autre dépôt (un dépôt jetable, le clone de la
+# mémoire privée), il les faisait viser le dépôt du projet (B-0057).
+VARIABLES_DE_DEPOT = ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY",
+                      "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_COMMON_DIR", "GIT_NAMESPACE", "GIT_PREFIX",
+                      "GIT_QUARANTINE_PATH")
+# L'index que juge le hook avant commit, seul usage légitime de ces
+# variables : un `git commit -a` en passe un temporaire.
+_index_du_hook: str | None = None
+
+
+def isoler_du_hook(racine: Path) -> None:
+    """Au début d'un hook git : retient en chemin absolu l'index que git
+    juge, puis retire de l'environnement ce qui désigne un dépôt. Chaque
+    commande retrouve alors son dépôt par son dossier, le projet comme un
+    autre."""
+    global _index_du_hook
+    index = os.environ.get("GIT_INDEX_FILE")
+    _index_du_hook = str(Path(racine, index).resolve()) if index else None
+    for v in VARIABLES_DE_DEPOT:
+        os.environ.pop(v, None)
+
+
+def arbre_de_l_index(racine: Path) -> str | None:
+    """L'index figé en arbre (`write-tree`) : celui que le hook avant commit
+    juge, ou celui du dépôt."""
+    env = dict(os.environ, GIT_INDEX_FILE=_index_du_hook) if _index_du_hook else None
+    r = subprocess.run(["git", "write-tree"], cwd=racine, capture_output=True, text=True, env=env)
+    return r.stdout.strip() or None if r.returncode == 0 else None
+
+
 def git_reussit(racine: Path, *args: str) -> bool:
     r = subprocess.run(["git", *args], cwd=racine, capture_output=True)
     return r.returncode == 0

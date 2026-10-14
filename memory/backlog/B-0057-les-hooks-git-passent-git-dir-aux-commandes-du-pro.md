@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0057 — Les hooks git passent GIT_DIR aux commandes du projet : depuis un worktree secondaire, ses tests visent le vrai dépôt
 
-> statut : ouvert · origine : J-2026-10-13-X · lu : backlog@44afd8b1
+> statut : fait · origine : J-2026-10-13-X · lu : backlog@44afd8b1 · ref : J-2026-10-14-B
 
 Mesuré en poussant D-0022 depuis un worktree secondaire de ce dépôt : git
 passe `GIT_DIR` et `GIT_INDEX_FILE` (absolus) à ses hooks, et le hook
