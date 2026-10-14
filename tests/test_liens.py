@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import config, liens
+from socle import config, links as liens
 
 DEPOT = "https://github.com/essai/calc"
 
@@ -34,6 +34,20 @@ class TestAdresses(unittest.TestCase):
         self.assertEqual(liens.ancre("J-2026-10-10-P — Backlog clos : B-0007, B-0015"),
                          "j-2026-10-10-p--backlog-clos--b-0007-b-0015")
         self.assertEqual(liens.ancre("`socle` « x » — a.b"), "socle--x---ab")
+
+    def test_une_seule_ancre_pour_les_liens_et_leur_controle(self):
+        # B-0017 : deux copies divergeaient. L'une gardait les soulignés du
+        # gras, que GitHub ne rend pas ; l'autre perdait l'accent décomposé.
+        from socle import checks_memory as controles_memoire
+
+        self.assertEqual(liens.ancre("B-0017 — __Deux__ **fonctions**"), "b-0017--deux-fonctions")
+        self.assertEqual(liens.ancre("Cafe\u0301 noir"), "cafe\u0301-noir")
+        self.assertFalse(hasattr(controles_memoire, "slug"), "la copie du contrôle est retirée")
+        # Les ancres d'un fichier, comme le contrôle des liens les voit : un
+        # titre répété prend le suffixe de GitHub, un titre en code n'en est pas un.
+        self.assertEqual(controles_memoire.ancres("## B-0017 — __Deux__\n\n## B-0017 — __Deux__\n"
+                                                  "```\n## pas un titre\n```\n"),
+                         {"b-0017--deux", "b-0017--deux-1"})
 
     def test_ce_qui_ressemble_a_un_chemin(self):
         self.assertEqual(liens.ressemble_a_un_chemin("moteur/socle/liens.py"), "moteur/socle/liens.py")
@@ -108,6 +122,64 @@ class TestLiensDuDepot(unittest.TestCase):
         )
         self.assertEqual(liens.problemes(self.projet, message), ([], []))
 
+
+class TestDemandeLue(unittest.TestCase):
+    """B-0022 : une réponse ne se relaie qu'à une demande que l'humain a pu
+    lire, poussée telle qu'elle est."""
+
+    def setUp(self):
+        self.dossier = Path(tempfile.mkdtemp(prefix="socle-relais-"))
+        self.addCleanup(shutil.rmtree, self.dossier, ignore_errors=True)
+        origine = self.dossier / "origine.git"
+        git(self.dossier, "init", "-q", "--bare", str(origine))
+        self.racine = self.dossier / "projet"
+        (self.racine / ".socle").mkdir(parents=True)
+        git(self.racine, "init", "-q", "-b", "main")
+        (self.racine / ".socle/politique.toml").write_text(f'[human]\nrepo_url = "{DEPOT}"\n')
+        self.demande = self.racine / "memoire/demandes/D-0001-essai.md"
+        self.demande.parent.mkdir(parents=True)
+        self.demande.write_text("<!-- socle: couche=demandes zone=publique -->\n# D-0001 — Essai ?\n")
+        git(self.racine, "remote", "add", "origin", str(origine))
+        self.projet = config.Projet.charger(self.racine)
+
+    def illisible(self):
+        from socle import cli, requests as demandes
+
+        d = next(x for x in demandes.toutes(self.racine) if x.id == "D-0001")
+        return cli.demande_illisible(self.projet, d)
+
+    def pousser(self):
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "demande")
+        git(self.racine, "push", "-q", "-u", "origin", "main")
+
+    def test_une_demande_jamais_poussee_n_a_pas_pu_etre_lue(self):
+        self.assertIn("pousser", self.illisible())
+
+    def test_une_demande_poussee_telle_quelle_a_pu_etre_lue(self):
+        self.pousser()
+        self.assertIsNone(self.illisible())
+
+    def test_cmd_answer_refuse_de_relayer_une_reponse_a_une_demande_non_lue(self):
+        import argparse
+        import contextlib
+        import io
+
+        from socle import cli
+
+        (self.racine / "citation.txt").write_text("oui")
+        args = argparse.Namespace(root=str(self.racine), request="D-0001", answer="valider", text="", by="Théo",
+                                  relayed=True, quote=None, quote_file=str(self.racine / "citation.txt"))
+        erreurs = io.StringIO()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(erreurs):
+            self.assertEqual(cli.cmd_answer(args), 2)
+        self.assertIn("n'a pas pu être lue par l'humain", erreurs.getvalue())
+        self.assertEqual(list(self.demande.parent.glob("*.reponse.toml")), [])
+
+    def test_une_demande_changee_depuis_le_push_n_est_pas_celle_qu_il_a_lue(self):
+        self.pousser()
+        self.demande.write_text(self.demande.read_text() + "\nUn ajout après coup.\n")
+        self.assertIn("diffère", self.illisible())
 
 if __name__ == "__main__":
     unittest.main()

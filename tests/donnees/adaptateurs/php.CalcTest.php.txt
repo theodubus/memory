@@ -1,0 +1,31 @@
+<?php
+
+namespace Essai\Tests;
+
+use Essai\Calc;
+use PHPUnit\Framework\TestCase;
+
+final class CalcTest extends TestCase
+{
+    public function testDouble(): void
+    {
+        $this->assertSame(4, Calc::double(2));
+    }
+
+    public function testRien(): void
+    {
+        $s = '{';
+        Calc::double(2);
+    }
+
+    public function testPlusTard(): void
+    {
+        $this->markTestSkipped();
+        $this->assertSame(6, Calc::triple(2));
+    }
+
+    private function aide(): int
+    {
+        return 1;
+    }
+}

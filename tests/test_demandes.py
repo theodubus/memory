@@ -2,9 +2,9 @@ import re
 import unittest
 from pathlib import Path
 
-from socle import config, demandes
+from socle import config, requests as demandes
 
-MODELE = (Path(__file__).resolve().parent.parent / "moteur/socle/modeles/demande.md").read_text(encoding="utf-8")
+MODELE = (Path(__file__).resolve().parent.parent / "engine/socle/templates/request.md").read_text(encoding="utf-8")
 
 CONFORME = """<!-- socle: couche=demandes zone=publique -->
 # D-0004 — Faut-il relever le plafond de mutants de search.rs de 3 à 5 ?
@@ -54,7 +54,7 @@ Refuser. Vérifié : les deux mutants changent un seuil d'élagage. Supposé : q
 
 
 def _demande(texte):
-    return demandes.Demande(chemin="memoire/demandes/D-0004-plafond.md", texte=texte,
+    return demandes.Demande(chemin="memory/requests/D-0004-plafond.md", texte=texte,
                             entree=demandes.memoire.analyser("x.md", texte).entrees[0],
                             sections=demandes.decouper_sections(texte))
 
@@ -86,6 +86,13 @@ class TestContrat(unittest.TestCase):
         texte = CONFORME.replace("[le verdict](https://exemple.org/verdict)", "le verdict")
         self.assertTrue(any("Où regarder" in f for f in demandes.linter(_demande(texte), self.projet)))
 
+    def test_sans_lien_le_refus_dit_comment_en_mettre_un(self):
+        # B-0027 : sans adresse de dépôt, `socle url` échoue et l'agent
+        # écrivait des chemins nus ; le refus dit qu'un lien relatif suffit.
+        texte = CONFORME.replace("[le verdict](https://exemple.org/verdict)", "le verdict")
+        faute = next(f for f in demandes.linter(_demande(texte), self.projet) if "Où regarder" in f)
+        self.assertIn("un lien relatif depuis la demande", faute)
+
     def test_contexte_d_une_ligne_refuse(self):
         texte = re.sub(r"## Contexte\n\n.*?\n\n## ", "## Contexte\n\nDeux survivants nouveaux.\n\n## ",
                        CONFORME, flags=re.S)
@@ -96,6 +103,14 @@ class TestContrat(unittest.TestCase):
         fautes = demandes.linter(_demande(texte), self.projet)
         self.assertTrue(any("Conséquences" in f for f in fautes))
         self.assertTrue(any("Réponses possibles" in f for f in fautes))
+
+    def test_une_comparaison_ou_du_code_cite_ne_sont_pas_des_trous(self):
+        # Relevé de la passe de recul, E : « < 5 » ou un extrait de code
+        # étaient pris pour un trou du gabarit.
+        texte = CONFORME.replace("Supposé : qu'aucun test",
+                                 "Si le compte reste < 5 et > 2, ou a <= b, `git log <a b>` le montre. Supposé : qu'aucun test")
+        fautes = demandes.linter(_demande(texte), self.projet)
+        self.assertFalse(any("gabarit laissé" in f for f in fautes), fautes)
 
     def test_le_gabarit_brut_ne_passe_pas(self):
         texte = MODELE.format(id="D-0004", titre="Choisir le format des fichiers de politique", date="2026-10-10")

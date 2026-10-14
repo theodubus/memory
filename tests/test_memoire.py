@@ -1,6 +1,7 @@
 import unittest
+from pathlib import Path
 
-from socle import memoire, outils
+from socle import memory as memoire, utils as outils
 
 CANONIQUE = """<!-- socle: couche=canonique zone=publique -->
 # Mémoire canonique
@@ -86,6 +87,12 @@ class TestReferences(unittest.TestCase):
         self.assertEqual(refs, [("commit", "3f2a9c1"), ("fichier", "src/x.rs:12"),
                                 ("url", "https://exemple.org"), ("id", "J-2026-10-10-A")])
 
+    def test_la_ponctuation_finale_n_est_pas_dans_la_reference(self):
+        # B-0020 : un SHA suivi d'un point ou d'une parenthèse était refusé.
+        refs = memoire.references("(commit:3f2a9c1). Voir fichier:docs/a_(b).md, puis fichier:src/x.rs:12.")
+        self.assertEqual(refs, [("commit", "3f2a9c1"), ("fichier", "docs/a_(b).md"), ("fichier", "src/x.rs:12")])
+        self.assertEqual(memoire.sans_ponctuation_finale("3f2a9c1)."), "3f2a9c1")
+
     def test_accent_grave_fermant_n_ouvre_pas_de_reference(self):
         self.assertEqual(memoire.references("les références `commit:` et aux identifiants `x`"), [])
 
@@ -109,3 +116,30 @@ class TestMotifs(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestFichierJournal(unittest.TestCase):
+    """ADR-0022 : un mois dont le fichier atteindrait son budget continue dans
+    le suivant, au lieu de bloquer tout commit qui ajoute au journal."""
+
+    def test_le_mois_continue_dans_un_second_fichier(self):
+        import tempfile
+
+        dossier = Path(tempfile.mkdtemp(prefix="socle-journal-"))
+        self.addCleanup(__import__("shutil").rmtree, dossier, ignore_errors=True)
+        self.assertEqual(memoire.fichier_journal(dossier, "2026-10", 100, 20).name, "2026-10.md")
+        (dossier / "2026-10.md").write_text("x" * 90)
+        self.assertEqual(memoire.fichier_journal(dossier, "2026-10", None, 20).name, "2026-10.md")
+        self.assertEqual(memoire.fichier_journal(dossier, "2026-10", 100, 5).name, "2026-10.md")
+        self.assertEqual(memoire.fichier_journal(dossier, "2026-10", 100, 20).name, "2026-10-2.md")
+        (dossier / "2026-10-2.md").write_text("y")
+        # Le mois a continué : on n'écrit plus dans le premier, même s'il a de la place.
+        self.assertEqual(memoire.fichier_journal(dossier, "2026-10", 100, 5).name, "2026-10-2.md")
+
+    def test_le_budget_d_un_fichier_vient_des_garde_fous(self):
+        from socle import config
+
+        p = config.Projet(racine=Path("."))
+        p.garde_fous = {"budgets": {"memory/journal/*.md": {"max_bytes": 100}}}
+        self.assertEqual(p.budget_octets("memory/journal/2026-10.md"), 100)
+        self.assertIsNone(p.budget_octets("memory/active.md"))

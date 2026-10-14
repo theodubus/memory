@@ -11,10 +11,10 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 
-from socle import config, initialisation, installeur, memoire, migrations
-from socle.modeles import gabarit
+from socle import config, initialization as initialisation, installer as installeur, memory as memoire, migrations
+from socle.templates import gabarit
 
-MOTEUR = Path(__file__).resolve().parent.parent / "moteur"
+MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 
 
 def depot(fichiers: dict[str, str]) -> Path:
@@ -66,21 +66,54 @@ class TestMemoirePriveeALInstallation(Base):
     def test_compagnon_sans_clone_le_dit(self):
         self.racine = depot({"calc.py": "x = 1\n"})
         code, sortie = installer(self.racine, prive="compagnon", relecture="lots", demandes_privees=True)
-        politique = (self.racine / config.POLITIQUE).read_text()
+        politique = (self.racine / config.FORMAT_ACTUEL.politique).read_text()
         self.assertIn('[private]\nmode = "compagnon"\nreview = "lots"\nrequests = true\n', politique)
-        self.assertIn("memoire/prive/", (self.racine / ".gitignore").read_text())
+        self.assertIn("memory/private/", (self.racine / ".gitignore").read_text())
         self.assertIn("dépôt privé absent", sortie)
+        self.assertIn("mettre en place le dépôt privé", sortie.split("Et maintenant :")[1])
+        etapes = sortie.split("Et maintenant :")[1]
+        self.assertIn("mettre en place le dépôt privé", etapes)
+        # Son verrou manque, mais ni une correction ni l'adoption n'y peuvent rien.
+        self.assertNotIn("--adoption", etapes)
+        self.assertIn("sa mise en place revient à l'humain", sortie)
 
     def test_chiffre_pose_le_filtre(self):
         self.racine = depot({"calc.py": "x = 1\n"})
         code, sortie = installer(self.racine, prive="chiffre", filtre="git-crypt")
-        self.assertIn("memoire/prive/** filter=git-crypt", (self.racine / ".gitattributes").read_text())
+        self.assertIn("memory/private/** filter=git-crypt", (self.racine / ".gitattributes").read_text())
         self.assertIn("filtre « git-crypt » non configuré", sortie)
 
     def test_la_politique_du_gabarit_reecrite(self):
-        texte = installeur.politique_privee(gabarit("politique.toml"), "chiffre", None, False)
+        texte = installeur.politique_privee(gabarit("policy.toml"), "chiffre", None, False)
         self.assertIn('[private]\nmode = "chiffre"\nrequests = false\n', texte)
         self.assertNotIn("# [private]", texte)
+
+
+class TestInstallationVerte(Base):
+    def test_le_code_existant_entre_a_mesurer_et_l_installation_finit_verte(self):
+        """B-0034, P1 : sur un projet qui a déjà du code, l'installation
+        finissait en échec, faute de plafond de mutation."""
+        self.racine = depot({"pyproject.toml": "[tool.pytest.ini_options]\n", "src/calc.py": "def f():\n    return 1\n"})
+        code, sortie = installer(self.racine, "python-pytest")
+        self.assertEqual(code, 0, sortie)
+        self.assertIn('"src/calc.py" = { pending = true }',
+                      (self.racine / config.FORMAT_ACTUEL.garde_fous).read_text())
+
+    def test_l_installation_dit_quoi_faire_ensuite(self):
+        """B-0034, P2 : l'audit ne montre que ce qui échoue ou avertit, puis
+        les étapes de l'humain, dans l'ordre, chacune avec sa commande."""
+        self.racine = depot({"calc.py": "x = 1\n"})
+        code, sortie = installer(self.racine)
+        self.assertRegex(sortie, r"… et \d+ autre\(s\) contrôle\(s\) sans rien à signaler")
+        etapes = sortie.split("Et maintenant :")[1].strip().splitlines()
+        self.assertIn("socle init --brief", etapes[0])
+        self.assertIn("git commit", etapes[1])
+        self.assertIn("ouvrir l'agent", etapes[2])
+
+    def test_garde_fous_initiaux_sans_mutation(self):
+        texte = installeur.garde_fous_initiaux(depot({"calc.py": "def f():\n    return 1\n"}),
+                                               (MOTEUR / "socle/adapters/python.toml").read_text())
+        self.assertNotIn("pending = true }", texte)
 
 
 class TestMiseAJour(Base):
@@ -89,16 +122,46 @@ class TestMiseAJour(Base):
         installer(self.racine)
 
     def test_le_verrou_note_le_format(self):
-        self.assertIn(f"format = {migrations.FORMAT}", (self.racine / config.LOCK).read_text())
+        self.assertIn(f"format = {migrations.FORMAT}", (self.racine / config.FORMAT_ACTUEL.lock).read_text())
 
     def test_la_politique_changee_est_montree_jamais_ecrasee(self):
-        p = self.racine / config.POLITIQUE
+        p = self.racine / config.FORMAT_ACTUEL.politique
         p.write_text(p.read_text().replace("max_attempts = 3", "max_attempts = 5"))
         self.assertTrue(installeur.diff_politique(self.racine))
         code, sortie = installer(self.racine)
         self.assertIn("mise à jour : moteur", sortie)
         self.assertIn("+max_attempts = 3", sortie)
         self.assertIn("max_attempts = 5", p.read_text())
+
+    def test_la_memoire_privee_s_ajoute_a_un_projet_installe(self):
+        """P4 du relevé du parcours (B-0034) : l'option annonçait la mémoire
+        privée sans écrire la politique, qui la laissait non configurée."""
+        code, sortie = installer(self.racine, prive="compagnon", relecture="lots")
+        politique = (self.racine / config.FORMAT_ACTUEL.politique).read_text()
+        self.assertIn('[private]\nmode = "compagnon"\nreview = "lots"\nrequests = false\n', politique)
+        self.assertIn("mémoire privée ajoutée à la politique", sortie)
+        self.assertEqual(config.Projet.charger(self.racine).pol("private", "mode"), "compagnon")
+
+    def test_une_memoire_privee_deja_choisie_n_est_pas_reecrite(self):
+        installer(self.racine, prive="chiffre")
+        installer(self.racine, prive="compagnon")
+        self.assertEqual(config.Projet.charger(self.racine).pol("private", "mode"), "chiffre")
+
+    def test_une_mise_a_jour_propose_d_abord_l_approbation(self):
+        etapes = installeur.et_maintenant(self.racine, True, ["protege.fichiers", "docs.liens"])
+        self.assertIn("socle approve --text", etapes[0])
+        self.assertIn("1 contrôle(s) en échec ci-dessus (docs.liens)", etapes[1])
+        self.assertIn('git commit -m "Mettre à jour le socle', etapes[2])
+        self.assertFalse(any("socle init" in e for e in etapes))
+
+    def test_une_installation_dit_de_proteger_la_branche(self):
+        """B-0044, L2 (R1) : rien ne disait à l'humain d'exiger la CI avant
+        de fusionner, sans quoi une CI rouge n'empêche rien."""
+        etapes = installeur.et_maintenant(self.racine, False, [])
+        protection = next(e for e in etapes if "protéger la branche par défaut" in e)
+        self.assertIn("« Socle — verify, contrôles, auto-test »", protection)
+        self.assertLess(etapes.index(protection), len(etapes) - 1)
+        self.assertFalse(any("protéger la branche" in e for e in installeur.et_maintenant(self.racine, True, [])))
 
     def test_les_migrations_s_appliquent_dans_l_ordre(self):
         faites = []
@@ -126,9 +189,12 @@ class TestEntrees(Base):
         questions = initialisation.questions_de_depart(self.charger(), None, False)
         self.assertEqual(len(questions), 5)
         self.assertTrue(all(q.defaut and q.effet for q in questions))
-        d = next((self.racine / "memoire/demandes").glob("D-0001-*.md")).read_text()
+        d = next((self.racine / "memory/requests").glob("D-0001-*.md")).read_text()
         self.assertIn("Défaut : aucun", d)
         self.assertIn("Ce qui revient maintenant à l'agent", flux.getvalue())
+        humain = flux.getvalue().split("Pour toi :")[1].split("Ce qui revient")[0]
+        self.assertIn("la demande D-0001 doit être sur GitHub", humain)
+        self.assertEqual(len(initialisation.pour_toi("D-0042")), 3)
 
     def test_cadrage_archive_tel_quel(self):
         self.racine = depot({})
@@ -143,10 +209,55 @@ class TestEntrees(Base):
                 initialisation.initialiser(self.charger(), cadrage=doc)
         finally:
             doc.unlink()
-        journal = next((self.racine / "memoire/journal").glob("*.md")).read_text()
+        journal = next((self.racine / "memory/journal").glob("*.md")).read_text()
         self.assertIn("Document de cadrage archivé tel quel", journal)
-        demande = next((self.racine / "memoire/demandes").glob("D-*.md")).read_text()
+        demande = next((self.racine / "memory/requests").glob("D-*.md")).read_text()
         self.assertIn("celui du document de cadrage", demande)
+
+    def test_avec_une_memoire_privee_le_cadrage_s_archive_en_prive(self):
+        """B-0044, L3 : le cadrage, d'où viennent les termes privés, était
+        archivé en public même avec une mémoire privée."""
+        self.racine = depot({})
+        installer(self.racine, prive="chiffre")
+        dossier = Path(tempfile.mkdtemp(prefix="socle-cadrages-"))
+        self.addCleanup(shutil.rmtree, dossier, ignore_errors=True)
+        doc = dossier / "cadrage.md"
+        doc.write_text("# Cadrage\n\nLe projet Mistral.\n")
+        with redirect_stdout(io.StringIO()):
+            self.assertEqual(initialisation.initialiser(self.charger(), cadrage=doc), 0)
+        self.assertEqual((self.racine / "memory/private/archives/cadrage.md").read_text(), doc.read_text())
+        self.assertFalse((self.racine / "memory/archives/cadrage.md").exists())
+        journal = next((self.racine / "memory/private/journal").glob("*.md")).read_text()
+        self.assertIn("zone=privee", journal)
+        self.assertIn(f"## {'P'}J-", journal)
+
+    def test_un_second_cadrage_n_ecrase_pas_le_premier(self):
+        """B-0044, L1 : l'archive « telle quelle » était écrasée par un second
+        document du même nom, et un nom avec une espace cassait sa référence."""
+        self.racine = depot({})
+        installer(self.racine)
+        dossier = Path(tempfile.mkdtemp(prefix="socle-cadrages-"))
+        self.addCleanup(shutil.rmtree, dossier, ignore_errors=True)
+        doc = dossier / "mon cadrage.md"
+        doc.write_text("# Premier\n")
+        premiere, emp1 = initialisation.archiver_cadrage(self.racine, doc)
+        self.assertNotIn(" ", premiere)
+        self.assertEqual(initialisation.archiver_cadrage(self.racine, doc), (premiere, emp1))
+        doc.write_text("# Second\n")
+        seconde, emp2 = initialisation.archiver_cadrage(self.racine, doc)
+        self.assertNotEqual(seconde, premiere)
+        self.assertEqual((self.racine / premiere).read_text(), "# Premier\n")
+        self.assertEqual((self.racine / seconde).read_text(), "# Second\n")
+
+    def test_la_demande_de_depart_renvoie_au_fichier_d_instructions_qui_existe(self):
+        """Quand l'installeur garde CLAUDE.md, lu par le projet, le lien vers
+        AGENTS.md était mort."""
+        self.racine = depot({"CLAUDE.md": "# Projet\n", "tests/test_doc.py": "open('CLAUDE.md').read()\n"})
+        installer(self.racine)
+        projet = self.charger()
+        texte = initialisation.demande_de_depart(projet, "D-0009", initialisation.questions_de_depart(projet, None, False),
+                                                 None, "rien du tout")
+        self.assertIn("[CLAUDE.md](../../CLAUDE.md)", texte)
 
     def test_depot_seulement_du_verifiable(self):
         self.racine = depot({"pyproject.toml": "[project]\n", "README.md": "# Projet\n",
@@ -167,7 +278,7 @@ class TestCommandes(Base):
     def test_install_puis_init_par_la_ligne_de_commande(self):
         import argparse
 
-        from socle import cli, demandes
+        from socle import cli, requests as demandes
 
         self.racine = depot({"calc.py": "x = 1\n"})
         ns = argparse.Namespace(target=str(self.racine), adapter="auto", owner="@essai", adoption=False,
@@ -179,6 +290,6 @@ class TestCommandes(Base):
         projet = config.Projet.charger(self.racine)
         texte = initialisation.demande_de_depart(projet, "D-0009", initialisation.questions_de_depart(projet, None, True),
                                                  None, "un dépôt existant")
-        d = demandes.charger(self.racine, None, "memoire/demandes/D-0009-questions-de-depart.md", texte)
+        d = demandes.charger(self.racine, None, "memory/requests/D-0009-questions-de-depart.md", texte)
         self.assertEqual(demandes.linter(d, projet), [])
         self.assertEqual(d.reponses_possibles(), ["defauts", "reponses", "contexte-insuffisant"])

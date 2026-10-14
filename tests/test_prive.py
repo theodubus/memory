@@ -11,16 +11,18 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
-from socle import cli, config, contexte, etat, hooks, liens, memoire, prive
-from socle.demandes import ecrire_reponse
-from socle.demandes import toutes as demandes_toutes
-from socle.rapport import Rapport
+from socle import (cli, config, context as contexte, state as etat, hooks, links as liens, memory as memoire,
+                   private as prive, private_setup as prive_installation)
+from socle.requests import ecrire_reponse
+from socle.requests import toutes as demandes_toutes
+from socle.report import Rapport
 
 P = "P"  # un identifiant privé en clair dans ce fichier public serait une fuite
 ENTETE = "<!-- socle: couche=canonique zone=privee -->\n# Mémoire canonique privée\n"
-FAIT_PRIVE = ENTETE + f"\n## {P}F-0001 — Le nom de code est Mistral\n\n> statut : supposé · source : fichier:memoire/actif.md\n"
+FAIT_PRIVE = ENTETE + f"\n## {P}F-0001 — Le nom de code est Mistral\n\n> statut : supposé · source : fichier:memory/actif.md\n"
 CANONIQUE = "<!-- socle: couche=canonique zone=publique -->\n# Mémoire canonique\n"
 ACTIF = "<!-- socle: couche=actif zone=publique -->\n# Chantier actif\n"
 
@@ -53,11 +55,11 @@ class Base(unittest.TestCase):
         self.dossier = Path(tempfile.mkdtemp(prefix="socle-prive-"))
         self.racine = self.dossier / "public"
         (self.racine / ".socle").mkdir(parents=True)
-        (self.racine / "memoire").mkdir()
-        (self.racine / "memoire/canonique.md").write_text(CANONIQUE)
-        (self.racine / "memoire/actif.md").write_text(ACTIF)
+        (self.racine / "memory").mkdir()
+        (self.racine / "memory/canonical.md").write_text(CANONIQUE)
+        (self.racine / "memory/active.md").write_text(ACTIF)
         if self.mode:
-            (self.racine / ".socle/politique.toml").write_text(f'[private]\nmode = "{self.mode}"\n')
+            (self.racine / ".socle/policy.toml").write_text(f'[private]\nmode = "{self.mode}"\n')
         git(self.racine, "init", "-q", "-b", "main")
 
     def tearDown(self):
@@ -78,8 +80,8 @@ class TestSansMode(Base):
         self.assertEqual(verifier(self.racine, prive.controle_acces).constats, [])
 
     def test_un_fichier_prive_commite_sans_mode_est_public(self):
-        (self.racine / "memoire/prive").mkdir()
-        (self.racine / "memoire/prive/canonique.md").write_text(FAIT_PRIVE)
+        (self.racine / "memory/private").mkdir()
+        (self.racine / "memory/private/canonical.md").write_text(FAIT_PRIVE)
         git(self.racine, "add", "-A")
         r = verifier(self.racine, prive.controle_acces)
         self.assertIn("sans mode de mémoire privée : ils sont publics", r.erreurs()[0].message)
@@ -97,11 +99,11 @@ class Compagnon(Base):
 
     def setUp(self):
         super().setUp()
-        (self.racine / ".gitignore").write_text("memoire/prive/\n")
-        self.prive = self.racine / "memoire/prive"
+        (self.racine / ".gitignore").write_text("memory/private/\n")
+        self.prive = self.racine / "memory/private"
         self.prive.mkdir()
         git(self.prive, "init", "-q", "-b", "main")
-        (self.prive / "canonique.md").write_text(FAIT_PRIVE)
+        (self.prive / "canonical.md").write_text(FAIT_PRIVE)
         self.sha = self.commit(self.prive, "fait privé")
         prive.ecrire_verrou(self.racine, self.sha)
         self.commit()
@@ -117,27 +119,43 @@ class TestCompagnon(Compagnon):
         self.assertTrue(prive.acces(projet).disponible)
         self.assertIn("disponible, au commit", prive.ligne_etat(projet))
         self.assertIn("mémoire privée : disponible, au commit", etat.calculer(projet, contenus=False))
-        self.assertEqual(memoire.fichiers_compagnon(self.racine), ["memoire/prive/canonique.md"])
+        self.assertEqual(memoire.fichiers_compagnon(self.racine), ["memory/private/canonical.md"])
         self.assertIn(f"{P}F-0001", memoire.Memoire.charger(self.racine).definitions())
         self.assertEqual(verifier(self.racine, prive.controle_verrou).erreurs(), [])
 
+    def test_ajout_seul_relit_la_memoire_privee_a_la_base(self):
+        """B-0044, L3 : la mémoire privée n'était jamais relue à la base, et
+        un fait privé effacé passait « ajout seul »."""
+        from socle import checks_memory as controles_memoire
+
+        base = git(self.racine, "rev-parse", "HEAD").strip()
+        projet = config.Projet.charger(self.racine)
+        self.assertIn(f"{P}F-0001", prive.memoire_privee_a(projet, base).definitions())
+        (self.prive / "canonical.md").write_text(ENTETE)
+        ctx = contexte.Contexte(projet, etage="agent", base=base)
+        r = Rapport()
+        controles_memoire.ajout_seul(ctx, r)
+        self.assertEqual([c.message for c in r.erreurs()],
+                         [f"fait `{P}F-0001` effacé : un fait se barre (réfuté) ou s'archive dans le journal, "
+                          "jamais ne disparaît"])
+
     def test_verrou_perime(self):
-        (self.prive / "canonique.md").write_text(FAIT_PRIVE + "\nUne précision.\n")
+        (self.prive / "canonical.md").write_text(FAIT_PRIVE + "\nUne précision.\n")
         self.commit(self.prive, "précision")
         erreurs = verifier(self.racine, prive.controle_verrou).erreurs()
         self.assertEqual(len(erreurs), 1)
         self.assertIn("le verrou désigne", erreurs[0].message)
 
     def test_changement_prive_hors_commit(self):
-        (self.prive / "canonique.md").write_text(FAIT_PRIVE + "\nPas commité.\n")
-        self.assertEqual(prive.compagnon_modifie(self.racine), ["canonique.md"])
+        (self.prive / "canonical.md").write_text(FAIT_PRIVE + "\nPas commité.\n")
+        self.assertEqual(prive.compagnon_modifie(self.racine), ["canonical.md"])
         self.assertIn("hors de tout commit", verifier(self.racine, prive.controle_verrou).erreurs()[0].message)
 
     def test_fichier_prive_force_dans_le_depot_public(self):
         # Tant que le clone est là, git refuse en silence d'y prendre un
         # fichier ; sans lui, `add -f` passe outre le `.gitignore`.
         shutil.rmtree(self.prive / ".git")
-        git(self.racine, "add", "-f", "memoire/prive/canonique.md")
+        git(self.racine, "add", "-f", "memory/private/canonical.md")
         self.assertIn("fichier privé commité dans le dépôt public",
                       verifier(self.racine, prive.controle_verrou).erreurs()[0].message)
 
@@ -151,34 +169,34 @@ class TestCompagnon(Compagnon):
         self.assertIn("indisponible", r.constats[0].message)
 
     def test_commande_verrouiller_puis_extraire(self):
-        (self.prive / "canonique.md").write_text(FAIT_PRIVE + "\nUne précision.\n")
+        (self.prive / "canonical.md").write_text(FAIT_PRIVE + "\nUne précision.\n")
         nouveau = self.commit(self.prive, "précision")
         flux = io.StringIO()
         with contextlib.redirect_stdout(flux), contextlib.redirect_stderr(io.StringIO()):
-            self.assertEqual(cli.cmd_prive(argparse.Namespace(root=str(self.racine), action="verrouiller")), 0)
+            self.assertEqual(cli.cmd_prive(argparse.Namespace(root=str(self.racine), action="lock")), 0)
         self.assertEqual(prive.lire_verrou(self.racine), nouveau)
         prive.ecrire_verrou(self.racine, self.sha)
         with contextlib.redirect_stdout(flux), contextlib.redirect_stderr(io.StringIO()):
-            self.assertEqual(cli.cmd_prive(argparse.Namespace(root=str(self.racine), action="extraire")), 0)
+            self.assertEqual(cli.cmd_prive(argparse.Namespace(root=str(self.racine), action="extract")), 0)
         self.assertEqual(prive.commit_compagnon(self.racine), self.sha)
 
     def test_le_contenu_nouveau_est_prive_par_defaut(self):
         flux = io.StringIO()
         with contextlib.redirect_stdout(flux):
             cli.cmd_new(argparse.Namespace(root=str(self.racine), type="fact", title="Une idée", private=False, public=False))
-        self.assertIn(f"## {P}F-0002 — Une idée", (self.prive / "canonique.md").read_text())
+        self.assertIn(f"## {P}F-0002 — Une idée", (self.prive / "canonical.md").read_text())
         with contextlib.redirect_stdout(flux):
             cli.cmd_new(argparse.Namespace(root=str(self.racine), type="fact", title="Un résultat", private=False, public=True))
-        self.assertIn("## F-0001 — Un résultat", (self.racine / "memoire/canonique.md").read_text())
+        self.assertIn("## F-0001 — Un résultat", (self.racine / "memory/canonical.md").read_text())
 
     def test_en_ci_un_constat_prive_est_masque(self):
-        (self.prive / "canonique.md").write_text(FAIT_PRIVE.replace("supposé", "inventé"))
+        (self.prive / "canonical.md").write_text(FAIT_PRIVE.replace("supposé", "inventé"))
         ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="ci")
         r = contexte.executer(ctx, ["memoire.format"])
         self.assertTrue(r.erreurs())
         texte = r.texte()
         self.assertNotIn("inventé", texte)
-        self.assertNotIn("canonique.md", texte)
+        self.assertNotIn("canonical.md", texte)
         self.assertIn("constat masqué : zone privée", texte)
 
 
@@ -191,15 +209,15 @@ class Chiffre(Base):
         filtre.write_text(FILTRE)
         git(self.racine, "config", "filter.essai.clean", f"{sys.executable} {filtre} clean")
         git(self.racine, "config", "filter.essai.smudge", f"{sys.executable} {filtre} smudge")
-        (self.racine / ".gitattributes").write_text("memoire/prive/** filter=essai\n")
-        (self.racine / "memoire/prive").mkdir()
-        (self.racine / "memoire/prive/canonique.md").write_text(FAIT_PRIVE)
+        (self.racine / ".gitattributes").write_text("memory/private/** filter=essai\n")
+        (self.racine / "memory/private").mkdir()
+        (self.racine / "memory/private/canonical.md").write_text(FAIT_PRIVE)
         self.commit()
 
 
 class TestChiffre(Chiffre):
     def test_commite_chiffre_lu_en_clair(self):
-        brut = git(self.racine, "show", "HEAD:memoire/prive/canonique.md")
+        brut = git(self.racine, "show", "HEAD:memory/private/canonical.md")
         self.assertTrue(brut.startswith("ESSAI:"))
         projet = config.Projet.charger(self.racine)
         self.assertTrue(prive.acces(projet).disponible)
@@ -208,28 +226,65 @@ class TestChiffre(Chiffre):
         self.assertEqual(prive.arbre_commite(contexte.Contexte(projet, tete="HEAD")), "HEAD")
 
     def test_sans_la_cle_la_memoire_est_indisponible(self):
-        (self.racine / "memoire/prive/canonique.md").write_text(git(self.racine, "show", "HEAD:memoire/prive/canonique.md"))
+        (self.racine / "memory/private/canonical.md").write_text(git(self.racine, "show", "HEAD:memory/private/canonical.md"))
         projet = config.Projet.charger(self.racine)
         mem = memoire.Memoire.charger(self.racine)
-        self.assertEqual(mem.illisibles, ["memoire/prive/canonique.md"])
+        self.assertEqual(mem.illisibles, ["memory/private/canonical.md"])
         self.assertFalse(prive.acces(projet, mem.illisibles).disponible)
         ctx = contexte.Contexte(projet, etage="agent")
-        self.assertIsNone(ctx.lire("memoire/prive/canonique.md"))
-        self.assertIn("memoire/prive/canonique.md", ctx.fichiers)
+        self.assertIsNone(ctx.lire("memory/private/canonical.md"))
+        self.assertIn("memory/private/canonical.md", ctx.fichiers)
+
+    def test_la_liste_des_termes_dechiffree_est_lisible(self):
+        """B-0044, L3 : la liste des termes n'a pas l'en-tête d'un fichier de
+        mémoire ; déchiffrée, elle rendait la mémoire « indisponible »."""
+        projet = config.Projet.charger(self.racine)
+        self.assertTrue(prive.ajouter_terme(projet, "Mistral"))
+        self.commit()
+        self.assertTrue(prive.acces(projet).disponible, prive.acces(projet).raison)
+        self.assertEqual(prive.termes(projet, "HEAD").liste, ["Mistral"])
+
+    def test_la_liste_des_termes_commitee_en_clair(self):
+        """B-0044, L3 : sans filtre, la liste partait en clair sans que
+        `prive.chiffre` la voie."""
+        (self.racine / ".gitattributes").write_text("memory/private/canonical.md filter=essai\n")
+        prive.ajouter_terme(config.Projet.charger(self.racine), "Mistral")
+        git(self.racine, "add", "-A")
+        erreurs = verifier(self.racine, prive.controle_chiffre).erreurs()
+        self.assertIn("memory/private/terms.txt", [c.chemin for c in erreurs])
+
+    def test_rien_ne_s_ecrit_a_l_aveugle_sans_la_cle(self):
+        """B-0044, L3 : sans la clé, un terme ajouté écrasait la liste
+        chiffrée, et `socle new` écrivait une entrée privée au numéro deviné,
+        en clair à la suite du fichier chiffré."""
+        projet = config.Projet.charger(self.racine)
+        prive.ajouter_terme(projet, "Mistral")
+        self.commit()
+        termes = self.racine / "memory/private/terms.txt"
+        chiffre = git(self.racine, "show", "HEAD:memory/private/terms.txt")
+        termes.write_text(chiffre)
+        canonique = self.racine / "memory/private/canonical.md"
+        canonique.write_text(git(self.racine, "show", "HEAD:memory/private/canonical.md"))
+        with self.assertRaises(RuntimeError):
+            prive.ajouter_terme(projet, "Zephyr")
+        self.assertEqual(termes.read_text(), chiffre)
+        avant = canonique.read_text()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()) as erreurs:
+            code = cli.cmd_new(argparse.Namespace(root=str(self.racine), type="fact", title="Un fait",
+                                                  private=False, public=False))
+        self.assertEqual(code, 2)
+        self.assertIn("mémoire privée indisponible", erreurs.getvalue())
+        self.assertEqual(canonique.read_text(), avant)
 
     def test_commite_en_clair_sans_filtre(self):
         (self.racine / ".gitattributes").write_text("")
-        (self.racine / "memoire/prive/journal").mkdir()
-        (self.racine / "memoire/prive/journal/2026-10.md").write_text(
+        (self.racine / "memory/private/journal").mkdir()
+        (self.racine / "memory/private/journal/2026-10.md").write_text(
             "<!-- socle: couche=journal zone=privee -->\n# Journal privé\n")
         git(self.racine, "add", "-A")
         messages = [c.message for c in verifier(self.racine, prive.controle_chiffre).erreurs()]
         self.assertTrue(any("EN CLAIR" in m for m in messages), messages)
         self.assertTrue(any("aucun filtre de chiffrement" in m for m in messages), messages)
-
-
-if __name__ == "__main__":
-    unittest.main()
 
 
 class TestRecuperation(Base):
@@ -242,9 +297,9 @@ class TestRecuperation(Base):
         self.depot = self.dossier / "prive-origine"
         self.depot.mkdir()
         git(self.depot, "init", "-q", "-b", "main")
-        (self.depot / "canonique.md").write_text(FAIT_PRIVE)
+        (self.depot / "canonical.md").write_text(FAIT_PRIVE)
         self.sha = self.commit(self.depot, "un")
-        (self.depot / "canonique.md").write_text(FAIT_PRIVE + "\nDeux.\n")
+        (self.depot / "canonical.md").write_text(FAIT_PRIVE + "\nDeux.\n")
         self.commit(self.depot, "deux")
         prive.ecrire_verrou(self.racine, self.sha)
 
@@ -285,7 +340,7 @@ DEMANDE_RETRAIT = """<!-- socle: couche=demandes zone=publique -->
 
 ## Décision demandée
 
-Valider la liste `memoire/prive/termes.txt` dans la version `{cite}`.
+Valider la liste `memory/private/terms.txt` dans la version `{cite}`.
 
 ## Réponses possibles
 
@@ -319,7 +374,7 @@ class TestTermes(Compagnon):
         t = prive.termes(projet)
         self.assertEqual((t.liste, t.disponible), (["Mistral", "re:zephyr-\\d+"], True))
         self.assertEqual(prive.termes(projet, self.base).liste, t.liste)
-        self.assertEqual(prive.lire_prive(projet, self.base, prive.TERMES), t.texte)
+        self.assertEqual(prive.lire_prive(projet, self.base, prive.fichier_termes(projet.racine)), t.texte)
         self.assertEqual(prive.fuites("Le projet MISTRAL avance, zephyr-12 aussi.", t.liste, identifiants=False),
                          ["terme privé n°1 de la liste", "terme privé n°2 de la liste"])
         self.assertEqual(prive.fuites("Un mistralien n'est pas un terme.", t.liste, identifiants=False), [])
@@ -333,16 +388,85 @@ class TestTermes(Compagnon):
         self.assertIn("terme privé n°1", erreurs[0])
         self.assertIn(f"identifiant privé `{P}F-0001`", erreurs[1])
 
+    def test_un_bloc_de_code_et_une_archive_sont_publics(self):
+        """B-0044, L3 : un identifiant privé dans un bloc de code d'un fichier
+        public passait le commit et la CI, et une archive publique échappait
+        au contrôle des termes."""
+        from socle import checks_memory as controles_memoire
+
+        (self.racine / "notes.md").write_text(f"Exemple :\n\n```\nvoir {P}F-0001\n```\n")
+        (self.racine / "memory/archives").mkdir(parents=True, exist_ok=True)
+        (self.racine / "memory/archives/cadrage.md").write_text("Le projet Mistral.\n")
+        self.commit()
+        erreurs = self.rapport(controles_memoire.prive).erreurs()
+        self.assertEqual([(c.chemin, c.ligne) for c in erreurs], [("notes.md", 4)])
+        erreurs = self.rapport(prive.controle_fuites).erreurs()
+        self.assertEqual([c.chemin for c in erreurs], ["memory/archives/cadrage.md"])
+
+    def test_un_terme_sous_ses_variantes(self):
+        """B-0044, L3 : un terme n'était trouvé que mot pour mot."""
+        liste = ["Acme Corp"]
+        for texte in ("acme_corp", "AcmeCorp", "ACME-CORP", "la société Acme\n# Corp", "MyAcmeCorpClient",
+                      "acme.corp2", "Àcmé Corp"):
+            with self.subTest(texte):
+                self.assertEqual(prive.fuites(texte, liste, identifiants=False), ["terme privé n°1 de la liste"])
+        for texte in ("acmecorporation", "macme corp", "acme", "ACMECORPS"):
+            with self.subTest(texte):
+                self.assertEqual(prive.fuites(texte, liste, identifiants=False), [])
+
+    def test_le_nom_d_un_fichier_ou_d_une_branche(self):
+        """B-0044, L3 : un nom de fichier ou de branche publiait le terme
+        sans qu'aucun contrôle le lise."""
+        (self.racine / "docs").mkdir()
+        (self.racine / "docs/plan-mistral.md").write_text("Un plan.\n")
+        self.commit()
+        erreurs = [c for c in self.rapport(prive.controle_fuites).erreurs()]
+        self.assertEqual([(c.chemin, "nom du fichier" in c.message) for c in erreurs], [("docs/plan-mistral.md", True)])
+        self.enterContext(unittest.mock.patch.dict(os.environ, {"GITHUB_HEAD_REF": "travail-mistral"}))
+        messages = [c.message for c in self.rapport(prive.controle_fuites, etage="ci").erreurs()]
+        self.assertTrue(any("nom de la branche" in m for m in messages), messages)
+
+    def test_le_hook_lit_les_noms_et_les_fichiers_publies(self):
+        """B-0044, L3 : le corps d'une pull request passé par un fichier hors
+        du dépôt n'était pas lu, ni un nom de branche ou de fichier nouveau."""
+        projet = config.Projet.charger(self.racine)
+        corps = self.dossier / "corps.md"
+        corps.write_text("Avance sur Mistral.\n")
+
+        def decide(outil, args):
+            flux = io.StringIO()
+            with contextlib.redirect_stdout(flux):
+                hooks.pre_tool_use(projet, {"session_id": "t", "tool_name": outil, "tool_input": args})
+            return "fuite de la mémoire privée" in flux.getvalue()
+
+        self.assertTrue(decide("Bash", {"command": f"gh pr create --title Essai --body-file {corps}"}))
+        self.assertTrue(decide("Bash", {"command": f"cd /tmp && gh api repos/o/r/issues -F body=@{corps}"}))
+        self.assertTrue(decide("Bash", {"command": "git checkout -b travail-mistral"}))
+        self.assertTrue(decide("Write", {"file_path": str(self.racine / "docs/mistral.md"), "content": "x\n"}))
+        self.assertFalse(decide("Bash", {"command": "gh pr create --title Essai --body-file /inexistant"}))
+        self.assertFalse(decide("Bash", {"command": "git checkout -b travail"}))
+        self.assertEqual(hooks.textes_publies(self.racine, hooks.commandes.analyser(f"git commit -F {corps}")),
+                         ["Avance sur Mistral.\n"])
+
+    def test_le_hook_avant_push_lit_le_nom_de_la_branche(self):
+        projet = config.Projet.charger(self.racine)
+        tete = git(self.racine, "rev-parse", "HEAD").strip()
+        with unittest.mock.patch("sys.stdin", io.StringIO(f"refs/heads/x {tete} refs/heads/mistral-x {'0' * 40}\n")), \
+                contextlib.redirect_stderr(io.StringIO()) as flux:
+            self.assertEqual(hooks.git_pre_push(projet), 1)
+        self.assertIn("nom de la branche", flux.getvalue())
+        self.assertNotIn("Mistral", flux.getvalue())
+
     def test_retirer_un_terme_exige_l_humain(self):
-        texte = (self.prive / "termes.txt").read_text().replace("Mistral\n", "")
-        (self.prive / "termes.txt").write_text(texte)
+        texte = (self.prive / "terms.txt").read_text().replace("Mistral\n", "")
+        (self.prive / "terms.txt").write_text(texte)
         sha = self.commit(self.prive, "retrait")
         prive.ecrire_verrou(self.racine, sha)
         cite = "sha256:" + prive.outils.sha256(texte)[:16]
         erreurs = self.rapport(prive.controle_termes).erreurs()
         self.assertIn(cite, erreurs[0].message)
         self.assertNotIn("Mistral", erreurs[0].message)
-        demande = self.racine / "memoire/demandes/D-0001-retrait.md"
+        demande = self.racine / "memory/requests/D-0001-retrait.md"
         demande.parent.mkdir(parents=True)
         demande.write_text(DEMANDE_RETRAIT.format(cite=cite))
         d = [x for x in demandes_toutes(self.racine) if x.id == "D-0001"][0]
@@ -373,7 +497,7 @@ class TestRelecture(Compagnon):
     """La relecture avant publication (D-0006) : au choix de l'humain."""
 
     def regler(self, valeur):
-        (self.racine / ".socle/politique.toml").write_text(f'[private]\nmode = "compagnon"\nreview = "{valeur}"\n')
+        (self.racine / ".socle/policy.toml").write_text(f'[private]\nmode = "compagnon"\nreview = "{valeur}"\n')
 
     def test_sans_reglage_rien_n_est_exige_mais_c_est_dit(self):
         projet = config.Projet.charger(self.racine)
@@ -420,10 +544,10 @@ class TestDemandesPrivees(Compagnon):
     l'humain (`[private] requests`)."""
 
     def test_privees_sur_decision(self):
-        (self.racine / ".socle/politique.toml").write_text(
-            '[private]\nmode = "compagnon"\nrequests = true\n\n[protected]\npaths = ["memoire/demandes/*.reponse.toml"]\n')
+        (self.racine / ".socle/policy.toml").write_text(
+            '[private]\nmode = "compagnon"\nrequests = true\n\n[protected]\npaths = ["memory/requests/*.answer.toml"]\n')
         projet = config.Projet.charger(self.racine)
-        self.assertIn("memoire/prive/demandes/*.reponse.toml", projet.chemins_proteges())
+        self.assertIn("memory/private/requests/*.answer.toml", projet.chemins_proteges())
         with contextlib.redirect_stdout(io.StringIO()):
             cli.cmd_new(argparse.Namespace(root=str(self.racine), type="request", title="Une question privée",
                                            private=False, public=False))
@@ -439,8 +563,93 @@ class TestDemandesPrivees(Compagnon):
 
 class TestLienPrive(Chiffre):
     def test_un_fichier_chiffre_n_a_pas_de_lien(self):
-        (self.racine / ".socle/politique.toml").write_text(
+        (self.racine / ".socle/policy.toml").write_text(
             '[private]\nmode = "chiffre"\n\n[human]\nrepo_url = "https://github.com/essai/public"\n')
-        url, raison = liens.lien(config.Projet.charger(self.racine), "memoire/prive/canonique.md")
+        url, raison = liens.lien(config.Projet.charger(self.racine), "memory/private/canonical.md")
         self.assertIsNone(url)
         self.assertIn("chiffré sur GitHub", raison)
+
+
+class TestInstallerCompagnon(unittest.TestCase):
+    """B-0034, P5 : le mode compagnon mis en place d'un geste, sur un dépôt
+    privé fabriqué (un dépôt nu, vide) ; `ssh-keygen` est simulé."""
+
+    CLE = '#!/bin/sh\nwhile [ $# -gt 0 ]; do [ "$1" = "-f" ] && f="$2"; shift; done\n' \
+          'echo "CLE PRIVEE D ESSAI" > "$f"; echo "ssh-ed25519 AAAA essai" > "$f.pub"\n'
+
+    def setUp(self):
+        from socle import installer as installeur
+
+        self.dossier = Path(tempfile.mkdtemp(prefix="socle-compagnon-"))
+        self.racine = self.dossier / "public"
+        self.racine.mkdir()
+        git(self.racine, "init", "-q", "-b", "main")
+        (self.racine / "calc.py").write_text("x = 1\n")
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(self.racine, "python", "@essai", prive="compagnon",
+                                 source=Path(__file__).resolve().parent.parent / "engine")
+        self.nu = self.dossier / "prive.git"
+        git(self.dossier, "init", "-q", "--bare", "-b", "main", str(self.nu))
+        outils = self.dossier / "bin"
+        outils.mkdir()
+        (outils / "ssh-keygen").write_text(self.CLE)
+        (outils / "ssh-keygen").chmod(0o755)
+        self.env = {"PATH": f"{outils}{os.pathsep}{os.environ['PATH']}", "GIT_AUTHOR_NAME": "t",
+                    "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"}
+
+    def tearDown(self):
+        shutil.rmtree(self.dossier, ignore_errors=True)
+
+    def installer(self):
+        from unittest import mock
+
+        with mock.patch.dict(os.environ, self.env):
+            return prive_installation.installer_compagnon(config.Projet.charger(self.racine), str(self.nu))
+
+    def test_un_geste_puis_les_deux_secrets(self):
+        code, lignes = self.installer()
+        self.assertEqual(code, 0, lignes)
+        sortie = "\n".join(lignes)
+        sha = git(self.nu, "rev-parse", "main").strip()
+        self.assertEqual(prive.lire_verrou(self.racine), sha)
+        self.assertIn("memory/private/", (self.racine / ".gitignore").read_text())
+        self.assertIn(f"SOCLE_PRIVE_DEPOT = {self.nu}", sortie)
+        cle = config.chemin_trace(self.racine).parent / "prive-deploiement"
+        self.assertTrue(cle.is_file() and Path(f"{cle}.pub").is_file())
+        self.assertIn(f"SOCLE_PRIVE_CLE   = le contenu de {cle}", sortie)
+        self.assertNotIn("CLE PRIVEE", sortie)
+        self.assertTrue(prive.acces(config.Projet.charger(self.racine)).disponible)
+        # Relancée, elle ne refait rien de ce qui est fait.
+        code, lignes = self.installer()
+        self.assertEqual(code, 0, lignes)
+        self.assertIn("dépôt privé déjà cloné", lignes[0])
+        self.assertEqual(prive.lire_verrou(self.racine), sha)
+
+    def test_hors_mode_compagnon_refus(self):
+        pol = self.racine / ".socle/policy.toml"
+        pol.write_text(pol.read_text().replace('mode = "compagnon"', 'mode = "chiffre"'))
+        code, lignes = self.installer()
+        self.assertEqual(code, 1)
+        self.assertIn("ne choisit pas le mode compagnon", lignes[0])
+
+    def test_gestes_github_avec_leurs_pages(self):
+        gestes = "\n".join(prive_installation.gestes_github("https://github.com/o/prive", "https://github.com/o/public",
+                                               Path("/x/cle")))
+        self.assertIn("https://github.com/o/prive/settings/keys/new", gestes)
+        self.assertIn("https://github.com/o/public/settings/secrets/actions/new", gestes)
+        self.assertIn("SOCLE_PRIVE_DEPOT = git@github.com:o/prive.git", gestes)
+        self.assertIn("gh repo deploy-key add /x/cle.pub --repo o/prive", gestes)
+
+    def test_adresse_ssh_pour_la_ci(self):
+        self.assertEqual(prive.adresse_ssh("https://github.com/o/prive"), "git@github.com:o/prive.git")
+        self.assertEqual(prive.adresse_ssh("https://github.com/o/prive.git"), "git@github.com:o/prive.git")
+        self.assertEqual(prive.adresse_ssh("git@github.com:o/prive.git"), "git@github.com:o/prive.git")
+
+    def test_le_hook_la_refuse_a_l_agent(self):
+        commande = " ".join(("python3", ".socle/socle", "prive", "installer", "--depot", "x"))
+        self.assertTrue(hooks.INSTALLER_PRIVE.search(commande))
+        self.assertFalse(hooks.INSTALLER_PRIVE.search(commande.replace("installer --depot x", "verrouiller")))
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -1,0 +1,8 @@
+# Réponse humaine, écrite par l'humain lui-même (`socle answer`).
+# Elle porte sur le texte exact de D-0012-approbation-humaine.md, dont l'empreinte suit.
+reponse = "valider"
+texte = "Migration de ce dépôt au format 2 de la mémoire (B-0036, ADR-0018)"
+par = "theodubus"
+date = "2026-10-11"
+canal = "terminal"
+empreinte = "sha256:a61ce4b490b02054f627958f4b996367d316343dfe97fd19b672195eedbf4f5a"

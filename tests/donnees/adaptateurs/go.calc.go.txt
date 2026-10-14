@@ -1,0 +1,13 @@
+package calc
+
+func Double(x int) int {
+	return 2 * x
+}
+
+func aide(x int) int {
+	return x + 1
+}
+
+func (c *Calc) Ajouter(x int) int {
+	return c.total + x
+}

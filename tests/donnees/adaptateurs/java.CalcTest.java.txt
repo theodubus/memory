@@ -1,0 +1,29 @@
+package essai;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
+class CalcTest {
+    @Test
+    void doubleMultiplieParDeux() {
+        assertEquals(4, Calc.double_(2));
+    }
+
+    @Test
+    @Disabled
+    void plusTard() {
+        assertEquals(6, Calc.triple(2));
+    }
+
+    @Test
+    void neMesureRien() {
+        String s = "{";
+        Calc.double_(2);
+    }
+
+    private int aide() {
+        return 1;
+    }
+}

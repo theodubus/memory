@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mutations partial="true">
+<mutation detected='true' status='KILLED' numberOfTestsRun='1'><sourceFile>Calc.java</sourceFile><mutatedClass>essai.Calc</mutatedClass><mutatedMethod>aide</mutatedMethod><lineNumber>9</lineNumber></mutation>
+<mutation detected='false' status='SURVIVED' numberOfTestsRun='1'><sourceFile>Calc.java</sourceFile><mutatedClass>essai.Calc</mutatedClass><mutatedMethod>suivant</mutatedMethod><lineNumber>13</lineNumber></mutation>
+<mutation detected='false' status='NO_COVERAGE' numberOfTestsRun='0'><sourceFile>Calc.java</sourceFile><mutatedClass>essai.Calc</mutatedClass><mutatedMethod>suivant</mutatedMethod><lineNumber>14</lineNumber></mutation>
+<mutation detected='true' status='TIMED_OUT' numberOfTestsRun='1'><sourceFile>Calc.java</sourceFile><mutatedClass>essai.Calc</mutatedClass><mutatedMethod>double_</mutatedMethod><lineNumber>5</lineNumber></mutation>
+</mutations>

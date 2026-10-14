@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0016-choisir-comment-eprouver-le-socle-hors-de-ce-depot.md, dont l'empreinte suit.
+reponse = "copie"
+texte = ""
+par = "Théo"
+date = "2026-10-12"
+canal = "conversation"
+citation = "D0016 copie\n\nTu as besoin du depot vide maintenant ?"
+empreinte = "sha256:e9c4ceefe60fa937c2bc2f40a3e4041fa46e4be743b0b5b3c3769ba72b473baf"

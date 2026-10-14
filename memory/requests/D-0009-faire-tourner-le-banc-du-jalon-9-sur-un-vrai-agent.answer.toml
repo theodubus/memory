@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0009-faire-tourner-le-banc-du-jalon-9-sur-un-vrai-agent.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-10-11"
+canal = "conversation"
+citation = "D0009 validé pour 18 sessions. veille a bien gérer par rapport aux limites (jsp si tu vois les limites de session), mais il faut faire attention à pas juste casser un test car on hit une limite de session, ou alors programmer des réveils automatiques quand c'est le cas pour que le test ne soit pas impacté"
+empreinte = "sha256:dc78743cab90c00a80517a93e66b6e48aed30b5749389025fc37d295e5e27b27"

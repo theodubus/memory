@@ -5,56 +5,64 @@ seule, qui rend fiables la mémoire, la documentation et les tests d'un projet
 de code entretenu par un agent. L'agent écrit, des contrôles automatiques
 attrapent les erreurs, et l'humain n'arbitre que ce qu'aucun contrôle ne peut
 trancher. Le cadrage fondateur est archivé tel quel dans
-`memoire/archives/cadrage-2026-10-10.md` ; ce qui vient du dépôt `chess` est
+`memory/archives/cadrage-2026-10-10.md` ; ce qui vient du dépôt `chess` est
 inventorié dans `docs/inventaire-chess.md`, et `docs/architecture.md` dit où
 chaque exigence du cadrage est appliquée.
 
 Ce dépôt est en **mode amont** : il est le premier utilisateur du socle qu'il
-fabrique. Le moteur vit dans `moteur/socle/` ; il est la source, donc son
+fabrique. Le moteur vit dans `engine/socle/` ; il est la source, donc son
 empreinte n'est pas figée ici. Les fichiers du projet vivent dans `.socle/`
 comme dans n'importe quel projet.
 
 ## Structure
 
-- `moteur/socle/` — le moteur : lecture de la mémoire, contrôles, hooks,
-  installeur, auto-test. `moteur/socle/FORMAT.md` fait foi pour le format de
+- `engine/socle/` — le moteur : lecture de la mémoire, contrôles, hooks,
+  installeur, auto-test. `engine/socle/FORMAT.md` fait foi pour le format de
   la mémoire.
-- `moteur/socle/adaptateurs/` — les adaptateurs maintenus (Rust, Python sous
-  `unittest`, Python sous `pytest`).
-- `moteur/socle/modeles/` — les gabarits que l'installeur pose dans un projet.
+- `engine/socle/adapters/` — les adaptateurs maintenus : Rust, Python sous
+  `unittest` et sous `pytest`, JavaScript et TypeScript, Go, Java, Ruby, PHP.
+- `engine/socle/templates/` — les gabarits que l'installeur pose dans un projet.
 - `tests/` — les tests du moteur (`unittest`), dont l'auto-test complet par
   injection de défauts.
 - `docs/` — l'architecture et l'inventaire de `chess`.
-- `memoire/` — la mémoire de ce projet, au format du socle.
+- `bench/` — le banc d'évaluation sur un agent réel, ses scénarios et leurs
+  juges (`docs/banc.md`), et le banc des adaptateurs, chacun éprouvé sur un
+  projet jetable de son langage (`bench/adapters.py`).
+- `memory/` — la mémoire de ce projet, au format du socle.
 
 ## Commandes
 
 ```sh
-python3 .socle/socle verify --rapide     # compilation, tests, contrôles
+python3 .socle/socle verify --fast       # compilation, tests, contrôles
 python3 .socle/socle ci                  # tout, dont l'auto-test
 python3 .socle/socle selftest --verbose  # les défauts injectés, un par un
+python3 bench/bench.py --agent simule    # le banc, sur un agent simulé
+python3 bench/adapters.py                # les adaptateurs, sur leurs vrais outils
 python3 .socle/socle install --target ../projet --adapter auto --owner @moi
-python3 .socle/socle init --cadrage cadrage.md --depot   # dans le projet installé
+python3 .socle/socle init --brief cadrage.md --repo   # dans le projet installé
 ```
 
 ## Règles propres à ce dépôt
 
-- **Tout contrôle nouveau a son défaut injecté** dans `moteur/socle/autotest.py`,
+- **Tout contrôle nouveau a son défaut injecté** dans `engine/socle/selftest.py`,
   et un témoin sain qui passe : un garde-fou qu'on n'a jamais vu échouer ne
-  prouve rien. L'auto-test a trouvé cinq contrôles muets à sa première
+  prouve rien. `tests/test_autotest.py` l'exige de chaque contrôle du
+  registre et de chaque refus reconnu. L'auto-test a trouvé cinq contrôles muets à sa première
   exécution (`J-2026-10-10-E`).
 - **Le moteur ne connaît ni langage ni agent** : ce qui dépend du langage va
   dans un adaptateur, ce qui dépend de l'agent dans les hooks.
 - **Bibliothèque standard de Python 3.11+ seulement** (`ADR-0001`), vérifié
   par `tests/test_moteur.py`.
-- **Commentaires, messages et documentation en français, identifiants en
-  anglais** (`ADR-0002`).
+- **Commentaires, messages, documentation et identifiants du code en
+  français ; commandes, options et noms de fichiers en anglais** (`ADR-0027`,
+  qui remplace `ADR-0002`) : un module s'importe sous son nom français
+  (`from socle import memory as memoire`).
 
 <!-- socle:debut — section posée par l'installeur, régénérée à chaque mise à jour -->
 
 ## Socle : mémoire, documentation et tests
 
-Ce dépôt utilise le socle (version et empreinte : `.socle/moteur.lock`).
+Ce dépôt utilise le socle (version et empreinte : `.socle/engine.lock`).
 Ce fichier dit **comment** travailler ;
 **où en est le projet** se calcule, et ne s'écrit jamais à la main.
 
@@ -64,32 +72,42 @@ Ce fichier dit **comment** travailler ;
 backlog, demandes humaines en attente —, puis le chantier actif et la mémoire
 canonique. Sous Claude Code, le hook `SessionStart` le fait seul ; sous un
 autre agent, le lancer d'abord. Rien de ce qui n'y figure pas n'est acquis.
+Ce que l'humain a écrit lui-même depuis le dernier commit de l'agent (une
+approbation, une réponse dans son terminal), l'état le liste : le lui citer
+dans la réponse suivante, par son identifiant et son lien, puisque la
+commande lui a donné un numéro qu'il ne retrouve pas dans la conversation.
 
-### La mémoire, dans `memoire/`
+Une consigne de l'humain donnée dans la conversation, qui vaut au-delà du tour
+(une règle, une préférence, une interdiction), s'écrit dans la mémoire avant de
+continuer : au chantier actif si elle touche le travail en cours, sinon au
+journal, avec son texte exact. Le résumé d'un compactage ne la garde pas
+toujours, et une session neuve n'a que la mémoire.
+
+### La mémoire, dans `memory/`
 
 | Couche | Où | Règle |
 | --- | --- | --- |
-| Canonique | `memoire/canonique.md` | faits avec statut et preuve ; ne change qu'avec une preuve nouvelle |
-| Actif | `memoire/actif.md` | chantier en cours, prochaines étapes ; réécrit, borné |
-| Décisions | `memoire/decisions/` | une ADR par fichier ; seul son statut change ensuite |
-| Journal | `memoire/journal/` | une entrée datée par événement ; ajout seul |
-| Backlog | `memoire/backlog.md` | sujets avec statut et origine ; clos avec une référence |
-| Demandes | `memoire/demandes/` | décisions humaines en file, au contrat ci-dessous |
+| Canonique | `memory/canonical.md` | faits avec statut et preuve ; ne change qu'avec une preuve nouvelle |
+| Actif | `memory/active.md` | chantier en cours, prochaines étapes ; réécrit, borné |
+| Décisions | `memory/decisions/` | une ADR par fichier ; seul son statut change ensuite |
+| Journal | `memory/journal/` | une entrée datée par événement ; ajout seul |
+| Backlog | `memory/backlog/` | sujets avec statut et origine ; clos avec une référence |
+| Demandes | `memory/requests/` | décisions humaines en file, au contrat ci-dessous |
 
 Une entrée : `## F-NNNN — titre`, puis une ligne `> statut : mesuré · preuve : commit:<sha>`.
 Statuts d'un fait : `mesuré` (avec `preuve`), `supposé`, `réfuté` (titre barré,
 avec `refutation`), `validé` (avec `validation : D-NNNN`, écrit après la
-réponse de l'humain). Format complet : `moteur/socle/FORMAT.md`.
+réponse de l'humain). Format complet : `engine/socle/FORMAT.md`.
 Un identifiant se calcule (`python3 .socle/socle new <type> "titre"`), il ne
 se devine pas. En cas de conflit, l'ordre d'autorité est : le code et les
 tests, puis la mémoire canonique, puis le journal.
 
-**Mémoire privée**, si la politique en choisit une (`[private] mode`) : le contenu nouveau va dans la zone privée, memoire/prive/ (`socle new` le fait par défaut), et rien de privé ne se recopie en public, ni un identifiant `P…`, ni son contenu, ni dans un message de commit, une pull request ou un commentaire. En mode compagnon, un changement privé se commite dans le dépôt privé, puis `socle prive verrouiller`. Un nom privé nouveau (une idée, un client) s'ajoute à la liste des termes privés (`socle prive terme <terme>`) ; seul l'humain en retire. Si la politique exige une relecture avant publication (`[private] review`), montrer à l'humain ce qui part, puis consigner son accord avec son texte exact (`socle relu --relayed --by <nom> --quote-file <fichier>`) : à chaque push, ou par lots. Une demande privée chiffrée ne se lit pas sur GitHub : la donner en entier dans la conversation. Indisponible (l'état le dit), on ne conclut pas sur ce qui en dépend.
+**Mémoire privée**, si la politique en choisit une (`[private] mode`) : le contenu nouveau va dans la zone privée, memory/private/, pour les couches que la politique rend privées (`socle new` le fait par défaut) ; une consigne de l'humain sur une entrée précise se suit par `socle new … --private` ou `--public`, et une entrée publique existante se bascule par `socle private move <ID>`, dont l'historique public garde l'ancien texte : le dire à l'humain. Rien de privé ne se recopie en public, ni un identifiant `P…`, ni son contenu, ni dans un message de commit, une pull request ou un commentaire. En mode compagnon, un changement privé se commite dans le dépôt privé, puis `socle private lock`. Un nom privé nouveau (une idée, un client) s'ajoute à la liste des termes privés (`socle private term <terme>`) ; seul l'humain en retire. Si la politique exige une relecture avant publication (`[private] review`), montrer à l'humain ce qui part, puis consigner son accord avec son texte exact (`socle reviewed --relayed --by <nom> --quote-file <fichier>`) : à chaque push, ou par lots. Une demande privée chiffrée ne se lit pas sur GitHub : la donner en entier dans la conversation. Indisponible (l'état le dit), on ne conclut pas sur ce qui en dépend.
 
-### Politique d'autonomie (`.socle/politique.toml`, modifiée par l'humain seul)
+### Politique d'autonomie (`.socle/policy.toml`, modifiée par l'humain seul)
 
-1. **Assouplir un garde-fou** (`.socle/garde-fous.toml`) exige une demande validée ; durcir est libre.
-2. **Supprimer un test ou changer une valeur attendue** exige une spécification changée qui nomme le test, ou une demande validée.
+1. **Assouplir un garde-fou** (`.socle/guardrails.toml`) exige une demande validée ; durcir est libre.
+2. **Supprimer un test ou changer une valeur attendue** exige une demande validée, ou une spécification que l'humain a lui-même changée et qui nomme le test ; une ADR écrite par l'agent ne suffit pas.
 3. **Décision de conception** : réversible et mesurable, l'agent décide et écrit une ADR ; coûteuse à défaire, demande.
 4. **Action irréversible ou externe** (force-push, push sur la branche par défaut, publication, suppression distante, dépense) : toujours une demande. Le hook la refuse.
 5. **Mémoire** : ajout seul ; « réfuté » exige une référence de mesure ; « validé » ne s'écrit qu'après la réponse de l'humain.
@@ -110,7 +128,11 @@ conséquences (si l'humain valide, refuse, ne répond pas), recommandation
 Le lint refuse une demande incomplète. L'humain répond dans la conversation ;
 l'agent consigne sa réponse, sans jamais la choisir, avec le texte exact :
 `python3 .socle/socle answer D-NNNN <réponse> --relayed --by <nom> --quote-file <fichier>`,
-et la recopie au journal. Une demande répondue est gelée.
+et la recopie au journal. Une demande répondue est gelée. Une réponse ne se
+relaie qu'à une demande poussée telle quelle : l'humain doit avoir pu la lire.
+Un test dont la valeur attendue change en attendant une telle demande, qui le
+nomme, peut rester changé dans l'arbre à la fin du tour ; il ne se commite
+qu'après la réponse.
 
 ### Lire la mémoire à la demande
 
@@ -125,7 +147,7 @@ se lit quand il sert, sans attendre qu'on le demande :
 - avant d'ouvrir un sujet, le backlog (`socle show --index backlog`) dit
   s'il existe déjà ;
 - pour savoir pourquoi une chose est ainsi, chercher dans le journal
-  (`grep -rn "<mot>" memoire/journal/`).
+  (`grep -rn "<mot>" memory/journal/`).
 
 La lecture se prouve : une décision, une demande ou un sujet de backlog
 nouveaux citent ce qu'ils ont lu avec son empreinte (`ADR-NNNN@xxxxxxxx`,
@@ -134,28 +156,28 @@ refusée ; il faut relire l'entrée. `socle new` pose l'empreinte de l'index.
 
 ### Avant de conclure
 
-- `python3 .socle/socle verify --rapide` passe (le hook `Stop` le vérifie) ; `verify` exécute tout.
+- `python3 .socle/socle verify --fast` passe (le hook `Stop` le vérifie) ; `verify` exécute tout.
 - Si du code a changé, la mémoire aussi : chantier actif, journal, backlog.
-- Si du code associé à une doc a changé (`[[docmap]]` des garde-fous), la doc change dans le même travail, ou un commit porte le trailer `Dispense-doc: <raison>`.
+- Si du code associé à une doc a changé (`[[docmap]]` des garde-fous), la doc change dans le même travail, ou le commit qui change ce code porte le trailer `Dispense-doc: <raison>`, qui ne vaut que pour lui.
 - Un correctif (sujet `fix:` ou trailer `Corrige: B-NNNN`) livre un test qui échoue sur le commit parent.
 - Une fonction publique ajoutée ou modifiée est nommée par au moins un test, ou un commit la dispense nommément avec sa raison (`Dispense-test: f, g — <raison>`). Du code existant découvert sans test : le test s'écrit tout de suite s'il est dans le périmètre du travail, sinon un sujet va au backlog.
 - Une action que seul l'humain peut faire (refusée par le hook, réglage d'un service, fichier qu'il détient) va au backlog avec `pour : humain`.
 - **Toute intervention qui a agi se termine par un récap, puis deux lignes** : `Pour toi :` — ce qui revient à l'humain, décisions en attente et actions à faire, ou « rien » —, et `Ensuite :` — la suite proposée (prochain jalon, ce qu'il reste à faire avant), et ce que l'agent attend s'il attend quelque chose (une CI, un match : quoi, et jusqu'à quand). L'état calcule ce qui revient à l'humain ; le hook `Stop` refuse de conclure sans les deux lignes.
-- **Un fichier à lire se donne par son lien** : l'humain lit dans la conversation ou sur GitHub, pas dans le conteneur de l'agent. `python3 .socle/socle url <chemin|ID>` donne le permalien, une fois le fichier poussé ; une demande en attente citée sans son lien, un lien relatif, ou un chemin entre accents graves qui n'existe pas dans le dépôt font refuser la fin du tour. Un chemin d'un autre dépôt s'écrit `depot:chemin`.
+- **Un fichier à lire se donne par son lien** : l'humain lit dans la conversation ou sur GitHub, pas dans le conteneur de l'agent. `python3 .socle/socle url <chemin|ID>` donne le permalien, une fois le fichier poussé ; une demande en attente citée sans son lien, un lien relatif, ou un chemin entre accents graves qui n'existe pas dans le dépôt font refuser la fin du tour. Un chemin d'un autre dépôt s'écrit `depot:chemin`, le dépôt lié quelque part dans le projet par son adresse (à défaut, déclaré dans `[references] repos` des garde-fous) ; un dépôt inconnu est signalé.
 
 ### Ne jamais
 
 - compléter un SHA de tête, inventer un identifiant ou une référence : le hook les refuse ;
 - écrire dans un fichier protégé (politique, adaptateur, verrou du moteur, hooks, CI, réponses humaines) ;
-- répondre à la place de l'humain (`socle answer` sans `--relayed` ni citation), ou lancer `socle approve`, réservé à l'humain ;
-- contourner un hook (`--no-verify`) : la CI exécute tout, et rien ne la contourne.
+- répondre à la place de l'humain (`socle answer` sans `--relayed` ni citation), ou lancer `socle approve` ou `socle private install`, réservés à l'humain ;
+- contourner un hook (`--no-verify`) : le hook de l'agent le refuse sur le dépôt du projet, et la CI exécute tout.
 
 ### Ce qui tourne tout seul
 
 | Où | Quoi |
 | --- | --- |
 | `.claude/settings.json` | hooks de Claude Code : `SessionStart` (état dérivé), `PreToolUse` (refus), `Stop` (contrôles de fin de tour) |
-| `.socle/git-hooks/` | hooks git : `pre-commit` (contrôles rapides), `prepare-commit-msg` (trailer `Socle-Hooks`), `commit-msg` (fuites de la mémoire privée), `pre-push` (`verify --rapide`, relecture avant publication) |
+| `.socle/git-hooks/` | hooks git : `pre-commit` (contrôles rapides), `prepare-commit-msg` (trailers `Socle-Hooks`, `Socle-Hooks-Since-Commit`), `commit-msg` (fuites de la mémoire privée ; une fonction sans test ni dispense, un correctif sans test, un commit d'agent sans hook de l'agent, en avertissement), `pre-push` (`verify --fast`, la plage qui part jugée comme la CI la jugera, relecture avant publication) |
 | `.github/workflows/socle.yml` | CI : capacités de l'adaptateur, tous les contrôles contre la base, auto-test du socle |
 | `.git/socle/hooks.log` | trace locale de chaque hook qui tire, non versionnée, commune à tous les worktrees du dépôt |
 

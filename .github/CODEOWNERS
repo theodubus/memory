@@ -3,4 +3,4 @@
 /.socle/ @theodubus
 /.claude/settings.json @theodubus
 /.github/ @theodubus
-/memoire/demandes/*.reponse.toml @theodubus
+/memory/requests/*.answer.toml @theodubus

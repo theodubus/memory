@@ -1,6 +1,6 @@
 import unittest
 
-from socle.controles_cliquet import assouplissements
+from socle.checks_ratchet import assouplissements
 
 BASE = {
     "budgets": {"memoire/actif.md": {"max_bytes": 6000}},
@@ -55,6 +55,64 @@ class TestCliquet(unittest.TestCase):
         del retire["mutation"]["caps"]["src/a.rs"]
         self.assertTrue(assouplissements(BASE, retire, modules_existants={"src/a.rs"}))
         self.assertEqual(assouplissements(BASE, retire, modules_existants=set()), [])
+
+    def test_le_budget_d_un_fichier_disparu_se_retire(self):
+        # ADR-0025 : le backlog en un fichier devient un dossier, et le
+        # budget du fichier unique part avec lui ; celui d'un fichier qui
+        # existe ne se retire pas.
+        retire = changer()
+        del retire["budgets"]["memoire/actif.md"]
+        self.assertTrue(assouplissements(BASE, retire, modules_existants={"memoire/actif.md"}))
+        self.assertEqual(assouplissements(BASE, retire, modules_existants={"memoire/autre.md"}), [])
+
+    def test_un_module_a_mesurer_puis_mesure(self):
+        """B-0034, P1 : un module « à mesurer » entre au cliquet sans
+        l'assouplir ; recevoir son plafond le durcit ; un module mesuré remis
+        « à mesurer » perd son plafond, ce qui assouplit."""
+        a_mesurer = changer()
+        a_mesurer["mutation"]["caps"]["src/b.rs"] = {"pending": True}
+        self.assertEqual(assouplissements(BASE, a_mesurer), [])
+        mesure = changer()
+        mesure["mutation"]["caps"]["src/b.rs"] = {"max": 2, "reason": "mesuré le 2026-10-12 : 2 survivant(s)"}
+        self.assertEqual(assouplissements(a_mesurer, mesure), [])
+        remis = changer()
+        remis["mutation"]["caps"]["src/a.rs"] = {"pending": True}
+        self.assertEqual([c for c, _ in assouplissements(BASE, remis, modules_existants={"src/a.rs"})],
+                         ['mutation.caps."src/a.rs".max'])
+        repasse = changer()
+        repasse["mutation"]["caps"]["src/b.rs"] = {"pending": False}
+        self.assertEqual([c for c, _ in assouplissements(repasse, a_mesurer)], ['mutation.caps."src/b.rs".pending'])
+
+    def test_un_plafond_ecrit_a_la_main(self):
+        """B-0044, L2 : un module « à mesurer » recevait n'importe quel
+        plafond écrit à la main, que le cliquet prenait pour un durcissement."""
+        a_mesurer = changer()
+        a_mesurer["mutation"]["caps"]["src/b.rs"] = {"pending": True}
+        invente = changer()
+        invente["mutation"]["caps"]["src/b.rs"] = {"max": 40, "reason": "mesuré"}
+        self.assertEqual([c for c, _ in assouplissements(a_mesurer, invente)], ['mutation.caps."src/b.rs".max'])
+        faux_compte = changer()
+        faux_compte["mutation"]["caps"]["src/b.rs"] = {"max": 40, "reason": "mesuré le 2026-10-12 : 2 survivant(s)"}
+        self.assertTrue(assouplissements(a_mesurer, faux_compte))
+        nul = changer()
+        nul["mutation"]["caps"]["src/b.rs"] = {"max": 0}
+        self.assertEqual(assouplissements(a_mesurer, nul), [])
+
+    def test_docs_ajoutees_a_une_correspondance(self):
+        """B-0044, L2 : une doc de plus dans une correspondance rend son
+        exigence plus facile à satisfaire ; une correspondance de plus sur le
+        même code la durcit."""
+        elargie = changer()
+        elargie["docmap"][0]["docs"].append("README.md")
+        (cle, pourquoi), = assouplissements(BASE, elargie)
+        self.assertEqual(cle, 'docmap "src/**"')
+        self.assertIn("README.md", pourquoi)
+        doublee = changer()
+        doublee["docmap"].append({"code": ["src/**"], "docs": ["docs/b.md"]})
+        self.assertEqual(assouplissements(BASE, doublee), [])
+        resserree = changer()
+        resserree["docmap"][0]["docs"] = []
+        self.assertEqual(assouplissements(BASE, resserree), [])
 
     def test_exclusion_ajoutee_et_booleen_desactive(self):
         apres = changer(nocopy__exclude=["docs/**"], memory__require_update_on_code_change=False)

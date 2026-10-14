@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import outils
+from socle import utils as outils
 
 
 def git(cwd, *args):
@@ -48,3 +48,66 @@ class TestBaseDeTravail(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestRenommages(unittest.TestCase):
+    """B-0044, L2 : un renommage ne gardait que le nouveau nom ; un fichier
+    protégé ou un test renommés passaient tous les étages."""
+
+    def test_un_renommage_donne_ses_deux_chemins(self):
+        racine = Path(tempfile.mkdtemp(prefix="socle-renommage-"))
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        git(racine, "init", "-q", "-b", "main")
+        (racine / "politique.toml").write_text("max = 3\n" * 20)
+        git(racine, "add", "-A")
+        git(racine, "commit", "-qm", "base")
+        base = git(racine, "rev-parse", "HEAD").strip()
+        git(racine, "mv", "politique.toml", "ancienne.toml")
+        self.assertEqual(outils.fichiers_changes(racine, base), ["ancienne.toml", "politique.toml"])
+        git(racine, "commit", "-qm", "renommage")
+        self.assertEqual(outils.fichiers_changes(racine, base, "HEAD"), ["ancienne.toml", "politique.toml"])
+
+
+class TestEcrire(unittest.TestCase):
+    """Les écritures de fichiers, en une copie (L7) : l'installeur et la
+    mémoire privée avaient chacun la leur, et quatre ajouts au `.gitignore`
+    se faisaient à la main."""
+
+    def setUp(self):
+        self.d = Path(tempfile.mkdtemp(prefix="socle-ecrire-"))
+        self.addCleanup(shutil.rmtree, self.d, ignore_errors=True)
+
+    def test_ecrire_cree_les_dossiers_et_rend_executable(self):
+        p = self.d / "a/b/hook"
+        outils.ecrire(p, "#!/bin/sh\n", executable=True)
+        self.assertEqual(p.read_text(), "#!/bin/sh\n")
+        self.assertTrue(os.access(p, os.X_OK))
+        outils.ecrire(self.d / "simple.txt", "x")
+        self.assertFalse(os.access(self.d / "simple.txt", os.X_OK))
+
+    def test_ajouter_lignes_seulement_les_manquantes(self):
+        p = self.d / ".gitignore"
+        self.assertEqual(outils.ajouter_lignes(p, ["a/", "b/"], "# pourquoi"), ["a/", "b/"])
+        self.assertEqual(p.read_text(), "# pourquoi\na/\nb/\n")
+        p.write_text(p.read_text() + "c/\n")
+        self.assertEqual(outils.ajouter_lignes(p, ["b/", "d/"], "# encore"), ["d/"])
+        self.assertEqual(p.read_text(), "# pourquoi\na/\nb/\nc/\n\n# encore\nd/\n")
+        self.assertEqual(outils.ajouter_lignes(p, ["a/", "d/"], "# rien"), [])
+        self.assertNotIn("# rien", p.read_text())
+
+
+class TestLirePlusieurs(unittest.TestCase):
+    def test_le_meme_contenu_que_fichier_par_fichier(self):
+        racine = Path(tempfile.mkdtemp(prefix="socle-lire-"))
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        git(racine, "init", "-q", "-b", "main")
+        (racine / "a.md").write_text("é\nune ligne\n")
+        (racine / "vide.md").write_text("")
+        (racine / "d").mkdir()
+        (racine / "d/b.md").write_text("b" * 70000)
+        git(racine, "add", "-A")
+        git(racine, "commit", "-qm", "base")
+        chemins = ["a.md", "absent.md", "d", "vide.md", "d/b.md"]
+        lus = outils.lire_plusieurs(racine, "HEAD", chemins)
+        self.assertEqual(lus, {c: outils.lire_a(racine, "HEAD", c) if c != "d" else None for c in chemins})
+        self.assertEqual(lus["vide.md"], "")

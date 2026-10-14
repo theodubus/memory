@@ -5,10 +5,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import config, contexte, controles_tests, outils
-from socle.rapport import Rapport
+from socle import config, context as contexte, checks_tests as controles_tests, utils as outils
+from socle.report import Rapport
 
-ADAPTATEUR = Path(__file__).resolve().parent.parent / "moteur/socle/adaptateurs/python.toml"
+ADAPTATEUR = Path(__file__).resolve().parent.parent / "engine/socle/adapters/python.toml"
 
 CALC = """FACTEUR = 2
 
@@ -42,7 +42,7 @@ class TestCodeTeste(unittest.TestCase):
         self.racine = Path(tempfile.mkdtemp(prefix="socle-code-teste-"))
         git(self.racine, "init", "-q", "-b", "main")
         (self.racine / ".socle").mkdir()
-        shutil.copy(ADAPTATEUR, self.racine / ".socle/adaptateur.toml")
+        shutil.copy(ADAPTATEUR, self.racine / ".socle/adapter.toml")
         (self.racine / "calc.py").write_text(CALC)
         (self.racine / "tests").mkdir()
         (self.racine / "tests/test_calc.py").write_text(TEST_CALC)
@@ -114,13 +114,13 @@ class TestCodeTeste(unittest.TestCase):
         self.assertIn("`double_tout`", erreurs[0])
 
     def test_le_moteur_installe_n_est_pas_du_code_du_projet(self):
-        moteur = self.racine / ".socle/moteur/socle"
+        moteur = self.racine / ".socle/engine/socle"
         moteur.mkdir(parents=True)
         (moteur / "outils.py").write_text("def git(*args):\n    return args\n")
         self.assertEqual(self.verifier(), [])
 
     def test_section_code_de_l_adaptateur_maintenu_a_defaut(self):
-        adaptateur = self.racine / ".socle/adaptateur.toml"
+        adaptateur = self.racine / ".socle/adapter.toml"
         texte = adaptateur.read_text()
         debut, fin = texte.index("[code]"), texte.index("[tests]")
         adaptateur.write_text(texte[:debut] + texte[fin:])
@@ -151,6 +151,74 @@ class TestCodeTeste(unittest.TestCase):
         self.assertEqual([c["message"].strip() for c in ctx.commits], ["vide"])
         tete = git(self.racine, "rev-parse", "HEAD").strip()
         self.assertEqual(contexte.Contexte(projet, base=self.base, tete=tete).rev_commit, tete)
+
+
+    def test_le_hook_avertit_sans_refuser(self):
+        """B-0034, P9 : le hook commit-msg, qui voit le message et ses
+        dispenses, avertit sans refuser de ce que la CI refusera."""
+        import io
+        from contextlib import redirect_stderr
+
+        from socle import hooks
+
+        self.ajouter_triple()
+        git(self.racine, "add", "-A")
+        projet = config.Projet.charger(self.racine)
+        message = self.racine / "MESSAGE"
+        message.write_text("Ajout de triple\n")
+        with redirect_stderr(io.StringIO()) as flux:
+            self.assertEqual(hooks.git_commit_msg(projet, str(message)), 0)
+        self.assertIn("la CI refusera ce commit", flux.getvalue())
+        self.assertIn("fonction `triple` ajoutée", flux.getvalue())
+
+    def test_code_sans_test_lit_la_dispense_du_message(self):
+        from socle import hooks
+
+        self.ajouter_triple()
+        git(self.racine, "add", "-A")
+        projet = config.Projet.charger(self.racine)
+        self.assertIn("triple", hooks.code_sans_test(projet, "Ajout de triple\n"))
+        self.assertIsNone(hooks.code_sans_test(
+            projet, "Ajout de triple\n\nDispense-test: triple — appelée par l'interface seulement\n"))
+
+
+class TestPlagePoussee(unittest.TestCase):
+    """B-0043 : le hook avant push juge aussi la plage qui part, celle que la
+    CI du push jugera ; contre la base, une dispense plus ancienne de la
+    branche couvrait une fonction modifiée depuis."""
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-plage-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        git(self.racine, "init", "-q", "-b", "main")
+        (self.racine / ".socle").mkdir()
+        shutil.copy(ADAPTATEUR, self.racine / ".socle/adapter.toml")
+        (self.racine / "calc.py").write_text(CALC)
+        (self.racine / "tests").mkdir()
+        (self.racine / "tests/test_calc.py").write_text(TEST_CALC)
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "base")
+        with open(self.racine / "calc.py", "a") as f:
+            f.write("\n\ndef triple(x):\n    return 3 * x\n")
+        git(self.racine, "commit", "-qam", "triple\n\nDispense-test: triple — appelée par l'interface seulement")
+        self.poussee = git(self.racine, "rev-parse", "HEAD").strip()
+        (self.racine / "calc.py").write_text((self.racine / "calc.py").read_text().replace("3 * x", "x * 3"))
+        git(self.racine, "commit", "-qam", "triple réécrite")
+        self.tete = git(self.racine, "rev-parse", "HEAD").strip()
+
+    def test_la_plage_qui_part_est_jugee(self):
+        from socle import hooks
+
+        projet = config.Projet.charger(self.racine)
+        r = hooks.plage_poussee(projet, [f"refs/heads/x {self.tete} refs/heads/x {self.poussee}"])
+        self.assertEqual(r.controles_en_echec(), ["tests.code-teste"])
+        self.assertIn("fonction `triple` modifiée", r.erreurs()[0].message)
+
+    def test_une_branche_neuve_n_a_pas_de_plage(self):
+        from socle import hooks
+
+        projet = config.Projet.charger(self.racine)
+        self.assertEqual(hooks.plage_poussee(projet, [f"refs/heads/x {self.tete} refs/heads/x {'0' * 40}"]).constats, [])
 
 
 if __name__ == "__main__":

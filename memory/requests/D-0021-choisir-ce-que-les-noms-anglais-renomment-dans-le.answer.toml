@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0021-choisir-ce-que-les-noms-anglais-renomment-dans-le.md, dont l'empreinte suit.
+reponse = "fichiers"
+texte = ""
+par = "Théo"
+date = "2026-10-13"
+canal = "conversation"
+citation = "D0019 en gros ça serait décaler des tests qu'on fair a chaque tour plutot en CI pour gagner du temps ? Si c'est ça ok je valide \n\nD0020 ok je valide\n\nD0021 ok je valide ta recommandation (ce qu'on tape et les noms des fichiers)\n\nOn verra plus tard pour la doc, sauf si tu as besoin maintenant"
+empreinte = "sha256:cca13533bb9ddba60857a8fa8a8c41920aa12613f30810a14724a059c82b60aa"

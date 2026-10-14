@@ -16,30 +16,42 @@ contrôle ne peut trancher.
 - **Auto-test** : chaque défaut connu est injecté dans un projet jetable et
   doit être attrapé par l'étage prévu.
 
-## Installer
+## Commencer
 
 Python 3.11 ou plus récent, dans un dépôt git :
 
 ```sh
 git clone https://github.com/theodubus/memory /tmp/socle
-PYTHONPATH=/tmp/socle/moteur python3 -m socle install --target . --adapter auto --owner @moi
-# projet existant : ajouter --adoption ; mémoire privée : --private compagnon|chiffre
-python3 .socle/socle init --cadrage cadrage.md --depot   # l'une, l'autre, les deux, ou rien
-python3 .socle/socle state
-python3 .socle/socle verify --rapide
+PYTHONPATH=/tmp/socle/engine python3 -m socle install --target . --owner @moi
 ```
 
-`--adapter auto` choisit l'adaptateur d'après le dépôt. Adaptateurs
+L'installation finit par « Et maintenant » : tes étapes suivantes, dans
+l'ordre, chacune avec sa commande (décrire le projet à l'agent, commiter,
+ouvrir l'agent). Ensuite, `python3 .socle/socle help` donne tes gestes :
+répondre aux demandes de l'agent, approuver tes propres changements
+protégés, relire avant publication si tu l'as choisi, commiter toi-même. Ce
+guide se lit aussi dans `engine/socle/HELP.md`.
+
+L'adaptateur se déduit du dépôt (`--adapter <nom>` le force). Adaptateurs
 maintenus : `rust`, `python` (`unittest`), `python-pytest` (pytest et
-mutmut) ; un autre langage se déclare dans un fichier `.toml` passé à
-`--adapter`. Relancer l'installeur met le socle à jour : il remplace le
-moteur, migre les formats, et montre le diff de la politique sans la
-toucher.
+mutmut), `javascript` (vitest et Stryker), `go` (go test et gremlins),
+`java` (Maven, JUnit 5 et PIT), `ruby` (RSpec et mutant), `php` (PHPUnit et
+Infection) ; un autre langage se déclare dans un fichier `.toml` passé à
+`--adapter`. Options : `--private compagnon|chiffre` (une mémoire privée),
+`--review lots|chaque-push` (relire avant publication), `--language en`
+(une mémoire en anglais), `--adoption` (un projet existant dont des
+contrôles échouent). Relancer l'installeur met le socle à jour : il
+remplace le moteur, migre les formats, et montre le diff de la politique
+sans la toucher.
 
 ## Lire la suite
 
+- `docs/socle.md` — ce que fait le socle et comment il est fait : la mémoire, les contrôles, les trois étages, la politique, les demandes, et que faire quand un contrôle refuse.
+- `engine/socle/HELP.md` — le guide de l'humain : ses gestes, chacun avec sa commande.
 - `AGENTS.md` — comment travailler dans ce dépôt, et ce que le socle impose.
 - `docs/architecture.md` — où chaque exigence du cadrage est appliquée.
-- `moteur/socle/FORMAT.md` — le format de la mémoire.
+- `docs/parcours.md` — le parcours de l'utilisateur, relevé, et ce qui le simplifiera.
+- `docs/recul.md` — la passe de recul sur le code et le fonctionnement : constats et propositions.
+- `engine/socle/FORMAT.md` — le format de la mémoire.
 - `docs/inventaire-chess.md` — ce qui vient du dépôt chess.
-- `memoire/archives/cadrage-2026-10-10.md` — le cadrage fondateur, tel quel.
+- `memory/archives/cadrage-2026-10-10.md` — le cadrage fondateur, tel quel.

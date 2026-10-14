@@ -7,9 +7,10 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 
-from socle import installeur
+from socle import config, context as contexte, checks_memory as controles_memoire, installer as installeur
+from socle.report import Rapport
 
-MOTEUR = Path(__file__).resolve().parent.parent / "moteur"
+MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 CLAUDE = "# Projet\n\nLes instructions du projet, écrites avant le socle.\n"
 
 
@@ -27,6 +28,26 @@ def depot(fichiers: dict[str, str]) -> Path:
 def installer(racine: Path, adoption=True):
     with redirect_stdout(io.StringIO()):
         installeur.installer(racine, "python", "@essai", adoption=adoption, source=MOTEUR)
+
+
+def erreurs_instructions(racine: Path) -> list[str]:
+    ctx = contexte.Contexte(config.Projet.charger(racine), etage="agent")
+    r = Rapport()
+    controles_memoire.source_unique(ctx, r)
+    return [c.message for c in r.erreurs("instructions.source-unique")]
+
+
+class TestAdaptateur(unittest.TestCase):
+    def test_un_adaptateur_maintenu_ou_un_fichier(self):
+        texte, nom = installeur.charger_adaptateur("rust")
+        self.assertEqual(nom, "rust")
+        self.assertIn("cargo-mutants", texte)
+        d = Path(tempfile.mkdtemp(prefix="socle-adaptateur-"))
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        (d / "maison.toml").write_text('name = "maison"\n', encoding="utf-8")
+        self.assertEqual(installeur.charger_adaptateur(str(d / "maison.toml")), ('name = "maison"\n', "maison"))
+        with self.assertRaises(SystemExit):
+            installeur.charger_adaptateur("cobol")
 
 
 class TestAdoption(unittest.TestCase):
@@ -49,7 +70,22 @@ class TestAdoption(unittest.TestCase):
         claude = (self.racine / "CLAUDE.md").read_text()
         self.assertTrue(claude.startswith(CLAUDE.rstrip("\n")))
         self.assertIn(installeur.DEBUT_SOCLE, claude)
-        self.assertIn('"CLAUDE.md" = { max_bytes =', (self.racine / ".socle/garde-fous.toml").read_text())
+        self.assertIn('"CLAUDE.md" = { max_bytes =', (self.racine / ".socle/guardrails.toml").read_text())
+
+    def test_claude_md_garde_fait_foi_seul(self):
+        # B-0049, mesuré à R6 : le contrôle exigeait AGENTS.md, que
+        # l'installeur n'avait pas posé, et le .gitignore y renvoyait.
+        self.racine = depot({"CLAUDE.md": CLAUDE, "tests/test_doc.py": "open('CLAUDE.md').read()\n",
+                             ".gitignore": "# Trace locale des hooks du socle (voir AGENTS.md)\n"})
+        installer(self.racine)
+        self.assertEqual(erreurs_instructions(self.racine), [])
+        gitignore = (self.racine / ".gitignore").read_text()
+        self.assertEqual(gitignore.count("# Trace locale des hooks du socle"), 1, gitignore)
+        (self.racine / ".gitignore").unlink()
+        installer(self.racine)
+        self.assertIn("(voir CLAUDE.md)", (self.racine / ".gitignore").read_text())
+        (self.racine / "CLAUDE.md").write_text(CLAUDE)  # sans la section du socle
+        self.assertEqual(len(erreurs_instructions(self.racine)), 1)
 
     def test_relance_regenere_la_section_sans_la_dupliquer(self):
         self.racine = depot({"app.py": "print('ok')\n"})
@@ -62,3 +98,79 @@ class TestAdoption(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestRelance(unittest.TestCase):
+    """B-0044, L1 : relancer l'installeur ne perd rien."""
+
+    def tearDown(self):
+        shutil.rmtree(self.racine, ignore_errors=True)
+
+    def test_relancee_depuis_le_projet_elle_garde_son_moteur(self):
+        """La source était aussi la destination : supprimée avant la copie."""
+        self.racine = depot({"app.py": "print('ok')\n"})
+        installer(self.racine, adoption=False)
+        with redirect_stdout(io.StringIO()) as flux:
+            installeur.installer(self.racine, "python", "@essai", source=self.racine / ".socle/engine")
+        self.assertTrue((self.racine / ".socle/engine/socle/cli.py").is_file())
+        self.assertIn("moteur déjà en place", flux.getvalue())
+
+    def test_un_claude_md_propre_au_projet_passe_dans_agents_md(self):
+        """Il était remplacé par la seule ligne d'import dès qu'AGENTS.md existait."""
+        self.racine = depot({"AGENTS.md": "# Projet\n", "CLAUDE.md": "Règle propre à Claude : répondre bref.\n"})
+        installer(self.racine, adoption=False)
+        self.assertEqual((self.racine / "CLAUDE.md").read_text().strip(), "@AGENTS.md")
+        self.assertIn("Règle propre à Claude : répondre bref.", (self.racine / "AGENTS.md").read_text())
+
+    def test_une_seconde_adoption_complete_la_liste(self):
+        """Elle écrivait une seconde table `[adoption]` : les garde-fous ne se
+        lisaient plus."""
+        import tomllib
+
+        self.racine = depot({"app.py": "print('ok')\n", "LISEZMOI.md": "Voir [la suite](absent.md).\n"})
+        installer(self.racine)
+        paragraphe = "Un long paragraphe recopié tel quel dans deux fichiers du projet, " * 4 + "\n"
+        (self.racine / "a.md").write_text(paragraphe)
+        (self.racine / "b.md").write_text(paragraphe)
+        installer(self.racine)
+        gf = tomllib.loads((self.racine / ".socle/guardrails.toml").read_text())
+        self.assertEqual(sorted(gf["adoption"]["warn_only"]), ["docs.copie", "memoire.references"])
+
+    def test_un_sous_dossier_d_un_depot_est_refuse(self):
+        """Les hooks git et le workflow de CI ne vivent qu'à la racine du
+        dépôt : posés plus bas, ils ne tiraient pas, sans un mot."""
+        from contextlib import redirect_stderr
+
+        self.racine = depot({"services/api/app.py": "print('ok')\n"})
+        flux = io.StringIO()
+        with redirect_stdout(flux), redirect_stderr(flux):
+            code = installeur.installer(self.racine / "services/api", "python", "@essai", source=MOTEUR)
+        self.assertEqual(code, 2)
+        self.assertIn("racine du dépôt", flux.getvalue())
+        self.assertFalse((self.racine / "services/api/.socle").exists())
+
+    def test_ce_que_le_socle_pose_n_est_pas_ignore_par_le_projet(self):
+        """Un `*.lock` du projet empêchait de commiter le verrou du moteur : un
+        clone frais disait le socle non installé."""
+        self.racine = depot({".gitignore": "*.lock\n", "app.py": "print('ok')\n"})
+        installer(self.racine, adoption=False)
+        ignore = subprocess.run(["git", "check-ignore", "-q", ".socle/engine.lock"], cwd=self.racine)
+        self.assertEqual(ignore.returncode, 1)
+
+    def test_un_fichier_cache_n_entre_pas_dans_l_empreinte(self):
+        """Un `.DS_Store` du clone source était copié et compté : un clone
+        frais, sans lui, disait le moteur altéré."""
+        from socle import config, fingerprint as empreinte
+
+        source = Path(tempfile.mkdtemp(prefix="socle-source-"))
+        self.addCleanup(shutil.rmtree, source, ignore_errors=True)
+        shutil.copytree(MOTEUR / "socle", source / "socle", ignore=shutil.ignore_patterns("__pycache__"))
+        (source / "socle/.DS_Store").write_bytes(b"\0\1")
+        self.racine = depot({"app.py": "print('ok')\n"})
+        with redirect_stdout(io.StringIO()):
+            installeur.installer(self.racine, "python", "@essai", source=source)
+        self.assertFalse((self.racine / ".socle/engine/socle/.DS_Store").exists())
+        (self.racine / ".socle/engine/socle/.DS_Store").write_bytes(b"\0\2")
+        verrou = config.Projet.charger(self.racine).lock
+        self.assertEqual(empreinte.calculer(self.racine, ".socle/engine")[0], verrou["fingerprint"])
+        self.assertFalse(any(p.name == ".DS_Store" for p in empreinte.fichiers_moteur(self.racine, ".socle/engine")))

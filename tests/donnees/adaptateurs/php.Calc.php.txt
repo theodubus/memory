@@ -1,0 +1,16 @@
+<?php
+
+namespace Essai;
+
+final class Calc
+{
+    public static function double(int $x): int
+    {
+        return 2 * $x;
+    }
+
+    private static function aide(int $x): int
+    {
+        return $x + 1;
+    }
+}

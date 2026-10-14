@@ -1,0 +1,297 @@
+[
+  {
+    "langage": "javascript",
+    "etapes": {
+      "dépendances": {
+        "ok": true,
+        "detail": ""
+      },
+      "installation, adaptateur déduit du dépôt": {
+        "ok": true,
+        "detail": ""
+      },
+      "verify sur le projet sain": {
+        "ok": true,
+        "detail": ""
+      },
+      "test sans assertion refusé par tests.creux": {
+        "ok": true,
+        "detail": ""
+      },
+      "test désactivé sans raison refusé par tests.creux": {
+        "ok": true,
+        "detail": ""
+      },
+      "valeur attendue changée refusé par tests.attendus": {
+        "ok": true,
+        "detail": ""
+      },
+      "fonction publique sans test refusé par tests.code-teste": {
+        "ok": true,
+        "detail": ""
+      },
+      "correctif avec son test de régression, rejoué sur le parent": {
+        "ok": true,
+        "detail": ""
+      },
+      "correctif sans test refusé par tests.regression": {
+        "ok": true,
+        "detail": ""
+      },
+      "balayage de mutation lu": {
+        "ok": true,
+        "detail": ""
+      },
+      "verdict au plafond mesuré (3 survivant(s))": {
+        "ok": true,
+        "detail": ""
+      },
+      "verdict sous le plafond refusé": {
+        "ok": true,
+        "detail": ""
+      }
+    },
+    "mutation_secondes": 5.2,
+    "mutation": {
+      "survivants": 3,
+      "attrapes": 7
+    },
+    "reussi": true
+  },
+  {
+    "langage": "go",
+    "etapes": {
+      "dépendances": {
+        "ok": true,
+        "detail": ""
+      },
+      "installation, adaptateur déduit du dépôt": {
+        "ok": true,
+        "detail": ""
+      },
+      "verify sur le projet sain": {
+        "ok": true,
+        "detail": ""
+      },
+      "test sans assertion refusé par tests.creux": {
+        "ok": true,
+        "detail": ""
+      },
+      "test désactivé sans raison refusé par tests.creux": {
+        "ok": true,
+        "detail": ""
+      },
+      "valeur attendue changée refusé par tests.attendus": {
+        "ok": true,
+        "detail": ""
+      },
+      "fonction publique sans test refusé par tests.code-teste": {
+        "ok": true,
+        "detail": ""
+      },
+      "correctif avec son test de régression, rejoué sur le parent": {
+        "ok": true,
+        "detail": ""
+      },
+      "correctif sans test refusé par tests.regression": {
+        "ok": true,
+        "detail": ""
+      },
+      "balayage de mutation lu": {
+        "ok": true,
+        "detail": ""
+      },
+      "verdict au plafond mesuré (1 survivant(s))": {
+        "ok": true,
+        "detail": ""
+      },
+      "verdict sous le plafond refusé": {
+        "ok": true,
+        "detail": ""
+      }
+    },
+    "mutation_secondes": 1.8,
+    "mutation": {
+      "survivants": 1,
+      "attrapes": 3
+    },
+    "reussi": true
+  },
+  {
+    "langage": "java",
+    "etapes": {
+      "dépendances": {
+        "ok": true,
+        "detail": ""
+      },
+      "installation, adaptateur déduit du dépôt": {
+        "ok": true,
+        "detail": ""
+      },
+      "verify sur le projet sain": {
+        "ok": true,
+        "detail": ""
+      },
+      "test sans assertion refusé par tests.creux": {
+        "ok": true,
+        "detail": ""
+      },
+      "test désactivé sans raison refusé par tests.creux": {
+        "ok": true,
+        "detail": ""
+      },
+      "valeur attendue changée refusé par tests.attendus": {
+        "ok": true,
+        "detail": ""
+      },
+      "fonction publique sans test refusé par tests.code-teste": {
+        "ok": true,
+        "detail": ""
+      },
+      "correctif avec son test de régression, rejoué sur le parent": {
+        "ok": true,
+        "detail": ""
+      },
+      "correctif sans test refusé par tests.regression": {
+        "ok": true,
+        "detail": ""
+      },
+      "balayage de mutation lu": {
+        "ok": true,
+        "detail": ""
+      },
+      "verdict au plafond mesuré (2 survivant(s))": {
+        "ok": true,
+        "detail": ""
+      },
+      "verdict sous le plafond refusé": {
+        "ok": true,
+        "detail": ""
+      }
+    },
+    "mutation_secondes": 5.9,
+    "mutation": {
+      "attrapes": 6,
+      "survivants": 2
+    },
+    "reussi": true
+  },
+  {
+    "langage": "ruby",
+    "etapes": {
+      "dépendances": {
+        "ok": true,
+        "detail": ""
+      },
+      "installation, adaptateur déduit du dépôt": {
+        "ok": true,
+        "detail": ""
+      },
+      "verify sur le projet sain": {
+        "ok": true,
+        "detail": ""
+      },
+      "test sans assertion refusé par tests.creux": {
+        "ok": true,
+        "detail": ""
+      },
+      "test désactivé sans raison refusé par tests.creux": {
+        "ok": true,
+        "detail": ""
+      },
+      "valeur attendue changée refusé par tests.attendus": {
+        "ok": true,
+        "detail": ""
+      },
+      "fonction publique sans test refusé par tests.code-teste": {
+        "ok": true,
+        "detail": ""
+      },
+      "correctif avec son test de régression, rejoué sur le parent": {
+        "ok": true,
+        "detail": ""
+      },
+      "correctif sans test refusé par tests.regression": {
+        "ok": true,
+        "detail": ""
+      },
+      "balayage de mutation lu": {
+        "ok": true,
+        "detail": ""
+      },
+      "verdict au plafond mesuré (14 survivant(s))": {
+        "ok": true,
+        "detail": ""
+      },
+      "verdict sous le plafond refusé": {
+        "ok": true,
+        "detail": ""
+      }
+    },
+    "mutation_secondes": 2.6,
+    "mutation": {
+      "attrapes": 43,
+      "survivants": 14
+    },
+    "reussi": true
+  },
+  {
+    "langage": "php",
+    "etapes": {
+      "dépendances": {
+        "ok": true,
+        "detail": ""
+      },
+      "installation, adaptateur déduit du dépôt": {
+        "ok": true,
+        "detail": ""
+      },
+      "verify sur le projet sain": {
+        "ok": true,
+        "detail": ""
+      },
+      "test sans assertion refusé par tests.creux": {
+        "ok": true,
+        "detail": ""
+      },
+      "test désactivé sans raison refusé par tests.creux": {
+        "ok": true,
+        "detail": ""
+      },
+      "valeur attendue changée refusé par tests.attendus": {
+        "ok": true,
+        "detail": ""
+      },
+      "fonction publique sans test refusé par tests.code-teste": {
+        "ok": true,
+        "detail": ""
+      },
+      "correctif avec son test de régression, rejoué sur le parent": {
+        "ok": true,
+        "detail": ""
+      },
+      "correctif sans test refusé par tests.regression": {
+        "ok": true,
+        "detail": ""
+      },
+      "balayage de mutation lu": {
+        "ok": true,
+        "detail": ""
+      },
+      "verdict au plafond mesuré (1 survivant(s))": {
+        "ok": true,
+        "detail": ""
+      },
+      "verdict sous le plafond refusé": {
+        "ok": true,
+        "detail": ""
+      }
+    },
+    "mutation_secondes": 0.9,
+    "mutation": {
+      "attrapes": 8,
+      "survivants": 1
+    },
+    "reussi": true
+  }
+]

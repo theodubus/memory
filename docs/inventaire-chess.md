@@ -33,7 +33,7 @@ une question posée dans la demande de validation, pas une correction.
 | `chess:.claude/hooks/no-fabricated-sha.sh` | Refuse un SHA de 40 caractères inconnu dont le préfixe de 7 est connu | Repris à l'identique dans le hook `pre-tool-use`, étendu aux références de commit et aux identifiants de mémoire inventés |
 | `chess:.claude/hooks/verify-on-stop.sh` | Refuse de finir un tour sur un arbre cassé ; laisse passer après trois échecs | Hook `stop` : contrôles du socle, puis capacités rapides de l'adaptateur si le code a bougé depuis la dernière vérification réussie. Les trois échecs deviennent le point 7 de la politique : on s'arrête, mais en escaladant |
 | Trace `chess:.claude/hooks-fired.log` et `chess:tools/verify-hooks.sh` | Prouver que les hooks sont chargés, pas seulement corrects | Trace locale, plus le trailer `Socle-Hooks` que la CI exige sur chaque commit d'agent (`ADR-0005`) : dans `chess`, la trace est ignorée par git et la CI ne la voit pas |
-| `chess:tools/verify.sh` | Toutes les étapes, même après un échec ; sortie complète d'un échec ; un seul code de sortie ; `--rapide` | `socle verify`, sur les capacités déclarées par l'adaptateur, plus les contrôles du socle |
+| `chess:tools/verify.sh` | Toutes les étapes, même après un échec ; sortie complète d'un échec ; un seul code de sortie ; `--fast` | `socle verify`, sur les capacités déclarées par l'adaptateur, plus les contrôles du socle |
 | `chess:.github/mutation-baseline.txt` et `chess:.github/mutation-verdict.sh` | Cliquet : casse à la hausse, signale la baisse ; raison écrite de chaque plafond non nul ; un résumé absent casse | `[mutation.caps]` des garde-fous et `socle mutation-verdict` ; `tests/test_mutation.py` rejoue les cas fabriqués de `chess:.github/mutation-verdict-test.sh` |
 | `chess:engine/tests/couverture_mutation.rs` | Tout fichier du moteur est dans la matrice et dans le plafond | Contrôle `mutation.couverture`, sur les modules que l'adaptateur déclare ; l'exemption « fichier sans fonction » devient une regex `has_code` |
 | `chess:engine/tests/outillage_documente.rs` | Tout dispositif est nommé dans la doc, ensemble parcouru et non énuméré | Contrôle `docs.outillage` |
@@ -60,7 +60,8 @@ une question posée dans la demande de validation, pas une correction.
   de ce dépôt (le socle la permet par `[human] keep_branches`).
 - `chess:tools/balayage-vivant.sh` (le cliquet de mutation ne peut pas signaler
   sa propre absence) : générique, mais il dépend de l'API GitHub. Reporté au
-  backlog avec le workflow de mutation générique.
+  backlog avec le workflow de mutation générique, puis repris par
+  `mutation.vivante` et le workflow que pose l'installeur (B-0005).
 
 ## Ce que `chess` n'a pas et que le socle ajoute
 

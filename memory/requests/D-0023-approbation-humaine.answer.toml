@@ -1,0 +1,8 @@
+# Réponse humaine, écrite par l'humain lui-même (`socle answer`).
+# Elle porte sur le texte exact de D-0023-approbation-humaine.md, dont l'empreinte suit.
+reponse = "valider"
+texte = "le moteur sous son nom anglais"
+par = "theodubus"
+date = "2026-10-14"
+canal = "terminal"
+empreinte = "sha256:384bde629ae375b64bd1e66bbed10a79f6f6ce14d95a52dbe36ce3dd48d18a16"

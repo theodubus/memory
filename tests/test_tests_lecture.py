@@ -3,9 +3,9 @@ import tomllib
 import unittest
 from pathlib import Path
 
-from socle import tests_lecture
+from socle import tests_reader as tests_lecture
 
-ADAPTATEURS = Path(__file__).resolve().parent.parent / "moteur/socle/adaptateurs"
+ADAPTATEURS = Path(__file__).resolve().parent.parent / "engine/socle/adapters"
 
 
 def cfg(langage):
@@ -57,6 +57,55 @@ class TestRust(unittest.TestCase):
         self.assertTrue(any(m.search(corps) for m in motifs))
         self.assertFalse(any(m.search(self.par_nom["lent"].corps) for m in motifs))
 
+    def test_zones_de_test_du_module(self):
+        # Le module de tests entier, ses aides comprises ; un test hors du
+        # module, depuis son commentaire et son attribut.
+        texte = ("pub fn double(x: i32) -> i32 {\n    2 * x\n}\n\n// hors module\n#[test]\nfn seul() {\n"
+                 "    assert_eq!(double(1), 2);\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n"
+                 "    fn aide() -> i32 { 3 }\n\n    #[test]\n    fn trois() {\n        assert_eq!(double(aide()), 6);\n"
+                 "    }\n}\n")
+        lignes = texte.splitlines()
+        zones = sorted(tests_lecture.zones_de_test(texte, "x", cfg("rust")))
+        self.assertEqual([lignes[d:f] for d, f in zones][:2],
+                         [lignes[4:9], lignes[10:21]])
+        self.assertEqual(lignes[10], "#[cfg(test)]")
+        self.assertEqual(lignes[20], "}")
+
+
+class TestFonctionDansUneChaine(unittest.TestCase):
+    """B-0025 : le banc garde le code de ses projets d'essai dans des
+    chaînes ; un `def` en début de ligne, dans une chaîne de plusieurs
+    lignes, était lu comme une fonction publique, qu'aucun test ne nomme."""
+
+    def test_un_def_dans_une_chaine_n_est_pas_une_fonction(self):
+        texte = (
+            "# l'apostrophe d'un commentaire n'ouvre pas de chaîne\n"
+            'PROJET = """\n'
+            "def echelle(x):\n"
+            "    return 3 * x\n"
+            '"""\n'
+            "\n"
+            "def vraie(x):\n"
+            "    '''Sa docstring, sur une ligne.'''\n"
+            "    return x\n"
+            "\n"
+            "AUTRE = '''\n"
+            "def fausse():\n"
+            "    pass\n"
+            "'''\n"
+            "def aussi_vraie():\n"
+            "    return 'une chaîne d\\'une ligne'\n"
+        )
+        noms = [f.nom for f in tests_lecture.extraire(texte, "x.py", cfg("python"))]
+        self.assertEqual(noms, ["vraie", "aussi_vraie"])
+
+    def test_sans_commentaires_declares_les_chaines_ne_cachent_rien(self):
+        # Une apostrophe de commentaire ouvrirait une chaîne fantôme jusqu'à
+        # la suivante : sans `line_comment`, les chaînes ne comptent pas.
+        sans = {k: v for k, v in cfg("python").items() if k not in ("block_comment", "line_comment")}
+        texte = "# l'apostrophe\ndef a():\n    pass\n# d'autres\ndef b():\n    pass\n"
+        self.assertEqual([f.nom for f in tests_lecture.extraire(texte, "x.py", sans)], ["a", "b"])
+
 
 class TestPython(unittest.TestCase):
     def setUp(self):
@@ -70,6 +119,20 @@ class TestPython(unittest.TestCase):
         self.assertTrue(tests_lecture.affirme(self.par_nom["test_via_aide"], self.assertion, self.aides))
         self.assertFalse(tests_lecture.affirme(self.par_nom["test_vide"], self.assertion, self.aides))
 
+    def test_une_raison_apres_une_condition_qui_appelle(self):
+        # L6 : `skipIf(os.environ.get(X), "raison")` passait pour sans raison.
+        raison = re.compile(self.c["ignore_reason"])
+        self.assertTrue(raison.search("@unittest.skipIf(os.environ.get(X), 'la CI le lance')"))
+        self.assertFalse(raison.search("@unittest.skipIf(os.environ.get(X))"))
+        # Une raison entre guillemets doubles qui contient une apostrophe.
+        self.assertTrue(raison.search("@unittest.skip(\"l'API est en panne\")"))
+
+    def test_enonces_entiers_et_normalises(self):
+        lignes = ["x = 1", "self.assertEqual(", "    double(2),", "    4,", ")", "assert y // 2 == 'a b'"]
+        enonces = tests_lecture.enonces(lignes, self.assertion, self.c)
+        self.assertEqual(enonces, {"self.assertEqual(double(2),4)": ["self.assertEqual("],
+                                   "asserty//2=='a b'": ["assert y // 2 == 'a b'"]})
+
     def test_skip(self):
         ignore, raison = re.compile(self.c["ignore"]), re.compile(self.c["ignore_reason"])
         nu, motive = self.par_nom["test_saute"], self.par_nom["test_saute_motive"]
@@ -81,6 +144,35 @@ class TestPython(unittest.TestCase):
         motifs = [re.compile(t) for t in self.c["tautology"]]
         lignes = self.par_nom["test_tauto"].lignes_corps
         self.assertTrue(any(m.search(l) for m in motifs for l in lignes))
+
+
+class TestFormesCourantes(unittest.TestCase):
+    """Relevé de la passe de recul, F : quatre formes courantes cassaient la
+    lecture des tests ; chacune avec un témoin creux, qui le reste."""
+
+    def lire(self, langage, texte) -> dict[str, bool]:
+        c = cfg(langage)
+        assertion = re.compile(c["assertion"])
+        return {f.nom: tests_lecture.affirme(f, assertion, set(), c)
+                for f in tests_lecture.extraire(texte, "x", c) if f.est_test}
+
+    def test_un_type_tableau_dans_la_signature_rust(self):
+        texte = "#[test]\nfn sig(x: [u8; 4]) {\n    assert_eq!(x[0], 1);\n}\n#[test]\nfn vide() {\n    f();\n}\n"
+        self.assertEqual(self.lire("rust", texte), {"sig": True, "vide": False})
+
+    def test_une_fleche_sans_accolades_en_javascript(self):
+        texte = 'test("un", () => expect(f()).toBe(1));\ntest("vide", () => f());\n'
+        self.assertEqual(self.lire("javascript", texte), {"un": True, "vide": False})
+
+    def test_une_expression_if_end_en_ruby(self):
+        texte = ('it "calcule" do\n  r = if a\n    1\n  else\n    2\n  end\n  expect(r).to eq(1)\nend\n'
+                 'it "vide" do\n  f\nend\n')
+        self.assertEqual(self.lire("ruby", texte), {"calcule": True, "vide": False})
+
+    def test_un_test_python_sur_une_ligne(self):
+        texte = ("class T(unittest.TestCase):\n    def test_un(self): self.assertEqual(f(), 1)\n"
+                 "    def test_vide(self): f()\n    def test_deux(self):\n        self.assertEqual(g(), 2)\n")
+        self.assertEqual(self.lire("python", texte), {"test_un": True, "test_vide": False, "test_deux": True})
 
 
 if __name__ == "__main__":

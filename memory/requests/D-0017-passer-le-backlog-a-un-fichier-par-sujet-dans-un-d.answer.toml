@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0017-passer-le-backlog-a-un-fichier-par-sujet-dans-un-d.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-10-12"
+canal = "conversation"
+citation = "theodubus/chess-copy-socle\n\net D0017 validée"
+empreinte = "sha256:c4c3ecf388a474ff64a98ea9040013ac47680489bfb44ef631cb2703891eb7a4"
