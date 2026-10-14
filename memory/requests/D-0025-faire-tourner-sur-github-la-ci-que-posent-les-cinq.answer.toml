@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0025-faire-tourner-sur-github-la-ci-que-posent-les-cinq.md, dont l'empreinte suit.
+reponse = "public"
+texte = ""
+par = "Théo"
+date = "2026-10-14"
+canal = "conversation"
+citation = "Ok pour d0025, le depot public est github.com/theodubus/tests \nJuste fais gaffe, travailler avec d'autres repos c'est ce qui avait causé dans l'autre session le déplacement du dossier de conteneur par defaut dans la session précédent"
+empreinte = "sha256:22c8e635f4e2bac9e978989f60e76e0f79ac91b2229244c66074782646d48197"
