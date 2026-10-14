@@ -36,7 +36,7 @@ jobs:
         env:
           SOCLE_PRIVE_DEPOT: ${{ secrets.SOCLE_PRIVE_DEPOT }}
           SOCLE_PRIVE_CLE: ${{ secrets.SOCLE_PRIVE_CLE }}
-        run: python3 .socle/socle prive recuperer
+        run: python3 .socle/socle private recover
       - name: Socle
         env:
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
