@@ -5,12 +5,15 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-B-0038 est fait, sur le feu vert de Théo (« Ok go ») : le moteur parle la
-langue de la mémoire du projet (ADR-0028, J-2026-10-14-M, J-2026-10-14-N).
-Un projet français ne voit rien changer. Ce qui reste en français dans un
-projet anglais, hors du moteur ou à la marge, est au backlog (B-0059). Les
-deux lots sont poussés sur `ccr-7128ec56-nnvoun`, et la CI de la branche
-passe sur leur dernier commit.
+La pull request #6 est fusionnée (J-2026-10-14-Q). Théo valide l'ordre de
+la suite (« Ok je valide ton ordre ») : B-0060 maintenant, la demande de
+B-0039 en parallèle, puis B-0048 avec B-0018, puis B-0059.
+
+B-0060, les quatre corrections de Théo : l'état avertit quand les hooks de
+l'agent ne sont pas chargés, le hook avant commit refuse un commit d'agent
+sans passage du filtre depuis le précédent, une consigne dans AGENTS.md,
+et un remède qui distingue les cas. Chaque contrôle nouveau a son défaut
+injecté et son témoin sain dans l'auto-test.
 
 ## Consignes en cours
 
@@ -26,12 +29,9 @@ passe sur leur dernier commit.
 
 ## Prochaines étapes
 
-1. La pull request de la branche vers `main`, demandée par Théo
-   (J-2026-10-14-O) : la mener jusqu'à une CI verte et fusionnable ; la
-   fusion revient à Théo.
-2. Ensuite, au choix de Théo : B-0060 (les sessions qui démarrent hors de
-   la racine du projet, à ne pas corriger avant qu'il le dise), B-0059 (les
-   restes en français), B-0046 (la documentation à refaire, que Théo
-   reprendra plus tard, J-2026-10-13-U), B-0039 (des dépôts jetables poussés
-   sur GitHub : une demande d'abord), B-0040 (dotnet absent d'ici) ; B-0042
-   attend sa propre demande.
+1. D-0025, la demande de B-0039, est posée : attendre la réponse de Théo,
+   et la relayer avec son texte exact.
+2. B-0060, puis le pousser et regarder la CI.
+3. Ensuite, dans l'ordre validé : B-0048 avec B-0018 (une demande
+   d'abord), puis B-0059. Plus tard : B-0046 (que Théo reprendra), B-0040
+   (dotnet absent d'ici) ; B-0042 attend sa propre demande.
