@@ -17,14 +17,17 @@ de près : B-0026 et B-0025 ; vu en chemin, B-0058.
   fait ; ce que l'agent fera ensuite se dit à part, comme tel ; un constat
   dit ce qu'il change pour Théo et ce qu'on attend de lui, ou « rien »
   (sa remarque sur B-0056 et B-0058, J-2026-10-14-F).
+- Les heures données à Théo s'écrivent à l'heure de Paris (UTC+2 jusqu'au
+  25 oct., UTC+1 ensuite) ; Théo : « Et quand tu donnes le temps écris en
+  heure de paris stp ».
 
 ## Prochaines étapes
 
 1. Le tri du backlog, à la demande de Théo : « y'a pas mal de vieux
    éléments qu'on traine dans la backlog depuis longtemps, est ce qu'il y
    en a des périmés ou des qui se traitent n'importe quand et sont
-   rapides ? Si oui tu peux t'en occuper juste apres ». Suite : B-0058,
-   puis B-0026 et B-0025.
+   rapides ? Si oui tu peux t'en occuper juste apres ». Suite : B-0026 et
+   B-0025 ; B-0058 attend la réponse à D-0024.
 2. Plus tard : B-0046 (la documentation à refaire, que Théo reprendra plus
    tard, J-2026-10-13-U), B-0038, B-0039, B-0040 ; B-0042 attend sa
    propre demande. La pull request, quand Théo la demandera.
