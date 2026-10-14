@@ -56,6 +56,37 @@ class TestRenommagesDeGit(unittest.TestCase):
         self.assertEqual(ctx.renommes, {"a.py": "c.py"})
 
 
+class TestFusionDUnePullRequest(unittest.TestCase):
+    """La CI d'une pull request juge la fusion que GitHub fabrique : son
+    premier parent est la base, le second la branche. Parcourue en premier
+    parent, la plage n'était que cette fusion, d'un bloc, et un fichier
+    renommé puis récrit sur la branche n'y était plus reconnu."""
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-fusion-pr-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        git(self.racine, "init", "-q", "-b", "main")
+        (self.racine / "a.py").write_text("".join(f"def f{i}():\n    return {i}\n" for i in range(20)))
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "a", "--no-verify")
+        self.base = git(self.racine, "rev-parse", "HEAD").strip()
+        git(self.racine, "checkout", "-q", "-b", "branche")
+        git(self.racine, "mv", "a.py", "b.py")
+        git(self.racine, "commit", "-qm", "b", "--no-verify")
+        texte = (self.racine / "b.py").read_text().splitlines(keepends=True)
+        (self.racine / "b.py").write_text("".join(texte[:10]) + "".join(f"def g{i}():\n    pass\n" for i in range(15)))
+        git(self.racine, "commit", "-qam", "récrit", "--no-verify")
+        git(self.racine, "checkout", "-q", "--detach", self.base)
+        git(self.racine, "merge", "-q", "--no-ff", "--no-edit", "branche")
+        self.fusion = git(self.racine, "rev-parse", "HEAD").strip()
+
+    def test_la_fusion_d_une_pull_request_suit_la_branche(self):
+        self.assertEqual(outils.renommes(self.racine, self.base, self.fusion), {"a.py": "b.py"})
+
+    def test_sur_l_arbre_de_travail_aussi(self):
+        self.assertEqual(outils.renommes(self.racine, self.base), {"a.py": "b.py"})
+
+
 class TestCliquetRenomme(unittest.TestCase):
     RENOMMES = {"src/vieux.py": "src/neuf.py", "src/outils/a.py": "src/utils/a.py", "docs/vieux.md": "docs/neuf.md"}
     AVANT = ["src/vieux.py", "src/outils/a.py", "src/outils/b.py", "docs/vieux.md"]

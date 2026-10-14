@@ -219,11 +219,22 @@ def renommes(racine: Path, base: str, tete: str | None = None) -> dict[str, str]
     commit par commit de `base` à `tete`, puis jusqu'à l'arbre de travail
     (`tete` absent) ou à l'arbre jugé (l'index, au commit). Commit par commit
     et non d'un bloc : un fichier renommé et beaucoup modifié depuis la base
-    ne ressemble plus assez à son ancien texte pour que git l'apparie."""
+    ne ressemble plus assez à son ancien texte pour que git l'apparie. La
+    fusion d'une pull request se parcourt par sa branche."""
     commit = bool(tete) and git(racine, "cat-file", "-t", tete, check=False).strip() == "commit"
+    fin = tete if commit else "HEAD"
+    # La fusion que GitHub fabrique pour la CI d'une pull request : son
+    # premier parent est la base, le second la branche. En premier parent, la
+    # plage ne serait que cette fusion, d'un bloc : on suit la branche, puis
+    # le pas de la fusion elle-même.
+    fusion = []
+    parents = git(racine, "rev-list", "--parents", "-n", "1", fin, check=False).split()[1:]
+    if len(parents) == 2 and git_reussit(racine, "merge-base", "--is-ancestor", parents[0], base):
+        fusion = [_renommages(git(racine, "diff", "-M", "--name-status", "-z", parents[1], fin, check=False))]
+        fin = parents[1]
     sortie = git(racine, "log", "--reverse", "--first-parent", "-M", "--name-status", "--format=%x01", "-z",
-                 f"{base}..{tete if commit else 'HEAD'}", check=False)
-    etapes = [_renommages(bloc) for bloc in sortie.split("\x01")[1:]]
+                 f"{base}..{fin}", check=False)
+    etapes = [_renommages(bloc) for bloc in sortie.split("\x01")[1:]] + fusion
     if not commit:
         etapes.append(_renommages(git(racine, "diff", "-M", "--name-status", "-z", "HEAD", *([tete] if tete else []),
                                       check=False)))
