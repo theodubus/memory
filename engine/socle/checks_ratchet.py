@@ -17,6 +17,7 @@ import json
 import re
 
 from socle import config, fingerprint as empreinte, memory as memoire, utils as outils
+from socle.messages import trad
 from socle.context import controle
 
 ABSENT = object()
@@ -110,11 +111,12 @@ def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | Non
             continue
         if va is ABSENT:
             if chemin[:2] == ("mutation", "caps") and chemin[-1] == "max" and not _mesure(b, chemin, vb):
-                res.append((cle, f"plafond {vb!r} écrit sans la mesure que pose `mutation-verdict --record`"))
+                res.append((cle, trad("plafond {vb} écrit sans la mesure que pose `mutation-verdict --record`",
+                                      vb=repr(vb))))
                 continue
             if sens in ("bas", "vrai", "couvre", "faux") or (sens == "inclus" and not vb):
                 continue  # un seuil ou une couverture qui apparaît durcit
-            res.append((cle, f"clé ajoutée : {vb!r}"))
+            res.append((cle, trad("clé ajoutée : {vb}", vb=repr(vb))))
             continue
         if vb is ABSENT:
             if chemin[:2] == ("mutation", "caps") and modules_existants is not None and chemin[2] not in modules_existants:
@@ -124,7 +126,7 @@ def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | Non
                 continue  # plus aucun fichier sous ce motif : son budget ne couvrait plus rien (ADR-0025)
             if sens == "faux":
                 continue  # « à mesurer » qui disparaît : le plafond mesuré le remplace
-            res.append((cle, f"seuil retiré (valait {va!r})"))
+            res.append((cle, trad("seuil retiré (valait {va})", va=repr(va))))
             continue
         if sens == "bas" and isinstance(va, (int, float)) and isinstance(vb, (int, float)):
             if vb > va:
@@ -138,13 +140,13 @@ def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | Non
         elif sens == "couvre":
             retires = set(va or []) - set(vb or [])
             if retires:
-                res.append((cle, f"couverture retirée : {sorted(retires)}"))
+                res.append((cle, trad("couverture retirée : {retires}", retires=sorted(retires))))
         elif sens == "inclus":
             ajoutes = set(vb or []) - set(va or [])
             if ajoutes:
-                res.append((cle, f"exclusion ajoutée : {sorted(ajoutes)}"))
+                res.append((cle, trad("exclusion ajoutée : {ajoutes}", ajoutes=sorted(ajoutes))))
         else:
-            res.append((cle, f"changement non classé : {va!r} → {vb!r}"))
+            res.append((cle, trad("changement non classé : {va} → {vb}", va=repr(va), vb=repr(vb))))
 
     # Chaque correspondance exige, quand son code change, l'une de ses docs :
     # une doc de plus à la liste rend l'exigence plus facile à satisfaire.
@@ -160,17 +162,17 @@ def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | Non
                 continue
             vus.add(cle)
             if not candidates:
-                res.append((cle, "correspondance code ↔ doc retirée"))
+                res.append((cle, trad("correspondance code ↔ doc retirée")))
             else:
                 ajoutees = min((d - docs for d in candidates), key=len)
-                res.append((cle, f"docs ajoutées à la correspondance : {sorted(ajoutees)}"))
+                res.append((cle, trad("docs ajoutées à la correspondance : {docs}", docs=sorted(ajoutees))))
     vals_avant = {v.get("name"): v for v in avant.get("values", [])}
     vals_apres = {v.get("name"): v for v in apres.get("values", [])}
     for nom, decl in vals_avant.items():
         if nom not in vals_apres:
-            res.append((f"values {json.dumps(nom, ensure_ascii=False)}", "valeur liée retirée"))
+            res.append((f"values {json.dumps(nom, ensure_ascii=False)}", trad("valeur liée retirée")))
         elif vals_apres[nom] != {**decl, "file": renommes.get(decl.get("file"), decl.get("file"))}:
-            res.append((f"values {json.dumps(nom, ensure_ascii=False)}", "source de la valeur changée"))
+            res.append((f"values {json.dumps(nom, ensure_ascii=False)}", trad("source de la valeur changée")))
     return res
 
 
@@ -211,11 +213,13 @@ def cliquet(ctx, r):
                                           ctx.fichiers_base):
         d = _valide_par(ctx, cle)
         if d:
-            r.avertir("cliquet.garde-fous", f"assouplissement validé par {d.id} : {cle} — {pourquoi}",
+            r.avertir("cliquet.garde-fous", trad("assouplissement validé par {id} : {cle} — {pourquoi}",
+                                                 id=d.id, cle=cle, pourquoi=pourquoi),
                       ctx.projet.chemins.garde_fous)
         else:
-            r.erreur("cliquet.garde-fous", f"assouplissement sans validation humaine : {cle} — {pourquoi}. "
-                     f"Émettre une demande qui cite `{cle}` ; elle couvrira ce changement une fois validée",
+            r.erreur("cliquet.garde-fous", trad("assouplissement sans validation humaine : {cle} — {pourquoi}. "
+                                                "Émettre une demande qui cite `{cle}` ; elle couvrira ce "
+                                                "changement une fois validée", cle=cle, pourquoi=pourquoi),
                      ctx.projet.chemins.garde_fous)
 
 
@@ -238,8 +242,8 @@ def proteges(ctx, r):
     if not ctx.projet_base or not ctx.projet_base.installe:
         installes = outils.filtrer(ctx.changes, ctx.projet.chemins_proteges())
         if installes:
-            r.avertir("protege.fichiers", f"installation du socle : {len(installes)} fichier(s) protégé(s) posé(s) — "
-                      "la politique par défaut est celle du cadrage")
+            r.avertir("protege.fichiers", trad("installation du socle : {n} fichier(s) protégé(s) posé(s) — la "
+                                               "politique par défaut est celle du cadrage", n=len(installes)))
         return
     motifs = sorted(set(ctx.projet.chemins_proteges()) | set(ctx.projet_base.chemins_proteges()))
 
@@ -256,7 +260,8 @@ def proteges(ctx, r):
         if nouveau != c and outils.correspond(nouveau, motifs) and existe(nouveau):
             # Déplacé par la migration du format : le fichier est jugé sous
             # son nom nouveau, protégé lui aussi, et non comme une suppression.
-            r.avertir("protege.fichiers", f"déplacé vers `{nouveau}` par la migration du format", c)
+            r.avertir("protege.fichiers", trad("déplacé vers `{nouveau}` par la migration du format",
+                                               nouveau=nouveau), c)
             continue
         if present and ctx.tete is None:
             cite = empreinte.courte(empreinte.fichier(ctx.racine / c))
@@ -266,29 +271,32 @@ def proteges(ctx, r):
             cite = "supprimé"
         d = _valide_par(ctx, c, cite)
         if d:
-            r.avertir("protege.fichiers", f"modification validée par {d.id}", c)
+            r.avertir("protege.fichiers", trad("modification validée par {id}", id=d.id), c)
         else:
-            r.erreur("protege.fichiers", f"fichier protégé modifié sans validation humaine. Une demande validée "
-                     f"doit citer `{c}` et `{cite}`", c)
+            r.erreur("protege.fichiers", trad("fichier protégé modifié sans validation humaine. Une demande "
+                                              "validée doit citer `{fichier}` et `{cite}`", fichier=c, cite=cite), c)
 
 
 @controle("moteur.empreinte")
 def moteur(ctx, r):
     """Le moteur du projet est celui que l'installeur a posé."""
     if not ctx.projet.installe:
-        r.erreur("moteur.empreinte", f"socle non installé : `{ctx.projet.chemins.lock}` absent (commité ? un "
-                 ".gitignore du projet peut l'écarter)")
+        r.erreur("moteur.empreinte", trad("socle non installé : `{lock}` absent (commité ? un .gitignore du "
+                                          "projet peut l'écarter)", lock=ctx.projet.chemins.lock))
         return
     if ctx.projet.mode == config.MODE_AMONT:
-        r.indisponible("moteur.empreinte", "mode amont : ce dépôt fabrique le moteur, son empreinte n'est pas figée")
+        r.indisponible("moteur.empreinte", trad("mode amont : ce dépôt fabrique le moteur, son empreinte n'est "
+                                                "pas figée"))
         return
     attendue = ctx.projet.lock.get("fingerprint")
     calculee, n = empreinte.calculer(ctx.racine, ctx.projet.dossier_moteur)
     if n == 0:
-        r.erreur("moteur.empreinte", f"moteur introuvable dans {ctx.projet.dossier_moteur}")
+        r.erreur("moteur.empreinte", trad("moteur introuvable dans {dossier_moteur}",
+                                          dossier_moteur=ctx.projet.dossier_moteur))
     elif calculee != attendue:
-        r.erreur("moteur.empreinte", f"moteur altéré : empreinte {empreinte.courte(calculee)}, "
-                 f"le verrou attend {empreinte.courte(str(attendue))}. Relancer l'installeur, jamais réparer à la main",
+        r.erreur("moteur.empreinte", trad("moteur altéré : empreinte {calculee}, le verrou attend {attendue}. "
+                                          "Relancer l'installeur, jamais réparer à la main",
+                                          calculee=empreinte.courte(calculee), attendue=empreinte.courte(str(attendue))),
                  ctx.projet.chemins.lock)
 
 
@@ -302,17 +310,18 @@ def configuration(ctx, r):
         return
     texte = ctx.lire(".claude/settings.json")
     if texte is None:
-        r.erreur("hooks.configuration", "`.claude/settings.json` absent : les hooks de Claude Code ne sont pas déclarés")
+        r.erreur("hooks.configuration", trad("`.claude/settings.json` absent : les hooks de Claude Code ne "
+                                             "sont pas déclarés"))
         return
     try:
         conf = json.loads(texte)
     except json.JSONDecodeError as e:
-        r.erreur("hooks.configuration", f"JSON illisible : {e}", ".claude/settings.json")
+        r.erreur("hooks.configuration", trad("JSON illisible : {erreur}", erreur=e), ".claude/settings.json")
         return
     for evt in HOOKS_REQUIS:
         commandes = [h.get("command", "") for bloc in conf.get("hooks", {}).get(evt, []) for h in bloc.get("hooks", [])]
         if not any(".socle/socle" in c and "hook" in c for c in commandes):
-            r.erreur("hooks.configuration", f"aucun hook {evt} n'appelle `.socle/socle hook`", ".claude/settings.json")
+            r.erreur("hooks.configuration", trad("aucun hook {evt} n'appelle `.socle/socle hook`", evt=evt), ".claude/settings.json")
 
 
 def lire_trailer_hooks(valeur: str) -> dict[str, str]:
@@ -344,18 +353,22 @@ def trace(ctx, r):
         sujet = c["message"].strip().splitlines()[0]
         valeurs = outils.trailers(c["message"]).get("socle-hooks")
         if not valeurs:
-            r.erreur("hooks.trace", f"{c['sha'][:10]} « {sujet} » : commit d'agent sans trailer `Socle-Hooks` — "
-                     "les hooks git n'ont pas tourné (`git config core.hooksPath .socle/git-hooks`)")
+            r.erreur("hooks.trace", trad("{sha} « {sujet} » : commit d'agent sans trailer `Socle-Hooks` — les "
+                                         "hooks git n'ont pas tourné (`git config core.hooksPath "
+                                         ".socle/git-hooks`)", sha=c['sha'][:10], sujet=sujet))
             continue
         t = lire_trailer_hooks(valeurs[-1])
         depuis = outils.trailers(c["message"]).get("socle-hooks-since-commit")
         n = lire_trailer_hooks(depuis[-1]).get("PreToolUse", "0") if depuis else "1"
         if not t.get("PreToolUse", "0").isdigit() or int(t.get("PreToolUse", "0")) < 1:
-            r.erreur("hooks.trace", f"{c['sha'][:10]} « {sujet} » : aucun PreToolUse n'a tiré pendant la session — "
-                     "les hooks de l'agent n'étaient pas chargés")
+            r.erreur("hooks.trace", trad("{sha} « {sujet} » : aucun PreToolUse n'a tiré pendant la session — "
+                                         "les hooks de l'agent n'étaient pas chargés",
+                                         sha=c['sha'][:10], sujet=sujet))
         elif not n.isdigit() or int(n) < 1:
             # B-0058 : le compte de la session garde les tirs d'avant l'arrêt.
-            r.erreur("hooks.trace", f"{c['sha'][:10]} « {sujet} » : aucun PreToolUse n'a tiré depuis le commit "
-                     "précédent — les hooks de l'agent ont cessé d'être chargés en cours de session")
+            r.erreur("hooks.trace", trad("{sha} « {sujet} » : aucun PreToolUse n'a tiré depuis le commit "
+                                         "précédent — les hooks de l'agent ont cessé d'être chargés en cours "
+                                         "de session", sha=c['sha'][:10], sujet=sujet))
         if t.get("SessionStart") == "0":
-            r.erreur("hooks.trace", f"{c['sha'][:10]} « {sujet} » : le hook SessionStart n'a jamais tiré pendant la session")
+            r.erreur("hooks.trace", trad("{sha} « {sujet} » : le hook SessionStart n'a jamais tiré pendant la "
+                                         "session", sha=c['sha'][:10], sujet=sujet))

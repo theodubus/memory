@@ -8,11 +8,13 @@ code ↔ doc). Sans base, un tel contrôle le dit au lieu d'être sauté en sile
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
 
 from socle import config, requests as demandes, memory as memoire, utils as outils
+from socle.messages import trad
 
 ETAGES = ("agent", "git", "ci")
 
@@ -28,6 +30,14 @@ class Controle:
 
 
 REGISTRE: dict[str, Controle] = {}
+
+
+def resume(doc: str) -> str:
+    """La première phrase d'une docstring, sur une ligne : ce que `socle
+    checks` montre d'un contrôle, et la clé de sa traduction (ADR-0028)."""
+    paragraphe = " ".join(l.strip() for l in (doc or "").strip().split("\n\n")[0].splitlines())
+    m = re.match(r".+?[.!?](?=\s|$)", paragraphe)
+    return m.group(0) if m else paragraphe
 
 
 def controle(id_: str, etages=ETAGES, base=False, lent=False):
@@ -205,13 +215,13 @@ def executer(ctx: Contexte, ids: list[str] | None = None):
     for c in selectionner(ctx.etage, ids, ctx.rapide):
         rapport.execute(c.id)
         if c.base and not ctx.base:
-            rapport.indisponible(c.id, "aucune révision de base : contrôle non exécuté")
+            rapport.indisponible(c.id, trad("aucune révision de base : contrôle non exécuté"))
             continue
         debut = len(rapport.constats)
         try:
             c.fonction(ctx, rapport)
         except Exception as e:  # un contrôle en panne échoue, il ne se tait pas
-            rapport.erreur(c.id, f"le contrôle a planté : {type(e).__name__}: {e}")
+            rapport.erreur(c.id, trad("le contrôle a planté : {erreur}", erreur=f"{type(e).__name__}: {e}"))
         if c.id in adoption:
             for constat in rapport.constats[debut:]:
                 if constat.gravite == ERREUR:
@@ -222,6 +232,6 @@ def executer(ctx: Contexte, ids: list[str] | None = None):
     if ctx.etage == "ci" and ctx.projet.pol("private", "mode"):
         for constat in rapport.constats:
             if constat.chemin and memoire.est_prive(constat.chemin):
-                constat.message = "constat masqué : zone privée (relancer les contrôles là où elle se lit)"
+                constat.message = trad("constat masqué : zone privée (relancer les contrôles là où elle se lit)")
                 constat.chemin, constat.ligne = ctx.projet.chemins.prive + "/…", None
     return rapport

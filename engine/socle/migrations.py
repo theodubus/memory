@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Callable
 
 from socle import config, utils as outils
+from socle.messages import trad
 
 # Un chemin du format 1 dans un texte : la mémoire, ou un fichier de `.socle/`
 # renommé. Ce qui suit le chemin (guillemet, espace, parenthèse…) le termine.
@@ -49,8 +50,8 @@ def _vers_format_2(cible: Path) -> list[str]:
         if not a.exists() and not a.is_symlink():
             return
         if b.exists():
-            raise RuntimeError(f"migration arrêtée : {vers} existe déjà, {de} n'y est pas déplacé — "
-                               "fusionner les deux à la main, puis relancer")
+            raise RuntimeError(trad("migration arrêtée : {vers} existe déjà, {de} n'y est pas déplacé — "
+                                    "fusionner les deux à la main, puis relancer", vers=vers, de=de))
         b.parent.mkdir(parents=True, exist_ok=True)
         if de in suivis:
             outils.git(cible, "mv", de, vers)
@@ -92,8 +93,8 @@ def _vers_format_2(cible: Path) -> list[str]:
                     if neuf != rel:
                         (prive_2 / neuf).parent.mkdir(parents=True, exist_ok=True)
                         outils.git(prive_2, "mv", "-k", rel, neuf)
-            res.append("le dépôt privé, cloné dans memory/private/ : ses fichiers sont renommés, à commiter "
-                       "dans le dépôt privé, puis `socle private lock`")
+            res.append(trad("le dépôt privé, cloné dans memory/private/ : ses fichiers sont renommés, à "
+                            "commiter dans le dépôt privé, puis `socle private lock`"))
         for dossier, sous, noms in os.walk(memoire_1):
             for n in noms:
                 rel = str((Path(dossier) / n).relative_to(cible)).replace(os.sep, "/")
@@ -102,7 +103,8 @@ def _vers_format_2(cible: Path) -> list[str]:
         # une perte, pas un reste.
         restes = [str(Path(d, n).relative_to(cible)) for d, _, noms in os.walk(memoire_1) for n in noms]
         if restes:
-            raise RuntimeError("migration arrêtée : des fichiers restent dans memoire/ — " + ", ".join(restes[:5]))
+            raise RuntimeError(trad("migration arrêtée : des fichiers restent dans memoire/ — {restes}",
+                                    restes=", ".join(restes[:5])))
         shutil.rmtree(memoire_1)
         res.append("memoire/ → memory/ (canonical.md, active.md, requests/, private/, *.answer.toml)")
 
@@ -124,7 +126,8 @@ def _vers_format_2(cible: Path) -> list[str]:
             p.write_text(apres, encoding="utf-8")
             reecrits.append(f)
     if reecrits:
-        res.append(f"chemins traduits dans {len(reecrits)} fichier(s) : {', '.join(reecrits[:8])}"
+        res.append(trad("chemins traduits dans {n} fichier(s) : {liste}",
+                        n=len(reecrits), liste=', '.join(reecrits[:8]))
                    + (" …" if len(reecrits) > 8 else ""))
     config.oublier_formats()
     return res
@@ -154,7 +157,8 @@ def _vers_format_3(cible: Path) -> list[str]:
             continue
         texte = p.read_text(encoding="utf-8")
         if not memoire.lisible(texte):
-            raise RuntimeError(f"migration arrêtée : {unique} est chiffré ici ; le déchiffrer, puis relancer")
+            raise RuntimeError(trad("migration arrêtée : {unique} est chiffré ici ; le déchiffrer, puis "
+                                    "relancer", unique=unique))
         f = memoire.analyser(unique, texte)
         entete = texte.splitlines()[0] if memoire.ENTETE_FICHIER.search(texte.splitlines()[0] if texte else "") \
             else "<!-- socle: couche=backlog zone=publique -->"
@@ -168,7 +172,8 @@ def _vers_format_3(cible: Path) -> list[str]:
             outils.git(cible, "add", "--", dossier)
         else:
             p.unlink()
-        res.append(f"{unique} → {dossier}/ : {len(sujets)} sujet(s), un fichier chacun")
+        res.append(trad("{unique} → {dossier}/ : {n} sujet(s), un fichier chacun",
+                        unique=unique, dossier=dossier, n=len(sujets)))
     gf = cible / f2.garde_fous
     if gf.is_file():
         texte = gf.read_text(encoding="utf-8")
@@ -176,7 +181,7 @@ def _vers_format_3(cible: Path) -> list[str]:
                       f'"{f3.backlog}/*.md" = {{ max_bytes = {BUDGET_SUJET} }}', texte)
         if neuf != texte:
             gf.write_text(neuf, encoding="utf-8")
-            res.append(f"plafond du backlog : {BUDGET_SUJET} octets par sujet")
+            res.append(trad("plafond du backlog : {budget} octets par sujet", budget=BUDGET_SUJET))
     config.oublier_formats()
     return res
 
@@ -193,6 +198,8 @@ def migrer(cible: Path, depuis: int, jusqua: int | None = None) -> list[str]:
     for v in range(depuis, jusqua):
         f = MIGRATIONS.get(v)
         if f is None:
-            raise RuntimeError(f"aucune migration du format {v} au format {v + 1} : mise à jour arrêtée")
-        res += [f"format {v} → {v + 1} : {ligne}" for ligne in f(cible)] or [f"format {v} → {v + 1}"]
+            raise RuntimeError(trad("aucune migration du format {avant} au format {apres} : mise à jour arrêtée",
+                                    avant=v, apres=v + 1))
+        res += [trad("format {avant} → {apres} : {ligne}", avant=v, apres=v + 1, ligne=ligne)
+                for ligne in f(cible)] or [trad("format {avant} → {apres}", avant=v, apres=v + 1)]
     return res

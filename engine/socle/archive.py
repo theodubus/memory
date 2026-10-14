@@ -7,6 +7,7 @@ import re
 from datetime import date
 
 from socle import config, language as langue, memory as memoire
+from socle.messages import trad
 
 TITRE = re.compile(r"^#{1,5} ")
 
@@ -15,17 +16,17 @@ def archiver_backlog(projet: config.Projet) -> int:
     racine = projet.racine
     ch = config.chemins(racine)
     if ch.backlog_en_dossier:
-        print("format 3 : un sujet clos reste dans son fichier, rien ne s'archive (ADR-0025)")
+        print(trad("format 3 : un sujet clos reste dans son fichier, rien ne s'archive (ADR-0025)"))
         return 0
     chemin = racine / ch.backlog
     if not chemin.is_file():
-        print("pas de backlog")
+        print(trad("pas de backlog"))
         return 0
     texte = chemin.read_text(encoding="utf-8")
     f = memoire.analyser(ch.backlog, texte)
     clos = [e for e in f.entrees if e.type == "B" and e.statut in memoire.BACKLOG_CLOS and e.refs("ref")]
     if not clos:
-        print("aucun sujet clos à archiver")
+        print(trad("aucun sujet clos à archiver"))
         return 0
     jour = date.today().isoformat()
     lg = langue.du_projet(projet)
@@ -51,7 +52,8 @@ def archiver_backlog(projet: config.Projet) -> int:
         journal.write_text(f"{langue.entete_fichier('journal', 'publique', lg)}\n"
                            f"# {langue.mot(langue.TEXTES, 'titre-journal', lg)} — {jour[:7]}\n", encoding="utf-8")
     journal.write_text(journal.read_text(encoding="utf-8").rstrip("\n") + "\n" + entree, encoding="utf-8")
-    print(f"{len(clos)} sujet(s) archivé(s) dans {ident} ({journal.relative_to(racine)})")
+    print(trad("{n} sujet(s) archivé(s) dans {ident} ({journal})",
+               n=len(clos), ident=ident, journal=journal.relative_to(racine)))
     return 0
 
 

@@ -26,6 +26,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 from socle import config, language as langue, utils as outils, tests_reader as tests_lecture
+from socle.messages import trad
 from socle.context import controle
 
 CAPACITES = ("format", "lint", "build", "tests", "mutation", "coverage", "regression")
@@ -62,17 +63,21 @@ def capacites(ctx, r):
     """Aucune capacité n'est omise en silence : déclarée, ou absente avec sa
     raison et son contrôle de remplacement."""
     if not ctx.projet.adaptateur:
-        r.erreur("adaptateur.capacites", f"aucun adaptateur (`{ctx.projet.chemins.adaptateur}`)")
+        r.erreur("adaptateur.capacites", trad("aucun adaptateur (`{adaptateur}`)",
+                                              adaptateur=ctx.projet.chemins.adaptateur))
         return
     caps = ctx.projet.adaptateur.get("capabilities", {})
     for nom in CAPACITES:
         c = caps.get(nom)
         if c is None:
-            r.erreur("adaptateur.capacites", f"capacité « {nom} » non déclarée : une commande, ou `absent` + `replacement`", ctx.projet.chemins.adaptateur)
+            r.erreur("adaptateur.capacites", trad("capacité « {nom} » non déclarée : une commande, ou `absent` "
+                                                  "+ `replacement`", nom=nom), ctx.projet.chemins.adaptateur)
         elif "command" not in c and not ("absent" in c and "replacement" in c):
-            r.erreur("adaptateur.capacites", f"capacité « {nom} » : ni `command`, ni `absent` avec `replacement`", ctx.projet.chemins.adaptateur)
+            r.erreur("adaptateur.capacites", trad("capacité « {nom} » : ni `command`, ni `absent` avec "
+                                                  "`replacement`", nom=nom), ctx.projet.chemins.adaptateur)
     if cfg_tests(ctx.projet) is None:
-        r.erreur("adaptateur.capacites", "section `[tests]` sans `function` : les tests creux ne peuvent pas être détectés", ctx.projet.chemins.adaptateur)
+        r.erreur("adaptateur.capacites", trad("section `[tests]` sans `function` : les tests creux ne peuvent "
+                                              "pas être détectés"), ctx.projet.chemins.adaptateur)
 
 
 @controle("tests.creux")
@@ -81,7 +86,7 @@ def creux(ctx, r):
     désactivé sans raison écrite. Sur le diff aux étages agent et git ; partout en CI."""
     cfg = cfg_tests(ctx.projet)
     if cfg is None:
-        r.indisponible("tests.creux", "adaptateur sans `[tests]` : détection impossible")
+        r.indisponible("tests.creux", trad("adaptateur sans `[tests]` : détection impossible"))
         return
     tous = fichiers_tests(ctx, ctx.fichiers)
     cibles = tous if ctx.etage == "ci" or not ctx.base else fichiers_tests(ctx, ctx.changes)
@@ -119,17 +124,18 @@ def creux(ctx, r):
         marques = [*f.attributs, f.entete, *f.lignes_corps]
         desactive = ignore and any(ignore.search(a) for a in [*f.attributs, f.entete, *corps_nu])
         if desactive and not (raison and any(raison.search(a) for a in marques)):
-            r.erreur("tests.creux", f"test `{f.nom}` désactivé sans raison écrite", f.fichier, f.ligne)
+            r.erreur("tests.creux", trad("test `{nom}` désactivé sans raison écrite", nom=f.nom), f.fichier, f.ligne)
         if not tests_lecture.affirme(f, assertion, aides, cfg):
-            r.erreur("tests.creux", f"test `{f.nom}` sans assertion : il passe sans rien mesurer", f.fichier, f.ligne)
+            r.erreur("tests.creux", trad("test `{nom}` sans assertion : il passe sans rien mesurer", nom=f.nom), f.fichier, f.ligne)
         for k, ligne in enumerate(f.lignes_corps):
             precedente = f.lignes_corps[k - 1] if k else ""
             if VOULU.search(ligne) or VOULU.search(precedente):
                 continue  # une tautologie voulue, raison écrite (un test de déterminisme)
             for t in tautos:
                 if t.search(ligne):
-                    r.erreur("tests.creux", f"assertion tautologique dans `{f.nom}` : « {ligne.strip()} » — "
-                             "si elle est voulue (déterminisme), l'écrire : commentaire `socle: voulu — <raison>`",
+                    r.erreur("tests.creux", trad("assertion tautologique dans `{nom}` : « {ligne} » — si elle "
+                                                 "est voulue (déterminisme), l'écrire : commentaire `socle: "
+                                                 "voulu — <raison>`", nom=f.nom, ligne=ligne.strip()),
                              f.fichier, f.ligne + k + 1)
     # Un groupe entier se désactive hors de tout test : une classe sous
     # `@unittest.skip`, un `describe.skip`, un `@Disabled` de classe, un
@@ -146,7 +152,8 @@ def creux(ctx, r):
                     or any(d <= i < e for d, e in dedans):
                 continue
             if not (raison and raison.search(ligne)):
-                r.erreur("tests.creux", f"groupe de tests désactivé sans raison écrite : « {ligne.strip()[:80]} »",
+                r.erreur("tests.creux", trad("groupe de tests désactivé sans raison écrite : « {ligne} »",
+                                             ligne=ligne.strip()[:80]),
                          chemin, i + 1)
 
 
@@ -164,10 +171,10 @@ def _justifie(ctx, nom: str) -> str | None:
     l'autorise pas à changer le test."""
     for d in ctx.validations:
         if _nomme(d.texte, nom):
-            return f"validé par {d.id}"
+            return trad("validé par {id}", id=d.id)
     for c in _specs_nommant(ctx, nom):
         if _ecrite_par_l_humain(ctx, c, nom):
-            return f"spécification changée par l'humain : {c}"
+            return trad("spécification changée par l'humain : {chemin}", chemin=c)
     return None
 
 
@@ -214,7 +221,7 @@ def attendus(ctx, r):
     l'humain (politique, point 2)."""
     cfg = cfg_tests(ctx.projet)
     if cfg is None:
-        r.indisponible("tests.attendus", "adaptateur sans `[tests]`")
+        r.indisponible("tests.attendus", trad("adaptateur sans `[tests]`"))
         return
     # Les lignes qui portent une valeur attendue : les assertions, et ce que
     # l'adaptateur y ajoute (`expected` : en Go, la condition `if got != 4`).
@@ -252,8 +259,9 @@ def attendus(ctx, r):
         if pourquoi:
             r.avertir("tests.attendus", f"{quoi} ({pourquoi})", fichier, ligne)
         elif attente:
-            r.avertir("tests.attendus", f"{quoi}, en attente de {attente} : le tour peut finir, le commit et la CI "
-                      "attendent la réponse de l'humain", fichier, ligne)
+            r.avertir("tests.attendus", trad("{quoi}, en attente de {attente} : le tour peut finir, le commit "
+                                             "et la CI attendent la réponse de l'humain",
+                                             quoi=quoi, attente=attente), fichier, ligne)
         else:
             r.erreur("tests.attendus", faute + _note_agent(ctx, nom), fichier, ligne)
 
@@ -266,15 +274,16 @@ def attendus(ctx, r):
         if b is None:
             if re.sub(r"\s+", " ", a.corps) in par_corps:
                 continue  # déplacé tel quel
-            signaler(a.nom, a.fichier, a.ligne, f"test `{a.nom}` supprimé",
-                     f"test `{a.nom}` supprimé sans validation humaine ni changement de spécification qui le nomme")
+            signaler(a.nom, a.fichier, a.ligne, trad("test `{nom}` supprimé", nom=a.nom),
+                     trad("test `{nom}` supprimé sans validation humaine ni changement de spécification qui le "
+                          "nomme", nom=a.nom))
             continue
         disparues = valeurs(a) - valeurs(b)
         if disparues:
             exemple = tests_lecture.enonces(a.lignes_corps, assertion, cfg)[next(iter(disparues))][0]
-            signaler(a.nom, b.fichier, b.ligne, f"assertion changée dans `{a.nom}`",
-                     f"assertion changée ou retirée dans `{a.nom}` : « {exemple} » — valeur attendue modifiée sans "
-                     "spécification ni validation humaine")
+            signaler(a.nom, b.fichier, b.ligne, trad("assertion changée dans `{nom}`", nom=a.nom),
+                     trad("assertion changée ou retirée dans `{nom}` : « {exemple} » — valeur attendue "
+                          "modifiée sans spécification ni validation humaine", nom=a.nom, exemple=exemple))
             continue
         # Une valeur attendue vit aussi hors de la ligne d'assertion : une
         # variable, une table, un paramètre. Rien ne la distingue d'une
@@ -285,10 +294,12 @@ def attendus(ctx, r):
     _attendus_hors_tests(ctx, cfg, avant_fichiers, [b for _, b in paires if b is not None], hors)
     for fichier, liste in sorted(hors.items()):
         noms = sorted({n for n, _ in liste})
-        r.avertir("tests.attendus", f"valeurs changées hors des assertions dans {len(noms)} test(s) — "
-                  f"{', '.join(f'`{n}`' for n in noms[:5])}{' …' if len(noms) > 5 else ''} (« {liste[0][1][:40]} ») : "
-                  "si l'une est une valeur attendue (une variable, une table, un paramètre, une constante), "
-                  "la changer exige une validation humaine (politique, point 2)", fichier)
+        r.avertir("tests.attendus", trad(
+            "valeurs changées hors des assertions dans {n} test(s) — {tests} (« {valeur} ») : si l'une est une "
+            "valeur attendue (une variable, une table, un paramètre, une constante), la changer exige une "
+            "validation humaine (politique, point 2)", n=len(noms),
+            tests=", ".join(f"`{n}`" for n in noms[:5]) + (" …" if len(noms) > 5 else ""), valeur=liste[0][1][:40]),
+            fichier)
 
 
 def _attendus_hors_tests(ctx, cfg, chemins, apres, hors):
@@ -337,8 +348,9 @@ def _note_agent(ctx, nom: str) -> str:
     specs = _specs_nommant(ctx, nom)
     if not specs:
         return ""
-    return (f" ; la spécification {specs[0]} le nomme, mais elle est écrite par l'agent : elle ne suffit pas "
-            "(politique, point 2). Poser une demande à l'humain, ou qu'il change lui-même la spécification")
+    return (trad(" ; la spécification {specs} le nomme, mais elle est écrite par l'agent : elle ne suffit pas "
+                 "(politique, point 2). Poser une demande à l'humain, ou qu'il change lui-même la spécification",
+                 specs=specs[0]))
 
 
 # `Dispense-test: f, g — raison` : les fonctions nommées, puis pourquoi
@@ -373,8 +385,9 @@ def dispenses_tests(ctx, r) -> set[str]:
         for v in langue.trailers(c["message"]).get("dispense-test", []):
             m = DISPENSE_TEST.match(v.strip())
             if not m:
-                r.erreur("tests.code-teste", f"dispense illisible dans le commit {c['sha'][:7]} : « {v.strip()} » — "
-                         "forme attendue : `Dispense-test: f, g — <raison d'au moins dix caractères>`")
+                r.erreur("tests.code-teste", trad("dispense illisible dans le commit {sha} : « {dispense} » — forme "
+                                                  "attendue : `Dispense-test: f, g — <raison d'au moins dix "
+                                                  "caractères>`", sha=c['sha'][:7], dispense=v.strip()))
                 continue
             noms |= {n.strip() for n in m["noms"].split(",")}
     return noms
@@ -400,7 +413,7 @@ def code_teste(ctx, r):
     donc pas la dispense qu'il porte."""
     cfg = cfg_tests(ctx.projet)
     if cfg is None:
-        r.indisponible("tests.code-teste", "adaptateur sans `[tests]` : fonctions illisibles")
+        r.indisponible("tests.code-teste", trad("adaptateur sans `[tests]` : fonctions illisibles"))
         return
     chemins, exclus, prive = config_code(ctx.projet)
     prive_re = re.compile(prive) if prive else None
@@ -438,10 +451,12 @@ def code_teste(ctx, r):
                 continue
             if f.nom in dispenses or re.search(rf"(?<![\w]){re.escape(f.nom)}(?![\w])", nommes):
                 continue
-            quoi = "modifiée" if f.nom in avant else "ajoutée"
-            r.erreur("tests.code-teste", f"fonction `{f.nom}` {quoi}, qu'aucun test ne nomme : écrire le test qui "
-                     f"l'appelle, ou la dispenser par un trailer de commit `Dispense-test: {f.nom} — <raison>`",
-                     chemin, f.ligne)
+            texte_ = (trad("fonction `{nom}` modifiée, qu'aucun test ne nomme : écrire le test qui l'appelle, ou la "
+                           "dispenser par un trailer de commit `Dispense-test: {nom} — <raison>`", nom=f.nom)
+                      if f.nom in avant else
+                      trad("fonction `{nom}` ajoutée, qu'aucun test ne nomme : écrire le test qui l'appelle, ou la "
+                           "dispenser par un trailer de commit `Dispense-test: {nom} — <raison>`", nom=f.nom))
+            r.erreur("tests.code-teste", texte_, chemin, f.ligne)
 
 
 def est_correctif(projet, message: str) -> bool:
@@ -460,7 +475,9 @@ def regression(ctx, r):
     if not correctifs:
         return
     if "command" not in cap:
-        r.indisponible("tests.regression", f"capacité absente : {cap.get('absent', 'non déclarée')} — remplacement : {cap.get('replacement', '?')}")
+        r.indisponible("tests.regression", trad("capacité absente : {absent} — remplacement : {remplacement}",
+                                                absent=cap.get("absent", trad("non déclarée")),
+                                                remplacement=cap.get("replacement", "?")))
         return
     motifs = cap.get("test_paths") or (cfg_tests(ctx.projet) or {}).get("paths", [])
     for c in correctifs:
@@ -478,30 +495,34 @@ def regression(ctx, r):
             commande = cap["module_command"].replace("{names}", " ".join(noms)) \
                 if noms and "module_command" in cap else None
         if commande is None:
-            ailleurs = " ; ni test changé dans un module de code" if "module_command" in cap else ""
-            r.erreur("tests.regression", f"correctif sans test de régression : {sha[:10]} « {sujet} » "
-                     f"(aucun fichier de {', '.join(motifs)} ajouté ou modifié{ailleurs})")
+            ailleurs = trad(" ; ni test changé dans un module de code") if "module_command" in cap else ""
+            r.erreur("tests.regression", trad("correctif sans test de régression : {sha} « {sujet} » (aucun "
+                                              "fichier de {liste} ajouté ou modifié{ailleurs})",
+                                              sha=sha[:10], sujet=sujet, liste=', '.join(motifs), ailleurs=ailleurs))
             continue
         sur_parent = _executer_superpose(ctx, parent, fichiers, commande, cap)
         if sur_parent is None:
-            r.erreur("tests.regression", f"{sha[:10]} : impossible de préparer le commit parent")
+            r.erreur("tests.regression", trad("{sha} : impossible de préparer le commit parent", sha=sha[:10]))
             continue
         code_parent, sortie = sur_parent
         if code_parent == 0:
-            r.erreur("tests.regression", f"{sha[:10]} « {sujet} » : son test passe déjà sur le parent — il ne prouve pas le correctif")
+            r.erreur("tests.regression", trad("{sha} « {sujet} » : son test passe déjà sur le parent — il ne "
+                                              "prouve pas le correctif", sha=sha[:10], sujet=sujet))
             continue
         # Un test qui ne se charge pas sur le parent (une compilation cassée,
         # un import manquant) y échoue pour une autre raison que le défaut
         # (relevé de la passe de recul, D).
         chargement = re.search(cap["load_error"], sortie) if cap.get("load_error") else None
         if chargement:
-            r.erreur("tests.regression", f"{sha[:10]} « {sujet} » : son test ne se charge pas sur le parent "
-                     f"(« {chargement.group(0).strip()[:80]} ») : il y échoue pour une autre raison que le défaut. "
-                     "L'écrire contre ce qui existe déjà sur le parent")
+            r.erreur("tests.regression", trad("{sha} « {sujet} » : son test ne se charge pas sur le parent (« "
+                                              "{erreur} ») : il y échoue pour une autre raison que le défaut. "
+                                              "L'écrire contre ce qui existe déjà sur le parent",
+                                              sha=sha[:10], sujet=sujet, erreur=chargement.group(0).strip()[:80]))
             continue
         code = (_executer_superpose(ctx, sha, {}, commande, cap) or (None, ""))[0]
         if code != 0:
-            r.erreur("tests.regression", f"{sha[:10]} « {sujet} » : son test de régression échoue sur le correctif lui-même")
+            r.erreur("tests.regression", trad("{sha} « {sujet} » : son test de régression échoue sur le "
+                                              "correctif lui-même", sha=sha[:10], sujet=sujet))
 
 
 def tests_du_module(ctx, parent: str, sha: str, chemins: list[str]) -> tuple[dict[str, str], list[str]]:
@@ -605,19 +626,21 @@ def couverture_mutation(ctx, r):
     modules = outils.filtrer(ctx.fichiers, cap.get("modules", []), cap.get("modules_exclude", []))
     for m in modules:
         if m not in caps and porte.search(ctx.lire(m) or ""):
-            r.erreur("mutation.couverture", "module hors du cliquet de mutation : l'y poser à mesurer "
-                     f"(`\"{m}\" = {{ pending = true }}` sous `[mutation.caps]` des garde-fous), puis le mesurer "
-                     "par un balayage (`socle mutation-run --record`)", m)
+            r.erreur("mutation.couverture", trad("module hors du cliquet de mutation : l'y poser à mesurer "
+                                                 '(`"{m}" = { pending = true }` sous `[mutation.caps]` des '
+                                                 "garde-fous), puis le mesurer par un balayage (`socle "
+                                                 "mutation-run --record`)", m=m), m)
         elif m in caps and caps[m].get("pending"):
             # À mesurer (B-0034, P1) : un avertissement, jusqu'au premier
             # balayage, qui pose le plafond mesuré.
-            r.avertir("mutation.couverture", "module à mesurer : lancer le balayage de mutation et poser son "
-                      "plafond (`socle mutation-run --record`), ou recopier celui du dernier balayage planifié", m)
+            r.avertir("mutation.couverture", trad("module à mesurer : lancer le balayage de mutation et poser "
+                                                  "son plafond (`socle mutation-run --record`), ou recopier "
+                                                  "celui du dernier balayage planifié"), m)
     for m in caps:
         if m not in ctx.fichiers:
-            r.erreur("mutation.couverture", f"le cliquet nomme `{m}`, qui n'existe pas", ctx.projet.chemins.garde_fous)
+            r.erreur("mutation.couverture", trad("le cliquet nomme `{m}`, qui n'existe pas", m=m), ctx.projet.chemins.garde_fous)
         elif "reason" not in caps[m] and caps[m].get("max", 0) > 0:
-            r.erreur("mutation.couverture", f"plafond non nul sans raison écrite pour `{m}`", ctx.projet.chemins.garde_fous)
+            r.erreur("mutation.couverture", trad("plafond non nul sans raison écrite pour `{m}`", m=m), ctx.projet.chemins.garde_fous)
 
 
 @controle("mutation.vivante", etages=("ci",))

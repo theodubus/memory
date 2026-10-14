@@ -481,4 +481,1236 @@ MESSAGES: dict[str, str] = {
         "ALL PASS",
     "ECHEC — {n} contrôle(s) : {controles}":
         "FAILED — {n} check(s): {controles}",
+    "dispositif qu'aucun document ne nomme : `{nom}` — le nommer, avec ce qu'il fait et pourquoi":
+        "a device no document names: `{nom}` — name it, with what it does and why",
+    "déclaration sans `regex`":
+        "declaration without `regex`",
+    "source absente : {fichier}":
+        "missing source: {fichier}",
+    "la commande source a dépassé son délai : {commande}":
+        "the source command timed out: {commande}",
+    "la commande source a échoué ({code}) : {commande}":
+        "the source command failed ({code}): {commande}",
+    "déclaration sans `file` ni `command`":
+        "declaration without `file` or `command`",
+    "la regex `{regex}` ne trouve rien dans la source":
+        "the regex `{regex}` finds nothing in the source",
+    "valeur déclarée sans `name`":
+        "value declared without `name`",
+    "valeur `{nom}` citée sans source déclarée (`[[values]]`)":
+        "value `{nom}` cited without a declared source (`[[values]]`)",
+    "`{nom}` vaut « {attendu} » à la source, la doc dit « {doc} »":
+        "`{nom}` is “{attendu}” at the source, the doc says “{doc}”",
+    "« {extrait} » ressemble à la valeur `{nom}` sans marqueur : l'encadrer de `<!-- valeur:{nom} -->…<!-- /valeur "
+    "-->`":
+        "“{extrait}” looks like the value `{nom}` without a marker: wrap it in `<!-- valeur:{nom} -->…<!-- /valeur "
+        "-->`",
+    "{n} fichier(s) de code sans doc associée, dispensé : « {dispenses} »":
+        "{n} code file(s) without their associated doc, waived: “{dispenses}”",
+    "code changé sans sa doc associée : {code} → mettre à jour {docs}, ou motiver une dispense par un trailer de "
+    "commit `Dispense-doc: <raison>`, dans le commit qui change ce code":
+        "code changed without its associated doc: {code} → update {docs}, or give a reason for a waiver with a "
+        "commit trailer `Waive-doc: <reason>`, in the commit that changes this code",
+    " ou ":
+        " or ",
+    "paragraphe identique aussi présent en {autres} : garder une source, renvoyer vers elle":
+        "identical paragraph also present in {autres}: keep one source, point to it",
+    "fichier de mémoire requis absent":
+        "required memory file missing",
+    "fichier hors des couches connues de la mémoire":
+        "file outside the known layers of the memory",
+    "en-tête `<!-- socle: couche=… zone=… -->` absent":
+        "header `<!-- socle: layer=… zone=… -->` missing",
+    "couche déclarée « {couche} », l'emplacement impose « {attendue} »":
+        "declared layer “{couche}”, the location requires “{attendue}”",
+    "zone non déclarée (`zone=publique` ou `zone=privee`)":
+        "zone not declared (`zone=public` or `zone=private`)",
+    "zone déclarée « {zone} » dans un emplacement « {zone_lieu} »":
+        "declared zone “{zone}” in a “{zone_lieu}” location",
+    "titre d'entrée illisible : « {titre} » — l'entrée n'est pas lue ; forme attendue : `## J-AAAA-MM-JJ-X — titre`":
+        "unreadable entry title: “{titre}” — the entry is not read; expected form: `## J-YYYY-MM-DD-X — title`",
+    "`{ident}` est défini {n} fois ({lieux})":
+        "`{ident}` is defined {n} times ({lieux})",
+    "`{id}` défini dans le chantier actif, qui est réécrit : un identifiant stable vit dans une couche durable":
+        "`{id}` defined in the active work, which is rewritten: a stable identifier lives in a durable layer",
+    "un fichier de journal se nomme `AAAA-MM.md`, ou `AAAA-MM-N.md` quand le mois continue (N à partir de 2)":
+        "a journal file is named `YYYY-MM.md`, or `YYYY-MM-N.md` when the month continues (N from 2)",
+    "un fichier de {couche} porte exactement une entrée ({n} trouvée(s))":
+        "a {couche} file holds exactly one entry ({n} found)",
+    "le nom du fichier doit commencer par {id}":
+        "the file name must start with {id}",
+    "`{id}` : un identifiant privé commence par P":
+        "`{id}`: a private identifier starts with P",
+    "`{id}` : un identifiant public ne commence pas par P":
+        "`{id}`: a public identifier does not start with P",
+    "`{id}` imbriqué hors d'une archive de journal":
+        "`{id}` nested outside a journal archive",
+    "`{id}` n'a pas sa place dans la couche « {couche} »":
+        "`{id}` does not belong in the “{couche}” layer",
+    "`{id}` est daté hors du mois de son fichier":
+        "`{id}` is dated outside its file's month",
+    "`{id}` : seule une entrée publique se bascule":
+        "`{id}`: only a public entry can be moved to private",
+    "`{id}` basculée garde un titre ou un texte : seuls « {titre} » et « {texte} » restent en public":
+        "`{id}` moved to private keeps a title or a text: only “{titre}” and “{texte}” stay in public",
+    "`{id}` sans `statut` (attendu : {liste})":
+        "`{id}` without `status` (expected: {liste})",
+    "`{id}` : statut « {statut} » inconnu (attendu : {liste})":
+        "`{id}`: unknown status “{statut}” (expected: {liste})",
+    "`{id}` est barré sans être « réfuté »":
+        "`{id}` is struck through without being “refuted”",
+    "`{ident}` ne désigne aucune entrée de la mémoire":
+        "`{ident}` names no entry of the memory",
+    "`{jeton}` : dépôt « {depot} » non déclaré, {n} chemin(s) cité(s) que rien ne vérifie, et aucune adresse du "
+    "projet ne le lie : un lien vers ce dépôt le fait connaître ; sinon ce n'est pas un dépôt, et la forme "
+    "`x:chemin` ne lui convient pas":
+        "`{jeton}`: repository “{depot}” not declared, {n} cited path(s) nothing checks, and no address of the "
+        "project links it: a link to this repository makes it known; otherwise it is not a repository, and the form "
+        "`x:path` does not suit it",
+    "`commit:{cible}` n'est pas un SHA":
+        "`commit:{cible}` is not a SHA",
+    "`commit:{cible}` n'existe pas dans ce dépôt (historique complet ? `fetch-depth: 0`)":
+        "`commit:{cible}` does not exist in this repository (full history? `fetch-depth: 0`)",
+    "`fichier:{cible}` : {chemin} n'existe pas":
+        "`file:{cible}`: {chemin} does not exist",
+    "`cmd:{cible}` : {premier} n'existe pas":
+        "`cmd:{cible}`: {premier} does not exist",
+    "lien mort : {cible}":
+        "dead link: {cible}",
+    "ancre morte : {cible}":
+        "dead anchor: {cible}",
+    "chemin cité inexistant : `{jeton}`":
+        "cited path does not exist: `{jeton}`",
+    "identifiant privé `{ident}` dans un fichier public":
+        "private identifier `{ident}` in a public file",
+    "`{ident}@{h}` ne correspond pas à la version actuelle de {ident} (lue avant un changement, ou inventée) : la "
+    "relire, `python3 .socle/socle show {ident}`, et citer l'empreinte affichée":
+        "`{ident}@{h}` does not match the current version of {ident} (read before a change, or invented): read it "
+        "again, `python3 .socle/socle show {ident}`, and cite the fingerprint shown",
+    "`{index}@{h}` ne correspond à aucune version récente de l'index : le relire, `python3 .socle/socle show --index "
+    "{index}`, et citer l'empreinte affichée":
+        "`{index}@{h}` matches no recent version of the index: read it again, `python3 .socle/socle show --index "
+        "{index}`, and cite the fingerprint shown",
+    "décision nouvelle `{ident}` sans `lu : decisions@…` : consulter l'index des décisions avant d'en ajouter une "
+    "(`socle show --index decisions`)":
+        "new decision `{ident}` without `read : decisions@…`: look at the decision index before adding one (`socle "
+        "show --index decisions`)",
+    "sujet nouveau `{ident}` sans `lu : backlog@…` : consulter le backlog avant d'y ajouter, pour ne pas dupliquer "
+    "(`socle show --index backlog`)":
+        "new topic `{ident}` without `read : backlog@…`: look at the backlog before adding to it, so as not to "
+        "duplicate (`socle show --index backlog`)",
+    "`{ident}` s'appuie sur `{cite}` sans montrer l'avoir lu : citer `{cite}@<empreinte>`, l'empreinte que donne "
+    "`socle show {cite}`":
+        "`{ident}` relies on `{cite}` without showing it was read: cite `{cite}@<fingerprint>`, the fingerprint "
+        "`socle show {cite}` gives",
+    "`{id}` est « mesuré » sans `preuve` (commit:, fichier:, cmd: ou identifiant)":
+        "`{id}` is “measured” without `proof` (commit:, file:, cmd: or identifier)",
+    "`{id}` réfuté : son titre se barre (`~~…~~`), il ne s'efface pas":
+        "`{id}` refuted: its title is struck through (`~~…~~`), it is not deleted",
+    "`{id}` réfuté sans `refutation` qui pointe vers la mesure":
+        "`{id}` refuted without a `refutation` pointing to the measurement",
+    "`{id}` « validé » sans `validation : D-NNNN` — ce statut ne s'écrit que par l'humain, via une demande":
+        "`{id}` “validated” without `validation : D-NNNN` — this status is only written by the human, through a "
+        "request",
+    "`{id}` cite `{demande}`, qui n'a pas de réponse « valider »":
+        "`{id}` cites `{demande}`, which has no “approve” answer",
+    "`{ident}` est pris aussi sur la branche par défaut, depuis que cette branche s'en est séparée, pour « {titre} » "
+    ": à la fusion, il serait défini deux fois. `python3 .socle/socle renumber {ident}` lui donne le prochain libre "
+    "et le reporte":
+        "`{ident}` is also taken on the default branch, since this branch split from it, for “{titre}”: at the "
+        "merge, it would be defined twice. `python3 .socle/socle renumber {ident}` gives it the next free one and "
+        "carries it over",
+    "`{id}` sans `origine` (entrée de journal, commit ou demande)":
+        "`{id}` without `origin` (journal entry, commit or request)",
+    "`{id}` est clos (« {statut} ») sans `ref` vers ce qui l'a clos":
+        "`{id}` is closed (“{statut}”) without a `ref` to what closed it",
+    "{octets} octets pour un budget de {budget} ({motif}) : archiver dans le journal":
+        "{octets} bytes for a budget of {budget} ({motif}): archive into the journal",
+    "{lignes} lignes pour un budget de {budget} ({motif}) : archiver dans le journal":
+        "{lignes} lines for a budget of {budget} ({motif}): archive into the journal",
+    "aucun budget ne couvre ce fichier (`[budgets]` des garde-fous)":
+        "no budget covers this file (`[budgets]` of the guardrails)",
+    "chantier actif inchangé depuis {age} jours (seuil : {jours})":
+        "active work unchanged for {age} days (threshold: {jours})",
+    "{n} fichier(s) de code changé(s) depuis la base et aucun de `{memoire}/` : mettre à jour le chantier actif ou "
+    "le journal avant de conclure":
+        "{n} code file(s) changed since the base and none of `{memoire}/`: update the active work or the journal "
+        "before concluding",
+    "mémoire privée illisible ici : son ajout seul n'est pas vérifié":
+        "private memory unreadable here: its append-only rule is not checked",
+    "réponse humaine modifiée ou supprimée : elle est définitive":
+        "human answer changed or deleted: it is final",
+    "`{ident}` basculée dans la mémoire privée : elle reste telle quelle":
+        "`{ident}` moved to the private memory: it stays as it is",
+    "entrée de journal `{ident}` supprimée (le journal est en ajout seul)":
+        "journal entry `{ident}` deleted (the journal is append-only)",
+    "entrée de journal `{ident}` modifiée (le journal est en ajout seul)":
+        "journal entry `{ident}` changed (the journal is append-only)",
+    "décision `{ident}` supprimée (une décision se remplace, elle ne s'efface pas)":
+        "decision `{ident}` deleted (a decision is superseded, it is not deleted)",
+    "décision `{ident}` réécrite : seul son statut peut changer, une décision nouvelle la remplace":
+        "decision `{ident}` rewritten: only its status can change, a new decision supersedes it",
+    "décision `{ident}` : passage « {statut} » → « {apres} » interdit":
+        "decision `{ident}`: change “{statut}” → “{apres}” forbidden",
+    "décision `{ident}` remplacée sans `remplacée-par : ADR-NNNN`":
+        "decision `{ident}` superseded without `superseded-by : ADR-NNNN`",
+    "fait `{ident}` effacé : un fait se barre (réfuté) ou s'archive dans le journal, jamais ne disparaît":
+        "fact `{ident}` erased: a fact is struck through (refuted) or archived into the journal, it never disappears",
+    "fait `{ident}` modifié sans référence de preuve nouvelle":
+        "fact `{ident}` changed without a new proof reference",
+    "fait `{ident}` réfuté : son texte se garde, barré ; il ne se réécrit pas":
+        "fact `{ident}` refuted: its text is kept, struck through; it is not rewritten",
+    "sujet `{ident}` disparu du backlog sans archive dans le journal":
+        "topic `{ident}` gone from the backlog without an archive in the journal",
+    "sujet `{ident}` archivé sans être clos":
+        "topic `{ident}` archived without being closed",
+    "demande `{ident}` supprimée (la retirer : `retirée : <raison>` dans ses métadonnées)":
+        "request `{ident}` deleted (to withdraw it: `withdrawn : <reason>` in its metadata)",
+    "`{id}` basculée : sa copie privée ne se lit pas ici":
+        "`{id}` moved to private: its private copy cannot be read here",
+    "`{id}` basculée sans copie privée qui la reprenne (`depuis : {id}`) : son contenu serait perdu ; `socle private "
+    "move` fait les deux":
+        "`{id}` moved to private without a private copy that takes it over (`from : {id}`): its content would be "
+        "lost; `socle private move` does both",
+    "`{id}` basculée : sa copie privée n'en reprend ni le titre ni le texte":
+        "`{id}` moved to private: its private copy takes over neither its title nor its text",
+    "réponse sans demande":
+        "answer without a request",
+    "AGENTS.md absent, et CLAUDE.md ne porte pas la section du socle : aucun fichier d'instructions ne fait foi":
+        "AGENTS.md missing, and CLAUDE.md does not carry the socle section: no instructions file is authoritative",
+    "CLAUDE.md doit contenir la seule ligne `@AGENTS.md` (aucune copie à synchroniser)":
+        "CLAUDE.md must contain the single line `@AGENTS.md` (no copy to keep in sync)",
+    "plafond {vb} écrit sans la mesure que pose `mutation-verdict --record`":
+        "cap {vb} written without the measurement `mutation-verdict --record` sets",
+    "clé ajoutée : {vb}":
+        "key added: {vb}",
+    "seuil retiré (valait {va})":
+        "threshold removed (was {va})",
+    "couverture retirée : {retires}":
+        "coverage removed: {retires}",
+    "exclusion ajoutée : {ajoutes}":
+        "exclusion added: {ajoutes}",
+    "changement non classé : {va} → {vb}":
+        "unclassified change: {va} → {vb}",
+    "correspondance code ↔ doc retirée":
+        "code ↔ doc mapping removed",
+    "docs ajoutées à la correspondance : {docs}":
+        "docs added to the mapping: {docs}",
+    "valeur liée retirée":
+        "tied value removed",
+    "source de la valeur changée":
+        "source of the value changed",
+    "assouplissement validé par {id} : {cle} — {pourquoi}":
+        "loosening approved by {id}: {cle} — {pourquoi}",
+    "assouplissement sans validation humaine : {cle} — {pourquoi}. Émettre une demande qui cite `{cle}` ; elle "
+    "couvrira ce changement une fois validée":
+        "loosening without human approval: {cle} — {pourquoi}. Open a request that cites `{cle}`; it will cover this "
+        "change once approved",
+    "installation du socle : {n} fichier(s) protégé(s) posé(s) — la politique par défaut est celle du cadrage":
+        "socle installation: {n} protected file(s) installed — the default policy is the brief's",
+    "déplacé vers `{nouveau}` par la migration du format":
+        "moved to `{nouveau}` by the format migration",
+    "modification validée par {id}":
+        "change approved by {id}",
+    "fichier protégé modifié sans validation humaine. Une demande validée doit citer `{fichier}` et `{cite}`":
+        "protected file changed without human approval. An approved request must cite `{fichier}` and `{cite}`",
+    "socle non installé : `{lock}` absent (commité ? un .gitignore du projet peut l'écarter)":
+        "socle not installed: `{lock}` missing (committed? a .gitignore of the project can exclude it)",
+    "mode amont : ce dépôt fabrique le moteur, son empreinte n'est pas figée":
+        "upstream mode: this repository builds the engine, its fingerprint is not frozen",
+    "moteur introuvable dans {dossier_moteur}":
+        "engine not found in {dossier_moteur}",
+    "moteur altéré : empreinte {calculee}, le verrou attend {attendue}. Relancer l'installeur, jamais réparer à la "
+    "main":
+        "altered engine: fingerprint {calculee}, the lock expects {attendue}. Run the installer again, never repair "
+        "by hand",
+    "`.claude/settings.json` absent : les hooks de Claude Code ne sont pas déclarés":
+        "`.claude/settings.json` missing: Claude Code's hooks are not declared",
+    "JSON illisible : {erreur}":
+        "unreadable JSON: {erreur}",
+    "aucun hook {evt} n'appelle `.socle/socle hook`":
+        "no {evt} hook calls `.socle/socle hook`",
+    "{sha} « {sujet} » : commit d'agent sans trailer `Socle-Hooks` — les hooks git n'ont pas tourné (`git config "
+    "core.hooksPath .socle/git-hooks`)":
+        "{sha} “{sujet}”: agent commit without a `Socle-Hooks` trailer — the git hooks did not run (`git config "
+        "core.hooksPath .socle/git-hooks`)",
+    "{sha} « {sujet} » : aucun PreToolUse n'a tiré pendant la session — les hooks de l'agent n'étaient pas chargés":
+        "{sha} “{sujet}”: no PreToolUse fired during the session — the agent's hooks were not loaded",
+    "{sha} « {sujet} » : aucun PreToolUse n'a tiré depuis le commit précédent — les hooks de l'agent ont cessé "
+    "d'être chargés en cours de session":
+        "{sha} “{sujet}”: no PreToolUse fired since the previous commit — the agent's hooks stopped being loaded "
+        "during the session",
+    "{sha} « {sujet} » : le hook SessionStart n'a jamais tiré pendant la session":
+        "{sha} “{sujet}”: the SessionStart hook never fired during the session",
+    "aucun adaptateur (`{adaptateur}`)":
+        "no adapter (`{adaptateur}`)",
+    "capacité « {nom} » non déclarée : une commande, ou `absent` + `replacement`":
+        "capability “{nom}” not declared: a command, or `absent` + `replacement`",
+    "capacité « {nom} » : ni `command`, ni `absent` avec `replacement`":
+        "capability “{nom}”: neither `command`, nor `absent` with `replacement`",
+    "section `[tests]` sans `function` : les tests creux ne peuvent pas être détectés":
+        "section `[tests]` without `function`: hollow tests cannot be detected",
+    "adaptateur sans `[tests]` : détection impossible":
+        "adapter without `[tests]`: detection impossible",
+    "test `{nom}` désactivé sans raison écrite":
+        "test `{nom}` disabled without a written reason",
+    "test `{nom}` sans assertion : il passe sans rien mesurer":
+        "test `{nom}` without an assertion: it passes without measuring anything",
+    "assertion tautologique dans `{nom}` : « {ligne} » — si elle est voulue (déterminisme), l'écrire : commentaire "
+    "`socle: voulu — <raison>`":
+        "tautological assertion in `{nom}`: “{ligne}” — if it is intended (determinism), say so: a comment `socle: "
+        "intended — <reason>`",
+    "groupe de tests désactivé sans raison écrite : « {ligne} »":
+        "group of tests disabled without a written reason: “{ligne}”",
+    "validé par {id}":
+        "approved by {id}",
+    "spécification changée par l'humain : {chemin}":
+        "specification changed by the human: {chemin}",
+    "adaptateur sans `[tests]`":
+        "adapter without `[tests]`",
+    "{quoi}, en attente de {attente} : le tour peut finir, le commit et la CI attendent la réponse de l'humain":
+        "{quoi}, waiting for {attente}: the turn can end, the commit and the CI wait for the human's answer",
+    "test `{nom}` supprimé":
+        "test `{nom}` deleted",
+    "test `{nom}` supprimé sans validation humaine ni changement de spécification qui le nomme":
+        "test `{nom}` deleted without human approval or a change of specification that names it",
+    "assertion changée dans `{nom}`":
+        "assertion changed in `{nom}`",
+    "assertion changée ou retirée dans `{nom}` : « {exemple} » — valeur attendue modifiée sans spécification ni "
+    "validation humaine":
+        "assertion changed or removed in `{nom}`: “{exemple}” — expected value changed without specification or "
+        "human approval",
+    "valeurs changées hors des assertions dans {n} test(s) — {tests} (« {valeur} ») : si l'une est une valeur "
+    "attendue (une variable, une table, un paramètre, une constante), la changer exige une validation humaine "
+    "(politique, point 2)":
+        "values changed outside the assertions in {n} test(s) — {tests} (“{valeur}”): if one is an expected value (a "
+        "variable, a table, a parameter, a constant), changing it requires human approval (policy, rule 2)",
+    " ; la spécification {specs} le nomme, mais elle est écrite par l'agent : elle ne suffit pas (politique, point "
+    "2). Poser une demande à l'humain, ou qu'il change lui-même la spécification":
+        "; the specification {specs} names it, but it is written by the agent: it is not enough (policy, rule 2). "
+        "Open a request to the human, or let them change the specification themselves",
+    "dispense illisible dans le commit {sha} : « {dispense} » — forme attendue : `Dispense-test: f, g — <raison d'au "
+    "moins dix caractères>`":
+        "unreadable waiver in commit {sha}: “{dispense}” — expected form: `Waive-test: f, g — <reason of at least "
+        "ten characters>`",
+    "adaptateur sans `[tests]` : fonctions illisibles":
+        "adapter without `[tests]`: functions unreadable",
+    "fonction `{nom}` modifiée, qu'aucun test ne nomme : écrire le test qui l'appelle, ou la dispenser par un "
+    "trailer de commit `Dispense-test: {nom} — <raison>`":
+        "function `{nom}` changed, which no test names: write the test that calls it, or waive it with a commit "
+        "trailer `Waive-test: {nom} — <reason>`",
+    "fonction `{nom}` ajoutée, qu'aucun test ne nomme : écrire le test qui l'appelle, ou la dispenser par un trailer "
+    "de commit `Dispense-test: {nom} — <raison>`":
+        "function `{nom}` added, which no test names: write the test that calls it, or waive it with a commit "
+        "trailer `Waive-test: {nom} — <reason>`",
+    "capacité absente : {absent} — remplacement : {remplacement}":
+        "capability absent: {absent} — replacement: {remplacement}",
+    "non déclarée":
+        "not declared",
+    " ; ni test changé dans un module de code":
+        "; nor a test changed in a code module",
+    "correctif sans test de régression : {sha} « {sujet} » (aucun fichier de {liste} ajouté ou modifié{ailleurs})":
+        "fix without a regression test: {sha} “{sujet}” (no file of {liste} added or changed{ailleurs})",
+    "{sha} : impossible de préparer le commit parent":
+        "{sha}: cannot prepare the parent commit",
+    "{sha} « {sujet} » : son test passe déjà sur le parent — il ne prouve pas le correctif":
+        "{sha} “{sujet}”: its test already passes on the parent — it does not prove the fix",
+    "{sha} « {sujet} » : son test ne se charge pas sur le parent (« {erreur} ») : il y échoue pour une autre raison "
+    "que le défaut. L'écrire contre ce qui existe déjà sur le parent":
+        "{sha} “{sujet}”: its test does not load on the parent (“{erreur}”): it fails there for another reason than "
+        "the defect. Write it against what already exists on the parent",
+    "{sha} « {sujet} » : son test de régression échoue sur le correctif lui-même":
+        "{sha} “{sujet}”: its regression test fails on the fix itself",
+    "module hors du cliquet de mutation : l'y poser à mesurer (`\"{m}\" = { pending = true }` sous `[mutation.caps]` "
+    "des garde-fous), puis le mesurer par un balayage (`socle mutation-run --record`)":
+        "module outside the mutation ratchet: add it to measure (`\"{m}\" = { pending = true }` under "
+        "`[mutation.caps]` of the guardrails), then measure it with a sweep (`socle mutation-run --record`)",
+    "module à mesurer : lancer le balayage de mutation et poser son plafond (`socle mutation-run --record`), ou "
+    "recopier celui du dernier balayage planifié":
+        "module to measure: run the mutation sweep and set its cap (`socle mutation-run --record`), or copy the one "
+        "of the last scheduled sweep",
+    "le cliquet nomme `{m}`, qui n'existe pas":
+        "the ratchet names `{m}`, which does not exist",
+    "plafond non nul sans raison écrite pour `{m}`":
+        "non-zero cap without a written reason for `{m}`",
+    "Ajouter un terme à la liste privée est libre ; en retirer un exige une demande validée qui cite la liste et son "
+    "empreinte nouvelle (D-0007).":
+        "Adding a term to the private list is free; removing one requires an approved request that cites the list "
+        "and its new fingerprint (D-0007).",
+    "Aucun identifiant privé dans un fichier public : le public ne référence jamais le privé.":
+        "No private identifier in a public file: the public never references the private.",
+    "Aucun terme de la liste privée dans un fichier public modifié, et ni terme ni identifiant privé dans un message "
+    "de commit.":
+        "No term of the private list in a changed public file, and neither a term nor a private identifier in a "
+        "commit message.",
+    "Aucune capacité n'est omise en silence : déclarée, ou absente avec sa raison et son contrôle de remplacement.":
+        "No capability is left out silently: declared, or absent with its reason and its replacement check.",
+    "Chaque commit d'agent porte la trace des hooks qui ont tiré pendant sa session (`Socle-Hooks:`, ajouté par le "
+    "hook git).":
+        "Each agent commit carries the trace of the hooks that fired during its session (`Socle-Hooks:`, added by "
+        "the git hook).",
+    "Chaque couche et le fichier d'instructions ont un plafond de taille.":
+        "Each layer and the instructions file have a size cap.",
+    "Chaque sujet a une origine ; un sujet clos a une référence.":
+        "Each topic has an origin; a closed topic has a reference.",
+    "Du code a changé et la mémoire non : la fin de tour attend sa mise à jour.":
+        "Code changed and the memory did not: the end of turn waits for its update.",
+    "Durcir un garde-fou est libre ; l'assouplir exige une demande validée qui cite la clé (politique, point 1).":
+        "Tightening a guardrail is free; loosening it requires an approved request that cites the key (policy, rule "
+        "1).",
+    "En-têtes, couches, identifiants, statuts : la mémoire se lit par script.":
+        "Headers, layers, identifiers, statuses: the memory is read by script.",
+    "Journal et décisions en ajout seul ; un fait ne disparaît pas, ne change qu'avec une nouvelle preuve, et se "
+    "barre quand il est réfuté.":
+        "Journal and decisions are append-only; a fact does not disappear, only changes with a new proof, and is "
+        "struck through when refuted.",
+    "La mémoire privée configurée est accessible, sinon c'est dit ; des fichiers privés sans mode configuré sont "
+    "publics, donc refusés.":
+        "The configured private memory is accessible, otherwise it is said; private files without a configured mode "
+        "are public, hence refused.",
+    "Le balayage de mutation planifié tourne encore.":
+        "The scheduled mutation sweep still runs.",
+    "Le moteur du projet est celui que l'installeur a posé.":
+        "The project's engine is the one the installer laid down.",
+    "Les hooks de l'agent sont déclarés et appellent le moteur.":
+        "The agent's hooks are declared and call the engine.",
+    "Mode chiffré : aucun fichier privé n'est commité en clair, et un filtre de chiffrement couvre la zone privée.":
+        "Encrypted mode: no private file is committed in clear, and an encryption filter covers the private zone.",
+    "Mode compagnon : rien de privé n'est commité dans le dépôt public, et le verrou désigne le commit du dépôt "
+    "privé qui va avec ce commit.":
+        "Companion mode: nothing private is committed in the public repository, and the lock names the private "
+        "repository's commit that goes with this commit.",
+    "Pas de test sans assertion, d'assertion tautologique, ni de test désactivé sans raison écrite.":
+        "No test without an assertion, no tautological assertion, no test disabled without a written reason.",
+    "Si du code change, la doc qui lui est associée change aussi — ou une dispense écrite et motivée l'accompagne "
+    "(`Dispense-doc: <raison>`), qui ne vaut que pour le code de son propre commit.":
+        "If code changes, its associated doc changes too — or a written, reasoned waiver comes with it (`Waive-doc: "
+        "<reason>`), which only covers the code of its own commit.",
+    "Supprimer un test ou changer une valeur attendue exige une validation humaine, ou un changement de "
+    "spécification qui le nomme, fait par l'humain (politique, point 2).":
+        "Deleting a test or changing an expected value requires human approval, or a change of specification that "
+        "names it, made by the human (policy, rule 2).",
+    "Tout correctif livre un test qui échoue sur le commit parent et passe sur le correctif, vérifié en l'exécutant.":
+        "Every fix delivers a test that fails on the parent commit and passes on the fix, checked by running it.",
+    "Tout dispositif du dépôt est nommé dans la documentation.":
+        "Every device of the repository is named in the documentation.",
+    "Tout identifiant, commit, fichier, lien ou chemin cité existe.":
+        "Every cited identifier, commit, file, link or path exists.",
+    "Tout module qui porte du code est dans le cliquet de mutation, et le cliquet ne nomme que des modules qui "
+    "existent.":
+        "Every module that holds code is in the mutation ratchet, and the ratchet only names modules that exist.",
+    "Toute demande en attente est autonome : huit champs, aucun identifiant nu.":
+        "Every pending request stands on its own: eight fields, no bare identifier.",
+    "Toute valeur citée dans la doc est liée à sa source, et les deux concordent.":
+        "Every value cited in the doc is tied to its source, and both agree.",
+    "Un chantier actif qui ne bouge plus est signalé — un avertissement, pas un échec.":
+        "An active work that no longer moves is reported — a warning, not a failure.",
+    "Un fait mesuré pointe vers sa preuve ; un fait réfuté garde sa trace ; un fait validé cite la demande que "
+    "l'humain a validée.":
+        "A measured fact points to its proof; a refuted fact keeps its trace; a validated fact cites the request the "
+        "human approved.",
+    "Un fichier protégé ne change qu'avec une demande validée qui cite son empreinte nouvelle (hooks, CI, politique, "
+    "adaptateur, moteur).":
+        "A protected file only changes with an approved request that cites its new fingerprint (hooks, CI, policy, "
+        "adapter, engine).",
+    "Un identifiant que la branche définit et que la branche par défaut a pris aussi depuis leur divergence, pour "
+    "une autre entrée, serait défini deux fois à la fusion (ADR-0026) : dit avant, avec la commande qui répare.":
+        "An identifier the branch defines and the default branch also took since they diverged, for another entry, "
+        "would be defined twice at the merge (ADR-0026): said beforehand, with the command that repairs it.",
+    "Un même contenu dans deux fichiers est une copie qui divergera : refusé.":
+        "The same content in two files is a copy that will diverge: refused.",
+    "Un seul fichier d'instructions fait foi : `AGENTS.md`, que `CLAUDE.md` importe en une ligne ; ou, sans "
+    "`AGENTS.md`, `CLAUDE.md` qui porte la section du socle, quand l'installeur l'a gardé parce que le projet le "
+    "nomme (B-0049).":
+        "A single instructions file is authoritative: `AGENTS.md`, which `CLAUDE.md` imports in one line; or, "
+        "without `AGENTS.md`, `CLAUDE.md` carrying the socle section, when the installer kept it because the project "
+        "names it (B-0049).",
+    "Une citation `ID@empreinte` ou `index@empreinte` ajoutée désigne une version que l'agent a pu lire "
+    "(`socle.readings`, ADR-0023) ; une décision, une demande ou un sujet de backlog nouveaux prouvent ce qu'ils ont "
+    "lu avant d'être écrits.":
+        "A citation `ID@fingerprint` or `index@fingerprint` that is added names a version the agent could read "
+        "(`socle.readings`, ADR-0023); a new decision, request or backlog topic proves what it read before being "
+        "written.",
+    "Une fonction publique ajoutée ou modifiée est nommée par au moins un test — ou une dispense motivée la nomme "
+    "(`Dispense-test: f — <raison>`).":
+        "A public function added or changed is named by at least one test — or a reasoned waiver names it "
+        "(`Waive-test: f — <reason>`).",
+    "Une réponse porte sur le texte exact de sa demande et en est une réponse possible.":
+        "An answer is about the exact text of its request and is one of its possible answers.",
+    "# Le commit du dépôt privé qui correspond à ce commit public (mode compagnon).\n# Écrit par `socle private "
+    "lock`, jamais à la main.\n":
+        "# The private repository's commit that matches this public commit (companion mode).\n# Written by `socle "
+        "private lock`, never by hand.\n",
+    "mémoire privée : indisponible ici, sans clé de déploiement (pull request d'un fork ?)":
+        "private memory: unavailable here, without a deploy key (pull request from a fork?)",
+    "mémoire privée : pas de verrou ({verrou})":
+        "private memory: no lock ({verrou})",
+    "mémoire privée : récupération impossible (étape `git {etape}`)":
+        "private memory: retrieval impossible (step `git {etape}`)",
+    "mémoire privée : récupérée au verrou {verrou}":
+        "private memory: retrieved at lock {verrou}",
+    "liste des termes privés illisible ici (`{fichier_termes}`) : le terme n'est pas ajouté à l'aveugle, la liste "
+    "serait écrasée ({raison})":
+        "list of private terms unreadable here (`{fichier_termes}`): the term is not added blindly, the list would "
+        "be overwritten ({raison})",
+    "identifiant privé `{i}`":
+        "private identifier `{i}`",
+    "terme privé n°{i} : expression régulière invalide":
+        "private term no. {i}: invalid regular expression",
+    "terme privé n°{i} de la liste":
+        "private term no. {i} of the list",
+    "relecture avant publication (politique : {relecture}) : {sha} n'a pas été relu. Montrer à l'humain ce qui part "
+    "(diff, messages de commit), puis consigner son accord avec son texte exact : `socle reviewed --relayed --by "
+    "<nom> --quote-file <fichier>`. ":
+        "review before publication (policy: {relecture}): {sha} has not been reviewed. Show the human what is "
+        "leaving (diff, commit messages), then record their agreement with their exact text: `socle reviewed "
+        "--relayed --by <name> --quote-file <file>`. ",
+    "Une relecture à chaque push.":
+        "One review at each push.",
+    "Une relecture par lot de commits.":
+        "One review per batch of commits.",
+    "le dépôt privé n'est pas cloné dans `{dossier}/`":
+        "the private repository is not cloned in `{dossier}/`",
+    "disponible, mais au commit {sha} et non au verrou {verrou} (`socle private extract` pour revenir au verrou, "
+    "`socle private lock` pour l'avancer)":
+        "available, but at commit {sha} and not at lock {verrou} (`socle private extract` to go back to the lock, "
+        "`socle private lock` to move it forward)",
+    "disponible, au commit {sha}":
+        "available, at commit {sha}",
+    "{n} fichier(s) privé(s) illisible(s) : chiffrés, la clé manque ici":
+        "{n} private file(s) unreadable: encrypted, the key is missing here",
+    "disponible, déchiffrée":
+        "available, decrypted",
+    "aucun mode de mémoire privée dans la politique":
+        "no private memory mode in the policy",
+    "mémoire privée : non configurée (mode public seul)":
+        "private memory: not configured (public mode only)",
+    "mémoire privée : mode « {m} » inconnu (attendu : {liste})":
+        "private memory: unknown mode “{m}” (expected: {liste})",
+    "mémoire privée : {raison} (mode {m})":
+        "private memory: {raison} (mode {m})",
+    "mémoire privée : INDISPONIBLE (mode {m}) — {raison} ; les contrôles qui l'exigent le signalent ; ne pas "
+    "conclure sur ce qui en dépend":
+        "private memory: UNAVAILABLE (mode {m}) — {raison}; the checks that require it report it; draw no conclusion "
+        "on what depends on it",
+    "{n} fichier(s) sous `{dossier}/` commité(s) sans mode de mémoire privée : ils sont publics. Choisir un mode "
+    "(`[private] mode` de la politique) ou les déplacer":
+        "{n} file(s) under `{dossier}/` committed without a private memory mode: they are public. Choose a mode "
+        "(`[private] mode` of the policy) or move them",
+    "mode de mémoire privée « {m} » inconnu (attendu : {liste})":
+        "unknown private memory mode “{m}” (expected: {liste})",
+    "mémoire privée indisponible : {raison}":
+        "private memory unavailable: {raison}",
+    "relecture avant publication non choisie (`[private] review` : {liste}) : aucune n'est exigée":
+        "review before publication not chosen (`[private] review`: {liste}): none is required",
+    "relecture « {rel} » inconnue (attendu : {liste})":
+        "unknown review “{rel}” (expected: {liste})",
+    "fichier privé commité dans le dépôt public : il appartient au dépôt privé, que `{dossier}/` clone (le retirer "
+    "de l'index)":
+        "private file committed in the public repository: it belongs to the private repository, which `{dossier}/` "
+        "clones (remove it from the index)",
+    "mode compagnon sans dépôt privé ni verrou : sa mise en place revient à l'humain, `private install --repo "
+    "<adresse du dépôt privé>`":
+        "companion mode without a private repository or a lock: setting it up falls to the human, `private install "
+        "--repo <address of the private repository>`",
+    "mode compagnon sans verrou : `socle private lock`":
+        "companion mode without a lock: `socle private lock`",
+    "dépôt privé non cloné : verrou non vérifiable":
+        "private repository not cloned: lock cannot be checked",
+    "{n} changement(s) de la mémoire privée hors de tout commit du dépôt privé : les y commiter, puis `socle private "
+    "lock`":
+        "{n} change(s) of the private memory outside any commit of the private repository: commit them there, then "
+        "`socle private lock`",
+    "le verrou désigne {verrou}, le dépôt privé est à {sha} : `socle private lock` pour l'avancer, ou `socle private "
+    "extract` pour y revenir":
+        "the lock names {verrou}, the private repository is at {sha}: `socle private lock` to move it forward, or "
+        "`socle private extract` to go back to it",
+    "fichier privé commité EN CLAIR : le filtre de chiffrement n'a pas tourné. Retirer le commit avant tout push ; "
+    "si c'est poussé, l'historique public l'a gardé":
+        "private file committed IN CLEAR: the encryption filter did not run. Remove the commit before any push; if "
+        "it is pushed, the public history has kept it",
+    "aucun filtre de chiffrement ne couvre `{zone}/` (`.gitattributes` : `{zone}/** filter=…`)":
+        "no encryption filter covers `{zone}/` (`.gitattributes`: `{zone}/** filter=…`)",
+    "liste des termes privés illisible ici : seuls les identifiants privés sont cherchés":
+        "list of private terms unreadable here: only private identifiers are searched for",
+    "fuite de la mémoire privée dans le nom du fichier : {fuite}":
+        "private memory leak in the file name: {fuite}",
+    "fuite de la mémoire privée : {fuite}":
+        "private memory leak: {fuite}",
+    "fuite de la mémoire privée dans le message du commit {sha} : {fuite}":
+        "private memory leak in the message of commit {sha}: {fuite}",
+    "fuite de la mémoire privée dans le nom de la branche : {fuite}":
+        "private memory leak in the branch name: {fuite}",
+    "liste des termes privés illisible ici : retraits non vérifiables":
+        "list of private terms unreadable here: removals cannot be checked",
+    "{n} terme(s) retiré(s), validé par {id}":
+        "{n} term(s) removed, approved by {id}",
+    "{n} terme(s) retiré(s) de la liste privée sans validation humaine : une demande validée doit citer "
+    "`{termes_ici}` et `{cite}`":
+        "{n} term(s) removed from the private list without human approval: an approved request must cite "
+        "`{termes_ici}` and `{cite}`",
+    "refus : la politique ne choisit pas le mode compagnon — relancer l'installation avec `--private compagnon`, qui "
+    "l'écrit":
+        "refused: the policy does not choose the companion mode — run the installation again with `--private "
+        "compagnon`, which writes it",
+    "refus : {rel}/ existe et n'est pas un clone : le déplacer, puis relancer":
+        "refused: {rel}/ exists and is not a clone: move it, then run again",
+    "refus : clone impossible ({erreur})":
+        "refused: clone impossible ({erreur})",
+    "git clone a échoué":
+        "git clone failed",
+    "dépôt privé cloné dans {rel}/":
+        "private repository cloned into {rel}/",
+    "dépôt privé déjà cloné dans {rel}/":
+        "private repository already cloned into {rel}/",
+    "{rel}/ ignoré par le dépôt public (.gitignore)":
+        "{rel}/ ignored by the public repository (.gitignore)",
+    "# Mémoire privée de {projet}\n\nLe socle y range la mémoire privée du projet, au même format que la mémoire "
+    "publique. Ce dépôt reste privé.\n":
+        "# Private memory of {projet}\n\nThe socle keeps the project's private memory here, in the same format as "
+        "the public memory. This repository stays private.\n",
+    "Mémoire privée : premier commit":
+        "Private memory: first commit",
+    "refus : premier commit du dépôt privé impossible ({erreur})":
+        "refused: first commit of the private repository impossible ({erreur})",
+    "premier commit du dépôt privé":
+        "first commit of the private repository",
+    "!! dépôt privé non poussé ({erreur}) : le pousser, sans quoi la CI ne trouvera pas le commit du verrou":
+        "!! private repository not pushed ({erreur}): push it, otherwise the CI will not find the lock's commit",
+    "dépôt privé poussé":
+        "private repository pushed",
+    "verrou : {sha} ({verrou})":
+        "lock: {sha} ({verrou})",
+    "!! clé de déploiement non créée ({erreur})":
+        "!! deploy key not created ({erreur})",
+    "!! ssh-keygen absent : créer la clé à la main, `ssh-keygen -t ed25519 -N \"\" -f {cle}`":
+        "!! ssh-keygen missing: create the key by hand, `ssh-keygen -t ed25519 -N \"\" -f {cle}`",
+    "clé de déploiement : {cle} (hors du dépôt, jamais commitée)":
+        "deploy key: {cle} (outside the repository, never committed)",
+    "Ensuite :":
+        "Then:",
+    "  - effacer la clé privée une fois le secret posé : rm {cle}":
+        "  - delete the private key once the secret is set: rm {cle}",
+    "  - commiter puis pousser : git add {verrou} .gitignore && git commit -m \"Mémoire privée : le dépôt "
+    "compagnon\" && git push":
+        "  - commit then push: git add {verrou} .gitignore && git commit -m \"Private memory: the companion "
+        "repository\" && git push",
+    "Sur GitHub, deux gestes :":
+        "On GitHub, two steps:",
+    "  1. la clé publique en clé de déploiement du dépôt privé, en lecture seule":
+        "  1. the public key as a deploy key of the private repository, read-only",
+    "     (le contenu de {cle}.pub)":
+        "     (the content of {cle}.pub)",
+    "  2. deux secrets du dépôt public":
+        "  2. two secrets of the public repository",
+    "     SOCLE_PRIVE_CLE   = le contenu de {cle}":
+        "     SOCLE_PRIVE_CLE   = the content of {cle}",
+    "  Ou, avec gh :":
+        "  Or, with gh:",
+    "non disponible localement (gh absent) — voir la pull request":
+        "not available locally (gh missing) — see the pull request",
+    "non disponible (gh ne répond pas)":
+        "not available (gh does not answer)",
+    "non disponible (gh non authentifié ou aucune exécution)":
+        "not available (gh not authenticated or no run)",
+    "non disponible (réponse illisible)":
+        "not available (unreadable answer)",
+    "{ci} : {etat} sur {sha}":
+        "{ci}: {etat} on {sha}",
+    "dépôt hors de GitHub":
+        "repository outside GitHub",
+    "aucune branche par défaut connue":
+        "no known default branch",
+    "gh absent":
+        "gh missing",
+    "gh non authentifié, ou réponse illisible":
+        "gh not authenticated, or unreadable answer",
+    " ; revue des propriétaires du code exigée":
+        "; code owners' review required",
+    " ; revue des propriétaires du code non exigée":
+        "; code owners' review not required",
+    "remettre en marche le balayage de mutation : {message}":
+        "restart the mutation sweep: {message}",
+    "mutation : {message}":
+        "mutation : {message}",
+    "== {nom} — état dérivé par `socle state`, rien de recopié ==":
+        "== {nom} — state derived by `socle state`, nothing copied ==",
+    "git : indisponible ({erreur})":
+        "git      : unavailable ({erreur})",
+    "mémoire : illisible ({erreur}) — lancer `python3 .socle/socle check`":
+        "memory   : unreadable ({erreur}) — run `python3 .socle/socle check`",
+    "demandes : illisibles ({erreur})":
+        "requests : unreadable ({erreur})",
+    "protéger la branche `{nom}` : y exiger la CI « {ci} » avant toute fusion, et la revue des propriétaires du code "
+    "(CODEOWNERS)":
+        "protect the branch `{nom}`: require the CI “{ci}” there before any merge, and the code owners' review "
+        "(CODEOWNERS)",
+    "branche  : {nom} — CI du socle exigée avant fusion{revue}":
+        "branch   : {nom} — socle CI required before merging{revue}",
+    "branche  : {nom} — CI du socle NON exigée : une CI rouge n'empêche pas de fusionner":
+        "branch   : {nom} — socle CI NOT required: a red CI does not prevent merging",
+    "branche  : protection inconnue ({detail})":
+        "branch   : protection unknown ({detail})",
+    "ce qui revient à l'humain : incalculable ({erreur})":
+        "what falls to the human: cannot be computed ({erreur})",
+    "écrit par l'humain lui-même depuis le dernier commit de l'agent : {n} — à lui citer, avec le lien":
+        "written by the human themselves since the agent's last commit: {n} — to cite to them, with the link",
+    "ce que l'humain a écrit lui-même : incalculable ({erreur})":
+        "what the human wrote themselves: cannot be computed ({erreur})",
+    "vérifier : `python3 .socle/socle verify --fast` (tout : sans `--fast`)":
+        "verify   : `python3 .socle/socle verify --fast` (everything: without `--fast`)",
+    "commit   : aucun (dépôt neuf)":
+        "commit   : none (new repository)",
+    "arbre propre":
+        "clean tree",
+    "ATTENTION, {n} fichier(s) non commité(s)":
+        "WARNING, {n} uncommitted file(s)",
+    "commit   : {sha} sur {branche} ({propre})":
+        "commit   : {sha} on {branche} ({propre})",
+    "base     : {defaut} — non fusionné : {n} commit(s)":
+        "base     : {defaut} — not merged: {n} commit(s)",
+    "  … et {n} autre(s)":
+        "  … and {n} more",
+    "depuis la base : {code} fichier(s) de code, {docs} de doc, {memoire} de mémoire":
+        "since the base: {code} code file(s), {docs} doc, {memoire} memory",
+    "  ^ du code a changé et la mémoire non : la fin de tour le refusera":
+        "  ^ code changed and the memory did not: the end of turn will refuse it",
+    "base     : aucune branche par défaut connue":
+        "base     : no known default branch",
+    "CI       : {ci}":
+        "CI       : {ci}",
+    "mesuré(s)":
+        "measured",
+    "supposé(s)":
+        "assumed",
+    "réfuté(s)":
+        "refuted",
+    "validé(s)":
+        "validated",
+    "mémoire  : {faits} fait(s) ({detail}) · {adrs} décision(s) · journal : {journal} entrée(s), dernière {dernier}":
+        "memory   : {faits} fact(s) ({detail}) · {adrs} decision(s) · journal: {journal} entry(ies), last {dernier}",
+    "aucun":
+        "none",
+    "décisions, index decisions@{empreinte} (une en entier : `python3 .socle/socle show ADR-NNNN`) :":
+        "decisions, index decisions@{empreinte} (one in full: `python3 .socle/socle show ADR-NNNN`):",
+    "backlog  : {ouverts} ouvert(s), {en_cours} en cours, {bloques} bloqué(s), {clos} clos":
+        "backlog  : {ouverts} open, {en_cours} in progress, {bloques} blocked, {clos} closed",
+    " à archiver":
+        " to archive",
+    "en cours":
+        "in progress",
+    "bloqué":
+        "blocked",
+    "péremption : chantier actif inchangé depuis {age} jours (seuil {jours})":
+        "staleness: active work unchanged for {age} days (threshold {jours})",
+    "demandes humaines en attente : {n}":
+        "pending human requests: {n}",
+    " (du {date})":
+        " (of {date})",
+    "  RENVOYÉE (contexte insuffisant) : {id} — à réécrire en une demande qui la remplace":
+        "  SENT BACK (insufficient context): {id} — to rewrite as a request that replaces it",
+    "hooks    : aucune trace — ils n'ont encore jamais tiré dans ce clone":
+        "hooks    : no trace — they have never fired in this clone yet",
+    "hooks    : {n} déclenchement(s) tracé(s), dernier : {dernier}":
+        "hooks    : {n} firing(s) traced, last: {dernier}",
+    "!! base « {valeur} » introuvable — repli sur la branche par défaut":
+        "!! base “{valeur}” not found — falling back to the default branch",
+    "socle {version} — contrôles, étage {etage}":
+        "socle {version} — checks, stage {etage}",
+    ", sans base":
+        ", no base",
+    "socle {version} — vérification rapide":
+        "socle {version} — fast verification",
+    "socle {version} — vérification complète":
+        "socle {version} — full verification",
+    "hook inconnu : {evt}":
+        "unknown hook: {evt}",
+    "`[private] layers` : « {nom} » n'est pas une couche ({liste})":
+        "`[private] layers`: “{nom}” is not a layer ({liste})",
+    "refus : mémoire privée indisponible ({raison}) ; une entrée privée ne s'écrit pas à l'aveugle. `--public` si "
+    "elle peut être publique, sinon attendre l'accès.":
+        "refused: private memory unavailable ({raison}); a private entry is not written blindly. `--public` if it "
+        "can be public, otherwise wait for access.",
+    "{ident} : aucune entrée de ce nom dans la mémoire":
+        "{ident}: no entry of that name in the memory",
+    ", archivée dans {parent}":
+        ", archived in {parent}",
+    "\n--- réponse ({chemin}) : {statut} ---":
+        "\n--- answer ({chemin}): {statut} ---",
+    "`socle private term <terme>` : une mémoire privée, et un terme":
+        "`socle private term <term>`: a private memory, and a term",
+    "terme ajouté à la liste privée":
+        "term added to the private list",
+    "terme déjà dans la liste privée":
+        "term already in the private list",
+    "`socle private move <ID>` : l'identifiant d'une entrée publique":
+        "`socle private move <ID>`: the identifier of a public entry",
+    "le verrou n'existe qu'en mode compagnon (`[private] mode` de la politique)":
+        "the lock only exists in companion mode (`[private] mode` of the policy)",
+    "dépôt privé absent de `{dossier}/` : le cloner d'abord":
+        "private repository missing from `{dossier}/`: clone it first",
+    "{n} changement(s) privé(s) sans commit : les commiter dans le dépôt privé d'abord":
+        "{n} private change(s) without a commit: commit them in the private repository first",
+    "verrou : {sha} — à commiter avec le reste (`{fichier_verrou}`)":
+        "lock: {sha} — to commit with the rest (`{fichier_verrou}`)",
+    "pas de verrou à extraire":
+        "no lock to extract",
+    "mémoire privée remise au verrou : {verrou}":
+        "private memory set back to the lock: {verrou}",
+    "dire relu sans --relayed":
+        "say reviewed without --relayed",
+    "refus : une relecture relayée nomme l'humain (--by) et cite son texte exact (--quote-file)":
+        "refused: a relayed review names the human (--by) and cites their exact text (--quote-file)",
+    "relu : {sha} peut partir vers le dépôt public":
+        "reviewed: {sha} can leave for the public repository",
+    "--- index {index}@{empreinte} — à citer `lu : {index}@…` ---":
+        "--- index {index}@{empreinte} — to cite `read : {index}@…` ---",
+    "(vide)":
+        "(empty)",
+    "demande introuvable : {demande}":
+        "request not found: {demande}",
+    "refus : une réponse relayée nomme l'humain qui l'a donnée (--by)":
+        "refused: a relayed answer names the human who gave it (--by)",
+    "répondre sans --relayed":
+        "answer without --relayed",
+    "refus : {id} n'a pas pu être lue par l'humain — {pourquoi}. Une réponse ne se relaie qu'à une demande qu'il a "
+    "pu lire : la pousser, lui donner son lien (`socle url {id}`), puis consigner la réponse qu'il donne ensuite. Il "
+    "peut aussi répondre lui-même, sans --relayed, dans son terminal.":
+        "refused: {id} could not be read by the human — {pourquoi}. An answer is only relayed to a request they "
+        "could read: push it, give them its link (`socle url {id}`), then record the answer they give afterwards. "
+        "They can also answer themselves, without --relayed, in their terminal.",
+    "réponse « {answer} » écrite dans {chemin} — à commiter avec la suite.":
+        "answer “{answer}” written in {chemin} — to commit with what follows.",
+    "rien à approuver : aucun fichier protégé changé depuis le dernier commit":
+        "nothing to approve: no protected file changed since the last commit",
+    "{n} fichier(s) protégé(s) changé(s) depuis le dernier commit :":
+        "{n} protected file(s) changed since the last commit:",
+    "refus : confirmer par `--yes`, ou nommer les fichiers par `--files`":
+        "refused: confirm with `--yes`, or name the files with `--files`",
+    "Les approuver ? [o/N] ":
+        "Approve them? [y/N] ",
+    "rien n'est approuvé":
+        "nothing is approved",
+    "refus : la raison cite {i}, qui n'existe pas dans cette mémoire":
+        "refused: the reason cites {i}, which does not exist in this memory",
+    "refus : {f} n'existe ni ici ni au dernier commit : rien à approuver":
+        "refused: {f} exists neither here nor at the last commit: nothing to approve",
+    "rien à approuver : --files ou --keys":
+        "nothing to approve: --files or --keys",
+    "{ident} écrite et validée : {chemin}":
+        "{ident} written and approved: {chemin}",
+    "socle {version} — auto-test par injection de défauts":
+        "socle {version} — self-test by fault injection",
+    "{calculee}  ({n} fichiers sous {dossier_moteur}/socle et le lanceur)":
+        "{calculee}  ({n} files under {dossier_moteur}/socle and the launcher)",
+    "supprimé":
+        "deleted",
+    "socle {version} — verdict de mutation":
+        "socle {version} — mutation verdict",
+    "socle {version} — balayage de mutation":
+        "socle {version} — mutation sweep",
+    "pour l'humain":
+        "for the human",
+    "pour l'agent":
+        "for the agent",
+    "internes (hooks, CI, moteur)":
+        "internal (hooks, CI, engine)",
+    "(humain seul) mettre en place le dépôt privé du mode compagnon : --repo <adresse>":
+        "(human only) set up the companion mode's private repository: --repo <address>",
+    "{groupe} :":
+        "{groupe}:",
+    "socle {version} — mémoire, documentation et tests fiables":
+        "socle {version} — reliable memory, documentation and tests",
+    "racine du projet (défaut : le dépôt git courant)":
+        "project root (default: the current git repository)",
+    "le guide de l'humain : ses gestes, chacun avec sa commande":
+        "the human's guide: their steps, each with its command",
+    "où en est le projet, calculé à chaque fois (injecté au démarrage de l'agent)":
+        "where the project stands, computed every time (injected when the agent starts)",
+    "sans le contenu de l'actif et du canonique":
+        "without the content of the active work and the canonical memory",
+    "contrôles du socle, un code de sortie":
+        "the socle's checks, one exit code",
+    "révision de base (défaut : divergence avec la branche par défaut)":
+        "base revision (default: divergence from the default branch)",
+    "révision contrôlée (défaut : l'arbre de travail)":
+        "checked revision (default: the working tree)",
+    "liste de contrôles, séparés par des virgules":
+        "list of checks, separated by commas",
+    "sans les contrôles lents":
+        "without the slow checks",
+    "ne montrer que ce qui échoue ou avertit":
+        "only show what fails or warns",
+    "le contrat verify : capacités de l'adaptateur puis contrôles":
+        "the verify contract: the adapter's capabilities then the checks",
+    "relancer les étapes rapides même si elles ont déjà passé sur cet arbre exact":
+        "run the fast steps again even if they already passed on this exact tree",
+    "tout : capacités, contrôles, auto-test":
+        "everything: capabilities, checks, self-test",
+    "point d'entrée des hooks de l'agent et de git":
+        "entry point of the agent's and git's hooks",
+    "prochain identifiant libre":
+        "next free identifier",
+    "ajoute une entrée squelette avec son identifiant":
+        "adds a skeleton entry with its identifier",
+    "dans la mémoire privée (défaut quand elle existe)":
+        "in the private memory (default when it exists)",
+    "dans la mémoire publique, même quand une mémoire privée existe":
+        "in the public memory, even when a private memory exists",
+    "afficher une entrée de mémoire, avec son empreinte, ou un index":
+        "show a memory entry, with its fingerprint, or an index",
+    "l'index des décisions ou du backlog ouvert":
+        "the index of the decisions or of the open backlog",
+    "mémoire privée : état, verrou du dépôt compagnon, termes, bascule ; `install` (humain seul) met en place le "
+    "dépôt compagnon":
+        "private memory: status, companion repository lock, terms, move; `install` (human only) sets up the "
+        "companion repository",
+    "avec `term` : le terme à ajouter à la liste privée ; avec `move` : l'identifiant de l'entrée publique à "
+    "basculer dans la mémoire privée":
+        "with `term`: the term to add to the private list; with `move`: the identifier of the public entry to move "
+        "into the private memory",
+    "avec `install` (humain seul) : l'adresse du dépôt privé, cloné et mis en place":
+        "with `install` (human only): the address of the private repository, cloned and set up",
+    "tu as relu ce qui part vers le dépôt public ; l'agent y relaie ton accord (--relayed)":
+        "you reviewed what leaves for the public repository; the agent relays your agreement (--relayed)",
+    "accord donné par l'humain dans la conversation":
+        "agreement given by the human in the conversation",
+    "le permalien d'un fichier ou d'une entrée, à donner à l'humain":
+        "the permalink of a file or an entry, to give to the human",
+    "répondre à une demande ; l'agent y relaie (--relayed) ta réponse donnée dans la conversation":
+        "answer a request; the agent relays (--relayed) your answer given in the conversation",
+    "réponse donnée par l'humain dans la conversation":
+        "answer given by the human in the conversation",
+    "texte exact de l'humain (avec --relayed)":
+        "the human's exact text (with --relayed)",
+    "fichier qui contient le texte exact de l'humain":
+        "file that contains the human's exact text",
+    "(humain seul) approuver tes changements protégés ; sans --files, ceux qui ont changé":
+        "(human only) approve your protected changes; without --files, those that changed",
+    "sans --files : approuver sans demander confirmation":
+        "without --files: approve without asking for confirmation",
+    "installer ou mettre à jour le socle dans un projet":
+        "install or update the socle in a project",
+    "`auto`, le défaut (déduit du dépôt), un adaptateur maintenu ({adaptateurs}) ou le chemin d'un .toml":
+        "`auto`, the default (deduced from the repository), a maintained adapter ({adaptateurs}) or the path of a "
+        ".toml",
+    "propriétaire pour CODEOWNERS, ex. @theodubus":
+        "owner for CODEOWNERS, e.g. @theodubus",
+    "projet existant : plafonds au niveau actuel":
+        "existing project: caps at the current level",
+    "mémoire privée, et son mode":
+        "private memory, and its mode",
+    "relecture humaine avant publication":
+        "human review before publication",
+    "demandes et réponses dans la mémoire privée":
+        "requests and answers in the private memory",
+    "mode chiffré : le nom du filtre git de l'outil":
+        "encrypted mode: the name of the tool's git filter",
+    "langue de la mémoire d'un projet neuf : mots-clés, gabarits et messages du moteur (défaut : fr)":
+        "language of a new project's memory: keywords, templates and the engine's messages (default: fr)",
+    "initialiser la mémoire depuis un cadrage, rien, ou le dépôt existant":
+        "initialize the memory from a brief, nothing, or the existing repository",
+    "le document de cadrage, archivé tel quel":
+        "the brief, archived as is",
+    "auditer le dépôt existant, en lecture seule":
+        "audit the existing repository, read-only",
+    "injecte des défauts connus et vérifie qu'ils sont attrapés":
+        "injects known faults and checks that they are caught",
+    "empreinte du moteur et de fichiers":
+        "fingerprint of the engine and of files",
+    "survivants d'un balayage contre les plafonds":
+        "survivors of a sweep against the caps",
+    "écrire le plafond mesuré des modules « à mesurer » dans les garde-fous":
+        "write the measured cap of the modules “to measure” into the guardrails",
+    "lance le balayage de mutation de l'adaptateur, puis son verdict":
+        "runs the adapter's mutation sweep, then its verdict",
+    "donne le prochain identifiant libre à une entrée qu'une autre branche a prise aussi":
+        "gives the next free identifier to an entry another branch also took",
+    "archive les sujets clos du backlog dans le journal":
+        "archives the closed backlog topics into the journal",
+    "liste des contrôles":
+        "list of the checks",
+    "socle {version} — mémoire, documentation et tests fiables\n":
+        "socle {version} — reliable memory, documentation and tests\n",
+    "\nLe guide : `python3 .socle/socle help` ; toutes les commandes : `python3 .socle/socle --help`.":
+        "\nThe guide: `python3 .socle/socle help`; all the commands: `python3 .socle/socle --help`.",
+    "adresse du dépôt inconnue : l'humain la règle dans la politique (`[human] repo_url`)":
+        "unknown repository address: the human sets it in the policy (`[human] repo_url`)",
+    "{cible} : aucune entrée de ce nom dans la mémoire":
+        "{cible}: no entry of that name in the memory",
+    "rien n'est poussé : pousser d'abord":
+        "nothing is pushed: push first",
+    "{chemin} n'est pas dans la version poussée ({sha}) : pousser d'abord":
+        "{chemin} is not in the pushed version ({sha}): push first",
+    "{chemin} : la version locale n'est pas poussée, le lien montre la version poussée":
+        "{chemin}: the local version is not pushed, the link shows the pushed version",
+    "{chemin} est chiffré sur GitHub, où l'humain ne peut pas le lire : le lui donner en entier dans la conversation":
+        "{chemin} is encrypted on GitHub, where the human cannot read it: give it to them in full in the conversation",
+    "dépôt privé non cloné, sans adresse web, ou rien n'y est poussé":
+        "private repository not cloned, without a web address, or nothing pushed there",
+    "{chemin} n'est pas dans la version poussée du dépôt privé : y pousser d'abord":
+        "{chemin} is not in the pushed version of the private repository: push there first",
+    "commit {version} inconnu ou pas poussé":
+        "commit {version} unknown or not pushed",
+    "{chemin} n'existe pas dans la version poussée « {ref} »":
+        "{chemin} does not exist in the pushed version “{ref}”",
+    "version « {version} » inconnue ou pas poussée":
+        "version “{version}” unknown or not pushed",
+    "lien relatif « {cible} » : hors du conteneur, il ne mène nulle part":
+        "relative link “{cible}”: outside the container, it leads nowhere",
+    "`{code}` : aucun chemin de ce nom dans le dépôt, le lien qu'en fait le client mène à un 404":
+        "`{code}`: no path of that name in the repository, the link the client makes of it leads to a 404",
+    "capacité absente : {absent}":
+        "capability absent: {absent}",
+    "lecteur de résultats inconnu : « {parser} » (connus : {liste})":
+        "unknown results reader: “{parser}” (known: {liste})",
+    "dossier de résultats introuvable : {dossier}":
+        "results folder not found: {dossier}",
+    "plafond vide : rien à comparer — un vert ici serait silencieux":
+        "empty cap: nothing to compare — a green here would be silent",
+    "{module} : à mesurer, et pas encore balayé":
+        "{module}: to measure, and not swept yet",
+    "{module} : à mesurer — {n} survivant(s) ; ":
+        "{module}: to measure — {n} survivor(s); ",
+    "plafond posé":
+        "cap set",
+    "`--record` l'écrit comme plafond":
+        "`--record` writes it as the cap",
+    "{module} : aucun résultat — le balayage n'a pas tourné sur ce module":
+        "{module}: no result — the sweep did not run on this module",
+    "{module} : {n} survivant(s) pour un plafond de {plafond} — du code a cessé d'être couvert. Corriger les tests, "
+    "ou demander à relever le plafond (raison écrite).":
+        "{module}: {n} survivor(s) for a cap of {plafond} — code stopped being covered. Fix the tests, or ask to "
+        "raise the cap (written reason).",
+    "{module} : {n} survivant(s) sous le plafond {plafond} — resserrer le plafond":
+        "{module}: {n} survivor(s) under the cap {plafond} — tighten the cap",
+    "{module} : plafond annoncé mais non écrit — la forme de sa clé dans `{fichier}` n'est pas reconnue ; l'écrire à "
+    "la main":
+        "{module}: cap announced but not written — the form of its key in `{fichier}` is not recognised; write it by "
+        "hand",
+    "la commande de l'adaptateur balaie module par module sans `{output}` : chaque balayage écraserait le précédent "
+    "; y ajouter l'option de l'outil qui choisit son dossier de sortie, `{output}` en valeur":
+        "the adapter's command sweeps module by module without `{output}`: each sweep would overwrite the previous "
+        "one; add the tool's option that chooses its output folder, with `{output}` as value",
+    "plafond vide : aucun module à balayer":
+        "empty cap: no module to sweep",
+    "le workflow est « {etat} » : GitHub endort les workflows planifiés d'un dépôt public après soixante jours sans "
+    "activité, et plus rien ne mesure le cliquet. Le réactiver (Actions → le workflow → Enable workflow), puis le "
+    "lancer à la main":
+        "the workflow is “{etat}”: GitHub puts the scheduled workflows of a public repository to sleep after sixty "
+        "days without activity, and nothing measures the ratchet any more. Re-enable it (Actions → the workflow → "
+        "Enable workflow), then run it by hand",
+    "aucun balayage en {age} jours d'existence du workflow : son cron ne part pas. Le lancer à la main, et chercher "
+    "pourquoi":
+        "no sweep in {age} days of the workflow's existence: its cron does not start. Run it by hand, and find out "
+        "why",
+    "pas encore de balayage : le premier part au prochain créneau du cron, ou à la main":
+        "no sweep yet: the first one starts at the cron's next slot, or by hand",
+    "dernier balayage il y a {age} jours ({derniere}) : le workflow est actif mais ne tourne plus. Le lancer à la "
+    "main, et chercher pourquoi son cron ne part plus":
+        "last sweep {age} days ago ({derniere}): the workflow is active but no longer runs. Run it by hand, and find "
+        "out why its cron no longer starts",
+    "dernier balayage il y a {age} jour(s)":
+        "last sweep {age} day(s) ago",
+    "gh a échoué":
+        "gh failed",
+    "réponse illisible":
+        "unreadable answer",
+    "aucun workflow ne lance le balayage de mutation : le cliquet ne se mesure jamais. Relancer l'installeur, qui "
+    "pose `{workflow}`":
+        "no workflow runs the mutation sweep: the ratchet is never measured. Run the installer again, which lays "
+        "down `{workflow}`",
+    "dépôt hors de GitHub : la vivacité du balayage ne s'y lit pas":
+        "repository outside GitHub: the sweep's liveness cannot be read there",
+    "gh absent : la vivacité du balayage ne se lit pas":
+        "gh missing: the sweep's liveness cannot be read",
+    "`{nom}` n'est pas encore sur la branche par défaut : GitHub ne le planifie qu'une fois fusionné":
+        "`{nom}` is not on the default branch yet: GitHub only schedules it once merged",
+    "API de GitHub injoignable ({faute}) : dans la CI, il faut `GH_TOKEN` et le droit `actions: read`":
+        "GitHub API unreachable ({faute}): in the CI, it needs `GH_TOKEN` and the `actions: read` permission",
+    "exécutions du balayage illisibles ({faute})":
+        "sweep runs unreadable ({faute})",
+    "réponse illisible : {erreur}":
+        "unreadable answer: {erreur}",
+    "en-tête `<!-- socle: couche=demandes zone=… -->` absent ou faux":
+        "header `<!-- socle: layer=requests zone=… -->` missing or wrong",
+    "pas de titre `# D-NNNN — <décision en une phrase>`":
+        "no title `# D-NNNN — <decision in one sentence>`",
+    "le titre doit énoncer la décision demandée en une phrase":
+        "the title must state the requested decision in one sentence",
+    "section « {titre} » absente":
+        "section “{titre}” missing",
+    "section « {titre} » vide ou trop courte":
+        "section “{titre}” empty or too short",
+    "section « {titre} » : texte du gabarit laissé tel quel ({trou}…)":
+        "section “{titre}”: template text left as is ({trou}…)",
+    "« Contexte » trop court : moins de {n} mots ne suffisent pas à quelqu'un qui n'a pas ouvert le projet depuis "
+    "une semaine":
+        "“Context” too short: fewer than {n} words are not enough for someone who has not opened the project for a "
+        "week",
+    "« Où regarder » doit donner un lien vers chaque document ou passage à lire, et dire ce qu'il faut y vérifier : "
+    "le permalien de `socle url <chemin>` ; sans adresse de dépôt connue, un lien relatif depuis la demande "
+    "(`[calc.py](../../calc.py)`)":
+        "“Where to look” must give a link to each document or passage to read, and say what to check there: the "
+        "permalink of `socle url <path>`; with no known repository address, a relative link from the request "
+        "(`[calc.py](../../calc.py)`)",
+    "« Options » doit dire l'effort de chaque option":
+        "“Options” must give the effort of each option",
+    "« Options » doit dire le risque de chaque option":
+        "“Options” must give the risk of each option",
+    "« Options » doit dire la réversibilité de chaque option":
+        "“Options” must give the reversibility of each option",
+    "« Conséquences » doit dire ce qui se passe si l'humain valide":
+        "“Consequences” must say what happens if the human approves",
+    "« Conséquences » doit dire ce qui se passe si l'humain refuse":
+        "“Consequences” must say what happens if the human rejects",
+    "« Conséquences » doit dire ce qui se passe sans réponse":
+        "“Consequences” must say what happens with no answer",
+    "« Recommandation » doit séparer ce qui est vérifié de ce qui est supposé":
+        "“Recommendation” must keep what is verified apart from what is assumed",
+    "« Réponses possibles » : au moins deux réponses, en liste `- \\`valeur\\` — sens`":
+        "“Possible answers”: at least two answers, as a list `- \\`value\\` — meaning`",
+    "« Réponses possibles » doit proposer `{renvoi}`":
+        "“Possible answers” must offer `{renvoi}`",
+    "identifiant `{ident}` cité sans description : le décrire en clair dans « Éléments cités » (`- <identifiant> — "
+    "ce que c'est, en une phrase`)":
+        "identifier `{ident}` cited without a description: describe it in plain words in “Cited elements” (`- "
+        "<identifier> — what it is, in one sentence`)",
+    "réponse sans champ `reponse`":
+        "answer without a `reponse` field",
+    "réponse `{reponse}` absente des réponses possibles de la demande":
+        "answer `{reponse}` not among the request's possible answers",
+    "réponse relayée depuis la conversation sans la citation exacte de l'humain":
+        "answer relayed from the conversation without the human's exact quote",
+    "la demande a changé après la réponse : la réponse portait sur un autre texte (une demande répondue est gelée ; "
+    "en écrire une nouvelle qui la remplace)":
+        "the request changed after the answer: the answer was about another text (an answered request is frozen; "
+        "write a new one that replaces it)",
+    "`{reponse}` n'est pas une réponse possible : {liste}":
+        "`{reponse}` is not a possible answer: {liste}",
+    "{id} a déjà une réponse ({reponse})":
+        "{id} already has an answer ({reponse})",
+    "canal inconnu : {canal}":
+        "unknown channel: {canal}",
+    "une réponse relayée cite le texte exact de l'humain (--quote ou --quote-file)":
+        "a relayed answer cites the human's exact text (--quote or --quote-file)",
+    "# Réponse humaine donnée dans la conversation, consignée par l'agent avec\n# le texte exact de l'humain "
+    "(`citation`). Relue avec le diff.\n":
+        "# Human answer given in the conversation, recorded by the agent with\n# the human's exact text "
+        "(`citation`). Reviewed with the diff.\n",
+    "# Réponse humaine, écrite par l'humain lui-même (`socle answer`).\n":
+        "# Human answer, written by the human themselves (`socle answer`).\n",
+    "# Elle porte sur le texte exact de {demande}, dont l'empreinte suit.\n":
+        "# It is about the exact text of {demande}, whose fingerprint follows.\n",
+    "la version poussée diffère de la version locale":
+        "the pushed version differs from the local version",
+    "format 3 : un sujet clos reste dans son fichier, rien ne s'archive (ADR-0025)":
+        "format 3: a closed topic stays in its file, nothing is archived (ADR-0025)",
+    "pas de backlog":
+        "no backlog",
+    "aucun sujet clos à archiver":
+        "no closed topic to archive",
+    "{n} sujet(s) archivé(s) dans {ident} ({journal})":
+        "{n} topic(s) archived in {ident} ({journal})",
+    "TOML illisible : {erreur}":
+        "unreadable TOML: {erreur}",
+    "aucune révision de base : contrôle non exécuté":
+        "no base revision: check not run",
+    "le contrôle a planté : {erreur}":
+        "the check crashed: {erreur}",
+    "constat masqué : zone privée (relancer les contrôles là où elle se lit)":
+        "finding hidden: private zone (run the checks again where it can be read)",
+    "`{ident}` existait avant la branche : ce n'est pas à elle de le renuméroter":
+        "`{ident}` existed before the branch: it is not for the branch to renumber it",
+    "`{ident}` a reçu sa réponse : une demande répondue est gelée":
+        "`{ident}` has received its answer: an answered request is frozen",
+    "reporté dans {n} fichier(s) : {liste}":
+        "carried over in {n} file(s): {liste}",
+    "un identifiant de journal exige une date":
+        "a journal identifier requires a date",
+    "migration arrêtée : {vers} existe déjà, {de} n'y est pas déplacé — fusionner les deux à la main, puis relancer":
+        "migration stopped: {vers} already exists, {de} is not moved there — merge the two by hand, then run again",
+    "le dépôt privé, cloné dans memory/private/ : ses fichiers sont renommés, à commiter dans le dépôt privé, puis "
+    "`socle private lock`":
+        "the private repository, cloned in memory/private/: its files are renamed, to commit in the private "
+        "repository, then `socle private lock`",
+    "migration arrêtée : des fichiers restent dans memoire/ — {restes}":
+        "migration stopped: files remain in memoire/ — {restes}",
+    "chemins traduits dans {n} fichier(s) : {liste}":
+        "paths translated in {n} file(s): {liste}",
+    "migration arrêtée : {unique} est chiffré ici ; le déchiffrer, puis relancer":
+        "migration stopped: {unique} is encrypted here; decrypt it, then run again",
+    "{unique} → {dossier}/ : {n} sujet(s), un fichier chacun":
+        "{unique} → {dossier}/: {n} topic(s), one file each",
+    "plafond du backlog : {budget} octets par sujet":
+        "backlog cap: {budget} bytes per topic",
+    "aucune migration du format {avant} au format {apres} : mise à jour arrêtée":
+        "no migration from format {avant} to format {apres}: update stopped",
+    "format {avant} → {apres} : {ligne}":
+        "format {avant} → {apres}: {ligne}",
+    "format {avant} → {apres}":
+        "format {avant} → {apres}",
+    "aucune mémoire privée dans la politique (`[private] mode`) : rien où basculer":
+        "no private memory in the policy (`[private] mode`): nowhere to move to",
+    "`{ident}` est déjà privée":
+        "`{ident}` is already private",
+    "une demande se lit là où l'humain lit : la retirer (`retirée : <raison>` dans ses métadonnées) et en poser une "
+    "privée (`socle new request \"…\" --private`)":
+        "a request is read where the human reads: withdraw it (`withdrawn : <reason>` in its metadata) and open a "
+        "private one (`socle new request \"…\" --private`)",
+    "`{ident}` : seuls un fait, un sujet, une entrée de journal ou une décision se basculent":
+        "`{ident}`: only a fact, a topic, a journal entry or a decision can be moved",
+    "`{ident}` est archivée dans `{parent}` : c'est cette entrée de journal qui se bascule":
+        "`{ident}` is archived in `{parent}`: it is that journal entry that is moved",
+    "`{ident}` archive {liste}, que d'autres entrées citent peut-être : leurs renvois publics ne survivraient pas à "
+    "la bascule":
+        "`{ident}` archives {liste}, which other entries may cite: their public references would not survive the move",
+    "`{ident}` : son texte ne se retrouve pas tel quel dans {fichier}":
+        "`{ident}`: its text is not found as is in {fichier}",
+    "{ident} → {nouvel} : son titre et son texte sont dans {prive_rel}":
+        "{ident} → {nouvel}: its title and its text are in {prive_rel}",
+    "en public, {public_rel} ne garde de {ident} que l'identifiant : les renvois restent valides":
+        "in public, {public_rel} keeps only the identifier of {ident}: references stay valid",
+    "l'historique public garde l'ancien texte : seule une réécriture de l'historique, publiée en écrasant la "
+    "branche, l'efface ; c'est à l'humain de la faire : le lui dire":
+        "the public history keeps the old text: only a rewrite of the history, published by overwriting the branch, "
+        "erases it; that is for the human to do: tell them",
+    "un nom qui doit rester privé partout s'ajoute à la liste des termes : `socle private term <terme>`":
+        "a name that must stay private everywhere is added to the list of terms: `socle private term <term>`",
+    "mode compagnon : commiter la copie dans le dépôt privé, puis `socle private lock`":
+        "companion mode: commit the copy in the private repository, then `socle private lock`",
+    "  … étapes rapides déjà passées sur cet arbre exact : non relancées (`--redo` pour les relancer)":
+        "  … fast steps already passed on this exact tree: not run again (`--redo` to run them again)",
+    "délai dépassé : {commande}":
+        "timed out: {commande}",
+    "aucun test trouvé (`{commande}`) : un projet qui commence n'en a pas encore ; le premier code s'écrit avec son "
+    "test":
+        "no test found (`{commande}`): a project that is starting has none yet; the first code is written with its "
+        "test",
+    "`{commande}` a rendu {code}\n        {queue}":
+        "`{commande}` returned {code}\n        {queue}",
+    "projet d'essai impossible à préparer : {erreur}":
+        "test project impossible to prepare: {erreur}",
+    "le témoin a planté : {erreur}":
+        "the witness crashed: {erreur}",
+    "témoin en échec — {nom} : un contrôle crie sur un cas sain\n        {sortie}":
+        "witness failing — {nom}: a check cries out on a healthy case\n        {sortie}",
+    "  témoin ok : {nom}":
+        "  witness ok: {nom}",
+    "{defaut} : injection impossible — {erreur}":
+        "{defaut}: injection impossible — {erreur}",
+    "DÉFAUT NON ATTRAPÉ : {defaut} (attendu : {controle}, étage {etage})":
+        "FAULT NOT CAUGHT: {defaut} (expected: {controle}, stage {etage})",
+    "{defaut} : attrapé, mais pas par {controle}\n        {sortie}":
+        "{defaut}: caught, but not by {controle}\n        {sortie}",
+    "  attrapé : {defaut} — {controle}, étage {etage}":
+        "  caught: {defaut} — {controle}, stage {etage}",
+    "installation du projet d'essai : {stdout}{stderr}":
+        "installation of the test project: {stdout}{stderr}",
+    "le témoin de base ne passe pas le hook pre-commit :\n{stdout}{stderr}":
+        "the base witness does not pass the pre-commit hook:\n{stdout}{stderr}",
+    "injection impossible : « {avant} » absent de {rel}":
+        "injection impossible: “{avant}” missing from {rel}",
+    "pas d'empreinte pour {cible} : {sortie}":
+        "no fingerprint for {cible}: {sortie}",
 }

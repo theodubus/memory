@@ -23,7 +23,8 @@ L'adaptateur (le langage du projet et ses outils) se déduit du dépôt ;
 sûr, le mode chiffré dépend d'un filtre comme git-crypt que le socle ne
 pose pas, et c'est le moins éprouvé), `--review lots` ou
 `--review chaque-push` (relire ce qui part avant publication),
-`--language en` (une mémoire en anglais), `--adoption` (un projet existant
+`--language en` (la mémoire, les gabarits et les messages du moteur en
+anglais), `--adoption` (un projet existant
 dont des contrôles échouent : ils passent en avertissement, et ne pourront
 que durcir).
 

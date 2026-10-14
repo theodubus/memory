@@ -7,6 +7,7 @@ restent valides. Séparée de `prive`, qui lit et contrôle la zone privée
 from __future__ import annotations
 
 from socle import config, language as langue, memory as memoire, utils as outils
+from socle.messages import trad
 from socle.private import acces, mode
 
 # Les entrées qu'une bascule déplace : une demande se lit là où l'humain lit,
@@ -23,27 +24,30 @@ def basculer(projet: config.Projet, ident: str, jour: str) -> list[str]:
     dire à l'humain."""
     racine, ch = projet.racine, projet.chemins
     if mode(projet) is None:
-        raise ValueError("aucune mémoire privée dans la politique (`[private] mode`) : rien où basculer")
+        raise ValueError(trad("aucune mémoire privée dans la politique (`[private] mode`) : rien où basculer"))
     a = acces(projet)
     if not a.disponible:
-        raise ValueError(f"mémoire privée indisponible : {a.raison}")
+        raise ValueError(trad("mémoire privée indisponible : {raison}", raison=a.raison))
     mem = memoire.Memoire.charger(racine)
     e = mem.entree(ident)
     if e is None:
-        raise ValueError(f"`{ident}` ne désigne aucune entrée de la mémoire")
+        raise ValueError(trad("`{ident}` ne désigne aucune entrée de la mémoire", ident=ident))
     if e.prive or e.basculee:
-        raise ValueError(f"`{ident}` est déjà privée")
+        raise ValueError(trad("`{ident}` est déjà privée", ident=ident))
     if e.type == "D":
-        raise ValueError("une demande se lit là où l'humain lit : la retirer (`retirée : <raison>` dans ses "
-                         "métadonnées) et en poser une privée (`socle new request \"…\" --private`)")
+        raise ValueError(trad("une demande se lit là où l'humain lit : la retirer (`retirée : <raison>` dans "
+                              'ses métadonnées) et en poser une privée (`socle new request "…" --private`)'))
     if e.type not in BASCULABLES:
-        raise ValueError(f"`{ident}` : seuls un fait, un sujet, une entrée de journal ou une décision se basculent")
+        raise ValueError(trad("`{ident}` : seuls un fait, un sujet, une entrée de journal ou une décision se "
+                              "basculent", ident=ident))
     if e.archivee:
-        raise ValueError(f"`{ident}` est archivée dans `{e.parent}` : c'est cette entrée de journal qui se bascule")
+        raise ValueError(trad("`{ident}` est archivée dans `{parent}` : c'est cette entrée de journal qui se "
+                              "bascule", ident=ident, parent=e.parent))
     enfants = [x.id for x in mem.entrees() if x.parent == ident]
     if enfants:
-        raise ValueError(f"`{ident}` archive {', '.join(enfants)}, que d'autres entrées citent peut-être : "
-                         "leurs renvois publics ne survivraient pas à la bascule")
+        raise ValueError(trad("`{ident}` archive {liste}, que d'autres entrées citent peut-être : leurs "
+                              "renvois publics ne survivraient pas à la bascule",
+                              ident=ident, liste=', '.join(enfants)))
     nouvel = mem.prochain_id(e.type, prive=True, date=e.id[2:12] if e.type == "J" else None)
     lg = langue.du_projet(projet)
     copie = _copie_privee(e, nouvel, lg)
@@ -68,15 +72,19 @@ def basculer(projet: config.Projet, ident: str, jour: str) -> list[str]:
         public_rel = e.fichier
         texte = (racine / e.fichier).read_text(encoding="utf-8")
         if e.texte not in texte:
-            raise ValueError(f"`{ident}` : son texte ne se retrouve pas tel quel dans {e.fichier}")
+            raise ValueError(trad("`{ident}` : son texte ne se retrouve pas tel quel dans {fichier}",
+                                  ident=ident, fichier=e.fichier))
         (racine / e.fichier).write_text(texte.replace(e.texte, _pierre(e, jour, lg), 1), encoding="utf-8")
-    res = [f"{ident} → {nouvel} : son titre et son texte sont dans {prive_rel}",
-           f"en public, {public_rel} ne garde de {ident} que l'identifiant : les renvois restent valides",
-           "l'historique public garde l'ancien texte : seule une réécriture de l'historique, publiée en "
-           "écrasant la branche, l'efface ; c'est à l'humain de la faire : le lui dire",
-           "un nom qui doit rester privé partout s'ajoute à la liste des termes : `socle private term <terme>`"]
+    res = [trad("{ident} → {nouvel} : son titre et son texte sont dans {prive_rel}",
+                ident=ident, nouvel=nouvel, prive_rel=prive_rel),
+           trad("en public, {public_rel} ne garde de {ident} que l'identifiant : les renvois restent valides",
+                public_rel=public_rel, ident=ident),
+           trad("l'historique public garde l'ancien texte : seule une réécriture de l'historique, publiée en "
+                "écrasant la branche, l'efface ; c'est à l'humain de la faire : le lui dire"),
+           trad("un nom qui doit rester privé partout s'ajoute à la liste des termes : `socle private term "
+                "<terme>`")]
     if mode(projet) == "compagnon":
-        res.append("mode compagnon : commiter la copie dans le dépôt privé, puis `socle private lock`")
+        res.append(trad("mode compagnon : commiter la copie dans le dépôt privé, puis `socle private lock`"))
     return res
 
 

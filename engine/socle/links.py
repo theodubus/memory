@@ -17,6 +17,7 @@ import unicodedata
 from urllib.parse import quote, unquote, urlsplit
 
 from socle import config, requests as demandes, memory as memoire, utils as outils
+from socle.messages import trad
 
 # Un lien markdown, une URL nue, un passage entre accents graves.
 LIEN_MD = re.compile(r"\[[^\]\n]*\]\((?P<cible>[^)\s]+)[^)\n]*\)")
@@ -90,12 +91,12 @@ def lien(projet: config.Projet, cible: str) -> tuple[str | None, str]:
     racine = projet.racine
     depot = url_depot(projet)
     if not depot:
-        return None, "adresse du dépôt inconnue : l'humain la règle dans la politique (`[human] repo_url`)"
+        return None, trad("adresse du dépôt inconnue : l'humain la règle dans la politique (`[human] repo_url`)")
     chemin, suffixe = cible.strip().rstrip("/"), ""
     if memoire.decouper_id(chemin):
         e = memoire.Memoire.charger(racine).entree(chemin)
         if e is None:
-            return None, f"{cible} : aucune entrée de ce nom dans la mémoire"
+            return None, trad("{cible} : aucune entrée de ce nom dans la mémoire", cible=cible)
         chemin = e.fichier
         if e.niveau > 1:  # une entrée parmi d'autres : son ancre
             m = memoire.TITRE_RE.match(e.texte.splitlines()[0])
@@ -104,17 +105,19 @@ def lien(projet: config.Projet, cible: str) -> tuple[str | None, str]:
         return _lien_prive(projet, chemin, suffixe)
     sha = commit_pousse(racine)
     if not sha:
-        return None, "rien n'est poussé : pousser d'abord"
+        return None, trad("rien n'est poussé : pousser d'abord")
     sorte = outils.git(racine, "cat-file", "-t", f"{sha}:{chemin}", check=False).strip()
     if sorte not in ("blob", "tree"):
-        return None, f"{chemin} n'est pas dans la version poussée ({sha[:7]}) : pousser d'abord"
+        return None, trad("{chemin} n'est pas dans la version poussée ({sha}) : pousser d'abord",
+                          chemin=chemin, sha=sha[:7])
     url = f"{depot}/{sorte}/{sha}/{quote(chemin)}{suffixe}"
     avertissement = ""
     local = racine / chemin
     if sorte == "blob" and local.is_file():
         pousse = outils.git(racine, "rev-parse", f"{sha}:{chemin}", check=False).strip()
         if outils.git(racine, "hash-object", "--", chemin, check=False).strip() != pousse:
-            avertissement = f"{chemin} : la version locale n'est pas poussée, le lien montre la version poussée"
+            avertissement = trad("{chemin} : la version locale n'est pas poussée, le lien montre la version "
+                                 "poussée", chemin=chemin)
     return url, avertissement
 
 
@@ -124,16 +127,17 @@ def _lien_prive(projet: config.Projet, chemin: str, suffixe: str) -> tuple[str |
     from socle import private as prive
 
     if prive.mode(projet) != "compagnon":
-        return None, (f"{chemin} est chiffré sur GitHub, où l'humain ne peut pas le lire : le lui donner en entier "
-                      "dans la conversation")
+        return None, (trad("{chemin} est chiffré sur GitHub, où l'humain ne peut pas le lire : le lui donner "
+                           "en entier dans la conversation", chemin=chemin))
     depot = prive.depot_compagnon(projet.racine)
     web = depuis_distant(outils.git(depot, "remote", "get-url", "origin", check=False).strip()) if depot else None
     sha = commit_pousse(depot) if depot else None
     if not web or not sha:
-        return None, "dépôt privé non cloné, sans adresse web, ou rien n'y est poussé"
+        return None, trad("dépôt privé non cloné, sans adresse web, ou rien n'y est poussé")
     interne = memoire.hors_zone_privee(chemin)
     if not outils.git(depot, "cat-file", "-t", f"{sha}:{interne}", check=False).strip():
-        return None, f"{chemin} n'est pas dans la version poussée du dépôt privé : y pousser d'abord"
+        return None, trad("{chemin} n'est pas dans la version poussée du dépôt privé : y pousser d'abord",
+                          chemin=chemin)
     return f"{web}/blob/{sha}/{quote(interne)}{suffixe}", ""
 
 
@@ -189,7 +193,8 @@ def url_morte(racine, depot: str, url: str) -> str | None:
     reste = url[len(depot) + 1:].split("#", 1)[0].split("?", 1)[0]
     parties = [unquote(p) for p in reste.split("/") if p]
     if len(parties) >= 2 and parties[0] == "commit":
-        return None if _rev_poussee(racine, parties[1]) else f"commit {parties[1][:12]} inconnu ou pas poussé"
+        return None if _rev_poussee(racine, parties[1]) else trad("commit {version} inconnu ou pas poussé",
+                                                                  version=parties[1][:12])
     if len(parties) < 2 or parties[0] not in ("blob", "tree", "raw"):
         return None
     # Une branche peut contenir des `/` : on essaie chaque découpage.
@@ -199,8 +204,8 @@ def url_morte(racine, depot: str, url: str) -> str | None:
         if rev:
             if not chemin or outils.git(racine, "cat-file", "-t", f"{rev}:{chemin}", check=False).strip():
                 return None
-            return f"{chemin} n'existe pas dans la version poussée « {ref[:12]} »"
-    return f"version « {parties[1][:12]} » inconnue ou pas poussée"
+            return trad("{chemin} n'existe pas dans la version poussée « {ref} »", chemin=chemin, ref=ref[:12])
+    return trad("version « {version} » inconnue ou pas poussée", version=parties[1][:12])
 
 
 def problemes(projet: config.Projet, message: str) -> tuple[list[str], list[str]]:
@@ -211,11 +216,12 @@ def problemes(projet: config.Projet, message: str) -> tuple[list[str], list[str]
     for m in LIEN_MD.finditer(texte):
         cible = m["cible"]
         if not SCHEMA.match(cible) and not cible.startswith("#"):
-            morts.append(f"lien relatif « {cible} » : hors du conteneur, il ne mène nulle part")
+            morts.append(trad("lien relatif « {cible} » : hors du conteneur, il ne mène nulle part", cible=cible))
     for m in CODE.finditer(texte):
         chemin = ressemble_a_un_chemin(m["code"])
         if chemin and not (racine / chemin).exists():
-            morts.append(f"`{m['code']}` : aucun chemin de ce nom dans le dépôt, le lien qu'en fait le client mène à un 404")
+            morts.append(trad("`{code}` : aucun chemin de ce nom dans le dépôt, le lien qu'en fait le client "
+                              "mène à un 404", code=m['code']))
     depot = url_depot(projet)
     urls = URL.findall(texte)
     if depot:

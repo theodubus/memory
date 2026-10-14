@@ -13,6 +13,7 @@ import re
 import subprocess
 
 from socle import config, utils as outils
+from socle.messages import trad
 from socle.report import Rapport
 
 ORDRE = ("format", "lint", "build", "tests")
@@ -33,8 +34,8 @@ def etapes_rapides(projet: config.Projet, rapport: Rapport, flux=None, refaire: 
     fichier = racine / MARQUE
     if marque and not refaire and fichier.is_file() and fichier.read_text().strip() == marque:
         if flux:
-            print("  … étapes rapides déjà passées sur cet arbre exact : non relancées (`--redo` pour les "
-                  "relancer)", file=flux, flush=True)
+            print(trad("  … étapes rapides déjà passées sur cet arbre exact : non relancées (`--redo` pour les "
+                       "relancer)"), file=flux, flush=True)
         return False
     avant = len(rapport.erreurs())
     executer_etapes(projet, True, rapport, flux)
@@ -76,7 +77,8 @@ def executer_etapes(projet: config.Projet, rapide: bool, rapport: Rapport, flux=
         ident = f"verify.{nom}"
         rapport.execute(ident)
         if "command" not in c:
-            rapport.indisponible(ident, f"capacité absente : {c.get('absent', '?')} — remplacement : {c.get('replacement', '?')}")
+            rapport.indisponible(ident, trad("capacité absente : {absent} — remplacement : {remplacement}",
+                                             absent=c.get('absent', '?'), remplacement=c.get('replacement', '?')))
             continue
         if flux:
             print(f"  … {ident} : {c['command']}", file=flux, flush=True)
@@ -85,7 +87,7 @@ def executer_etapes(projet: config.Projet, rapide: bool, rapport: Rapport, flux=
                                text=True, encoding="utf-8", errors="replace", env=env,
                                timeout=c.get("timeout", 3600))
         except subprocess.TimeoutExpired:
-            rapport.erreur(ident, f"délai dépassé : {c['command']}")
+            rapport.erreur(ident, trad("délai dépassé : {commande}", commande=c['command']))
             continue
         if p.returncode != 0:
             sortie = (p.stdout + p.stderr).rstrip()
@@ -93,7 +95,9 @@ def executer_etapes(projet: config.Projet, rapide: bool, rapport: Rapport, flux=
             if c.get("no_tests") and re.search(c["no_tests"], sortie):
                 # Un projet qui commence n'a pas encore de test : l'outil le
                 # dit par un échec, que l'adaptateur reconnaît (B-0026).
-                rapport.avertir(ident, f"aucun test trouvé (`{c['command']}`) : un projet qui commence n'en a pas "
-                                "encore ; le premier code s'écrit avec son test")
+                rapport.avertir(ident, trad("aucun test trouvé (`{commande}`) : un projet qui commence n'en a "
+                                            "pas encore ; le premier code s'écrit avec son test",
+                                            commande=c['command']))
                 continue
-            rapport.erreur(ident, f"`{c['command']}` a rendu {p.returncode}\n        {queue}")
+            rapport.erreur(ident, trad("`{commande}` a rendu {code}\n        {queue}",
+                                       commande=c['command'], code=p.returncode, queue=queue))

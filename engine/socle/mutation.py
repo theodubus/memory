@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import Callable
 
 from socle import config
+from socle.messages import trad
 from socle.report import Rapport
 
 
@@ -210,18 +211,19 @@ def verdict(projet: config.Projet, dossier: Path, poser: bool = False) -> Rappor
     r.execute(ident)
     cap = projet.adaptateur.get("capabilities", {}).get("mutation", {})
     if "command" not in cap:
-        r.indisponible(ident, f"capacité absente : {cap.get('absent', 'non déclarée')}")
+        r.indisponible(ident, trad("capacité absente : {absent}", absent=cap.get("absent", trad("non déclarée"))))
         return r
     lecteur = LECTEURS.get(cap.get("parser", ""))
     if lecteur is None:
-        r.erreur(ident, f"lecteur de résultats inconnu : « {cap.get('parser')} » (connus : {', '.join(LECTEURS)})")
+        r.erreur(ident, trad("lecteur de résultats inconnu : « {parser} » (connus : {liste})",
+                             parser=cap.get('parser'), liste=', '.join(LECTEURS)))
         return r
     if not dossier.is_dir():
-        r.erreur(ident, f"dossier de résultats introuvable : {dossier}")
+        r.erreur(ident, trad("dossier de résultats introuvable : {dossier}", dossier=dossier))
         return r
     plafonds = projet.gf("mutation", "caps", defaut={}) or {}
     if not plafonds:
-        r.erreur(ident, "plafond vide : rien à comparer — un vert ici serait silencieux")
+        r.erreur(ident, trad("plafond vide : rien à comparer — un vert ici serait silencieux"))
         return r
     resultats = lecteur(dossier)
     mesures = {}
@@ -229,25 +231,29 @@ def verdict(projet: config.Projet, dossier: Path, poser: bool = False) -> Rappor
         c = resultats.get(module)
         if p.get("pending"):
             if not c:
-                r.avertir(ident, f"{module} : à mesurer, et pas encore balayé")
+                r.avertir(ident, trad("{module} : à mesurer, et pas encore balayé", module=module))
                 continue
             mesures[module] = c["survivants"]
-            r.avertir(ident, f"{module} : à mesurer — {c['survivants']} survivant(s) ; "
-                      + ("plafond posé" if poser else "`--record` l'écrit comme plafond"))
+            r.avertir(ident, trad("{module} : à mesurer — {n} survivant(s) ; ", module=module, n=c["survivants"])
+                      + (trad("plafond posé") if poser else trad("`--record` l'écrit comme plafond")))
             continue
         if not c:
-            r.erreur(ident, f"{module} : aucun résultat — le balayage n'a pas tourné sur ce module")
+            r.erreur(ident, trad("{module} : aucun résultat — le balayage n'a pas tourné sur ce module",
+                                 module=module))
             continue
         n = c["survivants"]
         if n > p.get("max", 0):
-            r.erreur(ident, f"{module} : {n} survivant(s) pour un plafond de {p.get('max', 0)} — du code a cessé "
-                     "d'être couvert. Corriger les tests, ou demander à relever le plafond (raison écrite).")
+            r.erreur(ident, trad("{module} : {n} survivant(s) pour un plafond de {plafond} — du code a cessé "
+                                 "d'être couvert. Corriger les tests, ou demander à relever le plafond (raison "
+                                 "écrite).", module=module, n=n, plafond=p.get('max', 0)))
         elif n < p.get("max", 0):
-            r.avertir(ident, f"{module} : {n} survivant(s) sous le plafond {p.get('max', 0)} — resserrer le plafond")
+            r.avertir(ident, trad("{module} : {n} survivant(s) sous le plafond {plafond} — resserrer le plafond",
+                                  module=module, n=n, plafond=p.get('max', 0)))
     if poser and mesures:
         for module in poser_plafonds(projet, mesures):
-            r.erreur(ident, f"{module} : plafond annoncé mais non écrit — la forme de sa clé dans "
-                     f"`{projet.chemins.garde_fous}` n'est pas reconnue ; l'écrire à la main")
+            r.erreur(ident, trad("{module} : plafond annoncé mais non écrit — la forme de sa clé dans "
+                                 "`{fichier}` n'est pas reconnue ; l'écrire à la main",
+                                 module=module, fichier=projet.chemins.garde_fous))
     return r
 
 
@@ -308,16 +314,16 @@ def commandes_de_balayage(projet: config.Projet) -> tuple[list[str], Path | None
     cap = projet.adaptateur.get("capabilities", {}).get("mutation", {})
     commande = cap.get("command")
     if not commande:
-        return [], None, f"capacité absente : {cap.get('absent', 'non déclarée')}"
+        return [], None, trad("capacité absente : {absent}", absent=cap.get("absent", trad("non déclarée")))
     if "{module}" not in commande:
         return [commande.replace("{output}", ".")], projet.racine, None
     if "{output}" not in commande:
-        return [], None, ("la commande de l'adaptateur balaie module par module sans `{output}` : chaque "
-                          "balayage écraserait le précédent ; y ajouter l'option de l'outil qui choisit son "
-                          "dossier de sortie, `{output}` en valeur")
+        return [], None, (trad("la commande de l'adaptateur balaie module par module sans `{output}` : chaque "
+                               "balayage écraserait le précédent ; y ajouter l'option de l'outil qui choisit "
+                               "son dossier de sortie, `{output}` en valeur"))
     modules = sorted(projet.gf("mutation", "caps", defaut={}) or {})
     if not modules:
-        return [], None, "plafond vide : aucun module à balayer"
+        return [], None, trad("plafond vide : aucun module à balayer")
     dossier = projet.racine / SORTIES
     return [commande.replace("{module}", shlex.quote(m)).replace("{output}", shlex.quote(str(dossier / f"{k:03d}")))
             for k, m in enumerate(modules)], dossier, None
@@ -333,7 +339,8 @@ def balayer(projet: config.Projet, poser: bool = False, flux=None) -> Rapport:
     r.execute(ident)
     commandes, dossier, faute = commandes_de_balayage(projet)
     if faute:
-        (r.indisponible if faute.startswith("capacité absente") else r.erreur)(ident, faute)
+        absente = "command" not in projet.adaptateur.get("capabilities", {}).get("mutation", {})
+        (r.indisponible if absente else r.erreur)(ident, faute)
         return r
     if dossier != projet.racine:
         shutil.rmtree(dossier, ignore_errors=True)
@@ -393,20 +400,23 @@ def vivacite(etat: str | None, derniere: str | None, cree: str | None,
     vaut `erreur`, `avertir` ou `None` (il tourne)."""
     maintenant = maintenant or datetime.now(timezone.utc)
     if etat != "active":
-        return "erreur", (f"le workflow est « {etat} » : GitHub endort les workflows planifiés d'un dépôt public "
-                          "après soixante jours sans activité, et plus rien ne mesure le cliquet. Le réactiver "
-                          "(Actions → le workflow → Enable workflow), puis le lancer à la main")
+        return "erreur", (trad("le workflow est « {etat} » : GitHub endort les workflows planifiés d'un dépôt "
+                               "public après soixante jours sans activité, et plus rien ne mesure le cliquet. "
+                               "Le réactiver (Actions → le workflow → Enable workflow), puis le lancer à la "
+                               "main", etat=etat))
     if derniere is None:
         age = (maintenant - _date(cree)).days if cree else 0
         if age > SEUIL_JOURS:
-            return "erreur", (f"aucun balayage en {age} jours d'existence du workflow : son cron ne part pas. "
-                              "Le lancer à la main, et chercher pourquoi")
-        return "avertir", "pas encore de balayage : le premier part au prochain créneau du cron, ou à la main"
+            return "erreur", (trad("aucun balayage en {age} jours d'existence du workflow : son cron ne part "
+                                   "pas. Le lancer à la main, et chercher pourquoi", age=age))
+        return "avertir", trad("pas encore de balayage : le premier part au prochain créneau du cron, ou à la "
+                               "main")
     age = (maintenant - _date(derniere)).days
     if age > SEUIL_JOURS:
-        return "erreur", (f"dernier balayage il y a {age} jours ({derniere[:10]}) : le workflow est actif mais ne "
-                          "tourne plus. Le lancer à la main, et chercher pourquoi son cron ne part plus")
-    return None, f"dernier balayage il y a {age} jour(s)"
+        return "erreur", (trad("dernier balayage il y a {age} jours ({derniere}) : le workflow est actif mais "
+                               "ne tourne plus. Le lancer à la main, et chercher pourquoi son cron ne part plus",
+                               age=age, derniere=derniere[:10]))
+    return None, trad("dernier balayage il y a {age} jour(s)", age=age)
 
 
 def _gh_api(racine: Path, chemin: str) -> tuple[object | None, str]:
@@ -417,11 +427,11 @@ def _gh_api(racine: Path, chemin: str) -> tuple[object | None, str]:
     except (subprocess.TimeoutExpired, OSError) as e:
         return None, type(e).__name__
     if p.returncode != 0:
-        return None, "404" if "404" in p.stderr else (p.stderr.strip().splitlines() or ["gh a échoué"])[-1]
+        return None, "404" if "404" in p.stderr else (p.stderr.strip().splitlines() or [trad("gh a échoué")])[-1]
     try:
         return json.loads(p.stdout), ""
     except ValueError:
-        return None, "réponse illisible"
+        return None, trad("réponse illisible")
 
 
 def etat_du_balayage(projet: config.Projet, fichiers: list[str],
@@ -436,27 +446,28 @@ def etat_du_balayage(projet: config.Projet, fichiers: list[str],
         return None, "", None, None
     flux = workflow_de_balayage(cap, fichiers, lire)
     if flux is None:
-        return "erreur", (f"aucun workflow ne lance le balayage de mutation : le cliquet ne se mesure jamais. "
-                          f"Relancer l'installeur, qui pose `{WORKFLOW}`"), None, None
+        return "erreur", (trad("aucun workflow ne lance le balayage de mutation : le cliquet ne se mesure "
+                               "jamais. Relancer l'installeur, qui pose `{workflow}`", workflow=WORKFLOW)), None, None
     url = liens.url_depot(projet) or ""
     if not url.startswith("https://github.com/"):
-        return "indisponible", "dépôt hors de GitHub : la vivacité du balayage ne s'y lit pas", flux, None
+        return "indisponible", trad("dépôt hors de GitHub : la vivacité du balayage ne s'y lit pas"), flux, None
     if not shutil.which("gh"):
-        return "indisponible", "gh absent : la vivacité du balayage ne se lit pas", flux, None
+        return "indisponible", trad("gh absent : la vivacité du balayage ne se lit pas"), flux, None
     depot, nom = url.removeprefix("https://github.com/"), flux.rsplit("/", 1)[-1]
     page = f"{url}/actions/workflows/{nom}"
     wf, faute = _gh_api(projet.racine, f"repos/{depot}/actions/workflows/{nom}")
     if faute == "404":
-        return "avertir", f"`{nom}` n'est pas encore sur la branche par défaut : GitHub ne le planifie qu'une fois fusionné", flux, page
+        return "avertir", trad("`{nom}` n'est pas encore sur la branche par défaut : GitHub ne le planifie "
+                               "qu'une fois fusionné", nom=nom), flux, page
     if not isinstance(wf, dict):
-        return "indisponible", (f"API de GitHub injoignable ({faute}) : dans la CI, il faut `GH_TOKEN` et le droit "
-                                "`actions: read`"), flux, page
+        return "indisponible", (trad("API de GitHub injoignable ({faute}) : dans la CI, il faut `GH_TOKEN` et "
+                                     "le droit `actions: read`", faute=faute)), flux, page
     if wf.get("state") != "active":
         # Endormi : ses exécutions n'y changent rien.
         return (*vivacite(wf.get("state"), None, None), flux, page)
     runs, faute = _gh_api(projet.racine, f"repos/{depot}/actions/workflows/{nom}/runs?per_page=1&status=completed")
     if not isinstance(runs, dict):
-        return "indisponible", f"exécutions du balayage illisibles ({faute})", flux, page
+        return "indisponible", trad("exécutions du balayage illisibles ({faute})", faute=faute), flux, page
     derniere = next(iter(runs.get("workflow_runs") or []), {}).get("created_at")
     niveau, message = vivacite(wf.get("state"), derniere, wf.get("created_at"))
     return niveau, message, flux, page

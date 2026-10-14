@@ -14,7 +14,7 @@ from datetime import date
 from pathlib import Path
 
 from socle import VERSION, config, hooks, language as langue, messages, utils as outils
-from socle.messages import trad
+from socle.messages import a_traduire, trad
 
 
 def _projet(args) -> config.Projet:
@@ -31,7 +31,7 @@ def _base(projet: config.Projet, valeur: str | None) -> str | None:
     if valeur and set(valeur) != {"0"} and outils.rev_existe(projet.racine, valeur):
         return outils.resoudre(projet.racine, valeur)
     if valeur and set(valeur) != {"0"}:
-        print(f"!! base « {valeur} » introuvable — repli sur la branche par défaut", file=sys.stderr)
+        print(trad("!! base « {valeur} » introuvable — repli sur la branche par défaut", valeur=valeur), file=sys.stderr)
     return outils.base_de_travail(projet.racine)
 
 
@@ -53,7 +53,8 @@ def cmd_check(args) -> int:
     ctx = contexte.Contexte(projet, etage=args.stage, base=base, tete=args.rev, rapide=args.fast)
     ids = [i.strip() for i in args.only.split(",")] if args.only else None
     rapport = contexte.executer(ctx, ids)
-    titre = f"socle {VERSION} — contrôles, étage {args.stage}" + (f", base {base[:10]}" if base else ", sans base")
+    titre = trad("socle {version} — contrôles, étage {etage}", version=VERSION, etage=args.stage) + (
+        f", base {base[:10]}" if base else trad(", sans base"))
     rapport.afficher(titre, court=getattr(args, "court", False))
     return 0 if rapport.reussi else 1
 
@@ -71,8 +72,9 @@ def cmd_verify(args) -> int:
         verification.executer_etapes(projet, False, rapport, flux=sys.stderr)
     etage = "git" if args.fast else "ci"
     rapport.fusionner(contexte.executer(contexte.Contexte(projet, etage=etage, base=base, rapide=args.fast)))
-    mode = "rapide" if args.fast else "complète"
-    rapport.afficher(f"socle {VERSION} — vérification {mode}" + (f", base {base[:10]}" if base else ""))
+    titre = (trad("socle {version} — vérification rapide", version=VERSION) if args.fast
+             else trad("socle {version} — vérification complète", version=VERSION))
+    rapport.afficher(titre + (f", base {base[:10]}" if base else ""))
     return 0 if rapport.reussi else 1
 
 
@@ -94,7 +96,7 @@ def cmd_ci(args) -> int:
     rapport.fusionner(contexte.executer(contexte.Contexte(projet, etage="ci", base=base)))
     if not args.no_selftest:
         rapport.fusionner(autotest.executer(projet, bavard=False))
-    rapport.afficher(f"socle {VERSION} — CI" + (f", base {base[:10]}" if base else ", sans base"))
+    rapport.afficher(f"socle {VERSION} — CI" + (f", base {base[:10]}" if base else trad(", sans base")))
     return 0 if rapport.reussi else 1
 
 
@@ -119,7 +121,7 @@ def cmd_hook(args) -> int:
         return hooks.git_pre_push(projet)
     if evt == "git-commit-msg":
         return hooks.git_commit_msg(projet, *args.rest[:1])
-    print(f"hook inconnu : {evt}", file=sys.stderr)
+    print(trad("hook inconnu : {evt}", evt=evt), file=sys.stderr)
     return 2
 
 
@@ -151,16 +153,17 @@ def cmd_new(args) -> int:
     # consigne de l'humain sur une entrée précise se dit par `--private` ou
     # `--public`.
     for nom in zone_privee.couches_inconnues(projet):
-        print(f"`[private] layers` : « {nom} » n'est pas une couche "
-              f"({', '.join(zone_privee.COUCHES_PRIVABLES)})", file=sys.stderr)
+        print(trad("`[private] layers` : « {nom} » n'est pas une couche ({liste})",
+                   nom=nom, liste=', '.join(zone_privee.COUCHES_PRIVABLES)), file=sys.stderr)
     defaut = memoire.TYPES[type_] in zone_privee.couches_privees(projet)
     prive = getattr(args, "private", False) or (defaut and not getattr(args, "public", False))
     acces = zone_privee.acces(projet, mem.illisibles) if prive else None
     if acces is not None and not acces.disponible:
         # Sans elle, l'identifiant se devinerait, et le texte clair
         # s'accolerait à un fichier chiffré (B-0044, L3).
-        print(f"refus : mémoire privée indisponible ({acces.raison}) ; une entrée privée ne s'écrit pas à "
-              "l'aveugle. `--public` si elle peut être publique, sinon attendre l'accès.", file=sys.stderr)
+        print(trad("refus : mémoire privée indisponible ({raison}) ; une entrée privée ne s'écrit pas à "
+                   "l'aveugle. `--public` si elle peut être publique, sinon attendre l'accès.",
+                   raison=acces.raison), file=sys.stderr)
         return 2
     from socle import identifiers as identifiants
 
@@ -244,10 +247,10 @@ def cmd_show(args) -> int:
     for ident in args.ids:
         e = mem.entree(ident)
         if e is None:
-            print(f"{ident} : aucune entrée de ce nom dans la mémoire", file=sys.stderr)
+            print(trad("{ident} : aucune entrée de ce nom dans la mémoire", ident=ident), file=sys.stderr)
             code = 1
             continue
-        lieu = f"{e.fichier}:{e.ligne}" + (f", archivée dans {e.parent}" if e.parent else "")
+        lieu = f"{e.fichier}:{e.ligne}" + (trad(", archivée dans {parent}", parent=e.parent) if e.parent else "")
         # L'empreinte s'imprime avec le texte : la citer (`ID@empreinte`)
         # montre qu'on a lu cette version-là (ADR-0008).
         print(f"--- {ident}@{memoire.empreinte_entree(e)} ({lieu}) ---")
@@ -255,7 +258,7 @@ def cmd_show(args) -> int:
         if e.type == "D":
             d = next((d for d in demandes.toutes(projet.racine) if d.id == ident), None)
             if d and d.chemin_reponse:
-                print(f"\n--- réponse ({d.chemin_reponse}) : {d.statut} ---")
+                print(trad("\n--- réponse ({chemin}) : {statut} ---", chemin=d.chemin_reponse, statut=d.statut))
                 print((projet.racine / d.chemin_reponse).read_text(encoding="utf-8").rstrip())
             elif d:
                 print(f"\n--- {d.statut} ---")
@@ -273,14 +276,14 @@ def cmd_prive(args) -> int:
         return 0
     if args.action == "term":
         if prive.mode(projet) is None or not args.terme:
-            print("`socle private term <terme>` : une mémoire privée, et un terme", file=sys.stderr)
+            print(trad("`socle private term <terme>` : une mémoire privée, et un terme"), file=sys.stderr)
             return 1
         try:
             ajoute = prive.ajouter_terme(projet, " ".join(args.terme))
         except RuntimeError as e:
             print(f"refus : {e}", file=sys.stderr)
             return 2
-        print("terme ajouté à la liste privée" if ajoute else "terme déjà dans la liste privée")
+        print(trad("terme ajouté à la liste privée") if ajoute else trad("terme déjà dans la liste privée"))
         return 0
     if args.action == "install":
         if hooks.sous_un_agent("`socle private install`"):
@@ -295,7 +298,7 @@ def cmd_prive(args) -> int:
         return code
     if args.action == "move":
         if len(args.terme) != 1:
-            print("`socle private move <ID>` : l'identifiant d'une entrée publique", file=sys.stderr)
+            print(trad("`socle private move <ID>` : l'identifiant d'une entrée publique"), file=sys.stderr)
             return 1
         try:
             from socle import move as bascule
@@ -307,29 +310,32 @@ def cmd_prive(args) -> int:
         print("\n".join(lignes))
         return 0
     if prive.mode(projet) != "compagnon":
-        print("le verrou n'existe qu'en mode compagnon (`[private] mode` de la politique)", file=sys.stderr)
+        print(trad("le verrou n'existe qu'en mode compagnon (`[private] mode` de la politique)"), file=sys.stderr)
         return 1
     if args.action == "recover":
         return prive.recuperer(projet)
     sha = prive.commit_compagnon(racine)
     if sha is None:
-        print(f"dépôt privé absent de `{prive.dossier(projet.racine)}/` : le cloner d'abord", file=sys.stderr)
+        print(trad("dépôt privé absent de `{dossier}/` : le cloner d'abord",
+                   dossier=prive.dossier(projet.racine)), file=sys.stderr)
         return 1
     if args.action == "lock":
         modifies = prive.compagnon_modifie(racine)
         if modifies:
-            print(f"{len(modifies)} changement(s) privé(s) sans commit : les commiter dans le dépôt privé d'abord",
+            print(trad("{n} changement(s) privé(s) sans commit : les commiter dans le dépôt privé d'abord",
+                       n=len(modifies)),
                   file=sys.stderr)
             return 1
         prive.ecrire_verrou(racine, sha)
-        print(f"verrou : {sha[:10]} — à commiter avec le reste (`{prive.fichier_verrou(projet.racine)}`)")
+        print(trad("verrou : {sha} — à commiter avec le reste (`{fichier_verrou}`)",
+                   sha=sha[:10], fichier_verrou=prive.fichier_verrou(projet.racine)))
         return 0
     verrou = prive.lire_verrou(racine)
     if verrou is None:
-        print("pas de verrou à extraire", file=sys.stderr)
+        print(trad("pas de verrou à extraire"), file=sys.stderr)
         return 1
     outils.git(prive.depot_compagnon(racine), "checkout", "-q", "--detach", verrou)
-    print(f"mémoire privée remise au verrou : {verrou[:10]}")
+    print(trad("mémoire privée remise au verrou : {verrou}", verrou=verrou[:10]))
     return 0
 
 
@@ -340,17 +346,17 @@ def cmd_relu(args) -> int:
     from socle import private as prive
 
     projet = _projet(args)
-    if not args.relayed and hooks.sous_un_agent("dire relu sans --relayed"):
+    if not args.relayed and hooks.sous_un_agent(trad("dire relu sans --relayed")):
         return 2
     citation = Path(args.quote_file).read_text(encoding="utf-8") if args.quote_file else (args.quote or "")
     if args.relayed and (not args.by or len(citation.strip()) < 2):
-        print("refus : une relecture relayée nomme l'humain (--by) et cite son texte exact (--quote-file)",
+        print(trad("refus : une relecture relayée nomme l'humain (--by) et cite son texte exact (--quote-file)"),
               file=sys.stderr)
         return 2
     sha = outils.git(projet.racine, "rev-parse", args.rev).strip()
     prive.noter_relecture(projet.racine, sha, args.by or _auteur(projet),
                           "conversation" if args.relayed else "terminal", citation)
-    print(f"relu : {sha[:10]} peut partir vers le dépôt public")
+    print(trad("relu : {sha} peut partir vers le dépôt public", sha=sha[:10]))
     return 0
 
 
@@ -375,9 +381,10 @@ def cmd_url(args) -> int:
 def _afficher_index(mem, index: str):
     from socle import memory as memoire
 
-    print(f"--- index {index}@{memoire.empreinte_index(mem, index)} — à citer `lu : {index}@…` ---")
+    print(trad("--- index {index}@{empreinte} — à citer `lu : {index}@…` ---", index=index,
+               empreinte=memoire.empreinte_index(mem, index)))
     lignes = memoire.lignes_index(mem, index)
-    print("\n".join(lignes) if lignes else "(vide)")
+    print("\n".join(lignes) if lignes else trad("(vide)"))
 
 
 def cmd_answer(args) -> int:
@@ -388,24 +395,24 @@ def cmd_answer(args) -> int:
     projet = _projet(args)
     cible = [d for d in demandes.toutes(projet.racine) if d.id == args.request]
     if not cible:
-        print(f"demande introuvable : {args.request}", file=sys.stderr)
+        print(trad("demande introuvable : {demande}", demande=args.request), file=sys.stderr)
         return 2
     d = cible[0]
     citation = args.quote or ""
     if args.quote_file:
         citation = Path(args.quote_file).read_text(encoding="utf-8")
     if args.relayed and not args.by:
-        print("refus : une réponse relayée nomme l'humain qui l'a donnée (--by)", file=sys.stderr)
+        print(trad("refus : une réponse relayée nomme l'humain qui l'a donnée (--by)"), file=sys.stderr)
         return 2
-    if not args.relayed and hooks.sous_un_agent("répondre sans --relayed"):
+    if not args.relayed and hooks.sous_un_agent(trad("répondre sans --relayed")):
         return 2
     if args.relayed:
         pourquoi = demande_illisible(projet, d)
         if pourquoi:
-            print(f"refus : {d.id} n'a pas pu être lue par l'humain — {pourquoi}. Une réponse ne se relaie qu'à "
-                  "une demande qu'il a pu lire : la pousser, lui donner son lien (`socle url "
-                  f"{d.id}`), puis consigner la réponse qu'il donne ensuite. Il peut aussi répondre lui-même, "
-                  "sans --relayed, dans son terminal.", file=sys.stderr)
+            print(trad("refus : {id} n'a pas pu être lue par l'humain — {pourquoi}. Une réponse ne se relaie "
+                       "qu'à une demande qu'il a pu lire : la pousser, lui donner son lien (`socle url {id}`), "
+                       "puis consigner la réponse qu'il donne ensuite. Il peut aussi répondre lui-même, sans "
+                       "--relayed, dans son terminal.", id=d.id, pourquoi=pourquoi), file=sys.stderr)
             return 2
     if not args.relayed:
         print(d.texte)
@@ -417,7 +424,8 @@ def cmd_answer(args) -> int:
     except ValueError as e:
         print(f"refus : {e}", file=sys.stderr)
         return 2
-    print(f"réponse « {args.answer} » écrite dans {chemin} — à commiter avec la suite.")
+    print(trad("réponse « {answer} » écrite dans {chemin} — à commiter avec la suite.",
+               answer=args.answer, chemin=chemin))
     return 0
 
 
@@ -462,17 +470,17 @@ def cmd_approve(args) -> int:
         # montrés avant d'être approuvés (B-0034, P3).
         args.files = fichiers_a_approuver(projet)
         if not args.files:
-            print("rien à approuver : aucun fichier protégé changé depuis le dernier commit")
+            print(trad("rien à approuver : aucun fichier protégé changé depuis le dernier commit"))
             return 0
-        print(f"{len(args.files)} fichier(s) protégé(s) changé(s) depuis le dernier commit :")
+        print(trad("{n} fichier(s) protégé(s) changé(s) depuis le dernier commit :", n=len(args.files)))
         for f in args.files:
             print(f"  - {f}")
         if not getattr(args, "oui", False):
             if not sys.stdin.isatty():
-                print("refus : confirmer par `--yes`, ou nommer les fichiers par `--files`", file=sys.stderr)
+                print(trad("refus : confirmer par `--yes`, ou nommer les fichiers par `--files`"), file=sys.stderr)
                 return 2
-            if input("Les approuver ? [o/N] ").strip().lower() not in ("o", "oui", "y", "yes"):
-                print("rien n'est approuvé")
+            if input(trad("Les approuver ? [o/N] ")).strip().lower() not in ("o", "oui", "y", "yes"):
+                print(trad("rien n'est approuvé"))
                 return 1
     mem = memoire.Memoire.charger(racine)
     ident = mem.prochain_id("D")
@@ -495,9 +503,9 @@ def cmd_approve(args) -> int:
                and not outils.git_reussit(racine, "cat-file", "-e", f"HEAD:{f}")]
     if inconnus or absents:
         for i in inconnus:
-            print(f"refus : la raison cite {i}, qui n'existe pas dans cette mémoire", file=sys.stderr)
+            print(trad("refus : la raison cite {i}, qui n'existe pas dans cette mémoire", i=i), file=sys.stderr)
         for f in absents:
-            print(f"refus : {f} n'existe ni ici ni au dernier commit : rien à approuver", file=sys.stderr)
+            print(trad("refus : {f} n'existe ni ici ni au dernier commit : rien à approuver", f=f), file=sys.stderr)
         return 2
     lg = langue.du_projet(projet)
     en = lg == "en"
@@ -512,7 +520,7 @@ def cmd_approve(args) -> int:
         cites.append(f"- `{k}` — guardrail key loosened by the human themselves, knowingly." if en else
                      f"- `{k}` — clé des garde-fous assouplie par l'humain lui-même, en connaissance de cause.")
     if not cites:
-        print("rien à approuver : --files ou --keys", file=sys.stderr)
+        print(trad("rien à approuver : --files ou --keys"), file=sys.stderr)
         return 2
     texte = gabarit("approval.md", lg).format(id=ident, date=jour, raison=raison, elements="\n".join(cites),
                                                  moteur=projet.dossier_moteur)
@@ -520,7 +528,7 @@ def cmd_approve(args) -> int:
     chemin.write_text(texte, encoding="utf-8")
     d = demandes.charger(racine, None, str(chemin.relative_to(racine)), texte)
     demandes.ecrire_reponse(racine, d, langue.mot(langue.REPONSES, "valider", lg), args.text, _auteur(projet), jour)
-    print(f"{ident} écrite et validée : {chemin.relative_to(racine)}")
+    print(trad("{ident} écrite et validée : {chemin}", ident=ident, chemin=chemin.relative_to(racine)))
     return 0
 
 
@@ -555,7 +563,7 @@ def cmd_selftest(args) -> int:
     from socle import selftest as autotest
 
     rapport = autotest.executer(_projet(args), bavard=args.verbose)
-    rapport.afficher(f"socle {VERSION} — auto-test par injection de défauts")
+    rapport.afficher(trad("socle {version} — auto-test par injection de défauts", version=VERSION))
     return 0 if rapport.reussi else 1
 
 
@@ -564,10 +572,11 @@ def cmd_fingerprint(args) -> int:
 
     projet = _projet(args)
     calculee, n = empreinte.calculer(projet.racine, projet.dossier_moteur)
-    print(f"{calculee}  ({n} fichiers sous {projet.dossier_moteur}/socle et le lanceur)")
+    print(trad("{calculee}  ({n} fichiers sous {dossier_moteur}/socle et le lanceur)",
+               calculee=calculee, n=n, dossier_moteur=projet.dossier_moteur))
     for f in args.files or []:
         p = projet.racine / f
-        print(f"{empreinte.courte(empreinte.fichier(p)) if p.is_file() else 'supprimé'}  {f}")
+        print(f"{empreinte.courte(empreinte.fichier(p)) if p.is_file() else trad('supprimé')}  {f}")
     return 0
 
 
@@ -575,7 +584,7 @@ def cmd_mutation_verdict(args) -> int:
     from socle import mutation
 
     rapport = mutation.verdict(_projet(args), Path(args.results), poser=getattr(args, "poser", False))
-    rapport.afficher(f"socle {VERSION} — verdict de mutation")
+    rapport.afficher(trad("socle {version} — verdict de mutation", version=VERSION))
     return 0 if rapport.reussi else 1
 
 
@@ -583,7 +592,7 @@ def cmd_mutation_run(args) -> int:
     from socle import mutation
 
     rapport = mutation.balayer(_projet(args), poser=getattr(args, "poser", False))
-    rapport.afficher(f"socle {VERSION} — balayage de mutation")
+    rapport.afficher(trad("socle {version} — balayage de mutation", version=VERSION))
     return 0 if rapport.reussi else 1
 
 
@@ -609,7 +618,7 @@ def cmd_checks(args) -> int:
     from socle import context as contexte
 
     for c in contexte.charger_controles().values():
-        premiere = c.doc.splitlines()[0] if c.doc else ""
+        premiere = trad(contexte.resume(c.doc)) if c.doc else ""
         print(f"{c.id:<28} {','.join(c.etages):<12} {'base ' if c.base else '     '}{'lent ' if c.lent else '     '}{premiere}")
     return 0
 
@@ -617,15 +626,16 @@ def cmd_checks(args) -> int:
 # Les commandes par public (B-0034, P6) : l'humain en a peu, l'agent
 # davantage, le reste sert aux hooks, à la CI et au moteur lui-même.
 GROUPES = {
-    "pour l'humain": ["help", "install", "init", "state", "answer", "approve", "reviewed", "private install"],
-    "pour l'agent": ["new", "show", "url", "verify", "check", "next-id", "private", "mutation-verdict", "mutation-run",
+    a_traduire("pour l'humain"): ["help", "install", "init", "state", "answer", "approve", "reviewed", "private install"],
+    a_traduire("pour l'agent"): ["new", "show", "url", "verify", "check", "next-id", "private", "mutation-verdict", "mutation-run",
                      "renumber", "archive", "checks"],
-    "internes (hooks, CI, moteur)": ["hook", "ci", "selftest", "fingerprint"],
+    a_traduire("internes (hooks, CI, moteur)"): ["hook", "ci", "selftest", "fingerprint"],
 }
 
 
 # Une sous-commande que l'aide range à part de sa commande.
-SOUS_COMMANDES = {"private install": "(humain seul) mettre en place le dépôt privé du mode compagnon : --repo <adresse>"}
+SOUS_COMMANDES = {"private install": a_traduire("(humain seul) mettre en place le dépôt privé du mode "
+                                                "compagnon : --repo <adresse>")}
 
 
 def aide_groupee(aides: dict[str, str], groupes: list[str] | None = None) -> str:
@@ -634,162 +644,184 @@ def aide_groupee(aides: dict[str, str], groupes: list[str] | None = None) -> str
     for groupe, noms in GROUPES.items():
         if groupes is not None and groupe not in groupes:
             continue
-        lignes.append(f"{groupe} :")
-        lignes += [f"  {n:<17} {aides.get(n) or SOUS_COMMANDES.get(n, '')}" for n in noms]
+        lignes.append(trad("{groupe} :", groupe=trad(groupe)))
+        lignes += [f"  {n:<17} {aides.get(n) or trad(SOUS_COMMANDES.get(n, ''))}" for n in noms]
         lignes.append("")
     return "\n".join(lignes).rstrip()
 
 
 def cmd_aide(args) -> int:
-    print((Path(__file__).resolve().parent / "HELP.md").read_text(encoding="utf-8").rstrip())
+    """Le guide de l'humain, dans la langue de la mémoire du projet quand il
+    en a une version (`HELP.en.md`)."""
+    dossier = Path(__file__).resolve().parent
+    traduit = dossier / f"HELP.{messages.langue()}.md"
+    print((traduit if traduit.is_file() else dossier / "HELP.md").read_text(encoding="utf-8").rstrip())
     return 0
 
 
 def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
     """L'analyseur de la ligne de commande, et l'aide d'une ligne de chaque
     commande."""
-    p = argparse.ArgumentParser(prog="socle", description=f"socle {VERSION} — mémoire, documentation et tests fiables",
+    p = argparse.ArgumentParser(prog="socle", description=trad("socle {version} — mémoire, documentation et "
+                                                               "tests fiables", version=VERSION),
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--root", help="racine du projet (défaut : le dépôt git courant)")
+    p.add_argument("--root", help=trad("racine du projet (défaut : le dépôt git courant)"))
     sp = p.add_subparsers(dest="cmd", required=True, metavar="<commande>")
 
-    s = sp.add_parser("help", help="le guide de l'humain : ses gestes, chacun avec sa commande")
+    s = sp.add_parser("help", help=trad("le guide de l'humain : ses gestes, chacun avec sa commande"))
     s.set_defaults(f=cmd_aide)
 
-    s = sp.add_parser("state", help="où en est le projet, calculé à chaque fois (injecté au démarrage de l'agent)")
-    s.add_argument("--short", action="store_true", help="sans le contenu de l'actif et du canonique")
+    s = sp.add_parser("state", help=trad("où en est le projet, calculé à chaque fois (injecté au démarrage de "
+                                         "l'agent)"))
+    s.add_argument("--short", action="store_true", help=trad("sans le contenu de l'actif et du canonique"))
     s.set_defaults(f=cmd_state)
 
-    s = sp.add_parser("check", help="contrôles du socle, un code de sortie")
+    s = sp.add_parser("check", help=trad("contrôles du socle, un code de sortie"))
     s.add_argument("--stage", choices=("agent", "git", "ci"), default="ci")
-    s.add_argument("--base", help="révision de base (défaut : divergence avec la branche par défaut)")
-    s.add_argument("--rev", help="révision contrôlée (défaut : l'arbre de travail)")
-    s.add_argument("--only", help="liste de contrôles, séparés par des virgules")
-    s.add_argument("--fast", action="store_true", help="sans les contrôles lents")
-    s.add_argument("--short", action="store_true", dest="court", help="ne montrer que ce qui échoue ou avertit")
+    s.add_argument("--base", help=trad("révision de base (défaut : divergence avec la branche par défaut)"))
+    s.add_argument("--rev", help=trad("révision contrôlée (défaut : l'arbre de travail)"))
+    s.add_argument("--only", help=trad("liste de contrôles, séparés par des virgules"))
+    s.add_argument("--fast", action="store_true", help=trad("sans les contrôles lents"))
+    s.add_argument("--short", action="store_true", dest="court", help=trad("ne montrer que ce qui échoue ou "
+                                                                           "avertit"))
     s.set_defaults(f=cmd_check)
 
-    s = sp.add_parser("verify", help="le contrat verify : capacités de l'adaptateur puis contrôles")
+    s = sp.add_parser("verify", help=trad("le contrat verify : capacités de l'adaptateur puis contrôles"))
     s.add_argument("--fast", action="store_true", dest="fast")
     s.add_argument("--redo", action="store_true", dest="refaire",
-                   help="relancer les étapes rapides même si elles ont déjà passé sur cet arbre exact")
+                   help=trad("relancer les étapes rapides même si elles ont déjà passé sur cet arbre exact"))
     s.add_argument("--base")
     s.set_defaults(f=cmd_verify)
 
-    s = sp.add_parser("ci", help="tout : capacités, contrôles, auto-test")
+    s = sp.add_parser("ci", help=trad("tout : capacités, contrôles, auto-test"))
     s.add_argument("--base")
     s.add_argument("--no-selftest", action="store_true")
     s.set_defaults(f=cmd_ci)
 
-    s = sp.add_parser("hook", help="point d'entrée des hooks de l'agent et de git")
+    s = sp.add_parser("hook", help=trad("point d'entrée des hooks de l'agent et de git"))
     s.add_argument("event")
     s.add_argument("rest", nargs="*")
     s.set_defaults(f=cmd_hook)
 
-    s = sp.add_parser("next-id", help="prochain identifiant libre")
+    s = sp.add_parser("next-id", help=trad("prochain identifiant libre"))
     s.add_argument("type", choices=sorted(TYPES_CLI))
     s.add_argument("--private", action="store_true")
     s.set_defaults(f=cmd_next_id)
 
-    s = sp.add_parser("new", help="ajoute une entrée squelette avec son identifiant")
+    s = sp.add_parser("new", help=trad("ajoute une entrée squelette avec son identifiant"))
     s.add_argument("type", choices=sorted(TYPES_CLI))
     s.add_argument("title")
     zone = s.add_mutually_exclusive_group()
-    zone.add_argument("--private", action="store_true", help="dans la mémoire privée (défaut quand elle existe)")
-    zone.add_argument("--public", action="store_true", help="dans la mémoire publique, même quand une mémoire privée existe")
+    zone.add_argument("--private", action="store_true", help=trad("dans la mémoire privée (défaut quand elle "
+                                                                  "existe)"))
+    zone.add_argument("--public", action="store_true", help=trad("dans la mémoire publique, même quand une "
+                                                                 "mémoire privée existe"))
     s.set_defaults(f=cmd_new)
 
-    s = sp.add_parser("show", help="afficher une entrée de mémoire, avec son empreinte, ou un index")
+    s = sp.add_parser("show", help=trad("afficher une entrée de mémoire, avec son empreinte, ou un index"))
     s.add_argument("ids", nargs="*")
-    s.add_argument("--index", choices=("decisions", "backlog"), help="l'index des décisions ou du backlog ouvert")
+    s.add_argument("--index", choices=("decisions", "backlog"), help=trad("l'index des décisions ou du backlog "
+                                                                          "ouvert"))
     s.set_defaults(f=cmd_show)
 
-    s = sp.add_parser("private", help="mémoire privée : état, verrou du dépôt compagnon, termes, bascule ; "
-                      "`install` (humain seul) met en place le dépôt compagnon")
+    s = sp.add_parser("private", help=trad("mémoire privée : état, verrou du dépôt compagnon, termes, bascule "
+                                           "; `install` (humain seul) met en place le dépôt compagnon"))
     s.add_argument("action", choices=("status", "install", "lock", "extract", "recover", "term", "move"))
-    s.add_argument("terme", nargs="*", help="avec `term` : le terme à ajouter à la liste privée ; "
-                   "avec `move` : l'identifiant de l'entrée publique à basculer dans la mémoire privée")
-    s.add_argument("--repo", help="avec `install` (humain seul) : l'adresse du dépôt privé, cloné et mis en place")
+    s.add_argument("terme", nargs="*", help=trad("avec `term` : le terme à ajouter à la liste privée ; avec "
+                                                 "`move` : l'identifiant de l'entrée publique à basculer dans "
+                                                 "la mémoire privée"))
+    s.add_argument("--repo", help=trad("avec `install` (humain seul) : l'adresse du dépôt privé, cloné et mis "
+                                       "en place"))
     s.set_defaults(f=cmd_prive)
 
-    s = sp.add_parser("reviewed", help="tu as relu ce qui part vers le dépôt public ; l'agent y relaie ton accord (--relayed)")
+    s = sp.add_parser("reviewed", help=trad("tu as relu ce qui part vers le dépôt public ; l'agent y relaie "
+                                            "ton accord (--relayed)"))
     s.add_argument("--rev", default="HEAD")
     s.add_argument("--by")
-    s.add_argument("--relayed", action="store_true", help="accord donné par l'humain dans la conversation")
+    s.add_argument("--relayed", action="store_true", help=trad("accord donné par l'humain dans la conversation"))
     s.add_argument("--quote")
     s.add_argument("--quote-file")
     s.set_defaults(f=cmd_relu)
 
-    s = sp.add_parser("url", help="le permalien d'un fichier ou d'une entrée, à donner à l'humain")
+    s = sp.add_parser("url", help=trad("le permalien d'un fichier ou d'une entrée, à donner à l'humain"))
     s.add_argument("cibles", nargs="+", metavar="chemin|ID")
     s.set_defaults(f=cmd_url)
 
-    s = sp.add_parser("answer", help="répondre à une demande ; l'agent y relaie (--relayed) ta réponse donnée dans la conversation")
+    s = sp.add_parser("answer", help=trad("répondre à une demande ; l'agent y relaie (--relayed) ta réponse "
+                                          "donnée dans la conversation"))
     s.add_argument("request")
     s.add_argument("answer")
     s.add_argument("--text", default="")
     s.add_argument("--by")
-    s.add_argument("--relayed", action="store_true", help="réponse donnée par l'humain dans la conversation")
-    s.add_argument("--quote", help="texte exact de l'humain (avec --relayed)")
-    s.add_argument("--quote-file", help="fichier qui contient le texte exact de l'humain")
+    s.add_argument("--relayed", action="store_true", help=trad("réponse donnée par l'humain dans la "
+                                                               "conversation"))
+    s.add_argument("--quote", help=trad("texte exact de l'humain (avec --relayed)"))
+    s.add_argument("--quote-file", help=trad("fichier qui contient le texte exact de l'humain"))
     s.set_defaults(f=cmd_answer)
 
-    s = sp.add_parser("approve", help="(humain seul) approuver tes changements protégés ; sans --files, ceux qui ont changé")
+    s = sp.add_parser("approve", help=trad("(humain seul) approuver tes changements protégés ; sans --files, "
+                                           "ceux qui ont changé"))
     s.add_argument("--files", nargs="*")
     s.add_argument("--keys", nargs="*")
     s.add_argument("--text", required=True)
-    s.add_argument("--yes", action="store_true", dest="oui", help="sans --files : approuver sans demander confirmation")
+    s.add_argument("--yes", action="store_true", dest="oui", help=trad("sans --files : approuver sans demander "
+                                                                       "confirmation"))
     s.set_defaults(f=cmd_approve)
 
-    s = sp.add_parser("install", help="installer ou mettre à jour le socle dans un projet")
+    s = sp.add_parser("install", help=trad("installer ou mettre à jour le socle dans un projet"))
     s.add_argument("--target", default=".")
     s.add_argument("--adapter", default="auto",
-                   help="`auto`, le défaut (déduit du dépôt), un adaptateur maintenu ("
-                   + ", ".join(sorted(x.stem for x in (Path(__file__).resolve().parent / "adapters").glob("*.toml")))
-                   + ") ou le chemin d'un .toml")
-    s.add_argument("--owner", default="", help="propriétaire pour CODEOWNERS, ex. @theodubus")
-    s.add_argument("--adoption", action="store_true", help="projet existant : plafonds au niveau actuel")
+                   help=trad("`auto`, le défaut (déduit du dépôt), un adaptateur maintenu ({adaptateurs}) ou le "
+                             "chemin d'un .toml", adaptateurs=", ".join(sorted(
+                                 x.stem for x in (Path(__file__).resolve().parent / "adapters").glob("*.toml")))))
+    s.add_argument("--owner", default="", help=trad("propriétaire pour CODEOWNERS, ex. @theodubus"))
+    s.add_argument("--adoption", action="store_true", help=trad("projet existant : plafonds au niveau actuel"))
     s.add_argument("--mode", choices=(config.MODE_PROJET, config.MODE_AMONT), default=config.MODE_PROJET)
-    s.add_argument("--private", choices=("compagnon", "chiffre"), help="mémoire privée, et son mode")
-    s.add_argument("--review", choices=("aucune", "chaque-push", "lots"), help="relecture humaine avant publication")
-    s.add_argument("--private-requests", action="store_true", help="demandes et réponses dans la mémoire privée")
-    s.add_argument("--filter", default="git-crypt", help="mode chiffré : le nom du filtre git de l'outil")
+    s.add_argument("--private", choices=("compagnon", "chiffre"), help=trad("mémoire privée, et son mode"))
+    s.add_argument("--review", choices=("aucune", "chaque-push", "lots"), help=trad("relecture humaine avant publication"))
+    s.add_argument("--private-requests", action="store_true", help=trad("demandes et réponses dans la mémoire "
+                                                                        "privée"))
+    s.add_argument("--filter", default="git-crypt", help=trad("mode chiffré : le nom du filtre git de l'outil"))
     s.add_argument("--language", choices=("fr", "en"),
-                   help="langue de la mémoire d'un projet neuf : mots-clés et gabarits (défaut : fr)")
+                   help=trad("langue de la mémoire d'un projet neuf : mots-clés, gabarits et messages du moteur "
+                             "(défaut : fr)"))
     s.set_defaults(f=cmd_install)
 
-    s = sp.add_parser("init", help="initialiser la mémoire depuis un cadrage, rien, ou le dépôt existant")
-    s.add_argument("--brief", dest="cadrage", help="le document de cadrage, archivé tel quel")
-    s.add_argument("--repo", action="store_true", dest="depot", help="auditer le dépôt existant, en lecture seule")
+    s = sp.add_parser("init", help=trad("initialiser la mémoire depuis un cadrage, rien, ou le dépôt existant"))
+    s.add_argument("--brief", dest="cadrage", help=trad("le document de cadrage, archivé tel quel"))
+    s.add_argument("--repo", action="store_true", dest="depot", help=trad("auditer le dépôt existant, en lecture "
+                                                                          "seule"))
     s.set_defaults(f=cmd_init)
 
-    s = sp.add_parser("selftest", help="injecte des défauts connus et vérifie qu'ils sont attrapés")
+    s = sp.add_parser("selftest", help=trad("injecte des défauts connus et vérifie qu'ils sont attrapés"))
     s.add_argument("--verbose", action="store_true")
     s.set_defaults(f=cmd_selftest)
 
-    s = sp.add_parser("fingerprint", help="empreinte du moteur et de fichiers")
+    s = sp.add_parser("fingerprint", help=trad("empreinte du moteur et de fichiers"))
     s.add_argument("files", nargs="*")
     s.set_defaults(f=cmd_fingerprint)
 
-    s = sp.add_parser("mutation-verdict", help="survivants d'un balayage contre les plafonds")
+    s = sp.add_parser("mutation-verdict", help=trad("survivants d'un balayage contre les plafonds"))
     s.add_argument("results")
     s.add_argument("--record", action="store_true", dest="poser",
-                   help="écrire le plafond mesuré des modules « à mesurer » dans les garde-fous")
+                   help=trad("écrire le plafond mesuré des modules « à mesurer » dans les garde-fous"))
     s.set_defaults(f=cmd_mutation_verdict)
 
-    s = sp.add_parser("mutation-run", help="lance le balayage de mutation de l'adaptateur, puis son verdict")
+    s = sp.add_parser("mutation-run", help=trad("lance le balayage de mutation de l'adaptateur, puis son "
+                                                "verdict"))
     s.add_argument("--record", action="store_true", dest="poser",
-                   help="écrire le plafond mesuré des modules « à mesurer » dans les garde-fous")
+                   help=trad("écrire le plafond mesuré des modules « à mesurer » dans les garde-fous"))
     s.set_defaults(f=cmd_mutation_run)
 
-    s = sp.add_parser("renumber", help="donne le prochain identifiant libre à une entrée qu'une autre branche a prise aussi")
+    s = sp.add_parser("renumber", help=trad("donne le prochain identifiant libre à une entrée qu'une autre "
+                                            "branche a prise aussi"))
     s.add_argument("id")
     s.set_defaults(f=cmd_renumber)
 
-    s = sp.add_parser("archive", help="archive les sujets clos du backlog dans le journal")
+    s = sp.add_parser("archive", help=trad("archive les sujets clos du backlog dans le journal"))
     s.set_defaults(f=cmd_archive)
 
-    s = sp.add_parser("checks", help="liste des contrôles")
+    s = sp.add_parser("checks", help=trad("liste des contrôles"))
     s.set_defaults(f=cmd_checks)
 
     # L'aide liste les commandes par public, au lieu de la liste d'argparse.
@@ -799,23 +831,36 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
     return p, aides
 
 
-def main(argv=None) -> int:
-    p, aides = analyseur()
-    argv = sys.argv[1:] if argv is None else argv
-    # Le lanceur passe `--root <racine>` devant ce que l'humain a tapé.
-    if not [x for i, x in enumerate(argv) if x != "--root" and (i == 0 or argv[i - 1] != "--root")]:
-        # Sans commande : l'aide courte, celle de l'humain.
-        print(f"socle {VERSION} — mémoire, documentation et tests fiables\n")
-        print(aide_groupee(aides, ["pour l'humain"]))
-        print("\nLe guide : `python3 .socle/socle help` ; toutes les commandes : `python3 .socle/socle --help`.")
-        return 0
-    from socle import commands as commandes
-
-    args = p.parse_args(commandes.noms_anglais(argv))
-    # La langue que la commande pose en chargeant son projet ne lui survit
-    # pas : un appel suivant, dans le même processus, part du français.
-    avant = messages.langue()
+def _langue_de(argv: list[str]) -> str:
+    """La langue de la mémoire du projet que vise la commande (`--root`, ou
+    le dépôt courant) : l'aide et ce qui s'imprime avant le chargement du
+    projet la suivent aussi. Le français hors d'un projet lisible."""
+    racine = next((argv[i + 1] for i, x in enumerate(argv[:-1]) if x == "--root"), None) or next(
+        (x.split("=", 1)[1] for x in argv if x.startswith("--root=")), None)
     try:
+        return langue.du_projet(config.Projet.charger(Path(racine) if racine else None))
+    except Exception:
+        return messages.FRANCAIS
+
+
+def main(argv=None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    # La langue que la commande pose ne lui survit pas : un appel suivant,
+    # dans le même processus, part du français.
+    avant = messages.choisir(_langue_de(argv))
+    try:
+        p, aides = analyseur()
+        # Le lanceur passe `--root <racine>` devant ce que l'humain a tapé.
+        if not [x for i, x in enumerate(argv) if x != "--root" and (i == 0 or argv[i - 1] != "--root")]:
+            # Sans commande : l'aide courte, celle de l'humain.
+            print(trad("socle {version} — mémoire, documentation et tests fiables\n", version=VERSION))
+            print(aide_groupee(aides, ["pour l'humain"]))
+            print(trad("\nLe guide : `python3 .socle/socle help` ; toutes les commandes : `python3 .socle/socle "
+                       "--help`."))
+            return 0
+        from socle import commands as commandes
+
+        args = p.parse_args(commandes.noms_anglais(argv))
         return args.f(args)
     finally:
         messages.choisir(avant)

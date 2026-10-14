@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from socle import config, language as langue, memory as memoire, utils as outils
+from socle.messages import a_traduire, trad
 
 # Les sections et les réponses, sous leurs clés internes ; elles s'écrivent
 # dans la langue de la mémoire du projet (B-0031).
@@ -117,7 +118,7 @@ def charger(racine: Path, rev: str | None, chemin: str, texte: str) -> Demande:
             d.reponse = tomllib.loads(brut)
         except tomllib.TOMLDecodeError as e:
             d.reponse = {}
-            d.erreur_reponse = f"réponse illisible : {e}"
+            d.erreur_reponse = trad("réponse illisible : {erreur}", erreur=e)
     return d
 
 
@@ -159,62 +160,68 @@ def linter(d: Demande, projet: config.Projet) -> list[str]:
     fautes = []
     f = memoire.analyser(d.chemin, d.texte)
     if f.couche != "demandes":
-        fautes.append("en-tête `<!-- socle: couche=demandes zone=… -->` absent ou faux")
+        fautes.append(trad("en-tête `<!-- socle: couche=demandes zone=… -->` absent ou faux"))
     if d.entree is None:
-        fautes.append("pas de titre `# D-NNNN — <décision en une phrase>`")
+        fautes.append(trad("pas de titre `# D-NNNN — <décision en une phrase>`"))
         return fautes
     if len(d.entree.titre) < 10:
-        fautes.append("le titre doit énoncer la décision demandée en une phrase")
+        fautes.append(trad("le titre doit énoncer la décision demandée en une phrase"))
     nom = Path(d.chemin).name
     if not nom.startswith(d.entree.id):
-        fautes.append(f"le nom du fichier doit commencer par {d.entree.id}")
+        fautes.append(trad("le nom du fichier doit commencer par {id}", id=d.entree.id))
 
     for k, titre in SECTIONS.items():
         contenu = d.sections.get(k)
         if contenu is None:
-            fautes.append(f"section « {titre} » absente")
+            fautes.append(trad("section « {titre} » absente", titre=titre))
         elif len(re.sub(r"\s+", " ", contenu)) < SECTION_MIN:
-            fautes.append(f"section « {titre} » vide ou trop courte")
+            fautes.append(trad("section « {titre} » vide ou trop courte", titre=titre))
         elif TROU.search(CODE_CITE.sub(" ", contenu)):
             # Le gabarit porte les mots que le lint cherche : un trou laissé
             # tel quel passerait pour une section remplie.
             trou = TROU.search(CODE_CITE.sub(" ", contenu)).group(0)
-            fautes.append(f"section « {titre} » : texte du gabarit laissé tel quel ({trou[:40]}…)")
+            fautes.append(trad("section « {titre} » : texte du gabarit laissé tel quel ({trou}…)",
+                               titre=titre, trou=trou[:40]))
 
     contexte = d.sections.get("contexte", "")
     if contexte and len(re.findall(r"[^\W\d_]{2,}", contexte)) < MOTS_CONTEXTE_MIN:
-        fautes.append(f"« Contexte » trop court : moins de {MOTS_CONTEXTE_MIN} mots ne suffisent pas à "
-                      "quelqu'un qui n'a pas ouvert le projet depuis une semaine")
+        fautes.append(trad("« Contexte » trop court : moins de {n} mots ne suffisent pas à "
+                           "quelqu'un qui n'a pas ouvert le projet depuis une semaine",
+                           n=MOTS_CONTEXTE_MIN))
     regarder = d.sections.get("ou-regarder", "")
     if "ou-regarder" in d.sections and not LIEN.search(regarder):
-        fautes.append("« Où regarder » doit donner un lien vers chaque document ou passage à lire, "
-                      "et dire ce qu'il faut y vérifier : le permalien de `socle url <chemin>` ; sans adresse "
-                      "de dépôt connue, un lien relatif depuis la demande (`[calc.py](../../calc.py)`)")
+        fautes.append(trad("« Où regarder » doit donner un lien vers chaque document ou passage à lire, et "
+                           "dire ce qu'il faut y vérifier : le permalien de `socle url <chemin>` ; sans "
+                           "adresse de dépôt connue, un lien relatif depuis la demande "
+                           "(`[calc.py](../../calc.py)`)"))
 
     norm = {k: outils.cle(v).replace("-", " ") for k, v in d.sections.items()}
     opts = norm.get("options", "")
-    for indice, quoi in (("effort", "l'effort"), ("risque", "le risque"), ("reversibilite", "la réversibilité")):
+    for indice, faute in (("effort", a_traduire("« Options » doit dire l'effort de chaque option")),
+                          ("risque", a_traduire("« Options » doit dire le risque de chaque option")),
+                          ("reversibilite", a_traduire("« Options » doit dire la réversibilité de chaque option"))):
         if "options" in d.sections and not any(x in opts for x in langue.INDICES[indice]):
-            fautes.append(f"« Options » doit dire {quoi} de chaque option")
+            fautes.append(trad(faute))
     cons = norm.get("consequences", "")
     if "consequences" in d.sections:
         if not any(x in cons for x in langue.INDICES["si-valide"]):
-            fautes.append("« Conséquences » doit dire ce qui se passe si l'humain valide")
+            fautes.append(trad("« Conséquences » doit dire ce qui se passe si l'humain valide"))
         if not any(x in cons for x in langue.INDICES["si-refuse"]):
-            fautes.append("« Conséquences » doit dire ce qui se passe si l'humain refuse")
+            fautes.append(trad("« Conséquences » doit dire ce qui se passe si l'humain refuse"))
         if not any(x in cons for x in langue.INDICES["sans-reponse"]):
-            fautes.append("« Conséquences » doit dire ce qui se passe sans réponse")
+            fautes.append(trad("« Conséquences » doit dire ce qui se passe sans réponse"))
     rec = norm.get("recommandation", "")
     if "recommandation" in d.sections and not (any(x in rec for x in langue.INDICES["verifie"])
                                                and any(x in rec for x in langue.INDICES["suppose"])):
-        fautes.append("« Recommandation » doit séparer ce qui est vérifié de ce qui est supposé")
+        fautes.append(trad("« Recommandation » doit séparer ce qui est vérifié de ce qui est supposé"))
 
     possibles = d.reponses_possibles()
     if "reponses-possibles" in d.sections:
         if len(possibles) < 2:
-            fautes.append("« Réponses possibles » : au moins deux réponses, en liste `- \\`valeur\\` — sens`")
+            fautes.append(trad("« Réponses possibles » : au moins deux réponses, en liste `- \\`valeur\\` — "
+                               "sens`"))
         if RENVOI not in {langue.reponse(x) for x in possibles}:
-            fautes.append(f"« Réponses possibles » doit proposer `{RENVOI}`")
+            fautes.append(trad("« Réponses possibles » doit proposer `{renvoi}`", renvoi=RENVOI))
 
     # Aucun identifiant interne sans description, dans la même demande.
     decrits = descriptions(d.sections.get("elements-cites", ""), motifs_internes(projet))
@@ -222,8 +229,8 @@ def linter(d: Demande, projet: config.Projet) -> list[str]:
     for ident in sorted(cites):
         if ident not in decrits:
             fautes.append(
-                f"identifiant `{ident}` cité sans description : le décrire en clair dans "
-                "« Éléments cités » (`- <identifiant> — ce que c'est, en une phrase`)"
+                trad("identifiant `{ident}` cité sans description : le décrire en clair dans « Éléments cités "
+                     "» (`- <identifiant> — ce que c'est, en une phrase`)", ident=ident)
             )
     return fautes
 
@@ -253,16 +260,16 @@ def verifier_reponse(d: Demande) -> list[str]:
         return [d.erreur_reponse]
     r = d.reponse.get("reponse")
     if not r:
-        fautes.append("réponse sans champ `reponse`")
+        fautes.append(trad("réponse sans champ `reponse`"))
     elif not d.accepte(str(r)):
-        fautes.append(f"réponse `{r}` absente des réponses possibles de la demande")
+        fautes.append(trad("réponse `{reponse}` absente des réponses possibles de la demande", reponse=r))
     if d.reponse.get("canal") == "conversation" and len(str(d.reponse.get("citation", "")).strip()) < 2:
-        fautes.append("réponse relayée depuis la conversation sans la citation exacte de l'humain")
+        fautes.append(trad("réponse relayée depuis la conversation sans la citation exacte de l'humain"))
     attendue = d.reponse.get("empreinte", "")
     if attendue != "sha256:" + outils.sha256(d.texte):
         fautes.append(
-            "la demande a changé après la réponse : la réponse portait sur un autre texte "
-            "(une demande répondue est gelée ; en écrire une nouvelle qui la remplace)"
+            trad("la demande a changé après la réponse : la réponse portait sur un autre texte (une demande "
+                 "répondue est gelée ; en écrire une nouvelle qui la remplace)")
         )
     return fautes
 
@@ -280,25 +287,27 @@ def ecrire_reponse(racine: Path, d: Demande, reponse: str, texte: str, par: str,
     reste dans le fichier, visible à la relecture du diff."""
     if not d.accepte(reponse):
         raise ValueError(
-            f"`{reponse}` n'est pas une réponse possible : {', '.join(d.reponses_possibles())}"
+            trad("`{reponse}` n'est pas une réponse possible : {liste}",
+                 reponse=reponse, liste=', '.join(d.reponses_possibles()))
         )
     if d.reponse is not None:
-        raise ValueError(f"{d.id} a déjà une réponse ({d.chemin_reponse})")
+        raise ValueError(trad("{id} a déjà une réponse ({reponse})",
+                              id=d.id, reponse=d.chemin_reponse))
     if canal not in CANAUX:
-        raise ValueError(f"canal inconnu : {canal}")
+        raise ValueError(trad("canal inconnu : {canal}", canal=canal))
     if canal == "conversation" and len(citation.strip()) < 2:
-        raise ValueError("une réponse relayée cite le texte exact de l'humain (--quote ou --quote-file)")
+        raise ValueError(trad("une réponse relayée cite le texte exact de l'humain (--quote ou --quote-file)"))
     cr = chemin_reponse(d.chemin)
     entete = (
-        "# Réponse humaine donnée dans la conversation, consignée par l'agent avec\n"
-        "# le texte exact de l'humain (`citation`). Relue avec le diff.\n"
+        trad("# Réponse humaine donnée dans la conversation, consignée par l'agent avec\n"
+             "# le texte exact de l'humain (`citation`). Relue avec le diff.\n")
         if canal == "conversation" else
-        "# Réponse humaine, écrite par l'humain lui-même (`socle answer`).\n"
+        trad("# Réponse humaine, écrite par l'humain lui-même (`socle answer`).\n")
     )
     contenu = (
         entete
-        + f"# Elle porte sur le texte exact de {Path(d.chemin).name}, dont l'empreinte suit.\n"
-        f"reponse = {_toml_str(reponse)}\n"
+        + trad("# Elle porte sur le texte exact de {demande}, dont l'empreinte suit.\n", demande=Path(d.chemin).name)
+        + f"reponse = {_toml_str(reponse)}\n"
         f"texte = {_toml_str(texte)}\n"
         f"par = {_toml_str(par)}\n"
         f"date = {_toml_str(date)}\n"
@@ -346,5 +355,5 @@ def illisible(projet: config.Projet, d: Demande) -> str | None:
         return None  # le dépôt privé : `lien` a vérifié qu'elle y est poussée
     sha = liens.commit_pousse(projet.racine)
     if outils.lire_a(projet.racine, sha, d.chemin) != (projet.racine / d.chemin).read_text(encoding="utf-8"):
-        return "la version poussée diffère de la version locale"
+        return trad("la version poussée diffère de la version locale")
     return None

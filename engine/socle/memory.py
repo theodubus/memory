@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from socle import config, language as langue, utils as outils
+from socle.messages import trad
 
 TYPES = {
     "F": "canonique",
@@ -476,7 +477,7 @@ def prochain_libre(type_: str, pris: set[str], prive: bool = False, date: str | 
     prefixe = ("P" if prive else "") + type_ + "-"
     if type_ == "J":
         if date is None:
-            raise ValueError("un identifiant de journal exige une date")
+            raise ValueError(trad("un identifiant de journal exige une date"))
         for lettre in _lettres():
             cand = f"{prefixe}{date}-{lettre}"
             if cand not in pris:

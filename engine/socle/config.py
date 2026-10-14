@@ -20,6 +20,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from socle import utils as outils
+from socle.messages import trad
 
 DOSSIER = ".socle"
 LANCEUR = ".socle/socle"
@@ -212,7 +213,7 @@ class Projet:
             try:
                 setattr(p, attr, charger_toml(racine, chemin, rev))
             except tomllib.TOMLDecodeError as e:
-                p.erreurs_config.append((chemin, f"TOML illisible : {e}"))
+                p.erreurs_config.append((chemin, trad("TOML illisible : {erreur}", erreur=e)))
         return p
 
     @property

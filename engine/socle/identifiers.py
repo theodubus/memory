@@ -14,6 +14,7 @@ import re
 from pathlib import Path
 
 from socle import config, memory as memoire, utils as outils
+from socle.messages import trad
 
 
 def pris_ailleurs(racine: Path, type_: str) -> set[str]:
@@ -78,13 +79,14 @@ def renumeroter(projet: config.Projet, ident: str) -> list[str]:
     mem = memoire.Memoire.charger(racine)
     e = mem.entree(ident)
     if e is None:
-        raise ValueError(f"`{ident}` ne désigne aucune entrée de la mémoire")
+        raise ValueError(trad("`{ident}` ne désigne aucune entrée de la mémoire", ident=ident))
     base = outils.base_de_travail(racine)
     if base and ident in memoire.Memoire.charger(racine, base).definitions():
-        raise ValueError(f"`{ident}` existait avant la branche : ce n'est pas à elle de le renuméroter")
+        raise ValueError(trad("`{ident}` existait avant la branche : ce n'est pas à elle de le renuméroter",
+                              ident=ident))
     if e.type == "D" and any(c.endswith(s) for c in outils.fichiers_courants(racine)
                              for s in memoire.SUFFIXES_REPONSE if c.startswith(e.fichier.removesuffix(".md"))):
-        raise ValueError(f"`{ident}` a reçu sa réponse : une demande répondue est gelée")
+        raise ValueError(trad("`{ident}` a reçu sa réponse : une demande répondue est gelée", ident=ident))
     pris = set(mem.definitions()) | pris_ailleurs(racine, e.type)
     defaut = outils.branche_par_defaut(racine)
     if defaut:
@@ -123,5 +125,5 @@ def renumeroter(projet: config.Projet, ident: str) -> list[str]:
         p = racine / chemin
         p.write_text(p.read_text(encoding="utf-8").replace(marque, f"{nouvel}@{empreinte}"), encoding="utf-8")
     res.insert(0, f"{ident} → {nouvel}")
-    res.append(f"reporté dans {len(touches)} fichier(s) : {', '.join(touches)}")
+    res.append(trad("reporté dans {n} fichier(s) : {liste}", n=len(touches), liste=', '.join(touches)))
     return res

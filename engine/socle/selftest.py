@@ -27,6 +27,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
+from socle.messages import trad
 from socle.report import Rapport, en_echec_dans
 
 # Les fils de l'auto-test : un clone chacun, au plus quatre (L6).
@@ -152,7 +153,8 @@ class Atelier:
                      "sys.exit(main(sys.argv[2:]))", str(self.moteur),
                      "install", "--target", ".", "--adapter", "python", "--owner", "@essai")
         if r.returncode != 0:
-            raise RuntimeError(f"installation du projet d'essai : {r.stdout[-3000:]}{r.stderr[-3000:]}")
+            raise RuntimeError(trad("installation du projet d'essai : {stdout}{stderr}",
+                                    stdout=r.stdout[-3000:], stderr=r.stderr[-3000:]))
         # La doc qui cite une valeur liée vient après sa déclaration : posée
         # avant, l'audit d'installation la refuserait, à raison.
         (origine / "docs").mkdir()
@@ -172,7 +174,8 @@ class Atelier:
         self.git(origine, "add", "-A")
         r = self.run(origine, "git", "commit", "-q", "-m", "Projet d'essai")
         if r.returncode != 0:
-            raise RuntimeError(f"le témoin de base ne passe pas le hook pre-commit :\n{r.stdout}{r.stderr}")
+            raise RuntimeError(trad("le témoin de base ne passe pas le hook pre-commit :\n{stdout}{stderr}",
+                                    stdout=r.stdout, stderr=r.stderr))
         self.origine = origine
 
     @staticmethod
@@ -320,7 +323,7 @@ def remplacer(c: Path, rel: str, avant: str, apres: str):
     p = c / rel
     t = p.read_text()
     if avant not in t:
-        raise RuntimeError(f"injection impossible : « {avant} » absent de {rel}")
+        raise RuntimeError(trad("injection impossible : « {avant} » absent de {rel}", avant=avant, rel=rel))
     p.write_text(t.replace(avant, apres, 1))
 
 
@@ -331,7 +334,7 @@ def empreinte(a: Atelier, c: Path, cible: str) -> str:
     sortie = a.socle(c, *args).stdout
     m = re.search(rf"{re.escape(cible)}@([0-9a-f]{{8}})", sortie)
     if not m:
-        raise RuntimeError(f"pas d'empreinte pour {cible} : {sortie[:200]}")
+        raise RuntimeError(trad("pas d'empreinte pour {cible} : {sortie}", cible=cible, sortie=sortie[:200]))
     return m.group(1)
 
 
@@ -1703,7 +1706,7 @@ def executer(projet=None, bavard: bool = False) -> Rapport:
             a.preparer()
         except Exception as e:
             r.execute("autotest")
-            r.erreur("autotest", f"projet d'essai impossible à préparer : {e}")
+            r.erreur("autotest", trad("projet d'essai impossible à préparer : {erreur}", erreur=e))
             return r
         # Chaque cas dans son clone, sur plusieurs fils : l'auto-test passe de
         # 76 à moins de 40 secondes sur quatre cœurs (L6). Le rapport garde
@@ -1725,25 +1728,28 @@ def executer(projet=None, bavard: bool = False) -> Rapport:
                 ident = "autotest.temoins"
                 r.execute(ident)
                 if panne is not None:
-                    sortie = f"le témoin a planté : {type(panne).__name__}: {panne}"
+                    sortie = trad("le témoin a planté : {erreur}", erreur=f"{type(panne).__name__}: {panne}")
                 if sortie:
-                    r.erreur(ident, f"témoin en échec — {nom} : un contrôle crie sur un cas sain\n        "
-                             + "\n        ".join(sortie.strip().splitlines()[-25:]))
+                    r.erreur(ident, trad("témoin en échec — {nom} : un contrôle crie sur un cas sain\n        {sortie}",
+                                         nom=nom, sortie="\n        ".join(sortie.strip().splitlines()[-25:])))
                 elif bavard:
-                    print(f"  témoin ok : {nom}", file=sys.stderr)
+                    print(trad("  témoin ok : {nom}", nom=nom), file=sys.stderr)
                 continue
             ident = f"autotest.{cas.id}"
             r.execute(ident)
             if panne is not None:
-                r.erreur(ident, f"{cas.defaut} : injection impossible — {type(panne).__name__}: {panne}")
+                r.erreur(ident, trad("{defaut} : injection impossible — {erreur}", defaut=cas.defaut,
+                                     erreur=f"{type(panne).__name__}: {panne}"))
                 continue
             if not sortie:
-                r.erreur(ident, f"DÉFAUT NON ATTRAPÉ : {cas.defaut} (attendu : {cas.controle}, étage {cas.etage})")
+                r.erreur(ident, trad("DÉFAUT NON ATTRAPÉ : {defaut} (attendu : {controle}, étage {etage})",
+                                     defaut=cas.defaut, controle=cas.controle, etage=cas.etage))
             elif not _attrape_par(cas, sortie):
-                r.erreur(ident, f"{cas.defaut} : attrapé, mais pas par {cas.controle}\n        "
-                         + "\n        ".join(sortie.strip().splitlines()[-15:]))
+                r.erreur(ident, trad("{defaut} : attrapé, mais pas par {controle}\n        {sortie}", defaut=cas.defaut,
+                                     controle=cas.controle, sortie="\n        ".join(sortie.strip().splitlines()[-15:])))
             elif bavard:
-                print(f"  attrapé : {cas.defaut} — {cas.controle}, étage {cas.etage}", file=sys.stderr)
+                print(trad("  attrapé : {defaut} — {controle}, étage {etage}",
+                           defaut=cas.defaut, controle=cas.controle, etage=cas.etage), file=sys.stderr)
     finally:
         a.nettoyer()
     return r
@@ -1787,7 +1793,8 @@ def _attrape_par(cas: Cas, sortie: str) -> bool:
     tous les contrôles exécutés, réussis compris : seule la ligne de synthèse
     `ECHEC — n contrôle(s) : …` dit lesquels ont échoué, dans toutes les langues. Un étage ou un
     contrôle qui plante n'attrape rien : il refuse par accident."""
-    if "Traceback (most recent call last)" in sortie or "le contrôle a planté" in sortie:
+    if "Traceback (most recent call last)" in sortie or "le contrôle a planté" in sortie \
+            or "the check crashed" in sortie:
         return False
     # Un rapport d'étage d'abord : un contrôle que le hook de l'agent nomme
     # aussi (`memoire.preuves`, `demandes.contrat`) s'attrape en CI par sa

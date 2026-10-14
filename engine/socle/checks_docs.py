@@ -13,6 +13,7 @@ import subprocess
 from collections import defaultdict
 
 from socle import config, language as langue, memory as memoire, utils as outils
+from socle.messages import trad
 from socle.context import controle
 
 MARQUEUR_VALEUR = re.compile(
@@ -34,7 +35,8 @@ def outillage(ctx, r):
     for chemin in outils.filtrer(ctx.fichiers, motifs):
         nom = chemin.rsplit("/", 1)[-1]
         if not any(nom in texte for c, texte in docs.items() if c != chemin):
-            r.erreur("docs.outillage", f"dispositif qu'aucun document ne nomme : `{nom}` — le nommer, avec ce qu'il fait et pourquoi", chemin)
+            r.erreur("docs.outillage", trad("dispositif qu'aucun document ne nomme : `{nom}` — le nommer, avec "
+                                            "ce qu'il fait et pourquoi", nom=nom), chemin)
 
 
 def normaliser_valeur(v: str) -> str:
@@ -57,25 +59,26 @@ def valeur_source(ctx, decl: dict) -> tuple[str | None, str | None]:
     expression régulière dont le premier groupe est la valeur."""
     regex = decl.get("regex")
     if not regex:
-        return None, "déclaration sans `regex`"
+        return None, trad("déclaration sans `regex`")
     if "file" in decl:
         texte = ctx.lire(decl["file"])
         if texte is None:
-            return None, f"source absente : {decl['file']}"
+            return None, trad("source absente : {fichier}", fichier=decl["file"])
     elif "command" in decl:
         try:
             p = subprocess.run(decl["command"], shell=True, cwd=ctx.racine, capture_output=True,
                                text=True, timeout=decl.get("timeout", 600))
         except subprocess.TimeoutExpired:
-            return None, f"la commande source a dépassé son délai : {decl['command']}"
+            return None, trad("la commande source a dépassé son délai : {commande}", commande=decl["command"])
         if p.returncode != 0:
-            return None, f"la commande source a échoué ({p.returncode}) : {decl['command']}"
+            return None, trad("la commande source a échoué ({code}) : {commande}",
+                              code=p.returncode, commande=decl["command"])
         texte = p.stdout
     else:
-        return None, "déclaration sans `file` ni `command`"
+        return None, trad("déclaration sans `file` ni `command`")
     m = re.search(regex, texte, re.M)
     if not m:
-        return None, f"la regex `{regex}` ne trouve rien dans la source"
+        return None, trad("la regex `{regex}` ne trouve rien dans la source", regex=regex)
     return (m.group(1) if m.groups() else m.group(0)), None
 
 
@@ -87,7 +90,7 @@ def valeurs(ctx, r):
     sources: dict[str, str | None] = {}
     for nom, decl in decls.items():
         if not nom:
-            r.erreur("docs.valeurs", "valeur déclarée sans `name`", ctx.projet.chemins.garde_fous)
+            r.erreur("docs.valeurs", trad("valeur déclarée sans `name`"), ctx.projet.chemins.garde_fous)
             continue
         if "command" in decl and ctx.rapide and not decl.get("fast", False):
             sources[nom] = None
@@ -104,13 +107,15 @@ def valeurs(ctx, r):
             ligne = texte.count("\n", 0, m.start()) + 1
             cites[nom] += 1
             if nom not in decls:
-                r.erreur("docs.valeurs", f"valeur `{nom}` citée sans source déclarée (`[[values]]`)", chemin, ligne)
+                r.erreur("docs.valeurs", trad("valeur `{nom}` citée sans source déclarée (`[[values]]`)",
+                                              nom=nom), chemin, ligne)
                 continue
             attendu = sources.get(nom)
             if attendu is None:
                 continue
             if normaliser_valeur(m["valeur"]) != normaliser_valeur(attendu):
-                r.erreur("docs.valeurs", f"`{nom}` vaut « {attendu.strip()} » à la source, la doc dit « {m['valeur'].strip()} »", chemin, ligne)
+                r.erreur("docs.valeurs", trad("`{nom}` vaut « {attendu} » à la source, la doc dit « {doc} »",
+                                              nom=nom, attendu=attendu.strip(), doc=m['valeur'].strip()), chemin, ligne)
 
     # Une copie non liée de la valeur courante : la doc la porte sans marqueur.
     for nom, v in sources.items():
@@ -123,8 +128,9 @@ def valeurs(ctx, r):
             nu = MARQUEUR_VALEUR.sub(" ", texte)
             for m in motif.finditer(nu):
                 ligne = nu.count("\n", 0, m.start()) + 1
-                r.avertir("docs.valeurs", f"« {m.group(0).strip()} » ressemble à la valeur `{nom}` sans marqueur : "
-                          f"l'encadrer de `<!-- valeur:{nom} -->…<!-- /valeur -->`", chemin, ligne)
+                r.avertir("docs.valeurs", trad("« {extrait} » ressemble à la valeur `{nom}` sans marqueur : "
+                                               "l'encadrer de `<!-- valeur:{nom} -->…<!-- /valeur -->`",
+                                               extrait=m.group(0).strip(), nom=nom), chemin, ligne)
 
 
 def _motif_libre(v: str) -> re.Pattern:
@@ -186,14 +192,15 @@ def correspondance(ctx, r):
         # plage ni toute la table (relevé de la passe de recul, D).
         restants = [c for c in code if c not in dispenses]
         if not restants:
-            r.avertir("docs.correspondance", f"{len(code)} fichier(s) de code sans doc associée, dispensé : "
-                      f"« {dispenses[code[0]]} »")
+            r.avertir("docs.correspondance", trad("{n} fichier(s) de code sans doc associée, dispensé : « "
+                                                  "{dispenses} »", n=len(code), dispenses=dispenses[code[0]]))
             continue
         r.erreur(
             "docs.correspondance",
-            f"code changé sans sa doc associée : {', '.join(restants[:5])}{' …' if len(restants) > 5 else ''} → "
-            f"mettre à jour {' ou '.join(ligne.get('docs', []))}, ou motiver une dispense "
-            "par un trailer de commit `Dispense-doc: <raison>`, dans le commit qui change ce code",
+            trad("code changé sans sa doc associée : {code} → mettre à jour {docs}, ou motiver une dispense par un "
+                 "trailer de commit `Dispense-doc: <raison>`, dans le commit qui change ce code",
+                 code=", ".join(restants[:5]) + (" …" if len(restants) > 5 else ""),
+                 docs=trad(" ou ").join(ligne.get("docs", []))),
         )
 
 
@@ -235,4 +242,5 @@ def copie(ctx, r):
         if len(fichiers) > 1:
             premier = lieux[0]
             autres = ", ".join(f"{c}:{l}" for c, l in lieux[1:])
-            r.erreur("docs.copie", f"paragraphe identique aussi présent en {autres} : garder une source, renvoyer vers elle", premier[0], premier[1])
+            r.erreur("docs.copie", trad("paragraphe identique aussi présent en {autres} : garder une source, "
+                                        "renvoyer vers elle", autres=autres), premier[0], premier[1])

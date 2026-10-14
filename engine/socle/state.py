@@ -16,13 +16,14 @@ import time
 from collections import Counter
 
 from socle import config, requests as demandes, memory as memoire, utils as outils
+from socle.messages import a_traduire, trad
 
 
 def _ligne_ci(racine, branche) -> str:
     """L'état de la CI, si `gh` est là et authentifié. Sinon on le dit : le
     moteur n'exige aucun service externe."""
     if not shutil.which("gh"):
-        return "non disponible localement (gh absent) — voir la pull request"
+        return trad("non disponible localement (gh absent) — voir la pull request")
     try:
         p = subprocess.run(
             ["gh", "run", "list", "--branch", branche, "--limit", "1",
@@ -30,16 +31,17 @@ def _ligne_ci(racine, branche) -> str:
             cwd=racine, capture_output=True, text=True, timeout=8,
         )
     except (subprocess.TimeoutExpired, OSError):
-        return "non disponible (gh ne répond pas)"
+        return trad("non disponible (gh ne répond pas)")
     if p.returncode != 0 or not p.stdout.strip() or p.stdout.strip() == "[]":
-        return "non disponible (gh non authentifié ou aucune exécution)"
+        return trad("non disponible (gh non authentifié ou aucune exécution)")
     import json
 
     try:
         r = json.loads(p.stdout)[0]
     except (ValueError, IndexError):
-        return "non disponible (réponse illisible)"
-    return f"{r.get('workflowName')} : {r.get('conclusion') or r.get('status')} sur {r.get('headSha', '')[:7]}"
+        return trad("non disponible (réponse illisible)")
+    return trad("{ci} : {etat} sur {sha}", ci=r.get("workflowName"), etat=r.get("conclusion") or r.get("status"),
+                sha=r.get("headSha", "")[:7])
 
 
 def _gh_json(racine, chemin: str):
@@ -72,17 +74,17 @@ def ci_exigee(projet: config.Projet) -> tuple[bool | None, str]:
 
     url = liens.url_depot(projet) or ""
     if not url.startswith("https://github.com/"):
-        return None, "dépôt hors de GitHub"
+        return None, trad("dépôt hors de GitHub")
     nom = (outils.branche_par_defaut(projet.racine) or "").removeprefix("origin/")
     if not nom:
-        return None, "aucune branche par défaut connue"
+        return None, trad("aucune branche par défaut connue")
     if not shutil.which("gh"):
-        return None, "gh absent"
+        return None, trad("gh absent")
     depot = url.removeprefix("https://github.com/")
     regles = _gh_json(projet.racine, f"repos/{depot}/rules/branches/{nom}")
     branche = _gh_json(projet.racine, f"repos/{depot}/branches/{nom}")
     if not isinstance(regles, list) or not isinstance(branche, dict):
-        return None, "gh non authentifié, ou réponse illisible"
+        return None, trad("gh non authentifié, ou réponse illisible")
     ci = nom_de_la_ci(projet)
     exigees = [c.get("context") for r in regles if r.get("type") == "required_status_checks"
                for c in (r.get("parameters") or {}).get("required_status_checks", [])]
@@ -91,8 +93,8 @@ def ci_exigee(projet: config.Projet) -> tuple[bool | None, str]:
         exigees += classique.get("contexts", []) + [c.get("context") for c in classique.get("checks", [])]
     revue = any((r.get("parameters") or {}).get("require_code_owner_review") for r in regles
                 if r.get("type") == "pull_request")
-    return ci in exigees, nom + (" ; revue des propriétaires du code exigée" if revue else
-                                 " ; revue des propriétaires du code non exigée")
+    return ci in exigees, nom + (trad(" ; revue des propriétaires du code exigée") if revue else
+                                 trad(" ; revue des propriétaires du code non exigée"))
 
 
 def _balayage(projet: config.Projet, elements: list) -> list[str]:
@@ -105,8 +107,9 @@ def _balayage(projet: config.Projet, elements: list) -> list[str]:
     if not message:
         return []
     if niveau == "erreur":
-        elements.append(humain.Element("action", f"remettre en marche le balayage de mutation : {message}", page or ""))
-    return [f"mutation : {message}"]
+        elements.append(humain.Element("action", trad("remettre en marche le balayage de mutation : {message}",
+                                                      message=message), page or ""))
+    return [trad("mutation : {message}", message=message)]
 
 
 def page_protection(projet: config.Projet) -> str | None:
@@ -122,57 +125,64 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
     racine = projet.racine
     lignes = []
     nom = racine.name
-    lignes.append(f"== {nom} — état dérivé par `socle state`, rien de recopié ==")
+    lignes.append(trad("== {nom} — état dérivé par `socle state`, rien de recopié ==", nom=nom))
     try:
         lignes += _git(racine, projet)
     except outils.ErreurGit as e:
-        lignes.append(f"git : indisponible ({e})")
+        lignes.append(trad("git : indisponible ({erreur})", erreur=e))
     try:
         mem = memoire.Memoire.charger(racine)
         lignes += _memoire(mem, projet)
     except Exception as e:  # l'état ne bloque jamais le démarrage
-        lignes.append(f"mémoire : illisible ({type(e).__name__}: {e}) — lancer `python3 .socle/socle check`")
+        lignes.append(trad("mémoire : illisible ({erreur}) — lancer `python3 .socle/socle check`",
+                           erreur=f"{type(e).__name__}: {e}"))
     try:
         lignes += _demandes(racine)
     except Exception as e:
-        lignes.append(f"demandes : illisibles ({type(e).__name__}: {e})")
+        lignes.append(trad("demandes : illisibles ({erreur})", erreur=f"{type(e).__name__}: {e}"))
     try:
         from socle import human as humain
 
         elements = humain.a_faire(projet)
         exigee, detail = ci_exigee(projet)
-        nom = detail.split(" ; ")[0]
+        # Le détail commence par le nom de la branche, suivi de ce que dit la
+        # revue des propriétaires du code.
+        nom = (outils.branche_par_defaut(racine) or "").removeprefix("origin/")
+        revue = detail[len(nom):] if nom and detail.startswith(nom) else ""
         if exigee is False:
             elements.append(humain.Element(
-                "action", f"protéger la branche `{nom}` : y exiger la CI « {nom_de_la_ci(projet)} » avant toute "
-                "fusion, et la revue des propriétaires du code (CODEOWNERS)", page_protection(projet) or ""))
+                "action", trad("protéger la branche `{nom}` : y exiger la CI « {ci} » avant toute fusion, et la revue "
+                               "des propriétaires du code (CODEOWNERS)", nom=nom, ci=nom_de_la_ci(projet)),
+                page_protection(projet) or ""))
         lignes += _balayage(projet, elements)
         if exigee:
-            lignes.append(f"branche  : {detail.replace(' ; ', ' — CI du socle exigée avant fusion ; ', 1)}")
+            lignes.append(trad("branche  : {nom} — CI du socle exigée avant fusion{revue}", nom=nom, revue=revue))
         elif exigee is False:
-            lignes.append(f"branche  : {nom} — CI du socle NON exigée : une CI rouge n'empêche pas de fusionner")
+            lignes.append(trad("branche  : {nom} — CI du socle NON exigée : une CI rouge n'empêche pas de fusionner",
+                               nom=nom))
         else:
-            lignes.append(f"branche  : protection inconnue ({detail})")
+            lignes.append(trad("branche  : protection inconnue ({detail})", detail=detail))
         lignes += humain.texte(elements)
     except Exception as e:
-        lignes.append(f"ce qui revient à l'humain : incalculable ({type(e).__name__}: {e})")
+        lignes.append(trad("ce qui revient à l'humain : incalculable ({erreur})", erreur=f"{type(e).__name__}: {e}"))
     try:
         from socle import human as humain
 
         faits = humain.fait_par_l_humain(projet)
         if faits:
-            lignes.append(f"écrit par l'humain lui-même depuis le dernier commit de l'agent : {len(faits)} "
-                          "— à lui citer, avec le lien")
+            lignes.append(trad("écrit par l'humain lui-même depuis le dernier commit de l'agent : {n} — à lui "
+                               "citer, avec le lien", n=len(faits)))
             for e in faits:
-                lignes.append(f"  {e.genre} : {e.quoi}")
+                lignes.append(f"  {humain.genre(e)} : {e.quoi}")
                 lignes.append(f"    {e.lien}")
     except Exception as e:
-        lignes.append(f"ce que l'humain a écrit lui-même : incalculable ({type(e).__name__}: {e})")
+        lignes.append(trad("ce que l'humain a écrit lui-même : incalculable ({erreur})",
+                           erreur=f"{type(e).__name__}: {e}"))
     lignes += _hooks(racine)
     from socle import private as prive
 
     lignes.append(prive.ligne_etat(projet))
-    lignes.append("vérifier : `python3 .socle/socle verify --fast` (tout : sans `--fast`)")
+    lignes.append(trad("vérifier : `python3 .socle/socle verify --fast` (tout : sans `--fast`)"))
     if contenus:
         # Le chantier actif et les faits, publics puis privés (B-0029) : une
         # mémoire privée lisible ici en fait partie, illisible elle est
@@ -191,44 +201,47 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
 
 def _git(racine, projet) -> list[str]:
     if not outils.est_depot(racine) or not outils.a_des_commits(racine):
-        return ["commit   : aucun (dépôt neuf)"]
+        return [trad("commit   : aucun (dépôt neuf)")]
     res = []
     court = outils.git(racine, "rev-parse", "--short", "HEAD").strip()
     branche = outils.git(racine, "rev-parse", "--abbrev-ref", "HEAD").strip()
     sales = [l for l in outils.git(racine, "status", "--porcelain").splitlines() if l.strip()]
-    propre = "arbre propre" if not sales else f"ATTENTION, {len(sales)} fichier(s) non commité(s)"
-    res.append(f"commit   : {court} sur {branche} ({propre})")
+    propre = trad("arbre propre") if not sales else trad("ATTENTION, {n} fichier(s) non commité(s)", n=len(sales))
+    res.append(trad("commit   : {sha} sur {branche} ({propre})", sha=court, branche=branche, propre=propre))
     defaut = outils.branche_par_defaut(racine)
     if defaut:
         non = outils.git(racine, "log", "--oneline", f"{defaut}..HEAD", check=False).splitlines()
-        res.append(f"base     : {defaut} — non fusionné : {len(non)} commit(s)")
+        res.append(trad("base     : {defaut} — non fusionné : {n} commit(s)", defaut=defaut, n=len(non)))
         res += [f"  {l}" for l in non[:10]]
         if len(non) > 10:
-            res.append(f"  … et {len(non) - 10} autre(s)")
+            res.append(trad("  … et {n} autre(s)", n=len(non) - 10))
         base = outils.base_de_travail(racine)
         if base:
             changes = outils.fichiers_changes(racine, base)
             code = outils.filtrer(changes, projet.chemins_code())
             docs = [c for c in changes if c.endswith(".md")]
             mem = [c for c in changes if memoire.est_memoire(c)]
-            res.append(f"depuis la base : {len(code)} fichier(s) de code, {len(docs)} de doc, {len(mem)} de mémoire")
+            res.append(trad("depuis la base : {code} fichier(s) de code, {docs} de doc, {memoire} de mémoire",
+                            code=len(code), docs=len(docs), memoire=len(mem)))
             if code and not mem:
-                res.append("  ^ du code a changé et la mémoire non : la fin de tour le refusera")
+                res.append(trad("  ^ du code a changé et la mémoire non : la fin de tour le refusera"))
     else:
-        res.append("base     : aucune branche par défaut connue")
-    res.append(f"CI       : {_ligne_ci(racine, branche)}")
+        res.append(trad("base     : aucune branche par défaut connue"))
+    res.append(trad("CI       : {ci}", ci=_ligne_ci(racine, branche)))
     return res
 
 
 def _memoire(mem: memoire.Memoire, projet) -> list[str]:
     faits = Counter(e.statut or "?" for e in mem.entrees("F") if not e.archivee)
-    libelles = {"mesure": "mesuré(s)", "suppose": "supposé(s)", "refute": "réfuté(s)", "valide": "validé(s)"}
-    detail = ", ".join(f"{n} {libelles.get(s, s)}" for s, n in sorted(faits.items()))
+    libelles = {"mesure": a_traduire("mesuré(s)"), "suppose": a_traduire("supposé(s)"),
+                "refute": a_traduire("réfuté(s)"), "valide": a_traduire("validé(s)")}
+    detail = ", ".join(f"{n} {trad(libelles[s]) if s in libelles else s}" for s, n in sorted(faits.items()))
     adrs = list(mem.entrees("ADR"))
     journal = sorted((e.id for e in mem.entrees("J")), key=lambda i: i.lstrip("P"))
     res = [
-        f"mémoire  : {sum(faits.values())} fait(s) ({detail or 'aucun'}) · {len(adrs)} décision(s) · "
-        f"journal : {len(journal)} entrée(s), dernière {journal[-1] if journal else '—'}"
+        trad("mémoire  : {faits} fait(s) ({detail}) · {adrs} décision(s) · journal : {journal} entrée(s), dernière "
+             "{dernier}", faits=sum(faits.values()), detail=detail or trad("aucun"), adrs=len(adrs),
+             journal=len(journal), dernier=journal[-1] if journal else "—")
     ]
     # L'index des décisions, que le cadrage prévoit : une ligne par décision
     # en vigueur, à lire en entier (`socle show ADR-NNNN`) avant d'en rouvrir une.
@@ -237,46 +250,50 @@ def _memoire(mem: memoire.Memoire, projet) -> list[str]:
     # nouvelle (`lu : decisions@…`, ADR-0008).
     lignes_index = memoire.lignes_index(mem, "decisions")
     if lignes_index:
-        res.append(f"décisions, index decisions@{memoire.empreinte_index(mem, 'decisions')} "
-                   "(une en entier : `python3 .socle/socle show ADR-NNNN`) :")
+        res.append(trad("décisions, index decisions@{empreinte} (une en entier : `python3 .socle/socle show "
+                        "ADR-NNNN`) :", empreinte=memoire.empreinte_index(mem, "decisions")))
         res += [f"  {l}" for l in lignes_index]
     backlog = [e for e in mem.entrees("B") if not e.archivee]
     par = Counter(e.statut for e in backlog)
     res.append(
-        f"backlog  : {par.get('ouvert', 0)} ouvert(s), {par.get('en-cours', 0)} en cours, "
-        f"{par.get('bloque', 0)} bloqué(s), {par.get('fait', 0) + par.get('abandonne', 0)} clos"
-        + ("" if projet.chemins.backlog_en_dossier else " à archiver")
+        trad("backlog  : {ouverts} ouvert(s), {en_cours} en cours, {bloques} bloqué(s), {clos} clos",
+             ouverts=par.get("ouvert", 0), en_cours=par.get("en-cours", 0), bloques=par.get("bloque", 0),
+             clos=par.get("fait", 0) + par.get("abandonne", 0))
+        + ("" if projet.chemins.backlog_en_dossier else trad(" à archiver"))
     )
-    for statut, libelle in (("en-cours", "en cours"), ("bloque", "bloqué")):
+    for statut, libelle in (("en-cours", a_traduire("en cours")), ("bloque", a_traduire("bloqué"))):
         for e in [e for e in backlog if e.statut == statut][:8]:
-            res.append(f"  {libelle} : {e.id} — {e.titre}")
+            res.append(f"  {trad(libelle)} : {e.id} — {e.titre}")
     jours = projet.gf("staleness", "active_days", defaut=7)
     t = outils.git(mem.racine, "log", "-1", "--format=%ct", "--", config.chemins(mem.racine).actif, check=False).strip() \
         if outils.a_des_commits(mem.racine) else ""
     if t:
         age = (time.time() - float(t)) / 86400
         if age > jours:
-            res.append(f"péremption : chantier actif inchangé depuis {age:.0f} jours (seuil {jours})")
+            res.append(trad("péremption : chantier actif inchangé depuis {age} jours (seuil {jours})",
+                            age=f"{age:.0f}", jours=jours))
     return res
 
 
 def _demandes(racine) -> list[str]:
     toutes = demandes.toutes(racine)
     attente = [d for d in toutes if d.reponse is None and d.statut == "en attente"]
-    res = [f"demandes humaines en attente : {len(attente)}"]
+    res = [trad("demandes humaines en attente : {n}", n=len(attente))]
     for d in attente:
         date = d.entree.meta.get("date", "") if d.entree else ""
-        res.append(f"  {d.id} — {d.entree.titre if d.entree else d.chemin}{f' (du {date})' if date else ''}")
+        res.append(f"  {d.id} — {d.entree.titre if d.entree else d.chemin}"
+                   + (trad(" (du {date})", date=date) if date else ""))
     renvoyees = [d for d in toutes if d.statut == "renvoyée"]
     for d in renvoyees:
-        res.append(f"  RENVOYÉE (contexte insuffisant) : {d.id} — à réécrire en une demande qui la remplace")
+        res.append(trad("  RENVOYÉE (contexte insuffisant) : {id} — à réécrire en une demande qui la remplace",
+                        id=d.id))
     return res
 
 
 def _hooks(racine) -> list[str]:
     lignes = config.lire_trace(racine)
     if not lignes:
-        return ["hooks    : aucune trace — ils n'ont encore jamais tiré dans ce clone"]
+        return [trad("hooks    : aucune trace — ils n'ont encore jamais tiré dans ce clone")]
     dernier = " ".join(lignes[-1].split("\t")[:2])
-    return [f"hooks    : {len(lignes)} déclenchement(s) tracé(s), dernier : {dernier}"]
+    return [trad("hooks    : {n} déclenchement(s) tracé(s), dernier : {dernier}", n=len(lignes), dernier=dernier)]
 

@@ -5,17 +5,10 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-B-0038, sur le feu vert de Théo (« Ok go ») : les messages du moteur et
-les textes qu'il pose dans un projet, dans la langue de la mémoire du
-projet (`[memory] language`). Un catalogue dont la clé est le message
-français tel qu'il est écrit dans le code ; un projet français ne voit
-rien changer. Par ordre : les hooks et l'installeur, puis les contrôles,
-l'état et la ligne de commande, puis un garde-fou qui refuse un message
-nouveau sans traduction.
-
-Le réglage posé au-dessus du dépôt (J-2026-10-14-J) a disparu avec
-l'ancien conteneur, et les hooks tirent depuis `memory` : plus rien à
-décider là-dessus (J-2026-10-14-L).
+B-0038 est fait, sur le feu vert de Théo (« Ok go ») : le moteur parle la
+langue de la mémoire du projet (ADR-0028, J-2026-10-14-M, J-2026-10-14-N).
+Un projet français ne voit rien changer. Ce qui reste en français dans un
+projet anglais, hors du moteur ou à la marge, est au backlog (B-0059).
 
 ## Consignes en cours
 
@@ -31,9 +24,9 @@ décider là-dessus (J-2026-10-14-L).
 
 ## Prochaines étapes
 
-1. B-0038 : l'ADR du catalogue, le mécanisme, puis la traduction par
-   lots, chaque lot vert et commité.
-2. Plus tard : B-0046 (la documentation à refaire, que Théo reprendra plus
-   tard, J-2026-10-13-U), B-0039 (des dépôts jetables poussés sur GitHub :
-   une demande d'abord), B-0040 (dotnet absent d'ici) ; B-0042 attend sa
-   propre demande. La pull request, quand Théo la demandera.
+1. Pousser le second lot de B-0038 et regarder la CI de la branche.
+2. Plus tard : B-0059 (les restes en français), B-0046 (la documentation à
+   refaire, que Théo reprendra plus tard, J-2026-10-13-U), B-0039 (des
+   dépôts jetables poussés sur GitHub : une demande d'abord), B-0040 (dotnet
+   absent d'ici) ; B-0042 attend sa propre demande. La pull request, quand
+   Théo la demandera.

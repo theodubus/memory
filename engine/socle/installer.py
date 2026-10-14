@@ -158,8 +158,12 @@ def diff_politique(cible: Path) -> list[str]:
     p = cible / config.chemins(cible).politique
     if not p.is_file():
         return []
+    # Le gabarit tel que l'installeur le poserait pour ce projet : dans sa
+    # langue, qu'il écrit dans la politique.
     lg = langue.du_projet(config.Projet.charger(cible))
-    projet, gab = p.read_text(encoding="utf-8").splitlines(), gabarit("policy.toml", lg).splitlines()
+    gab = gabarit("policy.toml", lg)
+    gab = politique_langue(gab, lg) if lg != "fr" else gab
+    projet, gab = p.read_text(encoding="utf-8").splitlines(), gab.splitlines()
     return list(difflib.unified_diff(projet, gab, trad("politique du projet"), trad("gabarit de cette version"),
                                      lineterm=""))
 
