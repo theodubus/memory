@@ -8,14 +8,15 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 L'ordre validé par Théo (J-2026-10-14-Q) : B-0060, fait (J-2026-10-14-R) ;
 la demande de B-0039 en parallèle ; puis B-0048 avec B-0018 ; puis B-0059.
 
-D-0025 est validée, réponse `public` (J-2026-10-14-S) : le dépôt d'essai
-est github.com/theodubus/tests. J'y pousse un projet jetable par branche
-(JavaScript, Go, Java, Ruby, PHP), je lis chaque CI, je corrige les étapes
-fausses des adaptateurs, puis je dis à Théo qu'il peut supprimer le dépôt.
+D-0025 est validée, réponse `public` (J-2026-10-14-S), mais suspendue
+avant tout push : chaque projet jetable contient le moteur, et `memory` est
+privé (J-2026-10-14-U). D-0027 demande à Théo de rendre le dépôt d'essai
+privé, ou d'accepter la publication. L'essai ira dans une session à part,
+qui ajoute ce dépôt ; celle-ci reste sur `memory` seul.
 
-D-0026 attend : Théo a posé des questions (ce que veut dire « local », quels
-hooks, comment éviter un usage détourné de « une fois ») ; j'y réponds et
-je réécris la demande, encore sans réponse.
+D-0026 est réécrite après les questions de Théo (J-2026-10-14-T) : une
+réponse relayée ne prouve rien, seule sa fusion le ferait ; recommandation :
+rien, pour l'instant. Elle attend sa réponse.
 
 ## Consignes en cours
 
@@ -38,10 +39,10 @@ je réécris la demande, encore sans réponse.
 
 ## Prochaines étapes
 
-1. D-0025 : les cinq projets jetables dans theodubus/tests, leur CI lue,
-   les étapes fausses corrigées ; puis clore B-0039.
-2. D-0026 : relayer la réponse de Théo avec son texte exact, une fois la
-   demande réécrite poussée.
+1. D-0027 puis D-0025 : sur la réponse de Théo, lancer la session à part
+   qui pousse les cinq projets jetables, lire leur CI, corriger les étapes
+   fausses ; puis clore B-0039.
+2. D-0026 : relayer la réponse de Théo avec son texte exact.
 3. Dans l'ordre validé : B-0059 (ce qui reste en français dans un projet
    anglais).
 4. Plus tard : B-0046 (que Théo reprendra), B-0040 (dotnet absent d'ici) ;
