@@ -26,8 +26,12 @@ passe sur leur dernier commit.
 
 ## Prochaines étapes
 
-1. B-0059 (les restes en français), proposé à Théo comme sujet suivant.
-2. Plus tard : B-0046 (la documentation à refaire, que Théo reprendra plus
-   tard, J-2026-10-13-U), B-0039 (des dépôts jetables poussés sur GitHub :
-   une demande d'abord), B-0040 (dotnet absent d'ici) ; B-0042 attend sa
-   propre demande. La pull request, quand Théo la demandera.
+1. La pull request de la branche vers `main`, demandée par Théo
+   (J-2026-10-14-O) : la mener jusqu'à une CI verte et fusionnable ; la
+   fusion revient à Théo.
+2. Ensuite, au choix de Théo : B-0060 (les sessions qui démarrent hors de
+   la racine du projet, à ne pas corriger avant qu'il le dise), B-0059 (les
+   restes en français), B-0046 (la documentation à refaire, que Théo
+   reprendra plus tard, J-2026-10-13-U), B-0039 (des dépôts jetables poussés
+   sur GitHub : une demande d'abord), B-0040 (dotnet absent d'ici) ; B-0042
+   attend sa propre demande.
