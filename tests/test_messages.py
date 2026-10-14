@@ -8,11 +8,12 @@ import threading
 import unittest
 from pathlib import Path
 
-from socle import human as humain, messages
+from socle import config, hooks, human as humain, messages, utils as outils
 from socle.messages_en import MESSAGES
 from socle.report import Rapport, en_echec_dans
 
-MOTEUR = Path(__file__).resolve().parent.parent / "engine" / "socle"
+RACINE = Path(__file__).resolve().parent.parent
+MOTEUR = RACINE / "engine" / "socle"
 VARIABLE = re.compile(r"\{(\w+)\}")
 
 
@@ -86,6 +87,32 @@ class Traduction(unittest.TestCase):
         with messages.dans("en"):
             self.assertEqual(humain.genre(e), "decision")
             self.assertEqual(humain.texte([e])[0], "what falls to the human: 1")
+
+
+class RefusDesHooks(unittest.TestCase):
+    """Deux refus du hook de l'agent, lus dans les deux langues : le texte
+    français ne change pas, l'anglais vient du catalogue."""
+
+    def tearDown(self):
+        messages.choisir(messages.FRANCAIS)
+
+    def test_sha_fabrique(self):
+        vrai = outils.git(RACINE, "rev-parse", "HEAD").strip()
+        faux = vrai[:7] + ("0" if vrai[7] != "0" else "1") * 33
+        self.assertIn("SHA fabriqué : " + faux, hooks.sha_fabrique(RACINE, f"commit {faux}"))
+        with messages.dans("en"):
+            self.assertIn("Fabricated SHA: " + faux, hooks.sha_fabrique(RACINE, f"commit {faux}"))
+        self.assertIsNone(hooks.sha_fabrique(RACINE, f"commit {vrai}"))
+
+    def test_statut_valide_ajoute(self):
+        projet = config.Projet.charger(RACINE)
+        apres = "## F-9999 — un fait\n\n> statut : validé · validation : D-9999\n"
+        faute = hooks.statut_valide_ajoute("memory/canonical.md", "", apres, projet)
+        self.assertIn("passe à « validé » sans demande validée", faute)
+        with messages.dans("en"):
+            faute = hooks.statut_valide_ajoute("memory/canonical.md", "", apres, projet)
+        self.assertIn("becomes “validated” without a request approved by the human", faute)
+        self.assertIsNone(hooks.statut_valide_ajoute("memory/active.md", "", apres, projet))
 
 
 class LigneDEchec(unittest.TestCase):
