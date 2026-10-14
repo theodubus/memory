@@ -211,7 +211,8 @@ def verdict(projet: config.Projet, dossier: Path, poser: bool = False) -> Rappor
     r.execute(ident)
     cap = projet.adaptateur.get("capabilities", {}).get("mutation", {})
     if "command" not in cap:
-        r.indisponible(ident, trad("capacité absente : {absent}", absent=cap.get("absent", trad("non déclarée"))))
+        r.indisponible(ident, trad("capacité absente : {absent}",
+                                   absent=trad(cap["absent"]) if "absent" in cap else trad("non déclarée")))
         return r
     lecteur = LECTEURS.get(cap.get("parser", ""))
     if lecteur is None:
@@ -314,7 +315,8 @@ def commandes_de_balayage(projet: config.Projet) -> tuple[list[str], Path | None
     cap = projet.adaptateur.get("capabilities", {}).get("mutation", {})
     commande = cap.get("command")
     if not commande:
-        return [], None, trad("capacité absente : {absent}", absent=cap.get("absent", trad("non déclarée")))
+        return [], None, trad("capacité absente : {absent}",
+                              absent=trad(cap["absent"]) if "absent" in cap else trad("non déclarée"))
     if "{module}" not in commande:
         return [commande.replace("{output}", ".")], projet.racine, None
     if "{output}" not in commande:

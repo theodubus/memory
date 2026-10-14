@@ -397,6 +397,13 @@ def filtrer(chemins, motifs, exclus=()) -> list[str]:
     return [c for c in chemins if correspond(c, motifs) and not correspond(c, exclus)]
 
 
+def nom_du_travail(workflow: str) -> str | None:
+    """Le nom du premier travail d'un workflow GitHub, celui qu'une
+    protection de branche exige."""
+    m = re.search(r"(?m)^ {4}name:\s*(.+?)\s*$", workflow)
+    return m.group(1).strip("'\"") if m else None
+
+
 def sans_accents(texte: str) -> str:
     return "".join(
         c for c in unicodedata.normalize("NFD", texte) if unicodedata.category(c) != "Mn"

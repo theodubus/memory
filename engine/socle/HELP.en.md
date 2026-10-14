@@ -45,7 +45,7 @@ the link of each page.
 
 After the first push, protect the default branch on GitHub: in the
 repository settings, "Rules", a ruleset that requires the socle's CI
-("Socle — verify, contrôles, auto-test") and the code owners' review before
+("Socle — verify, checks, self-test") and the code owners' review before
 any merge. Without it, a red CI does not prevent merging. `socle state` says
 whether the CI is required, and reminds you otherwise.
 

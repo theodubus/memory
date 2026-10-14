@@ -475,9 +475,10 @@ def regression(ctx, r):
     if not correctifs:
         return
     if "command" not in cap:
+        absent = trad(cap["absent"]) if "absent" in cap else trad("non déclarée")
+        remplacement = trad(cap["replacement"]) if "replacement" in cap else "?"
         r.indisponible("tests.regression", trad("capacité absente : {absent} — remplacement : {remplacement}",
-                                                absent=cap.get("absent", trad("non déclarée")),
-                                                remplacement=cap.get("replacement", "?")))
+                                                absent=absent, remplacement=remplacement))
         return
     motifs = cap.get("test_paths") or (cfg_tests(ctx.projet) or {}).get("paths", [])
     for c in correctifs:

@@ -12,8 +12,14 @@ D-0027 est répondue `publier` (J-2026-10-14-V) : l'essai de la CI des
 adaptateurs part dans `theodubus/tests`, public, moteur compris, depuis une
 session à part qui ajoute ce dépôt ; celle-ci reste sur `memory` seul.
 Session d'essai lancée le 14 oct. à 22 h 25 (heure de Paris) :
-`session_01L5X5DzSiY59tjT4e5kfzCs` ; elle mesure et rapporte par message,
-sans rien corriger ni pousser vers `memory`.
+`session_01L5X5DzSiY59tjT4e5kfzCs`. Elle est bloquée : le contrôle de
+permissions du mode automatique lui a refusé l'ajout de `theodubus/tests`,
+puis ses commandes ; rien n'est poussé. La suite dépend de Théo.
+
+B-0059 en cours (J-2026-10-14-W) : textes des adaptateurs et workflows
+dans la langue du projet, faits ; restent le marqueur des valeurs liées, la
+raison d'un plafond de mutation mesuré, le statut d'une demande, les
+défauts de l'auto-test et le message du lanceur.
 
 D-0026 est répondue `rien` : le refus reste, son message est plus clair ;
 B-0048 et B-0018 restent ouverts, « on se le garde en tete et on voit si

@@ -13,7 +13,7 @@ from pathlib import Path
 
 from socle import (archive as archivage, cli, config, context as contexte, checks_memory as controles_memoire,
                    requests as demandes, human as humain, installer as installeur, language as langue,
-                   memory as memoire)
+                   memory as memoire, messages, utils as outils)
 from socle.report import Rapport
 
 MOTEUR = Path(__file__).resolve().parent.parent / "engine"
@@ -178,6 +178,75 @@ class ProjetAnglais(unittest.TestCase):
                   controles_memoire.contrat):
             f(ctx, r)
         return [c.message for c in r.erreurs()]
+
+
+class TestCIAnglaise(unittest.TestCase):
+    """Les workflows posés dans un projet anglais (B-0059)."""
+
+    def installer(self, adaptateur: str, **options) -> str:
+        sortie = io.StringIO()
+        with contextlib.redirect_stdout(sortie), contextlib.redirect_stderr(sortie):
+            self.assertEqual(installeur.installer(self.racine, adaptateur, "@essai", source=MOTEUR, **options), 0)
+        return sortie.getvalue()
+
+    def lire(self, rel: str) -> str:
+        return (self.racine / rel).read_text(encoding="utf-8")
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-ci-anglaise-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        git(self.racine, "init", "-q", "-b", "main")
+        (self.racine / "calc.py").write_text("def double(x):\n    return 2 * x\n")
+        self.installer("python", langue_memoire="en")
+
+    def test_la_ci_posee_est_en_anglais(self):
+        # Le nom du travail, celui des étapes et les commentaires.
+        ci = self.lire(".github/workflows/socle.yml")
+        self.assertIn("    name: Socle — verify, checks, self-test\n", ci)
+        self.assertIn("- name: Private memory", ci)
+        self.assertNotIn("Mémoire privée", ci)
+        self.assertNotIn("Posé par l'installeur", ci)
+
+    def test_une_mise_a_jour_garde_le_nom_du_travail_en_place(self):
+        # Une protection de branche exige ce nom : la langue ne le change pas.
+        chemin = self.racine / ".github/workflows/socle.yml"
+        chemin.write_text(self.lire(".github/workflows/socle.yml").replace(
+            "    name: Socle — verify, checks, self-test\n", "    name: Socle — verify, contrôles, auto-test\n"),
+            encoding="utf-8")
+        sortie = self.installer("python")
+        ci = self.lire(".github/workflows/socle.yml")
+        self.assertIn("    name: Socle — verify, contrôles, auto-test\n", ci)
+        self.assertIn("- name: Private memory", ci)
+        self.assertIn("CI job name kept: “Socle — verify, contrôles, auto-test”", sortie)
+
+    def test_les_etapes_d_un_adaptateur_et_le_balayage_en_anglais(self):
+        self.installer("python-pytest")
+        self.assertIn("- name: pytest and mutmut", self.lire(".github/workflows/socle.yml"))
+        balayage = self.lire(".github/workflows/socle-mutation.yml")
+        self.assertIn("    name: Socle — mutation sweep\n", balayage)
+        self.assertIn("- name: pytest and mutmut", balayage)
+        self.assertNotIn("Balayage et verdict", balayage)
+
+    def test_nom_du_travail_et_noms_d_etapes(self):
+        self.assertEqual(outils.nom_du_travail("jobs:\n  socle:\n    name: 'Socle — x'\n"), "Socle — x")
+        self.assertIsNone(outils.nom_du_travail("name: Socle\n"))
+        etapes = "      - name: Dépendances\n        run: npm ci\n      - uses: actions/setup-go@v5\n"
+        with messages.dans("en"):
+            self.assertEqual(installeur.noms_d_etapes_traduits(etapes),
+                             "      - name: Dependencies\n        run: npm ci\n      - uses: actions/setup-go@v5\n")
+        self.assertEqual(installeur.noms_d_etapes_traduits(etapes), etapes)
+
+    def test_un_projet_francais_garde_sa_ci_francaise(self):
+        francais = Path(tempfile.mkdtemp(prefix="socle-ci-francaise-"))
+        self.addCleanup(shutil.rmtree, francais, ignore_errors=True)
+        git(francais, "init", "-q", "-b", "main")
+        (francais / "calc.py").write_text("def double(x):\n    return 2 * x\n")
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            installeur.installer(francais, "python-pytest", "@essai", source=MOTEUR)
+        self.assertIn("    name: Socle — verify, contrôles, auto-test\n",
+                      (francais / ".github/workflows/socle.yml").read_text(encoding="utf-8"))
+        self.assertIn("- name: pytest et mutmut",
+                      (francais / ".github/workflows/socle-mutation.yml").read_text(encoding="utf-8"))
 
 
 class TestProjetAnglais(ProjetAnglais):

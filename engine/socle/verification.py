@@ -78,7 +78,8 @@ def executer_etapes(projet: config.Projet, rapide: bool, rapport: Rapport, flux=
         rapport.execute(ident)
         if "command" not in c:
             rapport.indisponible(ident, trad("capacité absente : {absent} — remplacement : {remplacement}",
-                                             absent=c.get('absent', '?'), remplacement=c.get('replacement', '?')))
+                                             absent=trad(c['absent']) if 'absent' in c else '?',
+                                             remplacement=trad(c['replacement']) if 'replacement' in c else '?'))
             continue
         if flux:
             print(f"  … {ident} : {c['command']}", file=flux, flush=True)

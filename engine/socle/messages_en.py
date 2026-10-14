@@ -1732,4 +1732,74 @@ MESSAGES: dict[str, str] = {
         "!! THE AGENT'S HOOKS ARE NOT LOADED in this session: the trace has no SessionStart for it. Neither the "
         "command filter, nor the end-of-turn checks, nor the state at startup run. Tell the human before any work. "
         "{remede}",
+    # Les textes des adaptateurs maintenus (`absent`, `replacement`), écrits
+    # dans leurs fichiers et traduits à l'affichage (B-0059).
+    "signal secondaire, jamais un garde-fou":
+        "secondary signal, never a guardrail",
+    "capacité `mutation`":
+        "capability `mutation`",
+    "aucun formateur imposé ; un projet qui adopte spotless ou google-java-format le déclare ici":
+        "no formatter imposed; a project that adopts spotless or google-java-format declares it here",
+    "relecture du diff, et `build` (le compilateur refuse ce qui ne se lit pas)":
+        "review of the diff, and `build` (the compiler refuses what does not parse)",
+    "aucun linter imposé ; un projet qui adopte checkstyle ou spotbugs le déclare ici":
+        "no linter imposed; a project that adopts checkstyle or spotbugs declares it here",
+    "capacité `build` : `javac` avec ses avertissements":
+        "capability `build`: `javac` with its warnings",
+    "aucun formateur imposé ; un projet qui adopte prettier le déclare ici (`npx prettier --check .`)":
+        "no formatter imposed; a project that adopts prettier declares it here (`npx prettier --check .`)",
+    "relecture du diff, et la capacité `tests`, qui charge chaque module testé":
+        "review of the diff, and the capability `tests`, which loads each tested module",
+    "aucun linter imposé ; un projet qui adopte eslint ou tsc le déclare ici (`npx eslint .`, `npx tsc --noEmit`)":
+        "no linter imposed; a project that adopts eslint or tsc declares it here (`npx eslint .`, `npx tsc --noEmit`)",
+    "la capacité `tests` : vitest refuse un module qui ne se charge pas":
+        "the capability `tests`: vitest refuses a module that does not load",
+    "langage interprété ; TypeScript se transpile à la volée par vitest":
+        "interpreted language; vitest transpiles TypeScript on the fly",
+    "capacité `tests`":
+        "capability `tests`",
+    "aucun formateur imposé ; un projet qui adopte php-cs-fixer le déclare ici":
+        "no formatter imposed; a project that adopts php-cs-fixer declares it here",
+    "relecture du diff, et `lint` (`php -l` de chaque fichier)":
+        "review of the diff, and `lint` (`php -l` of each file)",
+    "langage interprété : pas de compilation séparée":
+        "interpreted language: no separate compilation",
+    "capacité `lint` (`php -l`)":
+        "capability `lint` (`php -l`)",
+    "aucun formateur dans la bibliothèque standard ; un projet qui adopte ruff ou black le déclare ici":
+        "no formatter in the standard library; a project that adopts ruff or black declares it here",
+    "relecture du diff, et `lint` (compilation de chaque fichier)":
+        "review of the diff, and `lint` (compilation of each file)",
+    "capacité `lint` (compileall)":
+        "capability `lint` (compileall)",
+    "capacité `mutation`, ou son remplacement":
+        "capability `mutation`, or its replacement",
+    "mutmut n'est pas évalué sur ce projet (outil candidat du cadrage, jalon 6)":
+        "mutmut is not evaluated on this project (candidate tool of the brief, milestone 6)",
+    "l'auto-test du socle et des tests qui injectent un défaut connu dans chaque garde-fou":
+        "the socle's self-test and tests that inject a known defect into each guardrail",
+    "aucun formateur imposé ; un projet qui adopte rubocop le déclare ici (`bundle exec rubocop`)":
+        "no formatter imposed; a project that adopts rubocop declares it here (`bundle exec rubocop`)",
+    "relecture du diff, et `lint` (`ruby -wc` de chaque fichier)":
+        "review of the diff, and `lint` (`ruby -wc` of each file)",
+    "capacité `lint` (`ruby -wc`)":
+        "capability `lint` (`ruby -wc`)",
+    "couverte par `lint` : clippy compile toutes les cibles, tests compris":
+        "covered by `lint`: clippy compiles every target, tests included",
+    "capacité `lint`":
+        "capability `lint`",
+    "signal secondaire, jamais un garde-fou : la mutation mesure ce que la couverture prétend":
+        "secondary signal, never a guardrail: mutation measures what coverage claims",
+    # Les noms des étapes de CI des adaptateurs, et ce que l'installeur dit
+    # des workflows qu'il pose dans la langue du projet (B-0059).
+    "Outil de mutation":
+        "Mutation tool",
+    "Dépendances":
+        "Dependencies",
+    "pytest et mutmut":
+        "pytest and mutmut",
+    "Toolchain Rust":
+        "Rust toolchain",
+    "nom du travail de CI gardé : « {nom} », celui qu'une protection de branche exige peut-être":
+        "CI job name kept: “{nom}”, the one a branch protection may require",
 }

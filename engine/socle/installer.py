@@ -49,6 +49,12 @@ def charger_adaptateur(nom: str) -> tuple[str, str]:
     return q.read_text(encoding="utf-8"), nom
 
 
+def noms_d_etapes_traduits(etapes: str) -> str:
+    """Les étapes de CI d'un adaptateur, le nom de chacune dans la langue des
+    messages ; le reste tel quel (B-0059)."""
+    return re.sub(r"(?m)^(\s*- name: )(.+?)\s*$", lambda m: m.group(1) + trad(m.group(2)), etapes)
+
+
 # Le fichier qui dit le langage d'un dépôt, et l'adaptateur maintenu qui va
 # avec ; le premier trouvé l'emporte.
 MARQUEURS_LANGAGE = (
@@ -318,9 +324,10 @@ def _poser_memoire(cible: Path, lg: str, nom_adaptateur: str, adoption: bool, ch
 
 
 def _poser_etages(cible: Path, texte_adaptateur: str, dossier_moteur: str, proprietaire: str,
-                  balayage: bool, motif: str, ch: config.Chemins) -> list[str]:
+                  balayage: bool, motif: str, ch: config.Chemins, lg: str = "fr") -> list[str]:
     """Les étages d'application : hooks de l'agent, hooks git, CI, balayage
-    de mutation, CODEOWNERS, .gitignore."""
+    de mutation, CODEOWNERS, .gitignore. Les workflows sont dans la langue de
+    la mémoire (B-0059)."""
     journal = []
     journal += _settings(cible)
     for h in (MODELES / "git-hooks").iterdir():
@@ -330,14 +337,25 @@ def _poser_etages(cible: Path, texte_adaptateur: str, dossier_moteur: str, propr
         journal.append(trad("hooks git branchés (core.hooksPath)"))
     else:
         journal.append(trad("!! core.hooksPath pointe ailleurs : hooks git NON branchés"))
-    setup = tomllib.loads(texte_adaptateur).get("ci_setup", "")
+    setup = noms_d_etapes_traduits(tomllib.loads(texte_adaptateur).get("ci_setup", ""))
     etapes = setup.strip("\n") + "\n" if setup.strip() else ""
-    outils.ecrire(cible / ".github/workflows/socle.yml", gabarit("socle.yml").replace("@@ETAPES_ADAPTATEUR@@\n", etapes))
+    workflow = gabarit("socle.yml", lg).replace("@@ETAPES_ADAPTATEUR@@\n", etapes)
+    # Le nom du travail est celui qu'une protection de branche exige : une
+    # mise à jour garde celui qui est en place, quelle que soit la langue.
+    existant = cible / ".github/workflows/socle.yml"
+    avant = outils.nom_du_travail(existant.read_text(encoding="utf-8")) if existant.is_file() else None
+    nouveau = outils.nom_du_travail(workflow)
+    if avant and nouveau and avant != nouveau:
+        workflow = workflow.replace(f"    name: {nouveau}\n", f"    name: {avant}\n", 1)
+        journal.append(trad("nom du travail de CI gardé : « {nom} », celui qu'une protection de branche exige "
+                            "peut-être", nom=avant))
+    outils.ecrire(cible / ".github/workflows/socle.yml", workflow)
     if balayage:
         installation = tomllib.loads(texte_adaptateur).get("capabilities", {}).get("mutation", {}).get("install", "")
         # En bloc littéral : la commande peut porter ce que YAML lirait autrement.
-        etape = (f"      - name: Outil de mutation\n        run: |\n          {installation}\n" if installation else "")
-        outils.ecrire(cible / mutation.WORKFLOW, gabarit("mutation.yml").replace("@@ETAPES_ADAPTATEUR@@\n", etapes)
+        etape = (f"      - name: {trad('Outil de mutation')}\n        run: |\n          {installation}\n"
+                 if installation else "")
+        outils.ecrire(cible / mutation.WORKFLOW, gabarit("mutation.yml", lg).replace("@@ETAPES_ADAPTATEUR@@\n", etapes)
                 .replace("@@INSTALLATION@@\n", etape))
     if motif:
         journal.append(motif)
@@ -403,7 +421,7 @@ def _installer(cible: Path, adaptateur: str, proprietaire: str, adoption: bool, 
         try:
             journal += migrations.migrer(cible, int(ancien.get("format", 1)), ch.format)
         except RuntimeError as e:
-            print(f"refus : {e}", file=sys.stderr)
+            print(trad("refus : {refus}", refus=e), file=sys.stderr)
             return 2
         config.oublier_formats()
 
@@ -424,7 +442,7 @@ def _installer(cible: Path, adaptateur: str, proprietaire: str, adoption: bool, 
     journal += _instructions(cible, dossier_moteur, lg, balayage, ch)
 
     # 5. Les étages d'application.
-    journal += _poser_etages(cible, texte_adaptateur, dossier_moteur, proprietaire, balayage, motif, ch)
+    journal += _poser_etages(cible, texte_adaptateur, dossier_moteur, proprietaire, balayage, motif, ch, lg)
     if prive:
         journal += _prive(cible, prive, filtre)
 

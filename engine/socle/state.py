@@ -9,7 +9,6 @@ en moins, jamais par un code non nul.
 
 from __future__ import annotations
 
-import re
 import shutil
 import subprocess
 import time
@@ -57,9 +56,7 @@ def _gh_json(racine, chemin: str):
 
 def nom_de_la_ci(projet: config.Projet) -> str:
     """Le nom du travail de la CI du socle, tel que GitHub l'exige."""
-    texte = outils.lire_a(projet.racine, None, ".github/workflows/socle.yml") or ""
-    m = re.search(r"(?m)^ {4}name:\s*(.+?)\s*$", texte)
-    return m.group(1).strip("'\"") if m else "Socle"
+    return outils.nom_du_travail(outils.lire_a(projet.racine, None, ".github/workflows/socle.yml") or "") or "Socle"
 
 
 def ci_exigee(projet: config.Projet) -> tuple[bool | None, str]:

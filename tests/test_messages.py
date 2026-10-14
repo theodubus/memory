@@ -54,6 +54,22 @@ def resumes_des_controles() -> set[str]:
     return res
 
 
+def textes_des_adaptateurs() -> set[str]:
+    """Les textes `absent` et `replacement` des adaptateurs maintenus, que
+    `verify` et les contrôles affichent traduits, et les noms de leurs étapes
+    de CI (B-0059)."""
+    import tomllib
+
+    res = set()
+    for chemin in sorted((MOTEUR / "adapters").glob("*.toml")):
+        adaptateur = tomllib.loads(chemin.read_text(encoding="utf-8"))
+        for cap in adaptateur.get("capabilities", {}).values():
+            res |= {cap[k] for k in ("absent", "replacement") if k in cap}
+        # Les noms de ses étapes de CI, posées dans la langue du projet.
+        res |= set(re.findall(r"(?m)^\s*- name: (.+?)\s*$", adaptateur.get("ci_setup", "")))
+    return res
+
+
 # Là où le moteur émet un message : le constat d'un contrôle (son second
 # argument), une impression, une exception, le refus d'un hook (le premier).
 PUITS_CONSTAT = {"erreur", "avertir", "indisponible"}
@@ -303,7 +319,28 @@ class Catalogue(unittest.TestCase):
     def test_le_catalogue_n_a_pas_d_entree_que_rien_n_emploie(self):
         employes = {n.args[0].value for _, _, n in enveloppes() if n.args and isinstance(n.args[0], ast.Constant)}
         employes |= resumes_des_controles()  # traduits à l'affichage de `socle checks`
+        employes |= textes_des_adaptateurs()  # traduits à l'affichage de `verify`
         self.assertEqual(sorted(set(MESSAGES) - employes), [])
+
+    def test_chaque_texte_d_un_adaptateur_maintenu_est_au_catalogue(self):
+        self.assertEqual(sorted(textes_des_adaptateurs() - set(MESSAGES)), [])
+
+    def test_verify_affiche_le_texte_d_un_adaptateur_dans_la_langue_du_projet(self):
+        from types import SimpleNamespace
+
+        from socle import verification
+
+        projet = SimpleNamespace(adaptateur={"capabilities": {"format": {
+            "absent": "langage interprété : pas de compilation séparée", "replacement": "capacité `lint`"}}})
+        attendus = {"fr": "capacité absente : langage interprété : pas de compilation séparée — remplacement : "
+                          "capacité `lint`",
+                    "en": "capability absent: interpreted language: no separate compilation — replacement: "
+                          "capability `lint`"}
+        for langue, attendu in attendus.items():
+            with self.subTest(langue), messages.dans(langue):
+                rapport = Rapport()
+                verification.executer_etapes(projet, False, rapport)
+                self.assertEqual([c.message for c in rapport.constats], [attendu])
 
     def test_aucun_message_en_dur_la_ou_le_moteur_en_emet(self):
         fautes = []
