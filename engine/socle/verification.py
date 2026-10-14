@@ -9,6 +9,7 @@ a besoin, et la tronquer oblige à relancer.
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 
 from socle import config, utils as outils
@@ -87,6 +88,12 @@ def executer_etapes(projet: config.Projet, rapide: bool, rapport: Rapport, flux=
             rapport.erreur(ident, f"délai dépassé : {c['command']}")
             continue
         if p.returncode != 0:
-            sortie = (p.stdout + p.stderr).rstrip().splitlines()
-            queue = "\n        ".join(sortie[-LIGNES_SORTIE:])
+            sortie = (p.stdout + p.stderr).rstrip()
+            queue = "\n        ".join(sortie.splitlines()[-LIGNES_SORTIE:])
+            if c.get("no_tests") and re.search(c["no_tests"], sortie):
+                # Un projet qui commence n'a pas encore de test : l'outil le
+                # dit par un échec, que l'adaptateur reconnaît (B-0026).
+                rapport.avertir(ident, f"aucun test trouvé (`{c['command']}`) : un projet qui commence n'en a pas "
+                                "encore ; le premier code s'écrit avec son test")
+                continue
             rapport.erreur(ident, f"`{c['command']}` a rendu {p.returncode}\n        {queue}")

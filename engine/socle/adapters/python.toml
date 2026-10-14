@@ -27,6 +27,9 @@ replacement = "capacité `lint` (compileall)"
 [capabilities.tests]
 command = "python3 -m unittest discover -s tests -t . -q"
 fast = true
+# Sans aucun test (pas encore de dossier `tests/`, ou un dossier vide),
+# unittest échoue : un avertissement, pas un échec (B-0026).
+no_tests = 'NO TESTS RAN|Start directory is not importable'
 
 [capabilities.mutation]
 absent = "mutmut n'est pas évalué sur ce projet (outil candidat du cadrage, jalon 6)"

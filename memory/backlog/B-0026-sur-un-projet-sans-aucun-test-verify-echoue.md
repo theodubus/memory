@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0026 — Sur un projet sans aucun test, verify échoue
 
-> statut : ouvert · origine : J-2026-10-11-G · lu : backlog@c462bb86
+> statut : fait · origine : J-2026-10-11-G · lu : backlog@c462bb86 · ref : J-2026-10-14-H
 
 Vu au banc (s6, premier passage : l'initialisation depuis un cadrage seul)
 et reproduit sur un projet installé vide : `socle verify` échoue sur

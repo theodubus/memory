@@ -72,6 +72,41 @@ class TestRust(unittest.TestCase):
         self.assertEqual(lignes[20], "}")
 
 
+class TestFonctionDansUneChaine(unittest.TestCase):
+    """B-0025 : le banc garde le code de ses projets d'essai dans des
+    chaînes ; un `def` en début de ligne, dans une chaîne de plusieurs
+    lignes, était lu comme une fonction publique, qu'aucun test ne nomme."""
+
+    def test_un_def_dans_une_chaine_n_est_pas_une_fonction(self):
+        texte = (
+            "# l'apostrophe d'un commentaire n'ouvre pas de chaîne\n"
+            'PROJET = """\n'
+            "def echelle(x):\n"
+            "    return 3 * x\n"
+            '"""\n'
+            "\n"
+            "def vraie(x):\n"
+            "    '''Sa docstring, sur une ligne.'''\n"
+            "    return x\n"
+            "\n"
+            "AUTRE = '''\n"
+            "def fausse():\n"
+            "    pass\n"
+            "'''\n"
+            "def aussi_vraie():\n"
+            "    return 'une chaîne d\\'une ligne'\n"
+        )
+        noms = [f.nom for f in tests_lecture.extraire(texte, "x.py", cfg("python"))]
+        self.assertEqual(noms, ["vraie", "aussi_vraie"])
+
+    def test_sans_commentaires_declares_les_chaines_ne_cachent_rien(self):
+        # Une apostrophe de commentaire ouvrirait une chaîne fantôme jusqu'à
+        # la suivante : sans `line_comment`, les chaînes ne comptent pas.
+        sans = {k: v for k, v in cfg("python").items() if k not in ("block_comment", "line_comment")}
+        texte = "# l'apostrophe\ndef a():\n    pass\n# d'autres\ndef b():\n    pass\n"
+        self.assertEqual([f.nom for f in tests_lecture.extraire(texte, "x.py", sans)], ["a", "b"])
+
+
 class TestPython(unittest.TestCase):
     def setUp(self):
         self.c, self.f, self.assertion, self.aides = analyser("python", PYTHON)

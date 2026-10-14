@@ -121,3 +121,33 @@ class TestAutotestUneFois(unittest.TestCase):
             cli.cmd_verify(argparse.Namespace(base=None, fast=True, refaire=True))
             cli.cmd_verify(argparse.Namespace(base=None, fast=False, refaire=False))
         self.assertEqual(appels, [("rapides", False), ("rapides", True), ("toutes", None)])
+
+
+class TestSansAucunTest(unittest.TestCase):
+    """B-0026 : un projet qui commence n'a pas encore de test, et unittest
+    le dit par un échec ; l'adaptateur le reconnaît, et `verify` avertit au
+    lieu d'échouer."""
+
+    def test_un_projet_sans_test_avertit(self):
+        racine = Path(tempfile.mkdtemp(prefix="socle-sans-test-"))
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=racine, check=True)
+        (racine / "calc.py").write_text("x = 1\n")
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(racine, "python", "@essai", source=MOTEUR)
+        projet = config.Projet.charger(racine)
+        for dossier in (None, "tests"):  # sans dossier, puis un dossier vide
+            if dossier:
+                (racine / dossier).mkdir()
+                (racine / dossier / "__init__.py").write_text("")
+            rapport = Rapport()
+            verification.executer_etapes(projet, True, rapport)
+            self.assertEqual(rapport.erreurs("verify.tests"), [], dossier)
+            self.assertIn("aucun test trouvé", rapport.texte())
+        # Un vrai échec reste un échec.
+        (racine / "tests/test_x.py").write_text("import unittest\n\nclass T(unittest.TestCase):\n"
+                                                "    def test_x(self):\n        self.fail('non')\n")
+        rapport = Rapport()
+        verification.executer_etapes(projet, True, rapport)
+        self.assertTrue(rapport.erreurs("verify.tests"))
+

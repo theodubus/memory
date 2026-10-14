@@ -71,6 +71,12 @@ toutes. Pendant les étapes rapides, le moteur pose la variable
 avec sa raison écrite, et la CI le joue toujours (D-0019). Sous `unittest` :
 `@unittest.skipIf(os.environ.get("SOCLE_RAPIDE"), "…")`.
 
+Un projet qui commence n'a pas encore de test, et plusieurs outils le
+disent par un échec (`unittest` : « NO TESTS RAN », ou un dossier `tests/`
+absent). La clé `no_tests` de la capacité `tests` reconnaît ce cas dans la
+sortie : `verify` en fait un avertissement, pas un échec. L'adaptateur
+Python la déclare ; un autre l'ajoute quand son outil se comporte ainsi.
+
 ## Une capacité absente se déclare
 
 Chaque capacité est soit une commande, soit déclarée absente avec ce qui la

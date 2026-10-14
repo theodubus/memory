@@ -140,10 +140,11 @@ def extraire(texte: str, fichier: str, cfg: dict) -> list[Fonction]:
     marque_ligne = re.compile(cfg["marker_line"]) if cfg.get("marker_line") else None
     litteraux, commentaire = cfg.get("strings", LITTERAUX), cfg.get("line_comment", COMMENTAIRE)
     lignes = texte.splitlines()
+    dans_une_chaine = _lignes_dans_une_chaine(texte, cfg)
     res = []
     for i, ligne in enumerate(lignes):
         m = fn_re.match(ligne)
-        if not m:
+        if not m or i in dans_une_chaine:
             continue
         nom = next((g for g in m.groups() if g), None) if m.groups() else m.group(0)
         if not nom:
@@ -177,6 +178,35 @@ def extraire(texte: str, fichier: str, cfg: dict) -> list[Fonction]:
 
 
 
+
+
+def _lignes_dans_une_chaine(texte: str, cfg: dict) -> set[int]:
+    """Les lignes (à partir de 0) qui commencent à l'intérieur d'une chaîne
+    ou d'un commentaire de plusieurs lignes : un `def` qui s'y trouve n'est
+    pas une fonction, mais du texte (B-0025 : le banc garde le code de ses
+    projets d'essai dans des chaînes). Les chaînes ne comptent que si
+    l'adaptateur déclare aussi ses commentaires de fin de ligne, sautés
+    d'abord : une apostrophe y ouvrirait une chaîne fantôme, qui cacherait
+    les vraies fonctions jusqu'à la suivante. Sans rien de déclaré, rien
+    n'est caché."""
+    sures = cfg.get("strings") and cfg.get("line_comment")
+    morceaux = [f"(?:{cfg['block_comment']})" if cfg.get("block_comment") else None,
+                f"(?:{cfg['strings']})" if sures else None,
+                f"(?P<fin>{cfg['line_comment']})" if sures else None]
+    if not any(morceaux):
+        return set()
+    motif = re.compile("|".join(x for x in morceaux if x), re.M)
+    debuts, n = [], 0
+    for ligne in texte.splitlines(keepends=True):
+        debuts.append(n)
+        n += len(ligne)
+    res = set()
+    for m in motif.finditer(texte):
+        if m.lastgroup == "fin" or "\n" not in m.group(0):
+            continue
+        a, b = m.span()
+        res.update(i for i, d in enumerate(debuts) if a < d < b)
+    return res
 
 
 def sans_commentaires(texte: str, cfg: dict) -> str:
