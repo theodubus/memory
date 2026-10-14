@@ -27,9 +27,11 @@ d'agent sans passage du filtre depuis le précédent.
 
 ## Prochaines étapes
 
-1. D-0025, la demande de B-0039, est posée : attendre la réponse de Théo,
-   et la relayer avec son texte exact.
-2. Pousser B-0060 et regarder la CI.
-3. Ensuite, dans l'ordre validé : B-0048 avec B-0018 (une demande
-   d'abord), puis B-0059. Plus tard : B-0046 (que Théo reprendra), B-0040
-   (dotnet absent d'ici) ; B-0042 attend sa propre demande.
+1. Deux demandes attendent la réponse de Théo, à relayer avec son texte
+   exact : D-0025 (un dépôt jetable sur GitHub pour la CI des cinq
+   adaptateurs, B-0039) et D-0026 (laisser passer une fois l'action validée,
+   et le push vers un dépôt local, B-0048 et B-0018).
+2. En attendant, dans l'ordre validé : B-0059 (ce qui reste en français
+   dans un projet anglais).
+3. Plus tard : B-0046 (que Théo reprendra), B-0040 (dotnet absent d'ici) ;
+   B-0042 attend sa propre demande.
