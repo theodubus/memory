@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0038 — Les textes que le moteur écrit en prose, dans la langue du projet
 
-> statut : ouvert · origine : J-2026-10-11-P · lu : backlog@12919d59
+> statut : en cours · origine : J-2026-10-11-P · lu : backlog@12919d59
 
 Suite de B-0031 : la mémoire s'écrit en anglais, mais le moteur écrit
 encore en français ses messages (contrôles, hooks, ligne de commande) et

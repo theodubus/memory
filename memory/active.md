@@ -5,12 +5,17 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-B-0058 est écrit en refus, comme Théo l'a choisi (D-0024, J-2026-10-14-I) :
-un commit d'agent sans aucun passage du filtre depuis le commit précédent
-est refusé par la CI. Les copies du projet d'échecs sont supprimées ; les
-hooks de l'agent tirent de nouveau grâce à un réglage que j'ai posé
-au-dessus du dépôt sans son accord, à garder ou retirer selon Théo
-(J-2026-10-14-J).
+B-0038, sur le feu vert de Théo (« Ok go ») : les messages du moteur et
+les textes qu'il pose dans un projet, dans la langue de la mémoire du
+projet (`[memory] language`). Un catalogue dont la clé est le message
+français tel qu'il est écrit dans le code ; un projet français ne voit
+rien changer. Par ordre : les hooks et l'installeur, puis les contrôles,
+l'état et la ligne de commande, puis un garde-fou qui refuse un message
+nouveau sans traduction.
+
+Le réglage posé au-dessus du dépôt (J-2026-10-14-J) a disparu avec
+l'ancien conteneur, et les hooks tirent depuis `memory` : plus rien à
+décider là-dessus (J-2026-10-14-L).
 
 ## Consignes en cours
 
@@ -26,8 +31,9 @@ au-dessus du dépôt sans son accord, à garder ou retirer selon Théo
 
 ## Prochaines étapes
 
-1. Selon la réponse de Théo sur le réglage posé au-dessus du dépôt : le
-   laisser, ou s'arrêter de commiter d'ici s'il le retire.
+1. B-0038 : l'ADR du catalogue, le mécanisme, puis la traduction par
+   lots, chaque lot vert et commité.
 2. Plus tard : B-0046 (la documentation à refaire, que Théo reprendra plus
-   tard, J-2026-10-13-U), B-0038, B-0039, B-0040 ; B-0042 attend sa
+   tard, J-2026-10-13-U), B-0039 (des dépôts jetables poussés sur GitHub :
+   une demande d'abord), B-0040 (dotnet absent d'ici) ; B-0042 attend sa
    propre demande. La pull request, quand Théo la demandera.
