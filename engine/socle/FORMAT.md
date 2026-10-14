@@ -204,8 +204,10 @@ révélée impossible à trancher pour l'humain.
   déclenché la question, et le problème lui-même — un extrait de code, la
   règle en cause. Si la décision porte sur un contenu (un inventaire, un
   format), elle le résume sur place.
-- « Où regarder » donne un lien (relatif ou URL) vers chaque document ou
-  passage à lire pour décider, et dit ce qu'il faut y vérifier.
+- « Où regarder » donne un lien vers chaque document ou passage à lire
+  pour décider, et dit ce qu'il faut y vérifier : le permalien de
+  `socle url`, ou, sans adresse de dépôt connue, un lien relatif depuis la
+  demande (B-0027).
 
 - « Éléments cités » décrit en clair, en au moins cinq mots, chaque
   identifiant interne de la demande (identifiants de mémoire, SHA, numéros de

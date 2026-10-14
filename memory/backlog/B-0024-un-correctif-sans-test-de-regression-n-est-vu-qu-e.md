@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0024 — Un correctif sans test de régression n'est vu qu'en CI
 
-> statut : ouvert · origine : J-2026-10-11-F · lu : backlog@9939ea82
+> statut : fait · origine : J-2026-10-11-F · lu : backlog@9939ea82 · ref : J-2026-10-14-E
 
 Au banc (s9, première version), deux agents ont commité un correctif
 (`fix:`) sans test de régression : ni la fin de tour ni le hook avant

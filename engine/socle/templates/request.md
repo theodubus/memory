@@ -17,7 +17,7 @@
 
 ## Où regarder
 
-<Un lien vers chaque document ou passage à lire pour décider, et ce qu'il faut y vérifier. Si la décision porte sur un contenu, le résumer aussi ici.>
+<Un lien vers chaque document ou passage à lire pour décider, et ce qu'il faut y vérifier : le permalien que donne `socle url <chemin>` ; sans adresse de dépôt connue, un lien relatif depuis cette demande vers le fichier. Si la décision porte sur un contenu, le résumer aussi ici.>
 
 ## Options
 

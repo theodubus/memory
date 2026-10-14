@@ -1,6 +1,7 @@
 import unittest
 
 from socle import hooks
+from tests.test_bascule import Projet
 
 LANCEUR = ".socle/" + "socle"  # en morceaux : ce fichier ne lance rien
 
@@ -149,6 +150,27 @@ class TestHooksAbsents(unittest.TestCase):
                 contextlib.redirect_stderr(io.StringIO()) as erreurs:
             self.assertEqual(hooks.git_commit_msg(projet, str(fichier)), 0)
         self.assertIn("sans aucun hook de l'agent", erreurs.getvalue())
+
+
+class TestCorrectifSansTest(Projet):
+    """B-0024 : un correctif sans test de régression n'était vu qu'en CI ; le
+    hook commit-msg le dit dès le commit, quand l'amender suffit encore."""
+
+    def test_un_correctif_qui_n_apporte_aucun_test(self):
+        from socle import config
+        from tests.test_bascule import git
+
+        racine = self.racine
+        (racine / "calc.py").write_text("def double(x):\n    return 2 * int(x)\n")
+        git(racine, "add", "calc.py")
+        projet = config.Projet.charger(racine)
+        avert = hooks.correctif_sans_test(projet, "fix: double accepte une chaîne")
+        self.assertIn("la CI le refusera (`tests.regression`)", avert)
+        self.assertIsNone(hooks.correctif_sans_test(projet, "Une amélioration de double"))
+        (racine / "tests").mkdir(exist_ok=True)
+        (racine / "tests/test_double.py").write_text("def test_chaine():\n    assert True\n")
+        git(racine, "add", "tests/test_double.py")
+        self.assertIsNone(hooks.correctif_sans_test(projet, "fix: double accepte une chaîne"))
 
 
 class TestSousUnAgent(unittest.TestCase):

@@ -42,6 +42,23 @@ class TestHookDansUnWorktree(unittest.TestCase):
         self.assertTrue((jetable / "HEAD").is_file())
         self.assertEqual(git(self.depot, "config", "core.bare").strip(), "false")
 
+    def test_par_le_point_d_entree_du_hook(self):
+        # Ce qu'a fait le hook de ce dépôt : un dépôt jetable créé pendant
+        # un hook git lancé du worktree visait le dépôt du projet.
+        import contextlib
+        import io
+
+        from socle import cli
+
+        jetable = self.dossier / "jetable.git"
+        jetable.mkdir()
+        with mock.patch.dict(os.environ, self.env), contextlib.redirect_stdout(io.StringIO()), \
+                contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(cli.main(["--root", str(self.worktree), "hook", "git-commit-msg"]), 0)
+            outils.git(jetable, "init", "-q", "--bare")
+        self.assertEqual(git(self.depot, "config", "core.bare").strip(), "false")
+        self.assertTrue((jetable / "HEAD").is_file())
+
     def test_l_index_juge_est_celui_que_git_passe(self):
         # Un `git commit -a` juge un index temporaire, pas celui du dépôt.
         temporaire = self.dossier / "index-temporaire"

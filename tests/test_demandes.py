@@ -86,6 +86,13 @@ class TestContrat(unittest.TestCase):
         texte = CONFORME.replace("[le verdict](https://exemple.org/verdict)", "le verdict")
         self.assertTrue(any("Où regarder" in f for f in demandes.linter(_demande(texte), self.projet)))
 
+    def test_sans_lien_le_refus_dit_comment_en_mettre_un(self):
+        # B-0027 : sans adresse de dépôt, `socle url` échoue et l'agent
+        # écrivait des chemins nus ; le refus dit qu'un lien relatif suffit.
+        texte = CONFORME.replace("[le verdict](https://exemple.org/verdict)", "le verdict")
+        faute = next(f for f in demandes.linter(_demande(texte), self.projet) if "Où regarder" in f)
+        self.assertIn("un lien relatif depuis la demande", faute)
+
     def test_contexte_d_une_ligne_refuse(self):
         texte = re.sub(r"## Contexte\n\n.*?\n\n## ", "## Contexte\n\nDeux survivants nouveaux.\n\n## ",
                        CONFORME, flags=re.S)

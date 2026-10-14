@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0027 — Sans adresse de dépôt, l'agent ne sait pas quel lien mettre dans une demande
 
-> statut : ouvert · origine : J-2026-10-11-G · lu : backlog@3cbd3c76
+> statut : fait · origine : J-2026-10-11-G · lu : backlog@3cbd3c76 · ref : J-2026-10-14-E
 
 Au banc, huit premiers jets de demande sur onze ont été refusés pour « Où
 regarder » sans lien (s4, s5, s9, s11) : sans `[human] repo_url` ni push, `socle

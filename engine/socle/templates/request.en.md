@@ -17,7 +17,7 @@
 
 ## Where to look
 
-<A link to each document or passage to read in order to decide, and what to check there. If the decision is about some content, summarise it here too.>
+<A link to each document or passage to read in order to decide, and what to check there: the permalink that `socle url <path>` gives; with no known repository address, a relative link from this request to the file. If the decision is about some content, summarise it here too.>
 
 ## Options
 

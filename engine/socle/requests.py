@@ -188,7 +188,8 @@ def linter(d: Demande, projet: config.Projet) -> list[str]:
     regarder = d.sections.get("ou-regarder", "")
     if "ou-regarder" in d.sections and not LIEN.search(regarder):
         fautes.append("« Où regarder » doit donner un lien vers chaque document ou passage à lire, "
-                      "et dire ce qu'il faut y vérifier")
+                      "et dire ce qu'il faut y vérifier : le permalien de `socle url <chemin>` ; sans adresse "
+                      "de dépôt connue, un lien relatif depuis la demande (`[calc.py](../../calc.py)`)")
 
     norm = {k: outils.cle(v).replace("-", " ") for k, v in d.sections.items()}
     opts = norm.get("options", "")

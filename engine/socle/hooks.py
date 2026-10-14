@@ -897,10 +897,36 @@ def git_commit_msg(projet: config.Projet, fichier: str = "") -> int:
         tracer_refus(projet.racine, "git-commit-msg", "fuite")
         print(f"socle — commit refusé : {faute}", file=sys.stderr)
         return 1
-    for avertissement in (code_sans_test(projet, message), hooks_absents(projet, message)):
+    for avertissement in (code_sans_test(projet, message), hooks_absents(projet, message),
+                          correctif_sans_test(projet, message)):
         if avertissement:
             print(avertissement, file=sys.stderr)
     return 0
+
+
+def correctif_sans_test(projet: config.Projet, message: str) -> str | None:
+    """Un correctif (`fix:`, `Corrige:`) dont le commit n'ajoute ni ne change
+    aucun test : la CI le refusera (`tests.regression`), seule à pouvoir
+    rejouer un test sur le commit d'avant. Le hook commit-msg le dit dès le
+    commit, sans refuser, quand l'amender suffit encore (B-0024)."""
+    from socle import checks_tests as controles_tests
+
+    if not controles_tests.est_correctif(projet, message) or not outils.a_des_commits(projet.racine):
+        return None
+    cap = projet.adaptateur.get("capabilities", {}).get("regression", {})
+    arbre = outils.arbre_de_l_index(projet.racine)
+    if "command" not in cap or not arbre:
+        return None
+    motifs = cap.get("test_paths") or (controles_tests.cfg_tests(projet) or {}).get("paths", [])
+    touches = [f for f in outils.git(projet.racine, "diff", "--name-only", "-z", "HEAD", arbre,
+                                     check=False).split("\0") if f]
+    if outils.filtrer(touches, motifs):
+        return None
+    if "module_command" in cap and outils.filtrer(touches, projet.chemins_code()):
+        return None  # un test peut vivre dans le module du code (B-0051) : la CI le cherche
+    return ("socle — avertissement : ce correctif n'ajoute ni ne change aucun test "
+            f"({', '.join(motifs)}) : la CI le refusera (`tests.regression`), faute d'un test qui échoue sur le "
+            "commit d'avant. L'ajouter à ce commit (`git commit --amend`), tant qu'il n'est pas poussé.")
 
 
 def hooks_absents(projet: config.Projet, message: str) -> str | None:
