@@ -27,7 +27,7 @@ from datetime import date
 from pathlib import Path
 
 from socle import VERSION, config, fingerprint as empreinte, language as langue, messages, mutation, utils as outils
-from socle.messages import trad
+from socle.messages import a_traduire, trad
 from socle.report import en_echec_dans
 from socle.templates import DOSSIER as MODELES, gabarit
 
@@ -47,6 +47,10 @@ def charger_adaptateur(nom: str) -> tuple[str, str]:
         raise SystemExit(trad("adaptateur inconnu : {nom} (maintenus : {connus} ; sinon un chemin vers un "
                               ".toml)", nom=nom, connus=connus))
     return q.read_text(encoding="utf-8"), nom
+
+
+# Le message du lanceur, tel qu'il est écrit dans son gabarit.
+PYTHON_ANCIEN = a_traduire("le socle exige Python 3.11 ou plus récent (tomllib) ; trouvé : ")
 
 
 def noms_d_etapes_traduits(etapes: str) -> str:
@@ -208,7 +212,10 @@ def _poser_moteur(cible: Path, mode: str, source: Path, ch: config.Chemins) -> t
             shutil.copytree(source / "socle", dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc", ".*"))
             journal.append(trad("moteur {version} copié dans {dossier_moteur}/socle", version=VERSION,
                                 dossier_moteur=dossier_moteur))
-    outils.ecrire(cible / config.LANCEUR, gabarit("launcher.py"), executable=True)
+    # Le message du lanceur sous un Python trop ancien s'écrit avant que le
+    # moteur ne se charge : il prend la langue du projet ici (B-0059).
+    outils.ecrire(cible / config.LANCEUR, gabarit("launcher.py").replace(PYTHON_ANCIEN, trad(PYTHON_ANCIEN)),
+                  executable=True)
 
     # 2. Le verrou et son empreinte. En mode amont, le moteur est la source :
     # une empreinte figée y changerait à chaque modification du moteur, et

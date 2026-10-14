@@ -227,6 +227,13 @@ class TestCIAnglaise(unittest.TestCase):
         self.assertIn("- name: pytest and mutmut", balayage)
         self.assertNotIn("Balayage et verdict", balayage)
 
+    def test_le_lanceur_parle_la_langue_du_projet(self):
+        # Son message sous un Python trop ancien s'écrit avant le moteur.
+        lanceur = self.lire(".socle/socle")
+        self.assertIn('"the socle requires Python 3.11 or newer (tomllib); found: "', lanceur)
+        self.assertNotIn(installeur.PYTHON_ANCIEN, lanceur)
+        self.assertIn(installeur.PYTHON_ANCIEN, (MOTEUR / "socle/templates/launcher.py").read_text(encoding="utf-8"))
+
     def test_nom_du_travail_et_noms_d_etapes(self):
         self.assertEqual(outils.nom_du_travail("jobs:\n  socle:\n    name: 'Socle — x'\n"), "Socle — x")
         self.assertIsNone(outils.nom_du_travail("name: Socle\n"))
@@ -258,6 +265,18 @@ class TestProjetAnglais(ProjetAnglais):
         self.assertIn("## Next steps", self.lire("memory/active.md"))
         self.assertIn("ref : file:.socle/engine.lock", next((self.racine / "memory/journal").glob("*.md")).read_text())
         self.assertEqual(self.erreurs(), [])
+
+    def test_show_dit_le_statut_d_une_demande_en_anglais(self):
+        # B-0059 : le statut affiché suit la langue ; la valeur comparée non.
+        sortie = self.socle("new", "request", "Choose the cap")
+        ident = sortie.split()[0]
+        self.assertIn("\n--- pending ---", self.socle("show", ident))
+        d = next(d for d in demandes.toutes(self.racine) if d.id == ident)
+        self.assertEqual(d.statut, "en attente")
+        d.reponse = {"reponse": "accept"}
+        with messages.dans("en"):
+            self.assertEqual(d.statut_affiche, "answered: accept")
+        self.assertEqual(d.statut_affiche, "répondue : accept")
 
     def test_new_ecrit_dans_la_langue_du_projet(self):
         self.socle("new", "fact", "Double doubles")

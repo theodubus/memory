@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0059 — Ce qui reste en français dans un projet anglais
 
-> statut : ouvert · origine : J-2026-10-14-N · lu : backlog@c4743d32
+> statut : fait · origine : J-2026-10-14-N · lu : backlog@c4743d32 · ref : J-2026-10-14-X, ADR-0029
 
 Suite de B-0038 : le moteur parle la langue du projet, mais un projet
 anglais lit encore du français à six endroits, hors du moteur ou à la

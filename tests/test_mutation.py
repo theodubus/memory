@@ -115,6 +115,16 @@ class TestAMesurer(unittest.TestCase):
         self.assertRegex(texte, r'"src/eval.rs" = \{ max = 1, reason = "mesuré le [\d-]+ : 1 survivant\(s\)" \}')
         self.assertTrue(mutation.verdict(self.projet(), self.dossier).reussi)
 
+    def test_poser_ecrit_la_raison_dans_la_langue_du_projet(self):
+        # B-0059 : la raison suit la langue des messages, et se relit.
+        from socle import messages
+
+        with messages.dans("en"):
+            mutation.verdict(self.projet(), self.dossier, poser=True)
+        texte = (self.dossier / ".socle/guardrails.toml").read_text()
+        self.assertRegex(texte, r'"src/eval.rs" = \{ max = 1, reason = "measured on [\d-]+: 1 survivor\(s\)" \}')
+        self.assertTrue(mutation.verdict(self.projet(), self.dossier).reussi)
+
     def test_cmd_mutation_verdict_avec_poser(self):
         import argparse
         import io

@@ -355,9 +355,13 @@ nouvelle. Les trailers de commit ont leurs deux noms (`Dispense-test` ou
 marqueur d'une tautologie voulue (`socle: voulu —` ou `socle: intended —`).
 Les messages du moteur suivent la même langue (ADR-0028), comme les
 commentaires qu'il écrit dans les fichiers qu'il pose (le verrou du moteur,
-l'en-tête d'une réponse `.answer.toml`) ; les valeurs qu'il relit lui-même
-(le statut d'une demande, le marqueur `<!-- valeur:… -->`) restent les
-mêmes dans toutes les langues.
+l'en-tête d'une réponse `.answer.toml`, les workflows de CI), les textes des
+adaptateurs maintenus et les descriptions de l'auto-test. Ce qu'il relit
+lui-même s'écrit dans la langue du projet et se lit dans les deux : le
+marqueur d'une valeur liée (`<!-- valeur:… -->` ou `<!-- value:… -->`), la
+raison d'un plafond de mutation mesuré (`mesuré le … : N survivant(s)` ou
+`measured on …: N survivor(s)`). Le statut d'une demande reste une valeur
+interne, que `socle show` dit dans la langue du projet (B-0059).
 
 | Clé interne | Français | Anglais |
 | --- | --- | --- |

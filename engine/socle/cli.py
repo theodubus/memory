@@ -258,10 +258,10 @@ def cmd_show(args) -> int:
         if e.type == "D":
             d = next((d for d in demandes.toutes(projet.racine) if d.id == ident), None)
             if d and d.chemin_reponse:
-                print(trad("\n--- réponse ({chemin}) : {statut} ---", chemin=d.chemin_reponse, statut=d.statut))
+                print(trad("\n--- réponse ({chemin}) : {statut} ---", chemin=d.chemin_reponse, statut=d.statut_affiche))
                 print((projet.racine / d.chemin_reponse).read_text(encoding="utf-8").rstrip())
             elif d:
-                print(f"\n--- {d.statut} ---")
+                print(f"\n--- {d.statut_affiche} ---")
     return code
 
 

@@ -83,6 +83,18 @@ class TestCliquet(unittest.TestCase):
         repasse["mutation"]["caps"]["src/b.rs"] = {"pending": False}
         self.assertEqual([c for c, _ in assouplissements(repasse, a_mesurer)], ['mutation.caps."src/b.rs".pending'])
 
+    def test_un_plafond_mesure_dans_un_projet_anglais(self):
+        """B-0059 : la raison d'un plafond mesuré s'écrit dans la langue du
+        projet ; le cliquet la reconnaît dans les deux, et son compte aussi."""
+        a_mesurer = changer()
+        a_mesurer["mutation"]["caps"]["src/b.rs"] = {"pending": True}
+        mesure = changer()
+        mesure["mutation"]["caps"]["src/b.rs"] = {"max": 2, "reason": "measured on 2026-10-12: 2 survivor(s)"}
+        self.assertEqual(assouplissements(a_mesurer, mesure), [])
+        faux_compte = changer()
+        faux_compte["mutation"]["caps"]["src/b.rs"] = {"max": 40, "reason": "measured on 2026-10-12: 2 survivor(s)"}
+        self.assertTrue(assouplissements(a_mesurer, faux_compte))
+
     def test_un_plafond_ecrit_a_la_main(self):
         """B-0044, L2 : un module « à mesurer » recevait n'importe quel
         plafond écrit à la main, que le cliquet prenait pour un durcissement."""

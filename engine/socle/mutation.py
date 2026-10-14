@@ -273,7 +273,8 @@ def poser_plafonds(projet: config.Projet, mesures: dict[str, int]) -> list[str]:
     for module, n in mesures.items():
         cle = json.dumps(module, ensure_ascii=False)
         cles = rf"(?:{re.escape(cle)}|'{re.escape(module)}')"
-        raison = f'"mesuré le {date.today().isoformat()} : {n} survivant(s)"'
+        raison = json.dumps(trad("mesuré le {date} : {n} survivant(s)", date=date.today().isoformat(), n=n),
+                            ensure_ascii=False)
         valeur = f"{{ max = {n}, reason = {raison} }}" if n else "{ max = 0 }"
         en_ligne = re.compile(rf"^\s*{cles}\s*=\s*\{{[^}}]*\bpending\b")
         en_table = re.compile(rf"^\s*\[\s*mutation\s*\.\s*caps\s*\.\s*{cles}\s*\]\s*$")

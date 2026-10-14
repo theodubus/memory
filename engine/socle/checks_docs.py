@@ -16,8 +16,9 @@ from socle import config, language as langue, memory as memoire, utils as outils
 from socle.messages import trad
 from socle.context import controle
 
+# Le marqueur d'une valeur liée, lu dans les deux langues (B-0059).
 MARQUEUR_VALEUR = re.compile(
-    r"<!--\s*valeur\s*:\s*(?P<nom>[\w.-]+)\s*-->(?P<valeur>.*?)<!--\s*/valeur\s*-->", re.S
+    r"<!--\s*(?:valeur|value)\s*:\s*(?P<nom>[\w.-]+)\s*-->(?P<valeur>.*?)<!--\s*/(?:valeur|value)\s*-->", re.S
 )
 MOTIFS_OUTILLAGE_DEFAUT = [
     ".socle/git-hooks/*",

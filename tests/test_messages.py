@@ -70,6 +70,14 @@ def textes_des_adaptateurs() -> set[str]:
     return res
 
 
+def descriptions_de_l_autotest() -> set[str]:
+    """Les descriptions des défauts injectés et des témoins sains, que
+    l'auto-test affiche traduites (B-0059)."""
+    from socle import selftest
+
+    return {c.defaut for c in selftest._cas()} | {nom for nom, _ in selftest._temoins()}
+
+
 # Là où le moteur émet un message : le constat d'un contrôle (son second
 # argument), une impression, une exception, le refus d'un hook (le premier).
 PUITS_CONSTAT = {"erreur", "avertir", "indisponible"}
@@ -223,6 +231,19 @@ class ConstatsDansLesDeuxLangues(unittest.TestCase):
         self.assertEqual(controles_docs.valeur_source(Contexte({"v.txt": "N = 4"}), {"file": "v.txt", "regex": r"N = (\d+)"}),
                          ("4", None))
 
+    def test_le_marqueur_d_une_valeur_dans_les_deux_langues(self):
+        # B-0059 : un projet anglais écrit `value:`, et le remède le lui dit.
+        from socle import checks_docs as controles_docs
+
+        for texte in ("x <!-- valeur:facteur -->2<!-- /valeur --> y", "x <!-- value:facteur -->2<!-- /value --> y"):
+            with self.subTest(texte):
+                m = controles_docs.MARQUEUR_VALEUR.search(texte)
+                self.assertEqual((m["nom"], m["valeur"]), ("facteur", "2"))
+        with messages.dans("en"):
+            self.assertIn("<!-- value:facteur -->", messages.trad(
+                "« {extrait} » ressemble à la valeur `{nom}` sans marqueur : l'encadrer de `<!-- valeur:{nom} -->…"
+                "<!-- /valeur -->`", extrait="2", nom="facteur"))
+
     def test_configuration(self):
         from socle import checks_ratchet as controles_cliquet
 
@@ -320,7 +341,11 @@ class Catalogue(unittest.TestCase):
         employes = {n.args[0].value for _, _, n in enveloppes() if n.args and isinstance(n.args[0], ast.Constant)}
         employes |= resumes_des_controles()  # traduits à l'affichage de `socle checks`
         employes |= textes_des_adaptateurs()  # traduits à l'affichage de `verify`
+        employes |= descriptions_de_l_autotest()  # traduites à l'affichage de l'auto-test
         self.assertEqual(sorted(set(MESSAGES) - employes), [])
+
+    def test_chaque_defaut_et_chaque_temoin_de_l_autotest_est_au_catalogue(self):
+        self.assertEqual(sorted(descriptions_de_l_autotest() - set(MESSAGES)), [])
 
     def test_chaque_texte_d_un_adaptateur_maintenu_est_au_catalogue(self):
         self.assertEqual(sorted(textes_des_adaptateurs() - set(MESSAGES)), [])

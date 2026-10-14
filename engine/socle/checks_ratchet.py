@@ -77,7 +77,9 @@ def _regle(chemin: tuple[str, ...]) -> str | None:
     return None
 
 
-MESURE = re.compile(r"mesuré le \d{4}-\d{2}-\d{2} : (\d+) survivant")
+# La raison d'un plafond mesuré, écrite dans la langue du projet et lue
+# dans les deux (B-0059).
+MESURE = re.compile(r"(?:mesuré le \d{4}-\d{2}-\d{2} : |measured on \d{4}-\d{2}-\d{2}: )(\d+) surviv")
 
 
 def _mesure(apres: dict, chemin: tuple[str, ...], plafond) -> bool:

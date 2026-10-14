@@ -505,7 +505,7 @@ MESSAGES: dict[str, str] = {
         "`{nom}` is “{attendu}” at the source, the doc says “{doc}”",
     "« {extrait} » ressemble à la valeur `{nom}` sans marqueur : l'encadrer de `<!-- valeur:{nom} -->…<!-- /valeur "
     "-->`":
-        "“{extrait}” looks like the value `{nom}` without a marker: wrap it in `<!-- valeur:{nom} -->…<!-- /valeur "
+        "“{extrait}” looks like the value `{nom}` without a marker: wrap it in `<!-- value:{nom} -->…<!-- /value "
         "-->`",
     "{n} fichier(s) de code sans doc associée, dispensé : « {dispenses} »":
         "{n} code file(s) without their associated doc, waived: “{dispenses}”",
@@ -1802,4 +1802,330 @@ MESSAGES: dict[str, str] = {
         "Rust toolchain",
     "nom du travail de CI gardé : « {nom} », celui qu'une protection de branche exige peut-être":
         "CI job name kept: “{nom}”, the one a branch protection may require",
+    "mesuré le {date} : {n} survivant(s)":
+        "measured on {date}: {n} survivor(s)",
+    "en attente":
+        "pending",
+    "retirée":
+        "withdrawn",
+    "renvoyée":
+        "sent back",
+    "répondue : {reponse}":
+        "answered: {reponse}",
+    "le socle exige Python 3.11 ou plus récent (tomllib) ; trouvé : ":
+        "the socle requires Python 3.11 or newer (tomllib); found: ",
+    # Les défauts injectés et les témoins sains de l'auto-test, décrits en
+    # français dans `selftest.py` et traduits à l'affichage (B-0059).
+    "valeur de la doc divergente de sa source":
+        "doc value diverging from its source",
+    "lien ou identifiant mort":
+        "dead link or identifier",
+    "code modifié sans doc associée":
+        "code changed without its associated doc",
+    "test sans assertion":
+        "test without an assertion",
+    "assertion tautologique":
+        "tautological assertion",
+    "test désactivé sans raison écrite":
+        "test disabled without a written reason",
+    "test dont la seule assertion est en commentaire":
+        "test whose only assertion is commented out",
+    "classe de tests entière désactivée sans raison écrite":
+        "whole test class disabled without a written reason",
+    "plafond de mutation relevé":
+        "mutation cap raised",
+    "plafond de mutation remis « à mesurer »":
+        "mutation cap put back to “to measure”",
+    "plafond de mutation écrit à la main, sans la mesure":
+        "mutation cap written by hand, without the measure",
+    "doc ajoutée à une correspondance code ↔ doc":
+        "doc added to a code ↔ doc mapping",
+    "autre dépôt déclaré sans validation, pour que ses chemins échappent au contrôle":
+        "other repository declared without approval, so that its paths escape the check",
+    "budget de mémoire relevé":
+        "memory budget raised",
+    "correctif sans test de régression":
+        "fix without a regression test",
+    "test de régression qui échoue sur le parent faute de s'y charger":
+        "regression test that fails on the parent because it does not load there",
+    "code sans sa doc, couvert par la dispense d'un autre commit":
+        "code without its doc, covered by another commit's waiver",
+    "hook de l'agent absent ou jamais tiré":
+        "agent hook absent or never fired",
+    "hooks de l'agent arrêtés depuis le commit précédent":
+        "agent hooks stopped since the previous commit",
+    "session d'agent démarrée hors de la racine : ses hooks ne sont pas chargés":
+        "agent session started outside the root: its hooks are not loaded",
+    "commit d'agent sans passage du filtre depuis le précédent":
+        "agent commit without a pass of the filter since the previous one",
+    "moteur altéré dans le projet":
+        "engine altered in the project",
+    "politique altérée sans validation":
+        "policy altered without approval",
+    "fichier de test renommé hors des chemins de test : ses tests disparaissent":
+        "test file renamed outside the test paths: its tests disappear",
+    "fichier protégé renommé : son ancien chemin disparaît":
+        "protected file renamed: its old path disappears",
+    "fichier protégé changé, commité sans validation":
+        "protected file changed, committed without approval",
+    "demande humaine avec identifiant nu":
+        "human request with a bare identifier",
+    "demande qui ne dit pas où regarder":
+        "request that does not say where to look",
+    "couche de mémoire au-delà de son budget":
+        "memory layer beyond its budget",
+    "identifiant privé dans un fichier public":
+        "private identifier in a public file",
+    "mémoire privée non accessible":
+        "private memory not accessible",
+    "mémoire privée commitée sans avancer le verrou":
+        "private memory committed without moving the lock forward",
+    "terme de la liste privée écrit dans un fichier public":
+        "term of the private list written in a public file",
+    "terme privé écrit sous une variante (collé, souligné)":
+        "private term written in a variant (joined, underscored)",
+    "terme privé dans le nom d'un fichier public":
+        "private term in the name of a public file",
+    "document archivé en public qui cite un terme privé":
+        "document archived in public that cites a private term",
+    "terme privé dans le nom d'une branche créée":
+        "private term in the name of a created branch",
+    "corps de pull request passé par un fichier hors du dépôt":
+        "pull request body passed through a file outside the repository",
+    "identifiant privé dans un bloc de code d'un fichier public":
+        "private identifier in a code block of a public file",
+    "fait privé effacé de la mémoire privée":
+        "private fact erased from the private memory",
+    "liste des termes privés commitée en clair":
+        "list of private terms committed in clear",
+    "terme ajouté sans accès à la mémoire privée":
+        "term added without access to the private memory",
+    "entrée privée écrite sans accès à la mémoire privée":
+        "private entry written without access to the private memory",
+    "identifiant privé dans un message de commit":
+        "private identifier in a commit message",
+    "l'agent écrit un terme privé dans un fichier public":
+        "the agent writes a private term in a public file",
+    "description de pull request qui cite un identifiant privé":
+        "pull request description that cites a private identifier",
+    "terme retiré de la liste privée sans validation humaine":
+        "term removed from the private list without human approval",
+    "sujet « done » sans référence, écrit en anglais":
+        "“done” subject without a reference, written in English",
+    "entrée publique « basculée » sans copie privée qui la reprenne":
+        "public entry “moved” without a private copy that takes it over",
+    "push vers le dépôt public sans relecture humaine":
+        "push to the public repository without human review",
+    "fichier privé commité en clair, sans filtre de chiffrement":
+        "private file committed in clear, without an encryption filter",
+    "entrée de backlog close sans référence":
+        "backlog entry closed without a reference",
+    "entrée de journal au titre mal formé, que rien ne lit":
+        "journal entry with a malformed title, which nothing reads",
+    "entrée de journal réécrite":
+        "journal entry rewritten",
+    "fait canonique effacé":
+        "canonical fact erased",
+    "valeur attendue changée sans spécification":
+        "expected value changed without a specification",
+    "valeur attendue changée sous une ADR que l'agent écrit lui-même":
+        "expected value changed under an ADR the agent writes itself",
+    "valeur attendue changée sous une demande que l'humain n'a pas pu lire, faute d'être poussée":
+        "expected value changed under a request the human could not read, as it was not pushed",
+    "test supprimé sans validation":
+        "test deleted without approval",
+    "fait passé à « validé » par l'agent":
+        "fact set to “validated” by the agent",
+    "SHA complété de tête":
+        "SHA completed from memory",
+    "force-push sans validation humaine":
+        "force-push without human approval",
+    "push forcé caché dans des drapeaux groupés":
+        "forced push hidden in grouped flags",
+    "push vers la branche par défaut par une référence complète":
+        "push to the default branch through a full reference",
+    "branche distante supprimée par l'API de GitHub":
+        "remote branch deleted through the GitHub API",
+    "fichier protégé écrit par une redirection du shell":
+        "protected file written by a shell redirection",
+    "dossier qui contient des fichiers protégés déplacé par le shell":
+        "folder containing protected files moved by the shell",
+    "l'agent coupe ses hooks par un réglage local de Claude Code":
+        "the agent cuts its hooks through a local Claude Code setting",
+    "chaque forme d'action irréversible ou externe":
+        "each form of irreversible or external action",
+    "chaque outil externe d'écriture":
+        "each external writing tool",
+    "référence à une entrée qui n'existe pas":
+        "reference to an entry that does not exist",
+    "contrôles rouges trois tours de suite, sans escalade":
+        "checks red three turns in a row, without escalation",
+    "fait « validé » commité sans réponse de l'humain":
+        "“validated” fact committed without the human's answer",
+    "demande hors contrat commitée":
+        "request out of contract committed",
+    "capacité absente sans son remplacement":
+        "capability absent without its replacement",
+    "demande réécrite après sa réponse":
+        "request rewritten after its answer",
+    "hooks de l'agent retirés de ses réglages":
+        "agent hooks removed from its settings",
+    "CLAUDE.md qui recopie des instructions":
+        "CLAUDE.md that copies instructions",
+    "AGENTS.md supprimé, CLAUDE.md sans la section du socle":
+        "AGENTS.md deleted, CLAUDE.md without the socle section",
+    "fichier de mémoire sans son en-tête":
+        "memory file without its header",
+    "chantier actif qui ne bouge plus":
+        "active work that no longer moves",
+    "fichiers privés commités sans mode de mémoire privée":
+        "private files committed without a private memory mode",
+    "module de code hors du cliquet de mutation":
+        "code module outside the mutation ratchet",
+    "balayage de mutation planifié endormi par GitHub":
+        "scheduled mutation sweep put to sleep by GitHub",
+    "survivants de mutation au-delà du plafond":
+        "mutation survivors beyond the cap",
+    "l'agent écrit une réponse humaine":
+        "the agent writes a human answer",
+    "l'agent répond à la place de l'humain":
+        "the agent answers in place of the human",
+    "l'agent approuve lui-même un changement protégé":
+        "the agent approves a protected change itself",
+    "l'agent commite en sautant les hooks du projet":
+        "the agent commits skipping the project's hooks",
+    "l'agent pousse en sautant les hooks, par -C vers le projet":
+        "the agent pushes skipping the hooks, through -C into the project",
+    "l'agent répond à la place de l'humain, lanceur entre guillemets après un cd":
+        "the agent answers in place of the human, launcher in quotes after a cd",
+    "l'agent met en place le dépôt compagnon (pousse, crée une clé)":
+        "the agent sets up the companion repository (pushes, creates a key)",
+    "réponse relayée sans le texte exact de l'humain":
+        "relayed answer without the human's exact text",
+    "réponse relayée à une demande que l'humain n'a pas pu lire":
+        "relayed answer to a request the human could not read",
+    "paragraphe copié dans deux fichiers":
+        "paragraph copied into two files",
+    "dispositif qu'aucune doc ne nomme":
+        "device no doc names",
+    "fin d'intervention sans dire ce qui revient à l'humain":
+        "end of intervention without saying what falls to the human",
+    "fin d'intervention qui ne dit pas la suite":
+        "end of intervention that does not say what comes next",
+    "chemin donné à l'humain qui n'existe pas dans le dépôt":
+        "path given to the human that does not exist in the repository",
+    "lien relatif, que l'humain ne peut pas suivre hors du conteneur":
+        "relative link, which the human cannot follow outside the container",
+    "permalien vers un fichier absent de la version poussée":
+        "permalink to a file absent from the pushed version",
+    "demande en attente citée sans son lien":
+        "pending request cited without its link",
+    "fonction publique ajoutée sans test qui la nomme":
+        "public function added without a test that names it",
+    "fonction modifiée sans test, couverte seulement par une dispense déjà poussée":
+        "function changed without a test, covered only by an already pushed waiver",
+    "décision ajoutée sans avoir consulté l'index des décisions":
+        "decision added without consulting the index of decisions",
+    "entrée citée dans une version qu'elle n'a plus":
+        "entry cited in a version it no longer has",
+    "identifiant que la branche par défaut a pris aussi":
+        "identifier the default branch took too",
+    "sujet ajouté au backlog sans l'avoir consulté":
+        "subject added to the backlog without consulting it",
+    "défaut indexé, corrigé seulement sur disque":
+        "defect in the index, fixed only on disk",
+    "code changé sans mise à jour de la mémoire":
+        "code changed without updating the memory",
+    "un changement complet passe la fin de tour, le commit et la CI":
+        "a complete change passes the end of turn, the commit and the CI",
+    "un correctif avec son test de régression passe la CI":
+        "a fix with its regression test passes the CI",
+    "un commit sans hooks dans un dépôt jetable, hors du projet, passe le hook de l'agent":
+        "a commit without hooks in a throwaway repository, outside the project, passes the agent's hook",
+    "un commit d'agent qui porte la trace de ses hooks passe la CI":
+        "an agent commit that carries the trace of its hooks passes the CI",
+    "une valeur attendue changée sous une spécification que l'humain a commitée passe la CI":
+        "an expected value changed under a specification the human committed passes the CI",
+    "CLAUDE.md gardé comme seule source, avec la section du socle, passe la CI (B-0049)":
+        "CLAUDE.md kept as the only source, with the socle section, passes the CI (B-0049)",
+    "une assertion reformatée à valeur égale passe la CI (relevé de recul, E)":
+        "an assertion reformatted with an equal value passes the CI (step-back review, E)",
+    "un chemin d'un autre dépôt, non déclaré, est signalé sans refus (B-0052)":
+        "a path from another repository, undeclared, is reported without refusal (B-0052)",
+    "une référence de commit en fin de phrase passe la CI (B-0020)":
+        "a commit reference at the end of a sentence passes the CI (B-0020)",
+    "durcir un garde-fou est libre":
+        "tightening a guardrail is free",
+    "un module nouveau entre au cliquet de mutation « à mesurer » : la CI passe":
+        "a new module enters the mutation ratchet “to measure”: the CI passes",
+    "un plafond de mutation posé par la mesure passe la CI":
+        "a mutation cap set by the measure passes the CI",
+    "une commande qui ne fait que citer une action refusée passe le hook de l'agent":
+        "a command that only cites a refused action passes the agent's hook",
+    "un mot proche d'un terme privé, sans l'être, passe le commit":
+        "a word close to a private term, without being one, passes the commit",
+    "un balayage de mutation planifié qui tourne passe la CI":
+        "a scheduled mutation sweep that runs passes the CI",
+    "un balayage de mutation sous le plafond passe le verdict":
+        "a mutation sweep under the cap passes the verdict",
+    "un garde-fou assoupli par l'humain, qui l'approuve, passe la CI":
+        "a guardrail loosened by the human, who approves it, passes the CI",
+    "un fichier protégé changé par l'humain, qui l'approuve, passe la CI":
+        "a protected file changed by the human, who approves it, passes the CI",
+    "une valeur attendue changée sous une demande validée par l'humain passe la CI":
+        "an expected value changed under a request approved by the human passes the CI",
+    "une demande complète passe le hook de l'agent":
+        "a complete request passes the agent's hook",
+    "une réponse donnée dans la conversation, relayée avec sa citation, passe le hook et la CI":
+        "an answer given in the conversation, relayed with its quote, passes the hook and the CI",
+    "une fin d'intervention avec « Pour toi : » et « Ensuite : » passe le hook de fin de tour":
+        "an end of intervention with “For you:” and “Next:” passes the end-of-turn hook",
+    "des liens que l'humain peut suivre passent le hook de fin de tour":
+        "links the human can follow pass the end-of-turn hook",
+    "une fonction ajoutée avec le test qui la nomme passe la CI":
+        "a function added with the test that names it passes the CI",
+    "deux pushes sains de suite passent le hook avant push, qui juge la plage de chacun":
+        "two sound pushes in a row pass the pre-push hook, which judges the range of each",
+    "une fonction privée, ou publique et dispensée avec sa raison, passe la CI":
+        "a private function, or a public one waived with its reason, passes the CI",
+    "mode compagnon : une entrée privée commitée et verrouillée passe la fin de tour, le commit et la CI":
+        "companion mode: a private entry committed and locked passes the end of turn, the commit and the CI",
+    "mode chiffré : une entrée privée part chiffrée et passe le commit et la CI":
+        "encrypted mode: a private entry leaves encrypted and passes the commit and the CI",
+    "ajouter un terme à la liste privée est libre : le commit et la CI passent":
+        "adding a term to the private list is free: the commit and the CI pass",
+    "mode compagnon : un sujet public basculé dans la mémoire privée passe la fin de tour, le commit et la CI":
+        "companion mode: a public subject moved into the private memory passes the end of turn, the commit and the CI",
+    "une mémoire en anglais : ses entrées, écrites par `socle new`, passent le commit et la CI":
+        "a memory in English: its entries, written by `socle new`, pass the commit and the CI",
+    "une valeur attendue changée sous une demande en attente, poussée : le tour finit, le commit attend":
+        "an expected value changed under a pending request, pushed: the turn ends, the commit waits",
+    "un push relu par l'humain, son accord relayé avec son texte exact, passe le hook de l'agent":
+        "a push reviewed by the human, their agreement relayed with their exact text, passes the agent's hook",
+    "sans la clé (une CI de fork), la mémoire privée est indisponible et rien n'échoue":
+        "without the key (a fork's CI), the private memory is unavailable and nothing fails",
+    "en CI, un constat de la zone privée échoue sans montrer son contenu":
+        "in CI, a finding in the private zone fails without showing its content",
+    "une fin de tour sans travail n'exige pas de récap":
+        "an end of turn without work does not require a recap",
+    "un identifiant renuméroté après une collision passe la CI":
+        "an identifier renumbered after a collision passes the CI",
+    "une décision qui prouve ses lectures passe le commit":
+        "a decision that proves its readings passes the commit",
+    "un commit d'agent fait dans un autre worktree porte la trace des hooks et passe la CI":
+        "an agent commit made in another worktree carries the trace of the hooks and passes the CI",
+    "une session d'agent dont le hook de démarrage a tiré : l'état n'avertit pas":
+        "an agent session whose startup hook fired: the state does not warn",
+    "un commit d'agent dont le filtre a tiré depuis le commit précédent passe le hook avant commit":
+        "an agent commit whose filter fired since the previous commit passes the pre-commit hook",
+    "un défaut sur disque mais pas dans l'index ne bloque pas le commit de ce qui est indexé":
+        "a defect on disk but not in the index does not block the commit of what is indexed",
+    "une tautologie voulue, raison écrite, passe le commit":
+        "an intended tautology, reason written, passes the commit",
+    "une commande qui CITE `socle answer` sans l'appeler passe":
+        "a command that CITES `socle answer` without calling it passes",
+    "l'agent verrouille la mémoire privée : seule sa mise en place est réservée à l'humain":
+        "the agent locks the private memory: only its setup is reserved to the human",
+    "une écriture ordinaire passe le hook de l'agent":
+        "an ordinary write passes the agent's hook",
 }

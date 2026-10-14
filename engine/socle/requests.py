@@ -74,6 +74,15 @@ class Demande:
         return "renvoyée" if langue.reponse(r) == RENVOI else f"répondue : {r}"
 
     @property
+    def statut_affiche(self) -> str:
+        """Le statut dit dans la langue des messages ; `statut` reste la valeur
+        que le moteur compare (B-0059)."""
+        if self.reponse is None:
+            return trad("retirée") if self.entree and "retiree" in self.entree.meta else trad("en attente")
+        r = str(self.reponse.get("reponse", ""))
+        return trad("renvoyée") if langue.reponse(r) == RENVOI else trad("répondue : {reponse}", reponse=r)
+
+    @property
     def validee(self) -> bool:
         return self.reponse is not None and langue.reponse(str(self.reponse.get("reponse", ""))) == REPONSE_POSITIVE
 

@@ -1764,25 +1764,26 @@ def executer(projet=None, bavard: bool = False) -> Rapport:
                     sortie = trad("le témoin a planté : {erreur}", erreur=f"{type(panne).__name__}: {panne}")
                 if sortie:
                     r.erreur(ident, trad("témoin en échec — {nom} : un contrôle crie sur un cas sain\n        {sortie}",
-                                         nom=nom, sortie="\n        ".join(sortie.strip().splitlines()[-25:])))
+                                         nom=trad(nom), sortie="\n        ".join(sortie.strip().splitlines()[-25:])))
                 elif bavard:
-                    print(trad("  témoin ok : {nom}", nom=nom), file=sys.stderr)
+                    print(trad("  témoin ok : {nom}", nom=trad(nom)), file=sys.stderr)
                 continue
             ident = f"autotest.{cas.id}"
             r.execute(ident)
             if panne is not None:
-                r.erreur(ident, trad("{defaut} : injection impossible — {erreur}", defaut=cas.defaut,
+                r.erreur(ident, trad("{defaut} : injection impossible — {erreur}", defaut=trad(cas.defaut),
                                      erreur=f"{type(panne).__name__}: {panne}"))
                 continue
             if not sortie:
                 r.erreur(ident, trad("DÉFAUT NON ATTRAPÉ : {defaut} (attendu : {controle}, étage {etage})",
-                                     defaut=cas.defaut, controle=cas.controle, etage=cas.etage))
+                                     defaut=trad(cas.defaut), controle=cas.controle, etage=cas.etage))
             elif not _attrape_par(cas, sortie):
-                r.erreur(ident, trad("{defaut} : attrapé, mais pas par {controle}\n        {sortie}", defaut=cas.defaut,
-                                     controle=cas.controle, sortie="\n        ".join(sortie.strip().splitlines()[-15:])))
+                r.erreur(ident, trad("{defaut} : attrapé, mais pas par {controle}\n        {sortie}",
+                                     defaut=trad(cas.defaut), controle=cas.controle,
+                                     sortie="\n        ".join(sortie.strip().splitlines()[-15:])))
             elif bavard:
                 print(trad("  attrapé : {defaut} — {controle}, étage {etage}",
-                           defaut=cas.defaut, controle=cas.controle, etage=cas.etage), file=sys.stderr)
+                           defaut=trad(cas.defaut), controle=cas.controle, etage=cas.etage), file=sys.stderr)
     finally:
         a.nettoyer()
     return r
