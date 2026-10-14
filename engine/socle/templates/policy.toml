@@ -89,9 +89,9 @@ allowed = []
 # Relecture humaine avant chaque publication vers le dépôt public :
 # "aucune", "chaque-push" ou "lots" (D-0006 du socle : au choix de l'humain).
 # Demandes et réponses privées : `requests = true` (publiques par défaut).
-# Langue de la mémoire : les mots-clés du format et les gabarits, "fr" ou
-# "en" ; la lecture accepte toutes les langues, une mémoire existante n'a
-# rien à réécrire. Sans ce réglage, le français.
+# Langue de la mémoire : les mots-clés du format, les gabarits et les
+# messages du moteur, "fr" ou "en" ; la lecture accepte toutes les langues,
+# une mémoire existante n'a rien à réécrire. Sans ce réglage, le français.
 # [memory]
 # language = "fr"
 

@@ -31,6 +31,7 @@ from pathlib import Path
 
 from socle import (commands as commandes, config, requests as demandes, memory as memoire, utils as outils,
                    private as prive)
+from socle.messages import trad
 
 OUTILS_ECRITURE = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 # Ce que le moteur refuse se juge sur chaque commande simple, découpée
@@ -106,7 +107,7 @@ def session_start(projet: config.Projet, entree: dict) -> int:
     git_ok = installer_hooks_git(projet.racine)
     print(etat.calculer(projet))
     if not git_ok and (projet.racine / config.GIT_HOOKS).is_dir():
-        print("\n!! hooks git non branchés : `git config core.hooksPath .socle/git-hooks`")
+        print(trad("\n!! hooks git non branchés : `git config core.hooksPath .socle/git-hooks`"))
     return 0
 
 
@@ -170,8 +171,9 @@ def sha_fabrique(racine: Path, texte: str) -> str | None:
         if not outils.git_reussit(racine, "cat-file", "-e", sha[:7]):
             continue
         reel = outils.git(racine, "rev-parse", sha[:7], check=False).strip() or "<introuvable>"
-        return (f"SHA fabriqué : {sha} n'est pas un objet de ce dépôt, alors que son préfixe {sha[:7]} en est un. "
-                f"Le SHA complet de {sha[:7]} est {reel}. Ne jamais compléter un SHA de tête : `git rev-parse`.")
+        return trad("SHA fabriqué : {sha} n'est pas un objet de ce dépôt, alors que son préfixe {prefixe} en est "
+                    "un. Le SHA complet de {prefixe} est {reel}. Ne jamais compléter un SHA de tête : "
+                    "`git rev-parse`.", sha=sha, prefixe=sha[:7], reel=reel)
     return None
 
 
@@ -195,26 +197,29 @@ def references_inventees(projet: config.Projet, rel: str, avant: str | None, apr
         soi = lp.entree_englobante(mem, rel, ligne)
         if ident in defs and not lp.deja_citee(soi, f"{ident}@{h}", mem_avant, avant or "") \
                 and not lp.entree_lue(plage, rel, soi, ident, h):
-            fautes.append(f"`{ident}@{h}` (ligne {ligne}) n'est pas l'empreinte de la version actuelle de {ident} : "
-                          f"la relire, `python3 .socle/socle show {ident}`")
+            fautes.append(trad("`{ident}@{h}` (ligne {ligne}) n'est pas l'empreinte de la version actuelle de "
+                               "{ident} : la relire, `python3 .socle/socle show {ident}`",
+                               ident=ident, h=h, ligne=ligne))
     for index, h, ligne in memoire.citations_index(apres):
         soi = lp.entree_englobante(mem, rel, ligne)
         if not lp.deja_citee(soi, f"{index}@{h}", mem_avant, avant or "") \
                 and not lp.index_lu(plage, rel, soi, index, h):
-            fautes.append(f"`{index}@{h}` (ligne {ligne}) n'est l'empreinte d'aucune version récente de l'index : "
-                          f"le relire, `python3 .socle/socle show --index {index}`")
+            fautes.append(trad("`{index}@{h}` (ligne {ligne}) n'est l'empreinte d'aucune version récente de "
+                               "l'index : le relire, `python3 .socle/socle show --index {index}`",
+                               index=index, h=h, ligne=ligne))
     deja = {i for i, _ in memoire.mentions(avant or "")}
     for ident, ligne in memoire.mentions(apres):
         if ident in deja or ident in defs or ident.startswith("P"):
             continue
-        fautes.append(f"`{ident}` (ligne {ligne}) ne désigne aucune entrée de la mémoire — "
-                      "créer l'entrée d'abord, ou corriger l'identifiant ; ne jamais en inventer un")
+        fautes.append(trad("`{ident}` (ligne {ligne}) ne désigne aucune entrée de la mémoire — créer l'entrée "
+                           "d'abord, ou corriger l'identifiant ; ne jamais en inventer un", ident=ident, ligne=ligne))
     refs_avant = set(memoire.references(avant or ""))
     for type_, cible in memoire.references(apres):
         if (type_, cible) in refs_avant:
             continue
         if type_ == "commit" and re.fullmatch(r"[0-9a-f]{7,40}", cible) and not outils.objet_existe(projet.racine, cible):
-            fautes.append(f"`commit:{cible}` n'existe pas dans ce dépôt — lire le SHA avec `git rev-parse`, jamais de tête")
+            fautes.append(trad("`commit:{cible}` n'existe pas dans ce dépôt — lire le SHA avec `git rev-parse`, "
+                               "jamais de tête", cible=cible))
     return fautes
 
 
@@ -230,8 +235,8 @@ def statut_valide_ajoute(rel: str, avant: str | None, apres: str, projet) -> str
             continue
         cites = [c for t, c in e.refs("validation") if t == "id"]
         if not any(par_id.get(c) and par_id[c].validee for c in cites):
-            return (f"`{e.id}` passe à « validé » sans demande validée par l'humain : ce statut ne s'écrit "
-                    "que par l'humain (politique, point 5). Émettre une demande `D-NNNN`.")
+            return (trad("`{id}` passe à « validé » sans demande validée par l'humain : ce statut ne s'écrit que "
+                         "par l'humain (politique, point 5). Émettre une demande `D-NNNN`.", id=e.id))
     return None
 
 
@@ -286,7 +291,7 @@ def ecriture_protegee(projet: config.Projet, cmd: str) -> str | None:
         prefixe = "" if rel in ("", ".") else rel.rstrip("/") + "/"
         touche = next((f for f in suivis if f.startswith(prefixe) and outils.correspond(f, motifs)), None)
         if touche:
-            return f"{rel or '.'}/ (dont {touche})"
+            return trad("{chemin}/ (dont {touche})", chemin=rel or ".", touche=touche)
     return None
 
 
@@ -304,20 +309,20 @@ def irreversible(racine: Path, c: commandes.Commande) -> str | None:
         options, args = commandes.options_et_arguments(reste)
         if sous == "push":
             if commandes.drapeau(options, "f", ("--force", "--force-with-lease", "--force-if-includes")):
-                return "push forcé"
+                return trad("push forcé")
             if commandes.drapeau(options, "d", ("--delete", "--prune")):
-                return "suppression d'une branche distante"
+                return trad("suppression d'une branche distante")
             if commandes.drapeau(options, "", ("--mirror", "--all", "--tags")):
-                return "push de toutes les références"
+                return trad("push de toutes les références")
             refs = args[1:]
             if any(r.startswith("+") for r in refs):
-                return "push forcé (+)"
+                return trad("push forcé (+)")
             if any(r.startswith(":") for r in refs):
-                return "suppression d'une branche distante"
+                return trad("suppression d'une branche distante")
             cibles = [r.split(":", 1)[-1].removeprefix("refs/heads/") for r in refs] or \
                 [outils.git(racine, "rev-parse", "--abbrev-ref", "HEAD", check=False).strip()]
             protegee = next((x for x in cibles if x in _branches_protegees(racine)), None)
-            return f"push sur la branche par défaut ({protegee})" if protegee else None
+            return trad("push sur la branche par défaut ({protegee})", protegee=protegee) if protegee else None
         if sous == "reset" and "--hard" in options:
             return "git reset --hard"
         if sous in ("filter-branch", "filter-repo"):
@@ -457,8 +462,8 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
     motifs_outils = projet.pol("irreversible", "tools", defaut=IRREVERSIBLES_OUTILS)
     for m in motifs_outils:
         if re.fullmatch(m, outil):
-            return refus(f"action externe ou irréversible ({outil}) : validation humaine requise "
-                         "(politique, point 4). Émettre une demande, travailler sur autre chose en attendant.")
+            return refus(trad("action externe ou irréversible ({outil}) : validation humaine requise (politique, "
+                              "point 4). Émettre une demande, travailler sur autre chose en attendant.", outil=outil))
 
     if outil == "Bash":
         cmd = args.get("command", "")
@@ -470,42 +475,44 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
             action = irreversible(racine, c) or next(
                 (" ".join(c.argv)[:120] for m in en_plus if re.search(m, " ".join(c.argv))), None)
             if action:
-                return refus(f"commande irréversible ou externe ({action}) : « {cmd.strip()[:200]} » — validation "
-                             "humaine requise (politique, point 4). Si c'est une décision, émettre une demande "
-                             "`D-NNNN` ; si c'est une action que l'humain doit faire lui-même, l'inscrire au backlog "
-                             "avec `pour : humain`. Puis continuer sur autre chose.")
+                return refus(trad("commande irréversible ou externe ({action}) : « {commande} » — validation humaine "
+                                  "requise (politique, point 4). Si c'est une décision, émettre une demande "
+                                  "`D-NNNN` ; si c'est une action que l'humain doit faire lui-même, l'inscrire au "
+                                  "backlog avec `pour : humain`. Puis continuer sur autre chose.",
+                                  action=action, commande=cmd.strip()[:200]))
             saut = contournement(racine, c, entree.get("cwd"))
             if saut:
-                return refus(f"`{saut}` contourne les hooks du projet : la CI exécute tout, et rien ne la "
-                             "contourne. Corriger ce que le hook refuse ; s'il refuse à tort, l'inscrire au backlog "
-                             "et le dire à l'humain.")
+                return refus(trad("`{saut}` contourne les hooks du projet : la CI exécute tout, et rien ne la "
+                                  "contourne. Corriger ce que le hook refuse ; s'il refuse à tort, l'inscrire au "
+                                  "backlog et le dire à l'humain.", saut=saut))
             h = commande_humaine(c)
             if h and h[0] == "private install":
-                return refus("`socle private install` est réservé à l'humain : il pousse vers le dépôt privé et "
-                             "crée une clé de déploiement (politique, point 4). L'inscrire au backlog avec "
-                             "`pour : humain`.")
+                return refus(trad("`socle private install` est réservé à l'humain : il pousse vers le dépôt privé "
+                                  "et crée une clé de déploiement (politique, point 4). L'inscrire au backlog avec "
+                                  "`pour : humain`."))
             if h and h[0] == "approve":
-                return refus("`socle approve` est réservé à l'humain : il valide ses propres changements protégés.")
+                return refus(trad("`socle approve` est réservé à l'humain : il valide ses propres changements "
+                                  "protégés."))
             # Les drapeaux du relais se cherchent dans la commande elle-même,
             # pas ailleurs dans le texte.
             relais = "--relayed" in h[1] and any(x.split("=", 1)[0] in ("--quote", "--quote-file") for x in h[1]) \
                 if h else True
             if not relais:
-                return refus("l'agent ne répond jamais à la place de l'humain. Il ne peut que relayer une réponse "
-                             "donnée dans la conversation : `socle answer D-NNNN <réponse> --relayed --by <nom> "
-                             "--quote-file <texte exact>` (ADR-0006), ou `socle reviewed --relayed --by <nom> "
-                             "--quote-file <texte exact>` pour une relecture avant publication.")
+                return refus(trad("l'agent ne répond jamais à la place de l'humain. Il ne peut que relayer une "
+                                  "réponse donnée dans la conversation : `socle answer D-NNNN <réponse> --relayed "
+                                  "--by <nom> --quote-file <texte exact>` (ADR-0006), ou `socle reviewed --relayed "
+                                  "--by <nom> --quote-file <texte exact>` pour une relecture avant publication."))
         faute = _fuite_bash(projet, cmd)
         if faute:
             return refus(faute)
         reglage = next((x for c in simples for x in ecrits(c) if REGLAGES_AGENT.search(x)), None)
         if reglage:
-            return refus(f"`{reglage}` : les réglages de Claude Code commandent ses hooks, seul l'humain les "
-                         "modifie (un réglage local peut les couper tous).")
+            return refus(trad("`{reglage}` : les réglages de Claude Code commandent ses hooks, seul l'humain les "
+                              "modifie (un réglage local peut les couper tous).", reglage=reglage))
         cible = ecriture_protegee(projet, cmd)
         if cible:
-            return refus(f"écriture d'un fichier protégé ({cible}) par le shell : seul l'humain modifie "
-                         "la politique, les hooks, la CI et le moteur (relance de l'installeur).")
+            return refus(trad("écriture d'un fichier protégé ({cible}) par le shell : seul l'humain modifie la "
+                              "politique, les hooks, la CI et le moteur (relance de l'installeur).", cible=cible))
 
     faute = _fuite_outil(projet, outil, args)
     if faute:
@@ -514,18 +521,19 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
     if outil in OUTILS_ECRITURE:
         chemin = args.get("file_path") or args.get("notebook_path") or ""
         if REGLAGES_AGENT.search(chemin.replace(os.sep, "/")):
-            return refus(f"`{chemin}` : les réglages de Claude Code commandent ses hooks, seul l'humain les "
-                         "modifie (un réglage local peut les couper tous).")
+            return refus(trad("`{chemin}` : les réglages de Claude Code commandent ses hooks, seul l'humain les "
+                              "modifie (un réglage local peut les couper tous).", chemin=chemin))
         rel = _relatif(racine, chemin)
         if rel and outils.correspond(rel, projet.chemins_proteges()):
-            return refus(f"`{rel}` est protégé par la politique : seul l'humain le modifie (CODEOWNERS), "
-                         "ou l'installeur pour les hooks, la CI et le moteur. Proposer le changement par une demande.")
+            return refus(trad("`{rel}` est protégé par la politique : seul l'humain le modifie (CODEOWNERS), ou "
+                              "l'installeur pour les hooks, la CI et le moteur. Proposer le changement par une "
+                              "demande.", rel=rel))
         if rel and rel.endswith(".md"):
             avant, apres = contenu_apres(racine, outil, args, rel)
             if apres is not None:
                 fautes = references_inventees(projet, rel, avant, apres)
                 if fautes:
-                    return refus("référence inventée — " + " ; ".join(fautes[:5]))
+                    return refus(trad("référence inventée — {fautes}", fautes=" ; ".join(fautes[:5])))
                 faute = statut_valide_ajoute(rel, avant, apres, projet)
                 if faute:
                     return refus(faute)
@@ -534,8 +542,8 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
                     if d.reponse is None:
                         fautes = demandes.linter(d, projet)
                         if fautes:
-                            return refus("demande hors contrat (elle doit se lire sans le projet en tête) — "
-                                          + " ; ".join(fautes[:8]))
+                            return refus(trad("demande hors contrat (elle doit se lire sans le projet en tête) "
+                                              "— {fautes}", fautes=" ; ".join(fautes[:8])))
 
     faute = sha_fabrique(racine, json.dumps(args, ensure_ascii=False))
     if faute:
@@ -560,8 +568,9 @@ def _fuites_dans(projet: config.Projet, texte: str) -> str | None:
     trouve = prive.fuites(texte, t.liste)
     if not trouve:
         return None
-    return ("fuite de la mémoire privée : " + ", ".join(trouve[:5]) + ". Une écriture publique ne cite ni "
-            "identifiant privé ni terme de la liste privée : reformuler sans eux (politique, mémoire privée).")
+    return trad("fuite de la mémoire privée : {termes}. Une écriture publique ne cite ni identifiant privé ni "
+                "terme de la liste privée : reformuler sans eux (politique, mémoire privée).",
+                termes=", ".join(trouve[:5]))
 
 
 # Les options qui publient le contenu d'un fichier (corps d'une pull request,
@@ -689,18 +698,18 @@ def stop(projet: config.Projet, entree: dict) -> int:
         precedent[0].isdigit() else 1
     compteur.parent.mkdir(parents=True, exist_ok=True)
     compteur.write_text(f"{essais} {cle}")
-    texte = rapport.texte("contrôles de fin de tour (`socle check --stage agent`)")
+    texte = rapport.texte(trad("contrôles de fin de tour (`socle check --stage agent`)"))
     if essais >= projet.maximum_tentatives():
         compteur.unlink(missing_ok=True)
-        print(json.dumps({"systemMessage": (
-            f"Les contrôles échouent encore après {essais} tentatives : ARRÊT ET ESCALADE (politique, point 7). "
+        print(json.dumps({"systemMessage": trad(
+            "Les contrôles échouent encore après {essais} tentatives : ARRÊT ET ESCALADE (politique, point 7). "
             "Écrire une demande `D-NNNN` qui résume l'échec, ce qui a été tenté et ce qui est supposé, "
-            "puis s'arrêter.\n\n" + texte)}, ensure_ascii=False))
+            "puis s'arrêter.\n\n{rapport}", essais=essais, rapport=texte)}, ensure_ascii=False))
         return 0
     tracer_refus(racine, "Stop", ",".join(rapport.controles_en_echec()), entree.get("session_id", ""))
-    print(json.dumps({"decision": "block", "reason": (
-        f"Les contrôles échouent (tentative {essais}/{projet.maximum_tentatives()}) : corriger avant de conclure.\n\n" + texte
-    )}, ensure_ascii=False))
+    print(json.dumps({"decision": "block", "reason": trad(
+        "Les contrôles échouent (tentative {essais}/{maximum}) : corriger avant de conclure.\n\n{rapport}",
+        essais=essais, maximum=projet.maximum_tentatives(), rapport=texte)}, ensure_ascii=False))
     return 0
 
 
@@ -738,8 +747,8 @@ def exiger_recap(projet: config.Projet, entree: dict) -> int:
     if message is None:
         if a_agi:
             retenir()
-            print(json.dumps({"systemMessage": "récap de fin d'intervention non vérifiable : transcript illisible"},
-                             ensure_ascii=False))
+            print(json.dumps({"systemMessage": trad("récap de fin d'intervention non vérifiable : transcript "
+                                                    "illisible")}, ensure_ascii=False))
         return 0
     manque = humain.recap_manquant(projet, message) if a_agi else []
     morts, sans_lien = liens.problemes(projet, message)
@@ -750,34 +759,39 @@ def exiger_recap(projet: config.Projet, entree: dict) -> int:
     if entree.get("stop_hook_active"):
         if a_agi:
             retenir()
-        defauts = ([f"sans {' ni '.join(manque)}"] if manque else []) + (
-            [f"{len(morts) + len(sans_lien)} lien(s) que l'humain ne pourra pas suivre"] if morts or sans_lien else [])
-        print(json.dumps({"systemMessage": f"fin d'intervention {', '.join(defauts)}, malgré un rappel"},
-                         ensure_ascii=False))
+        defauts = ([trad("sans {manque}", manque=trad(" ni ").join(manque))] if manque else []) + (
+            [trad("{n} lien(s) que l'humain ne pourra pas suivre", n=len(morts) + len(sans_lien))]
+            if morts or sans_lien else [])
+        print(json.dumps({"systemMessage": trad("fin d'intervention {defauts}, malgré un rappel",
+                                                defauts=", ".join(defauts))}, ensure_ascii=False))
         return 0
     raisons = []
     if manque:
         liste = "\n".join(humain.texte(humain.a_faire(projet)))
-        suite = humain.prochaines_etapes(projet) or "(le chantier actif n'a pas de section « Prochaines étapes »)"
-        raisons.append(
-            f"Tu as agi pendant ce tour, et ton dernier message n'a pas {' ni '.join(manque)}. Termine par un récap "
-            "de ce qui a été fait, puis :\n"
-            "- « Pour toi : » ce qui revient à l'humain — décisions, actions qu'il est seul à pouvoir faire — ou « rien » ;\n"
-            "- « Ensuite : » la suite proposée (prochain jalon, ce qu'il reste à faire avant), et ce que tu attends, "
-            "s'il y a lieu (une CI, un match : quoi, et jusqu'à quand).\n\n"
-            "Ce qui revient à l'humain, calculé maintenant :\n" + liste
-            + "\n\nProchaines étapes, selon le chantier actif :\n" + suite)
+        suite = humain.prochaines_etapes(projet) or trad("(le chantier actif n'a pas de section « Prochaines "
+                                                         "étapes »)")
+        raisons.append(trad(
+            "Tu as agi pendant ce tour, et ton dernier message n'a pas {manque}. Termine par un récap de ce qui a "
+            "été fait, puis :\n"
+            "- « Pour toi : » ce qui revient à l'humain — décisions, actions qu'il est seul à pouvoir faire — ou "
+            "« rien » ;\n"
+            "- « Ensuite : » la suite proposée (prochain jalon, ce qu'il reste à faire avant), et ce que tu "
+            "attends, s'il y a lieu (une CI, un match : quoi, et jusqu'à quand).\n\n"
+            "Ce qui revient à l'humain, calculé maintenant :\n{liste}\n\n"
+            "Prochaines étapes, selon le chantier actif :\n{suite}",
+            manque=trad(" ni ").join(manque), liste=liste, suite=suite))
     if morts:
-        raisons.append(
-            "Ton dernier message contient des liens que l'humain ne pourra pas suivre : il lit dans la conversation "
-            "ou sur GitHub, pas dans ton conteneur.\n" + "\n".join(f"- {m}" for m in morts)
-            + "\nDonne un fichier par son permalien (`socle url <chemin|ID>`, après le push) ; n'écris entre accents "
-            "graves que des chemins qui existent dans ce dépôt, et ceux d'un autre dépôt sous la forme `depot:chemin`.")
+        raisons.append(trad(
+            "Ton dernier message contient des liens que l'humain ne pourra pas suivre : il lit dans la "
+            "conversation ou sur GitHub, pas dans ton conteneur.\n{liens}\nDonne un fichier par son permalien "
+            "(`socle url <chemin|ID>`, après le push) ; n'écris entre accents graves que des chemins qui existent "
+            "dans ce dépôt, et ceux d'un autre dépôt sous la forme `depot:chemin`.",
+            liens="\n".join(f"- {m}" for m in morts)))
     if sans_lien:
-        raisons.append(
-            f"Ton dernier message cite {', '.join(sans_lien)}, en attente de l'humain, sans son lien : "
-            "il doit pouvoir l'ouvrir d'un clic. Ajoute la sortie de `socle url "
-            + " ".join(sans_lien) + "`.")
+        raisons.append(trad(
+            "Ton dernier message cite {demandes}, en attente de l'humain, sans son lien : il doit pouvoir l'ouvrir "
+            "d'un clic. Ajoute la sortie de `socle url {ids}`.",
+            demandes=", ".join(sans_lien), ids=" ".join(sans_lien)))
     tracer_refus(racine, "Stop", ",".join(x for x, oui in (("recap", manque), ("liens", morts), ("lien-de-demande", sans_lien))
                                          if oui), entree.get("session_id", ""))
     print(json.dumps({"decision": "block", "reason": "\n\n".join(raisons)}, ensure_ascii=False))
@@ -802,12 +816,12 @@ def git_pre_commit(projet: config.Projet) -> int:
     rapport = contexte.executer(ctx)
     if not rapport.reussi:
         tracer_refus(projet.racine, "git-pre-commit", ",".join(rapport.controles_en_echec()))
-        rapport.afficher("socle — contrôles avant commit", flux=sys.stderr, court=True)
+        rapport.afficher(trad("socle — contrôles avant commit"), flux=sys.stderr, court=True)
         if "protege.fichiers" in rapport.controles_en_echec():
-            print("\nFichiers protégés : si c'est l'humain qui les a changés (une mise à jour du socle, sa "
-                  "politique), `python3 .socle/socle approve --text \"<raison>\"` les liste et les approuve — réservé à l'humain ; "
-                  "l'agent, lui, ouvre une demande.", file=sys.stderr)
-        print("\nCommit refusé. `git commit --no-verify` contourne ce hook, jamais la CI.", file=sys.stderr)
+            print(trad("\nFichiers protégés : si c'est l'humain qui les a changés (une mise à jour du socle, sa "
+                       'politique), `python3 .socle/socle approve --text "<raison>"` les liste et les approuve — '
+                       "réservé à l'humain ; l'agent, lui, ouvre une demande."), file=sys.stderr)
+        print(trad("\nCommit refusé. `git commit --no-verify` contourne ce hook, jamais la CI."), file=sys.stderr)
         return 1
     return 0
 
@@ -854,8 +868,8 @@ def sous_un_agent(geste: str) -> bool:
     ou non. Le dit, et rend vrai."""
     if not os.environ.get("CLAUDECODE"):
         return False
-    print(f"refus : {geste} est réservé à l'humain, et cette commande tourne dans une session d'agent "
-          "(CLAUDECODE) — l'humain la lance dans son propre terminal", file=sys.stderr)
+    print(trad("refus : {geste} est réservé à l'humain, et cette commande tourne dans une session d'agent "
+               "(CLAUDECODE) — l'humain la lance dans son propre terminal", geste=geste), file=sys.stderr)
     return True
 
 
@@ -914,7 +928,7 @@ def git_commit_msg(projet: config.Projet, fichier: str = "") -> int:
     faute = _fuites_dans(projet, message) if prive.mode(projet) is not None else None
     if faute:
         tracer_refus(projet.racine, "git-commit-msg", "fuite")
-        print(f"socle — commit refusé : {faute}", file=sys.stderr)
+        print(trad("socle — commit refusé : {faute}", faute=faute), file=sys.stderr)
         return 1
     for avertissement in (code_sans_test(projet, message), hooks_absents(projet, message),
                           correctif_sans_test(projet, message)):
@@ -943,9 +957,9 @@ def correctif_sans_test(projet: config.Projet, message: str) -> str | None:
         return None
     if "module_command" in cap and outils.filtrer(touches, projet.chemins_code()):
         return None  # un test peut vivre dans le module du code (B-0051) : la CI le cherche
-    return ("socle — avertissement : ce correctif n'ajoute ni ne change aucun test "
-            f"({', '.join(motifs)}) : la CI le refusera (`tests.regression`), faute d'un test qui échoue sur le "
-            "commit d'avant. L'ajouter à ce commit (`git commit --amend`), tant qu'il n'est pas poussé.")
+    return (trad("socle — avertissement : ce correctif n'ajoute ni ne change aucun test ({liste}) : la CI le "
+                 "refusera (`tests.regression`), faute d'un test qui échoue sur le commit d'avant. L'ajouter à ce "
+                 "commit (`git commit --amend`), tant qu'il n'est pas poussé.", liste=', '.join(motifs)))
 
 
 def hooks_absents(projet: config.Projet, message: str) -> str | None:
@@ -960,20 +974,20 @@ def hooks_absents(projet: config.Projet, message: str) -> str | None:
     valeurs = outils.trailers(message).get("socle-hooks")
     if not valeurs:
         return None
-    conseil = ("Ouvrir la session de l'agent dans le dépôt du projet, où ses hooks se chargent "
-               "(`.claude/settings.json`).")
+    conseil = trad("Ouvrir la session de l'agent dans le dépôt du projet, où ses hooks se chargent "
+                   "(`.claude/settings.json`).")
     tirs = controles_cliquet.lire_trailer_hooks(valeurs[-1]).get("PreToolUse", "0")
     if not tirs.isdigit() or int(tirs) < 1:
-        return ("socle — avertissement : commit d'agent sans aucun hook de l'agent pendant sa session "
-                f"(`Socle-Hooks: {valeurs[-1]}`) : la CI le refusera (`hooks.trace`). " + conseil)
+        return (trad("socle — avertissement : commit d'agent sans aucun hook de l'agent pendant sa session "
+                     "(`Socle-Hooks: {valeurs}`) : la CI le refusera (`hooks.trace`). ", valeurs=valeurs[-1]) + conseil)
     # B-0058 : des hooks qui ont tiré en début de session, puis plus du tout.
     depuis = outils.trailers(message).get("socle-hooks-since-commit")
     tirs = controles_cliquet.lire_trailer_hooks(depuis[-1]).get("PreToolUse", "0") if depuis else "1"
     if tirs.isdigit() and int(tirs) >= 1:
         return None
-    return ("socle — avertissement : commit d'agent sans aucun hook de l'agent depuis le commit précédent "
-            f"(`Socle-Hooks-Since-Commit: {depuis[-1]}`) : ses hooks ont cessé de tirer en cours de session, "
-            "et la CI le refusera (`hooks.trace`). " + conseil)
+    return (trad("socle — avertissement : commit d'agent sans aucun hook de l'agent depuis le commit précédent "
+                 "(`Socle-Hooks-Since-Commit: {depuis}`) : ses hooks ont cessé de tirer en cours de session, et la "
+                 "CI le refusera (`hooks.trace`). ", depuis=depuis[-1]) + conseil)
 
 
 def code_sans_test(projet: config.Projet, message: str) -> str | None:
@@ -995,10 +1009,10 @@ def code_sans_test(projet: config.Projet, message: str) -> str | None:
     erreurs = r.erreurs("tests.code-teste")
     if not erreurs:
         return None
-    return ("socle — avertissement : la CI refusera ce commit (`tests.code-teste`) :\n"
+    return (trad("socle — avertissement : la CI refusera ce commit (`tests.code-teste`) :\n")
             + "\n".join(f"  ! {c.en_ligne()}" for c in erreurs)
-            + "\nLe commit passe ici. Écrire le test dans un commit suivant, ou amender ce message "
-            "(`git commit --amend`) avec la dispense.")
+            + trad("\nLe commit passe ici. Écrire le test dans un commit suivant, ou amender ce message (`git "
+                   "commit --amend`) avec la dispense."))
 
 
 def plage_poussee(projet: config.Projet, lignes: list[str]):
@@ -1037,13 +1051,14 @@ def git_pre_push(projet: config.Projet) -> int:
         trouve = prive.fuites("\n".join(noms), prive.termes(projet).liste)
         if trouve:
             tracer_refus(projet.racine, "git-pre-push", "fuite")
-            print(f"socle — push refusé : fuite de la mémoire privée dans le nom de la branche : {', '.join(trouve)}",
+            print(trad("socle — push refusé : fuite de la mémoire privée dans le nom de la branche : {liste}",
+                       liste=', '.join(trouve)),
                   file=sys.stderr)
             return 1
     refus = prive.publication_refusee(projet, [l.split()[1] for l in lignes if len(l.split()) >= 2])
     if refus:
         tracer_refus(projet.racine, "git-pre-push", "relecture")
-        print(f"socle — push refusé : {refus}", file=sys.stderr)
+        print(trad("socle — push refusé : {refus}", refus=refus), file=sys.stderr)
         return 1
     base = outils.base_de_travail(projet.racine)
     ctx = contexte.Contexte(projet, etage="git", base=base, tete=None, rapide=True)
@@ -1054,6 +1069,6 @@ def git_pre_push(projet: config.Projet) -> int:
     verification.etapes_rapides(projet, rapport)
     if not rapport.reussi:
         tracer_refus(projet.racine, "git-pre-push", ",".join(rapport.controles_en_echec()))
-        rapport.afficher("socle — vérification avant push", flux=sys.stderr, court=True)
+        rapport.afficher(trad("socle — vérification avant push"), flux=sys.stderr, court=True)
         return 1
     return 0

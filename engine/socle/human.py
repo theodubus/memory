@@ -22,6 +22,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from socle import config, requests as demandes, language as langue, links as liens, memory as memoire, utils as outils
+from socle.messages import a_traduire, trad
 
 # Les lignes qu'un récap de fin d'intervention doit contenir : ce qui revient
 # à l'humain, puis la suite (ADR-0007, complété par ADR-0009) ; en gras
@@ -37,9 +38,13 @@ MARQUEURS_RECAP_EN = {
 }
 
 
+# Le genre d'un élément, dit dans la langue du projet à l'affichage.
+GENRES = {"décision": a_traduire("décision"), "action": a_traduire("action"), "réponse": a_traduire("réponse")}
+
+
 @dataclass
 class Element:
-    genre: str  # « décision » ou « action »
+    genre: str  # « décision », « action » ou « réponse »
     quoi: str
     lien: str = ""  # où l'humain le lit, quand c'est un fichier poussé
 
@@ -71,7 +76,7 @@ def a_faire(projet: config.Projet) -> list[Element]:
     for d in demandes.toutes(projet.racine):
         if d.reponse is None and d.statut == "en attente" and d.entree:
             url, _ = liens.lien(projet, d.chemin)
-            res.append(Element("décision", f"{d.id} — {d.entree.titre}", url or "(pas encore poussée : pas de lien)"))
+            res.append(Element("décision", f"{d.id} — {d.entree.titre}", url or trad("(pas encore poussée : pas de lien)")))
     mem = memoire.Memoire.charger(projet.racine)
     for e in mem.entrees("B"):
         if e.archivee or e.statut in memoire.BACKLOG_CLOS:
@@ -80,9 +85,10 @@ def a_faire(projet: config.Projet) -> list[Element]:
             # Le lien du sujet, où vit son mode d'emploi : commandes,
             # résultats attendus (ADR-0025).
             url, _ = liens.lien(projet, e.id)
-            res.append(Element("action", f"{e.id} — {e.titre}", url or "(pas encore poussé : pas de lien)"))
+            res.append(Element("action", f"{e.id} — {e.titre}", url or trad("(pas encore poussé : pas de lien)")))
     for b in branches_a_supprimer(projet):
-        res.append(Element("action", f"supprimer la branche distante `{b}`, déjà contenue dans la branche par défaut"))
+        res.append(Element("action", trad("supprimer la branche distante `{branche}`, déjà contenue dans la branche "
+                                          "par défaut", branche=b)))
     return res
 
 
@@ -117,16 +123,21 @@ def fait_par_l_humain(projet: config.Projet) -> list[Element]:
         quoi = (f"{d.id} — {d.entree.titre if d.entree else d.chemin} : « {r.get('reponse', '')} »"
                 f" ({', '.join(x for x in (str(r.get('par', '')), str(r.get('date', ''))) if x)})")
         url, _ = liens.lien(projet, d.chemin)
-        res.append(Element("réponse", quoi, url or "(pas encore poussée : pas de lien)"))
+        res.append(Element("réponse", quoi, url or trad("(pas encore poussée : pas de lien)")))
     return res
+
+
+def genre(e: Element) -> str:
+    """Le genre d'un élément dans la langue du projet."""
+    return trad(GENRES[e.genre]) if e.genre in GENRES else e.genre
 
 
 def texte(elements: list[Element]) -> list[str]:
     if not elements:
-        return ["ce qui revient à l'humain : rien"]
-    lignes = [f"ce qui revient à l'humain : {len(elements)}"]
+        return [trad("ce qui revient à l'humain : rien")]
+    lignes = [trad("ce qui revient à l'humain : {n}", n=len(elements))]
     for e in elements:
-        lignes.append(f"  {e.genre} : {e.quoi}")
+        lignes.append(f"  {genre(e)} : {e.quoi}")
         if e.lien:
             lignes.append(f"    {e.lien}")
     return lignes

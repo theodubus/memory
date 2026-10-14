@@ -27,7 +27,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-from socle.report import Rapport
+from socle.report import Rapport, en_echec_dans
 
 # Les fils de l'auto-test : un clone chacun, au plus quatre (L6).
 FILS = min(4, os.cpu_count() or 1)
@@ -1785,17 +1785,15 @@ RAISONS_AGENT = {
 def _attrape_par(cas: Cas, sortie: str) -> bool:
     """Le défaut est-il attrapé par le contrôle ATTENDU ? Le rapport liste
     tous les contrôles exécutés, réussis compris : seule la ligne de synthèse
-    `ECHEC — n contrôle(s) : …` dit lesquels ont échoué. Un étage ou un
+    `ECHEC — n contrôle(s) : …` dit lesquels ont échoué, dans toutes les langues. Un étage ou un
     contrôle qui plante n'attrape rien : il refuse par accident."""
     if "Traceback (most recent call last)" in sortie or "le contrôle a planté" in sortie:
         return False
     # Un rapport d'étage d'abord : un contrôle que le hook de l'agent nomme
     # aussi (`memoire.preuves`, `demandes.contrat`) s'attrape en CI par sa
     # ligne de synthèse, pas par la phrase de son refus (B-0044, L4).
-    for ligne in sortie.splitlines():
-        if ligne.startswith("ECHEC — ") and " : " in ligne:
-            if cas.controle in [x.strip() for x in ligne.split(" : ", 1)[1].split(",")]:
-                return True
+    if cas.controle in en_echec_dans(sortie):
+        return True
     if cas.controle in RAISONS_AGENT:
         return RAISONS_AGENT[cas.controle] in sortie
     return False

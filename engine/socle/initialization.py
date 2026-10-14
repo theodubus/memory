@@ -19,7 +19,8 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
-from socle import config, language as langue, memory as memoire, mutation, utils as outils
+from socle import config, language as langue, memory as memoire, messages, mutation, utils as outils
+from socle.messages import trad
 from socle.templates import gabarit
 
 
@@ -67,10 +68,10 @@ def auditer_depot(projet: config.Projet) -> list[Fait]:
                 if not f.startswith((config.DOSSIER + "/", ".claude/")) and not memoire.est_memoire(f)]
     faits = []
     if "Cargo.toml" in fichiers:
-        faits.append(Fait("Le projet se construit avec cargo (Rust)", "Cargo.toml"))
+        faits.append(Fait(trad("Le projet se construit avec cargo (Rust)"), "Cargo.toml"))
     for f in ("pyproject.toml", "setup.py", "setup.cfg"):
         if f in fichiers:
-            faits.append(Fait("Le projet est un paquet Python", f))
+            faits.append(Fait(trad("Le projet est un paquet Python"), f))
             break
     cfg = projet.adaptateur.get("tests") or {}
     if cfg.get("function"):
@@ -84,16 +85,17 @@ def auditer_depot(projet: config.Projet) -> list[Fait]:
                 par_fichier[f] = n
         if par_fichier:
             premier = sorted(par_fichier)[0]
-            faits.append(Fait(f"Le dépôt a {sum(par_fichier.values())} fonction(s) de test, dans "
-                              f"{len(par_fichier)} fichier(s), dont `{premier}`", premier))
+            faits.append(Fait(trad("Le dépôt a {n} fonction(s) de test, dans {fichiers} fichier(s), dont "
+                                   "`{premier}`", n=sum(par_fichier.values()), fichiers=len(par_fichier),
+                                   premier=premier), premier))
     # La CI du socle et son balayage de mutation ne sont pas ceux du projet :
     # l'installeur vient de les poser.
     for ci in sorted(f for f in fichiers if f.startswith(".github/workflows/") and f.endswith((".yml", ".yaml"))
                      and f not in (".github/workflows/socle.yml", mutation.WORKFLOW)):
-        faits.append(Fait(f"Une CI GitHub existe : `{ci.rsplit('/', 1)[1]}`", ci))
+        faits.append(Fait(trad("Une CI GitHub existe : `{nom}`", nom=ci.rsplit("/", 1)[1]), ci))
     for doc in ("README.md", "README", "README.rst"):
         if doc in fichiers:
-            faits.append(Fait("Le dépôt a un README", doc))
+            faits.append(Fait(trad("Le dépôt a un README"), doc))
             break
     return faits
 
@@ -104,25 +106,28 @@ def questions_de_depart(projet: config.Projet, cadrage: str | None, depot: bool)
     confidentialité non."""
     q = []
     if cadrage:
-        but = "celui du document de cadrage, tel qu'il est écrit"
+        but = trad("celui du document de cadrage, tel qu'il est écrit")
     elif depot:
-        but = "celui que dit le README, s'il en a un ; sinon aucun, et le backlog reste vide"
+        but = trad("celui que dit le README, s'il en a un ; sinon aucun, et le backlog reste vide")
     else:
-        but = "aucun : le backlog reste vide jusqu'à ce que tu en donnes un"
-    q.append(Question("Quel est le but du projet, en une phrase ?", but,
-                      "le but alimente le backlog ; en défaut, il est noté « supposé »"))
+        but = trad("aucun : le backlog reste vide jusqu'à ce que tu en donnes un")
+    q.append(Question(trad("Quel est le but du projet, en une phrase ?"), but,
+                      trad("le but alimente le backlog ; en défaut, il est noté « supposé »")))
     if not (depot and detecter(projet)):
-        q.append(Question("Dans quel langage, avec quels outils de test ?",
-                          "celui de l'adaptateur posé à l'installation",
-                          "l'adaptateur décide comment le socle lance les tests ; le changer demande ton accord"))
-    q.append(Question("Une partie de la mémoire doit-elle rester privée ?",
-                      "non : toute la mémoire est publique",
-                      "une mémoire privée se pose par l'installeur, en dépôt privé à côté ou chiffrée"))
-    q.append(Question("La politique d'autonomie par défaut (les huit points du cadrage) te convient-elle ?",
-                      "oui, telle quelle",
-                      "la politique dit ce que l'agent décide seul et ce qu'il te demande ; toi seul la modifies"))
-    q.append(Question("Des contraintes à respecter (licence, dépendances, plateformes, délais) ?",
-                      "aucune connue", "une contrainte devient un fait « supposé » jusqu'à ce que tu la valides"))
+        q.append(Question(trad("Dans quel langage, avec quels outils de test ?"),
+                          trad("celui de l'adaptateur posé à l'installation"),
+                          trad("l'adaptateur décide comment le socle lance les tests ; le changer demande ton "
+                               "accord")))
+    q.append(Question(trad("Une partie de la mémoire doit-elle rester privée ?"),
+                      trad("non : toute la mémoire est publique"),
+                      trad("une mémoire privée se pose par l'installeur, en dépôt privé à côté ou chiffrée")))
+    q.append(Question(trad("La politique d'autonomie par défaut (les huit points du cadrage) te convient-elle ?"),
+                      trad("oui, telle quelle"),
+                      trad("la politique dit ce que l'agent décide seul et ce qu'il te demande ; toi seul la "
+                           "modifies")))
+    q.append(Question(trad("Des contraintes à respecter (licence, dépendances, plateformes, délais) ?"),
+                      trad("aucune connue"),
+                      trad("une contrainte devient un fait « supposé » jusqu'à ce que tu la valides")))
     plafond = int(projet.pol("init_questions_max", defaut=7))
     return q[:plafond]
 
@@ -138,42 +143,53 @@ def demande_de_depart(projet: config.Projet, ident: str, questions: list[Questio
     plafond = int(projet.pol("init_questions_max", defaut=7))
     lignes = []
     for i, q in enumerate(questions, 1):
-        lignes.append(f"{i}. **{q.texte}** Défaut : {q.defaut}. Ce que ça change : {q.effet}.")
+        lignes.append(trad("{i}. **{question}** Défaut : {defaut}. Ce que ça change : {effet}.", i=i,
+                           question=q.texte, defaut=q.defaut, effet=q.effet))
     if cadrage:
-        cite = (f"- Le document de cadrage, archivé tel quel sous `{cadrage}` : ce que le projet veut, d'où "
-                "l'agent tire les faits « supposés » et le backlog de départ.")
-        lien = f"- Le document de cadrage : [{Path(cadrage).name}](../{Path(cadrage).relative_to(projet.chemins.memoire)})."
+        cite = trad("- Le document de cadrage, archivé tel quel sous `{cadrage}` : ce que le projet veut, d'où "
+                    "l'agent tire les faits « supposés » et le backlog de départ.", cadrage=cadrage)
+        lien = trad("- Le document de cadrage : [{nom}]({lien}).", nom=Path(cadrage).name,
+                    lien=f"../{Path(cadrage).relative_to(projet.chemins.memoire)}")
     else:
-        cite = "- Aucun élément de la mémoire : le projet commence, et ces questions en posent le départ."
+        cite = trad("- Aucun élément de la mémoire : le projet commence, et ces questions en posent le départ.")
         # Le fichier d'instructions qui existe : l'installeur garde CLAUDE.md
         # quand le projet le lit par son nom.
         instr = config.INSTRUCTIONS if (projet.racine / config.INSTRUCTIONS).is_file() else "CLAUDE.md"
-        lien = f"- Les instructions du projet : [{instr}](../../{instr}), section de la politique d'autonomie."
-    return gabarit("starting-questions.md").format(
+        lien = trad("- Les instructions du projet : [{instr}]({lien}), section de la politique d'autonomie.",
+                    instr=instr, lien=f"../../{instr}")
+    return gabarit("starting-questions.md", langue.du_projet(projet)).format(
         id=ident, date=date.today().isoformat(), entrees=entrees, n=len(questions), plafond=plafond,
         questions="\n".join(lignes), elements=cite, lien=lien)
 
 
 def initialiser(projet: config.Projet, cadrage: Path | None = None, depot: bool = False) -> int:
+    """Ce que `socle init` fait, dans la langue de la mémoire du projet :
+    ce qu'il écrit dans la mémoire comme ce qu'il imprime."""
+    with messages.dans(langue.du_projet(projet)):
+        return _initialiser(projet, cadrage, depot)
+
+
+def _initialiser(projet: config.Projet, cadrage: Path | None, depot: bool) -> int:
     from socle import cli, private as prive
 
     racine = projet.racine
     if not projet.installe:
-        print("refus : le socle n'est pas installé ici (`socle install` d'abord)")
+        print(trad("refus : le socle n'est pas installé ici (`socle install` d'abord)"))
         return 2
     jour = date.today().isoformat()
     lg = langue.du_projet(projet)
     mem = memoire.Memoire.charger(racine)
-    entrees = " et ".join(x for x in (
-        "un document de cadrage" if cadrage else "", "un dépôt existant" if depot else "") if x) or "rien du tout"
-    sortie = [f"initialisation depuis {entrees}"]
+    entrees = trad(" et ").join(x for x in (
+        trad("un document de cadrage") if cadrage else "", trad("un dépôt existant") if depot else "") if x) \
+        or trad("rien du tout")
+    sortie = [trad("initialisation depuis {entrees}", entrees=entrees)]
 
     archive = None
     if cadrage:
         en_prive = prive.mode(projet) is not None
         if en_prive and not prive.acces(projet).disponible:
-            print(f"refus : avec une mémoire privée, le cadrage s'archive dans sa zone, indisponible ici "
-                  f"({prive.acces(projet).raison}) ; la mettre en place d'abord")
+            print(trad("refus : avec une mémoire privée, le cadrage s'archive dans sa zone, indisponible ici "
+                       "({raison}) ; la mettre en place d'abord", raison=prive.acces(projet).raison))
             return 2
         archive, emp = archiver_cadrage(racine, cadrage, prive=en_prive)
         journal_prive = en_prive and "journal" in prive.couches_privees(projet)
@@ -181,12 +197,13 @@ def initialiser(projet: config.Projet, cadrage: Path | None = None, depot: bool 
         journal = projet.chemins.dans_prive(projet.chemins.journal) if journal_prive else projet.chemins.journal
         cli._ajouter(memoire.fichier_journal(racine / journal, jour[:7],
                                              projet.budget_octets(f"{projet.chemins.journal}/{jour[:7]}.md"), 2000),
-                     f"\n## {ident} — Document de cadrage archivé tel quel\n\n"
-                     f"{langue.meta(lg, type='initialisation', ref=langue.ref_fichier(archive, lg))} · empreinte : {emp}\n\n"
-                     "Archivé sans réécriture. Ce qu'il affirme entre dans la mémoire en « supposé », avec ce "
-                     "fichier pour source, jusqu'à validation humaine.\n",
+                     trad("\n## {ident} — Document de cadrage archivé tel quel\n\n{meta} · empreinte : {emp}\n\n"
+                          "Archivé sans réécriture. Ce qu'il affirme entre dans la mémoire en « supposé », avec ce "
+                          "fichier pour source, jusqu'à validation humaine.\n", ident=ident, emp=emp,
+                          meta=langue.meta(lg, type="initialisation", ref=langue.ref_fichier(archive, lg))),
                      langue.entete_fichier("journal", "privee" if journal_prive else "publique", lg))
-        sortie.append(f"document archivé : {archive} ({emp[:23]}…), journal {ident}")
+        sortie.append(trad("document archivé : {archive} ({empreinte}…), journal {ident}", archive=archive,
+                           empreinte=emp[:23], ident=ident))
         mem = memoire.Memoire.charger(racine)
 
     if depot:
@@ -196,25 +213,27 @@ def initialiser(projet: config.Projet, cadrage: Path | None = None, depot: bool 
         for k, f in enumerate(faits):
             bloc += (f"\n## F-{premier + k:04d} — {f.titre}\n\n"
                      + langue.meta(lg, "F", statut="mesure", preuve=langue.ref_fichier(f.preuve, lg),
-                                   source="audit d'initialisation", date=jour) + "\n")
+                                   source=trad("audit d'initialisation"), date=jour) + "\n")
         if bloc:
             cli._ajouter(racine / projet.chemins.canonique, bloc, langue.entete_fichier("canonique", "publique", lg))
-        sortie.append(f"audit du dépôt en lecture seule : {len(faits)} fait(s) mesuré(s), chacun avec son fichier")
+        sortie.append(trad("audit du dépôt en lecture seule : {n} fait(s) mesuré(s), chacun avec son fichier",
+                           n=len(faits)))
         mem = memoire.Memoire.charger(racine)
 
     qs = questions_de_depart(projet, archive, depot)
     ident = mem.prochain_id("D")
-    chemin = racine / projet.chemins.demandes / f"{ident}-questions-de-depart.md"
+    chemin = racine / projet.chemins.demandes / f"{ident}-{'starting-questions' if lg == 'en' else 'questions-de-depart'}.md"
     chemin.parent.mkdir(parents=True, exist_ok=True)
     chemin.write_text(demande_de_depart(projet, ident, qs, archive, entrees), encoding="utf-8")
-    sortie.append(f"questions de départ : {ident}, {len(qs)} question(s), chacune avec son défaut")
+    sortie.append(trad("questions de départ : {ident}, {n} question(s), chacune avec son défaut", ident=ident,
+                       n=len(qs)))
 
     for l in sortie:
         print(f"  - {l}")
-    print("\nPour toi :")
+    print(trad("\nPour toi :"))
     for i, etape in enumerate(pour_toi(ident), 1):
         print(f"  {i}. {etape}")
-    print("\n" + gabarit("initialization.md"))
+    print("\n" + gabarit("initialization.md", lg))
     return 0
 
 
@@ -222,10 +241,10 @@ def pour_toi(ident: str) -> list[str]:
     """Ce qui revient à l'humain après `init`, avant la part de l'agent,
     écrite pour lui (B-0034, P2)."""
     return [
-        f'commiter puis pousser : `git add -A && git commit -m "Initialiser la mémoire" && git push` '
-        f"(la demande {ident} doit être sur GitHub pour que tu puisses la lire)",
-        "ouvrir l'agent dans le projet : il relit les questions de départ et te les pose dans la conversation, "
-        "avec leur lien",
-        "y répondre dans la conversation, une ligne par question ou « défauts » : l'agent consigne ta réponse "
-        "telle quelle",
+        trad('commiter puis pousser : `git add -A && git commit -m "Initialiser la mémoire" && git push` (la '
+             "demande {ident} doit être sur GitHub pour que tu puisses la lire)", ident=ident),
+        trad("ouvrir l'agent dans le projet : il relit les questions de départ et te les pose dans la "
+             "conversation, avec leur lien"),
+        trad("y répondre dans la conversation, une ligne par question ou « défauts » : l'agent consigne ta "
+             "réponse telle quelle"),
     ]

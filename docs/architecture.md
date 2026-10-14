@@ -58,6 +58,7 @@ comparent le même fichier sous ses deux noms.
 | `fingerprint.py` | l'empreinte du moteur |
 | `installer.py` | installation, mise à jour, adoption ; adaptateur déduit du dépôt ; mémoire privée posée à l'installation, ou ajoutée à un projet installé ; diff de politique à la mise à jour ; le code existant entre « à mesurer » au cliquet de mutation ; un audit court, puis « Et maintenant », les étapes de l'humain avec leur commande ; ne s'installe qu'à la racine du dépôt ; relancé, il ne perd rien : le moteur reste en place s'il est lancé depuis le projet, un CLAUDE.md propre au projet passe dans AGENTS.md, une seconde adoption complète sa liste, et ce que le .gitignore du projet écarterait reçoit une exception (B-0044, L1) ; le format de la mémoire en paramètre, l'actuel par défaut, que fixe un test qui porte sur un format antérieur, et la ligne du backlog des instructions et son plafond qui le suivent (ADR-0025) |
 | `language.py` | la langue de la mémoire : le vocabulaire du format par langue, ramené à des clés internes à la lecture, et celui du projet à l'écriture |
+| `messages.py`, `messages_en.py` | les messages du moteur dans la langue de la mémoire du projet : un message s'écrit en français dans le code, enveloppé par `trad`, et ce texte est la clé du catalogue anglais ; la ligne de commande pose la langue en chargeant le projet, l'installeur et `socle init` la leur ; `tests/test_messages.py` exige qu'aucun message enveloppé ne manque au catalogue (ADR-0028) |
 | `config.py` | la configuration du projet et les deux tables de chemins (formats 1 et 2), choisie par projet et par révision |
 | `migrations.py` | les migrations de format, appliquées dans l'ordre à la mise à jour ; du format 1 au 2, le renommage des chemins |
 | `initialization.py` | les trois entrées d'initialisation : document archivé tel quel, audit du dépôt en lecture seule, questions de départ |
@@ -210,9 +211,11 @@ comparent le même fichier sous ses deux noms.
   la mémoire ; le format 1 reste lu, et la migration ne réécrit pas la
   mémoire.
 - **La mémoire s'écrit dans la langue du projet et se lit dans toutes**
-  (`ADR-0020`) : le moteur ramène chaque mot-clé à une clé interne, une
-  mémoire existante n'a rien à réécrire, et les messages du moteur restent
-  en français.
+  (`ADR-0020`) : le moteur ramène chaque mot-clé à une clé interne, et une
+  mémoire existante n'a rien à réécrire. Les messages du moteur et les
+  gabarits en prose qu'il pose suivent la même langue (`ADR-0028`) : le
+  message français est la clé du catalogue d'une autre langue, et un projet
+  français ne voit rien changer.
 - **Ce qu'on tape et ce qu'on voit dans l'arborescence est en anglais, le
   code se lit en français** (`ADR-0027`) : commandes, options, dossiers,
   modules et gabarits portent des noms anglais, les anciens noms de

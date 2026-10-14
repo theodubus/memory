@@ -7,8 +7,15 @@ allers-retours (leçon de `chess:tools/verify.sh`).
 
 from __future__ import annotations
 
+import re
 import sys
 from dataclasses import dataclass, field
+
+from socle.messages import trad
+
+# La ligne finale d'un rapport en échec, qui nomme les contrôles : relue par
+# l'installeur, l'auto-test et le banc, dans toutes les langues (ADR-0028).
+LIGNE_ECHEC = re.compile(r"^(?:ECHEC — \d+ contrôle\(s\) : |FAILED — \d+ check\(s\): )(.+)$", re.M)
 
 ERREUR = "erreur"
 AVERTISSEMENT = "avertissement"
@@ -93,11 +100,11 @@ class Rapport:
             avert = [c for c in siens if c.gravite == AVERTISSEMENT]
             indispo = [c for c in siens if c.gravite == INDISPONIBLE]
             if erreurs:
-                etat = "ECHEC"
+                etat = trad("ECHEC")
             elif indispo:
-                etat = "indisponible"
+                etat = trad("indisponible")
             elif avert:
-                etat = "ok (avertissement)"
+                etat = trad("ok (avertissement)")
             else:
                 etat = "ok"
             if court and not (erreurs or avert or indispo):
@@ -108,14 +115,21 @@ class Rapport:
                 marque = {ERREUR: "|", AVERTISSEMENT: "!", INDISPONIBLE: "?"}[c.gravite]
                 lignes.append(f"      {marque} {c.en_ligne()}")
         if court and tus:
-            lignes.append(f"  … et {tus} autre(s) contrôle(s) sans rien à signaler")
+            lignes.append(trad("  … et {n} autre(s) contrôle(s) sans rien à signaler", n=tus))
         lignes.append("")
         if self.reussi:
-            lignes.append("TOUT PASSE")
+            lignes.append(trad("TOUT PASSE"))
         else:
             echecs = self.controles_en_echec()
-            lignes.append(f"ECHEC — {len(echecs)} contrôle(s) : {', '.join(echecs)}")
+            lignes.append(trad("ECHEC — {n} contrôle(s) : {controles}", n=len(echecs), controles=", ".join(echecs)))
         return "\n".join(lignes)
 
     def afficher(self, titre: str | None = None, flux=None, court: bool = False):
         print(self.texte(titre, court), file=flux or sys.stdout)
+
+
+def en_echec_dans(sortie: str) -> list[str]:
+    """Les contrôles en échec que nomme la sortie d'un rapport, quelle que soit
+    sa langue ; vide si tout passe."""
+    m = LIGNE_ECHEC.search(sortie or "")
+    return [c.strip() for c in m.group(1).split(",")] if m else []

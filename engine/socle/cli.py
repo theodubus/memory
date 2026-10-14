@@ -13,11 +13,16 @@ import sys
 from datetime import date
 from pathlib import Path
 
-from socle import VERSION, config, hooks, language as langue, utils as outils
+from socle import VERSION, config, hooks, language as langue, messages, utils as outils
+from socle.messages import trad
 
 
 def _projet(args) -> config.Projet:
-    return config.Projet.charger(Path(args.root) if getattr(args, "root", None) else None)
+    """Le projet ; ses messages, dès lors, dans la langue de sa mémoire
+    (ADR-0028)."""
+    projet = config.Projet.charger(Path(args.root) if getattr(args, "root", None) else None)
+    messages.choisir(langue.du_projet(projet))
+    return projet
 
 
 def _base(projet: config.Projet, valeur: str | None) -> str | None:
@@ -807,4 +812,10 @@ def main(argv=None) -> int:
     from socle import commands as commandes
 
     args = p.parse_args(commandes.noms_anglais(argv))
-    return args.f(args)
+    # La langue que la commande pose en chargeant son projet ne lui survit
+    # pas : un appel suivant, dans le même processus, part du français.
+    avant = messages.langue()
+    try:
+        return args.f(args)
+    finally:
+        messages.choisir(avant)

@@ -26,7 +26,9 @@ import tomllib
 from datetime import date
 from pathlib import Path
 
-from socle import VERSION, config, fingerprint as empreinte, language as langue, mutation, utils as outils
+from socle import VERSION, config, fingerprint as empreinte, language as langue, messages, mutation, utils as outils
+from socle.messages import trad
+from socle.report import en_echec_dans
 from socle.templates import DOSSIER as MODELES, gabarit
 
 ADAPTATEURS = Path(__file__).resolve().parent / "adapters"
@@ -42,7 +44,8 @@ def charger_adaptateur(nom: str) -> tuple[str, str]:
     q = ADAPTATEURS / f"{nom}.toml"
     if not q.is_file():
         connus = ", ".join(sorted(x.stem for x in ADAPTATEURS.glob("*.toml")))
-        raise SystemExit(f"adaptateur inconnu : {nom} (maintenus : {connus} ; sinon un chemin vers un .toml)")
+        raise SystemExit(trad("adaptateur inconnu : {nom} (maintenus : {connus} ; sinon un chemin vers un "
+                              ".toml)", nom=nom, connus=connus))
     return q.read_text(encoding="utf-8"), nom
 
 
@@ -108,12 +111,13 @@ def _balayage_planifie(cible: Path, texte_adaptateur: str) -> tuple[bool, str]:
         return True, ""
     autre = mutation.workflow_de_balayage(cap, flux, lambda f: outils.lire_a(cible, None, f), sauf_le_sien=True)
     if autre:
-        return False, (f"balayage de mutation : `{autre}` le lance déjà, le socle n'en pose pas un second ; "
-                       "la CI vérifie qu'il tourne encore")
-    return True, f"balayage de mutation hebdomadaire posé : {mutation.WORKFLOW}"
+        return False, (trad("balayage de mutation : `{autre}` le lance déjà, le socle n'en pose pas un second "
+                            "; la CI vérifie qu'il tourne encore", autre=autre))
+    return True, trad("balayage de mutation hebdomadaire posé : {workflow}", workflow=mutation.WORKFLOW)
 
 
-def garde_fous_initiaux(cible: Path, texte_adaptateur: str, ch: config.Chemins = config.FORMAT_ACTUEL) -> str:
+def garde_fous_initiaux(cible: Path, texte_adaptateur: str, ch: config.Chemins = config.FORMAT_ACTUEL,
+                        lg: str = "fr") -> str:
     """Les garde-fous du gabarit, avec chaque module qui porte déjà du code
     posé « à mesurer » au cliquet de mutation : une installation sur un
     projet existant finit verte, et le premier balayage pose les plafonds
@@ -124,7 +128,7 @@ def garde_fous_initiaux(cible: Path, texte_adaptateur: str, ch: config.Chemins =
     texte = re.sub(rf'(?m)^"{re.escape(config.FORMAT_3.backlog)}/\*\.md" = \{{[^}}]*\}}|'
                    rf'^"{re.escape(config.FORMAT_2.backlog)}" = \{{[^}}]*\}}',
                    f'"{ch.backlog}/*.md" = {{ max_bytes = {migrations.BUDGET_SUJET} }}' if ch.backlog_en_dossier
-                   else f'"{ch.backlog}" = {{ max_bytes = 24000 }}', gabarit("guardrails.toml"))
+                   else f'"{ch.backlog}" = {{ max_bytes = 24000 }}', gabarit("guardrails.toml", lg))
     cap = tomllib.loads(texte_adaptateur).get("capabilities", {}).get("mutation", {})
     if "command" not in cap:
         return texte
@@ -154,19 +158,22 @@ def diff_politique(cible: Path) -> list[str]:
     p = cible / config.chemins(cible).politique
     if not p.is_file():
         return []
-    projet, gab = p.read_text(encoding="utf-8").splitlines(), gabarit("policy.toml").splitlines()
-    return list(difflib.unified_diff(projet, gab, "politique du projet", "gabarit de cette version", lineterm=""))
+    lg = langue.du_projet(config.Projet.charger(cible))
+    projet, gab = p.read_text(encoding="utf-8").splitlines(), gabarit("policy.toml", lg).splitlines()
+    return list(difflib.unified_diff(projet, gab, trad("politique du projet"), trad("gabarit de cette version"),
+                                     lineterm=""))
 
 
 def _refus_cible(cible: Path) -> str | None:
     """Pourquoi le socle ne s'installe pas là, ou `None`."""
     if not outils.est_depot(cible):
-        return f"{cible} n'est pas un dépôt git"
+        return trad("{cible} n'est pas un dépôt git", cible=cible)
     haut = outils.git(cible, "rev-parse", "--show-toplevel", check=False).strip()
     if haut and Path(haut).resolve() != cible.resolve():
         # Les hooks git (core.hooksPath) et le workflow de CI ne se lisent
         # qu'à la racine du dépôt : posés plus bas, ils ne tireraient pas.
-        return f"{cible} n'est pas la racine du dépôt git ({haut}) ; le socle s'installe à la racine"
+        return trad("{cible} n'est pas la racine du dépôt git ({haut}) ; le socle s'installe à la racine",
+                    cible=cible, haut=haut)
     return None
 
 
@@ -182,13 +189,15 @@ def _poser_moteur(cible: Path, mode: str, source: Path, ch: config.Chemins) -> t
         if dest.exists() and dest.resolve() == (source / "socle").resolve():
             # Lancé depuis le projet lui-même : la source est la destination,
             # et la supprimer avant la copie effaçait le moteur (B-0044, L1).
-            journal.append(f"moteur déjà en place dans {dossier_moteur}/socle (installeur lancé depuis le projet) : "
-                           "conservé ; pour une autre version, lancer l'installeur depuis le clone du socle")
+            journal.append(trad("moteur déjà en place dans {dossier_moteur}/socle (installeur lancé depuis le "
+                                "projet) : conservé ; pour une autre version, lancer l'installeur depuis le "
+                                "clone du socle", dossier_moteur=dossier_moteur))
         else:
             if dest.exists():
                 shutil.rmtree(dest)
             shutil.copytree(source / "socle", dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc", ".*"))
-            journal.append(f"moteur {VERSION} copié dans {dossier_moteur}/socle")
+            journal.append(trad("moteur {version} copié dans {dossier_moteur}/socle", version=VERSION,
+                                dossier_moteur=dossier_moteur))
     outils.ecrire(cible / config.LANCEUR, gabarit("launcher.py"), executable=True)
 
     # 2. Le verrou et son empreinte. En mode amont, le moteur est la source :
@@ -196,26 +205,28 @@ def _poser_moteur(cible: Path, mode: str, source: Path, ch: config.Chemins) -> t
     # ferait de chacune un changement de fichier protégé.
     if mode == config.MODE_AMONT:
         outils.ecrire(cible / ch.lock, (
-            "# Verrou du moteur — écrit par l'installeur, jamais à la main.\n"
-            "# Mode amont : ce dépôt fabrique le moteur, dont l'empreinte n'est pas figée ici.\n"
-            f'mode = "{mode}"\n'
+            trad("# Verrou du moteur — écrit par l'installeur, jamais à la main.\n"
+                 "# Mode amont : ce dépôt fabrique le moteur, dont l'empreinte n'est pas figée ici.\n")
+            + f'mode = "{mode}"\n'
             f'engine_dir = "{dossier_moteur}"\n'
             f"format = {ch.format}\n"
         ))
-        journal.append(f"verrou en mode amont : le moteur est la source, sous {dossier_moteur}/socle")
+        journal.append(trad("verrou en mode amont : le moteur est la source, sous {dossier_moteur}/socle",
+                            dossier_moteur=dossier_moteur))
     else:
         calculee, n = empreinte.calculer(cible, dossier_moteur)
         outils.ecrire(cible / ch.lock, (
-            "# Verrou du moteur — écrit par l'installeur, jamais à la main.\n"
-            "# La CI recalcule l'empreinte ; un moteur altéré dans le projet fait échouer `moteur.empreinte`.\n"
-            f'version = "{VERSION}"\n'
+            trad("# Verrou du moteur — écrit par l'installeur, jamais à la main.\n"
+                 "# La CI recalcule l'empreinte ; un moteur altéré dans le projet fait échouer "
+                 "`moteur.empreinte`.\n")
+            + f'version = "{VERSION}"\n'
             f'mode = "{mode}"\n'
             f'engine_dir = "{dossier_moteur}"\n'
             f'fingerprint = "{calculee}"\n'
             f"files = {n}\n"
             f"format = {ch.format}\n"
         ))
-        journal.append(f"verrou : {empreinte.courte(calculee)} sur {n} fichiers")
+        journal.append(trad("verrou : {empreinte} sur {n} fichiers", empreinte=empreinte.courte(calculee), n=n))
 
     return dossier_moteur, journal
 
@@ -226,7 +237,8 @@ def _poser_configuration(cible: Path, texte_adaptateur: str, ancien: dict, prive
     """La politique, l'adaptateur et les garde-fous, posés s'ils manquent ;
     rend la langue de la mémoire."""
     journal = []
-    politique = gabarit("policy.toml")
+    neuf = not (cible / ch.politique).is_file()
+    politique = gabarit("policy.toml", langue_memoire if langue_memoire and neuf else "fr")
     if prive:
         politique = politique_privee(politique, prive, relecture, demandes_privees)
     if langue_memoire and not (cible / ch.politique).is_file():
@@ -249,23 +261,24 @@ def _poser_configuration(cible: Path, texte_adaptateur: str, ancien: dict, prive
                 texte_pol = politique_privee(texte_pol.rstrip("\n") + "\n\n# [private]\n", prive, relecture,
                                              demandes_privees)
             p_pol.write_text(texte_pol, encoding="utf-8")
-            journal.append(f"mémoire privée ajoutée à la politique ({prive}) : un changement protégé, à approuver")
+            journal.append(trad("mémoire privée ajoutée à la politique ({prive}) : un changement protégé, à "
+                                "approuver", prive=prive))
     if ancien and (cible / ch.politique).is_file():
         ecart = diff_politique(cible)
         if ecart:
-            journal.append("la politique du projet diffère du gabarit de cette version ; rien n'est écrit, "
-                           "elle est à l'humain — à relire :\n      " + "\n      ".join(ecart))
+            journal.append(trad("la politique du projet diffère du gabarit de cette version ; rien n'est écrit, "
+                                "elle est à l'humain — à relire :\n      {ecart}", ecart="\n      ".join(ecart)))
     for nom, contenu in (
         (ch.politique, politique),
         (ch.adaptateur, texte_adaptateur),
-        (ch.garde_fous, garde_fous_initiaux(cible, texte_adaptateur, ch)),
+        (ch.garde_fous, garde_fous_initiaux(cible, texte_adaptateur, ch, lg)),
     ):
         p = cible / nom
         if p.is_file():
-            journal.append(f"{nom} existe : conservé (comparer au gabarit à la main si besoin)")
+            journal.append(trad("{nom} existe : conservé (comparer au gabarit à la main si besoin)", nom=nom))
         else:
             outils.ecrire(p, contenu)
-            journal.append(f"{nom} posé")
+            journal.append(trad("{nom} posé", nom=nom))
 
     return lg, journal
 
@@ -295,7 +308,7 @@ def _poser_memoire(cible: Path, lg: str, nom_adaptateur: str, adoption: bool, ch
                 .replace("@@ADAPTATEUR@@", nom_adaptateur)
                 .replace("@@ADOPTION@@", ("" if not adoption else ", in adoption mode" if lg == "en"
                                           else ", en mode adoption")))
-        journal.append(f"mémoire initiale posée, journal ouvert par {ident}")
+        journal.append(trad("mémoire initiale posée, journal ouvert par {ident}", ident=ident))
 
     return journal
 
@@ -310,9 +323,9 @@ def _poser_etages(cible: Path, texte_adaptateur: str, dossier_moteur: str, propr
         outils.ecrire(cible / config.GIT_HOOKS / h.name, h.read_text(encoding="utf-8"), executable=True)
     if outils.git(cible, "config", "--get", "core.hooksPath", check=False).strip() in ("", config.GIT_HOOKS):
         outils.git(cible, "config", "core.hooksPath", config.GIT_HOOKS)
-        journal.append("hooks git branchés (core.hooksPath)")
+        journal.append(trad("hooks git branchés (core.hooksPath)"))
     else:
-        journal.append("!! core.hooksPath pointe ailleurs : hooks git NON branchés")
+        journal.append(trad("!! core.hooksPath pointe ailleurs : hooks git NON branchés"))
     setup = tomllib.loads(texte_adaptateur).get("ci_setup", "")
     etapes = setup.strip("\n") + "\n" if setup.strip() else ""
     outils.ecrire(cible / ".github/workflows/socle.yml", gabarit("socle.yml").replace("@@ETAPES_ADAPTATEUR@@\n", etapes))
@@ -339,23 +352,34 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
               langue_memoire: str | None = None, format_memoire: int | None = None) -> int:
     """Installe ou met à jour le socle dans `cible`. `format_memoire` : le
     format de la mémoire, l'actuel par défaut ; un test qui porte sur un
-    format antérieur le fixe."""
+    format antérieur le fixe. Ses messages sont dans la langue de la mémoire
+    du projet : celle qu'il a déjà, ou celle choisie pour un projet neuf."""
+    existant = (cible / config.chemins(cible).politique).is_file()
+    lg = langue.du_projet(config.Projet.charger(cible)) if existant else (langue_memoire or "fr")
+    with messages.dans(lg):
+        return _installer(cible, adaptateur, proprietaire, adoption, mode, source, prive, relecture,
+                          demandes_privees, filtre, langue_memoire, format_memoire)
+
+
+def _installer(cible: Path, adaptateur: str, proprietaire: str, adoption: bool, mode: str, source: Path | None,
+               prive: str | None, relecture: str | None, demandes_privees: bool, filtre: str,
+               langue_memoire: str | None, format_memoire: int | None) -> int:
     from socle import migrations
 
     ch = config.FORMATS[format_memoire or migrations.FORMAT]
 
     refus = _refus_cible(cible)
     if refus:
-        print(f"refus : {refus}", file=sys.stderr)
+        print(trad("refus : {refus}", refus=refus), file=sys.stderr)
         return 2
     source = source or Path(__file__).resolve().parent.parent
     if adaptateur == "auto":
         detecte = detecter_adaptateur(cible)
         if detecte is None:
             connus = "|".join(sorted(x.stem for x in ADAPTATEURS.glob("*.toml")))
-            print("refus : langage non détecté (aucun de Cargo.toml, pyproject.toml, go.mod, pom.xml, Gemfile, "
-                  "composer.json, package.json, ni fichier Python) : le demander à l'humain, "
-                  f"puis `--adapter <{connus}>` ou le chemin d'un .toml", file=sys.stderr)
+            print(trad("refus : langage non détecté (aucun de Cargo.toml, pyproject.toml, go.mod, pom.xml, "
+                       "Gemfile, composer.json, package.json, ni fichier Python) : le demander à l'humain, "
+                       "puis `--adapter <{connus}>` ou le chemin d'un .toml", connus=connus), file=sys.stderr)
             return 2
         adaptateur = detecte
     texte_adaptateur, nom_adaptateur = charger_adaptateur(adaptateur)
@@ -364,11 +388,14 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
     try:
         tomllib.loads(texte_adaptateur)
     except tomllib.TOMLDecodeError as e:
-        print(f"refus : adaptateur « {nom_adaptateur} » illisible : {e}", file=sys.stderr)
+        print(trad("refus : adaptateur « {nom} » illisible : {erreur}", nom=nom_adaptateur, erreur=e),
+              file=sys.stderr)
         return 2
-    journal = [f"adaptateur : {nom_adaptateur}" + (" (détecté)" if adaptateur != nom_adaptateur else "")]
+    journal = [trad("adaptateur : {nom}", nom=nom_adaptateur)
+               + (trad(" (détecté)") if adaptateur != nom_adaptateur else "")]
     if ancien:
-        journal.append(f"mise à jour : moteur {ancien.get('version', 'amont')} → {VERSION}")
+        journal.append(trad("mise à jour : moteur {avant} → {version}", avant=ancien.get("version", "amont"),
+                            version=VERSION))
         try:
             journal += migrations.migrer(cible, int(ancien.get("format", 1)), ch.format)
         except RuntimeError as e:
@@ -407,12 +434,12 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
     if adoption:
         journal += _adopter(cible)
 
-    print(f"socle {VERSION} installé dans {cible}")
+    print(trad("socle {version} installé dans {cible}", version=VERSION, cible=cible))
     for l in journal:
         print(f"  - {l}")
-    print("\nAudit :")
+    print(trad("\nAudit :"))
     code, echecs = _audit(cible)
-    print("\nEt maintenant :")
+    print(trad("\nEt maintenant :"))
     for i, etape in enumerate(et_maintenant(cible, bool(ancien), echecs), 1):
         print(f"  {i}. {etape}")
     return code
@@ -449,21 +476,23 @@ def _instructions(cible: Path, dossier_moteur: str, lg: str = "fr", balayage: bo
             # (essai sur chess, J-2026-10-10-G). La section du socle va dans
             # CLAUDE.md, et le renommage devient une décision humaine.
             _section_dans(claude, bloc)
-            res.append(f"!! CLAUDE.md gardé : {len(dependants)} fichier(s) du projet le nomment "
-                       f"({', '.join(dependants[:5])}{' …' if len(dependants) > 5 else ''}) ; "
-                       "le renommer en AGENTS.md est une décision humaine — section du socle ajoutée à CLAUDE.md")
+            res.append(trad("!! CLAUDE.md gardé : {n} fichier(s) du projet le nomment ({liste}) ; le renommer en "
+                            "AGENTS.md est une décision humaine — section du socle ajoutée à CLAUDE.md",
+                            n=len(dependants),
+                            liste=", ".join(dependants[:5]) + (" …" if len(dependants) > 5 else "")))
             return res
     if not agents.is_file():
         if claude.is_file() and claude.read_text(encoding="utf-8").strip() != "@AGENTS.md":
             # Le CLAUDE.md existant devient AGENTS.md, historique compris.
             if not outils.git_reussit(cible, "mv", "CLAUDE.md", config.INSTRUCTIONS):
                 shutil.move(str(claude), str(agents))
-            res.append("CLAUDE.md existant renommé en AGENTS.md (il fait foi désormais)")
+            res.append(trad("CLAUDE.md existant renommé en AGENTS.md (il fait foi désormais)"))
             texte = agents.read_text(encoding="utf-8").rstrip("\n") + "\n\n"
         else:
-            texte = f"# {cible.name}\n\nÀ compléter : ce que fait le projet, sa structure, ses commandes.\n\n"
+            texte = trad("# {nom}\n\nÀ compléter : ce que fait le projet, sa structure, ses commandes.\n\n",
+                         nom=cible.name)
         agents.write_text(texte + bloc, encoding="utf-8")
-        res.append("AGENTS.md posé")
+        res.append(trad("AGENTS.md posé"))
     else:
         res.append(_section_dans(agents, bloc))
     # Un CLAUDE.md qui dit autre chose que l'import : son contenu, propre au
@@ -472,12 +501,12 @@ def _instructions(cible: Path, dossier_moteur: str, lg: str = "fr", balayage: bo
     propre = "\n".join(l for l in ancien.splitlines() if l.strip() != "@AGENTS.md").strip()
     if propre:
         texte = agents.read_text(encoding="utf-8")
-        ajout = f"## Repris de CLAUDE.md\n\n{propre}\n\n"
+        ajout = trad("## Repris de CLAUDE.md\n\n{propre}\n\n", propre=propre)
         texte = (texte.replace(DEBUT_SOCLE, ajout + DEBUT_SOCLE, 1) if DEBUT_SOCLE in texte
                  else texte.rstrip("\n") + "\n\n" + ajout)
         agents.write_text(texte, encoding="utf-8")
-        res.append("le contenu de CLAUDE.md, propre au projet, est repris dans AGENTS.md, qui fait foi ; "
-                   "CLAUDE.md n'importe plus qu'AGENTS.md")
+        res.append(trad("le contenu de CLAUDE.md, propre au projet, est repris dans AGENTS.md, qui fait foi ; "
+                        "CLAUDE.md n'importe plus qu'AGENTS.md"))
     claude.write_text("@AGENTS.md\n", encoding="utf-8")
     return res
 
@@ -489,9 +518,9 @@ def _section_dans(fichier: Path, bloc: str) -> str:
         avant, reste = texte.split(DEBUT_SOCLE, 1)
         apres = reste.split(FIN_SOCLE, 1)[1]
         fichier.write_text(avant + bloc.rstrip("\n") + apres, encoding="utf-8")
-        return f"section du socle de {fichier.name} régénérée"
+        return trad("section du socle de {fichier} régénérée", fichier=fichier.name)
     fichier.write_text(texte.rstrip("\n") + "\n\n" + bloc, encoding="utf-8")
-    return f"section du socle ajoutée à {fichier.name}"
+    return trad("section du socle ajoutée à {fichier}", fichier=fichier.name)
 
 
 def _qui_nomme(cible: Path, nom: str) -> list[str]:
@@ -513,7 +542,7 @@ def _settings(cible: Path) -> list[str]:
         try:
             conf = json.loads(p.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
-            return ["!! .claude/settings.json illisible : hooks NON déclarés"]
+            return [trad("!! .claude/settings.json illisible : hooks NON déclarés")]
     else:
         conf = {"$schema": modele["$schema"]}
     hooks = conf.setdefault("hooks", {})
@@ -524,18 +553,19 @@ def _settings(cible: Path) -> list[str]:
                         if not any(".socle/socle hook" in h.get("command", "") for h in b.get("hooks", []))]
         existants.extend(blocs)
     outils.ecrire(p, json.dumps(conf, ensure_ascii=False, indent=2) + "\n")
-    return ["hooks de Claude Code déclarés dans .claude/settings.json"]
+    return [trad("hooks de Claude Code déclarés dans .claude/settings.json")]
 
 
 def _codeowners(cible: Path, proprietaire: str) -> list[str]:
     p = cible / ".github/CODEOWNERS"
     if not proprietaire:
-        return ["!! aucun propriétaire (--owner) : CODEOWNERS non posé — la politique n'est protégée que par la CI"]
+        return [trad("!! aucun propriétaire (--owner) : CODEOWNERS non posé — la politique n'est protégée que "
+                     "par la CI")]
     lignes = gabarit("CODEOWNERS").replace("@@OWNER@@", proprietaire).splitlines()
     existant = p.read_text(encoding="utf-8").splitlines() if p.is_file() else []
     ajout = [l for l in lignes if l not in existant]
     outils.ecrire(p, "\n".join(existant + ajout).strip("\n") + "\n")
-    return [f"CODEOWNERS : {proprietaire} sur la politique, les hooks et la CI"]
+    return [trad("CODEOWNERS : {proprietaire} sur la politique, les hooks et la CI", proprietaire=proprietaire)]
 
 
 def _gitignore(cible: Path) -> list[str]:
@@ -545,9 +575,10 @@ def _gitignore(cible: Path) -> list[str]:
     # quand l'installeur l'a gardé (B-0049) ; celui d'une installation
     # antérieure compte, quel que soit le fichier qu'il nomme.
     source = config.INSTRUCTIONS if (cible / config.INSTRUCTIONS).is_file() else "CLAUDE.md"
-    commentaire = "# Trace locale des hooks du socle"
-    deja = any(l.startswith(commentaire) for l in existant.splitlines())
-    outils.ajouter_lignes(p, ["/.socle/trace/", "__pycache__/"], "" if deja else f"{commentaire} (voir {source})")
+    commentaire = trad("# Trace locale des hooks du socle")
+    # Le commentaire d'une installation dans une autre langue compte aussi.
+    deja = any(l.startswith(("# Trace locale des hooks du socle", commentaire)) for l in existant.splitlines())
+    outils.ajouter_lignes(p, ["/.socle/trace/", "__pycache__/"], "" if deja else trad("{commentaire} (voir {source})", commentaire=commentaire, source=source))
     return []
 
 
@@ -567,12 +598,12 @@ def _non_ignores(cible: Path, chemins: list[str]) -> list[str]:
     pris = ignores()
     if not pris:
         return []
-    outils.ajouter_lignes(cible / ".gitignore", [f"!/{c}" for c in pris], "# Le socle : ses fichiers se commitent")
+    outils.ajouter_lignes(cible / ".gitignore", [f"!/{c}" for c in pris], trad("# Le socle : ses fichiers se commitent"))
     restes = ignores()
-    res = [f".gitignore : {len(pris) - len(restes)} fichier(s) du socle n'y sont plus ignorés"]
+    res = [trad(".gitignore : {n} fichier(s) du socle n'y sont plus ignorés", n=len(pris) - len(restes))]
     if restes:
-        res.append(f"!! encore ignorés par le .gitignore du projet, un dossier parent sans doute : {', '.join(restes)} "
-                   "— à rendre à la main, sans quoi ils ne seront pas commités")
+        res.append(trad("!! encore ignorés par le .gitignore du projet, un dossier parent sans doute : {liste} "
+                        "— à rendre à la main, sans quoi ils ne seront pas commités", liste=', '.join(restes)))
     return res
 
 
@@ -584,14 +615,14 @@ def _prive(cible: Path, mode: str, filtre: str) -> list[str]:
     res = []
     zone = prive.dossier(cible)
     if mode == "compagnon":
-        outils.ajouter_lignes(cible / ".gitignore", [f"{zone}/"], "# Le clone du dépôt privé (mémoire privée)")
+        outils.ajouter_lignes(cible / ".gitignore", [f"{zone}/"], trad("# Le clone du dépôt privé (mémoire privée)"))
         sha = prive.commit_compagnon(cible)
         if sha:
             prive.ecrire_verrou(cible, sha)
-            res.append(f"mémoire privée (compagnon) : dépôt privé trouvé, verrou à {sha[:10]}")
+            res.append(trad("mémoire privée (compagnon) : dépôt privé trouvé, verrou à {sha}", sha=sha[:10]))
         else:
-            res.append("!! mémoire privée (compagnon) : dépôt privé absent — le mettre en place : "
-                       "`python3 .socle/socle private install --repo <adresse du dépôt privé>`")
+            res.append(trad("!! mémoire privée (compagnon) : dépôt privé absent — le mettre en place : "
+                            "`python3 .socle/socle private install --repo <adresse du dépôt privé>`"))
     else:
         p = cible / ".gitattributes"
         texte = p.read_text(encoding="utf-8") if p.is_file() else ""
@@ -599,11 +630,12 @@ def _prive(cible: Path, mode: str, filtre: str) -> list[str]:
         if not any(l.startswith(f"{zone}/**") for l in texte.splitlines()):
             p.write_text(texte.rstrip("\n") + ("\n" if texte.strip() else "") + ligne + "\n", encoding="utf-8")
         if outils.git(cible, "config", "--get", f"filter.{filtre}.clean", check=False).strip():
-            res.append(f"mémoire privée (chiffrée) : filtre « {filtre} » configuré")
+            res.append(trad("mémoire privée (chiffrée) : filtre « {filtre} » configuré", filtre=filtre))
         else:
-            res.append(f"!! mémoire privée (chiffrée) : filtre « {filtre} » non configuré ici — l'initialiser "
-                       f"(`{filtre} init`, ou l'équivalent de l'outil) avant d'écrire du privé ; `prive.chiffre` "
-                       "refusera tout fichier privé commité en clair")
+            res.append(trad("!! mémoire privée (chiffrée) : filtre « {filtre} » non configuré ici — "
+                            "l'initialiser (`{filtre} init`, ou l'équivalent de l'outil) avant d'écrire du "
+                            "privé ; `prive.chiffre` refusera tout fichier privé commité en clair",
+                            filtre=filtre))
     return res
 
 
@@ -620,7 +652,8 @@ def _adopter(cible: Path) -> list[str]:
         # Gardé comme source le temps du renommage : il a son budget, au niveau actuel.
         taille = int(math.ceil(len(claude.read_bytes()) / 1000.0) * 1000)
         texte = texte.replace("[budgets]\n", f'[budgets]\n"CLAUDE.md" = {{ max_bytes = {taille} }}\n', 1)
-        res.append(f"budget de CLAUDE.md, gardé comme source : {taille} octets (il ne pourra que baisser)")
+        res.append(trad("budget de CLAUDE.md, gardé comme source : {taille} octets (il ne pourra que baisser)",
+                        taille=taille))
     gf.write_text(texte, encoding="utf-8")
     projet = config.Projet.charger(cible)
     for motif, b in (projet.gf("budgets", defaut={}) or {}).items():
@@ -628,7 +661,8 @@ def _adopter(cible: Path) -> list[str]:
         if tailles and max(tailles) > b.get("max_bytes", 0):
             nouveau = int(math.ceil(max(tailles) / 1000.0) * 1000)
             texte = re.sub(rf'^("{re.escape(motif)}"\s*=\s*\{{\s*max_bytes\s*=\s*)\d+', rf"\g<1>{nouveau}", texte, flags=re.M)
-            res.append(f"budget de {motif} fixé au niveau actuel : {nouveau} octets (il ne pourra que baisser)")
+            res.append(trad("budget de {motif} fixé au niveau actuel : {nouveau} octets (il ne pourra que "
+                            "baisser)", motif=motif, nouveau=nouveau))
     gf.write_text(texte, encoding="utf-8")
     projet = config.Projet.charger(cible)
     rapport = contexte.executer(contexte.Contexte(projet, etage="ci", base=None))
@@ -642,11 +676,12 @@ def _adopter(cible: Path) -> list[str]:
             liste = json.dumps(list(deja) + [c for c in en_echec if c not in deja])
             texte = re.sub(r"(?ms)^(warn_only\s*=\s*)\[[^\]]*\]", lambda m: m.group(1) + liste, texte, count=1)
         else:
-            texte += ("\n\n[adoption]\n# Contrôles en échec sur l'existant, passés en avertissement. En retirer un\n"
-                      "# durcit (libre) ; en ajouter un assouplit (demande validée).\n"
-                      f"warn_only = {json.dumps(en_echec)}")
+            texte += ("\n\n[adoption]\n" + trad("# Contrôles en échec sur l'existant, passés en avertissement. En "
+                                                "retirer un\n# durcit (libre) ; en ajouter un assouplit (demande "
+                                                "validée).\n") + f"warn_only = {json.dumps(en_echec)}")
         gf.write_text(texte + "\n", encoding="utf-8")
-        res.append(f"adoption : {len(en_echec)} contrôle(s) en avertissement : {', '.join(en_echec)}")
+        res.append(trad("adoption : {n} contrôle(s) en avertissement : {liste}",
+                        n=len(en_echec), liste=', '.join(en_echec)))
     return res
 
 
@@ -658,8 +693,7 @@ def _audit(cible: Path) -> tuple[int, list[str]]:
     print(r.stdout, end="")
     if r.stderr:
         print(r.stderr, end="", file=sys.stderr)
-    m = re.search(r"(?m)^ECHEC — \d+ contrôle\(s\) : (.+)$", r.stdout)
-    return r.returncode, [c.strip() for c in m.group(1).split(",")] if m else []
+    return r.returncode, en_echec_dans(r.stdout)
 
 
 def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str]) -> list[str]:
@@ -670,21 +704,23 @@ def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str]) -> list[str
     projet = config.Projet.charger(cible)
     etapes = []
     if "protege.fichiers" in echecs:
-        etapes.append("approuver les fichiers protégés que la mise à jour a changés (la liste s'affiche, "
-                      f'à confirmer) : `python3 .socle/socle approve --text "Mise à jour du socle {VERSION}"`')
+        etapes.append(trad("approuver les fichiers protégés que la mise à jour a changés (la liste s'affiche, "
+                           'à confirmer) : `python3 .socle/socle approve --text "Mise à jour du socle '
+                           '{version}"`', version=VERSION))
     mode = prive.mode(projet)
     sans_compagnon = mode == "compagnon" and not prive.commit_compagnon(cible)
     # Le verrou d'un dépôt compagnon pas encore en place : l'étape qui le
     # met en place le règle, pas une correction ni l'adoption.
     autres = [c for c in echecs if c != "protege.fichiers" and not (sans_compagnon and c == "prive.verrou")]
     if autres:
-        etapes.append(f"{len(autres)} contrôle(s) en échec ci-dessus ({', '.join(autres)}) : les corriger, "
-                      "ou relancer l'installation avec `--adoption`, qui les passe en avertissement sur l'existant")
+        etapes.append(trad("{n} contrôle(s) en échec ci-dessus ({liste}) : les corriger, ou relancer "
+                           "l'installation avec `--adoption`, qui les passe en avertissement sur l'existant",
+                           n=len(autres), liste=', '.join(autres)))
     if sans_compagnon:
-        etapes.append("mettre en place le dépôt privé (créé vide sur GitHub, privé) : clone, premier commit, "
-                      "verrou (ce qui règle `prive.verrou`), clé de déploiement, puis les deux gestes sur "
-                      "GitHub, avec leurs liens : "
-                      "`python3 .socle/socle private install --repo <adresse du dépôt privé>`")
+        etapes.append(trad("mettre en place le dépôt privé (créé vide sur GitHub, privé) : clone, premier "
+                           "commit, verrou (ce qui règle `prive.verrou`), clé de déploiement, puis les deux "
+                           "gestes sur GitHub, avec leurs liens : `python3 .socle/socle private install --repo "
+                           "<adresse du dépôt privé>`"))
     elif mode and mode != "compagnon":
         filtre = "git-crypt"
         attributs = cible / ".gitattributes"
@@ -692,23 +728,26 @@ def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str]) -> list[str
             m = re.search(rf"(?m)^{re.escape(prive.dossier(cible))}/\*\* filter=(\S+)", attributs.read_text(encoding="utf-8"))
             filtre = m.group(1) if m else filtre
         if not outils.git(cible, "config", "--get", f"filter.{filtre}.clean", check=False).strip():
-            etapes.append(f"initialiser le filtre de chiffrement « {filtre} » (`{filtre} init`, ou l'équivalent "
-                          "de l'outil) avant d'écrire du privé")
+            etapes.append(trad("initialiser le filtre de chiffrement « {filtre} » (`{filtre} init`, ou "
+                               "l'équivalent de l'outil) avant d'écrire du privé", filtre=filtre))
     demandes = cible / projet.chemins.demandes
     if not mise_a_jour and not (demandes.is_dir() and any(demandes.glob("D-*.md"))):
-        etapes.append("décrire le projet à l'agent : `python3 .socle/socle init --brief <document> --repo` "
-                      "(sans document : `--repo` seul ; un dépôt vide : sans option)")
-    message = f"Mettre à jour le socle {VERSION}" if mise_a_jour else f"Installer le socle {VERSION}"
-    etapes.append(f'commiter puis pousser : `git add -A && git commit -m "{message}" && git push`')
-    etapes.append("ouvrir l'agent dans le projet : il lit l'état au démarrage"
-                  + ("" if mise_a_jour else ", et te pose les questions de départ dans la conversation"))
+        etapes.append(trad("décrire le projet à l'agent : `python3 .socle/socle init --brief <document> "
+                           "--repo` (sans document : `--repo` seul ; un dépôt vide : sans option)"))
+    message = (trad("Mettre à jour le socle {version}", version=VERSION) if mise_a_jour
+               else trad("Installer le socle {version}", version=VERSION))
+    etapes.append(trad('commiter puis pousser : `git add -A && git commit -m "{message}" && git push`',
+                       message=message))
+    etapes.append(trad("ouvrir l'agent dans le projet : il lit l'état au démarrage") if mise_a_jour
+                  else trad("ouvrir l'agent dans le projet : il lit l'état au démarrage, et te pose les questions "
+                            "de départ dans la conversation"))
     if not mise_a_jour:
         from socle import state as etat
 
         page = etat.page_protection(projet)
-        etapes.append("après ce premier push, protéger la branche par défaut : un ensemble de règles qui y exige "
-                      f"la CI « {etat.nom_de_la_ci(projet)} » et la revue des propriétaires du code"
-                      + (f" ({page})" if page else " (réglages du dépôt)")
-                      + " ; sans lui, une CI rouge n'empêche pas de fusionner, et `socle state` le signale")
-    etapes.append("ensuite, tes gestes, chacun avec sa commande : `python3 .socle/socle help`")
+        etapes.append(trad("après ce premier push, protéger la branche par défaut : un ensemble de règles qui y "
+                           "exige la CI « {ci} » et la revue des propriétaires du code ({page}) ; sans lui, une CI "
+                           "rouge n'empêche pas de fusionner, et `socle state` le signale",
+                           ci=etat.nom_de_la_ci(projet), page=page or trad("réglages du dépôt")))
+    etapes.append(trad("ensuite, tes gestes, chacun avec sa commande : `python3 .socle/socle help`"))
     return etapes
