@@ -8,7 +8,9 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 B-0038 est fait, sur le feu vert de Théo (« Ok go ») : le moteur parle la
 langue de la mémoire du projet (ADR-0028, J-2026-10-14-M, J-2026-10-14-N).
 Un projet français ne voit rien changer. Ce qui reste en français dans un
-projet anglais, hors du moteur ou à la marge, est au backlog (B-0059).
+projet anglais, hors du moteur ou à la marge, est au backlog (B-0059). Les
+deux lots sont poussés sur `ccr-7128ec56-nnvoun`, et la CI de la branche
+passe sur leur dernier commit.
 
 ## Consignes en cours
 
@@ -24,9 +26,8 @@ projet anglais, hors du moteur ou à la marge, est au backlog (B-0059).
 
 ## Prochaines étapes
 
-1. Pousser le second lot de B-0038 et regarder la CI de la branche.
-2. Plus tard : B-0059 (les restes en français), B-0046 (la documentation à
-   refaire, que Théo reprendra plus tard, J-2026-10-13-U), B-0039 (des
-   dépôts jetables poussés sur GitHub : une demande d'abord), B-0040 (dotnet
-   absent d'ici) ; B-0042 attend sa propre demande. La pull request, quand
-   Théo la demandera.
+1. B-0059 (les restes en français), proposé à Théo comme sujet suivant.
+2. Plus tard : B-0046 (la documentation à refaire, que Théo reprendra plus
+   tard, J-2026-10-13-U), B-0039 (des dépôts jetables poussés sur GitHub :
+   une demande d'abord), B-0040 (dotnet absent d'ici) ; B-0042 attend sa
+   propre demande. La pull request, quand Théo la demandera.
