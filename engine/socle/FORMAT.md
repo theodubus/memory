@@ -353,7 +353,11 @@ langue n'a rien à réécrire, et ses entrées nouvelles prennent les mots de la
 nouvelle. Les trailers de commit ont leurs deux noms (`Dispense-test` ou
 `Waive-test`, `Dispense-doc` ou `Waive-doc`, `Corrige` ou `Fixes`), comme le
 marqueur d'une tautologie voulue (`socle: voulu —` ou `socle: intended —`).
-Les messages du moteur restent en français.
+Les messages du moteur suivent la même langue (ADR-0028), comme les
+commentaires qu'il écrit dans les fichiers qu'il pose (le verrou du moteur,
+l'en-tête d'une réponse `.answer.toml`) ; les valeurs qu'il relit lui-même
+(le statut d'une demande, le marqueur `<!-- valeur:… -->`) restent les
+mêmes dans toutes les langues.
 
 | Clé interne | Français | Anglais |
 | --- | --- | --- |

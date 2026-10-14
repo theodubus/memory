@@ -218,6 +218,58 @@ class ConstatsDansLesDeuxLangues(unittest.TestCase):
                           self.constats(controles_cliquet.configuration, Contexte({".claude/settings.json": "{}"}))[0])
 
 
+class ConstatsDeLaMemoireEtDeLAdaptateur(unittest.TestCase):
+    def tearDown(self):
+        messages.choisir(messages.FRANCAIS)
+
+    def constats(self, controle, ctx) -> list[str]:
+        r = Rapport()
+        controle(ctx, r)
+        return [c.message for c in r.constats]
+
+    def test_peremption(self):
+        from unittest import mock
+
+        from socle import checks_memory as controles_memoire
+
+        ctx = Contexte({})
+        ctx.fichiers = [ctx.projet.chemins.actif]
+        il_y_a_trente_jours = __import__("time").time() - 30 * 86400
+        with mock.patch.object(controles_memoire, "date_derniere_modif", return_value=il_y_a_trente_jours):
+            self.assertIn("chantier actif inchangé depuis 30 jours (seuil : 7)",
+                          self.constats(controles_memoire.peremption, ctx)[0])
+            with messages.dans("en"):
+                self.assertIn("active work unchanged for 30 days (threshold: 7)",
+                              self.constats(controles_memoire.peremption, ctx)[0])
+
+    def test_retard(self):
+        from socle import checks_memory as controles_memoire
+
+        ctx = Contexte({})
+        ctx.changes = ["engine/socle/archive.py"]
+        self.assertIn("1 fichier(s) de code changé(s) depuis la base et aucun de `memory/`",
+                      self.constats(controles_memoire.retard, ctx)[0])
+        with messages.dans("en"):
+            self.assertIn("1 code file(s) changed since the base and none of `memory/`",
+                          self.constats(controles_memoire.retard, ctx)[0])
+        ctx.changes.append("memory/active.md")
+        self.assertEqual(self.constats(controles_memoire.retard, ctx), [])
+
+    def test_capacites(self):
+        from types import SimpleNamespace
+
+        from socle import checks_tests as controles_tests
+
+        ctx = SimpleNamespace(projet=SimpleNamespace(adaptateur={}, chemins=config.Projet.charger(RACINE).chemins))
+        self.assertEqual(self.constats(controles_tests.capacites, ctx), ["aucun adaptateur (`.socle/adapter.toml`)"])
+        with messages.dans("en"):
+            self.assertEqual(self.constats(controles_tests.capacites, ctx), ["no adapter (`.socle/adapter.toml`)"])
+        ctx.projet.adaptateur = {"capabilities": {}, "tests": {"function": "x"}}
+        with messages.dans("en"):
+            self.assertIn("capability “format” not declared: a command, or `absent` + `replacement`",
+                          self.constats(controles_tests.capacites, ctx))
+
+
 class LigneDEchec(unittest.TestCase):
     def test_en_echec_dans_lit_les_deux_langues(self):
         self.assertEqual(en_echec_dans("x\nECHEC — 2 contrôle(s) : a.b, c\n"), ["a.b", "c"])
@@ -250,7 +302,8 @@ class Catalogue(unittest.TestCase):
 
     def test_le_catalogue_n_a_pas_d_entree_que_rien_n_emploie(self):
         employes = {n.args[0].value for _, _, n in enveloppes() if n.args and isinstance(n.args[0], ast.Constant)}
-        self.assertEqual(sorted(set(MESSAGES) - employes - resumes_des_controles()), [])
+        employes |= resumes_des_controles()  # traduits à l'affichage de `socle checks`
+        self.assertEqual(sorted(set(MESSAGES) - employes), [])
 
     def test_aucun_message_en_dur_la_ou_le_moteur_en_emet(self):
         fautes = []
