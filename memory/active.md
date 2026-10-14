@@ -11,6 +11,9 @@ la demande de B-0039 en parallèle ; puis B-0048 avec B-0018 ; puis B-0059.
 D-0027 est répondue `publier` (J-2026-10-14-V) : l'essai de la CI des
 adaptateurs part dans `theodubus/tests`, public, moteur compris, depuis une
 session à part qui ajoute ce dépôt ; celle-ci reste sur `memory` seul.
+Session d'essai lancée le 14 oct. à 22 h 25 (heure de Paris) :
+`session_01L5X5DzSiY59tjT4e5kfzCs` ; elle mesure et rapporte par message,
+sans rien corriger ni pousser vers `memory`.
 
 D-0026 est répondue `rien` : le refus reste, son message est plus clair ;
 B-0048 et B-0018 restent ouverts, « on se le garde en tete et on voit si
