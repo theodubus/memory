@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0061 — La mise à jour d'un projet au format 2 dont le backlog est vide échoue
 
-> statut : ouvert · origine : J-2026-10-14-W · lu : backlog@c716992e
+> statut : fait · origine : J-2026-10-14-W · lu : backlog@c716992e · ref : J-2026-10-15-A
 
 Mesuré le 14 oct., en écrivant les tests de B-0059 : un projet installé au
 format 2 (backlog en un fichier), dont le backlog n'a aucun sujet, refuse sa

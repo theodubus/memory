@@ -17,9 +17,10 @@ permissions du mode automatique lui a refusé l'ajout de `theodubus/tests`,
 puis ses commandes ; rien n'est poussé. La suite dépend de Théo.
 
 B-0059 est fait (J-2026-10-14-W, J-2026-10-14-X, ADR-0029) : un projet
-anglais ne lit plus de français dans ce que le socle pose ou affiche. Un
-bug voisin attend au backlog : B-0061 (la mise à jour d'un projet au
-format 2 dont le backlog est vide échoue).
+anglais ne lit plus de français dans ce que le socle pose ou affiche. Le bug
+voisin trouvé en chemin, B-0061 (la mise à jour d'un projet au format 2
+dont le backlog est vide échouait), est corrigé sur la validation de Théo
+(J-2026-10-15-A).
 
 D-0026 est répondue `rien` : le refus reste, son message est plus clair ;
 B-0048 et B-0018 restent ouverts, « on se le garde en tete et on voit si
@@ -49,7 +50,6 @@ B-0048 et B-0018 restent ouverts, « on se le garde en tete et on voit si
 1. L'essai de la CI des adaptateurs : la session à part pousse les cinq
    projets jetables et rapporte leur CI ; corriger ici les étapes
    fausses, puis clore B-0039 et dire à Théo qu'il peut supprimer le dépôt.
-2. L'ordre validé est épuisé : proposer la suite à Théo (B-0061, qui
-   casse une mise à jour, en tête).
+2. L'ordre validé est épuisé : proposer la suite à Théo.
 3. Plus tard : B-0046 (que Théo reprendra), B-0040 (dotnet absent d'ici) ;
    B-0042 attend sa propre demande.

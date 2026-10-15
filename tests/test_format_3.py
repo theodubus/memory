@@ -132,6 +132,29 @@ class TestInstallation(unittest.TestCase):
                          "<!-- socle: couche=backlog zone=publique -->\n# B-0001 — Un sujet\n\n"
                          "> statut : ouvert · origine : fichier:calc.py\n")
 
+    def test_la_mise_a_jour_d_un_backlog_vide(self):
+        # B-0061 : sans sujet, le dossier n'était pas créé, et l'ajout du
+        # dossier à l'index faisait échouer la mise à jour.
+        racine = Path(tempfile.mkdtemp(prefix="socle-format-2-vide-"))
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        git(racine, "init", "-q", "-b", "main")
+        (racine / "calc.py").write_text("def double(x):\n    return 2 * x\n")
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(racine, "python", "@essai", source=MOTEUR, format_memoire=2)
+        git(racine, "add", "-A")
+        git(racine, "commit", "-qm", "base", "--no-verify")
+        sortie = io.StringIO()
+        with contextlib.redirect_stdout(sortie), contextlib.redirect_stderr(sortie):
+            # 1 : l'audit attend l'approbation des fichiers protégés mis à
+            # jour, comme toute mise à jour ; 2 serait un refus.
+            self.assertEqual(installeur.installer(racine, "python", "@essai", source=MOTEUR), 1, sortie.getvalue())
+        self.assertNotIn("refus :", sortie.getvalue())
+        self.assertIn("memory/backlog.md → memory/backlog/ : 0 sujet(s)", sortie.getvalue())
+        config.oublier_formats()
+        self.assertEqual(config.chemins(racine).format, 3)
+        self.assertFalse((racine / "memory/backlog.md").exists())
+        self.assertIn("memory/backlog/.gitkeep", git(racine, "ls-files", "memory/backlog").split())
+
     def test_un_sujet_de_plus_au_format_2(self):
         racine = Path(tempfile.mkdtemp(prefix="socle-format-2-"))
         self.addCleanup(shutil.rmtree, racine, ignore_errors=True)

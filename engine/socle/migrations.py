@@ -167,6 +167,10 @@ def _vers_format_3(cible: Path) -> list[str]:
             lignes = [(l[1:] if not code and TITRE.match(l) else l) for _, l, code in memoire.lignes_hors_code(e.texte)]
             nom = f"{e.id}-{memoire.nom_de_fichier(e.titre)}.md"
             outils.ecrire(cible / dossier / nom, entete + "\n" + "\n".join(lignes).rstrip("\n") + "\n")
+        if not sujets:
+            # Un backlog vide reste un dossier, comme à l'installation : git
+            # ne suit pas un dossier vide (B-0061).
+            outils.ecrire(cible / dossier / ".gitkeep", "")
         if unique in suivis:
             outils.git(cible, "rm", "-q", unique)
             outils.git(cible, "add", "--", dossier)
