@@ -431,6 +431,14 @@ def _installer(cible: Path, adaptateur: str, proprietaire: str, adoption: bool, 
             print(trad("refus : {refus}", refus=e), file=sys.stderr)
             return 2
         config.oublier_formats()
+        # Les sujets clos quittent les ouverts (ADR-0030) : une fois, à la
+        # mise à jour, puis par `socle archive`.
+        from socle import archive as archivage, memory as memoire
+
+        ranges = archivage.ranger_backlog(cible)
+        if ranges:
+            journal.append(trad("backlog : {n} sujet(s) clos rangé(s) dans `{dossier}/`", n=len(ranges),
+                                dossier=memoire.DOSSIER_CLOS))
 
     # 1. Le moteur, remplacé en bloc, et son verrou.
     dossier_moteur, poses = _poser_moteur(cible, mode, source, ch)

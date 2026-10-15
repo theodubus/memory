@@ -847,8 +847,8 @@ MESSAGES: dict[str, str] = {
         "the git hook).",
     "Chaque couche et le fichier d'instructions ont un plafond de taille.":
         "Each layer and the instructions file have a size cap.",
-    "Chaque sujet a une origine ; un sujet clos a une référence.":
-        "Each topic has an origin; a closed topic has a reference.",
+    "Chaque sujet a une origine ; un sujet clos a une référence, et il est rangé avec les clos.":
+        "Each topic has an origin; a closed topic has a reference, and it is filed with the closed ones.",
     "Du code a changé et la mémoire non : la fin de tour attend sa mise à jour.":
         "Code changed and the memory did not: the end of turn waits for its update.",
     "Durcir un garde-fou est libre ; l'assouplir exige une demande validée qui cite la clé (politique, point 1).":
@@ -1422,8 +1422,9 @@ MESSAGES: dict[str, str] = {
         "runs the adapter's mutation sweep, then its verdict",
     "donne le prochain identifiant libre à une entrée qu'une autre branche a prise aussi":
         "gives the next free identifier to an entry another branch also took",
-    "archive les sujets clos du backlog dans le journal":
-        "archives the closed backlog topics into the journal",
+    "range les sujets clos du backlog à l'écart des ouverts (au format 2 : les archive dans le journal)":
+        "files the closed topics of the backlog apart from the open ones (in format 2: archives them in the "
+        "journal)",
     "liste des contrôles":
         "list of the checks",
     "socle {version} — mémoire, documentation et tests fiables\n":
@@ -1600,8 +1601,6 @@ MESSAGES: dict[str, str] = {
         "# It is about the exact text of {demande}, whose fingerprint follows.\n",
     "la version poussée diffère de la version locale":
         "the pushed version differs from the local version",
-    "format 3 : un sujet clos reste dans son fichier, rien ne s'archive (ADR-0025)":
-        "format 3: a closed topic stays in its file, nothing is archived (ADR-0025)",
     "pas de backlog":
         "no backlog",
     "aucun sujet clos à archiver":
@@ -2128,4 +2127,22 @@ MESSAGES: dict[str, str] = {
         "the agent locks the private memory: only its setup is reserved to the human",
     "une écriture ordinaire passe le hook de l'agent":
         "an ordinary write passes the agent's hook",
+    "`{id}` est clos (« {statut} ») mais reste parmi les sujets ouverts : `python3 .socle/socle archive` le range "
+    "dans `{dossier}/`":
+        "`{id}` is closed (“{statut}”) but stays among the open topics: `python3 .socle/socle archive` files it in "
+        "`{dossier}/`",
+    "`{id}` est rangé parmi les sujets clos alors qu'il est « {statut} » : `python3 .socle/socle archive` le remet "
+    "parmi les ouverts":
+        "`{id}` is filed among the closed topics while it is “{statut}”: `python3 .socle/socle archive` puts it back "
+        "among the open ones",
+    "{n} sujet(s) rangé(s) : les clos dans `{dossier}/`, les ouverts hors de lui":
+        "{n} topic(s) filed: the closed ones in `{dossier}/`, the open ones outside it",
+    "le backlog est déjà rangé":
+        "the backlog is already in order",
+    "backlog : {n} sujet(s) clos rangé(s) dans `{dossier}/`":
+        "backlog: {n} closed topic(s) filed in `{dossier}/`",
+    "sujet clos, avec sa référence, laissé parmi les ouverts":
+        "closed topic, with its reference, left among the open ones",
+    "un sujet clos, rangé avec les clos par `socle archive`, passe la CI":
+        "a closed topic, filed with the closed ones by `socle archive`, passes the CI",
 }

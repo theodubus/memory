@@ -166,7 +166,9 @@ def _vers_format_3(cible: Path) -> list[str]:
         for e in sujets:
             lignes = [(l[1:] if not code and TITRE.match(l) else l) for _, l, code in memoire.lignes_hors_code(e.texte)]
             nom = f"{e.id}-{memoire.nom_de_fichier(e.titre)}.md"
-            outils.ecrire(cible / dossier / nom, entete + "\n" + "\n".join(lignes).rstrip("\n") + "\n")
+            # Un sujet clos va d'emblée avec les clos (ADR-0030).
+            lieu = f"{dossier}/{memoire.DOSSIER_CLOS}" if e.statut in memoire.BACKLOG_CLOS else dossier
+            outils.ecrire(cible / lieu / nom, entete + "\n" + "\n".join(lignes).rstrip("\n") + "\n")
         if not sujets:
             # Un backlog vide reste un dossier, comme à l'installation : git
             # ne suit pas un dossier vide (B-0061).

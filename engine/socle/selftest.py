@@ -495,8 +495,12 @@ def ajouter_sujet(c: Path, bloc: str):
         ajouter(c, ch.backlog, bloc)
         return
     m = re.match(r"\s*## (B-\d{4}) — (.+)", bloc)
-    outils.ecrire(c / ch.backlog / f"{m[1]}-{memoire.nom_de_fichier(m[2])}.md",
-                  "<!-- socle: couche=backlog zone=publique -->\n" + bloc.strip("\n").replace("## ", "# ", 1) + "\n")
+    texte = "<!-- socle: couche=backlog zone=publique -->\n" + bloc.strip("\n").replace("## ", "# ", 1) + "\n"
+    rel = f"{ch.backlog}/{m[1]}-{memoire.nom_de_fichier(m[2])}.md"
+    # Un sujet clos va d'emblée avec les clos (ADR-0030).
+    if any(e.statut in memoire.BACKLOG_CLOS for e in memoire.analyser(rel, texte).entrees):
+        rel = f"{ch.backlog}/{memoire.DOSSIER_CLOS}/{rel.rsplit('/', 1)[-1]}"
+    outils.ecrire(c / rel, texte)
 
 
 def _sujet(c: Path, ident: str) -> str:
@@ -504,6 +508,13 @@ def _sujet(c: Path, ident: str) -> str:
     from socle import memory as memoire
 
     return memoire.Memoire.charger(c).entree(ident).fichier
+
+
+def _clore(c: Path, ident: str):
+    """Clôt un sujet du backlog, avec sa référence, sans le déplacer."""
+    p = c / _sujet(c, ident)
+    p.write_text(re.sub(r"(?m)^> statut : ouvert( · [^\n]*)?$",
+                        lambda m: "> statut : fait" + (m[1] or "") + " · ref : fichier:calc.py", p.read_text(), count=1))
 
 
 def maj_memoire(c: Path, texte: str = "Travail en cours sur l'essai."):
@@ -932,6 +943,12 @@ def _cas() -> list[Cas]:
     @defaut("backlog-clos-sans-ref", "entrée de backlog close sans référence", "git", "memoire.backlog")
     def _(a, c):
         remplacer(c, _sujet(c, "B-0001"), "> statut : ouvert", "> statut : fait")
+        return etage_git(a, c)
+
+    @defaut("clos-parmi-les-ouverts", "sujet clos, avec sa référence, laissé parmi les ouverts", "git",
+            "memoire.backlog")
+    def _(a, c):
+        _clore(c, "B-0001")
         return etage_git(a, c)
 
     # Au-delà du tableau du cadrage.
@@ -1651,6 +1668,14 @@ def _temoins() -> list[tuple[str, Callable]]:
         a.commit(c, "renuméroté")
         r = a.socle(c, "check", "--stage", "ci", "--base", point)
         return "" if r.returncode == 0 else r.stdout + r.stderr
+
+    @temoin("un sujet clos, rangé avec les clos par `socle archive`, passe la CI")
+    def _(a, c):
+        _clore(c, "B-0001")
+        r = a.socle(c, "archive")
+        if r.returncode != 0 or not list((c / "memory/backlog/closed").glob("B-0001-*.md")):
+            return r.stdout + r.stderr or "B-0001 n'est pas rangé"
+        return etage_ci(a, c, "B-0001 clos et rangé")
 
     @temoin("une décision qui prouve ses lectures passe le commit")
     def _(a, c):

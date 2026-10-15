@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0029-changer-deux-tests-du-format-3-que-contredit-le-ra.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-10-15"
+canal = "conversation"
+citation = "D0029 validé"
+empreinte = "sha256:f8c04ddcdbecf5227020f8f28fb63dc78b833500d72bd5f8ba0bc3a78ad10b24"

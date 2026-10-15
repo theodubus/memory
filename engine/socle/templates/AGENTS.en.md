@@ -37,7 +37,7 @@ always keep it, and a new session only has the memory.
 | Active | `memory/active.md` | work in progress, next steps; rewritten, kept short |
 | Decisions | `memory/decisions/` | one ADR per file; only its status changes afterwards |
 | Journal | `memory/journal/` | one dated entry per event; append only |
-| Backlog | `@@BACKLOG@@` | topics with status and origin; closed with a reference |
+| Backlog | `@@BACKLOG@@` | topics with status and origin; closed with a reference, then filed by `socle archive` |
 | Requests | `memory/requests/` | human decisions in a queue, under the contract below |
 
 An entry: `## F-NNNN — title`, then a line `> status : measured · proof : commit:<sha>`.

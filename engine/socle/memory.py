@@ -59,6 +59,9 @@ STATUTS = {
     "ADR": {"proposee", "acceptee", "remplacee", "rejetee", "abandonnee"},
 }
 BACKLOG_CLOS = {"fait", "abandonne"}
+# Le sous-dossier du backlog en dossier où `socle archive` range les sujets
+# clos, à l'écart des ouverts (ADR-0030, D-0028).
+DOSSIER_CLOS = "closed"
 
 # Une entrée publique basculée dans la mémoire privée (B-0029) : elle garde
 # son identifiant, pour que les renvois restent valides, et perd son titre et
@@ -338,9 +341,26 @@ def couche_attendue(chemin: str) -> str | None:
     # fichier unique, sans son extension.
     for couche, lieu in (("backlog", f.backlog.removesuffix(".md")), ("decisions", f.decisions),
                          ("journal", f.journal), ("demandes", f.demandes)):
-        if chemin.startswith(lieu + "/") and "/" not in chemin[len(lieu) + 1:]:
+        reste = chemin[len(lieu) + 1:] if chemin.startswith(lieu + "/") else None
+        if couche == "backlog" and reste and reste.startswith(DOSSIER_CLOS + "/"):
+            reste = reste[len(DOSSIER_CLOS) + 1:]
+        if reste is not None and "/" not in reste:
             return couche
     return "inconnue"
+
+
+def parmi_les_clos(chemin: str) -> bool:
+    """Le fichier d'un sujet rangé avec les sujets clos (ADR-0030)."""
+    return couche_attendue(chemin) == "backlog" and chemin.rsplit("/", 2)[-2:-1] == [DOSSIER_CLOS]
+
+
+def hors_des_clos(chemin: str) -> str:
+    """Le chemin d'un sujet comme s'il était parmi les ouverts : ce que
+    ses plafonds visent, où qu'il soit rangé."""
+    if not parmi_les_clos(chemin):
+        return chemin
+    dossier, nom = chemin.rsplit("/", 1)
+    return dossier.removesuffix("/" + DOSSIER_CLOS) + "/" + nom
 
 
 def analyser(chemin: str, texte: str) -> FichierMemoire:

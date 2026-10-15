@@ -98,7 +98,7 @@ toujours, et une session neuve n'a que la mémoire.
 | Actif | `memory/active.md` | chantier en cours, prochaines étapes ; réécrit, borné |
 | Décisions | `memory/decisions/` | une ADR par fichier ; seul son statut change ensuite |
 | Journal | `memory/journal/` | une entrée datée par événement ; ajout seul |
-| Backlog | `memory/backlog/` | sujets avec statut et origine ; clos avec une référence |
+| Backlog | `memory/backlog/` | sujets avec statut et origine ; clos avec une référence, puis rangés par `socle archive` |
 | Demandes | `memory/requests/` | décisions humaines en file, au contrat ci-dessous |
 
 Une entrée : `## F-NNNN — titre`, puis une ligne `> statut : mesuré · preuve : commit:<sha>`.

@@ -818,7 +818,7 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
     s.add_argument("id")
     s.set_defaults(f=cmd_renumber)
 
-    s = sp.add_parser("archive", help=trad("archive les sujets clos du backlog dans le journal"))
+    s = sp.add_parser("archive", help=trad("range les sujets clos du backlog à l'écart des ouverts (au format 2 : les archive dans le journal)"))
     s.set_defaults(f=cmd_archive)
 
     s = sp.add_parser("checks", help=trad("liste des contrôles"))

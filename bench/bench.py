@@ -41,7 +41,7 @@ MOTEUR = RACINE / "engine"
 DONNEES = Path(__file__).resolve().parent / "data"
 sys.path.insert(0, str(MOTEUR))
 
-from socle import selftest as autotest, config, requests as demandes, memory as memoire  # noqa: E402
+from socle import archive as archivage, selftest as autotest, config, requests as demandes, memory as memoire  # noqa: E402
 
 GIT = {"GIT_AUTHOR_NAME": "banc", "GIT_AUTHOR_EMAIL": "banc@socle", "GIT_COMMITTER_NAME": "banc",
        "GIT_COMMITTER_EMAIL": "banc@socle", "GIT_CONFIG_NOSYSTEM": "1"}
@@ -870,6 +870,7 @@ def _projet_chantier(dossier: Path, nom: str, fonctions: tuple[str, ...] = ("qua
     origine = premier.meta.get("origine", "")
     b.write_text(b.read_text().replace(f"> statut : ouvert · origine : {origine}",
                                        f"> statut : fait · origine : {origine} · ref : fichier:calc.py", 1))
+    archivage.ranger_backlog(p)  # le sujet clos rejoint les clos (ADR-0030)
     for n, titre, statut in [(2 + i, f"Ajouter `{f}`", "ouvert") for i, f in enumerate(fonctions)] \
             + [(2 + len(fonctions), "Rendre FACTEUR configurable", "bloqué")]:
         autotest.ajouter_sujet(p, f"\n## B-{n:04d} — {titre}\n\n> statut : {statut} · origine : fichier:memory/actif.md\n")

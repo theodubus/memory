@@ -575,16 +575,26 @@ def collisions(ctx, r):
 
 @controle("memoire.backlog")
 def backlog(ctx, r):
-    """Chaque sujet a une origine ; un sujet clos a une référence."""
+    """Chaque sujet a une origine ; un sujet clos a une référence, et il est rangé avec les clos."""
+    en_dossier = ctx.projet.chemins.backlog_en_dossier
     for e in ctx.memoire.entrees("B"):
         if e.basculee:
             continue
         if not e.refs("origine"):
             r.erreur("memoire.backlog", trad("`{id}` sans `origine` (entrée de journal, commit ou demande)",
                                              id=e.id), e.fichier, e.ligne)
-        if e.statut in memoire.BACKLOG_CLOS and not e.refs("ref"):
+        clos = e.statut in memoire.BACKLOG_CLOS
+        if clos and not e.refs("ref"):
             r.erreur("memoire.backlog", trad("`{id}` est clos (« {statut} ») sans `ref` vers ce qui l'a clos",
                                              id=e.id, statut=e.statut), e.fichier, e.ligne)
+        # Au format 3, un sujet clos quitte les ouverts (ADR-0030).
+        if en_dossier and memoire.couche_attendue(e.fichier) == "backlog" and clos != memoire.parmi_les_clos(e.fichier):
+            r.erreur("memoire.backlog", trad("`{id}` est clos (« {statut} ») mais reste parmi les sujets ouverts : "
+                                             "`python3 .socle/socle archive` le range dans `{dossier}/`",
+                                             id=e.id, statut=e.statut, dossier=memoire.DOSSIER_CLOS) if clos else
+                     trad("`{id}` est rangé parmi les sujets clos alors qu'il est « {statut} » : `python3 "
+                          ".socle/socle archive` le remet parmi les ouverts", id=e.id, statut=e.statut),
+                     e.fichier, e.ligne)
 
 
 # --------------------------------------------------------------------------
@@ -601,6 +611,9 @@ def budgets(ctx, r):
     # mêmes contrôles (cadrage, règles de classement, point 5).
     ch = ctx.projet.chemins
     miroirs = {c: ch.memoire + "/" + memoire.hors_zone_privee(c) for c in ctx.fichiers if est_prive(c)}
+    # Un sujet rangé avec les clos garde le plafond d'un sujet (ADR-0030).
+    miroirs = {c: memoire.hors_des_clos(miroirs.get(c, c)) for c in ctx.fichiers
+               if c in miroirs or memoire.parmi_les_clos(c)}
     for motif, b in budgets.items():
         vises = set(outils.filtrer(ctx.fichiers, [motif])) | {c for c, m in miroirs.items() if outils.correspond(m, [motif])}
         for chemin in sorted(vises):

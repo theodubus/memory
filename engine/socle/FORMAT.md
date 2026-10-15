@@ -169,12 +169,17 @@ Son corps, libre, avec ses sous-titres (`## Les commandes`…).
 ```
 
 Chaque sujet a son plafond (`"memory/backlog/*.md"` dans `[budgets]`). Un
-sujet clos reste dans son fichier : rien ne s'archive. La migration depuis
-le format 2 remonte chaque sujet d'un niveau de titre, sous-titres compris,
-et un lien écrit vers l'ancre d'un sujet dans `backlog.md` reste valide
-tant que le sujet existe. Une bascule en privé copie le fichier sous
-`private/backlog/`, et un fichier public garde l'identifiant, comme pour
-une décision.
+sujet clos garde son fichier, rangé à l'écart des ouverts dans le
+sous-dossier `closed` du backlog (ADR-0030) : `socle archive` y range
+chaque sujet clos, et remet parmi les ouverts un sujet rouvert ; le
+contrôle du backlog refuse un sujet mal rangé, et la mise à jour range un
+projet existant. Un sujet rangé garde son identifiant et le plafond d'un
+sujet. La migration depuis le format 2 remonte chaque sujet d'un niveau de
+titre, sous-titres compris, range les clos, et un lien écrit vers l'ancre
+d'un sujet dans `backlog.md` reste valide tant que le sujet existe. Une
+bascule en privé copie le fichier sous `private/backlog/` (ou son
+sous-dossier des clos), et un fichier public garde l'identifiant, comme
+pour une décision.
 
 Au format 2, le backlog est un seul fichier, `backlog.md`, et `socle archive`
 déplace les entrées closes dans une entrée de journal datée, en sous-titres :
