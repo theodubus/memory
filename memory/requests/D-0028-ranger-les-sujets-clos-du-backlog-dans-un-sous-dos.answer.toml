@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0028-ranger-les-sujets-clos-du-backlog-dans-un-sous-dos.md, dont l'empreinte suit.
+reponse = "sous-dossier"
+texte = ""
+par = "Théo"
+date = "2026-10-15"
+canal = "conversation"
+citation = "D0028 sous dossier"
+empreinte = "sha256:17901482df4965d8dc72e3853693b12c20391b11f7800c48ebb5d9d98dcc91b0"

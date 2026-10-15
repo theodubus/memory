@@ -17,8 +17,10 @@ poussé les cinq projets (une branche par langage) : le workflow « Socle »
 passe 5 sur 5 (F-0019, J-2026-10-15-C). Le balayage de mutation n'a pas
 tourné : GitHub n'a pas enregistré son workflow ; à lancer à la main.
 
-D-0028 attend Théo : ranger les sujets clos du backlog dans un sous-dossier
-`closed/` (sa question, J-2026-10-15-B).
+D-0028 répondue `sous-dossier` (J-2026-10-15-D) : le rangement est écrit
+dans l'arbre, non commité ; D-0029 demande de valider les deux tests qui
+affirmaient l'ancienne règle. Sur sa réponse : commiter, ranger le backlog
+de ce dépôt (`socle archive`), vérifier tout, pousser.
 
 B-0059 est fait (J-2026-10-14-W, J-2026-10-14-X, ADR-0029) : un projet
 anglais ne lit plus de français dans ce que le socle pose ou affiche. Le bug
@@ -51,9 +53,10 @@ B-0048 et B-0018 restent ouverts, « on se le garde en tete et on voit si
 
 ## Prochaines étapes
 
-1. L'essai de la CI des adaptateurs : la session à part pousse les cinq
-   projets jetables et rapporte leur CI ; corriger ici les étapes
-   fausses, puis clore B-0039 et dire à Théo qu'il peut supprimer le dépôt.
-2. L'ordre validé est épuisé : proposer la suite à Théo.
-3. Plus tard : B-0046 (que Théo reprendra), B-0040 (dotnet absent d'ici) ;
+1. D-0029 : sur la réponse de Théo, commiter le rangement des sujets clos.
+2. L'essai de la CI des adaptateurs : le workflow « Socle » passe 5 sur 5 ;
+   le balayage de mutation n'est pas enregistré par GitHub (B-0063) ;
+   décider avec Théo de la suite, puis lui dire de supprimer le dépôt.
+3. L'ordre validé est épuisé : proposer la suite à Théo.
+4. Plus tard : B-0046 (que Théo reprendra), B-0040 (dotnet absent d'ici) ;
    B-0042 attend sa propre demande.
