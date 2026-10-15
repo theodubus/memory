@@ -12,9 +12,12 @@ D-0027 est répondue `publier` (J-2026-10-14-V) : l'essai de la CI des
 adaptateurs part dans `theodubus/tests`, public, moteur compris, depuis une
 session à part qui ajoute ce dépôt ; celle-ci reste sur `memory` seul.
 Session d'essai lancée le 14 oct. à 22 h 25 (heure de Paris) :
-`session_01L5X5DzSiY59tjT4e5kfzCs`. Elle est bloquée : le contrôle de
-permissions du mode automatique lui a refusé l'ajout de `theodubus/tests`,
-puis ses commandes ; rien n'est poussé. La suite dépend de Théo.
+`session_01L5X5DzSiY59tjT4e5kfzCs`. Débloquée par Théo le 15 oct., elle a
+poussé les cinq projets (une branche par langage) ; leurs CI tournent, et
+elle rapporte par message (J-2026-10-15-B).
+
+D-0028 attend Théo : ranger les sujets clos du backlog dans un sous-dossier
+`closed/` (sa question, J-2026-10-15-B).
 
 B-0059 est fait (J-2026-10-14-W, J-2026-10-14-X, ADR-0029) : un projet
 anglais ne lit plus de français dans ce que le socle pose ou affiche. Le bug
