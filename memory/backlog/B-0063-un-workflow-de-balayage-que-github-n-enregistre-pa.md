@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0063 — Un workflow de balayage que GitHub n'enregistre pas reste un simple avertissement
 
-> statut : ouvert · origine : J-2026-10-15-D · lu : backlog@acfaabc5
+> statut : en-cours · origine : J-2026-10-15-D · lu : backlog@acfaabc5
 
 Constaté le 15 oct. dans le dépôt d'essai : GitHub n'a pas enregistré le
 workflow du balayage de mutation (`socle-mutation.yml`), pourtant présent

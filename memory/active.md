@@ -55,6 +55,10 @@ B-0048 et B-0018 restent ouverts, « on se le garde en tete et on voit si
 1. L'essai de la CI des adaptateurs : le workflow « Socle » passe 5 sur 5 ;
    le balayage de mutation n'est pas enregistré par GitHub (B-0063) ;
    décider avec Théo de la suite, puis lui dire de supprimer le dépôt.
-2. L'ordre validé est épuisé : proposer la suite à Théo (B-0063 en tête).
+2. B-0063, validé par Théo (J-2026-10-15-F) : la session d'essai fait un
+   commit anodin sur la branche par défaut du dépôt d'essai et relit la
+   liste des workflows ; le balayage enregistré, elle le lance sur les
+   cinq branches (le reste de B-0039) ; ici, `mutation.vivante` distingue
+   « pas encore fusionné » de « présent mais inconnu de GitHub ».
 3. Plus tard : B-0046 (que Théo reprendra), B-0040 (dotnet absent d'ici) ;
    B-0042 attend sa propre demande.
