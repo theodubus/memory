@@ -13,3 +13,6 @@ existent, puis faire de même pour les actions des adaptateurs
 (`setup-node`, `setup-go`, `setup-java`, `setup-ruby`, `setup-php`) ; la CI
 de ce dépôt (`.github/workflows/socle.yml`) est protégée et revient à
 l'humain.
+
+Le 15 oct., les journaux du balayage sur GitHub ajoutent `setup-node@v4`,
+`setup-go@v5` et `setup-java@v4` à la liste (J-2026-10-15-K).

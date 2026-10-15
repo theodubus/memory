@@ -79,6 +79,13 @@ class TestVivacite(unittest.TestCase):
         self.assertEqual(niveau, "erreur")
         self.assertIn("Pousser un commit sur la branche par défaut", message)
 
+    def test_le_remede_dit_de_modifier_le_fichier_du_workflow(self):
+        # B-0063, mesuré le 15 oct. : GitHub n'a enregistré le balayage qu'au
+        # push qui modifiait son fichier, ni au premier push, ni au suivant.
+        _, message = mutation.inconnu_de_github("socle-mutation.yml", il_y_a(10), MAINTENANT)
+        self.assertIn("qui modifie ce fichier (une ligne de commentaire suffit", message)
+        self.assertIn("qu'au push qui modifie son fichier", message)
+
     def test_un_workflow_ancien_sans_aucun_balayage(self):
         niveau, message = mutation.vivacite("active", None, il_y_a(40), MAINTENANT)
         self.assertEqual(niveau, "erreur")

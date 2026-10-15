@@ -2145,10 +2145,12 @@ MESSAGES: dict[str, str] = {
         "closed topic, with its reference, left among the open ones",
     "un sujet clos, rangé avec les clos par `socle archive`, passe la CI":
         "a closed topic, filed with the closed ones by `socle archive`, passes the CI",
-    "Pousser un commit sur la branche par défaut, pour que GitHub en relise les workflows, puis vérifier dans "
-    "l'onglet Actions qu'il y apparaît":
-        "Push a commit to the default branch, so that GitHub reads its workflows again, then check in the Actions "
-        "tab that it appears",
+    "Pousser un commit sur la branche par défaut qui modifie ce fichier (une ligne de commentaire suffit ; c'est "
+    "un fichier protégé, que l'humain approuve) : GitHub n'enregistre un workflow qu'au push qui modifie son "
+    "fichier, pas toujours au premier push qui le pose. Puis vérifier dans l'onglet Actions qu'il y apparaît":
+        "Push a commit to the default branch that changes this file (a comment line is enough; it is a protected "
+        "file, which the human approves): GitHub only registers a workflow at a push that changes its file, not "
+        "always at the first push that adds it. Then check in the Actions tab that it appears",
     "`{nom}` est sur la branche par défaut depuis le {date}, mais GitHub ne le connaît pas : son cron ne part "
     "jamais, et plus rien ne mesure le cliquet. {remede}":
         "`{nom}` has been on the default branch since {date}, but GitHub does not know it: its cron never starts, "

@@ -426,8 +426,9 @@ def vivacite(etat: str | None, derniere: str | None, cree: str | None,
 # le délai qu'on lui laisse pour l'enregistrer, en jours (B-0063).
 DELAI_ENREGISTREMENT = 2
 REMEDE_ENREGISTREMENT = a_traduire(
-    "Pousser un commit sur la branche par défaut, pour que GitHub en relise les workflows, puis vérifier dans "
-    "l'onglet Actions qu'il y apparaît")
+    "Pousser un commit sur la branche par défaut qui modifie ce fichier (une ligne de commentaire suffit ; c'est "
+    "un fichier protégé, que l'humain approuve) : GitHub n'enregistre un workflow qu'au push qui modifie son "
+    "fichier, pas toujours au premier push qui le pose. Puis vérifier dans l'onglet Actions qu'il y apparaît")
 
 
 def arrivee_sur_la_branche_par_defaut(racine: Path, flux: str) -> str | None:

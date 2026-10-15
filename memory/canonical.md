@@ -182,3 +182,24 @@ de chacun des cinq langages : 5 sur 5, en une minute à une minute et demie,
 auto-test compris. Mesuré le 15 oct. dans le dépôt d'essai public de Théo.
 Le workflow du balayage de mutation, lui, n'a pas encore tourné sur GitHub
 (B-0039).
+
+## F-0020 — Le balayage de mutation que pose le socle passe sur GitHub dans un projet de chacun des cinq adaptateurs récents
+
+> statut : mesuré · preuve : J-2026-10-15-K
+
+Le workflow « Socle — mutation » que pose l'installeur, lancé à la main dans
+le projet jetable du banc de chacun des cinq langages, passe sur GitHub :
+5 sur 5, avec l'outil de mutation de chaque adaptateur (Stryker, gremlins,
+PIT, mutant, Infection avec pcov) et les comptes de survivants du banc
+local. Mesuré le 15 oct. dans le dépôt d'essai de Théo.
+
+## F-0021 — GitHub n'enregistre un workflow sans déclencheur push qu'au push qui modifie son fichier
+
+> statut : mesuré · preuve : J-2026-10-15-K, J-2026-10-15-I
+
+Dans le dépôt d'essai, le workflow du balayage (planifié et lançable à la
+main, sans déclencheur `push`) n'a été enregistré par GitHub ni au premier
+push d'un dépôt vide qui le contenait, ni au push suivant sur la branche
+par défaut, qui ne le touchait pas, mais une seconde après un commit qui
+le modifiait. Mesuré une fois, sur un dépôt neuf ; non mesuré sur un dépôt
+existant où l'installeur pose le fichier.

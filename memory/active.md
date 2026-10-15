@@ -5,27 +5,18 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-L'ordre validé par Théo (J-2026-10-14-Q) : B-0060, fait (J-2026-10-14-R) ;
-la demande de B-0039 en parallèle ; puis B-0048 avec B-0018 ; puis B-0059.
-
-D-0027 est répondue `publier` (J-2026-10-14-V) : l'essai de la CI des
-adaptateurs part dans `theodubus/tests`, public, moteur compris, depuis une
-session à part qui ajoute ce dépôt ; celle-ci reste sur `memory` seul.
-Session d'essai lancée le 14 oct. à 22 h 25 (heure de Paris) :
-`session_01L5X5DzSiY59tjT4e5kfzCs`. Débloquée par Théo le 15 oct., elle a
-poussé les cinq projets (une branche par langage) : le workflow « Socle »
-passe 5 sur 5 (F-0019, J-2026-10-15-C). Le balayage de mutation n'a pas
-tourné : GitHub n'a pas enregistré son workflow ; à lancer à la main.
+L'essai de la CI des adaptateurs sur GitHub est fini (D-0025, D-0027) : le
+workflow « Socle » et le balayage de mutation passent dans les cinq
+langages (F-0019, F-0020) ; B-0039 est fait. En chemin, GitHub n'enregistre
+un workflow sans déclencheur `push` qu'au push qui modifie son fichier
+(F-0021) : `mutation.vivante` le dit et le remède le corrige (B-0063, fait).
+Le dépôt d'essai et sa session (`session_01L5X5DzSiY59tjT4e5kfzCs`) ne
+servent plus : Théo peut supprimer l'un, et l'autre s'archive sur son
+accord.
 
 Les sujets clos du backlog sont rangés dans le sous-dossier `closed`
 (D-0028, D-0029, ADR-0030, J-2026-10-15-E) : `socle archive` range un sujet
 qu'on clôt.
-
-B-0059 est fait (J-2026-10-14-W, J-2026-10-14-X, ADR-0029) : un projet
-anglais ne lit plus de français dans ce que le socle pose ou affiche. Le bug
-voisin trouvé en chemin, B-0061 (la mise à jour d'un projet au format 2
-dont le backlog est vide échouait), est corrigé sur la validation de Théo
-(J-2026-10-15-A).
 
 D-0026 est répondue `rien` : le refus reste, son message est plus clair ;
 B-0048 et B-0018 restent ouverts, « on se le garde en tete et on voit si
@@ -52,14 +43,8 @@ B-0048 et B-0018 restent ouverts, « on se le garde en tete et on voit si
 
 ## Prochaines étapes
 
-1. L'essai de la CI des adaptateurs : le workflow « Socle » passe 5 sur 5 ;
-   le balayage de mutation n'est pas enregistré par GitHub (B-0063) ;
-   décider avec Théo de la suite, puis lui dire de supprimer le dépôt.
-2. B-0063, validé par Théo (J-2026-10-15-F) : le contrôle est fait
-   (J-2026-10-15-G) ; reste l'essai, dont le commit anodin sur la branche
-   `javascript` du dépôt d'essai revient à Théo (le hook du projet jetable
-   refuse celui de la session d'essai). Puis la session d'essai relit la
-   liste des workflows, lance le balayage sur les cinq branches (le reste
-   de B-0039), et le remède du contrôle se confirme ou se corrige.
-3. Plus tard : B-0046 (que Théo reprendra), B-0040 (dotnet absent d'ici) ;
+1. Proposer la suite à Théo : B-0062 (les actions des workflows sur un
+   Node déprécié), B-0064 (la bascule après migration), ou un sujet qu'il
+   choisit.
+2. Plus tard : B-0046 (que Théo reprendra), B-0040 (dotnet absent d'ici) ;
    B-0042 attend sa propre demande.
