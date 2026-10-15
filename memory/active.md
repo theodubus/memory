@@ -13,8 +13,9 @@ adaptateurs part dans `theodubus/tests`, public, moteur compris, depuis une
 session à part qui ajoute ce dépôt ; celle-ci reste sur `memory` seul.
 Session d'essai lancée le 14 oct. à 22 h 25 (heure de Paris) :
 `session_01L5X5DzSiY59tjT4e5kfzCs`. Débloquée par Théo le 15 oct., elle a
-poussé les cinq projets (une branche par langage) ; leurs CI tournent, et
-elle rapporte par message (J-2026-10-15-B).
+poussé les cinq projets (une branche par langage) : le workflow « Socle »
+passe 5 sur 5 (F-0019, J-2026-10-15-C). Le balayage de mutation n'a pas
+tourné : GitHub n'a pas enregistré son workflow ; à lancer à la main.
 
 D-0028 attend Théo : ranger les sujets clos du backlog dans un sous-dossier
 `closed/` (sa question, J-2026-10-15-B).

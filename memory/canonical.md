@@ -170,3 +170,15 @@ jetable avec ses vrais outils : 60 étapes sur 60. Chaque faute de test est
 refusée par le contrôle attendu, la régression se rejoue sur le parent, et
 le verdict de mutation casse sous le plafond mesuré. Mesuré dans ce
 conteneur, pas sur GitHub (B-0039).
+
+## F-0019 — La CI que pose le socle passe sur GitHub dans un projet de chacun des cinq adaptateurs récents
+
+> statut : mesuré · preuve : J-2026-10-15-C
+
+Le workflow « Socle » que pose l'installeur, avec les étapes d'installation
+de chaque adaptateur (Node et `npm ci`, Go, Java et Maven, Ruby et Bundler,
+PHP avec pcov et Composer), passe sur GitHub dans le projet jetable du banc
+de chacun des cinq langages : 5 sur 5, en une minute à une minute et demie,
+auto-test compris. Mesuré le 15 oct. dans le dépôt d'essai public de Théo.
+Le workflow du balayage de mutation, lui, n'a pas encore tourné sur GitHub
+(B-0039).
