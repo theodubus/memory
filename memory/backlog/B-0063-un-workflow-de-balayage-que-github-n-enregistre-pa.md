@@ -26,3 +26,9 @@ par défaut. À éprouver par un commit anodin sur cette branche du dépôt
 d'essai, puis relire la liste ; si c'est confirmé, un projet neuf dont le
 premier push porte le socle n'a pas de balayage tant que personne ne
 repousse, et le contrôle doit le dire.
+
+Réfuté le 15 oct. (J-2026-10-15-I) : un second push sur la branche par
+défaut, qui ne touche pas `socle-mutation.yml`, ne le fait pas enregistrer.
+Le remède écrit dans le contrôle le supposait : à corriger après l'essai
+suivant (un commit qui modifie le fichier, fait dans l'éditeur de GitHub,
+qui signalerait aussi une erreur).
