@@ -67,6 +67,18 @@ class TestVivacite(unittest.TestCase):
         self.assertEqual(niveau, "avertir")
         self.assertIn("pas encore de balayage", message)
 
+    def test_un_workflow_que_github_ne_connait_pas(self):
+        # B-0063 : pas encore fusionné, un avertissement ; fusionné mais
+        # inconnu, un avertissement le temps du délai, puis une erreur.
+        nom = "socle-mutation.yml"
+        self.assertEqual(mutation.inconnu_de_github(nom, None, MAINTENANT)[0], "avertir")
+        niveau, message = mutation.inconnu_de_github(nom, il_y_a(1), MAINTENANT)
+        self.assertEqual(niveau, "avertir")
+        self.assertIn("ne le connaît pas encore", message)
+        niveau, message = mutation.inconnu_de_github(nom, il_y_a(mutation.DELAI_ENREGISTREMENT), MAINTENANT)
+        self.assertEqual(niveau, "erreur")
+        self.assertIn("Pousser un commit sur la branche par défaut", message)
+
     def test_un_workflow_ancien_sans_aucun_balayage(self):
         niveau, message = mutation.vivacite("active", None, il_y_a(40), MAINTENANT)
         self.assertEqual(niveau, "erreur")
@@ -243,6 +255,24 @@ class TestEtatDuBalayage(unittest.TestCase):
         niveau, message, _, _ = self.etat()
         self.assertEqual(niveau, "avertir")
         self.assertIn("pas encore sur la branche par défaut", message)
+
+    def test_present_sur_la_branche_par_defaut_mais_inconnu_de_github(self):
+        # B-0063 : le fichier est fusionné depuis dix jours, GitHub rend 404.
+        (self.racine / ".github/workflows").mkdir(parents=True)
+        (self.racine / mutation.WORKFLOW).write_text("name: Socle — mutation\n")
+        il_y_a_dix_jours = (datetime.now(timezone.utc) - timedelta(days=10)).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        env = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t",
+               "GIT_COMMITTER_EMAIL": "t@t", "GIT_COMMITTER_DATE": il_y_a_dix_jours, "GIT_AUTHOR_DATE": il_y_a_dix_jours}
+        subprocess.run(["git", "add", "-A"], cwd=self.racine, check=True, env=env)
+        subprocess.run(["git", "commit", "-qm", "balayage", "--no-verify"], cwd=self.racine, check=True, env=env)
+        subprocess.run(["git", "update-ref", "refs/remotes/origin/main", "HEAD"], cwd=self.racine, check=True)
+        self.assertEqual(mutation.arrivee_sur_la_branche_par_defaut(self.racine, mutation.WORKFLOW)[:10],
+                         il_y_a_dix_jours[:10])
+        self.gh({"/socle-mutation.yml": None})
+        niveau, message, _, _ = self.etat()
+        self.assertEqual(niveau, "erreur")
+        self.assertIn(f"est sur la branche par défaut depuis le {il_y_a_dix_jours[:10]}, mais GitHub ne le "
+                      "connaît pas : son cron ne part jamais", message)
 
     def test_sans_jeton(self):
         self.gh({})

@@ -2145,4 +2145,18 @@ MESSAGES: dict[str, str] = {
         "closed topic, with its reference, left among the open ones",
     "un sujet clos, rangé avec les clos par `socle archive`, passe la CI":
         "a closed topic, filed with the closed ones by `socle archive`, passes the CI",
+    "Pousser un commit sur la branche par défaut, pour que GitHub en relise les workflows, puis vérifier dans "
+    "l'onglet Actions qu'il y apparaît":
+        "Push a commit to the default branch, so that GitHub reads its workflows again, then check in the Actions "
+        "tab that it appears",
+    "`{nom}` est sur la branche par défaut depuis le {date}, mais GitHub ne le connaît pas : son cron ne part "
+    "jamais, et plus rien ne mesure le cliquet. {remede}":
+        "`{nom}` has been on the default branch since {date}, but GitHub does not know it: its cron never starts, "
+        "and nothing measures the ratchet any more. {remede}",
+    "`{nom}` est sur la branche par défaut depuis le {date}, mais GitHub ne le connaît pas encore. {remede}":
+        "`{nom}` has been on the default branch since {date}, but GitHub does not know it yet. {remede}",
+    "balayage de mutation fusionné depuis dix jours, que GitHub ne connaît pas":
+        "mutation sweep merged ten days ago, which GitHub does not know",
+    "un balayage de mutation fusionné aujourd'hui, que GitHub ne connaît pas encore, passe la CI":
+        "a mutation sweep merged today, which GitHub does not know yet, passes the CI",
 }

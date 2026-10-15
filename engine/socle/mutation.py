@@ -31,7 +31,7 @@ from pathlib import Path
 from typing import Callable
 
 from socle import config
-from socle.messages import trad
+from socle.messages import a_traduire, trad
 from socle.report import Rapport
 
 
@@ -422,6 +422,42 @@ def vivacite(etat: str | None, derniere: str | None, cree: str | None,
     return None, trad("dernier balayage il y a {age} jour(s)", age=age)
 
 
+# Un workflow présent sur la branche par défaut, que GitHub ne connaît pas :
+# le délai qu'on lui laisse pour l'enregistrer, en jours (B-0063).
+DELAI_ENREGISTREMENT = 2
+REMEDE_ENREGISTREMENT = a_traduire(
+    "Pousser un commit sur la branche par défaut, pour que GitHub en relise les workflows, puis vérifier dans "
+    "l'onglet Actions qu'il y apparaît")
+
+
+def arrivee_sur_la_branche_par_defaut(racine: Path, flux: str) -> str | None:
+    """La date du plus ancien commit visible de la branche par défaut qui
+    touche `flux`, s'il y est ; `None` sinon."""
+    from socle import utils as outils
+
+    defaut = outils.branche_par_defaut(racine)
+    if not defaut or not outils.git_reussit(racine, "cat-file", "-e", f"{defaut}:{flux}"):
+        return None
+    dates = outils.git(racine, "log", "--format=%cI", defaut, "--", flux, check=False).split()
+    return dates[-1] if dates else None
+
+
+def inconnu_de_github(nom: str, arrivee: str | None, maintenant: datetime | None = None) -> tuple[str, str]:
+    """(niveau, message) quand GitHub ne connaît pas le workflow : pas encore
+    fusionné, un avertissement ; présent sur la branche par défaut sans être
+    enregistré, son cron ne part jamais, une erreur passé le délai (B-0063)."""
+    if arrivee is None:
+        return "avertir", trad("`{nom}` n'est pas encore sur la branche par défaut : GitHub ne le planifie "
+                               "qu'une fois fusionné", nom=nom)
+    age = ((maintenant or datetime.now(timezone.utc)) - _date(arrivee)).days
+    if age >= DELAI_ENREGISTREMENT:
+        return "erreur", trad("`{nom}` est sur la branche par défaut depuis le {date}, mais GitHub ne le connaît "
+                              "pas : son cron ne part jamais, et plus rien ne mesure le cliquet. {remede}",
+                              nom=nom, date=arrivee[:10], remede=trad(REMEDE_ENREGISTREMENT))
+    return "avertir", trad("`{nom}` est sur la branche par défaut depuis le {date}, mais GitHub ne le connaît pas "
+                           "encore. {remede}", nom=nom, date=arrivee[:10], remede=trad(REMEDE_ENREGISTREMENT))
+
+
 def _gh_api(racine: Path, chemin: str) -> tuple[object | None, str]:
     """(réponse, faute) de l'API de GitHub par `gh` ; la faute vaut `404`
     quand la ressource n'existe pas."""
@@ -460,8 +496,7 @@ def etat_du_balayage(projet: config.Projet, fichiers: list[str],
     page = f"{url}/actions/workflows/{nom}"
     wf, faute = _gh_api(projet.racine, f"repos/{depot}/actions/workflows/{nom}")
     if faute == "404":
-        return "avertir", trad("`{nom}` n'est pas encore sur la branche par défaut : GitHub ne le planifie "
-                               "qu'une fois fusionné", nom=nom), flux, page
+        return (*inconnu_de_github(nom, arrivee_sur_la_branche_par_defaut(projet.racine, flux)), flux, page)
     if not isinstance(wf, dict):
         return "indisponible", (trad("API de GitHub injoignable ({faute}) : dans la CI, il faut `GH_TOKEN` et "
                                      "le droit `actions: read`", faute=faute)), flux, page

@@ -24,6 +24,7 @@ import tempfile
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable
 
@@ -428,7 +429,10 @@ import json, sys
 from datetime import datetime, timedelta, timezone
 chemin = sys.argv[2] if sys.argv[1:2] == ["api"] else ""
 hier = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
-if chemin.endswith("/actions/workflows/socle-mutation.yml"):
+if chemin.endswith("/actions/workflows/socle-mutation.yml") and "{etat}" == "inconnu":
+    sys.stderr.write("gh: Not Found (HTTP 404)\\n")
+    sys.exit(1)
+elif chemin.endswith("/actions/workflows/socle-mutation.yml"):
     print(json.dumps({{"state": "{etat}", "created_at": "2026-01-01T00:00:00Z"}}))
 elif "/actions/workflows/socle-mutation.yml/runs?" in chemin:
     print(json.dumps({{"workflow_runs": [{{"created_at": hier}}]}}))
@@ -437,15 +441,17 @@ else:
 """
 
 
-def _balayage_planifie(a: "Atelier", c: Path, etat: str) -> dict:
-    """Le projet d'essai avec un balayage planifié, posé à la base : la
-    mutation factice, son workflow et la doc qui le nomme. Rend
-    l'environnement où `gh`, simulé, dit l'état du workflow."""
+def _balayage_planifie(a: "Atelier", c: Path, etat: str, jours: int = 0) -> dict:
+    """Le projet d'essai avec un balayage planifié, posé à la base il y a
+    `jours` jours : la mutation factice, son workflow et la doc qui le nomme.
+    Rend l'environnement où `gh`, simulé, dit l'état du workflow
+    (`inconnu` : GitHub ne le connaît pas)."""
     avec_mutation(c)
     (c / ".github/workflows/socle-mutation.yml").write_text('name: Socle — mutation\non:\n  schedule:\n'
                                                             '    - cron: "23 2 * * 2"\n')
     ajouter(c, "docs/calc.md", "\nLe balayage de mutation, chaque semaine : `socle-mutation.yml`.\n")
-    a.commit(c, "balayage planifié")
+    date = (datetime.now(timezone.utc) - timedelta(days=jours)).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+    a.commit(c, "balayage planifié", env={"GIT_COMMITTER_DATE": date, "GIT_AUTHOR_DATE": date})
     a.git(c, "update-ref", "refs/remotes/origin/main", "HEAD")
     outils_ = c.parent / f"{c.name}-bin"
     outils_.mkdir()
@@ -1143,6 +1149,13 @@ def _cas() -> list[Cas]:
         r = a.socle(c, "check", "--stage", "ci", "--base", "origin/main", env=env)
         return "" if r.returncode == 0 else r.stdout + r.stderr
 
+    @defaut("balayage-inconnu", "balayage de mutation fusionné depuis dix jours, que GitHub ne connaît pas", "ci",
+            "mutation.vivante")
+    def _(a, c):
+        env = _balayage_planifie(a, c, "inconnu", jours=10)
+        r = a.socle(c, "check", "--stage", "ci", "--base", "origin/main", env=env)
+        return "" if r.returncode == 0 else r.stdout + r.stderr
+
     @defaut("mutants-survivants", "survivants de mutation au-delà du plafond", "ci", "mutation.verdict")
     def _(a, c):
         avec_mutation(c)
@@ -1443,6 +1456,14 @@ def _temoins() -> list[tuple[str, Callable]]:
         # rien prouver.
         ligne = next((l.split() for l in r.stdout.splitlines() if l.strip().startswith("mutation.vivante")), [])
         return "" if ligne[-1:] == ["ok"] else f"mutation.vivante, attendu « ok » : {r.stdout}"
+
+    @temoin("un balayage de mutation fusionné aujourd'hui, que GitHub ne connaît pas encore, passe la CI")
+    def _(a, c):
+        env = _balayage_planifie(a, c, "inconnu")
+        r = a.socle(c, "check", "--stage", "ci", "--base", "origin/main", env=env)
+        if r.returncode != 0:
+            return r.stdout + r.stderr
+        return "" if "ne le connaît pas encore" in r.stdout else f"mutation.vivante, avertissement attendu : {r.stdout}"
 
     @temoin("un balayage de mutation sous le plafond passe le verdict")
     def _(a, c):
