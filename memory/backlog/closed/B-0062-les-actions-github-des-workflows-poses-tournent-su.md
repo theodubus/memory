@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0062 — Les actions GitHub des workflows posés tournent sur un Node déprécié
 
-> statut : ouvert · origine : J-2026-10-15-C · lu : backlog@66518ff8
+> statut : fait · origine : J-2026-10-15-C · lu : backlog@66518ff8 · ref : J-2026-10-17-B, B-0065
 
 Mesuré le 15 oct., dans les journaux de la CI des cinq projets jetables
 sur GitHub : `actions/checkout@v4` et `actions/setup-python@v5`, que posent

@@ -14,7 +14,7 @@ sources = ["**/src/main/java/**/*.java", "**/src/test/java/**/*.java"]
 
 # Étapes ajoutées au workflow de CI avant le socle (indentation YAML de six).
 ci_setup = """
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21

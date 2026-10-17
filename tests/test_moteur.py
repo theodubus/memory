@@ -61,3 +61,26 @@ class TestDocstrings(unittest.TestCase):
                     if chemin.split("/", 1)[0] in racines and not (DEPOT / chemin).exists():
                         morts.append(f"{p.relative_to(MOTEUR)} : {chemin}")
         self.assertEqual(morts, [])
+
+
+# La première version majeure de chaque action qui tourne sur Node 24, lue
+# dans son `action.yml` le 17 oct. (B-0062) : GitHub déprécie Node 20.
+NODE_24 = {
+    "actions/checkout": 5, "actions/setup-python": 6, "actions/setup-node": 5, "actions/setup-go": 6,
+    "actions/setup-java": 5, "ruby/setup-ruby": 1, "shivammathur/setup-php": 2,
+}
+
+
+class TestActionsDesWorkflows(unittest.TestCase):
+    def test_chaque_action_posee_tourne_sur_node_24(self):
+        sources = sorted((MOTEUR / "templates").glob("*.yml")) + sorted((MOTEUR / "adapters").glob("*.toml"))
+        vues, fautes = set(), []
+        for chemin in sources:
+            for action, majeure in re.findall(r"uses:\s*([\w.-]+/[\w.-]+)@v(\d+)", chemin.read_text(encoding="utf-8")):
+                vues.add(action)
+                if action not in NODE_24:
+                    fautes.append(f"{chemin.name} : {action} n'a pas sa version Node 24 vérifiée")
+                elif int(majeure) < NODE_24[action]:
+                    fautes.append(f"{chemin.name} : {action}@v{majeure} tourne sur un Node déprécié")
+        self.assertEqual(fautes, [])
+        self.assertTrue({"actions/checkout", "actions/setup-python"} <= vues)
