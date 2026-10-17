@@ -168,6 +168,14 @@ class TestRangement(Format3):
         self.assertTrue((self.racine / "memory/backlog/closed/B-0002-basculee.md").is_file())
         self.assertEqual(self.erreurs(), [])
 
+    def test_la_bascule_d_un_sujet_a_sous_titres_juste_apres_la_migration(self):
+        # B-0064 : comparée à une base d'avant la migration, où ses
+        # sous-titres sont un niveau plus bas, sa copie privée en reprend
+        # bien le texte.
+        code, sortie = self.socle("prive", "basculer", "B-0002")
+        self.assertEqual(code, 0, sortie)
+        self.assertEqual(self.erreurs(), [])
+
     def test_la_mise_a_jour_range_un_projet_existant(self):
         # Un projet au format 3 d'avant le rangement : un sujet clos parmi les ouverts.
         clos = self.racine / "memory/backlog/closed/B-0002-un-sujet-detaille.md"

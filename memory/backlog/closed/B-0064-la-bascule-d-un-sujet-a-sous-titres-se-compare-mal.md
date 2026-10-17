@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0064 — La bascule d'un sujet à sous-titres se compare mal à une base d'avant la migration au format 3
 
-> statut : ouvert · origine : J-2026-10-15-D · lu : backlog@4ee6266e
+> statut : fait · origine : J-2026-10-15-D · lu : backlog@4ee6266e · ref : J-2026-10-17-C
 
 Constaté le 15 oct. en écrivant les tests du rangement des sujets clos :
 un sujet qui a des sous-titres, migré du format 2 au format 3 (ses titres

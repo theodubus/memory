@@ -43,8 +43,9 @@ B-0048 et B-0018 restent ouverts, « on se le garde en tete et on voit si
 
 ## Prochaines étapes
 
-1. L'ordre validé par Théo (J-2026-10-17-A) : B-0062 (les actions des
-   workflows sur un Node déprécié), puis B-0064 (la bascule après
-   migration).
+1. L'ordre validé par Théo (J-2026-10-17-A) est fait : B-0062
+   (J-2026-10-17-B ; la session d'essai éprouve les nouvelles versions sur
+   GitHub, si le dépôt d'essai existe encore ; la CI de ce dépôt revient à
+   Théo, B-0065), puis B-0064 (J-2026-10-17-C). Proposer la suite.
 2. Plus tard : B-0046 (que Théo reprendra), B-0040 (dotnet absent d'ici) ;
    B-0042 attend sa propre demande.

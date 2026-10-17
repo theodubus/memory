@@ -704,6 +704,13 @@ def _norm(t: str) -> str:
     return "\n".join(l.rstrip() for l in t.strip().splitlines())
 
 
+def _sans_niveaux(t: str) -> str:
+    """Le texte, ses titres ramenés à un même niveau : la migration au format
+    3 remonte d'un niveau les sous-titres d'un sujet, sans rien en changer
+    d'autre (B-0064)."""
+    return re.sub(r"(?m)^#{1,6} ", "# ", _norm(t))
+
+
 @controle("memoire.ajout-seul", base=True)
 def ajout_seul(ctx, r):
     """Journal et décisions en ajout seul ; un fait ne disparaît pas, ne change
@@ -807,7 +814,7 @@ def _bascule(ctx, r, a: memoire.Entree, b: memoire.Entree):
                                             "{id}`) : son contenu serait perdu ; `socle private move` fait les "
                                             "deux", id=a.id), b.fichier, b.ligne)
         return
-    if not any(_norm(a.corps) in _norm(c.corps) and a.titre == c.titre for c in copies):
+    if not any(_sans_niveaux(a.corps) in _sans_niveaux(c.corps) and a.titre == c.titre for c in copies):
         r.erreur("memoire.ajout-seul", trad("`{id}` basculée : sa copie privée n'en reprend ni le titre ni le "
                                             "texte", id=a.id),
                  b.fichier, b.ligne)
