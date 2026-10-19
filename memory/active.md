@@ -46,12 +46,19 @@ B-0048 et B-0018 restent ouverts, « on se le garde en tete et on voit si
   backlog de rétro-compatibilité avec une version antérieure / Le projet
   est EN DEV », « considere que pour le moment personne ne l'a encore
   utilisé » (J-2026-10-19-A).
+- Le but : « un produit hyper pratique pour des projets, qui combines tous
+  les avantages de mon projet (actuel + prévu) et du leur » (BMAD Method) ;
+  ni fusion des codes ni réimplémentation de BMAD, leur cohabitation
+  (J-2026-10-19-E, B-0067).
 
 ## Prochaines étapes
 
-1. L'ordre validé par Théo (J-2026-10-17-A) est fait : B-0062
-   (J-2026-10-17-B ; ses versions restent supposées sur GitHub,
-   J-2026-10-19-B ; la CI de ce dépôt revient à Théo, B-0065), puis B-0064
-   (J-2026-10-17-C). Proposer la suite.
-2. Plus tard : B-0046 (que Théo reprendra), B-0040 (dotnet absent d'ici) ;
+1. Proposé à Théo (J-2026-10-19-E), en attente de son choix : l'essai de
+   cohabitation avec BMAD (B-0067) avant les sujets qui la recoupent
+   (B-0009, B-0042, B-0046, B-0054, B-0055, B-0066) ; les sujets du socle
+   seul (B-0006, B-0008, B-0010, B-0011, B-0012, B-0040) se font avant ou
+   après, sans dépendre de l'essai.
+2. B-0065 revient à Théo, quand il aura son ordinateur : rien ne presse,
+   la CI passe avec les anciennes actions.
+3. Plus tard : B-0046 (que Théo reprendra), B-0040 (dotnet absent d'ici) ;
    B-0042 attend sa propre demande.
