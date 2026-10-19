@@ -230,6 +230,13 @@ def _bmad(projet: config.Projet) -> list[str]:
         stories = [k for k, v in etats.items() if v == statut and not k.startswith("epic-")]
         if stories:
             res.append(trad("  sprint, {statut} : {liste}", statut=statut, liste=", ".join(stories)))
+    from socle import installer as installeur
+
+    sans = [n for n in installeur.personnalisations_bmad(racine)
+            if not (racine / "_bmad" / "custom" / f"{n}.toml").is_file()]
+    if sans:
+        res.append(trad("  !! {n} skill(s) de BMAD sans la personnalisation du socle ({liste}) : relancer "
+                        "l'installeur du socle", n=len(sans), liste=", ".join(sans[:4]) + (" …" if len(sans) > 4 else "")))
     hors = controles_bmad.reports_a_entrer(projet, memoire.Memoire.charger(racine))
     if hors:
         res.append(trad("  {n} travail(aux) reporté(s) par BMAD hors du backlog : `python3 .socle/socle "

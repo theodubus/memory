@@ -2250,4 +2250,13 @@ MESSAGES: dict[str, str] = {
         "BMAD spec approved without the human's approval recorded",
     "une spec de BMAD approuvée, dont l'approbation de l'humain est consignée en séance, passe la CI (ADR-0032)":
         "an approved BMAD spec, whose human approval is recorded in session, passes the CI (ADR-0032)",
+    "BMAD Method : sa personnalisation posée pour {n} skill(s) — la mémoire du socle, son état, les décisions en "
+    "séance et sa fin de tour (ADR-0032)":
+        "BMAD Method: its customization written for {n} skill(s) — the socle's memory, its state, the decisions "
+        "taken in session and its end of turn (ADR-0032)",
+    "!! BMAD Method : personnalisation propre au projet gardée pour {liste} — y ajouter à la main ce que pose le "
+    "socle":
+        "!! BMAD Method: the project's own customization kept for {liste} — add by hand what the socle writes",
+    "  !! {n} skill(s) de BMAD sans la personnalisation du socle ({liste}) : relancer l'installeur du socle":
+        "  !! {n} BMAD skill(s) without the socle's customization ({liste}): run the socle's installer again",
 }

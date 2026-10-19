@@ -279,5 +279,63 @@ class TestSeance(unittest.TestCase):
         self.assertEqual(h.group(0), "decision")
 
 
+CUSTOMIZE_WORKFLOW = "[workflow]\nactivation_steps_append = []\non_complete = \"\"\n"
+CUSTOMIZE_AGENT = "[agent]\nactivation_steps_append = []\n"
+
+
+class TestPersonnalisation(unittest.TestCase):
+    def projet(self, propre: str | None = None) -> Path:
+        fichiers = {"calc.py": "X = 1\n", "_bmad/config.toml": "",
+                    ".claude/skills/bmad-build/customize.toml": CUSTOMIZE_WORKFLOW,
+                    ".claude/skills/bmad-agent-dev/customize.toml": CUSTOMIZE_AGENT,
+                    ".claude/skills/bmad-help/SKILL.md": "# aide\n"}
+        if propre:
+            fichiers["_bmad/custom/bmad-build.toml"] = propre
+        return depot(fichiers)
+
+    def test_personnalisations_bmad_lit_la_table_de_chaque_skill(self):
+        self.assertEqual(installeur.personnalisations_bmad(self.projet()),
+                         {"bmad-agent-dev": "agent", "bmad-build": "workflow"})
+
+    def test_l_installeur_pose_la_personnalisation_dans_la_langue_du_projet(self):
+        import tomllib
+
+        racine = self.projet()
+        with contextlib.redirect_stdout(io.StringIO()) as sortie:
+            installeur.installer(racine, "python", "@essai", source=MOTEUR)
+        self.assertIn("personnalisation posée pour 2 skill(s)", sortie.getvalue())
+        build = tomllib.loads((racine / "_bmad/custom/bmad-build.toml").read_text(encoding="utf-8"))["workflow"]
+        self.assertEqual(build["persistent_facts"], ["file:memory/active.md", "file:memory/canonical.md"])
+        self.assertIn("socle decision", " ".join(build["activation_steps_append"]))
+        self.assertIn("bmad-import", build["on_complete"])
+        agent = tomllib.loads((racine / "_bmad/custom/bmad-agent-dev.toml").read_text(encoding="utf-8"))["agent"]
+        self.assertNotIn("on_complete", agent)
+        self.assertNotIn("sans la personnalisation du socle",
+                         etat.calculer(config.Projet.charger(racine), contenus=False))
+
+    def test_poser_bmad_garde_une_personnalisation_du_projet(self):
+        racine = self.projet(propre="[workflow]\non_complete = \"Ouvrir la spec.\"\n")
+        journal = installeur.poser_bmad(racine, "fr")
+        self.assertIn("bmad-build", " ".join(journal))
+        self.assertEqual((racine / "_bmad/custom/bmad-build.toml").read_text(encoding="utf-8"),
+                         "[workflow]\non_complete = \"Ouvrir la spec.\"\n")
+        self.assertTrue((racine / "_bmad/custom/bmad-agent-dev.toml").is_file())
+
+    def test_poser_bmad_regenere_ce_qu_il_a_pose_et_parle_anglais(self):
+        racine = self.projet()
+        installeur.poser_bmad(racine, "en")
+        p = racine / "_bmad/custom/bmad-build.toml"
+        self.assertIn("Before handing back", p.read_text(encoding="utf-8"))
+        installeur.poser_bmad(racine, "fr")
+        self.assertIn("Avant de rendre la main", p.read_text(encoding="utf-8"))
+
+    def test_l_etat_signale_un_skill_sans_personnalisation(self):
+        racine = projet_avec_bmad(reports="")
+        (racine / ".claude/skills/bmad-spec").mkdir(parents=True)
+        (racine / ".claude/skills/bmad-spec/customize.toml").write_text(CUSTOMIZE_WORKFLOW, encoding="utf-8")
+        self.assertIn("sans la personnalisation du socle (bmad-spec)",
+                      etat.calculer(config.Projet.charger(racine), contenus=False))
+
+
 if __name__ == "__main__":
     unittest.main()

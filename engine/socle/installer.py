@@ -155,6 +155,63 @@ def declarer_tiers(texte: str, chemins: list[str]) -> str:
     return texte.rstrip("\n") + "\n\n[thirdparty]\n" + f"paths = {liste}\n"
 
 
+# La fin d'un workflow de BMAD, dans la personnalisation que pose le socle :
+# un agent de BMAD n'en a pas.
+FIN_BMAD = {
+    "fr": 'on_complete = "Avant de rendre la main : faire entrer au backlog du socle les travaux reportés (`python3 '
+          '.socle/socle bmad-import`), consigner le travail dans la mémoire du socle (le chantier actif, et une entrée '
+          'de journal par `python3 .socle/socle new journal` qui cite la spec ou le document sans le recopier), '
+          'relancer `python3 .socle/socle verify --fast`, commiter, puis finir par les lignes « Pour toi : » et '
+          '« Ensuite : »."\n',
+    "en": 'on_complete = "Before handing back: enter the deferred work into the socle\'s backlog (`python3 .socle/socle '
+          'bmad-import`), record the work in the socle\'s memory (the active work, and a journal entry by `python3 '
+          '.socle/socle new journal` that cites the spec or the document without copying it), run `python3 '
+          '.socle/socle verify --fast` again, commit, then end with the lines “For you:” and “Next:”."\n',
+}
+MARQUES_BMAD = ("# Posé par le socle (ADR-0032)", "# Written by the socle (ADR-0032)")
+
+
+def personnalisations_bmad(cible: Path) -> dict[str, str]:
+    """Les skills de BMAD qui se personnalisent, et la table de leur
+    personnalisation (`workflow` ou `agent`), lue dans leur fichier par
+    défaut : un skill nouveau d'une version de BMAD y entre sans liste à
+    tenir."""
+    res = {}
+    for f in sorted(cible.glob("*/skills/bmad-*/customize.toml")) + sorted(cible.glob("skills/bmad-*/customize.toml")):
+        m = re.search(r"(?m)^\[(workflow|agent)\]\s*$", f.read_text(encoding="utf-8"))
+        if m:
+            res.setdefault(f.parent.name, m[1])
+    return res
+
+
+def poser_bmad(cible: Path, lg: str, ch: config.Chemins = config.FORMAT_ACTUEL) -> list[str]:
+    """Avec BMAD Method, sa personnalisation officielle, un fichier par skill
+    sous `_bmad/custom/` (ADR-0032) : la mémoire du socle en faits
+    persistants, son état à l'activation, la consignation des décisions en
+    séance, et la fin de tour du socle. Un fichier que le projet a écrit
+    lui-même est gardé, et signalé."""
+    skills = personnalisations_bmad(cible)
+    if not skills or not (cible / "_bmad").is_dir():
+        return []
+    modele = gabarit("bmad-custom.toml", lg).replace("@@ACTIF@@", ch.actif).replace("@@CANONIQUE@@", ch.canonique)
+    poses, gardes = 0, []
+    for nom, table in skills.items():
+        texte = modele.replace("@@TABLE@@", table).replace(
+            "@@FIN@@\n", FIN_BMAD.get(lg, FIN_BMAD["fr"]) if table == "workflow" else "")
+        p = cible / "_bmad" / "custom" / f"{nom}.toml"
+        if p.is_file() and not p.read_text(encoding="utf-8").startswith(MARQUES_BMAD):
+            gardes.append(nom)
+            continue
+        outils.ecrire(p, texte)
+        poses += 1
+    res = [trad("BMAD Method : sa personnalisation posée pour {n} skill(s) — la mémoire du socle, son état, les "
+                "décisions en séance et sa fin de tour (ADR-0032)", n=poses)]
+    if gardes:
+        res.append(trad("!! BMAD Method : personnalisation propre au projet gardée pour {liste} — y ajouter à la main "
+                        "ce que pose le socle", liste=", ".join(gardes)))
+    return res
+
+
 def garde_fous_initiaux(cible: Path, texte_adaptateur: str, ch: config.Chemins = config.FORMAT_ACTUEL,
                         lg: str = "fr") -> str:
     """Les garde-fous du gabarit, avec chaque module qui porte déjà du code
@@ -500,8 +557,9 @@ def _installer(cible: Path, adaptateur: str, proprietaire: str, adoption: bool, 
     balayage, motif = _balayage_planifie(cible, texte_adaptateur)
     journal += _instructions(cible, dossier_moteur, lg, balayage, ch)
 
-    # 5. Les étages d'application.
+    # 5. Les étages d'application, et le lien avec BMAD Method s'il est là.
     journal += _poser_etages(cible, texte_adaptateur, dossier_moteur, proprietaire, balayage, motif, ch, lg)
+    journal += poser_bmad(cible, lg, ch)
     if prive:
         journal += _prive(cible, prive, filtre)
 
