@@ -10,8 +10,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import bmad, checks_bmad as controles_bmad, config, context as contexte, installer as installeur, \
-    memory as memoire, state as etat
+from socle import bmad, checks_bmad as controles_bmad, config, context as contexte, hooks, installer as installeur, \
+    memory as memoire, requests as demandes, state as etat
 
 MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 
@@ -192,6 +192,91 @@ class TestEtat(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):
             installeur.installer(racine, "python", "@essai", source=MOTEUR)
         self.assertNotIn("BMAD", etat.calculer(config.Projet.charger(racine), contenus=False))
+
+
+class TestSeance(unittest.TestCase):
+    def setUp(self):
+        self.racine = projet_avec_bmad(reports="")
+        self.projet = config.Projet.charger(self.racine)
+        self.spec = "_bmad-output/implementation-artifacts/spec-triple.md"
+
+    def approuver(self, sujet=None):
+        return demandes.ecrire_seance(self.projet, "Approuver la spec de triple", "Tu approuves la spec ?",
+                                      "valider", "Théo", "2026-10-19", "conversation", "Oui, approuvé.",
+                                      sujet or f"{self.spec}@{bmad.spec(self.spec, SPEC).empreinte_intention}")
+
+    def echecs(self):
+        subprocess.run(["git", "add", "-A"], cwd=self.racine, check=True)
+        rapport = contexte.executer(contexte.Contexte(config.Projet.charger(self.racine), etage="ci", base=None),
+                                    ids=["bmad.approbation", "demandes.contrat", "demandes.reponses"])
+        return rapport.controles_en_echec(), "\n".join(c.message for c in rapport.constats)
+
+    def test_ecrire_seance_pose_la_question_et_sa_reponse(self):
+        chemin, reponse = self.approuver()
+        d = next(x for x in demandes.toutes(self.racine) if x.chemin == chemin)
+        self.assertTrue(d.seance)
+        self.assertTrue(d.validee)
+        self.assertEqual(d.sujet[0], self.spec)
+        self.assertIn("Tu approuves la spec ?", d.texte)
+        self.assertTrue((self.racine / reponse).is_file())
+        self.assertEqual(demandes.verifier_reponse(d), [])
+        self.assertIsNone(demandes.illisible(self.projet, d))
+        self.assertTrue(d.accepte("approuver et continuer"))
+
+    def test_une_seance_relayee_sans_citation_est_refusee(self):
+        with self.assertRaises(ValueError):
+            demandes.ecrire_seance(self.projet, "Approuver la spec de triple", "", "valider", "Théo", "2026-10-19",
+                                   "conversation", "")
+        self.assertEqual(list((self.racine / "memory/requests").glob("D-*.md")), [])
+
+    def test_une_seance_sans_reponse_est_hors_contrat(self):
+        chemin, reponse = self.approuver()
+        (self.racine / reponse).unlink()
+        d = next(x for x in demandes.toutes(self.racine) if x.chemin == chemin)
+        self.assertTrue(any("séance" in f for f in demandes.linter(d, self.projet)))
+
+    def test_une_spec_approuvee_sans_trace_est_refusee(self):
+        echecs, texte = self.echecs()
+        self.assertIn("bmad.approbation", echecs)
+        self.assertIn("socle decision", texte)
+
+    def test_une_spec_approuvee_et_consignee_passe(self):
+        self.approuver()
+        echecs, texte = self.echecs()
+        self.assertEqual(echecs, [], texte)
+
+    def test_une_intention_changee_apres_l_approbation_est_refusee(self):
+        self.approuver()
+        p = self.racine / self.spec
+        p.write_text(p.read_text(encoding="utf-8").replace("Il manque triple.", "Il manque quadruple."),
+                     encoding="utf-8")
+        echecs, texte = self.echecs()
+        self.assertIn("bmad.approbation", echecs)
+        self.assertIn("changée après son approbation", texte)
+
+    def test_une_spec_courte_n_a_pas_besoin_d_approbation(self):
+        p = self.racine / self.spec
+        p.write_text(SPEC.replace("'dispatch'", "'oneshot'"), encoding="utf-8")
+        self.assertNotIn("bmad.approbation", self.echecs()[0])
+
+    def test_la_commande_cmd_decision_cite_l_intention_de_la_spec(self):
+        import argparse
+        from socle import cli
+
+        citation = self.racine.parent / f"{self.racine.name}-citation.txt"
+        citation.write_text("Oui, approuvé.", encoding="utf-8")
+        args = argparse.Namespace(root=str(self.racine), question="Approuver la spec de triple", answer="valider",
+                                  question_file=None, about=self.spec, by="Théo", relayed=True, quote=None,
+                                  quote_file=str(citation))
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(cli.cmd_decision(args), 0)
+        d = next(x for x in demandes.toutes(self.racine) if x.seance)
+        self.assertEqual(d.sujet, (self.spec, bmad.spec(self.spec, SPEC).empreinte_intention))
+
+    def test_le_hook_refuse_une_decision_que_l_agent_ne_relaie_pas(self):
+        h = hooks.COMMANDES_HUMAINES.search("python3 .socle/socle decision 'Approuver la spec x' valider")
+        self.assertIsNotNone(h)
+        self.assertEqual(h.group(0), "decision")
 
 
 if __name__ == "__main__":

@@ -81,6 +81,10 @@ only relayed to a request pushed as is: the human must have been able to
 read it. A test whose expected value changes while waiting for such a
 request, which names it, may stay changed in the tree at the end of the
 turn; it is only committed after the answer.
+A decision taken in session, the human present (approving a BMAD spec,
+settling an open question), is recorded at once with their answer word for
+word: `python3 .socle/socle decision "<question>" <answer> --relayed --by <name> --quote-file <file>`
+(`--about <path>` for what it approves).
 
 ### Reading the memory on demand
 

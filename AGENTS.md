@@ -140,6 +140,10 @@ relaie qu'à une demande poussée telle quelle : l'humain doit avoir pu la lire.
 Un test dont la valeur attendue change en attendant une telle demande, qui le
 nomme, peut rester changé dans l'arbre à la fin du tour ; il ne se commite
 qu'après la réponse.
+Une décision prise en séance, l'humain présent (approuver une spec de BMAD,
+trancher une question ouverte), se consigne aussitôt avec sa réponse mot
+pour mot : `python3 .socle/socle decision "<question>" <réponse> --relayed --by <nom> --quote-file <fichier>`
+(`--about <chemin>` pour ce qu'elle approuve).
 
 ### Lire la mémoire à la demande
 

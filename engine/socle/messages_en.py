@@ -65,11 +65,15 @@ MESSAGES: dict[str, str] = {
     "`socle approve` est réservé à l'humain : il valide ses propres changements protégés.":
         "`socle approve` is reserved for the human: it approves their own protected changes.",
     "l'agent ne répond jamais à la place de l'humain. Il ne peut que relayer une réponse donnée dans la conversation "
-    ": `socle answer D-NNNN <réponse> --relayed --by <nom> --quote-file <texte exact>` (ADR-0006), ou `socle "
-    "reviewed --relayed --by <nom> --quote-file <texte exact>` pour une relecture avant publication.":
+    ": `socle answer D-NNNN <réponse> --relayed --by <nom> --quote-file <texte exact>` (ADR-0006), `socle decision "
+    "\"<question>\" <réponse> --relayed --by <nom> --quote-file <texte exact>` pour une décision prise en séance "
+    "(ADR-0032), ou `socle reviewed --relayed --by <nom> --quote-file <texte exact>` pour une relecture avant "
+    "publication.":
         "the agent never answers in the human's place. It can only relay an answer given in the conversation: `socle "
-        "answer D-NNNN <answer> --relayed --by <name> --quote-file <exact text>` (ADR-0006), or `socle reviewed "
-        "--relayed --by <name> --quote-file <exact text>` for a review before publication.",
+        "answer D-NNNN <answer> --relayed --by <name> --quote-file <exact text>` (ADR-0006), `socle decision "
+        "\"<question>\" <answer> --relayed --by <name> --quote-file <exact text>` for a decision taken in session "
+        "(ADR-0032), or `socle reviewed --relayed --by <name> --quote-file <exact text>` for a review before "
+        "publication.",
     "`{reglage}` : les réglages de Claude Code commandent ses hooks, seul l'humain les modifie (un réglage local "
     "peut les couper tous).":
         "`{reglage}`: Claude Code's settings drive its hooks, only the human changes them (a local setting can turn "
@@ -2204,4 +2208,46 @@ MESSAGES: dict[str, str] = {
     "socle suit et clôt.":
         "Work that BMAD defers enters the socle's backlog (ADR-0032): a single list of findings, which the socle "
         "tracks and closes.",
+    "ce que la décision approuve (une spec de BMAD : son intention figée)":
+        "what the decision approves (a BMAD spec: its frozen intent)",
+    "consigner une décision prise en séance, avec la réponse de l'humain ; l'agent y relaie (--relayed) ta réponse "
+    "mot pour mot":
+        "record a decision taken in session, with the human's answer; the agent relays (--relayed) your answer word "
+        "for word",
+    "consigner une décision sans --relayed":
+        "recording a decision without --relayed",
+    "décision en séance consignée : {chemin}, et sa réponse « {answer} » — à commiter avec la suite.":
+        "decision taken in session recorded: {chemin}, with its answer “{answer}” — to commit with the rest.",
+    "décision en séance sans la réponse de l'humain : la consigner avec elle, mot pour mot (`socle decision`)":
+        "decision taken in session without the human's answer: record it with it, word for word (`socle decision`)",
+    "fichier qui contient la question telle que l'humain l'a lue":
+        "file holding the question as the human read it",
+    "intention figée changée après son approbation ({ids}) : seul l'humain la change — lui faire approuver la "
+    "nouvelle, et la consigner":
+        "frozen intent changed after its approval ({ids}): only the human changes it — have them approve the new "
+        "one, and record it",
+    "la question doit énoncer la décision en une phrase":
+        "the question must state the decision in one sentence",
+    "refus : {erreur}":
+        "refused: {erreur}",
+    "refus : « {chemin} » n'existe pas dans le dépôt":
+        "refused: “{chemin}” does not exist in the repository",
+    "spec « {statut} » sans l'approbation de l'humain consignée : la consigner, mot pour mot, dès qu'il l'a donnée "
+    "— `python3 .socle/socle decision \"<la question posée>\" valider --about {chemin} --relayed --by <nom> "
+    "--quote-file <texte exact>`":
+        "spec “{statut}” without the human's approval recorded: record it, word for word, as soon as given — "
+        "`python3 .socle/socle decision \"<the question asked>\" approve --about {chemin} --relayed --by <name> "
+        "--quote-file <exact text>`",
+    "Une spec de BMAD approuvée l'est par l'humain, consigné mot pour mot (ADR-0032), et son intention figée ne "
+    "change plus sans lui.":
+        "An approved BMAD spec is approved by the human, recorded word for word (ADR-0032), and its frozen intent "
+        "no longer changes without them.",
+    "décision en séance consignée par l'agent sans la citer":
+        "decision taken in session recorded by the agent without quoting it",
+    "intention figée d'une spec changée après son approbation":
+        "frozen intent of a spec changed after its approval",
+    "spec de BMAD approuvée sans l'approbation de l'humain consignée":
+        "BMAD spec approved without the human's approval recorded",
+    "une spec de BMAD approuvée, dont l'approbation de l'humain est consignée en séance, passe la CI (ADR-0032)":
+        "an approved BMAD spec, whose human approval is recorded in session, passes the CI (ADR-0032)",
 }

@@ -416,7 +416,7 @@ def commande_humaine(c: commandes.Commande) -> tuple[str, list[str]] | None:
     reste = commandes.noms_anglais(reste)
     if reste[:2] == ["private", "install"]:
         return "private install", reste
-    if reste and reste[0] in ("answer", "approve", "reviewed"):
+    if reste and reste[0] in ("answer", "decision", "approve", "reviewed"):
         return reste[0], reste
     return None
 
@@ -445,7 +445,7 @@ class _Trouve:
         return self.nom
 
 
-COMMANDES_HUMAINES = _Repere(("answer", "approve", "reviewed"))
+COMMANDES_HUMAINES = _Repere(("answer", "decision", "approve", "reviewed"))
 INSTALLER_PRIVE = _Repere(("private install",))
 
 
@@ -503,8 +503,10 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
             if not relais:
                 return refus(trad("l'agent ne répond jamais à la place de l'humain. Il ne peut que relayer une "
                                   "réponse donnée dans la conversation : `socle answer D-NNNN <réponse> --relayed "
-                                  "--by <nom> --quote-file <texte exact>` (ADR-0006), ou `socle reviewed --relayed "
-                                  "--by <nom> --quote-file <texte exact>` pour une relecture avant publication."))
+                                  "--by <nom> --quote-file <texte exact>` (ADR-0006), `socle decision "
+                                  "\"<question>\" <réponse> --relayed --by <nom> --quote-file <texte exact>` pour une "
+                                  "décision prise en séance (ADR-0032), ou `socle reviewed --relayed --by <nom> "
+                                  "--quote-file <texte exact>` pour une relecture avant publication."))
         faute = _fuite_bash(projet, cmd)
         if faute:
             return refus(faute)

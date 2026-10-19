@@ -5,6 +5,10 @@ BMAD produit, sans le recopier.
   reportés) entre au backlog du socle, la seule liste des trouvailles ;
   `socle bmad-import` l'y fait entrer, et le report s'y reconnaît à son
   empreinte.
+- `bmad.approbation` : une spec que le workflow de BMAD fait approuver par
+  l'humain ne quitte pas le brouillon sans son approbation consignée, mot
+  pour mot, dans le registre des demandes (`socle decision`), et son
+  intention figée ne change plus sans une approbation nouvelle.
 """
 
 from __future__ import annotations
@@ -100,3 +104,27 @@ def reports(ctx, r):
                  trad("travail reporté par BMAD, absent du backlog : « {resume} » — le faire entrer : `python3 "
                       ".socle/socle bmad-import`", resume=_titre(rep.resume)),
                  bmad.fichier_des_reports(ctx.racine, ctx.tete))
+
+
+@controle("bmad.approbation", etages=("agent", "git", "ci"))
+def approbation(ctx, r):
+    """Une spec de BMAD approuvée l'est par l'humain, consigné mot pour mot
+    (ADR-0032), et son intention figée ne change plus sans lui."""
+    if not bmad.present(ctx.racine, ctx.tete):
+        return
+    decisions = [d for d in ctx.demandes if d.validee and d.sujet]
+    for s in bmad.specs(ctx.racine, ctx.fichiers, ctx.tete):
+        if not s.approuvee:
+            continue
+        siennes = [d for d in decisions if d.sujet[0] == s.chemin]
+        if not siennes:
+            r.erreur("bmad.approbation",
+                     trad("spec « {statut} » sans l'approbation de l'humain consignée : la consigner, mot pour mot, "
+                          "dès qu'il l'a donnée — `python3 .socle/socle decision \"<la question posée>\" valider "
+                          "--about {chemin} --relayed --by <nom> --quote-file <texte exact>`",
+                          statut=s.statut, chemin=s.chemin), s.chemin)
+        elif not any(d.sujet[1] == s.empreinte_intention for d in siennes):
+            r.erreur("bmad.approbation",
+                     trad("intention figée changée après son approbation ({ids}) : seul l'humain la change — lui "
+                          "faire approuver la nouvelle, et la consigner", ids=", ".join(d.id for d in siennes)),
+                     s.chemin)

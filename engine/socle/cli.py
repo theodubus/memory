@@ -429,6 +429,45 @@ def cmd_answer(args) -> int:
     return 0
 
 
+def cmd_decision(args) -> int:
+    """Une décision prise en séance (ADR-0032) : l'humain a lu la question
+    dans la conversation et y a répondu ; l'agent la consigne avec sa réponse
+    mot pour mot (`--relayed`), ou l'humain le fait lui-même. `--about` nomme
+    ce qu'elle approuve ; une spec de BMAD s'y cite avec l'empreinte de son
+    intention figée."""
+    from socle import bmad, requests as demandes
+
+    projet = _projet(args)
+    citation = args.quote or ""
+    if args.quote_file:
+        citation = Path(args.quote_file).read_text(encoding="utf-8")
+    if args.relayed and not args.by:
+        print(trad("refus : une réponse relayée nomme l'humain qui l'a donnée (--by)"), file=sys.stderr)
+        return 2
+    if not args.relayed and hooks.sous_un_agent(trad("consigner une décision sans --relayed")):
+        return 2
+    sujet = ""
+    if args.about:
+        chemin = args.about
+        texte = outils.lire_a(projet.racine, None, chemin)
+        if texte is None:
+            print(trad("refus : « {chemin} » n'existe pas dans le dépôt", chemin=chemin), file=sys.stderr)
+            return 2
+        spec = bmad.spec(chemin, texte)
+        sujet = f"{chemin}@{spec.empreinte_intention}" if spec else chemin
+    question = Path(args.question_file).read_text(encoding="utf-8") if args.question_file else ""
+    try:
+        chemin, reponse = demandes.ecrire_seance(projet, args.question, question, args.answer,
+                                                 args.by or _auteur(projet), date.today().isoformat(),
+                                                 "conversation" if args.relayed else "terminal", citation, sujet)
+    except ValueError as e:
+        print(trad("refus : {erreur}", erreur=e), file=sys.stderr)
+        return 2
+    print(trad("décision en séance consignée : {chemin}, et sa réponse « {answer} » — à commiter avec la suite.",
+               chemin=chemin, answer=args.answer))
+    return 0
+
+
 def demande_illisible(projet, d) -> str | None:
     """Pourquoi l'humain n'a pas pu lire la demande telle qu'elle est (B-0022),
     ou `None` : `demandes.illisible`."""
@@ -642,7 +681,8 @@ def cmd_checks(args) -> int:
 # Les commandes par public (B-0034, P6) : l'humain en a peu, l'agent
 # davantage, le reste sert aux hooks, à la CI et au moteur lui-même.
 GROUPES = {
-    a_traduire("pour l'humain"): ["help", "install", "init", "state", "answer", "approve", "reviewed", "private install"],
+    a_traduire("pour l'humain"): ["help", "install", "init", "state", "answer", "decision", "approve", "reviewed",
+                                  "private install"],
     a_traduire("pour l'agent"): ["new", "show", "url", "verify", "check", "next-id", "private", "mutation-verdict", "mutation-run",
                      "renumber", "archive", "bmad-import", "checks"],
     a_traduire("internes (hooks, CI, moteur)"): ["hook", "ci", "selftest", "fingerprint"],
@@ -774,6 +814,19 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
     s.add_argument("--quote", help=trad("texte exact de l'humain (avec --relayed)"))
     s.add_argument("--quote-file", help=trad("fichier qui contient le texte exact de l'humain"))
     s.set_defaults(f=cmd_answer)
+
+    s = sp.add_parser("decision", help=trad("consigner une décision prise en séance, avec la réponse de l'humain ; "
+                                            "l'agent y relaie (--relayed) ta réponse mot pour mot"))
+    s.add_argument("question")
+    s.add_argument("answer")
+    s.add_argument("--question-file", help=trad("fichier qui contient la question telle que l'humain l'a lue"))
+    s.add_argument("--about", help=trad("ce que la décision approuve (une spec de BMAD : son intention figée)"))
+    s.add_argument("--by")
+    s.add_argument("--relayed", action="store_true", help=trad("réponse donnée par l'humain dans la "
+                                                               "conversation"))
+    s.add_argument("--quote", help=trad("texte exact de l'humain (avec --relayed)"))
+    s.add_argument("--quote-file", help=trad("fichier qui contient le texte exact de l'humain"))
+    s.set_defaults(f=cmd_decision)
 
     s = sp.add_parser("approve", help=trad("(humain seul) approuver tes changements protégés ; sans --files, "
                                            "ceux qui ont changé"))

@@ -645,11 +645,27 @@ route: '{route}'
 """
 
 
-def avec_bmad(c: Path, statut: str = "done", route: str = "oneshot", approche: str = "Refuser ce qui n'est pas un nombre."):
+SPEC_BMAD = "_bmad-output/implementation-artifacts/spec-x.md"
+
+
+def avec_bmad(c: Path, statut: str = "done", route: str = "oneshot",
+              approche: str = "Refuser ce qui n'est pas un nombre.", report: bool = True):
     ajouter(c, "_bmad/config.toml", BMAD_CONFIG)
-    ajouter(c, "_bmad-output/implementation-artifacts/spec-x.md",
-            BMAD_SPEC.format(statut=statut, route=route, approche=approche))
-    ajouter(c, "_bmad-output/implementation-artifacts/deferred-work.md", BMAD_REPORT)
+    # Écrite telle quelle : son en-tête est sa première ligne.
+    (c / SPEC_BMAD).parent.mkdir(parents=True, exist_ok=True)
+    (c / SPEC_BMAD).write_text(BMAD_SPEC.format(statut=statut, route=route, approche=approche))
+    if report:
+        ajouter(c, "_bmad-output/implementation-artifacts/deferred-work.md", BMAD_REPORT)
+
+
+def approuver_en_seance(a: "Atelier", c: Path):
+    """L'humain approuve la spec dans la conversation ; l'agent consigne sa
+    réponse mot pour mot."""
+    (c.parent / f"{c.name}-citation.txt").write_text("Oui, approuvé : continue.")
+    r = a.socle(c, "decision", "Approuver la spec qui rend double robuste", "valider", "--about", SPEC_BMAD,
+                "--relayed", "--by", "Théo", "--quote-file", str(c.parent / f"{c.name}-citation.txt"))
+    if r.returncode != 0:
+        raise RuntimeError(r.stdout + r.stderr)
 
 
 def _cas() -> list[Cas]:
@@ -747,6 +763,26 @@ def _cas() -> list[Cas]:
     def _(a, c):
         avec_bmad(c)
         return etage_ci(a, c)
+
+    @defaut("spec-approuvee-sans-trace", "spec de BMAD approuvée sans l'approbation de l'humain consignée", "ci",
+            "bmad.approbation")
+    def _(a, c):
+        avec_bmad(c, statut="ready-for-dev", route="dispatch", report=False)
+        return etage_ci(a, c)
+
+    @defaut("intention-changee-apres-approbation", "intention figée d'une spec changée après son approbation", "ci",
+            "bmad.approbation")
+    def _(a, c):
+        avec_bmad(c, statut="ready-for-dev", route="dispatch", report=False)
+        approuver_en_seance(a, c)
+        remplacer(c, SPEC_BMAD, "Refuser ce qui n'est pas un nombre.", "Convertir toute entrée en nombre.")
+        return etage_ci(a, c)
+
+    @defaut("decision-sans-relais", "décision en séance consignée par l'agent sans la citer", "agent",
+            "commande humaine")
+    def _(a, c):
+        lanceur = ".socle/" + "socle"
+        return etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} decision 'Approuver la spec x' valider"})
 
     @defaut("budget-releve", "budget de mémoire relevé", "ci", "cliquet.garde-fous")
     def _(a, c):
@@ -1549,6 +1585,13 @@ def _temoins() -> list[tuple[str, Callable]]:
         r = a.socle(c, "bmad-import")
         if r.returncode != 0 or "B-" not in r.stdout:
             return r.stdout + r.stderr
+        return etage_ci(a, c)
+
+    @temoin("une spec de BMAD approuvée, dont l'approbation de l'humain est consignée en séance, passe la CI "
+            "(ADR-0032)")
+    def _(a, c):
+        avec_bmad(c, statut="in-progress", route="dispatch", report=False)
+        approuver_en_seance(a, c)
         return etage_ci(a, c)
 
     @temoin("un fichier protégé changé par l'humain, qui l'approuve, passe la CI")

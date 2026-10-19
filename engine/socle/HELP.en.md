@@ -71,6 +71,11 @@ end; the agent records your answer with your exact text.
 On your own, in your terminal:
 `python3 .socle/socle answer D-NNNN <answer> --text "<your text>"`.
 
+A question asked in session, while you are there (approving a BMAD spec,
+settling an open question): you answer in the conversation, and the agent
+records at once the question and your answer word for word in the same
+register (`socle decision`).
+
 ### 4. Approve your own protected changes
 
 The policy, the guardrails, the adapter, the hooks, the CI and the engine

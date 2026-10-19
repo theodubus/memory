@@ -37,6 +37,8 @@ CHAMPS = {
     "basculee": {"fr": "basculée", "en": "made-private"},
     "depuis": {"fr": "depuis", "en": "from"},
     "report": {"fr": "report", "en": "deferred"},
+    "forme": {"fr": "forme", "en": "form"},
+    "sujet": {"fr": "sujet", "en": "about"},
 }
 
 # Statuts, par type d'entrée : « abandoned » est un sujet abandonné ou une
@@ -53,7 +55,7 @@ STATUTS = {
 }
 
 # Valeurs d'un champ qui se comparent : `pour : humain`.
-VALEURS = {"humain": {"fr": "humain", "en": "human"}}
+VALEURS = {"humain": {"fr": "humain", "en": "human"}, "seance": {"fr": "séance", "en": "session"}}
 
 # L'en-tête d'un fichier : `<!-- socle: couche=canonique zone=publique -->`.
 ENTETE = {"couche": {"fr": "couche", "en": "layer"}, "zone": {"fr": "zone", "en": "zone"}}
@@ -79,6 +81,9 @@ SECTIONS = {
     "recommandation": {"fr": "Recommandation", "en": "Recommendation"},
     "reponses-possibles": {"fr": "Réponses possibles", "en": "Possible answers"},
 }
+# La section d'une décision prise en séance (ADR-0032) : la question telle
+# que l'humain l'a lue dans la conversation.
+SECTIONS_SEANCE = {"question-posee": {"fr": "Question posée", "en": "Question asked"}}
 REPONSES = {
     "valider": {"fr": "valider", "en": "approve"},
     "refuser": {"fr": "refuser", "en": "reject"},
@@ -152,7 +157,7 @@ _ENTETE = _inverse(ENTETE)
 _COUCHES = _inverse(COUCHES)
 _ZONES = _inverse(ZONES)
 _REFERENCES = _inverse(REFERENCES)
-_SECTIONS = _inverse(SECTIONS)
+_SECTIONS = _inverse({**SECTIONS, **SECTIONS_SEANCE})
 _REPONSES = _inverse(REPONSES)
 _TRAILERS = {outils.cle(m): cle for cle, mots in TRAILERS.items() for m in mots}
 

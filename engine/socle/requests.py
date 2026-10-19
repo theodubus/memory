@@ -83,6 +83,22 @@ class Demande:
         return trad("renvoyée") if langue.reponse(r) == RENVOI else trad("répondue : {reponse}", reponse=r)
 
     @property
+    def seance(self) -> bool:
+        """Une décision prise en séance (ADR-0032) : l'humain a lu la question
+        dans la conversation et y a répondu ; elle s'écrit avec sa réponse."""
+        return bool(self.entree) and langue.valeur(self.entree.meta.get("forme", "")) == "seance"
+
+    @property
+    def sujet(self) -> tuple[str, str] | None:
+        """Ce que la décision approuve : un chemin, et l'empreinte de la
+        version approuvée (`chemin@empreinte`) quand il y en a une."""
+        brut = (self.entree.meta.get("sujet", "") if self.entree else "").strip()
+        if not brut:
+            return None
+        chemin, _, empreinte = brut.partition("@")
+        return chemin.strip(), empreinte.strip()
+
+    @property
     def validee(self) -> bool:
         return self.reponse is not None and langue.reponse(str(self.reponse.get("reponse", ""))) == REPONSE_POSITIVE
 
@@ -92,7 +108,10 @@ class Demande:
 
     def accepte(self, reponse: str) -> bool:
         """Une réponse possible, telle qu'écrite ou dans une autre langue
-        (`approve` pour `valider`)."""
+        (`approve` pour `valider`). En séance, la question n'a pas de liste
+        écrite : toute réponse se consigne."""
+        if self.seance:
+            return bool(reponse.strip())
         return langue.reponse(reponse) in {langue.reponse(p) for p in self.reponses_possibles()}
 
 
@@ -175,6 +194,12 @@ def linter(d: Demande, projet: config.Projet) -> list[str]:
         return fautes
     if len(d.entree.titre) < 10:
         fautes.append(trad("le titre doit énoncer la décision demandée en une phrase"))
+    if d.seance:
+        # Une décision en séance n'attend rien : elle s'écrit avec la réponse
+        # que l'humain vient de donner.
+        fautes.append(trad("décision en séance sans la réponse de l'humain : la consigner avec elle, mot pour mot "
+                           "(`socle decision`)"))
+        return fautes
     nom = Path(d.chemin).name
     if not nom.startswith(d.entree.id):
         fautes.append(trad("le nom du fichier doit commencer par {id}", id=d.entree.id))
@@ -328,6 +353,37 @@ def ecrire_reponse(racine: Path, d: Demande, reponse: str, texte: str, par: str,
     return cr
 
 
+def ecrire_seance(projet: config.Projet, question: str, texte: str, reponse: str, par: str, jour: str,
+                  canal: str, citation: str = "", sujet: str = "") -> tuple[str, str]:
+    """Une décision prise en séance (ADR-0032) : la question que l'humain a
+    lue dans la conversation, avec sa réponse, d'un seul geste, dans le
+    registre des demandes. Rend les chemins de la demande et de sa
+    réponse."""
+    from socle import identifiers as identifiants
+
+    racine = projet.racine
+    if len(question.strip()) < 10:
+        raise ValueError(trad("la question doit énoncer la décision en une phrase"))
+    mem = memoire.Memoire.charger(racine)
+    ident = mem.prochain_id("D", date=jour, pris_ailleurs=identifiants.pris_ailleurs(racine, "D"))
+    lg = langue.du_projet(projet)
+    champs = {"date": jour, "forme": langue.mot(langue.VALEURS, "seance", lg)}
+    if sujet:
+        champs["sujet"] = sujet
+    chemin = f"{projet.chemins.demandes}/{ident}-{memoire.nom_de_fichier(question)}.md"
+    contenu = (f"{langue.entete_fichier('demandes', 'publique', lg)}\n# {ident} — {question.strip()}\n\n"
+               f"{langue.meta(lg, **champs)}\n\n"
+               f"## {langue.mot(langue.SECTIONS_SEANCE, 'question-posee', lg)}\n\n{(texte or question).strip()}\n")
+    outils.ecrire(racine / chemin, contenu)
+    d = charger(racine, None, chemin, contenu)
+    try:
+        cr = ecrire_reponse(racine, d, reponse, "", par, jour, canal=canal, citation=citation)
+    except ValueError:
+        (racine / chemin).unlink()
+        raise
+    return chemin, cr
+
+
 def _toml_str(s: str) -> str:
     return '"' + s.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n") + '"'
 
@@ -355,6 +411,8 @@ def illisible(projet: config.Projet, d: Demande) -> str | None:
     lit pas sur GitHub : l'agent la donne en entier dans la conversation."""
     from socle import links as liens, private as prive
 
+    if d.seance:
+        return None  # l'humain a lu la question dans la conversation
     if memoire.est_prive(d.chemin) and prive.mode(projet) == "chiffre":
         return None
     url, avertissement = liens.lien(projet, d.chemin)

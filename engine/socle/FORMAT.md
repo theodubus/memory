@@ -252,6 +252,20 @@ L'état de la demande se dérive de la réponse : en attente, répondue, renvoy�
 (`contexte-insuffisant` : l'agent la réécrit en une nouvelle demande),
 retirée (métadonnée `retirée : <raison>`). Une demande répondue est gelée.
 
+Une décision prise en séance (ADR-0032) est la forme courte d'une demande :
+l'humain, présent, a lu la question dans la conversation et y a répondu
+(approuver une spec de BMAD, trancher une question ouverte). Elle s'écrit
+avec sa réponse, d'un seul geste, par `socle decision "<question>"
+<réponse> --relayed --by <nom> --quote-file <fichier>` : un titre, la
+métadonnée `forme : séance`, une section `Question posée` qui garde la
+question telle qu'il l'a lue, et sa réponse citée mot pour mot. `sujet :
+<chemin>@<empreinte>` nomme ce qu'elle approuve ; pour une spec de BMAD,
+l'empreinte est celle de son intention figée. Elle ne passe pas par le
+contrat des huit sections ; sans réponse, elle est hors contrat. Le
+contrôle `bmad.approbation` exige qu'une spec que le workflow de BMAD fait
+approuver ait la sienne, et que son intention figée n'ait pas changé
+depuis.
+
 ## La zone privée
 
 Une mémoire privée est une option, choisie par l'humain dans la politique
@@ -395,6 +409,9 @@ interne, que `socle show` dit dans la langue du projet (B-0059).
 | champ `basculee` | basculée | made-private |
 | champ `depuis` | depuis | from |
 | champ `report` | report | deferred |
+| champ `forme` | forme | form |
+| champ `sujet` | sujet | about |
+| valeur `seance` | séance | session |
 | statut F `mesure` | mesuré | measured |
 | statut F `suppose` | supposé | assumed |
 | statut F `refute` | réfuté | refuted |

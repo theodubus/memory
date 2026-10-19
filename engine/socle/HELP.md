@@ -73,6 +73,11 @@ exact. `contexte-insuffisant` la lui renvoie, et il la réécrit.
 Seul dans ton terminal :
 `python3 .socle/socle answer D-NNNN <réponse> --text "<ton texte>"`.
 
+Une question posée en séance, pendant que tu es là (approuver une spec de
+BMAD, trancher une question ouverte) : tu réponds dans la conversation, et
+l'agent consigne aussitôt la question et ta réponse mot pour mot dans le
+même registre (`socle decision`).
+
 ### 4. Approuver tes propres changements protégés
 
 La politique, les garde-fous, l'adaptateur, les hooks, la CI et le moteur
