@@ -12,13 +12,12 @@ commune de BMAD et du socle passe. B-0069 est en cours : un agent réel
 éprouve la personnalisation de BMAD dans un projet jetable du dossier de
 travail de la session.
 
-Question de Théo en attente de son choix : « Les deux memoire (socle et
-bmad) et facon de me consulter ne sont pas redondantes ? On a pas une
-meilleure facon de marier les deux ? ». Proposé : un seul propriétaire
-par nature d'information (planifier à BMAD, prouver et retenir au socle,
-qui lit les sorties de BMAD sans les recopier), un seul registre des
-décisions de Théo en deux formats (en séance, en file). B-0069 suit son
-choix.
+Théo a validé le mariage (J-2026-10-19-J, ADR-0032) : un propriétaire par
+nature d'information, un seul registre de ses décisions en deux formats.
+Deux sessions réelles sous BMAD et le socle passent (J-2026-10-19-K,
+J-2026-10-19-L) ; B-0069 réalise le mariage, par morceaux : la
+personnalisation posée par l'installeur, les reports aspirés au backlog,
+l'état qui lit BMAD, les décisions en séance consignées.
 
 L'essai de la CI des adaptateurs sur GitHub est fini (F-0019, F-0020,
 F-0021) ; le dépôt d'essai ne sert plus, Théo peut le supprimer.
