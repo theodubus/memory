@@ -44,6 +44,7 @@ REGLES = [
     (("requests", "internal_id_patterns"), "couvre"),
     (("tests", "spec_paths"), "inclus"),
     (("adoption", "warn_only"), "inclus"),
+    (("thirdparty", "paths"), "inclus"),
 ]
 
 

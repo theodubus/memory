@@ -126,6 +126,35 @@ def _balayage_planifie(cible: Path, texte_adaptateur: str) -> tuple[bool, str]:
     return True, trad("balayage de mutation hebdomadaire posé : {workflow}", workflow=mutation.WORKFLOW)
 
 
+# Les outils tiers que l'installeur reconnaît : leur nom, ce qui trahit leur
+# présence, et les chemins de leurs fichiers, qu'aucun contrôle ne juge
+# (ADR-0031). Leurs sorties (les documents qu'ils écrivent pour le projet)
+# n'en sont pas : elles sont au projet.
+OUTILS_TIERS = (
+    ("BMAD Method", ("_bmad", "*/skills/bmad-*", "skills/bmad-*"), ["_bmad/**", "**/skills/bmad-*/**"]),
+)
+
+
+def outils_tiers(cible: Path) -> list[tuple[str, list[str]]]:
+    """Les outils tiers présents dans le projet, avec leurs chemins : un
+    dossier qui trahit l'outil suffit, commité ou non."""
+    return [(nom, chemins) for nom, indices, chemins in OUTILS_TIERS
+            if any(d.is_dir() for i in indices for d in cible.glob(i))]
+
+
+def declarer_tiers(texte: str, chemins: list[str]) -> str:
+    """Les garde-fous, avec ces chemins tiers ajoutés à leur liste."""
+    actuels = (tomllib.loads(texte).get("thirdparty") or {}).get("paths", [])
+    manquants = [c for c in chemins if c not in actuels]
+    if not manquants:
+        return texte
+    liste = json.dumps(list(actuels) + manquants)
+    if re.search(r"(?m)^\[thirdparty\]\s*$", texte):
+        return re.sub(r"(?ms)^(\[thirdparty\]\s*$.*?^paths\s*=\s*)\[[^\]]*\]", lambda m: m.group(1) + liste,
+                      texte, count=1)
+    return texte.rstrip("\n") + "\n\n[thirdparty]\n" + f"paths = {liste}\n"
+
+
 def garde_fous_initiaux(cible: Path, texte_adaptateur: str, ch: config.Chemins = config.FORMAT_ACTUEL,
                         lg: str = "fr") -> str:
     """Les garde-fous du gabarit, avec chaque module qui porte déjà du code
@@ -139,11 +168,14 @@ def garde_fous_initiaux(cible: Path, texte_adaptateur: str, ch: config.Chemins =
                    rf'^"{re.escape(config.FORMAT_2.backlog)}" = \{{[^}}]*\}}',
                    f'"{ch.backlog}/*.md" = {{ max_bytes = {migrations.BUDGET_SUJET} }}' if ch.backlog_en_dossier
                    else f'"{ch.backlog}" = {{ max_bytes = 24000 }}', gabarit("guardrails.toml", lg))
+    tiers = [c for _, chemins in outils_tiers(cible) for c in chemins]
+    texte = declarer_tiers(texte, tiers)
     cap = tomllib.loads(texte_adaptateur).get("capabilities", {}).get("mutation", {})
     if "command" not in cap:
         return texte
     porte = re.compile(cap.get("has_code", r"."))
-    fichiers = [f for f in outils.fichiers_courants(cible) if not f.startswith(config.DOSSIER + "/")]
+    fichiers = [f for f in outils.fichiers_courants(cible)
+                if not f.startswith(config.DOSSIER + "/") and not outils.correspond(f, tiers)]
     modules = [m for m in outils.filtrer(fichiers, cap.get("modules", []), cap.get("modules_exclude", []))
                if porte.search(outils.lire_a(cible, None, m) or "")]
     if not modules:
@@ -296,6 +328,18 @@ def _poser_configuration(cible: Path, texte_adaptateur: str, ancien: dict, prive
         else:
             outils.ecrire(p, contenu)
             journal.append(trad("{nom} posé", nom=nom))
+    gf = cible / ch.garde_fous
+    for outil, chemins in outils_tiers(cible):
+        texte = gf.read_text(encoding="utf-8")
+        nouveau = declarer_tiers(texte, chemins)
+        if nouveau != texte:
+            gf.write_text(nouveau, encoding="utf-8")
+            journal.append(trad("{outil} : ses fichiers déclarés tiers, qu'aucun contrôle ne juge ({chemins}) — un "
+                                "assouplissement des garde-fous, à approuver : `python3 .socle/socle approve "
+                                "--keys thirdparty.paths`", outil=outil, chemins=", ".join(chemins)))
+        else:
+            journal.append(trad("{outil} : ses fichiers sont tiers, qu'aucun contrôle ne juge ({chemins})",
+                                outil=outil, chemins=", ".join(chemins)))
 
     return lg, journal
 

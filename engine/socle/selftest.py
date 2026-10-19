@@ -616,6 +616,10 @@ Vérifié : rien. Supposé : que c'est mieux.
 """
 
 
+# La liste vide des chemins tiers, telle que l'installeur la pose.
+TIERS_VIDE = "\npaths = []\n"
+
+
 def _cas() -> list[Cas]:
     cas = []
 
@@ -693,6 +697,18 @@ def _cas() -> list[Cas]:
             "ci", "cliquet.garde-fous")
     def _(a, c):
         remplacer(c, ".socle/guardrails.toml", "repos = []", 'repos = ["x.patch"]')
+        return etage_ci(a, c)
+
+    @defaut("tiers-declare", "chemin tiers déclaré sans validation, pour qu'un fichier du projet échappe aux "
+            "contrôles", "ci", "cliquet.garde-fous")
+    def _(a, c):
+        remplacer(c, ".socle/guardrails.toml", TIERS_VIDE, '\npaths = ["calc.py"]\n')
+        return etage_ci(a, c)
+
+    @defaut("tiers-sur-la-memoire", "chemin tiers qui couvrirait la mémoire", "ci", "config")
+    def _(a, c):
+        remplacer(c, ".socle/guardrails.toml", TIERS_VIDE, '\npaths = ["memory/**"]\n')
+        a.socle(c, "approve", "--keys", "thirdparty.paths", "--text", "La mémoire comme outil")
         return etage_ci(a, c)
 
     @defaut("budget-releve", "budget de mémoire relevé", "ci", "cliquet.garde-fous")
@@ -1477,6 +1493,18 @@ def _temoins() -> list[tuple[str, Callable]]:
                   '"memory/active.md" = { max_bytes = 9000 }')
         r = a.socle(c, "approve", "--keys", 'budgets."memory/active.md".max_bytes', "--text", "Plus de place")
         return (r.stdout + r.stderr) if r.returncode != 0 else etage_ci(a, c)
+
+    @temoin("les fichiers d'un outil tiers, déclaré par l'humain qui l'approuve, échappent aux contrôles : la CI "
+            "passe (ADR-0031)")
+    def _(a, c):
+        remplacer(c, ".socle/guardrails.toml", TIERS_VIDE, '\npaths = ["_outil/**"]\n')
+        r = a.socle(c, "approve", "--keys", "thirdparty.paths", "--text", "Les fichiers de l'outil")
+        if r.returncode != 0:
+            return r.stdout + r.stderr
+        ajouter(c, "_outil/aide.py", "def aide(x):\n    return x\n")
+        ajouter(c, "_outil/test_outil.py", "def test_rien():\n    pass\n")
+        ajouter(c, "_outil/LISEZMOI.md", "Chaque constat cite `file:line`, et F-0099.\n")
+        return etage_ci(a, c)
 
     @temoin("un fichier protégé changé par l'humain, qui l'approuve, passe la CI")
     def _(a, c):

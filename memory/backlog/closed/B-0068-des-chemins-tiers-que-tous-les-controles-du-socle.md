@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0068 — Des chemins tiers, que tous les contrôles du socle ignorent
 
-> statut : en cours · origine : J-2026-10-19-G · lu : backlog@71c25a15
+> statut : fait · origine : J-2026-10-19-G · lu : backlog@71c25a15 · ref : J-2026-10-19-I
 
 Mesuré à l'essai de cohabitation avec BMAD (F-0022) : les fichiers d'un
 outil tiers installé dans le projet (ses skills, ses scripts) sont jugés

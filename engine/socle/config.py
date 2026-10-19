@@ -14,6 +14,7 @@ les commentaires et messages en français.
 
 from __future__ import annotations
 
+import re
 import tomllib
 from dataclasses import dataclass, field, replace
 from functools import lru_cache
@@ -279,6 +280,31 @@ class Projet:
         return [self.chemins.archives + "/**", self.dossier_moteur.rstrip("/") + "/**"] + list(
             self.gf("references", "exclude", defaut=[])
         )
+
+    def chemins_tiers(self) -> list[str]:
+        """Les fichiers d'un outil tiers installé dans le projet (ses skills,
+        ses scripts) : aucun contrôle ne les juge (ADR-0031). Un motif qui
+        couvrirait un fichier du socle, de la mémoire ou de la politique est
+        écarté, et signalé par `erreurs_tiers`."""
+        motifs = self.gf("thirdparty", "paths", defaut=[]) or []
+        return [m for m in motifs if isinstance(m, str) and not self._couvre_le_socle(m)]
+
+    def erreurs_tiers(self) -> list[str]:
+        """Les motifs de chemins tiers qui couvriraient un fichier que le
+        socle garde : ils sont ignorés, et la configuration est en erreur."""
+        motifs = self.gf("thirdparty", "paths", defaut=[]) or []
+        return [m for m in motifs if not isinstance(m, str) or self._couvre_le_socle(m)]
+
+    def _couvre_le_socle(self, motif: str) -> bool:
+        ch = self.chemins
+        gardes = [DOSSIER + "/x", ch.memoire + "/x", "AGENTS.md", "CLAUDE.md", ".claude/settings.json"]
+        gardes += [re.sub(r"\*+", "x", m) for m in self.pol("protected", "paths", defaut=[]) or []]
+        return any(outils.correspond(g, [motif]) for g in gardes)
+
+    def hors_tiers(self, chemins):
+        """Les chemins donnés, sans ceux d'un outil tiers."""
+        tiers = self.chemins_tiers()
+        return [c for c in chemins if not outils.correspond(c, tiers)] if tiers else list(chemins)
 
     def chemins_proteges(self) -> list[str]:
         res = list(self.pol("protected", "paths", defaut=[]))

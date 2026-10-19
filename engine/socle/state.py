@@ -225,7 +225,7 @@ def _git(racine, projet) -> list[str]:
             res.append(trad("  … et {n} autre(s)", n=len(non) - 10))
         base = outils.base_de_travail(racine)
         if base:
-            changes = outils.fichiers_changes(racine, base)
+            changes = projet.hors_tiers(outils.fichiers_changes(racine, base))
             code = outils.filtrer(changes, projet.chemins_code())
             docs = [c for c in changes if c.endswith(".md")]
             mem = [c for c in changes if memoire.est_memoire(c)]

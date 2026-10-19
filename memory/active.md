@@ -5,13 +5,20 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-L'essai de cohabitation avec BMAD Method est fait (B-0067, J-2026-10-19-G),
-sans agent réel : aucun conflit de fichiers ; le socle refuse les fichiers
-de BMAD faute de notion de fichiers tiers (F-0022, B-0068) ; BMAD finit son
-travail sans toucher la mémoire du socle, mais sa personnalisation
-officielle peut lui faire porter la mémoire et la fin de tour du socle
-(F-0023, B-0069). Les deux projets d'essai sont dans le dossier de travail
-de la session, jetables.
+L'essai de cohabitation avec BMAD Method est fait (B-0067, J-2026-10-19-G).
+B-0068 est fait (ADR-0031, J-2026-10-19-I) : les fichiers d'un outil tiers,
+déclarés par l'installeur, échappent à tous les contrôles ; l'installation
+commune de BMAD et du socle passe. B-0069 est en cours : un agent réel
+éprouve la personnalisation de BMAD dans un projet jetable du dossier de
+travail de la session.
+
+Question de Théo en attente de son choix : « Les deux memoire (socle et
+bmad) et facon de me consulter ne sont pas redondantes ? On a pas une
+meilleure facon de marier les deux ? ». Proposé : un seul propriétaire
+par nature d'information (planifier à BMAD, prouver et retenir au socle,
+qui lit les sorties de BMAD sans les recopier), un seul registre des
+décisions de Théo en deux formats (en séance, en file). B-0069 suit son
+choix.
 
 L'essai de la CI des adaptateurs sur GitHub est fini (F-0019, F-0020,
 F-0021) ; le dépôt d'essai ne sert plus, Théo peut le supprimer.

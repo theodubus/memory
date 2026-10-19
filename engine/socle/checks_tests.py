@@ -484,7 +484,7 @@ def regression(ctx, r):
     for c in correctifs:
         sha, parent = c["sha"], c["parents"][0]
         sujet = c["message"].strip().splitlines()[0]
-        touches = outils.fichiers_changes(ctx.racine, parent, sha)
+        touches = ctx.projet.hors_tiers(outils.fichiers_changes(ctx.racine, parent, sha))
         tests = [t for t in outils.filtrer(touches, motifs) if outils.lire_a(ctx.racine, sha, t) is not None]
         if tests:
             fichiers = {t: outils.lire_a(ctx.racine, sha, t) or "" for t in tests}

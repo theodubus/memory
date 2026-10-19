@@ -2161,4 +2161,22 @@ MESSAGES: dict[str, str] = {
         "mutation sweep merged ten days ago, which GitHub does not know",
     "un balayage de mutation fusionné aujourd'hui, que GitHub ne connaît pas encore, passe la CI":
         "a mutation sweep merged today, which GitHub does not know yet, passes the CI",
+    "chemin tiers « {motif} » ignoré : il couvrirait un fichier du socle, de la mémoire ou de la politique, que les "
+    "contrôles doivent juger":
+        "third-party path “{motif}” ignored: it would cover a file of the socle, of the memory or of the policy, "
+        "which the checks must judge",
+    "{outil} : ses fichiers déclarés tiers, qu'aucun contrôle ne juge ({chemins}) — un assouplissement des "
+    "garde-fous, à approuver : `python3 .socle/socle approve --keys thirdparty.paths`":
+        "{outil}: its files declared third-party, which no check judges ({chemins}) — a relaxation of the "
+        "guardrails, to approve: `python3 .socle/socle approve --keys thirdparty.paths`",
+    "{outil} : ses fichiers sont tiers, qu'aucun contrôle ne juge ({chemins})":
+        "{outil}: its files are third-party, which no check judges ({chemins})",
+    "chemin tiers déclaré sans validation, pour qu'un fichier du projet échappe aux contrôles":
+        "third-party path declared without validation, so that a file of the project escapes the checks",
+    "chemin tiers qui couvrirait la mémoire":
+        "third-party path that would cover the memory",
+    "les fichiers d'un outil tiers, déclaré par l'humain qui l'approuve, échappent aux contrôles : la CI passe "
+    "(ADR-0031)":
+        "the files of a third-party tool, declared by the human who approves it, escape the checks: the CI passes "
+        "(ADR-0031)",
 }

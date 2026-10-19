@@ -64,13 +64,17 @@ class Contexte:
     def racine(self) -> Path:
         return self.projet.racine
 
+    # Les fichiers d'un outil tiers (ADR-0031) sont hors de ces listes :
+    # aucun contrôle ne les voit, ni à la tête ni à la base.
+
     @cached_property
     def fichiers(self) -> list[str]:
         if self.tete is None:
             # Le clone du dépôt privé (mode compagnon) est ignoré par git,
             # mais c'est de la mémoire : les contrôles la lisent.
-            return sorted(set(outils.fichiers_courants(self.racine)) | set(memoire.fichiers_compagnon(self.racine)))
-        return outils.fichiers_a(self.racine, self.tete)
+            tous = set(outils.fichiers_courants(self.racine)) | set(memoire.fichiers_compagnon(self.racine))
+            return self.projet.hors_tiers(sorted(tous))
+        return self.projet.hors_tiers(outils.fichiers_a(self.racine, self.tete))
 
     @cached_property
     def format_base(self) -> config.Chemins | None:
@@ -87,7 +91,7 @@ class Contexte:
         res = outils.fichiers_a(self.racine, self.base) if self.base else []
         if self.migre:
             res = [config.traduire(c, vers=self.projet.chemins.format) for c in res]
-        return res
+        return self.projet.hors_tiers(res)
 
     def lire(self, chemin: str) -> str | None:
         """Le texte d'un fichier de la tête ; un fichier privé chiffré ici
@@ -129,7 +133,7 @@ class Contexte:
         `tete` est None)."""
         if not self.base:
             return list(self.fichiers)
-        return outils.fichiers_changes(self.racine, self.base, self.tete)
+        return self.projet.hors_tiers(outils.fichiers_changes(self.racine, self.base, self.tete))
 
     @cached_property
     def renommes(self) -> dict[str, str]:
@@ -137,7 +141,9 @@ class Contexte:
         à la tête, tels que git les reconnaît (ADR-0027)."""
         if not self.base:
             return {}
-        return outils.renommes(self.racine, self.base, self.tete)
+        tiers = self.projet.chemins_tiers()
+        return {a: b for a, b in outils.renommes(self.racine, self.base, self.tete).items()
+                if not outils.correspond(b, tiers)}
 
     @cached_property
     def rev_commit(self) -> str:
@@ -208,6 +214,10 @@ def executer(ctx: Contexte, ids: list[str] | None = None):
     rapport = Rapport()
     for chemin, erreur in ctx.projet.erreurs_config:
         rapport.erreur("config", erreur, chemin)
+    for motif in ctx.projet.erreurs_tiers():
+        rapport.erreur("config", trad("chemin tiers « {motif} » ignoré : il couvrirait un fichier du socle, de la "
+                                      "mémoire ou de la politique, que les contrôles doivent juger", motif=motif),
+                       ctx.projet.chemins.garde_fous)
     # Mode adoption : sur un projet existant, ces contrôles avertissent au lieu
     # d'échouer, le temps de résorber l'existant. Retirer un contrôle de la
     # liste durcit (libre) ; en ajouter un assouplit (cliquet).
