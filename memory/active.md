@@ -10,9 +10,8 @@ workflow « Socle » et le balayage de mutation passent dans les cinq
 langages (F-0019, F-0020) ; B-0039 est fait. En chemin, GitHub n'enregistre
 un workflow sans déclencheur `push` qu'au push qui modifie son fichier
 (F-0021) : `mutation.vivante` le dit et le remède le corrige (B-0063, fait).
-Le dépôt d'essai et sa session (`session_01L5X5DzSiY59tjT4e5kfzCs`) ne
-servent plus : Théo peut supprimer l'un, et l'autre s'archive sur son
-accord.
+Le dépôt d'essai ne sert plus, Théo peut le supprimer ; sa session est
+archivée (J-2026-10-19-B).
 
 Les sujets clos du backlog sont rangés dans le sous-dossier `closed`
 (D-0028, D-0029, ADR-0030, J-2026-10-15-E) : `socle archive` range un sujet
@@ -41,11 +40,18 @@ B-0048 et B-0018 restent ouverts, « on se le garde en tete et on voit si
   être déclaré racine ; à chaque reprise, vérifier que l'état a été
   injecté, sinon le dire à Théo et ne rien pousser (J-2026-10-14-S).
 
+- Pas de rétro-compatibilité avec une version antérieure du socle : ni
+  sujet de backlog, ni travail pour qu'un projet installé par une version
+  antérieure continue de marcher ; Théo : « ne te mets pas des éléments de
+  backlog de rétro-compatibilité avec une version antérieure / Le projet
+  est EN DEV », « considere que pour le moment personne ne l'a encore
+  utilisé » (J-2026-10-19-A).
+
 ## Prochaines étapes
 
 1. L'ordre validé par Théo (J-2026-10-17-A) est fait : B-0062
-   (J-2026-10-17-B ; la session d'essai éprouve les nouvelles versions sur
-   GitHub, si le dépôt d'essai existe encore ; la CI de ce dépôt revient à
-   Théo, B-0065), puis B-0064 (J-2026-10-17-C). Proposer la suite.
+   (J-2026-10-17-B ; ses versions restent supposées sur GitHub,
+   J-2026-10-19-B ; la CI de ce dépôt revient à Théo, B-0065), puis B-0064
+   (J-2026-10-17-C). Proposer la suite.
 2. Plus tard : B-0046 (que Théo reprendra), B-0040 (dotnet absent d'ici) ;
    B-0042 attend sa propre demande.
