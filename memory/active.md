@@ -53,11 +53,10 @@ B-0048 et B-0018 restent ouverts, « on se le garde en tete et on voit si
 
 ## Prochaines étapes
 
-1. Proposé à Théo (J-2026-10-19-E), en attente de son choix : l'essai de
-   cohabitation avec BMAD (B-0067) avant les sujets qui la recoupent
-   (B-0009, B-0042, B-0046, B-0054, B-0055, B-0066) ; les sujets du socle
-   seul (B-0006, B-0008, B-0010, B-0011, B-0012, B-0040) se font avant ou
-   après, sans dépendre de l'essai.
+1. B-0067 en cours, validé par Théo (J-2026-10-19-F) : l'essai de
+   cohabitation avec BMAD, avant les sujets qui la recoupent (B-0009,
+   B-0042, B-0046, B-0054, B-0055, B-0066) ; les sujets du socle seul
+   (B-0006, B-0008, B-0010, B-0011, B-0012, B-0040) n'en dépendent pas.
 2. B-0065 revient à Théo, quand il aura son ordinateur : rien ne presse,
    la CI passe avec les anciennes actions.
 3. Plus tard : B-0046 (que Théo reprendra), B-0040 (dotnet absent d'ici) ;
