@@ -48,15 +48,19 @@ garde en tete et on voit si ça finit par etre bloquant ».
   les avantages de mon projet (actuel + prévu) et du leur » (BMAD Method) ;
   ni fusion des codes ni réimplémentation de BMAD, leur cohabitation
   (J-2026-10-19-E, B-0067).
+- Sessions d'un agent réel : « Tu as mon autorisation pour utiliser
+  l'abonnement » (Théo, J-2026-10-19-H) ; chacune plafonnée à l'équivalent
+  de 2 dollars, et sa consommation rapportée.
+- On conçoit pour une installation commune du socle et de BMAD : « Aucun
+  projet n'est deja equipé du socle » (Théo, J-2026-10-19-H).
 
 ## Prochaines étapes
 
-1. Proposé à Théo après l'essai (J-2026-10-19-G), en attente de son choix :
-   B-0068 (les chemins tiers, sans quoi rien ne cohabite), puis B-0069
-   (brancher le socle sur BMAD par sa personnalisation, avec un essai sur
-   un agent réel qui demande sa validation pour la dépense) ; ensuite les
-   sujets qui recoupent BMAD, conçus pour la combinaison (B-0009, B-0042,
-   B-0046, B-0054, B-0055, B-0066). Les sujets du socle seul (B-0006,
-   B-0008, B-0010, B-0011, B-0012, B-0040) n'en dépendent pas.
+1. Validé par Théo (J-2026-10-19-H) : B-0068 (les chemins tiers, déclarés
+   par l'installeur), puis B-0069 (brancher le socle sur BMAD par sa
+   personnalisation, éprouvé sur un agent réel, planification comprise).
+   Ensuite les sujets qui recoupent BMAD, conçus pour la combinaison
+   (B-0009, B-0042, B-0046, B-0054, B-0066) ; les sujets du socle seul
+   n'en dépendent pas.
 2. B-0065 revient à Théo, quand il aura son ordinateur : rien ne presse,
    la CI passe avec les anciennes actions.
