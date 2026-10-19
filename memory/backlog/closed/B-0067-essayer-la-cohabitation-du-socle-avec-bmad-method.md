@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0067 — Essayer la cohabitation du socle avec BMAD Method, avant les sujets qui la recoupent
 
-> statut : en cours · origine : J-2026-10-19-E · lu : backlog@46629a4e
+> statut : fait · origine : J-2026-10-19-E · lu : backlog@46629a4e · ref : J-2026-10-19-G
 
 Le but de Théo (texte exact au journal) : un produit pratique qui combine
 les avantages du socle, actuels et prévus, et ceux de BMAD Method. Ni

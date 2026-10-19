@@ -5,21 +5,19 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-L'essai de la CI des adaptateurs sur GitHub est fini (D-0025, D-0027) : le
-workflow « Socle » et le balayage de mutation passent dans les cinq
-langages (F-0019, F-0020) ; B-0039 est fait. En chemin, GitHub n'enregistre
-un workflow sans déclencheur `push` qu'au push qui modifie son fichier
-(F-0021) : `mutation.vivante` le dit et le remède le corrige (B-0063, fait).
-Le dépôt d'essai ne sert plus, Théo peut le supprimer ; sa session est
-archivée (J-2026-10-19-B).
+L'essai de cohabitation avec BMAD Method est fait (B-0067, J-2026-10-19-G),
+sans agent réel : aucun conflit de fichiers ; le socle refuse les fichiers
+de BMAD faute de notion de fichiers tiers (F-0022, B-0068) ; BMAD finit son
+travail sans toucher la mémoire du socle, mais sa personnalisation
+officielle peut lui faire porter la mémoire et la fin de tour du socle
+(F-0023, B-0069). Les deux projets d'essai sont dans le dossier de travail
+de la session, jetables.
 
-Les sujets clos du backlog sont rangés dans le sous-dossier `closed`
-(D-0028, D-0029, ADR-0030, J-2026-10-15-E) : `socle archive` range un sujet
-qu'on clôt.
+L'essai de la CI des adaptateurs sur GitHub est fini (F-0019, F-0020,
+F-0021) ; le dépôt d'essai ne sert plus, Théo peut le supprimer.
 
-D-0026 est répondue `rien` : le refus reste, son message est plus clair ;
-B-0048 et B-0018 restent ouverts, « on se le garde en tete et on voit si
-ça finit par etre bloquant ».
+D-0026 est répondue `rien` : B-0048 et B-0018 restent ouverts, « on se le
+garde en tete et on voit si ça finit par etre bloquant ».
 
 ## Consignes en cours
 
@@ -53,11 +51,12 @@ B-0048 et B-0018 restent ouverts, « on se le garde en tete et on voit si
 
 ## Prochaines étapes
 
-1. B-0067 en cours, validé par Théo (J-2026-10-19-F) : l'essai de
-   cohabitation avec BMAD, avant les sujets qui la recoupent (B-0009,
-   B-0042, B-0046, B-0054, B-0055, B-0066) ; les sujets du socle seul
-   (B-0006, B-0008, B-0010, B-0011, B-0012, B-0040) n'en dépendent pas.
+1. Proposé à Théo après l'essai (J-2026-10-19-G), en attente de son choix :
+   B-0068 (les chemins tiers, sans quoi rien ne cohabite), puis B-0069
+   (brancher le socle sur BMAD par sa personnalisation, avec un essai sur
+   un agent réel qui demande sa validation pour la dépense) ; ensuite les
+   sujets qui recoupent BMAD, conçus pour la combinaison (B-0009, B-0042,
+   B-0046, B-0054, B-0055, B-0066). Les sujets du socle seul (B-0006,
+   B-0008, B-0010, B-0011, B-0012, B-0040) n'en dépendent pas.
 2. B-0065 revient à Théo, quand il aura son ordinateur : rien ne presse,
    la CI passe avec les anciennes actions.
-3. Plus tard : B-0046 (que Théo reprendra), B-0040 (dotnet absent d'ici) ;
-   B-0042 attend sa propre demande.
