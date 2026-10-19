@@ -36,6 +36,7 @@ CHAMPS = {
     "reformulee": {"fr": "reformulée", "en": "reworded"},
     "basculee": {"fr": "basculée", "en": "made-private"},
     "depuis": {"fr": "depuis", "en": "from"},
+    "report": {"fr": "report", "en": "deferred"},
 }
 
 # Statuts, par type d'entrée : « abandoned » est un sujet abandonné ou une
@@ -109,6 +110,8 @@ TEXTES = {
     "texte-basculee": {"fr": "Son contenu est dans la mémoire privée.", "en": "Its content is in the private memory."},
     "archive-backlog": {"fr": "Backlog clos archivé", "en": "Closed backlog archived"},
     "titre-journal": {"fr": "Journal", "en": "Journal"},
+    "report-bmad": {"fr": "Reporté par BMAD depuis « {source} » : {resume}",
+                    "en": "Deferred by BMAD from “{source}”: {resume}"},
 }
 
 # Les entrées que `socle new` pose, par langue.

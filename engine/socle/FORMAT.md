@@ -181,6 +181,13 @@ bascule en privé copie le fichier sous `private/backlog/` (ou son
 sous-dossier des clos), et un fichier public garde l'identifiant, comme
 pour une décision.
 
+Avec BMAD Method (ADR-0032), un travail que BMAD reporte (sa liste des
+travaux reportés) entre au backlog par `socle bmad-import` : un sujet par
+report, dont l'`origine` est cette liste et le champ `report` l'empreinte
+du report, qui le reconnaît ; son corps cite la spec d'où il vient sans la
+recopier. Le contrôle `bmad.reports` refuse un report resté hors du
+backlog.
+
 Au format 2, le backlog est un seul fichier, `backlog.md`, et `socle archive`
 déplace les entrées closes dans une entrée de journal datée, en sous-titres :
 
@@ -387,6 +394,7 @@ interne, que `socle show` dit dans la langue du projet (B-0059).
 | champ `reformulee` | reformulée | reworded |
 | champ `basculee` | basculée | made-private |
 | champ `depuis` | depuis | from |
+| champ `report` | report | deferred |
 | statut F `mesure` | mesuré | measured |
 | statut F `suppose` | supposé | assumed |
 | statut F `refute` | réfuté | refuted |

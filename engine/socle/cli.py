@@ -614,6 +614,22 @@ def cmd_archive(args) -> int:
     return archivage.archiver_backlog(_projet(args))
 
 
+def cmd_bmad_import(args) -> int:
+    """Fait entrer au backlog les travaux que BMAD a reportés (ADR-0032)."""
+    from socle import checks_bmad as controles_bmad
+
+    try:
+        poses = controles_bmad.importer(_projet(args))
+    except RuntimeError as e:
+        print(e, file=sys.stderr)
+        return 2
+    if not poses:
+        print(trad("aucun travail reporté par BMAD à faire entrer au backlog"))
+    for ident, chemin in poses:
+        print(f"{ident}\t{chemin}")
+    return 0
+
+
 def cmd_checks(args) -> int:
     from socle import context as contexte
 
@@ -628,7 +644,7 @@ def cmd_checks(args) -> int:
 GROUPES = {
     a_traduire("pour l'humain"): ["help", "install", "init", "state", "answer", "approve", "reviewed", "private install"],
     a_traduire("pour l'agent"): ["new", "show", "url", "verify", "check", "next-id", "private", "mutation-verdict", "mutation-run",
-                     "renumber", "archive", "checks"],
+                     "renumber", "archive", "bmad-import", "checks"],
     a_traduire("internes (hooks, CI, moteur)"): ["hook", "ci", "selftest", "fingerprint"],
 }
 
@@ -820,6 +836,9 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
 
     s = sp.add_parser("archive", help=trad("range les sujets clos du backlog à l'écart des ouverts (au format 2 : les archive dans le journal)"))
     s.set_defaults(f=cmd_archive)
+
+    s = sp.add_parser("bmad-import", help=trad("fait entrer au backlog les travaux que BMAD a reportés"))
+    s.set_defaults(f=cmd_bmad_import)
 
     s = sp.add_parser("checks", help=trad("liste des contrôles"))
     s.set_defaults(f=cmd_checks)

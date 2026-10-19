@@ -149,6 +149,10 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
     except Exception as e:
         lignes.append(trad("demandes : illisibles ({erreur})", erreur=f"{type(e).__name__}: {e}"))
     try:
+        lignes += _bmad(projet)
+    except Exception as e:
+        lignes.append(trad("BMAD : illisible ({erreur})", erreur=f"{type(e).__name__}: {e}"))
+    try:
         from socle import human as humain
 
         elements = humain.a_faire(projet)
@@ -205,6 +209,32 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
                 lignes.append(f"--- {chemin} ---")
                 lignes.append(texte.rstrip())
     return "\n".join(lignes)
+
+
+def _bmad(projet: config.Projet) -> list[str]:
+    """Ce que BMAD planifie et que le socle lit sans le recopier (ADR-0032) :
+    les specs non finies, les stories en cours ou en revue, les reports
+    encore hors du backlog."""
+    from socle import bmad, checks_bmad as controles_bmad
+
+    racine = projet.racine
+    if not bmad.present(racine):
+        return []
+    res = []
+    ouvertes = [s for s in bmad.specs(racine, outils.fichiers_courants(racine)) if s.statut != bmad.FINIE]
+    res.append(trad("BMAD     : {n} spec(s) non finie(s)", n=len(ouvertes)))
+    res += [f"  {s.chemin} ({s.statut}, {s.route or '?'})" for s in ouvertes]
+    impl = bmad.dossiers(racine)[1]
+    etats = bmad.sprint(outils.lire_a(racine, None, f"{impl}/{bmad.SPRINT}") or "")
+    for statut in ("in-progress", "review"):
+        stories = [k for k, v in etats.items() if v == statut and not k.startswith("epic-")]
+        if stories:
+            res.append(trad("  sprint, {statut} : {liste}", statut=statut, liste=", ".join(stories)))
+    hors = controles_bmad.reports_a_entrer(projet, memoire.Memoire.charger(racine))
+    if hors:
+        res.append(trad("  {n} travail(aux) reporté(s) par BMAD hors du backlog : `python3 .socle/socle "
+                        "bmad-import`", n=len(hors)))
+    return res
 
 
 def _git(racine, projet) -> list[str]:

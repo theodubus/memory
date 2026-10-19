@@ -619,6 +619,38 @@ Vérifié : rien. Supposé : que c'est mieux.
 # La liste vide des chemins tiers, telle que l'installeur la pose.
 TIERS_VIDE = "\npaths = []\n"
 
+# BMAD Method en réduction (ADR-0032) : sa configuration, et un travail que
+# son workflow de construction a reporté.
+BMAD_CONFIG = '[modules.bmm]\nimplementation_artifacts = "{project-root}/_bmad-output/implementation-artifacts"\n'
+BMAD_REPORT = ("- source_spec: `_bmad-output/implementation-artifacts/spec-x.md`\n"
+               "  summary: Valider l'entrée de double, qui accepte aujourd'hui une chaîne.\n"
+               "  evidence: double(\"a\") rend \"aa\" ; antérieur au changement.\n")
+
+
+BMAD_SPEC = """---
+title: 'Rendre double robuste'
+status: '{statut}'
+route: '{route}'
+---
+
+<frozen-after-approval reason="human-owned intent">
+
+## Intent
+
+**Problem:** double accepte une chaîne.
+
+**Approach:** {approche}
+
+</frozen-after-approval>
+"""
+
+
+def avec_bmad(c: Path, statut: str = "done", route: str = "oneshot", approche: str = "Refuser ce qui n'est pas un nombre."):
+    ajouter(c, "_bmad/config.toml", BMAD_CONFIG)
+    ajouter(c, "_bmad-output/implementation-artifacts/spec-x.md",
+            BMAD_SPEC.format(statut=statut, route=route, approche=approche))
+    ajouter(c, "_bmad-output/implementation-artifacts/deferred-work.md", BMAD_REPORT)
+
 
 def _cas() -> list[Cas]:
     cas = []
@@ -709,6 +741,11 @@ def _cas() -> list[Cas]:
     def _(a, c):
         remplacer(c, ".socle/guardrails.toml", TIERS_VIDE, '\npaths = ["memory/**"]\n')
         a.socle(c, "approve", "--keys", "thirdparty.paths", "--text", "La mémoire comme outil")
+        return etage_ci(a, c)
+
+    @defaut("report-bmad-hors-backlog", "travail reporté par BMAD resté hors du backlog", "ci", "bmad.reports")
+    def _(a, c):
+        avec_bmad(c)
         return etage_ci(a, c)
 
     @defaut("budget-releve", "budget de mémoire relevé", "ci", "cliquet.garde-fous")
@@ -1504,6 +1541,14 @@ def _temoins() -> list[tuple[str, Callable]]:
         ajouter(c, "_outil/aide.py", "def aide(x):\n    return x\n")
         ajouter(c, "_outil/test_outil.py", "def test_rien():\n    pass\n")
         ajouter(c, "_outil/LISEZMOI.md", "Chaque constat cite `file:line`, et F-0099.\n")
+        return etage_ci(a, c)
+
+    @temoin("un travail reporté par BMAD, entré au backlog par `socle bmad-import`, passe la CI (ADR-0032)")
+    def _(a, c):
+        avec_bmad(c)
+        r = a.socle(c, "bmad-import")
+        if r.returncode != 0 or "B-" not in r.stdout:
+            return r.stdout + r.stderr
         return etage_ci(a, c)
 
     @temoin("un fichier protégé changé par l'humain, qui l'approuve, passe la CI")

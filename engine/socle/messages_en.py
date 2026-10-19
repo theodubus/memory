@@ -2179,4 +2179,29 @@ MESSAGES: dict[str, str] = {
     "(ADR-0031)":
         "the files of a third-party tool, declared by the human who approves it, escape the checks: the CI passes "
         "(ADR-0031)",
+    "travail reporté par BMAD resté hors du backlog":
+        "work deferred by BMAD left out of the backlog",
+    "un travail reporté par BMAD, entré au backlog par `socle bmad-import`, passe la CI (ADR-0032)":
+        "work deferred by BMAD, entered into the backlog by `socle bmad-import`, passes the CI (ADR-0032)",
+    "travail reporté par BMAD, absent du backlog : « {resume} » — le faire entrer : `python3 "
+    ".socle/socle bmad-import`":
+        "work deferred by BMAD, missing from the backlog: “{resume}” — enter it: `python3 .socle/socle bmad-import`",
+    "refus : mémoire privée indisponible ({raison}) ; une entrée privée ne s'écrit pas à l'aveugle":
+        "refused: private memory unavailable ({raison}); a private entry is not written blind",
+    "aucun travail reporté par BMAD à faire entrer au backlog":
+        "no work deferred by BMAD to enter into the backlog",
+    "fait entrer au backlog les travaux que BMAD a reportés":
+        "enters into the backlog the work BMAD deferred",
+    "BMAD : illisible ({erreur})":
+        "BMAD: unreadable ({erreur})",
+    "BMAD     : {n} spec(s) non finie(s)":
+        "BMAD     : {n} unfinished spec(s)",
+    "  sprint, {statut} : {liste}":
+        "  sprint, {statut}: {liste}",
+    "  {n} travail(aux) reporté(s) par BMAD hors du backlog : `python3 .socle/socle bmad-import`":
+        "  {n} work item(s) deferred by BMAD outside the backlog: `python3 .socle/socle bmad-import`",
+    "Un travail que BMAD reporte entre au backlog du socle (ADR-0032) : une seule liste des trouvailles, que le "
+    "socle suit et clôt.":
+        "Work that BMAD defers enters the socle's backlog (ADR-0032): a single list of findings, which the socle "
+        "tracks and closes.",
 }
