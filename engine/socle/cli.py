@@ -939,6 +939,14 @@ def main(argv=None) -> int:
         from socle import commands as commandes
 
         args = p.parse_args(commandes.noms_anglais(argv))
-        return args.f(args)
+        try:
+            return args.f(args)
+        except BrokenPipeError:
+            # Le lecteur s'en est allé (`| head -1`, B-0070) : ce n'est pas une
+            # panne. La sortie restante part dans le vide, pour que l'arrêt de
+            # l'interpréteur ne retombe pas sur le même tube fermé.
+            vide = os.open(os.devnull, os.O_WRONLY)
+            os.dup2(vide, sys.stdout.fileno())
+            return 0
     finally:
         messages.choisir(avant)

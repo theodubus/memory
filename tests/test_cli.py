@@ -7,6 +7,7 @@ import io
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -244,3 +245,18 @@ class TestChecks(unittest.TestCase):
         listes = {l.split()[0] for l in sortie.splitlines() if l.strip()}
         self.assertIn("prive.verrou", listes)
         self.assertEqual(listes, set(contexte.charger_controles()))
+
+
+class TestTubeFerme(unittest.TestCase):
+    """B-0070 : une sortie coupée (`| head -1`) n'est pas une panne."""
+
+    def test_main_rend_la_main_sans_trace_quand_le_lecteur_ferme_le_tube(self):
+        racine = Path(__file__).resolve().parent.parent
+        p = subprocess.Popen([sys.executable, str(racine / ".socle/socle"), "checks"], cwd=racine,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        p.stdout.close()  # le lecteur s'en va avant que la commande n'écrive
+        erreurs = p.stderr.read()
+        p.wait(timeout=60)
+        self.assertNotIn("Traceback", erreurs)
+        self.assertNotIn("BrokenPipeError", erreurs)
+        self.assertEqual(p.returncode, 0)
