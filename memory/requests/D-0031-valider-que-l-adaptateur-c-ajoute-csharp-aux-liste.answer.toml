@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0031-valider-que-l-adaptateur-c-ajoute-csharp-aux-liste.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-10-20"
+canal = "conversation"
+citation = "Ok je valide D0031"
+empreinte = "sha256:2cebfc6e441f9c616d95e6b990adfc973be0aedd539662e62badf5975742802e"

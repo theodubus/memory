@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0040 — Un adaptateur C# (dotnet test, Stryker.NET), à éprouver là où dotnet existe
 
-> statut : ouvert · origine : J-2026-10-11-Q · lu : backlog@30534ad0
+> statut : fait · origine : J-2026-10-11-Q · lu : backlog@30534ad0 · ref : J-2026-10-20-N
 
 Théo voulait les langages courants ; C# en est, mais dotnet n'est pas dans
 ce conteneur, et un adaptateur non éprouvé ne se maintient pas. Écrire

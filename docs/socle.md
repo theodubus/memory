@@ -225,9 +225,9 @@ L'adaptateur dit au moteur comment le langage du projet se vérifie : ses
 capacités (formater, analyser, compiler, tester, muter, mesurer la
 couverture, rejouer un test sur le commit d'avant), et comment lire ses
 tests et ses fonctions publiques. Une capacité absente se déclare, avec ce
-qui la remplace. Huit sont maintenus et éprouvés sur un projet jetable de
+qui la remplace. Neuf sont maintenus et éprouvés sur un projet jetable de
 leur langage : Rust, Python sous `unittest` et sous pytest, JavaScript et
-TypeScript, Go, Java, Ruby, PHP. Un autre langage se décrit dans un fichier
+TypeScript, Go, Java, Ruby, PHP, C#. Un autre langage se décrit dans un fichier
 de même forme. Le détail : `engine/socle/adapters/README.md`.
 
 ## L'auto-test et les bancs

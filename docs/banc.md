@@ -183,6 +183,6 @@ parent, et que le verdict de mutation casse sous le plafond mesuré. Ce qu'il
 (`engine/socle/adapters/README.md`).
 
 ```sh
-python3 bench/adapters.py                          # les cinq langages
+python3 bench/adapters.py                          # les six langages
 python3 bench/adapters.py --langages go --garder   # un seul, projet gardé
 ```

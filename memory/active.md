@@ -62,10 +62,12 @@ garde en tete et on voit si ça finit par etre bloquant ».
 ## Prochaines étapes
 
 1. En autonomie (J-2026-10-20-C), faits sans arbitrage : B-0074, B-0070,
-   B-0073, B-0054, B-0008, B-0072, B-0011. Arrêt sur arbitrage : D-0031,
-   l'adaptateur C# (B-0040), qui change deux listes de tests attendues ;
-   rien n'est écrit, les mesures sont au journal (J-2026-10-20-L).
-2. Les autres sujets ouverts demandent Théo ou des données : B-0066 et
+   B-0073, B-0054, B-0008, B-0072, B-0011. D-0031 validée par Théo : B-0040,
+   l'adaptateur C#, est fait et passe son banc (F-0025, J-2026-10-20-N) ;
+   ses étapes de CI n'ont pas tourné sur GitHub.
+2. B-0075, relevé en écrivant C# : la régression de Java joint deux
+   classes de test par une espace ; à mesurer au banc, puis à corriger.
+3. Les autres sujets ouverts demandent Théo ou des données : B-0066 et
    B-0071 (leur conception), B-0010 et B-0012 (une cible, ou des mesures
    sur un vrai projet), B-0009 (un cas réel), B-0042 (une publication),
    B-0006 (après elle), B-0046 (que Théo reprendra), B-0018 et B-0048 (en

@@ -64,10 +64,13 @@ class TestDocstrings(unittest.TestCase):
 
 
 # La première version majeure de chaque action qui tourne sur Node 24, lue
-# dans son `action.yml` le 17 oct. (B-0062) : GitHub déprécie Node 20.
+# dans son `action.yml` le 17 oct. (B-0062), et le 20 oct. pour
+# `actions/setup-dotnet` (B-0040 : la v4 tourne sur Node 20) : GitHub
+# déprécie Node 20.
 NODE_24 = {
     "actions/checkout": 5, "actions/setup-python": 6, "actions/setup-node": 5, "actions/setup-go": 6,
     "actions/setup-java": 5, "ruby/setup-ruby": 1, "shivammathur/setup-php": 2,
+    "actions/setup-dotnet": 5,
 }
 
 

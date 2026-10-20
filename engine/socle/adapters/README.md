@@ -34,12 +34,14 @@ mais il ne verrait rien des tests.
 
 ## Ce qu'il contient
 
-Huit adaptateurs sont maintenus. Le tableau ci-dessous compare les trois
-premiers ; celui de la section « Cinq langages de plus » compare les autres.
+Neuf adaptateurs sont maintenus. Le tableau ci-dessous compare les trois
+premiers ; celui de la section « Cinq langages de plus » compare les cinq
+suivants, et la section « C# » le dernier.
 Ce sont des extraits : les fichiers font foi, [rust.toml](rust.toml),
 [python.toml](python.toml), [python-pytest.toml](python-pytest.toml),
 [javascript.toml](javascript.toml), [go.toml](go.toml),
-[java.toml](java.toml), [ruby.toml](ruby.toml) et [php.toml](php.toml). Les
+[java.toml](java.toml), [ruby.toml](ruby.toml), [php.toml](php.toml) et
+[csharp.toml](csharp.toml). Les
 deux adaptateurs Python ne diffèrent que par le lanceur de tests et la
 mutation : `python` s'en tient à la bibliothèque standard (`unittest`), sans
 mutation ; `python-pytest` prend pytest et mutmut, qui exige pytest.
@@ -108,9 +110,9 @@ On écrit un nouveau fichier, avec les mêmes clés ; le moteur ne change pas.
 Une seule exception : si l'outil de mutation du langage est nouveau, le
 moteur doit apprendre à lire ses résultats (`engine/socle/mutation.py`, une
 fonction par outil ; il en connaît sept : `cargo-mutants`, `mutmut`,
-`stryker`, `gremlins`, `pit`, `mutant` et `infection`). Puis on l'éprouve
-sur un projet jetable, comme le fait `bench/adapters.py` pour les cinq
-derniers.
+`stryker` (Stryker pour JavaScript, Stryker.NET pour C#), `gremlins`, `pit`,
+`mutant` et `infection`). Puis on l'éprouve sur un projet jetable, comme le
+fait `bench/adapters.py` pour les six derniers.
 
 Les clés qui décrivent un langage, toutes facultatives sauf `function` :
 
@@ -182,3 +184,31 @@ charger à Composer le code de l'arbre de travail dans le worktree de la
 régression (d'où `copied`), et la commande de mutant devinait mal ses
 sujets (d'où `mutant.yml`). Les étapes de CI que chaque adaptateur ajoute
 au workflow n'ont tourné qu'ici, pas encore sur GitHub.
+
+## C# (B-0040)
+
+| Ce que le moteur demande | C# |
+| --- | --- |
+| Lancer les tests | `dotnet test` (xUnit, NUnit ou MSTest) |
+| Vérifier le code | `dotnet build`, le compilateur et ses analyseurs par défaut |
+| Vérifier le formatage | `dotnet format whitespace`, en mode dossier : deux secondes, sans construire |
+| Reconnaître un test | `[Fact]`, `[Theory]`, `[Test]`, `[TestCase]`, `[TestMethod]` |
+| Reconnaître un test désactivé | `Skip = "…"`, `[Ignore]`, `[Explicit]`, `Assert.Inconclusive` ; la raison, en trois caractères au moins |
+| Rejouer un test sur le commit d'avant | `dotnet test --filter` de sa classe, du nom de son fichier |
+| Mesurer la mutation | Stryker.NET, épinglé dans le manifeste d'outils du projet |
+| Dire quelles fonctions sont privées | sans `public` |
+
+Le dépôt porte une solution, ou un projet, à sa racine : l'installeur le
+reconnaît à son `*.sln`, `*.slnx` ou `*.csproj`, avant un `package.json`
+qu'un projet web porte souvent pour ses ressources, et les commandes de .NET
+l'y trouvent seules. Stryker.NET écrit le rapport du même schéma que
+Stryker, sous un autre nom (`mutation-report.json`) et avec des chemins
+absolus : le lecteur de Stryker lit les deux. Un fichier qui ne déclare que
+des types (un `record` sans corps, une interface) n'a rien à muter ; il
+n'entre pas au plafond. La version 5 de Stryker.NET exige un SDK plus récent
+que .NET 8 : le banc épingle la 4.16.0, et la CI pose les deux SDK de
+support long.
+
+Le banc l'éprouve comme les cinq précédents, sur une solution xUnit. Les
+étapes de CI qu'il ajoute au workflow n'ont tourné qu'ici, pas encore sur
+GitHub.

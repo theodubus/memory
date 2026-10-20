@@ -15,6 +15,7 @@ et les contrôles qui échouent sur l'existant passent en avertissement
 
 from __future__ import annotations
 
+import fnmatch
 import json
 import math
 import os
@@ -59,8 +60,10 @@ def noms_d_etapes_traduits(etapes: str) -> str:
     return re.sub(r"(?m)^(\s*- name: )(.+?)\s*$", lambda m: m.group(1) + trad(m.group(2)), etapes)
 
 
-# Le fichier qui dit le langage d'un dépôt, et l'adaptateur maintenu qui va
-# avec ; le premier trouvé l'emporte.
+# Le fichier qui dit le langage d'un dépôt, son nom ou son motif, et
+# l'adaptateur maintenu qui va avec ; le premier trouvé l'emporte. Une
+# solution ou un projet .NET passe avant `package.json`, qu'un projet web en
+# C# porte souvent pour ses ressources.
 MARQUEURS_LANGAGE = (
     (("Cargo.toml",), "rust"),
     (("pyproject.toml", "setup.py", "setup.cfg"), "python"),
@@ -68,6 +71,7 @@ MARQUEURS_LANGAGE = (
     (("pom.xml",), "java"),
     (("Gemfile",), "ruby"),
     (("composer.json",), "php"),
+    (("*.sln", "*.slnx", "*.csproj"), "csharp"),
     (("package.json",), "javascript"),
 )
 
@@ -79,14 +83,15 @@ def langages_presents(fichiers: list[str]) -> dict[str, list[str]]:
     res: dict[str, list[str]] = {}
     for marqueurs, langage in MARQUEURS_LANGAGE:
         for f in fichiers:
-            if f.rsplit("/", 1)[-1] in marqueurs and not f.startswith(config.DOSSIER + "/"):
+            nom = f.rsplit("/", 1)[-1]
+            if any(fnmatch.fnmatchcase(nom, m) for m in marqueurs) and not f.startswith(config.DOSSIER + "/"):
                 res.setdefault(langage, []).append(f)
     return res
 
 
 def detecter_langage(cible: Path) -> str | None:
     for fichiers, langage in MARQUEURS_LANGAGE:
-        if any((cible / f).is_file() for f in fichiers):
+        if any(p.is_file() for f in fichiers for p in cible.glob(f)):
             return langage
     return None
 
@@ -574,8 +579,8 @@ def _installer(cible: Path, adaptateur: str, proprietaire: str, adoption: bool, 
         if detecte is None:
             connus = "|".join(sorted(x.stem for x in ADAPTATEURS.glob("*.toml")))
             print(trad("refus : langage non détecté (aucun de Cargo.toml, pyproject.toml, go.mod, pom.xml, "
-                       "Gemfile, composer.json, package.json, ni fichier Python) : le demander à l'humain, "
-                       "puis `--adapter <{connus}>` ou le chemin d'un .toml", connus=connus), file=sys.stderr)
+                       "Gemfile, composer.json, *.sln, *.csproj, package.json, ni fichier Python) : le demander "
+                       "à l'humain, puis `--adapter <{connus}>` ou le chemin d'un .toml", connus=connus), file=sys.stderr)
             return 2
         adaptateur = detecte
     texte_adaptateur, nom_adaptateur = charger_adaptateur(adaptateur)

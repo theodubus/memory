@@ -2,6 +2,7 @@
 reconnaît les tests de son langage."""
 
 import re
+import subprocess
 import tempfile
 import tomllib
 import unittest
@@ -21,7 +22,7 @@ def adaptateurs() -> dict[str, dict]:
 class TestAdaptateursMaintenus(unittest.TestCase):
     def test_les_adaptateurs_maintenus(self):
         self.assertEqual(sorted(adaptateurs()),
-                         ["go", "java", "javascript", "php", "python", "python-pytest", "ruby", "rust"])
+                         ["csharp", "go", "java", "javascript", "php", "python", "python-pytest", "ruby", "rust"])
 
     def test_chaque_capacite_est_declaree(self):
         for nom, a in adaptateurs().items():
@@ -89,6 +90,15 @@ class TestLangages(unittest.TestCase):
                 [("testDouble", True, True, False, False), ("testRien", True, False, False, False),
                  ("testPlusTard", True, True, True, False), ("aide", False, False, False, False)],
                 "php.Calc.php.txt", {"double": False, "aide": True}),
+        # xUnit, NUnit et MSTest dans un même fichier (B-0040).
+        "csharp": ("csharp.CalcTests.cs.txt",
+                   [("DoublerMultiplieParDeux", True, True, False, False), ("SuivantAjouteUn", True, True, False, False),
+                    ("PlusTardAvecRaison", True, True, True, True), ("PlusTardSansRaison", True, True, True, False),
+                    ("NeMesureRien", True, False, False, False), ("NUnitIgnoreAvecRaison", True, True, True, True),
+                    ("MSTestInconclusif", True, False, True, False), ("SurUneLigne", True, True, False, False),
+                    ("Aide", False, False, False, False)],
+                   "csharp.Calc.cs.txt", {"Doubler": False, "Tripler": False, "Aide": True, "Interne": True,
+                                          "SansModificateur": True, "Ancienne": False}),
     }
 
     def test_chaque_langage_lit_ses_tests_et_son_code(self):
@@ -110,7 +120,7 @@ class TestLangages(unittest.TestCase):
     def test_la_tautologie_de_chaque_langage(self):
         exemples = {"javascript": "    expect(x).toBe(x);", "go": "\tif got != got {",
                     "java": "        assertEquals(x, x);", "ruby": "    expect(x).to eq(x)",
-                    "php": "        $this->assertSame($x, $x);"}
+                    "php": "        $this->assertSame($x, $x);", "csharp": "        Assert.Equal(x, x);"}
         for langage, ligne in exemples.items():
             with self.subTest(langage=langage):
                 motifs = [re.compile(m) for m in adaptateurs()[langage]["tests"]["tautology"]]
@@ -140,6 +150,12 @@ class TestLecteursDeMutation(unittest.TestCase):
                           "pit": mutation.lire_pit, "mutant": mutation.lire_mutant,
                           "infection": mutation.lire_infection})
 
+    def test_stryker_net_et_ses_chemins_absolus(self):
+        # Le rapport de Stryker.NET : même schéma, autre nom, chemins absolus (B-0040).
+        res = mutation.lire_stryker(DONNEES / "mutation/stryker-net")
+        self.assertEqual(dict(res["src/Calc/Calc.cs"]), {"attrapes": 1, "survivants": 2, "expires": 1, "inviables": 2})
+        self.assertEqual(res["Calc.cs"], res["/home/runner/work/calc/calc/src/Calc/Calc.cs".lstrip("/")])
+
     def test_mutant_ne_lit_que_la_session_la_plus_recente(self):
         res = mutation.lire_mutant(DONNEES / "mutation/mutant")
         self.assertEqual(sum(res["calc.rb"].values()), 4)
@@ -161,6 +177,26 @@ class TestDetectionEtRegression(unittest.TestCase):
             with self.subTest(fichier=fichier), tempfile.TemporaryDirectory() as d:
                 (Path(d) / fichier).write_text("")
                 self.assertEqual(installeur.detecter_langage(Path(d)), langage)
+
+    def test_csharp_se_deduit_de_sa_solution_ou_de_son_projet(self):
+        for fichier in ("Calc.sln", "Calc.slnx", "Calc.csproj"):
+            with self.subTest(fichier=fichier), tempfile.TemporaryDirectory() as d:
+                (Path(d) / fichier).write_text("")
+                (Path(d) / "package.json").write_text("{}")
+                self.assertEqual(installeur.detecter_langage(Path(d)), "csharp")
+
+    def test_un_projet_net_plus_bas_est_vu_par_l_audit(self):
+        presents = installeur.langages_presents(["package.json", "src/App/App.csproj", ".socle/x.csproj"])
+        self.assertEqual(presents, {"csharp": ["src/App/App.csproj"], "javascript": ["package.json"]})
+
+    def test_csharp_rejoue_ses_tests_par_leur_classe(self):
+        # Le filtre de `dotnet test`, tel que le shell le compose : un `|` entre deux classes.
+        cap = adaptateurs()["csharp"]["capabilities"]["regression"]
+        commande = commande_regression(cap, ["tests/A.Tests/ATests.cs", "tests/A.Tests/BTests.cs"])
+        self.assertTrue(commande.startswith("dotnet test --nologo --filter "))
+        sortie = subprocess.run("printf '%s\\n' " + commande.removeprefix("dotnet test --nologo --filter "),
+                                shell=True, capture_output=True, text=True).stdout
+        self.assertEqual(sortie, "FullyQualifiedName~ATests|FullyQualifiedName~BTests\n")
 
     def test_go_rejoue_un_test_par_son_paquet(self):
         cap = adaptateurs()["go"]["capabilities"]["regression"]

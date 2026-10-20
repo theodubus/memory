@@ -20,7 +20,8 @@ comme dans n'importe quel projet.
   installeur, auto-test. `engine/socle/FORMAT.md` fait foi pour le format de
   la mémoire.
 - `engine/socle/adapters/` — les adaptateurs maintenus : Rust, Python sous
-  `unittest` et sous `pytest`, JavaScript et TypeScript, Go, Java, Ruby, PHP.
+  `unittest` et sous `pytest`, JavaScript et TypeScript, Go, Java, Ruby, PHP,
+  C#.
 - `engine/socle/templates/` — les gabarits que l'installeur pose dans un projet.
 - `tests/` — les tests du moteur (`unittest`), dont l'auto-test complet par
   injection de défauts.

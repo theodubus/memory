@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1",
+  "thresholds": { "high": 80, "low": 60 },
+  "projectRoot": "/home/runner/work/calc/calc",
+  "files": {
+    "/home/runner/work/calc/calc/src/Calc/Calc.cs": {
+      "language": "cs",
+      "mutants": [
+        { "id": "0", "mutatorName": "Arithmetic mutation", "status": "Killed" },
+        { "id": "1", "mutatorName": "Equality mutation", "status": "Survived" },
+        { "id": "2", "mutatorName": "Block removal mutation", "status": "NoCoverage" },
+        { "id": "3", "mutatorName": "Negate expression", "status": "Timeout" },
+        { "id": "4", "mutatorName": "Block removal mutation", "status": "Ignored" },
+        { "id": "5", "mutatorName": "String mutation", "status": "CompileError" }
+      ]
+    }
+  },
+  "testFiles": {
+    "/home/runner/work/calc/calc/tests/Calc.Tests/CalcTests.cs": { "tests": [] }
+  }
+}

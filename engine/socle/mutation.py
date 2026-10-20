@@ -107,15 +107,18 @@ def _json(f: Path):
         return None
 
 
-# Stryker (JavaScript, TypeScript) : le rapport `mutation.json` du schéma
-# commun des rapports de mutation. Un statut absent d'ici compte survivant.
+# Stryker (JavaScript, TypeScript) et Stryker.NET (C#) : le rapport du schéma
+# commun des rapports de mutation, `mutation.json` pour l'un,
+# `mutation-report.json` pour l'autre, qui écrit des chemins absolus. Un
+# statut absent d'ici compte survivant.
 STATUTS_STRYKER = {"Killed": "attrapes", "Timeout": "expires", "CompileError": "inviables",
                    "RuntimeError": "inviables", "Ignored": "inviables"}
+RAPPORTS_STRYKER = ("mutation.json", "mutation-report.json")
 
 
 def lire_stryker(dossier: Path) -> dict[str, Counter]:
     res: dict[str, Counter] = {}
-    for f in sorted(dossier.rglob("mutation.json")):
+    for f in sorted(f for nom in RAPPORTS_STRYKER for f in dossier.rglob(nom)):
         if "node_modules" in f.parts or not isinstance(d := _json(f), dict):
             continue
         for chemin, contenu in (d.get("files") or {}).items():

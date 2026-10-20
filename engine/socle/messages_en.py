@@ -349,10 +349,11 @@ MESSAGES: dict[str, str] = {
     "refus : {refus}":
         "refused: {refus}",
     "refus : langage non détecté (aucun de Cargo.toml, pyproject.toml, go.mod, pom.xml, Gemfile, composer.json, "
-    "package.json, ni fichier Python) : le demander à l'humain, puis `--adapter <{connus}>` ou le chemin d'un .toml":
+    "*.sln, *.csproj, package.json, ni fichier Python) : le demander à l'humain, puis `--adapter <{connus}>` ou le "
+    "chemin d'un .toml":
         "refused: language not detected (none of Cargo.toml, pyproject.toml, go.mod, pom.xml, Gemfile, "
-        "composer.json, package.json, nor a Python file): ask the human, then `--adapter <{connus}>` or the path of "
-        "a .toml",
+        "composer.json, *.sln, *.csproj, package.json, nor a Python file): ask the human, then "
+        "`--adapter <{connus}>` or the path of a .toml",
     "refus : adaptateur « {nom} » illisible : {erreur}":
         "refused: adapter “{nom}” unreadable: {erreur}",
     "adaptateur : {nom}":
@@ -1791,6 +1792,12 @@ MESSAGES: dict[str, str] = {
         "review of the diff, and `lint` (`ruby -wc` of each file)",
     "capacité `lint` (`ruby -wc`)":
         "capability `lint` (`ruby -wc`)",
+    "aucun analyseur imposé ; un projet qui adopte ses règles de style le déclare ici (`dotnet format style "
+    "--verify-no-changes`)":
+        "no analyzer imposed; a project that adopts its style rules declares it here (`dotnet format style "
+        "--verify-no-changes`)",
+    "capacité `build` : le compilateur et ses analyseurs par défaut, avec leurs avertissements":
+        "capability `build`: the compiler and its default analyzers, with their warnings",
     "couverte par `lint` : clippy compile toutes les cibles, tests compris":
         "covered by `lint`: clippy compiles every target, tests included",
     "capacité `lint`":

@@ -234,3 +234,11 @@ Une session, dans un projet jetable installé avec le mariage entier
 (ADR-0032) : le workflow de construction de BMAD mené au bout, aucun refus
 de hook, tous les contrôles verts, 4,57 dollars. Mesuré une fois ; l'entrée
 des reports au backlog n'y a pas tourné.
+
+## F-0025 — L'adaptateur C# passe les douze étapes de son banc
+
+> statut : mesuré · preuve : J-2026-10-20-N, cmd:`python3 bench/adapters.py --langages csharp`
+
+Une solution xUnit jetable, avec le SDK .NET 8 et Stryker.NET 4.16.0 :
+12 étapes sur 12, au premier passage. Mesuré dans ce conteneur, pas sur
+GitHub : les étapes de CI que l'adaptateur ajoute n'y ont pas tourné.

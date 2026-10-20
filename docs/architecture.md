@@ -64,7 +64,7 @@ comparent le même fichier sous ses deux noms.
 | `migrations.py` | les migrations de format, appliquées dans l'ordre à la mise à jour ; du format 1 au 2, le renommage des chemins |
 | `initialization.py` | les trois entrées d'initialisation : document archivé tel quel, audit du dépôt en lecture seule, questions de départ |
 | `selftest.py` | l'injection de défauts dans un projet jetable : chaque contrôle du registre et chaque refus reconnu en ont au moins un (un test l'exige, ou une exemption écrite), une mutation factice exerce le cliquet de mutation, et des témoins vérifient qu'un changement validé par l'humain passe (B-0044, L4) ; un sujet s'y ajoute dans l'un ou l'autre format du backlog (ADR-0025) |
-| `adapters/` | Rust (extrait de chess), Python sous `unittest`, Python sous `pytest` avec `mutmut` (jalon 6), JavaScript et TypeScript, Go, Java, Ruby et PHP (B-0030, éprouvés par `bench/adapters.py`), maintenus ; ce qu'est un adaptateur : `engine/socle/adapters/README.md` |
+| `adapters/` | Rust (extrait de chess), Python sous `unittest`, Python sous `pytest` avec `mutmut` (jalon 6), JavaScript et TypeScript, Go, Java, Ruby et PHP (B-0030), C# (B-0040), éprouvés par `bench/adapters.py`, maintenus ; ce qu'est un adaptateur : `engine/socle/adapters/README.md` |
 | `templates/` | les gabarits posés par l'installeur |
 
 ## Exigences du cadrage et contrôles qui les appliquent
