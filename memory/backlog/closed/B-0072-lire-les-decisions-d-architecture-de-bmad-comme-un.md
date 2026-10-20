@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0072 — Lire les décisions d'architecture de BMAD comme une couche de décisions du socle
 
-> statut : ouvert · origine : J-2026-10-20-A · lu : backlog@9b2e2382
+> statut : fait · origine : J-2026-10-20-A · lu : backlog@9b2e2382 · ref : J-2026-10-20-J
 
 Laissé pour plus tard par la décision du mariage (ADR-0032@294aa890) : le document
 d'architecture de BMAD porte des décisions numérotées (AD-1, AD-2…), à

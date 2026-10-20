@@ -2286,4 +2286,24 @@ MESSAGES: dict[str, str] = {
         "theirs from .claude/settings.json, or leaves in it only what is the project's own",
     "un chemin qui n'existe que dans une rustine suivie du dépôt passe la CI (B-0008)":
         "a path that only exists in a patch tracked by the repository passes the CI (B-0008)",
+    "    … et {n} autre(s)":
+        "    … and {n} more",
+    "  décisions d'architecture (une en entier : `python3 .socle/socle show AD-n`) :":
+        "  architecture decisions (one in full: `python3 .socle/socle show AD-n`):",
+    "`{citation}` : {ident} ne désigne aucune décision d'architecture de BMAD":
+        "`{citation}`: {ident} names no BMAD architecture decision",
+    "`{citation}` n'est pas l'empreinte de la version actuelle de {ident} : la relire, `python3 .socle/socle show "
+    "{ident}`":
+        "`{citation}` is not the fingerprint of the current version of {ident}: read it again, `python3 .socle/socle "
+        "show {ident}`",
+    "{ident} : aucune décision de ce nom dans l'architecture de BMAD":
+        "{ident}: no decision of that name in BMAD's architecture",
+    "Une décision d'architecture de BMAD citée avec son empreinte (`AD-n@empreinte`) l'est dans sa version actuelle "
+    "(B-0072).":
+        "A BMAD architecture decision cited with its fingerprint (`AD-n@fingerprint`) is cited in its current "
+        "version (B-0072).",
+    "décision d'architecture de BMAD citée dans une version qu'elle n'a plus":
+        "BMAD architecture decision cited in a version it no longer has",
+    "une décision d'architecture de BMAD citée dans sa version actuelle passe la CI (B-0072)":
+        "a BMAD architecture decision cited in its current version passes the CI (B-0072)",
 }

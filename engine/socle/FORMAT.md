@@ -252,6 +252,12 @@ L'état de la demande se dérive de la réponse : en attente, répondue, renvoy�
 (`contexte-insuffisant` : l'agent la réécrit en une nouvelle demande),
 retirée (métadonnée `retirée : <raison>`). Une demande répondue est gelée.
 
+Avec BMAD Method, les décisions de son document d'architecture (`AD-n`,
+B-0072) se lisent comme des décisions : l'état les liste, `socle show AD-n`
+en donne le texte et l'empreinte, et une citation `AD-n@empreinte` dans la
+mémoire désigne sa version actuelle (`bmad.lectures`) ; une citation déjà
+écrite ne se rejuge pas.
+
 Une décision prise en séance (ADR-0032) est la forme courte d'une demande :
 l'humain, présent, a lu la question dans la conversation et y a répondu
 (approuver une spec de BMAD, trancher une question ouverte). Elle s'écrit

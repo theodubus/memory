@@ -5,6 +5,9 @@ BMAD produit, sans le recopier.
   reportés) entre au backlog du socle, la seule liste des trouvailles ;
   `socle bmad-import` l'y fait entrer, et le report s'y reconnaît à son
   empreinte.
+- `bmad.lectures` : une décision d'architecture de BMAD citée avec son
+  empreinte (`AD-n@empreinte`) dans la mémoire l'est dans sa version
+  actuelle (B-0072) ; une citation déjà là ne se rejuge pas.
 - `bmad.approbation` : une spec que le workflow de BMAD fait approuver par
   l'humain ne quitte pas le brouillon sans son approbation consignée, mot
   pour mot, dans le registre des demandes (`socle decision`), et son
@@ -128,3 +131,30 @@ def approbation(ctx, r):
                      trad("intention figée changée après son approbation ({ids}) : seul l'humain la change — lui "
                           "faire approuver la nouvelle, et la consigner", ids=", ".join(d.id for d in siennes)),
                      s.chemin)
+
+
+@controle("bmad.lectures", etages=("agent", "git", "ci"))
+def lectures(ctx, r):
+    """Une décision d'architecture de BMAD citée avec son empreinte
+    (`AD-n@empreinte`) l'est dans sa version actuelle (B-0072)."""
+    if not bmad.present(ctx.racine, ctx.tete):
+        return
+    empreintes: dict[str, set[str]] = {}
+    for d in bmad.decisions_architecture(ctx.racine, ctx.fichiers, ctx.tete):
+        empreintes.setdefault(d.ident, set()).add(d.empreinte)
+    for c in ctx.changes:
+        if not memoire.est_memoire(c):
+            continue
+        texte, avant = ctx.lire(c) or "", ctx.lire_base(c) or ""
+        for n, ligne in enumerate(texte.splitlines(), 1):
+            for m in bmad.CITATION_AD.finditer(ligne):
+                if m.group(0) in avant:
+                    continue  # déjà là : lue quand elle a été écrite
+                ident, h = m.group(1), m.group(2)
+                if ident not in empreintes:
+                    r.erreur("bmad.lectures", trad("`{citation}` : {ident} ne désigne aucune décision d'architecture "
+                                                   "de BMAD", citation=m.group(0), ident=ident), c, n)
+                elif h not in empreintes[ident]:
+                    r.erreur("bmad.lectures", trad("`{citation}` n'est pas l'empreinte de la version actuelle de "
+                                                   "{ident} : la relire, `python3 .socle/socle show {ident}`",
+                                                   citation=m.group(0), ident=ident), c, n)

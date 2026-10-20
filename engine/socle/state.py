@@ -224,6 +224,12 @@ def _bmad(projet: config.Projet) -> list[str]:
     ouvertes = [s for s in bmad.specs(racine, outils.fichiers_courants(racine)) if s.statut != bmad.FINIE]
     res.append(trad("BMAD     : {n} spec(s) non finie(s)", n=len(ouvertes)))
     res += [f"  {s.chemin} ({s.statut}, {s.route or '?'})" for s in ouvertes]
+    decisions = bmad.decisions_architecture(racine, outils.fichiers_courants(racine))
+    if decisions:
+        res.append(trad("  décisions d'architecture (une en entier : `python3 .socle/socle show AD-n`) :"))
+        res += [f"    {d.ident} — {d.titre}" for d in decisions[:12]]
+        if len(decisions) > 12:
+            res.append(trad("    … et {n} autre(s)", n=len(decisions) - 12))
     impl = bmad.dossiers(racine)[1]
     etats = bmad.sprint(outils.lire_a(racine, None, f"{impl}/{bmad.SPRINT}") or "")
     for statut in ("in-progress", "review"):

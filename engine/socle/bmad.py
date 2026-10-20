@@ -178,3 +178,53 @@ def sprint(texte: str) -> dict[str, str]:
             if m:
                 res[m[1]] = m[2]
     return res
+
+
+# --- les décisions d'architecture -----------------------------------------------
+#
+# Le document d'architecture de BMAD (« architecture spine », reconnu à son
+# en-tête `type: architecture-spine`) porte des décisions numérotées, à
+# identifiants stables : `### AD-n — <décision>`, puis `Binds`, `Prevents`,
+# `Rule`. Le socle les lit comme des décisions (B-0072) : l'état les liste,
+# `socle show AD-n` en donne le texte et l'empreinte, et une lecture se
+# prouve par `AD-n@empreinte`.
+
+ARCHITECTURE = "architecture-spine"
+AD = re.compile(r"^#{2,4}\s*(AD-\d+)\b\s*[—–:-]?\s*(.*)$", re.M)
+CITATION_AD = re.compile(r"(?<![\w-])(AD-\d+)@([0-9a-f]{8})\b")
+
+
+@dataclass
+class DecisionArchitecture:
+    ident: str  # `AD-n`
+    titre: str
+    chemin: str
+    texte: str
+
+    @property
+    def empreinte(self) -> str:
+        return outils.sha256(re.sub(r"\s+", " ", self.texte).strip())[:8]
+
+    @property
+    def adoptee(self) -> bool:
+        """Réglée par l'humain ou par l'existant (`[ADOPTED]`)."""
+        return "[ADOPTED]" in self.texte
+
+
+def decisions_architecture(racine: Path, fichiers: list[str], rev: str | None = None) -> list[DecisionArchitecture]:
+    """Les décisions de chaque document d'architecture de BMAD, hors des
+    blocs de code ; une décision court jusqu'au titre suivant de son niveau
+    ou plus haut."""
+    plan, _ = dossiers(racine, rev)
+    res = []
+    for c in outils.filtrer(fichiers, [plan + "/**/*.md"]):
+        texte = outils.lire_a(racine, rev, c) or ""
+        if en_tete(texte).get("type") != ARCHITECTURE:
+            continue
+        lisible = re.sub(r"```.*?```", lambda m: re.sub(r"[^\n]", " ", m.group(0)), texte, flags=re.S)
+        titres = list(re.finditer(r"^(#{1,6})\s", lisible, re.M))
+        for m in AD.finditer(lisible):
+            niveau = len(re.match(r"#+", m.group(0)).group(0))
+            fin = next((t.start() for t in titres if t.start() > m.start() and len(t.group(1)) <= niveau), len(texte))
+            res.append(DecisionArchitecture(m.group(1), m.group(2).strip(), c, texte[m.start():fin].strip()))
+    return res

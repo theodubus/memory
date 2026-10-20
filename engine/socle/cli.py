@@ -245,6 +245,9 @@ def cmd_show(args) -> int:
     if args.index:
         _afficher_index(mem, args.index)
     for ident in args.ids:
+        if re.fullmatch(r"AD-\d+", ident):
+            code |= _afficher_decision_bmad(projet, ident)
+            continue
         e = mem.entree(ident)
         if e is None:
             print(trad("{ident} : aucune entrée de ce nom dans la mémoire", ident=ident), file=sys.stderr)
@@ -263,6 +266,22 @@ def cmd_show(args) -> int:
             elif d:
                 print(f"\n--- {d.statut_affiche} ---")
     return code
+
+
+def _afficher_decision_bmad(projet, ident: str) -> int:
+    """Une décision d'architecture de BMAD (B-0072), avec son empreinte à
+    citer (`AD-n@empreinte`) ; une par document d'architecture qui la porte."""
+    from socle import bmad
+
+    trouvees = [d for d in bmad.decisions_architecture(projet.racine, outils.fichiers_courants(projet.racine))
+                if d.ident == ident]
+    if not trouvees:
+        print(trad("{ident} : aucune décision de ce nom dans l'architecture de BMAD", ident=ident), file=sys.stderr)
+        return 1
+    for d in trouvees:
+        print(f"--- {d.ident}@{d.empreinte} ({d.chemin}) ---")
+        print(d.texte)
+    return 0
 
 
 def cmd_prive(args) -> int:

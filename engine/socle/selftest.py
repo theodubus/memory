@@ -658,6 +658,35 @@ def avec_bmad(c: Path, statut: str = "done", route: str = "oneshot",
         ajouter(c, "_bmad-output/implementation-artifacts/deferred-work.md", BMAD_REPORT)
 
 
+SPINE_BMAD = "_bmad-output/planning-artifacts/architecture/ARCHITECTURE-SPINE.md"
+SPINE = """---
+name: 'calc'
+type: architecture-spine
+status: final
+---
+
+# Architecture Spine — calc
+
+## Invariants & Rules
+
+### AD-1 — Une seule constante de multiplication
+
+- **Binds:** all
+- **Prevents:** deux facteurs qui divergent
+- **Rule:** tout facteur vient de FACTEUR.
+"""
+
+
+def avec_architecture(c: Path) -> str:
+    """BMAD et son document d'architecture ; rend l'empreinte de AD-1."""
+    from socle import bmad
+
+    ajouter(c, "_bmad/config.toml", BMAD_CONFIG)
+    (c / SPINE_BMAD).parent.mkdir(parents=True, exist_ok=True)
+    (c / SPINE_BMAD).write_text(SPINE)
+    return bmad.decisions_architecture(c, [SPINE_BMAD])[0].empreinte
+
+
 def approuver_en_seance(a: "Atelier", c: Path):
     """L'humain approuve la spec dans la conversation ; l'agent consigne sa
     réponse mot pour mot."""
@@ -776,6 +805,13 @@ def _cas() -> list[Cas]:
         avec_bmad(c, statut="ready-for-dev", route="dispatch", report=False)
         approuver_en_seance(a, c)
         remplacer(c, SPEC_BMAD, "Refuser ce qui n'est pas un nombre.", "Convertir toute entrée en nombre.")
+        return etage_ci(a, c)
+
+    @defaut("decision-bmad-lue-perimee", "décision d'architecture de BMAD citée dans une version qu'elle n'a plus",
+            "ci", "bmad.lectures")
+    def _(a, c):
+        avec_architecture(c)
+        maj_memoire(c, "Le facteur suit `AD-1@00000000`.")
         return etage_ci(a, c)
 
     @defaut("decision-sans-relais", "décision en séance consignée par l'agent sans la citer", "agent",
@@ -1592,6 +1628,12 @@ def _temoins() -> list[tuple[str, Callable]]:
     def _(a, c):
         avec_bmad(c, statut="in-progress", route="dispatch", report=False)
         approuver_en_seance(a, c)
+        return etage_ci(a, c)
+
+    @temoin("une décision d'architecture de BMAD citée dans sa version actuelle passe la CI (B-0072)")
+    def _(a, c):
+        h = avec_architecture(c)
+        maj_memoire(c, f"Le facteur suit `AD-1@{h}`.")
         return etage_ci(a, c)
 
     @temoin("un chemin qui n'existe que dans une rustine suivie du dépôt passe la CI (B-0008)")

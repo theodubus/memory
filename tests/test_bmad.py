@@ -413,5 +413,95 @@ class TestEnUneCommande(unittest.TestCase):
         self.assertFalse((racine / ".socle").exists())
 
 
+SPINE = """---
+name: 'calc'
+type: architecture-spine # build-substrate
+status: final
+---
+
+# Architecture Spine — calc
+
+## Invariants & Rules
+
+### AD-1 — Une seule fonction de multiplication
+
+- **Binds:** all
+- **Prevents:** deux formules
+- **Rule:** tout passe par multiplier. [ADOPTED]
+
+### AD-2 — Pas de dépendance
+
+- **Rule:** bibliothèque standard seule.
+
+```text
+### AD-9 — un exemple dans un bloc de code
+```
+
+## Stack
+
+| Name | Version |
+| --- | --- |
+| Python | 3.12 |
+"""
+CHEMIN_SPINE = "_bmad-output/planning-artifacts/architecture/ARCHITECTURE-SPINE.md"
+
+
+class TestDecisionsArchitecture(unittest.TestCase):
+    def projet(self) -> Path:
+        racine = projet_avec_bmad(reports="")
+        p = racine / CHEMIN_SPINE
+        p.parent.mkdir(parents=True)
+        p.write_text(SPINE, encoding="utf-8")
+        subprocess.run(["git", "add", "-A"], cwd=racine, check=True)
+        return racine
+
+    def test_decisions_architecture_lit_chaque_ad_hors_des_blocs_de_code(self):
+        racine = self.projet()
+        ds = bmad.decisions_architecture(racine, [CHEMIN_SPINE])
+        self.assertEqual([(d.ident, d.titre) for d in ds], [("AD-1", "Une seule fonction de multiplication"),
+                                                            ("AD-2", "Pas de dépendance")])
+        self.assertTrue(ds[0].adoptee)
+        self.assertFalse(ds[1].adoptee)
+        self.assertIn("bibliothèque standard seule", ds[1].texte)
+        self.assertNotIn("Stack", ds[1].texte)
+        self.assertEqual(bmad.decisions_architecture(racine, ["_bmad-output/implementation-artifacts/spec-triple.md"]),
+                         [])
+
+    def test_l_etat_et_show_donnent_les_decisions(self):
+        from socle import cli
+
+        racine = self.projet()
+        self.assertIn("AD-1 — Une seule fonction de multiplication",
+                      etat.calculer(config.Projet.charger(racine), contenus=False))
+        sortie = io.StringIO()
+        with contextlib.redirect_stdout(sortie):
+            self.assertEqual(cli.main(["--root", str(racine), "show", "AD-2"]), 0)
+        h = bmad.decisions_architecture(racine, [CHEMIN_SPINE])[1].empreinte
+        self.assertIn(f"AD-2@{h}", sortie.getvalue())
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(cli.main(["--root", str(racine), "show", "AD-7"]), 1)
+
+    def citer(self, racine: Path, citation: str) -> list[str]:
+        subprocess.run(["git", "-c", "user.name=a", "-c", "user.email=a@b", "commit", "-q", "--no-verify", "-m", "base"],
+                       cwd=racine, check=True)
+        p = racine / "memory/active.md"
+        p.write_text(p.read_text(encoding="utf-8") + f"\nLe calcul suit `{citation}`.\n", encoding="utf-8")
+        rapport = contexte.executer(contexte.Contexte(config.Projet.charger(racine), etage="ci", base="HEAD"),
+                                    ids=["bmad.lectures"])
+        return [c.message for c in rapport.constats if c.gravite == "erreur"]
+
+    def test_une_citation_a_jour_passe(self):
+        racine = self.projet()
+        h = bmad.decisions_architecture(racine, [CHEMIN_SPINE])[0].empreinte
+        self.assertEqual(self.citer(racine, f"AD-1@{h}"), [])
+
+    def test_une_citation_perimee_ou_inconnue_est_refusee(self):
+        racine = self.projet()
+        fautes = self.citer(racine, "AD-1@00000000")
+        self.assertTrue(any("show AD-1" in f for f in fautes), fautes)
+        racine = self.projet()
+        self.assertTrue(any("aucune décision" in f for f in self.citer(racine, "AD-5@00000000")))
+
+
 if __name__ == "__main__":
     unittest.main()
