@@ -8,7 +8,7 @@ Trois sources, toutes dérivées, rien de recopié :
   l'agent) ;
 - ce qui se calcule : les branches distantes que la branche par défaut
   contient en entier, donc supprimables sans rien perdre — une action
-  distante que le hook refuse à l'agent (repris de `chess:tools/etat.sh`).
+  distante que le hook refuse à l'agent.
 
 La liste sert deux fois : dans l'état dérivé au démarrage, et dans le récap
 que le hook de fin de tour exige quand l'agent a agi (ADR-0007).

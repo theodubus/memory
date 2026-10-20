@@ -15,8 +15,7 @@ Hooks git (`core.hooksPath = .socle/git-hooks`) :
 
 Chaque hook laisse une trace datée dans `.socle/trace/hooks.log` : un script
 ne peut pas dire s'il a été CHARGÉ, il ne tourne que s'il l'a été. La trace
-rend « les hooks tournent-ils ? » vérifiable (leçon de
-`chess:tools/verify-hooks.sh`).
+rend « les hooks tournent-ils ? » vérifiable.
 """
 
 from __future__ import annotations
@@ -164,7 +163,7 @@ def contenu_apres(racine: Path, outil: str, args: dict, rel: str) -> tuple[str |
 
 def sha_fabrique(racine: Path, texte: str) -> str | None:
     """Un SHA de 40 caractères inconnu dont le préfixe de 7 est connu : la
-    signature d'un SHA complété de tête (`chess:.claude/hooks/no-fabricated-sha.sh`)."""
+    signature d'un SHA complété de tête."""
     for sha in sorted(set(re.findall(r"\b[0-9a-f]{40}\b", texte))):
         if outils.git_reussit(racine, "cat-file", "-e", sha):
             continue

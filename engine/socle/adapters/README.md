@@ -46,7 +46,7 @@ deux adaptateurs Python ne diffèrent que par le lanceur de tests et la
 mutation : `python` s'en tient à la bibliothèque standard (`unittest`), sans
 mutation ; `python-pytest` prend pytest et mutmut, qui exige pytest.
 
-| Ce que le moteur demande | Rust (repris de chess) | Python (`unittest`) | Python (`pytest`) | Qui s'en sert |
+| Ce que le moteur demande | Rust | Python (`unittest`) | Python (`pytest`) | Qui s'en sert |
 | --- | --- | --- | --- | --- |
 | Lancer les tests | `cargo test` | `unittest` | `pytest` | `socle verify`, hook de fin de tour, CI |
 | Vérifier le code | `clippy` | compilation de chaque fichier | idem | idem |

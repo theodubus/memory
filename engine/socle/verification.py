@@ -26,8 +26,8 @@ def etapes_rapides(projet: config.Projet, rapport: Rapport, flux=None, refaire: 
     """Les étapes rapides de l'adaptateur, sauf si elles ont déjà toutes passé
     sur cet arbre exact (HEAD, diff, fichiers non suivis et leur contenu) : la
     vérification que l'agent lance, la fin de tour et le hook avant push ne
-    paient pas trois fois la même compilation (L6, mesuré sur un projet Rust
-    à la copie du projet d'échecs). La CI, elle, refait tout. Rend vrai si
+    paient pas trois fois la même compilation (L6, mesuré sur un projet
+    Rust). La CI, elle, refait tout. Rend vrai si
     elles ont tourné."""
     racine = projet.racine
     marque = outils.empreinte_arbre(racine) if outils.a_des_commits(racine) else ""

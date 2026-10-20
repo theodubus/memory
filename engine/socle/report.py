@@ -2,7 +2,7 @@
 
 Tous les contrôles s'exécutent, même après un échec, et sont rapportés
 ensemble : découvrir trois problèmes d'un coup coûte moins cher que trois
-allers-retours (leçon de `chess:tools/verify.sh`).
+allers-retours.
 """
 
 from __future__ import annotations

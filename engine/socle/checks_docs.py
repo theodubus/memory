@@ -3,7 +3,7 @@
 Chaque règle est un contrôle qui échoue en cas de divergence, au lieu de
 compter sur la vigilance de l'agent. Les ensembles contrôlés sont parcourus
 par motif, jamais énumérés à la main : une liste écrite à la main laisserait
-le jugement décider de la couverture — leçon de `chess:engine/tests/outillage_documente.rs`.
+le jugement décider de la couverture.
 """
 
 from __future__ import annotations

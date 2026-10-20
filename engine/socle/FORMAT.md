@@ -62,11 +62,11 @@ de métadonnées (une ou plusieurs lignes `>` consécutives), puis d'un corps
 libre qui court jusqu'au titre suivant de même niveau ou de niveau supérieur.
 
 ```markdown
-## F-0007 — Le bench à profondeur 7 explore 70 452 nœuds
+## F-0007 — La suite de tests complète tourne en moins de 40 secondes
 
-> statut : mesuré · preuve : cmd:`cargo run --release -- bench 7` · date : 2026-10-10
+> statut : mesuré · preuve : cmd:`cargo test --release` · date : 2026-10-10
 
-Mesuré sur le binaire de base ; le chiffre change avec l'arbre de recherche.
+Mesuré sur la machine de CI ; le chiffre change avec le nombre de tests.
 ```
 
 Les métadonnées sont des paires `clé : valeur` séparées par un point médian
@@ -97,7 +97,7 @@ Une valeur de métadonnée, ou le texte, peut citer :
 | --- | --- |
 | `commit:3f2a9c1` | l'objet existe dans le dépôt (historique complet) |
 | `fichier:src/x.rs`, `fichier:src/x.rs:12`, `fichier:doc.md#ancre` | le chemin existe |
-| ``cmd:`cargo test, puis bench` `` ou `cmd:tools/verify.sh` | le script existe s'il est un chemin du dépôt |
+| ``cmd:`cargo test, puis cargo bench` `` ou `cmd:scripts/verify.sh` | le script existe s'il est un chemin du dépôt |
 | `url:https://…` | jamais suivie : aucun service externe |
 | `F-0007`, `J-2026-10-10-A`… | l'entrée existe |
 

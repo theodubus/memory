@@ -58,7 +58,7 @@ paths = [".socle/git-hooks/*", ".github/workflows/*.yml", ".claude/settings.json
 # [[values]]
 # name = "nom"
 # file = "src/config.rs"
-# regex = 'MAX_DEPTH: u32 = (\d+)'
+# regex = 'MAX_RETRIES: u32 = (\d+)'
 
 [nocopy]
 # Un paragraphe d'au moins ce nombre de caractères présent dans deux fichiers

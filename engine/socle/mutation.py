@@ -4,7 +4,7 @@ confrontés au plafond des garde-fous.
 Le plafond est un cliquet : il CASSE à la hausse et SIGNALE la baisse. Un
 mutant qui expire sur une machine chargée est compté « expiré » plutôt que
 « survivant », donc une baisse peut n'être qu'un artefact de charge ; une
-hausse, jamais (`chess:.github/mutation-verdict.sh`).
+hausse, jamais.
 
 Les lecteurs de résultats sont propres à chaque outil ; l'adaptateur nomme le
 sien (`parser`). Un module du plafond sans aucun résultat est un balayage qui
@@ -14,7 +14,7 @@ Le balayage lui-même (`balayer`) lance la commande de l'adaptateur, module
 par module quand elle nomme `{module}`, puis rend le verdict : c'est ce que
 fait chaque semaine le workflow que pose l'installeur. Et parce qu'un
 cliquet ne peut pas signaler sa propre absence, `vivacite` dit quand ce
-workflow cesse de tourner (`chess:tools/balayage-vivant.sh`, B-0005).
+workflow cesse de tourner (B-0005).
 """
 
 from __future__ import annotations
@@ -368,7 +368,7 @@ def balayer(projet: config.Projet, poser: bool = False, flux=None) -> Rapport:
 
 WORKFLOW = ".github/workflows/socle-mutation.yml"
 # Ce qui, dans un workflow, désigne l'outil de mutation d'un adaptateur : un
-# projet qui balaie déjà (le projet d'échecs) n'en reçoit pas un second.
+# projet qui balaie déjà par son propre workflow n'en reçoit pas un second.
 MARQUES_OUTIL = {"cargo-mutants": r"\bcargo[ -]mutants\b", "mutmut": r"\bmutmut\b", "stryker": r"\bstryker\b",
                  "gremlins": r"\bgremlins\b", "pit": r"\bpitest\b", "mutant": r"\bmutant\s+run\b",
                  "infection": r"\binfection\b"}

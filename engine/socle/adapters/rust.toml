@@ -1,8 +1,7 @@
 # Adaptateur maintenu : Rust (cargo).
 #
-# Extrait du dépôt chess (`chess:tools/verify.sh`, `chess:.github/workflows/ci.yml`,
-# `chess:.github/workflows/mutation.yml`). Copié dans `.socle/adaptateur.toml`
-# à l'installation, puis protégé : le modifier exige une validation humaine.
+# Copié dans `.socle/adapter.toml` à l'installation, puis protégé : le
+# modifier exige une validation humaine.
 # Un projet ajoute ses étapes propres dans `[[steps]]` (critères d'acceptation,
 # bench…).
 

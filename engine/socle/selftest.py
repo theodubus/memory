@@ -1523,7 +1523,7 @@ def _temoins() -> list[tuple[str, Callable]]:
     @temoin("un chemin d'un autre dépôt, non déclaré, est signalé sans refus (B-0052)")
     def _(a, c):
         remplacer(c, "memory/active.md", "## En cours\n\nRien pour l'instant.",
-                  "## En cours\n\nLe modèle vient de `chess:tools/etat.sh`.")
+                  "## En cours\n\nLe modèle vient de `ailleurs:tools/etat.sh`.")
         return etage_ci(a, c)
 
     @temoin("une référence de commit en fin de phrase passe la CI (B-0020)")

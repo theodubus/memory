@@ -691,7 +691,7 @@ def _instructions(cible: Path, dossier_moteur: str, lg: str = "fr", balayage: bo
         dependants = _qui_nomme(cible, "CLAUDE.md")
         if dependants:
             # Le renommer casserait le projet : ses propres fichiers le lisent
-            # (essai sur chess, J-2026-10-10-G). La section du socle va dans
+            # (J-2026-10-10-G). La section du socle va dans
             # CLAUDE.md, et le renommage devient une décision humaine.
             _section_dans(claude, bloc)
             res.append(trad("!! CLAUDE.md gardé : {n} fichier(s) du projet le nomment ({liste}) ; le renommer en "

@@ -652,7 +652,7 @@ def vivante(ctx, r):
     """Le balayage de mutation planifié tourne encore. GitHub endort les
     workflows planifiés d'un dépôt public après soixante jours sans activité,
     et le verdict ne peut pas signaler sa propre absence : ce contrôle tourne
-    à chaque push, quand le code bouge (B-0005, `chess:tools/balayage-vivant.sh`)."""
+    à chaque push, quand le code bouge (B-0005)."""
     from socle import mutation
 
     niveau, message, flux, _ = mutation.etat_du_balayage(ctx.projet, ctx.fichiers, ctx.lire)

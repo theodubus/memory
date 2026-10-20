@@ -171,7 +171,7 @@ RUSTINE = re.compile(r"^\+\+\+ b/(\S+)", re.M)
 def _dans_une_rustine(ctx, chemin: str) -> bool:
     """Le chemin est un fichier qu'une rustine suivie du dépôt (`*.patch`,
     `*.diff`) écrit, ou l'un de ses dossiers : il existe une fois la rustine
-    appliquée (B-0008, 25 cas sur le projet d'échecs)."""
+    appliquée (B-0008)."""
     ecrits = ctx._cache.get("rustines")
     if ecrits is None:
         ecrits = set()
