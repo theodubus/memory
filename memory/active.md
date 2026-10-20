@@ -61,15 +61,17 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 ## Prochaines étapes
 
-1. En autonomie (J-2026-10-20-C), faits sans arbitrage : B-0074, B-0070,
-   B-0073, B-0054, B-0008, B-0072, B-0011. D-0031 validée par Théo : B-0040,
-   l'adaptateur C#, est fait et passe son banc (F-0025, J-2026-10-20-N) ;
-   ses étapes de CI n'ont pas tourné sur GitHub : D-0032 demande de pousser
-   le projet jetable sur une branche `csharp` du dépôt d'essai.
-2. B-0075, relevé en écrivant C#, est fait : la régression joint les
-   classes de test comme l'outil les attend (J-2026-10-20-O).
-3. Les autres sujets ouverts demandent Théo ou des données : B-0066 et
-   B-0071 (leur conception), B-0010 et B-0012 (une cible, ou des mesures
-   sur un vrai projet), B-0009 (un cas réel), B-0042 (une publication),
-   B-0006 (après elle), B-0046 (que Théo reprendra), B-0018 et B-0048 (en
-   attente de devenir bloquants).
+1. La documentation (B-0046) avant le projet pilote (Théo, J-2026-10-20-Q),
+   selon le plan écrit dans B-0046 : le dépôt en trois parts (le produit,
+   sa fabrication, le socle appliqué à lui-même), le fonctionnement et les
+   principes avec des schémas, l'installation.
+2. D-0033 attend Théo : retirer le code de compatibilité et ses tests, et
+   le vocabulaire des échecs des données de tests. Validée, elle se fait
+   avant la documentation ; B-0076 (la section `[code]` de l'adaptateur de
+   ce dépôt) revient à Théo.
+3. Faits ce jour : B-0040 (C#, CI et balayage passés sur GitHub, F-0026),
+   B-0075 ; les traces des échecs retirées de ce qu'un projet reçoit.
+   Ouvert : B-0077 (les renvois du moteur à la mémoire de ce dépôt).
+4. Ensuite, le projet pilote ; puis B-0042 (le paquet pip), B-0071 et
+   B-0066. Les autres sujets ouverts attendent des données ou Théo : B-0010,
+   B-0012, B-0009, B-0006, B-0018, B-0048.
