@@ -1,81 +1,133 @@
-# Socle — mémoire, documentation et tests fiables pour agents de code
+# Socle
 
-Version <!-- valeur:version -->0.1.0<!-- /valeur -->. Le socle s'installe
-dans un projet de code qu'un agent entretient (Claude Code, ou un autre). Il
-donne à l'agent une mémoire qui survit aux sessions et aux compactages, et
-il rend ses erreurs détectables par une machine : une référence inventée, un
-test qui ne mesure rien, une documentation qui dérive, un seuil relâché en
-douce, une décision prise à la place de l'humain. L'agent écrit tout ; des
-contrôles automatiques vérifient pendant son travail, au commit et en CI ;
-l'humain ne tranche que ce qu'aucun contrôle ne peut trancher.
+**Une mémoire et des garde-fous pour les agents de code qui entretiennent
+un projet dans la durée.**
 
-Un moteur Python 3.11+, bibliothèque standard seule, qui ne connaît ni le
-langage du projet (un adaptateur le décrit) ni l'agent (ses hooks le
-branchent).
+Le socle s'ajoute à un projet de code qu'un agent (Claude Code, ou un autre)
+fait avancer de session en session. Il garde la mémoire du projet dans le
+dépôt, la remet à l'agent à chaque démarrage, et vérifie automatiquement ce
+que l'agent écrit : son code, ses tests, sa documentation, sa mémoire.
+L'humain n'a plus à relire chaque détail ; il ne tranche que ce qu'aucune
+machine ne peut trancher.
 
-## Ce dépôt : le produit et l'atelier
+## Le problème
+
+Un agent de code est rapide, mais il travaille par sessions, et chacune
+repart de zéro. Sur un projet de plusieurs semaines, cela se paie :
+
+- **il oublie** : une décision prise mardi, une consigne donnée la veille,
+  un piège déjà rencontré ;
+- **ses notes dérivent** : ce qu'il écrit pour s'en souvenir, et la
+  documentation qu'il tient, cessent peu à peu de dire vrai ;
+- **ses tests peuvent ne rien prouver** : une assertion qui compare une
+  valeur à elle-même, un test désactivé, une valeur attendue changée pour
+  que le test passe ;
+- **il invente** : un fichier, un commit, un identifiant qui n'existent pas,
+  cités avec aplomb ;
+- **il assouplit** : un seuil relâché pour faire passer un contrôle, une
+  question tranchée à la place de l'humain.
+
+Chacune de ces erreurs est plausible et silencieuse. On la découvre tard,
+quand on la découvre.
+
+## Ce que fait le socle
+
+Il ne demande pas à l'agent d'être fiable : il rend ses erreurs visibles
+pour une machine, au plus tôt.
+
+**Une mémoire qui survit aux sessions.** Les faits établis (chacun avec sa
+preuve), le chantier en cours, les décisions, le journal, le backlog :
+dans le dépôt, versionnés, dans un format qu'un script sait lire. À chaque
+démarrage et après chaque compactage, l'agent reçoit l'état du projet
+calculé depuis git (le commit, la CI, ce qui attend l'humain), puis le
+chantier et les faits.
+
+**Des contrôles à trois moments.** Pendant le travail de l'agent, à chaque
+commit, et en CI, une trentaine de contrôles vérifient que chaque fichier,
+commit ou identifiant cité existe, que la documentation suit le code qu'elle
+décrit, qu'un test affirme vraiment quelque chose, qu'un correctif apporte
+le test qui l'aurait attrapé. La CI rejoue tout, et rien ne la contourne.
+
+**Les vraies décisions te reviennent, une à une.** Relâcher un seuil,
+supprimer un test, faire une action irréversible : l'agent ne le fait pas
+seul. Il t'écrit une demande qui se lit sans le contexte en tête : la
+question, les options, ce qu'il recommande et pourquoi. Tu réponds dans la
+conversation ; ta réponse est consignée mot pour mot.
+
+**Rien ne s'affaiblit en silence.** Chaque seuil est sous cliquet : le
+durcir est libre, le relâcher exige ta validation. Chaque garde-fou a été vu
+échouer : l'auto-test injecte chaque défaut connu dans un projet jetable et
+vérifie qu'il est attrapé.
+
+## À quoi ça ressemble
+
+Une session ordinaire, du point de vue de l'agent :
 
 ```mermaid
-flowchart LR
-    subgraph produit["Le produit — ce qu'un projet reçoit"]
-        moteur["engine/socle/<br/>le moteur, ses adaptateurs,<br/>ses gabarits, son guide"]
-    end
-    subgraph atelier["L'atelier — ce qui fabrique le produit"]
-        tests["tests/<br/>les tests du moteur"]
-        bancs["bench/<br/>les bancs d'évaluation"]
-        fab["docs/fabrication/<br/>architecture, relevés, histoire"]
-        mem["memory/, .socle/, AGENTS.md<br/>le socle appliqué à ce dépôt :<br/>l'historique de fabrication"]
-    end
-    moteur -- "l'installeur le copie" --> projet["ton projet"]
-    atelier -. "n'y va jamais" .-> projet
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    actor H as Toi
+    participant A as L'agent
+    participant S as Le socle
+    participant G as La CI
+    A->>S: ouvre une session
+    S-->>A: l'état du projet, le chantier en cours, les faits
+    Note over A: écrit le code, les tests, la doc, la mémoire
+    A->>S: termine son tour
+    S-->>A: refusé : « F-0003 ne désigne aucune entrée »
+    Note over A: corrige la référence
+    A->>S: commite
+    S-->>A: contrôles rapides : rien à signaler
+    A->>G: pousse
+    G-->>A: tous les contrôles, et l'auto-test : vert
+    Note over A: voudrait relâcher un seuil : ce n'est pas à lui
+    A->>H: une demande : la question, les options, sa recommandation
+    H-->>A: « valider », consigné mot pour mot
 ```
 
-Seul **le produit**, `engine/socle/`, va dans un projet : l'installeur le
-copie, puis pose une mémoire vide et les fichiers du projet. **L'atelier**
-ne sort jamais d'ici : les tests, les bancs, la documentation de
-fabrication, et la mémoire de ce dépôt. Le socle s'applique aussi à
-lui-même, comme à n'importe quel projet : sa mémoire est l'historique de la
-fabrication de l'outil (son backlog, son journal, ses décisions), pas un
-modèle à recopier. Un projet équipé commence avec une mémoire vide.
+Ce que l'agent reçoit au démarrage, sur un projet qui vient d'être équipé
+(extrait, sorti tel quel) :
 
-## Comment ça marche
-
-```mermaid
-flowchart LR
-    agent["L'agent<br/>écrit le code, les tests,<br/>la doc et la mémoire"]
-    controles["Les contrôles<br/>pendant son travail,<br/>au commit, en CI"]
-    humain["L'humain<br/>répond aux demandes,<br/>approuve ses propres changements"]
-    agent -- "chaque geste" --> controles
-    controles -- "refus, avec la sortie" --> agent
-    agent -- "ce qu'aucun contrôle<br/>ne tranche : une demande" --> humain
-    humain -- "sa réponse, consignée<br/>mot pour mot" --> agent
+```text
+== demo — état dérivé par `socle state`, rien de recopié ==
+commit   : 859b89a sur main (arbre propre)
+mémoire  : 0 fait(s) (aucun) · 0 décision(s) · journal : 1 entrée(s), dernière J-2026-10-20-A
+backlog  : 0 ouvert(s), 0 en cours, 0 bloqué(s), 0 clos
+demandes humaines en attente : 0
+ce qui revient à l'humain : rien
+…
+--- memory/active.md ---
 ```
 
-- **La mémoire** vit dans le dépôt, en six couches lisibles par script : les
-  faits (chacun avec sa preuve), le chantier actif, les décisions, le
-  journal, le backlog, et les demandes à l'humain. Elle s'écrit en ajout
-  seul ; un identifiant se calcule, il ne se devine pas.
-- **L'état du projet se calcule**, il ne s'écrit pas : au démarrage de
-  chaque session et après chaque compactage, l'agent reçoit le commit, la
-  CI, le backlog, ce qui attend l'humain, puis le chantier actif et les
-  faits.
-- **Une trentaine de contrôles** vérifient la mémoire, la documentation et
-  les tests, à trois étages : les hooks de l'agent, les hooks git, la CI.
-  La CI exécute tout, et rien ne la contourne.
-- **Rien ne s'affaiblit en silence** : relâcher un seuil, supprimer un test,
-  changer une valeur attendue ou toucher un fichier protégé exige la
-  validation de l'humain.
-- **Chaque garde-fou a été vu échouer** : l'auto-test injecte chaque défaut
-  connu dans un projet jetable, et vérifie que l'étage prévu l'attrape.
+Ce qu'il voit quand il cite une entrée qui n'existe pas, et change la valeur
+attendue d'un test pour qu'il passe :
 
-Le détail, avec les schémas de ce que pose l'installation et du trajet
-d'une demande : [le fonctionnement et les principes](docs/fonctionnement.md).
+```text
+  memoire.references                 ECHEC
+      | memory/active.md:14 — `F-0003` ne désigne aucune entrée de la mémoire
+  tests.attendus                     ECHEC
+      | tests/test_calc.py:6 — assertion changée ou retirée dans `test_double` : « self.assertEqual(double(2), 4) » — valeur attendue modifiée sans spécification ni validation humaine
+```
 
-## Installer
+L'agent ne peut pas finir son tour ainsi : il corrige la référence, et pour
+le test, soit il remet la valeur, soit il te pose la question.
 
-Il faut Python 3.11 ou plus récent, et un dépôt git. Le moteur se récupère
-seul, sans l'atelier : un clone partiel qui ne télécharge que
-`engine/socle/` (environ 2 Mo), puis l'installeur.
+## Ce qu'il faut
+
+- Python 3.11 ou plus récent, et git. Le moteur n'a aucune dépendance.
+- Un projet dans l'un des langages maintenus : Rust, Python (`unittest` ou
+  pytest), JavaScript et TypeScript, Go, Java, Ruby, PHP, C#. Un autre
+  langage se décrit dans un fichier de configuration
+  ([les adaptateurs](engine/socle/adapters/README.md)).
+- Pour les trois étages : Claude Code pour les contrôles pendant le travail,
+  GitHub pour la CI. Avec un autre agent, ou une autre forge, les hooks git
+  et la commande de CI fonctionnent ; l'étage de l'agent manque.
+- Facultatif : BMAD Method, qui planifie pendant que le socle prouve et
+  retient ; une seule option installe les deux.
+
+## Essayer
+
+Le moteur se récupère seul, sans le reste de ce dépôt :
 
 ```sh
 git clone --depth 1 --filter=blob:none --sparse https://github.com/theodubus/memory /tmp/socle
@@ -84,71 +136,36 @@ cd ton-projet
 PYTHONPATH=/tmp/socle/engine python3 -m socle install --target . --owner @toi
 ```
 
-L'adaptateur se déduit du dépôt ; `--adapter <nom>` le force. Adaptateurs
-maintenus : `rust`, `python` (`unittest`), `python-pytest` (pytest et
-mutmut), `javascript` (vitest et Stryker, TypeScript compris), `go` (go
-test et gremlins), `java` (Maven, JUnit 5 et PIT), `ruby` (RSpec et
-mutant), `php` (PHPUnit et Infection), `csharp` (dotnet test et
-Stryker.NET). Un autre langage se décrit dans un fichier `.toml` passé à
-`--adapter` ([les adaptateurs](engine/socle/adapters/README.md)).
+L'installeur détecte le langage, pose le socle et finit par tes étapes
+suivantes, chacune avec sa commande : décrire le projet à l'agent, commiter,
+ouvrir l'agent, protéger la branche par défaut. Ensuite,
+`python3 .socle/socle help` te donne tes gestes au quotidien. Les options
+(mémoire privée, relecture avant publication, mémoire en anglais, projet
+existant) sont dans [le guide de l'humain](engine/socle/HELP.md).
 
-Options utiles : `--with-bmad` installe aussi BMAD Method, qui planifie
-pendant que le socle prouve et retient ; `--private compagnon` pose une
-mémoire privée ; `--review lots` te fait relire ce qui part avant
-publication ; `--language en` met la mémoire et les messages en anglais ;
-`--adoption` équipe un projet existant dont des contrôles échouent encore.
-Relancer la même commande met le socle à jour : le moteur est remplacé, et
-le diff de ta politique t'est montré sans la toucher.
+## Documentation
 
-### Ce qu'un projet reçoit
+| Tu veux… | Lis |
+| --- | --- |
+| comprendre comment le socle fonctionne, et pourquoi | [le fonctionnement et les principes](docs/fonctionnement.md) |
+| savoir quoi faire au quotidien : répondre à l'agent, approuver, mettre à jour | [le guide de l'humain](engine/socle/HELP.md) |
+| savoir comment la mémoire est écrite | [le format de la mémoire](engine/socle/FORMAT.md) |
+| brancher un autre langage | [les adaptateurs](engine/socle/adapters/README.md) |
+| contribuer au socle, ou savoir comment il a été fait | [la fabrication](docs/fabrication/README.md) |
 
-```text
-.socle/                   le lanceur, le moteur copié, sa politique, ses seuils, son adaptateur, ses hooks git
-memory/                   une mémoire vide : faits, chantier actif, décisions, journal, backlog, demandes
-AGENTS.md                 les instructions de l'agent (CLAUDE.md l'importe)
-.claude/settings.json     les hooks de Claude Code
-.github/workflows/        la CI, et le balayage de mutation hebdomadaire
-.github/CODEOWNERS        toi, propriétaire de la politique, des hooks et de la CI
-```
+## Où en est le projet
 
-Rien de l'atelier : ni ses tests, ni ses bancs, ni sa mémoire.
+Version <!-- valeur:version -->0.1.0<!-- /valeur -->, en développement. Le
+socle est éprouvé sur des projets jetables dans chacun des langages
+maintenus, sur la CI de GitHub, par un banc qui fait travailler un agent
+réel sur des scénarios propices aux fautes, et sur une copie d'un vrai
+projet de plusieurs semaines. Il n'équipe pas encore de projet en
+production : c'est la prochaine étape.
 
-### La première session
+## Ce dépôt
 
-L'installation finit par « Et maintenant » : tes étapes, dans l'ordre,
-chacune avec sa commande.
-
-1. Décrire le projet à l'agent :
-   `python3 .socle/socle init --brief <document> --repo`.
-2. Commiter et pousser.
-3. Ouvrir l'agent dans le projet : il lit l'état au démarrage et te pose
-   les questions de départ dans la conversation.
-4. Protéger la branche par défaut : y exiger la CI « Socle — verify,
-   contrôles, auto-test » ; sans cela, une CI rouge n'empêche pas de
-   fusionner.
-
-Ensuite, `python3 .socle/socle help` donne tes gestes, chacun avec sa
-commande : répondre aux demandes de l'agent, approuver tes propres
-changements protégés, relire avant publication si tu l'as choisi. Ce guide
-est aussi [dans le dépôt](engine/socle/HELP.md).
-
-## Lire la suite
-
-Le produit :
-
-- [le fonctionnement et les principes](docs/fonctionnement.md) — la
-  mémoire, les contrôles, les trois étages, la politique, les demandes, et
-  que faire quand un contrôle refuse ;
-- [le guide de l'humain](engine/socle/HELP.md) — tes gestes, chacun avec sa
-  commande ;
-- [le format de la mémoire](engine/socle/FORMAT.md) — ce qui fait foi pour
-  la lire et l'écrire ;
-- [les adaptateurs](engine/socle/adapters/README.md) — comment un langage
-  se décrit.
-
-L'atelier :
-
-- [la fabrication](docs/fabrication/README.md) — l'architecture, les bancs,
-  les relevés, et l'histoire du socle ;
-- [comment travailler dans ce dépôt](AGENTS.md) ;
-- [le cadrage fondateur](memory/archives/cadrage-2026-10-10.md), tel quel.
+| Partie | Où | Ce que c'est |
+| --- | --- | --- |
+| **Le produit** | `engine/socle/` | le moteur, ses adaptateurs, ses gabarits, son guide : la seule chose que l'installation copie dans un projet |
+| **L'atelier** | `tests/`, `bench/`, `docs/fabrication/` | ce qui fabrique et éprouve le produit ; rien n'en sort |
+| **Le socle appliqué à lui-même** | `memory/`, `.socle/`, `AGENTS.md` | ce dépôt est équipé du socle comme n'importe quel projet ; sa mémoire est l'historique de la fabrication, pas un modèle |

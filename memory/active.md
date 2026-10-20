@@ -21,6 +21,12 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 ## Consignes en cours
 
+- La documentation se conçoit avant de s'écrire, commence par ce dont le
+  projet parle et ce qu'il est, ses schémas se vérifient rendus avant le
+  push, et elle n'est faite que validée par Théo ; Théo : « fais un petit
+  effort de conception sur ce qu'est censé être une documentation »
+  (J-2026-10-20-Y).
+
 - Une attente annoncée dans le récap (CI, banc, match) s'accompagne d'un
   réveil programmé pour y revenir (Théo, J-2026-10-13-N).
 - Ce qui revient à Théo ne contient que ses gestes, chacun avec ce qu'il
@@ -61,8 +67,10 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 ## Prochaines étapes
 
-1. Faits : le retrait du code de compatibilité (D-0033, D-0035,
-   J-2026-10-20-U) et la documentation (B-0046, D-0036, J-2026-10-20-W).
+1. Fait : le retrait du code de compatibilité (D-0033, D-0035,
+   J-2026-10-20-U). Maintenant : la documentation (B-0046), à reconcevoir ;
+   la première version (J-2026-10-20-W) n'est pas validée par Théo
+   (J-2026-10-20-Y).
 2. Fait aussi : B-0077, le moteur ne renvoie plus à la mémoire de ce dépôt
    (J-2026-10-20-X). La publication du paquet du seul produit (B-0042)
    attend Théo : D-0037 (pip depuis GitHub, PyPI, une archive, ou rien).

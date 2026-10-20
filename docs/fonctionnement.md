@@ -1,24 +1,27 @@
 # Le socle : son fonctionnement et ses principes
 
-Ce document explique le socle à qui l'installe ou veut le comprendre. Les
-gestes de l'humain, chacun avec sa commande, sont dans
-[le guide](../engine/socle/HELP.md), affiché par `python3 .socle/socle help` ;
-le format exact de la mémoire, dans [son format](../engine/socle/FORMAT.md).
-Comment le socle est fabriqué, et où chaque exigence du cadrage est
-appliquée, relève de l'atelier : [la fabrication](fabrication/README.md).
+Ce document explique comment le socle fonctionne et pourquoi il est fait
+ainsi, à qui l'installe ou veut le comprendre avant de l'installer. Le
+problème qu'il résout et un aperçu d'une session sont dans
+[le README](../README.md) ; les gestes de l'humain, chacun avec sa commande,
+dans [le guide](../engine/socle/HELP.md) ; le format exact de la mémoire,
+dans [son format](../engine/socle/FORMAT.md). Comment le socle est fabriqué
+relève de l'atelier : [la fabrication](fabrication/README.md).
 
-## Le problème
+- [Les principes](#les-principes)
+- [Les trois étages](#les-trois-étages)
+- [La mémoire](#la-mémoire)
+- [Les contrôles](#les-contrôles)
+- [La politique d'autonomie](#la-politique-dautonomie)
+- [Les demandes de décision](#les-demandes-de-décision)
+- [Les garde-fous et le cliquet](#les-garde-fous-et-le-cliquet)
+- [Les adaptateurs](#les-adaptateurs)
+- [L'auto-test](#lauto-test)
+- [Ce que l'installation pose dans un projet](#ce-que-linstallation-pose-dans-un-projet)
+- [Quand un contrôle refuse](#quand-un-contrôle-refuse)
+- [Ce qui n'est pas fait](#ce-qui-nest-pas-fait)
 
-Un agent de code qui entretient un projet sur des semaines oublie : chaque
-session repart de zéro, et un compactage efface une partie de la
-conversation. Ce qu'il écrit pour s'en souvenir dérive, comme la
-documentation qu'il tient. Ses tests peuvent passer sans rien mesurer. Il
-cite un fichier ou un commit qui n'existe pas, relâche un seuil pour faire
-passer un contrôle, ou tranche une question qui revenait à l'humain.
-Chacune de ces erreurs est plausible et silencieuse : elle se voit trop
-tard, quand elle se voit.
-
-## Le principe
+## Les principes
 
 Le socle ne demande pas à l'agent d'être fiable : il rend ses erreurs
 détectables par une machine, au plus tôt.
@@ -43,50 +46,36 @@ Le moteur est en Python 3.11 ou plus récent, bibliothèque standard seule,
 et ne connaît ni le langage du projet ni l'agent : ce qui dépend du langage
 vit dans un adaptateur, ce qui dépend de l'agent dans ses hooks.
 
-## Ce que l'installation pose dans un projet
+## Les trois étages
 
-L'installeur copie le moteur, et lui seul, depuis ce dépôt ; il pose le
-reste à partir de ses gabarits, et ne touche jamais ce que le projet a déjà
-écrit lui-même.
+Le même moteur sert les trois étages : chacun lance les contrôles qui lui
+reviennent, et chacun arrête l'agent un peu plus tard que le précédent.
+Une erreur attrapée pendant le tour ne coûte presque rien ; la CI rattrape
+tout ce qui aurait échappé aux deux premiers.
 
 ```mermaid
-flowchart TB
-    subgraph source["Ce dépôt"]
-        moteur["engine/socle/<br/>moteur, adaptateurs, gabarits"]
-    end
-    subgraph projet["Le projet"]
-        copie[".socle/engine/socle/<br/>le moteur, copié tel quel"]
-        config[".socle/<br/>lanceur, verrou, politique,<br/>seuils, adaptateur, hooks git"]
-        memoire["memory/<br/>une mémoire vide"]
-        instr["AGENTS.md, CLAUDE.md"]
-        etages[".claude/settings.json,<br/>.github/workflows/, CODEOWNERS"]
-    end
-    moteur -- "copié" --> copie
-    moteur -- "gabarits posés,<br/>jamais écrasés" --> config & memoire & instr & etages
+flowchart LR
+    A(["L'agent<br/>travaille"]) --> E1
+    E1["<b>1. Pendant le tour</b><br/>hooks de l'agent<br/><br/>refuse une action<br/>irréversible, une référence<br/>inventée, une fin de tour<br/>aux contrôles rouges"] --> E2
+    E2["<b>2. Au commit, au push</b><br/>hooks git<br/><br/>juge ce qui part,<br/>trace les hooks de l'agent,<br/>arrête une fuite du privé"] --> E3
+    E3["<b>3. Sur GitHub</b><br/>la CI<br/><br/>rejoue tout contre la base,<br/>et l'auto-test du socle"] --> F(["Fusion"])
 ```
 
-```text
-.socle/
-  socle               le lanceur : python3 .socle/socle <commande>
-  engine/socle/       le moteur, copié tel quel ; la CI vérifie son empreinte
-  engine.lock         sa version et son empreinte
-  policy.toml         la politique d'autonomie, à l'humain
-  guardrails.toml     les seuils des contrôles, sous cliquet
-  adapter.toml        le langage du projet et ses outils
-  git-hooks/          les hooks git, branchés par core.hooksPath
-memory/               la mémoire du projet
-AGENTS.md             les instructions de l'agent ; CLAUDE.md l'importe
-.claude/settings.json les hooks de Claude Code
-.github/workflows/socle.yml   la CI
-.github/workflows/socle-mutation.yml   le balayage de mutation hebdomadaire,
-                      quand l'adaptateur en déclare un et que le projet n'en
-                      lance pas déjà un
-.github/CODEOWNERS    l'humain, propriétaire de la politique, des hooks et de la CI
-```
+Chaque refus revient à l'agent avec ce qu'il a vu et la façon d'en sortir ;
+il corrige, puis repasse l'étage.
 
-Trois sortes de fichiers, donc : le moteur, que seul l'installeur remplace ;
-les fichiers du projet, que l'agent modifie selon la politique ; et les
-étages d'application (hooks, CI), protégés.
+| Étage | Quand | Ce qu'il fait |
+| --- | --- | --- |
+| L'agent (hooks de Claude Code) | au démarrage, avant chaque outil, à la fin de chaque tour | injecte l'état ; refuse une action irréversible, l'écriture d'un fichier protégé, une réponse à la place de l'humain, une référence ou un SHA inventés, une fuite du privé ; refuse de conclure tant que les contrôles échouent, que la mémoire est en retard sur le code, ou que le dernier message n'a pas son récap (« Pour toi : », « Ensuite : ») et des liens que l'humain peut suivre |
+| git | à chaque commit et à chaque push | juge ce qui sera commité (l'index) avec les contrôles rapides ; trace les hooks de l'agent dans le commit ; refuse une fuite dans le message ; avertit d'une fonction sans test ; avant le push, exécute `verify --fast` (ses étapes, seulement si elles n'ont pas déjà passé sur cet arbre), juge la plage qui part comme la CI du push la jugera, et, si elle est choisie, exige la relecture de l'humain |
+| La CI | à chaque push et pull request | exécute tout, contre la base : les capacités de l'adaptateur, tous les contrôles, et l'auto-test du socle |
+
+Le même moteur sert les trois étages. Un autre agent que Claude Code n'a
+pas les hooks du premier étage : il lance `socle state` lui-même, et les
+hooks git et la CI le couvrent comme n'importe qui.
+
+Après trois échecs de suite à la fin d'un tour, l'agent s'arrête et écrit
+une demande qui résume ce qu'il a tenté.
 
 ## La mémoire
 
@@ -134,7 +123,7 @@ d'essai ; le mode compagnon est le plus sûr.
 **Langue.** La mémoire s'écrit en français ou en anglais, au choix du
 projet, et se lit dans les deux.
 
-## L'état dérivé
+### L'état dérivé
 
 `python3 .socle/socle state` imprime où en est le projet : le commit et la
 branche, ce qui n'est pas fusionné, l'état de la CI et si GitHub l'exige
@@ -177,21 +166,6 @@ Par famille :
   réponse porte sur le texte exact de sa demande.
 - **Le privé** : accès, verrou, chiffrement, fuites, liste des termes.
 
-## Les trois étages
-
-| Étage | Quand | Ce qu'il fait |
-| --- | --- | --- |
-| L'agent (hooks de Claude Code) | au démarrage, avant chaque outil, à la fin de chaque tour | injecte l'état ; refuse une action irréversible, l'écriture d'un fichier protégé, une réponse à la place de l'humain, une référence ou un SHA inventés, une fuite du privé ; refuse de conclure tant que les contrôles échouent, que la mémoire est en retard sur le code, ou que le dernier message n'a pas son récap (« Pour toi : », « Ensuite : ») et des liens que l'humain peut suivre |
-| git | à chaque commit et à chaque push | juge ce qui sera commité (l'index) avec les contrôles rapides ; trace les hooks de l'agent dans le commit ; refuse une fuite dans le message ; avertit d'une fonction sans test ; avant le push, exécute `verify --fast` (ses étapes, seulement si elles n'ont pas déjà passé sur cet arbre), juge la plage qui part comme la CI du push la jugera, et, si elle est choisie, exige la relecture de l'humain |
-| La CI | à chaque push et pull request | exécute tout, contre la base : les capacités de l'adaptateur, tous les contrôles, et l'auto-test du socle |
-
-Le même moteur sert les trois étages. Un autre agent que Claude Code n'a
-pas les hooks du premier étage : il lance `socle state` lui-même, et les
-hooks git et la CI le couvrent comme n'importe qui.
-
-Après trois échecs de suite à la fin d'un tour, l'agent s'arrête et écrit
-une demande qui résume ce qu'il a tenté.
-
 ## La politique d'autonomie
 
 `.socle/policy.toml` dit ce que l'agent décide seul et ce qu'il demande.
@@ -219,16 +193,17 @@ texte exact de l'humain, seulement si la demande a été poussée telle
 quelle ; la demande répondue est gelée.
 
 ```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
 sequenceDiagram
     participant A as L'agent
-    participant G as Le dépôt (GitHub)
-    participant H as L'humain
-    A->>A: socle new request : les huit champs
-    A->>G: commit et push de la demande
-    A->>H: son lien, dans la conversation
-    H->>A: sa réponse, dans la conversation
-    A->>G: socle answer --relayed, avec son texte exact
-    Note over G: la demande répondue est gelée ;<br/>une réponse « valider » autorise<br/>ce qu'elle nomme
+    participant D as Le dépôt
+    actor H as L'humain
+    A->>A: socle new request, puis les huit champs
+    A->>D: commit et push de la demande
+    A->>H: le lien de la demande, dans la conversation
+    H-->>A: sa réponse, dans la conversation
+    A->>D: socle answer --relayed, avec son texte exact
+    Note over D: gelée, la demande ne change plus. « valider » autorise ce qu'elle nomme.
 ```
 
 Seule la réponse `valider` autorise un geste que la politique réserve à
@@ -269,7 +244,7 @@ leur langage : Rust, Python sous `unittest` et sous pytest, JavaScript et
 TypeScript, Go, Java, Ruby, PHP, C#. Un autre langage se décrit dans un fichier
 de même forme. Le détail : `engine/socle/adapters/README.md`.
 
-## L'auto-test et les bancs
+## L'auto-test
 
 `python3 .socle/socle selftest` fabrique un projet jetable, y injecte un à
 un chaque défaut connu (une référence morte, un test tautologique, un seuil
@@ -281,11 +256,39 @@ chaque refus du hook en ont au moins un défaut, ce qu'un test exige. La CI
 le lance à chaque push. Un garde-fou ajouté sans son
 défaut injecté n'est pas accepté dans ce dépôt.
 
-Deux bancs, dans l'atelier, mesurent le reste : le banc d'évaluation fait
+Dans l'atelier, deux bancs mesurent le reste : le banc d'évaluation fait
 travailler un agent réel sur des scénarios propices aux erreurs, et dit
 quel étage attrape quoi ([le banc](fabrication/banc.md)) ; le banc des
 adaptateurs éprouve chacun sur les vrais outils de son langage
 (`bench/adapters.py`).
+
+## Ce que l'installation pose dans un projet
+
+L'installeur copie le moteur, et lui seul ; il pose le reste à partir de ses
+gabarits, et ne touche jamais à ce que le projet a déjà écrit lui-même.
+
+```text
+.socle/
+  socle               le lanceur : python3 .socle/socle <commande>
+  engine/socle/       le moteur, copié tel quel ; la CI vérifie son empreinte
+  engine.lock         sa version et son empreinte
+  policy.toml         la politique d'autonomie, à l'humain
+  guardrails.toml     les seuils des contrôles, sous cliquet
+  adapter.toml        le langage du projet et ses outils
+  git-hooks/          les hooks git, branchés par core.hooksPath
+memory/               la mémoire du projet
+AGENTS.md             les instructions de l'agent ; CLAUDE.md l'importe
+.claude/settings.json les hooks de Claude Code
+.github/workflows/socle.yml   la CI
+.github/workflows/socle-mutation.yml   le balayage de mutation hebdomadaire,
+                      quand l'adaptateur en déclare un et que le projet n'en
+                      lance pas déjà un
+.github/CODEOWNERS    l'humain, propriétaire de la politique, des hooks et de la CI
+```
+
+Trois sortes de fichiers, donc : le moteur, que seul l'installeur remplace ;
+les fichiers du projet, que l'agent modifie selon la politique ; et les
+étages d'application (hooks, CI), protégés.
 
 ## Quand un contrôle refuse
 
