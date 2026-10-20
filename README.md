@@ -39,7 +39,7 @@ L'adaptateur se déduit du dépôt (`--adapter <nom>` le force). Adaptateurs
 maintenus : `rust`, `python` (`unittest`), `python-pytest` (pytest et
 mutmut), `javascript` (vitest et Stryker), `go` (go test et gremlins),
 `java` (Maven, JUnit 5 et PIT), `ruby` (RSpec et mutant), `php` (PHPUnit et
-Infection) ; un autre langage se déclare dans un fichier `.toml` passé à
+Infection), `csharp` (dotnet test et Stryker.NET) ; un autre langage se déclare dans un fichier `.toml` passé à
 `--adapter`. Options : `--private compagnon|chiffre` (une mémoire privée),
 `--review lots|chaque-push` (relire avant publication), `--language en`
 (une mémoire en anglais), `--adoption` (un projet existant dont des

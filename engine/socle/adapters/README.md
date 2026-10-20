@@ -211,5 +211,5 @@ que .NET 8 : le banc épingle la 4.16.0, et la CI pose les deux SDK de
 support long.
 
 Le banc l'éprouve comme les cinq précédents, sur une solution xUnit. Les
-étapes de CI qu'il ajoute au workflow n'ont tourné qu'ici, pas encore sur
-GitHub.
+étapes de CI qu'il ajoute au workflow, et le balayage hebdomadaire,
+passent aussi sur GitHub, dans un dépôt d'essai (F-0026).

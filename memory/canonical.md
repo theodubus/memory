@@ -242,3 +242,12 @@ des reports au backlog n'y a pas tourné.
 Une solution xUnit jetable, avec le SDK .NET 8 et Stryker.NET 4.16.0 :
 12 étapes sur 12, au premier passage. Mesuré dans ce conteneur, pas sur
 GitHub : les étapes de CI que l'adaptateur ajoute n'y ont pas tourné.
+
+## F-0026 — La CI et le balayage que pose le socle passent sur GitHub dans un projet C#
+
+> statut : mesuré · preuve : J-2026-10-20-P
+
+Le projet C# jetable du banc, sur la branche `csharp` du dépôt d'essai : le
+workflow « Socle » passe, avec `actions/setup-dotnet@v5` et les SDK 8 et 10,
+et le balayage lancé à la main lit 2 survivants de Stryker.NET, comme le
+banc local. Mesuré le 20 oct.
