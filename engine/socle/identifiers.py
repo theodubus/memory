@@ -1,8 +1,8 @@
-"""Les identifiants que deux branches prennent ensemble (ADR-0026).
+"""Les identifiants que deux branches prennent ensemble.
 
 `socle new` calcule un identifiant sur l'arbre de sa branche, qui ne voit
-pas les autres : deux branches parties du même commit prennent le même
-(B-0053). Trois gestes : voir les identifiants que les branches distantes
+pas les autres : deux branches parties du même commit prennent le même.
+Trois gestes : voir les identifiants que les branches distantes
 ont déjà pris, refuser avant la fusion un identifiant que la branche par
 défaut a pris aussi depuis que la branche s'en est séparée, et le
 renuméroter.

@@ -29,6 +29,7 @@ qu'un projet reçoit n'en parle.
 | --- | --- |
 | [L'architecture](architecture.md) | où chaque exigence du cadrage est appliquée, module par module, et ce qui ne l'est pas encore |
 | [Le banc d'évaluation](banc.md) | comment un agent réel est mis à l'épreuve sur des scénarios propices aux fautes, et quel étage attrape quoi |
+| [Les adaptateurs](adaptateurs.md) | comment chaque adaptateur maintenu a été éprouvé, et ce que ces essais ont corrigé |
 | [Le parcours de l'utilisateur](parcours.md) | ce que l'humain tape, lit et décide, relevé de l'installation à l'usage courant, et ce qui l'a simplifié |
 | [La passe de recul](recul.md) | un relevé de tout le code et du fonctionnement : constats et propositions |
 | [L'inventaire de chess](inventaire-chess.md) | ce que le projet d'échecs contenait de générique, et ce que chaque pièce est devenue |

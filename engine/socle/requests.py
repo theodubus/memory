@@ -23,7 +23,7 @@ from socle import config, language as langue, memory as memoire, utils as outils
 from socle.messages import a_traduire, trad
 
 # Les sections et les réponses, sous leurs clés internes ; elles s'écrivent
-# dans la langue de la mémoire du projet (B-0031).
+# dans la langue de la mémoire du projet.
 SECTIONS = {k: v["fr"] for k, v in langue.SECTIONS.items()}
 REPONSE_POSITIVE = "valider"
 RENVOI = "contexte-insuffisant"
@@ -39,7 +39,7 @@ MOTIFS_INTERNES = [
 MOTS_DESCRIPTION_MIN = 5
 SECTION_MIN = 15
 # Une demande lue une semaine plus tard, sans le projet en tête : le contexte
-# raconte, il ne résume pas en une ligne (retour de Théo, J-2026-10-10-I).
+# raconte, il ne résume pas en une ligne.
 MOTS_CONTEXTE_MIN = 60
 LIEN = re.compile(r"\]\([^)\s]+\)|https?://\S+")
 # Un trou du gabarit : `<texte avec des espaces>`, hors commentaire HTML ;
@@ -75,7 +75,7 @@ class Demande:
     @property
     def statut_affiche(self) -> str:
         """Le statut dit dans la langue des messages ; `statut` reste la valeur
-        que le moteur compare (B-0059)."""
+        que le moteur compare."""
         if self.reponse is None:
             return trad("retirée") if self.entree and "retiree" in self.entree.meta else trad("en attente")
         r = str(self.reponse.get("reponse", ""))
@@ -83,7 +83,7 @@ class Demande:
 
     @property
     def seance(self) -> bool:
-        """Une décision prise en séance (ADR-0032) : l'humain a lu la question
+        """Une décision prise en séance : l'humain a lu la question
         dans la conversation et y a répondu ; elle s'écrit avec sa réponse."""
         return bool(self.entree) and langue.valeur(self.entree.meta.get("forme", "")) == "seance"
 
@@ -314,7 +314,7 @@ def ecrire_reponse(racine: Path, d: Demande, reponse: str, texte: str, par: str,
                    canal: str = "terminal", citation: str = "") -> str:
     """Écrit la réponse humaine. Refuse une réponse hors des réponses possibles.
 
-    Deux canaux (ADR-0006). `terminal` : l'humain lance lui-même
+    Deux canaux. `terminal` : l'humain lance lui-même
     `socle answer`. `conversation` : l'humain a répondu dans le chat, et
     l'agent consigne sa réponse ; il doit alors en citer le texte exact, qui
     reste dans le fichier, visible à la relecture du diff."""
@@ -354,7 +354,7 @@ def ecrire_reponse(racine: Path, d: Demande, reponse: str, texte: str, par: str,
 
 def ecrire_seance(projet: config.Projet, question: str, texte: str, reponse: str, par: str, jour: str,
                   canal: str, citation: str = "", sujet: str = "") -> tuple[str, str]:
-    """Une décision prise en séance (ADR-0032) : la question que l'humain a
+    """Une décision prise en séance : la question que l'humain a
     lue dans la conversation, avec sa réponse, d'un seul geste, dans le
     registre des demandes. Rend les chemins de la demande et de sa
     réponse."""
@@ -404,7 +404,7 @@ def validations_ajoutees(racine: Path, base: str | None, tete: str | None) -> li
 
 
 def illisible(projet: config.Projet, d: Demande) -> str | None:
-    """Pourquoi l'humain n'a pas pu lire la demande telle qu'elle est (B-0022),
+    """Pourquoi l'humain n'a pas pu lire la demande telle qu'elle est,
     ou `None`. Au banc, un agent a écrit une demande puis y a relayé une phrase
     que l'humain avait dite avant qu'elle existe. Une demande chiffrée ne se
     lit pas sur GitHub : l'agent la donne en entier dans la conversation."""

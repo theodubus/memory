@@ -1,4 +1,4 @@
-"""Le catalogue anglais des messages du moteur (ADR-0028) : le texte français,
+"""Le catalogue anglais des messages du moteur : le texte français,
 tel qu'il est écrit dans le code, vers sa traduction. Les variables `{nom}`
 sont les mêmes des deux côtés ; `tests/test_messages.py` le vérifie, et
 qu'aucun message enveloppé n'y manque."""
@@ -69,14 +69,14 @@ MESSAGES: dict[str, str] = {
     "`socle approve` est réservé à l'humain : il valide ses propres changements protégés.":
         "`socle approve` is reserved for the human: it approves their own protected changes.",
     "l'agent ne répond jamais à la place de l'humain. Il ne peut que relayer une réponse donnée dans la conversation "
-    ": `socle answer D-NNNN <réponse> --relayed --by <nom> --quote-file <texte exact>` (ADR-0006), `socle decision "
-    "\"<question>\" <réponse> --relayed --by <nom> --quote-file <texte exact>` pour une décision prise en séance "
-    "(ADR-0032), ou `socle reviewed --relayed --by <nom> --quote-file <texte exact>` pour une relecture avant "
+    ": `socle answer D-NNNN <réponse> --relayed --by <nom> --quote-file <texte exact>`, `socle decision "
+    "\"<question>\" <réponse> --relayed --by <nom> --quote-file <texte exact>` pour une décision prise en séance"
+    ", ou `socle reviewed --relayed --by <nom> --quote-file <texte exact>` pour une relecture avant "
     "publication.":
         "the agent never answers in the human's place. It can only relay an answer given in the conversation: `socle "
-        "answer D-NNNN <answer> --relayed --by <name> --quote-file <exact text>` (ADR-0006), `socle decision "
-        "\"<question>\" <answer> --relayed --by <name> --quote-file <exact text>` for a decision taken in session "
-        "(ADR-0032), or `socle reviewed --relayed --by <name> --quote-file <exact text>` for a review before "
+        "answer D-NNNN <answer> --relayed --by <name> --quote-file <exact text>`, `socle decision "
+        "\"<question>\" <answer> --relayed --by <name> --quote-file <exact text>` for a decision taken in session"
+        ", or `socle reviewed --relayed --by <name> --quote-file <exact text>` for a review before "
         "publication.",
     "`{reglage}` : les réglages de Claude Code commandent ses hooks, seul l'humain les modifie (un réglage local "
     "peut les couper tous).":
@@ -833,9 +833,9 @@ MESSAGES: dict[str, str] = {
     "plafond non nul sans raison écrite pour `{m}`":
         "non-zero cap without a written reason for `{m}`",
     "Ajouter un terme à la liste privée est libre ; en retirer un exige une demande validée qui cite la liste et son "
-    "empreinte nouvelle (D-0007).":
+    "empreinte nouvelle.":
         "Adding a term to the private list is free; removing one requires an approved request that cites the list "
-        "and its new fingerprint (D-0007).",
+        "and its new fingerprint.",
     "Aucun identifiant privé dans un fichier public : le public ne référence jamais le privé.":
         "No private identifier in a public file: the public never references the private.",
     "Aucun terme de la liste privée dans un fichier public modifié, et ni terme ni identifiant privé dans un message "
@@ -913,22 +913,22 @@ MESSAGES: dict[str, str] = {
         "A protected file only changes with an approved request that cites its new fingerprint (hooks, CI, policy, "
         "adapter, engine).",
     "Un identifiant que la branche définit et que la branche par défaut a pris aussi depuis leur divergence, pour "
-    "une autre entrée, serait défini deux fois à la fusion (ADR-0026) : dit avant, avec la commande qui répare.":
+    "une autre entrée, serait défini deux fois à la fusion : dit avant, avec la commande qui répare.":
         "An identifier the branch defines and the default branch also took since they diverged, for another entry, "
-        "would be defined twice at the merge (ADR-0026): said beforehand, with the command that repairs it.",
+        "would be defined twice at the merge: said beforehand, with the command that repairs it.",
     "Un même contenu dans deux fichiers est une copie qui divergera : refusé.":
         "The same content in two files is a copy that will diverge: refused.",
     "Un seul fichier d'instructions fait foi : `AGENTS.md`, que `CLAUDE.md` importe en une ligne ; ou, sans "
     "`AGENTS.md`, `CLAUDE.md` qui porte la section du socle, quand l'installeur l'a gardé parce que le projet le "
-    "nomme (B-0049).":
+    "nomme.":
         "A single instructions file is authoritative: `AGENTS.md`, which `CLAUDE.md` imports in one line; or, "
         "without `AGENTS.md`, `CLAUDE.md` carrying the socle section, when the installer kept it because the project "
-        "names it (B-0049).",
+        "names it.",
     "Une citation `ID@empreinte` ou `index@empreinte` ajoutée désigne une version que l'agent a pu lire "
-    "(`socle.readings`, ADR-0023) ; une décision, une demande ou un sujet de backlog nouveaux prouvent ce qu'ils ont "
+    "(`socle.readings`) ; une décision, une demande ou un sujet de backlog nouveaux prouvent ce qu'ils ont "
     "lu avant d'être écrits.":
         "A citation `ID@fingerprint` or `index@fingerprint` that is added names a version the agent could read "
-        "(`socle.readings`, ADR-0023); a new decision, request or backlog topic proves what it read before being "
+        " (`socle.readings`); a new decision, request or backlog topic proves what it read before being "
         "written.",
     "Une fonction publique ajoutée ou modifiée est nommée par au moins un test — ou une dispense motivée la nomme "
     "(`Dispense-test: f — <raison>`).":
@@ -1706,7 +1706,7 @@ MESSAGES: dict[str, str] = {
         "command filter, nor the end-of-turn checks, nor the state at startup run. Tell the human before any work. "
         "{remede}",
     # Les textes des adaptateurs maintenus (`absent`, `replacement`), écrits
-    # dans leurs fichiers et traduits à l'affichage (B-0059).
+    # dans leurs fichiers et traduits à l'affichage.
     "signal secondaire, jamais un garde-fou":
         "secondary signal, never a guardrail",
     "capacité `mutation`":
@@ -1747,8 +1747,8 @@ MESSAGES: dict[str, str] = {
         "capability `lint` (compileall)",
     "capacité `mutation`, ou son remplacement":
         "capability `mutation`, or its replacement",
-    "mutmut n'est pas évalué sur ce projet (outil candidat du cadrage, jalon 6)":
-        "mutmut is not evaluated on this project (candidate tool of the brief, milestone 6)",
+    "pas d'outil de mutation sous unittest : l'adaptateur python-pytest emploie mutmut":
+        "no mutation tool under unittest: the python-pytest adapter uses mutmut",
     "l'auto-test du socle et des tests qui injectent un défaut connu dans chaque garde-fou":
         "the socle's self-test and tests that inject a known defect into each guardrail",
     "aucun formateur imposé ; un projet qui adopte rubocop le déclare ici (`bundle exec rubocop`)":
@@ -1770,7 +1770,7 @@ MESSAGES: dict[str, str] = {
     "signal secondaire, jamais un garde-fou : la mutation mesure ce que la couverture prétend":
         "secondary signal, never a guardrail: mutation measures what coverage claims",
     # Les noms des étapes de CI des adaptateurs, et ce que l'installeur dit
-    # des workflows qu'il pose dans la langue du projet (B-0059).
+    # des workflows qu'il pose dans la langue du projet.
     "Outil de mutation":
         "Mutation tool",
     "Dépendances":
@@ -1794,7 +1794,7 @@ MESSAGES: dict[str, str] = {
     "le socle exige Python 3.11 ou plus récent (tomllib) ; trouvé : ":
         "the socle requires Python 3.11 or newer (tomllib); found: ",
     # Les défauts injectés et les témoins sains de l'auto-test, décrits en
-    # français dans `selftest.py` et traduits à l'affichage (B-0059).
+    # français dans `selftest.py` et traduits à l'affichage.
     "valeur de la doc divergente de sa source":
         "doc value diverging from its source",
     "lien ou identifiant mort":
@@ -2025,14 +2025,14 @@ MESSAGES: dict[str, str] = {
         "an agent commit that carries the trace of its hooks passes the CI",
     "une valeur attendue changée sous une spécification que l'humain a commitée passe la CI":
         "an expected value changed under a specification the human committed passes the CI",
-    "CLAUDE.md gardé comme seule source, avec la section du socle, passe la CI (B-0049)":
-        "CLAUDE.md kept as the only source, with the socle section, passes the CI (B-0049)",
+    "CLAUDE.md gardé comme seule source, avec la section du socle, passe la CI":
+        "CLAUDE.md kept as the only source, with the socle section, passes the CI",
     "une assertion reformatée à valeur égale passe la CI (relevé de recul, E)":
         "an assertion reformatted with an equal value passes the CI (step-back review, E)",
-    "un chemin d'un autre dépôt, non déclaré, est signalé sans refus (B-0052)":
-        "a path from another repository, undeclared, is reported without refusal (B-0052)",
-    "une référence de commit en fin de phrase passe la CI (B-0020)":
-        "a commit reference at the end of a sentence passes the CI (B-0020)",
+    "un chemin d'un autre dépôt, non déclaré, est signalé sans refus":
+        "a path from another repository, undeclared, is reported without refusal",
+    "une référence de commit en fin de phrase passe la CI":
+        "a commit reference at the end of a sentence passes the CI",
     "durcir un garde-fou est libre":
         "tightening a guardrail is free",
     "un module nouveau entre au cliquet de mutation « à mesurer » : la CI passe":
@@ -2155,14 +2155,12 @@ MESSAGES: dict[str, str] = {
         "third-party path declared without validation, so that a file of the project escapes the checks",
     "chemin tiers qui couvrirait la mémoire":
         "third-party path that would cover the memory",
-    "les fichiers d'un outil tiers, déclaré par l'humain qui l'approuve, échappent aux contrôles : la CI passe "
-    "(ADR-0031)":
-        "the files of a third-party tool, declared by the human who approves it, escape the checks: the CI passes "
-        "(ADR-0031)",
+    "les fichiers d'un outil tiers, déclaré par l'humain qui l'approuve, échappent aux contrôles : la CI passe":
+        "the files of a third-party tool, declared by the human who approves it, escape the checks: the CI passes",
     "travail reporté par BMAD resté hors du backlog":
         "work deferred by BMAD left out of the backlog",
-    "un travail reporté par BMAD, entré au backlog par `socle bmad-import`, passe la CI (ADR-0032)":
-        "work deferred by BMAD, entered into the backlog by `socle bmad-import`, passes the CI (ADR-0032)",
+    "un travail reporté par BMAD, entré au backlog par `socle bmad-import`, passe la CI":
+        "work deferred by BMAD, entered into the backlog by `socle bmad-import`, passes the CI",
     "travail reporté par BMAD, absent du backlog : « {resume} » — le faire entrer : `python3 "
     ".socle/socle bmad-import`":
         "work deferred by BMAD, missing from the backlog: “{resume}” — enter it: `python3 .socle/socle bmad-import`",
@@ -2180,9 +2178,9 @@ MESSAGES: dict[str, str] = {
         "  sprint, {statut}: {liste}",
     "  {n} travail(aux) reporté(s) par BMAD hors du backlog : `python3 .socle/socle bmad-import`":
         "  {n} work item(s) deferred by BMAD outside the backlog: `python3 .socle/socle bmad-import`",
-    "Un travail que BMAD reporte entre au backlog du socle (ADR-0032) : une seule liste des trouvailles, que le "
+    "Un travail que BMAD reporte entre au backlog du socle : une seule liste des trouvailles, que le "
     "socle suit et clôt.":
-        "Work that BMAD defers enters the socle's backlog (ADR-0032): a single list of findings, which the socle "
+        "Work that BMAD defers enters the socle's backlog: a single list of findings, which the socle "
         "tracks and closes.",
     "ce que la décision approuve (une spec de BMAD : son intention figée)":
         "what the decision approves (a BMAD spec: its frozen intent)",
@@ -2214,9 +2212,9 @@ MESSAGES: dict[str, str] = {
         "spec “{statut}” without the human's approval recorded: record it, word for word, as soon as given — "
         "`python3 .socle/socle decision \"<the question asked>\" approve --about {chemin} --relayed --by <name> "
         "--quote-file <exact text>`",
-    "Une spec de BMAD approuvée l'est par l'humain, consigné mot pour mot (ADR-0032), et son intention figée ne "
+    "Une spec de BMAD approuvée l'est par l'humain, consigné mot pour mot, et son intention figée ne "
     "change plus sans lui.":
-        "An approved BMAD spec is approved by the human, recorded word for word (ADR-0032), and its frozen intent "
+        "An approved BMAD spec is approved by the human, recorded word for word, and its frozen intent "
         "no longer changes without them.",
     "décision en séance consignée par l'agent sans la citer":
         "decision taken in session recorded by the agent without quoting it",
@@ -2224,12 +2222,12 @@ MESSAGES: dict[str, str] = {
         "frozen intent of a spec changed after its approval",
     "spec de BMAD approuvée sans l'approbation de l'humain consignée":
         "BMAD spec approved without the human's approval recorded",
-    "une spec de BMAD approuvée, dont l'approbation de l'humain est consignée en séance, passe la CI (ADR-0032)":
-        "an approved BMAD spec, whose human approval is recorded in session, passes the CI (ADR-0032)",
+    "une spec de BMAD approuvée, dont l'approbation de l'humain est consignée en séance, passe la CI":
+        "an approved BMAD spec, whose human approval is recorded in session, passes the CI",
     "BMAD Method : sa personnalisation posée pour {n} skill(s) — la mémoire du socle, son état, les décisions en "
-    "séance et sa fin de tour (ADR-0032)":
+    "séance et sa fin de tour":
         "BMAD Method: its customization written for {n} skill(s) — the socle's memory, its state, the decisions "
-        "taken in session and its end of turn (ADR-0032)",
+        "taken in session and its end of turn",
     "!! BMAD Method : personnalisation propre au projet gardée pour {liste} — y ajouter à la main ce que pose le "
     "socle":
         "!! BMAD Method: the project's own customization kept for {liste} — add by hand what the socle writes",
@@ -2256,8 +2254,8 @@ MESSAGES: dict[str, str] = {
         "!! the project already has its own state at startup ({commandes}): every session also receives the "
         "socle's, and the two overlap (branch, commits, what is the human's). To keep only one, the human removes "
         "theirs from .claude/settings.json, or leaves in it only what is the project's own",
-    "un chemin qui n'existe que dans une rustine suivie du dépôt passe la CI (B-0008)":
-        "a path that only exists in a patch tracked by the repository passes the CI (B-0008)",
+    "un chemin qui n'existe que dans une rustine suivie du dépôt passe la CI":
+        "a path that only exists in a patch tracked by the repository passes the CI",
     "    … et {n} autre(s)":
         "    … and {n} more",
     "  décisions d'architecture (une en entier : `python3 .socle/socle show AD-n`) :":
@@ -2270,14 +2268,14 @@ MESSAGES: dict[str, str] = {
         "show {ident}`",
     "{ident} : aucune décision de ce nom dans l'architecture de BMAD":
         "{ident}: no decision of that name in BMAD's architecture",
-    "Une décision d'architecture de BMAD citée avec son empreinte (`AD-n@empreinte`) l'est dans sa version actuelle "
-    "(B-0072).":
+    "Une décision d'architecture de BMAD citée avec son empreinte (`AD-n@empreinte`) l'est dans sa version actuelle"
+    ".":
         "A BMAD architecture decision cited with its fingerprint (`AD-n@fingerprint`) is cited in its current "
-        "version (B-0072).",
+        "version.",
     "décision d'architecture de BMAD citée dans une version qu'elle n'a plus":
         "BMAD architecture decision cited in a version it no longer has",
-    "une décision d'architecture de BMAD citée dans sa version actuelle passe la CI (B-0072)":
-        "a BMAD architecture decision cited in its current version passes the CI (B-0072)",
+    "une décision d'architecture de BMAD citée dans sa version actuelle passe la CI":
+        "a BMAD architecture decision cited in its current version passes the CI",
     "adaptateur : audit impossible ({erreur})":
         "adapter  : audit impossible ({erreur})",
     "adaptateur : !! langage(s) que l'adaptateur ({couvert}) ne couvre pas : {liste} — leurs tests, leur compilation "

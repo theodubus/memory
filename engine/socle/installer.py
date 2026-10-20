@@ -56,7 +56,7 @@ PYTHON_ANCIEN = a_traduire("le socle exige Python 3.11 ou plus récent (tomllib)
 
 def noms_d_etapes_traduits(etapes: str) -> str:
     """Les étapes de CI d'un adaptateur, le nom de chacune dans la langue des
-    messages ; le reste tel quel (B-0059)."""
+    messages ; le reste tel quel."""
     return re.sub(r"(?m)^(\s*- name: )(.+?)\s*$", lambda m: m.group(1) + trad(m.group(2)), etapes)
 
 
@@ -78,7 +78,7 @@ MARQUEURS_LANGAGE = (
 
 def langages_presents(fichiers: list[str]) -> dict[str, list[str]]:
     """Chaque langage dont le dépôt porte un fichier marqueur, à la racine ou
-    plus bas, et où (B-0011) : l'audit de l'adaptateur les compare à celui
+    plus bas, et où : l'audit de l'adaptateur les compare à celui
     qu'il couvre."""
     res: dict[str, list[str]] = {}
     for marqueurs, langage in MARQUEURS_LANGAGE:
@@ -128,7 +128,7 @@ def politique_privee(texte: str, mode: str, relecture: str | None, demandes: boo
 def _balayage_planifie(cible: Path, texte_adaptateur: str) -> tuple[bool, str]:
     """(poser, ce qu'en dit le journal) : le workflow de mutation se pose
     quand l'adaptateur déclare un balayage, sauf si un workflow du projet
-    le lance déjà (B-0005) ; celui du socle, déjà posé, se met à jour."""
+    le lance déjà ; celui du socle, déjà posé, se met à jour."""
     cap = tomllib.loads(texte_adaptateur).get("capabilities", {}).get("mutation", {})
     if "command" not in cap:
         return False, ""
@@ -145,7 +145,7 @@ def _balayage_planifie(cible: Path, texte_adaptateur: str) -> tuple[bool, str]:
 
 # Les outils tiers que l'installeur reconnaît : leur nom, ce qui trahit leur
 # présence, et les chemins de leurs fichiers, qu'aucun contrôle ne juge
-# (ADR-0031). Leurs sorties (les documents qu'ils écrivent pour le projet)
+#. Leurs sorties (les documents qu'ils écrivent pour le projet)
 # n'en sont pas : elles sont au projet.
 OUTILS_TIERS = (
     ("BMAD Method", ("_bmad", "*/skills/bmad-*", "skills/bmad-*"), ["_bmad/**", "**/skills/bmad-*/**"]),
@@ -172,7 +172,7 @@ def declarer_tiers(texte: str, chemins: list[str]) -> str:
     return texte.rstrip("\n") + "\n\n[thirdparty]\n" + f"paths = {liste}\n"
 
 
-# BMAD Method, installé avec le socle en une commande (B-0074) : la version
+# BMAD Method, installé avec le socle en une commande : la version
 # éprouvée avec lui, son module de méthode, pour Claude Code.
 VERSION_BMAD = "6.12.4"
 LANGUES_BMAD = {"fr": "French", "en": "English"}
@@ -221,7 +221,7 @@ FIN_BMAD = {
           '.socle/socle new journal` that cites the spec or the document without copying it), run `python3 '
           '.socle/socle verify --fast` again, commit, then end with the lines “For you:” and “Next:”."\n',
 }
-MARQUES_BMAD = ("# Posé par le socle (ADR-0032)", "# Written by the socle (ADR-0032)")
+MARQUES_BMAD = ("# Posé par le socle", "# Written by the socle")
 
 
 def personnalisations_bmad(cible: Path) -> dict[str, str]:
@@ -239,7 +239,7 @@ def personnalisations_bmad(cible: Path) -> dict[str, str]:
 
 def poser_bmad(cible: Path, lg: str, ch: config.Chemins = config.FORMAT_ACTUEL) -> list[str]:
     """Avec BMAD Method, sa personnalisation officielle, un fichier par skill
-    sous `_bmad/custom/` (ADR-0032) : la mémoire du socle en faits
+    sous `_bmad/custom/` : la mémoire du socle en faits
     persistants, son état à l'activation, la consignation des décisions en
     séance, et la fin de tour du socle. Un fichier que le projet a écrit
     lui-même est gardé, et signalé."""
@@ -258,7 +258,7 @@ def poser_bmad(cible: Path, lg: str, ch: config.Chemins = config.FORMAT_ACTUEL) 
         outils.ecrire(p, texte)
         poses += 1
     res = [trad("BMAD Method : sa personnalisation posée pour {n} skill(s) — la mémoire du socle, son état, les "
-                "décisions en séance et sa fin de tour (ADR-0032)", n=poses)]
+                "décisions en séance et sa fin de tour", n=poses)]
     if gardes:
         res.append(trad("!! BMAD Method : personnalisation propre au projet gardée pour {liste} — y ajouter à la main "
                         "ce que pose le socle", liste=", ".join(gardes)))
@@ -270,7 +270,7 @@ def garde_fous_initiaux(cible: Path, texte_adaptateur: str, ch: config.Chemins =
     """Les garde-fous du gabarit, avec chaque module qui porte déjà du code
     posé « à mesurer » au cliquet de mutation : une installation sur un
     projet existant finit verte, et le premier balayage pose les plafonds
-    mesurés (B-0034, P1)."""
+    mesurés."""
     texte = gabarit("guardrails.toml", lg)
     tiers = [c for _, chemins in outils_tiers(cible) for c in chemins]
     texte = declarer_tiers(texte, tiers)
@@ -290,8 +290,8 @@ def garde_fous_initiaux(cible: Path, texte_adaptateur: str, ch: config.Chemins =
 
 
 def politique_nom(texte: str, nom: str) -> str:
-    """La politique d'un projet neuf, avec le nom de l'humain qui l'installe
-    (B-0073) : il signe les réponses que l'agent relaie. Sans nom, la ligne
+    """La politique d'un projet neuf, avec le nom de l'humain qui l'installe :
+    il signe les réponses que l'agent relaie. Sans nom, la ligne
     reste en commentaire."""
     if not nom:
         return texte
@@ -301,7 +301,7 @@ def politique_nom(texte: str, nom: str) -> str:
 
 def politique_langue(texte: str, lg: str) -> str:
     """La politique du gabarit, avec la langue de la mémoire choisie à
-    l'installation au lieu de son exemple en commentaire (B-0031)."""
+    l'installation au lieu de son exemple en commentaire."""
     return texte.replace('# [memory]\n# language = "fr"\n', f'[memory]\nlanguage = "{lg}"\n', 1)
 
 
@@ -350,7 +350,7 @@ def _poser_moteur(cible: Path, mode: str, source: Path, ch: config.Chemins) -> t
         dest = cible / dossier_moteur / "socle"
         if dest.exists() and dest.resolve() == (source / "socle").resolve():
             # Lancé depuis le projet lui-même : la source est la destination,
-            # et la supprimer avant la copie effaçait le moteur (B-0044, L1).
+            # et la supprimer avant la copie effaçait le moteur.
             journal.append(trad("moteur déjà en place dans {dossier_moteur}/socle (installeur lancé depuis le "
                                 "projet) : conservé ; pour une autre version, lancer l'installeur depuis le "
                                 "clone du socle", dossier_moteur=dossier_moteur))
@@ -361,7 +361,7 @@ def _poser_moteur(cible: Path, mode: str, source: Path, ch: config.Chemins) -> t
             journal.append(trad("moteur {version} copié dans {dossier_moteur}/socle", version=VERSION,
                                 dossier_moteur=dossier_moteur))
     # Le message du lanceur sous un Python trop ancien s'écrit avant que le
-    # moteur ne se charge : il prend la langue du projet ici (B-0059).
+    # moteur ne se charge : il prend la langue du projet ici.
     outils.ecrire(cible / config.LANCEUR, gabarit("launcher.py").replace(PYTHON_ANCIEN, trad(PYTHON_ANCIEN)),
                   executable=True)
 
@@ -416,7 +416,7 @@ def _poser_configuration(cible: Path, texte_adaptateur: str, ancien: dict, prive
         langue.du_projet(config.Projet.charger(cible)) if (cible / ch.politique).is_file() else "fr")
     # Une mémoire privée demandée sur un projet déjà installé : la politique
     # existe et se garde, mais c'est l'humain qui lance la commande, et sans
-    # sa section la mémoire privée resterait « non configurée » (B-0034, P4).
+    # sa section la mémoire privée resterait « non configurée ».
     # Une section déjà là est un choix fait : elle ne se réécrit pas.
     p_pol = cible / ch.politique
     if prive and p_pol.is_file():
@@ -470,7 +470,7 @@ def _poser_memoire(cible: Path, lg: str, nom_adaptateur: str, adoption: bool, ch
         p = cible / lieu
         if not p.is_file():
             outils.ecrire(p, gabarit(f"memory/{nom}", lg))
-    # Le backlog est un dossier, un fichier par sujet (ADR-0025).
+    # Le backlog est un dossier, un fichier par sujet.
     for lieu in (ch.decisions, ch.demandes, ch.backlog):
         d = cible / lieu
         d.mkdir(parents=True, exist_ok=True)
@@ -495,7 +495,7 @@ def _poser_etages(cible: Path, texte_adaptateur: str, dossier_moteur: str, propr
                   balayage: bool, motif: str, ch: config.Chemins, lg: str = "fr") -> list[str]:
     """Les étages d'application : hooks de l'agent, hooks git, CI, balayage
     de mutation, CODEOWNERS, .gitignore. Les workflows sont dans la langue de
-    la mémoire (B-0059)."""
+    la mémoire."""
     journal = []
     journal += _settings(cible)
     for h in (MODELES / "git-hooks").iterdir():
@@ -541,7 +541,7 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
               relecture: str | None = None, demandes_privees: bool = False, filtre: str = "git-crypt",
               langue_memoire: str | None = None, avec_bmad: bool = False, version_bmad: str = VERSION_BMAD) -> int:
     """Installe ou met à jour le socle dans `cible`, et BMAD Method avant lui
-    avec `avec_bmad` (B-0074). Ses messages sont dans la langue de la mémoire du projet : celle qu'il a
+    avec `avec_bmad`. Ses messages sont dans la langue de la mémoire du projet : celle qu'il a
     déjà, ou celle choisie pour un projet neuf."""
     existant = (cible / config.FORMAT_ACTUEL.politique).is_file()
     lg = langue.du_projet(config.Projet.charger(cible)) if existant else (langue_memoire or "fr")
@@ -591,7 +591,7 @@ def _installer(cible: Path, adaptateur: str, proprietaire: str, adoption: bool, 
     if ancien:
         journal.append(trad("mise à jour : moteur {avant} → {version}", avant=ancien.get("version", "amont"),
                             version=VERSION))
-        # Les sujets clos quittent les ouverts (ADR-0030) : une fois, à la
+        # Les sujets clos quittent les ouverts : une fois, à la
         # mise à jour, puis par `socle archive`.
         from socle import archive as archivage, memory as memoire
 
@@ -669,7 +669,7 @@ def _instructions(cible: Path, dossier_moteur: str, lg: str = "fr", balayage: bo
         dependants = _qui_nomme(cible, "CLAUDE.md")
         if dependants:
             # Le renommer casserait le projet : ses propres fichiers le lisent
-            # (J-2026-10-10-G). La section du socle va dans
+            #. La section du socle va dans
             # CLAUDE.md, et le renommage devient une décision humaine.
             _section_dans(claude, bloc)
             res.append(trad("!! CLAUDE.md gardé : {n} fichier(s) du projet le nomment ({liste}) ; le renommer en "
@@ -752,8 +752,7 @@ def _settings(cible: Path) -> list[str]:
     res = [trad("hooks de Claude Code déclarés dans .claude/settings.json")]
     propres = etats_du_projet(conf)
     if propres:
-        # Mesuré à R6 (B-0054) : chaque session reçoit alors deux états, qui
-        # se recoupent.
+        # Chaque session recevrait alors deux états, qui se recoupent.
         res.append(trad("!! le projet a déjà son propre état au démarrage ({commandes}) : chaque session reçoit "
                         "aussi celui du socle, et les deux se recoupent (branche, commits, ce qui revient à "
                         "l'humain). Pour n'en garder qu'un, l'humain retire le sien de .claude/settings.json, ou "
@@ -784,7 +783,7 @@ def _gitignore(cible: Path) -> list[str]:
     p = cible / ".gitignore"
     existant = p.read_text(encoding="utf-8") if p.is_file() else ""
     # Le commentaire renvoie au fichier d'instructions qui fait foi : CLAUDE.md
-    # quand l'installeur l'a gardé (B-0049) ; celui d'une installation
+    # quand l'installeur l'a gardé ; celui d'une installation
     # antérieure compte, quel que soit le fichier qu'il nomme.
     source = config.INSTRUCTIONS if (cible / config.INSTRUCTIONS).is_file() else "CLAUDE.md"
     commentaire = trad("# Trace locale des hooks du socle")
@@ -798,7 +797,7 @@ def _non_ignores(cible: Path, chemins: list[str]) -> list[str]:
     """Ce que le socle pose ne doit pas être ignoré par le `.gitignore` du
     projet (un `*.lock` gardait le verrou hors des commits) : une exception
     s'ajoute pour chaque fichier ignoré, et ce qu'elle ne suffit pas à
-    rendre (un dossier parent ignoré) se dit (B-0044, L1)."""
+    rendre (un dossier parent ignoré) se dit."""
     def ignores() -> list[str]:
         presents = [c for c in chemins if (cible / c).exists()]
         if not presents:
@@ -910,7 +909,7 @@ def _audit(cible: Path) -> tuple[int, list[str]]:
 
 def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str]) -> list[str]:
     """Ce qui reste à l'humain après l'installation, dans l'ordre où le
-    faire (B-0034, P2) : chaque étape avec sa commande."""
+    faire : chaque étape avec sa commande."""
     from socle import private as prive
 
     projet = config.Projet.charger(cible)

@@ -1,6 +1,6 @@
 # Adaptateur maintenu : Python, tests sous pytest, mutation par mutmut.
 #
-# Éprouvé au jalon 6 sur un projet jetable. mutmut exige pytest : un projet
+# Éprouvé sur un projet jetable. mutmut exige pytest : un projet
 # sous unittest seul prend l'adaptateur `python`. Les modules soumis à la
 # mutation (`modules`) supposent la disposition `src/` : un projet dont le
 # paquet est à la racine les nomme dans sa copie (`.socle/adaptateur.toml`),

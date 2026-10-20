@@ -51,8 +51,7 @@ def _bloc_accolades(lignes: list[str], i: int, litteraux: str = LITTERAUX,
     """Le corps entre la première accolade et sa fermante, signature exclue.
     Sans accolade avant la fin de l'instruction (un `;` hors de toute
     parenthèse ou crochet : `fn f(x: [u8; 4]) {` en a un dedans), le corps est
-    l'instruction elle-même : une flèche sans accolades de JavaScript
-    (relevé de la passe de recul, F)."""
+    l'instruction elle-même : une flèche sans accolades de JavaScript."""
     profondeur, debut, parentheses = 0, None, 0
     for j in range(i, len(lignes)):
         for c in _sans_litteraux(lignes[j], litteraux, commentaire):
@@ -85,7 +84,7 @@ def _couper(bloc: list[str]) -> list[str]:
 OUVRE_FIN = re.compile(r"^\s*(?:def|class|module|if|unless|while|until|case|begin|for|function)\b"
                        r"|\bdo\s*(?:\|[^|]*\|)?\s*$"
                        # `r = if a … end` : une expression ouvre aussi un bloc
-                       # (relevé de la passe de recul, F).
+                       #.
                        r"|(?:[=(,]|\|\||&&|\breturn)\s*(?:if|unless|case|begin|while|until)\b")
 FERME_FIN = re.compile(r"\bend\b")
 
@@ -108,7 +107,7 @@ def _bloc_indentation(lignes: list[str], i: int) -> tuple[list[str], int]:
     j = i + 1
     # La signature peut continuer sur plusieurs lignes jusqu'au `:` ; un
     # corps écrit sur la même ligne (`def test_x(self): …`) est le seul corps
-    # (relevé de la passe de recul, F).
+    #.
     while j < len(lignes) and j - i < 20:
         signature = re.sub(r"\s+#.*$", "", lignes[j - 1]).rstrip()
         if signature.endswith(":"):
@@ -183,7 +182,7 @@ def extraire(texte: str, fichier: str, cfg: dict) -> list[Fonction]:
 def _lignes_dans_une_chaine(texte: str, cfg: dict) -> set[int]:
     """Les lignes (à partir de 0) qui commencent à l'intérieur d'une chaîne
     ou d'un commentaire de plusieurs lignes : un `def` qui s'y trouve n'est
-    pas une fonction, mais du texte (B-0025 : le banc garde le code de ses
+    pas une fonction, mais du texte (un banc peut garder le code de ses
     projets d'essai dans des chaînes). Les chaînes ne comptent que si
     l'adaptateur déclare aussi ses commentaires de fin de ligne, sautés
     d'abord : une apostrophe y ouvrirait une chaîne fantôme, qui cacherait
@@ -214,7 +213,7 @@ def sans_commentaires(texte: str, cfg: dict) -> str:
     (`comment`), les commentaires de bloc (`block_comment` : `/* … */`, une
     docstring de Python) et de fin de ligne (`line_comment`, s'il est
     déclaré), les littéraux gardés. Un mot cité en commentaire n'appelle rien
-    ni n'affirme rien (relevé de la passe de recul, D)."""
+    ni n'affirme rien."""
     litteraux = cfg.get("strings", LITTERAUX)
     if cfg.get("block_comment"):
         texte = re.sub(f"(?:{cfg['block_comment']})|({litteraux})", lambda m: m.group(1) or "", texte)
@@ -237,7 +236,7 @@ def litteraux(texte: str, cfg: dict) -> Counter:
     """Les valeurs écrites dans un texte, hors de ses commentaires : chaînes,
     nombres, booléens et nul, chacune autant de fois qu'elle y figure. Une
     valeur attendue vit aussi hors de la ligne d'assertion : dans une
-    variable, une table, un paramètre (ADR-0024)."""
+    variable, une table, un paramètre."""
     motif = re.compile(f"({cfg.get('strings', LITTERAUX)})|({NOMBRE})|({MOTS_VALEURS})")
     return Counter(m.group(0) for m in motif.finditer(sans_commentaires(texte, cfg)))
 

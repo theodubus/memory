@@ -1,4 +1,4 @@
-"""Les messages du moteur dans la langue du projet (B-0038, ADR-0028).
+"""Les messages du moteur dans la langue du projet.
 
 Un message s'écrit en français dans le code, enveloppé par `trad` ; le texte
 français est la clé du catalogue d'une autre langue (`messages_en.py`). La

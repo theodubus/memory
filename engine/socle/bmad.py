@@ -1,4 +1,4 @@
-"""Ce que le socle lit de BMAD Method (ADR-0032) : planifier appartient à
+"""Ce que le socle lit de BMAD Method : planifier appartient à
 BMAD, le socle le lit sans le recopier.
 
 - Ses dossiers, dans sa configuration (`_bmad/config.toml`).
@@ -185,7 +185,7 @@ def sprint(texte: str) -> dict[str, str]:
 # Le document d'architecture de BMAD (« architecture spine », reconnu à son
 # en-tête `type: architecture-spine`) porte des décisions numérotées, à
 # identifiants stables : `### AD-n — <décision>`, puis `Binds`, `Prevents`,
-# `Rule`. Le socle les lit comme des décisions (B-0072) : l'état les liste,
+# `Rule`. Le socle les lit comme des décisions : l'état les liste,
 # `socle show AD-n` en donne le texte et l'empreinte, et une lecture se
 # prouve par `AD-n@empreinte`.
 

@@ -54,7 +54,7 @@ replacement = "capacité `mutation`"
 # Un test d'intégration, dans `tests/`, se pose tel quel sur le commit
 # parent. Un test unitaire vit dans le module qu'il teste : sur le parent ne
 # s'appliquent que ses lignes de test (`[tests] test_module` et les
-# fonctions de test), puis `module_command` le lance par son nom (B-0051).
+# fonctions de test), puis `module_command` le lance par son nom.
 command = "cargo test {test_args}"
 test_paths = ["tests/*.rs", "*/tests/*.rs"]
 # Ce qui, dans la sortie, dit que le test ne s'est pas chargé sur le parent (une

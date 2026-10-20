@@ -60,17 +60,17 @@ STATUTS = {
 }
 BACKLOG_CLOS = {"fait", "abandonne"}
 # Le sous-dossier du backlog en dossier où `socle archive` range les sujets
-# clos, à l'écart des ouverts (ADR-0030, D-0028).
+# clos, à l'écart des ouverts.
 DOSSIER_CLOS = "closed"
 
-# Une entrée publique basculée dans la mémoire privée (B-0029) : elle garde
+# Une entrée publique basculée dans la mémoire privée : elle garde
 # son identifiant, pour que les renvois restent valides, et perd son titre et
 # son texte, repris par une copie privée qui cite `depuis : <identifiant>`.
 TITRE_BASCULEE = langue.TEXTES["titre-basculee"]["fr"]
 TEXTE_BASCULEE = langue.TEXTES["texte-basculee"]["fr"]
 
 
-# La mémoire et sa zone privée (jalon 7, même arborescence).
+# La mémoire et sa zone privée (même arborescence).
 DOSSIER = config.FORMAT_ACTUEL.memoire
 DOSSIER_PRIVE = config.FORMAT_ACTUEL.prive
 SUFFIXE_REPONSE = config.FORMAT_ACTUEL.reponse
@@ -119,7 +119,7 @@ def hors_zone_privee(chemin: str) -> str:
 def lisible(texte: str | None) -> bool:
     """Un fichier de mémoire se lit en clair quand sa première ligne non vide
     porte l'en-tête du socle ; chiffré, il ne se lit pas. La liste des termes
-    privés se reconnaît au sien (B-0044, L3)."""
+    privés se reconnaît au sien."""
     for ligne in (texte or "").splitlines():
         if ligne.strip():
             return bool(ENTETE_FICHIER.search(ligne)) or ligne.lstrip().startswith(ENTETE_TERMES)
@@ -158,7 +158,7 @@ def fichier_journal(dossier: Path, mois: str, budget: int | None = None, ajout: 
     """Le fichier du journal où écrire une entrée de `ajout` octets : celui du
     mois (`AAAA-MM.md`), puis `AAAA-MM-2.md`, `AAAA-MM-3.md`… quand le
     précédent dépasserait son budget. Le journal est en ajout seul : un
-    fichier plein ne se vide pas, le mois continue dans le suivant (ADR-0022)."""
+    fichier plein ne se vide pas, le mois continue dans le suivant."""
     n = 1
     while True:
         p = dossier / (f"{mois}.md" if n == 1 else f"{mois}-{n}.md")
@@ -228,7 +228,7 @@ REF_RE = re.compile(
 
 def sans_ponctuation_finale(cible: str) -> str:
     """Une référence nue en fin de phrase, ou entre parenthèses, sans le point
-    ou la parenthèse qui la suit (B-0020) ; une parenthèse ouverte dans la
+    ou la parenthèse qui la suit ; une parenthèse ouverte dans la
     référence garde sa fermante."""
     while cible:
         fin = cible[-1]
@@ -314,7 +314,7 @@ def couche_attendue(chemin: str) -> str | None:
     if not est_memoire(chemin) or not chemin.endswith(".md"):
         return None
     f = config.FORMAT_ACTUEL
-    if est_prive(chemin):  # la zone privée (jalon 7) reprend la même arborescence
+    if est_prive(chemin):  # la zone privée reprend la même arborescence
         chemin = f.memoire + "/" + hors_zone_privee(chemin)
     if chemin.startswith(f.archives + "/") or chemin == f.memoire + "/README.md":
         return None
@@ -332,7 +332,7 @@ def couche_attendue(chemin: str) -> str | None:
 
 
 def parmi_les_clos(chemin: str) -> bool:
-    """Le fichier d'un sujet rangé avec les sujets clos (ADR-0030)."""
+    """Le fichier d'un sujet rangé avec les sujets clos."""
     return couche_attendue(chemin) == "backlog" and chemin.rsplit("/", 2)[-2:-1] == [DOSSIER_CLOS]
 
 
@@ -437,7 +437,7 @@ class Memoire:
             chemins = outils.fichiers_a(racine, rev)
         chemins = [c for c in chemins if couche_attendue(c) is not None]
         # À une révision, tous les fichiers d'un coup : un `git show` par
-        # fichier coûtait l'essentiel de la lecture prouvée (ADR-0023).
+        # fichier coûtait l'essentiel de la lecture prouvée.
         textes = outils.lire_plusieurs(racine, rev, chemins) if rev is not None else {}
         for c in chemins:
             texte = textes.get(c) if rev is not None else outils.lire_a(racine, rev, c)
@@ -469,7 +469,7 @@ class Memoire:
                     pris_ailleurs: set[str] = frozenset()) -> str:
         """Le prochain identifiant libre d'un type. Calculé, jamais deviné :
         deux sessions qui devinent tombent sur le même. `pris_ailleurs` : ceux
-        que d'autres branches ont déjà pris (ADR-0026)."""
+        que d'autres branches ont déjà pris."""
         return prochain_libre(type_, set(self.definitions()) | set(pris_ailleurs), prive, date)
 
 
@@ -500,7 +500,7 @@ def _lettres():
 
 
 # --------------------------------------------------------------------------
-# Lecture prouvée (ADR-0008)
+# Lecture prouvée
 # --------------------------------------------------------------------------
 #
 # Une entrée a une empreinte : les huit premiers caractères du SHA-256 de son

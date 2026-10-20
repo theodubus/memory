@@ -45,7 +45,7 @@ def git(racine: Path, *args: str, check: bool = True, entree: str | None = None)
 # Ce par quoi git désigne un dépôt à ses commandes. Git le passe à ses hooks,
 # en chemin absolu depuis un worktree secondaire : hérité par les tests du
 # projet ou par git dans un autre dépôt (un dépôt jetable, le clone de la
-# mémoire privée), il les faisait viser le dépôt du projet (B-0057).
+# mémoire privée), il les faisait viser le dépôt du projet.
 VARIABLES_DE_DEPOT = ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY",
                       "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_COMMON_DIR", "GIT_NAMESPACE", "GIT_PREFIX",
                       "GIT_QUARANTINE_PATH")

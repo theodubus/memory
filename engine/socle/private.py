@@ -1,4 +1,4 @@
-"""La mémoire privée (jalon 7) : des notes du projet qui ne doivent pas être
+"""La mémoire privée : des notes du projet qui ne doivent pas être
 publiques, rangées sous `memory/private/` avec le même format que le reste.
 
 Deux modes, au choix de l'humain dans la politique (`[private] mode`) :
@@ -43,12 +43,12 @@ def fichier_termes(racine: Path, rev: str | None = None) -> str:
 
 
 MODES = ("compagnon", "chiffre")
-# La liste des termes qui ne doivent jamais paraître en public (D-0007) :
+# La liste des termes qui ne doivent jamais paraître en public :
 # l'agent y ajoute librement, seul l'humain en retire.
 ENTETE_TERMES = memoire.ENTETE_TERMES
-# La relecture humaine avant publication (D-0006) : au choix de l'humain.
+# La relecture humaine avant publication : au choix de l'humain.
 RELECTURES = ("aucune", "chaque-push", "lots")
-# Les couches dont le contenu nouveau peut être privé par défaut (B-0029) ; le
+# Les couches dont le contenu nouveau peut être privé par défaut ; le
 # chantier actif, réécrit à la main, n'a pas d'entrée à placer.
 COUCHES_PRIVABLES = ("canonique", "backlog", "decisions", "journal", "demandes")
 
@@ -183,7 +183,7 @@ def termes(projet: config.Projet, rev: str | None = None) -> Termes:
 def ajouter_terme(projet: config.Projet, terme: str) -> bool:
     """Ajoute un terme à la liste (libre : cela durcit le contrôle). Faux
     s'il y était déjà. Une liste illisible ici (chiffrée sans la clé, dépôt
-    privé absent) n'est pas réécrite : elle serait écrasée (B-0044, L3)."""
+    privé absent) n'est pas réécrite : elle serait écrasée."""
     p = projet.racine / fichier_termes(projet.racine)
     actuels, ouverte = termes(projet), acces(projet)
     if not ouverte.disponible or not actuels.disponible or (p.is_file() and not actuels.texte):
@@ -224,7 +224,7 @@ def fuites(texte: str, liste: list[str], identifiants: bool = True) -> list[str]
 
 
 def _terme_present(terme: str, texte: str) -> bool:
-    """Le terme, sous ses variantes d'écriture (B-0044, L3) : casse et
+    """Le terme, sous ses variantes d'écriture : casse et
     accents ignorés, ses mots séparés par n'importe quels séparateurs ou par
     rien (`acme corp`, `acme_corp`, `AcmeCorp`, coupé en fin de ligne d'un
     commentaire). Il commence et finit sur une frontière de mot : un
@@ -361,8 +361,7 @@ def memoire_privee(ctx) -> memoire.Memoire | None:
 def memoire_privee_a(projet: config.Projet, rev: str) -> memoire.Memoire | None:
     """La mémoire privée à une révision du dépôt public, la base d'une plage :
     vide quand elle n'existait pas encore, `None` quand elle existait mais ne
-    se lit pas ici. Sans elle, « ajout seul » ne la protégeait pas (B-0044,
-    L3)."""
+    se lit pas ici. Sans elle, « ajout seul » ne la protégerait pas."""
     racine = projet.racine
     m = mode(projet)
     if m == "compagnon":
@@ -454,7 +453,7 @@ def controle_verrou(ctx, r):
     verrou = lire_verrou(ctx.racine, ctx.tete)
     if verrou is None:
         if commit_compagnon(ctx.racine) is None:
-            # Rien n'est encore en place : c'est à l'humain (B-0034, P5).
+            # Rien n'est encore en place : c'est à l'humain.
             r.erreur("prive.verrou", trad("mode compagnon sans dépôt privé ni verrou : sa mise en place "
                                           "revient à l'humain, `private install --repo <adresse du dépôt "
                                           "privé>`"), fichier_verrou(ctx.racine))
@@ -533,7 +532,7 @@ def controle_fuites(ctx, r):
 @controle("prive.termes", base=True)
 def controle_termes(ctx, r):
     """Ajouter un terme à la liste privée est libre ; en retirer un exige une
-    demande validée qui cite la liste et son empreinte nouvelle (D-0007)."""
+    demande validée qui cite la liste et son empreinte nouvelle."""
     if mode(ctx.projet) is None:
         return
     avant, apres = termes(ctx.projet, ctx.base), termes(ctx.projet, ctx.tete)
@@ -558,7 +557,7 @@ def controle_termes(ctx, r):
 
 
 # --------------------------------------------------------------------------
-# Couche par couche, entrée par entrée (B-0029)
+# Couche par couche, entrée par entrée
 # --------------------------------------------------------------------------
 
 

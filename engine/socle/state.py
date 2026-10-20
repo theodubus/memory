@@ -63,8 +63,7 @@ def ci_exigee(projet: config.Projet) -> tuple[bool | None, str]:
     """La CI du socle est-elle exigée avant de fusionner sur la branche par
     défaut, par un ensemble de règles ou une protection de branche de
     GitHub ? Sans elle, une CI rouge n'empêche pas de fusionner : la
-    garantie « seule la CI est incontournable » tombe (R1 de la passe de
-    recul). `None` quand on ne peut pas le savoir, avec la raison ; sinon
+    garantie « seule la CI est incontournable » tombe. `None` quand on ne peut pas le savoir, avec la raison ; sinon
     le nom de la branche, et si la revue des propriétaires du code est
     exigée aussi."""
     from socle import links as liens
@@ -127,7 +126,7 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
 
     if hooks.hooks_non_charges(projet):
         # En tête, avant tout le reste : rien de ce qui suit n'est protégé
-        # par les hooks de l'agent (B-0060).
+        # par les hooks de l'agent.
         lignes.append(trad("!! LES HOOKS DE L'AGENT NE SONT PAS CHARGÉS dans cette session : la trace n'a aucun "
                            "SessionStart pour elle. Ni le filtre des commandes, ni les contrôles de fin de tour, "
                            "ni l'état au démarrage ne tournent. Le dire à l'humain avant tout travail. {remede}",
@@ -200,7 +199,7 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
     lignes.append(prive.ligne_etat(projet))
     lignes.append(trad("vérifier : `python3 .socle/socle verify --fast` (tout : sans `--fast`)"))
     if contenus:
-        # Le chantier actif et les faits, publics puis privés (B-0029) : une
+        # Le chantier actif et les faits, publics puis privés : une
         # mémoire privée lisible ici en fait partie, illisible elle est
         # signalée plus haut.
         ch = projet.chemins
@@ -216,7 +215,7 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
 
 
 def audit_adaptateur(projet: config.Projet) -> list[str]:
-    """L'audit de l'adaptateur, à chaque état (B-0011) : un langage dont le
+    """L'audit de l'adaptateur, à chaque état : un langage dont le
     dépôt porte un fichier marqueur, et que l'adaptateur ne couvre pas, voit
     son code échapper aux capacités ; la décision revient à l'humain."""
     from socle import installer as installeur
@@ -235,7 +234,7 @@ def audit_adaptateur(projet: config.Projet) -> list[str]:
 
 
 def _bmad(projet: config.Projet) -> list[str]:
-    """Ce que BMAD planifie et que le socle lit sans le recopier (ADR-0032) :
+    """Ce que BMAD planifie et que le socle lit sans le recopier :
     les specs non finies, les stories en cours ou en revue, les reports
     encore hors du backlog."""
     from socle import bmad, checks_bmad as controles_bmad
@@ -321,7 +320,7 @@ def _memoire(mem: memoire.Memoire, projet) -> list[str]:
     # en vigueur, à lire en entier (`socle show ADR-NNNN`) avant d'en rouvrir une.
     # Toutes, rejetées et remplacées comprises : on ne rouvre pas non plus une
     # décision écartée. L'empreinte de l'index se cite dans une décision
-    # nouvelle (`lu : decisions@…`, ADR-0008).
+    # nouvelle (`lu : decisions@…`).
     lignes_index = memoire.lignes_index(mem, "decisions")
     if lignes_index:
         res.append(trad("décisions, index decisions@{empreinte} (une en entier : `python3 .socle/socle show "

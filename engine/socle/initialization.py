@@ -41,9 +41,9 @@ def archiver_cadrage(racine: Path, document: Path, prive: bool = False) -> tuple
     """Le document, copié tel quel dans les archives de la mémoire, et son
     empreinte. Son nom perd ses espaces (une référence `fichier:` n'en a pas) ;
     un document différent du même nom prend un suffixe au lieu d'écraser
-    l'archive, et le même document se retrouve tel quel (B-0044, L1). Avec
+    l'archive, et le même document se retrouve tel quel. Avec
     une mémoire privée, il s'archive dans sa zone : c'est de lui que viennent
-    les termes privés (B-0044, L3)."""
+    les termes privés."""
     ch = config.FORMAT_ACTUEL
     dossier = racine / (ch.dans_prive(ch.archives) if prive else ch.archives)
     dossier.mkdir(parents=True, exist_ok=True)
@@ -239,7 +239,7 @@ def _initialiser(projet: config.Projet, cadrage: Path | None, depot: bool) -> in
 
 def pour_toi(ident: str) -> list[str]:
     """Ce qui revient à l'humain après `init`, avant la part de l'agent,
-    écrite pour lui (B-0034, P2)."""
+    écrite pour lui."""
     return [
         trad('commiter puis pousser : `git add -A && git commit -m "Initialiser la mémoire" && git push` (la '
              "demande {ident} doit être sur GitHub pour que tu puisses la lire)", ident=ident),

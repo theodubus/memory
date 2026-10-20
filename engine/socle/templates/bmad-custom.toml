@@ -1,4 +1,4 @@
-# Posé par le socle (ADR-0032) et régénéré à chaque mise à jour : ne pas
+# Posé par le socle et régénéré à chaque mise à jour : ne pas
 # l'éditer. BMAD planifie ; le socle prouve et retient.
 [@@TABLE@@]
 persistent_facts = ["file:@@ACTIF@@", "file:@@CANONIQUE@@"]

@@ -16,7 +16,7 @@ from socle import language as langue, memory as memoire, utils as outils
 from socle.messages import trad
 from socle.context import controle
 
-# Le marqueur d'une valeur liée, lu dans les deux langues (B-0059).
+# Le marqueur d'une valeur liée, lu dans les deux langues.
 MARQUEUR_VALEUR = re.compile(
     r"<!--\s*(?:valeur|value)\s*:\s*(?P<nom>[\w.-]+)\s*-->(?P<valeur>.*?)<!--\s*/(?:valeur|value)\s*-->", re.S
 )
@@ -190,7 +190,7 @@ def correspondance(ctx, r):
         if docs:
             continue
         # Une dispense couvre le code du commit qui la porte, pas toute la
-        # plage ni toute la table (relevé de la passe de recul, D).
+        # plage ni toute la table.
         restants = [c for c in code if c not in dispenses]
         if not restants:
             r.avertir("docs.correspondance", trad("{n} fichier(s) de code sans doc associée, dispensé : « "
@@ -228,7 +228,7 @@ def copie(ctx, r):
     Sauf dans les demandes : le contrat veut qu'une demande se lise seule,
     son contexte résumé sur place plutôt que renvoyé ailleurs, et elle est
     gelée une fois répondue. Deux approbations écrites par le même gabarit
-    se ressemblent forcément (B-0019)."""
+    se ressemblent forcément."""
     minimum = ctx.projet.gf("nocopy", "min_chars", defaut=200)
     ch = ctx.projet.chemins
     exclus = ctx.projet.exclusions_docs() + list(ctx.projet.gf("nocopy", "exclude", defaut=[])) + [

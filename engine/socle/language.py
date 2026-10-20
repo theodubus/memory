@@ -1,4 +1,4 @@
-"""La langue de la mémoire (B-0031) : les mots-clés du format (champs des
+"""La langue de la mémoire : les mots-clés du format (champs des
 entrées, statuts, couches, sections des demandes, réponses) et les gabarits
 dans la langue choisie par le projet (`[memory] language` de la politique).
 
@@ -81,7 +81,7 @@ SECTIONS = {
     "recommandation": {"fr": "Recommandation", "en": "Recommendation"},
     "reponses-possibles": {"fr": "Réponses possibles", "en": "Possible answers"},
 }
-# La section d'une décision prise en séance (ADR-0032) : la question telle
+# La section d'une décision prise en séance : la question telle
 # que l'humain l'a lue dans la conversation.
 SECTIONS_SEANCE = {"question-posee": {"fr": "Question posée", "en": "Question asked"}}
 REPONSES = {

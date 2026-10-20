@@ -26,8 +26,7 @@ def etapes_rapides(projet: config.Projet, rapport: Rapport, flux=None, refaire: 
     """Les étapes rapides de l'adaptateur, sauf si elles ont déjà toutes passé
     sur cet arbre exact (HEAD, diff, fichiers non suivis et leur contenu) : la
     vérification que l'agent lance, la fin de tour et le hook avant push ne
-    paient pas trois fois la même compilation (L6, mesuré sur un projet
-    Rust). La CI, elle, refait tout. Rend vrai si
+    paient pas trois fois la même compilation. La CI, elle, refait tout. Rend vrai si
     elles ont tourné."""
     racine = projet.racine
     marque = outils.empreinte_arbre(racine) if outils.a_des_commits(racine) else ""
@@ -60,7 +59,7 @@ def etapes(projet: config.Projet, rapide: bool) -> list[tuple[str, dict]]:
     return res
 
 
-# Posée pendant les étapes rapides (D-0019) : un test trop long pour une fin
+# Posée pendant les étapes rapides : un test trop long pour une fin
 # de tour s'y met de côté, avec sa raison écrite, et la CI, qui lance toutes
 # les étapes sans elle, le joue toujours.
 RAPIDE = "SOCLE_RAPIDE"
@@ -95,7 +94,7 @@ def executer_etapes(projet: config.Projet, rapide: bool, rapport: Rapport, flux=
             queue = "\n        ".join(sortie.splitlines()[-LIGNES_SORTIE:])
             if c.get("no_tests") and re.search(c["no_tests"], sortie):
                 # Un projet qui commence n'a pas encore de test : l'outil le
-                # dit par un échec, que l'adaptateur reconnaît (B-0026).
+                # dit par un échec, que l'adaptateur reconnaît.
                 rapport.avertir(ident, trad("aucun test trouvé (`{commande}`) : un projet qui commence n'en a "
                                             "pas encore ; le premier code s'écrit avec son test",
                                             commande=c['command']))

@@ -34,7 +34,7 @@ REGISTRE: dict[str, Controle] = {}
 
 def resume(doc: str) -> str:
     """La première phrase d'une docstring, sur une ligne : ce que `socle
-    checks` montre d'un contrôle, et la clé de sa traduction (ADR-0028)."""
+    checks` montre d'un contrôle, et la clé de sa traduction."""
     paragraphe = " ".join(l.strip() for l in (doc or "").strip().split("\n\n")[0].splitlines())
     m = re.match(r".+?[.!?](?=\s|$)", paragraphe)
     return m.group(0) if m else paragraphe
@@ -64,7 +64,7 @@ class Contexte:
     def racine(self) -> Path:
         return self.projet.racine
 
-    # Les fichiers d'un outil tiers (ADR-0031) sont hors de ces listes :
+    # Les fichiers d'un outil tiers sont hors de ces listes :
     # aucun contrôle ne les voit, ni à la tête ni à la base.
 
     @cached_property
@@ -125,7 +125,7 @@ class Contexte:
     @cached_property
     def renommes(self) -> dict[str, str]:
         """Les fichiers que la plage renomme, de leur nom à la base à leur nom
-        à la tête, tels que git les reconnaît (ADR-0027)."""
+        à la tête, tels que git les reconnaît."""
         if not self.base:
             return {}
         tiers = self.projet.chemins_tiers()

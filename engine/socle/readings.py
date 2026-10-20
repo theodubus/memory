@@ -1,5 +1,5 @@
-"""La lecture prouvée (ADR-0008), en une seule fonction que partagent le
-contrôle `memoire.lectures` et le hook de l'agent (ADR-0023).
+"""La lecture prouvée, en une seule fonction que partagent le
+contrôle `memoire.lectures` et le hook de l'agent.
 
 Une citation `ID@empreinte` vaut pour la version actuelle de l'entrée, ou
 pour celle du commit de la plage où la citation paraît pour la première
@@ -101,7 +101,7 @@ def deja_citee(soi: memoire.Entree | None, citation: str, avant: memoire.Memoire
     """La citation était là avant, dans la même entrée ou dans celle dont
     elle vient (une entrée basculée en privé, un sujet archivé) ; hors de
     toute entrée, dans le même fichier. Recopiée d'une autre entrée du
-    fichier, elle se juge (relevé de la passe de recul, D)."""
+    fichier, elle se juge."""
     if soi is None:
         return citation in texte_avant
     if avant is None:

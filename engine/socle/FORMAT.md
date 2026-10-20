@@ -132,7 +132,7 @@ identifiant. Un titre qui commence comme une entrée sans en être une
 lisible (`## J-2026-10-10 sans sa lettre`) est refusé : l'entrée ne serait lue
 nulle part. Ajout seul : une entrée publiée ne change plus, sauf pour
 recevoir à sa suite, sur une ligne nouvelle, une archive. Un mois dont le fichier atteindrait son
-budget continue dans `AAAA-MM-2.md`, puis `AAAA-MM-3.md` (ADR-0022).
+budget continue dans `AAAA-MM-2.md`, puis `AAAA-MM-3.md`.
 
 ### Backlog — `B-`
 
@@ -144,7 +144,7 @@ l'humain peut faire porte `pour : humain` : elle figure dans « ce qui revient
 lien de son sujet, où vit son mode d'emploi (commandes, résultats attendus),
 jusqu'à ce qu'elle soit close.
 
-Un sujet par fichier (ADR-0025), nommé comme une décision
+Un sujet par fichier, nommé comme une décision
 (`B-0001-<titre court>.md`), sous un titre de niveau un :
 
 ```markdown
@@ -158,7 +158,7 @@ Son corps, libre, avec ses sous-titres (`## Les commandes`…).
 
 Chaque sujet a son plafond (`"memory/backlog/*.md"` dans `[budgets]`). Un
 sujet clos garde son fichier, rangé à l'écart des ouverts dans le
-sous-dossier `closed` du backlog (ADR-0030) : `socle archive` y range
+sous-dossier `closed` du backlog : `socle archive` y range
 chaque sujet clos, et remet parmi les ouverts un sujet rouvert ; le
 contrôle du backlog refuse un sujet mal rangé, et la mise à jour range un
 projet existant. Un sujet rangé garde son identifiant et le plafond d'un
@@ -166,7 +166,7 @@ sujet. Une bascule en privé copie le fichier sous `private/backlog/` (ou son
 sous-dossier des clos), et un fichier public garde l'identifiant, comme
 pour une décision.
 
-Avec BMAD Method (ADR-0032), un travail que BMAD reporte (sa liste des
+Avec BMAD Method, un travail que BMAD reporte (sa liste des
 travaux reportés) entre au backlog par `socle bmad-import` : un sujet par
 report, dont l'`origine` est cette liste et le champ `report` l'empreinte
 du report, qui le reconnaît ; son corps cite la spec d'où il vient sans la
@@ -192,7 +192,7 @@ révélée impossible à trancher pour l'humain.
 - « Où regarder » donne un lien vers chaque document ou passage à lire
   pour décider, et dit ce qu'il faut y vérifier : le permalien de
   `socle url`, ou, sans adresse de dépôt connue, un lien relatif depuis la
-  demande (B-0027).
+  demande.
 
 - « Éléments cités » décrit en clair, en au moins cinq mots, chaque
   identifiant interne de la demande (identifiants de mémoire, SHA, numéros de
@@ -225,13 +225,13 @@ L'état de la demande se dérive de la réponse : en attente, répondue, renvoy�
 (`contexte-insuffisant` : l'agent la réécrit en une nouvelle demande),
 retirée (métadonnée `retirée : <raison>`). Une demande répondue est gelée.
 
-Avec BMAD Method, les décisions de son document d'architecture (`AD-n`,
-B-0072) se lisent comme des décisions : l'état les liste, `socle show AD-n`
+Avec BMAD Method, les décisions de son document d'architecture (`AD-n`)
+se lisent comme des décisions : l'état les liste, `socle show AD-n`
 en donne le texte et l'empreinte, et une citation `AD-n@empreinte` dans la
 mémoire désigne sa version actuelle (`bmad.lectures`) ; une citation déjà
 écrite ne se rejuge pas.
 
-Une décision prise en séance (ADR-0032) est la forme courte d'une demande :
+Une décision prise en séance est la forme courte d'une demande :
 l'humain, présent, a lu la question dans la conversation et y a répondu
 (approuver une spec de BMAD, trancher une question ouverte). Elle s'écrit
 avec sa réponse, d'un seul geste, par `socle decision "<question>"
@@ -358,7 +358,7 @@ langue n'a rien à réécrire, et ses entrées nouvelles prennent les mots de la
 nouvelle. Les trailers de commit ont leurs deux noms (`Dispense-test` ou
 `Waive-test`, `Dispense-doc` ou `Waive-doc`, `Corrige` ou `Fixes`), comme le
 marqueur d'une tautologie voulue (`socle: voulu —` ou `socle: intended —`).
-Les messages du moteur suivent la même langue (ADR-0028), comme les
+Les messages du moteur suivent la même langue, comme les
 commentaires qu'il écrit dans les fichiers qu'il pose (le verrou du moteur,
 l'en-tête d'une réponse `.answer.toml`, les workflows de CI), les textes des
 adaptateurs maintenus et les descriptions de l'auto-test. Ce qu'il relit
@@ -366,7 +366,7 @@ lui-même s'écrit dans la langue du projet et se lit dans les deux : le
 marqueur d'une valeur liée (`<!-- valeur:… -->` ou `<!-- value:… -->`), la
 raison d'un plafond de mutation mesuré (`mesuré le … : N survivant(s)` ou
 `measured on …: N survivor(s)`). Le statut d'une demande reste une valeur
-interne, que `socle show` dit dans la langue du projet (B-0059).
+interne, que `socle show` dit dans la langue du projet.
 
 | Clé interne | Français | Anglais |
 | --- | --- | --- |
@@ -442,7 +442,7 @@ son texte ; chaque index aussi (`decisions@…` pour toutes les décisions,
 Citer `ADR-NNNN@xxxxxxxx`, c'est montrer qu'on a lu cette version-là. Une
 citation ajoutée doit désigner la version actuelle de l'entrée, ou celle du
 commit où la citation a paru ; une citation d'index, une version de l'index
-dans la plage du travail, de sa base à l'arbre (ADR-0023). Sinon elle est
+dans la plage du travail, de sa base à l'arbre. Sinon elle est
 périmée ou inventée, et refusée ; recopiée d'une autre entrée, elle se juge
 comme une lecture neuve. Elle est obligatoire :
 

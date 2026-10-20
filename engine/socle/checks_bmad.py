@@ -1,4 +1,4 @@
-"""Le mariage avec BMAD Method (ADR-0032) : ce que le socle garde de ce que
+"""Le mariage avec BMAD Method : ce que le socle garde de ce que
 BMAD produit, sans le recopier.
 
 - `bmad.reports` : un travail que BMAD reporte (sa liste des travaux
@@ -7,7 +7,7 @@ BMAD produit, sans le recopier.
   empreinte.
 - `bmad.lectures` : une décision d'architecture de BMAD citée avec son
   empreinte (`AD-n@empreinte`) dans la mémoire l'est dans sa version
-  actuelle (B-0072) ; une citation déjà là ne se rejuge pas.
+  actuelle ; une citation déjà là ne se rejuge pas.
 - `bmad.approbation` : une spec que le workflow de BMAD fait approuver par
   l'humain ne quitte pas le brouillon sans son approbation consignée, mot
   pour mot, dans le registre des demandes (`socle decision`), et son
@@ -98,7 +98,7 @@ def importer(projet: config.Projet) -> list[tuple[str, str]]:
 
 @controle("bmad.reports", etages=("agent", "git", "ci"))
 def reports(ctx, r):
-    """Un travail que BMAD reporte entre au backlog du socle (ADR-0032) : une
+    """Un travail que BMAD reporte entre au backlog du socle : une
     seule liste des trouvailles, que le socle suit et clôt."""
     if not bmad.present(ctx.racine, ctx.tete):
         return
@@ -111,8 +111,8 @@ def reports(ctx, r):
 
 @controle("bmad.approbation", etages=("agent", "git", "ci"))
 def approbation(ctx, r):
-    """Une spec de BMAD approuvée l'est par l'humain, consigné mot pour mot
-    (ADR-0032), et son intention figée ne change plus sans lui."""
+    """Une spec de BMAD approuvée l'est par l'humain, consigné mot pour mot,
+   et son intention figée ne change plus sans lui."""
     if not bmad.present(ctx.racine, ctx.tete):
         return
     decisions = [d for d in ctx.demandes if d.validee and d.sujet]
@@ -136,7 +136,7 @@ def approbation(ctx, r):
 @controle("bmad.lectures", etages=("agent", "git", "ci"))
 def lectures(ctx, r):
     """Une décision d'architecture de BMAD citée avec son empreinte
-    (`AD-n@empreinte`) l'est dans sa version actuelle (B-0072)."""
+    (`AD-n@empreinte`) l'est dans sa version actuelle."""
     if not bmad.present(ctx.racine, ctx.tete):
         return
     empreintes: dict[str, set[str]] = {}

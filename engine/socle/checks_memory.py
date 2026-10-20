@@ -58,7 +58,7 @@ def format_memoire(ctx, r):
                                             zone=f.zone, zone_lieu=zone_lieu), chemin, 1)
         _format_entrees(r, chemin, f, attendue, zone_lieu == "privee")
         # Un titre mal formé fait disparaître l'entrée de toute lecture
-        # (relevé de la passe de recul, D).
+        #.
         for ligne, titre in f.illisibles:
             r.erreur("memoire.format", trad("titre d'entrée illisible : « {titre} » — l'entrée n'est pas lue ; "
                                             "forme attendue : `## J-AAAA-MM-JJ-X — titre`", titre=titre[:60]), chemin, ligne)
@@ -78,7 +78,7 @@ def _format_entrees(r, chemin, f, couche, prive):
                                             "identifiant stable vit dans une couche durable", id=e.id), chemin, e.ligne)
         return
     attendu = TYPE_DE_COUCHE[couche]
-    # `AAAA-MM.md`, puis `AAAA-MM-2.md`… quand le mois dépasse son budget (ADR-0022).
+    # `AAAA-MM.md`, puis `AAAA-MM-2.md`… quand le mois dépasse son budget.
     if couche == "journal" and not re.match(r"^\d{4}-\d{2}(?:-[2-9]|-[1-9]\d+)?\.md$", nom):
         r.erreur("memoire.format", trad("un fichier de journal se nomme `AAAA-MM.md`, ou `AAAA-MM-N.md` quand "
                                         "le mois continue (N à partir de 2)"), chemin)
@@ -106,7 +106,7 @@ def _format_entrees(r, chemin, f, couche, prive):
             if not nom.startswith(date[:7]):
                 r.erreur("memoire.format", trad("`{id}` est daté hors du mois de son fichier", id=e.id), chemin, e.ligne)
         if e.basculee:
-            # Ni titre ni texte propres : ce sont eux qui sont privés (B-0029).
+            # Ni titre ni texte propres : ce sont eux qui sont privés.
             if prive:
                 r.erreur("memoire.format", trad("`{id}` : seule une entrée publique se bascule", id=e.id), chemin, e.ligne)
             if e.titre not in langue.textes("titre-basculee") or \
@@ -153,7 +153,7 @@ def ancres(texte: str) -> set[str]:
 def _existe(ctx, chemin: str, historique: bool = False) -> bool:
     """Le chemin existe. Avec `historique` (une couche qui ne se réécrit
     pas), un chemin qui a existé dans l'historique du dépôt vaut aussi : la
-    mémoire ne suit pas un renommage (ADR-0027)."""
+    mémoire ne suit pas un renommage."""
     chemin = chemin.strip("/")
     if _existe_tel_quel(ctx, chemin) or historique and _a_existe(ctx, chemin):
         return True
@@ -166,7 +166,7 @@ RUSTINE = re.compile(r"^\+\+\+ b/(\S+)", re.M)
 def _dans_une_rustine(ctx, chemin: str) -> bool:
     """Le chemin est un fichier qu'une rustine suivie du dépôt (`*.patch`,
     `*.diff`) écrit, ou l'un de ses dossiers : il existe une fois la rustine
-    appliquée (B-0008)."""
+    appliquée."""
     ecrits = ctx._cache.get("rustines")
     if ecrits is None:
         ecrits = set()
@@ -200,8 +200,8 @@ def _a_existe(ctx, chemin: str) -> bool:
 
 def _basculee(ctx, chemin: str) -> str | None:
     """Le fichier qui remplace celui d'une décision basculée dans la mémoire
-    privée (`ADR-0003-basculee.md` pour `ADR-0003-un-titre.md`, B-0029), ou
-    d'un sujet du backlog (ADR-0025)."""
+    privée (`ADR-0003-basculee.md` pour `ADR-0003-un-titre.md`), ou
+    d'un sujet du backlog."""
     dossier, _, nom = chemin.rpartition("/")
     m = re.match(r"^((?:ADR|B)-\d{4})-.+\.md$", nom)
     if not m or not memoire.est_memoire(chemin):
@@ -224,7 +224,7 @@ def _alias(ctx, chemin: str) -> str:
 def _lien_d_un_ancien_nom(ctx, chemin_doc: str, lien: str) -> bool:
     """Un lien relatif d'une couche gelée, écrit quand son fichier avait un
     autre nom : lu depuis l'un de ses anciens emplacements, il mène à un
-    chemin qui a existé (ADR-0027)."""
+    chemin qui a existé."""
     anciens = ctx._cache.setdefault("anciens-noms", {})
     if chemin_doc not in anciens:
         sortie = outils.git(ctx.racine, "log", "--follow", "--name-only", "--format=", "--", chemin_doc, check=False)
@@ -352,7 +352,7 @@ def _verifier_lien(ctx, chemin_doc: str, dossier: str, cible: str, historique: b
     if re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", cible) or cible.startswith("//"):
         return None  # URL : jamais suivie, aucun service externe
     # Un lien s'écrit encodé (`%20` pour une espace, `%C3%A9` pour un « é ») :
-    # il désigne le chemin et l'ancre décodés (B-0020).
+    # il désigne le chemin et l'ancre décodés.
     chemin, _, ancre = (unquote(x) for x in cible.partition("#"))
     if chemin:
         cible_n = _normaliser_chemin(dossier, chemin)
@@ -395,7 +395,7 @@ def depots_connus(ctx, textes) -> set[str]:
     par leur adresse, dans les textes lus ou dans `.gitmodules`, et ceux que
     les garde-fous déclarent (`[references] repos`), pour un dépôt qu'aucune
     adresse ne nomme. L'outil s'adapte au projet : il ne demande pas ce que
-    le projet dit déjà (Théo, J-2026-10-13-L)."""
+    le projet dit déjà."""
     connus = set(ctx.projet.gf("references", "repos", defaut=[]) or [])
     for texte in [*textes, ctx.lire(".gitmodules") or ""]:
         connus |= {m.group(1).rstrip(".") for m in DEPOT_LIE.finditer(texte)}  # une adresse en fin de phrase
@@ -405,7 +405,7 @@ def depots_connus(ctx, textes) -> set[str]:
 def depot_non_declare(ctx, jeton: str, connus: set[str] | None = None) -> str | None:
     """Le dépôt d'un `depot:chemin` cité, si le projet ne le connaît pas
     (`depots_connus`) : son chemin n'est vérifié nulle part, et n'importe
-    quelle chaîne `x:chemin` passerait (B-0052)."""
+    quelle chaîne `x:chemin` passerait."""
     m = re.match(r"^([A-Za-z0-9][\w.+-]*):([^:\s]*/[^\s]*|[^:\s/]+\.\w+)$", jeton.strip())
     if not m or m.group(1).lower() in SCHEMAS or m.group(2).startswith("//") or REVISION.match(m.group(1)):
         return None
@@ -439,7 +439,7 @@ def _verifier_chemin_cite(ctx, jeton: str, historique: bool = False) -> str | No
 def prive(ctx, r):
     """Aucun identifiant privé dans un fichier public : le public ne référence
     jamais le privé. Un bloc de code et une archive sont publics comme le
-    reste (B-0044, L3)."""
+    reste."""
     moteur = ctx.projet.dossier_moteur.rstrip("/") + "/"
     for chemin in ctx.fichiers:
         if est_prive(chemin) or chemin.startswith(moteur):
@@ -455,14 +455,14 @@ def prive(ctx, r):
 
 
 # --------------------------------------------------------------------------
-# Lecture prouvée (ADR-0008)
+# Lecture prouvée
 # --------------------------------------------------------------------------
 
 
 @controle("memoire.lectures", base=True)
 def lectures(ctx, r):
     """Une citation `ID@empreinte` ou `index@empreinte` ajoutée désigne une
-    version que l'agent a pu lire (`socle.readings`, ADR-0023) ; une
+    version que l'agent a pu lire (`socle.readings`) ; une
     décision, une demande ou un sujet de backlog nouveaux prouvent ce qu'ils
     ont lu avant d'être écrits."""
     from socle import readings as lp
@@ -499,7 +499,7 @@ def lectures(ctx, r):
         if e.archivee:
             continue
         if e.depuis and all(d in defs and defs[d][0].basculee for d in e.depuis):
-            continue  # la copie privée d'une entrée basculée : ce n'est pas une entrée nouvelle (B-0029)
+            continue  # la copie privée d'une entrée basculée : ce n'est pas une entrée nouvelle
         if e.type == "ADR" and not any(i == "decisions" for i, _, _ in memoire.citations_index(e.texte)):
             r.erreur("memoire.lectures", trad("décision nouvelle `{ident}` sans `lu : decisions@…` : consulter "
                                               "l'index des décisions avant d'en ajouter une (`socle show "
@@ -556,7 +556,7 @@ def preuves(ctx, r):
 def collisions(ctx, r):
     """Un identifiant que la branche définit et que la branche par défaut a
     pris aussi depuis leur divergence, pour une autre entrée, serait défini
-    deux fois à la fusion (ADR-0026) : dit avant, avec la commande qui répare."""
+    deux fois à la fusion : dit avant, avec la commande qui répare."""
     from socle import identifiers as identifiants
 
     bases = identifiants.bases_a_comparer(ctx.racine, ctx.base)
@@ -581,7 +581,7 @@ def backlog(ctx, r):
         if clos and not e.refs("ref"):
             r.erreur("memoire.backlog", trad("`{id}` est clos (« {statut} ») sans `ref` vers ce qui l'a clos",
                                              id=e.id, statut=e.statut), e.fichier, e.ligne)
-        # Un sujet clos quitte les ouverts (ADR-0030).
+        # Un sujet clos quitte les ouverts.
         if memoire.couche_attendue(e.fichier) == "backlog" and clos != memoire.parmi_les_clos(e.fichier):
             r.erreur("memoire.backlog", trad("`{id}` est clos (« {statut} ») mais reste parmi les sujets ouverts : "
                                              "`python3 .socle/socle archive` le range dans `{dossier}/`",
@@ -605,7 +605,7 @@ def budgets(ctx, r):
     # mêmes contrôles (cadrage, règles de classement, point 5).
     ch = ctx.projet.chemins
     miroirs = {c: ch.memoire + "/" + memoire.hors_zone_privee(c) for c in ctx.fichiers if est_prive(c)}
-    # Un sujet rangé avec les clos garde le plafond d'un sujet (ADR-0030).
+    # Un sujet rangé avec les clos garde le plafond d'un sujet.
     miroirs = {c: memoire.hors_des_clos(miroirs.get(c, c)) for c in ctx.fichiers
                if c in miroirs or memoire.parmi_les_clos(c)}
     for motif, b in budgets.items():
@@ -684,7 +684,7 @@ def retard(ctx, r):
 def _corps_sans_meta(e: memoire.Entree) -> str:
     """Le texte de l'entrée sans son titre ni sa ligne de métadonnées, celle
     qui suit le titre. Une citation du corps en fait partie : la réécrire,
-    c'est réécrire la décision (relevé de la passe de recul, D)."""
+    c'est réécrire la décision."""
     lignes = e.texte.splitlines()[1:]
     j = 0
     while j < len(lignes) and not lignes[j].strip():
@@ -702,7 +702,7 @@ def _norm(t: str) -> str:
 def ajout_seul(ctx, r):
     """Journal et décisions en ajout seul ; un fait ne disparaît pas, ne change
     qu'avec une nouvelle preuve, et se barre quand il est réfuté. La mémoire
-    privée aussi, relue à la base (B-0044, L3)."""
+    privée aussi, relue à la base."""
     from socle import private as prive
 
     _comparer(ctx, r, ctx.memoire_base.definitions(), ctx.memoire.definitions())
@@ -775,7 +775,7 @@ def _comparer(ctx, r, avant: dict, apres: dict):
                                                         "il ne se réécrit pas", ident=ident), b.fichier, b.ligne)
         elif a.type == "B":
             # Un sujet ne quitte pas le backlog : clos, il se range avec les
-            # clos (ADR-0030).
+            # clos.
             if b is None or b.archivee and not a.archivee:
                 r.erreur("memoire.ajout-seul", trad("sujet `{ident}` disparu du backlog : un sujet clos se range "
                                                     "par `socle archive`, il ne s'efface pas", ident=ident),
@@ -787,7 +787,7 @@ def _comparer(ctx, r, avant: dict, apres: dict):
 
 
 def _bascule(ctx, r, a: memoire.Entree, b: memoire.Entree):
-    """Une entrée publique basculée dans la mémoire privée (B-0029) : une copie
+    """Une entrée publique basculée dans la mémoire privée : une copie
     privée qui cite `depuis : <identifiant>` en reprend le texte, sans quoi la
     bascule serait un effacement."""
     from socle import private as prive
@@ -811,7 +811,7 @@ def _bascule(ctx, r, a: memoire.Entree, b: memoire.Entree):
 def _seulement_ajouts(avant: str, apres: str) -> bool:
     """Une entrée de journal qui reçoit une archive imbriquée à la suite de son
     texte reste en ajout seul ; un ajout commence sur une ligne nouvelle,
-    jamais au milieu d'une phrase (relevé de la passe de recul, D)."""
+    jamais au milieu d'une phrase."""
     a, b = _norm(avant), _norm(apres)
     return b == a or b.startswith(a + "\n")
 
@@ -848,7 +848,7 @@ def source_unique(ctx, r):
     """Un seul fichier d'instructions fait foi : `AGENTS.md`, que `CLAUDE.md`
     importe en une ligne ; ou, sans `AGENTS.md`, `CLAUDE.md` qui porte la
     section du socle, quand l'installeur l'a gardé parce que le projet le
-    nomme (B-0049)."""
+    nomme."""
     if config.INSTRUCTIONS not in ctx.fichiers:
         if "CLAUDE.md" in ctx.fichiers and config.DEBUT_SOCLE in (ctx.lire("CLAUDE.md") or ""):
             return

@@ -27,7 +27,7 @@ TRACE = ".socle/trace/hooks.log"  # hors dépôt git seulement
 COMPTEUR_STOP = ".socle/trace/stop-echecs"
 INSTRUCTIONS = "AGENTS.md"
 # Ce qui ouvre la section du socle dans le fichier d'instructions : AGENTS.md,
-# ou CLAUDE.md quand l'installeur l'a gardé comme source (B-0049).
+# ou CLAUDE.md quand l'installeur l'a gardé comme source.
 DEBUT_SOCLE = "<!-- socle:debut — section posée par l'installeur, régénérée à chaque mise à jour -->"
 
 
@@ -38,7 +38,7 @@ class Chemins:
     memoire: str
     canonique: str
     actif: str
-    backlog: str  # un dossier, un fichier par sujet (ADR-0025)
+    backlog: str  # un dossier, un fichier par sujet
     decisions: str
     journal: str
     demandes: str
@@ -62,7 +62,7 @@ FORMAT_ACTUEL = Chemins("memory", "memory/canonical.md", "memory/active.md", "me
                         "memory/decisions", "memory/journal", "memory/requests", "memory/archives", "memory/private",
                         "memory/private/terms.txt", ".answer.toml", ".socle/engine.lock", ".socle/policy.toml",
                         ".socle/guardrails.toml", ".socle/adapter.toml", ".socle/private.lock", ".socle/engine")
-# Le format de la mémoire, que le verrou note (D-0020).
+# Le format de la mémoire, que le verrou note.
 FORMAT = 3
 
 MODE_AMONT = "amont"   # le dépôt qui fabrique le moteur : il le modifie
@@ -73,7 +73,7 @@ def chemin_trace(racine: Path) -> Path:
     """La trace des hooks vit dans le répertoire git commun
     (`.git/socle/hooks.log`), que partagent tous les worktrees du dépôt : les
     hooks de l'agent y écrivent depuis le dépôt principal, et le hook git d'un
-    commit fait dans un autre worktree y lit la même trace (B-0015). Hors
+    commit fait dans un autre worktree y lit la même trace. Hors
     dépôt git, sous `.socle/trace/`."""
     import subprocess
 
@@ -185,7 +185,7 @@ class Projet:
 
     def chemins_tiers(self) -> list[str]:
         """Les fichiers d'un outil tiers installé dans le projet (ses skills,
-        ses scripts) : aucun contrôle ne les juge (ADR-0031). Un motif qui
+        ses scripts) : aucun contrôle ne les juge. Un motif qui
         couvrirait un fichier du socle, de la mémoire ou de la politique est
         écarté, et signalé par `erreurs_tiers`."""
         motifs = self.gf("thirdparty", "paths", defaut=[]) or []

@@ -1,4 +1,4 @@
-# Written by the socle (ADR-0032) and regenerated at every update: do not
+# Written by the socle and regenerated at every update: do not
 # edit it. BMAD plans; the socle proves and remembers.
 [@@TABLE@@]
 persistent_facts = ["file:@@ACTIF@@", "file:@@CANONIQUE@@"]

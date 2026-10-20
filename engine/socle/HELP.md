@@ -34,8 +34,8 @@ recoupent. Retire le sien de `.claude/settings.json`, ou n'y laisse que ce
 qui est propre au projet ; c'est un réglage de l'agent, que toi seul
 modifies.
 
-Avec BMAD Method, la méthode de planification que le socle épouse
-(ADR-0032), une seule commande installe les deux : `--with-bmad` pose
+Avec BMAD Method, la méthode de planification que le socle épouse,
+une seule commande installe les deux : `--with-bmad` pose
 d'abord BMAD, à la version éprouvée avec le socle et dans la langue du
 projet (il faut Node.js 20.12 ou plus récent pour `npx`, et `uv` pour ses
 skills), puis le socle, qui déclare ses fichiers tiers et branche ses

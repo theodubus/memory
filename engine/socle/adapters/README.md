@@ -70,7 +70,7 @@ Une étape marquée `fast = true` tourne à la fin de chaque tour, avant
 chaque push et quand l'agent lance `verify --fast` ; la CI les lance
 toutes. Pendant les étapes rapides, le moteur pose la variable
 `SOCLE_RAPIDE` : un test trop long pour une fin de tour s'y met de côté,
-avec sa raison écrite, et la CI le joue toujours (D-0019). Sous `unittest` :
+avec sa raison écrite, et la CI le joue toujours. Sous `unittest` :
 `@unittest.skipIf(os.environ.get("SOCLE_RAPIDE"), "…")`.
 
 Un projet qui commence n'a pas encore de test, et plusieurs outils le
@@ -136,27 +136,10 @@ Les clés qui décrivent un langage, toutes facultatives sauf `function` :
 | `module_command` (régression) | la commande qui lance, par leurs noms (`{names}`), des tests écrits dans le module qu'ils testent ; sur le parent, seules leurs lignes de test s'appliquent | `cargo test --workspace -- {names}` |
 | `test_module` | ce qui ouvre un module de tests dans un fichier de code : ses aides suivent le test sur le parent | `#[cfg(test)]` |
 
-## Le jalon 6 : un second langage, éprouvé
+## JavaScript, Go, Java, Ruby et PHP
 
-Le jalon 6 a installé le socle, avec l'adaptateur `python-pytest`, sur un
-petit projet Python jetable (un convertisseur de chiffres romains testé sous
-pytest), et fait tourner toute la chaîne : vérification, contrôles, CI,
-balayage `mutmut` et verdict contre le plafond. Un test sans assertion, un
-test supprimé, une fonction publique sans test, un correctif sans test de
-régression et des tests affaiblis jusqu'à laisser survivre des mutants y ont
-chacun été attrapés.
-
-La porte demandait que le moteur ne change pas. Les contrôles, la mémoire et
-les hooks n'ont pas changé ; deux corrections ont été nécessaires : le
-lecteur des résultats de `mutmut`, propre à cet outil, qui n'avait jamais
-tourné, et `tests.code-teste`, qui prenait le moteur installé dans `.socle/`
-pour du code du projet, ce que seul un projet Python pouvait montrer. Le
-journal (J-2026-10-10-W) en garde le détail.
-
-## Cinq langages de plus (B-0030)
-
-À la demande de Théo, cinq adaptateurs de plus, chacun avec l'outil de tests
-et l'outil de mutation les plus courants de son langage :
+Chaque adaptateur emploie l'outil de tests et l'outil de mutation les plus
+courants de son langage :
 
 | Ce que le moteur demande | JavaScript, TypeScript | Go | Java | Ruby | PHP |
 | --- | --- | --- | --- | --- | --- |
@@ -173,20 +156,7 @@ Chaque outil de mutation lit la configuration du projet : `stryker.config.json`,
 la section PIT du `pom.xml`, `mutant.yml`, `infection.json5` ; gremlins n'en
 demande pas. Infection exige un pilote de couverture (pcov ou xdebug).
 
-Le banc `bench/adapters.py` éprouve les cinq sur un projet jetable de leur
-langage, avec leurs vrais outils : le projet sain passe `socle verify` ; un
-test sans assertion, un test désactivé sans raison, une valeur attendue
-changée et une fonction publique sans test sont refusés par le contrôle
-attendu ; un correctif passe avec son test de régression, rejoué sur le
-parent, et il est refusé sans ; le balayage de mutation se lit, et son
-verdict passe au plafond mesuré et casse en dessous. Le premier passage a
-montré deux défauts, corrigés : en PHP, le lien vers `vendor` faisait
-charger à Composer le code de l'arbre de travail dans le worktree de la
-régression (d'où `copied`), et la commande de mutant devinait mal ses
-sujets (d'où `mutant.yml`). Les étapes de CI que chaque adaptateur ajoute
-au workflow n'ont tourné qu'ici, pas encore sur GitHub.
-
-## C# (B-0040)
+## C#
 
 | Ce que le moteur demande | C# |
 | --- | --- |
@@ -207,9 +177,5 @@ Stryker, sous un autre nom (`mutation-report.json`) et avec des chemins
 absolus : le lecteur de Stryker lit les deux. Un fichier qui ne déclare que
 des types (un `record` sans corps, une interface) n'a rien à muter ; il
 n'entre pas au plafond. La version 5 de Stryker.NET exige un SDK plus récent
-que .NET 8 : le banc épingle la 4.16.0, et la CI pose les deux SDK de
-support long.
-
-Le banc l'éprouve comme les cinq précédents, sur une solution xUnit. Les
-étapes de CI qu'il ajoute au workflow, et le balayage hebdomadaire,
-passent aussi sur GitHub, dans un dépôt d'essai (F-0026).
+que .NET 8 : le manifeste d'outils épingle la 4.16.0, et la CI pose les
+deux SDK de support long.

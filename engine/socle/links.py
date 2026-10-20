@@ -5,7 +5,7 @@ dans le conteneur de l'agent : un lien relatif, un chemin qui n'existe pas,
 ou un fichier qui n'est pas encore poussé y mènent à un 404. Ce module
 calcule le permalien d'un fichier ou d'une entrée de mémoire — au commit
 poussé, et non à une branche qui disparaîtra à la fusion — et repère, dans
-un message, les liens que l'humain ne pourra pas suivre (ADR-0010).
+un message, les liens que l'humain ne pourra pas suivre.
 
 Les URL ont la forme de GitHub : `<dépôt>/blob/<commit>/<chemin>`.
 """
@@ -68,7 +68,7 @@ def ancre(titre: str) -> str:
     """L'ancre que GitHub donne à un titre : son texte rendu (sans accents
     graves ni marques de gras), en minuscules, sans ponctuation, les espaces
     changés en tirets (« B-0014 — Exiger » donne `b-0014--exiger`). Seule
-    copie : les liens de la mémoire se vérifient avec elle (B-0017)."""
+    copie : les liens de la mémoire se vérifient avec elle."""
     t = re.sub(r"`|\*\*|__", "", titre.strip().lower())
     t = "".join(c for c in t if c in " -_" or unicodedata.category(c)[0] in "LNM")
     return t.replace(" ", "-")

@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from socle.messages import trad
 
 # La ligne finale d'un rapport en échec, qui nomme les contrôles : relue par
-# l'installeur, l'auto-test et le banc, dans toutes les langues (ADR-0028).
+# l'installeur, l'auto-test et le banc, dans toutes les langues.
 LIGNE_ECHEC = re.compile(r"^(?:ECHEC — \d+ contrôle\(s\) : |FAILED — \d+ check\(s\): )(.+)$", re.M)
 
 ERREUR = "erreur"
@@ -84,7 +84,7 @@ class Rapport:
 
     def texte(self, titre: str | None = None, court: bool = False) -> str:
         """Le rapport, contrôle par contrôle ; `court` n'en montre que ce qui
-        échoue, avertit ou n'a pas pu s'exécuter, et compte le reste (B-0034, P2)."""
+        échoue, avertit ou n'a pas pu s'exécuter, et compte le reste."""
         lignes = []
         tus = 0
         if titre:

@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0077 — Le moteur copié dans un projet cite la mémoire de ce dépôt
 
-> statut : ouvert · origine : J-2026-10-20-Q · lu : backlog@1615e20b
+> statut : fait · origine : J-2026-10-20-Q · ref : J-2026-10-20-X · lu : backlog@1615e20b
 
 Le moteur, copié tel quel dans le dossier `.socle` de chaque projet, porte
 dans ses commentaires environ 330 renvois à la mémoire de ce dépôt-ci

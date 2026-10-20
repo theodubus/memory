@@ -79,7 +79,7 @@ def _regle(chemin: tuple[str, ...]) -> str | None:
 
 
 # La raison d'un plafond mesuré, écrite dans la langue du projet et lue
-# dans les deux (B-0059).
+# dans les deux.
 MESURE = re.compile(r"(?:mesuré le \d{4}-\d{2}-\d{2} : |measured on \d{4}-\d{2}-\d{2}: )(\d+) surviv")
 
 
@@ -99,8 +99,7 @@ def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | Non
     `modules_existants` : les fichiers de l'arbre jugé ; le seuil d'un fichier
     disparu se retire avec lui. `renommes` et `fichiers_avant` : les fichiers
     que la plage renomme, et ceux de la base ; une correspondance ou une
-    valeur liée qui suit ses fichiers sous leur nouveau nom n'assouplit rien
-    (ADR-0027)."""
+    valeur liée qui suit ses fichiers sous leur nouveau nom n'assouplit rien."""
     renommes = renommes or {}
     res = []
     a, b = aplatir(avant), aplatir(apres)
@@ -126,7 +125,7 @@ def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | Non
                 continue  # le module a disparu : son plafond avec lui
             if chemin[0] == "budgets" and modules_existants is not None \
                     and not outils.filtrer(modules_existants, [chemin[1]]):
-                continue  # plus aucun fichier sous ce motif : son budget ne couvrait plus rien (ADR-0025)
+                continue  # plus aucun fichier sous ce motif : son budget ne couvrait plus rien
             if sens == "faux":
                 continue  # « à mesurer » qui disparaît : le plafond mesuré le remplace
             res.append((cle, trad("seuil retiré (valait {va})", va=repr(va))))
@@ -317,8 +316,8 @@ def lire_trailer_hooks(valeur: str) -> dict[str, str]:
 
 
 # Le remède quand les hooks de l'agent ne sont pas chargés : Claude Code ne
-# les lit que dans le dossier où la session démarre (B-0060). L'agent ne
-# pose jamais lui-même un réglage pour les rétablir (J-2026-10-14-J).
+# les lit que dans le dossier où la session démarre. L'agent ne
+# pose jamais lui-même un réglage pour les rétablir.
 REMEDE_HOOKS = a_traduire(
     "Claude Code ne lit ses hooks que dans le dossier où la session démarre : relancer la session depuis la "
     "racine du projet ; dans une session à plusieurs dépôts, ouvrir une session sur ce dépôt seul. L'agent "
@@ -337,7 +336,7 @@ def trace(ctx, r):
     session (`Socle-Hooks:`, ajouté par le hook git). Absente, ou sans
     PreToolUse : les hooks n'ont jamais été chargés. Et depuis le commit
     précédent (`Socle-Hooks-Since-Commit:`) : sans PreToolUse, ils ont cessé
-    de tirer en cours de session (B-0058)."""
+    de tirer en cours de session."""
     for c in ctx.commits:
         if len(c["parents"]) != 1 or not est_agent(ctx.projet, c["message"]):
             continue
@@ -358,7 +357,7 @@ def trace(ctx, r):
                                          "les hooks de l'agent n'étaient pas chargés. {remede}",
                                          sha=c['sha'][:10], sujet=sujet, remede=trad(REMEDE_HOOKS)))
         elif not n.isdigit() or int(n) < 1:
-            # B-0058 : le compte de la session garde les tirs d'avant l'arrêt.
+            # Le compte de la session garde les tirs d'avant l'arrêt.
             r.erreur("hooks.trace", trad("{sha} « {sujet} » : aucun PreToolUse n'a tiré depuis le commit "
                                          "précédent — les hooks de l'agent ont cessé d'être chargés en cours "
                                          "de session. {remede}", sha=c['sha'][:10], sujet=sujet,

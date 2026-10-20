@@ -36,7 +36,7 @@ OUTILS_ECRITURE = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 # Ce que le moteur refuse se juge sur chaque commande simple, découpée
 # (`commandes.analyser`), pas sur le texte : voir `irreversible`. La
 # politique peut AJOUTER des motifs (`[irreversible] bash`), appliqués à
-# chaque commande simple ; elle ne retire rien à ceux du moteur (B-0044, L2).
+# chaque commande simple ; elle ne retire rien à ceux du moteur.
 IRREVERSIBLES_BASH: list[str] = []
 IRREVERSIBLES_OUTILS = [
     r"mcp__github__(merge_pull_request|delete_file|create_repository|fork_repository|create_release|push_files"
@@ -186,8 +186,8 @@ def references_inventees(projet: config.Projet, rel: str, avant: str | None, apr
     if memoire.couche_attendue(rel) not in (None, "inconnue"):
         mem.fichiers[rel] = memoire.analyser(rel, apres)
     defs = mem.definitions()
-    # Lecture prouvée (ADR-0008), par la même fonction que `memoire.lectures`
-    # (ADR-0023) : la base du travail, ses commits et l'arbre. Le refus ne
+    # Lecture prouvée, par la même fonction que `memoire.lectures` :
+    # la base du travail, ses commits et l'arbre. Le refus ne
     # donne pas la bonne empreinte : elle s'obtient en relisant.
     base = outils.base_de_travail(projet.racine)
     commits = outils.git(projet.racine, "rev-list", "--reverse", f"{base}..HEAD", check=False).split() if base else []
@@ -365,7 +365,7 @@ def contournement(racine: Path, c: commandes.Commande, depart: str | None = None
     """Un `git commit`, `git merge` ou `git push` qui saute les hooks du
     dépôt du projet (`--no-verify`, ou `-n` pour un commit), dit en clair ;
     `None` sinon, et pour un autre dépôt, désigné par `-C` ou après un `cd`
-    (un dépôt jetable) : seuls les hooks du projet y sont en jeu (B-0023)."""
+    (un dépôt jetable) : seuls les hooks du projet y sont en jeu."""
     if c.programme != "git":
         return None
     sous, reste = commandes.git_sous_commande(c.argv)
@@ -500,9 +500,9 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
             if not relais:
                 return refus(trad("l'agent ne répond jamais à la place de l'humain. Il ne peut que relayer une "
                                   "réponse donnée dans la conversation : `socle answer D-NNNN <réponse> --relayed "
-                                  "--by <nom> --quote-file <texte exact>` (ADR-0006), `socle decision "
+                                  "--by <nom> --quote-file <texte exact>`, `socle decision "
                                   "\"<question>\" <réponse> --relayed --by <nom> --quote-file <texte exact>` pour une "
-                                  "décision prise en séance (ADR-0032), ou `socle reviewed --relayed --by <nom> "
+                                  "décision prise en séance, ou `socle reviewed --relayed --by <nom> "
                                   "--quote-file <texte exact>` pour une relecture avant publication."))
         faute = _fuite_bash(projet, cmd)
         if faute:
@@ -554,7 +554,7 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
 
 
 # --------------------------------------------------------------------------
-# Fuites de la mémoire privée (D-0008) : le hook de l'agent voit, avant
+# Fuites de la mémoire privée : le hook de l'agent voit, avant
 # qu'elles partent, les écritures et les publications que ni les hooks git ni
 # la CI ne voient à temps (une description de pull request, un commentaire).
 # --------------------------------------------------------------------------
@@ -576,7 +576,7 @@ def _fuites_dans(projet: config.Projet, texte: str) -> str | None:
 
 # Les options qui publient le contenu d'un fichier (corps d'une pull request,
 # notes d'une version, message de commit) : il part comme s'il était écrit
-# dans la commande (B-0044, L3).
+# dans la commande.
 OPTIONS_FICHIER = {"--body-file", "--notes-file", "--file", "-F", "--field", "-f", "--raw-field"}
 
 
@@ -611,7 +611,7 @@ def textes_publies(racine: Path, simples: list) -> list[str]:
 
 def _noms_publies(racine: Path, simples: list) -> list[str]:
     """Les noms de branche qu'une commande crée ou pousse : publiés eux
-    aussi (B-0044, L3)."""
+    aussi."""
     res = []
     for c in simples:
         if c.programme != "git":
@@ -653,7 +653,7 @@ def _fuite_outil(projet: config.Projet, outil: str, args: dict) -> str | None:
             return None
         # Seul ce qui s'ajoute compte : une fuite plus ancienne ne bloque pas
         # chaque écriture suivante du même fichier. Le nom d'un fichier
-        # nouveau est publié comme son contenu (B-0044, L3).
+        # nouveau est publié comme son contenu.
         anciennes = set((avant or "").splitlines())
         ajout = "\n".join(l for l in apres.splitlines() if l not in anciennes)
         return _fuites_dans(projet, (rel + "\n" if avant is None else "") + ajout)
@@ -728,9 +728,8 @@ def _appels_externes(racine: Path, session: str) -> bool:
 
 def exiger_recap(projet: config.Projet, entree: dict) -> int:
     """Un tour où l'agent a agi se termine par un récap et deux lignes,
-    `Pour toi :` et `Ensuite :` (ADR-0007, ADR-0009). Tout dernier message,
-    qu'il ait agi ou non, ne donne que des liens que l'humain peut suivre
-    (ADR-0010)."""
+    `Pour toi :` et `Ensuite :`. Tout dernier message,
+    qu'il ait agi ou non, ne donne que des liens que l'humain peut suivre."""
     from socle import human as humain, links as liens
 
     racine = projet.racine
@@ -820,7 +819,7 @@ def git_pre_commit(projet: config.Projet) -> int:
     base = outils.base_de_travail(projet.racine)
     # On juge ce qui sera commité : l'index, figé en arbre par `write-tree`,
     # et non les fichiers sur disque, qui peuvent cacher un défaut indexé ou
-    # en montrer un qui ne sera pas commité (B-0007).
+    # en montrer un qui ne sera pas commité.
     index = outils.arbre_de_l_index(projet.racine)
     ctx = contexte.Contexte(projet, etage="git", base=base, tete=index, rapide=True)
     rapport = contexte.executer(ctx)
@@ -840,7 +839,7 @@ def compter_session(racine: Path, session: str | None = None) -> str:
     """`SessionStart=1 PreToolUse=12 Stop=3` pour la session donnée, ou à
     défaut la plus récente de la trace ; `aucun` sans trace. Le commit d'une
     session dont les hooks sont coupés compte ainsi zéro, au lieu d'emprunter
-    la trace d'une session plus ancienne (B-0044, L2)."""
+    la trace d'une session plus ancienne."""
     lignes = [l.split("\t") for l in config.lire_trace(racine)]
     agent = [l for l in lignes if len(l) >= 3 and l[1] in ("SessionStart", "PreToolUse", "Stop")]
     if not agent and not session:
@@ -863,7 +862,7 @@ def compter_depuis_le_commit(racine: Path, session: str | None = None) -> str:
     pour la session donnée ou, à défaut, la plus récente depuis. La commande
     qui commite passe elle-même par le filtre : des hooks chargés en comptent
     toujours au moins un. Le compte de toute la session ne voit pas des hooks
-    qui cessent de tirer en cours de route (B-0058)."""
+    qui cessent de tirer en cours de route."""
     lignes = [l.split("\t") for l in config.lire_trace(racine)]
     debut = next((i + 1 for i in range(len(lignes) - 1, -1, -1)
                   if len(lignes[i]) >= 2 and lignes[i][1] == "git-prepare-commit-msg"), 0)
@@ -875,7 +874,7 @@ def compter_depuis_le_commit(racine: Path, session: str | None = None) -> str:
 def hooks_non_charges(projet: config.Projet) -> bool:
     """Sous Claude Code (`CLAUDECODE`), la trace n'a aucun SessionStart pour
     la session courante (`CLAUDE_CODE_SESSION_ID`) : ses hooks ne sont pas
-    chargés, la session ayant démarré hors de la racine du projet (B-0060).
+    chargés, la session ayant démarré hors de la racine du projet.
     Faux hors d'un agent, sans identifiant de session, ou quand la politique
     n'outille pas Claude Code."""
     session = os.environ.get("CLAUDE_CODE_SESSION_ID")
@@ -889,7 +888,7 @@ def filtre_absent(projet: config.Projet) -> str | None:
     """Un commit d'agent (`CLAUDECODE`) sans aucun passage du filtre de
     l'agent depuis le commit précédent : le compte (`PreToolUse=0`), à
     refuser dès le hook avant commit, au lieu du seul avertissement du
-    message de commit (B-0060). `None` sinon. La commande qui commite passe
+    message de commit. `None` sinon. La commande qui commite passe
     elle-même par le filtre : des hooks chargés en comptent au moins un."""
     if not os.environ.get("CLAUDECODE") or not projet.pol("agents", "claude_code", defaut=True):
         return None
@@ -898,7 +897,7 @@ def filtre_absent(projet: config.Projet) -> str | None:
 
 
 def sous_un_agent(geste: str) -> bool:
-    """Défense en profondeur (B-0044, L2) : une commande réservée à l'humain
+    """Défense en profondeur : une commande réservée à l'humain
     refuse de tourner dans une session d'agent, que le hook l'ait reconnue
     ou non. Le dit, et rend vrai."""
     if not os.environ.get("CLAUDECODE"):
@@ -946,8 +945,8 @@ def git_prepare_commit_msg(projet: config.Projet, fichier: str, source: str = ""
 def git_commit_msg(projet: config.Projet, fichier: str = "") -> int:
     """Le message d'un commit public ne cite ni identifiant privé ni terme de
     la liste privée : le seul étage, hors de l'agent, qui le voit avant le
-    commit (D-0008). Il avertit aussi d'une fonction que la CI refusera faute
-    de test ou de dispense (B-0034, P9)."""
+    commit. Il avertit aussi d'une fonction que la CI refusera faute
+    de test ou de dispense."""
     tracer(projet.racine, "git-commit-msg")
     if not fichier:
         return 0
@@ -976,7 +975,7 @@ def correctif_sans_test(projet: config.Projet, message: str) -> str | None:
     """Un correctif (`fix:`, `Corrige:`) dont le commit n'ajoute ni ne change
     aucun test : la CI le refusera (`tests.regression`), seule à pouvoir
     rejouer un test sur le commit d'avant. Le hook commit-msg le dit dès le
-    commit, sans refuser, quand l'amender suffit encore (B-0024)."""
+    commit, sans refuser, quand l'amender suffit encore."""
     from socle import checks_tests as controles_tests
 
     if not controles_tests.est_correctif(projet, message) or not outils.a_des_commits(projet.racine):
@@ -991,7 +990,7 @@ def correctif_sans_test(projet: config.Projet, message: str) -> str | None:
     if outils.filtrer(touches, motifs):
         return None
     if "module_command" in cap and outils.filtrer(touches, projet.chemins_code()):
-        return None  # un test peut vivre dans le module du code (B-0051) : la CI le cherche
+        return None  # un test peut vivre dans le module du code : la CI le cherche
     return (trad("socle — avertissement : ce correctif n'ajoute ni ne change aucun test ({liste}) : la CI le "
                  "refusera (`tests.regression`), faute d'un test qui échoue sur le commit d'avant. L'ajouter à ce "
                  "commit (`git commit --amend`), tant qu'il n'est pas poussé.", liste=', '.join(motifs)))
@@ -1001,7 +1000,7 @@ def hooks_absents(projet: config.Projet, message: str) -> str | None:
     """Un commit d'agent dont la trace ne compte aucun PreToolUse : les hooks
     de l'agent n'ont pas tiré pendant sa session, et la CI refusera le commit
     (`hooks.trace`). Le hook commit-msg, qui voit la trace que le hook
-    précédent vient d'écrire, le dit dès le commit, sans refuser (B-0050)."""
+    précédent vient d'écrire, le dit dès le commit, sans refuser."""
     from socle import checks_ratchet as controles_cliquet
 
     if not controles_cliquet.est_agent(projet, message):
@@ -1014,7 +1013,7 @@ def hooks_absents(projet: config.Projet, message: str) -> str | None:
     if not tirs.isdigit() or int(tirs) < 1:
         return (trad("socle — avertissement : commit d'agent sans aucun hook de l'agent pendant sa session "
                      "(`Socle-Hooks: {valeurs}`) : la CI le refusera (`hooks.trace`). ", valeurs=valeurs[-1]) + conseil)
-    # B-0058 : des hooks qui ont tiré en début de session, puis plus du tout.
+    # Des hooks qui ont tiré en début de session, puis plus du tout.
     depuis = outils.trailers(message).get("socle-hooks-since-commit")
     tirs = controles_cliquet.lire_trailer_hooks(depuis[-1]).get("PreToolUse", "0") if depuis else "1"
     if tirs.isdigit() and int(tirs) >= 1:
@@ -1028,7 +1027,7 @@ def code_sans_test(projet: config.Projet, message: str) -> str | None:
     """Une fonction publique que ni un test ni une dispense ne nomme : la CI
     refusera le commit (`tests.code-teste`). Le hook commit-msg, le premier
     étage qui voit le message et ses dispenses, le dit sans refuser : un
-    humain qui commite son code l'apprend ici, pas en CI (B-0034, P9)."""
+    humain qui commite son code l'apprend ici, pas en CI."""
     from socle import context as contexte, checks_tests as controles_tests
     from socle.report import Rapport
 
@@ -1054,7 +1053,7 @@ def plage_poussee(projet: config.Projet, lignes: list[str]):
     commit distant au commit local de chaque référence déjà présente en
     face. C'est la plage que la CI d'un push jugera ; contre la branche par
     défaut, une dispense ou une validation plus anciennes de la branche
-    couvraient ce qu'elle refusera (B-0043)."""
+    couvraient ce qu'elle refusera."""
     from socle import context as contexte
     from socle.report import Rapport
 
@@ -1080,7 +1079,7 @@ def git_pre_push(projet: config.Projet) -> int:
     # Les commits qui partent : `<réf locale> <sha local> <réf distante> <sha distant>` par ligne.
     lignes = [] if sys.stdin is None or sys.stdin.isatty() else sys.stdin.read().splitlines()
     if prive.mode(projet):
-        # Le nom de la branche distante est publié lui aussi (B-0044, L3).
+        # Le nom de la branche distante est publié lui aussi.
         noms = [l.split()[2].removeprefix("refs/heads/") for l in lignes if len(l.split()) >= 4]
         trouve = prive.fuites("\n".join(noms), prive.termes(projet).liste)
         if trouve:

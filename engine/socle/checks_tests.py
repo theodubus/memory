@@ -95,7 +95,7 @@ def creux(ctx, r):
     # aide qui affirme peut vivre ailleurs que le test qui l'appelle. Mais
     # dans un fichier de code, seulement dans ses lignes de test (le module
     # de tests de Rust) : un `assert` du code de production n'affirme rien
-    # pour le test qui l'appelle (relevé de la passe de recul, D).
+    # pour le test qui l'appelle.
     sources = outils.filtrer(ctx.fichiers, ctx.projet.adaptateur.get("sources", []))
     toutes = fonctions(ctx, sorted(set(tous) | set(sources)))
     assertion = re.compile(cfg.get("assertion", r"assert"))
@@ -118,7 +118,7 @@ def creux(ctx, r):
         # la ligne qui le définit (`test.skip(…)`, `xit "…"`) ou dans son corps
         # (`t.Skip(…)`, `markTestSkipped(…)`).
         # Dans le corps, la marque se cherche hors des chaînes : un test qui
-        # parle d'un `skip` ne se désactive pas (L6).
+        # parle d'un `skip` ne se désactive pas.
         litteraux = cfg.get("strings", tests_lecture.LITTERAUX)
         corps_nu = [re.sub(litteraux, '""', l) for l in f.lignes_corps]
         marques = [*f.attributs, f.entete, *f.lignes_corps]
@@ -139,7 +139,7 @@ def creux(ctx, r):
                              f.fichier, f.ligne + k + 1)
     # Un groupe entier se désactive hors de tout test : une classe sous
     # `@unittest.skip`, un `describe.skip`, un `@Disabled` de classe, un
-    # `skip` dans un `before` (relevé de la passe de recul, D).
+    # `skip` dans un `before`.
     if ignore is None:
         return
     comm = re.compile(cfg["comment"]) if cfg.get("comment") else None
@@ -166,8 +166,7 @@ def _nomme(texte: str, nom: str) -> bool:
 
 def _justifie(ctx, nom: str) -> str | None:
     """Une validation humaine, ou une spécification que l'humain a changée et
-    qui nomme le test (politique, point 2, option B tranchée par Théo,
-    ADR-0017) : une spécification que l'agent écrit dans le même travail ne
+    qui nomme le test (politique, point 2) : une spécification que l'agent écrit dans le même travail ne
     l'autorise pas à changer le test."""
     for d in ctx.validations:
         if _nomme(d.texte, nom):
@@ -180,7 +179,7 @@ def _justifie(ctx, nom: str) -> str | None:
 
 def _en_attente(ctx, nom: str) -> str | None:
     """À la fin du tour seulement (étage agent), une demande en attente,
-    poussée telle quelle, qui nomme le test (B-0033) : le travail qui attend
+    poussée telle quelle, qui nomme le test : le travail qui attend
     la réponse de l'humain peut rester dans l'arbre, au lieu d'être remisé
     hors de la mémoire. Le commit et la CI le refusent toujours."""
     from socle import requests as demandes
@@ -287,7 +286,7 @@ def attendus(ctx, r):
             continue
         # Une valeur attendue vit aussi hors de la ligne d'assertion : une
         # variable, une table, un paramètre. Rien ne la distingue d'une
-        # donnée de test : elle est dite, pas refusée (ADR-0024).
+        # donnée de test : elle est dite, pas refusée.
         valeurs_parties = lits(a) - lits(b)
         if valeurs_parties and not _justifie(ctx, a.nom):
             hors.setdefault(b.fichier, []).append((b.nom, next(iter(valeurs_parties))))
@@ -307,7 +306,7 @@ def _attendus_hors_tests(ctx, cfg, chemins, apres, hors):
     aide qui affirme) : retirée ou changée, elle compte pour chaque test qui
     nomme sa constante ou son aide. Dans un fichier de code, seules ses
     lignes de test comptent : le module de tests de Rust, jamais le code de
-    production (ADR-0024)."""
+    production."""
     chemins_code, exclus_code, _ = config_code(ctx.projet)
 
     def reste(texte, chemin) -> list[str]:
@@ -436,7 +435,7 @@ def code_teste(ctx, r):
     nommes = "\n".join(nommes)
     dispenses = dispenses_tests(ctx, r)
     # Un fichier renommé se compare à son ancien nom : ses fonctions n'y sont
-    # pas nouvelles (ADR-0027).
+    # pas nouvelles.
     ancien_nom = {neuf: ancien for ancien, neuf in ctx.renommes.items()}
     for chemin in code:
         texte = ctx.lire(chemin) or ""
@@ -490,7 +489,7 @@ def regression(ctx, r):
             fichiers = {t: outils.lire_a(ctx.racine, sha, t) or "" for t in tests}
             commande = commande_regression(cap, tests)
         else:
-            # Un test écrit dans le module du code (B-0051, mesuré à R6) :
+            # Un test écrit dans le module du code :
             # sur le parent, le seul changement de ses fonctions de test.
             fichiers, noms = tests_du_module(ctx, parent, sha, [t for t in touches if t not in tests])
             commande = cap["module_command"].replace("{names}", " ".join(noms)) \
@@ -512,7 +511,7 @@ def regression(ctx, r):
             continue
         # Un test qui ne se charge pas sur le parent (une compilation cassée,
         # un import manquant) y échoue pour une autre raison que le défaut
-        # (relevé de la passe de recul, D).
+        #.
         chargement = re.search(cap["load_error"], sortie) if cap.get("load_error") else None
         if chargement:
             r.erreur("tests.regression", trad("{sha} « {sujet} » : son test ne se charge pas sur le parent (« "
@@ -565,7 +564,7 @@ def commande_regression(cap: dict, tests: list[str]) -> str:
     fichier, où `{file}`, `{stem}`, `{module}` et `{dir}`, son dossier, se
     remplacent ; un même argument ne se répète pas). Les arguments se
     joignent par `test_arg_separator`, une espace sinon : Maven veut une
-    virgule dans `-Dtest=`, le filtre de `dotnet test` un `|` (B-0075)."""
+    virgule dans `-Dtest=`, le filtre de `dotnet test` un `|`."""
     gabarit = cap.get("test_arg", "--test {stem}")
     separateur = cap.get("test_arg_separator", " ")
     args = []
@@ -635,7 +634,7 @@ def couverture_mutation(ctx, r):
                                                  "garde-fous), puis le mesurer par un balayage (`socle "
                                                  "mutation-run --record`)", m=m), m)
         elif m in caps and caps[m].get("pending"):
-            # À mesurer (B-0034, P1) : un avertissement, jusqu'au premier
+            # À mesurer : un avertissement, jusqu'au premier
             # balayage, qui pose le plafond mesuré.
             r.avertir("mutation.couverture", trad("module à mesurer : lancer le balayage de mutation et poser "
                                                   "son plafond (`socle mutation-run --record`), ou recopier "
@@ -652,7 +651,7 @@ def vivante(ctx, r):
     """Le balayage de mutation planifié tourne encore. GitHub endort les
     workflows planifiés d'un dépôt public après soixante jours sans activité,
     et le verdict ne peut pas signaler sa propre absence : ce contrôle tourne
-    à chaque push, quand le code bouge (B-0005)."""
+    à chaque push, quand le code bouge."""
     from socle import mutation
 
     niveau, message, flux, _ = mutation.etat_du_balayage(ctx.projet, ctx.fichiers, ctx.lire)

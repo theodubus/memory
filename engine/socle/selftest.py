@@ -375,7 +375,7 @@ RECAP = "\n\nPour toi : rien.\nEnsuite : rien."
 
 def _demande_nommant_le_test(a: "Atelier", c: Path) -> str:
     """Une demande au contrat qui nomme `test_double`, pour en changer la
-    valeur attendue (B-0033)."""
+    valeur attendue."""
     return demande_bonne(a, c).replace(
         "## Où regarder", "- `test_double` — le test du module, qui attend le double de deux.\n\n## Où regarder", 1)
 
@@ -403,7 +403,7 @@ def tous_refuses(a: Atelier, c: Path, essais: list[tuple[str, dict]]) -> str:
     return "\n".join(raisons)
 
 
-# Une mutation factice (B-0044, L4) : l'adaptateur du projet d'essai n'a pas
+# Une mutation factice : l'adaptateur du projet d'essai n'a pas
 # de mutation, et `mutation.couverture` ne s'y exerçait jamais. Le balayage
 # se simule par une sortie de mutmut écrite à la main.
 MUTATION_FACTICE = """[capabilities.mutation]
@@ -423,7 +423,7 @@ def avec_mutation(c: Path):
 
 
 # `gh`, simulé : l'état du workflow de mutation et sa dernière exécution,
-# d'hier (B-0005).
+# d'hier.
 GH_FACTICE = """#!{python}
 import json, sys
 from datetime import datetime, timedelta, timezone
@@ -471,7 +471,7 @@ def balayage(c: Path, lignes: str) -> Path:
 def _collision(a: "Atelier", c: Path) -> str:
     """La branche par défaut avance, dans ce clone seulement, avec un B-0002
     pris par une autre branche ; la branche de travail, partie d'avant, prend
-    B-0002 pour un autre sujet (ADR-0026). Rend le point de divergence, la
+    B-0002 pour un autre sujet. Rend le point de divergence, la
     base de la CI."""
     point = a.git(c, "rev-parse", "HEAD").strip()
 
@@ -491,15 +491,14 @@ def _collision(a: "Atelier", c: Path) -> str:
 
 def ajouter_sujet(c: Path, bloc: str):
     """Un sujet de plus au backlog, écrit `## B-… — titre`, ses métadonnées,
-    son corps : dans son propre fichier, son titre remonté d'un niveau
-    (ADR-0025)."""
+    son corps : dans son propre fichier, son titre remonté d'un niveau."""
     from socle import config, memory as memoire, utils as outils
 
     ch = config.FORMAT_ACTUEL
     m = re.match(r"\s*## (B-\d{4}) — (.+)", bloc)
     texte = "<!-- socle: couche=backlog zone=publique -->\n" + bloc.strip("\n").replace("## ", "# ", 1) + "\n"
     rel = f"{ch.backlog}/{m[1]}-{memoire.nom_de_fichier(m[2])}.md"
-    # Un sujet clos va d'emblée avec les clos (ADR-0030).
+    # Un sujet clos va d'emblée avec les clos.
     if any(e.statut in memoire.BACKLOG_CLOS for e in memoire.analyser(rel, texte).entrees):
         rel = f"{ch.backlog}/{memoire.DOSSIER_CLOS}/{rel.rsplit('/', 1)[-1]}"
     outils.ecrire(c / rel, texte)
@@ -615,7 +614,7 @@ Vérifié : rien. Supposé : que c'est mieux.
 # La liste vide des chemins tiers, telle que l'installeur la pose.
 TIERS_VIDE = "\npaths = []\n"
 
-# BMAD Method en réduction (ADR-0032) : sa configuration, et un travail que
+# BMAD Method en réduction : sa configuration, et un travail que
 # son workflow de construction a reporté.
 BMAD_CONFIG = '[modules.bmm]\nimplementation_artifacts = "{project-root}/_bmad-output/implementation-artifacts"\n'
 BMAD_REPORT = ("- source_spec: `_bmad-output/implementation-artifacts/spec-x.md`\n"
@@ -860,7 +859,7 @@ def _cas() -> list[Cas]:
                         "Socle-Agent: claude-code\nSocle-Hooks: SessionStart=1 PreToolUse=4 Stop=1\n"
                         "Socle-Hooks-Since-Commit: PreToolUse=0")
 
-    # B-0060 : une session d'agent démarrée hors de la racine du projet n'a
+    # Une session d'agent démarrée hors de la racine du projet n'a
     # pas ses hooks ; l'état le dit en tête, le hook avant commit refuse.
     @defaut("hooks-non-charges", "session d'agent démarrée hors de la racine : ses hooks ne sont pas chargés",
             "agent", "hooks non chargés")
@@ -1389,7 +1388,7 @@ def _cas() -> list[Cas]:
             "tests.code-teste")
     def _(a, c):
         # Contre la branche par défaut, la dispense du premier commit couvre
-        # `triple` ; la plage du second push, celle que la CI jugera, non (B-0043).
+        # `triple` ; la plage du second push, celle que la CI jugera, non.
         ajouter(c, "calc.py", "\n\ndef triple(x):\n    return 3 * x\n")
         ajouter(c, "docs/calc.md", "`triple` multiplie par trois.\n")
         maj_memoire(c, "Ajout de triple, dispensée.")
@@ -1501,7 +1500,7 @@ def _temoins() -> list[tuple[str, Callable]]:
         maj_memoire(c)
         return etage_ci(a, c, MESSAGE_AGENT)
 
-    @temoin("CLAUDE.md gardé comme seule source, avec la section du socle, passe la CI (B-0049)")
+    @temoin("CLAUDE.md gardé comme seule source, avec la section du socle, passe la CI")
     def _(a, c):
         a.run(c, "git", "rm", "-q", "CLAUDE.md")
         a.run(c, "git", "mv", "AGENTS.md", "CLAUDE.md")
@@ -1516,13 +1515,13 @@ def _temoins() -> list[tuple[str, Callable]]:
         maj_memoire(c, "Test reformaté.")
         return etage_ci(a, c, MESSAGE_AGENT)
 
-    @temoin("un chemin d'un autre dépôt, non déclaré, est signalé sans refus (B-0052)")
+    @temoin("un chemin d'un autre dépôt, non déclaré, est signalé sans refus")
     def _(a, c):
         remplacer(c, "memory/active.md", "## En cours\n\nRien pour l'instant.",
                   "## En cours\n\nLe modèle vient de `ailleurs:tools/etat.sh`.")
         return etage_ci(a, c)
 
-    @temoin("une référence de commit en fin de phrase passe la CI (B-0020)")
+    @temoin("une référence de commit en fin de phrase passe la CI")
     def _(a, c):
         sha = a.run(c, "git", "rev-parse", "HEAD").stdout.strip()
         maj_memoire(c, f"Repris de l'essai (commit:{sha}).")
@@ -1600,7 +1599,7 @@ def _temoins() -> list[tuple[str, Callable]]:
         return (r.stdout + r.stderr) if r.returncode != 0 else etage_ci(a, c)
 
     @temoin("les fichiers d'un outil tiers, déclaré par l'humain qui l'approuve, échappent aux contrôles : la CI "
-            "passe (ADR-0031)")
+            "passe")
     def _(a, c):
         remplacer(c, ".socle/guardrails.toml", TIERS_VIDE, '\npaths = ["_outil/**"]\n')
         r = a.socle(c, "approve", "--keys", "thirdparty.paths", "--text", "Les fichiers de l'outil")
@@ -1611,7 +1610,7 @@ def _temoins() -> list[tuple[str, Callable]]:
         ajouter(c, "_outil/LISEZMOI.md", "Chaque constat cite `file:line`, et F-0099.\n")
         return etage_ci(a, c)
 
-    @temoin("un travail reporté par BMAD, entré au backlog par `socle bmad-import`, passe la CI (ADR-0032)")
+    @temoin("un travail reporté par BMAD, entré au backlog par `socle bmad-import`, passe la CI")
     def _(a, c):
         avec_bmad(c)
         r = a.socle(c, "bmad-import")
@@ -1619,20 +1618,19 @@ def _temoins() -> list[tuple[str, Callable]]:
             return r.stdout + r.stderr
         return etage_ci(a, c)
 
-    @temoin("une spec de BMAD approuvée, dont l'approbation de l'humain est consignée en séance, passe la CI "
-            "(ADR-0032)")
+    @temoin("une spec de BMAD approuvée, dont l'approbation de l'humain est consignée en séance, passe la CI")
     def _(a, c):
         avec_bmad(c, statut="in-progress", route="dispatch", report=False)
         approuver_en_seance(a, c)
         return etage_ci(a, c)
 
-    @temoin("une décision d'architecture de BMAD citée dans sa version actuelle passe la CI (B-0072)")
+    @temoin("une décision d'architecture de BMAD citée dans sa version actuelle passe la CI")
     def _(a, c):
         h = avec_architecture(c)
         maj_memoire(c, f"Le facteur suit `AD-1@{h}`.")
         return etage_ci(a, c)
 
-    @temoin("un chemin qui n'existe que dans une rustine suivie du dépôt passe la CI (B-0008)")
+    @temoin("un chemin qui n'existe que dans une rustine suivie du dépôt passe la CI")
     def _(a, c):
         (c / "attic").mkdir(exist_ok=True)
         (c / "attic/sondes.patch").write_text("--- /dev/null\n+++ b/attic/sondes/lecteur.py\n@@ -0,0 +1 @@\n+X = 1\n")
@@ -1875,7 +1873,7 @@ def _temoins() -> list[tuple[str, Callable]]:
         a.socle(c, "hook", "session-start", entree=json.dumps(entree))
         a.socle(c, "hook", "pre-tool-use", entree=json.dumps({**entree, "tool_name": "Bash", "tool_input": {"command": "ls"}}))
         # … et le commit se fait dans un autre worktree, comme la pull request
-        # de démonstration (B-0015).
+        # de démonstration.
         wt = c.parent / f"{c.name}-wt"
         a.git(c, "worktree", "add", "-q", "-b", "autre", str(wt))
         maj_memoire(wt, "Travail fait dans un autre worktree.")
@@ -1999,7 +1997,7 @@ def executer(projet=None, bavard: bool = False) -> Rapport:
 # Le hook PreToolUse ne nomme pas de contrôle : il rend sa raison, qu'on
 # reconnaît à ces mots.
 # Les contrôles du registre qu'aucun défaut injecté n'éprouve, chacun avec
-# sa raison écrite : un test exige que tout autre en ait un (B-0044, L4).
+# sa raison écrite : un test exige que tout autre en ait un.
 SANS_DEFAUT: dict[str, str] = {}
 
 RAISONS_AGENT = {
@@ -2041,7 +2039,7 @@ def _attrape_par(cas: Cas, sortie: str) -> bool:
         return False
     # Un rapport d'étage d'abord : un contrôle que le hook de l'agent nomme
     # aussi (`memoire.preuves`, `demandes.contrat`) s'attrape en CI par sa
-    # ligne de synthèse, pas par la phrase de son refus (B-0044, L4).
+    # ligne de synthèse, pas par la phrase de son refus.
     if cas.controle in en_echec_dans(sortie):
         return True
     if cas.controle in RAISONS_AGENT:

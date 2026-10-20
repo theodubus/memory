@@ -63,8 +63,9 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 1. Faits : le retrait du code de compatibilité (D-0033, D-0035,
    J-2026-10-20-U) et la documentation (B-0046, D-0036, J-2026-10-20-W).
-2. Maintenant : B-0077, les renvois du moteur à la mémoire de ce dépôt ;
-   puis la demande de publication du paquet du seul produit (B-0042).
+2. Fait aussi : B-0077, le moteur ne renvoie plus à la mémoire de ce dépôt
+   (J-2026-10-20-X). Maintenant : la demande de publication du paquet du
+   seul produit (B-0042).
 3. Ensuite B-0079 (session reprise hors de la racine, non détectée), B-0080
    (un clone sans la branche par défaut), B-0081 (une demande à plusieurs
    réponses positives ne valide rien), B-0082 (les noms d'une classe du

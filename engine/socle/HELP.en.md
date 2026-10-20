@@ -33,7 +33,7 @@ two, which overlap. Remove yours from `.claude/settings.json`, or leave in it
 only what is the project's own; it is an agent setting, which only you
 change.
 
-With BMAD Method, the planning method the socle marries (ADR-0032), one
+With BMAD Method, the planning method the socle marries, one
 command installs both: `--with-bmad` first installs BMAD, at the version
 proven with the socle and in the project's language (`npx` needs Node.js
 20.12 or later, and its skills need `uv`), then the socle, which declares

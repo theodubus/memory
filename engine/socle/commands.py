@@ -1,5 +1,5 @@
 """Une commande shell, découpée en commandes simples, pour que les hooks
-jugent ce qu'elle fait et non le texte qu'elle cite (B-0044, L2).
+jugent ce qu'elle fait et non le texte qu'elle cite.
 
 Un heredoc, une chaîne entre guillemets ou un message de commit qui
 nomment une commande dangereuse ne la lancent pas ; un lanceur entre

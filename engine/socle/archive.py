@@ -1,5 +1,5 @@
 """Archivage : `socle archive` range les sujets clos du backlog à l'écart
-des ouverts (ADR-0030)."""
+des ouverts."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ def archiver_backlog(projet: config.Projet) -> int:
 def ranger_backlog(racine: Path) -> list[tuple[str, str]]:
     """Range chaque sujet du backlog selon son statut : un sujet
     clos dans le sous-dossier des clos, un sujet ouvert hors de lui, dans la
-    zone publique comme dans la privée (ADR-0030). Un déplacement suivi par
+    zone publique comme dans la privée. Un déplacement suivi par
     le dépôt est indexé ; dans le dépôt compagnon, il reste à y commiter.
     Rend les déplacements, (avant, après) ; idempotent."""
     suivis = set(outils.git(racine, "ls-files", "-z", check=False).split("\0")) - {""} \

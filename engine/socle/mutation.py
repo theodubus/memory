@@ -14,7 +14,7 @@ Le balayage lui-même (`balayer`) lance la commande de l'adaptateur, module
 par module quand elle nomme `{module}`, puis rend le verdict : c'est ce que
 fait chaque semaine le workflow que pose l'installeur. Et parce qu'un
 cliquet ne peut pas signaler sa propre absence, `vivacite` dit quand ce
-workflow cesse de tourner (B-0005).
+workflow cesse de tourner.
 """
 
 from __future__ import annotations
@@ -58,8 +58,7 @@ def lire_cargo_mutants(dossier: Path) -> dict[str, Counter]:
 STATUTS_MUTMUT = {"killed": "attrapes", "caught by type check": "attrapes", "timeout": "expires",
                   "suspicious": "expires", "segfault": "expires", "skipped": "inviables"}
 # Le module est tout ce qui précède le dernier `.x_` ou `.xǁ` : le nom de la
-# fonction n'a pas de point, et un module peut commencer par `x_` (relevé de
-# la passe de recul, F).
+# fonction n'a pas de point, et un module peut commencer par `x_`.
 NOM_MUTMUT = re.compile(r"^(?P<module>[\w.]+)\.x[_ǁ][^.]*__mutmut_\d+$")
 
 
@@ -207,8 +206,7 @@ LECTEURS = {"cargo-mutants": lire_cargo_mutants, "mutmut": lire_mutmut, "stryker
 def verdict(projet: config.Projet, dossier: Path, poser: bool = False) -> Rapport:
     """Les survivants de chaque module du plafond, confrontés à son plafond.
     Un module « à mesurer » (`pending`) n'a pas encore de plafond : son compte
-    se dit, et `poser` l'écrit dans les garde-fous, ce qui durcit le cliquet
-    (B-0034, P1)."""
+    se dit, et `poser` l'écrit dans les garde-fous, ce qui durcit le cliquet."""
     r = Rapport()
     ident = "mutation.verdict"
     r.execute(ident)
@@ -266,7 +264,7 @@ def poser_plafonds(projet: config.Projet, mesures: dict[str, int]) -> list[str]:
     par son plafond mesuré, avec sa raison quand il n'est pas nul. La clé
     s'écrit entre guillemets doubles ou simples, en table en ligne ou en
     table ; rend les modules dont le plafond n'a pas pu s'écrire, relu après
-    coup (relevé de la passe de recul, F)."""
+    coup."""
     import json
     import tomllib
     from datetime import date
@@ -426,7 +424,7 @@ def vivacite(etat: str | None, derniere: str | None, cree: str | None,
 
 
 # Un workflow présent sur la branche par défaut, que GitHub ne connaît pas :
-# le délai qu'on lui laisse pour l'enregistrer, en jours (B-0063).
+# le délai qu'on lui laisse pour l'enregistrer, en jours.
 DELAI_ENREGISTREMENT = 2
 REMEDE_ENREGISTREMENT = a_traduire(
     "Pousser un commit sur la branche par défaut qui modifie ce fichier (une ligne de commentaire suffit ; c'est "
@@ -449,7 +447,7 @@ def arrivee_sur_la_branche_par_defaut(racine: Path, flux: str) -> str | None:
 def inconnu_de_github(nom: str, arrivee: str | None, maintenant: datetime | None = None) -> tuple[str, str]:
     """(niveau, message) quand GitHub ne connaît pas le workflow : pas encore
     fusionné, un avertissement ; présent sur la branche par défaut sans être
-    enregistré, son cron ne part jamais, une erreur passé le délai (B-0063)."""
+    enregistré, son cron ne part jamais, une erreur passé le délai."""
     if arrivee is None:
         return "avertir", trad("`{nom}` n'est pas encore sur la branche par défaut : GitHub ne le planifie "
                                "qu'une fois fusionné", nom=nom)
