@@ -65,8 +65,8 @@ garde en tete et on voit si ça finit par etre bloquant ».
    B-0073, B-0054, B-0008, B-0072, B-0011. D-0031 validée par Théo : B-0040,
    l'adaptateur C#, est fait et passe son banc (F-0025, J-2026-10-20-N) ;
    ses étapes de CI n'ont pas tourné sur GitHub.
-2. B-0075, relevé en écrivant C# : la régression de Java joint deux
-   classes de test par une espace ; à mesurer au banc, puis à corriger.
+2. B-0075, relevé en écrivant C#, est fait : la régression joint les
+   classes de test comme l'outil les attend (J-2026-10-20-O).
 3. Les autres sujets ouverts demandent Théo ou des données : B-0066 et
    B-0071 (leur conception), B-0010 et B-0012 (une cible, ou des mesures
    sur un vrai projet), B-0009 (un cas réel), B-0042 (une publication),

@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0075 — La régression de Java ne rejoue pas deux classes de test à la fois
 
-> statut : ouvert · origine : J-2026-10-20-N · lu : backlog@89d725be
+> statut : fait · origine : J-2026-10-20-N · lu : backlog@89d725be · ref : J-2026-10-20-O
 
 Lu dans le code en écrivant l'adaptateur C#, non mesuré : le moteur joint
 les arguments de test par une espace (`{test_args}`), et l'adaptateur Java

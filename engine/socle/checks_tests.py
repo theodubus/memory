@@ -563,8 +563,11 @@ def tests_du_module(ctx, parent: str, sha: str, chemins: list[str]) -> tuple[dic
 def commande_regression(cap: dict, tests: list[str]) -> str:
     """Remplit `{files}`, `{stems}` et `{test_args}` (un `test_arg` par
     fichier, où `{file}`, `{stem}`, `{module}` et `{dir}`, son dossier, se
-    remplacent ; un même argument ne se répète pas)."""
+    remplacent ; un même argument ne se répète pas). Les arguments se
+    joignent par `test_arg_separator`, une espace sinon : Maven veut une
+    virgule dans `-Dtest=`, le filtre de `dotnet test` un `|` (B-0075)."""
     gabarit = cap.get("test_arg", "--test {stem}")
+    separateur = cap.get("test_arg_separator", " ")
     args = []
     for t in tests:
         module = t[: -len(Path(t).suffix)].replace("/", ".") if Path(t).suffix else t.replace("/", ".")
@@ -577,7 +580,7 @@ def commande_regression(cap: dict, tests: list[str]) -> str:
         cap["command"]
         .replace("{files}", " ".join(tests))
         .replace("{stems}", " ".join(Path(t).stem for t in tests))
-        .replace("{test_args}", " ".join(args))
+        .replace("{test_args}", separateur.join(args))
     )
 
 

@@ -198,6 +198,18 @@ class TestDetectionEtRegression(unittest.TestCase):
                                 shell=True, capture_output=True, text=True).stdout
         self.assertEqual(sortie, "FullyQualifiedName~ATests|FullyQualifiedName~BTests\n")
 
+    def test_les_arguments_de_test_se_joignent_par_le_separateur_de_l_adaptateur(self):
+        cap = {"command": "outil {test_args}", "test_arg": "{stem}", "test_arg_separator": ","}
+        self.assertEqual(commande_regression(cap, ["t/ATest.x", "t/BTest.x"]), "outil ATest,BTest")
+        sans = {k: v for k, v in cap.items() if k != "test_arg_separator"}
+        self.assertEqual(commande_regression(sans, ["t/ATest.x", "t/BTest.x"]), "outil ATest BTest")
+
+    def test_java_rejoue_deux_classes_en_une_commande(self):
+        # B-0075 : `-Dtest=ATest BTest` faisait lire à Maven une phase `BTest`.
+        cap = adaptateurs()["java"]["capabilities"]["regression"]
+        commande = commande_regression(cap, ["src/test/java/essai/ATest.java", "src/test/java/essai/BTest.java"])
+        self.assertEqual(commande, "mvn -q -B test -Dsurefire.failIfNoSpecifiedTests=false -Dtest=ATest,BTest")
+
     def test_go_rejoue_un_test_par_son_paquet(self):
         cap = adaptateurs()["go"]["capabilities"]["regression"]
         self.assertEqual(commande_regression(cap, ["calc/calc_test.go", "calc/autre_test.go", "x_test.go"]),
