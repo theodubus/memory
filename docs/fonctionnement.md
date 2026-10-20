@@ -1,11 +1,11 @@
-# Le socle : ce qu'il fait, comment il est fait
+# Le socle : son fonctionnement et ses principes
 
 Ce document explique le socle à qui l'installe ou veut le comprendre. Les
-gestes de l'humain, chacun avec sa commande, sont dans le guide
-(`engine/socle/HELP.md`, affiché par `python3 .socle/socle help`) ; le
-format exact de la mémoire, dans `engine/socle/FORMAT.md` ; la
-correspondance entre chaque exigence du cadrage et le contrôle qui
-l'applique, dans `docs/architecture.md`.
+gestes de l'humain, chacun avec sa commande, sont dans
+[le guide](../engine/socle/HELP.md), affiché par `python3 .socle/socle help` ;
+le format exact de la mémoire, dans [son format](../engine/socle/FORMAT.md).
+Comment le socle est fabriqué, et où chaque exigence du cadrage est
+appliquée, relève de l'atelier : [la fabrication](fabrication/README.md).
 
 ## Le problème
 
@@ -44,6 +44,26 @@ et ne connaît ni le langage du projet ni l'agent : ce qui dépend du langage
 vit dans un adaptateur, ce qui dépend de l'agent dans ses hooks.
 
 ## Ce que l'installation pose dans un projet
+
+L'installeur copie le moteur, et lui seul, depuis ce dépôt ; il pose le
+reste à partir de ses gabarits, et ne touche jamais ce que le projet a déjà
+écrit lui-même.
+
+```mermaid
+flowchart TB
+    subgraph source["Ce dépôt"]
+        moteur["engine/socle/<br/>moteur, adaptateurs, gabarits"]
+    end
+    subgraph projet["Le projet"]
+        copie[".socle/engine/socle/<br/>le moteur, copié tel quel"]
+        config[".socle/<br/>lanceur, verrou, politique,<br/>seuils, adaptateur, hooks git"]
+        memoire["memory/<br/>une mémoire vide"]
+        instr["AGENTS.md, CLAUDE.md"]
+        etages[".claude/settings.json,<br/>.github/workflows/, CODEOWNERS"]
+    end
+    moteur -- "copié" --> copie
+    moteur -- "gabarits posés,<br/>jamais écrasés" --> config & memoire & instr & etages
+```
 
 ```text
 .socle/
@@ -196,7 +216,26 @@ qui sépare le vérifié du supposé, et les réponses possibles, dont
 Son cycle : l'agent l'écrit et la pousse, puis en donne le lien ;
 l'humain répond dans la conversation ; l'agent consigne la réponse avec le
 texte exact de l'humain, seulement si la demande a été poussée telle
-quelle ; la demande répondue est gelée. Une réponse validée est ce qui
+quelle ; la demande répondue est gelée.
+
+```mermaid
+sequenceDiagram
+    participant A as L'agent
+    participant G as Le dépôt (GitHub)
+    participant H as L'humain
+    A->>A: socle new request : les huit champs
+    A->>G: commit et push de la demande
+    A->>H: son lien, dans la conversation
+    H->>A: sa réponse, dans la conversation
+    A->>G: socle answer --relayed, avec son texte exact
+    Note over G: la demande répondue est gelée ;<br/>une réponse « valider » autorise<br/>ce qu'elle nomme
+```
+
+Seule la réponse `valider` autorise un geste que la politique réserve à
+l'humain (relâcher un seuil, supprimer un test, changer un fichier
+protégé) : une demande qui en annonce un doit l'offrir parmi ses réponses.
+Une question tranchée sur le moment, l'humain présent, se consigne de même,
+en décision prise en séance (`socle decision`). Une réponse validée est ce qui
 autorise ensuite le changement qu'elle nomme : la clé de seuil, le test,
 le fichier protégé.
 
@@ -242,10 +281,11 @@ chaque refus du hook en ont au moins un défaut, ce qu'un test exige. La CI
 le lance à chaque push. Un garde-fou ajouté sans son
 défaut injecté n'est pas accepté dans ce dépôt.
 
-Deux bancs mesurent le reste : le banc d'évaluation fait travailler un
-agent réel sur des scénarios propices aux erreurs, et dit quel étage
-attrape quoi (`docs/banc.md`) ; le banc des adaptateurs éprouve chacun sur
-les vrais outils de son langage (`bench/adapters.py`).
+Deux bancs, dans l'atelier, mesurent le reste : le banc d'évaluation fait
+travailler un agent réel sur des scénarios propices aux erreurs, et dit
+quel étage attrape quoi ([le banc](fabrication/banc.md)) ; le banc des
+adaptateurs éprouve chacun sur les vrais outils de son langage
+(`bench/adapters.py`).
 
 ## Quand un contrôle refuse
 
@@ -276,7 +316,6 @@ dit à l'humain, et l'état dit si c'est fait.
 
 ## Ce qui n'est pas fait
 
-Le backlog le tient (`python3 .socle/socle show --index backlog`) :
-l'empreinte du moteur comparée
-à la version publiée, un paquet installable par pip, les textes du moteur
-dans la langue du projet, et les limites connues des contrôles.
+Le backlog de ce dépôt le tient (`python3 .socle/socle show --index
+backlog`, ici) : un paquet installable sans clone, l'empreinte du moteur
+comparée à la version publiée, et les limites connues des contrôles.

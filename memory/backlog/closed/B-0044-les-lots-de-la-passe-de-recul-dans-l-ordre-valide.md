@@ -3,7 +3,7 @@
 
 > statut : fait · origine : J-2026-10-12-F · lu : backlog@19253d8c · ref : J-2026-10-13-V
 
-Les lots du relevé de la passe de recul (`docs/recul.md`, section 3), dans
+Les lots du relevé de la passe de recul (`docs/fabrication/recul.md`, section 3), dans
 l'ordre que Théo a validé : L1, les pertes de données et la casse à
 l'installation ; L2, les contournements du hook de l'agent, le hook par
 découpage en arguments, les commandes humaines refusées sous un agent, la

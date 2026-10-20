@@ -4,10 +4,10 @@ Les fichiers de ce répertoire préparent l'installation du socle sur
 `theodubus/chess` (jalon 8). Rien n'y a été poussé : les essais tournent sur
 un clone jetable.
 
-- `docs/chess/adaptateur.toml` — l'adaptateur proposé : l'adaptateur Rust
+- `docs/fabrication/chess/adaptateur.toml` — l'adaptateur proposé : l'adaptateur Rust
   maintenu, plus les étapes propres à chess reprises de sa CI et de son
   script de vérification. À valider par Théo à l'installation.
-- `docs/chess/mutation-caps.toml` — les plafonds de mutation de chess, repris
+- `docs/fabrication/chess/mutation-caps.toml` — les plafonds de mutation de chess, repris
   tels quels avec le renvoi à leur raison écrite.
 
 ## Ce que les essais ont montré

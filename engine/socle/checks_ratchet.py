@@ -181,15 +181,16 @@ def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | Non
 
 def _suivie(motif: str, docs: set[str], apres_docmap: list[tuple[set[str], set[str]]], renommes: dict[str, str],
             fichiers_avant: list[str] | None) -> bool:
-    """Le motif d'une correspondance dont les fichiers ont été renommés :
-    chacun, sous son nouveau nom, reste couvert par une correspondance qui
-    n'exige pas d'autre doc que les siennes, renommées elles aussi. Un motif
-    qui ne couvrait rien, ou dont aucun fichier n'a changé de nom, ne se
-    suit pas : le retirer reste un assouplissement."""
+    """Le motif d'une correspondance dont les fichiers, ou les docs, ont été
+    renommés : chacun, sous son nouveau nom, reste couvert par une
+    correspondance qui n'exige pas d'autre doc que les siennes, renommées
+    elles aussi. Un motif qui ne couvrait rien, ou dont ni les fichiers ni
+    les docs n'ont changé de nom, ne se suit pas : le retirer reste un
+    assouplissement."""
     if not renommes or not fichiers_avant:
         return False
     couverts = [f for f in fichiers_avant if outils.correspond(f, [motif])]
-    if not any(f in renommes for f in couverts):
+    if not couverts or not any(f in renommes for f in couverts) and not any(d in renommes for d in docs):
         return False
     docs_suivies = {renommes.get(d, d) for d in docs}
     return all(any(outils.correspond(renommes.get(f, f), sorted(c)) and d <= docs_suivies for c, d in apres_docmap)

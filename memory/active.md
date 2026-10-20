@@ -61,16 +61,14 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 ## Prochaines étapes
 
-1. Fait : le code de compatibilité retiré, avec ses tests, et le
-   vocabulaire des échecs des tests (D-0033, D-0035 validée,
-   J-2026-10-20-U, J-2026-10-20-V).
-2. Maintenant : la documentation, selon le plan de B-0046 validé par Théo
-   (D-0036) et la séparation du produit et de l'atelier (ADR-0033).
-3. Ensuite B-0077, puis la demande de publication du paquet du seul
-   produit (B-0042). B-0079 (session reprise hors de la racine, non
-   détectée), B-0080 (un clone sans la branche par défaut) et B-0081 (une
-   demande à plusieurs réponses positives ne valide rien) après la doc.
-   B-0076 revient à Théo.
+1. Faits : le retrait du code de compatibilité (D-0033, D-0035,
+   J-2026-10-20-U) et la documentation (B-0046, D-0036, J-2026-10-20-W).
+2. Maintenant : B-0077, les renvois du moteur à la mémoire de ce dépôt ;
+   puis la demande de publication du paquet du seul produit (B-0042).
+3. Ensuite B-0079 (session reprise hors de la racine, non détectée), B-0080
+   (un clone sans la branche par défaut), B-0081 (une demande à plusieurs
+   réponses positives ne valide rien), B-0082 (les noms d'une classe du
+   test de mutation). B-0076 revient à Théo.
 4. Puis le projet pilote ; B-0071 et B-0066. Les autres sujets ouverts
    attendent des données ou Théo : B-0010, B-0012, B-0009, B-0006, B-0018,
    B-0048, B-0078.

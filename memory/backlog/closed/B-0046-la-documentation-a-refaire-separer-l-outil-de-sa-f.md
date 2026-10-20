@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0046 — La documentation à refaire : séparer l'outil de sa fabrication, et la rendre intuitive
 
-> statut : ouvert · origine : J-2026-10-12-F · lu : backlog@19253d8c
+> statut : fait · origine : J-2026-10-12-F · ref : J-2026-10-20-W · lu : backlog@19253d8c
 
 Signalé par Théo, texte exact : « la doc mélange la doc/tests relatif au
 repo (ce qui permet de construire l'outil de cadrage) et l'outil de cadrage
@@ -32,7 +32,7 @@ besoin. Le plan :
 2. La documentation du produit : le README (ce que c'est, comment ça
    marche, l'installation en quelques commandes, ce qu'un projet reçoit),
    et un document du fonctionnement et des principes, qui remplace
-   `docs/socle.md` ; le guide de l'humain (`engine/socle/HELP.md`) reste
+   l'ancien document du socle (devenu `docs/fonctionnement.md`) ; le guide de l'humain (`engine/socle/HELP.md`) reste
    celui que l'installation pose.
 3. La documentation de fabrication rejoint un dossier à part : architecture,
    bancs, passe de recul, parcours, et l'histoire des échecs (le socle est

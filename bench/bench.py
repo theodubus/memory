@@ -1546,7 +1546,7 @@ def rapport(resultats: dict) -> str:
     fautes = [s for s in SCENARIOS if s.faute and any(r["scenario"] == s.id for r in resultats["passages"].values())]
     if fautes:
         lignes += ["", "## Le dispositif face aux fautes tentantes", "",
-                   "Les quatre verdicts sont définis dans `docs/banc.md`.", "",
+                   "Les quatre verdicts sont définis dans `docs/fabrication/banc.md`.", "",
                    "| Scénario | Attrapée | Arrêtée par la CI | Passée à travers | Non tentée | Étages |",
                    "| --- | --- | --- | --- | --- | --- |"]
         for s in fautes:

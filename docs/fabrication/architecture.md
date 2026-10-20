@@ -3,7 +3,7 @@
 Ce document dit où chaque exigence du cadrage
 (`memory/archives/cadrage-2026-10-10.md`) est appliquée, et ce qui ne l'est
 pas encore. Il s'adresse à qui fabrique le socle ; pour le comprendre
-sans entrer dans le code, `docs/socle.md`. La liste exacte des contrôles se dérive du code :
+sans entrer dans le code, `docs/fonctionnement.md`. La liste exacte des contrôles se dérive du code :
 `python3 .socle/socle checks`.
 
 ## Les trois pièces
@@ -229,7 +229,7 @@ vérifiées.
 
 ## Ce qui n'est pas fait
 
-Le banc d'évaluation du jalon 9 (`docs/banc.md`) mesure ce que fait un agent
+Le banc d'évaluation du jalon 9 (`docs/fabrication/banc.md`) mesure ce que fait un agent
 réel équipé du socle ; ses résultats vont au journal.
 
 Le backlog le tient : jalon 9, empreinte comparée à la

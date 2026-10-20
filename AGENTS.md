@@ -6,8 +6,9 @@ de code entretenu par un agent. L'agent écrit, des contrôles automatiques
 attrapent les erreurs, et l'humain n'arbitre que ce qu'aucun contrôle ne peut
 trancher. Le cadrage fondateur est archivé tel quel dans
 `memory/archives/cadrage-2026-10-10.md` ; ce qui vient du dépôt `chess` est
-inventorié dans `docs/inventaire-chess.md`, et `docs/architecture.md` dit où
-chaque exigence du cadrage est appliquée.
+inventorié dans `docs/fabrication/inventaire-chess.md`, et
+`docs/fabrication/architecture.md` dit où chaque exigence du cadrage est
+appliquée.
 
 Ce dépôt est en **mode amont** : il est le premier utilisateur du socle qu'il
 fabrique. Le moteur vit dans `engine/socle/` ; il est la source, donc son
@@ -15,6 +16,11 @@ empreinte n'est pas figée ici. Les fichiers du projet vivent dans `.socle/`
 comme dans n'importe quel projet.
 
 ## Structure
+
+Le dépôt a deux parts (ADR-0033). **Le produit**, `engine/socle/`, est la
+seule chose qu'un projet reçoit : rien n'y renvoie à l'atelier. **L'atelier**
+est tout le reste : les tests, les bancs, la documentation de fabrication et
+la mémoire de ce dépôt, qui est l'historique de fabrication de l'outil.
 
 - `engine/socle/` — le moteur : lecture de la mémoire, contrôles, hooks,
   installeur, auto-test. `engine/socle/FORMAT.md` fait foi pour le format de
@@ -25,9 +31,11 @@ comme dans n'importe quel projet.
 - `engine/socle/templates/` — les gabarits que l'installeur pose dans un projet.
 - `tests/` — les tests du moteur (`unittest`), dont l'auto-test complet par
   injection de défauts.
-- `docs/` — l'architecture et l'inventaire de `chess`.
+- `docs/fonctionnement.md` — le fonctionnement et les principes du produit ;
+  `docs/fabrication/` — la documentation de l'atelier : architecture, bancs,
+  relevés, l'histoire de `chess`.
 - `bench/` — le banc d'évaluation sur un agent réel, ses scénarios et leurs
-  juges (`docs/banc.md`), et le banc des adaptateurs, chacun éprouvé sur un
+  juges (`docs/fabrication/banc.md`), et le banc des adaptateurs, chacun éprouvé sur un
   projet jetable de son langage (`bench/adapters.py`).
 - `memory/` — la mémoire de ce projet, au format du socle.
 

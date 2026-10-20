@@ -3,7 +3,7 @@
 # L'adaptateur Rust maintenu (moteur/socle/adaptateurs/rust.toml), plus les
 # étapes propres à chess, reprises une à une de chess:tools/verify.sh et de
 # chess:.github/workflows/ci.yml. Avec lui, `socle verify` exécute ce que la CI
-# de chess exécute (porte du jalon 3, voir docs/chess/README.md).
+# de chess exécute (porte du jalon 3, voir docs/fabrication/chess/README.md).
 
 language = "rust"
 name = "Rust (cargo) — chess"

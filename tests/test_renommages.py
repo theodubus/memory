@@ -114,6 +114,17 @@ class TestCliquetRenomme(unittest.TestCase):
         self.assertIn('docmap "src/vieux.py"',
                       [c for c, _ in assouplissements(DOCMAP, apres, renommes=self.RENOMMES, fichiers_avant=self.AVANT)])
 
+    def test_une_correspondance_dont_seule_la_doc_est_renommee_n_assouplit_rien(self):
+        avant = {"docmap": [{"code": ["src/a.py"], "docs": ["docs/vieux.md"]}]}
+        apres = {"docmap": [{"code": ["src/a.py"], "docs": ["docs/neuf.md"]}]}
+        self.assertEqual(assouplissements(avant, apres, renommes={"docs/vieux.md": "docs/neuf.md"},
+                                          fichiers_avant=["src/a.py", "docs/vieux.md"]), [])
+        # Une doc de plus que la doc renommée reste un assouplissement.
+        apres = {"docmap": [{"code": ["src/a.py"], "docs": ["docs/neuf.md", "README.md"]}]}
+        self.assertEqual([c for c, _ in assouplissements(avant, apres, renommes={"docs/vieux.md": "docs/neuf.md"},
+                                                         fichiers_avant=["src/a.py", "docs/vieux.md"])],
+                         ['docmap "src/a.py"'])
+
     def test_une_valeur_liee_suit_son_fichier_et_rien_d_autre(self):
         apres = self.apres(["src/neuf.py", "src/utils/*.py", "src/outils/*.py"], fichier="src/autre.py")
         self.assertEqual([c for c, _ in assouplissements(DOCMAP, apres, renommes=self.RENOMMES, fichiers_avant=self.AVANT)],
