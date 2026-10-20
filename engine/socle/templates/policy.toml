@@ -65,6 +65,9 @@ markers = ['(?im)^co-authored-by:.*\bclaude\b', '(?im)^socle-agent:']
 # Branches distantes jamais proposées à la suppression, même contenues dans la
 # branche par défaut (celles d'un autre agent, par exemple).
 keep_branches = []
+# Le nom de l'humain, qui signe les réponses que l'agent relaie (`--by` par
+# défaut) ; l'installeur le prend dans git.
+# name = "Prénom"
 # Les lignes qu'un récap de fin d'intervention doit contenir ; le hook Stop
 # les cherche dans le dernier message de l'agent (par défaut « Pour toi : »
 # et « Ensuite : »).

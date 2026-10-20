@@ -1269,8 +1269,12 @@ MESSAGES: dict[str, str] = {
         "(empty)",
     "demande introuvable : {demande}":
         "request not found: {demande}",
-    "refus : une réponse relayée nomme l'humain qui l'a donnée (--by)":
-        "refused: a relayed answer names the human who gave it (--by)",
+    "refus : une réponse relayée nomme l'humain qui l'a donnée (--by), à moins que la politique ne le nomme "
+    "(`[human] name`)":
+        "refused: a relayed answer names the human who gave it (--by), unless the policy names them "
+        "(`[human] name`)",
+    "note : --by « {by} » n'est pas le nom que la politique donne à l'humain (« {nom} »)":
+        "note: --by “{by}” is not the name the policy gives the human (“{nom}”)",
     "répondre sans --relayed":
         "answer without --relayed",
     "refus : {id} n'a pas pu être lue par l'humain — {pourquoi}. Une réponse ne se relaie qu'à une demande qu'il a "

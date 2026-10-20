@@ -349,12 +349,13 @@ def cmd_relu(args) -> int:
     if not args.relayed and hooks.sous_un_agent(trad("dire relu sans --relayed")):
         return 2
     citation = Path(args.quote_file).read_text(encoding="utf-8") if args.quote_file else (args.quote or "")
-    if args.relayed and (not args.by or len(citation.strip()) < 2):
+    par = _signataire(projet, args)
+    if args.relayed and (not par or len(citation.strip()) < 2):
         print(trad("refus : une relecture relayée nomme l'humain (--by) et cite son texte exact (--quote-file)"),
               file=sys.stderr)
         return 2
     sha = outils.git(projet.racine, "rev-parse", args.rev).strip()
-    prive.noter_relecture(projet.racine, sha, args.by or _auteur(projet),
+    prive.noter_relecture(projet.racine, sha, par,
                           "conversation" if args.relayed else "terminal", citation)
     print(trad("relu : {sha} peut partir vers le dépôt public", sha=sha[:10]))
     return 0
@@ -401,8 +402,9 @@ def cmd_answer(args) -> int:
     citation = args.quote or ""
     if args.quote_file:
         citation = Path(args.quote_file).read_text(encoding="utf-8")
-    if args.relayed and not args.by:
-        print(trad("refus : une réponse relayée nomme l'humain qui l'a donnée (--by)"), file=sys.stderr)
+    par = _signataire(projet, args)
+    if args.relayed and not par:
+        print(trad(REFUS_SANS_NOM), file=sys.stderr)
         return 2
     if not args.relayed and hooks.sous_un_agent(trad("répondre sans --relayed")):
         return 2
@@ -418,7 +420,7 @@ def cmd_answer(args) -> int:
         print(d.texte)
         print("\n" + "=" * 72)
     try:
-        chemin = demandes.ecrire_reponse(projet.racine, d, args.answer, args.text or "", args.by or _auteur(projet),
+        chemin = demandes.ecrire_reponse(projet.racine, d, args.answer, args.text or "", par,
                                          date.today().isoformat(),
                                          canal="conversation" if args.relayed else "terminal", citation=citation)
     except ValueError as e:
@@ -441,8 +443,9 @@ def cmd_decision(args) -> int:
     citation = args.quote or ""
     if args.quote_file:
         citation = Path(args.quote_file).read_text(encoding="utf-8")
-    if args.relayed and not args.by:
-        print(trad("refus : une réponse relayée nomme l'humain qui l'a donnée (--by)"), file=sys.stderr)
+    par = _signataire(projet, args)
+    if args.relayed and not par:
+        print(trad(REFUS_SANS_NOM), file=sys.stderr)
         return 2
     if not args.relayed and hooks.sous_un_agent(trad("consigner une décision sans --relayed")):
         return 2
@@ -458,7 +461,7 @@ def cmd_decision(args) -> int:
     question = Path(args.question_file).read_text(encoding="utf-8") if args.question_file else ""
     try:
         chemin, reponse = demandes.ecrire_seance(projet, args.question, question, args.answer,
-                                                 args.by or _auteur(projet), date.today().isoformat(),
+                                                 par, date.today().isoformat(),
                                                  "conversation" if args.relayed else "terminal", citation, sujet)
     except ValueError as e:
         print(trad("refus : {erreur}", erreur=e), file=sys.stderr)
@@ -491,7 +494,24 @@ def fichiers_a_approuver(projet) -> list[str]:
 
 
 def _auteur(projet) -> str:
-    return outils.git(projet.racine, "config", "user.name", check=False).strip() or "humain"
+    """L'humain : son nom dans la politique (B-0073), sinon celui de git."""
+    return (str(projet.pol("human", "name", defaut="") or "").strip()
+            or outils.git(projet.racine, "config", "user.name", check=False).strip() or "humain")
+
+
+def _signataire(projet, args) -> str | None:
+    """Qui signe une réponse : `--by`, sinon le nom que la politique donne à
+    l'humain (B-0073). Relayée sans l'un ni l'autre, personne : l'agent ne
+    devine pas un nom. Un `--by` qui diffère de la politique est dit."""
+    nom = str(projet.pol("human", "name", defaut="") or "").strip()
+    if args.by and nom and args.by.strip() != nom:
+        print(trad("note : --by « {by} » n'est pas le nom que la politique donne à l'humain (« {nom} »)",
+                   by=args.by, nom=nom), file=sys.stderr)
+    return args.by or nom or (None if args.relayed else _auteur(projet))
+
+
+REFUS_SANS_NOM = a_traduire("refus : une réponse relayée nomme l'humain qui l'a donnée (--by), à moins que la "
+                            "politique ne le nomme (`[human] name`)")
 
 
 def cmd_approve(args) -> int:

@@ -260,3 +260,49 @@ class TestTubeFerme(unittest.TestCase):
         self.assertNotIn("Traceback", erreurs)
         self.assertNotIn("BrokenPipeError", erreurs)
         self.assertEqual(p.returncode, 0)
+
+
+class TestSignataire(unittest.TestCase):
+    """B-0073 : le nom de l'humain, dans la politique, signe ses réponses
+    relayées ; l'agent ne le devine pas."""
+
+    def projet(self, nom: str = "") -> config.Projet:
+        politique = {"human": {"name": nom}} if nom else {}
+        return config.Projet(racine=Path(tempfile.mkdtemp()), politique=politique)
+
+    def args(self, by=None, relayed=True):
+        return argparse.Namespace(by=by, relayed=relayed)
+
+    def test_politique_nom_ecrit_le_nom_de_l_humain(self):
+        from socle import installer as installeur
+        from socle.templates import gabarit
+
+        texte = installeur.politique_nom(gabarit("policy.toml", "fr"), "Théo")
+        self.assertIn('\nname = "Théo"\n', texte)
+        self.assertEqual(installeur.politique_nom(gabarit("policy.toml", "fr"), ""), gabarit("policy.toml", "fr"))
+
+    def test_le_nom_de_la_politique_signe_par_defaut(self):
+        self.assertEqual(cli._signataire(self.projet("Théo"), self.args()), "Théo")
+        self.assertEqual(cli._auteur(self.projet("Théo")), "Théo")
+
+    def test_sans_nom_ni_by_une_reponse_relayee_n_est_signee_par_personne(self):
+        self.assertIsNone(cli._signataire(self.projet(), self.args()))
+
+    def test_un_by_qui_differe_de_la_politique_est_dit(self):
+        erreurs = io.StringIO()
+        with contextlib.redirect_stderr(erreurs):
+            self.assertEqual(cli._signataire(self.projet("Théo"), self.args(by="Marie")), "Marie")
+        self.assertIn("Marie", erreurs.getvalue())
+        self.assertIn("Théo", erreurs.getvalue())
+
+    def test_l_installeur_pose_le_nom_git_de_l_humain(self):
+        from socle import installer as installeur
+
+        racine = Path(tempfile.mkdtemp(prefix="socle-nom-"))
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=racine, check=True)
+        subprocess.run(["git", "config", "user.name", "Théo Essai"], cwd=racine, check=True)
+        (racine / "calc.py").write_text("X = 1\n", encoding="utf-8")
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(racine, "python", "@essai", source=Path(__file__).resolve().parent.parent / "engine")
+        self.assertEqual(config.Projet.charger(racine).pol("human", "name"), "Théo Essai")
+        self.assertEqual(installeur.diff_politique(racine), [])

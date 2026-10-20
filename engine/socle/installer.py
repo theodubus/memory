@@ -278,6 +278,16 @@ def garde_fous_initiaux(cible: Path, texte_adaptateur: str, ch: config.Chemins =
     return texte.replace(exemple, exemple + entrees, 1)
 
 
+def politique_nom(texte: str, nom: str) -> str:
+    """La politique d'un projet neuf, avec le nom de l'humain qui l'installe
+    (B-0073) : il signe les réponses que l'agent relaie. Sans nom, la ligne
+    reste en commentaire."""
+    if not nom:
+        return texte
+    return re.sub(r'(?m)^# name = "[^"\n]*"$', lambda m: f"name = {json.dumps(nom, ensure_ascii=False)}", texte,
+                  count=1)
+
+
 def politique_langue(texte: str, lg: str) -> str:
     """La politique du gabarit, avec la langue de la mémoire choisie à
     l'installation au lieu de son exemple en commentaire (B-0031)."""
@@ -298,6 +308,8 @@ def diff_politique(cible: Path) -> list[str]:
     lg = langue.du_projet(config.Projet.charger(cible))
     gab = gabarit("policy.toml", lg)
     gab = politique_langue(gab, lg) if lg != "fr" else gab
+    # Le nom de l'humain, que l'installeur y a écrit, n'est pas un écart.
+    gab = politique_nom(gab, str(config.Projet.charger(cible).pol("human", "name", defaut="") or ""))
     projet, gab = p.read_text(encoding="utf-8").splitlines(), gab.splitlines()
     return list(difflib.unified_diff(projet, gab, trad("politique du projet"), trad("gabarit de cette version"),
                                      lineterm=""))
@@ -385,6 +397,8 @@ def _poser_configuration(cible: Path, texte_adaptateur: str, ancien: dict, prive
         politique = politique_privee(politique, prive, relecture, demandes_privees)
     if langue_memoire and not (cible / ch.politique).is_file():
         politique = politique_langue(politique, langue_memoire)
+    if neuf:
+        politique = politique_nom(politique, outils.git(cible, "config", "user.name", check=False).strip())
     # La langue de la mémoire : celle choisie ici pour un projet neuf, sinon
     # celle que sa politique dit déjà.
     lg = langue_memoire if langue_memoire and not (cible / ch.politique).is_file() else (

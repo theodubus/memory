@@ -65,6 +65,9 @@ markers = ['(?im)^co-authored-by:.*\bclaude\b', '(?im)^socle-agent:']
 # Remote branches never proposed for deletion, even when contained in the
 # default branch (another agent's, for example).
 keep_branches = []
+# The human's name, who signs the answers the agent relays (`--by` by
+# default); the installer takes it from git.
+# name = "First name"
 # The lines an end-of-intervention recap must contain; the Stop hook looks for
 # them in the agent's last message (by default "For you:" and "Next:" in an
 # English memory).
