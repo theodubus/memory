@@ -61,6 +61,12 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 ## Prochaines étapes
 
-1. B-0074 fait (J-2026-10-20-E) ; en autonomie, les sujets du backlog qui
-   se font sans arbitrage (J-2026-10-20-C) ; ceux qui en demandent sont
-   listés pour Théo à l'arrêt.
+1. En autonomie (J-2026-10-20-C), faits sans arbitrage : B-0074, B-0070,
+   B-0073, B-0054, B-0008, B-0072, B-0011. Arrêt sur arbitrage : D-0031,
+   l'adaptateur C# (B-0040), qui change deux listes de tests attendues ;
+   rien n'est écrit, les mesures sont au journal (J-2026-10-20-L).
+2. Les autres sujets ouverts demandent Théo ou des données : B-0066 et
+   B-0071 (leur conception), B-0010 et B-0012 (une cible, ou des mesures
+   sur un vrai projet), B-0009 (un cas réel), B-0042 (une publication),
+   B-0006 (après elle), B-0046 (que Théo reprendra), B-0018 et B-0048 (en
+   attente de devenir bloquants).
