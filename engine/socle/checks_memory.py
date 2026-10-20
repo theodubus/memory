@@ -162,7 +162,25 @@ def _existe(ctx, chemin: str, historique: bool = False) -> bool:
     alias = config.sous_le_format(chemin, ctx.projet.chemins.format)
     if alias != chemin and _existe_tel_quel(ctx, alias):
         return True
-    return _basculee(ctx, alias) is not None or _backlog_unique(ctx, alias)
+    return _basculee(ctx, alias) is not None or _backlog_unique(ctx, alias) or _dans_une_rustine(ctx, chemin)
+
+
+RUSTINE = re.compile(r"^\+\+\+ b/(\S+)", re.M)
+
+
+def _dans_une_rustine(ctx, chemin: str) -> bool:
+    """Le chemin est un fichier qu'une rustine suivie du dépôt (`*.patch`,
+    `*.diff`) écrit, ou l'un de ses dossiers : il existe une fois la rustine
+    appliquée (B-0008, 25 cas sur le projet d'échecs)."""
+    ecrits = ctx._cache.get("rustines")
+    if ecrits is None:
+        ecrits = set()
+        for f in outils.filtrer(ctx.fichiers, ["**/*.patch", "**/*.diff"]):
+            for m in RUSTINE.finditer(ctx.lire(f) or ""):
+                parts = m.group(1).split("/")
+                ecrits |= {"/".join(parts[:i]) for i in range(1, len(parts) + 1)}
+        ctx._cache["rustines"] = ecrits
+    return chemin in ecrits
 
 
 # Les couches qui ne se réécrivent pas : ce qu'elles citent a existé quand

@@ -2284,4 +2284,6 @@ MESSAGES: dict[str, str] = {
         "!! the project already has its own state at startup ({commandes}): every session also receives the "
         "socle's, and the two overlap (branch, commits, what is the human's). To keep only one, the human removes "
         "theirs from .claude/settings.json, or leaves in it only what is the project's own",
+    "un chemin qui n'existe que dans une rustine suivie du dépôt passe la CI (B-0008)":
+        "a path that only exists in a patch tracked by the repository passes the CI (B-0008)",
 }

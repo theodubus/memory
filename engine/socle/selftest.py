@@ -1594,6 +1594,13 @@ def _temoins() -> list[tuple[str, Callable]]:
         approuver_en_seance(a, c)
         return etage_ci(a, c)
 
+    @temoin("un chemin qui n'existe que dans une rustine suivie du dépôt passe la CI (B-0008)")
+    def _(a, c):
+        (c / "attic").mkdir(exist_ok=True)
+        (c / "attic/sondes.patch").write_text("--- /dev/null\n+++ b/attic/sondes/lecteur.py\n@@ -0,0 +1 @@\n+X = 1\n")
+        ajouter(c, "docs/calc.md", "Le lecteur `attic/sondes/lecteur.py` vient de la rustine.\n")
+        return etage_ci(a, c)
+
     @temoin("un fichier protégé changé par l'humain, qui l'approuve, passe la CI")
     def _(a, c):
         ajouter(c, ".github/CODEOWNERS", "# une ligne de plus\n")
