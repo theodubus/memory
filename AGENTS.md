@@ -38,7 +38,7 @@ python3 .socle/socle ci                  # tout, dont l'auto-test
 python3 .socle/socle selftest --verbose  # les défauts injectés, un par un
 python3 bench/bench.py --agent simule    # le banc, sur un agent simulé
 python3 bench/adapters.py                # les adaptateurs, sur leurs vrais outils
-python3 .socle/socle install --target ../projet --adapter auto --owner @moi
+python3 .socle/socle install --target ../projet --adapter auto --owner @moi [--with-bmad]
 python3 .socle/socle init --brief cadrage.md --repo   # dans le projet installé
 ```
 

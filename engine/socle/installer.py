@@ -155,6 +155,42 @@ def declarer_tiers(texte: str, chemins: list[str]) -> str:
     return texte.rstrip("\n") + "\n\n[thirdparty]\n" + f"paths = {liste}\n"
 
 
+# BMAD Method, installé avec le socle en une commande (B-0074) : la version
+# éprouvée avec lui, son module de méthode, pour Claude Code.
+VERSION_BMAD = "6.12.4"
+LANGUES_BMAD = {"fr": "French", "en": "English"}
+
+
+def commande_bmad(cible: Path, lg: str, version: str = VERSION_BMAD) -> list[str]:
+    """La commande non interactive qui installe BMAD dans `cible`, dans la
+    langue du projet."""
+    langue_bmad = LANGUES_BMAD.get(lg, LANGUES_BMAD["fr"])
+    return ["npx", "-y", f"bmad-method@{version}", "install", "--directory", str(cible), "--modules", "bmm",
+            "--tools", "claude-code", "--yes", "--communication-language", langue_bmad,
+            "--document-output-language", langue_bmad]
+
+
+def installer_bmad(cible: Path, lg: str, version: str = VERSION_BMAD) -> tuple[bool, list[str]]:
+    """Installe BMAD Method avant le socle, qui le reconnaîtra ensuite : rend
+    s'il est là, et ce qu'il y a à dire. Un BMAD déjà présent est gardé ; sa
+    mise à jour revient à BMAD."""
+    if (cible / "_bmad").is_dir():
+        return True, [trad("BMAD Method déjà présent : gardé tel quel (sa mise à jour : `npx bmad-method install "
+                           "--action update`)")]
+    if shutil.which("npx") is None:
+        return False, [trad("BMAD Method s'installe par npx, introuvable ici : installer Node.js 20.12 ou plus "
+                            "récent, puis relancer")]
+    r = subprocess.run(commande_bmad(cible, lg, version), cwd=cible, capture_output=True, text=True)
+    if r.returncode != 0 or not (cible / "_bmad").is_dir():
+        return False, [trad("l'installation de BMAD Method {version} a échoué : {sortie}", version=version,
+                            sortie=(r.stdout + r.stderr).strip()[-800:])]
+    res = [trad("BMAD Method {version} installé (module de méthode, pour Claude Code)", version=version)]
+    if shutil.which("uv") is None:
+        res.append(trad("!! uv introuvable : les skills de BMAD en ont besoin pour rendre leurs workflows — "
+                        "l'installer (https://docs.astral.sh/uv/)"))
+    return True, res
+
+
 # La fin d'un workflow de BMAD, dans la personnalisation que pose le socle :
 # un agent de BMAD n'en a pas.
 FIN_BMAD = {
@@ -479,21 +515,25 @@ def _poser_etages(cible: Path, texte_adaptateur: str, dossier_moteur: str, propr
 def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bool = False,
               mode: str = config.MODE_PROJET, source: Path | None = None, prive: str | None = None,
               relecture: str | None = None, demandes_privees: bool = False, filtre: str = "git-crypt",
-              langue_memoire: str | None = None, format_memoire: int | None = None) -> int:
-    """Installe ou met à jour le socle dans `cible`. `format_memoire` : le
-    format de la mémoire, l'actuel par défaut ; un test qui porte sur un
-    format antérieur le fixe. Ses messages sont dans la langue de la mémoire
-    du projet : celle qu'il a déjà, ou celle choisie pour un projet neuf."""
+              langue_memoire: str | None = None, format_memoire: int | None = None,
+              avec_bmad: bool = False, version_bmad: str = VERSION_BMAD) -> int:
+    """Installe ou met à jour le socle dans `cible`, et BMAD Method avant lui
+    avec `avec_bmad` (B-0074). `format_memoire` : le format de la mémoire,
+    l'actuel par défaut ; un test qui porte sur un format antérieur le fixe.
+    Ses messages sont dans la langue de la mémoire du projet : celle qu'il a
+    déjà, ou celle choisie pour un projet neuf."""
     existant = (cible / config.chemins(cible).politique).is_file()
     lg = langue.du_projet(config.Projet.charger(cible)) if existant else (langue_memoire or "fr")
     with messages.dans(lg):
         return _installer(cible, adaptateur, proprietaire, adoption, mode, source, prive, relecture,
-                          demandes_privees, filtre, langue_memoire, format_memoire)
+                          demandes_privees, filtre, langue_memoire, format_memoire,
+                          version_bmad if avec_bmad else None, lg)
 
 
 def _installer(cible: Path, adaptateur: str, proprietaire: str, adoption: bool, mode: str, source: Path | None,
                prive: str | None, relecture: str | None, demandes_privees: bool, filtre: str,
-               langue_memoire: str | None, format_memoire: int | None) -> int:
+               langue_memoire: str | None, format_memoire: int | None, version_bmad: str | None = None,
+               lg_projet: str = "fr") -> int:
     from socle import migrations
 
     ch = config.FORMATS[format_memoire or migrations.FORMAT]
@@ -523,6 +563,14 @@ def _installer(cible: Path, adaptateur: str, proprietaire: str, adoption: bool, 
         return 2
     journal = [trad("adaptateur : {nom}", nom=nom_adaptateur)
                + (trad(" (détecté)") if adaptateur != nom_adaptateur else "")]
+    if version_bmad:
+        # Après la détection du langage, que les scripts Python de BMAD
+        # fausseraient ; avant le reste, qui le reconnaîtra.
+        present, dits = installer_bmad(cible, lg_projet, version_bmad)
+        if not present:
+            print(trad("refus : {refus}", refus=dits[0]), file=sys.stderr)
+            return 2
+        journal += dits
     if ancien:
         journal.append(trad("mise à jour : moteur {avant} → {version}", avant=ancien.get("version", "amont"),
                             version=VERSION))

@@ -53,12 +53,14 @@ garde en tete et on voit si ça finit par etre bloquant ».
   de 2 dollars, et sa consommation rapportée.
 - On conçoit pour une installation commune du socle et de BMAD : « Aucun
   projet n'est deja equipé du socle » (Théo, J-2026-10-19-H).
+- En autonomie sur le backlog : « tu peux travailler en autonomie sur la
+  backlog sur tous les éléments qui peuvent se faire n'importe quand et
+  pour lesquels tu n'as pas besoin d'arbitrage / Tu peux t'arrêter quand
+  tu as fini ça ou quand tu as besoin d'un arbitrage » (Théo,
+  J-2026-10-20-C) ; d'abord l'installation en une commande (B-0074).
 
 ## Prochaines étapes
 
-1. Proposer à Théo la suite, conçue pour la combinaison : les sujets qui
-   recoupent BMAD (B-0009, B-0042, B-0046, B-0054, B-0066), et ceux que le
-   mariage a ouverts (B-0071 le modèle et l'effort par tâche, B-0072 les
-   décisions d'architecture de BMAD, B-0073 le nom de l'humain).
-2. B-0065 revient à Théo, quand il aura son ordinateur : rien ne presse,
-   la CI passe avec les anciennes actions.
+1. B-0074 fait (J-2026-10-20-E) ; en autonomie, les sujets du backlog qui
+   se font sans arbitrage (J-2026-10-20-C) ; ceux qui en demandent sont
+   listés pour Théo à l'arrêt.

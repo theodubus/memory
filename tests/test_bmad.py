@@ -337,5 +337,81 @@ class TestPersonnalisation(unittest.TestCase):
                       etat.calculer(config.Projet.charger(racine), contenus=False))
 
 
+# Un npx factice : il note ses arguments, et pose ce que BMAD poserait.
+NPX_FACTICE = """#!/usr/bin/env python3
+import json, sys
+from pathlib import Path
+args = sys.argv[1:]
+cible = Path(args[args.index("--directory") + 1])
+(cible / "appel-npx.json").write_text(json.dumps(args))
+(cible / "_bmad").mkdir()
+(cible / "_bmad/config.toml").write_text("")
+skill = cible / ".claude/skills/bmad-build"
+skill.mkdir(parents=True)
+(skill / "customize.toml").write_text("[workflow]\\non_complete = ''\\n")
+"""
+
+
+class TestEnUneCommande(unittest.TestCase):
+    def avec_npx(self, echec: bool = False) -> Path:
+        dossier = Path(tempfile.mkdtemp(prefix="socle-npx-"))
+        npx = dossier / "npx"
+        npx.write_text("#!/bin/sh\nexit 3\n" if echec else NPX_FACTICE, encoding="utf-8")
+        npx.chmod(0o755)
+        return dossier
+
+    def installer(self, racine: Path, dossier_npx: Path | None, **options) -> tuple[int, str]:
+        from unittest import mock
+
+        chemin = os.environ.get("PATH", "")
+        chemin = f"{dossier_npx}:{chemin}" if dossier_npx else ":".join(
+            d for d in chemin.split(":") if not (Path(d) / "npx").exists())
+        sortie = io.StringIO()
+        with mock.patch.dict(os.environ, {"PATH": chemin}), contextlib.redirect_stdout(sortie), \
+                contextlib.redirect_stderr(sortie):
+            code = installeur.installer(racine, "python", "@essai", source=MOTEUR, avec_bmad=True, **options)
+        return code, sortie.getvalue()
+
+    def test_commande_bmad_suit_la_langue_et_la_version(self):
+        c = installeur.commande_bmad(Path("/p"), "en", "6.12.4")
+        self.assertEqual(c[:3], ["npx", "-y", "bmad-method@6.12.4"])
+        self.assertEqual(c[c.index("--communication-language") + 1], "English")
+        self.assertEqual(installeur.commande_bmad(Path("/p"), "fr")[2], f"bmad-method@{installeur.VERSION_BMAD}")
+
+    def test_une_commande_installe_bmad_puis_le_socle_qui_le_reconnait(self):
+        import json
+
+        racine = depot({"calc.py": "X = 1\n"})
+        code, sortie = self.installer(racine, self.avec_npx())
+        self.assertEqual(code, 0, sortie)
+        appel = json.loads((racine / "appel-npx.json").read_text())
+        self.assertIn("--yes", appel)
+        self.assertEqual(appel[appel.index("--document-output-language") + 1], "French")
+        self.assertIn("BMAD Method 6.12.4 installé", sortie)
+        self.assertEqual(config.Projet.charger(racine).chemins_tiers(), ["_bmad/**", "**/skills/bmad-*/**"])
+        self.assertTrue((racine / "_bmad/custom/bmad-build.toml").is_file())
+
+    def test_installer_bmad_garde_un_bmad_deja_la(self):
+        racine = depot({"calc.py": "X = 1\n", "_bmad/config.toml": ""})
+        present, dits = installeur.installer_bmad(racine, "fr")
+        self.assertTrue(present)
+        self.assertIn("déjà présent", dits[0])
+        self.assertFalse((racine / "appel-npx.json").exists())
+
+    def test_sans_npx_l_installation_s_arrete_avec_le_remede(self):
+        racine = depot({"calc.py": "X = 1\n"})
+        code, sortie = self.installer(racine, None)
+        self.assertEqual(code, 2)
+        self.assertIn("Node.js", sortie)
+        self.assertFalse((racine / ".socle").exists())
+
+    def test_un_echec_de_bmad_arrete_l_installation(self):
+        racine = depot({"calc.py": "X = 1\n"})
+        code, sortie = self.installer(racine, self.avec_npx(echec=True), version_bmad="9.9.9")
+        self.assertEqual(code, 2)
+        self.assertIn("BMAD Method 9.9.9 a échoué", sortie)
+        self.assertFalse((racine / ".socle").exists())
+
+
 if __name__ == "__main__":
     unittest.main()

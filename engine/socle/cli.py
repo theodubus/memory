@@ -586,6 +586,8 @@ def cmd_install(args) -> int:
         demandes_privees=args.private_requests,
         filtre=args.filter,
         langue_memoire=getattr(args, "language", None),
+        avec_bmad=getattr(args, "with_bmad", False),
+        version_bmad=getattr(args, "bmad_version", None) or installeur.VERSION_BMAD,
     )
 
 
@@ -854,6 +856,10 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
     s.add_argument("--language", choices=("fr", "en"),
                    help=trad("langue de la mémoire d'un projet neuf : mots-clés, gabarits et messages du moteur "
                              "(défaut : fr)"))
+    s.add_argument("--with-bmad", action="store_true",
+                   help=trad("installer d'abord BMAD Method (par npx), que le socle reconnaît ensuite"))
+    s.add_argument("--bmad-version", help=trad("la version de BMAD Method à installer (défaut : celle éprouvée avec "
+                                               "le socle)"))
     s.set_defaults(f=cmd_install)
 
     s = sp.add_parser("init", help=trad("initialiser la mémoire depuis un cadrage, rien, ou le dépôt existant"))

@@ -27,6 +27,13 @@ install, and it is the least proven), `--review lots` or
 `--adoption` (an existing project some checks fail on: they become
 warnings, and can only tighten).
 
+With BMAD Method, the planning method the socle marries (ADR-0032), one
+command installs both: `--with-bmad` first installs BMAD, at the version
+proven with the socle and in the project's language (`npx` needs Node.js
+20.12 or later, and its skills need `uv`), then the socle, which declares
+its files third-party and plugs its workflows into the memory.
+`--bmad-version <x.y.z>` picks another one.
+
 The command ends with "What now": your next steps, in order, each with its
 command. An update runs the same command again from the up-to-date clone of
 the socle.

@@ -25,6 +25,9 @@ git clone https://github.com/theodubus/memory /tmp/socle
 PYTHONPATH=/tmp/socle/engine python3 -m socle install --target . --owner @moi
 ```
 
+Avec BMAD Method, qui planifie pendant que le socle prouve et retient,
+ajouter `--with-bmad` : la même commande installe les deux.
+
 L'installation finit par « Et maintenant » : tes étapes suivantes, dans
 l'ordre, chacune avec sa commande (décrire le projet à l'agent, commiter,
 ouvrir l'agent). Ensuite, `python3 .socle/socle help` donne tes gestes :

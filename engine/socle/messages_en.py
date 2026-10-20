@@ -2259,4 +2259,19 @@ MESSAGES: dict[str, str] = {
         "!! BMAD Method: the project's own customization kept for {liste} — add by hand what the socle writes",
     "  !! {n} skill(s) de BMAD sans la personnalisation du socle ({liste}) : relancer l'installeur du socle":
         "  !! {n} BMAD skill(s) without the socle's customization ({liste}): run the socle's installer again",
+    "!! uv introuvable : les skills de BMAD en ont besoin pour rendre leurs workflows — l'installer "
+    "(https://docs.astral.sh/uv/)":
+        "!! uv not found: BMAD's skills need it to render their workflows — install it (https://docs.astral.sh/uv/)",
+    "BMAD Method déjà présent : gardé tel quel (sa mise à jour : `npx bmad-method install --action update`)":
+        "BMAD Method already present: kept as is (its update: `npx bmad-method install --action update`)",
+    "BMAD Method s'installe par npx, introuvable ici : installer Node.js 20.12 ou plus récent, puis relancer":
+        "BMAD Method installs through npx, not found here: install Node.js 20.12 or later, then run again",
+    "BMAD Method {version} installé (module de méthode, pour Claude Code)":
+        "BMAD Method {version} installed (method module, for Claude Code)",
+    "installer d'abord BMAD Method (par npx), que le socle reconnaît ensuite":
+        "install BMAD Method first (through npx), which the socle then recognises",
+    "l'installation de BMAD Method {version} a échoué : {sortie}":
+        "the installation of BMAD Method {version} failed: {sortie}",
+    "la version de BMAD Method à installer (défaut : celle éprouvée avec le socle)":
+        "the version of BMAD Method to install (default: the one proven with the socle)",
 }

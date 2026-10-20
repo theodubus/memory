@@ -28,6 +28,13 @@ anglais), `--adoption` (un projet existant
 dont des contrôles échouent : ils passent en avertissement, et ne pourront
 que durcir).
 
+Avec BMAD Method, la méthode de planification que le socle épouse
+(ADR-0032), une seule commande installe les deux : `--with-bmad` pose
+d'abord BMAD, à la version éprouvée avec le socle et dans la langue du
+projet (il faut Node.js 20.12 ou plus récent pour `npx`, et `uv` pour ses
+skills), puis le socle, qui déclare ses fichiers tiers et branche ses
+workflows sur la mémoire. `--bmad-version <x.y.z>` en choisit une autre.
+
 La commande finit par « Et maintenant » : tes étapes suivantes, dans
 l'ordre, chacune avec sa commande. Une mise à jour relance la même commande
 depuis le clone à jour du socle.

@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0065 — Passer la CI de ce dépôt aux actions qui tournent sur Node 24
 
-> statut : ouvert · origine : J-2026-10-17-B · pour : humain · lu : backlog@c100e7fc
+> statut : fait · origine : J-2026-10-17-B · pour : humain · lu : backlog@c100e7fc · ref : J-2026-10-20-D
 
 Les workflows que pose le socle passent aux actions qui tournent sur
 Node 24 (B-0062) ; la CI de ce dépôt, fichier protégé que toi seul modifies,
