@@ -225,3 +225,12 @@ que son installeur ne touche jamais, ajoute au workflow rendu des faits
 persistants (la mémoire du socle), une étape d'activation (`socle state`)
 et une étape de fin (consigner, vérifier, les deux lignes). Ce qu'un agent
 réel en fait n'est pas mesuré (B-0069).
+
+## F-0024 — Sous le mariage avec BMAD, un agent réel fait approuver sa spec, consigne l'approbation en séance mot pour mot avant de coder, et ne touche pas à l'intention figée
+
+> statut : mesuré · preuve : J-2026-10-20-B · date : 2026-10-20
+
+Une session, dans un projet jetable installé avec le mariage entier
+(ADR-0032) : le workflow de construction de BMAD mené au bout, aucun refus
+de hook, tous les contrôles verts, 4,57 dollars. Mesuré une fois ; l'entrée
+des reports au backlog n'y a pas tourné.

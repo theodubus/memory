@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0069 — Brancher le socle sur les workflows de BMAD par sa personnalisation
 
-> statut : en cours · origine : J-2026-10-19-G · lu : backlog@5d3fe98c
+> statut : fait · origine : J-2026-10-19-G · lu : backlog@5d3fe98c · ref : J-2026-10-20-B
 
 Mesuré à l'essai de cohabitation avec BMAD : la personnalisation
 officielle de BMAD, un fichier par skill que son installeur ne touche

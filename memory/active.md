@@ -5,19 +5,13 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-L'essai de cohabitation avec BMAD Method est fait (B-0067, J-2026-10-19-G).
-B-0068 est fait (ADR-0031, J-2026-10-19-I) : les fichiers d'un outil tiers,
-déclarés par l'installeur, échappent à tous les contrôles ; l'installation
-commune de BMAD et du socle passe. B-0069 est en cours : un agent réel
-éprouve la personnalisation de BMAD dans un projet jetable du dossier de
-travail de la session.
-
-Théo a validé le mariage (J-2026-10-19-J, ADR-0032) : un propriétaire par
-nature d'information, un seul registre de ses décisions en deux formats.
-Deux sessions réelles sous BMAD et le socle passent (J-2026-10-19-K,
-J-2026-10-19-L) ; B-0069 réalise le mariage, par morceaux : la
-personnalisation posée par l'installeur, les reports aspirés au backlog,
-l'état qui lit BMAD, les décisions en séance consignées.
+Le mariage du socle et de BMAD Method est fait (ADR-0032, B-0069) : le
+socle lit BMAD sans le recopier, fait entrer ses reports au backlog,
+consigne les décisions de Théo prises en séance et garde les specs
+approuvées ; l'installeur pose les chemins tiers (B-0068) et la
+personnalisation de BMAD. Une session réelle de bout en bout le confirme
+(F-0024, J-2026-10-20-B). Les projets d'essai sont dans le dossier de
+travail de la session, jetables.
 
 L'essai de la CI des adaptateurs sur GitHub est fini (F-0019, F-0020,
 F-0021) ; le dépôt d'essai ne sert plus, Théo peut le supprimer.
@@ -62,11 +56,9 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 ## Prochaines étapes
 
-1. Validé par Théo (J-2026-10-19-H) : B-0068 (les chemins tiers, déclarés
-   par l'installeur), puis B-0069 (brancher le socle sur BMAD par sa
-   personnalisation, éprouvé sur un agent réel, planification comprise).
-   Ensuite les sujets qui recoupent BMAD, conçus pour la combinaison
-   (B-0009, B-0042, B-0046, B-0054, B-0066) ; les sujets du socle seul
-   n'en dépendent pas.
+1. Proposer à Théo la suite, conçue pour la combinaison : les sujets qui
+   recoupent BMAD (B-0009, B-0042, B-0046, B-0054, B-0066), et ceux que le
+   mariage a ouverts (B-0071 le modèle et l'effort par tâche, B-0072 les
+   décisions d'architecture de BMAD, B-0073 le nom de l'humain).
 2. B-0065 revient à Théo, quand il aura son ordinateur : rien ne presse,
    la CI passe avec les anciennes actions.
