@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0034-separer-le-produit-de-l-atelier-l-utilisateur-n-in.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-10-20"
+canal = "conversation"
+citation = "Ok pour ta proposition de séparation"
+empreinte = "sha256:6a2348ec1e5ed7da3536eed2c9e8e749f9432284d9debca1b72a17d5678a6049"

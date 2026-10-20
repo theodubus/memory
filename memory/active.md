@@ -61,17 +61,17 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 ## Prochaines étapes
 
-1. La documentation (B-0046) avant le projet pilote (Théo, J-2026-10-20-Q),
-   selon le plan écrit dans B-0046 : le dépôt en trois parts (le produit,
-   sa fabrication, le socle appliqué à lui-même), le fonctionnement et les
-   principes avec des schémas, l'installation.
-2. D-0033 attend Théo : retirer le code de compatibilité et ses tests, et
-   le vocabulaire des échecs des données de tests. Validée, elle se fait
-   avant la documentation ; B-0076 (la section `[code]` de l'adaptateur de
-   ce dépôt) revient à Théo.
-3. Faits ce jour : B-0040 (C#, CI et balayage passés sur GitHub, F-0026),
-   B-0075 ; les traces des échecs retirées de ce qu'un projet reçoit.
-   Ouvert : B-0077 (les renvois du moteur à la mémoire de ce dépôt).
-4. Ensuite, le projet pilote ; puis B-0042 (le paquet pip), B-0071 et
-   B-0066. Les autres sujets ouverts attendent des données ou Théo : B-0010,
-   B-0012, B-0009, B-0006, B-0018, B-0048.
+1. D-0033 répondue `tout` (J-2026-10-20-S) : retirer le code de
+   compatibilité et ses tests, et le vocabulaire des échecs des données de
+   tests ; tout passe (`verify`, l'auto-test, la CI) avant le push.
+2. Puis soumettre à Théo, en clair, le plan de documentation de B-0046,
+   avec la séparation du produit et de l'atelier (ADR-0033, D-0034) ;
+   Théo : « il faudra aussi que la nouvelle session pense en apres de me
+   demander de valider le plan de doc ». La doc ne s'écrit qu'après sa
+   réponse.
+3. Ensuite la doc, B-0077, puis la demande de publication du paquet du
+   seul produit (B-0042). B-0079 (session reprise hors de la racine, non
+   détectée) après le retrait. B-0076 revient à Théo.
+4. Puis le projet pilote ; B-0071 et B-0066. Les autres sujets ouverts
+   attendent des données ou Théo : B-0010, B-0012, B-0009, B-0006, B-0018,
+   B-0048, B-0078.
