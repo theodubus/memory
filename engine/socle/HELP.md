@@ -28,6 +28,12 @@ anglais), `--adoption` (un projet existant
 dont des contrôles échouent : ils passent en avertissement, et ne pourront
 que durcir).
 
+Si le projet a déjà son propre état au démarrage (un hook `SessionStart`
+à lui), l'installeur le signale : chaque session en recevrait deux, qui se
+recoupent. Retire le sien de `.claude/settings.json`, ou n'y laisse que ce
+qui est propre au projet ; c'est un réglage de l'agent, que toi seul
+modifies.
+
 Avec BMAD Method, la méthode de planification que le socle épouse
 (ADR-0032), une seule commande installe les deux : `--with-bmad` pose
 d'abord BMAD, à la version éprouvée avec le socle et dans la langue du

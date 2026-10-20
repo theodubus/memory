@@ -754,7 +754,23 @@ def _settings(cible: Path) -> list[str]:
                         if not any(".socle/socle hook" in h.get("command", "") for h in b.get("hooks", []))]
         existants.extend(blocs)
     outils.ecrire(p, json.dumps(conf, ensure_ascii=False, indent=2) + "\n")
-    return [trad("hooks de Claude Code déclarés dans .claude/settings.json")]
+    res = [trad("hooks de Claude Code déclarés dans .claude/settings.json")]
+    propres = etats_du_projet(conf)
+    if propres:
+        # Mesuré à R6 (B-0054) : chaque session reçoit alors deux états, qui
+        # se recoupent.
+        res.append(trad("!! le projet a déjà son propre état au démarrage ({commandes}) : chaque session reçoit "
+                        "aussi celui du socle, et les deux se recoupent (branche, commits, ce qui revient à "
+                        "l'humain). Pour n'en garder qu'un, l'humain retire le sien de .claude/settings.json, ou "
+                        "n'y laisse que ce qui est propre au projet", commandes=", ".join(propres)))
+    return res
+
+
+def etats_du_projet(conf: dict) -> list[str]:
+    """Les commandes `SessionStart` que le projet déclare lui-même, à côté de
+    celle du socle."""
+    return [h.get("command", "") for b in (conf.get("hooks") or {}).get("SessionStart", [])
+            for h in b.get("hooks", []) if h.get("command") and ".socle/socle hook" not in h["command"]]
 
 
 def _codeowners(cible: Path, proprietaire: str) -> list[str]:

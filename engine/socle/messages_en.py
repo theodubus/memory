@@ -2278,4 +2278,10 @@ MESSAGES: dict[str, str] = {
         "the installation of BMAD Method {version} failed: {sortie}",
     "la version de BMAD Method à installer (défaut : celle éprouvée avec le socle)":
         "the version of BMAD Method to install (default: the one proven with the socle)",
+    "!! le projet a déjà son propre état au démarrage ({commandes}) : chaque session reçoit aussi celui du socle, "
+    "et les deux se recoupent (branche, commits, ce qui revient à l'humain). Pour n'en garder qu'un, l'humain retire "
+    "le sien de .claude/settings.json, ou n'y laisse que ce qui est propre au projet":
+        "!! the project already has its own state at startup ({commandes}): every session also receives the "
+        "socle's, and the two overlap (branch, commits, what is the human's). To keep only one, the human removes "
+        "theirs from .claude/settings.json, or leaves in it only what is the project's own",
 }

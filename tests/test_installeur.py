@@ -174,3 +174,34 @@ class TestRelance(unittest.TestCase):
         verrou = config.Projet.charger(self.racine).lock
         self.assertEqual(empreinte.calculer(self.racine, ".socle/engine")[0], verrou["fingerprint"])
         self.assertFalse(any(p.name == ".DS_Store" for p in empreinte.fichiers_moteur(self.racine, ".socle/engine")))
+
+
+class TestDeuxEtats(unittest.TestCase):
+    """B-0054 : un projet qui a déjà son état au démarrage le garde, et
+    l'installeur dit que chaque session en recevra deux."""
+
+    def test_l_installeur_signale_l_etat_propre_au_projet(self):
+        import contextlib
+        import io
+        import json
+        import subprocess
+        import tempfile
+
+        racine = Path(tempfile.mkdtemp(prefix="socle-etats-"))
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=racine, check=True)
+        (racine / "calc.py").write_text("X = 1\n", encoding="utf-8")
+        (racine / ".claude").mkdir()
+        (racine / ".claude/settings.json").write_text(json.dumps({"hooks": {"SessionStart": [
+            {"hooks": [{"type": "command", "command": "bash tools/etat.sh"}]}]}}), encoding="utf-8")
+        sortie = io.StringIO()
+        with contextlib.redirect_stdout(sortie):
+            installeur.installer(racine, "python", "@essai", source=MOTEUR)
+        self.assertIn("propre état au démarrage (bash tools/etat.sh)", sortie.getvalue())
+        conf = json.loads((racine / ".claude/settings.json").read_text(encoding="utf-8"))
+        self.assertEqual(installeur.etats_du_projet(conf), ["bash tools/etat.sh"])
+        self.assertTrue(any(".socle/socle hook session-start" in h["command"]
+                            for b in conf["hooks"]["SessionStart"] for h in b["hooks"]))
+
+    def test_sans_etat_propre_rien_n_est_dit(self):
+        self.assertEqual(installeur.etats_du_projet({"hooks": {"SessionStart": [
+            {"hooks": [{"type": "command", "command": "python3 .socle/socle hook session-start"}]}]}}), [])

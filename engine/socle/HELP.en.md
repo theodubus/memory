@@ -27,6 +27,12 @@ install, and it is the least proven), `--review lots` or
 `--adoption` (an existing project some checks fail on: they become
 warnings, and can only tighten).
 
+If the project already has its own state at startup (a `SessionStart`
+hook of its own), the installer reports it: every session would receive
+two, which overlap. Remove yours from `.claude/settings.json`, or leave in it
+only what is the project's own; it is an agent setting, which only you
+change.
+
 With BMAD Method, the planning method the socle marries (ADR-0032), one
 command installs both: `--with-bmad` first installs BMAD, at the version
 proven with the socle and in the project's language (`npx` needs Node.js
