@@ -107,7 +107,7 @@ Ce que le recul ajoute :
 
 | Constat | Où |
 | --- | --- |
-| La migration du format 1 au format 2 efface les fichiers de mémoire pas encore commités : `git mv -k` les saute, puis le dossier est supprimé **(v)** | `engine/socle/migrations.py` |
+| La migration du format 1 au format 2 efface les fichiers de mémoire pas encore commités : `git mv -k` les saute, puis le dossier est supprimé **(v)** | la migration des formats, retirée depuis (D-0033) |
 | L'installation relancée depuis le projet (`python3 .socle/socle install`) efface son propre moteur : la source est la destination, supprimée avant la copie **(v)** ; le message de `private install` conseille justement cette commande | `engine/socle/installer.py` |
 | Un CLAUDE.md existant est remplacé par la seule ligne d'import dès qu'un AGENTS.md existe, à chaque mise à jour | `engine/socle/installer.py` |
 | Relancer `--adoption` écrit une seconde table `[adoption]` : les garde-fous deviennent illisibles | `engine/socle/installer.py` |

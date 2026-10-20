@@ -17,23 +17,19 @@ sans entrer dans le code, `docs/socle.md`. La liste exacte des contrôles se dé
 Les trois étages appellent le même moteur : `python3 .socle/socle hook …`
 pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
 
-Ces chemins sont ceux du **format 2** de la mémoire (`ADR-0018`) : en
-anglais pour tous, quelle que soit la langue du contenu. Un projet au
-format 1 (`memory/`, `.socle/policy.toml`, `.socle/engine.lock`…, comme
-ce dépôt jusqu'à sa migration) se lit tel quel : le moteur choisit la table
-des chemins d'après le verrou, puis la politique, puis le dossier de
-mémoire. La migration renomme et traduit les chemins de la configuration et
-de la documentation, jamais la mémoire, qui est en ajout seul : un ancien
-chemin cité dans une entrée gelée reste une référence valide, et une ancre
-écrite avant le renommage aussi. En CI, la plage qui migre lit la base sous
-les noms de la tête, pour que le cliquet, l'ajout seul et les références
-comparent le même fichier sous ses deux noms.
+Ces chemins sont en anglais pour tous, quelle que soit la langue du contenu
+(`ADR-0018`). Le moteur ne lit que le format courant de la mémoire (le
+format 3, le backlog en un fichier par sujet) : aucun projet n'a été équipé
+d'une version antérieure, et le code qui les lisait est retiré (D-0033). Une
+couche gelée de la mémoire ne suit pas un renommage : un chemin qu'elle cite
+vaut s'il a existé dans l'historique du dépôt, et ses ancres ne sont pas
+vérifiées.
 
 ## Le moteur, module par module
 
 | Module | Rôle |
 | --- | --- |
-| `cli.py` | les commandes, rangées par public dans l'aide (l'humain, l'agent, les hooks et la CI) : `help`, `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `private`, `reviewed`, `answer`, `approve`, `install`, `init`, `selftest`, `fingerprint`, `mutation-verdict`, `mutation-run`, `renumber`, `archive`, `checks` ; sans commande, l'aide de l'humain ; les anciens noms français (`aide`, `prive`, `relu`, `--oui`…) restent acceptés une version, lus sous leur nom anglais par la ligne de commande comme par le hook (ADR-0027) |
+| `cli.py` | les commandes, rangées par public dans l'aide (l'humain, l'agent, les hooks et la CI) : `help`, `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `private`, `reviewed`, `answer`, `approve`, `install`, `init`, `selftest`, `fingerprint`, `mutation-verdict`, `mutation-run`, `renumber`, `archive`, `checks` ; sans commande, l'aide de l'humain |
 | `HELP.md` | le guide de l'humain, source unique : ses gestes, chacun avec sa commande ; `socle help` l'affiche |
 | `memory.py` | lecture des cinq couches : en-têtes, entrées, identifiants, métadonnées, références |
 | `requests.py` | le contrat des demandes, son lint, les réponses humaines gelées |
@@ -42,7 +38,7 @@ comparent le même fichier sous ses deux noms.
 | `checks_memory.py` | format, références (un chemin cité par une couche gelée vaut s'il a existé dans l'historique, ADR-0027), fuite d'identifiants privés (blocs de code et archives compris), preuves, backlog, budgets, péremption, retard, ajout seul (la mémoire privée relue à la base, B-0044, L3), demandes, source unique des instructions |
 | `checks_docs.py` | outillage documenté, valeurs liées, correspondance code ↔ doc, refus des copies |
 | `checks_tests.py` | capacités de l'adaptateur, tests creux, valeurs attendues, régression rejouée sur le parent, couverture de mutation, code nouveau nommé par un test (un fichier renommé se compare à son ancien nom) |
-| `checks_ratchet.py` | cliquet des garde-fous (une correspondance ou une valeur liée qui suit ses fichiers renommés n'assouplit rien, ADR-0027), fichiers protégés (un renommage compte ses deux chemins ; le déplacement d'une migration de format se juge sous le nom nouveau), empreinte du moteur, configuration et trace des hooks |
+| `checks_ratchet.py` | cliquet des garde-fous (une correspondance ou une valeur liée qui suit ses fichiers renommés n'assouplit rien, ADR-0027), fichiers protégés (un renommage compte ses deux chemins), empreinte du moteur, configuration et trace des hooks |
 | `bmad.py`, `checks_bmad.py` | ce que le socle lit de BMAD Method sans le recopier (ADR-0032) : ses dossiers, ses specs (statut, route, intention figée), ses travaux reportés, l'état de son sprint ; `bmad.reports` et `socle bmad-import`, qui fait entrer les reports au backlog ; `bmad.approbation`, qui exige l'approbation de l'humain consignée pour une spec que BMAD fait approuver ; ses décisions d'architecture (AD-n) listées dans l'état, montrées par `socle show AD-n` avec leur empreinte, et `bmad.lectures`, qui juge leurs citations (B-0072) |
 | `tests_reader.py` | extraction des fonctions de test selon l'adaptateur (blocs à accolades, indentés ou fermés par `end`) ; un en-tête de fonction écrit dans une chaîne ou un commentaire de plusieurs lignes n'en est pas un (B-0025) ; transitivité des assertions |
 | `hooks.py` | les points d'entrée des hooks de l'agent et de git, la trace, dont chaque refus et l'étage qui l'a prononcé ; chaque commande shell de l'agent jugée commande simple par commande simple : écriture d'un fichier protégé ou d'un réglage de Claude Code, commande réservée à l'humain, commit ou push qui saute les hooks du projet (`--no-verify`, B-0023), push forcé ou vers la branche par défaut, publication, suppression distante (B-0044, L2) ; un hook git retient l'index qu'il juge, puis retire de l'environnement ce qui désigne un dépôt (`GIT_DIR`…), que git lui passe depuis un worktree secondaire et dont les tests du projet hériteraient (B-0057) |
@@ -60,8 +56,7 @@ comparent le même fichier sous ses deux noms.
 | `installer.py` | installation, mise à jour, adoption ; adaptateur déduit du dépôt ; mémoire privée posée à l'installation, ou ajoutée à un projet installé ; diff de politique à la mise à jour ; le code existant entre « à mesurer » au cliquet de mutation ; un audit court, puis « Et maintenant », les étapes de l'humain avec leur commande ; ne s'installe qu'à la racine du dépôt ; relancé, il ne perd rien : le moteur reste en place s'il est lancé depuis le projet, un CLAUDE.md propre au projet passe dans AGENTS.md, une seconde adoption complète sa liste, et ce que le .gitignore du projet écarterait reçoit une exception (B-0044, L1) ; les fichiers d'un outil tiers qu'il reconnaît (BMAD Method) déclarés d'emblée, ou à la mise à jour qui le trouve, à approuver (ADR-0031) ; un état au démarrage propre au projet (son hook `SessionStart`) gardé et signalé, chaque session en recevant deux (B-0054) ; le nom de l'humain qui installe, pris dans git, posé dans la politique d'un projet neuf : il signe les réponses que l'agent relaie, qui ne devine pas un nom (B-0073) ; avec `--with-bmad`, BMAD Method installé d'abord, à la version éprouvée et dans la langue du projet, après la détection du langage que ses scripts fausseraient (B-0074) ; avec BMAD Method, sa personnalisation officielle posée pour chaque skill, dans la langue du projet : la mémoire du socle en faits persistants, son état à l'activation, la consignation des décisions en séance, sa fin de tour ; une personnalisation propre au projet est gardée (ADR-0032) ; le format de la mémoire en paramètre, l'actuel par défaut, que fixe un test qui porte sur un format antérieur, et la ligne du backlog des instructions et son plafond qui le suivent (ADR-0025) |
 | `language.py` | la langue de la mémoire : le vocabulaire du format par langue, ramené à des clés internes à la lecture, et celui du projet à l'écriture |
 | `messages.py`, `messages_en.py` | les messages du moteur dans la langue de la mémoire du projet : un message s'écrit en français dans le code, enveloppé par `trad`, et ce texte est la clé du catalogue anglais ; la ligne de commande pose la langue avant même d'analyser la commande, l'installeur et `socle init` la leur ; `socle checks` traduit la première phrase de chaque contrôle, `socle help` lit `HELP.en.md` ; `tests/test_messages.py` exige qu'aucun message enveloppé ne manque au catalogue, et refuse un message en prose écrit en dur là où le moteur en émet (ADR-0028) ; le catalogue traduit aussi, à l'affichage, les textes des adaptateurs maintenus, les noms de leurs étapes de CI, les descriptions de l'auto-test et le statut d'une demande, et l'installeur, le message du lanceur ; le marqueur d'une valeur liée et la raison d'un plafond mesuré se lisent dans les deux langues (B-0059) |
-| `config.py` | la configuration du projet et les deux tables de chemins (formats 1 et 2), choisie par projet et par révision |
-| `migrations.py` | les migrations de format, appliquées dans l'ordre à la mise à jour ; du format 1 au 2, le renommage des chemins |
+| `config.py` | la configuration du projet et la table de ses chemins |
 | `initialization.py` | les trois entrées d'initialisation : document archivé tel quel, audit du dépôt en lecture seule, questions de départ |
 | `selftest.py` | l'injection de défauts dans un projet jetable : chaque contrôle du registre et chaque refus reconnu en ont au moins un (un test l'exige, ou une exemption écrite), une mutation factice exerce le cliquet de mutation, et des témoins vérifient qu'un changement validé par l'humain passe (B-0044, L4) ; un sujet s'y ajoute dans l'un ou l'autre format du backlog (ADR-0025) |
 | `adapters/` | Rust (extrait de chess), Python sous `unittest`, Python sous `pytest` avec `mutmut` (jalon 6), JavaScript et TypeScript, Go, Java, Ruby et PHP (B-0030), C# (B-0040), éprouvés par `bench/adapters.py`, maintenus ; ce qu'est un adaptateur : `engine/socle/adapters/README.md` |
@@ -77,7 +72,7 @@ comparent le même fichier sous ses deux noms.
 | Backlog : origine, clôture avec référence | `memoire.backlog` | agent, git, CI |
 | Budgets de taille | `memoire.budgets` | agent, git, CI |
 | Péremption de l'actif (avertissement) | `memoire.peremption` | agent, git, CI |
-| Journal et décisions en ajout seul (une citation d'une décision comprise, un ajout au journal sur une ligne nouvelle) ; fait jamais effacé ; une validation se reconnaît à son identifiant, migration comprise | `memoire.ajout-seul` | agent, git, CI |
+| Journal et décisions en ajout seul (une citation d'une décision comprise, un ajout au journal sur une ligne nouvelle) ; fait jamais effacé ; une validation se reconnaît à son identifiant, déplacement compris | `memoire.ajout-seul` | agent, git, CI |
 | Mémoire en retard sur le code : fin de tour refusée | `memoire.retard` | agent |
 | Le privé ne fuit pas dans le public (identifiants) | `memoire.prive` | agent, git, CI |
 | Mémoire privée en dépôt compagnon : rien de privé dans le dépôt public, verrou à jour | `prive.verrou`, `socle private lock`, `socle private extract` | agent, git, CI |
@@ -93,7 +88,7 @@ comparent le même fichier sous ses deux noms.
 | Contrat des demandes : huit champs (les sept du cadrage et « Où regarder », avec un lien vers chaque document à lire), contexte d'au moins soixante mots, aucun identifiant nu | `demandes.contrat`, hook `pre-tool-use` | agent, git, CI |
 | Décision archivée avec le texte exact | `demandes.reponses` (empreinte de la demande) | agent, git, CI |
 | Un identifiant ne se définit qu'une fois, même entre deux branches : `socle new` saute ceux des branches distantes ; celui que la branche par défaut a pris aussi depuis la divergence est dit avant la fusion, et se renumérote (ADR-0026) | `socle new`, `memoire.collisions`, `socle renumber` | agent, git, CI |
-| Le backlog en un fichier par sujet (format 3), un plafond par sujet, rien d'archivé au journal ; un lien vers l'ancre d'un sujet dans l'ancien fichier unique reste valide ; une action humaine donnée avec le lien de son sujet (ADR-0025) ; les sujets clos rangés à l'écart des ouverts, dans le sous-dossier `closed`, par `socle archive`, la migration et la mise à jour (ADR-0030) | `memoire.format`, `memoire.budgets`, `memoire.references`, `memoire.backlog`, la migration 2 → 3, l'état | agent, git, CI |
+| Le backlog en un fichier par sujet, un plafond par sujet, rien d'archivé au journal ; une action humaine donnée avec le lien de son sujet (ADR-0025) ; les sujets clos rangés à l'écart des ouverts, dans le sous-dossier `closed`, par `socle archive` et la mise à jour (ADR-0030) | `memoire.format`, `memoire.budgets`, `memoire.references`, `memoire.backlog`, l'état | agent, git, CI |
 | `AGENTS.md` fait foi, `CLAUDE.md` l'importe ; ou, sans `AGENTS.md`, `CLAUDE.md` que l'installeur a gardé parce que le projet le nomme, et qui porte la section du socle (B-0049) | `instructions.source-unique` | agent, git, CI |
 | Valeurs dupliquées liées à leur source ; `3,5` vaut `3.5`, pas `35` | `docs.valeurs` | agent, git, CI |
 | Outillage documenté | `docs.outillage` | agent, git, CI |
@@ -122,7 +117,7 @@ comparent le même fichier sous ses deux noms.
 | Des liens que l'humain peut suivre : permaliens au commit poussé, aucun lien relatif ni chemin inexistant, chaque demande en attente avec son lien | `links.py`, `socle url`, hook `stop` | agent |
 | Lire avant de décider, prouvé par l'empreinte de la version lue | `memoire.lectures` ; hook `pre-tool-use` (empreinte périmée ou inventée) ; `socle show`, `socle new` | agent, git, CI |
 | Installation en une commande, adaptateur déduit du dépôt, mémoire privée et langue de la mémoire choisies à l'installation ; les workflows de CI dans cette langue, noms des étapes des adaptateurs compris, et le nom du travail déjà en place gardé à la mise à jour, puisqu'une protection de branche l'exige (B-0059) | `socle install --adapter auto [--private …] [--language en]`, gabarits `*.en.yml` | — |
-| Mise à jour : moteur remplacé, formats migrés, diff de politique montré pour validation humaine | `socle install` relancé, `migrations.py` ; en CI, base lue sous les noms de la tête | — |
+| Mise à jour : moteur remplacé, diff de politique montré pour validation humaine | `socle install` relancé | — |
 | Initialisation depuis un cadrage, rien, un dépôt existant, ou les deux : rien d'inventé, questions plafonnées avec leurs défauts | `socle init`, demande de départ au contrat, `memoire.preuves` | agent, git, CI |
 | Auto-tests par injection de défauts | `socle selftest`, dans `socle ci` | CI |
 
@@ -217,9 +212,7 @@ comparent le même fichier sous ses deux noms.
   sans réécrire les entrées gelées, et la copie privée qui cite
   `depuis : <ID>` prouve que rien n'est effacé. L'historique public garde
   l'ancien texte ; le réécrire revient à l'humain.
-- **Les chemins d'un projet sont en anglais** (`ADR-0018`), au format 2 de
-  la mémoire ; le format 1 reste lu, et la migration ne réécrit pas la
-  mémoire.
+- **Les chemins d'un projet sont en anglais** (`ADR-0018`).
 - **La mémoire s'écrit dans la langue du projet et se lit dans toutes**
   (`ADR-0020`) : le moteur ramène chaque mot-clé à une clé interne, et une
   mémoire existante n'a rien à réécrire. Les messages du moteur et les
@@ -228,8 +221,7 @@ comparent le même fichier sous ses deux noms.
   français ne voit rien changer.
 - **Ce qu'on tape et ce qu'on voit dans l'arborescence est en anglais, le
   code se lit en français** (`ADR-0027`) : commandes, options, dossiers,
-  modules et gabarits portent des noms anglais, les anciens noms de
-  commandes et d'options restent acceptés une version, un module s'importe
+  modules et gabarits portent des noms anglais, un module s'importe
   sous son nom français ; les noms des tests et de la documentation ne
   changent pas, et la mémoire gelée garde les chemins d'avant.
 - **Une tautologie voulue passe avec sa raison écrite** (`socle: voulu —`),

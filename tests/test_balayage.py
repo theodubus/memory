@@ -356,7 +356,7 @@ class TestInstallation(unittest.TestCase):
         self.assertNotIn("@@", agents)
 
     def test_un_projet_qui_balaie_deja_n_en_recoit_pas_un_second(self):
-        # Le cas du projet d'échecs : son propre workflow lance cargo-mutants.
+        # Un projet Rust dont le propre workflow lance cargo-mutants.
         self.racine = depot({"Cargo.toml": "[package]\nname = \"calc\"\n", "src/lib.rs": "pub fn f() {}\n",
                              ".github/workflows/mutation.yml": "jobs:\n  m:\n    steps:\n      - run: cargo mutants\n"})
         journal = installer(self.racine, "rust")

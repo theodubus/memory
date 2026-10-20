@@ -4,6 +4,10 @@ sont les mêmes des deux côtés ; `tests/test_messages.py` le vérifie, et
 qu'aucun message enveloppé n'y manque."""
 
 MESSAGES: dict[str, str] = {
+    "sujet `{ident}` disparu du backlog : un sujet clos se range par `socle archive`, il ne s'efface pas":
+        "topic `{ident}` gone from the backlog: a closed topic is filed by `socle archive`, it is not erased",
+    "range les sujets clos du backlog à l'écart des ouverts":
+        "files the closed backlog topics apart from the open ones",
     "\n!! hooks git non branchés : `git config core.hooksPath .socle/git-hooks`":
         "\n!! git hooks not wired: `git config core.hooksPath .socle/git-hooks`",
     "SHA fabriqué : {sha} n'est pas un objet de ce dépôt, alors que son préfixe {prefixe} en est un. Le SHA complet "
@@ -667,10 +671,6 @@ MESSAGES: dict[str, str] = {
         "fact `{ident}` changed without a new proof reference",
     "fait `{ident}` réfuté : son texte se garde, barré ; il ne se réécrit pas":
         "fact `{ident}` refuted: its text is kept, struck through; it is not rewritten",
-    "sujet `{ident}` disparu du backlog sans archive dans le journal":
-        "topic `{ident}` gone from the backlog without an archive in the journal",
-    "sujet `{ident}` archivé sans être clos":
-        "topic `{ident}` archived without being closed",
     "demande `{ident}` supprimée (la retirer : `retirée : <raison>` dans ses métadonnées)":
         "request `{ident}` deleted (to withdraw it: `withdrawn : <reason>` in its metadata)",
     "`{id}` basculée : sa copie privée ne se lit pas ici":
@@ -715,8 +715,6 @@ MESSAGES: dict[str, str] = {
         "change once approved",
     "installation du socle : {n} fichier(s) protégé(s) posé(s) — la politique par défaut est celle du cadrage":
         "socle installation: {n} protected file(s) installed — the default policy is the brief's",
-    "déplacé vers `{nouveau}` par la migration du format":
-        "moved to `{nouveau}` by the format migration",
     "modification validée par {id}":
         "change approved by {id}",
     "fichier protégé modifié sans validation humaine. Une demande validée doit citer `{fichier}` et `{cite}`":
@@ -1196,8 +1194,6 @@ MESSAGES: dict[str, str] = {
         "decisions, index decisions@{empreinte} (one in full: `python3 .socle/socle show ADR-NNNN`):",
     "backlog  : {ouverts} ouvert(s), {en_cours} en cours, {bloques} bloqué(s), {clos} clos":
         "backlog  : {ouverts} open, {en_cours} in progress, {bloques} blocked, {clos} closed",
-    " à archiver":
-        " to archive",
     "en cours":
         "in progress",
     "bloqué":
@@ -1431,9 +1427,6 @@ MESSAGES: dict[str, str] = {
         "runs the adapter's mutation sweep, then its verdict",
     "donne le prochain identifiant libre à une entrée qu'une autre branche a prise aussi":
         "gives the next free identifier to an entry another branch also took",
-    "range les sujets clos du backlog à l'écart des ouverts (au format 2 : les archive dans le journal)":
-        "files the closed topics of the backlog apart from the open ones (in format 2: archives them in the "
-        "journal)",
     "liste des contrôles":
         "list of the checks",
     "socle {version} — mémoire, documentation et tests fiables\n":
@@ -1610,12 +1603,6 @@ MESSAGES: dict[str, str] = {
         "# It is about the exact text of {demande}, whose fingerprint follows.\n",
     "la version poussée diffère de la version locale":
         "the pushed version differs from the local version",
-    "pas de backlog":
-        "no backlog",
-    "aucun sujet clos à archiver":
-        "no closed topic to archive",
-    "{n} sujet(s) archivé(s) dans {ident} ({journal})":
-        "{n} topic(s) archived in {ident} ({journal})",
     "TOML illisible : {erreur}":
         "unreadable TOML: {erreur}",
     "aucune révision de base : contrôle non exécuté":
@@ -1632,28 +1619,6 @@ MESSAGES: dict[str, str] = {
         "carried over in {n} file(s): {liste}",
     "un identifiant de journal exige une date":
         "a journal identifier requires a date",
-    "migration arrêtée : {vers} existe déjà, {de} n'y est pas déplacé — fusionner les deux à la main, puis relancer":
-        "migration stopped: {vers} already exists, {de} is not moved there — merge the two by hand, then run again",
-    "le dépôt privé, cloné dans memory/private/ : ses fichiers sont renommés, à commiter dans le dépôt privé, puis "
-    "`socle private lock`":
-        "the private repository, cloned in memory/private/: its files are renamed, to commit in the private "
-        "repository, then `socle private lock`",
-    "migration arrêtée : des fichiers restent dans memoire/ — {restes}":
-        "migration stopped: files remain in memoire/ — {restes}",
-    "chemins traduits dans {n} fichier(s) : {liste}":
-        "paths translated in {n} file(s): {liste}",
-    "migration arrêtée : {unique} est chiffré ici ; le déchiffrer, puis relancer":
-        "migration stopped: {unique} is encrypted here; decrypt it, then run again",
-    "{unique} → {dossier}/ : {n} sujet(s), un fichier chacun":
-        "{unique} → {dossier}/: {n} topic(s), one file each",
-    "plafond du backlog : {budget} octets par sujet":
-        "backlog cap: {budget} bytes per topic",
-    "aucune migration du format {avant} au format {apres} : mise à jour arrêtée":
-        "no migration from format {avant} to format {apres}: update stopped",
-    "format {avant} → {apres} : {ligne}":
-        "format {avant} → {apres}: {ligne}",
-    "format {avant} → {apres}":
-        "format {avant} → {apres}",
     "aucune mémoire privée dans la politique (`[private] mode`) : rien où basculer":
         "no private memory in the policy (`[private] mode`): nowhere to move to",
     "`{ident}` est déjà privée":

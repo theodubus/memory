@@ -17,7 +17,7 @@ def git(cwd, *args):
 
 
 class TestBranchesASupprimer(unittest.TestCase):
-    """Le cas de `chess:tools/etat-test.sh`, généralisé : une ligne qui se tait
+    """Un cas réel, généralisé : une ligne qui se tait
     presque toujours s'éprouve sur des dépôts fabriqués."""
 
     def setUp(self):

@@ -7,31 +7,31 @@ from socle import config, requests as demandes
 MODELE = (Path(__file__).resolve().parent.parent / "engine/socle/templates/request.md").read_text(encoding="utf-8")
 
 CONFORME = """<!-- socle: couche=demandes zone=publique -->
-# D-0004 — Faut-il relever le plafond de mutants de search.rs de 3 à 5 ?
+# D-0004 — Faut-il relever le plafond de mutants de parser.rs de 3 à 5 ?
 
 > date : 2026-10-10
 
 ## Décision demandée
 
-Relever le plafond de mutants survivants de search.rs de 3 à 5.
+Relever le plafond de mutants survivants de parser.rs de 3 à 5.
 
 ## Contexte
 
 Le balayage hebdomadaire signale deux survivants nouveaux depuis le commit cité.
 Un survivant est une modification du code que tous les tests acceptent : ici,
-deux changements de la marge d'élagage de la recherche, qui ne modifient aucun
-coup sur les positions des tests mais pourraient changer la force de jeu. Le
+deux changements du seuil de tolérance de l'analyseur, qui ne modifient aucun
+résultat sur les fichiers des tests mais pourraient changer ses performances. Le
 plafond actuel de trois survivants pour ce fichier a été mesuré le mois dernier
 et il casse désormais, ce qui bloque la CI hebdomadaire jusqu'à décision.
 
 ## Où regarder
 
-- Le journal du balayage : [le verdict](https://exemple.org/verdict), section « survivants de search.rs ».
+- Le journal du balayage : [le verdict](https://exemple.org/verdict), section « survivants de parser.rs ».
 
 ## Éléments cités
 
-- 3f2a9c1 — le commit qui a introduit la marge d'élagage où vivent les deux mutants.
-- B-0012 — le sujet du backlog qui demande de mesurer cette marge par un match.
+- 3f2a9c1 — le commit qui a introduit le seuil de tolérance où vivent les deux mutants.
+- B-0012 — le sujet du backlog qui demande de mesurer ce seuil par un banc.
 
 ## Options
 
@@ -43,7 +43,7 @@ Si tu valides, le plafond passe à 5. Si tu refuses, j'écris les tests. Sans r�
 
 ## Recommandation
 
-Refuser. Vérifié : les deux mutants changent un seuil d'élagage. Supposé : qu'aucun test unitaire ne les tue sans match.
+Refuser. Vérifié : les deux mutants changent un seuil de tolérance. Supposé : qu'aucun test unitaire ne les tue sans banc.
 
 ## Réponses possibles
 
@@ -73,7 +73,7 @@ class TestContrat(unittest.TestCase):
         self.assertIn("B-0007", fautes[0])
 
     def test_description_trop_courte_refusee(self):
-        texte = CONFORME.replace("- B-0012 — le sujet du backlog qui demande de mesurer cette marge par un match.", "- B-0012 — voir backlog")
+        texte = CONFORME.replace("- B-0012 — le sujet du backlog qui demande de mesurer ce seuil par un banc.", "- B-0012 — voir backlog")
         self.assertTrue(any("B-0012" in f for f in demandes.linter(_demande(texte), self.projet)))
 
     def test_motif_du_projet(self):

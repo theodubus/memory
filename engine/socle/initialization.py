@@ -44,7 +44,7 @@ def archiver_cadrage(racine: Path, document: Path, prive: bool = False) -> tuple
     l'archive, et le même document se retrouve tel quel (B-0044, L1). Avec
     une mémoire privée, il s'archive dans sa zone : c'est de lui que viennent
     les termes privés (B-0044, L3)."""
-    ch = config.chemins(racine)
+    ch = config.FORMAT_ACTUEL
     dossier = racine / (ch.dans_prive(ch.archives) if prive else ch.archives)
     dossier.mkdir(parents=True, exist_ok=True)
     nom = re.sub(r"\s+", "-", document.name.strip())

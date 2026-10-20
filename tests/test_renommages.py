@@ -1,16 +1,15 @@
 """ADR-0027 (B-0045) : les noms de fichiers et les commandes du socle passent
-en anglais. Les anciens noms de commandes et d'options restent acceptés, et
-la mémoire qui ne se réécrit pas garde les chemins d'avant le renommage."""
+en anglais, et la mémoire qui ne se réécrit pas garde les chemins d'avant le
+renommage."""
 
 import contextlib
 import io
-import os
 import shutil
 import tempfile
 import unittest
 from pathlib import Path
 
-from socle import cli, commands as commandes, config, context as contexte, checks_memory as controles_memoire, hooks
+from socle import cli, config, context as contexte, checks_memory as controles_memoire, hooks
 from socle import utils as outils
 from socle.checks_ratchet import assouplissements
 from tests.test_bascule import Projet, git
@@ -121,41 +120,12 @@ class TestCliquetRenomme(unittest.TestCase):
                          ['values "n"'])
 
 
-class TestMoteurParUnLien(unittest.TestCase):
-    def test_le_dossier_du_moteur_se_lit_a_sa_cible(self):
-        racine = Path(tempfile.mkdtemp(prefix="socle-lien-"))
-        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
-        (racine / "engine/socle").mkdir(parents=True)
-        os.symlink("engine", racine / "moteur")
-        projet = config.Projet(racine=racine, lock={"engine_dir": "moteur"})
-        self.assertEqual(projet.dossier_moteur, "engine")
-        self.assertEqual(config.Projet(racine=racine, lock={"engine_dir": "engine"}).dossier_moteur, "engine")
-
-
-class TestAnciensNoms(unittest.TestCase):
-    def test_la_commande_son_action_et_ses_options_sous_leur_nom_anglais(self):
-        self.assertEqual(commandes.noms_anglais(["--root", "x", "prive", "basculer", "B-0001"]),
-                         ["--root", "x", "private", "move", "B-0001"])
-        self.assertEqual(commandes.noms_anglais(["approve", "--text", "t", "--oui"]), ["approve", "--text", "t", "--yes"])
-        self.assertEqual(commandes.noms_anglais(["init", "--cadrage=c.md", "--depot"]), ["init", "--brief=c.md", "--repo"])
-        # Le terme à ajouter n'est pas une action, ce qui suit `--` n'est pas
-        # une option, et un nom anglais reste tel quel.
-        self.assertEqual(commandes.noms_anglais(["prive", "terme", "etat"]), ["private", "term", "etat"])
-        self.assertEqual(commandes.noms_anglais(["new", "fact", "--", "--oui"]), ["new", "fact", "--", "--oui"])
-        self.assertEqual(commandes.noms_anglais(["reviewed", "--by", "x"]), ["reviewed", "--by", "x"])
-
-    def test_une_commande_de_l_humain_l_est_sous_ses_deux_noms(self):
-        for commande in ("python3 .socle/socle private install --repo x", "python3 .socle/socle prive installer --depot x"):
-            self.assertEqual(hooks.INSTALLER_PRIVE.search(commande).group(0), "private install", commande)
-        for commande in ("python3 .socle/socle reviewed --by x", "python3 .socle/socle relu --by x"):
-            self.assertEqual(hooks.COMMANDES_HUMAINES.search(commande).group(0), "reviewed", commande)
+class TestCommandesHumaines(unittest.TestCase):
+    def test_une_commande_de_l_humain_se_reconnait_sous_son_nom(self):
+        self.assertEqual(hooks.INSTALLER_PRIVE.search("python3 .socle/socle private install --repo x").group(0),
+                         "private install")
+        self.assertEqual(hooks.COMMANDES_HUMAINES.search("python3 .socle/socle reviewed --by x").group(0), "reviewed")
         self.assertIsNone(hooks.INSTALLER_PRIVE.search("python3 .socle/socle private lock"))
-
-    def test_le_guide_sous_ses_deux_noms(self):
-        for nom in ("help", "aide"):
-            with contextlib.redirect_stdout(io.StringIO()) as sortie:
-                self.assertEqual(cli.main([nom]), 0)
-            self.assertIn("socle help", sortie.getvalue(), nom)
 
 
 class TestCouchesGelees(Projet):
@@ -194,6 +164,33 @@ class TestCouchesGelees(Projet):
         self.assertIsNotNone(controles_memoire.verifier_ref(ctx, "fichier", "scripts/vieux.py"))
         self.assertIsNone(controles_memoire.verifier_ref(ctx, "fichier", "scripts/vieux.py", historique=True))
         self.assertIsNotNone(controles_memoire.verifier_ref(ctx, "fichier", "scripts/jamais.py", historique=True))
+
+    def test_un_lien_relatif_se_lit_depuis_l_ancien_nom_de_son_fichier(self):
+        # Écrite ailleurs, la décision a rejoint la mémoire : son lien
+        # relatif menait à `scripts/autre.py` depuis son ancien dossier.
+        (self.racine / "notes").mkdir()
+        (self.racine / "notes/ADR-0002-ancienne.md").write_text(
+            "<!-- socle: couche=decisions zone=publique -->\n# ADR-0002 — Ancienne\n\n"
+            "> statut : acceptée · date : 2026-10-11\n\nVoir [l'outil](../scripts/autre.py).\n")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "une note", "--no-verify")
+        git(self.racine, "mv", "notes/ADR-0002-ancienne.md", "memory/decisions/ADR-0002-ancienne.md")
+        git(self.racine, "commit", "-qm", "dans la mémoire", "--no-verify")
+        self.base = git(self.racine, "rev-parse", "HEAD").strip()
+        self.assertEqual(self.erreurs(), [])
+        # Le même lien, dans un fichier qui n'a jamais eu d'autre nom, est mort.
+        (self.racine / "memory/decisions/ADR-0003-neuve.md").write_text(
+            "<!-- socle: couche=decisions zone=publique -->\n# ADR-0003 — Neuve\n\n"
+            "> statut : acceptée · date : 2026-10-11\n\nVoir [l'outil](../scripts/autre.py).\n")
+        self.assertIn("lien mort : ../scripts/autre.py", self.erreurs())
+
+    def test_le_contexte_lit_la_base(self):
+        git(self.racine, "mv", "scripts/old.py", "scripts/neuf.py")
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="agent", base=self.base)
+        self.assertIn("scripts/old.py", ctx.fichiers_base)
+        self.assertNotIn("scripts/neuf.py", ctx.fichiers_base)
+        self.assertEqual(ctx.lire_base("scripts/old.py"), "x = 1\n")
+        self.assertIsNone(ctx.lire_base("scripts/neuf.py"))
 
     def test_le_chantier_actif_suit_le_renommage(self):
         # Le chantier actif se réécrit : il cite le nom d'aujourd'hui.

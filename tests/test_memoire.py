@@ -1,18 +1,18 @@
 import unittest
 from pathlib import Path
 
-from socle import memory as memoire, utils as outils
+from socle import config, memory as memoire, requests as demandes, utils as outils
 
 CANONIQUE = """<!-- socle: couche=canonique zone=publique -->
 # Mémoire canonique
 
-## F-0001 — Le bench explore 70 452 nœuds
+## F-0001 — Le traitement par lots lit 70 452 lignes
 
-> statut : mesuré · preuve : cmd:`cargo run -- bench 7, profondeur 7` · date : 2026-10-10
+> statut : mesuré · preuve : cmd:`cargo run -- lots 7, taille 7` · date : 2026-10-10
 
 Mesuré sur le binaire de base.
 
-## F-0002 — ~~Le copy-make coûte 20 %~~
+## F-0002 — ~~La copie des tampons coûte 20 %~~
 
 > statut : Réfuté
 > Réfutation : F-0001
@@ -27,19 +27,19 @@ Corps conservé.
 
 class TestAnalyse(unittest.TestCase):
     def test_entete_et_entrees(self):
-        f = memoire.analyser("memoire/canonique.md", CANONIQUE)
+        f = memoire.analyser("memory/canonical.md", CANONIQUE)
         self.assertEqual((f.couche, f.zone), ("canonique", "publique"))
         self.assertEqual([e.id for e in f.entrees], ["F-0001", "F-0002"])
 
     def test_metadonnees_et_commande_avec_virgule(self):
-        e = memoire.analyser("memoire/canonique.md", CANONIQUE).entrees[0]
+        e = memoire.analyser("memory/canonical.md", CANONIQUE).entrees[0]
         self.assertEqual(e.statut, "mesure")
-        self.assertEqual(e.refs("preuve"), [("cmd", "cargo run -- bench 7, profondeur 7")])
+        self.assertEqual(e.refs("preuve"), [("cmd", "cargo run -- lots 7, taille 7")])
 
     def test_fait_barre_et_meta_sur_deux_lignes(self):
-        e = memoire.analyser("memoire/canonique.md", CANONIQUE).entrees[1]
+        e = memoire.analyser("memory/canonical.md", CANONIQUE).entrees[1]
         self.assertTrue(e.barre)
-        self.assertEqual(e.titre, "Le copy-make coûte 20 %")
+        self.assertEqual(e.titre, "La copie des tampons coûte 20 %")
         self.assertEqual(e.statut, "refute")
         self.assertEqual(e.refs("refutation"), [("id", "F-0001")])
 
@@ -49,7 +49,7 @@ class TestAnalyse(unittest.TestCase):
     def test_archive_imbriquee_dans_le_journal(self):
         texte = ("<!-- socle: couche=journal zone=publique -->\n# Journal\n\n"
                  "## J-2026-10-12-A — Backlog clos\n\n### B-0003 — Lien mort\n\n> statut : fait\n")
-        f = memoire.analyser("memoire/journal/2026-10.md", texte)
+        f = memoire.analyser("memory/journal/2026-10.md", texte)
         b = [e for e in f.entrees if e.type == "B"][0]
         self.assertEqual(b.parent, "J-2026-10-12-A")
         self.assertTrue(b.archivee)
@@ -59,20 +59,33 @@ class TestAnalyse(unittest.TestCase):
         texte = f"F-0001, J-2026-10-10-A, {prive}, ADR-0003 ; pas F-12 ni J-0001 ni XF-0001."
         self.assertEqual([i for i, _ in memoire.mentions(texte)], ["F-0001", "J-2026-10-10-A", prive, "ADR-0003"])
 
+    def test_les_chemins_de_la_memoire(self):
+        self.assertTrue(memoire.est_memoire("memory/canonical.md"))
+        self.assertFalse(memoire.est_memoire("docs/memory/notes.md"))
+        reponse = "memory/requests/D-0001-essai.answer.toml"
+        self.assertTrue(memoire.est_reponse(reponse))
+        self.assertFalse(memoire.est_reponse("memory/requests/D-0001-essai.md"))
+        self.assertEqual(memoire.demande_de_reponse(reponse), "memory/requests/D-0001-essai.md")
+        self.assertEqual(demandes.chemin_reponse("memory/requests/D-0001-essai.md"), reponse)
+        self.assertEqual(memoire.hors_zone_privee("memory/private/backlog/PB-0001-x.md"), "backlog/PB-0001-x.md")
+        self.assertEqual(memoire.hors_zone_privee("memory/backlog/B-0001-x.md"), "memory/backlog/B-0001-x.md")
+        self.assertEqual(config.FORMAT_ACTUEL.dans_prive("memory/backlog"), "memory/private/backlog")
+        self.assertEqual(config.FORMAT_ACTUEL.dans_prive("docs/a.md"), "docs/a.md")
+
     def test_couche_imposee_par_l_emplacement(self):
-        self.assertEqual(memoire.couche_attendue("memoire/journal/2026-10.md"), "journal")
-        self.assertEqual(memoire.couche_attendue("memoire/prive/canonique.md"), "canonique")
-        self.assertIsNone(memoire.couche_attendue("memoire/archives/cadrage.md"))
-        self.assertEqual(memoire.couche_attendue("memoire/notes.md"), "inconnue")
+        self.assertEqual(memoire.couche_attendue("memory/journal/2026-10.md"), "journal")
+        self.assertEqual(memoire.couche_attendue("memory/private/canonical.md"), "canonique")
+        self.assertIsNone(memoire.couche_attendue("memory/archives/cadrage.md"))
+        self.assertEqual(memoire.couche_attendue("memory/notes.md"), "inconnue")
 
 
 class TestLectureProuvee(unittest.TestCase):
     def test_l_empreinte_suit_le_texte(self):
-        a = memoire.analyser("memoire/canonique.md", CANONIQUE).entrees[0]
-        b = memoire.analyser("memoire/canonique.md", CANONIQUE.replace("binaire de base", "binaire AVX2")).entrees[0]
+        a = memoire.analyser("memory/canonical.md", CANONIQUE).entrees[0]
+        b = memoire.analyser("memory/canonical.md", CANONIQUE.replace("binaire de base", "binaire AVX2")).entrees[0]
         self.assertRegex(memoire.empreinte_entree(a), r"^[0-9a-f]{8}$")
         self.assertNotEqual(memoire.empreinte_entree(a), memoire.empreinte_entree(b))
-        espaces = memoire.analyser("memoire/canonique.md", CANONIQUE.replace("base.", "base.   ")).entrees[0]
+        espaces = memoire.analyser("memory/canonical.md", CANONIQUE.replace("base.", "base.   ")).entrees[0]
         self.assertEqual(memoire.empreinte_entree(a), memoire.empreinte_entree(espaces))
 
     def test_citations(self):

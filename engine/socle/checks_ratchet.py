@@ -210,8 +210,6 @@ def cliquet(ctx, r):
     avant = ctx.projet_base.garde_fous if ctx.projet_base else {}
     if not avant:
         return  # installation : rien à comparer
-    if ctx.migre:  # une migration de format renomme les chemins, elle n'assouplit rien
-        avant = traduire_profond(avant, ctx.projet.chemins.format)
     for cle, pourquoi in assouplissements(avant, ctx.projet.garde_fous, set(ctx.fichiers), ctx.renommes,
                                           ctx.fichiers_base):
         d = _valide_par(ctx, cle)
@@ -225,18 +223,6 @@ def cliquet(ctx, r):
                                                 "changement une fois validée", cle=cle, pourquoi=pourquoi),
                      ctx.projet.chemins.garde_fous)
 
-
-
-def traduire_profond(valeur, vers: int):
-    """Les garde-fous d'un format dans l'autre : chaque chemin, clé ou
-    valeur, sous son nom du format `vers`."""
-    if isinstance(valeur, dict):
-        return {traduire_profond(k, vers): traduire_profond(v, vers) for k, v in valeur.items()}
-    if isinstance(valeur, list):
-        return [traduire_profond(v, vers) for v in valeur]
-    if isinstance(valeur, str):
-        return config.traduire(valeur, vers=vers)
-    return valeur
 
 @controle("protege.fichiers", base=True)
 def proteges(ctx, r):
@@ -259,13 +245,6 @@ def proteges(ctx, r):
         if ctx.projet.mode == config.MODE_AMONT and c.startswith(ctx.projet.dossier_moteur + "/socle/"):
             continue
         present = existe(c)
-        nouveau = config.traduire(c, vers=ctx.projet.chemins.format) if ctx.migre and not present else c
-        if nouveau != c and outils.correspond(nouveau, motifs) and existe(nouveau):
-            # Déplacé par la migration du format : le fichier est jugé sous
-            # son nom nouveau, protégé lui aussi, et non comme une suppression.
-            r.avertir("protege.fichiers", trad("déplacé vers `{nouveau}` par la migration du format",
-                                               nouveau=nouveau), c)
-            continue
         if present and ctx.tete is None:
             cite = empreinte.courte(empreinte.fichier(ctx.racine / c))
         elif present:
@@ -361,7 +340,7 @@ def trace(ctx, r):
     for c in ctx.commits:
         if len(c["parents"]) != 1 or not est_agent(ctx.projet, c["message"]):
             continue
-        if all(outils.lire_a(ctx.racine, c["parents"][0], f.lock) is None for f in config.FORMATS.values()):
+        if outils.lire_a(ctx.racine, c["parents"][0], ctx.projet.chemins.lock) is None:
             continue  # le socle n'était pas encore installé
         sujet = c["message"].strip().splitlines()[0]
         valeurs = outils.trailers(c["message"]).get("socle-hooks")

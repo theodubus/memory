@@ -52,9 +52,9 @@ def basculer(projet: config.Projet, ident: str, jour: str) -> list[str]:
     lg = langue.du_projet(projet)
     copie = _copie_privee(e, nouvel, lg)
     fichier = mem.fichiers[e.fichier]
-    # Une décision, et un sujet du backlog au format 3, ont chacun leur
-    # fichier : il se copie en privé, et un fichier public garde l'identifiant.
-    propre = {"ADR": ch.decisions, "B": ch.backlog if ch.backlog_en_dossier else None}.get(e.type)
+    # Une décision et un sujet du backlog ont chacun leur fichier : il se
+    # copie en privé, et un fichier public garde l'identifiant.
+    propre = {"ADR": ch.decisions, "B": ch.backlog}.get(e.type)
     if propre and e.fichier.startswith(propre + "/"):
         # Le dossier du fichier, pas celui de la couche : un sujet clos garde
         # sa place parmi les clos, en public comme en privé (ADR-0030).

@@ -11,7 +11,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import (archive as archivage, cli, config, context as contexte, checks_memory as controles_memoire,
+from socle import (cli, config, context as contexte, checks_memory as controles_memoire,
                    requests as demandes, human as humain, installer as installeur, language as langue,
                    memory as memoire, messages, utils as outils)
 from socle.report import Rapport
@@ -141,6 +141,9 @@ class TestVocabulaire(unittest.TestCase):
         self.assertEqual(e.refs("preuve"), [("fichier", "calc.py")])
 
 
+SUJET = "memory/backlog/B-0001-add-triple.md"
+
+
 class ProjetAnglais(unittest.TestCase):
     def setUp(self):
         self.racine = Path(tempfile.mkdtemp(prefix="socle-langue-"))
@@ -148,12 +151,10 @@ class ProjetAnglais(unittest.TestCase):
         git(self.racine, "init", "-q", "-b", "main")
         (self.racine / "calc.py").write_text("def double(x):\n    return 2 * x\n")
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-            # Le backlog en un fichier : ce que ces tests lisent (ADR-0025).
-            installeur.installer(self.racine, "python", "@essai", source=MOTEUR, langue_memoire="en", format_memoire=2)
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR, langue_memoire="en")
         git(self.racine, "add", "-A")
         git(self.racine, "commit", "-qm", "base", "--no-verify")
         self.base = git(self.racine, "rev-parse", "HEAD").strip()
-        config.oublier_formats()
         self.projet = config.Projet.charger(self.racine)
 
     def socle(self, *args) -> str:
@@ -282,8 +283,8 @@ class TestProjetAnglais(ProjetAnglais):
         self.socle("new", "fact", "Double doubles")
         self.assertIn("> status : assumed · source :", self.lire("memory/canonical.md"))
         self.socle("new", "backlog", "Add triple")
-        self.assertIn("> status : open · origin :", self.lire("memory/backlog.md"))
-        self.assertIn("read : backlog@", self.lire("memory/backlog.md"))
+        self.assertIn("> status : open · origin :", self.lire(SUJET))
+        self.assertIn("read : backlog@", self.lire(SUJET))
         self.socle("new", "adr", "One constant only")
         adr = next((self.racine / "memory/decisions").glob("ADR-0001-*.md")).read_text()
         self.assertIn("layer=decisions zone=public", adr)
@@ -299,8 +300,8 @@ class TestProjetAnglais(ProjetAnglais):
         self.remplacer("memory/canonical.md", "> status : assumed · source : <where this fact comes from>\n\n"
                        "<the fact, and what would prove it>", "> status : measured · proof : file:calc.py\n\nRead in the code.")
         self.socle("new", "backlog", "Add triple")
-        self.remplacer("memory/backlog.md", "<J-… or commit:… where the topic came up>", ident)
-        self.remplacer("memory/backlog.md", "<what to do, and why>", "For the invoices.")
+        self.remplacer(SUJET, "<J-… or commit:… where the topic came up>", ident)
+        self.remplacer(SUJET, "<what to do, and why>", "For the invoices.")
         (self.racine / "memory/requests/D-0001-choose-the-rounding-mode.md").write_text(DEMANDE)
         self.assertEqual(self.erreurs(), [])
         d = next(x for x in demandes.toutes(self.racine) if x.id == "D-0001")
@@ -328,28 +329,21 @@ class TestProjetAnglais(ProjetAnglais):
         ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="ci", base=self.base, tete="HEAD")
         self.assertEqual(controles_docs.dispenses(ctx), ["a comment only, nothing to document"])
 
-    def test_l_archive_du_backlog_est_en_anglais(self):
-        backlog = self.racine / "memory/backlog.md"
-        backlog.write_text(backlog.read_text() + "\n## B-0001 — Add triple\n\n> status : done · origin : commit:"
-                           f"{self.base[:7]} · ref : commit:{self.base[:7]}\n\nDone.\n")
-        with contextlib.redirect_stdout(io.StringIO()):
-            archivage.archiver_backlog(config.Projet.charger(self.racine))
-        self.assertIn("Closed backlog archived : B-0001", next((self.racine / "memory/journal").glob("*.md")).read_text())
-
-
     def test_une_bascule_en_anglais(self):
         pol = self.racine / ".socle/policy.toml"
         pol.write_text(pol.read_text() + '\n[private]\nmode = "chiffre"\n')
-        backlog = self.racine / "memory/backlog.md"
-        backlog.write_text(backlog.read_text() + "\n## B-0001 — Call the client\n\n> status : open · origin : commit:"
-                           f"{self.base[:7]}\n\nBefore November.\n")
+        (self.racine / "memory/backlog/B-0001-call-the-client.md").write_text(
+            "<!-- socle: layer=backlog zone=public -->\n# B-0001 — Call the client\n\n> status : open · origin : "
+            f"commit:{self.base[:7]}\n\nBefore November.\n")
         git(self.racine, "add", "-A")
         git(self.racine, "commit", "-qm", "sujet", "--no-verify")
         self.base = git(self.racine, "rev-parse", "HEAD").strip()
-        self.socle("prive", "basculer", "B-0001")
-        self.assertIn("## B-0001 — Entry moved to the private memory\n\n> made-private : ", backlog.read_text())
-        self.assertIn("from : B-0001", self.lire("memory/private/backlog.md"))
-        self.assertIn("layer=backlog zone=private", self.lire("memory/private/backlog.md"))
+        self.socle("private", "move", "B-0001")
+        self.assertIn("# B-0001 — Entry moved to the private memory\n\n> made-private : ",
+                      self.lire("memory/backlog/B-0001-basculee.md"))
+        copie = "memory/private/backlog/PB-0001-call-the-client.md"
+        self.assertIn("from : B-0001", self.lire(copie))
+        self.assertIn("layer=backlog zone=private", self.lire(copie))
         self.assertEqual(self.erreurs(), [])
 
 if __name__ == "__main__":

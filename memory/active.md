@@ -61,18 +61,15 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 ## Prochaines étapes
 
-1. Le code de compatibilité retiré, avec ses tests, et le vocabulaire des
-   échecs des tests (D-0033 répondue `tout`, J-2026-10-20-U) : fait dans
-   l'arbre de travail, non commité ; le commit attend D-0035 (la même
-   liste de tests, à valider, `tout` ne valant pas validation, B-0081).
-2. Maintenant : soumettre à Théo, en clair, le plan de documentation de
-   B-0046, avec la séparation du produit et de l'atelier (ADR-0033,
-   D-0034) ; Théo : « il faudra aussi que la nouvelle session pense en
-   apres de me demander de valider le plan de doc ». La doc ne s'écrit
-   qu'après sa réponse.
-3. Ensuite la doc, B-0077, puis la demande de publication du paquet du
-   seul produit (B-0042). B-0079 (session reprise hors de la racine, non
-   détectée) et B-0080 (un clone sans la branche par défaut) après la doc.
+1. Fait : le code de compatibilité retiré, avec ses tests, et le
+   vocabulaire des échecs des tests (D-0033, D-0035 validée,
+   J-2026-10-20-U, J-2026-10-20-V).
+2. Maintenant : la documentation, selon le plan de B-0046 validé par Théo
+   (D-0036) et la séparation du produit et de l'atelier (ADR-0033).
+3. Ensuite B-0077, puis la demande de publication du paquet du seul
+   produit (B-0042). B-0079 (session reprise hors de la racine, non
+   détectée), B-0080 (un clone sans la branche par défaut) et B-0081 (une
+   demande à plusieurs réponses positives ne valide rien) après la doc.
    B-0076 revient à Théo.
 4. Puis le projet pilote ; B-0071 et B-0066. Les autres sujets ouverts
    attendent des données ou Théo : B-0010, B-0012, B-0009, B-0006, B-0018,

@@ -1,7 +1,7 @@
 """L6 : une vérification réussie se mémorise. La vérification que l'agent
 lance, la fin de tour et le hook avant push ne refont pas les étapes
-rapides sur un arbre où elles ont déjà toutes passé ; mesuré à la copie du
-projet d'échecs, une fin de tour et un push recompilaient le même arbre."""
+rapides sur un arbre où elles ont déjà toutes passé ; mesuré sur la copie
+d'un projet réel, une fin de tour et un push recompilaient le même arbre."""
 
 import contextlib
 import io

@@ -1,6 +1,5 @@
 """La mémoire privée (jalon 7) : des notes du projet qui ne doivent pas être
-publiques, rangées sous `memory/private/` (`memoire/prive/` au format 1)
-avec le même format que le reste.
+publiques, rangées sous `memory/private/` avec le même format que le reste.
 
 Deux modes, au choix de l'humain dans la politique (`[private] mode`) :
 
@@ -31,16 +30,16 @@ from socle.context import controle
 
 
 def dossier(racine: Path, rev: str | None = None) -> str:
-    """La zone privée du projet, sous le nom de son format."""
-    return config.chemins(racine, rev).prive
+    """La zone privée du projet."""
+    return config.FORMAT_ACTUEL.prive
 
 
 def fichier_verrou(racine: Path, rev: str | None = None) -> str:
-    return config.chemins(racine, rev).prive_lock
+    return config.FORMAT_ACTUEL.prive_lock
 
 
 def fichier_termes(racine: Path, rev: str | None = None) -> str:
-    return config.chemins(racine, rev).termes
+    return config.FORMAT_ACTUEL.termes
 
 
 MODES = ("compagnon", "chiffre")

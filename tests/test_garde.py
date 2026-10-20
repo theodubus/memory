@@ -46,7 +46,7 @@ REFUS = [
     ("answer après cd .socle", B("cd .socle && python3 socle answer D-0001 valider")),
     ("answer, drapeaux du relais dans une autre commande",
      B(f"python3 {L} answer D-0001 valider; echo --relayed --quote-file x")),
-    ("approve, lanceur entre guillemets", B(f'python3 "{L}" approve --text x --oui')),
+    ("approve, lanceur entre guillemets", B(f'python3 "{L}" approve --text x --yes')),
     ("approve par python -m socle", B("PYTHONPATH=moteur python3 -m socle approve --text x")),
     ("écriture >", B("echo x > .socle/policy.toml")),
     ("écriture 1>", B("echo x 1> .socle/policy.toml")),
@@ -86,7 +86,7 @@ PASSE = [
     ("push vers une branche de maintenance", B(f"{G} {P} origin maintenance-x")),
     ("push d'une branche nommée main-fix", B(f"{G} {P} origin main-fix")),
     ("relais avec sa citation", B(f"python3 {L} answer D-0001 valider --relayed --by Théo --quote-file /tmp/c.txt")),
-    ("verrouiller la mémoire privée", B(f"python3 {L} prive verrouiller")),
+    ("verrouiller la mémoire privée", B(f"python3 {L} private lock")),
     ("rm d'un fichier ordinaire", B("rm -f /tmp/x.txt && touch calc.py")),
     ("lire un réglage", B("cat .claude/settings.json")),
 ]

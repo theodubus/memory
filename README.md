@@ -44,7 +44,7 @@ Infection), `csharp` (dotnet test et Stryker.NET) ; un autre langage se déclare
 `--review lots|chaque-push` (relire avant publication), `--language en`
 (une mémoire en anglais), `--adoption` (un projet existant dont des
 contrôles échouent). Relancer l'installeur met le socle à jour : il
-remplace le moteur, migre les formats, et montre le diff de la politique
+remplace le moteur et montre le diff de la politique
 sans la toucher.
 
 ## Lire la suite

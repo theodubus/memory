@@ -490,16 +490,12 @@ def _collision(a: "Atelier", c: Path) -> str:
 
 
 def ajouter_sujet(c: Path, bloc: str):
-    """Un sujet de plus au backlog, écrit comme dans le fichier unique
-    (`## B-… — titre`, ses métadonnées, son corps) : à sa suite au format 2,
-    dans son propre fichier au format 3, son titre remonté d'un niveau
+    """Un sujet de plus au backlog, écrit `## B-… — titre`, ses métadonnées,
+    son corps : dans son propre fichier, son titre remonté d'un niveau
     (ADR-0025)."""
     from socle import config, memory as memoire, utils as outils
 
-    ch = config.chemins(c)
-    if not ch.backlog_en_dossier:
-        ajouter(c, ch.backlog, bloc)
-        return
+    ch = config.FORMAT_ACTUEL
     m = re.match(r"\s*## (B-\d{4}) — (.+)", bloc)
     texte = "<!-- socle: couche=backlog zone=publique -->\n" + bloc.strip("\n").replace("## ", "# ", 1) + "\n"
     rel = f"{ch.backlog}/{m[1]}-{memoire.nom_de_fichier(m[2])}.md"

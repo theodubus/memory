@@ -12,7 +12,7 @@ qui le lit est `socle/memoire.py`, les contrôles sont listés par
 memory/
   canonical.md            faits vérifiés, avec statut et preuve
   active.md               chantier en cours, prochaines étapes
-  backlog/B-0001-*.md     un sujet à traiter par fichier, avec statut et origine (format 3)
+  backlog/B-0001-*.md     un sujet à traiter par fichier, avec statut et origine
   decisions/ADR-0001-*.md une décision par fichier
   journal/2026-10.md      un fichier par mois, une entrée par événement
   requests/D-0001-*.md    une demande de décision humaine par fichier
@@ -21,27 +21,11 @@ memory/
   private/                zone privée, même arborescence (voir « La zone privée »)
 ```
 
-Ce sont les emplacements du **format 3** (ADR-0025) : ceux du format 2, sauf
-le backlog, qui y était un seul fichier, `backlog.md`. Le moteur lit les
-deux ; la forme du backlog, fichier ou dossier, dit lequel. La mise à jour
-découpe le fichier unique, un fichier par sujet (voir « Backlog »).
-
-Les noms du **format 2** sont en anglais pour tous les projets quelle que
-soit la langue de la mémoire (B-0032) ; la configuration du socle suit
-(`.socle/policy.toml`, `.socle/guardrails.toml`, `.socle/adapter.toml`,
-`.socle/engine.lock`, `.socle/private.lock`, le moteur sous `.socle/engine/`).
-
-**Le format 1** avait des noms français : `memoire/`, `canonique.md`,
-`actif.md`, `demandes/`, `prive/`, `termes.txt`, `*.reponse.toml`,
-`.socle/politique.toml`, `.socle/garde-fous.toml`, `.socle/adaptateur.toml`,
-`.socle/moteur.lock`, `.socle/prive.lock`, `.socle/engine/`. Le moteur lit
-les deux : le nom du verrou (à défaut, de la politique, puis du dossier de
-mémoire) dit le format d'un projet. La mise à jour par l'installeur migre un
-projet au format 1 : elle renomme ses fichiers (`git mv`) et traduit les
-chemins de sa configuration et de sa documentation, mais ne réécrit pas la
-mémoire — le journal est en ajout seul, une demande répondue est gelée. Les
-anciens chemins, et les ancres de titres qui en citent, y restent valides
-par alias. La CI d'une plage qui migre lit la base sous les noms de la tête.
+Les noms sont en anglais pour tous les projets, quelle que soit la langue de
+la mémoire ; la configuration du socle suit (`.socle/policy.toml`,
+`.socle/guardrails.toml`, `.socle/adapter.toml`, `.socle/engine.lock`,
+`.socle/private.lock`, le moteur sous `.socle/engine/`). Le verrou note le
+format de la mémoire (`format = 3`).
 Les couches gardent leurs noms internes (`canonique`, `actif`, `demandes`…)
 dans l'en-tête des fichiers : c'est le vocabulaire du format, pas un chemin.
 
@@ -106,7 +90,11 @@ final, la parenthèse qui la referme. Les liens markdown relatifs et leurs
 ancres, décodés (`%20`), et les chemins du dépôt cités entre accents graves,
 sont vérifiés aussi ; un chemin d'un autre dépôt s'écrit `depot:chemin`, le
 dépôt lié quelque part dans le projet par son adresse, ou, à défaut, déclaré
-dans `[references] repos` des garde-fous. Un bloc de code
+dans `[references] repos` des garde-fous. Dans une couche qui ne se
+réécrit pas (canonique, décisions, journal, demandes), un chemin qui a
+existé dans l'historique du dépôt vaut, un lien relatif se lit aussi depuis
+les anciens emplacements de son fichier, et l'ancre d'un lien n'est pas
+vérifiée : le titre qu'elle visait a pu changer depuis. Un bloc de code
 clôturé porte des exemples : rien n'y est vérifié.
 
 ## Couches
@@ -156,7 +144,7 @@ l'humain peut faire porte `pour : humain` : elle figure dans « ce qui revient
 lien de son sujet, où vit son mode d'emploi (commandes, résultats attendus),
 jusqu'à ce qu'elle soit close.
 
-Au format 3 (ADR-0025), un sujet par fichier, nommé comme une décision
+Un sujet par fichier (ADR-0025), nommé comme une décision
 (`B-0001-<titre court>.md`), sous un titre de niveau un :
 
 ```markdown
@@ -174,10 +162,7 @@ sous-dossier `closed` du backlog (ADR-0030) : `socle archive` y range
 chaque sujet clos, et remet parmi les ouverts un sujet rouvert ; le
 contrôle du backlog refuse un sujet mal rangé, et la mise à jour range un
 projet existant. Un sujet rangé garde son identifiant et le plafond d'un
-sujet. La migration depuis le format 2 remonte chaque sujet d'un niveau de
-titre, sous-titres compris, range les clos, et un lien écrit vers l'ancre
-d'un sujet dans `backlog.md` reste valide tant que le sujet existe. Une
-bascule en privé copie le fichier sous `private/backlog/` (ou son
+sujet. Une bascule en privé copie le fichier sous `private/backlog/` (ou son
 sous-dossier des clos), et un fichier public garde l'identifiant, comme
 pour une décision.
 
@@ -188,20 +173,8 @@ du report, qui le reconnaît ; son corps cite la spec d'où il vient sans la
 recopier. Le contrôle `bmad.reports` refuse un report resté hors du
 backlog.
 
-Au format 2, le backlog est un seul fichier, `backlog.md`, et `socle archive`
-déplace les entrées closes dans une entrée de journal datée, en sous-titres :
-
-```markdown
-## J-2026-10-12-A — Backlog clos archivé
-
-### B-0003 — Corriger le lien mort du README
-
-> statut : fait · origine : J-2026-10-10-A · ref : commit:3f2a9c1
-```
-
-Un sujet ou un fait archivé reste défini, donc toute référence vers lui
-reste vivante. Ses propres sous-titres descendent d'un niveau avec lui, et
-un lien écrit vers son ancre dans le backlog reste valide.
+Un fait archivé dans le journal reste défini, donc toute référence vers lui
+reste vivante.
 
 ### Demandes — `D-`
 
@@ -335,7 +308,7 @@ les liens vers son ancien nom, et les ancres vers l'ancien titre d'une
 entrée basculée, restent valides. Une entrée basculée ne change plus ;
 une bascule sans copie privée qui reprenne son texte est un effacement, et
 l'ajout seul la refuse. Une demande ne se bascule pas : elle se retire et se
-pose à nouveau en privé ; une entrée de journal qui archive des sujets non
+pose à nouveau en privé ; une entrée de journal qui archive des faits non
 plus. L'historique public garde l'ancien texte : seule une réécriture de
 l'historique l'efface, et c'est à l'humain de la faire.
 

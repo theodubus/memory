@@ -49,10 +49,10 @@ class TestValeurs(unittest.TestCase):
         self.assertEqual(normaliser_valeur("1 234,56"), "1234.56")
 
     def test_une_valeur_libre_ne_se_confond_pas(self):
-        self.assertTrue(_motif_libre("3,5").search("vaut 3.5 Elo"))
-        self.assertFalse(_motif_libre("3,5").search("vaut 35 Elo"))
-        self.assertFalse(_motif_libre("35").search("vaut 3,5 Elo"))
-        self.assertTrue(_motif_libre("70452").search("70 452 nœuds"))
+        self.assertTrue(_motif_libre("3,5").search("vaut 3.5 kg"))
+        self.assertFalse(_motif_libre("3,5").search("vaut 35 kg"))
+        self.assertFalse(_motif_libre("35").search("vaut 3,5 kg"))
+        self.assertTrue(_motif_libre("70452").search("70 452 lignes"))
         self.assertFalse(_motif_libre("8432521").search("84 32 521"))
 
 

@@ -332,14 +332,12 @@ def _memoire(mem: memoire.Memoire, projet) -> list[str]:
     res.append(
         trad("backlog  : {ouverts} ouvert(s), {en_cours} en cours, {bloques} bloqué(s), {clos} clos",
              ouverts=par.get("ouvert", 0), en_cours=par.get("en-cours", 0), bloques=par.get("bloque", 0),
-             clos=par.get("fait", 0) + par.get("abandonne", 0))
-        + ("" if projet.chemins.backlog_en_dossier else trad(" à archiver"))
-    )
+             clos=par.get("fait", 0) + par.get("abandonne", 0)))
     for statut, libelle in (("en-cours", a_traduire("en cours")), ("bloque", a_traduire("bloqué"))):
         for e in [e for e in backlog if e.statut == statut][:8]:
             res.append(f"  {trad(libelle)} : {e.id} — {e.titre}")
     jours = projet.gf("staleness", "active_days", defaut=7)
-    t = outils.git(mem.racine, "log", "-1", "--format=%ct", "--", config.chemins(mem.racine).actif, check=False).strip() \
+    t = outils.git(mem.racine, "log", "-1", "--format=%ct", "--", config.FORMAT_ACTUEL.actif, check=False).strip() \
         if outils.a_des_commits(mem.racine) else ""
     if t:
         age = (time.time() - float(t)) / 86400

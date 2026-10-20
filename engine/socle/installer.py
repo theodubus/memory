@@ -270,14 +270,8 @@ def garde_fous_initiaux(cible: Path, texte_adaptateur: str, ch: config.Chemins =
     """Les garde-fous du gabarit, avec chaque module qui porte déjà du code
     posé « à mesurer » au cliquet de mutation : une installation sur un
     projet existant finit verte, et le premier balayage pose les plafonds
-    mesurés (B-0034, P1). Le plafond du backlog suit sa forme : un fichier
-    unique, ou un plafond par sujet (ADR-0025)."""
-    from socle import migrations
-
-    texte = re.sub(rf'(?m)^"{re.escape(config.FORMAT_3.backlog)}/\*\.md" = \{{[^}}]*\}}|'
-                   rf'^"{re.escape(config.FORMAT_2.backlog)}" = \{{[^}}]*\}}',
-                   f'"{ch.backlog}/*.md" = {{ max_bytes = {migrations.BUDGET_SUJET} }}' if ch.backlog_en_dossier
-                   else f'"{ch.backlog}" = {{ max_bytes = 24000 }}', gabarit("guardrails.toml", lg))
+    mesurés (B-0034, P1)."""
+    texte = gabarit("guardrails.toml", lg)
     tiers = [c for _, chemins in outils_tiers(cible) for c in chemins]
     texte = declarer_tiers(texte, tiers)
     cap = tomllib.loads(texte_adaptateur).get("capabilities", {}).get("mutation", {})
@@ -317,7 +311,7 @@ def diff_politique(cible: Path) -> list[str]:
     l'humain."""
     import difflib
 
-    p = cible / config.chemins(cible).politique
+    p = cible / config.FORMAT_ACTUEL.politique
     if not p.is_file():
         return []
     # Le gabarit tel que l'installeur le poserait pour ce projet : dans sa
@@ -380,7 +374,7 @@ def _poser_moteur(cible: Path, mode: str, source: Path, ch: config.Chemins) -> t
                  "# Mode amont : ce dépôt fabrique le moteur, dont l'empreinte n'est pas figée ici.\n")
             + f'mode = "{mode}"\n'
             f'engine_dir = "{dossier_moteur}"\n'
-            f"format = {ch.format}\n"
+            f"format = {config.FORMAT}\n"
         ))
         journal.append(trad("verrou en mode amont : le moteur est la source, sous {dossier_moteur}/socle",
                             dossier_moteur=dossier_moteur))
@@ -395,7 +389,7 @@ def _poser_moteur(cible: Path, mode: str, source: Path, ch: config.Chemins) -> t
             f'engine_dir = "{dossier_moteur}"\n'
             f'fingerprint = "{calculee}"\n'
             f"files = {n}\n"
-            f"format = {ch.format}\n"
+            f"format = {config.FORMAT}\n"
         ))
         journal.append(trad("verrou : {empreinte} sur {n} fichiers", empreinte=empreinte.courte(calculee), n=n))
 
@@ -472,13 +466,12 @@ def _poser_memoire(cible: Path, lg: str, nom_adaptateur: str, adoption: bool, ch
     """La mémoire initiale : chaque couche absente, et le journal ouvert."""
     journal = []
     jour = date.today().isoformat()
-    # Au format 3, le backlog est un dossier, un fichier par sujet (ADR-0025).
-    unique = () if ch.backlog_en_dossier else (("backlog.md", ch.backlog),)
-    for nom, lieu in (("canonical.md", ch.canonique), ("active.md", ch.actif)) + unique:
+    for nom, lieu in (("canonical.md", ch.canonique), ("active.md", ch.actif)):
         p = cible / lieu
         if not p.is_file():
             outils.ecrire(p, gabarit(f"memory/{nom}", lg))
-    for lieu in (ch.decisions, ch.demandes) + ((ch.backlog,) if ch.backlog_en_dossier else ()):
+    # Le backlog est un dossier, un fichier par sujet (ADR-0025).
+    for lieu in (ch.decisions, ch.demandes, ch.backlog):
         d = cible / lieu
         d.mkdir(parents=True, exist_ok=True)
         if not any(d.iterdir()):
@@ -546,28 +539,22 @@ def _poser_etages(cible: Path, texte_adaptateur: str, dossier_moteur: str, propr
 def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bool = False,
               mode: str = config.MODE_PROJET, source: Path | None = None, prive: str | None = None,
               relecture: str | None = None, demandes_privees: bool = False, filtre: str = "git-crypt",
-              langue_memoire: str | None = None, format_memoire: int | None = None,
-              avec_bmad: bool = False, version_bmad: str = VERSION_BMAD) -> int:
+              langue_memoire: str | None = None, avec_bmad: bool = False, version_bmad: str = VERSION_BMAD) -> int:
     """Installe ou met à jour le socle dans `cible`, et BMAD Method avant lui
-    avec `avec_bmad` (B-0074). `format_memoire` : le format de la mémoire,
-    l'actuel par défaut ; un test qui porte sur un format antérieur le fixe.
-    Ses messages sont dans la langue de la mémoire du projet : celle qu'il a
+    avec `avec_bmad` (B-0074). Ses messages sont dans la langue de la mémoire du projet : celle qu'il a
     déjà, ou celle choisie pour un projet neuf."""
-    existant = (cible / config.chemins(cible).politique).is_file()
+    existant = (cible / config.FORMAT_ACTUEL.politique).is_file()
     lg = langue.du_projet(config.Projet.charger(cible)) if existant else (langue_memoire or "fr")
     with messages.dans(lg):
         return _installer(cible, adaptateur, proprietaire, adoption, mode, source, prive, relecture,
-                          demandes_privees, filtre, langue_memoire, format_memoire,
+                          demandes_privees, filtre, langue_memoire,
                           version_bmad if avec_bmad else None, lg)
 
 
 def _installer(cible: Path, adaptateur: str, proprietaire: str, adoption: bool, mode: str, source: Path | None,
                prive: str | None, relecture: str | None, demandes_privees: bool, filtre: str,
-               langue_memoire: str | None, format_memoire: int | None, version_bmad: str | None = None,
-               lg_projet: str = "fr") -> int:
-    from socle import migrations
-
-    ch = config.FORMATS[format_memoire or migrations.FORMAT]
+               langue_memoire: str | None, version_bmad: str | None = None, lg_projet: str = "fr") -> int:
+    ch = config.FORMAT_ACTUEL
 
     refus = _refus_cible(cible)
     if refus:
@@ -584,8 +571,7 @@ def _installer(cible: Path, adaptateur: str, proprietaire: str, adoption: bool, 
             return 2
         adaptateur = detecte
     texte_adaptateur, nom_adaptateur = charger_adaptateur(adaptateur)
-    config.oublier_formats()
-    ancien = config.Projet.charger(cible).lock if (cible / config.chemins(cible).lock).is_file() else {}
+    ancien = config.Projet.charger(cible).lock if (cible / config.FORMAT_ACTUEL.lock).is_file() else {}
     try:
         tomllib.loads(texte_adaptateur)
     except tomllib.TOMLDecodeError as e:
@@ -605,12 +591,6 @@ def _installer(cible: Path, adaptateur: str, proprietaire: str, adoption: bool, 
     if ancien:
         journal.append(trad("mise à jour : moteur {avant} → {version}", avant=ancien.get("version", "amont"),
                             version=VERSION))
-        try:
-            journal += migrations.migrer(cible, int(ancien.get("format", 1)), ch.format)
-        except RuntimeError as e:
-            print(trad("refus : {refus}", refus=e), file=sys.stderr)
-            return 2
-        config.oublier_formats()
         # Les sujets clos quittent les ouverts (ADR-0030) : une fois, à la
         # mise à jour, puis par `socle archive`.
         from socle import archive as archivage, memory as memoire
@@ -679,9 +659,7 @@ def _instructions(cible: Path, dossier_moteur: str, lg: str = "fr", balayage: bo
     res = []
     agents = cible / config.INSTRUCTIONS
     claude = cible / "CLAUDE.md"
-    # Le backlog sous la forme du format installé : un fichier, ou un dossier
-    # (ADR-0025) ; un chemin cité qui n'existe pas serait refusé.
-    backlog = ch.backlog + ("/" if ch.backlog_en_dossier else "")
+    backlog = ch.backlog + "/"
     section = (gabarit("AGENTS.md", lg).replace("@@VERSION@@", VERSION).replace("@@MOTEUR@@", dossier_moteur)
                .replace("@@BACKLOG@@", backlog)
                .replace("@@LIGNE_MUTATION@@\n", LIGNE_MUTATION.get(lg, LIGNE_MUTATION["fr"]) if balayage else ""))
@@ -878,7 +856,7 @@ def _adopter(cible: Path) -> list[str]:
     avertissement, liste d'où l'on ne retire que pour durcir."""
     from socle import context as contexte
 
-    gf = cible / config.chemins(cible).garde_fous
+    gf = cible / config.FORMAT_ACTUEL.garde_fous
     texte = gf.read_text(encoding="utf-8")
     res = []
     claude = cible / "CLAUDE.md"

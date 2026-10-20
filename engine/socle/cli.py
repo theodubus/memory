@@ -184,13 +184,9 @@ def cmd_new(args) -> int:
         # Le backlog s'affiche avant d'y ajouter : un doublon se voit ici.
         _afficher_index(mem, "backlog")
         bloc = squelette.format(lu=memoire.empreinte_index(mem, "backlog"))
-        if ch.backlog_en_dossier:
-            # Un fichier par sujet, comme une décision (ADR-0025).
-            chemin = lieu(ch.backlog) / f"{ident}-{memoire.nom_de_fichier(titre)}.md"
-            outils.ecrire(chemin, f"{langue.entete_fichier('backlog', zone, lg)}\n# {ident} — {titre}\n\n{bloc}\n")
-        else:
-            chemin = lieu(ch.backlog)
-            _ajouter(chemin, f"\n## {ident} — {titre}\n\n{bloc}\n", langue.entete_fichier("backlog", zone, lg))
+        # Un fichier par sujet, comme une décision (ADR-0025).
+        chemin = lieu(ch.backlog) / f"{ident}-{memoire.nom_de_fichier(titre)}.md"
+        outils.ecrire(chemin, f"{langue.entete_fichier('backlog', zone, lg)}\n# {ident} — {titre}\n\n{bloc}\n")
     elif type_ == "J":
         bloc = f"\n## {ident} — {titre}\n\n{squelette}\n"
         dossier = lieu(ch.journal)
@@ -932,7 +928,7 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
     s.add_argument("id")
     s.set_defaults(f=cmd_renumber)
 
-    s = sp.add_parser("archive", help=trad("range les sujets clos du backlog à l'écart des ouverts (au format 2 : les archive dans le journal)"))
+    s = sp.add_parser("archive", help=trad("range les sujets clos du backlog à l'écart des ouverts"))
     s.set_defaults(f=cmd_archive)
 
     s = sp.add_parser("bmad-import", help=trad("fait entrer au backlog les travaux que BMAD a reportés"))
@@ -975,9 +971,7 @@ def main(argv=None) -> int:
             print(trad("\nLe guide : `python3 .socle/socle help` ; toutes les commandes : `python3 .socle/socle "
                        "--help`."))
             return 0
-        from socle import commands as commandes
-
-        args = p.parse_args(commandes.noms_anglais(argv))
+        args = p.parse_args(argv)
         try:
             return args.f(args)
         except BrokenPipeError:

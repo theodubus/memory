@@ -46,16 +46,16 @@ class TestAutresDepots(unittest.TestCase):
         """Théo, J-2026-10-13-L : l'outil s'adapte au projet, il ne demande
         pas ce que le projet dit déjà. Un dépôt lié par son adresse est
         connu, dans un texte lu ou dans `.gitmodules`."""
-        texte = "Repris de [chess](https://github.com/theodubus/chess) : `chess:tools/etat.sh`.\n"
+        texte = "Repris de [outil](https://github.com/exemple/outil) : `outil:tools/etat.sh`.\n"
         self.assertEqual(self.avertissements(texte), [])
         (self.racine / ".gitmodules").write_text('[submodule "ui"]\n\turl = git@github.com:theodubus/ui.git\n')
         self.assertEqual(self.avertissements("Voir `ui:src/main.ts`.\n"), [])
         self.assertEqual(len(self.avertissements("Voir `x.patch:engine/a.rs`.\n")), 1)
         ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="agent")
-        self.assertEqual(controles_memoire.depots_connus(ctx, ["https://github.com/theodubus/chess."]), {"chess", "ui"})
+        self.assertEqual(controles_memoire.depots_connus(ctx, ["https://github.com/exemple/outil."]), {"outil", "ui"})
 
     def test_un_depot_declare_passe(self):
-        self.assertEqual(self.avertissements("Voir `chess:tools/etat.sh`.\n", repos=["chess"]), [])
+        self.assertEqual(self.avertissements("Voir `outil:tools/etat.sh`.\n", repos=["outil"]), [])
 
     def test_une_url_une_reference_ou_une_revision_ne_sont_pas_des_depots(self):
         texte = "`https://exemple.org/a/b`, `HEAD:refs/heads/main`, `1f6dab2:docs/a.md`, `std::fs`\n"
@@ -65,7 +65,7 @@ class TestAutresDepots(unittest.TestCase):
 
     def test_declarer_un_depot_est_un_assouplissement(self):
         avant = {"references": {"scan": ["**/*.md"], "exclude": [], "repos": []}}
-        apres = {"references": {"scan": ["**/*.md"], "exclude": [], "repos": ["chess"]}}
+        apres = {"references": {"scan": ["**/*.md"], "exclude": [], "repos": ["outil"]}}
         self.assertEqual([c for c, _ in assouplissements(avant, apres)], ["references.repos"])
         self.assertEqual(assouplissements(apres, avant), [])
 

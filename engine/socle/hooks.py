@@ -389,9 +389,8 @@ def contournement(racine: Path, c: commandes.Commande, depart: str | None = None
 def commande_humaine(c: commandes.Commande) -> tuple[str, list[str]] | None:
     """Une commande du socle réservée à l'humain (`answer`, `approve`,
     `reviewed`, `private install`), quel que soit le chemin du lanceur (entre
-    guillemets, après un `cd`, par `python3 -m socle`) et sous son ancien nom
-    aussi (`relu`, `prive installer`) : son nom anglais et ses arguments ;
-    `None` sinon."""
+    guillemets, après un `cd`, par `python3 -m socle`) : son nom et ses
+    arguments ; `None` sinon."""
     argv = c.argv
     if not argv:
         return None
@@ -412,7 +411,6 @@ def commande_humaine(c: commandes.Commande) -> tuple[str, list[str]] | None:
         return None
     while reste and (reste[0] == "--root" or reste[0].startswith("--root=")):
         reste = reste[2:] if reste[0] == "--root" else reste[1:]
-    reste = commandes.noms_anglais(reste)
     if reste[:2] == ["private", "install"]:
         return "private install", reste
     if reste and reste[0] in ("answer", "decision", "approve", "reviewed"):
@@ -563,8 +561,7 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
 
 
 def _vers_le_prive(racine: Path, cmd: str) -> bool:
-    zones = "|".join(re.escape(d) for d in memoire.DOSSIERS_PRIVES)
-    return bool(re.search(r"(?:-C|cd)\s+(?:\S*/)?(?:" + zones + ")", cmd))
+    return bool(re.search(r"(?:-C|cd)\s+(?:\S*/)?" + re.escape(memoire.DOSSIER_PRIVE), cmd))
 
 
 def _fuites_dans(projet: config.Projet, texte: str) -> str | None:

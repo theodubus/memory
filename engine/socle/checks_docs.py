@@ -12,7 +12,7 @@ import re
 import subprocess
 from collections import defaultdict
 
-from socle import config, language as langue, memory as memoire, utils as outils
+from socle import language as langue, memory as memoire, utils as outils
 from socle.messages import trad
 from socle.context import controle
 
@@ -230,9 +230,9 @@ def copie(ctx, r):
     gelée une fois répondue. Deux approbations écrites par le même gabarit
     se ressemblent forcément (B-0019)."""
     minimum = ctx.projet.gf("nocopy", "min_chars", defaut=200)
+    ch = ctx.projet.chemins
     exclus = ctx.projet.exclusions_docs() + list(ctx.projet.gf("nocopy", "exclude", defaut=[])) + [
-        f"{f.demandes}/**" for f in config.FORMATS.values()] + [
-        f"{f.dans_prive(f.demandes)}/**" for f in config.FORMATS.values()]
+        f"{ch.demandes}/**", f"{ch.dans_prive(ch.demandes)}/**"]
     vus: dict[str, list[tuple[str, int]]] = defaultdict(list)
     for chemin, texte in ctx.textes(["**/*.md"], exclus).items():
         for debut, p in paragraphes(texte):

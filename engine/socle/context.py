@@ -77,20 +77,8 @@ class Contexte:
         return self.projet.hors_tiers(outils.fichiers_a(self.racine, self.tete))
 
     @cached_property
-    def format_base(self) -> config.Chemins | None:
-        return config.chemins(self.racine, self.base) if self.base else None
-
-    @cached_property
-    def migre(self) -> bool:
-        """La plage change le format de la mémoire (B-0032) : la base se lit
-        alors sous les noms de la tête."""
-        return self.format_base is not None and self.format_base.format != self.projet.chemins.format
-
-    @cached_property
     def fichiers_base(self) -> list[str]:
         res = outils.fichiers_a(self.racine, self.base) if self.base else []
-        if self.migre:
-            res = [config.traduire(c, vers=self.projet.chemins.format) for c in res]
         return self.projet.hors_tiers(res)
 
     def lire(self, chemin: str) -> str | None:
@@ -109,8 +97,7 @@ class Contexte:
             return None
         cle = ("b", chemin)
         if cle not in self._cache:
-            lieu = config.traduire(chemin, vers=self.format_base.format) if self.migre else chemin
-            self._cache[cle] = outils.lire_a(self.racine, self.base, lieu)
+            self._cache[cle] = outils.lire_a(self.racine, self.base, chemin)
         return self._cache[cle]
 
     @cached_property

@@ -16,10 +16,9 @@ from socle import cli, config, hooks, human as humain, links as liens, memory as
 
 DEPOT = "https://github.com/essai/memoire"
 
+SUJET = "memory/backlog/B-0001-ajouter-une-fonction-triple.md"
 BACKLOG = """<!-- socle: couche=backlog zone=publique -->
-# Backlog
-
-## B-0001 — Ajouter une fonction triple
+# B-0001 — Ajouter une fonction triple
 
 > statut : ouvert · origine : fichier:calc.py
 
@@ -71,7 +70,7 @@ class TestCommandes(unittest.TestCase):
         (source / ".socle").mkdir()
         (source / ".socle/policy.toml").write_text(f'[human]\nrepo_url = "{DEPOT}"\n')
         (source / "calc.py").write_text("def double(x):\n    return 2 * x\n")
-        for chemin, texte in (("memory/backlog.md", BACKLOG), ("memory/active.md", ACTIF),
+        for chemin, texte in ((SUJET, BACKLOG), ("memory/active.md", ACTIF),
                               ("memory/decisions/ADR-0001-une-seule-constante.md", ADR)):
             (source / chemin).parent.mkdir(parents=True, exist_ok=True)
             (source / chemin).write_text(texte)
@@ -90,7 +89,7 @@ class TestCommandes(unittest.TestCase):
         attendue = memoire.empreinte_entree(mem.entree("B-0001"))
         code, texte = sortie(cli.cmd_show, root=str(self.racine), ids=["B-0001"], index=None)
         self.assertEqual(code, 0)
-        self.assertIn(f"--- B-0001@{attendue} (memory/backlog.md:4) ---", texte)
+        self.assertIn(f"--- B-0001@{attendue} ({SUJET}:2) ---", texte)
         code, texte = sortie(cli.cmd_show, root=str(self.racine), ids=["B-0099"], index="backlog")
         self.assertEqual(code, 1)
         self.assertIn(f"index backlog@{memoire.empreinte_index(mem, 'backlog')}", texte)
@@ -99,7 +98,7 @@ class TestCommandes(unittest.TestCase):
         mem = memoire.Memoire.charger(self.racine)
         self.assertEqual(memoire.lignes_index(mem, "backlog"), ["B-0001 — Ajouter une fonction triple (ouvert)"])
         avant = memoire.empreinte_index(mem, "backlog")
-        p = self.racine / "memory/backlog.md"
+        p = self.racine / SUJET
         p.write_text(p.read_text().replace("statut : ouvert", "statut : fait · ref : fichier:calc.py"))
         mem = memoire.Memoire.charger(self.racine)
         self.assertEqual(memoire.lignes_index(mem, "backlog"), [])
@@ -108,7 +107,7 @@ class TestCommandes(unittest.TestCase):
     def test_url_donne_le_permalien(self):
         code, texte = sortie(cli.cmd_url, root=str(self.racine), cibles=["B-0001", "ADR-0001", "absent.md"])
         self.assertEqual(code, 1)
-        self.assertIn(f"[B-0001]({DEPOT}/blob/{self.pousse}/memory/backlog.md#b-0001--ajouter-une-fonction-triple)", texte)
+        self.assertIn(f"[B-0001]({DEPOT}/blob/{self.pousse}/{SUJET})", texte)
         self.assertIn(f"[ADR-0001]({DEPOT}/blob/{self.pousse}/memory/decisions/ADR-0001-une-seule-constante.md)", texte)
         self.assertNotIn("absent.md", texte)
 
@@ -141,12 +140,9 @@ class TestCommandes(unittest.TestCase):
         trace = config.chemin_trace(self.racine)
         self.assertEqual(trace, config.chemin_trace(autre))
         self.assertEqual(trace, (self.racine / ".git/socle/hooks.log").resolve())
-        ancienne = self.racine / config.TRACE
-        ancienne.parent.mkdir(parents=True, exist_ok=True)
-        ancienne.write_text("ancienne\n")
         trace.parent.mkdir(parents=True, exist_ok=True)
         trace.write_text("nouvelle\n")
-        self.assertEqual(config.lire_trace(self.racine), ["ancienne", "nouvelle"])
+        self.assertEqual(config.lire_trace(self.racine), ["nouvelle"])
         self.assertEqual(config.lire_trace(autre), ["nouvelle"])
         hooks.tracer(autre, "Stop", "session")
         self.assertRegex(config.lire_trace(self.racine)[-1], r"^\S+\tStop\tsession\t$")

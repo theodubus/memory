@@ -113,7 +113,6 @@ VOULU = ("voulu", "intended")
 TEXTES = {
     "titre-basculee": {"fr": "Entrée basculée dans la mémoire privée", "en": "Entry moved to the private memory"},
     "texte-basculee": {"fr": "Son contenu est dans la mémoire privée.", "en": "Its content is in the private memory."},
-    "archive-backlog": {"fr": "Backlog clos archivé", "en": "Closed backlog archived"},
     "titre-journal": {"fr": "Journal", "en": "Journal"},
     "report-bmad": {"fr": "Reporté par BMAD depuis « {source} » : {resume}",
                     "en": "Deferred by BMAD from “{source}”: {resume}"},

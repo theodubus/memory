@@ -1,5 +1,5 @@
 """Le jalon 8 : l'installeur qui choisit l'adaptateur, pose la mémoire
-privée, migre et montre le diff de politique à la mise à jour ; et les
+privée et montre le diff de politique à la mise à jour ; et les
 trois entrées d'initialisation."""
 
 import io
@@ -11,7 +11,7 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 
-from socle import config, initialization as initialisation, installer as installeur, memory as memoire, migrations
+from socle import config, initialization as initialisation, installer as installeur, memory as memoire
 from socle.templates import gabarit
 
 MOTEUR = Path(__file__).resolve().parent.parent / "engine"
@@ -122,7 +122,7 @@ class TestMiseAJour(Base):
         installer(self.racine)
 
     def test_le_verrou_note_le_format(self):
-        self.assertIn(f"format = {migrations.FORMAT}", (self.racine / config.FORMAT_ACTUEL.lock).read_text())
+        self.assertIn(f"format = {config.FORMAT}", (self.racine / config.FORMAT_ACTUEL.lock).read_text())
 
     def test_la_politique_changee_est_montree_jamais_ecrasee(self):
         p = self.racine / config.FORMAT_ACTUEL.politique
@@ -162,19 +162,6 @@ class TestMiseAJour(Base):
         self.assertIn("« Socle — verify, contrôles, auto-test »", protection)
         self.assertLess(etapes.index(protection), len(etapes) - 1)
         self.assertFalse(any("protéger la branche" in e for e in installeur.et_maintenant(self.racine, True, [])))
-
-    def test_les_migrations_s_appliquent_dans_l_ordre(self):
-        faites = []
-        avant = dict(migrations.MIGRATIONS), migrations.FORMAT
-        migrations.MIGRATIONS.update({1: lambda c: faites.append(1) or ["un"], 2: lambda c: faites.append(2) or []})
-        try:
-            self.assertEqual(migrations.migrer(self.racine, 1, 3), ["format 1 → 2 : un", "format 2 → 3"])
-            self.assertEqual(faites, [1, 2])
-            with self.assertRaises(RuntimeError):
-                migrations.migrer(self.racine, 1, 4)
-        finally:
-            migrations.MIGRATIONS.clear()
-            migrations.MIGRATIONS.update(avant[0])
 
 
 class TestEntrees(Base):

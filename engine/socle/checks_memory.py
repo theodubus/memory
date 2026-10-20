@@ -35,8 +35,8 @@ est_prive = memoire.est_prive
 def format_memoire(ctx, r):
     """En-têtes, couches, identifiants, statuts : la mémoire se lit par script."""
     ch = ctx.projet.chemins
-    # Au format 3, le backlog est un dossier, qu'aucun sujet ne rend requis.
-    for requis in (ch.canonique, ch.actif) + (() if ch.backlog_en_dossier else (ch.backlog,)):
+    # Le backlog est un dossier, qu'aucun sujet ne rend requis.
+    for requis in (ch.canonique, ch.actif):
         if requis not in ctx.fichiers:
             r.erreur("memoire.format", trad("fichier de mémoire requis absent"), requis)
     for chemin, f in sorted(ctx.memoire.fichiers.items()):
@@ -151,18 +151,13 @@ def ancres(texte: str) -> set[str]:
 
 
 def _existe(ctx, chemin: str, historique: bool = False) -> bool:
-    """Le chemin existe, sous son nom ou sous celui que la migration du
-    format lui a donné : le journal et les demandes gelées gardent les
-    anciens chemins, qui restent valides (B-0032). Avec `historique` (une
-    couche qui ne se réécrit pas), un chemin qui a existé dans l'historique
-    du dépôt vaut aussi : la mémoire ne suit pas un renommage (ADR-0027)."""
+    """Le chemin existe. Avec `historique` (une couche qui ne se réécrit
+    pas), un chemin qui a existé dans l'historique du dépôt vaut aussi : la
+    mémoire ne suit pas un renommage (ADR-0027)."""
     chemin = chemin.strip("/")
     if _existe_tel_quel(ctx, chemin) or historique and _a_existe(ctx, chemin):
         return True
-    alias = config.sous_le_format(chemin, ctx.projet.chemins.format)
-    if alias != chemin and _existe_tel_quel(ctx, alias):
-        return True
-    return _basculee(ctx, alias) is not None or _backlog_unique(ctx, alias) or _dans_une_rustine(ctx, chemin)
+    return _basculee(ctx, chemin) is not None or _dans_une_rustine(ctx, chemin)
 
 
 RUSTINE = re.compile(r"^\+\+\+ b/(\S+)", re.M)
@@ -203,17 +198,10 @@ def _a_existe(ctx, chemin: str) -> bool:
     return chemin in connus
 
 
-def _backlog_unique(ctx, chemin: str) -> bool:
-    """Le backlog en un fichier, cité avant que le format 3 n'en fasse un
-    dossier : le journal et les demandes gelées le citent encore (ADR-0025)."""
-    return ctx.projet.chemins.backlog_en_dossier and chemin in (config.FORMAT_2.backlog,
-                                                                 config.FORMAT_2.dans_prive(config.FORMAT_2.backlog))
-
-
 def _basculee(ctx, chemin: str) -> str | None:
     """Le fichier qui remplace celui d'une décision basculée dans la mémoire
     privée (`ADR-0003-basculee.md` pour `ADR-0003-un-titre.md`, B-0029), ou
-    d'un sujet du backlog au format 3 (ADR-0025)."""
+    d'un sujet du backlog (ADR-0025)."""
     dossier, _, nom = chemin.rpartition("/")
     m = re.match(r"^((?:ADR|B)-\d{4})-.+\.md$", nom)
     if not m or not memoire.est_memoire(chemin):
@@ -226,12 +214,22 @@ BASCULEE = "basculee"
 
 
 def _alias(ctx, chemin: str) -> str:
-    """Le chemin tel qu'il existe : le sien, son nom au format du projet, ou
-    celui du fichier qui remplace une décision basculée."""
+    """Le chemin tel qu'il existe : le sien, ou celui du fichier qui remplace
+    une décision basculée."""
     if _existe_tel_quel(ctx, chemin.strip("/")):
         return chemin
-    alias = config.sous_le_format(chemin, ctx.projet.chemins.format)
-    return alias if _existe_tel_quel(ctx, alias) else (_basculee(ctx, alias) or alias)
+    return _basculee(ctx, chemin) or chemin
+
+
+def _lien_d_un_ancien_nom(ctx, chemin_doc: str, lien: str) -> bool:
+    """Un lien relatif d'une couche gelée, écrit quand son fichier avait un
+    autre nom : lu depuis l'un de ses anciens emplacements, il mène à un
+    chemin qui a existé (ADR-0027)."""
+    anciens = ctx._cache.setdefault("anciens-noms", {})
+    if chemin_doc not in anciens:
+        sortie = outils.git(ctx.racine, "log", "--follow", "--name-only", "--format=", "--", chemin_doc, check=False)
+        anciens[chemin_doc] = {c for c in sortie.splitlines() if c and c != chemin_doc}
+    return any(_a_existe(ctx, _normaliser_chemin(c.rpartition("/")[0], lien)) for c in anciens[chemin_doc])
 
 
 def _existe_tel_quel(ctx, chemin: str) -> bool:
@@ -358,47 +356,26 @@ def _verifier_lien(ctx, chemin_doc: str, dossier: str, cible: str, historique: b
     chemin, _, ancre = (unquote(x) for x in cible.partition("#"))
     if chemin:
         cible_n = _normaliser_chemin(dossier, chemin)
-        if not _existe(ctx, cible_n, historique) and not _ignore(ctx.racine, cible_n):
+        if not _existe(ctx, cible_n, historique) and not _ignore(ctx.racine, cible_n) \
+                and not (historique and _lien_d_un_ancien_nom(ctx, chemin_doc, chemin)):
             return trad("lien mort : {cible}", cible=cible)
     else:
         cible_n = chemin_doc
-    if ancre and cible_n.endswith(".md"):
+    # Une couche gelée ne voit vérifiés que ses fichiers : le titre qu'une
+    # ancre visait a pu changer depuis.
+    if ancre and cible_n.endswith(".md") and not historique:
         lieu = _alias(ctx, cible_n)
-        if _backlog_unique(ctx, lieu):
-            # L'ancre d'un sujet du fichier unique vaut tant que le sujet
-            # existe, dans son fichier ou archivé au journal.
-            if not any(ancre.startswith(liens.ancre(e.id) + "--") for e in ctx.memoire.entrees("B")):
-                return trad("ancre morte : {cible}", cible=cible)
-            return None
         texte = ctx.lire(lieu)
-        if texte is not None and ancre not in ancres(texte) and ancre_au_format_2(ancre) not in ancres(texte) \
-                and not _ancre_deplacee(ctx, lieu, ancre):
+        if texte is not None and ancre not in ancres(texte) and not _ancre_deplacee(ctx, lieu, ancre):
             return trad("ancre morte : {cible}", cible=cible)
     return None
 
 
 def _ancre_deplacee(ctx, chemin: str, ancre: str) -> bool:
-    """L'ancre d'une entrée qui a quitté ce fichier, écrite avant : une entrée
-    basculée en privé, qui n'a plus son titre ; ou un sujet du backlog
-    archivé au journal (B-0044, L1)."""
+    """L'ancre d'une entrée basculée en privé, écrite avant : elle n'a plus
+    son titre."""
     f = ctx.memoire.fichiers.get(chemin)
-    if f is not None and any(e.basculee and ancre.startswith(liens.ancre(e.id) + "--") for e in f.entrees):
-        return True
-    return chemin == ctx.projet.chemins.backlog and any(
-        e.archivee and ancre.startswith(liens.ancre(e.id) + "--") for e in ctx.memoire.entrees("B"))
-
-
-# Les titres qui citent un chemin renommé au format 2 changent d'ancre : une
-# ancre ancienne, dans une demande gelée ou le journal, reste valide.
-_ANCRES_RENOMMEES = [(liens.ancre(getattr(config.FORMAT_1, a)), liens.ancre(getattr(config.FORMAT_2, a)))
-                     for a in ("politique", "garde_fous", "adaptateur", "lock", "prive_lock")]
-
-
-def ancre_au_format_2(ancre: str) -> str:
-    """Une ancre de titre écrite avant la migration, sous son nom au format 2."""
-    for avant, apres in _ANCRES_RENOMMEES:
-        ancre = ancre.replace(avant, apres)
-    return re.sub(r"(?<![\w])memoire(?![\w])", "memory", ancre)
+    return f is not None and any(e.basculee and ancre.startswith(liens.ancre(e.id) + "--") for e in f.entrees)
 
 
 # Ce qui précède `:` sans désigner un dépôt : un schéma d'URL, un type de
@@ -594,7 +571,6 @@ def collisions(ctx, r):
 @controle("memoire.backlog")
 def backlog(ctx, r):
     """Chaque sujet a une origine ; un sujet clos a une référence, et il est rangé avec les clos."""
-    en_dossier = ctx.projet.chemins.backlog_en_dossier
     for e in ctx.memoire.entrees("B"):
         if e.basculee:
             continue
@@ -605,8 +581,8 @@ def backlog(ctx, r):
         if clos and not e.refs("ref"):
             r.erreur("memoire.backlog", trad("`{id}` est clos (« {statut} ») sans `ref` vers ce qui l'a clos",
                                              id=e.id, statut=e.statut), e.fichier, e.ligne)
-        # Au format 3, un sujet clos quitte les ouverts (ADR-0030).
-        if en_dossier and memoire.couche_attendue(e.fichier) == "backlog" and clos != memoire.parmi_les_clos(e.fichier):
+        # Un sujet clos quitte les ouverts (ADR-0030).
+        if memoire.couche_attendue(e.fichier) == "backlog" and clos != memoire.parmi_les_clos(e.fichier):
             r.erreur("memoire.backlog", trad("`{id}` est clos (« {statut} ») mais reste parmi les sujets ouverts : "
                                              "`python3 .socle/socle archive` le range dans `{dossier}/`",
                                              id=e.id, statut=e.statut, dossier=memoire.DOSSIER_CLOS) if clos else
@@ -722,13 +698,6 @@ def _norm(t: str) -> str:
     return "\n".join(l.rstrip() for l in t.strip().splitlines())
 
 
-def _sans_niveaux(t: str) -> str:
-    """Le texte, ses titres ramenés à un même niveau : la migration au format
-    3 remonte d'un niveau les sous-titres d'un sujet, sans rien en changer
-    d'autre (B-0064)."""
-    return re.sub(r"(?m)^#{1,6} ", "# ", _norm(t))
-
-
 @controle("memoire.ajout-seul", base=True)
 def ajout_seul(ctx, r):
     """Journal et décisions en ajout seul ; un fait ne disparaît pas, ne change
@@ -805,11 +774,12 @@ def _comparer(ctx, r, avant: dict, apres: dict):
                     r.erreur("memoire.ajout-seul", trad("fait `{ident}` réfuté : son texte se garde, barré ; "
                                                         "il ne se réécrit pas", ident=ident), b.fichier, b.ligne)
         elif a.type == "B":
-            if b is None:
-                r.erreur("memoire.ajout-seul", trad("sujet `{ident}` disparu du backlog sans archive dans le "
-                                                    "journal", ident=ident), a.fichier, a.ligne)
-            elif b.archivee and b.statut not in memoire.BACKLOG_CLOS:
-                r.erreur("memoire.ajout-seul", trad("sujet `{ident}` archivé sans être clos", ident=ident), b.fichier, b.ligne)
+            # Un sujet ne quitte pas le backlog : clos, il se range avec les
+            # clos (ADR-0030).
+            if b is None or b.archivee and not a.archivee:
+                r.erreur("memoire.ajout-seul", trad("sujet `{ident}` disparu du backlog : un sujet clos se range "
+                                                    "par `socle archive`, il ne s'efface pas", ident=ident),
+                         a.fichier, a.ligne)
         elif a.type == "D":
             if b is None:
                 r.erreur("memoire.ajout-seul", trad("demande `{ident}` supprimée (la retirer : `retirée : "
@@ -832,7 +802,7 @@ def _bascule(ctx, r, a: memoire.Entree, b: memoire.Entree):
                                             "{id}`) : son contenu serait perdu ; `socle private move` fait les "
                                             "deux", id=a.id), b.fichier, b.ligne)
         return
-    if not any(_sans_niveaux(a.corps) in _sans_niveaux(c.corps) and a.titre == c.titre for c in copies):
+    if not any(_norm(a.corps) in _norm(c.corps) and a.titre == c.titre for c in copies):
         r.erreur("memoire.ajout-seul", trad("`{id}` basculée : sa copie privée n'en reprend ni le titre ni le "
                                             "texte", id=a.id),
                  b.fichier, b.ligne)

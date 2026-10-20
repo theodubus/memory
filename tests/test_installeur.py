@@ -63,7 +63,7 @@ class TestAdoption(unittest.TestCase):
         self.assertIn(installeur.DEBUT_SOCLE, agents)
 
     def test_claude_md_garde_quand_le_projet_le_lit(self):
-        # Le cas de chess : un test du projet lit CLAUDE.md par son nom.
+        # Un projet dont un test lit CLAUDE.md par son nom.
         self.racine = depot({"CLAUDE.md": CLAUDE, "tests/test_doc.py": "open('CLAUDE.md').read()\n"})
         installer(self.racine)
         self.assertFalse((self.racine / "AGENTS.md").exists())

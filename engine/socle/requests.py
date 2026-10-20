@@ -6,9 +6,8 @@ et qu'aucun identifiant interne n'y paraisse sans description. La qualité de
 l'explication, elle, ne se contrôle pas : la réponse `contexte-insuffisant`
 renvoie la demande à l'agent, et ce renvoi reste consigné dans la réponse.
 
-Une réponse vit à côté de la demande, dans `<demande>.answer.toml`
-(`<demande>.reponse.toml` au format 1 de la mémoire), et
-seul l'humain l'écrit (`socle repondre`). Elle porte l'empreinte du texte
+Une réponse vit à côté de la demande, dans `<demande>.answer.toml`, et
+seul l'humain l'écrit (`socle answer`). Elle porte l'empreinte du texte
 exact auquel l'humain a répondu : la demande est gelée dès qu'elle a une
 réponse.
 """
@@ -116,7 +115,7 @@ class Demande:
 
 
 def chemin_reponse(chemin_demande: str) -> str:
-    return chemin_demande[: -len(".md")] + memoire.chemins_de(chemin_demande).reponse
+    return chemin_demande[: -len(".md")] + memoire.SUFFIXE_REPONSE
 
 
 def decouper_sections(texte: str) -> dict[str, str]:
@@ -391,7 +390,7 @@ def _toml_str(s: str) -> str:
 def validations_ajoutees(racine: Path, base: str | None, tete: str | None) -> list[Demande]:
     """Les demandes validées par une réponse AJOUTÉE dans la plage : une vieille
     validation ne couvre pas un assouplissement nouveau. Une demande se
-    reconnaît à son identifiant, qui ne change pas quand une migration
+    reconnaît à son identifiant, qui ne change pas quand un déplacement
     renomme son fichier et celui de sa réponse (relevé de la passe de
     recul, D)."""
     def cle(d: Demande) -> str:

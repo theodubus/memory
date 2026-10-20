@@ -26,8 +26,7 @@ def pris_ailleurs(racine: Path, type_: str) -> set[str]:
     motif = rf"^#{{1,6}} P?{re.escape(type_)}-[0-9A-Z-]+ "
     res = set()
     for ref in refs:
-        sortie = outils.git(racine, "grep", "-h", "-o", "-E", motif, ref, "--", *sorted(set(memoire.DOSSIERS)),
-                            check=False)
+        sortie = outils.git(racine, "grep", "-h", "-o", "-E", motif, ref, "--", memoire.DOSSIER, check=False)
         res |= {l.split()[1] for l in sortie.splitlines() if len(l.split()) > 1}
     return res
 
@@ -84,8 +83,8 @@ def renumeroter(projet: config.Projet, ident: str) -> list[str]:
     if base and ident in memoire.Memoire.charger(racine, base).definitions():
         raise ValueError(trad("`{ident}` existait avant la branche : ce n'est pas à elle de le renuméroter",
                               ident=ident))
-    if e.type == "D" and any(c.endswith(s) for c in outils.fichiers_courants(racine)
-                             for s in memoire.SUFFIXES_REPONSE if c.startswith(e.fichier.removesuffix(".md"))):
+    if e.type == "D" and any(c.endswith(memoire.SUFFIXE_REPONSE) and c.startswith(e.fichier.removesuffix(".md"))
+                             for c in outils.fichiers_courants(racine)):
         raise ValueError(trad("`{ident}` a reçu sa réponse : une demande répondue est gelée", ident=ident))
     pris = set(mem.definitions()) | pris_ailleurs(racine, e.type)
     defaut = outils.branche_par_defaut(racine)
