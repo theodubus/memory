@@ -2306,4 +2306,12 @@ MESSAGES: dict[str, str] = {
         "BMAD architecture decision cited in a version it no longer has",
     "une décision d'architecture de BMAD citée dans sa version actuelle passe la CI (B-0072)":
         "a BMAD architecture decision cited in its current version passes the CI (B-0072)",
+    "adaptateur : audit impossible ({erreur})":
+        "adapter  : audit impossible ({erreur})",
+    "adaptateur : !! langage(s) que l'adaptateur ({couvert}) ne couvre pas : {liste} — leurs tests, leur compilation "
+    "et leur mutation ne passent par aucune capacité ; le dire à l'humain par une demande (un autre adaptateur, ou "
+    "ces fichiers déclarés tiers)":
+        "adapter  : !! language(s) the adapter ({couvert}) does not cover: {liste} — their tests, build and mutation "
+        "go through no capability; tell the human through a request (another adapter, or these files declared "
+        "third-party)",
 }

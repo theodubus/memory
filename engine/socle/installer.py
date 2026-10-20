@@ -72,6 +72,18 @@ MARQUEURS_LANGAGE = (
 )
 
 
+def langages_presents(fichiers: list[str]) -> dict[str, list[str]]:
+    """Chaque langage dont le dépôt porte un fichier marqueur, à la racine ou
+    plus bas, et où (B-0011) : l'audit de l'adaptateur les compare à celui
+    qu'il couvre."""
+    res: dict[str, list[str]] = {}
+    for marqueurs, langage in MARQUEURS_LANGAGE:
+        for f in fichiers:
+            if f.rsplit("/", 1)[-1] in marqueurs and not f.startswith(config.DOSSIER + "/"):
+                res.setdefault(langage, []).append(f)
+    return res
+
+
 def detecter_langage(cible: Path) -> str | None:
     for fichiers, langage in MARQUEURS_LANGAGE:
         if any((cible / f).is_file() for f in fichiers):

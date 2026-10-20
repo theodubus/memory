@@ -149,6 +149,10 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
     except Exception as e:
         lignes.append(trad("demandes : illisibles ({erreur})", erreur=f"{type(e).__name__}: {e}"))
     try:
+        lignes += audit_adaptateur(projet)
+    except Exception as e:
+        lignes.append(trad("adaptateur : audit impossible ({erreur})", erreur=f"{type(e).__name__}: {e}"))
+    try:
         lignes += _bmad(projet)
     except Exception as e:
         lignes.append(trad("BMAD : illisible ({erreur})", erreur=f"{type(e).__name__}: {e}"))
@@ -209,6 +213,25 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
                 lignes.append(f"--- {chemin} ---")
                 lignes.append(texte.rstrip())
     return "\n".join(lignes)
+
+
+def audit_adaptateur(projet: config.Projet) -> list[str]:
+    """L'audit de l'adaptateur, à chaque état (B-0011) : un langage dont le
+    dépôt porte un fichier marqueur, et que l'adaptateur ne couvre pas, voit
+    son code échapper aux capacités ; la décision revient à l'humain."""
+    from socle import installer as installeur
+
+    couvert = projet.adaptateur.get("language")
+    if not couvert:
+        return []
+    presents = installeur.langages_presents(projet.hors_tiers(outils.fichiers_courants(projet.racine)))
+    autres = {l: f for l, f in presents.items() if l != couvert}
+    if not autres:
+        return []
+    liste = ", ".join(f"{l} ({', '.join(f[:2])}{' …' if len(f) > 2 else ''})" for l, f in sorted(autres.items()))
+    return [trad("adaptateur : !! langage(s) que l'adaptateur ({couvert}) ne couvre pas : {liste} — leurs tests, leur "
+                 "compilation et leur mutation ne passent par aucune capacité ; le dire à l'humain par une demande "
+                 "(un autre adaptateur, ou ces fichiers déclarés tiers)", couvert=couvert, liste=liste)]
 
 
 def _bmad(projet: config.Projet) -> list[str]:
