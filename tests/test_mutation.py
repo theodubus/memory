@@ -82,14 +82,14 @@ class TestAMesurer(unittest.TestCase):
     """B-0034, P1 : un module « à mesurer » n'a pas de plafond ; le verdict
     dit son compte, et `poser` l'écrit dans les garde-fous."""
 
-    GARDE_FOUS = '[mutation.caps]\n"src/parse.rs" = { pending = true }\n"src/table.rs" = { pending = true }\n'
+    GARDE_FOUS = '[mutation.caps]\n"src/eval.rs" = { pending = true }\n"src/tt.rs" = { pending = true }\n'
 
     def setUp(self):
         self.dossier = Path(tempfile.mkdtemp())
         out = self.dossier / "eval/mutants.out"
         out.mkdir(parents=True)
-        (out / "missed.txt").write_text("src/parse.rs:10:5: replace + with -\n")
-        (out / "caught.txt").write_text("src/table.rs:3:1: replace y\n")
+        (out / "missed.txt").write_text("src/eval.rs:10:5: replace + with -\n")
+        (out / "caught.txt").write_text("src/tt.rs:3:1: replace y\n")
         (self.dossier / ".socle").mkdir()
         (self.dossier / ".socle/guardrails.toml").write_text(self.GARDE_FOUS)
 
@@ -106,13 +106,13 @@ class TestAMesurer(unittest.TestCase):
     def test_un_module_a_mesurer_ne_casse_pas(self):
         r = mutation.verdict(self.projet(), self.dossier)
         self.assertTrue(r.reussi)
-        self.assertTrue(any("src/parse.rs : à mesurer — 1 survivant(s)" in c.message for c in r.constats))
+        self.assertTrue(any("src/eval.rs : à mesurer — 1 survivant(s)" in c.message for c in r.constats))
 
     def test_poser_ecrit_le_plafond_mesure(self):
         mutation.verdict(self.projet(), self.dossier, poser=True)
         texte = (self.dossier / ".socle/guardrails.toml").read_text()
-        self.assertIn('"src/table.rs" = { max = 0 }', texte)
-        self.assertRegex(texte, r'"src/parse.rs" = \{ max = 1, reason = "mesuré le [\d-]+ : 1 survivant\(s\)" \}')
+        self.assertIn('"src/tt.rs" = { max = 0 }', texte)
+        self.assertRegex(texte, r'"src/eval.rs" = \{ max = 1, reason = "mesuré le [\d-]+ : 1 survivant\(s\)" \}')
         self.assertTrue(mutation.verdict(self.projet(), self.dossier).reussi)
 
     def test_poser_ecrit_la_raison_dans_la_langue_du_projet(self):
@@ -122,7 +122,7 @@ class TestAMesurer(unittest.TestCase):
         with messages.dans("en"):
             mutation.verdict(self.projet(), self.dossier, poser=True)
         texte = (self.dossier / ".socle/guardrails.toml").read_text()
-        self.assertRegex(texte, r'"src/parse.rs" = \{ max = 1, reason = "measured on [\d-]+: 1 survivor\(s\)" \}')
+        self.assertRegex(texte, r'"src/eval.rs" = \{ max = 1, reason = "measured on [\d-]+: 1 survivor\(s\)" \}')
         self.assertTrue(mutation.verdict(self.projet(), self.dossier).reussi)
 
     def test_cmd_mutation_verdict_avec_poser(self):
@@ -137,14 +137,14 @@ class TestAMesurer(unittest.TestCase):
             code = cli.cmd_mutation_verdict(argparse.Namespace(results=str(self.dossier), poser=True))
         self.assertEqual(code, 0, flux.getvalue())
         self.assertIn("plafond posé", flux.getvalue())
-        self.assertIn('"src/table.rs" = { max = 0 }', (self.dossier / ".socle/guardrails.toml").read_text())
+        self.assertIn('"src/tt.rs" = { max = 0 }', (self.dossier / ".socle/guardrails.toml").read_text())
 
     def test_poser_plafonds_ne_touche_que_les_modules_a_mesurer(self):
         gf = self.dossier / ".socle/guardrails.toml"
         gf.write_text(self.GARDE_FOUS + '"src/x.rs" = { max = 4, reason = "équivalents" }\n')
-        mutation.poser_plafonds(self.projet(), {"src/parse.rs": 0, "src/x.rs": 0})
+        mutation.poser_plafonds(self.projet(), {"src/eval.rs": 0, "src/x.rs": 0})
         self.assertIn('"src/x.rs" = { max = 4, reason = "équivalents" }', gf.read_text())
-        self.assertIn('"src/parse.rs" = { max = 0 }', gf.read_text())
+        self.assertIn('"src/eval.rs" = { max = 0 }', gf.read_text())
 
     def test_poser_les_autres_formes_de_cle(self):
         """Relevé de la passe de recul, F : une clé entre guillemets simples,
@@ -152,18 +152,18 @@ class TestAMesurer(unittest.TestCase):
         import tomllib
 
         gf = self.dossier / ".socle/guardrails.toml"
-        gf.write_text("[mutation.caps]\n'src/parse.rs' = { pending = true }\n\n"
-                      '[mutation.caps."src/table.rs"]\npending = true\nreason = "pas encore balayé"\n')
-        self.assertEqual(mutation.poser_plafonds(self.projet(), {"src/parse.rs": 1, "src/table.rs": 0}), [])
+        gf.write_text("[mutation.caps]\n'src/eval.rs' = { pending = true }\n\n"
+                      '[mutation.caps."src/tt.rs"]\npending = true\nreason = "pas encore balayé"\n')
+        self.assertEqual(mutation.poser_plafonds(self.projet(), {"src/eval.rs": 1, "src/tt.rs": 0}), [])
         caps = tomllib.loads(gf.read_text())["mutation"]["caps"]
-        self.assertEqual(caps["src/parse.rs"]["max"], 1)
-        self.assertEqual(caps["src/table.rs"], {"max": 0})
+        self.assertEqual(caps["src/eval.rs"]["max"], 1)
+        self.assertEqual(caps["src/tt.rs"], {"max": 0})
 
     def test_un_plafond_non_ecrit_est_dit(self):
         gf = self.dossier / ".socle/guardrails.toml"
-        gf.write_text('[mutation]\ncaps = { "src/parse.rs" = { pending = true }, "src/table.rs" = { pending = true } }\n')
-        self.assertEqual(sorted(mutation.poser_plafonds(self.projet(), {"src/parse.rs": 1, "src/table.rs": 0})),
-                         ["src/parse.rs", "src/table.rs"])
+        gf.write_text('[mutation]\ncaps = { "src/eval.rs" = { pending = true }, "src/tt.rs" = { pending = true } }\n')
+        self.assertEqual(sorted(mutation.poser_plafonds(self.projet(), {"src/eval.rs": 1, "src/tt.rs": 0})),
+                         ["src/eval.rs", "src/tt.rs"])
         r = mutation.verdict(self.projet(), self.dossier, poser=True)
         self.assertTrue(any("plafond annoncé mais non écrit" in c.message for c in r.erreurs()))
 
