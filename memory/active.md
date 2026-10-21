@@ -26,6 +26,11 @@ garde en tete et on voit si ça finit par etre bloquant ».
   push, et elle n'est faite que validée par Théo ; Théo : « fais un petit
   effort de conception sur ce qu'est censé être une documentation »
   (J-2026-10-20-Y).
+- La documentation a un ton formel, clair, sans tutoiement ; elle répond à
+  une liste de questions, chacune à un seul endroit et entière, et chaque
+  fichier a une portée claire ; Théo : « il faut se lister ce a quoi on veut
+  répondre puis se dire ou ça a sa place » (J-2026-10-21-A). Le plan lui est
+  soumis dans la conversation avant la nouvelle version.
 
 - Une attente annoncée dans le récap (CI, banc, match) s'accompagne d'un
   réveil programmé pour y revenir (Théo, J-2026-10-13-N).
