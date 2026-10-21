@@ -32,7 +32,8 @@ besoin. Le plan :
 2. La documentation du produit : le README (ce que c'est, comment ça
    marche, l'installation en quelques commandes, ce qu'un projet reçoit),
    et un document du fonctionnement et des principes, qui remplace
-   l'ancien document du socle (devenu `docs/fonctionnement.md`) ; le guide de l'humain (`engine/socle/HELP.md`) reste
+   l'ancien document du socle (fondu depuis dans le README et le guide
+   d'utilisation, D-0038) ; le guide de l'humain (`engine/socle/HELP.md`) reste
    celui que l'installation pose.
 3. La documentation de fabrication rejoint un dossier à part : architecture,
    bancs, passe de recul, parcours, et l'histoire des échecs (le socle est

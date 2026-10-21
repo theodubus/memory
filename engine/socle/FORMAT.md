@@ -3,7 +3,7 @@
 La mémoire est un ensemble de fichiers markdown en cinq couches, plus la file
 des demandes humaines. Un script sait la lire : sans cela, aucun contrôle
 automatique ne serait possible. Ce document fait foi pour le format ; le code
-qui le lit est `socle/memoire.py`, les contrôles sont listés par
+qui le lit est `socle/memory.py`, les contrôles sont listés par
 `python3 .socle/socle checks`.
 
 ## Emplacements

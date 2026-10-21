@@ -1,6 +1,10 @@
-# Les adaptateurs
+# Spécification des adaptateurs
 
-## En une phrase
+Ce document spécifie les adaptateurs : ce qu'ils sont, les champs qu'ils
+déclarent, et ce que chaque adaptateur maintenu emploie. Il s'adresse à qui
+choisit un adaptateur ou en écrit un pour un autre langage.
+
+## Définition
 
 Un adaptateur est un petit fichier de réglages, en TOML, qui apprend au socle
 à faire **dans un langage donné** les quelques gestes qu'il ne peut pas
@@ -14,7 +18,7 @@ La mémoire et la documentation sont du markdown, que le moteur lit de la même
 façon dans n'importe quel projet. Les tests, non : chaque langage les écrit
 et les lance à sa manière.
 
-Prenons une règle du socle : **un correctif livre un test qui échoue sur le
+Soit une règle du socle : **un correctif livre un test qui échoue sur le
 commit d'avant**, preuve qu'il attrape le bogue corrigé. Pour l'appliquer, le
 moteur doit :
 
