@@ -48,6 +48,20 @@ class TestAtelierPartage(unittest.TestCase):
     """L6 : les cas tournent sur plusieurs fils ; une origine privée se
     prépare une fois, et chaque clone a son propre dossier."""
 
+    def test_l_atelier_coupe_la_maintenance_automatique_de_git(self):
+        """La CI de bd1fc51 : un clone parallèle de l'origine a perdu un objet
+        que la maintenance automatique de git rangeait en arrière-plan."""
+        import subprocess
+        from pathlib import Path
+
+        import socle
+
+        a = autotest.Atelier(Path(socle.__file__).resolve().parent.parent, False)
+        self.addCleanup(a.nettoyer)
+        lire = lambda cle: subprocess.run(["git", "config", "--get", cle], cwd=a.dossier, env=a.env,
+                                          capture_output=True, text=True).stdout.strip()
+        self.assertEqual([lire("gc.auto"), lire("maintenance.auto"), lire("receive.autogc")], ["0", "false", "false"])
+
     def test_une_origine_privee_se_prepare_une_fois_sur_plusieurs_fils(self):
         from concurrent.futures import ThreadPoolExecutor
         from pathlib import Path

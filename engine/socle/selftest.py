@@ -120,6 +120,15 @@ class Atelier:
             "GIT_AUTHOR_NAME": "autotest", "GIT_AUTHOR_EMAIL": "autotest@socle",
             "GIT_COMMITTER_NAME": "autotest", "GIT_COMMITTER_EMAIL": "autotest@socle",
             "GIT_CONFIG_NOSYSTEM": "1", "HOME": str(self.dossier),
+            # Les cas clonent l'origine en parallèle, en local : une
+            # maintenance automatique de git, lancée en arrière-plan par un
+            # commit ou une réception, y range les objets pendant qu'un clone
+            # les copie (« failed to copy file », « hardlink different from
+            # source »). Elle n'a rien à faire dans des dépôts jetables.
+            "GIT_CONFIG_COUNT": "3",
+            "GIT_CONFIG_KEY_0": "gc.auto", "GIT_CONFIG_VALUE_0": "0",
+            "GIT_CONFIG_KEY_1": "maintenance.auto", "GIT_CONFIG_VALUE_1": "false",
+            "GIT_CONFIG_KEY_2": "receive.autogc", "GIT_CONFIG_VALUE_2": "false",
         })
         self.n = 0
         # Les cas tournent sur plusieurs fils (L6) : le compteur des clones
