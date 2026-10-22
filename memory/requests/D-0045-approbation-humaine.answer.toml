@@ -1,0 +1,8 @@
+# Réponse humaine, écrite par l'humain lui-même (`socle answer`).
+# Elle porte sur le texte exact de D-0045-approbation-humaine.md, dont l'empreinte suit.
+reponse = "valider"
+texte = "B-0085 : les skills du socle protégés"
+par = "theodubus"
+date = "2026-10-23"
+canal = "terminal"
+empreinte = "sha256:fc38de77586727eb2e0ba9b2b2870da5e70e43a94d0b347d654c0d34e73f0580"
