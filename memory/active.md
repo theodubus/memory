@@ -31,6 +31,11 @@ garde en tete et on voit si ça finit par etre bloquant ».
   fichier a une portée claire ; Théo : « il faut se lister ce a quoi on veut
   répondre puis se dire ou ça a sa place » (J-2026-10-21-A). Le plan lui est
   soumis dans la conversation avant la nouvelle version.
+- La documentation ne rapporte pas les essais de l'outil, dit à quoi il
+  sert, reste aussi courte que le fonctionnement le permet, et le guide
+  suit le parcours de l'utilisateur ; Théo : « on dit qu'on l'a testé mais
+  on ne dit pas a quoi sert l'outil », « j'ai du mal à me projeter dans le
+  parcours utilisateur » (J-2026-10-22-A).
 
 - Une attente annoncée dans le récap (CI, banc, match) s'accompagne d'un
   réveil programmé pour y revenir (Théo, J-2026-10-13-N).
@@ -77,8 +82,8 @@ garde en tete et on voit si ça finit par etre bloquant ».
    la première version (J-2026-10-20-W) n'est pas validée par Théo
    (J-2026-10-20-Y).
 2. Fait aussi : B-0077, le moteur ne renvoie plus à la mémoire de ce dépôt
-   (J-2026-10-20-X). La publication du paquet du seul produit (B-0042)
-   attend Théo : D-0037 (pip depuis GitHub, PyPI, une archive, ou rien).
+   (J-2026-10-20-X). D-0037 répondue `rien` pour aujourd'hui ; à terme, le
+   dépôt de distribution séparé (B-0083), à la première version mûre.
 3. Ensuite B-0079 (session reprise hors de la racine, non détectée), B-0080
    (un clone sans la branche par défaut), B-0081 (une demande à plusieurs
    réponses positives ne valide rien), B-0082 (les noms d'une classe du

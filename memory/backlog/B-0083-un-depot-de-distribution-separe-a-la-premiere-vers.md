@@ -20,3 +20,8 @@ liens que les projets installés gardent vers l'atelier (le lanceur et les
 gabarits n'en ont pas ; la documentation du produit, si) ; et si un
 paquet PyPI vient en plus (D-0037). Une publication et un changement de
 visibilité : des gestes de Théo, sur demande.
+
+Le 22 oct., Théo le veut à terme (J-2026-10-22-A) : `rien` à D-0037 ne vaut
+que pour aujourd'hui, et le dépôt de distribution est l'étape prévue à la
+première version mûre, pour épargner à l'utilisateur la friction de la
+séparation.
