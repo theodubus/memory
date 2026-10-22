@@ -85,8 +85,11 @@ garde en tete et on voit si ça finit par etre bloquant ».
    lequel, et comment, est à demander à Théo.
 3. Faits en attendant le pilote : B-0078, B-0079, B-0080 (J-2026-10-22-C).
    B-0081 et B-0082 faits sur les réponses de Théo (D-0040, D-0041).
-   B-0066, les skills : étudié, la conception attend Théo (D-0042). Puis
-   B-0071.
-   B-0076 revient à Théo. Attendent le pilote ou des données : B-0009,
-   B-0010, B-0012 ; attend le dépôt de distribution : B-0006 ; gardés en
-   tête : B-0018, B-0048.
+4. En cours : B-0066, les skills, selon l'option 1 validée (D-0042) : les
+   skills du socle posés par l'installeur, les instructions allégées, les
+   skills du projet écrits par l'agent, deux contrôles avec leurs défauts
+   injectés. Ensuite B-0084.
+5. B-0076 : Théo pousse son commit, arrêté par un test sous Python 3.14,
+   corrigé depuis (J-2026-10-22-G) ; puis le dernier repli de
+   compatibilité part. Attendent le pilote : B-0010, B-0012, B-0071 ; le
+   dépôt de distribution : B-0083 ; gardé en tête : B-0048.

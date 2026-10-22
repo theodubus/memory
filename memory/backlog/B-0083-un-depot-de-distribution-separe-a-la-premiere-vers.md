@@ -25,3 +25,11 @@ Le 22 oct., Théo le veut à terme (J-2026-10-22-A) : `rien` à D-0037 ne vaut
 que pour aujourd'hui, et le dépôt de distribution est l'étape prévue à la
 première version mûre, pour épargner à l'utilisateur la friction de la
 séparation.
+
+Le 22 oct., il reprend deux sujets abandonnés à son profit (J-2026-10-22-G).
+B-0042, le paquet installable par pip : la question d'un paquet en plus du
+dépôt de distribution, déjà posée ici. B-0006, comparer l'empreinte du
+moteur à la version publiée : sans version publiée, rien à comparer, et le
+moteur comme son verrou sont des fichiers protégés ; le dépôt de
+distribution pourra publier l'empreinte de chaque version, que la CI d'un
+projet comparera.
