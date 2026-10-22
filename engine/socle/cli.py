@@ -972,7 +972,12 @@ def main(argv=None) -> int:
             return 0
         args = p.parse_args(argv)
         try:
-            return args.f(args)
+            code = args.f(args)
+            # Une sortie tamponnée (128 Kio depuis Python 3.14) ne part qu'ici :
+            # le tube fermé se constate dans ce bloc, pas à l'arrêt de
+            # l'interpréteur, qui le dirait et rendrait 120.
+            sys.stdout.flush()
+            return code
         except BrokenPipeError:
             # Le lecteur s'en est allé (`| head -1`) : ce n'est pas une
             # panne. La sortie restante part dans le vide, pour que l'arrêt de

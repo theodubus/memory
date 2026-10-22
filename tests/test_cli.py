@@ -257,6 +257,28 @@ class TestTubeFerme(unittest.TestCase):
         self.assertNotIn("BrokenPipeError", erreurs)
         self.assertEqual(p.returncode, 0)
 
+    def test_une_sortie_tamponnee_jusqu_au_bout_constate_aussi_le_tube_ferme(self):
+        """Python 3.14 tamponne 128 Kio, 8 Kio avant : la sortie de `checks`
+        ne partait plus qu'à l'arrêt de l'interpréteur, hors de `main`, qui
+        disait « Exception ignored while flushing sys.stdout » et rendait 120.
+        Le push de Théo s'y est arrêté."""
+        import contextlib
+        import io
+
+        racine = Path(__file__).resolve().parent.parent
+        lecture, ecriture = os.pipe()
+        os.close(lecture)  # le lecteur s'en va avant que la commande n'écrive
+        flux = io.TextIOWrapper(io.BufferedWriter(io.FileIO(ecriture, "w"), buffer_size=1 << 20), encoding="utf-8")
+        avant, sys.stdout = sys.stdout, flux
+        try:
+            code = cli.main(["--root", str(racine), "checks"])
+            flux.flush()  # ce que fait l'arrêt de l'interpréteur
+        finally:
+            sys.stdout = avant
+            with contextlib.suppress(BrokenPipeError):
+                flux.close()
+        self.assertEqual(code, 0)
+
 
 class TestSignataire(unittest.TestCase):
     """B-0073 : le nom de l'humain, dans la politique, signe ses réponses
