@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0081 — Une demande dont plusieurs réponses sont positives ne valide rien
 
-> statut : ouvert · origine : J-2026-10-20-U · lu : backlog@09b7dcc5
+> statut : fait · origine : J-2026-10-20-U · ref : D-0040 · lu : backlog@09b7dcc5
 
 D-0033 offrait `tout`, `compatibilite-seule` et `refuser` ; Théo a répondu
 `tout`, qui autorise la suppression des tests qu'elle nomme, mais le moteur

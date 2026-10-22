@@ -202,7 +202,10 @@ révélée impossible à trancher pour l'humain.
   ce qui se passe si l'humain valide, refuse, ne répond pas ;
   « Recommandation » sépare le vérifié du supposé.
 - « Réponses possibles » est une liste `` - `valeur` — sens `` qui propose
-  `contexte-insuffisant`.
+  `contexte-insuffisant`. Une demande qui nomme un test du projet ou une clé
+  des seuils propose aussi `valider` : seule cette réponse autorise à les
+  changer, et les contrôles cherchent leur nom dans le texte de la demande
+  validée.
 
 La réponse vit dans `<demande>.answer.toml`. L'humain répond dans la
 conversation, et l'agent consigne sa réponse avec le texte exact

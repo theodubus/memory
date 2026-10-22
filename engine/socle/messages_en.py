@@ -1586,6 +1586,12 @@ MESSAGES: dict[str, str] = {
         "“Possible answers”: at least two answers, as a list `- \\`value\\` — meaning`",
     "« Réponses possibles » doit proposer `{renvoi}`":
         "“Possible answers” must offer `{renvoi}`",
+    "« Réponses possibles » : la demande nomme {noms}, que seule une réponse `{positive}` autorise à changer, mais "
+    "ne propose pas `{positive}` ; la proposer pour l'option qui y touche (une autre option mène à une demande "
+    "nouvelle)":
+        "“Possible answers”: the request names {noms}, which only an answer `{positive}` authorises to change, but "
+        "does not offer `{positive}`; offer it for the option that touches them (another option leads to a new "
+        "request)",
     "identifiant `{ident}` cité sans description : le décrire en clair dans « Éléments cités » (`- <identifiant> — "
     "ce que c'est, en une phrase`)":
         "identifier `{ident}` cited without a description: describe it in plain words in “Cited elements” (`- "
@@ -1868,6 +1874,8 @@ MESSAGES: dict[str, str] = {
         "human request with a bare identifier",
     "demande qui ne dit pas où regarder":
         "request that does not say where to look",
+    "demande qui nomme un test sans proposer `valider` : aucune réponse ne l'autoriserait":
+        "request that names a test without offering `approve`: no answer would authorise it",
     "couche de mémoire au-delà de son budget":
         "memory layer beyond its budget",
     "identifiant privé dans un fichier public":
@@ -2060,6 +2068,10 @@ MESSAGES: dict[str, str] = {
         "a command that only cites a refused action passes the agent's hook",
     "un mot proche d'un terme privé, sans l'être, passe le commit":
         "a word close to a private term, without being one, passes the commit",
+    "une demande de choix qui ne nomme ni test ni seuil passe sans `valider`, et une demande qui nomme un test "
+    "passe avec lui":
+        "a choice request that names neither a test nor a threshold passes without `approve`, and a request that "
+        "names a test passes with it",
     "un balayage de mutation planifié qui tourne passe la CI":
         "a scheduled mutation sweep that runs passes the CI",
     "un balayage de mutation sous le plafond passe le verdict":

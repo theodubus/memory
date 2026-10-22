@@ -343,6 +343,15 @@ def demande_bonne(a: Atelier, c: Path) -> str:
     return DEMANDE_BONNE.replace("- B-0001 —", f"- B-0001@{empreinte(a, c, 'B-0001')} —")
 
 
+def _demande_de_choix(a: Atelier, c: Path, cite: str) -> str:
+    """La demande saine, en choix entre deux réponses dont aucune n'est
+    `valider`, qui cite `cite` à l'appui de sa recommandation."""
+    return (demande_bonne(a, c)
+            .replace("Vérifié : un seul appelant.", f"Vérifié : un seul appelant, que {cite} exerce.")
+            .replace("- `valider` — je refonds d'abord.", "- `refondre` — je refonds d'abord.")
+            .replace("- `refuser` — j'ajoute tel quel.", "- `ajouter` — j'ajoute tel quel."))
+
+
 ADR_ESSAI = """<!-- socle: couche=decisions zone=publique -->
 # ADR-0001 — Garder une seule fonction de multiplication
 
@@ -911,6 +920,12 @@ def _cas() -> list[Cas]:
     def _(a, c):
         sans = demande_bonne(a, c).replace("[calc.py](../../calc.py)", "le module")
         return etage_outil(a, c, "Write", {"file_path": str(c / "memory/requests/D-0001-refactor.md"), "content": sans})
+
+    @defaut("demande-sans-valider", "demande qui nomme un test sans proposer `valider` : aucune réponse ne "
+            "l'autoriserait", "agent", "geste sans valider")
+    def _(a, c):
+        return etage_outil(a, c, "Write", {"file_path": str(c / "memory/requests/D-0001-refactor.md"),
+                                           "content": _demande_de_choix(a, c, "`test_double`")})
 
     @defaut("budget-depasse", "couche de mémoire au-delà de son budget", "git", "memoire.budgets")
     def _(a, c):
@@ -1548,6 +1563,14 @@ def _temoins() -> list[tuple[str, Callable]]:
         maj_memoire(c, "Un module de constantes, mesuré.")
         return etage_ci(a, c)
 
+    @temoin("une demande de choix qui ne nomme ni test ni seuil passe sans `valider`, et une demande qui nomme "
+            "un test passe avec lui")
+    def _(a, c):
+        chemin = str(c / "memory/requests/D-0001-refactor.md")
+        return (etage_outil(a, c, "Write", {"file_path": chemin, "content": _demande_de_choix(a, c, "la fonction")})
+                or etage_outil(a, c, "Write", {"file_path": chemin, "content": demande_bonne(a, c).replace(
+                    "Vérifié : un seul appelant.", "Vérifié : un seul appelant, que `test_double` exerce.")}))
+
     @temoin("une commande qui ne fait que citer une action refusée passe le hook de l'agent")
     def _(a, c):
         lanceur = ".socle/" + "socle"
@@ -2026,6 +2049,7 @@ RAISONS_AGENT = {
     "demande non lue": "n'a pas pu être lue par l'humain",
     "hooks non chargés": "LES HOOKS DE L'AGENT NE SONT PAS CHARGÉS",
     "commit sans filtre": "commit d'agent sans aucun passage du filtre",
+    "geste sans valider": "que seule une réponse `valider` autorise à changer",
 }
 
 

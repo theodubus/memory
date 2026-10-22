@@ -255,6 +255,15 @@ def linter(d: Demande, projet: config.Projet) -> list[str]:
                                "sens`"))
         if RENVOI not in {langue.reponse(x) for x in possibles}:
             fautes.append(trad("« Réponses possibles » doit proposer `{renvoi}`", renvoi=RENVOI))
+        if REPONSE_POSITIVE not in {langue.reponse(x) for x in possibles}:
+            nommes = gestes_nommes(d, projet)
+            if nommes:
+                fautes.append(trad("« Réponses possibles » : la demande nomme {noms}, que seule une réponse "
+                                   "`{positive}` autorise à changer, mais ne propose pas `{positive}` ; la "
+                                   "proposer pour l'option qui y touche (une autre option mène à une demande "
+                                   "nouvelle)", noms=", ".join(f"`{n}`" for n in nommes[:5]),
+                                   positive=langue.mot(langue.REPONSES, REPONSE_POSITIVE,
+                                                       langue.du_projet(projet))))
 
     # Aucun identifiant interne sans description, dans la même demande.
     decrits = descriptions(d.sections.get("elements-cites", ""), motifs_internes(projet))
@@ -266,6 +275,29 @@ def linter(d: Demande, projet: config.Projet) -> list[str]:
                      "» (`- <identifiant> — ce que c'est, en une phrase`)", ident=ident)
             )
     return fautes
+
+
+def gestes_nommes(d: Demande, projet: config.Projet) -> list[str]:
+    """Les tests du projet et les clés des seuils que la demande nomme : ce
+    que lisent, dans une demande validée, les deux contrôles qui acceptent une
+    validation (`tests.attendus`, `cliquet.garde-fous`). Une demande qui en
+    nomme sans proposer `valider` ne peut rien autoriser, quoi que l'humain
+    réponde (D-0040)."""
+    from socle import checks_ratchet as cliquet, checks_tests, tests_reader as tests_lecture
+
+    nommes = []
+    cfg = checks_tests.cfg_tests(projet)
+    if cfg is not None:
+        for chemin in outils.filtrer(outils.fichiers_courants(projet.racine), cfg.get("paths", []),
+                                     cfg.get("exclude", [])):
+            try:
+                texte = (projet.racine / chemin).read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                continue
+            nommes += [f.nom for f in tests_lecture.extraire(texte, chemin, cfg)
+                       if f.est_test and f.nom not in nommes and checks_tests._nomme(d.texte, f.nom)]
+    nommes += [c for c in map(cliquet._cle, cliquet.aplatir(projet.garde_fous)) if c in d.texte]
+    return nommes
 
 
 def descriptions(bloc: str, motifs: list[re.Pattern]) -> set[str]:

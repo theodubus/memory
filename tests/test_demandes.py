@@ -118,6 +118,56 @@ class TestContrat(unittest.TestCase):
         self.assertTrue(any("gabarit laissé tel quel" in f for f in fautes), fautes)
 
 
+class TestUneDemandeQuiAutorise(unittest.TestCase):
+    """D-0040 (B-0081) : une demande aux réponses `tout`, `compatibilite-seule`
+    et `refuser` nommait les tests à supprimer ; la réponse `tout` n'en
+    autorisait aucun, et rien ne l'avait dit à la rédaction."""
+
+    def setUp(self):
+        import shutil
+        import tempfile
+        import tomllib
+
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-demande-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        (self.racine / "tests").mkdir()
+        (self.racine / "tests/test_parser.py").write_text(
+            "import unittest\n\n\nclass T(unittest.TestCase):\n    def test_tolerance(self):\n"
+            "        self.assertEqual(2 * 2, 4)\n")
+        adaptateur = tomllib.loads((Path(demandes.__file__).parent / "adapters/python.toml").read_text())
+        self.projet = config.Projet(racine=self.racine, adaptateur=adaptateur,
+                                    garde_fous={"mutation": {"caps": {"parser.rs": {"max": 3}}}})
+
+    def _sans_valider(self, texte):
+        return texte.replace("- `valider` — le plafond passe à 5.", "- `relever` — le plafond passe à 5.")
+
+    def test_qui_nomme_un_test_sans_proposer_valider_est_refusee(self):
+        texte = self._sans_valider(CONFORME.replace("pourraient changer ses performances.",
+                                                    "pourraient changer ses performances (`test_tolerance`)."))
+        self.assertEqual(demandes.gestes_nommes(_demande(texte), self.projet), ["test_tolerance"])
+        fautes = demandes.linter(_demande(texte), self.projet)
+        self.assertEqual(len(fautes), 1)
+        self.assertIn("`test_tolerance`", fautes[0])
+        self.assertIn("ne propose pas `valider`", fautes[0])
+
+    def test_qui_nomme_une_cle_des_seuils_sans_proposer_valider_est_refusee(self):
+        texte = self._sans_valider(CONFORME.replace("de 3 à 5.\n\n## Contexte",
+                                                    'de 3 à 5 (`mutation.caps."parser.rs".max`).\n\n## Contexte'))
+        fautes = demandes.linter(_demande(texte), self.projet)
+        self.assertEqual(len(fautes), 1)
+        self.assertIn('`mutation.caps."parser.rs".max`', fautes[0])
+
+    def test_qui_propose_valider_ou_ne_nomme_rien_passe(self):
+        nomme = CONFORME.replace("pourraient changer ses performances.",
+                                 "pourraient changer ses performances (`test_tolerance`).")
+        self.assertEqual(demandes.linter(_demande(nomme), self.projet), [])
+        self.assertEqual(demandes.linter(_demande(self._sans_valider(CONFORME)), self.projet), [])
+        # Un mot qui contient le nom d'un test sans l'être ne compte pas.
+        voisin = self._sans_valider(CONFORME.replace("pourraient changer ses performances.",
+                                                     "pourraient changer ses performances (`test_tolerance_2`)."))
+        self.assertEqual(demandes.linter(_demande(voisin), self.projet), [])
+
+
 class TestReponse(unittest.TestCase):
     def test_reponse_gelee(self):
         d = _demande(CONFORME)
