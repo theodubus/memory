@@ -84,7 +84,8 @@ garde en tete et on voit si ça finit par etre bloquant ».
 2. Maintenant : le projet pilote, l'essai du socle sur un vrai projet ;
    lequel, et comment, est à demander à Théo.
 3. Faits en attendant le pilote : B-0078, B-0079, B-0080 (J-2026-10-22-C).
-   À arbitrer par Théo, sans le pilote : B-0081, B-0082, B-0066, B-0071.
+   À arbitrer par Théo, sans le pilote : B-0081 (demande D-0040), B-0082
+   (demande D-0041), B-0066, B-0071.
    B-0076 revient à Théo. Attendent le pilote ou des données : B-0009,
    B-0010, B-0012 ; attend le dépôt de distribution : B-0006 ; gardés en
    tête : B-0018, B-0048.
