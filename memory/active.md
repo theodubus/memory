@@ -85,7 +85,8 @@ garde en tete et on voit si ça finit par etre bloquant ».
    lequel, et comment, est à demander à Théo.
 3. Faits en attendant le pilote : B-0078, B-0079, B-0080 (J-2026-10-22-C).
    B-0081 et B-0082 faits sur les réponses de Théo (D-0040, D-0041).
-   En étude : B-0066, les skills (J-2026-10-22-D). Puis B-0071.
+   B-0066, les skills : étudié, la conception attend Théo (D-0042). Puis
+   B-0071.
    B-0076 revient à Théo. Attendent le pilote ou des données : B-0009,
    B-0010, B-0012 ; attend le dépôt de distribution : B-0006 ; gardés en
    tête : B-0018, B-0048.
