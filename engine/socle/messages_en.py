@@ -4,6 +4,21 @@ sont les mêmes des deux côtés ; `tests/test_messages.py` le vérifie, et
 qu'aucun message enveloppé n'y manque."""
 
 MESSAGES: dict[str, str] = {
+    "socle — commit refusé : un second commit dans la même commande que le précédent. Le filtre de l'agent ne "
+    "passe qu'une fois par commande, et chaque commit d'agent doit le passer : lancer ce commit dans une commande "
+    "à part.":
+        "socle — commit refused: a second commit in the same command as the previous one. The agent's filter only "
+        "runs once per command, and each agent commit must go through it: run this commit in a separate command.",
+    "push sur {protegee}, prise pour la branche par défaut faute de mieux : ce clone n'a ni `origin/HEAD`, ni "
+    "`main`, ni `master`. Si la branche par défaut du dépôt distant est une autre, `git fetch origin <elle>` la fait "
+    "connaître ; relancer ensuite le push":
+        "push to {protegee}, taken for the default branch for want of better: this clone has no `origin/HEAD`, no "
+        "`main`, no `master`. If the remote repository's default branch is another one, `git fetch origin <it>` "
+        "makes it known; then run the push again",
+    "  ^ devinée : ce clone n'a ni `origin/HEAD`, ni `main`, ni `master` ; si la branche par défaut du dépôt distant "
+    "est une autre, `git fetch origin <elle>` la fait connaître":
+        "  ^ guessed: this clone has no `origin/HEAD`, no `main`, no `master`; if the remote repository's default "
+        "branch is another one, `git fetch origin <it>` makes it known",
     "sujet `{ident}` disparu du backlog : un sujet clos se range par `socle archive`, il ne s'efface pas":
         "topic `{ident}` gone from the backlog: a closed topic is filed by `socle archive`, it is not erased",
     "range les sujets clos du backlog à l'écart des ouverts":
@@ -1699,12 +1714,14 @@ MESSAGES: dict[str, str] = {
     "(`{depuis}`) : ses hooks ne sont pas chargés. {remede}":
         "socle — commit refused: agent commit without any pass of the agent's filter since the previous commit "
         "(`{depuis}`): its hooks are not loaded. {remede}",
-    "!! LES HOOKS DE L'AGENT NE SONT PAS CHARGÉS dans cette session : la trace n'a aucun SessionStart pour elle. Ni "
-    "le filtre des commandes, ni les contrôles de fin de tour, ni l'état au démarrage ne tournent. Le dire à "
+    "!! LES HOOKS DE L'AGENT NE SONT PAS CHARGÉS dans cette session : aucun n'a tiré pour elle récemment, ni au "
+    "démarrage ni avant cette commande (une session reprise hors de la racine du projet garde ses traces d'avant). "
+    "Ni le filtre des commandes, ni les contrôles de fin de tour, ni l'état au démarrage ne tournent. Le dire à "
     "l'humain avant tout travail. {remede}":
-        "!! THE AGENT'S HOOKS ARE NOT LOADED in this session: the trace has no SessionStart for it. Neither the "
-        "command filter, nor the end-of-turn checks, nor the state at startup run. Tell the human before any work. "
-        "{remede}",
+        "!! THE AGENT'S HOOKS ARE NOT LOADED in this session: none fired for it recently, neither at startup nor "
+        "before this command (a session resumed outside the project root keeps its traces from before). Neither "
+        "the command filter, nor the end-of-turn checks, nor the state at startup run. Tell the human before any "
+        "work. {remede}",
     # Les textes des adaptateurs maintenus (`absent`, `replacement`), écrits
     # dans leurs fichiers et traduits à l'affichage.
     "signal secondaire, jamais un garde-fou":

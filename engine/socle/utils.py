@@ -293,15 +293,27 @@ def lignes_changees(racine: Path, base: str | None, tete: str | None, chemin: st
 
 def branche_par_defaut(racine: Path) -> str | None:
     """`origin/main`, `origin/master`, ou ce que pointe `origin/HEAD`."""
+    return _branche_par_defaut(racine)[0]
+
+
+def branche_par_defaut_devinee(racine: Path) -> bool:
+    """La branche par défaut n'est que devinée : ce clone n'a ni `origin/HEAD`
+    ni `main` ni `master`, et la branche suivie de la branche courante en
+    tient lieu. Un clone qui n'a récupéré que sa branche de travail prend
+    ainsi celle-ci pour la branche par défaut."""
+    return _branche_par_defaut(racine)[1]
+
+
+def _branche_par_defaut(racine: Path) -> tuple[str | None, bool]:
     r = subprocess.run(
         ["git", "symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"],
         cwd=racine, capture_output=True, text=True,
     )
     if r.returncode == 0 and r.stdout.strip():
-        return r.stdout.strip().removeprefix("refs/remotes/")
+        return r.stdout.strip().removeprefix("refs/remotes/"), False
     for nom in ("origin/main", "origin/master", "main", "master"):
         if rev_existe(racine, nom):
-            return nom
+            return nom, False
     # Un dépôt neuf n'a parfois encore que sa branche de travail : ce qui est
     # déjà poussé sert alors de base, plutôt que pas de base du tout.
     r = subprocess.run(
@@ -309,8 +321,8 @@ def branche_par_defaut(racine: Path) -> str | None:
         cwd=racine, capture_output=True, text=True,
     )
     if r.returncode == 0 and r.stdout.strip():
-        return r.stdout.strip()
-    return None
+        return r.stdout.strip(), True
+    return None, False
 
 
 def base_de_travail(racine: Path) -> str | None:

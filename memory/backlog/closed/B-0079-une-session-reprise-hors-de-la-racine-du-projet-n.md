@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0079 — Une session reprise hors de la racine du projet n'est pas détectée par socle state
 
-> statut : ouvert · origine : J-2026-10-20-T · lu : backlog@1615e20b
+> statut : fait · origine : J-2026-10-20-T · ref : J-2026-10-22-C · lu : backlog@1615e20b
 
 Une session de Claude Code reprise hors de la racine du projet (après
 l'ajout d'un second dépôt, J-2026-10-20-T) n'a plus de hooks, mais

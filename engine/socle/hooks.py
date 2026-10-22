@@ -321,6 +321,11 @@ def irreversible(racine: Path, c: commandes.Commande) -> str | None:
             cibles = [r.split(":", 1)[-1].removeprefix("refs/heads/") for r in refs] or \
                 [outils.git(racine, "rev-parse", "--abbrev-ref", "HEAD", check=False).strip()]
             protegee = next((x for x in cibles if x in _branches_protegees(racine)), None)
+            if protegee and protegee not in ("main", "master") and outils.branche_par_defaut_devinee(racine):
+                return trad("push sur {protegee}, prise pour la branche par défaut faute de mieux : ce clone n'a ni "
+                            "`origin/HEAD`, ni `main`, ni `master`. Si la branche par défaut du dépôt distant est "
+                            "une autre, `git fetch origin <elle>` la fait connaître ; relancer ensuite le push",
+                            protegee=protegee)
             return trad("push sur la branche par défaut ({protegee})", protegee=protegee) if protegee else None
         if sous == "reset" and "--hard" in options:
             return "git reset --hard"
@@ -812,9 +817,16 @@ def git_pre_commit(projet: config.Projet) -> int:
         from socle.checks_ratchet import REMEDE_HOOKS
 
         tracer_refus(projet.racine, "git-pre-commit", "hooks.filtre")
-        print(trad("socle — commit refusé : commit d'agent sans aucun passage du filtre de l'agent depuis le "
-                   "commit précédent (`{depuis}`) : ses hooks ne sont pas chargés. {remede}", depuis=sans_filtre,
-                   remede=trad(REMEDE_HOOKS)), file=sys.stderr)
+        if hooks_non_charges(projet):
+            print(trad("socle — commit refusé : commit d'agent sans aucun passage du filtre de l'agent depuis le "
+                       "commit précédent (`{depuis}`) : ses hooks ne sont pas chargés. {remede}", depuis=sans_filtre,
+                       remede=trad(REMEDE_HOOKS)), file=sys.stderr)
+        else:
+            # Le filtre vient de passer pour la session : c'est un second commit
+            # dans la même commande que le précédent.
+            print(trad("socle — commit refusé : un second commit dans la même commande que le précédent. Le "
+                       "filtre de l'agent ne passe qu'une fois par commande, et chaque commit d'agent doit le "
+                       "passer : lancer ce commit dans une commande à part."), file=sys.stderr)
         return 1
     base = outils.base_de_travail(projet.racine)
     # On juge ce qui sera commité : l'index, figé en arbre par `write-tree`,
@@ -871,17 +883,33 @@ def compter_depuis_le_commit(racine: Path, session: str | None = None) -> str:
     return f"PreToolUse={sum(1 for l in filtre if l[2] == session)}"
 
 
-def hooks_non_charges(projet: config.Projet) -> bool:
-    """Sous Claude Code (`CLAUDECODE`), la trace n'a aucun SessionStart pour
-    la session courante (`CLAUDE_CODE_SESSION_ID`) : ses hooks ne sont pas
-    chargés, la session ayant démarré hors de la racine du projet.
-    Faux hors d'un agent, sans identifiant de session, ou quand la politique
-    n'outille pas Claude Code."""
+# Des hooks chargés laissent une trace fraîche : `socle state` tourne au
+# démarrage, juste après le SessionStart, ou dans une commande que le filtre
+# vient de voir passer. Une session reprise hors de la racine du projet
+# garde son identifiant et les traces d'avant la reprise, mais n'en ajoute
+# plus : la plus récente vieillit.
+FRAICHEUR_HOOKS = 600  # secondes
+
+
+def hooks_non_charges(projet: config.Projet, maintenant: datetime | None = None) -> bool:
+    """Sous Claude Code (`CLAUDECODE`), les hooks de la session courante
+    (`CLAUDE_CODE_SESSION_ID`) ne tirent pas : la trace n'a aucun
+    SessionStart pour elle, ou son dernier passage (démarrage ou filtre)
+    date de plus de `FRAICHEUR_HOOKS` secondes. La session a démarré, ou
+    repris, hors de la racine du projet. Faux hors d'un agent, sans
+    identifiant de session, ou quand la politique n'outille pas Claude Code."""
     session = os.environ.get("CLAUDE_CODE_SESSION_ID")
     if not os.environ.get("CLAUDECODE") or not session or not projet.pol("agents", "claude_code", defaut=True):
         return False
     lignes = [l.split("\t") for l in config.lire_trace(projet.racine)]
-    return not any(len(l) >= 3 and l[1] == "SessionStart" and l[2] == session for l in lignes)
+    passages = [l for l in lignes if len(l) >= 3 and l[2] == session and l[1] in ("SessionStart", "PreToolUse")]
+    if not any(l[1] == "SessionStart" for l in passages):
+        return True
+    try:
+        dernier = datetime.fromisoformat(passages[-1][0])
+    except ValueError:
+        return False
+    return ((maintenant or datetime.now(dernier.tzinfo)) - dernier).total_seconds() > FRAICHEUR_HOOKS
 
 
 def filtre_absent(projet: config.Projet) -> str | None:

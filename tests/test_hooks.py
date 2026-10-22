@@ -1,6 +1,6 @@
 import unittest
 
-from socle import hooks
+from socle import config, hooks
 from tests.test_bascule import Projet
 
 LANCEUR = ".socle/" + "socle"  # en morceaux : ce fichier ne lance rien
@@ -172,6 +172,24 @@ class TestHooksNonCharges(unittest.TestCase):
         with self.sous(CLAUDECODE="1", CLAUDE_CODE_SESSION_ID="s"):
             self.assertFalse(hooks.hooks_non_charges(self.projet))
 
+    def test_une_session_reprise_hors_de_la_racine_est_dite_sans_hooks(self):
+        """B-0079 : reprise hors de la racine, la session garde son
+        identifiant et le SessionStart d'avant la reprise, mais plus rien ne
+        tire ; l'état ne le voyait pas."""
+        from datetime import datetime, timedelta, timezone
+
+        trace = config.chemin_trace(self.racine)
+        trace.parent.mkdir(parents=True, exist_ok=True)
+        avant = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat(timespec="seconds")
+        trace.write_text(f"{avant}\tSessionStart\ts\tstartup\n{avant}\tPreToolUse\ts\tBash\n")
+        with self.sous(CLAUDECODE="1", CLAUDE_CODE_SESSION_ID="s"):
+            self.assertTrue(hooks.hooks_non_charges(self.projet))
+            # La commande qui lance l'état vient de passer le filtre : chargés.
+            hooks.tracer(self.racine, "PreToolUse", "s", "Bash")
+            self.assertFalse(hooks.hooks_non_charges(self.projet))
+            plus_tard = datetime.now(timezone.utc) + timedelta(seconds=hooks.FRAICHEUR_HOOKS + 1)
+            self.assertTrue(hooks.hooks_non_charges(self.projet, maintenant=plus_tard))
+
     def test_hors_d_un_agent_ou_sans_session_rien_n_est_dit(self):
         with self.sous():
             self.assertFalse(hooks.hooks_non_charges(self.projet))
@@ -187,6 +205,22 @@ class TestHooksNonCharges(unittest.TestCase):
             self.assertEqual(hooks.filtre_absent(self.projet), "PreToolUse=0")
         with self.sous():
             self.assertIsNone(hooks.filtre_absent(self.projet))
+
+    def test_un_second_commit_dans_la_meme_commande_le_dit(self):
+        """B-0078 : le filtre de l'agent a tiré pour la commande, qui commite
+        deux fois ; le second commit était refusé comme si les hooks
+        n'étaient pas chargés."""
+        import contextlib
+        import io
+
+        hooks.tracer(self.racine, "SessionStart", "s", "startup")
+        hooks.tracer(self.racine, "PreToolUse", "s", "Bash")
+        hooks.tracer(self.racine, "git-prepare-commit-msg")
+        sortie = io.StringIO()
+        with self.sous(CLAUDECODE="1", CLAUDE_CODE_SESSION_ID="s"), contextlib.redirect_stderr(sortie):
+            self.assertEqual(hooks.git_pre_commit(self.projet), 1)
+        self.assertIn("un second commit dans la même commande", sortie.getvalue())
+        self.assertNotIn("ne sont pas chargés", sortie.getvalue())
 
     def test_le_hook_avant_commit_refuse_sans_passage_du_filtre(self):
         import contextlib

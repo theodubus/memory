@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0080 — Un clone sans la branche par défaut prend sa propre branche pour elle, et le hook refuse son push
 
-> statut : ouvert · origine : J-2026-10-20-U · lu : backlog@412062c4
+> statut : fait · origine : J-2026-10-20-U · ref : J-2026-10-22-C · lu : backlog@412062c4
 
 Mesuré le 20 oct., dans une session neuve : le clone n'avait que la branche
 de travail ; `utils.branche_par_defaut` ne trouve ni `origin/HEAD`, ni

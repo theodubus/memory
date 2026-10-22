@@ -127,9 +127,11 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
     if hooks.hooks_non_charges(projet):
         # En tête, avant tout le reste : rien de ce qui suit n'est protégé
         # par les hooks de l'agent.
-        lignes.append(trad("!! LES HOOKS DE L'AGENT NE SONT PAS CHARGÉS dans cette session : la trace n'a aucun "
-                           "SessionStart pour elle. Ni le filtre des commandes, ni les contrôles de fin de tour, "
-                           "ni l'état au démarrage ne tournent. Le dire à l'humain avant tout travail. {remede}",
+        lignes.append(trad("!! LES HOOKS DE L'AGENT NE SONT PAS CHARGÉS dans cette session : aucun n'a tiré "
+                           "pour elle récemment, ni au démarrage ni avant cette commande (une session reprise hors "
+                           "de la racine du projet garde ses traces d'avant). Ni le filtre des commandes, ni les "
+                           "contrôles de fin de tour, ni l'état au démarrage ne tournent. Le dire à l'humain avant "
+                           "tout travail. {remede}",
                            remede=trad(REMEDE_HOOKS)))
         lignes.append("")
     lignes.append(trad("== {nom} — état dérivé par `socle state`, rien de recopié ==", nom=nom))
@@ -285,6 +287,9 @@ def _git(racine, projet) -> list[str]:
     if defaut:
         non = outils.git(racine, "log", "--oneline", f"{defaut}..HEAD", check=False).splitlines()
         res.append(trad("base     : {defaut} — non fusionné : {n} commit(s)", defaut=defaut, n=len(non)))
+        if outils.branche_par_defaut_devinee(racine):
+            res.append(trad("  ^ devinée : ce clone n'a ni `origin/HEAD`, ni `main`, ni `master` ; si la branche par "
+                            "défaut du dépôt distant est une autre, `git fetch origin <elle>` la fait connaître"))
         res += [f"  {l}" for l in non[:10]]
         if len(non) > 10:
             res.append(trad("  … et {n} autre(s)", n=len(non) - 10))

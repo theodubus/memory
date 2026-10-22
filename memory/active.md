@@ -83,9 +83,8 @@ garde en tete et on voit si ça finit par etre bloquant ».
    dépôt de distribution séparé (B-0083), à la première version mûre.
 2. Maintenant : le projet pilote, l'essai du socle sur un vrai projet ;
    lequel, et comment, est à demander à Théo.
-3. Ensuite B-0079 (session reprise hors de la racine, non détectée), B-0080
-   (un clone sans la branche par défaut), B-0081 (une demande à plusieurs
-   réponses positives ne valide rien), B-0082 (les noms d'une classe du
-   test de mutation). B-0076 revient à Théo. Puis B-0071 et B-0066. Les
-   autres sujets ouverts attendent des données ou Théo : B-0010, B-0012,
-   B-0009, B-0006, B-0018, B-0048, B-0078.
+3. Faits en attendant le pilote : B-0078, B-0079, B-0080 (J-2026-10-22-C).
+   À arbitrer par Théo, sans le pilote : B-0081, B-0082, B-0066, B-0071.
+   B-0076 revient à Théo. Attendent le pilote ou des données : B-0009,
+   B-0010, B-0012 ; attend le dépôt de distribution : B-0006 ; gardés en
+   tête : B-0018, B-0048.

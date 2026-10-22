@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0078 — Deux commits dans une même commande : le second est refusé comme si les hooks n'étaient pas chargés
 
-> statut : ouvert · origine : J-2026-10-20-R · lu : backlog@1615e20b
+> statut : fait · origine : J-2026-10-20-R · ref : J-2026-10-22-C · lu : backlog@1615e20b
 
 Mesuré le 20 oct. : deux `git commit` enchaînés dans une même commande de
 l'agent ; le premier passe, le second est refusé par `hooks.filtre`, « ses
