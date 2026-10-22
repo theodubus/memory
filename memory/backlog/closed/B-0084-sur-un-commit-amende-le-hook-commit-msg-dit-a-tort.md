@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0084 — Sur un commit amendé, le hook commit-msg dit à tort qu'un correctif n'a pas de test
 
-> statut : ouvert · origine : commit:c198ed9 · lu : backlog@42b2ad8b
+> statut : fait · origine : commit:c198ed9 · ref : J-2026-10-22-J · lu : backlog@42b2ad8b
 
 Le commit c198ed9 (le lint de D-0040) change `tests/test_demandes.py`.
 Amendé pour y ajouter la doc d'architecture, il a fait dire au hook

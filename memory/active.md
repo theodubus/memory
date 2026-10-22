@@ -85,8 +85,9 @@ garde en tete et on voit si ça finit par etre bloquant ».
    lequel, et comment, est à demander à Théo.
 3. Faits en attendant le pilote : B-0078, B-0079, B-0080 (J-2026-10-22-C).
    B-0081 et B-0082 faits sur les réponses de Théo (D-0040, D-0041).
-4. Fait : B-0066, les skills, selon l'option 1 de D-0042 (ADR-0034,
-   J-2026-10-22-H). Ensuite B-0084.
+4. Faits : B-0066, les skills, selon l'option 1 de D-0042 (ADR-0034,
+   J-2026-10-22-H) ; B-0084 (J-2026-10-22-J) ; la CI de l'auto-test
+   protégée de la maintenance de git (J-2026-10-22-I).
 5. B-0076 : la section `[code]` est poussée par Théo (bd1fc51) ; le retrait
    du repli et la réécriture de son test attendent D-0044. À Théo aussi :
    protéger les skills du socle dans la politique de ce dépôt (B-0085).

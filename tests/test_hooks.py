@@ -326,6 +326,44 @@ class TestCorrectifSansTest(Projet):
         git(racine, "add", "tests/test_double.py")
         self.assertIsNone(hooks.correctif_sans_test(projet, "fix: double accepte une chaîne"))
 
+    def test_un_correctif_amende_se_juge_contre_le_parent_du_commit_amende(self):
+        """B-0084 : amendé pour y ajouter une doc, un correctif qui portait
+        déjà son test se voyait dire qu'il n'en avait pas."""
+        from tests.test_bascule import git
+
+        racine = self.racine
+        (racine / "calc.py").write_text("def double(x):\n    return 2 * int(x)\n")
+        (racine / "tests").mkdir(exist_ok=True)
+        (racine / "tests/test_double.py").write_text("def test_chaine():\n    assert True\n")
+        git(racine, "add", "-A")
+        git(racine, "commit", "-qm", "fix: double accepte une chaîne", "--no-verify")
+        (racine / "docs/notes.md").write_text("Une ligne de doc de plus.\n")
+        git(racine, "add", "-A")
+        projet = config.Projet.charger(racine)
+        message = "fix: double accepte une chaîne"
+        self.assertIsNone(hooks.correctif_sans_test(projet, message, amendement=True))
+        # Le même index, en commit nouveau : il n'apporte bien aucun test.
+        self.assertIn("la CI le refusera", hooks.correctif_sans_test(projet, message, amendement=False))
+
+    def test_l_amendement_se_lit_dans_la_commande_de_git(self):
+        import os
+        import subprocess
+        import sys
+        from pathlib import Path
+
+        moteur = Path(hooks.__file__).resolve().parent.parent
+        code = "from socle import hooks; print(hooks.amendement_en_cours())"
+        # Le hook est l'enfant de la commande git : ici, d'un parent qui en
+        # porte les arguments.
+        parent = "import subprocess, sys; subprocess.run([sys.executable, '-c', sys.argv[1]])"
+
+        def lancer(*args):
+            return subprocess.run([sys.executable, "-c", parent, code, *args], capture_output=True, text=True,
+                                  env={**os.environ, "PYTHONPATH": str(moteur)}).stdout.strip()
+
+        self.assertEqual(lancer("commit", "--amend", "--no-edit"), "True")
+        self.assertEqual(lancer("commit", "-m", "x"), "False")
+
 
 class TestSousUnAgent(unittest.TestCase):
     def test_sous_un_agent(self):

@@ -1011,11 +1011,26 @@ def git_commit_msg(projet: config.Projet, fichier: str = "") -> int:
     return 0
 
 
-def correctif_sans_test(projet: config.Projet, message: str) -> str | None:
+def amendement_en_cours() -> bool:
+    """Le hook tourne sous un `git commit --amend` : git lance ses hooks
+    sans leur dire qu'il amende, mais sa ligne de commande le dit."""
+    import subprocess
+
+    try:
+        args = [x.decode(errors="replace") for x in Path(f"/proc/{os.getppid()}/cmdline").read_bytes().split(b"\0")]
+    except OSError:
+        r = subprocess.run(["ps", "-o", "args=", "-p", str(os.getppid())], capture_output=True, text=True)
+        args = r.stdout.split()
+    return "--amend" in args
+
+
+def correctif_sans_test(projet: config.Projet, message: str, amendement: bool | None = None) -> str | None:
     """Un correctif (`fix:`, `Corrige:`) dont le commit n'ajoute ni ne change
     aucun test : la CI le refusera (`tests.regression`), seule à pouvoir
     rejouer un test sur le commit d'avant. Le hook commit-msg le dit dès le
-    commit, sans refuser, quand l'amender suffit encore."""
+    commit, sans refuser, quand l'amender suffit encore. Un commit amendé se
+    juge contre le parent de celui qu'il remplace, qui porte peut-être déjà
+    ses tests (B-0084)."""
     from socle import checks_tests as controles_tests
 
     if not controles_tests.est_correctif(projet, message) or not outils.a_des_commits(projet.racine):
@@ -1025,7 +1040,12 @@ def correctif_sans_test(projet: config.Projet, message: str) -> str | None:
     if "command" not in cap or not arbre:
         return None
     motifs = cap.get("test_paths") or (controles_tests.cfg_tests(projet) or {}).get("paths", [])
-    touches = [f for f in outils.git(projet.racine, "diff", "--name-only", "-z", "HEAD", arbre,
+    if amendement is None:
+        amendement = amendement_en_cours()
+    parent = "HEAD"
+    if amendement:
+        parent = "HEAD^" if outils.rev_existe(projet.racine, "HEAD^") else outils.ARBRE_VIDE
+    touches = [f for f in outils.git(projet.racine, "diff", "--name-only", "-z", parent, arbre,
                                      check=False).split("\0") if f]
     if outils.filtrer(touches, motifs):
         return None
