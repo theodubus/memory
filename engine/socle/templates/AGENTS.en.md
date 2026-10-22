@@ -38,7 +38,7 @@ always keep it, and a new session only has the memory.
 | Decisions | `memory/decisions/` | one ADR per file; only its status changes afterwards |
 | Journal | `memory/journal/` | one dated entry per event; append only |
 | Backlog | `@@BACKLOG@@` | topics with status and origin; closed with a reference, then filed by `socle archive` |
-| Requests | `memory/requests/` | human decisions in a queue, under the contract below |
+| Requests | `memory/requests/` | human decisions in a queue, under the contract of the skill `socle-request` |
 
 An entry: `## F-NNNN — title`, then a line `> status : measured · proof : commit:<sha>`.
 Statuses of a fact: `measured` (with `proof`), `assumed`, `refuted` (title struck
@@ -48,7 +48,7 @@ An identifier is computed (`python3 .socle/socle new <type> "title"`), it is
 never guessed. In case of conflict, the order of authority is: the code and
 the tests, then the canonical memory, then the journal.
 
-**Private memory**, if the policy chooses one (`[private] mode`): new content goes into the private zone, memory/private/, for the layers the policy makes private (`socle new` does it by default); an instruction from the human about a given entry is followed with `socle new … --private` or `--public`, and an existing public entry is moved with `socle private move <ID>`, whose public history keeps the old text: tell the human. Nothing private is copied to public, neither a `P…` identifier, nor its content, nor in a commit message, a pull request or a comment. In companion mode, a private change is committed in the private repository, then `socle private lock`. A new private name (an idea, a client) is added to the list of private terms (`socle private term <term>`); only the human removes one. If the policy requires a review before publication (`[private] review`), show the human what is leaving, then record their agreement with their exact text (`socle reviewed --relayed --by <name> --quote-file <file>`): at each push, or in batches. An encrypted private request cannot be read on GitHub: give it in full in the conversation. Unavailable (the state says so), nothing is concluded about what depends on it.
+**Private memory**, if the policy chooses one (`[private] mode`): nothing private is copied to public, neither a `P…` identifier, nor its content, nor in a commit message, a pull request or a comment; unavailable (the state says so), nothing is concluded about what depends on it. Where to write, moving an entry, committing in companion mode, a review before publication: the skill `socle-private-memory`.
 
 ### Autonomy policy (`.socle/policy.toml`, changed by the human only)
 
@@ -63,28 +63,13 @@ the tests, then the canonical memory, then the journal.
 
 ### Human decision requests
 
-A request is read once the context is lost: it stands on its own.
-`python3 .socle/socle new request "<decision>"` lays out the skeleton of the
-eight fields: decision requested, context (the problem itself, summarised on
-the spot, not a pointer), cited elements (each described in plain words,
-never an identifier alone), where to look (a link to each document to read,
-and what to check there), options (effort, risk, reversibility),
-consequences (if the human approves, rejects, does not answer),
-recommendation (verified kept apart from assumed), possible answers
-including `insufficient-context`.
-The lint refuses an incomplete request. The human answers in the
-conversation; the agent records their answer, never choosing it, with the
-exact text:
-`python3 .socle/socle answer D-NNNN <answer> --relayed --by <name> --quote-file <file>`,
-and copies it into the journal. An answered request is frozen. An answer is
-only relayed to a request pushed as is: the human must have been able to
-read it. A test whose expected value changes while waiting for such a
-request, which names it, may stay changed in the tree at the end of the
-turn; it is only committed after the answer.
-A decision taken in session, the human present (approving a BMAD spec,
-settling an open question), is recorded at once with their answer word for
-word: `python3 .socle/socle decision "<question>" <answer> --relayed --by <name> --quote-file <file>`
-(`--about <path>` for what it approves).
+A decision that belongs to the human is put as a request, which reads on its
+own once the context is lost, and whose link is given in the conversation.
+The human answers in the conversation; the agent records their answer word
+for word, never choosing it, and copies it into the journal. A decision
+taken in session, the human present (approving a BMAD spec, settling an open
+question), is recorded at once in the same way. How: the skill
+`socle-request`.
 
 ### Reading the memory on demand
 
@@ -104,6 +89,23 @@ Reading is proven: a new decision, request or backlog topic cites what it
 read with its fingerprint (`ADR-NNNN@xxxxxxxx`, `read : decisions@…`,
 `read : backlog@…`). A stale or invented fingerprint is refused; the entry
 must be read again. `socle new` puts in the index fingerprint.
+
+### Skills
+
+A rare procedure is read in its skill, which the agent loads on its
+description: `socle-request` (writing a request, relaying an answer,
+recording a decision taken in session) and `socle-private-memory` (the
+private memory), in `.claude/skills/`, laid by the installer and protected;
+another agent reads their `SKILL.md` at that path.
+
+A project procedure that comes back (the journal shows the first time) is
+written as a skill the second time, in `.claude/skills/<name>/SKILL.md`: a
+name without the `socle-` or `bmad-` prefixes, a header with `name` (the
+folder's name) and `description` (what it does, and when to use it), and a
+journal entry that says so. A skill says how to do something, the memory
+what is and why: it copies nothing from it. Its commands, in code blocks,
+are judged as the hook would judge them; a command not to run is cited in
+the text.
 
 ### Before concluding
 

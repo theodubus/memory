@@ -188,7 +188,7 @@ def charger_controles() -> dict[str, Controle]:
     seule liste, pour que `socle checks` et l'exécution voient les mêmes."""
     from socle import (checks_bmad as controles_bmad, checks_ratchet as controles_cliquet,  # noqa: F401
                        checks_docs as controles_docs, checks_memory as controles_memoire,
-                       checks_tests as controles_tests, private as prive)
+                       checks_skills as controles_skills, checks_tests as controles_tests, private as prive)
 
     return REGISTRE
 

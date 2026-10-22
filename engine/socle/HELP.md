@@ -50,6 +50,11 @@ Chaque intervention de l'agent qui a agi se termine par deux lignes :
 commit, la CI, le backlog, les demandes en attente, ce qui revient à
 l'humain. La mémoire se lit dans `memory/`.
 
+Une procédure du projet qui revient, l'agent l'écrit en skill dans
+`.claude/skills/`, avec une entrée au journal : il la charge ensuite à la
+demande au lieu de la reconstituer. Ses skills sont contrôlés comme le
+reste ; ceux du socle, posés par l'installeur, sont protégés.
+
 ## 3. Répondre à l'agent
 
 **Une demande.** Quand une décision revient à l'humain (relâcher un seuil,

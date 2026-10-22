@@ -451,6 +451,64 @@ COMMANDES_HUMAINES = _Repere(("answer", "decision", "approve", "reviewed"))
 INSTALLER_PRIVE = _Repere(("private install",))
 
 
+def refus_bash(projet: config.Projet, cmd: str, cwd: str | None = None) -> str | None:
+    """La raison pour laquelle le hook refuse une commande du shell, ou rien :
+    le même jugement pour une commande que l'agent lance et pour une
+    commande qu'un skill lui ferait lancer (`skills.commandes`)."""
+    racine = projet.racine
+    # Chaque commande simple, découpée : ce qu'elle lance, pas le texte
+    # qu'elle cite (un heredoc, un message de commit).
+    simples = commandes.analyser(cmd)
+    en_plus = projet.pol("irreversible", "bash", defaut=IRREVERSIBLES_BASH) or []
+    for c in simples:
+        action = irreversible(racine, c) or next(
+            (" ".join(c.argv)[:120] for m in en_plus if re.search(m, " ".join(c.argv))), None)
+        if action:
+            return trad("commande irréversible ou externe ({action}) : « {commande} » — validation humaine "
+                        "requise (politique, point 4), et une demande validée ne la débloque pas : "
+                        "l'action revient à l'humain. Si c'est une décision, émettre une demande "
+                        "`D-NNNN` ; une fois l'action décidée, l'inscrire au backlog avec `pour : humain`, "
+                        "sa commande exacte, où la lancer et ce qu'elle doit produire. Puis continuer sur "
+                        "autre chose.",
+                        action=action, commande=cmd.strip()[:200])
+        saut = contournement(racine, c, cwd)
+        if saut:
+            return trad("`{saut}` contourne les hooks du projet : la CI exécute tout, et rien ne la "
+                        "contourne. Corriger ce que le hook refuse ; s'il refuse à tort, l'inscrire au "
+                        "backlog et le dire à l'humain.", saut=saut)
+        h = commande_humaine(c)
+        if h and h[0] == "private install":
+            return trad("`socle private install` est réservé à l'humain : il pousse vers le dépôt privé "
+                        "et crée une clé de déploiement (politique, point 4). L'inscrire au backlog avec "
+                        "`pour : humain`.")
+        if h and h[0] == "approve":
+            return trad("`socle approve` est réservé à l'humain : il valide ses propres changements "
+                        "protégés.")
+        # Les drapeaux du relais se cherchent dans la commande elle-même,
+        # pas ailleurs dans le texte.
+        relais = "--relayed" in h[1] and any(x.split("=", 1)[0] in ("--quote", "--quote-file") for x in h[1]) \
+            if h else True
+        if not relais:
+            return trad("l'agent ne répond jamais à la place de l'humain. Il ne peut que relayer une "
+                        "réponse donnée dans la conversation : `socle answer D-NNNN <réponse> --relayed "
+                        "--by <nom> --quote-file <texte exact>`, `socle decision "
+                        "\"<question>\" <réponse> --relayed --by <nom> --quote-file <texte exact>` pour une "
+                        "décision prise en séance, ou `socle reviewed --relayed --by <nom> "
+                        "--quote-file <texte exact>` pour une relecture avant publication.")
+    faute = _fuite_bash(projet, cmd)
+    if faute:
+        return faute
+    reglage = next((x for c in simples for x in ecrits(c) if REGLAGES_AGENT.search(x)), None)
+    if reglage:
+        return trad("`{reglage}` : les réglages de Claude Code commandent ses hooks, seul l'humain les "
+                    "modifie (un réglage local peut les couper tous).", reglage=reglage)
+    cible = ecriture_protegee(projet, cmd)
+    if cible:
+        return trad("écriture d'un fichier protégé ({cible}) par le shell : seul l'humain modifie la "
+                    "politique, les hooks, la CI et le moteur (relance de l'installeur).", cible=cible)
+    return None
+
+
 def pre_tool_use(projet: config.Projet, entree: dict) -> int:
     racine = projet.racine
     outil = entree.get("tool_name", "")
@@ -469,57 +527,9 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
                               "l'humain. Émettre une demande, travailler sur autre chose en attendant.", outil=outil))
 
     if outil == "Bash":
-        cmd = args.get("command", "")
-        # Chaque commande simple, découpée : ce qu'elle lance, pas le texte
-        # qu'elle cite (un heredoc, un message de commit).
-        simples = commandes.analyser(cmd)
-        en_plus = projet.pol("irreversible", "bash", defaut=IRREVERSIBLES_BASH) or []
-        for c in simples:
-            action = irreversible(racine, c) or next(
-                (" ".join(c.argv)[:120] for m in en_plus if re.search(m, " ".join(c.argv))), None)
-            if action:
-                return refus(trad("commande irréversible ou externe ({action}) : « {commande} » — validation humaine "
-                                  "requise (politique, point 4), et une demande validée ne la débloque pas : "
-                                  "l'action revient à l'humain. Si c'est une décision, émettre une demande "
-                                  "`D-NNNN` ; une fois l'action décidée, l'inscrire au backlog avec `pour : humain`, "
-                                  "sa commande exacte, où la lancer et ce qu'elle doit produire. Puis continuer sur "
-                                  "autre chose.",
-                                  action=action, commande=cmd.strip()[:200]))
-            saut = contournement(racine, c, entree.get("cwd"))
-            if saut:
-                return refus(trad("`{saut}` contourne les hooks du projet : la CI exécute tout, et rien ne la "
-                                  "contourne. Corriger ce que le hook refuse ; s'il refuse à tort, l'inscrire au "
-                                  "backlog et le dire à l'humain.", saut=saut))
-            h = commande_humaine(c)
-            if h and h[0] == "private install":
-                return refus(trad("`socle private install` est réservé à l'humain : il pousse vers le dépôt privé "
-                                  "et crée une clé de déploiement (politique, point 4). L'inscrire au backlog avec "
-                                  "`pour : humain`."))
-            if h and h[0] == "approve":
-                return refus(trad("`socle approve` est réservé à l'humain : il valide ses propres changements "
-                                  "protégés."))
-            # Les drapeaux du relais se cherchent dans la commande elle-même,
-            # pas ailleurs dans le texte.
-            relais = "--relayed" in h[1] and any(x.split("=", 1)[0] in ("--quote", "--quote-file") for x in h[1]) \
-                if h else True
-            if not relais:
-                return refus(trad("l'agent ne répond jamais à la place de l'humain. Il ne peut que relayer une "
-                                  "réponse donnée dans la conversation : `socle answer D-NNNN <réponse> --relayed "
-                                  "--by <nom> --quote-file <texte exact>`, `socle decision "
-                                  "\"<question>\" <réponse> --relayed --by <nom> --quote-file <texte exact>` pour une "
-                                  "décision prise en séance, ou `socle reviewed --relayed --by <nom> "
-                                  "--quote-file <texte exact>` pour une relecture avant publication."))
-        faute = _fuite_bash(projet, cmd)
-        if faute:
-            return refus(faute)
-        reglage = next((x for c in simples for x in ecrits(c) if REGLAGES_AGENT.search(x)), None)
-        if reglage:
-            return refus(trad("`{reglage}` : les réglages de Claude Code commandent ses hooks, seul l'humain les "
-                              "modifie (un réglage local peut les couper tous).", reglage=reglage))
-        cible = ecriture_protegee(projet, cmd)
-        if cible:
-            return refus(trad("écriture d'un fichier protégé ({cible}) par le shell : seul l'humain modifie la "
-                              "politique, les hooks, la CI et le moteur (relance de l'installeur).", cible=cible))
+        raison = refus_bash(projet, args.get("command", ""), entree.get("cwd"))
+        if raison:
+            return refus(raison)
 
     faute = _fuite_outil(projet, outil, args)
     if faute:
@@ -550,7 +560,8 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
                         fautes = demandes.linter(d, projet)
                         if fautes:
                             return refus(trad("demande hors contrat (elle doit se lire sans le projet en tête) "
-                                              "— {fautes}", fautes=" ; ".join(fautes[:8])))
+                                              "— {fautes} ; la procédure : le skill `socle-request`",
+                                              fautes=" ; ".join(fautes[:8])))
 
     faute = sha_fabrique(racine, json.dumps(args, ensure_ascii=False))
     if faute:
@@ -575,7 +586,8 @@ def _fuites_dans(projet: config.Projet, texte: str) -> str | None:
     if not trouve:
         return None
     return trad("fuite de la mémoire privée : {termes}. Une écriture publique ne cite ni identifiant privé ni "
-                "terme de la liste privée : reformuler sans eux (politique, mémoire privée).",
+                "terme de la liste privée : reformuler sans eux (politique, mémoire privée ; le skill "
+                "`socle-private-memory`).",
                 termes=", ".join(trouve[:5]))
 
 

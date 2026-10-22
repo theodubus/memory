@@ -491,6 +491,23 @@ def _poser_memoire(cible: Path, lg: str, nom_adaptateur: str, adoption: bool, ch
     return journal
 
 
+# Le dossier des skills de Claude Code ; un autre agent les lit à ces
+# chemins, que les instructions donnent.
+SKILLS = ".claude/skills"
+
+
+def poser_skills(cible: Path, lg: str = "fr") -> list[str]:
+    """Les skills du socle, dans la langue de la mémoire : ses procédures
+    rares, que l'agent charge sur leur description au lieu de les relire à
+    chaque session (ADR-0034). Posés par l'installeur comme les hooks, et
+    remplacés à chaque mise à jour."""
+    noms = []
+    for dossier in sorted(p for p in (MODELES / "skills").iterdir() if p.is_dir()):
+        outils.ecrire(cible / SKILLS / dossier.name / "SKILL.md", gabarit(f"skills/{dossier.name}/SKILL.md", lg))
+        noms.append(dossier.name)
+    return [trad("skills du socle posés dans {dossier} : {noms}", dossier=SKILLS, noms=", ".join(noms))]
+
+
 def _poser_etages(cible: Path, texte_adaptateur: str, dossier_moteur: str, proprietaire: str,
                   balayage: bool, motif: str, ch: config.Chemins, lg: str = "fr") -> list[str]:
     """Les étages d'application : hooks de l'agent, hooks git, CI, balayage
@@ -498,6 +515,7 @@ def _poser_etages(cible: Path, texte_adaptateur: str, dossier_moteur: str, propr
     la mémoire."""
     journal = []
     journal += _settings(cible)
+    journal += poser_skills(cible, lg)
     for h in (MODELES / "git-hooks").iterdir():
         outils.ecrire(cible / config.GIT_HOOKS / h.name, h.read_text(encoding="utf-8"), executable=True)
     if outils.git(cible, "config", "--get", "core.hooksPath", check=False).strip() in ("", config.GIT_HOOKS):
@@ -531,7 +549,8 @@ def _poser_etages(cible: Path, texte_adaptateur: str, dossier_moteur: str, propr
     journal += _gitignore(cible)
     journal += _non_ignores(cible, [config.LANCEUR, ch.lock, ch.politique, ch.adaptateur, ch.garde_fous,
                                     f"{config.GIT_HOOKS}/pre-commit", ".github/workflows/socle.yml", mutation.WORKFLOW,
-                                    ".claude/settings.json", config.INSTRUCTIONS, "CLAUDE.md", ch.canonique,
+                                    ".claude/settings.json", f"{SKILLS}/socle-request/SKILL.md", config.INSTRUCTIONS,
+                                    "CLAUDE.md", ch.canonique,
                                     f"{dossier_moteur}/socle/cli.py"])
     return journal
 

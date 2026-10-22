@@ -34,6 +34,7 @@ paths = [
   ".socle/socle",
   ".socle/git-hooks/**",
   ".claude/settings.json",
+  ".claude/skills/socle-*/**",
   ".github/workflows/socle.yml",
   ".github/workflows/socle-mutation.yml",
   ".github/CODEOWNERS",

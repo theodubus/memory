@@ -1,0 +1,71 @@
+---
+name: socle-request
+description: Poser une demande de décision humaine, relayer la réponse de l'humain, ou consigner une décision prise en séance. À utiliser quand une décision revient à l'humain (politique d'autonomie, points 1 à 4, 7 et 8), quand il répond à une demande, ou quand il tranche une question dans la conversation.
+---
+
+# Les demandes de décision humaine
+
+Une demande est lue quand le contexte est perdu : elle se suffit à
+elle-même. L'humain répond dans la conversation ; l'agent consigne sa
+réponse mot pour mot, sans jamais la choisir.
+
+## Poser une demande
+
+1. `python3 .socle/socle new request "<décision>"` pose le squelette et
+   donne l'identifiant.
+2. Remplir les huit champs :
+   - **Décision demandée** : en une phrase.
+   - **Contexte** : le problème lui-même, résumé sur place en au moins
+     soixante mots, pas un renvoi.
+   - **Éléments cités** : chaque identifiant décrit en clair, avec
+     l'empreinte de la version lue (`- B-NNNN@xxxxxxxx — ce que c'est, en
+     une phrase`) ; jamais un identifiant seul.
+   - **Où regarder** : un lien vers chaque document à lire
+     (`python3 .socle/socle url <chemin>`), et ce qu'il faut y vérifier.
+   - **Options** : pour chacune, l'effort, le risque, la réversibilité.
+   - **Conséquences** : si l'humain valide, s'il refuse, sans réponse.
+   - **Recommandation** : le vérifié séparé du supposé.
+   - **Réponses possibles** : une liste `` - `valeur` — sens `` qui
+     propose `contexte-insuffisant`. Une demande qui nomme un test ou une
+     clé des seuils propose aussi `valider` : seule cette réponse autorise
+     à les changer.
+3. Le lint refuse une demande incomplète ; le hook de l'agent la refuse dès
+   l'écriture.
+4. Commiter et pousser la demande telle quelle, puis donner son lien
+   (`python3 .socle/socle url D-NNNN`) dans la conversation. Travailler sur
+   autre chose en attendant la réponse (politique, point 8).
+
+## Relayer une réponse
+
+1. Écrire le texte exact de l'humain dans un fichier.
+2. Consigner la réponse :
+
+```sh
+python3 .socle/socle answer D-NNNN <réponse> --relayed --by <nom> --quote-file <fichier>
+```
+
+3. Recopier la réponse au journal, avec son texte exact.
+
+Une réponse ne se relaie qu'à une demande poussée telle quelle : l'humain
+doit avoir pu la lire. Une demande répondue est gelée. La réponse
+`contexte-insuffisant` renvoie la demande : la réécrire en une demande
+nouvelle, qui la remplace.
+
+Un test dont la valeur attendue change en attendant une demande qui le
+nomme peut rester changé dans l'arbre à la fin du tour ; il ne se commite
+qu'après la réponse.
+
+## Consigner une décision prise en séance
+
+Une question que l'humain tranche sur le moment (approuver une spec de
+BMAD, choisir entre deux options) se consigne aussitôt, avec sa réponse mot
+pour mot ; `--about <chemin>` désigne ce qu'elle approuve :
+
+```sh
+python3 .socle/socle decision "<question>" <réponse> --relayed --by <nom> --quote-file <fichier>
+```
+
+## Ce que l'agent ne fait jamais
+
+Répondre à la place de l'humain (`socle answer` sans `--relayed` ni
+citation), ni lancer `socle approve`, réservé à l'humain.

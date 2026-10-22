@@ -141,6 +141,7 @@ L'installation ajoute à un projet :
 memory/               la mémoire du projet, vide au départ
 AGENTS.md             les instructions de l'agent (CLAUDE.md l'importe)
 .claude/settings.json les hooks de Claude Code
+.claude/skills/       les procédures rares du socle, que l'agent charge à la demande
 .github/              la CI, le balayage de mutation hebdomadaire, CODEOWNERS
 ```
 

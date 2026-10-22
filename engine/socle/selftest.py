@@ -343,6 +343,28 @@ def demande_bonne(a: Atelier, c: Path) -> str:
     return DEMANDE_BONNE.replace("- B-0001 —", f"- B-0001@{empreinte(a, c, 'B-0001')} —")
 
 
+SKILL_ESSAI = """---
+name: verifier-calc
+description: Vérifier le module de calcul avant de le livrer, ses tests et sa documentation. À utiliser quand le module de calcul change.
+---
+
+# Vérifier le module de calcul
+
+```sh
+python3 -m unittest discover -s tests -q
+```
+
+Ne jamais lancer `git commit --no-verify` : la CI exécute tout.
+"""
+
+
+def _poser_skill(c: Path, texte: str):
+    """Le skill d'essai, son en-tête en tête du fichier, là où l'agent le lit."""
+    p = c / ".claude/skills/verifier-calc/SKILL.md"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(texte)
+
+
 def _demande_de_choix(a: Atelier, c: Path, cite: str) -> str:
     """La demande saine, en choix entre deux réponses dont aucune n'est
     `valider`, qui cite `cite` à l'appui de sa recommandation."""
@@ -926,6 +948,21 @@ def _cas() -> list[Cas]:
     def _(a, c):
         return etage_outil(a, c, "Write", {"file_path": str(c / "memory/requests/D-0001-refactor.md"),
                                            "content": _demande_de_choix(a, c, "`test_double`")})
+
+    @defaut("skill-sans-description", "skill dont la description ne dit pas quand s'en servir", "git",
+            "skills.contrat")
+    def _(a, c):
+        _poser_skill(c, SKILL_ESSAI.replace(
+            "Vérifier le module de calcul avant de le livrer, ses tests et sa documentation. À utiliser quand le "
+            "module de calcul change.", "Vérifier le calcul."))
+        return etage_git(a, c)
+
+    @defaut("skill-commande-refusee", "skill qui fait lancer une commande que le hook refuse", "git",
+            "skills.commandes")
+    def _(a, c):
+        _poser_skill(c, SKILL_ESSAI.replace(
+            "python3 -m unittest discover -s tests -q", "git commit -q --no-verify -m livraison"))
+        return etage_git(a, c)
 
     @defaut("budget-depasse", "couche de mémoire au-delà de son budget", "git", "memoire.budgets")
     def _(a, c):
@@ -1541,6 +1578,12 @@ def _temoins() -> list[tuple[str, Callable]]:
         sha = a.run(c, "git", "rev-parse", "HEAD").stdout.strip()
         maj_memoire(c, f"Repris de l'essai (commit:{sha}).")
         return etage_ci(a, c)
+
+    @temoin("un skill du projet bien formé, qui cite dans son texte une commande à ne pas lancer, passe le "
+            "commit et la CI")
+    def _(a, c):
+        _poser_skill(c, SKILL_ESSAI)
+        return etage_git(a, c) or etage_ci(a, c)
 
     @temoin("durcir un garde-fou est libre")
     def _(a, c):

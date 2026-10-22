@@ -251,3 +251,13 @@ Le projet C# jetable du banc, sur la branche `csharp` du dépôt d'essai : le
 workflow « Socle » passe, avec `actions/setup-dotnet@v5` et les SDK 8 et 10,
 et le balayage lancé à la main lit 2 survivants de Stryker.NET, comme le
 banc local. Mesuré le 20 oct.
+
+## F-0027 — Claude Code liste les skills de .claude/skills avec leur description au démarrage d'une session
+
+> statut : mesuré · preuve : J-2026-10-22-H · date : 2026-10-22
+
+Au redémarrage de la session, après la pose de `socle-request` et de
+`socle-private-memory` dans ce dépôt, Claude Code les a listés parmi ses
+skills disponibles, chacun avec la description de son en-tête. La
+supposition de D-0042 (qu'il charge un skill de ce dossier sur sa
+description) est vérifiée pour Claude Code ; pour un autre agent, non.

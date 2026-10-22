@@ -49,6 +49,11 @@ At any time, `python3 .socle/socle state` gives the project's state: the
 commit, the CI, the backlog, the pending requests, what is up to the human.
 The memory is read in `memory/`.
 
+A project procedure that comes back, the agent writes as a skill in
+`.claude/skills/`, with a journal entry: it then loads it on demand instead
+of rebuilding it. Its skills are checked like the rest; the socle's, laid by
+the installer, are protected.
+
 ## 3. Answering the agent
 
 **A request.** When a decision belongs to the human (loosening a

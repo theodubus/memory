@@ -111,12 +111,14 @@ MESSAGES: dict[str, str] = {
         "the CI and the engine. Propose the change in a request.",
     "référence inventée — {fautes}":
         "invented reference — {fautes}",
-    "demande hors contrat (elle doit se lire sans le projet en tête) — {fautes}":
-        "request out of contract (it must read without the project in mind) — {fautes}",
+    "demande hors contrat (elle doit se lire sans le projet en tête) — {fautes} ; la procédure : le skill "
+    "`socle-request`":
+        "request out of contract (it must read without the project in mind) — {fautes}; the procedure: the skill "
+        "`socle-request`",
     "fuite de la mémoire privée : {termes}. Une écriture publique ne cite ni identifiant privé ni terme de la liste "
-    "privée : reformuler sans eux (politique, mémoire privée).":
+    "privée : reformuler sans eux (politique, mémoire privée ; le skill `socle-private-memory`).":
         "private memory leak: {termes}. A public write cites neither a private identifier nor a term of the private "
-        "list: rephrase without them (policy, private memory).",
+        "list: rephrase without them (policy, private memory; the skill `socle-private-memory`).",
     "contrôles de fin de tour (`socle check --stage agent`)":
         "end-of-turn checks (`socle check --stage agent`)",
     "Les contrôles échouent encore après {essais} tentatives : ARRÊT ET ESCALADE (politique, point 7). Écrire une "
@@ -2313,4 +2315,37 @@ MESSAGES: dict[str, str] = {
         "adapter  : !! language(s) the adapter ({couvert}) does not cover: {liste} — their tests, build and mutation "
         "go through no capability; tell the human through a request (another adapter, or these files declared "
         "third-party)",
+    # Les skills (ADR-0034).
+    "Un skill se nomme comme son dossier et dit, dans sa description, ce qu'il fait et quand s'en servir ; "
+    "`socle-` reste aux skills du socle.":
+        "A skill is named after its folder and says, in its description, what it does and when to use it; "
+        "`socle-` stays for the socle's skills.",
+    "Une commande qu'un skill donne à lancer est jugée comme le hook de l'agent la jugerait : un skill ne fait "
+    "pas lancer ce que le hook refuse.":
+        "A command a skill gives to run is judged as the agent's hook would judge it: a skill does not make the "
+        "agent run what the hook refuses.",
+    "skill sans en-tête : le fichier commence par `---`, `name: {dossier}`, `description: <ce qu'il fait, et "
+    "quand s'en servir>`, `---`":
+        "skill without a header: the file starts with `---`, `name: {dossier}`, `description: <what it does, and "
+        "when to use it>`, `---`",
+    "le skill se nomme « {nom} » : son nom est celui de son dossier, « {dossier} »":
+        "the skill is named “{nom}”: its name is its folder's, “{dossier}”",
+    "description trop maigre : ce que fait le skill et quand s'en servir, en au moins {n} mots ; l'agent ne "
+    "charge un skill que sur elle":
+        "description too thin: what the skill does and when to use it, in at least {n} words; the agent only "
+        "loads a skill on it",
+    "le préfixe `{prefixe}` est réservé aux skills que pose l'installeur : nommer autrement un skill du projet":
+        "the `{prefixe}` prefix is reserved for the skills the installer lays: name a project skill otherwise",
+    "le skill donne à lancer une commande que le hook de l'agent refuse — {raison} ; une commande à ne pas "
+    "lancer se cite dans le texte, pas dans un bloc de code":
+        "the skill gives a command to run that the agent's hook refuses — {raison}; a command not to run is "
+        "cited in the text, not in a code block",
+    "skills du socle posés dans {dossier} : {noms}":
+        "socle skills laid in {dossier}: {noms}",
+    "skill dont la description ne dit pas quand s'en servir":
+        "skill whose description does not say when to use it",
+    "skill qui fait lancer une commande que le hook refuse":
+        "skill that makes the agent run a command the hook refuses",
+    "un skill du projet bien formé, qui cite dans son texte une commande à ne pas lancer, passe le commit et la CI":
+        "a well-formed project skill, which cites in its text a command not to run, passes the commit and the CI",
 }
