@@ -1,0 +1,8 @@
+# Réponse humaine, écrite par l'humain lui-même (`socle answer`).
+# Elle porte sur le texte exact de D-0043-approbation-humaine.md, dont l'empreinte suit.
+reponse = "valider"
+texte = "B-0076 : la section [code] de l'adaptateur Python maintenu, ajoutée à l'adaptateur de ce dépôt"
+par = "theodubus"
+date = "2026-10-22"
+canal = "terminal"
+empreinte = "sha256:03064aafdb14569450fc6f23b091d99160f695e2569c069bb34499199694d071"
