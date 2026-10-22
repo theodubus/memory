@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0066 — L'agent ajoute lui-même un skill quand une procédure revient
 
-> statut : ouvert · origine : J-2026-10-19-C · lu : backlog@dbd16c96
+> statut : fait · origine : J-2026-10-19-C · ref : ADR-0034 · lu : backlog@dbd16c96
 
 Demandé par Théo (texte exact au journal) : que l'agent ajoute des skills
 de lui-même quand c'est nécessaire. Un skill est une procédure, dans un
