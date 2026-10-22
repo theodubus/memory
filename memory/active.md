@@ -87,8 +87,8 @@ garde en tete et on voit si ça finit par etre bloquant ».
    B-0081 et B-0082 faits sur les réponses de Théo (D-0040, D-0041).
 4. Fait : B-0066, les skills, selon l'option 1 de D-0042 (ADR-0034,
    J-2026-10-22-H). Ensuite B-0084.
-5. À Théo : pousser son commit de B-0076, arrêté par un test sous Python
-   3.14, corrigé depuis (J-2026-10-22-G) ; puis le dernier repli de
-   compatibilité part. Protéger les skills du socle dans la politique de
-   ce dépôt (B-0085). Attendent le pilote : B-0010, B-0012, B-0071 ; le
-   dépôt de distribution : B-0083 ; gardé en tête : B-0048.
+5. B-0076 : la section `[code]` est poussée par Théo (bd1fc51) ; le retrait
+   du repli et la réécriture de son test attendent D-0044. À Théo aussi :
+   protéger les skills du socle dans la politique de ce dépôt (B-0085).
+   Attendent le pilote : B-0010, B-0012, B-0071 ; le dépôt de
+   distribution : B-0083 ; gardé en tête : B-0048.
