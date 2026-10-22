@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0076 — Ajouter la section [code] à l'adaptateur de ce dépôt, fichier protégé
 
-> statut : ouvert · origine : J-2026-10-20-Q · lu : backlog@1615e20b · pour : humain
+> statut : fait · origine : J-2026-10-20-Q · ref : D-0044 · lu : backlog@1615e20b · pour : humain
 
 L'adaptateur de ce dépôt (`.socle/adapter.toml`, protégé) n'a pas de
 section `[code]` : il a été posé avant qu'elle existe, et le moteur lui

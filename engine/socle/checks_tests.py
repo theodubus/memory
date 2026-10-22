@@ -21,7 +21,6 @@ import re
 import shutil
 import subprocess
 import tempfile
-import tomllib
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -360,16 +359,9 @@ DISPENSE_TEST = re.compile(r"^(?P<noms>[\w.]+(?:\s*,\s*[\w.]+)*)\s+[—–-]+\s+
 def config_code(projet) -> tuple[list, list, str | None]:
     """(chemins, exclusions, motif d'une fonction privée) du code soumis à
     `tests.code-teste`. La section `[code]` de l'adaptateur du projet ; à
-    défaut, celle de l'adaptateur maintenu du même langage, venue avec le
-    moteur ; à défaut, les sources hors fichiers de test, toute fonction
-    comptant comme publique."""
+    défaut, les sources hors fichiers de test, toute fonction comptant comme
+    publique."""
     code = projet.adaptateur.get("code")
-    if code is None:
-        from socle import installer as installeur
-
-        maintenu = installeur.ADAPTATEURS / f"{projet.adaptateur.get('language', '')}.toml"
-        if maintenu.is_file():
-            code = tomllib.loads(maintenu.read_text(encoding="utf-8")).get("code")
     # Le dossier du socle n'est jamais du code du projet : le moteur y est
     # installé, immuable, et ses fonctions ne sont pas celles du projet.
     socle = [f"{config.DOSSIER}/**"]

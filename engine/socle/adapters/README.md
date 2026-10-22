@@ -66,9 +66,8 @@ La mutation consiste à modifier le code exprès (changer un `+` en `-`, un
 `<` en `<=`) et à vérifier qu'un test au moins échoue. Un « mutant » qui
 survit montre du code qu'aucun test ne vérifie vraiment.
 
-Un projet installé avant qu'une section existe hérite de celle de
-l'adaptateur maintenu du même langage, venue avec le moteur : c'est le cas de
-la section `[code]`.
+Sans section `[code]`, le code à tester est celui des sources, hors
+fichiers de test, et toute fonction compte comme publique.
 
 Une étape marquée `fast = true` tourne à la fin de chaque tour, avant
 chaque push et quand l'agent lance `verify --fast` ; la CI les lance

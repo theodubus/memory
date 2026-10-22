@@ -88,8 +88,8 @@ garde en tete et on voit si ça finit par etre bloquant ».
 4. Faits : B-0066, les skills, selon l'option 1 de D-0042 (ADR-0034,
    J-2026-10-22-H) ; B-0084 (J-2026-10-22-J) ; la CI de l'auto-test
    protégée de la maintenance de git (J-2026-10-22-I).
-5. B-0076 : la section `[code]` est poussée par Théo (bd1fc51) ; le retrait
-   du repli et la réécriture de son test attendent D-0044. À Théo aussi :
-   protéger les skills du socle dans la politique de ce dépôt (B-0085).
-   Attendent le pilote : B-0010, B-0012, B-0071 ; le dépôt de
-   distribution : B-0083 ; gardé en tête : B-0048.
+5. B-0076 fait : la section `[code]` poussée par Théo, le dernier repli de
+   compatibilité retiré (D-0044). À Théo : protéger les skills du socle
+   dans la politique de ce dépôt (B-0085). Puis le projet pilote, à
+   choisir par Théo. Attendent le pilote : B-0010, B-0012, B-0071 ; le
+   dépôt de distribution : B-0083 ; gardé en tête : B-0048.
