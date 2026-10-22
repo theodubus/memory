@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0046 — La documentation à refaire : séparer l'outil de sa fabrication, et la rendre intuitive
 
-> statut : ouvert · origine : J-2026-10-12-F · lu : backlog@19253d8c
+> statut : fait · origine : J-2026-10-12-F · ref : D-0039 · lu : backlog@19253d8c
 
 Signalé par Théo, texte exact : « la doc mélange la doc/tests relatif au
 repo (ce qui permet de construire l'outil de cadrage) et l'outil de cadrage

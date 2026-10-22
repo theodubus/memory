@@ -77,17 +77,15 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 ## Prochaines étapes
 
-1. Fait : le retrait du code de compatibilité (D-0033, D-0035,
-   J-2026-10-20-U). Maintenant : la documentation (B-0046), à reconcevoir ;
-   la première version (J-2026-10-20-W) n'est pas validée par Théo
-   (J-2026-10-20-Y).
-2. Fait aussi : B-0077, le moteur ne renvoie plus à la mémoire de ce dépôt
-   (J-2026-10-20-X). D-0037 répondue `rien` pour aujourd'hui ; à terme, le
+1. Faits : le retrait du code de compatibilité (J-2026-10-20-U), B-0077
+   (J-2026-10-20-X), la documentation, validée par Théo (D-0039,
+   J-2026-10-22-B). D-0037 répondue `rien` pour aujourd'hui ; à terme, le
    dépôt de distribution séparé (B-0083), à la première version mûre.
+2. Maintenant : le projet pilote, l'essai du socle sur un vrai projet ;
+   lequel, et comment, est à demander à Théo.
 3. Ensuite B-0079 (session reprise hors de la racine, non détectée), B-0080
    (un clone sans la branche par défaut), B-0081 (une demande à plusieurs
    réponses positives ne valide rien), B-0082 (les noms d'une classe du
-   test de mutation). B-0076 revient à Théo.
-4. Puis le projet pilote ; B-0071 et B-0066. Les autres sujets ouverts
-   attendent des données ou Théo : B-0010, B-0012, B-0009, B-0006, B-0018,
-   B-0048, B-0078.
+   test de mutation). B-0076 revient à Théo. Puis B-0071 et B-0066. Les
+   autres sujets ouverts attendent des données ou Théo : B-0010, B-0012,
+   B-0009, B-0006, B-0018, B-0048, B-0078.
