@@ -129,7 +129,7 @@ agent, which fixes them alone. Those that concern the human:
 | `cliquet.garde-fous` | a threshold was loosened | restore it, or approve a request that cites it |
 | `tests.attendus` | an expected value changed, or a test disappeared | approve a request that names the test, or restore the test |
 | `tests.code-teste` | a public function without a test | write the test, or `Waive-test:` in the commit |
-| `tests.regression` | a fix without a test that proves it | write that test |
+| `tests.regression` | a fix without a test that proves it | write that test; if its proof depends on the environment, approve a request that names the commit |
 | `docs.correspondance` | code changed without its documentation | update the documentation, or `Waive-doc:` in the commit |
 | `mutation.vivante` | the weekly sweep no longer runs | re-enable it in GitHub's Actions tab |
 | push refused, review | the policy requires a review | review what goes out, give one's agreement |

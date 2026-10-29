@@ -498,8 +498,16 @@ def regression(ctx, r):
             continue
         code_parent, sortie = sur_parent
         if code_parent == 0:
+            admise = _admis_par(ctx, sha)
+            if admise:
+                r.avertir("tests.regression", trad("{sha} « {sujet} » : son test passe déjà sur le parent ; admis "
+                                                   "par {id}, une demande validée qui nomme ce commit",
+                                                   sha=sha[:10], sujet=sujet, id=admise))
+                continue
             r.erreur("tests.regression", trad("{sha} « {sujet} » : son test passe déjà sur le parent — il ne "
-                                              "prouve pas le correctif", sha=sha[:10], sujet=sujet))
+                                              "prouve pas le correctif ; si sa preuve dépend de l'environnement, "
+                                              "une demande validée qui nomme ce commit l'admet", sha=sha[:10],
+                                              sujet=sujet))
             continue
         # Un test qui ne se charge pas sur le parent (une compilation cassée,
         # un import manquant) y échoue pour une autre raison que le défaut
@@ -515,6 +523,16 @@ def regression(ctx, r):
         if code != 0:
             r.erreur("tests.regression", trad("{sha} « {sujet} » : son test de régression échoue sur le "
                                               "correctif lui-même", sha=sha[:10], sujet=sujet))
+
+
+def _admis_par(ctx, sha: str) -> str | None:
+    """La demande validée dans la plage qui nomme ce correctif par son SHA,
+    sept caractères au moins : l'humain y admet un test dont la preuve dépend
+    de l'environnement (D-0047)."""
+    for d in ctx.validations:
+        if any(sha.startswith(m.group(0)) for m in re.finditer(r"\b[0-9a-f]{7,40}\b", d.texte)):
+            return d.id
+    return None
 
 
 def tests_du_module(ctx, parent: str, sha: str, chemins: list[str]) -> tuple[dict[str, str], list[str]]:

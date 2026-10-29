@@ -829,8 +829,14 @@ MESSAGES: dict[str, str] = {
         "fix without a regression test: {sha} “{sujet}” (no file of {liste} added or changed{ailleurs})",
     "{sha} : impossible de préparer le commit parent":
         "{sha}: cannot prepare the parent commit",
-    "{sha} « {sujet} » : son test passe déjà sur le parent — il ne prouve pas le correctif":
-        "{sha} “{sujet}”: its test already passes on the parent — it does not prove the fix",
+    "{sha} « {sujet} » : son test passe déjà sur le parent — il ne prouve pas le correctif ; si sa preuve dépend "
+    "de l'environnement, une demande validée qui nomme ce commit l'admet":
+        "{sha} “{sujet}”: its test already passes on the parent — it does not prove the fix; if its proof depends "
+        "on the environment, an approved request that names this commit admits it",
+    "{sha} « {sujet} » : son test passe déjà sur le parent ; admis par {id}, une demande validée qui nomme ce "
+    "commit":
+        "{sha} “{sujet}”: its test already passes on the parent; admitted by {id}, an approved request that names "
+        "this commit",
     "{sha} « {sujet} » : son test ne se charge pas sur le parent (« {erreur} ») : il y échoue pour une autre raison "
     "que le défaut. L'écrire contre ce qui existe déjà sur le parent":
         "{sha} “{sujet}”: its test does not load on the parent (“{erreur}”): it fails there for another reason than "
@@ -2367,4 +2373,7 @@ MESSAGES: dict[str, str] = {
         "mutation caps taken over from {source}: {n}",
     "!! plafonds de {source} écartés, faute d'un module de ce nom qui porte du code : {liste}":
         "!! caps from {source} set aside, for want of a module of that name that carries code: {liste}",
+    "un correctif dont le test passe sur le parent, admis par une demande validée qui nomme son commit, passe la "
+    "CI":
+        "a fix whose test passes on the parent, admitted by an approved request that names its commit, passes the CI",
 }

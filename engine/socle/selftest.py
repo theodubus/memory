@@ -1731,6 +1731,28 @@ def _temoins() -> list[tuple[str, Callable]]:
         maj_memoire(c)
         return etage_ci(a, c)
 
+    @temoin("un correctif dont le test passe sur le parent, admis par une demande validée qui nomme son commit, "
+            "passe la CI")
+    def _(a, c):
+        remplacer(c, "calc.py", "return FACTEUR * x", "return FACTEUR * int(x)")
+        remplacer(c, "docs/calc.md", "la\nconstante", "la constante\nentière")
+        (c / "tests/test_regression.py").write_text(TEST_REGRESSION.replace('double("3")', "double(3)"))
+        maj_memoire(c, "Correctif de `double` sur les chaînes.")
+        r = a.commit(c, "fix: double accepte une chaîne")
+        if r.returncode != 0:
+            return r.stdout + r.stderr
+        sha = a.git(c, "rev-parse", "HEAD").strip()[:8]
+        demande = demande_bonne(a, c).replace(
+            "- B-0001@", f"- {sha} — le correctif de double, dont le test passe sur le parent dans la CI.\n- B-0001@", 1)
+        (c / "memory/requests/D-0001-refactor.md").write_text(demande)
+        pousser(a, c)
+        (c / "citation.txt").write_text("valider")
+        r = a.socle(c, "answer", "D-0001", "valider", "--relayed", "--by", "Théo", "--quote-file", "citation.txt")
+        (c / "citation.txt").unlink()
+        if r.returncode != 0:
+            return r.stdout + r.stderr
+        return etage_ci(a, c)
+
     @temoin("une demande complète passe le hook de l'agent")
     def _(a, c):
         return etage_outil(a, c, "Write", {"file_path": str(c / "memory/requests/D-0001-refactor.md"), "content": demande_bonne(a, c)})
