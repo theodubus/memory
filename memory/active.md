@@ -21,6 +21,9 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 ## Consignes en cours
 
+- La PR #7, de la branche de travail vers `main`, se suit jusqu'à sa
+  fusion : CI et commentaires ; Théo : « oui surveille la PR jusqu'à la
+  fusion » (J-2026-10-29-G).
 - La documentation se conçoit avant de s'écrire, commence par ce dont le
   projet parle et ce qu'il est, ses schémas se vérifient rendus avant le
   push, et elle n'est faite que validée par Théo ; Théo : « fais un petit
