@@ -1,7 +1,16 @@
+import contextlib
+import io
+import shutil
+import subprocess
+import tempfile
 import unittest
+import unittest.mock
+from pathlib import Path
 
-from socle import config, hooks
+from socle import config, hooks, installer as installeur
 from tests.test_bascule import Projet
+
+MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 
 LANCEUR = ".socle/" + "socle"  # en morceaux : ce fichier ne lance rien
 
@@ -536,3 +545,62 @@ class TestTraceDesRefusDeFinDeTourEtDeGit(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestOutilsEnSessionCloud(unittest.TestCase):
+    """D-0048 : en session cloud, le conteneur repart de zéro, et le pilote
+    n'avait pas pytest ; le hook de démarrage installe les outils de
+    l'adaptateur, par les commandes que la CI lance pour eux."""
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-outils-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=self.racine, check=True)
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(self.racine, "python-pytest", "@essai", source=MOTEUR)
+        self.projet = config.Projet.charger(self.racine)
+        self.compte = self.racine / ".git/compte"
+        self.etape(f"echo . >> {self.compte}")
+
+    def etape(self, commande: str):
+        self.projet.adaptateur["ci_setup"] = f"      - name: Outils\n        run: {commande}\n"
+
+    def fois(self) -> int:
+        return len(self.compte.read_text().split()) if self.compte.is_file() else 0
+
+    def demarrer(self) -> str:
+        sortie = io.StringIO()
+        with unittest.mock.patch.dict("os.environ", {hooks.SESSION_CLOUD: "true"}), \
+                contextlib.redirect_stdout(sortie):
+            hooks.session_start(self.projet, {})
+        return sortie.getvalue()
+
+    def test_hors_session_cloud_rien_ne_s_installe(self):
+        with unittest.mock.patch.dict("os.environ", {hooks.SESSION_CLOUD: ""}):
+            self.assertEqual(hooks.installer_outils(self.projet), [])
+        self.assertEqual(self.fois(), 0)
+
+    def test_en_session_cloud_les_outils_s_installent_une_fois_par_conteneur(self):
+        sortie = self.demarrer()
+        self.assertIn(f"outils de l'adaptateur installés (session cloud) : `echo . >> {self.compte}`", sortie)
+        self.assertEqual(self.fois(), 1)
+        # Une reprise ou un compactage, dans le même conteneur : rien à refaire.
+        self.assertNotIn("outils de l'adaptateur", self.demarrer())
+        self.assertEqual(self.fois(), 1)
+
+    def test_un_echec_se_dit_sans_bloquer_et_se_retente(self):
+        self.etape("echo pip absent >&2; exit 4")
+        sortie = self.demarrer()
+        self.assertIn("!! outils de l'adaptateur : `echo pip absent >&2; exit 4` a rendu 4", sortie)
+        self.assertIn("pip absent", sortie)
+        self.assertIn("== ", sortie)  # l'état est là quand même
+        self.assertIn("a rendu 4", self.demarrer())
+
+    def test_l_adaptateur_maintenu_installe_pytest_et_mutmut(self):
+        projet = config.Projet.charger(self.racine)
+        with unittest.mock.patch.object(hooks.subprocess, "run") as lancer, \
+                unittest.mock.patch.dict("os.environ", {hooks.SESSION_CLOUD: "true"}):
+            lancer.return_value = subprocess.CompletedProcess([], 0, "", "")
+            hooks.installer_outils(projet)
+        self.assertEqual(lancer.call_args[0][0], "python3 -m pip install pytest mutmut")
+

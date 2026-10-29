@@ -24,7 +24,9 @@ import json
 import os
 import posixpath
 import re
+import subprocess
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -104,10 +106,66 @@ def session_start(projet: config.Projet, entree: dict) -> int:
 
     tracer(projet.racine, "SessionStart", entree.get("session_id", ""), entree.get("source", ""))
     git_ok = installer_hooks_git(projet.racine)
+    installes = installer_outils(projet)
     print(etat.calculer(projet))
+    if installes:
+        print("\n" + "\n".join(installes))
     if not git_ok and (projet.racine / config.GIT_HOOKS).is_dir():
         print(trad("\n!! hooks git non branchés : `git config core.hooksPath .socle/git-hooks`"))
     return 0
+
+
+# Claude Code la pose dans ses sessions cloud, dont le conteneur repart de
+# zéro à chaque session.
+SESSION_CLOUD = "CLAUDE_CODE_REMOTE"
+# Sous le délai du hook de démarrage (`.claude/settings.json`).
+DELAI_OUTILS = 270
+
+
+def installer_outils(projet: config.Projet) -> list[str]:
+    """En session cloud, les outils de l'adaptateur, par les commandes que la
+    CI lance pour eux : sans eux, la première vérification de l'agent échoue
+    (D-0048). Une fois par conteneur ; un échec se dit sans bloquer le
+    démarrage. Rend les lignes à montrer à l'agent."""
+    from socle import verification
+
+    if os.environ.get(SESSION_CLOUD) != "true":
+        return []
+    commandes_ci = verification.commandes_ci(projet)
+    if not commandes_ci:
+        return []
+    marque = config.chemin_trace(projet.racine).parent / "outils-installes"
+    empreinte = outils.sha256("\n".join(commandes_ci))
+    try:
+        if marque.read_text(encoding="utf-8").strip() == empreinte:
+            return []
+    except OSError:
+        pass
+    fin = time.monotonic() + DELAI_OUTILS
+    lignes, reussi = [], True
+    for c in commandes_ci:
+        try:
+            p = subprocess.run(c, shell=True, cwd=projet.racine, capture_output=True, text=True, encoding="utf-8",
+                               errors="replace", timeout=max(1, fin - time.monotonic()))
+        except subprocess.TimeoutExpired:
+            reussi = False
+            lignes.append(trad("!! outils de l'adaptateur : `{commande}` dépasse le délai du démarrage ; la "
+                               "relancer avant de vérifier", commande=c))
+            continue
+        if p.returncode == 0:
+            lignes.append(trad("outils de l'adaptateur installés (session cloud) : `{commande}`", commande=c))
+            continue
+        reussi = False
+        queue = "\n    ".join((p.stdout + p.stderr).strip().splitlines()[-5:])
+        lignes.append(trad("!! outils de l'adaptateur : `{commande}` a rendu {code} ; la relancer avant de "
+                           "vérifier\n    {queue}", commande=c, code=p.returncode, queue=queue))
+    if reussi:
+        try:
+            marque.parent.mkdir(parents=True, exist_ok=True)
+            marque.write_text(empreinte + "\n", encoding="utf-8")
+        except OSError:
+            pass
+    return lignes
 
 
 # --------------------------------------------------------------------------

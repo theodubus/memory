@@ -1018,10 +1018,12 @@ def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str]) -> list[str
     ci = verification.commandes_ci(projet)
     if ci and not mise_a_jour:
         # La CI installe les outils de l'adaptateur ; l'environnement de
-        # l'agent en a besoin aussi, et un conteneur cloud repart de zéro.
+        # l'agent en a besoin aussi. En session cloud, le hook de démarrage
+        # s'en charge ensuite (D-0048), pas dans la session qui installe.
         etapes.append(trad("donner à l'agent les outils que la CI installe : {commandes}, là où il travaille ; en "
-                           "session cloud, dans le script d'installation de l'environnement, que chaque session "
-                           "neuve exécute", commandes=" ; ".join(f"`{x}`" for x in ci)))
+                           "session cloud, dans le script d'installation de l'environnement ou par l'agent, pour "
+                           "cette session seulement : le hook de démarrage du socle les installe ensuite dans "
+                           "chaque session neuve", commandes=" ; ".join(f"`{x}`" for x in ci)))
     message = (trad("Mettre à jour le socle {version}", version=VERSION) if mise_a_jour
                else trad("Installer le socle {version}", version=VERSION))
     etapes.append(trad('commiter puis pousser : `git add -A && git commit -m "{message}" && git push`',
