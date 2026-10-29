@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0085 — Protéger les skills du socle dans la politique de ce dépôt, fichier protégé
 
-> statut : ouvert · origine : J-2026-10-22-H · pour : humain · lu : backlog@c942935a
+> statut : fait · origine : J-2026-10-22-H · ref : J-2026-10-29-A · pour : humain · lu : backlog@c942935a
 
 La politique d'un projet neuf protège les skills du socle
 (`.claude/skills/socle-*/**`, ADR-0034) ; celle de ce dépôt, posée avant,

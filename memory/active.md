@@ -81,15 +81,15 @@ garde en tete et on voit si ça finit par etre bloquant ».
    (J-2026-10-20-X), la documentation, validée par Théo (D-0039,
    J-2026-10-22-B). D-0037 répondue `rien` pour aujourd'hui ; à terme, le
    dépôt de distribution séparé (B-0083), à la première version mûre.
-2. Maintenant : le projet pilote, l'essai du socle sur un vrai projet ;
-   lequel, et comment, est à demander à Théo.
+2. Maintenant : le projet pilote (point 6).
 3. Faits en attendant le pilote : B-0078, B-0079, B-0080 (J-2026-10-22-C).
    B-0081 et B-0082 faits sur les réponses de Théo (D-0040, D-0041).
 4. Faits : B-0066, les skills, selon l'option 1 de D-0042 (ADR-0034,
    J-2026-10-22-H) ; B-0084 (J-2026-10-22-J) ; la CI de l'auto-test
    protégée de la maintenance de git (J-2026-10-22-I).
 5. B-0076 fait : la section `[code]` poussée par Théo, le dernier repli de
-   compatibilité retiré (D-0044). À Théo : protéger les skills du socle
-   dans la politique de ce dépôt (B-0085). Puis le projet pilote, à
-   choisir par Théo. Attendent le pilote : B-0010, B-0012, B-0071 ; le
-   dépôt de distribution : B-0083 ; gardé en tête : B-0048.
+   compatibilité retiré (D-0044) ; B-0085 fait par Théo (J-2026-10-29-A).
+6. Le projet pilote : un projet neuf de Théo, dont il écrit le cadrage
+   avant l'installation (J-2026-10-29-A). Attendent le pilote : B-0010,
+   B-0012, B-0071 ; le dépôt de distribution : B-0083 ; gardé en tête :
+   B-0048.
