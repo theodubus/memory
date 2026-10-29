@@ -190,6 +190,22 @@ class TestHooksNonCharges(unittest.TestCase):
             plus_tard = datetime.now(timezone.utc) + timedelta(seconds=hooks.FRAICHEUR_HOOKS + 1)
             self.assertTrue(hooks.hooks_non_charges(self.projet, maintenant=plus_tard))
 
+    def test_une_session_qui_installe_le_socle_a_ses_hooks(self):
+        """Installé pendant la session, le socle n'a pas vu son SessionStart,
+        mais ses hooks tirent dès l'appel d'outil suivant (F-0003) : l'état
+        les disait à tort non chargés, et l'agent ne devait plus rien pousser."""
+        trace = config.chemin_trace(self.racine)
+        trace.parent.mkdir(parents=True, exist_ok=True)
+        hooks.tracer(self.racine, "Install", "", "0.1.0")
+        hooks.tracer(self.racine, "PreToolUse", "s", "Bash")
+        with self.sous(CLAUDECODE="1", CLAUDE_CODE_SESSION_ID="s"):
+            self.assertTrue(hooks.installe_pendant([l.split("\t") for l in config.lire_trace(self.racine)], "s"))
+            self.assertFalse(hooks.hooks_non_charges(self.projet))
+        # Une autre session, après coup, n'hérite pas de l'installation.
+        hooks.tracer(self.racine, "PreToolUse", "autre", "Bash")
+        with self.sous(CLAUDECODE="1", CLAUDE_CODE_SESSION_ID="autre"):
+            self.assertTrue(hooks.hooks_non_charges(self.projet))
+
     def test_hors_d_un_agent_ou_sans_session_rien_n_est_dit(self):
         with self.sous():
             self.assertFalse(hooks.hooks_non_charges(self.projet))

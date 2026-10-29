@@ -871,13 +871,17 @@ def compter_session(racine: Path, session: str | None = None) -> str:
     session = session or next((l[2] for l in reversed(agent) if l[2]), "")
     de_la_session = [l for l in agent if l[2] == session]
     compte = {e: sum(1 for l in de_la_session if l[1] == e) for e in ("SessionStart", "PreToolUse", "Stop")}
-    if compte["SessionStart"] == 0:
-        # Le socle a-t-il été installé PENDANT cette session ? Alors son
-        # SessionStart a eu lieu avant que le hook n'existe.
-        premier = next((i for i, l in enumerate(lignes) if len(l) >= 3 and l[2] == session), None)
-        if premier is not None and premier > 0 and lignes[premier - 1][1] == "Install":
-            return f"SessionStart=installation PreToolUse={compte['PreToolUse']} Stop={compte['Stop']}"
+    if compte["SessionStart"] == 0 and installe_pendant(lignes, session):
+        return f"SessionStart=installation PreToolUse={compte['PreToolUse']} Stop={compte['Stop']}"
     return " ".join(f"{k}={v}" for k, v in compte.items())
+
+
+def installe_pendant(lignes: list[list[str]], session: str) -> bool:
+    """Le socle a été installé PENDANT cette session : la première trace de
+    la session suit l'installation. Son SessionStart a eu lieu avant que le
+    hook n'existe, et ses hooks tirent dès l'appel d'outil suivant (F-0003)."""
+    premier = next((i for i, l in enumerate(lignes) if len(l) >= 3 and l[2] == session), None)
+    return premier is not None and premier > 0 and lignes[premier - 1][1] == "Install"
 
 
 def compter_depuis_le_commit(racine: Path, session: str | None = None) -> str:
@@ -906,16 +910,17 @@ FRAICHEUR_HOOKS = 600  # secondes
 def hooks_non_charges(projet: config.Projet, maintenant: datetime | None = None) -> bool:
     """Sous Claude Code (`CLAUDECODE`), les hooks de la session courante
     (`CLAUDE_CODE_SESSION_ID`) ne tirent pas : la trace n'a aucun
-    SessionStart pour elle, ou son dernier passage (démarrage ou filtre)
-    date de plus de `FRAICHEUR_HOOKS` secondes. La session a démarré, ou
-    repris, hors de la racine du projet. Faux hors d'un agent, sans
+    SessionStart pour elle, sauf si le socle a été installé pendant elle, ou
+    son dernier passage (démarrage ou filtre) date de plus de
+    `FRAICHEUR_HOOKS` secondes. La session a démarré, ou repris, hors de la
+    racine du projet. Faux hors d'un agent, sans
     identifiant de session, ou quand la politique n'outille pas Claude Code."""
     session = os.environ.get("CLAUDE_CODE_SESSION_ID")
     if not os.environ.get("CLAUDECODE") or not session or not projet.pol("agents", "claude_code", defaut=True):
         return False
     lignes = [l.split("\t") for l in config.lire_trace(projet.racine)]
     passages = [l for l in lignes if len(l) >= 3 and l[2] == session and l[1] in ("SessionStart", "PreToolUse")]
-    if not any(l[1] == "SessionStart" for l in passages):
+    if not any(l[1] == "SessionStart" for l in passages) and not installe_pendant(lignes, session):
         return True
     try:
         dernier = datetime.fromisoformat(passages[-1][0])
