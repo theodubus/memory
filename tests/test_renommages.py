@@ -203,6 +203,15 @@ class TestCouchesGelees(Projet):
         self.assertEqual(ctx.lire_base("scripts/old.py"), "x = 1\n")
         self.assertIsNone(ctx.lire_base("scripts/neuf.py"))
 
+    def test_un_chemin_barre_ne_se_juge_pas(self):
+        """B-0087, relevé sur chess : un chemin barré dit qu'il n'existe plus,
+        et le contrôle le refusait comme un chemin vivant."""
+        self.citer("memory/active.md", "\nL'outil vivait dans <s>`scripts/jamais.py`</s>, puis "
+                                       "~~`scripts/plus.py`~~ ; voir <del>[l'ancien](../scripts/jamais.py)</del>.\n")
+        self.assertEqual(self.erreurs(), [])
+        self.citer("memory/active.md", "\nEt `scripts/jamais.py`, qui n'est pas barré.\n")
+        self.assertEqual(self.erreurs(), ["chemin cité inexistant : `scripts/jamais.py`"])
+
     def test_le_chantier_actif_suit_le_renommage(self):
         # Le chantier actif se réécrit : il cite le nom d'aujourd'hui.
         self.citer("memory/active.md", "\nL'outil vit dans `scripts/vieux.py`.\n")

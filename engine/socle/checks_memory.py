@@ -306,11 +306,12 @@ def references(ctx, r):
                 faute = verifier_ref(ctx, type_, cible, gele)
                 if faute:
                     r.erreur("memoire.references", faute, chemin, i)
-            for m in LIEN_RE.finditer(ligne):
+            vivante = memoire.sans_barre(ligne)
+            for m in LIEN_RE.finditer(vivante):
                 faute = _verifier_lien(ctx, chemin, dossier, m.group(1), gele)
                 if faute:
                     r.erreur("memoire.references", faute, chemin, i)
-            sans_refs = memoire.REF_RE.sub(" ", ligne)
+            sans_refs = memoire.REF_RE.sub(" ", vivante)
             for m in CODE_EN_LIGNE.finditer(sans_refs):
                 faute = _verifier_chemin_cite(ctx, m.group(1), gele)
                 if faute:

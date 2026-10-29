@@ -179,6 +179,16 @@ def lignes_hors_code(texte: str):
         yield i, ligne, dedans
 
 
+# Un texte barré (`~~…~~`, `<s>…</s>`, `<del>…</del>`) dit ce qui n'est plus :
+# ses chemins et ses liens ne se jugent pas comme vivants (B-0087).
+TEXTE_BARRE = re.compile(r"~~[^~\n]+?~~|<(?P<balise>s|del|strike)>.*?</(?P=balise)>", re.I)
+
+
+def sans_barre(ligne: str) -> str:
+    """La ligne sans ce qu'elle barre."""
+    return TEXTE_BARRE.sub(" ", ligne)
+
+
 def mentions(texte: str) -> list[tuple[str, int]]:
     """Les identifiants mentionnés hors des blocs de code clôturés, avec leur
     ligne. Les blocs clôturés portent des exemples, pas des références."""

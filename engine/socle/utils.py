@@ -167,6 +167,27 @@ def empreinte_arbre(racine: Path) -> str:
     return sha256(tete + diff + autres + contenus)
 
 
+def empreinte_contenu(racine: Path, hors: tuple[str, ...] = ()) -> str:
+    """Le contenu de l'arbre de travail, fichiers non suivis compris, tel que
+    git l'écrirait en arbre : un commit qui n'y change rien le garde, à la
+    différence d'`empreinte_arbre`. Les chemins qui commencent par l'un de
+    `hors` n'y entrent pas (B-0086)."""
+    import shutil
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as dossier:
+        index = Path(dossier) / "index"
+        reel = git(racine, "rev-parse", "--git-path", "index", check=False).strip()
+        if reel and (racine / reel).is_file():
+            shutil.copyfile(racine / reel, index)  # ses dates évitent de tout relire
+        env = {**os.environ, "GIT_INDEX_FILE": str(index)}
+        subprocess.run(["git", "add", "-A"], cwd=racine, env=env, capture_output=True)
+        arbre = subprocess.run(["git", "write-tree"], cwd=racine, env=env, capture_output=True,
+                               text=True).stdout.strip()
+    lignes = git(racine, "ls-tree", "-r", "--full-tree", arbre, check=False).splitlines() if arbre else []
+    return sha256("".join(l + "\n" for l in lignes if not l.split("\t", 1)[-1].startswith(hors)))
+
+
 def lire_plusieurs(racine: Path, rev: str, chemins: list[str]) -> dict[str, str | None]:
     """Le contenu de plusieurs fichiers à une révision, en un seul processus
     git (`cat-file --batch`) au lieu d'un `git show` par fichier ; `None`

@@ -110,6 +110,44 @@ class TestInstallationVerte(Base):
         self.assertIn("git commit", etapes[1])
         self.assertIn("ouvrir l'agent", etapes[2])
 
+    def test_des_plafonds_deja_mesures_sont_repris(self):
+        """B-0009, relevé par l'essai à blanc sur chess : les plafonds qu'un
+        projet avait mesurés se perdaient à l'adoption, chaque module « à
+        mesurer » jusqu'à un balayage de plusieurs heures."""
+        self.racine = depot({"pyproject.toml": "[tool.pytest.ini_options]\n",
+                             "src/calc.py": "def f():\n    return 1\n", "src/autre.py": "def g():\n    return 2\n"})
+        dossier = Path(tempfile.mkdtemp(prefix="socle-plafonds-"))
+        self.addCleanup(shutil.rmtree, dossier, ignore_errors=True)
+        caps = dossier / "plafonds.toml"
+        caps.write_text('[mutation.caps]\n"src/calc.py" = { max = 3, reason = "mesuré par le projet" }\n'
+                        '"src/autre.py" = { max = 0 }\n"src/absent.py" = { max = 1 }\n')
+        self.assertEqual(installeur.lire_plafonds(caps)["src/calc.py"], {"max": 3, "reason": "mesuré par le projet"})
+        code, sortie = installer(self.racine, "python-pytest", adoption=True, plafonds=caps)
+        self.assertEqual(code, 0, sortie)
+        gf = (self.racine / config.FORMAT_ACTUEL.garde_fous).read_text()
+        self.assertIn('"src/calc.py" = { max = 3, reason = "mesuré par le projet" }', gf)
+        self.assertIn('"src/autre.py" = { max = 0, reason = "repris de plafonds.toml à l\'installation" }', gf)
+        self.assertIn("plafonds de mutation repris de plafonds.toml : 2", sortie)
+        self.assertIn("écartés, faute d'un module de ce nom qui porte du code : src/absent.py", sortie)
+
+    def test_des_plafonds_illisibles_arretent_l_installation_avant_d_ecrire(self):
+        self.racine = depot({"src/calc.py": "def f():\n    return 1\n"})
+        dossier = Path(tempfile.mkdtemp(prefix="socle-plafonds-"))
+        self.addCleanup(shutil.rmtree, dossier, ignore_errors=True)
+        caps = dossier / "plafonds.toml"
+        for texte, faute in (("[mutation.caps]\n\"src/calc.py\" = { max = -1 }\n", "entier positif ou nul"),
+                             ("[autre]\n", "aucune table"), ("= faux", "illisible")):
+            caps.write_text(texte)
+            with self.assertRaises(ValueError) as e:
+                installeur.lire_plafonds(caps)
+            self.assertIn(faute, str(e.exception))
+        import contextlib
+        with contextlib.redirect_stderr(io.StringIO()) as erreurs:
+            code, _ = installer(self.racine, "python-pytest", plafonds=caps)
+        self.assertEqual(code, 2)
+        self.assertIn("illisible", erreurs.getvalue())
+        self.assertFalse((self.racine / ".socle").exists())
+
     def test_garde_fous_initiaux_sans_mutation(self):
         texte = installeur.garde_fous_initiaux(depot({"calc.py": "def f():\n    return 1\n"}),
                                                (MOTEUR / "socle/adapters/python.toml").read_text())

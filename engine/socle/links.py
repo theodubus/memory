@@ -211,7 +211,7 @@ def url_morte(racine, depot: str, url: str) -> str | None:
 def problemes(projet: config.Projet, message: str) -> tuple[list[str], list[str]]:
     """(liens morts, demandes sans lien) du message de l'agent."""
     racine = projet.racine
-    texte = _hors_code(message)
+    texte = memoire.sans_barre(_hors_code(message))
     morts = []
     for m in LIEN_MD.finditer(texte):
         cible = m["cible"]

@@ -171,6 +171,7 @@ PYTHONPATH=/tmp/socle/engine python3 -m socle install --target . --owner @<propr
 | --- | --- |
 | `--with-bmad` | installe aussi BMAD Method, à la version éprouvée avec le socle |
 | `--adoption` | équipe un projet existant : les contrôles qui échouent passent en avertissement, puis ne peuvent que durcir |
+| `--mutation-caps <fichier>` | reprend des plafonds de mutation déjà mesurés (une table `[mutation.caps]` en TOML) au lieu de poser ces modules « à mesurer » |
 | `--private compagnon` | ajoute une mémoire privée, dans un dépôt privé à part |
 | `--review lots` | exige la relecture de l'humain avant toute publication |
 | `--language en` | mémoire et messages en anglais |

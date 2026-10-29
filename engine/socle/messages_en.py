@@ -2348,4 +2348,23 @@ MESSAGES: dict[str, str] = {
         "skill that makes the agent run a command the hook refuses",
     "un skill du projet bien formé, qui cite dans son texte une commande à ne pas lancer, passe le commit et la CI":
         "a well-formed project skill, which cites in its text a command not to run, passes the commit and the CI",
+    # Les plafonds de mutation repris à l'installation (B-0009).
+    "des plafonds de mutation déjà mesurés, à reprendre au lieu de poser ces modules « à mesurer » : un fichier "
+    "TOML de `[mutation.caps]`":
+        "mutation caps already measured, to take over instead of laying these modules “to measure”: a TOML file "
+        "of `[mutation.caps]`",
+    "{fichier} illisible : {erreur}":
+        "{fichier} unreadable: {erreur}",
+    "{fichier} n'a aucune table `[mutation.caps]`":
+        "{fichier} has no `[mutation.caps]` table",
+    "{fichier} : le plafond de « {module} » n'est pas un `max` entier positif ou nul":
+        "{fichier}: the cap of “{module}” is not a `max` integer, positive or zero",
+    "repris de {source} à l'installation":
+        "taken over from {source} at installation",
+    "!! plafonds de {source} non repris : les garde-fous existent déjà":
+        "!! caps from {source} not taken over: the guardrails already exist",
+    "plafonds de mutation repris de {source} : {n}":
+        "mutation caps taken over from {source}: {n}",
+    "!! plafonds de {source} écartés, faute d'un module de ce nom qui porte du code : {liste}":
+        "!! caps from {source} set aside, for want of a module of that name that carries code: {liste}",
 }

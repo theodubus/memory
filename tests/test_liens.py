@@ -123,6 +123,15 @@ class TestLiensDuDepot(unittest.TestCase):
         self.assertEqual(liens.problemes(self.projet, message), ([], []))
 
 
+    def test_un_chemin_barre_d_un_message_ne_se_juge_pas(self):
+        """B-0087 : un chemin barré dit ce qui n'est plus."""
+        from socle import memory as memoire
+
+        self.assertEqual(memoire.sans_barre("a ~~`docs/x.md`~~ b <s>`docs/y.md`</s> c <DEL>z</DEL>"), "a   b   c  ")
+        message = "L'ancien guide, ~~`docs/absent.md`~~, puis <s>[l'autre](docs/parti.md)</s>."
+        self.assertEqual(liens.problemes(self.projet, message), ([], []))
+
+
 class TestDemandeLue(unittest.TestCase):
     """B-0022 : une réponse ne se relaie qu'à une demande que l'humain a pu
     lire, poussée telle qu'elle est."""

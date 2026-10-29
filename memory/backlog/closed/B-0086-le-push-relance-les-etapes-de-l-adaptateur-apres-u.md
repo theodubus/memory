@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0086 — Le push relance les étapes de l'adaptateur après un commit qui ne change pas le code
 
-> statut : ouvert · origine : J-2026-10-29-B · lu : backlog@b8f4fad9
+> statut : fait · origine : J-2026-10-29-B · ref : J-2026-10-29-C · lu : backlog@b8f4fad9
 
 Relevé par l'essai à blanc sur chess. Les étapes rapides de l'adaptateur
 (la compilation et les tests, en minutes sur chess) ne se relancent pas

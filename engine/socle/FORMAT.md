@@ -90,7 +90,9 @@ final, la parenthèse qui la referme. Les liens markdown relatifs et leurs
 ancres, décodés (`%20`), et les chemins du dépôt cités entre accents graves,
 sont vérifiés aussi ; un chemin d'un autre dépôt s'écrit `depot:chemin`, le
 dépôt lié quelque part dans le projet par son adresse, ou, à défaut, déclaré
-dans `[references] repos` des garde-fous. Dans une couche qui ne se
+dans `[references] repos` des garde-fous. Un texte barré (`~~…~~`,
+`<s>…</s>`, `<del>…</del>`) dit ce qui n'est plus : ses chemins et ses liens
+ne se vérifient pas. Dans une couche qui ne se
 réécrit pas (canonique, décisions, journal, demandes), un chemin qui a
 existé dans l'historique du dépôt vaut, un lien relatif se lit aussi depuis
 les anciens emplacements de son fichier, et l'ancre d'un lien n'est pas

@@ -24,12 +24,14 @@ MARQUE = ".socle/trace/derniere-verification"
 
 def etapes_rapides(projet: config.Projet, rapport: Rapport, flux=None, refaire: bool = False) -> bool:
     """Les étapes rapides de l'adaptateur, sauf si elles ont déjà toutes passé
-    sur cet arbre exact (HEAD, diff, fichiers non suivis et leur contenu) : la
-    vérification que l'agent lance, la fin de tour et le hook avant push ne
-    paient pas trois fois la même compilation. La CI, elle, refait tout. Rend vrai si
-    elles ont tourné."""
+    sur ce contenu exact (fichiers non suivis compris) : la vérification que
+    l'agent lance, la fin de tour et le hook avant push ne paient pas trois
+    fois la même compilation. Un commit qui ne change pas le contenu, ou qui
+    ne change que la mémoire, que les étapes ne lisent pas, ne les relance pas
+    (B-0086). La CI, elle, refait tout. Rend vrai si elles ont tourné."""
     racine = projet.racine
-    marque = outils.empreinte_arbre(racine) if outils.a_des_commits(racine) else ""
+    hors = (projet.chemins.memoire.rstrip("/") + "/",)
+    marque = outils.empreinte_contenu(racine, hors) if outils.a_des_commits(racine) else ""
     fichier = racine / MARQUE
     if marque and not refaire and fichier.is_file() and fichier.read_text().strip() == marque:
         if flux:

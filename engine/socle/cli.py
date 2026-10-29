@@ -622,6 +622,7 @@ def cmd_install(args) -> int:
         langue_memoire=getattr(args, "language", None),
         avec_bmad=getattr(args, "with_bmad", False),
         version_bmad=getattr(args, "bmad_version", None) or installeur.VERSION_BMAD,
+        plafonds=Path(args.mutation_caps).resolve() if getattr(args, "mutation_caps", None) else None,
     )
 
 
@@ -894,6 +895,8 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
                    help=trad("installer d'abord BMAD Method (par npx), que le socle reconnaît ensuite"))
     s.add_argument("--bmad-version", help=trad("la version de BMAD Method à installer (défaut : celle éprouvée avec "
                                                "le socle)"))
+    s.add_argument("--mutation-caps", help=trad("des plafonds de mutation déjà mesurés, à reprendre au lieu de poser "
+                                                "ces modules « à mesurer » : un fichier TOML de `[mutation.caps]`"))
     s.set_defaults(f=cmd_install)
 
     s = sp.add_parser("init", help=trad("initialiser la mémoire depuis un cadrage, rien, ou le dépôt existant"))

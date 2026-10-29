@@ -265,12 +265,34 @@ def poser_bmad(cible: Path, lg: str, ch: config.Chemins = config.FORMAT_ACTUEL) 
     return res
 
 
+def lire_plafonds(fichier: Path) -> dict[str, dict]:
+    """Des plafonds de mutation déjà mesurés, à reprendre à l'installation :
+    la table `[mutation.caps]` d'un fichier TOML, chaque module avec son
+    `max` entier et, s'il en a une, sa raison (B-0009). Une erreur dit ce qui
+    ne va pas, avant que rien ne s'écrive."""
+    try:
+        caps = tomllib.loads(fichier.read_text(encoding="utf-8")).get("mutation", {}).get("caps", {})
+    except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError) as e:
+        raise ValueError(trad("{fichier} illisible : {erreur}", fichier=fichier, erreur=e)) from e
+    if not caps:
+        raise ValueError(trad("{fichier} n'a aucune table `[mutation.caps]`", fichier=fichier))
+    res = {}
+    for module, c in caps.items():
+        maxi = c.get("max") if isinstance(c, dict) else None
+        if not isinstance(maxi, int) or isinstance(maxi, bool) or maxi < 0:
+            raise ValueError(trad("{fichier} : le plafond de « {module} » n'est pas un `max` entier positif ou nul",
+                                  fichier=fichier, module=module))
+        res[module] = {"max": maxi, "reason": str(c.get("reason", "")).strip()}
+    return res
+
+
 def garde_fous_initiaux(cible: Path, texte_adaptateur: str, ch: config.Chemins = config.FORMAT_ACTUEL,
-                        lg: str = "fr") -> str:
+                        lg: str = "fr", plafonds: dict[str, dict] | None = None, source: str = "") -> str:
     """Les garde-fous du gabarit, avec chaque module qui porte déjà du code
     posé « à mesurer » au cliquet de mutation : une installation sur un
     projet existant finit verte, et le premier balayage pose les plafonds
-    mesurés."""
+    mesurés. Un module dont `plafonds` donne la mesure, faite ailleurs, la
+    reprend au lieu d'attendre ce balayage (B-0009)."""
     texte = gabarit("guardrails.toml", lg)
     tiers = [c for _, chemins in outils_tiers(cible) for c in chemins]
     texte = declarer_tiers(texte, tiers)
@@ -284,9 +306,17 @@ def garde_fous_initiaux(cible: Path, texte_adaptateur: str, ch: config.Chemins =
                if porte.search(outils.lire_a(cible, None, m) or "")]
     if not modules:
         return texte
-    entrees = "".join(f"{json.dumps(m, ensure_ascii=False)} = {{ pending = true }}\n" for m in sorted(modules))
+    plafonds = plafonds or {}
+
+    def entree(m: str) -> str:
+        cle = json.dumps(m, ensure_ascii=False)
+        if m not in plafonds:
+            return f"{cle} = {{ pending = true }}\n"
+        raison = plafonds[m]["reason"] or trad("repris de {source} à l'installation", source=source)
+        return f"{cle} = {{ max = {plafonds[m]['max']}, reason = {json.dumps(raison, ensure_ascii=False)} }}\n"
+
     exemple = '# "src/lib.rs" = { max = 0 }\n'
-    return texte.replace(exemple, exemple + entrees, 1)
+    return texte.replace(exemple, exemple + "".join(entree(m) for m in sorted(modules)), 1)
 
 
 def politique_nom(texte: str, nom: str) -> str:
@@ -398,7 +428,8 @@ def _poser_moteur(cible: Path, mode: str, source: Path, ch: config.Chemins) -> t
 
 def _poser_configuration(cible: Path, texte_adaptateur: str, ancien: dict, prive: str | None,
                          relecture: str | None, demandes_privees: bool,
-                         langue_memoire: str | None, ch: config.Chemins) -> tuple[str, list[str]]:
+                         langue_memoire: str | None, ch: config.Chemins,
+                         plafonds: dict[str, dict] | None = None, source: str = "") -> tuple[str, list[str]]:
     """La politique, l'adaptateur et les garde-fous, posés s'ils manquent ;
     rend la langue de la mémoire."""
     journal = []
@@ -438,14 +469,25 @@ def _poser_configuration(cible: Path, texte_adaptateur: str, ancien: dict, prive
     for nom, contenu in (
         (ch.politique, politique),
         (ch.adaptateur, texte_adaptateur),
-        (ch.garde_fous, garde_fous_initiaux(cible, texte_adaptateur, ch, lg)),
+        (ch.garde_fous, garde_fous_initiaux(cible, texte_adaptateur, ch, lg, plafonds, source)),
     ):
         p = cible / nom
         if p.is_file():
             journal.append(trad("{nom} existe : conservé (comparer au gabarit à la main si besoin)", nom=nom))
+            if nom == ch.garde_fous and plafonds:
+                journal.append(trad("!! plafonds de {source} non repris : les garde-fous existent déjà",
+                                    source=source))
         else:
             outils.ecrire(p, contenu)
             journal.append(trad("{nom} posé", nom=nom))
+            if nom == ch.garde_fous and plafonds:
+                poses = tomllib.loads(contenu).get("mutation", {}).get("caps", {})
+                repris = [m for m in plafonds if "max" in poses.get(m, {})]
+                journal.append(trad("plafonds de mutation repris de {source} : {n}", source=source, n=len(repris)))
+                ecartes = sorted(set(plafonds) - set(repris))
+                if ecartes:
+                    journal.append(trad("!! plafonds de {source} écartés, faute d'un module de ce nom qui porte du "
+                                        "code : {liste}", source=source, liste=", ".join(ecartes)))
     gf = cible / ch.garde_fous
     for outil, chemins in outils_tiers(cible):
         texte = gf.read_text(encoding="utf-8")
@@ -558,21 +600,29 @@ def _poser_etages(cible: Path, texte_adaptateur: str, dossier_moteur: str, propr
 def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bool = False,
               mode: str = config.MODE_PROJET, source: Path | None = None, prive: str | None = None,
               relecture: str | None = None, demandes_privees: bool = False, filtre: str = "git-crypt",
-              langue_memoire: str | None = None, avec_bmad: bool = False, version_bmad: str = VERSION_BMAD) -> int:
+              langue_memoire: str | None = None, avec_bmad: bool = False, version_bmad: str = VERSION_BMAD,
+              plafonds: Path | None = None) -> int:
     """Installe ou met à jour le socle dans `cible`, et BMAD Method avant lui
     avec `avec_bmad`. Ses messages sont dans la langue de la mémoire du projet : celle qu'il a
     déjà, ou celle choisie pour un projet neuf."""
     existant = (cible / config.FORMAT_ACTUEL.politique).is_file()
     lg = langue.du_projet(config.Projet.charger(cible)) if existant else (langue_memoire or "fr")
     with messages.dans(lg):
+        # Les plafonds déjà mesurés se lisent avant que rien ne s'écrive.
+        try:
+            caps = lire_plafonds(plafonds) if plafonds else None
+        except ValueError as e:
+            print(trad("refus : {erreur}", erreur=e), file=sys.stderr)
+            return 2
         return _installer(cible, adaptateur, proprietaire, adoption, mode, source, prive, relecture,
                           demandes_privees, filtre, langue_memoire,
-                          version_bmad if avec_bmad else None, lg)
+                          version_bmad if avec_bmad else None, lg, caps, plafonds.name if plafonds else "")
 
 
 def _installer(cible: Path, adaptateur: str, proprietaire: str, adoption: bool, mode: str, source: Path | None,
                prive: str | None, relecture: str | None, demandes_privees: bool, filtre: str,
-               langue_memoire: str | None, version_bmad: str | None = None, lg_projet: str = "fr") -> int:
+               langue_memoire: str | None, version_bmad: str | None = None, lg_projet: str = "fr",
+               plafonds: dict[str, dict] | None = None, source_plafonds: str = "") -> int:
     ch = config.FORMAT_ACTUEL
 
     refus = _refus_cible(cible)
@@ -625,7 +675,7 @@ def _installer(cible: Path, adaptateur: str, proprietaire: str, adoption: bool, 
 
     # 2. Les fichiers du projet : posés s'ils manquent, jamais écrasés.
     lg, poses = _poser_configuration(cible, texte_adaptateur, ancien, prive, relecture, demandes_privees,
-                                     langue_memoire, ch)
+                                     langue_memoire, ch, plafonds, source_plafonds)
     journal += poses
 
     # 3. La mémoire initiale.
