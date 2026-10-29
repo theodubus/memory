@@ -157,8 +157,9 @@ l'historique de la fabrication.
 
 Prérequis : Python 3.11+ et git ; un projet en Rust, Python, JavaScript ou
 TypeScript, Go, Java, Ruby, PHP ou C# (un autre langage se décrit par un
-adaptateur) ; Claude Code et GitHub pour les trois étages ; avec BMAD,
-Node.js 20.12+ et `uv`.
+adaptateur) ; les outils de son adaptateur là où l'agent travaille (pytest,
+cargo…), que l'installeur cite ; Claude Code et GitHub pour les trois
+étages ; avec BMAD, Node.js 20.12+ et `uv`.
 
 ```sh
 git clone --depth 1 --filter=blob:none --sparse https://github.com/theodubus/memory /tmp/socle

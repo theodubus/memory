@@ -21,9 +21,6 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 ## Consignes en cours
 
-- La PR #7, de la branche de travail vers `main`, se suit jusqu'à sa
-  fusion : CI et commentaires ; Théo : « oui surveille la PR jusqu'à la
-  fusion » (J-2026-10-29-G).
 - La documentation se conçoit avant de s'écrire, commence par ce dont le
   projet parle et ce qu'il est, ses schémas se vérifient rendus avant le
   push, et elle n'est faite que validée par Théo ; Théo : « fais un petit
@@ -93,7 +90,8 @@ garde en tete et on voit si ça finit par etre bloquant ».
 5. B-0076 fait : la section `[code]` poussée par Théo, le dernier repli de
    compatibilité retiré (D-0044) ; B-0085 fait par Théo (J-2026-10-29-A).
 6. Le projet pilote : un projet neuf de Théo, avec BMAD Method, cadrage
-   écrit (J-2026-10-29-E). D'abord la branche fusionnée sur `main`, geste
-   de Théo ; puis l'installation, dans le dépôt du pilote et une session à
-   lui. Attendent le pilote : B-0010, B-0012, B-0071 ; le dépôt de
+   écrit (J-2026-10-29-E). La branche est fusionnée sur `main`
+   (J-2026-10-29-K). L'installation du pilote (justcook) s'est arrêtée sur
+   un `verify` rouge (J-2026-10-29-L) : B-0089, B-0090 et B-0091 faits ;
+   la session du pilote se réinstalle une fois ces correctifs sur `main`. Attendent le pilote : B-0010, B-0012, B-0071 ; le dépôt de
    distribution : B-0083 ; gardé en tête : B-0048.

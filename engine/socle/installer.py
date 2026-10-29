@@ -28,6 +28,7 @@ from datetime import date
 from pathlib import Path
 
 from socle import VERSION, config, fingerprint as empreinte, language as langue, messages, mutation, utils as outils
+from socle import verification
 from socle.messages import a_traduire, trad
 from socle.report import en_echec_dans
 from socle.templates import DOSSIER as MODELES, gabarit
@@ -1014,6 +1015,13 @@ def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str]) -> list[str
     if not mise_a_jour and not (demandes.is_dir() and any(demandes.glob("D-*.md"))):
         etapes.append(trad("décrire le projet à l'agent : `python3 .socle/socle init --brief <document> "
                            "--repo` (sans document : `--repo` seul ; un dépôt vide : sans option)"))
+    ci = verification.commandes_ci(projet)
+    if ci and not mise_a_jour:
+        # La CI installe les outils de l'adaptateur ; l'environnement de
+        # l'agent en a besoin aussi, et un conteneur cloud repart de zéro.
+        etapes.append(trad("donner à l'agent les outils que la CI installe : {commandes}, là où il travaille ; en "
+                           "session cloud, dans le script d'installation de l'environnement, que chaque session "
+                           "neuve exécute", commandes=" ; ".join(f"`{x}`" for x in ci)))
     message = (trad("Mettre à jour le socle {version}", version=VERSION) if mise_a_jour
                else trad("Installer le socle {version}", version=VERSION))
     etapes.append(trad('commiter puis pousser : `git add -A && git commit -m "{message}" && git push`',

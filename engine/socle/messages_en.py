@@ -476,6 +476,10 @@ MESSAGES: dict[str, str] = {
     "seul ; un dépôt vide : sans option)":
         "describe the project to the agent: `python3 .socle/socle init --brief <document> --repo` (without a "
         "document: `--repo` alone; an empty repository: no option)",
+    "donner à l'agent les outils que la CI installe : {commandes}, là où il travaille ; en session cloud, dans le "
+    "script d'installation de l'environnement, que chaque session neuve exécute":
+        "give the agent the tools the CI installs: {commandes}, where it works; in a cloud session, in the "
+        "environment's setup script, which every new session runs",
     "Mettre à jour le socle {version}":
         "Update the socle {version}",
     "Installer le socle {version}":
@@ -1685,6 +1689,14 @@ MESSAGES: dict[str, str] = {
     "test":
         "no test found (`{commande}`): a project that is starting has none yet; the first code is written with its "
         "test",
+    "pas encore de code (aucun fichier {sources}) : `{commande}` non lancée ; elle tournera dès le premier fichier":
+        "no code yet (no {sources} file): `{commande}` not run; it will run from the first file",
+    "l'outil manque à cet environnement ; la CI l'installe ainsi : {commandes} — l'installer ici et, en session "
+    "cloud, dans le script d'installation de l'environnement, que chaque session neuve exécute":
+        "the tool is missing from this environment; the CI installs it with: {commandes} — install it here and, in a "
+        "cloud session, in the environment's setup script, which every new session runs",
+    "l'outil manque à cet environnement : l'installer":
+        "the tool is missing from this environment: install it",
     "`{commande}` a rendu {code}\n        {queue}":
         "`{commande}` returned {code}\n        {queue}",
     "projet d'essai impossible à préparer : {erreur}":

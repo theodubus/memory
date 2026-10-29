@@ -8,6 +8,7 @@ import io
 import shutil
 import subprocess
 import tempfile
+import tomllib
 import unittest
 import unittest.mock
 from pathlib import Path
@@ -175,4 +176,78 @@ class TestSansAucunTest(unittest.TestCase):
         rapport = Rapport()
         verification.executer_etapes(projet, True, rapport)
         self.assertTrue(rapport.erreurs("verify.tests"))
+
+
+class TestSansCode(unittest.TestCase):
+    """B-0089 : un projet neuf s'installe avant son premier fichier, et la
+    commande de test de presque tout adaptateur y échoue (pas de manifeste,
+    pas d'outil, aucun test). Sans aucun fichier source à lui, `verify`
+    avertit sans lancer ses étapes ; le premier fichier les relance."""
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-sans-code-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=self.racine, check=True)
+        (self.racine / "README.md").write_text("# neuf\n")
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(self.racine, "python-pytest", "@essai", source=MOTEUR)
+        self.projet = config.Projet.charger(self.racine)
+        self.tests = self.projet.adaptateur["capabilities"]["tests"]
+
+    def verifier(self) -> Rapport:
+        rapport = Rapport()
+        verification.executer_etapes(self.projet, True, rapport)
+        return rapport
+
+    def test_sans_code_les_etapes_avertissent_sans_tourner(self):
+        # Une commande qui échoue toujours, comme cargo sans manifeste.
+        self.tests["command"] = "python3 -c 'raise SystemExit(3)'"
+        tiers = self.racine / ".claude/skills/bmad-essai/scripts/outil.py"
+        tiers.parent.mkdir(parents=True)
+        tiers.write_text("x = 1\n")
+        with unittest.mock.patch.object(self.projet, "chemins_tiers", return_value=["**/skills/bmad-*/**"]):
+            # Le moteur du socle et les fichiers tiers ne sont pas du code du projet.
+            self.assertTrue(verification.sans_code(self.projet))
+            rapport = self.verifier()
+            self.assertEqual(rapport.erreurs(), [])
+            self.assertIn("pas encore de code (aucun fichier `**/*.py`)", rapport.texte())
+            # Le premier fichier relance les étapes.
+            (self.racine / "app.py").write_text("x = 1\n")
+            self.assertFalse(verification.sans_code(self.projet))
+            self.assertTrue(self.verifier().erreurs("verify.tests"))
+
+    def test_pytest_sans_aucun_test_avertit(self):
+        (self.racine / "app.py").write_text("x = 1\n")
+        self.tests["command"] = "python3 -c \"print('no tests ran in 0.01s'); raise SystemExit(5)\""
+        rapport = self.verifier()
+        self.assertEqual(rapport.erreurs("verify.tests"), [])
+        self.assertIn("aucun test trouvé", rapport.texte())
+
+    def test_un_outil_absent_se_dit_avec_les_commandes_de_la_ci(self):
+        """B-0090 : le pilote n'avait que « No module named pytest », sans
+        savoir que la CI l'installe, ni comment."""
+        (self.racine / "app.py").write_text("x = 1\n")
+        for commande in ("python3 -m module_qui_n_existe_pas", "commande-qui-n-existe-pas"):
+            self.tests["command"] = commande
+            texte = "\n".join(c.message for c in self.verifier().erreurs("verify.tests"))
+            self.assertIn("l'outil manque à cet environnement ; la CI l'installe ainsi : "
+                          "`python3 -m pip install pytest mutmut`", texte, commande)
+        # Un échec ordinaire ne parle pas d'outil.
+        self.tests["command"] = "python3 -c 'raise SystemExit(1)'"
+        erreurs = self.verifier().erreurs("verify.tests")
+        self.assertTrue(erreurs)
+        self.assertNotIn("l'outil manque", erreurs[0].message)
+
+    def test_commandes_ci_lit_les_etapes_de_chaque_adaptateur(self):
+        attendu = {
+            "python-pytest": ["python3 -m pip install pytest mutmut"],
+            "javascript": ["npm ci"],
+            "rust": ["rustup show active-toolchain || rustup toolchain install stable --profile minimal "
+                     "--component rustfmt,clippy ; rustc --version && cargo --version"],
+            "python": [],
+        }
+        for nom, commandes in attendu.items():
+            texte = (MOTEUR / "socle/adapters" / f"{nom}.toml").read_text()
+            self.projet.adaptateur["ci_setup"] = tomllib.loads(texte).get("ci_setup", "")
+            self.assertEqual(verification.commandes_ci(self.projet), commandes, nom)
 

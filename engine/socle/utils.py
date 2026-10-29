@@ -179,7 +179,10 @@ def empreinte_contenu(racine: Path, hors: tuple[str, ...] = ()) -> str:
         index = Path(dossier) / "index"
         reel = git(racine, "rev-parse", "--git-path", "index", check=False).strip()
         if reel and (racine / reel).is_file():
-            shutil.copyfile(racine / reel, index)  # ses dates évitent de tout relire
+            # Ses dates évitent de tout relire, la sienne comprise : git relit une
+            # entrée datée de la seconde de l'index, et une copie datée du moment
+            # lui ferait croire inchangé un fichier modifié dans cette seconde (B-0091).
+            shutil.copy2(racine / reel, index)
         env = {**os.environ, "GIT_INDEX_FILE": str(index)}
         subprocess.run(["git", "add", "-A"], cwd=racine, env=env, capture_output=True)
         arbre = subprocess.run(["git", "write-tree"], cwd=racine, env=env, capture_output=True,

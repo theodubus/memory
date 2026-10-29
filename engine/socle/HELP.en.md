@@ -7,8 +7,8 @@ project root: `python3 .socle/socle <command>`; this guide is shown by
 
 The path in short:
 
-1. **Getting started**, once: describe the project, push, protect the
-   branch.
+1. **Getting started**, once: describe the project, give the agent its
+   tools, push, protect the branch.
 2. **Working with the agent**: give it tasks, read its recaps.
 3. **Answering the agent** when a decision belongs to the human.
 4. **Occasional actions**: approve one's own changes, update, act where the
@@ -22,11 +22,17 @@ Right after the installation:
    `python3 .socle/socle init --brief <document> --repo`. The brief is
    archived; `--repo` surveys what the repository already holds. Without a
    document, `--repo` alone; in an empty repository, no option.
-2. Commit and push.
-3. Protect the default branch on GitHub (repository settings, "Rules"):
+2. Give the agent the tools the CI installs for the adapter (pytest, for
+   instance), which the installer quotes with their commands. In a cloud
+   session, the container starts from scratch at every session: these
+   commands go in the environment's setup script, in its settings. As long
+   as the project has no source file, `verify` runs neither build nor
+   tests, and says so.
+3. Commit and push.
+4. Protect the default branch on GitHub (repository settings, "Rules"):
    require the CI "Socle — verify, checks, self-test" and the code owners'
    review before any merge. Without it, a red CI does not prevent merging.
-4. Open the agent in the project. It reads the state at start-up, then asks
+5. Open the agent in the project. It reads the state at start-up, then asks
    a few starting questions in the conversation.
 
 If the project already had its own `SessionStart` hook, the installer

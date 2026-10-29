@@ -78,9 +78,18 @@ avec sa raison écrite, et la CI le joue toujours. Sous `unittest` :
 
 Un projet qui commence n'a pas encore de test, et plusieurs outils le
 disent par un échec (`unittest` : « NO TESTS RAN », ou un dossier `tests/`
-absent). La clé `no_tests` de la capacité `tests` reconnaît ce cas dans la
-sortie : `verify` en fait un avertissement, pas un échec. L'adaptateur
-Python la déclare ; un autre l'ajoute quand son outil se comporte ainsi.
+absent ; pytest : « no tests ran »). La clé `no_tests` de la capacité
+`tests` reconnaît ce cas dans la sortie : `verify` en fait un
+avertissement, pas un échec. Les deux adaptateurs Python la déclarent ; un
+autre l'ajoute quand son outil se comporte ainsi. Avant même son premier
+fichier source (aucun fichier `sources`, hors du dossier du socle et des
+fichiers tiers), un projet neuf n'a rien à compiler ni à tester : `verify`
+ne lance pas les capacités, et le dit en avertissement.
+
+Les étapes `ci_setup` installent les outils de l'adaptateur dans la CI,
+avant le socle. L'agent en a besoin aussi, là où il travaille :
+l'installeur cite leurs commandes parmi les étapes qui suivent, et un
+`verify` qui échoue faute d'outil les rappelle.
 
 ## Une capacité absente se déclare
 

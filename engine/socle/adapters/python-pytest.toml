@@ -35,6 +35,9 @@ replacement = "capacité `lint` (compileall)"
 # tests, que pytest ramasserait.
 command = "python3 -m pytest -q --ignore=mutants"
 fast = true
+# Sans aucun test, pytest rend 5 et le dit : un projet qui commence n'en a
+# pas encore, `verify` en fait un avertissement.
+no_tests = '(?m)^no tests ran\b'
 
 [capabilities.mutation]
 # Hebdomadaire, pas à chaque commit. mutmut lit sa configuration dans

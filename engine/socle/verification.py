@@ -20,6 +20,9 @@ ORDRE = ("format", "lint", "build", "tests")
 LIGNES_SORTIE = 120
 # L'empreinte du dernier arbre sur lequel les étapes rapides ont toutes passé.
 MARQUE = ".socle/trace/derniere-verification"
+# Un outil absent de l'environnement : le shell ne trouve pas la commande
+# (code 127), ou Python le module que la commande lance.
+OUTIL_ABSENT = re.compile(r"(?m)^\S*python[\d.]*: No module named \S+")
 
 
 def etapes_rapides(projet: config.Projet, rapport: Rapport, flux=None, refaire: bool = False) -> bool:
@@ -67,6 +70,41 @@ def etapes(projet: config.Projet, rapide: bool) -> list[tuple[str, dict]]:
 RAPIDE = "SOCLE_RAPIDE"
 
 
+def sans_code(projet: config.Projet) -> bool:
+    """Vrai quand le projet n'a encore aucun fichier source à lui : un projet
+    neuf, installé avant sa première ligne, n'a rien à compiler ni à tester
+    (B-0089). Ni le dossier du socle ni les fichiers d'un outil tiers n'en
+    sont."""
+    sources = projet.adaptateur.get("sources", [])
+    if not sources:
+        return False
+    fichiers = projet.hors_tiers(outils.fichiers_courants(projet.racine))
+    return not outils.filtrer(fichiers, sources, [f"{config.DOSSIER}/**"])
+
+
+def commandes_ci(projet: config.Projet) -> list[str]:
+    """Les commandes que la CI lance pour les outils de l'adaptateur, avant le
+    socle (ses étapes `ci_setup`) : l'environnement de l'agent en a besoin
+    aussi (B-0090). Un bloc `run: |` donne une commande, ses lignes jointes."""
+    res, bloc = [], None
+    for ligne in (projet.adaptateur.get("ci_setup") or "").splitlines():
+        if bloc is not None:
+            if ligne.strip() and len(ligne) - len(ligne.lstrip()) > bloc[0]:
+                bloc[1].append(ligne.strip())
+                continue
+            if bloc[1]:
+                res.append(" ; ".join(bloc[1]))
+            bloc = None
+        m = re.match(r"^(\s*)(?:- )?run:\s*(.*?)\s*$", ligne)
+        if m and m.group(2) in ("|", ">"):
+            bloc = (len(m.group(1)), [])
+        elif m and m.group(2):
+            res.append(m.group(2))
+    if bloc and bloc[1]:
+        res.append(" ; ".join(bloc[1]))
+    return res
+
+
 def executer_etapes(projet: config.Projet, rapide: bool, rapport: Rapport, flux=None):
     env = dict(os.environ)
     env.setdefault("LC_ALL", "C.UTF-8")
@@ -74,6 +112,7 @@ def executer_etapes(projet: config.Projet, rapide: bool, rapport: Rapport, flux=
         env[RAPIDE] = "1"
     else:
         env.pop(RAPIDE, None)
+    vide = sans_code(projet)
     for nom, c in etapes(projet, rapide):
         ident = f"verify.{nom}"
         rapport.execute(ident)
@@ -81,6 +120,14 @@ def executer_etapes(projet: config.Projet, rapide: bool, rapport: Rapport, flux=
             rapport.indisponible(ident, trad("capacité absente : {absent} — remplacement : {remplacement}",
                                              absent=trad(c['absent']) if 'absent' in c else '?',
                                              remplacement=trad(c['replacement']) if 'replacement' in c else '?'))
+            continue
+        if vide and nom in ORDRE:
+            # Les étapes d'un projet déclarées par lui (`steps`) tournent
+            # toujours : elles ne jugent pas forcément son code.
+            rapport.avertir(ident, trad("pas encore de code (aucun fichier {sources}) : `{commande}` non lancée ; "
+                                        "elle tournera dès le premier fichier",
+                                        sources=", ".join(f"`{s}`" for s in projet.adaptateur["sources"]),
+                                        commande=c['command']))
             continue
         if flux:
             print(f"  … {ident} : {c['command']}", file=flux, flush=True)
@@ -101,5 +148,13 @@ def executer_etapes(projet: config.Projet, rapide: bool, rapport: Rapport, flux=
                                             "pas encore ; le premier code s'écrit avec son test",
                                             commande=c['command']))
                 continue
-            rapport.erreur(ident, trad("`{commande}` a rendu {code}\n        {queue}",
-                                       commande=c['command'], code=p.returncode, queue=queue))
+            message = trad("`{commande}` a rendu {code}\n        {queue}",
+                           commande=c['command'], code=p.returncode, queue=queue)
+            if p.returncode == 127 or OUTIL_ABSENT.search(sortie):
+                ci = commandes_ci(projet)
+                message += "\n        " + (trad("l'outil manque à cet environnement ; la CI l'installe ainsi : {commandes} "
+                                               "— l'installer ici et, en session cloud, dans le script "
+                                               "d'installation de l'environnement, que chaque session neuve exécute",
+                                               commandes=" ; ".join(f"`{x}`" for x in ci)) if ci
+                                         else trad("l'outil manque à cet environnement : l'installer"))
+            rapport.erreur(ident, message)
