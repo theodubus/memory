@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0090 — Un outil de l'adaptateur absent de l'environnement de l'agent ne se dit nulle part avant verify
 
-> statut : ouvert · origine : J-2026-10-29-L · lu : backlog@b8f4fad9
+> statut : fait · origine : J-2026-10-29-L · ref : J-2026-10-29-N · lu : backlog@b8f4fad9
 
 La CI que pose le socle installe les outils de l'adaptateur (ses étapes
 `ci_setup` : `pip install pytest mutmut`, `npm ci`, `composer install`…),

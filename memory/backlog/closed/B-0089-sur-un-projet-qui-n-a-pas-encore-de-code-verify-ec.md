@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0089 — Sur un projet qui n'a pas encore de code, verify échoue avec tout adaptateur sauf python
 
-> statut : ouvert · origine : J-2026-10-29-L · lu : backlog@b8f4fad9
+> statut : fait · origine : J-2026-10-29-L · ref : J-2026-10-29-N · lu : backlog@b8f4fad9
 
 Un projet neuf s'installe avant d'avoir du code : avec BMAD Method, la
 planification dure avant la première story. Sur un tel projet, `verify`

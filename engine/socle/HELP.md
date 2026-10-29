@@ -7,7 +7,8 @@ par `python3 .socle/socle help`.
 
 Le parcours en bref :
 
-1. **Démarrer**, une fois : décrire le projet, pousser, protéger la branche.
+1. **Démarrer**, une fois : décrire le projet, donner ses outils à
+   l'agent, pousser, protéger la branche.
 2. **Travailler avec l'agent** : lui confier des tâches, lire ses
    récapitulatifs.
 3. **Répondre à l'agent** quand une décision revient à l'humain.
@@ -22,12 +23,18 @@ Juste après l'installation :
    `python3 .socle/socle init --brief <document> --repo`. Le document de
    cadrage est archivé ; `--repo` relève ce que le dépôt contient déjà. Sans
    document, `--repo` seul ; dans un dépôt vide, sans option.
-2. Commiter et pousser.
-3. Protéger la branche par défaut sur GitHub (réglages du dépôt,
+2. Donner à l'agent les outils que la CI installe pour l'adaptateur
+   (pytest, par exemple), que l'installeur cite avec leurs commandes. En
+   session cloud, le conteneur repart de zéro à chaque session : ces
+   commandes vont dans le script d'installation de l'environnement, dans
+   ses réglages. Tant que le projet n'a aucun fichier source, `verify` ne
+   lance ni compilation ni tests, et le dit.
+3. Commiter et pousser.
+4. Protéger la branche par défaut sur GitHub (réglages du dépôt,
    « Rules ») : exiger la CI « Socle — verify, contrôles, auto-test » et la
    revue des propriétaires du code avant toute fusion. Sans cela, une CI
    rouge n'empêche pas de fusionner.
-4. Ouvrir l'agent dans le projet. Il lit l'état au démarrage, puis pose
+5. Ouvrir l'agent dans le projet. Il lit l'état au démarrage, puis pose
    quelques questions de départ dans la conversation.
 
 Si le projet avait déjà son propre hook `SessionStart`, l'installeur le

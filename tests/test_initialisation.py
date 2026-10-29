@@ -99,6 +99,24 @@ class TestInstallationVerte(Base):
         self.assertIn('"src/calc.py" = { pending = true }',
                       (self.racine / config.FORMAT_ACTUEL.garde_fous).read_text())
 
+    def test_l_installation_dit_les_outils_que_la_ci_installe(self):
+        """B-0090 : la CI installe pytest, mais rien ne disait que
+        l'environnement de l'agent en a besoin aussi ; le pilote l'a appris
+        par un `verify` rouge."""
+        self.racine = depot({"README.md": "# neuf\n"})
+        code, sortie = installer(self.racine, "python-pytest")
+        self.assertEqual(code, 0, sortie)
+        etapes = sortie.split("Et maintenant :")[1]
+        self.assertIn("donner à l'agent les outils que la CI installe : `python3 -m pip install pytest mutmut`, "
+                      "là où il travaille ; en session cloud, dans le script d'installation de l'environnement",
+                      etapes)
+        # Un adaptateur sans outil à installer n'en dit rien.
+        autre = depot({"calc.py": "x = 1\n"})
+        self.addCleanup(shutil.rmtree, autre, ignore_errors=True)
+        code, sortie = installer(autre, "python")
+        self.assertEqual(code, 0, sortie)
+        self.assertNotIn("outils que la CI installe", sortie)
+
     def test_l_installation_dit_quoi_faire_ensuite(self):
         """B-0034, P2 : l'audit ne montre que ce qui échoue ou avertit, puis
         les étapes de l'humain, dans l'ordre, chacune avec sa commande."""

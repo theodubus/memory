@@ -91,6 +91,7 @@ garde en tete et on voit si ça finit par etre bloquant ».
    compatibilité retiré (D-0044) ; B-0085 fait par Théo (J-2026-10-29-A).
 6. Le projet pilote : un projet neuf de Théo, avec BMAD Method, cadrage
    écrit (J-2026-10-29-E). La branche est fusionnée sur `main`
-   (J-2026-10-29-K) ; reste l'installation, depuis `main`, dans le dépôt du
-   pilote et une session à lui. Attendent le pilote : B-0010, B-0012, B-0071 ; le dépôt de
+   (J-2026-10-29-K). L'installation du pilote (justcook) s'est arrêtée sur
+   un `verify` rouge (J-2026-10-29-L) : B-0089, B-0090 et B-0091 faits ;
+   la session du pilote se réinstalle une fois ces correctifs sur `main`. Attendent le pilote : B-0010, B-0012, B-0071 ; le dépôt de
    distribution : B-0083 ; gardé en tête : B-0048.
