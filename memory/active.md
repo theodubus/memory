@@ -89,7 +89,8 @@ garde en tete et on voit si ça finit par etre bloquant ».
    protégée de la maintenance de git (J-2026-10-22-I).
 5. B-0076 fait : la section `[code]` poussée par Théo, le dernier repli de
    compatibilité retiré (D-0044) ; B-0085 fait par Théo (J-2026-10-29-A).
-6. Le projet pilote : un projet neuf de Théo, dont il écrit le cadrage
-   avant l'installation (J-2026-10-29-A). Attendent le pilote : B-0010,
-   B-0012, B-0071 ; le dépôt de distribution : B-0083 ; gardé en tête :
-   B-0048.
+6. Le projet pilote : un projet neuf de Théo, avec BMAD Method, cadrage
+   écrit (J-2026-10-29-E). D'abord la branche fusionnée sur `main`, geste
+   de Théo ; puis l'installation, dans le dépôt du pilote et une session à
+   lui. Attendent le pilote : B-0010, B-0012, B-0071 ; le dépôt de
+   distribution : B-0083 ; gardé en tête : B-0048.
