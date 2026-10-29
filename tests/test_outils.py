@@ -2,6 +2,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -137,3 +138,24 @@ class TestLirePlusieurs(unittest.TestCase):
         lus = outils.lire_plusieurs(racine, "HEAD", chemins)
         self.assertEqual(lus, {c: outils.lire_a(racine, "HEAD", c) if c != "d" else None for c in chemins})
         self.assertEqual(lus["vide.md"], "")
+
+
+class TestEmpreinteContenu(unittest.TestCase):
+    """B-0091 : un fichier modifié dans la seconde de son dernier `git add`,
+    à taille égale, passait pour inchangé. La copie de l'index prenait la
+    date du moment, et git ne le relisait plus : les étapes rapides
+    n'étaient pas relancées sur un arbre qui avait changé."""
+
+    def test_un_fichier_change_dans_la_seconde_de_l_index_se_voit(self):
+        racine = Path(tempfile.mkdtemp(prefix="socle-empreinte-"))
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        git(racine, "init", "-q")
+        # L'ajout et la modification dans la même seconde, l'empreinte dans la suivante.
+        time.sleep(1 - time.time() % 1 + 0.02)
+        (racine / "a.py").write_text("x = 1\n")
+        git(racine, "add", "-A")
+        avant = outils.empreinte_contenu(racine)
+        (racine / "a.py").write_text("x = 2\n")
+        time.sleep(1.05)
+        self.assertNotEqual(outils.empreinte_contenu(racine), avant)
+
