@@ -1,5 +1,5 @@
-"""La lecture prouvée (ADR-0008), en une seule fonction que partagent le
-contrôle `memoire.lectures` et le hook de l'agent (ADR-0023).
+"""La lecture prouvée, en une seule fonction que partagent le
+contrôle `memoire.lectures` et le hook de l'agent.
 
 Une citation `ID@empreinte` vaut pour la version actuelle de l'entrée, ou
 pour celle du commit de la plage où la citation paraît pour la première
@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from socle import config, memory as memoire, utils as outils
+from socle import memory as memoire, utils as outils
 
 
 class Plage:
@@ -50,9 +50,9 @@ class Plage:
     def parution(self, chemin: str, citation: str, soi: memoire.Entree | None) -> int | None:
         """Le rang du commit où la citation paraît pour la première fois :
         dans ce fichier, ou dans l'entrée qui la porte, où qu'elle soit alors
-        (un sujet créé puis archivé au journal sur la même branche)."""
+        (un sujet créé puis rangé avec les clos sur la même branche)."""
         # `git log -S` trouve les commits où le nombre d'occurrences change,
-        # sans charger la mémoire de chacun. Une migration renomme le
+        # sans charger la mémoire de chacun. Un déplacement renomme le
         # fichier sans suivre son histoire : l'entrée qui porte la citation,
         # cherchée partout, donne la parution la plus ancienne.
         rangs = []
@@ -79,12 +79,10 @@ class Plage:
         return self._changeants[type_]
 
     def _changeant(self, type_: str) -> list[str]:
-        # Les décisions, et les sujets du backlog au format 3, vivent un par
-        # fichier : leur dossier entier, pour ceux ajoutés en route ; chaque
-        # chemin sous ses deux noms, d'un format de la mémoire à l'autre.
-        lieux = {memoire.dossier_propre(c) or c for m in (self.courante, self.base) if m is not None
-                 for c, f in m.fichiers.items() if any(e.type == type_ for e in f.entrees)}
-        lieux = sorted(lieux | {config.traduire(c, vers=v) for c in lieux for v in (1, 2)})
+        # Les décisions et les sujets du backlog vivent un par fichier : leur
+        # dossier entier, pour ceux ajoutés en route.
+        lieux = sorted({memoire.dossier_propre(c) or c for m in (self.courante, self.base) if m is not None
+                        for c, f in m.fichiers.items() if any(e.type == type_ for e in f.entrees)})
         if not lieux:
             return []
         return self._log("--", *lieux)
@@ -103,7 +101,7 @@ def deja_citee(soi: memoire.Entree | None, citation: str, avant: memoire.Memoire
     """La citation était là avant, dans la même entrée ou dans celle dont
     elle vient (une entrée basculée en privé, un sujet archivé) ; hors de
     toute entrée, dans le même fichier. Recopiée d'une autre entrée du
-    fichier, elle se juge (relevé de la passe de recul, D)."""
+    fichier, elle se juge."""
     if soi is None:
         return citation in texte_avant
     if avant is None:

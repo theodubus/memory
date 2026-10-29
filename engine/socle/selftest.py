@@ -24,6 +24,7 @@ import tempfile
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable
 
@@ -119,6 +120,15 @@ class Atelier:
             "GIT_AUTHOR_NAME": "autotest", "GIT_AUTHOR_EMAIL": "autotest@socle",
             "GIT_COMMITTER_NAME": "autotest", "GIT_COMMITTER_EMAIL": "autotest@socle",
             "GIT_CONFIG_NOSYSTEM": "1", "HOME": str(self.dossier),
+            # Les cas clonent l'origine en parallèle, en local : une
+            # maintenance automatique de git, lancée en arrière-plan par un
+            # commit ou une réception, y range les objets pendant qu'un clone
+            # les copie (« failed to copy file », « hardlink different from
+            # source »). Elle n'a rien à faire dans des dépôts jetables.
+            "GIT_CONFIG_COUNT": "3",
+            "GIT_CONFIG_KEY_0": "gc.auto", "GIT_CONFIG_VALUE_0": "0",
+            "GIT_CONFIG_KEY_1": "maintenance.auto", "GIT_CONFIG_VALUE_1": "false",
+            "GIT_CONFIG_KEY_2": "receive.autogc", "GIT_CONFIG_VALUE_2": "false",
         })
         self.n = 0
         # Les cas tournent sur plusieurs fils (L6) : le compteur des clones
@@ -342,6 +352,37 @@ def demande_bonne(a: Atelier, c: Path) -> str:
     return DEMANDE_BONNE.replace("- B-0001 —", f"- B-0001@{empreinte(a, c, 'B-0001')} —")
 
 
+SKILL_ESSAI = """---
+name: verifier-calc
+description: Vérifier le module de calcul avant de le livrer, ses tests et sa documentation. À utiliser quand le module de calcul change.
+---
+
+# Vérifier le module de calcul
+
+```sh
+python3 -m unittest discover -s tests -q
+```
+
+Ne jamais lancer `git commit --no-verify` : la CI exécute tout.
+"""
+
+
+def _poser_skill(c: Path, texte: str):
+    """Le skill d'essai, son en-tête en tête du fichier, là où l'agent le lit."""
+    p = c / ".claude/skills/verifier-calc/SKILL.md"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(texte)
+
+
+def _demande_de_choix(a: Atelier, c: Path, cite: str) -> str:
+    """La demande saine, en choix entre deux réponses dont aucune n'est
+    `valider`, qui cite `cite` à l'appui de sa recommandation."""
+    return (demande_bonne(a, c)
+            .replace("Vérifié : un seul appelant.", f"Vérifié : un seul appelant, que {cite} exerce.")
+            .replace("- `valider` — je refonds d'abord.", "- `refondre` — je refonds d'abord.")
+            .replace("- `refuser` — j'ajoute tel quel.", "- `ajouter` — j'ajoute tel quel."))
+
+
 ADR_ESSAI = """<!-- socle: couche=decisions zone=publique -->
 # ADR-0001 — Garder une seule fonction de multiplication
 
@@ -374,7 +415,7 @@ RECAP = "\n\nPour toi : rien.\nEnsuite : rien."
 
 def _demande_nommant_le_test(a: "Atelier", c: Path) -> str:
     """Une demande au contrat qui nomme `test_double`, pour en changer la
-    valeur attendue (B-0033)."""
+    valeur attendue."""
     return demande_bonne(a, c).replace(
         "## Où regarder", "- `test_double` — le test du module, qui attend le double de deux.\n\n## Où regarder", 1)
 
@@ -402,7 +443,7 @@ def tous_refuses(a: Atelier, c: Path, essais: list[tuple[str, dict]]) -> str:
     return "\n".join(raisons)
 
 
-# Une mutation factice (B-0044, L4) : l'adaptateur du projet d'essai n'a pas
+# Une mutation factice : l'adaptateur du projet d'essai n'a pas
 # de mutation, et `mutation.couverture` ne s'y exerçait jamais. Le balayage
 # se simule par une sortie de mutmut écrite à la main.
 MUTATION_FACTICE = """[capabilities.mutation]
@@ -422,13 +463,16 @@ def avec_mutation(c: Path):
 
 
 # `gh`, simulé : l'état du workflow de mutation et sa dernière exécution,
-# d'hier (B-0005).
+# d'hier.
 GH_FACTICE = """#!{python}
 import json, sys
 from datetime import datetime, timedelta, timezone
 chemin = sys.argv[2] if sys.argv[1:2] == ["api"] else ""
 hier = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
-if chemin.endswith("/actions/workflows/socle-mutation.yml"):
+if chemin.endswith("/actions/workflows/socle-mutation.yml") and "{etat}" == "inconnu":
+    sys.stderr.write("gh: Not Found (HTTP 404)\\n")
+    sys.exit(1)
+elif chemin.endswith("/actions/workflows/socle-mutation.yml"):
     print(json.dumps({{"state": "{etat}", "created_at": "2026-01-01T00:00:00Z"}}))
 elif "/actions/workflows/socle-mutation.yml/runs?" in chemin:
     print(json.dumps({{"workflow_runs": [{{"created_at": hier}}]}}))
@@ -437,15 +481,17 @@ else:
 """
 
 
-def _balayage_planifie(a: "Atelier", c: Path, etat: str) -> dict:
-    """Le projet d'essai avec un balayage planifié, posé à la base : la
-    mutation factice, son workflow et la doc qui le nomme. Rend
-    l'environnement où `gh`, simulé, dit l'état du workflow."""
+def _balayage_planifie(a: "Atelier", c: Path, etat: str, jours: int = 0) -> dict:
+    """Le projet d'essai avec un balayage planifié, posé à la base il y a
+    `jours` jours : la mutation factice, son workflow et la doc qui le nomme.
+    Rend l'environnement où `gh`, simulé, dit l'état du workflow
+    (`inconnu` : GitHub ne le connaît pas)."""
     avec_mutation(c)
     (c / ".github/workflows/socle-mutation.yml").write_text('name: Socle — mutation\non:\n  schedule:\n'
                                                             '    - cron: "23 2 * * 2"\n')
     ajouter(c, "docs/calc.md", "\nLe balayage de mutation, chaque semaine : `socle-mutation.yml`.\n")
-    a.commit(c, "balayage planifié")
+    date = (datetime.now(timezone.utc) - timedelta(days=jours)).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+    a.commit(c, "balayage planifié", env={"GIT_COMMITTER_DATE": date, "GIT_AUTHOR_DATE": date})
     a.git(c, "update-ref", "refs/remotes/origin/main", "HEAD")
     outils_ = c.parent / f"{c.name}-bin"
     outils_.mkdir()
@@ -465,7 +511,7 @@ def balayage(c: Path, lignes: str) -> Path:
 def _collision(a: "Atelier", c: Path) -> str:
     """La branche par défaut avance, dans ce clone seulement, avec un B-0002
     pris par une autre branche ; la branche de travail, partie d'avant, prend
-    B-0002 pour un autre sujet (ADR-0026). Rend le point de divergence, la
+    B-0002 pour un autre sujet. Rend le point de divergence, la
     base de la CI."""
     point = a.git(c, "rev-parse", "HEAD").strip()
 
@@ -484,19 +530,18 @@ def _collision(a: "Atelier", c: Path) -> str:
 
 
 def ajouter_sujet(c: Path, bloc: str):
-    """Un sujet de plus au backlog, écrit comme dans le fichier unique
-    (`## B-… — titre`, ses métadonnées, son corps) : à sa suite au format 2,
-    dans son propre fichier au format 3, son titre remonté d'un niveau
-    (ADR-0025)."""
+    """Un sujet de plus au backlog, écrit `## B-… — titre`, ses métadonnées,
+    son corps : dans son propre fichier, son titre remonté d'un niveau."""
     from socle import config, memory as memoire, utils as outils
 
-    ch = config.chemins(c)
-    if not ch.backlog_en_dossier:
-        ajouter(c, ch.backlog, bloc)
-        return
+    ch = config.FORMAT_ACTUEL
     m = re.match(r"\s*## (B-\d{4}) — (.+)", bloc)
-    outils.ecrire(c / ch.backlog / f"{m[1]}-{memoire.nom_de_fichier(m[2])}.md",
-                  "<!-- socle: couche=backlog zone=publique -->\n" + bloc.strip("\n").replace("## ", "# ", 1) + "\n")
+    texte = "<!-- socle: couche=backlog zone=publique -->\n" + bloc.strip("\n").replace("## ", "# ", 1) + "\n"
+    rel = f"{ch.backlog}/{m[1]}-{memoire.nom_de_fichier(m[2])}.md"
+    # Un sujet clos va d'emblée avec les clos.
+    if any(e.statut in memoire.BACKLOG_CLOS for e in memoire.analyser(rel, texte).entrees):
+        rel = f"{ch.backlog}/{memoire.DOSSIER_CLOS}/{rel.rsplit('/', 1)[-1]}"
+    outils.ecrire(c / rel, texte)
 
 
 def _sujet(c: Path, ident: str) -> str:
@@ -504,6 +549,13 @@ def _sujet(c: Path, ident: str) -> str:
     from socle import memory as memoire
 
     return memoire.Memoire.charger(c).entree(ident).fichier
+
+
+def _clore(c: Path, ident: str):
+    """Clôt un sujet du backlog, avec sa référence, sans le déplacer."""
+    p = c / _sujet(c, ident)
+    p.write_text(re.sub(r"(?m)^> statut : ouvert( · [^\n]*)?$",
+                        lambda m: "> statut : fait" + (m[1] or "") + " · ref : fichier:calc.py", p.read_text(), count=1))
 
 
 def maj_memoire(c: Path, texte: str = "Travail en cours sur l'essai."):
@@ -599,6 +651,87 @@ Vérifié : rien. Supposé : que c'est mieux.
 """
 
 
+# La liste vide des chemins tiers, telle que l'installeur la pose.
+TIERS_VIDE = "\npaths = []\n"
+
+# BMAD Method en réduction : sa configuration, et un travail que
+# son workflow de construction a reporté.
+BMAD_CONFIG = '[modules.bmm]\nimplementation_artifacts = "{project-root}/_bmad-output/implementation-artifacts"\n'
+BMAD_REPORT = ("- source_spec: `_bmad-output/implementation-artifacts/spec-x.md`\n"
+               "  summary: Valider l'entrée de double, qui accepte aujourd'hui une chaîne.\n"
+               "  evidence: double(\"a\") rend \"aa\" ; antérieur au changement.\n")
+
+
+BMAD_SPEC = """---
+title: 'Rendre double robuste'
+status: '{statut}'
+route: '{route}'
+---
+
+<frozen-after-approval reason="human-owned intent">
+
+## Intent
+
+**Problem:** double accepte une chaîne.
+
+**Approach:** {approche}
+
+</frozen-after-approval>
+"""
+
+
+SPEC_BMAD = "_bmad-output/implementation-artifacts/spec-x.md"
+
+
+def avec_bmad(c: Path, statut: str = "done", route: str = "oneshot",
+              approche: str = "Refuser ce qui n'est pas un nombre.", report: bool = True):
+    ajouter(c, "_bmad/config.toml", BMAD_CONFIG)
+    # Écrite telle quelle : son en-tête est sa première ligne.
+    (c / SPEC_BMAD).parent.mkdir(parents=True, exist_ok=True)
+    (c / SPEC_BMAD).write_text(BMAD_SPEC.format(statut=statut, route=route, approche=approche))
+    if report:
+        ajouter(c, "_bmad-output/implementation-artifacts/deferred-work.md", BMAD_REPORT)
+
+
+SPINE_BMAD = "_bmad-output/planning-artifacts/architecture/ARCHITECTURE-SPINE.md"
+SPINE = """---
+name: 'calc'
+type: architecture-spine
+status: final
+---
+
+# Architecture Spine — calc
+
+## Invariants & Rules
+
+### AD-1 — Une seule constante de multiplication
+
+- **Binds:** all
+- **Prevents:** deux facteurs qui divergent
+- **Rule:** tout facteur vient de FACTEUR.
+"""
+
+
+def avec_architecture(c: Path) -> str:
+    """BMAD et son document d'architecture ; rend l'empreinte de AD-1."""
+    from socle import bmad
+
+    ajouter(c, "_bmad/config.toml", BMAD_CONFIG)
+    (c / SPINE_BMAD).parent.mkdir(parents=True, exist_ok=True)
+    (c / SPINE_BMAD).write_text(SPINE)
+    return bmad.decisions_architecture(c, [SPINE_BMAD])[0].empreinte
+
+
+def approuver_en_seance(a: "Atelier", c: Path):
+    """L'humain approuve la spec dans la conversation ; l'agent consigne sa
+    réponse mot pour mot."""
+    (c.parent / f"{c.name}-citation.txt").write_text("Oui, approuvé : continue.")
+    r = a.socle(c, "decision", "Approuver la spec qui rend double robuste", "valider", "--about", SPEC_BMAD,
+                "--relayed", "--by", "Théo", "--quote-file", str(c.parent / f"{c.name}-citation.txt"))
+    if r.returncode != 0:
+        raise RuntimeError(r.stdout + r.stderr)
+
+
 def _cas() -> list[Cas]:
     cas = []
 
@@ -678,6 +811,50 @@ def _cas() -> list[Cas]:
         remplacer(c, ".socle/guardrails.toml", "repos = []", 'repos = ["x.patch"]')
         return etage_ci(a, c)
 
+    @defaut("tiers-declare", "chemin tiers déclaré sans validation, pour qu'un fichier du projet échappe aux "
+            "contrôles", "ci", "cliquet.garde-fous")
+    def _(a, c):
+        remplacer(c, ".socle/guardrails.toml", TIERS_VIDE, '\npaths = ["calc.py"]\n')
+        return etage_ci(a, c)
+
+    @defaut("tiers-sur-la-memoire", "chemin tiers qui couvrirait la mémoire", "ci", "config")
+    def _(a, c):
+        remplacer(c, ".socle/guardrails.toml", TIERS_VIDE, '\npaths = ["memory/**"]\n')
+        a.socle(c, "approve", "--keys", "thirdparty.paths", "--text", "La mémoire comme outil")
+        return etage_ci(a, c)
+
+    @defaut("report-bmad-hors-backlog", "travail reporté par BMAD resté hors du backlog", "ci", "bmad.reports")
+    def _(a, c):
+        avec_bmad(c)
+        return etage_ci(a, c)
+
+    @defaut("spec-approuvee-sans-trace", "spec de BMAD approuvée sans l'approbation de l'humain consignée", "ci",
+            "bmad.approbation")
+    def _(a, c):
+        avec_bmad(c, statut="ready-for-dev", route="dispatch", report=False)
+        return etage_ci(a, c)
+
+    @defaut("intention-changee-apres-approbation", "intention figée d'une spec changée après son approbation", "ci",
+            "bmad.approbation")
+    def _(a, c):
+        avec_bmad(c, statut="ready-for-dev", route="dispatch", report=False)
+        approuver_en_seance(a, c)
+        remplacer(c, SPEC_BMAD, "Refuser ce qui n'est pas un nombre.", "Convertir toute entrée en nombre.")
+        return etage_ci(a, c)
+
+    @defaut("decision-bmad-lue-perimee", "décision d'architecture de BMAD citée dans une version qu'elle n'a plus",
+            "ci", "bmad.lectures")
+    def _(a, c):
+        avec_architecture(c)
+        maj_memoire(c, "Le facteur suit `AD-1@00000000`.")
+        return etage_ci(a, c)
+
+    @defaut("decision-sans-relais", "décision en séance consignée par l'agent sans la citer", "agent",
+            "commande humaine")
+    def _(a, c):
+        lanceur = ".socle/" + "socle"
+        return etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} decision 'Approuver la spec x' valider"})
+
     @defaut("budget-releve", "budget de mémoire relevé", "ci", "cliquet.garde-fous")
     def _(a, c):
         remplacer(c, ".socle/guardrails.toml", '"memory/active.md" = { max_bytes = 6000 }', '"memory/active.md" = { max_bytes = 60000 }')
@@ -722,6 +899,23 @@ def _cas() -> list[Cas]:
                         "Socle-Agent: claude-code\nSocle-Hooks: SessionStart=1 PreToolUse=4 Stop=1\n"
                         "Socle-Hooks-Since-Commit: PreToolUse=0")
 
+    # Une session d'agent démarrée hors de la racine du projet n'a
+    # pas ses hooks ; l'état le dit en tête, le hook avant commit refuse.
+    @defaut("hooks-non-charges", "session d'agent démarrée hors de la racine : ses hooks ne sont pas chargés",
+            "agent", "hooks non chargés")
+    def _(a, c):
+        r = a.socle(c, "state", "--short", env={"CLAUDECODE": "1", "CLAUDE_CODE_SESSION_ID": "sans-hooks"})
+        return "\n".join(l for l in r.stdout.splitlines() if l.startswith("!!"))
+
+    @defaut("commit-sans-filtre", "commit d'agent sans passage du filtre depuis le précédent", "git",
+            "commit sans filtre")
+    def _(a, c):
+        maj_memoire(c, "Commit d'agent sans hooks chargés.")
+        a.git(c, "add", "-A")
+        r = a.run(c, "git", "commit", "-q", "-m", "essai",
+                  env={"CLAUDECODE": "1", "CLAUDE_CODE_SESSION_ID": "sans-hooks"})
+        return "" if r.returncode == 0 else r.stdout + r.stderr
+
     @defaut("moteur-altere", "moteur altéré dans le projet", "ci", "moteur.empreinte")
     def _(a, c):
         ajouter(c, ".socle/engine/socle/utils.py", "# retouche locale\n")
@@ -757,6 +951,27 @@ def _cas() -> list[Cas]:
     def _(a, c):
         sans = demande_bonne(a, c).replace("[calc.py](../../calc.py)", "le module")
         return etage_outil(a, c, "Write", {"file_path": str(c / "memory/requests/D-0001-refactor.md"), "content": sans})
+
+    @defaut("demande-sans-valider", "demande qui nomme un test sans proposer `valider` : aucune réponse ne "
+            "l'autoriserait", "agent", "geste sans valider")
+    def _(a, c):
+        return etage_outil(a, c, "Write", {"file_path": str(c / "memory/requests/D-0001-refactor.md"),
+                                           "content": _demande_de_choix(a, c, "`test_double`")})
+
+    @defaut("skill-sans-description", "skill dont la description ne dit pas quand s'en servir", "git",
+            "skills.contrat")
+    def _(a, c):
+        _poser_skill(c, SKILL_ESSAI.replace(
+            "Vérifier le module de calcul avant de le livrer, ses tests et sa documentation. À utiliser quand le "
+            "module de calcul change.", "Vérifier le calcul."))
+        return etage_git(a, c)
+
+    @defaut("skill-commande-refusee", "skill qui fait lancer une commande que le hook refuse", "git",
+            "skills.commandes")
+    def _(a, c):
+        _poser_skill(c, SKILL_ESSAI.replace(
+            "python3 -m unittest discover -s tests -q", "git commit -q --no-verify -m livraison"))
+        return etage_git(a, c)
 
     @defaut("budget-depasse", "couche de mémoire au-delà de son budget", "git", "memoire.budgets")
     def _(a, c):
@@ -915,6 +1130,12 @@ def _cas() -> list[Cas]:
     @defaut("backlog-clos-sans-ref", "entrée de backlog close sans référence", "git", "memoire.backlog")
     def _(a, c):
         remplacer(c, _sujet(c, "B-0001"), "> statut : ouvert", "> statut : fait")
+        return etage_git(a, c)
+
+    @defaut("clos-parmi-les-ouverts", "sujet clos, avec sa référence, laissé parmi les ouverts", "git",
+            "memoire.backlog")
+    def _(a, c):
+        _clore(c, "B-0001")
         return etage_git(a, c)
 
     # Au-delà du tableau du cadrage.
@@ -1109,6 +1330,13 @@ def _cas() -> list[Cas]:
         r = a.socle(c, "check", "--stage", "ci", "--base", "origin/main", env=env)
         return "" if r.returncode == 0 else r.stdout + r.stderr
 
+    @defaut("balayage-inconnu", "balayage de mutation fusionné depuis dix jours, que GitHub ne connaît pas", "ci",
+            "mutation.vivante")
+    def _(a, c):
+        env = _balayage_planifie(a, c, "inconnu", jours=10)
+        r = a.socle(c, "check", "--stage", "ci", "--base", "origin/main", env=env)
+        return "" if r.returncode == 0 else r.stdout + r.stderr
+
     @defaut("mutants-survivants", "survivants de mutation au-delà du plafond", "ci", "mutation.verdict")
     def _(a, c):
         avec_mutation(c)
@@ -1221,7 +1449,7 @@ def _cas() -> list[Cas]:
             "tests.code-teste")
     def _(a, c):
         # Contre la branche par défaut, la dispense du premier commit couvre
-        # `triple` ; la plage du second push, celle que la CI jugera, non (B-0043).
+        # `triple` ; la plage du second push, celle que la CI jugera, non.
         ajouter(c, "calc.py", "\n\ndef triple(x):\n    return 3 * x\n")
         ajouter(c, "docs/calc.md", "`triple` multiplie par trois.\n")
         maj_memoire(c, "Ajout de triple, dispensée.")
@@ -1333,7 +1561,7 @@ def _temoins() -> list[tuple[str, Callable]]:
         maj_memoire(c)
         return etage_ci(a, c, MESSAGE_AGENT)
 
-    @temoin("CLAUDE.md gardé comme seule source, avec la section du socle, passe la CI (B-0049)")
+    @temoin("CLAUDE.md gardé comme seule source, avec la section du socle, passe la CI")
     def _(a, c):
         a.run(c, "git", "rm", "-q", "CLAUDE.md")
         a.run(c, "git", "mv", "AGENTS.md", "CLAUDE.md")
@@ -1348,17 +1576,23 @@ def _temoins() -> list[tuple[str, Callable]]:
         maj_memoire(c, "Test reformaté.")
         return etage_ci(a, c, MESSAGE_AGENT)
 
-    @temoin("un chemin d'un autre dépôt, non déclaré, est signalé sans refus (B-0052)")
+    @temoin("un chemin d'un autre dépôt, non déclaré, est signalé sans refus")
     def _(a, c):
         remplacer(c, "memory/active.md", "## En cours\n\nRien pour l'instant.",
-                  "## En cours\n\nLe modèle vient de `chess:tools/etat.sh`.")
+                  "## En cours\n\nLe modèle vient de `ailleurs:tools/etat.sh`.")
         return etage_ci(a, c)
 
-    @temoin("une référence de commit en fin de phrase passe la CI (B-0020)")
+    @temoin("une référence de commit en fin de phrase passe la CI")
     def _(a, c):
         sha = a.run(c, "git", "rev-parse", "HEAD").stdout.strip()
         maj_memoire(c, f"Repris de l'essai (commit:{sha}).")
         return etage_ci(a, c)
+
+    @temoin("un skill du projet bien formé, qui cite dans son texte une commande à ne pas lancer, passe le "
+            "commit et la CI")
+    def _(a, c):
+        _poser_skill(c, SKILL_ESSAI)
+        return etage_git(a, c) or etage_ci(a, c)
 
     @temoin("durcir un garde-fou est libre")
     def _(a, c):
@@ -1380,6 +1614,14 @@ def _temoins() -> list[tuple[str, Callable]]:
                   '"calc.py" = { max = 0 }\n"unites.py" = { max = 2, reason = "mesuré le 2026-10-12 : 2 survivant(s)" }')
         maj_memoire(c, "Un module de constantes, mesuré.")
         return etage_ci(a, c)
+
+    @temoin("une demande de choix qui ne nomme ni test ni seuil passe sans `valider`, et une demande qui nomme "
+            "un test passe avec lui")
+    def _(a, c):
+        chemin = str(c / "memory/requests/D-0001-refactor.md")
+        return (etage_outil(a, c, "Write", {"file_path": chemin, "content": _demande_de_choix(a, c, "la fonction")})
+                or etage_outil(a, c, "Write", {"file_path": chemin, "content": demande_bonne(a, c).replace(
+                    "Vérifié : un seul appelant.", "Vérifié : un seul appelant, que `test_double` exerce.")}))
 
     @temoin("une commande qui ne fait que citer une action refusée passe le hook de l'agent")
     def _(a, c):
@@ -1410,6 +1652,14 @@ def _temoins() -> list[tuple[str, Callable]]:
         ligne = next((l.split() for l in r.stdout.splitlines() if l.strip().startswith("mutation.vivante")), [])
         return "" if ligne[-1:] == ["ok"] else f"mutation.vivante, attendu « ok » : {r.stdout}"
 
+    @temoin("un balayage de mutation fusionné aujourd'hui, que GitHub ne connaît pas encore, passe la CI")
+    def _(a, c):
+        env = _balayage_planifie(a, c, "inconnu")
+        r = a.socle(c, "check", "--stage", "ci", "--base", "origin/main", env=env)
+        if r.returncode != 0:
+            return r.stdout + r.stderr
+        return "" if "ne le connaît pas encore" in r.stdout else f"mutation.vivante, avertissement attendu : {r.stdout}"
+
     @temoin("un balayage de mutation sous le plafond passe le verdict")
     def _(a, c):
         avec_mutation(c)
@@ -1422,6 +1672,45 @@ def _temoins() -> list[tuple[str, Callable]]:
                   '"memory/active.md" = { max_bytes = 9000 }')
         r = a.socle(c, "approve", "--keys", 'budgets."memory/active.md".max_bytes', "--text", "Plus de place")
         return (r.stdout + r.stderr) if r.returncode != 0 else etage_ci(a, c)
+
+    @temoin("les fichiers d'un outil tiers, déclaré par l'humain qui l'approuve, échappent aux contrôles : la CI "
+            "passe")
+    def _(a, c):
+        remplacer(c, ".socle/guardrails.toml", TIERS_VIDE, '\npaths = ["_outil/**"]\n')
+        r = a.socle(c, "approve", "--keys", "thirdparty.paths", "--text", "Les fichiers de l'outil")
+        if r.returncode != 0:
+            return r.stdout + r.stderr
+        ajouter(c, "_outil/aide.py", "def aide(x):\n    return x\n")
+        ajouter(c, "_outil/test_outil.py", "def test_rien():\n    pass\n")
+        ajouter(c, "_outil/LISEZMOI.md", "Chaque constat cite `file:line`, et F-0099.\n")
+        return etage_ci(a, c)
+
+    @temoin("un travail reporté par BMAD, entré au backlog par `socle bmad-import`, passe la CI")
+    def _(a, c):
+        avec_bmad(c)
+        r = a.socle(c, "bmad-import")
+        if r.returncode != 0 or "B-" not in r.stdout:
+            return r.stdout + r.stderr
+        return etage_ci(a, c)
+
+    @temoin("une spec de BMAD approuvée, dont l'approbation de l'humain est consignée en séance, passe la CI")
+    def _(a, c):
+        avec_bmad(c, statut="in-progress", route="dispatch", report=False)
+        approuver_en_seance(a, c)
+        return etage_ci(a, c)
+
+    @temoin("une décision d'architecture de BMAD citée dans sa version actuelle passe la CI")
+    def _(a, c):
+        h = avec_architecture(c)
+        maj_memoire(c, f"Le facteur suit `AD-1@{h}`.")
+        return etage_ci(a, c)
+
+    @temoin("un chemin qui n'existe que dans une rustine suivie du dépôt passe la CI")
+    def _(a, c):
+        (c / "attic").mkdir(exist_ok=True)
+        (c / "attic/sondes.patch").write_text("--- /dev/null\n+++ b/attic/sondes/lecteur.py\n@@ -0,0 +1 @@\n+X = 1\n")
+        ajouter(c, "docs/calc.md", "Le lecteur `attic/sondes/lecteur.py` vient de la rustine.\n")
+        return etage_ci(a, c)
 
     @temoin("un fichier protégé changé par l'humain, qui l'approuve, passe la CI")
     def _(a, c):
@@ -1440,6 +1729,28 @@ def _temoins() -> list[tuple[str, Callable]]:
         (c / "citation.txt").unlink()
         remplacer(c, "tests/test_calc.py", "self.assertEqual(double(2), 4)", "self.assertEqual(double(2), 4.0)")
         maj_memoire(c)
+        return etage_ci(a, c)
+
+    @temoin("un correctif dont le test passe sur le parent, admis par une demande validée qui nomme son commit, "
+            "passe la CI")
+    def _(a, c):
+        remplacer(c, "calc.py", "return FACTEUR * x", "return FACTEUR * int(x)")
+        remplacer(c, "docs/calc.md", "la\nconstante", "la constante\nentière")
+        (c / "tests/test_regression.py").write_text(TEST_REGRESSION.replace('double("3")', "double(3)"))
+        maj_memoire(c, "Correctif de `double` sur les chaînes.")
+        r = a.commit(c, "fix: double accepte une chaîne")
+        if r.returncode != 0:
+            return r.stdout + r.stderr
+        sha = a.git(c, "rev-parse", "HEAD").strip()[:8]
+        demande = demande_bonne(a, c).replace(
+            "- B-0001@", f"- {sha} — le correctif de double, dont le test passe sur le parent dans la CI.\n- B-0001@", 1)
+        (c / "memory/requests/D-0001-refactor.md").write_text(demande)
+        pousser(a, c)
+        (c / "citation.txt").write_text("valider")
+        r = a.socle(c, "answer", "D-0001", "valider", "--relayed", "--by", "Théo", "--quote-file", "citation.txt")
+        (c / "citation.txt").unlink()
+        if r.returncode != 0:
+            return r.stdout + r.stderr
         return etage_ci(a, c)
 
     @temoin("une demande complète passe le hook de l'agent")
@@ -1635,6 +1946,14 @@ def _temoins() -> list[tuple[str, Callable]]:
         r = a.socle(c, "check", "--stage", "ci", "--base", point)
         return "" if r.returncode == 0 else r.stdout + r.stderr
 
+    @temoin("un sujet clos, rangé avec les clos par `socle archive`, passe la CI")
+    def _(a, c):
+        _clore(c, "B-0001")
+        r = a.socle(c, "archive")
+        if r.returncode != 0 or not list((c / "memory/backlog/closed").glob("B-0001-*.md")):
+            return r.stdout + r.stderr or "B-0001 n'est pas rangé"
+        return etage_ci(a, c, "B-0001 clos et rangé")
+
     @temoin("une décision qui prouve ses lectures passe le commit")
     def _(a, c):
         lu = f" · lu : decisions@{empreinte(a, c, 'decisions')}"
@@ -1651,7 +1970,7 @@ def _temoins() -> list[tuple[str, Callable]]:
         a.socle(c, "hook", "session-start", entree=json.dumps(entree))
         a.socle(c, "hook", "pre-tool-use", entree=json.dumps({**entree, "tool_name": "Bash", "tool_input": {"command": "ls"}}))
         # … et le commit se fait dans un autre worktree, comme la pull request
-        # de démonstration (B-0015).
+        # de démonstration.
         wt = c.parent / f"{c.name}-wt"
         a.git(c, "worktree", "add", "-q", "-b", "autre", str(wt))
         maj_memoire(wt, "Travail fait dans un autre worktree.")
@@ -1660,6 +1979,22 @@ def _temoins() -> list[tuple[str, Callable]]:
         if r.returncode != 0:
             return r.stdout + r.stderr
         r = a.socle(wt, "check", "--stage", "ci", "--base", "origin/main")
+        return "" if r.returncode == 0 else r.stdout + r.stderr
+
+    @temoin("une session d'agent dont le hook de démarrage a tiré : l'état n'avertit pas")
+    def _(a, c):
+        a.socle(c, "hook", "session-start", entree=json.dumps({"session_id": "avec-hooks", "source": "startup"}))
+        r = a.socle(c, "state", "--short", env={"CLAUDECODE": "1", "CLAUDE_CODE_SESSION_ID": "avec-hooks"})
+        return "\n".join(l for l in r.stdout.splitlines() if l.startswith("!!"))
+
+    @temoin("un commit d'agent dont le filtre a tiré depuis le commit précédent passe le hook avant commit")
+    def _(a, c):
+        a.socle(c, "hook", "pre-tool-use", entree=json.dumps(
+            {"session_id": "avec-filtre", "tool_name": "Bash", "tool_input": {"command": "git commit -m essai"}}))
+        maj_memoire(c, "Commit d'agent, ses hooks chargés.")
+        a.git(c, "add", "-A")
+        r = a.run(c, "git", "commit", "-q", "-m", "essai",
+                  env={"CLAUDECODE": "1", "CLAUDE_CODE_SESSION_ID": "avec-filtre"})
         return "" if r.returncode == 0 else r.stdout + r.stderr
 
     @temoin("un défaut sur disque mais pas dans l'index ne bloque pas le commit de ce qui est indexé")
@@ -1731,25 +2066,26 @@ def executer(projet=None, bavard: bool = False) -> Rapport:
                     sortie = trad("le témoin a planté : {erreur}", erreur=f"{type(panne).__name__}: {panne}")
                 if sortie:
                     r.erreur(ident, trad("témoin en échec — {nom} : un contrôle crie sur un cas sain\n        {sortie}",
-                                         nom=nom, sortie="\n        ".join(sortie.strip().splitlines()[-25:])))
+                                         nom=trad(nom), sortie="\n        ".join(sortie.strip().splitlines()[-25:])))
                 elif bavard:
-                    print(trad("  témoin ok : {nom}", nom=nom), file=sys.stderr)
+                    print(trad("  témoin ok : {nom}", nom=trad(nom)), file=sys.stderr)
                 continue
             ident = f"autotest.{cas.id}"
             r.execute(ident)
             if panne is not None:
-                r.erreur(ident, trad("{defaut} : injection impossible — {erreur}", defaut=cas.defaut,
+                r.erreur(ident, trad("{defaut} : injection impossible — {erreur}", defaut=trad(cas.defaut),
                                      erreur=f"{type(panne).__name__}: {panne}"))
                 continue
             if not sortie:
                 r.erreur(ident, trad("DÉFAUT NON ATTRAPÉ : {defaut} (attendu : {controle}, étage {etage})",
-                                     defaut=cas.defaut, controle=cas.controle, etage=cas.etage))
+                                     defaut=trad(cas.defaut), controle=cas.controle, etage=cas.etage))
             elif not _attrape_par(cas, sortie):
-                r.erreur(ident, trad("{defaut} : attrapé, mais pas par {controle}\n        {sortie}", defaut=cas.defaut,
-                                     controle=cas.controle, sortie="\n        ".join(sortie.strip().splitlines()[-15:])))
+                r.erreur(ident, trad("{defaut} : attrapé, mais pas par {controle}\n        {sortie}",
+                                     defaut=trad(cas.defaut), controle=cas.controle,
+                                     sortie="\n        ".join(sortie.strip().splitlines()[-15:])))
             elif bavard:
                 print(trad("  attrapé : {defaut} — {controle}, étage {etage}",
-                           defaut=cas.defaut, controle=cas.controle, etage=cas.etage), file=sys.stderr)
+                           defaut=trad(cas.defaut), controle=cas.controle, etage=cas.etage), file=sys.stderr)
     finally:
         a.nettoyer()
     return r
@@ -1758,7 +2094,7 @@ def executer(projet=None, bavard: bool = False) -> Rapport:
 # Le hook PreToolUse ne nomme pas de contrôle : il rend sa raison, qu'on
 # reconnaît à ces mots.
 # Les contrôles du registre qu'aucun défaut injecté n'éprouve, chacun avec
-# sa raison écrite : un test exige que tout autre en ait un (B-0044, L4).
+# sa raison écrite : un test exige que tout autre en ait un.
 SANS_DEFAUT: dict[str, str] = {}
 
 RAISONS_AGENT = {
@@ -1785,6 +2121,9 @@ RAISONS_AGENT = {
     "fuite": "fuite de la mémoire privée",
     "relecture": "relecture avant publication",
     "demande non lue": "n'a pas pu être lue par l'humain",
+    "hooks non chargés": "LES HOOKS DE L'AGENT NE SONT PAS CHARGÉS",
+    "commit sans filtre": "commit d'agent sans aucun passage du filtre",
+    "geste sans valider": "que seule une réponse `valider` autorise à changer",
 }
 
 
@@ -1798,7 +2137,7 @@ def _attrape_par(cas: Cas, sortie: str) -> bool:
         return False
     # Un rapport d'étage d'abord : un contrôle que le hook de l'agent nomme
     # aussi (`memoire.preuves`, `demandes.contrat`) s'attrape en CI par sa
-    # ligne de synthèse, pas par la phrase de son refus (B-0044, L4).
+    # ligne de synthèse, pas par la phrase de son refus.
     if cas.controle in en_echec_dans(sortie):
         return True
     if cas.controle in RAISONS_AGENT:

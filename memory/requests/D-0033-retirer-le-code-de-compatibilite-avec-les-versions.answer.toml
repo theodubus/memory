@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0033-retirer-le-code-de-compatibilite-avec-les-versions.md, dont l'empreinte suit.
+reponse = "tout"
+texte = ""
+par = "Théo"
+date = "2026-10-20"
+canal = "conversation"
+citation = "Et oui tout retirer"
+empreinte = "sha256:61b76ef04eb859b994a08bc52404c9222e3cb1c06c0e4cd4263e978308bba981"

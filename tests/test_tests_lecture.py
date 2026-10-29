@@ -35,11 +35,11 @@ class TestRust(unittest.TestCase):
 
     def test_tests_reconnus(self):
         self.assertEqual(sorted(f.nom for f in self.f if f.est_test),
-                         ["lent", "lent_mais_motive", "perft_un", "rien", "tautologie"])
+                         ["lent", "lent_mais_motive", "produit_un", "rien", "tautologie"])
 
     def test_assertion_par_aide(self):
         self.assertIn("verifie", self.aides)
-        self.assertTrue(tests_lecture.affirme(self.par_nom["perft_un"], self.assertion, self.aides))
+        self.assertTrue(tests_lecture.affirme(self.par_nom["produit_un"], self.assertion, self.aides))
 
     def test_sans_assertion_malgre_l_accolade_dans_la_chaine(self):
         self.assertFalse(tests_lecture.affirme(self.par_nom["rien"], self.assertion, self.aides))

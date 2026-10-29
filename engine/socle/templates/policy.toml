@@ -34,6 +34,7 @@ paths = [
   ".socle/socle",
   ".socle/git-hooks/**",
   ".claude/settings.json",
+  ".claude/skills/socle-*/**",
   ".github/workflows/socle.yml",
   ".github/workflows/socle-mutation.yml",
   ".github/CODEOWNERS",
@@ -65,6 +66,9 @@ markers = ['(?im)^co-authored-by:.*\bclaude\b', '(?im)^socle-agent:']
 # Branches distantes jamais proposées à la suppression, même contenues dans la
 # branche par défaut (celles d'un autre agent, par exemple).
 keep_branches = []
+# Le nom de l'humain, qui signe les réponses que l'agent relaie (`--by` par
+# défaut) ; l'installeur le prend dans git.
+# name = "Prénom"
 # Les lignes qu'un récap de fin d'intervention doit contenir ; le hook Stop
 # les cherche dans le dernier message de l'agent (par défaut « Pour toi : »
 # et « Ensuite : »).
@@ -87,7 +91,7 @@ allowed = []
 #   (git-crypt ou équivalent) ; `.gitattributes` : `memory/private/** filter=…`.
 # Sans accès, la mémoire privée est signalée indisponible, jamais sautée.
 # Relecture humaine avant chaque publication vers le dépôt public :
-# "aucune", "chaque-push" ou "lots" (D-0006 du socle : au choix de l'humain).
+# "aucune", "chaque-push" ou "lots", au choix de l'humain.
 # Demandes et réponses privées : `requests = true` (publiques par défaut).
 # Langue de la mémoire : les mots-clés du format, les gabarits et les
 # messages du moteur, "fr" ou "en" ; la lecture accepte toutes les langues,

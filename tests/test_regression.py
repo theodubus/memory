@@ -99,6 +99,35 @@ class TestTestDuModule(unittest.TestCase):
         self.assertEqual(len(erreurs), 1, erreurs)
         self.assertIn("passe déjà sur le parent", erreurs[0])
 
+    def test_une_demande_validee_qui_nomme_le_commit_l_admet(self):
+        """D-0047 : un correctif dont le test passe sur le parent dans la CI,
+        parce que sa preuve dépend de l'environnement, bloquait la PR à jamais ;
+        l'humain l'admet par une demande validée qui nomme son commit."""
+        from socle import requests as demandes
+
+        self.corriger(CORRIGE.replace("double(self.entree()) == 6", "double(3) == 6"))
+        sha = git(self.racine, "rev-parse", "HEAD").strip()
+        chemin = self.racine / "memory/requests/D-0001-admettre.md"
+        chemin.parent.mkdir(parents=True, exist_ok=True)
+        chemin.write_text(f"<!-- socle: couche=demandes zone=publique -->\n# D-0001 — Admettre le correctif {sha[:8]}\n\n"
+                          "> date : 2026-10-29\n\nSon test ne prouve rien dans la CI.\n\n## Réponses possibles\n\n"
+                          "- `valider` — l'admettre.\n- `contexte-insuffisant` — réécrire la demande.\n")
+        d = next(x for x in demandes.toutes(self.racine) if x.id == "D-0001")
+        demandes.ecrire_reponse(self.racine, d, "valider", "", "Théo", "2026-10-29", canal="conversation",
+                                citation="valider")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "D-0001 validée", "--no-verify")
+        ctx = self.contexte()
+        r = Rapport()
+        controles_tests.regression(ctx, r)
+        self.assertEqual(r.erreurs("tests.regression"), [])
+        self.assertTrue(any("admis par D-0001" in c.message for c in r.constats))
+        # Six caractères du commit ne le nomment pas.
+        from types import SimpleNamespace
+
+        courte = SimpleNamespace(validations=[SimpleNamespace(id="D-0002", texte=f"le correctif {sha[:6]}")])
+        self.assertIsNone(controles_tests._admis_par(courte, sha))
+
     def test_sans_commande_de_module_le_correctif_reste_sans_test(self):
         self.corriger(CORRIGE)
         erreurs = self.erreurs(self.contexte(module_command=False))

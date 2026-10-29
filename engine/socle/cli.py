@@ -18,8 +18,7 @@ from socle.messages import a_traduire, trad
 
 
 def _projet(args) -> config.Projet:
-    """Le projet ; ses messages, dès lors, dans la langue de sa mémoire
-    (ADR-0028)."""
+    """Le projet ; ses messages, dès lors, dans la langue de sa mémoire."""
     projet = config.Projet.charger(Path(args.root) if getattr(args, "root", None) else None)
     messages.choisir(langue.du_projet(projet))
     return projet
@@ -86,7 +85,7 @@ def cmd_ci(args) -> int:
     base = _base(projet, args.base)
     rapport = Rapport()
     # L'auto-test tourne une fois, ici, pas aussi dans la suite de tests du
-    # projet qui le contient (ce dépôt) : il valait 87 secondes de CI (L6).
+    # projet qui le contient : il y coûterait une seconde fois.
     if not args.no_selftest:
         os.environ[autotest.ENSUITE] = "1"
     try:
@@ -148,7 +147,7 @@ def cmd_new(args) -> int:
     jour = date.today().isoformat()
     # Avec une mémoire privée, le contenu nouveau est privé par défaut
     # (cadrage, règles de classement, point 3), couche par couche selon la
-    # politique (`[private] layers`, B-0029). Une demande ne devient privée que
+    # politique (`[private] layers`). Une demande ne devient privée que
     # si l'humain l'a choisi : il doit pouvoir la lire là où il lit. Une
     # consigne de l'humain sur une entrée précise se dit par `--private` ou
     # `--public`.
@@ -160,20 +159,20 @@ def cmd_new(args) -> int:
     acces = zone_privee.acces(projet, mem.illisibles) if prive else None
     if acces is not None and not acces.disponible:
         # Sans elle, l'identifiant se devinerait, et le texte clair
-        # s'accolerait à un fichier chiffré (B-0044, L3).
+        # s'accolerait à un fichier chiffré.
         print(trad("refus : mémoire privée indisponible ({raison}) ; une entrée privée ne s'écrit pas à "
                    "l'aveugle. `--public` si elle peut être publique, sinon attendre l'accès.",
                    raison=acces.raison), file=sys.stderr)
         return 2
     from socle import identifiers as identifiants
 
-    # Ceux que les branches distantes ont déjà pris aussi (ADR-0026).
+    # Ceux que les branches distantes ont déjà pris aussi.
     ident = mem.prochain_id(type_, prive=prive, date=jour, pris_ailleurs=identifiants.pris_ailleurs(racine, type_))
     titre = args.title
     zone = "privee" if prive else "publique"
     ch = projet.chemins
     lieu = (lambda c: racine / ch.dans_prive(c)) if prive else (lambda c: racine / c)
-    # La langue de la mémoire du projet (B-0031) : les mots-clés et les
+    # La langue de la mémoire du projet : les mots-clés et les
     # gabarits s'écrivent dans la sienne.
     lg = langue.du_projet(projet)
     squelette = langue.SQUELETTES[lg].get(type_, "")
@@ -184,13 +183,9 @@ def cmd_new(args) -> int:
         # Le backlog s'affiche avant d'y ajouter : un doublon se voit ici.
         _afficher_index(mem, "backlog")
         bloc = squelette.format(lu=memoire.empreinte_index(mem, "backlog"))
-        if ch.backlog_en_dossier:
-            # Un fichier par sujet, comme une décision (ADR-0025).
-            chemin = lieu(ch.backlog) / f"{ident}-{memoire.nom_de_fichier(titre)}.md"
-            outils.ecrire(chemin, f"{langue.entete_fichier('backlog', zone, lg)}\n# {ident} — {titre}\n\n{bloc}\n")
-        else:
-            chemin = lieu(ch.backlog)
-            _ajouter(chemin, f"\n## {ident} — {titre}\n\n{bloc}\n", langue.entete_fichier("backlog", zone, lg))
+        # Un fichier par sujet, comme une décision.
+        chemin = lieu(ch.backlog) / f"{ident}-{memoire.nom_de_fichier(titre)}.md"
+        outils.ecrire(chemin, f"{langue.entete_fichier('backlog', zone, lg)}\n# {ident} — {titre}\n\n{bloc}\n")
     elif type_ == "J":
         bloc = f"\n## {ident} — {titre}\n\n{squelette}\n"
         dossier = lieu(ch.journal)
@@ -245,6 +240,9 @@ def cmd_show(args) -> int:
     if args.index:
         _afficher_index(mem, args.index)
     for ident in args.ids:
+        if re.fullmatch(r"AD-\d+", ident):
+            code |= _afficher_decision_bmad(projet, ident)
+            continue
         e = mem.entree(ident)
         if e is None:
             print(trad("{ident} : aucune entrée de ce nom dans la mémoire", ident=ident), file=sys.stderr)
@@ -252,17 +250,33 @@ def cmd_show(args) -> int:
             continue
         lieu = f"{e.fichier}:{e.ligne}" + (trad(", archivée dans {parent}", parent=e.parent) if e.parent else "")
         # L'empreinte s'imprime avec le texte : la citer (`ID@empreinte`)
-        # montre qu'on a lu cette version-là (ADR-0008).
+        # montre qu'on a lu cette version-là.
         print(f"--- {ident}@{memoire.empreinte_entree(e)} ({lieu}) ---")
         print(e.texte)
         if e.type == "D":
             d = next((d for d in demandes.toutes(projet.racine) if d.id == ident), None)
             if d and d.chemin_reponse:
-                print(trad("\n--- réponse ({chemin}) : {statut} ---", chemin=d.chemin_reponse, statut=d.statut))
+                print(trad("\n--- réponse ({chemin}) : {statut} ---", chemin=d.chemin_reponse, statut=d.statut_affiche))
                 print((projet.racine / d.chemin_reponse).read_text(encoding="utf-8").rstrip())
             elif d:
-                print(f"\n--- {d.statut} ---")
+                print(f"\n--- {d.statut_affiche} ---")
     return code
+
+
+def _afficher_decision_bmad(projet, ident: str) -> int:
+    """Une décision d'architecture de BMAD, avec son empreinte à
+    citer (`AD-n@empreinte`) ; une par document d'architecture qui la porte."""
+    from socle import bmad
+
+    trouvees = [d for d in bmad.decisions_architecture(projet.racine, outils.fichiers_courants(projet.racine))
+                if d.ident == ident]
+    if not trouvees:
+        print(trad("{ident} : aucune décision de ce nom dans l'architecture de BMAD", ident=ident), file=sys.stderr)
+        return 1
+    for d in trouvees:
+        print(f"--- {d.ident}@{d.empreinte} ({d.chemin}) ---")
+        print(d.texte)
+    return 0
 
 
 def cmd_prive(args) -> int:
@@ -340,7 +354,7 @@ def cmd_prive(args) -> int:
 
 
 def cmd_relu(args) -> int:
-    """L'humain a relu ce qui part vers le dépôt public (D-0006) : il le dit
+    """L'humain a relu ce qui part vers le dépôt public : il le dit
     lui-même, ou l'agent relaie son accord donné dans la conversation, avec
     son texte exact."""
     from socle import private as prive
@@ -349,12 +363,13 @@ def cmd_relu(args) -> int:
     if not args.relayed and hooks.sous_un_agent(trad("dire relu sans --relayed")):
         return 2
     citation = Path(args.quote_file).read_text(encoding="utf-8") if args.quote_file else (args.quote or "")
-    if args.relayed and (not args.by or len(citation.strip()) < 2):
+    par = _signataire(projet, args)
+    if args.relayed and (not par or len(citation.strip()) < 2):
         print(trad("refus : une relecture relayée nomme l'humain (--by) et cite son texte exact (--quote-file)"),
               file=sys.stderr)
         return 2
     sha = outils.git(projet.racine, "rev-parse", args.rev).strip()
-    prive.noter_relecture(projet.racine, sha, args.by or _auteur(projet),
+    prive.noter_relecture(projet.racine, sha, par,
                           "conversation" if args.relayed else "terminal", citation)
     print(trad("relu : {sha} peut partir vers le dépôt public", sha=sha[:10]))
     return 0
@@ -362,7 +377,7 @@ def cmd_relu(args) -> int:
 
 def cmd_url(args) -> int:
     """Le permalien d'un fichier ou d'une entrée, à donner à l'humain : il
-    lit sur GitHub, pas dans le conteneur de l'agent (ADR-0010)."""
+    lit sur GitHub, pas dans le conteneur de l'agent."""
     from socle import links as liens
 
     projet = _projet(args)
@@ -389,7 +404,7 @@ def _afficher_index(mem, index: str):
 
 def cmd_answer(args) -> int:
     """L'humain répond lui-même, ou l'agent relaie (`--relayed`) une réponse
-    donnée dans la conversation, en citant son texte exact (ADR-0006)."""
+    donnée dans la conversation, en citant son texte exact."""
     from socle import requests as demandes
 
     projet = _projet(args)
@@ -401,8 +416,9 @@ def cmd_answer(args) -> int:
     citation = args.quote or ""
     if args.quote_file:
         citation = Path(args.quote_file).read_text(encoding="utf-8")
-    if args.relayed and not args.by:
-        print(trad("refus : une réponse relayée nomme l'humain qui l'a donnée (--by)"), file=sys.stderr)
+    par = _signataire(projet, args)
+    if args.relayed and not par:
+        print(trad(REFUS_SANS_NOM), file=sys.stderr)
         return 2
     if not args.relayed and hooks.sous_un_agent(trad("répondre sans --relayed")):
         return 2
@@ -418,7 +434,7 @@ def cmd_answer(args) -> int:
         print(d.texte)
         print("\n" + "=" * 72)
     try:
-        chemin = demandes.ecrire_reponse(projet.racine, d, args.answer, args.text or "", args.by or _auteur(projet),
+        chemin = demandes.ecrire_reponse(projet.racine, d, args.answer, args.text or "", par,
                                          date.today().isoformat(),
                                          canal="conversation" if args.relayed else "terminal", citation=citation)
     except ValueError as e:
@@ -429,8 +445,48 @@ def cmd_answer(args) -> int:
     return 0
 
 
+def cmd_decision(args) -> int:
+    """Une décision prise en séance : l'humain a lu la question
+    dans la conversation et y a répondu ; l'agent la consigne avec sa réponse
+    mot pour mot (`--relayed`), ou l'humain le fait lui-même. `--about` nomme
+    ce qu'elle approuve ; une spec de BMAD s'y cite avec l'empreinte de son
+    intention figée."""
+    from socle import bmad, requests as demandes
+
+    projet = _projet(args)
+    citation = args.quote or ""
+    if args.quote_file:
+        citation = Path(args.quote_file).read_text(encoding="utf-8")
+    par = _signataire(projet, args)
+    if args.relayed and not par:
+        print(trad(REFUS_SANS_NOM), file=sys.stderr)
+        return 2
+    if not args.relayed and hooks.sous_un_agent(trad("consigner une décision sans --relayed")):
+        return 2
+    sujet = ""
+    if args.about:
+        chemin = args.about
+        texte = outils.lire_a(projet.racine, None, chemin)
+        if texte is None:
+            print(trad("refus : « {chemin} » n'existe pas dans le dépôt", chemin=chemin), file=sys.stderr)
+            return 2
+        spec = bmad.spec(chemin, texte)
+        sujet = f"{chemin}@{spec.empreinte_intention}" if spec else chemin
+    question = Path(args.question_file).read_text(encoding="utf-8") if args.question_file else ""
+    try:
+        chemin, reponse = demandes.ecrire_seance(projet, args.question, question, args.answer,
+                                                 par, date.today().isoformat(),
+                                                 "conversation" if args.relayed else "terminal", citation, sujet)
+    except ValueError as e:
+        print(trad("refus : {erreur}", erreur=e), file=sys.stderr)
+        return 2
+    print(trad("décision en séance consignée : {chemin}, et sa réponse « {answer} » — à commiter avec la suite.",
+               chemin=chemin, answer=args.answer))
+    return 0
+
+
 def demande_illisible(projet, d) -> str | None:
-    """Pourquoi l'humain n'a pas pu lire la demande telle qu'elle est (B-0022),
+    """Pourquoi l'humain n'a pas pu lire la demande telle qu'elle est,
     ou `None` : `demandes.illisible`."""
     from socle import requests as demandes
 
@@ -439,7 +495,7 @@ def demande_illisible(projet, d) -> str | None:
 
 def fichiers_a_approuver(projet) -> list[str]:
     """Les fichiers protégés changés depuis le dernier commit, que rien ne
-    valide encore : ceux que `socle approve` approuverait (B-0034, P3)."""
+    valide encore : ceux que `socle approve` approuverait."""
     from socle import context as contexte
     from socle.checks_ratchet import proteges
     from socle.report import Rapport
@@ -452,7 +508,24 @@ def fichiers_a_approuver(projet) -> list[str]:
 
 
 def _auteur(projet) -> str:
-    return outils.git(projet.racine, "config", "user.name", check=False).strip() or "humain"
+    """L'humain : son nom dans la politique, sinon celui de git."""
+    return (str(projet.pol("human", "name", defaut="") or "").strip()
+            or outils.git(projet.racine, "config", "user.name", check=False).strip() or "humain")
+
+
+def _signataire(projet, args) -> str | None:
+    """Qui signe une réponse : `--by`, sinon le nom que la politique donne à
+    l'humain. Relayée sans l'un ni l'autre, personne : l'agent ne
+    devine pas un nom. Un `--by` qui diffère de la politique est dit."""
+    nom = str(projet.pol("human", "name", defaut="") or "").strip()
+    if args.by and nom and args.by.strip() != nom:
+        print(trad("note : --by « {by} » n'est pas le nom que la politique donne à l'humain (« {nom} »)",
+                   by=args.by, nom=nom), file=sys.stderr)
+    return args.by or nom or (None if args.relayed else _auteur(projet))
+
+
+REFUS_SANS_NOM = a_traduire("refus : une réponse relayée nomme l'humain qui l'a donnée (--by), à moins que la "
+                            "politique ne le nomme (`[human] name`)")
 
 
 def cmd_approve(args) -> int:
@@ -467,7 +540,7 @@ def cmd_approve(args) -> int:
     racine = projet.racine
     if not args.files and not getattr(args, "keys", None):
         # Sans liste : les fichiers protégés que l'humain vient de changer,
-        # montrés avant d'être approuvés (B-0034, P3).
+        # montrés avant d'être approuvés.
         args.files = fichiers_a_approuver(projet)
         if not args.files:
             print(trad("rien à approuver : aucun fichier protégé changé depuis le dernier commit"))
@@ -486,7 +559,7 @@ def cmd_approve(args) -> int:
     ident = mem.prochain_id("D")
     jour = date.today().isoformat()
     # La raison peut citer des entrées : elles se citent avec leur empreinte,
-    # comme dans toute demande nouvelle (ADR-0008). Une entrée qui n'existe
+    # comme dans toute demande nouvelle. Une entrée qui n'existe
     # pas ici, ou un fichier qui n'existe ni ici ni au dernier commit, arrête
     # tout avant d'écrire.
     inconnus = []
@@ -547,6 +620,9 @@ def cmd_install(args) -> int:
         demandes_privees=args.private_requests,
         filtre=args.filter,
         langue_memoire=getattr(args, "language", None),
+        avec_bmad=getattr(args, "with_bmad", False),
+        version_bmad=getattr(args, "bmad_version", None) or installeur.VERSION_BMAD,
+        plafonds=Path(args.mutation_caps).resolve() if getattr(args, "mutation_caps", None) else None,
     )
 
 
@@ -614,6 +690,22 @@ def cmd_archive(args) -> int:
     return archivage.archiver_backlog(_projet(args))
 
 
+def cmd_bmad_import(args) -> int:
+    """Fait entrer au backlog les travaux que BMAD a reportés."""
+    from socle import checks_bmad as controles_bmad
+
+    try:
+        poses = controles_bmad.importer(_projet(args))
+    except RuntimeError as e:
+        print(e, file=sys.stderr)
+        return 2
+    if not poses:
+        print(trad("aucun travail reporté par BMAD à faire entrer au backlog"))
+    for ident, chemin in poses:
+        print(f"{ident}\t{chemin}")
+    return 0
+
+
 def cmd_checks(args) -> int:
     from socle import context as contexte
 
@@ -623,12 +715,13 @@ def cmd_checks(args) -> int:
     return 0
 
 
-# Les commandes par public (B-0034, P6) : l'humain en a peu, l'agent
+# Les commandes par public : l'humain en a peu, l'agent
 # davantage, le reste sert aux hooks, à la CI et au moteur lui-même.
 GROUPES = {
-    a_traduire("pour l'humain"): ["help", "install", "init", "state", "answer", "approve", "reviewed", "private install"],
+    a_traduire("pour l'humain"): ["help", "install", "init", "state", "answer", "decision", "approve", "reviewed",
+                                  "private install"],
     a_traduire("pour l'agent"): ["new", "show", "url", "verify", "check", "next-id", "private", "mutation-verdict", "mutation-run",
-                     "renumber", "archive", "checks"],
+                     "renumber", "archive", "bmad-import", "checks"],
     a_traduire("internes (hooks, CI, moteur)"): ["hook", "ci", "selftest", "fingerprint"],
 }
 
@@ -759,6 +852,19 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
     s.add_argument("--quote-file", help=trad("fichier qui contient le texte exact de l'humain"))
     s.set_defaults(f=cmd_answer)
 
+    s = sp.add_parser("decision", help=trad("consigner une décision prise en séance, avec la réponse de l'humain ; "
+                                            "l'agent y relaie (--relayed) ta réponse mot pour mot"))
+    s.add_argument("question")
+    s.add_argument("answer")
+    s.add_argument("--question-file", help=trad("fichier qui contient la question telle que l'humain l'a lue"))
+    s.add_argument("--about", help=trad("ce que la décision approuve (une spec de BMAD : son intention figée)"))
+    s.add_argument("--by")
+    s.add_argument("--relayed", action="store_true", help=trad("réponse donnée par l'humain dans la "
+                                                               "conversation"))
+    s.add_argument("--quote", help=trad("texte exact de l'humain (avec --relayed)"))
+    s.add_argument("--quote-file", help=trad("fichier qui contient le texte exact de l'humain"))
+    s.set_defaults(f=cmd_decision)
+
     s = sp.add_parser("approve", help=trad("(humain seul) approuver tes changements protégés ; sans --files, "
                                            "ceux qui ont changé"))
     s.add_argument("--files", nargs="*")
@@ -785,6 +891,12 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
     s.add_argument("--language", choices=("fr", "en"),
                    help=trad("langue de la mémoire d'un projet neuf : mots-clés, gabarits et messages du moteur "
                              "(défaut : fr)"))
+    s.add_argument("--with-bmad", action="store_true",
+                   help=trad("installer d'abord BMAD Method (par npx), que le socle reconnaît ensuite"))
+    s.add_argument("--bmad-version", help=trad("la version de BMAD Method à installer (défaut : celle éprouvée avec "
+                                               "le socle)"))
+    s.add_argument("--mutation-caps", help=trad("des plafonds de mutation déjà mesurés, à reprendre au lieu de poser "
+                                                "ces modules « à mesurer » : un fichier TOML de `[mutation.caps]`"))
     s.set_defaults(f=cmd_install)
 
     s = sp.add_parser("init", help=trad("initialiser la mémoire depuis un cadrage, rien, ou le dépôt existant"))
@@ -818,8 +930,11 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
     s.add_argument("id")
     s.set_defaults(f=cmd_renumber)
 
-    s = sp.add_parser("archive", help=trad("archive les sujets clos du backlog dans le journal"))
+    s = sp.add_parser("archive", help=trad("range les sujets clos du backlog à l'écart des ouverts"))
     s.set_defaults(f=cmd_archive)
+
+    s = sp.add_parser("bmad-import", help=trad("fait entrer au backlog les travaux que BMAD a reportés"))
+    s.set_defaults(f=cmd_bmad_import)
 
     s = sp.add_parser("checks", help=trad("liste des contrôles"))
     s.set_defaults(f=cmd_checks)
@@ -858,9 +973,20 @@ def main(argv=None) -> int:
             print(trad("\nLe guide : `python3 .socle/socle help` ; toutes les commandes : `python3 .socle/socle "
                        "--help`."))
             return 0
-        from socle import commands as commandes
-
-        args = p.parse_args(commandes.noms_anglais(argv))
-        return args.f(args)
+        args = p.parse_args(argv)
+        try:
+            code = args.f(args)
+            # Une sortie tamponnée (128 Kio depuis Python 3.14) ne part qu'ici :
+            # le tube fermé se constate dans ce bloc, pas à l'arrêt de
+            # l'interpréteur, qui le dirait et rendrait 120.
+            sys.stdout.flush()
+            return code
+        except BrokenPipeError:
+            # Le lecteur s'en est allé (`| head -1`) : ce n'est pas une
+            # panne. La sortie restante part dans le vide, pour que l'arrêt de
+            # l'interpréteur ne retombe pas sur le même tube fermé.
+            vide = os.open(os.devnull, os.O_WRONLY)
+            os.dup2(vide, sys.stdout.fileno())
+            return 0
     finally:
         messages.choisir(avant)

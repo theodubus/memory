@@ -15,8 +15,7 @@ Hooks git (`core.hooksPath = .socle/git-hooks`) :
 
 Chaque hook laisse une trace datée dans `.socle/trace/hooks.log` : un script
 ne peut pas dire s'il a été CHARGÉ, il ne tourne que s'il l'a été. La trace
-rend « les hooks tournent-ils ? » vérifiable (leçon de
-`chess:tools/verify-hooks.sh`).
+rend « les hooks tournent-ils ? » vérifiable.
 """
 
 from __future__ import annotations
@@ -37,7 +36,7 @@ OUTILS_ECRITURE = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 # Ce que le moteur refuse se juge sur chaque commande simple, découpée
 # (`commandes.analyser`), pas sur le texte : voir `irreversible`. La
 # politique peut AJOUTER des motifs (`[irreversible] bash`), appliqués à
-# chaque commande simple ; elle ne retire rien à ceux du moteur (B-0044, L2).
+# chaque commande simple ; elle ne retire rien à ceux du moteur.
 IRREVERSIBLES_BASH: list[str] = []
 IRREVERSIBLES_OUTILS = [
     r"mcp__github__(merge_pull_request|delete_file|create_repository|fork_repository|create_release|push_files"
@@ -164,7 +163,7 @@ def contenu_apres(racine: Path, outil: str, args: dict, rel: str) -> tuple[str |
 
 def sha_fabrique(racine: Path, texte: str) -> str | None:
     """Un SHA de 40 caractères inconnu dont le préfixe de 7 est connu : la
-    signature d'un SHA complété de tête (`chess:.claude/hooks/no-fabricated-sha.sh`)."""
+    signature d'un SHA complété de tête."""
     for sha in sorted(set(re.findall(r"\b[0-9a-f]{40}\b", texte))):
         if outils.git_reussit(racine, "cat-file", "-e", sha):
             continue
@@ -187,8 +186,8 @@ def references_inventees(projet: config.Projet, rel: str, avant: str | None, apr
     if memoire.couche_attendue(rel) not in (None, "inconnue"):
         mem.fichiers[rel] = memoire.analyser(rel, apres)
     defs = mem.definitions()
-    # Lecture prouvée (ADR-0008), par la même fonction que `memoire.lectures`
-    # (ADR-0023) : la base du travail, ses commits et l'arbre. Le refus ne
+    # Lecture prouvée, par la même fonction que `memoire.lectures` :
+    # la base du travail, ses commits et l'arbre. Le refus ne
     # donne pas la bonne empreinte : elle s'obtient en relisant.
     base = outils.base_de_travail(projet.racine)
     commits = outils.git(projet.racine, "rev-list", "--reverse", f"{base}..HEAD", check=False).split() if base else []
@@ -322,6 +321,11 @@ def irreversible(racine: Path, c: commandes.Commande) -> str | None:
             cibles = [r.split(":", 1)[-1].removeprefix("refs/heads/") for r in refs] or \
                 [outils.git(racine, "rev-parse", "--abbrev-ref", "HEAD", check=False).strip()]
             protegee = next((x for x in cibles if x in _branches_protegees(racine)), None)
+            if protegee and protegee not in ("main", "master") and outils.branche_par_defaut_devinee(racine):
+                return trad("push sur {protegee}, prise pour la branche par défaut faute de mieux : ce clone n'a ni "
+                            "`origin/HEAD`, ni `main`, ni `master`. Si la branche par défaut du dépôt distant est "
+                            "une autre, `git fetch origin <elle>` la fait connaître ; relancer ensuite le push",
+                            protegee=protegee)
             return trad("push sur la branche par défaut ({protegee})", protegee=protegee) if protegee else None
         if sous == "reset" and "--hard" in options:
             return "git reset --hard"
@@ -366,7 +370,7 @@ def contournement(racine: Path, c: commandes.Commande, depart: str | None = None
     """Un `git commit`, `git merge` ou `git push` qui saute les hooks du
     dépôt du projet (`--no-verify`, ou `-n` pour un commit), dit en clair ;
     `None` sinon, et pour un autre dépôt, désigné par `-C` ou après un `cd`
-    (un dépôt jetable) : seuls les hooks du projet y sont en jeu (B-0023)."""
+    (un dépôt jetable) : seuls les hooks du projet y sont en jeu."""
     if c.programme != "git":
         return None
     sous, reste = commandes.git_sous_commande(c.argv)
@@ -390,9 +394,8 @@ def contournement(racine: Path, c: commandes.Commande, depart: str | None = None
 def commande_humaine(c: commandes.Commande) -> tuple[str, list[str]] | None:
     """Une commande du socle réservée à l'humain (`answer`, `approve`,
     `reviewed`, `private install`), quel que soit le chemin du lanceur (entre
-    guillemets, après un `cd`, par `python3 -m socle`) et sous son ancien nom
-    aussi (`relu`, `prive installer`) : son nom anglais et ses arguments ;
-    `None` sinon."""
+    guillemets, après un `cd`, par `python3 -m socle`) : son nom et ses
+    arguments ; `None` sinon."""
     argv = c.argv
     if not argv:
         return None
@@ -413,10 +416,9 @@ def commande_humaine(c: commandes.Commande) -> tuple[str, list[str]] | None:
         return None
     while reste and (reste[0] == "--root" or reste[0].startswith("--root=")):
         reste = reste[2:] if reste[0] == "--root" else reste[1:]
-    reste = commandes.noms_anglais(reste)
     if reste[:2] == ["private", "install"]:
         return "private install", reste
-    if reste and reste[0] in ("answer", "approve", "reviewed"):
+    if reste and reste[0] in ("answer", "decision", "approve", "reviewed"):
         return reste[0], reste
     return None
 
@@ -445,8 +447,66 @@ class _Trouve:
         return self.nom
 
 
-COMMANDES_HUMAINES = _Repere(("answer", "approve", "reviewed"))
+COMMANDES_HUMAINES = _Repere(("answer", "decision", "approve", "reviewed"))
 INSTALLER_PRIVE = _Repere(("private install",))
+
+
+def refus_bash(projet: config.Projet, cmd: str, cwd: str | None = None) -> str | None:
+    """La raison pour laquelle le hook refuse une commande du shell, ou rien :
+    le même jugement pour une commande que l'agent lance et pour une
+    commande qu'un skill lui ferait lancer (`skills.commandes`)."""
+    racine = projet.racine
+    # Chaque commande simple, découpée : ce qu'elle lance, pas le texte
+    # qu'elle cite (un heredoc, un message de commit).
+    simples = commandes.analyser(cmd)
+    en_plus = projet.pol("irreversible", "bash", defaut=IRREVERSIBLES_BASH) or []
+    for c in simples:
+        action = irreversible(racine, c) or next(
+            (" ".join(c.argv)[:120] for m in en_plus if re.search(m, " ".join(c.argv))), None)
+        if action:
+            return trad("commande irréversible ou externe ({action}) : « {commande} » — validation humaine "
+                        "requise (politique, point 4), et une demande validée ne la débloque pas : "
+                        "l'action revient à l'humain. Si c'est une décision, émettre une demande "
+                        "`D-NNNN` ; une fois l'action décidée, l'inscrire au backlog avec `pour : humain`, "
+                        "sa commande exacte, où la lancer et ce qu'elle doit produire. Puis continuer sur "
+                        "autre chose.",
+                        action=action, commande=cmd.strip()[:200])
+        saut = contournement(racine, c, cwd)
+        if saut:
+            return trad("`{saut}` contourne les hooks du projet : la CI exécute tout, et rien ne la "
+                        "contourne. Corriger ce que le hook refuse ; s'il refuse à tort, l'inscrire au "
+                        "backlog et le dire à l'humain.", saut=saut)
+        h = commande_humaine(c)
+        if h and h[0] == "private install":
+            return trad("`socle private install` est réservé à l'humain : il pousse vers le dépôt privé "
+                        "et crée une clé de déploiement (politique, point 4). L'inscrire au backlog avec "
+                        "`pour : humain`.")
+        if h and h[0] == "approve":
+            return trad("`socle approve` est réservé à l'humain : il valide ses propres changements "
+                        "protégés.")
+        # Les drapeaux du relais se cherchent dans la commande elle-même,
+        # pas ailleurs dans le texte.
+        relais = "--relayed" in h[1] and any(x.split("=", 1)[0] in ("--quote", "--quote-file") for x in h[1]) \
+            if h else True
+        if not relais:
+            return trad("l'agent ne répond jamais à la place de l'humain. Il ne peut que relayer une "
+                        "réponse donnée dans la conversation : `socle answer D-NNNN <réponse> --relayed "
+                        "--by <nom> --quote-file <texte exact>`, `socle decision "
+                        "\"<question>\" <réponse> --relayed --by <nom> --quote-file <texte exact>` pour une "
+                        "décision prise en séance, ou `socle reviewed --relayed --by <nom> "
+                        "--quote-file <texte exact>` pour une relecture avant publication.")
+    faute = _fuite_bash(projet, cmd)
+    if faute:
+        return faute
+    reglage = next((x for c in simples for x in ecrits(c) if REGLAGES_AGENT.search(x)), None)
+    if reglage:
+        return trad("`{reglage}` : les réglages de Claude Code commandent ses hooks, seul l'humain les "
+                    "modifie (un réglage local peut les couper tous).", reglage=reglage)
+    cible = ecriture_protegee(projet, cmd)
+    if cible:
+        return trad("écriture d'un fichier protégé ({cible}) par le shell : seul l'humain modifie la "
+                    "politique, les hooks, la CI et le moteur (relance de l'installeur).", cible=cible)
+    return None
 
 
 def pre_tool_use(projet: config.Projet, entree: dict) -> int:
@@ -463,56 +523,13 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
     for m in motifs_outils:
         if re.fullmatch(m, outil):
             return refus(trad("action externe ou irréversible ({outil}) : validation humaine requise (politique, "
-                              "point 4). Émettre une demande, travailler sur autre chose en attendant.", outil=outil))
+                              "point 4), et une demande validée ne la débloque pas : l'action revient à "
+                              "l'humain. Émettre une demande, travailler sur autre chose en attendant.", outil=outil))
 
     if outil == "Bash":
-        cmd = args.get("command", "")
-        # Chaque commande simple, découpée : ce qu'elle lance, pas le texte
-        # qu'elle cite (un heredoc, un message de commit).
-        simples = commandes.analyser(cmd)
-        en_plus = projet.pol("irreversible", "bash", defaut=IRREVERSIBLES_BASH) or []
-        for c in simples:
-            action = irreversible(racine, c) or next(
-                (" ".join(c.argv)[:120] for m in en_plus if re.search(m, " ".join(c.argv))), None)
-            if action:
-                return refus(trad("commande irréversible ou externe ({action}) : « {commande} » — validation humaine "
-                                  "requise (politique, point 4). Si c'est une décision, émettre une demande "
-                                  "`D-NNNN` ; si c'est une action que l'humain doit faire lui-même, l'inscrire au "
-                                  "backlog avec `pour : humain`. Puis continuer sur autre chose.",
-                                  action=action, commande=cmd.strip()[:200]))
-            saut = contournement(racine, c, entree.get("cwd"))
-            if saut:
-                return refus(trad("`{saut}` contourne les hooks du projet : la CI exécute tout, et rien ne la "
-                                  "contourne. Corriger ce que le hook refuse ; s'il refuse à tort, l'inscrire au "
-                                  "backlog et le dire à l'humain.", saut=saut))
-            h = commande_humaine(c)
-            if h and h[0] == "private install":
-                return refus(trad("`socle private install` est réservé à l'humain : il pousse vers le dépôt privé "
-                                  "et crée une clé de déploiement (politique, point 4). L'inscrire au backlog avec "
-                                  "`pour : humain`."))
-            if h and h[0] == "approve":
-                return refus(trad("`socle approve` est réservé à l'humain : il valide ses propres changements "
-                                  "protégés."))
-            # Les drapeaux du relais se cherchent dans la commande elle-même,
-            # pas ailleurs dans le texte.
-            relais = "--relayed" in h[1] and any(x.split("=", 1)[0] in ("--quote", "--quote-file") for x in h[1]) \
-                if h else True
-            if not relais:
-                return refus(trad("l'agent ne répond jamais à la place de l'humain. Il ne peut que relayer une "
-                                  "réponse donnée dans la conversation : `socle answer D-NNNN <réponse> --relayed "
-                                  "--by <nom> --quote-file <texte exact>` (ADR-0006), ou `socle reviewed --relayed "
-                                  "--by <nom> --quote-file <texte exact>` pour une relecture avant publication."))
-        faute = _fuite_bash(projet, cmd)
-        if faute:
-            return refus(faute)
-        reglage = next((x for c in simples for x in ecrits(c) if REGLAGES_AGENT.search(x)), None)
-        if reglage:
-            return refus(trad("`{reglage}` : les réglages de Claude Code commandent ses hooks, seul l'humain les "
-                              "modifie (un réglage local peut les couper tous).", reglage=reglage))
-        cible = ecriture_protegee(projet, cmd)
-        if cible:
-            return refus(trad("écriture d'un fichier protégé ({cible}) par le shell : seul l'humain modifie la "
-                              "politique, les hooks, la CI et le moteur (relance de l'installeur).", cible=cible))
+        raison = refus_bash(projet, args.get("command", ""), entree.get("cwd"))
+        if raison:
+            return refus(raison)
 
     faute = _fuite_outil(projet, outil, args)
     if faute:
@@ -543,7 +560,8 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
                         fautes = demandes.linter(d, projet)
                         if fautes:
                             return refus(trad("demande hors contrat (elle doit se lire sans le projet en tête) "
-                                              "— {fautes}", fautes=" ; ".join(fautes[:8])))
+                                              "— {fautes} ; la procédure : le skill `socle-request`",
+                                              fautes=" ; ".join(fautes[:8])))
 
     faute = sha_fabrique(racine, json.dumps(args, ensure_ascii=False))
     if faute:
@@ -552,15 +570,14 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
 
 
 # --------------------------------------------------------------------------
-# Fuites de la mémoire privée (D-0008) : le hook de l'agent voit, avant
+# Fuites de la mémoire privée : le hook de l'agent voit, avant
 # qu'elles partent, les écritures et les publications que ni les hooks git ni
 # la CI ne voient à temps (une description de pull request, un commentaire).
 # --------------------------------------------------------------------------
 
 
 def _vers_le_prive(racine: Path, cmd: str) -> bool:
-    zones = "|".join(re.escape(d) for d in memoire.DOSSIERS_PRIVES)
-    return bool(re.search(r"(?:-C|cd)\s+(?:\S*/)?(?:" + zones + ")", cmd))
+    return bool(re.search(r"(?:-C|cd)\s+(?:\S*/)?" + re.escape(memoire.DOSSIER_PRIVE), cmd))
 
 
 def _fuites_dans(projet: config.Projet, texte: str) -> str | None:
@@ -569,13 +586,14 @@ def _fuites_dans(projet: config.Projet, texte: str) -> str | None:
     if not trouve:
         return None
     return trad("fuite de la mémoire privée : {termes}. Une écriture publique ne cite ni identifiant privé ni "
-                "terme de la liste privée : reformuler sans eux (politique, mémoire privée).",
+                "terme de la liste privée : reformuler sans eux (politique, mémoire privée ; le skill "
+                "`socle-private-memory`).",
                 termes=", ".join(trouve[:5]))
 
 
 # Les options qui publient le contenu d'un fichier (corps d'une pull request,
 # notes d'une version, message de commit) : il part comme s'il était écrit
-# dans la commande (B-0044, L3).
+# dans la commande.
 OPTIONS_FICHIER = {"--body-file", "--notes-file", "--file", "-F", "--field", "-f", "--raw-field"}
 
 
@@ -610,7 +628,7 @@ def textes_publies(racine: Path, simples: list) -> list[str]:
 
 def _noms_publies(racine: Path, simples: list) -> list[str]:
     """Les noms de branche qu'une commande crée ou pousse : publiés eux
-    aussi (B-0044, L3)."""
+    aussi."""
     res = []
     for c in simples:
         if c.programme != "git":
@@ -652,7 +670,7 @@ def _fuite_outil(projet: config.Projet, outil: str, args: dict) -> str | None:
             return None
         # Seul ce qui s'ajoute compte : une fuite plus ancienne ne bloque pas
         # chaque écriture suivante du même fichier. Le nom d'un fichier
-        # nouveau est publié comme son contenu (B-0044, L3).
+        # nouveau est publié comme son contenu.
         anciennes = set((avant or "").splitlines())
         ajout = "\n".join(l for l in apres.splitlines() if l not in anciennes)
         return _fuites_dans(projet, (rel + "\n" if avant is None else "") + ajout)
@@ -727,9 +745,8 @@ def _appels_externes(racine: Path, session: str) -> bool:
 
 def exiger_recap(projet: config.Projet, entree: dict) -> int:
     """Un tour où l'agent a agi se termine par un récap et deux lignes,
-    `Pour toi :` et `Ensuite :` (ADR-0007, ADR-0009). Tout dernier message,
-    qu'il ait agi ou non, ne donne que des liens que l'humain peut suivre
-    (ADR-0010)."""
+    `Pour toi :` et `Ensuite :`. Tout dernier message,
+    qu'il ait agi ou non, ne donne que des liens que l'humain peut suivre."""
     from socle import human as humain, links as liens
 
     racine = projet.racine
@@ -807,10 +824,26 @@ def git_pre_commit(projet: config.Projet) -> int:
     from socle import context as contexte
 
     tracer(projet.racine, "git-pre-commit")
+    sans_filtre = filtre_absent(projet)
+    if sans_filtre:
+        from socle.checks_ratchet import REMEDE_HOOKS
+
+        tracer_refus(projet.racine, "git-pre-commit", "hooks.filtre")
+        if hooks_non_charges(projet):
+            print(trad("socle — commit refusé : commit d'agent sans aucun passage du filtre de l'agent depuis le "
+                       "commit précédent (`{depuis}`) : ses hooks ne sont pas chargés. {remede}", depuis=sans_filtre,
+                       remede=trad(REMEDE_HOOKS)), file=sys.stderr)
+        else:
+            # Le filtre vient de passer pour la session : c'est un second commit
+            # dans la même commande que le précédent.
+            print(trad("socle — commit refusé : un second commit dans la même commande que le précédent. Le "
+                       "filtre de l'agent ne passe qu'une fois par commande, et chaque commit d'agent doit le "
+                       "passer : lancer ce commit dans une commande à part."), file=sys.stderr)
+        return 1
     base = outils.base_de_travail(projet.racine)
     # On juge ce qui sera commité : l'index, figé en arbre par `write-tree`,
     # et non les fichiers sur disque, qui peuvent cacher un défaut indexé ou
-    # en montrer un qui ne sera pas commité (B-0007).
+    # en montrer un qui ne sera pas commité.
     index = outils.arbre_de_l_index(projet.racine)
     ctx = contexte.Contexte(projet, etage="git", base=base, tete=index, rapide=True)
     rapport = contexte.executer(ctx)
@@ -830,7 +863,7 @@ def compter_session(racine: Path, session: str | None = None) -> str:
     """`SessionStart=1 PreToolUse=12 Stop=3` pour la session donnée, ou à
     défaut la plus récente de la trace ; `aucun` sans trace. Le commit d'une
     session dont les hooks sont coupés compte ainsi zéro, au lieu d'emprunter
-    la trace d'une session plus ancienne (B-0044, L2)."""
+    la trace d'une session plus ancienne."""
     lignes = [l.split("\t") for l in config.lire_trace(racine)]
     agent = [l for l in lignes if len(l) >= 3 and l[1] in ("SessionStart", "PreToolUse", "Stop")]
     if not agent and not session:
@@ -838,13 +871,17 @@ def compter_session(racine: Path, session: str | None = None) -> str:
     session = session or next((l[2] for l in reversed(agent) if l[2]), "")
     de_la_session = [l for l in agent if l[2] == session]
     compte = {e: sum(1 for l in de_la_session if l[1] == e) for e in ("SessionStart", "PreToolUse", "Stop")}
-    if compte["SessionStart"] == 0:
-        # Le socle a-t-il été installé PENDANT cette session ? Alors son
-        # SessionStart a eu lieu avant que le hook n'existe.
-        premier = next((i for i, l in enumerate(lignes) if len(l) >= 3 and l[2] == session), None)
-        if premier is not None and premier > 0 and lignes[premier - 1][1] == "Install":
-            return f"SessionStart=installation PreToolUse={compte['PreToolUse']} Stop={compte['Stop']}"
+    if compte["SessionStart"] == 0 and installe_pendant(lignes, session):
+        return f"SessionStart=installation PreToolUse={compte['PreToolUse']} Stop={compte['Stop']}"
     return " ".join(f"{k}={v}" for k, v in compte.items())
+
+
+def installe_pendant(lignes: list[list[str]], session: str) -> bool:
+    """Le socle a été installé PENDANT cette session : la première trace de
+    la session suit l'installation. Son SessionStart a eu lieu avant que le
+    hook n'existe, et ses hooks tirent dès l'appel d'outil suivant (F-0003)."""
+    premier = next((i for i, l in enumerate(lignes) if len(l) >= 3 and l[2] == session), None)
+    return premier is not None and premier > 0 and lignes[premier - 1][1] == "Install"
 
 
 def compter_depuis_le_commit(racine: Path, session: str | None = None) -> str:
@@ -853,7 +890,7 @@ def compter_depuis_le_commit(racine: Path, session: str | None = None) -> str:
     pour la session donnée ou, à défaut, la plus récente depuis. La commande
     qui commite passe elle-même par le filtre : des hooks chargés en comptent
     toujours au moins un. Le compte de toute la session ne voit pas des hooks
-    qui cessent de tirer en cours de route (B-0058)."""
+    qui cessent de tirer en cours de route."""
     lignes = [l.split("\t") for l in config.lire_trace(racine)]
     debut = next((i + 1 for i in range(len(lignes) - 1, -1, -1)
                   if len(lignes[i]) >= 2 and lignes[i][1] == "git-prepare-commit-msg"), 0)
@@ -862,8 +899,50 @@ def compter_depuis_le_commit(racine: Path, session: str | None = None) -> str:
     return f"PreToolUse={sum(1 for l in filtre if l[2] == session)}"
 
 
+# Des hooks chargés laissent une trace fraîche : `socle state` tourne au
+# démarrage, juste après le SessionStart, ou dans une commande que le filtre
+# vient de voir passer. Une session reprise hors de la racine du projet
+# garde son identifiant et les traces d'avant la reprise, mais n'en ajoute
+# plus : la plus récente vieillit.
+FRAICHEUR_HOOKS = 600  # secondes
+
+
+def hooks_non_charges(projet: config.Projet, maintenant: datetime | None = None) -> bool:
+    """Sous Claude Code (`CLAUDECODE`), les hooks de la session courante
+    (`CLAUDE_CODE_SESSION_ID`) ne tirent pas : la trace n'a aucun
+    SessionStart pour elle, sauf si le socle a été installé pendant elle, ou
+    son dernier passage (démarrage ou filtre) date de plus de
+    `FRAICHEUR_HOOKS` secondes. La session a démarré, ou repris, hors de la
+    racine du projet. Faux hors d'un agent, sans
+    identifiant de session, ou quand la politique n'outille pas Claude Code."""
+    session = os.environ.get("CLAUDE_CODE_SESSION_ID")
+    if not os.environ.get("CLAUDECODE") or not session or not projet.pol("agents", "claude_code", defaut=True):
+        return False
+    lignes = [l.split("\t") for l in config.lire_trace(projet.racine)]
+    passages = [l for l in lignes if len(l) >= 3 and l[2] == session and l[1] in ("SessionStart", "PreToolUse")]
+    if not any(l[1] == "SessionStart" for l in passages) and not installe_pendant(lignes, session):
+        return True
+    try:
+        dernier = datetime.fromisoformat(passages[-1][0])
+    except ValueError:
+        return False
+    return ((maintenant or datetime.now(dernier.tzinfo)) - dernier).total_seconds() > FRAICHEUR_HOOKS
+
+
+def filtre_absent(projet: config.Projet) -> str | None:
+    """Un commit d'agent (`CLAUDECODE`) sans aucun passage du filtre de
+    l'agent depuis le commit précédent : le compte (`PreToolUse=0`), à
+    refuser dès le hook avant commit, au lieu du seul avertissement du
+    message de commit. `None` sinon. La commande qui commite passe
+    elle-même par le filtre : des hooks chargés en comptent au moins un."""
+    if not os.environ.get("CLAUDECODE") or not projet.pol("agents", "claude_code", defaut=True):
+        return None
+    depuis = compter_depuis_le_commit(projet.racine, os.environ.get("CLAUDE_CODE_SESSION_ID"))
+    return depuis if depuis == "PreToolUse=0" else None
+
+
 def sous_un_agent(geste: str) -> bool:
-    """Défense en profondeur (B-0044, L2) : une commande réservée à l'humain
+    """Défense en profondeur : une commande réservée à l'humain
     refuse de tourner dans une session d'agent, que le hook l'ait reconnue
     ou non. Le dit, et rend vrai."""
     if not os.environ.get("CLAUDECODE"):
@@ -911,8 +990,8 @@ def git_prepare_commit_msg(projet: config.Projet, fichier: str, source: str = ""
 def git_commit_msg(projet: config.Projet, fichier: str = "") -> int:
     """Le message d'un commit public ne cite ni identifiant privé ni terme de
     la liste privée : le seul étage, hors de l'agent, qui le voit avant le
-    commit (D-0008). Il avertit aussi d'une fonction que la CI refusera faute
-    de test ou de dispense (B-0034, P9)."""
+    commit. Il avertit aussi d'une fonction que la CI refusera faute
+    de test ou de dispense."""
     tracer(projet.racine, "git-commit-msg")
     if not fichier:
         return 0
@@ -937,11 +1016,26 @@ def git_commit_msg(projet: config.Projet, fichier: str = "") -> int:
     return 0
 
 
-def correctif_sans_test(projet: config.Projet, message: str) -> str | None:
+def amendement_en_cours() -> bool:
+    """Le hook tourne sous un `git commit --amend` : git lance ses hooks
+    sans leur dire qu'il amende, mais sa ligne de commande le dit."""
+    import subprocess
+
+    try:
+        args = [x.decode(errors="replace") for x in Path(f"/proc/{os.getppid()}/cmdline").read_bytes().split(b"\0")]
+    except OSError:
+        r = subprocess.run(["ps", "-o", "args=", "-p", str(os.getppid())], capture_output=True, text=True)
+        args = r.stdout.split()
+    return "--amend" in args
+
+
+def correctif_sans_test(projet: config.Projet, message: str, amendement: bool | None = None) -> str | None:
     """Un correctif (`fix:`, `Corrige:`) dont le commit n'ajoute ni ne change
     aucun test : la CI le refusera (`tests.regression`), seule à pouvoir
     rejouer un test sur le commit d'avant. Le hook commit-msg le dit dès le
-    commit, sans refuser, quand l'amender suffit encore (B-0024)."""
+    commit, sans refuser, quand l'amender suffit encore. Un commit amendé se
+    juge contre le parent de celui qu'il remplace, qui porte peut-être déjà
+    ses tests (B-0084)."""
     from socle import checks_tests as controles_tests
 
     if not controles_tests.est_correctif(projet, message) or not outils.a_des_commits(projet.racine):
@@ -951,12 +1045,17 @@ def correctif_sans_test(projet: config.Projet, message: str) -> str | None:
     if "command" not in cap or not arbre:
         return None
     motifs = cap.get("test_paths") or (controles_tests.cfg_tests(projet) or {}).get("paths", [])
-    touches = [f for f in outils.git(projet.racine, "diff", "--name-only", "-z", "HEAD", arbre,
+    if amendement is None:
+        amendement = amendement_en_cours()
+    parent = "HEAD"
+    if amendement:
+        parent = "HEAD^" if outils.rev_existe(projet.racine, "HEAD^") else outils.ARBRE_VIDE
+    touches = [f for f in outils.git(projet.racine, "diff", "--name-only", "-z", parent, arbre,
                                      check=False).split("\0") if f]
     if outils.filtrer(touches, motifs):
         return None
     if "module_command" in cap and outils.filtrer(touches, projet.chemins_code()):
-        return None  # un test peut vivre dans le module du code (B-0051) : la CI le cherche
+        return None  # un test peut vivre dans le module du code : la CI le cherche
     return (trad("socle — avertissement : ce correctif n'ajoute ni ne change aucun test ({liste}) : la CI le "
                  "refusera (`tests.regression`), faute d'un test qui échoue sur le commit d'avant. L'ajouter à ce "
                  "commit (`git commit --amend`), tant qu'il n'est pas poussé.", liste=', '.join(motifs)))
@@ -966,7 +1065,7 @@ def hooks_absents(projet: config.Projet, message: str) -> str | None:
     """Un commit d'agent dont la trace ne compte aucun PreToolUse : les hooks
     de l'agent n'ont pas tiré pendant sa session, et la CI refusera le commit
     (`hooks.trace`). Le hook commit-msg, qui voit la trace que le hook
-    précédent vient d'écrire, le dit dès le commit, sans refuser (B-0050)."""
+    précédent vient d'écrire, le dit dès le commit, sans refuser."""
     from socle import checks_ratchet as controles_cliquet
 
     if not controles_cliquet.est_agent(projet, message):
@@ -974,13 +1073,12 @@ def hooks_absents(projet: config.Projet, message: str) -> str | None:
     valeurs = outils.trailers(message).get("socle-hooks")
     if not valeurs:
         return None
-    conseil = trad("Ouvrir la session de l'agent dans le dépôt du projet, où ses hooks se chargent "
-                   "(`.claude/settings.json`).")
+    conseil = trad(controles_cliquet.REMEDE_HOOKS)
     tirs = controles_cliquet.lire_trailer_hooks(valeurs[-1]).get("PreToolUse", "0")
     if not tirs.isdigit() or int(tirs) < 1:
         return (trad("socle — avertissement : commit d'agent sans aucun hook de l'agent pendant sa session "
                      "(`Socle-Hooks: {valeurs}`) : la CI le refusera (`hooks.trace`). ", valeurs=valeurs[-1]) + conseil)
-    # B-0058 : des hooks qui ont tiré en début de session, puis plus du tout.
+    # Des hooks qui ont tiré en début de session, puis plus du tout.
     depuis = outils.trailers(message).get("socle-hooks-since-commit")
     tirs = controles_cliquet.lire_trailer_hooks(depuis[-1]).get("PreToolUse", "0") if depuis else "1"
     if tirs.isdigit() and int(tirs) >= 1:
@@ -994,7 +1092,7 @@ def code_sans_test(projet: config.Projet, message: str) -> str | None:
     """Une fonction publique que ni un test ni une dispense ne nomme : la CI
     refusera le commit (`tests.code-teste`). Le hook commit-msg, le premier
     étage qui voit le message et ses dispenses, le dit sans refuser : un
-    humain qui commite son code l'apprend ici, pas en CI (B-0034, P9)."""
+    humain qui commite son code l'apprend ici, pas en CI."""
     from socle import context as contexte, checks_tests as controles_tests
     from socle.report import Rapport
 
@@ -1020,7 +1118,7 @@ def plage_poussee(projet: config.Projet, lignes: list[str]):
     commit distant au commit local de chaque référence déjà présente en
     face. C'est la plage que la CI d'un push jugera ; contre la branche par
     défaut, une dispense ou une validation plus anciennes de la branche
-    couvraient ce qu'elle refusera (B-0043)."""
+    couvraient ce qu'elle refusera."""
     from socle import context as contexte
     from socle.report import Rapport
 
@@ -1046,7 +1144,7 @@ def git_pre_push(projet: config.Projet) -> int:
     # Les commits qui partent : `<réf locale> <sha local> <réf distante> <sha distant>` par ligne.
     lignes = [] if sys.stdin is None or sys.stdin.isatty() else sys.stdin.read().splitlines()
     if prive.mode(projet):
-        # Le nom de la branche distante est publié lui aussi (B-0044, L3).
+        # Le nom de la branche distante est publié lui aussi.
         noms = [l.split()[2].removeprefix("refs/heads/") for l in lignes if len(l.split()) >= 4]
         trouve = prive.fuites("\n".join(noms), prive.termes(projet).liste)
         if trouve:

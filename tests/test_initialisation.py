@@ -1,5 +1,5 @@
 """Le jalon 8 : l'installeur qui choisit l'adaptateur, pose la mémoire
-privée, migre et montre le diff de politique à la mise à jour ; et les
+privée et montre le diff de politique à la mise à jour ; et les
 trois entrées d'initialisation."""
 
 import io
@@ -11,7 +11,7 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 
-from socle import config, initialization as initialisation, installer as installeur, memory as memoire, migrations
+from socle import config, initialization as initialisation, installer as installeur, memory as memoire
 from socle.templates import gabarit
 
 MOTEUR = Path(__file__).resolve().parent.parent / "engine"
@@ -110,6 +110,44 @@ class TestInstallationVerte(Base):
         self.assertIn("git commit", etapes[1])
         self.assertIn("ouvrir l'agent", etapes[2])
 
+    def test_des_plafonds_deja_mesures_sont_repris(self):
+        """B-0009, relevé par l'essai à blanc sur chess : les plafonds qu'un
+        projet avait mesurés se perdaient à l'adoption, chaque module « à
+        mesurer » jusqu'à un balayage de plusieurs heures."""
+        self.racine = depot({"pyproject.toml": "[tool.pytest.ini_options]\n",
+                             "src/calc.py": "def f():\n    return 1\n", "src/autre.py": "def g():\n    return 2\n"})
+        dossier = Path(tempfile.mkdtemp(prefix="socle-plafonds-"))
+        self.addCleanup(shutil.rmtree, dossier, ignore_errors=True)
+        caps = dossier / "plafonds.toml"
+        caps.write_text('[mutation.caps]\n"src/calc.py" = { max = 3, reason = "mesuré par le projet" }\n'
+                        '"src/autre.py" = { max = 0 }\n"src/absent.py" = { max = 1 }\n')
+        self.assertEqual(installeur.lire_plafonds(caps)["src/calc.py"], {"max": 3, "reason": "mesuré par le projet"})
+        code, sortie = installer(self.racine, "python-pytest", adoption=True, plafonds=caps)
+        self.assertEqual(code, 0, sortie)
+        gf = (self.racine / config.FORMAT_ACTUEL.garde_fous).read_text()
+        self.assertIn('"src/calc.py" = { max = 3, reason = "mesuré par le projet" }', gf)
+        self.assertIn('"src/autre.py" = { max = 0, reason = "repris de plafonds.toml à l\'installation" }', gf)
+        self.assertIn("plafonds de mutation repris de plafonds.toml : 2", sortie)
+        self.assertIn("écartés, faute d'un module de ce nom qui porte du code : src/absent.py", sortie)
+
+    def test_des_plafonds_illisibles_arretent_l_installation_avant_d_ecrire(self):
+        self.racine = depot({"src/calc.py": "def f():\n    return 1\n"})
+        dossier = Path(tempfile.mkdtemp(prefix="socle-plafonds-"))
+        self.addCleanup(shutil.rmtree, dossier, ignore_errors=True)
+        caps = dossier / "plafonds.toml"
+        for texte, faute in (("[mutation.caps]\n\"src/calc.py\" = { max = -1 }\n", "entier positif ou nul"),
+                             ("[autre]\n", "aucune table"), ("= faux", "illisible")):
+            caps.write_text(texte)
+            with self.assertRaises(ValueError) as e:
+                installeur.lire_plafonds(caps)
+            self.assertIn(faute, str(e.exception))
+        import contextlib
+        with contextlib.redirect_stderr(io.StringIO()) as erreurs:
+            code, _ = installer(self.racine, "python-pytest", plafonds=caps)
+        self.assertEqual(code, 2)
+        self.assertIn("illisible", erreurs.getvalue())
+        self.assertFalse((self.racine / ".socle").exists())
+
     def test_garde_fous_initiaux_sans_mutation(self):
         texte = installeur.garde_fous_initiaux(depot({"calc.py": "def f():\n    return 1\n"}),
                                                (MOTEUR / "socle/adapters/python.toml").read_text())
@@ -122,7 +160,7 @@ class TestMiseAJour(Base):
         installer(self.racine)
 
     def test_le_verrou_note_le_format(self):
-        self.assertIn(f"format = {migrations.FORMAT}", (self.racine / config.FORMAT_ACTUEL.lock).read_text())
+        self.assertIn(f"format = {config.FORMAT}", (self.racine / config.FORMAT_ACTUEL.lock).read_text())
 
     def test_la_politique_changee_est_montree_jamais_ecrasee(self):
         p = self.racine / config.FORMAT_ACTUEL.politique
@@ -162,19 +200,6 @@ class TestMiseAJour(Base):
         self.assertIn("« Socle — verify, contrôles, auto-test »", protection)
         self.assertLess(etapes.index(protection), len(etapes) - 1)
         self.assertFalse(any("protéger la branche" in e for e in installeur.et_maintenant(self.racine, True, [])))
-
-    def test_les_migrations_s_appliquent_dans_l_ordre(self):
-        faites = []
-        avant = dict(migrations.MIGRATIONS), migrations.FORMAT
-        migrations.MIGRATIONS.update({1: lambda c: faites.append(1) or ["un"], 2: lambda c: faites.append(2) or []})
-        try:
-            self.assertEqual(migrations.migrer(self.racine, 1, 3), ["format 1 → 2 : un", "format 2 → 3"])
-            self.assertEqual(faites, [1, 2])
-            with self.assertRaises(RuntimeError):
-                migrations.migrer(self.racine, 1, 4)
-        finally:
-            migrations.MIGRATIONS.clear()
-            migrations.MIGRATIONS.update(avant[0])
 
 
 class TestEntrees(Base):

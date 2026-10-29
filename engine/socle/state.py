@@ -9,7 +9,6 @@ en moins, jamais par un code non nul.
 
 from __future__ import annotations
 
-import re
 import shutil
 import subprocess
 import time
@@ -57,17 +56,14 @@ def _gh_json(racine, chemin: str):
 
 def nom_de_la_ci(projet: config.Projet) -> str:
     """Le nom du travail de la CI du socle, tel que GitHub l'exige."""
-    texte = outils.lire_a(projet.racine, None, ".github/workflows/socle.yml") or ""
-    m = re.search(r"(?m)^ {4}name:\s*(.+?)\s*$", texte)
-    return m.group(1).strip("'\"") if m else "Socle"
+    return outils.nom_du_travail(outils.lire_a(projet.racine, None, ".github/workflows/socle.yml") or "") or "Socle"
 
 
 def ci_exigee(projet: config.Projet) -> tuple[bool | None, str]:
     """La CI du socle est-elle exigée avant de fusionner sur la branche par
     défaut, par un ensemble de règles ou une protection de branche de
     GitHub ? Sans elle, une CI rouge n'empêche pas de fusionner : la
-    garantie « seule la CI est incontournable » tombe (R1 de la passe de
-    recul). `None` quand on ne peut pas le savoir, avec la raison ; sinon
+    garantie « seule la CI est incontournable » tombe. `None` quand on ne peut pas le savoir, avec la raison ; sinon
     le nom de la branche, et si la revue des propriétaires du code est
     exigée aussi."""
     from socle import links as liens
@@ -125,6 +121,19 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
     racine = projet.racine
     lignes = []
     nom = racine.name
+    from socle import hooks
+    from socle.checks_ratchet import REMEDE_HOOKS
+
+    if hooks.hooks_non_charges(projet):
+        # En tête, avant tout le reste : rien de ce qui suit n'est protégé
+        # par les hooks de l'agent.
+        lignes.append(trad("!! LES HOOKS DE L'AGENT NE SONT PAS CHARGÉS dans cette session : aucun n'a tiré "
+                           "pour elle récemment, ni au démarrage ni avant cette commande (une session reprise hors "
+                           "de la racine du projet garde ses traces d'avant). Ni le filtre des commandes, ni les "
+                           "contrôles de fin de tour, ni l'état au démarrage ne tournent. Le dire à l'humain avant "
+                           "tout travail. {remede}",
+                           remede=trad(REMEDE_HOOKS)))
+        lignes.append("")
     lignes.append(trad("== {nom} — état dérivé par `socle state`, rien de recopié ==", nom=nom))
     try:
         lignes += _git(racine, projet)
@@ -140,6 +149,14 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
         lignes += _demandes(racine)
     except Exception as e:
         lignes.append(trad("demandes : illisibles ({erreur})", erreur=f"{type(e).__name__}: {e}"))
+    try:
+        lignes += audit_adaptateur(projet)
+    except Exception as e:
+        lignes.append(trad("adaptateur : audit impossible ({erreur})", erreur=f"{type(e).__name__}: {e}"))
+    try:
+        lignes += _bmad(projet)
+    except Exception as e:
+        lignes.append(trad("BMAD : illisible ({erreur})", erreur=f"{type(e).__name__}: {e}"))
     try:
         from socle import human as humain
 
@@ -184,7 +201,7 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
     lignes.append(prive.ligne_etat(projet))
     lignes.append(trad("vérifier : `python3 .socle/socle verify --fast` (tout : sans `--fast`)"))
     if contenus:
-        # Le chantier actif et les faits, publics puis privés (B-0029) : une
+        # Le chantier actif et les faits, publics puis privés : une
         # mémoire privée lisible ici en fait partie, illisible elle est
         # signalée plus haut.
         ch = projet.chemins
@@ -197,6 +214,64 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
                 lignes.append(f"--- {chemin} ---")
                 lignes.append(texte.rstrip())
     return "\n".join(lignes)
+
+
+def audit_adaptateur(projet: config.Projet) -> list[str]:
+    """L'audit de l'adaptateur, à chaque état : un langage dont le
+    dépôt porte un fichier marqueur, et que l'adaptateur ne couvre pas, voit
+    son code échapper aux capacités ; la décision revient à l'humain."""
+    from socle import installer as installeur
+
+    couvert = projet.adaptateur.get("language")
+    if not couvert:
+        return []
+    presents = installeur.langages_presents(projet.hors_tiers(outils.fichiers_courants(projet.racine)))
+    autres = {l: f for l, f in presents.items() if l != couvert}
+    if not autres:
+        return []
+    liste = ", ".join(f"{l} ({', '.join(f[:2])}{' …' if len(f) > 2 else ''})" for l, f in sorted(autres.items()))
+    return [trad("adaptateur : !! langage(s) que l'adaptateur ({couvert}) ne couvre pas : {liste} — leurs tests, leur "
+                 "compilation et leur mutation ne passent par aucune capacité ; le dire à l'humain par une demande "
+                 "(un autre adaptateur, ou ces fichiers déclarés tiers)", couvert=couvert, liste=liste)]
+
+
+def _bmad(projet: config.Projet) -> list[str]:
+    """Ce que BMAD planifie et que le socle lit sans le recopier :
+    les specs non finies, les stories en cours ou en revue, les reports
+    encore hors du backlog."""
+    from socle import bmad, checks_bmad as controles_bmad
+
+    racine = projet.racine
+    if not bmad.present(racine):
+        return []
+    res = []
+    ouvertes = [s for s in bmad.specs(racine, outils.fichiers_courants(racine)) if s.statut != bmad.FINIE]
+    res.append(trad("BMAD     : {n} spec(s) non finie(s)", n=len(ouvertes)))
+    res += [f"  {s.chemin} ({s.statut}, {s.route or '?'})" for s in ouvertes]
+    decisions = bmad.decisions_architecture(racine, outils.fichiers_courants(racine))
+    if decisions:
+        res.append(trad("  décisions d'architecture (une en entier : `python3 .socle/socle show AD-n`) :"))
+        res += [f"    {d.ident} — {d.titre}" for d in decisions[:12]]
+        if len(decisions) > 12:
+            res.append(trad("    … et {n} autre(s)", n=len(decisions) - 12))
+    impl = bmad.dossiers(racine)[1]
+    etats = bmad.sprint(outils.lire_a(racine, None, f"{impl}/{bmad.SPRINT}") or "")
+    for statut in ("in-progress", "review"):
+        stories = [k for k, v in etats.items() if v == statut and not k.startswith("epic-")]
+        if stories:
+            res.append(trad("  sprint, {statut} : {liste}", statut=statut, liste=", ".join(stories)))
+    from socle import installer as installeur
+
+    sans = [n for n in installeur.personnalisations_bmad(racine)
+            if not (racine / "_bmad" / "custom" / f"{n}.toml").is_file()]
+    if sans:
+        res.append(trad("  !! {n} skill(s) de BMAD sans la personnalisation du socle ({liste}) : relancer "
+                        "l'installeur du socle", n=len(sans), liste=", ".join(sans[:4]) + (" …" if len(sans) > 4 else "")))
+    hors = controles_bmad.reports_a_entrer(projet, memoire.Memoire.charger(racine))
+    if hors:
+        res.append(trad("  {n} travail(aux) reporté(s) par BMAD hors du backlog : `python3 .socle/socle "
+                        "bmad-import`", n=len(hors)))
+    return res
 
 
 def _git(racine, projet) -> list[str]:
@@ -212,12 +287,15 @@ def _git(racine, projet) -> list[str]:
     if defaut:
         non = outils.git(racine, "log", "--oneline", f"{defaut}..HEAD", check=False).splitlines()
         res.append(trad("base     : {defaut} — non fusionné : {n} commit(s)", defaut=defaut, n=len(non)))
+        if outils.branche_par_defaut_devinee(racine):
+            res.append(trad("  ^ devinée : ce clone n'a ni `origin/HEAD`, ni `main`, ni `master` ; si la branche par "
+                            "défaut du dépôt distant est une autre, `git fetch origin <elle>` la fait connaître"))
         res += [f"  {l}" for l in non[:10]]
         if len(non) > 10:
             res.append(trad("  … et {n} autre(s)", n=len(non) - 10))
         base = outils.base_de_travail(racine)
         if base:
-            changes = outils.fichiers_changes(racine, base)
+            changes = projet.hors_tiers(outils.fichiers_changes(racine, base))
             code = outils.filtrer(changes, projet.chemins_code())
             docs = [c for c in changes if c.endswith(".md")]
             mem = [c for c in changes if memoire.est_memoire(c)]
@@ -247,7 +325,7 @@ def _memoire(mem: memoire.Memoire, projet) -> list[str]:
     # en vigueur, à lire en entier (`socle show ADR-NNNN`) avant d'en rouvrir une.
     # Toutes, rejetées et remplacées comprises : on ne rouvre pas non plus une
     # décision écartée. L'empreinte de l'index se cite dans une décision
-    # nouvelle (`lu : decisions@…`, ADR-0008).
+    # nouvelle (`lu : decisions@…`).
     lignes_index = memoire.lignes_index(mem, "decisions")
     if lignes_index:
         res.append(trad("décisions, index decisions@{empreinte} (une en entier : `python3 .socle/socle show "
@@ -258,14 +336,12 @@ def _memoire(mem: memoire.Memoire, projet) -> list[str]:
     res.append(
         trad("backlog  : {ouverts} ouvert(s), {en_cours} en cours, {bloques} bloqué(s), {clos} clos",
              ouverts=par.get("ouvert", 0), en_cours=par.get("en-cours", 0), bloques=par.get("bloque", 0),
-             clos=par.get("fait", 0) + par.get("abandonne", 0))
-        + ("" if projet.chemins.backlog_en_dossier else trad(" à archiver"))
-    )
+             clos=par.get("fait", 0) + par.get("abandonne", 0)))
     for statut, libelle in (("en-cours", a_traduire("en cours")), ("bloque", a_traduire("bloqué"))):
         for e in [e for e in backlog if e.statut == statut][:8]:
             res.append(f"  {trad(libelle)} : {e.id} — {e.titre}")
     jours = projet.gf("staleness", "active_days", defaut=7)
-    t = outils.git(mem.racine, "log", "-1", "--format=%ct", "--", config.chemins(mem.racine).actif, check=False).strip() \
+    t = outils.git(mem.racine, "log", "-1", "--format=%ct", "--", config.FORMAT_ACTUEL.actif, check=False).strip() \
         if outils.a_des_commits(mem.racine) else ""
     if t:
         age = (time.time() - float(t)) / 86400

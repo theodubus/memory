@@ -1,6 +1,6 @@
 import unittest
 
-from socle import hooks
+from socle import config, hooks
 from tests.test_bascule import Projet
 
 LANCEUR = ".socle/" + "socle"  # en morceaux : ce fichier ne lance rien
@@ -142,6 +142,113 @@ class TestPrepareCommitMsg(unittest.TestCase):
                       second.read_text())
 
 
+class TestHooksNonCharges(unittest.TestCase):
+    """B-0060 : une session de Claude Code démarrée hors de la racine du
+    projet n'a pas ses hooks ; l'état le dit, le hook avant commit refuse."""
+
+    def setUp(self):
+        import shutil
+        import tempfile
+        from pathlib import Path
+
+        from socle import config
+
+        self.racine = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        self.projet = config.Projet(racine=self.racine)
+
+    def sous(self, **env):
+        import os
+        from unittest import mock
+
+        base = {k: v for k, v in os.environ.items() if not k.startswith("CLAUDE")}
+        return mock.patch.dict(os.environ, {**base, **env}, clear=True)
+
+    def test_hooks_non_charges_sans_session_start_pour_la_session(self):
+        hooks.tracer(self.racine, "SessionStart", "autre", "startup")
+        with self.sous(CLAUDECODE="1", CLAUDE_CODE_SESSION_ID="s"):
+            self.assertTrue(hooks.hooks_non_charges(self.projet))
+        hooks.tracer(self.racine, "SessionStart", "s", "startup")
+        with self.sous(CLAUDECODE="1", CLAUDE_CODE_SESSION_ID="s"):
+            self.assertFalse(hooks.hooks_non_charges(self.projet))
+
+    def test_une_session_reprise_hors_de_la_racine_est_dite_sans_hooks(self):
+        """B-0079 : reprise hors de la racine, la session garde son
+        identifiant et le SessionStart d'avant la reprise, mais plus rien ne
+        tire ; l'état ne le voyait pas."""
+        from datetime import datetime, timedelta, timezone
+
+        trace = config.chemin_trace(self.racine)
+        trace.parent.mkdir(parents=True, exist_ok=True)
+        avant = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat(timespec="seconds")
+        trace.write_text(f"{avant}\tSessionStart\ts\tstartup\n{avant}\tPreToolUse\ts\tBash\n")
+        with self.sous(CLAUDECODE="1", CLAUDE_CODE_SESSION_ID="s"):
+            self.assertTrue(hooks.hooks_non_charges(self.projet))
+            # La commande qui lance l'état vient de passer le filtre : chargés.
+            hooks.tracer(self.racine, "PreToolUse", "s", "Bash")
+            self.assertFalse(hooks.hooks_non_charges(self.projet))
+            plus_tard = datetime.now(timezone.utc) + timedelta(seconds=hooks.FRAICHEUR_HOOKS + 1)
+            self.assertTrue(hooks.hooks_non_charges(self.projet, maintenant=plus_tard))
+
+    def test_une_session_qui_installe_le_socle_a_ses_hooks(self):
+        """Installé pendant la session, le socle n'a pas vu son SessionStart,
+        mais ses hooks tirent dès l'appel d'outil suivant (F-0003) : l'état
+        les disait à tort non chargés, et l'agent ne devait plus rien pousser."""
+        trace = config.chemin_trace(self.racine)
+        trace.parent.mkdir(parents=True, exist_ok=True)
+        hooks.tracer(self.racine, "Install", "", "0.1.0")
+        hooks.tracer(self.racine, "PreToolUse", "s", "Bash")
+        with self.sous(CLAUDECODE="1", CLAUDE_CODE_SESSION_ID="s"):
+            self.assertTrue(hooks.installe_pendant([l.split("\t") for l in config.lire_trace(self.racine)], "s"))
+            self.assertFalse(hooks.hooks_non_charges(self.projet))
+        # Une autre session, après coup, n'hérite pas de l'installation.
+        hooks.tracer(self.racine, "PreToolUse", "autre", "Bash")
+        with self.sous(CLAUDECODE="1", CLAUDE_CODE_SESSION_ID="autre"):
+            self.assertTrue(hooks.hooks_non_charges(self.projet))
+
+    def test_hors_d_un_agent_ou_sans_session_rien_n_est_dit(self):
+        with self.sous():
+            self.assertFalse(hooks.hooks_non_charges(self.projet))
+        with self.sous(CLAUDECODE="1"):
+            self.assertFalse(hooks.hooks_non_charges(self.projet))
+
+    def test_filtre_absent_depuis_le_commit_precedent(self):
+        with self.sous(CLAUDECODE="1", CLAUDE_CODE_SESSION_ID="s"):
+            self.assertEqual(hooks.filtre_absent(self.projet), "PreToolUse=0")
+            hooks.tracer(self.racine, "PreToolUse", "s", "Bash")
+            self.assertIsNone(hooks.filtre_absent(self.projet))
+            hooks.tracer(self.racine, "git-prepare-commit-msg")
+            self.assertEqual(hooks.filtre_absent(self.projet), "PreToolUse=0")
+        with self.sous():
+            self.assertIsNone(hooks.filtre_absent(self.projet))
+
+    def test_un_second_commit_dans_la_meme_commande_le_dit(self):
+        """B-0078 : le filtre de l'agent a tiré pour la commande, qui commite
+        deux fois ; le second commit était refusé comme si les hooks
+        n'étaient pas chargés."""
+        import contextlib
+        import io
+
+        hooks.tracer(self.racine, "SessionStart", "s", "startup")
+        hooks.tracer(self.racine, "PreToolUse", "s", "Bash")
+        hooks.tracer(self.racine, "git-prepare-commit-msg")
+        sortie = io.StringIO()
+        with self.sous(CLAUDECODE="1", CLAUDE_CODE_SESSION_ID="s"), contextlib.redirect_stderr(sortie):
+            self.assertEqual(hooks.git_pre_commit(self.projet), 1)
+        self.assertIn("un second commit dans la même commande", sortie.getvalue())
+        self.assertNotIn("ne sont pas chargés", sortie.getvalue())
+
+    def test_le_hook_avant_commit_refuse_sans_passage_du_filtre(self):
+        import contextlib
+        import io
+
+        sortie = io.StringIO()
+        with self.sous(CLAUDECODE="1", CLAUDE_CODE_SESSION_ID="s"), contextlib.redirect_stderr(sortie):
+            self.assertEqual(hooks.git_pre_commit(self.projet), 1)
+        self.assertIn("commit d'agent sans aucun passage du filtre", sortie.getvalue())
+        self.assertIn("relancer la session depuis la racine du projet", sortie.getvalue())
+
+
 class TestCommitMsg(unittest.TestCase):
     def test_le_diff_de_commit_v_n_est_pas_lu_comme_le_message(self):
         """Une dispense écrite dans le message reste lue quand `git commit -v`
@@ -234,6 +341,44 @@ class TestCorrectifSansTest(Projet):
         (racine / "tests/test_double.py").write_text("def test_chaine():\n    assert True\n")
         git(racine, "add", "tests/test_double.py")
         self.assertIsNone(hooks.correctif_sans_test(projet, "fix: double accepte une chaîne"))
+
+    def test_un_correctif_amende_se_juge_contre_le_parent_du_commit_amende(self):
+        """B-0084 : amendé pour y ajouter une doc, un correctif qui portait
+        déjà son test se voyait dire qu'il n'en avait pas."""
+        from tests.test_bascule import git
+
+        racine = self.racine
+        (racine / "calc.py").write_text("def double(x):\n    return 2 * int(x)\n")
+        (racine / "tests").mkdir(exist_ok=True)
+        (racine / "tests/test_double.py").write_text("def test_chaine():\n    assert True\n")
+        git(racine, "add", "-A")
+        git(racine, "commit", "-qm", "fix: double accepte une chaîne", "--no-verify")
+        (racine / "docs/notes.md").write_text("Une ligne de doc de plus.\n")
+        git(racine, "add", "-A")
+        projet = config.Projet.charger(racine)
+        message = "fix: double accepte une chaîne"
+        self.assertIsNone(hooks.correctif_sans_test(projet, message, amendement=True))
+        # Le même index, en commit nouveau : il n'apporte bien aucun test.
+        self.assertIn("la CI le refusera", hooks.correctif_sans_test(projet, message, amendement=False))
+
+    def test_l_amendement_se_lit_dans_la_commande_de_git(self):
+        import os
+        import subprocess
+        import sys
+        from pathlib import Path
+
+        moteur = Path(hooks.__file__).resolve().parent.parent
+        code = "from socle import hooks; print(hooks.amendement_en_cours())"
+        # Le hook est l'enfant de la commande git : ici, d'un parent qui en
+        # porte les arguments.
+        parent = "import subprocess, sys; subprocess.run([sys.executable, '-c', sys.argv[1]])"
+
+        def lancer(*args):
+            return subprocess.run([sys.executable, "-c", parent, code, *args], capture_output=True, text=True,
+                                  env={**os.environ, "PYTHONPATH": str(moteur)}).stdout.strip()
+
+        self.assertEqual(lancer("commit", "--amend", "--no-edit"), "True")
+        self.assertEqual(lancer("commit", "-m", "x"), "False")
 
 
 class TestSousUnAgent(unittest.TestCase):

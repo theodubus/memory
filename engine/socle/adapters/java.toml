@@ -14,7 +14,7 @@ sources = ["**/src/main/java/**/*.java", "**/src/test/java/**/*.java"]
 
 # Étapes ajoutées au workflow de CI avant le socle (indentation YAML de six).
 ci_setup = """
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
@@ -51,9 +51,11 @@ absent = "signal secondaire, jamais un garde-fou"
 replacement = "capacité `mutation`"
 
 [capabilities.regression]
-# Un test rejoué sur le commit parent : sa classe.
+# Un test rejoué sur le commit parent : sa classe ; plusieurs, séparées par
+# une virgule, que Maven attend dans `-Dtest=`.
 command = "mvn -q -B test -Dsurefire.failIfNoSpecifiedTests=false -Dtest={test_args}"
 test_arg = "{stem}"
+test_arg_separator = ","
 test_paths = ["src/test/java/**/*Test.java", "src/test/java/**/*Tests.java", "src/test/java/**/Test*.java"]
 # Ce qui, dans la sortie, dit que le test ne s'est pas chargé sur le parent (une
 # compilation cassée, un import manquant) : il y échoue pour une autre raison

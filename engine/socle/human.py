@@ -8,10 +8,10 @@ Trois sources, toutes dérivées, rien de recopié :
   l'agent) ;
 - ce qui se calcule : les branches distantes que la branche par défaut
   contient en entier, donc supprimables sans rien perdre — une action
-  distante que le hook refuse à l'agent (repris de `chess:tools/etat.sh`).
+  distante que le hook refuse à l'agent.
 
 La liste sert deux fois : dans l'état dérivé au démarrage, et dans le récap
-que le hook de fin de tour exige quand l'agent a agi (ADR-0007).
+que le hook de fin de tour exige quand l'agent a agi.
 """
 
 from __future__ import annotations
@@ -25,13 +25,13 @@ from socle import config, requests as demandes, language as langue, links as lie
 from socle.messages import a_traduire, trad
 
 # Les lignes qu'un récap de fin d'intervention doit contenir : ce qui revient
-# à l'humain, puis la suite (ADR-0007, complété par ADR-0009) ; en gras
+# à l'humain, puis la suite ; en gras
 # (`**Pour toi** :`) aussi.
 MARQUEURS_RECAP = {
     "Pour toi :": r"(?im)^[\W_]*pour toi[\s*_]*:",
     "Ensuite :": r"(?im)^[\W_]*ensuite[\s*_]*:",
 }
-# Les mêmes, quand la mémoire du projet est en anglais (B-0031).
+# Les mêmes, quand la mémoire du projet est en anglais.
 MARQUEURS_RECAP_EN = {
     "For you:": r"(?im)^[\W_]*for you[\s*_]*:",
     "Next:": r"(?im)^[\W_]*next[\s*_]*:",
@@ -83,7 +83,7 @@ def a_faire(projet: config.Projet) -> list[Element]:
             continue
         if langue.valeur(memoire.nettoyer(e.meta.get("pour", ""))) == "humain":
             # Le lien du sujet, où vit son mode d'emploi : commandes,
-            # résultats attendus (ADR-0025).
+            # résultats attendus.
             url, _ = liens.lien(projet, e.id)
             res.append(Element("action", f"{e.id} — {e.titre}", url or trad("(pas encore poussé : pas de lien)")))
     for b in branches_a_supprimer(projet):
@@ -110,8 +110,7 @@ def fait_par_l_humain(projet: config.Projet) -> list[Element]:
     """Les réponses que l'humain a écrites lui-même (`socle answer` dans son
     terminal, une approbation de ses changements protégés), depuis le dernier
     commit de l'agent, commitées ou non : l'agent ne les a pas vues passer,
-    et l'humain ne connaît pas toujours le numéro que la commande a donné
-    (B-0034, P7)."""
+    et l'humain ne connaît pas toujours le numéro que la commande a donné."""
     depuis = dernier_commit_agent(projet)
     res = []
     for d in demandes.toutes(projet.racine):

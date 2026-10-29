@@ -1,8 +1,8 @@
-"""Les identifiants que deux branches prennent ensemble (ADR-0026).
+"""Les identifiants que deux branches prennent ensemble.
 
 `socle new` calcule un identifiant sur l'arbre de sa branche, qui ne voit
-pas les autres : deux branches parties du même commit prennent le même
-(B-0053). Trois gestes : voir les identifiants que les branches distantes
+pas les autres : deux branches parties du même commit prennent le même.
+Trois gestes : voir les identifiants que les branches distantes
 ont déjà pris, refuser avant la fusion un identifiant que la branche par
 défaut a pris aussi depuis que la branche s'en est séparée, et le
 renuméroter.
@@ -26,8 +26,7 @@ def pris_ailleurs(racine: Path, type_: str) -> set[str]:
     motif = rf"^#{{1,6}} P?{re.escape(type_)}-[0-9A-Z-]+ "
     res = set()
     for ref in refs:
-        sortie = outils.git(racine, "grep", "-h", "-o", "-E", motif, ref, "--", *sorted(set(memoire.DOSSIERS)),
-                            check=False)
+        sortie = outils.git(racine, "grep", "-h", "-o", "-E", motif, ref, "--", memoire.DOSSIER, check=False)
         res |= {l.split()[1] for l in sortie.splitlines() if len(l.split()) > 1}
     return res
 
@@ -84,8 +83,8 @@ def renumeroter(projet: config.Projet, ident: str) -> list[str]:
     if base and ident in memoire.Memoire.charger(racine, base).definitions():
         raise ValueError(trad("`{ident}` existait avant la branche : ce n'est pas à elle de le renuméroter",
                               ident=ident))
-    if e.type == "D" and any(c.endswith(s) for c in outils.fichiers_courants(racine)
-                             for s in memoire.SUFFIXES_REPONSE if c.startswith(e.fichier.removesuffix(".md"))):
+    if e.type == "D" and any(c.endswith(memoire.SUFFIXE_REPONSE) and c.startswith(e.fichier.removesuffix(".md"))
+                             for c in outils.fichiers_courants(racine)):
         raise ValueError(trad("`{ident}` a reçu sa réponse : une demande répondue est gelée", ident=ident))
     pris = set(mem.definitions()) | pris_ailleurs(racine, e.type)
     defaut = outils.branche_par_defaut(racine)

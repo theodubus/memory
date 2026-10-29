@@ -21,6 +21,7 @@ code = []
 "memory/journal/*.md" = { max_bytes = 80000 }
 "memory/decisions/*.md" = { max_bytes = 10000 }
 "memory/requests/*.md" = { max_bytes = 12000 }
+".claude/skills/*/SKILL.md" = { max_bytes = 8000 }
 
 [staleness]
 # Un chantier actif inchangé depuis plus longtemps est signalé (avertissement).
@@ -34,6 +35,14 @@ exclude = []
 # projet ne lie (un dépôt lié est connu sans réglage) ; un dépôt inconnu est
 # signalé. En ajouter un est un assouplissement : une décision humaine.
 repos = []
+
+[thirdparty]
+# Les fichiers d'un outil tiers installé dans le projet (ses skills, ses
+# scripts) : aucun contrôle ne les juge, ni ses mises à jour. L'installeur y
+# déclare les outils qu'il reconnaît (BMAD Method) ; un motif qui couvrirait
+# un fichier du socle, de la mémoire ou de la politique est refusé. En
+# ajouter un assouplit : une décision humaine.
+paths = []
 
 [tooling]
 # Tout fichier qui correspond doit être nommé dans un document.
@@ -50,7 +59,7 @@ paths = [".socle/git-hooks/*", ".github/workflows/*.yml", ".claude/settings.json
 # [[values]]
 # name = "nom"
 # file = "src/config.rs"
-# regex = 'MAX_DEPTH: u32 = (\d+)'
+# regex = 'MAX_RETRIES: u32 = (\d+)'
 
 [nocopy]
 # Un paragraphe d'au moins ce nombre de caractères présent dans deux fichiers

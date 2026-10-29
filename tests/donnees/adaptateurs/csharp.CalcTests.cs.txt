@@ -1,0 +1,58 @@
+using Calc;
+using NUnit.Framework;
+using Xunit;
+
+namespace Calc.Tests;
+
+public class CalcTests
+{
+    [Fact]
+    public void DoublerMultiplieParDeux()
+    {
+        Assert.Equal(4, Calcul.Doubler(2));
+    }
+
+    [Theory]
+    [InlineData(1, 2)]
+    [InlineData(2, 3)]
+    public void SuivantAjouteUn(int x, int attendu)
+    {
+        Assert.Equal(attendu, Calcul.Suivant(x));
+    }
+
+    [Fact(Skip = "la spécification attend la règle des centaines")]
+    public void PlusTardAvecRaison()
+    {
+        Assert.Equal(6, Calcul.Tripler(2));
+    }
+
+    [Fact(Skip = "")]
+    public void PlusTardSansRaison()
+    {
+        Assert.Equal(6, Calcul.Tripler(2));
+    }
+
+    [Fact]
+    public void NeMesureRien()
+    {
+        var s = @"{ "" }";
+        var c = '"';
+        Calcul.Doubler(2);
+    }
+
+    [Test, Ignore("attend la version 2")]
+    public void NUnitIgnoreAvecRaison()
+    {
+        ClassicAssert.AreEqual(4, Calcul.Doubler(2));
+    }
+
+    [TestMethod]
+    public void MSTestInconclusif()
+    {
+        Assert.Inconclusive();
+    }
+
+    [Fact] public async Task SurUneLigne() => Assert.True(await Task.FromResult(Calcul.Doubler(1) == 2));
+
+    private static int Aide() => 1;
+}

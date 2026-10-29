@@ -16,10 +16,10 @@ ce que le jalon 6 a vérifié pour Python :
   au plafond mesuré et casse en dessous.
 
 Il faut les outils du langage (node, go, java et maven, ruby et bundler,
-php et composer avec un pilote de couverture) et l'accès aux registres de
-paquets. Les projets vivent dans un dossier temporaire, effacé à la fin.
+php et composer avec un pilote de couverture, le SDK .NET 8) et l'accès aux
+registres de paquets. Les projets vivent dans un dossier temporaire, effacé à la fin.
 
-    python3 bench/adapters.py                     # les cinq langages
+    python3 bench/adapters.py                     # les six langages
     python3 bench/adapters.py --langages go,php   # quelques-uns
     python3 bench/adapters.py --garder            # garder les projets
 """
@@ -298,6 +298,108 @@ final class CalcTest extends TestCase
 }}
 """
 
+# Une solution qui réunit le projet et ses tests : `dotnet build`, `dotnet
+# test` et Stryker.NET la trouvent seuls à la racine.
+CS_SOLUTION = """Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calc", "src\\Calc\\Calc.csproj", "{2B3FC5AF-3300-41E2-9560-83BA67E993ED}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calc.Tests", "tests\\Calc.Tests\\Calc.Tests.csproj", "{519F2A7C-1914-45B0-85A5-B6D7E792B02B}"
+EndProject
+Global
+\tGlobalSection(SolutionConfigurationPlatforms) = preSolution
+\t\tDebug|Any CPU = Debug|Any CPU
+\t\tRelease|Any CPU = Release|Any CPU
+\tEndGlobalSection
+\tGlobalSection(ProjectConfigurationPlatforms) = postSolution
+\t\t{2B3FC5AF-3300-41E2-9560-83BA67E993ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+\t\t{2B3FC5AF-3300-41E2-9560-83BA67E993ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+\t\t{2B3FC5AF-3300-41E2-9560-83BA67E993ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+\t\t{2B3FC5AF-3300-41E2-9560-83BA67E993ED}.Release|Any CPU.Build.0 = Release|Any CPU
+\t\t{519F2A7C-1914-45B0-85A5-B6D7E792B02B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+\t\t{519F2A7C-1914-45B0-85A5-B6D7E792B02B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+\t\t{519F2A7C-1914-45B0-85A5-B6D7E792B02B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+\t\t{519F2A7C-1914-45B0-85A5-B6D7E792B02B}.Release|Any CPU.Build.0 = Release|Any CPU
+\tEndGlobalSection
+EndGlobal
+"""
+CS_PROJET = """<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+</Project>
+"""
+CS_PROJET_TESTS = """<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.0" />
+    <PackageReference Include="xunit" Version="2.4.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\\..\\src\\Calc\\Calc.csproj" />
+  </ItemGroup>
+</Project>
+"""
+# Stryker.NET, épinglé dans le manifeste d'outils du projet : la version 5
+# exige un SDK plus récent que .NET 8.
+CS_OUTILS = json.dumps({"version": 1, "isRoot": True,
+                        "tools": {"dotnet-stryker": {"version": "4.16.0", "commands": ["dotnet-stryker"]}}},
+                       indent=2) + "\n"
+CS_CODE = """namespace Calc;
+
+public static class Calcul
+{
+    public static int Doubler(int x)
+    {
+        return 2 * x;
+    }
+
+    public static int Suivant(int x)
+    {
+        if (x > 100)
+        {
+            return x;
+        }
+        return Aide(x);
+    }
+
+    private static int Aide(int x)
+    {
+        return x + 1;
+    }
+}
+"""
+CS_TEST = f"""using Calc;
+using Xunit;
+
+namespace Calc.Tests;
+
+public class CalcTests
+{{
+    [Fact]
+    public void DoublerMultiplieParDeux()
+    {{
+        Assert.Equal(4, Calcul.Doubler(2));
+    }}
+
+    [Fact]
+    public void SuivantAjouteUn()
+    {{
+        Assert.Equal(2, Calcul.Suivant(1));
+    }}
+    // {FIN}
+}}
+"""
+
 LANGAGES = {
     "javascript": Langage(
         adaptateur="javascript",
@@ -405,6 +507,31 @@ LANGAGES = {
                     "use PHPUnit\\Framework\\TestCase;\n\nfinal class RegressionTest extends TestCase\n{\n"
                     "    public function testDoubleDeTrois(): void\n    {\n"
                     "        $this->assertSame(6, Calc::double(3));\n    }\n}\n"),
+    ),
+    "csharp": Langage(
+        adaptateur="csharp",
+        fichiers={"Calc.sln": CS_SOLUTION, ".gitignore": "bin/\nobj/\nStrykerOutput/\n",
+                  ".config/dotnet-tools.json": CS_OUTILS, "src/Calc/Calc.csproj": CS_PROJET,
+                  "src/Calc/Calc.cs": CS_CODE, "tests/Calc.Tests/Calc.Tests.csproj": CS_PROJET_TESTS,
+                  "tests/Calc.Tests/CalcTests.cs": CS_TEST},
+        preparer=["dotnet restore", "dotnet tool restore"],
+        code="src/Calc/Calc.cs",
+        creux=("tests/Calc.Tests/CalcTests.cs", f"    // {FIN}\n",
+               "    [Fact]\n    public void NeMesureRien()\n    {\n        Calcul.Doubler(3);\n    }\n"),
+        # xUnit ne désactive un test que par sa raison : vide, elle n'en dit aucune.
+        desactive=("tests/Calc.Tests/CalcTests.cs", f"    // {FIN}\n",
+                   '    [Fact(Skip = "")]\n    public void PlusTard()\n    {\n'
+                   "        Assert.Equal(6, Calcul.Doubler(3));\n    }\n"),
+        attendu=("tests/Calc.Tests/CalcTests.cs", "Assert.Equal(4,", "Assert.Equal(5,"),
+        fonction=("src/Calc/Calc.cs", "    private static int Aide(int x)",
+                  "    public static int Quadrupler(int x)\n    {\n        return 4 * x;\n    }\n\n"
+                  "    private static int Aide(int x)"),
+        bogue=("src/Calc/Calc.cs", "return 2 * x;", "return 2 * x + 1;"),
+        regression=("tests/Calc.Tests/RegressionTests.cs",
+                    "using Calc;\nusing Xunit;\n\nnamespace Calc.Tests;\n\npublic class RegressionTests\n{\n"
+                    "    [Fact]\n    public void DoublerDeTrois()\n    {\n"
+                    "        Assert.Equal(6, Calcul.Doubler(3));\n    }\n}\n"),
+        env={"DOTNET_CLI_TELEMETRY_OPTOUT": "1", "DOTNET_NOLOGO": "1"},
     ),
 }
 

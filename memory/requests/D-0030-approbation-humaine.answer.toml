@@ -1,0 +1,8 @@
+# Réponse humaine, écrite par l'humain lui-même (`socle answer`).
+# Elle porte sur le texte exact de D-0030-approbation-humaine.md, dont l'empreinte suit.
+reponse = "valider"
+texte = "les actions de la CI sur Node 24"
+par = "theodubus"
+date = "2026-10-20"
+canal = "terminal"
+empreinte = "sha256:ebef01b8cb8d02765b7d97c913fdb145c386153547b0b49952b51fd196e5c5f3"

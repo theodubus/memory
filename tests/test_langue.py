@@ -11,9 +11,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import (archive as archivage, cli, config, context as contexte, checks_memory as controles_memoire,
+from socle import (cli, config, context as contexte, checks_memory as controles_memoire,
                    requests as demandes, human as humain, installer as installeur, language as langue,
-                   memory as memoire)
+                   memory as memoire, messages, utils as outils)
 from socle.report import Rapport
 
 MOTEUR = Path(__file__).resolve().parent.parent / "engine"
@@ -141,6 +141,9 @@ class TestVocabulaire(unittest.TestCase):
         self.assertEqual(e.refs("preuve"), [("fichier", "calc.py")])
 
 
+SUJET = "memory/backlog/B-0001-add-triple.md"
+
+
 class ProjetAnglais(unittest.TestCase):
     def setUp(self):
         self.racine = Path(tempfile.mkdtemp(prefix="socle-langue-"))
@@ -148,12 +151,10 @@ class ProjetAnglais(unittest.TestCase):
         git(self.racine, "init", "-q", "-b", "main")
         (self.racine / "calc.py").write_text("def double(x):\n    return 2 * x\n")
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-            # Le backlog en un fichier : ce que ces tests lisent (ADR-0025).
-            installeur.installer(self.racine, "python", "@essai", source=MOTEUR, langue_memoire="en", format_memoire=2)
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR, langue_memoire="en")
         git(self.racine, "add", "-A")
         git(self.racine, "commit", "-qm", "base", "--no-verify")
         self.base = git(self.racine, "rev-parse", "HEAD").strip()
-        config.oublier_formats()
         self.projet = config.Projet.charger(self.racine)
 
     def socle(self, *args) -> str:
@@ -180,6 +181,82 @@ class ProjetAnglais(unittest.TestCase):
         return [c.message for c in r.erreurs()]
 
 
+class TestCIAnglaise(unittest.TestCase):
+    """Les workflows posés dans un projet anglais (B-0059)."""
+
+    def installer(self, adaptateur: str, **options) -> str:
+        sortie = io.StringIO()
+        with contextlib.redirect_stdout(sortie), contextlib.redirect_stderr(sortie):
+            self.assertEqual(installeur.installer(self.racine, adaptateur, "@essai", source=MOTEUR, **options), 0)
+        return sortie.getvalue()
+
+    def lire(self, rel: str) -> str:
+        return (self.racine / rel).read_text(encoding="utf-8")
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-ci-anglaise-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        git(self.racine, "init", "-q", "-b", "main")
+        (self.racine / "calc.py").write_text("def double(x):\n    return 2 * x\n")
+        self.installer("python", langue_memoire="en")
+
+    def test_la_ci_posee_est_en_anglais(self):
+        # Le nom du travail, celui des étapes et les commentaires.
+        ci = self.lire(".github/workflows/socle.yml")
+        self.assertIn("    name: Socle — verify, checks, self-test\n", ci)
+        self.assertIn("- name: Private memory", ci)
+        self.assertNotIn("Mémoire privée", ci)
+        self.assertNotIn("Posé par l'installeur", ci)
+
+    def test_une_mise_a_jour_garde_le_nom_du_travail_en_place(self):
+        # Une protection de branche exige ce nom : la langue ne le change pas.
+        chemin = self.racine / ".github/workflows/socle.yml"
+        chemin.write_text(self.lire(".github/workflows/socle.yml").replace(
+            "    name: Socle — verify, checks, self-test\n", "    name: Socle — verify, contrôles, auto-test\n"),
+            encoding="utf-8")
+        sortie = self.installer("python")
+        ci = self.lire(".github/workflows/socle.yml")
+        self.assertIn("    name: Socle — verify, contrôles, auto-test\n", ci)
+        self.assertIn("- name: Private memory", ci)
+        self.assertIn("CI job name kept: “Socle — verify, contrôles, auto-test”", sortie)
+
+    def test_les_etapes_d_un_adaptateur_et_le_balayage_en_anglais(self):
+        self.installer("python-pytest")
+        self.assertIn("- name: pytest and mutmut", self.lire(".github/workflows/socle.yml"))
+        balayage = self.lire(".github/workflows/socle-mutation.yml")
+        self.assertIn("    name: Socle — mutation sweep\n", balayage)
+        self.assertIn("- name: pytest and mutmut", balayage)
+        self.assertNotIn("Balayage et verdict", balayage)
+
+    def test_le_lanceur_parle_la_langue_du_projet(self):
+        # Son message sous un Python trop ancien s'écrit avant le moteur.
+        lanceur = self.lire(".socle/socle")
+        self.assertIn('"the socle requires Python 3.11 or newer (tomllib); found: "', lanceur)
+        self.assertNotIn(installeur.PYTHON_ANCIEN, lanceur)
+        self.assertIn(installeur.PYTHON_ANCIEN, (MOTEUR / "socle/templates/launcher.py").read_text(encoding="utf-8"))
+
+    def test_nom_du_travail_et_noms_d_etapes(self):
+        self.assertEqual(outils.nom_du_travail("jobs:\n  socle:\n    name: 'Socle — x'\n"), "Socle — x")
+        self.assertIsNone(outils.nom_du_travail("name: Socle\n"))
+        etapes = "      - name: Dépendances\n        run: npm ci\n      - uses: actions/setup-go@v5\n"
+        with messages.dans("en"):
+            self.assertEqual(installeur.noms_d_etapes_traduits(etapes),
+                             "      - name: Dependencies\n        run: npm ci\n      - uses: actions/setup-go@v5\n")
+        self.assertEqual(installeur.noms_d_etapes_traduits(etapes), etapes)
+
+    def test_un_projet_francais_garde_sa_ci_francaise(self):
+        francais = Path(tempfile.mkdtemp(prefix="socle-ci-francaise-"))
+        self.addCleanup(shutil.rmtree, francais, ignore_errors=True)
+        git(francais, "init", "-q", "-b", "main")
+        (francais / "calc.py").write_text("def double(x):\n    return 2 * x\n")
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            installeur.installer(francais, "python-pytest", "@essai", source=MOTEUR)
+        self.assertIn("    name: Socle — verify, contrôles, auto-test\n",
+                      (francais / ".github/workflows/socle.yml").read_text(encoding="utf-8"))
+        self.assertIn("- name: pytest et mutmut",
+                      (francais / ".github/workflows/socle-mutation.yml").read_text(encoding="utf-8"))
+
+
 class TestProjetAnglais(ProjetAnglais):
     def test_l_installation_pose_tout_en_anglais(self):
         self.assertEqual(langue.du_projet(self.projet), "en")
@@ -190,12 +267,24 @@ class TestProjetAnglais(ProjetAnglais):
         self.assertIn("ref : file:.socle/engine.lock", next((self.racine / "memory/journal").glob("*.md")).read_text())
         self.assertEqual(self.erreurs(), [])
 
+    def test_show_dit_le_statut_d_une_demande_en_anglais(self):
+        # B-0059 : le statut affiché suit la langue ; la valeur comparée non.
+        sortie = self.socle("new", "request", "Choose the cap")
+        ident = sortie.split()[0]
+        self.assertIn("\n--- pending ---", self.socle("show", ident))
+        d = next(d for d in demandes.toutes(self.racine) if d.id == ident)
+        self.assertEqual(d.statut, "en attente")
+        d.reponse = {"reponse": "accept"}
+        with messages.dans("en"):
+            self.assertEqual(d.statut_affiche, "answered: accept")
+        self.assertEqual(d.statut_affiche, "répondue : accept")
+
     def test_new_ecrit_dans_la_langue_du_projet(self):
         self.socle("new", "fact", "Double doubles")
         self.assertIn("> status : assumed · source :", self.lire("memory/canonical.md"))
         self.socle("new", "backlog", "Add triple")
-        self.assertIn("> status : open · origin :", self.lire("memory/backlog.md"))
-        self.assertIn("read : backlog@", self.lire("memory/backlog.md"))
+        self.assertIn("> status : open · origin :", self.lire(SUJET))
+        self.assertIn("read : backlog@", self.lire(SUJET))
         self.socle("new", "adr", "One constant only")
         adr = next((self.racine / "memory/decisions").glob("ADR-0001-*.md")).read_text()
         self.assertIn("layer=decisions zone=public", adr)
@@ -211,8 +300,8 @@ class TestProjetAnglais(ProjetAnglais):
         self.remplacer("memory/canonical.md", "> status : assumed · source : <where this fact comes from>\n\n"
                        "<the fact, and what would prove it>", "> status : measured · proof : file:calc.py\n\nRead in the code.")
         self.socle("new", "backlog", "Add triple")
-        self.remplacer("memory/backlog.md", "<J-… or commit:… where the topic came up>", ident)
-        self.remplacer("memory/backlog.md", "<what to do, and why>", "For the invoices.")
+        self.remplacer(SUJET, "<J-… or commit:… where the topic came up>", ident)
+        self.remplacer(SUJET, "<what to do, and why>", "For the invoices.")
         (self.racine / "memory/requests/D-0001-choose-the-rounding-mode.md").write_text(DEMANDE)
         self.assertEqual(self.erreurs(), [])
         d = next(x for x in demandes.toutes(self.racine) if x.id == "D-0001")
@@ -240,28 +329,21 @@ class TestProjetAnglais(ProjetAnglais):
         ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="ci", base=self.base, tete="HEAD")
         self.assertEqual(controles_docs.dispenses(ctx), ["a comment only, nothing to document"])
 
-    def test_l_archive_du_backlog_est_en_anglais(self):
-        backlog = self.racine / "memory/backlog.md"
-        backlog.write_text(backlog.read_text() + "\n## B-0001 — Add triple\n\n> status : done · origin : commit:"
-                           f"{self.base[:7]} · ref : commit:{self.base[:7]}\n\nDone.\n")
-        with contextlib.redirect_stdout(io.StringIO()):
-            archivage.archiver_backlog(config.Projet.charger(self.racine))
-        self.assertIn("Closed backlog archived : B-0001", next((self.racine / "memory/journal").glob("*.md")).read_text())
-
-
     def test_une_bascule_en_anglais(self):
         pol = self.racine / ".socle/policy.toml"
         pol.write_text(pol.read_text() + '\n[private]\nmode = "chiffre"\n')
-        backlog = self.racine / "memory/backlog.md"
-        backlog.write_text(backlog.read_text() + "\n## B-0001 — Call the client\n\n> status : open · origin : commit:"
-                           f"{self.base[:7]}\n\nBefore November.\n")
+        (self.racine / "memory/backlog/B-0001-call-the-client.md").write_text(
+            "<!-- socle: layer=backlog zone=public -->\n# B-0001 — Call the client\n\n> status : open · origin : "
+            f"commit:{self.base[:7]}\n\nBefore November.\n")
         git(self.racine, "add", "-A")
         git(self.racine, "commit", "-qm", "sujet", "--no-verify")
         self.base = git(self.racine, "rev-parse", "HEAD").strip()
-        self.socle("prive", "basculer", "B-0001")
-        self.assertIn("## B-0001 — Entry moved to the private memory\n\n> made-private : ", backlog.read_text())
-        self.assertIn("from : B-0001", self.lire("memory/private/backlog.md"))
-        self.assertIn("layer=backlog zone=private", self.lire("memory/private/backlog.md"))
+        self.socle("private", "move", "B-0001")
+        self.assertIn("# B-0001 — Entry moved to the private memory\n\n> made-private : ",
+                      self.lire("memory/backlog/B-0001-basculee.md"))
+        copie = "memory/private/backlog/PB-0001-call-the-client.md"
+        self.assertIn("from : B-0001", self.lire(copie))
+        self.assertIn("layer=backlog zone=private", self.lire(copie))
         self.assertEqual(self.erreurs(), [])
 
 if __name__ == "__main__":

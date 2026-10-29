@@ -59,63 +59,53 @@ STATUTS = {
     "ADR": {"proposee", "acceptee", "remplacee", "rejetee", "abandonnee"},
 }
 BACKLOG_CLOS = {"fait", "abandonne"}
+# Le sous-dossier du backlog en dossier où `socle archive` range les sujets
+# clos, à l'écart des ouverts.
+DOSSIER_CLOS = "closed"
 
-# Une entrée publique basculée dans la mémoire privée (B-0029) : elle garde
+# Une entrée publique basculée dans la mémoire privée : elle garde
 # son identifiant, pour que les renvois restent valides, et perd son titre et
 # son texte, repris par une copie privée qui cite `depuis : <identifiant>`.
 TITRE_BASCULEE = langue.TEXTES["titre-basculee"]["fr"]
 TEXTE_BASCULEE = langue.TEXTES["texte-basculee"]["fr"]
 
 
-# La mémoire et sa zone privée (jalon 7, même arborescence), sous leurs noms
-# des deux formats : un chemin se reconnaît quel que soit le format du projet.
-DOSSIERS = tuple(f.memoire for f in config.FORMATS.values())
-DOSSIERS_PRIVES = tuple(f.prive for f in config.FORMATS.values())
-SUFFIXES_REPONSE = tuple(f.reponse for f in config.FORMATS.values())
+# La mémoire et sa zone privée (même arborescence).
+DOSSIER = config.FORMAT_ACTUEL.memoire
+DOSSIER_PRIVE = config.FORMAT_ACTUEL.prive
+SUFFIXE_REPONSE = config.FORMAT_ACTUEL.reponse
 
 
 def est_memoire(chemin: str) -> bool:
-    return chemin.startswith(tuple(d + "/" for d in DOSSIERS))
+    return chemin.startswith(DOSSIER + "/")
 
 
 def est_prive(chemin: str) -> bool:
-    return chemin.startswith(tuple(d + "/" for d in DOSSIERS_PRIVES))
+    return chemin.startswith(DOSSIER_PRIVE + "/")
 
 
 def est_reponse(chemin: str) -> bool:
     """Une réponse humaine, à côté de sa demande."""
-    return est_memoire(chemin) and chemin.endswith(SUFFIXES_REPONSE)
+    return est_memoire(chemin) and chemin.endswith(SUFFIXE_REPONSE)
 
 
 def demande_de_reponse(chemin: str) -> str:
     """Le chemin de la demande à laquelle répond un fichier de réponse."""
-    for s in SUFFIXES_REPONSE:
-        if chemin.endswith(s):
-            return chemin[: -len(s)] + ".md"
-    return chemin
-
-
-def chemins_de(chemin: str) -> config.Chemins:
-    """Le format auquel appartient un chemin de la mémoire."""
-    for f in config.FORMATS.values():
-        if chemin.startswith(f.memoire + "/"):
-            return f
-    return config.FORMAT_ACTUEL
+    return chemin[: -len(SUFFIXE_REPONSE)] + ".md" if chemin.endswith(SUFFIXE_REPONSE) else chemin
 
 
 def dossier_propre(chemin: str) -> str | None:
     """Le dossier d'un fichier qui porte une seule entrée (une décision, une
-    demande, un sujet du backlog au format 3) ; `None` pour un fichier qui en
-    porte plusieurs."""
-    if couche_attendue(chemin) in ("decisions", "demandes") or \
-            couche_attendue(chemin) == "backlog" and not chemin.endswith("/backlog.md"):
+    demande, un sujet du backlog) ; `None` pour un fichier qui en porte
+    plusieurs."""
+    if couche_attendue(chemin) in ("decisions", "demandes", "backlog"):
         return chemin.rsplit("/", 1)[0]
     return None
 
 
 def nom_de_fichier(titre: str) -> str:
     """Le titre d'une entrée qui a son propre fichier (décision, demande,
-    sujet du backlog au format 3), réduit pour son nom : `ADR-0003-<ceci>.md`."""
+    sujet du backlog), réduit pour son nom : `ADR-0003-<ceci>.md`."""
     s = re.sub(r"[^a-z0-9]+", "-", outils.sans_accents(titre).lower()).strip("-")
     return s[:50].rstrip("-") or "sans-titre"
 
@@ -123,16 +113,13 @@ def nom_de_fichier(titre: str) -> str:
 def hors_zone_privee(chemin: str) -> str:
     """Un chemin de la zone privée, relatif à elle (son chemin dans le dépôt
     privé) ; inchangé hors de la zone privée."""
-    for d in DOSSIERS_PRIVES:
-        if chemin.startswith(d + "/"):
-            return chemin[len(d) + 1:]
-    return chemin
+    return chemin[len(DOSSIER_PRIVE) + 1:] if est_prive(chemin) else chemin
 
 
 def lisible(texte: str | None) -> bool:
     """Un fichier de mémoire se lit en clair quand sa première ligne non vide
     porte l'en-tête du socle ; chiffré, il ne se lit pas. La liste des termes
-    privés se reconnaît au sien (B-0044, L3)."""
+    privés se reconnaît au sien."""
     for ligne in (texte or "").splitlines():
         if ligne.strip():
             return bool(ENTETE_FICHIER.search(ligne)) or ligne.lstrip().startswith(ENTETE_TERMES)
@@ -144,7 +131,7 @@ def fichiers_compagnon(racine: Path) -> list[str]:
     public ignore : `git ls-files` ne les voit pas."""
     import os
 
-    p = racine / config.chemins(racine).prive
+    p = racine / config.FORMAT_ACTUEL.prive
     if not (p / ".git").exists():
         return []
     res = []
@@ -171,7 +158,7 @@ def fichier_journal(dossier: Path, mois: str, budget: int | None = None, ajout: 
     """Le fichier du journal où écrire une entrée de `ajout` octets : celui du
     mois (`AAAA-MM.md`), puis `AAAA-MM-2.md`, `AAAA-MM-3.md`… quand le
     précédent dépasserait son budget. Le journal est en ajout seul : un
-    fichier plein ne se vide pas, le mois continue dans le suivant (ADR-0022)."""
+    fichier plein ne se vide pas, le mois continue dans le suivant."""
     n = 1
     while True:
         p = dossier / (f"{mois}.md" if n == 1 else f"{mois}-{n}.md")
@@ -190,6 +177,16 @@ def lignes_hors_code(texte: str):
             dedans = not dedans
             continue
         yield i, ligne, dedans
+
+
+# Un texte barré (`~~…~~`, `<s>…</s>`, `<del>…</del>`) dit ce qui n'est plus :
+# ses chemins et ses liens ne se jugent pas comme vivants (B-0087).
+TEXTE_BARRE = re.compile(r"~~[^~\n]+?~~|<(?P<balise>s|del|strike)>.*?</(?P=balise)>", re.I)
+
+
+def sans_barre(ligne: str) -> str:
+    """La ligne sans ce qu'elle barre."""
+    return TEXTE_BARRE.sub(" ", ligne)
 
 
 def mentions(texte: str) -> list[tuple[str, int]]:
@@ -241,7 +238,7 @@ REF_RE = re.compile(
 
 def sans_ponctuation_finale(cible: str) -> str:
     """Une référence nue en fin de phrase, ou entre parenthèses, sans le point
-    ou la parenthèse qui la suit (B-0020) ; une parenthèse ouverte dans la
+    ou la parenthèse qui la suit ; une parenthèse ouverte dans la
     référence garde sa fermante."""
     while cible:
         fin = cible[-1]
@@ -326,21 +323,36 @@ def couche_attendue(chemin: str) -> str | None:
     Les couches gardent leurs noms internes, quel que soit le nom du fichier."""
     if not est_memoire(chemin) or not chemin.endswith(".md"):
         return None
-    f = chemins_de(chemin)
-    if est_prive(chemin):  # la zone privée (jalon 7) reprend la même arborescence
+    f = config.FORMAT_ACTUEL
+    if est_prive(chemin):  # la zone privée reprend la même arborescence
         chemin = f.memoire + "/" + hors_zone_privee(chemin)
     if chemin.startswith(f.archives + "/") or chemin == f.memoire + "/README.md":
         return None
-    for couche, lieu in (("canonique", f.canonique), ("actif", f.actif), ("backlog", f.backlog)):
+    for couche, lieu in (("canonique", f.canonique), ("actif", f.actif)):
         if chemin == lieu:
             return couche
-    # Le backlog en dossier (format 3, ADR-0025), sous le même nom que le
-    # fichier unique, sans son extension.
-    for couche, lieu in (("backlog", f.backlog.removesuffix(".md")), ("decisions", f.decisions),
+    for couche, lieu in (("backlog", f.backlog), ("decisions", f.decisions),
                          ("journal", f.journal), ("demandes", f.demandes)):
-        if chemin.startswith(lieu + "/") and "/" not in chemin[len(lieu) + 1:]:
+        reste = chemin[len(lieu) + 1:] if chemin.startswith(lieu + "/") else None
+        if couche == "backlog" and reste and reste.startswith(DOSSIER_CLOS + "/"):
+            reste = reste[len(DOSSIER_CLOS) + 1:]
+        if reste is not None and "/" not in reste:
             return couche
     return "inconnue"
+
+
+def parmi_les_clos(chemin: str) -> bool:
+    """Le fichier d'un sujet rangé avec les sujets clos."""
+    return couche_attendue(chemin) == "backlog" and chemin.rsplit("/", 2)[-2:-1] == [DOSSIER_CLOS]
+
+
+def hors_des_clos(chemin: str) -> str:
+    """Le chemin d'un sujet comme s'il était parmi les ouverts : ce que
+    ses plafonds visent, où qu'il soit rangé."""
+    if not parmi_les_clos(chemin):
+        return chemin
+    dossier, nom = chemin.rsplit("/", 1)
+    return dossier.removesuffix("/" + DOSSIER_CLOS) + "/" + nom
 
 
 def analyser(chemin: str, texte: str) -> FichierMemoire:
@@ -435,7 +447,7 @@ class Memoire:
             chemins = outils.fichiers_a(racine, rev)
         chemins = [c for c in chemins if couche_attendue(c) is not None]
         # À une révision, tous les fichiers d'un coup : un `git show` par
-        # fichier coûtait l'essentiel de la lecture prouvée (ADR-0023).
+        # fichier coûtait l'essentiel de la lecture prouvée.
         textes = outils.lire_plusieurs(racine, rev, chemins) if rev is not None else {}
         for c in chemins:
             texte = textes.get(c) if rev is not None else outils.lire_a(racine, rev, c)
@@ -467,7 +479,7 @@ class Memoire:
                     pris_ailleurs: set[str] = frozenset()) -> str:
         """Le prochain identifiant libre d'un type. Calculé, jamais deviné :
         deux sessions qui devinent tombent sur le même. `pris_ailleurs` : ceux
-        que d'autres branches ont déjà pris (ADR-0026)."""
+        que d'autres branches ont déjà pris."""
         return prochain_libre(type_, set(self.definitions()) | set(pris_ailleurs), prive, date)
 
 
@@ -498,7 +510,7 @@ def _lettres():
 
 
 # --------------------------------------------------------------------------
-# Lecture prouvée (ADR-0008)
+# Lecture prouvée
 # --------------------------------------------------------------------------
 #
 # Une entrée a une empreinte : les huit premiers caractères du SHA-256 de son

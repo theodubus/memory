@@ -21,6 +21,7 @@ code = []
 "memory/journal/*.md" = { max_bytes = 80000 }
 "memory/decisions/*.md" = { max_bytes = 10000 }
 "memory/requests/*.md" = { max_bytes = 12000 }
+".claude/skills/*/SKILL.md" = { max_bytes = 8000 }
 
 [staleness]
 # Un chantier actif inchangé depuis plus longtemps est signalé (avertissement).
@@ -86,12 +87,13 @@ code = [
   "engine/socle/installer.py", "engine/socle/fingerprint.py", "engine/socle/selftest.py",
   "engine/socle/tests_reader.py", "engine/socle/adapters/*.toml",
 ]
-docs = ["docs/architecture.md"]
+docs = ["docs/fabrication/architecture.md"]
 
 [[docmap]]
 # Les gabarits posés dans les projets : la section du socle d'AGENTS.md les décrit.
-code = ["engine/socle/templates/*.toml", "engine/socle/templates/*.yml", "engine/socle/templates/*.json", "engine/socle/templates/git-hooks/*"]
-docs = ["engine/socle/templates/AGENTS.md", "docs/architecture.md"]
+code = ["engine/socle/templates/*.toml", "engine/socle/templates/*.yml", "engine/socle/templates/*.json", "engine/socle/templates/git-hooks/*",
+        "engine/socle/templates/skills/**"]
+docs = ["engine/socle/templates/AGENTS.md", "docs/fabrication/architecture.md"]
 
 [[values]]
 name = "version"

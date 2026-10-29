@@ -45,7 +45,7 @@ def git(racine: Path, *args: str, check: bool = True, entree: str | None = None)
 # Ce par quoi git désigne un dépôt à ses commandes. Git le passe à ses hooks,
 # en chemin absolu depuis un worktree secondaire : hérité par les tests du
 # projet ou par git dans un autre dépôt (un dépôt jetable, le clone de la
-# mémoire privée), il les faisait viser le dépôt du projet (B-0057).
+# mémoire privée), il les faisait viser le dépôt du projet.
 VARIABLES_DE_DEPOT = ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY",
                       "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_COMMON_DIR", "GIT_NAMESPACE", "GIT_PREFIX",
                       "GIT_QUARANTINE_PATH")
@@ -165,6 +165,27 @@ def empreinte_arbre(racine: Path) -> str:
     contenus = subprocess.run(["git", "hash-object", "--stdin-paths"], cwd=racine, input=autres,
                               capture_output=True, text=True).stdout if autres.strip() else ""
     return sha256(tete + diff + autres + contenus)
+
+
+def empreinte_contenu(racine: Path, hors: tuple[str, ...] = ()) -> str:
+    """Le contenu de l'arbre de travail, fichiers non suivis compris, tel que
+    git l'écrirait en arbre : un commit qui n'y change rien le garde, à la
+    différence d'`empreinte_arbre`. Les chemins qui commencent par l'un de
+    `hors` n'y entrent pas (B-0086)."""
+    import shutil
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as dossier:
+        index = Path(dossier) / "index"
+        reel = git(racine, "rev-parse", "--git-path", "index", check=False).strip()
+        if reel and (racine / reel).is_file():
+            shutil.copyfile(racine / reel, index)  # ses dates évitent de tout relire
+        env = {**os.environ, "GIT_INDEX_FILE": str(index)}
+        subprocess.run(["git", "add", "-A"], cwd=racine, env=env, capture_output=True)
+        arbre = subprocess.run(["git", "write-tree"], cwd=racine, env=env, capture_output=True,
+                               text=True).stdout.strip()
+    lignes = git(racine, "ls-tree", "-r", "--full-tree", arbre, check=False).splitlines() if arbre else []
+    return sha256("".join(l + "\n" for l in lignes if not l.split("\t", 1)[-1].startswith(hors)))
 
 
 def lire_plusieurs(racine: Path, rev: str, chemins: list[str]) -> dict[str, str | None]:
@@ -293,15 +314,27 @@ def lignes_changees(racine: Path, base: str | None, tete: str | None, chemin: st
 
 def branche_par_defaut(racine: Path) -> str | None:
     """`origin/main`, `origin/master`, ou ce que pointe `origin/HEAD`."""
+    return _branche_par_defaut(racine)[0]
+
+
+def branche_par_defaut_devinee(racine: Path) -> bool:
+    """La branche par défaut n'est que devinée : ce clone n'a ni `origin/HEAD`
+    ni `main` ni `master`, et la branche suivie de la branche courante en
+    tient lieu. Un clone qui n'a récupéré que sa branche de travail prend
+    ainsi celle-ci pour la branche par défaut."""
+    return _branche_par_defaut(racine)[1]
+
+
+def _branche_par_defaut(racine: Path) -> tuple[str | None, bool]:
     r = subprocess.run(
         ["git", "symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"],
         cwd=racine, capture_output=True, text=True,
     )
     if r.returncode == 0 and r.stdout.strip():
-        return r.stdout.strip().removeprefix("refs/remotes/")
+        return r.stdout.strip().removeprefix("refs/remotes/"), False
     for nom in ("origin/main", "origin/master", "main", "master"):
         if rev_existe(racine, nom):
-            return nom
+            return nom, False
     # Un dépôt neuf n'a parfois encore que sa branche de travail : ce qui est
     # déjà poussé sert alors de base, plutôt que pas de base du tout.
     r = subprocess.run(
@@ -309,8 +342,8 @@ def branche_par_defaut(racine: Path) -> str | None:
         cwd=racine, capture_output=True, text=True,
     )
     if r.returncode == 0 and r.stdout.strip():
-        return r.stdout.strip()
-    return None
+        return r.stdout.strip(), True
+    return None, False
 
 
 def base_de_travail(racine: Path) -> str | None:
@@ -395,6 +428,13 @@ def correspond(chemin: str, motifs) -> bool:
 
 def filtrer(chemins, motifs, exclus=()) -> list[str]:
     return [c for c in chemins if correspond(c, motifs) and not correspond(c, exclus)]
+
+
+def nom_du_travail(workflow: str) -> str | None:
+    """Le nom du premier travail d'un workflow GitHub, celui qu'une
+    protection de branche exige."""
+    m = re.search(r"(?m)^ {4}name:\s*(.+?)\s*$", workflow)
+    return m.group(1).strip("'\"") if m else None
 
 
 def sans_accents(texte: str) -> str:

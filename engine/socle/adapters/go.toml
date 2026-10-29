@@ -11,7 +11,7 @@ sources = ["**/*.go"]
 
 # Étapes ajoutées au workflow de CI avant le socle (indentation YAML de six).
 ci_setup = """
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: stable
 """

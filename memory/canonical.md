@@ -170,3 +170,94 @@ jetable avec ses vrais outils : 60 étapes sur 60. Chaque faute de test est
 refusée par le contrôle attendu, la régression se rejoue sur le parent, et
 le verdict de mutation casse sous le plafond mesuré. Mesuré dans ce
 conteneur, pas sur GitHub (B-0039).
+
+## F-0019 — La CI que pose le socle passe sur GitHub dans un projet de chacun des cinq adaptateurs récents
+
+> statut : mesuré · preuve : J-2026-10-15-C
+
+Le workflow « Socle » que pose l'installeur, avec les étapes d'installation
+de chaque adaptateur (Node et `npm ci`, Go, Java et Maven, Ruby et Bundler,
+PHP avec pcov et Composer), passe sur GitHub dans le projet jetable du banc
+de chacun des cinq langages : 5 sur 5, en une minute à une minute et demie,
+auto-test compris. Mesuré le 15 oct. dans le dépôt d'essai public de Théo.
+Le workflow du balayage de mutation, lui, n'a pas encore tourné sur GitHub
+(B-0039).
+
+## F-0020 — Le balayage de mutation que pose le socle passe sur GitHub dans un projet de chacun des cinq adaptateurs récents
+
+> statut : mesuré · preuve : J-2026-10-15-K
+
+Le workflow « Socle — mutation » que pose l'installeur, lancé à la main dans
+le projet jetable du banc de chacun des cinq langages, passe sur GitHub :
+5 sur 5, avec l'outil de mutation de chaque adaptateur (Stryker, gremlins,
+PIT, mutant, Infection avec pcov) et les comptes de survivants du banc
+local. Mesuré le 15 oct. dans le dépôt d'essai de Théo.
+
+## F-0021 — GitHub n'enregistre un workflow sans déclencheur push qu'au push qui modifie son fichier
+
+> statut : mesuré · preuve : J-2026-10-15-K, J-2026-10-15-I
+
+Dans le dépôt d'essai, le workflow du balayage (planifié et lançable à la
+main, sans déclencheur `push`) n'a été enregistré par GitHub ni au premier
+push d'un dépôt vide qui le contenait, ni au push suivant sur la branche
+par défaut, qui ne le touchait pas, mais une seconde après un commit qui
+le modifiait. Mesuré une fois, sur un dépôt neuf ; non mesuré sur un dépôt
+existant où l'installeur pose le fichier.
+
+## La cohabitation avec BMAD Method
+
+## F-0022 — L'ajout de BMAD Method 6.12.4 à un projet Python équipé du socle est refusé par quatre contrôles, sur les fichiers de BMAD
+
+> statut : mesuré · preuve : J-2026-10-19-G · date : 2026-10-19
+
+Au commit, `docs.copie`, `memoire.references` et `tests.creux` ; en CI,
+`tests.code-teste` en plus, sur les 47 fonctions de ses scripts Python. Le
+socle n'a pas de notion de fichiers tiers (B-0068). Installé en adoption
+après BMAD, le socle passe, mais en mettant trois contrôles en
+avertissement pour tout le projet.
+
+## F-0023 — La personnalisation de BMAD Method fait porter à ses workflows la mémoire et la fin de tour du socle, sans toucher à ses fichiers
+
+> statut : mesuré · preuve : J-2026-10-19-G · date : 2026-10-19
+
+Un fichier de personnalisation du workflow de construction de BMAD 6.12.4,
+que son installeur ne touche jamais, ajoute au workflow rendu des faits
+persistants (la mémoire du socle), une étape d'activation (`socle state`)
+et une étape de fin (consigner, vérifier, les deux lignes). Ce qu'un agent
+réel en fait n'est pas mesuré (B-0069).
+
+## F-0024 — Sous le mariage avec BMAD, un agent réel fait approuver sa spec, consigne l'approbation en séance mot pour mot avant de coder, et ne touche pas à l'intention figée
+
+> statut : mesuré · preuve : J-2026-10-20-B · date : 2026-10-20
+
+Une session, dans un projet jetable installé avec le mariage entier
+(ADR-0032) : le workflow de construction de BMAD mené au bout, aucun refus
+de hook, tous les contrôles verts, 4,57 dollars. Mesuré une fois ; l'entrée
+des reports au backlog n'y a pas tourné.
+
+## F-0025 — L'adaptateur C# passe les douze étapes de son banc
+
+> statut : mesuré · preuve : J-2026-10-20-N, cmd:`python3 bench/adapters.py --langages csharp`
+
+Une solution xUnit jetable, avec le SDK .NET 8 et Stryker.NET 4.16.0 :
+12 étapes sur 12, au premier passage. Mesuré dans ce conteneur, pas sur
+GitHub : les étapes de CI que l'adaptateur ajoute n'y ont pas tourné.
+
+## F-0026 — La CI et le balayage que pose le socle passent sur GitHub dans un projet C#
+
+> statut : mesuré · preuve : J-2026-10-20-P
+
+Le projet C# jetable du banc, sur la branche `csharp` du dépôt d'essai : le
+workflow « Socle » passe, avec `actions/setup-dotnet@v5` et les SDK 8 et 10,
+et le balayage lancé à la main lit 2 survivants de Stryker.NET, comme le
+banc local. Mesuré le 20 oct.
+
+## F-0027 — Claude Code liste les skills de .claude/skills avec leur description au démarrage d'une session
+
+> statut : mesuré · preuve : J-2026-10-22-H · date : 2026-10-22
+
+Au redémarrage de la session, après la pose de `socle-request` et de
+`socle-private-memory` dans ce dépôt, Claude Code les a listés parmi ses
+skills disponibles, chacun avec la description de son en-tête. La
+supposition de D-0042 (qu'il charge un skill de ce dossier sur sa
+description) est vérifiée pour Claude Code ; pour un autre agent, non.

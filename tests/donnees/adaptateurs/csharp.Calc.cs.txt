@@ -1,0 +1,33 @@
+namespace Calc;
+
+public static class Calcul
+{
+    public static int Doubler(int x)
+    {
+        if (x > 100)
+        {
+            return x;
+        }
+        return 2 * x;
+    }
+
+    public static int Tripler(int x) => 3 * x;
+
+    private static int Aide(int x)
+    {
+        return x + 1;
+    }
+
+    internal static int Interne(int x)
+    {
+        return x;
+    }
+
+    static int SansModificateur(int x) => x;
+
+    [Obsolete("remplacée par Doubler")]
+    public static int Ancienne(int x)
+    {
+        return Aide(x);
+    }
+}

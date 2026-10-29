@@ -1,6 +1,10 @@
-# Les adaptateurs
+# Spécification des adaptateurs
 
-## En une phrase
+Ce document spécifie les adaptateurs : ce qu'ils sont, les champs qu'ils
+déclarent, et ce que chaque adaptateur maintenu emploie. Il s'adresse à qui
+choisit un adaptateur ou en écrit un pour un autre langage.
+
+## Définition
 
 Un adaptateur est un petit fichier de réglages, en TOML, qui apprend au socle
 à faire **dans un langage donné** les quelques gestes qu'il ne peut pas
@@ -14,7 +18,7 @@ La mémoire et la documentation sont du markdown, que le moteur lit de la même
 façon dans n'importe quel projet. Les tests, non : chaque langage les écrit
 et les lance à sa manière.
 
-Prenons une règle du socle : **un correctif livre un test qui échoue sur le
+Soit une règle du socle : **un correctif livre un test qui échoue sur le
 commit d'avant**, preuve qu'il attrape le bogue corrigé. Pour l'appliquer, le
 moteur doit :
 
@@ -34,17 +38,19 @@ mais il ne verrait rien des tests.
 
 ## Ce qu'il contient
 
-Huit adaptateurs sont maintenus. Le tableau ci-dessous compare les trois
-premiers ; celui de la section « Cinq langages de plus » compare les autres.
+Neuf adaptateurs sont maintenus. Le tableau ci-dessous compare les trois
+premiers ; celui de la section « Cinq langages de plus » compare les cinq
+suivants, et la section « C# » le dernier.
 Ce sont des extraits : les fichiers font foi, [rust.toml](rust.toml),
 [python.toml](python.toml), [python-pytest.toml](python-pytest.toml),
 [javascript.toml](javascript.toml), [go.toml](go.toml),
-[java.toml](java.toml), [ruby.toml](ruby.toml) et [php.toml](php.toml). Les
+[java.toml](java.toml), [ruby.toml](ruby.toml), [php.toml](php.toml) et
+[csharp.toml](csharp.toml). Les
 deux adaptateurs Python ne diffèrent que par le lanceur de tests et la
 mutation : `python` s'en tient à la bibliothèque standard (`unittest`), sans
 mutation ; `python-pytest` prend pytest et mutmut, qui exige pytest.
 
-| Ce que le moteur demande | Rust (repris de chess) | Python (`unittest`) | Python (`pytest`) | Qui s'en sert |
+| Ce que le moteur demande | Rust | Python (`unittest`) | Python (`pytest`) | Qui s'en sert |
 | --- | --- | --- | --- | --- |
 | Lancer les tests | `cargo test` | `unittest` | `pytest` | `socle verify`, hook de fin de tour, CI |
 | Vérifier le code | `clippy` | compilation de chaque fichier | idem | idem |
@@ -60,15 +66,14 @@ La mutation consiste à modifier le code exprès (changer un `+` en `-`, un
 `<` en `<=`) et à vérifier qu'un test au moins échoue. Un « mutant » qui
 survit montre du code qu'aucun test ne vérifie vraiment.
 
-Un projet installé avant qu'une section existe hérite de celle de
-l'adaptateur maintenu du même langage, venue avec le moteur : c'est le cas de
-la section `[code]`.
+Sans section `[code]`, le code à tester est celui des sources, hors
+fichiers de test, et toute fonction compte comme publique.
 
 Une étape marquée `fast = true` tourne à la fin de chaque tour, avant
 chaque push et quand l'agent lance `verify --fast` ; la CI les lance
 toutes. Pendant les étapes rapides, le moteur pose la variable
 `SOCLE_RAPIDE` : un test trop long pour une fin de tour s'y met de côté,
-avec sa raison écrite, et la CI le joue toujours (D-0019). Sous `unittest` :
+avec sa raison écrite, et la CI le joue toujours. Sous `unittest` :
 `@unittest.skipIf(os.environ.get("SOCLE_RAPIDE"), "…")`.
 
 Un projet qui commence n'a pas encore de test, et plusieurs outils le
@@ -108,9 +113,9 @@ On écrit un nouveau fichier, avec les mêmes clés ; le moteur ne change pas.
 Une seule exception : si l'outil de mutation du langage est nouveau, le
 moteur doit apprendre à lire ses résultats (`engine/socle/mutation.py`, une
 fonction par outil ; il en connaît sept : `cargo-mutants`, `mutmut`,
-`stryker`, `gremlins`, `pit`, `mutant` et `infection`). Puis on l'éprouve
-sur un projet jetable, comme le fait `bench/adapters.py` pour les cinq
-derniers.
+`stryker` (Stryker pour JavaScript, Stryker.NET pour C#), `gremlins`, `pit`,
+`mutant` et `infection`). Puis on l'éprouve sur un projet jetable, comme le
+fait `bench/adapters.py` pour les six derniers.
 
 Les clés qui décrivent un langage, toutes facultatives sauf `function` :
 
@@ -129,31 +134,15 @@ Les clés qui décrivent un langage, toutes facultatives sauf `function` :
 | `command` (mutation) | le balayage ; avec `{module}`, il se lance une fois par module du plafond, et `{output}` lui donne son propre dossier de résultats, sans quoi chaque module écraserait le précédent | `cargo mutants --file {module} --output {output}` |
 | `install` (mutation) | ce qui pose l'outil sur le runner du balayage hebdomadaire, quand rien d'autre ne le fait | `cargo install cargo-mutants --locked` |
 | `test_arg` (régression) | un argument par test rejoué ; `{file}`, `{stem}`, `{module}` ou `{dir}` | `./{dir}` en Go |
+| `test_arg_separator` (régression) | ce qui joint les arguments de plusieurs tests rejoués ; une espace sinon | `,` pour `-Dtest=` de Maven, `\|` pour le filtre de `dotnet test` |
 | `load_error` (régression) | ce qui, dans la sortie, dit que le test ne s'est pas chargé sur le parent : il y échoue pour une autre raison que le défaut | `\[build failed\]` en Go |
 | `module_command` (régression) | la commande qui lance, par leurs noms (`{names}`), des tests écrits dans le module qu'ils testent ; sur le parent, seules leurs lignes de test s'appliquent | `cargo test --workspace -- {names}` |
 | `test_module` | ce qui ouvre un module de tests dans un fichier de code : ses aides suivent le test sur le parent | `#[cfg(test)]` |
 
-## Le jalon 6 : un second langage, éprouvé
+## JavaScript, Go, Java, Ruby et PHP
 
-Le jalon 6 a installé le socle, avec l'adaptateur `python-pytest`, sur un
-petit projet Python jetable (un convertisseur de chiffres romains testé sous
-pytest), et fait tourner toute la chaîne : vérification, contrôles, CI,
-balayage `mutmut` et verdict contre le plafond. Un test sans assertion, un
-test supprimé, une fonction publique sans test, un correctif sans test de
-régression et des tests affaiblis jusqu'à laisser survivre des mutants y ont
-chacun été attrapés.
-
-La porte demandait que le moteur ne change pas. Les contrôles, la mémoire et
-les hooks n'ont pas changé ; deux corrections ont été nécessaires : le
-lecteur des résultats de `mutmut`, propre à cet outil, qui n'avait jamais
-tourné, et `tests.code-teste`, qui prenait le moteur installé dans `.socle/`
-pour du code du projet, ce que seul un projet Python pouvait montrer. Le
-journal (J-2026-10-10-W) en garde le détail.
-
-## Cinq langages de plus (B-0030)
-
-À la demande de Théo, cinq adaptateurs de plus, chacun avec l'outil de tests
-et l'outil de mutation les plus courants de son langage :
+Chaque adaptateur emploie l'outil de tests et l'outil de mutation les plus
+courants de son langage :
 
 | Ce que le moteur demande | JavaScript, TypeScript | Go | Java | Ruby | PHP |
 | --- | --- | --- | --- | --- | --- |
@@ -170,15 +159,26 @@ Chaque outil de mutation lit la configuration du projet : `stryker.config.json`,
 la section PIT du `pom.xml`, `mutant.yml`, `infection.json5` ; gremlins n'en
 demande pas. Infection exige un pilote de couverture (pcov ou xdebug).
 
-Le banc `bench/adapters.py` éprouve les cinq sur un projet jetable de leur
-langage, avec leurs vrais outils : le projet sain passe `socle verify` ; un
-test sans assertion, un test désactivé sans raison, une valeur attendue
-changée et une fonction publique sans test sont refusés par le contrôle
-attendu ; un correctif passe avec son test de régression, rejoué sur le
-parent, et il est refusé sans ; le balayage de mutation se lit, et son
-verdict passe au plafond mesuré et casse en dessous. Le premier passage a
-montré deux défauts, corrigés : en PHP, le lien vers `vendor` faisait
-charger à Composer le code de l'arbre de travail dans le worktree de la
-régression (d'où `copied`), et la commande de mutant devinait mal ses
-sujets (d'où `mutant.yml`). Les étapes de CI que chaque adaptateur ajoute
-au workflow n'ont tourné qu'ici, pas encore sur GitHub.
+## C#
+
+| Ce que le moteur demande | C# |
+| --- | --- |
+| Lancer les tests | `dotnet test` (xUnit, NUnit ou MSTest) |
+| Vérifier le code | `dotnet build`, le compilateur et ses analyseurs par défaut |
+| Vérifier le formatage | `dotnet format whitespace`, en mode dossier : deux secondes, sans construire |
+| Reconnaître un test | `[Fact]`, `[Theory]`, `[Test]`, `[TestCase]`, `[TestMethod]` |
+| Reconnaître un test désactivé | `Skip = "…"`, `[Ignore]`, `[Explicit]`, `Assert.Inconclusive` ; la raison, en trois caractères au moins |
+| Rejouer un test sur le commit d'avant | `dotnet test --filter` de sa classe, du nom de son fichier ; plusieurs, jointes par `\|` |
+| Mesurer la mutation | Stryker.NET, épinglé dans le manifeste d'outils du projet |
+| Dire quelles fonctions sont privées | sans `public` |
+
+Le dépôt porte une solution, ou un projet, à sa racine : l'installeur le
+reconnaît à son `*.sln`, `*.slnx` ou `*.csproj`, avant un `package.json`
+qu'un projet web porte souvent pour ses ressources, et les commandes de .NET
+l'y trouvent seules. Stryker.NET écrit le rapport du même schéma que
+Stryker, sous un autre nom (`mutation-report.json`) et avec des chemins
+absolus : le lecteur de Stryker lit les deux. Un fichier qui ne déclare que
+des types (un `record` sans corps, une interface) n'a rien à muter ; il
+n'entre pas au plafond. La version 5 de Stryker.NET exige un SDK plus récent
+que .NET 8 : le manifeste d'outils épingle la 4.16.0, et la CI pose les
+deux SDK de support long.

@@ -22,7 +22,7 @@ from socle.report import Rapport
 
 P = "P"  # un identifiant privé en clair dans ce fichier public serait une fuite
 ENTETE = "<!-- socle: couche=canonique zone=privee -->\n# Mémoire canonique privée\n"
-FAIT_PRIVE = ENTETE + f"\n## {P}F-0001 — Le nom de code est Mistral\n\n> statut : supposé · source : fichier:memory/actif.md\n"
+FAIT_PRIVE = ENTETE + f"\n## {P}F-0001 — Le nom de code est Mistral\n\n> statut : supposé · source : fichier:memory/active.md\n"
 CANONIQUE = "<!-- socle: couche=canonique zone=publique -->\n# Mémoire canonique\n"
 ACTIF = "<!-- socle: couche=actif zone=publique -->\n# Chantier actif\n"
 
@@ -86,9 +86,15 @@ class TestSansMode(Base):
         r = verifier(self.racine, prive.controle_acces)
         self.assertIn("sans mode de mémoire privée : ils sont publics", r.erreurs()[0].message)
 
+    def test_les_fichiers_de_la_zone_privee(self):
+        racine = Path(".")
+        self.assertEqual(prive.dossier(racine), "memory/private")
+        self.assertEqual(prive.fichier_verrou(racine), ".socle/private.lock")
+        self.assertEqual(prive.fichier_termes(racine), "memory/private/terms.txt")
+
     def test_zone_et_lisibilite(self):
-        self.assertTrue(memoire.est_prive("memoire/prive/canonique.md"))
-        self.assertFalse(memoire.est_prive("memoire/canonique.md"))
+        self.assertTrue(memoire.est_prive("memory/private/canonical.md"))
+        self.assertFalse(memoire.est_prive("memory/canonical.md"))
         self.assertTrue(memoire.lisible(FAIT_PRIVE))
         self.assertFalse(memoire.lisible("ESSAI:PCEtLSBzb2NsZQ=="))
         self.assertFalse(memoire.lisible(None))
@@ -646,9 +652,9 @@ class TestInstallerCompagnon(unittest.TestCase):
         self.assertEqual(prive.adresse_ssh("git@github.com:o/prive.git"), "git@github.com:o/prive.git")
 
     def test_le_hook_la_refuse_a_l_agent(self):
-        commande = " ".join(("python3", ".socle/socle", "prive", "installer", "--depot", "x"))
+        commande = " ".join(("python3", ".socle/socle", "private", "install", "--repo", "x"))
         self.assertTrue(hooks.INSTALLER_PRIVE.search(commande))
-        self.assertFalse(hooks.INSTALLER_PRIVE.search(commande.replace("installer --depot x", "verrouiller")))
+        self.assertFalse(hooks.INSTALLER_PRIVE.search(commande.replace("install --repo x", "lock")))
 
 
 if __name__ == "__main__":

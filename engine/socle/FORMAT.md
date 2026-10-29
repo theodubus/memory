@@ -3,7 +3,7 @@
 La mémoire est un ensemble de fichiers markdown en cinq couches, plus la file
 des demandes humaines. Un script sait la lire : sans cela, aucun contrôle
 automatique ne serait possible. Ce document fait foi pour le format ; le code
-qui le lit est `socle/memoire.py`, les contrôles sont listés par
+qui le lit est `socle/memory.py`, les contrôles sont listés par
 `python3 .socle/socle checks`.
 
 ## Emplacements
@@ -12,7 +12,7 @@ qui le lit est `socle/memoire.py`, les contrôles sont listés par
 memory/
   canonical.md            faits vérifiés, avec statut et preuve
   active.md               chantier en cours, prochaines étapes
-  backlog/B-0001-*.md     un sujet à traiter par fichier, avec statut et origine (format 3)
+  backlog/B-0001-*.md     un sujet à traiter par fichier, avec statut et origine
   decisions/ADR-0001-*.md une décision par fichier
   journal/2026-10.md      un fichier par mois, une entrée par événement
   requests/D-0001-*.md    une demande de décision humaine par fichier
@@ -21,27 +21,11 @@ memory/
   private/                zone privée, même arborescence (voir « La zone privée »)
 ```
 
-Ce sont les emplacements du **format 3** (ADR-0025) : ceux du format 2, sauf
-le backlog, qui y était un seul fichier, `backlog.md`. Le moteur lit les
-deux ; la forme du backlog, fichier ou dossier, dit lequel. La mise à jour
-découpe le fichier unique, un fichier par sujet (voir « Backlog »).
-
-Les noms du **format 2** sont en anglais pour tous les projets quelle que
-soit la langue de la mémoire (B-0032) ; la configuration du socle suit
-(`.socle/policy.toml`, `.socle/guardrails.toml`, `.socle/adapter.toml`,
-`.socle/engine.lock`, `.socle/private.lock`, le moteur sous `.socle/engine/`).
-
-**Le format 1** avait des noms français : `memoire/`, `canonique.md`,
-`actif.md`, `demandes/`, `prive/`, `termes.txt`, `*.reponse.toml`,
-`.socle/politique.toml`, `.socle/garde-fous.toml`, `.socle/adaptateur.toml`,
-`.socle/moteur.lock`, `.socle/prive.lock`, `.socle/engine/`. Le moteur lit
-les deux : le nom du verrou (à défaut, de la politique, puis du dossier de
-mémoire) dit le format d'un projet. La mise à jour par l'installeur migre un
-projet au format 1 : elle renomme ses fichiers (`git mv`) et traduit les
-chemins de sa configuration et de sa documentation, mais ne réécrit pas la
-mémoire — le journal est en ajout seul, une demande répondue est gelée. Les
-anciens chemins, et les ancres de titres qui en citent, y restent valides
-par alias. La CI d'une plage qui migre lit la base sous les noms de la tête.
+Les noms sont en anglais pour tous les projets, quelle que soit la langue de
+la mémoire ; la configuration du socle suit (`.socle/policy.toml`,
+`.socle/guardrails.toml`, `.socle/adapter.toml`, `.socle/engine.lock`,
+`.socle/private.lock`, le moteur sous `.socle/engine/`). Le verrou note le
+format de la mémoire (`format = 3`).
 Les couches gardent leurs noms internes (`canonique`, `actif`, `demandes`…)
 dans l'en-tête des fichiers : c'est le vocabulaire du format, pas un chemin.
 
@@ -62,11 +46,11 @@ de métadonnées (une ou plusieurs lignes `>` consécutives), puis d'un corps
 libre qui court jusqu'au titre suivant de même niveau ou de niveau supérieur.
 
 ```markdown
-## F-0007 — Le bench à profondeur 7 explore 70 452 nœuds
+## F-0007 — La suite de tests complète tourne en moins de 40 secondes
 
-> statut : mesuré · preuve : cmd:`cargo run --release -- bench 7` · date : 2026-10-10
+> statut : mesuré · preuve : cmd:`cargo test --release` · date : 2026-10-10
 
-Mesuré sur le binaire de base ; le chiffre change avec l'arbre de recherche.
+Mesuré sur la machine de CI ; le chiffre change avec le nombre de tests.
 ```
 
 Les métadonnées sont des paires `clé : valeur` séparées par un point médian
@@ -97,7 +81,7 @@ Une valeur de métadonnée, ou le texte, peut citer :
 | --- | --- |
 | `commit:3f2a9c1` | l'objet existe dans le dépôt (historique complet) |
 | `fichier:src/x.rs`, `fichier:src/x.rs:12`, `fichier:doc.md#ancre` | le chemin existe |
-| ``cmd:`cargo test, puis bench` `` ou `cmd:tools/verify.sh` | le script existe s'il est un chemin du dépôt |
+| ``cmd:`cargo test, puis cargo bench` `` ou `cmd:scripts/verify.sh` | le script existe s'il est un chemin du dépôt |
 | `url:https://…` | jamais suivie : aucun service externe |
 | `F-0007`, `J-2026-10-10-A`… | l'entrée existe |
 
@@ -106,7 +90,13 @@ final, la parenthèse qui la referme. Les liens markdown relatifs et leurs
 ancres, décodés (`%20`), et les chemins du dépôt cités entre accents graves,
 sont vérifiés aussi ; un chemin d'un autre dépôt s'écrit `depot:chemin`, le
 dépôt lié quelque part dans le projet par son adresse, ou, à défaut, déclaré
-dans `[references] repos` des garde-fous. Un bloc de code
+dans `[references] repos` des garde-fous. Un texte barré (`~~…~~`,
+`<s>…</s>`, `<del>…</del>`) dit ce qui n'est plus : ses chemins et ses liens
+ne se vérifient pas. Dans une couche qui ne se
+réécrit pas (canonique, décisions, journal, demandes), un chemin qui a
+existé dans l'historique du dépôt vaut, un lien relatif se lit aussi depuis
+les anciens emplacements de son fichier, et l'ancre d'un lien n'est pas
+vérifiée : le titre qu'elle visait a pu changer depuis. Un bloc de code
 clôturé porte des exemples : rien n'y est vérifié.
 
 ## Couches
@@ -144,7 +134,7 @@ identifiant. Un titre qui commence comme une entrée sans en être une
 lisible (`## J-2026-10-10 sans sa lettre`) est refusé : l'entrée ne serait lue
 nulle part. Ajout seul : une entrée publiée ne change plus, sauf pour
 recevoir à sa suite, sur une ligne nouvelle, une archive. Un mois dont le fichier atteindrait son
-budget continue dans `AAAA-MM-2.md`, puis `AAAA-MM-3.md` (ADR-0022).
+budget continue dans `AAAA-MM-2.md`, puis `AAAA-MM-3.md`.
 
 ### Backlog — `B-`
 
@@ -156,7 +146,7 @@ l'humain peut faire porte `pour : humain` : elle figure dans « ce qui revient
 lien de son sujet, où vit son mode d'emploi (commandes, résultats attendus),
 jusqu'à ce qu'elle soit close.
 
-Au format 3 (ADR-0025), un sujet par fichier, nommé comme une décision
+Un sujet par fichier, nommé comme une décision
 (`B-0001-<titre court>.md`), sous un titre de niveau un :
 
 ```markdown
@@ -169,27 +159,24 @@ Son corps, libre, avec ses sous-titres (`## Les commandes`…).
 ```
 
 Chaque sujet a son plafond (`"memory/backlog/*.md"` dans `[budgets]`). Un
-sujet clos reste dans son fichier : rien ne s'archive. La migration depuis
-le format 2 remonte chaque sujet d'un niveau de titre, sous-titres compris,
-et un lien écrit vers l'ancre d'un sujet dans `backlog.md` reste valide
-tant que le sujet existe. Une bascule en privé copie le fichier sous
-`private/backlog/`, et un fichier public garde l'identifiant, comme pour
-une décision.
+sujet clos garde son fichier, rangé à l'écart des ouverts dans le
+sous-dossier `closed` du backlog : `socle archive` y range
+chaque sujet clos, et remet parmi les ouverts un sujet rouvert ; le
+contrôle du backlog refuse un sujet mal rangé, et la mise à jour range un
+projet existant. Un sujet rangé garde son identifiant et le plafond d'un
+sujet. Une bascule en privé copie le fichier sous `private/backlog/` (ou son
+sous-dossier des clos), et un fichier public garde l'identifiant, comme
+pour une décision.
 
-Au format 2, le backlog est un seul fichier, `backlog.md`, et `socle archive`
-déplace les entrées closes dans une entrée de journal datée, en sous-titres :
+Avec BMAD Method, un travail que BMAD reporte (sa liste des
+travaux reportés) entre au backlog par `socle bmad-import` : un sujet par
+report, dont l'`origine` est cette liste et le champ `report` l'empreinte
+du report, qui le reconnaît ; son corps cite la spec d'où il vient sans la
+recopier. Le contrôle `bmad.reports` refuse un report resté hors du
+backlog.
 
-```markdown
-## J-2026-10-12-A — Backlog clos archivé
-
-### B-0003 — Corriger le lien mort du README
-
-> statut : fait · origine : J-2026-10-10-A · ref : commit:3f2a9c1
-```
-
-Un sujet ou un fait archivé reste défini, donc toute référence vers lui
-reste vivante. Ses propres sous-titres descendent d'un niveau avec lui, et
-un lien écrit vers son ancre dans le backlog reste valide.
+Un fait archivé dans le journal reste défini, donc toute référence vers lui
+reste vivante.
 
 ### Demandes — `D-`
 
@@ -207,7 +194,7 @@ révélée impossible à trancher pour l'humain.
 - « Où regarder » donne un lien vers chaque document ou passage à lire
   pour décider, et dit ce qu'il faut y vérifier : le permalien de
   `socle url`, ou, sans adresse de dépôt connue, un lien relatif depuis la
-  demande (B-0027).
+  demande.
 
 - « Éléments cités » décrit en clair, en au moins cinq mots, chaque
   identifiant interne de la demande (identifiants de mémoire, SHA, numéros de
@@ -217,7 +204,10 @@ révélée impossible à trancher pour l'humain.
   ce qui se passe si l'humain valide, refuse, ne répond pas ;
   « Recommandation » sépare le vérifié du supposé.
 - « Réponses possibles » est une liste `` - `valeur` — sens `` qui propose
-  `contexte-insuffisant`.
+  `contexte-insuffisant`. Une demande qui nomme un test du projet ou une clé
+  des seuils propose aussi `valider` : seule cette réponse autorise à les
+  changer, et les contrôles cherchent leur nom dans le texte de la demande
+  validée.
 
 La réponse vit dans `<demande>.answer.toml`. L'humain répond dans la
 conversation, et l'agent consigne sa réponse avec le texte exact
@@ -239,6 +229,26 @@ empreinte = "sha256:…"   # le texte exact de la demande au moment de la répon
 L'état de la demande se dérive de la réponse : en attente, répondue, renvoyée
 (`contexte-insuffisant` : l'agent la réécrit en une nouvelle demande),
 retirée (métadonnée `retirée : <raison>`). Une demande répondue est gelée.
+
+Avec BMAD Method, les décisions de son document d'architecture (`AD-n`)
+se lisent comme des décisions : l'état les liste, `socle show AD-n`
+en donne le texte et l'empreinte, et une citation `AD-n@empreinte` dans la
+mémoire désigne sa version actuelle (`bmad.lectures`) ; une citation déjà
+écrite ne se rejuge pas.
+
+Une décision prise en séance est la forme courte d'une demande :
+l'humain, présent, a lu la question dans la conversation et y a répondu
+(approuver une spec de BMAD, trancher une question ouverte). Elle s'écrit
+avec sa réponse, d'un seul geste, par `socle decision "<question>"
+<réponse> --relayed --by <nom> --quote-file <fichier>` : un titre, la
+métadonnée `forme : séance`, une section `Question posée` qui garde la
+question telle qu'il l'a lue, et sa réponse citée mot pour mot. `sujet :
+<chemin>@<empreinte>` nomme ce qu'elle approuve ; pour une spec de BMAD,
+l'empreinte est celle de son intention figée. Elle ne passe pas par le
+contrat des huit sections ; sans réponse, elle est hors contrat. Le
+contrôle `bmad.approbation` exige qu'une spec que le workflow de BMAD fait
+approuver ait la sienne, et que son intention figée n'ait pas changé
+depuis.
 
 ## La zone privée
 
@@ -303,7 +313,7 @@ les liens vers son ancien nom, et les ancres vers l'ancien titre d'une
 entrée basculée, restent valides. Une entrée basculée ne change plus ;
 une bascule sans copie privée qui reprenne son texte est un effacement, et
 l'ajout seul la refuse. Une demande ne se bascule pas : elle se retire et se
-pose à nouveau en privé ; une entrée de journal qui archive des sujets non
+pose à nouveau en privé ; une entrée de journal qui archive des faits non
 plus. L'historique public garde l'ancien texte : seule une réécriture de
 l'historique l'efface, et c'est à l'humain de la faire.
 
@@ -353,11 +363,15 @@ langue n'a rien à réécrire, et ses entrées nouvelles prennent les mots de la
 nouvelle. Les trailers de commit ont leurs deux noms (`Dispense-test` ou
 `Waive-test`, `Dispense-doc` ou `Waive-doc`, `Corrige` ou `Fixes`), comme le
 marqueur d'une tautologie voulue (`socle: voulu —` ou `socle: intended —`).
-Les messages du moteur suivent la même langue (ADR-0028), comme les
+Les messages du moteur suivent la même langue, comme les
 commentaires qu'il écrit dans les fichiers qu'il pose (le verrou du moteur,
-l'en-tête d'une réponse `.answer.toml`) ; les valeurs qu'il relit lui-même
-(le statut d'une demande, le marqueur `<!-- valeur:… -->`) restent les
-mêmes dans toutes les langues.
+l'en-tête d'une réponse `.answer.toml`, les workflows de CI), les textes des
+adaptateurs maintenus et les descriptions de l'auto-test. Ce qu'il relit
+lui-même s'écrit dans la langue du projet et se lit dans les deux : le
+marqueur d'une valeur liée (`<!-- valeur:… -->` ou `<!-- value:… -->`), la
+raison d'un plafond de mutation mesuré (`mesuré le … : N survivant(s)` ou
+`measured on …: N survivor(s)`). Le statut d'une demande reste une valeur
+interne, que `socle show` dit dans la langue du projet.
 
 | Clé interne | Français | Anglais |
 | --- | --- | --- |
@@ -378,6 +392,10 @@ mêmes dans toutes les langues.
 | champ `reformulee` | reformulée | reworded |
 | champ `basculee` | basculée | made-private |
 | champ `depuis` | depuis | from |
+| champ `report` | report | deferred |
+| champ `forme` | forme | form |
+| champ `sujet` | sujet | about |
+| valeur `seance` | séance | session |
 | statut F `mesure` | mesuré | measured |
 | statut F `suppose` | supposé | assumed |
 | statut F `refute` | réfuté | refuted |
@@ -429,7 +447,7 @@ son texte ; chaque index aussi (`decisions@…` pour toutes les décisions,
 Citer `ADR-NNNN@xxxxxxxx`, c'est montrer qu'on a lu cette version-là. Une
 citation ajoutée doit désigner la version actuelle de l'entrée, ou celle du
 commit où la citation a paru ; une citation d'index, une version de l'index
-dans la plage du travail, de sa base à l'arbre (ADR-0023). Sinon elle est
+dans la plage du travail, de sa base à l'arbre. Sinon elle est
 périmée ou inventée, et refusée ; recopiée d'une autre entrée, elle se juge
 comme une lecture neuve. Elle est obligatoire :
 

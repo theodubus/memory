@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0026-laisser-passer-au-hook-une-seule-fois-l-action-ext.md, dont l'empreinte suit.
+reponse = "rien"
+texte = ""
+par = "Théo"
+date = "2026-10-14"
+canal = "conversation"
+citation = "D0026 rien pour l'instant, on se le garde en tete et on voit si ça finit par etre bloquant"
+empreinte = "sha256:aa2dfb90fad46f3a61e39362d12e1052c35f769add893258704d553f36308038"

@@ -40,9 +40,10 @@ class TestApprobation(unittest.TestCase):
         git(self.racine, "init", "-q", "-b", "main")
         (self.racine / "calc.py").write_text("x = 1\n")
         with contextlib.redirect_stdout(io.StringIO()):
-            installeur.installer(self.racine, "python", "@essai", source=MOTEUR, format_memoire=2)
-        with open(self.racine / "memory/backlog.md", "a") as f:
-            f.write("\n## B-0001 — Accepter le workflow\n\n> statut : ouvert · origine : fichier:calc.py · pour : humain\n")
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+        (self.racine / "memory/backlog/B-0001-accepter-le-workflow.md").write_text(
+            "<!-- socle: couche=backlog zone=publique -->\n# B-0001 — Accepter le workflow\n\n"
+            "> statut : ouvert · origine : fichier:calc.py · pour : humain\n")
         git(self.racine, "add", "-A")
         git(self.racine, "commit", "-qm", "installation", "--no-verify")
         self.base = git(self.racine, "rev-parse", "HEAD").strip()
@@ -71,6 +72,21 @@ class TestApprobation(unittest.TestCase):
         self.assertEqual(cli.fichiers_a_approuver(config.Projet.charger(self.racine)), [])
         demande = next((self.racine / "memory/requests").glob("D-*-approbation-humaine.md")).read_text()
         self.assertIn("`.github/workflows/socle.yml`", demande)
+
+    def test_l_approbation_couvre_le_fichier_protege_change(self):
+        from socle import checks_ratchet as controles_cliquet, requests as demandes
+
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="agent", base=self.base)
+        r = Rapport()
+        controles_cliquet.proteges(ctx, r)
+        self.assertTrue(r.erreurs("protege.fichiers"))
+        self.assertEqual(demandes.validations_ajoutees(self.racine, self.base, None), [])
+        self.assertEqual(self.approuver(".github/workflows/socle.yml")[0], 0)
+        self.assertEqual(len(demandes.validations_ajoutees(self.racine, self.base, None)), 1)
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="agent", base=self.base)
+        r = Rapport()
+        controles_cliquet.proteges(ctx, r)
+        self.assertEqual([c.message for c in r.erreurs("protege.fichiers")], [])
 
     def test_l_etat_rappelle_l_approbation_jusqu_au_commit_suivant_de_l_agent(self):
         """B-0034, P7 : Théo a approuvé D-0012 dans son terminal, et ne

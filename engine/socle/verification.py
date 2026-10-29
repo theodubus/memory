@@ -24,13 +24,14 @@ MARQUE = ".socle/trace/derniere-verification"
 
 def etapes_rapides(projet: config.Projet, rapport: Rapport, flux=None, refaire: bool = False) -> bool:
     """Les étapes rapides de l'adaptateur, sauf si elles ont déjà toutes passé
-    sur cet arbre exact (HEAD, diff, fichiers non suivis et leur contenu) : la
-    vérification que l'agent lance, la fin de tour et le hook avant push ne
-    paient pas trois fois la même compilation (L6, mesuré sur un projet Rust
-    à la copie du projet d'échecs). La CI, elle, refait tout. Rend vrai si
-    elles ont tourné."""
+    sur ce contenu exact (fichiers non suivis compris) : la vérification que
+    l'agent lance, la fin de tour et le hook avant push ne paient pas trois
+    fois la même compilation. Un commit qui ne change pas le contenu, ou qui
+    ne change que la mémoire, que les étapes ne lisent pas, ne les relance pas
+    (B-0086). La CI, elle, refait tout. Rend vrai si elles ont tourné."""
     racine = projet.racine
-    marque = outils.empreinte_arbre(racine) if outils.a_des_commits(racine) else ""
+    hors = (projet.chemins.memoire.rstrip("/") + "/",)
+    marque = outils.empreinte_contenu(racine, hors) if outils.a_des_commits(racine) else ""
     fichier = racine / MARQUE
     if marque and not refaire and fichier.is_file() and fichier.read_text().strip() == marque:
         if flux:
@@ -60,7 +61,7 @@ def etapes(projet: config.Projet, rapide: bool) -> list[tuple[str, dict]]:
     return res
 
 
-# Posée pendant les étapes rapides (D-0019) : un test trop long pour une fin
+# Posée pendant les étapes rapides : un test trop long pour une fin
 # de tour s'y met de côté, avec sa raison écrite, et la CI, qui lance toutes
 # les étapes sans elle, le joue toujours.
 RAPIDE = "SOCLE_RAPIDE"
@@ -78,7 +79,8 @@ def executer_etapes(projet: config.Projet, rapide: bool, rapport: Rapport, flux=
         rapport.execute(ident)
         if "command" not in c:
             rapport.indisponible(ident, trad("capacité absente : {absent} — remplacement : {remplacement}",
-                                             absent=c.get('absent', '?'), remplacement=c.get('replacement', '?')))
+                                             absent=trad(c['absent']) if 'absent' in c else '?',
+                                             remplacement=trad(c['replacement']) if 'replacement' in c else '?'))
             continue
         if flux:
             print(f"  … {ident} : {c['command']}", file=flux, flush=True)
@@ -94,7 +96,7 @@ def executer_etapes(projet: config.Projet, rapide: bool, rapport: Rapport, flux=
             queue = "\n        ".join(sortie.splitlines()[-LIGNES_SORTIE:])
             if c.get("no_tests") and re.search(c["no_tests"], sortie):
                 # Un projet qui commence n'a pas encore de test : l'outil le
-                # dit par un échec, que l'adaptateur reconnaît (B-0026).
+                # dit par un échec, que l'adaptateur reconnaît.
                 rapport.avertir(ident, trad("aucun test trouvé (`{commande}`) : un projet qui commence n'en a "
                                             "pas encore ; le premier code s'écrit avec son test",
                                             commande=c['command']))

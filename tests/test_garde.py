@@ -46,7 +46,7 @@ REFUS = [
     ("answer après cd .socle", B("cd .socle && python3 socle answer D-0001 valider")),
     ("answer, drapeaux du relais dans une autre commande",
      B(f"python3 {L} answer D-0001 valider; echo --relayed --quote-file x")),
-    ("approve, lanceur entre guillemets", B(f'python3 "{L}" approve --text x --oui')),
+    ("approve, lanceur entre guillemets", B(f'python3 "{L}" approve --text x --yes')),
     ("approve par python -m socle", B("PYTHONPATH=moteur python3 -m socle approve --text x")),
     ("écriture >", B("echo x > .socle/policy.toml")),
     ("écriture 1>", B("echo x 1> .socle/policy.toml")),
@@ -86,7 +86,7 @@ PASSE = [
     ("push vers une branche de maintenance", B(f"{G} {P} origin maintenance-x")),
     ("push d'une branche nommée main-fix", B(f"{G} {P} origin main-fix")),
     ("relais avec sa citation", B(f"python3 {L} answer D-0001 valider --relayed --by Théo --quote-file /tmp/c.txt")),
-    ("verrouiller la mémoire privée", B(f"python3 {L} prive verrouiller")),
+    ("verrouiller la mémoire privée", B(f"python3 {L} private lock")),
     ("rm d'un fichier ordinaire", B("rm -f /tmp/x.txt && touch calc.py")),
     ("lire un réglage", B("cat .claude/settings.json")),
 ]
@@ -152,6 +152,21 @@ class TestGarde(unittest.TestCase):
         finally:
             subprocess.run(["git", "checkout", "-q", "travail"], cwd=self.racine, check=True)
         self.assertEqual(self.decide(*B(f"{G} {P}")), "passe")
+
+    def test_le_refus_d_une_action_externe_la_rend_a_l_humain(self):
+        # D-0026 : une demande validée ne débloque pas l'action ; le refus le
+        # dit, et demande la commande exacte pour l'humain.
+        for outil, args in (B(f"{G} {P} origin main"), ("mcp__github__merge_pull_request", {})):
+            with self.subTest(outil):
+                flux = io.StringIO()
+                with contextlib.redirect_stdout(flux):
+                    hooks.pre_tool_use(self.projet, {"session_id": "garde", "tool_name": outil, "tool_input": args})
+                self.assertIn("une demande validée ne la débloque pas", flux.getvalue())
+        flux = io.StringIO()
+        with contextlib.redirect_stdout(flux):
+            hooks.pre_tool_use(self.projet, {"session_id": "garde", "tool_name": "Bash",
+                                             "tool_input": {"command": f"{G} {P} origin main"}})
+        self.assertIn("sa commande exacte", flux.getvalue())
 
 
 class TestDecoupage(unittest.TestCase):

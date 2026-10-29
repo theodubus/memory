@@ -3,8 +3,8 @@ fn verifie(n: u64) {
 }
 
 #[test]
-fn perft_un() {
-    verifie(perft(1));
+fn produit_un() {
+    verifie(produit(1));
 }
 
 #[test]

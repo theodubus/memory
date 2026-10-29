@@ -17,7 +17,7 @@ import json
 import re
 
 from socle import config, fingerprint as empreinte, memory as memoire, utils as outils
-from socle.messages import trad
+from socle.messages import a_traduire, trad
 from socle.context import controle
 
 ABSENT = object()
@@ -44,6 +44,7 @@ REGLES = [
     (("requests", "internal_id_patterns"), "couvre"),
     (("tests", "spec_paths"), "inclus"),
     (("adoption", "warn_only"), "inclus"),
+    (("thirdparty", "paths"), "inclus"),
 ]
 
 
@@ -77,7 +78,9 @@ def _regle(chemin: tuple[str, ...]) -> str | None:
     return None
 
 
-MESURE = re.compile(r"mesuré le \d{4}-\d{2}-\d{2} : (\d+) survivant")
+# La raison d'un plafond mesuré, écrite dans la langue du projet et lue
+# dans les deux.
+MESURE = re.compile(r"(?:mesuré le \d{4}-\d{2}-\d{2} : |measured on \d{4}-\d{2}-\d{2}: )(\d+) surviv")
 
 
 def _mesure(apres: dict, chemin: tuple[str, ...], plafond) -> bool:
@@ -96,8 +99,7 @@ def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | Non
     `modules_existants` : les fichiers de l'arbre jugé ; le seuil d'un fichier
     disparu se retire avec lui. `renommes` et `fichiers_avant` : les fichiers
     que la plage renomme, et ceux de la base ; une correspondance ou une
-    valeur liée qui suit ses fichiers sous leur nouveau nom n'assouplit rien
-    (ADR-0027)."""
+    valeur liée qui suit ses fichiers sous leur nouveau nom n'assouplit rien."""
     renommes = renommes or {}
     res = []
     a, b = aplatir(avant), aplatir(apres)
@@ -123,7 +125,7 @@ def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | Non
                 continue  # le module a disparu : son plafond avec lui
             if chemin[0] == "budgets" and modules_existants is not None \
                     and not outils.filtrer(modules_existants, [chemin[1]]):
-                continue  # plus aucun fichier sous ce motif : son budget ne couvrait plus rien (ADR-0025)
+                continue  # plus aucun fichier sous ce motif : son budget ne couvrait plus rien
             if sens == "faux":
                 continue  # « à mesurer » qui disparaît : le plafond mesuré le remplace
             res.append((cle, trad("seuil retiré (valait {va})", va=repr(va))))
@@ -178,15 +180,16 @@ def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | Non
 
 def _suivie(motif: str, docs: set[str], apres_docmap: list[tuple[set[str], set[str]]], renommes: dict[str, str],
             fichiers_avant: list[str] | None) -> bool:
-    """Le motif d'une correspondance dont les fichiers ont été renommés :
-    chacun, sous son nouveau nom, reste couvert par une correspondance qui
-    n'exige pas d'autre doc que les siennes, renommées elles aussi. Un motif
-    qui ne couvrait rien, ou dont aucun fichier n'a changé de nom, ne se
-    suit pas : le retirer reste un assouplissement."""
+    """Le motif d'une correspondance dont les fichiers, ou les docs, ont été
+    renommés : chacun, sous son nouveau nom, reste couvert par une
+    correspondance qui n'exige pas d'autre doc que les siennes, renommées
+    elles aussi. Un motif qui ne couvrait rien, ou dont ni les fichiers ni
+    les docs n'ont changé de nom, ne se suit pas : le retirer reste un
+    assouplissement."""
     if not renommes or not fichiers_avant:
         return False
     couverts = [f for f in fichiers_avant if outils.correspond(f, [motif])]
-    if not any(f in renommes for f in couverts):
+    if not couverts or not any(f in renommes for f in couverts) and not any(d in renommes for d in docs):
         return False
     docs_suivies = {renommes.get(d, d) for d in docs}
     return all(any(outils.correspond(renommes.get(f, f), sorted(c)) and d <= docs_suivies for c, d in apres_docmap)
@@ -207,8 +210,6 @@ def cliquet(ctx, r):
     avant = ctx.projet_base.garde_fous if ctx.projet_base else {}
     if not avant:
         return  # installation : rien à comparer
-    if ctx.migre:  # une migration de format renomme les chemins, elle n'assouplit rien
-        avant = traduire_profond(avant, ctx.projet.chemins.format)
     for cle, pourquoi in assouplissements(avant, ctx.projet.garde_fous, set(ctx.fichiers), ctx.renommes,
                                           ctx.fichiers_base):
         d = _valide_par(ctx, cle)
@@ -222,18 +223,6 @@ def cliquet(ctx, r):
                                                 "changement une fois validée", cle=cle, pourquoi=pourquoi),
                      ctx.projet.chemins.garde_fous)
 
-
-
-def traduire_profond(valeur, vers: int):
-    """Les garde-fous d'un format dans l'autre : chaque chemin, clé ou
-    valeur, sous son nom du format `vers`."""
-    if isinstance(valeur, dict):
-        return {traduire_profond(k, vers): traduire_profond(v, vers) for k, v in valeur.items()}
-    if isinstance(valeur, list):
-        return [traduire_profond(v, vers) for v in valeur]
-    if isinstance(valeur, str):
-        return config.traduire(valeur, vers=vers)
-    return valeur
 
 @controle("protege.fichiers", base=True)
 def proteges(ctx, r):
@@ -256,13 +245,6 @@ def proteges(ctx, r):
         if ctx.projet.mode == config.MODE_AMONT and c.startswith(ctx.projet.dossier_moteur + "/socle/"):
             continue
         present = existe(c)
-        nouveau = config.traduire(c, vers=ctx.projet.chemins.format) if ctx.migre and not present else c
-        if nouveau != c and outils.correspond(nouveau, motifs) and existe(nouveau):
-            # Déplacé par la migration du format : le fichier est jugé sous
-            # son nom nouveau, protégé lui aussi, et non comme une suppression.
-            r.avertir("protege.fichiers", trad("déplacé vers `{nouveau}` par la migration du format",
-                                               nouveau=nouveau), c)
-            continue
         if present and ctx.tete is None:
             cite = empreinte.courte(empreinte.fichier(ctx.racine / c))
         elif present:
@@ -333,6 +315,16 @@ def lire_trailer_hooks(valeur: str) -> dict[str, str]:
     return res
 
 
+# Le remède quand les hooks de l'agent ne sont pas chargés : Claude Code ne
+# les lit que dans le dossier où la session démarre. L'agent ne
+# pose jamais lui-même un réglage pour les rétablir.
+REMEDE_HOOKS = a_traduire(
+    "Claude Code ne lit ses hooks que dans le dossier où la session démarre : relancer la session depuis la "
+    "racine du projet ; dans une session à plusieurs dépôts, ouvrir une session sur ce dépôt seul. L'agent "
+    "n'écrit jamais lui-même un réglage de Claude Code pour les rétablir : il le dit à l'humain, et ne pousse "
+    "rien.")
+
+
 def est_agent(projet, message: str) -> bool:
     marqueurs = projet.pol("agents", "markers", defaut=[r"(?im)^co-authored-by:.*\bclaude\b", r"(?im)^socle-agent:"])
     return any(re.search(m, message) for m in marqueurs)
@@ -344,11 +336,11 @@ def trace(ctx, r):
     session (`Socle-Hooks:`, ajouté par le hook git). Absente, ou sans
     PreToolUse : les hooks n'ont jamais été chargés. Et depuis le commit
     précédent (`Socle-Hooks-Since-Commit:`) : sans PreToolUse, ils ont cessé
-    de tirer en cours de session (B-0058)."""
+    de tirer en cours de session."""
     for c in ctx.commits:
         if len(c["parents"]) != 1 or not est_agent(ctx.projet, c["message"]):
             continue
-        if all(outils.lire_a(ctx.racine, c["parents"][0], f.lock) is None for f in config.FORMATS.values()):
+        if outils.lire_a(ctx.racine, c["parents"][0], ctx.projet.chemins.lock) is None:
             continue  # le socle n'était pas encore installé
         sujet = c["message"].strip().splitlines()[0]
         valeurs = outils.trailers(c["message"]).get("socle-hooks")
@@ -362,13 +354,14 @@ def trace(ctx, r):
         n = lire_trailer_hooks(depuis[-1]).get("PreToolUse", "0") if depuis else "1"
         if not t.get("PreToolUse", "0").isdigit() or int(t.get("PreToolUse", "0")) < 1:
             r.erreur("hooks.trace", trad("{sha} « {sujet} » : aucun PreToolUse n'a tiré pendant la session — "
-                                         "les hooks de l'agent n'étaient pas chargés",
-                                         sha=c['sha'][:10], sujet=sujet))
+                                         "les hooks de l'agent n'étaient pas chargés. {remede}",
+                                         sha=c['sha'][:10], sujet=sujet, remede=trad(REMEDE_HOOKS)))
         elif not n.isdigit() or int(n) < 1:
-            # B-0058 : le compte de la session garde les tirs d'avant l'arrêt.
+            # Le compte de la session garde les tirs d'avant l'arrêt.
             r.erreur("hooks.trace", trad("{sha} « {sujet} » : aucun PreToolUse n'a tiré depuis le commit "
                                          "précédent — les hooks de l'agent ont cessé d'être chargés en cours "
-                                         "de session", sha=c['sha'][:10], sujet=sujet))
+                                         "de session. {remede}", sha=c['sha'][:10], sujet=sujet,
+                                         remede=trad(REMEDE_HOOKS)))
         if t.get("SessionStart") == "0":
             r.erreur("hooks.trace", trad("{sha} « {sujet} » : le hook SessionStart n'a jamais tiré pendant la "
                                          "session", sha=c['sha'][:10], sujet=sujet))

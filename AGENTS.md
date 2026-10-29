@@ -6,8 +6,9 @@ de code entretenu par un agent. L'agent écrit, des contrôles automatiques
 attrapent les erreurs, et l'humain n'arbitre que ce qu'aucun contrôle ne peut
 trancher. Le cadrage fondateur est archivé tel quel dans
 `memory/archives/cadrage-2026-10-10.md` ; ce qui vient du dépôt `chess` est
-inventorié dans `docs/inventaire-chess.md`, et `docs/architecture.md` dit où
-chaque exigence du cadrage est appliquée.
+inventorié dans `docs/fabrication/inventaire-chess.md`, et
+`docs/fabrication/architecture.md` dit où chaque exigence du cadrage est
+appliquée.
 
 Ce dépôt est en **mode amont** : il est le premier utilisateur du socle qu'il
 fabrique. Le moteur vit dans `engine/socle/` ; il est la source, donc son
@@ -16,17 +17,26 @@ comme dans n'importe quel projet.
 
 ## Structure
 
+Le dépôt a deux parts (ADR-0033). **Le produit**, `engine/socle/`, est la
+seule chose qu'un projet reçoit : rien n'y renvoie à l'atelier. **L'atelier**
+est tout le reste : les tests, les bancs, la documentation de fabrication et
+la mémoire de ce dépôt, qui est l'historique de fabrication de l'outil.
+
 - `engine/socle/` — le moteur : lecture de la mémoire, contrôles, hooks,
   installeur, auto-test. `engine/socle/FORMAT.md` fait foi pour le format de
   la mémoire.
 - `engine/socle/adapters/` — les adaptateurs maintenus : Rust, Python sous
-  `unittest` et sous `pytest`, JavaScript et TypeScript, Go, Java, Ruby, PHP.
+  `unittest` et sous `pytest`, JavaScript et TypeScript, Go, Java, Ruby, PHP,
+  C#.
 - `engine/socle/templates/` — les gabarits que l'installeur pose dans un projet.
 - `tests/` — les tests du moteur (`unittest`), dont l'auto-test complet par
   injection de défauts.
-- `docs/` — l'architecture et l'inventaire de `chess`.
+- `README.md` — ce qu'est le socle, son principe, sa structure, son
+  installation ; `engine/socle/HELP.md` — le guide d'utilisation d'un projet
+  équipé ; `docs/fabrication/` — la documentation de l'atelier :
+  architecture, bancs, relevés, l'histoire de `chess`.
 - `bench/` — le banc d'évaluation sur un agent réel, ses scénarios et leurs
-  juges (`docs/banc.md`), et le banc des adaptateurs, chacun éprouvé sur un
+  juges (`docs/fabrication/banc.md`), et le banc des adaptateurs, chacun éprouvé sur un
   projet jetable de son langage (`bench/adapters.py`).
 - `memory/` — la mémoire de ce projet, au format du socle.
 
@@ -38,7 +48,7 @@ python3 .socle/socle ci                  # tout, dont l'auto-test
 python3 .socle/socle selftest --verbose  # les défauts injectés, un par un
 python3 bench/bench.py --agent simule    # le banc, sur un agent simulé
 python3 bench/adapters.py                # les adaptateurs, sur leurs vrais outils
-python3 .socle/socle install --target ../projet --adapter auto --owner @moi
+python3 .socle/socle install --target ../projet --adapter auto --owner @moi [--with-bmad]
 python3 .socle/socle init --brief cadrage.md --repo   # dans le projet installé
 ```
 
@@ -77,6 +87,13 @@ approbation, une réponse dans son terminal), l'état le liste : le lui citer
 dans la réponse suivante, par son identifiant et son lien, puisque la
 commande lui a donné un numéro qu'il ne retrouve pas dans la conversation.
 
+Si l'état n'a pas été injecté au démarrage d'une session de Claude Code, les
+hooks de l'agent ne sont pas chargés : la session a démarré hors de la racine
+du projet. Le dire à l'humain avant tout travail, et ne rien pousser ;
+`socle state` l'affiche aussi en tête, et le hook avant commit refuse alors
+le commit. Ne jamais écrire soi-même un réglage de Claude Code pour rétablir
+les hooks.
+
 Une consigne de l'humain donnée dans la conversation, qui vaut au-delà du tour
 (une règle, une préférence, une interdiction), s'écrit dans la mémoire avant de
 continuer : au chantier actif si elle touche le travail en cours, sinon au
@@ -91,8 +108,8 @@ toujours, et une session neuve n'a que la mémoire.
 | Actif | `memory/active.md` | chantier en cours, prochaines étapes ; réécrit, borné |
 | Décisions | `memory/decisions/` | une ADR par fichier ; seul son statut change ensuite |
 | Journal | `memory/journal/` | une entrée datée par événement ; ajout seul |
-| Backlog | `memory/backlog/` | sujets avec statut et origine ; clos avec une référence |
-| Demandes | `memory/requests/` | décisions humaines en file, au contrat ci-dessous |
+| Backlog | `memory/backlog/` | sujets avec statut et origine ; clos avec une référence, puis rangés par `socle archive` |
+| Demandes | `memory/requests/` | décisions humaines en file, au contrat du skill `socle-request` |
 
 Une entrée : `## F-NNNN — titre`, puis une ligne `> statut : mesuré · preuve : commit:<sha>`.
 Statuts d'un fait : `mesuré` (avec `preuve`), `supposé`, `réfuté` (titre barré,
@@ -102,11 +119,11 @@ Un identifiant se calcule (`python3 .socle/socle new <type> "titre"`), il ne
 se devine pas. En cas de conflit, l'ordre d'autorité est : le code et les
 tests, puis la mémoire canonique, puis le journal.
 
-**Mémoire privée**, si la politique en choisit une (`[private] mode`) : le contenu nouveau va dans la zone privée, memory/private/, pour les couches que la politique rend privées (`socle new` le fait par défaut) ; une consigne de l'humain sur une entrée précise se suit par `socle new … --private` ou `--public`, et une entrée publique existante se bascule par `socle private move <ID>`, dont l'historique public garde l'ancien texte : le dire à l'humain. Rien de privé ne se recopie en public, ni un identifiant `P…`, ni son contenu, ni dans un message de commit, une pull request ou un commentaire. En mode compagnon, un changement privé se commite dans le dépôt privé, puis `socle private lock`. Un nom privé nouveau (une idée, un client) s'ajoute à la liste des termes privés (`socle private term <terme>`) ; seul l'humain en retire. Si la politique exige une relecture avant publication (`[private] review`), montrer à l'humain ce qui part, puis consigner son accord avec son texte exact (`socle reviewed --relayed --by <nom> --quote-file <fichier>`) : à chaque push, ou par lots. Une demande privée chiffrée ne se lit pas sur GitHub : la donner en entier dans la conversation. Indisponible (l'état le dit), on ne conclut pas sur ce qui en dépend.
+**Mémoire privée**, si la politique en choisit une (`[private] mode`) : rien de privé ne se recopie en public, ni un identifiant `P…`, ni son contenu, ni dans un message de commit, une pull request ou un commentaire ; indisponible (l'état le dit), on ne conclut pas sur ce qui en dépend. Où écrire, basculer une entrée, commiter en mode compagnon, faire relire avant publication : le skill `socle-private-memory`.
 
 ### Politique d'autonomie (`.socle/policy.toml`, modifiée par l'humain seul)
 
-1. **Assouplir un garde-fou** (`.socle/guardrails.toml`) exige une demande validée ; durcir est libre.
+1. **Assouplir un garde-fou** (`.socle/guardrails.toml`) exige une demande validée ; durcir est libre. Déclarer des fichiers tiers, qu'aucun contrôle ne juge (`[thirdparty] paths`), assouplit.
 2. **Supprimer un test ou changer une valeur attendue** exige une demande validée, ou une spécification que l'humain a lui-même changée et qui nomme le test ; une ADR écrite par l'agent ne suffit pas.
 3. **Décision de conception** : réversible et mesurable, l'agent décide et écrit une ADR ; coûteuse à défaire, demande.
 4. **Action irréversible ou externe** (force-push, push sur la branche par défaut, publication, suppression distante, dépense) : toujours une demande. Le hook la refuse.
@@ -117,22 +134,12 @@ tests, puis la mémoire canonique, puis le journal.
 
 ### Demandes de décision humaine
 
-Une demande est lue quand le contexte est perdu : elle se suffit à elle-même.
-`python3 .socle/socle new request "<décision>"` pose le squelette des huit
-champs : décision demandée, contexte (le problème lui-même, résumé sur place,
-pas un renvoi), éléments cités (chacun décrit en clair, jamais un identifiant
-seul), où regarder (un lien vers chaque document à lire, et quoi y vérifier),
-options (effort, risque, réversibilité),
-conséquences (si l'humain valide, refuse, ne répond pas), recommandation
-(vérifié séparé du supposé), réponses possibles dont `contexte-insuffisant`.
-Le lint refuse une demande incomplète. L'humain répond dans la conversation ;
-l'agent consigne sa réponse, sans jamais la choisir, avec le texte exact :
-`python3 .socle/socle answer D-NNNN <réponse> --relayed --by <nom> --quote-file <fichier>`,
-et la recopie au journal. Une demande répondue est gelée. Une réponse ne se
-relaie qu'à une demande poussée telle quelle : l'humain doit avoir pu la lire.
-Un test dont la valeur attendue change en attendant une telle demande, qui le
-nomme, peut rester changé dans l'arbre à la fin du tour ; il ne se commite
-qu'après la réponse.
+Une décision qui revient à l'humain se pose en demande, qui se lit seule
+quand le contexte est perdu, et dont le lien se donne dans la conversation.
+L'humain répond dans la conversation ; l'agent consigne sa réponse mot pour
+mot, sans jamais la choisir, et la recopie au journal. Une décision prise en
+séance, l'humain présent (approuver une spec de BMAD, trancher une question
+ouverte), se consigne aussitôt de même. Comment : le skill `socle-request`.
 
 ### Lire la mémoire à la demande
 
@@ -153,6 +160,23 @@ La lecture se prouve : une décision, une demande ou un sujet de backlog
 nouveaux citent ce qu'ils ont lu avec son empreinte (`ADR-NNNN@xxxxxxxx`,
 `lu : decisions@…`, `lu : backlog@…`). Une empreinte périmée ou inventée est
 refusée ; il faut relire l'entrée. `socle new` pose l'empreinte de l'index.
+
+### Les skills
+
+Une procédure rare se lit dans son skill, que l'agent charge sur sa
+description : `socle-request` (poser une demande, relayer une réponse,
+consigner une décision en séance) et `socle-private-memory` (la mémoire
+privée), dans `.claude/skills/`, posés par l'installeur et protégés ; un
+autre agent lit leur `SKILL.md` à ce chemin.
+
+Une procédure du projet qui se refait (le journal montre la première fois)
+s'écrit en skill à la deuxième, dans `.claude/skills/<nom>/SKILL.md` : un
+nom sans les préfixes `socle-` ni `bmad-`, un en-tête `name` (le nom du
+dossier) et `description` (ce qu'il fait, et quand s'en servir), et une
+entrée au journal qui le dit. Un skill dit comment faire, la mémoire ce qui
+est et pourquoi : il n'en recopie rien. Ses commandes, dans des blocs de
+code, sont jugées comme le hook les jugerait ; une commande à ne pas lancer
+se cite dans le texte.
 
 ### Avant de conclure
 

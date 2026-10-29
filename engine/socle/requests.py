@@ -6,9 +6,8 @@ et qu'aucun identifiant interne n'y paraisse sans description. La qualité de
 l'explication, elle, ne se contrôle pas : la réponse `contexte-insuffisant`
 renvoie la demande à l'agent, et ce renvoi reste consigné dans la réponse.
 
-Une réponse vit à côté de la demande, dans `<demande>.answer.toml`
-(`<demande>.reponse.toml` au format 1 de la mémoire), et
-seul l'humain l'écrit (`socle repondre`). Elle porte l'empreinte du texte
+Une réponse vit à côté de la demande, dans `<demande>.answer.toml`, et
+seul l'humain l'écrit (`socle answer`). Elle porte l'empreinte du texte
 exact auquel l'humain a répondu : la demande est gelée dès qu'elle a une
 réponse.
 """
@@ -24,7 +23,7 @@ from socle import config, language as langue, memory as memoire, utils as outils
 from socle.messages import a_traduire, trad
 
 # Les sections et les réponses, sous leurs clés internes ; elles s'écrivent
-# dans la langue de la mémoire du projet (B-0031).
+# dans la langue de la mémoire du projet.
 SECTIONS = {k: v["fr"] for k, v in langue.SECTIONS.items()}
 REPONSE_POSITIVE = "valider"
 RENVOI = "contexte-insuffisant"
@@ -40,7 +39,7 @@ MOTIFS_INTERNES = [
 MOTS_DESCRIPTION_MIN = 5
 SECTION_MIN = 15
 # Une demande lue une semaine plus tard, sans le projet en tête : le contexte
-# raconte, il ne résume pas en une ligne (retour de Théo, J-2026-10-10-I).
+# raconte, il ne résume pas en une ligne.
 MOTS_CONTEXTE_MIN = 60
 LIEN = re.compile(r"\]\([^)\s]+\)|https?://\S+")
 # Un trou du gabarit : `<texte avec des espaces>`, hors commentaire HTML ;
@@ -74,6 +73,31 @@ class Demande:
         return "renvoyée" if langue.reponse(r) == RENVOI else f"répondue : {r}"
 
     @property
+    def statut_affiche(self) -> str:
+        """Le statut dit dans la langue des messages ; `statut` reste la valeur
+        que le moteur compare."""
+        if self.reponse is None:
+            return trad("retirée") if self.entree and "retiree" in self.entree.meta else trad("en attente")
+        r = str(self.reponse.get("reponse", ""))
+        return trad("renvoyée") if langue.reponse(r) == RENVOI else trad("répondue : {reponse}", reponse=r)
+
+    @property
+    def seance(self) -> bool:
+        """Une décision prise en séance : l'humain a lu la question
+        dans la conversation et y a répondu ; elle s'écrit avec sa réponse."""
+        return bool(self.entree) and langue.valeur(self.entree.meta.get("forme", "")) == "seance"
+
+    @property
+    def sujet(self) -> tuple[str, str] | None:
+        """Ce que la décision approuve : un chemin, et l'empreinte de la
+        version approuvée (`chemin@empreinte`) quand il y en a une."""
+        brut = (self.entree.meta.get("sujet", "") if self.entree else "").strip()
+        if not brut:
+            return None
+        chemin, _, empreinte = brut.partition("@")
+        return chemin.strip(), empreinte.strip()
+
+    @property
     def validee(self) -> bool:
         return self.reponse is not None and langue.reponse(str(self.reponse.get("reponse", ""))) == REPONSE_POSITIVE
 
@@ -83,12 +107,15 @@ class Demande:
 
     def accepte(self, reponse: str) -> bool:
         """Une réponse possible, telle qu'écrite ou dans une autre langue
-        (`approve` pour `valider`)."""
+        (`approve` pour `valider`). En séance, la question n'a pas de liste
+        écrite : toute réponse se consigne."""
+        if self.seance:
+            return bool(reponse.strip())
         return langue.reponse(reponse) in {langue.reponse(p) for p in self.reponses_possibles()}
 
 
 def chemin_reponse(chemin_demande: str) -> str:
-    return chemin_demande[: -len(".md")] + memoire.chemins_de(chemin_demande).reponse
+    return chemin_demande[: -len(".md")] + memoire.SUFFIXE_REPONSE
 
 
 def decouper_sections(texte: str) -> dict[str, str]:
@@ -166,6 +193,12 @@ def linter(d: Demande, projet: config.Projet) -> list[str]:
         return fautes
     if len(d.entree.titre) < 10:
         fautes.append(trad("le titre doit énoncer la décision demandée en une phrase"))
+    if d.seance:
+        # Une décision en séance n'attend rien : elle s'écrit avec la réponse
+        # que l'humain vient de donner.
+        fautes.append(trad("décision en séance sans la réponse de l'humain : la consigner avec elle, mot pour mot "
+                           "(`socle decision`)"))
+        return fautes
     nom = Path(d.chemin).name
     if not nom.startswith(d.entree.id):
         fautes.append(trad("le nom du fichier doit commencer par {id}", id=d.entree.id))
@@ -222,6 +255,15 @@ def linter(d: Demande, projet: config.Projet) -> list[str]:
                                "sens`"))
         if RENVOI not in {langue.reponse(x) for x in possibles}:
             fautes.append(trad("« Réponses possibles » doit proposer `{renvoi}`", renvoi=RENVOI))
+        if REPONSE_POSITIVE not in {langue.reponse(x) for x in possibles}:
+            nommes = gestes_nommes(d, projet)
+            if nommes:
+                fautes.append(trad("« Réponses possibles » : la demande nomme {noms}, que seule une réponse "
+                                   "`{positive}` autorise à changer, mais ne propose pas `{positive}` ; la "
+                                   "proposer pour l'option qui y touche (une autre option mène à une demande "
+                                   "nouvelle)", noms=", ".join(f"`{n}`" for n in nommes[:5]),
+                                   positive=langue.mot(langue.REPONSES, REPONSE_POSITIVE,
+                                                       langue.du_projet(projet))))
 
     # Aucun identifiant interne sans description, dans la même demande.
     decrits = descriptions(d.sections.get("elements-cites", ""), motifs_internes(projet))
@@ -233,6 +275,29 @@ def linter(d: Demande, projet: config.Projet) -> list[str]:
                      "» (`- <identifiant> — ce que c'est, en une phrase`)", ident=ident)
             )
     return fautes
+
+
+def gestes_nommes(d: Demande, projet: config.Projet) -> list[str]:
+    """Les tests du projet et les clés des seuils que la demande nomme : ce
+    que lisent, dans une demande validée, les deux contrôles qui acceptent une
+    validation (`tests.attendus`, `cliquet.garde-fous`). Une demande qui en
+    nomme sans proposer `valider` ne peut rien autoriser, quoi que l'humain
+    réponde (D-0040)."""
+    from socle import checks_ratchet as cliquet, checks_tests, tests_reader as tests_lecture
+
+    nommes = []
+    cfg = checks_tests.cfg_tests(projet)
+    if cfg is not None:
+        for chemin in outils.filtrer(outils.fichiers_courants(projet.racine), cfg.get("paths", []),
+                                     cfg.get("exclude", [])):
+            try:
+                texte = (projet.racine / chemin).read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                continue
+            nommes += [f.nom for f in tests_lecture.extraire(texte, chemin, cfg)
+                       if f.est_test and f.nom not in nommes and checks_tests._nomme(d.texte, f.nom)]
+    nommes += [c for c in map(cliquet._cle, cliquet.aplatir(projet.garde_fous)) if c in d.texte]
+    return nommes
 
 
 def descriptions(bloc: str, motifs: list[re.Pattern]) -> set[str]:
@@ -281,7 +346,7 @@ def ecrire_reponse(racine: Path, d: Demande, reponse: str, texte: str, par: str,
                    canal: str = "terminal", citation: str = "") -> str:
     """Écrit la réponse humaine. Refuse une réponse hors des réponses possibles.
 
-    Deux canaux (ADR-0006). `terminal` : l'humain lance lui-même
+    Deux canaux. `terminal` : l'humain lance lui-même
     `socle answer`. `conversation` : l'humain a répondu dans le chat, et
     l'agent consigne sa réponse ; il doit alors en citer le texte exact, qui
     reste dans le fichier, visible à la relecture du diff."""
@@ -319,6 +384,37 @@ def ecrire_reponse(racine: Path, d: Demande, reponse: str, texte: str, par: str,
     return cr
 
 
+def ecrire_seance(projet: config.Projet, question: str, texte: str, reponse: str, par: str, jour: str,
+                  canal: str, citation: str = "", sujet: str = "") -> tuple[str, str]:
+    """Une décision prise en séance : la question que l'humain a
+    lue dans la conversation, avec sa réponse, d'un seul geste, dans le
+    registre des demandes. Rend les chemins de la demande et de sa
+    réponse."""
+    from socle import identifiers as identifiants
+
+    racine = projet.racine
+    if len(question.strip()) < 10:
+        raise ValueError(trad("la question doit énoncer la décision en une phrase"))
+    mem = memoire.Memoire.charger(racine)
+    ident = mem.prochain_id("D", date=jour, pris_ailleurs=identifiants.pris_ailleurs(racine, "D"))
+    lg = langue.du_projet(projet)
+    champs = {"date": jour, "forme": langue.mot(langue.VALEURS, "seance", lg)}
+    if sujet:
+        champs["sujet"] = sujet
+    chemin = f"{projet.chemins.demandes}/{ident}-{memoire.nom_de_fichier(question)}.md"
+    contenu = (f"{langue.entete_fichier('demandes', 'publique', lg)}\n# {ident} — {question.strip()}\n\n"
+               f"{langue.meta(lg, **champs)}\n\n"
+               f"## {langue.mot(langue.SECTIONS_SEANCE, 'question-posee', lg)}\n\n{(texte or question).strip()}\n")
+    outils.ecrire(racine / chemin, contenu)
+    d = charger(racine, None, chemin, contenu)
+    try:
+        cr = ecrire_reponse(racine, d, reponse, "", par, jour, canal=canal, citation=citation)
+    except ValueError:
+        (racine / chemin).unlink()
+        raise
+    return chemin, cr
+
+
 def _toml_str(s: str) -> str:
     return '"' + s.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n") + '"'
 
@@ -326,7 +422,7 @@ def _toml_str(s: str) -> str:
 def validations_ajoutees(racine: Path, base: str | None, tete: str | None) -> list[Demande]:
     """Les demandes validées par une réponse AJOUTÉE dans la plage : une vieille
     validation ne couvre pas un assouplissement nouveau. Une demande se
-    reconnaît à son identifiant, qui ne change pas quand une migration
+    reconnaît à son identifiant, qui ne change pas quand un déplacement
     renomme son fichier et celui de sa réponse (relevé de la passe de
     recul, D)."""
     def cle(d: Demande) -> str:
@@ -340,12 +436,14 @@ def validations_ajoutees(racine: Path, base: str | None, tete: str | None) -> li
 
 
 def illisible(projet: config.Projet, d: Demande) -> str | None:
-    """Pourquoi l'humain n'a pas pu lire la demande telle qu'elle est (B-0022),
+    """Pourquoi l'humain n'a pas pu lire la demande telle qu'elle est,
     ou `None`. Au banc, un agent a écrit une demande puis y a relayé une phrase
     que l'humain avait dite avant qu'elle existe. Une demande chiffrée ne se
     lit pas sur GitHub : l'agent la donne en entier dans la conversation."""
     from socle import links as liens, private as prive
 
+    if d.seance:
+        return None  # l'humain a lu la question dans la conversation
     if memoire.est_prive(d.chemin) and prive.mode(projet) == "chiffre":
         return None
     url, avertissement = liens.lien(projet, d.chemin)

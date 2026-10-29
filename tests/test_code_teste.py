@@ -119,18 +119,16 @@ class TestCodeTeste(unittest.TestCase):
         (moteur / "outils.py").write_text("def git(*args):\n    return args\n")
         self.assertEqual(self.verifier(), [])
 
-    def test_section_code_de_l_adaptateur_maintenu_a_defaut(self):
+    def test_sans_section_code_les_sources_hors_fichiers_de_test(self):
+        """D-0044 : le repli vers la section de l'adaptateur maintenu est
+        parti ; sans section, les sources hors fichiers de test."""
         adaptateur = self.racine / ".socle/adapter.toml"
         texte = adaptateur.read_text()
         debut, fin = texte.index("[code]"), texte.index("[tests]")
         adaptateur.write_text(texte[:debut] + texte[fin:])
         chemins, exclus, prive = controles_tests.config_code(config.Projet.charger(self.racine))
         self.assertEqual(chemins, ["**/*.py"])
-        self.assertIn("tests/**", exclus)
-        self.assertTrue(prive)
-        adaptateur.write_text(adaptateur.read_text().replace('language = "python"', 'language = "inconnu"'))
-        chemins, exclus, prive = controles_tests.config_code(config.Projet.charger(self.racine))
-        self.assertEqual(chemins, ["**/*.py"])
+        self.assertIn("tests/**/test_*.py", exclus)
         self.assertIn(".socle/**", exclus)
         self.assertIsNone(prive)
 

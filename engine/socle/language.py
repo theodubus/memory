@@ -1,4 +1,4 @@
-"""La langue de la mémoire (B-0031) : les mots-clés du format (champs des
+"""La langue de la mémoire : les mots-clés du format (champs des
 entrées, statuts, couches, sections des demandes, réponses) et les gabarits
 dans la langue choisie par le projet (`[memory] language` de la politique).
 
@@ -36,6 +36,9 @@ CHAMPS = {
     "reformulee": {"fr": "reformulée", "en": "reworded"},
     "basculee": {"fr": "basculée", "en": "made-private"},
     "depuis": {"fr": "depuis", "en": "from"},
+    "report": {"fr": "report", "en": "deferred"},
+    "forme": {"fr": "forme", "en": "form"},
+    "sujet": {"fr": "sujet", "en": "about"},
 }
 
 # Statuts, par type d'entrée : « abandoned » est un sujet abandonné ou une
@@ -52,7 +55,7 @@ STATUTS = {
 }
 
 # Valeurs d'un champ qui se comparent : `pour : humain`.
-VALEURS = {"humain": {"fr": "humain", "en": "human"}}
+VALEURS = {"humain": {"fr": "humain", "en": "human"}, "seance": {"fr": "séance", "en": "session"}}
 
 # L'en-tête d'un fichier : `<!-- socle: couche=canonique zone=publique -->`.
 ENTETE = {"couche": {"fr": "couche", "en": "layer"}, "zone": {"fr": "zone", "en": "zone"}}
@@ -78,6 +81,9 @@ SECTIONS = {
     "recommandation": {"fr": "Recommandation", "en": "Recommendation"},
     "reponses-possibles": {"fr": "Réponses possibles", "en": "Possible answers"},
 }
+# La section d'une décision prise en séance : la question telle
+# que l'humain l'a lue dans la conversation.
+SECTIONS_SEANCE = {"question-posee": {"fr": "Question posée", "en": "Question asked"}}
 REPONSES = {
     "valider": {"fr": "valider", "en": "approve"},
     "refuser": {"fr": "refuser", "en": "reject"},
@@ -107,8 +113,9 @@ VOULU = ("voulu", "intended")
 TEXTES = {
     "titre-basculee": {"fr": "Entrée basculée dans la mémoire privée", "en": "Entry moved to the private memory"},
     "texte-basculee": {"fr": "Son contenu est dans la mémoire privée.", "en": "Its content is in the private memory."},
-    "archive-backlog": {"fr": "Backlog clos archivé", "en": "Closed backlog archived"},
     "titre-journal": {"fr": "Journal", "en": "Journal"},
+    "report-bmad": {"fr": "Reporté par BMAD depuis « {source} » : {resume}",
+                    "en": "Deferred by BMAD from “{source}”: {resume}"},
 }
 
 # Les entrées que `socle new` pose, par langue.
@@ -149,7 +156,7 @@ _ENTETE = _inverse(ENTETE)
 _COUCHES = _inverse(COUCHES)
 _ZONES = _inverse(ZONES)
 _REFERENCES = _inverse(REFERENCES)
-_SECTIONS = _inverse(SECTIONS)
+_SECTIONS = _inverse({**SECTIONS, **SECTIONS_SEANCE})
 _REPONSES = _inverse(REPONSES)
 _TRAILERS = {outils.cle(m): cle for cle, mots in TRAILERS.items() for m in mots}
 

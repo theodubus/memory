@@ -7,6 +7,7 @@ import io
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -15,10 +16,9 @@ from socle import cli, config, hooks, human as humain, links as liens, memory as
 
 DEPOT = "https://github.com/essai/memoire"
 
+SUJET = "memory/backlog/B-0001-ajouter-une-fonction-triple.md"
 BACKLOG = """<!-- socle: couche=backlog zone=publique -->
-# Backlog
-
-## B-0001 — Ajouter une fonction triple
+# B-0001 — Ajouter une fonction triple
 
 > statut : ouvert · origine : fichier:calc.py
 
@@ -70,7 +70,7 @@ class TestCommandes(unittest.TestCase):
         (source / ".socle").mkdir()
         (source / ".socle/policy.toml").write_text(f'[human]\nrepo_url = "{DEPOT}"\n')
         (source / "calc.py").write_text("def double(x):\n    return 2 * x\n")
-        for chemin, texte in (("memory/backlog.md", BACKLOG), ("memory/active.md", ACTIF),
+        for chemin, texte in ((SUJET, BACKLOG), ("memory/active.md", ACTIF),
                               ("memory/decisions/ADR-0001-une-seule-constante.md", ADR)):
             (source / chemin).parent.mkdir(parents=True, exist_ok=True)
             (source / chemin).write_text(texte)
@@ -89,7 +89,7 @@ class TestCommandes(unittest.TestCase):
         attendue = memoire.empreinte_entree(mem.entree("B-0001"))
         code, texte = sortie(cli.cmd_show, root=str(self.racine), ids=["B-0001"], index=None)
         self.assertEqual(code, 0)
-        self.assertIn(f"--- B-0001@{attendue} (memory/backlog.md:4) ---", texte)
+        self.assertIn(f"--- B-0001@{attendue} ({SUJET}:2) ---", texte)
         code, texte = sortie(cli.cmd_show, root=str(self.racine), ids=["B-0099"], index="backlog")
         self.assertEqual(code, 1)
         self.assertIn(f"index backlog@{memoire.empreinte_index(mem, 'backlog')}", texte)
@@ -98,7 +98,7 @@ class TestCommandes(unittest.TestCase):
         mem = memoire.Memoire.charger(self.racine)
         self.assertEqual(memoire.lignes_index(mem, "backlog"), ["B-0001 — Ajouter une fonction triple (ouvert)"])
         avant = memoire.empreinte_index(mem, "backlog")
-        p = self.racine / "memory/backlog.md"
+        p = self.racine / SUJET
         p.write_text(p.read_text().replace("statut : ouvert", "statut : fait · ref : fichier:calc.py"))
         mem = memoire.Memoire.charger(self.racine)
         self.assertEqual(memoire.lignes_index(mem, "backlog"), [])
@@ -107,7 +107,7 @@ class TestCommandes(unittest.TestCase):
     def test_url_donne_le_permalien(self):
         code, texte = sortie(cli.cmd_url, root=str(self.racine), cibles=["B-0001", "ADR-0001", "absent.md"])
         self.assertEqual(code, 1)
-        self.assertIn(f"[B-0001]({DEPOT}/blob/{self.pousse}/memory/backlog.md#b-0001--ajouter-une-fonction-triple)", texte)
+        self.assertIn(f"[B-0001]({DEPOT}/blob/{self.pousse}/{SUJET})", texte)
         self.assertIn(f"[ADR-0001]({DEPOT}/blob/{self.pousse}/memory/decisions/ADR-0001-une-seule-constante.md)", texte)
         self.assertNotIn("absent.md", texte)
 
@@ -140,12 +140,9 @@ class TestCommandes(unittest.TestCase):
         trace = config.chemin_trace(self.racine)
         self.assertEqual(trace, config.chemin_trace(autre))
         self.assertEqual(trace, (self.racine / ".git/socle/hooks.log").resolve())
-        ancienne = self.racine / config.TRACE
-        ancienne.parent.mkdir(parents=True, exist_ok=True)
-        ancienne.write_text("ancienne\n")
         trace.parent.mkdir(parents=True, exist_ok=True)
         trace.write_text("nouvelle\n")
-        self.assertEqual(config.lire_trace(self.racine), ["ancienne", "nouvelle"])
+        self.assertEqual(config.lire_trace(self.racine), ["nouvelle"])
         self.assertEqual(config.lire_trace(autre), ["nouvelle"])
         hooks.tracer(autre, "Stop", "session")
         self.assertRegex(config.lire_trace(self.racine)[-1], r"^\S+\tStop\tsession\t$")
@@ -244,3 +241,86 @@ class TestChecks(unittest.TestCase):
         listes = {l.split()[0] for l in sortie.splitlines() if l.strip()}
         self.assertIn("prive.verrou", listes)
         self.assertEqual(listes, set(contexte.charger_controles()))
+
+
+class TestTubeFerme(unittest.TestCase):
+    """B-0070 : une sortie coupée (`| head -1`) n'est pas une panne."""
+
+    def test_main_rend_la_main_sans_trace_quand_le_lecteur_ferme_le_tube(self):
+        racine = Path(__file__).resolve().parent.parent
+        p = subprocess.Popen([sys.executable, str(racine / ".socle/socle"), "checks"], cwd=racine,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        p.stdout.close()  # le lecteur s'en va avant que la commande n'écrive
+        erreurs = p.stderr.read()
+        p.wait(timeout=60)
+        self.assertNotIn("Traceback", erreurs)
+        self.assertNotIn("BrokenPipeError", erreurs)
+        self.assertEqual(p.returncode, 0)
+
+    def test_une_sortie_tamponnee_jusqu_au_bout_constate_aussi_le_tube_ferme(self):
+        """Python 3.14 tamponne 128 Kio, 8 Kio avant : la sortie de `checks`
+        ne partait plus qu'à l'arrêt de l'interpréteur, hors de `main`, qui
+        disait « Exception ignored while flushing sys.stdout » et rendait 120.
+        Le push de Théo s'y est arrêté."""
+        import contextlib
+        import io
+
+        racine = Path(__file__).resolve().parent.parent
+        lecture, ecriture = os.pipe()
+        os.close(lecture)  # le lecteur s'en va avant que la commande n'écrive
+        flux = io.TextIOWrapper(io.BufferedWriter(io.FileIO(ecriture, "w"), buffer_size=1 << 20), encoding="utf-8")
+        avant, sys.stdout = sys.stdout, flux
+        try:
+            code = cli.main(["--root", str(racine), "checks"])
+            flux.flush()  # ce que fait l'arrêt de l'interpréteur
+        finally:
+            sys.stdout = avant
+            with contextlib.suppress(BrokenPipeError):
+                flux.close()
+        self.assertEqual(code, 0)
+
+
+class TestSignataire(unittest.TestCase):
+    """B-0073 : le nom de l'humain, dans la politique, signe ses réponses
+    relayées ; l'agent ne le devine pas."""
+
+    def projet(self, nom: str = "") -> config.Projet:
+        politique = {"human": {"name": nom}} if nom else {}
+        return config.Projet(racine=Path(tempfile.mkdtemp()), politique=politique)
+
+    def args(self, by=None, relayed=True):
+        return argparse.Namespace(by=by, relayed=relayed)
+
+    def test_politique_nom_ecrit_le_nom_de_l_humain(self):
+        from socle import installer as installeur
+        from socle.templates import gabarit
+
+        texte = installeur.politique_nom(gabarit("policy.toml", "fr"), "Théo")
+        self.assertIn('\nname = "Théo"\n', texte)
+        self.assertEqual(installeur.politique_nom(gabarit("policy.toml", "fr"), ""), gabarit("policy.toml", "fr"))
+
+    def test_le_nom_de_la_politique_signe_par_defaut(self):
+        self.assertEqual(cli._signataire(self.projet("Théo"), self.args()), "Théo")
+        self.assertEqual(cli._auteur(self.projet("Théo")), "Théo")
+
+    def test_sans_nom_ni_by_une_reponse_relayee_n_est_signee_par_personne(self):
+        self.assertIsNone(cli._signataire(self.projet(), self.args()))
+
+    def test_un_by_qui_differe_de_la_politique_est_dit(self):
+        erreurs = io.StringIO()
+        with contextlib.redirect_stderr(erreurs):
+            self.assertEqual(cli._signataire(self.projet("Théo"), self.args(by="Marie")), "Marie")
+        self.assertIn("Marie", erreurs.getvalue())
+        self.assertIn("Théo", erreurs.getvalue())
+
+    def test_l_installeur_pose_le_nom_git_de_l_humain(self):
+        from socle import installer as installeur
+
+        racine = Path(tempfile.mkdtemp(prefix="socle-nom-"))
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=racine, check=True)
+        subprocess.run(["git", "config", "user.name", "Théo Essai"], cwd=racine, check=True)
+        (racine / "calc.py").write_text("X = 1\n", encoding="utf-8")
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(racine, "python", "@essai", source=Path(__file__).resolve().parent.parent / "engine")
+        self.assertEqual(config.Projet.charger(racine).pol("human", "name"), "Théo Essai")
+        self.assertEqual(installeur.diff_politique(racine), [])

@@ -1,7 +1,7 @@
 """L6 : une vérification réussie se mémorise. La vérification que l'agent
 lance, la fin de tour et le hook avant push ne refont pas les étapes
-rapides sur un arbre où elles ont déjà toutes passé ; mesuré à la copie du
-projet d'échecs, une fin de tour et un push recompilaient le même arbre."""
+rapides sur un arbre où elles ont déjà toutes passé ; mesuré sur la copie
+d'un projet réel, une fin de tour et un push recompilaient le même arbre."""
 
 import contextlib
 import io
@@ -58,6 +58,31 @@ class TestEtapesRapides(unittest.TestCase):
         (self.racine / "neuf.py").write_text("y = 1\n")
         self.assertTrue(self.lancer())
         self.assertEqual(self.fois(), 3)
+
+    def test_un_commit_ou_la_memoire_seule_ne_relancent_pas_les_etapes(self):
+        """B-0086, relevé sur chess : la fin de tour avait compilé et testé,
+        puis le push recompilait le même contenu, commité, ou dont seule la
+        mémoire avait changé."""
+        (self.racine / "calc.py").write_text("x = 2\n")
+        self.assertTrue(self.lancer())
+        subprocess.run(["git", "add", "-A"], cwd=self.racine, check=True)
+        subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "x = 2", "--no-verify"],
+                       cwd=self.racine, check=True)
+        self.assertFalse(self.lancer())
+        actif = self.racine / "memory/active.md"
+        actif.write_text(actif.read_text() + "\nUne ligne de plus.\n")
+        self.assertFalse(self.lancer())
+        (self.racine / "calc.py").write_text("x = 3\n")
+        self.assertTrue(self.lancer())
+        self.assertEqual(self.fois(), 2)
+
+    def test_l_empreinte_du_contenu(self):
+        avant = outils.empreinte_contenu(self.racine, ("memory/",))
+        (self.racine / "memory/active.md").write_text("autre\n")
+        self.assertEqual(outils.empreinte_contenu(self.racine, ("memory/",)), avant)
+        self.assertNotEqual(outils.empreinte_contenu(self.racine), avant)
+        (self.racine / "neuf.py").write_text("y = 1\n")
+        self.assertNotEqual(outils.empreinte_contenu(self.racine, ("memory/",)), avant)
 
     def test_les_etapes_rapides_le_disent_a_leurs_commandes(self):
         # D-0019 : un test trop long pour une fin de tour se met de côté

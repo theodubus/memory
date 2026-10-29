@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0027-rendre-prive-le-depot-d-essai-ou-accepter-d-y-publ.md, dont l'empreinte suit.
+reponse = "publier"
+texte = ""
+par = "Théo"
+date = "2026-10-14"
+canal = "conversation"
+citation = "D0027 publier \nMemory est destiné à devenir public à terme de toute façon, + je n'ai pas une grande communauté, personne n'ira voir un dépôt expérimental exitant quelques jours sur mon compte, si le public a le moindre avantage, je le prends"
+empreinte = "sha256:1854eec976fb1c969f87bac17670bcbcc836e3493aefd9c1aa10e4484625676f"

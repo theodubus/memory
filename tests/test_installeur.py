@@ -63,7 +63,7 @@ class TestAdoption(unittest.TestCase):
         self.assertIn(installeur.DEBUT_SOCLE, agents)
 
     def test_claude_md_garde_quand_le_projet_le_lit(self):
-        # Le cas de chess : un test du projet lit CLAUDE.md par son nom.
+        # Un projet dont un test lit CLAUDE.md par son nom.
         self.racine = depot({"CLAUDE.md": CLAUDE, "tests/test_doc.py": "open('CLAUDE.md').read()\n"})
         installer(self.racine)
         self.assertFalse((self.racine / "AGENTS.md").exists())
@@ -174,3 +174,79 @@ class TestRelance(unittest.TestCase):
         verrou = config.Projet.charger(self.racine).lock
         self.assertEqual(empreinte.calculer(self.racine, ".socle/engine")[0], verrou["fingerprint"])
         self.assertFalse(any(p.name == ".DS_Store" for p in empreinte.fichiers_moteur(self.racine, ".socle/engine")))
+
+
+class TestDeuxEtats(unittest.TestCase):
+    """B-0054 : un projet qui a déjà son état au démarrage le garde, et
+    l'installeur dit que chaque session en recevra deux."""
+
+    def test_l_installeur_signale_l_etat_propre_au_projet(self):
+        import contextlib
+        import io
+        import json
+        import subprocess
+        import tempfile
+
+        racine = Path(tempfile.mkdtemp(prefix="socle-etats-"))
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=racine, check=True)
+        (racine / "calc.py").write_text("X = 1\n", encoding="utf-8")
+        (racine / ".claude").mkdir()
+        (racine / ".claude/settings.json").write_text(json.dumps({"hooks": {"SessionStart": [
+            {"hooks": [{"type": "command", "command": "bash tools/etat.sh"}]}]}}), encoding="utf-8")
+        sortie = io.StringIO()
+        with contextlib.redirect_stdout(sortie):
+            installeur.installer(racine, "python", "@essai", source=MOTEUR)
+        self.assertIn("propre état au démarrage (bash tools/etat.sh)", sortie.getvalue())
+        conf = json.loads((racine / ".claude/settings.json").read_text(encoding="utf-8"))
+        self.assertEqual(installeur.etats_du_projet(conf), ["bash tools/etat.sh"])
+        self.assertTrue(any(".socle/socle hook session-start" in h["command"]
+                            for b in conf["hooks"]["SessionStart"] for h in b["hooks"]))
+
+    def test_sans_etat_propre_rien_n_est_dit(self):
+        self.assertEqual(installeur.etats_du_projet({"hooks": {"SessionStart": [
+            {"hooks": [{"type": "command", "command": "python3 .socle/socle hook session-start"}]}]}}), [])
+
+
+class TestAuditAdaptateur(unittest.TestCase):
+    """B-0011 : à chaque état, un langage que l'adaptateur ne couvre pas est
+    dit, pour que l'humain en décide."""
+
+    def projet(self, fichiers: dict[str, str]) -> Path:
+        import contextlib
+        import io
+        import tempfile
+
+        racine = Path(tempfile.mkdtemp(prefix="socle-audit-"))
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=racine, check=True)
+        (racine / "calc.py").write_text("X = 1\n", encoding="utf-8")
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(racine, "python", "@essai", source=MOTEUR)
+        for chemin, texte in fichiers.items():
+            p = racine / chemin
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text(texte, encoding="utf-8")
+        subprocess.run(["git", "add", "-A"], cwd=racine, check=True)
+        return racine
+
+    def test_langages_presents_trouve_les_marqueurs_a_toute_profondeur(self):
+        self.assertEqual(installeur.langages_presents(["pyproject.toml", "web/package.json", "a/b/go.mod", "x.py"]),
+                         {"python": ["pyproject.toml"], "javascript": ["web/package.json"], "go": ["a/b/go.mod"]})
+
+    def test_audit_adaptateur_dit_un_langage_que_l_adaptateur_ne_couvre_pas(self):
+        from socle import state as etat
+
+        racine = self.projet({"web/package.json": "{}\n"})
+        lignes = etat.audit_adaptateur(config.Projet.charger(racine))
+        self.assertEqual(len(lignes), 1)
+        self.assertIn("javascript (web/package.json)", lignes[0])
+        self.assertIn("(python)", lignes[0])
+        self.assertIn("javascript (web/package.json)", etat.calculer(config.Projet.charger(racine), contenus=False))
+
+    def test_rien_a_dire_quand_tout_est_couvert_ou_tiers(self):
+        from socle import state as etat
+
+        self.assertEqual(etat.audit_adaptateur(config.Projet.charger(self.projet({"pyproject.toml": ""}))), [])
+        racine = self.projet({"_outil/package.json": "{}\n"})
+        gf = racine / ".socle/guardrails.toml"
+        gf.write_text(installeur.declarer_tiers(gf.read_text(encoding="utf-8"), ["_outil/**"]), encoding="utf-8")
+        self.assertEqual(etat.audit_adaptateur(config.Projet.charger(racine)), [])

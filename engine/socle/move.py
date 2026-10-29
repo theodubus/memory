@@ -1,8 +1,7 @@
-"""La bascule d'une entrée publique dans la mémoire privée (B-0029) :
+"""La bascule d'une entrée publique dans la mémoire privée :
 `socle private move <ID>`. Une copie privée reprend son titre et son
 texte ; l'entrée publique garde son identifiant, pour que les renvois
-restent valides. Séparée de `prive`, qui lit et contrôle la zone privée
-(L7)."""
+restent valides. Séparée de `prive`, qui lit et contrôle la zone privée."""
 
 from __future__ import annotations
 
@@ -52,14 +51,16 @@ def basculer(projet: config.Projet, ident: str, jour: str) -> list[str]:
     lg = langue.du_projet(projet)
     copie = _copie_privee(e, nouvel, lg)
     fichier = mem.fichiers[e.fichier]
-    # Une décision, et un sujet du backlog au format 3, ont chacun leur
-    # fichier : il se copie en privé, et un fichier public garde l'identifiant.
-    propre = {"ADR": ch.decisions, "B": ch.backlog if ch.backlog_en_dossier else None}.get(e.type)
+    # Une décision et un sujet du backlog ont chacun leur fichier : il se
+    # copie en privé, et un fichier public garde l'identifiant.
+    propre = {"ADR": ch.decisions, "B": ch.backlog}.get(e.type)
     if propre and e.fichier.startswith(propre + "/"):
-        couche, nom = memoire.TYPES[e.type], e.fichier.rsplit("/", 1)[-1]
-        prive_rel = ch.dans_prive(f"{propre}/{nouvel}{nom[len(ident):]}")
+        # Le dossier du fichier, pas celui de la couche : un sujet clos garde
+        # sa place parmi les clos, en public comme en privé.
+        couche, (dossier, nom) = memoire.TYPES[e.type], e.fichier.rsplit("/", 1)
+        prive_rel = ch.dans_prive(f"{dossier}/{nouvel}{nom[len(ident):]}")
         outils.ecrire(racine / prive_rel, f"{langue.entete_fichier(couche, 'privee', lg)}\n{copie}\n")
-        public_rel = f"{propre}/{ident}-basculee.md"
+        public_rel = f"{dossier}/{ident}-basculee.md"
         outils.ecrire(racine / public_rel, f"{langue.entete_fichier(couche, 'publique', lg)}\n{_pierre(e, jour, lg)}\n")
         (racine / e.fichier).unlink()
     else:

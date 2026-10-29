@@ -1,122 +1,174 @@
-# The socle, on the human's side
+# The socle, on the human's side: user guide
 
-The socle makes reliable the memory, the documentation and the tests of a
-project that a coding agent maintains. The agent writes; automatic checks
-catch its mistakes during its work, at commit time and in CI; you only
-settle what no check can settle.
-
-Commands run at the project root:
-`python3 .socle/socle <command>`. This guide is shown by
+This guide follows the human's path in a project equipped with the socle,
+from the end of the installation to everyday use. Commands run at the
+project root: `python3 .socle/socle <command>`; this guide is shown by
 `python3 .socle/socle help`.
 
-## What you do
+The path in short:
 
-### 1. Install, update
+1. **Getting started**, once: describe the project, push, protect the
+   branch.
+2. **Working with the agent**: give it tasks, read its recaps.
+3. **Answering the agent** when a decision belongs to the human.
+4. **Occasional actions**: approve one's own changes, update, act where the
+   agent cannot.
 
-```sh
-PYTHONPATH=<clone of the socle>/engine python3 -m socle install --target . --owner @you --language en
-```
+## 1. Getting started
 
-The adapter (the project's language and its tools) is deduced from the
-repository; `--adapter <name>` forces it. Options: `--private compagnon` or
-`--private chiffre` (a private memory; companion mode is the safest,
-encrypted mode depends on a filter such as git-crypt that the socle does not
-install, and it is the least proven), `--review lots` or
-`--review chaque-push` (review what leaves before publication),
-`--language en` (a memory, templates and engine messages in English),
-`--adoption` (an existing project some checks fail on: they become
-warnings, and can only tighten).
+Right after the installation:
 
-The command ends with "What now": your next steps, in order, each with its
-command. An update runs the same command again from the up-to-date clone of
-the socle.
+1. Describe the project:
+   `python3 .socle/socle init --brief <document> --repo`. The brief is
+   archived; `--repo` surveys what the repository already holds. Without a
+   document, `--repo` alone; in an empty repository, no option.
+2. Commit and push.
+3. Protect the default branch on GitHub (repository settings, "Rules"):
+   require the CI "Socle — verify, checks, self-test" and the code owners'
+   review before any merge. Without it, a red CI does not prevent merging.
+4. Open the agent in the project. It reads the state at start-up, then asks
+   a few starting questions in the conversation.
 
-In companion mode, the private memory lives in a second, private repository.
-Create it empty on GitHub, then:
+If the project already had its own `SessionStart` hook, the installer
+points it out: remove it from `.claude/settings.json`, otherwise each
+session receives two states.
 
-```sh
-python3 .socle/socle private install --repo <address of the private repository>
-```
+## 2. Working with the agent
 
-It clones it, makes the first commit there, writes the lock and creates a
-deploy key; it ends with the two steps left on GitHub (the key as a deploy
-key of the private repository, two secrets in the public repository), with
-the link of each page.
+Tasks are given to the agent as usual. At the start of each session, it
+receives the project's state; it works, and the checks verify it at each
+step.
 
-After the first push, protect the default branch on GitHub: in the
-repository settings, "Rules", a ruleset that requires the socle's CI
-("Socle — verify, contrôles, auto-test") and the code owners' review before
-any merge. Without it, a red CI does not prevent merging. `socle state` says
-whether the CI is required, and reminds you otherwise.
+Each intervention of the agent that acted ends with two lines:
 
-### 2. Describe the project
+- **"For you:"** — what is up to the human: a request to read, an action
+  to take, or nothing;
+- **"Next:"** — what comes next, and what the agent is waiting for.
 
-```sh
-python3 .socle/socle init --brief <document> --repo
-```
+At any time, `python3 .socle/socle state` gives the project's state: the
+commit, the CI, the backlog, the pending requests, what is up to the human.
+The memory is read in `memory/`.
 
-The document is archived as is; `--repo` records what the repository already
-contains (tools, tests, CI). The agent then asks you a few starting
-questions, each with its default.
+A project procedure that comes back, the agent writes as a skill in
+`.claude/skills/`, with a journal entry: it then loads it on demand instead
+of rebuilding it. Its skills are checked like the rest; the socle's, laid by
+the installer, are protected.
 
-### 3. Answer the agent's requests
+## 3. Answering the agent
 
-When a decision falls to you (loosening a guardrail, changing the expected
-value of a test, a decision costly to undo, an irreversible action), the
-agent writes a request that stands on its own, and gives you its link. You
-answer in the conversation, with one of the possible answers written at its
-end; the agent records your answer with your exact text.
-`insufficient-context` sends it back to the agent, who rewrites it.
+**A request.** When a decision belongs to the human (loosening a
+threshold, deleting a test, a decision costly to undo, an irreversible
+action), the agent writes a request and gives its link. It reads on its
+own and ends with the list of possible answers. Answer in the
+conversation; the agent records the answer word for word.
 
-On your own, in your terminal:
-`python3 .socle/socle answer D-NNNN <answer> --text "<your text>"`.
+- `approve` is the only answer that authorises an action reserved to the
+  human.
+- `insufficient-context` sends the request back to the agent, which
+  rewrites it.
+- From a terminal:
+  `python3 .socle/socle answer D-NNNN <answer> --text "<text>"`.
 
-### 4. Approve your own protected changes
+**A question in session.** A question settled on the spot (approving a
+spec, choosing between two options) is answered in the conversation; the
+agent records it at once, word for word, like a request.
 
-The policy, the guardrails, the adapter, the hooks, the CI and the engine
-are protected: changing them without approval fails the commit. When you
-are the one changing them (a socle update, your policy):
+**A review before publication**, if the policy requires it: the agent
+shows what goes out to the public repository, the human gives their
+agreement in the conversation. From a terminal:
+`python3 .socle/socle reviewed --by <name>`.
 
-```sh
-python3 .socle/socle approve --text "<reason>"
-```
+## 4. Occasional actions
 
-lists the changed protected files, then approves them on confirmation, by
-writing an approved request (D-NNNN) to commit with them. The agent cannot
-run this command; it will cite that number to you on its next turn.
+**Approving one's own protected changes.** The policy, the thresholds, the
+adapter, the hooks and the CI are protected: a commit that changes them
+without approval is refused. When the change comes from the human:
+`python3 .socle/socle approve --text "<reason>"`, then commit. This
+command is reserved to the human.
 
-### 5. Review before publication, if you chose it
+**Doing what the agent cannot do.** Pushing to the default branch,
+publishing, setting up a service: the agent records it in the backlog with
+how to do it, and the state lists it under what is up to the human.
 
-With `review` in the `[private]` section of the policy, nothing leaves for
-the public repository without your agreement: the agent shows you what is
-leaving, and you answer in the conversation. On your own, in your terminal:
-`python3 .socle/socle reviewed --by <you>`.
+**Committing oneself.** The same checks apply: a public function added is
+named by a test, or waived in the commit message
+(`Waive-test: f — <reason>`); a fix brings a test that fails on the
+previous commit.
 
-### 6. Commit yourself
+**Updating the socle.** Run the installation command again from an
+up-to-date copy of the engine. The project's files are never overwritten;
+the diff of the policy is shown. Then approve the changed protected files
+(`socle approve`), and commit.
 
-The same checks apply to your commits. A public function added or changed is
-named by a test, or waived in the commit message,
-`Waive-test: f — <reason>`: the hook warns you at commit time, the CI
-refuses without it. A fix (subject `fix:`, or trailer `Fixes: B-NNNN`)
-brings a test that fails on the parent commit.
+**Setting up the private memory** (companion mode). Create an empty private
+repository on GitHub, then
+`python3 .socle/socle private install --repo <address>`. The command ends
+with the two settings to make on GitHub, with their links.
 
-## What you read
+## With BMAD Method
 
-- `python3 .socle/socle state`: where the project stands, computed every
-  time, never copied: commit, CI, backlog, pending requests, and what falls
-  to you.
-- The end of each intervention of the agent that acted: "For you:", what
-  falls to you, then "Next:", what comes next.
-- The memory, in `memory/`: the facts and their proof, the active work, the
-  decisions, the journal, the backlog, the requests.
+- **Run a BMAD workflow** by naming it to the agent (for instance
+  `bmad-build`). The workflow reads the socle's state at start-up and ends
+  with its checks.
+- **Approve a spec**: when the workflow stops to have it approved, answer in
+  the conversation. The approval is recorded before the code; the approved
+  intent no longer changes without a new approval.
+- **Work deferred** by BMAD enters the socle's backlog
+  (`socle bmad-import`, run by the agent).
+- **Update BMAD**: `npx bmad-method install --action update`, then run the
+  socle's installation again.
 
-## What depends on you alone
+## When a check refuses
 
-- The autonomy policy, `.socle/policy.toml`: what the agent decides alone,
-  and what it asks you.
-- Loosening a guardrail, in `.socle/guardrails.toml`; tightening is free,
-  for the agent too.
-- Irreversible or external actions: pushing to the default branch,
-  publishing, deleting remotely, spending. The hook refuses them to the
-  agent; it puts them in the backlog with `for : human`, and the state lists
-  them for you.
+Each refusal says what it saw and how to get out of it. Most are for the
+agent, which fixes them alone. Those that concern the human:
+
+| Refusal | Meaning | What to do |
+| --- | --- | --- |
+| `protege.fichiers` | a protected file changed without approval | change by the human: `socle approve`; by the agent: it must ask |
+| `cliquet.garde-fous` | a threshold was loosened | restore it, or approve a request that cites it |
+| `tests.attendus` | an expected value changed, or a test disappeared | approve a request that names the test, or restore the test |
+| `tests.code-teste` | a public function without a test | write the test, or `Waive-test:` in the commit |
+| `tests.regression` | a fix without a test that proves it | write that test; if its proof depends on the environment, approve a request that names the commit |
+| `docs.correspondance` | code changed without its documentation | update the documentation, or `Waive-doc:` in the commit |
+| `mutation.vivante` | the weekly sweep no longer runs | re-enable it in GitHub's Actions tab |
+| push refused, review | the policy requires a review | review what goes out, give one's agreement |
+
+## Reference
+
+### The autonomy policy
+
+`.socle/policy.toml`, modified by the human only:
+
+1. Loosening a guardrail requires an approved request; tightening is free.
+2. Deleting a test or changing an expected value requires an approved
+   request.
+3. The agent takes reversible and measurable decisions; it asks for those
+   that are costly to undo.
+4. An irreversible or external action is always asked for.
+5. The memory is append-only.
+6. A defect next to the current work goes to the backlog.
+7. After three failures in a row, the agent stops and writes a request.
+8. The agent never guesses an approval: it waits for the answer.
+
+### Commands
+
+| For the human | |
+| --- | --- |
+| `help` | this guide |
+| `install` | install or update the socle |
+| `init` | describe the project |
+| `state` | the project's state |
+| `answer`, `decision`, `reviewed` | answer a request, record a decision in session, a review |
+| `approve` | approve one's own protected changes |
+| `private install` | set up the private memory |
+
+The other commands serve the agent and the hooks; `python3 .socle/socle
+--help` lists them all, and `python3 .socle/socle checks` lists the checks.
+
+### Thresholds
+
+`.socle/guardrails.toml` holds the checks' thresholds: memory size
+budgets, mutation caps, correspondences between code and documentation,
+third-party files (BMAD's, for instance). Tightening them is free;
+loosening them requires an approved request.

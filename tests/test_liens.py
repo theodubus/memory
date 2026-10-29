@@ -54,7 +54,7 @@ class TestAdresses(unittest.TestCase):
         self.assertEqual(liens.ressemble_a_un_chemin("tests/test_humain.py:65"), "tests/test_humain.py")
         self.assertEqual(liens.ressemble_a_un_chemin("memoire/"), "memoire/")
         self.assertEqual(liens.ressemble_a_un_chemin("AGENTS.md"), "AGENTS.md")
-        for pas_un_chemin in ("origin/main", "outils.git", "socle url D-0005", "chess:CLAUDE.md",
+        for pas_un_chemin in ("origin/main", "outils.git", "socle url D-0005", "outil:CLAUDE.md",
                               "**/*.md", "ADR-0007@ac16270e", "/home/user/x.md", "python3.11"):
             self.assertIsNone(liens.ressemble_a_un_chemin(pas_un_chemin), pas_un_chemin)
 
@@ -70,7 +70,7 @@ class TestLiensDuDepot(unittest.TestCase):
         git(source, "init", "-q", "-b", "main")
         (source / "docs/a.md").write_text("# A\n")
         (source / ".socle").mkdir()
-        (source / ".socle/politique.toml").write_text(f'[human]\nrepo_url = "{DEPOT}"\n')
+        (source / ".socle/policy.toml").write_text(f'[human]\nrepo_url = "{DEPOT}"\n')
         git(source, "add", "-A")
         git(source, "commit", "-qm", "un")
         self.clone = self.dossier / "clone"
@@ -123,6 +123,15 @@ class TestLiensDuDepot(unittest.TestCase):
         self.assertEqual(liens.problemes(self.projet, message), ([], []))
 
 
+    def test_un_chemin_barre_d_un_message_ne_se_juge_pas(self):
+        """B-0087 : un chemin barré dit ce qui n'est plus."""
+        from socle import memory as memoire
+
+        self.assertEqual(memoire.sans_barre("a ~~`docs/x.md`~~ b <s>`docs/y.md`</s> c <DEL>z</DEL>"), "a   b   c  ")
+        message = "L'ancien guide, ~~`docs/absent.md`~~, puis <s>[l'autre](docs/parti.md)</s>."
+        self.assertEqual(liens.problemes(self.projet, message), ([], []))
+
+
 class TestDemandeLue(unittest.TestCase):
     """B-0022 : une réponse ne se relaie qu'à une demande que l'humain a pu
     lire, poussée telle qu'elle est."""
@@ -135,8 +144,8 @@ class TestDemandeLue(unittest.TestCase):
         self.racine = self.dossier / "projet"
         (self.racine / ".socle").mkdir(parents=True)
         git(self.racine, "init", "-q", "-b", "main")
-        (self.racine / ".socle/politique.toml").write_text(f'[human]\nrepo_url = "{DEPOT}"\n')
-        self.demande = self.racine / "memoire/demandes/D-0001-essai.md"
+        (self.racine / ".socle/policy.toml").write_text(f'[human]\nrepo_url = "{DEPOT}"\n')
+        self.demande = self.racine / "memory/requests/D-0001-essai.md"
         self.demande.parent.mkdir(parents=True)
         self.demande.write_text("<!-- socle: couche=demandes zone=publique -->\n# D-0001 — Essai ?\n")
         git(self.racine, "remote", "add", "origin", str(origine))
@@ -174,7 +183,7 @@ class TestDemandeLue(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(erreurs):
             self.assertEqual(cli.cmd_answer(args), 2)
         self.assertIn("n'a pas pu être lue par l'humain", erreurs.getvalue())
-        self.assertEqual(list(self.demande.parent.glob("*.reponse.toml")), [])
+        self.assertEqual(list(self.demande.parent.glob("*.answer.toml")), [])
 
     def test_une_demande_changee_depuis_le_push_n_est_pas_celle_qu_il_a_lue(self):
         self.pousser()

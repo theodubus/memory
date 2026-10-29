@@ -15,7 +15,7 @@ sources = ["**/*.js", "**/*.mjs", "**/*.cjs", "**/*.jsx", "**/*.ts", "**/*.mts",
 
 # Étapes ajoutées au workflow de CI avant le socle (indentation YAML de six).
 ci_setup = """
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - name: Dépendances

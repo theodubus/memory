@@ -22,7 +22,7 @@ def adaptateur(nom: str) -> dict:
 
 class TestProjetsJetables(unittest.TestCase):
     def test_un_projet_par_adaptateur_nouveau(self):
-        self.assertEqual(sorted(banc.LANGAGES), ["go", "java", "javascript", "php", "ruby"])
+        self.assertEqual(sorted(banc.LANGAGES), ["csharp", "go", "java", "javascript", "php", "ruby"])
 
     def test_chaque_defaut_s_applique_a_son_projet(self):
         for nom, l in banc.LANGAGES.items():

@@ -38,6 +38,32 @@ class TestBaseDeTravail(unittest.TestCase):
         self.assertEqual(outils.branche_par_defaut(local), "origin/travail")
         self.assertEqual(outils.base_de_travail(local), git(local, "rev-parse", "HEAD").strip())
 
+    def test_un_clone_de_sa_seule_branche_de_travail_devine_la_branche_par_defaut(self):
+        """B-0080 : le dépôt distant a `main`, mais le clone n'a récupéré que
+        sa branche de travail ; il la prenait pour la branche par défaut, et
+        le hook refusait son push sans dire pourquoi."""
+        from socle import commands as commandes, hooks
+
+        amont = self.dossier / "amont"
+        amont.mkdir()
+        git(amont, "init", "-q", "-b", "main")
+        (amont / "a").write_text("a")
+        git(amont, "add", "a")
+        git(amont, "commit", "-qm", "a")
+        git(amont, "branch", "travail")
+        local = self.dossier / "local"
+        git(self.dossier, "clone", "-q", "--single-branch", "-b", "travail", str(amont), str(local))
+        git(local, "remote", "set-head", "origin", "-d")
+        self.assertEqual(outils.branche_par_defaut(local), "origin/travail")
+        self.assertTrue(outils.branche_par_defaut_devinee(local))
+        refus = hooks.irreversible(local, commandes.analyser("git push origin travail")[0])
+        self.assertIn("faute de mieux", refus)
+        self.assertIn("git fetch origin <elle>", refus)
+        git(local, "fetch", "-q", "origin", "main:refs/remotes/origin/main")
+        self.assertEqual(outils.branche_par_defaut(local), "origin/main")
+        self.assertFalse(outils.branche_par_defaut_devinee(local))
+        self.assertIsNone(hooks.irreversible(local, commandes.analyser("git push origin travail")[0]))
+
     def test_sans_rien_pas_de_base(self):
         git(self.dossier, "init", "-q", "-b", "seule")
         (self.dossier / "a").write_text("a")

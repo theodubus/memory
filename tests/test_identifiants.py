@@ -16,14 +16,12 @@ from socle.report import Rapport
 from tests.test_bascule import P, git
 
 MOTEUR = Path(__file__).resolve().parent.parent / "engine"
-SUJET = "\n## {id} — {titre}\n\n> statut : ouvert · origine : fichier:calc.py\n"
+SUJET = "# {id} — {titre}\n\n> statut : ouvert · origine : fichier:calc.py\n"
 
 
 class Depot(unittest.TestCase):
     """Un projet installé et poussé ; la branche `x` prend `B-0001`, puis la
     branche par défaut reçoit, d'une autre branche, un autre `B-0001`."""
-
-    format_3 = False
 
     def setUp(self):
         self.dossier = Path(tempfile.mkdtemp(prefix="socle-identifiants-"))
@@ -35,12 +33,11 @@ class Depot(unittest.TestCase):
         git(self.racine, "init", "-q", "-b", "main")
         (self.racine / "calc.py").write_text("x = 1\n")
         with contextlib.redirect_stdout(io.StringIO()):
-            installeur.installer(self.racine, "python", "@essai", source=MOTEUR, format_memoire=3 if self.format_3 else 2)
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
         git(self.racine, "add", "-A")
         git(self.racine, "commit", "-qm", "installation", "--no-verify")
         git(self.racine, "remote", "add", "origin", str(origine))
         git(self.racine, "push", "-q", "--no-verify", "-u", "origin", "main")
-        config.oublier_formats()
         git(self.racine, "switch", "-q", "-c", "y")
         self.sujet("B-0001", "Le sujet de la branche y")
         git(self.racine, "switch", "-q", "main")
@@ -48,18 +45,11 @@ class Depot(unittest.TestCase):
         git(self.racine, "push", "-q", "--no-verify", "origin", "main")
         git(self.racine, "switch", "-q", "-c", "x", "HEAD~1")
         self.sujet("B-0001", "Le sujet de la branche x")
-        config.oublier_formats()
 
     def sujet(self, ident, titre):
-        ch = config.chemins(self.racine)
-        if ch.backlog_en_dossier:
-            p = self.racine / ch.backlog / f"{ident}-{memoire.nom_de_fichier(titre)}.md"
-            p.parent.mkdir(parents=True, exist_ok=True)
-            p.write_text("<!-- socle: couche=backlog zone=publique -->\n" + SUJET.format(id=ident, titre=titre)
-                         .replace("\n## ", "# ", 1))
-        else:
-            p = self.racine / ch.backlog
-            p.write_text(p.read_text() + SUJET.format(id=ident, titre=titre))
+        p = self.racine / config.FORMAT_ACTUEL.backlog / f"{ident}-{memoire.nom_de_fichier(titre)}.md"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text("<!-- socle: couche=backlog zone=publique -->\n" + SUJET.format(id=ident, titre=titre))
         git(self.racine, "add", "-A")
         git(self.racine, "commit", "-qm", titre, "--no-verify")
 
@@ -155,9 +145,7 @@ class TestBranchesDistantes(Depot):
         self.assertIn("B-0002\t", sortie)
 
 
-class TestFormat3(Depot):
-    format_3 = True
-
+class TestFichierDuSujet(Depot):
     def test_le_fichier_du_sujet_change_de_nom(self):
         lignes = identifiants.renumeroter(config.Projet.charger(self.racine), "B-0001")
         self.assertEqual(lignes[:2], ["B-0001 → B-0002", "memory/backlog/B-0001-le-sujet-de-la-branche-x.md → "

@@ -4,7 +4,7 @@ confrontés au plafond des garde-fous.
 Le plafond est un cliquet : il CASSE à la hausse et SIGNALE la baisse. Un
 mutant qui expire sur une machine chargée est compté « expiré » plutôt que
 « survivant », donc une baisse peut n'être qu'un artefact de charge ; une
-hausse, jamais (`chess:.github/mutation-verdict.sh`).
+hausse, jamais.
 
 Les lecteurs de résultats sont propres à chaque outil ; l'adaptateur nomme le
 sien (`parser`). Un module du plafond sans aucun résultat est un balayage qui
@@ -14,7 +14,7 @@ Le balayage lui-même (`balayer`) lance la commande de l'adaptateur, module
 par module quand elle nomme `{module}`, puis rend le verdict : c'est ce que
 fait chaque semaine le workflow que pose l'installeur. Et parce qu'un
 cliquet ne peut pas signaler sa propre absence, `vivacite` dit quand ce
-workflow cesse de tourner (`chess:tools/balayage-vivant.sh`, B-0005).
+workflow cesse de tourner.
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ from pathlib import Path
 from typing import Callable
 
 from socle import config
-from socle.messages import trad
+from socle.messages import a_traduire, trad
 from socle.report import Rapport
 
 
@@ -58,8 +58,7 @@ def lire_cargo_mutants(dossier: Path) -> dict[str, Counter]:
 STATUTS_MUTMUT = {"killed": "attrapes", "caught by type check": "attrapes", "timeout": "expires",
                   "suspicious": "expires", "segfault": "expires", "skipped": "inviables"}
 # Le module est tout ce qui précède le dernier `.x_` ou `.xǁ` : le nom de la
-# fonction n'a pas de point, et un module peut commencer par `x_` (relevé de
-# la passe de recul, F).
+# fonction n'a pas de point, et un module peut commencer par `x_`.
 NOM_MUTMUT = re.compile(r"^(?P<module>[\w.]+)\.x[_ǁ][^.]*__mutmut_\d+$")
 
 
@@ -107,15 +106,18 @@ def _json(f: Path):
         return None
 
 
-# Stryker (JavaScript, TypeScript) : le rapport `mutation.json` du schéma
-# commun des rapports de mutation. Un statut absent d'ici compte survivant.
+# Stryker (JavaScript, TypeScript) et Stryker.NET (C#) : le rapport du schéma
+# commun des rapports de mutation, `mutation.json` pour l'un,
+# `mutation-report.json` pour l'autre, qui écrit des chemins absolus. Un
+# statut absent d'ici compte survivant.
 STATUTS_STRYKER = {"Killed": "attrapes", "Timeout": "expires", "CompileError": "inviables",
                    "RuntimeError": "inviables", "Ignored": "inviables"}
+RAPPORTS_STRYKER = ("mutation.json", "mutation-report.json")
 
 
 def lire_stryker(dossier: Path) -> dict[str, Counter]:
     res: dict[str, Counter] = {}
-    for f in sorted(dossier.rglob("mutation.json")):
+    for f in sorted(f for nom in RAPPORTS_STRYKER for f in dossier.rglob(nom)):
         if "node_modules" in f.parts or not isinstance(d := _json(f), dict):
             continue
         for chemin, contenu in (d.get("files") or {}).items():
@@ -204,14 +206,14 @@ LECTEURS = {"cargo-mutants": lire_cargo_mutants, "mutmut": lire_mutmut, "stryker
 def verdict(projet: config.Projet, dossier: Path, poser: bool = False) -> Rapport:
     """Les survivants de chaque module du plafond, confrontés à son plafond.
     Un module « à mesurer » (`pending`) n'a pas encore de plafond : son compte
-    se dit, et `poser` l'écrit dans les garde-fous, ce qui durcit le cliquet
-    (B-0034, P1)."""
+    se dit, et `poser` l'écrit dans les garde-fous, ce qui durcit le cliquet."""
     r = Rapport()
     ident = "mutation.verdict"
     r.execute(ident)
     cap = projet.adaptateur.get("capabilities", {}).get("mutation", {})
     if "command" not in cap:
-        r.indisponible(ident, trad("capacité absente : {absent}", absent=cap.get("absent", trad("non déclarée"))))
+        r.indisponible(ident, trad("capacité absente : {absent}",
+                                   absent=trad(cap["absent"]) if "absent" in cap else trad("non déclarée")))
         return r
     lecteur = LECTEURS.get(cap.get("parser", ""))
     if lecteur is None:
@@ -262,7 +264,7 @@ def poser_plafonds(projet: config.Projet, mesures: dict[str, int]) -> list[str]:
     par son plafond mesuré, avec sa raison quand il n'est pas nul. La clé
     s'écrit entre guillemets doubles ou simples, en table en ligne ou en
     table ; rend les modules dont le plafond n'a pas pu s'écrire, relu après
-    coup (relevé de la passe de recul, F)."""
+    coup."""
     import json
     import tomllib
     from datetime import date
@@ -272,7 +274,8 @@ def poser_plafonds(projet: config.Projet, mesures: dict[str, int]) -> list[str]:
     for module, n in mesures.items():
         cle = json.dumps(module, ensure_ascii=False)
         cles = rf"(?:{re.escape(cle)}|'{re.escape(module)}')"
-        raison = f'"mesuré le {date.today().isoformat()} : {n} survivant(s)"'
+        raison = json.dumps(trad("mesuré le {date} : {n} survivant(s)", date=date.today().isoformat(), n=n),
+                            ensure_ascii=False)
         valeur = f"{{ max = {n}, reason = {raison} }}" if n else "{ max = 0 }"
         en_ligne = re.compile(rf"^\s*{cles}\s*=\s*\{{[^}}]*\bpending\b")
         en_table = re.compile(rf"^\s*\[\s*mutation\s*\.\s*caps\s*\.\s*{cles}\s*\]\s*$")
@@ -314,7 +317,8 @@ def commandes_de_balayage(projet: config.Projet) -> tuple[list[str], Path | None
     cap = projet.adaptateur.get("capabilities", {}).get("mutation", {})
     commande = cap.get("command")
     if not commande:
-        return [], None, trad("capacité absente : {absent}", absent=cap.get("absent", trad("non déclarée")))
+        return [], None, trad("capacité absente : {absent}",
+                              absent=trad(cap["absent"]) if "absent" in cap else trad("non déclarée"))
     if "{module}" not in commande:
         return [commande.replace("{output}", ".")], projet.racine, None
     if "{output}" not in commande:
@@ -362,7 +366,7 @@ def balayer(projet: config.Projet, poser: bool = False, flux=None) -> Rapport:
 
 WORKFLOW = ".github/workflows/socle-mutation.yml"
 # Ce qui, dans un workflow, désigne l'outil de mutation d'un adaptateur : un
-# projet qui balaie déjà (le projet d'échecs) n'en reçoit pas un second.
+# projet qui balaie déjà par son propre workflow n'en reçoit pas un second.
 MARQUES_OUTIL = {"cargo-mutants": r"\bcargo[ -]mutants\b", "mutmut": r"\bmutmut\b", "stryker": r"\bstryker\b",
                  "gremlins": r"\bgremlins\b", "pit": r"\bpitest\b", "mutant": r"\bmutant\s+run\b",
                  "infection": r"\binfection\b"}
@@ -419,6 +423,43 @@ def vivacite(etat: str | None, derniere: str | None, cree: str | None,
     return None, trad("dernier balayage il y a {age} jour(s)", age=age)
 
 
+# Un workflow présent sur la branche par défaut, que GitHub ne connaît pas :
+# le délai qu'on lui laisse pour l'enregistrer, en jours.
+DELAI_ENREGISTREMENT = 2
+REMEDE_ENREGISTREMENT = a_traduire(
+    "Pousser un commit sur la branche par défaut qui modifie ce fichier (une ligne de commentaire suffit ; c'est "
+    "un fichier protégé, que l'humain approuve) : GitHub n'enregistre un workflow qu'au push qui modifie son "
+    "fichier, pas toujours au premier push qui le pose. Puis vérifier dans l'onglet Actions qu'il y apparaît")
+
+
+def arrivee_sur_la_branche_par_defaut(racine: Path, flux: str) -> str | None:
+    """La date du plus ancien commit visible de la branche par défaut qui
+    touche `flux`, s'il y est ; `None` sinon."""
+    from socle import utils as outils
+
+    defaut = outils.branche_par_defaut(racine)
+    if not defaut or not outils.git_reussit(racine, "cat-file", "-e", f"{defaut}:{flux}"):
+        return None
+    dates = outils.git(racine, "log", "--format=%cI", defaut, "--", flux, check=False).split()
+    return dates[-1] if dates else None
+
+
+def inconnu_de_github(nom: str, arrivee: str | None, maintenant: datetime | None = None) -> tuple[str, str]:
+    """(niveau, message) quand GitHub ne connaît pas le workflow : pas encore
+    fusionné, un avertissement ; présent sur la branche par défaut sans être
+    enregistré, son cron ne part jamais, une erreur passé le délai."""
+    if arrivee is None:
+        return "avertir", trad("`{nom}` n'est pas encore sur la branche par défaut : GitHub ne le planifie "
+                               "qu'une fois fusionné", nom=nom)
+    age = ((maintenant or datetime.now(timezone.utc)) - _date(arrivee)).days
+    if age >= DELAI_ENREGISTREMENT:
+        return "erreur", trad("`{nom}` est sur la branche par défaut depuis le {date}, mais GitHub ne le connaît "
+                              "pas : son cron ne part jamais, et plus rien ne mesure le cliquet. {remede}",
+                              nom=nom, date=arrivee[:10], remede=trad(REMEDE_ENREGISTREMENT))
+    return "avertir", trad("`{nom}` est sur la branche par défaut depuis le {date}, mais GitHub ne le connaît pas "
+                           "encore. {remede}", nom=nom, date=arrivee[:10], remede=trad(REMEDE_ENREGISTREMENT))
+
+
 def _gh_api(racine: Path, chemin: str) -> tuple[object | None, str]:
     """(réponse, faute) de l'API de GitHub par `gh` ; la faute vaut `404`
     quand la ressource n'existe pas."""
@@ -457,8 +498,7 @@ def etat_du_balayage(projet: config.Projet, fichiers: list[str],
     page = f"{url}/actions/workflows/{nom}"
     wf, faute = _gh_api(projet.racine, f"repos/{depot}/actions/workflows/{nom}")
     if faute == "404":
-        return "avertir", trad("`{nom}` n'est pas encore sur la branche par défaut : GitHub ne le planifie "
-                               "qu'une fois fusionné", nom=nom), flux, page
+        return (*inconnu_de_github(nom, arrivee_sur_la_branche_par_defaut(projet.racine, flux)), flux, page)
     if not isinstance(wf, dict):
         return "indisponible", (trad("API de GitHub injoignable ({faute}) : dans la CI, il faut `GH_TOKEN` et "
                                      "le droit `actions: read`", faute=faute)), flux, page

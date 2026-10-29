@@ -1,6 +1,6 @@
-"""Le mode compagnon mis en place d'un geste (B-0034, P5) :
+"""Le mode compagnon mis en place d'un geste :
 `socle private install`, réservé à l'humain. Séparé de `prive`, qui lit et
-contrôle la zone privée (L7)."""
+contrôle la zone privée."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from socle.private import adresse_ssh, commit_compagnon, depot_compagnon, dossie
 
 
 def installer_compagnon(projet: config.Projet, adresse: str) -> tuple[int, list[str]]:
-    """Le mode compagnon mis en place d'un geste (B-0034, P5) : le dépôt privé
+    """Le mode compagnon mis en place d'un geste : le dépôt privé
     cloné, son premier commit poussé s'il est vide, le verrou écrit, une clé
     de déploiement créée ; puis ce qui reste à faire sur GitHub, avec les
     liens. Réservé à l'humain : il pousse vers le dépôt privé et crée une clé."""

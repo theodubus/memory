@@ -1,5 +1,5 @@
 """Une commande shell, découpée en commandes simples, pour que les hooks
-jugent ce qu'elle fait et non le texte qu'elle cite (B-0044, L2).
+jugent ce qu'elle fait et non le texte qu'elle cite.
 
 Un heredoc, une chaîne entre guillemets ou un message de commit qui
 nomment une commande dangereuse ne la lancent pas ; un lanceur entre
@@ -179,34 +179,3 @@ def git_sous_commande(argv: list[str]) -> tuple[str, list[str]]:
         i += 2 if argv[i] in ("-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec-path") else 1
     return (argv[i], argv[i + 1:]) if i < len(argv) else ("", [])
 
-
-# Les anciens noms des commandes du socle, de leurs actions et de leurs
-# options, acceptés le temps d'une version (ADR-0027). La ligne de commande
-# et le hook de l'agent les lisent sous leur nom anglais : une commande
-# réservée à l'humain l'est sous ses deux noms.
-ANCIENNES_COMMANDES = {"aide": "help", "prive": "private", "relu": "reviewed"}
-ANCIENNES_ACTIONS = {"etat": "status", "installer": "install", "verrouiller": "lock", "extraire": "extract",
-                     "recuperer": "recover", "terme": "term", "basculer": "move"}
-ANCIENNES_OPTIONS = {"--court": "--short", "--oui": "--yes", "--cadrage": "--brief", "--depot": "--repo",
-                     "--poser": "--record", "--rapide": "--fast", "--refaire": "--redo"}
-
-
-def noms_anglais(argv: list[str]) -> list[str]:
-    """Les arguments d'une commande du socle, après le lanceur, sous les noms
-    anglais de la commande, de son action et de ses options."""
-    res = list(argv)
-    i = 0
-    while i < len(res) and (res[i] == "--root" or res[i].startswith("--root=")):
-        i += 2 if res[i] == "--root" else 1
-    if i >= len(res):
-        return res
-    res[i] = ANCIENNES_COMMANDES.get(res[i], res[i])
-    if res[i] == "private" and i + 1 < len(res):
-        res[i + 1] = ANCIENNES_ACTIONS.get(res[i + 1], res[i + 1])
-    for j in range(i + 1, len(res)):
-        if res[j] == "--":
-            break
-        nom, egal, valeur = res[j].partition("=")
-        if nom in ANCIENNES_OPTIONS:
-            res[j] = ANCIENNES_OPTIONS[nom] + egal + valeur
-    return res

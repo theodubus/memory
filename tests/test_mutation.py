@@ -14,38 +14,38 @@ def projet(caps, parser="cargo-mutants"):
 
 
 class TestVerdict(unittest.TestCase):
-    """Les cas fabriqués de `chess:.github/mutation-verdict-test.sh`, rejoués
-    sur le verdict générique."""
+    """Des cas fabriqués, rejoués sur le verdict générique : un survivant
+    sous son plafond, au-dessus, un module absent, un analyseur inconnu."""
 
     def setUp(self):
         self.dossier = Path(tempfile.mkdtemp())
         out = self.dossier / "eval/mutants.out"
         out.mkdir(parents=True)
-        (out / "missed.txt").write_text("src/eval.rs:10:5: replace + with -\nsrc/eval.rs:12:5: replace > with >=\n")
-        (out / "caught.txt").write_text("src/eval.rs:20:5: replace x\nsrc/tt.rs:3:1: replace y\n")
+        (out / "missed.txt").write_text("src/parse.rs:10:5: replace + with -\nsrc/parse.rs:12:5: replace > with >=\n")
+        (out / "caught.txt").write_text("src/parse.rs:20:5: replace x\nsrc/table.rs:3:1: replace y\n")
 
     def tearDown(self):
         shutil.rmtree(self.dossier)
 
     def test_hausse_casse(self):
-        r = mutation.verdict(projet({"src/eval.rs": {"max": 1}, "src/tt.rs": {"max": 0}}), self.dossier)
+        r = mutation.verdict(projet({"src/parse.rs": {"max": 1}, "src/table.rs": {"max": 0}}), self.dossier)
         self.assertFalse(r.reussi)
         self.assertIn("2 survivant(s) pour un plafond de 1", r.erreurs()[0].message)
 
     def test_egalite_passe_et_baisse_signalee(self):
-        r = mutation.verdict(projet({"src/eval.rs": {"max": 2}, "src/tt.rs": {"max": 1}}), self.dossier)
+        r = mutation.verdict(projet({"src/parse.rs": {"max": 2}, "src/table.rs": {"max": 1}}), self.dossier)
         self.assertTrue(r.reussi)
         self.assertTrue(any("resserrer" in c.message for c in r.constats))
 
     def test_module_jamais_balaye_casse(self):
-        r = mutation.verdict(projet({"src/eval.rs": {"max": 2}, "src/see.rs": {"max": 0}}), self.dossier)
-        self.assertEqual([c.message.split(" :")[0] for c in r.erreurs()], ["src/see.rs"])
+        r = mutation.verdict(projet({"src/parse.rs": {"max": 2}, "src/score.rs": {"max": 0}}), self.dossier)
+        self.assertEqual([c.message.split(" :")[0] for c in r.erreurs()], ["src/score.rs"])
 
     def test_plafond_vide_casse(self):
         self.assertFalse(mutation.verdict(projet({}), self.dossier).reussi)
 
     def test_lecteur_inconnu_casse(self):
-        self.assertFalse(mutation.verdict(projet({"src/eval.rs": {"max": 9}}, parser="?"), self.dossier).reussi)
+        self.assertFalse(mutation.verdict(projet({"src/parse.rs": {"max": 9}}, parser="?"), self.dossier).reussi)
 
 
 class TestCouverture(unittest.TestCase):
@@ -66,11 +66,11 @@ class TestCouverture(unittest.TestCase):
         return r
 
     def test_hors_du_cliquet_casse(self):
-        r = self.verifier({}, {"src/eval.rs": "fn f() {}\n"})
+        r = self.verifier({}, {"src/parse.rs": "fn f() {}\n"})
         self.assertIn("module hors du cliquet", r.erreurs()[0].message)
 
     def test_a_mesurer_avertit(self):
-        r = self.verifier({"src/eval.rs": {"pending": True}}, {"src/eval.rs": "fn f() {}\n"})
+        r = self.verifier({"src/parse.rs": {"pending": True}}, {"src/parse.rs": "fn f() {}\n"})
         self.assertTrue(r.reussi)
         self.assertIn("module à mesurer", r.constats[0].message)
 
@@ -82,14 +82,14 @@ class TestAMesurer(unittest.TestCase):
     """B-0034, P1 : un module « à mesurer » n'a pas de plafond ; le verdict
     dit son compte, et `poser` l'écrit dans les garde-fous."""
 
-    GARDE_FOUS = '[mutation.caps]\n"src/eval.rs" = { pending = true }\n"src/tt.rs" = { pending = true }\n'
+    GARDE_FOUS = '[mutation.caps]\n"src/score.rs" = { pending = true }\n"src/table.rs" = { pending = true }\n'
 
     def setUp(self):
         self.dossier = Path(tempfile.mkdtemp())
         out = self.dossier / "eval/mutants.out"
         out.mkdir(parents=True)
-        (out / "missed.txt").write_text("src/eval.rs:10:5: replace + with -\n")
-        (out / "caught.txt").write_text("src/tt.rs:3:1: replace y\n")
+        (out / "missed.txt").write_text("src/score.rs:10:5: replace + with -\n")
+        (out / "caught.txt").write_text("src/table.rs:3:1: replace y\n")
         (self.dossier / ".socle").mkdir()
         (self.dossier / ".socle/guardrails.toml").write_text(self.GARDE_FOUS)
 
@@ -106,13 +106,23 @@ class TestAMesurer(unittest.TestCase):
     def test_un_module_a_mesurer_ne_casse_pas(self):
         r = mutation.verdict(self.projet(), self.dossier)
         self.assertTrue(r.reussi)
-        self.assertTrue(any("src/eval.rs : à mesurer — 1 survivant(s)" in c.message for c in r.constats))
+        self.assertTrue(any("src/score.rs : à mesurer — 1 survivant(s)" in c.message for c in r.constats))
 
     def test_poser_ecrit_le_plafond_mesure(self):
         mutation.verdict(self.projet(), self.dossier, poser=True)
         texte = (self.dossier / ".socle/guardrails.toml").read_text()
-        self.assertIn('"src/tt.rs" = { max = 0 }', texte)
-        self.assertRegex(texte, r'"src/eval.rs" = \{ max = 1, reason = "mesuré le [\d-]+ : 1 survivant\(s\)" \}')
+        self.assertIn('"src/table.rs" = { max = 0 }', texte)
+        self.assertRegex(texte, r'"src/score.rs" = \{ max = 1, reason = "mesuré le [\d-]+ : 1 survivant\(s\)" \}')
+        self.assertTrue(mutation.verdict(self.projet(), self.dossier).reussi)
+
+    def test_poser_ecrit_la_raison_dans_la_langue_du_projet(self):
+        # B-0059 : la raison suit la langue des messages, et se relit.
+        from socle import messages
+
+        with messages.dans("en"):
+            mutation.verdict(self.projet(), self.dossier, poser=True)
+        texte = (self.dossier / ".socle/guardrails.toml").read_text()
+        self.assertRegex(texte, r'"src/score.rs" = \{ max = 1, reason = "measured on [\d-]+: 1 survivor\(s\)" \}')
         self.assertTrue(mutation.verdict(self.projet(), self.dossier).reussi)
 
     def test_cmd_mutation_verdict_avec_poser(self):
@@ -127,14 +137,14 @@ class TestAMesurer(unittest.TestCase):
             code = cli.cmd_mutation_verdict(argparse.Namespace(results=str(self.dossier), poser=True))
         self.assertEqual(code, 0, flux.getvalue())
         self.assertIn("plafond posé", flux.getvalue())
-        self.assertIn('"src/tt.rs" = { max = 0 }', (self.dossier / ".socle/guardrails.toml").read_text())
+        self.assertIn('"src/table.rs" = { max = 0 }', (self.dossier / ".socle/guardrails.toml").read_text())
 
     def test_poser_plafonds_ne_touche_que_les_modules_a_mesurer(self):
         gf = self.dossier / ".socle/guardrails.toml"
         gf.write_text(self.GARDE_FOUS + '"src/x.rs" = { max = 4, reason = "équivalents" }\n')
-        mutation.poser_plafonds(self.projet(), {"src/eval.rs": 0, "src/x.rs": 0})
+        mutation.poser_plafonds(self.projet(), {"src/score.rs": 0, "src/x.rs": 0})
         self.assertIn('"src/x.rs" = { max = 4, reason = "équivalents" }', gf.read_text())
-        self.assertIn('"src/eval.rs" = { max = 0 }', gf.read_text())
+        self.assertIn('"src/score.rs" = { max = 0 }', gf.read_text())
 
     def test_poser_les_autres_formes_de_cle(self):
         """Relevé de la passe de recul, F : une clé entre guillemets simples,
@@ -142,18 +152,18 @@ class TestAMesurer(unittest.TestCase):
         import tomllib
 
         gf = self.dossier / ".socle/guardrails.toml"
-        gf.write_text("[mutation.caps]\n'src/eval.rs' = { pending = true }\n\n"
-                      '[mutation.caps."src/tt.rs"]\npending = true\nreason = "pas encore balayé"\n')
-        self.assertEqual(mutation.poser_plafonds(self.projet(), {"src/eval.rs": 1, "src/tt.rs": 0}), [])
+        gf.write_text("[mutation.caps]\n'src/score.rs' = { pending = true }\n\n"
+                      '[mutation.caps."src/table.rs"]\npending = true\nreason = "pas encore balayé"\n')
+        self.assertEqual(mutation.poser_plafonds(self.projet(), {"src/score.rs": 1, "src/table.rs": 0}), [])
         caps = tomllib.loads(gf.read_text())["mutation"]["caps"]
-        self.assertEqual(caps["src/eval.rs"]["max"], 1)
-        self.assertEqual(caps["src/tt.rs"], {"max": 0})
+        self.assertEqual(caps["src/score.rs"]["max"], 1)
+        self.assertEqual(caps["src/table.rs"], {"max": 0})
 
     def test_un_plafond_non_ecrit_est_dit(self):
         gf = self.dossier / ".socle/guardrails.toml"
-        gf.write_text('[mutation]\ncaps = { "src/eval.rs" = { pending = true }, "src/tt.rs" = { pending = true } }\n')
-        self.assertEqual(sorted(mutation.poser_plafonds(self.projet(), {"src/eval.rs": 1, "src/tt.rs": 0})),
-                         ["src/eval.rs", "src/tt.rs"])
+        gf.write_text('[mutation]\ncaps = { "src/score.rs" = { pending = true }, "src/table.rs" = { pending = true } }\n')
+        self.assertEqual(sorted(mutation.poser_plafonds(self.projet(), {"src/score.rs": 1, "src/table.rs": 0})),
+                         ["src/score.rs", "src/table.rs"])
         r = mutation.verdict(self.projet(), self.dossier, poser=True)
         self.assertTrue(any("plafond annoncé mais non écrit" in c.message for c in r.erreurs()))
 

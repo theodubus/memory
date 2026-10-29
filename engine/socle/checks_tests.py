@@ -21,7 +21,6 @@ import re
 import shutil
 import subprocess
 import tempfile
-import tomllib
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -95,7 +94,7 @@ def creux(ctx, r):
     # aide qui affirme peut vivre ailleurs que le test qui l'appelle. Mais
     # dans un fichier de code, seulement dans ses lignes de test (le module
     # de tests de Rust) : un `assert` du code de production n'affirme rien
-    # pour le test qui l'appelle (relevé de la passe de recul, D).
+    # pour le test qui l'appelle.
     sources = outils.filtrer(ctx.fichiers, ctx.projet.adaptateur.get("sources", []))
     toutes = fonctions(ctx, sorted(set(tous) | set(sources)))
     assertion = re.compile(cfg.get("assertion", r"assert"))
@@ -118,7 +117,7 @@ def creux(ctx, r):
         # la ligne qui le définit (`test.skip(…)`, `xit "…"`) ou dans son corps
         # (`t.Skip(…)`, `markTestSkipped(…)`).
         # Dans le corps, la marque se cherche hors des chaînes : un test qui
-        # parle d'un `skip` ne se désactive pas (L6).
+        # parle d'un `skip` ne se désactive pas.
         litteraux = cfg.get("strings", tests_lecture.LITTERAUX)
         corps_nu = [re.sub(litteraux, '""', l) for l in f.lignes_corps]
         marques = [*f.attributs, f.entete, *f.lignes_corps]
@@ -139,7 +138,7 @@ def creux(ctx, r):
                              f.fichier, f.ligne + k + 1)
     # Un groupe entier se désactive hors de tout test : une classe sous
     # `@unittest.skip`, un `describe.skip`, un `@Disabled` de classe, un
-    # `skip` dans un `before` (relevé de la passe de recul, D).
+    # `skip` dans un `before`.
     if ignore is None:
         return
     comm = re.compile(cfg["comment"]) if cfg.get("comment") else None
@@ -166,8 +165,7 @@ def _nomme(texte: str, nom: str) -> bool:
 
 def _justifie(ctx, nom: str) -> str | None:
     """Une validation humaine, ou une spécification que l'humain a changée et
-    qui nomme le test (politique, point 2, option B tranchée par Théo,
-    ADR-0017) : une spécification que l'agent écrit dans le même travail ne
+    qui nomme le test (politique, point 2) : une spécification que l'agent écrit dans le même travail ne
     l'autorise pas à changer le test."""
     for d in ctx.validations:
         if _nomme(d.texte, nom):
@@ -180,7 +178,7 @@ def _justifie(ctx, nom: str) -> str | None:
 
 def _en_attente(ctx, nom: str) -> str | None:
     """À la fin du tour seulement (étage agent), une demande en attente,
-    poussée telle quelle, qui nomme le test (B-0033) : le travail qui attend
+    poussée telle quelle, qui nomme le test : le travail qui attend
     la réponse de l'humain peut rester dans l'arbre, au lieu d'être remisé
     hors de la mémoire. Le commit et la CI le refusent toujours."""
     from socle import requests as demandes
@@ -287,7 +285,7 @@ def attendus(ctx, r):
             continue
         # Une valeur attendue vit aussi hors de la ligne d'assertion : une
         # variable, une table, un paramètre. Rien ne la distingue d'une
-        # donnée de test : elle est dite, pas refusée (ADR-0024).
+        # donnée de test : elle est dite, pas refusée.
         valeurs_parties = lits(a) - lits(b)
         if valeurs_parties and not _justifie(ctx, a.nom):
             hors.setdefault(b.fichier, []).append((b.nom, next(iter(valeurs_parties))))
@@ -307,7 +305,7 @@ def _attendus_hors_tests(ctx, cfg, chemins, apres, hors):
     aide qui affirme) : retirée ou changée, elle compte pour chaque test qui
     nomme sa constante ou son aide. Dans un fichier de code, seules ses
     lignes de test comptent : le module de tests de Rust, jamais le code de
-    production (ADR-0024)."""
+    production."""
     chemins_code, exclus_code, _ = config_code(ctx.projet)
 
     def reste(texte, chemin) -> list[str]:
@@ -361,16 +359,9 @@ DISPENSE_TEST = re.compile(r"^(?P<noms>[\w.]+(?:\s*,\s*[\w.]+)*)\s+[—–-]+\s+
 def config_code(projet) -> tuple[list, list, str | None]:
     """(chemins, exclusions, motif d'une fonction privée) du code soumis à
     `tests.code-teste`. La section `[code]` de l'adaptateur du projet ; à
-    défaut, celle de l'adaptateur maintenu du même langage, venue avec le
-    moteur ; à défaut, les sources hors fichiers de test, toute fonction
-    comptant comme publique."""
+    défaut, les sources hors fichiers de test, toute fonction comptant comme
+    publique."""
     code = projet.adaptateur.get("code")
-    if code is None:
-        from socle import installer as installeur
-
-        maintenu = installeur.ADAPTATEURS / f"{projet.adaptateur.get('language', '')}.toml"
-        if maintenu.is_file():
-            code = tomllib.loads(maintenu.read_text(encoding="utf-8")).get("code")
     # Le dossier du socle n'est jamais du code du projet : le moteur y est
     # installé, immuable, et ses fonctions ne sont pas celles du projet.
     socle = [f"{config.DOSSIER}/**"]
@@ -436,7 +427,7 @@ def code_teste(ctx, r):
     nommes = "\n".join(nommes)
     dispenses = dispenses_tests(ctx, r)
     # Un fichier renommé se compare à son ancien nom : ses fonctions n'y sont
-    # pas nouvelles (ADR-0027).
+    # pas nouvelles.
     ancien_nom = {neuf: ancien for ancien, neuf in ctx.renommes.items()}
     for chemin in code:
         texte = ctx.lire(chemin) or ""
@@ -475,21 +466,22 @@ def regression(ctx, r):
     if not correctifs:
         return
     if "command" not in cap:
+        absent = trad(cap["absent"]) if "absent" in cap else trad("non déclarée")
+        remplacement = trad(cap["replacement"]) if "replacement" in cap else "?"
         r.indisponible("tests.regression", trad("capacité absente : {absent} — remplacement : {remplacement}",
-                                                absent=cap.get("absent", trad("non déclarée")),
-                                                remplacement=cap.get("replacement", "?")))
+                                                absent=absent, remplacement=remplacement))
         return
     motifs = cap.get("test_paths") or (cfg_tests(ctx.projet) or {}).get("paths", [])
     for c in correctifs:
         sha, parent = c["sha"], c["parents"][0]
         sujet = c["message"].strip().splitlines()[0]
-        touches = outils.fichiers_changes(ctx.racine, parent, sha)
+        touches = ctx.projet.hors_tiers(outils.fichiers_changes(ctx.racine, parent, sha))
         tests = [t for t in outils.filtrer(touches, motifs) if outils.lire_a(ctx.racine, sha, t) is not None]
         if tests:
             fichiers = {t: outils.lire_a(ctx.racine, sha, t) or "" for t in tests}
             commande = commande_regression(cap, tests)
         else:
-            # Un test écrit dans le module du code (B-0051, mesuré à R6) :
+            # Un test écrit dans le module du code :
             # sur le parent, le seul changement de ses fonctions de test.
             fichiers, noms = tests_du_module(ctx, parent, sha, [t for t in touches if t not in tests])
             commande = cap["module_command"].replace("{names}", " ".join(noms)) \
@@ -506,12 +498,20 @@ def regression(ctx, r):
             continue
         code_parent, sortie = sur_parent
         if code_parent == 0:
+            admise = _admis_par(ctx, sha)
+            if admise:
+                r.avertir("tests.regression", trad("{sha} « {sujet} » : son test passe déjà sur le parent ; admis "
+                                                   "par {id}, une demande validée qui nomme ce commit",
+                                                   sha=sha[:10], sujet=sujet, id=admise))
+                continue
             r.erreur("tests.regression", trad("{sha} « {sujet} » : son test passe déjà sur le parent — il ne "
-                                              "prouve pas le correctif", sha=sha[:10], sujet=sujet))
+                                              "prouve pas le correctif ; si sa preuve dépend de l'environnement, "
+                                              "une demande validée qui nomme ce commit l'admet", sha=sha[:10],
+                                              sujet=sujet))
             continue
         # Un test qui ne se charge pas sur le parent (une compilation cassée,
         # un import manquant) y échoue pour une autre raison que le défaut
-        # (relevé de la passe de recul, D).
+        #.
         chargement = re.search(cap["load_error"], sortie) if cap.get("load_error") else None
         if chargement:
             r.erreur("tests.regression", trad("{sha} « {sujet} » : son test ne se charge pas sur le parent (« "
@@ -523,6 +523,16 @@ def regression(ctx, r):
         if code != 0:
             r.erreur("tests.regression", trad("{sha} « {sujet} » : son test de régression échoue sur le "
                                               "correctif lui-même", sha=sha[:10], sujet=sujet))
+
+
+def _admis_par(ctx, sha: str) -> str | None:
+    """La demande validée dans la plage qui nomme ce correctif par son SHA,
+    sept caractères au moins : l'humain y admet un test dont la preuve dépend
+    de l'environnement (D-0047)."""
+    for d in ctx.validations:
+        if any(sha.startswith(m.group(0)) for m in re.finditer(r"\b[0-9a-f]{7,40}\b", d.texte)):
+            return d.id
+    return None
 
 
 def tests_du_module(ctx, parent: str, sha: str, chemins: list[str]) -> tuple[dict[str, str], list[str]]:
@@ -562,8 +572,11 @@ def tests_du_module(ctx, parent: str, sha: str, chemins: list[str]) -> tuple[dic
 def commande_regression(cap: dict, tests: list[str]) -> str:
     """Remplit `{files}`, `{stems}` et `{test_args}` (un `test_arg` par
     fichier, où `{file}`, `{stem}`, `{module}` et `{dir}`, son dossier, se
-    remplacent ; un même argument ne se répète pas)."""
+    remplacent ; un même argument ne se répète pas). Les arguments se
+    joignent par `test_arg_separator`, une espace sinon : Maven veut une
+    virgule dans `-Dtest=`, le filtre de `dotnet test` un `|`."""
     gabarit = cap.get("test_arg", "--test {stem}")
+    separateur = cap.get("test_arg_separator", " ")
     args = []
     for t in tests:
         module = t[: -len(Path(t).suffix)].replace("/", ".") if Path(t).suffix else t.replace("/", ".")
@@ -576,7 +589,7 @@ def commande_regression(cap: dict, tests: list[str]) -> str:
         cap["command"]
         .replace("{files}", " ".join(tests))
         .replace("{stems}", " ".join(Path(t).stem for t in tests))
-        .replace("{test_args}", " ".join(args))
+        .replace("{test_args}", separateur.join(args))
     )
 
 
@@ -631,7 +644,7 @@ def couverture_mutation(ctx, r):
                                                  "garde-fous), puis le mesurer par un balayage (`socle "
                                                  "mutation-run --record`)", m=m), m)
         elif m in caps and caps[m].get("pending"):
-            # À mesurer (B-0034, P1) : un avertissement, jusqu'au premier
+            # À mesurer : un avertissement, jusqu'au premier
             # balayage, qui pose le plafond mesuré.
             r.avertir("mutation.couverture", trad("module à mesurer : lancer le balayage de mutation et poser "
                                                   "son plafond (`socle mutation-run --record`), ou recopier "
@@ -648,7 +661,7 @@ def vivante(ctx, r):
     """Le balayage de mutation planifié tourne encore. GitHub endort les
     workflows planifiés d'un dépôt public après soixante jours sans activité,
     et le verdict ne peut pas signaler sa propre absence : ce contrôle tourne
-    à chaque push, quand le code bouge (B-0005, `chess:tools/balayage-vivant.sh`)."""
+    à chaque push, quand le code bouge."""
     from socle import mutation
 
     niveau, message, flux, _ = mutation.etat_du_balayage(ctx.projet, ctx.fichiers, ctx.lire)
