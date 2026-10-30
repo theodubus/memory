@@ -13,9 +13,6 @@ personnalisation de BMAD. Une session réelle de bout en bout le confirme
 (F-0024, J-2026-10-20-B). Les projets d'essai sont dans le dossier de
 travail de la session, jetables.
 
-L'essai de la CI des adaptateurs sur GitHub est fini (F-0019, F-0020,
-F-0021) ; le dépôt d'essai ne sert plus, Théo peut le supprimer.
-
 D-0026 est répondue `rien` : B-0048 et B-0018 restent ouverts, « on se le
 garde en tete et on voit si ça finit par etre bloquant ».
 
@@ -96,6 +93,8 @@ garde en tete et on voit si ça finit par etre bloquant ».
    (J-2026-10-29-E). Installé depuis `main` après les correctifs de son
    premier retour (J-2026-10-29-L à J-2026-10-30-A) ; la CI rouge du push
    de sa PR #1 et sa session reprise sans hooks : B-0096 et B-0097 faits ;
-   il continue dans une session neuve sur son seul dépôt (J-2026-10-30-E).
+   il continue dans une session neuve sur son seul dépôt, une fois sa PR #1
+   fusionnée (J-2026-10-30-J) ; les correctifs sont sur `main`
+   (J-2026-10-30-K).
    B-0095 attend son architecture. Attendent le pilote : B-0010, B-0012,
    B-0071 ; le dépôt de distribution : B-0083 ; gardé en tête : B-0048.
