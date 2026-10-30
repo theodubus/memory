@@ -18,8 +18,10 @@ The path in short:
 
 A cloud session that added the socle's repository to install it is not
 resumed: a session with two repositories starts outside the project root,
-without the agent's hooks. The rest happens in a new session on the
-project's repository alone.
+without the agent's hooks. It opens a pull request; once that is merged,
+the rest happens in a new session on the project's repository alone. Not
+before: a new session starts from the default branch, which does not have
+the socle yet.
 
 Right after the installation:
 
