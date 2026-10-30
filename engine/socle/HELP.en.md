@@ -16,6 +16,11 @@ The path in short:
 
 ## 1. Getting started
 
+A cloud session that added the socle's repository to install it is not
+resumed: a session with two repositories starts outside the project root,
+without the agent's hooks. The rest happens in a new session on the
+project's repository alone.
+
 Right after the installation:
 
 1. Describe the project:

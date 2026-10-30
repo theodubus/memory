@@ -745,6 +745,10 @@ MESSAGES: dict[str, str] = {
     "couvrira ce changement une fois validée":
         "loosening without human approval: {cle} — {pourquoi}. Open a request that cites `{cle}`; it will cover this "
         "change once approved",
+    "installation en cours : la branche par défaut n'a pas encore le socle, et {n} fichier(s) protégé(s) changent "
+    "avant sa fusion ({liste})":
+        "installation in progress: the default branch does not have the socle yet, and {n} protected file(s) change "
+        "before it is merged ({liste})",
     "installation du socle : {n} fichier(s) protégé(s) posé(s) — la politique par défaut est celle du cadrage":
         "socle installation: {n} protected file(s) installed — the default policy is the brief's",
     "modification validée par {id}":

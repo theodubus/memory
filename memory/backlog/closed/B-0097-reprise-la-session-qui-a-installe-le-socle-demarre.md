@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0097 — Reprise, la session qui a installé le socle démarre hors de la racine du projet
 
-> statut : ouvert · origine : J-2026-10-30-D · lu : backlog@e00eea09
+> statut : fait · origine : J-2026-10-30-D · ref : J-2026-10-30-E · lu : backlog@e00eea09
 
 Pour installer, la session cloud du projet ajoute le dépôt privé du socle
 (`add_repo`) et le clone. La session devient alors une session à deux

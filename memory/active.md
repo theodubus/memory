@@ -91,7 +91,8 @@ garde en tete et on voit si ça finit par etre bloquant ».
    compatibilité retiré (D-0044) ; B-0085 fait par Théo (J-2026-10-29-A).
 6. Le projet pilote : justcook, un projet neuf de Théo avec BMAD Method
    (J-2026-10-29-E). Installé depuis `main` après les correctifs de son
-   premier retour (J-2026-10-29-L à J-2026-10-30-A) ; sa PR #1 a une CI
-   rouge, à diagnostiquer sur le bloc que Théo collera (J-2026-10-30-C).
+   premier retour (J-2026-10-29-L à J-2026-10-30-A) ; la CI rouge du push
+   de sa PR #1 et sa session reprise sans hooks : B-0096 et B-0097 faits ;
+   il continue dans une session neuve sur son seul dépôt (J-2026-10-30-E).
    B-0095 attend son architecture. Attendent le pilote : B-0010, B-0012,
    B-0071 ; le dépôt de distribution : B-0083 ; gardé en tête : B-0048.

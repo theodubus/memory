@@ -181,3 +181,55 @@ class TestApprobation(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestInstallationEnCours(unittest.TestCase):
+    """B-0096 : sur la pull request qui installe le socle, Théo a écrit son
+    nom dans la politique ; la CI de la PR, qui juge depuis `main`, l'a
+    acceptée, celle du push, qui juge depuis le push précédent, l'a refusée.
+    Tant que la branche par défaut n'a pas le socle, la plage est
+    l'installation."""
+
+    def setUp(self):
+        self.enterContext(unittest.mock.patch.dict(os.environ))
+        os.environ.pop("CLAUDECODE", None)
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-installation-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        git(self.racine, "init", "-q", "-b", "main")
+        (self.racine / "README.md").write_text("# neuf\n")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "départ", "--no-verify")
+        git(self.racine, "checkout", "-q", "-b", "installation")
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "installation", "--no-verify")
+        self.base = git(self.racine, "rev-parse", "HEAD").strip()
+        politique = self.racine / ".socle/policy.toml"
+        texte = politique.read_text()
+        politique.write_text(texte.replace('# name = "Prénom"', 'name = "Théo"') if '# name = "Prénom"' in texte
+                             else texte + "# le nom de l'humain\n")
+        git(self.racine, "commit", "-qam", "le nom de l'humain", "--no-verify")
+
+    def juger(self) -> Rapport:
+        from socle import checks_ratchet as controles_cliquet
+
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="ci", base=self.base,
+                                tete=git(self.racine, "rev-parse", "HEAD").strip())
+        r = Rapport()
+        controles_cliquet.proteges(ctx, r)
+        return r
+
+    def test_avant_la_fusion_un_fichier_protege_corrige_est_l_installation(self):
+        from socle import checks_ratchet as controles_cliquet
+
+        self.assertTrue(controles_cliquet.installation_en_cours(self.racine))
+        r = self.juger()
+        self.assertEqual(r.erreurs("protege.fichiers"), [])
+        self.assertIn("installation en cours : la branche par défaut n'a pas encore le socle", r.texte())
+        # L'installation fusionnée, un fichier protégé ne change plus sans validation.
+        git(self.racine, "checkout", "-q", "main")
+        git(self.racine, "merge", "-q", "--ff-only", "installation")
+        self.assertFalse(controles_cliquet.installation_en_cours(self.racine))
+        self.assertTrue(self.juger().erreurs("protege.fichiers"))
+
