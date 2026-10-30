@@ -153,8 +153,8 @@ def executer_etapes(projet: config.Projet, rapide: bool, rapport: Rapport, flux=
             if p.returncode == 127 or OUTIL_ABSENT.search(sortie):
                 ci = commandes_ci(projet)
                 message += "\n        " + (trad("l'outil manque à cet environnement ; la CI l'installe ainsi : {commandes} "
-                                               "— l'installer ici et, en session cloud, dans le script "
-                                               "d'installation de l'environnement, que chaque session neuve exécute",
+                                               "— l'installer ici ; en session cloud, le hook de démarrage du "
+                                               "socle l'installe dans chaque session neuve",
                                                commandes=" ; ".join(f"`{x}`" for x in ci)) if ci
                                          else trad("l'outil manque à cet environnement : l'installer"))
             rapport.erreur(ident, message)

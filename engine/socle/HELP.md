@@ -25,10 +25,11 @@ Juste après l'installation :
    document, `--repo` seul ; dans un dépôt vide, sans option.
 2. Donner à l'agent les outils que la CI installe pour l'adaptateur
    (pytest, par exemple), que l'installeur cite avec leurs commandes. En
-   session cloud, le conteneur repart de zéro à chaque session : ces
-   commandes vont dans le script d'installation de l'environnement, dans
-   ses réglages. Tant que le projet n'a aucun fichier source, `verify` ne
-   lance ni compilation ni tests, et le dit.
+   session cloud, le conteneur repart de zéro à chaque session : le hook de
+   démarrage du socle les installe dans chaque session neuve ; seule la
+   session qui installe le socle les installe elle-même. Tant que le projet
+   n'a aucun fichier source, `verify` ne lance ni compilation ni tests, et
+   le dit.
 3. Commiter et pousser.
 4. Protéger la branche par défaut sur GitHub (réglages du dépôt,
    « Rules ») : exiger la CI « Socle — verify, contrôles, auto-test » et la

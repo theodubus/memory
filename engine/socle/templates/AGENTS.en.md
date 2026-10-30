@@ -129,7 +129,7 @@ the text.
 
 | Where | What |
 | --- | --- |
-| `.claude/settings.json` | Claude Code hooks: `SessionStart` (derived state), `PreToolUse` (refusals), `Stop` (end-of-turn checks) |
+| `.claude/settings.json` | Claude Code hooks: `SessionStart` (derived state; in a cloud session, the adapter's tools), `PreToolUse` (refusals), `Stop` (end-of-turn checks) |
 | `.socle/git-hooks/` | git hooks: `pre-commit` (fast checks), `prepare-commit-msg` (`Socle-Hooks`, `Socle-Hooks-Since-Commit` trailers), `commit-msg` (private memory leaks; a function with neither test nor waiver, a fix without a test, an agent commit without any agent hook, as warnings), `pre-push` (`verify --fast`, the pushed range judged as the CI will judge it, review before publication) |
 | `.github/workflows/socle.yml` | CI: adapter capabilities, all checks against the base, socle self-test |
 @@LIGNE_MUTATION@@

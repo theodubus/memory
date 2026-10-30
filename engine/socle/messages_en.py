@@ -477,9 +477,11 @@ MESSAGES: dict[str, str] = {
         "describe the project to the agent: `python3 .socle/socle init --brief <document> --repo` (without a "
         "document: `--repo` alone; an empty repository: no option)",
     "donner à l'agent les outils que la CI installe : {commandes}, là où il travaille ; en session cloud, dans le "
-    "script d'installation de l'environnement, que chaque session neuve exécute":
+    "script d'installation de l'environnement ou par l'agent, pour cette session seulement : le hook de démarrage "
+    "du socle les installe ensuite dans chaque session neuve":
         "give the agent the tools the CI installs: {commandes}, where it works; in a cloud session, in the "
-        "environment's setup script, which every new session runs",
+        "environment's setup script or by the agent, for this session only: the socle's start-up hook then "
+        "installs them in every new session",
     "Mettre à jour le socle {version}":
         "Update the socle {version}",
     "Installer le socle {version}":
@@ -1689,12 +1691,18 @@ MESSAGES: dict[str, str] = {
     "test":
         "no test found (`{commande}`): a project that is starting has none yet; the first code is written with its "
         "test",
+    "!! outils de l'adaptateur : `{commande}` dépasse le délai du démarrage ; la relancer avant de vérifier":
+        "!! adapter tools: `{commande}` exceeds the start-up time limit; run it again before verifying",
+    "outils de l'adaptateur installés (session cloud) : `{commande}`":
+        "adapter tools installed (cloud session): `{commande}`",
+    "!! outils de l'adaptateur : `{commande}` a rendu {code} ; la relancer avant de vérifier\n    {queue}":
+        "!! adapter tools: `{commande}` returned {code}; run it again before verifying\n    {queue}",
     "pas encore de code (aucun fichier {sources}) : `{commande}` non lancée ; elle tournera dès le premier fichier":
         "no code yet (no {sources} file): `{commande}` not run; it will run from the first file",
-    "l'outil manque à cet environnement ; la CI l'installe ainsi : {commandes} — l'installer ici et, en session "
-    "cloud, dans le script d'installation de l'environnement, que chaque session neuve exécute":
-        "the tool is missing from this environment; the CI installs it with: {commandes} — install it here and, in a "
-        "cloud session, in the environment's setup script, which every new session runs",
+    "l'outil manque à cet environnement ; la CI l'installe ainsi : {commandes} — l'installer ici ; en session "
+    "cloud, le hook de démarrage du socle l'installe dans chaque session neuve":
+        "the tool is missing from this environment; the CI installs it with: {commandes} — install it here; in a "
+        "cloud session, the socle's start-up hook installs it in every new session",
     "l'outil manque à cet environnement : l'installer":
         "the tool is missing from this environment: install it",
     "`{commande}` a rendu {code}\n        {queue}":
