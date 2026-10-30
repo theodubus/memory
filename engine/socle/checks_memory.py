@@ -471,8 +471,17 @@ def sans_question_de_seance(texte: str) -> str:
     """Le texte d'une entrée, sans la question d'une décision prise en séance :
     elle recopie ce que l'humain a lu dans la conversation, et ne se corrige
     plus une fois sa réponse écrite (B-0100). La lecture se prouve dans ce que
-    l'agent écrit lui-même."""
-    return QUESTION_SEANCE.sub("", texte) if SEANCE.search(texte) else texte
+    l'agent écrit lui-même. Le titre, qui nomme la question, peut nommer ce
+    qu'elle cite (B-0103) ; ce que seul le titre cite se prouve encore."""
+    if not SEANCE.search(texte):
+        return texte
+    m = QUESTION_SEANCE.search(texte)
+    cites = {i for i, _ in memoire.mentions(m.group(0))} if m else set()
+    titre, _, corps = QUESTION_SEANCE.sub("", texte).partition("\n")
+    if titre.startswith("#"):
+        for ident in cites:
+            titre = re.sub(rf"\b{re.escape(ident)}\b(?!@)", "", titre)
+    return f"{titre}\n{corps}"
 
 @controle("memoire.lectures", base=True)
 def lectures(ctx, r):

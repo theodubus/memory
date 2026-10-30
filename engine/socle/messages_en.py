@@ -2238,6 +2238,10 @@ MESSAGES: dict[str, str] = {
         "file holding the question as the human read it",
     "la question doit énoncer la décision en une phrase":
         "the question must state the decision in one sentence",
+    "le titre cite {ids}, que la question posée ne cite pas : le citer avec son empreinte (`ID@…`, que donne "
+    "`socle show`), ou le nommer dans la question":
+        "the title cites {ids}, which the question asked does not cite: cite it with its fingerprint (`ID@…`, given "
+        "by `socle show`), or name it in the question",
     "refus : {erreur}":
         "refused: {erreur}",
     "refus : « {chemin} » n'existe pas dans le dépôt":

@@ -384,6 +384,17 @@ def ecrire_reponse(racine: Path, d: Demande, reponse: str, texte: str, par: str,
     return cr
 
 
+def titre_sans_preuve(question: str, texte: str = "") -> list[str]:
+    """Les identifiants que le titre d'une décision en séance cite seul, sans
+    empreinte : la question posée, recopie de la conversation, n'a pas à
+    prouver ses lectures ; ce que le titre ajoute, si (B-0103). Sans texte,
+    le titre est la question."""
+    if not texte:
+        return []
+    cites = {i for i, _ in memoire.mentions(texte)} | {i for i, _, _ in memoire.citations(question)}
+    return sorted({i for i, _ in memoire.mentions(question)} - cites)
+
+
 def ecrire_seance(projet: config.Projet, question: str, texte: str, reponse: str, par: str, jour: str,
                   canal: str, citation: str = "", sujet: str = "") -> tuple[str, str]:
     """Une décision prise en séance : la question que l'humain a
@@ -395,6 +406,13 @@ def ecrire_seance(projet: config.Projet, question: str, texte: str, reponse: str
     racine = projet.racine
     if len(question.strip()) < 10:
         raise ValueError(trad("la question doit énoncer la décision en une phrase"))
+    seuls = titre_sans_preuve(question, texte)
+    if seuls:
+        # Une fois la réponse écrite, protégée, la décision ne se corrige
+        # plus : son titre se juge avant (B-0103).
+        raise ValueError(trad("le titre cite {ids}, que la question posée ne cite pas : le citer avec son "
+                              "empreinte (`ID@…`, que donne `socle show`), ou le nommer dans la question",
+                              ids=", ".join(seuls)))
     mem = memoire.Memoire.charger(racine)
     ident = mem.prochain_id("D", date=jour, pris_ailleurs=identifiants.pris_ailleurs(racine, "D"))
     lg = langue.du_projet(projet)

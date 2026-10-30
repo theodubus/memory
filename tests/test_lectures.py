@@ -381,6 +381,13 @@ class TestDecisionEnSeance(unittest.TestCase):
                      "## Question posée\n\nRetirer l'outil, la règle (ADR-0001) restant ?\n")
         self.assertEqual(self.erreurs(), [])
 
+    def test_le_titre_d_une_seance_peut_nommer_ce_que_sa_question_cite(self):
+        """B-0103 : le titre de D-0052 nommait B-0092, que sa question citait ;
+        refusé, il ne pouvait plus se corriger."""
+        self.demande("Retirer l'outil, ADR-0001 restant", " · forme : séance",
+                     "## Question posée\n\nRetirer l'outil, la règle (ADR-0001) restant ?\n")
+        self.assertEqual(self.erreurs(), [])
+
     def test_hors_de_la_question_la_lecture_se_prouve_encore(self):
         self.demande("Retirer ce que dit ADR-0001", " · forme : séance",
                      "## Question posée\n\nRetirer l'outil ?\n")

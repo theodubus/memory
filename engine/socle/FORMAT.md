@@ -233,7 +233,9 @@ question telle qu'il l'a lue, et sa réponse citée mot pour mot. `sujet :
 <chemin>` nomme le document qu'elle approuve (`--about`). Elle ne passe pas
 par le contrat des huit sections ; sans réponse, elle est hors contrat. Sa
 question, transcription de la conversation, n'a pas à prouver ses lectures
-par des empreintes.
+par des empreintes, ni son titre ce que la question cite ; un identifiant
+que seul le titre cite se prouve, et `socle decision` refuse de l'écrire
+sans empreinte, la réponse écrite ne laissant plus corriger la décision.
 
 ## La zone privée
 

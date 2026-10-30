@@ -16,6 +16,10 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 ## Consignes en cours
 
+- Le moment venu, donner à Théo ce qu'il faut pour lancer le pilote neuf
+  (création du dépôt, prompt d'installation, gestes sur GitHub, premier
+  message de la session de travail) ; Théo : « garde en tete de me donner
+  ce qu'il faudra pour lancer le pilote le moment venu » (J-2026-10-30-S).
 - La branche de travail est `ccr-7128ec56-nnvoun-v2`, tirée de `main` sur la
   réponse `branche-neuve` de Théo à D-0049 (J-2026-10-30-J) ; l'ancienne
   branche reste, pour les SHA que la mémoire cite.
@@ -74,19 +78,8 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 ## Prochaines étapes
 
-1. Faits : le retrait du code de compatibilité (J-2026-10-20-U), B-0077
-   (J-2026-10-20-X), la documentation, validée par Théo (D-0039,
-   J-2026-10-22-B). D-0037 répondue `rien` pour aujourd'hui ; à terme, le
-   dépôt de distribution séparé (B-0083), à la première version mûre.
-2. Maintenant : le retrait de BMAD fusionné, puis le pilote neuf (point 6).
-3. Faits en attendant le pilote : B-0078, B-0079, B-0080 (J-2026-10-22-C).
-   B-0081 et B-0082 faits sur les réponses de Théo (D-0040, D-0041).
-4. Faits : B-0066, les skills, selon l'option 1 de D-0042 (ADR-0034,
-   J-2026-10-22-H) ; B-0084 (J-2026-10-22-J) ; la CI de l'auto-test
-   protégée de la maintenance de git (J-2026-10-22-I).
-5. B-0076 fait : la section `[code]` poussée par Théo, le dernier repli de
-   compatibilité retiré (D-0044) ; B-0085 fait par Théo (J-2026-10-29-A).
-6. Le projet pilote : justcook, avec BMAD, installé et éprouvé
+1. Maintenant : l'ordre du backlog et B-0092 (D-0052), puis le pilote neuf.
+2. Le projet pilote : justcook, avec BMAD, installé et éprouvé
    (J-2026-10-29-E à J-2026-10-30-M) ; BMAD retiré, le pilote repart d'un
    dépôt neuf, installé sans BMAD, avec le cadrage, la planification faite
    d'abord à la main sous la consigne de ton de Théo (D-0051). Puis la
