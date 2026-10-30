@@ -95,6 +95,6 @@ garde en tete et on voit si ça finit par etre bloquant ».
    un `verify` rouge (J-2026-10-29-L) : B-0089, B-0090 et B-0091 faits ;
    ils sont sur `main` (J-2026-10-29-P) ; la session du pilote se
    réinstalle de zéro. En session cloud, le hook de démarrage installe
-   désormais les outils de l'adaptateur (D-0048, ADR-0035), à fusionner
-   sur `main`. Attendent le pilote : B-0010, B-0012, B-0071 ; le dépôt de
+   désormais les outils de l'adaptateur (D-0048, ADR-0035), sur `main`
+   (J-2026-10-30-A). Attendent le pilote : B-0010, B-0012, B-0071 ; le dépôt de
    distribution : B-0083 ; gardé en tête : B-0048.
