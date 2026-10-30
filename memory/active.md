@@ -5,8 +5,8 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-L'ordre du backlog (ADR-0037), B-0092 et B-0103, faits sur D-0052, dans
-une PR vers `main`. BMAD Method est retiré du socle (ADR-0036). Les
+L'ordre du backlog (ADR-0037), B-0092 et B-0103, faits sur D-0052, sont
+sur `main` (J-2026-10-30-V). BMAD Method est retiré du socle (ADR-0036). Les
 projets d'essai sont dans le dossier de travail de la session, jetables.
 
 D-0026 est répondue `rien` : B-0048 et B-0018 restent ouverts, « on se le
@@ -76,8 +76,8 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 ## Prochaines étapes
 
-1. Maintenant : la PR de l'ordre du backlog fusionnée, puis le pilote neuf
-   (B-0104), dont Théo reçoit ce qu'il faut pour le lancer.
+1. Maintenant : le pilote neuf (B-0104) ; Théo a reçu ce qu'il faut pour
+   le lancer (J-2026-10-30-V), ses retours sont attendus.
 2. La suite se lit dans l'ordre du backlog (`socle state`) : après le
    pilote, la planification (B-0101), puis la répartition entre agents
    (B-0055) ; B-0010, B-0012 et B-0095 attendent le pilote ; gardé en
