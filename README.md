@@ -188,8 +188,11 @@ comprise : la session du projet ajoute ce dépôt, privé, pour le cloner
 hors du dossier de ses dépôts, puis installe avec `--human <nom>`, l'identité git
 du conteneur étant celle de l'agent. Ajouter ce dépôt fait d'elle une
 session à deux dépôts : reprise, elle démarre hors de la racine du projet,
-sans les hooks de l'agent. La session qui installe ne se reprend donc pas ;
-le travail continue dans une session neuve sur le seul dépôt du projet.
+sans les hooks de l'agent. La session qui installe ne se reprend donc pas :
+elle pousse sa branche et ouvre une pull request, que l'humain fusionne.
+Le travail continue ensuite dans une session neuve sur le seul dépôt du
+projet ; pas avant la fusion, une session neuve partant de la branche par
+défaut, qui n'a pas encore le socle.
 
 ## État du projet
 

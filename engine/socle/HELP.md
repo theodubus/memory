@@ -19,8 +19,10 @@ Le parcours en bref :
 
 Une session cloud qui a ajouté le dépôt du socle pour l'installer ne se
 reprend pas : une session à deux dépôts démarre hors de la racine du
-projet, sans les hooks de l'agent. La suite se fait dans une session neuve
-sur le seul dépôt du projet.
+projet, sans les hooks de l'agent. Elle ouvre une pull request ; une fois
+celle-ci fusionnée, la suite se fait dans une session neuve sur le seul
+dépôt du projet. Pas avant : une session neuve part de la branche par
+défaut, qui n'a pas encore le socle.
 
 Juste après l'installation :
 
