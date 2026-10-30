@@ -224,6 +224,17 @@ def cliquet(ctx, r):
                      ctx.projet.chemins.garde_fous)
 
 
+def installation_en_cours(racine) -> bool:
+    """La branche par défaut n'a pas encore le socle : la plage, même jugée
+    depuis un push qui l'a déjà posé, appartient à la pull request qui
+    l'installe, et la CI de celle-ci la juge depuis la branche par défaut
+    (B-0096). Une branche par défaut introuvable ou devinée ne dit rien."""
+    ref = outils.branche_par_defaut(racine)
+    if not ref or outils.branche_par_defaut_devinee(racine):
+        return False
+    return outils.lire_a(racine, ref, config.FORMAT_ACTUEL.lock) is None
+
+
 @controle("protege.fichiers", base=True)
 def proteges(ctx, r):
     """Un fichier protégé ne change qu'avec une demande validée qui cite son
@@ -233,6 +244,13 @@ def proteges(ctx, r):
         if installes:
             r.avertir("protege.fichiers", trad("installation du socle : {n} fichier(s) protégé(s) posé(s) — la "
                                                "politique par défaut est celle du cadrage", n=len(installes)))
+        return
+    if installation_en_cours(ctx.racine):
+        changes = outils.filtrer(ctx.changes, ctx.projet.chemins_proteges())
+        if changes:
+            r.avertir("protege.fichiers", trad("installation en cours : la branche par défaut n'a pas encore le "
+                                               "socle, et {n} fichier(s) protégé(s) changent avant sa fusion "
+                                               "({liste})", n=len(changes), liste=", ".join(changes[:5])))
         return
     motifs = sorted(set(ctx.projet.chemins_proteges()) | set(ctx.projet_base.chemins_proteges()))
 

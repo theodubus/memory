@@ -17,6 +17,11 @@ Le parcours en bref :
 
 ## 1. Démarrer
 
+Une session cloud qui a ajouté le dépôt du socle pour l'installer ne se
+reprend pas : une session à deux dépôts démarre hors de la racine du
+projet, sans les hooks de l'agent. La suite se fait dans une session neuve
+sur le seul dépôt du projet.
+
 Juste après l'installation :
 
 1. Décrire le projet :

@@ -183,6 +183,14 @@ L'installeur termine par les étapes suivantes, chacune avec sa commande. La
 suite est décrite dans [le guide d'utilisation](engine/socle/HELP.md),
 copié dans le projet et affiché par `python3 .socle/socle help`.
 
+**En session cloud de Claude Code**, l'agent peut tout faire, installation
+comprise : la session du projet ajoute ce dépôt, privé, pour le cloner
+hors du dossier de ses dépôts, puis installe avec `--human <nom>`, l'identité git
+du conteneur étant celle de l'agent. Ajouter ce dépôt fait d'elle une
+session à deux dépôts : reprise, elle démarre hors de la racine du projet,
+sans les hooks de l'agent. La session qui installe ne se reprend donc pas ;
+le travail continue dans une session neuve sur le seul dépôt du projet.
+
 ## État du projet
 
 Version <!-- valeur:version -->0.1.0<!-- /valeur -->, en développement.

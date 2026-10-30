@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0096 — Avant la fusion de l'installation, la CI d'un push refuse un fichier protégé que l'humain corrige
 
-> statut : ouvert · origine : J-2026-10-30-D · lu : backlog@e00eea09
+> statut : fait · origine : J-2026-10-30-D · ref : J-2026-10-30-E · lu : backlog@e00eea09
 
 Tant que la branche par défaut n'a pas le socle, la pull request qui
 l'installe est tout entière l'installation : la CI de la PR, qui juge
