@@ -39,7 +39,7 @@ format lisible par script :
 | Chantier actif | le travail en cours et les prochaines étapes |
 | Décisions | une décision par fichier, avec ses raisons |
 | Journal | une entrée datée par événement, en ajout seul |
-| Backlog | les sujets à traiter, un par fichier |
+| Backlog | les sujets à traiter, un par fichier, dans leur ordre : ce que chacun attend, et les jalons |
 | Demandes | les décisions qui attendent l'humain, puis sa réponse |
 
 À chaque session, l'agent reçoit l'état du projet, calculé depuis git et la

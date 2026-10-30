@@ -845,6 +845,9 @@ def exiger_recap(projet: config.Projet, entree: dict) -> int:
         liste = "\n".join(humain.texte(humain.a_faire(projet)))
         suite = humain.prochaines_etapes(projet) or trad("(le chantier actif n'a pas de section « Prochaines "
                                                          "étapes »)")
+        ordre = memoire.lignes_ordre(memoire.Memoire.charger(projet.racine))
+        if ordre:
+            suite += "\n\n" + trad("Selon l'ordre du backlog :") + "\n" + "\n".join(f"- {l}" for l in ordre)
         raisons.append(trad(
             "Tu as agi pendant ce tour, et ton dernier message n'a pas {manque}. Termine par un récap de ce qui a "
             "été fait, puis :\n"

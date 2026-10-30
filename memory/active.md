@@ -5,11 +5,9 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-BMAD Method est retiré du socle (D-0051, ADR-0036, J-2026-10-30-Q), dans
-une PR vers `main` ; restent la déclaration des fichiers tiers et les
-décisions en séance. La planification (B-0101) et la répartition du
-travail entre agents (B-0055) reviennent au socle. Les projets d'essai
-sont dans le dossier de travail de la session, jetables.
+L'ordre du backlog (ADR-0037), B-0092 et B-0103, faits sur D-0052, dans
+une PR vers `main`. BMAD Method est retiré du socle (ADR-0036). Les
+projets d'essai sont dans le dossier de travail de la session, jetables.
 
 D-0026 est répondue `rien` : B-0048 et B-0018 restent ouverts, « on se le
 garde en tete et on voit si ça finit par etre bloquant ».
@@ -78,12 +76,10 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 ## Prochaines étapes
 
-1. Maintenant : l'ordre du backlog et B-0092 (D-0052), puis le pilote neuf.
-2. Le projet pilote : justcook, avec BMAD, installé et éprouvé
-   (J-2026-10-29-E à J-2026-10-30-M) ; BMAD retiré, le pilote repart d'un
-   dépôt neuf, installé sans BMAD, avec le cadrage, la planification faite
-   d'abord à la main sous la consigne de ton de Théo (D-0051). Puis la
-   planification (B-0101), puis la répartition entre agents (B-0055),
-   quand le pilote écrira du code. B-0095 attend son architecture ;
-   attendent le pilote : B-0010, B-0012 ; le dépôt de distribution :
-   B-0083 ; gardé en tête : B-0048 ; pour Théo : B-0102.
+1. Maintenant : la PR de l'ordre du backlog fusionnée, puis le pilote neuf
+   (B-0104), dont Théo reçoit ce qu'il faut pour le lancer.
+2. La suite se lit dans l'ordre du backlog (`socle state`) : après le
+   pilote, la planification (B-0101), puis la répartition entre agents
+   (B-0055) ; B-0010, B-0012 et B-0095 attendent le pilote ; gardé en
+   tête : B-0048 ; à la première version mûre : B-0083 ; pour Théo :
+   B-0102.

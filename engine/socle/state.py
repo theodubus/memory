@@ -297,6 +297,7 @@ def _memoire(mem: memoire.Memoire, projet) -> list[str]:
     for statut, libelle in (("en-cours", a_traduire("en cours")), ("bloque", a_traduire("bloqué"))):
         for e in [e for e in backlog if e.statut == statut][:8]:
             res.append(f"  {trad(libelle)} : {e.id} — {e.titre}")
+    res += [f"  {l}" for l in memoire.lignes_ordre(mem)]
     jours = projet.gf("staleness", "active_days", defaut=7)
     t = outils.git(mem.racine, "log", "-1", "--format=%ct", "--", config.FORMAT_ACTUEL.actif, check=False).strip() \
         if outils.a_des_commits(mem.racine) else ""

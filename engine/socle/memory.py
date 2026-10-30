@@ -546,6 +546,83 @@ def lignes_index(mem: "Memoire", index: str, sauf: set[str] = frozenset()) -> li
     return sorted(res)
 
 
+# --------------------------------------------------------------------------
+# L'ordre du backlog : un sujet attend d'autres sujets (`après`), un jalon
+# est un sujet qui attend ses tâches ; ce qui vient ensuite se calcule.
+# --------------------------------------------------------------------------
+
+
+def dependances(e: Entree) -> list[str]:
+    """Les sujets qu'un sujet du backlog attend (`après : B-0012, B-0014`)."""
+    return [c for t, c in e.refs("apres") if t == "id"]
+
+
+def est_jalon(e: Entree) -> bool:
+    return langue.valeur(nettoyer(e.meta.get("forme", ""))) == "jalon"
+
+
+@dataclass
+class Ordre:
+    """Ce qui vient ensuite : les sujets prêts (ouverts, pas encore en cours,
+    dont tout ce qu'ils attendent est clos), le prochain jalon et ce qui lui
+    reste, et le nombre de sujets qui attendent un sujet non clos."""
+
+    prets: list[Entree]
+    jalon: Entree | None
+    restants: list[str]
+    en_attente: int
+
+
+def ordre(mem: "Memoire") -> Ordre | None:
+    """L'ordre du backlog, s'il en a un : sans `après` ni jalon, rien."""
+    sujets = {e.id: e for e in mem.entrees("B") if not e.archivee and not e.basculee}
+    if not any(dependances(e) or est_jalon(e) for e in sujets.values()):
+        return None
+
+    def ouvert(i: str) -> bool:
+        return i in sujets and sujets[i].statut not in BACKLOG_CLOS
+
+    def attendus(i: str) -> set[str]:
+        """Les sujets ouverts qu'un sujet attend, de proche en proche ; un
+        cycle s'arrête (le contrôle de l'ordre le refuse)."""
+        vus, pile = set(), list(dependances(sujets[i]))
+        while pile:
+            d = pile.pop()
+            if d in vus or d == i or d not in sujets:
+                continue
+            vus.add(d)
+            pile += dependances(sujets[d])
+        return {d for d in vus if ouvert(d)}
+
+    ouverts = sorted(i for i in sujets if ouvert(i))
+    jalons = [i for i in ouverts if est_jalon(sujets[i]) and not any(est_jalon(sujets[d]) for d in attendus(i))]
+    jalon = jalons[0] if jalons else None
+    restants = sorted(attendus(jalon)) if jalon else []
+    # Un sujet en cours ou bloqué n'est plus à prendre : l'état le dit à part.
+    a_prendre = [i for i in ouverts if sujets[i].statut == "ouvert" and not est_jalon(sujets[i])]
+    prets = sorted((i for i in a_prendre if not any(ouvert(d) for d in dependances(sujets[i]))),
+                   key=lambda i: (i not in restants, i))
+    attente = len(a_prendre) - len(prets)
+    return Ordre([sujets[i] for i in prets], sujets[jalon] if jalon else None, restants, attente)
+
+
+def lignes_ordre(mem: "Memoire", plafond: int = 8) -> list[str]:
+    """L'ordre du backlog en lignes, pour l'état et le rappel de fin de tour."""
+    o = ordre(mem)
+    if o is None:
+        return []
+    res = []
+    if o.jalon:
+        res.append(trad("prochain jalon : {id} — {titre} ; reste : {restants}", id=o.jalon.id, titre=o.jalon.titre,
+                        restants=", ".join(o.restants) if o.restants else trad("rien, il se clôt")))
+    res += [trad("prêt : {id} — {titre}", id=e.id, titre=e.titre) for e in o.prets[:plafond]]
+    if len(o.prets) > plafond:
+        res.append(trad("… et {n} autre(s) prêt(s)", n=len(o.prets) - plafond))
+    if o.en_attente:
+        res.append(trad("{n} sujet(s) attendent un sujet ouvert", n=o.en_attente))
+    return res
+
+
 def empreinte_index(mem: "Memoire", index: str, sauf: set[str] = frozenset()) -> str:
     return outils.sha256("\n".join(lignes_index(mem, index, sauf)))[:8]
 

@@ -1035,6 +1035,19 @@ def _cas() -> list[Cas]:
         _clore(c, "B-0001")
         return etage_git(a, c)
 
+    @defaut("sujet-qui-s-attend", "sujet du backlog qui s'attend lui-même (`après`)", "git", "memoire.ordre")
+    def _(a, c):
+        remplacer(c, _sujet(c, "B-0001"), "> statut : ouvert", "> statut : ouvert · après : B-0001")
+        return etage_git(a, c)
+
+    @defaut("fait-avant-ce-qu-il-attend", "jalon fait alors que la tâche qu'il attend est ouverte", "git",
+            "memoire.ordre")
+    def _(a, c):
+        ajouter_sujet(c, "\n## B-0002 — Livrer la multiplication\n\n"
+                         f"> statut : fait · origine : {a.journal} · ref : fichier:calc.py · forme : jalon · "
+                         f"après : B-0001 · lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n")
+        return etage_git(a, c)
+
     # Au-delà du tableau du cadrage.
 
     @defaut("titre-d-entree-illisible", "entrée de journal au titre mal formé, que rien ne lit", "git", "memoire.format")
@@ -1489,6 +1502,14 @@ def _temoins() -> list[tuple[str, Callable]]:
             "commit et la CI")
     def _(a, c):
         _poser_skill(c, SKILL_ESSAI)
+        return etage_git(a, c) or etage_ci(a, c)
+
+    @temoin("un jalon qui attend une tâche ouverte, dans l'ordre, passe le commit et la CI")
+    def _(a, c):
+        ajouter_sujet(c, "\n## B-0002 — Livrer la multiplication\n\n"
+                         f"> statut : ouvert · origine : {a.journal} · forme : jalon · après : B-0001 · "
+                         f"lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n")
+        maj_memoire(c, "Le jalon de la multiplication posé.")
         return etage_git(a, c) or etage_ci(a, c)
 
     @temoin("durcir un garde-fou est libre")

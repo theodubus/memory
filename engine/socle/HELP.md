@@ -64,8 +64,8 @@ Chaque intervention de l'agent qui a agi se termine par deux lignes :
 - **« Ensuite : »** — la suite prévue, et ce que l'agent attend.
 
 À tout moment, `python3 .socle/socle state` donne l'état du projet : le
-commit, la CI, le backlog, les demandes en attente, ce qui revient à
-l'humain. La mémoire se lit dans `memory/`.
+commit, la CI, le backlog et ce qui vient ensuite (le prochain jalon, les
+sujets prêts), les demandes en attente, ce qui revient à l'humain. La mémoire se lit dans `memory/`.
 
 Une procédure du projet qui revient, l'agent l'écrit en skill dans
 `.claude/skills/`, avec une entrée au journal : il la charge ensuite à la

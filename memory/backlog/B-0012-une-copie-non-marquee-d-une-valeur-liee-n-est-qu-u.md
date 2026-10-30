@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0012 — Une copie non marquée d'une valeur liée n'est qu'un avertissement
 
-> statut : ouvert · origine : J-2026-10-10-E
+> statut : ouvert · origine : J-2026-10-10-E · après : B-0104
 
 `docs.valeurs` refuse une valeur marquée fausse, mais ne fait qu'avertir sur
 une copie non marquée de la valeur courante : elle pourrait être une
