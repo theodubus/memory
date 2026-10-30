@@ -21,6 +21,9 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 ## Consignes en cours
 
+- La branche de travail est `ccr-7128ec56-nnvoun-v2`, tirée de `main` sur la
+  réponse `branche-neuve` de Théo à D-0049 (J-2026-10-30-J) ; l'ancienne
+  branche reste, pour les SHA que la mémoire cite.
 - La documentation se conçoit avant de s'écrire, commence par ce dont le
   projet parle et ce qu'il est, ses schémas se vérifient rendus avant le
   push, et elle n'est faite que validée par Théo ; Théo : « fais un petit
