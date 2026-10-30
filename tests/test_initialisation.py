@@ -117,6 +117,17 @@ class TestInstallationVerte(Base):
         self.assertEqual(code, 0, sortie)
         self.assertNotIn("outils que la CI installe", sortie)
 
+    def test_la_protection_de_la_branche_n_exige_que_la_ci(self):
+        """B-0093 : la revue des propriétaires du code, exigée, aurait bloqué
+        toute fusion du pilote : son agent ouvre les pull requests au nom de
+        l'humain, qui ne peut pas approuver les siennes."""
+        self.racine = depot({"calc.py": "x = 1\n"})
+        code, sortie = installer(self.racine)
+        protection = next(e for e in installeur.et_maintenant(self.racine, False, [])
+                          if "protéger la branche par défaut" in e)
+        self.assertIn("un ensemble de règles qui y exige la CI « Socle — verify, contrôles, auto-test » (", protection)
+        self.assertIn("La revue des propriétaires du code ne s'y ajoute que si un autre humain relit", protection)
+
     def test_l_installation_dit_quoi_faire_ensuite(self):
         """B-0034, P2 : l'audit ne montre que ce qui échoue ou avertit, puis
         les étapes de l'humain, dans l'ordre, chacune avec sa commande."""

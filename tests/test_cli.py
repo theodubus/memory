@@ -11,6 +11,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from socle import cli, config, hooks, human as humain, links as liens, memory as memoire, report as rapport
 
@@ -320,7 +321,49 @@ class TestSignataire(unittest.TestCase):
         subprocess.run(["git", "init", "-q", "-b", "main"], cwd=racine, check=True)
         subprocess.run(["git", "config", "user.name", "Théo Essai"], cwd=racine, check=True)
         (racine / "calc.py").write_text("X = 1\n", encoding="utf-8")
-        with contextlib.redirect_stdout(io.StringIO()):
+        # Hors session cloud : l'identité git est alors celle de l'humain.
+        with contextlib.redirect_stdout(io.StringIO()), mock.patch.dict(os.environ, {hooks.SESSION_CLOUD: ""}):
             installeur.installer(racine, "python", "@essai", source=Path(__file__).resolve().parent.parent / "engine")
         self.assertEqual(config.Projet.charger(racine).pol("human", "name"), "Théo Essai")
         self.assertEqual(installeur.diff_politique(racine), [])
+
+    def installer_en_session_cloud(self, **options) -> tuple[Path, str]:
+        from socle import installer as installeur
+
+        racine = Path(tempfile.mkdtemp(prefix="socle-nom-"))
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=racine, check=True)
+        subprocess.run(["git", "config", "user.name", "Claude"], cwd=racine, check=True)
+        sortie = io.StringIO()
+        with contextlib.redirect_stdout(sortie), mock.patch.dict(os.environ, {hooks.SESSION_CLOUD: "true"}):
+            installeur.installer(racine, "python", "@essai", source=Path(__file__).resolve().parent.parent / "engine",
+                                 **options)
+        return racine, sortie.getvalue()
+
+    def test_en_session_cloud_le_nom_git_de_l_agent_ne_signe_pas(self):
+        """B-0094 : le pilote, installé par l'agent en session cloud, nommait
+        l'humain « Claude », l'identité git du conteneur."""
+        racine, sortie = self.installer_en_session_cloud()
+        self.assertEqual(config.Projet.charger(racine).pol("human", "name", defaut=""), "")
+        self.assertIn("écrire ton nom dans `.socle/policy.toml` (`[human] name`) avant de fusionner "
+                      "l'installation", sortie)
+
+    def test_nom_de_l_humain_ne_prend_pas_l_identite_git_de_l_agent(self):
+        from socle import installer as installeur
+
+        racine = Path(tempfile.mkdtemp(prefix="socle-nom-"))
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=racine, check=True)
+        subprocess.run(["git", "config", "user.name", "Claude"], cwd=racine, check=True)
+        with mock.patch.dict(os.environ, {hooks.SESSION_CLOUD: "true"}):
+            self.assertEqual(installeur.nom_de_l_humain(racine), "")
+            self.assertEqual(installeur.nom_de_l_humain(racine, " Théo "), "Théo")
+        with mock.patch.dict(os.environ, {hooks.SESSION_CLOUD: ""}):
+            self.assertEqual(installeur.nom_de_l_humain(racine), "Claude")
+
+    def test_human_donne_le_nom_meme_en_session_cloud(self):
+        racine, sortie = self.installer_en_session_cloud(humain="Théo")
+        self.assertEqual(config.Projet.charger(racine).pol("human", "name"), "Théo")
+        self.assertNotIn("écrire ton nom", sortie)
+        args = cli.analyseur()[0].parse_args(["install", "--target", ".", "--human", "Théo"])
+        self.assertEqual(args.human, "Théo")

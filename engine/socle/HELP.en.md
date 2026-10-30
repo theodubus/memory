@@ -31,8 +31,10 @@ Right after the installation:
    says so.
 3. Commit and push.
 4. Protect the default branch on GitHub (repository settings, "Rules"):
-   require the CI "Socle — verify, checks, self-test" and the code owners'
-   review before any merge. Without it, a red CI does not prevent merging.
+   require the CI "Socle — verify, checks, self-test" before any merge.
+   Without it, a red CI does not prevent merging. The code owners' review
+   is added only if another human reviews: the author of a pull request
+   cannot approve it, and the agent opens its own under the human's name.
 5. Open the agent in the project. It reads the state at start-up, then asks
    a few starting questions in the conversation.
 

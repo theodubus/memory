@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0094 — Sous un agent, l'installeur prend le nom git de l'agent pour celui de l'humain
 
-> statut : ouvert · origine : J-2026-10-30-B · lu : backlog@6da5822d
+> statut : fait · origine : J-2026-10-30-B · ref : J-2026-10-30-C · lu : backlog@6da5822d
 
 L'installeur nomme l'humain dans la politique d'un projet neuf d'après
 `git config user.name` (B-0073) : c'est lui qui signe les réponses que

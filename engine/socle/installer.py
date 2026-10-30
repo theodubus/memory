@@ -320,6 +320,20 @@ def garde_fous_initiaux(cible: Path, texte_adaptateur: str, ch: config.Chemins =
     return texte.replace(exemple, exemple + "".join(entree(m) for m in sorted(modules)), 1)
 
 
+def nom_de_l_humain(cible: Path, donne: str = "") -> str:
+    """Le nom qui signe les réponses que l'agent relaie : celui que l'humain
+    donne (`--human`), sinon son nom git. En session cloud, l'identité git du
+    conteneur est celle de l'agent (« Claude »), pas celle de l'humain : elle
+    ne se prend pas (B-0094)."""
+    from socle import hooks
+
+    if donne.strip():
+        return donne.strip()
+    if os.environ.get(hooks.SESSION_CLOUD) == "true":
+        return ""
+    return outils.git(cible, "config", "user.name", check=False).strip()
+
+
 def politique_nom(texte: str, nom: str) -> str:
     """La politique d'un projet neuf, avec le nom de l'humain qui l'installe :
     il signe les réponses que l'agent relaie. Sans nom, la ligne
@@ -430,7 +444,8 @@ def _poser_moteur(cible: Path, mode: str, source: Path, ch: config.Chemins) -> t
 def _poser_configuration(cible: Path, texte_adaptateur: str, ancien: dict, prive: str | None,
                          relecture: str | None, demandes_privees: bool,
                          langue_memoire: str | None, ch: config.Chemins,
-                         plafonds: dict[str, dict] | None = None, source: str = "") -> tuple[str, list[str]]:
+                         plafonds: dict[str, dict] | None = None, source: str = "",
+                         humain: str = "") -> tuple[str, list[str]]:
     """La politique, l'adaptateur et les garde-fous, posés s'ils manquent ;
     rend la langue de la mémoire."""
     journal = []
@@ -441,7 +456,7 @@ def _poser_configuration(cible: Path, texte_adaptateur: str, ancien: dict, prive
     if langue_memoire and not (cible / ch.politique).is_file():
         politique = politique_langue(politique, langue_memoire)
     if neuf:
-        politique = politique_nom(politique, outils.git(cible, "config", "user.name", check=False).strip())
+        politique = politique_nom(politique, nom_de_l_humain(cible, humain))
     # La langue de la mémoire : celle choisie ici pour un projet neuf, sinon
     # celle que sa politique dit déjà.
     lg = langue_memoire if langue_memoire and not (cible / ch.politique).is_file() else (
@@ -602,7 +617,7 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
               mode: str = config.MODE_PROJET, source: Path | None = None, prive: str | None = None,
               relecture: str | None = None, demandes_privees: bool = False, filtre: str = "git-crypt",
               langue_memoire: str | None = None, avec_bmad: bool = False, version_bmad: str = VERSION_BMAD,
-              plafonds: Path | None = None) -> int:
+              plafonds: Path | None = None, humain: str = "") -> int:
     """Installe ou met à jour le socle dans `cible`, et BMAD Method avant lui
     avec `avec_bmad`. Ses messages sont dans la langue de la mémoire du projet : celle qu'il a
     déjà, ou celle choisie pour un projet neuf."""
@@ -617,13 +632,14 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
             return 2
         return _installer(cible, adaptateur, proprietaire, adoption, mode, source, prive, relecture,
                           demandes_privees, filtre, langue_memoire,
-                          version_bmad if avec_bmad else None, lg, caps, plafonds.name if plafonds else "")
+                          version_bmad if avec_bmad else None, lg, caps, plafonds.name if plafonds else "",
+                          humain)
 
 
 def _installer(cible: Path, adaptateur: str, proprietaire: str, adoption: bool, mode: str, source: Path | None,
                prive: str | None, relecture: str | None, demandes_privees: bool, filtre: str,
                langue_memoire: str | None, version_bmad: str | None = None, lg_projet: str = "fr",
-               plafonds: dict[str, dict] | None = None, source_plafonds: str = "") -> int:
+               plafonds: dict[str, dict] | None = None, source_plafonds: str = "", humain: str = "") -> int:
     ch = config.FORMAT_ACTUEL
 
     refus = _refus_cible(cible)
@@ -676,7 +692,7 @@ def _installer(cible: Path, adaptateur: str, proprietaire: str, adoption: bool, 
 
     # 2. Les fichiers du projet : posés s'ils manquent, jamais écrasés.
     lg, poses = _poser_configuration(cible, texte_adaptateur, ancien, prive, relecture, demandes_privees,
-                                     langue_memoire, ch, plafonds, source_plafonds)
+                                     langue_memoire, ch, plafonds, source_plafonds, humain)
     journal += poses
 
     # 3. La mémoire initiale.
@@ -1028,6 +1044,12 @@ def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str]) -> list[str
                else trad("Installer le socle {version}", version=VERSION))
     etapes.append(trad('commiter puis pousser : `git add -A && git commit -m "{message}" && git push`',
                        message=message))
+    if not mise_a_jour and not str(projet.pol("human", "name", defaut="") or "").strip():
+        # Sans lui, chaque réponse relayée doit nommer l'humain (`--by`).
+        etapes.append(trad("écrire ton nom dans `{politique}` (`[human] name`) avant de fusionner l'installation : "
+                           "il signe les réponses que l'agent relaie. En session cloud, l'identité git est celle "
+                           "de l'agent, que l'installeur ne prend pas ; `--human <nom>` le donne à l'installation",
+                           politique=projet.chemins.politique))
     etapes.append(trad("ouvrir l'agent dans le projet : il lit l'état au démarrage") if mise_a_jour
                   else trad("ouvrir l'agent dans le projet : il lit l'état au démarrage, et te pose les questions "
                             "de départ dans la conversation"))
@@ -1035,9 +1057,13 @@ def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str]) -> list[str
         from socle import state as etat
 
         page = etat.page_protection(projet)
+        # L'auteur d'une pull request ne peut pas l'approuver, et l'agent ouvre
+        # les siennes au nom de l'humain : seul, il ne fusionnerait plus (B-0093).
         etapes.append(trad("après ce premier push, protéger la branche par défaut : un ensemble de règles qui y "
-                           "exige la CI « {ci} » et la revue des propriétaires du code ({page}) ; sans lui, une CI "
-                           "rouge n'empêche pas de fusionner, et `socle state` le signale",
+                           "exige la CI « {ci} » ({page}) ; sans lui, une CI rouge n'empêche pas de fusionner, et "
+                           "`socle state` le signale. La revue des propriétaires du code ne s'y ajoute que si un "
+                           "autre humain relit : l'auteur d'une pull request ne peut pas l'approuver, et l'agent "
+                           "ouvre les siennes au nom de l'humain",
                            ci=etat.nom_de_la_ci(projet), page=page or trad("réglages du dépôt")))
     etapes.append(trad("ensuite, tes gestes, chacun avec sa commande : `python3 .socle/socle help`"))
     return etapes
