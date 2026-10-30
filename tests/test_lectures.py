@@ -338,3 +338,53 @@ class TestModuleLectures(TestLectureUnifiee):
         autre = lectures.entree_englobante(mem, un, 4)
         self.assertFalse(lectures.deja_citee(autre, f"backlog@{lu0}", base, ""))
         self.assertTrue(lectures.deja_citee(None, f"backlog@{lu0}", base, f"lu : backlog@{lu0}"))
+
+
+class TestDecisionEnSeance(unittest.TestCase):
+    """B-0100 : la question d'une décision en séance recopie ce que l'humain a
+    lu ; elle citait ADR-0031 sans empreinte, et sa réponse, protégée, ne
+    laissait plus la corriger."""
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-seance-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        git(self.racine, "init", "-q", "-b", "main")
+        (self.racine / "memory/decisions").mkdir(parents=True)
+        (self.racine / "memory/decisions/ADR-0001-une.md").write_text(adr(1, ""))
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "base")
+        self.base = git(self.racine, "rev-parse", "HEAD").strip()
+        (self.racine / "memory/requests").mkdir(parents=True)
+
+    def demande(self, titre: str, forme: str, corps: str):
+        (self.racine / "memory/requests/D-0001-une.md").write_text(
+            f"<!-- socle: couche=demandes zone=publique -->\n# D-0001 — {titre}\n\n"
+            f"> date : 2026-10-30{forme}\n\n{corps}")
+
+    def erreurs(self) -> list[str]:
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="ci", base=self.base, tete=None)
+        r = Rapport()
+        controles_memoire.lectures(ctx, r)
+        return [c.message for c in r.erreurs("memoire.lectures")]
+
+    def test_sans_question_de_seance_ne_retire_que_la_question_d_une_seance(self):
+        seance = ("# D-0001 — Titre\n\n> date : 2026-10-30 · forme : séance\n\n"
+                  "## Question posée\n\nLa question (ADR-0001).\n\n## Suite\n\nLe reste.\n")
+        texte = controles_memoire.sans_question_de_seance(seance)
+        self.assertNotIn("ADR-0001", texte)
+        self.assertIn("Le reste.", texte)
+        en_file = seance.replace(" · forme : séance", "")
+        self.assertEqual(controles_memoire.sans_question_de_seance(en_file), en_file)
+
+    def test_la_question_d_une_seance_n_a_pas_a_prouver_ses_lectures(self):
+        self.demande("Retirer un outil", " · forme : séance",
+                     "## Question posée\n\nRetirer l'outil, la règle (ADR-0001) restant ?\n")
+        self.assertEqual(self.erreurs(), [])
+
+    def test_hors_de_la_question_la_lecture_se_prouve_encore(self):
+        self.demande("Retirer ce que dit ADR-0001", " · forme : séance",
+                     "## Question posée\n\nRetirer l'outil ?\n")
+        self.assertTrue(any("ADR-0001" in e for e in self.erreurs()))
+        # Une demande posée en file prouve ce que sa question cite.
+        self.demande("Retirer un outil", "", "## Question posée\n\nRetirer l'outil (ADR-0001) ?\n")
+        self.assertTrue(any("ADR-0001" in e for e in self.erreurs()))
