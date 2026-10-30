@@ -176,12 +176,15 @@ def cmd_new(args) -> int:
     # gabarits s'écrivent dans la sienne.
     lg = langue.du_projet(projet)
     squelette = langue.SQUELETTES[lg].get(type_, "")
+    # Ce qui s'affiche avant l'identifiant, imprimé une fois l'entrée
+    # écrite : une sortie coupée (`| head -1`) ne l'empêche plus.
+    index = ""
     if type_ == "F":
         chemin = lieu(ch.canonique)
         _ajouter(chemin, f"\n## {ident} — {titre}\n\n{squelette}\n", langue.entete_fichier("canonique", zone, lg))
     elif type_ == "B":
-        # Le backlog s'affiche avant d'y ajouter : un doublon se voit ici.
-        _afficher_index(mem, "backlog")
+        # Le backlog s'affiche avec le sujet ajouté : un doublon se voit ici.
+        index = _texte_index(mem, "backlog")
         bloc = squelette.format(lu=memoire.empreinte_index(mem, "backlog"))
         # Un fichier par sujet, comme une décision.
         chemin = lieu(ch.backlog) / f"{ident}-{memoire.nom_de_fichier(titre)}.md"
@@ -198,9 +201,9 @@ def cmd_new(args) -> int:
                               f"# {langue.mot(langue.TEXTES, 'titre-journal', lg)} — {jour[:7]}\n", encoding="utf-8")
         _ajouter(chemin, bloc)
     elif type_ == "ADR":
-        # Les décisions s'affichent avant d'en ajouter une : on ne rouvre pas
+        # Les décisions s'affichent avec celle qu'on ajoute : on ne rouvre pas
         # une décision prise sans fait nouveau.
-        _afficher_index(mem, "decisions")
+        index = _texte_index(mem, "decisions")
         chemin = lieu(ch.decisions) / f"{ident}-{memoire.nom_de_fichier(titre)}.md"
         chemin.parent.mkdir(parents=True, exist_ok=True)
         bloc = squelette.format(date=jour, lu=memoire.empreinte_index(mem, "decisions"))
@@ -214,6 +217,8 @@ def cmd_new(args) -> int:
         texte = gabarit("request.md", lg).format(id=ident, titre=titre, date=jour)
         entete = texte.split("\n", 1)[0]
         chemin.write_text(texte.replace(entete, langue.entete_fichier("demandes", zone, lg), 1), encoding="utf-8")
+    if index:
+        print(index)
     print(f"{ident}\t{chemin.relative_to(racine)}")
     return 0
 
@@ -374,13 +379,17 @@ def cmd_url(args) -> int:
     return code
 
 
-def _afficher_index(mem, index: str):
+def _texte_index(mem, index: str) -> str:
     from socle import memory as memoire
 
-    print(trad("--- index {index}@{empreinte} — à citer `lu : {index}@…` ---", index=index,
-               empreinte=memoire.empreinte_index(mem, index)))
     lignes = memoire.lignes_index(mem, index)
-    print("\n".join(lignes) if lignes else trad("(vide)"))
+    return "\n".join([trad("--- index {index}@{empreinte} — à citer `lu : {index}@…` ---", index=index,
+                            empreinte=memoire.empreinte_index(mem, index)),
+                      "\n".join(lignes) if lignes else trad("(vide)")])
+
+
+def _afficher_index(mem, index: str):
+    print(_texte_index(mem, index))
 
 
 def cmd_answer(args) -> int:

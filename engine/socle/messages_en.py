@@ -894,6 +894,34 @@ MESSAGES: dict[str, str] = {
         "Each layer and the instructions file have a size cap.",
     "Chaque sujet a une origine ; un sujet clos a une référence, et il est rangé avec les clos.":
         "Each topic has an origin; a closed topic has a reference, and it is filed with the closed ones.",
+    "Un sujet n'attend (`après`) que des sujets du backlog, jamais lui-même de proche en proche, et ne se dit fait "
+    "qu'une fois clos ce qu'il attend : un jalon ne se clôt pas sur des tâches ouvertes.":
+        "A topic waits (`after`) only on backlog topics, never on itself step by step, and is done only once what it "
+        "waits on is closed: a milestone does not close over open tasks.",
+    "`{id}` : `après` ne nomme que des sujets du backlog ({valeur})":
+        "`{id}`: `after` names only backlog topics ({valeur})",
+    "`{id}` est fait avant `{dep}`, qu'il attend, encore « {statut} »":
+        "`{id}` is done before `{dep}`, which it waits on, still “{statut}”",
+    "`{id}` s'attend lui-même : {cycle}":
+        "`{id}` waits on itself: {cycle}",
+    "sujet du backlog qui s'attend lui-même (`après`)":
+        "backlog topic that waits on itself (`after`)",
+    "jalon fait alors que la tâche qu'il attend est ouverte":
+        "milestone done while the task it waits on is open",
+    "un jalon qui attend une tâche ouverte, dans l'ordre, passe le commit et la CI":
+        "a milestone that waits on an open task, in order, passes the commit and the CI",
+    "prochain jalon : {id} — {titre} ; reste : {restants}":
+        "next milestone: {id} — {titre}; left: {restants}",
+    "rien, il se clôt":
+        "nothing, it can close",
+    "Selon l'ordre du backlog :":
+        "According to the backlog's order:",
+    "prêt : {id} — {titre}":
+        "ready: {id} — {titre}",
+    "… et {n} autre(s) prêt(s)":
+        "… and {n} more ready",
+    "{n} sujet(s) attendent un sujet ouvert":
+        "{n} topic(s) wait on an open topic",
     "Du code a changé et la mémoire non : la fin de tour attend sa mise à jour.":
         "Code changed and the memory did not: the end of turn waits for its update.",
     "Durcir un garde-fou est libre ; l'assouplir exige une demande validée qui cite la clé (politique, point 1).":
@@ -2238,6 +2266,10 @@ MESSAGES: dict[str, str] = {
         "file holding the question as the human read it",
     "la question doit énoncer la décision en une phrase":
         "the question must state the decision in one sentence",
+    "le titre cite {ids}, que la question posée ne cite pas : le citer avec son empreinte (`ID@…`, que donne "
+    "`socle show`), ou le nommer dans la question":
+        "the title cites {ids}, which the question asked does not cite: cite it with its fingerprint (`ID@…`, given "
+        "by `socle show`), or name it in the question",
     "refus : {erreur}":
         "refused: {erreur}",
     "refus : « {chemin} » n'existe pas dans le dépôt":

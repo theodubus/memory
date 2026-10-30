@@ -117,7 +117,8 @@ plus bas). Modifié, il porte une référence de preuve qu'il n'avait pas.
 
 Réécrit librement, borné par son budget. Il ne définit aucun identifiant :
 un identifiant est stable, l'actif ne l'est pas. Il renvoie aux entrées du
-backlog et du journal.
+backlog et du journal. L'ordre du travail ne s'y recopie pas : il se tient
+au backlog, d'où l'état le calcule.
 
 ### Décisions — `ADR-`
 
@@ -167,6 +168,25 @@ projet existant. Un sujet rangé garde son identifiant et le plafond d'un
 sujet. Une bascule en privé copie le fichier sous `private/backlog/` (ou son
 sous-dossier des clos), et un fichier public garde l'identifiant, comme
 pour une décision.
+
+L'ordre du travail se tient au backlog. Un sujet attend d'autres sujets
+par `après : B-0012, B-0014` ; un jalon est un sujet marqué `forme : jalon`,
+qui attend ses tâches (et le jalon d'avant, s'il y en a un). L'état en
+calcule ce qui vient ensuite : le prochain jalon, ouvert, qu'aucun jalon
+ouvert ne précède, avec ce qui lui reste ; les sujets prêts, ouverts et
+pas encore en cours, dont tout ce qu'ils attendent est clos, ceux du prochain jalon d'abord ; et le
+nombre de sujets qui attendent encore. Le rappel de fin de tour le redonne.
+Le contrôle de l'ordre refuse un `après` qui nomme autre chose qu'un sujet
+du backlog, un sujet qui s'attend lui-même de proche en proche, et un sujet
+`fait` avant ce qu'il attend : un jalon ne se clôt pas sur des tâches
+ouvertes. Un sujet abandonné peut laisser ce qu'il attendait ; un sujet
+clos, fait ou abandonné, ne retient plus ceux qui l'attendent.
+
+```markdown
+# B-0020 — La recherche par ingrédient livrée
+
+> statut : ouvert · origine : D-0003 · forme : jalon · après : B-0021, B-0022
+```
 
 Un fait archivé dans le journal reste défini, donc toute référence vers lui
 reste vivante.
@@ -233,7 +253,9 @@ question telle qu'il l'a lue, et sa réponse citée mot pour mot. `sujet :
 <chemin>` nomme le document qu'elle approuve (`--about`). Elle ne passe pas
 par le contrat des huit sections ; sans réponse, elle est hors contrat. Sa
 question, transcription de la conversation, n'a pas à prouver ses lectures
-par des empreintes.
+par des empreintes, ni son titre ce que la question cite ; un identifiant
+que seul le titre cite se prouve, et `socle decision` refuse de l'écrire
+sans empreinte, la réponse écrite ne laissant plus corriger la décision.
 
 ## La zone privée
 
@@ -380,7 +402,9 @@ interne, que `socle show` dit dans la langue du projet.
 | champ `report` | report | deferred |
 | champ `forme` | forme | form |
 | champ `sujet` | sujet | about |
+| champ `apres` | après | after |
 | valeur `seance` | séance | session |
+| valeur `jalon` | jalon | milestone |
 | statut F `mesure` | mesuré | measured |
 | statut F `suppose` | supposé | assumed |
 | statut F `refute` | réfuté | refuted |

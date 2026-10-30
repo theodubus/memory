@@ -228,6 +228,17 @@ class TestSeance(unittest.TestCase):
         self.assertIsNone(demandes.illisible(self.projet, d))
         self.assertTrue(d.accepte("approuver et continuer"))
 
+    def test_ecrire_seance_refuse_un_titre_qui_cite_seul_un_identifiant(self):
+        """B-0103 : refusé après coup, le titre ne se corrige plus ; il se juge
+        avant d'écrire."""
+        self.assertEqual(demandes.titre_sans_preuve("Retirer B-0001", "Retirer l'outil ?"), ["B-0001"])
+        self.assertEqual(demandes.titre_sans_preuve("Retirer B-0001", "Retirer B-0001 ?"), [])
+        self.assertEqual(demandes.titre_sans_preuve("Retirer B-0001@0123abcd", "Retirer l'outil ?"), [])
+        with self.assertRaises(ValueError):
+            demandes.ecrire_seance(self.projet, "Approuver la spec et B-0001", "Tu approuves la spec ?", "valider",
+                                   "Théo", "2026-10-19", "conversation", "Oui, approuvé.")
+        self.assertEqual(list((self.racine / "memory/requests").glob("D-*.md")), [])
+
     def test_une_seance_relayee_sans_citation_est_refusee(self):
         with self.assertRaises(ValueError):
             demandes.ecrire_seance(self.projet, "Approuver la spec de triple", "", "valider", "Théo", "2026-10-19",

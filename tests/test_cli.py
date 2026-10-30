@@ -119,6 +119,19 @@ class TestCommandes(unittest.TestCase):
         adr = (self.racine / "memory/decisions/ADR-0002-garder-la-constante.md").read_text()
         self.assertIn(f"lu : decisions@{memoire.empreinte_index(mem, 'decisions')}", adr)
 
+    def test_new_ecrit_le_sujet_meme_si_sa_sortie_est_coupee(self):
+        """B-0092 : `socle new backlog … | head -1` ne créait rien, la sortie
+        coupée l'arrêtant avant l'écriture."""
+        class TubeCoupe(io.StringIO):
+            def write(self, s):
+                if "\n" in self.getvalue():
+                    raise BrokenPipeError
+                return super().write(s)
+
+        with contextlib.redirect_stdout(TubeCoupe()), self.assertRaises(BrokenPipeError):
+            cli.cmd_new(argparse.Namespace(root=str(self.racine), type="backlog", title="Un sujet coupé"))
+        self.assertTrue((self.racine / "memory/backlog/B-0002-un-sujet-coupe.md").is_file())
+
     def test_prochaines_etapes_du_chantier_actif(self):
         self.assertEqual(humain.prochaines_etapes(self.projet), "1. Ajouter triple (B-0001).")
 

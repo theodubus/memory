@@ -523,6 +523,24 @@ class TestTraceDesRefusDeFinDeTourEtDeGit(unittest.TestCase):
         self.assertIn('"block"', sortie)
         self.assertEqual(self.dernier_refus()[2:], ["r", "Stop:recap"])
 
+    def test_exiger_recap_rappelle_l_ordre_du_backlog(self):
+        import json
+        import tempfile
+        from pathlib import Path
+
+        backlog = self.racine / "memory/backlog"
+        backlog.mkdir(parents=True, exist_ok=True)
+        for ident, meta in (("B-0001", ""), ("B-0002", " · forme : jalon · après : B-0001")):
+            f = backlog / f"{ident}-essai.md"
+            f.write_text(f"<!-- socle: couche=backlog zone=publique -->\n# {ident} — Le sujet {ident}\n\n"
+                         f"> statut : ouvert · origine : fichier:calc.py{meta}\n\nPour l'essai.\n")
+            self.addCleanup(f.unlink)
+        transcript = Path(tempfile.mkdtemp()) / "t.jsonl"
+        transcript.write_text(json.dumps({"type": "assistant", "message": {"content": "Fait."}}))
+        sortie = self.appeler(hooks.exiger_recap, self.projet, {"session_id": "o", "transcript_path": str(transcript)})
+        self.assertIn("prochain jalon : B-0002 — Le sujet B-0002 ; reste : B-0001", sortie)
+        self.assertIn("prêt : B-0001 — Le sujet B-0001", sortie)
+
     def test_git_pre_commit_trace_les_controles_en_echec(self):
         import subprocess
 

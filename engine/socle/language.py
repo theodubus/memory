@@ -39,6 +39,7 @@ CHAMPS = {
     "report": {"fr": "report", "en": "deferred"},
     "forme": {"fr": "forme", "en": "form"},
     "sujet": {"fr": "sujet", "en": "about"},
+    "apres": {"fr": "après", "en": "after"},
 }
 
 # Statuts, par type d'entrée : « abandoned » est un sujet abandonné ou une
@@ -55,7 +56,8 @@ STATUTS = {
 }
 
 # Valeurs d'un champ qui se comparent : `pour : humain`.
-VALEURS = {"humain": {"fr": "humain", "en": "human"}, "seance": {"fr": "séance", "en": "session"}}
+VALEURS = {"humain": {"fr": "humain", "en": "human"}, "seance": {"fr": "séance", "en": "session"},
+           "jalon": {"fr": "jalon", "en": "milestone"}}
 
 # L'en-tête d'un fichier : `<!-- socle: couche=canonique zone=publique -->`.
 ENTETE = {"couche": {"fr": "couche", "en": "layer"}, "zone": {"fr": "zone", "en": "zone"}}

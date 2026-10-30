@@ -62,7 +62,8 @@ Each intervention of the agent that acted ends with two lines:
 - **"Next:"** — what comes next, and what the agent is waiting for.
 
 At any time, `python3 .socle/socle state` gives the project's state: the
-commit, the CI, the backlog, the pending requests, what is up to the human.
+commit, the CI, the backlog and what comes next (the next milestone, the
+ready topics), the pending requests, what is up to the human.
 The memory is read in `memory/`.
 
 A project procedure that comes back, the agent writes as a skill in

@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0052-faire-l-ordre-du-backlog-et-b-0092-avant-le-pilote.md, dont l'empreinte suit.
+reponse = "oui"
+texte = ""
+par = "Théo"
+date = "2026-10-30"
+canal = "conversation"
+citation = "Fusionné, et oui fait ordre backlog et b92 avant pilote, et garde en tete de me donner ce qu'il faudra pour lancer le pilote le moment venu"
+empreinte = "sha256:3d99372faefb947bf87134ffdcb6793c485e071105dc654fcec71e9954115c1c"

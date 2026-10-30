@@ -471,8 +471,17 @@ def sans_question_de_seance(texte: str) -> str:
     """Le texte d'une entrée, sans la question d'une décision prise en séance :
     elle recopie ce que l'humain a lu dans la conversation, et ne se corrige
     plus une fois sa réponse écrite (B-0100). La lecture se prouve dans ce que
-    l'agent écrit lui-même."""
-    return QUESTION_SEANCE.sub("", texte) if SEANCE.search(texte) else texte
+    l'agent écrit lui-même. Le titre, qui nomme la question, peut nommer ce
+    qu'elle cite (B-0103) ; ce que seul le titre cite se prouve encore."""
+    if not SEANCE.search(texte):
+        return texte
+    m = QUESTION_SEANCE.search(texte)
+    cites = {i for i, _ in memoire.mentions(m.group(0))} if m else set()
+    titre, _, corps = QUESTION_SEANCE.sub("", texte).partition("\n")
+    if titre.startswith("#"):
+        for ident in cites:
+            titre = re.sub(rf"\b{re.escape(ident)}\b(?!@)", "", titre)
+    return f"{titre}\n{corps}"
 
 @controle("memoire.lectures", base=True)
 def lectures(ctx, r):
@@ -605,6 +614,38 @@ def backlog(ctx, r):
                      trad("`{id}` est rangé parmi les sujets clos alors qu'il est « {statut} » : `python3 "
                           ".socle/socle archive` le remet parmi les ouverts", id=e.id, statut=e.statut),
                      e.fichier, e.ligne)
+
+
+@controle("memoire.ordre")
+def ordre(ctx, r):
+    """Un sujet n'attend (`après`) que des sujets du backlog, jamais lui-même
+    de proche en proche, et ne se dit fait qu'une fois clos ce qu'il attend :
+    un jalon ne se clôt pas sur des tâches ouvertes."""
+    sujets = {e.id: e for e in ctx.memoire.entrees("B") if not e.archivee and not e.basculee}
+    for e in sujets.values():
+        if "apres" not in e.meta:
+            continue
+        refs = e.refs("apres")
+        if not refs or any(t != "id" or not re.fullmatch(r"P?B-\d{4}", c) for t, c in refs):
+            r.erreur("memoire.ordre", trad("`{id}` : `après` ne nomme que des sujets du backlog ({valeur})",
+                                           id=e.id, valeur=e.meta["apres"]), e.fichier, e.ligne)
+        if e.statut == "fait":
+            for d in memoire.dependances(e):
+                if d in sujets and sujets[d].statut not in memoire.BACKLOG_CLOS:
+                    r.erreur("memoire.ordre", trad("`{id}` est fait avant `{dep}`, qu'il attend, encore « {statut} »",
+                                                   id=e.id, dep=d, statut=sujets[d].statut), e.fichier, e.ligne)
+    # Un cycle se dit une fois, depuis le plus petit de ses sujets.
+    for depart in sorted(sujets):
+        pile = [[depart]]
+        while pile:
+            chemin = pile.pop()
+            suivants = memoire.dependances(sujets[chemin[-1]])
+            if depart in suivants:
+                e = sujets[depart]
+                r.erreur("memoire.ordre", trad("`{id}` s'attend lui-même : {cycle}", id=depart,
+                                               cycle=" → ".join(chemin + [depart])), e.fichier, e.ligne)
+                break
+            pile += [chemin + [d] for d in suivants if d in sujets and d > depart and d not in chemin]
 
 
 # --------------------------------------------------------------------------
