@@ -623,6 +623,7 @@ def cmd_install(args) -> int:
         avec_bmad=getattr(args, "with_bmad", False),
         version_bmad=getattr(args, "bmad_version", None) or installeur.VERSION_BMAD,
         plafonds=Path(args.mutation_caps).resolve() if getattr(args, "mutation_caps", None) else None,
+        humain=getattr(args, "human", None) or "",
     )
 
 
@@ -881,6 +882,8 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
                              "chemin d'un .toml", adaptateurs=", ".join(sorted(
                                  x.stem for x in (Path(__file__).resolve().parent / "adapters").glob("*.toml")))))
     s.add_argument("--owner", default="", help=trad("propriétaire pour CODEOWNERS, ex. @theodubus"))
+    s.add_argument("--human", help=trad("le nom de l'humain, qui signe les réponses que l'agent relaie (défaut : son "
+                                        "nom git, hors session cloud)"))
     s.add_argument("--adoption", action="store_true", help=trad("projet existant : plafonds au niveau actuel"))
     s.add_argument("--mode", choices=(config.MODE_PROJET, config.MODE_AMONT), default=config.MODE_PROJET)
     s.add_argument("--private", choices=("compagnon", "chiffre"), help=trad("mémoire privée, et son mode"))

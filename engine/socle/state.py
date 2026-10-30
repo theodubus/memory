@@ -168,8 +168,8 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
         revue = detail[len(nom):] if nom and detail.startswith(nom) else ""
         if exigee is False:
             elements.append(humain.Element(
-                "action", trad("protéger la branche `{nom}` : y exiger la CI « {ci} » avant toute fusion, et la revue "
-                               "des propriétaires du code (CODEOWNERS)", nom=nom, ci=nom_de_la_ci(projet)),
+                "action", trad("protéger la branche `{nom}` : y exiger la CI « {ci} » avant toute fusion", nom=nom,
+                               ci=nom_de_la_ci(projet)),
                 page_protection(projet) or ""))
         lignes += _balayage(projet, elements)
         if exigee:

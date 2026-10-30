@@ -17,6 +17,13 @@ Le parcours en bref :
 
 ## 1. Démarrer
 
+Une session cloud qui a ajouté le dépôt du socle pour l'installer ne se
+reprend pas : une session à deux dépôts démarre hors de la racine du
+projet, sans les hooks de l'agent. Elle ouvre une pull request ; une fois
+celle-ci fusionnée, la suite se fait dans une session neuve sur le seul
+dépôt du projet. Pas avant : une session neuve part de la branche par
+défaut, qui n'a pas encore le socle.
+
 Juste après l'installation :
 
 1. Décrire le projet :
@@ -32,9 +39,11 @@ Juste après l'installation :
    le dit.
 3. Commiter et pousser.
 4. Protéger la branche par défaut sur GitHub (réglages du dépôt,
-   « Rules ») : exiger la CI « Socle — verify, contrôles, auto-test » et la
-   revue des propriétaires du code avant toute fusion. Sans cela, une CI
-   rouge n'empêche pas de fusionner.
+   « Rules ») : exiger la CI « Socle — verify, contrôles, auto-test » avant
+   toute fusion. Sans cela, une CI rouge n'empêche pas de fusionner. La
+   revue des propriétaires du code ne s'y ajoute que si un autre humain
+   relit : l'auteur d'une pull request ne peut pas l'approuver, et l'agent
+   ouvre les siennes au nom de l'humain.
 5. Ouvrir l'agent dans le projet. Il lit l'état au démarrage, puis pose
    quelques questions de départ dans la conversation.
 

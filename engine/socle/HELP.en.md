@@ -16,6 +16,13 @@ The path in short:
 
 ## 1. Getting started
 
+A cloud session that added the socle's repository to install it is not
+resumed: a session with two repositories starts outside the project root,
+without the agent's hooks. It opens a pull request; once that is merged,
+the rest happens in a new session on the project's repository alone. Not
+before: a new session starts from the default branch, which does not have
+the socle yet.
+
 Right after the installation:
 
 1. Describe the project:
@@ -31,8 +38,10 @@ Right after the installation:
    says so.
 3. Commit and push.
 4. Protect the default branch on GitHub (repository settings, "Rules"):
-   require the CI "Socle — verify, checks, self-test" and the code owners'
-   review before any merge. Without it, a red CI does not prevent merging.
+   require the CI "Socle — verify, checks, self-test" before any merge.
+   Without it, a red CI does not prevent merging. The code owners' review
+   is added only if another human reviews: the author of a pull request
+   cannot approve it, and the agent opens its own under the human's name.
 5. Open the agent in the project. It reads the state at start-up, then asks
    a few starting questions in the conversation.
 

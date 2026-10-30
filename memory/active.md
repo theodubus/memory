@@ -21,6 +21,9 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 ## Consignes en cours
 
+- La branche de travail est `ccr-7128ec56-nnvoun-v2`, tirée de `main` sur la
+  réponse `branche-neuve` de Théo à D-0049 (J-2026-10-30-J) ; l'ancienne
+  branche reste, pour les SHA que la mémoire cite.
 - La documentation se conçoit avant de s'écrire, commence par ce dont le
   projet parle et ce qu'il est, ses schémas se vérifient rendus avant le
   push, et elle n'est faite que validée par Théo ; Théo : « fais un petit
@@ -89,12 +92,10 @@ garde en tete et on voit si ça finit par etre bloquant ».
    protégée de la maintenance de git (J-2026-10-22-I).
 5. B-0076 fait : la section `[code]` poussée par Théo, le dernier repli de
    compatibilité retiré (D-0044) ; B-0085 fait par Théo (J-2026-10-29-A).
-6. Le projet pilote : un projet neuf de Théo, avec BMAD Method, cadrage
-   écrit (J-2026-10-29-E). La branche est fusionnée sur `main`
-   (J-2026-10-29-K). L'installation du pilote (justcook) s'est arrêtée sur
-   un `verify` rouge (J-2026-10-29-L) : B-0089, B-0090 et B-0091 faits ;
-   ils sont sur `main` (J-2026-10-29-P) ; la session du pilote se
-   réinstalle de zéro. En session cloud, le hook de démarrage installe
-   désormais les outils de l'adaptateur (D-0048, ADR-0035), à fusionner
-   sur `main`. Attendent le pilote : B-0010, B-0012, B-0071 ; le dépôt de
-   distribution : B-0083 ; gardé en tête : B-0048.
+6. Le projet pilote : justcook, un projet neuf de Théo avec BMAD Method
+   (J-2026-10-29-E). Installé depuis `main` après les correctifs de son
+   premier retour (J-2026-10-29-L à J-2026-10-30-A) ; la CI rouge du push
+   de sa PR #1 et sa session reprise sans hooks : B-0096 et B-0097 faits ;
+   il continue dans une session neuve sur son seul dépôt (J-2026-10-30-E).
+   B-0095 attend son architecture. Attendent le pilote : B-0010, B-0012,
+   B-0071 ; le dépôt de distribution : B-0083 ; gardé en tête : B-0048.

@@ -494,11 +494,20 @@ MESSAGES: dict[str, str] = {
     "conversation":
         "open the agent in the project: it reads the state at startup, and asks you the starting questions in the "
         "conversation",
-    "après ce premier push, protéger la branche par défaut : un ensemble de règles qui y exige la CI « {ci} » et la "
-    "revue des propriétaires du code ({page}) ; sans lui, une CI rouge n'empêche pas de fusionner, et `socle state` "
-    "le signale":
-        "after this first push, protect the default branch: a ruleset that requires the CI “{ci}” and the code "
-        "owners' review there ({page}); without it, a red CI does not prevent merging, and `socle state` reports it",
+    "après ce premier push, protéger la branche par défaut : un ensemble de règles qui y exige la CI « {ci} » "
+    "({page}) ; sans lui, une CI rouge n'empêche pas de fusionner, et `socle state` le signale. La revue des "
+    "propriétaires du code ne s'y ajoute que si un autre humain relit : l'auteur d'une pull request ne peut pas "
+    "l'approuver, et l'agent ouvre les siennes au nom de l'humain":
+        "after this first push, protect the default branch: a ruleset that requires the CI “{ci}” there ({page}); "
+        "without it, a red CI does not prevent merging, and `socle state` reports it. The code owners' review is "
+        "added only if another human reviews: the author of a pull request cannot approve it, and the agent opens "
+        "its own under the human's name",
+    "écrire ton nom dans `{politique}` (`[human] name`) avant de fusionner l'installation : il signe les réponses "
+    "que l'agent relaie. En session cloud, l'identité git est celle de l'agent, que l'installeur ne prend pas ; "
+    "`--human <nom>` le donne à l'installation":
+        "write your name in `{politique}` (`[human] name`) before merging the installation: it signs the answers "
+        "the agent relays. In a cloud session, the git identity is the agent's, which the installer does not take; "
+        "`--human <name>` gives it at installation",
     "réglages du dépôt":
         "repository settings",
     "ensuite, tes gestes, chacun avec sa commande : `python3 .socle/socle help`":
@@ -736,6 +745,10 @@ MESSAGES: dict[str, str] = {
     "couvrira ce changement une fois validée":
         "loosening without human approval: {cle} — {pourquoi}. Open a request that cites `{cle}`; it will cover this "
         "change once approved",
+    "installation en cours : la branche par défaut n'a pas encore le socle, et {n} fichier(s) protégé(s) changent "
+    "avant sa fusion ({liste})":
+        "installation in progress: the default branch does not have the socle yet, and {n} protected file(s) change "
+        "before it is merged ({liste})",
     "installation du socle : {n} fichier(s) protégé(s) posé(s) — la politique par défaut est celle du cadrage":
         "socle installation: {n} protected file(s) installed — the default policy is the brief's",
     "modification validée par {id}":
@@ -1169,10 +1182,8 @@ MESSAGES: dict[str, str] = {
         "memory   : unreadable ({erreur}) — run `python3 .socle/socle check`",
     "demandes : illisibles ({erreur})":
         "requests : unreadable ({erreur})",
-    "protéger la branche `{nom}` : y exiger la CI « {ci} » avant toute fusion, et la revue des propriétaires du code "
-    "(CODEOWNERS)":
-        "protect the branch `{nom}`: require the CI “{ci}” there before any merge, and the code owners' review "
-        "(CODEOWNERS)",
+    "protéger la branche `{nom}` : y exiger la CI « {ci} » avant toute fusion":
+        "protect the branch `{nom}`: require the CI “{ci}” there before any merge",
     "branche  : {nom} — CI du socle exigée avant fusion{revue}":
         "branch   : {nom} — socle CI required before merging{revue}",
     "branche  : {nom} — CI du socle NON exigée : une CI rouge n'empêche pas de fusionner":
@@ -1426,6 +1437,9 @@ MESSAGES: dict[str, str] = {
         ".toml",
     "propriétaire pour CODEOWNERS, ex. @theodubus":
         "owner for CODEOWNERS, e.g. @theodubus",
+    "le nom de l'humain, qui signe les réponses que l'agent relaie (défaut : son nom git, hors session cloud)":
+        "the human's name, which signs the answers the agent relays (default: their git name, outside a cloud "
+        "session)",
     "projet existant : plafonds au niveau actuel":
         "existing project: caps at the current level",
     "mémoire privée, et son mode":

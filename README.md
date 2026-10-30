@@ -177,10 +177,22 @@ PYTHONPATH=/tmp/socle/engine python3 -m socle install --target . --owner @<propr
 | `--review lots` | exige la relecture de l'humain avant toute publication |
 | `--language en` | mémoire et messages en anglais |
 | `--adapter <nom>` | impose le langage au lieu de le déduire |
+| `--human <nom>` | le nom de l'humain, qui signe les réponses que l'agent relaie ; par défaut son nom git, sauf en session cloud, où l'identité git est celle de l'agent |
 
 L'installeur termine par les étapes suivantes, chacune avec sa commande. La
 suite est décrite dans [le guide d'utilisation](engine/socle/HELP.md),
 copié dans le projet et affiché par `python3 .socle/socle help`.
+
+**En session cloud de Claude Code**, l'agent peut tout faire, installation
+comprise : la session du projet ajoute ce dépôt, privé, pour le cloner
+hors du dossier de ses dépôts, puis installe avec `--human <nom>`, l'identité git
+du conteneur étant celle de l'agent. Ajouter ce dépôt fait d'elle une
+session à deux dépôts : reprise, elle démarre hors de la racine du projet,
+sans les hooks de l'agent. La session qui installe ne se reprend donc pas :
+elle pousse sa branche et ouvre une pull request, que l'humain fusionne.
+Le travail continue ensuite dans une session neuve sur le seul dépôt du
+projet ; pas avant la fusion, une session neuve partant de la branche par
+défaut, qui n'a pas encore le socle.
 
 ## État du projet
 
