@@ -6,27 +6,43 @@
 ## Décision demandée
 
 Choisir comment faire passer la CI de la PR #10, que le contrôle des
-correctifs bloque sur un commit déjà poussé dont le test échoue sur
-lui-même dans l'environnement de la CI de GitHub.
+correctifs bloque sur un commit déjà poussé : soit en retirant ce commit
+de l'historique, soit en l'acceptant tel qu'il est.
 
 ## Contexte
 
-La CI de la PR #10 n'échoue que sur `tests.regression`, le contrôle qui
-rejoue le test de chaque correctif sur son parent, où il doit échouer, puis
-sur le correctif lui-même, où il doit passer. Il bloque le correctif
-b61611e, celui du nom de l'humain (B-0094) : sur ce commit, un test de
-l'installeur, `test_l_installation_dit_quoi_faire_ensuite`, échoue. La
-nouvelle étape « écrire ton nom » ne s'affiche que sans nom git ; la CI de
-GitHub n'a pas d'identité git, ce conteneur en a une ; elle s'y plaçait
-avant l'étape que le test attend en troisième. Le commit suivant, 1c01c86,
-l'a déplacée : la tête de la PR passe tous ses tests, sur GitHub comme ici.
-Reproduit ici sans identité git : le contrôle échoue de même ; avec
-l'identité du conteneur, il passe.
+**Ce que fait le contrôle.** `tests.regression` ne tourne que dans la CI.
+Pour chaque commit marqué correctif (sujet `fix:` ou trailer `Corrige:`),
+il reprend les fichiers de test que ce commit a changés et les exécute
+deux fois : sur le commit parent, où ils doivent échouer, ce qui prouve que
+le test voit le défaut ; puis sur le correctif lui-même, où ils doivent
+passer, ce qui prouve que le correctif le corrige. Il juge chaque correctif
+tel qu'il est dans l'historique, pas la tête de la branche.
 
-Le contrôle juge chaque correctif par son propre commit, et l'historique
-déjà poussé ne se corrige pas sans le réécrire. Pour que cela ne se
-reproduise pas, la suite de tests ignore désormais la configuration git de
-la machine, comme sur GitHub.
+**Ce qui échoue.** b61611e, le correctif du nom de l'humain (B-0094), a changé deux
+fichiers de test, dont celui de l'installeur. Ses tests nouveaux passent
+bien : ils échouent sur le parent et passent sur lui. Mais sur b61611e, un
+test plus ancien du même fichier échoue,
+`test_l_installation_dit_quoi_faire_ensuite`. Il attend « ouvrir l'agent »
+en troisième étape après l'installation. Or b61611e a ajouté une étape
+« écrire ton nom », qui ne s'affiche que si l'installeur ne trouve aucun
+nom, et l'a placée avant. La CI de GitHub n'a pas d'identité git : l'étape
+s'y affiche et décale la liste, le test échoue. Ce conteneur a une
+identité git (« Claude ») : l'étape ne s'y affichait pas, et le test
+passait. b61611e a donc vraiment cassé ce test, mais seulement là où aucun
+nom n'est connu ; le contrôle a raison sur ce commit.
+
+**Ce qui est déjà corrigé.** Le commit suivant, 1c01c86, a déplacé l'étape
+après « ouvrir l'agent » : sur la tête de la PR, tous les tests passent,
+sur GitHub comme ici. La suite de tests ignore désormais la configuration
+git de la machine : elle ne peut plus passer ici en échouant sur GitHub.
+
+**Pourquoi un commit de plus n'y change rien.** La CI d'une PR juge toute
+la plage depuis `main`. Tant que b61611e est dans cette plage, le contrôle
+le rejoue et le refuse, quel que soit ce qui vient après. Il n'en sort que
+de deux façons : en disparaissant de l'historique (options 1 et 2), ou en
+entrant dans `main`, après quoi aucune plage future ne le contient
+(options 3 et 4, qui l'acceptent tel qu'il est).
 
 ## Éléments cités
 
@@ -34,9 +50,9 @@ la machine, comme sur GitHub.
   l'agent, avec les correctifs du deuxième retour du pilote.
 - B-0094@5e0722d0 — le sujet clos : en session cloud, l'installeur prenait le
   nom git de l'agent pour celui de l'humain.
-- b61611e — le correctif de B-0094, dont le test échoue sur lui-même dans la
-  CI de GitHub.
-- 1c01c86 — le commit suivant, qui déplace l'étape et rend le test vert.
+- b61611e — le correctif de B-0094, dont un test du fichier qu'il change
+  échoue sur lui-même sans identité git.
+- 1c01c86 — le commit suivant, qui déplace l'étape et rend ce test vert.
 - D-0047@b6b624e3 — la demande du 29 octobre : une demande validée qui
   nomme un correctif l'admet quand son test passe déjà sur le parent.
 - B-0048@a359bf6f — le sujet ouvert du backlog : une action externe validée par une
@@ -48,36 +64,50 @@ la machine, comme sur GitHub.
   rouge sur `tests.regression`, et le commentaire de l'agent qui décrit
   l'échec.
 - [les contrôles des tests](https://github.com/theodubus/memory/blob/a74a30d87f7d2e246c1c02e4ba5a7486c77ea062/engine/socle/checks_tests.py),
-  la fonction `regression` : l'exception de D-0047 ne couvre que le test qui
-  passe sur le parent, pas celui qui échoue sur le correctif.
+  la fonction `regression` : le rejeu sur le parent puis sur le correctif ;
+  l'exception de D-0047 ne couvre que le premier.
 - [les tests de l'installation](https://github.com/theodubus/memory/blob/a74a30d87f7d2e246c1c02e4ba5a7486c77ea062/tests/test_initialisation.py),
   le test `test_l_installation_dit_quoi_faire_ensuite`, qui attend l'étape
   « ouvrir l'agent » en troisième.
 
 ## Options
 
-1. **Étendre l'exception de D-0047.** Une demande validée qui nomme un
-   correctif l'admet aussi quand son test échoue sur lui-même dans la CI, et
-   le contrôle le dit en avertissement. Cette demande-ci, validée, nomme
-   b61611e : la PR passe. Effort : une demi-heure, avec un test. Risque
-   faible : rien ne passe sans une validation qui nomme le commit.
-   Réversible.
-2. **Fusionner en passant outre la CI, une fois**, si la règle de `main`
-   vous le permet. Effort : quelques minutes. Risque : la protection est
-   contournée une fois, la CI rouge reste sur la fusion. Rien ne change dans
-   le socle.
-3. **Réécrire l'historique de la branche**, en fondant 1c01c86 dans
-   b61611e, puis le pousser de force. Effort : une demi-heure. Risque : une
-   poussée forcée, que le hook refuse à l'agent même validée : vous
-   la feriez depuis un terminal. Difficile à défaire.
+Les deux premières retirent le commit cassé de l'historique : le contrôle
+passe parce qu'il n'y a plus rien à refuser. Les deux dernières gardent ce
+commit et l'acceptent : l'une une fois, sans trace dans le socle, l'autre
+par une validation écrite qui le nomme.
+
+1. **Refaire la PR sur une branche neuve.** Je recrée ses changements depuis
+   `main` sur une branche neuve, où b61611e et 1c01c86 ne font qu'un commit,
+   correct sur GitHub ; je ferme la PR #10 et en ouvre une autre. Rien n'est
+   contourné ni relâché. Effort : une demi-heure, et votre accord pour
+   pousser sur cette branche neuve, où je continue ensuite. Risque : les
+   SHA b61611e et 1c01c86, cités dans le journal, ne désignent plus que
+   l'ancienne branche, qui reste. Réversible.
+2. **Réécrire la branche actuelle.** Même résultat sur la même branche et la
+   même PR, mais il faut une poussée forcée, que le hook refuse à l'agent
+   même validée : vous la feriez depuis un terminal. Effort : une
+   demi-heure, et un geste à vous. Difficile à défaire.
+3. **Admettre ce commit par une demande validée.** Le contrôle apprend
+   qu'une demande validée qui nomme un correctif l'admet aussi quand son
+   test échoue sur lui-même, en avertissement qui cite la demande ; celle-ci
+   nomme b61611e. Le contrôle ne se relâche pour aucun autre commit : chaque
+   admission exige votre validation, qui nomme le commit et reste dans la
+   mémoire. C'est le mécanisme de D-0047, étendu à ce cas. Effort : une
+   demi-heure, avec un test. Réversible.
+4. **Fusionner une fois en passant outre la CI**, si la règle de `main` vous
+   le permet. Rien ne change dans le socle ; b61611e entre dans `main` et ne
+   se rejoue plus. Effort : quelques minutes. Risque : la protection est
+   contournée une fois, sans trace dans la mémoire, et la CI rouge reste sur
+   la fusion.
 
 ## Conséquences
 
-- Si Théo valide (option 1) : l'exception et son test s'écrivent, la CI de
-  la PR passe avec un avertissement qui cite cette demande, et la PR se
-  fusionne normalement.
-- S'il choisit l'option 2 ou 3 : je fais ma part, ou rien pour l'option 2,
-  qui est son geste.
+- Option 1 ou 2 : l'historique de la PR ne contient plus de commit cassé, et
+  sa CI passe sans exception.
+- Si Théo valide (option 3) : la CI de la PR passe avec un avertissement
+  qui cite cette demande ; le mécanisme sert ensuite à tout projet.
+- Option 4 : rien à faire de mon côté.
 - S'il refuse : la PR reste rouge ; rien ne se fusionne sur `main`. Le
   pilote n'en dépend pas : ses correctifs ne servent qu'aux installations
   suivantes.
@@ -85,19 +115,23 @@ la machine, comme sur GitHub.
 
 ## Recommandation
 
-L'option 1, comme pour D-0047.
+L'option 1 : elle retire le défaut au lieu de l'accepter, sans geste à
+vous ni poussée forcée. L'option 3 reste raisonnable si vous préférez
+garder la PR #10 telle quelle : elle n'admet que ce commit, nommé.
 
 Vérifié : sans identité git, le contrôle refuse b61611e et lui seul ; avec
 l'identité du conteneur, il passe ; la tête de la PR passe la suite entière
-sans identité git.
+sans identité git ; une demande sans réponse se réécrit, une demande
+répondue est figée.
 
-Supposé : qu'un correctif dont la preuve dépend de l'environnement se
-représente ailleurs, et que l'exception étendue y serve.
+Supposé : que la branche neuve de l'option 1 passe la CI du premier coup ;
+je la vérifierai sans identité git avant de la pousser.
 
 ## Réponses possibles
 
-- `valider` — option 1 : le contrôle admet aussi un correctif qui échoue sur lui-même quand une demande validée le nomme, et la PR passe avec cette demande.
-- `fusion-forcee` — option 2 : Théo fusionne en passant outre la CI une fois ; rien ne change dans le socle.
-- `reecrire` — option 3 : l'historique de la branche est réécrit, et Théo pousse de force depuis un terminal.
+- `branche-neuve` — option 1 : je refais la PR sur une branche neuve, sans le commit cassé, et ferme la PR #10.
+- `reecrire` — option 2 : je prépare l'historique réécrit, et Théo le pousse de force depuis un terminal.
+- `valider` — option 3 : le contrôle admet aussi un correctif qui échoue sur lui-même quand une demande validée le nomme, et la PR passe avec cette demande.
+- `fusion-forcee` — option 4 : Théo fusionne en passant outre la CI une fois ; rien ne change dans le socle.
 - `refuser` — la PR reste rouge ; rien ne se fusionne sur `main`.
 - `contexte-insuffisant` — la demande revient à l'agent, qui la réécrit en une demande qui la remplace.
