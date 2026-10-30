@@ -177,6 +177,7 @@ PYTHONPATH=/tmp/socle/engine python3 -m socle install --target . --owner @<propr
 | `--review lots` | exige la relecture de l'humain avant toute publication |
 | `--language en` | mémoire et messages en anglais |
 | `--adapter <nom>` | impose le langage au lieu de le déduire |
+| `--human <nom>` | le nom de l'humain, qui signe les réponses que l'agent relaie ; par défaut son nom git, sauf en session cloud, où l'identité git est celle de l'agent |
 
 L'installeur termine par les étapes suivantes, chacune avec sa commande. La
 suite est décrite dans [le guide d'utilisation](engine/socle/HELP.md),

@@ -32,9 +32,11 @@ Juste après l'installation :
    le dit.
 3. Commiter et pousser.
 4. Protéger la branche par défaut sur GitHub (réglages du dépôt,
-   « Rules ») : exiger la CI « Socle — verify, contrôles, auto-test » et la
-   revue des propriétaires du code avant toute fusion. Sans cela, une CI
-   rouge n'empêche pas de fusionner.
+   « Rules ») : exiger la CI « Socle — verify, contrôles, auto-test » avant
+   toute fusion. Sans cela, une CI rouge n'empêche pas de fusionner. La
+   revue des propriétaires du code ne s'y ajoute que si un autre humain
+   relit : l'auteur d'une pull request ne peut pas l'approuver, et l'agent
+   ouvre les siennes au nom de l'humain.
 5. Ouvrir l'agent dans le projet. Il lit l'état au démarrage, puis pose
    quelques questions de départ dans la conversation.
 

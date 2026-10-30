@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0093 — L'installeur fait exiger une revue que l'humain seul ne peut pas donner aux PR de son agent
 
-> statut : ouvert · origine : J-2026-10-30-A · lu : backlog@3dbb481c
+> statut : fait · origine : J-2026-10-30-A · ref : J-2026-10-30-C · lu : backlog@3dbb481c
 
 Les étapes qui suivent l'installation, et le guide, font exiger sur la
 branche par défaut la CI et la revue des propriétaires du code. Mais un
