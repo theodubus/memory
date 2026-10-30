@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0071 — Choisir le modèle et l'effort de chaque tâche, ce que BMAD ne fait pas
 
-> statut : ouvert · origine : J-2026-10-20-A · lu : backlog@d6370f4d
+> statut : abandonné · origine : J-2026-10-20-A · lu : backlog@d6370f4d · ref : B-0055, J-2026-10-30-Q
 
 Demandé par Théo (texte exact au journal). Ce que B-0055 voulait et que
 BMAD ne fait pas : décider, pour chaque tâche qu'un agent maître confie à
@@ -16,3 +16,6 @@ pose le socle, ou des définitions de sous-agents), sur quoi elle choisit
 planification), et la mesurer au banc plutôt que la supposer, comme le
 voulait B-0055 : coût, durée et qualité d'une tâche selon le modèle et
 l'effort.
+
+Fondu dans B-0055, rouvert au retrait de BMAD (D-0051, J-2026-10-30-Q) :
+le choix du modèle et de l'effort de chaque tâche y est repris.

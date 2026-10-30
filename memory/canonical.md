@@ -204,36 +204,7 @@ par défaut, qui ne le touchait pas, mais une seconde après un commit qui
 le modifiait. Mesuré une fois, sur un dépôt neuf ; non mesuré sur un dépôt
 existant où l'installeur pose le fichier.
 
-## La cohabitation avec BMAD Method
-
-## F-0022 — L'ajout de BMAD Method 6.12.4 à un projet Python équipé du socle est refusé par quatre contrôles, sur les fichiers de BMAD
-
-> statut : mesuré · preuve : J-2026-10-19-G · date : 2026-10-19
-
-Au commit, `docs.copie`, `memoire.references` et `tests.creux` ; en CI,
-`tests.code-teste` en plus, sur les 47 fonctions de ses scripts Python. Le
-socle n'a pas de notion de fichiers tiers (B-0068). Installé en adoption
-après BMAD, le socle passe, mais en mettant trois contrôles en
-avertissement pour tout le projet.
-
-## F-0023 — La personnalisation de BMAD Method fait porter à ses workflows la mémoire et la fin de tour du socle, sans toucher à ses fichiers
-
-> statut : mesuré · preuve : J-2026-10-19-G · date : 2026-10-19
-
-Un fichier de personnalisation du workflow de construction de BMAD 6.12.4,
-que son installeur ne touche jamais, ajoute au workflow rendu des faits
-persistants (la mémoire du socle), une étape d'activation (`socle state`)
-et une étape de fin (consigner, vérifier, les deux lignes). Ce qu'un agent
-réel en fait n'est pas mesuré (B-0069).
-
-## F-0024 — Sous le mariage avec BMAD, un agent réel fait approuver sa spec, consigne l'approbation en séance mot pour mot avant de coder, et ne touche pas à l'intention figée
-
-> statut : mesuré · preuve : J-2026-10-20-B · date : 2026-10-20
-
-Une session, dans un projet jetable installé avec le mariage entier
-(ADR-0032) : le workflow de construction de BMAD mené au bout, aucun refus
-de hook, tous les contrôles verts, 4,57 dollars. Mesuré une fois ; l'entrée
-des reports au backlog n'y a pas tourné.
+## Les adaptateurs, la CI et l'agent
 
 ## F-0025 — L'adaptateur C# passe les douze étapes de son banc
 

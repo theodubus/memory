@@ -67,7 +67,7 @@ A decision that belongs to the human is put as a request, which reads on its
 own once the context is lost, and whose link is given in the conversation.
 The human answers in the conversation; the agent records their answer word
 for word, never choosing it, and copies it into the journal. A decision
-taken in session, the human present (approving a BMAD spec, settling an open
+taken in session, the human present (approving a specification, settling an open
 question), is recorded at once in the same way. How: the skill
 `socle-request`.
 
@@ -100,7 +100,7 @@ another agent reads their `SKILL.md` at that path.
 
 A project procedure that comes back (the journal shows the first time) is
 written as a skill the second time, in `.claude/skills/<name>/SKILL.md`: a
-name without the `socle-` or `bmad-` prefixes, a header with `name` (the
+name without the `socle-` prefix, a header with `name` (the
 folder's name) and `description` (what it does, and when to use it), and a
 journal entry that says so. A skill says how to do something, the memory
 what is and why: it copies nothing from it. Its commands, in code blocks,

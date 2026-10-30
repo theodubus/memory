@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0050-retirer-bmad-method-du-socle.md, dont l'empreinte suit.
+reponse = "principe-valide"
+texte = ""
+par = "Théo"
+date = "2026-10-30"
+canal = "conversation"
+citation = "Ok on va retirer bmad, mais il y a plein de trucs a faire / Il me semble qu'il y avait une partie du socle se l'époque qu'on chevauchait bmad et qu'on avait enlevé / Aussi d'autres éléments de backlog abandonnés non ? / Et aussi la doc est impactée / Je valide sur le principe d'enlever bmad mais il faut se fixer tous les changements que ça implique, les nouvelles tâches qui réapparaissent etc, ensuite on lancera"
+empreinte = "sha256:d0463adadbd8b26ec3e7b31bc24171537c5bff2c96305b09f9331be6bc963198"

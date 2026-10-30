@@ -1,7 +1,7 @@
 <!-- socle: couche=decisions zone=publique -->
 # ADR-0032 — Le socle et BMAD mariés : un propriétaire par nature d'information, une seule façon de consulter l'humain
 
-> statut : acceptée · date : 2026-10-19 · lu : decisions@54148801
+> statut : remplacée · date : 2026-10-19 · lu : decisions@54148801 · remplacée-par : ADR-0036
 
 ## Contexte
 

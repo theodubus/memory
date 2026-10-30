@@ -460,6 +460,20 @@ def prive(ctx, r):
 # --------------------------------------------------------------------------
 
 
+
+# Une décision prise en séance, et sa question : la conversation que
+# l'humain a lue, recopiée telle quelle.
+SEANCE = re.compile(r"(?m)^> .*\b(?:forme : séance|form: session)\b")
+QUESTION_SEANCE = re.compile(r"(?ms)^## (?:Question posée|Question asked)\n.*?(?=^## |\Z)")
+
+
+def sans_question_de_seance(texte: str) -> str:
+    """Le texte d'une entrée, sans la question d'une décision prise en séance :
+    elle recopie ce que l'humain a lu dans la conversation, et ne se corrige
+    plus une fois sa réponse écrite (B-0100). La lecture se prouve dans ce que
+    l'agent écrit lui-même."""
+    return QUESTION_SEANCE.sub("", texte) if SEANCE.search(texte) else texte
+
 @controle("memoire.lectures", base=True)
 def lectures(ctx, r):
     """Une citation `ID@empreinte` ou `index@empreinte` ajoutée désigne une
@@ -510,8 +524,9 @@ def lectures(ctx, r):
                                               "backlog avant d'y ajouter, pour ne pas dupliquer (`socle show "
                                               "--index backlog`)", ident=ident), e.fichier, e.ligne)
         if e.type in ("ADR", "D"):
-            prouves = {i for i, _, _ in memoire.citations(e.texte)}
-            for cite in sorted({i for i, _ in memoire.mentions(e.texte)} - prouves - {ident}):
+            texte = sans_question_de_seance(e.texte)
+            prouves = {i for i, _, _ in memoire.citations(texte)}
+            for cite in sorted({i for i, _ in memoire.mentions(texte)} - prouves - {ident}):
                 r.erreur("memoire.lectures", trad("`{ident}` s'appuie sur `{cite}` sans montrer l'avoir lu : "
                                                   "citer `{cite}@<empreinte>`, l'empreinte que donne `socle "
                                                   "show {cite}`", ident=ident, cite=cite), e.fichier, e.ligne)

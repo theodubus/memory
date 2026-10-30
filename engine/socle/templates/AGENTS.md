@@ -68,7 +68,7 @@ Une décision qui revient à l'humain se pose en demande, qui se lit seule
 quand le contexte est perdu, et dont le lien se donne dans la conversation.
 L'humain répond dans la conversation ; l'agent consigne sa réponse mot pour
 mot, sans jamais la choisir, et la recopie au journal. Une décision prise en
-séance, l'humain présent (approuver une spec de BMAD, trancher une question
+séance, l'humain présent (approuver une spécification, trancher une question
 ouverte), se consigne aussitôt de même. Comment : le skill `socle-request`.
 
 ### Lire la mémoire à la demande
@@ -101,7 +101,7 @@ autre agent lit leur `SKILL.md` à ce chemin.
 
 Une procédure du projet qui se refait (le journal montre la première fois)
 s'écrit en skill à la deuxième, dans `.claude/skills/<nom>/SKILL.md` : un
-nom sans les préfixes `socle-` ni `bmad-`, un en-tête `name` (le nom du
+nom sans le préfixe `socle-`, un en-tête `name` (le nom du
 dossier) et `description` (ce qu'il fait, et quand s'en servir), et une
 entrée au journal qui le dit. Un skill dit comment faire, la mémoire ce qui
 est et pourquoi : il n'en recopie rien. Ses commandes, dans des blocs de

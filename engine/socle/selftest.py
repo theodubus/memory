@@ -654,83 +654,6 @@ Vérifié : rien. Supposé : que c'est mieux.
 # La liste vide des chemins tiers, telle que l'installeur la pose.
 TIERS_VIDE = "\npaths = []\n"
 
-# BMAD Method en réduction : sa configuration, et un travail que
-# son workflow de construction a reporté.
-BMAD_CONFIG = '[modules.bmm]\nimplementation_artifacts = "{project-root}/_bmad-output/implementation-artifacts"\n'
-BMAD_REPORT = ("- source_spec: `_bmad-output/implementation-artifacts/spec-x.md`\n"
-               "  summary: Valider l'entrée de double, qui accepte aujourd'hui une chaîne.\n"
-               "  evidence: double(\"a\") rend \"aa\" ; antérieur au changement.\n")
-
-
-BMAD_SPEC = """---
-title: 'Rendre double robuste'
-status: '{statut}'
-route: '{route}'
----
-
-<frozen-after-approval reason="human-owned intent">
-
-## Intent
-
-**Problem:** double accepte une chaîne.
-
-**Approach:** {approche}
-
-</frozen-after-approval>
-"""
-
-
-SPEC_BMAD = "_bmad-output/implementation-artifacts/spec-x.md"
-
-
-def avec_bmad(c: Path, statut: str = "done", route: str = "oneshot",
-              approche: str = "Refuser ce qui n'est pas un nombre.", report: bool = True):
-    ajouter(c, "_bmad/config.toml", BMAD_CONFIG)
-    # Écrite telle quelle : son en-tête est sa première ligne.
-    (c / SPEC_BMAD).parent.mkdir(parents=True, exist_ok=True)
-    (c / SPEC_BMAD).write_text(BMAD_SPEC.format(statut=statut, route=route, approche=approche))
-    if report:
-        ajouter(c, "_bmad-output/implementation-artifacts/deferred-work.md", BMAD_REPORT)
-
-
-SPINE_BMAD = "_bmad-output/planning-artifacts/architecture/ARCHITECTURE-SPINE.md"
-SPINE = """---
-name: 'calc'
-type: architecture-spine
-status: final
----
-
-# Architecture Spine — calc
-
-## Invariants & Rules
-
-### AD-1 — Une seule constante de multiplication
-
-- **Binds:** all
-- **Prevents:** deux facteurs qui divergent
-- **Rule:** tout facteur vient de FACTEUR.
-"""
-
-
-def avec_architecture(c: Path) -> str:
-    """BMAD et son document d'architecture ; rend l'empreinte de AD-1."""
-    from socle import bmad
-
-    ajouter(c, "_bmad/config.toml", BMAD_CONFIG)
-    (c / SPINE_BMAD).parent.mkdir(parents=True, exist_ok=True)
-    (c / SPINE_BMAD).write_text(SPINE)
-    return bmad.decisions_architecture(c, [SPINE_BMAD])[0].empreinte
-
-
-def approuver_en_seance(a: "Atelier", c: Path):
-    """L'humain approuve la spec dans la conversation ; l'agent consigne sa
-    réponse mot pour mot."""
-    (c.parent / f"{c.name}-citation.txt").write_text("Oui, approuvé : continue.")
-    r = a.socle(c, "decision", "Approuver la spec qui rend double robuste", "valider", "--about", SPEC_BMAD,
-                "--relayed", "--by", "Théo", "--quote-file", str(c.parent / f"{c.name}-citation.txt"))
-    if r.returncode != 0:
-        raise RuntimeError(r.stdout + r.stderr)
-
 
 def _cas() -> list[Cas]:
     cas = []
@@ -821,32 +744,6 @@ def _cas() -> list[Cas]:
     def _(a, c):
         remplacer(c, ".socle/guardrails.toml", TIERS_VIDE, '\npaths = ["memory/**"]\n')
         a.socle(c, "approve", "--keys", "thirdparty.paths", "--text", "La mémoire comme outil")
-        return etage_ci(a, c)
-
-    @defaut("report-bmad-hors-backlog", "travail reporté par BMAD resté hors du backlog", "ci", "bmad.reports")
-    def _(a, c):
-        avec_bmad(c)
-        return etage_ci(a, c)
-
-    @defaut("spec-approuvee-sans-trace", "spec de BMAD approuvée sans l'approbation de l'humain consignée", "ci",
-            "bmad.approbation")
-    def _(a, c):
-        avec_bmad(c, statut="ready-for-dev", route="dispatch", report=False)
-        return etage_ci(a, c)
-
-    @defaut("intention-changee-apres-approbation", "intention figée d'une spec changée après son approbation", "ci",
-            "bmad.approbation")
-    def _(a, c):
-        avec_bmad(c, statut="ready-for-dev", route="dispatch", report=False)
-        approuver_en_seance(a, c)
-        remplacer(c, SPEC_BMAD, "Refuser ce qui n'est pas un nombre.", "Convertir toute entrée en nombre.")
-        return etage_ci(a, c)
-
-    @defaut("decision-bmad-lue-perimee", "décision d'architecture de BMAD citée dans une version qu'elle n'a plus",
-            "ci", "bmad.lectures")
-    def _(a, c):
-        avec_architecture(c)
-        maj_memoire(c, "Le facteur suit `AD-1@00000000`.")
         return etage_ci(a, c)
 
     @defaut("decision-sans-relais", "décision en séance consignée par l'agent sans la citer", "agent",
@@ -1683,26 +1580,6 @@ def _temoins() -> list[tuple[str, Callable]]:
         ajouter(c, "_outil/aide.py", "def aide(x):\n    return x\n")
         ajouter(c, "_outil/test_outil.py", "def test_rien():\n    pass\n")
         ajouter(c, "_outil/LISEZMOI.md", "Chaque constat cite `file:line`, et F-0099.\n")
-        return etage_ci(a, c)
-
-    @temoin("un travail reporté par BMAD, entré au backlog par `socle bmad-import`, passe la CI")
-    def _(a, c):
-        avec_bmad(c)
-        r = a.socle(c, "bmad-import")
-        if r.returncode != 0 or "B-" not in r.stdout:
-            return r.stdout + r.stderr
-        return etage_ci(a, c)
-
-    @temoin("une spec de BMAD approuvée, dont l'approbation de l'humain est consignée en séance, passe la CI")
-    def _(a, c):
-        avec_bmad(c, statut="in-progress", route="dispatch", report=False)
-        approuver_en_seance(a, c)
-        return etage_ci(a, c)
-
-    @temoin("une décision d'architecture de BMAD citée dans sa version actuelle passe la CI")
-    def _(a, c):
-        h = avec_architecture(c)
-        maj_memoire(c, f"Le facteur suit `AD-1@{h}`.")
         return etage_ci(a, c)
 
     @temoin("un chemin qui n'existe que dans une rustine suivie du dépôt passe la CI")

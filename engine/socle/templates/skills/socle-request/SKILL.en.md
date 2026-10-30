@@ -57,8 +57,8 @@ committed after the answer.
 
 ## Recording a decision taken in session
 
-A question the human settles on the spot (approving a BMAD spec, choosing
-between two options) is recorded at once, with their answer word for word;
+A question the human settles on the spot (approving a specification,
+choosing between two options) is recorded at once, with their answer word for word;
 `--about <path>` designates what it approves:
 
 ```sh

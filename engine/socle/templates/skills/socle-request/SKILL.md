@@ -57,9 +57,9 @@ qu'après la réponse.
 
 ## Consigner une décision prise en séance
 
-Une question que l'humain tranche sur le moment (approuver une spec de
-BMAD, choisir entre deux options) se consigne aussitôt, avec sa réponse mot
-pour mot ; `--about <chemin>` désigne ce qu'elle approuve :
+Une question que l'humain tranche sur le moment (approuver une
+spécification, choisir entre deux options) se consigne aussitôt, avec sa
+réponse mot pour mot ; `--about <chemin>` désigne ce qu'elle approuve :
 
 ```sh
 python3 .socle/socle decision "<question>" <réponse> --relayed --by <nom> --quote-file <fichier>

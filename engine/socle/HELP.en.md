@@ -121,19 +121,6 @@ repository on GitHub, then
 `python3 .socle/socle private install --repo <address>`. The command ends
 with the two settings to make on GitHub, with their links.
 
-## With BMAD Method
-
-- **Run a BMAD workflow** by naming it to the agent (for instance
-  `bmad-build`). The workflow reads the socle's state at start-up and ends
-  with its checks.
-- **Approve a spec**: when the workflow stops to have it approved, answer in
-  the conversation. The approval is recorded before the code; the approved
-  intent no longer changes without a new approval.
-- **Work deferred** by BMAD enters the socle's backlog
-  (`socle bmad-import`, run by the agent).
-- **Update BMAD**: `npx bmad-method install --action update`, then run the
-  socle's installation again.
-
 ## When a check refuses
 
 Each refusal says what it saw and how to get out of it. Most are for the
@@ -186,5 +173,5 @@ The other commands serve the agent and the hooks; `python3 .socle/socle
 
 `.socle/guardrails.toml` holds the checks' thresholds: memory size
 budgets, mutation caps, correspondences between code and documentation,
-third-party files (BMAD's, for instance). Tightening them is free;
+third-party files (those of a tool installed in the project). Tightening them is free;
 loosening them requires an approved request.

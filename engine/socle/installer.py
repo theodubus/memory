@@ -144,22 +144,6 @@ def _balayage_planifie(cible: Path, texte_adaptateur: str) -> tuple[bool, str]:
     return True, trad("balayage de mutation hebdomadaire posé : {workflow}", workflow=mutation.WORKFLOW)
 
 
-# Les outils tiers que l'installeur reconnaît : leur nom, ce qui trahit leur
-# présence, et les chemins de leurs fichiers, qu'aucun contrôle ne juge
-#. Leurs sorties (les documents qu'ils écrivent pour le projet)
-# n'en sont pas : elles sont au projet.
-OUTILS_TIERS = (
-    ("BMAD Method", ("_bmad", "*/skills/bmad-*", "skills/bmad-*"), ["_bmad/**", "**/skills/bmad-*/**"]),
-)
-
-
-def outils_tiers(cible: Path) -> list[tuple[str, list[str]]]:
-    """Les outils tiers présents dans le projet, avec leurs chemins : un
-    dossier qui trahit l'outil suffit, commité ou non."""
-    return [(nom, chemins) for nom, indices, chemins in OUTILS_TIERS
-            if any(d.is_dir() for i in indices for d in cible.glob(i))]
-
-
 def declarer_tiers(texte: str, chemins: list[str]) -> str:
     """Les garde-fous, avec ces chemins tiers ajoutés à leur liste."""
     actuels = (tomllib.loads(texte).get("thirdparty") or {}).get("paths", [])
@@ -171,99 +155,6 @@ def declarer_tiers(texte: str, chemins: list[str]) -> str:
         return re.sub(r"(?ms)^(\[thirdparty\]\s*$.*?^paths\s*=\s*)\[[^\]]*\]", lambda m: m.group(1) + liste,
                       texte, count=1)
     return texte.rstrip("\n") + "\n\n[thirdparty]\n" + f"paths = {liste}\n"
-
-
-# BMAD Method, installé avec le socle en une commande : la version
-# éprouvée avec lui, son module de méthode, pour Claude Code.
-VERSION_BMAD = "6.12.4"
-LANGUES_BMAD = {"fr": "French", "en": "English"}
-
-
-def commande_bmad(cible: Path, lg: str, version: str = VERSION_BMAD) -> list[str]:
-    """La commande non interactive qui installe BMAD dans `cible`, dans la
-    langue du projet."""
-    langue_bmad = LANGUES_BMAD.get(lg, LANGUES_BMAD["fr"])
-    return ["npx", "-y", f"bmad-method@{version}", "install", "--directory", str(cible), "--modules", "bmm",
-            "--tools", "claude-code", "--yes", "--communication-language", langue_bmad,
-            "--document-output-language", langue_bmad]
-
-
-def installer_bmad(cible: Path, lg: str, version: str = VERSION_BMAD) -> tuple[bool, list[str]]:
-    """Installe BMAD Method avant le socle, qui le reconnaîtra ensuite : rend
-    s'il est là, et ce qu'il y a à dire. Un BMAD déjà présent est gardé ; sa
-    mise à jour revient à BMAD."""
-    if (cible / "_bmad").is_dir():
-        return True, [trad("BMAD Method déjà présent : gardé tel quel (sa mise à jour : `npx bmad-method install "
-                           "--action update`)")]
-    if shutil.which("npx") is None:
-        return False, [trad("BMAD Method s'installe par npx, introuvable ici : installer Node.js 20.12 ou plus "
-                            "récent, puis relancer")]
-    r = subprocess.run(commande_bmad(cible, lg, version), cwd=cible, capture_output=True, text=True)
-    if r.returncode != 0 or not (cible / "_bmad").is_dir():
-        return False, [trad("l'installation de BMAD Method {version} a échoué : {sortie}", version=version,
-                            sortie=(r.stdout + r.stderr).strip()[-800:])]
-    res = [trad("BMAD Method {version} installé (module de méthode, pour Claude Code)", version=version)]
-    if shutil.which("uv") is None:
-        res.append(trad("!! uv introuvable : les skills de BMAD en ont besoin pour rendre leurs workflows — "
-                        "l'installer (https://docs.astral.sh/uv/)"))
-    return True, res
-
-
-# La fin d'un workflow de BMAD, dans la personnalisation que pose le socle :
-# un agent de BMAD n'en a pas.
-FIN_BMAD = {
-    "fr": 'on_complete = "Avant de rendre la main : faire entrer au backlog du socle les travaux reportés (`python3 '
-          '.socle/socle bmad-import`), consigner le travail dans la mémoire du socle (le chantier actif, et une entrée '
-          'de journal par `python3 .socle/socle new journal` qui cite la spec ou le document sans le recopier), '
-          'relancer `python3 .socle/socle verify --fast`, commiter, puis finir par les lignes « Pour toi : » et '
-          '« Ensuite : »."\n',
-    "en": 'on_complete = "Before handing back: enter the deferred work into the socle\'s backlog (`python3 .socle/socle '
-          'bmad-import`), record the work in the socle\'s memory (the active work, and a journal entry by `python3 '
-          '.socle/socle new journal` that cites the spec or the document without copying it), run `python3 '
-          '.socle/socle verify --fast` again, commit, then end with the lines “For you:” and “Next:”."\n',
-}
-MARQUES_BMAD = ("# Posé par le socle", "# Written by the socle")
-
-
-def personnalisations_bmad(cible: Path) -> dict[str, str]:
-    """Les skills de BMAD qui se personnalisent, et la table de leur
-    personnalisation (`workflow` ou `agent`), lue dans leur fichier par
-    défaut : un skill nouveau d'une version de BMAD y entre sans liste à
-    tenir."""
-    res = {}
-    for f in sorted(cible.glob("*/skills/bmad-*/customize.toml")) + sorted(cible.glob("skills/bmad-*/customize.toml")):
-        m = re.search(r"(?m)^\[(workflow|agent)\]\s*$", f.read_text(encoding="utf-8"))
-        if m:
-            res.setdefault(f.parent.name, m[1])
-    return res
-
-
-def poser_bmad(cible: Path, lg: str, ch: config.Chemins = config.FORMAT_ACTUEL) -> list[str]:
-    """Avec BMAD Method, sa personnalisation officielle, un fichier par skill
-    sous `_bmad/custom/` : la mémoire du socle en faits
-    persistants, son état à l'activation, la consignation des décisions en
-    séance, et la fin de tour du socle. Un fichier que le projet a écrit
-    lui-même est gardé, et signalé."""
-    skills = personnalisations_bmad(cible)
-    if not skills or not (cible / "_bmad").is_dir():
-        return []
-    modele = gabarit("bmad-custom.toml", lg).replace("@@ACTIF@@", ch.actif).replace("@@CANONIQUE@@", ch.canonique)
-    poses, gardes = 0, []
-    for nom, table in skills.items():
-        texte = modele.replace("@@TABLE@@", table).replace(
-            "@@FIN@@\n", FIN_BMAD.get(lg, FIN_BMAD["fr"]) if table == "workflow" else "")
-        p = cible / "_bmad" / "custom" / f"{nom}.toml"
-        if p.is_file() and not p.read_text(encoding="utf-8").startswith(MARQUES_BMAD):
-            gardes.append(nom)
-            continue
-        outils.ecrire(p, texte)
-        poses += 1
-    res = [trad("BMAD Method : sa personnalisation posée pour {n} skill(s) — la mémoire du socle, son état, les "
-                "décisions en séance et sa fin de tour", n=poses)]
-    if gardes:
-        res.append(trad("!! BMAD Method : personnalisation propre au projet gardée pour {liste} — y ajouter à la main "
-                        "ce que pose le socle", liste=", ".join(gardes)))
-    return res
 
 
 def lire_plafonds(fichier: Path) -> dict[str, dict]:
@@ -295,14 +186,11 @@ def garde_fous_initiaux(cible: Path, texte_adaptateur: str, ch: config.Chemins =
     mesurés. Un module dont `plafonds` donne la mesure, faite ailleurs, la
     reprend au lieu d'attendre ce balayage (B-0009)."""
     texte = gabarit("guardrails.toml", lg)
-    tiers = [c for _, chemins in outils_tiers(cible) for c in chemins]
-    texte = declarer_tiers(texte, tiers)
     cap = tomllib.loads(texte_adaptateur).get("capabilities", {}).get("mutation", {})
     if "command" not in cap:
         return texte
     porte = re.compile(cap.get("has_code", r"."))
-    fichiers = [f for f in outils.fichiers_courants(cible)
-                if not f.startswith(config.DOSSIER + "/") and not outils.correspond(f, tiers)]
+    fichiers = [f for f in outils.fichiers_courants(cible) if not f.startswith(config.DOSSIER + "/")]
     modules = [m for m in outils.filtrer(fichiers, cap.get("modules", []), cap.get("modules_exclude", []))
                if porte.search(outils.lire_a(cible, None, m) or "")]
     if not modules:
@@ -504,19 +392,6 @@ def _poser_configuration(cible: Path, texte_adaptateur: str, ancien: dict, prive
                 if ecartes:
                     journal.append(trad("!! plafonds de {source} écartés, faute d'un module de ce nom qui porte du "
                                         "code : {liste}", source=source, liste=", ".join(ecartes)))
-    gf = cible / ch.garde_fous
-    for outil, chemins in outils_tiers(cible):
-        texte = gf.read_text(encoding="utf-8")
-        nouveau = declarer_tiers(texte, chemins)
-        if nouveau != texte:
-            gf.write_text(nouveau, encoding="utf-8")
-            journal.append(trad("{outil} : ses fichiers déclarés tiers, qu'aucun contrôle ne juge ({chemins}) — un "
-                                "assouplissement des garde-fous, à approuver : `python3 .socle/socle approve "
-                                "--keys thirdparty.paths`", outil=outil, chemins=", ".join(chemins)))
-        else:
-            journal.append(trad("{outil} : ses fichiers sont tiers, qu'aucun contrôle ne juge ({chemins})",
-                                outil=outil, chemins=", ".join(chemins)))
-
     return lg, journal
 
 
@@ -616,11 +491,10 @@ def _poser_etages(cible: Path, texte_adaptateur: str, dossier_moteur: str, propr
 def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bool = False,
               mode: str = config.MODE_PROJET, source: Path | None = None, prive: str | None = None,
               relecture: str | None = None, demandes_privees: bool = False, filtre: str = "git-crypt",
-              langue_memoire: str | None = None, avec_bmad: bool = False, version_bmad: str = VERSION_BMAD,
-              plafonds: Path | None = None, humain: str = "") -> int:
-    """Installe ou met à jour le socle dans `cible`, et BMAD Method avant lui
-    avec `avec_bmad`. Ses messages sont dans la langue de la mémoire du projet : celle qu'il a
-    déjà, ou celle choisie pour un projet neuf."""
+              langue_memoire: str | None = None, plafonds: Path | None = None, humain: str = "") -> int:
+    """Installe ou met à jour le socle dans `cible`. Ses messages sont dans la
+    langue de la mémoire du projet : celle qu'il a déjà, ou celle choisie pour
+    un projet neuf."""
     existant = (cible / config.FORMAT_ACTUEL.politique).is_file()
     lg = langue.du_projet(config.Projet.charger(cible)) if existant else (langue_memoire or "fr")
     with messages.dans(lg):
@@ -631,15 +505,14 @@ def installer(cible: Path, adaptateur: str, proprietaire: str = "", adoption: bo
             print(trad("refus : {erreur}", erreur=e), file=sys.stderr)
             return 2
         return _installer(cible, adaptateur, proprietaire, adoption, mode, source, prive, relecture,
-                          demandes_privees, filtre, langue_memoire,
-                          version_bmad if avec_bmad else None, lg, caps, plafonds.name if plafonds else "",
+                          demandes_privees, filtre, langue_memoire, caps, plafonds.name if plafonds else "",
                           humain)
 
 
 def _installer(cible: Path, adaptateur: str, proprietaire: str, adoption: bool, mode: str, source: Path | None,
                prive: str | None, relecture: str | None, demandes_privees: bool, filtre: str,
-               langue_memoire: str | None, version_bmad: str | None = None, lg_projet: str = "fr",
-               plafonds: dict[str, dict] | None = None, source_plafonds: str = "", humain: str = "") -> int:
+               langue_memoire: str | None, plafonds: dict[str, dict] | None = None, source_plafonds: str = "",
+               humain: str = "") -> int:
     ch = config.FORMAT_ACTUEL
 
     refus = _refus_cible(cible)
@@ -666,14 +539,6 @@ def _installer(cible: Path, adaptateur: str, proprietaire: str, adoption: bool, 
         return 2
     journal = [trad("adaptateur : {nom}", nom=nom_adaptateur)
                + (trad(" (détecté)") if adaptateur != nom_adaptateur else "")]
-    if version_bmad:
-        # Après la détection du langage, que les scripts Python de BMAD
-        # fausseraient ; avant le reste, qui le reconnaîtra.
-        present, dits = installer_bmad(cible, lg_projet, version_bmad)
-        if not present:
-            print(trad("refus : {refus}", refus=dits[0]), file=sys.stderr)
-            return 2
-        journal += dits
     if ancien:
         journal.append(trad("mise à jour : moteur {avant} → {version}", avant=ancien.get("version", "amont"),
                             version=VERSION))
@@ -702,9 +567,8 @@ def _installer(cible: Path, adaptateur: str, proprietaire: str, adoption: bool, 
     balayage, motif = _balayage_planifie(cible, texte_adaptateur)
     journal += _instructions(cible, dossier_moteur, lg, balayage, ch)
 
-    # 5. Les étages d'application, et le lien avec BMAD Method s'il est là.
+    # 5. Les étages d'application.
     journal += _poser_etages(cible, texte_adaptateur, dossier_moteur, proprietaire, balayage, motif, ch, lg)
-    journal += poser_bmad(cible, lg, ch)
     if prive:
         journal += _prive(cible, prive, filtre)
 

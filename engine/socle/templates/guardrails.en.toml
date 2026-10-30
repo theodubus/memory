@@ -37,10 +37,9 @@ repos = []
 
 [thirdparty]
 # The files of a third-party tool installed in the project (its skills, its
-# scripts): no check judges them, nor their updates. The installer declares
-# the tools it recognises (BMAD Method); a pattern that would cover a file of
-# the socle, of the memory or of the policy is refused. Adding one relaxes:
-# a human decision.
+# scripts): no check judges them, nor their updates. A pattern that would
+# cover a file of the socle, of the memory or of the policy is refused.
+# Adding one relaxes: a human decision.
 paths = []
 
 [tooling]

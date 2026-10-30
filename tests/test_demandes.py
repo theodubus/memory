@@ -1,8 +1,15 @@
+import contextlib
+import io
 import re
+import shutil
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
-from socle import config, requests as demandes
+from socle import config, hooks, installer as installeur, requests as demandes
+
+MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 
 MODELE = (Path(__file__).resolve().parent.parent / "engine/socle/templates/request.md").read_text(encoding="utf-8")
 
@@ -184,3 +191,77 @@ class TestReponse(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestSeance(unittest.TestCase):
+    """Une décision prise en séance : la question que l'humain a lue dans la
+    conversation, et sa réponse mot pour mot, dans le registre des demandes ;
+    `--about` y nomme le document qu'elle approuve."""
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-seance-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=self.racine, check=True)
+        (self.racine / "calc.py").write_text("X = 1\n")
+        self.spec = "docs/spec-triple.md"
+        (self.racine / "docs").mkdir()
+        (self.racine / self.spec).write_text("# Ajouter triple\n")
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+        subprocess.run(["git", "add", "-A"], cwd=self.racine, check=True)
+        self.projet = config.Projet.charger(self.racine)
+
+    def approuver(self, sujet=None):
+        return demandes.ecrire_seance(self.projet, "Approuver la spec de triple", "Tu approuves la spec ?",
+                                      "valider", "Théo", "2026-10-19", "conversation", "Oui, approuvé.",
+                                      sujet or self.spec)
+
+    def test_ecrire_seance_pose_la_question_et_sa_reponse(self):
+        chemin, reponse = self.approuver()
+        d = next(x for x in demandes.toutes(self.racine) if x.chemin == chemin)
+        self.assertTrue(d.seance)
+        self.assertTrue(d.validee)
+        self.assertEqual(d.sujet[0], self.spec)
+        self.assertIn("Tu approuves la spec ?", d.texte)
+        self.assertTrue((self.racine / reponse).is_file())
+        self.assertEqual(demandes.verifier_reponse(d), [])
+        self.assertIsNone(demandes.illisible(self.projet, d))
+        self.assertTrue(d.accepte("approuver et continuer"))
+
+    def test_une_seance_relayee_sans_citation_est_refusee(self):
+        with self.assertRaises(ValueError):
+            demandes.ecrire_seance(self.projet, "Approuver la spec de triple", "", "valider", "Théo", "2026-10-19",
+                                   "conversation", "")
+        self.assertEqual(list((self.racine / "memory/requests").glob("D-*.md")), [])
+
+    def test_une_seance_sans_reponse_est_hors_contrat(self):
+        chemin, reponse = self.approuver()
+        (self.racine / reponse).unlink()
+        d = next(x for x in demandes.toutes(self.racine) if x.chemin == chemin)
+        self.assertTrue(any("séance" in f for f in demandes.linter(d, self.projet)))
+
+    def test_cmd_decision_nomme_le_document_approuve_et_refuse_un_chemin_absent(self):
+        import argparse
+        from socle import cli
+
+        citation = self.racine.parent / f"{self.racine.name}-citation.txt"
+        citation.write_text("Oui, approuvé.", encoding="utf-8")
+        self.addCleanup(citation.unlink)
+
+        def decision(about):
+            args = argparse.Namespace(root=str(self.racine), question="Approuver la spec de triple",
+                                      answer="valider", question_file=None, about=about, by="Théo", relayed=True,
+                                      quote=None, quote_file=str(citation))
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                return cli.cmd_decision(args)
+
+        self.assertEqual(decision("docs/absente.md"), 2)
+        self.assertEqual(list((self.racine / "memory/requests").glob("D-*.md")), [])
+        self.assertEqual(decision(self.spec), 0)
+        d = next(x for x in demandes.toutes(self.racine) if x.seance)
+        self.assertEqual(d.sujet[0], self.spec)
+
+    def test_le_hook_refuse_une_decision_que_l_agent_ne_relaie_pas(self):
+        h = hooks.COMMANDES_HUMAINES.search("python3 .socle/socle decision 'Approuver la spec x' valider")
+        self.assertIsNotNone(h)
+        self.assertEqual(h.group(0), "decision")

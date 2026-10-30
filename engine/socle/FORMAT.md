@@ -168,13 +168,6 @@ sujet. Une bascule en privé copie le fichier sous `private/backlog/` (ou son
 sous-dossier des clos), et un fichier public garde l'identifiant, comme
 pour une décision.
 
-Avec BMAD Method, un travail que BMAD reporte (sa liste des
-travaux reportés) entre au backlog par `socle bmad-import` : un sujet par
-report, dont l'`origine` est cette liste et le champ `report` l'empreinte
-du report, qui le reconnaît ; son corps cite la spec d'où il vient sans la
-recopier. Le contrôle `bmad.reports` refuse un report resté hors du
-backlog.
-
 Un fait archivé dans le journal reste défini, donc toute référence vers lui
 reste vivante.
 
@@ -230,25 +223,17 @@ L'état de la demande se dérive de la réponse : en attente, répondue, renvoy�
 (`contexte-insuffisant` : l'agent la réécrit en une nouvelle demande),
 retirée (métadonnée `retirée : <raison>`). Une demande répondue est gelée.
 
-Avec BMAD Method, les décisions de son document d'architecture (`AD-n`)
-se lisent comme des décisions : l'état les liste, `socle show AD-n`
-en donne le texte et l'empreinte, et une citation `AD-n@empreinte` dans la
-mémoire désigne sa version actuelle (`bmad.lectures`) ; une citation déjà
-écrite ne se rejuge pas.
-
 Une décision prise en séance est la forme courte d'une demande :
 l'humain, présent, a lu la question dans la conversation et y a répondu
-(approuver une spec de BMAD, trancher une question ouverte). Elle s'écrit
+(approuver une spécification, trancher une question ouverte). Elle s'écrit
 avec sa réponse, d'un seul geste, par `socle decision "<question>"
 <réponse> --relayed --by <nom> --quote-file <fichier>` : un titre, la
 métadonnée `forme : séance`, une section `Question posée` qui garde la
 question telle qu'il l'a lue, et sa réponse citée mot pour mot. `sujet :
-<chemin>@<empreinte>` nomme ce qu'elle approuve ; pour une spec de BMAD,
-l'empreinte est celle de son intention figée. Elle ne passe pas par le
-contrat des huit sections ; sans réponse, elle est hors contrat. Le
-contrôle `bmad.approbation` exige qu'une spec que le workflow de BMAD fait
-approuver ait la sienne, et que son intention figée n'ait pas changé
-depuis.
+<chemin>` nomme le document qu'elle approuve (`--about`). Elle ne passe pas
+par le contrat des huit sections ; sans réponse, elle est hors contrat. Sa
+question, transcription de la conversation, n'a pas à prouver ses lectures
+par des empreintes.
 
 ## La zone privée
 
