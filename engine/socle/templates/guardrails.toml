@@ -38,10 +38,9 @@ repos = []
 
 [thirdparty]
 # Les fichiers d'un outil tiers installé dans le projet (ses skills, ses
-# scripts) : aucun contrôle ne les juge, ni ses mises à jour. L'installeur y
-# déclare les outils qu'il reconnaît (BMAD Method) ; un motif qui couvrirait
-# un fichier du socle, de la mémoire ou de la politique est refusé. En
-# ajouter un assouplit : une décision humaine.
+# scripts) : aucun contrôle ne les juge, ni ses mises à jour. Un motif qui
+# couvrirait un fichier du socle, de la mémoire ou de la politique est
+# refusé. En ajouter un assouplit : une décision humaine.
 paths = []
 
 [tooling]

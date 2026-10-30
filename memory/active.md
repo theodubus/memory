@@ -5,13 +5,11 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-Le mariage du socle et de BMAD Method est fait (ADR-0032, B-0069) : le
-socle lit BMAD sans le recopier, fait entrer ses reports au backlog,
-consigne les décisions de Théo prises en séance et garde les specs
-approuvées ; l'installeur pose les chemins tiers (B-0068) et la
-personnalisation de BMAD. Une session réelle de bout en bout le confirme
-(F-0024, J-2026-10-20-B). Les projets d'essai sont dans le dossier de
-travail de la session, jetables.
+BMAD Method est retiré du socle (D-0051, ADR-0036, J-2026-10-30-Q), dans
+une PR vers `main` ; restent la déclaration des fichiers tiers et les
+décisions en séance. La planification (B-0101) et la répartition du
+travail entre agents (B-0055) reviennent au socle. Les projets d'essai
+sont dans le dossier de travail de la session, jetables.
 
 D-0026 est répondue `rien` : B-0048 et B-0018 restent ouverts, « on se le
 garde en tete et on voit si ça finit par etre bloquant ».
@@ -61,14 +59,13 @@ garde en tete et on voit si ça finit par etre bloquant ».
   est EN DEV », « considere que pour le moment personne ne l'a encore
   utilisé » (J-2026-10-19-A).
 - Le but : « un produit hyper pratique pour des projets, qui combines tous
-  les avantages de mon projet (actuel + prévu) et du leur » (BMAD Method) ;
-  ni fusion des codes ni réimplémentation de BMAD, leur cohabitation
-  (J-2026-10-19-E, B-0067).
+  les avantages de mon projet (actuel + prévu) et du leur » (BMAD Method,
+  J-2026-10-19-E) ; BMAD retiré (D-0051), ses avantages se construisent
+  dans le socle, à sa manière : B-0101, B-0055.
 - Sessions d'un agent réel : « Tu as mon autorisation pour utiliser
   l'abonnement » (Théo, J-2026-10-19-H) ; chacune plafonnée à l'équivalent
   de 2 dollars, et sa consommation rapportée.
-- On conçoit pour une installation commune du socle et de BMAD : « Aucun
-  projet n'est deja equipé du socle » (Théo, J-2026-10-19-H).
+- « Aucun projet n'est deja equipé du socle » (Théo, J-2026-10-19-H).
 - En autonomie sur le backlog : « tu peux travailler en autonomie sur la
   backlog sur tous les éléments qui peuvent se faire n'importe quand et
   pour lesquels tu n'as pas besoin d'arbitrage / Tu peux t'arrêter quand
@@ -81,7 +78,7 @@ garde en tete et on voit si ça finit par etre bloquant ».
    (J-2026-10-20-X), la documentation, validée par Théo (D-0039,
    J-2026-10-22-B). D-0037 répondue `rien` pour aujourd'hui ; à terme, le
    dépôt de distribution séparé (B-0083), à la première version mûre.
-2. Maintenant : le projet pilote (point 6).
+2. Maintenant : le retrait de BMAD fusionné, puis le pilote neuf (point 6).
 3. Faits en attendant le pilote : B-0078, B-0079, B-0080 (J-2026-10-22-C).
    B-0081 et B-0082 faits sur les réponses de Théo (D-0040, D-0041).
 4. Faits : B-0066, les skills, selon l'option 1 de D-0042 (ADR-0034,
@@ -89,12 +86,11 @@ garde en tete et on voit si ça finit par etre bloquant ».
    protégée de la maintenance de git (J-2026-10-22-I).
 5. B-0076 fait : la section `[code]` poussée par Théo, le dernier repli de
    compatibilité retiré (D-0044) ; B-0085 fait par Théo (J-2026-10-29-A).
-6. Le projet pilote : justcook, un projet neuf de Théo avec BMAD Method
-   (J-2026-10-29-E). Installé depuis `main` après les correctifs de son
-   premier retour (J-2026-10-29-L à J-2026-10-30-A) ; la CI rouge du push
-   de sa PR #1 et sa session reprise sans hooks : B-0096 et B-0097 faits ;
-   il continue dans une session neuve sur son seul dépôt, une fois sa PR #1
-   fusionnée (J-2026-10-30-J) ; les correctifs sont sur `main`
-   (J-2026-10-30-K).
-   B-0095 attend son architecture. Attendent le pilote : B-0010, B-0012,
-   B-0071 ; le dépôt de distribution : B-0083 ; gardé en tête : B-0048.
+6. Le projet pilote : justcook, avec BMAD, installé et éprouvé
+   (J-2026-10-29-E à J-2026-10-30-M) ; BMAD retiré, le pilote repart d'un
+   dépôt neuf, installé sans BMAD, avec le cadrage, la planification faite
+   d'abord à la main sous la consigne de ton de Théo (D-0051). Puis la
+   planification (B-0101), puis la répartition entre agents (B-0055),
+   quand le pilote écrira du code. B-0095 attend son architecture ;
+   attendent le pilote : B-0010, B-0012 ; le dépôt de distribution :
+   B-0083 ; gardé en tête : B-0048 ; pour Théo : B-0102.

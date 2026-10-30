@@ -1435,6 +1435,8 @@ MESSAGES: dict[str, str] = {
     "`auto`, le défaut (déduit du dépôt), un adaptateur maintenu ({adaptateurs}) ou le chemin d'un .toml":
         "`auto`, the default (deduced from the repository), a maintained adapter ({adaptateurs}) or the path of a "
         ".toml",
+    "ce que la décision approuve (le chemin du document)":
+        "what the decision approves (the document's path)",
     "propriétaire pour CODEOWNERS, ex. @theodubus":
         "owner for CODEOWNERS, e.g. @theodubus",
     "le nom de l'humain, qui signe les réponses que l'agent relaie (défaut : son nom git, hors session cloud)":
@@ -2216,45 +2218,12 @@ MESSAGES: dict[str, str] = {
     "contrôles doivent juger":
         "third-party path “{motif}” ignored: it would cover a file of the socle, of the memory or of the policy, "
         "which the checks must judge",
-    "{outil} : ses fichiers déclarés tiers, qu'aucun contrôle ne juge ({chemins}) — un assouplissement des "
-    "garde-fous, à approuver : `python3 .socle/socle approve --keys thirdparty.paths`":
-        "{outil}: its files declared third-party, which no check judges ({chemins}) — a relaxation of the "
-        "guardrails, to approve: `python3 .socle/socle approve --keys thirdparty.paths`",
-    "{outil} : ses fichiers sont tiers, qu'aucun contrôle ne juge ({chemins})":
-        "{outil}: its files are third-party, which no check judges ({chemins})",
     "chemin tiers déclaré sans validation, pour qu'un fichier du projet échappe aux contrôles":
         "third-party path declared without validation, so that a file of the project escapes the checks",
     "chemin tiers qui couvrirait la mémoire":
         "third-party path that would cover the memory",
     "les fichiers d'un outil tiers, déclaré par l'humain qui l'approuve, échappent aux contrôles : la CI passe":
         "the files of a third-party tool, declared by the human who approves it, escape the checks: the CI passes",
-    "travail reporté par BMAD resté hors du backlog":
-        "work deferred by BMAD left out of the backlog",
-    "un travail reporté par BMAD, entré au backlog par `socle bmad-import`, passe la CI":
-        "work deferred by BMAD, entered into the backlog by `socle bmad-import`, passes the CI",
-    "travail reporté par BMAD, absent du backlog : « {resume} » — le faire entrer : `python3 "
-    ".socle/socle bmad-import`":
-        "work deferred by BMAD, missing from the backlog: “{resume}” — enter it: `python3 .socle/socle bmad-import`",
-    "refus : mémoire privée indisponible ({raison}) ; une entrée privée ne s'écrit pas à l'aveugle":
-        "refused: private memory unavailable ({raison}); a private entry is not written blind",
-    "aucun travail reporté par BMAD à faire entrer au backlog":
-        "no work deferred by BMAD to enter into the backlog",
-    "fait entrer au backlog les travaux que BMAD a reportés":
-        "enters into the backlog the work BMAD deferred",
-    "BMAD : illisible ({erreur})":
-        "BMAD: unreadable ({erreur})",
-    "BMAD     : {n} spec(s) non finie(s)":
-        "BMAD     : {n} unfinished spec(s)",
-    "  sprint, {statut} : {liste}":
-        "  sprint, {statut}: {liste}",
-    "  {n} travail(aux) reporté(s) par BMAD hors du backlog : `python3 .socle/socle bmad-import`":
-        "  {n} work item(s) deferred by BMAD outside the backlog: `python3 .socle/socle bmad-import`",
-    "Un travail que BMAD reporte entre au backlog du socle : une seule liste des trouvailles, que le "
-    "socle suit et clôt.":
-        "Work that BMAD defers enters the socle's backlog: a single list of findings, which the socle "
-        "tracks and closes.",
-    "ce que la décision approuve (une spec de BMAD : son intention figée)":
-        "what the decision approves (a BMAD spec: its frozen intent)",
     "consigner une décision prise en séance, avec la réponse de l'humain ; l'agent y relaie (--relayed) ta réponse "
     "mot pour mot":
         "record a decision taken in session, with the human's answer; the agent relays (--relayed) your answer word "
@@ -2267,58 +2236,14 @@ MESSAGES: dict[str, str] = {
         "decision taken in session without the human's answer: record it with it, word for word (`socle decision`)",
     "fichier qui contient la question telle que l'humain l'a lue":
         "file holding the question as the human read it",
-    "intention figée changée après son approbation ({ids}) : seul l'humain la change — lui faire approuver la "
-    "nouvelle, et la consigner":
-        "frozen intent changed after its approval ({ids}): only the human changes it — have them approve the new "
-        "one, and record it",
     "la question doit énoncer la décision en une phrase":
         "the question must state the decision in one sentence",
     "refus : {erreur}":
         "refused: {erreur}",
     "refus : « {chemin} » n'existe pas dans le dépôt":
         "refused: “{chemin}” does not exist in the repository",
-    "spec « {statut} » sans l'approbation de l'humain consignée : la consigner, mot pour mot, dès qu'il l'a donnée "
-    "— `python3 .socle/socle decision \"<la question posée>\" valider --about {chemin} --relayed --by <nom> "
-    "--quote-file <texte exact>`":
-        "spec “{statut}” without the human's approval recorded: record it, word for word, as soon as given — "
-        "`python3 .socle/socle decision \"<the question asked>\" approve --about {chemin} --relayed --by <name> "
-        "--quote-file <exact text>`",
-    "Une spec de BMAD approuvée l'est par l'humain, consigné mot pour mot, et son intention figée ne "
-    "change plus sans lui.":
-        "An approved BMAD spec is approved by the human, recorded word for word, and its frozen intent "
-        "no longer changes without them.",
     "décision en séance consignée par l'agent sans la citer":
         "decision taken in session recorded by the agent without quoting it",
-    "intention figée d'une spec changée après son approbation":
-        "frozen intent of a spec changed after its approval",
-    "spec de BMAD approuvée sans l'approbation de l'humain consignée":
-        "BMAD spec approved without the human's approval recorded",
-    "une spec de BMAD approuvée, dont l'approbation de l'humain est consignée en séance, passe la CI":
-        "an approved BMAD spec, whose human approval is recorded in session, passes the CI",
-    "BMAD Method : sa personnalisation posée pour {n} skill(s) — la mémoire du socle, son état, les décisions en "
-    "séance et sa fin de tour":
-        "BMAD Method: its customization written for {n} skill(s) — the socle's memory, its state, the decisions "
-        "taken in session and its end of turn",
-    "!! BMAD Method : personnalisation propre au projet gardée pour {liste} — y ajouter à la main ce que pose le "
-    "socle":
-        "!! BMAD Method: the project's own customization kept for {liste} — add by hand what the socle writes",
-    "  !! {n} skill(s) de BMAD sans la personnalisation du socle ({liste}) : relancer l'installeur du socle":
-        "  !! {n} BMAD skill(s) without the socle's customization ({liste}): run the socle's installer again",
-    "!! uv introuvable : les skills de BMAD en ont besoin pour rendre leurs workflows — l'installer "
-    "(https://docs.astral.sh/uv/)":
-        "!! uv not found: BMAD's skills need it to render their workflows — install it (https://docs.astral.sh/uv/)",
-    "BMAD Method déjà présent : gardé tel quel (sa mise à jour : `npx bmad-method install --action update`)":
-        "BMAD Method already present: kept as is (its update: `npx bmad-method install --action update`)",
-    "BMAD Method s'installe par npx, introuvable ici : installer Node.js 20.12 ou plus récent, puis relancer":
-        "BMAD Method installs through npx, not found here: install Node.js 20.12 or later, then run again",
-    "BMAD Method {version} installé (module de méthode, pour Claude Code)":
-        "BMAD Method {version} installed (method module, for Claude Code)",
-    "installer d'abord BMAD Method (par npx), que le socle reconnaît ensuite":
-        "install BMAD Method first (through npx), which the socle then recognises",
-    "l'installation de BMAD Method {version} a échoué : {sortie}":
-        "the installation of BMAD Method {version} failed: {sortie}",
-    "la version de BMAD Method à installer (défaut : celle éprouvée avec le socle)":
-        "the version of BMAD Method to install (default: the one proven with the socle)",
     "!! le projet a déjà son propre état au démarrage ({commandes}) : chaque session reçoit aussi celui du socle, "
     "et les deux se recoupent (branche, commits, ce qui revient à l'humain). Pour n'en garder qu'un, l'humain retire "
     "le sien de .claude/settings.json, ou n'y laisse que ce qui est propre au projet":
@@ -2327,26 +2252,6 @@ MESSAGES: dict[str, str] = {
         "theirs from .claude/settings.json, or leaves in it only what is the project's own",
     "un chemin qui n'existe que dans une rustine suivie du dépôt passe la CI":
         "a path that only exists in a patch tracked by the repository passes the CI",
-    "    … et {n} autre(s)":
-        "    … and {n} more",
-    "  décisions d'architecture (une en entier : `python3 .socle/socle show AD-n`) :":
-        "  architecture decisions (one in full: `python3 .socle/socle show AD-n`):",
-    "`{citation}` : {ident} ne désigne aucune décision d'architecture de BMAD":
-        "`{citation}`: {ident} names no BMAD architecture decision",
-    "`{citation}` n'est pas l'empreinte de la version actuelle de {ident} : la relire, `python3 .socle/socle show "
-    "{ident}`":
-        "`{citation}` is not the fingerprint of the current version of {ident}: read it again, `python3 .socle/socle "
-        "show {ident}`",
-    "{ident} : aucune décision de ce nom dans l'architecture de BMAD":
-        "{ident}: no decision of that name in BMAD's architecture",
-    "Une décision d'architecture de BMAD citée avec son empreinte (`AD-n@empreinte`) l'est dans sa version actuelle"
-    ".":
-        "A BMAD architecture decision cited with its fingerprint (`AD-n@fingerprint`) is cited in its current "
-        "version.",
-    "décision d'architecture de BMAD citée dans une version qu'elle n'a plus":
-        "BMAD architecture decision cited in a version it no longer has",
-    "une décision d'architecture de BMAD citée dans sa version actuelle passe la CI":
-        "a BMAD architecture decision cited in its current version passes the CI",
     "adaptateur : audit impossible ({erreur})":
         "adapter  : audit impossible ({erreur})",
     "adaptateur : !! langage(s) que l'adaptateur ({couvert}) ne couvre pas : {liste} — leurs tests, leur compilation "

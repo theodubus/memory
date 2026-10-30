@@ -96,42 +96,6 @@ sequenceDiagram
     H-->>A: « valider », consigné mot pour mot
 ```
 
-## Avec BMAD Method
-
-[BMAD Method](https://github.com/bmad-code-org/BMAD-METHOD) est une méthode
-de développement par agents : des workflows qui mènent un projet du brief au
-code (PRD, architecture, epics, stories, specs). Elle organise le travail,
-mais ne vérifie pas ce que l'agent produit et ne garde pas de mémoire hors
-de ses documents. Le socle s'y associe sans modifier ses fichiers :
-
-| BMAD Method planifie | Le socle vérifie et retient |
-| --- | --- |
-| brief, PRD, architecture, epics, stories, specs, sprint | faits, consignes, journal, backlog, décisions de l'humain |
-
-- Les workflows de BMAD lisent l'état du socle au démarrage et terminent
-  par ses contrôles.
-- L'approbation d'une spec par l'humain est consignée comme une décision ;
-  sans elle, la spec ne quitte pas le brouillon.
-- Les travaux que BMAD reporte entrent au backlog du socle.
-- Les documents de BMAD sont contrôlés comme le reste du projet.
-
-```mermaid
-%%{init: {"sequence": {"mirrorActors": false}}}%%
-sequenceDiagram
-    actor H as L'humain
-    participant A as L'agent, dans un workflow de BMAD
-    participant S as Le socle
-    H->>A: lance le workflow de construction, avec le besoin
-    A->>S: à l'activation, lit l'état du projet
-    Note over A: BMAD : rédige la spec
-    A->>H: demande l'approbation de la spec
-    H-->>A: « j'approuve »
-    A->>S: consigne l'approbation mot pour mot, avec la spec
-    Note over A: BMAD : code et tests, relecture
-    A->>S: fin du workflow : mémoire à jour, contrôles verts
-    A->>S: fait entrer au backlog les travaux reportés
-```
-
 ## Structure
 
 L'installation ajoute à un projet :
@@ -159,7 +123,7 @@ Prérequis : Python 3.11+ et git ; un projet en Rust, Python, JavaScript ou
 TypeScript, Go, Java, Ruby, PHP ou C# (un autre langage se décrit par un
 adaptateur) ; les outils de son adaptateur là où l'agent travaille (pytest,
 cargo…), que l'installeur cite ; Claude Code et GitHub pour les trois
-étages ; avec BMAD, Node.js 20.12+ et `uv`.
+étages.
 
 ```sh
 git clone --depth 1 --filter=blob:none --sparse https://github.com/theodubus/memory /tmp/socle
@@ -170,7 +134,6 @@ PYTHONPATH=/tmp/socle/engine python3 -m socle install --target . --owner @<propr
 
 | Option | Effet |
 | --- | --- |
-| `--with-bmad` | installe aussi BMAD Method, à la version éprouvée avec le socle |
 | `--adoption` | équipe un projet existant : les contrôles qui échouent passent en avertissement, puis ne peuvent que durcir |
 | `--mutation-caps <fichier>` | reprend des plafonds de mutation déjà mesurés (une table `[mutation.caps]` en TOML) au lieu de poser ces modules « à mesurer » |
 | `--private compagnon` | ajoute une mémoire privée, dans un dépôt privé à part |

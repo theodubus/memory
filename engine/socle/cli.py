@@ -240,9 +240,6 @@ def cmd_show(args) -> int:
     if args.index:
         _afficher_index(mem, args.index)
     for ident in args.ids:
-        if re.fullmatch(r"AD-\d+", ident):
-            code |= _afficher_decision_bmad(projet, ident)
-            continue
         e = mem.entree(ident)
         if e is None:
             print(trad("{ident} : aucune entrée de ce nom dans la mémoire", ident=ident), file=sys.stderr)
@@ -261,22 +258,6 @@ def cmd_show(args) -> int:
             elif d:
                 print(f"\n--- {d.statut_affiche} ---")
     return code
-
-
-def _afficher_decision_bmad(projet, ident: str) -> int:
-    """Une décision d'architecture de BMAD, avec son empreinte à
-    citer (`AD-n@empreinte`) ; une par document d'architecture qui la porte."""
-    from socle import bmad
-
-    trouvees = [d for d in bmad.decisions_architecture(projet.racine, outils.fichiers_courants(projet.racine))
-                if d.ident == ident]
-    if not trouvees:
-        print(trad("{ident} : aucune décision de ce nom dans l'architecture de BMAD", ident=ident), file=sys.stderr)
-        return 1
-    for d in trouvees:
-        print(f"--- {d.ident}@{d.empreinte} ({d.chemin}) ---")
-        print(d.texte)
-    return 0
 
 
 def cmd_prive(args) -> int:
@@ -449,9 +430,8 @@ def cmd_decision(args) -> int:
     """Une décision prise en séance : l'humain a lu la question
     dans la conversation et y a répondu ; l'agent la consigne avec sa réponse
     mot pour mot (`--relayed`), ou l'humain le fait lui-même. `--about` nomme
-    ce qu'elle approuve ; une spec de BMAD s'y cite avec l'empreinte de son
-    intention figée."""
-    from socle import bmad, requests as demandes
+    ce qu'elle approuve."""
+    from socle import requests as demandes
 
     projet = _projet(args)
     citation = args.quote or ""
@@ -470,8 +450,7 @@ def cmd_decision(args) -> int:
         if texte is None:
             print(trad("refus : « {chemin} » n'existe pas dans le dépôt", chemin=chemin), file=sys.stderr)
             return 2
-        spec = bmad.spec(chemin, texte)
-        sujet = f"{chemin}@{spec.empreinte_intention}" if spec else chemin
+        sujet = chemin
     question = Path(args.question_file).read_text(encoding="utf-8") if args.question_file else ""
     try:
         chemin, reponse = demandes.ecrire_seance(projet, args.question, question, args.answer,
@@ -620,8 +599,6 @@ def cmd_install(args) -> int:
         demandes_privees=args.private_requests,
         filtre=args.filter,
         langue_memoire=getattr(args, "language", None),
-        avec_bmad=getattr(args, "with_bmad", False),
-        version_bmad=getattr(args, "bmad_version", None) or installeur.VERSION_BMAD,
         plafonds=Path(args.mutation_caps).resolve() if getattr(args, "mutation_caps", None) else None,
         humain=getattr(args, "human", None) or "",
     )
@@ -691,22 +668,6 @@ def cmd_archive(args) -> int:
     return archivage.archiver_backlog(_projet(args))
 
 
-def cmd_bmad_import(args) -> int:
-    """Fait entrer au backlog les travaux que BMAD a reportés."""
-    from socle import checks_bmad as controles_bmad
-
-    try:
-        poses = controles_bmad.importer(_projet(args))
-    except RuntimeError as e:
-        print(e, file=sys.stderr)
-        return 2
-    if not poses:
-        print(trad("aucun travail reporté par BMAD à faire entrer au backlog"))
-    for ident, chemin in poses:
-        print(f"{ident}\t{chemin}")
-    return 0
-
-
 def cmd_checks(args) -> int:
     from socle import context as contexte
 
@@ -722,7 +683,7 @@ GROUPES = {
     a_traduire("pour l'humain"): ["help", "install", "init", "state", "answer", "decision", "approve", "reviewed",
                                   "private install"],
     a_traduire("pour l'agent"): ["new", "show", "url", "verify", "check", "next-id", "private", "mutation-verdict", "mutation-run",
-                     "renumber", "archive", "bmad-import", "checks"],
+                     "renumber", "archive", "checks"],
     a_traduire("internes (hooks, CI, moteur)"): ["hook", "ci", "selftest", "fingerprint"],
 }
 
@@ -858,7 +819,7 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
     s.add_argument("question")
     s.add_argument("answer")
     s.add_argument("--question-file", help=trad("fichier qui contient la question telle que l'humain l'a lue"))
-    s.add_argument("--about", help=trad("ce que la décision approuve (une spec de BMAD : son intention figée)"))
+    s.add_argument("--about", help=trad("ce que la décision approuve (le chemin du document)"))
     s.add_argument("--by")
     s.add_argument("--relayed", action="store_true", help=trad("réponse donnée par l'humain dans la "
                                                                "conversation"))
@@ -894,10 +855,6 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
     s.add_argument("--language", choices=("fr", "en"),
                    help=trad("langue de la mémoire d'un projet neuf : mots-clés, gabarits et messages du moteur "
                              "(défaut : fr)"))
-    s.add_argument("--with-bmad", action="store_true",
-                   help=trad("installer d'abord BMAD Method (par npx), que le socle reconnaît ensuite"))
-    s.add_argument("--bmad-version", help=trad("la version de BMAD Method à installer (défaut : celle éprouvée avec "
-                                               "le socle)"))
     s.add_argument("--mutation-caps", help=trad("des plafonds de mutation déjà mesurés, à reprendre au lieu de poser "
                                                 "ces modules « à mesurer » : un fichier TOML de `[mutation.caps]`"))
     s.set_defaults(f=cmd_install)
@@ -936,8 +893,6 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
     s = sp.add_parser("archive", help=trad("range les sujets clos du backlog à l'écart des ouverts"))
     s.set_defaults(f=cmd_archive)
 
-    s = sp.add_parser("bmad-import", help=trad("fait entrer au backlog les travaux que BMAD a reportés"))
-    s.set_defaults(f=cmd_bmad_import)
 
     s = sp.add_parser("checks", help=trad("liste des contrôles"))
     s.set_defaults(f=cmd_checks)

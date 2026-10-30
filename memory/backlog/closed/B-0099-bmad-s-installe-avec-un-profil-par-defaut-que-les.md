@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0099 — BMAD s'installe avec un profil par défaut que les sessions cloud perdent : nom, langue, niveau
 
-> statut : ouvert · origine : J-2026-10-30-M · lu : backlog@e00eea09
+> statut : abandonné · origine : J-2026-10-30-M · lu : backlog@e00eea09 · ref : J-2026-10-30-Q
 
 `--with-bmad` installe BMAD Method sans répondre à ses questions : le
 niveau de l'utilisateur reste « intermediate », alors que BMAD propose
@@ -16,3 +16,6 @@ se commite et que l'installeur de BMAD ne touche pas : le nom de l'humain
 (`--human`), la langue de la mémoire, et un niveau qu'il choisit, « expert »
 par défaut pour un humain qui délègue le code sans déléguer les
 décisions. À trancher avec la place que Théo garde à BMAD sur le pilote.
+
+Abandonné : BMAD est retiré du socle (D-0051, J-2026-10-30-Q), il n'y a
+plus de profil à poser.

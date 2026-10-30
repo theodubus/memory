@@ -154,10 +154,6 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
     except Exception as e:
         lignes.append(trad("adaptateur : audit impossible ({erreur})", erreur=f"{type(e).__name__}: {e}"))
     try:
-        lignes += _bmad(projet)
-    except Exception as e:
-        lignes.append(trad("BMAD : illisible ({erreur})", erreur=f"{type(e).__name__}: {e}"))
-    try:
         from socle import human as humain
 
         elements = humain.a_faire(projet)
@@ -233,45 +229,6 @@ def audit_adaptateur(projet: config.Projet) -> list[str]:
     return [trad("adaptateur : !! langage(s) que l'adaptateur ({couvert}) ne couvre pas : {liste} — leurs tests, leur "
                  "compilation et leur mutation ne passent par aucune capacité ; le dire à l'humain par une demande "
                  "(un autre adaptateur, ou ces fichiers déclarés tiers)", couvert=couvert, liste=liste)]
-
-
-def _bmad(projet: config.Projet) -> list[str]:
-    """Ce que BMAD planifie et que le socle lit sans le recopier :
-    les specs non finies, les stories en cours ou en revue, les reports
-    encore hors du backlog."""
-    from socle import bmad, checks_bmad as controles_bmad
-
-    racine = projet.racine
-    if not bmad.present(racine):
-        return []
-    res = []
-    ouvertes = [s for s in bmad.specs(racine, outils.fichiers_courants(racine)) if s.statut != bmad.FINIE]
-    res.append(trad("BMAD     : {n} spec(s) non finie(s)", n=len(ouvertes)))
-    res += [f"  {s.chemin} ({s.statut}, {s.route or '?'})" for s in ouvertes]
-    decisions = bmad.decisions_architecture(racine, outils.fichiers_courants(racine))
-    if decisions:
-        res.append(trad("  décisions d'architecture (une en entier : `python3 .socle/socle show AD-n`) :"))
-        res += [f"    {d.ident} — {d.titre}" for d in decisions[:12]]
-        if len(decisions) > 12:
-            res.append(trad("    … et {n} autre(s)", n=len(decisions) - 12))
-    impl = bmad.dossiers(racine)[1]
-    etats = bmad.sprint(outils.lire_a(racine, None, f"{impl}/{bmad.SPRINT}") or "")
-    for statut in ("in-progress", "review"):
-        stories = [k for k, v in etats.items() if v == statut and not k.startswith("epic-")]
-        if stories:
-            res.append(trad("  sprint, {statut} : {liste}", statut=statut, liste=", ".join(stories)))
-    from socle import installer as installeur
-
-    sans = [n for n in installeur.personnalisations_bmad(racine)
-            if not (racine / "_bmad" / "custom" / f"{n}.toml").is_file()]
-    if sans:
-        res.append(trad("  !! {n} skill(s) de BMAD sans la personnalisation du socle ({liste}) : relancer "
-                        "l'installeur du socle", n=len(sans), liste=", ".join(sans[:4]) + (" …" if len(sans) > 4 else "")))
-    hors = controles_bmad.reports_a_entrer(projet, memoire.Memoire.charger(racine))
-    if hors:
-        res.append(trad("  {n} travail(aux) reporté(s) par BMAD hors du backlog : `python3 .socle/socle "
-                        "bmad-import`", n=len(hors)))
-    return res
 
 
 def _git(racine, projet) -> list[str]:

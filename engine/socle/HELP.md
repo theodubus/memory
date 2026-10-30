@@ -121,20 +121,6 @@ privé vide sur GitHub, puis
 `python3 .socle/socle private install --repo <adresse>`. La commande
 termine par les deux réglages à faire sur GitHub, avec leurs liens.
 
-## Avec BMAD Method
-
-- **Lancer un workflow de BMAD** en le nommant à l'agent (par exemple
-  `bmad-build`). Le workflow lit l'état du socle au démarrage et termine par
-  ses contrôles.
-- **Approuver une spec** : quand le workflow s'arrête pour la faire
-  approuver, répondre dans la conversation. L'approbation est consignée
-  avant le code ; l'intention approuvée ne change plus sans une approbation
-  nouvelle.
-- **Les travaux reportés** par BMAD entrent au backlog du socle
-  (`socle bmad-import`, lancé par l'agent).
-- **Mettre à jour BMAD** : `npx bmad-method install --action update`, puis
-  relancer l'installation du socle.
-
 ## Quand un contrôle refuse
 
 Chaque refus dit ce qu'il a vu et comment en sortir. La plupart s'adressent
@@ -188,5 +174,5 @@ contrôles.
 
 `.socle/guardrails.toml` porte les seuils des contrôles : budgets de taille
 de la mémoire, plafonds de mutation, correspondances entre code et
-documentation, fichiers tiers (ceux de BMAD, par exemple). Les durcir est
+documentation, fichiers tiers (ceux d'un outil installé dans le projet). Les durcir est
 libre ; les relâcher exige une demande validée.
