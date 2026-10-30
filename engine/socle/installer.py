@@ -1044,15 +1044,15 @@ def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str]) -> list[str
                else trad("Installer le socle {version}", version=VERSION))
     etapes.append(trad('commiter puis pousser : `git add -A && git commit -m "{message}" && git push`',
                        message=message))
+    etapes.append(trad("ouvrir l'agent dans le projet : il lit l'état au démarrage") if mise_a_jour
+                  else trad("ouvrir l'agent dans le projet : il lit l'état au démarrage, et te pose les questions "
+                            "de départ dans la conversation"))
     if not mise_a_jour and not str(projet.pol("human", "name", defaut="") or "").strip():
         # Sans lui, chaque réponse relayée doit nommer l'humain (`--by`).
         etapes.append(trad("écrire ton nom dans `{politique}` (`[human] name`) avant de fusionner l'installation : "
                            "il signe les réponses que l'agent relaie. En session cloud, l'identité git est celle "
                            "de l'agent, que l'installeur ne prend pas ; `--human <nom>` le donne à l'installation",
                            politique=projet.chemins.politique))
-    etapes.append(trad("ouvrir l'agent dans le projet : il lit l'état au démarrage") if mise_a_jour
-                  else trad("ouvrir l'agent dans le projet : il lit l'état au démarrage, et te pose les questions "
-                            "de départ dans la conversation"))
     if not mise_a_jour:
         from socle import state as etat
 
