@@ -15,3 +15,6 @@ Le 31 oct. (J-2026-10-31-A) : installé, la PR #1 de JustCook ouverte ;
 la roadmap et le schéma que deux agents ont crus perdus l'étaient : le
 cadrage est un artifact, dont l'export en Markdown les a perdus ; la
 session de travail en reçoit le lien (J-2026-10-31-B).
+
+À vérifier à sa prochaine mise à jour (J-2026-10-31-M) : qu'une session
+cloud clone le dépôt public `theodubus/socle` sans l'ajouter.

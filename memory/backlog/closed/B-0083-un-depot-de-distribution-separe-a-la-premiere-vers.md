@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0083 — Un dépôt de distribution séparé, à la première version mûre ; ce dépôt gardé privé pour la fabrication
 
-> statut : en cours · origine : J-2026-10-21-B · lu : backlog@7cf0d815
+> statut : fait · origine : J-2026-10-21-B · lu : backlog@7cf0d815 · ref : J-2026-10-31-M
 
 Proposé par Théo en réponse à D-0037@436f2cf4 : à la première version
 mûre, un dépôt de distribution ne contient que ce qu'un projet reçoit (le
@@ -40,3 +40,5 @@ Théo, après trois incidents de sessions à deux dépôts. Le dépôt public
 écrit. Reste : la première publication, à la fusion, et la vérification
 qu'une session cloud clone ce dépôt sans l'ajouter. Le paquet PyPI et
 l'empreinte publiée par version restent à trancher.
+
+Fait (J-2026-10-31-M) : publié ; le paquet PyPI et l'empreinte par version passent à B-0109.
