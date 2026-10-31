@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0102 — Rafraîchir le skill socle-request et le réglage de Claude Code, protégés, de ce dépôt depuis leurs gabarits
 
-> statut : en cours · origine : J-2026-10-30-Q · lu : backlog@aa365018
+> statut : fait · origine : J-2026-10-30-Q · lu : backlog@aa365018 · ref : J-2026-10-31-U
 
 Le retrait de BMAD (J-2026-10-30-Q) change le gabarit du skill des
 demandes : une décision en séance approuve « une spécification », non
@@ -33,3 +33,5 @@ mieux. Il n'a pas de terminal ; l'installeur, relancé sur ce dépôt comme
 pour une mise à jour en session cloud, réécrit cinq fichiers protégés en
 retard, et D-0060 les cite avec leurs empreintes, à valider dans la
 conversation (J-2026-10-31-T). Le geste ci-dessus n'est plus le sien.
+
+D-0060 validée (J-2026-10-31-U) : les cinq fichiers se commitent.

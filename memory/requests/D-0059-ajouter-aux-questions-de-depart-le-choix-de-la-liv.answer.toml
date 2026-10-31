@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0059-ajouter-aux-questions-de-depart-le-choix-de-la-liv.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-10-31"
+canal = "conversation"
+citation = "D0059 valider\nD0060 valider\nEnchaîner par defaut, mais pas forcement tout, on peut imaginer qu'avant de se lancer l'agent disent le gros lot sur lequel il va travailler\n\nJe fusionne et supprime la branche juste apres, rappelle le moi ainsi que le prompt à donner à l'autre session"
+empreinte = "sha256:22f6b82b1996ef103f236f2893160934bedab29f0caeecc10d34e171f6ecd71a"

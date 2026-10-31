@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0113 — La livraison par défaut : une branche de développement et une seule pull request ouverte, une par sujet en option choisie au départ
 
-> statut : en cours · origine : J-2026-10-31-S · lu : backlog@21d64bbd
+> statut : fait · origine : J-2026-10-31-S · lu : backlog@21d64bbd · ref : J-2026-10-31-U
 
 Le pilote, en pilote automatique, a ouvert cinq pull requests, longues à
 fusionner pour Théo : rien dans les instructions que pose le socle ne dit
@@ -22,3 +22,5 @@ Fait : les instructions, en deux langues, et le guide. La question de
 départ attend D-0059 : elle fait passer de cinq à six le nombre de
 questions qu'attend `test_rien`, ce qui revient à Théo (politique, point
 2).
+
+D-0059 validée (J-2026-10-31-U) : la question de départ s'ajoute.
