@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0113 — La livraison par défaut : une branche de développement et une seule pull request ouverte, une par sujet en option choisie au départ
 
-> statut : ouvert · origine : J-2026-10-31-S · lu : backlog@21d64bbd
+> statut : en cours · origine : J-2026-10-31-S · lu : backlog@21d64bbd
 
 Le pilote, en pilote automatique, a ouvert cinq pull requests, longues à
 fusionner pour Théo : rien dans les instructions que pose le socle ne dit
@@ -17,3 +17,8 @@ branche et une pull request par sujet en option, choisie au départ.
 - les questions de départ posent le choix, avec la branche de
   développement pour défaut ; le choix devient un fait de la mémoire ;
 - le guide le dit.
+
+Fait : les instructions, en deux langues, et le guide. La question de
+départ attend D-0059 : elle fait passer de cinq à six le nombre de
+questions qu'attend `test_rien`, ce qui revient à Théo (politique, point
+2).

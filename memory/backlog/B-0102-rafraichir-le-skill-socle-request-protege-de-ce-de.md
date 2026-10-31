@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0102 — Rafraîchir le skill socle-request et le réglage de Claude Code, protégés, de ce dépôt depuis leurs gabarits
 
-> statut : ouvert · origine : J-2026-10-30-Q · pour : humain · lu : backlog@aa365018
+> statut : en cours · origine : J-2026-10-30-Q · lu : backlog@aa365018
 
 Le retrait de BMAD (J-2026-10-30-Q) change le gabarit du skill des
 demandes : une décision en séance approuve « une spécification », non
@@ -27,3 +27,9 @@ git add -A && git commit -m "B-0102 : le skill des demandes et le réglage de Cl
 Sans ce geste, l'agent de ce dépôt lit encore BMAD dans ce skill, et son
 hook ne voit pas le widget de questions ; les contrôles n'en dépendent
 pas.
+
+Le 31 oct., Théo demande de le faire « si c'est nécessaire/mieux » : c'est
+mieux. Il n'a pas de terminal ; l'installeur, relancé sur ce dépôt comme
+pour une mise à jour en session cloud, réécrit cinq fichiers protégés en
+retard, et D-0060 les cite avec leurs empreintes, à valider dans la
+conversation (J-2026-10-31-T). Le geste ci-dessus n'est plus le sien.
