@@ -257,6 +257,18 @@ MESSAGES: dict[str, str] = {
         "yes, as it is",
     "la politique dit ce que l'agent décide seul et ce qu'il te demande ; toi seul la modifies":
         "the policy says what the agent decides alone and what it asks you; only you change it",
+    "Le travail se livre-t-il par une branche de développement, une seule pull request ouverte à la fois, ou "
+    "par une branche et une pull request par sujet ?":
+        "Is the work delivered through one development branch, with only one pull request open at a time, or "
+        "through one branch and one pull request per topic?",
+    "une branche de développement : chaque lot fini s'ajoute à la pull request ouverte, que tu fusionnes quand "
+    "tu veux":
+        "one development branch: each finished batch is added to the open pull request, which you merge "
+        "whenever you want",
+    "une pull request par sujet se relit sujet par sujet, mais il y en a une à fusionner par sujet ; le choix "
+    "devient un fait de la mémoire, que l'agent suit":
+        "a pull request per topic is reviewed topic by topic, but there is one to merge per topic; the choice "
+        "becomes a fact of the memory, which the agent follows",
     "Des contraintes à respecter (licence, dépendances, plateformes, délais) ?":
         "Any constraints to respect (licence, dependencies, platforms, deadlines)?",
     "aucune connue":
