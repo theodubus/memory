@@ -119,8 +119,16 @@ class TestApprobation(unittest.TestCase):
             controles_cliquet.proteges(ctx, r)
             return r
 
-        # Pas encore poussée : l'humain ne peut pas la lire.
+        # Pas encore poussée : l'humain ne peut pas la lire. Le hook avant push
+        # juge ce qui part, sans le fichier changé dans l'arbre.
         self.assertTrue(juger("agent").erreurs("protege.fichiers"))
+        from socle import hooks
+
+        tete = git(self.racine, "rev-parse", "HEAD").strip()
+        with unittest.mock.patch("sys.stdin", io.StringIO(f"refs/heads/main {tete} refs/heads/main {'0' * 40}\n")), \
+                contextlib.redirect_stderr(io.StringIO()) as flux:
+            hooks.git_pre_push(config.Projet.charger(self.racine))
+        self.assertNotIn("protege.fichiers", flux.getvalue())
         git(self.racine, "push", "-q", "--no-verify", "-u", "origin", "main")
         r = juger("agent")
         self.assertEqual([c.message for c in r.erreurs("protege.fichiers")], [])

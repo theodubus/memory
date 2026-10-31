@@ -15,5 +15,8 @@ répit (B-0033), pas les fichiers protégés.
 Correctif : à la fin du tour seulement, une demande en attente, poussée
 telle quelle, qui cite le fichier et son empreinte nouvelle, laisse le
 fichier dans l'arbre ; le commit et la CI attendent toujours la réponse.
-Un test et un témoin de l'auto-test l'établissent ; l'étape de mise à jour
-de l'installeur le dit.
+Et le hook avant push jugeait l'arbre, non ce qui part : les fichiers
+protégés changés y refusaient le push de la demande qui les cite. Il juge
+désormais le dernier commit. Un test, qui échoue sur le commit parent, et
+un témoin de l'auto-test l'établissent ; l'étape de mise à jour de
+l'installeur le dit.

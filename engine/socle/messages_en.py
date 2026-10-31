@@ -2234,6 +2234,8 @@ MESSAGES: dict[str, str] = {
         "a memory in English: its entries, written by `socle new`, pass the commit and the CI",
     "une valeur attendue changée sous une demande en attente, poussée : le tour finit, le commit attend":
         "an expected value changed under a pending request, pushed: the turn ends, the commit waits",
+    "un fichier protégé changé sous une demande en attente, poussée : le tour finit, le commit attend":
+        "a protected file changed under a pending request, pushed: the turn ends, the commit waits",
     "un push relu par l'humain, son accord relayé avec son texte exact, passe le hook de l'agent":
         "a push reviewed by the human, their agreement relayed with their exact text, passes the agent's hook",
     "sans la clé (une CI de fork), la mémoire privée est indisponible et rien n'échoue":
