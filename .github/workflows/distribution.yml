@@ -1,0 +1,49 @@
+# Publie le produit, et lui seul, dans le dépôt public de distribution
+# (D-0056, D-0057) : le moteur sous `socle/`, et `engine/README.md` pour
+# README. La licence de ce dépôt public y reste telle que l'humain l'a posée.
+# Le jeton, à accès fin, n'écrit que dans ce dépôt public.
+name: Distribution
+
+on:
+  push:
+    branches: [main]
+    paths: ["engine/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: distribution
+  cancel-in-progress: false
+
+jobs:
+  publier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Publier le moteur dans theodubus/socle
+        env:
+          JETON: ${{ secrets.SOCLE_DISTRIBUTION_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "$JETON" ]; then
+            echo "::error::secret SOCLE_DISTRIBUTION_TOKEN absent : rien n'est publié"
+            exit 1
+          fi
+          git clone --depth 1 "https://x-access-token:${JETON}@github.com/theodubus/socle" public
+          rm -rf public/socle
+          cp -r engine/socle public/socle
+          find public/socle -name __pycache__ -prune -exec rm -rf {} +
+          cp engine/README.md public/README.md
+          version=$(sed -n 's/^VERSION = "\(.*\)"$/\1/p' engine/socle/__init__.py)
+          cd public
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "rien de nouveau à publier"
+            exit 0
+          fi
+          git commit -q -m "Socle ${version}, publié depuis ${GITHUB_SHA::7}"
+          git push origin HEAD

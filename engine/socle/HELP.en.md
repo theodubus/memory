@@ -118,15 +118,16 @@ named by a test, or waived in the commit message
 previous commit.
 
 **Updating the socle.** Run the installation command again from an
-up-to-date copy of the engine. The project's files are never overwritten;
+up-to-date clone of the engine (`git clone --depth 1
+https://github.com/theodubus/socle /tmp/socle`). The project's files are never overwritten;
 the diff of the policy is shown. Then approve the changed protected files
 (`socle approve`), and commit. In a cloud session, with no terminal, the
-update is done in a dedicated session, which adds the socle's repository
-and is therefore not resumed: it installs, commits, pushes its branch and
-opens the pull request in one go, without waiting for anything. The
-approval then happens in a new session on the project's repository alone:
-the agent puts there a request that cites each changed protected file with
-its fingerprint, and the human approves it in the conversation.
+agent puts a request that cites each changed protected file with its
+fingerprint, and the human approves it in the conversation. The engine's
+public repository is cloned without being added to the session; a session
+that had to add a second repository is not resumed: it installs, commits,
+pushes and opens the pull request in one go, and the request is put in a
+new session on the project's repository alone.
 
 **Setting up the private memory** (companion mode). Create an empty private
 repository on GitHub, then

@@ -868,12 +868,12 @@ def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str]) -> list[str
         # En session cloud, l'humain n'a pas de terminal, et la session qui a
         # ajouté le dépôt du socle ne se reprend pas (B-0107).
         etapes.append(trad("approuver les fichiers protégés que la mise à jour a changés : en session cloud, "
-                           "l'humain n'a pas de terminal pour `socle approve`, et cette session, qui a ajouté le "
-                           "dépôt du socle, ne se reprend pas. Y commiter, pousser la branche et ouvrir la pull "
-                           "request, d'une traite et sans rien attendre ; puis, dans une session neuve sur le seul "
-                           "dépôt du projet, sur cette branche, poser une demande qui cite chaque fichier protégé "
-                           "changé et son empreinte (`python3 .socle/socle check` les donne), que l'humain valide "
-                           "dans la conversation"))
+                           "l'humain n'a pas de terminal pour `socle approve` ; poser une demande qui cite chaque "
+                           "fichier protégé changé et son empreinte (`python3 .socle/socle check` les donne), que "
+                           "l'humain valide dans la conversation. Une session qui a dû ajouter le dépôt du socle "
+                           "ne se reprend pas : y commiter, pousser la branche et ouvrir la pull request, d'une "
+                           "traite et sans rien attendre, et poser la demande dans une session neuve sur le seul "
+                           "dépôt du projet, sur cette branche"))
     elif "protege.fichiers" in echecs:
         etapes.append(trad("approuver les fichiers protégés que la mise à jour a changés (la liste s'affiche, "
                            'à confirmer) : `python3 .socle/socle approve --text "Mise à jour du socle '

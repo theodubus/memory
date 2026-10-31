@@ -1814,15 +1814,16 @@ MESSAGES: dict[str, str] = {
         "--include-untracked`, or the text of the new files), for the human to give to the new session: the "
         "container may disappear with it.",
     "approuver les fichiers protégés que la mise à jour a changés : en session cloud, l'humain n'a pas de terminal "
-    "pour `socle approve`, et cette session, qui a ajouté le dépôt du socle, ne se reprend pas. Y commiter, pousser "
-    "la branche et ouvrir la pull request, d'une traite et sans rien attendre ; puis, dans une session neuve sur le "
-    "seul dépôt du projet, sur cette branche, poser une demande qui cite chaque fichier protégé changé et son "
-    "empreinte (`python3 .socle/socle check` les donne), que l'humain valide dans la conversation":
+    "pour `socle approve` ; poser une demande qui cite chaque fichier protégé changé et son empreinte (`python3 "
+    ".socle/socle check` les donne), que l'humain valide dans la conversation. Une session qui a dû ajouter le dépôt "
+    "du socle ne se reprend pas : y commiter, pousser la branche et ouvrir la pull request, d'une traite et sans rien "
+    "attendre, et poser la demande dans une session neuve sur le seul dépôt du projet, sur cette branche":
         "approve the protected files the update changed: in a cloud session, the human has no terminal for `socle "
-        "approve`, and this session, which added the socle's repository, is not resumed. Commit there, push the "
-        "branch and open the pull request, in one go and without waiting for anything; then, in a new session on the "
-        "project's repository alone, on that branch, put a request that cites each changed protected file and its "
-        "fingerprint (`python3 .socle/socle check` gives them), which the human approves in the conversation",
+        "approve`; put a request that cites each changed protected file and its fingerprint (`python3 .socle/socle "
+        "check` gives them), which the human approves in the conversation. A session that had to add the socle's "
+        "repository is not resumed: commit there, push the branch and open the pull request, in one go and without "
+        "waiting for anything, and put the request in a new session on the project's repository alone, on that "
+        "branch",
     "{sha} « {sujet} » : aucun PreToolUse n'a tiré pendant la session — les hooks de l'agent n'étaient pas chargés. "
     "{remede}":
         "{sha} “{sujet}”: no PreToolUse fired during the session — the agent's hooks were not loaded. {remede}",

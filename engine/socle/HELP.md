@@ -115,16 +115,17 @@ publique ajoutée est nommée par un test, ou dispensée dans le message du
 commit (`Dispense-test: f — <raison>`) ; un correctif apporte un test qui
 échoue sur le commit précédent.
 
-**Mettre à jour le socle.** Relancer la commande d'installation depuis une
-copie à jour du moteur. Les fichiers du projet ne sont jamais écrasés ; le
+**Mettre à jour le socle.** Relancer la commande d'installation depuis un
+clone à jour du moteur (`git clone --depth 1
+https://github.com/theodubus/socle /tmp/socle`). Les fichiers du projet ne sont jamais écrasés ; le
 diff de la politique est montré. Approuver ensuite les fichiers protégés
 changés (`socle approve`), puis commiter. En session cloud, sans terminal,
-la mise à jour se fait dans une session dédiée, qui ajoute le dépôt du
-socle et ne se reprend donc pas : elle installe, commite, pousse sa branche
-et ouvre la pull request d'une traite, sans rien attendre. L'approbation se
-fait ensuite dans une session neuve sur le seul dépôt du projet : l'agent
-y pose une demande qui cite chaque fichier protégé changé avec son
-empreinte, et l'humain la valide dans la conversation.
+l'agent pose une demande qui cite chaque fichier protégé changé avec son
+empreinte, et l'humain la valide dans la conversation. Le dépôt public du
+moteur se clone sans être ajouté à la session ; une session qui a dû
+ajouter un second dépôt ne se reprend pas : elle installe, commite, pousse
+et ouvre la pull request d'une traite, et la demande se pose dans une
+session neuve sur le seul dépôt du projet.
 
 **Mettre en place la mémoire privée** (mode compagnon). Créer un dépôt
 privé vide sur GitHub, puis

@@ -14,6 +14,7 @@ sans entrer dans le code, le `README.md` et le guide d'utilisation
 | Moteur immuable | dans un projet, .socle/engine/socle/ (ici, la source : `engine/socle/`), lanceur `.socle/socle`, verrou .socle/engine.lock | l'installeur seul ; la CI vérifie l'empreinte |
 | Fichiers du projet | memory/, .socle/policy.toml, .socle/adapter.toml, .socle/guardrails.toml | le projet, selon la politique |
 | Étages d'application | `.claude/settings.json`, `.socle/git-hooks/`, `.github/workflows/socle.yml` (et le balayage de mutation hebdomadaire, quand l'adaptateur en déclare un), `.github/CODEOWNERS` | l'installeur ; fichiers protégés |
+| Distribution (ce dépôt seul) | le dépôt public `theodubus/socle`, sous MIT : le moteur sous `socle/`, et `engine/README.md` pour README ; publié par `.github/workflows/distribution.yml` à chaque fusion sur `main` (D-0056, D-0057) | le workflow, avec un jeton qui n'écrit que là |
 
 Les trois étages appellent le même moteur : `python3 .socle/socle hook …`
 pour l'agent et pour git, `python3 .socle/socle ci` pour la CI.
