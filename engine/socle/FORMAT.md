@@ -225,7 +225,8 @@ révélée impossible à trancher pour l'humain.
   que sur `valider`, et les contrôles cherchent leur nom dans le texte de
   la demande validée. Une décision en séance se consigne de même sous une
   réponse de base, ou sous une option que la question nomme entre accents
-  graves.
+  graves. Les questions de départ que pose `socle init` suivent la règle
+  (D-0054) : `valider` y applique tous les défauts.
 
 La réponse vit dans `<demande>.answer.toml`. L'humain répond dans la
 conversation, et l'agent consigne sa réponse avec le texte exact
