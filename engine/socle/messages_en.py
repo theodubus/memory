@@ -757,6 +757,9 @@ MESSAGES: dict[str, str] = {
         "before it is merged ({liste})",
     "installation du socle : {n} fichier(s) protégé(s) posé(s) — la politique par défaut est celle du cadrage":
         "socle installation: {n} protected file(s) installed — the default policy is the brief's",
+    "modification en attente de {id} : le tour peut finir, le commit et la CI attendent la réponse de "
+    "l'humain":
+        "change awaiting {id}: the turn may end, the commit and the CI wait for the human's answer",
     "modification validée par {id}":
         "change approved by {id}",
     "fichier protégé modifié sans validation humaine. Une demande validée doit citer `{fichier}` et `{cite}`":
@@ -1825,12 +1828,14 @@ MESSAGES: dict[str, str] = {
         "container may disappear with it.",
     "approuver les fichiers protégés que la mise à jour a changés : en session cloud, l'humain n'a pas de terminal "
     "pour `socle approve` ; poser une demande qui cite chaque fichier protégé changé et son empreinte (`python3 "
-    ".socle/socle check` les donne), que l'humain valide dans la conversation. Une session qui a dû ajouter le dépôt "
-    "du socle ne se reprend pas : y commiter, pousser la branche et ouvrir la pull request, d'une traite et sans rien "
+    ".socle/socle check` les donne), que l'humain valide dans la conversation ; poussée, elle laisse finir le tour, "
+    "les fichiers changés restant dans l'arbre jusqu'à sa réponse, puis se commitant avec elle. Une session qui a dû "
+    "ajouter le dépôt du socle ne se reprend pas : y commiter, pousser la branche et ouvrir la pull request, d'une traite et sans rien "
     "attendre, et poser la demande dans une session neuve sur le seul dépôt du projet, sur cette branche":
         "approve the protected files the update changed: in a cloud session, the human has no terminal for `socle "
         "approve`; put a request that cites each changed protected file and its fingerprint (`python3 .socle/socle "
-        "check` gives them), which the human approves in the conversation. A session that had to add the socle's "
+        "check` gives them), which the human approves in the conversation; once pushed, it lets the turn end, the "
+        "changed files staying in the tree until the answer, then committed with it. A session that had to add the socle's "
         "repository is not resumed: commit there, push the branch and open the pull request, in one go and without "
         "waiting for anything, and put the request in a new session on the project's repository alone, on that "
         "branch",
