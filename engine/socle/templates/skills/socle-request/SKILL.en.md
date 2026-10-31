@@ -27,8 +27,10 @@ never choosing it.
      answer.
    - **Recommendation**: what is verified kept apart from what is assumed.
    - **Possible answers**: a list `` - `value` — meaning `` that offers
-     `insufficient-context`. A request that names a test or a threshold key
-     also offers `approve`: only that answer authorises changing them.
+     the base answers, the same in every request: `approve` (the
+     recommendation), `reject` and `insufficient-context`; a choice request
+     adds its options, and no synonym (`accept`, `yes`…). Only `approve`
+     authorises changing a test or a threshold key the request names.
 3. The lint refuses an incomplete request; the agent's hook refuses it as
    soon as it is written.
 4. Commit and push the request as is, then give its link

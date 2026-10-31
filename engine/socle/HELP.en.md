@@ -79,6 +79,9 @@ action), the agent writes a request and gives its link. It reads on its
 own and ends with the list of possible answers. Answer in the
 conversation; the agent records the answer word for word.
 
+- The base answers are the same in every request: `approve` (the
+  recommendation), `reject`, `insufficient-context`; a choice request adds
+  its options.
 - `approve` is the only answer that authorises an action reserved to the
   human.
 - `insufficient-context` sends the request back to the agent, which

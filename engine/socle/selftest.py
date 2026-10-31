@@ -855,6 +855,12 @@ def _cas() -> list[Cas]:
         return etage_outil(a, c, "Write", {"file_path": str(c / "memory/requests/D-0001-refactor.md"),
                                            "content": _demande_de_choix(a, c, "`test_double`")})
 
+    @defaut("reponse-synonyme", "demande qui propose « approuver » au lieu de la réponse de base `valider`", "agent",
+            "demandes.contrat")
+    def _(a, c):
+        return etage_outil(a, c, "Write", {"file_path": str(c / "memory/requests/D-0001-refactor.md"),
+                                           "content": demande_bonne(a, c).replace("- `valider` —", "- `approuver` —")})
+
     @defaut("skill-sans-description", "skill dont la description ne dit pas quand s'en servir", "git",
             "skills.contrat")
     def _(a, c):
@@ -1541,11 +1547,14 @@ def _temoins() -> list[tuple[str, Callable]]:
         maj_memoire(c, "Un module de constantes, mesuré.")
         return etage_ci(a, c)
 
-    @temoin("une demande de choix qui ne nomme ni test ni seuil passe sans `valider`, et une demande qui nomme "
-            "un test passe avec lui")
+    @temoin("une demande de choix qui propose les réponses de base et ses options passe, et une demande qui nomme "
+            "un test passe avec `valider`")
     def _(a, c):
         chemin = str(c / "memory/requests/D-0001-refactor.md")
-        return (etage_outil(a, c, "Write", {"file_path": chemin, "content": _demande_de_choix(a, c, "la fonction")})
+        # D-0053 : les réponses de base dans toute demande, les options en plus.
+        choix = demande_bonne(a, c).replace("- `refuser` — j'ajoute tel quel.\n",
+                                            "- `refuser` — j'ajoute tel quel.\n- `scinder` — je scinde le module.\n")
+        return (etage_outil(a, c, "Write", {"file_path": chemin, "content": choix})
                 or etage_outil(a, c, "Write", {"file_path": chemin, "content": demande_bonne(a, c).replace(
                     "Vérifié : un seul appelant.", "Vérifié : un seul appelant, que `test_double` exerce.")}))
 

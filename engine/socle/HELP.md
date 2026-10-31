@@ -80,6 +80,9 @@ irréversible), l'agent écrit une demande et en donne le lien. Elle se lit
 seule et se termine par la liste des réponses possibles. Répondre dans la
 conversation ; l'agent consigne la réponse mot pour mot.
 
+- Les réponses de base sont les mêmes dans toute demande : `valider` (la
+  recommandation), `refuser`, `contexte-insuffisant` ; une demande de choix
+  y ajoute ses options.
 - `valider` est la seule réponse qui autorise un geste réservé à l'humain.
 - `contexte-insuffisant` renvoie la demande à l'agent, qui la réécrit.
 - Depuis un terminal :

@@ -33,6 +33,6 @@
 
 ## Réponses possibles
 
-- `valider` — <ce que ça déclenche>
+- `valider` — <la recommandation : ce que ça déclenche>
 - `refuser` — <ce que ça déclenche>
 - `contexte-insuffisant` — la demande revient à l'agent, qui la réécrit en une demande qui la remplace.

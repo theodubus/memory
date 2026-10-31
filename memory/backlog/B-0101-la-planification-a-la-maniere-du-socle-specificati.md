@@ -23,3 +23,7 @@ banc.
 
 Les tâches qu'elle pose prennent leur ordre au backlog (ADR-0037) : ce
 que chacune attend (`après`), et des jalons qui attendent leurs tâches.
+
+Le pilote le montre (J-2026-10-31-E) : sans emplacement fixé pour la
+spécification et l'architecture, l'agent en fait une ADR et la soumet à
+l'humain. Le skill fixe où elles vivent.

@@ -26,9 +26,11 @@ réponse mot pour mot, sans jamais la choisir.
    - **Conséquences** : si l'humain valide, s'il refuse, sans réponse.
    - **Recommandation** : le vérifié séparé du supposé.
    - **Réponses possibles** : une liste `` - `valeur` — sens `` qui
-     propose `contexte-insuffisant`. Une demande qui nomme un test ou une
-     clé des seuils propose aussi `valider` : seule cette réponse autorise
-     à les changer.
+     propose les réponses de base, les mêmes dans toute demande :
+     `valider` (la recommandation), `refuser` et `contexte-insuffisant` ;
+     une demande de choix y ajoute ses options, et aucun synonyme
+     (`approuver`, `oui`…). Seule `valider` autorise à changer un test ou
+     une clé des seuils que la demande nomme.
 3. Le lint refuse une demande incomplète ; le hook de l'agent la refuse dès
    l'écriture.
 4. Commiter et pousser la demande telle quelle, puis donner son lien

@@ -35,7 +35,7 @@ always keep it, and a new session only has the memory.
 | --- | --- | --- |
 | Canonical | `memory/canonical.md` | facts with status and proof; only changes with a new proof |
 | Active | `memory/active.md` | work in progress, next steps; rewritten, kept short |
-| Decisions | `memory/decisions/` | one ADR per file; only its status changes afterwards |
+| Decisions | `memory/decisions/` | one ADR per file, the project's only decision register; only its status changes afterwards |
 | Journal | `memory/journal/` | one dated entry per event; append only |
 | Backlog | `@@BACKLOG@@` | topics with status and origin, ordered by `after` and their milestones (the state computes the ready ones); closed with a reference, then filed by `socle archive` |
 | Requests | `memory/requests/` | human decisions in a queue, under the contract of the skill `socle-request` |

@@ -914,6 +914,22 @@ MESSAGES: dict[str, str] = {
         "links cannot be followed. A decision that needs context (approving a document, choosing between options) is "
         "written as a request (`socle new request`), whose link is given in the conversation; a short question is "
         "asked in the text of the answer.",
+    "une demande de choix qui propose les réponses de base et ses options passe, et une demande qui nomme un test "
+    "passe avec `valider`":
+        "a choice request that proposes the base answers and its options passes, and a request that names a test "
+        "passes with `approve`",
+    "demande qui propose « approuver » au lieu de la réponse de base `valider`":
+        "request that proposes “approuver” instead of the base answer `approve`",
+    "« Réponses possibles » doit proposer les réponses de base, les mêmes dans toute demande ({manquent}) : "
+    "`{positive}` y prend la recommandation, et une demande de choix ajoute ses options":
+        "“Possible answers” must propose the base answers, the same in every request ({manquent}): `{positive}` takes "
+        "the recommendation, and a choice request adds its options",
+    "« Réponses possibles » : `{x}` double la réponse de base `{base}`, à employer à sa place":
+        "“Possible answers”: `{x}` duplicates the base answer `{base}`, to be used instead",
+    "« {reponse} » : une décision en séance se consigne sous une réponse de base ({base}), ou sous une option que la "
+    "question nomme entre accents graves ; le texte exact de l'humain va dans la citation":
+        "“{reponse}”: a decision in session is recorded under a base answer ({base}), or under an option the question "
+        "names in backticks; the human's exact text goes in the quote",
     "sujet du backlog qui s'attend lui-même (`après`)":
         "backlog topic that waits on itself (`after`)",
     "jalon fait alors que la tâche qu'il attend est ouverte":
@@ -2150,10 +2166,6 @@ MESSAGES: dict[str, str] = {
         "a command that only cites a refused action passes the agent's hook",
     "un mot proche d'un terme privé, sans l'être, passe le commit":
         "a word close to a private term, without being one, passes the commit",
-    "une demande de choix qui ne nomme ni test ni seuil passe sans `valider`, et une demande qui nomme un test "
-    "passe avec lui":
-        "a choice request that names neither a test nor a threshold passes without `approve`, and a request that "
-        "names a test passes with it",
     "un balayage de mutation planifié qui tourne passe la CI":
         "a scheduled mutation sweep that runs passes the CI",
     "un balayage de mutation sous le plafond passe le verdict":

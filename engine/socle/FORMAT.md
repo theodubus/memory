@@ -217,10 +217,15 @@ révélée impossible à trancher pour l'humain.
   ce qui se passe si l'humain valide, refuse, ne répond pas ;
   « Recommandation » sépare le vérifié du supposé.
 - « Réponses possibles » est une liste `` - `valeur` — sens `` qui propose
-  `contexte-insuffisant`. Une demande qui nomme un test du projet ou une clé
-  des seuils propose aussi `valider` : seule cette réponse autorise à les
-  changer, et les contrôles cherchent leur nom dans le texte de la demande
-  validée.
+  les réponses de base, les mêmes dans toute demande : `valider` (la
+  recommandation telle quelle, ou l'option recommandée), `refuser` et
+  `contexte-insuffisant` ; une demande de choix y ajoute ses options, et le
+  lint refuse un synonyme d'une réponse de base (`approuver`, `oui`…). Une
+  demande qui nomme un test du projet ou une clé des seuils ne les change
+  que sur `valider`, et les contrôles cherchent leur nom dans le texte de
+  la demande validée. Une décision en séance se consigne de même sous une
+  réponse de base, ou sous une option que la question nomme entre accents
+  graves.
 
 La réponse vit dans `<demande>.answer.toml`. L'humain répond dans la
 conversation, et l'agent consigne sa réponse avec le texte exact

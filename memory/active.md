@@ -14,6 +14,10 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 ## Consignes en cours
 
+- Le pilote est un essai de choc du socle : ses imperfections sont
+  attendues, seules celles du socle se corrigent ici ; Théo : « pas grave
+  si le pilote n'est pas idéal partout, c'est un crashtest pour le socle
+  donc normal » (J-2026-10-31-E).
 - Le moment venu, donner à Théo ce qu'il faut pour lancer le pilote neuf
   (création du dépôt, prompt d'installation, gestes sur GitHub, premier
   message de la session de travail) ; Théo : « garde en tete de me donner
