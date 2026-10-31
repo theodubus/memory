@@ -860,11 +860,21 @@ def _audit(cible: Path) -> tuple[int, list[str]]:
 def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str]) -> list[str]:
     """Ce qui reste à l'humain après l'installation, dans l'ordre où le
     faire : chaque étape avec sa commande."""
-    from socle import private as prive
+    from socle import hooks, private as prive
 
     projet = config.Projet.charger(cible)
     etapes = []
-    if "protege.fichiers" in echecs:
+    if "protege.fichiers" in echecs and os.environ.get(hooks.SESSION_CLOUD) == "true":
+        # En session cloud, l'humain n'a pas de terminal, et la session qui a
+        # ajouté le dépôt du socle ne se reprend pas (B-0107).
+        etapes.append(trad("approuver les fichiers protégés que la mise à jour a changés : en session cloud, "
+                           "l'humain n'a pas de terminal pour `socle approve`, et cette session, qui a ajouté le "
+                           "dépôt du socle, ne se reprend pas. Y commiter, pousser la branche et ouvrir la pull "
+                           "request, d'une traite et sans rien attendre ; puis, dans une session neuve sur le seul "
+                           "dépôt du projet, sur cette branche, poser une demande qui cite chaque fichier protégé "
+                           "changé et son empreinte (`python3 .socle/socle check` les donne), que l'humain valide "
+                           "dans la conversation"))
+    elif "protege.fichiers" in echecs:
         etapes.append(trad("approuver les fichiers protégés que la mise à jour a changés (la liste s'affiche, "
                            'à confirmer) : `python3 .socle/socle approve --text "Mise à jour du socle '
                            '{version}"`', version=VERSION))

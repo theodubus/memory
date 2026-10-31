@@ -120,7 +120,13 @@ previous commit.
 **Updating the socle.** Run the installation command again from an
 up-to-date copy of the engine. The project's files are never overwritten;
 the diff of the policy is shown. Then approve the changed protected files
-(`socle approve`), and commit.
+(`socle approve`), and commit. In a cloud session, with no terminal, the
+update is done in a dedicated session, which adds the socle's repository
+and is therefore not resumed: it installs, commits, pushes its branch and
+opens the pull request in one go, without waiting for anything. The
+approval then happens in a new session on the project's repository alone:
+the agent puts there a request that cites each changed protected file with
+its fingerprint, and the human approves it in the conversation.
 
 **Setting up the private memory** (companion mode). Create an empty private
 repository on GitHub, then

@@ -181,6 +181,18 @@ class TestHooksNonCharges(unittest.TestCase):
         with self.sous(CLAUDECODE="1", CLAUDE_CODE_SESSION_ID="s"):
             self.assertFalse(hooks.hooks_non_charges(self.projet))
 
+    def test_l_etat_sans_hooks_dit_de_montrer_le_travail_en_cours(self):
+        """B-0108 : sans ses hooks, le pilote ne pouvait plus commiter son
+        brouillon, resté dans un stash du conteneur."""
+        from socle import state as etat
+
+        hooks.tracer(self.racine, "SessionStart", "autre", "startup")
+        with self.sous(CLAUDECODE="1", CLAUDE_CODE_SESSION_ID="s"):
+            sortie = etat.calculer(self.projet)
+        self.assertIn("NE SONT PAS CHARGÉS", sortie)
+        self.assertIn("git stash show -p --include-untracked", sortie)
+        self.assertIn("le montre dans la conversation", sortie)
+
     def test_une_session_reprise_hors_de_la_racine_est_dite_sans_hooks(self):
         """B-0079 : reprise hors de la racine, la session garde son
         identifiant et le SessionStart d'avant la reprise, mais plus rien ne

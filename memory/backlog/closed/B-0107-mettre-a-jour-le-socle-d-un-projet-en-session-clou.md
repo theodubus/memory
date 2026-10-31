@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0107 — Mettre à jour le socle d'un projet en session cloud sans aller-retour humain dans la session à deux dépôts
 
-> statut : ouvert · origine : J-2026-10-31-I · lu : backlog@67ab3cec
+> statut : fait · origine : J-2026-10-31-I · lu : backlog@67ab3cec · ref : J-2026-10-31-J
 
 Mettre à jour le socle d'un projet en session cloud oblige à ajouter le
 dépôt du socle, privé : la session passe à deux dépôts et, si son
@@ -18,3 +18,5 @@ la conversation, B-0106) se fait ensuite dans une session neuve sur le
 seul dépôt du projet, sur la branche de la mise à jour. Ce que B-0083
 rendrait inutile : un dépôt de distribution public se clone sans
 l'ajouter à la session.
+
+Fait (D-0055, J-2026-10-31-J).

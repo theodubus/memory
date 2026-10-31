@@ -155,7 +155,10 @@ sans les hooks de l'agent. La session qui installe ne se reprend donc pas :
 elle pousse sa branche et ouvre une pull request, que l'humain fusionne.
 Le travail continue ensuite dans une session neuve sur le seul dépôt du
 projet ; pas avant la fusion, une session neuve partant de la branche par
-défaut, qui n'a pas encore le socle.
+défaut, qui n'a pas encore le socle. Une mise à jour suit le même chemin, en
+session dédiée et d'une traite ; ses fichiers protégés s'approuvent ensuite,
+dans une session neuve, par une demande que l'humain valide dans la
+conversation.
 
 ## État du projet
 

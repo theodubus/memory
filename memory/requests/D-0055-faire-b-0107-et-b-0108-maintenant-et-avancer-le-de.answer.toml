@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0055-faire-b-0107-et-b-0108-maintenant-et-avancer-le-de.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-10-31"
+canal = "conversation"
+citation = "oui fais B-0107 et B-0108 et B0083 maintenant si ça simplifie tout\n\nEt dis moi comment récupérer le brouillon"
+empreinte = "sha256:7643a8fa5b1ee558639b7961fd1b476fbdf06c9c0823e13da9b594e9ddff6cbe"
