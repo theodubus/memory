@@ -54,7 +54,7 @@ Les nouvelles versions sont celles des gabarits, que l'installeur recopie :
 
 - Si vous validez : je consigne votre réponse, je commite les cinq fichiers avec elle, et B-0102 est fait ; le réglage prend effet à la prochaine session de ce dépôt.
 - Si vous refusez : je retire les changements de l'arbre ; rien ne part.
-- Sans réponse : les fichiers restent changés dans l'arbre, hors de la pull request, qui peut se fusionner sans eux.
+- Sans réponse : les fichiers restent mis de côté, hors de la pull request, qui peut se fusionner sans eux ; l'installeur les reproduit à l'identique.
 
 ## Recommandation
 
