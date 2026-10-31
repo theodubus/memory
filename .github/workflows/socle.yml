@@ -12,6 +12,9 @@ on:
 
 permissions:
   contents: read
+  # `mutation.vivante` lit l'état du balayage planifié et sa dernière
+  # exécution.
+  actions: read
 
 jobs:
   socle:
@@ -40,4 +43,5 @@ jobs:
       - name: Socle
         env:
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          GH_TOKEN: ${{ github.token }}
         run: python3 .socle/socle ci --base "$BASE"
