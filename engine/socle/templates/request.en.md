@@ -33,6 +33,6 @@
 
 ## Possible answers
 
-- `approve` — <what it triggers>
+- `approve` — <the recommendation: what it triggers>
 - `reject` — <what it triggers>
 - `insufficient-context` — the request goes back to the agent, who rewrites it as a request that replaces it.

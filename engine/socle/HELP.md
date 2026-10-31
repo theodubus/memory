@@ -80,15 +80,19 @@ irréversible), l'agent écrit une demande et en donne le lien. Elle se lit
 seule et se termine par la liste des réponses possibles. Répondre dans la
 conversation ; l'agent consigne la réponse mot pour mot.
 
+- Les réponses de base sont les mêmes dans toute demande : `valider` (la
+  recommandation), `refuser`, `contexte-insuffisant` ; une demande de choix
+  y ajoute ses options.
 - `valider` est la seule réponse qui autorise un geste réservé à l'humain.
 - `contexte-insuffisant` renvoie la demande à l'agent, qui la réécrit.
 - Depuis un terminal :
   `python3 .socle/socle answer D-NNNN <réponse> --text "<texte>"`.
 
-**Une question en séance.** Une question tranchée sur le moment
-(approuver une spec, choisir entre deux options) se répond dans la
-conversation ; l'agent la consigne aussitôt, mot pour mot, comme une
-demande.
+**Une question en séance.** Une question courte, que l'agent pose dans
+le texte de sa réponse, se répond dans la conversation ; l'agent la
+consigne aussitôt, mot pour mot, comme une demande. Ce qui demande du
+contexte, approuver un document compris, arrive en demande, avec son
+lien ; jamais dans le widget de questions de l'agent, que le hook refuse.
 
 **Une relecture avant publication**, si la politique l'exige : l'agent
 montre ce qui part vers le dépôt public, l'humain donne son accord dans la

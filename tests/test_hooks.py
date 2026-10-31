@@ -523,6 +523,23 @@ class TestTraceDesRefusDeFinDeTourEtDeGit(unittest.TestCase):
         self.assertIn('"block"', sortie)
         self.assertEqual(self.dernier_refus()[2:], ["r", "Stop:recap"])
 
+    def test_pre_tool_use_refuse_le_widget_de_questions_de_l_agent(self):
+        """B-0105 : une décision posée dans le widget de questions de l'agent
+        s'y lit en texte brut, sans liens à suivre."""
+        import json
+
+        sortie = self.appeler(hooks.pre_tool_use, self.projet, {
+            "session_id": "w", "tool_name": "AskUserQuestion",
+            "tool_input": {"questions": [{"question": "Approuves-tu la spécification ?", "header": "Spec",
+                                          "multiSelect": False, "options": []}]}})
+        decision = json.loads(sortie)["hookSpecificOutput"]
+        self.assertEqual(decision["permissionDecision"], "deny")
+        self.assertIn("widget de questions de l'agent", decision["permissionDecisionReason"])
+        self.assertIn("socle new request", decision["permissionDecisionReason"])
+        # Le hook ne le voit que si le réglage de Claude Code le lui montre.
+        reglage = json.loads((self.racine / ".claude/settings.json").read_text())
+        self.assertIn("AskUserQuestion", reglage["hooks"]["PreToolUse"][0]["matcher"].split("|"))
+
     def test_exiger_recap_rappelle_l_ordre_du_backlog(self):
         import json
         import tempfile

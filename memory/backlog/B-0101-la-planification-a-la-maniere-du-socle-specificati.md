@@ -11,15 +11,19 @@ tâche en sujet du backlog avec ses critères d'acceptation ; l'approbation
 d'une spécification consignée en séance (`socle decision --about`) ; un
 skill du socle qui décrit la procédure, au ton formel et technique.
 
-Le ton est une exigence, mesurée sur le pilote (J-2026-10-30-M) : le
-skill pose des questions d'ingénieur à un ingénieur, ne coache pas,
-n'invente ni contexte ni besoin, et reprend le cadrage sans le
-transformer ; ce que le cadrage ne dit pas devient une question ouverte,
-pas une hypothèse.
+Ce que le pilote a montré de BMAD (J-2026-10-30-M), et que le socle
+exige déjà d'une initialisation : le skill n'invente ni contexte ni
+besoin, reprend le cadrage sans le transformer, et fait de ce que le
+cadrage ne dit pas une question ouverte, pas une hypothèse. Le ton, lui,
+n'est pas une consigne : celle de Théo ne visait que BMAD (J-2026-10-31-B).
 
-L'ordre : le pilote neuf d'abord, où la planification se fait à la main
-sous la consigne de ton de Théo ; le skill s'écrit ensuite, sur ce que la
-main a montré, et se mesure au banc.
+L'ordre : le pilote neuf d'abord, où la planification se fait à la main ;
+le skill s'écrit ensuite, sur ce que la main a montré, et se mesure au
+banc.
 
 Les tâches qu'elle pose prennent leur ordre au backlog (ADR-0037) : ce
 que chacune attend (`après`), et des jalons qui attendent leurs tâches.
+
+Le pilote le montre (J-2026-10-31-E) : sans emplacement fixé pour la
+spécification et l'architecture, l'agent en fait une ADR et la soumet à
+l'humain. Le skill fixe où elles vivent.

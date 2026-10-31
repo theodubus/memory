@@ -165,14 +165,41 @@ class TestUneDemandeQuiAutorise(unittest.TestCase):
         self.assertIn('`mutation.caps."parser.rs".max`', fautes[0])
 
     def test_qui_propose_valider_ou_ne_nomme_rien_passe(self):
+        """D-0053 : une demande qui ne nomme rien propose elle aussi `valider`,
+        réponse de base de toute demande ; sans lui, elle est refusée pour
+        cela seul, pas au titre d'un test qu'elle nommerait."""
         nomme = CONFORME.replace("pourraient changer ses performances.",
                                  "pourraient changer ses performances (`test_tolerance`).")
         self.assertEqual(demandes.linter(_demande(nomme), self.projet), [])
-        self.assertEqual(demandes.linter(_demande(self._sans_valider(CONFORME)), self.projet), [])
+        fautes = demandes.linter(_demande(self._sans_valider(CONFORME)), self.projet)
+        self.assertEqual(len(fautes), 1)
+        self.assertIn("réponses de base", fautes[0])
         # Un mot qui contient le nom d'un test sans l'être ne compte pas.
         voisin = self._sans_valider(CONFORME.replace("pourraient changer ses performances.",
                                                      "pourraient changer ses performances (`test_tolerance_2`)."))
-        self.assertEqual(demandes.linter(_demande(voisin), self.projet), [])
+        fautes = demandes.linter(_demande(voisin), self.projet)
+        self.assertEqual(len(fautes), 1)
+        self.assertNotIn("test_tolerance", fautes[0])
+
+    def test_les_reponses_de_base_sont_les_memes_dans_toute_demande(self):
+        """D-0053 : le pilote demandait « approuver » où ce dépôt demande
+        `valider` ; une demande de choix ajoute ses options aux réponses de
+        base."""
+        choix = CONFORME.replace("- `refuser` — j'écris les tests.\n",
+                                 "- `refuser` — j'écris les tests.\n- `relever` — le plafond passe à 4.\n")
+        self.assertEqual(demandes.linter(_demande(choix), self.projet), [])
+        sans_refuser = CONFORME.replace("- `refuser` — j'écris les tests.", "- `tester` — j'écris les tests.")
+        fautes = demandes.linter(_demande(sans_refuser), self.projet)
+        self.assertEqual(len(fautes), 1)
+        self.assertIn("`refuser`", fautes[0])
+        synonyme = CONFORME.replace("- `refuser` — j'écris les tests.\n",
+                                    "- `refuser` — j'écris les tests.\n- `Approuver` — le plafond passe à 5.\n")
+        fautes = demandes.linter(_demande(synonyme), self.projet)
+        self.assertEqual(len(fautes), 1)
+        self.assertIn("`Approuver` double la réponse de base `valider`", fautes[0])
+        # Une demande retirée n'attend plus de réponse.
+        retiree = sans_refuser.replace("> date : 2026-10-10", "> date : 2026-10-10 · retirée : sans objet")
+        self.assertEqual(demandes.linter(_demande(retiree), self.projet), [])
 
 
 class TestReponse(unittest.TestCase):
@@ -236,6 +263,18 @@ class TestSeance(unittest.TestCase):
         self.assertEqual(demandes.titre_sans_preuve("Retirer B-0001@0123abcd", "Retirer l'outil ?"), [])
         with self.assertRaises(ValueError):
             demandes.ecrire_seance(self.projet, "Approuver la spec et B-0001", "Tu approuves la spec ?", "valider",
+                                   "Théo", "2026-10-19", "conversation", "Oui, approuvé.")
+        self.assertEqual(list((self.racine / "memory/requests").glob("D-*.md")), [])
+
+    def test_une_seance_se_consigne_sous_une_reponse_de_base_ou_une_option_nommee(self):
+        """D-0053 : « oui », « principe-valide », « approuver » faisaient
+        chacun leur vocabulaire ; le texte exact reste dans la citation."""
+        self.assertTrue(demandes.reponse_de_seance("valider", "Tu approuves la spec ?"))
+        self.assertTrue(demandes.reponse_de_seance("approve", "Tu approuves la spec ?"))
+        self.assertTrue(demandes.reponse_de_seance("branche-neuve", "`branche-neuve` ou `rejouer` ?"))
+        self.assertFalse(demandes.reponse_de_seance("approuver", "Tu approuves la spec ?"))
+        with self.assertRaises(ValueError):
+            demandes.ecrire_seance(self.projet, "Approuver la spec de triple", "Tu approuves la spec ?", "oui",
                                    "Théo", "2026-10-19", "conversation", "Oui, approuvé.")
         self.assertEqual(list((self.racine / "memory/requests").glob("D-*.md")), [])
 

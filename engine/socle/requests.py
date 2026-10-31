@@ -255,15 +255,31 @@ def linter(d: Demande, projet: config.Projet) -> list[str]:
                                "sens`"))
         if RENVOI not in {langue.reponse(x) for x in possibles}:
             fautes.append(trad("« Réponses possibles » doit proposer `{renvoi}`", renvoi=RENVOI))
-        if REPONSE_POSITIVE not in {langue.reponse(x) for x in possibles}:
-            nommes = gestes_nommes(d, projet)
-            if nommes:
-                fautes.append(trad("« Réponses possibles » : la demande nomme {noms}, que seule une réponse "
-                                   "`{positive}` autorise à changer, mais ne propose pas `{positive}` ; la "
-                                   "proposer pour l'option qui y touche (une autre option mène à une demande "
-                                   "nouvelle)", noms=", ".join(f"`{n}`" for n in nommes[:5]),
-                                   positive=langue.mot(langue.REPONSES, REPONSE_POSITIVE,
-                                                       langue.du_projet(projet))))
+        lg = langue.du_projet(projet)
+        proposees = {langue.reponse(x) for x in possibles}
+        manquent = [r for r in langue.REPONSES if r not in proposees and r != RENVOI]
+        nommes = gestes_nommes(d, projet) if REPONSE_POSITIVE in manquent else []
+        if nommes:
+            fautes.append(trad("« Réponses possibles » : la demande nomme {noms}, que seule une réponse "
+                               "`{positive}` autorise à changer, mais ne propose pas `{positive}` ; la "
+                               "proposer pour l'option qui y touche (une autre option mène à une demande "
+                               "nouvelle)", noms=", ".join(f"`{n}`" for n in nommes[:5]),
+                               positive=langue.mot(langue.REPONSES, REPONSE_POSITIVE, lg)))
+        # Le geste nommé a son propre refus ; une demande retirée n'attend plus
+        # de réponse, et les réponses de base (D-0053) ne la concernent pas.
+        manquent = [] if "retiree" in d.entree.meta else [r for r in manquent
+                                                          if not (nommes and r == REPONSE_POSITIVE)]
+        if manquent:
+            fautes.append(trad("« Réponses possibles » doit proposer les réponses de base, les mêmes dans toute "
+                               "demande ({manquent}) : `{positive}` y prend la recommandation, et une demande de "
+                               "choix ajoute ses options", manquent=", ".join(
+                                   f"`{langue.mot(langue.REPONSES, r, lg)}`" for r in manquent),
+                               positive=langue.mot(langue.REPONSES, REPONSE_POSITIVE, lg)))
+        for x in possibles:
+            base = langue.SYNONYMES.get(outils.cle(x))
+            if base:
+                fautes.append(trad("« Réponses possibles » : `{x}` double la réponse de base `{base}`, à employer "
+                                   "à sa place", x=x, base=langue.mot(langue.REPONSES, base, lg)))
 
     # Aucun identifiant interne sans description, dans la même demande.
     decrits = descriptions(d.sections.get("elements-cites", ""), motifs_internes(projet))
@@ -384,6 +400,15 @@ def ecrire_reponse(racine: Path, d: Demande, reponse: str, texte: str, par: str,
     return cr
 
 
+def reponse_de_seance(reponse: str, question: str) -> bool:
+    """Une décision en séance se consigne sous une réponse de base, dans une
+    langue ou l'autre, ou sous une option que la question nomme entre accents
+    graves (D-0053) : le vocabulaire est celui de toute demande."""
+    if langue.reponse(reponse) in langue.REPONSES:
+        return True
+    return outils.cle(reponse) in {outils.cle(o) for o in re.findall(r"`([^`]+)`", question)}
+
+
 def titre_sans_preuve(question: str, texte: str = "") -> list[str]:
     """Les identifiants que le titre d'une décision en séance cite seul, sans
     empreinte : la question posée, recopie de la conversation, n'a pas à
@@ -406,6 +431,12 @@ def ecrire_seance(projet: config.Projet, question: str, texte: str, reponse: str
     racine = projet.racine
     if len(question.strip()) < 10:
         raise ValueError(trad("la question doit énoncer la décision en une phrase"))
+    if not reponse_de_seance(reponse, texte or question):
+        lg = langue.du_projet(projet)
+        raise ValueError(trad("« {reponse} » : une décision en séance se consigne sous une réponse de base ({base}), "
+                              "ou sous une option que la question nomme entre accents graves ; le texte exact de "
+                              "l'humain va dans la citation", reponse=reponse, base=", ".join(
+                                  f"`{langue.mot(langue.REPONSES, r, lg)}`" for r in langue.REPONSES)))
     seuls = titre_sans_preuve(question, texte)
     if seuls:
         # Une fois la réponse écrite, protégée, la décision ne se corrige

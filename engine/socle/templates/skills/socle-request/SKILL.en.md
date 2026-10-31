@@ -27,8 +27,10 @@ never choosing it.
      answer.
    - **Recommendation**: what is verified kept apart from what is assumed.
    - **Possible answers**: a list `` - `value` — meaning `` that offers
-     `insufficient-context`. A request that names a test or a threshold key
-     also offers `approve`: only that answer authorises changing them.
+     the base answers, the same in every request: `approve` (the
+     recommendation), `reject` and `insufficient-context`; a choice request
+     adds its options, and no synonym (`accept`, `yes`…). Only `approve`
+     authorises changing a test or a threshold key the request names.
 3. The lint refuses an incomplete request; the agent's hook refuses it as
    soon as it is written.
 4. Commit and push the request as is, then give its link
@@ -57,8 +59,11 @@ committed after the answer.
 
 ## Recording a decision taken in session
 
-A question the human settles on the spot (approving a specification,
-choosing between two options) is recorded at once, with their answer word for word;
+A decision that needs context, approving a document included, is put as a
+request (above), never in the agent's question widget: the human reads raw
+text there, with no links to follow. What the human settles in the
+conversation, of their own accord or on a short question asked in the text
+of the answer, is recorded at once, with their answer word for word;
 `--about <path>` designates what it approves:
 
 ```sh

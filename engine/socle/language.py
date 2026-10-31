@@ -91,6 +91,13 @@ REPONSES = {
     "refuser": {"fr": "refuser", "en": "reject"},
     "contexte-insuffisant": {"fr": "contexte-insuffisant", "en": "insufficient-context"},
 }
+# Ce qui doublerait une réponse de base, dans une langue ou l'autre : les
+# réponses de base sont les mêmes dans toute demande (D-0053).
+SYNONYMES = {
+    "approuver": "valider", "accepter": "valider", "oui": "valider", "ok": "valider",
+    "accept": "valider", "validate": "valider", "yes": "valider",
+    "rejeter": "refuser", "non": "refuser", "refuse": "refuser", "decline": "refuser", "no": "refuser",
+}
 
 # Ce que le lint d'une demande cherche dans ses sections, toutes langues
 # confondues (texte sans accents, en minuscules).

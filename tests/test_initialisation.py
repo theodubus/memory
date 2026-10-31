@@ -346,4 +346,5 @@ class TestCommandes(Base):
                                                  None, "un dépôt existant")
         d = demandes.charger(self.racine, None, "memory/requests/D-0009-questions-de-depart.md", texte)
         self.assertEqual(demandes.linter(d, projet), [])
-        self.assertEqual(d.reponses_possibles(), ["defauts", "reponses", "contexte-insuffisant"])
+        # D-0054 : les réponses de base, comme dans toute demande.
+        self.assertEqual(d.reponses_possibles(), ["valider", "reponses", "refuser", "contexte-insuffisant"])

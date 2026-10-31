@@ -39,13 +39,16 @@ mettre à sa place.
   reste « supposé » et se corrige plus tard ; réversible.
 - **Répondre question par question** : quelques minutes ; le départ suit ce
   que tu veux ; réversible.
+- **Refuser les défauts** : effort nul maintenant ; risque, le départ attend
+  ces réponses, chaque question restant ouverte ; réversible.
 
 ## Conséquences
 
 Si tu valides les défauts, l'agent les applique, marqués « supposés ». Si tu
 réponds autrement, l'agent consigne ton texte exact et l'applique. Si tu
-refuses les questions telles qu'elles sont (`contexte-insuffisant`),
-l'agent les réécrit. Sans réponse, les défauts s'appliquent, marqués
+refuses les défauts (`refuser`), chaque question reste ouverte, au backlog.
+Si les questions ne se comprennent pas (`contexte-insuffisant`), l'agent
+les réécrit. Sans réponse, les défauts s'appliquent, marqués
 « supposés », et la demande reste en file pour que tu y reviennes.
 
 ## Recommandation
@@ -55,6 +58,7 @@ que l'audit du dépôt a lu, s'il y en avait un. Supposé : tout le reste.
 
 ## Réponses possibles
 
-- `defauts` — tous les défauts s'appliquent, marqués « supposés ».
+- `valider` — tous les défauts s'appliquent, marqués « supposés ».
 - `reponses` — le texte de ta réponse donne les réponses, question par question ; l'agent le consigne tel quel.
+- `refuser` — aucun défaut ne s'applique : chaque question reste ouverte, au backlog.
 - `contexte-insuffisant` — la demande revient à l'agent, qui la réécrit en une demande qui la remplace.

@@ -35,7 +35,7 @@ always keep it, and a new session only has the memory.
 | --- | --- | --- |
 | Canonical | `memory/canonical.md` | facts with status and proof; only changes with a new proof |
 | Active | `memory/active.md` | work in progress, next steps; rewritten, kept short |
-| Decisions | `memory/decisions/` | one ADR per file; only its status changes afterwards |
+| Decisions | `memory/decisions/` | one ADR per file, the project's only decision register; only its status changes afterwards |
 | Journal | `memory/journal/` | one dated entry per event; append only |
 | Backlog | `@@BACKLOG@@` | topics with status and origin, ordered by `after` and their milestones (the state computes the ready ones); closed with a reference, then filed by `socle archive` |
 | Requests | `memory/requests/` | human decisions in a queue, under the contract of the skill `socle-request` |
@@ -66,10 +66,13 @@ the tests, then the canonical memory, then the journal.
 A decision that belongs to the human is put as a request, which reads on its
 own once the context is lost, and whose link is given in the conversation.
 The human answers in the conversation; the agent records their answer word
-for word, never choosing it, and copies it into the journal. A decision
-taken in session, the human present (approving a specification, settling an open
-question), is recorded at once in the same way. How: the skill
-`socle-request`.
+for word, never choosing it, and copies it into the journal. A decision that
+needs context, approving a document included, is always written as a
+request; never in the agent's question widget, where the human reads raw
+text with no links to follow (the hook refuses it). What the human settles
+in the conversation, of their own accord or on a short question asked in
+the text of the answer, is recorded at once in the same way, in session.
+How: the skill `socle-request`.
 
 ### Reading the memory on demand
 
@@ -123,7 +126,8 @@ the text.
 - complete a head SHA, invent an identifier or a reference: the hook refuses them;
 - write to a protected file (policy, adapter, engine lock, hooks, CI, human answers);
 - answer on the human's behalf (`socle answer` without `--relayed` and a quote), or run `socle approve` or `socle private install`, which are for the human only;
-- bypass a hook (`--no-verify`): the agent's hook refuses it on the project's repository, and the CI runs everything.
+- bypass a hook (`--no-verify`): the agent's hook refuses it on the project's repository, and the CI runs everything;
+- ask the human a question in the agent's question widget: the hook refuses it.
 
 ### What runs on its own
 
