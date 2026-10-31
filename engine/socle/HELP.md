@@ -76,8 +76,14 @@ demander ; l'état donne ensuite le prochain jalon et les sujets prêts.
 **Livrer.** Par défaut, l'agent fait tout sur une branche de
 développement et garde une seule pull request ouverte, à laquelle chaque
 lot fini s'ajoute : la fusionner quand on veut, une fois sa CI verte. Une
-pull request par sujet, chacune à fusionner, se choisit en le disant à
-l'agent, qui l'écrit en fait de la mémoire.
+pull request par sujet, chacune à fusionner, se choisit aux questions de
+départ, ou plus tard en le disant à l'agent, qui l'écrit en fait de la
+mémoire.
+
+**Enchaîner.** Tant que rien ne revient à l'humain, l'agent enchaîne les
+sujets prêts sans attendre de message. Avant de s'y lancer, il annonce le
+lot qu'il va traiter : l'arrêter ou le réorienter se fait d'un message.
+Il s'arrête à la fin du lot, ou dès qu'une décision revient à l'humain.
 
 Chaque intervention de l'agent qui a agi se termine par deux lignes :
 
