@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0058-la-livraison-du-travail-par-defaut-dans-les-instru.md, dont l'empreinte suit.
+reponse = "branche-de-dev"
+texte = ""
+par = "Théo"
+date = "2026-10-31"
+canal = "conversation"
+citation = "Mais pourquoi poser une étiquette, c'est quoi une étiquette ??? Tu as peut etre expliqué tout ça y'a 3h dans ton chemin de pensee mais moi dans ton recap dire \"je pose une étiquette\" ne suffit pas du tout\n\nEt on rafraîchi le skill si c'est nécessaire/mieux\n\n\nAussi la le pilote a fonctionné en pilote auto pendant un temps, et il a fait 5 pr\nAssez long a fusionner\n\nOn peut laisser une pr/branche par feature en option a décider au début mais par defaut une branche de dev ou on fait tout pour éviter d'avoir 150 pr"
+empreinte = "sha256:4b656edfacea349cc3bb5a669b6d81f5734c65d79d7011ce10be76a24688501f"

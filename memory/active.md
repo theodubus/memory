@@ -28,8 +28,9 @@ garde en tete et on voit si ça finit par etre bloquant ».
   message de la session de travail) ; Théo : « garde en tete de me donner
   ce qu'il faudra pour lancer le pilote le moment venu » (J-2026-10-30-S).
 - La branche de travail est `ccr-7128ec56-nnvoun-v2`, tirée de `main` sur la
-  réponse `branche-neuve` de Théo à D-0049 (J-2026-10-30-J) ; l'ancienne
-  branche reste, pour les SHA que la mémoire cite.
+  réponse `branche-neuve` de Théo à D-0049 (J-2026-10-30-J). L'ancienne
+  branche peut se supprimer : la PR #10 garde ses commits, que la mémoire
+  cite (J-2026-10-31-S).
 - La documentation se conçoit avant de s'écrire, commence par ce dont le
   projet parle et ce qu'il est, ses schémas se vérifient rendus avant le
   push, et elle n'est faite que validée par Théo ; Théo : « fais un petit
@@ -48,6 +49,10 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 - Une attente annoncée dans le récap (CI, banc, match) s'accompagne d'un
   réveil programmé pour y revenir (Théo, J-2026-10-13-N).
+- Chaque point de « Pour toi » se comprend seul, sans mon raisonnement,
+  que Théo ne lit pas : ce que c'est, pourquoi, ce que change sa réponse ;
+  Théo : « dans ton recap dire "je pose une étiquette" ne suffit pas du
+  tout » (J-2026-10-31-S).
 - Ce qui revient à Théo ne contient que ses gestes, chacun avec ce qu'il
   fait ; ce que l'agent fera ensuite se dit à part, comme tel ; un constat
   dit ce qu'il change pour Théo et ce qu'on attend de lui, ou « rien »
