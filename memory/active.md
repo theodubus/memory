@@ -5,8 +5,10 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-L'ordre du backlog (ADR-0037), B-0092 et B-0103, faits sur D-0052, sont
-sur `main` (J-2026-10-30-V). BMAD Method est retiré du socle (ADR-0036). Les
+Sur `main` : l'ordre du backlog (ADR-0037), puis les premiers retours du
+pilote, le widget de questions refusé (B-0105) et les réponses de base
+(D-0053, D-0054) (J-2026-10-31-H). La mise à jour du pilote attend le
+moment que Théo choisit. BMAD Method est retiré du socle (ADR-0036). Les
 projets d'essai sont dans le dossier de travail de la session, jetables.
 
 D-0026 est répondue `rien` : B-0048 et B-0018 restent ouverts, « on se le
