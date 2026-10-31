@@ -85,10 +85,11 @@ conversation ; l'agent consigne la réponse mot pour mot.
 - Depuis un terminal :
   `python3 .socle/socle answer D-NNNN <réponse> --text "<texte>"`.
 
-**Une question en séance.** Une question tranchée sur le moment
-(approuver une spec, choisir entre deux options) se répond dans la
-conversation ; l'agent la consigne aussitôt, mot pour mot, comme une
-demande.
+**Une question en séance.** Une question courte, que l'agent pose dans
+le texte de sa réponse, se répond dans la conversation ; l'agent la
+consigne aussitôt, mot pour mot, comme une demande. Ce qui demande du
+contexte, approuver un document compris, arrive en demande, avec son
+lien ; jamais dans le widget de questions de l'agent, que le hook refuse.
 
 **Une relecture avant publication**, si la politique l'exige : l'agent
 montre ce qui part vers le dépôt public, l'humain donne son accord dans la

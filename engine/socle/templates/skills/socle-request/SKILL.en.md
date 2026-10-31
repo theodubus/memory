@@ -57,8 +57,11 @@ committed after the answer.
 
 ## Recording a decision taken in session
 
-A question the human settles on the spot (approving a specification,
-choosing between two options) is recorded at once, with their answer word for word;
+A decision that needs context, approving a document included, is put as a
+request (above), never in the agent's question widget: the human reads raw
+text there, with no links to follow. What the human settles in the
+conversation, of their own accord or on a short question asked in the text
+of the answer, is recorded at once, with their answer word for word;
 `--about <path>` designates what it approves:
 
 ```sh

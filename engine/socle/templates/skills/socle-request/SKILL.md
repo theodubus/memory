@@ -57,8 +57,11 @@ qu'après la réponse.
 
 ## Consigner une décision prise en séance
 
-Une question que l'humain tranche sur le moment (approuver une
-spécification, choisir entre deux options) se consigne aussitôt, avec sa
+Une décision qui demande du contexte, approuver un document compris, se
+pose en demande (plus haut), jamais dans le widget de questions de
+l'agent : l'humain y lit un texte brut, sans liens à suivre. Ce que
+l'humain tranche dans la conversation, de lui-même ou sur une question
+courte posée dans le texte de la réponse, se consigne aussitôt, avec sa
 réponse mot pour mot ; `--about <chemin>` désigne ce qu'elle approuve :
 
 ```sh

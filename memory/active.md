@@ -76,8 +76,9 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 ## Prochaines étapes
 
-1. Maintenant : le pilote neuf (B-0104), installé, sa PR #1 ouverte
-   (J-2026-10-31-A) ; ensuite la session de travail, et ses retours.
+1. Maintenant : le pilote neuf (B-0104), sa session de travail lancée ;
+   ses retours, au fil de l'eau (J-2026-10-31-C), se corrigent ici et
+   lui parviennent à la mise à jour de son socle.
 2. La suite se lit dans l'ordre du backlog (`socle state`) : après le
    pilote, la planification (B-0101), puis la répartition entre agents
    (B-0055) ; B-0010, B-0012 et B-0095 attendent le pilote ; gardé en

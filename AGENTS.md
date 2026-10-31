@@ -137,9 +137,13 @@ tests, puis la mémoire canonique, puis le journal.
 Une décision qui revient à l'humain se pose en demande, qui se lit seule
 quand le contexte est perdu, et dont le lien se donne dans la conversation.
 L'humain répond dans la conversation ; l'agent consigne sa réponse mot pour
-mot, sans jamais la choisir, et la recopie au journal. Une décision prise en
-séance, l'humain présent (approuver une spécification, trancher une question
-ouverte), se consigne aussitôt de même. Comment : le skill `socle-request`.
+mot, sans jamais la choisir, et la recopie au journal. Une décision qui
+demande du contexte, approuver un document compris, s'écrit toujours en
+demande ; jamais dans le widget de questions de l'agent, où l'humain lit un
+texte brut sans liens à suivre (le hook le refuse). Ce que l'humain tranche
+dans la conversation, de lui-même ou sur une question courte posée dans le
+texte de la réponse, se consigne aussitôt de même, en séance. Comment : le
+skill `socle-request`.
 
 ### Lire la mémoire à la demande
 
@@ -194,7 +198,8 @@ se cite dans le texte.
 - compléter un SHA de tête, inventer un identifiant ou une référence : le hook les refuse ;
 - écrire dans un fichier protégé (politique, adaptateur, verrou du moteur, hooks, CI, réponses humaines) ;
 - répondre à la place de l'humain (`socle answer` sans `--relayed` ni citation), ou lancer `socle approve` ou `socle private install`, réservés à l'humain ;
-- contourner un hook (`--no-verify`) : le hook de l'agent le refuse sur le dépôt du projet, et la CI exécute tout.
+- contourner un hook (`--no-verify`) : le hook de l'agent le refuse sur le dépôt du projet, et la CI exécute tout ;
+- poser une question à l'humain dans le widget de questions de l'agent : le hook le refuse.
 
 ### Ce qui tourne tout seul
 

@@ -904,6 +904,16 @@ MESSAGES: dict[str, str] = {
         "`{id}` is done before `{dep}`, which it waits on, still “{statut}”",
     "`{id}` s'attend lui-même : {cycle}":
         "`{id}` waits on itself: {cycle}",
+    "décision posée à l'humain dans le widget de questions de l'agent":
+        "decision put to the human in the agent's question widget",
+    "une question à l'humain ne passe pas par le widget de questions de l'agent : son texte y est brut et ses liens "
+    "ne s'y suivent pas. Une décision qui demande du contexte (approuver un document, choisir entre des options) "
+    "s'écrit en demande (`socle new request`), dont le lien se donne dans la conversation ; une question courte se "
+    "pose dans le texte de la réponse.":
+        "a question to the human does not go through the agent's question widget: its text is raw there and its "
+        "links cannot be followed. A decision that needs context (approving a document, choosing between options) is "
+        "written as a request (`socle new request`), whose link is given in the conversation; a short question is "
+        "asked in the text of the answer.",
     "sujet du backlog qui s'attend lui-même (`après`)":
         "backlog topic that waits on itself (`after`)",
     "jalon fait alors que la tâche qu'il attend est ouverte":

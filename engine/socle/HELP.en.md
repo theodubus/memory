@@ -86,9 +86,11 @@ conversation; the agent records the answer word for word.
 - From a terminal:
   `python3 .socle/socle answer D-NNNN <answer> --text "<text>"`.
 
-**A question in session.** A question settled on the spot (approving a
-spec, choosing between two options) is answered in the conversation; the
-agent records it at once, word for word, like a request.
+**A question in session.** A short question, which the agent asks in the
+text of its answer, is answered in the conversation; the agent records it
+at once, word for word, like a request. What needs context, approving a
+document included, comes as a request, with its link; never in the
+agent's question widget, which the hook refuses.
 
 **A review before publication**, if the policy requires it: the agent
 shows what goes out to the public repository, the human gives their

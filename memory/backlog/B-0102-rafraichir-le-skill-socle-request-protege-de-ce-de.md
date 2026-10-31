@@ -1,5 +1,5 @@
 <!-- socle: couche=backlog zone=publique -->
-# B-0102 — Rafraîchir le skill socle-request protégé de ce dépôt depuis son gabarit
+# B-0102 — Rafraîchir le skill socle-request et le réglage de Claude Code, protégés, de ce dépôt depuis leurs gabarits
 
 > statut : ouvert · origine : J-2026-10-30-Q · pour : humain · lu : backlog@aa365018
 
@@ -10,11 +10,20 @@ plus « une spec de BMAD ». La copie de ce dépôt, sous
 rafraîchit. Geste de Théo, depuis la racine du dépôt, sur une branche à
 jour de `main` une fois le retrait fusionné :
 
+Le 31 oct., B-0105 change le même skill (une décision qui demande du
+contexte s'écrit en demande, jamais dans le widget de questions de
+l'agent) et le gabarit du réglage de Claude Code, protégé lui aussi, dont
+le hook de l'agent doit voir ce widget pour le refuser ; la copie de ce
+dépôt garde aussi un délai de démarrage de 30 secondes, quand le gabarit
+en donne 300 (ADR-0035). Le geste, une fois B-0105 sur `main` :
+
 ```sh
 cp engine/socle/templates/skills/socle-request/SKILL.md .claude/skills/socle-request/SKILL.md
-python3 .socle/socle approve --files .claude/skills/socle-request/SKILL.md --text "B-0102 : le skill des demandes rafraîchi depuis son gabarit"
-git add -A && git commit -m "B-0102 : le skill des demandes rafraîchi depuis son gabarit"
+cp engine/socle/templates/settings.json .claude/settings.json
+python3 .socle/socle approve --files .claude/skills/socle-request/SKILL.md .claude/settings.json --text "B-0102 : le skill des demandes et le réglage de Claude Code rafraîchis depuis leurs gabarits"
+git add -A && git commit -m "B-0102 : le skill des demandes et le réglage de Claude Code rafraîchis depuis leurs gabarits"
 ```
 
-Seules trois lignes changent ; sans ce geste, l'agent de ce dépôt lit
-encore BMAD dans ce skill, sans effet sur les contrôles.
+Sans ce geste, l'agent de ce dépôt lit encore BMAD dans ce skill, et son
+hook ne voit pas le widget de questions ; les contrôles n'en dépendent
+pas.

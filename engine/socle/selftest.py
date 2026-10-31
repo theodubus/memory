@@ -1316,6 +1316,14 @@ def _cas() -> list[Cas]:
         ajouter(c, ".github/workflows/nuit.yml", "name: Nuit\non: [push]\njobs: {}\n")
         return etage_git(a, c)
 
+    @defaut("question-en-widget", "décision posée à l'humain dans le widget de questions de l'agent", "agent",
+            "question en widget")
+    def _(a, c):
+        return etage_outil(a, c, "AskUserQuestion", {"questions": [{
+            "question": "Approuves-tu la spécification, docs/calc.md ?", "header": "Spécification",
+            "multiSelect": False, "options": [{"label": "Approuver", "description": "La spécification est validée."},
+                                              {"label": "Refuser", "description": "Elle se réécrit."}]}]})
+
     @defaut("fin-sans-recap", "fin d'intervention sans dire ce qui revient à l'humain", "agent", "récap")
     def _(a, c):
         maj_memoire(c, "Travail du tour.")
@@ -2022,6 +2030,7 @@ RAISONS_AGENT = {
     "hooks non chargés": "LES HOOKS DE L'AGENT NE SONT PAS CHARGÉS",
     "commit sans filtre": "commit d'agent sans aucun passage du filtre",
     "geste sans valider": "que seule une réponse `valider` autorise à changer",
+    "question en widget": "widget de questions de l'agent",
 }
 
 

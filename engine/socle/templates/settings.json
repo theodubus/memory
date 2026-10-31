@@ -15,7 +15,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Bash|Write|Edit|MultiEdit|NotebookEdit|mcp__.*",
+        "matcher": "Bash|Write|Edit|MultiEdit|NotebookEdit|AskUserQuestion|mcp__.*",
         "hooks": [
           {
             "type": "command",

@@ -244,8 +244,10 @@ L'état de la demande se dérive de la réponse : en attente, répondue, renvoy�
 retirée (métadonnée `retirée : <raison>`). Une demande répondue est gelée.
 
 Une décision prise en séance est la forme courte d'une demande :
-l'humain, présent, a lu la question dans la conversation et y a répondu
-(approuver une spécification, trancher une question ouverte). Elle s'écrit
+l'humain, présent, a tranché dans la conversation, de lui-même ou sur une
+question courte posée dans le texte de la réponse, jamais dans le widget de
+questions de l'agent. Ce qui demande du contexte, approuver un document
+compris, est une demande. Elle s'écrit
 avec sa réponse, d'un seul geste, par `socle decision "<question>"
 <réponse> --relayed --by <nom> --quote-file <fichier>` : un titre, la
 métadonnée `forme : séance`, une section `Question posée` qui garde la

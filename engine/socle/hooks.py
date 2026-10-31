@@ -567,6 +567,11 @@ def refus_bash(projet: config.Projet, cmd: str, cwd: str | None = None) -> str |
     return None
 
 
+# Le widget de questions de l'agent (B-0105) : l'humain y lit un texte brut,
+# sans liens à suivre, et n'y répond qu'à des options écrites par l'agent.
+QUESTIONS_AGENT = ("AskUserQuestion",)
+
+
 def pre_tool_use(projet: config.Projet, entree: dict) -> int:
     racine = projet.racine
     outil = entree.get("tool_name", "")
@@ -576,6 +581,13 @@ def pre_tool_use(projet: config.Projet, entree: dict) -> int:
     def refus(raison: str) -> int:
         tracer_refus(racine, "PreToolUse", f"{outil} — {raison}", entree.get("session_id", ""))
         return _refus(raison)
+
+    if outil in QUESTIONS_AGENT:
+        return refus(trad("une question à l'humain ne passe pas par le widget de questions de l'agent : son texte y "
+                          "est brut et ses liens ne s'y suivent pas. Une décision qui demande du contexte (approuver "
+                          "un document, choisir entre des options) s'écrit en demande (`socle new request`), dont le "
+                          "lien se donne dans la conversation ; une question courte se pose dans le texte de la "
+                          "réponse."))
 
     motifs_outils = projet.pol("irreversible", "tools", defaut=IRREVERSIBLES_OUTILS)
     for m in motifs_outils:
