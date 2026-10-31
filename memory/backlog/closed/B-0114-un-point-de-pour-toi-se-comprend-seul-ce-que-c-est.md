@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0114 — Un point de « Pour toi » se comprend seul : ce que c'est, pourquoi, ce que change la réponse
 
-> statut : ouvert · origine : J-2026-10-31-S · lu : backlog@21d64bbd
+> statut : fait · origine : J-2026-10-31-S · lu : backlog@21d64bbd · ref : J-2026-10-31-S
 
 Mon récap demandait à Théo s'il fallait « poser une étiquette » sur une
 branche, sans dire ce qu'est une étiquette, ni pourquoi elle servirait :

@@ -73,6 +73,12 @@ avec ses critères d'acceptation et ce qu'elle attend (`après`), groupée en
 jalons. Il soumet chaque document en demande. Il suffit de le lui
 demander ; l'état donne ensuite le prochain jalon et les sujets prêts.
 
+**Livrer.** Par défaut, l'agent fait tout sur une branche de
+développement et garde une seule pull request ouverte, à laquelle chaque
+lot fini s'ajoute : la fusionner quand on veut, une fois sa CI verte. Une
+pull request par sujet, chacune à fusionner, se choisit en le disant à
+l'agent, qui l'écrit en fait de la mémoire.
+
 Chaque intervention de l'agent qui a agi se termine par deux lignes :
 
 - **« Pour toi : »** — ce qui revient à l'humain : une demande à lire, une
