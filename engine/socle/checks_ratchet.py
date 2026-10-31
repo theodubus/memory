@@ -340,7 +340,9 @@ REMEDE_HOOKS = a_traduire(
     "Claude Code ne lit ses hooks que dans le dossier où la session démarre : relancer la session depuis la "
     "racine du projet ; dans une session à plusieurs dépôts, ouvrir une session sur ce dépôt seul. L'agent "
     "n'écrit jamais lui-même un réglage de Claude Code pour les rétablir : il le dit à l'humain, et ne pousse "
-    "rien.")
+    "rien. Le travail en cours, qui ne peut plus se commiter, il le montre dans la conversation (`git diff`, "
+    "`git stash show -p --include-untracked`, ou le texte des fichiers nouveaux), pour que l'humain le donne à "
+    "la session neuve : le conteneur peut disparaître avec lui.")
 
 
 def est_agent(projet, message: str) -> bool:

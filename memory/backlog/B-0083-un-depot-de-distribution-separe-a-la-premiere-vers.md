@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0083 — Un dépôt de distribution séparé, à la première version mûre ; ce dépôt gardé privé pour la fabrication
 
-> statut : ouvert · origine : J-2026-10-21-B · lu : backlog@7cf0d815
+> statut : en cours · origine : J-2026-10-21-B · lu : backlog@7cf0d815
 
 Proposé par Théo en réponse à D-0037@436f2cf4 : à la première version
 mûre, un dépôt de distribution ne contient que ce qu'un projet reçoit (le
@@ -33,3 +33,10 @@ moteur à la version publiée : sans version publiée, rien à comparer, et le
 moteur comme son verrou sont des fichiers protégés ; le dépôt de
 distribution pourra publier l'empreinte de chaque version, que la CI d'un
 projet comparera.
+
+Le 31 oct. (D-0055, D-0056, D-0057, ADR-0040) : avancé, sur la demande de
+Théo, après trois incidents de sessions à deux dépôts. Le dépôt public
+`theodubus/socle` existe, sous MIT ; le workflow qui y publie le moteur est
+écrit. Reste : la première publication, à la fusion, et la vérification
+qu'une session cloud clone ce dépôt sans l'ajouter. Le paquet PyPI et
+l'empreinte publiée par version restent à trancher.

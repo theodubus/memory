@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+import unittest.mock
 from contextlib import redirect_stdout
 from pathlib import Path
 
@@ -220,6 +221,17 @@ class TestMiseAJour(Base):
         self.assertIn("1 contrôle(s) en échec ci-dessus (docs.liens)", etapes[1])
         self.assertIn('git commit -m "Mettre à jour le socle', etapes[2])
         self.assertFalse(any("socle init" in e for e in etapes))
+
+    def test_en_session_cloud_une_mise_a_jour_approuve_dans_une_session_neuve(self):
+        """B-0107 : la session du pilote qui mettait le socle à jour attendait
+        la validation de Théo ; à deux dépôts, elle a redémarré sans ses
+        hooks. Sans terminal, l'approbation passe par une demande, posée dans
+        une session neuve sur le seul dépôt du projet."""
+        with unittest.mock.patch.dict(os.environ, {"CLAUDE_CODE_REMOTE": "true"}):
+            etapes = installeur.et_maintenant(self.racine, True, ["protege.fichiers"])
+        self.assertNotIn("socle approve --text", etapes[0])
+        self.assertIn("sans rien attendre", etapes[0])
+        self.assertIn("session neuve sur le seul dépôt du projet", etapes[0])
 
     def test_une_installation_dit_de_proteger_la_branche(self):
         """B-0044, L2 (R1) : rien ne disait à l'humain d'exiger la CI avant

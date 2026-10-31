@@ -1803,10 +1803,27 @@ MESSAGES: dict[str, str] = {
         "no fingerprint for {cible}: {sortie}",
     "Claude Code ne lit ses hooks que dans le dossier où la session démarre : relancer la session depuis la racine "
     "du projet ; dans une session à plusieurs dépôts, ouvrir une session sur ce dépôt seul. L'agent n'écrit jamais "
-    "lui-même un réglage de Claude Code pour les rétablir : il le dit à l'humain, et ne pousse rien.":
+    "lui-même un réglage de Claude Code pour les rétablir : il le dit à l'humain, et ne pousse rien. Le travail en "
+    "cours, qui ne peut plus se commiter, il le montre dans la conversation (`git diff`, `git stash show -p "
+    "--include-untracked`, ou le texte des fichiers nouveaux), pour que l'humain le donne à la session neuve : le "
+    "conteneur peut disparaître avec lui.":
         "Claude Code only reads its hooks in the folder where the session starts: restart the session from the "
         "project root; in a session with several repositories, open a session on this repository alone. The agent "
-        "never writes a Claude Code setting itself to restore them: it tells the human, and pushes nothing.",
+        "never writes a Claude Code setting itself to restore them: it tells the human, and pushes nothing. The work "
+        "in progress, which can no longer be committed, it shows in the conversation (`git diff`, `git stash show -p "
+        "--include-untracked`, or the text of the new files), for the human to give to the new session: the "
+        "container may disappear with it.",
+    "approuver les fichiers protégés que la mise à jour a changés : en session cloud, l'humain n'a pas de terminal "
+    "pour `socle approve` ; poser une demande qui cite chaque fichier protégé changé et son empreinte (`python3 "
+    ".socle/socle check` les donne), que l'humain valide dans la conversation. Une session qui a dû ajouter le dépôt "
+    "du socle ne se reprend pas : y commiter, pousser la branche et ouvrir la pull request, d'une traite et sans rien "
+    "attendre, et poser la demande dans une session neuve sur le seul dépôt du projet, sur cette branche":
+        "approve the protected files the update changed: in a cloud session, the human has no terminal for `socle "
+        "approve`; put a request that cites each changed protected file and its fingerprint (`python3 .socle/socle "
+        "check` gives them), which the human approves in the conversation. A session that had to add the socle's "
+        "repository is not resumed: commit there, push the branch and open the pull request, in one go and without "
+        "waiting for anything, and put the request in a new session on the project's repository alone, on that "
+        "branch",
     "{sha} « {sujet} » : aucun PreToolUse n'a tiré pendant la session — les hooks de l'agent n'étaient pas chargés. "
     "{remede}":
         "{sha} “{sujet}”: no PreToolUse fired during the session — the agent's hooks were not loaded. {remede}",

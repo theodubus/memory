@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0056-publier-le-moteur-du-socle-dans-un-depot-public-de.md, dont l'empreinte suit.
+reponse = "valider"
+texte = "La licence reste à choisir : MIT ou AGPL, à arbitrer."
+par = "Théo"
+date = "2026-10-31"
+canal = "conversation"
+citation = "Et d0056 pourquoi mit ? Arbitre mit vs agpl (j'utilise souvent mit pour des outils intermédiaires pour favoriser l'adoption, et souvent agpl pour des solutions utilisateurs quand il n'y a pas grand chose a ajouter dessus pour eviter que des charognards viennent capitaliser sur un travail censé etre distribué gratuitement)\n\nMis a part la licence encore en suspend, je valide d0056, j'irai faire le dépôt juste apres avoir valide la license"
+empreinte = "sha256:e8102132cd5235f3bb0172601873df2daab9c21472fdaf36964b95be03ae1e39"

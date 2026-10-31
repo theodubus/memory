@@ -126,11 +126,14 @@ cargo…), que l'installeur cite ; Claude Code et GitHub pour les trois
 étages.
 
 ```sh
-git clone --depth 1 --filter=blob:none --sparse https://github.com/theodubus/memory /tmp/socle
-git -C /tmp/socle sparse-checkout set engine
+git clone --depth 1 https://github.com/theodubus/socle /tmp/socle
 cd <projet>
-PYTHONPATH=/tmp/socle/engine python3 -m socle install --target . --owner @<propriétaire>
+PYTHONPATH=/tmp/socle python3 -m socle install --target . --owner @<propriétaire>
 ```
+
+Le dépôt public `theodubus/socle`, sous licence MIT, ne contient que le
+produit ; le workflow `distribution.yml` de ce dépôt-ci l'y publie à chaque
+fusion sur `main`.
 
 | Option | Effet |
 | --- | --- |
@@ -147,22 +150,25 @@ suite est décrite dans [le guide d'utilisation](engine/socle/HELP.md),
 copié dans le projet et affiché par `python3 .socle/socle help`.
 
 **En session cloud de Claude Code**, l'agent peut tout faire, installation
-comprise : la session du projet ajoute ce dépôt, privé, pour le cloner
-hors du dossier de ses dépôts, puis installe avec `--human <nom>`, l'identité git
-du conteneur étant celle de l'agent. Ajouter ce dépôt fait d'elle une
-session à deux dépôts : reprise, elle démarre hors de la racine du projet,
-sans les hooks de l'agent. La session qui installe ne se reprend donc pas :
-elle pousse sa branche et ouvre une pull request, que l'humain fusionne.
-Le travail continue ensuite dans une session neuve sur le seul dépôt du
-projet ; pas avant la fusion, une session neuve partant de la branche par
-défaut, qui n'a pas encore le socle.
+comprise : le dépôt public se clone sans être ajouté à la session, qui
+reste sur le seul dépôt du projet ; l'installation prend `--human <nom>`,
+l'identité git du conteneur étant celle de l'agent. La session qui installe
+pousse sa branche et ouvre une pull request, que l'humain fusionne ; le
+travail continue ensuite dans une session neuve, partie de la branche par
+défaut, qui a alors le socle. Pour une mise à jour, sans terminal pour
+`socle approve`, l'agent pose une demande qui cite chaque fichier protégé
+changé avec son empreinte, que l'humain valide dans la conversation.
+
+Une session qui ajoute un second dépôt passe à deux dépôts : reprise, elle
+démarre hors de la racine du projet, sans les hooks de l'agent. Elle ne se
+reprend donc pas : elle fait son travail d'une traite, sans rien attendre,
+et la suite se fait dans une session neuve sur le seul dépôt du projet.
 
 ## État du projet
 
 Version <!-- valeur:version -->0.1.0<!-- /valeur -->, en développement.
 L'étage de l'agent n'existe que pour Claude Code. L'installation passe par
-un clone de ce dépôt ; un dépôt de distribution ne contenant que le produit
-est prévu pour la première version stable.
+le dépôt public de distribution, qui ne contient que le produit.
 
 ## Documentation
 

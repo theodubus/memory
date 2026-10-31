@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0057-la-licence-du-depot-public-de-distribution-du-socl.md, dont l'empreinte suit.
+reponse = "mit"
+texte = ""
+par = "Théo"
+date = "2026-10-31"
+canal = "conversation"
+citation = "Depot cree, secret ajouté\n\nJe dois attendre ta publication avant de mettre le prompt dans la nouvelle session ?\n(Ps j'ai créé in readme et licence sans faire exprès, et ça sera mit)"
+empreinte = "sha256:0f92779550990cec3aebf52e3d5805cf764340604a43b4fb1dc16fcd59403a00"

@@ -39,6 +39,9 @@ la mémoire de ce dépôt, qui est l'historique de fabrication de l'outil.
   juges (`docs/fabrication/banc.md`), et le banc des adaptateurs, chacun éprouvé sur un
   projet jetable de son langage (`bench/adapters.py`).
 - `memory/` — la mémoire de ce projet, au format du socle.
+- `.github/workflows/distribution.yml` — publie le produit, et lui seul,
+  dans le dépôt public `theodubus/socle` à chaque fusion sur `main` (D-0056) :
+  le moteur sous `socle/`, et `engine/README.md` pour README.
 
 ## Commandes
 
