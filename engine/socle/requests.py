@@ -267,10 +267,8 @@ def linter(d: Demande, projet: config.Projet) -> list[str]:
                                positive=langue.mot(langue.REPONSES, REPONSE_POSITIVE, lg)))
         # Le geste nommé a son propre refus ; une demande retirée n'attend plus
         # de réponse, et les réponses de base (D-0053) ne la concernent pas.
-        # Les questions de départ, que pose `socle init`, gardent les leurs
-        # tant que D-0054 n'a pas tranché.
-        exemptee = "retiree" in d.entree.meta or "socle init" in d.entree.meta.get("origine", "")
-        manquent = [] if exemptee else [r for r in manquent if not (nommes and r == REPONSE_POSITIVE)]
+        manquent = [] if "retiree" in d.entree.meta else [r for r in manquent
+                                                          if not (nommes and r == REPONSE_POSITIVE)]
         if manquent:
             fautes.append(trad("« Réponses possibles » doit proposer les réponses de base, les mêmes dans toute "
                                "demande ({manquent}) : `{positive}` y prend la recommandation, et une demande de "

@@ -39,12 +39,15 @@ place.
   "assumed" and can be corrected later; reversible.
 - **Answer question by question**: a few minutes; the start follows what you
   want; reversible.
+- **Reject the defaults**: no effort now; risk, the start waits for these
+  answers, each question staying open; reversible.
 
 ## Consequences
 
 If you approve the defaults, the agent applies them, marked "assumed". If you
 answer otherwise, the agent records your exact text and applies it. If you
-reject the questions as they stand (`insufficient-context`), the agent
+reject the defaults (`reject`), each question stays open, in the backlog.
+If the questions cannot be understood (`insufficient-context`), the agent
 rewrites them. With no answer, the defaults apply, marked "assumed", and the
 request stays in the queue for you to come back to.
 
@@ -55,6 +58,7 @@ repository audit read, if there was one. Assumed: everything else.
 
 ## Possible answers
 
-- `defaults` — all the defaults apply, marked "assumed".
+- `approve` — all the defaults apply, marked "assumed".
 - `answers` — the text of your answer gives the answers, question by question; the agent records it as is.
+- `reject` — no default applies: each question stays open, in the backlog.
 - `insufficient-context` — the request goes back to the agent, who rewrites it as a request that replaces it.
