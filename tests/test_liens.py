@@ -123,6 +123,17 @@ class TestLiensDuDepot(unittest.TestCase):
         self.assertEqual(liens.problemes(self.projet, message), ([], []))
 
 
+    def test_une_pull_request_se_cite_par_son_lien(self):
+        """B-0110 : l'agent du pilote donnait « la pull request 2 » à fusionner,
+        sans lien."""
+        for message in ("Fusionne la pull request 2.", "La PR #2 reste à fusionner.", "Voir la PR 2 et la PR 14."):
+            with self.subTest(message=message):
+                morts, _ = liens.problemes(self.projet, message)
+                self.assertTrue(any("pull request 2 citée sans son lien" in m for m in morts), morts)
+        message = f"La PR #3 est ouverte : {DEPOT}/pull/3."
+        self.assertEqual(liens.problemes(self.projet, message), ([], []))
+        self.assertTrue(liens.problemes(self.projet, f"La PR #3 : {DEPOT}/pull/31.")[0])
+
     def test_un_chemin_barre_d_un_message_ne_se_juge_pas(self):
         """B-0087 : un chemin barré dit ce qui n'est plus."""
         from socle import memory as memoire
