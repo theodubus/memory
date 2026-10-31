@@ -56,6 +56,32 @@ class TestBranchesASupprimer(unittest.TestCase):
         quoi = [e.quoi for e in humain.a_faire(self.projet)]
         self.assertTrue(any("`fusionnee`" in q for q in quoi), quoi)
 
+    def test_une_branche_non_fusionnee_et_inactive_se_signale(self):
+        """B-0112 : les branches de session du pilote, jamais livrées,
+        restaient sans que personne ne les signale."""
+        import time
+
+        source = self.dossier / "source"
+        git(source, "switch", "-q", "-c", "ancienne", "main")
+        (source / "g").write_text("vieux")
+        git(source, "add", "g")
+        vieux = "2026-01-01T12:00:00"
+        subprocess.run(["git", "commit", "-qm", "vieux"], cwd=source, check=True, capture_output=True,
+                       env={**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t",
+                            "GIT_COMMITTER_EMAIL": "t@t", "GIT_CONFIG_NOSYSTEM": "1", "HOME": str(source),
+                            "GIT_COMMITTER_DATE": vieux, "GIT_AUTHOR_DATE": vieux})
+        git(source, "switch", "-q", "main")
+        git(self.clone, "fetch", "-q", "origin")
+        inactives = humain.branches_inactives(self.projet)
+        # `en-cours` a un commit absent de main, mais récent : elle ne se signale pas.
+        self.assertEqual([b for b, _, _ in inactives], ["ancienne"])
+        self.assertEqual(inactives[0][1], 1)
+        self.assertGreater(inactives[0][2], 7)
+        self.assertEqual(humain.branches_inactives(self.projet, maintenant=time.time() + 30 * 86400)[0][0], "ancienne")
+        (self.clone / "memory").mkdir()
+        quoi = [e.quoi for e in humain.a_faire(self.projet)]
+        self.assertTrue(any(q.startswith("examiner la branche distante `ancienne`") for q in quoi), quoi)
+
     def test_une_action_humaine_vient_avec_le_lien_de_son_sujet(self):
         # ADR-0025 : le mode d'emploi d'une action humaine (commandes,
         # résultats attendus) vit dans son sujet, que l'état donne par son lien.
