@@ -9,7 +9,9 @@ Sur `main` : l'ordre du backlog (ADR-0037), puis les premiers retours du
 pilote, le widget de questions refusé (B-0105) et les réponses de base
 (D-0053, D-0054) (J-2026-10-31-H) ; la mise à jour en session cloud
 (B-0107), le travail en cours sans hooks (B-0108), et la distribution
-publique `theodubus/socle`, sous MIT, publiée (ADR-0040, J-2026-10-31-M). BMAD Method est retiré du socle (ADR-0036). Les
+publique `theodubus/socle`, sous MIT, publiée (ADR-0040, J-2026-10-31-M) ;
+une pull request citée sans son lien refusée (B-0110), et les branches
+non fusionnées et inactives signalées (B-0112, J-2026-10-31-R). BMAD Method est retiré du socle (ADR-0036). Les
 projets d'essai sont dans le dossier de travail de la session, jetables.
 
 D-0026 est répondue `rien` : B-0048 et B-0018 restent ouverts, « on se le
