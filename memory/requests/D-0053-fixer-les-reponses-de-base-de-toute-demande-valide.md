@@ -1,7 +1,7 @@
 <!-- socle: couche=demandes zone=publique -->
 # D-0053 — Fixer les réponses de base de toute demande : valider, refuser, contexte-insuffisant
 
-> date : 2026-10-31 · lu : decisions@a5a9abfc
+> date : 2026-10-31 · lu : decisions@366e992c
 
 ## Décision demandée
 
