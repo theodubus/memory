@@ -139,6 +139,14 @@ consigne aussitôt, mot pour mot, comme une demande. Ce qui demande du
 contexte, approuver un document compris, arrive en demande, avec son
 lien ; jamais dans le widget de questions de l'agent, que le hook refuse.
 
+**Des questions de cadrage.** Quand la spécification d'un sujet dépend
+d'une intention que la mémoire ne dit pas, l'agent pose des questions
+ouvertes, chacune avec son hypothèse, dans une demande dont il donne le
+lien. Y répondre librement, en un ou plusieurs messages (`reponses`), ou
+`valider` ses hypothèses : il consigne le texte tel quel, puis soumet la
+spécification qui en découle. Lui dire « pose-moi tes questions sur ce
+sujet » suffit à en demander.
+
 **Une relecture avant publication**, si la politique l'exige : l'agent
 montre ce qui part vers le dépôt public, l'humain donne son accord dans la
 conversation. Depuis un terminal : `python3 .socle/socle reviewed --by <nom>`.

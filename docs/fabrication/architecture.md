@@ -31,7 +31,7 @@ vérifiées.
 
 | Module | Rôle |
 | --- | --- |
-| `cli.py` | les commandes, rangées par public dans l'aide (l'humain, l'agent, les hooks et la CI) : `help`, `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `private`, `reviewed`, `answer`, `approve`, `install`, `init`, `selftest`, `fingerprint`, `mutation-verdict`, `mutation-run`, `renumber`, `archive`, `checks` ; sans commande, l'aide de l'humain |
+| `cli.py` | les commandes, rangées par public dans l'aide (l'humain, l'agent, les hooks et la CI), dont `new request --questions`, les questions de cadrage d'un sujet (D-0067) : `help`, `state`, `show`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `private`, `reviewed`, `answer`, `approve`, `install`, `init`, `selftest`, `fingerprint`, `mutation-verdict`, `mutation-run`, `renumber`, `archive`, `checks` ; sans commande, l'aide de l'humain |
 | `HELP.md` | le guide de l'humain, source unique : ses gestes, chacun avec sa commande ; `socle help` l'affiche |
 | `memory.py` | lecture des cinq couches : en-têtes, entrées, identifiants, métadonnées, références ; l'ordre du backlog (`après`, qui nomme des sujets ou des demandes attendues jusqu'à leur réponse, D-0064 ; jalons ; priorité haute ou basse, D-0062), d'où se calculent le prochain jalon, les sujets prêts rangés par priorité et, à part, ceux de priorité basse (D-0052) ; les critères de « Fait quand » d'un sujet |
 | `requests.py` | le contrat des demandes, son lint, les réponses humaines gelées ; les réponses de base, les mêmes dans toute demande, et le refus de leurs synonymes (D-0053), les questions de départ comprises (D-0054) |

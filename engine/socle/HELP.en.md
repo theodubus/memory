@@ -139,6 +139,14 @@ at once, word for word, like a request. What needs context, approving a
 document included, comes as a request, with its link; never in the
 agent's question widget, which the hook refuses.
 
+**Framing questions.** When a topic's specification depends on an
+intention the memory does not state, the agent asks open questions, each
+with its assumption, in a request whose link it gives. Answer them
+freely, in one or several messages (`answers`), or `approve` its
+assumptions: it records the text as is, then submits the specification
+that follows from it. Telling it "ask me your questions about this
+topic" is enough to request them.
+
 **A review before publication**, if the policy requires it: the agent
 shows what goes out to the public repository, the human gives their
 agreement in the conversation. From a terminal:

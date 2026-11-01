@@ -73,7 +73,10 @@ demande ; jamais dans le widget de questions de l'agent, où l'humain lit un
 texte brut sans liens à suivre (le hook le refuse). Ce que l'humain tranche
 dans la conversation, de lui-même ou sur une question courte posée dans le
 texte de la réponse, se consigne aussitôt de même, en séance. Comment : le
-skill `socle-request`.
+skill `socle-request`. Un sujet dont la spécification dépend d'une intention
+que la mémoire ne dit pas se cadre d'abord par des questions ouvertes
+(`socle new request --questions`) ; une spécification se soumet avant son
+code.
 
 ### Lire la mémoire à la demande
 

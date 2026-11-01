@@ -2274,6 +2274,10 @@ MESSAGES: dict[str, str] = {
         "existing case of a case file changed without human approval",
     "un cas ajouté à un fichier de cas passe le commit et la CI":
         "a case added to a case file passes the commit and the CI",
+    "avec `request` : des questions de cadrage d'un sujet, ouvertes, auxquelles l'humain répond librement":
+        "with `request`: framing questions about a topic, open, which the human answers freely",
+    "`--questions` ne vaut que pour une demande (`request`)":
+        "`--questions` applies only to a request (`request`)",
     "sujet du backlog d'une priorité ni haute ni basse":
         "backlog topic with a priority neither high nor low",
     "sujet fait alors que la demande qu'il attend est sans réponse":

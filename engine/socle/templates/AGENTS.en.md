@@ -72,7 +72,10 @@ request; never in the agent's question widget, where the human reads raw
 text with no links to follow (the hook refuses it). What the human settles
 in the conversation, of their own accord or on a short question asked in
 the text of the answer, is recorded at once in the same way, in session.
-How: the skill `socle-request`.
+How: the skill `socle-request`. A topic whose specification depends on an
+intention the memory does not state is first framed by open questions
+(`socle new request --questions`); a specification is submitted before its
+code.
 
 ### Reading the memory on demand
 
