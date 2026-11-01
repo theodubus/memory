@@ -9,7 +9,10 @@ Sur `main` : l'ordre du backlog (ADR-0037), puis les premiers retours du
 pilote, le widget de questions refusé (B-0105) et les réponses de base
 (D-0053, D-0054) (J-2026-10-31-H) ; la mise à jour en session cloud
 (B-0107), le travail en cours sans hooks (B-0108), et la distribution
-publique `theodubus/socle`, sous MIT, publiée (ADR-0040, J-2026-10-31-M). BMAD Method est retiré du socle (ADR-0036). Les
+publique `theodubus/socle`, sous MIT, publiée (ADR-0040, J-2026-10-31-M) ;
+une pull request citée sans son lien refusée (B-0110), et les branches
+non fusionnées et inactives signalées (B-0112, J-2026-10-31-R). PR #18 : la
+livraison (D-0058, D-0059), l'enchaînement (D-0061), B-0115, D-0060. BMAD Method est retiré du socle (ADR-0036). Les
 projets d'essai sont dans le dossier de travail de la session, jetables.
 
 D-0026 est répondue `rien` : B-0048 et B-0018 restent ouverts, « on se le
@@ -26,8 +29,9 @@ garde en tete et on voit si ça finit par etre bloquant ».
   message de la session de travail) ; Théo : « garde en tete de me donner
   ce qu'il faudra pour lancer le pilote le moment venu » (J-2026-10-30-S).
 - La branche de travail est `ccr-7128ec56-nnvoun-v2`, tirée de `main` sur la
-  réponse `branche-neuve` de Théo à D-0049 (J-2026-10-30-J) ; l'ancienne
-  branche reste, pour les SHA que la mémoire cite.
+  réponse `branche-neuve` de Théo à D-0049 (J-2026-10-30-J). L'ancienne
+  branche peut se supprimer : la PR #10 garde ses commits, que la mémoire
+  cite (J-2026-10-31-S).
 - La documentation se conçoit avant de s'écrire, commence par ce dont le
   projet parle et ce qu'il est, ses schémas se vérifient rendus avant le
   push, et elle n'est faite que validée par Théo ; Théo : « fais un petit
@@ -46,6 +50,10 @@ garde en tete et on voit si ça finit par etre bloquant ».
 
 - Une attente annoncée dans le récap (CI, banc, match) s'accompagne d'un
   réveil programmé pour y revenir (Théo, J-2026-10-13-N).
+- Chaque point de « Pour toi » se comprend seul, sans mon raisonnement,
+  que Théo ne lit pas : ce que c'est, pourquoi, ce que change sa réponse ;
+  Théo : « dans ton recap dire "je pose une étiquette" ne suffit pas du
+  tout » (J-2026-10-31-S).
 - Ce qui revient à Théo ne contient que ses gestes, chacun avec ce qu'il
   fait ; ce que l'agent fera ensuite se dit à part, comme tel ; un constat
   dit ce qu'il change pour Théo et ce qu'on attend de lui, ou « rien »
@@ -74,7 +82,6 @@ garde en tete et on voit si ça finit par etre bloquant ».
 - Sessions d'un agent réel : « Tu as mon autorisation pour utiliser
   l'abonnement » (Théo, J-2026-10-19-H) ; chacune plafonnée à l'équivalent
   de 2 dollars, et sa consommation rapportée.
-- « Aucun projet n'est deja equipé du socle » (Théo, J-2026-10-19-H).
 - En autonomie sur le backlog : « tu peux travailler en autonomie sur la
   backlog sur tous les éléments qui peuvent se faire n'importe quand et
   pour lesquels tu n'as pas besoin d'arbitrage / Tu peux t'arrêter quand
@@ -89,5 +96,4 @@ garde en tete et on voit si ça finit par etre bloquant ».
 2. La suite se lit dans l'ordre du backlog (`socle state`) : après le
    pilote, la planification (B-0101), puis la répartition entre agents
    (B-0055) ; B-0010, B-0012 et B-0095 attendent le pilote ; gardé en
-   tête : B-0048 ; à la première version mûre : B-0083 ; pour Théo :
-   B-0102.
+   tête : B-0048.

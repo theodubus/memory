@@ -253,7 +253,7 @@ class TestEntrees(Base):
         with redirect_stdout(io.StringIO()) as flux:
             self.assertEqual(initialisation.initialiser(self.charger()), 0)
         questions = initialisation.questions_de_depart(self.charger(), None, False)
-        self.assertEqual(len(questions), 5)
+        self.assertEqual(len(questions), 6)
         self.assertTrue(all(q.defaut and q.effet for q in questions))
         d = next((self.racine / "memory/requests").glob("D-0001-*.md")).read_text()
         self.assertIn("Défaut : aucun", d)
@@ -261,6 +261,17 @@ class TestEntrees(Base):
         humain = flux.getvalue().split("Pour toi :")[1].split("Ce qui revient")[0]
         self.assertIn("la demande D-0001 doit être sur GitHub", humain)
         self.assertEqual(len(initialisation.pour_toi("D-0042")), 3)
+
+    def test_les_questions_de_depart_posent_la_livraison(self):
+        """D-0058 : par défaut une branche de développement et une seule pull
+        request ouverte ; une par sujet, seulement au choix de l'humain."""
+        self.racine = depot({})
+        installer(self.racine)
+        questions = initialisation.questions_de_depart(self.charger(), None, False)
+        livraison = [q for q in questions if "pull request" in q.texte]
+        self.assertEqual(len(livraison), 1)
+        self.assertTrue(livraison[0].defaut.startswith("une branche de développement"))
+        self.assertIn("par sujet", livraison[0].texte)
 
     def test_cadrage_archive_tel_quel(self):
         self.racine = depot({})

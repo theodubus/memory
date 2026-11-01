@@ -88,6 +88,54 @@ class TestApprobation(unittest.TestCase):
         controles_cliquet.proteges(ctx, r)
         self.assertEqual([c.message for c in r.erreurs("protege.fichiers")], [])
 
+    def test_une_mise_a_jour_attend_sa_demande_poussee_a_la_fin_du_tour(self):
+        """B-0115 : en session cloud, l'humain valide la mise à jour dans la
+        conversation, et le hook de fin de tour refusait de conclure tant que
+        les fichiers protégés changés attendaient sa réponse. Une demande
+        poussée qui cite le fichier et son empreinte laisse finir le tour ; le
+        commit et la CI attendent toujours la réponse."""
+        from socle import checks_ratchet as controles_cliquet, fingerprint as empreinte
+
+        origine = self.racine.parent / (self.racine.name + "-origine.git")
+        git(self.racine.parent, "init", "-q", "--bare", str(origine))
+        self.addCleanup(shutil.rmtree, origine, ignore_errors=True)
+        git(self.racine, "remote", "add", "origin", str(origine))
+        pol = self.racine / ".socle/policy.toml"
+        pol.write_text(pol.read_text().replace("[human]\n", '[human]\nrepo_url = "https://github.com/x/y"\n', 1))
+        git(self.racine, "add", ".socle/policy.toml")
+        git(self.racine, "commit", "-qm", "adresse du dépôt", "--no-verify")
+        base = git(self.racine, "rev-parse", "HEAD").strip()
+        cite = empreinte.courte(empreinte.fichier(self.racine / ".github/workflows/socle.yml"))
+        demande = "memory/requests/D-0001-mise-a-jour.md"
+        (self.racine / demande).write_text(
+            "<!-- socle: couche=demandes zone=publique -->\n# D-0001 — La mise à jour du socle\n\n"
+            f"> date : 2026-10-31\n\n## Décision demandée\n\nValider `.github/workflows/socle.yml` et `{cite}`.\n")
+        git(self.racine, "add", demande)
+        git(self.racine, "commit", "-qm", "la demande", "--no-verify")
+
+        def juger(etage, tete=None) -> Rapport:
+            ctx = contexte.Contexte(config.Projet.charger(self.racine), etage=etage, base=base, tete=tete)
+            r = Rapport()
+            controles_cliquet.proteges(ctx, r)
+            return r
+
+        # Pas encore poussée : l'humain ne peut pas la lire. Le hook avant push
+        # juge ce qui part, sans le fichier changé dans l'arbre.
+        self.assertTrue(juger("agent").erreurs("protege.fichiers"))
+        from socle import hooks
+
+        tete = git(self.racine, "rev-parse", "HEAD").strip()
+        with unittest.mock.patch("sys.stdin", io.StringIO(f"refs/heads/main {tete} refs/heads/main {'0' * 40}\n")), \
+                contextlib.redirect_stderr(io.StringIO()) as flux:
+            hooks.git_pre_push(config.Projet.charger(self.racine))
+        self.assertNotIn("protege.fichiers", flux.getvalue())
+        git(self.racine, "push", "-q", "--no-verify", "-u", "origin", "main")
+        r = juger("agent")
+        self.assertEqual([c.message for c in r.erreurs("protege.fichiers")], [])
+        self.assertIn("en attente de D-0001", r.texte())
+        git(self.racine, "commit", "-qam", "la mise à jour", "--no-verify")
+        self.assertTrue(juger("ci", git(self.racine, "rev-parse", "HEAD").strip()).erreurs("protege.fichiers"))
+
     def test_l_etat_rappelle_l_approbation_jusqu_au_commit_suivant_de_l_agent(self):
         """B-0034, P7 : Théo a approuvé D-0012 dans son terminal, et ne
         retrouvait pas ce numéro dans la conversation : l'état le liste à

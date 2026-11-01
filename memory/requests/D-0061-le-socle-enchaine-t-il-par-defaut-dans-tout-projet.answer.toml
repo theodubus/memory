@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0061-le-socle-enchaine-t-il-par-defaut-dans-tout-projet.md, dont l'empreinte suit.
+reponse = "enchainer"
+texte = ""
+par = "Théo"
+date = "2026-10-31"
+canal = "conversation"
+citation = "D0059 valider\nD0060 valider\nEnchaîner par defaut, mais pas forcement tout, on peut imaginer qu'avant de se lancer l'agent disent le gros lot sur lequel il va travailler\n\nJe fusionne et supprime la branche juste apres, rappelle le moi ainsi que le prompt à donner à l'autre session"
+empreinte = "sha256:f7f74a90b4379d03fdee336c79b8fc6f9355dca45770f0b8fb4826ad24fc7bd7"
