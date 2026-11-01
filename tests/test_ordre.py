@@ -112,3 +112,113 @@ class TestControle(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def demande(ident: str) -> str:
+    return (f"<!-- socle: couche=demandes zone=publique -->\n# {ident} — La demande {ident}\n\n"
+            "> date : 2026-11-01\n\n## Décision demandée\n\nTrancher.\n")
+
+
+def avec_demande(mem: memoire.Memoire, ident: str, repondue: bool = False) -> str:
+    chemin = f"memory/requests/{ident}-essai.md"
+    mem.fichiers[chemin] = memoire.analyser(chemin, demande(ident))
+    if repondue:
+        mem.repondues.add(chemin)
+    return chemin
+
+
+def avec_meta(texte: str, meta: str) -> str:
+    """Le sujet, une métadonnée de plus sur sa ligne."""
+    return texte.replace("\n\nPour l'essai.", f" · {meta}\n\nPour l'essai.")
+
+
+class TestPriorite(unittest.TestCase):
+    """D-0062 : une priorité, haute ou basse, que l'humain ou l'agent pose ;
+    la normale ne s'écrit pas."""
+
+    def test_la_priorite_se_lit_dans_les_deux_langues(self):
+        fr = memoire_de(avec_meta(sujet("B-0001"), "priorité : basse")).entree("B-0001")
+        en = memoire_de(avec_meta(sujet("B-0001", "open", en=True), "priority: low")).entree("B-0001")
+        self.assertEqual([memoire.priorite(fr), memoire.priorite(en)], ["basse", "basse"])
+        self.assertIsNone(memoire.priorite(memoire_de(sujet("B-0001")).entree("B-0001")))
+
+    def test_les_prets_se_rangent_par_priorite_et_les_basses_restent_a_part(self):
+        mem = memoire_de(sujet("B-0001"), avec_meta(sujet("B-0002"), "priorité : haute"),
+                         avec_meta(sujet("B-0003"), "priorité : basse"))
+        o = memoire.ordre(mem)
+        self.assertEqual([e.id for e in o.prets], ["B-0002", "B-0001"])
+        self.assertEqual([e.id for e in o.basses], ["B-0003"])
+        self.assertEqual(o.en_attente, 0)
+        self.assertEqual(memoire.lignes_ordre(mem), [
+            "prêt : B-0002 — Le sujet B-0002 (priorité haute)",
+            "prêt : B-0001 — Le sujet B-0001",
+            "prêts aussi, de priorité basse : B-0003",
+        ])
+
+    def test_une_priorite_autre_que_haute_ou_basse_est_refusee(self):
+        for valeur in ("urgente", "normale"):
+            with self.subTest(valeur=valeur):
+                mem = memoire_de(avec_meta(sujet("B-0001"), f"priorité : {valeur}"))
+                self.assertEqual(len(erreurs(mem)), 1, erreurs(mem))
+        self.assertEqual(erreurs(memoire_de(avec_meta(sujet("B-0001"), "priorité : haute"))), [])
+
+
+class TestDemandeAttendue(unittest.TestCase):
+    """D-0064 : un sujet peut attendre une demande ; il est prêt une fois
+    qu'elle a sa réponse."""
+
+    def test_un_sujet_qui_attend_une_demande_est_pret_a_sa_reponse(self):
+        mem = memoire_de(sujet("B-0001", apres="D-0001"))
+        chemin = avec_demande(mem, "D-0001")
+        o = memoire.ordre(mem)
+        self.assertEqual((o.prets, o.en_attente), ([], 1))
+        self.assertEqual(erreurs(mem), [])
+        mem.repondues.add(chemin)
+        self.assertEqual([e.id for e in memoire.ordre(mem).prets], ["B-0001"])
+
+    def test_un_sujet_fait_avant_la_reponse_qu_il_attend_est_refuse(self):
+        mem = memoire_de(sujet("B-0001", "fait", apres="D-0001"))
+        avec_demande(mem, "D-0001")
+        self.assertEqual(erreurs(mem), ["`B-0001` est fait avant `D-0001`, qu'il attend, encore sans réponse"])
+        avec_demande(mem, "D-0001", repondue=True)
+        self.assertEqual(erreurs(mem), [])
+
+    def test_une_demande_repondue_se_lit_a_cote_de_sa_reponse(self):
+        import shutil
+        import subprocess
+        import tempfile
+
+        racine = Path(tempfile.mkdtemp(prefix="socle-repondues-"))
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        (racine / "memory/requests").mkdir(parents=True)
+        (racine / "memory/requests/D-0001-essai.md").write_text(demande("D-0001"))
+        (racine / "memory/requests/D-0001-essai.answer.toml").write_text('reponse = "valider"\n')
+        subprocess.run(["git", "init", "-q"], cwd=racine, check=True)
+        subprocess.run(["git", "add", "-A"], cwd=racine, check=True)
+        mem = memoire.Memoire.charger(racine)
+        self.assertTrue(memoire.demande_close(mem, mem.entree("D-0001")))
+
+
+class TestFaitQuand(unittest.TestCase):
+    """D-0064 : la section « Fait quand », en cases à cocher, toutes cochées
+    avant de clore un sujet « fait »."""
+
+    TEXTE = "\n\n## Fait quand\n\n- [x] le test passe\n- [ ] le guide le dit\n\n## Notes\n\n- [ ] hors section\n"
+
+    def fautes(self, texte: str) -> list[str]:
+        r = Rapport()
+        controles_memoire.backlog(types.SimpleNamespace(memoire=memoire_de(texte)), r)
+        return [c.message for c in r.erreurs("memoire.backlog") if "Fait quand" in c.message]
+
+    def test_les_criteres_se_lisent_dans_leur_section(self):
+        e = memoire_de(sujet("B-0001") + self.TEXTE).entree("B-0001")
+        self.assertEqual(memoire.criteres(e), [(True, "le test passe"), (False, "le guide le dit")])
+        self.assertEqual(memoire.criteres(memoire_de(sujet("B-0001")).entree("B-0001")), [])
+
+    def test_un_sujet_fait_avec_un_critere_non_coche_est_refuse(self):
+        self.assertEqual(self.fautes(sujet("B-0001", "fait") + self.TEXTE),
+                         ["`B-0001` est clos « fait » avec un critère de « Fait quand » non coché : le guide le dit"])
+        self.assertEqual(self.fautes(sujet("B-0001", "fait") + self.TEXTE.replace("[ ] le guide", "[x] le guide")), [])
+        # Ouvert, ou abandonné, il peut garder des critères non cochés.
+        self.assertEqual(self.fautes(sujet("B-0001") + self.TEXTE), [])
+        self.assertEqual(self.fautes(sujet("B-0001", "abandonné") + self.TEXTE), [])

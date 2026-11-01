@@ -12,7 +12,8 @@ pilote, le widget de questions refusé (B-0105) et les réponses de base
 publique `theodubus/socle`, sous MIT, publiée (ADR-0040, J-2026-10-31-M) ;
 une pull request citée sans son lien refusée (B-0110), et les branches
 non fusionnées et inactives signalées (B-0112, J-2026-10-31-R). PR #18 : la
-livraison (D-0058, D-0059), l'enchaînement (D-0061), B-0115, D-0060. BMAD Method est retiré du socle (ADR-0036). Les
+livraison (D-0058, D-0059), l'enchaînement (D-0061), B-0115, D-0060. Dans
+la PR #19 : la priorité (D-0062), le prêt et le fait (D-0064), B-0117. BMAD Method est retiré du socle (ADR-0036). Les
 projets d'essai sont dans le dossier de travail de la session, jetables.
 
 D-0026 est répondue `rien` : B-0048 et B-0018 restent ouverts, « on se le

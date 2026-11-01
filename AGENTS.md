@@ -35,13 +35,11 @@ la mémoire de ce dépôt, qui est l'historique de fabrication de l'outil.
   installation ; `engine/socle/HELP.md` — le guide d'utilisation d'un projet
   équipé ; `docs/fabrication/` — la documentation de l'atelier :
   architecture, bancs, relevés, l'histoire de `chess`.
-- `bench/` — le banc d'évaluation sur un agent réel, ses scénarios et leurs
-  juges (`docs/fabrication/banc.md`), et le banc des adaptateurs, chacun éprouvé sur un
-  projet jetable de son langage (`bench/adapters.py`).
+- `bench/` — le banc sur un agent réel (`docs/fabrication/banc.md`), et celui
+  des adaptateurs, chacun sur un projet jetable (`bench/adapters.py`).
 - `memory/` — la mémoire de ce projet, au format du socle.
-- `.github/workflows/distribution.yml` — publie le produit, et lui seul,
-  dans le dépôt public `theodubus/socle` à chaque fusion sur `main` (D-0056) :
-  le moteur sous `socle/`, et `engine/README.md` pour README.
+- `.github/workflows/distribution.yml` — publie le moteur, et lui seul, dans
+  le dépôt public `theodubus/socle` à chaque fusion sur `main` (D-0056).
 
 ## Commandes
 
@@ -66,8 +64,7 @@ python3 .socle/socle init --brief cadrage.md --repo   # dans le projet installé
 - **Bibliothèque standard de Python 3.11+ seulement** (`ADR-0001`), vérifié
   par `tests/test_moteur.py`.
 - **Commentaires, messages, documentation et identifiants du code en
-  français ; commandes, options et noms de fichiers en anglais** (`ADR-0027`,
-  qui remplace `ADR-0002`) : un module s'importe sous son nom français
+  français ; commandes, options et noms de fichiers en anglais** (`ADR-0027`) : un module s'importe sous son nom français
   (`from socle import memory as memoire`).
 
 <!-- socle:debut — section posée par l'installeur, régénérée à chaque mise à jour -->
@@ -110,7 +107,7 @@ toujours, et une session neuve n'a que la mémoire.
 | Actif | `memory/active.md` | chantier en cours, prochaines étapes ; réécrit, borné |
 | Décisions | `memory/decisions/` | une ADR par fichier, le seul registre des décisions du projet ; seul son statut change ensuite |
 | Journal | `memory/journal/` | une entrée datée par événement ; ajout seul |
-| Backlog | `memory/backlog/` | sujets avec statut et origine, ordonnés par `après` et leurs jalons (l'état en calcule les prêts) ; clos avec une référence, puis rangés par `socle archive` |
+| Backlog | `memory/backlog/` | sujets avec statut et origine, ordonnés par `après` (sujets ou demandes), leurs jalons et leur priorité (l'état en calcule les prêts) ; faits quand leur « Fait quand » est coché, clos avec une référence, puis rangés par `socle archive` |
 | Demandes | `memory/requests/` | décisions humaines en file, au contrat du skill `socle-request` |
 
 Une entrée : `## F-NNNN — titre`, puis une ligne `> statut : mesuré · preuve : commit:<sha>`.
@@ -188,8 +185,10 @@ se cite dans le texte.
 
 Tant que rien ne revient à l'humain, l'agent enchaîne les sujets prêts
 sans attendre de message. Il annonce d'abord le lot, pas forcément tout ce
-qui est prêt (les sujets, le jalon qu'ils servent), puis s'y met ; il
-s'arrête à la fin du lot, ou dès qu'une décision revient à l'humain.
+qui est prêt (les sujets, leur taille, le jalon qu'ils servent ; un sujet de
+priorité basse s'il est commode), puis s'y met ; il s'arrête à la fin du
+lot, ou dès qu'une décision revient à l'humain. Il ne change pas une
+priorité que l'humain a donnée.
 
 Par défaut, tout se fait sur une branche de développement, avec une seule
 pull request ouverte à la fois : chaque lot fini s'y ajoute, l'humain la
