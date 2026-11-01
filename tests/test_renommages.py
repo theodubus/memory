@@ -158,16 +158,23 @@ class TestCouchesGelees(Projet):
         p = self.racine / fichier
         p.write_text(p.read_text().rstrip("\n") + "\n" + texte)
 
-    def test_le_journal_garde_un_chemin_qui_a_existe(self):
+    def journal(self) -> tuple[str, str]:
+        """Le fichier du journal que l'installeur a posé, nommé d'après le mois
+        en cours, et un identifiant daté de ce mois : un identifiant d'un autre
+        mois y serait refusé (le test échouait depuis le 1er novembre)."""
         journal = next((self.racine / "memory/journal").glob("*.md")).relative_to(self.racine)
-        self.citer(str(journal), "\n## J-2026-10-13-Z — Un outil\n\n"
+        return str(journal), f"J-{journal.stem[:7]}-13-Z"
+
+    def test_le_journal_garde_un_chemin_qui_a_existe(self):
+        journal, ident = self.journal()
+        self.citer(journal, f"\n## {ident} — Un outil\n\n"
                                  "Écrit dans `scripts/vieux.py`, voir [le source](../../scripts/vieux.py) "
                                  "et fichier:scripts/vieux.py.\n")
         self.assertEqual(self.erreurs(), [])
 
     def test_un_chemin_qui_n_a_jamais_existe_reste_refuse(self):
-        journal = next((self.racine / "memory/journal").glob("*.md")).relative_to(self.racine)
-        self.citer(str(journal), "\n## J-2026-10-13-Z — Un outil\n\nÉcrit dans `scripts/jamais.py`.\n")
+        journal, ident = self.journal()
+        self.citer(journal, f"\n## {ident} — Un outil\n\nÉcrit dans `scripts/jamais.py`.\n")
         self.assertEqual(self.erreurs(), ["chemin cité inexistant : `scripts/jamais.py`"])
 
     def test_une_reference_d_une_couche_gelee(self):
