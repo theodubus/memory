@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0063-pour-rendre-a-la-ci-le-commit-que-le-journal-cite.md, dont l'empreinte suit.
+reponse = "etiquette"
+texte = ""
+par = "Théo"
+date = "2026-11-01"
+canal = "conversation"
+citation = "Ok etiquette pour la ci rouge\nEt ok pour les dor et les dod tels que tu les as présentés"
+empreinte = "sha256:d071e4324a5dfaca89e810a7f99ac4bf6b560012ae66e15f7ac522fd159a7399"

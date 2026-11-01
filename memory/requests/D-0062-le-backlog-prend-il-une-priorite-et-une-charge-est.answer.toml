@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0062-le-backlog-prend-il-une-priorite-et-une-charge-est.md, dont l'empreinte suit.
+reponse = "priorite"
+texte = ""
+par = "Théo"
+date = "2026-11-01"
+canal = "conversation"
+citation = "Ok pas de charge estimée pour l'instant, juste la prio\n\nUtile aussi d'écrire les dépendances (dor, éléments pouvant etre d'autres b-xxxx ou non) et éléments pour valider (dod) des éléments de backlog ?\n\nDetaille concrètement le probleme pour la ci rouge, ce qu'il s'est passé pourquoi etc detaille mieux et plus simplement pour que je comprenne tout sans contexte"
+empreinte = "sha256:d132c3a07111aafe6aaf80e3c6de89f75636a65d640df70c755f0462c44be41f"

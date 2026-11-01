@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0064-le-backlog-dit-il-ce-qui-rend-un-sujet-pret-et-ce.md, dont l'empreinte suit.
+reponse = "pret-et-fait"
+texte = ""
+par = "Théo"
+date = "2026-11-01"
+canal = "conversation"
+citation = "Ok etiquette pour la ci rouge\nEt ok pour les dor et les dod tels que tu les as présentés"
+empreinte = "sha256:47fc10b01a02bb49862de18b4864f64dd81d6c9d2e008035bf36cd3250cf11a6"

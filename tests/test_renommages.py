@@ -158,16 +158,23 @@ class TestCouchesGelees(Projet):
         p = self.racine / fichier
         p.write_text(p.read_text().rstrip("\n") + "\n" + texte)
 
-    def test_le_journal_garde_un_chemin_qui_a_existe(self):
+    def journal(self) -> tuple[str, str]:
+        """Le fichier du journal que l'installeur a posé, nommé d'après le mois
+        en cours, et un identifiant daté de ce mois : un identifiant d'un autre
+        mois y serait refusé (le test échouait depuis le 1er novembre)."""
         journal = next((self.racine / "memory/journal").glob("*.md")).relative_to(self.racine)
-        self.citer(str(journal), "\n## J-2026-10-13-Z — Un outil\n\n"
+        return str(journal), f"J-{journal.stem[:7]}-13-Z"
+
+    def test_le_journal_garde_un_chemin_qui_a_existe(self):
+        journal, ident = self.journal()
+        self.citer(journal, f"\n## {ident} — Un outil\n\n"
                                  "Écrit dans `scripts/vieux.py`, voir [le source](../../scripts/vieux.py) "
                                  "et fichier:scripts/vieux.py.\n")
         self.assertEqual(self.erreurs(), [])
 
     def test_un_chemin_qui_n_a_jamais_existe_reste_refuse(self):
-        journal = next((self.racine / "memory/journal").glob("*.md")).relative_to(self.racine)
-        self.citer(str(journal), "\n## J-2026-10-13-Z — Un outil\n\nÉcrit dans `scripts/jamais.py`.\n")
+        journal, ident = self.journal()
+        self.citer(journal, f"\n## {ident} — Un outil\n\nÉcrit dans `scripts/jamais.py`.\n")
         self.assertEqual(self.erreurs(), ["chemin cité inexistant : `scripts/jamais.py`"])
 
     def test_une_reference_d_une_couche_gelee(self):
@@ -261,3 +268,39 @@ class TestEtageCi(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestCommitDUnePullRequest(unittest.TestCase):
+    """B-0117 : la mémoire citait un commit que seule une branche supprimée
+    portait. GitHub le garde dans sa pull request, mais un clone ne
+    récupère que les branches et les étiquettes : la CI le disait absent."""
+
+    def test_un_commit_qui_n_est_plus_que_dans_une_pull_request_se_retrouve(self):
+        dossier = Path(tempfile.mkdtemp(prefix="socle-pull-"))
+        self.addCleanup(shutil.rmtree, dossier, ignore_errors=True)
+        origine, depot, clone = dossier / "origine.git", dossier / "depot", dossier / "clone"
+        git(dossier, "init", "-q", "--bare", str(origine))
+        depot.mkdir()
+        git(depot, "init", "-q", "-b", "main")
+        (depot / "a.txt").write_text("a\n")
+        git(depot, "add", "-A")
+        git(depot, "commit", "-qm", "départ", "--no-verify")
+        git(depot, "remote", "add", "origin", str(origine))
+        git(depot, "push", "-q", "--no-verify", "origin", "main")
+        git(depot, "checkout", "-q", "-b", "sujet")
+        (depot / "b.txt").write_text("b\n")
+        git(depot, "add", "-A")
+        git(depot, "commit", "-qm", "sujet", "--no-verify")
+        sha = git(depot, "rev-parse", "HEAD").strip()
+        # La pull request garde le commit ; sa branche n'est pas sur l'origine.
+        git(depot, "push", "-q", "--no-verify", "origin", "HEAD:refs/pull/1/head")
+        # `--no-local` : un clone local recopierait tous les objets de l'origine.
+        git(dossier, "clone", "-q", "--no-local", str(origine), str(clone))
+        self.assertFalse(outils.objet_existe(clone, sha))
+        ctx = contexte.Contexte(config.Projet.charger(clone), etage="ci")
+        self.assertIsNone(controles_memoire.verifier_ref(ctx, "commit", sha[:7]))
+        self.assertTrue(outils.objet_existe(clone, sha))
+        # Une fois par dépôt et par processus : la seconde fois, rien n'est récupéré.
+        self.assertFalse(outils.recuperer_pull_requests(clone))
+        # Un commit qui n'existe nulle part reste refusé.
+        self.assertIn("ni dans ses pull requests", controles_memoire.verifier_ref(ctx, "commit", "0123456"))
