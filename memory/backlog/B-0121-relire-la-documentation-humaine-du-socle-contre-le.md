@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0121 — Relire la documentation humaine du socle contre les changements depuis le 31 octobre
 
-> statut : ouvert · origine : J-2026-11-01-J · après : B-0120 · lu : backlog@a34ad892
+> statut : en cours · origine : J-2026-11-01-J · après : B-0120 · lu : backlog@a34ad892
 
 Théo : « Apres il faudra aussi vérifier si la doc du socle est à jour avec
 les changements qu'on a fait (doc humaine) ». Depuis le 31 octobre, le
@@ -15,6 +15,8 @@ formel.
 
 ## Fait quand
 
-- [ ] `README.md`, `engine/README.md`, `engine/socle/HELP.md` et `engine/socle/HELP.en.md` relus contre ces changements
-- [ ] le plan des corrections soumis à Théo dans la conversation avant de les écrire
+- [x] `README.md`, `engine/README.md`, `engine/socle/HELP.md` et `engine/socle/HELP.en.md` relus contre ces changements
+- [x] le plan des corrections soumis à Théo dans la conversation avant de les écrire
 - [ ] les corrections écrites, et validées par Théo
+
+Le 1er novembre, le plan validé (D-0068) ; les corrections écrites, qui attendent la validation de Théo.

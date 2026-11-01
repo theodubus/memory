@@ -39,14 +39,14 @@ format lisible par script :
 | Chantier actif | le travail en cours et les prochaines étapes |
 | Décisions | une décision par fichier, avec ses raisons |
 | Journal | une entrée datée par événement, en ajout seul |
-| Backlog | les sujets à traiter, un par fichier, dans leur ordre : ce que chacun attend, et les jalons |
+| Backlog | les sujets à traiter, un par fichier, dans leur ordre : ce que chacun attend, sa priorité, les jalons, et ce qui le rend fait |
 | Demandes | les décisions qui attendent l'humain, puis sa réponse |
 
 À chaque session, l'agent reçoit l'état du projet, calculé depuis git et la
 mémoire (commit, CI, backlog, ce qui attend l'humain), puis le chantier et
 les faits.
 
-**Les contrôles, à trois étages.** Une trentaine de contrôles vérifient que
+**Les contrôles, à trois étages.** Près de quarante contrôles vérifient que
 toute référence citée existe, que la documentation suit le code, que les
 tests affirment quelque chose et qu'aucun n'est affaibli en silence, que la
 mémoire est tenue à jour. Ils s'exécutent pendant le travail de l'agent, au
@@ -63,14 +63,23 @@ flowchart LR
 **Les décisions réservées à l'humain.** Une politique, modifiée par
 l'humain seul, fixe ce que l'agent décide et ce qu'il demande. Ce qui est
 coûteux à défaire, irréversible, ou qui affaiblirait un garde-fou (relâcher
-un seuil, supprimer un test) fait l'objet d'une **demande** : un document
-qui se lit sans le contexte de la session, avec les options et une
-recommandation. L'humain répond dans la conversation ; la réponse est
-consignée mot pour mot.
+un seuil, supprimer un test, changer un résultat attendu) fait l'objet
+d'une **demande** : un document qui se lit sans le contexte de la session,
+avec les options et une recommandation. L'humain répond dans la
+conversation ; la réponse est consignée mot pour mot. Quand son intention
+manque pour spécifier un sujet, l'agent lui pose des questions ouvertes
+plutôt que de deviner ; chaque spécification lui est soumise avant son
+code.
 
 **Le cliquet.** Chaque seuil peut être durci librement, jamais relâché sans
 validation. Les fichiers qui encadrent l'agent (politique, hooks, CI) ne
 changent qu'avec l'accord de l'humain.
+
+**Le rythme.** Tant que rien n'attend l'humain, l'agent enchaîne les sujets
+prêts, par lots qu'il annonce avant de s'y mettre. Il livre sur une seule
+pull request ouverte à la fois, que l'humain fusionne quand il veut. Chaque
+intervention se termine par ce qui revient à l'humain, chaque point
+compréhensible seul, et par la suite prévue.
 
 Une session, de bout en bout :
 
