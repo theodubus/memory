@@ -19,3 +19,14 @@ spécifications et de les déclarer (`spec_paths`, ce qui assouplit et
 passe par une demande ; `[[docmap]]` du code vers elles) ; et
 `tests.attendus` surveille les fichiers de données qu'un test lit pour
 ses valeurs attendues.
+
+Le 1er novembre, le pilote répond (J-2026-11-01-I). Aucun de ses tests ne
+lit encore de valeur attendue dans ses fichiers de cas ; mais leurs 111
+sorties attendues seront rejouées par le domaine, et rien ne protège
+aujourd'hui leurs changements. Et des spécifications ont reçu leur code
+sans être soumises à Théo. Ce que le socle peut faire :
+- protéger les fichiers de cas que le projet déclare : ajouter un cas est
+  libre, changer ou retirer un cas existant exige une demande validée,
+  comme une valeur attendue dans un test ;
+- signaler dans ce qui revient à l'humain une spécification qu'aucune
+  demande validée n'a approuvée.

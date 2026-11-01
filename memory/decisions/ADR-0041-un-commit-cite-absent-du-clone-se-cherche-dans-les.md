@@ -1,7 +1,7 @@
 <!-- socle: couche=decisions zone=publique -->
 # ADR-0041 — Un commit cité, absent du clone, se cherche dans les pull requests de l'origine avant d'être dit absent
 
-> statut : proposée · date : 2026-11-01 · source : D-0063@5371f812, B-0117@4160db6a · lu : decisions@655f507c
+> statut : acceptée · date : 2026-11-01 · source : D-0063@5371f812, B-0117@4160db6a · lu : decisions@655f507c
 
 ## Contexte
 
