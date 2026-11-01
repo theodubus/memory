@@ -228,3 +228,73 @@ class TestEnAttenteDeLHumain(TestValeurAttendue):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+CAS = """[
+  {
+    "id": "c1",
+    "entree": 2,
+    "attendu": 4
+  },
+  {
+    "id": "c2",
+    "entree": 3,
+    "attendu": 6
+  }
+]
+"""
+
+
+class TestFichiersDeCas(TestValeurAttendue):
+    """D-0066 : des tests lisent leurs résultats attendus dans des fichiers
+    de cas, que le projet déclare. Ajouter un cas est libre ; en changer ou
+    en retirer un exige une validation humaine, comme une valeur attendue
+    écrite dans un test."""
+
+    def setUp(self):
+        super().setUp()
+        gf = self.racine / ".socle/guardrails.toml"
+        texte = gf.read_text()
+        self.assertIn("spec_paths =", texte)
+        gf.write_text(texte.replace("spec_paths =", 'case_paths = ["docs/*.cas.json"]\nspec_paths =', 1))
+        self.ecrire("docs/double.cas.json", CAS)
+        self.commit("Les cas du double")
+        self.base = git(self.racine, "rev-parse", "HEAD").strip()
+
+    def test_ajouter_deplacer_ou_remettre_en_forme_un_cas_est_libre(self):
+        ajout = CAS.replace('    "attendu": 6\n  }\n]', '    "attendu": 6\n  },\n  {\n    "id": "c3",\n'
+                                                       '    "entree": 5,\n    "attendu": 10\n  }\n]')
+        self.ecrire("docs/double.cas.json", ajout)
+        self.commit("Un cas de plus")
+        self.assertEqual(self.erreurs(), ([], []))
+        self.ecrire("docs/double.cas.json", ajout.replace("  ", "    "))
+        self.commit("Remis en forme")
+        self.assertEqual(self.erreurs()[0], [])
+
+    def test_changer_ou_retirer_un_cas_est_refuse(self):
+        self.ecrire("docs/double.cas.json", CAS.replace('"attendu": 6', '"attendu": 7'))
+        self.commit("Le cas suit le code" + AGENT)
+        erreurs, _ = self.erreurs()
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertIn("cas changé ou retiré dans `docs/double.cas.json`", erreurs[0])
+        self.assertIn('« "attendu": 6 »', erreurs[0])
+        self.ecrire("docs/double.cas.json", "[]\n")
+        self.commit("Plus de cas" + AGENT)
+        self.assertEqual(len(self.erreurs()[0]), 1)
+
+    def test_une_validation_qui_cite_le_fichier_autorise_le_changement(self):
+        import types
+        import unittest.mock
+
+        self.ecrire("docs/double.cas.json", CAS.replace('"attendu": 6', '"attendu": 7'))
+        self.commit("Le cas suit la nouvelle règle")
+        validee = types.SimpleNamespace(id="D-0001", texte="Changer `docs/double.cas.json` : le c2 attend 7.")
+        with unittest.mock.patch.object(contexte.Contexte, "validations", new_callable=unittest.mock.PropertyMock,
+                                        return_value=[validee]):
+            erreurs, avertissements = self.erreurs()
+        self.assertEqual(erreurs, [])
+        self.assertTrue(any("validé par D-0001" in a for a in avertissements), avertissements)
+
+    def test_les_lignes_retirees_ignorent_les_blancs_et_la_virgule_finale(self):
+        self.assertEqual(controles_tests.cas_retires('{\n  "a": 1\n}\n', '{\n    "a": 1,\n  "b": 2\n}\n'), [])
+        self.assertEqual(controles_tests.cas_retires('{\n  "a": 1\n}\n', '{\n  "a": 2\n}\n'), ['"a": 1'])

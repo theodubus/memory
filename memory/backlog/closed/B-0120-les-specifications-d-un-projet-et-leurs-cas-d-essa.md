@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0120 — Les spécifications d'un projet et leurs cas d'essai : le socle ne sait pas où ils sont
 
-> statut : en cours · origine : J-2026-11-01-G · lu : backlog@4cc6e0f8
+> statut : fait · origine : J-2026-11-01-G · lu : backlog@4cc6e0f8 · ref : J-2026-11-01-M
 
 L'agent du pilote écrit ses spécifications dans docs/specs, chacune
 avec un fichier de cas d'essai (`*.cas.json`). C'est leur place, mais le
@@ -35,6 +35,6 @@ D-0066, `socle` (J-2026-11-01-L).
 
 ## Fait quand
 
-- [ ] un projet déclare ses fichiers de cas ; changer ou retirer un cas existant exige une demande validée qui cite le fichier, et un défaut injecté l'éprouve
-- [ ] l'état signale une spécification déclarée qu'aucune demande ne cite
-- [ ] les instructions, le format et le guide le disent
+- [x] un projet déclare ses fichiers de cas ; changer ou retirer un cas existant exige une demande validée qui cite le fichier, et un défaut injecté l'éprouve
+- [x] l'état signale une spécification déclarée qu'aucune demande ne cite
+- [x] les instructions, les gabarits des garde-fous et le guide le disent (le format de la mémoire n'en parle pas : ce sont des garde-fous)

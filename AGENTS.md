@@ -4,16 +4,13 @@ Ce dépôt fabrique le **socle** : un moteur Python, bibliothèque standard
 seule, qui rend fiables la mémoire, la documentation et les tests d'un projet
 de code entretenu par un agent. L'agent écrit, des contrôles automatiques
 attrapent les erreurs, et l'humain n'arbitre que ce qu'aucun contrôle ne peut
-trancher. Le cadrage fondateur est archivé tel quel dans
-`memory/archives/cadrage-2026-10-10.md` ; ce qui vient du dépôt `chess` est
-inventorié dans `docs/fabrication/inventaire-chess.md`, et
-`docs/fabrication/architecture.md` dit où chaque exigence du cadrage est
+trancher. Le cadrage fondateur : `memory/archives/cadrage-2026-10-10.md` ;
+`docs/fabrication/architecture.md` dit où chacune de ses exigences est
 appliquée.
 
-Ce dépôt est en **mode amont** : il est le premier utilisateur du socle qu'il
-fabrique. Le moteur vit dans `engine/socle/` ; il est la source, donc son
-empreinte n'est pas figée ici. Les fichiers du projet vivent dans `.socle/`
-comme dans n'importe quel projet.
+Ce dépôt est en **mode amont** : premier utilisateur du socle qu'il
+fabrique, il en a la source sous `engine/socle/`, dont l'empreinte n'est
+donc pas figée ; ses fichiers de projet vivent dans `.socle/`, comme partout.
 
 ## Structure
 
@@ -31,8 +28,7 @@ la mémoire de ce dépôt, qui est l'historique de fabrication de l'outil.
 - `engine/socle/templates/` — les gabarits que l'installeur pose dans un projet.
 - `tests/` — les tests du moteur (`unittest`), dont l'auto-test complet par
   injection de défauts.
-- `README.md` — ce qu'est le socle, son principe, sa structure, son
-  installation ; `engine/socle/HELP.md` — le guide d'utilisation d'un projet
+- `README.md` — ce qu'est le socle et comment l'installer ; `engine/socle/HELP.md` — le guide d'utilisation d'un projet
   équipé ; `docs/fabrication/` — la documentation de l'atelier :
   architecture, bancs, relevés, l'histoire de `chess`.
 - `bench/` — le banc sur un agent réel (`docs/fabrication/banc.md`), et celui
@@ -50,7 +46,6 @@ python3 .socle/socle selftest --verbose  # les défauts injectés, un par un
 python3 bench/bench.py --agent simule    # le banc, sur un agent simulé
 python3 bench/adapters.py                # les adaptateurs, sur leurs vrais outils
 python3 .socle/socle install --target ../projet --adapter auto --owner @moi
-python3 .socle/socle init --brief cadrage.md --repo   # dans le projet installé
 ```
 
 ## Règles propres à ce dépôt
@@ -123,7 +118,7 @@ tests, puis la mémoire canonique, puis le journal.
 ### Politique d'autonomie (`.socle/policy.toml`, modifiée par l'humain seul)
 
 1. **Assouplir un garde-fou** (`.socle/guardrails.toml`) exige une demande validée ; durcir est libre. Déclarer des fichiers tiers, qu'aucun contrôle ne juge (`[thirdparty] paths`), assouplit.
-2. **Supprimer un test ou changer une valeur attendue** exige une demande validée, ou une spécification que l'humain a lui-même changée et qui nomme le test ; une ADR écrite par l'agent ne suffit pas.
+2. **Supprimer un test ou changer une valeur attendue**, dans un test ou un fichier de cas déclaré, exige une demande validée, ou une spécification que l'humain a lui-même changée et qui nomme le test ; une ADR écrite par l'agent ne suffit pas.
 3. **Décision de conception** : réversible et mesurable, l'agent décide et écrit une ADR ; coûteuse à défaire, demande.
 4. **Action irréversible ou externe** (force-push, push sur la branche par défaut, publication, suppression distante, dépense) : toujours une demande. Le hook la refuse.
 5. **Mémoire** : ajout seul ; « réfuté » exige une référence de mesure ; « validé » ne s'écrit qu'après la réponse de l'humain.

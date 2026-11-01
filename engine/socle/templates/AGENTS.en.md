@@ -53,7 +53,7 @@ the tests, then the canonical memory, then the journal.
 ### Autonomy policy (`.socle/policy.toml`, changed by the human only)
 
 1. **Loosening a guardrail** (`.socle/guardrails.toml`) requires an approved request; tightening is free. Declaring third-party files, which no check judges (`[thirdparty] paths`), loosens.
-2. **Deleting a test or changing an expected value** requires an approved request, or a specification the human changed themselves and that names the test; an ADR written by the agent is not enough.
+2. **Deleting a test or changing an expected value**, in a test or a declared case file, requires an approved request, or a specification the human changed themselves and that names the test; an ADR written by the agent is not enough.
 3. **Design decision**: reversible and measurable, the agent decides and writes an ADR; costly to undo, ask.
 4. **Irreversible or external action** (force-push, push to the default branch, publication, remote deletion, spending): always a request. The hook refuses it.
 5. **Memory**: append only; "refuted" requires a measurement reference; "validated" is only written after the human's answer.

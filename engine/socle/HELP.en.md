@@ -73,6 +73,14 @@ all checked before closing it), grouped in milestones. It submits each
 document as a request. Just ask it to; the state then gives the next
 milestone and the ready topics.
 
+**Specifications and test cases.** The project declares where its
+specifications live (`[specs] paths` in the guardrails): the state tells
+you about any that no request has submitted to you. It also declares its
+case files (`[tests] case_paths`), data where its tests read their
+expected results: adding a case is free, but changing or removing an
+existing case requires your approval, like an expected value written in a
+test.
+
 **Prioritising.** A topic can carry `priority: high` or `priority: low`;
 the normal one is not written. Telling the agent is enough, and it does
 not change a priority the human gave. The ready topics are sorted by

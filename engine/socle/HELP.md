@@ -75,6 +75,14 @@ sa réponse) et ce qui la rend faite (une section « Fait quand », en cases
 chaque document en demande. Il suffit de le lui demander ; l'état donne
 ensuite le prochain jalon et les sujets prêts.
 
+**Spécifications et cas d'essai.** Le projet déclare où vivent ses
+spécifications (`[specs] paths` des garde-fous) : l'état vous signale
+celle qu'aucune demande ne vous a soumise. Il déclare aussi ses fichiers
+de cas (`[tests] case_paths`), des données où ses tests lisent leurs
+résultats attendus : y ajouter un cas est libre, mais changer ou retirer
+un cas existant exige votre validation, comme une valeur attendue écrite
+dans un test.
+
 **Prioriser.** Un sujet peut porter `priorité : haute` ou
 `priorité : basse` ; la normale ne s'écrit pas. Le dire à l'agent suffit,
 et il ne change pas une priorité que l'humain a donnée. Les sujets prêts
