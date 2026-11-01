@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0067-le-socle-ajoute-t-il-des-questions-de-cadrage-d-un.md, dont l'empreinte suit.
+reponse = "cadrage"
+texte = ""
+par = "Théo"
+date = "2026-11-01"
+canal = "conversation"
+citation = "Ok pour socle\nOk pour cadrage\n\nEt ensuite oui avance puis revois la documentation"
+empreinte = "sha256:1ea823cd8729bbaeec4f14fc9b0ec33adba7b593800b8bbb60c47920c687c3f0"

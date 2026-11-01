@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0120 — Les spécifications d'un projet et leurs cas d'essai : le socle ne sait pas où ils sont
 
-> statut : ouvert · origine : J-2026-11-01-G · lu : backlog@4cc6e0f8
+> statut : en cours · origine : J-2026-11-01-G · lu : backlog@4cc6e0f8
 
 L'agent du pilote écrit ses spécifications dans docs/specs, chacune
 avec un fichier de cas d'essai (`*.cas.json`). C'est leur place, mais le
@@ -30,3 +30,11 @@ sans être soumises à Théo. Ce que le socle peut faire :
   comme une valeur attendue dans un test ;
 - signaler dans ce qui revient à l'humain une spécification qu'aucune
   demande validée n'a approuvée.
+
+D-0066, `socle` (J-2026-11-01-L).
+
+## Fait quand
+
+- [ ] un projet déclare ses fichiers de cas ; changer ou retirer un cas existant exige une demande validée qui cite le fichier, et un défaut injecté l'éprouve
+- [ ] l'état signale une spécification déclarée qu'aucune demande ne cite
+- [ ] les instructions, le format et le guide le disent
