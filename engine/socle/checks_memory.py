@@ -335,9 +335,12 @@ def verifier_ref(ctx, type_: str, cible: str, historique: bool = False) -> str |
     if type_ == "commit":
         if not re.fullmatch(r"[0-9a-f]{7,40}", cible):
             return trad("`commit:{cible}` n'est pas un SHA", cible=cible)
-        if not outils.objet_existe(ctx.racine, cible):
-            return trad("`commit:{cible}` n'existe pas dans ce dépôt (historique complet ? `fetch-depth: 0`)",
-                        cible=cible)
+        # Absent du clone, il peut n'être plus que dans une pull request :
+        # on les récupère avant de le dire absent (B-0117).
+        if not outils.objet_existe(ctx.racine, cible) and not (
+                outils.recuperer_pull_requests(ctx.racine) and outils.objet_existe(ctx.racine, cible)):
+            return trad("`commit:{cible}` n'existe pas dans ce dépôt, ni dans ses pull requests (historique "
+                        "complet ? `fetch-depth: 0`)", cible=cible)
     elif type_ == "fichier":
         chemin = re.split(r"[#]|:(?=\d)", cible, maxsplit=1)[0]
         if not _existe(ctx, chemin, historique) and not _ignore(ctx.racine, chemin):

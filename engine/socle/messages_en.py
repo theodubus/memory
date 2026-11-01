@@ -630,8 +630,10 @@ MESSAGES: dict[str, str] = {
         "`x:path` does not suit it",
     "`commit:{cible}` n'est pas un SHA":
         "`commit:{cible}` is not a SHA",
-    "`commit:{cible}` n'existe pas dans ce dépôt (historique complet ? `fetch-depth: 0`)":
-        "`commit:{cible}` does not exist in this repository (full history? `fetch-depth: 0`)",
+    "`commit:{cible}` n'existe pas dans ce dépôt, ni dans ses pull requests (historique complet ? `fetch-depth: "
+    "0`)":
+        "`commit:{cible}` does not exist in this repository, nor in its pull requests (full history? `fetch-depth: "
+        "0`)",
     "`fichier:{cible}` : {chemin} n'existe pas":
         "`file:{cible}`: {chemin} does not exist",
     "`cmd:{cible}` : {premier} n'existe pas":

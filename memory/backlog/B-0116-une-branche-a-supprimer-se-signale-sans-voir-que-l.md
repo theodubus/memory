@@ -15,3 +15,6 @@ commit par une pull request. C'est arrivé à ce dépôt le 1er novembre
 étiquette sur les commits cités, avec la commande, au lieu de proposer la
 suppression seule ; et le refus de `memoire.references` sur un commit
 absent du clone nomme ce remède à côté de l'historique complet.
+
+Le 1er novembre, B-0117 retrouve le commit d'une branche supprimée dans sa
+pull request : il reste le cas d'une branche qui n'en a jamais eu.

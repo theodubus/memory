@@ -79,7 +79,7 @@ Une valeur de métadonnée, ou le texte, peut citer :
 
 | Forme | Vérifiée en CI |
 | --- | --- |
-| `commit:3f2a9c1` | l'objet existe dans le dépôt (historique complet) |
+| `commit:3f2a9c1` | l'objet existe dans le dépôt (historique complet), ou dans une de ses pull requests, que le contrôle récupère avant de le dire absent |
 | `fichier:src/x.rs`, `fichier:src/x.rs:12`, `fichier:doc.md#ancre` | le chemin existe |
 | ``cmd:`cargo test, puis cargo bench` `` ou `cmd:scripts/verify.sh` | le script existe s'il est un chemin du dépôt |
 | `url:https://…` | jamais suivie : aucun service externe |
