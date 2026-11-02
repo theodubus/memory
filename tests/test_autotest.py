@@ -79,6 +79,27 @@ class TestAtelierPartage(unittest.TestCase):
         self.assertTrue((origines[0] / "memory/private/canonical.md").is_file())
 
 
+class TestEtagesSousLaCiExigee(unittest.TestCase):
+    """D-0071 : les étages de l'atelier passent un environnement, où un `gh`
+    simulé dit la CI du socle exigée sur la branche par défaut."""
+
+    def test_un_fichier_protege_en_attente_se_commite_et_se_pousse_sous_la_ci_exigee(self):
+        from pathlib import Path
+
+        import socle
+
+        a = autotest.Atelier(Path(socle.__file__).resolve().parent.parent, False)
+        self.addCleanup(a.nettoyer)
+        a.preparer()
+        c = a.clone()
+        autotest.protege_en_attente(a, c)
+        # Sans la CI exigée, le commit attend la réponse de l'humain.
+        self.assertIn("protege.fichiers", autotest.etage_git(a, c))
+        env = autotest.ci_exigee(a, c)
+        self.assertEqual(autotest.etage_git(a, c, env=env), "")
+        self.assertEqual(autotest.etage_push(a, c, env=env), "")
+
+
 AUTOTEST_ENSUITE = bool(os.environ.get(autotest.ENSUITE))
 ETAPES_RAPIDES = bool(os.environ.get(verification.RAPIDE))
 
