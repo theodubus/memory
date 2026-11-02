@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0070-cadrer-la-revue-adversariale-d-un-lot-avant-sa-liv.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-02"
+canal = "conversation"
+citation = "Le socle est il prêt d'être suffisamment mâture (fiable et elements de backlog faits) pour être intégré à chess ? Ou reste encore pas mal de travail \n\n====\n\nvalider D0070 et D0071"
+empreinte = "sha256:852642386857a3a9aefacfe1bf12f862c53f29665d99a1f7c8b2305894795ea1"
