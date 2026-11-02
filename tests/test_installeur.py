@@ -149,8 +149,9 @@ class TestRelance(unittest.TestCase):
         with redirect_stdout(io.StringIO()) as flux:
             installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
         sortie = flux.getvalue()
-        self.assertIn("réglages du gabarit absents de .socle/guardrails.toml (2) : à déclarer s'ils servent au "
-                      "projet, une fois ce moteur commité", sortie)
+        self.assertIn("réglages du gabarit absents de .socle/guardrails.toml (2)", sortie)
+        # Déclarés avant que ce moteur soit commité, le pilote les a vus pris pour un assouplissement.
+        self.assertIn("une fois ce moteur commité", sortie)
         self.assertIn("`[tests] case_paths` — Les fichiers de cas", sortie)
         self.assertIn("`[specs] paths` — Les spécifications du projet", sortie)
         self.assertEqual(gf.read_text(), avant)
