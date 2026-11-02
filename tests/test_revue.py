@@ -80,6 +80,19 @@ class TestDossier(unittest.TestCase):
         self.assertIn("(diff tronqué :", texte)
         self.assertIn("`git diff origin/main` les donne", texte)
 
+    def test_la_commande_imprime_le_dossier(self):
+        import argparse
+        import contextlib
+        import io
+
+        from socle import cli
+
+        self.lot()
+        with contextlib.redirect_stdout(io.StringIO()) as flux:
+            code = cli.cmd_review(argparse.Namespace(root=str(self.racine), base="origin/main", max_bytes=60_000))
+        self.assertEqual(code, 0)
+        self.assertEqual(flux.getvalue(), revue.dossier(config.Projet.charger(self.racine), "origin/main"))
+
     def test_sans_changement_rien_a_relire(self):
         self.assertIn("(aucun changement hors de la mémoire : rien à relire)", revue.dossier(self.projet))
 
