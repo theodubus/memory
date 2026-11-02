@@ -219,6 +219,25 @@ class TestCouchesGelees(Projet):
         self.citer("memory/active.md", "\nEt `scripts/jamais.py`, qui n'est pas barré.\n")
         self.assertEqual(self.erreurs(), ["chemin cité inexistant : `scripts/jamais.py`"])
 
+    def test_une_demande_cite_un_fichier_protege_qu_elle_propose_d_ajouter(self):
+        """B-0127 : une mise à jour du socle pose un skill nouveau, protégé ;
+        la demande qui le cite avec son empreinte, encore absent, était
+        refusée, et la mise à jour ne se faisait pas valider."""
+        from socle import checks_memory
+
+        demande = "memory/requests/D-0001-un-skill.md"
+        (self.racine / demande).write_text(
+            "<!-- socle: couche=demandes zone=publique -->\n# D-0001 — Un skill\n\n> date : 2026-11-02\n\n"
+            "Valider `.claude/skills/socle-neuf/SKILL.md` et `sha256:0123456789abcdef`.\n")
+        self.assertEqual(self.erreurs(), [])
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="agent", base=self.base)
+        self.assertTrue(checks_memory.protege_cite(ctx, ".claude/skills/socle-neuf/SKILL.md"))
+        self.assertFalse(checks_memory.protege_cite(ctx, "scripts/jamais.py"))
+        # Hors d'une demande, ou pour un fichier qui n'est pas protégé, le
+        # chemin absent reste refusé.
+        self.citer("memory/active.md", "\nLe skill `.claude/skills/socle-neuf/SKILL.md`.\n")
+        self.assertEqual(self.erreurs(), ["chemin cité inexistant : `.claude/skills/socle-neuf/SKILL.md`"])
+
     def test_le_chantier_actif_suit_le_renommage(self):
         # Le chantier actif se réécrit : il cite le nom d'aujourd'hui.
         self.citer("memory/active.md", "\nL'outil vit dans `scripts/vieux.py`.\n")
