@@ -1,7 +1,7 @@
 <!-- socle: couche=decisions zone=publique -->
 # ADR-0042 — La revue adversariale d'un lot, par un relecteur sans contexte, avant sa livraison
 
-> statut : proposée · date : 2026-11-02 · source : D-0070@51d47c63, B-0124@fe238ccb · lu : decisions@c64b48fd
+> statut : proposée · date : 2026-11-02 · source : D-0070@51d47c63, B-0124@dfa9917f · lu : decisions@c64b48fd
 
 ## Contexte
 
@@ -11,7 +11,7 @@ logique, un cas qu'aucun test n'exerce, un code qui contredit une
 spécification passent tous les contrôles. BMAD faisait relire le travail
 par des relecteurs indépendants, dont un relecteur adversarial ; son
 retrait (D-0051@cea58730) a rangé ce principe dans la répartition entre
-agents, qui viendra tard. B-0124@fe238ccb l'en sort. Théo a validé les
+agents, qui viendra tard. B-0124@dfa9917f l'en sort. Théo a validé les
 hypothèses de ses questions de cadrage (D-0070@51d47c63) : elles
 s'appliquent ici, « supposées » jusqu'à la mesure.
 
