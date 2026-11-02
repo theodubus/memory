@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0106 — Approuver depuis une session cloud les fichiers protégés qu'une mise à jour du socle change : socle approve exige un terminal
 
-> statut : ouvert · origine : J-2026-10-31-G · lu : backlog@ed7e2136 · après : D-0071
+> statut : fait · origine : J-2026-10-31-G · lu : backlog@ed7e2136 · après : D-0071 · ref : J-2026-11-02-I
 
 Mettre à jour le socle d'un projet change ses fichiers protégés : le
 moteur sous `.socle/`, ses hooks, le réglage de Claude Code, les skills du

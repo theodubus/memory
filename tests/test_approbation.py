@@ -136,6 +136,52 @@ class TestApprobation(unittest.TestCase):
         git(self.racine, "commit", "-qam", "la mise à jour", "--no-verify")
         self.assertTrue(juger("ci", git(self.racine, "rev-parse", "HEAD").strip()).erreurs("protege.fichiers"))
 
+    def test_sous_la_ci_exigee_une_mise_a_jour_en_attente_se_commite(self):
+        """D-0071 : les fichiers protégés d'une mise à jour attendaient non
+        commités dans le conteneur de l'agent, où l'humain ne pouvait pas les
+        lire. Sous une demande en attente, poussée, ils se commitent et se
+        poussent si la branche par défaut exige la CI du socle ; la CI les
+        refuse jusqu'à la réponse."""
+        from socle import checks_ratchet as controles_cliquet, fingerprint as empreinte
+
+        origine = self.racine.parent / (self.racine.name + "-origine.git")
+        git(self.racine.parent, "init", "-q", "--bare", str(origine))
+        self.addCleanup(shutil.rmtree, origine, ignore_errors=True)
+        git(self.racine, "remote", "add", "origin", str(origine))
+        pol = self.racine / ".socle/policy.toml"
+        pol.write_text(pol.read_text().replace("[human]\n", '[human]\nrepo_url = "https://github.com/x/y"\n', 1))
+        git(self.racine, "add", ".socle/policy.toml")
+        git(self.racine, "commit", "-qm", "adresse du dépôt", "--no-verify")
+        base = git(self.racine, "rev-parse", "HEAD").strip()
+        cite = empreinte.courte(empreinte.fichier(self.racine / ".github/workflows/socle.yml"))
+        demande = "memory/requests/D-0001-mise-a-jour.md"
+        (self.racine / demande).write_text(
+            "<!-- socle: couche=demandes zone=publique -->\n# D-0001 — La mise à jour du socle\n\n"
+            f"> date : 2026-10-31\n\n## Décision demandée\n\nValider `.github/workflows/socle.yml` et `{cite}`.\n")
+        git(self.racine, "add", demande)
+        git(self.racine, "commit", "-qm", "la demande", "--no-verify")
+        git(self.racine, "push", "-q", "--no-verify", "-u", "origin", "main")
+
+        def juger(etage, exigee, tete=None) -> Rapport:
+            controles_cliquet._FUSION_GARDEE.clear()
+            with unittest.mock.patch("socle.state.ci_exigee", return_value=(exigee, "main")):
+                ctx = contexte.Contexte(config.Projet.charger(self.racine), etage=etage, base=base, tete=tete)
+                r = Rapport()
+                controles_cliquet.proteges(ctx, r)
+                self.assertEqual(controles_cliquet.fusion_gardee(ctx.projet), exigee is True)
+            return r
+
+        r = juger("git", True)
+        self.assertEqual([c.message for c in r.erreurs("protege.fichiers")], [])
+        self.assertIn("elle se commite et se pousse", r.texte())
+        self.assertIn("elle se commite et se pousse", juger("agent", True).texte())
+        # Une CI non exigée, ou une protection inconnue : le commit attend.
+        self.assertTrue(juger("git", False).erreurs("protege.fichiers"))
+        self.assertTrue(juger("git", None).erreurs("protege.fichiers"))
+        # La CI le refuse toujours.
+        git(self.racine, "commit", "-qam", "la mise à jour", "--no-verify")
+        self.assertTrue(juger("ci", True, git(self.racine, "rev-parse", "HEAD").strip()).erreurs("protege.fichiers"))
+
     def test_l_etat_rappelle_l_approbation_jusqu_au_commit_suivant_de_l_agent(self):
         """B-0034, P7 : Théo a approuvé D-0012 dans son terminal, et ne
         retrouvait pas ce numéro dans la conversation : l'état le liste à
