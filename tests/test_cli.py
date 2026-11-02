@@ -147,6 +147,11 @@ class TestCommandes(unittest.TestCase):
         self.assertIn("Hypothèse de l'agent", texte)
         d = demandes.charger(self.racine, None, str(chemin.relative_to(self.racine)), texte)
         self.assertEqual(d.reponses_possibles(), ["valider", "reponses", "refuser", "contexte-insuffisant"])
+        # Ce que le gabarit écrit seul passe le contrat (B-0125) : son
+        # « Options » dit l'effort, le risque et la réversibilité de chaque
+        # option, ses « Conséquences » ce qui se passe sans réponse.
+        fautes = demandes.linter(d, config.Projet.charger(self.racine))
+        self.assertFalse([f for f in fautes if "« Options »" in f or "« Conséquences »" in f], fautes)
         # Réservé aux demandes.
         with contextlib.redirect_stderr(io.StringIO()):
             self.assertEqual(cli.cmd_new(argparse.Namespace(root=str(self.racine), type="backlog", questions=True,
