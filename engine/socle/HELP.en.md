@@ -186,7 +186,9 @@ fingerprint, and the human approves it in the conversation. The engine's
 public repository is cloned without being added to the session. An update
 keeps the project's guardrails as they are, and names the settings that
 have appeared in the template since: the agent declares there the ones the
-project needs, such as its specifications and case files (section 2).
+project needs, such as its specifications and case files (section 2),
+once the new engine is committed. Before that, CI judges with the old
+engine, which does not know them and counts them as loosening.
 
 **Setting up the private memory** (companion mode). Create an empty private
 repository on GitHub, then

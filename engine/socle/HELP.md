@@ -186,7 +186,9 @@ empreinte, et l'humain la valide dans la conversation. Le dépôt public du
 moteur se clone sans être ajouté à la session. Une mise à jour garde les
 garde-fous du projet tels quels, et nomme les réglages apparus depuis dans
 le gabarit : l'agent y déclare ceux qui servent au projet, comme ses
-spécifications et ses fichiers de cas (section 2).
+spécifications et ses fichiers de cas (section 2), une fois le moteur
+nouveau commité. Avant, la CI juge avec l'ancien moteur, qui ne les connaît
+pas et les compte pour un assouplissement.
 
 **Mettre en place la mémoire privée** (mode compagnon). Créer un dépôt
 privé vide sur GitHub, puis

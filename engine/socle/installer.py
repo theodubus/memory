@@ -438,12 +438,16 @@ def _poser_configuration(cible: Path, texte_adaptateur: str, ancien: dict, prive
             if nom == ch.garde_fous and plafonds:
                 journal.append(trad("!! plafonds de {source} non repris : les garde-fous existent déjà",
                                     source=source))
+            # Le pilote les avait déclarés avant que son moteur nouveau soit commité :
+            # l'ancien, qui jugeait la CI, les a pris pour un assouplissement.
             if nom == ch.garde_fous:
                 nouveaux = reglages_nouveaux(p.read_text(encoding="utf-8"), gabarit("guardrails.toml", lg))
                 if nouveaux:
                     journal.append(trad(
-                        "!! réglages du gabarit absents de {nom} ({n}) : à déclarer s'ils servent au projet ; "
-                        "ce qui durcit est libre, un assouplissement attend une demande validée :\n      {liste}",
+                        "!! réglages du gabarit absents de {nom} ({n}) : à déclarer s'ils servent au projet, une "
+                        "fois ce moteur commité (la CI juge avec le moteur commité, et un réglage qu'il ne connaît "
+                        "pas compte pour un assouplissement) ; ce qui durcit est libre, un assouplissement attend "
+                        "une demande validée :\n      {liste}",
                         nom=nom, n=len(nouveaux),
                         liste="\n      ".join(f"`{cle}` — {quoi}" if quoi else f"`{cle}`"
                                               for cle, quoi in nouveaux)))

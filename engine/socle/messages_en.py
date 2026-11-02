@@ -371,10 +371,12 @@ MESSAGES: dict[str, str] = {
         "— to review:\n      {ecart}",
     "{nom} existe : conservé (comparer au gabarit à la main si besoin)":
         "{nom} exists: kept (compare it with the template by hand if needed)",
-    "!! réglages du gabarit absents de {nom} ({n}) : à déclarer s'ils servent au projet ; ce qui durcit est libre, "
-    "un assouplissement attend une demande validée :\n      {liste}":
-        "!! template settings missing from {nom} ({n}): declare them if the project needs them; tightening is free, "
-        "loosening waits for a validated request:\n      {liste}",
+    "!! réglages du gabarit absents de {nom} ({n}) : à déclarer s'ils servent au projet, une fois ce moteur commité "
+    "(la CI juge avec le moteur commité, et un réglage qu'il ne connaît pas compte pour un assouplissement) ; ce qui "
+    "durcit est libre, un assouplissement attend une demande validée :\n      {liste}":
+        "!! template settings missing from {nom} ({n}): declare them if the project needs them, once this engine is "
+        "committed (CI judges with the committed engine, and a setting it does not know counts as loosening); "
+        "tightening is free, loosening waits for a validated request:\n      {liste}",
     "{nom} posé":
         "{nom} installed",
     "mémoire initiale posée, journal ouvert par {ident}":
