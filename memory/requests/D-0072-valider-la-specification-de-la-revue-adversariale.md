@@ -38,7 +38,7 @@ spécification, résumée ici :
 
 ## Éléments cités
 
-- ADR-0042@7da2d910 — la spécification de la revue adversariale, proposée,
+- ADR-0042@f8c7c93a — la spécification de la revue adversariale, proposée,
   que cette demande soumet.
 - D-0070@51d47c63 — vos réponses aux questions de cadrage de la revue :
   `valider`, les hypothèses de l'agent s'appliquent, « supposées ».
