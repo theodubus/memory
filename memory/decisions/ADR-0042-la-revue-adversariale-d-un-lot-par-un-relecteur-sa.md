@@ -1,7 +1,7 @@
 <!-- socle: couche=decisions zone=publique -->
 # ADR-0042 — La revue adversariale d'un lot, par un relecteur sans contexte, avant sa livraison
 
-> statut : proposée · date : 2026-11-02 · source : D-0070@51d47c63, B-0124@fe238ccb · lu : decisions@c64b48fd
+> statut : acceptée · date : 2026-11-02 · source : D-0070@51d47c63, B-0124@fe238ccb · lu : decisions@c64b48fd
 
 ## Contexte
 
