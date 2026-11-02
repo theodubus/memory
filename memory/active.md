@@ -7,10 +7,10 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 Sur `main` : la distribution publique `theodubus/socle`, sous MIT
 (ADR-0040), et les retours du pilote livrés par les PR #14 à #20 (journal,
-depuis J-2026-10-31-H). Dernière fusionnée, la PR #20 : les fichiers de cas
-et les spécifications (B-0120), les questions de cadrage (B-0122), la
-documentation relue (B-0121), que Théo a validée (D-0069,
-J-2026-11-02-B). BMAD Method est retiré du socle (ADR-0036). Les
+depuis J-2026-10-31-H). PR #20 : les fichiers de cas et les spécifications
+(B-0120), les questions de cadrage (B-0122), la documentation relue
+(B-0121, D-0069). Dernière fusionnée, la PR #21 : B-0123 et B-0116
+(J-2026-11-02-F). BMAD Method est retiré du socle (ADR-0036). Les
 projets d'essai sont dans le dossier de travail de la session, jetables.
 
 D-0026 est répondue `rien` : B-0048 et B-0018 restent ouverts, « on se le

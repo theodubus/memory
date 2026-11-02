@@ -166,7 +166,10 @@ pousse sa branche et ouvre une pull request, que l'humain fusionne ; le
 travail continue ensuite dans une session neuve, partie de la branche par
 défaut, qui a alors le socle. Pour une mise à jour, sans terminal pour
 `socle approve`, l'agent pose une demande qui cite chaque fichier protégé
-changé avec son empreinte, que l'humain valide dans la conversation.
+changé avec son empreinte, que l'humain valide dans la conversation. Si la
+branche par défaut exige la CI du socle, ces fichiers se commitent sous la
+demande, et l'humain les lit dans la pull request, rouge jusqu'à sa
+réponse.
 
 Une session qui ajoute un second dépôt passe à deux dépôts : reprise, elle
 démarre hors de la racine du projet, sans les hooks de l'agent. Elle ne se

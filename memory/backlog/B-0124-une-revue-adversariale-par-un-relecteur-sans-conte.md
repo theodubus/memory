@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0124 — Une revue adversariale, par un relecteur sans contexte, avant de livrer un lot
 
-> statut : ouvert · origine : J-2026-11-01-O · lu : backlog@b9991d59
+> statut : ouvert · origine : J-2026-11-01-O · lu : backlog@b9991d59 · après : D-0070, D-0072
 
 BMAD faisait relire le travail par des relecteurs indépendants, dont une
 « lentille » adversariale qui cherche à le prendre en défaut. Retiré
