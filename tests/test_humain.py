@@ -199,3 +199,34 @@ class TestDernierMessage(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestSpecificationsNonSoumises(unittest.TestCase):
+    """D-0066 : le pilote avait écrit le code de deux spécifications que
+    l'humain n'avait jamais vues. Une spécification déclarée qu'aucune
+    demande ne soumet, ni en attente ni approuvée, revient à l'humain."""
+
+    def test_une_specification_qu_aucune_demande_ne_soumet_se_signale(self):
+        import types
+
+        dossier = Path(tempfile.mkdtemp(prefix="socle-specs-"))
+        self.addCleanup(shutil.rmtree, dossier, ignore_errors=True)
+        git(dossier, "init", "-q", "-b", "main")
+        (dossier / "docs/specs").mkdir(parents=True)
+        for nom in ("approuvee", "en-attente", "refusee", "jamais"):
+            (dossier / f"docs/specs/{nom}.md").write_text("# Spécification\n")
+        git(dossier, "add", "-A")
+
+        def projet(motifs):
+            return types.SimpleNamespace(racine=dossier, gf=lambda *cles, defaut=None:
+                                         motifs if cles == ("specs", "paths") else defaut)
+
+        demandes = [
+            types.SimpleNamespace(texte="Approuver `docs/specs/approuvee.md`.", reponse={"reponse": "valider"}),
+            types.SimpleNamespace(texte="Approuver `docs/specs/en-attente.md`.", reponse=None),
+            types.SimpleNamespace(texte="Approuver `docs/specs/refusee.md`.", reponse={"reponse": "reject"}),
+        ]
+        self.assertEqual(sorted(humain.specifications_non_soumises(projet(["docs/specs/*.md"]), demandes)),
+                         ["docs/specs/jamais.md", "docs/specs/refusee.md"])
+        # Sans spécification déclarée, rien ne se signale.
+        self.assertEqual(humain.specifications_non_soumises(projet(None), demandes), [])

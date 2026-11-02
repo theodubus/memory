@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0065-le-correctif-qui-a-remplace-l-etiquette-le-control.md, dont l'empreinte suit.
+reponse = "garder"
+texte = ""
+par = "Théo"
+date = "2026-11-01"
+canal = "conversation"
+citation = "Ok garder le correctif"
+empreinte = "sha256:725c25b4171f164979d507f7535117c6659960d36a684a4d94df6d15aa13a0e2"

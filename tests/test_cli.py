@@ -132,6 +132,26 @@ class TestCommandes(unittest.TestCase):
             cli.cmd_new(argparse.Namespace(root=str(self.racine), type="backlog", title="Un sujet coupé"))
         self.assertTrue((self.racine / "memory/backlog/B-0002-un-sujet-coupe.md").is_file())
 
+    def test_new_request_questions_pose_des_questions_de_cadrage(self):
+        """D-0067 : en cours de projet, des questions ouvertes sur un sujet,
+        auxquelles l'humain répond librement, sur le modèle des questions
+        de départ."""
+        from socle import requests as demandes
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(cli.cmd_new(argparse.Namespace(root=str(self.racine), type="request", questions=True,
+                                                            title="Cadrer le mode multi-agent")), 0)
+        chemin = next((self.racine / "memory/requests").glob("D-*-cadrer-le-mode-multi-agent.md"))
+        texte = chemin.read_text()
+        self.assertIn("## Questions", texte)
+        self.assertIn("Hypothèse de l'agent", texte)
+        d = demandes.charger(self.racine, None, str(chemin.relative_to(self.racine)), texte)
+        self.assertEqual(d.reponses_possibles(), ["valider", "reponses", "refuser", "contexte-insuffisant"])
+        # Réservé aux demandes.
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(cli.cmd_new(argparse.Namespace(root=str(self.racine), type="backlog", questions=True,
+                                                            title="Un sujet")), 2)
+
     def test_prochaines_etapes_du_chantier_actif(self):
         self.assertEqual(humain.prochaines_etapes(self.projet), "1. Ajouter triple (B-0001).")
 
