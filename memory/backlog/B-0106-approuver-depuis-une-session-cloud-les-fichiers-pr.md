@@ -18,3 +18,9 @@ de lignes. Piste : `socle approve --relayed --by <nom> --quote-file
 l'humain ayant donné son accord dans la conversation ; c'est relâcher un
 refus du hook, à décider par Théo. Et l'étape que l'installeur affiche
 devrait dire le chemin cloud.
+
+Le 2 novembre, la première mise à jour du pilote (J-2026-11-02-E) : la
+demande a cité vingt fichiers protégés et Théo l'a validée. Mais tant
+qu'elle attendait, la session cloud rappelait à chaque tour les changements
+non commités, et l'agent du pilote répondait à chaque fois la même chose.
+Le chemin actuel marche ; c'est son temps d'attente qui coûte.

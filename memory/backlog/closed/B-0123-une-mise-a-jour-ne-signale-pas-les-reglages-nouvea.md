@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0123 — Une mise à jour ne signale pas les réglages nouveaux des garde-fous à un projet existant
 
-> statut : ouvert · origine : J-2026-11-01-N · lu : backlog@74166902
+> statut : fait · origine : J-2026-11-01-N · lu : backlog@74166902 · ref : J-2026-11-02-C
 
 Relevé en préparant la relecture de la documentation (B-0121). À une
 mise à jour, l'installeur garde le fichier des garde-fous du projet tel
