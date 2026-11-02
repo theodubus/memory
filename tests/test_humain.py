@@ -82,6 +82,49 @@ class TestBranchesASupprimer(unittest.TestCase):
         quoi = [e.quoi for e in humain.a_faire(self.projet)]
         self.assertTrue(any(q.startswith("examiner la branche distante `ancienne`") for q in quoi), quoi)
 
+    def test_une_branche_qui_seule_garde_un_commit_cite_dit_de_l_etiqueter(self):
+        """B-0116 : supprimer une telle branche avait fait échouer
+        `memoire.references` en CI, dont le clone ne récupère que les
+        branches et les étiquettes."""
+        from socle import utils as outils
+
+        source = self.dossier / "source"
+        git(source, "switch", "-q", "-c", "ancienne", "main")
+        (source / "g").write_text("vieux")
+        git(source, "add", "g")
+        vieux = "2026-01-01T12:00:00"
+        subprocess.run(["git", "commit", "-qm", "vieux"], cwd=source, check=True, capture_output=True,
+                       env={**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t",
+                            "GIT_COMMITTER_EMAIL": "t@t", "GIT_CONFIG_NOSYSTEM": "1", "HOME": str(source),
+                            "GIT_COMMITTER_DATE": vieux, "GIT_AUTHOR_DATE": vieux})
+        sha = git(source, "rev-parse", "--short=7", "HEAD").strip()
+        git(source, "switch", "-q", "main")
+        git(self.clone, "fetch", "-q", "origin")
+        deux = git(self.clone, "rev-parse", "--short=7", "origin/main").strip()
+        journal = self.clone / "memory/journal/2026-01.md"
+        journal.parent.mkdir(parents=True)
+        journal.write_text("<!-- socle: couche=journal zone=publique -->\n# Journal\n\n"
+                           f"## J-2026-01-01-A — Essai\n\n> ref : commit:{sha}, commit:{deux}\n\nTexte.\n")
+        self.assertEqual(humain.commits_cites(self.projet), {sha, deux})
+        outils._PULL_REQUESTS_RECUPEREES.clear()
+        self.assertEqual(humain.commits_cites_seuls(self.projet, "ancienne"), [sha])
+        quoi = [e.quoi for e in humain.a_faire(self.projet) if "`ancienne`" in e.quoi]
+        self.assertEqual(len(quoi), 1, quoi)
+        self.assertIn(f"dont {sha}, que la mémoire cite et qu'elle seule garde", quoi[0])
+        self.assertIn(outils.etiqueter([sha]), quoi[0])
+        self.assertEqual(outils.etiqueter(["a1b2c3d", "e4f5a6b"]),
+                         "git tag cite/a1b2c3d a1b2c3d && git tag cite/e4f5a6b e4f5a6b"
+                         " && git push origin cite/a1b2c3d cite/e4f5a6b")
+        # Une pull request le garde : la CI le retrouve (B-0117), rien à étiqueter.
+        git(source, "update-ref", "refs/pull/3/head", "ancienne")
+        outils._PULL_REQUESTS_RECUPEREES.clear()
+        self.assertEqual(humain.commits_cites_seuls(self.projet, "ancienne"), [])
+        # Une étiquette aussi.
+        git(self.clone, "update-ref", "-d", "refs/socle/pull/3")
+        git(self.clone, "tag", f"cite/{sha}", sha)
+        outils._PULL_REQUESTS_RECUPEREES.add(str(self.clone.resolve()))
+        self.assertEqual(humain.commits_cites_seuls(self.projet, "ancienne"), [])
+
     def test_une_action_humaine_vient_avec_le_lien_de_son_sujet(self):
         # ADR-0025 : le mode d'emploi d'une action humaine (commandes,
         # résultats attendus) vit dans son sujet, que l'état donne par son lien.

@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0116 — Une branche à supprimer se signale sans voir que la mémoire cite un commit qu'elle seule contient
 
-> statut : ouvert · origine : J-2026-11-01-C · lu : backlog@0121264b
+> statut : fait · origine : J-2026-11-01-C · lu : backlog@0121264b · ref : J-2026-11-02-D
 
 L'état signale une branche distante non fusionnée et inactive, à livrer
 ou à supprimer (B-0112). Il ne regarde pas si la mémoire cite, sous la

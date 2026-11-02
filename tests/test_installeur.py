@@ -136,6 +136,29 @@ class TestRelance(unittest.TestCase):
         gf = tomllib.loads((self.racine / ".socle/guardrails.toml").read_text())
         self.assertEqual(sorted(gf["adoption"]["warn_only"]), ["docs.copie", "memoire.references"])
 
+    def test_une_mise_a_jour_nomme_les_reglages_nouveaux_des_garde_fous(self):
+        """B-0123 : les garde-fous du projet se gardent, et les réglages
+        apparus dans le gabarit n'y arrivaient pas, sans un mot."""
+        self.racine = depot({"app.py": "print('ok')\n"})
+        installer(self.racine, adoption=False)
+        gf = self.racine / ".socle/guardrails.toml"
+        texte = gf.read_text()
+        avant = texte.replace('# case_paths = ["docs/specs/*.cas.json"]\n', "")
+        avant = avant.replace('[specs]\n', "").replace('# paths = ["docs/specs/*.md"]\n', "")
+        gf.write_text(avant)
+        with redirect_stdout(io.StringIO()) as flux:
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+        sortie = flux.getvalue()
+        self.assertIn("réglages du gabarit absents de .socle/guardrails.toml (2)", sortie)
+        self.assertIn("`[tests] case_paths` — Les fichiers de cas", sortie)
+        self.assertIn("`[specs] paths` — Les spécifications du projet", sortie)
+        self.assertEqual(gf.read_text(), avant)
+        # Écrits, même en commentaire, ils ne se signalent plus.
+        gf.write_text(texte)
+        with redirect_stdout(io.StringIO()) as flux:
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+        self.assertNotIn("réglages du gabarit absents", flux.getvalue())
+
     def test_un_sous_dossier_d_un_depot_est_refuse(self):
         """Les hooks git et le workflow de CI ne vivent qu'à la racine du
         dépôt : posés plus bas, ils ne tiraient pas, sans un mot."""
@@ -174,6 +197,24 @@ class TestRelance(unittest.TestCase):
         verrou = config.Projet.charger(self.racine).lock
         self.assertEqual(empreinte.calculer(self.racine, ".socle/engine")[0], verrou["fingerprint"])
         self.assertFalse(any(p.name == ".DS_Store" for p in empreinte.fichiers_moteur(self.racine, ".socle/engine")))
+
+
+class TestReglagesNouveaux(unittest.TestCase):
+    """B-0123 : les réglages du gabarit qu'un fichier de garde-fous n'écrit
+    pas, même en commentaire."""
+
+    def test_reglages_nouveaux_ecrits_ou_commentes(self):
+        modele = ("[tests]\n# Les fichiers de cas.\n# case_paths = []\nspec_paths = []\n\n"
+                  "# Correspondance code et doc.\n# [[docmap]]\n# code = []\n# docs = []\n\n"
+                  '[budgets]\n"AGENTS.md" = { max_bytes = 1 }\n')
+        self.assertEqual(installeur.reglages_nouveaux("[tests]\nspec_paths = []\n", modele), [
+            ("[tests] case_paths", "Les fichiers de cas."),
+            ("[docmap] code", "Correspondance code et doc."),
+            ("[docmap] docs", "Correspondance code et doc."),
+        ])
+        projet = '[tests]\ncase_paths = ["a.json"]\nspec_paths = []\n[[docmap]]\ncode = ["src/**"]\ndocs = ["d.md"]\n'
+        self.assertEqual(installeur.reglages_nouveaux(projet, modele), [])
+        self.assertEqual(installeur.reglages_nouveaux(modele, modele), [])
 
 
 class TestDeuxEtats(unittest.TestCase):
