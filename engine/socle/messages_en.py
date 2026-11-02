@@ -1540,6 +1540,39 @@ MESSAGES: dict[str, str] = {
         "agreement given by the human in the conversation",
     "le permalien d'un fichier ou d'une entrée, à donner à l'humain":
         "the permalink of a file or an entry, to give to the human",
+    "le dossier de la revue adversariale d'un lot, pour un relecteur sans contexte":
+        "the brief of a batch's adversarial review, for a reviewer without context",
+    "la base du lot (par défaut : la branche distante, sinon la branche par défaut)":
+        "the base of the batch (by default: the remote branch, otherwise the default branch)",
+    "le plafond du diff montré":
+        "the cap of the diff shown",
+    "# Revue adversariale d'un lot":
+        "# Adversarial review of a batch",
+    "Tu relis le lot de travail d'un autre agent, sans son contexte : tu n'as que ce dossier, et tu ne modifies rien. "
+    "Ton rôle est de le prendre en défaut. Cherche ce qui casse (un cas limite, une erreur de logique, une "
+    "régression), ce qu'aucun test ne prouve (une branche du code, un message, un cas que rien n'exerce), et ce qui "
+    "contredit un sujet, un critère « Fait quand » ou une décision cités plus bas. Ne juge ni le style, ni ce que les "
+    "contrôles automatiques jugent déjà : la forme de la mémoire, les liens, la présence des tests. Rends des "
+    "constats numérotés, chacun avec son fichier et sa ligne, ce qui casse et comment le vérifier ; ou « aucun "
+    "constat ».":
+        "You review another agent's batch of work, without its context: you only have this brief, and you change "
+        "nothing. Your role is to find fault with it. Look for what breaks (an edge case, a logic error, a "
+        "regression), what no test proves (a code branch, a message, a case nothing exercises), and what contradicts "
+        "a topic, a “Done when” criterion or a decision cited below. Judge neither style nor what the automatic "
+        "checks already judge: the form of the memory, the links, the presence of tests. Return numbered findings, "
+        "each with its file and line, what breaks and how to verify it; or “no finding”.",
+    "(aucune base connue : ni branche distante, ni branche par défaut ; rien à relire)":
+        "(no known base: neither a remote branch nor a default branch; nothing to review)",
+    "## Le diff du lot ({n} fichier(s), depuis {base})":
+        "## The batch's diff ({n} file(s), since {base})",
+    "(aucun changement hors de la mémoire : rien à relire)":
+        "(no change outside the memory: nothing to review)",
+    "(diff tronqué : {n} caractère(s) de plus non montrés ; `git diff {base}` les donne)":
+        "(diff truncated: {n} more character(s) not shown; `git diff {base}` gives them)",
+    "## Les sujets que le lot ferme":
+        "## The topics the batch closes",
+    "## Les décisions et les demandes qu'ils citent":
+        "## The decisions and requests they cite",
     "répondre à une demande ; l'agent y relaie (--relayed) ta réponse donnée dans la conversation":
         "answer a request; the agent relays (--relayed) your answer given in the conversation",
     "réponse donnée par l'humain dans la conversation":
