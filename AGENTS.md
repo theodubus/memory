@@ -22,7 +22,7 @@ la mémoire de ce dépôt, qui est l'historique de fabrication de l'outil.
 - `engine/socle/` — le moteur : lecture de la mémoire, contrôles, hooks,
   installeur, auto-test. `engine/socle/FORMAT.md` fait foi pour le format de
   la mémoire.
-- `engine/socle/adapters/` — les adaptateurs maintenus, un par langage.
+- `engine/socle/adapters/` — les adaptateurs maintenus.
 - `engine/socle/templates/` — les gabarits que l'installeur pose dans un projet.
 - `tests/` — les tests du moteur (`unittest`), dont l'auto-test complet par
   injection de défauts.
