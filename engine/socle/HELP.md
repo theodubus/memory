@@ -99,6 +99,12 @@ sujets prêts sans attendre de message. Avant de s'y lancer, il annonce le
 lot qu'il va traiter : l'arrêter ou le réorienter se fait d'un message.
 Il s'arrête à la fin du lot, ou dès qu'une décision revient à l'humain.
 
+**Faire relire.** Avant de livrer un lot qui change du code, une
+spécification ou un test, l'agent le fait relire par un relecteur sans
+contexte, qui cherche à le prendre en défaut : ce qui casse, ce qu'aucun
+test ne prouve, ce qui contredit une décision. L'agent corrige chaque
+constat fondé et écarte les autres ; son récap dit combien.
+
 **Livrer.** Par défaut, l'agent fait tout sur une branche de
 développement et garde une seule pull request ouverte, à laquelle chaque
 lot fini s'ajoute : la fusionner quand on veut, une fois sa CI verte. Une

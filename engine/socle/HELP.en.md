@@ -96,6 +96,12 @@ the batch it will work on: stopping or redirecting it takes one message.
 It stops at the end of the batch, or as soon as a decision is up to the
 human.
 
+**Having it reviewed.** Before delivering a batch that changes code, a
+specification or a test, the agent has it reviewed by a reviewer without
+context, who tries to find fault with it: what breaks, what no test
+proves, what contradicts a decision. The agent fixes each founded finding
+and dismisses the others; its recap says how many.
+
 **Delivering.** By default, the agent does everything on one development
 branch and keeps only one pull request open, to which each finished batch
 is added: merge it whenever you want, once its CI is green. One pull

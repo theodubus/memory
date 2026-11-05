@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0124 — Une revue adversariale, par un relecteur sans contexte, avant de livrer un lot
 
-> statut : ouvert · origine : J-2026-11-01-O · lu : backlog@b9991d59 · après : D-0070, D-0072
+> statut : fait · origine : J-2026-11-01-O · lu : backlog@b9991d59 · après : D-0070, D-0072 · ref : J-2026-11-05-C
 
 BMAD faisait relire le travail par des relecteurs indépendants, dont une
 « lentille » adversariale qui cherche à le prendre en défaut. Retiré
@@ -21,5 +21,9 @@ banc.
 
 ## Fait quand
 
-- [ ] la procédure de revue est écrite, côté agent, et les instructions disent quand s'en servir
-- [ ] le banc mesure ce qu'elle trouve sur des défauts connus
+- [x] la procédure de revue est écrite, côté agent, et les instructions disent quand s'en servir
+- [x] le banc mesure ce qu'elle trouve sur des défauts connus
+
+Le 5 novembre : la commande `socle review`, le skill `socle-review`
+(D-0074) et la règle par défaut des instructions (D-0075) ; le banc trouve
+les quatre défauts injectés à chaque passage (J-2026-11-05-B).
