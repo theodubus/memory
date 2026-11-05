@@ -1,5 +1,5 @@
 """Le dossier de la revue adversariale d'un lot (ADR-0042) : ce que reçoit
-le relecteur sans contexte, et rien d'autre."""
+le relecteur, qui n'a pas la conversation de l'agent mais peut lire le dépôt."""
 
 import os
 import shutil
@@ -57,6 +57,8 @@ class TestDossier(unittest.TestCase):
         self.lot()
         texte = revue.dossier(self.projet)
         self.assertIn("Ton rôle est de le prendre en défaut", texte)
+        # Il peut lire le dépôt pour vérifier un constat (D-0076, ADR-0044).
+        self.assertIn("tu peux lire le dépôt pour vérifier un constat", texte)
         self.assertIn("## Le diff du lot (1 fichier(s), depuis origin/main)", texte)
         self.assertIn("+    return x * 2", texte)
         # La mémoire ne passe pas par le diff, mais par ses sujets.

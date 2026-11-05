@@ -61,11 +61,12 @@ def decisions_citees(projet: config.Projet, sujets: list) -> list:
 
 
 def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFOND_DIFF) -> str:
-    """Tout ce que reçoit le relecteur : la consigne, le diff du lot, les
-    sujets qu'il ferme et les décisions qu'ils citent."""
+    """Ce que reçoit le relecteur, en plus du dépôt qu'il peut lire : la
+    consigne, le diff du lot, les sujets qu'il ferme et les décisions
+    qu'ils citent."""
     base = base or base_du_lot(projet.racine)
     lignes = [trad("# Revue adversariale d'un lot"), "", trad(
-        "Tu relis le lot de travail d'un autre agent, sans son contexte : tu n'as que ce dossier, et tu ne "
+        "Tu relis le lot de travail d'un autre agent, sans sa conversation ni son raisonnement : tu as ce dossier, et tu peux lire le dépôt pour vérifier un constat, mais tu ne "
         "modifies rien. Ton rôle est de le prendre en défaut. Cherche ce qui casse (un cas limite, une erreur "
         "de logique, une régression), ce qu'aucun test ne prouve (une branche du code, un message, un cas que "
         "rien n'exerce), et ce qui contredit un sujet, un critère « Fait quand » ou une décision cités plus "

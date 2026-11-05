@@ -387,7 +387,7 @@ def cmd_url(args) -> int:
 
 def cmd_review(args) -> int:
     """Le dossier de la revue adversariale d'un lot (ADR-0042) : ce que
-    reçoit le relecteur sans contexte, et rien d'autre. Le moteur ne le
+    reçoit le relecteur, qui n'a pas la conversation. Le moteur ne le
     lance pas : le skill `socle-review` dit comment."""
     from socle import review as revue
 

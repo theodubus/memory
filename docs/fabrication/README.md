@@ -2,7 +2,7 @@
 
 Ces documents s'adressent à qui fabrique le socle, pas à qui l'installe :
 aucun n'est copié dans un projet. Pour comprendre l'outil et s'en servir,
-[le README](../../README.md) et
+[sa page d'accueil](../../engine/README.md) et
 [le guide d'utilisation](../../engine/socle/HELP.md) suffisent.
 
 ## D'où vient le socle

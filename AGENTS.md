@@ -26,8 +26,9 @@ la mémoire de ce dépôt, qui est l'historique de fabrication de l'outil.
 - `engine/socle/templates/` — les gabarits que l'installeur pose dans un projet.
 - `tests/` — les tests du moteur (`unittest`), dont l'auto-test complet par
   injection de défauts.
-- `README.md`, `engine/socle/HELP.md` (le guide d'un projet équipé),
-  `docs/fabrication/` (l'atelier : architecture, bancs, relevés, `chess`).
+- `engine/README.md` (la page publique), `README.md`, `engine/socle/HELP.md`
+  (le guide d'un projet équipé), `docs/fabrication/` (l'atelier :
+  architecture, bancs, relevés, `chess`).
 - `bench/` — les bancs, sur un agent réel (`docs/fabrication/banc.md`) et
   sur les adaptateurs (`bench/adapters.py`).
 - `memory/` — la mémoire de ce projet, au format du socle.

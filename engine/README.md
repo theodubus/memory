@@ -76,7 +76,10 @@ validation. Les fichiers qui encadrent l'agent (politique, hooks, CI) ne
 changent qu'avec l'accord de l'humain.
 
 **Le rythme.** Tant que rien n'attend l'humain, l'agent enchaîne les sujets
-prêts, par lots qu'il annonce avant de s'y mettre. Il livre sur une seule
+prêts, par lots qu'il annonce avant de s'y mettre. Avant de livrer un lot,
+il le fait relire par un autre agent, qui n'a pas sa conversation et
+cherche ce que les contrôles ne voient pas : un code qui passe ses tests
+mais contredit la décision qu'il applique. Il livre sur une seule
 pull request ouverte à la fois, que l'humain fusionne quand il veut. Chaque
 intervention se termine par ce qui revient à l'humain, chaque point
 compréhensible seul, et par la suite prévue.
@@ -105,10 +108,7 @@ sequenceDiagram
     H-->>A: « valider », consigné mot pour mot
 ```
 
-
 ## Ce que l'installation ajoute à un projet
-
-L'installation ajoute à un projet :
 
 ```text
 .socle/               le moteur, sa politique, ses seuils, son adaptateur, ses hooks git
@@ -116,7 +116,7 @@ memory/               la mémoire du projet, vide au départ
 AGENTS.md             les instructions de l'agent (CLAUDE.md l'importe)
 .claude/settings.json les hooks de Claude Code
 .claude/skills/       les procédures rares du socle, que l'agent charge à la demande
-.github/              la CI, le balayage de mutation hebdomadaire, CODEOWNERS
+.github/              la CI, CODEOWNERS, et le balayage de mutation hebdomadaire si l'adaptateur le permet
 ```
 
 Le moteur est en Python 3.11+, sans dépendance. Il ne connaît ni le langage
@@ -158,23 +158,14 @@ reste ainsi sur le seul dépôt du projet. L'installation prend `--human
 <nom>`, l'identité git du conteneur étant celle de l'agent. La session qui
 installe pousse sa branche et ouvre une pull request ; une fois celle-ci
 fusionnée, le travail continue dans une session neuve, qui reçoit l'état du
-projet et les hooks de l'agent dès son démarrage. Pour une mise à jour,
-sans terminal pour `socle approve`, l'agent pose une demande qui cite
-chaque fichier protégé changé avec son empreinte, que l'humain valide dans
-la conversation. Si la branche par défaut exige la CI du socle, ces
-fichiers se commitent sous la demande, et l'humain les lit dans la pull
-request, rouge jusqu'à sa réponse.
-
-Une session qui ajoute un second dépôt passe à deux dépôts : reprise, elle
-démarre hors de la racine du projet, sans les hooks de l'agent. Elle ne se
-reprend donc pas : elle fait son travail d'une traite, sans rien attendre,
-et la suite se fait dans une session neuve sur le seul dépôt du projet.
+projet et les hooks de l'agent dès son démarrage. La mise à jour sans
+terminal, et la session qui ajoute un second dépôt, sont dans le guide.
 
 ## État
 
 Version <!-- valeur:version -->0.1.0<!-- /valeur -->, en développement.
 L'étage de l'agent n'existe que pour Claude Code. Ce dépôt ne contient que
-le produit, publié depuis son atelier à chaque version.
+le produit, publié depuis son atelier à chaque changement du moteur.
 
 ## Documentation
 

@@ -1548,14 +1548,14 @@ MESSAGES: dict[str, str] = {
         "the cap of the diff shown",
     "# Revue adversariale d'un lot":
         "# Adversarial review of a batch",
-    "Tu relis le lot de travail d'un autre agent, sans son contexte : tu n'as que ce dossier, et tu ne modifies rien. "
+    "Tu relis le lot de travail d'un autre agent, sans sa conversation ni son raisonnement : tu as ce dossier, et tu peux lire le dépôt pour vérifier un constat, mais tu ne modifies rien. "
     "Ton rôle est de le prendre en défaut. Cherche ce qui casse (un cas limite, une erreur de logique, une "
     "régression), ce qu'aucun test ne prouve (une branche du code, un message, un cas que rien n'exerce), et ce qui "
     "contredit un sujet, un critère « Fait quand » ou une décision cités plus bas. Ne juge ni le style, ni ce que les "
     "contrôles automatiques jugent déjà : la forme de la mémoire, les liens, la présence des tests. Rends des "
     "constats numérotés, chacun avec son fichier et sa ligne, ce qui casse et comment le vérifier ; ou « aucun "
     "constat ».":
-        "You review another agent's batch of work, without its context: you only have this brief, and you change "
+        "You review another agent's batch of work, without its conversation or its reasoning: you have this brief, and you may read the repository to check a finding, but you change "
         "nothing. Your role is to find fault with it. Look for what breaks (an edge case, a logic error, a "
         "regression), what no test proves (a code branch, a message, a case nothing exercises), and what contradicts "
         "a topic, a “Done when” criterion or a decision cited below. Judge neither style nor what the automatic "

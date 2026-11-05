@@ -10,7 +10,7 @@ publiée comme README du dépôt public
 
 **Le produit**, `engine/socle/`, est la seule partie copiée dans un projet ;
 le workflow `distribution.yml` le publie, avec sa page d'accueil et sous
-licence MIT, dans le dépôt public à chaque fusion sur `main`. **L'atelier**
+licence MIT, dans le dépôt public à chaque fusion sur `main` qui le change. **L'atelier**
 est tout le reste : les tests (`tests/`), les bancs (`bench/`), la
 documentation de fabrication (`docs/fabrication/`) et la mémoire
 (`memory/`). Ce dépôt est lui-même équipé du socle, en mode amont : sa
