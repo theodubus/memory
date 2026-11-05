@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0128 — Le dépôt public n'explique pas le socle : son README n'a que l'installation, le problème et le fonctionnement restent dans l'atelier
 
-> statut : ouvert · origine : J-2026-11-05-A · lu : backlog@9eaa5e2a
+> statut : fait · origine : J-2026-11-05-A · ref : J-2026-11-05-E · lu : backlog@9eaa5e2a
 
 Le dépôt public `theodubus/socle` reçoit le moteur et `engine/README.md`,
 qui ne dit que l'installation et renvoie au guide. Ce que le socle résout
@@ -16,6 +16,6 @@ plan se soumet à Théo avant d'écrire, et le schéma se vérifie rendu.
 
 ## Fait quand
 
-- [ ] le plan soumis à Théo et validé
-- [ ] le README public dit ce qu'est le socle, le problème, le fonctionnement, l'installation
-- [ ] le README de ce dépôt est celui de l'atelier, sans copie du produit
+- [x] le plan soumis à Théo et validé
+- [x] le README public dit ce qu'est le socle, le problème, le fonctionnement, l'installation
+- [x] le README de ce dépôt est celui de l'atelier, sans copie du produit

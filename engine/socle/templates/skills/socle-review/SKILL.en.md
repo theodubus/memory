@@ -1,6 +1,6 @@
 ---
 name: socle-review
-description: Have a batch reviewed by a reviewer without context before delivering it, the adversarial review, then handle its findings. Use before the push that delivers a batch that changes code, a specification or a test, in a project that applies it.
+description: Have a batch reviewed by a reviewer without context before delivering it, the adversarial review, then handle its findings. Use before the push that delivers a batch that changes code, a specification or a test.
 ---
 
 # The adversarial review of a batch
@@ -28,11 +28,13 @@ python3 .socle/socle review
    It gives the instruction, the batch's diff since the remote branch
    (otherwise the default branch), the topics the batch closes and the
    decisions they cite. `--base <ref>` changes the batch's base.
-3. Hand it to a reviewer without context. Under Claude Code: a subagent
-   (the `Agent` tool), of the session's model, whose only message is this
-   brief, as is. It has neither the conversation, nor the memory, nor the
-   state: add nothing to it. An agent without subagents skips the review,
-   and its recap says so.
+3. Hand it to a reviewer who does not have the conversation. Under
+   Claude Code: a subagent (the `Agent` tool), of the session's model,
+   whose only message is this brief, as is: nothing is added to it,
+   nothing removed. It also receives the project's instructions and can
+   read the repository, but neither the conversation nor the agent's
+   reasoning, and the brief tells it to change nothing. An agent without
+   subagents skips the review, and its recap says so.
 
 ## The findings
 

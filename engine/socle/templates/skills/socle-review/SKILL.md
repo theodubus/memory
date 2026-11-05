@@ -1,6 +1,6 @@
 ---
 name: socle-review
-description: Faire relire un lot par un relecteur sans contexte avant de le livrer, la revue adversariale, puis traiter ses constats. À utiliser avant le push qui livre un lot qui change du code, une spécification ou un test, dans un projet qui l'applique.
+description: Faire relire un lot par un relecteur sans contexte avant de le livrer, la revue adversariale, puis traiter ses constats. À utiliser avant le push qui livre un lot qui change du code, une spécification ou un test.
 ---
 
 # La revue adversariale d'un lot
@@ -28,11 +28,13 @@ python3 .socle/socle review
    Il donne la consigne, le diff du lot depuis la branche distante (sinon
    la branche par défaut), les sujets que le lot ferme et les décisions
    qu'ils citent. `--base <ref>` change la base du lot.
-3. Le confier à un relecteur sans contexte. Sous Claude Code : un
-   sous-agent (outil `Agent`), du modèle de la session, dont le seul
-   message est ce dossier, tel quel. Il n'a ni la conversation, ni la
-   mémoire, ni l'état : ne rien y ajouter. Un agent sans sous-agents saute
-   la revue, et son récap le dit.
+3. Le confier à un relecteur qui n'a pas la conversation. Sous Claude
+   Code : un sous-agent (outil `Agent`), du modèle de la session, dont le
+   seul message est ce dossier, tel quel : rien ne s'y ajoute, rien ne s'en
+   retire. Il reçoit aussi les instructions du projet et peut lire le
+   dépôt, mais ni la conversation ni le raisonnement de l'agent, et le
+   dossier lui dit de ne rien modifier. Un agent sans sous-agents saute la
+   revue, et son récap le dit.
 
 ## Les constats
 
