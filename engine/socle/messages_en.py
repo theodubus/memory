@@ -466,6 +466,12 @@ MESSAGES: dict[str, str] = {
         "budget of CLAUDE.md, kept as a source: {taille} bytes (it can only go down)",
     "budget de {motif} fixé au niveau actuel : {nouveau} octets (il ne pourra que baisser)":
         "budget of {motif} set at the current level: {nouveau} bytes (it can only go down)",
+    "!! {fichier} dépasse son budget : {octets} octets pour {budget}, {ecart} de plus qu'avant l'installation, que "
+    "la section du socle a posée ou régénérée ; resserrer la partie propre au projet, hors de cette section, ou "
+    "relever le budget par une demande validée, puisque le relever assouplit un garde-fou":
+        "!! {fichier} exceeds its budget: {octets} bytes for {budget}, {ecart} more than before the installation, "
+        "which the socle's section added or regenerated; tighten the project's own part, outside that section, or "
+        "raise the budget through a validated request, since raising it loosens a guardrail",
     "# Contrôles en échec sur l'existant, passés en avertissement. En retirer un\n# durcit (libre) ; en ajouter un "
     "assouplit (demande validée).\n":
         "# Checks failing on the existing code, turned into warnings. Removing one\n# tightens (free); adding one "
@@ -704,6 +710,10 @@ MESSAGES: dict[str, str] = {
         "`{id}` is closed (“{statut}”) without a `ref` to what closed it",
     "{octets} octets pour un budget de {budget} ({motif}) : archiver dans le journal":
         "{octets} bytes for a budget of {budget} ({motif}): archive into the journal",
+    "{octets} octets pour un budget de {budget} ({motif}) : resserrer la partie propre au projet, hors de la section "
+    "du socle, ou relever le budget par une demande validée":
+        "{octets} bytes for a budget of {budget} ({motif}): tighten the project's own part, outside the socle's "
+        "section, or raise the budget through a validated request",
     "{lignes} lignes pour un budget de {budget} ({motif}) : archiver dans le journal":
         "{lignes} lines for a budget of {budget} ({motif}): archive into the journal",
     "aucun budget ne couvre ce fichier (`[budgets]` des garde-fous)":

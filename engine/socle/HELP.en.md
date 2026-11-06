@@ -197,7 +197,10 @@ keeps the project's guardrails as they are, and names the settings that
 have appeared in the template since: the agent declares there the ones the
 project needs, such as its specifications and case files (section 2),
 once the new engine is committed. Before that, CI judges with the old
-engine, which does not know them and counts them as loosening.
+engine, which does not know them and counts them as loosening. If the
+socle's section, which is regenerated, makes `AGENTS.md` exceed its budget,
+the installer says so: tighten the project's own part, or raise the budget
+through a validated request, since raising it loosens a guardrail.
 
 **Setting up the private memory** (companion mode). Create an empty private
 repository on GitHub, then

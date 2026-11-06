@@ -161,6 +161,46 @@ class TestRelance(unittest.TestCase):
             installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
         self.assertNotIn("réglages du gabarit absents", flux.getvalue())
 
+    def test_une_mise_a_jour_qui_fait_depasser_son_budget_a_agents_md_le_dit(self):
+        """B-0129 : la section du socle grossit à la mise à jour, et le budget
+        d'AGENTS.md, fixé au plus juste, ne peut que baisser. L'audit le
+        disait rouge, avec pour remède « archiver dans le journal »."""
+        import re
+
+        self.racine = depot({"app.py": "print('ok')\n"})
+        installer(self.racine, adoption=False)
+        agents = self.racine / "AGENTS.md"
+        # Une section d'un moteur plus ancien, plus courte : la mise à jour la fait grossir.
+        texte = agents.read_text(encoding="utf-8")
+        debut, fin = texte.index("### Les skills"), texte.index("### Livrer le travail")
+        agents.write_text(texte[:debut] + texte[fin:], encoding="utf-8")
+        avant = len(agents.read_bytes())
+        gf = self.racine / ".socle/guardrails.toml"
+        gf.write_text(re.sub(r'^"AGENTS.md" = \{ max_bytes = \d+ \}', f'"AGENTS.md" = {{ max_bytes = {avant + 10} }}',
+                             gf.read_text(), flags=re.M))
+        with redirect_stdout(io.StringIO()) as flux:
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+        apres = len(agents.read_bytes())
+        self.assertGreater(apres, avant + 10)
+        self.assertIn(f"!! AGENTS.md dépasse son budget : {apres} octets pour {avant + 10}, {apres - avant} de plus "
+                      "qu'avant l'installation", flux.getvalue())
+        self.assertIn("relever le budget par une demande validée, puisque le relever assouplit un garde-fou",
+                      flux.getvalue())
+        # Le contrôle des budgets dit le même remède, et non d'archiver dans le journal.
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="agent")
+        r = Rapport()
+        controles_memoire.budgets(ctx, r)
+        self.assertEqual([(c.chemin, c.message) for c in r.erreurs()],
+                         [("AGENTS.md", f"{apres} octets pour un budget de {avant + 10} (AGENTS.md) : resserrer la "
+                                        "partie propre au projet, hors de la section du socle, ou relever le budget "
+                                        "par une demande validée")])
+        # Dans son budget, la mise à jour n'en dit rien.
+        gf.write_text(re.sub(r'^"AGENTS.md" = \{ max_bytes = \d+ \}', '"AGENTS.md" = { max_bytes = 16000 }',
+                             gf.read_text(), flags=re.M))
+        with redirect_stdout(io.StringIO()) as flux:
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+        self.assertNotIn("dépasse son budget", flux.getvalue())
+
     def test_un_sous_dossier_d_un_depot_est_refuse(self):
         """Les hooks git et le workflow de CI ne vivent qu'à la racine du
         dépôt : posés plus bas, ils ne tiraient pas, sans un mot."""

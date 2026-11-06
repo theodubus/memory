@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0129 — Une mise à jour qui fait grossir la section du socle peut faire dépasser à AGENTS.md le budget qu'une adoption a fixé au plus juste
 
-> statut : ouvert · origine : J-2026-11-05-D · lu : backlog@80164bf6
+> statut : fait · origine : J-2026-11-05-D · ref : ADR-0045 · lu : backlog@80164bf6
 
 Relevé par la revue adversariale du lot de D-0075 (J-2026-11-05-D). La
 section du socle d'AGENTS.md se régénère à chaque mise à jour ; le lot de
@@ -17,3 +17,8 @@ fera dépasser le budget, et ce que l'humain peut faire (resserrer la partie
 propre du projet, ou relever le budget par une demande) ; ou que la
 croissance de la section du socle elle-même compte à part du budget de la
 partie propre.
+
+## Fait quand
+
+- [x] une mise à jour qui fait dépasser son budget à `AGENTS.md` le dit, avec ce que l'humain peut faire
+- [x] le contrôle des budgets donne le même remède pour un fichier d'instructions
