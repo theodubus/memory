@@ -708,9 +708,10 @@ def budgets(ctx, r):
             texte = ctx.lire(chemin) or ""
             octets = len(texte.encode("utf-8"))
             lignes = texte.count("\n") + (0 if texte.endswith("\n") or not texte else 1)
-            if "max_bytes" in b and octets > b["max_bytes"] and chemin in (config.INSTRUCTIONS, "CLAUDE.md"):
-                # Rien ne s'archive d'un fichier d'instructions, et la section
-                # du socle s'y régénère à chaque mise à jour (B-0129).
+            # Rien ne s'archive d'un fichier d'instructions, et la section du
+            # socle s'y régénère à chaque mise à jour (B-0129).
+            instructions_ = chemin in (config.INSTRUCTIONS, "CLAUDE.md")
+            if "max_bytes" in b and octets > b["max_bytes"] and instructions_:
                 r.erreur("memoire.budgets", trad("{octets} octets pour un budget de {budget} ({motif}) : resserrer "
                                                  "la partie propre au projet, hors de la section du socle, ou "
                                                  "relever le budget par une demande validée", octets=octets,
@@ -718,7 +719,12 @@ def budgets(ctx, r):
             elif "max_bytes" in b and octets > b["max_bytes"]:
                 r.erreur("memoire.budgets", trad("{octets} octets pour un budget de {budget} ({motif}) : archiver "
                                                  "dans le journal", octets=octets, budget=b['max_bytes'], motif=motif), chemin)
-            if "max_lines" in b and lignes > b["max_lines"]:
+            if "max_lines" in b and lignes > b["max_lines"] and instructions_:
+                r.erreur("memoire.budgets", trad("{lignes} lignes pour un budget de {budget} ({motif}) : resserrer "
+                                                 "la partie propre au projet, hors de la section du socle, ou "
+                                                 "relever le budget par une demande validée", lignes=lignes,
+                                                 budget=b['max_lines'], motif=motif), chemin)
+            elif "max_lines" in b and lignes > b["max_lines"]:
                 r.erreur("memoire.budgets", trad("{lignes} lignes pour un budget de {budget} ({motif}) : archiver "
                                                  "dans le journal", lignes=lignes, budget=b['max_lines'], motif=motif), chemin)
     # Le fichier d'instructions est AGENTS.md ; tant qu'une adoption garde

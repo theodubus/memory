@@ -635,7 +635,8 @@ def _installer(cible: Path, adaptateur: str, proprietaire: str, adoption: bool, 
 
     # 4. Les instructions : AGENTS.md fait foi, CLAUDE.md l'importe.
     balayage, motif = _balayage_planifie(cible, texte_adaptateur)
-    tailles = {nom: len((cible / nom).read_bytes()) for nom in INSTRUCTIONS if (cible / nom).is_file()}
+    section_avant = sum(_taille_section((cible / nom).read_text(encoding="utf-8")) for nom in INSTRUCTIONS
+                        if (cible / nom).is_file())
     journal += _instructions(cible, dossier_moteur, lg, balayage, ch)
 
     # 5. Les étages d'application.
@@ -652,7 +653,7 @@ def _installer(cible: Path, adaptateur: str, proprietaire: str, adoption: bool, 
     # 7. Adoption : budgets au niveau actuel, contrôles en échec en avertissement.
     if adoption:
         journal += _adopter(cible)
-    journal += _alerte_budget(cible, tailles)
+    journal += _alerte_budget(cible, section_avant)
 
     print(trad("socle {version} installé dans {cible}", version=VERSION, cible=cible))
     for l in journal:
@@ -734,24 +735,37 @@ def _instructions(cible: Path, dossier_moteur: str, lg: str = "fr", balayage: bo
 INSTRUCTIONS = (config.INSTRUCTIONS, "CLAUDE.md")
 
 
-def _alerte_budget(cible: Path, avant: dict[str, int]) -> list[str]:
+def _taille_section(texte: str) -> int:
+    """La taille, en octets, de la section du socle d'un fichier
+    d'instructions, ses marqueurs compris ; 0 sans elle."""
+    if DEBUT_SOCLE not in texte or FIN_SOCLE not in texte:
+        return 0
+    debut = texte.index(DEBUT_SOCLE)
+    return len(texte[debut:texte.index(FIN_SOCLE, debut) + len(FIN_SOCLE)].encode("utf-8"))
+
+
+def _alerte_budget(cible: Path, section_avant: int) -> list[str]:
     """B-0129 : le fichier d'instructions que la section du socle, posée ou
-    régénérée, fait passer au-delà de son budget. Le cliquet ne laisse un
-    budget que baisser : l'installeur dit ce que l'humain peut faire, au lieu
-    que l'audit le dise seulement rouge."""
-    projet = config.Projet.charger(cible)
+    régénérée, fait passer au-delà de son budget : sans ce que la section a
+    gagné, il tenait. Le cliquet ne laisse un budget que baisser :
+    l'installeur dit ce que l'humain peut faire, au lieu que l'audit le dise
+    seulement rouge. Le contenu repris d'un CLAUDE.md n'est pas la section."""
+    budgets = config.Projet.charger(cible).gf("budgets", defaut={}) or {}
     res = []
     for nom in INSTRUCTIONS:
         f = cible / nom
-        if not f.is_file() or DEBUT_SOCLE not in f.read_text(encoding="utf-8"):
+        if not f.is_file():
             continue
-        budget, octets = projet.budget_octets(nom), len(f.read_bytes())
-        if budget is not None and octets > budget:
-            res.append(trad("!! {fichier} dépasse son budget : {octets} octets pour {budget}, {ecart} de plus "
-                            "qu'avant l'installation, que la section du socle a posée ou régénérée ; resserrer la "
-                            "partie propre au projet, hors de cette section, ou relever le budget par une demande "
-                            "validée, puisque le relever assouplit un garde-fou",
-                            fichier=nom, octets=octets, budget=budget, ecart=octets - avant.get(nom, 0)))
+        texte = f.read_text(encoding="utf-8")
+        octets, ecart = len(texte.encode("utf-8")), _taille_section(texte) - section_avant
+        # Le plus bas des budgets qui le couvrent : le contrôle les juge tous.
+        budget = min((int(b["max_bytes"]) for motif, b in budgets.items()
+                      if "max_bytes" in b and outils.correspond(nom, [motif])), default=None)
+        if budget is not None and ecart > 0 and octets > budget >= octets - ecart:
+            res.append(trad("!! {fichier} dépasse son budget : {octets} octets pour {budget}, la section du socle, "
+                            "posée ou régénérée, ayant grossi de {ecart} ; resserrer la partie propre au projet, hors "
+                            "de cette section, ou relever le budget par une demande validée, puisque le relever "
+                            "assouplit un garde-fou", fichier=nom, octets=octets, budget=budget, ecart=ecart))
     return res
 
 

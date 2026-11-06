@@ -17,13 +17,17 @@ comptée à part du budget.
 
 ## Décision
 
-- La mise à jour régénère la section comme avant. Si le fichier
-  d'instructions qui la porte dépasse alors son budget, l'installeur le
-  dit dans son rapport : la taille, le budget, ce que l'installation a
-  ajouté, et les deux issues, resserrer la partie propre au projet hors de
-  la section, ou relever le budget par une demande validée.
+- La mise à jour régénère la section comme avant. Si la section, en
+  grossissant, fait passer au-delà de son budget le fichier d'instructions
+  qui la porte (sans ce qu'elle a gagné, il tenait), l'installeur le dit
+  dans son rapport : la taille, le plus bas des budgets qui le couvrent, ce
+  que la section a gagné, et les deux issues, resserrer la partie propre au
+  projet hors de la section, ou relever le budget par une demande validée.
+  Le contenu qu'un CLAUDE.md apporte à AGENTS.md n'est pas la section ; un
+  fichier qui dépassait déjà son budget n'en est pas accusé.
 - Pour un fichier d'instructions, `memoire.budgets` donne ces deux mêmes
-  issues au lieu d'« archiver dans le journal ».
+  issues, en octets comme en lignes, au lieu d'« archiver dans le
+  journal ». Le commentaire du gabarit des garde-fous le dit aussi.
 - La section du socle n'est pas comptée à part : le budget borne ce que
   l'agent lit à chaque session, section comprise, et l'en exempter
   assouplirait un garde-fou sans l'accord de l'humain.
