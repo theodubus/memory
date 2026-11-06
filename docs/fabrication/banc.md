@@ -171,6 +171,22 @@ Le banc partage les limites du compte avec la session qui le lance : il
 tourne détaché, et c'est lui, pas cette session, qui attend la remise à
 zéro.
 
+## Le banc de la revue adversariale
+
+Un troisième banc, `bench/review.py`, mesure ce que trouve la revue
+adversariale d'un lot (B-0124, ADR-0042). Un projet jetable porte une
+décision, et deux lots qui ferment le sujet qui l'applique : un lot fautif,
+qui passe ses tests et contredit la décision en quatre points, et un lot
+sain. Le relecteur, un agent réel lancé dans un dossier vide, ne reçoit que
+le dossier de `socle review`. Le banc compte les défauts trouvés sur le lot
+fautif ; les constats du lot sain se lisent, un juge par mots-clés les
+prenant pour des défauts. Une limite d'usage l'arrête sans écrire de
+rapport. Le premier relevé : [le 5 novembre](../../bench/reports/2026-11-05-revue.md).
+
+```sh
+python3 bench/review.py --passages 3 --budget 2
+```
+
 ## Le banc des adaptateurs
 
 Un second banc, sans agent : `bench/adapters.py` éprouve chaque

@@ -22,17 +22,15 @@ la mémoire de ce dépôt, qui est l'historique de fabrication de l'outil.
 - `engine/socle/` — le moteur : lecture de la mémoire, contrôles, hooks,
   installeur, auto-test. `engine/socle/FORMAT.md` fait foi pour le format de
   la mémoire.
-- `engine/socle/adapters/` — les adaptateurs maintenus : Rust, Python sous
-  `unittest` et sous `pytest`, JavaScript et TypeScript, Go, Java, Ruby, PHP,
-  C#.
+- `engine/socle/adapters/` — les adaptateurs maintenus.
 - `engine/socle/templates/` — les gabarits que l'installeur pose dans un projet.
 - `tests/` — les tests du moteur (`unittest`), dont l'auto-test complet par
   injection de défauts.
-- `README.md` — ce qu'est le socle et comment l'installer ; `engine/socle/HELP.md` — le guide d'utilisation d'un projet
-  équipé ; `docs/fabrication/` — la documentation de l'atelier :
-  architecture, bancs, relevés, l'histoire de `chess`.
-- `bench/` — le banc sur un agent réel (`docs/fabrication/banc.md`), et celui
-  des adaptateurs, chacun sur un projet jetable (`bench/adapters.py`).
+- `engine/README.md` (la page publique), `README.md`, `engine/socle/HELP.md`
+  (le guide d'un projet équipé), `docs/fabrication/` (l'atelier :
+  architecture, bancs, relevés, `chess`).
+- `bench/` — les bancs, sur un agent réel (`docs/fabrication/banc.md`) et
+  sur les adaptateurs (`bench/adapters.py`).
 - `memory/` — la mémoire de ce projet, au format du socle.
 - `.github/workflows/distribution.yml` — publie le moteur, et lui seul, dans
   le dépôt public `theodubus/socle` à chaque fusion sur `main` (D-0056).
@@ -166,9 +164,10 @@ refusée ; il faut relire l'entrée. `socle new` pose l'empreinte de l'index.
 
 Une procédure rare se lit dans son skill, que l'agent charge sur sa
 description : `socle-request` (poser une demande, relayer une réponse,
-consigner une décision en séance) et `socle-private-memory` (la mémoire
-privée), dans `.claude/skills/`, posés par l'installeur et protégés ; un
-autre agent lit leur `SKILL.md` à ce chemin.
+consigner une décision en séance), `socle-private-memory` (la mémoire
+privée) et `socle-review` (la revue adversariale d'un lot, avant sa
+livraison), dans `.claude/skills/`, posés par l'installeur et
+protégés ; un autre agent lit leur `SKILL.md` à ce chemin.
 
 Une procédure du projet qui se refait (le journal montre la première fois)
 s'écrit en skill à la deuxième, dans `.claude/skills/<nom>/SKILL.md` : un
@@ -186,7 +185,9 @@ sans attendre de message. Il annonce d'abord le lot, pas forcément tout ce
 qui est prêt (les sujets, leur taille, le jalon qu'ils servent ; un sujet de
 priorité basse s'il est commode), puis s'y met ; il s'arrête à la fin du
 lot, ou dès qu'une décision revient à l'humain. Il ne change pas une
-priorité que l'humain a donnée.
+priorité que l'humain a donnée. Avant le push d'un lot qui change du code,
+une spécification ou un test, il le fait relire par un relecteur sans
+contexte (le skill `socle-review`), et son récap dit les constats.
 
 Par défaut, tout se fait sur une branche de développement, avec une seule
 pull request ouverte à la fois : chaque lot fini s'y ajoute, l'humain la

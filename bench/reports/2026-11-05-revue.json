@@ -1,0 +1,100 @@
+[
+  {
+    "sortie": "Je n'ai pas pu exécuter le code : `prix.py` n'est pas dans le dossier de travail, et la commande Python n'a pas été autorisée. Les constats viennent donc d'une lecture du diff. Les numéros de ligne sont ceux du nouveau `prix.py` ; chaque constat dit comment le vérifier.\n\n1. **`prix.py:6` : la remise ne s'applique pas à 10 unités.** Le code teste `quantite > 10`, alors que l'ADR-0001 et le critère « Fait quand » disent « à partir de 10 unités », donc `>= 10`. `total(100, 10)` renvoie `1000` au lieu de `950`. Le critère est coché alors qu'il n'est pas tenu.\n   *Vérifier :* `assertEqual(total(100, 10), 950)`.\n\n2. **`prix.py:7` : le total remisé est arrondi au plus proche, pas au centime inférieur.** `round()` de Python arrondit au plus proche, et vers le pair quand on tombe pile sur ,5. L'ADR demande un arrondi au centime inférieur. Par exemple `total(30, 11)` : 330 × 0,95 = 313,5 donne `314` au lieu de `313`. Les cas au-dessus de ,5 sont aussi faux : `total(13, 11)` : 143 × 0,95 = 135,85 donne `136` au lieu de `135`. Le calcul passe en plus par le flottant `0.95`, qui n'est pas exact. Le critère est coché alors qu'il n'est pas tenu.\n   *Vérifier :* `assertEqual(total(30, 11), 313)` et `assertEqual(total(13, 11), 135)`. La correction attendue est un calcul entier, `brut * 95 // 100`.\n\n3. **`prix.py:3` : une quantité nulle n'est pas refusée.** Le code ne teste que `quantite < 0`. `total(100, 0)` renvoie `0` au lieu de lever `ValueError`. Le critère « négative ou nulle » est coché alors qu'il n'est pas tenu.\n   *Vérifier :* `assertRaises(ValueError, total, 100, 0)`.\n\n4. **`prix.py:13` : les centimes ne sont pas complétés à deux chiffres.** `centimes % 100` n'est pas complété par un zéro. `formater(105)` renvoie `\"1,5 €\"` au lieu de `\"1,05 €\"`, qui est justement l'exemple de l'ADR. De même, `formater(5)` renvoie `\"0,5 €\"` et `formater(100)` renvoie `\"1,0 €\"`. Le critère est coché alors qu'il n'est pas tenu.\n   *Vérifier :* `assertEqual(formater(105), \"1,05 €\")`. La correction attendue est `{centimes % 100:02d}`.\n\n5. **`prix.py:13` : un montant négatif est faux.** Avec `//` et `%` sur un nombre négatif, `formater(-5)` donne `-1 // 100 = -1` et `-5 % 100 = 95`, donc `\"-1,95 €\"`. Ce cas peut arriver, car `total` ne contrôle pas le signe de `prix_unitaire`. L'ADR ne traite pas les montants négatifs, d'où une sévérité moindre que les quatre premiers constats ; il faut soit les refuser, soit les formater correctement.\n   *Vérifier :* `formater(-5)`.\n\n6. **`tests/test_prix.py` : aucun test ne couvre les critères cochés.** Les trois tests passent malgré les constats 1 à 4 :\n   * `total(100, 20)` donne un résultat entier, donc l'arrondi n'est jamais exercé.\n   * `formater(1999)` a deux chiffres de centimes « par chance », donc le complément par un zéro ne l'est pas non plus.\n   * Rien ne teste la limite à 10 unités, la quantité nulle ou négative, ni le `ValueError` de la ligne 4.\n\n   Le passage du sujet B-0001 au statut « fait » ne repose donc sur aucune preuve.\n\n**Verdict :** le lot ne tient aucun des quatre critères « Fait quand ». Il ne faut pas fermer B-0001.",
+    "cout": 0.12368200000000001,
+    "modeles": [
+      "claude-opus-5-5"
+    ],
+    "erreur": false,
+    "lot": "fautif",
+    "passage": 1,
+    "trouves": [
+      "arrondi",
+      "centimes",
+      "nulle",
+      "seuil"
+    ],
+    "constats": 6,
+    "autres": []
+  },
+  {
+    "sortie": "Je n'ai pas pu exécuter le code (la commande n'a pas été autorisée). Les constats ci-dessous viennent donc de la lecture du diff, avec des calculs faits à la main. Chaque constat donne un appel qui permet de le vérifier.\n\n1. **`prix.py:6`, le seuil de remise est décalé d'une unité.** La condition `quantite > 10` contredit l'ADR et le critère « la remise s'applique à partir de 10 unités ». Pour vérifier : `total(100, 10)` rend `1000`, alors que `950` est attendu. Il faut `>= 10`.\n\n2. **`prix.py:7`, le montant est arrondi au plus proche et non au centime inférieur.** `round()` arrondit au plus proche, et départage les demis vers le pair. Cela contredit le critère « le total remisé s'arrondit au centime inférieur ». Pour vérifier :\n   - `total(2, 11)` : 22 × 0,95 = 20,9, la fonction rend `21` au lieu de `20`.\n   - `total(1, 50)` : 47,5, la fonction rend `48` au lieu de `47`.\n\n   La correction passe par un calcul entier, `brut * 95 // 100`. Un `floor` sur un flottant ne suffit pas, car il reste exposé à l'imprécision de `0.95`.\n\n3. **`prix.py:3`, une quantité nulle est acceptée.** La condition `quantite < 0` laisse passer 0, alors que l'ADR et le critère disent « négative ou nulle lève `ValueError` ». Pour vérifier : `total(100, 0)` rend `0` sans lever d'erreur. Il faut `<= 0`.\n\n4. **`prix.py:13`, les centimes ne sont pas complétés à deux chiffres.** `{centimes % 100}` affiche les centimes sans le zéro de tête. L'exemple même de l'ADR échoue : `formater(105)` rend `\"1,5 €\"` au lieu de `\"1,05 €\"`, et `formater(100)` rend `\"1,0 €\"`. Il faut `{centimes % 100:02d}`.\n\n   Pour un montant négatif, `//` et `%` donnent un affichage faux : `formater(-5)` rend `\"-1,95 €\"`. Ce cas n'est pas couvert par l'ADR, je le signale seulement.\n\n5. **`tests/test_prix.py`, les quatre critères cochés ne sont prouvés par aucun test.**\n   - Seuil : aucun test à 10 unités. Le seul test remisé passe par 20, donc le défaut n°1 n'est pas détecté.\n   - Arrondi : `100 × 20 × 0,95` tombe juste, donc rien ne prouve l'arrondi au centime inférieur (défaut n°2).\n   - Quantité négative ou nulle : aucun test de `ValueError`, ni pour 0 ni pour une valeur négative (défaut n°3).\n   - Affichage : le seul test utilise `1999`, dont les centimes ont déjà deux chiffres (défaut n°4).\n\n   Le sujet B-0001 est marqué « fait » avec ses quatre cases cochées, alors que trois des quatre critères sont faux dans le code.",
+    "cout": 0.1156562,
+    "modeles": [
+      "claude-opus-5-5"
+    ],
+    "erreur": false,
+    "lot": "fautif",
+    "passage": 2,
+    "trouves": [
+      "arrondi",
+      "centimes",
+      "nulle",
+      "seuil"
+    ],
+    "constats": 5,
+    "autres": []
+  },
+  {
+    "sortie": "J'ai fait cette revue en lisant le diff. La commande qui devait lancer les cas limites et les tests n'a pas reçu l'autorisation : aucun résultat ci-dessous n'a été obtenu en exécutant le code. Les valeurs viennent du calcul fait à la main sur le diff.\n\n## Constats\n\n**1. `prix.py:6` — la remise ne s'applique pas à 10 unités.**\nL'ADR-0001 dit « à partir de 10 unités », ce qui inclut 10. Le code teste `quantite > 10`.\n- Ce qui casse : `total(100, 10)` rend `1000` au lieu de `950`.\n- Ce que ça contredit : le premier critère « Fait quand » de B-0001, pourtant coché.\n- Pour vérifier : `assertEqual(total(100, 10), 950)`.\n\n**2. `prix.py:7` — l'arrondi va au plus proche, pas au centime inférieur.**\n`round()` arrondit au plus proche (à égalité, vers le pair). L'ADR demande d'arrondir au centime inférieur. Le calcul en flottant (`* 0.95`) peut aussi introduire des erreurs de précision.\n- Ce qui casse : `total(13, 11)` donne 143 × 0,95 = 135,85, que `round` porte à `136` au lieu de `135`.\n- Ce que ça contredit : le deuxième critère, coché.\n- Pour vérifier : `assertEqual(total(13, 11), 135)`. Un calcul entier, `brut * 95 // 100`, règle les deux problèmes.\n\n**3. `prix.py:3` — une quantité nulle est acceptée.**\nLa condition `quantite < 0` laisse passer 0. L'ADR veut que « négative ou nulle » lève `ValueError`.\n- Ce qui casse : `total(100, 0)` rend `0` sans erreur.\n- Ce que ça contredit : le troisième critère, coché.\n- Pour vérifier : `assertRaises(ValueError, total, 100, 0)`. Corriger avec `quantite <= 0`. Le message `\"quantité négative\"` serait alors à ajuster.\n\n**4. `prix.py:13` — les centimes ne sont pas complétés à deux chiffres.**\n`centimes % 100` est inséré sans zéro devant.\n- Ce qui casse : `formater(105)` donne `\"1,5 €\"` au lieu de `\"1,05 €\"`, qui est l'exemple même de l'ADR. `formater(100)` donne `\"1,0 €\"`.\n- Ce que ça contredit : le quatrième critère, coché.\n- Pour vérifier : `assertEqual(formater(105), \"1,05 €\")`. Corriger avec `{centimes % 100:02d}`.\n- Point secondaire : un montant négatif s'affiche faux, car `//` et `%` arrondissent vers le bas. `formater(-5)` donne `\"-1,95 €\"`. L'ADR ne le traite pas, mais l'ancienne version affichait `-0.05 €`, c'est donc une régression.\n\n**5. `tests/test_prix.py:8-14` — les tests ne couvrent aucun des quatre critères.**\n- `total(100, 20)` est loin du seuil et tombe juste (1900), donc l'arrondi n'est pas exercé.\n- `total(100, 1)` ne touche aucune limite.\n- `formater(1999)` a deux chiffres de centimes non nuls, donc le remplissage par un zéro n'est pas testé.\n- Rien n'exerce la branche `ValueError` (`prix.py:3-4`).\n\nLes quatre défauts ci-dessus passent donc tous les tests. Pourtant, B-0001 est marqué « fait », avec les quatre cases cochées.\n\n**6. Statut de B-0001.**\nLe sujet est passé à « fait » alors que ses quatre critères sont contredits par le code (constats 1 à 4). Il faut le rouvrir.",
+    "cout": 0.1143556,
+    "modeles": [
+      "claude-opus-5-5"
+    ],
+    "erreur": false,
+    "lot": "fautif",
+    "passage": 3,
+    "trouves": [
+      "arrondi",
+      "centimes",
+      "nulle",
+      "seuil"
+    ],
+    "constats": 6,
+    "autres": [
+      "**6. Statut de B-0001.**\nLe sujet est passé à « fait » alors que ses quatre critères sont contredits par le code (constats 1 à 4). Il faut le rouvrir."
+    ]
+  },
+  {
+    "sortie": "J'ai trouvé 5 constats. Je n'ai pu exécuter ni les tests ni les cas ci-dessous (la commande n'a pas été autorisée). Les résultats annoncés découlent de la sémantique de Python et chaque constat donne la commande qui permet de les vérifier.\n\n**1. `prix.py:13` : `formater` affiche faux les montants négatifs.**\nEn Python, `//` et `%` arrondissent vers −∞. Donc `formater(-105)` donne `-2,95 €` au lieu de `-1,05 €`, et `formater(-5)` donne `-1,95 €`. Un montant négatif peut bien arriver ici. `total` ne contrôle pas le signe de `prix_unitaire` : `total(-100, 1)` vaut `-100` et s'affiche `-1,00 €` par chance, mais `formater(-150)` donne `-2,50 €`. Avec l'ancienne version, `f\"{-1.05:.2f}\"` affichait le bon montant : c'est une régression.\nVérifier : `python3 -c \"from prix import formater; print(formater(-105))\"`\n\n**2. `prix.py:13` : `formater` n'accepte plus les montants non entiers.**\nAvec un flottant, le spécificateur `:02d` lève `ValueError: Unknown format code 'd' for object of type 'float'`. Avant le lot, `formater(1999.0)` renvoyait `19.99 €`. Désormais tout appelant qui passe un flottant plante, par exemple un `brut * 0.95` fait ailleurs ou une valeur lue en JSON. ADR-0001 ne dit nulle part que l'entrée doit être un entier, et aucun test ne fixe ce contrat.\nVérifier : `python3 -c \"from prix import formater; print(formater(1999.0))\"`\n\n**3. `tests/test_prix.py:22-24` : le refus d'une quantité négative n'est pas testé.**\nLe critère « une quantité négative ou nulle est refusée » est coché, mais seul `total(100, 0)` est exercé. Si la condition devenait `if quantite == 0:`, tous les tests passeraient encore et `total(100, -1)` renverrait `-100` sans erreur.\nVérifier : remplacer `<= 0` par `== 0` dans `prix.py:4` et relancer `python3 -m unittest`, qui reste vert.\n\n**4. `tests/test_prix.py:10-17` : la limite basse de la remise n'est pas fixée.**\nLes tests sans remise ne portent que sur `quantite=1`. Avec `quantite >= 2` ou `quantite > 1` à la place de `quantite >= 10` (`prix.py:6`), les sept tests passent quand même. Le critère « la remise s'applique à partir de 10 unités » n'est donc prouvé que d'un côté : rien ne vérifie que 9 unités ne sont pas remisées.\nVérifier : remplacer `>= 10` par `>= 2` et relancer les tests, qui restent verts. Il manque un test du type `total(100, 9) == 900`.\n\n**5. `prix.py:7` : l'arrondi « au centime inférieur » n'est ni défini ni testé pour un prix négatif.**\n`brut * 95 // 100` arrondit vers −∞. Ainsi `total(-33, 10)` donne `-314`, alors qu'une troncature vers zéro donnerait `-313`. ADR-0001 ne précise pas lequel des deux est voulu pour un avoir ou un prix négatif. Rien ne refuse non plus un `prix_unitaire` négatif. Ce n'est un défaut que si les prix négatifs sont possibles, mais le comportement n'est pas couvert. Il faut soit le décider, soit refuser le prix négatif.\n\n**Ce qui tient :** le cas `total(33, 10) == 313` empêche bien de remplacer le calcul par un `round()` (313,5 donnerait 314). Le cas `formater(105)` couvre bien le zéro de remplissage des centimes.",
+    "cout": 0.1173978,
+    "modeles": [
+      "claude-opus-5-5"
+    ],
+    "erreur": false,
+    "lot": "sain",
+    "passage": 1,
+    "trouves": null,
+    "constats": 5,
+    "autres": []
+  },
+  {
+    "sortie": "Le dossier de travail est vide : ni `prix.py` ni les tests ne sont présents. J'ai donc relu le diff seul, sans rien exécuter. Les résultats donnés ci-dessous suivent la sémantique Python de `//` et `%`.\n\n## Constats\n\n**1. `prix.py`, `formater` : un montant négatif s'affiche faux.** C'est une régression.\n- `formater(-105)` donne `-105 // 100 = -2` et `-105 % 100 = 95`, donc `\"-2,95 €\"` au lieu de `\"-1,05 €\"`. De même, `formater(-1)` donne `\"-1,99 €\"`.\n- L'ancienne version affichait `\"-1.05 €\"` : le signe et la valeur étaient justes.\n- Un montant négatif reste possible. `total` ne contrôle pas `prix_unitaire`, donc `total(-105, 1)` renvoie `-105`. `formater` sert aussi à d'autres montants (avoirs, remboursements).\n- Pour vérifier : `assertEqual(formater(-105), \"-1,05 €\")` échoue.\n\n**2. `prix.py`, `formater` : un montant non entier fait maintenant planter la fonction.** C'est une régression.\n- Le format `:02d` refuse les nombres à virgule. `formater(1999.0)` lève `ValueError: Unknown format code 'd' for object of type 'float'`, alors que l'ancienne version renvoyait `\"19.99 €\"`.\n- Tout appelant qui passe un montant calculé en flottant casse.\n- L'ADR ne fixe pas le type attendu, et aucun test ne couvre ce cas.\n- Pour vérifier : appeler `formater(1999.0)`.\n\n**3. `tests/test_prix.py` : le seuil de 10 unités n'est testé que par le haut.**\n- Les tests de petite quantité n'utilisent que `quantite = 1`. Si on remplace `quantite >= 10` par `quantite >= 2` (ou toute valeur de 2 à 10), les 7 tests passent encore.\n- Le critère « la remise s'applique à partir de 10 unités » n'est donc pas prouvé.\n- Pour vérifier : ajouter `assertEqual(total(100, 9), 900)`, qui fera échouer cette modification.\n\n**4. `tests/test_prix.py` : le refus d'une quantité négative n'est pas testé.**\n- Le critère et l'ADR exigent de refuser une quantité « négative ou nulle », mais seul `total(100, 0)` est testé.\n- Si on remplace `quantite <= 0` par `quantite == 0`, les tests passent encore, et `total(100, -3)` renvoie `-300` sans erreur.\n- Pour vérifier : ajouter `assertRaises(ValueError)` sur `total(100, -1)`.\n\n**5. `tests/test_prix.py` : les montants sans euros ou à zéro centime ne sont pas testés.**\n- Les tests couvrent `1999` et `105`, mais ni `5` (attendu `\"0,05 €\"`) ni `100` (attendu `\"1,00 €\"`).\n- Le code actuel les gère correctement. Rien n'empêche pourtant une régression sur ces cas, qui sont exactement ceux visés par « toujours deux chiffres de centimes ».\n- Pour vérifier : ajouter `formater(5)` et `formater(100)`.\n\n**6. `prix.py`, `total` : la remise sur un prix négatif s'arrondit dans le mauvais sens.**\n- Le calcul `brut * 95 // 100` arrondit vers moins l'infini. Avec `total(-33, 10)`, il donne `-31350 // 100 = -314`.\n- En valeur absolue, c'est l'arrondi supérieur, alors que l'ADR veut l'arrondi « au centime inférieur ».\n- La lecture dépend du constat 1 : rien n'interdit un prix unitaire négatif, et rien ne dit ce qui doit se passer dans ce cas.\n- Pour vérifier : appeler `total(-33, 10)`. Le résultat est `-314` et non `-313`.",
+    "cout": 0.124618,
+    "modeles": [
+      "claude-opus-5-5"
+    ],
+    "erreur": false,
+    "lot": "sain",
+    "passage": 2,
+    "trouves": null,
+    "constats": 6,
+    "autres": []
+  },
+  {
+    "sortie": "J'ai relu le lot uniquement à partir du diff. Le dossier de travail est vide : je n'ai donc rien pu exécuter, et toutes les valeurs ci-dessous sont calculées à la main sur le code du diff.\n\n## Constats\n\n**1. `prix.py`, nouvelle ligne 13 (`formater`) : un montant négatif s'affiche faux.**\nEn Python, `//` et `%` arrondissent vers −∞. Avec `formater(-105)`, on obtient `-105 // 100 = -2` et `-105 % 100 = 95`, donc `\"-2,95 €\"` au lieu de `\"-1,05 €\"`. ADR-0001 dit qu'« un montant s'affiche en euros » et ne limite pas la règle aux montants positifs. Un avoir ou un remboursement s'afficherait donc avec un mauvais montant.\nPour vérifier : `assertEqual(formater(-105), \"-1,05 €\")`.\n\n**2. `prix.py`, nouvelle ligne 13 : régression sur les montants non entiers.**\nL'ancienne version (`centimes / 100:.2f`) acceptait un `float`. Avec la nouvelle, `formater(19.99)` lève `ValueError: Unknown format code 'd' for object of type 'float'`. Le même plantage se produit plus en amont : si `prix_unitaire` est un `float`, alors `brut * 95 // 100` renvoie un `float`, et le `formater` de ce total plante.\nPour vérifier : `formater(1999.0)` et `formater(total(9.5, 10))`.\n\n**3. `tests/test_prix.py` : le seuil de 10 unités n'est pas encadré par le bas.**\nSeules les quantités 1, 10 et 20 sont testées. Les variantes `quantite >= 2`, `quantite > 1` ou `quantite >= 5` font toutes passer la suite. Le critère « la remise s'applique *à partir de* 10 unités » n'est donc démontré que d'un seul côté.\nPour vérifier : ajouter `assertEqual(total(100, 9), 900)`.\n\n**4. `tests/test_prix.py`, ligne 22 : la quantité négative n'est pas testée.**\nLe critère coché dit « négative ou nulle », mais seul `total(100, 0)` est testé. Si l'on remplace `quantite <= 0` par `quantite == 0`, la suite passe toujours.\nPour vérifier : ajouter `assertRaises(ValueError)` sur `total(100, -1)`.\n\n**5. `tests/test_prix.py`, ligne 27 : le cas des montants sous un euro n'est pas testé.**\nRien n'exerce un montant inférieur à 100 centimes, comme `formater(5)`, qui doit donner `\"0,05 €\"`, ou `formater(0)`. Le code actuel les traite correctement, mais une réécriture qui casserait la partie euros (par exemple sans le zéro avant la virgule) ne serait détectée par aucun test.\n\n**6. `prix.py`, nouvelle ligne 3 (`total`) : `prix_unitaire` n'est pas validé.**\nUn prix unitaire négatif donne un total négatif sans erreur, ce qui renvoie au constat 1. L'ADR ne demande rien à ce sujet, donc je ne compte pas ce point comme une non-conformité. Il faut en revanche le trancher, parce qu'il détermine si le constat 1 peut se produire en pratique.",
+    "cout": 0.12152520000000001,
+    "modeles": [
+      "claude-opus-5-5"
+    ],
+    "erreur": false,
+    "lot": "sain",
+    "passage": 3,
+    "trouves": null,
+    "constats": 6,
+    "autres": [
+      "**2. `prix.py`, nouvelle ligne 13 : régression sur les montants non entiers.**\nL'ancienne version (`centimes / 100:.2f`) acceptait un `float`. Avec la nouvelle, `formater(19.99)` lève `ValueError: Unknown format code 'd' for object of type 'float'`. Le même plantage se produit plus en amont : si `prix_unitaire` est un `float`, alors `brut * 95 // 100` renvoie un `float`, et le `formater` de ce total plante.\nPour vérifier : `formater(1999.0)` et `formater(total(9.5, 10))`.",
+      "**6. `prix.py`, nouvelle ligne 3 (`total`) : `prix_unitaire` n'est pas validé.**\nUn prix unitaire négatif donne un total négatif sans erreur, ce qui renvoie au constat 1. L'ADR ne demande rien à ce sujet, donc je ne compte pas ce point comme une non-conformité. Il faut en revanche le trancher, parce qu'il détermine si le constat 1 peut se produire en pratique."
+    ]
+  }
+]

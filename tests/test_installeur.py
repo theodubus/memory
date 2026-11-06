@@ -161,6 +161,85 @@ class TestRelance(unittest.TestCase):
             installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
         self.assertNotIn("réglages du gabarit absents", flux.getvalue())
 
+    def _deborder(self, nom: str) -> tuple[str, int, int, Path]:
+        """Une section d'un moteur plus ancien, plus courte, dans `nom`, et un
+        budget au plus juste : la mise à jour la fait grossir au-delà."""
+        import re
+
+        f = self.racine / nom
+        texte = f.read_text(encoding="utf-8")
+        debut, fin = texte.index("### Les skills"), texte.index("### Livrer le travail")
+        f.write_text(texte[:debut] + texte[fin:], encoding="utf-8")
+        avant = len(f.read_bytes())
+        gf = self.racine / ".socle/guardrails.toml"
+        gf.write_text(re.sub(rf'^"{re.escape(nom)}" = \{{ max_bytes = \d+ \}}',
+                             f'"{nom}" = {{ max_bytes = {avant + 10} }}', gf.read_text(), flags=re.M))
+        with redirect_stdout(io.StringIO()) as flux:
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+        return flux.getvalue(), avant, len(f.read_bytes()), gf
+
+    def _budgets(self) -> list[tuple[str, str]]:
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="agent")
+        r = Rapport()
+        controles_memoire.budgets(ctx, r)
+        return [(c.chemin, c.message) for c in r.erreurs()]
+
+    def test_une_mise_a_jour_qui_fait_depasser_son_budget_a_agents_md_le_dit(self):
+        """B-0129 : la section du socle grossit à la mise à jour, et le budget
+        d'AGENTS.md, fixé au plus juste, ne peut que baisser. L'audit le
+        disait rouge, avec pour remède « archiver dans le journal »."""
+        self.racine = depot({"app.py": "print('ok')\n"})
+        installer(self.racine, adoption=False)
+        sortie, avant, apres, gf = self._deborder("AGENTS.md")
+        self.assertGreater(apres, avant + 10)
+        self.assertIn(f"!! AGENTS.md dépasse son budget : {apres} octets pour {avant + 10}, la section du socle, "
+                      f"posée ou régénérée, ayant grossi de {apres - avant} ; resserrer la partie propre au projet",
+                      sortie)
+        self.assertIn("relever le budget par une demande validée, puisque le relever assouplit un garde-fou", sortie)
+        # Le contrôle des budgets dit le même remède, et non d'archiver dans le journal.
+        self.assertEqual(self._budgets(),
+                         [("AGENTS.md", f"{apres} octets pour un budget de {avant + 10} (AGENTS.md) : resserrer la "
+                                        "partie propre au projet, hors de la section du socle, ou relever le budget "
+                                        "par une demande validée")])
+        # Relancée sans que la section grossisse, elle ne l'en accuse pas.
+        with redirect_stdout(io.StringIO()) as flux:
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+        self.assertNotIn("dépasse son budget", flux.getvalue())
+        # Un plafond de lignes reçoit le même remède.
+        lignes = (self.racine / "AGENTS.md").read_text(encoding="utf-8").count("\n")
+        gf.write_text(gf.read_text().replace(f'"AGENTS.md" = {{ max_bytes = {avant + 10} }}',
+                                             '"AGENTS.md" = { max_bytes = 16000, max_lines = 50 }'))
+        self.assertEqual(self._budgets(),
+                         [("AGENTS.md", f"{lignes} lignes pour un budget de 50 (AGENTS.md) : resserrer la partie "
+                                        "propre au projet, hors de la section du socle, ou relever le budget par une "
+                                        "demande validée")])
+
+    def test_un_claude_md_garde_comme_source_qui_depasse_son_budget_le_dit(self):
+        """B-0129 : un fichier du projet nomme CLAUDE.md, l'adoption le garde
+        comme source, et la section du socle y vit."""
+        self.racine = depot({"outil.sh": "cat CLAUDE.md\n", "CLAUDE.md": CLAUDE})
+        installer(self.racine)
+        self.assertFalse((self.racine / "AGENTS.md").exists())
+        sortie, avant, apres, _ = self._deborder("CLAUDE.md")
+        self.assertIn(f"!! CLAUDE.md dépasse son budget : {apres} octets pour {avant + 10}, la section du socle, "
+                      f"posée ou régénérée, ayant grossi de {apres - avant} ;", sortie)
+        self.assertIn(("CLAUDE.md", f"{apres} octets pour un budget de {avant + 10} (CLAUDE.md) : resserrer la "
+                                    "partie propre au projet, hors de la section du socle, ou relever le budget par "
+                                    "une demande validée"), self._budgets())
+
+    def test_le_contenu_repris_de_claude_md_n_est_pas_la_section(self):
+        """B-0129 : renommé en AGENTS.md, un CLAUDE.md garde son contenu ; ce
+        que la section a ajouté se compte sans lui."""
+        self.racine = depot({"CLAUDE.md": CLAUDE + "Une consigne du projet, longue. " * 300 + "\n"})
+        with redirect_stdout(io.StringIO()) as flux:
+            installeur.installer(self.racine, "python", "@essai", adoption=False, source=MOTEUR)
+        texte = (self.racine / "AGENTS.md").read_text(encoding="utf-8")
+        octets, section = len(texte.encode("utf-8")), installeur._taille_section(texte)
+        self.assertGreater(octets, 16000)
+        self.assertGreater(16000, octets - section)
+        self.assertIn(f"!! AGENTS.md dépasse son budget : {octets} octets pour 16000, la section du socle, posée ou "
+                      f"régénérée, ayant grossi de {section} ;", flux.getvalue())
+
     def test_un_sous_dossier_d_un_depot_est_refuse(self):
         """Les hooks git et le workflow de CI ne vivent qu'à la racine du
         dépôt : posés plus bas, ils ne tiraient pas, sans un mot."""

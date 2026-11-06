@@ -123,13 +123,26 @@ class TestSkillsDuSocle(unittest.TestCase):
         for nom in controles.DU_SOCLE:
             texte = (self.racine / installeur.SKILLS / nom / "SKILL.md").read_text()
             self.assertTrue(texte.startswith(f"---\nname: {nom}\n"))
-        self.assertEqual(sorted(controles.DU_SOCLE), ["socle-private-memory", "socle-request"])
+        self.assertEqual(sorted(controles.DU_SOCLE), ["socle-private-memory", "socle-request", "socle-review"])
         self.assertIn(".claude/skills/socle-*/**", config.Projet.charger(self.racine).chemins_proteges())
         self.assertEqual(juger(self.racine), {"skills.contrat": [], "skills.commandes": []})
 
+    def test_les_instructions_ne_nomment_que_les_skills_du_socle_poses(self):
+        """Relevé par la revue du lot de D-0075 : un nom de skill faux dans
+        les instructions (`socle-reveiw`) passait tous les contrôles, et la
+        règle aurait renvoyé l'agent à un skill absent."""
+        import re
+
+        from socle.templates import DOSSIER
+
+        for gabarit in ("AGENTS.md", "AGENTS.en.md"):
+            cites = set(re.findall(r"`(socle-[a-z-]+)`", (DOSSIER / gabarit).read_text(encoding="utf-8")))
+            self.assertEqual(cites, set(controles.DU_SOCLE), gabarit)
+
     def test_dans_les_deux_langues_ils_passent_leurs_controles(self):
         self.assertEqual(installeur.poser_skills(self.racine, "en"),
-                         ["skills du socle posés dans .claude/skills : socle-private-memory, socle-request"])
+                         ["skills du socle posés dans .claude/skills : socle-private-memory, socle-request, "
+                          "socle-review"])
         texte = (self.racine / ".claude/skills/socle-request/SKILL.md").read_text()
         self.assertIn("description: Write a request for a human decision", texte)
         self.assertEqual(juger(self.racine), {"skills.contrat": [], "skills.commandes": []})

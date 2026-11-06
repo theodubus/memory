@@ -9,8 +9,11 @@ Sur `main` : la distribution publique `theodubus/socle`, sous MIT
 (ADR-0040), et les retours du pilote livrés par les PR #14 à #20 (journal,
 depuis J-2026-10-31-H). PR #20 : les fichiers de cas et les spécifications
 (B-0120), les questions de cadrage (B-0122), la documentation relue
-(B-0121, D-0069). Dernière fusionnée, la PR #21 : B-0123 et B-0116
-(J-2026-11-02-F). BMAD Method est retiré du socle (ADR-0036). Les
+(B-0121, D-0069). PR #21 : B-0123 et B-0116. Dernière fusionnée, la PR
+#22 : B-0106 (D-0071) et B-0125 (J-2026-11-02-J). Ouverte, la PR #23 : la
+revue adversariale, règle de tout projet (B-0124, ADR-0042 à ADR-0044), la
+page d'accueil publique (B-0128, D-0077), B-0127, et B-0129 (ADR-0045).
+Ensuite : les retours du pilote, pour B-0126 (chess). BMAD Method est retiré du socle (ADR-0036). Les
 projets d'essai sont dans le dossier de travail de la session, jetables.
 
 D-0026 est répondue `rien` : B-0048 et B-0018 restent ouverts, « on se le
