@@ -24,8 +24,9 @@ pilote : le premier projet réel équipé.
 dit, pour un langage, où sont les sources et les tests, comment
 reconnaître un test, une assertion ou une fonction publique, comment
 lancer les tests et mesurer la mutation (la part des défauts injectés que
-les tests attrapent). Le socle en fournit dix, dits maintenus, chacun
-éprouvé ici sur de vrais outils (Python, Java, Go…). Un projet n'en lit
+les tests attrapent). Le socle en fournit neuf, dits maintenus, chacun
+éprouvé ici sur de vrais outils (Python, Java, Go…) ; j'en avais compté
+dix, à tort, dans la demande précédente. Un projet n'en lit
 qu'un. Cette nuit, vers minuit, vous avez validé qu'il en lise plusieurs,
 pour JustCook, dont l'app sera en Kotlin et les outils sont en Python, et
 que l'adaptateur Kotlin s'écrive ici, dans le dépôt du socle.
@@ -83,12 +84,12 @@ de Python et de Kotlin).
    module, dans les garde-fous : deux langages ne se mêlent pas. Le
    balayage planifié, chaque semaine, lance les outils de tous.
 6. *L'installation et la mise à jour.* L'installeur accepte plusieurs
-   adaptateurs (`--adapter python-pytest --adapter kotlin-gradle`), et, en
+   adaptateurs (`--adapter python-pytest --adapter kotlin`), et, en
    automatique, en pose un par langage qu'il reconnaît ; le premier nommé
    prend `.socle/adapter.toml`, sans autre effet. La mise à jour rafraîchit chaque copie d'un
    adaptateur maintenu, que vous approuvez comme tout fichier protégé.
 7. *Ce qui ne change pas.* Un projet à un seul langage ne change rien, et
-   les dix adaptateurs maintenus restent tels quels. Le moteur ne connaît
+   les neuf adaptateurs maintenus restent tels quels. Le moteur ne connaît
    toujours aucun langage : tout ce qui en dépend reste dans les
    adaptateurs.
 8. *Les preuves.* Des tests pour chaque règle à deux langages ; l'auto-test
@@ -96,8 +97,17 @@ de Python et de Kotlin).
    passe ; le banc éprouve un projet d'essai en Python et en Kotlin, avec
    les vrais outils.
 
-**L'ordre.** D'abord l'adaptateur Kotlin pour Gradle, utile seul à un
-projet tout en Kotlin, éprouvé par le banc, dès maintenant. Puis le moteur,
+**L'ordre.** D'abord l'adaptateur Kotlin pour Gradle, `kotlin`, utile seul
+à un projet tout en Kotlin : il est écrit, et éprouvé par le banc. Il a
+demandé deux changements du moteur, que la spécification ne touche pas :
+le lecteur de PIT rangeait ses résultats sous `src/main/java/`, et le
+verdict retrouve désormais un module Kotlin par son plus long suffixe ;
+l'installeur reconnaît Kotlin à `build.gradle.kts`, pourvu qu'une source
+`.kt` l'accompagne. Deux tests existants listent les adaptateurs
+maintenus et les langages du banc :
+`test_les_adaptateurs_maintenus` et `test_un_projet_par_adaptateur_nouveau`
+en attendent un de plus, `kotlin` ; votre validation couvre ce changement
+de leur valeur attendue, et rien de l'adaptateur ne se commite avant. Puis le moteur,
 après votre réponse. Puis une version du socle, et la mise à jour de
 JustCook, qu'une demande posée dans son dépôt vous fera approuver.
 Quelques jours en tout.
