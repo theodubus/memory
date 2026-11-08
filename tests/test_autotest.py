@@ -99,6 +99,30 @@ class TestEtagesSousLaCiExigee(unittest.TestCase):
         self.assertEqual(autotest.etage_git(a, c, env=env), "")
         self.assertEqual(autotest.etage_push(a, c, env=env), "")
 
+    def test_il_se_pousse_aussi_vers_une_branche_deja_poussee(self):
+        """Le hook avant push juge la plage qui part comme la CI : sur une
+        branche déjà poussée, il refusait le fichier en attente, que D-0071
+        laisse pousser (constaté le 8 novembre, sur ce dépôt)."""
+        from pathlib import Path
+
+        import socle
+
+        a = autotest.Atelier(Path(socle.__file__).resolve().parent.parent, False)
+        self.addCleanup(a.nettoyer)
+        a.preparer()
+        c = a.clone()
+        env = autotest.ci_exigee(a, c)
+        autotest.protege_en_attente(a, c)
+        # La branche existe déjà en face, sans le fichier protégé : sinon le
+        # push en créerait une neuve, sans plage à juger.
+        self.assertEqual(autotest.etage_push(a, c, hooks=False, env=env), "")
+        self.assertEqual(autotest.etage_git(a, c, env=env), "")
+        self.assertEqual(autotest.etage_push(a, c, env=env), "")
+        # La CI, elle, le refuse jusqu'à la réponse de l'humain.
+        r = a.socle(c, "check", "--stage", "ci", "--base", "origin/main", env=env)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertRegex(r.stdout, r"ECHEC — .*protege\.fichiers")
+
 
 AUTOTEST_ENSUITE = bool(os.environ.get(autotest.ENSUITE))
 ETAPES_RAPIDES = bool(os.environ.get(verification.RAPIDE))

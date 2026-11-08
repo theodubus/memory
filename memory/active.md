@@ -5,16 +5,17 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-Sur `main` : la distribution publique `theodubus/socle`, sous MIT
-(ADR-0040), et les retours du pilote livrés par les PR #14 à #20 (journal,
-depuis J-2026-10-31-H). PR #20 : les fichiers de cas et les spécifications
-(B-0120), les questions de cadrage (B-0122), la documentation relue
-(B-0121, D-0069). PR #21 : B-0123 et B-0116. Dernière fusionnée, la PR
-#22 : B-0106 (D-0071) et B-0125 (J-2026-11-02-J). Ouverte, la PR #23 : la
-revue adversariale, règle de tout projet (B-0124, ADR-0042 à ADR-0044), la
-page d'accueil publique (B-0128, D-0077), B-0127, et B-0129 (ADR-0045).
-Ensuite : les retours du pilote, pour B-0126 (chess). BMAD Method est retiré du socle (ADR-0036). Les
-projets d'essai sont dans le dossier de travail de la session, jetables.
+Sur `main` : la distribution publique `theodubus/socle` (ADR-0040), et
+les retours du pilote livrés jusqu'à la PR #23 (journal, depuis
+J-2026-10-31-H). Ouverte, la PR #24 : le contexte d'une demande part du
+projet, chaque demande est relue à froid (B-0130, ADR-0046), et le hook
+avant push laisse partir un fichier protégé en attente (D-0071). D-0079,
+la copie protégée du skill `socle-request`, est validée : la PR attend sa
+fusion. B-0132 : règle validée (D-0080, ADR-0050) ; le skill `socle-resume`
+attend D-0081, non commité, dans l'arbre (J-2026-11-08-L).
+Ensuite : les retours du pilote pour B-0126 (chess), le
+compte de deux journées sans défaut repartant du 8 novembre. Les projets
+d'essai sont dans le dossier de travail de la session, jetables.
 
 D-0026 est répondue `rien` : B-0048 et B-0018 restent ouverts, « on se le
 garde en tete et on voit si ça finit par etre bloquant ».
