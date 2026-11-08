@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0130 — Une demande ne remet pas en contexte l'humain qui revient sur le projet après des jours : elle suppose le projet en tête
 
-> statut : ouvert · origine : J-2026-11-08-A · lu : backlog@826570b4
+> statut : fait · origine : J-2026-11-08-A · ref : J-2026-11-08-G · lu : backlog@826570b4
 
 Retour du pilote (J-2026-11-08-A). Une demande du pilote remplit le
 contrat du socle, mais son contexte commence par « Le banc d'essai note un
@@ -24,4 +24,4 @@ et une relecture à froid de chaque demande avant de la poser.
 
 - [x] la spécification soumise à Théo et validée
 - [x] le contexte d'une demande part du projet et du but du chantier, et le contrôle des demandes le vérifie
-- [ ] la relecture à froid d'une demande a sa commande et son étape dans le skill `socle-request`
+- [x] la relecture à froid d'une demande a sa commande et son étape dans le skill `socle-request`
