@@ -9,8 +9,9 @@ Sur `main` : la distribution publique `theodubus/socle` (ADR-0040), et
 les retours du pilote livrés jusqu'à la PR #24, fusionnée le 8 novembre
 (journal, depuis J-2026-10-31-H ; J-2026-11-08-N). Aucune PR ouverte. B-0132 : le skill `socle-resume` est validé (D-0081) et appliqué ici ;
 reste une coupure réelle reprise par un réveil. B-0133 : ce qu'il ne
-couvre pas, pour une demande. Le pilote passe à Kotlin : D-0082 (B-0095,
-plusieurs adaptateurs) attend Théo ; ses frictions, B-0134 à B-0139.
+couvre pas, pour une demande. Pilote en Kotlin : D-0083 (adaptateurs
+multiples) attend Théo ; l'adaptateur `kotlin`, éprouvé, l'attend dans
+l'arbre (J-2026-11-08-U). Frictions : B-0134 à B-0139.
 Ensuite : les retours du pilote pour B-0126 (chess), le
 compte de deux journées sans défaut repartant du 8 novembre. Les projets
 d'essai sont dans le dossier de travail de la session, jetables.
