@@ -1,7 +1,7 @@
 <!-- socle: couche=decisions zone=publique -->
 # ADR-0048 — Un agent coupé reprend seul à la levée de sa limite d'usage : un réveil armé pendant chaque tour de travail, retiré à sa fin normale
 
-> statut : proposée · date : 2026-11-08 · source : B-0132@cc8d5405, J-2026-11-08-H@3d8256b3, ADR-0047@6c9bbf4f · lu : decisions@a3981c9d
+> statut : abandonnée · date : 2026-11-08 · source : B-0132@cc8d5405, J-2026-11-08-H@3d8256b3, ADR-0047@6c9bbf4f · lu : decisions@a3981c9d
 
 ## Contexte
 
