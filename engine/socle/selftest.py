@@ -1978,7 +1978,10 @@ def _temoins() -> list[tuple[str, Callable]]:
     def _(a, c):
         protege_en_attente(a, c)
         env = ci_exigee(a, c)
-        return etage_git(a, c, env=env) or etage_push(a, c, env=env)
+        # La branche existe déjà en face : le hook avant push juge aussi la
+        # plage qui part, comme la CI la jugera.
+        return (etage_push(a, c, hooks=False, env=env) or etage_git(a, c, env=env)
+                or etage_push(a, c, env=env))
 
     @temoin("un push relu par l'humain, son accord relayé avec son texte exact, passe le hook de l'agent")
     def _(a, c):

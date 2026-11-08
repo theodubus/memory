@@ -162,10 +162,11 @@ class TestApprobation(unittest.TestCase):
         git(self.racine, "commit", "-qm", "la demande", "--no-verify")
         git(self.racine, "push", "-q", "--no-verify", "-u", "origin", "main")
 
-        def juger(etage, exigee, tete=None) -> Rapport:
+        def juger(etage, exigee, tete=None, avant_push=False) -> Rapport:
             controles_cliquet._FUSION_GARDEE.clear()
             with unittest.mock.patch("socle.state.ci_exigee", return_value=(exigee, "main")):
-                ctx = contexte.Contexte(config.Projet.charger(self.racine), etage=etage, base=base, tete=tete)
+                ctx = contexte.Contexte(config.Projet.charger(self.racine), etage=etage, base=base, tete=tete,
+                                        avant_push=avant_push)
                 r = Rapport()
                 controles_cliquet.proteges(ctx, r)
                 self.assertEqual(controles_cliquet.fusion_gardee(ctx.projet), exigee is True)
@@ -181,6 +182,12 @@ class TestApprobation(unittest.TestCase):
         # La CI le refuse toujours.
         git(self.racine, "commit", "-qam", "la mise à jour", "--no-verify")
         self.assertTrue(juger("ci", True, git(self.racine, "rev-parse", "HEAD").strip()).erreurs("protege.fichiers"))
+        tete = git(self.racine, "rev-parse", "HEAD").strip()
+        # La plage que le hook avant push juge comme la CI le laisse partir,
+        # sous la même condition que l'étage git.
+        self.assertEqual(juger("ci", True, tete, avant_push=True).erreurs("protege.fichiers"), [])
+        self.assertTrue(juger("ci", False, tete, avant_push=True).erreurs("protege.fichiers"))
+        self.assertTrue(juger("ci", None, tete, avant_push=True).erreurs("protege.fichiers"))
 
     def test_l_etat_rappelle_l_approbation_jusqu_au_commit_suivant_de_l_agent(self):
         """B-0034, P7 : Théo a approuvé D-0012 dans son terminal, et ne
