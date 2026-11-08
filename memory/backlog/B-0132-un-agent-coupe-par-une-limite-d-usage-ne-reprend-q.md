@@ -14,6 +14,6 @@ fenêtres et l'heure de leur remise à zéro.
 
 ## Fait quand
 
-- [ ] la spécification soumise à Théo et validée
-- [ ] la procédure écrite et posée dans tout projet
+- [x] la spécification soumise à Théo et validée (D-0080, ADR-0050)
+- [x] la procédure écrite et posée dans tout projet (le skill `socle-resume`, D-0081)
 - [ ] une coupure réelle suivie d'une reprise sans message de l'humain

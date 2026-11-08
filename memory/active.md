@@ -7,8 +7,9 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 Sur `main` : la distribution publique `theodubus/socle` (ADR-0040), et
 les retours du pilote livrés jusqu'à la PR #24, fusionnée le 8 novembre
-(journal, depuis J-2026-10-31-H ; J-2026-11-08-N). Aucune PR ouverte. B-0132 : règle validée (D-0080, ADR-0050) ; le skill `socle-resume`
-attend D-0081, non commité, dans l'arbre (J-2026-11-08-L).
+(journal, depuis J-2026-10-31-H ; J-2026-11-08-N). Aucune PR ouverte. B-0132 : le skill `socle-resume` est validé (D-0081) et appliqué ici ;
+reste une coupure réelle reprise par un réveil. B-0133 : ce qu'il ne
+couvre pas, pour une demande.
 Ensuite : les retours du pilote pour B-0126 (chess), le
 compte de deux journées sans défaut repartant du 8 novembre. Les projets
 d'essai sont dans le dossier de travail de la session, jetables.
