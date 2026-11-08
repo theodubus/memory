@@ -6,12 +6,8 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 ## En cours
 
 Sur `main` : la distribution publique `theodubus/socle` (ADR-0040), et
-les retours du pilote livrés jusqu'à la PR #23 (journal, depuis
-J-2026-10-31-H). Ouverte, la PR #24 : le contexte d'une demande part du
-projet, chaque demande est relue à froid (B-0130, ADR-0046), et le hook
-avant push laisse partir un fichier protégé en attente (D-0071). D-0079,
-la copie protégée du skill `socle-request`, est validée : la PR attend sa
-fusion. B-0132 : règle validée (D-0080, ADR-0050) ; le skill `socle-resume`
+les retours du pilote livrés jusqu'à la PR #24, fusionnée le 8 novembre
+(journal, depuis J-2026-10-31-H ; J-2026-11-08-N). Aucune PR ouverte. B-0132 : règle validée (D-0080, ADR-0050) ; le skill `socle-resume`
 attend D-0081, non commité, dans l'arbre (J-2026-11-08-L).
 Ensuite : les retours du pilote pour B-0126 (chess), le
 compte de deux journées sans défaut repartant du 8 novembre. Les projets
