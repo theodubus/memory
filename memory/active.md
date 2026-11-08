@@ -11,7 +11,9 @@ J-2026-10-31-H). Ouverte, la PR #24 : le contexte d'une demande part du
 projet, chaque demande est relue à froid (B-0130, ADR-0046), et le hook
 avant push laisse partir un fichier protégé en attente (D-0071). D-0079,
 la copie protégée du skill `socle-request`, est validée : la PR attend sa
-fusion. Ensuite : les retours du pilote pour B-0126 (chess), le
+fusion. Sur la branche : B-0132, la reprise seule après une limite
+d'usage, sa règle soumise en entier dans sa demande (J-2026-11-08-J).
+Ensuite : les retours du pilote pour B-0126 (chess), le
 compte de deux journées sans défaut repartant du 8 novembre. Les projets
 d'essai sont dans le dossier de travail de la session, jetables.
 

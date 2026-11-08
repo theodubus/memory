@@ -1,7 +1,7 @@
 <!-- socle: couche=decisions zone=publique -->
 # ADR-0049 — Un agent coupé par une limite d'usage reprend seul à sa levée : un réveil par fenêtre pendant chaque tour de travail, qui ne reprend qu'une coupure par limite
 
-> statut : proposée · date : 2026-11-08 · source : B-0132@cc8d5405, J-2026-11-08-H@3d8256b3, J-2026-11-08-I@4e3666a8, ADR-0048@daa1288e · lu : decisions@94e8477d
+> statut : abandonnée · date : 2026-11-08 · source : B-0132@cc8d5405, J-2026-11-08-H@3d8256b3, J-2026-11-08-I@4e3666a8, ADR-0048@daa1288e · lu : decisions@94e8477d
 
 ## Contexte
 
