@@ -41,6 +41,11 @@ SECTION_MIN = 15
 # Une demande lue une semaine plus tard, sans le projet en tête : le contexte
 # raconte, il ne résume pas en une ligne.
 MOTS_CONTEXTE_MIN = 60
+# Chacun des trois paragraphes qui ouvrent le contexte (ADR-0046) dit
+# quelque chose : un nom en gras suivi d'une demi-phrase ne remet personne
+# en contexte. Une demande datée d'avant la règle garde l'ancien contrat.
+MOTS_PARAGRAPHE_MIN = 15
+DATE_PARAGRAPHES = "2026-11-08"
 LIEN = re.compile(r"\]\([^)\s]+\)|https?://\S+")
 # Un trou du gabarit : `<texte avec des espaces>`, hors commentaire HTML ;
 # collé à ses chevrons, pour qu'une comparaison (« < 5 », « a <= b ») n'en
@@ -182,6 +187,40 @@ def identifiants_cites(texte: str, motifs: list[re.Pattern]) -> set[str]:
     return res
 
 
+def paragraphes_du_contexte(contexte: str) -> list[str]:
+    """ADR-0046 : le contexte commence par « Le projet », « Le chantier » et
+    « La question », dans cet ordre, chacun ouvert par son nom en gras et long
+    d'au moins quinze mots. Les noms se lisent dans les deux langues. Vide :
+    le contexte part du projet."""
+    paragraphes = [p.strip() for p in re.split(r"\n\s*\n", contexte.strip()) if p.strip()]
+
+    def cle(p: str) -> str | None:
+        for k, noms in langue.PARAGRAPHES_CONTEXTE.items():
+            if any(re.match(rf"\*\*\s*{re.escape(n)}\s*[.:]?\s*\*\*", p, re.I) for n in noms.values()):
+                return k
+        return None
+
+    trouves = [(cle(p), p) for p in paragraphes]
+    trouves = [(k, p) for k, p in trouves if k]
+    ordre = list(langue.PARAGRAPHES_CONTEXTE)
+    noms = {k: v["fr"] for k, v in langue.PARAGRAPHES_CONTEXTE.items()}
+    manque = [noms[k] for k in ordre if k not in {k for k, _ in trouves}]
+    if manque:
+        return [trad("« Contexte » : il commence par trois paragraphes, chacun ouvert par son nom en gras, pour "
+                     "qui revient sur le projet après des semaines : **Le projet.** (ce que fait le projet), **Le "
+                     "chantier.** (le but du travail en cours, ce qui est fait et ce qui reste), **La question.** "
+                     "(ce qui la pose maintenant) ; il manque : {manque}", manque=", ".join(manque))]
+    fautes = []
+    if [k for k, _ in trouves][:3] != ordre or cle(paragraphes[0]) != "projet":
+        fautes.append(trad("« Contexte » : il commence par « Le projet », puis « Le chantier », puis « La "
+                           "question », dans cet ordre"))
+    for k, p in trouves:
+        if len(re.findall(r"[^\W\d_]{2,}", p)) - len(noms[k].split()) < MOTS_PARAGRAPHE_MIN:
+            fautes.append(trad("« Contexte » : le paragraphe « {nom} » fait moins de {n} mots", nom=noms[k],
+                               n=MOTS_PARAGRAPHE_MIN))
+    return fautes
+
+
 def linter(d: Demande, projet: config.Projet) -> list[str]:
     """Les manquements au contrat, en clair. Vide : la demande est conforme."""
     fautes = []
@@ -217,6 +256,8 @@ def linter(d: Demande, projet: config.Projet) -> list[str]:
                                titre=titre, trou=trou[:40]))
 
     contexte = d.sections.get("contexte", "")
+    if contexte and d.entree.meta.get("date", "") >= DATE_PARAGRAPHES:
+        fautes += paragraphes_du_contexte(contexte)
     if contexte and len(re.findall(r"[^\W\d_]{2,}", contexte)) < MOTS_CONTEXTE_MIN:
         fautes.append(trad("« Contexte » trop court : moins de {n} mots ne suffisent pas à "
                            "quelqu'un qui n'a pas ouvert le projet depuis une semaine",

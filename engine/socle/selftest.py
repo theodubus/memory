@@ -904,6 +904,15 @@ def _cas() -> list[Cas]:
     def _(a, c):
         return etage_outil(a, c, "Write", {"file_path": str(c / "memory/requests/D-0001-refactor.md"), "content": DEMANDE_NUE})
 
+    @defaut("demande-sans-le-projet", "demande dont le contexte ne part pas du projet : l'humain qui y revient "
+            "après des semaines ne sait plus de quoi elle parle", "agent", "contexte du projet")
+    def _(a, c):
+        # ADR-0046 : la demande saine, datée d'après la règle, sans les trois
+        # paragraphes qui ouvrent son contexte.
+        recente = demande_bonne(a, c).replace("> date : 2026-10-10", "> date : 2026-11-08")
+        return etage_outil(a, c, "Write", {"file_path": str(c / "memory/requests/D-0001-refactor.md"),
+                                           "content": recente})
+
     @defaut("demande-sans-lien", "demande qui ne dit pas où regarder", "agent", "où regarder")
     def _(a, c):
         sans = demande_bonne(a, c).replace("[calc.py](../../calc.py)", "le module")
@@ -2170,6 +2179,7 @@ RAISONS_AGENT = {
     "memoire.peremption": "chantier actif inchangé depuis",
     "réglage de l'agent": "les réglages de Claude Code commandent ses hooks",
     "où regarder": "« Où regarder » doit donner un lien",
+    "contexte du projet": "« Contexte » : il commence par trois paragraphes",
     "récap": "pas Pour toi :",
     "suite": "pas Ensuite :",
     "liens": "liens que l'humain ne pourra pas suivre",

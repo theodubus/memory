@@ -99,5 +99,47 @@ class TestDossier(unittest.TestCase):
         self.assertIn("(aucun changement hors de la mémoire : rien à relire)", revue.dossier(self.projet))
 
 
+class TestRelectureAFroid(unittest.TestCase):
+    """ADR-0046 : le lecteur n'a que le texte de la demande, dans le rôle de
+    l'humain qui revient sur le projet après des semaines."""
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-froid-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        git(self.racine, "init", "-q", "-b", "main")
+        (self.racine / "memory/requests").mkdir(parents=True)
+        self.texte = ("<!-- socle: couche=demandes zone=publique -->\n# D-0001 — Choisir la source des tickets\n\n"
+                      "> date : 2026-11-08\n\n## Contexte\n\nLe banc d'essai note un fournisseur.\n")
+        (self.racine / "memory/requests/D-0001-choisir.md").write_text(self.texte, encoding="utf-8")
+        git(self.racine, "add", "-A")
+        self.projet = config.Projet(racine=self.racine)
+
+    def test_le_dossier_donne_la_consigne_puis_la_demande_seule(self):
+        texte = revue.dossier_demande(self.projet, "D-0001")
+        self.assertTrue(texte.startswith("# Relecture à froid d'une demande\n\nTu es l'humain à qui cette demande "
+                                         "s'adresse. Tu n'as pas ouvert ce projet depuis trois semaines"))
+        self.assertIn("n'ouvre aucun lien, ne lis aucun fichier", texte)
+        self.assertIn("3. Chaque mot, nom, sigle ou renvoi que le texte emploie sans te l'expliquer", texte)
+        self.assertTrue(texte.endswith("## La demande\n\n" + self.texte.strip() + "\n"))
+
+    def test_une_demande_inconnue(self):
+        import argparse
+        import contextlib
+        import io
+
+        from socle import cli
+
+        self.assertIsNone(revue.dossier_demande(self.projet, "D-0002"))
+        with contextlib.redirect_stderr(io.StringIO()) as err:
+            code = cli.cmd_review(argparse.Namespace(root=str(self.racine), base=None, max_bytes=60_000,
+                                                     request="D-0002"))
+        self.assertEqual(code, 2)
+        self.assertIn("aucune demande D-0002", err.getvalue())
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            self.assertEqual(cli.cmd_review(argparse.Namespace(root=str(self.racine), base=None, max_bytes=60_000,
+                                                               request="D-0001")), 0)
+        self.assertIn("## La demande", out.getvalue())
+
+
 if __name__ == "__main__":
     unittest.main()

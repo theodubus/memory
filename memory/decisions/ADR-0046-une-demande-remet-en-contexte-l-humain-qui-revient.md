@@ -1,7 +1,7 @@
 <!-- socle: couche=decisions zone=publique -->
 # ADR-0046 — Une demande remet en contexte l'humain qui revient après des semaines : un contexte qui part du projet, et une relecture à froid avant de la poser
 
-> statut : proposée · date : 2026-11-08 · source : B-0130@5cad0686, J-2026-11-08-A@4bd08673 · lu : decisions@95c3299f
+> statut : acceptée · date : 2026-11-08 · validation : D-0078@c7bdf1a6 · source : B-0130@5cad0686, J-2026-11-08-A@4bd08673 · lu : decisions@95c3299f
 
 ## Contexte
 

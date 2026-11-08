@@ -125,6 +125,81 @@ class TestContrat(unittest.TestCase):
         self.assertTrue(any("gabarit laissé tel quel" in f for f in fautes), fautes)
 
 
+PARAGRAPHES = """**Le projet.** Un analyseur de fichiers de configuration, écrit en Rust, que
+l'équipe d'exploitation lance à chaque déploiement pour refuser une configuration fausse.
+
+**Le chantier.** Le cliquet de mutation garde la suite de tests honnête : chaque
+fichier a un plafond de survivants qui ne peut que baisser. Le 2 octobre, tu as fixé ces
+plafonds au niveau mesuré ce jour-là.
+
+**La question.** Le balayage hebdomadaire de cette semaine dépasse le plafond d'un
+fichier, ce qui bloque la CI hebdomadaire jusqu'à ta décision.
+
+"""
+
+
+def _datee(texte: str, date: str = "2026-11-08") -> str:
+    return texte.replace("> date : 2026-10-10", f"> date : {date}")
+
+
+def _avec_paragraphes(texte: str, paragraphes: str = PARAGRAPHES) -> str:
+    return texte.replace("## Contexte\n\n", "## Contexte\n\n" + paragraphes, 1)
+
+
+class TestParagraphesDuContexte(unittest.TestCase):
+    """ADR-0046 : le contexte d'une demande part du projet, pour l'humain qui
+    y revient après des semaines (retour du pilote, J-2026-11-08-A)."""
+
+    def setUp(self):
+        self.projet = config.Projet(racine=Path("."))
+
+    def fautes(self, texte: str) -> list[str]:
+        return [f for f in demandes.linter(_demande(texte), self.projet) if "« Contexte » :" in f]
+
+    def test_une_demande_sans_les_trois_paragraphes_est_refusee(self):
+        fautes = self.fautes(_datee(CONFORME))
+        self.assertEqual(len(fautes), 1)
+        self.assertIn("**Le projet.** (ce que fait le projet)", fautes[0])
+        self.assertTrue(fautes[0].endswith("il manque : Le projet, Le chantier, La question"))
+
+    def test_avec_les_trois_paragraphes_elle_passe(self):
+        self.assertEqual(demandes.linter(_demande(_avec_paragraphes(_datee(CONFORME))), self.projet), [])
+        self.assertEqual(demandes.paragraphes_du_contexte(PARAGRAPHES + "Le détail suit."), [])
+        # Les noms se lisent aussi en anglais.
+        anglais = PARAGRAPHES.replace("**Le projet.**", "**The project.**").replace(
+            "**Le chantier.**", "**The work.**").replace("**La question.**", "**The question.**")
+        self.assertEqual(self.fautes(_avec_paragraphes(_datee(CONFORME), anglais)), [])
+
+    def test_il_en_manque_un(self):
+        sans = PARAGRAPHES.replace("**Le chantier.**", "Le chantier :")
+        self.assertTrue(self.fautes(_avec_paragraphes(_datee(CONFORME), sans))[0].endswith("il manque : Le chantier"))
+
+    def test_dans_le_desordre_ou_ailleurs_qu_en_tete(self):
+        projet, chantier, question = PARAGRAPHES.strip().split("\n\n")
+        desordre = "\n\n".join([chantier, projet, question]) + "\n\n"
+        self.assertEqual(self.fautes(_avec_paragraphes(_datee(CONFORME), desordre)),
+                         ["« Contexte » : il commence par « Le projet », puis « Le chantier », puis « La "
+                          "question », dans cet ordre"])
+        apres = _datee(CONFORME).replace("plafond actuel de trois survivants pour ce fichier a été mesuré le mois "
+                                         "dernier\net il casse désormais, ce qui bloque la CI hebdomadaire jusqu'à "
+                                         "décision.\n", "plafond actuel de trois survivants pour ce fichier a été "
+                                         "mesuré le mois dernier\net il casse désormais, ce qui bloque la CI "
+                                         "hebdomadaire jusqu'à décision.\n\n" + PARAGRAPHES.rstrip("\n") + "\n")
+        self.assertIn("« Contexte » : il commence par « Le projet », puis « Le chantier », puis « La question », "
+                      "dans cet ordre", self.fautes(apres))
+
+    def test_un_paragraphe_trop_court(self):
+        court = PARAGRAPHES.replace("**La question.** Le balayage hebdomadaire de cette semaine dépasse le plafond "
+                                    "d'un\nfichier, ce qui bloque la CI hebdomadaire jusqu'à ta décision.",
+                                    "**La question.** Le plafond casse.")
+        self.assertEqual(self.fautes(_avec_paragraphes(_datee(CONFORME), court)),
+                         ["« Contexte » : le paragraphe « La question » fait moins de 15 mots"])
+
+    def test_une_demande_d_avant_la_regle_garde_l_ancien_contrat(self):
+        self.assertEqual(self.fautes(_datee(CONFORME, "2026-11-07")), [])
+        self.assertEqual(self.fautes(CONFORME), [])
+
+
 class TestUneDemandeQuiAutorise(unittest.TestCase):
     """D-0040 (B-0081) : une demande aux réponses `tout`, `compatibilite-seule`
     et `refuser` nommait les tests à supprimer ; la réponse `tout` n'en

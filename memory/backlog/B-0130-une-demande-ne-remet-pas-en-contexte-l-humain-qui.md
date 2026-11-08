@@ -22,6 +22,6 @@ et une relecture à froid de chaque demande avant de la poser.
 
 ## Fait quand
 
-- [ ] la spécification soumise à Théo et validée
-- [ ] le contexte d'une demande part du projet et du but du chantier, et le contrôle des demandes le vérifie
+- [x] la spécification soumise à Théo et validée
+- [x] le contexte d'une demande part du projet et du but du chantier, et le contrôle des demandes le vérifie
 - [ ] la relecture à froid d'une demande a sa commande et son étape dans le skill `socle-request`
