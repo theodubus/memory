@@ -136,9 +136,10 @@ reste ; ceux du socle, posés par l'installeur, sont protégés.
 supprimer un test, une décision coûteuse à défaire, une action
 irréversible), l'agent écrit une demande et en donne le lien. Elle se lit
 seule, même après des semaines loin du projet : son contexte commence par
-le projet, le chantier en cours et la question, et un sous-agent qui n'a
-que son texte l'a relue à froid avant qu'elle vous parvienne. Elle se
-termine par la liste des réponses possibles. Répondre dans la
+le projet, le chantier en cours et la question. L'agent qui a des
+sous-agents la fait relire à froid, par l'un d'eux qui n'a que son texte,
+avant de vous la poser, et son récap en donne le bilan. Elle se termine par
+la liste des réponses possibles. Répondre dans la
 conversation ; l'agent consigne la réponse mot pour mot.
 
 - Les réponses de base sont les mêmes dans toute demande : `valider` (la

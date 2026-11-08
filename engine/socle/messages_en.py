@@ -1566,6 +1566,8 @@ MESSAGES: dict[str, str] = {
         "# Cold reading of a request",
     "## La demande":
         "## The request",
+    "une demande récente, ouverte sur le projet, le chantier et la question, passe le hook de l'agent":
+        "a recent request, opening on the project, the work and the question, passes the agent's hook",
     "demande dont le contexte ne part pas du projet : l'humain qui y revient après des semaines ne sait plus de "
     "quoi elle parle":
         "request whose context does not start from the project: the human coming back to it after weeks no longer "

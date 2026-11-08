@@ -398,6 +398,17 @@ def empreinte(a: Atelier, c: Path, cible: str) -> str:
     return m.group(1)
 
 
+# Les trois paragraphes qui ouvrent le contexte d'une demande récente
+# (ADR-0046).
+PARAGRAPHES_DU_CONTEXTE = (
+    "**Le projet.** Un module de calcul, petit et public, que d'autres projets importent pour doubler et "
+    "multiplier des nombres.\n\n"
+    "**Le chantier.** Le backlog demande d'y ajouter une fonction triple ; rien n'est encore écrit, et aucune "
+    "décision passée ne porte sur la forme du module.\n\n"
+    "**La question.** Ajouter triple sur le modèle de double dupliquerait sa logique, d'où le choix d'une "
+    "refonte avant d'écrire.\n\n")
+
+
 def demande_bonne(a: Atelier, c: Path) -> str:
     return DEMANDE_BONNE.replace("- B-0001 —", f"- B-0001@{empreinte(a, c, 'B-0001')} —")
 
@@ -1792,6 +1803,14 @@ def _temoins() -> list[tuple[str, Callable]]:
         if r.returncode != 0:
             return r.stdout + r.stderr
         return etage_ci(a, c)
+
+    @temoin("une demande récente, ouverte sur le projet, le chantier et la question, passe le hook de l'agent")
+    def _(a, c):
+        # ADR-0046 : le pendant sain de `demande-sans-le-projet`.
+        recente = demande_bonne(a, c).replace("> date : 2026-10-10", "> date : 2026-11-08").replace(
+            "## Contexte\n\n", "## Contexte\n\n" + PARAGRAPHES_DU_CONTEXTE, 1)
+        return etage_outil(a, c, "Write", {"file_path": str(c / "memory/requests/D-0001-refactor.md"),
+                                           "content": recente})
 
     @temoin("une demande complète passe le hook de l'agent")
     def _(a, c):

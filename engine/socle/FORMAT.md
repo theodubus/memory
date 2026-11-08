@@ -226,8 +226,10 @@ révélée impossible à trancher pour l'humain.
   date) et `**La question.**` (ce qui la pose maintenant). Viennent ensuite
   le problème lui-même — un extrait de code, la règle en cause — et, si la
   décision porte sur un contenu (un inventaire, un format), son résumé sur
-  place. Les trois noms se lisent dans les deux langues ; une demande datée
-  d'avant le 8 novembre 2026 en est dispensée.
+  place. Les trois noms se lisent dans les deux langues. En est dispensée
+  une demande posée avant le moteur qui apporte la règle, telle quelle au
+  commit qui précède la mise à jour de son verrou, ou datée d'avant le
+  8 novembre 2026.
 - « Où regarder » donne un lien vers chaque document ou passage à lire
   pour décider, et dit ce qu'il faut y vérifier : le permalien de
   `socle url`, ou, sans adresse de dépôt connue, un lien relatif depuis la
