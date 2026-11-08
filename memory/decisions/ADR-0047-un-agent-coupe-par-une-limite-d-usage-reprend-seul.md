@@ -1,7 +1,7 @@
 <!-- socle: couche=decisions zone=publique -->
 # ADR-0047 — Un agent coupé par une limite d'usage reprend seul à sa levée : un seul réveil, armé quand la limite approche, porteur du travail en cours
 
-> statut : proposée · date : 2026-11-08 · source : B-0132@cc8d5405, J-2026-11-08-H@3d8256b3 · lu : decisions@cece1142
+> statut : abandonnée · date : 2026-11-08 · source : B-0132@cc8d5405, J-2026-11-08-H@3d8256b3 · lu : decisions@cece1142
 
 ## Contexte
 
