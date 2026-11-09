@@ -6,14 +6,13 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 ## En cours
 
 Sur `main` : la distribution `theodubus/socle` (ADR-0040) et les retours
-du pilote jusqu'à la PR #24, fusionnée le 8 novembre. PR #25
-ouverte : skill `socle-resume` (B-0132, D-0081 ; reste une coupure
-réelle reprise), D-0082 et D-0083 validées, l'adaptateur
-`kotlin` et sa revue (J-2026-11-09-B). Ensuite : l'ADR qui recopie D-0083,
-puis le moteur des adaptateurs multiples (B-0095) ; B-0133, B-0140, B-0141 ;
-les frictions du pilote (B-0134 à B-0139) ; puis B-0126 (chess), le compte
-de deux journées sans défaut repartant du 8 novembre. Projets d'essai :
-jetables, hors du dépôt.
+du pilote jusqu'à la PR #24, fusionnée le 8 novembre. PR #25 ouverte :
+skill `socle-resume` (B-0132, D-0081 ; reste une coupure réelle reprise),
+l'adaptateur `kotlin`, puis le moteur des adaptateurs multiples (ADR-0051,
+J-2026-11-09-F) ; B-0095 reste ouvert jusqu'au retour de JustCook. Ensuite :
+une version du socle pour JustCook ; B-0133, B-0140 à B-0142 ; les
+frictions du pilote (B-0134 à B-0139) ; puis B-0126 (chess), le compte de
+deux journées sans défaut repartant du 8 novembre.
 
 D-0026 est répondue `rien` : B-0048 et B-0018 restent ouverts, « on se le
 garde en tete et on voit si ça finit par etre bloquant ».

@@ -48,7 +48,7 @@ fast = true
 # est réécrit à chaque balayage.
 tool = "pit"
 command = "./gradlew -q pitest"
-modules = ["src/main/kotlin/**/*.kt"]
+modules = ["src/main/kotlin/**/*.kt", "**/src/main/kotlin/**/*.kt"]
 # Une fonction qui a un corps : une interface ou un `expect` n'a rien à muter.
 has_code = '\bfun\b[^\n]*\)[^\n(]*[{=]'
 parser = "pit"

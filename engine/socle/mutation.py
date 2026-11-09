@@ -30,7 +30,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
 
-from socle import config
+from socle import config, utils as outils
 from socle.messages import a_traduire, trad
 from socle.report import Rapport
 
@@ -247,7 +247,7 @@ def verdict(projet: config.Projet, dossier: Path, poser: bool = False) -> Rappor
     if not dossier.is_dir():
         r.erreur(ident, trad("dossier de résultats introuvable : {dossier}", dossier=dossier))
         return r
-    plafonds = projet.gf("mutation", "caps", defaut={}) or {}
+    plafonds = plafonds_de(projet)
     if not plafonds:
         r.erreur(ident, trad("plafond vide : rien à comparer — un vert ici serait silencieux"))
         return r
@@ -281,6 +281,18 @@ def verdict(projet: config.Projet, dossier: Path, poser: bool = False) -> Rappor
                                  "`{fichier}` n'est pas reconnue ; l'écrire à la main",
                                  module=module, fichier=projet.chemins.garde_fous))
     return r
+
+
+def plafonds_de(projet: config.Projet) -> dict:
+    """Les plafonds que juge l'adaptateur de la vue. Dans un projet à
+    plusieurs adaptateurs, ceux de ses seuls modules : deux langages ne se
+    mêlent pas (ADR-0051, point 5). Seul, il les juge tous."""
+    plafonds = projet.gf("mutation", "caps", defaut={}) or {}
+    if not projet.plusieurs_adaptateurs:
+        return plafonds
+    cap = projet.adaptateur.get("capabilities", {}).get("mutation", {})
+    siens = set(outils.filtrer(sorted(plafonds), cap.get("modules", []), cap.get("modules_exclude", [])))
+    return {m: p for m, p in plafonds.items() if m in siens}
 
 
 def poser_plafonds(projet: config.Projet, mesures: dict[str, int]) -> list[str]:
@@ -349,19 +361,35 @@ def commandes_de_balayage(projet: config.Projet) -> tuple[list[str], Path | None
         return [], None, (trad("la commande de l'adaptateur balaie module par module sans `{output}` : chaque "
                                "balayage écraserait le précédent ; y ajouter l'option de l'outil qui choisit "
                                "son dossier de sortie, `{output}` en valeur"))
-    modules = sorted(projet.gf("mutation", "caps", defaut={}) or {})
+    modules = sorted(plafonds_de(projet))
     if not modules:
         return [], None, trad("plafond vide : aucun module à balayer")
     dossier = projet.racine / SORTIES
+    if projet.plusieurs_adaptateurs:
+        dossier = dossier / projet.adaptateur_courant.nom
     return [commande.replace("{module}", shlex.quote(m)).replace("{output}", shlex.quote(str(dossier / f"{k:03d}")))
             for k, m in enumerate(modules)], dossier, None
 
 
 def balayer(projet: config.Projet, poser: bool = False, flux=None) -> Rapport:
-    """Lance le balayage de l'adaptateur, puis rend son verdict. Le code de
-    sortie de l'outil ne décide rien (des survivants le font souvent échouer) :
-    le verdict lit ses résultats, et un module sans résultat casse. Sans
-    `flux`, la sortie de l'outil passe telle quelle, au fil du balayage."""
+    """Lance le balayage de chaque adaptateur, puis rend son verdict. Le code
+    de sortie de l'outil ne décide rien (des survivants le font souvent
+    échouer) : le verdict lit ses résultats, et un module sans résultat
+    casse. Sans `flux`, la sortie de l'outil passe telle quelle, au fil du
+    balayage. Dans un projet à plusieurs adaptateurs, chaque constat nomme le
+    sien (ADR-0051, point 5)."""
+    if not projet.plusieurs_adaptateurs:
+        return _balayer(projet, poser, flux)
+    r = Rapport()
+    for a in projet.adaptateurs:
+        siens = _balayer(projet.pour(a), poser, flux)
+        for k in siens.constats:
+            k.message = trad("{adaptateur} : {message}", adaptateur=a.nom, message=k.message)
+        r.fusionner(siens)
+    return r
+
+
+def _balayer(projet: config.Projet, poser: bool, flux) -> Rapport:
     r = Rapport()
     ident = "mutation.balayage"
     r.execute(ident)
@@ -506,10 +534,13 @@ def etat_du_balayage(projet: config.Projet, fichiers: list[str],
     quand il tourne, ou quand l'adaptateur ne déclare pas de mutation."""
     from socle import links as liens
 
-    cap = projet.adaptateur.get("capabilities", {}).get("mutation", {})
-    if "command" not in cap:
+    # Un balayage planifié lance les outils de tous les adaptateurs : un
+    # workflow qui nomme celui de l'un d'eux compte.
+    caps = [c for a in projet.adaptateurs
+            if "command" in (c := a.donnees.get("capabilities", {}).get("mutation", {}))]
+    if not caps:
         return None, "", None, None
-    flux = workflow_de_balayage(cap, fichiers, lire)
+    flux = next((f for c in caps if (f := workflow_de_balayage(c, fichiers, lire))), None)
     if flux is None:
         return "erreur", (trad("aucun workflow ne lance le balayage de mutation : le cliquet ne se mesure "
                                "jamais. Relancer l'installeur, qui pose `{workflow}`", workflow=WORKFLOW)), None, None

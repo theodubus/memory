@@ -116,6 +116,42 @@ fournit).
   Le socle ne marche donc pas que pour Rust : il tourne en Python ici, à
   chaque commit.
 
+## Un projet en plusieurs langages
+
+Un projet peut en écrire plusieurs, une app et ses outils, un serveur et son
+client : il a alors un adaptateur par langage (ADR-0051).
+
+- **Où ils vivent.** Le principal reste `.socle/adapter.toml` ; les autres
+  vont dans `.socle/adapters/<nom>.toml`, au même format. Tous sont
+  protégés, et tous jugent de la même façon : aucun ne passe avant un autre.
+- **Qui juge quel fichier.** Chaque fichier est jugé par l'adaptateur dont
+  les motifs le désignent : ses sources, son code ou ses tests. Le contrôle
+  `adaptateur.recouvrement` refuse un fichier que deux adaptateurs
+  désignent, en les nommant. L'ambiguïté se règle en resserrant les motifs
+  d'une copie, par une demande.
+- **Les règles des tests.** Chaque contrôle qui lit l'adaptateur tourne une
+  fois par adaptateur, avec ses seuls motifs, et ses constats nomment
+  l'adaptateur (`kotlin : test … sans assertion`). Une fonction Kotlin se
+  teste en Kotlin. Un correctif livre un test dans le langage du code qu'il
+  corrige, et dans chacun s'il en corrige plusieurs ; un correctif qui ne
+  touche le code d'aucun revient au principal.
+- **La vérification.** `verify` lance les étapes de chaque adaptateur, l'un
+  après l'autre et jusqu'au bout, chacune nommée `verify.<adaptateur>.<étape>`
+  (`verify.kotlin.tests`). La CI installe les outils de tous.
+- **La mutation.** Chaque adaptateur balaie ses modules avec son outil, et ne
+  juge que leurs plafonds ; les plafonds restent tenus par module, dans les
+  garde-fous. `socle mutation-verdict <dossier> --adapter <nom>` juge les
+  résultats d'un seul outil.
+- **L'installation.** `socle install --adapter python-pytest --adapter
+  kotlin` : le premier nommé prend `.socle/adapter.toml`. En automatique,
+  l'installeur en pose un par langage qu'il reconnaît. La mise à jour
+  rafraîchit chaque copie d'un adaptateur maintenu sous `.socle/adapters/`,
+  que l'humain approuve comme tout fichier protégé ; une copie dont une
+  demande avait resserré les motifs est à remettre.
+
+Un projet à un seul langage ne change rien : il n'a que son adaptateur
+principal.
+
 ## Pour un autre langage
 
 On écrit un nouveau fichier, avec les mêmes clés ; le moteur ne change pas.
@@ -203,7 +239,7 @@ deux SDK de support long.
 | Reconnaître une assertion | kotlin.test et JUnit (`assert…`, `fail`), MockK et Mockito (`verify`, `coVerify`), kotest (`shouldBe`…) |
 | Reconnaître un test désactivé | `@Ignore` (kotlin.test, JUnit 4), `@Disabled` (JUnit 5) ; la raison, dans `@Disabled("…")`, `@Ignore("…")`, ou un commentaire après l'`@Ignore` de kotlin.test, qui n'en prend pas |
 | Rejouer un test sur le commit d'avant | `./gradlew test --tests '*<Classe>'`, du nom de son fichier |
-| Mesurer la mutation | PIT, par le greffon Gradle `info.solidsoft.pitest`, en XML sans horodatage ; un fichier sans corps de fonction (une interface, des `expect`) n'entre pas au plafond |
+| Mesurer la mutation | PIT, par le greffon Gradle `info.solidsoft.pitest`, en XML sans horodatage, dans chaque module où il est appliqué ; un fichier sans corps de fonction (une interface, des `expect`) n'entre pas au plafond |
 | Dire quelles fonctions sont privées | `private` ou `internal` : tout le reste est public, `protected` compris |
 
 L'installeur reconnaît Kotlin à son build Gradle écrit en Kotlin
