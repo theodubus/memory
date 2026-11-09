@@ -186,15 +186,30 @@ class AdaptateursConnus(NamedTuple):
     installes: dict[str, str]  # nom → texte, dans le moteur installé
     versions: dict[str, set[str]]  # nom → chaque texte que le moteur du projet en a porté
     moteur: str  # le dossier du moteur installé
+    commit: str = ""  # le dernier commit avant la mise à jour : ce qui a changé se lit depuis lui
+    superficiel: bool = False  # un clone superficiel : l'historique, et ses versions, sont incomplets
 
 
 def versions_maintenues(cible: Path, dossier_moteur: str) -> AdaptateursConnus:
     """Les adaptateurs maintenus du moteur installé, et chaque version que
     l'historique git du projet en a eue sous `**/socle/adapters/` : une copie
-    identique à l'une d'elles n'est pas adaptée (ADR-0052, point 2)."""
+    identique à l'une d'elles n'est pas adaptée (ADR-0052, point 2). Le
+    moteur installé est celui du dernier commit, sinon celui de l'arbre :
+    l'installeur relancé avant ce commit trouve déjà le nouveau dans l'arbre
+    (revue du lot d'ADR-0052, constat 1)."""
     d = cible / dossier_moteur / "socle/adapters"
-    installes = {p.stem: p.read_text(encoding="utf-8") for p in sorted(d.glob("*.toml"))} if d.is_dir() else {}
-    versions = {nom: {texte} for nom, texte in installes.items()}
+    arbre = {p.stem: p.read_text(encoding="utf-8") for p in sorted(d.glob("*.toml"))} if d.is_dir() else {}
+    installes = dict(arbre)
+    commit = outils.git(cible, "rev-parse", "--verify", "-q", "HEAD", check=False).strip()
+    if commit:
+        for chemin in outils.git(cible, "ls-tree", "-z", "--name-only", commit, "--",
+                                 f"{dossier_moteur}/socle/adapters/", check=False).split("\0"):
+            if chemin.endswith(".toml"):
+                installes[Path(chemin).stem] = outils.git(cible, "show", f"{commit}:{chemin}", check=False)
+    versions: dict[str, set[str]] = {}
+    for textes in (arbre, installes):
+        for nom, texte in textes.items():
+            versions.setdefault(nom, set()).add(texte)
     sortie = outils.git(cible, "log", "--raw", "--no-abbrev", "--format=", "--",
                         ":(glob)**/socle/adapters/*.toml", check=False)
     blobs: dict[str, str] = {}
@@ -208,7 +223,8 @@ def versions_maintenues(cible: Path, dossier_moteur: str) -> AdaptateursConnus:
         texte = outils.git(cible, "cat-file", "blob", blob, check=False)
         if texte:
             versions.setdefault(nom, set()).add(texte)
-    return AdaptateursConnus(installes, versions, dossier_moteur)
+    superficiel = outils.git(cible, "rev-parse", "--is-shallow-repository", check=False).strip() == "true"
+    return AdaptateursConnus(installes, versions, dossier_moteur, commit[:12], superficiel)
 
 
 def adaptateur_de_base(texte: str, versions: dict[str, set[str]]) -> str | None:
@@ -250,11 +266,20 @@ def rafraichir_copie(cible: Path, chemin: str, base: str | None, connus: Adaptat
         outils.ecrire(p, nouveau)
         return [trad("{nom} rafraîchi depuis l'adaptateur maintenu {base}, que le projet n'avait pas adapté : un "
                      "changement protégé, à approuver", nom=chemin, base=base)]
-    if connus.installes.get(base) != nouveau:
+    source = f"{connus.moteur}/socle/adapters/{base}.toml"
+    if base not in connus.installes:
+        # Un `git diff` ne montrerait rien d'un fichier que le moteur installé
+        # n'avait pas (revue du lot d'ADR-0052, constat 4).
+        return [trad("!! {nom} : conservé ; l'adaptateur maintenu {base} n'était pas dans le moteur installé : le "
+                     "comparer à la copie (`diff {nom} {source}`), et proposer à l'humain, par une demande, ce "
+                     "qu'il faut en reprendre", nom=chemin, base=base, source=source)]
+    if connus.installes[base] != nouveau:
+        # Depuis le commit d'avant la mise à jour : la commande montre encore
+        # ce qui a changé une fois la mise à jour commitée.
+        voir = f"git diff {connus.commit} -- {source}" if connus.commit else f"diff {chemin} {source}"
         return [trad("!! {nom} adapté par le projet : conservé ; l'adaptateur maintenu {base} a changé depuis le "
-                     "moteur installé, ou n'y était pas : proposer à l'humain, par une demande, d'y reporter ses "
-                     "corrections (ce qui a changé : `git diff -- {source}`)", nom=chemin, base=base,
-                     source=f"{connus.moteur}/socle/adapters/{base}.toml")]
+                     "moteur installé : proposer à l'humain, par une demande, d'y reporter ses corrections (ce qui "
+                     "a changé : `{voir}`)", nom=chemin, base=base, voir=voir)]
     return [trad("{nom} adapté par le projet : conservé ; l'adaptateur maintenu {base} n'a pas changé",
                  nom=chemin, base=base)]
 
@@ -900,6 +925,10 @@ def _installer(cible: Path, adaptateur: str | list[str], proprietaire: str, adop
     # Ce que le projet a porté des adaptateurs maintenus se lit avant que le
     # moteur installé ne soit remplacé (ADR-0052).
     connus = versions_maintenues(cible, str(ancien.get("engine_dir") or ch.moteur)) if ancien else None
+    if connus is not None and connus.superficiel:
+        journal.append(trad("!! clone superficiel : l'historique du moteur y est incomplet, et une copie d'adaptateur "
+                            "que le projet n'a pas adaptée peut y être prise pour adaptée, et gardée ; "
+                            "`git fetch --unshallow`, puis relancer l'installeur"))
 
     # 1. Le moteur, remplacé en bloc, et son verrou.
     dossier_moteur, poses = _poser_moteur(cible, mode, source, ch)
@@ -917,8 +946,9 @@ def _installer(cible: Path, adaptateur: str | list[str], proprietaire: str, adop
     # le balayage partent des copies telles qu'elles sont désormais : une
     # copie adaptée, gardée, y garde ses adaptations. Nommer pour le langage
     # du principal un autre adaptateur maintenu que le sien en fait la CI,
-    # comme avant (ADR-0052, point 5). Ceux qu'il vient de nommer d'abord.
-    if texte_principal and (texte_adaptateur == texte_principal or (
+    # comme avant ; détecté, il ne la fait pas (ADR-0052, point 5). Ceux
+    # qu'il vient de nommer d'abord.
+    if texte_principal and (texte_adaptateur == texte_principal or not charges[0][3] or (
             connus is not None and adaptateur_de_base(texte_principal, connus.versions) == nom_adaptateur)):
         texte_adaptateur = principal.read_text(encoding="utf-8")
     en_place = {Path(c).stem: (cible / c).read_text(encoding="utf-8")

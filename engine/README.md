@@ -164,7 +164,7 @@ terminal, et la session qui ajoute un second dépôt, sont dans le guide.
 
 ## État
 
-Version <!-- valeur:version -->0.1.0<!-- /valeur -->, en développement.
+Version <!-- valeur:version -->0.2.0<!-- /valeur -->, en développement.
 L'étage de l'agent n'existe que pour Claude Code. Ce dépôt ne contient que
 le produit, publié depuis son atelier à chaque changement du moteur.
 

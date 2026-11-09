@@ -2601,12 +2601,18 @@ MESSAGES: dict[str, str] = {
     "à approuver":
         "{nom} refreshed from the maintained adapter {base}, which the project had not adapted: a protected change, "
         "to approve",
-    "!! {nom} adapté par le projet : conservé ; l'adaptateur maintenu {base} a changé depuis le moteur installé, ou "
-    "n'y était pas : proposer à l'humain, par une demande, d'y reporter ses corrections (ce qui a changé : "
-    "`git diff -- {source}`)":
-        "!! {nom} adapted by the project: kept; the maintained adapter {base} has changed since the installed engine, "
-        "or was not in it: propose to the human, through a request, to carry its corrections over (what changed: "
-        "`git diff -- {source}`)",
+    "!! {nom} adapté par le projet : conservé ; l'adaptateur maintenu {base} a changé depuis le moteur installé : "
+    "proposer à l'humain, par une demande, d'y reporter ses corrections (ce qui a changé : `{voir}`)":
+        "!! {nom} adapted by the project: kept; the maintained adapter {base} has changed since the installed engine: "
+        "propose to the human, through a request, to carry its corrections over (what changed: `{voir}`)",
+    "!! {nom} : conservé ; l'adaptateur maintenu {base} n'était pas dans le moteur installé : le comparer à la copie "
+    "(`diff {nom} {source}`), et proposer à l'humain, par une demande, ce qu'il faut en reprendre":
+        "!! {nom}: kept; the maintained adapter {base} was not in the installed engine: compare it with the copy "
+        "(`diff {nom} {source}`), and propose to the human, through a request, what to take from it",
+    "!! clone superficiel : l'historique du moteur y est incomplet, et une copie d'adaptateur que le projet n'a pas "
+    "adaptée peut y être prise pour adaptée, et gardée ; `git fetch --unshallow`, puis relancer l'installeur":
+        "!! shallow clone: the engine's history is incomplete in it, and an adapter copy that the project has not "
+        "adapted may be taken for adapted, and kept; `git fetch --unshallow`, then run the installer again",
     "{nom} adapté par le projet : conservé ; l'adaptateur maintenu {base} n'a pas changé":
         "{nom} adapted by the project: kept; the maintained adapter {base} has not changed",
     "fichier désigné par deux adaptateurs":

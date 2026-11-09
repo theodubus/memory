@@ -459,6 +459,7 @@ class Rafraichissement(unittest.TestCase):
         ancien = self.maintenu["kotlin"] + "\n# version d'avant\n"
         self.ecrire(self.MOTEUR_KT, ancien)
         self.ecrire(self.KT, ancien)
+        self.commit("version d'avant")
         sortie = installer_et_lire(self.racine, "auto")
         self.assertEqual(self.lire(self.KT), self.maintenu["kotlin"])
         self.assertIn(f"{self.KT} rafraîchi depuis l'adaptateur maintenu kotlin, que le projet n'avait pas adapté",
@@ -487,10 +488,51 @@ class Rafraichissement(unittest.TestCase):
                       sortie)
         # Le moteur installé portait une version d'avant : le maintenu a changé.
         self.ecrire(self.MOTEUR_KT, self.maintenu["kotlin"] + "\n# version d'avant\n")
+        self.commit("version d'avant")
+        avant = git(self.racine, "rev-parse", "HEAD").strip()[:12]
+        voir = ["git", "diff", avant, "--", self.MOTEUR_KT]
+        for _ in range(2):
+            # Relancé avant le commit, l'installeur trouve le moteur nouveau
+            # dans l'arbre : il juge encore contre le dernier commit.
+            sortie = installer_et_lire(self.racine, "auto")
+            self.assertEqual(self.lire(self.KT), adaptee)
+            self.assertIn(f"!! {self.KT} adapté par le projet : conservé ; l'adaptateur maintenu kotlin a changé",
+                          sortie)
+            self.assertIn(f"`{' '.join(voir)}`", sortie)
+        # La commande montre ce qui a changé, avant le commit de la mise à
+        # jour comme après.
+        self.assertIn("# version d'avant", git(self.racine, *voir[1:]))
+        self.commit("mise à jour")
+        self.assertIn("# version d'avant", git(self.racine, *voir[1:]))
+
+    def test_un_maintenu_absent_du_moteur_installe_se_compare_a_la_copie(self):
+        adaptee = self.maintenu["kotlin"] + "\n# adaptée\n"
+        self.ecrire(self.KT, adaptee)
+        (self.racine / self.MOTEUR_KT).unlink()
+        self.commit("moteur sans kotlin")
         sortie = installer_et_lire(self.racine, "auto")
         self.assertEqual(self.lire(self.KT), adaptee)
-        self.assertIn(f"!! {self.KT} adapté par le projet : conservé ; l'adaptateur maintenu kotlin a changé", sortie)
-        self.assertIn(f"`git diff -- {self.MOTEUR_KT}`", sortie)
+        self.assertIn(f"!! {self.KT} : conservé ; l'adaptateur maintenu kotlin n'était pas dans le moteur installé : "
+                      f"le comparer à la copie (`diff {self.KT} {self.MOTEUR_KT}`)", sortie)
+
+    def test_un_clone_superficiel_se_signale(self):
+        clone = Path(tempfile.mkdtemp(prefix="socle-rafraichir-clone-"))
+        self.addCleanup(shutil.rmtree, clone, ignore_errors=True)
+        git(clone, "clone", "-q", "--depth", "1", f"file://{self.racine}", "copie")
+        sortie = installer_et_lire(clone / "copie", "auto")
+        self.assertIn("!! clone superficiel : l'historique du moteur y est incomplet", sortie)
+        self.assertNotIn("clone superficiel", installer_et_lire(self.racine, "auto"))
+
+    def test_la_ci_garde_la_copie_principale_quand_la_detection_change_d_adaptateur(self):
+        # Une copie adaptée de `python` ; le dépôt dit pytest : la détection
+        # propose `python-pytest`, qu'aucun nom n'impose (constat 2 de la revue).
+        adaptee = self.maintenu["python"].replace(
+            'ci_setup = ""', 'ci_setup = """\n      - name: Outil maison\n        run: echo outil-maison\n"""', 1)
+        self.assertTrue(adaptee != self.maintenu["python"])
+        self.ecrire(".socle/adapter.toml", adaptee)
+        installer(self.racine, "auto")
+        self.assertTrue(self.lire(".socle/adapter.toml") == adaptee)
+        self.assertIn("echo outil-maison", self.lire(".github/workflows/socle.yml"))
 
     def test_une_copie_resserree_par_une_demande_se_garde(self):
         # Le point 2 d'ADR-0051 : un recouvrement se règle en resserrant les
@@ -532,12 +574,23 @@ class Rafraichissement(unittest.TestCase):
         v1 = self.maintenu["kotlin"] + "\n# version 1\n"
         self.ecrire(self.MOTEUR_KT, v1)
         self.commit("version 1")
-        self.ecrire(self.MOTEUR_KT, self.maintenu["kotlin"] + "\n# installée\n")
+        self.ecrire(self.MOTEUR_KT, self.maintenu["kotlin"] + "\n# arbre\n")
         connus = installeur.versions_maintenues(self.racine, ".socle/engine")
-        self.assertEqual(connus.installes["kotlin"], self.maintenu["kotlin"] + "\n# installée\n")
+        # Le moteur installé est celui du dernier commit ; l'arbre compte parmi les versions.
+        self.assertEqual(connus.installes["kotlin"], v1)
         self.assertEqual(connus.versions["kotlin"],
-                         {self.maintenu["kotlin"], v1, self.maintenu["kotlin"] + "\n# installée\n"})
+                         {self.maintenu["kotlin"], v1, self.maintenu["kotlin"] + "\n# arbre\n"})
         self.assertEqual(connus.moteur, ".socle/engine")
+        self.assertEqual(connus.commit, git(self.racine, "rev-parse", "HEAD").strip()[:12])
+        self.assertFalse(connus.superficiel)
+        # Une version que seul un renommage porte, sous l'ancien dossier du moteur.
+        v2 = v1 + "# renommée\n"
+        self.ecrire("ancien/socle/adapters/kotlin.toml", v1)
+        self.commit("ancien moteur")
+        git(self.racine, "mv", "ancien", "nouveau")
+        self.ecrire("nouveau/socle/adapters/kotlin.toml", v2)
+        self.commit("moteur renommé")
+        self.assertIn(v2, installeur.versions_maintenues(self.racine, ".socle/engine").versions["kotlin"])
         # Les copies du projet, sous `.socle/adapters/`, ne sont pas des versions maintenues.
         self.ecrire(self.KT, "# propre au projet\n")
         self.commit("copie")
@@ -554,6 +607,7 @@ class Rafraichissement(unittest.TestCase):
         # Sans langage qu'un adaptateur maintenu porte : propre au projet.
         self.assertIsNone(installeur.adaptateur_de_base('language = "cobol"\n', versions))
         self.assertIsNone(installeur.adaptateur_de_base("[capabilities]\n", versions))
+        self.assertIsNone(installeur.adaptateur_de_base("language = \n", versions))
 
     def test_rafraichir_copie_garde_un_adaptateur_propre_au_projet(self):
         connus = installeur.versions_maintenues(self.racine, ".socle/engine")

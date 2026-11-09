@@ -18,7 +18,7 @@ mémoire est l'historique de la fabrication.
 
 ## État
 
-L'atelier fabrique la version <!-- valeur:version -->0.1.0<!-- /valeur -->,
+L'atelier fabrique la version <!-- valeur:version -->0.2.0<!-- /valeur -->,
 en développement. Où en est le travail se calcule :
 `python3 .socle/socle state`.
 

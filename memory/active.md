@@ -6,11 +6,11 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 ## En cours
 
 Sur `main` : la PR #25 (adaptateurs multiples, ADR-0051). Sur la
-branche : D-0085, validée, et ADR-0052, qui remplace le point 6
-d'ADR-0051 ; l'installeur ne rafraîchit une copie d'adaptateur que non
-adaptée, et ses tests. À faire : la revue adversariale, une version du
-socle, la demande de mise à jour de JustCook (B-0095). Puis B-0133,
-B-0134 à B-0143, B-0126 (chess).
+branche : D-0085, validée ; ADR-0052, qui remplace le point 6
+d'ADR-0051 : l'installeur ne rafraîchit une copie d'adaptateur que non
+adaptée ; sa revue (J-2026-11-09-P) ; la version 0.2.0. À faire : la
+fusion par Théo, puis le prompt de mise à jour de JustCook (B-0095,
+J-2026-11-09-O). Puis B-0133, B-0134 à B-0144, B-0126 (chess).
 
 D-0026 est répondue `rien` : B-0048 et B-0018 restent ouverts, « on se le
 garde en tete et on voit si ça finit par etre bloquant ».

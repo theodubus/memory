@@ -37,8 +37,13 @@ mesurable) :
    `**/socle/adapters/<nom>.toml`. L'historique compte pour la copie
    principale, qu'aucune mise à jour ne rafraîchissait : posée par une
    version plus ancienne, elle peut n'être identique à aucune du moteur
-   installé sans que le projet y ait touché. Un premier passage de
-   l'installeur, sans moteur installé, ne rafraîchit rien.
+   installé sans que le projet y ait touché. Le moteur installé est celui
+   du dernier commit, sinon celui de l'arbre : relancé avant ce commit,
+   l'installeur trouve déjà le nouveau dans l'arbre. Dans un clone
+   superficiel, l'historique est incomplet : l'installeur le dit, et
+   demande de le compléter (`git fetch --unshallow`) avant de relancer. Un
+   premier passage de l'installeur, sans moteur installé, ne rafraîchit
+   rien.
 3. *Son adaptateur maintenu.* Pour une copie `.socle/adapters/<nom>.toml`,
    celui de son nom. Pour la principale, celui dont elle porte une version ;
    adaptée, celui de son langage (`language`) dont le texte est le plus
@@ -46,17 +51,20 @@ mesurable) :
    adaptateur maintenu, une copie est propre au projet, et se garde comme
    avant.
 4. *Dire.* Une copie adaptée dont l'adaptateur maintenu a changé depuis le
-   moteur installé, ou n'y était pas, se garde avec un avertissement de
-   l'installeur (`!!`) qui nomme ce qui a changé
-   (`git diff -- <moteur>/socle/adapters/<nom>.toml`) et dit d'en proposer
-   le report à l'humain par une demande. Une copie adaptée dont
-   l'adaptateur n'a pas changé se garde, sur une ligne.
+   moteur installé se garde avec un avertissement de l'installeur (`!!`)
+   qui nomme ce qui a changé, depuis le commit d'avant la mise à jour
+   (`git diff <commit> -- <moteur>/socle/adapters/<nom>.toml`, qui le
+   montre encore une fois la mise à jour commitée), et dit d'en proposer le
+   report à l'humain par une demande. Si le moteur installé n'avait pas cet
+   adaptateur, l'avertissement dit de le comparer à la copie (`diff`). Une
+   copie adaptée dont l'adaptateur n'a pas changé se garde, sur une
+   ligne.
 5. *La CI et le balayage* se génèrent des copies telles qu'elles sont
    après la mise à jour, non des adaptateurs maintenus nommés : une copie
    gardée y garde ses adaptations, ses étapes de CI comprises. Nommer, pour
    le langage de la copie principale, un autre adaptateur maintenu que le
    sien (`python` sur une copie de `python-pytest`) en fait la CI, comme
-   avant.
+   avant ; détecté par l'installeur, il ne la fait pas.
 
 ## Conséquences
 
