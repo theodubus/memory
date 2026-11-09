@@ -105,6 +105,22 @@ class TestLiensDuDepot(unittest.TestCase):
         self.assertEqual(avertissement, "")
         self.assertEqual(liens.commit_pousse(self.clone), pousse)
 
+    def test_une_branche_distante_perimee_du_meme_nom_cede_a_la_plus_recente(self):
+        """Repartie de `origin/main` après une fusion, la branche garde sa
+        branche distante du même nom, à l'ancien travail, jusqu'au push
+        suivant : le permalien vise `origin/main`, plus récent."""
+        git(self.clone, "push", "-q", "origin", "claude/essai")
+        source = self.dossier / "source"
+        (source / "docs/d.md").write_text("# D\n")
+        git(source, "add", "-A")
+        git(source, "commit", "-qm", "fusion")
+        git(self.clone, "fetch", "-q", "origin")
+        git(self.clone, "checkout", "-q", "-B", "claude/essai", "origin/main")
+        main = git(self.clone, "rev-parse", "origin/main").strip()
+        url, avertissement = liens.lien(config.Projet.charger(self.clone), "docs/d.md")
+        self.assertEqual(url, f"{DEPOT}/blob/{main}/docs/d.md")
+        self.assertEqual(liens.commit_pousse(self.clone), main)
+
     def test_pas_de_lien_vers_ce_qui_n_est_pas_pousse(self):
         url, avertissement = liens.lien(self.projet, "docs/b.md")
         self.assertIsNone(url)
