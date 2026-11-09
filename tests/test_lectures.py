@@ -219,9 +219,13 @@ class TestCitationsDeLaPlage(unittest.TestCase):
     def test_une_citation_neuve_d_une_version_perimee_est_refusee(self):
         # La version de B-0001 citée a existé dans la plage, mais la citation
         # est écrite maintenant, après la clôture : elle a lu une version
-        # qui n'était plus la bonne.
+        # qui n'était plus la bonne. La clôture change aussi le corps du
+        # sujet : un changement des seules métadonnées ne périme plus une
+        # citation (D-0086).
         mem = memoire.Memoire.charger(self.racine, self.base)
         ancienne = memoire.empreinte_entree(mem.entree("B-0001"))
+        b1 = next((self.racine / "memory/backlog").glob("B-0001-*.md"))
+        b1.write_text(b1.read_text() + "\nClos sur un constat.\n")
         journal = self.racine / "memory/journal/2026-10.md"
         journal.parent.mkdir(parents=True)
         journal.write_text("<!-- socle: couche=journal zone=publique -->\n# Journal\n\n"
@@ -231,6 +235,51 @@ class TestCitationsDeLaPlage(unittest.TestCase):
         controles_memoire.lectures(ctx, r)
         self.assertEqual(len(r.erreurs()), 1, [c.message for c in r.erreurs()])
         self.assertIn(f"B-0001@{ancienne}", r.erreurs()[0].message)
+
+    def erreurs(self) -> list[str]:
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="ci", base=self.base, tete=None)
+        r = Rapport()
+        controles_memoire.lectures(ctx, r)
+        return [c.message for c in r.erreurs()]
+
+    def journal(self, texte: str):
+        p = self.racine / "memory/journal/2026-10.md"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text("<!-- socle: couche=journal zone=publique -->\n# Journal\n\n" + texte)
+
+    def test_un_changement_des_seules_metadonnees_ne_perime_pas_une_citation_neuve(self):
+        """D-0086 : la clôture de B-0001 ne change que sa ligne de
+        métadonnées ; une citation neuve de la version d'avant reste bonne."""
+        avant = memoire.Memoire.charger(self.racine, self.base).entree("B-0001")
+        apres = memoire.Memoire.charger(self.racine).entree("B-0001")
+        self.assertNotEqual(avant.meta, apres.meta)
+        self.assertEqual(memoire.empreinte_entree(avant), memoire.empreinte_entree(apres))
+        self.journal(f"## J-2026-10-10-A — Constat\n\nVoir B-0001@{memoire.empreinte_entree(avant)}.\n")
+        self.assertEqual(self.erreurs(), [])
+
+    def test_une_citation_au_texte_entier_reste_acceptee(self):
+        """Les citations écrites avant D-0086 portent l'empreinte du texte
+        entier : elles restent bonnes tant qu'elles correspondent."""
+        e = memoire.Memoire.charger(self.racine).entree("B-0001")
+        entier = memoire.empreinte_texte_entier(e)
+        self.assertNotEqual(entier, memoire.empreinte_entree(e))
+        self.assertEqual(memoire.empreintes_entree(e), {entier, memoire.empreinte_entree(e)})
+        self.journal(f"## J-2026-10-10-A — Constat\n\nVoir B-0001@{entier}.\n")
+        self.assertEqual(self.erreurs(), [])
+
+    def test_deux_entrees_qui_se_citent_dans_leurs_metadonnees(self):
+        """Deux entrées écrites ensemble, chacune citant l'autre dans sa
+        ligne de métadonnées : l'empreinte de l'une ne dépend plus de la
+        citation que porte l'autre, et les deux restent bonnes."""
+        titre_a, titre_b = "## J-2026-10-10-A — Un constat", "## J-2026-10-10-B — Sa suite"
+        corps_a, corps_b = "Le constat.", "La suite du constat."
+        h_a = memoire.empreinte_entree(memoire.analyser(
+            "memory/journal/2026-10.md", f"# Journal\n\n{titre_a}\n\n{corps_a}\n").entrees[0])
+        h_b = memoire.empreinte_entree(memoire.analyser(
+            "memory/journal/2026-10.md", f"# Journal\n\n{titre_b}\n\n{corps_b}\n").entrees[0])
+        self.journal(f"{titre_a}\n\n> ref : J-2026-10-10-B@{h_b}\n\n{corps_a}\n\n"
+                     f"{titre_b}\n\n> ref : J-2026-10-10-A@{h_a}\n\n{corps_b}\n")
+        self.assertEqual(self.erreurs(), [])
 
 
 if __name__ == "__main__":
