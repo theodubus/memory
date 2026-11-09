@@ -38,14 +38,14 @@ mais il ne verrait rien des tests.
 
 ## Ce qu'il contient
 
-Neuf adaptateurs sont maintenus. Le tableau ci-dessous compare les trois
+Dix adaptateurs sont maintenus. Le tableau ci-dessous compare les trois
 premiers ; celui de la section « Cinq langages de plus » compare les cinq
-suivants, et la section « C# » le dernier.
+suivants, et les sections « C# » et « Kotlin » les deux derniers.
 Ce sont des extraits : les fichiers font foi, [rust.toml](rust.toml),
 [python.toml](python.toml), [python-pytest.toml](python-pytest.toml),
 [javascript.toml](javascript.toml), [go.toml](go.toml),
-[java.toml](java.toml), [ruby.toml](ruby.toml), [php.toml](php.toml) et
-[csharp.toml](csharp.toml). Les
+[java.toml](java.toml), [ruby.toml](ruby.toml), [php.toml](php.toml),
+[csharp.toml](csharp.toml) et [kotlin.toml](kotlin.toml). Les
 deux adaptateurs Python ne diffèrent que par le lanceur de tests et la
 mutation : `python` s'en tient à la bibliothèque standard (`unittest`), sans
 mutation ; `python-pytest` prend pytest et mutmut, qui exige pytest.
@@ -191,3 +191,23 @@ des types (un `record` sans corps, une interface) n'a rien à muter ; il
 n'entre pas au plafond. La version 5 de Stryker.NET exige un SDK plus récent
 que .NET 8 : le manifeste d'outils épingle la 4.16.0, et la CI pose les
 deux SDK de support long.
+
+## Kotlin
+
+| Ce que le moteur demande | Kotlin |
+| --- | --- |
+| Lancer les tests | `./gradlew test` (kotlin.test ou JUnit 5, sous `useJUnitPlatform()`) |
+| Vérifier le code | `./gradlew testClasses`, le compilateur Kotlin et ses avertissements |
+| Reconnaître un test | `@Test` de kotlin.test, de JUnit 4 ou de JUnit 5, sur `fun` ; un nom entre accents graves compte |
+| Reconnaître un test désactivé | `@Ignore` (kotlin.test, JUnit 4), `@Disabled` (JUnit 5) ; la raison, dans `@Disabled("…")` |
+| Rejouer un test sur le commit d'avant | `./gradlew test --tests '*<Classe>'`, du nom de son fichier |
+| Mesurer la mutation | PIT, par le greffon Gradle `info.solidsoft.pitest`, en XML sans horodatage |
+| Dire quelles fonctions sont privées | `private`, `internal` ou `protected` : tout le reste est public |
+
+L'installeur reconnaît Kotlin à son build Gradle écrit en Kotlin
+(`build.gradle.kts` ou `settings.gradle.kts`), pourvu que le dépôt porte une
+source `.kt` : un projet Java sous Gradle porte le même build. PIT ne connaît
+que le paquet et le nom du fichier source, qu'il range sous `src/main/java/` ;
+le verdict retrouve un module Kotlin par son plus long suffixe, d'au moins un
+dossier et un fichier. Un projet multiplateforme, dont les tâches de Gradle
+ont d'autres noms, adapte les commandes dans sa copie.

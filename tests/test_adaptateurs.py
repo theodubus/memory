@@ -22,7 +22,8 @@ def adaptateurs() -> dict[str, dict]:
 class TestAdaptateursMaintenus(unittest.TestCase):
     def test_les_adaptateurs_maintenus(self):
         self.assertEqual(sorted(adaptateurs()),
-                         ["csharp", "go", "java", "javascript", "php", "python", "python-pytest", "ruby", "rust"])
+                         ["csharp", "go", "java", "javascript", "kotlin", "php", "python", "python-pytest", "ruby",
+                          "rust"])
 
     def test_chaque_capacite_est_declaree(self):
         for nom, a in adaptateurs().items():
@@ -125,6 +126,78 @@ class TestLangages(unittest.TestCase):
             with self.subTest(langage=langage):
                 motifs = [re.compile(m) for m in adaptateurs()[langage]["tests"]["tautology"]]
                 self.assertTrue(any(m.search(ligne) for m in motifs))
+
+
+class TestKotlin(unittest.TestCase):
+    """L'adaptateur Kotlin pour Gradle (B-0095, D-0082) : il lit les tests de
+    kotlin.test et de JUnit 5, leurs assertions, un test désactivé avec ou
+    sans raison, les fonctions publiques par défaut, et retrouve les
+    résultats de PIT d'un module Kotlin."""
+
+    def setUp(self):
+        self.ad = adaptateurs()["kotlin"]
+        self.cfg = self.ad["tests"]
+
+    def test_il_lit_ses_tests_et_leurs_assertions(self):
+        assertion = re.compile(self.cfg["assertion"])
+        fonctions = tests_lecture.extraire((DONNEES / "kotlin.CalcTest.kt.txt").read_text(), "CalcTest.kt", self.cfg)
+        lus = [(f.nom, f.est_test, tests_lecture.affirme(f, assertion, set()), *_desactive(f, self.cfg))
+               for f in fonctions]
+        self.assertEqual(lus, [("doublerMultiplieParDeux", True, True, False, False),
+                               ("`refuse un nombre negatif`", True, True, False, False),
+                               ("neMesureRien", True, False, False, False),
+                               ("plusTard", True, True, True, False),
+                               ("attendAvecSaRaison", True, True, True, True),
+                               ("aide", False, False, False, False)])
+
+    def test_tout_est_public_sauf_private_internal_et_protected(self):
+        prive = re.compile(self.ad["code"]["private"])
+        texte = (DONNEES / "kotlin.Calc.kt.txt").read_text()
+        lignes = texte.splitlines()
+        vus = {f.nom: bool(prive.match(lignes[f.ligne - 1]))
+               for f in tests_lecture.extraire(texte, "Calc.kt", self.cfg)}
+        self.assertEqual(vus, {"doubler": False, "racine": False, "aide": True, "interne": True,
+                               "toString": False})
+
+    def test_sa_tautologie(self):
+        motifs = [re.compile(m) for m in self.cfg["tautology"]]
+        self.assertTrue(any(m.search("        assertEquals(x, x)") for m in motifs))
+        self.assertFalse(any(m.search("        assertEquals(4, x)") for m in motifs))
+
+    def test_il_rejoue_un_test_par_sa_classe(self):
+        cap = self.ad["capabilities"]["regression"]
+        self.assertEqual(commande_regression(cap, ["src/test/kotlin/essai/RegressionTest.kt"]),
+                         "./gradlew -q test --tests '*RegressionTest'")
+
+    def test_un_build_gradle_en_kotlin_ne_suffit_pas_sans_source_kotlin(self):
+        """Un projet Java sous Gradle porte lui aussi `build.gradle.kts` : il
+        faut encore du Kotlin pour que le projet en soit."""
+        with tempfile.TemporaryDirectory() as d:
+            racine = Path(d)
+            (racine / "build.gradle.kts").write_text("plugins { java }\n")
+            (racine / "src/main/java").mkdir(parents=True)
+            (racine / "src/main/java/App.java").write_text("class App {}\n")
+            self.assertIsNone(installeur.detecter_langage(racine))
+            self.assertEqual(installeur.langages_presents(["build.gradle.kts", "src/main/java/App.java"]), {})
+            (racine / "src/main/kotlin").mkdir(parents=True)
+            (racine / "src/main/kotlin/App.kt").write_text("fun main() {}\n")
+            self.assertEqual(installeur.detecter_langage(racine), "kotlin")
+            self.assertEqual(installeur.langages_presents(["build.gradle.kts", "src/main/kotlin/App.kt"]),
+                             {"kotlin": ["build.gradle.kts"]})
+
+    def test_pit_retrouve_un_module_kotlin(self):
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "mutations.xml").write_text(
+                "<mutations><mutation detected='true' status='KILLED'><sourceFile>Calc.kt</sourceFile>"
+                "<mutatedClass>essai.Calc</mutatedClass></mutation>"
+                "<mutation detected='false' status='SURVIVED'><sourceFile>Calc.kt</sourceFile>"
+                "<mutatedClass>essai.Calc</mutatedClass></mutation></mutations>")
+            resultats = mutation.lire_pit(Path(d))
+        self.assertEqual(mutation._du_module(resultats, "src/main/kotlin/essai/Calc.kt"),
+                         {"attrapes": 1, "survivants": 1})
+        # Le nom seul du fichier ne suffit pas : un homonyme d'un autre
+        # paquet ne prête pas ses résultats.
+        self.assertIsNone(mutation._du_module(resultats, "src/main/kotlin/autre/Calc.kt"))
 
 
 class TestLecteursDeMutation(unittest.TestCase):

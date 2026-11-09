@@ -1,0 +1,91 @@
+# Adaptateur maintenu : Kotlin sous Gradle, tests kotlin.test ou JUnit 5,
+# mutation par PIT (B-0095, D-0082).
+#
+# Éprouvé sur un projet jetable (`bench/adapters.py`). Le projet porte le
+# wrapper de Gradle (`./gradlew`), le greffon `kotlin("jvm")` (ou
+# `kotlin("multiplatform")`), JUnit 5 sous `useJUnitPlatform()`, et le
+# greffon `info.solidsoft.pitest` avec ses rapports en XML sans horodatage
+# (`outputFormats.set(listOf("XML"))`, `timestampedReports.set(false)`).
+# Un projet multiplateforme, dont les tâches ont d'autres noms, remplace les
+# commandes dans sa copie (`.socle/adapter.toml`).
+
+language = "kotlin"
+name = "Kotlin (Gradle, kotlin.test ou JUnit 5, PIT)"
+maintained = true
+sources = ["**/src/**/kotlin/**/*.kt"]
+
+# Étapes ajoutées au workflow de CI avant le socle (indentation YAML de six).
+ci_setup = """
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+"""
+
+[capabilities.format]
+absent = "aucun formateur imposé ; un projet qui adopte ktlint ou ktfmt le déclare ici"
+replacement = "relecture du diff, et `build` (le compilateur refuse ce qui ne se lit pas)"
+
+[capabilities.lint]
+absent = "aucun linter imposé ; un projet qui adopte detekt ou ktlint le déclare ici"
+replacement = "capacité `build` : le compilateur Kotlin et ses avertissements"
+
+[capabilities.build]
+command = "./gradlew -q testClasses"
+fast = true
+
+[capabilities.tests]
+command = "./gradlew -q test"
+fast = true
+
+[capabilities.mutation]
+# Hebdomadaire, pas à chaque commit. Le rapport `build/reports/pitest/mutations.xml`
+# est réécrit à chaque balayage.
+tool = "pit"
+command = "./gradlew -q pitest"
+modules = ["src/main/kotlin/**/*.kt"]
+has_code = '\bfun\b'
+parser = "pit"
+
+[capabilities.coverage]
+absent = "signal secondaire, jamais un garde-fou"
+replacement = "capacité `mutation`"
+
+[capabilities.regression]
+# Un test rejoué sur le commit parent : sa classe, par `--tests`, une fois
+# par fichier.
+command = "./gradlew -q test {test_args}"
+test_arg = "--tests '*{stem}'"
+test_paths = ["src/test/kotlin/**/*Test.kt", "src/test/kotlin/**/*Tests.kt", "**/src/*Test/kotlin/**/*Test.kt"]
+# Ce qui, dans la sortie, dit que le test ne s'est pas chargé sur le parent (une
+# compilation cassée, une référence introuvable) : il y échoue pour une autre
+# raison que le défaut corrigé.
+load_error = 'Compilation error|Unresolved reference|e: file:'
+
+[code]
+# En Kotlin, tout est public par défaut : une fonction `private`,
+# `internal` ou `protected` se teste par les fonctions publiques qui
+# l'appellent.
+paths = ["src/main/kotlin/**/*.kt", "**/src/main/kotlin/**/*.kt", "**/src/*Main/kotlin/**/*.kt"]
+exclude = []
+private = '^(?=[^=(]*\b(?:private|internal|protected)\b)[^=(]*\bfun\b'
+
+[tests]
+paths = ["src/test/kotlin/**/*.kt", "**/src/test/kotlin/**/*.kt", "**/src/*Test/kotlin/**/*.kt"]
+# Une fonction : des modificateurs, `fun`, un récepteur ou des paramètres de
+# type, puis son nom, entre accents graves ou non.
+function = '''^\s*(?:(?:public|internal|private|protected|override|open|abstract|final|suspend|inline|operator|infix|tailrec)\s+)*fun\s+(?:<[^>]+>\s+)?(?:[\w.<>?]+\.)?(\w+|`[^`]+`)\s*\('''
+attribute = '^\s*@'
+comment = '^\s*(?://|/?\*)'
+block_comment = '''/\*[\s\S]*?\*/'''
+marker_attribute = '@(?:kotlin\.test\.|org\.junit\.jupiter\.api\.|org\.junit\.)?(?:Test|ParameterizedTest|RepeatedTest|TestFactory)\b'
+block = "braces"
+line_comment = '//.*$'
+assertion = '\bassert\w*\s*(?:<[^>]*>)?\s*[({]|\bAssertions\.\w+\(|\bfail\s*\(|\bexpect\s*\('
+ignore = '@(?:kotlin\.test\.|org\.junit\.)?Ignore\b|@(?:org\.junit\.jupiter\.api\.)?Disabled\b|\bassume(?:True|False)\s*\('
+ignore_reason = '''@Disabled\s*\(\s*"[^"]{3,}"'''
+tautology = [
+  'assertEquals\(\s*([^,()]+(?:\([^()]*\))?)\s*,\s*\1\s*\)',
+  'assertTrue\(\s*true\s*\)',
+]

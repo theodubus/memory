@@ -1,0 +1,38 @@
+package essai
+
+import kotlin.test.Ignore
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import org.junit.jupiter.api.Disabled
+
+class CalcTest {
+    @Test
+    fun doublerMultiplieParDeux() {
+        assertEquals(4, Calc.doubler(2))
+    }
+
+    @Test
+    fun `refuse un nombre negatif`() {
+        assertFailsWith<IllegalArgumentException> { Calc.racine(-1) }
+    }
+
+    @Test
+    fun neMesureRien() {
+        Calc.doubler(3)
+    }
+
+    @Ignore
+    @Test
+    fun plusTard() {
+        assertEquals(6, Calc.doubler(3))
+    }
+
+    @Disabled("le calcul flottant attend la version 2")
+    @Test
+    fun attendAvecSaRaison() {
+        assertEquals(6, Calc.doubler(3))
+    }
+
+    private fun aide(x: Int): Int = x
+}

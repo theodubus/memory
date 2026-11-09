@@ -203,6 +203,21 @@ LECTEURS = {"cargo-mutants": lire_cargo_mutants, "mutmut": lire_mutmut, "stryker
             "gremlins": lire_gremlins, "pit": lire_pit, "mutant": lire_mutant, "infection": lire_infection}
 
 
+def _du_module(resultats: dict[str, Counter], module: str) -> Counter | None:
+    """Les résultats d'un module : sous son chemin, sinon sous le plus long de
+    ses suffixes que l'outil a écrit, d'au moins un dossier et un fichier.
+    PIT ne connaît que le paquet et le nom du fichier source, qu'il range
+    sous `src/main/java/` : un module Kotlin, `src/main/kotlin/essai/Calc.kt`,
+    se retrouve par `essai/Calc.kt`. Le nom seul du fichier ne suffit pas :
+    il prêterait au module les résultats d'un homonyme d'un autre paquet."""
+    if module in resultats:
+        return resultats[module]
+    for suffixe in _suffixes(module)[1:-1]:
+        if suffixe in resultats:
+            return resultats[suffixe]
+    return None
+
+
 def verdict(projet: config.Projet, dossier: Path, poser: bool = False) -> Rapport:
     """Les survivants de chaque module du plafond, confrontés à son plafond.
     Un module « à mesurer » (`pending`) n'a pas encore de plafond : son compte
@@ -230,7 +245,7 @@ def verdict(projet: config.Projet, dossier: Path, poser: bool = False) -> Rappor
     resultats = lecteur(dossier)
     mesures = {}
     for module, p in plafonds.items():
-        c = resultats.get(module)
+        c = _du_module(resultats, module)
         if p.get("pending"):
             if not c:
                 r.avertir(ident, trad("{module} : à mesurer, et pas encore balayé", module=module))

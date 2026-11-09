@@ -2023,6 +2023,12 @@ MESSAGES: dict[str, str] = {
         "no linter imposed; a project that adopts checkstyle or spotbugs declares it here",
     "capacité `build` : `javac` avec ses avertissements":
         "capability `build`: `javac` with its warnings",
+    "aucun formateur imposé ; un projet qui adopte ktlint ou ktfmt le déclare ici":
+        "no formatter imposed; a project that adopts ktlint or ktfmt declares it here",
+    "aucun linter imposé ; un projet qui adopte detekt ou ktlint le déclare ici":
+        "no linter imposed; a project that adopts detekt or ktlint declares it here",
+    "capacité `build` : le compilateur Kotlin et ses avertissements":
+        "capability `build`: the Kotlin compiler and its warnings",
     "aucun formateur imposé ; un projet qui adopte prettier le déclare ici (`npx prettier --check .`)":
         "no formatter imposed; a project that adopts prettier declares it here (`npx prettier --check .`)",
     "relecture du diff, et la capacité `tests`, qui charge chaque module testé":

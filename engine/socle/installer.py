@@ -70,11 +70,18 @@ MARQUEURS_LANGAGE = (
     (("pyproject.toml", "setup.py", "setup.cfg"), "python"),
     (("go.mod",), "go"),
     (("pom.xml",), "java"),
+    (("build.gradle.kts", "settings.gradle.kts"), "kotlin"),
     (("Gemfile",), "ruby"),
     (("composer.json",), "php"),
     (("*.sln", "*.slnx", "*.csproj"), "csharp"),
     (("package.json",), "javascript"),
 )
+
+
+# Un langage dont le marqueur ne suffit pas : son build Gradle écrit en
+# Kotlin, un projet Java sous Gradle le porte aussi ; il faut encore une
+# source du langage.
+SOURCE_EXIGEE = {"kotlin": ".kt"}
 
 
 def langages_presents(fichiers: list[str]) -> dict[str, list[str]]:
@@ -83,6 +90,8 @@ def langages_presents(fichiers: list[str]) -> dict[str, list[str]]:
     qu'il couvre."""
     res: dict[str, list[str]] = {}
     for marqueurs, langage in MARQUEURS_LANGAGE:
+        if langage in SOURCE_EXIGEE and not any(f.endswith(SOURCE_EXIGEE[langage]) for f in fichiers):
+            continue
         for f in fichiers:
             nom = f.rsplit("/", 1)[-1]
             if any(fnmatch.fnmatchcase(nom, m) for m in marqueurs) and not f.startswith(config.DOSSIER + "/"):
@@ -93,6 +102,8 @@ def langages_presents(fichiers: list[str]) -> dict[str, list[str]]:
 def detecter_langage(cible: Path) -> str | None:
     for fichiers, langage in MARQUEURS_LANGAGE:
         if any(p.is_file() for f in fichiers for p in cible.glob(f)):
+            if langage in SOURCE_EXIGEE and not any(cible.rglob(f"*{SOURCE_EXIGEE[langage]}")):
+                continue
             return langage
     return None
 

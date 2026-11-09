@@ -22,7 +22,7 @@ def adaptateur(nom: str) -> dict:
 
 class TestProjetsJetables(unittest.TestCase):
     def test_un_projet_par_adaptateur_nouveau(self):
-        self.assertEqual(sorted(banc.LANGAGES), ["csharp", "go", "java", "javascript", "php", "ruby"])
+        self.assertEqual(sorted(banc.LANGAGES), ["csharp", "go", "java", "javascript", "kotlin", "php", "ruby"])
 
     def test_chaque_defaut_s_applique_a_son_projet(self):
         for nom, l in banc.LANGAGES.items():
@@ -49,6 +49,18 @@ class TestProjetsJetables(unittest.TestCase):
 
 
 class TestVerdictDuBanc(unittest.TestCase):
+    def test_eprouver_s_arrete_quand_une_dependance_manque(self):
+        """Une commande de préparation qui échoue arrête le banc à sa première
+        étape, notée en échec : rien ne s'éprouve sur un projet incomplet."""
+        import dataclasses
+        from unittest import mock
+
+        cassee = dataclasses.replace(banc.LANGAGES["kotlin"], preparer=["false"])
+        with tempfile.TemporaryDirectory() as d, mock.patch.dict(banc.LANGAGES, {"kotlin": cassee}):
+            res = banc.eprouver("kotlin", Path(d) / "projet", bavard=False)
+        self.assertEqual(list(res["etapes"]), ["dépendances"])
+        self.assertFalse(res["etapes"]["dépendances"]["ok"])
+
     def test_refuse_par_lit_la_ligne_de_synthese(self):
         sortie = "  tests.creux    ECHEC\n\nECHEC — 2 contrôle(s) : tests.creux, tests.attendus\n"
         self.assertTrue(banc.refuse_par(sortie, "tests.attendus"))

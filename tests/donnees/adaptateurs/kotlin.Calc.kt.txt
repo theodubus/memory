@@ -1,0 +1,18 @@
+package essai
+
+object Calc {
+    fun doubler(x: Int): Int {
+        return 2 * x
+    }
+
+    fun racine(x: Int): Double {
+        require(x >= 0)
+        return Math.sqrt(x.toDouble())
+    }
+
+    private fun aide(x: Int): Int = x
+
+    internal fun interne(x: Int): Int = x
+
+    override fun toString(): String = "Calc"
+}

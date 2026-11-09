@@ -219,6 +219,68 @@ class CalcTest {{
 }}
 """
 
+KOTLIN_GRADLE = """plugins {
+    kotlin("jvm") version "2.0.21"
+    id("info.solidsoft.pitest") version "1.15.0"
+}
+
+repositories { mavenCentral() }
+
+dependencies {
+    testImplementation(kotlin("test"))
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+kotlin { jvmToolchain(21) }
+
+tasks.test { useJUnitPlatform() }
+
+pitest {
+    junit5PluginVersion.set("1.2.1")
+    targetClasses.set(listOf("essai.*"))
+    outputFormats.set(listOf("XML"))
+    timestampedReports.set(false)
+}
+"""
+KOTLIN_CODE = """package essai
+
+object Calc {
+    fun doubler(x: Int): Int {
+        return 2 * x
+    }
+
+    fun suivant(x: Int): Int {
+        if (x > 100) {
+            return x
+        }
+        return aide(x)
+    }
+
+    private fun aide(x: Int): Int {
+        return x + 1
+    }
+}
+"""
+KOTLIN_TEST = f"""package essai
+
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
+class CalcTest {{
+    @Test
+    fun doublerMultiplieParDeux() {{
+        assertEquals(4, Calc.doubler(2))
+    }}
+
+    @Test
+    fun suivantAjouteUn() {{
+        assertEquals(2, Calc.suivant(1))
+    }}
+    // {FIN}
+}}
+"""
+
 RUBY_CODE = """# Le module de calcul d'essai.
 module Calc
   def self.double(x)
@@ -462,6 +524,28 @@ LANGAGES = {
                     "import org.junit.jupiter.api.Test;\n\nclass RegressionTest {\n    @Test\n"
                     "    void doublerDeTrois() {\n        assertEquals(6, Calc.doubler(3));\n    }\n}\n"),
     ),
+    "kotlin": Langage(
+        adaptateur="kotlin",
+        fichiers={"settings.gradle.kts": 'rootProject.name = "essai"\n', "build.gradle.kts": KOTLIN_GRADLE,
+                  ".gitignore": "build/\n.gradle/\n.kotlin/\n", "src/main/kotlin/essai/Calc.kt": KOTLIN_CODE,
+                  "src/test/kotlin/essai/CalcTest.kt": KOTLIN_TEST},
+        preparer=["gradle -q --no-daemon wrapper", "./gradlew -q testClasses"],
+        code="src/main/kotlin/essai/Calc.kt",
+        creux=("src/test/kotlin/essai/CalcTest.kt", f"    // {FIN}\n",
+               "    @Test\n    fun neMesureRien() {\n        Calc.doubler(3)\n    }\n"),
+        desactive=("src/test/kotlin/essai/CalcTest.kt", f"    // {FIN}\n",
+                   "    @kotlin.test.Ignore\n    @Test\n    fun plusTard() {\n        assertEquals(6, Calc.doubler(3))\n"
+                   "    }\n"),
+        attendu=("src/test/kotlin/essai/CalcTest.kt", "assertEquals(4,", "assertEquals(5,"),
+        fonction=("src/main/kotlin/essai/Calc.kt", "    private fun aide(x: Int): Int {",
+                  "    fun quadrupler(x: Int): Int {\n        return 4 * x\n    }\n\n"
+                  "    private fun aide(x: Int): Int {"),
+        bogue=("src/main/kotlin/essai/Calc.kt", "return 2 * x\n", "return 2 * x + 1\n"),
+        regression=("src/test/kotlin/essai/RegressionTest.kt",
+                    "package essai\n\nimport kotlin.test.Test\nimport kotlin.test.assertEquals\n\n"
+                    "class RegressionTest {\n    @Test\n    fun doublerDeTrois() {\n"
+                    "        assertEquals(6, Calc.doubler(3))\n    }\n}\n"),
+    ),
     "ruby": Langage(
         adaptateur="ruby",
         fichiers={"Gemfile": 'source "https://rubygems.org"\n\ngem "rspec", "~> 3.13"\ngem "mutant-rspec", "~> 0.12"\n',
@@ -660,7 +744,7 @@ def eprouver(nom: str, dossier: Path, bavard: bool) -> dict:
     debut = time.time()
     r = p.run(cap["command"], delai=1800)
     res["mutation_secondes"] = round(time.time() - debut, 1)
-    compte = mutation.LECTEURS[cap["parser"]](dossier).get(l.code)
+    compte = mutation._du_module(mutation.LECTEURS[cap["parser"]](dossier), l.code)
     res["mutation"] = dict(compte or {})
     noter("balayage de mutation lu", bool(compte), "" if compte else r.stdout + r.stderr)
     if compte:
