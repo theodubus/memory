@@ -591,15 +591,25 @@ def corrige_son_code(ctx, parent: str, sha: str) -> bool:
 
 
 def concerne(projet, touches: list[str]) -> bool:
-    """Les fichiers qu'un correctif touche concernent l'adaptateur de la vue :
-    ils comptent de ses sources, ou d'aucune et il est le principal."""
+    """Les fichiers qu'un correctif touche concernent l'adaptateur de la vue
+    s'ils comptent de son code (sa section `[code]`, ses sources hors tests
+    à défaut) : un test ajouté dans un autre langage ne fait pas de ce
+    langage celui du code corrigé. Un correctif qui ne touche le code
+    d'aucun concerne ceux dont il touche les sources, ses tests par exemple,
+    sinon le principal."""
     courant = projet.adaptateur_courant
-    hors = [f"{config.DOSSIER}/**"]
-    if outils.filtrer(touches, courant.donnees.get("sources", []), hors):
-        return True
     tous = projet.adaptateurs
-    return courant.chemin == tous[0].chemin and not any(
-        outils.filtrer(touches, a.donnees.get("sources", []), hors) for a in tous)
+    hors = [f"{config.DOSSIER}/**"]
+
+    def code_de(a) -> list[str]:
+        chemins, exclus, _ = config_code(projet.pour(a))
+        return outils.filtrer(touches, chemins, exclus)
+
+    if any(code_de(a) for a in tous):
+        return bool(code_de(courant))
+    if any(outils.filtrer(touches, a.donnees.get("sources", []), hors) for a in tous):
+        return bool(outils.filtrer(touches, courant.donnees.get("sources", []), hors))
+    return courant.chemin == tous[0].chemin
 
 
 @controle("adaptateur.recouvrement")

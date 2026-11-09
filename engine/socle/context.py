@@ -216,12 +216,15 @@ def _lancer(c: Controle, ctx: Contexte, rapport):
 
 def _par_adaptateur(c: Controle, ctx: Contexte, rapport):
     """Le contrôle, une fois par adaptateur. Un constat que chacun rend à
-    l'identique ne dépend d'aucun (un fichier de cas, une dispense
-    illisible) : il se dit une fois. Les autres nomment leur adaptateur."""
+    l'identique se dit une fois : sans nom s'il porte sur un fichier
+    qu'aucun adaptateur ne désigne (un fichier de cas, les garde-fous), avec
+    le nom de tous sinon (deux correctifs refusés de même dans deux
+    langages). Les autres nomment leur adaptateur."""
     from socle.report import Rapport
 
+    tous = ctx.projet.adaptateurs
     passages = []
-    for a in ctx.projet.adaptateurs:
+    for a in tous:
         r = Rapport()
         _lancer(c, ctx.pour(a), r)
         passages.append((a, r.constats))
@@ -237,8 +240,13 @@ def _par_adaptateur(c: Controle, ctx: Contexte, rapport):
                 if cle(k) in vus:
                     continue
                 vus.add(cle(k))
+                if k.chemin and not any(ctx.projet.designes(x, [k.chemin]) for x in tous):
+                    rapport.constats.append(k)
+                    continue
+                noms = ", ".join(x.nom for x in tous)
             else:
-                k.message = trad("{adaptateur} : {message}", adaptateur=a.nom, message=k.message)
+                noms = a.nom
+            k.message = trad("{adaptateur} : {message}", adaptateur=noms, message=k.message)
             rapport.constats.append(k)
 
 

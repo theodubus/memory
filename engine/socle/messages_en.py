@@ -2605,4 +2605,10 @@ MESSAGES: dict[str, str] = {
         "file designated by two adapters",
     "un second adaptateur aux motifs disjoints, posé par l'installeur et approuvé par l'humain, passe la CI":
         "a second adapter with disjoint patterns, set by the installer and approved by the human, passes the CI",
+    "!! {adaptateur} ne déclare pas `language` : aucun autre adaptateur ne s'ajoute en automatique ({liste}) ; les "
+    "nommer par `--adapter`, ou y déclarer son langage":
+        "!! {adaptateur} does not declare `language`: no other adapter is added automatically ({liste}); name them "
+        "with `--adapter`, or declare its language in it",
+    "plafonds de mutation : {n} module(s) des adaptateurs ajoutés posé(s) à mesurer":
+        "mutation caps: {n} module(s) of the added adapters set to measure",
 }

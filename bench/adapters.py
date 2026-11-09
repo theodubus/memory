@@ -861,7 +861,8 @@ def eprouver_mixte(dossier: Path, bavard: bool) -> dict:
     p.commit("fix: doubler redevient juste")
     r = p.socle("check", "--stage", "ci", "--base", avant, "--only", "tests.regression")
     noter("correctif Kotlin prouvé par un seul test Python refusé par tests.regression",
-          refuse_par(r.stdout, "tests.regression") and "kotlin : " in r.stdout, r.stdout + r.stderr)
+          refuse_par(r.stdout, "tests.regression") and "kotlin : " in r.stdout and "python : " not in r.stdout,
+          r.stdout + r.stderr)
     p.git("reset", "-q", "--hard", avant)
     p.git("checkout", base, "--", k.bogue[0])
     chemin, contenu = k.regression

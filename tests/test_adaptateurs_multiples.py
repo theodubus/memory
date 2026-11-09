@@ -150,14 +150,18 @@ class ParAdaptateur(DeuxLangages):
 
     def test_un_constat_commun_aux_adaptateurs_ne_se_dit_qu_une_fois(self):
         def verifier(ctx, r):
-            r.erreur("essai.commun", "commun")
+            r.erreur("essai.commun", "d'un fichier de cas", "docs/cas.json")
+            r.erreur("essai.commun", "dans chaque langage")
             r.erreur("essai.commun", f"propre à {ctx.projet.adaptateur['language']}")
 
         c = contexte.Controle("essai.commun", verifier, ("ci",), False, False, "", True)
         r = Rapport()
         contexte._par_adaptateur(c, contexte.Contexte(self.projet(), etage="ci"), r)
+        # Un fichier qu'aucun ne désigne : sans nom ; le même refus dans les
+        # deux langages : les deux noms (revue du lot, constat 11).
         self.assertEqual([k.message for k in r.constats],
-                         ["commun", "python : propre à python", "kotlin : propre à kotlin"])
+                         ["d'un fichier de cas", "python, kotlin : dans chaque langage",
+                          "python : propre à python", "kotlin : propre à kotlin"])
 
     def test_un_correctif_se_prouve_dans_le_langage_du_code_corrige(self):
         p = self.projet()
@@ -173,6 +177,14 @@ class ParAdaptateur(DeuxLangages):
         # seul langage.
         self.assertTrue(controles_tests.concerne(python, ["README.md"]))
         self.assertFalse(controles_tests.concerne(kotlin, ["README.md"]))
+        # Un test Python ajouté à un correctif du code Kotlin ne fait pas de
+        # Python le langage du code corrigé (revue du lot, constat 4).
+        mixte = ["src/main/kotlin/essai/Calc.kt", "src/test/kotlin/essai/CalcTest.kt", "tests/test_calc.py"]
+        self.assertTrue(controles_tests.concerne(kotlin, mixte))
+        self.assertFalse(controles_tests.concerne(python, mixte))
+        # Des tests seuls, sans code : ceux de leur langage.
+        self.assertTrue(controles_tests.concerne(kotlin, ["src/test/kotlin/essai/CalcTest.kt"]))
+        self.assertFalse(controles_tests.concerne(python, ["src/test/kotlin/essai/CalcTest.kt"]))
 
     def test_corrige_son_code_lit_les_fichiers_du_correctif(self):
         self.ecrire("src/main/kotlin/essai/Calc.kt", CALC_KT.replace("2 * x", "x * 2"))
@@ -254,6 +266,16 @@ class Mutation(DeuxLangages):
         shutil.rmtree(self.racine / ".socle/adapters")
         self.assertEqual(len(mutation.plafonds_de(self.projet())), 2)
 
+    def test_un_plafond_qu_aucun_adaptateur_ne_designe_revient_au_principal(self):
+        # Revue du lot, constat 5 : sans lui, `calc.py`, hors de `src/`, ne
+        # serait plus jugé par personne.
+        gf = self.racine / ".socle/guardrails.toml"
+        gf.write_text(gf.read_text() + '"calc.py" = { max = 0 }\n')
+        p = self.projet()
+        python, kotlin = (p.pour(a) for a in p.adaptateurs)
+        self.assertEqual(sorted(mutation.plafonds_de(python)), ["calc.py", "src/outil.py"])
+        self.assertEqual(list(mutation.plafonds_de(kotlin)), ["src/main/kotlin/essai/Calc.kt"])
+
     def test_chaque_balayage_ecrit_dans_son_dossier(self):
         p = self.projet()
         commandes, dossier, faute = mutation.commandes_de_balayage(p.pour(p.adaptateurs[1]))
@@ -321,6 +343,118 @@ class Installation(unittest.TestCase):
         caps = (self.racine / ".socle/guardrails.toml").read_text()
         self.assertIn('"app/src/main/kotlin/app/App.kt"', caps)
         self.assertIn('"src/outils/verif.py"', caps)
+
+
+def installer(racine: Path, adaptateurs, proprietaire="@essai") -> int:
+    import contextlib
+
+    with open(os.devnull, "w") as nul, contextlib.redirect_stdout(nul), contextlib.redirect_stderr(nul):
+        return installeur.installer(racine, adaptateurs, proprietaire)
+
+
+class MiseAJour(unittest.TestCase):
+    """Un projet Python déjà équipé, auquel du Kotlin s'ajoute : le chemin de
+    JustCook (revue du lot de B-0095)."""
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-maj-deux-"))
+        git(self.racine, "init", "-q", "-b", "main")
+        for chemin, texte in (("pyproject.toml", "[project]\nname = \"outils\"\n[tool.pytest.ini_options]\n"),
+                              ("src/outils/verif.py", "def verifier():\n    return True\n")):
+            self.ecrire(chemin, texte)
+        installer(self.racine, ["python-pytest"])
+        self.ecrire("app/build.gradle.kts", "plugins { kotlin(\"jvm\") }\n")
+        self.ecrire("app/src/main/kotlin/app/App.kt", "package app\n\nfun main() {}\n")
+
+    def tearDown(self):
+        shutil.rmtree(self.racine, ignore_errors=True)
+
+    def ecrire(self, chemin: str, texte: str):
+        p = self.racine / chemin
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(texte)
+
+    def test_les_modules_du_langage_ajoute_entrent_a_mesurer(self):
+        installer(self.racine, "auto")
+        caps = (self.racine / ".socle/guardrails.toml").read_text()
+        self.assertIn('"app/src/main/kotlin/app/App.kt" = { pending = true }', caps)
+        self.assertIn('"src/outils/verif.py"', caps)
+
+    def test_la_ci_garde_les_outils_du_principal_quand_seul_l_autre_est_nomme(self):
+        installer(self.racine, ["kotlin"])
+        self.assertTrue((self.racine / ".socle/adapters/kotlin.toml").is_file())
+        self.assertIn('language = "python"', (self.racine / ".socle/adapter.toml").read_text())
+        ci = (self.racine / ".github/workflows/socle.yml").read_text()
+        self.assertIn("mutmut", ci)
+        self.assertIn("actions/setup-java", ci)
+
+    def test_un_principal_sans_langage_ne_recoit_pas_de_doublon(self):
+        p = self.racine / ".socle/adapter.toml"
+        p.write_text(p.read_text().replace('language = "python"\n', "", 1))
+        installer(self.racine, "auto")
+        self.assertFalse((self.racine / ".socle/adapters/python-pytest.toml").exists())
+        self.assertFalse((self.racine / ".socle/adapters/kotlin.toml").exists())
+        # Nommé, il s'ajoute.
+        installer(self.racine, ["kotlin"])
+        self.assertTrue((self.racine / ".socle/adapters/kotlin.toml").is_file())
+
+    def test_ajouter_a_mesurer_cree_la_table_qui_manque(self):
+        self.assertEqual(installeur.ajouter_a_mesurer("[memory]\n", ["a.kt"]),
+                         '[memory]\n\n[mutation.caps]\n"a.kt" = { pending = true }\n')
+        self.assertEqual(installeur.ajouter_a_mesurer('[mutation.caps]\n"b.py" = { max = 0 }\n', ["a.kt"]),
+                         '[mutation.caps]\n"a.kt" = { pending = true }\n"b.py" = { max = 0 }\n')
+        self.assertEqual(installeur.modules_a_mesurer(self.racine, [(ADAPTATEURS / "kotlin.toml").read_text()]),
+                         ["app/src/main/kotlin/app/App.kt"])
+
+
+class Detection(unittest.TestCase):
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-detection-"))
+        git(self.racine, "init", "-q", "-b", "main")
+
+    def tearDown(self):
+        shutil.rmtree(self.racine, ignore_errors=True)
+
+    def ecrire(self, chemin: str, texte: str):
+        p = self.racine / chemin
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(texte)
+
+    def test_un_langage_tiers_n_appelle_pas_d_adaptateur(self):
+        self.ecrire("pyproject.toml", "[project]\nname = \"x\"\n")
+        self.ecrire("x.py", "X = 1\n")
+        self.ecrire("web/package.json", "{}\n")
+        self.assertEqual(installeur.detecter_adaptateurs(self.racine), ["python", "javascript"])
+        self.ecrire(".socle/guardrails.toml", '[thirdparty]\npaths = ["web/**"]\n')
+        self.assertEqual(installeur.detecter_adaptateurs(self.racine), ["python"])
+
+    def test_un_python_second_sous_pytest_prend_python_pytest(self):
+        self.ecrire("build.gradle.kts", "plugins { kotlin(\"jvm\") }\n")
+        self.ecrire("src/main/kotlin/A.kt", "fun a() = 1\n")
+        self.ecrire("tools/pyproject.toml", "[project]\nname = \"t\"\n[tool.pytest.ini_options]\n")
+        self.ecrire("tools/t.py", "T = 1\n")
+        self.assertEqual(installeur.detecter_adaptateurs(self.racine), ["kotlin", "python-pytest"])
+
+
+class Balayage(unittest.TestCase):
+    def test_un_workflow_qui_ne_lance_qu_un_outil_ne_suffit_pas(self):
+        racine = Path(tempfile.mkdtemp(prefix="socle-balayage-deux-"))
+        try:
+            git(racine, "init", "-q", "-b", "main")
+            (racine / ".github/workflows").mkdir(parents=True)
+            (racine / ".github/workflows/pit.yml").write_text("jobs:\n  m:\n    steps:\n      - run: ./gradlew pitest\n")
+            py, kt = ((ADAPTATEURS / f"{n}.toml").read_text() for n in ("python-pytest", "kotlin"))
+            self.assertEqual(installeur._balayage_planifie(racine, kt)[0], False)
+            self.assertEqual(installeur._balayage_planifie(racine, py, [kt])[0], True)
+            (racine / ".socle/adapters").mkdir(parents=True)
+            (racine / ".socle/adapter.toml").write_text(py)
+            (racine / ".socle/adapters/kotlin.toml").write_text(kt)
+            projet = config.Projet.charger(racine)
+            fichiers = outils_fichiers(racine)
+            niveau, message, _, _ = mutation.etat_du_balayage(projet, fichiers, lambda f: (racine / f).read_text())
+            self.assertEqual(niveau, "erreur")
+        finally:
+            shutil.rmtree(racine, ignore_errors=True)
 
 
 if __name__ == "__main__":

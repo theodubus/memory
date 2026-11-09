@@ -124,6 +124,9 @@ client : il a alors un adaptateur par langage (ADR-0051).
 - **Où ils vivent.** Le principal reste `.socle/adapter.toml` ; les autres
   vont dans `.socle/adapters/<nom>.toml`, au même format. Tous sont
   protégés, et tous jugent de la même façon : aucun ne passe avant un autre.
+  Chacun déclare son langage (`language`) : l'installeur n'en pose pas deux
+  pour le même, et n'en ajoute aucun en automatique à un principal qui ne
+  dit pas le sien.
 - **Qui juge quel fichier.** Chaque fichier est jugé par l'adaptateur dont
   les motifs le désignent : ses sources, son code ou ses tests. Le contrôle
   `adaptateur.recouvrement` refuse un fichier que deux adaptateurs
@@ -133,18 +136,24 @@ client : il a alors un adaptateur par langage (ADR-0051).
   fois par adaptateur, avec ses seuls motifs, et ses constats nomment
   l'adaptateur (`kotlin : test … sans assertion`). Une fonction Kotlin se
   teste en Kotlin. Un correctif livre un test dans le langage du code qu'il
-  corrige, et dans chacun s'il en corrige plusieurs ; un correctif qui ne
-  touche le code d'aucun revient au principal.
+  corrige (sa section `[code]`), et dans chacun s'il en corrige plusieurs ;
+  un test ajouté dans un autre langage ne fait pas de lui un langage du
+  code corrigé. Un correctif qui ne touche le code d'aucun revient au
+  langage de ses tests, sinon au principal.
 - **La vérification.** `verify` lance les étapes de chaque adaptateur, l'un
   après l'autre et jusqu'au bout, chacune nommée `verify.<adaptateur>.<étape>`
   (`verify.kotlin.tests`). La CI installe les outils de tous.
 - **La mutation.** Chaque adaptateur balaie ses modules avec son outil, et ne
-  juge que leurs plafonds ; les plafonds restent tenus par module, dans les
-  garde-fous. `socle mutation-verdict <dossier> --adapter <nom>` juge les
-  résultats d'un seul outil.
+  juge que leurs plafonds ; un plafond qu'aucun ne désigne revient au
+  principal. Les plafonds restent tenus par module, dans les garde-fous.
+  `socle mutation-verdict <dossier> --adapter <nom>` juge les résultats d'un
+  seul outil. Le balayage planifié du socle se pose tant qu'un outil n'a
+  pas son propre workflow dans le projet.
 - **L'installation.** `socle install --adapter python-pytest --adapter
   kotlin` : le premier nommé prend `.socle/adapter.toml`. En automatique,
-  l'installeur en pose un par langage qu'il reconnaît. La mise à jour
+  l'installeur en pose un par langage qu'il reconnaît, hors des fichiers
+  tiers. Un langage ajouté à un projet déjà équipé voit ses modules entrer
+  « à mesurer » au cliquet de mutation. La mise à jour
   rafraîchit chaque copie d'un adaptateur maintenu sous `.socle/adapters/`,
   que l'humain approuve comme tout fichier protégé ; une copie dont une
   demande avait resserré les motifs est à remettre.

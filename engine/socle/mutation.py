@@ -290,8 +290,17 @@ def plafonds_de(projet: config.Projet) -> dict:
     plafonds = projet.gf("mutation", "caps", defaut={}) or {}
     if not projet.plusieurs_adaptateurs:
         return plafonds
-    cap = projet.adaptateur.get("capabilities", {}).get("mutation", {})
-    siens = set(outils.filtrer(sorted(plafonds), cap.get("modules", []), cap.get("modules_exclude", [])))
+
+    def modules_de(a) -> set[str]:
+        cap = a.donnees.get("capabilities", {}).get("mutation", {})
+        return set(outils.filtrer(sorted(plafonds), cap.get("modules", []), cap.get("modules_exclude", [])))
+
+    siens = modules_de(projet.adaptateur_courant)
+    # Un plafond qu'aucun adaptateur ne désigne revient au principal, qui le
+    # jugeait seul avant : un module sans résultat casse toujours.
+    if projet.adaptateur_courant.chemin == projet.adaptateurs[0].chemin:
+        designes = set().union(*(modules_de(a) for a in projet.adaptateurs))
+        siens |= set(plafonds) - designes
     return {m: p for m, p in plafonds.items() if m in siens}
 
 
@@ -540,7 +549,10 @@ def etat_du_balayage(projet: config.Projet, fichiers: list[str],
             if "command" in (c := a.donnees.get("capabilities", {}).get("mutation", {}))]
     if not caps:
         return None, "", None, None
-    flux = next((f for c in caps if (f := workflow_de_balayage(c, fichiers, lire))), None)
+    # Le workflow du socle balaie tous les adaptateurs ; sans lui, chaque
+    # outil doit avoir le sien.
+    trouves = [workflow_de_balayage(c, fichiers, lire) for c in caps]
+    flux = trouves[0] if all(trouves) else None
     if flux is None:
         return "erreur", (trad("aucun workflow ne lance le balayage de mutation : le cliquet ne se mesure "
                                "jamais. Relancer l'installeur, qui pose `{workflow}`", workflow=WORKFLOW)), None, None

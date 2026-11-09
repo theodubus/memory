@@ -125,8 +125,19 @@ def detecter_adaptateur(cible: Path) -> str | None:
         langage = "python"
     if langage != "python":
         return langage
-    indices = [f for f in fichiers if f.endswith("conftest.py") or f in ("pytest.ini", "tox.ini")]
-    for f in [f for f in fichiers if f in ("pyproject.toml", "setup.cfg") or f.startswith("requirements")]:
+    return _python_ou_pytest(cible, fichiers)
+
+
+def _python_ou_pytest(cible: Path, fichiers: list[str], partout: bool = False) -> str:
+    """`python-pytest` quand le dépôt dit pytest, `python` sinon. Ses fichiers
+    de configuration se lisent à la racine ; `partout`, dans tout dossier :
+    pour un Python qui n'est pas le premier langage, ses outils vivent souvent
+    dans un sous-dossier (revue du lot de B-0095, constat 7)."""
+    def nom(f):
+        return f.rsplit("/", 1)[-1] if partout else f
+
+    indices = [f for f in fichiers if f.endswith("conftest.py") or nom(f) in ("pytest.ini", "tox.ini")]
+    for f in [f for f in fichiers if nom(f) in ("pyproject.toml", "setup.cfg") or nom(f).startswith("requirements")]:
         if "pytest" in (cible / f).read_text(encoding="utf-8", errors="replace"):
             indices.append(f)
     return "python-pytest" if indices else "python"
@@ -141,12 +152,18 @@ def detecter_adaptateurs(cible: Path) -> list[str]:
         return []
     res = [premier]
     vus = {_langage_de(premier)}
-    presents = langages_presents([f for f in outils.fichiers_courants(cible)
-                                  if not f.startswith((config.DOSSIER + "/", ".claude/"))])
+    # Les fichiers d'un outil tiers n'appellent pas d'adaptateur : l'état ne
+    # signale pas leur langage non plus.
+    fichiers = config.Projet.charger(cible).hors_tiers(
+        [f for f in outils.fichiers_courants(cible) if not f.startswith((config.DOSSIER + "/", ".claude/"))])
+    presents = langages_presents(fichiers)
     for _, langage in MARQUEURS_LANGAGE:
-        if langage in presents and langage not in vus and (ADAPTATEURS / f"{langage}.toml").is_file():
+        if langage not in presents or langage in vus:
+            continue
+        nom = _python_ou_pytest(cible, fichiers, partout=True) if langage == "python" else langage
+        if (ADAPTATEURS / f"{nom}.toml").is_file():
             vus.add(langage)
-            res.append(langage)
+            res.append(nom)
     return res
 
 
@@ -184,8 +201,11 @@ def _balayage_planifie(cible: Path, texte_adaptateur: str, autres: list[str] = (
                   if p.is_file()) if (cible / ".github/workflows").is_dir() else []
     if mutation.WORKFLOW in flux:
         return True, ""
-    autre = next((a for c in caps if (a := mutation.workflow_de_balayage(
-        c, flux, lambda f: outils.lire_a(cible, None, f), sauf_le_sien=True))), None)
+    # Un workflow du projet qui lance l'outil d'un seul langage ne balaie pas
+    # les autres : celui du socle se pose tant qu'un outil n'a pas le sien.
+    autres = [mutation.workflow_de_balayage(c, flux, lambda f: outils.lire_a(cible, None, f), sauf_le_sien=True)
+              for c in caps]
+    autre = autres[0] if all(autres) else None
     if autre:
         return False, (trad("balayage de mutation : `{autre}` le lance déjà, le socle n'en pose pas un second "
                             "; la CI vérifie qu'il tourne encore", autre=autre))
@@ -235,16 +255,8 @@ def garde_fous_initiaux(cible: Path, texte_adaptateur: str, ch: config.Chemins =
     mesurés. Un module dont `plafonds` donne la mesure, faite ailleurs, la
     reprend au lieu d'attendre ce balayage (B-0009)."""
     texte = gabarit("guardrails.toml", lg)
-    fichiers = [f for f in outils.fichiers_courants(cible) if not f.startswith(config.DOSSIER + "/")]
-    modules = []
     # Chaque adaptateur pose les modules de son langage (ADR-0051, point 5).
-    for x in (texte_adaptateur, *autres):
-        cap = tomllib.loads(x).get("capabilities", {}).get("mutation", {})
-        if "command" not in cap:
-            continue
-        porte = re.compile(cap.get("has_code", r"."))
-        modules += [m for m in outils.filtrer(fichiers, cap.get("modules", []), cap.get("modules_exclude", []))
-                    if porte.search(outils.lire_a(cible, None, m) or "") and m not in modules]
+    modules = modules_a_mesurer(cible, [texte_adaptateur, *autres])
     if not modules:
         return texte
     plafonds = plafonds or {}
@@ -516,16 +528,55 @@ def _poser_configuration(cible: Path, texte_adaptateur: str, ancien: dict, prive
                 if ecartes:
                     journal.append(trad("!! plafonds de {source} écartés, faute d'un module de ce nom qui porte du "
                                         "code : {liste}", source=source, liste=", ".join(ecartes)))
-    journal += _poser_autres_adaptateurs(cible, autres, ch)
+    poses, sortie = _poser_autres_adaptateurs(cible, autres, ch)
+    journal += sortie
+    gf = cible / ch.garde_fous
+    if poses and gf.is_file():
+        # Une mise à jour qui ajoute un langage : ses modules entrent « à
+        # mesurer » au cliquet, comme ceux d'une installation neuve (revue du
+        # lot de B-0095, constat 2). Ajouter un plafond durcit.
+        texte = gf.read_text(encoding="utf-8")
+        modules = [m for m in modules_a_mesurer(cible, poses)
+                   if m not in (tomllib.loads(texte).get("mutation", {}).get("caps", {}) or {})]
+        if modules:
+            outils.ecrire(gf, ajouter_a_mesurer(texte, modules))
+            journal.append(trad("plafonds de mutation : {n} module(s) des adaptateurs ajoutés posé(s) à mesurer",
+                                n=len(modules)))
     return lg, journal
 
 
-def _poser_autres_adaptateurs(cible: Path, autres: list[tuple[str, str]], ch: config.Chemins) -> list[str]:
+def modules_a_mesurer(cible: Path, textes: list[str]) -> list[str]:
+    """Les modules qui portent du code, pour chaque adaptateur qui déclare un
+    balayage de mutation."""
+    fichiers = [f for f in outils.fichiers_courants(cible) if not f.startswith(config.DOSSIER + "/")]
+    modules = []
+    for x in textes:
+        cap = tomllib.loads(x).get("capabilities", {}).get("mutation", {})
+        if "command" not in cap:
+            continue
+        porte = re.compile(cap.get("has_code", r"."))
+        modules += [m for m in outils.filtrer(fichiers, cap.get("modules", []), cap.get("modules_exclude", []))
+                    if porte.search(outils.lire_a(cible, None, m) or "") and m not in modules]
+    return sorted(modules)
+
+
+def ajouter_a_mesurer(texte: str, modules: list[str]) -> str:
+    """Les garde-fous, avec ces modules « à mesurer » sous `[mutation.caps]`,
+    la table ajoutée si elle manque."""
+    lignes = "".join(f"{json.dumps(m, ensure_ascii=False)} = {{ pending = true }}\n" for m in modules)
+    m = re.search(r"(?m)^\[mutation\.caps\]\s*\n", texte)
+    if m:
+        return texte[:m.end()] + lignes + texte[m.end():]
+    return texte.rstrip("\n") + "\n\n[mutation.caps]\n" + lignes
+
+
+def _poser_autres_adaptateurs(cible: Path, autres: list[tuple[str, str]],
+                              ch: config.Chemins) -> tuple[list[str], list[str]]:
     """Les adaptateurs des autres langages, `.socle/adapters/<nom>.toml` :
     posés s'ils manquent. Une copie d'un adaptateur maintenu se rafraîchit à
     chaque mise à jour, et l'humain l'approuve comme tout fichier protégé ;
     un adaptateur propre au projet se garde (ADR-0051, point 6)."""
-    journal = []
+    journal, poses = [], []
     a_poser = dict(autres)
     for chemin in config.fichiers_adaptateurs(cible, ch.adaptateurs):
         nom = Path(chemin).stem
@@ -535,6 +586,7 @@ def _poser_autres_adaptateurs(cible: Path, autres: list[tuple[str, str]], ch: co
         p = cible / ch.adaptateurs / f"{nom}.toml"
         if not p.is_file():
             outils.ecrire(p, texte)
+            poses.append(texte)
             journal.append(trad("{nom} posé", nom=f"{ch.adaptateurs}/{nom}.toml"))
         elif not (ADAPTATEURS / f"{nom}.toml").is_file():
             journal.append(trad("{nom} existe : conservé (comparer au gabarit à la main si besoin)",
@@ -544,7 +596,7 @@ def _poser_autres_adaptateurs(cible: Path, autres: list[tuple[str, str]], ch: co
             journal.append(trad("{nom} rafraîchi depuis l'adaptateur maintenu : un changement protégé, à "
                                 "approuver ; une copie dont une demande avait resserré les motifs est à "
                                 "remettre", nom=f"{ch.adaptateurs}/{nom}.toml"))
-    return journal
+    return poses, journal
 
 
 def _poser_memoire(cible: Path, lg: str, nom_adaptateur: str, adoption: bool, ch: config.Chemins) -> list[str]:
@@ -693,10 +745,11 @@ def _installer(cible: Path, adaptateur: str | list[str], proprietaire: str, adop
     # `.socle/adapter.toml` ; `auto` en pose un par langage reconnu
     # (ADR-0051, point 6).
     demandes_ = [adaptateur] if isinstance(adaptateur, str) else list(adaptateur) or ["auto"]
-    noms, detectes = [], False
+    noms, detectes, nommes = [], False, set()
     for n in demandes_:
         if n != "auto":
             noms += [n] if n not in noms else []
+            nommes.add(n)
             continue
         trouves = detecter_adaptateurs(cible)
         if not trouves and not noms and n == demandes_[-1]:
@@ -715,21 +768,36 @@ def _installer(cible: Path, adaptateur: str | list[str], proprietaire: str, adop
         except tomllib.TOMLDecodeError as e:
             print(trad("refus : adaptateur « {nom} » illisible : {erreur}", nom=nom, erreur=e), file=sys.stderr)
             return 2
-        charges.append((nom, texte, str(donnees.get("language") or nom)))
+        charges.append((nom, texte, str(donnees.get("language") or nom), n in nommes))
     # Le principal : celui que le projet a déjà, sinon le premier nommé. Un
     # autre adaptateur du même langage que lui ne s'ajoute pas.
     principal = cible / ch.adaptateur
-    langage_principal = (str(config.lire_toml(principal.read_text(encoding="utf-8")).get("language") or "")
-                         if principal.is_file() else charges[0][2])
+    texte_principal = principal.read_text(encoding="utf-8") if principal.is_file() else ""
+    langage_principal = (str(config.lire_toml(texte_principal).get("language") or "") if principal.is_file()
+                         else charges[0][2])
     texte_adaptateur, nom_adaptateur = charges[0][1], charges[0][0]
-    langages, autres = {langage_principal}, []
-    for nom, texte, langage in charges[1:] if not principal.is_file() else charges:
-        if langage not in langages:
-            langages.add(langage)
-            autres.append((nom, texte))
+    langages, autres, sans_langage = {langage_principal}, [], []
+    for nom, texte, langage, nomme in charges[1:] if not principal.is_file() else charges:
+        if langage in langages:
+            continue
+        if principal.is_file() and not langage_principal and not nomme:
+            # Un principal qui ne dit pas son langage : un adaptateur détecté
+            # pourrait le doubler (revue du lot de B-0095, constat 9).
+            sans_langage.append(nom)
+            continue
+        langages.add(langage)
+        autres.append((nom, texte))
+    if principal.is_file() and autres and charges[0][2] != langage_principal:
+        # Le premier nommé n'est pas le principal du projet : la CI part du
+        # principal, qui reste (constat 3).
+        texte_adaptateur, nom_adaptateur = texte_principal, langage_principal or Path(ch.adaptateur).stem
     ancien = config.Projet.charger(cible).lock if (cible / config.FORMAT_ACTUEL.lock).is_file() else {}
     journal = [trad("adaptateur : {nom}", nom=", ".join([nom_adaptateur, *(n for n, _ in autres)]))
                + (trad(" (détecté)") if detectes else "")]
+    if sans_langage:
+        journal.append(trad("!! {adaptateur} ne déclare pas `language` : aucun autre adaptateur ne s'ajoute en "
+                            "automatique ({liste}) ; les nommer par `--adapter`, ou y déclarer son langage",
+                            adaptateur=ch.adaptateur, liste=", ".join(sans_langage)))
     if ancien:
         journal.append(trad("mise à jour : moteur {avant} → {version}", avant=ancien.get("version", "amont"),
                             version=VERSION))
