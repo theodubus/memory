@@ -231,7 +231,7 @@ Chaque refus dit ce qu'il a vu et comment en sortir. La plupart s'adressent
 | `cliquet.garde-fous` | un seuil a été relâché | le rétablir, ou valider une demande qui le cite |
 | `tests.attendus` | une valeur attendue a changé, dans un test ou un fichier de cas, ou un test a disparu | valider une demande qui nomme le test ou cite le fichier de cas, ou rétablir |
 | `tests.code-teste` | une fonction publique sans test | écrire le test, ou `Dispense-test:` dans le commit |
-| `tests.regression` | un correctif sans test qui le prouve | écrire ce test ; si sa preuve dépend de l'environnement, valider une demande qui nomme le commit |
+| `tests.regression` | un correctif sans test qui le prouve | écrire ce test ; si sa preuve dépend de l'environnement, ou si le correctif ne touche aucun fichier qu'un adaptateur juge, valider une demande qui nomme le commit |
 | `docs.correspondance` | du code a changé sans sa documentation | mettre la documentation à jour, ou `Dispense-doc:` dans le commit |
 | `mutation.vivante` | le balayage hebdomadaire ne tourne plus | le réactiver dans l'onglet Actions de GitHub |
 | push refusé, relecture | la politique exige une relecture | relire ce qui part, donner son accord |

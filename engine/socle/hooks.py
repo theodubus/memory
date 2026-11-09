@@ -1144,6 +1144,14 @@ def correctif_sans_test(projet: config.Projet, message: str, amendement: bool | 
         parent = "HEAD^" if outils.rev_existe(projet.racine, "HEAD^") else outils.ARBRE_VIDE
     touches = [f for f in outils.git(projet.racine, "diff", "--name-only", "-z", parent, arbre,
                                      check=False).split("\0") if f]
+    hors = controles_tests.hors_de_tout_adaptateur(projet, projet.hors_tiers(touches))
+    if hors:
+        # Aucun adaptateur ne juge ses fichiers : un test n'y peut rien
+        # (D-0088).
+        return trad("socle — avertissement : ce correctif ne touche aucun fichier qu'un adaptateur juge ({liste}) : "
+                    "la CI le refusera (`tests.regression`), sauf si une demande validée nomme ce commit et "
+                    "l'admet sans test ; sinon, un adaptateur pour leur langage, ou ces fichiers déclarés tiers, par "
+                    "une demande.", liste=", ".join(hors[:5]) + (" …" if len(hors) > 5 else ""))
     # Dans un projet à plusieurs adaptateurs, un test par langage du code
     # corrigé (ADR-0051, point 3).
     vues = [projet.pour(a) for a in projet.adaptateurs] if projet.plusieurs_adaptateurs else [projet]

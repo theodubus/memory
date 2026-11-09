@@ -27,7 +27,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 from socle import config, language as langue, utils as outils, tests_reader as tests_lecture
-from socle.messages import trad
+from socle.messages import a_traduire, trad
 from socle.context import controle
 
 CAPACITES = ("format", "lint", "build", "tests", "mutation", "coverage", "regression")
@@ -532,6 +532,19 @@ def regression(ctx, r):
         sha, parent = c["sha"], c["parents"][0]
         sujet = c["message"].strip().splitlines()[0]
         touches = ctx.projet.hors_tiers(outils.fichiers_changes(ctx.racine, parent, sha))
+        hors = hors_de_tout_adaptateur(ctx.projet, touches)
+        if hors:
+            # Aucun adaptateur ne juge ses fichiers : aucun test ne peut le
+            # prouver ici. Une demande validée qui le nomme l'admet (D-0088).
+            admise = _admis_par(ctx, sha)
+            if admise:
+                r.avertir("tests.regression", trad("{sha} « {sujet} » : correctif hors de tout adaptateur, admis "
+                                                   "sans test par {id}, une demande validée qui nomme ce commit",
+                                                   sha=sha[:10], sujet=sujet, id=admise))
+            else:
+                r.erreur("tests.regression", trad(REFUS_HORS_ADAPTATEUR, sha=sha[:10], sujet=sujet,
+                                                  liste=", ".join(hors[:5]) + (" …" if len(hors) > 5 else "")))
+            continue
         tests = [t for t in outils.filtrer(touches, motifs) if outils.lire_a(ctx.racine, sha, t) is not None]
         if tests:
             fichiers = {t: outils.lire_a(ctx.racine, sha, t) or "" for t in tests}
@@ -579,6 +592,24 @@ def regression(ctx, r):
         if code != 0:
             r.erreur("tests.regression", trad("{sha} « {sujet} » : son test de régression échoue sur le "
                                               "correctif lui-même", sha=sha[:10], sujet=sujet))
+
+
+# Un correctif qui ne touche aucun fichier qu'un adaptateur juge (D-0088).
+REFUS_HORS_ADAPTATEUR = a_traduire(
+    "{sha} « {sujet} » : correctif qui ne touche aucun fichier qu'un adaptateur juge ({liste}) : aucun test ne "
+    "peut le prouver ici. Trois issues : un adaptateur pour leur langage ; ces fichiers déclarés tiers "
+    "(`[thirdparty] paths` des garde-fous, un assouplissement, donc par une demande) ; ou une demande que l'humain "
+    "valide, qui nomme ce commit et l'admet sans test")
+
+
+def hors_de_tout_adaptateur(projet, touches: list[str]) -> list[str]:
+    """Les fichiers d'un correctif quand aucun d'eux n'est désigné par un
+    adaptateur du projet (ni son code, ni ses sources, ni ses tests) ; une
+    liste vide sinon (D-0088)."""
+    touches = [f for f in touches if not f.startswith(config.DOSSIER + "/")]
+    if not touches or any(projet.designes(a, touches) for a in projet.adaptateurs):
+        return []
+    return touches
 
 
 def corrige_son_code(ctx, parent: str, sha: str) -> bool:

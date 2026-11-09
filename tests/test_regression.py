@@ -141,6 +141,78 @@ class TestTestDuModule(unittest.TestCase):
         self.assertIn("ni test changé dans un module de code", erreurs[0])
 
 
+class TestCorrectifHorsDeToutAdaptateur(unittest.TestCase):
+    """D-0088 : un correctif qui ne touche aucun fichier qu'un adaptateur
+    juge (du Dart, sous un adaptateur Python) ne se prouve par aucun test ;
+    il reste refusé, en le disant, et une demande validée qui nomme son
+    commit l'admet."""
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-hors-adaptateur-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        git(self.racine, "init", "-q", "-b", "main")
+        (self.racine / "calc.py").write_text(CALC)
+        (self.racine / "app").mkdir()
+        (self.racine / "app/main.dart").write_text("int doubler(int x) => 2 * x;\n")
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "base", "--no-verify")
+        self.base = git(self.racine, "rev-parse", "HEAD").strip()
+        (self.racine / "app/main.dart").write_text("int doubler(int x) => x * 2;\n")
+        git(self.racine, "commit", "-qam", "fix: doubler en Dart", "--no-verify")
+        self.sha = git(self.racine, "rev-parse", "HEAD").strip()
+
+    def juger(self) -> Rapport:
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="ci", base=self.base, tete="HEAD")
+        r = Rapport()
+        controles_tests.regression(ctx, r)
+        return r
+
+    def test_il_est_refuse_en_nommant_ses_fichiers_et_les_issues(self):
+        erreurs = [c.message for c in self.juger().erreurs("tests.regression")]
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertIn("correctif qui ne touche aucun fichier qu'un adaptateur juge (app/main.dart)", erreurs[0])
+        self.assertIn("ou une demande que l'humain valide, qui nomme ce commit et l'admet sans test", erreurs[0])
+        self.assertNotIn("sans test de régression", erreurs[0])
+
+    def test_une_demande_validee_qui_nomme_le_commit_l_admet_sans_test(self):
+        from socle import requests as demandes
+
+        chemin = self.racine / "memory/requests/D-0001-admettre.md"
+        chemin.parent.mkdir(parents=True, exist_ok=True)
+        chemin.write_text(f"<!-- socle: couche=demandes zone=publique -->\n# D-0001 — Admettre le correctif "
+                          f"{self.sha[:8]}\n\n> date : 2026-11-09\n\nAucun adaptateur ne juge le Dart.\n\n"
+                          "## Réponses possibles\n\n- `valider` — l'admettre.\n- `contexte-insuffisant` — réécrire "
+                          "la demande.\n")
+        d = next(x for x in demandes.toutes(self.racine) if x.id == "D-0001")
+        demandes.ecrire_reponse(self.racine, d, "valider", "", "Théo", "2026-11-09", canal="conversation",
+                                citation="valider")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "D-0001 validée", "--no-verify")
+        r = self.juger()
+        self.assertEqual(r.erreurs("tests.regression"), [])
+        self.assertTrue(any("correctif hors de tout adaptateur, admis sans test par D-0001" in c.message
+                            for c in r.constats))
+
+    def test_hors_de_tout_adaptateur(self):
+        projet = config.Projet.charger(self.racine)
+        self.assertEqual(controles_tests.hors_de_tout_adaptateur(projet, ["app/main.dart", "README.md"]),
+                         ["app/main.dart", "README.md"])
+        self.assertEqual(controles_tests.hors_de_tout_adaptateur(projet, ["app/main.dart", "calc.py"]), [])
+        self.assertEqual(controles_tests.hors_de_tout_adaptateur(projet, [".socle/policy.toml"]), [])
+        self.assertEqual(controles_tests.hors_de_tout_adaptateur(projet, []), [])
+
+    def test_le_hook_le_dit_des_le_commit(self):
+        from socle import hooks
+
+        (self.racine / "app/main.dart").write_text("int doubler(int x) => x + x;\n")
+        git(self.racine, "add", "app/main.dart")
+        message = hooks.correctif_sans_test(config.Projet.charger(self.racine), "fix: doubler encore",
+                                            amendement=False)
+        self.assertIn("ce correctif ne touche aucun fichier qu'un adaptateur juge (app/main.dart)", message)
+
+
 class TestChargement(unittest.TestCase):
     """Relevé de la passe de recul, D : un test de régression qui échoue sur
     le parent parce qu'il ne s'y charge pas (un import manquant) ne prouve
