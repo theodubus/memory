@@ -9,9 +9,9 @@ Sur `main` : la PR #25 (adaptateurs multiples, ADR-0051). Sur la
 branche : D-0085, validée ; ADR-0052, qui remplace le point 6
 d'ADR-0051 : l'installeur ne rafraîchit une copie d'adaptateur que non
 adaptée ; sa revue (J-2026-11-09-P) ; la version 0.2.0 (PR #26).
-Frictions du pilote (J-2026-11-09-S) : trois faites, trois à Théo
-(D-0086 à D-0088). Puis le prompt de mise à jour de JustCook (B-0095,
-J-2026-11-09-O) ; B-0133, B-0140 à B-0144, B-0126.
+Frictions du pilote : cinq faites ; B-0137 attend D-0087
+(J-2026-11-09-U). Puis le prompt de mise à jour de JustCook
+(J-2026-11-09-O) ; B-0133, B-0140 à B-0144, B-0126.
 
 B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
 
