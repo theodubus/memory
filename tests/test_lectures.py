@@ -267,6 +267,24 @@ class TestCitationsDeLaPlage(unittest.TestCase):
         self.journal(f"## J-2026-10-10-A — Constat\n\nVoir B-0001@{entier}.\n")
         self.assertEqual(self.erreurs(), [])
 
+    def test_une_citation_au_texte_entier_vaut_pour_la_version_de_sa_parution(self):
+        """Une citation écrite dans la plage, avant la mise à jour du moteur,
+        porte l'empreinte du texte entier ; l'entrée citée change ensuite de
+        corps : elle vaut toujours pour la version du commit où elle paraît."""
+        e = memoire.Memoire.charger(self.racine).entree("B-0001")
+        entier = memoire.empreinte_texte_entier(e)
+        self.journal(f"## J-2026-10-10-A — Constat\n\nVoir B-0001@{entier}.\n")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "constat")
+        b1 = next((self.racine / "memory/backlog").glob("B-0001-*.md"))
+        b1.write_text(b1.read_text() + "\nUn corps nouveau.\n")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "B-0001 change")
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="ci", base=self.base, tete="HEAD")
+        r = Rapport()
+        controles_memoire.lectures(ctx, r)
+        self.assertEqual([c.message for c in r.erreurs()], [])
+
     def test_deux_entrees_qui_se_citent_dans_leurs_metadonnees(self):
         """Deux entrées écrites ensemble, chacune citant l'autre dans sa
         ligne de métadonnées : l'empreinte de l'une ne dépend plus de la

@@ -531,7 +531,14 @@ def regression(ctx, r):
     for c in correctifs:
         sha, parent = c["sha"], c["parents"][0]
         sujet = c["message"].strip().splitlines()[0]
-        touches = ctx.projet.hors_tiers(outils.fichiers_changes(ctx.racine, parent, sha))
+        changes = outils.fichiers_changes(ctx.racine, parent, sha)
+        touches = ctx.projet.hors_tiers(changes)
+        if changes and not touches:
+            # Il ne touche que des fichiers déclarés tiers, qui échappent à
+            # tous les contrôles (ADR-0031) : l'une des issues de D-0088.
+            r.avertir("tests.regression", trad("{sha} « {sujet} » : correctif qui ne touche que des fichiers "
+                                               "tiers : non jugé", sha=sha[:10], sujet=sujet))
+            continue
         hors = hors_de_tout_adaptateur(ctx.projet, touches)
         if hors:
             # Aucun adaptateur ne juge ses fichiers : aucun test ne peut le
@@ -605,11 +612,17 @@ REFUS_HORS_ADAPTATEUR = a_traduire(
 def hors_de_tout_adaptateur(projet, touches: list[str]) -> list[str]:
     """Les fichiers d'un correctif quand aucun d'eux n'est désigné par un
     adaptateur du projet (ni son code, ni ses sources, ni ses tests) ; une
-    liste vide sinon (D-0088)."""
-    touches = [f for f in touches if not f.startswith(config.DOSSIER + "/")]
+    liste vide sinon (D-0088). Ceux du dossier du socle, de la mémoire et de
+    la documentation viennent en dernier : le message nomme d'abord ce que
+    le correctif corrige, que la mémoire accompagne."""
     if not touches or any(projet.designes(a, touches) for a in projet.adaptateurs):
         return []
-    return touches
+    memoire = projet.chemins.memoire.rstrip("/") + "/"
+
+    def accompagne(f: str) -> bool:
+        return f.startswith((config.DOSSIER + "/", memoire)) or f.endswith(".md")
+
+    return sorted(touches, key=lambda f: (accompagne(f), f))
 
 
 def corrige_son_code(ctx, parent: str, sha: str) -> bool:
@@ -670,10 +683,14 @@ def recouvrement(ctx, r):
 
 def _admis_par(ctx, sha: str) -> str | None:
     """La demande validée dans la plage qui nomme ce correctif par son SHA,
-    sept caractères au moins : l'humain y admet un test dont la preuve dépend
-    de l'environnement (D-0047)."""
+    sept caractères au moins, dans son texte et non dans l'adresse d'un
+    lien : l'humain y admet un test dont la preuve dépend de l'environnement
+    (D-0047), ou un correctif qu'aucun adaptateur ne juge (D-0088). Un
+    permalien porte le SHA du dernier commit poussé : une demande sans
+    rapport ne l'admet pas pour autant."""
     for d in ctx.validations:
-        if any(sha.startswith(m.group(0)) for m in re.finditer(r"\b[0-9a-f]{7,40}\b", d.texte)):
+        texte = re.sub(r"https?://\S+", " ", d.texte)
+        if any(sha.startswith(m.group(0)) for m in re.finditer(r"\b[0-9a-f]{7,40}\b", texte)):
             return d.id
     return None
 

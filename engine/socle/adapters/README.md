@@ -139,10 +139,12 @@ client : il a alors un adaptateur par langage (ADR-0051).
   corrige (sa section `[code]`), et dans chacun s'il en corrige plusieurs ;
   un test ajouté dans un autre langage ne fait pas de lui un langage du
   code corrigé. Un correctif qui ne touche le code d'aucun revient au
-  langage de ses tests. Un correctif qui ne touche aucun fichier qu'un
-  adaptateur juge est refusé, en nommant ses fichiers : aucun test ne peut
-  le prouver ; une demande que l'humain valide, qui nomme son commit,
-  l'admet sans test (D-0088, ADR-0054).
+  langage de ses tests, sinon au principal. Un correctif qui ne touche
+  aucun fichier qu'un adaptateur juge est refusé, en nommant ses fichiers :
+  aucun test ne peut le prouver ; une demande que l'humain valide, qui
+  nomme son commit dans son texte, l'admet sans test (D-0088, ADR-0054).
+  Un correctif qui ne touche que des fichiers déclarés tiers n'est pas
+  jugé.
 - **La vérification.** `verify` lance les étapes de chaque adaptateur, l'un
   après l'autre et jusqu'au bout, chacune nommée `verify.<adaptateur>.<étape>`
   (`verify.kotlin.tests`). La CI installe les outils de tous.

@@ -200,8 +200,57 @@ class TestCorrectifHorsDeToutAdaptateur(unittest.TestCase):
         self.assertEqual(controles_tests.hors_de_tout_adaptateur(projet, ["app/main.dart", "README.md"]),
                          ["app/main.dart", "README.md"])
         self.assertEqual(controles_tests.hors_de_tout_adaptateur(projet, ["app/main.dart", "calc.py"]), [])
-        self.assertEqual(controles_tests.hors_de_tout_adaptateur(projet, [".socle/policy.toml"]), [])
+        # Le dossier du socle n'est à aucun adaptateur : un correctif qui n'y
+        # touche que lui s'admet aussi par une demande.
+        self.assertEqual(controles_tests.hors_de_tout_adaptateur(projet, [".socle/policy.toml"]),
+                         [".socle/policy.toml"])
         self.assertEqual(controles_tests.hors_de_tout_adaptateur(projet, []), [])
+        # Ce qu'il corrige d'abord, la mémoire et la documentation qui
+        # l'accompagnent ensuite.
+        self.assertEqual(controles_tests.hors_de_tout_adaptateur(
+            projet, ["README.md", "memory/active.md", "src/main.dart"]),
+            ["src/main.dart", "README.md", "memory/active.md"])
+
+    def test_des_fichiers_declares_tiers_ne_sont_pas_juges(self):
+        """La deuxième issue du refus : ses fichiers déclarés tiers, le
+        correctif n'est plus jugé, au lieu d'exiger un test Python."""
+        gf = self.racine / ".socle/guardrails.toml"
+        texte = gf.read_text()
+        i = texte.index("[thirdparty]\n")
+        gf.write_text(texte[:i] + texte[i:].replace("paths = []", 'paths = ["app/**"]', 1))
+        self.assertEqual(config.Projet.charger(self.racine).chemins_tiers(), ["app/**"])
+        r = self.juger()
+        self.assertEqual(r.erreurs("tests.regression"), [])
+        self.assertTrue(any("correctif qui ne touche que des fichiers tiers : non jugé" in c.message
+                            for c in r.constats))
+
+    def test_un_permalien_vers_le_commit_ne_l_admet_pas(self):
+        """Un permalien porte le SHA complet du dernier commit poussé : une
+        demande sans rapport qui en donne un ne nomme pas ce correctif."""
+        from socle import requests as demandes
+
+        chemin = self.racine / "memory/requests/D-0001-autre.md"
+        chemin.parent.mkdir(parents=True, exist_ok=True)
+        chemin.write_text("<!-- socle: couche=demandes zone=publique -->\n# D-0001 — Une autre question\n\n"
+                          f"> date : 2026-11-09\n\nVoir [le test](https://github.com/o/r/blob/{self.sha}/t.py#L2)."
+                          "\n\n## Réponses possibles\n\n- `valider` — oui.\n- `contexte-insuffisant` — réécrire.\n")
+        d = next(x for x in demandes.toutes(self.racine) if x.id == "D-0001")
+        demandes.ecrire_reponse(self.racine, d, "valider", "", "Théo", "2026-11-09", canal="conversation",
+                                citation="valider")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "D-0001 validée", "--no-verify")
+        erreurs = [c.message for c in self.juger().erreurs("tests.regression")]
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertIn("aucun fichier qu'un adaptateur juge", erreurs[0])
+
+    def test_le_hook_se_tait_quand_le_principal_ne_rejoue_rien(self):
+        from socle import hooks
+
+        (self.racine / "app/main.dart").write_text("int doubler(int x) => x + x;\n")
+        git(self.racine, "add", "app/main.dart")
+        projet = config.Projet.charger(self.racine)
+        projet.adaptateur["capabilities"]["regression"].pop("command", None)
+        self.assertIsNone(hooks.correctif_sans_test(projet, "fix: doubler encore", amendement=False))
 
     def test_le_hook_le_dit_des_le_commit(self):
         from socle import hooks

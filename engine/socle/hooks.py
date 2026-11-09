@@ -1144,7 +1144,11 @@ def correctif_sans_test(projet: config.Projet, message: str, amendement: bool | 
         parent = "HEAD^" if outils.rev_existe(projet.racine, "HEAD^") else outils.ARBRE_VIDE
     touches = [f for f in outils.git(projet.racine, "diff", "--name-only", "-z", parent, arbre,
                                      check=False).split("\0") if f]
-    hors = controles_tests.hors_de_tout_adaptateur(projet, projet.hors_tiers(touches))
+    # La CI juge un correctif hors de tout adaptateur dans la vue du
+    # principal, et seulement si celui-ci sait rejouer un test.
+    principal = projet.pour(projet.adaptateurs[0]) if projet.plusieurs_adaptateurs else projet
+    rejoue = "command" in principal.adaptateur.get("capabilities", {}).get("regression", {})
+    hors = controles_tests.hors_de_tout_adaptateur(projet, projet.hors_tiers(touches)) if rejoue else []
     if hors:
         # Aucun adaptateur ne juge ses fichiers : un test n'y peut rien
         # (D-0088).
