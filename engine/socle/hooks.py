@@ -959,17 +959,27 @@ def installe_pendant(lignes: list[list[str]], session: str) -> bool:
 
 def compter_depuis_le_commit(racine: Path, session: str | None = None) -> str:
     """`PreToolUse=3` : les passages du filtre de l'agent depuis le commit
-    précédent du dépôt (sa ligne `git-prepare-commit-msg` dans la trace),
-    pour la session donnée ou, à défaut, la plus récente depuis. La commande
-    qui commite passe elle-même par le filtre : des hooks chargés en comptent
+    précédent du même worktree (sa ligne `git-prepare-commit-msg` dans la
+    trace, qui nomme son worktree ; une ligne qui n'en nomme aucun vaut pour
+    tous), pour la session donnée ou, à défaut, la plus récente depuis. La
+    trace est commune aux worktrees : un commit dans un autre ne fait pas du
+    suivant un second commit de la même commande (B-0136). La commande qui
+    commite passe elle-même par le filtre : des hooks chargés en comptent
     toujours au moins un. Le compte de toute la session ne voit pas des hooks
     qui cessent de tirer en cours de route."""
     lignes = [l.split("\t") for l in config.lire_trace(racine)]
+    ici = worktree(racine)
     debut = next((i + 1 for i in range(len(lignes) - 1, -1, -1)
-                  if len(lignes[i]) >= 2 and lignes[i][1] == "git-prepare-commit-msg"), 0)
+                  if len(lignes[i]) >= 2 and lignes[i][1] == "git-prepare-commit-msg"
+                  and (len(lignes[i]) < 4 or lignes[i][3] in ("", ici))), 0)
     filtre = [l for l in lignes[debut:] if len(l) >= 3 and l[1] == "PreToolUse"]
     session = session or next((l[2] for l in reversed(filtre) if l[2]), "")
     return f"PreToolUse={sum(1 for l in filtre if l[2] == session)}"
+
+
+def worktree(racine: Path) -> str:
+    """Le worktree d'un commit, tel que la trace le nomme : sa racine."""
+    return str(Path(racine).resolve())
 
 
 # Des hooks chargés laissent une trace fraîche : `socle state` tourne au
@@ -1031,7 +1041,7 @@ def git_prepare_commit_msg(projet: config.Projet, fichier: str, source: str = ""
     `Socle-Hooks-Since-Commit`."""
     # Le compte depuis le commit précédent se lit avant de tracer celui-ci.
     depuis = compter_depuis_le_commit(projet.racine, os.environ.get("CLAUDE_CODE_SESSION_ID"))
-    tracer(projet.racine, "git-prepare-commit-msg")
+    tracer(projet.racine, "git-prepare-commit-msg", "", worktree(projet.racine))
     if not os.environ.get("CLAUDECODE") or source in ("merge", "squash"):
         return 0
     p = Path(fichier)
