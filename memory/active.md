@@ -5,17 +5,14 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-Sur `main` : la distribution publique `theodubus/socle` (ADR-0040), et
-les retours du pilote livrés jusqu'à la PR #23 (journal, depuis
-J-2026-10-31-H). Ouverte, la PR #24 : le contexte d'une demande part du
-projet, chaque demande est relue à froid (B-0130, ADR-0046), et le hook
-avant push laisse partir un fichier protégé en attente (D-0071). D-0079,
-la copie protégée du skill `socle-request`, est validée : la PR attend sa
-fusion. B-0132 : règle validée (D-0080, ADR-0050) ; le skill `socle-resume`
-attend D-0081, non commité, dans l'arbre (J-2026-11-08-L).
-Ensuite : les retours du pilote pour B-0126 (chess), le
-compte de deux journées sans défaut repartant du 8 novembre. Les projets
-d'essai sont dans le dossier de travail de la session, jetables.
+Sur `main` : la distribution `theodubus/socle` (ADR-0040) et les retours
+du pilote jusqu'à la PR #24, fusionnée le 8 novembre. PR #25 ouverte :
+skill `socle-resume` (B-0132, D-0081 ; reste une coupure réelle reprise),
+l'adaptateur `kotlin`, puis le moteur des adaptateurs multiples (ADR-0051,
+J-2026-11-09-F) ; B-0095 reste ouvert jusqu'au retour de JustCook. Ensuite :
+une version du socle pour JustCook ; B-0133, B-0140 à B-0142 ; les
+frictions du pilote (B-0134 à B-0139) ; puis B-0126 (chess), le compte de
+deux journées sans défaut repartant du 8 novembre.
 
 D-0026 est répondue `rien` : B-0048 et B-0018 restent ouverts, « on se le
 garde en tete et on voit si ça finit par etre bloquant ».
@@ -50,6 +47,9 @@ garde en tete et on voit si ça finit par etre bloquant ».
   on ne dit pas a quoi sert l'outil », « j'ai du mal à me projeter dans le
   parcours utilisateur » (J-2026-10-22-A).
 
+- Une limite d'usage proche décide de l'ordre des sujets, jamais de la
+  profondeur du travail ; Théo : « jamais de faire une certaine partie du
+  travail au rabais » (J-2026-11-09-C).
 - Une attente annoncée dans le récap (CI, banc, match) s'accompagne d'un
   réveil programmé pour y revenir (Théo, J-2026-10-13-N).
 - Chaque point de « Pour toi » se comprend seul, sans mon raisonnement,

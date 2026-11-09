@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0084-revalider-dans-le-push-des-tests-les-deux-valeurs.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-09"
+canal = "conversation"
+citation = "Oui je re valide"
+empreinte = "sha256:a9eecab758b888335d9d2d8d31accd1f50a51fa92fc6924edb3bde51eb974089"

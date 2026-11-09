@@ -22,7 +22,8 @@ def adaptateurs() -> dict[str, dict]:
 class TestAdaptateursMaintenus(unittest.TestCase):
     def test_les_adaptateurs_maintenus(self):
         self.assertEqual(sorted(adaptateurs()),
-                         ["csharp", "go", "java", "javascript", "php", "python", "python-pytest", "ruby", "rust"])
+                         ["csharp", "go", "java", "javascript", "kotlin", "php", "python", "python-pytest", "ruby",
+                          "rust"])
 
     def test_chaque_capacite_est_declaree(self):
         for nom, a in adaptateurs().items():
@@ -125,6 +126,120 @@ class TestLangages(unittest.TestCase):
             with self.subTest(langage=langage):
                 motifs = [re.compile(m) for m in adaptateurs()[langage]["tests"]["tautology"]]
                 self.assertTrue(any(m.search(ligne) for m in motifs))
+
+
+class TestKotlin(unittest.TestCase):
+    """L'adaptateur Kotlin pour Gradle (B-0095, D-0082) : il lit les tests de
+    kotlin.test, de JUnit et de MockK, leurs assertions, un test désactivé
+    avec ou sans raison, les fonctions en expression ou annotées sur leur
+    ligne, tout public sauf `private` et `internal`, et retrouve les
+    résultats de PIT d'un fichier Kotlin."""
+
+    def setUp(self):
+        self.ad = adaptateurs()["kotlin"]
+        self.cfg = self.ad["tests"]
+
+    def test_il_lit_ses_tests_et_leurs_assertions(self):
+        assertion = re.compile(self.cfg["assertion"])
+        fonctions = tests_lecture.extraire((DONNEES / "kotlin.CalcTest.kt.txt").read_text(), "CalcTest.kt", self.cfg)
+        lus = [(f.nom, f.est_test, tests_lecture.affirme(f, assertion, set()), *_desactive(f, self.cfg))
+               for f in fonctions]
+        self.assertEqual(lus, [("creuxEnExpression", True, False, False, False),
+                               ("doublerMultiplieParDeux", True, True, False, False),
+                               ("parExpression", True, True, False, False),
+                               ("surUneLigne", True, True, False, False),
+                               ("`refuse un nombre negatif`", True, True, False, False),
+                               ("verifieLAppel", True, True, False, False),
+                               ("neMesureRien", True, False, False, False),
+                               ("plusTard", True, True, True, False),
+                               ("kotlinTestAvecRaison", True, True, True, True),
+                               ("junit4AvecRaison", True, True, True, True),
+                               ("attendAvecSaRaison", True, True, True, True),
+                               ("aide", False, False, False, False)])
+
+    def test_tout_est_public_sauf_private_et_internal(self):
+        prive = re.compile(self.ad["code"]["private"])
+        texte = (DONNEES / "kotlin.Calc.kt.txt").read_text()
+        lignes = texte.splitlines()
+        fonctions = tests_lecture.extraire(texte, "Calc.kt", self.cfg)
+        self.assertEqual({f.nom: bool(prive.match(lignes[f.ligne - 1])) for f in fonctions},
+                         {"doubler": False, "tripler": False, "racine": False, "plusGrand": False, "total": False,
+                          "principal": False, "pourLesSousClasses": False, "aide": True, "interne": True,
+                          "toString": False})
+        # Une fonction en expression finit sur sa ligne : celle qui la suit
+        # n'y est pas prise pour une fonction imbriquée.
+        tripler = next(f for f in fonctions if f.nom == "tripler")
+        self.assertEqual(tripler.fin, tripler.ligne)
+
+    def test_un_fichier_sans_corps_n_entre_pas_a_la_mutation(self):
+        a_du_code = re.compile(self.ad["capabilities"]["mutation"]["has_code"])
+        self.assertTrue(a_du_code.search("    fun doubler(x: Int): Int {"))
+        self.assertTrue(a_du_code.search("    fun tripler(x: Int) = 3 * x"))
+        self.assertFalse(a_du_code.search("    fun doubler(x: Int = g()): Int"))
+        self.assertFalse(a_du_code.search("expect fun plateforme(): String"))
+
+    def test_sa_tautologie(self):
+        motifs = [re.compile(m) for m in self.cfg["tautology"]]
+        self.assertTrue(any(m.search("        assertEquals(x, x)") for m in motifs))
+        self.assertFalse(any(m.search("        assertEquals(4, x)") for m in motifs))
+
+    def test_il_rejoue_un_test_par_sa_classe_dans_chaque_module(self):
+        cap = self.ad["capabilities"]["regression"]
+        self.assertEqual(commande_regression(cap, ["src/test/kotlin/essai/RegressionTest.kt"]),
+                         "./gradlew -q test --tests '*RegressionTest'")
+        from socle import utils as outils
+
+        for chemin in ("app/src/test/kotlin/essai/RegressionTest.kt", "app/src/test/java/essai/RegressionTest.kt",
+                       "shared/src/commonTest/kotlin/essai/RegressionTest.kt"):
+            self.assertTrue(outils.filtrer([chemin], cap["test_paths"]), chemin)
+
+    def test_un_build_gradle_en_kotlin_ne_suffit_pas_sans_source_kotlin(self):
+        """Un projet Java sous Gradle porte lui aussi `build.gradle.kts`, et
+        souvent des greffons de construction en Kotlin sous `buildSrc/` : il
+        faut encore du Kotlin dans le projet même."""
+        with tempfile.TemporaryDirectory() as d:
+            racine = Path(d)
+            (racine / "build.gradle.kts").write_text("plugins { java }\n")
+            (racine / "src/main/java").mkdir(parents=True)
+            (racine / "src/main/java/App.java").write_text("class App {}\n")
+            (racine / "buildSrc/src/main/kotlin").mkdir(parents=True)
+            (racine / "buildSrc/src/main/kotlin/Convention.kt").write_text("fun f() {}\n")
+            self.assertIsNone(installeur.detecter_langage(racine))
+            self.assertEqual(installeur.langages_presents(
+                ["build.gradle.kts", "src/main/java/App.java", "buildSrc/src/main/kotlin/Convention.kt"]), {})
+            (racine / "src/main/kotlin").mkdir(parents=True)
+            (racine / "src/main/kotlin/App.kt").write_text("fun main() {}\n")
+            self.assertEqual(installeur.detecter_langage(racine), "kotlin")
+            self.assertEqual(installeur.langages_presents(["build.gradle.kts", "src/main/kotlin/App.kt"]),
+                             {"kotlin": ["build.gradle.kts"]})
+
+    def test_pit_retrouve_le_fichier_kotlin_de_chaque_mutation(self):
+        """PIT ne connaît que le paquet et le nom du fichier source : le
+        lecteur retrouve le fichier dans le dépôt, rangé sous son paquet, ou
+        seul de son nom à déclarer ce paquet ; un homonyme d'un autre paquet
+        ne prête pas ses résultats."""
+        with tempfile.TemporaryDirectory() as d:
+            racine = Path(d)
+            for chemin, texte in (("src/main/kotlin/essai/Calc.kt", "package essai\n"),
+                                  ("src/main/kotlin/autre/Calc.kt", "package autre\n"),
+                                  ("src/main/kotlin/App.kt", "package org.exemple.app\n"),
+                                  ("build/generated/essai/Calc.kt", "package essai\n")):
+                (racine / chemin).parent.mkdir(parents=True, exist_ok=True)
+                (racine / chemin).write_text(texte)
+            (racine / "build/reports/pitest").mkdir(parents=True)
+            (racine / "build/reports/pitest/mutations.xml").write_text(
+                "<mutations>"
+                "<mutation status='KILLED'><sourceFile>Calc.kt</sourceFile><mutatedClass>essai.Calc</mutatedClass>"
+                "</mutation>"
+                "<mutation status='SURVIVED'><sourceFile>Calc.kt</sourceFile><mutatedClass>essai.Calc</mutatedClass>"
+                "</mutation>"
+                "<mutation status='SURVIVED'><sourceFile>App.kt</sourceFile>"
+                "<mutatedClass>org.exemple.app.AppKt</mutatedClass></mutation>"
+                "</mutations>")
+            resultats = mutation.lire_pit(racine)
+        self.assertEqual(resultats["src/main/kotlin/essai/Calc.kt"], {"attrapes": 1, "survivants": 1})
+        self.assertEqual(resultats["src/main/kotlin/App.kt"], {"survivants": 1})
+        self.assertNotIn("src/main/kotlin/autre/Calc.kt", resultats)
 
 
 class TestLecteursDeMutation(unittest.TestCase):

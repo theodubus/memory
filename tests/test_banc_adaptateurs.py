@@ -22,7 +22,7 @@ def adaptateur(nom: str) -> dict:
 
 class TestProjetsJetables(unittest.TestCase):
     def test_un_projet_par_adaptateur_nouveau(self):
-        self.assertEqual(sorted(banc.LANGAGES), ["csharp", "go", "java", "javascript", "php", "ruby"])
+        self.assertEqual(sorted(banc.LANGAGES), ["csharp", "go", "java", "javascript", "kotlin", "php", "ruby"])
 
     def test_chaque_defaut_s_applique_a_son_projet(self):
         for nom, l in banc.LANGAGES.items():
@@ -49,6 +49,40 @@ class TestProjetsJetables(unittest.TestCase):
 
 
 class TestVerdictDuBanc(unittest.TestCase):
+    def test_eprouver_s_arrete_quand_une_dependance_manque(self):
+        """Une commande de préparation qui échoue arrête le banc à sa première
+        étape, notée en échec : rien ne s'éprouve sur un projet incomplet."""
+        import dataclasses
+        from unittest import mock
+
+        cassee = dataclasses.replace(banc.LANGAGES["kotlin"], preparer=["false"])
+        with tempfile.TemporaryDirectory() as d, mock.patch.dict(banc.LANGAGES, {"kotlin": cassee}):
+            res = banc.eprouver("kotlin", Path(d) / "projet", bavard=False)
+        self.assertEqual(list(res["etapes"]), ["dépendances"])
+        self.assertFalse(res["etapes"]["dépendances"]["ok"])
+
+    def test_eprouver_mixte_s_arrete_quand_une_dependance_manque(self):
+        """Le projet en deux langages s'arrête comme les autres sur une
+        préparation qui échoue."""
+        import dataclasses
+        from unittest import mock
+
+        cassee = dataclasses.replace(banc.LANGAGES["kotlin"], preparer=["false"])
+        with tempfile.TemporaryDirectory() as d, mock.patch.dict(banc.LANGAGES, {"kotlin": cassee}):
+            res = banc.eprouver_mixte(Path(d) / "mixte", bavard=False)
+        self.assertEqual(res["langage"], banc.MIXTE)
+        self.assertEqual(list(res["etapes"]), ["dépendances"])
+        self.assertFalse(res["etapes"]["dépendances"]["ok"])
+
+    def test_le_projet_mixte_donne_a_chaque_adaptateur_son_code(self):
+        """Le module Python est dans les modules de `python-pytest`, son test
+        de régression se rejoue sous lui ; le code Kotlin reste à `kotlin`."""
+        py = adaptateur("python-pytest")["capabilities"]
+        self.assertEqual(outils.filtrer([banc.PY_MODULE], py["mutation"]["modules"]), [banc.PY_MODULE])
+        self.assertEqual(outils.filtrer([banc.PY_REGRESSION[0]], py["regression"]["test_paths"]),
+                         [banc.PY_REGRESSION[0]])
+        self.assertEqual(outils.filtrer([banc.LANGAGES["kotlin"].code], py["mutation"]["modules"]), [])
+
     def test_refuse_par_lit_la_ligne_de_synthese(self):
         sortie = "  tests.creux    ECHEC\n\nECHEC — 2 contrôle(s) : tests.creux, tests.attendus\n"
         self.assertTrue(banc.refuse_par(sortie, "tests.attendus"))

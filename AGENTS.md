@@ -23,17 +23,16 @@ la mémoire de ce dépôt, qui est l'historique de fabrication de l'outil.
   installeur, auto-test. `engine/socle/FORMAT.md` fait foi pour le format de
   la mémoire.
 - `engine/socle/adapters/` — les adaptateurs maintenus.
-- `engine/socle/templates/` — les gabarits que l'installeur pose dans un projet.
-- `tests/` — les tests du moteur (`unittest`), dont l'auto-test complet par
-  injection de défauts.
+- `engine/socle/templates/` — les gabarits de l'installeur.
+- `tests/` — les tests du moteur (`unittest`), dont l'auto-test.
 - `engine/README.md` (la page publique), `README.md`, `engine/socle/HELP.md`
   (le guide d'un projet équipé), `docs/fabrication/` (l'atelier :
   architecture, bancs, relevés, `chess`).
 - `bench/` — les bancs, sur un agent réel (`docs/fabrication/banc.md`) et
   sur les adaptateurs (`bench/adapters.py`).
-- `memory/` — la mémoire de ce projet, au format du socle.
-- `.github/workflows/distribution.yml` — publie le moteur, et lui seul, dans
-  le dépôt public `theodubus/socle` à chaque fusion sur `main` (D-0056).
+- `memory/` — la mémoire de ce projet.
+- `.github/workflows/distribution.yml` — publie le moteur seul dans
+  `theodubus/socle` à chaque fusion sur `main` (D-0056).
 
 ## Commandes
 
@@ -165,8 +164,9 @@ refusée ; il faut relire l'entrée. `socle new` pose l'empreinte de l'index.
 Une procédure rare se lit dans son skill, que l'agent charge sur sa
 description : `socle-request` (poser une demande, relayer une réponse,
 consigner une décision en séance), `socle-private-memory` (la mémoire
-privée) et `socle-review` (la revue adversariale d'un lot, avant sa
-livraison), dans `.claude/skills/`, posés par l'installeur et
+privée), `socle-review` (la revue adversariale d'un lot, avant sa
+livraison) et `socle-resume` (en session cloud, à chaque tour qui agit :
+reprendre seul après une limite d'usage), dans `.claude/skills/`, posés par l'installeur et
 protégés ; un autre agent lit leur `SKILL.md` à ce chemin.
 
 Une procédure du projet qui se refait (le journal montre la première fois)

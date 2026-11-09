@@ -1,0 +1,30 @@
+package essai
+
+object Calc {
+    fun doubler(x: Int): Int {
+        return 2 * x
+    }
+
+    fun tripler(x: Int) = 3 * x
+
+    fun racine(x: Int): Double {
+        require(x >= 0)
+        return Math.sqrt(x.toDouble())
+    }
+
+    fun <T : Comparable<T>> plusGrand(a: T, b: T): T = if (a > b) a else b
+
+    fun Map<String, Int>.total(): Int = values.sum()
+
+    @JvmStatic fun principal(args: Array<String>) {
+        println(args.size)
+    }
+
+    protected fun pourLesSousClasses(x: Int): Int = x
+
+    private fun aide(x: Int): Int = x
+
+    internal fun interne(x: Int): Int = x
+
+    override fun toString(): String = "Calc"
+}

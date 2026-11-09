@@ -355,7 +355,7 @@ class Catalogue(unittest.TestCase):
 
         from socle import verification
 
-        projet = SimpleNamespace(adaptateur={"capabilities": {"format": {
+        projet = SimpleNamespace(plusieurs_adaptateurs=False, adaptateur={"capabilities": {"format": {
             "absent": "langage interprété : pas de compilation séparée", "replacement": "capacité `lint`"}}})
         attendus = {"fr": "capacité absente : langage interprété : pas de compilation séparée — remplacement : "
                           "capacité `lint`",

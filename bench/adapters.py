@@ -15,11 +15,17 @@ ce que le jalon 6 a vérifié pour Python :
 - le balayage de mutation tourne, son rapport se lit, et le verdict passe
   au plafond mesuré et casse en dessous.
 
+Puis un projet en deux langages, Python et Kotlin (ADR-0051) : un
+adaptateur par langage déduit du dépôt, `verify` sur les deux, chaque test
+jugé par son adaptateur, un correctif Kotlin qu'un test Python ne prouve
+pas, et la mutation des deux.
+
 Il faut les outils du langage (node, go, java et maven, ruby et bundler,
 php et composer avec un pilote de couverture, le SDK .NET 8) et l'accès aux
 registres de paquets. Les projets vivent dans un dossier temporaire, effacé à la fin.
 
-    python3 bench/adapters.py                     # les six langages
+    python3 bench/adapters.py                     # les langages, puis le projet en deux
+    python3 bench/adapters.py --langages python+kotlin   # Python et Kotlin ensemble
     python3 bench/adapters.py --langages go,php   # quelques-uns
     python3 bench/adapters.py --garder            # garder les projets
 """
@@ -214,6 +220,68 @@ class CalcTest {{
     @Test
     void suivantAjouteUn() {{
         assertEquals(2, Calc.suivant(1));
+    }}
+    // {FIN}
+}}
+"""
+
+KOTLIN_GRADLE = """plugins {
+    kotlin("jvm") version "2.0.21"
+    id("info.solidsoft.pitest") version "1.15.0"
+}
+
+repositories { mavenCentral() }
+
+dependencies {
+    testImplementation(kotlin("test"))
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+kotlin { jvmToolchain(21) }
+
+tasks.test { useJUnitPlatform() }
+
+pitest {
+    junit5PluginVersion.set("1.2.1")
+    targetClasses.set(listOf("essai.*"))
+    outputFormats.set(listOf("XML"))
+    timestampedReports.set(false)
+}
+"""
+KOTLIN_CODE = """package essai
+
+object Calc {
+    fun doubler(x: Int): Int {
+        return 2 * x
+    }
+
+    fun suivant(x: Int): Int {
+        if (x > 100) {
+            return x
+        }
+        return aide(x)
+    }
+
+    private fun aide(x: Int): Int {
+        return x + 1
+    }
+}
+"""
+KOTLIN_TEST = f"""package essai
+
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
+class CalcTest {{
+    @Test
+    fun doublerMultiplieParDeux() {{
+        assertEquals(4, Calc.doubler(2))
+    }}
+
+    @Test
+    fun suivantAjouteUn() {{
+        assertEquals(2, Calc.suivant(1))
     }}
     // {FIN}
 }}
@@ -462,6 +530,28 @@ LANGAGES = {
                     "import org.junit.jupiter.api.Test;\n\nclass RegressionTest {\n    @Test\n"
                     "    void doublerDeTrois() {\n        assertEquals(6, Calc.doubler(3));\n    }\n}\n"),
     ),
+    "kotlin": Langage(
+        adaptateur="kotlin",
+        fichiers={"settings.gradle.kts": 'rootProject.name = "essai"\n', "build.gradle.kts": KOTLIN_GRADLE,
+                  ".gitignore": "build/\n.gradle/\n.kotlin/\n", "src/main/kotlin/essai/Calc.kt": KOTLIN_CODE,
+                  "src/test/kotlin/essai/CalcTest.kt": KOTLIN_TEST},
+        preparer=["gradle -q --no-daemon wrapper", "./gradlew -q testClasses"],
+        code="src/main/kotlin/essai/Calc.kt",
+        creux=("src/test/kotlin/essai/CalcTest.kt", f"    // {FIN}\n",
+               "    @Test\n    fun neMesureRien() {\n        Calc.doubler(3)\n    }\n"),
+        desactive=("src/test/kotlin/essai/CalcTest.kt", f"    // {FIN}\n",
+                   "    @kotlin.test.Ignore\n    @Test\n    fun plusTard() {\n        assertEquals(6, Calc.doubler(3))\n"
+                   "    }\n"),
+        attendu=("src/test/kotlin/essai/CalcTest.kt", "assertEquals(4,", "assertEquals(5,"),
+        fonction=("src/main/kotlin/essai/Calc.kt", "    private fun aide(x: Int): Int {",
+                  "    fun quadrupler(x: Int): Int {\n        return 4 * x\n    }\n\n"
+                  "    private fun aide(x: Int): Int {"),
+        bogue=("src/main/kotlin/essai/Calc.kt", "return 2 * x\n", "return 2 * x + 1\n"),
+        regression=("src/test/kotlin/essai/RegressionTest.kt",
+                    "package essai\n\nimport kotlin.test.Test\nimport kotlin.test.assertEquals\n\n"
+                    "class RegressionTest {\n    @Test\n    fun doublerDeTrois() {\n"
+                    "        assertEquals(6, Calc.doubler(3))\n    }\n}\n"),
+    ),
     "ruby": Langage(
         adaptateur="ruby",
         fichiers={"Gemfile": 'source "https://rubygems.org"\n\ngem "rspec", "~> 3.13"\ngem "mutant-rspec", "~> 0.12"\n',
@@ -676,6 +766,126 @@ def eprouver(nom: str, dossier: Path, bavard: bool) -> dict:
     return res
 
 
+# Un projet en deux langages, comme JustCook : ses outils en Python sous
+# pytest, son app en Kotlin sous Gradle (ADR-0051, point 8).
+MIXTE = "python+kotlin"
+PY_PYPROJECT = """[project]
+name = "outils"
+version = "0.1.0"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.mutmut]
+source_paths = ["src/outils"]
+pytest_add_cli_args_test_selection = ["tests"]
+"""
+PY_CODE = "def tripler(x):\n    return 3 * x\n"
+PY_TEST = "from outils.calc import tripler\n\n\ndef test_tripler():\n    assert tripler(2) == 6\n"
+PY_REGRESSION = ("tests/test_regression.py",
+                 "from outils.calc import tripler\n\n\ndef test_tripler_de_trois():\n    assert tripler(3) == 9\n")
+PY_MODULE = "src/outils/calc.py"
+
+
+def eprouver_mixte(dossier: Path, bavard: bool) -> dict:
+    """Le projet en Python et en Kotlin : chaque langage jugé par son
+    adaptateur, avec ses vrais outils (pytest et mutmut, Gradle et PIT)."""
+    k = LANGAGES["kotlin"]
+    p = Projet(dossier, k)
+    res: dict = {"langage": MIXTE, "etapes": {}}
+
+    def noter(etape: str, ok: bool, detail: str = ""):
+        res["etapes"][etape] = {"ok": ok, "detail": detail.strip()[-1500:]}
+        if bavard:
+            print(f"  {'ok ' if ok else 'ÉCHEC'} {MIXTE} — {etape}" + ("" if ok else f"\n{detail.strip()[-1500:]}"),
+                  file=sys.stderr)
+
+    fichiers = {**k.fichiers, "pyproject.toml": PY_PYPROJECT, PY_MODULE: PY_CODE, "src/outils/__init__.py": "",
+                "tests/test_outils.py": PY_TEST}
+    fichiers[".gitignore"] += "mutants/\nmutmut-results.txt\n__pycache__/\n.pytest_cache/\n"
+    dossier.mkdir(parents=True)
+    for rel, contenu in fichiers.items():
+        (dossier / rel).parent.mkdir(parents=True, exist_ok=True)
+        (dossier / rel).write_text(contenu)
+    p.git("init", "-q", "-b", "main")
+    for c in [*k.preparer, f"{sys.executable} -m pytest -q --co"]:
+        r = p.run(c)
+        if r.returncode:
+            noter("dépendances", False, r.stdout + r.stderr)
+            return res
+    noter("dépendances", True)
+    r = p.run([sys.executable, "-c", "import sys; sys.path.insert(0, sys.argv[1]); from socle.cli import main; "
+               "sys.exit(main(sys.argv[2:]))", str(MOTEUR), "install", "--target", ".", "--adapter", "auto",
+               "--owner", "@essai"])
+    principal = (dossier / ".socle/adapter.toml").read_text() if (dossier / ".socle/adapter.toml").is_file() else ""
+    noter("installation, un adaptateur par langage déduit du dépôt",
+          'language = "python"' in principal and (dossier / ".socle/adapters/kotlin.toml").is_file(),
+          r.stdout + r.stderr)
+    caps = {PY_MODULE: 99, k.code: 99}
+
+    def plafonds():
+        gf = dossier / ".socle/guardrails.toml"
+        texte = gf.read_text()
+        debut = texte.index("[mutation.caps]\n") + len("[mutation.caps]\n")
+        fin = texte.find("\n[", debut)
+        fin = len(texte) if fin == -1 else fin + 1
+        gf.write_text(texte[:debut] + "".join(f'"{m}" = {{ max = {n}, reason = "mesuré par le banc des adaptateurs" }}\n'
+                                              for m, n in caps.items()) + texte[fin:])
+
+    plafonds()
+    base = p.commit("Projet d'essai en deux langages")
+
+    r = p.socle("verify", "--fast")
+    noter("verify sur le projet sain, les étapes des deux adaptateurs",
+          r.returncode == 0 and "verify.kotlin.tests" in r.stdout + r.stderr and "verify.python.tests" in r.stdout + r.stderr,
+          r.stdout + r.stderr)
+    r = p.socle("check", "--stage", "agent", "--base", "HEAD", "--only", "adaptateur.recouvrement")
+    noter("aucun fichier désigné par les deux adaptateurs", r.returncode == 0, r.stdout + r.stderr)
+
+    for etape, quoi, prefixe in (("test Kotlin sans assertion", k.creux, "kotlin : "),
+                                 ("test Python sans assertion",
+                                  ("tests/test_outils.py", "    assert tripler(2) == 6\n", "    tripler(2)\n"),
+                                  "python : ")):
+        p.remplacer(quoi)
+        r = p.socle("check", "--stage", "agent", "--base", "HEAD", "--only", "tests.creux")
+        noter(f"{etape} refusé par tests.creux, qui nomme son adaptateur",
+              refuse_par(r.stdout, "tests.creux") and prefixe in r.stdout, r.stdout + r.stderr)
+        p.git("checkout", "--", ".")
+
+    # Un correctif du code Kotlin ne se prouve pas par un test Python.
+    p.remplacer(k.bogue)
+    avant = p.commit("Un bogue entre dans le code Kotlin")
+    p.git("checkout", base, "--", k.bogue[0])
+    (dossier / PY_REGRESSION[0]).write_text(PY_REGRESSION[1])
+    p.commit("fix: doubler redevient juste")
+    r = p.socle("check", "--stage", "ci", "--base", avant, "--only", "tests.regression")
+    noter("correctif Kotlin prouvé par un seul test Python refusé par tests.regression",
+          refuse_par(r.stdout, "tests.regression") and "kotlin : " in r.stdout and "python : " not in r.stdout,
+          r.stdout + r.stderr)
+    p.git("reset", "-q", "--hard", avant)
+    p.git("checkout", base, "--", k.bogue[0])
+    chemin, contenu = k.regression
+    (dossier / chemin).write_text(contenu)
+    p.commit("fix: doubler redevient juste")
+    r = p.socle("check", "--stage", "ci", "--base", avant, "--only", "tests.regression")
+    noter("correctif Kotlin avec son test Kotlin, rejoué sur le parent", r.returncode == 0, r.stdout + r.stderr)
+
+    # La mutation : chaque adaptateur balaie ses modules avec son outil.
+    debut = time.time()
+    r = p.socle("mutation-run")
+    res["mutation_secondes"] = round(time.time() - debut, 1)
+    sortie = r.stdout + r.stderr
+    vus = {m: (f"{m} :" in sortie and "aucun résultat" not in sortie.split(m, 1)[1].splitlines()[0]) for m in caps}
+    res["mutation"] = {"python": mutation.LECTEURS["mutmut"](dossier).get(PY_MODULE),
+                       "kotlin": mutation.LECTEURS["pit"](dossier).get(k.code)}
+    res["mutation"] = {n: dict(c or {}) for n, c in res["mutation"].items()}
+    noter("balayage de mutation des deux adaptateurs, chacun au plafond de ses modules",
+          r.returncode == 0 and all(vus.values()) and all(res["mutation"].values()), sortie)
+    res["reussi"] = all(e["ok"] for e in res["etapes"].values())
+    return res
+
+
 def rapport(resultats: list[dict]) -> str:
     lignes = ["# Banc des adaptateurs", "", "Chaque adaptateur, éprouvé sur un projet jetable de son langage "
               "(`bench/adapters.py`).", ""]
@@ -691,7 +901,8 @@ def rapport(resultats: list[dict]) -> str:
 
 def main(argv=None) -> int:
     a = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    a.add_argument("--langages", default=",".join(LANGAGES))
+    a.add_argument("--langages", default=",".join([*LANGAGES, MIXTE]),
+                   help=f"les langages à éprouver, et `{MIXTE}` pour le projet en deux langages")
     a.add_argument("--garder", action="store_true", help="garder les projets jetables")
     a.add_argument("--sortie", help="dossier où écrire rapport.md et resultats.json")
     args = a.parse_args(argv)
@@ -701,7 +912,8 @@ def main(argv=None) -> int:
         for nom in [x.strip() for x in args.langages.split(",") if x.strip()]:
             print(f"{nom} …", file=sys.stderr)
             try:
-                resultats.append(eprouver(nom, racine / nom, True))
+                resultats.append(eprouver_mixte(racine / "mixte", True) if nom == MIXTE
+                                 else eprouver(nom, racine / nom, True))
             except Exception as e:  # un banc qui plante le dit, il ne passe pas
                 resultats.append({"langage": nom, "etapes": {"déroulé": {"ok": False, "detail": f"{type(e).__name__}: {e}"}},
                                   "reussi": False})

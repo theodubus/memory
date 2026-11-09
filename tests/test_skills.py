@@ -3,6 +3,7 @@ les deux contrôles qui les jugent."""
 
 import io
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -123,7 +124,8 @@ class TestSkillsDuSocle(unittest.TestCase):
         for nom in controles.DU_SOCLE:
             texte = (self.racine / installeur.SKILLS / nom / "SKILL.md").read_text()
             self.assertTrue(texte.startswith(f"---\nname: {nom}\n"))
-        self.assertEqual(sorted(controles.DU_SOCLE), ["socle-private-memory", "socle-request", "socle-review"])
+        self.assertEqual(sorted(controles.DU_SOCLE), ["socle-private-memory", "socle-request", "socle-resume",
+                                                      "socle-review"])
         self.assertIn(".claude/skills/socle-*/**", config.Projet.charger(self.racine).chemins_proteges())
         self.assertEqual(juger(self.racine), {"skills.contrat": [], "skills.commandes": []})
 
@@ -142,10 +144,55 @@ class TestSkillsDuSocle(unittest.TestCase):
     def test_dans_les_deux_langues_ils_passent_leurs_controles(self):
         self.assertEqual(installeur.poser_skills(self.racine, "en"),
                          ["skills du socle posés dans .claude/skills : socle-private-memory, socle-request, "
-                          "socle-review"])
+                          "socle-resume, socle-review"])
         texte = (self.racine / ".claude/skills/socle-request/SKILL.md").read_text()
         self.assertIn("description: Write a request for a human decision", texte)
         self.assertEqual(juger(self.racine), {"skills.contrat": [], "skills.commandes": []})
+
+
+class TestLaReprise(unittest.TestCase):
+    """Le skill de la reprise après une limite d'usage (ADR-0050) : posé dans
+    les deux langues, il ne relance que l'agent dont le tour a fini sur une
+    limite, et un tour qui finit retire ses réveils."""
+
+    def setUp(self):
+        self.racine = depot({"app.py": "print('ok')\n"})
+
+    def tearDown(self):
+        shutil.rmtree(self.racine, ignore_errors=True)
+
+    def lire(self, lg: str) -> str:
+        installeur.poser_skills(self.racine, lg)
+        return (self.racine / installeur.SKILLS / "socle-resume" / "SKILL.md").read_text(encoding="utf-8")
+
+    def test_il_est_pose_dans_les_deux_langues_et_passe_ses_controles(self):
+        for lg, reveil in (("fr", "Reprise après limite"), ("en", "Resume after limit")):
+            texte = self.lire(lg)
+            self.assertTrue(texte.startswith("---\nname: socle-resume\n"), lg)
+            self.assertIn(reveil, texte, lg)
+            self.assertEqual(juger(self.racine), {"skills.contrat": [], "skills.commandes": []}, lg)
+
+    def test_seul_un_tour_fini_sur_une_limite_relance_l_agent(self):
+        sections = {}
+        for lg, jamais, fin, reveil, non in (
+                ("fr", "ne relance jamais l'agent", "## À la fin de chaque tour", "## Au réveil", "Ne pas reprendre"),
+                ("en", "never restarts the agent", "## At the end of every turn", "## On waking", "Do not resume")):
+            texte = self.lire(lg)
+            self.assertIn(jamais, texte, lg)
+            section = texte.split(fin, 1)[1].split("\n## ", 1)[0]
+            self.assertIn("delete_trigger", section, lg)
+            # Au réveil : la fin du tour d'avant se lit d'abord, et quatre
+            # cas, chacun une puce, retiennent l'agent de reprendre.
+            au_reveil = texte.split(reveil, 1)[1].split("\n## ", 1)[0]
+            self.assertIn("usage_limit_reached", au_reveil, lg)
+            cas = au_reveil.split(non, 1)[1].split("\n\n", 1)[0]
+            self.assertEqual(len(re.findall(r"^   - ", cas, re.M)), 4, lg)
+            sections[lg] = re.findall(r"^## ", texte, re.M)
+        self.assertEqual(len(sections["fr"]), len(sections["en"]))
+
+    def test_un_sous_agent_ne_touche_a_aucun_reveil(self):
+        for lg, regle in (("fr", "Un sous-agent ne touche à aucun réveil"), ("en", "A subagent\ntouches no wake-up")):
+            self.assertIn(regle, self.lire(lg), lg)
 
 
 class TestRefusBash(unittest.TestCase):
