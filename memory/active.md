@@ -5,16 +5,15 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-Sur `main` : la distribution publique `theodubus/socle` (ADR-0040), et
-les retours du pilote livrés jusqu'à la PR #24, fusionnée le 8 novembre
-(journal, depuis J-2026-10-31-H ; J-2026-11-08-N). Aucune PR ouverte. B-0132 : le skill `socle-resume` est validé (D-0081) et appliqué ici ;
-reste une coupure réelle reprise par un réveil. B-0133 : ce qu'il ne
-couvre pas, pour une demande. Pilote en Kotlin : D-0083 (adaptateurs
-multiples) attend Théo ; l'adaptateur `kotlin`, éprouvé, l'attend dans
-l'arbre (J-2026-11-08-U). Frictions : B-0134 à B-0139.
-Ensuite : les retours du pilote pour B-0126 (chess), le
-compte de deux journées sans défaut repartant du 8 novembre. Les projets
-d'essai sont dans le dossier de travail de la session, jetables.
+Sur `main` : la distribution `theodubus/socle` (ADR-0040) et les retours
+du pilote jusqu'à la PR #24, fusionnée le 8 novembre. PR #25
+ouverte : skill `socle-resume` (B-0132, D-0081 ; reste une coupure
+réelle reprise), D-0082 et D-0083 validées, l'adaptateur
+`kotlin` et sa revue (J-2026-11-09-B). Ensuite : l'ADR qui recopie D-0083,
+puis le moteur des adaptateurs multiples (B-0095) ; B-0133, B-0140, B-0141 ;
+les frictions du pilote (B-0134 à B-0139) ; puis B-0126 (chess), le compte
+de deux journées sans défaut repartant du 8 novembre. Projets d'essai :
+jetables, hors du dépôt.
 
 D-0026 est répondue `rien` : B-0048 et B-0018 restent ouverts, « on se le
 garde en tete et on voit si ça finit par etre bloquant ».
@@ -49,6 +48,9 @@ garde en tete et on voit si ça finit par etre bloquant ».
   on ne dit pas a quoi sert l'outil », « j'ai du mal à me projeter dans le
   parcours utilisateur » (J-2026-10-22-A).
 
+- Une limite d'usage proche décide de l'ordre des sujets, jamais de la
+  profondeur du travail ; Théo : « jamais de faire une certaine partie du
+  travail au rabais » (J-2026-11-09-C).
 - Une attente annoncée dans le récap (CI, banc, match) s'accompagne d'un
   réveil programmé pour y revenir (Théo, J-2026-10-13-N).
 - Chaque point de « Pour toi » se comprend seul, sans mon raisonnement,

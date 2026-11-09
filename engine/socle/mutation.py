@@ -141,16 +141,40 @@ def lire_gremlins(dossier: Path) -> dict[str, Counter]:
     return res
 
 
-# PIT (Java) : `target/pit-reports/mutations.xml`. Le fichier se déduit du
+# PIT (Java, Kotlin) : `target/pit-reports/mutations.xml` sous Maven,
+# `build/reports/pitest/mutations.xml` sous Gradle. Le fichier se déduit du
 # paquet de la classe mutée et du nom de son fichier source.
 STATUTS_PIT = {"KILLED": "attrapes", "TIMED_OUT": "expires", "MEMORY_ERROR": "expires",
                "RUN_ERROR": "inviables", "NON_VIABLE": "inviables"}
+# Ce que produit la construction, où un fichier source n'est qu'une copie.
+DOSSIERS_DE_CONSTRUCTION = {"build", "target", ".gradle", "out"}
+
+
+def _source_pit(dossier: Path, paquet: str, source: str, connus: dict) -> str:
+    """Le fichier source d'une mutation de PIT, qui ne connaît que le paquet de
+    la classe et le nom du fichier : celui du dépôt dont le chemin finit par
+    le paquet puis le nom (`src/main/kotlin/essai/Calc.kt`) ; sinon le seul de
+    ce nom qui déclare ce paquet, Kotlin permettant de ne pas ranger un
+    fichier sous son paquet ; à défaut, le chemin de Maven,
+    `src/main/java/<paquet>/<fichier>`."""
+    cle = (paquet, source)
+    if cle not in connus:
+        attendu = f"{paquet}/{source}" if paquet else source
+        trouves = [p for p in dossier.rglob(source)
+                   if p.is_file() and not DOSSIERS_DE_CONSTRUCTION & set(p.relative_to(dossier).parts[:-1])]
+        rangs = [p for p in trouves if p.relative_to(dossier).as_posix().endswith(attendu)]
+        if len(rangs) != 1 and paquet:
+            declare = re.compile(rf"^\s*package\s+{re.escape(paquet.replace('/', '.'))}\s*;?\s*$", re.M)
+            rangs = [p for p in trouves if declare.search(p.read_text(encoding="utf-8", errors="replace"))]
+        connus[cle] = rangs[0].relative_to(dossier).as_posix() if len(rangs) == 1 else f"src/main/java/{attendu}"
+    return connus[cle]
 
 
 def lire_pit(dossier: Path) -> dict[str, Counter]:
     import xml.etree.ElementTree as ET
 
     res: dict[str, Counter] = {}
+    connus: dict = {}
     for f in sorted(dossier.rglob("mutations.xml")):
         try:
             racine = ET.parse(f).getroot()
@@ -159,8 +183,8 @@ def lire_pit(dossier: Path) -> dict[str, Counter]:
         for m in racine.iter("mutation"):
             classe, source = m.findtext("mutatedClass", ""), m.findtext("sourceFile", "")
             paquet = "/".join(classe.split(".")[:-1])
-            chemin = f"src/main/java/{paquet}/{source}" if paquet else f"src/main/java/{source}"
-            _compter(res, chemin, STATUTS_PIT.get(m.get("status", ""), "survivants"))
+            _compter(res, _source_pit(dossier, paquet, source, connus), STATUTS_PIT.get(m.get("status", ""),
+                                                                                    "survivants"))
     return res
 
 
@@ -203,21 +227,6 @@ LECTEURS = {"cargo-mutants": lire_cargo_mutants, "mutmut": lire_mutmut, "stryker
             "gremlins": lire_gremlins, "pit": lire_pit, "mutant": lire_mutant, "infection": lire_infection}
 
 
-def _du_module(resultats: dict[str, Counter], module: str) -> Counter | None:
-    """Les résultats d'un module : sous son chemin, sinon sous le plus long de
-    ses suffixes que l'outil a écrit, d'au moins un dossier et un fichier.
-    PIT ne connaît que le paquet et le nom du fichier source, qu'il range
-    sous `src/main/java/` : un module Kotlin, `src/main/kotlin/essai/Calc.kt`,
-    se retrouve par `essai/Calc.kt`. Le nom seul du fichier ne suffit pas :
-    il prêterait au module les résultats d'un homonyme d'un autre paquet."""
-    if module in resultats:
-        return resultats[module]
-    for suffixe in _suffixes(module)[1:-1]:
-        if suffixe in resultats:
-            return resultats[suffixe]
-    return None
-
-
 def verdict(projet: config.Projet, dossier: Path, poser: bool = False) -> Rapport:
     """Les survivants de chaque module du plafond, confrontés à son plafond.
     Un module « à mesurer » (`pending`) n'a pas encore de plafond : son compte
@@ -245,7 +254,7 @@ def verdict(projet: config.Projet, dossier: Path, poser: bool = False) -> Rappor
     resultats = lecteur(dossier)
     mesures = {}
     for module, p in plafonds.items():
-        c = _du_module(resultats, module)
+        c = resultats.get(module)
         if p.get("pending"):
             if not c:
                 r.avertir(ident, trad("{module} : à mesurer, et pas encore balayé", module=module))

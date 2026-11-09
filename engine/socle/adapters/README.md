@@ -133,6 +133,7 @@ Les clés qui décrivent un langage, toutes facultatives sauf `function` :
 | `function` | une fonction ou un test ; le premier groupe trouvé est son nom | `^\s*func\s+(\w+)` |
 | `marker_attribute`, `marker_name`, `marker_line` | ce qui fait un test : un attribut au-dessus, son nom, ou sa ligne | `#[test]`, `^test`, `test("…", …)` |
 | `block` | la forme d'un bloc : `braces`, `indent` ou `end` | `end` pour Ruby |
+| `expression_body` | une fonction écrite en expression, sans bloc : son corps commence au premier groupe, et va jusqu'aux lignes suivantes plus indentées | `fun f(x: Int) = 2 * x` en Kotlin |
 | `strings`, `line_comment` | les littéraux et le commentaire de fin de ligne, où une accolade ne compte pas | chaînes entre accents graves de JavaScript |
 | `block_comment` | un commentaire de bloc, ou une docstring : un mot qui y figure n'affirme ni n'appelle rien | `/\*[\s\S]*?\*/` |
 | `assertion` | ce qui affirme ; un test sans assertion est creux | `\bexpect\s*\(` |
@@ -198,16 +199,26 @@ deux SDK de support long.
 | --- | --- |
 | Lancer les tests | `./gradlew test` (kotlin.test ou JUnit 5, sous `useJUnitPlatform()`) |
 | Vérifier le code | `./gradlew testClasses`, le compilateur Kotlin et ses avertissements |
-| Reconnaître un test | `@Test` de kotlin.test, de JUnit 4 ou de JUnit 5, sur `fun` ; un nom entre accents graves compte |
-| Reconnaître un test désactivé | `@Ignore` (kotlin.test, JUnit 4), `@Disabled` (JUnit 5) ; la raison, dans `@Disabled("…")` |
+| Reconnaître un test | `@Test` de kotlin.test, de JUnit 4 ou de JUnit 5, au-dessus de `fun` ou sur sa ligne ; un nom entre accents graves compte ; une fonction en expression (`fun t() = …`) a son corps après le `=` |
+| Reconnaître une assertion | kotlin.test et JUnit (`assert…`, `fail`), MockK et Mockito (`verify`, `coVerify`), kotest (`shouldBe`…) |
+| Reconnaître un test désactivé | `@Ignore` (kotlin.test, JUnit 4), `@Disabled` (JUnit 5) ; la raison, dans `@Disabled("…")`, `@Ignore("…")`, ou un commentaire après l'`@Ignore` de kotlin.test, qui n'en prend pas |
 | Rejouer un test sur le commit d'avant | `./gradlew test --tests '*<Classe>'`, du nom de son fichier |
-| Mesurer la mutation | PIT, par le greffon Gradle `info.solidsoft.pitest`, en XML sans horodatage |
-| Dire quelles fonctions sont privées | `private`, `internal` ou `protected` : tout le reste est public |
+| Mesurer la mutation | PIT, par le greffon Gradle `info.solidsoft.pitest`, en XML sans horodatage ; un fichier sans corps de fonction (une interface, des `expect`) n'entre pas au plafond |
+| Dire quelles fonctions sont privées | `private` ou `internal` : tout le reste est public, `protected` compris |
 
 L'installeur reconnaît Kotlin à son build Gradle écrit en Kotlin
 (`build.gradle.kts` ou `settings.gradle.kts`), pourvu que le dépôt porte une
-source `.kt` : un projet Java sous Gradle porte le même build. PIT ne connaît
-que le paquet et le nom du fichier source, qu'il range sous `src/main/java/` ;
-le verdict retrouve un module Kotlin par son plus long suffixe, d'au moins un
-dossier et un fichier. Un projet multiplateforme, dont les tâches de Gradle
-ont d'autres noms, adapte les commandes dans sa copie.
+source `.kt` hors de `buildSrc/` : un projet Java sous Gradle porte le même
+build, et souvent des greffons de construction en Kotlin. PIT ne connaît que
+le paquet et le nom du fichier source : son lecteur retrouve le fichier dans
+le dépôt, rangé sous son paquet, sinon le seul de ce nom qui déclare ce
+paquet. Les sources se cherchent sous `src/*/kotlin` comme sous `src/*/java`,
+la disposition d'Android Studio. Un projet à plusieurs modules déclare
+`filter { isFailOnNoMatchingTests = false }` dans ses tâches de test : le
+rejeu filtre par classe à la racine. Le rejeu nomme la classe d'après le
+fichier du test : une classe de test nommée autrement que son fichier ne s'y
+trouve pas, et le correctif est refusé, Gradle ne trouvant aucun test ; et
+le filtre `*CalcTest` lance aussi `BigCalcTest`, sans fausser le verdict,
+qui exige encore le succès sur le correctif. Un projet multiplateforme ou Android,
+dont les tâches de Gradle ont d'autres noms (`testDebugUnitTest`) et dont la
+mutation passe par un autre greffon, adapte les commandes dans sa copie.

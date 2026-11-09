@@ -80,8 +80,14 @@ MARQUEURS_LANGAGE = (
 
 # Un langage dont le marqueur ne suffit pas : son build Gradle écrit en
 # Kotlin, un projet Java sous Gradle le porte aussi ; il faut encore une
-# source du langage.
+# source du langage, hors des greffons de construction (`buildSrc/`), qu'un
+# projet Java écrit souvent en Kotlin.
 SOURCE_EXIGEE = {"kotlin": ".kt"}
+HORS_SOURCES = ("buildSrc",)
+
+
+def _source_du_langage(chemin: str, extension: str) -> bool:
+    return chemin.endswith(extension) and not set(HORS_SOURCES) & set(chemin.split("/")[:-1])
 
 
 def langages_presents(fichiers: list[str]) -> dict[str, list[str]]:
@@ -90,7 +96,7 @@ def langages_presents(fichiers: list[str]) -> dict[str, list[str]]:
     qu'il couvre."""
     res: dict[str, list[str]] = {}
     for marqueurs, langage in MARQUEURS_LANGAGE:
-        if langage in SOURCE_EXIGEE and not any(f.endswith(SOURCE_EXIGEE[langage]) for f in fichiers):
+        if langage in SOURCE_EXIGEE and not any(_source_du_langage(f, SOURCE_EXIGEE[langage]) for f in fichiers):
             continue
         for f in fichiers:
             nom = f.rsplit("/", 1)[-1]
@@ -102,7 +108,9 @@ def langages_presents(fichiers: list[str]) -> dict[str, list[str]]:
 def detecter_langage(cible: Path) -> str | None:
     for fichiers, langage in MARQUEURS_LANGAGE:
         if any(p.is_file() for f in fichiers for p in cible.glob(f)):
-            if langage in SOURCE_EXIGEE and not any(cible.rglob(f"*{SOURCE_EXIGEE[langage]}")):
+            if langage in SOURCE_EXIGEE and not any(
+                    _source_du_langage(p.relative_to(cible).as_posix(), SOURCE_EXIGEE[langage])
+                    for p in cible.rglob(f"*{SOURCE_EXIGEE[langage]}")):
                 continue
             return langage
     return None

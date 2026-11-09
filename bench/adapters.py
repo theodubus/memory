@@ -744,7 +744,7 @@ def eprouver(nom: str, dossier: Path, bavard: bool) -> dict:
     debut = time.time()
     r = p.run(cap["command"], delai=1800)
     res["mutation_secondes"] = round(time.time() - debut, 1)
-    compte = mutation._du_module(mutation.LECTEURS[cap["parser"]](dossier), l.code)
+    compte = mutation.LECTEURS[cap["parser"]](dossier).get(l.code)
     res["mutation"] = dict(compte or {})
     noter("balayage de mutation lu", bool(compte), "" if compte else r.stdout + r.stderr)
     if compte:
