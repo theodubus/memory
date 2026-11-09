@@ -8,12 +8,12 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 Sur `main` : la PR #25 (adaptateurs multiples, ADR-0051). Sur la
 branche : D-0085, validée ; ADR-0052, qui remplace le point 6
 d'ADR-0051 : l'installeur ne rafraîchit une copie d'adaptateur que non
-adaptée ; sa revue (J-2026-11-09-P) ; la version 0.2.0. À faire : la
-fusion par Théo, puis le prompt de mise à jour de JustCook (B-0095,
-J-2026-11-09-O). Puis B-0133, B-0134 à B-0144, B-0126 (chess).
+adaptée ; sa revue (J-2026-11-09-P) ; la version 0.2.0 (PR #26). À
+faire : les frictions du pilote, B-0134 à B-0139, avant sa mise à jour ;
+puis le prompt de cette mise à jour (B-0095, J-2026-11-09-O). Puis
+B-0133, B-0140 à B-0144, B-0126 (chess).
 
-D-0026 est répondue `rien` : B-0048 et B-0018 restent ouverts, « on se le
-garde en tete et on voit si ça finit par etre bloquant ».
+B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
 
 ## Consignes en cours
 
@@ -25,8 +25,9 @@ garde en tete et on voit si ça finit par etre bloquant ».
   (création du dépôt, prompt d'installation, gestes sur GitHub, premier
   message de la session de travail) ; Théo : « garde en tete de me donner
   ce qu'il faudra pour lancer le pilote le moment venu » (J-2026-10-30-S).
-- La branche de travail est `ccr-82da0a2e-iccil9`, tirée de `main` après la
-  PR #25 ; `ccr-7128ec56-nnvoun-v2` y est fusionnée (J-2026-11-09-M).
+- La branche de travail est `ccr-82da0a2e-iccil9` (J-2026-11-09-M).
+- Les frictions du pilote (B-0134 à B-0139) avant sa mise à jour ; Théo :
+  « Autant les faire avant mise à jour » (J-2026-11-09-R).
 - Aucun autre dépôt dans la session, ni lecture de JustCook ou de
   `theodubus/socle` ; Théo : « N'ajoute aucun autre dépôt à la session, et
   ne lis ni JustCook ni theodubus/socle (donner leurs liens reste
