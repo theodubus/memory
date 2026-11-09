@@ -11,7 +11,15 @@ validation des fichiers protégés (J-2026-11-08-S). Chercher un ordre, ou un
 jugement par le moteur nouveau, qui laisse la CI verte.
 
 Fait quand :
-- [x] une mise à jour qui apporte des clés nouvelles aux garde-fous laisse la CI verte, prouvé sur un projet d'essai
+- [x] une mise à jour qui apporte des clés nouvelles aux garde-fous ne fait plus échouer la CI à cause d'elles, prouvé sur un projet d'essai
 
-Mesuré (J-2026-11-09-S) : le moteur nouveau commité avec ses réglages, `cliquet.garde-fous` passe ;
-seul `protege.fichiers` attend la réponse de l'humain, par construction (D-0071).
+Le critère disait « laisse la CI verte » ; précisé sur la revue du lot
+(J-2026-11-09-T), parce que la mesure le dément à la lettre. Mesuré
+(J-2026-11-09-S) : le moteur nouveau commité avec ses réglages,
+`cliquet.garde-fous` passe ; la CI ne reste rouge que sur
+`protege.fichiers`, jusqu'à la réponse de l'humain, comme D-0071 le veut
+quand la branche par défaut exige la CI du socle. Sans cette exigence, les
+fichiers protégés attendent non commités, et l'installeur dit de déclarer
+les réglages nouveaux une fois le moteur commité (B-0123). Le symptôme que
+le pilote rapportait, une CI rouge jusqu'à la validation, reste donc, par
+la décision D-0071, mais plus à cause des clés nouvelles.
