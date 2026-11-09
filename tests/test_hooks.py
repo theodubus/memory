@@ -262,7 +262,8 @@ class TestHooksNonCharges(unittest.TestCase):
     def test_un_commit_dans_un_autre_worktree_n_est_pas_un_second_commit(self):
         """B-0136 : la trace est commune aux worktrees ; un commit dans l'un,
         puis un autre dans un second, dans la même commande, passent. Deux
-        dans le même worktree restent refusés."""
+        dans le même worktree restent refusés. Le premier commit passe par le
+        vrai hook, qui nomme son worktree dans la trace."""
         import subprocess
 
         from socle import config
@@ -275,14 +276,38 @@ class TestHooksNonCharges(unittest.TestCase):
         projet_autre = config.Projet(racine=autre)
         hooks.tracer(self.racine, "SessionStart", "s", "startup")
         hooks.tracer(self.racine, "PreToolUse", "s", "Bash")
-        hooks.tracer(self.racine, "git-prepare-commit-msg", "", str(self.racine.resolve()))
+        message = self.racine / "MSG"
+        message.write_text("Premier\n")
         with self.sous(CLAUDECODE="1", CLAUDE_CODE_SESSION_ID="s"):
+            self.assertIsNone(hooks.filtre_absent(self.projet))
+            hooks.git_prepare_commit_msg(self.projet, str(message))
             self.assertIsNone(hooks.filtre_absent(projet_autre))
             self.assertEqual(hooks.filtre_absent(self.projet), "PreToolUse=0")
-            hooks.tracer(autre, "git-prepare-commit-msg", "", str(autre.resolve()))
+            message.write_text("Second\n")
+            hooks.git_prepare_commit_msg(projet_autre, str(message))
             self.assertEqual(hooks.filtre_absent(projet_autre), "PreToolUse=0")
-        # Le hook nomme ainsi le worktree de chaque commit.
-        self.assertEqual(hooks.worktree(autre), str(autre.resolve()))
+        self.assertEqual(config.lire_trace(self.racine)[-1].split("\t")[3], str(autre.resolve()))
+
+    def test_un_worktree_neuf_ne_masque_pas_des_hooks_qui_ont_cesse_de_tirer(self):
+        """B-0058, dans un worktree neuf : son compte partirait du début de la
+        trace. Des hooks qui ne tirent plus depuis un commit ailleurs, et dont
+        le dernier passage n'est plus frais, font refuser le commit."""
+        import subprocess
+
+        from socle import config
+
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=self.racine, check=True)
+        subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty",
+                        "-m", "base"], cwd=self.racine, check=True)
+        neuf = self.racine / "neuf"
+        subprocess.run(["git", "worktree", "add", "-q", "-b", "neuf", str(neuf)], cwd=self.racine, check=True)
+        trace = config.chemin_trace(self.racine)
+        trace.parent.mkdir(parents=True, exist_ok=True)
+        trace.write_text("2026-11-09T08:00:00+00:00\tSessionStart\ts\tstartup\n"
+                         "2026-11-09T08:00:01+00:00\tPreToolUse\ts\tBash\n"
+                         f"2026-11-09T08:00:02+00:00\tgit-prepare-commit-msg\t\t{self.racine.resolve()}\n")
+        with self.sous(CLAUDECODE="1", CLAUDE_CODE_SESSION_ID="s"):
+            self.assertEqual(hooks.filtre_absent(config.Projet(racine=neuf)), "PreToolUse=0")
 
     def test_le_hook_avant_commit_refuse_sans_passage_du_filtre(self):
         import contextlib

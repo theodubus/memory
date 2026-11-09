@@ -957,7 +957,7 @@ def installe_pendant(lignes: list[list[str]], session: str) -> bool:
     return premier is not None and premier > 0 and lignes[premier - 1][1] == "Install"
 
 
-def compter_depuis_le_commit(racine: Path, session: str | None = None) -> str:
+def compter_depuis_le_commit(racine: Path, session: str | None = None, tous: bool = False) -> str:
     """`PreToolUse=3` : les passages du filtre de l'agent depuis le commit
     précédent du même worktree (sa ligne `git-prepare-commit-msg` dans la
     trace, qui nomme son worktree ; une ligne qui n'en nomme aucun vaut pour
@@ -966,12 +966,13 @@ def compter_depuis_le_commit(racine: Path, session: str | None = None) -> str:
     suivant un second commit de la même commande (B-0136). La commande qui
     commite passe elle-même par le filtre : des hooks chargés en comptent
     toujours au moins un. Le compte de toute la session ne voit pas des hooks
-    qui cessent de tirer en cours de route."""
+    qui cessent de tirer en cours de route. `tous` : depuis le commit
+    précédent de n'importe quel worktree."""
     lignes = [l.split("\t") for l in config.lire_trace(racine)]
     ici = worktree(racine)
     debut = next((i + 1 for i in range(len(lignes) - 1, -1, -1)
                   if len(lignes[i]) >= 2 and lignes[i][1] == "git-prepare-commit-msg"
-                  and (len(lignes[i]) < 4 or lignes[i][3] in ("", ici))), 0)
+                  and (tous or len(lignes[i]) < 4 or lignes[i][3] in ("", ici))), 0)
     filtre = [l for l in lignes[debut:] if len(l) >= 3 and l[1] == "PreToolUse"]
     session = session or next((l[2] for l in reversed(filtre) if l[2]), "")
     return f"PreToolUse={sum(1 for l in filtre if l[2] == session)}"
@@ -1017,11 +1018,21 @@ def filtre_absent(projet: config.Projet) -> str | None:
     l'agent depuis le commit précédent : le compte (`PreToolUse=0`), à
     refuser dès le hook avant commit, au lieu du seul avertissement du
     message de commit. `None` sinon. La commande qui commite passe
-    elle-même par le filtre : des hooks chargés en comptent au moins un."""
+    elle-même par le filtre : des hooks chargés en comptent au moins un.
+
+    Le compte part du commit précédent du même worktree (B-0136). Un commit
+    d'un autre worktree depuis le dernier passage du filtre n'excuse que des
+    hooks qui tirent encore : la trace de la session doit être fraîche, sans
+    quoi un worktree neuf compterait toute la session, et ne verrait pas des
+    hooks qui ont cessé de tirer (B-0058)."""
     if not os.environ.get("CLAUDECODE") or not projet.pol("agents", "claude_code", defaut=True):
         return None
-    depuis = compter_depuis_le_commit(projet.racine, os.environ.get("CLAUDE_CODE_SESSION_ID"))
-    return depuis if depuis == "PreToolUse=0" else None
+    session = os.environ.get("CLAUDE_CODE_SESSION_ID")
+    depuis = compter_depuis_le_commit(projet.racine, session)
+    if depuis == "PreToolUse=0":
+        return depuis
+    partout = compter_depuis_le_commit(projet.racine, session, tous=True)
+    return partout if partout == "PreToolUse=0" and hooks_non_charges(projet) else None
 
 
 def sous_un_agent(geste: str) -> bool:

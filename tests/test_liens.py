@@ -121,6 +121,30 @@ class TestLiensDuDepot(unittest.TestCase):
         self.assertEqual(url, f"{DEPOT}/blob/{main}/docs/d.md")
         self.assertEqual(liens.commit_pousse(self.clone), main)
 
+    def test_la_branche_du_meme_nom_se_cherche_sur_son_distant(self):
+        """Une branche qui suit un autre distant qu'`origin` se cherche sur
+        lui ; une qui suit une branche locale (`.`), sur `origin`."""
+        source = self.dossier / "source"
+        git(self.clone, "remote", "add", "amont", str(source))
+        git(self.clone, "fetch", "-q", "amont")
+        git(self.clone, "checkout", "-q", "-B", "ailleurs", "amont/main")
+        self.assertEqual(git(self.clone, "config", "--get", "branch.ailleurs.remote").strip(), "amont")
+        (self.clone / "docs/e.md").write_text("# E\n")
+        git(self.clone, "add", "-A")
+        git(self.clone, "commit", "-qm", "quatre")
+        git(self.clone, "push", "-q", "amont", "ailleurs")
+        self.assertEqual(liens.commit_pousse(self.clone), git(self.clone, "rev-parse", "amont/ailleurs").strip())
+        git(self.clone, "push", "-q", "origin", "ailleurs:locale")
+        git(self.clone, "fetch", "-q", "origin")
+        git(self.clone, "checkout", "-q", "-b", "locale", "--track", "ailleurs")
+        self.assertEqual(git(self.clone, "config", "--get", "branch.locale.remote").strip(), ".")
+        # La branche locale suivie avance sans elle : le commit poussé est
+        # celui de `origin/locale`.
+        git(self.clone, "checkout", "-q", "ailleurs")
+        git(self.clone, "commit", "-q", "--allow-empty", "-m", "cinq")
+        git(self.clone, "checkout", "-q", "locale")
+        self.assertEqual(liens.commit_pousse(self.clone), git(self.clone, "rev-parse", "origin/locale").strip())
+
     def test_pas_de_lien_vers_ce_qui_n_est_pas_pousse(self):
         url, avertissement = liens.lien(self.projet, "docs/b.md")
         self.assertIsNone(url)
