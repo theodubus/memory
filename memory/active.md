@@ -5,15 +5,12 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-Sur `main` : la PR #25, fusionnée le 9 novembre (B-0132 fait ; adaptateur
-`kotlin` ; adaptateurs multiples, ADR-0051). Sur la branche seulement :
-D-0085, validée (J-2026-11-09-L), et B-0143. À faire : une ADR qui
-remplace le point 6 d'ADR-0051 par le texte de D-0085 ; l'installeur ne
-rafraîchit une copie, principale comprise, qu'identique à l'adaptateur
-maintenu du moteur installé (lu avant son remplacement), et dit quand
-celui d'une copie adaptée a changé ; tests, revue ; une version du socle,
-la mise à jour de JustCook (B-0095). Puis B-0133, B-0134 à B-0143,
-B-0126 (chess).
+Sur `main` : la PR #25 (adaptateurs multiples, ADR-0051). Sur la
+branche : D-0085, validée, et ADR-0052, qui remplace le point 6
+d'ADR-0051 ; l'installeur ne rafraîchit une copie d'adaptateur que non
+adaptée, et ses tests. À faire : la revue adversariale, une version du
+socle, la demande de mise à jour de JustCook (B-0095). Puis B-0133,
+B-0134 à B-0143, B-0126 (chess).
 
 D-0026 est répondue `rien` : B-0048 et B-0018 restent ouverts, « on se le
 garde en tete et on voit si ça finit par etre bloquant ».
@@ -28,10 +25,12 @@ garde en tete et on voit si ça finit par etre bloquant ».
   (création du dépôt, prompt d'installation, gestes sur GitHub, premier
   message de la session de travail) ; Théo : « garde en tete de me donner
   ce qu'il faudra pour lancer le pilote le moment venu » (J-2026-10-30-S).
-- La branche de travail est `ccr-7128ec56-nnvoun-v2`, tirée de `main` sur la
-  réponse `branche-neuve` de Théo à D-0049 (J-2026-10-30-J). L'ancienne
-  branche peut se supprimer : la PR #10 garde ses commits, que la mémoire
-  cite (J-2026-10-31-S).
+- La branche de travail est `ccr-82da0a2e-iccil9`, tirée de `main` après la
+  PR #25 ; `ccr-7128ec56-nnvoun-v2` y est fusionnée (J-2026-11-09-M).
+- Aucun autre dépôt dans la session, ni lecture de JustCook ou de
+  `theodubus/socle` ; Théo : « N'ajoute aucun autre dépôt à la session, et
+  ne lis ni JustCook ni theodubus/socle (donner leurs liens reste
+  permis) » (J-2026-11-09-M).
 - La documentation se conçoit avant de s'écrire, commence par ce dont le
   projet parle et ce qu'il est, ses schémas se vérifient rendus avant le
   push, et elle n'est faite que validée par Théo ; Théo : « fais un petit

@@ -148,7 +148,8 @@ PYTHONPATH=/tmp/socle python3 -m socle install --target . --owner @<propriétair
 
 L'installeur termine par les étapes suivantes, chacune avec sa commande.
 Une mise à jour relance les mêmes commandes depuis un clone à jour : les
-fichiers du projet ne sont jamais écrasés. La suite, étape par étape : [le
+fichiers du projet ne sont jamais écrasés, hors une copie d'un adaptateur
+maintenu que le projet n'a pas adaptée. La suite, étape par étape : [le
 guide d'utilisation](socle/HELP.md), copié dans le projet et affiché par
 `python3 .socle/socle help`.
 

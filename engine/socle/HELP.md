@@ -195,7 +195,10 @@ commit (`Dispense-test: f — <raison>`) ; un correctif apporte un test qui
 **Mettre à jour le socle.** Relancer la commande d'installation depuis un
 clone à jour du moteur (`git clone --depth 1
 https://github.com/theodubus/socle /tmp/socle`). Les fichiers du projet ne sont jamais écrasés ; le
-diff de la politique est montré. Approuver ensuite les fichiers protégés
+diff de la politique est montré. Seule exception, une copie d'un adaptateur
+maintenu que le projet n'a pas adaptée se rafraîchit ; une copie adaptée se
+garde, et l'installeur dit quand son adaptateur maintenu a changé : l'agent
+propose alors d'y reporter les corrections, par une demande. Approuver ensuite les fichiers protégés
 changés (`socle approve`), puis commiter. En session cloud, sans terminal,
 l'agent pose une demande qui cite chaque fichier protégé changé avec son
 empreinte, et l'humain la valide dans la conversation. Si la branche par

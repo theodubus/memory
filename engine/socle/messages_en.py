@@ -2597,10 +2597,18 @@ MESSAGES: dict[str, str] = {
         "unknown adapter: “{nom}” (the project's: {liste})",
     "dans un projet à plusieurs adaptateurs, celui dont l'outil a écrit ces résultats (le principal sinon)":
         "in a project with several adapters, the one whose tool wrote these results (the main one otherwise)",
-    "{nom} rafraîchi depuis l'adaptateur maintenu : un changement protégé, à approuver ; une copie dont une demande "
-    "avait resserré les motifs est à remettre":
-        "{nom} refreshed from the maintained adapter: a protected change, to approve; a copy whose patterns a "
-        "request had narrowed is to be restored",
+    "{nom} rafraîchi depuis l'adaptateur maintenu {base}, que le projet n'avait pas adapté : un changement protégé, "
+    "à approuver":
+        "{nom} refreshed from the maintained adapter {base}, which the project had not adapted: a protected change, "
+        "to approve",
+    "!! {nom} adapté par le projet : conservé ; l'adaptateur maintenu {base} a changé depuis le moteur installé, ou "
+    "n'y était pas : proposer à l'humain, par une demande, d'y reporter ses corrections (ce qui a changé : "
+    "`git diff -- {source}`)":
+        "!! {nom} adapted by the project: kept; the maintained adapter {base} has changed since the installed engine, "
+        "or was not in it: propose to the human, through a request, to carry its corrections over (what changed: "
+        "`git diff -- {source}`)",
+    "{nom} adapté par le projet : conservé ; l'adaptateur maintenu {base} n'a pas changé":
+        "{nom} adapted by the project: kept; the maintained adapter {base} has not changed",
     "fichier désigné par deux adaptateurs":
         "file designated by two adapters",
     "un second adaptateur aux motifs disjoints, posé par l'installeur et approuvé par l'humain, passe la CI":
