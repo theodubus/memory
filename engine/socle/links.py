@@ -78,10 +78,16 @@ def ancre(titre: str) -> str:
 
 
 def commit_pousse(racine) -> str | None:
-    """Le dernier commit poussé de la branche courante, sinon celui de la
-    branche par défaut distante."""
+    """Le dernier commit poussé de la branche courante : sa branche distante
+    du même nom, sinon celle qu'elle suit, sinon la branche par défaut
+    distante. Une branche repartie de `origin/main` suit celle-ci tant qu'on
+    ne l'a pas changé, alors qu'elle se pousse sous son propre nom (B-0134)."""
     defaut = outils.branche_par_defaut(racine)
-    for ref in ("@{upstream}", defaut if defaut and defaut.startswith("origin/") else None):
+    branche = outils.git(racine, "rev-parse", "--abbrev-ref", "HEAD", check=False).strip()
+    distant = outils.git(racine, "config", "--get", f"branch.{branche}.remote", check=False).strip()
+    meme_nom = f"{distant if distant not in ('', '.') else 'origin'}/{branche}" \
+        if branche and branche != "HEAD" else None
+    for ref in (meme_nom, "@{upstream}", defaut if defaut and defaut.startswith("origin/") else None):
         if ref and outils.rev_existe(racine, ref):
             return outils.resoudre(racine, ref)
     return None

@@ -90,6 +90,21 @@ class TestLiensDuDepot(unittest.TestCase):
         self.assertEqual(url, f"{DEPOT}/blob/{self.main}/docs/a.md")
         self.assertEqual(avertissement, "")
 
+    def test_permalien_a_la_branche_distante_du_meme_nom(self):
+        """B-0134 : une branche repartie de `origin/main` le suit ; ses
+        fichiers se poussent sous son nom, et le permalien les y trouve."""
+        git(self.clone, "checkout", "-q", "-B", "travail", "origin/main")
+        self.assertEqual(git(self.clone, "rev-parse", "--abbrev-ref", "@{upstream}").strip(), "origin/main")
+        (self.clone / "docs/c.md").write_text("# C\n")
+        git(self.clone, "add", "-A")
+        git(self.clone, "commit", "-qm", "trois")
+        git(self.clone, "push", "-q", "origin", "travail")
+        pousse = git(self.clone, "rev-parse", "origin/travail").strip()
+        url, avertissement = liens.lien(config.Projet.charger(self.clone), "docs/c.md")
+        self.assertEqual(url, f"{DEPOT}/blob/{pousse}/docs/c.md")
+        self.assertEqual(avertissement, "")
+        self.assertEqual(liens.commit_pousse(self.clone), pousse)
+
     def test_pas_de_lien_vers_ce_qui_n_est_pas_pousse(self):
         url, avertissement = liens.lien(self.projet, "docs/b.md")
         self.assertIsNone(url)
