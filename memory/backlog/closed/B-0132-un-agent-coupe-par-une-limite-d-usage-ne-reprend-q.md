@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0132 — Un agent coupé par une limite d'usage ne reprend qu'au message suivant de l'humain : il doit reprendre seul à la levée de la limite
 
-> statut : ouvert · origine : J-2026-11-08-H · lu : backlog@2ac91e6b
+> statut : fait · origine : J-2026-11-08-H · lu : backlog@2ac91e6b · ref : J-2026-11-09-G
 
 Quand une limite d'usage, de cinq heures ou de la semaine, coupe l'agent
 au milieu d'un travail, il ne reprend qu'au message suivant de Théo ; deux
@@ -16,4 +16,4 @@ fenêtres et l'heure de leur remise à zéro.
 
 - [x] la spécification soumise à Théo et validée (D-0080, ADR-0050)
 - [x] la procédure écrite et posée dans tout projet (le skill `socle-resume`, D-0081)
-- [ ] une coupure réelle suivie d'une reprise sans message de l'humain
+- [x] une coupure réelle suivie d'une reprise sans message de l'humain
