@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0135 — Une citation se périme quand l'entrée citée ne change que ses métadonnées, et une demande et son sujet qui se citent l'un l'autre se périment dans l'ordre d'écriture
 
-> statut : ouvert · origine : J-2026-11-08-S · lu : backlog@7b6c36fe
+> statut : ouvert · origine : J-2026-11-08-S · lu : backlog@7b6c36fe · après : D-0086
 
 Une empreinte de lecture couvre tout le texte de l'entrée citée : ajouter
 `après : D-NNNN` à un sujet, ou changer son statut, périme chaque citation
