@@ -23,6 +23,12 @@ sous-agent au contexte neuf par sujet (J-2026-11-10-O) ; le relais de
 session reste une piste si cela ne suffit pas. Reste à l'écrire dans les
 instructions, et à mesurer le coût d'un sujet ainsi mené.
 
+Premier essai, coupé par la limite (J-2026-11-10-Q) : le compactage d'une
+conversation longue coûte lui-même une part de la fenêtre, un appel
+compte pour 1 % environ même après, et un sous-agent se lance au premier
+plan, un à la fois, pour que la fin du tour ne juge pas un arbre en cours
+d'écriture.
+
 ## Fait quand
 
 - [ ] Théo a choisi la solution sur un essai, et le socle la met en œuvre
