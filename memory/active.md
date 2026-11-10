@@ -5,11 +5,12 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-JustCook mis à jour, ses fichiers protégés attendent Théo. Sur la branche
-(PR #28, que Théo fusionne lui-même) : D-0092 validée et la règle de
-fusion ; la passe de recul et D-0093, ses sept propositions et quatre
-jalons, en attente. Sans réponse : B-0149, B-0151, B-0141, dans une
-session neuve, cette conversation coûtant trop (J-2026-11-10-L).
+D-0093 validée sauf sa proposition 7 (J-2026-11-10-N) : quatre jalons,
+B-0154 (alléger), B-0157 (chess, sous ADR-0057), B-0159 (mesurer), B-0160
+(le noyau et la méthode). Le socle organise et fiabilise. JustCook est en
+pause tant que le socle se corrige. Prochain : B-0149, B-0151, B-0141,
+puis B-0010, B-0155, B-0156 (le contexte long, à cadrer avec Théo).
+L'agent fusionne ses pull requests (D-0092).
 
 B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
 

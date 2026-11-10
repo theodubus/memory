@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0055 — Un mode multi-agent : un agent maître qui tient la mémoire et répartit les tâches
 
-> statut : ouvert · origine : J-2026-10-13-L · lu : backlog@74e54c44 · ref : J-2026-10-19-H, J-2026-10-30-Q · après : B-0101
+> statut : ouvert · origine : J-2026-10-13-L · lu : backlog@74e54c44 · ref : J-2026-10-19-H, J-2026-10-30-Q · après : B-0101, B-0162
 
 Demandé par Théo (texte exact au journal) : un agent maître qui tient la
 mémoire, envoie des sous-agents sur les tâches, décide pour chacune du
@@ -32,3 +32,6 @@ pose l'installeur), sur quoi elle choisit (la taille de la tâche, sa
 nature : relecture, implémentation, planification), et ce qu'elle coûte,
 mesuré au banc : coût, durée et qualité d'une tâche selon le modèle et
 l'effort.
+
+Le 10 novembre : le cadrage l'écartait, et son sort dépend de la
+proposition 7 de D-0093@333ad9d0, à reformuler (B-0162).
