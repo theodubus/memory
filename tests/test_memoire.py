@@ -87,6 +87,13 @@ class TestLectureProuvee(unittest.TestCase):
         self.assertNotEqual(memoire.empreinte_entree(a), memoire.empreinte_entree(b))
         espaces = memoire.analyser("memory/canonical.md", CANONIQUE.replace("base.", "base.   ")).entrees[0]
         self.assertEqual(memoire.empreinte_entree(a), memoire.empreinte_entree(espaces))
+        # La ligne de métadonnées n'y compte pas, mais compte dans celle du
+        # texte entier, que portent les citations d'avant D-0086.
+        statut = memoire.analyser("memory/canonical.md", CANONIQUE.replace("statut : mesuré", "statut : supposé")
+                                  .replace(" · date : 2026-10-10", "")).entrees[0]
+        self.assertNotEqual(a.meta, statut.meta)
+        self.assertEqual(memoire.empreinte_entree(a), memoire.empreinte_entree(statut))
+        self.assertNotEqual(memoire.empreinte_texte_entier(a), memoire.empreinte_texte_entier(statut))
 
     def test_citations(self):
         texte = "Voir ADR-0003@0a1b2c3d, F-0001 (sans empreinte) et lu : decisions@deadbeef.\n```\nF-0002@11111111\n```"

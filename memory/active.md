@@ -5,17 +5,15 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-Sur `main` : la distribution `theodubus/socle` (ADR-0040) et les retours
-du pilote jusqu'à la PR #24, fusionnée le 8 novembre. PR #25 ouverte :
-skill `socle-resume` (B-0132, D-0081 ; reste une coupure réelle reprise),
-l'adaptateur `kotlin`, puis le moteur des adaptateurs multiples (ADR-0051,
-J-2026-11-09-F) ; B-0095 reste ouvert jusqu'au retour de JustCook. Ensuite :
-une version du socle pour JustCook ; B-0133, B-0140 à B-0142 ; les
-frictions du pilote (B-0134 à B-0139) ; puis B-0126 (chess), le compte de
-deux journées sans défaut repartant du 8 novembre.
+Sur `main` : la PR #25 (adaptateurs multiples, ADR-0051). Sur la
+branche : D-0085, validée ; ADR-0052, qui remplace le point 6
+d'ADR-0051 : l'installeur ne rafraîchit une copie d'adaptateur que non
+adaptée ; sa revue (J-2026-11-09-P) ; la version 0.2.0 (PR #26).
+Frictions du pilote : les six faites, B-0137 par ADR-0055
+(J-2026-11-10-C). Puis, la PR #26 fusionnée, la mise à jour de JustCook
+(J-2026-11-09-O) ; B-0133, B-0140 à B-0144, B-0126.
 
-D-0026 est répondue `rien` : B-0048 et B-0018 restent ouverts, « on se le
-garde en tete et on voit si ça finit par etre bloquant ».
+B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
 
 ## Consignes en cours
 
@@ -27,10 +25,13 @@ garde en tete et on voit si ça finit par etre bloquant ».
   (création du dépôt, prompt d'installation, gestes sur GitHub, premier
   message de la session de travail) ; Théo : « garde en tete de me donner
   ce qu'il faudra pour lancer le pilote le moment venu » (J-2026-10-30-S).
-- La branche de travail est `ccr-7128ec56-nnvoun-v2`, tirée de `main` sur la
-  réponse `branche-neuve` de Théo à D-0049 (J-2026-10-30-J). L'ancienne
-  branche peut se supprimer : la PR #10 garde ses commits, que la mémoire
-  cite (J-2026-10-31-S).
+- La branche de travail est `ccr-82da0a2e-iccil9` (J-2026-11-09-M).
+- Les frictions du pilote (B-0134 à B-0139) avant sa mise à jour ; Théo :
+  « Autant les faire avant mise à jour » (J-2026-11-09-R).
+- Aucun autre dépôt dans la session, ni lecture de JustCook ou de
+  `theodubus/socle` ; Théo : « N'ajoute aucun autre dépôt à la session, et
+  ne lis ni JustCook ni theodubus/socle (donner leurs liens reste
+  permis) » (J-2026-11-09-M).
 - La documentation se conçoit avant de s'écrire, commence par ce dont le
   projet parle et ce qu'il est, ses schémas se vérifient rendus avant le
   push, et elle n'est faite que validée par Théo ; Théo : « fais un petit

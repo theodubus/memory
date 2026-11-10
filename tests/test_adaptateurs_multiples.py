@@ -407,6 +407,217 @@ class MiseAJour(unittest.TestCase):
                          ["app/src/main/kotlin/app/App.kt"])
 
 
+def installer_et_lire(racine: Path, adaptateurs) -> str:
+    """L'installeur, et ce qu'il imprime."""
+    import contextlib
+    import io
+
+    sortie = io.StringIO()
+    with contextlib.redirect_stdout(sortie), contextlib.redirect_stderr(io.StringIO()):
+        installeur.installer(racine, adaptateurs, "@essai")
+    return sortie.getvalue()
+
+
+class Rafraichissement(unittest.TestCase):
+    """La mise à jour ne rafraîchit une copie d'adaptateur, la principale
+    comprise, que si le projet ne l'a pas adaptée (ADR-0052)."""
+
+    KT = ".socle/adapters/kotlin.toml"
+    MOTEUR_KT = ".socle/engine/socle/adapters/kotlin.toml"
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-rafraichir-"))
+        git(self.racine, "init", "-q", "-b", "main")
+        for chemin, texte in (("pyproject.toml", "[project]\nname = \"outils\"\n[tool.pytest.ini_options]\n"),
+                              ("src/outils/verif.py", "def verifier():\n    return True\n"),
+                              ("app/build.gradle.kts", "plugins { kotlin(\"jvm\") }\n"),
+                              ("app/src/main/kotlin/app/App.kt", "package app\n\nfun main() {}\n")):
+            self.ecrire(chemin, texte)
+        installer(self.racine, "auto")
+        self.commit("installation")
+        self.maintenu = {n: (ADAPTATEURS / f"{n}.toml").read_text() for n in ("kotlin", "python-pytest", "python")}
+
+    def tearDown(self):
+        shutil.rmtree(self.racine, ignore_errors=True)
+
+    def ecrire(self, chemin: str, texte: str):
+        p = self.racine / chemin
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(texte)
+
+    def lire(self, chemin: str) -> str:
+        return (self.racine / chemin).read_text()
+
+    def commit(self, message: str):
+        # Un dépôt jetable : ses versions d'essai du moteur ne passent pas par
+        # les hooks git que l'installeur y a branchés.
+        git(self.racine, "add", "-A")
+        git(self.racine, "-c", "core.hooksPath=/dev/null", "commit", "-qm", message)
+
+    def test_une_copie_non_adaptee_se_rafraichit(self):
+        # Le moteur installé portait une version d'avant, que la copie a gardée.
+        ancien = self.maintenu["kotlin"] + "\n# version d'avant\n"
+        self.ecrire(self.MOTEUR_KT, ancien)
+        self.ecrire(self.KT, ancien)
+        self.commit("version d'avant")
+        sortie = installer_et_lire(self.racine, "auto")
+        self.assertEqual(self.lire(self.KT), self.maintenu["kotlin"])
+        self.assertIn(f"{self.KT} rafraîchi depuis l'adaptateur maintenu kotlin, que le projet n'avait pas adapté",
+                      sortie)
+
+    def test_la_copie_principale_d_une_version_de_l_historique_se_rafraichit(self):
+        # Posée par une version ancienne, que le moteur installé n'a plus : la
+        # copie principale d'un projet à un seul langage, qu'aucune mise à jour
+        # ne rafraîchissait.
+        v1 = self.maintenu["python-pytest"] + "\n# version 1\n"
+        self.ecrire(".socle/engine/socle/adapters/python-pytest.toml", v1)
+        self.ecrire(".socle/adapter.toml", v1)
+        self.commit("version 1")
+        self.ecrire(".socle/engine/socle/adapters/python-pytest.toml", self.maintenu["python-pytest"] + "\n# v2\n")
+        self.commit("version 2")
+        sortie = installer_et_lire(self.racine, ["python-pytest"])
+        self.assertEqual(self.lire(".socle/adapter.toml"), self.maintenu["python-pytest"])
+        self.assertIn(".socle/adapter.toml rafraîchi depuis l'adaptateur maintenu python-pytest", sortie)
+
+    def test_une_copie_adaptee_se_garde_et_l_installeur_dit_quand_son_maintenu_a_change(self):
+        adaptee = self.maintenu["kotlin"].replace("cache: gradle", "cache: gradle\n          # Android")
+        self.ecrire(self.KT, adaptee)
+        sortie = installer_et_lire(self.racine, "auto")
+        self.assertEqual(self.lire(self.KT), adaptee)
+        self.assertIn(f"{self.KT} adapté par le projet : conservé ; l'adaptateur maintenu kotlin n'a pas changé",
+                      sortie)
+        # Le moteur installé portait une version d'avant : le maintenu a changé.
+        self.ecrire(self.MOTEUR_KT, self.maintenu["kotlin"] + "\n# version d'avant\n")
+        self.commit("version d'avant")
+        avant = git(self.racine, "rev-parse", "HEAD").strip()[:12]
+        voir = ["git", "diff", avant, "--", self.MOTEUR_KT]
+        for _ in range(2):
+            # Relancé avant le commit, l'installeur trouve le moteur nouveau
+            # dans l'arbre : il juge encore contre le dernier commit.
+            sortie = installer_et_lire(self.racine, "auto")
+            self.assertEqual(self.lire(self.KT), adaptee)
+            self.assertIn(f"!! {self.KT} adapté par le projet : conservé ; l'adaptateur maintenu kotlin a changé",
+                          sortie)
+            self.assertIn(f"`{' '.join(voir)}`", sortie)
+        # La commande montre ce qui a changé, avant le commit de la mise à
+        # jour comme après.
+        self.assertIn("# version d'avant", git(self.racine, *voir[1:]))
+        self.commit("mise à jour")
+        self.assertIn("# version d'avant", git(self.racine, *voir[1:]))
+
+    def test_un_maintenu_absent_du_moteur_installe_se_compare_a_la_copie(self):
+        adaptee = self.maintenu["kotlin"] + "\n# adaptée\n"
+        self.ecrire(self.KT, adaptee)
+        (self.racine / self.MOTEUR_KT).unlink()
+        self.commit("moteur sans kotlin")
+        sortie = installer_et_lire(self.racine, "auto")
+        self.assertEqual(self.lire(self.KT), adaptee)
+        self.assertIn(f"!! {self.KT} : conservé ; l'adaptateur maintenu kotlin n'était pas dans le moteur installé : "
+                      f"le comparer à la copie (`diff {self.KT} {self.MOTEUR_KT}`)", sortie)
+
+    def test_un_clone_superficiel_se_signale(self):
+        clone = Path(tempfile.mkdtemp(prefix="socle-rafraichir-clone-"))
+        self.addCleanup(shutil.rmtree, clone, ignore_errors=True)
+        git(clone, "clone", "-q", "--depth", "1", f"file://{self.racine}", "copie")
+        sortie = installer_et_lire(clone / "copie", "auto")
+        self.assertIn("!! clone superficiel : l'historique du moteur y est incomplet", sortie)
+        self.assertNotIn("clone superficiel", installer_et_lire(self.racine, "auto"))
+
+    def test_la_ci_garde_la_copie_principale_quand_la_detection_change_d_adaptateur(self):
+        # Une copie adaptée de `python` ; le dépôt dit pytest : la détection
+        # propose `python-pytest`, qu'aucun nom n'impose (constat 2 de la revue).
+        adaptee = self.maintenu["python"].replace(
+            'ci_setup = ""', 'ci_setup = """\n      - name: Outil maison\n        run: echo outil-maison\n"""', 1)
+        self.assertTrue(adaptee != self.maintenu["python"])
+        self.ecrire(".socle/adapter.toml", adaptee)
+        installer(self.racine, "auto")
+        self.assertTrue(self.lire(".socle/adapter.toml") == adaptee)
+        self.assertIn("echo outil-maison", self.lire(".github/workflows/socle.yml"))
+
+    def test_une_copie_resserree_par_une_demande_se_garde(self):
+        # Le point 2 d'ADR-0051 : un recouvrement se règle en resserrant les
+        # motifs d'une copie ; la mise à jour ne le défait pas.
+        resserree = self.maintenu["kotlin"].replace('sources = ["**/src/**/kotlin/**/*.kt"',
+                                                     'sources = ["app/src/**/kotlin/**/*.kt"', 1)
+        self.assertTrue(resserree != self.maintenu["kotlin"])
+        self.ecrire(self.KT, resserree)
+        installer(self.racine, "auto")
+        self.assertTrue(self.lire(self.KT) == resserree)
+
+    def test_la_ci_part_de_la_copie_gardee(self):
+        adaptee = self.maintenu["kotlin"].replace(
+            '"""\n\n[capabilities.format]',
+            '      - name: SDK Android\n        run: echo sdk-android\n"""\n\n[capabilities.format]', 1)
+        self.assertTrue(adaptee != self.maintenu["kotlin"])
+        self.ecrire(self.KT, adaptee)
+        installer(self.racine, "auto")
+        ci = self.lire(".github/workflows/socle.yml")
+        self.assertIn("echo sdk-android", ci)
+        self.assertIn("mutmut", ci)
+
+    def test_la_ci_part_de_la_copie_principale_gardee(self):
+        adaptee = self.maintenu["python-pytest"].replace(
+            "run: python3 -m pip install pytest mutmut\n",
+            "run: python3 -m pip install pytest mutmut hypothesis\n", 1)
+        self.assertTrue(adaptee != self.maintenu["python-pytest"])
+        self.ecrire(".socle/adapter.toml", adaptee)
+        installer(self.racine, "auto")
+        self.assertTrue(self.lire(".socle/adapter.toml") == adaptee)
+        self.assertIn("pip install pytest mutmut hypothesis", self.lire(".github/workflows/socle.yml"))
+        # Nommer un autre adaptateur maintenu pour son langage en fait la CI.
+        installer(self.racine, ["python", "kotlin"])
+        ci = self.lire(".github/workflows/socle.yml")
+        self.assertNotIn("hypothesis", ci)
+        self.assertTrue(self.lire(".socle/adapter.toml") == adaptee)
+
+    def test_versions_maintenues_lit_le_moteur_installe_et_l_historique(self):
+        v1 = self.maintenu["kotlin"] + "\n# version 1\n"
+        self.ecrire(self.MOTEUR_KT, v1)
+        self.commit("version 1")
+        self.ecrire(self.MOTEUR_KT, self.maintenu["kotlin"] + "\n# arbre\n")
+        connus = installeur.versions_maintenues(self.racine, ".socle/engine")
+        # Le moteur installé est celui du dernier commit ; l'arbre compte parmi les versions.
+        self.assertEqual(connus.installes["kotlin"], v1)
+        self.assertEqual(connus.versions["kotlin"],
+                         {self.maintenu["kotlin"], v1, self.maintenu["kotlin"] + "\n# arbre\n"})
+        self.assertEqual(connus.moteur, ".socle/engine")
+        self.assertEqual(connus.commit, git(self.racine, "rev-parse", "HEAD").strip()[:12])
+        self.assertFalse(connus.superficiel)
+        # Une version que seul un renommage porte, sous l'ancien dossier du moteur.
+        v2 = v1 + "# renommée\n"
+        self.ecrire("ancien/socle/adapters/kotlin.toml", v1)
+        self.commit("ancien moteur")
+        git(self.racine, "mv", "ancien", "nouveau")
+        self.ecrire("nouveau/socle/adapters/kotlin.toml", v2)
+        self.commit("moteur renommé")
+        self.assertIn(v2, installeur.versions_maintenues(self.racine, ".socle/engine").versions["kotlin"])
+        # Les copies du projet, sous `.socle/adapters/`, ne sont pas des versions maintenues.
+        self.ecrire(self.KT, "# propre au projet\n")
+        self.commit("copie")
+        self.assertNotIn("# propre au projet\n", installeur.versions_maintenues(self.racine, ".socle/engine")
+                         .versions["kotlin"])
+
+    def test_adaptateur_de_base_de_la_copie_principale(self):
+        versions = {n: {t} for n, t in self.maintenu.items()}
+        self.assertEqual(installeur.adaptateur_de_base(self.maintenu["python"], versions), "python")
+        # Adaptée : l'adaptateur maintenu de son langage le plus proche.
+        self.assertEqual(installeur.adaptateur_de_base(self.maintenu["python-pytest"] + "\n# adapté\n", versions),
+                         "python-pytest")
+        self.assertEqual(installeur.adaptateur_de_base(self.maintenu["python"] + "\n# adapté\n", versions), "python")
+        # Sans langage qu'un adaptateur maintenu porte : propre au projet.
+        self.assertIsNone(installeur.adaptateur_de_base('language = "cobol"\n', versions))
+        self.assertIsNone(installeur.adaptateur_de_base("[capabilities]\n", versions))
+        self.assertIsNone(installeur.adaptateur_de_base("language = \n", versions))
+
+    def test_rafraichir_copie_garde_un_adaptateur_propre_au_projet(self):
+        connus = installeur.versions_maintenues(self.racine, ".socle/engine")
+        self.ecrire(".socle/adapters/maison.toml", 'language = "maison"\n')
+        self.assertEqual(installeur.rafraichir_copie(self.racine, ".socle/adapters/maison.toml", None, connus),
+                         [".socle/adapters/maison.toml existe : conservé (comparer au gabarit à la main si besoin)"])
+        self.assertEqual(installeur.rafraichir_copie(self.racine, self.KT, "kotlin", connus), [])
+        self.assertEqual(self.lire(".socle/adapters/maison.toml"), 'language = "maison"\n')
+
+
 class Detection(unittest.TestCase):
     def setUp(self):
         self.racine = Path(tempfile.mkdtemp(prefix="socle-detection-"))
