@@ -247,3 +247,87 @@ Théo a validé l'ordre recommandé (D-0015) ; le sujet B-0044 suit les lots.
 | L6 | une vérification réussie se mémorise, l'auto-test tourne sur quatre fils et une seule fois en CI ; le banc et l'auto-test complet attendent la CI (D-0019) : la suite rapide passe de 290 à 143 secondes | J-2026-10-13-O, J-2026-10-13-V |
 | R2 | le balayage de mutation hebdomadaire, posé par l'installeur sauf quand le projet en lance déjà un, et `mutation.vivante`, qui casse la CI quand il cesse de tourner (B-0005) | J-2026-10-13-P |
 | L7 | `installer()` en étapes nommées ; la bascule et la mise en place du dépôt compagnon hors de `private.py`, dont les contrôles restent (des tests les nomment dans leurs assertions) ; l'ancre, l'écriture d'un fichier et l'ajout au `.gitignore` en une copie ; les docstrings périmées, et un test des chemins qu'elles citent | J-2026-10-13-Q |
+
+## La passe du 10 novembre 2026
+
+À la demande de Théo (J-2026-11-10-L) : regarder tout le projet, à quoi il
+sert et à quoi il est censé servir, et proposer. Cette passe ne refait pas
+la relecture du code d'octobre : elle confronte le cadrage à ce que le
+projet est devenu, sur la mémoire, les chiffres du dépôt et le retour du
+pilote du jour (J-2026-11-10-H). L'agent l'a faite seul.
+
+### Où en est le projet
+
+Le cadrage demandait un socle qui rende fiables la mémoire, la
+documentation et les tests, sur tous les projets de Théo, pour six
+problèmes et en neuf jalons. Les neuf jalons sont livrés. Le socle sert
+sur ce dépôt et sur JustCook, le pilote, depuis le 30 octobre ; chess, le
+projet d'où il vient, n'a connu qu'un essai sur une copie.
+
+| Mesure, au 10 novembre | Valeur |
+| --- | --- |
+| Moteur | 18 000 lignes, le double du 12 octobre ; 39 contrôles ; 774 tests |
+| Mémoire de ce dépôt | 56 décisions, 131 sujets, un journal de 337 entrées et 433 Ko |
+| Demandes à Théo | 92 en cinq semaines, dont 25 décisions consignées en séance |
+| Livraison | 466 commits, 26 pull requests |
+| État injecté à chaque démarrage, ici | 26,6 Ko : 6,3 pour l'index des décisions, 11,7 pour les faits, 5,9 pour le chantier actif |
+| Instructions de l'agent | 16 Ko, dont 12,8 pour la section du socle |
+| Une session de travail (9 et 10 novembre) | 880 appels d'outils pour 40 commits, 9 refus |
+
+### Constats
+
+- **C1. Le périmètre a glissé de « fiabiliser » à « organiser le
+  travail ».** Le cadrage écartait le suivi de tâches, les spécifications
+  et l'orchestration. Le socle ordonne aujourd'hui le backlog (ADR-0037),
+  planifie (B-0101), règle la livraison par lots et leur revue (ADR-0042),
+  fait reprendre l'agent après une limite d'usage (ADR-0050), et un mode à
+  plusieurs agents attend au backlog (B-0055). Chaque ajout répondait à un
+  besoin, surtout après le retrait de BMAD (ADR-0036). Le socle est devenu
+  deux choses : un noyau qui fiabilise, une méthode qui organise.
+- **C2. Le coût pour l'agent a monté.** Le cadrage nommait le risque du
+  coût du démarrage et sa parade, des couches lues à la demande. L'état de
+  ce dépôt pèse 26,6 Ko, à chaque démarrage et après chaque compactage ;
+  un correctif d'une ligne (B-0146) a demandé plus de vingt étapes, entre
+  journal, sujet, revue, récap et réveils de reprise.
+- **C3. Le coût pour l'humain aussi.** Soixante-sept demandes à lire en
+  cinq semaines, des récaps longs, chaque pull request à fusionner
+  jusqu'à D-0092. Le cadrage voulait limiter les validations aux huit
+  points de la politique.
+- **C4. La valeur n'est pas mesurée en usage réel.** Le banc mesure des
+  fautes injectées. Rien ne compte, sur le pilote, les refus fondés et
+  les refus à tort, que le cadrage demandait de mesurer ; ses retours
+  ne disent que des gênes.
+- **C5. La porte de chess recule.** Le plan validé (D-0073) attend deux
+  journées du pilote sans retour qui corrige le socle. Chaque mise à jour
+  en apporte : six le 10 novembre. Tant que le socle change à ce rythme,
+  chess (B-0126) n'arrive pas.
+- **C6. La documentation de fabrication grossit par accrétion.**
+  `docs/fabrication/architecture.md` pèse 41,7 Ko, avec une cellule de
+  3 900 caractères : la correspondance code ↔ doc y ajoute une
+  proposition à chaque correctif. La réponse au problème 2 du cadrage
+  produit ici son problème 5.
+- **C7. Les consignes durables de l'humain n'ont pas de couche.** Elles
+  vivent dans le chantier actif, plein à 98 % de son budget, que chaque
+  mise à jour oblige à resserrer ; le journal, lui, n'est pas injecté au
+  démarrage.
+- **C8. Rien n'incite à repartir d'une session neuve**, ce que la reprise
+  sans contexte permet pourtant. Une conversation longue se relit à
+  chaque étape : celle du 10 novembre a été coupée par une limite d'usage.
+
+### Propositions
+
+| # | Proposition | Répond à | Effort |
+| --- | --- | --- | --- |
+| P1 | Alléger chaque tour : l'état au démarrage sous 10 Ko (les dix dernières décisions et leur nombre, les faits par leur titre), les réveils de reprise armés une fois par tour, B-0010 sans attendre le pilote | C2 | moyen |
+| P2 | Une session par lot : au-delà d'une taille de conversation, le hook de fin de tour fait proposer une session neuve, et les instructions le disent | C8 | faible |
+| P3 | Une couche des consignes de l'humain, injectée au démarrage, chacune en vigueur ou levée ; le chantier actif ne garde que le travail en cours | C7 | moyen |
+| P4 | L'architecture en document court : un paragraphe par module, le détail dans les décisions ; un budget sur le fichier | C6 | moyen |
+| P5 | chess, prochain jalon : aucune règle nouvelle d'ici là, des correctifs seulement ; la porte de D-0073 devient « sans retour bloquant » | C5 | celui de B-0126 |
+| P6 | Mesurer en usage réel : une commande relève les refus par contrôle et les demandes par semaine ; le pilote classe ses refus, fondés ou à tort ; un relevé mensuel dit quels contrôles gardent leur place | C3, C4 | moyen |
+| P7 | Séparer le noyau de la méthode : la méthode (lots, revue, pull request unique, reprise, planification) en skills que le projet choisit ; B-0101 en fait partie, B-0055 sort du périmètre | C1 | important, coûteux à défaire |
+
+Ordre recommandé : P1 et P2, qui baissent le coût de tout le reste ; P3 et
+P4 ; P5, avec P6 en parallèle sur le pilote ; P7 après chess, cadré par
+des questions. Les trois sujets qui servent la prochaine mise à jour du
+pilote (B-0149, B-0151) et la sûreté de la revue (B-0141) gardent leur
+place en tête.
