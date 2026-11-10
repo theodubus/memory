@@ -234,6 +234,10 @@ class TestMiseAJour(Base):
         self.assertNotIn("socle approve --text", etapes[0])
         self.assertIn("sans rien attendre", etapes[0])
         self.assertIn("session neuve sur le seul dépôt du projet", etapes[0])
+        # B-0149 : le pilote a appris le contrat de sa demande au refus du
+        # lint, et sa liste de 54 fichiers en dépassait le budget.
+        self.assertIn('La poser par `python3 .socle/socle new request "<décision>"`, qui en dit le contrat', etapes[0])
+        self.assertIn("ces lignes ne comptent pas dans le budget de la demande", etapes[0])
         # B-0148 : deux refus du hook avant commit sur le pilote ; l'ordre
         # des commits se dit.
         commit = next(e for e in etapes if "git commit" in e)

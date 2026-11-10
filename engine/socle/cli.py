@@ -226,6 +226,12 @@ def cmd_new(args) -> int:
     if index:
         print(index)
     print(f"{ident}\t{chemin.relative_to(racine)}")
+    if type_ == "D":
+        # Le contrat, avant qu'elle soit écrite et non au refus du lint ;
+        # après l'identifiant, que la première ligne garde (ADR-0058).
+        from socle import requests as demandes
+
+        print(demandes.contrat(projet, str(Path(ch.demandes) / chemin.name)))
     return 0
 
 

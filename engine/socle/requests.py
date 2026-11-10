@@ -37,6 +37,13 @@ MOTIFS_INTERNES = [
     r"(?<![\w&])#\d+\b",
 ]
 MOTS_DESCRIPTION_MIN = 5
+# Une ligne d'empreinte (ADR-0058) : un fichier protégé et son empreinte
+# nouvelle, rien d'autre, quelle que soit sa mise en liste. C'est ce que
+# `protege.fichiers` lit dans la demande qui approuve une mise à jour ;
+# l'humain, lui, lit les fichiers dans la pull request.
+EMPREINTE_DE_FICHIER = re.compile(r"sha256:[0-9a-f]{16}")
+FICHIER_SUPPRIME = ("supprimé", "deleted")
+DECOR_DE_LISTE = {"-", "*", "+", "—", "–", ":", "|", "·"}
 SECTION_MIN = 15
 # Une demande lue une semaine plus tard, sans le projet en tête : le contexte
 # raconte, il ne résume pas en une ligne.
@@ -186,6 +193,57 @@ def identifiants_cites(texte: str, motifs: list[re.Pattern]) -> set[str]:
             for x in m.finditer(ligne):
                 res.add(x.group(0))
     return res
+
+
+def ligne_d_empreinte(ligne: str, proteges: list[str]) -> bool:
+    """ADR-0058 : la ligne ne dit qu'un fichier protégé et son empreinte
+    nouvelle (`sha256:` et seize caractères, ou « supprimé »), dans un ordre
+    ou dans l'autre, en puce, entre accents graves ou dans un tableau. Un mot
+    de plus, ou un chemin que la politique ne protège pas, et c'est de la
+    prose."""
+    jetons = [j.strip("`").rstrip(".,;") for j in ligne.replace("`", " ").split()]
+    jetons = [j for j in jetons if j and j not in DECOR_DE_LISTE]
+    if len(jetons) != 2:
+        return False
+    empreintes = [j for j in jetons if EMPREINTE_DE_FICHIER.fullmatch(j) or j in FICHIER_SUPPRIME]
+    chemins = [j for j in jetons if j not in empreintes]
+    return len(empreintes) == 1 and len(chemins) == 1 and outils.correspond(chemins[0], proteges)
+
+
+def hors_empreintes(texte: str, projet: config.Projet) -> str:
+    """ADR-0058 : le texte d'une demande sans ses lignes d'empreinte, ce que
+    son budget compte et ce que son lint lit comme de la prose. La liste des
+    fichiers protégés d'une mise à jour n'y pèse donc rien, et ses
+    empreintes n'ont pas à être décrites une à une."""
+    proteges = projet.chemins_proteges()
+    return "".join(ligne for ligne in texte.splitlines(keepends=True) if not ligne_d_empreinte(ligne, proteges))
+
+
+def contrat(projet: config.Projet, chemin: str) -> str:
+    """ADR-0058 : le contrat d'une demande, dit par la commande qui la pose,
+    avant qu'elle soit écrite, avec les seuils du lint et le budget du
+    projet. Le lint reste le juge ; ceci évite de l'apprendre à son refus."""
+    lg = langue.du_projet(projet)
+    noms = [v.get(langue_des_messages(), v["fr"]) for v in langue.PARAGRAPHES_CONTEXTE.values()]
+    lignes = [trad("Son contrat, que le lint juge dès l'écriture (le skill `socle-request` le détaille) :"),
+              trad("- chaque section du squelette remplie, sans texte du gabarit laissé entre chevrons ;"),
+              trad("- « Contexte » commence par trois paragraphes, chacun ouvert par son nom en gras et long d'au "
+                   "moins {n} mots : {noms} ; puis le détail, {total} mots au moins en tout ;",
+                   n=MOTS_PARAGRAPHE_MIN, noms=", ".join(f"**{n}.**" for n in noms), total=MOTS_CONTEXTE_MIN),
+              trad("- « Éléments cités » décrit en clair, en au moins {n} mots, chaque identifiant interne "
+                   "(identifiant de mémoire, SHA, numéro de pull request) ; un fichier protégé à faire approuver "
+                   "s'y écrit sur sa ligne, son chemin et son empreinte nouvelle, rien d'autre (`- "
+                   ".socle/policy.toml sha256:0123456789abcdef`) : ces lignes n'ont pas à être décrites et ne "
+                   "comptent pas dans le budget ;", n=MOTS_DESCRIPTION_MIN),
+              trad("- « Où regarder » donne un lien ; « Options » dit l'effort, le risque et la réversibilité de "
+                   "chacune ; « Conséquences », ce qui se passe si l'humain valide, s'il refuse, sans réponse ; « "
+                   "Recommandation » sépare le vérifié du supposé ;"),
+              trad("- « Réponses possibles » propose les réponses de base : {reponses}.",
+                   reponses=", ".join(f"`{langue.mot(langue.REPONSES, r, lg)}`" for r in langue.REPONSES))]
+    budget = projet.budget_octets(chemin)
+    if budget:
+        lignes.append(trad("Son budget : {budget} octets, les lignes d'empreinte mises à part.", budget=budget))
+    return "\n".join(lignes)
 
 
 def posee_avant_le_moteur(projet: config.Projet, chemin: str, texte: str) -> bool:
@@ -343,7 +401,8 @@ def linter(d: Demande, projet: config.Projet) -> list[str]:
 
     # Aucun identifiant interne sans description, dans la même demande.
     decrits = descriptions(d.sections.get("elements-cites", ""), motifs_internes(projet))
-    cites = identifiants_cites(d.texte, motifs_internes(projet)) - {d.entree.id}
+    # Une ligne d'empreinte se suffit : son chemin dit ce qu'elle est (ADR-0058).
+    cites = identifiants_cites(hors_empreintes(d.texte, projet), motifs_internes(projet)) - {d.entree.id}
     for ident in sorted(cites):
         if ident not in decrits:
             fautes.append(

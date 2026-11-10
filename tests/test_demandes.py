@@ -274,6 +274,95 @@ class TestPoseeAvantLeMoteur(unittest.TestCase):
         self.assertFalse(demandes.posee_avant_le_moteur(self.projet, "memory/requests/D-0005-plafond.md", neuve))
 
 
+class TestLignesDEmpreinte(unittest.TestCase):
+    """ADR-0058 : la demande qui approuve une mise à jour cite chaque fichier
+    protégé avec son empreinte ; les 54 du pilote, une ligne décrite chacun,
+    dépassaient son budget de 374 octets, et l'agent a retiré un paragraphe
+    utile. Une ligne qui ne dit qu'un fichier protégé et son empreinte ne
+    compte plus, ni au budget ni au lint, et `socle new request` dit le
+    contrat avant qu'elle soit écrite."""
+
+    PROTEGES = [".socle/engine/**", ".github/CODEOWNERS"]
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-empreintes-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=self.racine, check=True)
+        (self.racine / "calc.py").write_text("X = 1\n")
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+        self.projet = config.Projet.charger(self.racine)
+        self.chemin = "memory/requests/D-0004-plafond.md"
+
+    def liste(self, n: int, suite: str = "") -> str:
+        return "".join(f"- `.socle/engine/socle/module_{i}.py` — `sha256:{i:015x}a`{suite}\n" for i in range(n))
+
+    def avec(self, liste: str) -> str:
+        return CONFORME.replace("\n## Options", f"{liste}\n## Options", 1)
+
+    def budgets(self, texte: str) -> list[str]:
+        from socle import checks_memory as controles_memoire, context as contexte
+        from socle.report import Rapport
+
+        (self.racine / self.chemin).write_text(texte, encoding="utf-8")
+        r = Rapport()
+        controles_memoire.budgets(contexte.Contexte(config.Projet.charger(self.racine), etage="agent"), r)
+        return [c.message for c in r.erreurs() if c.chemin == self.chemin]
+
+    def test_une_ligne_d_empreinte_ne_dit_qu_un_fichier_protege_et_son_empreinte(self):
+        for ligne in ("- `.socle/engine/socle/hooks.py` — `sha256:0123456789abcdef`",
+                      ".socle/engine/socle/hooks.py sha256:0123456789abcdef\n",
+                      "sha256:0123456789abcdef  .github/CODEOWNERS",
+                      "| `.github/CODEOWNERS` | `sha256:0123456789abcdef` |",
+                      "* `.github/CODEOWNERS` : supprimé."):
+            self.assertTrue(demandes.ligne_d_empreinte(ligne, self.PROTEGES), ligne)
+        for ligne in ("- `.socle/engine/socle/hooks.py` — `sha256:0123456789abcdef`, le hook de l'agent",
+                      "- `calc.py` — `sha256:0123456789abcdef`",
+                      "- `.github/CODEOWNERS` — `sha256:0123`",
+                      "- `.github/CODEOWNERS` et `.socle/engine/a.py`",
+                      "- `.github/CODEOWNERS`", "sha256:0123456789abcdef", "## Éléments cités", ""):
+            self.assertFalse(demandes.ligne_d_empreinte(ligne, self.PROTEGES), ligne)
+
+    def test_hors_empreintes_ne_retire_que_ces_lignes(self):
+        texte = self.avec(self.liste(3) + "- `calc.py` — `sha256:0123456789abcdef`\n")
+        self.assertEqual(demandes.hors_empreintes(texte, self.projet),
+                         self.avec("- `calc.py` — `sha256:0123456789abcdef`\n"))
+
+    def test_le_lint_ne_demande_pas_de_decrire_une_ligne_d_empreinte(self):
+        self.assertEqual(demandes.linter(_demande(self.avec(self.liste(54))), self.projet), [])
+        # Ailleurs que sur sa ligne, une empreinte reste un identifiant à décrire.
+        fautes = demandes.linter(_demande(self.avec("Voir aussi sha256:0123456789abcdef, du moteur.\n")), self.projet)
+        self.assertEqual(len(fautes), 1)
+        self.assertIn("`0123456789abcdef` cité sans description", fautes[0])
+
+    def test_le_budget_d_une_demande_ne_compte_pas_ses_lignes_d_empreinte(self):
+        liste = self.liste(300)
+        self.assertGreater(len(self.avec(liste).encode("utf-8")), 12000)
+        self.assertEqual(self.budgets(self.avec(liste)), [])
+
+    def test_de_la_prose_sur_la_ligne_et_elle_compte(self):
+        erreurs = self.budgets(self.avec(self.liste(150, ", un fichier du moteur que la mise à jour change.")))
+        self.assertEqual(len(erreurs), 1)
+        self.assertIn("pour un budget de 12000 (memory/requests/*.md), les lignes d'empreinte mises à part : "
+                      "resserrer la demande", erreurs[0])
+        self.assertNotIn("archiver dans le journal", erreurs[0])
+
+    def test_socle_new_request_dit_le_contrat_apres_l_identifiant(self):
+        from socle import cli
+
+        sortie = io.StringIO()
+        with contextlib.redirect_stdout(sortie):
+            self.assertEqual(cli.main(["--root", str(self.racine), "new", "request", "Approuver la mise à jour"]), 0)
+        premiere, _, suite = sortie.getvalue().partition("\n")
+        self.assertEqual(premiere, "D-0001\tmemory/requests/D-0001-approuver-la-mise-a-jour.md")
+        self.assertEqual(suite.rstrip("\n"), demandes.contrat(self.projet, "memory/requests/D-0001-x.md"))
+        self.assertIn("**Le projet.**, **Le chantier.**, **La question.**", suite)
+        self.assertIn("long d'au moins 15 mots", suite)
+        self.assertIn("ces lignes n'ont pas à être décrites et ne comptent pas dans le budget", suite)
+        self.assertIn("`valider`, `refuser`, `contexte-insuffisant`", suite)
+        self.assertIn("Son budget : 12000 octets, les lignes d'empreinte mises à part.", suite)
+
+
 class TestUneDemandeQuiAutorise(unittest.TestCase):
     """D-0040 (B-0081) : une demande aux réponses `tout`, `compatibilite-seule`
     et `refuser` nommait les tests à supprimer ; la réponse `tout` n'en

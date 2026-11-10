@@ -213,7 +213,9 @@ garde, et l'installeur dit quand son adaptateur maintenu a changé : l'agent
 propose alors d'y reporter les corrections, par une demande. Approuver ensuite les fichiers protégés
 changés (`socle approve`), puis commiter. En session cloud, sans terminal,
 l'agent pose une demande qui cite chaque fichier protégé changé avec son
-empreinte, et l'humain la valide dans la conversation. Si la branche par
+empreinte, et l'humain la valide dans la conversation ; chaque fichier y
+tient sur une ligne, son chemin et son empreinte sans rien d'autre, que le
+budget de la demande ne compte pas. Si la branche par
 défaut exige la CI du socle, l'agent commite et pousse ces fichiers dès la
 demande poussée : la CI reste rouge jusqu'à la validation, et l'humain les
 lit dans la pull request avant de répondre. Le dépôt public du
