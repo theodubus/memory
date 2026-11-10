@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0089-des-etiquettes-sur-les-sujets-du-backlog-ou-une-fo.md, dont l'empreinte suit.
+reponse = "rien"
+texte = ""
+par = "Théo"
+date = "2026-11-10"
+canal = "conversation"
+citation = "a rien"
+empreinte = "sha256:c5c4178b42b4ee2ce6d711df726679e3a16974216add81b43767e0fa64dac4e7"

@@ -5,13 +5,11 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-Sur `main` : la PR #25 (adaptateurs multiples, ADR-0051). Sur la
-branche : D-0085, validée ; ADR-0052, qui remplace le point 6
-d'ADR-0051 : l'installeur ne rafraîchit une copie d'adaptateur que non
-adaptée ; sa revue (J-2026-11-09-P) ; la version 0.2.0 (PR #26).
-Frictions du pilote : les six faites, B-0137 par ADR-0055
-(J-2026-11-10-C). Puis, la PR #26 fusionnée, la mise à jour de JustCook
-(J-2026-11-09-O) ; B-0133, B-0140 à B-0144, B-0126.
+La PR #26 fusionnée (adaptateurs adaptés gardés, les six gênes du pilote,
+J-2026-11-10-E) ; Théo lance la mise à jour de JustCook. Sur la branche :
+les prompts d'installation et de mise à jour en session cloud (D-0091),
+B-0145. Puis, D-0090 : B-0101 lancé, et les jalons de ce dépôt proposés
+par une demande, JustCook à jour ; B-0133, B-0140 à B-0144, B-0126.
 
 B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
 
