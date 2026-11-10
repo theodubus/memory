@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0087-cadrer-ce-que-le-socle-juge-sur-une-branche-jetabl.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-10"
+canal = "conversation"
+citation = "Valider D0087"
+empreinte = "sha256:66a7b8b5af8890f11fa0fc2bc728f59f9ba50b9ae748896f7342851a0d29e96f"
