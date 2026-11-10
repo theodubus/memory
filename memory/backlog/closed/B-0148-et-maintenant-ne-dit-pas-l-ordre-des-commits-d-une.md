@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0148 — « Et maintenant » ne dit pas l'ordre des commits d'une mise à jour en session cloud, que le hook avant commit impose
 
-> statut : ouvert · origine : J-2026-11-10-H · lu : backlog@e41bab5c
+> statut : fait · origine : J-2026-11-10-H · lu : backlog@e41bab5c · ref : J-2026-11-10-I
 
 À la mise à jour du pilote en session cloud (J-2026-11-10-H), le hook
 avant commit a refusé deux fois : le journal citait la copie de
@@ -14,4 +14,4 @@ dit que la demande poussée laisse ensuite commiter les fichiers protégés.
 
 ## Fait quand
 
-- [ ] « Et maintenant », en session cloud, dit l'ordre des commits d'une mise à jour, et un test le montre
+- [x] « Et maintenant », en session cloud, dit l'ordre des commits d'une mise à jour, et un test le montre
