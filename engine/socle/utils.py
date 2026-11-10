@@ -341,6 +341,12 @@ def lignes_changees(racine: Path, base: str | None, tete: str | None, chemin: st
     return res
 
 
+def branche_courante(racine: Path) -> str | None:
+    """Le nom de la branche courante, `None` hors de toute branche."""
+    nom = git(racine, "rev-parse", "--abbrev-ref", "HEAD", check=False).strip()
+    return nom if nom and nom != "HEAD" else None
+
+
 def branche_par_defaut(racine: Path) -> str | None:
     """`origin/main`, `origin/master`, ou ce que pointe `origin/HEAD`."""
     return _branche_par_defaut(racine)[0]

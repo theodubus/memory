@@ -757,6 +757,13 @@ def poser_skills(cible: Path, lg: str = "fr") -> list[str]:
     return [trad("skills du socle posés dans {dossier} : {noms}", dossier=SKILLS, noms=", ".join(noms))]
 
 
+def ignorer_aux_envois(projet: config.Projet) -> str:
+    """La ligne du workflow de CI qui écarte les branches jetables des
+    envois ; une pull request qui en part la lance toujours (D-0087)."""
+    motifs = [p if p.endswith("*") else p + "**" for p in projet.branches_jetables()]
+    return f"    branches-ignore: [{', '.join(json.dumps(m) for m in motifs)}]\n" if motifs else ""
+
+
 def etapes_de_ci(textes: list[str]) -> str:
     """Les étapes de CI des adaptateurs, l'une après l'autre ; une étape que
     deux adaptateurs déclarent à l'identique ne se répète pas (ADR-0051,
@@ -789,6 +796,7 @@ def _poser_etages(cible: Path, texte_adaptateur: str, dossier_moteur: str, propr
     setup = noms_d_etapes_traduits(etapes_de_ci([texte_adaptateur, *(x for _, x in autres)]))
     etapes = setup.strip("\n") + "\n" if setup.strip() else ""
     workflow = gabarit("socle.yml", lg).replace("@@ETAPES_ADAPTATEUR@@\n", etapes)
+    workflow = workflow.replace("@@BRANCHES_JETABLES@@", ignorer_aux_envois(config.Projet.charger(cible)))
     # Le nom du travail est celui qu'une protection de branche exige : une
     # mise à jour garde celui qui est en place, quelle que soit la langue.
     existant = cible / ".github/workflows/socle.yml"

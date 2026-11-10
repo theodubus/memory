@@ -118,6 +118,14 @@ pull request par sujet, chacune à fusionner, se choisit aux questions de
 départ, ou plus tard en le disant à l'agent, qui l'écrit en fait de la
 mémoire.
 
+Un prototype qu'on ne compte pas fusionner se fait sur une branche
+jetable, nommée `proto/…` (ou d'un autre préfixe déclaré dans
+`[branches] disposable` des garde-fous). La CI du socle ne la juge pas aux
+envois, et les liens morts d'un fichier qu'elle ajoute n'y sont qu'un
+avertissement ; les contrôles avant commit et ceux de la session de
+l'agent restent. Jetée, elle disparaît sans rien laisser ; fusionnée, elle
+passe par une pull request, dont la CI la juge en entier.
+
 Chaque intervention de l'agent qui a agi se termine par deux lignes :
 
 - **« Pour toi : »** — ce qui revient à l'humain : une demande à lire, une

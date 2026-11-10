@@ -114,6 +114,13 @@ is added: merge it whenever you want, once its CI is green. One pull
 request per topic, each to merge, is chosen in the starting questions, or
 later by telling the agent, which writes it as a fact of the memory.
 
+A prototype not meant to be merged is done on a disposable branch, named
+`proto/…` (or with another prefix declared in `[branches] disposable` of the
+guardrails). The socle's CI does not judge it on push, and the dead links of
+a file it adds are only a warning there; the checks before commit and those
+of the agent's session remain. Thrown away, it leaves nothing; merged, it
+goes through a pull request, whose CI judges it whole.
+
 Each intervention of the agent that acted ends with two lines:
 
 - **"For you:"** — what is up to the human: a request to read, an action

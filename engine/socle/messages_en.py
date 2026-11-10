@@ -2623,6 +2623,8 @@ MESSAGES: dict[str, str] = {
         "ways out: an adapter for their language; these files declared third-party (`[thirdparty] paths` in the "
         "guardrails, a relaxation, so through a request); or a request the human approves, which names this commit "
         "and admits it without a test",
+    "{faute} — branche jetable, fichier qu'elle ajoute : averti, sa pull request le jugera":
+        "{faute} — disposable branch, a file it adds: warned, its pull request will judge it",
     "{sha} « {sujet} » : correctif qui ne touche que des fichiers tiers : non jugé":
         "{sha} “{sujet}”: fix that touches only third-party files: not judged",
     "{sha} « {sujet} » : correctif hors de tout adaptateur, admis sans test par {id}, une demande validée qui nomme "

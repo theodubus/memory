@@ -36,6 +36,13 @@ exclude = []
 # repository is reported. Adding one is a loosening: a human decision.
 repos = []
 
+[branches]
+# Disposable branches, by the start of their name: prototypes that are not
+# merged. The socle's CI does not judge them on push, and the dead links of a
+# file they add are only a warning there; a pull request from one judges it
+# whole. Adding one relaxes: a human decision.
+disposable = ["proto/"]
+
 [thirdparty]
 # The files of a third-party tool installed in the project (its skills, its
 # scripts): no check judges them, nor their updates. A pattern that would

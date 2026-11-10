@@ -1237,7 +1237,8 @@ def plage_poussee(projet: config.Projet, lignes: list[str]):
     commit distant au commit local de chaque référence déjà présente en
     face. C'est la plage que la CI d'un push jugera ; contre la branche par
     défaut, une dispense ou une validation plus anciennes de la branche
-    couvraient ce qu'elle refusera."""
+    couvraient ce qu'elle refusera. Une branche jetable n'a pas de CI aux
+    envois : rien à juger comme elle (D-0087)."""
     from socle import context as contexte
     from socle.report import Rapport
 
@@ -1251,6 +1252,8 @@ def plage_poussee(projet: config.Projet, lignes: list[str]):
         local, distant = morceaux[1], morceaux[3]
         if set(local) == {"0"} or set(distant) == {"0"} or not outils.rev_existe(projet.racine, distant):
             continue  # une branche neuve, une suppression, ou un distant qu'on n'a pas : rien à comparer
+        if projet.branche_jetable(morceaux[2].removeprefix("refs/heads/")):
+            continue  # une branche jetable : la CI ne la juge pas aux envois (D-0087)
         ctx = contexte.Contexte(projet, etage="ci", base=distant, tete=local, rapide=True, avant_push=True)
         rapport.fusionner(contexte.executer(ctx, ids))
     return rapport
