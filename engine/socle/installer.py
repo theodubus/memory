@@ -998,20 +998,28 @@ def _installer(cible: Path, adaptateur: str | list[str], proprietaire: str, adop
     print(trad("\nEt maintenant :"))
     for i, etape in enumerate(et_maintenant(cible, bool(ancien), echecs), 1):
         print(f"  {i}. {etape}")
-    return code_de_sortie(code, echecs)
+    return code_de_sortie(code, echecs, attentes_de_l_humain(cible))
 
 
-# Les contrôles qu'une installation réussie laisse en échec jusqu'au geste
-# de l'humain, que « Et maintenant » lui dit : l'approbation des fichiers
-# protégés qu'elle a changés.
-ATTENTE_HUMAINE = frozenset({"protege.fichiers"})
+def attentes_de_l_humain(cible: Path) -> set[str]:
+    """Les contrôles qu'une installation réussie laisse en échec jusqu'à un
+    geste de l'humain que « Et maintenant » lui dit, ni à corriger ni à
+    passer en adoption : l'approbation des fichiers protégés qu'elle a
+    changés, et le verrou d'un dépôt compagnon pas encore en place, que
+    `socle private install`, réservé à l'humain, pose."""
+    from socle import private as prive
+
+    attentes = {"protege.fichiers"}
+    if prive.mode(config.Projet.charger(cible)) == "compagnon" and not prive.commit_compagnon(cible):
+        attentes.add("prive.verrou")
+    return attentes
 
 
-def code_de_sortie(code: int, echecs: list[str]) -> int:
+def code_de_sortie(code: int, echecs: list[str], attentes: set[str]) -> int:
     """Le code de l'installeur, d'après celui de son audit : 0 quand
     l'installation a réussi et que seuls attendent les gestes de l'humain,
     1 quand un autre contrôle échoue, à corriger (B-0150, ADR-0056)."""
-    if code and echecs and set(echecs) <= ATTENTE_HUMAINE:
+    if code and echecs and set(echecs) <= attentes:
         return 0
     return code
 
@@ -1346,8 +1354,10 @@ def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str]) -> list[str
     mode = prive.mode(projet)
     sans_compagnon = mode == "compagnon" and not prive.commit_compagnon(cible)
     # Le verrou d'un dépôt compagnon pas encore en place : l'étape qui le
-    # met en place le règle, pas une correction ni l'adoption.
-    autres = [c for c in echecs if c != "protege.fichiers" and not (sans_compagnon and c == "prive.verrou")]
+    # met en place le règle, pas une correction ni l'adoption. Le code de
+    # sortie lit la même liste (ADR-0056).
+    attentes = attentes_de_l_humain(cible)
+    autres = [c for c in echecs if c not in attentes]
     if autres:
         etapes.append(trad("{n} contrôle(s) en échec ci-dessus ({liste}) : les corriger, ou relancer "
                            "l'installation avec `--adoption`, qui les passe en avertissement sur l'existant",
@@ -1384,10 +1394,12 @@ def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str]) -> list[str
     if mise_a_jour and "protege.fichiers" in echecs and os.environ.get(hooks.SESSION_CLOUD) == "true":
         # Le hook avant commit juge ce que le commit contient : la note qui
         # cite un fichier protégé part avec lui, la demande avant eux (B-0148).
-        etapes.append(trad('commiter en deux temps : d\'abord la demande seule, et la pousser ; puis, quand elle '
-                           'le permet, les fichiers protégés avec ce qui les cite (journal, chantier actif) : '
-                           '`git add -A && git commit -m "{message}" && git push`. Le hook avant commit refuse une '
-                           'référence à un fichier que le commit ne contient pas', message=message))
+        etapes.append(trad('dans la session qui pose la demande, commiter en deux temps : d\'abord la demande '
+                           'seule, qui ne cite que ce qui est déjà commité, hors les fichiers protégés qu\'elle '
+                           'approuve, et la pousser ; puis, quand elle le permet, les fichiers protégés avec ce qui '
+                           'les cite (journal, chantier actif) : `git add -A && git commit -m "{message}" && git '
+                           'push`. Le hook avant commit refuse une référence, chemin ou identifiant, que le commit '
+                           'ne contient pas', message=message))
     else:
         etapes.append(trad('commiter puis pousser : `git add -A && git commit -m "{message}" && git push`',
                            message=message))

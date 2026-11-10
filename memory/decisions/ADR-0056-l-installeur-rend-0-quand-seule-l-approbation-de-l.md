@@ -15,13 +15,16 @@ jour réussie, qu'un script lirait comme un échec (J-2026-11-10-H@6cded717).
 
 L'installeur rend 0 quand l'installation a réussi et que les seuls
 contrôles en échec attendent un geste de l'humain que « Et maintenant »
-lui dit : aujourd'hui, `protege.fichiers`. Un autre contrôle en échec, à
-corriger ou à passer en adoption, rend 1, comme une erreur de
-l'installeur. L'audit et « Et maintenant » ne changent pas.
+lui dit : `protege.fichiers`, l'approbation des fichiers protégés qu'elle
+a changés, et `prive.verrou` quand le dépôt compagnon n'est pas encore en
+place, que pose `socle private install`, réservé à l'humain. « Et
+maintenant » lit la même liste pour ne pas les dire à corriger. Un autre
+contrôle en échec, à corriger ou à passer en adoption, rend 1 ; un refus
+d'installer rend 2, comme avant.
 
 ## Conséquences
 
 Un script qui lance l'installeur distingue un échec d'une installation
 qui attend l'humain ; il lit l'audit pour savoir ce qui attend. Le défaire :
-`code_de_sortie` et `ATTENTE_HUMAINE` dans `engine/socle/installer.py`, et
+`code_de_sortie` et `attentes_de_l_humain` dans `engine/socle/installer.py`, et
 leur test dans `tests/test_initialisation.py`.

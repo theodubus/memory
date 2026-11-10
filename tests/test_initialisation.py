@@ -76,6 +76,8 @@ class TestMemoirePriveeALInstallation(Base):
         self.assertIn("mettre en place le dépôt privé", etapes)
         # Son verrou manque, mais ni une correction ni l'adoption n'y peuvent rien.
         self.assertNotIn("--adoption", etapes)
+        # La revue de B-0150 : seul l'humain peut agir, l'installation a réussi.
+        self.assertEqual(code, 0, sortie)
         self.assertIn("sa mise en place revient à l'humain", sortie)
 
     def test_chiffre_pose_le_filtre(self):
@@ -235,7 +237,8 @@ class TestMiseAJour(Base):
         # B-0148 : deux refus du hook avant commit sur le pilote ; l'ordre
         # des commits se dit.
         commit = next(e for e in etapes if "git commit" in e)
-        self.assertIn("commiter en deux temps : d'abord la demande seule", commit)
+        self.assertIn("dans la session qui pose la demande, commiter en deux temps : d'abord la demande seule", commit)
+        self.assertIn("Le hook avant commit refuse une référence, chemin ou identifiant", commit)
         self.assertIn("avec ce qui les cite (journal, chantier actif)", commit)
         with unittest.mock.patch.dict(os.environ, {"CLAUDE_CODE_REMOTE": ""}):
             hors_cloud = installeur.et_maintenant(self.racine, True, ["protege.fichiers"])
@@ -244,10 +247,12 @@ class TestMiseAJour(Base):
     def test_le_code_de_sortie_distingue_l_attente_de_l_humain_d_un_echec(self):
         """B-0150 : sur le pilote, l'installeur rendait 1 pour une mise à
         jour réussie qui attendait l'approbation de ses fichiers protégés."""
-        self.assertEqual(installeur.code_de_sortie(1, ["protege.fichiers"]), 0)
-        self.assertEqual(installeur.code_de_sortie(1, ["protege.fichiers", "docs.liens"]), 1)
-        self.assertEqual(installeur.code_de_sortie(1, []), 1)
-        self.assertEqual(installeur.code_de_sortie(0, []), 0)
+        attentes = installeur.attentes_de_l_humain(self.racine)
+        self.assertEqual(attentes, {"protege.fichiers"})
+        self.assertEqual(installeur.code_de_sortie(1, ["protege.fichiers"], attentes), 0)
+        self.assertEqual(installeur.code_de_sortie(1, ["protege.fichiers", "docs.liens"], attentes), 1)
+        self.assertEqual(installeur.code_de_sortie(1, [], attentes), 1)
+        self.assertEqual(installeur.code_de_sortie(0, [], attentes), 0)
 
     def test_une_installation_dit_de_proteger_la_branche(self):
         """B-0044, L2 (R1) : rien ne disait à l'humain d'exiger la CI avant
