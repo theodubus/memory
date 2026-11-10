@@ -17,8 +17,15 @@ que 35 fichiers de chess nomment ; valider l'adaptateur proposé
 de déterminisme de la recherche. Les plafonds de mutation se reprennent de
 `docs/fabrication/chess/mutation-caps.toml` (B-0009).
 
+La feuille de route de chess se pose à l'installation, à la main et avec
+Théo, depuis son carnet de bord, avec ce que le socle sait déjà faire : des
+sujets ordonnés par `après`, des jalons, des priorités, des critères de fin
+(D-0094). La procédure de planification (B-0101) s'écrit ensuite, sur ce
+que JustCook et chess auront montré.
+
 ## Fait quand
 
 - [ ] deux journées de travail réel du pilote sans retour qui corrige le socle
 - [ ] un essai à blanc sur chess, avec la version publiée, sans constat bloquant
 - [ ] le socle installé sur chess pour de bon, en mode adoption, l'installation fusionnée
+- [ ] la feuille de route de chess posée à la main avec Théo, depuis son carnet de bord : sujets ordonnés, jalons, priorités (D-0094)

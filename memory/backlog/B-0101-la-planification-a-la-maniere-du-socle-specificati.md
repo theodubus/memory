@@ -22,6 +22,9 @@ le skill s'écrit ensuite, sur ce que la main a montré, et se mesure au
 banc.
 Théo l'a lancé sans attendre la fin de B-0104 (D-0090) : le skill
 s'écrit sur ce que le pilote a déjà montré.
+Depuis, la porte de chess le range après son installation (ADR-0057), et
+Théo le confirme (D-0094) : chess se planifie à la main à son installation
+(B-0126), et le skill s'écrit sur ce que JustCook et chess auront montré.
 
 Les tâches qu'elle pose prennent leur ordre au backlog (ADR-0037) : ce
 que chacune attend (`après`), et des jalons qui attendent leurs tâches.
