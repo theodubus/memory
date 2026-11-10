@@ -226,6 +226,17 @@ régénère, fait dépasser à `AGENTS.md` son budget, l'installeur le dit :
 resserrer la partie propre au projet, ou relever le budget par une demande
 validée, puisque le relever assouplit un garde-fou.
 
+En session cloud, le prompt à donner à l'agent :
+
+```text
+Mets à jour le socle de ce dépôt depuis son dépôt public, sans ajouter ce dépôt à la session :
+1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.
+2. git clone --depth 1 https://github.com/theodubus/socle /tmp/socle
+3. Sur ta branche de travail, depuis la racine du dépôt : PYTHONPATH=/tmp/socle python3 -m socle install --target . ; si le projet a plusieurs adaptateurs (des copies dans .socle/adapters/), nomme-les tous par --adapter, le principal d'abord, comme à l'installation.
+4. Suis les étapes « Et maintenant » de l'installeur, dont la demande qui cite les fichiers protégés changés, puis pousse et ouvre la pull request.
+5. Dis-moi ce qui me revient.
+```
+
 **Mettre en place la mémoire privée** (mode compagnon). Créer un dépôt
 privé vide sur GitHub, puis
 `python3 .socle/socle private install --repo <adresse>`. La commande
