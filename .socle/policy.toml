@@ -45,6 +45,7 @@ paths = [
 # liste par défaut du moteur s'applique ; la remplacer ici la remplace.
 # bash = ['\bgit\s+push\b.*--force', ...]
 # tools = ['mcp__github__merge_pull_request', ...]
+tools = ['mcp__github__(delete_file|create_repository|fork_repository|create_release|push_files|create_or_update_file|enable_pr_auto_merge)']
 
 [agents]
 # Claude Code est l'agent outillé de hooks ; les autres agents restent
