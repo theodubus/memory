@@ -29,6 +29,17 @@ compte pour 1 % environ même après, et un sous-agent se lance au premier
 plan, un à la fois, pour que la fin du tour ne juge pas un arbre en cours
 d'écriture.
 
+Premier sujet mené ainsi, B-0149 (J-2026-11-10-S) : 24 minutes, 53 appels
+d'outils, les trois quarts d'une fenêtre de cinq heures et un dixième de
+la semaine avec le modèle de la session ; le contexte du sous-agent a
+fini plus gros que celui de la conversation principale. Le sous-agent
+sort le sujet de la conversation, il n'en baisse pas le coût. Ce que sa
+consigne doit dire, appris là : clore le sujet avant de le citer dans une
+ADR, puis `socle archive` ; donner à `verify --fast` un délai de cinq
+minutes. L'outil lance le sous-agent en arrière-plan quoi qu'on demande :
+la conversation principale attend son commit. L'auto-test ne sait pas
+jouer un seul cas, ce qui allonge l'essai d'un défaut injecté.
+
 ## Fait quand
 
 - [ ] Théo a choisi la solution sur un essai, et le socle la met en œuvre

@@ -8,9 +8,10 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 D-0093 validée sauf sa proposition 7 (J-2026-11-10-N) : quatre jalons,
 B-0154 (alléger), B-0157 (chess, sous ADR-0057), B-0159 (mesurer), B-0160
 (le noyau et la méthode). Le socle organise et fiabilise. JustCook est en
-pause tant que le socle se corrige. La PR #29, mémoire seule, se
-fusionne par l'agent, sa CI verte (D-0092). Prochain : B-0149, B-0151,
-B-0141, un sous-agent par sujet ; puis B-0010, B-0155, B-0156.
+pause. B-0149 est fait, poussé sans pull request : sa revue adversariale
+passe avant toute fusion. Le lot s'est arrêté là : un sujet coûte les
+trois quarts d'une fenêtre (J-2026-11-10-S), et Théo dit comment dépenser
+le reste de la semaine. Ensuite : B-0151, B-0141, B-0010, B-0155, B-0156.
 
 B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
 

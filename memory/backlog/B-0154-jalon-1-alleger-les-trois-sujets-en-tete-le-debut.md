@@ -8,6 +8,10 @@ coût de chaque intervention avant chess. D'abord les trois sujets
 annoncés (B-0149, B-0151, B-0141), puis le début de session (B-0010), les
 réveils de reprise (B-0155) et le contexte long (B-0156).
 
+Avant de clore le jalon : une seule demande à Théo pour rafraîchir les
+copies protégées des skills que ses sujets ont changés (`socle-request`,
+par B-0149).
+
 ## Fait quand
 
 - [ ] ses six sujets sont clos
