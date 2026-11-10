@@ -83,6 +83,30 @@ class TestBranchesASupprimer(unittest.TestCase):
         git(self.clone, "switch", "-q", "-c", "locale")
         self.assertEqual(humain.branches_contenues_dans_le_travail(self.projet), [])
 
+    def test_ni_un_prototype_ni_une_branche_au_meme_sommet(self):
+        """La revue de B-0145 : une branche de travail jetable ne se fusionne
+        pas, son contenu n'est gardé nulle part ailleurs ; deux branches au
+        même sommet se désigneraient l'une l'autre."""
+        source = self.dossier / "source"
+        git(source, "branch", "morceau", "en-cours")
+        git(source, "branch", "jumelle", "en-cours")
+        git(source, "switch", "-q", "en-cours")
+        (source / "f").write_text("plus")
+        git(source, "commit", "-qam", "plus")
+        git(source, "switch", "-q", "-c", "proto/essai")
+        (source / "f").write_text("essai")
+        git(source, "commit", "-qam", "essai")
+        git(source, "switch", "-q", "main")
+        git(self.clone, "fetch", "-q", "origin")
+        git(self.clone, "switch", "-q", "jumelle")
+        # `jumelle` au sommet de `morceau` : ni l'une ni l'autre n'est dite.
+        self.assertEqual(humain.branches_contenues_dans_le_travail(self.projet), [])
+        git(self.clone, "switch", "-q", "proto/essai")
+        self.assertEqual(humain.branches_contenues_dans_le_travail(self.projet), [])
+        git(self.clone, "switch", "-q", "en-cours")
+        self.assertEqual(humain.branches_contenues_dans_le_travail(self.projet),
+                         [("jumelle", "origin/en-cours"), ("morceau", "origin/en-cours")])
+
     def test_elles_apparaissent_dans_ce_qui_revient_a_l_humain(self):
         (self.clone / "memory").mkdir()
         quoi = [e.quoi for e in humain.a_faire(self.projet)]

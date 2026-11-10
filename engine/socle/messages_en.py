@@ -213,10 +213,10 @@ MESSAGES: dict[str, str] = {
         "(not pushed yet: no link)",
     "supprimer la branche distante `{branche}`, déjà contenue dans la branche par défaut":
         "delete the remote branch `{branche}`, already contained in the default branch",
-    "supprimer la branche distante `{branche}`, déjà contenue dans `{travail}`, la branche de travail poussée : rien "
-    "ne se perd":
-        "delete the remote branch `{branche}`, already contained in `{travail}`, the pushed working branch: nothing is "
-        "lost",
+    "supprimer la branche distante `{branche}`, déjà contenue dans `{travail}`, la branche de travail poussée : son "
+    "contenu ne se perd pas ; une pull request ouverte qui en part se fermerait avec elle":
+        "delete the remote branch `{branche}`, already contained in `{travail}`, the pushed working branch: its content "
+        "is not lost; an open pull request from it would close with it",
     "(pas encore poussée : pas de lien)":
         "(not pushed yet: no link)",
     "ce qui revient à l'humain : rien":

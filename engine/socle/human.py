@@ -6,9 +6,9 @@ Trois sources, toutes dérivées, rien de recopié :
 - les entrées du backlog marquées `pour : humain` (actions déclarées : un
   réglage de GitHub, un fichier à fournir, une action que le hook refuse à
   l'agent) ;
-- ce qui se calcule : les branches distantes que la branche par défaut
-  contient en entier, donc supprimables sans rien perdre — une action
-  distante que le hook refuse à l'agent.
+- ce qui se calcule : les branches distantes que la branche par défaut,
+  ou la branche de travail poussée, contient en entier, donc supprimables
+  sans rien perdre — une action distante que le hook refuse à l'agent.
 
 La liste sert deux fois : dans l'état dérivé au démarrage, et dans le récap
 que le hook de fin de tour exige quand l'agent a agi.
@@ -74,14 +74,16 @@ def branches_a_supprimer(projet: config.Projet) -> list[str]:
 def branches_contenues_dans_le_travail(projet: config.Projet) -> list[tuple[str, str]]:
     """Les branches distantes que la branche de travail poussée contient en
     entier, sans que la branche par défaut les contienne : (nom, branche
-    poussée qui les contient). Leur contenu est déjà sur le distant, et
-    arrivera dans la branche par défaut avec la pull request de la branche
-    de travail : les supprimer ne perd rien (B-0145). Mêmes exceptions que
-    `branches_a_supprimer`."""
+    poussée qui les contient). Leur contenu est déjà sur le distant, dans
+    la branche de travail : les supprimer ne le perd pas (B-0145). Mêmes
+    exceptions que `branches_a_supprimer`, et calculé comme elle sur le
+    dernier fetch. Une branche de travail jetable, qu'on ne fusionne pas,
+    n'en garde aucune (D-0087) ; une branche au même sommet qu'elle n'est
+    pas dite, chacune contenant l'autre."""
     racine = projet.racine
     defaut = outils.branche_par_defaut(racine)
     courante = outils.branche_courante(racine)
-    if not defaut or not defaut.startswith("origin/") or not courante:
+    if not defaut or not defaut.startswith("origin/") or not courante or projet.branche_jetable(courante):
         return []
     poussee = f"origin/{courante}"
     if not outils.rev_existe(racine, poussee):
@@ -95,7 +97,8 @@ def branches_contenues_dans_le_travail(projet: config.Projet) -> list[tuple[str,
             continue
         hors_defaut = outils.git(racine, "rev-list", "--count", f"{defaut}..{ref}", check=False).strip()
         hors_travail = outils.git(racine, "rev-list", "--count", f"{poussee}..{ref}", check=False).strip()
-        if hors_defaut not in ("", "0") and hors_travail == "0":
+        travail_en_plus = outils.git(racine, "rev-list", "--count", f"{ref}..{poussee}", check=False).strip()
+        if hors_defaut not in ("", "0") and hors_travail == "0" and travail_en_plus not in ("", "0"):
             res.append((nom, poussee))
     return sorted(res)
 
@@ -218,7 +221,8 @@ def a_faire(projet: config.Projet) -> list[Element]:
     contenues = branches_contenues_dans_le_travail(projet)
     for b, poussee in contenues:
         res.append(Element("action", trad("supprimer la branche distante `{branche}`, déjà contenue dans `{travail}`, "
-                                          "la branche de travail poussée : rien ne se perd", branche=b,
+                                          "la branche de travail poussée : son contenu ne se perd pas ; une pull "
+                                          "request ouverte qui en part se fermerait avec elle", branche=b,
                                           travail=poussee), page))
     dites = {b for b, _ in contenues}
     inactives = [i for i in branches_inactives(projet) if i[0] not in dites]
