@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0095-fable-pour-ce-qui-en-vaut-la-peine-opus-pour-les-i.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-10"
+canal = "conversation"
+citation = "Pourquoi j'utilise fable : anthropic a accordé fable avec un reset gratuit pour mes utilisateurs pro, je l'utilise ici pour le tester et aussi pour le mettre sur les sujets importants comme la prise de recul, details, et planification long terme du socle.\n\nJe compte aussi l'utiliser pour l'adoption du socle sur chess, ainsi que dans la session chess pour une revue et challenge de la roadmap actuelle. Les implémentations peuvent surement rester a opus (et passé cette semaine, j'utiliserai opus partout a nouveau de toute facon)\n\nAnthropic a laissé un reset pour les crédits liés a l'utilisation fable cette semaine, d'où mon utilisation intensive (mais ducoup a utiliser la ou ça en vaut la peine)\n\nA noter que j'au aussi un deuxième abonnement pro sur un autre compte qui a de l'utilisation et est connecté a mon github\n\nTu peux aussi toi meme décider sur quel modèle tu lances les sous agents ? Et aussi avec quel modèle faire quoi cette semaine"
+empreinte = "sha256:53dffbe62b66c5be612ec7675729e3f5dcf05225b27ef4d2c2bda42aa16cb2ec"
