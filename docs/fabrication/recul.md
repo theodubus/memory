@@ -326,8 +326,9 @@ projet d'où il vient, n'a connu qu'un essai sur une copie.
 | P6 | Mesurer en usage réel : une commande relève les refus par contrôle et les demandes par semaine ; le pilote classe ses refus, fondés ou à tort ; un relevé mensuel dit quels contrôles gardent leur place | C3, C4 | moyen |
 | P7 | Séparer le noyau de la méthode : la méthode (lots, revue, pull request unique, reprise, planification) en skills que le projet choisit ; B-0101 en fait partie, B-0055 sort du périmètre | C1 | important, coûteux à défaire |
 
-Ordre recommandé : P1 et P2, qui baissent le coût de tout le reste ; P3 et
-P4 ; P5, avec P6 en parallèle sur le pilote ; P7 après chess, cadré par
-des questions. Les trois sujets qui servent la prochaine mise à jour du
-pilote (B-0149, B-0151) et la sûreté de la revue (B-0141) gardent leur
-place en tête.
+Ordre recommandé, pour que chess ne recule plus : les trois sujets qui
+servent la prochaine mise à jour du pilote (B-0149, B-0151) et la sûreté
+de la revue (B-0141), puis P1 et P2, qui baissent le coût de tout le
+reste ; ensuite P5, chess, avec P4 et les correctifs ouverts pendant les
+journées du pilote, et P6 en parallèle ; P3 et P7 après chess, puisqu'ils
+ajoutent des règles.
