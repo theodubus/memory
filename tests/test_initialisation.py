@@ -241,6 +241,14 @@ class TestMiseAJour(Base):
             hors_cloud = installeur.et_maintenant(self.racine, True, ["protege.fichiers"])
         self.assertTrue(next(e for e in hors_cloud if "git commit" in e).startswith("commiter puis pousser"))
 
+    def test_le_code_de_sortie_distingue_l_attente_de_l_humain_d_un_echec(self):
+        """B-0150 : sur le pilote, l'installeur rendait 1 pour une mise à
+        jour réussie qui attendait l'approbation de ses fichiers protégés."""
+        self.assertEqual(installeur.code_de_sortie(1, ["protege.fichiers"]), 0)
+        self.assertEqual(installeur.code_de_sortie(1, ["protege.fichiers", "docs.liens"]), 1)
+        self.assertEqual(installeur.code_de_sortie(1, []), 1)
+        self.assertEqual(installeur.code_de_sortie(0, []), 0)
+
     def test_une_installation_dit_de_proteger_la_branche(self):
         """B-0044, L2 (R1) : rien ne disait à l'humain d'exiger la CI avant
         de fusionner, sans quoi une CI rouge n'empêche rien."""

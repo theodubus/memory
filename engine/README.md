@@ -147,6 +147,8 @@ PYTHONPATH=/tmp/socle python3 -m socle install --target . --owner @<propriétair
 | `--human <nom>` | le nom de l'humain, qui signe les réponses que l'agent relaie ; par défaut son nom git, sauf en session cloud, où l'identité git est celle de l'agent |
 
 L'installeur termine par les étapes suivantes, chacune avec sa commande.
+Il rend 0 quand l'installation a réussi, même si ses fichiers protégés
+attendent l'approbation de l'humain, et 1 quand un autre contrôle échoue.
 Une mise à jour relance les mêmes commandes depuis un clone à jour : les
 fichiers du projet ne sont jamais écrasés, hors une copie d'un adaptateur
 maintenu que le projet n'a pas adaptée. La suite, étape par étape : [le

@@ -998,6 +998,21 @@ def _installer(cible: Path, adaptateur: str | list[str], proprietaire: str, adop
     print(trad("\nEt maintenant :"))
     for i, etape in enumerate(et_maintenant(cible, bool(ancien), echecs), 1):
         print(f"  {i}. {etape}")
+    return code_de_sortie(code, echecs)
+
+
+# Les contrôles qu'une installation réussie laisse en échec jusqu'au geste
+# de l'humain, que « Et maintenant » lui dit : l'approbation des fichiers
+# protégés qu'elle a changés.
+ATTENTE_HUMAINE = frozenset({"protege.fichiers"})
+
+
+def code_de_sortie(code: int, echecs: list[str]) -> int:
+    """Le code de l'installeur, d'après celui de son audit : 0 quand
+    l'installation a réussi et que seuls attendent les gestes de l'humain,
+    1 quand un autre contrôle échoue, à corriger (B-0150, ADR-0056)."""
+    if code and echecs and set(echecs) <= ATTENTE_HUMAINE:
+        return 0
     return code
 
 
