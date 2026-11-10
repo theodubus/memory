@@ -28,9 +28,7 @@ la mémoire de ce dépôt, qui est l'historique de fabrication de l'outil.
 - `engine/README.md` (la page publique), `README.md`, `engine/socle/HELP.md`
   (le guide d'un projet équipé), `docs/fabrication/` (l'atelier :
   architecture, bancs, relevés, `chess`).
-- `bench/` — les bancs, sur un agent réel (`docs/fabrication/banc.md`) et
-  sur les adaptateurs (`bench/adapters.py`).
-- `memory/` — la mémoire de ce projet.
+- `bench/` — les bancs (`docs/fabrication/banc.md`).
 - `.github/workflows/distribution.yml` — publie le moteur seul dans
   `theodubus/socle` à chaque fusion sur `main` (D-0056).
 
@@ -41,7 +39,6 @@ python3 .socle/socle verify --fast       # compilation, tests, contrôles
 python3 .socle/socle ci                  # tout, dont l'auto-test
 python3 .socle/socle selftest --verbose  # les défauts injectés, un par un
 python3 bench/bench.py --agent simule    # le banc, sur un agent simulé
-python3 bench/adapters.py                # les adaptateurs, sur leurs vrais outils
 python3 .socle/socle install --target ../projet --adapter auto --owner @moi
 ```
 
@@ -58,6 +55,9 @@ python3 .socle/socle install --target ../projet --adapter auto --owner @moi
 - **Commentaires, messages, documentation et identifiants du code en
   français ; commandes, options et noms de fichiers en anglais** (`ADR-0027`) : un module s'importe sous son nom français
   (`from socle import memory as memoire`).
+- **L'agent fusionne lui-même sa pull request** (D-0092), jamais celle
+  d'un autre : CI verte, revue adversariale faite, aucune demande en
+  attente sur son contenu ; le récap donne son lien.
 
 <!-- socle:debut — section posée par l'installeur, régénérée à chaque mise à jour -->
 

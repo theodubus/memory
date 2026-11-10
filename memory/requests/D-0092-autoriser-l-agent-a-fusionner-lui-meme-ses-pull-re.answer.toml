@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0092-autoriser-l-agent-a-fusionner-lui-meme-ses-pull-re.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-10"
+canal = "conversation"
+citation = "Valider D0092, c'est commit"
+empreinte = "sha256:0e63203cb4b905f3d92a11bec1cc90e3e392d964f721e1f3aa8276fad0bfd18a"

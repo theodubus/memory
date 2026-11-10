@@ -5,11 +5,11 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-La PR #26 fusionnée ; JustCook mis à jour, ses fichiers protégés attendent
-Théo. Sur la branche (PR #27) : D-0091, B-0145, puis le retour du pilote
-(J-2026-11-10-H) : B-0146, B-0148, B-0150 faits. Restent B-0147, B-0149,
-B-0151 à B-0153 ; puis, D-0090 : B-0101, et les jalons de ce dépôt
-proposés par une demande ; B-0133, B-0140 à B-0144, B-0126.
+JustCook mis à jour, ses fichiers protégés attendent Théo. Sur la branche
+(PR #28, que Théo fusionne lui-même) : D-0092 validée et la règle de
+fusion ; la passe de recul et D-0093, ses sept propositions et quatre
+jalons, en attente. Sans réponse : B-0149, B-0151, B-0141, dans une
+session neuve, cette conversation coûtant trop (J-2026-11-10-L).
 
 B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
 
