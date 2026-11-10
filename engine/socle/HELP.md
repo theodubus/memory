@@ -55,7 +55,8 @@ Juste après l'installation :
    ouvre les siennes au nom de l'humain. Dans les réglages généraux, cocher
    « Automatically delete head branches » : une branche fusionnée s'efface
    alors seule. L'état signale les autres : celles que la branche par
-   défaut contient déjà, à supprimer, et celles qui ne bougent plus depuis
+   défaut ou la branche de travail poussée contiennent déjà, à supprimer,
+   et celles qui ne bougent plus depuis
    une semaine sans avoir été fusionnées, à livrer ou à supprimer. Si une
    telle branche garde seule un commit que la mémoire cite, l'état donne
    d'abord la commande qui l'étiquette : sans elle, la CI ne le

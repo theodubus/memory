@@ -71,6 +71,35 @@ def branches_a_supprimer(projet: config.Projet) -> list[str]:
     return sorted(res)
 
 
+def branches_contenues_dans_le_travail(projet: config.Projet) -> list[tuple[str, str]]:
+    """Les branches distantes que la branche de travail poussée contient en
+    entier, sans que la branche par défaut les contienne : (nom, branche
+    poussée qui les contient). Leur contenu est déjà sur le distant, et
+    arrivera dans la branche par défaut avec la pull request de la branche
+    de travail : les supprimer ne perd rien (B-0145). Mêmes exceptions que
+    `branches_a_supprimer`."""
+    racine = projet.racine
+    defaut = outils.branche_par_defaut(racine)
+    courante = outils.branche_courante(racine)
+    if not defaut or not defaut.startswith("origin/") or not courante:
+        return []
+    poussee = f"origin/{courante}"
+    if not outils.rev_existe(racine, poussee):
+        return []
+    garder = projet.pol("human", "keep_branches", defaut=[]) or []
+    res = []
+    refs = outils.git(racine, "for-each-ref", "--format=%(refname:short)", "refs/remotes/origin", check=False)
+    for ref in refs.split():
+        nom = ref.removeprefix("origin/")
+        if ref in ("origin", "origin/HEAD", defaut, poussee) or outils.correspond(nom, garder):
+            continue
+        hors_defaut = outils.git(racine, "rev-list", "--count", f"{defaut}..{ref}", check=False).strip()
+        hors_travail = outils.git(racine, "rev-list", "--count", f"{poussee}..{ref}", check=False).strip()
+        if hors_defaut not in ("", "0") and hors_travail == "0":
+            res.append((nom, poussee))
+    return sorted(res)
+
+
 # Au-delà, une branche non fusionnée qui ne bouge plus se signale (B-0112).
 JOURS_INACTIVITE = 7
 
@@ -186,7 +215,13 @@ def a_faire(projet: config.Projet) -> list[Element]:
     for b in branches_a_supprimer(projet):
         res.append(Element("action", trad("supprimer la branche distante `{branche}`, déjà contenue dans la branche "
                                           "par défaut", branche=b), page))
-    inactives = branches_inactives(projet)
+    contenues = branches_contenues_dans_le_travail(projet)
+    for b, poussee in contenues:
+        res.append(Element("action", trad("supprimer la branche distante `{branche}`, déjà contenue dans `{travail}`, "
+                                          "la branche de travail poussée : rien ne se perd", branche=b,
+                                          travail=poussee), page))
+    dites = {b for b, _ in contenues}
+    inactives = [i for i in branches_inactives(projet) if i[0] not in dites]
     cites = commits_cites(projet) if inactives else set()
     for b, absents, age in inactives:
         seuls = commits_cites_seuls(projet, b, cites)
