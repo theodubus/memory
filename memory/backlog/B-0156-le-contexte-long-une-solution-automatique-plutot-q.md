@@ -18,6 +18,11 @@ après lequel le socle réinjecte l'état ; le relais de session par
 l'agent, avec les outils de la session cloud ; un sous-agent au contexte
 neuf par sujet. À cadrer avec Théo, sur un essai.
 
+Le 10 novembre, Théo retient le compactage, qu'il lance lui-même, et un
+sous-agent au contexte neuf par sujet (J-2026-11-10-O) ; le relais de
+session reste une piste si cela ne suffit pas. Reste à l'écrire dans les
+instructions, et à mesurer le coût d'un sujet ainsi mené.
+
 ## Fait quand
 
 - [ ] Théo a choisi la solution sur un essai, et le socle la met en œuvre

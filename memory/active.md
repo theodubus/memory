@@ -8,25 +8,24 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 D-0093 validée sauf sa proposition 7 (J-2026-11-10-N) : quatre jalons,
 B-0154 (alléger), B-0157 (chess, sous ADR-0057), B-0159 (mesurer), B-0160
 (le noyau et la méthode). Le socle organise et fiabilise. JustCook est en
-pause tant que le socle se corrige. Prochain : B-0149, B-0151, B-0141,
-puis B-0010, B-0155, B-0156 (le contexte long, à cadrer avec Théo).
-L'agent fusionne ses pull requests (D-0092).
+pause tant que le socle se corrige. La PR #29, mémoire seule, se
+fusionne par l'agent, sa CI verte (D-0092). Prochain : B-0149, B-0151,
+B-0141, un sous-agent par sujet ; puis B-0010, B-0155, B-0156.
 
 B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
 
 ## Consignes en cours
 
+- Le contexte long : Théo compacte la conversation, et chaque sujet se
+  confie à un sous-agent au contexte neuf, la conversation principale ne
+  faisant que lancer, relire et livrer ; Théo : « Compact maintenant +
+  sous agent par session est encore mieux que nouvelle session a chaque
+  fois non ? Si oui on fait ça » (J-2026-11-10-O).
 - Le pilote est un essai de choc du socle : ses imperfections sont
   attendues, seules celles du socle se corrigent ici ; Théo : « pas grave
   si le pilote n'est pas idéal partout, c'est un crashtest pour le socle
   donc normal » (J-2026-10-31-E).
-- Le moment venu, donner à Théo ce qu'il faut pour lancer le pilote neuf
-  (création du dépôt, prompt d'installation, gestes sur GitHub, premier
-  message de la session de travail) ; Théo : « garde en tete de me donner
-  ce qu'il faudra pour lancer le pilote le moment venu » (J-2026-10-30-S).
 - La branche de travail est `ccr-82da0a2e-iccil9` (J-2026-11-09-M).
-- Les frictions du pilote (B-0134 à B-0139) avant sa mise à jour ; Théo :
-  « Autant les faire avant mise à jour » (J-2026-11-09-R).
 - Aucun autre dépôt dans la session, ni lecture de JustCook ou de
   `theodubus/socle` ; Théo : « N'ajoute aucun autre dépôt à la session, et
   ne lis ni JustCook ni theodubus/socle (donner leurs liens reste
