@@ -121,10 +121,13 @@ mémoire.
 Un prototype qu'on ne compte pas fusionner se fait sur une branche
 jetable, nommée `proto/…` (ou d'un autre préfixe déclaré dans
 `[branches] disposable` des garde-fous). La CI du socle ne la juge pas aux
-envois, et les liens morts d'un fichier qu'elle ajoute n'y sont qu'un
-avertissement ; les contrôles avant commit et ceux de la session de
-l'agent restent. Jetée, elle disparaît sans rien laisser ; fusionnée, elle
-passe par une pull request, dont la CI la juge en entier.
+envois, et les références mortes (liens, identifiants, chemins cités) d'un
+fichier qu'elle ajoute n'y sont qu'un avertissement ; les autres contrôles
+avant commit et ceux de la session de l'agent restent, et la mémoire
+privée reste jugée en entier. Jetée, elle ne laisse rien dans la branche
+par défaut ; poussée, sa suppression sur GitHub vous revient, et l'état
+la liste parmi les branches à examiner après une semaine sans activité.
+Fusionnée, elle passe par une pull request, dont la CI la juge en entier.
 
 Chaque intervention de l'agent qui a agi se termine par deux lignes :
 

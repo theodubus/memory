@@ -1259,6 +1259,18 @@ def plage_poussee(projet: config.Projet, lignes: list[str]):
     return rapport
 
 
+def branches_envoyees(lignes: list[str]) -> list[str]:
+    """Les références distantes qu'un push met à jour, d'après les lignes
+    que git donne au hook avant push, sans les suppressions ; une étiquette
+    garde son nom complet, qui n'est celui d'aucune branche."""
+    res = []
+    for ligne in lignes:
+        morceaux = ligne.split()
+        if len(morceaux) >= 4 and set(morceaux[1]) != {"0"}:
+            res.append(morceaux[2].removeprefix("refs/heads/"))
+    return res
+
+
 def git_pre_push(projet: config.Projet) -> int:
     from socle import context as contexte, verification
 
@@ -1286,7 +1298,10 @@ def git_pre_push(projet: config.Projet) -> int:
     # laisse ses fichiers protégés en attendant la validation de l'humain,
     # que la demande poussée ici lui permet de lire (B-0115).
     tete = outils.git(projet.racine, "rev-parse", "HEAD", check=False).strip() or None
-    ctx = contexte.Contexte(projet, etage="git", base=base, tete=tete, rapide=True)
+    # Ce qui part se juge pour les branches qui le reçoivent : une branche
+    # jetable extraite qu'on pousse ailleurs ne relâche rien (D-0087).
+    ctx = contexte.Contexte(projet, etage="git", base=base, tete=tete, rapide=True,
+                            branches=branches_envoyees(lignes))
     rapport = contexte.executer(ctx)
     for constat in plage_poussee(projet, lignes).constats:
         if constat not in rapport.constats:

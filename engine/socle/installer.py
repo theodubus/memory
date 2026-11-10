@@ -758,10 +758,15 @@ def poser_skills(cible: Path, lg: str = "fr") -> list[str]:
 
 
 def ignorer_aux_envois(projet: config.Projet) -> str:
-    """La ligne du workflow de CI qui écarte les branches jetables des
-    envois ; une pull request qui en part la lance toujours (D-0087)."""
-    motifs = [p if p.endswith("*") else p + "**" for p in projet.branches_jetables()]
-    return f"    branches-ignore: [{', '.join(json.dumps(m) for m in motifs)}]\n" if motifs else ""
+    """Les lignes du workflow de CI qui écartent les branches jetables des
+    envois ; une pull request qui en part la lance toujours (D-0087). Un
+    préfixe n'a aucun caractère de motif (`Projet.branches_jetables`) : `**`
+    le prolonge comme `startswith`. Les étiquettes se nomment, faute de quoi
+    GitHub ne lancerait plus la CI pour elles."""
+    motifs = [p + "**" for p in projet.branches_jetables()]
+    if not motifs:
+        return ""
+    return f"    branches-ignore: [{', '.join(json.dumps(m) for m in motifs)}]\n    tags: [\"**\"]\n"
 
 
 def etapes_de_ci(textes: list[str]) -> str:

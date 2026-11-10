@@ -342,9 +342,10 @@ def lignes_changees(racine: Path, base: str | None, tete: str | None, chemin: st
 
 
 def branche_courante(racine: Path) -> str | None:
-    """Le nom de la branche courante, `None` hors de toute branche."""
-    nom = git(racine, "rev-parse", "--abbrev-ref", "HEAD", check=False).strip()
-    return nom if nom and nom != "HEAD" else None
+    """Le nom de la branche courante, `None` hors de toute branche ; une
+    étiquette du même nom ne le change pas."""
+    ref = git(racine, "symbolic-ref", "-q", "HEAD", check=False).strip()
+    return ref.removeprefix("refs/heads/") if ref.startswith("refs/heads/") else None
 
 
 def branche_par_defaut(racine: Path) -> str | None:

@@ -291,7 +291,8 @@ def references(ctx, r):
 
     def signaler(faute: str, chemin: str, ligne: int):
         # Sur une branche jetable, hors de la CI, un fichier qu'elle ajoute
-        # n'est qu'averti ; sa pull request le rejuge en entier (D-0087).
+        # n'est qu'averti, quelle que soit la faute de référence ; sa pull
+        # request le rejuge en entier (D-0087).
         if chemin in essais:
             r.avertir("memoire.references", trad("{faute} — branche jetable, fichier qu'elle ajoute : averti, sa "
                                                  "pull request le jugera", faute=faute), chemin, ligne)
@@ -343,10 +344,15 @@ def references(ctx, r):
 
 def ajoutes_par_une_branche_jetable(ctx, chemins) -> set[str]:
     """Hors de la CI, sur une branche jetable, les fichiers qu'elle ajoute :
-    absents de la base (D-0087). Un ensemble vide sinon."""
-    if ctx.etage == "ci" or not ctx.projet.branche_jetable(outils.branche_courante(ctx.racine)):
+    absents de la base, son point de divergence avec la branche par défaut
+    (D-0087). Un ensemble vide sinon : sans base, rien ne dit ce qu'elle
+    ajoute ; avant un push, chaque branche qui part doit être jetable. La
+    mémoire privée reste jugée : aucune CI ne la relit."""
+    noms = ctx.branches if ctx.branches is not None else [outils.branche_courante(ctx.racine)]
+    if ctx.etage == "ci" or not ctx.base or not noms or not all(ctx.projet.branche_jetable(n) for n in noms):
         return set()
-    return {c for c in chemins if ctx.lire_base(c) is None}
+    base = set(ctx.fichiers_base)
+    return {c for c in chemins if c not in base and not memoire.est_prive(c)}
 
 
 def verifier_ref(ctx, type_: str, cible: str, historique: bool = False) -> str | None:

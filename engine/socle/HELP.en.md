@@ -116,10 +116,14 @@ later by telling the agent, which writes it as a fact of the memory.
 
 A prototype not meant to be merged is done on a disposable branch, named
 `proto/…` (or with another prefix declared in `[branches] disposable` of the
-guardrails). The socle's CI does not judge it on push, and the dead links of
-a file it adds are only a warning there; the checks before commit and those
-of the agent's session remain. Thrown away, it leaves nothing; merged, it
-goes through a pull request, whose CI judges it whole.
+guardrails). The socle's CI does not judge it on push, and the dead
+references (links, identifiers, cited paths) of a file it adds are only a
+warning there; the other checks before commit and those of the agent's
+session remain, and the private memory is still judged whole. Thrown away,
+it leaves nothing in the default branch; once pushed, deleting it on GitHub
+is up to you, and the state lists it among the branches to examine after a
+week without activity. Merged, it goes through a pull request, whose CI
+judges it whole.
 
 Each intervention of the agent that acted ends with two lines:
 
