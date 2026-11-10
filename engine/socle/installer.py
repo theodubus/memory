@@ -1366,8 +1366,16 @@ def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str]) -> list[str
                            "chaque session neuve", commandes=" ; ".join(f"`{x}`" for x in ci)))
     message = (trad("Mettre à jour le socle {version}", version=VERSION) if mise_a_jour
                else trad("Installer le socle {version}", version=VERSION))
-    etapes.append(trad('commiter puis pousser : `git add -A && git commit -m "{message}" && git push`',
-                       message=message))
+    if mise_a_jour and "protege.fichiers" in echecs and os.environ.get(hooks.SESSION_CLOUD) == "true":
+        # Le hook avant commit juge ce que le commit contient : la note qui
+        # cite un fichier protégé part avec lui, la demande avant eux (B-0148).
+        etapes.append(trad('commiter en deux temps : d\'abord la demande seule, et la pousser ; puis, quand elle '
+                           'le permet, les fichiers protégés avec ce qui les cite (journal, chantier actif) : '
+                           '`git add -A && git commit -m "{message}" && git push`. Le hook avant commit refuse une '
+                           'référence à un fichier que le commit ne contient pas', message=message))
+    else:
+        etapes.append(trad('commiter puis pousser : `git add -A && git commit -m "{message}" && git push`',
+                           message=message))
     etapes.append(trad("ouvrir l'agent dans le projet : il lit l'état au démarrage") if mise_a_jour
                   else trad("ouvrir l'agent dans le projet : il lit l'état au démarrage, et te donne le lien des questions "
                           "de départ, une demande à laquelle tu réponds dans la conversation"))

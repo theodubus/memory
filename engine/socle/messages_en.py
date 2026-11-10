@@ -516,6 +516,12 @@ MESSAGES: dict[str, str] = {
         "Install the socle {version}",
     "commiter puis pousser : `git add -A && git commit -m \"{message}\" && git push`":
         "commit then push: `git add -A && git commit -m \"{message}\" && git push`",
+    "commiter en deux temps : d'abord la demande seule, et la pousser ; puis, quand elle le permet, les fichiers "
+    "protégés avec ce qui les cite (journal, chantier actif) : `git add -A && git commit -m \"{message}\" && git "
+    "push`. Le hook avant commit refuse une référence à un fichier que le commit ne contient pas":
+        "commit in two steps: first the request alone, and push it; then, when it allows it, the protected files "
+        "with what cites them (journal, active work): `git add -A && git commit -m \"{message}\" && git push`. The "
+        "pre-commit hook refuses a reference to a file the commit does not contain",
     "ouvrir l'agent dans le projet : il lit l'état au démarrage":
         "open the agent in the project: it reads the state at startup",
     "ouvrir l'agent dans le projet : il lit l'état au démarrage, et te donne le lien des questions de départ, une "

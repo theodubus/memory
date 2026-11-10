@@ -232,6 +232,14 @@ class TestMiseAJour(Base):
         self.assertNotIn("socle approve --text", etapes[0])
         self.assertIn("sans rien attendre", etapes[0])
         self.assertIn("session neuve sur le seul dépôt du projet", etapes[0])
+        # B-0148 : deux refus du hook avant commit sur le pilote ; l'ordre
+        # des commits se dit.
+        commit = next(e for e in etapes if "git commit" in e)
+        self.assertIn("commiter en deux temps : d'abord la demande seule", commit)
+        self.assertIn("avec ce qui les cite (journal, chantier actif)", commit)
+        with unittest.mock.patch.dict(os.environ, {"CLAUDE_CODE_REMOTE": ""}):
+            hors_cloud = installeur.et_maintenant(self.racine, True, ["protege.fichiers"])
+        self.assertTrue(next(e for e in hors_cloud if "git commit" in e).startswith("commiter puis pousser"))
 
     def test_une_installation_dit_de_proteger_la_branche(self):
         """B-0044, L2 (R1) : rien ne disait à l'humain d'exiger la CI avant
