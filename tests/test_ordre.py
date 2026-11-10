@@ -176,6 +176,20 @@ class TestDemandeAttendue(unittest.TestCase):
         mem.repondues.add(chemin)
         self.assertEqual([e.id for e in memoire.ordre(mem).prets], ["B-0001"])
 
+    def test_un_jalon_qui_attend_un_sujet_qui_attend_une_demande(self):
+        """B-0146 : sur le pilote, l'état disait la mémoire illisible
+        (`KeyError`), le prochain jalon lisant comme un sujet chaque attendu,
+        demandes comprises."""
+        mem = memoire_de(sujet("B-0001", apres="D-0001"), sujet("B-0002", forme="jalon", apres="B-0001"))
+        avec_demande(mem, "D-0001")
+        o = memoire.ordre(mem)
+        self.assertEqual(o.jalon.id, "B-0002")
+        self.assertEqual(o.restants, ["B-0001", "D-0001"])
+        self.assertEqual((o.prets, o.en_attente), ([], 1))
+        self.assertEqual(memoire.lignes_ordre(mem)[0],
+                         "prochain jalon : B-0002 — Le sujet B-0002 ; reste : B-0001, D-0001")
+        self.assertEqual(erreurs(mem), [])
+
     def test_un_sujet_fait_avant_la_reponse_qu_il_attend_est_refuse(self):
         mem = memoire_de(sujet("B-0001", "fait", apres="D-0001"))
         avec_demande(mem, "D-0001")

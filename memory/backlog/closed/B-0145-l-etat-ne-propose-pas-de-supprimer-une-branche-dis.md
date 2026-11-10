@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0145 — L'état ne propose pas de supprimer une branche distante que la branche de travail poussée contient en entier
 
-> statut : ouvert · origine : J-2026-11-10-D · lu : backlog@13100dad
+> statut : fait · origine : J-2026-11-10-D · lu : backlog@13100dad · ref : J-2026-11-10-F
 
 `human.branches_a_supprimer` ne propose de supprimer qu'une branche
 distante que la branche par défaut contient en entier (B-0112). Une
@@ -17,4 +17,4 @@ exclues, comme la branche courante.
 
 ## Fait quand
 
-- [ ] l'état liste à supprimer une branche distante que la branche de travail poussée contient en entier, et un test le montre
+- [x] l'état liste à supprimer une branche distante que la branche de travail poussée contient en entier, et un test le montre

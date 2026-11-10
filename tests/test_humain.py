@@ -51,6 +51,62 @@ class TestBranchesASupprimer(unittest.TestCase):
         self.projet.politique = {"human": {"keep_branches": ["codex/*"]}}
         self.assertEqual(humain.branches_a_supprimer(self.projet), ["fusionnee"])
 
+    def test_une_branche_contenue_dans_la_branche_de_travail_poussee_est_proposee(self):
+        """B-0145 : une branche fusionnée dans la branche de travail, poussée,
+        n'était proposée qu'une fois la pull request de celle-ci fusionnée."""
+        import time
+
+        source = self.dossier / "source"
+        git(source, "branch", "morceau", "en-cours")
+        git(source, "switch", "-q", "en-cours")
+        (source / "f").write_text("quatre")
+        git(source, "commit", "-qam", "quatre")
+        git(source, "switch", "-q", "main")
+        git(self.clone, "fetch", "-q", "origin")
+        self.assertEqual(humain.branches_contenues_dans_le_travail(self.projet), [])
+        git(self.clone, "switch", "-q", "en-cours")
+        self.assertEqual(humain.branches_contenues_dans_le_travail(self.projet), [("morceau", "origin/en-cours")])
+        # Celles que la branche par défaut contient restent à part, et la
+        # politique en garde.
+        self.assertEqual(humain.branches_a_supprimer(self.projet), ["codex/ui", "fusionnee", "travail"])
+        self.projet.politique = {"human": {"keep_branches": ["morc*"]}}
+        self.assertEqual(humain.branches_contenues_dans_le_travail(self.projet), [])
+        self.projet.politique = {}
+        (self.clone / "memory").mkdir()
+        quoi = [e.quoi for e in humain.a_faire(self.projet)]
+        self.assertTrue(any("`morceau`" in q and "`origin/en-cours`" in q for q in quoi), quoi)
+        # Inactive, elle n'est pas dite deux fois.
+        with unittest.mock.patch.object(time, "time", return_value=time.time() + 30 * 86400):
+            quoi = [e.quoi for e in humain.a_faire(self.projet)]
+        self.assertEqual(sum("`morceau`" in q for q in quoi), 1, quoi)
+        # Une branche de travail qui n'est pas poussée ne contient rien.
+        git(self.clone, "switch", "-q", "-c", "locale")
+        self.assertEqual(humain.branches_contenues_dans_le_travail(self.projet), [])
+
+    def test_ni_un_prototype_ni_une_branche_au_meme_sommet(self):
+        """La revue de B-0145 : une branche de travail jetable ne se fusionne
+        pas, son contenu n'est gardé nulle part ailleurs ; deux branches au
+        même sommet se désigneraient l'une l'autre."""
+        source = self.dossier / "source"
+        git(source, "branch", "morceau", "en-cours")
+        git(source, "branch", "jumelle", "en-cours")
+        git(source, "switch", "-q", "en-cours")
+        (source / "f").write_text("plus")
+        git(source, "commit", "-qam", "plus")
+        git(source, "switch", "-q", "-c", "proto/essai")
+        (source / "f").write_text("essai")
+        git(source, "commit", "-qam", "essai")
+        git(source, "switch", "-q", "main")
+        git(self.clone, "fetch", "-q", "origin")
+        git(self.clone, "switch", "-q", "jumelle")
+        # `jumelle` au sommet de `morceau` : ni l'une ni l'autre n'est dite.
+        self.assertEqual(humain.branches_contenues_dans_le_travail(self.projet), [])
+        git(self.clone, "switch", "-q", "proto/essai")
+        self.assertEqual(humain.branches_contenues_dans_le_travail(self.projet), [])
+        git(self.clone, "switch", "-q", "en-cours")
+        self.assertEqual(humain.branches_contenues_dans_le_travail(self.projet),
+                         [("jumelle", "origin/en-cours"), ("morceau", "origin/en-cours")])
+
     def test_elles_apparaissent_dans_ce_qui_revient_a_l_humain(self):
         (self.clone / "memory").mkdir()
         quoi = [e.quoi for e in humain.a_faire(self.projet)]
