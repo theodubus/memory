@@ -297,6 +297,75 @@ class TestCouchesGelees(Projet):
         controles_memoire._ignore.cache_clear()
         self.assertEqual(self.erreurs(), [])
 
+    def test_une_regle_du_gitignore_pas_encore_ajoutee_ne_compte_pas(self):
+        """Revue de B-0166, constat 1 : une règle écrite dans un `.gitignore`
+        commité, sans `git add`, manque à un clone neuf. Refusée jusqu'à ce
+        que l'index l'ait."""
+        ignore = self.racine / "scripts/.gitignore"
+        ignore.write_text("*.tmp\n")
+        git(self.racine, "add", "scripts/.gitignore")
+        git(self.racine, "commit", "-qm", "un gitignore", "--no-verify")
+        ignore.write_text("*.tmp\nlocaux/\n")
+        (self.racine / "scripts/locaux").mkdir()
+        (self.racine / "scripts/locaux/x.txt").write_text("x\n")
+        controles_memoire._ignore.cache_clear()
+        self.citer("memory/active.md", "\nLes essais vivent dans `scripts/locaux/`.\n")
+        erreurs = self.erreurs()
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertIn("ignoré par git : `scripts/locaux/`", erreurs[0])
+        git(self.racine, "add", "scripts/.gitignore")
+        controles_memoire._ignore.cache_clear()
+        self.assertEqual(self.erreurs(), [])
+
+    def test_un_dossier_ignore_cite_sans_barre_finale(self):
+        """Revue de B-0166, constat 2 : sans barre finale, un dossier ignoré
+        passait s'il était sur le disque, et échouait dans un clone neuf, où
+        il manque. Refusé dans les deux cas ; avec la barre, il passe."""
+        ignore = self.racine / "scripts/.gitignore"
+        ignore.write_text("locaux/\n")
+        git(self.racine, "add", "scripts/.gitignore")
+        controles_memoire._ignore.cache_clear()
+        self.citer("memory/active.md", "\nLes essais vivent dans `scripts/locaux`.\n")
+        absent = self.erreurs()
+        self.assertEqual(absent, ["chemin cité inexistant : `scripts/locaux`"])
+        (self.racine / "scripts/locaux").mkdir()
+        (self.racine / "scripts/locaux/x.txt").write_text("x\n")
+        controles_memoire._ignore.cache_clear()
+        present = self.erreurs()
+        self.assertEqual(len(present), 1, present)
+        self.assertIn("sans barre finale", present[0])
+        self.assertIn("`scripts/locaux/`", present[0])
+        texte = (self.racine / "memory/active.md").read_text().replace("`scripts/locaux`", "`scripts/locaux/`")
+        (self.racine / "memory/active.md").write_text(texte)
+        self.assertEqual(self.erreurs(), [])
+        shutil.rmtree(self.racine / "scripts/locaux")
+        controles_memoire._ignore.cache_clear()
+        self.assertEqual(self.erreurs(), [])
+
+    def test_un_script_neuf_cite_par_cmd_est_averti(self):
+        """Revue de B-0166, constat 3 : `cmd:` suit la règle de `fichier:`."""
+        (self.racine / "scripts/lancer.sh").write_text("echo\n")
+        self.citer("memory/active.md", "\nLancer cmd:scripts/lancer.sh pour l'essai.\n")
+        self.assertEqual(self.erreurs(), [])
+        self.assertTrue(any("`cmd:scripts/lancer.sh`" in m and "git add" in m for m in self.avertissements()))
+
+    def test_un_chemin_d_un_depot_imbrique(self):
+        """Revue de B-0166, constats 4 et 5 : un dépôt git imbriqué, comme un
+        worktree d'agent non ignoré, n'est pas livré par `git add` ; le
+        message le dit, et non qu'une règle l'ignore."""
+        imbrique = self.racine / "scripts/copie"
+        imbrique.mkdir()
+        git(imbrique, "init", "-q")
+        (imbrique / "a.md").write_text("a\n")
+        self.assertEqual(outils.depot_imbrique(self.racine, "scripts/copie/a.md"), "scripts/copie")
+        self.assertIsNone(outils.depot_imbrique(self.racine, "scripts/vieux.py"))
+        self.assertFalse(outils.chemin_suivi(self.racine, "scripts/copie/a.md", a_ajouter=True))
+        self.assertFalse(outils.chemin_suivi(self.racine, "scripts/copie/", a_ajouter=True))
+        self.citer("memory/active.md", "\nVoir `scripts/copie/a.md`.\n")
+        erreurs = self.erreurs()
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertIn("dépôt git imbriqué `scripts/copie/`", erreurs[0])
+
     def test_les_fichiers_suivis(self):
         (self.racine / "scripts/neuf.py").write_text("z = 1\n")
         self.assertNotIn("scripts/neuf.py", outils.fichiers_suivis(self.racine))

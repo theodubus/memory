@@ -705,8 +705,14 @@ MESSAGES: dict[str, str] = {
         "{faute} — not tracked by git, to be added (`git add`)",
     "chemin cité inexistant : `{jeton}`":
         "cited path does not exist: `{jeton}`",
-    "chemin cité ignoré par git : `{jeton}` — présent sur le disque seulement (une règle de git qu'aucun `.gitignore` suivi ne porte l'ignore), il manquera à un clone neuf, celui de la CI : ne pas le citer":
-        "cited path ignored by git: `{jeton}` — present on disk only (a git rule that no tracked `.gitignore` carries ignores it), a fresh clone, the CI's, will lack it: do not cite it",
+    "chemin cité ignoré par git : `{jeton}` — présent sur le disque seulement (une règle locale, ou d'un `.gitignore` pas encore ajouté à l'index, l'ignore), il manquera à un clone neuf, celui de la CI : ne pas le citer, ou ajouter la règle (`git add` du `.gitignore`)":
+        "cited path ignored by git: `{jeton}` — present on disk only (a local rule, or one from a `.gitignore` not yet added to the index, ignores it), a fresh clone, the CI's, will lack it: do not cite it, or add the rule (`git add` the `.gitignore`)",
+    "dossier non suivi cité sans barre finale : `{jeton}` — sans elle, il ne se juge pas comme dans un clone neuf : écrire `{j}/`":
+        "untracked directory cited without a trailing slash: `{jeton}` — without it, it is not judged as in a fresh clone: write `{j}/`",
+    "chemin cité dans le dépôt git imbriqué `{depot}/` : `{jeton}` — le dépôt ne le suit pas, et `git add` n'en ferait qu'un lien de sous-module : ne pas le citer":
+        "cited path inside the nested git repository `{depot}/`: `{jeton}` — the repository does not track it, and `git add` would only make a submodule link of it: do not cite it",
+    "`{code}` : dans le dépôt git imbriqué `{depot}/`, que le dépôt ne suit pas, le lien qu'en fait le client mène à un 404 : ne pas le citer":
+        "`{code}`: inside the nested git repository `{depot}/`, which the repository does not track, the link the client makes of it leads to a 404: do not cite it",
     "chemin cité non suivi par git : `{jeton}` — à ajouter (`git add`) : le commit qui ne l'ajoute pas sera refusé, et la CI le dirait inexistant":
         "cited path not tracked by git: `{jeton}` — to be added (`git add`): a commit that does not add it will be refused, and the CI would call it nonexistent",
     "identifiant privé `{ident}` dans un fichier public":

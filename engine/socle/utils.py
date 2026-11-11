@@ -181,7 +181,21 @@ def chemin_suivi(racine: Path, chemin: str, a_ajouter: bool = False) -> bool:
         return True
     autres = ["--others", "--exclude-standard"] if a_ajouter else []
     sortie = git(racine, "ls-files", "-z", "--cached", *autres, "--", f":(literal){c}", check=False)
-    return any(sortie.split("\0"))
+    # Un dépôt git imbriqué, non suivi, sort en `dossier/` : `git add` n'en
+    # ferait qu'un lien de sous-module, ses fichiers ne seraient pas livrés.
+    return any(n and not n.endswith("/") for n in sortie.split("\0"))
+
+
+def depot_imbrique(racine: Path, chemin: str) -> str | None:
+    """Le dossier d'un dépôt git imbriqué (un worktree d'agent, un clone)
+    qui contient le chemin, ou est ce chemin : ses fichiers ne sont pas ceux
+    du dépôt. `None` s'il n'y en a pas."""
+    parts = [p for p in chemin.strip().strip("/").split("/") if p]
+    for i in range(1, len(parts) + 1):
+        dossier = "/".join(parts[:i])
+        if (Path(racine) / dossier / ".git").exists():
+            return dossier
+    return None
 
 
 def fichiers_a(racine: Path, rev: str | None) -> list[str]:

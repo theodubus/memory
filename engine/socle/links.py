@@ -241,8 +241,15 @@ def problemes(projet: config.Projet, message: str) -> tuple[list[str], list[str]
         # Suivi par git, ou livré par le prochain `git add`, et non présent
         # sur le disque : un dossier que git ignore, une règle locale
         # comprise, n'est que dans le conteneur (B-0166).
-        if chemin and not outils.chemin_suivi(racine, chemin, a_ajouter=True):
-            if (racine / chemin).exists():
+        # Suivi mais supprimé du disque (`rm` sans `git rm`) : le prochain
+        # commit le retirera, refusé comme le contrôle de la mémoire le fait.
+        if chemin and not (outils.chemin_suivi(racine, chemin, a_ajouter=True) and (racine / chemin).exists()):
+            imbrique = outils.depot_imbrique(racine, chemin)
+            if imbrique:
+                morts.append(trad("`{code}` : dans le dépôt git imbriqué `{depot}/`, que le dépôt ne suit pas, le "
+                                  "lien qu'en fait le client mène à un 404 : ne pas le citer", code=m['code'],
+                                  depot=imbrique))
+            elif (racine / chemin).exists():
                 morts.append(trad("`{code}` : présent sur le disque du conteneur mais ignoré par git, le lien "
                                   "qu'en fait le client mène à un 404 : ne pas le citer", code=m['code']))
             else:

@@ -272,11 +272,13 @@ def _existe_tel_quel(ctx, chemin: str) -> bool:
 
 
 @lru_cache(maxsize=4096)
-def _ignore(racine, chemin: str) -> bool:
-    """Le chemin est ignoré par une règle d'un `.gitignore` suivi : un dossier
-    produit (`/tools/arbiters/`) se cite sans exister. Les règles locales
-    (`.git/info/exclude`, `core.excludesFile`) ne comptent pas : un clone
-    neuf, celui de la CI, ne les a pas (B-0166)."""
+def _ignore(racine, rev: str, chemin: str) -> bool:
+    """Le chemin est ignoré par une règle d'un `.gitignore` de la version
+    jugée : un dossier produit (`/tools/arbiters/`) se cite sans exister. La
+    version jugée est l'arbre `rev` (un commit, l'index figé), ou l'index si
+    `rev` est vide : une règle écrite sur le disque sans `git add`, comme une
+    règle locale (`.git/info/exclude`, `core.excludesFile`), manque à un
+    clone neuf, celui de la CI, et ne compte pas (B-0166, ADR-0063)."""
     r = subprocess.run(["git", "check-ignore", "-v", "--no-index", chemin], cwd=racine,
                        capture_output=True, text=True)
     if r.returncode != 0:
@@ -286,7 +288,8 @@ def _ignore(racine, chemin: str) -> bool:
     motif = reste.partition(":")[2]
     if motif.startswith("!") or source.rsplit("/", 1)[-1] != ".gitignore" or source.startswith(("/", ".git/")):
         return False
-    return outils.git_reussit(racine, "ls-files", "--error-unmatch", "--", source)
+    juge = subprocess.run(["git", "show", f"{rev}:{source}"], cwd=racine, capture_output=True, text=True)
+    return juge.returncode == 0 and motif in {l.rstrip() for l in juge.stdout.splitlines()}
 
 
 def _racines(ctx) -> set[str]:
@@ -413,13 +416,14 @@ def verifier_ref(ctx, type_: str, cible: str, historique: bool = False) -> str |
                         "l'a encore, `{commande}` le rend)", cible=cible, commande=outils.etiqueter([cible]))
     elif type_ == "fichier":
         chemin = re.split(r"[#]|:(?=\d)", cible, maxsplit=1)[0]
-        if not _existe(ctx, chemin, historique) and not _ignore(ctx.racine, chemin):
+        if not _existe(ctx, chemin, historique) and not _ignore(ctx.racine, ctx.tete or "", chemin):
             return _faute_absent(ctx, chemin, trad("`fichier:{cible}` : {chemin} n'existe pas", cible=cible,
                                                    chemin=chemin))
     elif type_ == "cmd":
         premier = cible.split()[0] if cible.split() else ""
         if "/" in premier and not _existe(ctx, premier.removeprefix("./"), historique):
-            return trad("`cmd:{cible}` : {premier} n'existe pas", cible=cible, premier=premier)
+            return _faute_absent(ctx, premier.removeprefix("./"),
+                                 trad("`cmd:{cible}` : {premier} n'existe pas", cible=cible, premier=premier))
     return None
 
 
@@ -431,7 +435,7 @@ def _verifier_lien(ctx, chemin_doc: str, dossier: str, cible: str, historique: b
     chemin, _, ancre = (unquote(x) for x in cible.partition("#"))
     if chemin:
         cible_n = _normaliser_chemin(dossier, chemin)
-        if not _existe(ctx, cible_n, historique) and not _ignore(ctx.racine, cible_n) \
+        if not _existe(ctx, cible_n, historique) and not _ignore(ctx.racine, ctx.tete or "", cible_n) \
                 and not (historique and _lien_d_un_ancien_nom(ctx, chemin_doc, chemin)):
             return _faute_absent(ctx, cible_n, trad("lien mort : {cible}", cible=cible))
     else:
@@ -513,17 +517,28 @@ def _verifier_chemin_cite(ctx, jeton: str, historique: bool = False) -> str | No
     j = j.rstrip("/")
     if not j or j.split("/", 1)[0] not in _racines(ctx):
         return None
-    # Un répertoire ignoré (`/tools/arbiters/`) ne se reconnaît qu'avec sa
-    # barre finale : sans elle, git ne sait pas que c'est un répertoire.
-    if _existe(ctx, j, historique) or _ignore(ctx.racine, j + "/" if dossier else j):
+    if _existe(ctx, j, historique):
         return None
+    # Un répertoire ignoré (`/tools/arbiters/`) ne se reconnaît qu'avec sa
+    # barre finale : sans elle, git ne sait pas que c'est un répertoire,
+    # sauf s'il est sur le disque, et un clone neuf ne l'a pas. Cité sans
+    # elle, présent ici, il serait jugé autrement dans la CI (B-0166).
+    if not dossier and (Path(ctx.racine) / j).is_dir() and not (ctx.tete is None and _a_ajouter(ctx, j)):
+        return trad("dossier non suivi cité sans barre finale : `{jeton}` — sans elle, il ne se juge pas comme dans "
+                    "un clone neuf : écrire `{j}/`", jeton=jeton, j=j)
+    if _ignore(ctx.racine, ctx.tete or "", j + "/" if dossier else j):
+        return None
+    imbrique = outils.depot_imbrique(ctx.racine, j) if ctx.tete is None else None
+    if imbrique:
+        return trad("chemin cité dans le dépôt git imbriqué `{depot}/` : `{jeton}` — le dépôt ne le suit pas, et "
+                    "`git add` n'en ferait qu'un lien de sous-module : ne pas le citer", depot=imbrique, jeton=jeton)
     if ctx.tete is None and _a_ajouter(ctx, j):
         return AAjouter(trad("chemin cité non suivi par git : `{jeton}` — à ajouter (`git add`) : le commit qui ne "
                              "l'ajoute pas sera refusé, et la CI le dirait inexistant", jeton=jeton))
     if ctx.tete is None and (Path(ctx.racine) / j).exists():
-        return trad("chemin cité ignoré par git : `{jeton}` — présent sur le disque seulement (une règle de git "
-                    "qu'aucun `.gitignore` suivi ne porte l'ignore), il manquera à un clone neuf, celui de la CI : "
-                    "ne pas le citer", jeton=jeton)
+        return trad("chemin cité ignoré par git : `{jeton}` — présent sur le disque seulement (une règle locale, "
+                    "ou d'un `.gitignore` pas encore ajouté à l'index, l'ignore), il manquera à un clone neuf, celui "
+                    "de la CI : ne pas le citer, ou ajouter la règle (`git add` du `.gitignore`)", jeton=jeton)
     return trad("chemin cité inexistant : `{jeton}`", jeton=jeton)
 
 

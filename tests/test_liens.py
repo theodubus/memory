@@ -183,6 +183,22 @@ class TestLiensDuDepot(unittest.TestCase):
         self.assertEqual(len(morts), 1, morts)
         self.assertIn("ignoré par git", morts[0])
 
+    def test_un_depot_imbrique_ou_un_fichier_supprime_d_un_message(self):
+        """Revue de B-0166, constats 4 à 6 : un dépôt git imbriqué non suivi
+        n'est pas livré par `git add`, et le message le dit ; un fichier suivi
+        mais supprimé du disque est refusé."""
+        imbrique = self.clone / "docs/copie"
+        imbrique.mkdir()
+        git(imbrique, "init", "-q")
+        (imbrique / "a.md").write_text("a\n")
+        for cite in ("docs/copie/a.md", "docs/copie/"):
+            morts, _ = liens.problemes(self.projet, f"Voir `{cite}`.")
+            self.assertEqual(len(morts), 1, morts)
+            self.assertIn("dépôt git imbriqué `docs/copie/`", morts[0])
+        (self.clone / "docs/a.md").unlink()
+        morts, _ = liens.problemes(self.projet, "Voir `docs/a.md`.")
+        self.assertEqual(len(morts), 1, morts)
+
     def test_liens_vivants_d_un_message(self):
         git(self.clone, "push", "-q", "origin", "claude/essai")
         message = (
