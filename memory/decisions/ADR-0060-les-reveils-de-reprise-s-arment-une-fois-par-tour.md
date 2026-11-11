@@ -38,9 +38,14 @@ Elle amende les points 1 à 4 d'ADR-0050 ; le reste tient.
 3. *Un tour qui s'ouvre fait siens les réveils restants*, sur un message
    de l'humain comme sur un réveil : la coupure qu'ils gardaient est
    finie ; celui dont l'heure est encore la bonne reste, l'autre se
-   déplace à l'heure du tour, et un tour en texte seul les retire.
-4. *Récrits au seul lancement d'un sous-agent*, une fois pour ceux lancés
-   ensemble. Leur texte porte le lot et les sous-agents en cours, plus
+   déplace à l'heure du tour, et un tour en texte seul les retire. Un
+   réveil laissé garde le texte du lot d'avant, qui ferait reprendre
+   l'ancien lot si ce tour était coupé : l'appel qui le déplace lui donne
+   aussi le texte du lot du tour (`update_trigger` prend l'heure et le
+   texte ensemble), sans appel de plus ; celui qui reste ne le reçoit que
+   si le lot a changé (revue du lot).
+4. *Récrits, en cours de tour, au seul lancement d'un sous-agent*, une
+   fois pour ceux lancés ensemble. Leur texte porte le lot et les sous-agents en cours, plus
    l'étape : au réveil, la conversation, git, le chantier actif et les
    worktrees la disent. Un sous-agent qui rend ne demande rien.
 5. La fin du tour et la vérification au réveil restent celles

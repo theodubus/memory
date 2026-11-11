@@ -527,6 +527,16 @@ def _valeur_option(args: list[str], nom: str, defaut: str) -> str:
     return valeur
 
 
+def _cible_illisible(texte: str) -> bool:
+    """Un chemin que le hook ne sait pas résoudre comme le shell le fera :
+    une substitution (`$D`, `$(pwd)`, un accent grave), que le shell neuf de
+    chaque appel peut rendre vide ou changer, ou un `~` autre que le dossier
+    de l'utilisateur (`~autre`, `~+`)."""
+    if "$" in texte or "`" in texte:
+        return True
+    return texte.startswith("~") and os.path.expanduser(texte).startswith("~")
+
+
 def installeur_hors_mode(projet: config.Projet, c: commandes.Commande,
                          depart: str | None = None) -> tuple[str, str, str] | None:
     """L'installeur (`socle install`) lancé sur un projet équipé dans un autre
@@ -534,19 +544,27 @@ def installeur_hors_mode(projet: config.Projet, c: commandes.Commande,
     celui du verrou ; `None` sinon. Le projet équipé est la racine du projet,
     ou toute cible qui porte son propre verrou (un worktree, une copie).
     Une cible sans verrou, une première installation dans un dossier
-    temporaire, passe ; la mise à jour dans le mode du verrou aussi."""
+    temporaire, passe ; la mise à jour dans le mode du verrou aussi.
+    Une cible que le hook ne sait pas résoudre, elle ou le `cd` qui la
+    précède (une variable, une substitution, `~autre`), rend un mode du
+    verrou vide : le hook refuse, faute de savoir ce qu'elle vise. Aucune
+    exception n'en sort : le hook qui lèverait laisserait passer toute la
+    commande sans la juger."""
     reste = arguments_socle(c)
     if not reste or reste[0] != "install":
         return None
     args = reste[1:]
     demande = _valeur_option(args, "--mode", config.MODE_PROJET)
-    cible = Path(c.chemin(_valeur_option(args, "--target", "."))).expanduser()
-    if not cible.is_absolute():
-        cible = Path(depart or projet.racine) / cible
+    brute = c.chemin(_valeur_option(args, "--target", "."))
+    if _cible_illisible(brute) or _cible_illisible(c.dossier):
+        return (brute, demande, "")
     try:
+        cible = Path(os.path.expanduser(brute))
+        if not cible.is_absolute():
+            cible = Path(depart or projet.racine) / cible
         cible = cible.resolve()
-    except OSError:
-        return None
+    except (OSError, RuntimeError, ValueError):
+        return (brute, demande, "")
     if cible == projet.racine.resolve():
         verrou = projet.lock
     else:
@@ -590,6 +608,12 @@ def refus_bash(projet: config.Projet, cmd: str, cwd: str | None = None) -> str |
                         "contourne. Corriger ce que le hook refuse ; s'il refuse à tort, l'inscrire au "
                         "backlog et le dire à l'humain.", saut=saut)
         hors_mode = installeur_hors_mode(projet, c, cwd)
+        if hors_mode and not hors_mode[2]:
+            return trad("l'installeur visé sur une cible que le hook ne sait pas résoudre (« {cible} ») : une "
+                        "variable, une substitution ou un `~` autre que le dossier de l'utilisateur, dans la cible "
+                        "ou dans le `cd` qui la précède. Chaque appel repart d'un shell neuf, où une variable est "
+                        "vide : la cible serait le dossier courant, le projet. Écrire le chemin en toutes lettres, "
+                        "absolu, par exemple celui que `mktemp -d` a rendu.", cible=hors_mode[0])
         if hors_mode:
             return trad("l'installeur visé sur un projet équipé ({cible}) en mode « {demande} », dans un autre "
                         "mode que celui de son verrou (« {attendu} ») : il en réécrirait le verrou, les hooks, "
@@ -822,9 +846,11 @@ def _empreinte_arbre(racine: Path) -> str:
 
 def signature_d_echec(racine: Path, echecs: list[str]) -> str:
     """Ce qui distingue un échec de fin de tour d'un autre : l'arbre que les
-    contrôles ont vu et leurs erreurs, sans le reste du rapport (les étapes
-    rapides de l'adaptateur ne se relancent pas sur un arbre où elles ont
-    passé). Deux tentatives de même signature n'ont rien changé (B-0143)."""
+    contrôles ont vu et les contrôles en échec, sans le texte des erreurs.
+    Pour une étape de l'adaptateur, ce texte est la fin de la sortie de
+    l'outil, qui change à chaque relance (une durée, « Ran N tests in
+    X.XXXs ») : il ferait de chaque relance un échec nouveau. Deux
+    tentatives de même signature n'ont rien changé (B-0143)."""
     return outils.sha256(_empreinte_arbre(racine) + "\n" + "\n".join(echecs))[:16]
 
 
@@ -853,7 +879,7 @@ def stop(projet: config.Projet, entree: dict) -> int:
     # recul, F).
     cle = session or "-"
     texte = rapport.texte(trad("contrôles de fin de tour (`socle check --stage agent`)"))
-    signature = signature_d_echec(racine, [f"{c.controle} {c.en_ligne()}" for c in rapport.erreurs()])
+    signature = signature_d_echec(racine, rapport.controles_en_echec())
     precedent = compteur.read_text().split() if compteur.is_file() else []
     sien = len(precedent) >= 2 and precedent[1] == cle and precedent[0].isdigit()
     # B-0143 (ADR-0061) : une relance que le hook a lui-même provoquée, sur le

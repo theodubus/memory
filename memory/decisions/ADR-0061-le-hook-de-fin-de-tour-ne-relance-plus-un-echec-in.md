@@ -16,9 +16,12 @@ entier, puisque sa réponse est une fin de tour (J-2026-11-09-K@24ab3e43).
 ## Décision
 
 1. Le hook retient, avec le compte des tentatives de la session, la
-   signature de l'échec : l'empreinte de l'arbre et les erreurs des
-   contrôles (pas le rapport entier, dont les étapes rapides de
-   l'adaptateur varient d'une tentative à l'autre).
+   signature de l'échec : l'empreinte de l'arbre et les noms des
+   contrôles en échec, sans le texte de leurs erreurs. Pour une étape de
+   l'adaptateur, ce texte est la fin de la sortie de l'outil, avec une
+   durée (« Ran N tests in X.XXXs ») : il change à chaque relance sur un
+   test rouge, le cas le plus courant, et ferait de chaque relance un
+   échec nouveau (revue du lot).
 2. Le premier arrêt d'un tour bloque toujours : l'agent a sa chance de
    corriger. Une relance que le hook a lui-même provoquée
    (`stop_hook_active`) sur la même signature ne bloque plus : le hook

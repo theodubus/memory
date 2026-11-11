@@ -1446,6 +1446,12 @@ def _cas() -> list[Cas]:
         lanceur = ".socle/" + "socle"
         return etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} " + "install --target . --mode amont"})
 
+    @defaut("agent-installe-cible-illisible", "l'agent relance l'installeur sur une cible écrite par une variable, "
+            "vide dans le shell neuf de l'appel : elle viserait le projet", "agent", "installeur cible illisible")
+    def _(a, c):
+        lanceur = ".socle/" + "socle"
+        return etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} " + 'install --target "$D" --mode amont'})
+
     @defaut("relais-sans-citation", "réponse relayée sans le texte exact de l'humain", "agent", "commande humaine")
     def _(a, c):
         lanceur = ".socle/" + "socle"
@@ -2273,6 +2279,7 @@ RAISONS_AGENT = {
     "commande de l'humain seul": "est réservé à l'humain",
     "contournement d'un hook": "contourne les hooks du projet",
     "installeur hors mode": "dans un autre mode que celui de son verrou",
+    "installeur cible illisible": "une cible que le hook ne sait pas résoudre",
     "écriture protégée": "par le shell : seul l'humain",
     "écriture à l'aveugle": "à l'aveugle",
     "référence inventée": "référence inventée",

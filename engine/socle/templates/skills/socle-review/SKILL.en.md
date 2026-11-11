@@ -35,8 +35,11 @@ python3 .socle/socle review
    read the repository, but neither the conversation nor the agent's
    reasoning, and the brief tells it to change nothing: to try a
    command, it creates a temporary directory outside the repository and
-   writes only there. The agent's hook refuses the installer aimed at the
-   project in another mode than its lock's, but not every write of the
+   writes only there, through the path `mktemp -d` returned, written out
+   in full in each command: a variable does not survive from one call to
+   the next. The agent's hook refuses the installer aimed at the
+   project in another mode than its lock's, or at a target written
+   through a variable, but not every write of the
    reviewer in the repository. An agent without
    subagents skips the review, and its recap says so.
 

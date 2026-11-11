@@ -70,8 +70,12 @@ Une fois, avant ou avec sa première action :
    le tour qui s'ouvre, sur un message de l'humain comme sur un réveil,
    les fait siens : la coupure qu'ils gardaient est finie, et un réveil
    d'une fenêtre écoulée, laissé tel quel, relancerait l'agent pour rien.
-   Celui dont l'heure est encore la bonne reste sans appel ; l'autre se
-   déplace à l'heure de ce tour (`update_trigger`, avec `run_once_at`).
+   Un réveil laissé garde aussi le texte du lot d'avant, qui ferait
+   reprendre l'ancien lot si ce tour était coupé : celui qu'il faut
+   déplacer reçoit, dans le même appel, l'heure de ce tour et le texte
+   de son lot (`update_trigger`, avec `run_once_at` et `prompt`) ; celui
+   dont l'heure est encore la bonne ne le reçoit, par le même appel, que
+   si le lot a changé, et reste sinon sans appel.
 2. Le réveil qui manque s'arme : `send_later`, avec `at` (la remise à
    zéro plus cinq minutes, jamais dans le passé), `name` et `message`.
    Jamais deux réveils de la même fenêtre.

@@ -32,3 +32,12 @@ dossier de la revue cantonne le relecteur à un dossier temporaire hors du
 dépôt. Les raisons de ne pas empêcher le reste sont écrites dans l'ADR.
 La troisième piste, la remise d'un fichier protégé par l'agent, assouplit :
 elle n'est pas faite, et reste à décider par l'humain s'il la veut.
+
+Ce qui reste ouvert (revue du lot, J-2026-11-11-F) : sur un projet en
+mode projet, c'est-à-dire tout projet équipé sauf ce dépôt, la commande
+de l'incident (`install --target . --adapter kotlin --owner @essai`)
+passe toujours le hook, le mode demandé étant celui du verrou. Le
+contrôle des fichiers protégés arrête le commit, mais la remise en état
+revient à l'humain ; la piste qui la permettrait à l'agent est B-0165.
+La revue a aussi fait refuser une cible que le hook ne sait pas résoudre
+(une variable, une substitution, `~autre`) et les options abrégées.

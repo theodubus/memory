@@ -89,6 +89,14 @@ MESSAGES: dict[str, str] = {
         "(“{attendu}”): it would rewrite its lock, hooks, CI and CODEOWNERS. The update is run again in the lock's "
         "mode (`--mode {attendu}`); to try the installer, aim it at a temporary directory created outside the "
         "repository. Changing the mode falls to the human.",
+    "l'installeur visé sur une cible que le hook ne sait pas résoudre (« {cible} ») : une variable, une substitution "
+    "ou un `~` autre que le dossier de l'utilisateur, dans la cible ou dans le `cd` qui la précède. Chaque appel "
+    "repart d'un shell neuf, où une variable est vide : la cible serait le dossier courant, le projet. Écrire le "
+    "chemin en toutes lettres, absolu, par exemple celui que `mktemp -d` a rendu.":
+        "the installer aimed at a target the hook cannot resolve (“{cible}”): a variable, a substitution or a `~` "
+        "other than the user's home, in the target or in the `cd` before it. Each call starts from a fresh shell, "
+        "where a variable is empty: the target would be the current directory, the project. Write the path out in "
+        "full, absolute, for instance the one `mktemp -d` returned.",
     "`socle approve` est réservé à l'humain : il valide ses propres changements protégés.":
         "`socle approve` is reserved for the human: it approves their own protected changes.",
     "l'agent ne répond jamais à la place de l'humain. Il ne peut que relayer une réponse donnée dans la conversation "
@@ -1677,7 +1685,8 @@ MESSAGES: dict[str, str] = {
     "Tu relis le lot de travail d'un autre agent, sans sa conversation ni son raisonnement : tu as ce dossier, et tu peux lire le dépôt pour vérifier un constat, mais tu ne modifies rien. "
     "Pour éprouver une commande (l'installeur, un script), crée d'abord un dossier temporaire hors du dépôt "
     "(`mktemp -d`), et n'écris que là : chaque commande qui écrit y vise par son chemin absolu, jamais par le "
-    "dossier courant. "
+    "dossier courant, écrit en toutes lettres tel que `mktemp -d` l'a rendu, jamais par une variable, qui ne "
+    "survit pas d'un appel à l'autre. "
     "Ton rôle est de le prendre en défaut. Cherche ce qui casse (un cas limite, une erreur de logique, une "
     "régression), ce qu'aucun test ne prouve (une branche du code, un message, un cas que rien n'exerce), et ce qui "
     "contredit un sujet, un critère « Fait quand » ou une décision cités plus bas. Ne juge ni le style, ni ce que les "
@@ -1687,7 +1696,8 @@ MESSAGES: dict[str, str] = {
         "You review another agent's batch of work, without its conversation or its reasoning: you have this brief, and you may read the repository to check a finding, but you change "
         "nothing. To try a command (the installer, a script), first create a temporary directory outside the "
         "repository (`mktemp -d`), and write only there: each command that writes aims at it by its absolute path, "
-        "never through the current directory. Your role is to find fault with it. Look for what breaks (an edge case, a logic error, a "
+        "never through the current directory, written out in full as `mktemp -d` returned it, never through a "
+        "variable, which does not survive from one call to the next. Your role is to find fault with it. Look for what breaks (an edge case, a logic error, a "
         "regression), what no test proves (a code branch, a message, a case nothing exercises), and what contradicts "
         "a topic, a “Done when” criterion or a decision cited below. Judge neither style nor what the automatic "
         "checks already judge: the form of the memory, the links, the presence of tests. Return numbered findings, "
@@ -2382,6 +2392,10 @@ MESSAGES: dict[str, str] = {
         "the agent sets up the companion repository (pushes, creates a key)",
     "l'agent relance l'installeur sur le projet dans un autre mode que son verrou":
         "the agent runs the installer again on the project in another mode than its lock's",
+    "l'agent relance l'installeur sur une cible écrite par une variable, vide dans le shell neuf de l'appel : elle "
+    "viserait le projet":
+        "the agent runs the installer again on a target written through a variable, empty in the call's fresh shell: "
+        "it would aim at the project",
     "réponse relayée sans le texte exact de l'humain":
         "relayed answer without the human's exact text",
     "réponse relayée à une demande que l'humain n'a pas pu lire":

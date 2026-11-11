@@ -68,9 +68,12 @@ Once, before or with its first action:
    remain, the turn that opens, on a message from the human as on a
    wake-up, makes them its own: the cut they guarded is over, and a
    wake-up of an elapsed window, left as is, would restart the agent for
-   nothing. The one whose time is still right stays without a call; the
-   other moves to this turn's time (`update_trigger`, with
-   `run_once_at`).
+   nothing. A wake-up left behind also keeps the text of the earlier
+   batch, which would resume the old batch if this turn were cut: the
+   one to move gets, in the same call, this turn's time and the text of
+   its batch (`update_trigger`, with `run_once_at` and `prompt`); the one
+   whose time is still right gets it, through the same call, only if the
+   batch changed, and otherwise stays without a call.
 2. The missing wake-up is armed: `send_later`, with `at` (the reset plus
    five minutes, never in the past), `name` and `message`. Never two
    wake-ups for the same window.

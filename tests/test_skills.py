@@ -209,8 +209,12 @@ class TestLaReprise(unittest.TestCase):
             self.assertIn(humain, section, lg)
             section = texte.split(sous_agent, 1)[1].split("\n## ", 1)[0]
             self.assertIn("update_trigger", section, lg)
-            # update_trigger ne récrit le texte qu'au lancement d'un sous-agent.
-            self.assertEqual(texte.count("`prompt`"), 1, lg)
+            # update_trigger récrit le texte au lancement d'un sous-agent, et
+            # au début du tour, dans l'appel qui déplace un réveil laissé :
+            # l'heure et le lot du tour ensemble, sans appel de plus.
+            self.assertEqual(texte.count("`prompt`"), 2, lg)
+            debut_tour = texte.split(debut, 1)[1].split("\n## ", 1)[0]
+            self.assertIn("`run_once_at` " + ("et" if lg == "fr" else "and") + " `prompt`", debut_tour, lg)
 
     def test_un_sous_agent_ne_touche_a_aucun_reveil(self):
         for lg, regle in (("fr", "Un sous-agent ne touche à aucun réveil"), ("en", "A subagent\ntouches no wake-up")):

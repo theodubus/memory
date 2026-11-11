@@ -94,6 +94,48 @@ class TestInstalleurHorsMode(unittest.TestCase):
         self.assertIsNone(self.juger(f"grep -n 'socle install --target .' {self.racine}/AGENTS.md"))
         self.assertIsNone(hooks.installeur_hors_mode(self.projet, hooks.commandes.analyser("git status")[0]))
 
+    def test_une_cible_que_le_hook_ne_resout_pas_fait_refuser_toute_la_commande(self):
+        """Revue du lot : `Path.expanduser` levait sur `~zz`, hors du `try` ;
+        le hook sortait en erreur et laissait passer toute la commande, le
+        push forcé compris."""
+        pousse = "git " + "push --force origin main"
+        raison = self.juger(f"python3 {LANCEUR} install --target ~zz; {pousse}")
+        self.assertIsNotNone(raison)
+        self.assertIn("ne sait pas résoudre", raison)
+        self.assertIn("en toutes lettres", raison)
+        for cible in ("~zz", "~+", "~zz/x"):
+            c = hooks.commandes.analyser(f"python3 {LANCEUR} install --target {cible} --mode amont")[0]
+            self.assertEqual(hooks.installeur_hors_mode(self.projet, c, str(self.racine))[2], "", cible)
+        # Le dossier de l'utilisateur, lui, se résout.
+        self.assertIsNone(self.juger(f"python3 {LANCEUR} install --target ~/jetable-inexistant-socle"))
+
+    def test_une_cible_ecrite_par_une_variable_est_refusee(self):
+        """Revue du lot : chaque appel repart d'un shell neuf, où `$D` est
+        vide ; la cible serait le dossier courant, le projet."""
+        for cmd in (f'python3 {LANCEUR} install --target "$D" --mode amont',
+                    f"python3 {LANCEUR} install --target=$D",
+                    f'cd "$D" && python3 {self.racine}/.socle/socle install --target .',
+                    f'python3 {LANCEUR} install --target "$(pwd)"',
+                    f"python3 {LANCEUR} install --target $(pwd)",
+                    f"python3 {LANCEUR} install --target `pwd`",
+                    f"cd `mktemp -d` && python3 {self.racine}/.socle/socle install"):
+            raison = self.juger(cmd)
+            self.assertIsNotNone(raison, cmd)
+            self.assertIn("ne sait pas résoudre", raison, cmd)
+        # Le chemin écrit en toutes lettres passe.
+        self.assertIsNone(self.juger(f"cd {self.jetable} && python3 {self.racine}/.socle/socle install --target ."))
+
+    def test_les_options_abregees_sont_refusees(self):
+        """Revue du lot : `install --mo amont` passait le hook, qui lit
+        `--mode` par son nom entier, et `argparse` l'acceptait."""
+        from socle import cli
+
+        analyseur = cli.analyseur()[0]
+        for args in (["install", "--mo", "amont"], ["install", "--targ", "/tmp/x"], ["--ro", ".", "state"]):
+            with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit, msg=args):
+                analyseur.parse_args(args)
+        self.assertEqual(analyseur.parse_args(["install", "--mode", "amont"]).mode, "amont")
+
     def test_les_arguments_du_socle(self):
         c = hooks.commandes.analyser(f"python3 {LANCEUR} --root . install --target x")[0]
         self.assertEqual(hooks.arguments_socle(c), ["install", "--target", "x"])
@@ -632,6 +674,38 @@ class TestTraceDesRefusDeFinDeTourEtDeGit(unittest.TestCase):
         # Le premier arrêt du tour suivant bloque de nouveau, sans compter la
         # relance comme une tentative.
         self.assertIn("tentative 2/", self.appeler(hooks.stop, self.projet, {"session_id": "i"}))
+
+    def test_une_relance_sur_un_test_rouge_ne_bloque_plus(self):
+        """Revue du lot : la signature contenait la sortie de l'outil, dont la
+        durée (« Ran N tests in X.XXXs ») change à chaque relance ; un test
+        rouge, le cas le plus courant, bloquait encore trois fois."""
+        import json
+
+        from socle import config
+
+        compteur = self.racine / config.COMPTEUR_STOP
+        self.addCleanup(compteur.unlink, missing_ok=True)
+        compteur.unlink(missing_ok=True)
+        dossier = self.racine / "tests"
+        cree = not dossier.exists()
+        dossier.mkdir(exist_ok=True)
+        if cree:
+            self.addCleanup(shutil.rmtree, dossier, True)
+        init = dossier / "__init__.py"
+        if not init.exists():
+            init.touch()
+            self.addCleanup(init.unlink, missing_ok=True)
+        rouge = dossier / "test_rouge_socle.py"
+        self.addCleanup(rouge.unlink, missing_ok=True)
+        # La sortie change à chaque lancement, comme une durée.
+        rouge.write_text("import time\nimport unittest\n\n\nclass T(unittest.TestCase):\n"
+                         "    def test_rouge(self):\n        self.fail(str(time.time_ns()))\n")
+        premier = json.loads(self.appeler(hooks.stop, self.projet, {"session_id": "r", "stop_hook_active": False}))
+        self.assertEqual(premier.get("decision"), "block", premier)
+        self.assertIn("verify.", premier["reason"])
+        relance = json.loads(self.appeler(hooks.stop, self.projet, {"session_id": "r", "stop_hook_active": True}))
+        self.assertNotIn("decision", relance)
+        self.assertIn("sans changement depuis la tentative précédente", relance["systemMessage"])
 
     def test_une_relance_apres_un_changement_bloque_encore(self):
         from socle import config
