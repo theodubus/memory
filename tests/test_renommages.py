@@ -243,6 +243,144 @@ class TestCouchesGelees(Projet):
         self.citer("memory/active.md", "\nL'outil vit dans `scripts/vieux.py`.\n")
         self.assertEqual(self.erreurs(), ["chemin cité inexistant : `scripts/vieux.py`"])
 
+    def avertissements(self) -> list[str]:
+        from socle.report import AVERTISSEMENT, Rapport
+
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="agent", base=self.base)
+        r = Rapport()
+        controles_memoire.references(ctx, r)
+        return [c.message for c in r.constats if c.gravite == AVERTISSEMENT]
+
+    def test_un_fichier_neuf_pas_encore_ajoute_est_averti(self):
+        """B-0166, ADR-0063 : un chemin cité vaut s'il est suivi par git,
+        l'index compris. Un fichier neuf qu'un `git add` livrerait est averti
+        sur l'arbre de travail ; le commit, qui juge l'index, le refuse s'il
+        ne l'ajoute pas."""
+        (self.racine / "scripts/neuf.py").write_text("z = 1\n")
+        self.citer("memory/active.md", "\nL'outil vit dans `scripts/neuf.py`, voir [le source](../scripts/neuf.py).\n")
+        self.assertEqual(self.erreurs(), [])
+        averti = self.avertissements()
+        self.assertEqual(len(averti), 2, averti)
+        self.assertTrue(any("non suivi par git : `scripts/neuf.py`" in m for m in averti), averti)
+        self.assertTrue(any(m.startswith("lien mort : ../scripts/neuf.py") and "git add" in m for m in averti), averti)
+        # L'index, figé en arbre, est ce que juge le hook avant commit : la
+        # citation ajoutée, sans le fichier, y est refusée.
+        git(self.racine, "add", "memory/active.md")
+        index = outils.arbre_de_l_index(self.racine)
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="git", base=self.base, tete=index)
+        from socle.report import Rapport
+        r = Rapport()
+        controles_memoire.references(ctx, r)
+        self.assertTrue(any("scripts/neuf.py" in c.message for c in r.erreurs()))
+        # Ajouté à l'index, pas encore commité : il passe.
+        git(self.racine, "add", "scripts/neuf.py")
+        self.assertEqual(self.erreurs(), [])
+        self.assertEqual(self.avertissements(), [])
+
+    def test_un_dossier_ignore_seulement_en_local_est_refuse(self):
+        """B-0166, l'incident : un dossier que seul `.git/info/exclude`
+        ignore passait en local et échouait dans un clone neuf. Ignoré par un
+        `.gitignore` suivi, il passe."""
+        (self.racine / "scripts/locaux").mkdir()
+        (self.racine / "scripts/locaux/x.txt").write_text("x\n")
+        exclude = self.racine / ".git/info/exclude"
+        exclude.parent.mkdir(exist_ok=True)
+        exclude.write_text("scripts/locaux/\n")
+        controles_memoire._ignore.cache_clear()
+        self.citer("memory/active.md", "\nLes essais vivent dans `scripts/locaux/`.\n")
+        erreurs = self.erreurs()
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertIn("`scripts/locaux/`", erreurs[0])
+        ignore = self.racine / "scripts/.gitignore"
+        ignore.write_text("locaux/\n")
+        git(self.racine, "add", "scripts/.gitignore")
+        controles_memoire._ignore.cache_clear()
+        self.assertEqual(self.erreurs(), [])
+
+    def test_une_regle_du_gitignore_pas_encore_ajoutee_ne_compte_pas(self):
+        """Revue de B-0166, constat 1 : une règle écrite dans un `.gitignore`
+        commité, sans `git add`, manque à un clone neuf. Refusée jusqu'à ce
+        que l'index l'ait."""
+        ignore = self.racine / "scripts/.gitignore"
+        ignore.write_text("*.tmp\n")
+        git(self.racine, "add", "scripts/.gitignore")
+        git(self.racine, "commit", "-qm", "un gitignore", "--no-verify")
+        ignore.write_text("*.tmp\nlocaux/\n")
+        (self.racine / "scripts/locaux").mkdir()
+        (self.racine / "scripts/locaux/x.txt").write_text("x\n")
+        controles_memoire._ignore.cache_clear()
+        self.citer("memory/active.md", "\nLes essais vivent dans `scripts/locaux/`.\n")
+        erreurs = self.erreurs()
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertIn("ignoré par git : `scripts/locaux/`", erreurs[0])
+        git(self.racine, "add", "scripts/.gitignore")
+        controles_memoire._ignore.cache_clear()
+        self.assertEqual(self.erreurs(), [])
+
+    def test_un_dossier_ignore_cite_sans_barre_finale(self):
+        """Revue de B-0166, constat 2 : sans barre finale, un dossier ignoré
+        passait s'il était sur le disque, et échouait dans un clone neuf, où
+        il manque. Refusé dans les deux cas ; avec la barre, il passe."""
+        ignore = self.racine / "scripts/.gitignore"
+        ignore.write_text("locaux/\n")
+        git(self.racine, "add", "scripts/.gitignore")
+        controles_memoire._ignore.cache_clear()
+        self.citer("memory/active.md", "\nLes essais vivent dans `scripts/locaux`.\n")
+        absent = self.erreurs()
+        self.assertEqual(absent, ["chemin cité inexistant : `scripts/locaux`"])
+        (self.racine / "scripts/locaux").mkdir()
+        (self.racine / "scripts/locaux/x.txt").write_text("x\n")
+        controles_memoire._ignore.cache_clear()
+        present = self.erreurs()
+        self.assertEqual(len(present), 1, present)
+        self.assertIn("sans barre finale", present[0])
+        self.assertIn("`scripts/locaux/`", present[0])
+        texte = (self.racine / "memory/active.md").read_text().replace("`scripts/locaux`", "`scripts/locaux/`")
+        (self.racine / "memory/active.md").write_text(texte)
+        self.assertEqual(self.erreurs(), [])
+        shutil.rmtree(self.racine / "scripts/locaux")
+        controles_memoire._ignore.cache_clear()
+        self.assertEqual(self.erreurs(), [])
+
+    def test_un_script_neuf_cite_par_cmd_est_averti(self):
+        """Revue de B-0166, constat 3 : `cmd:` suit la règle de `fichier:`."""
+        (self.racine / "scripts/lancer.sh").write_text("echo\n")
+        self.citer("memory/active.md", "\nLancer cmd:scripts/lancer.sh pour l'essai.\n")
+        self.assertEqual(self.erreurs(), [])
+        self.assertTrue(any("`cmd:scripts/lancer.sh`" in m and "git add" in m for m in self.avertissements()))
+
+    def test_un_chemin_d_un_depot_imbrique(self):
+        """Revue de B-0166, constats 4 et 5 : un dépôt git imbriqué, comme un
+        worktree d'agent non ignoré, n'est pas livré par `git add` ; le
+        message le dit, et non qu'une règle l'ignore."""
+        imbrique = self.racine / "scripts/copie"
+        imbrique.mkdir()
+        git(imbrique, "init", "-q")
+        (imbrique / "a.md").write_text("a\n")
+        self.assertEqual(outils.depot_imbrique(self.racine, "scripts/copie/a.md"), "scripts/copie")
+        self.assertIsNone(outils.depot_imbrique(self.racine, "scripts/vieux.py"))
+        self.assertFalse(outils.chemin_suivi(self.racine, "scripts/copie/a.md", a_ajouter=True))
+        self.assertFalse(outils.chemin_suivi(self.racine, "scripts/copie/", a_ajouter=True))
+        self.citer("memory/active.md", "\nVoir `scripts/copie/a.md`.\n")
+        erreurs = self.erreurs()
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertIn("dépôt git imbriqué `scripts/copie/`", erreurs[0])
+
+    def test_les_fichiers_suivis(self):
+        (self.racine / "scripts/neuf.py").write_text("z = 1\n")
+        self.assertNotIn("scripts/neuf.py", outils.fichiers_suivis(self.racine))
+        self.assertFalse(outils.chemin_suivi(self.racine, "scripts/neuf.py"))
+        self.assertTrue(outils.chemin_suivi(self.racine, "scripts/"))
+        git(self.racine, "add", "scripts/neuf.py")
+        self.assertIn("scripts/neuf.py", outils.fichiers_suivis(self.racine))
+        self.assertTrue(outils.chemin_suivi(self.racine, "scripts/neuf.py"))
+        hors = Path(tempfile.mkdtemp(prefix="socle-hors-depot-"))
+        self.addCleanup(shutil.rmtree, hors, ignore_errors=True)
+        (hors / "a.md").write_text("a\n")
+        self.assertIsNone(outils.fichiers_suivis(hors))
+        self.assertTrue(outils.chemin_suivi(hors, "a.md"))
+        self.assertFalse(outils.chemin_suivi(hors, "b.md"))
+
 
 class TestSousLeursModulesRenommes(Projet):
     """Les commandes dont seul l'import du module a changé de nom : elles

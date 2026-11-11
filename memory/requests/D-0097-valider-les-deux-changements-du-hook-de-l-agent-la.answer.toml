@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0097-valider-les-deux-changements-du-hook-de-l-agent-la.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-11"
+canal = "conversation"
+citation = "Je valide le changement de hooks proposés"
+empreinte = "sha256:bfee1794c34c5846a3ba8b9659c7ea77dfec7ded9dca29fc6fbab9fead0b7de5"

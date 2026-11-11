@@ -169,6 +169,36 @@ class TestLiensDuDepot(unittest.TestCase):
         self.assertIn("docs/b.md n'existe pas", morts[2])
         self.assertEqual(sans_lien, [])
 
+    def test_un_chemin_present_sur_le_disque_seulement_d_un_message(self):
+        """B-0166 : un chemin donné à l'humain vaut s'il est suivi par git, ou
+        livré par le prochain `git add` ; un dossier qu'une règle locale de
+        git ignore (`.git/info/exclude`) n'est que dans le conteneur."""
+        (self.clone / "docs/local.md").write_text("# Local\n")
+        self.assertEqual(liens.problemes(self.projet, "Voir `docs/local.md`."), ([], []))
+        (self.clone / "docs/essais").mkdir()
+        (self.clone / "docs/essais/x.md").write_text("x\n")
+        (self.clone / ".git/info").mkdir(exist_ok=True)
+        (self.clone / ".git/info/exclude").write_text("docs/essais/\n")
+        morts, _ = liens.problemes(self.projet, "Voir `docs/essais/`.")
+        self.assertEqual(len(morts), 1, morts)
+        self.assertIn("ignoré par git", morts[0])
+
+    def test_un_depot_imbrique_ou_un_fichier_supprime_d_un_message(self):
+        """Revue de B-0166, constats 4 à 6 : un dépôt git imbriqué non suivi
+        n'est pas livré par `git add`, et le message le dit ; un fichier suivi
+        mais supprimé du disque est refusé."""
+        imbrique = self.clone / "docs/copie"
+        imbrique.mkdir()
+        git(imbrique, "init", "-q")
+        (imbrique / "a.md").write_text("a\n")
+        for cite in ("docs/copie/a.md", "docs/copie/"):
+            morts, _ = liens.problemes(self.projet, f"Voir `{cite}`.")
+            self.assertEqual(len(morts), 1, morts)
+            self.assertIn("dépôt git imbriqué `docs/copie/`", morts[0])
+        (self.clone / "docs/a.md").unlink()
+        morts, _ = liens.problemes(self.projet, "Voir `docs/a.md`.")
+        self.assertEqual(len(morts), 1, morts)
+
     def test_liens_vivants_d_un_message(self):
         git(self.clone, "push", "-q", "origin", "claude/essai")
         message = (
