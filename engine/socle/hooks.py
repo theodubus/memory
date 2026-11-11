@@ -114,13 +114,19 @@ def arbre_juge(racine: Path, entree: dict) -> Path:
         depart = Path(str(entree["cwd"]))
     if depart is None:
         return racine
-    # Un fichier nouveau peut être dans un dossier encore absent.
-    while not depart.is_dir() and depart != depart.parent:
-        depart = depart.parent
-    ici, ailleurs = _depot_commun(racine), _depot_commun(depart)
-    if not ici or not ailleurs or ailleurs[0] == ici[0] or ailleurs[1] != ici[1]:
-        return racine
-    if not (ailleurs[0] / ".socle").is_dir():
+    try:
+        # Un fichier nouveau peut être dans un dossier encore absent.
+        while not depart.is_dir() and depart != depart.parent:
+            depart = depart.parent
+        ici, ailleurs = _depot_commun(racine), _depot_commun(depart)
+        if not ici or not ailleurs or ailleurs[0] == ici[0] or ailleurs[1] != ici[1]:
+            return racine
+        if not (ailleurs[0] / ".socle").is_dir():
+            return racine
+    except OSError:
+        # Un dossier que l'agent n'a pas le droit de lire (les réglages d'un
+        # autre utilisateur) n'est pas un worktree du projet ; un hook qui
+        # planterait ici laisserait passer la commande qu'il devait juger.
         return racine
     return ailleurs[0]
 

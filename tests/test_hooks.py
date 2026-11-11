@@ -913,6 +913,16 @@ class TestArbreJuge(Projet):
                 "tool_input": {"file_path": str(ou / "docs/suite.md"),
                                "content": "La suite applique ADR-0002.\n"}}
 
+
+    def test_un_dossier_illisible_rend_la_racine(self):
+        """En CI, le dossier des réglages d'un autre utilisateur ne se lit
+        pas : le lire lève une erreur de permission, et un hook qui planterait
+        laisserait passer la commande qu'il devait juger."""
+        from unittest import mock
+        entree = {"tool_name": "Write", "tool_input": {"file_path": "/root/.claude/settings.json"}}
+        with mock.patch.object(Path, "is_dir", side_effect=PermissionError(13, "Permission denied")):
+            self.assertEqual(hooks.arbre_juge(self.racine, entree), self.racine)
+
     def test_une_entree_creee_dans_le_worktree_s_y_cite(self):
         code, sortie = self.hook(self.ecrire(self.arbre, self.arbre))
         self.assertEqual((code, sortie), (0, ""))
