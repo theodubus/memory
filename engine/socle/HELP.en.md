@@ -19,8 +19,18 @@ The path in short:
 
 In a cloud session, the agent installs the socle from its public
 repository, which is cloned without being added to the session. The
-session that installs started before the socle, hence without its hooks:
-it pushes its branch and opens a pull request. Once that is merged, the
+agent's hooks load in the session that installs, from the tool call that
+follows the installer writing their settings: from then on, a protected
+file (the adapter, the CI, the policy) can no longer be fixed by hand.
+What is wrong is fixed by running the installer again with the right
+options, an adapter of the project's own being given by `--adapter
+<file.toml>`; a trial is undone by committing it on its branch, then going
+back to the starting branch with `git switch`, never file by file, which
+the hook refuses: uncommitted, its files would follow, and the installer
+run again would see an update. Before the first
+commit, `python3 .socle/socle verify --fast` runs the adapter's build and
+tests, which the installer's audit does not run. The session that installs
+pushes its branch and opens a pull request. Once that is merged, the
 work continues in a new session, which starts from the default branch and
 receives the state as soon as it starts. A session that adds a second
 repository is not resumed: with two repositories, it restarts outside the
@@ -37,7 +47,10 @@ A project written in several languages has one adapter per language: the
 installer sets one per language it recognises, or those it is given
 (`--adapter python-pytest --adapter kotlin`, the first being the main
 one), and each file is judged by the one of its language (the
-[adapters specification](adapters/README.md)).
+[adapters specification](adapters/README.md)). A language whose manifest
+is only in a subdirectory gets no adapter automatically: the installer
+says so, with its two ways out, an adapter of the project's own whose
+commands enter the subdirectory, or the subdirectory declared third-party.
 
 Right after the installation:
 

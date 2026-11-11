@@ -3,8 +3,9 @@ import os
 import shutil
 import subprocess
 import tempfile
+import tomllib
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 from socle import config, context as contexte, checks_memory as controles_memoire, installer as installeur
@@ -372,3 +373,179 @@ class TestAuditAdaptateur(unittest.TestCase):
         gf = racine / ".socle/guardrails.toml"
         gf.write_text(installeur.declarer_tiers(gf.read_text(encoding="utf-8"), ["_outil/**"]), encoding="utf-8")
         self.assertEqual(etat.audit_adaptateur(config.Projet.charger(racine)), [])
+
+
+class TestSousDossiers(unittest.TestCase):
+    """B-0168 : l'essai à blanc sur chess, un dépôt Rust dont l'interface
+    JavaScript vit dans `ui/`, avec son propre manifeste."""
+
+    def setUp(self):
+        self.racine = depot({"Cargo.toml": "[package]\nname = \"essai\"\n", "src/lib.rs": "pub fn f() {}\n",
+                             "ui/package.json": "{}\n", "ui/src/app.js": "export const x = 1;\n"})
+
+    def tearDown(self):
+        shutil.rmtree(self.racine, ignore_errors=True)
+
+    def installer(self, *adaptateurs, adoption=False) -> tuple[int, str, str]:
+        sortie, erreurs = io.StringIO(), io.StringIO()
+        with redirect_stdout(sortie), redirect_stderr(erreurs):
+            code = installeur.installer(self.racine, list(adaptateurs) or "auto", "@essai", adoption=adoption,
+                                        source=MOTEUR)
+        return code, sortie.getvalue(), erreurs.getvalue()
+
+    def test_un_manifeste_d_un_sous_dossier_ne_recoit_pas_d_adaptateur(self):
+        self.assertEqual(installeur.langages_en_sous_dossier(self.racine), {"javascript": ["ui/package.json"]})
+        self.assertEqual(installeur.detecter_adaptateurs(self.racine), ["rust"])
+        dit = installeur.sous_dossiers_sans_adaptateur(self.racine, {"rust"})
+        self.assertEqual(len(dit), 1)
+        self.assertIn("ui/package.json", dit[0])
+        self.assertIn('[thirdparty] paths = ["ui/**"]', dit[0])
+        self.assertIn("--adapter <fichier.toml>", dit[0])
+        self.assertEqual(installeur.sous_dossiers_sans_adaptateur(self.racine, {"rust", "javascript"}), [])
+
+    def test_un_manifeste_a_la_racine_garde_son_adaptateur(self):
+        (self.racine / "package.json").write_text("{}\n", encoding="utf-8")
+        self.assertEqual(installeur.langages_en_sous_dossier(self.racine), {})
+        self.assertEqual(installeur.detecter_adaptateurs(self.racine), ["rust", "javascript"])
+
+    def test_l_installeur_le_dit_et_ne_pose_que_l_adaptateur_de_la_racine(self):
+        _, sortie, _ = self.installer()
+        self.assertFalse((self.racine / ".socle/adapters/javascript.toml").exists())
+        self.assertIn("!! javascript", sortie)
+        self.assertNotIn("npm ci", (self.racine / ".github/workflows/socle.yml").read_text(encoding="utf-8"))
+
+    def test_la_fin_dit_que_les_capacites_n_ont_pas_ete_lancees(self):
+        _, sortie, _ = self.installer()
+        self.assertIn(installeur.note_d_audit(), sortie)
+        self.assertIn("python3 .socle/socle verify --fast", sortie.split("Et maintenant :", 1)[1])
+        commit = next(e for e in installeur.et_maintenant(self.racine, False, []) if "git commit" in e)
+        self.assertIn("Avant de commiter, lancer `python3 .socle/socle verify --fast`", commit)
+        self.assertIn("git switch", commit)
+        commit = next(e for e in installeur.et_maintenant(self.racine, True, []) if "git commit" in e)
+        self.assertIn("verify --fast", commit)
+        self.assertNotIn("git switch", commit)
+
+    def test_un_adaptateur_propre_au_projet_se_pose_et_se_garde(self):
+        propre = Path(tempfile.mkdtemp(prefix="socle-adaptateur-propre-"))
+        self.addCleanup(shutil.rmtree, propre, ignore_errors=True)
+        texte = (installeur.ADAPTATEURS / "rust.toml").read_text(encoding="utf-8").replace(
+            "[capabilities.tests]\n", "# Propre au projet.\n[capabilities.tests]\n", 1)
+        (propre / "chess-rust.toml").write_text(texte, encoding="utf-8")
+        code, _, erreurs = self.installer(str(propre / "chess-rust.toml"))
+        self.assertIn(code, (0, 1), erreurs)
+        self.assertEqual((self.racine / ".socle/adapter.toml").read_text(encoding="utf-8"), texte)
+        # À la mise à jour, une copie que le projet a adaptée se garde (ADR-0052).
+        _, sortie, _ = self.installer()
+        self.assertEqual((self.racine / ".socle/adapter.toml").read_text(encoding="utf-8"), texte)
+        self.assertIn("adapté par le projet : conservé", sortie)
+
+    def test_un_adaptateur_propre_hors_contrat_est_refuse(self):
+        propre = Path(tempfile.mkdtemp(prefix="socle-adaptateur-propre-"))
+        self.addCleanup(shutil.rmtree, propre, ignore_errors=True)
+        (propre / "maison.toml").write_text('language = "rust"\n[capabilities.tests]\ncommand = "cargo test"\n',
+                                            encoding="utf-8")
+        self.assertTrue(installeur.est_un_fichier(str(propre / "maison.toml")))
+        self.assertFalse(installeur.est_un_fichier("rust"))
+        code, _, erreurs = self.installer(str(propre / "maison.toml"))
+        self.assertEqual(code, 2)
+        self.assertIn("contrat des adaptateurs", erreurs)
+        self.assertIn("« format »", erreurs)
+        self.assertFalse((self.racine / ".socle").exists())
+        with self.assertRaises(SystemExit):
+            installeur.charger_adaptateur(str(propre / "absent.toml"))
+
+    def commit(self):
+        env = {**os.environ, "GIT_CONFIG_NOSYSTEM": "1", "SOCLE_HOOKS_OFF": "1"}
+        subprocess.run(["git", "add", "-A"], cwd=self.racine, check=True, env=env)
+        subprocess.run(["git", "-c", "user.name=essai", "-c", "user.email=essai@exemple.org", "-c",
+                        "core.hooksPath=/dev/null", "commit", "-q", "-m", "essai"], cwd=self.racine, check=True,
+                       env=env)
+
+    def test_une_mise_a_jour_compte_les_adaptateurs_deja_poses(self):
+        # Revue de B-0168, constat 1 : l'adaptateur de `ui/`, propre au
+        # projet, posé ; la relance automatique ne le dit plus manquant.
+        propre = Path(tempfile.mkdtemp(prefix="socle-adaptateur-propre-"))
+        self.addCleanup(shutil.rmtree, propre, ignore_errors=True)
+        texte = (installeur.ADAPTATEURS / "javascript.toml").read_text(encoding="utf-8").replace(
+            'command = "npx vitest run"', 'command = "cd ui && npx vitest run"')
+        (propre / "ui.toml").write_text(texte, encoding="utf-8")
+        code, _, erreurs = self.installer("rust", str(propre / "ui.toml"))
+        self.assertIn(code, (0, 1), erreurs)
+        self.assertEqual(installeur.langages_en_place(self.racine, config.FORMAT_ACTUEL), {"rust", "javascript"})
+        self.commit()
+        _, sortie, _ = self.installer()
+        self.assertNotIn("!! javascript", sortie)
+
+    def test_un_adaptateur_donne_qu_un_principal_en_place_ecarte_le_dit(self):
+        # Revue de B-0168, constat 4 : l'essai non commité, l'installeur
+        # relancé garde le principal ; il ne nomme plus l'autre comme posé.
+        self.installer("rust")
+        propre = Path(tempfile.mkdtemp(prefix="socle-adaptateur-propre-"))
+        self.addCleanup(shutil.rmtree, propre, ignore_errors=True)
+        texte = (installeur.ADAPTATEURS / "rust.toml").read_text(encoding="utf-8") + "\n# Propre au projet.\n"
+        (propre / "own-rust.toml").write_text(texte, encoding="utf-8")
+        _, sortie, _ = self.installer(str(propre / "own-rust.toml"))
+        self.assertIn("!! own-rust non posé : .socle/adapter.toml existe déjà pour rust, et se garde", sortie)
+        self.assertNotIn("adaptateur : own-rust", sortie)
+        self.assertNotEqual((self.racine / ".socle/adapter.toml").read_text(encoding="utf-8"), texte)
+
+    def test_un_python_de_sous_dossier_ne_se_lance_que_s_il_tourne_de_la_racine(self):
+        # Revue de B-0168, constat 2 : `unittest discover -s tests` échoue à
+        # la racine sans `tests/` ; pytest parcourt les sous-dossiers.
+        (self.racine / "ui").rename(self.racine / "hors")
+        shutil.rmtree(self.racine / "hors")
+        for chemin, texte in (("tools/pyproject.toml", "[project]\nname = \"t\"\n"),
+                              ("tools/tests/test_t.py", "import unittest\n")):
+            (self.racine / chemin).parent.mkdir(parents=True, exist_ok=True)
+            (self.racine / chemin).write_text(texte, encoding="utf-8")
+        self.assertEqual(installeur.detecter_adaptateurs(self.racine), ["rust"])
+        self.assertIn("python", installeur.langages_en_sous_dossier(self.racine))
+        (self.racine / "tests").mkdir()
+        (self.racine / "tests/test_racine.py").write_text("import unittest\n", encoding="utf-8")
+        self.assertEqual(installeur.detecter_adaptateurs(self.racine), ["rust", "python"])
+
+    def test_un_python_sans_manifeste_aux_tests_a_la_racine_garde_son_adaptateur(self):
+        racine = depot({"app.py": "X = 1\n", "tests/test_app.py": "import unittest\n"})
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        self.assertEqual(installeur.detecter_adaptateurs(racine), ["python"])
+        self.assertEqual(installeur.langages_en_sous_dossier(racine), {})
+
+    def test_gradle_lance_de_la_racine_garde_kotlin(self):
+        # Revue de B-0168, constat 3 : un build Groovy et le wrapper à la
+        # racine, le module Kotlin dans `app/`.
+        racine = depot({"pyproject.toml": "[project]\nname = \"x\"\n", "x.py": "X = 1\n",
+                        "settings.gradle": "include ':app'\n", "gradlew": "#!/bin/sh\n",
+                        "app/build.gradle.kts": "plugins { kotlin(\"jvm\") }\n",
+                        "app/src/main/kotlin/app/App.kt": "package app\n\nfun main() {}\n"})
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        self.assertEqual(installeur.detecter_adaptateurs(racine), ["python", "kotlin"])
+        self.assertTrue(installeur.lancable_de_la_racine(racine, "kotlin", ["app/build.gradle.kts"], ["gradlew"]))
+        self.assertFalse(installeur.lancable_de_la_racine(racine, "kotlin", ["app/build.gradle.kts"], []))
+
+    def test_le_contrat_juge_un_adaptateur_lu(self):
+        from socle import checks_tests
+
+        self.assertEqual(checks_tests.ecarts_au_contrat(tomllib.loads(
+            (installeur.ADAPTATEURS / "rust.toml").read_text(encoding="utf-8"))), [])
+        ecarts = checks_tests.ecarts_au_contrat({"capabilities": {"format": {"absent": "rien"}}})
+        self.assertIn("capacité « format » : ni `command`, ni `absent` avec `replacement`", ecarts)
+        self.assertTrue(any("`[tests]`" in e for e in ecarts))
+
+
+class TestBudgetDAdoption(unittest.TestCase):
+    def test_la_taille_plus_un_dixieme_au_millier_superieur(self):
+        self.assertEqual(installeur.budget_d_adoption(138934), 153000)
+        self.assertEqual(installeur.budget_d_adoption(10000), 11000)
+        self.assertEqual(installeur.budget_d_adoption(1), 1000)
+
+    def test_l_adoption_laisse_une_marge_au_fichier_d_instructions(self):
+        racine = depot({"CLAUDE.md": "# Projet\n" + "x" * 30000 + "\n",
+                        "tests/test_doc.py": "open('CLAUDE.md').read()\n"})
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        sortie = io.StringIO()
+        with redirect_stdout(sortie):
+            installeur.installer(racine, "python", "@essai", adoption=True, source=MOTEUR)
+        taille = len((racine / "CLAUDE.md").read_bytes())
+        budgets = tomllib.loads((racine / ".socle/guardrails.toml").read_text(encoding="utf-8"))["budgets"]
+        self.assertGreaterEqual(budgets["CLAUDE.md"]["max_bytes"] - taille, taille // 10)
+        self.assertIn("plus un dixième", sortie.getvalue())

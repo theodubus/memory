@@ -19,9 +19,20 @@ Le parcours en bref :
 ## 1. Démarrer
 
 En session cloud, l'agent installe le socle depuis son dépôt public, qui se
-clone sans être ajouté à la session. La session qui installe a démarré
-avant le socle, donc sans ses hooks : elle pousse sa branche et ouvre une
-pull request. Une fois celle-ci fusionnée, le travail continue dans une
+clone sans être ajouté à la session. Les hooks de l'agent se chargent
+dans la session qui installe, dès l'appel d'outil qui suit l'écriture de
+ses réglages par l'installeur : ensuite, un fichier protégé (l'adaptateur,
+la CI, la politique) ne se corrige plus à la main. Ce qui ne va pas se
+corrige en relançant l'installeur avec les bonnes options, un adaptateur
+propre au projet se donnant par `--adapter <fichier.toml>` ; un essai se
+défait en le commitant sur sa branche, puis en revenant à la branche de
+départ par `git switch`, jamais fichier par fichier, que le hook refuse :
+non commités, ses fichiers suivraient, et l'installeur relancé y verrait
+une mise à jour. Avant le premier commit,
+`python3 .socle/socle verify --fast` lance la compilation et les tests de
+l'adaptateur, que l'audit de l'installeur ne lance pas. La session qui
+installe pousse sa branche et ouvre une pull request. Une fois celle-ci
+fusionnée, le travail continue dans une
 session neuve, qui part de la branche par défaut et reçoit l'état dès son
 démarrage. Une session qui ajoute un second dépôt ne se reprend pas : à
 deux dépôts, elle redémarre hors de la racine du projet, sans les hooks de
@@ -38,7 +49,11 @@ Un projet écrit en plusieurs langages a un adaptateur par langage :
 l'installeur en pose un par langage qu'il reconnaît, ou ceux qu'on lui
 nomme (`--adapter python-pytest --adapter kotlin`, le premier étant le
 principal), et chaque fichier est jugé par celui de son langage (la
-[spécification des adaptateurs](adapters/README.md)).
+[spécification des adaptateurs](adapters/README.md)). Un langage dont le
+manifeste n'est que dans un sous-dossier ne reçoit pas d'adaptateur en
+automatique : l'installeur le dit, avec ses deux issues, un adaptateur
+propre au projet dont les commandes entrent dans le sous-dossier, ou le
+sous-dossier déclaré tiers.
 
 Juste après l'installation :
 

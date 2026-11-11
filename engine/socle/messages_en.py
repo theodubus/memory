@@ -516,10 +516,52 @@ MESSAGES: dict[str, str] = {
         "!! private memory (encrypted): filter “{filtre}” not configured here — initialize it (`{filtre} init`, or "
         "the tool's equivalent) before writing anything private; `prive.chiffre` will refuse any private file "
         "committed in clear",
-    "budget de CLAUDE.md, gardé comme source : {taille} octets (il ne pourra que baisser)":
-        "budget of CLAUDE.md, kept as a source: {taille} bytes (it can only go down)",
-    "budget de {motif} fixé au niveau actuel : {nouveau} octets (il ne pourra que baisser)":
-        "budget of {motif} set at the current level: {nouveau} bytes (it can only go down)",
+    "budget de CLAUDE.md, gardé comme source : {taille} octets pour {octets}, sa taille plus un dixième, arrondie au "
+    "millier supérieur (il ne pourra que baisser)":
+        "budget of CLAUDE.md, kept as a source: {taille} bytes for {octets}, its size plus a tenth, rounded up to the "
+        "next thousand (it can only go down)",
+    "budget de {motif} fixé au niveau actuel avec sa marge : {nouveau} octets pour {octets}, la taille plus un "
+    "dixième, arrondie au millier supérieur (il ne pourra que baisser)":
+        "budget of {motif} set at the current level with its margin: {nouveau} bytes for {octets}, the size plus a "
+        "tenth, rounded up to the next thousand (it can only go down)",
+    "!! {langage} : son manifeste n'est que dans un sous-dossier ({manifestes}) ; aucun adaptateur ne lui est posé, "
+    "ses commandes se lanceraient à la racine. Deux issues : lui donner un adaptateur propre au projet, dont les "
+    "commandes entrent dans {dossiers}, en relançant l'installeur avec `--adapter <principal> --adapter "
+    "<fichier.toml>` ; ou déclarer le sous-dossier tiers, qu'aucun contrôle ne juge alors, par `[thirdparty] paths "
+    "= [{motifs}]` des garde-fous, une décision de l'humain":
+        "!! {langage}: its manifest is only in a subdirectory ({manifestes}); no adapter is set for it, its commands "
+        "would run at the root. Two ways out: give it an adapter of the project's own, whose commands enter "
+        "{dossiers}, by running the installer again with `--adapter <main> --adapter <file.toml>`; or declare the "
+        "subdirectory third-party, then judged by no check, through `[thirdparty] paths = [{motifs}]` of the "
+        "guardrails, a decision for the human",
+    "!! {nom} non posé : {adaptateur} existe déjà pour {langage}, et se garde. Pour le remplacer : sur un essai, le "
+    "commiter sur sa branche, revenir à la branche de départ par `git switch` et relancer l'installeur sur une "
+    "branche neuve ; sur un projet équipé, proposer le changement à l'humain par une demande, l'adaptateur étant "
+    "protégé":
+        "!! {nom} not set: {adaptateur} already exists for {langage}, and is kept. To replace it: on a trial, commit "
+        "it on its branch, go back to the starting branch with `git switch` and run the installer again on a new "
+        "branch; on an equipped project, propose the change to the human through a request, the adapter being "
+        "protected",
+    "fichier d'adaptateur introuvable : {nom}":
+        "adapter file not found: {nom}",
+    "refus : l'adaptateur {chemin} ne tient pas le contrat des adaptateurs :\n  - {ecarts}":
+        "refused: the adapter {chemin} does not meet the adapter contract:\n  - {ecarts}",
+    "(l'audit lance les contrôles du socle, pas les capacités de l'adaptateur : la compilation et les tests du "
+    "projet n'ont pas été lancés ; `python3 .socle/socle verify --fast` les lance)":
+        "(the audit runs the socle's checks, not the adapter's capabilities: the project's build and tests have not "
+        "been run; `python3 .socle/socle verify --fast` runs them)",
+    ". Avant de commiter, lancer `python3 .socle/socle verify --fast` : il lance la compilation et les tests de "
+    "l'adaptateur, que l'audit n'a pas lancés":
+        ". Before committing, run `python3 .socle/socle verify --fast`: it runs the adapter's build and tests, which "
+        "the audit did not run",
+    ". S'ils échouent pour une raison que l'adaptateur porte (ses commandes, lancées à la racine) : l'adaptateur "
+    "posé est protégé, et ne se corrige plus à la main. Laisser l'essai sur sa branche, commité, revenir à la "
+    "branche de départ par `git switch`, jamais fichier par fichier, et relancer l'installeur sur une branche neuve "
+    "avec `--adapter <fichier.toml>`":
+        ". If they fail for a reason the adapter carries (its commands, run at the root): the adapter set is "
+        "protected, and can no longer be fixed by hand. Leave the trial on its branch, committed, go back to the "
+        "starting branch with `git switch`, never file by file, and run the installer again on a new branch with "
+        "`--adapter <file.toml>`",
     "!! {fichier} dépasse son budget : {octets} octets pour {budget}, la section du socle, posée ou régénérée, "
     "ayant grossi de {ecart} ; resserrer la partie propre au projet, hors de cette section, ou relever le budget par "
     "une demande validée, puisque le relever assouplit un garde-fou":
