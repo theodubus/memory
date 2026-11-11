@@ -5,13 +5,13 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-chess n'attend plus le pilote (ADR-0059, D-0096) : le jalon 1 (B-0154) se
-resserre sur B-0149, B-0155, B-0143 et B-0141 ; puis l'essai à blanc et
-l'installation (B-0126), par la session de chess, sur l'autre compte de
-Théo. Cette session orchestre ; des sous-agents sur Opus implémentent,
-chacun dans un worktree. Les quatre sujets sont faits, le hook validé.
-Encore avant chess : B-0166, B-0164, B-0165. Après chess : B-0151, B-0010,
-B-0156. JustCook est en pause (J-2026-11-10-N).
+chess n'attend plus le pilote (ADR-0059, D-0096). Livrés : le jalon 1
+(B-0154), B-0166, B-0164. L'essai à blanc est fait ; avant l'installation
+(B-0126, qui liste ce que Théo y tranche) : B-0165 (relu, à intégrer),
+B-0168, B-0169, B-0170. Cette session orchestre ; des sous-agents sur Opus
+implémentent, chacun dans un worktree, relus avant tout push
+(J-2026-11-11-G), puis rebasés et renumérotés. Après chess : B-0151,
+B-0010, B-0156, B-0167. JustCook est en pause (J-2026-11-10-N).
 
 B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
 

@@ -20,5 +20,12 @@ Les couvrir change la règle validée : une demande les soumet à Théo, avec
 le coût de chaque piste (garder les réveils tant qu'un rappel attend,
 c'est accepter des réveils quand l'agent n'est pas coupé).
 
+Un troisième cas, le 11 novembre : un réveil armé avant que Théo ne
+remette l'usage à zéro, ce qui a rouvert la fenêtre et déplacé sa remise à
+zéro, s'est déclenché un quart d'heure avant la levée de la limite ;
+refusé, il n'a rien relancé, et son message n'est arrivé qu'une
+demi-heure plus tard. Après une remise à zéro par l'humain, l'heure se
+relit et le réveil se déplace.
+
 Fait quand :
 - [ ] une demande soumet ces deux cas à Théo, et sa réponse est consignée.
