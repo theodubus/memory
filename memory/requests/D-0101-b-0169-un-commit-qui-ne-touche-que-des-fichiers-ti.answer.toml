@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0101-b-0169-un-commit-qui-ne-touche-que-des-fichiers-ti.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-11"
+canal = "conversation"
+citation = "B169 je valide A"
+empreinte = "sha256:b69a0badd466323f881da33ff1419c12b0190d91ddefd6e4526f58dcb24186c3"
