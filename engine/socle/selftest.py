@@ -1440,6 +1440,12 @@ def _cas() -> list[Cas]:
         lanceur = ".socle/" + "socle"
         return etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} private " + "install --repo git@h:o/p.git"})
 
+    @defaut("agent-installe-hors-mode", "l'agent relance l'installeur sur le projet dans un autre mode que son verrou",
+            "agent", "installeur hors mode")
+    def _(a, c):
+        lanceur = ".socle/" + "socle"
+        return etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} " + "install --target . --mode amont"})
+
     @defaut("relais-sans-citation", "réponse relayée sans le texte exact de l'humain", "agent", "commande humaine")
     def _(a, c):
         lanceur = ".socle/" + "socle"
@@ -1618,6 +1624,13 @@ def _temoins() -> list[tuple[str, Callable]]:
     @temoin("un commit sans hooks dans un dépôt jetable, hors du projet, passe le hook de l'agent")
     def _(a, c):
         return etage_outil(a, c, "Bash", {"command": "cd /tmp/jetable && git commit -q -m x --" + "no-verify"})
+
+    @temoin("l'installeur relancé dans le mode du verrou, ou sur un dossier temporaire, passe le hook de l'agent")
+    def _(a, c):
+        lanceur = ".socle/" + "socle"
+        return (etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} " + "install --target . --owner @moi"})
+                or etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} " + "install --target /tmp/jetable-socle "
+                                                         "--mode amont"}))
 
     @temoin("un commit d'agent qui porte la trace de ses hooks passe la CI")
     def _(a, c):
@@ -2259,6 +2272,7 @@ RAISONS_AGENT = {
     "commande humaine": "ne répond jamais à la place de l'humain",
     "commande de l'humain seul": "est réservé à l'humain",
     "contournement d'un hook": "contourne les hooks du projet",
+    "installeur hors mode": "dans un autre mode que celui de son verrou",
     "écriture protégée": "par le shell : seul l'humain",
     "écriture à l'aveugle": "à l'aveugle",
     "référence inventée": "référence inventée",

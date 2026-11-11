@@ -81,6 +81,14 @@ MESSAGES: dict[str, str] = {
     "(politique, point 4). L'inscrire au backlog avec `pour : humain`.":
         "`socle private install` is reserved for the human: it pushes to the private repository and creates a deploy "
         "key (policy, rule 4). Add it to the backlog with `for : human`.",
+    "l'installeur visé sur un projet équipé ({cible}) en mode « {demande} », dans un autre mode que celui de son "
+    "verrou (« {attendu} ») : il en réécrirait le verrou, les hooks, la CI et CODEOWNERS. La mise à jour se relance "
+    "dans le mode du verrou (`--mode {attendu}`) ; pour éprouver l'installeur, viser un dossier temporaire créé hors "
+    "du dépôt. Changer de mode revient à l'humain.":
+        "the installer aimed at an equipped project ({cible}) in mode “{demande}”, another mode than its lock's "
+        "(“{attendu}”): it would rewrite its lock, hooks, CI and CODEOWNERS. The update is run again in the lock's "
+        "mode (`--mode {attendu}`); to try the installer, aim it at a temporary directory created outside the "
+        "repository. Changing the mode falls to the human.",
     "`socle approve` est réservé à l'humain : il valide ses propres changements protégés.":
         "`socle approve` is reserved for the human: it approves their own protected changes.",
     "l'agent ne répond jamais à la place de l'humain. Il ne peut que relayer une réponse donnée dans la conversation "
@@ -1667,6 +1675,9 @@ MESSAGES: dict[str, str] = {
     "« Contexte » : le paragraphe « {nom} » fait moins de {n} mots":
         "“Context”: the “{nom}” paragraph has fewer than {n} words",
     "Tu relis le lot de travail d'un autre agent, sans sa conversation ni son raisonnement : tu as ce dossier, et tu peux lire le dépôt pour vérifier un constat, mais tu ne modifies rien. "
+    "Pour éprouver une commande (l'installeur, un script), crée d'abord un dossier temporaire hors du dépôt "
+    "(`mktemp -d`), et n'écris que là : chaque commande qui écrit y vise par son chemin absolu, jamais par le "
+    "dossier courant. "
     "Ton rôle est de le prendre en défaut. Cherche ce qui casse (un cas limite, une erreur de logique, une "
     "régression), ce qu'aucun test ne prouve (une branche du code, un message, un cas que rien n'exerce), et ce qui "
     "contredit un sujet, un critère « Fait quand » ou une décision cités plus bas. Ne juge ni le style, ni ce que les "
@@ -1674,7 +1685,9 @@ MESSAGES: dict[str, str] = {
     "constats numérotés, chacun avec son fichier et sa ligne, ce qui casse et comment le vérifier ; ou « aucun "
     "constat ».":
         "You review another agent's batch of work, without its conversation or its reasoning: you have this brief, and you may read the repository to check a finding, but you change "
-        "nothing. Your role is to find fault with it. Look for what breaks (an edge case, a logic error, a "
+        "nothing. To try a command (the installer, a script), first create a temporary directory outside the "
+        "repository (`mktemp -d`), and write only there: each command that writes aims at it by its absolute path, "
+        "never through the current directory. Your role is to find fault with it. Look for what breaks (an edge case, a logic error, a "
         "regression), what no test proves (a code branch, a message, a case nothing exercises), and what contradicts "
         "a topic, a “Done when” criterion or a decision cited below. Judge neither style nor what the automatic "
         "checks already judge: the form of the memory, the links, the presence of tests. Return numbered findings, "
@@ -2367,6 +2380,8 @@ MESSAGES: dict[str, str] = {
         "the agent answers in place of the human, launcher in quotes after a cd",
     "l'agent met en place le dépôt compagnon (pousse, crée une clé)":
         "the agent sets up the companion repository (pushes, creates a key)",
+    "l'agent relance l'installeur sur le projet dans un autre mode que son verrou":
+        "the agent runs the installer again on the project in another mode than its lock's",
     "réponse relayée sans le texte exact de l'humain":
         "relayed answer without the human's exact text",
     "réponse relayée à une demande que l'humain n'a pas pu lire":
@@ -2409,6 +2424,8 @@ MESSAGES: dict[str, str] = {
         "a fix with its regression test passes the CI",
     "un commit sans hooks dans un dépôt jetable, hors du projet, passe le hook de l'agent":
         "a commit without hooks in a throwaway repository, outside the project, passes the agent's hook",
+    "l'installeur relancé dans le mode du verrou, ou sur un dossier temporaire, passe le hook de l'agent":
+        "the installer run again in the lock's mode, or on a temporary directory, passes the agent's hook",
     "un commit d'agent qui porte la trace de ses hooks passe la CI":
         "an agent commit that carries the trace of its hooks passes the CI",
     "une valeur attendue changée sous une spécification que l'humain a commitée passe la CI":

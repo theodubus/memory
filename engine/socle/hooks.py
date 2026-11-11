@@ -449,11 +449,11 @@ def contournement(racine: Path, c: commandes.Commande, depart: str | None = None
     return f"git {sous} --no-verify"
 
 
-def commande_humaine(c: commandes.Commande) -> tuple[str, list[str]] | None:
-    """Une commande du socle réservée à l'humain (`answer`, `approve`,
-    `reviewed`, `private install`), quel que soit le chemin du lanceur (entre
-    guillemets, après un `cd`, par `python3 -m socle`) : son nom et ses
-    arguments ; `None` sinon."""
+def arguments_socle(c: commandes.Commande) -> list[str] | None:
+    """Les arguments d'une invocation du socle, sous-commande en tête et
+    options globales (`--root`) retirées, quel que soit le chemin du lanceur
+    (entre guillemets, après un `cd`) ; `None` si la commande ne lance pas
+    le socle."""
     argv = c.argv
     if not argv:
         return None
@@ -474,6 +474,16 @@ def commande_humaine(c: commandes.Commande) -> tuple[str, list[str]] | None:
         return None
     while reste and (reste[0] == "--root" or reste[0].startswith("--root=")):
         reste = reste[2:] if reste[0] == "--root" else reste[1:]
+    return reste
+
+
+def commande_humaine(c: commandes.Commande) -> tuple[str, list[str]] | None:
+    """Une commande du socle réservée à l'humain (`answer`, `approve`,
+    `reviewed`, `private install`), quel que soit le chemin du lanceur (entre
+    guillemets, après un `cd`) : son nom et ses arguments ; `None` sinon."""
+    reste = arguments_socle(c)
+    if reste is None:
+        return None
     if reste[:2] == ["private", "install"]:
         return "private install", reste
     if reste and reste[0] in ("answer", "decision", "approve", "reviewed"):
@@ -505,6 +515,51 @@ class _Trouve:
         return self.nom
 
 
+def _valeur_option(args: list[str], nom: str, defaut: str) -> str:
+    """La valeur d'une option longue (`--nom x` ou `--nom=x`), la dernière
+    donnée l'emportant, comme pour `argparse`."""
+    valeur = defaut
+    for i, x in enumerate(args):
+        if x == nom and i + 1 < len(args):
+            valeur = args[i + 1]
+        elif x.startswith(nom + "="):
+            valeur = x.split("=", 1)[1]
+    return valeur
+
+
+def installeur_hors_mode(projet: config.Projet, c: commandes.Commande,
+                         depart: str | None = None) -> tuple[str, str, str] | None:
+    """L'installeur (`socle install`) lancé sur un projet équipé dans un autre
+    mode que celui de son verrou (ADR-0062) : sa cible, le mode demandé et
+    celui du verrou ; `None` sinon. Le projet équipé est la racine du projet,
+    ou toute cible qui porte son propre verrou (un worktree, une copie).
+    Une cible sans verrou, une première installation dans un dossier
+    temporaire, passe ; la mise à jour dans le mode du verrou aussi."""
+    reste = arguments_socle(c)
+    if not reste or reste[0] != "install":
+        return None
+    args = reste[1:]
+    demande = _valeur_option(args, "--mode", config.MODE_PROJET)
+    cible = Path(c.chemin(_valeur_option(args, "--target", "."))).expanduser()
+    if not cible.is_absolute():
+        cible = Path(depart or projet.racine) / cible
+    try:
+        cible = cible.resolve()
+    except OSError:
+        return None
+    if cible == projet.racine.resolve():
+        verrou = projet.lock
+    else:
+        try:
+            verrou = config.lire_toml((cible / projet.chemins.lock).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return None
+    if not verrou:
+        return None
+    attendu = verrou.get("mode", config.MODE_PROJET)
+    return (str(cible), demande, attendu) if demande != attendu else None
+
+
 COMMANDES_HUMAINES = _Repere(("answer", "decision", "approve", "reviewed"))
 INSTALLER_PRIVE = _Repere(("private install",))
 
@@ -534,6 +589,14 @@ def refus_bash(projet: config.Projet, cmd: str, cwd: str | None = None) -> str |
             return trad("`{saut}` contourne les hooks du projet : la CI exécute tout, et rien ne la "
                         "contourne. Corriger ce que le hook refuse ; s'il refuse à tort, l'inscrire au "
                         "backlog et le dire à l'humain.", saut=saut)
+        hors_mode = installeur_hors_mode(projet, c, cwd)
+        if hors_mode:
+            return trad("l'installeur visé sur un projet équipé ({cible}) en mode « {demande} », dans un autre "
+                        "mode que celui de son verrou (« {attendu} ») : il en réécrirait le verrou, les hooks, "
+                        "la CI et CODEOWNERS. La mise à jour se relance dans le mode du verrou (`--mode "
+                        "{attendu}`) ; pour éprouver l'installeur, viser un dossier temporaire créé hors du "
+                        "dépôt. Changer de mode revient à l'humain.",
+                        cible=hors_mode[0], demande=hors_mode[1], attendu=hors_mode[2])
         h = commande_humaine(c)
         if h and h[0] == "private install":
             return trad("`socle private install` est réservé à l'humain : il pousse vers le dépôt privé "

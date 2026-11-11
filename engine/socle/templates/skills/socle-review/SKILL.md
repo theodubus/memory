@@ -33,7 +33,11 @@ python3 .socle/socle review
    seul message est ce dossier, tel quel : rien ne s'y ajoute, rien ne s'en
    retire. Il reçoit aussi les instructions du projet et peut lire le
    dépôt, mais ni la conversation ni le raisonnement de l'agent, et le
-   dossier lui dit de ne rien modifier. Un agent sans sous-agents saute la
+   dossier lui dit de ne rien modifier : pour éprouver une commande, il
+   crée un dossier temporaire hors du dépôt et n'écrit que là. Le hook de
+   l'agent refuse l'installeur visé sur le projet dans un autre mode que
+   celui de son verrou, mais pas toute écriture du relecteur
+   dans le dépôt. Un agent sans sous-agents saute la
    revue, et son récap le dit.
 
 ## Les constats

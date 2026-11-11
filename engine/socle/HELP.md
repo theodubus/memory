@@ -207,7 +207,9 @@ commit (`Dispense-test: f — <raison>`) ; un correctif apporte un test qui
 **Mettre à jour le socle.** Relancer la commande d'installation depuis un
 clone à jour du moteur (`git clone --depth 1
 https://github.com/theodubus/socle /tmp/socle`). Les fichiers du projet ne sont jamais écrasés ; le
-diff de la politique est montré. Seule exception, une copie d'un adaptateur
+diff de la politique est montré. Le hook de l'agent refuse l'installeur visé
+sur un projet équipé dans un autre mode que celui de son verrou : la mise
+à jour garde le mode. Seule exception, une copie d'un adaptateur
 maintenu que le projet n'a pas adaptée se rafraîchit ; une copie adaptée se
 garde, et l'installeur dit quand son adaptateur maintenu a changé : l'agent
 propose alors d'y reporter les corrections, par une demande. Approuver ensuite les fichiers protégés
