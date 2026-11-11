@@ -11,7 +11,7 @@ l'installation (B-0126, qui liste ce que Théo y tranche) : B-0168, B-0169,
 B-0170. Cette session orchestre ; des sous-agents sur Opus
 implémentent, chacun dans un worktree, relus avant tout push
 (J-2026-11-11-G), puis rebasés et renumérotés. Après chess : B-0151,
-B-0010, B-0156, B-0167. JustCook est en pause (J-2026-11-10-N).
+B-0010, B-0156, B-0167, B-0172, B-0173. JustCook est en pause (J-2026-11-10-N).
 
 B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
 
