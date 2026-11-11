@@ -757,6 +757,14 @@ def _empreinte_arbre(racine: Path) -> str:
     return outils.empreinte_arbre(racine)
 
 
+def signature_d_echec(racine: Path, echecs: list[str]) -> str:
+    """Ce qui distingue un échec de fin de tour d'un autre : l'arbre que les
+    contrôles ont vu et leurs erreurs, sans le reste du rapport (les étapes
+    rapides de l'adaptateur ne se relancent pas sur un arbre où elles ont
+    passé). Deux tentatives de même signature n'ont rien changé (B-0143)."""
+    return outils.sha256(_empreinte_arbre(racine) + "\n" + "\n".join(echecs))[:16]
+
+
 def stop(projet: config.Projet, entree: dict) -> int:
     from socle import context as contexte, verification
 
@@ -781,12 +789,25 @@ def stop(projet: config.Projet, entree: dict) -> int:
     # pas à l'escalade sur les échecs d'une autre (relevé de la passe de
     # recul, F).
     cle = session or "-"
-    precedent = compteur.read_text().split() if compteur.is_file() else []
-    essais = int(precedent[0]) + 1 if len(precedent) == 2 and precedent[1] == cle and \
-        precedent[0].isdigit() else 1
-    compteur.parent.mkdir(parents=True, exist_ok=True)
-    compteur.write_text(f"{essais} {cle}")
     texte = rapport.texte(trad("contrôles de fin de tour (`socle check --stage agent`)"))
+    signature = signature_d_echec(racine, [f"{c.controle} {c.en_ligne()}" for c in rapport.erreurs()])
+    precedent = compteur.read_text().split() if compteur.is_file() else []
+    sien = len(precedent) >= 2 and precedent[1] == cle and precedent[0].isdigit()
+    # B-0143 (ADR-0061) : une relance que le hook a lui-même provoquée, sur le
+    # même échec et le même arbre, ne peut rien apporter ; elle ne bloque
+    # plus. L'humain lit le rapport dans le message du hook ; le commit et la
+    # CI refusent toujours. Le compteur ne bouge pas : la relance n'était pas
+    # une tentative, et le premier arrêt du tour suivant bloque de nouveau.
+    if entree.get("stop_hook_active") and sien and precedent[2:] == [signature]:
+        tracer(racine, "Stop-inchange", session, ",".join(rapport.controles_en_echec()))
+        print(json.dumps({"systemMessage": trad(
+            "Les contrôles échouent encore, sans changement depuis la tentative précédente : le hook ne relance "
+            "plus ce tour, que l'agent n'a pas pu corriger. À l'humain de regarder ; le commit et la CI refusent "
+            "toujours.\n\n{rapport}", rapport=texte)}, ensure_ascii=False))
+        return 0
+    essais = int(precedent[0]) + 1 if sien else 1
+    compteur.parent.mkdir(parents=True, exist_ok=True)
+    compteur.write_text(f"{essais} {cle} {signature}")
     if essais >= projet.maximum_tentatives():
         compteur.unlink(missing_ok=True)
         print(json.dumps({"systemMessage": trad(
@@ -796,7 +817,10 @@ def stop(projet: config.Projet, entree: dict) -> int:
         return 0
     tracer_refus(racine, "Stop", ",".join(rapport.controles_en_echec()), entree.get("session_id", ""))
     print(json.dumps({"decision": "block", "reason": trad(
-        "Les contrôles échouent (tentative {essais}/{maximum}) : corriger avant de conclure.\n\n{rapport}",
+        "Les contrôles échouent (tentative {essais}/{maximum}) : corriger avant de conclure. Si tu ne peux pas "
+        "corriger (un fichier que tu n'as pas le droit de remettre), réponds en une ligne qui dit pourquoi, sans "
+        "redire ton récap : une relance sur le même échec et le même arbre ne bloque plus, et l'humain reçoit le "
+        "rapport.\n\n{rapport}",
         essais=essais, maximum=projet.maximum_tentatives(), rapport=texte)}, ensure_ascii=False))
     return 0
 

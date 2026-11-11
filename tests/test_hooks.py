@@ -558,6 +558,44 @@ class TestTraceDesRefusDeFinDeTourEtDeGit(unittest.TestCase):
         self.assertIn("tentative 1/", self.appeler(hooks.stop, self.projet, {"session_id": "b"}))
         self.assertIn("tentative 2/", self.appeler(hooks.stop, self.projet, {"session_id": "b"}))
 
+    def test_une_relance_sur_un_echec_inchange_ne_bloque_plus(self):
+        """B-0143 : le hook relançait trois fois un tour qui ne pouvait rien
+        corriger, et l'agent redisait son récap à chaque relance."""
+        import json
+
+        from socle import config
+
+        compteur = self.racine / config.COMPTEUR_STOP
+        self.addCleanup(compteur.unlink, missing_ok=True)
+        compteur.unlink(missing_ok=True)
+        self.canonique.write_text(self.sain + self.FAUX)
+        premier = json.loads(self.appeler(hooks.stop, self.projet, {"session_id": "i", "stop_hook_active": False}))
+        self.assertEqual(premier["decision"], "block")
+        self.assertIn("réponds en une ligne", premier["reason"])
+        relance = json.loads(self.appeler(hooks.stop, self.projet, {"session_id": "i", "stop_hook_active": True}))
+        self.assertNotIn("decision", relance)
+        self.assertIn("sans changement depuis la tentative précédente", relance["systemMessage"])
+        self.assertIn("memoire.preuves", relance["systemMessage"])
+        # Le premier arrêt du tour suivant bloque de nouveau, sans compter la
+        # relance comme une tentative.
+        self.assertIn("tentative 2/", self.appeler(hooks.stop, self.projet, {"session_id": "i"}))
+
+    def test_une_relance_apres_un_changement_bloque_encore(self):
+        from socle import config
+
+        compteur = self.racine / config.COMPTEUR_STOP
+        self.addCleanup(compteur.unlink, missing_ok=True)
+        compteur.unlink(missing_ok=True)
+        self.canonique.write_text(self.sain + self.FAUX)
+        self.appeler(hooks.stop, self.projet, {"session_id": "j", "stop_hook_active": False})
+        self.canonique.write_text(self.sain + self.FAUX + "\nUne ligne de plus.\n")
+        self.assertIn("tentative 2/", self.appeler(hooks.stop, self.projet, {"session_id": "j", "stop_hook_active": True}))
+        # La signature change avec l'arbre.
+        avant = hooks.signature_d_echec(self.racine, ["memoire.preuves x"])
+        self.assertNotEqual(hooks.signature_d_echec(self.racine, ["memoire.preuves y"]), avant)
+        self.canonique.write_text(self.sain + self.FAUX)
+        self.assertNotEqual(hooks.signature_d_echec(self.racine, ["memoire.preuves x"]), avant)
+
     def test_l_empreinte_voit_le_contenu_d_un_fichier_non_suivi(self):
         """Relevé de la passe de recul, F : seuls les noms des fichiers non
         suivis comptaient ; une vérification réussie restait valable après

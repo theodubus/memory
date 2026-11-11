@@ -125,8 +125,18 @@ MESSAGES: dict[str, str] = {
     "demande `D-NNNN` qui résume l'échec, ce qui a été tenté et ce qui est supposé, puis s'arrêter.\n\n{rapport}":
         "The checks still fail after {essais} attempts: STOP AND ESCALATE (policy, rule 7). Write a request `D-NNNN` "
         "that sums up the failure, what was tried and what is assumed, then stop.\n\n{rapport}",
-    "Les contrôles échouent (tentative {essais}/{maximum}) : corriger avant de conclure.\n\n{rapport}":
-        "The checks fail (attempt {essais}/{maximum}): fix them before concluding.\n\n{rapport}",
+    "Les contrôles échouent (tentative {essais}/{maximum}) : corriger avant de conclure. Si tu ne peux pas "
+    "corriger (un fichier que tu n'as pas le droit de remettre), réponds en une ligne qui dit pourquoi, sans "
+    "redire ton récap : une relance sur le même échec et le même arbre ne bloque plus, et l'humain reçoit le "
+    "rapport.\n\n{rapport}":
+        "The checks fail (attempt {essais}/{maximum}): fix them before concluding. If you cannot fix them (a file "
+        "you are not allowed to restore), answer in one line that says why, without repeating your recap: a re-run "
+        "on the same failure and the same tree no longer blocks, and the human gets the report.\n\n{rapport}",
+    "Les contrôles échouent encore, sans changement depuis la tentative précédente : le hook ne relance plus ce "
+    "tour, que l'agent n'a pas pu corriger. À l'humain de regarder ; le commit et la CI refusent toujours."
+    "\n\n{rapport}":
+        "The checks still fail, unchanged since the previous attempt: the hook no longer re-runs this turn, which "
+        "the agent could not fix. Over to the human; the commit and the CI still refuse.\n\n{rapport}",
     "récap de fin d'intervention non vérifiable : transcript illisible":
         "end-of-intervention recap cannot be checked: unreadable transcript",
     "sans {manque}":
@@ -2315,6 +2325,8 @@ MESSAGES: dict[str, str] = {
         "reference to an entry that does not exist",
     "contrôles rouges trois tours de suite, sans escalade":
         "checks red three turns in a row, without escalation",
+    "relance du hook sur un échec et un arbre inchangés, que l'humain ne voit pas":
+        "hook re-run on an unchanged failure and tree, which the human does not see",
     "fait « validé » commité sans réponse de l'humain":
         "“validated” fact committed without the human's answer",
     "demande hors contrat commitée":
@@ -2487,6 +2499,8 @@ MESSAGES: dict[str, str] = {
         "in CI, a finding in the private zone fails without showing its content",
     "une fin de tour sans travail n'exige pas de récap":
         "an end of turn without work does not require a recap",
+    "une relance du hook après une correction passe la fin de tour":
+        "a hook re-run after a fix passes the end of turn",
     "un identifiant renuméroté après une collision passe la CI":
         "an identifier renumbered after a collision passes the CI",
     "une décision qui prouve ses lectures passe le commit":
