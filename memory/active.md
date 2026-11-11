@@ -6,9 +6,9 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 ## En cours
 
 chess n'attend plus le pilote (ADR-0059, D-0096). Livrés : le jalon 1
-(B-0154), B-0166, B-0164. L'essai à blanc est fait ; avant l'installation
-(B-0126, qui liste ce que Théo y tranche) : B-0165 (relu, à intégrer),
-B-0168, B-0169, B-0170. Cette session orchestre ; des sous-agents sur Opus
+(B-0154), B-0166, B-0164, B-0165. L'essai à blanc est fait ; avant
+l'installation (B-0126, qui liste ce que Théo y tranche) : B-0168, B-0169,
+B-0170. Cette session orchestre ; des sous-agents sur Opus
 implémentent, chacun dans un worktree, relus avant tout push
 (J-2026-11-11-G), puis rebasés et renumérotés. Après chess : B-0151,
 B-0010, B-0156, B-0167. JustCook est en pause (J-2026-11-10-N).
