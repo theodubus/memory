@@ -279,8 +279,16 @@ MESSAGES: dict[str, str] = {
         "The project is a Python package",
     "Le dépôt a {n} fonction(s) de test, dans {fichiers} fichier(s), dont `{premier}`":
         "The repository has {n} test function(s), in {fichiers} file(s), including `{premier}`",
-    "Une CI GitHub existe : `{nom}`":
-        "A GitHub CI exists: `{nom}`",
+    "qui jugent un push de branche ou une pull request : {liste}":
+        "judging a branch push or a pull request: {liste}",
+    "{gauche} ; {droite}":
+        "{gauche}; {droite}",
+    "autres (à la main, planifiés, autre événement) : {liste}":
+        "others (manual, scheduled, other event): {liste}",
+    "non lus : {liste}":
+        "unread: {liste}",
+    "Workflows GitHub du projet, {parties}":
+        "The project's GitHub workflows, {parties}",
     "Le dépôt a un README":
         "The repository has a README",
     "celui du document de cadrage, tel qu'il est écrit":
