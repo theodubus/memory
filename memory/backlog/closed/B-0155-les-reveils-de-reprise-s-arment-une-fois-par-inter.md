@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0155 — Les réveils de reprise s'arment une fois par intervention, au lieu d'être réécrits à chaque étape
 
-> statut : ouvert · origine : J-2026-11-10-N · lu : backlog@ce9f9642
+> statut : fait · origine : J-2026-11-10-N · lu : backlog@ce9f9642 · ref : J-2026-11-11-C
 
 Le skill de reprise fait réécrire les deux réveils à chaque étape et à
 chaque sous-agent : deux appels, et plusieurs kilo-octets de réponse, à
@@ -12,4 +12,4 @@ déclenché à tort deux fois le 10 novembre : ne jamais l'armer ainsi.
 
 ## Fait quand
 
-- [ ] le skill arme les réveils une fois par intervention, ne les récrit qu'au lancement d'un sous-agent, et ne les arme jamais dans le passé
+- [x] le skill arme les réveils une fois par intervention, ne les récrit qu'au lancement d'un sous-agent, et ne les arme jamais dans le passé

@@ -190,6 +190,28 @@ class TestLaReprise(unittest.TestCase):
             sections[lg] = re.findall(r"^## ", texte, re.M)
         self.assertEqual(len(sections["fr"]), len(sections["en"]))
 
+    def test_les_reveils_s_arment_une_fois_par_tour_jamais_dans_le_passe(self):
+        # B-0155, ADR-0060 : armés au début du tour, récrits au seul
+        # lancement d'un sous-agent, jamais à une heure passée ; un tour
+        # qui s'ouvre sur l'humain fait siens les réveils laissés.
+        for lg, debut, sous_agent, passe, humain in (
+                ("fr", "## Au début de chaque tour", "## Au lancement d'un sous-agent",
+                 "**Jamais dans le passé.**", "sur un message de l'humain"),
+                ("en", "## At the start of every turn", "## When launching a subagent",
+                 "**Never in the past.**", "on a message from the human")):
+            texte = self.lire(lg)
+            self.assertNotIn("## À chaque étape", texte, lg)
+            self.assertNotIn("## At every step", texte, lg)
+            self.assertIn(passe, texte, lg)
+            self.assertIn("date -u", texte, lg)
+            section = texte.split(debut, 1)[1].split("\n## ", 1)[0]
+            self.assertIn("send_later", section, lg)
+            self.assertIn(humain, section, lg)
+            section = texte.split(sous_agent, 1)[1].split("\n## ", 1)[0]
+            self.assertIn("update_trigger", section, lg)
+            # update_trigger ne récrit le texte qu'au lancement d'un sous-agent.
+            self.assertEqual(texte.count("`prompt`"), 1, lg)
+
     def test_un_sous_agent_ne_touche_a_aucun_reveil(self):
         for lg, regle in (("fr", "Un sous-agent ne touche à aucun réveil"), ("en", "A subagent\ntouches no wake-up")):
             self.assertIn(regle, self.lire(lg), lg)
