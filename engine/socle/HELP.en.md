@@ -338,3 +338,25 @@ budgets, mutation caps, correspondences between code and documentation,
 third-party files (those of a tool installed in the project), the
 project's case files and specifications. Tightening them is free;
 loosening them requires an approved request.
+
+**A subfolder worked on by other agents.** When other agent sessions,
+which have neither the socle's hooks nor its rules, work on a subfolder on
+their own branches (a user interface, say), declare it third-party in the
+guardrails (`[thirdparty] paths = ["ui/**"]`), then approve it: it is a
+relaxation
+(`python3 .socle/socle approve --keys thirdparty.paths --text "<reason>"`).
+A commit that touches only third-party paths is then not a commit of the
+project: declaring a third-party path also exempts from the hooks' trace
+the commits that touch only it; a test exemption it carries is neither
+judged nor read (it exempts no function of the project), and a fix there
+is only warned about. Their pull requests pass the socle's CI job.
+Nothing needs setting on GitHub, or in the pre-push hook, which those
+sessions do not have: the socle's CI job, required before merging or not,
+judges them this way. Two limits, each with its setting:
+
+- a commit that also touches a file of the project (the memory, the
+  documentation, a file at the root) is judged as a whole, and refused
+  without the hooks' trace: those sessions stay in their subfolder;
+- the adapter's capabilities (build, tests) run as it declares them: if
+  they cover the subfolder, it must build and its tests pass, or the human
+  excludes it from the adapter's sources, a protected file.

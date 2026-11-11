@@ -342,3 +342,26 @@ de la mémoire, plafonds de mutation, correspondances entre code et
 documentation, fichiers tiers (ceux d'un outil installé dans le projet),
 fichiers de cas et spécifications du projet. Les durcir est
 libre ; les relâcher exige une demande validée.
+
+**Un sous-dossier travaillé par d'autres agents.** Quand d'autres sessions
+d'agents, qui n'ont ni les hooks ni les règles du socle, travaillent un
+sous-dossier sur leurs propres branches (une interface, par exemple),
+le déclarer tiers dans les garde-fous (`[thirdparty] paths = ["ui/**"]`),
+puis l'approuver : c'est un assouplissement
+(`python3 .socle/socle approve --keys thirdparty.paths --text "<raison>"`).
+Un commit qui ne touche que des chemins tiers n'est alors pas un commit du
+projet : déclarer un chemin tiers dispense aussi de la trace des hooks les
+commits qui ne touchent que lui ; une dispense de test qu'il porte n'est ni
+jugée ni lue (elle ne dispense aucune fonction du projet), et un correctif
+n'y est qu'averti. Leurs pull requests passent le travail de CI du socle.
+Rien n'est à régler côté GitHub, ni au hook avant push, que ces sessions
+n'ont pas : le travail de CI du socle, exigé ou non avant fusion, les juge
+ainsi. Deux limites, chacune avec son réglage :
+
+- un commit qui touche aussi un fichier du projet (la mémoire, la
+  documentation, un fichier à la racine) est jugé en entier, et refusé sans
+  la trace des hooks : ces sessions restent dans leur sous-dossier ;
+- les capacités de l'adaptateur (compilation, tests) tournent comme il les
+  déclare : si elles couvrent le sous-dossier, il doit compiler et ses
+  tests passer, ou l'humain l'exclut des sources de l'adaptateur, fichier
+  protégé.

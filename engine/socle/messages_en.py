@@ -2708,6 +2708,12 @@ MESSAGES: dict[str, str] = {
         "third-party path that would cover the memory",
     "les fichiers d'un outil tiers, déclaré par l'humain qui l'approuve, échappent aux contrôles : la CI passe":
         "the files of a third-party tool, declared by the human who approves it, escape the checks: the CI passes",
+    "commit d'agent sans trace des hooks qui touche un chemin déclaré tiers et un fichier du projet":
+        "agent commit without the hooks' trace that touches a path declared third-party and a file of the project",
+    "le commit d'un agent d'une autre session, sans les hooks du socle, qui ne touche que des chemins déclarés "
+    "tiers, passe la CI":
+        "the commit of an agent from another session, without the socle's hooks, that touches only paths declared "
+        "third-party, passes the CI",
     "consigner une décision prise en séance, avec la réponse de l'humain ; l'agent y relaie (--relayed) ta réponse "
     "mot pour mot":
         "record a decision taken in session, with the human's answer; the agent relays (--relayed) your answer word "

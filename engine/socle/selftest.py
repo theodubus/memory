@@ -630,6 +630,18 @@ def _clore(c: Path, ident: str):
                         lambda m: "> statut : fait" + (m[1] or "") + " · ref : fichier:calc.py", p.read_text(), count=1))
 
 
+def _declarer_ui_tierce(a: Atelier, c: Path):
+    """L'interface, travaillée par d'autres sessions d'agents, déclarée tierce
+    par l'humain qui l'approuve, dans un commit à lui (B-0169)."""
+    remplacer(c, ".socle/guardrails.toml", TIERS_VIDE, '\npaths = ["ui/**"]\n')
+    r = a.socle(c, "approve", "--keys", "thirdparty.paths", "--text", "L'interface, travaillée ailleurs")
+    if r.returncode != 0:
+        raise RuntimeError(r.stdout + r.stderr)
+    r = a.commit(c, "L'interface déclarée tierce")
+    if r.returncode != 0:
+        raise RuntimeError(r.stderr)
+
+
 def maj_memoire(c: Path, texte: str = "Travail en cours sur l'essai."):
     remplacer(c, "memory/active.md", "## En cours\n\nRien pour l'instant.", f"## En cours\n\n{texte}")
 
@@ -859,6 +871,14 @@ def _cas() -> list[Cas]:
     @defaut("hook-jamais-tire", "hook de l'agent absent ou jamais tiré", "ci", "hooks.trace")
     def _(a, c):
         maj_memoire(c, "Commit d'agent sans hooks.")
+        return etage_ci(a, c, "Travail d'agent\n\nCo-Authored-By: Claude <noreply@anthropic.com>")
+
+    @defaut("hook-absent-hors-tiers", "commit d'agent sans trace des hooks qui touche un chemin déclaré tiers et "
+            "un fichier du projet", "ci", "hooks.trace")
+    def _(a, c):
+        _declarer_ui_tierce(a, c)
+        ajouter(c, "ui/app.py", "def rendu(x):\n    return x\n")
+        maj_memoire(c, "L'interface et la mémoire.")
         return etage_ci(a, c, "Travail d'agent\n\nCo-Authored-By: Claude <noreply@anthropic.com>")
 
     @defaut("hooks-arretes-en-session", "hooks de l'agent arrêtés depuis le commit précédent", "ci", "hooks.trace")
@@ -1895,6 +1915,13 @@ def _temoins() -> list[tuple[str, Callable]]:
         ajouter(c, "_outil/test_outil.py", "def test_rien():\n    pass\n")
         ajouter(c, "_outil/LISEZMOI.md", "Chaque constat cite `file:line`, et F-0099.\n")
         return etage_ci(a, c)
+
+    @temoin("le commit d'un agent d'une autre session, sans les hooks du socle, qui ne touche que des chemins "
+            "déclarés tiers, passe la CI")
+    def _(a, c):
+        _declarer_ui_tierce(a, c)
+        ajouter(c, "ui/app.py", "def rendu(x):\n    return x\n")
+        return etage_ci(a, c, "fix: l'interface rend mieux\n\nCo-Authored-By: Claude <noreply@anthropic.com>")
 
     @temoin("un chemin qui n'existe que dans une rustine suivie du dépôt passe la CI")
     def _(a, c):

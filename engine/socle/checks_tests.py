@@ -435,7 +435,7 @@ def config_code(projet) -> tuple[list, list, str | None]:
 
 def dispenses_tests(ctx, r) -> set[str]:
     noms = set()
-    for c in ctx.commits:
+    for c in ctx.commits_du_projet:
         for v in langue.trailers(c["message"]).get("dispense-test", []):
             m = DISPENSE_TEST.match(v.strip())
             if not m:
