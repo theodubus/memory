@@ -41,9 +41,14 @@ le carnet de bord vers la mémoire ; le balayage de mutation de chess
 gardé, celui du socle non posé pour l'instant (à terme : B-0172) ; les branches de réseaux
 déclarées à garder.
 
+Le 11 novembre au soir, B-0165, B-0168, B-0169 et B-0170 sont fusionnés et
+publiés (J-2026-11-11-V). Les prompts de l'installation, à coller dans la
+session de chess, sont dans `docs/fabrication/chess/prompt-installation.md` :
+le premier commence comme un essai et ne pousse rien avant sa porte.
+
 ## Fait quand
 
-- [ ] les lots à livrer avant chess, ceux du jalon 1 (B-0154), sont fusionnés et publiés (ADR-0059)
+- [x] les lots à livrer avant chess, ceux du jalon 1 (B-0154), sont fusionnés et publiés (ADR-0059)
 - [ ] un essai à blanc sur chess, avec la version publiée, sans constat bloquant
 - [ ] le socle installé sur chess pour de bon, en mode adoption, l'installation fusionnée
 - [ ] la feuille de route de chess posée à la main avec Théo, depuis son carnet de bord : sujets ordonnés, jalons, priorités (D-0094)
