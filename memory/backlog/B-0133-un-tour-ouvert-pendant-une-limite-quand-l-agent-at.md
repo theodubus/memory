@@ -27,5 +27,10 @@ refusé, il n'a rien relancé, et son message n'est arrivé qu'une
 demi-heure plus tard. Après une remise à zéro par l'humain, l'heure se
 relit et le réveil se déplace.
 
+Théo précise ensuite (J-2026-11-11-Q) : « C'est moi qui ai mis le message
+de 16h25 a la main ». Un réveil déclenché avant la levée de la limite est
+donc perdu, il n'attend pas en file : sans l'humain, la session ne serait
+pas repartie.
+
 Fait quand :
 - [ ] une demande soumet ces deux cas à Théo, et sa réponse est consignée.

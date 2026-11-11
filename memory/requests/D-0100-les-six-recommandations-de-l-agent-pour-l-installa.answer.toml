@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0100-les-six-recommandations-de-l-agent-pour-l-installa.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-11"
+canal = "conversation"
+citation = "Tu as encore tes 6 recommandations ? Je suis ok pour tout mais juste : \n4) on a en objectif de découper le claude.md et le distribuer dans des fichiers mémoire ?\n5) Mutation : a terme on garde pas tel quel ?"
+empreinte = "sha256:41d4ef8fcc561228730c774e7bb67a6c008094fb75e318387955b4b0ce3762d1"
