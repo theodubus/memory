@@ -5,22 +5,24 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-D-0093 validée sauf sa proposition 7 (J-2026-11-10-N) : quatre jalons,
-B-0154 (alléger), B-0157 (chess, sous ADR-0057), B-0159 (mesurer), B-0160
-(le noyau et la méthode). Le socle organise et fiabilise. JustCook est en
-pause tant que le socle se corrige. La PR #29, mémoire seule, se
-fusionne par l'agent, sa CI verte (D-0092). Prochain : B-0149, B-0151,
-B-0141, un sous-agent par sujet ; puis B-0010, B-0155, B-0156.
+chess n'attend plus le pilote (ADR-0059, D-0096) : le jalon 1 (B-0154) se
+resserre sur B-0149, B-0155, B-0143 et B-0141 ; puis l'essai à blanc et
+l'installation (B-0126), par la session de chess, sur l'autre compte de
+Théo. Cette session orchestre ; des sous-agents sur Opus implémentent, un
+sujet à la fois, chacun dans un worktree. En cours : les constats de la
+revue de B-0149. Après chess : B-0151, B-0010, B-0156. JustCook est en
+pause ; les jalons de D-0093 tiennent (J-2026-11-10-N).
 
 B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
 
 ## Consignes en cours
 
-- Le contexte long : Théo compacte la conversation, et chaque sujet se
-  confie à un sous-agent au contexte neuf, la conversation principale ne
-  faisant que lancer, relire et livrer ; Théo : « Compact maintenant +
-  sous agent par session est encore mieux que nouvelle session a chaque
-  fois non ? Si oui on fait ça » (J-2026-11-10-O).
+- Le contexte long et les modèles : Théo compacte la conversation ;
+  chaque sujet va à un sous-agent au contexte neuf, dont l'agent choisit
+  le modèle (J-2026-11-10-O). Jusqu'au 16 novembre, Fable là où il vaut
+  son prix (recul, détails, planification, chess), Opus pour les
+  implémentations, puis Opus partout ; Théo : « a utiliser la ou ça en
+  vaut la peine » (D-0095, J-2026-11-10-T).
 - Le pilote est un essai de choc du socle : ses imperfections sont
   attendues, seules celles du socle se corrigent ici ; Théo : « pas grave
   si le pilote n'est pas idéal partout, c'est un crashtest pour le socle

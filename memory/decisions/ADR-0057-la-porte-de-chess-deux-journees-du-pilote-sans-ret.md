@@ -1,7 +1,7 @@
 <!-- socle: couche=decisions zone=publique -->
 # ADR-0057 — La porte de chess : deux journées du pilote sans retour bloquant, et d'ici là des correctifs seulement
 
-> statut : acceptée · date : 2026-11-10 · validation : D-0093@333ad9d0 · source : D-0073@f690f8a8, B-0126@e4f0cc19 · lu : decisions@7feca569
+> statut : remplacée · date : 2026-11-10 · validation : D-0093@333ad9d0 · source : D-0073@f690f8a8, B-0126@e4f0cc19 · lu : decisions@7feca569 · remplacée-par : ADR-0059
 
 ## Contexte
 

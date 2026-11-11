@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
 from socle import (cli, config, context as contexte, checks_memory as controles_memoire,
@@ -310,6 +311,50 @@ class TestProjetAnglais(ProjetAnglais):
         d = next(x for x in demandes.toutes(self.racine) if x.id == "D-0001")
         self.assertTrue(d.validee)
         self.assertEqual(demandes.verifier_reponse(d), [])
+
+    def test_new_request_dit_le_contrat_en_anglais(self):
+        """La relecture de B-0149 : le contrat d'une demande n'était vérifié
+        qu'en français ; ici, les noms des paragraphes et les réponses de
+        base sont ceux d'un projet en anglais, gabarit des questions compris."""
+        with messages.dans("en"):
+            sortie = self.socle("new", "request", "Choose the cap")
+            questions = self.socle("new", "request", "--questions", "Frame the cap")
+        self.assertIn("Its contract, which the lint judges", sortie)
+        self.assertIn("**The project.**, **The work.**, **The question.**", sortie)
+        self.assertIn("`approve`, `reject`, `insufficient-context`", sortie)
+        self.assertIn("fingerprint lines set aside", sortie)
+        self.assertNotIn("“Questions”", sortie)
+        self.assertNotIn("contrat", sortie + questions)
+        self.assertIn("“Questions” asks each open question", questions)
+        self.assertIn("the template's free answer, `answers`", questions)
+        self.assertIn("- `answers` —", next((self.racine / "memory/requests").glob("D-0002-*.md")).read_text())
+
+    def test_un_fichier_protege_supprime_s_approuve_en_anglais(self):
+        """B-0163 : `socle approve` écrit `deleted` dans un projet en anglais,
+        et `protege.fichiers` ne cherchait que « supprimé » : la suppression
+        approuvée restait refusée."""
+        from socle import checks_ratchet as controles_cliquet, fingerprint as empreinte
+
+        fichier = ".github/workflows/socle.yml"
+        (self.racine / fichier).unlink()
+
+        def erreurs():
+            r = Rapport()
+            controles_cliquet.proteges(contexte.Contexte(config.Projet.charger(self.racine), etage="agent",
+                                                         base=self.base), r)
+            return [c.message for c in r.erreurs("protege.fichiers")]
+
+        self.assertTrue(any("`deleted`" in e for e in erreurs()))
+        with unittest.mock.patch.dict(os.environ):
+            os.environ.pop("CLAUDECODE", None)
+            self.assertIn("written and approved", self.socle("approve", "--files", fichier, "--text", "Drop the workflow"))
+        demande = next((self.racine / "memory/requests").glob("D-*.md")).read_text()
+        self.assertIn(f"`{fichier}` — protected file changed by the human themselves; new fingerprint `deleted`",
+                      demande)
+        self.assertEqual(erreurs(), [])
+        self.assertEqual((empreinte.supprime("en"), empreinte.supprime("fr"), empreinte.supprime("de")),
+                         ("deleted", "supprimé", "supprimé"))
+        self.assertEqual(demandes.FICHIER_SUPPRIME, tuple(empreinte.SUPPRIME.values()))
 
     def test_une_entree_francaise_se_lit_dans_un_projet_anglais(self):
         canon = self.racine / "memory/canonical.md"
