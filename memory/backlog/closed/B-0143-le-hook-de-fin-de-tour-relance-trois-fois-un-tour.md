@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0143 — Le hook de fin de tour relance trois fois un tour qui ne peut rien corriger, et l'agent répète son récap à chaque fois
 
-> statut : ouvert · origine : J-2026-11-09-K · lu : backlog@c0d85cf2
+> statut : fait · origine : J-2026-11-09-K · lu : backlog@c0d85cf2 · ref : J-2026-11-11-D
 
 Quand un contrôle de fin de tour échoue sur ce que l'agent ne peut pas
 corriger (ici, un fichier protégé changé par erreur, que le hook lui
@@ -20,4 +20,4 @@ refusant toujours ; et une relance accepte une réponse courte, sans
 redire le récap. Toucher au hook de fin de tour : une demande.
 
 Fait quand :
-- [ ] un tour dont l'échec ne change pas entre deux tentatives ne se relance plus, ou la raison de garder la relance est écrite, et un test le montre
+- [x] un tour dont l'échec ne change pas entre deux tentatives ne se relance plus, ou la raison de garder la relance est écrite, et un test le montre

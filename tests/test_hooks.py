@@ -47,6 +47,101 @@ class TestCommandesHumaines(unittest.TestCase):
         self.assertIsNone(hooks.COMMANDES_HUMAINES.search("grep -n 'socle answer' AGENTS.md"))
 
 
+class TestInstalleurHorsMode(unittest.TestCase):
+    """B-0141 : un relecteur sans contexte a lancé l'installeur, en mode
+    projet, sur ce dépôt en mode amont ; le hook refuse désormais
+    l'installeur visé sur un projet équipé dans un autre mode que son verrou
+    (ADR-0062), et laisse passer la mise à jour dans le mode du verrou."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+        self.racine = self.tmp / "projet"
+        (self.racine / ".socle").mkdir(parents=True)
+        subprocess.run(["git", "init", "-q", str(self.racine)], check=True)
+        (self.racine / ".socle/engine.lock").write_text('mode = "amont"\nengine_dir = "engine"\n')
+        self.projet = config.Projet.charger(self.racine)
+        self.jetable = self.tmp / "jetable"
+        self.jetable.mkdir()
+
+    def juger(self, cmd: str, cwd: Path | None = None) -> str | None:
+        return hooks.refus_bash(self.projet, cmd, str(cwd or self.racine))
+
+    def test_l_incident_est_refuse(self):
+        # La commande de l'incident : le mode par défaut, `projet`, sur la racine en amont.
+        raison = self.juger(f"python3 {LANCEUR} install --target . --adapter kotlin --owner @essai")
+        self.assertIn("dans un autre mode que celui de son verrou", raison)
+        self.assertIn("`--mode amont`", raison)
+        # La cible absolue, par `--target=`, ou atteinte après un `cd`.
+        self.assertIsNotNone(self.juger(f"python3 {LANCEUR} install --target={self.racine} --mode projet"))
+        self.assertIsNotNone(self.juger(f"cd {self.jetable} && python3 {self.racine}/.socle/socle install "
+                                        f"--target {self.racine}"))
+        self.assertEqual(hooks.installeur_hors_mode(
+            self.projet, hooks.commandes.analyser(f"python3 {LANCEUR} install")[0], str(self.racine)),
+            (str(self.racine.resolve()), "projet", "amont"))
+
+    def test_une_copie_equipee_juge_par_son_propre_verrou(self):
+        copie = self.tmp / "worktree"
+        (copie / ".socle").mkdir(parents=True)
+        (copie / ".socle/engine.lock").write_text('mode = "amont"\n')
+        self.assertIsNotNone(self.juger(f"python3 {LANCEUR} install --target {copie}"))
+        self.assertIsNone(self.juger(f"python3 {LANCEUR} install --target {copie} --mode amont"))
+
+    def test_la_mise_a_jour_et_le_dossier_temporaire_passent(self):
+        self.assertIsNone(self.juger(f"python3 {LANCEUR} install --target . --mode amont"))
+        self.assertIsNone(self.juger(f"python3 {LANCEUR} install --target {self.jetable} --adapter python"))
+        self.assertIsNone(self.juger(f"cd {self.jetable} && python3 {self.racine}/.socle/socle install --target ."))
+        self.assertIsNone(self.juger(f"grep -n 'socle install --target .' {self.racine}/AGENTS.md"))
+        self.assertIsNone(hooks.installeur_hors_mode(self.projet, hooks.commandes.analyser("git status")[0]))
+
+    def test_une_cible_que_le_hook_ne_resout_pas_fait_refuser_toute_la_commande(self):
+        """Revue du lot : `Path.expanduser` levait sur `~zz`, hors du `try` ;
+        le hook sortait en erreur et laissait passer toute la commande, le
+        push forcé compris."""
+        pousse = "git " + "push --force origin main"
+        raison = self.juger(f"python3 {LANCEUR} install --target ~zz; {pousse}")
+        self.assertIsNotNone(raison)
+        self.assertIn("ne sait pas résoudre", raison)
+        self.assertIn("en toutes lettres", raison)
+        for cible in ("~zz", "~+", "~zz/x"):
+            c = hooks.commandes.analyser(f"python3 {LANCEUR} install --target {cible} --mode amont")[0]
+            self.assertEqual(hooks.installeur_hors_mode(self.projet, c, str(self.racine))[2], "", cible)
+        # Le dossier de l'utilisateur, lui, se résout.
+        self.assertIsNone(self.juger(f"python3 {LANCEUR} install --target ~/jetable-inexistant-socle"))
+
+    def test_une_cible_ecrite_par_une_variable_est_refusee(self):
+        """Revue du lot : chaque appel repart d'un shell neuf, où `$D` est
+        vide ; la cible serait le dossier courant, le projet."""
+        for cmd in (f'python3 {LANCEUR} install --target "$D" --mode amont',
+                    f"python3 {LANCEUR} install --target=$D",
+                    f'cd "$D" && python3 {self.racine}/.socle/socle install --target .',
+                    f'python3 {LANCEUR} install --target "$(pwd)"',
+                    f"python3 {LANCEUR} install --target $(pwd)",
+                    f"python3 {LANCEUR} install --target `pwd`",
+                    f"cd `mktemp -d` && python3 {self.racine}/.socle/socle install"):
+            raison = self.juger(cmd)
+            self.assertIsNotNone(raison, cmd)
+            self.assertIn("ne sait pas résoudre", raison, cmd)
+        # Le chemin écrit en toutes lettres passe.
+        self.assertIsNone(self.juger(f"cd {self.jetable} && python3 {self.racine}/.socle/socle install --target ."))
+
+    def test_les_options_abregees_sont_refusees(self):
+        """Revue du lot : `install --mo amont` passait le hook, qui lit
+        `--mode` par son nom entier, et `argparse` l'acceptait."""
+        from socle import cli
+
+        analyseur = cli.analyseur()[0]
+        for args in (["install", "--mo", "amont"], ["install", "--targ", "/tmp/x"], ["--ro", ".", "state"]):
+            with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit, msg=args):
+                analyseur.parse_args(args)
+        self.assertEqual(analyseur.parse_args(["install", "--mode", "amont"]).mode, "amont")
+
+    def test_les_arguments_du_socle(self):
+        c = hooks.commandes.analyser(f"python3 {LANCEUR} --root . install --target x")[0]
+        self.assertEqual(hooks.arguments_socle(c), ["install", "--target", "x"])
+        self.assertIsNone(hooks.arguments_socle(hooks.commandes.analyser("ls -la")[0]))
+
+
 class TestTrailer(unittest.TestCase):
     def test_compte_de_la_session_la_plus_recente(self):
         import tempfile
@@ -557,6 +652,76 @@ class TestTraceDesRefusDeFinDeTourEtDeGit(unittest.TestCase):
         self.assertIn("tentative 2/", self.appeler(hooks.stop, self.projet, {"session_id": "a"}))
         self.assertIn("tentative 1/", self.appeler(hooks.stop, self.projet, {"session_id": "b"}))
         self.assertIn("tentative 2/", self.appeler(hooks.stop, self.projet, {"session_id": "b"}))
+
+    def test_une_relance_sur_un_echec_inchange_ne_bloque_plus(self):
+        """B-0143 : le hook relançait trois fois un tour qui ne pouvait rien
+        corriger, et l'agent redisait son récap à chaque relance."""
+        import json
+
+        from socle import config
+
+        compteur = self.racine / config.COMPTEUR_STOP
+        self.addCleanup(compteur.unlink, missing_ok=True)
+        compteur.unlink(missing_ok=True)
+        self.canonique.write_text(self.sain + self.FAUX)
+        premier = json.loads(self.appeler(hooks.stop, self.projet, {"session_id": "i", "stop_hook_active": False}))
+        self.assertEqual(premier["decision"], "block")
+        self.assertIn("réponds en une ligne", premier["reason"])
+        relance = json.loads(self.appeler(hooks.stop, self.projet, {"session_id": "i", "stop_hook_active": True}))
+        self.assertNotIn("decision", relance)
+        self.assertIn("sans changement depuis la tentative précédente", relance["systemMessage"])
+        self.assertIn("memoire.preuves", relance["systemMessage"])
+        # Le premier arrêt du tour suivant bloque de nouveau, sans compter la
+        # relance comme une tentative.
+        self.assertIn("tentative 2/", self.appeler(hooks.stop, self.projet, {"session_id": "i"}))
+
+    def test_une_relance_sur_un_test_rouge_ne_bloque_plus(self):
+        """Revue du lot : la signature contenait la sortie de l'outil, dont la
+        durée (« Ran N tests in X.XXXs ») change à chaque relance ; un test
+        rouge, le cas le plus courant, bloquait encore trois fois."""
+        import json
+
+        from socle import config
+
+        compteur = self.racine / config.COMPTEUR_STOP
+        self.addCleanup(compteur.unlink, missing_ok=True)
+        compteur.unlink(missing_ok=True)
+        dossier = self.racine / "tests"
+        cree = not dossier.exists()
+        dossier.mkdir(exist_ok=True)
+        if cree:
+            self.addCleanup(shutil.rmtree, dossier, True)
+        init = dossier / "__init__.py"
+        if not init.exists():
+            init.touch()
+            self.addCleanup(init.unlink, missing_ok=True)
+        rouge = dossier / "test_rouge_socle.py"
+        self.addCleanup(rouge.unlink, missing_ok=True)
+        # La sortie change à chaque lancement, comme une durée.
+        rouge.write_text("import time\nimport unittest\n\n\nclass T(unittest.TestCase):\n"
+                         "    def test_rouge(self):\n        self.fail(str(time.time_ns()))\n")
+        premier = json.loads(self.appeler(hooks.stop, self.projet, {"session_id": "r", "stop_hook_active": False}))
+        self.assertEqual(premier.get("decision"), "block", premier)
+        self.assertIn("verify.", premier["reason"])
+        relance = json.loads(self.appeler(hooks.stop, self.projet, {"session_id": "r", "stop_hook_active": True}))
+        self.assertNotIn("decision", relance)
+        self.assertIn("sans changement depuis la tentative précédente", relance["systemMessage"])
+
+    def test_une_relance_apres_un_changement_bloque_encore(self):
+        from socle import config
+
+        compteur = self.racine / config.COMPTEUR_STOP
+        self.addCleanup(compteur.unlink, missing_ok=True)
+        compteur.unlink(missing_ok=True)
+        self.canonique.write_text(self.sain + self.FAUX)
+        self.appeler(hooks.stop, self.projet, {"session_id": "j", "stop_hook_active": False})
+        self.canonique.write_text(self.sain + self.FAUX + "\nUne ligne de plus.\n")
+        self.assertIn("tentative 2/", self.appeler(hooks.stop, self.projet, {"session_id": "j", "stop_hook_active": True}))
+        # La signature change avec l'arbre.
+        avant = hooks.signature_d_echec(self.racine, ["memoire.preuves x"])
+        self.assertNotEqual(hooks.signature_d_echec(self.racine, ["memoire.preuves y"]), avant)
+        self.canonique.write_text(self.sain + self.FAUX)
+        self.assertNotEqual(hooks.signature_d_echec(self.racine, ["memoire.preuves x"]), avant)
 
     def test_l_empreinte_voit_le_contenu_d_un_fichier_non_suivi(self):
         """Relevé de la passe de recul, F : seuls les noms des fichiers non

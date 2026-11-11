@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0141 — Le relecteur sans contexte agit dans le dépôt : une commande mal dirigée y a lancé l'installeur, et le hook l'a laissé faire
 
-> statut : ouvert · origine : J-2026-11-09-B · lu : backlog@1324e2bb
+> statut : fait · origine : J-2026-11-09-B · lu : backlog@1324e2bb · ref : J-2026-11-11-E
 
 Pendant la revue adversariale de l'adaptateur `kotlin` (J-2026-11-09-B),
 le relecteur, un sous-agent sans contexte, voulait éprouver l'installeur
@@ -24,4 +24,20 @@ Pistes, chacune touchant un fichier protégé ou le hook, donc une demande :
   commité.
 
 Fait quand :
-- [ ] un relecteur ne peut plus changer un fichier protégé du dépôt sans que le hook le refuse, ou la raison de ne pas l'empêcher est écrite, et un test le montre
+- [x] un relecteur ne peut plus changer un fichier protégé du dépôt sans que le hook le refuse, ou la raison de ne pas l'empêcher est écrite, et un test le montre
+
+Fait par les deux premières pistes (ADR-0062) : le hook refuse
+l'installeur visé sur un projet équipé hors du mode de son verrou, et le
+dossier de la revue cantonne le relecteur à un dossier temporaire hors du
+dépôt. Les raisons de ne pas empêcher le reste sont écrites dans l'ADR.
+La troisième piste, la remise d'un fichier protégé par l'agent, assouplit :
+elle n'est pas faite, et reste à décider par l'humain s'il la veut.
+
+Ce qui reste ouvert (revue du lot, J-2026-11-11-F) : sur un projet en
+mode projet, c'est-à-dire tout projet équipé sauf ce dépôt, la commande
+de l'incident (`install --target . --adapter kotlin --owner @essai`)
+passe toujours le hook, le mode demandé étant celui du verrou. Le
+contrôle des fichiers protégés arrête le commit, mais la remise en état
+revient à l'humain ; la piste qui la permettrait à l'agent est B-0165.
+La revue a aussi fait refuser une cible que le hook ne sait pas résoudre
+(une variable, une substitution, `~autre`) et les options abrégées.
