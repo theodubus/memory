@@ -19,7 +19,7 @@ import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from socle import config, language as langue, memory as memoire, utils as outils
+from socle import config, fingerprint as empreinte, language as langue, memory as memoire, utils as outils
 from socle.messages import a_traduire, langue as langue_des_messages, trad
 
 # Les sections et les réponses, sous leurs clés internes ; elles s'écrivent
@@ -38,12 +38,16 @@ MOTIFS_INTERNES = [
 ]
 MOTS_DESCRIPTION_MIN = 5
 # Une ligne d'empreinte (ADR-0058) : un fichier protégé et son empreinte
-# nouvelle, rien d'autre, quelle que soit sa mise en liste. C'est ce que
+# nouvelle, rien d'autre, dans les mises en liste que `ligne_d_empreinte`
+# énumère. C'est ce que
 # `protege.fichiers` lit dans la demande qui approuve une mise à jour ;
 # l'humain, lui, lit les fichiers dans la pull request.
 EMPREINTE_DE_FICHIER = re.compile(r"sha256:[0-9a-f]{16}")
-FICHIER_SUPPRIME = ("supprimé", "deleted")
-DECOR_DE_LISTE = {"-", "*", "+", "—", "–", ":", "|", "·"}
+FICHIER_SUPPRIME = tuple(empreinte.SUPPRIME.values())
+DECOR_DE_LISTE = {"-", "+", "—", "–", "|", "·", "→", "->", "=>"}
+_PUCE_NUMEROTEE = re.compile(r"\d+[.)]")
+# Ce qu'un chemin de fichier ne porte pas : un motif, un lien Markdown.
+_PAS_UN_FICHIER = re.compile(r"[*?\[\]()<>]")
 SECTION_MIN = 15
 # Une demande lue une semaine plus tard, sans le projet en tête : le contexte
 # raconte, il ne résume pas en une ligne.
@@ -195,19 +199,34 @@ def identifiants_cites(texte: str, motifs: list[re.Pattern]) -> set[str]:
     return res
 
 
-def ligne_d_empreinte(ligne: str, proteges: list[str]) -> bool:
+def ligne_d_empreinte(ligne: str, proteges: list[str], racine: Path | None = None) -> bool:
     """ADR-0058 : la ligne ne dit qu'un fichier protégé et son empreinte
-    nouvelle (`sha256:` et seize caractères, ou « supprimé »), dans un ordre
-    ou dans l'autre, en puce, entre accents graves ou dans un tableau. Un mot
-    de plus, ou un chemin que la politique ne protège pas, et c'est de la
+    nouvelle (`sha256:` et seize caractères, ou « supprimé » / `deleted`),
+    dans un ordre ou dans l'autre. Sont acceptés autour : une puce (`-`,
+    `*`, `+`) ou un numéro (`1.`, `1)`), une cellule de tableau (`|`), des
+    accents graves ou du gras (`**`) sur l'un ou l'autre, un deux-points
+    collé ou séparé, un tiret, un point médian, une flèche (`→`, `->`,
+    `=>`), une ponctuation finale (`.`, `,`, `;`). Ne l'est pas : un mot de
+    plus, un chemin que la politique ne protège pas, un répertoire (finissant
+    par `/`, ou qui en est un sous `racine`), un motif (`*`, `?`, `[`), un
+    lien Markdown. Ce n'est alors pas une ligne d'empreinte, mais de la
     prose."""
-    jetons = [j.strip("`").rstrip(".,;") for j in ligne.replace("`", " ").split()]
+    jetons = ligne.replace("`", " ").replace("→", " → ").split()
+    if jetons and _PUCE_NUMEROTEE.fullmatch(jetons[0]):
+        jetons = jetons[1:]
+    # Le gras et la ponctuation qui collent au jeton, pas les `_` d'un nom.
+    jetons = [re.sub(r"^\*+|[*.,;:]+$", "", j) for j in jetons]
     jetons = [j for j in jetons if j and j not in DECOR_DE_LISTE]
     if len(jetons) != 2:
         return False
     empreintes = [j for j in jetons if EMPREINTE_DE_FICHIER.fullmatch(j) or j in FICHIER_SUPPRIME]
     chemins = [j for j in jetons if j not in empreintes]
-    return len(empreintes) == 1 and len(chemins) == 1 and outils.correspond(chemins[0], proteges)
+    if len(empreintes) != 1 or len(chemins) != 1:
+        return False
+    chemin = chemins[0]
+    if chemin.endswith("/") or _PAS_UN_FICHIER.search(chemin) or (racine is not None and (racine / chemin).is_dir()):
+        return False
+    return outils.correspond(chemin, proteges)
 
 
 def hors_empreintes(texte: str, projet: config.Projet) -> str:
@@ -216,13 +235,16 @@ def hors_empreintes(texte: str, projet: config.Projet) -> str:
     fichiers protégés d'une mise à jour n'y pèse donc rien, et ses
     empreintes n'ont pas à être décrites une à une."""
     proteges = projet.chemins_proteges()
-    return "".join(ligne for ligne in texte.splitlines(keepends=True) if not ligne_d_empreinte(ligne, proteges))
+    return "".join(ligne for ligne in texte.splitlines(keepends=True)
+                   if not ligne_d_empreinte(ligne, proteges, projet.racine))
 
 
-def contrat(projet: config.Projet, chemin: str) -> str:
+def contrat(projet: config.Projet, chemin: str, questions: bool = False) -> str:
     """ADR-0058 : le contrat d'une demande, dit par la commande qui la pose,
     avant qu'elle soit écrite, avec les seuils du lint et le budget du
-    projet. Le lint reste le juge ; ceci évite de l'apprendre à son refus."""
+    projet. Le lint reste le juge ; ceci évite de l'apprendre à son refus.
+    Avec `questions`, celui du gabarit des questions de cadrage (D-0067),
+    qui a sa section « Questions » et une réponse libre de plus."""
     lg = langue.du_projet(projet)
     noms = [v.get(langue_des_messages(), v["fr"]) for v in langue.PARAGRAPHES_CONTEXTE.values()]
     lignes = [trad("Son contrat, que le lint juge dès l'écriture (le skill `socle-request` le détaille) :"),
@@ -240,6 +262,10 @@ def contrat(projet: config.Projet, chemin: str) -> str:
                    "Recommandation » sépare le vérifié du supposé ;"),
               trad("- « Réponses possibles » propose les réponses de base : {reponses}.",
                    reponses=", ".join(f"`{langue.mot(langue.REPONSES, r, lg)}`" for r in langue.REPONSES))]
+    if questions:
+        lignes.insert(3, trad("- « Questions » pose chaque question ouverte, en gras et numérotée, suivie de "
+                              "l'hypothèse de l'agent (« aucune » s'il n'en a pas) ; « Réponses possibles » garde la "
+                              "réponse libre du gabarit, `reponses`, en plus des réponses de base ;"))
     budget = projet.budget_octets(chemin)
     if budget:
         lignes.append(trad("Son budget : {budget} octets, les lignes d'empreinte mises à part.", budget=budget))

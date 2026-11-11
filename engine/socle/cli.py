@@ -231,7 +231,7 @@ def cmd_new(args) -> int:
         # après l'identifiant, que la première ligne garde (ADR-0058).
         from socle import requests as demandes
 
-        print(demandes.contrat(projet, str(Path(ch.demandes) / chemin.name)))
+        print(demandes.contrat(projet, str(Path(ch.demandes) / chemin.name), questions=questions))
     return 0
 
 
@@ -604,7 +604,7 @@ def cmd_approve(args) -> int:
     cites = []
     for f in args.files or []:
         p = racine / f
-        nouvelle = empreinte.courte(empreinte.fichier(p)) if p.is_file() else ("deleted" if en else "supprimé")
+        nouvelle = empreinte.courte(empreinte.fichier(p)) if p.is_file() else empreinte.supprime(lg)
         cites.append(f"- `{f}` — protected file changed by the human themselves; new fingerprint `{nouvelle}`."
                      if en else f"- `{f}` — fichier protégé modifié par l'humain lui-même ; empreinte nouvelle "
                      f"`{nouvelle}`.")

@@ -725,7 +725,12 @@ MESSAGES: dict[str, str] = {
     "protégé qu'elle fait approuver":
         "{octets} bytes for a budget of {budget} ({motif}), fingerprint lines set aside: tighten the request, or "
         "bring down to a fingerprint line, the path and the fingerprint with nothing else, each protected file it "
-        "has approved",
+        "submits for approval",
+    "- « Questions » pose chaque question ouverte, en gras et numérotée, suivie de l'hypothèse de l'agent (« aucune "
+    "» s'il n'en a pas) ; « Réponses possibles » garde la réponse libre du gabarit, `reponses`, en plus des réponses "
+    "de base ;":
+        "- “Questions” asks each open question, in bold and numbered, followed by the agent's assumption (“none” if it "
+        "has none); “Possible answers” keeps the template's free answer, `answers`, on top of the basic answers;",
     "Son contrat, que le lint juge dès l'écriture (le skill `socle-request` le détaille) :":
         "Its contract, which the lint judges as soon as it is written (the `socle-request` skill details it):",
     "- chaque section du squelette remplie, sans texte du gabarit laissé entre chevrons ;":
@@ -2023,7 +2028,9 @@ MESSAGES: dict[str, str] = {
     ".socle/socle check` les donne), que l'humain valide dans la conversation. La poser par `python3 .socle/socle "
     'new request "<décision>"`, qui en dit le contrat, celui du moteur nouveau ; chaque fichier s\'y écrit sur sa '
     "ligne, son chemin et son empreinte sans rien d'autre : ces lignes ne comptent pas dans le budget de la demande. "
-    "Poussée, elle laisse commiter et "
+    "Poussée seule d'abord, la demande est jugée par la CI avec le moteur d'avant, qui peut encore compter ces "
+    "lignes dans son budget et la refuser : ce refus cesse une fois les fichiers protégés commités, avec le moteur "
+    "nouveau. Poussée, elle laisse commiter et "
     "pousser ces fichiers si la branche par défaut exige la CI du socle, qui les refuse jusqu'à la réponse et où "
     "l'humain les lit dans la pull request (D-0071) ; sinon, ils restent dans l'arbre jusqu'à sa réponse, puis se "
     "commitent avec elle. Une session qui a dû "
@@ -2034,7 +2041,9 @@ MESSAGES: dict[str, str] = {
         "check` gives them), which the human approves in the conversation. Put it with `python3 .socle/socle new "
         'request "<decision>"`, which states its contract, the new engine\'s; each file is written there on its own '
         "line, its path and its fingerprint with nothing else: these lines do not count in the request's budget. "
-        "Once pushed, it lets these files be "
+        "Pushed alone first, the request is judged by the CI with the previous engine, which may still count these "
+        "lines in its budget and refuse it: that refusal stops once the protected files are committed, with the new "
+        "engine. Once pushed, it lets these files be "
         "committed and pushed if the default branch requires the socle CI, which refuses them until the answer and "
         "where the human reads them in the pull request (D-0071); otherwise they stay in the tree until the answer, "
         "then are committed with it. A session that had to add the socle's "

@@ -1343,7 +1343,10 @@ def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str]) -> list[str
                            "l'humain valide dans la conversation. La poser par `python3 .socle/socle new request "
                            '"<décision>"`, qui en dit le contrat, celui du moteur nouveau ; chaque fichier s\'y '
                            "écrit sur sa ligne, son chemin et son empreinte sans rien d'autre : ces lignes ne "
-                           "comptent pas dans le budget de la demande. Poussée, elle laisse commiter et pousser ces "
+                           "comptent pas dans le budget de la demande. Poussée seule d'abord, la demande est jugée par la CI "
+                           "avec le moteur d'avant, qui peut encore compter ces lignes dans son budget et la refuser "
+                           ": ce refus cesse une fois les fichiers protégés commités, avec le moteur nouveau. "
+                           "Poussée, elle laisse commiter et pousser ces "
                            "fichiers si la branche par défaut exige la CI du socle, qui les refuse jusqu'à la réponse "
                            "et où l'humain les lit dans la pull request (D-0071) ; sinon, ils restent dans l'arbre "
                            "jusqu'à sa réponse, puis se commitent avec elle. Une session qui a dû ajouter le dépôt du socle "

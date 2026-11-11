@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0163 — En anglais, socle approve cite deleted pour un fichier protégé supprimé, que protege.fichiers ne lit pas
 
-> statut : ouvert · origine : J-2026-11-10-R · lu : backlog@f697f7f8
+> statut : fait · origine : J-2026-11-10-R · lu : backlog@f697f7f8 · ref : J-2026-11-11-B
 
 Dans un projet dont la mémoire est en anglais, `socle approve` écrit
 `deleted` comme empreinte nouvelle d'un fichier protégé supprimé
@@ -13,4 +13,4 @@ serait pas reconnue. Lu dans le code en traitant le budget d'une demande
 
 ## Fait quand
 
-- [ ] dans un projet en anglais, un fichier protégé supprimé que l'humain approuve passe la CI, et un test le montre
+- [x] dans un projet en anglais, un fichier protégé supprimé que l'humain approuve passe la CI, et un test le montre

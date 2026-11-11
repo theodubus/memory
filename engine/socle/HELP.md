@@ -215,7 +215,10 @@ changés (`socle approve`), puis commiter. En session cloud, sans terminal,
 l'agent pose une demande qui cite chaque fichier protégé changé avec son
 empreinte, et l'humain la valide dans la conversation ; chaque fichier y
 tient sur une ligne, son chemin et son empreinte sans rien d'autre, que le
-budget de la demande ne compte pas. Si la branche par
+budget de la demande ne compte pas. Poussée seule d'abord, la demande est
+jugée par la CI avec le moteur d'avant, qui peut encore compter ces lignes
+et la refuser : ce refus cesse une fois les fichiers protégés commités,
+avec le moteur nouveau. Si la branche par
 défaut exige la CI du socle, l'agent commite et pousse ces fichiers dès la
 demande poussée : la CI reste rouge jusqu'à la validation, et l'humain les
 lit dans la pull request avant de répondre. Le dépôt public du

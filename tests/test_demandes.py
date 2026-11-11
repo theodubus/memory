@@ -323,6 +323,42 @@ class TestLignesDEmpreinte(unittest.TestCase):
                       "- `.github/CODEOWNERS`", "sha256:0123456789abcdef", "## Éléments cités", ""):
             self.assertFalse(demandes.ligne_d_empreinte(ligne, self.PROTEGES), ligne)
 
+    def test_les_mises_en_liste_courantes_sont_des_lignes_d_empreinte(self):
+        """La relecture de B-0149 : une liste numérotée, un deux-points collé
+        au chemin, du gras, une flèche redevenaient de la prose comptée, et un
+        répertoire passait par le motif `**`. Chaque forme, une à une."""
+        acceptees = {
+            "numérotée": "1. .socle/engine/socle/hooks.py sha256:0123456789abcdef",
+            "numérotée, parenthèse": "12) `.github/CODEOWNERS` `sha256:0123456789abcdef`",
+            "deux-points collé": "- .github/CODEOWNERS: sha256:0123456789abcdef",
+            "deux-points collé, accents graves": "- `.github/CODEOWNERS`: `sha256:0123456789abcdef`",
+            "gras": "- **.github/CODEOWNERS** sha256:0123456789abcdef",
+            "gras et accents graves": "- **`.github/CODEOWNERS`** — `sha256:0123456789abcdef`",
+            "gras et deux-points": "- **.github/CODEOWNERS:** sha256:0123456789abcdef",
+            "accents graves": "`.socle/engine/socle/hooks.py` `sha256:0123456789abcdef`",
+            "flèche": "- .github/CODEOWNERS → sha256:0123456789abcdef",
+            "flèche collée": "- .github/CODEOWNERS→sha256:0123456789abcdef",
+            "flèche ascii": "- .github/CODEOWNERS -> sha256:0123456789abcdef",
+            "flèche double": "- .github/CODEOWNERS => sha256:0123456789abcdef",
+            "puce étoile": "* .github/CODEOWNERS sha256:0123456789abcdef",
+            "puce plus": "+ .github/CODEOWNERS sha256:0123456789abcdef",
+            "point médian": ".github/CODEOWNERS · sha256:0123456789abcdef",
+            "supprimé en anglais": "- `.github/CODEOWNERS` deleted",
+            "un nom à tirets bas": "- .socle/engine/socle/__init__.py sha256:0123456789abcdef",
+        }
+        for forme, ligne in acceptees.items():
+            self.assertTrue(demandes.ligne_d_empreinte(ligne, self.PROTEGES, self.racine), forme)
+        refusees = {
+            "répertoire, barre finale": "- .socle/engine/ sha256:0123456789abcdef",
+            "répertoire existant": "- .socle/engine/socle sha256:0123456789abcdef",
+            "motif": "- .socle/engine/** sha256:0123456789abcdef",
+            "lien Markdown": "- [.github/CODEOWNERS](.github/CODEOWNERS) sha256:0123456789abcdef",
+            "un mot de plus après la flèche": "- .github/CODEOWNERS → nouvelle sha256:0123456789abcdef",
+        }
+        self.assertTrue((self.racine / ".socle/engine/socle").is_dir())
+        for forme, ligne in refusees.items():
+            self.assertFalse(demandes.ligne_d_empreinte(ligne, self.PROTEGES, self.racine), forme)
+
     def test_hors_empreintes_ne_retire_que_ces_lignes(self):
         texte = self.avec(self.liste(3) + "- `calc.py` — `sha256:0123456789abcdef`\n")
         self.assertEqual(demandes.hors_empreintes(texte, self.projet),
@@ -361,6 +397,24 @@ class TestLignesDEmpreinte(unittest.TestCase):
         self.assertIn("ces lignes n'ont pas à être décrites et ne comptent pas dans le budget", suite)
         self.assertIn("`valider`, `refuser`, `contexte-insuffisant`", suite)
         self.assertIn("Son budget : 12000 octets, les lignes d'empreinte mises à part.", suite)
+        self.assertNotIn("« Questions »", suite)
+
+    def test_avec_questions_le_contrat_dit_la_section_des_questions(self):
+        """La relecture de B-0149 : `new request --questions` imprimait le
+        contrat d'une demande ordinaire, muet sur la section « Questions » de
+        son gabarit et sur sa réponse libre."""
+        from socle import cli
+
+        sortie = io.StringIO()
+        with contextlib.redirect_stdout(sortie):
+            self.assertEqual(cli.main(["--root", str(self.racine), "new", "request", "--questions", "Cadrer"]), 0)
+        suite = sortie.getvalue().partition("\n")[2]
+        self.assertEqual(suite.rstrip("\n"), demandes.contrat(self.projet, "memory/requests/D-0001-x.md", questions=True))
+        lignes = suite.splitlines()
+        questions = next(i for i, l in enumerate(lignes) if l.startswith("- « Questions »"))
+        self.assertTrue(lignes[questions - 1].startswith("- « Contexte »"))
+        self.assertTrue(lignes[questions + 1].startswith("- « Éléments cités »"))
+        self.assertIn("la réponse libre du gabarit, `reponses`", suite)
 
 
 class TestUneDemandeQuiAutorise(unittest.TestCase):

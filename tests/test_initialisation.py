@@ -238,6 +238,11 @@ class TestMiseAJour(Base):
         # lint, et sa liste de 54 fichiers en dépassait le budget.
         self.assertIn('La poser par `python3 .socle/socle new request "<décision>"`, qui en dit le contrat', etapes[0])
         self.assertIn("ces lignes ne comptent pas dans le budget de la demande", etapes[0])
+        # La relecture de B-0149 : poussée seule, la demande est jugée par le
+        # moteur d'avant, qui compte encore ces lignes ; rien ne le disait.
+        self.assertIn("Poussée seule d'abord, la demande est jugée par la CI avec le moteur d'avant, qui peut "
+                      "encore compter ces lignes dans son budget et la refuser : ce refus cesse une fois les "
+                      "fichiers protégés commités", etapes[0])
         # B-0148 : deux refus du hook avant commit sur le pilote ; l'ordre
         # des commits se dit.
         commit = next(e for e in etapes if "git commit" in e)

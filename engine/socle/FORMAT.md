@@ -242,15 +242,21 @@ révélée impossible à trancher pour l'humain.
   README signalé par la CI`. Un fichier protégé à faire approuver, comme
   chacun de ceux qu'une mise à jour change, s'y écrit sur une ligne
   d'empreinte (ADR-0058) : son chemin et son empreinte nouvelle (`sha256:`
-  et seize caractères, ou `supprimé`), rien d'autre, quelle que soit sa mise
-  en liste (`- .socle/policy.toml sha256:0123456789abcdef`). Une telle
-  ligne n'a pas à être décrite et ne compte pas dans le budget de la
-  demande : l'humain lit les fichiers dans la pull request, pas leurs
-  empreintes. Un mot de plus sur la ligne, ou un chemin que la politique
-  ne protège pas, et elle redevient de la prose, décrite et comptée.
+  et seize caractères, ou `supprimé` comme `deleted`), rien d'autre
+  (`- .socle/policy.toml sha256:0123456789abcdef`). Autour, sont admis :
+  une puce (`-`, `*`, `+`) ou un numéro (`1.`, `1)`), une cellule de
+  tableau, des accents graves ou du gras sur le chemin ou l'empreinte, un
+  deux-points collé au chemin ou séparé, un tiret, un point médian, une
+  flèche (`→`, `->`, `=>`) et une ponctuation finale. Une telle ligne n'a
+  pas à être décrite et ne compte pas dans le budget de la demande :
+  l'humain lit les fichiers dans la pull request, pas leurs empreintes. Un
+  mot de plus sur la ligne, un chemin que la politique ne protège pas, un
+  répertoire, un motif (`*`, `?`) ou un lien Markdown vers le fichier, et
+  elle redevient de la prose, décrite et comptée.
 - `socle new request` imprime ce contrat sous l'identifiant, avec les
   seuils du lint et le budget du projet : il se lit avant d'écrire la
-  demande, pas au refus du lint.
+  demande, pas au refus du lint. Avec `--questions`, il dit aussi la
+  section « Questions » de ce gabarit et sa réponse libre.
 - « Options » dit l'effort, le risque et la réversibilité ; « Conséquences »
   ce qui se passe si l'humain valide, refuse, ne répond pas ;
   « Recommandation » sépare le vérifié du supposé.
