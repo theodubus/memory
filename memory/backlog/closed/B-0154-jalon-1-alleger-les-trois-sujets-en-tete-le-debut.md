@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0154 — Jalon 1 — Alléger : les trois sujets en tête, le début de session, le contexte long
 
-> statut : ouvert · origine : J-2026-11-10-N · lu : backlog@35bd69cc · forme : jalon · après : B-0149, B-0155, B-0143, B-0141
+> statut : fait · origine : J-2026-11-10-N · ref : J-2026-11-11-W · lu : backlog@35bd69cc · forme : jalon · après : B-0149, B-0155, B-0143, B-0141
 
 Le premier jalon que Théo a validé (D-0093@333ad9d0, J-2026-11-10-N) : baisser le
 coût de chaque intervention avant chess. D'abord les trois sujets
@@ -19,4 +19,4 @@ par B-0149).
 
 ## Fait quand
 
-- [ ] ses quatre sujets sont clos
+- [x] ses quatre sujets sont clos

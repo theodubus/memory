@@ -6,9 +6,9 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 ## En cours
 
 chess n'attend plus le pilote (ADR-0059, D-0096). Livrés : le jalon 1
-(B-0154), B-0166, B-0164, B-0165, B-0168, B-0169, B-0170. L'essai à
-blanc est fait ; restent, avant l'installation (B-0126, D-0100) : les
-copies des skills, puis le prompt d'installation.
+(B-0154), B-0166, B-0164, B-0165, B-0168, B-0169, B-0170. L'installation
+(B-0126) se lance par `docs/fabrication/chess/prompt-installation.md` ;
+on attend son compte rendu.
 Cette session orchestre ; des sous-agents sur Opus
 implémentent, chacun dans un worktree, relus avant tout push
 (J-2026-11-11-G). Après chess : B-0151,

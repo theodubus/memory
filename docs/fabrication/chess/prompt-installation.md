@@ -46,6 +46,7 @@ Consigne-les dans la mémoire du projet une fois le socle posé, avec ce texte c
    PYTHONPATH=/tmp/socle python3 -m socle install --target . --adoption --adapter /tmp/chess.toml --owner @theodubus --human Théo
    - L'installeur juge l'adaptateur avant d'écrire quoi que ce soit. S'il le refuse, corrige le fichier et relance.
    - Dès que .claude/settings.json est écrit, les hooks du socle te jugent : un fichier protégé ne se corrige plus à la main. Pour revenir en arrière, commite sur ta branche, change de branche, puis relance l'installeur avec les bonnes options ; jamais fichier par fichier.
+   - Pas de mémoire privée à l'installation : n'ajoute pas l'option --private. Elle pourra se poser plus tard, si le besoin apparaît.
    - L'installeur doit dire que le JavaScript de ui/ ne reçoit pas d'adaptateur, et poser le budget de CLAUDE.md avec une marge d'un dixième. Si ce n'est pas le cas, c'est un constat bloquant.
 
 4. Suis les étapes « Et maintenant » de l'installeur, dans l'ordre, puis applique mes décisions :
@@ -62,7 +63,7 @@ Consigne-les dans la mémoire du projet une fois le socle posé, avec ce texte c
 6. Commite, pousse, ouvre la pull request. Sa description dit ce que l'installation ajoute, et reprend ce qui me revient.
 
 7. Rends-moi compte, court :
-   - ce qui me revient, dans l'ordre : les lignes de politique à ajouter (texte exact, et lien vers le fichier sur la branche), les fichiers protégés à approuver, l'adaptateur à lire, la pull request à fusionner, la branche par défaut à protéger ;
+   - ce qui me revient, dans l'ordre : les lignes de politique à ajouter (texte exact, et lien vers le fichier sur la branche), les fichiers protégés à approuver, l'adaptateur à lire, la pull request à fusionner. La branche par défaut est déjà protégée : dis-moi seulement s'il faut y exiger la CI du socle, et comment ;
    - les contradictions entre la section du socle et le texte de chess dans CLAUDE.md (qui fusionne, socle state et tools/etat.sh, socle verify et tools/verify.sh, le titre en double) : corrige dans le texte de chess celles que mes décisions tranchent, liste les autres ;
    - ce qui tourne en double à chaque fin de tour (les hooks de chess et ceux du socle lancent chacun les tests) : mesure-le et propose, sans rien retirer ;
    - les avertissements d'adoption, tels quels ;
