@@ -1,0 +1,37 @@
+<!-- socle: couche=backlog zone=publique -->
+# B-0173 — La consommation d'une session qui orchestre : mesurer ce qui pèse, puis écrire les règles qui la bornent
+
+> statut : ouvert · origine : J-2026-11-11-R · après : B-0126 · lu : backlog@e69f45bc
+
+Le 11 novembre, une session qui orchestre des sous-agents a vidé deux
+fenêtres de cinq heures, la seconde en moins d'une demi-heure, et pris
+plus de trente points de la semaine (J-2026-11-11-P, J-2026-11-11-R). Théo
+demande si un sujet doit porter la consommation : « Sous agents, modèles,
+gestion du contexte lu, compactage/demande de compactage ou autre ? Ou
+c'est uniquement lié a fable et disparaîtra quand je ferais tout de
+nouveau avec opus ».
+
+Le modèle ne change que le prix de chaque lecture. Ce qui pèse tient à la
+façon de travailler, et reste avec un autre modèle :
+
+- la conversation principale se relit à chaque appel ; elle grossit
+  jusqu'au compactage (B-0156) ;
+- après une pause longue, une limite par exemple, tout se relit au prix
+  fort : la conversation, et chaque sous-agent qu'on reprend ;
+- chaque sous-agent a son contexte ; en lancer plusieurs à la fois
+  multiplie la dépense, et le reprendre après sa revue le fait relire ;
+- ce que le socle injecte : l'état à chaque démarrage, compactage et
+  reprise (B-0010), les messages des hooks, le dossier de revue.
+
+Rien de cela n'est mesuré : la session ne voit que le pourcentage de ses
+fenêtres. À mesurer d'abord, sur une journée d'orchestration ; puis écrire
+dans la méthode ce qui la borne : quand compacter ou le demander, combien
+de sous-agents à la fois, quand reprendre un sous-agent plutôt qu'en
+lancer un neuf, quel modèle pour quel travail, que faire à l'approche
+d'une limite.
+
+## Fait quand
+
+- [ ] une mesure dit, sur une journée d'orchestration, ce que pèsent la conversation principale, les sous-agents et les reprises après une pause
+- [ ] ce que le socle injecte à chaque démarrage, compactage et reprise est mesuré, et borné si c'est lui qui pèse (B-0010)
+- [ ] la méthode de délégation dit quand compacter, combien de sous-agents à la fois, quand en reprendre un, quel modèle pour quoi, et que faire à l'approche d'une limite

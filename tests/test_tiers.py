@@ -101,5 +101,78 @@ class TestContexte(unittest.TestCase):
         self.assertNotIn("_bmad/outil.py", ctx.fichiers)
 
 
+class TestCommitsTiers(unittest.TestCase):
+    """B-0169 : le commit d'une autre session d'agent, sans les hooks du
+    socle, qui ne touche que des chemins déclarés tiers, n'est pas jugé ; un
+    commit qui touche aussi un fichier du projet l'est en entier."""
+
+    AGENT = "Co-Authored-By: Claude <noreply@anthropic.com>"
+
+    def setUp(self):
+        self.racine = depot({"calc.py": "X = 1\n"})
+        installer(self.racine)
+        self.env = {**os.environ, "HOME": str(self.racine), "GIT_CONFIG_NOSYSTEM": "1", "GIT_AUTHOR_NAME": "a",
+                    "GIT_AUTHOR_EMAIL": "a@b", "GIT_COMMITTER_NAME": "a", "GIT_COMMITTER_EMAIL": "a@b"}
+        gf = self.racine / ".socle/guardrails.toml"
+        gf.write_text(installeur.declarer_tiers(gf.read_text(encoding="utf-8"), ["ui/**"]), encoding="utf-8")
+        self.base = self.commit("Le projet, son interface déclarée tierce")
+
+    def commit(self, message: str) -> str:
+        subprocess.run(["git", "add", "-A"], cwd=self.racine, check=True, env=self.env)
+        subprocess.run(["git", "commit", "-q", "--no-verify", "--allow-empty", "-m", message], cwd=self.racine,
+                       check=True, env=self.env)
+        return subprocess.run(["git", "rev-parse", "HEAD"], cwd=self.racine, check=True, env=self.env,
+                              capture_output=True, text=True).stdout.strip()
+
+    def ecrire(self, chemin: str, texte: str):
+        p = self.racine / chemin
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(texte, encoding="utf-8")
+
+    def test_commits_du_projet_ecarte_ceux_qui_ne_touchent_que_des_tiers(self):
+        self.ecrire("ui/app.py", "def rendu(x):\n    return x\n")
+        seul = self.commit(f"fix: l'interface\n\n{self.AGENT}")
+        self.ecrire("ui/app.py", "def rendu(x):\n    return 2 * x\n")
+        self.ecrire("calc.py", "X = 2\n")
+        mixte = self.commit(f"L'interface et le calcul\n\n{self.AGENT}")
+        vide = self.commit(f"Rien\n\n{self.AGENT}")
+        projet = config.Projet.charger(self.racine)
+        ctx = contexte.Contexte(projet, etage="ci", base=self.base)
+        self.assertEqual([c["sha"] for c in ctx.commits], [seul, mixte, vide])
+        self.assertEqual([c["sha"] for c in ctx.commits_du_projet], [mixte, vide])
+        self.assertTrue(contexte.ne_touche_que_des_tiers(projet, self.racine, ctx.commits[0]))
+        self.assertFalse(contexte.ne_touche_que_des_tiers(projet, self.racine, ctx.commits[1]))
+        self.assertFalse(contexte.ne_touche_que_des_tiers(projet, self.racine, ctx.commits[2]))
+
+    def test_la_trace_des_hooks_ne_juge_pas_le_commit_qui_ne_touche_que_des_tiers(self):
+        self.ecrire("ui/app.py", "def rendu(x):\n    return x\n")
+        seul = self.commit(f"L'interface\n\n{self.AGENT}")
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="ci", base=self.base)
+        self.assertEqual(contexte.executer(ctx, ids=["hooks.trace"]).erreurs("hooks.trace"), [])
+        self.ecrire("ui/app.py", "def rendu(x):\n    return 2 * x\n")
+        self.ecrire("calc.py", "X = 2\n")
+        mixte = self.commit(f"L'interface et le calcul\n\n{self.AGENT}")
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="ci", base=self.base)
+        rapport = contexte.executer(ctx, ids=["hooks.trace"])
+        erreurs = "\n".join(c.message for c in rapport.erreurs("hooks.trace"))
+        self.assertIn(mixte[:10], erreurs)
+        self.assertNotIn(seul[:10], erreurs)
+
+
+    def test_une_dispense_portee_par_un_commit_tiers_n_est_ni_jugee_ni_lue(self):
+        """Illisible, elle ne fait pas échouer la CI ; valable, elle ne
+        dispense pas une fonction du projet de même nom."""
+        from socle import checks_tests as controles_tests
+        from socle.report import Rapport
+
+        self.ecrire("ui/app.py", "def rendu(x):\n    return x\n")
+        self.commit(f"L'interface\n\nDispense-test: rendu\n{self.AGENT}")
+        self.ecrire("ui/app.py", "def calcul(x):\n    return x\n")
+        self.commit(f"L'interface encore\n\nDispense-test: calcul — une raison assez longue\n{self.AGENT}")
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="ci", base=self.base)
+        r = Rapport()
+        self.assertEqual(controles_tests.dispenses_tests(ctx, r), set())
+        self.assertEqual(r.erreurs("tests.code-teste"), [])
+
 if __name__ == "__main__":
     unittest.main()

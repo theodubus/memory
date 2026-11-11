@@ -425,8 +425,10 @@ def trace(ctx, r):
     session (`Socle-Hooks:`, ajouté par le hook git). Absente, ou sans
     PreToolUse : les hooks n'ont jamais été chargés. Et depuis le commit
     précédent (`Socle-Hooks-Since-Commit:`) : sans PreToolUse, ils ont cessé
-    de tirer en cours de session."""
-    for c in ctx.commits:
+    de tirer en cours de session. Un commit qui ne touche que des chemins
+    déclarés tiers n'est pas un commit du projet : l'agent d'une autre
+    session, qui n'a pas les hooks du socle, l'a écrit (ADR-0031)."""
+    for c in ctx.commits_du_projet:
         if len(c["parents"]) != 1 or not est_agent(ctx.projet, c["message"]):
             continue
         if outils.lire_a(ctx.racine, c["parents"][0], ctx.projet.chemins.lock) is None:

@@ -312,6 +312,7 @@ class Installation(unittest.TestCase):
         git(self.racine, "init", "-q", "-b", "main")
         for chemin, texte in (("pyproject.toml", "[project]\nname = \"outils\"\n[tool.pytest.ini_options]\n"),
                               ("src/outils/verif.py", "def verifier():\n    return True\n"),
+                              ("settings.gradle.kts", "include(\":app\")\n"),
                               ("app/build.gradle.kts", "plugins { kotlin(\"jvm\") }\n"),
                               ("app/src/main/kotlin/app/App.kt", "package app\n\nfun main() {}\n")):
             p = self.racine / chemin
@@ -363,6 +364,7 @@ class MiseAJour(unittest.TestCase):
                               ("src/outils/verif.py", "def verifier():\n    return True\n")):
             self.ecrire(chemin, texte)
         installer(self.racine, ["python-pytest"])
+        self.ecrire("settings.gradle.kts", "include(\":app\")\n")
         self.ecrire("app/build.gradle.kts", "plugins { kotlin(\"jvm\") }\n")
         self.ecrire("app/src/main/kotlin/app/App.kt", "package app\n\nfun main() {}\n")
 
@@ -430,6 +432,7 @@ class Rafraichissement(unittest.TestCase):
         git(self.racine, "init", "-q", "-b", "main")
         for chemin, texte in (("pyproject.toml", "[project]\nname = \"outils\"\n[tool.pytest.ini_options]\n"),
                               ("src/outils/verif.py", "def verifier():\n    return True\n"),
+                              ("settings.gradle.kts", "include(\":app\")\n"),
                               ("app/build.gradle.kts", "plugins { kotlin(\"jvm\") }\n"),
                               ("app/src/main/kotlin/app/App.kt", "package app\n\nfun main() {}\n")):
             self.ecrire(chemin, texte)
@@ -634,9 +637,11 @@ class Detection(unittest.TestCase):
     def test_un_langage_tiers_n_appelle_pas_d_adaptateur(self):
         self.ecrire("pyproject.toml", "[project]\nname = \"x\"\n")
         self.ecrire("x.py", "X = 1\n")
-        self.ecrire("web/package.json", "{}\n")
+        # À la racine : le manifeste d'un sous-dossier n'appelle pas
+        # d'adaptateur, tiers ou non (B-0168).
+        self.ecrire("package.json", "{}\n")
         self.assertEqual(installeur.detecter_adaptateurs(self.racine), ["python", "javascript"])
-        self.ecrire(".socle/guardrails.toml", '[thirdparty]\npaths = ["web/**"]\n')
+        self.ecrire(".socle/guardrails.toml", '[thirdparty]\npaths = ["package.json"]\n')
         self.assertEqual(installeur.detecter_adaptateurs(self.racine), ["python"])
 
     def test_un_python_second_sous_pytest_prend_python_pytest(self):

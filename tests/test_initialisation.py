@@ -380,6 +380,80 @@ class TestEntrees(Base):
         self.assertTrue(all(e.statut == "mesure" and e.refs("preuve") for e in mem.entrees("F")))
         self.assertFalse(initialisation.detecter(self.charger()) is None)
 
+    def test_les_workflows_tiennent_en_un_fait_qui_distingue_les_ci(self):
+        """B-0170 : sur chess, onze workflows donnaient onze faits « une CI
+        GitHub existe », dont sept lancés à la main ou planifiés."""
+        self.racine = depot({"README.md": "# Projet\n",
+                             ".github/workflows/ci.yml": "name: CI\non: [push, pull_request]\njobs: {}\n",
+                             ".github/workflows/ui.yml": "on:\n  pull_request:\n    paths: [ui/**]\n"
+                                                         "  workflow_dispatch:\njobs: {}\n",
+                             ".github/workflows/mesure.yml": "on: workflow_dispatch\njobs: {}\n",
+                             ".github/workflows/nuit.yml": "'on':\n  schedule:\n    - cron: '0 3 * * *'\n",
+                             ".github/workflows/bizarre.yml": "name: sans déclencheur\n"})
+        installer(self.racine)
+        faits = initialisation.auditer_depot(self.charger())
+        workflows = [f for f in faits if f.preuve.startswith(".github/")]
+        self.assertEqual(len(workflows), 1)
+        self.assertEqual(workflows[0].titre,
+                         "Workflows GitHub du projet, qui jugent un push de branche ou une pull request : 2 "
+                         "(`ci.yml`, `ui.yml`) ; autres (à la main, planifiés, autre événement) : 2 (`mesure.yml`, "
+                         "`nuit.yml`) ; non lus : 1 (`bizarre.yml`)")
+        self.assertEqual(workflows[0].preuve, ".github/workflows/bizarre.yml")
+
+    def test_declencheurs_lus_sans_yaml_et_jamais_devines(self):
+        lire = initialisation.declencheurs
+        self.assertEqual(lire("on: push\n"), {"push"})
+        self.assertEqual(lire('"on": [ push , pull_request ]  # commentaire\n'), {"push", "pull_request"})
+        self.assertEqual(lire("on: {push: {branches: [main]}}\n"), {"push"})
+        self.assertEqual(lire("on:\n  - push\n  - workflow_dispatch\njobs:\n  on: x\n"),
+                         {"push", "workflow_dispatch"})
+        self.assertEqual(lire("on:\n  push:\n    branches:\n      - main\n\n  # note\n  schedule:\n"
+                              "    - cron: '0 0 * * *'\njobs: {}\n"), {"push", "schedule"})
+        self.assertIsNone(lire("name: rien\n"))
+        self.assertIsNone(lire("on: [push,\n  pull_request]\n"))
+        self.assertIsNone(lire("on: ${{ x }}\n"))
+
+    def test_declencheurs_un_push_de_tags_seuls_ne_juge_pas(self):
+        """Revue de B-0170, constat 1 : un release.yml sur tags ne juge ni
+        une branche ni une pull request."""
+        lire = initialisation.declencheurs
+        self.assertEqual(lire("on:\n  push:\n    tags: ['v*']\n"), {"push_tags"})
+        self.assertEqual(lire("on:\n  push:\n    tags-ignore:\n      - x\n  workflow_dispatch:\n"),
+                         {"push_tags", "workflow_dispatch"})
+        self.assertEqual(lire("on:\n  push:\n    branches: [main]\n    tags: ['v*']\n"), {"push"})
+        self.assertEqual(lire("on:\n  push:\n    tags: ['v*']\n  pull_request:\n"), {"push_tags", "pull_request"})
+        self.assertIsNone(lire("on: {push: {tags: ['v*']}}\n"))
+        self.assertIsNone(lire("on:\n  push: {tags: ['v*']}\n"))
+        self.assertEqual(initialisation.resumer_workflows(
+            {"release.yml": lire("on:\n  push:\n    tags: ['v*']\n"),
+             "pr.yml": lire("on:\n  push:\n    tags: ['v*']\n  pull_request:\n")}),
+            "Workflows GitHub du projet, qui jugent un push de branche ou une pull request : 1 (`pr.yml`) ; "
+            "autres (à la main, planifiés, autre événement) : 1 (`release.yml`)")
+
+    def test_declencheurs_formes_compactes_bom_et_non_lus_choisis(self):
+        """Revue de B-0170, constats 2 et 3."""
+        lire = initialisation.declencheurs
+        self.assertEqual(lire("on:\n  schedule:\n  - cron: '0 0 * * *'\n  workflow_dispatch:\n"),
+                         {"schedule", "workflow_dispatch"})
+        self.assertEqual(lire("on:\n- push\n- pull_request\njobs: {}\n"), {"push", "pull_request"})
+        self.assertEqual(lire("﻿on: push\n"), {"push"})
+        # Choix écrit : ces formes valides restent « non lues ».
+        self.assertIsNone(lire("on: {push: {branches: [main, dev]}, pull_request: {}}\n"))
+        self.assertIsNone(lire("on: &t\n  push:\n"))
+
+    def test_resumer_workflows_en_anglais_suit_sa_ponctuation(self):
+        """Revue de B-0170, constat 4."""
+        from socle import messages
+        with messages.dans("en"):
+            texte = initialisation.resumer_workflows({"a.yml": {"push"}, "b.yml": {"schedule"}, "c.yml": None})
+        self.assertEqual(texte, "The project's GitHub workflows, judging a branch push or a pull request: 1 (`a.yml`); "
+                                "others (manual, scheduled, other event): 1 (`b.yml`); unread: 1 (`c.yml`)")
+
+    def test_resumer_workflows_sans_ci(self):
+        self.assertEqual(initialisation.resumer_workflows({"a.yml": {"schedule"}}),
+                         "Workflows GitHub du projet, qui jugent un push de branche ou une pull request : aucun ; "
+                         "autres (à la main, planifiés, autre événement) : 1 (`a.yml`)")
+
 
 class TestCommandes(Base):
     def test_install_puis_init_par_la_ligne_de_commande(self):
