@@ -145,6 +145,168 @@ class TestGarde(unittest.TestCase):
         self.assertIn(".socle/", hooks.ecriture_protegee(self.projet, "rm -rf .socle"))
         self.assertIsNone(hooks.ecriture_protegee(self.projet, "touch calc.py"))
 
+    def test_remise_en_etat_d_un_fichier_protege(self):
+        """D-0098 (B-0165) : l'agent remet un fichier protégé changé par
+        erreur à son état du dernier commit, et supprime un fichier apparu
+        sous un chemin protégé que git ne suit pas ; rien d'autre."""
+        politique = self.racine / ".socle/policy.toml"
+        avant = politique.read_text()
+        apparu = self.racine / ".socle/git-hooks/post-merge"
+        politique.write_text(avant + "# changé par erreur\n")
+        apparu.write_text("#!/bin/sh\n")
+        self.addCleanup(politique.write_text, avant)
+        self.addCleanup(apparu.unlink)
+        passe = [f"{G} restore --source=HEAD --staged --worktree -- .socle/policy.toml",
+                 f"{G} restore --source=HEAD .socle/policy.toml .github/CODEOWNERS",
+                 f"{G} checkout HEAD -- .github/CODEOWNERS",
+                 f"cd .socle && {G} checkout HEAD -- policy.toml",
+                 "rm .socle/git-hooks/post-merge",
+                 "rm -f .socle/git-hooks/post-merge"]
+        for commande in passe:
+            with self.subTest(commande):
+                self.assertEqual(self.decide(*B(commande)), "passe")
+                c, = [c for c in commandes.analyser(commande) if c.programme in ("git", "rm")]
+                self.assertIsNone(hooks.remise_en_etat(self.projet, c)[1])
+        refus = [f"{G} restore .socle/policy.toml",
+                 f"{G} checkout -- .socle/policy.toml",
+                 f"{G} restore --source=HEAD~1 -- .socle/policy.toml",
+                 f"{G} checkout HEAD~1 -- .socle/policy.toml",
+                 f"{G} checkout main -- .socle/policy.toml",
+                 f"{G} restore --source=HEAD -- .",
+                 f"{G} restore --source=HEAD -- .socle",
+                 f"{G} checkout HEAD -- .github",
+                 f"{G} restore --source=HEAD -- '.socle/git-hooks/*'",
+                 f"{G} restore --source=HEAD -- .socle/git-hooks/$NOM",
+                 f"{G} -C . restore --source=HEAD -- .socle/policy.toml",
+                 "rm .socle/policy.toml",
+                 "rm .socle/git-hooks/post-*",
+                 # La revue de B-0165 : une remise admise ne dispense que de
+                 # ce qu'elle remet, ses redirections se jugent.
+                 f"{G} restore --source=HEAD -- .socle/policy.toml > .socle/git-hooks/pre-commit",
+                 f"{G} restore --source=HEAD -- .socle/policy.toml > .github/CODEOWNERS",
+                 f"{G} checkout HEAD -- .socle/policy.toml > .claude/settings.local.json",
+                 "rm .socle/git-hooks/post-merge > .github/CODEOWNERS",
+                 f"{G} restore --source=HEAD -- .socle/policy.toml .socle/policy.toml > .socle/policy.toml",
+                 "rm .socle/git-hooks/post-merge .claude/settings.local.json",
+                 # Un autre dépôt, un autre environnement.
+                 f"GIT_DIR=/tmp/autre/.git {G} checkout HEAD -- .socle/policy.toml",
+                 f"env GIT_WORK_TREE=/tmp {G} restore --source=HEAD -- .socle/policy.toml",
+                 f"export GIT_DIR=/tmp/autre/.git; {G} checkout HEAD -- .socle/policy.toml",
+                 # `checkout` sans `--`, chemins lus dans un fichier.
+                 f"{G} checkout HEAD~1 .socle/policy.toml",
+                 f"{G} checkout main .socle/policy.toml",
+                 f"{G} checkout .socle/policy.toml",
+                 f"{G} restore --source=HEAD --pathspec-from-file=/tmp/chemins.txt",
+                 f"{G} checkout HEAD --pathspec-from-file=/tmp/chemins.txt --pathspec-file-nul"]
+        for commande in refus:
+            with self.subTest(commande):
+                self.assertEqual(self.decide(*B(commande)), "refus")
+        self.assertIsNone(hooks.remise_en_etat(self.projet, commandes.analyser(f"{G} restore calc.py")[0]))
+        self.assertEqual(self.decide(*B(f"{G} checkout HEAD .socle/policy.toml")), "passe")
+        self.assertEqual(self.decide(*B(f"{G} checkout travail")), "passe")
+
+    def test_remise_en_etat_des_reglages_de_claude_code_refusee(self):
+        """La réponse de Théo sur B-0165, « Exclure » : les réglages de Claude
+        Code ne se remettent pas par l'agent ; le refus est celui des
+        réglages. Un autre fichier protégé se remet toujours."""
+        for commande in (f"{G} restore --source=HEAD -- .claude/settings.json",
+                         f"{G} checkout HEAD -- .claude/settings.json"):
+            with self.subTest(commande):
+                self.assertIn("les réglages de Claude Code commandent ses hooks", self.raison(commande))
+        self.assertEqual(self.decide(*B(f"{G} restore --source=HEAD -- .socle/policy.toml")), "passe")
+
+    def test_remise_en_etat_jugee_dans_les_deux_arbres(self):
+        """B-0164 et B-0165 : une remise lancée dans un worktree se juge
+        contre la racine et contre lui ; refusée dans l'un, elle est
+        refusée (une demande en attente que seul le worktree porte)."""
+        arbre = self.racine / ".claude/worktrees/remise"
+        subprocess.run(["git", "worktree", "add", "-q", "-b", "remise", str(arbre)], cwd=self.racine, check=True)
+        self.addCleanup(subprocess.run, ["git", "worktree", "remove", "--force", str(arbre)], cwd=self.racine)
+
+        def decide(commande):
+            flux = io.StringIO()
+            with contextlib.redirect_stdout(flux):
+                hooks.pre_tool_use(self.projet, {"session_id": "garde", "tool_name": "Bash", "cwd": str(arbre),
+                                                 "tool_input": {"command": commande}})
+            return flux.getvalue()
+
+        self.assertNotIn('"deny"', decide(f"{G} checkout HEAD -- .socle/policy.toml"))
+        self.assertIn('"deny"', decide(f"{G} checkout HEAD~1 .socle/policy.toml"))
+        (arbre / "memory/requests/D-0001-politique.md").write_text(
+            "# D-0001 — Changer la politique\n\n> date : 2026-11-11\n\n## Question\n\n`.socle/policy.toml` change.\n")
+        self.assertIn("D-0001", decide(f"{G} checkout HEAD -- .socle/policy.toml"))
+
+    def test_checkout_sans_tirets_ecrit_ses_chemins(self):
+        """La revue de B-0165 : `git checkout <révision> <chemins>` sans `--`
+        écrit ses chemins comme avec."""
+        c, = commandes.analyser(f"{G} checkout HEAD~1 .socle/policy.toml")
+        self.assertEqual(hooks.ecrits(c), [".socle/policy.toml"])
+        self.assertEqual(hooks.ecriture_protegee(self.projet, f"{G} checkout HEAD~1 .socle/policy.toml"),
+                         ".socle/policy.toml")
+        self.assertEqual(commandes.analyser(f"GIT_DIR=x env -u Y {G} status")[0].prefixe,
+                         ["GIT_DIR=x", "env", "-u", "Y"])
+
+    def raison(self, commande: str) -> str:
+        flux = io.StringIO()
+        with contextlib.redirect_stdout(flux):
+            hooks.pre_tool_use(self.projet, {"session_id": "garde", "tool_name": "Bash",
+                                             "tool_input": {"command": commande}})
+        return flux.getvalue()
+
+    def demande(self, nom: str, cite: str, reponse: str | None = None) -> Path:
+        d = self.racine / f"memory/requests/{nom}.md"
+        d.write_text(f"# {nom[:6]} — Changer la politique\n\n> date : 2026-11-11\n\n## Question\n\n{cite} change.\n")
+        self.addCleanup(d.unlink, missing_ok=True)
+        if reponse is not None:
+            r = self.racine / f"memory/requests/{nom}.answer.toml"
+            r.write_text(f'reponse = "{reponse}"\npar = "Théo"\n')
+            self.addCleanup(r.unlink, missing_ok=True)
+        return d
+
+    def test_remise_en_etat_d_un_fichier_cite_par_une_demande_en_attente(self):
+        """D-0098 : un fichier protégé que cite une demande en attente porte
+        peut-être la modification que l'humain y soumet ; il ne se remet pas."""
+        self.demande("D-0001-politique", "`.socle/policy.toml`")
+        remise = f"{G} restore --source=HEAD --staged --worktree -- .socle/policy.toml"
+        self.assertIn("est cité par la demande D-0001, en attente", self.raison(remise))
+        self.assertEqual(self.decide(*B(f"{G} checkout HEAD -- .github/CODEOWNERS")), "passe")
+
+    def test_remise_en_etat_d_un_fichier_dont_une_demande_cite_le_dossier(self):
+        """La revue de B-0165 : une demande qui cite le dossier épargne ses
+        fichiers ; un autre chemin qui commence comme lui, non."""
+        self.demande("D-0001-politique", "Tout `.socle/` ")
+        self.assertIn("D-0001", self.raison(f"{G} checkout HEAD -- .socle/policy.toml"))
+        self.assertEqual(self.decide(*B(f"{G} checkout HEAD -- .github/CODEOWNERS")), "passe")
+        self.assertTrue(hooks._cite_chemin("le dossier `.github/**`", ".github/CODEOWNERS"))
+        self.assertFalse(hooks._cite_chemin("`.github/workflows/socle.yml`", ".github/CODEOWNERS"))
+
+    def test_remise_en_etat_sous_une_demande_validee_pas_encore_commitee(self):
+        """La revue de B-0165 : une demande validée dont la réponse attend
+        son commit, ou dont l'empreinte citée est celle du fichier présent,
+        épargne le fichier ; validée et commitée, plus."""
+        from socle import fingerprint as empreinte
+
+        self.demande("D-0001-politique", "`.socle/policy.toml`", "valider")
+        self.assertIn("D-0001", self.raison(f"{G} checkout HEAD -- .socle/policy.toml"))
+        self.demande("D-0001-politique", "`.socle/policy.toml`", "refuser")
+        self.assertEqual(self.decide(*B(f"{G} checkout HEAD -- .socle/policy.toml")), "passe")
+        # Validée et commitée : le fichier n'est épargné que si l'arbre porte
+        # la version qu'elle approuve.
+        codeowners = self.racine / ".github/CODEOWNERS"
+        avant = codeowners.read_text()
+        self.addCleanup(codeowners.write_text, avant)
+        codeowners.write_text(avant + "* @autre\n")
+        cite = empreinte.courte(empreinte.fichier(codeowners))
+        env = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t",
+               "GIT_COMMITTER_EMAIL": "t@t"}
+        env.pop("CLAUDECODE", None)
+        self.demande("D-0002-codeowners", f"`.github/CODEOWNERS` et `{cite}`", "valider")
+        subprocess.run(["git", "add", "memory/requests"], cwd=self.racine, check=True, env=env)
+        subprocess.run(["git", "commit", "-qm", "D-0002", "--no-verify"], cwd=self.racine, check=True, env=env)
+        self.assertIn("D-0002", self.raison(f"{G} checkout HEAD -- .github/CODEOWNERS"))
+        codeowners.write_text(avant + "* @erreur\n")
+        self.assertEqual(self.decide(*B(f"{G} checkout HEAD -- .github/CODEOWNERS")), "passe")
+
     def test_un_push_sans_destination_depuis_la_branche_par_defaut(self):
         subprocess.run(["git", "checkout", "-q", "main"], cwd=self.racine, check=True)
         try:

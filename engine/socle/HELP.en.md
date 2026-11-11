@@ -199,7 +199,19 @@ agreement in the conversation. From a terminal:
 adapter, the hooks and the CI are protected: a commit that changes them
 without approval is refused. When the change comes from the human:
 `python3 .socle/socle approve --text "<reason>"`, then commit. This
-command is reserved to the human.
+command is reserved to the human. The agent never writes to a protected
+file, except to put it back as it was at the last commit when it changed
+it by mistake (D-0098), Claude Code's settings excepted, which the human
+keeps for themselves: `git restore --source=HEAD --staged --worktree --
+<path>` or `git checkout HEAD -- <path>`, each path written out in full,
+or `rm <path>` for a file that appeared under a protected path and that
+git does not track. Anything else is refused to it: another commit, with
+or without `--`, a whole folder, a shell pattern or variable, paths read
+from a file, a variable or a prefix before `git`, a redirection to another
+protected file, and a file that is cited, itself or its folder, by a
+request pending or approved whose approved change is not committed yet.
+The accepted risk: erasing a change of the human in the working tree that
+they neither committed nor submitted in a request.
 
 **Doing what the agent cannot do.** Pushing to the default branch,
 publishing, setting up a service, deleting a remote branch, setting a tag

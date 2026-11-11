@@ -31,6 +31,16 @@ sujets ordonnés par `après`, des jalons, des priorités, des critères de fin
 (D-0094). La procédure de planification (B-0101) s'écrit ensuite, sur ce
 que JustCook et chess auront montré.
 
+Ce que l'installation tranche avec Théo, recommandations de l'agent du
+11 novembre, validées par Théo (D-0100) : l'adaptateur Rust préparé pour
+chess, complété par la session de chess et donné à l'installeur en fichier
+(B-0168) ; le sous-dossier de l'interface déclaré tiers ; la fusion par
+l'agent, par une ligne que Théo ajoute à la politique de chess ; une marge
+au budget du fichier d'instructions, puis un premier sujet pour déplacer
+le carnet de bord vers la mémoire ; le balayage de mutation de chess
+gardé, celui du socle non posé pour l'instant (à terme : B-0172) ; les branches de réseaux
+déclarées à garder.
+
 ## Fait quand
 
 - [ ] les lots à livrer avant chess, ceux du jalon 1 (B-0154), sont fusionnés et publiés (ADR-0059)

@@ -1274,6 +1274,47 @@ def _cas() -> list[Cas]:
         return etage_outil(a, c, "Bash", {"command": f"echo 'max_attempts = 99' >> {c.resolve()}/.socle/policy.toml"},
                            cwd=arbre)
 
+    @defaut("remise-hors-head", "fichier protégé remis à un autre état que le dernier commit, ou tout un dossier",
+            "agent", "remise hors forme")
+    def _(a, c):
+        ajouter(c, ".socle/policy.toml", "# changé par erreur\n")
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "git checkout HEAD~1 -- .socle/policy.toml", "git restore --source=main -- .socle/policy.toml",
+            "git restore .socle/policy.toml", "git restore --source=HEAD -- .", "git checkout HEAD -- .socle",
+            "git restore --source=HEAD -- '.socle/git-hooks/*'")])
+
+    @defaut("remise-redirigee", "remise admise d'un fichier protégé dont la redirection écrit un autre fichier "
+            "protégé", "agent", "écriture protégée")
+    def _(a, c):
+        ajouter(c, ".socle/policy.toml", "# changé par erreur\n")
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "git restore --source=HEAD -- .socle/policy.toml > .github/CODEOWNERS",
+            "git checkout HEAD -- .socle/policy.toml > .socle/git-hooks/pre-commit")])
+
+    @defaut("remise-autre-depot", "remise d'un fichier protégé depuis un autre dépôt, une autre révision sans `--`, "
+            "ou des chemins lus dans un fichier", "agent", "remise hors forme")
+    def _(a, c):
+        ajouter(c, ".socle/policy.toml", "# changé par erreur\n")
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "GIT_DIR=/tmp/autre/.git git checkout HEAD -- .socle/policy.toml",
+            "env GIT_WORK_TREE=/tmp git restore --source=HEAD -- .socle/policy.toml",
+            "git checkout HEAD~1 .socle/policy.toml",
+            "git restore --source=HEAD --pathspec-from-file=/tmp/chemins.txt")])
+
+    @defaut("remise-reglages", "réglages de Claude Code remis à l'état du dernier commit par l'agent", "agent",
+            "réglage de l'agent")
+    def _(a, c):
+        ajouter(c, ".claude/settings.json", " ")
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "git restore --source=HEAD -- .claude/settings.json", "git checkout HEAD -- .claude/settings.json")])
+
+    @defaut("remise-sous-demande", "fichier protégé remis alors qu'une demande en attente le cite", "agent",
+            "remise sous demande")
+    def _(a, c):
+        protege_en_attente(a, c)
+        return etage_outil(a, c, "Bash", {"command": "git restore --source=HEAD --staged --worktree -- "
+                                                     ".github/CODEOWNERS"})
+
     @defaut("reglage-local-agent", "l'agent coupe ses hooks par un réglage local de Claude Code", "agent",
             "réglage de l'agent")
     def _(a, c):
@@ -1662,6 +1703,17 @@ def _temoins() -> list[tuple[str, Callable]]:
         return (etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} " + "install --target . --owner @moi"})
                 or etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} " + "install --target /tmp/jetable-socle "
                                                          "--mode amont"}))
+
+    @temoin("un fichier protégé changé par erreur, remis à son état du dernier commit, et un fichier apparu sous un "
+            "chemin protégé, supprimé, passent le hook de l'agent (D-0098)")
+    def _(a, c):
+        ajouter(c, ".socle/policy.toml", "# changé par erreur\n")
+        ajouter(c, ".github/CODEOWNERS", "* @essai\n")
+        ajouter(c, ".socle/git-hooks/post-merge", "#!/bin/sh\n")
+        return (etage_outil(a, c, "Bash", {"command": "git restore --source=HEAD --staged --worktree -- "
+                                                      ".socle/policy.toml"})
+                or etage_outil(a, c, "Bash", {"command": "git checkout HEAD -- .github/CODEOWNERS"})
+                or etage_outil(a, c, "Bash", {"command": "rm .socle/git-hooks/post-merge"}))
 
     @temoin("un commit d'agent qui porte la trace de ses hooks passe la CI")
     def _(a, c):
@@ -2327,6 +2379,8 @@ RAISONS_AGENT = {
     "installeur hors mode": "dans un autre mode que celui de son verrou",
     "installeur cible illisible": "une cible que le hook ne sait pas résoudre",
     "écriture protégée": "par le shell : seul l'humain",
+    "remise hors forme": "Seule passe la remise",
+    "remise sous demande": "en attente, ou validée sans que ce qu'elle approuve",
     "écriture à l'aveugle": "à l'aveugle",
     "référence inventée": "référence inventée",
     "escalade": "ARRÊT ET ESCALADE",
