@@ -199,7 +199,20 @@ conversation. Depuis un terminal : `python3 .socle/socle reviewed --by <nom>`.
 l'adaptateur, les hooks et la CI sont protégés : un commit qui les change
 sans validation est refusé. Quand le changement vient de l'humain :
 `python3 .socle/socle approve --text "<raison>"`, puis commiter. Cette
-commande est réservée à l'humain.
+commande est réservée à l'humain. L'agent, lui, n'écrit jamais dans un
+fichier protégé, sauf pour le remettre à son état du dernier commit quand
+il l'a changé par erreur (D-0098), hors des réglages de Claude Code, que
+l'humain garde pour lui : `git restore --source=HEAD --staged
+--worktree -- <chemin>` ou `git checkout HEAD -- <chemin>`, chaque chemin
+écrit en toutes lettres, ou `rm <chemin>` pour un fichier apparu sous un
+chemin protégé que git ne suit pas. Le reste lui est refusé : un autre
+commit, avec ou sans `--`, un dossier entier, un motif ou une variable du
+shell, des chemins lus dans un fichier, une variable ou un préfixe devant
+`git`, une redirection vers un autre fichier protégé, et un fichier que
+cite, lui ou son dossier, une demande en attente ou validée dont ce
+qu'elle approuve n'est pas commité. Le risque accepté : effacer une
+modification de l'humain dans l'arbre de travail qu'il n'a ni commitée ni
+soumise par une demande.
 
 **Faire ce que l'agent ne peut pas faire.** Pousser sur la branche par
 défaut, publier, régler un service, supprimer une branche distante, poser

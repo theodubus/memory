@@ -114,9 +114,33 @@ MESSAGES: dict[str, str] = {
         "`{reglage}`: Claude Code's settings drive its hooks, only the human changes them (a local setting can turn "
         "them all off).",
     "écriture d'un fichier protégé ({cible}) par le shell : seul l'humain modifie la politique, les hooks, la CI et "
-    "le moteur (relance de l'installeur).":
+    "le moteur (relance de l'installeur). Un fichier protégé changé par erreur, hors des réglages de Claude Code, se "
+    "remet à son état du dernier commit : {formes} (D-0098).":
         "write to a protected file ({cible}) through the shell: only the human changes the policy, the hooks, the CI "
-        "and the engine (by running the installer again).",
+        "and the engine (by running the installer again). A protected file changed by mistake, except Claude Code's "
+        "settings, is put back as it was at the last commit: {formes} (D-0098).",
+    "remise en état d'un fichier protégé refusée ({pourquoi}). Seule passe la remise d'un fichier protégé changé par "
+    "erreur, hors des réglages de Claude Code, à son état du dernier commit, chaque chemin écrit en toutes lettres : "
+    "{formes}, ce dernier pour un fichier que git ne suit pas (D-0098). Le reste revient à l'humain.":
+        "restoring a protected file refused ({pourquoi}). Only putting a protected file changed by mistake, except "
+        "Claude Code's settings, back as it was at the last commit passes, each path written out in full: {formes}, "
+        "the last one for a file git does not track (D-0098). Anything else is up to the human.",
+    "forme de commande : une autre source que le dernier commit, ou d'autres options":
+        "command form: a source other than the last commit, or other options",
+    "`{brut}` n'est pas un chemin écrit en toutes lettres":
+        "`{brut}` is not a path written out in full",
+    "`{rel}` n'est pas un fichier du dernier commit":
+        "`{rel}` is not a file of the last commit",
+    "`{rel}` n'est pas un fichier que git ne suit pas":
+        "`{rel}` is not a file git does not track",
+    "`{rel}` est cité par la demande {id}, en attente, ou validée sans que ce qu'elle approuve soit commité : sa "
+    "remise en état revient à l'humain (D-0098).":
+        "`{rel}` is cited by the request {id}, pending, or approved while what it approves is not committed yet: "
+        "restoring it is up to the human (D-0098).",
+    "chemins lus dans un fichier":
+        "paths read from a file",
+    "une variable, `env`, `export` ou un préfixe change l'environnement de la commande":
+        "a variable, `env`, `export` or a prefix changes the command's environment",
     "`{chemin}` : les réglages de Claude Code commandent ses hooks, seul l'humain les modifie (un réglage local peut "
     "les couper tous).":
         "`{chemin}`: Claude Code's settings drive its hooks, only the human changes them (a local setting can turn "
@@ -906,6 +930,14 @@ MESSAGES: dict[str, str] = {
         "change approved by {id}",
     "fichier protégé modifié sans validation humaine. Une demande validée doit citer `{fichier}` et `{cite}`":
         "protected file changed without human approval. An approved request must cite `{fichier}` and `{cite}`",
+    "fichier protégé modifié sans validation humaine. Une demande validée doit citer `{fichier}` et `{cite}`. "
+    "Changé par erreur dans l'arbre de travail, l'agent le remet à son état du dernier commit : `git restore "
+    "--source=HEAD --staged --worktree -- {fichier}`, ou `rm {fichier}` s'il est apparu sans être suivi par git "
+    "(D-0098)":
+        "protected file changed without human approval. An approved request must cite `{fichier}` and `{cite}`. "
+        "Changed by mistake in the working tree, the agent puts it back as it was at the last commit: `git restore "
+        "--source=HEAD --staged --worktree -- {fichier}`, or `rm {fichier}` if it appeared without being tracked by "
+        "git (D-0098)",
     "socle non installé : `{lock}` absent (commité ? un .gitignore du projet peut l'écarter)":
         "socle not installed: `{lock}` missing (committed? a .gitignore of the project can exclude it)",
     "mode amont : ce dépôt fabrique le moteur, son empreinte n'est pas figée":
@@ -2352,6 +2384,22 @@ MESSAGES: dict[str, str] = {
         "protected file written by a shell redirection",
     "dossier qui contient des fichiers protégés déplacé par le shell":
         "folder containing protected files moved by the shell",
+    "fichier protégé remis à un autre état que le dernier commit, ou tout un dossier":
+        "protected file put back to a state other than the last commit, or a whole folder",
+    "remise admise d'un fichier protégé dont la redirection écrit un autre fichier protégé":
+        "allowed restore of a protected file whose redirection writes another protected file",
+    "remise d'un fichier protégé depuis un autre dépôt, une autre révision sans `--`, ou des chemins lus dans un "
+    "fichier":
+        "restore of a protected file from another repository, another revision without `--`, or paths read from a "
+        "file",
+    "réglages de Claude Code remis à l'état du dernier commit par l'agent":
+        "Claude Code's settings put back as they were at the last commit by the agent",
+    "fichier protégé remis alors qu'une demande en attente le cite":
+        "protected file put back while a pending request cites it",
+    "un fichier protégé changé par erreur, remis à son état du dernier commit, et un fichier apparu sous un chemin "
+    "protégé, supprimé, passent le hook de l'agent (D-0098)":
+        "a protected file changed by mistake, put back as it was at the last commit, and a file that appeared under "
+        "a protected path, deleted, pass the agent's hook (D-0098)",
     "l'agent coupe ses hooks par un réglage local de Claude Code":
         "the agent cuts its hooks through a local Claude Code setting",
     "chaque forme d'action irréversible ou externe":

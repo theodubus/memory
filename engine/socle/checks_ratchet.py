@@ -333,9 +333,17 @@ def proteges(ctx, r):
         elif attente:
             r.avertir("protege.fichiers", trad("modification en attente de {id} : le tour peut finir, le commit "
                                                "et la CI attendent la réponse de l'humain", id=attente.id), c)
-        else:
+        elif re.search(r"(^|/)\.claude/settings(\.local)?\.json$", c):
+            # Les réglages de Claude Code restent à l'humain, remise comprise.
             r.erreur("protege.fichiers", trad("fichier protégé modifié sans validation humaine. Une demande "
                                               "validée doit citer `{fichier}` et `{cite}`", fichier=c, cite=cite), c)
+        else:
+            r.erreur("protege.fichiers", trad("fichier protégé modifié sans validation humaine. Une demande "
+                                              "validée doit citer `{fichier}` et `{cite}`. Changé par erreur dans "
+                                              "l'arbre de travail, l'agent le remet à son état du dernier commit : "
+                                              "`git restore --source=HEAD --staged --worktree -- {fichier}`, ou "
+                                              "`rm {fichier}` s'il est apparu sans être suivi par git (D-0098)",
+                                              fichier=c, cite=cite), c)
 
 
 @controle("moteur.empreinte")
