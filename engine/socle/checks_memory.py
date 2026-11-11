@@ -10,6 +10,7 @@ import re
 import subprocess
 import time
 from functools import lru_cache
+from pathlib import Path
 from urllib.parse import unquote
 
 from socle import config, requests as demandes, language as langue, links as liens, memory as memoire, utils as outils
@@ -202,12 +203,17 @@ def _basculee(ctx, chemin: str) -> str | None:
     """Le fichier qui remplace celui d'une décision basculée dans la mémoire
     privée (`ADR-0003-basculee.md` pour `ADR-0003-un-titre.md`), ou
     d'un sujet du backlog."""
+    remplacant = _nom_basculee(chemin)
+    return remplacant if remplacant and _existe_tel_quel(ctx, remplacant) else None
+
+
+def _nom_basculee(chemin: str) -> str | None:
     dossier, _, nom = chemin.rpartition("/")
     m = re.match(r"^((?:ADR|B)-\d{4})-.+\.md$", nom)
     if not m or not memoire.est_memoire(chemin):
         return None
     remplacant = f"{dossier}/{m[1]}-{BASCULEE}.md"
-    return remplacant if remplacant != chemin and _existe_tel_quel(ctx, remplacant) else None
+    return remplacant if remplacant != chemin else None
 
 
 BASCULEE = "basculee"
@@ -232,13 +238,32 @@ def _lien_d_un_ancien_nom(ctx, chemin_doc: str, lien: str) -> bool:
     return any(_a_existe(ctx, _normaliser_chemin(c.rpartition("/")[0], lien)) for c in anciens[chemin_doc])
 
 
+def _citables(ctx) -> set[str]:
+    """Les fichiers qu'une référence peut désigner : ceux de l'arbre jugé
+    (un commit, l'index au commit) ; sur l'arbre de travail, ceux que git
+    suit, l'index compris, et le clone du dépôt privé. Un fichier présent sur
+    le disque seulement manque à un clone neuf : la CI le dirait absent
+    (B-0166). Hors d'un dépôt, ceux du disque."""
+    ens = ctx._cache.get("ensemble")
+    if ens is None:
+        ens = set(ctx.fichiers)
+        # Un dépôt sans commit, celui qu'on vient d'équiper : tout y est
+        # neuf, et le premier commit jugera son index.
+        if ctx.tete is None and outils.a_des_commits(ctx.racine):
+            suivis = outils.fichiers_suivis(ctx.racine)
+            if suivis is not None:
+                ens &= set(suivis) | set(memoire.fichiers_compagnon(ctx.racine))
+        ctx._cache["ensemble"] = ens
+    return ens
+
+
 def _existe_tel_quel(ctx, chemin: str) -> bool:
-    if chemin in ctx._cache.setdefault("ensemble", set(ctx.fichiers)) or chemin == "":
+    if chemin in _citables(ctx) or chemin == "":
         return True
     dossiers = ctx._cache.get("dossiers")
     if dossiers is None:
         dossiers = set()
-        for f in ctx.fichiers:
+        for f in _citables(ctx):
             parts = f.split("/")
             for i in range(1, len(parts)):
                 dossiers.add("/".join(parts[:i]))
@@ -248,8 +273,20 @@ def _existe_tel_quel(ctx, chemin: str) -> bool:
 
 @lru_cache(maxsize=4096)
 def _ignore(racine, chemin: str) -> bool:
-    r = subprocess.run(["git", "check-ignore", "-q", "--no-index", chemin], cwd=racine, capture_output=True)
-    return r.returncode == 0
+    """Le chemin est ignoré par une règle d'un `.gitignore` suivi : un dossier
+    produit (`/tools/arbiters/`) se cite sans exister. Les règles locales
+    (`.git/info/exclude`, `core.excludesFile`) ne comptent pas : un clone
+    neuf, celui de la CI, ne les a pas (B-0166)."""
+    r = subprocess.run(["git", "check-ignore", "-v", "--no-index", chemin], cwd=racine,
+                       capture_output=True, text=True)
+    if r.returncode != 0:
+        return False
+    # `source:ligne:motif<TAB>chemin`
+    source, _, reste = r.stdout.partition("\t")[0].partition(":")
+    motif = reste.partition(":")[2]
+    if motif.startswith("!") or source.rsplit("/", 1)[-1] != ".gitignore" or source.startswith(("/", ".git/")):
+        return False
+    return outils.git_reussit(racine, "ls-files", "--error-unmatch", "--", source)
 
 
 def _racines(ctx) -> set[str]:
@@ -292,8 +329,12 @@ def references(ctx, r):
     def signaler(faute: str, chemin: str, ligne: int):
         # Sur une branche jetable, hors de la CI, un fichier qu'elle ajoute
         # n'est qu'averti, quelle que soit la faute de référence ; sa pull
-        # request le rejuge en entier (D-0087).
-        if chemin in essais:
+        # request le rejuge en entier (D-0087). Un fichier qu'un `git add`
+        # livrerait n'est qu'averti sur l'arbre de travail : le commit, qui
+        # juge l'index, le refuse s'il ne l'ajoute pas (ADR-0063).
+        if isinstance(faute, AAjouter):
+            r.avertir("memoire.references", faute, chemin, ligne)
+        elif chemin in essais:
             r.avertir("memoire.references", trad("{faute} — branche jetable, fichier qu'elle ajoute : averti, sa "
                                                  "pull request le jugera", faute=faute), chemin, ligne)
         else:
@@ -373,7 +414,8 @@ def verifier_ref(ctx, type_: str, cible: str, historique: bool = False) -> str |
     elif type_ == "fichier":
         chemin = re.split(r"[#]|:(?=\d)", cible, maxsplit=1)[0]
         if not _existe(ctx, chemin, historique) and not _ignore(ctx.racine, chemin):
-            return trad("`fichier:{cible}` : {chemin} n'existe pas", cible=cible, chemin=chemin)
+            return _faute_absent(ctx, chemin, trad("`fichier:{cible}` : {chemin} n'existe pas", cible=cible,
+                                                   chemin=chemin))
     elif type_ == "cmd":
         premier = cible.split()[0] if cible.split() else ""
         if "/" in premier and not _existe(ctx, premier.removeprefix("./"), historique):
@@ -391,7 +433,7 @@ def _verifier_lien(ctx, chemin_doc: str, dossier: str, cible: str, historique: b
         cible_n = _normaliser_chemin(dossier, chemin)
         if not _existe(ctx, cible_n, historique) and not _ignore(ctx.racine, cible_n) \
                 and not (historique and _lien_d_un_ancien_nom(ctx, chemin_doc, chemin)):
-            return trad("lien mort : {cible}", cible=cible)
+            return _faute_absent(ctx, cible_n, trad("lien mort : {cible}", cible=cible))
     else:
         cible_n = chemin_doc
     # Une couche gelée ne voit vérifiés que ses fichiers : le titre qu'une
@@ -475,7 +517,43 @@ def _verifier_chemin_cite(ctx, jeton: str, historique: bool = False) -> str | No
     # barre finale : sans elle, git ne sait pas que c'est un répertoire.
     if _existe(ctx, j, historique) or _ignore(ctx.racine, j + "/" if dossier else j):
         return None
+    if ctx.tete is None and _a_ajouter(ctx, j):
+        return AAjouter(trad("chemin cité non suivi par git : `{jeton}` — à ajouter (`git add`) : le commit qui ne "
+                             "l'ajoute pas sera refusé, et la CI le dirait inexistant", jeton=jeton))
+    if ctx.tete is None and (Path(ctx.racine) / j).exists():
+        return trad("chemin cité ignoré par git : `{jeton}` — présent sur le disque seulement (une règle de git "
+                    "qu'aucun `.gitignore` suivi ne porte l'ignore), il manquera à un clone neuf, celui de la CI : "
+                    "ne pas le citer", jeton=jeton)
     return trad("chemin cité inexistant : `{jeton}`", jeton=jeton)
+
+
+class AAjouter(str):
+    """La faute d'un chemin cité qu'un `git add` livrerait : avertie sur
+    l'arbre de travail ; le commit, qui juge l'index, la refuse s'il ne
+    l'ajoute pas (ADR-0063)."""
+
+
+def _faute_absent(ctx, chemin: str, faute: str) -> str:
+    """La faute d'un fichier lié ou référencé hors des fichiers suivis :
+    avertie s'il est à ajouter (`AAjouter`), refusée sinon."""
+    c = chemin.strip("/")
+    if ctx.tete is None and (_a_ajouter(ctx, c) or _a_ajouter(ctx, _nom_basculee(c) or c)):
+        return AAjouter(trad("{faute} — non suivi par git, à ajouter (`git add`)", faute=faute))
+    return faute
+
+
+def _a_ajouter(ctx, chemin: str) -> bool:
+    """Le chemin est un fichier non suivi de l'arbre de travail qu'aucune
+    règle de git n'ignore, ou un dossier qui en contient : `git add` le
+    livre."""
+    hors_index = ctx._cache.get("a-ajouter")
+    if hors_index is None:
+        hors_index = set()
+        for f in set(ctx.fichiers) - _citables(ctx):
+            parts = f.split("/")
+            hors_index.update("/".join(parts[:i]) for i in range(1, len(parts) + 1))
+        ctx._cache["a-ajouter"] = hors_index
+    return chemin in hors_index
 
 
 @controle("memoire.prive")

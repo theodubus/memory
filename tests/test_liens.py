@@ -169,6 +169,20 @@ class TestLiensDuDepot(unittest.TestCase):
         self.assertIn("docs/b.md n'existe pas", morts[2])
         self.assertEqual(sans_lien, [])
 
+    def test_un_chemin_present_sur_le_disque_seulement_d_un_message(self):
+        """B-0166 : un chemin donné à l'humain vaut s'il est suivi par git, ou
+        livré par le prochain `git add` ; un dossier qu'une règle locale de
+        git ignore (`.git/info/exclude`) n'est que dans le conteneur."""
+        (self.clone / "docs/local.md").write_text("# Local\n")
+        self.assertEqual(liens.problemes(self.projet, "Voir `docs/local.md`."), ([], []))
+        (self.clone / "docs/essais").mkdir()
+        (self.clone / "docs/essais/x.md").write_text("x\n")
+        (self.clone / ".git/info").mkdir(exist_ok=True)
+        (self.clone / ".git/info/exclude").write_text("docs/essais/\n")
+        morts, _ = liens.problemes(self.projet, "Voir `docs/essais/`.")
+        self.assertEqual(len(morts), 1, morts)
+        self.assertIn("ignoré par git", morts[0])
+
     def test_liens_vivants_d_un_message(self):
         git(self.clone, "push", "-q", "origin", "claude/essai")
         message = (
