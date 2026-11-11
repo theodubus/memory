@@ -7,8 +7,8 @@ import unittest
 import unittest.mock
 from pathlib import Path
 
-from socle import config, hooks, installer as installeur
-from tests.test_bascule import Projet
+from socle import cli, config, hooks, installer as installeur
+from tests.test_bascule import Projet, git
 
 MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 
@@ -865,4 +865,123 @@ class TestOutilsEnSessionCloud(unittest.TestCase):
             lancer.return_value = subprocess.CompletedProcess([], 0, "", "")
             hooks.installer_outils(projet)
         self.assertEqual(lancer.call_args[0][0], "python3 -m pip install pytest mutmut")
+
+
+DECISION_ARBRE = """<!-- socle: couche=decisions zone=publique -->
+# ADR-0002 — Écrire dans le worktree
+
+> statut : acceptée · date : 2026-11-11
+
+## Décision
+
+Le travail se fait dans un worktree.
+"""
+
+
+class TestArbreJuge(Projet):
+    """B-0164 : un hook de l'agent juge l'arbre où l'action a lieu. Une
+    entrée créée dans un worktree du même dépôt, que la copie principale
+    n'a pas encore, n'y est pas une référence inventée."""
+
+    def setUp(self):
+        super().setUp()
+        dehors = Path(tempfile.mkdtemp(prefix="socle-arbre-"))
+        self.addCleanup(shutil.rmtree, dehors, ignore_errors=True)
+        self.dehors = dehors.resolve()
+        # Là où Claude Code pose le worktree d'un sous-agent : sous la copie principale.
+        self.arbre = self.racine.resolve() / ".claude/worktrees/arbre"
+        git(self.racine, "worktree", "add", "-q", "-b", "travail", str(self.arbre))
+        (self.arbre / "memory/decisions/ADR-0002-ecrire-dans-le-worktree.md").write_text(
+            DECISION_ARBRE, encoding="utf-8")
+
+    def hook(self, entree: dict, evt: str = "pre-tool-use") -> tuple[int, str]:
+        import json
+        import sys
+
+        sortie = io.StringIO()
+        with unittest.mock.patch.object(sys, "stdin", io.StringIO(json.dumps(entree))), \
+                contextlib.redirect_stdout(sortie), contextlib.redirect_stderr(sortie):
+            code = cli.main(["--root", str(self.racine), "hook", evt])
+        return code, sortie.getvalue()
+
+    def bash(self, commande: str, cwd: Path) -> str:
+        return self.hook({"tool_name": "Bash", "cwd": str(cwd), "session_id": "s",
+                          "tool_input": {"command": commande}})[1]
+
+    def ecrire(self, ou: Path, cwd: Path) -> dict:
+        return {"tool_name": "Write", "cwd": str(cwd), "session_id": "s",
+                "tool_input": {"file_path": str(ou / "docs/suite.md"),
+                               "content": "La suite applique ADR-0002.\n"}}
+
+
+    def test_un_dossier_illisible_rend_la_racine(self):
+        """En CI, le dossier des réglages d'un autre utilisateur ne se lit
+        pas : le lire lève une erreur de permission, et un hook qui planterait
+        laisserait passer la commande qu'il devait juger."""
+        from unittest import mock
+        entree = {"tool_name": "Write", "tool_input": {"file_path": "/root/.claude/settings.json"}}
+        with mock.patch.object(Path, "is_dir", side_effect=PermissionError(13, "Permission denied")):
+            self.assertEqual(hooks.arbre_juge(self.racine, entree), self.racine)
+
+    def test_une_entree_creee_dans_le_worktree_s_y_cite(self):
+        code, sortie = self.hook(self.ecrire(self.arbre, self.arbre))
+        self.assertEqual((code, sortie), (0, ""))
+        # Le même fichier, depuis la session principale : l'arbre du fichier.
+        code, sortie = self.hook(self.ecrire(self.arbre, self.racine))
+        self.assertEqual((code, sortie), (0, ""))
+
+    def test_la_copie_principale_reste_jugee_contre_sa_memoire(self):
+        code, sortie = self.hook(self.ecrire(self.racine, self.arbre))
+        self.assertIn('"deny"', sortie)
+        self.assertIn("ADR-0002", sortie)
+
+    def test_depuis_le_worktree_la_copie_principale_reste_protegee(self):
+        """Revue de B-0164 : le dossier courant ne lève aucun refus. Ce que
+        la racine de la session refuse, elle le refuse depuis un worktree."""
+        racine = self.racine.resolve()
+        options = "--no-" + "verify"
+        for commande in (f"echo x > {racine}/.socle/policy.toml",
+                         f"cd {racine} && rm .socle/policy.toml",
+                         f"git -C {racine} commit {options} -m x"):
+            for cwd in (racine, self.arbre):
+                self.assertIn('"deny"', self.bash(commande, cwd), (commande, cwd))
+        # Un fichier protégé du worktree lui-même reste refusé, d'où qu'on écrive.
+        for cwd in (racine, self.arbre):
+            code, sortie = self.hook({"tool_name": "Write", "cwd": str(cwd), "session_id": "s",
+                                      "tool_input": {"file_path": str(self.arbre / ".socle/policy.toml"),
+                                                     "content": "x"}})
+            self.assertIn('"deny"', sortie, cwd)
+            self.assertIn("policy.toml", sortie)
+            self.assertIn('"deny"', self.bash("echo x > .socle/policy.toml", self.arbre))
+
+    def test_la_fin_de_tour_juge_la_racine_de_la_session(self):
+        """Revue de B-0164 : une faute dans la copie principale bloque la fin
+        de tour, que le dossier courant soit la racine ou un worktree."""
+        notes = self.racine / "docs/notes.md"
+        notes.write_text(notes.read_text() + "\nVoir F-0099.\n")
+        for cwd in (self.racine.resolve(), self.arbre):
+            code, sortie = self.hook({"session_id": "s", "cwd": str(cwd), "stop_hook_active": False}, "stop")
+            self.assertIn('"block"', sortie, cwd)
+            self.assertIn("F-0099", sortie)
+
+    def test_l_arbre_juge(self):
+        racine = self.racine.resolve()
+        self.assertEqual(hooks.arbre_juge(racine, {"cwd": str(self.arbre / "docs")}), self.arbre)
+        self.assertEqual(hooks.arbre_juge(racine, {"cwd": str(racine)}), racine)
+        self.assertEqual(hooks.arbre_juge(racine, {}), racine)
+        # Un dossier hors de tout dépôt, ou un autre dépôt : rien ne change.
+        self.assertEqual(hooks.arbre_juge(racine, {"cwd": str(self.dehors)}), racine)
+        autre = self.dehors / "autre"
+        (autre / ".socle").mkdir(parents=True)
+        git(autre, "init", "-q")
+        self.assertEqual(hooks.arbre_juge(racine, {"cwd": str(autre)}), racine)
+        # Un fichier écrit l'emporte sur le dossier courant, même s'il est neuf.
+        entree = {"tool_name": "Edit", "cwd": str(racine),
+                  "tool_input": {"file_path": str(self.arbre / "neuf/dossier/x.md")}}
+        self.assertEqual(hooks.arbre_juge(racine, entree), self.arbre)
+        # Un worktree du même dépôt sans le socle : la racine.
+        nu = self.dehors / "nu"
+        git(self.racine, "worktree", "add", "-q", "--detach", str(nu), "HEAD")
+        shutil.rmtree(nu / ".socle")
+        self.assertEqual(hooks.arbre_juge(racine, {"cwd": str(nu)}), racine)
 

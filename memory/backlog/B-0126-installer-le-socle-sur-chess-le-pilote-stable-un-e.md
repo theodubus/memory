@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0126 — Installer le socle sur chess : le pilote stable, un essai à blanc, puis l'installation
 
-> statut : ouvert · origine : J-2026-11-02-K · après : D-0073, B-0154 · lu : backlog@f649164c
+> statut : ouvert · origine : J-2026-11-02-K · après : D-0073, B-0154, B-0168, B-0169, B-0170 · lu : backlog@f649164c
 
 Théo a demandé si le socle était assez mûr pour chess, son projet en
 cours (J-2026-11-02-H), et validé le plan proposé (D-0073). Ce que la
@@ -20,6 +20,10 @@ de déterminisme de la recherche. Les plafonds de mutation se reprennent de
 Le 11 novembre, Théo lève l'attente du pilote (D-0096, ADR-0059) : les
 lots importants du socle se livrent, puis l'essai à blanc et
 l'installation se font dans la session de chess, sur son autre compte.
+
+L'essai à blanc du 11 novembre (`docs/fabrication/chess/essai-a-blanc-2026-11-11.md`) a rendu deux constats bloquants
+et des gênes : B-0168, B-0169 et B-0170 les corrigent avant l'installation, et le
+compte rendu liste ce que l'installation doit trancher avec Théo.
 
 La feuille de route de chess se pose à l'installation, à la main et avec
 Théo, depuis son carnet de bord, avec ce que le socle sait déjà faire : des

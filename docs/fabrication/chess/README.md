@@ -10,6 +10,9 @@ un clone jetable.
 - `docs/fabrication/chess/mutation-caps.toml` — les plafonds de mutation de chess, repris
   tels quels avec le renvoi à leur raison écrite.
 
+- `docs/fabrication/chess/essai-a-blanc-2026-11-11.md` — le compte rendu de l'essai à blanc du
+  11 novembre 2026, avec la version publiée du socle.
+
 ## Ce que les essais ont montré
 
 Porte du jalon 2 (`J-2026-10-10-F`) : en mode adoption, l'audit tourne sur
