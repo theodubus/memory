@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0126 — Installer le socle sur chess : le pilote stable, un essai à blanc, puis l'installation
 
-> statut : ouvert · origine : J-2026-11-02-K · après : D-0073 · lu : backlog@f649164c
+> statut : ouvert · origine : J-2026-11-02-K · après : D-0073, B-0154 · lu : backlog@f649164c
 
 Théo a demandé si le socle était assez mûr pour chess, son projet en
 cours (J-2026-11-02-H), et validé le plan proposé (D-0073). Ce que la
@@ -17,6 +17,10 @@ que 35 fichiers de chess nomment ; valider l'adaptateur proposé
 de déterminisme de la recherche. Les plafonds de mutation se reprennent de
 `docs/fabrication/chess/mutation-caps.toml` (B-0009).
 
+Le 11 novembre, Théo lève l'attente du pilote (D-0096, ADR-0059) : les
+lots importants du socle se livrent, puis l'essai à blanc et
+l'installation se font dans la session de chess, sur son autre compte.
+
 La feuille de route de chess se pose à l'installation, à la main et avec
 Théo, depuis son carnet de bord, avec ce que le socle sait déjà faire : des
 sujets ordonnés par `après`, des jalons, des priorités, des critères de fin
@@ -25,7 +29,7 @@ que JustCook et chess auront montré.
 
 ## Fait quand
 
-- [ ] deux journées de travail réel du pilote sans retour qui corrige le socle
+- [ ] les lots à livrer avant chess, ceux du jalon 1 (B-0154), sont fusionnés et publiés (ADR-0059)
 - [ ] un essai à blanc sur chess, avec la version publiée, sans constat bloquant
 - [ ] le socle installé sur chess pour de bon, en mode adoption, l'installation fusionnée
 - [ ] la feuille de route de chess posée à la main avec Théo, depuis son carnet de bord : sujets ordonnés, jalons, priorités (D-0094)

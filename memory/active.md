@@ -5,12 +5,13 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-D-0093 validée sauf sa proposition 7 (J-2026-11-10-N) : quatre jalons,
-B-0154 (alléger), B-0157 (chess, sous ADR-0057), B-0159, B-0160. Le socle
-organise et fiabilise. JustCook est en pause. B-0149 est fait et poussé ;
-sa revue passe avant sa fusion. Un sujet coûte les trois quarts d'une
-fenêtre (J-2026-11-10-S) : B-0151 et B-0141 attendent que Théo dise sur
-quel compte se font les implémentations. Ensuite : B-0010, B-0155, B-0156.
+chess n'attend plus le pilote (ADR-0059, D-0096) : le jalon 1 (B-0154) se
+resserre sur B-0149, B-0155, B-0143 et B-0141 ; puis l'essai à blanc et
+l'installation (B-0126), par la session de chess, sur l'autre compte de
+Théo. Cette session orchestre ; des sous-agents sur Opus implémentent, un
+sujet à la fois, chacun dans un worktree. En cours : les constats de la
+revue de B-0149. Après chess : B-0151, B-0010, B-0156. JustCook est en
+pause ; les jalons de D-0093 tiennent (J-2026-11-10-N).
 
 B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
 
