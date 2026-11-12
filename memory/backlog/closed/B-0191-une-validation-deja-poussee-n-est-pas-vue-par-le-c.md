@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0191 — Une validation déjà poussée n'est pas vue par le contrôle d'avant push, qui ne juge que ce qui part
 
-> statut : ouvert · origine : J-2026-11-12-H · lu : backlog@d439d914
+> statut : fait · origine : J-2026-11-12-H · ref : J-2026-11-12-L · lu : backlog@d439d914
 
 Le 12 novembre, la validation de Théo sur une valeur attendue (D-0104) a
 été commitée et poussée seule, avant le changement qu'elle autorise. Le
@@ -20,4 +20,4 @@ seule plage qui part.
 
 ## Fait quand
 
-- [ ] une validation de l'humain déjà poussée sur la branche, absente de la branche par défaut, compte avant le push comme elle compte en CI, pour une valeur attendue comme pour un fichier protégé ; un test le montre
+- ~~une validation de l'humain déjà poussée sur la branche, absente de la branche par défaut, compte avant le push comme elle compte en CI, pour une valeur attendue comme pour un fichier protégé ; un test le montre~~ — doublon de B-0142, qui porte ce critère

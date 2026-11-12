@@ -5,14 +5,17 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-Le socle est installé sur chess (J-2026-11-12-A) ; reste sa feuille de
-route, dans la session de chess (B-0126). Ce que
-l'installation a montré est corrigé et publié (J-2026-11-12-I). Reste
-la mise à jour de chess. B-0179 est corrigé ; le pilote le prouvera à
-sa reprise (J-2026-11-10-N).
-Cette session orchestre ; des sous-agents sur Opus implémentent, chacun
-dans un worktree, relus avant tout push (J-2026-11-11-G). Ensuite : B-0151,
-B-0010, B-0156, B-0167, B-0172, B-0173.
+Le socle est installé sur chess (J-2026-11-12-A) ; Théo y a lancé la
+feuille de route (B-0126) et a le prompt de mise à jour
+(`docs/fabrication/chess/prompt-mise-a-jour.md`). Le lot du 12 novembre
+est fini, fusionné et publié (J-2026-11-12-I, J-2026-11-12-K) : on attend
+les comptes rendus de chess et, pour B-0179, du pilote. Rien ne tourne ;
+la conversation continue sur Opus après compactage (J-2026-11-12-L).
+Prochain lot, à annoncer : B-0173 d'abord (la relecture après une limite
+coûte la moitié d'une fenêtre), puis B-0171, B-0142, B-0176 ; ensuite
+B-0151, B-0010, B-0156, B-0167, B-0172. Méthode : un sous-agent par
+sujet dans un worktree, relu avant tout push (J-2026-11-11-G) ; la réponse
+de l'humain se commite avec le changement qu'elle autorise.
 
 B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
 
@@ -20,10 +23,8 @@ B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
 
 - Le contexte long et les modèles : Théo compacte la conversation ;
   chaque sujet va à un sous-agent au contexte neuf, dont l'agent choisit
-  le modèle (J-2026-11-10-O). Jusqu'au 16 novembre, Fable là où il vaut
-  son prix (recul, détails, planification, chess), Opus pour les
-  implémentations, puis Opus partout ; Théo : « a utiliser la ou ça en
-  vaut la peine » (D-0095, J-2026-11-10-T).
+  le modèle (J-2026-11-10-O). Depuis le 12 novembre, Opus partout
+  (D-0095, J-2026-11-12-L).
 - Le pilote est un essai de choc du socle : ses imperfections sont
   attendues, seules celles du socle se corrigent ici ; Théo : « pas grave
   si le pilote n'est pas idéal partout, c'est un crashtest pour le socle
@@ -94,10 +95,8 @@ B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
 
 ## Prochaines étapes
 
-1. Maintenant : le pilote neuf (B-0104), sa session de travail lancée ;
-   ses retours, au fil de l'eau (J-2026-10-31-C), se corrigent ici et
-   lui parviennent à la mise à jour de son socle.
-2. La suite se lit dans l'ordre du backlog (`socle state`) : après le
-   pilote, la planification (B-0101), puis la répartition entre agents
-   (B-0055) ; B-0010, B-0012 et B-0095 attendent le pilote ; gardé en
-   tête : B-0048.
+1. Attendre les comptes rendus : la mise à jour et la feuille de route de
+   chess ; la CI du pilote à sa reprise (B-0179).
+2. Le prochain lot se lit plus haut. La suite, dans l'ordre du backlog
+   (`socle state`) : la planification (B-0101), puis la répartition entre
+   agents (B-0055) ; gardé en tête : B-0048.

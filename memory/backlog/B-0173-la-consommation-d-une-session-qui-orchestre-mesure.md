@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0173 — La consommation d'une session qui orchestre : mesurer ce qui pèse, puis écrire les règles qui la bornent
 
-> statut : ouvert · origine : J-2026-11-11-R · après : B-0126 · lu : backlog@e69f45bc
+> statut : ouvert · origine : J-2026-11-11-R · priorité : haute · lu : backlog@e69f45bc
 
 Le 11 novembre, une session qui orchestre des sous-agents a vidé deux
 fenêtres de cinq heures, la seconde en moins d'une demi-heure, et pris
@@ -29,6 +29,17 @@ dans la méthode ce qui la borne : quand compacter ou le demander, combien
 de sous-agents à la fois, quand reprendre un sous-agent plutôt qu'en
 lancer un neuf, quel modèle pour quel travail, que faire à l'approche
 d'une limite.
+
+Le 12 novembre, Théo en fait une priorité (J-2026-11-12-L) : « a chaque
+fois que tu relis apres limite on se mange 50% de la limite de session
+d'un coup / Traiter ce problème est classé prioritaire ? ». Mesuré sur
+cette session : à chaque reprise après une limite, la conversation longue
+et ses sous-agents se relisent au prix fort, et la moitié de la fenêtre de
+cinq heures part avant tout travail. Pistes à peser d'abord : compacter à
+la fin de chaque lot et avant une attente longue ; intégrer soi-même les
+petits lots plutôt que de reprendre un sous-agent ; un réveil qui ouvre
+une session neuve, lue depuis la mémoire, au lieu de reprendre la longue.
+Le sujet n'attend plus chess, qui est installé.
 
 ## Fait quand
 
