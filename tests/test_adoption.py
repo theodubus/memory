@@ -223,5 +223,120 @@ class TestCliquetDesToleres(unittest.TestCase):
         self.assertEqual(assouplissements(avant, self.apres(["a — x"])), [])
 
 
+class TestSecondeRevue(unittest.TestCase):
+    """B-0189 : la seconde revue de B-0180."""
+
+    def setUp(self):
+        self.racine = depot({"app.py": "print('ok')\n", "LISEZMOI.md": LISEZMOI})
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        installer(self.racine, adoption=True)
+        self.gf = self.racine / ".socle/guardrails.toml"
+
+    def commit(self, message: str) -> str:
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-q", "--no-verify", "-m", message)
+        return subprocess.run(["git", "rev-parse", "HEAD"], cwd=self.racine, capture_output=True,
+                              text=True, check=True).stdout.strip()
+
+    def juger(self, base: str, ids: list[str]) -> list[Constat]:
+        projet = config.Projet.charger(self.racine)
+        return contexte.executer(contexte.Contexte(projet, etage="ci", base=base), ids=ids).constats
+
+    def test_une_cle_dont_le_chemin_contient_un_tiret_long_est_suivie(self):
+        self.assertEqual(contexte.cle_renommee("docs/a — b.md — F-0001", {"docs/a — b.md": "c.md"}),
+                         "c.md — F-0001")
+
+    def test_le_renommage_se_regle_dans_la_pull_request_qui_renomme(self):
+        base = self.commit("base")
+        git(self.racine, "mv", "LISEZMOI.md", "LIRE.md")
+        self.commit("renomme")
+        erreurs = [k for k in self.juger(base, ["memoire.references"]) if k.gravite == ERREUR]
+        self.assertEqual(len(erreurs), 2, erreurs)
+        self.assertTrue(any("renommer sa clé dans `[adoption.tolerated]` de « LISEZMOI.md — absent.md » à "
+                            "« LIRE.md — absent.md »" in k.message for k in erreurs), erreurs)
+        # La liste corrigée dans la même plage : le cliquet la laisse passer,
+        # et la CI est verte.
+        self.gf.write_text(self.gf.read_text().replace('"LISEZMOI.md — ', '"LIRE.md — '))
+        self.commit("liste corrigée")
+        constats = self.juger(base, ["memoire.references", "cliquet.garde-fous"])
+        self.assertFalse([k for k in constats if k.gravite == ERREUR], constats)
+        self.assertFalse([k for k in constats if "résorbé" in k.message], constats)
+
+    def test_la_liste_corrigee_dans_un_push_suivant_passe(self):
+        # Le renommage est parti dans un push antérieur : la plage du push
+        # suivant ne le contient plus, les renommages se lisent depuis la
+        # branche par défaut.
+        self.commit("base")
+        git(self.racine, "update-ref", "refs/remotes/origin/main", "HEAD")
+        git(self.racine, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main")
+        git(self.racine, "mv", "LISEZMOI.md", "LIRE.md")
+        pousse = self.commit("renomme")
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="ci", base=pousse)
+        self.assertEqual(ctx.renommes, {})
+        self.assertEqual(ctx.renommes_adoption, {"LISEZMOI.md": "LIRE.md"})
+        erreurs = [k for k in self.juger(pousse, ["memoire.references"]) if k.gravite == ERREUR]
+        self.assertEqual(len(erreurs), 2, erreurs)
+        self.assertTrue(all("renommer sa clé" in k.message for k in erreurs), erreurs)
+        self.gf.write_text(self.gf.read_text().replace('"LISEZMOI.md — ', '"LIRE.md — '))
+        self.commit("liste corrigée")
+        constats = self.juger(pousse, ["memoire.references", "cliquet.garde-fous"])
+        self.assertFalse([k for k in constats if k.gravite == ERREUR], constats)
+
+    def test_le_resorbe_cite_la_cle_telle_qu_elle_est_dans_la_liste(self):
+        base = self.commit("base")
+        git(self.racine, "mv", "LISEZMOI.md", "LIRE.md")
+        self.commit("renomme")
+        (self.racine / "LIRE.md").write_text("Et F-0099.\n")
+        self.commit("lien retiré")
+        resorbes = [k.message for k in self.juger(base, ["memoire.references"]) if "résorbé" in k.message]
+        self.assertEqual(len(resorbes), 1, resorbes)
+        self.assertIn("LISEZMOI.md — absent.md", resorbes[0])
+
+    def test_la_mise_a_jour_suit_les_renommages_de_la_branche(self):
+        self.gf.write_text(installeur._TABLE_TOLERES.sub("", self.gf.read_text()))
+        self.commit("base")
+        git(self.racine, "update-ref", "refs/remotes/origin/main", "HEAD")
+        git(self.racine, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main")
+        git(self.racine, "mv", "LISEZMOI.md", "LIRE.md")
+        self.commit("renomme sur la branche")
+        sortie = installer(self.racine, adoption=False)
+        tolerees = tomllib.loads(self.gf.read_text())["adoption"]["tolerated"]["memoire.references"]
+        self.assertEqual(sorted(tolerees), ["LIRE.md — F-0099", "LIRE.md — absent.md"])
+        self.assertNotIn("né(s) sur la branche", sortie)
+        self.assertIn("2 constat(s) d'un fichier renommé sur la branche, consigné(s) sous son nouveau nom", sortie)
+
+    def test_un_chemin_cite_n_a_pas_la_cle_du_lien_mort(self):
+        # Le lien toléré corrigé en un chemin cité, inexistant, vers la même
+        # cible : une faute d'un autre genre, qui n'est pas tolérée.
+        (self.racine / "LISEZMOI.md").write_text(LISEZMOI.replace("[la suite](absent.md)", "`memory/absent.md`"))
+        self.gf.write_text(self.gf.read_text().replace('"LISEZMOI.md — absent.md"', '"LISEZMOI.md — memory/absent.md"'))
+        erreurs = [k for k in references(self.racine) if k.gravite == ERREUR]
+        self.assertEqual([k.objet for k in erreurs], ["chemin:memory/absent.md"])
+        self.assertEqual(contexte.cle_de_constat(erreurs[0]), "LISEZMOI.md — chemin:memory/absent.md")
+
+    def test_docs_valeurs_garde_sa_source_francaise(self):
+        self.gf.write_text(self.gf.read_text() + '\n[[values]]\nname = "v"\n')
+        projet = config.Projet.charger(self.racine)
+        with messages.dans("en"):
+            rapport = contexte.executer(contexte.Contexte(projet, etage="ci", base=None), ids=["docs.valeurs"])
+        erreur, = rapport.erreurs()
+        self.assertEqual(messages.source(erreur.message), "`v` : déclaration sans `regex`")
+
+    def test_tests_attendus_garde_sa_source_francaise(self):
+        (self.racine / "tests").mkdir(exist_ok=True)
+        (self.racine / "tests/test_x.py").write_text("import unittest\n\n\nclass T(unittest.TestCase):\n"
+                                                    "    def test_un(self):\n        self.assertEqual(1 + 1, 2)\n")
+        base = self.commit("base")
+        (self.racine / "tests/test_x.py").write_text("import unittest\n\n\nclass T(unittest.TestCase):\n"
+                                                    "    def test_un(self):\n        self.assertEqual(1 + 1, 3)\n")
+        projet = config.Projet.charger(self.racine)
+        with messages.dans("en"):
+            rapport = contexte.executer(contexte.Contexte(projet, etage="ci", base=base), ids=["tests.attendus"])
+        erreurs = rapport.erreurs()
+        self.assertTrue(erreurs, rapport.constats)
+        self.assertTrue(all(messages.source(k.message).startswith("assertion changée") for k in erreurs),
+                        [messages.source(k.message) for k in erreurs])
+
+
 if __name__ == "__main__":
     unittest.main()

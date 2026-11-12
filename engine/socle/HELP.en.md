@@ -346,8 +346,13 @@ failed on the existing code are named in `[adoption] warn_only`, and the
 findings present at installation in `[adoption.tolerated]`, per check,
 under a key that depends neither on the line number nor on the language:
 the file and what the finding cites (`"README.md — missing.md"` for a dead
-link). Those stay warnings, even if the file is renamed; any new finding of
-these checks fails. A finding the CI no longer sees is reported: removing
+link). Those stay warnings; any new finding of these checks fails.
+Renaming a file that carries some is settled in the pull request that
+renames it: the check fails and says to rename the key in the list, from
+the old one to the new one, which the ratchet allows in the same pull
+request. Only a rename that git recognizes is followed: commit the rename
+alone, before editing the file; failing that, fix the finding, or tolerate
+it through an approved request. A finding the CI no longer sees is reported: removing
 it from the list is free, adding one requires an approved request that
 cites it. The
 state says, per check, how many findings adoption still tolerates; at zero,

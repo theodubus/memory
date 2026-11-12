@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0189 — Seconde revue de B-0180 : un fichier renommé perd sa tolérance à la pull request suivante, et la clé ne dit plus le genre de faute
 
-> statut : ouvert · origine : J-2026-11-12-D · priorité : haute · lu : backlog@d439d914
+> statut : fait · origine : J-2026-11-12-D · priorité : haute · lu : backlog@d439d914 · ref : J-2026-11-12-E
 
 Les corrections de la première revue de B-0180 étaient lourdes (la clé
 d'un constat refaite, `trad` qui rend un texte gardant sa source) : la
@@ -25,7 +25,7 @@ sur `trad` est écarté ; six constats restent, sur le lot déjà poussé :
 
 ## Fait quand
 
-- [ ] renommer un fichier qui porte un constat toléré se règle dans la pull request qui le renomme : le contrôle demande de renommer la clé dans la liste, ce que le cliquet laisse faire, et le guide le dit
-- [ ] la mise à jour d'un projet adopté avant la règle suit les renommages de la branche
-- [ ] deux fautes de genre différent sur la même cible ont deux clés, sans changer les clés déjà consignées par un test poussé
-- [ ] les constats 4, 5 et 6 sont corrigés, chacun avec un test
+- [x] renommer un fichier qui porte un constat toléré se règle dans la pull request qui le renomme : le contrôle demande de renommer la clé dans la liste, ce que le cliquet laisse faire, et le guide le dit
+- [x] la mise à jour d'un projet adopté avant la règle suit les renommages de la branche
+- [x] deux fautes de genre différent sur la même cible ont deux clés, sans changer les clés déjà consignées par un test poussé
+- [x] les constats 4, 5 et 6 sont corrigés, chacun avec un test

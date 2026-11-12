@@ -609,6 +609,19 @@ MESSAGES: dict[str, str] = {
     "constat toléré par l'adoption résorbé, à retirer de "
     "`[adoption.tolerated]` : {cle}":
         "finding tolerated by adoption resolved, to remove from `[adoption.tolerated]`: {cle}",
+    "{message} — constat toléré par l'adoption, mais son fichier est renommé : renommer "
+    "sa clé dans `[adoption.tolerated]` de « {ancienne} » à « {nouvelle} », ce que le "
+    "cliquet laisse faire dans la même pull request":
+        "{message} — finding tolerated by adoption, but its file is renamed: rename its key in "
+        "`[adoption.tolerated]` from \"{ancienne}\" to \"{nouvelle}\", which the ratchet allows in the same "
+        "pull request",
+    "`{nom}` : {err}":
+        "`{nom}`: {err}",
+    "{faute}{note}":
+        "{faute}{note}",
+    "mise à jour : {controle} — {n} constat(s) d'un fichier renommé sur la branche, consigné(s) sous "
+    "son nouveau nom : {cles}":
+        "update: {controle} — {n} finding(s) of a file renamed on the branch, recorded under its new name: {cles}",
     "# Les constats présents à l'adoption, que `warn_only` tolère : toute autre erreur de ces\n"
     "# contrôles échoue. En retirer durcit (libre) ; en ajouter assouplit (demande validée).":
         "# The findings present at adoption, which `warn_only` tolerates: any other error of these\n"

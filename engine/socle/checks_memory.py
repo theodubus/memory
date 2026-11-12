@@ -372,7 +372,9 @@ def references(ctx, r):
                 if faute and demande and protege_cite(ctx, m.group(1)):
                     faute = None
                 if faute:
-                    signaler(faute, chemin, i, m.group(1))
+                    # Le genre de faute dans l'objet : un lien mort vers la même
+                    # cible n'a pas la même clé d'adoption (B-0189).
+                    signaler(faute, chemin, i, f"chemin:{m.group(1)}")
                 depot = depot_non_declare(ctx, m.group(1), connus)
                 if depot:
                     autres.setdefault(depot, []).append((chemin, i, m.group(1)))

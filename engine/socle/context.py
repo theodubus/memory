@@ -146,9 +146,28 @@ class Contexte:
         à la tête, tels que git les reconnaît."""
         if not self.base:
             return {}
+        return self._renommes_depuis(self.base)
+
+    def _renommes_depuis(self, base: str) -> dict[str, str]:
         tiers = self.projet.chemins_tiers()
-        return {a: b for a, b in outils.renommes(self.racine, self.base, self.tete).items()
+        return {a: b for a, b in outils.renommes(self.racine, base, self.tete).items()
                 if not outils.correspond(b, tiers)}
+
+    @cached_property
+    def renommes_adoption(self) -> dict[str, str]:
+        """Les renommages que suivent les clés de l'adoption : depuis le point
+        de divergence avec la branche par défaut, quel que soit le push qui
+        les a portés, ajoutés à ceux de la plage ; sans branche par défaut
+        lisible, ceux de la plage seuls (B-0189)."""
+        if not self.base:
+            return {}
+        defaut = outils.branche_par_defaut(self.racine)
+        tete = self.tete if self.tete and outils.git(self.racine, "cat-file", "-t", self.tete,
+                                                      check=False).strip() == "commit" else "HEAD"
+        depart = outils.git(self.racine, "merge-base", tete, defaut, check=False).strip() if defaut else ""
+        if not depart:
+            return self.renommes
+        return {**self.renommes, **self._renommes_depuis(depart)}
 
     @cached_property
     def rev_commit(self) -> str:
@@ -294,9 +313,14 @@ def cle_de_constat(constat) -> str:
 
 def cle_renommee(cle: str, renommes: dict[str, str]) -> str:
     """La clé d'un constat toléré, son fichier suivi sous son nouveau nom :
-    renommer un fichier ne change pas ce que l'adoption tolère."""
-    chemin, sep, coeur = cle.partition(" — ")
-    return f"{renommes[chemin]}{sep}{coeur}" if sep and chemin in renommes else cle
+    le cliquet et l'installeur reconnaissent ainsi une clé renommée avec son
+    fichier. Le fichier se reconnaît au préfixe « ancien nom — » de la clé,
+    le plus long : un chemin peut contenir lui-même « — » (B-0189)."""
+    chemins = [c for c in renommes if cle.startswith(c + " — ")]
+    if not chemins:
+        return cle
+    chemin = max(chemins, key=len)
+    return renommes[chemin] + cle[len(chemin):]
 
 
 def tolerances(projet: config.Projet) -> dict[str, list[str] | None]:
@@ -349,8 +373,11 @@ def constats_presents(projet: config.Projet, ids: list[str], tete: str | None = 
 def _appliquer_adoption(controle: str, constats: list, tolerees: list[str] | None, rapport, ctx: "Contexte"):
     """Sous l'adoption, une erreur dont la clé est tolérée passe en
     avertissement, autant de fois que la liste la compte ; toute autre reste
-    une erreur. Un fichier renommé par la plage garde ses constats tolérés.
-    Un constat toléré que la CI ne voit plus se signale, à la CI seulement :
+    une erreur. Un fichier que la plage renomme, sous une clé que la liste
+    porte encore sous l'ancien nom, n'est pas toléré en silence : son constat
+    reste une erreur, qui dit de renommer la clé dans la liste, ce que le
+    cliquet laisse faire dans la même plage (B-0189). Un constat toléré que
+    la CI ne voit plus se signale, sous sa clé dans la liste, à la CI seulement :
     ailleurs, un contrôle peut ne juger que les fichiers changés. Sans
     liste, l'ancienne règle : tout passe en avertissement, et le contrôle le
     dit."""
@@ -368,14 +395,27 @@ def _appliquer_adoption(controle: str, constats: list, tolerees: list[str] | Non
             rapport.avertir(controle, trad("contrôle désarmé en entier par l'adoption : aucune liste de constats "
                                            "tolérés ; relancer l'installeur pour la consigner"), chemin_gf)
         return
-    renommes = ctx.renommes if ctx.base else {}
-    reste = Counter(cle_renommee(k, renommes) for k in tolerees)
+    renommes = ctx.renommes_adoption
+    reste = Counter(tolerees)
+    # La nouvelle clé d'un constat dont la plage renomme le fichier, vers sa
+    # clé dans la liste, encore sous l'ancien nom.
+    a_renommer: dict[str, str] = {}
+    for ancienne in tolerees:
+        nouvelle = cle_renommee(ancienne, renommes)
+        if nouvelle != ancienne:
+            a_renommer.setdefault(nouvelle, ancienne)
     for k in erreurs:
         cle = cle_de_constat(k)
         if reste[cle] > 0:
             reste[cle] -= 1
             k.gravite = AVERTISSEMENT
             k.message = "(adoption) " + k.message
+        elif cle in a_renommer and reste[a_renommer[cle]] > 0:
+            reste[a_renommer[cle]] -= 1
+            k.message = trad("{message} — constat toléré par l'adoption, mais son fichier est renommé : renommer "
+                             "sa clé dans `[adoption.tolerated]` de « {ancienne} » à « {nouvelle} », ce que le "
+                             "cliquet laisse faire dans la même pull request", message=k.message,
+                             ancienne=a_renommer[cle], nouvelle=cle)
     if ctx.etage != "ci":
         return
     for cle, n in sorted(reste.items()):

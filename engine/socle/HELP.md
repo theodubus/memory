@@ -350,8 +350,13 @@ libre ; les relâcher exige une demande validée.
 constats présents à l'installation dans `[adoption.tolerated]`, par
 contrôle, sous une clé qui ne dépend ni du numéro de ligne ni de la
 langue : le fichier et ce que le constat cite (`"LISEZMOI.md — absent.md"`
-pour un lien mort). Ceux-là restent en avertissement, même si le fichier
-est renommé ; tout constat nouveau de ces contrôles échoue. Un constat que
+pour un lien mort). Ceux-là restent en avertissement ; tout constat
+nouveau de ces contrôles échoue. Renommer un fichier qui en porte se règle
+dans la pull request qui le renomme : le contrôle échoue et dit de renommer
+la clé dans la liste, de l'ancienne à la nouvelle, ce que le cliquet laisse
+faire dans la même pull request. Seul un renommage que git reconnaît se
+suit : commiter le renommage seul, avant de modifier le fichier ; à défaut,
+corriger le constat, ou le tolérer par une demande validée. Un constat que
 la CI ne voit plus se signale : le retirer de la liste est libre, en
 ajouter un exige une demande validée qui le cite. L'état dit, par contrôle, combien de constats
 l'adoption tolère encore ; à zéro, le contrôle peut sortir de `warn_only`.

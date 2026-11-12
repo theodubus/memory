@@ -103,13 +103,17 @@ def _mesure(apres: dict, chemin: tuple[str, ...], plafond) -> bool:
 
 def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | None = None,
                      renommes: dict[str, str] | None = None,
-                     fichiers_avant: list[str] | None = None) -> list[tuple[str, str]]:
+                     fichiers_avant: list[str] | None = None,
+                     renommes_toleres: dict[str, str] | None = None) -> list[tuple[str, str]]:
     """[(clé citable, explication)] des assouplissements de `avant` à `apres`.
     `modules_existants` : les fichiers de l'arbre jugé ; le seuil d'un fichier
     disparu se retire avec lui. `renommes` et `fichiers_avant` : les fichiers
     que la plage renomme, et ceux de la base ; une correspondance ou une
-    valeur liée qui suit ses fichiers sous leur nouveau nom n'assouplit rien."""
+    valeur liée qui suit ses fichiers sous leur nouveau nom n'assouplit rien.
+    `renommes_toleres` : ceux que suivent les clés de l'adoption, lus depuis
+    la branche par défaut (B-0189) ; à défaut, `renommes`."""
     renommes = renommes or {}
+    renommes_toleres = renommes if renommes_toleres is None else renommes_toleres
     res = []
     a, b = aplatir(avant), aplatir(apres)
     for chemin, defaut in DEFAUTS.items():
@@ -124,7 +128,7 @@ def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | Non
         if sens == "libre":
             continue
         if sens == "tolere":
-            res += _toleres(cle, chemin[-1], va, vb, apres, renommes)
+            res += _toleres(cle, chemin[-1], va, vb, apres, renommes_toleres)
             continue
         if va is ABSENT:
             if chemin[:2] == ("mutation", "caps") and chemin[-1] == "max" and not _mesure(b, chemin, vb):
@@ -251,7 +255,7 @@ def cliquet(ctx, r):
     if not avant:
         return  # installation : rien à comparer
     for cle, pourquoi in assouplissements(avant, ctx.projet.garde_fous, set(ctx.fichiers), ctx.renommes,
-                                          ctx.fichiers_base):
+                                          ctx.fichiers_base, ctx.renommes_adoption):
         d = _valide_par(ctx, cle)
         if d:
             r.avertir("cliquet.garde-fous", trad("assouplissement validé par {id} : {cle} — {pourquoi}",

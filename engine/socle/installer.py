@@ -1509,8 +1509,23 @@ def consigner_tolerances(cible: Path, mise_a_jour: bool = False) -> list[str]:
                                 "qu'une branche aurait ajoutés"))
             else:
                 de_la_base = contexte.constats_presents(projet, manquants, tete=base)
+                # Un fichier renommé sur la branche garde ses constats de la
+                # base, sous son nouveau nom (B-0189).
+                tiers = projet.chemins_tiers()
+                renommes = {a: b for a, b in outils.renommes(cible, base).items()
+                            if not outils.correspond(b, tiers)}
+                deplacees: dict[str, Counter] = {}
+                for c in manquants:
+                    suivies = [contexte.cle_renommee(k, renommes) for k in de_la_base[c]]
+                    deplacees[c] = Counter(n for k, n in zip(de_la_base[c], suivies) if n != k)
+                    de_la_base[c] = suivies
                 for c in manquants:
                     gardes = list((Counter(presents[c]) & Counter(de_la_base[c])).elements())
+                    consignees = list((deplacees[c] & Counter(gardes)).elements())
+                    if consignees:
+                        res.append(trad("mise à jour : {controle} — {n} constat(s) d'un fichier renommé sur la "
+                                        "branche, consigné(s) sous son nouveau nom : {cles}",
+                                        controle=c, n=len(consignees), cles="; ".join(consignees)))
                     nes = list((Counter(presents[c]) - Counter(de_la_base[c])).elements())
                     if nes:
                         res.append(trad("mise à jour : {controle} — {n} constat(s) né(s) sur la branche, absent(s) "

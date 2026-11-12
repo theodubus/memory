@@ -326,7 +326,7 @@ def attendus(ctx, r):
                                              "et la CI attendent la réponse de l'humain",
                                              quoi=quoi, attente=attente), fichier, ligne)
         else:
-            r.erreur("tests.attendus", faute + _note_agent(ctx, nom), fichier, ligne)
+            r.erreur("tests.attendus", trad("{faute}{note}", faute=faute, note=_note_agent(ctx, nom)), fichier, ligne)
 
     hors: dict[str, list[tuple[str, str]]] = {}
 

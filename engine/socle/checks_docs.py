@@ -98,7 +98,7 @@ def valeurs(ctx, r):
             continue
         v, err = valeur_source(ctx, decl)
         if err:
-            r.erreur("docs.valeurs", f"`{nom}` : {err}", ctx.projet.chemins.garde_fous)
+            r.erreur("docs.valeurs", trad("`{nom}` : {err}", nom=nom, err=err), ctx.projet.chemins.garde_fous)
         sources[nom] = v
 
     cites = defaultdict(int)
