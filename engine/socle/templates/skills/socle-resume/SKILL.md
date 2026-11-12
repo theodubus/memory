@@ -48,9 +48,9 @@ l'heure armée précède `now` : retirer ce réveil et le réarmer à la borne.
 **Sans l'outil `list_events`**, chaque réveil s'arme à la borne, et
 celui de cinq heures, dont la fenêtre a commencé on ne sait quand, s'y
 repousse au début de chaque tour qui agit et au lancement d'un sous-agent
-(`run_once_at`, dans l'appel prévu). Il tombe après la levée si la
-coupure vient moins de cinq heures après ce report ; au-delà, rien ne
-garantit la reprise. `list_triggers` retrouve les réveils.
+(`run_once_at`, dans l'appel prévu). Il tombe après la levée tant
+qu'aucune fenêtre n'a recommencé entre ce report et la coupure ; sinon
+il tire trop tôt et se perd. `list_triggers` retrouve les réveils.
 
 Leur texte porte ce que l'agent ne retrouve pas ailleurs : le lot, et les
 sous-agents en cours. L'étape, il la retrouve dans sa conversation, git,

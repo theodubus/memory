@@ -48,8 +48,8 @@ and re-arm it at the bound.
 and the five-hour one, whose window began no one knows when, is pushed
 back to it at the start of every turn where the agent acts and when
 launching a subagent (`run_once_at`, in the planned call). It falls after
-the limit lifts if the cut comes less than five hours after that push;
-beyond, nothing guarantees the resumption. `list_triggers` finds the
+the limit lifts as long as no window restarted between that push and the
+cut; otherwise it fires too early and is lost. `list_triggers` finds the
 wake-ups again.
 
 Their text carries what the agent finds nowhere else: the batch, and the
