@@ -239,6 +239,8 @@ class TestSansCode(unittest.TestCase):
         self.assertNotIn("l'outil manque", erreurs[0].message)
 
     def test_commandes_ci_lit_les_etapes_de_chaque_adaptateur(self):
+        # `npm ci` attend `package.json`, comme dans la CI (B-0179).
+        (self.racine / "package.json").write_text("{}\n")
         attendu = {
             "python-pytest": ["python3 -m pip install pytest mutmut"],
             "javascript": ["npm ci"],

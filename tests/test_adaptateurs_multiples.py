@@ -3,9 +3,11 @@ dont les motifs le désignent (ADR-0051). Un projet fabriqué, en Python et en
 Kotlin, comme JustCook : ses outils en Python, son app en Kotlin."""
 
 import os
+import re
 import shutil
 import subprocess
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -669,6 +671,175 @@ class Balayage(unittest.TestCase):
             fichiers = outils_fichiers(racine)
             niveau, message, _, _ = mutation.etat_du_balayage(projet, fichiers, lambda f: (racine / f).read_text())
             self.assertEqual(niveau, "erreur")
+        finally:
+            shutil.rmtree(racine, ignore_errors=True)
+
+
+# Ce qu'une étape de `ci_setup` exige d'un fichier de build, et les motifs que
+# sa condition peut citer : ceux que l'outil lit. Un cache d'un outil absent
+# de la table est une faute : la table s'étend avec les adaptateurs.
+CACHES = {
+    "gradle": {"**/*.gradle*", "**/gradle-wrapper.properties", "buildSrc/**/Versions.kt",
+               "buildSrc/**/Dependencies.kt", "gradle/*.versions.toml", "**/versions.properties"},
+    "maven": {"**/pom.xml"},
+    "npm": {"**/package-lock.json", "**/npm-shrinkwrap.json"}, "yarn": {"**/yarn.lock"},
+    "pnpm": {"**/pnpm-lock.yaml"}, "pip": {"**/requirements.txt"}, "pipenv": {"**/Pipfile.lock"},
+    "poetry": {"**/poetry.lock"},
+}
+COMMANDES = (
+    (r"\bnpm (?:ci|install)\b|\byarn(?: install)?(?:\s|$)|\bpnpm install\b", {"package.json"}),
+    (r"\bcomposer install\b", {"composer.json"}),
+    (r"\bdotnet restore\b", {"*.sln", "*.slnx", "*.csproj"}),
+    (r"\bmvn\b", {"pom.xml", "**/pom.xml"}),
+    (r"\./gradlew\b", {"gradlew"}),
+    (r"\bbundle install\b", {"Gemfile", "gems.rb"}),
+)
+# Une clé ou une option qui nomme le fichier qu'elle lit : la condition le cite.
+NOMME_SON_FICHIER = re.compile(r"(?:[\w-]+-file|cache-dependency-path):\s*['\"]?([^\s,}'\"]+)"
+                               r"|\bpip3? install\b[^\n]*?\s-r\s*(\S+)")
+
+
+def etapes_yaml(texte: str) -> list[str]:
+    """Les étapes d'un `ci_setup` ou d'un workflow, une par bloc `      - `."""
+    return [b for b in re.split(r"(?m)^(?=      - )", texte) if b.strip()]
+
+
+def exigences(bloc: str) -> list[tuple[str, set[str] | None]]:
+    """Ce que l'étape exige d'un fichier de build : ce qui l'exige, et les
+    motifs permis à sa condition (None : un cache que la table ignore)."""
+    code = re.sub(r"(?m)^\s*(?:- )?(?:name:|#).*$", "", bloc)
+    res = [(f"cache: {outil}", CACHES.get(outil))
+           for outil in re.findall(r"(?<![\w-])cache:\s*['\"]?([\w-]+)", code) if outil != "false"]
+    res += [(m.group(0).strip(), permis) for motif, permis in COMMANDES for m in [re.search(motif, code)] if m]
+    res += [(m.group(0).strip(), {m.group(1) or m.group(2)}) for m in NOMME_SON_FICHIER.finditer(code)]
+    return res
+
+
+def fautes_d_etape(bloc: str) -> list[str]:
+    """Ce qui manque à la condition d'une étape qui exige un fichier."""
+    exige = exigences(bloc)
+    if not exige:
+        return []
+    m = re.search(r"(?m)^\s*(?:- )?if:\s*hashFiles\(([^)]*)\)\s*!=\s*''\s*$", bloc)
+    if not m:
+        return [f"{quoi} : aucune condition `if: hashFiles(…) != ''`" for quoi, _ in exige]
+    motifs = set(re.findall(r"'([^']+)'", m.group(1)))
+    fautes = []
+    for quoi, permis in exige:
+        if permis is None:
+            fautes.append(f"{quoi} : outil absent de la table des caches")
+        elif not motifs or not motifs <= permis:
+            # Chaque motif cité est lu par l'outil : la condition vraie,
+            # l'outil trouve son fichier.
+            fautes.append(f"{quoi} : la condition cite {sorted(motifs)}, hors de {sorted(permis)}")
+    return fautes
+
+
+class AvantLePremierFichier(unittest.TestCase):
+    """B-0179 : un adaptateur posé avant le premier fichier de son langage ne
+    fait pas échouer la CI. Le pilote, en `python-pytest` et `kotlin` sans
+    Gradle, voyait `actions/setup-java` refuser son `cache: gradle`. Le
+    workflow ne tourne que sur GitHub : son texte se juge ici."""
+
+    def test_une_etape_qui_exige_un_fichier_de_build_l_attend(self):
+        fautes, conditionnees = [], 0
+        for chemin in sorted(ADAPTATEURS.glob("*.toml")):
+            for bloc in etapes_yaml(tomllib.loads(chemin.read_text()).get("ci_setup", "")):
+                fautes += [f"{chemin.name} : {f}" for f in fautes_d_etape(bloc)]
+                conditionnees += bool(exigences(bloc))
+        self.assertEqual(fautes, [])
+        self.assertGreaterEqual(conditionnees, 5)
+
+    def test_le_juge_des_etapes_reconnait_chaque_forme(self):
+        """Chaque forme qu'une étape prend pour exiger un fichier est vue en
+        faute, sans condition ou avec une condition qui cite autre chose."""
+        fautives = (
+            "      - uses: actions/setup-node@v5\n        with:\n          cache: npm\n",
+            "      - uses: actions/setup-python@v6\n        with: {python-version: '3.12', cache: pip}\n",
+            "      - uses: actions/setup-go@v6\n        with:\n          go-version-file: go.mod\n",
+            "      - uses: actions/setup-dotnet@v5\n        with:\n          global-json-file: global.json\n",
+            "      - uses: actions/setup-python@v6\n        with:\n          cache-dependency-path: req/dev.txt\n",
+            "      - name: D\n        run: python3 -m pip install -r requirements.txt\n",
+            "      - name: D\n        run: yarn install --frozen-lockfile\n",
+            "      - name: D\n        run: pnpm install\n",
+            "      - name: D\n        if: hashFiles('composer.json') != ''\n        run: npm ci\n",
+            "      - uses: actions/setup-java@v5\n        if: hashFiles('**/*.gradle*', 'settings.gradle') != ''\n"
+            "        with:\n          cache: gradle\n",
+            "      - uses: actions/setup-java@v5\n        with:\n          cache: sbt\n",
+        )
+        for bloc in fautives:
+            self.assertTrue(fautes_d_etape(bloc), bloc)
+        saines = (
+            "      - uses: ruby/setup-ruby@v1\n        with:\n          bundler-cache: true\n",
+            "      - name: pytest et mutmut\n        run: python3 -m pip install pytest mutmut\n",
+            "      - name: D\n        if: hashFiles('package.json') != ''\n        run: npm ci\n",
+            "      - uses: actions/setup-go@v6\n        if: hashFiles('go.mod') != ''\n        with:\n"
+            "          go-version-file: go.mod\n",
+        )
+        for bloc in saines:
+            self.assertEqual(fautes_d_etape(bloc), [], bloc)
+
+    def test_un_projet_python_et_kotlin_sans_gradle_passe_la_ci(self):
+        racine = Path(tempfile.mkdtemp(prefix="socle-sans-gradle-"))
+        try:
+            git(racine, "init", "-q", "-b", "main")
+            (racine / "pyproject.toml").write_text("[project]\nname = \"pilote\"\n")
+            self.assertEqual(installer(racine, ["python-pytest", "kotlin"]), 0)
+            self.assertFalse([f for f in racine.rglob("*") if f.suffix == ".kt" or ".gradle" in f.name])
+            ci = (racine / ".github/workflows/socle.yml").read_text()
+            java = [b for b in etapes_yaml(ci) if "actions/setup-java" in b]
+            self.assertEqual(len(java), 1, ci)
+            self.assertIn("if: hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') != ''", java[0])
+            self.assertIn("cache: gradle", java[0])
+            self.assertEqual([f for b in etapes_yaml(ci) for f in fautes_d_etape(b)], [])
+            git(racine, "add", "-A")
+            git(racine, "-c", "core.hooksPath=/dev/null", "commit", "-qm", "socle")
+            # `socle ci` sans l'auto-test : les capacités, puis les contrôles.
+            projet = config.Projet.charger(racine)
+            r = Rapport()
+            verification.executer_etapes(projet, False, r)
+            r.fusionner(contexte.executer(contexte.Contexte(projet, etage="ci", base=None)))
+            self.assertTrue(r.reussi, r.texte())
+            # Le saut des capacités de Kotlin se dit, il n'est pas silencieux.
+            sauts = [c.message for c in r.constats if c.controle == "verify.kotlin.tests"]
+            self.assertTrue(sauts and "pas encore de code" in sauts[0], sauts)
+        finally:
+            shutil.rmtree(racine, ignore_errors=True)
+
+    def test_l_agent_ne_lance_pas_une_commande_qui_attend_son_fichier_de_build(self):
+        """Revue de B-0179 : la condition vaut aussi côté agent. Un projet
+        `javascript` et `csharp` neuf, sans `package.json` ni solution : ni
+        l'installeur ni le hook de démarrage ne lancent `npm ci` ou
+        `dotnet restore`, ils disent qu'elles attendent."""
+        from unittest import mock
+
+        racine = Path(tempfile.mkdtemp(prefix="socle-sans-manifeste-"))
+        try:
+            git(racine, "init", "-q", "-b", "main")
+            sortie = installer_et_lire(racine, ["javascript", "csharp"])
+            self.assertNotIn("donner à l'agent les outils que la CI installe", sortie)
+            self.assertIn("attendent leur fichier de build", sortie)
+            self.assertIn("`npm ci` (attend `package.json`)", sortie)
+            projet = config.Projet.charger(racine)
+            self.assertEqual(verification.commandes_ci(projet), [])
+            attente = verification.commandes_en_attente(projet)
+            self.assertEqual([c for c, _ in attente], ["npm ci", "dotnet restore && dotnet tool restore"])
+            self.assertIn("`dotnet restore && dotnet tool restore` (attend `*.sln`, `*.slnx`, `*.csproj`)",
+                          verification.attente_dite(attente))
+            with mock.patch.dict(os.environ, {hooks.SESSION_CLOUD: "true"}):
+                lignes = hooks.installer_outils(projet)
+            self.assertEqual(len(lignes), 1, lignes)
+            self.assertIn("en attente de leur fichier de build", lignes[0])
+            self.assertFalse([x for x in lignes if x.startswith("!!")])
+            # Le manifeste là, la commande se donne, comme la CI la lancera.
+            (racine / "package.json").write_text("{}\n")
+            self.assertEqual(verification.commandes_ci(projet), ["npm ci"])
+            self.assertEqual([c for c, _ in verification.commandes_en_attente(projet)],
+                             ["dotnet restore && dotnet tool restore"])
+            # Sans condition, une commande se donne toujours ; un `ci_setup`
+            # sans liste d'étapes se lit encore.
+            self.assertEqual(verification.etapes_ci("      - name: O\n        run: echo o\n"), [("echo o", [])])
+            self.assertEqual(verification.etapes_ci("run: echo o\n"), [("echo o", [])])
         finally:
             shutil.rmtree(racine, ignore_errors=True)
 
