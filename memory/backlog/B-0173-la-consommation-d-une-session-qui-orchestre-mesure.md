@@ -49,11 +49,14 @@ le compactage qui suit, 12 points.
 Mesuré le 12 novembre (J-2026-11-12-N) : le relevé
 `docs/fabrication/consommation.md` donne, pour les 11 et 12 novembre, ce
 que pèsent la conversation principale, les sous-agents, les reprises et
-les compactages, et ce que le socle injecte. Les 12 points de 18 h 07 à
-18 h 10 sont des appels ordinaires, pas le compactage (environ 4 points).
-Le socle ne pèse pas (3 % du contexte relu) : aucune borne à poser ici ;
-la sortie tronquée du hook de démarrage est notée pour B-0010. Reste la
-méthode, que le relevé chiffre règle par règle.
+les compactages, et ce que le socle injecte, dans la conversation
+principale comme dans les sous-agents. Les 12 points de 18 h 07 à 18 h 10
+sont des appels ordinaires, pas le compactage (5 points, ± 1). Le socle
+pèse peu (4 à 7 % du contexte relu selon la portée, section du socle
+d'AGENTS.md comprise) : aucune borne à poser ici ; la sortie tronquée du
+hook de démarrage, dont l'agent relit parfois le fichier complet, est
+notée pour B-0010. Reste la méthode, que le relevé chiffre règle par
+règle.
 
 ## Fait quand
 
