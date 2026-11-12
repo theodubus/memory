@@ -12,11 +12,11 @@ faits par leur titre, le reste lu à la demande), sans attendre le pilote,
 dans le jalon B-0154.
 
 Le 12 novembre, la mesure de B-0173 (J-2026-11-12-N) le rend pressant :
-l'état injecté au démarrage fait 24 à 28 Ko, et Claude Code ne transmet à
-l'agent qu'un aperçu de 2 Ko, avec le chemin du fichier complet, que
-l'agent ne relit pas. Le chantier actif et les faits ne lui parviennent
-donc pas, ni ici ni sur chess ; la session de ce dépôt l'a vu à chaque
-reprise du 12 au soir. La borne de D-0093 doit tenir sous ce que Claude
+l'état injecté au démarrage fait 26 à 30 Ko, et Claude Code ne transmet à
+l'agent qu'un aperçu d'environ 2 Ko, avec le chemin du fichier complet,
+que l'agent n'a relu que quatre fois en quatre jours, sans règle qui le
+lui demande. Le chantier actif et les faits ne lui parviennent donc le
+plus souvent pas, ni ici ni sur chess. La borne de D-0093 doit tenir sous ce que Claude
 Code transmet entier, ou l'essentiel dans les premiers 2 Ko. C'est aussi
 ce qui permet de continuer un travail dans une session neuve
 (J-2026-11-12-O). Théo le passe en priorité haute, juste après B-0173
