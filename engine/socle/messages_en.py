@@ -589,6 +589,56 @@ MESSAGES: dict[str, str] = {
         "loosens (approved request).\n",
     "adoption : {n} contrôle(s) en avertissement : {liste}":
         "adoption: {n} check(s) as warnings: {liste}",
+    "adoption : !! {controle} désarmé en entier : aucune liste de constats tolérés "
+    "(`[adoption.tolerated]`), toutes ses erreurs, même nouvelles, passent en "
+    "avertissement. Remède : relancer l'installeur (`python3 .socle/socle install "
+    "--target .`), qui consigne les constats présents comme tolérés":
+        "adoption: !! {controle} entirely disarmed: no list of tolerated findings (`[adoption.tolerated]`), all its "
+        "errors, even new ones, become warnings. Remedy: run the installer again (`python3 .socle/socle install "
+        "--target .`), which records the present findings as tolerated",
+    "adoption : {controle} — plus aucun constat toléré : il peut sortir de "
+    "`[adoption] warn_only` (durcir est libre)":
+        "adoption: {controle} — no tolerated finding left: it can leave `[adoption] warn_only` (tightening is free)",
+    "adoption : {controle} — {n} constat(s) d'avant l'installation encore toléré(s) ; "
+    "tout constat nouveau échoue. À zéro, il pourra sortir de `[adoption] warn_only`":
+        "adoption: {controle} — {n} finding(s) from before the installation still tolerated; any new finding "
+        "fails. At zero, it can leave `[adoption] warn_only`",
+    "contrôle désarmé en entier par l'adoption : aucune liste de constats "
+    "tolérés ; relancer l'installeur pour la consigner":
+        "check entirely disarmed by adoption: no list of tolerated findings; run the installer again to record it",
+    "constat toléré par l'adoption résorbé, à retirer de "
+    "`[adoption.tolerated]` : {cle}":
+        "finding tolerated by adoption resolved, to remove from `[adoption.tolerated]`: {cle}",
+    "# Les constats présents à l'adoption, que `warn_only` tolère : toute autre erreur de ces\n"
+    "# contrôles échoue. En retirer durcit (libre) ; en ajouter assouplit (demande validée).":
+        "# The findings present at adoption, which `warn_only` tolerates: any other error of these\n"
+        "# checks fails. Removing one tightens (free); adding one loosens (approved request).",
+    "mise à jour : {controle} était désarmé en entier par l'adoption ; ses {n} "
+    "constat(s) présent(s) sont consignés comme tolérés (`[adoption.tolerated]`), et "
+    "tout constat nouveau échouera désormais (B-0180)":
+        "update: {controle} was entirely disarmed by adoption; its {n} present finding(s) are recorded as tolerated "
+        "(`[adoption.tolerated]`), and any new finding will now fail (B-0180)",
+    "adoption : illisible ({erreur})":
+        "adoption: unreadable ({erreur})",
+    "liste des constats tolérés retirée : le contrôle entier est désarmé":
+        "list of tolerated findings removed: the whole check is disarmed",
+    "constat toléré ajouté ({n} fois)":
+        "tolerated finding added ({n} time(s))",
+    "mise à jour : aucune base lisible (la branche par défaut distante) : les constats "
+    "présents dans l'arbre de travail sont consignés comme tolérés, y compris ceux "
+    "qu'une branche aurait ajoutés":
+        "update: no readable base (the remote default branch): the findings present in the working tree are "
+        "recorded as tolerated, including those a branch may have added",
+    "mise à jour : {controle} — {n} constat(s) né(s) sur la branche, absent(s) "
+    "de la branche par défaut, non toléré(s) : à corriger ({cles})":
+        "update: {controle} — {n} finding(s) born on the branch, absent from the default branch, not tolerated: "
+        "to fix ({cles})",
+    "référence morte née après l'adoption, sous un contrôle en `warn_only`":
+        "dead reference born after adoption, under a check in `warn_only`",
+    "sous l'adoption, une référence morte d'avant l'installation, déplacée d'une ligne, reste en avertissement au "
+    "commit (B-0180)":
+        "under adoption, a dead reference from before the installation, moved down a line, stays a warning at "
+        "commit (B-0180)",
     "approuver les fichiers protégés que la mise à jour a changés (la liste s'affiche, à confirmer) : `python3 "
     ".socle/socle approve --text \"Mise à jour du socle {version}\"`":
         "approve the protected files the update changed (the list is shown, to confirm): `python3 .socle/socle "

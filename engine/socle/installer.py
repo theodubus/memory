@@ -12,7 +12,9 @@ Ce qu'il copie et ce qu'il référence décide de tout :
 
 Mode adoption (projet existant) : les budgets sont fixés au niveau actuel,
 et les contrôles qui échouent sur l'existant passent en avertissement
-(`[adoption] warn_only`), d'où on ne les retire que pour durcir.
+(`[adoption] warn_only`), d'où on ne les retire que pour durcir ; seuls les
+constats présents à l'adoption y sont tolérés (`[adoption.tolerated]`), tout
+autre échoue (B-0180).
 """
 
 from __future__ import annotations
@@ -26,6 +28,7 @@ import shutil
 import subprocess
 import sys
 import tomllib
+from collections import Counter
 from datetime import date
 from pathlib import Path
 from typing import NamedTuple
@@ -1129,6 +1132,8 @@ def _installer(cible: Path, adaptateur: str | list[str], proprietaire: str, adop
     # 7. Adoption : budgets au niveau actuel, contrôles en échec en avertissement.
     if adoption:
         journal += _adopter(cible)
+    if adoption or ancien:
+        journal += consigner_tolerances(cible, mise_a_jour=not adoption)
     journal += _alerte_budget(cible, section_avant)
 
     print(trad("socle {version} installé dans {cible}", version=VERSION, cible=cible))
@@ -1468,6 +1473,67 @@ def _adopter(cible: Path) -> list[str]:
         res.append(trad("adoption : {n} contrôle(s) en avertissement : {liste}",
                         n=len(en_echec), liste=', '.join(en_echec)))
     return res
+
+
+_TABLE_TOLERES = re.compile(r"(?ms)^\[adoption\.tolerated\][^\n]*\n.*?(?=^\[|\Z)")
+
+
+def consigner_tolerances(cible: Path, mise_a_jour: bool = False) -> list[str]:
+    """Chaque contrôle de `[adoption] warn_only` qui n'a pas encore sa liste
+    de constats tolérés reçoit ceux présents maintenant : à l'adoption, et à
+    la mise à jour d'un projet adopté avant B-0180, dont les constats anciens
+    ne deviennent pas des erreurs. Dit ensuite, par contrôle, combien
+    l'adoption en tolère. Une liste déjà là ne s'étend jamais : ce serait
+    assouplir."""
+    from socle import context as contexte
+
+    projet = config.Projet.charger(cible)
+    manquants = [c for c, liste in contexte.tolerances(projet).items() if liste is None]
+    res = []
+    if manquants:
+        gf = cible / config.FORMAT_ACTUEL.garde_fous
+        texte = gf.read_text(encoding="utf-8")
+        existantes = projet.gf("adoption", "tolerated", defaut={}) or {}
+        if existantes and not _TABLE_TOLERES.search(texte):
+            # Écrite à la main sous une autre forme : on n'y touche pas.
+            return res + contexte.bilan_adoption(projet)
+        presents = contexte.constats_presents(projet, manquants)
+        if mise_a_jour:
+            # Un projet adopté avant B-0180 : ne sont d'avant l'installation
+            # que les constats de la base, la branche par défaut ; un constat
+            # né sur la branche de travail n'est pas toléré.
+            base = outils.base_de_travail(cible)
+            if base is None:
+                res.append(trad("mise à jour : aucune base lisible (la branche par défaut distante) : les constats "
+                                "présents dans l'arbre de travail sont consignés comme tolérés, y compris ceux "
+                                "qu'une branche aurait ajoutés"))
+            else:
+                de_la_base = contexte.constats_presents(projet, manquants, tete=base)
+                for c in manquants:
+                    gardes = list((Counter(presents[c]) & Counter(de_la_base[c])).elements())
+                    nes = list((Counter(presents[c]) - Counter(de_la_base[c])).elements())
+                    if nes:
+                        res.append(trad("mise à jour : {controle} — {n} constat(s) né(s) sur la branche, absent(s) "
+                                        "de la branche par défaut, non toléré(s) : à corriger ({cles})",
+                                        controle=c, n=len(nes), cles="; ".join(nes)))
+                    presents[c] = gardes
+        toutes = {**existantes, **presents}
+        lignes = ["[adoption.tolerated]",
+                  trad("# Les constats présents à l'adoption, que `warn_only` tolère : toute autre erreur de ces\n"
+                       "# contrôles échoue. En retirer durcit (libre) ; en ajouter assouplit (demande validée).")]
+        for c, cles in toutes.items():
+            lignes.append(f"{json.dumps(c, ensure_ascii=False)} = [")
+            lignes += [f"    {json.dumps(k, ensure_ascii=False)}," for k in cles]
+            lignes.append("]")
+        texte = _TABLE_TOLERES.sub("", texte).rstrip("\n") + "\n\n" + "\n".join(lignes) + "\n"
+        gf.write_text(texte, encoding="utf-8")
+        for c in manquants:
+            if mise_a_jour:
+                res.append(trad("mise à jour : {controle} était désarmé en entier par l'adoption ; ses {n} "
+                                "constat(s) présent(s) sont consignés comme tolérés (`[adoption.tolerated]`), et "
+                                "tout constat nouveau échouera désormais (B-0180)", controle=c, n=len(presents[c])))
+        projet = config.Projet.charger(cible)
+    return res + contexte.bilan_adoption(projet)
 
 
 def _audit(cible: Path) -> tuple[int, list[str]]:

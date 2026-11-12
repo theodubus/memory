@@ -345,6 +345,20 @@ documentation, fichiers tiers (ceux d'un outil installé dans le projet),
 fichiers de cas et spécifications du projet. Les durcir est
 libre ; les relâcher exige une demande validée.
 
+**Un projet adopté** (installé avec `--adoption`). Les contrôles qui
+échouaient sur l'existant sont nommés dans `[adoption] warn_only`, et les
+constats présents à l'installation dans `[adoption.tolerated]`, par
+contrôle, sous une clé qui ne dépend ni du numéro de ligne ni de la
+langue : le fichier et ce que le constat cite (`"LISEZMOI.md — absent.md"`
+pour un lien mort). Ceux-là restent en avertissement, même si le fichier
+est renommé ; tout constat nouveau de ces contrôles échoue. Un constat que
+la CI ne voit plus se signale : le retirer de la liste est libre, en
+ajouter un exige une demande validée qui le cite. L'état dit, par contrôle, combien de constats
+l'adoption tolère encore ; à zéro, le contrôle peut sortir de `warn_only`.
+Un projet adopté avant cette règle reçoit sa liste à la mise à jour du
+moteur, faite des constats de la branche par défaut (ceux nés sur la
+branche ne sont pas tolérés, l'installeur les nomme) ; tant qu'elle manque, l'état dit le contrôle désarmé en entier.
+
 **Un sous-dossier travaillé par d'autres agents.** Quand d'autres sessions
 d'agents, qui n'ont ni les hooks ni les règles du socle, travaillent un
 sous-dossier sur leurs propres branches (une interface, par exemple),

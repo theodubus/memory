@@ -244,4 +244,5 @@ def copie(ctx, r):
             premier = lieux[0]
             autres = ", ".join(f"{c}:{l}" for c, l in lieux[1:])
             r.erreur("docs.copie", trad("paragraphe identique aussi présent en {autres} : garder une source, "
-                                        "renvoyer vers elle", autres=autres), premier[0], premier[1])
+                                        "renvoyer vers elle", autres=autres), premier[0], premier[1],
+                     "copie en " + ", ".join(sorted(fichiers - {premier[0]})))

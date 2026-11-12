@@ -573,6 +573,19 @@ def _balayage_planifie(a: "Atelier", c: Path, etat: str, jours: int = 0) -> dict
     return {"PATH": f"{outils_}{os.pathsep}{a.env.get('PATH', '')}"}
 
 
+def _adopte_avec_une_reference_morte(a: "Atelier", c: Path):
+    """Le projet d'essai adopté avec une référence morte d'avant
+    l'installation, tolérée par l'installeur lui-même, posé à la base
+    (B-0180)."""
+    from socle import installer as installeur
+
+    ajouter(c, "docs/calc.md", "Voir F-0098.\n")
+    ajouter(c, ".socle/guardrails.toml", '\n[adoption]\nwarn_only = ["memoire.references"]\n')
+    installeur.consigner_tolerances(c)
+    a.commit(c, "adoption")
+    a.git(c, "update-ref", "refs/remotes/origin/main", "HEAD")
+
+
 def balayage(c: Path, lignes: str) -> Path:
     d = c.parent / f"{c.name}-mutants"
     d.mkdir(exist_ok=True)
@@ -1657,6 +1670,13 @@ def _cas() -> list[Cas]:
                 f"> statut : ouvert · origine : {a.journal}\n\nPour l'essai.\n")
         return etage_git(a, c)
 
+    @defaut("constat-neuf-sous-adoption", "référence morte née après l'adoption, sous un contrôle en "
+            "`warn_only`", "git", "memoire.references")
+    def _(a, c):
+        _adopte_avec_une_reference_morte(a, c)
+        ajouter(c, "docs/calc.md", "Voir F-0097.\n")
+        return etage_git(a, c)
+
     @defaut("defaut-indexe-masque", "défaut indexé, corrigé seulement sur disque", "git", "memoire.references")
     def _(a, c):
         ajouter(c, "docs/calc.md", "Voir F-0099.\n")
@@ -1724,6 +1744,13 @@ def _temoins() -> list[tuple[str, Callable]]:
         (c / "tests/test_regression.py").write_text(TEST_REGRESSION)
         maj_memoire(c, "Correctif de `double` sur les chaînes, avec son test.")
         return etage_ci(a, c, "fix: double accepte une chaîne")
+
+    @temoin("sous l'adoption, une référence morte d'avant l'installation, déplacée d'une ligne, reste en "
+            "avertissement au commit (B-0180)")
+    def _(a, c):
+        _adopte_avec_une_reference_morte(a, c)
+        remplacer(c, "docs/calc.md", "# Calcul\n", "# Calcul\n\nUne ligne de plus.\n")
+        return etage_git(a, c)
 
     @temoin("un commit sans hooks dans un dépôt jetable, hors du projet, passe le hook de l'agent")
     def _(a, c):

@@ -341,6 +341,22 @@ third-party files (those of a tool installed in the project), the
 project's case files and specifications. Tightening them is free;
 loosening them requires an approved request.
 
+**An adopted project** (installed with `--adoption`). The checks that
+failed on the existing code are named in `[adoption] warn_only`, and the
+findings present at installation in `[adoption.tolerated]`, per check,
+under a key that depends neither on the line number nor on the language:
+the file and what the finding cites (`"README.md — missing.md"` for a dead
+link). Those stay warnings, even if the file is renamed; any new finding of
+these checks fails. A finding the CI no longer sees is reported: removing
+it from the list is free, adding one requires an approved request that
+cites it. The
+state says, per check, how many findings adoption still tolerates; at zero,
+the check can leave `warn_only`. A project adopted before this rule gets its
+list when the engine is updated, made of the default branch's findings
+(those born on the branch are not tolerated, the installer names them);
+while it is missing, the state says the
+check is entirely disarmed.
+
 **A subfolder worked on by other agents.** When other agent sessions,
 which have neither the socle's hooks nor its rules, work on a subfolder on
 their own branches (a user interface, say), declare it third-party in the

@@ -26,7 +26,8 @@ ABSENT = object()
 # est plus strict ; `faux` : faux ou absent est plus strict (un module « à
 # mesurer » qui reçoit son plafond) ; `inclus` : une liste plus courte est
 # plus stricte (des exclusions) ; `couvre` : une liste plus longue est plus
-# stricte (une couverture).
+# stricte (une couverture) ; `tolere` : les constats que l'adoption tolère,
+# comptés, ne peuvent que se réduire (B-0180).
 REGLES = [
     (("budgets", "*", "max_bytes|max_lines"), "bas"),
     (("staleness", "active_days"), "bas"),
@@ -46,6 +47,7 @@ REGLES = [
     (("tests", "case_paths"), "couvre"),
     (("specs", "paths"), "couvre"),
     (("adoption", "warn_only"), "inclus"),
+    (("adoption", "tolerated", "*"), "tolere"),
     (("thirdparty", "paths"), "inclus"),
     (("branches", "disposable"), "inclus"),
 ]
@@ -121,6 +123,9 @@ def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | Non
         sens = _regle(chemin)
         if sens == "libre":
             continue
+        if sens == "tolere":
+            res += _toleres(cle, chemin[-1], va, vb, apres, renommes)
+            continue
         if va is ABSENT:
             if chemin[:2] == ("mutation", "caps") and chemin[-1] == "max" and not _mesure(b, chemin, vb):
                 res.append((cle, trad("plafond {vb} écrit sans la mesure que pose `mutation-verdict --record`",
@@ -186,6 +191,31 @@ def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | Non
         elif vals_apres[nom] != {**decl, "file": renommes.get(decl.get("file"), decl.get("file"))}:
             res.append((f"values {json.dumps(nom, ensure_ascii=False)}", trad("source de la valeur changée")))
     return res
+
+
+def _toleres(cle: str, controle: str, va, vb, apres: dict,
+             renommes: dict[str, str] | None = None) -> list[tuple[str, str]]:
+    """La liste des constats qu'un contrôle sous adoption tolère : qui
+    apparaît, elle durcit (absente, le contrôle entier l'était) ; qui
+    disparaît alors que le contrôle reste sous l'adoption, elle le désarme ;
+    qui compte un constat de plus, elle assouplit, et chaque constat ajouté
+    se cite à part : une demande validée n'autorise que ceux qu'elle nomme.
+    Un constat dont la plage renomme le fichier, suivi sous son nouveau nom,
+    n'est pas ajouté."""
+    from collections import Counter
+
+    from socle.context import cle_renommee
+
+    if va is ABSENT:
+        return []
+    if vb is ABSENT or not isinstance(vb, list):
+        if controle in ((apres.get("adoption") or {}).get("warn_only") or []):
+            return [(cle, trad("liste des constats tolérés retirée : le contrôle entier est désarmé"))]
+        return []
+    avant = Counter(cle_renommee(str(k), renommes or {}) for k in (va if isinstance(va, list) else []))
+    ajoutes = Counter(map(str, vb)) - avant
+    return [(f"{cle} {json.dumps(k, ensure_ascii=False)}", trad("constat toléré ajouté ({n} fois)", n=n))
+            for k, n in sorted(ajoutes.items())]
 
 
 def _suivie(motif: str, docs: set[str], apres_docmap: list[tuple[set[str], set[str]]], renommes: dict[str, str],

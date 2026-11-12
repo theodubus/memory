@@ -272,9 +272,122 @@ def _par_adaptateur(c: Controle, ctx: Contexte, rapport):
             rapport.constats.append(k)
 
 
-def executer(ctx: Contexte, ids: list[str] | None = None):
-    from socle.report import Rapport  # import local : pas de cycle
+# Le numéro de ligne qu'un message porte parfois dans son texte : la clé
+# d'un constat toléré n'en dépend pas, les lignes bougent (ADR de B-0180).
+_LIGNE_DANS_LE_MESSAGE = re.compile(r"(\.\w+):\d+(?::\d+)?\b|\b(lignes?|lines?) \d+(?:[-–]\d+)?")
+
+
+def cle_de_constat(constat) -> str:
+    """La clé stable d'un constat, sous laquelle l'adoption le tolère : son
+    fichier et son objet, la valeur qu'il cite (un identifiant, la cible
+    d'un lien, le nom d'un test), qui ne dépend ni de la langue ni de la
+    tournure du message ; à défaut d'objet, son message en français. Sans
+    numéro de ligne ni blancs répétés. Deux constats de même clé se comptent
+    (B-0180)."""
+    from socle.messages import source
+
+    coeur = constat.objet if constat.objet else source(constat.message)
+    coeur = _LIGNE_DANS_LE_MESSAGE.sub(lambda m: m.group(1) or m.group(2) + " …", str(coeur))
+    coeur = " ".join(coeur.split())
+    return f"{constat.chemin} — {coeur}" if constat.chemin else coeur
+
+
+def cle_renommee(cle: str, renommes: dict[str, str]) -> str:
+    """La clé d'un constat toléré, son fichier suivi sous son nouveau nom :
+    renommer un fichier ne change pas ce que l'adoption tolère."""
+    chemin, sep, coeur = cle.partition(" — ")
+    return f"{renommes[chemin]}{sep}{coeur}" if sep and chemin in renommes else cle
+
+
+def tolerances(projet: config.Projet) -> dict[str, list[str] | None]:
+    """Par contrôle de `[adoption] warn_only`, les clés des constats que
+    l'adoption tolère (`[adoption.tolerated]`), ou None quand la liste
+    manque : le contrôle est alors désarmé en entier, comme avant B-0180."""
+    tolerees = projet.gf("adoption", "tolerated", defaut={}) or {}
+    if not isinstance(tolerees, dict):
+        tolerees = {}
+    res = {}
+    for c in projet.gf("adoption", "warn_only", defaut=[]) or []:
+        liste = tolerees.get(c)
+        res[c] = [str(k) for k in liste] if isinstance(liste, list) else None
+    return res
+
+
+def bilan_adoption(projet: config.Projet) -> list[str]:
+    """Ce que l'état et l'installeur disent de l'adoption, contrôle par
+    contrôle : combien de constats elle tolère encore, ou que le contrôle est
+    désarmé en entier faute de liste, et comment y remédier."""
+    lignes = []
+    for c, liste in tolerances(projet).items():
+        if liste is None:
+            lignes.append(trad("adoption : !! {controle} désarmé en entier : aucune liste de constats tolérés "
+                               "(`[adoption.tolerated]`), toutes ses erreurs, même nouvelles, passent en "
+                               "avertissement. Remède : relancer l'installeur (`python3 .socle/socle install "
+                               "--target .`), qui consigne les constats présents comme tolérés", controle=c))
+        elif not liste:
+            lignes.append(trad("adoption : {controle} — plus aucun constat toléré : il peut sortir de "
+                               "`[adoption] warn_only` (durcir est libre)", controle=c))
+        else:
+            lignes.append(trad("adoption : {controle} — {n} constat(s) d'avant l'installation encore toléré(s) ; "
+                               "tout constat nouveau échoue. À zéro, il pourra sortir de `[adoption] warn_only`",
+                               controle=c, n=len(liste)))
+    return lignes
+
+
+def constats_presents(projet: config.Projet, ids: list[str], tete: str | None = None) -> dict[str, list[str]]:
+    """Par contrôle nommé, les clés de ses erreurs présentes, jugées sans
+    l'adoption, sur l'arbre de travail ou sur la révision `tete` : ce que
+    l'installeur consigne comme toléré."""
+    rapport = executer(Contexte(projet, etage="ci", base=None, tete=tete), ids=list(ids), adoption=False)
+    res = {c: [] for c in ids}
+    for k in rapport.erreurs():
+        if k.controle in res:
+            res[k.controle].append(cle_de_constat(k))
+    return res
+
+
+def _appliquer_adoption(controle: str, constats: list, tolerees: list[str] | None, rapport, ctx: "Contexte"):
+    """Sous l'adoption, une erreur dont la clé est tolérée passe en
+    avertissement, autant de fois que la liste la compte ; toute autre reste
+    une erreur. Un fichier renommé par la plage garde ses constats tolérés.
+    Un constat toléré que la CI ne voit plus se signale, à la CI seulement :
+    ailleurs, un contrôle peut ne juger que les fichiers changés. Sans
+    liste, l'ancienne règle : tout passe en avertissement, et le contrôle le
+    dit."""
+    chemin_gf = ctx.projet.chemins.garde_fous
+    from collections import Counter
+
     from socle.report import AVERTISSEMENT, ERREUR
+
+    erreurs = [k for k in constats if k.gravite == ERREUR]
+    if tolerees is None:
+        for k in erreurs:
+            k.gravite = AVERTISSEMENT
+            k.message = "(adoption) " + k.message
+        if erreurs:
+            rapport.avertir(controle, trad("contrôle désarmé en entier par l'adoption : aucune liste de constats "
+                                           "tolérés ; relancer l'installeur pour la consigner"), chemin_gf)
+        return
+    renommes = ctx.renommes if ctx.base else {}
+    reste = Counter(cle_renommee(k, renommes) for k in tolerees)
+    for k in erreurs:
+        cle = cle_de_constat(k)
+        if reste[cle] > 0:
+            reste[cle] -= 1
+            k.gravite = AVERTISSEMENT
+            k.message = "(adoption) " + k.message
+    if ctx.etage != "ci":
+        return
+    for cle, n in sorted(reste.items()):
+        if n > 0:
+            rapport.avertir(controle, trad("constat toléré par l'adoption résorbé, à retirer de "
+                                           "`[adoption.tolerated]` : {cle}", cle=cle), chemin_gf)
+
+
+def executer(ctx: Contexte, ids: list[str] | None = None, adoption: bool = True):
+    """Les contrôles de l'étage, ou ceux nommés ; `adoption` faux les juge
+    comme hors adoption (l'installeur, pour consigner ce qui est présent)."""
+    from socle.report import Rapport  # import local : pas de cycle
 
     charger_controles()
 
@@ -285,10 +398,11 @@ def executer(ctx: Contexte, ids: list[str] | None = None):
         rapport.erreur("config", trad("chemin tiers « {motif} » ignoré : il couvrirait un fichier du socle, de la "
                                       "mémoire ou de la politique, que les contrôles doivent juger", motif=motif),
                        ctx.projet.chemins.garde_fous)
-    # Mode adoption : sur un projet existant, ces contrôles avertissent au lieu
-    # d'échouer, le temps de résorber l'existant. Retirer un contrôle de la
-    # liste durcit (libre) ; en ajouter un assouplit (cliquet).
-    adoption = set(ctx.projet.gf("adoption", "warn_only", defaut=[]) or [])
+    # Mode adoption : sur un projet existant, ces contrôles tolèrent les
+    # constats présents à l'installation (`[adoption.tolerated]`) et échouent
+    # sur tout autre (B-0180). Retirer un contrôle ou un constat durcit
+    # (libre) ; en ajouter un assouplit (cliquet).
+    tolerees = tolerances(ctx.projet) if adoption else {}
     for c in selectionner(ctx.etage, ids, ctx.rapide):
         rapport.execute(c.id)
         if c.base and not ctx.base:
@@ -299,11 +413,8 @@ def executer(ctx: Contexte, ids: list[str] | None = None):
             _par_adaptateur(c, ctx, rapport)
         else:
             _lancer(c, ctx, rapport)
-        if c.id in adoption:
-            for constat in rapport.constats[debut:]:
-                if constat.gravite == ERREUR:
-                    constat.gravite = AVERTISSEMENT
-                    constat.message = "(adoption) " + constat.message
+        if c.id in tolerees:
+            _appliquer_adoption(c.id, rapport.constats[debut:], tolerees[c.id], rapport, ctx)
     # En CI, le journal d'un dépôt public est public : un constat de la zone
     # privée n'y montre ni son texte ni son chemin, seulement qu'il existe.
     if ctx.etage == "ci" and ctx.projet.pol("private", "mode"):

@@ -138,7 +138,7 @@ PYTHONPATH=/tmp/socle python3 -m socle install --target . --owner @<propriétair
 
 | Option | Effet |
 | --- | --- |
-| `--adoption` | équipe un projet existant : les contrôles qui échouent passent en avertissement, puis ne peuvent que durcir |
+| `--adoption` | équipe un projet existant : les constats présents des contrôles qui échouent sont consignés et passent en avertissement, tout constat nouveau échoue, et la liste ne peut que se réduire |
 | `--mutation-caps <fichier>` | reprend des plafonds de mutation déjà mesurés (une table `[mutation.caps]` en TOML) au lieu de poser ces modules « à mesurer » |
 | `--private compagnon` | ajoute une mémoire privée, dans un dépôt privé à part |
 | `--review lots` | exige la relecture de l'humain avant toute publication |

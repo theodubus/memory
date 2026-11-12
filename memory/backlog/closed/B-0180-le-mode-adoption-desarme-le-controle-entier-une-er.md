@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0180 — Le mode adoption désarme le contrôle entier : une erreur nouvelle passe en avertissement comme les anciennes
 
-> statut : ouvert · origine : J-2026-11-12-A · priorité : haute · lu : backlog@849cf3e7
+> statut : fait · origine : J-2026-11-12-A · priorité : haute · lu : backlog@849cf3e7 · ref : J-2026-11-12-D
 
 À l'installation sur chess (`docs/fabrication/chess/installation-2026-11-12.md`, point 1) : un contrôle nommé dans
 `[adoption] warn_only` voit toutes ses erreurs passer en avertissement,
@@ -15,6 +15,6 @@ l'installation, pas ceux qui viennent après.
 
 ## Fait quand
 
-- [ ] sous l'adoption, un constat né après l'installation fait échouer son contrôle ; ceux d'avant restent en avertissement, et leur liste ne peut que se réduire
-- [ ] un projet déjà installé en adoption reçoit cette règle à sa mise à jour, sans que ses constats anciens deviennent des erreurs
-- [ ] l'état dit, par contrôle, combien de constats l'adoption tolère encore
+- [x] sous l'adoption, un constat né après l'installation fait échouer son contrôle ; ceux d'avant restent en avertissement, et leur liste ne peut que se réduire
+- [x] un projet déjà installé en adoption reçoit cette règle à sa mise à jour, sans que ses constats anciens deviennent des erreurs
+- [x] l'état dit, par contrôle, combien de constats l'adoption tolère encore
