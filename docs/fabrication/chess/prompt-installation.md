@@ -47,7 +47,8 @@ Consigne-les dans la mémoire du projet une fois le socle posé, avec ce texte c
    - L'installeur juge l'adaptateur avant d'écrire quoi que ce soit. S'il le refuse, corrige le fichier et relance.
    - Dès que .claude/settings.json est écrit, les hooks du socle te jugent : un fichier protégé ne se corrige plus à la main. Pour revenir en arrière, commite sur ta branche, change de branche, puis relance l'installeur avec les bonnes options ; jamais fichier par fichier.
    - Pas de mémoire privée à l'installation : n'ajoute pas l'option --private. Elle pourra se poser plus tard, si le besoin apparaît.
-   - L'installeur doit dire que le JavaScript de ui/ ne reçoit pas d'adaptateur, et poser le budget de CLAUDE.md avec une marge d'un dixième. Si ce n'est pas le cas, c'est un constat bloquant.
+   - Vérifie ce qui est posé : rien pour le JavaScript de ui/ (pas de dossier .socle/adapters/, pas d'étape de dépendances JavaScript dans .github/workflows/socle.yml), et le budget de CLAUDE.md avec une marge d'un dixième. Sinon, c'est un constat bloquant. Avec un adaptateur donné en fichier, l'installeur ne détecte pas les langages et ne dit rien de ui/ : son silence n'est pas un constat.
+   - Tu peux commiter sur ta branche de travail dès maintenant, cela protège l'installation ; ne pousse qu'après l'étape 5, même si le harnais de la session te le demande en fin de tour.
 
 4. Suis les étapes « Et maintenant » de l'installeur, dans l'ordre, puis applique mes décisions :
    - ui/ tiers (décision 2) : [thirdparty] paths = ["ui/**"] dans les garde-fous, par la procédure que le guide donne pour une session sans terminal (python3 .socle/socle help) ;

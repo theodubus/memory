@@ -198,7 +198,16 @@ vérifiées.
 - **Mode adoption** : à l'installation sur un projet existant, les budgets
   sont fixés au niveau actuel et les contrôles en échec passent en
   avertissement (`[adoption] warn_only`), liste dont on ne retire que pour
-  durcir.
+  durcir. Seuls les constats présents à l'installation y sont tolérés
+  (`[adoption.tolerated]`, une clé par constat : le fichier et l'objet qu'il
+  cite, sans ligne ni langue ; une copie s'y nomme avec les huit premiers
+  mots du paragraphe, ADR-0070), tout autre échoue, et cette liste ne peut que se réduire ;
+  un projet adopté avant la reçoit à sa mise à jour, faite des constats de
+  la branche par défaut, et l'état dit, par
+  contrôle, combien il en reste (B-0180). Renommer un fichier qui porte
+  un constat toléré se règle dans la pull request qui le renomme : le
+  contrôle demande d'y renommer la clé, ce que le cliquet laisse faire
+  (B-0189, ADR-0069).
 - **Les fichiers d'un outil tiers** (`ADR-0031`) se déclarent une fois
   (`[thirdparty] paths`) et sortent de toutes les listes que lisent les
   contrôles : l'adoption n'éteint plus un contrôle pour tout le projet à

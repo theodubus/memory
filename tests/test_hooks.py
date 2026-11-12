@@ -46,6 +46,40 @@ class TestCommandesHumaines(unittest.TestCase):
     def test_citation_acceptee(self):
         self.assertIsNone(hooks.COMMANDES_HUMAINES.search("grep -n 'socle answer' AGENTS.md"))
 
+    def test_l_aide_passe_et_rien_de_plus(self):
+        """B-0184 : l'aide de `socle answer`, `decision` et `reviewed` était
+        refusée comme une réponse donnée à la place de l'humain."""
+        projet = config.Projet.charger(Path(__file__).resolve().parent.parent)
+        for nom in ("answer", "decision", "reviewed"):
+            for aide in ("--help", "-h"):
+                self.assertIsNone(hooks.refus_bash(projet, f"python3 {LANCEUR} {nom} {aide}"), (nom, aide))
+        refus = "répond jamais à la place de l'humain"
+        for cmd in (f"python3 {LANCEUR} answer D-0001 valider --help",
+                    f"python3 {LANCEUR} decision --help \"Q ?\" oui",
+                    f"python3 {LANCEUR} reviewed -h --by Théo",
+                    f"python3 {LANCEUR} answer D-0001 valider"):
+            self.assertIn(refus, hooks.refus_bash(projet, cmd) or "", cmd)
+        self.assertIn("réservé à l'humain", hooks.refus_bash(projet, f"python3 {LANCEUR} approve --help") or "")
+
+    def test_une_option_de_python_a_valeur_ne_cache_pas_la_commande(self):
+        """B-0187 : `python3 -W ignore … answer` passait le hook ; la valeur
+        de l'option était prise pour le script."""
+        projet = config.Projet.charger(Path(__file__).resolve().parent.parent)
+        refus = "répond jamais à la place de l'humain"
+        for options in ("-W ignore", "-X utf8", "-Wignore", "-bW error", "-B -X dev", "--check-hash-based-pycs never",
+                        "-W ignore -m socle", "-I -m socle", "-msocle"):
+            cmd = f"python3 {options} {'' if 'socle' in options else LANCEUR} answer D-0001 oui"
+            self.assertIn(refus, hooks.refus_bash(projet, cmd) or "", cmd)
+        self.assertEqual(hooks.options_de_python(["-W", "ignore", LANCEUR, "x"]), [LANCEUR, "x"])
+        self.assertEqual(hooks.options_de_python(["-Xutf8", "-m", "socle", "x"]), ["-m socle", "x"])
+        # Ce qui n'est pas le lanceur du socle n'est pas pris pour lui.
+        self.assertIsNone(hooks.options_de_python(["-c", "print(1)", LANCEUR]))
+        self.assertIsNone(hooks.options_de_python(["-m", "unittest", LANCEUR, "answer"]))
+        for cmd in (f"python3 -c 'print(1)' {LANCEUR} answer D-0001 oui",
+                    f"python3 -W ignore -m unittest {LANCEUR} answer D-0001 oui",
+                    "python3 -X utf8 outil.py answer D-0001 oui"):
+            self.assertIsNone(hooks.refus_bash(projet, cmd), cmd)
+
 
 class TestInstalleurHorsMode(unittest.TestCase):
     """B-0141 : un relecteur sans contexte a lancé l'installeur, en mode
@@ -807,6 +841,58 @@ class TestTraceDesRefusDeFinDeTourEtDeGit(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestFinDeTourSurLesSeulsTests(unittest.TestCase):
+    """B-0182 : la fin de tour ne lançait les étapes rapides que si un
+    fichier des `sources` de l'adaptateur avait changé ; un fichier de tests
+    que l'adaptateur déclare, hors de ses sources, compte aussi."""
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-fin-tests-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=self.racine, check=True)
+        (self.racine / "app").mkdir()
+        (self.racine / "app/calc.py").write_text("x = 1\n")
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+        subprocess.run(["git", "add", "-A"], cwd=self.racine, check=True)
+        subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "base", "--no-verify"],
+                       cwd=self.racine, check=True)
+
+    def lancees(self) -> bool:
+        from socle import context as contexte, verification
+        from socle.report import Rapport
+
+        projet = config.Projet.charger(self.racine)
+        projet.adaptateur["sources"] = ["app/**/*.py"]  # les tests hors des sources
+        projet.adaptateur.setdefault("tests", {})["exclude"] = ["tests/donnees/**"]
+        appels = []
+        with unittest.mock.patch.object(verification, "etapes_rapides", lambda *a, **k: appels.append(1)), \
+                unittest.mock.patch.object(contexte, "executer", return_value=Rapport()), \
+                unittest.mock.patch.object(hooks, "exiger_recap", return_value=0), \
+                contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            hooks.stop(projet, {"session_id": "t"})
+        return bool(appels)
+
+    def test_un_fichier_de_tests_change_lance_les_etapes_rapides(self):
+        self.assertFalse(self.lancees())  # rien n'a changé
+        (self.racine / "tests").mkdir(exist_ok=True)
+        (self.racine / "tests/test_calc.py").write_text("import unittest\n")
+        self.assertTrue(self.lancees())
+        self.assertEqual(config.Projet.charger(self.racine).fichiers_de_tests(["tests/test_calc.py", "notes.txt"]),
+                         ["tests/test_calc.py"])
+
+    def test_un_autre_fichier_ne_les_lance_pas(self):
+        (self.racine / "notes.txt").write_text("rien\n")
+        self.assertFalse(self.lancees())
+
+    def test_un_fichier_de_tests_exclu_ne_les_lance_pas(self):
+        # Revue du lot : les exclusions de `[tests]` valent, comme pour
+        # `Projet.designes`.
+        (self.racine / "tests/donnees").mkdir(parents=True)
+        (self.racine / "tests/donnees/test_jeu.py").write_text("x = 1\n")
+        self.assertFalse(self.lancees())
 
 
 class TestOutilsEnSessionCloud(unittest.TestCase):

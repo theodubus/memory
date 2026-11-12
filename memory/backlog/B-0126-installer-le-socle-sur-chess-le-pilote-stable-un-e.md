@@ -46,9 +46,14 @@ publiés (J-2026-11-11-V). Les prompts de l'installation, à coller dans la
 session de chess, sont dans `docs/fabrication/chess/prompt-installation.md` :
 le premier commence comme un essai et ne pousse rien avant sa porte.
 
+Le 12 novembre, le socle est installé sur chess et fusionné
+(J-2026-11-12-A). La porte de l'installation, passée avant le push avec la
+version publiée, a tenu lieu de second essai à blanc. Reste la feuille de
+route, dans la session de chess.
+
 ## Fait quand
 
 - [x] les lots à livrer avant chess, ceux du jalon 1 (B-0154), sont fusionnés et publiés (ADR-0059)
-- [ ] un essai à blanc sur chess, avec la version publiée, sans constat bloquant
-- [ ] le socle installé sur chess pour de bon, en mode adoption, l'installation fusionnée
+- [x] un essai à blanc sur chess, avec la version publiée, sans constat bloquant
+- [x] le socle installé sur chess pour de bon, en mode adoption, l'installation fusionnée
 - [ ] la feuille de route de chess posée à la main avec Théo, depuis son carnet de bord : sujets ordonnés, jalons, priorités (D-0094)

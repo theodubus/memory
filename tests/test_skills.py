@@ -216,6 +216,26 @@ class TestLaReprise(unittest.TestCase):
             debut_tour = texte.split(debut, 1)[1].split("\n## ", 1)[0]
             self.assertIn("`run_once_at` " + ("et" if lg == "fr" else "and") + " `prompt`", debut_tour, lg)
 
+    def test_sans_list_events_les_reveils_s_arment_a_la_borne(self):
+        # B-0181 : une session cloud sans list_events n'en a pas moins le
+        # skill ; l'heure ne se lit pas, chaque réveil s'arme à sa borne et
+        # celui de cinq heures s'y repousse à chaque tour qui agit et au
+        # lancement d'un sous-agent ; au réveil, la conversation seule dit
+        # s'il faut reprendre, et l'heure de la coupure reste inconnue.
+        for lg, regle, quand, sous_agent, reveil, au_reveil, inconnue in (
+                ("fr", "**Sans l'outil `list_events`**", "## Quand", "au lancement d'un sous-agent", "## Au réveil",
+                 "**Sans `list_events`**", "coupé à une heure inconnue"),
+                ("en", "**Without the `list_events` tool**", "## When", "launching a subagent", "## On waking",
+                 "**Without `list_events`**", "cut off at an unknown time")):
+            texte = self.lire(lg)
+            self.assertNotIn("list_events", texte.split(quand, 1)[1].split("\n## ", 1)[0], lg)
+            regle_texte = " ".join(texte.split(regle, 1)[1].split("\n\n", 1)[0].split())
+            self.assertIn(sous_agent, regle_texte, lg)
+            self.assertIn("list_triggers", regle_texte, lg)
+            section = " ".join(texte.split(reveil, 1)[1].split("\n## ", 1)[0].split())
+            self.assertIn(au_reveil, section, lg)
+            self.assertIn(inconnue, section, lg)
+
     def test_un_sous_agent_ne_touche_a_aucun_reveil(self):
         for lg, regle in (("fr", "Un sous-agent ne touche à aucun réveil"), ("en", "A subagent\ntouches no wake-up")):
             self.assertIn(regle, self.lire(lg), lg)

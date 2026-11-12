@@ -12,6 +12,10 @@ un clone jetable.
 
 - `docs/fabrication/chess/essai-a-blanc-2026-11-11.md` — le compte rendu de l'essai à blanc du
   11 novembre 2026, avec la version publiée du socle.
+- `docs/fabrication/chess/installation-2026-11-11.md` — le compte rendu de l'arrêt de
+  l'installation réelle à son étape 3, sur une condition fausse du prompt.
+- `docs/fabrication/chess/installation-2026-11-12.md` — le compte rendu de l'installation
+  faite, et les neuf constats qu'elle a rendus côté socle.
 - `docs/fabrication/chess/prompt-installation.md` — les deux prompts de l'installation, à
   coller dans la session de chess : installer, puis poser la feuille de route.
 

@@ -439,6 +439,46 @@ class TestSousDossiers(unittest.TestCase):
         self.assertEqual((self.racine / ".socle/adapter.toml").read_text(encoding="utf-8"), texte)
         self.assertIn("adapté par le projet : conservé", sortie)
 
+    def test_avec_un_adaptateur_donne_l_installeur_le_dit_aussi(self):
+        # B-0178 : sur chess, `--adapter <fichier>` pour le Rust ; rien n'était
+        # dit du JavaScript de `ui/`, sauf en détection automatique.
+        propre = Path(tempfile.mkdtemp(prefix="socle-adaptateur-propre-"))
+        self.addCleanup(shutil.rmtree, propre, ignore_errors=True)
+        (propre / "chess-rust.toml").write_text((installeur.ADAPTATEURS / "rust.toml").read_text(encoding="utf-8")
+                                                + "\n# Propre au projet.\n", encoding="utf-8")
+        for adaptateur in (str(propre / "chess-rust.toml"), "rust"):
+            shutil.rmtree(self.racine / ".socle", ignore_errors=True)
+            code, sortie, erreurs = self.installer(adaptateur)
+            self.assertIn(code, (0, 1), erreurs)
+            self.assertIn("!! javascript", sortie, adaptateur)
+            self.assertIn('[thirdparty] paths = ["ui/**"]', sortie, adaptateur)
+        # Le manifeste sous un chemin tiers déjà déclaré : plus rien à dire.
+        gf = self.racine / config.FORMAT_ACTUEL.garde_fous
+        gf.write_text(gf.read_text(encoding="utf-8").replace("[thirdparty]\n", '[thirdparty]\npaths = ["ui/**"]\n', 1)
+                      .replace("\npaths = []\n", "\n", 1), encoding="utf-8")
+        self.assertEqual(installeur.sous_dossiers_sans_adaptateur(self.racine, {"rust"}), [])
+        _, sortie, _ = self.installer(str(propre / "chess-rust.toml"))
+        self.assertNotIn("!! javascript", sortie)
+
+    def test_un_adaptateur_donne_sans_langage_est_nomme(self):
+        # Revue du lot de B-0178 : un adaptateur propre au projet sans clé
+        # `language` faisait dire « aucun adaptateur ne lui est posé ».
+        propre = Path(tempfile.mkdtemp(prefix="socle-adaptateur-propre-"))
+        self.addCleanup(shutil.rmtree, propre, ignore_errors=True)
+        texte = (installeur.ADAPTATEURS / "javascript.toml").read_text(encoding="utf-8")
+        texte = "\n".join(l for l in texte.splitlines() if not l.startswith("language")) + "\n"
+        (propre / "ui.toml").write_text(texte.replace('command = "npx vitest run"', 'command = "cd ui && npx vitest run"'),
+                                        encoding="utf-8")
+        code, sortie, erreurs = self.installer("rust", str(propre / "ui.toml"))
+        self.assertIn(code, (0, 1), erreurs)
+        self.assertNotIn("aucun adaptateur ne lui est posé", sortie)
+        self.assertIn(f"{propre / 'ui.toml'} ne déclare pas `language`", sortie)
+        self.assertIn('ajouter `language = "javascript"` à ce fichier', sortie)
+        self.assertEqual(installeur.adaptateurs_sans_langage(self.racine, config.FORMAT_ACTUEL),
+                         [".socle/adapters/ui.toml"])
+        dit = installeur.sous_dossiers_sans_adaptateur(self.racine, {"rust"}, [".socle/adapters/ui.toml"])
+        self.assertIn(".socle/adapters/ui.toml ne déclare pas `language`", dit[0])
+
     def test_un_adaptateur_propre_hors_contrat_est_refuse(self):
         propre = Path(tempfile.mkdtemp(prefix="socle-adaptateur-propre-"))
         self.addCleanup(shutil.rmtree, propre, ignore_errors=True)
