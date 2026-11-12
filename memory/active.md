@@ -5,27 +5,27 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 ## En cours
 
-Le socle est installé sur chess (J-2026-11-12-A) ; Théo y a lancé la
-feuille de route (B-0126) et a le prompt de mise à jour
-(`docs/fabrication/chess/prompt-mise-a-jour.md`) : on attend les comptes
-rendus de chess et, pour B-0179, du pilote. Lot en cours, dans l'ordre
-validé par Théo (D-0106) : B-0173 d'abord. Sa mesure est rendue : le
-commit du sous-agent attend dans son worktree, ni relu ni poussé ;
-restent la revue, l'intégration, les règles dans le skill. Arrêt le 12 à
-92 % de la fenêtre de cinq heures, suite à minuit (Paris). Puis B-0142,
-B-0171, B-0176 ; ensuite B-0151, B-0010,
-B-0156, B-0167, B-0172. La méthode d'un lot est le skill
-`.claude/skills/delegate-lot/SKILL.md` (J-2026-11-12-M) ; la conversation
-passe sur Opus (J-2026-11-12-L).
+Le socle est installé sur chess (J-2026-11-12-A) ; on attend les
+comptes rendus de chess (mise à jour, feuille de route B-0126) et, pour
+B-0179, du pilote. Lot en cours, dans l'ordre validé (D-0106, D-0107) :
+B-0173 ; sa mesure est sur la branche, non poussée, en revue ; restent
+ses corrections, le push, et les règles de consommation dans le skill
+`.claude/skills/delegate-lot/SKILL.md`. Puis B-0010 (haute), B-0142,
+B-0171, B-0176 ; ensuite B-0151, B-0156, B-0167, B-0172.
 
 B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
 
 ## Consignes en cours
 
-- Le contexte long et les modèles : Théo compacte la conversation ;
-  chaque sujet va à un sous-agent au contexte neuf, dont l'agent choisit
-  le modèle (J-2026-11-10-O). Depuis le 12 novembre, Opus partout
-  (D-0095, J-2026-11-12-L).
+- Les modèles : Opus partout depuis le 12 novembre (D-0095,
+  J-2026-11-12-L).
+- Un lot par session : un lot rendu que la fenêtre ne permet pas de
+  suivre d'un autre entier, tout se range (mémoire, push, réveils) pour
+  qu'une session neuve continue, même sur un autre compte ; Théo :
+  « lorsqu'un lot est rendu et que la limite de session ne permet a
+  priori pas d'en refaire un entier sans être coupé, juste tout bien
+  ranger pour permettre a une session neuve de continuer »
+  (J-2026-11-12-O).
 - Le pilote est un essai de choc du socle : ses imperfections sont
   attendues, seules celles du socle se corrigent ici ; Théo : « pas grave
   si le pilote n'est pas idéal partout, c'est un crashtest pour le socle
