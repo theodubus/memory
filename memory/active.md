@@ -9,8 +9,11 @@ Le socle est installé sur chess (J-2026-11-12-A) ; Théo y a lancé la
 feuille de route (B-0126) et a le prompt de mise à jour
 (`docs/fabrication/chess/prompt-mise-a-jour.md`) : on attend les comptes
 rendus de chess et, pour B-0179, du pilote. Lot en cours, dans l'ordre
-validé par Théo (D-0106) : B-0173 d'abord, un sous-agent mesure la
-consommation, puis B-0142, B-0171, B-0176 ; ensuite B-0151, B-0010,
+validé par Théo (D-0106) : B-0173 d'abord. Sa mesure est rendue : le
+commit du sous-agent attend dans son worktree, ni relu ni poussé ;
+restent la revue, l'intégration, les règles dans le skill. Arrêt le 12 à
+92 % de la fenêtre de cinq heures, suite à minuit (Paris). Puis B-0142,
+B-0171, B-0176 ; ensuite B-0151, B-0010,
 B-0156, B-0167, B-0172. La méthode d'un lot est le skill
 `.claude/skills/delegate-lot/SKILL.md` (J-2026-11-12-M) ; la conversation
 passe sur Opus (J-2026-11-12-L).
