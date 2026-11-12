@@ -99,12 +99,52 @@ une valeur attendue ne se réécrivent plus, elles se complètent.
 
 ## La consommation
 
-En attendant la mesure de B-0173 :
+Ce qui pèse (B-0173, `docs/fabrication/consommation.md`) : chaque appel
+relit toute la conversation, et chaque pas de l'orchestration en est un
+(lancer un sous-agent, recevoir son compte rendu, intégrer, regarder la
+CI) ; après plus d'une heure d'arrêt, la conversation se relit au prix
+fort ; un sous-agent repris après plus de cinq minutes aussi. Un
+sous-agent ne relit pas la conversation qui l'a lancé.
 
-- demander à l'humain de compacter à la fin de chaque lot et avant une
-  attente longue : après une heure d'arrêt, toute la conversation se
-  relit au prix fort ;
-- ne pas reprendre un sous-agent après une pause longue quand un neuf,
-  avec sa consigne et les constats, suffit ;
-- attendre une CI ou un sous-agent sans sonder : leur fin relance la
-  session.
+- Un lot par session : la session courte orchestre à bas prix.
+- Deux sous-agents à la fois au plus. Un petit sujet ou un correctif de
+  quelques lignes, la session le fait elle-même.
+- Un sous-agent ne se reprend pas après une pause : un neuf reçoit la
+  consigne et les constats.
+- Une attente de plus d'une heure (une CI longue, une réponse de
+  l'humain, la nuit) ne se fait pas dans une conversation longue : la
+  session range et s'arrête.
+- Les réveils (skill `socle-resume`) s'arment pendant le lot, pour le cas
+  rare où une étape atteint une limite, et se retirent à la fin d'un tour
+  où rien ne tourne.
+
+## Changer de session
+
+Quand : un lot est rendu (fusionné) et la fenêtre de cinq heures ne
+permet pas d'en faire un autre entier sans être coupé, ou une attente de
+plus d'une heure s'annonce. La part consommée de la fenêtre se lit dans
+`list_events` (`kinds: ["rate_limit_event"]`, `utilization` de
+`five_hour`).
+
+Ranger d'abord, pour qu'une session neuve, sur ce compte ou un autre,
+reparte du dépôt seul :
+
+1. tout poussé, rien qui ne vive que dans le conteneur ; la pull request
+   fusionnée, ou son état dit au chantier actif ;
+2. les worktrees et leurs branches retirés ;
+3. le chantier actif dit le lot suivant et ce qui attend (un compte
+   rendu, une CI, une demande) ;
+4. les réveils retirés.
+
+Puis le dire dans la conversation : qu'il faut changer de session, et
+pourquoi, et donner le prompt de la session neuve, dans un bloc de texte
+à copier :
+
+```text
+Reprends le travail du socle dans ce dépôt, en session neuve.
+Avant tout : lis l'état en entier (python3 .socle/socle state ; si le
+démarrage n'en a donné qu'un aperçu, lis le fichier complet dont il donne
+le chemin), puis memory/active.md, et applique-les.
+Le lot : <les sujets, dans l'ordre>, selon le skill delegate-lot.
+Ce qui attend : <un compte rendu, une CI, une demande> | rien.
+```

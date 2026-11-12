@@ -20,12 +20,11 @@ B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
 - Les modèles : Opus partout depuis le 12 novembre (D-0095,
   J-2026-11-12-L).
 - Un lot par session : un lot rendu que la fenêtre ne permet pas de
-  suivre d'un autre entier, tout se range (mémoire, push, réveils) pour
-  qu'une session neuve continue, même sur un autre compte ; Théo :
-  « lorsqu'un lot est rendu et que la limite de session ne permet a
-  priori pas d'en refaire un entier sans être coupé, juste tout bien
-  ranger pour permettre a une session neuve de continuer »
-  (J-2026-11-12-O).
+  suivre d'un autre entier, tout se range pour qu'une session neuve
+  continue, même sur un autre compte, et la session le dit avec le
+  prompt de la session neuve ; les réveils restent armés pendant le lot.
+  Théo : « dès qu'on dois changer de session […] l'indique dans le chat,
+  et donne le prompt à donner à une session neuve » (J-2026-11-12-P).
 - Le pilote est un essai de choc du socle : ses imperfections sont
   attendues, seules celles du socle se corrigent ici ; Théo : « pas grave
   si le pilote n'est pas idéal partout, c'est un crashtest pour le socle
