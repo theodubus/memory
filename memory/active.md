@@ -7,8 +7,8 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 Le socle est installé sur chess (J-2026-11-12-A) ; reste sa feuille de
 route, dans la session de chess (B-0126). Ce que
-l'installation a montré est corrigé : B-0180, B-0189, B-0181, B-0182, B-0184,
-B-0178, B-0187. Restent la mise à jour de chess, puis B-0179 avant la
+l'installation a montré est corrigé et publié (J-2026-11-12-I). Restent
+la mise à jour de chess, dont le prompt est écrit, puis B-0179 avant la
 reprise du pilote (J-2026-11-10-N).
 Cette session orchestre ; des sous-agents sur Opus implémentent, chacun
 dans un worktree, relus avant tout push (J-2026-11-11-G). Ensuite : B-0151,
