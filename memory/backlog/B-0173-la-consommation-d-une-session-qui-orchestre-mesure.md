@@ -46,8 +46,17 @@ après la limite, un seul appel, la relecture à froid de la conversation
 longue, prend 39 points de la fenêtre de cinq heures et 6 de la semaine ;
 le compactage qui suit, 12 points.
 
+Mesuré le 12 novembre (J-2026-11-12-N) : le relevé
+`docs/fabrication/consommation.md` donne, pour les 11 et 12 novembre, ce
+que pèsent la conversation principale, les sous-agents, les reprises et
+les compactages, et ce que le socle injecte. Les 12 points de 18 h 07 à
+18 h 10 sont des appels ordinaires, pas le compactage (environ 4 points).
+Le socle ne pèse pas (3 % du contexte relu) : aucune borne à poser ici ;
+la sortie tronquée du hook de démarrage est notée pour B-0010. Reste la
+méthode, que le relevé chiffre règle par règle.
+
 ## Fait quand
 
-- [ ] une mesure dit, sur une journée d'orchestration, ce que pèsent la conversation principale, les sous-agents et les reprises après une pause
-- [ ] ce que le socle injecte à chaque démarrage, compactage et reprise est mesuré, et borné si c'est lui qui pèse (B-0010)
+- [x] une mesure dit, sur une journée d'orchestration, ce que pèsent la conversation principale, les sous-agents et les reprises après une pause
+- [x] ce que le socle injecte à chaque démarrage, compactage et reprise est mesuré, et borné si c'est lui qui pèse (B-0010)
 - [ ] la méthode de délégation dit quand compacter, combien de sous-agents à la fois, quand en reprendre un, quel modèle pour quoi, et que faire à l'approche d'une limite
