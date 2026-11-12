@@ -29,6 +29,6 @@ elle est à faire avant sa reprise.
 
 ## Fait quand
 
-- [ ] la CI posée passe sur un projet `python-pytest` et `kotlin` sans aucun fichier `.kt` ni fichier Gradle, ce qu'un cas de l'auto-test ou un test prouve
-- [ ] les autres adaptateurs maintenus dont le `ci_setup` demande un cache sont vérifiés de même, et corrigés s'il le faut
+- [x] la CI posée passe sur un projet `python-pytest` et `kotlin` sans aucun fichier `.kt` ni fichier Gradle, ce qu'un cas de l'auto-test ou un test prouve
+- [x] les autres adaptateurs maintenus dont le `ci_setup` demande un cache sont vérifiés de même, et corrigés s'il le faut
 - [ ] une version corrigée est publiée, et le pilote peut se mettre à jour
