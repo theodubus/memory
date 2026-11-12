@@ -200,7 +200,8 @@ vérifiées.
   avertissement (`[adoption] warn_only`), liste dont on ne retire que pour
   durcir. Seuls les constats présents à l'installation y sont tolérés
   (`[adoption.tolerated]`, une clé par constat : le fichier et l'objet qu'il
-  cite, sans ligne ni langue), tout autre échoue, et cette liste ne peut que se réduire ;
+  cite, sans ligne ni langue ; une copie s'y nomme avec les huit premiers
+  mots du paragraphe, ADR-0070), tout autre échoue, et cette liste ne peut que se réduire ;
   un projet adopté avant la reçoit à sa mise à jour, faite des constats de
   la branche par défaut, et l'état dit, par
   contrôle, combien il en reste (B-0180). Renommer un fichier qui porte

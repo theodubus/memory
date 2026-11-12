@@ -11,6 +11,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 from socle import config, context as contexte, installer as installeur, messages, state as etat
+from socle.checks_docs import debut_de
 from socle.checks_ratchet import assouplissements
 from socle.report import AVERTISSEMENT, ERREUR, Constat
 
@@ -95,7 +96,8 @@ class TestAdoption(unittest.TestCase):
         rapport = contexte.executer(contexte.Contexte(projet, etage="ci", base=None),
                                     ids=["tests.creux", "docs.copie"], adoption=False)
         objets = {k.controle: k.objet for k in rapport.erreurs()}
-        self.assertEqual(objets, {"tests.creux": "sans assertion test_rien", "docs.copie": "copie en b.md"})
+        self.assertEqual(objets, {"tests.creux": "sans assertion test_rien",
+                                  "docs.copie": "copie en b.md : Un long paragraphe recopié tel quel dans deux"})
 
     def test_la_liste_tolere_toujours_dans_une_autre_langue(self):
         with messages.dans("en"):
@@ -182,6 +184,40 @@ class TestAdoption(unittest.TestCase):
         lignes = installeur.consigner_tolerances(self.racine, mise_a_jour=True)
         self.assertEqual(self.tolerees(), avant)
         self.assertEqual(len(lignes), 1)
+
+
+class TestClesDistinctes(unittest.TestCase):
+    """B-0190 : deux paragraphes recopiés entre les deux mêmes fichiers ont
+    deux clés ; l'un toléré, l'autre neuf, le neuf fait échouer le contrôle."""
+
+    P1 = "Un premier paragraphe recopié tel quel entre les deux fichiers du projet, " * 4
+    P2 = "Un second paragraphe, tout autre, lui aussi recopié entre les deux mêmes fichiers, " * 4
+
+    def adopter(self, fichiers: dict[str, str]) -> Path:
+        racine = depot({"app.py": "print('ok')\n", **fichiers})
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        installer(racine, adoption=True)
+        return racine
+
+    def juger(self, racine: Path, controle: str) -> list[Constat]:
+        projet = config.Projet.charger(racine)
+        return contexte.executer(contexte.Contexte(projet, etage="ci", base=None), ids=[controle]).constats
+
+    def test_le_debut_d_un_paragraphe_est_ses_huit_premiers_mots(self):
+        self.assertEqual(debut_de("un  deux\ttrois\nquatre cinq six sept huit neuf"),
+                         "un deux trois quatre cinq six sept huit")
+        self.assertEqual(debut_de("Trois mots seulement"), "Trois mots seulement")
+        self.assertEqual(debut_de("x" * 500), "x" * 80)  # sans blanc, la clé reste bornée
+
+    def test_deux_paragraphes_recopies_entre_deux_fichiers_ont_deux_cles(self):
+        racine = self.adopter({"a.md": self.P1 + "\n\n" + self.P2 + "\n", "b.md": self.P1 + "\n"})
+        toleres = tomllib.loads((racine / ".socle/guardrails.toml").read_text())["adoption"]["tolerated"]
+        self.assertEqual(toleres["docs.copie"],
+                         ["a.md — copie en b.md : Un premier paragraphe recopié tel quel entre les"])
+        (racine / "b.md").write_text(self.P2 + "\n")
+        erreurs = [k for k in self.juger(racine, "docs.copie") if k.gravite == ERREUR]
+        self.assertEqual([k.objet for k in erreurs],
+                         ["copie en b.md : Un second paragraphe, tout autre, lui aussi recopié"])
 
 
 class TestCliquetDesToleres(unittest.TestCase):
