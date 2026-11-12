@@ -1487,6 +1487,18 @@ def _cas() -> list[Cas]:
         lanceur = ".socle/" + "socle"  # en deux morceaux : ce fichier n'est pas une invocation
         return etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} answer D-0001 valider"})
 
+    @defaut("agent-repond-aide-glissee", "l'agent répond à la place de l'humain, `--help` glissé dans la réponse",
+            "agent", "commande humaine")
+    def _(a, c):
+        lanceur = ".socle/" + "socle"
+        return etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} answer D-0001 valider --help"})
+
+    @defaut("agent-repond-option-python", "l'agent répond à la place de l'humain, une option de python à valeur "
+            "devant le lanceur", "agent", "commande humaine")
+    def _(a, c):
+        lanceur = ".socle/" + "socle"
+        return etage_outil(a, c, "Bash", {"command": f"python3 -W ignore {lanceur} answer D-0001 valider"})
+
     @defaut("agent-approuve", "l'agent approuve lui-même un changement protégé", "agent", "commande de l'humain seul")
     def _(a, c):
         lanceur = ".socle/" + "socle"
@@ -2307,6 +2319,12 @@ def _temoins() -> list[tuple[str, Callable]]:
         ajouter(c, "tests/test_calc.py", "    def test_deterministe(self):\n"
                 "        self.assertEqual(double(3), double(3))  # socle: voulu — double est déterministe\n")
         return etage_git(a, c)
+
+    @temoin("l'aide de `socle answer`, `decision` et `reviewed` passe le hook de l'agent")
+    def _(a, c):
+        lanceur = ".socle/" + "socle"
+        return etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} answer --help && python3 {lanceur} "
+                                                     f"decision -h && python3 {lanceur} reviewed --help"})
 
     @temoin("une commande qui CITE `socle answer` sans l'appeler passe")
     def _(a, c):

@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0178 — L'installeur ne dit rien d'un langage en sous-dossier quand l'adaptateur est donné en fichier
 
-> statut : ouvert · origine : J-2026-11-11-X · lu : backlog@cd0009c1
+> statut : fait · origine : J-2026-11-11-X · lu : backlog@cd0009c1 · ref : J-2026-11-12-C
 
 À l'installation réelle sur chess (`docs/fabrication/chess/installation-2026-11-11.md`),
 l'installeur a reçu un adaptateur propre au projet par `--adapter` : il n'a
@@ -13,4 +13,4 @@ reste sans adaptateur ni déclaration de chemin tiers.
 
 ## Fait quand
 
-- [ ] avec un adaptateur donné par `--adapter`, l'installeur nomme aussi les langages dont le manifeste n'est que dans un sous-dossier et qui n'ont ni adaptateur ni chemin tiers déclaré, avec leurs deux issues
+- [x] avec un adaptateur donné par `--adapter`, l'installeur nomme aussi les langages dont le manifeste n'est que dans un sous-dossier et qui n'ont ni adaptateur ni chemin tiers déclaré, avec leurs deux issues

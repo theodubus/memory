@@ -51,7 +51,9 @@ nomme (`--adapter python-pytest --adapter kotlin`, le premier étant le
 principal), et chaque fichier est jugé par celui de son langage (la
 [spécification des adaptateurs](adapters/README.md)). Un langage dont le
 manifeste n'est que dans un sous-dossier ne reçoit pas d'adaptateur en
-automatique : l'installeur le dit, avec ses deux issues, un adaptateur
+automatique. En automatique comme avec `--adapter`, tant qu'aucun
+adaptateur ne le couvre et que son manifeste n'est pas sous un chemin
+tiers déclaré, l'installeur le dit, avec ses deux issues : un adaptateur
 propre au projet dont les commandes entrent dans le sous-dossier, ou le
 sous-dossier déclaré tiers.
 

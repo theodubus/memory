@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0182 — La fin de tour ne lance pas les étapes rapides quand seuls des fichiers de tests ont changé
 
-> statut : ouvert · origine : J-2026-11-12-A · lu : backlog@8bd286ff
+> statut : fait · origine : J-2026-11-12-A · lu : backlog@8bd286ff · ref : J-2026-11-12-C
 
 À l'installation sur chess (`docs/fabrication/chess/installation-2026-11-12.md`, point 3) : la fin de tour ne lance les
 étapes rapides que si un fichier des `sources` de l'adaptateur a changé
@@ -13,4 +13,4 @@ changé se lance avant la fin du tour.
 
 ## Fait quand
 
-- [ ] la fin de tour lance les étapes rapides quand un fichier de tests que l'adaptateur déclare a changé, sources inchangées ; un test le montre
+- [x] la fin de tour lance les étapes rapides quand un fichier de tests que l'adaptateur déclare a changé, sources inchangées ; un test le montre

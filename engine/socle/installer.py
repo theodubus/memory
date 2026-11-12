@@ -234,23 +234,49 @@ def langages_en_place(cible: Path, ch: config.Chemins) -> set[str]:
     return res
 
 
-def sous_dossiers_sans_adaptateur(cible: Path, couverts: set[str]) -> list[str]:
-    """Ce que l'installeur dit, en automatique, de chaque langage qu'aucun
-    adaptateur ne couvre parce que son manifeste n'est que dans un
-    sous-dossier : où, et les deux issues (B-0168)."""
+def adaptateurs_sans_langage(cible: Path, ch: config.Chemins) -> list[str]:
+    """Les adaptateurs que le projet a déjà et qui ne déclarent pas
+    `language` : le nom de leur fichier en tient lieu, et ne dit pas quel
+    langage ils couvrent."""
+    res = []
+    for c in [ch.adaptateur, *config.fichiers_adaptateurs(cible, ch.adaptateurs)]:
+        p = cible / c
+        try:
+            if p.is_file() and not config.lire_toml(p.read_text(encoding="utf-8")).get("language"):
+                res.append(c)
+        except (tomllib.TOMLDecodeError, OSError):
+            continue
+    return res
+
+
+def sous_dossiers_sans_adaptateur(cible: Path, couverts: set[str], sans_langage: list[str] | tuple = ()) -> list[str]:
+    """Ce que l'installeur dit, en automatique comme avec `--adapter`
+    (B-0178), de chaque langage qu'aucun adaptateur ne couvre parce que son
+    manifeste n'est que dans un sous-dossier : où, et les deux issues
+    (B-0168). Un manifeste sous un chemin tiers déclaré ne compte pas (les
+    fichiers tiers sont hors du projet). Si des adaptateurs posés ne
+    déclarent pas leur langage (`sans_langage`), l'installeur les nomme au
+    lieu d'affirmer qu'aucun ne couvre ce langage."""
     res = []
     for langage, chemins in langages_en_sous_dossier(cible).items():
         if langage in couverts:
             continue
         dossiers = sorted({c.rsplit("/", 1)[0] for c in chemins})
+        issues = trad("Deux issues : lui donner un adaptateur propre au projet, dont les commandes entrent dans "
+                      "{dossiers}, en relançant l'installeur avec `--adapter <principal> --adapter <fichier.toml>` ; "
+                      "ou déclarer le sous-dossier tiers, qu'aucun contrôle ne juge alors, par `[thirdparty] paths "
+                      "= [{motifs}]` des garde-fous, une décision de l'humain",
+                      dossiers=", ".join(f"{d}/" for d in dossiers), motifs=", ".join(f'"{d}/**"' for d in dossiers))
+        if sans_langage:
+            res.append(trad("!! {langage} : son manifeste n'est que dans un sous-dossier ({manifestes}), et {liste} "
+                            "ne déclare pas `language` : si cet adaptateur couvre {langage}, ajouter "
+                            "`language = \"{langage}\"` à ce fichier et relancer l'installeur. Sinon : {issues}",
+                            langage=langage, manifestes=", ".join(chemins), liste=", ".join(sans_langage),
+                            issues=issues))
+            continue
         res.append(trad("!! {langage} : son manifeste n'est que dans un sous-dossier ({manifestes}) ; aucun adaptateur "
-                        "ne lui est posé, ses commandes se lanceraient à la racine. Deux issues : lui donner un "
-                        "adaptateur propre au projet, dont les commandes entrent dans {dossiers}, en relançant "
-                        "l'installeur avec `--adapter <principal> --adapter <fichier.toml>` ; ou déclarer le "
-                        "sous-dossier tiers, qu'aucun contrôle ne juge alors, par `[thirdparty] paths = [{motifs}]` "
-                        "des garde-fous, une décision de l'humain",
-                        langage=langage, manifestes=", ".join(chemins), dossiers=", ".join(f"{d}/" for d in dossiers),
-                        motifs=", ".join(f'"{d}/**"' for d in dossiers)))
+                        "ne lui est posé, ses commandes se lanceraient à la racine. {issues}",
+                        langage=langage, manifestes=", ".join(chemins), issues=issues))
     return res
 
 
@@ -970,7 +996,7 @@ def _installer(cible: Path, adaptateur: str | list[str], proprietaire: str, adop
         noms += [x for x in trouves if x not in noms]
     from socle.checks_tests import ecarts_au_contrat
 
-    charges, de_fichier = [], set()
+    charges, de_fichier, sans_cle = [], set(), {}
     for n in noms:
         texte, nom = charger_adaptateur(n)
         try:
@@ -986,6 +1012,8 @@ def _installer(cible: Path, adaptateur: str | list[str], proprietaire: str, adop
                        chemin=n, ecarts="\n  - ".join(ecarts)), file=sys.stderr)
             return 2
         charges.append((nom, texte, str(donnees.get("language") or nom), n in nommes))
+        if not donnees.get("language"):
+            sans_cle[nom] = n
         if est_un_fichier(n):
             de_fichier.add(nom)
     # Le principal : celui que le projet a déjà, sinon le premier nommé. Un
@@ -1030,11 +1058,12 @@ def _installer(cible: Path, adaptateur: str | list[str], proprietaire: str, adop
                             "par `git switch` et relancer l'installeur sur une branche neuve ; sur un projet "
                             "équipé, proposer le changement à l'humain par une demande, l'adaptateur étant protégé",
                             nom=nom, adaptateur=ch.adaptateur, langage=langage_principal))
-    if detectes:
-        # Les langages couverts : ceux de cet appel, et ceux des copies déjà
-        # posées (revue de B-0168).
-        journal += sous_dossiers_sans_adaptateur(cible, langages | {c[2] for c in charges}
-                                                 | langages_en_place(cible, ch))
+    # Les langages couverts : ceux de cet appel, et ceux des copies déjà
+    # posées (revue de B-0168), détectés ou nommés par `--adapter` (B-0178).
+    poses_sans_cle = [sans_cle[n] for n in [nom_adaptateur, *(n for n, _ in autres)] if n in sans_cle]
+    journal += sous_dossiers_sans_adaptateur(cible, langages | {c[2] for c in charges}
+                                             | langages_en_place(cible, ch),
+                                             sorted(set(poses_sans_cle) | set(adaptateurs_sans_langage(cible, ch))))
     if ancien:
         journal.append(trad("mise à jour : moteur {avant} → {version}", avant=ancien.get("version", "amont"),
                             version=VERSION))

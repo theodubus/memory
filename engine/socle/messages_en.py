@@ -532,16 +532,23 @@ MESSAGES: dict[str, str] = {
     "dixième, arrondie au millier supérieur (il ne pourra que baisser)":
         "budget of {motif} set at the current level with its margin: {nouveau} bytes for {octets}, the size plus a "
         "tenth, rounded up to the next thousand (it can only go down)",
+    "Deux issues : lui donner un adaptateur propre au projet, dont les commandes entrent dans {dossiers}, en "
+    "relançant l'installeur avec `--adapter <principal> --adapter <fichier.toml>` ; ou déclarer le sous-dossier "
+    "tiers, qu'aucun contrôle ne juge alors, par `[thirdparty] paths = [{motifs}]` des garde-fous, une décision de "
+    "l'humain":
+        "Two ways out: give it an adapter of the project's own, whose commands enter {dossiers}, by running the "
+        "installer again with `--adapter <main> --adapter <file.toml>`; or declare the subdirectory third-party, then "
+        "judged by no check, through `[thirdparty] paths = [{motifs}]` of the guardrails, a decision for the human",
+    "!! {langage} : son manifeste n'est que dans un sous-dossier ({manifestes}), et {liste} ne déclare pas "
+    "`language` : si cet adaptateur couvre {langage}, ajouter `language = \"{langage}\"` à ce fichier et relancer "
+    "l'installeur. Sinon : {issues}":
+        "!! {langage}: its manifest is only in a subdirectory ({manifestes}), and {liste} does not declare "
+        "`language`: if that adapter covers {langage}, add `language = \"{langage}\"` to that file and run the "
+        "installer again. Otherwise: {issues}",
     "!! {langage} : son manifeste n'est que dans un sous-dossier ({manifestes}) ; aucun adaptateur ne lui est posé, "
-    "ses commandes se lanceraient à la racine. Deux issues : lui donner un adaptateur propre au projet, dont les "
-    "commandes entrent dans {dossiers}, en relançant l'installeur avec `--adapter <principal> --adapter "
-    "<fichier.toml>` ; ou déclarer le sous-dossier tiers, qu'aucun contrôle ne juge alors, par `[thirdparty] paths "
-    "= [{motifs}]` des garde-fous, une décision de l'humain":
+    "ses commandes se lanceraient à la racine. {issues}":
         "!! {langage}: its manifest is only in a subdirectory ({manifestes}); no adapter is set for it, its commands "
-        "would run at the root. Two ways out: give it an adapter of the project's own, whose commands enter "
-        "{dossiers}, by running the installer again with `--adapter <main> --adapter <file.toml>`; or declare the "
-        "subdirectory third-party, then judged by no check, through `[thirdparty] paths = [{motifs}]` of the "
-        "guardrails, a decision for the human",
+        "would run at the root. {issues}",
     "!! {nom} non posé : {adaptateur} existe déjà pour {langage}, et se garde. Pour le remplacer : sur un essai, le "
     "commiter sur sa branche, revenir à la branche de départ par `git switch` et relancer l'installeur sur une "
     "branche neuve ; sur un projet équipé, proposer le changement à l'humain par une demande, l'adaptateur étant "
@@ -2492,6 +2499,10 @@ MESSAGES: dict[str, str] = {
         "the agent writes a human answer",
     "l'agent répond à la place de l'humain":
         "the agent answers in place of the human",
+    "l'agent répond à la place de l'humain, `--help` glissé dans la réponse":
+        "the agent answers in place of the human, `--help` slipped into the answer",
+    "l'agent répond à la place de l'humain, une option de python à valeur devant le lanceur":
+        "the agent answers in place of the human, a python option with a value before the launcher",
     "l'agent approuve lui-même un changement protégé":
         "the agent approves a protected change itself",
     "l'agent commite en sautant les hooks du projet":
@@ -2666,6 +2677,8 @@ MESSAGES: dict[str, str] = {
         "a defect on disk but not in the index does not block the commit of what is indexed",
     "une tautologie voulue, raison écrite, passe le commit":
         "an intended tautology, reason written, passes the commit",
+    "l'aide de `socle answer`, `decision` et `reviewed` passe le hook de l'agent":
+        "the help of `socle answer`, `decision` and `reviewed` passes the agent's hook",
     "une commande qui CITE `socle answer` sans l'appeler passe":
         "a command that CITES `socle answer` without calling it passes",
     "l'agent verrouille la mémoire privée : seule sa mise en place est réservée à l'humain":

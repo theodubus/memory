@@ -48,9 +48,11 @@ installer sets one per language it recognises, or those it is given
 (`--adapter python-pytest --adapter kotlin`, the first being the main
 one), and each file is judged by the one of its language (the
 [adapters specification](adapters/README.md)). A language whose manifest
-is only in a subdirectory gets no adapter automatically: the installer
-says so, with its two ways out, an adapter of the project's own whose
-commands enter the subdirectory, or the subdirectory declared third-party.
+is only in a subdirectory gets no adapter automatically. Automatically
+as with `--adapter`, while no adapter covers it and its manifest is not
+under a declared third-party path, the installer says so, with its two ways out: an adapter of the project's
+own whose commands enter the subdirectory, or the subdirectory declared
+third-party.
 
 Right after the installation:
 
