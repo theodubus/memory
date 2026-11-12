@@ -7,15 +7,13 @@ Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
 
 Le socle est installé sur chess (J-2026-11-12-A) ; Théo y a lancé la
 feuille de route (B-0126) et a le prompt de mise à jour
-(`docs/fabrication/chess/prompt-mise-a-jour.md`). Le lot du 12 novembre
-est fini, fusionné et publié (J-2026-11-12-I, J-2026-11-12-K) : on attend
-les comptes rendus de chess et, pour B-0179, du pilote. Rien ne tourne ;
-la conversation continue sur Opus après compactage (J-2026-11-12-L).
-Prochain lot, à annoncer : B-0173 d'abord (la relecture après une limite
-coûte la moitié d'une fenêtre), puis B-0171, B-0142, B-0176 ; ensuite
-B-0151, B-0010, B-0156, B-0167, B-0172. Méthode : un sous-agent par
-sujet dans un worktree, relu avant tout push (J-2026-11-11-G) ; la réponse
-de l'humain se commite avec le changement qu'elle autorise.
+(`docs/fabrication/chess/prompt-mise-a-jour.md`) : on attend les comptes
+rendus de chess et, pour B-0179, du pilote. Lot en cours, dans l'ordre
+validé par Théo (D-0106) : B-0173 d'abord, un sous-agent mesure la
+consommation, puis B-0142, B-0171, B-0176 ; ensuite B-0151, B-0010,
+B-0156, B-0167, B-0172. La méthode d'un lot est le skill
+`.claude/skills/delegate-lot/SKILL.md` (J-2026-11-12-M) ; la conversation
+passe sur Opus (J-2026-11-12-L).
 
 B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
 

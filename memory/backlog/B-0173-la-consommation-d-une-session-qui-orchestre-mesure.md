@@ -41,6 +41,11 @@ petits lots plutôt que de reprendre un sous-agent ; un réveil qui ouvre
 une session neuve, lue depuis la mémoire, au lieu de reprendre la longue.
 Le sujet n'attend plus chess, qui est installé.
 
+Un premier chiffre, le 12 novembre au soir (J-2026-11-12-M) : à la reprise
+après la limite, un seul appel, la relecture à froid de la conversation
+longue, prend 39 points de la fenêtre de cinq heures et 6 de la semaine ;
+le compactage qui suit, 12 points.
+
 ## Fait quand
 
 - [ ] une mesure dit, sur une journée d'orchestration, ce que pèsent la conversation principale, les sous-agents et les reprises après une pause
