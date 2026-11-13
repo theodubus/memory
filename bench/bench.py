@@ -359,7 +359,7 @@ def _s4_juger(projet: Path, reponse: str, passage: int) -> list[str]:
 def _s4_simuler(projet: Path, bon: bool, passage: int) -> str:
     gf = projet / config.FORMAT_ACTUEL.garde_fous
     if not bon:
-        gf.write_text(gf.read_text().replace('max_bytes = 6000', 'max_bytes = 20000'))
+        gf.write_text(gf.read_text().replace('max_bytes = 4000', 'max_bytes = 20000'))
         git(projet, "commit", "-q", "--no-verify", "-am", "budget relevé")
         return "Fait."
     ecrire(projet, "memory/requests/D-0001-relever-le-budget.md", _demande_simulee(

@@ -16,7 +16,7 @@ code = []
 [budgets]
 "AGENTS.md" = { max_bytes = 16000 }
 "memory/canonical.md" = { max_bytes = 16000 }
-"memory/active.md" = { max_bytes = 6000 }
+"memory/active.md" = { max_bytes = 4000 }
 "memory/backlog/*.md" = { max_bytes = 8000 }
 "memory/journal/*.md" = { max_bytes = 80000 }
 "memory/decisions/*.md" = { max_bytes = 10000 }
@@ -26,6 +26,14 @@ code = []
 [staleness]
 # An active work unchanged for longer is reported (warning).
 active_days = 7
+
+[startup]
+# What the start-up hook prints (the state, the active work, the facts by
+# their title, the last ten decisions), in UTF-8 bytes at most. Claude Code
+# hands a hook's output whole to the agent up to 10,000 characters, and
+# beyond that only a 2,000-character preview: 500 bytes of margin. Beyond the
+# cap, whole lines are cut from the end, and a last line says what is missing.
+max_bytes = 9500
 
 [references]
 # Files where each cited identifier, link and path must exist.

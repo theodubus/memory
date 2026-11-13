@@ -13,6 +13,8 @@ import shutil
 import subprocess
 import time
 from collections import Counter
+from dataclasses import dataclass
+from typing import Callable
 
 from socle import config, requests as demandes, memory as memoire, utils as outils
 from socle.messages import a_traduire, trad
@@ -117,7 +119,15 @@ def page_protection(projet: config.Projet) -> str | None:
     return f"{url}/settings/rules" if url.startswith("https://github.com/") else None
 
 
-def calculer(projet: config.Projet, contenus: bool = True) -> str:
+def calculer(projet: config.Projet, contenus: bool = True, supplement: list[str] | tuple = ()) -> str:
+    """L'état du démarrage : l'état dérivé, puis, avec `contenus`, le
+    chantier actif, les faits par leur titre et les dix dernières décisions,
+    sous la borne des garde-fous (`[startup] max_bytes`, ADR-0071), que
+    Claude Code remet entière à l'agent. `supplement` : les lignes que le
+    hook de démarrage ajoute (les outils de l'adaptateur, les hooks git),
+    comptées dans la borne. Les lignes d'action (les demandes, l'humain, les
+    hooks) précèdent le backlog, dont la liste des prêts est la plus
+    longue : l'essentiel tient dans les premiers octets."""
     racine = projet.racine
     lignes = []
     nom = racine.name
@@ -139,9 +149,11 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
         lignes += _git(racine, projet)
     except outils.ErreurGit as e:
         lignes.append(trad("git : indisponible ({erreur})", erreur=e))
+    mem, backlog = None, []
     try:
         mem = memoire.Memoire.charger(racine)
         lignes += _memoire(mem, projet)
+        backlog = _backlog(mem)
     except Exception as e:  # l'état ne bloque jamais le démarrage
         lignes.append(trad("mémoire : illisible ({erreur}) — lancer `python3 .socle/socle check`",
                            erreur=f"{type(e).__name__}: {e}"))
@@ -201,21 +213,113 @@ def calculer(projet: config.Projet, contenus: bool = True) -> str:
     from socle import private as prive
 
     lignes.append(prive.ligne_etat(projet))
+    lignes += [l for bloc in supplement for l in str(bloc).strip("\n").splitlines()]
+    lignes += backlog
     lignes.append(trad("vérifier : `python3 .socle/socle verify --fast` (tout : sans `--fast`)"))
-    if contenus:
-        # Le chantier actif et les faits, publics puis privés : une
-        # mémoire privée lisible ici en fait partie, illisible elle est
-        # signalée plus haut.
-        ch = projet.chemins
-        for chemin in (ch.actif, ch.canonique, ch.dans_prive(ch.actif), ch.dans_prive(ch.canonique)):
-            texte = outils.lire_a(racine, None, chemin)
-            if texte is not None and memoire.est_prive(chemin) and not memoire.lisible(texte):
-                continue
-            if texte is not None:
-                lignes.append("")
-                lignes.append(f"--- {chemin} ---")
-                lignes.append(texte.rstrip())
-    return "\n".join(lignes)
+    if not contenus:
+        return "\n".join(lignes)
+    return "\n".join(borner(lignes, parties_injectees(projet, mem), projet.borne_demarrage()))
+
+
+@dataclass
+class Partie:
+    """Ce que le démarrage injecte après l'état dérivé : un en-tête, des
+    lignes, et ce que dit la coupe quand elle en retire `n` sur `total`."""
+
+    entete: list[str]
+    lignes: list[str]
+    manque: Callable[[int, int], str]
+
+
+# Les décisions que le démarrage injecte ; l'index entier se lit à la demande.
+DERNIERES_DECISIONS = 10
+
+
+def parties_injectees(projet: config.Projet, mem: memoire.Memoire | None) -> list[Partie]:
+    """Le chantier actif, public puis privé, entier ; les faits par leur
+    titre, publics puis privés, le statut dit quand il n'est pas « mesuré » ;
+    les dix dernières décisions, la plus récente d'abord, le statut dit
+    quand elle n'est pas acceptée. Une mémoire privée illisible ici n'en
+    donne rien : l'état dérivé le dit plus haut."""
+    racine, ch = projet.racine, projet.chemins
+    res = []
+    for chemin in (ch.actif, ch.dans_prive(ch.actif)):
+        texte = outils.lire_a(racine, None, chemin)
+        if not texte or not texte.strip() or (memoire.est_prive(chemin) and not memoire.lisible(texte)):
+            continue
+        res.append(Partie(["", f"--- {chemin} ---"], texte.rstrip().splitlines(),
+                          lambda n, total, c=chemin: trad("la fin du chantier actif, {n} ligne(s) sur {total} : lire "
+                                                          "{chemin}", n=n, total=total, chemin=c)))
+    if mem is None:
+        return res
+    for chemin in (ch.canonique, ch.dans_prive(ch.canonique)):
+        f = mem.fichiers.get(chemin)
+        faits = [e for e in (f.entrees if f else []) if e.type == "F" and not e.archivee and not e.basculee]
+        if not faits:
+            continue
+        lignes = [f"{e.id} — {e.titre}" if e.statut == "mesure" else
+                  f"{e.id} — {e.titre} ({memoire.nettoyer(e.meta.get('statut', ''))})" for e in faits]
+        res.append(Partie(["", trad("--- {chemin} : {n} fait(s) par leur titre ; un en entier : `python3 .socle/socle "
+                                    "show F-NNNN` ---", chemin=chemin, n=len(faits))], lignes,
+                          lambda n, total, c=chemin: trad("{n} fait(s) sur {total} : lire {chemin}", n=n,
+                                                          total=total, chemin=c)))
+    decisions = [e for e in mem.entrees("ADR") if not e.archivee and not e.basculee]
+    if decisions:
+        # Les plus récentes : par date, puis par numéro (une décision privée
+        # a sa propre suite de numéros).
+        decisions.sort(key=lambda e: (e.meta.get("date", ""), e.id.rsplit("-", 1)[-1], e.prive), reverse=True)
+        dernieres = decisions[:DERNIERES_DECISIONS]
+        res.append(Partie(
+            ["", trad("--- les {n} dernières décisions sur {total}, la plus récente d'abord ; avant toute décision de "
+                      "conception, l'index entier : `python3 .socle/socle show --index decisions` ---",
+                      n=len(dernieres), total=len(decisions))],
+            [f"{e.id} — {e.titre}" if e.statut == "acceptee" else f"{e.id} — {e.titre} ({e.statut})"
+             for e in dernieres],
+            lambda n, total: trad("{n} des {total} dernières décisions : `python3 .socle/socle show --index "
+                                  "decisions`", n=n, total=total)))
+    return res
+
+
+def _octets(lignes: list[str]) -> int:
+    """La taille, en octets UTF-8, de ces lignes imprimées, chacune suivie
+    de son saut de ligne : les octets majorent les unités UTF-16 que
+    compte Claude Code."""
+    return sum(len(l.encode("utf-8")) + 1 for l in lignes)
+
+
+def borner(essentiel: list[str], parties: list[Partie], borne: int) -> list[str]:
+    """L'état dérivé, puis les parties, en `borne` octets au plus, sauts de
+    ligne compris. Au-delà, des lignes entières se retirent depuis la fin
+    (les décisions, puis les faits ; le chantier actif en dernier recours),
+    un en-tête avec la dernière ligne qu'il annonce, et une dernière ligne
+    dit ce qui manque et comment le lire : jamais en silence, jamais au
+    milieu d'une ligne. L'état dérivé ne se coupe pas : ses listes sont
+    plafonnées."""
+    gardees = [list(p.lignes) for p in parties]
+    coupees = [0] * len(parties)
+
+    def note() -> list[str]:
+        manque = [p.manque(n, len(p.lignes)) for p, n in zip(parties, coupees) if n]
+        if not manque:
+            return []
+        return [trad("!! coupé à la borne du démarrage ({borne} octets, `[startup] max_bytes` des garde-fous) : "
+                     "{manque}", borne=borne, manque=" ; ".join(manque))]
+
+    taille = _octets(essentiel) + sum(_octets(p.entete + g) for p, g in zip(parties, gardees) if g)
+    i = len(parties) - 1
+    while i >= 0 and taille + _octets(note()) > borne:
+        if not gardees[i]:
+            i -= 1
+            continue
+        taille -= _octets([gardees[i].pop()])
+        coupees[i] += 1
+        if not gardees[i]:
+            taille -= _octets(parties[i].entete)
+    res = list(essentiel)
+    for p, g in zip(parties, gardees):
+        if g:
+            res += p.entete + g
+    return res + note()
 
 
 def audit_adaptateur(projet: config.Projet) -> list[str]:
@@ -238,6 +342,13 @@ def audit_adaptateur(projet: config.Projet) -> list[str]:
                  "(un autre adaptateur, ou ces fichiers déclarés tiers)", couvert=couvert, liste=liste)]
 
 
+# Les listes de l'état dérivé, plafonnées pour qu'il tienne dans les premiers
+# octets du démarrage (ADR-0071) : `git log` et `socle show --index backlog`
+# donnent le reste.
+COMMITS_MONTRES = 5
+PRETS_MONTRES = 5
+
+
 def _git(racine, projet) -> list[str]:
     if not outils.est_depot(racine) or not outils.a_des_commits(racine):
         return [trad("commit   : aucun (dépôt neuf)")]
@@ -254,9 +365,9 @@ def _git(racine, projet) -> list[str]:
         if outils.branche_par_defaut_devinee(racine):
             res.append(trad("  ^ devinée : ce clone n'a ni `origin/HEAD`, ni `main`, ni `master` ; si la branche par "
                             "défaut du dépôt distant est une autre, `git fetch origin <elle>` la fait connaître"))
-        res += [f"  {l}" for l in non[:10]]
-        if len(non) > 10:
-            res.append(trad("  … et {n} autre(s)", n=len(non) - 10))
+        res += [f"  {l}" for l in non[:COMMITS_MONTRES]]
+        if len(non) > COMMITS_MONTRES:
+            res.append(trad("  … et {n} autre(s)", n=len(non) - COMMITS_MONTRES))
         base = outils.base_de_travail(racine)
         if base:
             changes = projet.hors_tiers(outils.fichiers_changes(racine, base))
@@ -285,26 +396,9 @@ def _memoire(mem: memoire.Memoire, projet) -> list[str]:
              "{dernier}", faits=sum(faits.values()), detail=detail or trad("aucun"), adrs=len(adrs),
              journal=len(journal), dernier=journal[-1] if journal else "—")
     ]
-    # L'index des décisions, que le cadrage prévoit : une ligne par décision
-    # en vigueur, à lire en entier (`socle show ADR-NNNN`) avant d'en rouvrir une.
-    # Toutes, rejetées et remplacées comprises : on ne rouvre pas non plus une
-    # décision écartée. L'empreinte de l'index se cite dans une décision
-    # nouvelle (`lu : decisions@…`).
-    lignes_index = memoire.lignes_index(mem, "decisions")
-    if lignes_index:
-        res.append(trad("décisions, index decisions@{empreinte} (une en entier : `python3 .socle/socle show "
-                        "ADR-NNNN`) :", empreinte=memoire.empreinte_index(mem, "decisions")))
-        res += [f"  {l}" for l in lignes_index]
-    backlog = [e for e in mem.entrees("B") if not e.archivee]
-    par = Counter(e.statut for e in backlog)
-    res.append(
-        trad("backlog  : {ouverts} ouvert(s), {en_cours} en cours, {bloques} bloqué(s), {clos} clos",
-             ouverts=par.get("ouvert", 0), en_cours=par.get("en-cours", 0), bloques=par.get("bloque", 0),
-             clos=par.get("fait", 0) + par.get("abandonne", 0)))
-    for statut, libelle in (("en-cours", a_traduire("en cours")), ("bloque", a_traduire("bloqué"))):
-        for e in [e for e in backlog if e.statut == statut][:8]:
-            res.append(f"  {trad(libelle)} : {e.id} — {e.titre}")
-    res += [f"  {l}" for l in memoire.lignes_ordre(mem)]
+    # L'index des décisions, que le cadrage prévoit, ne s'injecte plus en
+    # entier : les dix dernières suivent les faits, et l'index se lit par
+    # `socle show --index decisions`, qui en donne l'empreinte (ADR-0071).
     jours = projet.gf("staleness", "active_days", defaut=7)
     t = outils.git(mem.racine, "log", "-1", "--format=%ct", "--", config.FORMAT_ACTUEL.actif, check=False).strip() \
         if outils.a_des_commits(mem.racine) else ""
@@ -313,6 +407,21 @@ def _memoire(mem: memoire.Memoire, projet) -> list[str]:
         if age > jours:
             res.append(trad("péremption : chantier actif inchangé depuis {age} jours (seuil {jours})",
                             age=f"{age:.0f}", jours=jours))
+    return res
+
+
+def _backlog(mem: memoire.Memoire) -> list[str]:
+    """Le backlog : ses comptes, ce qui est en cours ou bloqué, et ce qui
+    vient ensuite."""
+    backlog = [e for e in mem.entrees("B") if not e.archivee]
+    par = Counter(e.statut for e in backlog)
+    res = [trad("backlog  : {ouverts} ouvert(s), {en_cours} en cours, {bloques} bloqué(s), {clos} clos",
+                ouverts=par.get("ouvert", 0), en_cours=par.get("en-cours", 0), bloques=par.get("bloque", 0),
+                clos=par.get("fait", 0) + par.get("abandonne", 0))]
+    for statut, libelle in (("en-cours", a_traduire("en cours")), ("bloque", a_traduire("bloqué"))):
+        for e in [e for e in backlog if e.statut == statut][:8]:
+            res.append(f"  {trad(libelle)} : {e.id} — {e.titre}")
+    res += [f"  {l}" for l in memoire.lignes_ordre(mem, plafond=PRETS_MONTRES)]
     return res
 
 

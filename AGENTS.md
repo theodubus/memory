@@ -10,7 +10,7 @@ appliquée.
 
 Ce dépôt est en **mode amont** : premier utilisateur du socle qu'il
 fabrique, il en a la source sous `engine/socle/`, dont l'empreinte n'est
-donc pas figée ; ses fichiers de projet vivent dans `.socle/`, comme partout.
+pas figée ; ses fichiers de projet vivent dans `.socle/`.
 
 ## Structure
 
@@ -70,8 +70,8 @@ Ce fichier dit **comment** travailler ;
 ### Au démarrage, et après chaque compactage
 
 `python3 .socle/socle state` imprime l'état dérivé — commit, base, CI,
-backlog, demandes humaines en attente —, puis le chantier actif et la mémoire
-canonique. Sous Claude Code, le hook `SessionStart` le fait seul ; sous un
+backlog, demandes humaines en attente —, puis l'essentiel de la
+mémoire. Sous Claude Code, le hook `SessionStart` le fait seul ; sous un
 autre agent, le lancer d'abord. Rien de ce qui n'y figure pas n'est acquis.
 Ce que l'humain a écrit lui-même depuis le dernier commit de l'agent (une
 approbation, une réponse dans son terminal), l'état le liste : le lui citer
@@ -141,13 +141,14 @@ code.
 
 ### Lire la mémoire à la demande
 
-Le démarrage n'injecte que l'état, le chantier actif et les faits. Le reste
-se lit quand il sert, sans attendre qu'on le demande :
+Le démarrage n'injecte que l'état, le chantier actif, les titres des faits
+et les dix dernières décisions. Le reste se lit quand il sert, sans
+attendre qu'on le demande :
 
 - un identifiant cité (`F-`, `B-`, `ADR-`, `D-`, `J-`) se lit avant de
   s'appuyer dessus : `python3 .socle/socle show <ID>`, qui donne aussi son
   empreinte ;
-- avant une décision de conception, l'index des décisions de l'état dit si
+- avant une décision de conception, `socle show --index decisions` dit si
   elle est déjà prise : on ne la rouvre pas sans fait nouveau ;
 - avant d'ouvrir un sujet, le backlog (`socle show --index backlog`) dit
   s'il existe déjà ;

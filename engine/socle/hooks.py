@@ -155,12 +155,12 @@ def session_start(projet: config.Projet, entree: dict) -> int:
 
     tracer(projet.racine, "SessionStart", entree.get("session_id", ""), entree.get("source", ""))
     git_ok = installer_hooks_git(projet.racine)
-    installes = installer_outils(projet)
-    print(etat.calculer(projet))
-    if installes:
-        print("\n" + "\n".join(installes))
+    # Ses lignes entrent dans l'état, avant le backlog : toute la sortie du
+    # hook tient sous la borne du démarrage (ADR-0071).
+    supplement = installer_outils(projet)
     if not git_ok and (projet.racine / config.GIT_HOOKS).is_dir():
-        print(trad("\n!! hooks git non branchés : `git config core.hooksPath .socle/git-hooks`"))
+        supplement.append(trad("\n!! hooks git non branchés : `git config core.hooksPath .socle/git-hooks`"))
+    print(etat.calculer(projet, supplement=supplement))
     return 0
 
 

@@ -1605,8 +1605,20 @@ MESSAGES: dict[str, str] = {
         "memory   : {faits} fact(s) ({detail}) · {adrs} decision(s) · journal: {journal} entry(ies), last {dernier}",
     "aucun":
         "none",
-    "décisions, index decisions@{empreinte} (une en entier : `python3 .socle/socle show ADR-NNNN`) :":
-        "decisions, index decisions@{empreinte} (one in full: `python3 .socle/socle show ADR-NNNN`):",
+    "la fin du chantier actif, {n} ligne(s) sur {total} : lire {chemin}":
+        "the end of the active work, {n} line(s) of {total}: read {chemin}",
+    "--- {chemin} : {n} fait(s) par leur titre ; un en entier : `python3 .socle/socle show F-NNNN` ---":
+        "--- {chemin}: {n} fact(s) by their title; one in full: `python3 .socle/socle show F-NNNN` ---",
+    "{n} fait(s) sur {total} : lire {chemin}":
+        "{n} fact(s) of {total}: read {chemin}",
+    "--- les {n} dernières décisions sur {total}, la plus récente d'abord ; avant toute décision de conception, "
+    "l'index entier : `python3 .socle/socle show --index decisions` ---":
+        "--- the last {n} decisions of {total}, the most recent first; before any design decision, the whole "
+        "index: `python3 .socle/socle show --index decisions` ---",
+    "{n} des {total} dernières décisions : `python3 .socle/socle show --index decisions`":
+        "{n} of the last {total} decisions: `python3 .socle/socle show --index decisions`",
+    "!! coupé à la borne du démarrage ({borne} octets, `[startup] max_bytes` des garde-fous) : {manque}":
+        "!! cut at the start-up cap ({borne} bytes, `[startup] max_bytes` of the guardrails): {manque}",
     "backlog  : {ouverts} ouvert(s), {en_cours} en cours, {bloques} bloqué(s), {clos} clos":
         "backlog  : {ouverts} open, {en_cours} in progress, {bloques} blocked, {clos} closed",
     "en cours":
