@@ -27,5 +27,13 @@ une seconde fois. B-0191, ouvert ce jour-là sans voir ce sujet, en était
 le doublon ; sa piste : lire les validations depuis la branche par défaut,
 comme les renommages des clés de l'adoption (B-0189).
 
+Le 13 novembre, la mise à jour de chess montre l'autre face de la règle
+« commiter la réponse avec le changement qu'elle autorise » : tant que la
+réponse validée dans la conversation (D-0009 de chess) n'est pas
+commitée, l'état l'affiche « en attente » à l'humain, qui l'a déjà donnée
+(`docs/fabrication/chess/mise-a-jour-2026-11-13.md`, gêne 6, J-2026-11-13-D).
+La solution doit tenir les deux : ni push refusé, ni réponse donnée
+affichée comme attendue.
+
 Fait quand :
 - [ ] un test changé sous une validation déjà poussée se pousse sans validation nouvelle, ou l'agent est averti avant de pousser la réponse seule, et un test le montre

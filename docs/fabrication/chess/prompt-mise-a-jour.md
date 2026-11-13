@@ -41,8 +41,8 @@ Une règle à connaître, tant que le socle ne l'a pas corrigée : quand je vali
    - la liste [adoption.tolerated] : tes quatre constats, sous les deux contrôles ;
    - python3 .socle/socle state : une ligne « adoption » par contrôle, avec son compte ;
    - rien de changé dans ta politique ni dans ton adaptateur.
-5. Suis les étapes « Et maintenant » de l'installeur, dont la demande qui cite chaque fichier protégé changé avec son empreinte : pousse-la, donne-moi son lien, et attends ma réponse.
-6. La porte, avant de me demander de fusionner : python3 .socle/socle verify --fast, python3 .socle/socle ci et tools/verify.sh --rapide passent. Donne-moi les durées.
+5. Suis les étapes « Et maintenant » de l'installeur, dans son ordre : la demande qui cite chaque fichier protégé changé avec son empreinte, poussée seule, puis les fichiers commités et poussés, pour que je les lise dans la pull request avant de répondre. Donne-moi son lien, et attends ma réponse.
+6. La porte, avant de me demander de fusionner : python3 .socle/socle verify --fast --redo (sans --redo, un arbre déjà vérifié saute ses étapes), python3 .socle/socle ci et tools/verify.sh --rapide passent. Donne-moi les durées.
 7. Ouvre la pull request, et dis-moi ce qui me revient.
 
 Rends-moi compte, court : ce que l'installeur a dit de l'adoption, mot pour mot ; la liste inscrite ; les fichiers protégés changés ; tout ce qui t'a gêné.
