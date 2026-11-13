@@ -401,10 +401,14 @@ def ecrits_bruts(c: commandes.Commande) -> list[str]:
 
 # Les options courtes d'un `sed` ou d'un `perl` qui prennent une valeur,
 # collée au groupe (`-es/a/b/`) ou, sauf celles qui la veulent collée,
-# l'argument suivant ; et celles qui donnent le script (B-0171).
-OPTIONS_A_VALEUR = {"sed": "efl", "perl": "eE0lIMmdDxCV"}
-OPTIONS_COLLEES = {"sed": "", "perl": "0lIMmdDxCV"}
+# l'argument suivant ; et celles qui donnent le script (B-0171). `perl -0`
+# et `perl -l` ne prennent que les chiffres qui les suivent (`-0777`,
+# `-0x1FF`, `-l015`) : la suite du groupe est d'autres options (`-lpi`,
+# `-0pi`, seconde revue de B-0171, constat 5).
+OPTIONS_A_VALEUR = {"sed": "efl", "perl": "eEIMmdDxCV"}
+OPTIONS_COLLEES = {"sed": "", "perl": "IMmdDxCV"}
 OPTIONS_SCRIPT = {"sed": "ef", "perl": "eE"}
+OPTIONS_CHIFFREES = {"sed": {}, "perl": {"0": re.compile(r"x[0-9A-Fa-f]*|[0-7]*"), "l": re.compile(r"[0-7]*")}}
 
 
 def _fichiers_d_un_script(nom: str, argv: list[str]) -> tuple[bool, list[str]]:
@@ -432,16 +436,77 @@ def _fichiers_d_un_script(nom: str, argv: list[str]) -> tuple[bool, list[str]]:
         if not a.startswith("-") or a == "-":
             fichiers.append(a)
             continue
-        for k, o in enumerate(a[1:], 1):
+        k = 1
+        while k < len(a):
+            o = a[k]
             if o == "i":
                 en_place = True
                 break
+            if o in OPTIONS_CHIFFREES[nom]:
+                k = OPTIONS_CHIFFREES[nom][o].match(a, k + 1).end()
+                continue
             if o in OPTIONS_A_VALEUR[nom]:
                 script = script or o in OPTIONS_SCRIPT[nom]
                 if k == len(a) - 1 and o not in OPTIONS_COLLEES[nom]:
                     i += 1
                 break
+            k += 1
     return en_place, fichiers if script else fichiers[1:]
+
+
+# Ce qui, dans le texte d'une commande, peut écrire selon `ecrits` : une
+# redirection, ou le nom d'un programme qu'il lit comme écrivain.
+PEUT_ECRIRE = re.compile(r">|(?<![\w.-])(?:" + "|".join(sorted(
+    ECRIVAINS | {"cp", "ln", "install", "rsync", "sed", "perl", "dd", "git"})) + r")(?![\w.-])")
+
+
+def peut_ecrire(cmd: str) -> bool:
+    """La commande peut-elle écrire, à en juger par son texte seul, sans la
+    découper : une redirection, ou le nom d'un programme que le hook lit
+    comme écrivain (`rm`, `sed`, `git`…), guillemets et barres obliques
+    inverses retirés (`r''m`, `\\rm`)."""
+    return bool(PEUT_ECRIRE.search(re.sub(r"[\\'\"]", "", cmd)))
+
+
+# Le temps que se donne le jugement des écritures d'une commande du shell :
+# au-delà, il la refuse (`injugeable`) plutôt que de laisser le délai du hook
+# la faire passer. Deux jugements, quand l'action a lieu dans un autre
+# worktree, tiennent sous les 20 s que Claude Code donne au hook.
+DELAI_JUGEMENT = 5
+
+
+def _dans_le_delai(limite: float | None):
+    """Lève `TimeoutError` si le jugement a passé sa `limite` (`time.monotonic`)."""
+    if limite is not None and time.monotonic() > limite:
+        raise TimeoutError
+
+
+def injugeable(cmd: str, erreur: BaseException | None = None) -> str | None:
+    """Le refus d'une commande dont le hook ne sait pas juger les écritures,
+    si elle peut écrire (`peut_ecrire`) : trop longue ou trop imbriquée pour
+    se découper sans risque (`commandes.demesure`), ou dont le découpage ou
+    le jugement a levé `erreur` (`TimeoutError`, au-delà de
+    `DELAI_JUGEMENT`). Un hook qui plante ou dépasse son délai laisse passer
+    la commande : ce qui ne se juge pas ne passe pas (seconde revue de
+    B-0171, constat 4, ADR-0072)."""
+    if isinstance(erreur, TimeoutError):
+        pourquoi = trad("son jugement a pris plus de {n} secondes", n=DELAI_JUGEMENT)
+    elif erreur is not None:
+        pourquoi = trad("son découpage a levé {erreur}", erreur=type(erreur).__name__)
+    elif (mesure := commandes.demesure(cmd)) and mesure[0] == "longueur":
+        pourquoi = trad("{n} caractères hors du corps de ses heredocs, au-delà de {max}", n=mesure[1],
+                        max=commandes.LONGUEUR_MAX)
+    elif mesure:
+        pourquoi = trad("{n} parenthèses ou accolades ouvertes à la fois, au-delà de {max}", n=mesure[1],
+                        max=commandes.PROFONDEUR_MAX)
+    else:
+        return None
+    if not peut_ecrire(cmd):
+        return None
+    return trad("écriture par le shell dans une commande que le hook ne sait pas juger ({pourquoi}) : il ne peut "
+                "dire si elle écrit un fichier protégé. La découper en commandes plus simples, lancées une à une ; "
+                "un long texte s'écrit par l'outil d'écriture de fichiers, ou dans le corps d'un heredoc, qui "
+                "ne compte pas (B-0171).", pourquoi=pourquoi)
 
 
 def cibles_ecrites(cmd: str) -> list[str]:
@@ -496,11 +561,12 @@ def _globbing_elargi(simples: list[commandes.Commande]) -> bool:
     """Un `shopt`, ou une affectation de `GLOBIGNORE`, dans la commande : ses
     motifs peuvent rendre les noms en `.` (`dotglob`), traverser les
     dossiers (`globstar`) ou ignorer la casse (`nocaseglob`)."""
-    return any(c.programme == "shopt" or any(nom == "GLOBIGNORE" for nom, _ in c.affectations)
+    return any(c.programme == "shopt" or "GLOBIGNORE" in (c.connues or dict(c.affectations))
                or any(p.startswith("GLOBIGNORE=") for p in c.prefixe) for c in simples)
 
 
-def ecritures_jugees(projet: config.Projet, cmd: str, cwd: str | None = None) -> list[tuple[str, str]]:
+def ecritures_jugees(projet: config.Projet, cmd: str, cwd: str | None = None,
+                     limite: float | None = None) -> list[tuple[str, str]]:
     """Ce que le hook retient des chemins qu'une commande shell écrit, hors
     des fichiers qu'une remise admise remet (D-0098), chacun développé comme
     le shell le ferait (B-0171) : ses accolades, son `~`, les variables de
@@ -512,7 +578,8 @@ def ecritures_jugees(projet: config.Projet, cmd: str, cwd: str | None = None) ->
     (`cwd`) s'il est connu, sinon de la racine (B-0205). Chaque constat :
     `("protege", cible)`, `("reglage", chemin)` ou, pour un chemin que le
     hook ne sait pas développer et qui peut tomber dans le projet,
-    `("illisible", mot)`."""
+    `("illisible", mot)`. Passé sa `limite` (`time.monotonic`), il lève
+    `TimeoutError`."""
     depart = depart_de(projet.racine, cwd)
     environnement = commandes.environnement_du_shell(os.environ, depart)
     simples = commandes.analyser(cmd, environnement=environnement)
@@ -520,11 +587,13 @@ def ecritures_jugees(projet: config.Projet, cmd: str, cwd: str | None = None) ->
     cache: dict = {}
     res: list[tuple[str, str]] = []
     for c in simples:
+        _dans_le_delai(limite)
         mots = _ecrits_hors_remise(projet, c, remise_en_etat(projet, c, cmd, depart), depart)
         if not mots:
             continue
         variables = commandes.variables_de(c, environnement)
         for mot in mots:
+            _dans_le_delai(limite)
             mot = mot.strip("'\"")
             try:
                 for forme in commandes.accolades(mot):
@@ -1031,9 +1100,21 @@ def refus_bash(projet: config.Projet, cmd: str, cwd: str | None = None) -> str |
     le même jugement pour une commande que l'agent lance et pour une
     commande qu'un skill lui ferait lancer (`skills.commandes`)."""
     racine = projet.racine
+    limite = time.monotonic() + DELAI_JUGEMENT
+    # Une commande trop longue ou trop imbriquée ne se découpe pas : elle
+    # dépasserait le délai du hook, ou épuiserait la pile de python.
+    trop = injugeable(cmd)
+    if trop:
+        return trop
     # Chaque commande simple, découpée : ce qu'elle lance, pas le texte
     # qu'elle cite (un heredoc, un message de commit).
-    simples = commandes.analyser(cmd)
+    try:
+        simples = commandes.analyser(cmd)
+    except Exception as e:  # ce qui ne se découpe pas ne passe pas, s'il peut écrire
+        raison = injugeable(cmd, e)
+        if raison:
+            return raison
+        raise
     en_plus = projet.pol("irreversible", "bash", defaut=IRREVERSIBLES_BASH) or []
     for c in simples:
         action = irreversible(racine, c) or next(
@@ -1092,15 +1173,24 @@ def refus_bash(projet: config.Projet, cmd: str, cwd: str | None = None) -> str |
     if faute:
         return faute
     depart = depart_de(racine, cwd)
-    remises = [(c, remise_en_etat(projet, c, cmd, depart)) for c in simples]
-    refusee = next((r[1] for _, r in remises if r is not None and r[1]), None)
-    if refusee:
-        return refusee
+    # Chaque chemin écrit, développé comme le shell le ferait (B-0171),
+    # depuis le dossier courant de l'agent (B-0205), dans le délai.
+    try:
+        remises = []
+        for c in simples:
+            _dans_le_delai(limite)
+            remises.append((c, remise_en_etat(projet, c, cmd, depart)))
+        refusee = next((r[1] for _, r in remises if r is not None and r[1]), None)
+        if refusee:
+            return refusee
+        jugees = ecritures_jugees(projet, cmd, cwd, limite)
+    except Exception as e:  # ce qui ne se juge pas ne passe pas, s'il peut écrire
+        raison = injugeable(cmd, e)
+        if raison:
+            return raison
+        raise
     # Les réglages de Claude Code restent à l'humain, remise comprise
     # (sa réponse : « Exclure »).
-    # Chaque chemin écrit, développé comme le shell le ferait (B-0171),
-    # depuis le dossier courant de l'agent (B-0205).
-    jugees = ecritures_jugees(projet, cmd, cwd)
     reglage = next((x for c in simples for x in ecrits(c) if REGLAGES_AGENT.search(x)), None) or next(
         (quoi for genre, quoi in jugees if genre == "reglage"), None)
     if reglage:

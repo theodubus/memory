@@ -10,13 +10,14 @@ lancent bien. Le découpage suit les guillemets, les séparateurs (`;`, `&&`,
 
 Les variables affectées dans la commande (`F=x`, `export F=x`, `F+=y`) et
 les dossiers où elle passe (`cd`, `pushd`, `popd`) se suivent, la cible
-d'un `cd` développée au moment du `cd` ; un sous-shell `( … )`, une
-substitution (`$(…)`, accents graves, `<(…)`), chaque élément d'un pipeline
-et une tâche de fond (`&`) ne les transmettent pas à la suite. `developper`
-rend un mot comme le shell le développerait, de son `~` et de ses
-variables, et marque ce qu'il ne sait pas développer ; `accolades` et
-`se_croisent` disent ce qu'une accolade et un motif du shell nomment
-(B-0171, ADR-0072).
+d'un `cd` développée au moment du `cd` ; le découpage suppose qu'un
+sous-shell `( … )`, une substitution (`$(…)`, accents graves, `<(…)`),
+chaque élément d'un pipeline et une tâche de fond (`&`) ne les transmettent
+pas à la suite. `developper` rend un mot comme le shell le développerait,
+de son `~` et de ses variables, et marque ce qu'il ne sait pas développer ;
+`accolades` et `se_croisent` disent ce qu'une accolade et un motif du shell
+nomment ; `demesure`, qu'une commande est trop longue ou trop imbriquée
+pour être découpée sans risque (B-0171, ADR-0072).
 
 Heuristique, comme tout ce qui lit du shell sans l'exécuter : les mots
 réservés (`if`, `then`, `{`, B-0204), les alias, les fonctions, `source`,
@@ -30,6 +31,7 @@ from __future__ import annotations
 import posixpath
 import re
 import shlex
+from collections import ChainMap
 from dataclasses import dataclass, field
 
 # Les préfixes qui lancent la commande qui les suit.
@@ -70,6 +72,20 @@ REPERE = re.compile("\x01(\\d+)\x01")
 # une suite de ponctuations (`);`, `)>`).
 OPERATEURS = (";;&", "&>>", "<<<", ";;", ";&", "&&", "||", "|&", "&>", ">>", ">|", ">&", "<&", "<<", "<>",
               ";", "&", "|", "(", ")", "<", ">", "\n")
+# Ce que `developper` développe, hors du `~` de tête : une variable, une
+# substitution, un motif étendu.
+A_DEVELOPPER = re.compile(r"[$`]|[?*+@!]\(")
+# Le nom d'une variable, ou un paramètre spécial, après un `$`.
+NOM_APRES_DOLLAR = re.compile(r"[A-Za-z_]\w*|[\d@*#?$!-]")
+# Au-delà, le hook ne découpe pas une commande (`demesure`) : plus de
+# `LONGUEUR_MAX` caractères hors du corps de ses heredocs, le découpage
+# risquerait de dépasser le délai du hook ; plus de `PROFONDEUR_MAX`
+# parenthèses ou accolades ouvertes à la fois, d'épuiser la pile de python.
+# Une valeur développée plus longue que `LONGUEUR_MAX`, que seule une
+# variable dupliquée rend (`F=$F$F`), est inconnue (seconde revue de
+# B-0171, constat 4, ADR-0072).
+LONGUEUR_MAX = 10_000
+PROFONDEUR_MAX = 32
 # Les échappements d'une chaîne `$'…'`.
 ECHAPPEMENTS = {"a": "\a", "b": "\b", "e": "\x1b", "E": "\x1b", "f": "\f", "n": "\n", "r": "\r", "t": "\t",
                 "v": "\v", "\\": "\\", "'": "'", '"': '"', "?": "?"}
@@ -94,6 +110,10 @@ class Commande:
     # moment de chaque `cd` : absolu si l'environnement d'`analyser` donne
     # `PWD`, `INCONNU` à la place de ce qui ne se développe pas (B-0171).
     lieu: str = ""
+    # Les variables de `affectations`, déjà développées avec l'environnement
+    # d'`analyser`, que `variables_de` reprend sans les redévelopper.
+    connues: dict[str, str] | None = field(default=None, repr=False, compare=False)
+    environnement: dict[str, str] | None = field(default=None, repr=False, compare=False)
 
     @property
     def programme(self) -> str:
@@ -385,15 +405,28 @@ class _Etat:
     """Ce qu'une commande laisse au shell qui la suit : son dossier, tel
     qu'écrit et développé, la pile de `pushd` (chaque entrée sous ces deux
     formes), le dossier écrit d'avant le dernier `cd`, les variables
-    affectées."""
+    affectées, et celles des `comptees` premières déjà développées
+    (`connues`), chacune une seule fois : les redévelopper toutes à chaque
+    `cd` rendait le découpage cubique (seconde revue de B-0171, constat 4)."""
     dossier: str
     lieu: str
     vues: list[tuple[str, str | None]]
     pile: list[tuple[str, str]] = field(default_factory=list)
     precedent: str = ""
+    connues: dict[str, str] = field(default_factory=dict)
+    comptees: int = 0
 
     def copie(self) -> _Etat:
-        return _Etat(self.dossier, self.lieu, list(self.vues), list(self.pile), self.precedent)
+        return _Etat(self.dossier, self.lieu, list(self.vues), list(self.pile), self.precedent, self.connues,
+                     self.comptees)
+
+    def variables(self, env: dict) -> dict[str, str]:
+        """Les variables affectées, développées dans l'ordre sur `env`. Le
+        dictionnaire rendu ne change plus : une commande le garde."""
+        if self.comptees < len(self.vues):
+            self.connues = _developpees(env, self.vues[self.comptees:], dict(self.connues))
+            self.comptees = len(self.vues)
+        return self.connues
 
 
 def analyser(texte: str, dossier: str = "", affectations: list[tuple[str, str | None]] | None = None,
@@ -421,7 +454,7 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
     englobants: list[tuple[_Etat, _Etat, _Etat, bool]] = []
 
     def lieu_de(cible: str) -> str:
-        d = developper(cible, _variables(env, etat.vues))[0]
+        d = developper(cible, _visibles(env, etat.variables(env)))[0]
         if d.startswith(("/", INCONNU)):
             return normaliser(d)
         return normaliser(posixpath.join(etat.lieu, d)) if d else etat.lieu
@@ -445,7 +478,8 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
             # elle ne vaut que pour celle-ci.
             etat.vues.extend(_affectation(m) for m in mots)
         if argv or redir:
-            c = Commande(argv, redir, etat.dossier, mots[:len(mots) - len(argv)], list(etat.vues), etat.lieu)
+            c = Commande(argv, redir, etat.dossier, mots[:len(mots) - len(argv)], list(etat.vues), etat.lieu,
+                         etat.variables(env), env)
             nom = c.programme
             if nom == "cd":
                 cible = (options_et_arguments(argv[1:])[1] or ["~"])[0]
@@ -641,8 +675,11 @@ def developper(mot: str, variables) -> tuple[str, list[str]]:
     une chaîne `$'…'` que le découpage n'a pas su lire, un motif étendu
     (`@(…)`). Un `$` en fin de mot est celui d'une substitution coupée. Un
     `INCONNU` déjà dans le mot (`accolades`) y reste."""
+    if not mot.startswith("~") and not A_DEVELOPPER.search(mot):
+        return mot, []  # sans rien à développer : sans le parcourir, qu'un long chemin rendrait lent
     res: list[str] = []
     inconnus: list[str] = []
+    taille = 0
     if mot.startswith("~"):
         tete, barre, reste = mot.partition("/")
         if tete in ("~", "~+", "~-"):
@@ -676,8 +713,8 @@ def developper(mot: str, variables) -> tuple[str, list[str]]:
             j = _ansi_c(mot, i + 2)[0]
         elif mot[i + 1] == "{":
             j = _accolade_fermante(mot, i + 1)
-        elif m := re.match(r"[A-Za-z_]\w*|[\d@*#?$!-]", mot[i + 1:]):
-            j = i + 1 + m.end()
+        elif m := NOM_APRES_DOLLAR.match(mot, i + 1):
+            j = m.end()
         else:
             res.append(ch)  # un `$` que rien de développable ne suit
             i += 1
@@ -686,24 +723,67 @@ def developper(mot: str, variables) -> tuple[str, list[str]]:
         if valeur is None or INCONNU in valeur:
             inconnus.append(mot[i:j])
         res.append(INCONNU if valeur is None else valeur)
+        taille += len(valeur or "")
+        if taille > LONGUEUR_MAX:
+            return INCONNU, [mot]  # une valeur dupliquée, qui ne fait pas un chemin
         i = j
     return "".join(res), inconnus
 
 
-def _variables(environnement, affectations: list[tuple[str, str | None]]) -> dict[str, str]:
-    variables = dict(environnement)
+def demesure(texte: str) -> tuple[str, int] | None:
+    """Ce qui rend une commande trop longue ou trop imbriquée pour que le
+    hook la découpe sans risque (`LONGUEUR_MAX`, `PROFONDEUR_MAX`) :
+    `("longueur", n)`, ses caractères hors du corps de ses heredocs, ou
+    `("profondeur", n)`, le plus de parenthèses et d'accolades ouvertes à la
+    fois, guillemets compris ; `None` si elle se découpe."""
+    corps = sans_heredocs(texte)
+    if len(corps) > LONGUEUR_MAX:
+        return "longueur", len(corps)
+    profondeur = pire = 0
+    for ch in corps:
+        if ch in "({":
+            profondeur += 1
+            pire = max(pire, profondeur)
+        elif ch in ")}":
+            profondeur = max(0, profondeur - 1)
+    return ("profondeur", pire) if pire > PROFONDEUR_MAX else None
+
+
+def _developpees(environnement, affectations: list[tuple[str, str | None]],
+                 connues: dict[str, str]) -> dict[str, str]:
+    """`connues`, complété des variables affectées, chaque valeur développée
+    à son tour sur celles d'avant et sur l'environnement. Une valeur trop
+    imbriquée pour se développer (`RecursionError`) est inconnue : un chemin
+    qui la cite se juge comme toute part inconnue (seconde revue de B-0171,
+    constat 4)."""
+    vues = ChainMap(connues, environnement)
     for nom, brute in affectations:
-        variables[nom] = INCONNU if brute is None else developper(brute, variables)[0]
-    # `$_` : le dernier argument de la commande d'avant, que le hook ne suit
-    # pas.
-    variables.pop("_", None)
-    return variables
+        try:
+            connues[nom] = INCONNU if brute is None else developper(brute, vues)[0]
+        except RecursionError:
+            connues[nom] = INCONNU
+    return connues
+
+
+def _visibles(environnement, connues: dict[str, str]):
+    """Les variables de l'environnement et celles affectées, sans `$_` : le
+    dernier argument de la commande d'avant, que le hook ne suit pas."""
+    vues = ChainMap(connues, environnement)
+    return {k: v for k, v in vues.items() if k != "_"} if "_" in vues else vues
+
+
+def _variables(environnement, affectations: list[tuple[str, str | None]]) -> dict[str, str]:
+    return dict(_visibles(environnement, _developpees(environnement, affectations, {})))
 
 
 def variables_de(c: Commande, environnement) -> dict[str, str]:
     """Les variables que le shell connaît quand la commande s'exécute :
     l'environnement, puis ce que le même texte affecte avant elle, chaque
-    valeur développée à son tour ; `INCONNU`, une valeur que le hook ignore."""
+    valeur développée à son tour ; `INCONNU`, une valeur que le hook ignore.
+    Sur l'environnement d'`analyser`, celles que le découpage a déjà
+    développées."""
+    if c.connues is not None and c.environnement == dict(environnement):
+        return dict(_visibles(environnement, c.connues))
     return _variables(environnement, c.affectations)
 
 
@@ -721,6 +801,10 @@ def normaliser(chemin: str) -> str:
     qu'un `..` ne remonte pas une part que le hook ne sait pas développer :
     `/tmp/$X/..` n'est pas `/tmp`, `$X` pouvant valoir plusieurs dossiers.
     Un chemin relatif vide reste vide (le dossier de départ)."""
+    if INCONNU not in chemin:
+        # Le même, sans le parcourir en python : `normpath` garde `//` en tête.
+        n = posixpath.normpath(chemin)
+        return "" if n == "." else n[1:] if n.startswith("//") else n
     absolu = chemin.startswith("/")
     parts: list[str] = []
     for p in chemin.split("/"):

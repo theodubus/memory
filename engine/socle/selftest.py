@@ -1353,6 +1353,16 @@ def _cas() -> list[Cas]:
             "declare -n R=F; F=.socle/policy.toml; echo 'max_attempts = 99' >> $R",
             "rm -f .socle/{,a}{,b}{,c}{,d}{,e}{,f}{,g}{,h}{,i}policy.toml")])
 
+    @defaut("commande-injugeable", "fichier protégé écrit par le shell dans une commande trop imbriquée ou trop "
+            "longue pour être jugée, ou dont le découpage plante", "agent", "commande injugeable")
+    def _(a, c):
+        # La seconde revue de B-0171, constat 4 : le hook plantait, ou
+        # dépassait son délai, et laissait passer.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "X=" + "$(" * 500 + "echo" + ")" * 500 + "; echo 'max_attempts = 99' >> .socle/policy.toml",
+            "eval " * 500 + "echo 'max_attempts = 99' >> .socle/policy.toml",
+            "cd /tmp; " * 1500 + f"cd {c}; echo 'max_attempts = 99' >> .socle/policy.toml")])
+
     @defaut("protege-dossier-courant", "fichier protégé écrit par le shell par un chemin relatif au dossier courant "
             "de l'agent, un motif ou `$PWD`", "agent", "écriture protégée")
     def _(a, c):
@@ -1851,6 +1861,17 @@ def _temoins() -> list[tuple[str, Callable]]:
                 or etage_outil(a, c, "Bash", {"command": f"D={ailleurs}; echo x > \"${{D:-/tmp}}/rapport.txt\""})
                 or etage_outil(a, c, "Bash", {"command": "sed -n -e's/i/j/p' .socle/policy.toml"})
                 or etage_outil(a, c, "Bash", {"command": "rm -rf ./*"}, cwd=ailleurs))
+
+    @temoin("une commande trop imbriquée qui n'écrit rien, un long heredoc et 500 `cd` vers un dossier hors du "
+            "projet passent le hook de l'agent (B-0171)")
+    def _(a, c):
+        # La seconde revue de B-0171, constat 4 : seuls les seuils et le
+        # délai refusent, et seulement ce qui peut écrire.
+        ailleurs = a.dossier.parent / (a.dossier.name + "-ailleurs")
+        return (etage_outil(a, c, "Bash", {"command": "echo " + "$(" * 40 + "true" + ")" * 40})
+                or etage_outil(a, c, "Bash", {"command": f"cat > {ailleurs}/long.txt <<'FIN'\n"
+                                                         + "une ligne de texte\n" * 1000 + "FIN"})
+                or etage_outil(a, c, "Bash", {"command": f"cd {ailleurs}; " + "cd a; " * 500 + "echo x > notes.txt"}))
 
     @temoin("un fichier protégé changé par erreur, remis à son état du dernier commit, et un fichier apparu sous un "
             "chemin protégé, supprimé, passent le hook de l'agent (D-0098)")
@@ -2541,6 +2562,7 @@ RAISONS_AGENT = {
     "installeur cible illisible": "une cible que le hook ne sait pas résoudre",
     "écriture protégée": "par le shell : seul l'humain",
     "écriture illisible": "un chemin que le hook ne sait pas développer",
+    "commande injugeable": "une commande que le hook ne sait pas juger",
     "remise hors forme": "Seule passe la remise",
     "remise sous demande": "en attente, ou validée sans que ce qu'elle approuve",
     "écriture à l'aveugle": "à l'aveugle",

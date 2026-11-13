@@ -10,6 +10,7 @@ import posixpath
 import shutil
 import subprocess
 import tempfile
+import time
 import unittest
 import unittest.mock
 from pathlib import Path
@@ -405,6 +406,55 @@ class TestGarde(unittest.TestCase):
                          ("echo x > \"${X:-/tmp}/x\"", "illisible"),
                          ("T=; echo x > \"${T-/tmp}/x\"", "illisible")])
 
+    def test_ce_que_le_hook_ne_sait_pas_juger_est_refuse(self):
+        """La seconde revue de B-0171, constat 4 : le hook laissait passer
+        quand son jugement plantait (`RecursionError`) ou dépassait son délai
+        (500 `cd` le rendaient cubique, plus de vingt secondes) ; il refuse
+        une commande trop longue ou trop imbriquée avant de la découper, et
+        celle dont le découpage lève, si elle peut écrire."""
+        injugeable = "que le hook ne sait pas juger"
+        with self.environnement():
+            # Sans `subTest` : sur le moteur d'avant, le premier cas lève, et
+            # le test s'arrête avant ceux qui y prendraient des heures.
+            for cmd in ("X=" + "$(" * 500 + "echo" + ")" * 500 + "; rm -f .socle/policy.toml",
+                        "X=; F=" + "${X:-" * 600 + "a" + "}" * 600 + "; echo x > .socle/policy.toml",
+                        "eval " * 500 + "echo x > .socle/policy.toml",
+                        "ls; " * 3000 + "echo x > .socle/policy.toml"):
+                self.assertIn(injugeable, hooks.refus_bash(self.projet, cmd) or "", cmd[:30])
+                self.assertEqual(self.decide(*B(cmd)), "refus", cmd[:30])
+            # 500 `cd` se jugent vite, et pour ce qu'ils écrivent.
+            debut = time.monotonic()
+            raison = hooks.refus_bash(self.projet, "cd a; " * 500 + f"cd {self.racine}; echo x > .socle/policy.toml")
+            self.assertLess(time.monotonic() - debut, 2)
+            self.assertIn("écriture d'un fichier protégé", raison or "")
+            # Un jugement qui passe son délai refuse : 300 `rm`, chacun
+            # demandant à git ses fichiers suivis, le passent.
+            with unittest.mock.patch.object(hooks, "DELAI_JUGEMENT", 0.5):
+                debut = time.monotonic()
+                raison = hooks.refus_bash(self.projet, "rm .socle/$X; " * 300)
+                self.assertLess(time.monotonic() - debut, 3)
+            self.assertIn("plus de 0.5 secondes", raison or "")
+            # Ce qui ne peut rien écrire n'est pas refusé pour autant.
+            self.assertIsNone(hooks.refus_bash(self.projet, "echo " + "$(" * 40 + "true" + ")" * 40))
+            for cible in ("commandes.analyser", "ecritures_jugees"):
+                with self.subTest(cible), unittest.mock.patch(f"socle.hooks.{cible}", side_effect=RecursionError):
+                    self.assertIn("RecursionError", hooks.refus_bash(self.projet, "echo x > notes.txt") or "")
+                    with self.assertRaises(RecursionError):
+                        hooks.refus_bash(self.projet, "ls")
+
+    def test_perl_l_et_0_ne_prennent_que_des_chiffres(self):
+        """La seconde revue de B-0171, constat 5 : `perl -l` et `-0`
+        avalaient la suite de leur groupe, `-i` compris."""
+        with self.environnement():
+            self.jugees([("perl -lpi -e 's/O/X/' .socle/policy.toml", "protege"),
+                         ("perl -0pi -e 's/O/X/' .socle/policy.toml", "protege"),
+                         ("perl -0777pi -e 's/O/X/' .socle/policy.toml", "protege"),
+                         ("perl -pli -e 's/O/X/' .socle/policy.toml", "protege"),
+                         ("perl -l015pi -e 's/O/X/' .socle/policy.toml", "protege"),
+                         ("perl -0x1FFpi -e 's/O/X/' .socle/policy.toml", "protege"),
+                         ("perl -0777 -ne 'print' .socle/policy.toml", None),
+                         ("perl -lne 'print' .socle/policy.toml", None)])
+
     def test_remise_en_etat_d_un_fichier_protege(self):
         """D-0098 (B-0165) : l'agent remet un fichier protégé changé par
         erreur à son état du dernier commit, et supprime un fichier apparu
@@ -726,6 +776,37 @@ class TestDecoupage(unittest.TestCase):
                 self.assertEqual(commandes.normaliser(chemin), normal)
                 if I in chemin:
                     self.assertEqual(commandes.lieu_sur(normal), lieu)
+
+    def test_demesure_et_valeur_dupliquee(self):
+        """La seconde revue de B-0171, constat 4 : une commande trop longue
+        (hors du corps de ses heredocs) ou trop imbriquée ne se découpe pas ;
+        une valeur dupliquée (`F=$F$F`) devient inconnue au lieu de doubler."""
+        L, P = commandes.LONGUEUR_MAX, commandes.PROFONDEUR_MAX
+        self.assertIsNone(commandes.demesure("cat > f <<'FIN'\n" + "x" * L + "\nFIN"))
+        self.assertEqual(commandes.demesure("x" * (L + 1)), ("longueur", L + 1))
+        self.assertIsNone(commandes.demesure("(" * P + ")" * P + "{(" * (P // 2)))
+        self.assertEqual(commandes.demesure("$(" * (P + 1)), ("profondeur", P + 1))
+        c = commandes.analyser("F=a; " + "F=$F$F; " * 40 + "ls", environnement={})[-1]
+        F = commandes.variables_de(c, {})["F"]
+        self.assertIn(commandes.INCONNU, F)
+        self.assertLessEqual(len(F), 2 * L)
+        self.assertEqual(commandes.developper("$F" * 3, {"F": "a" * (L // 2)})[0], commandes.INCONNU)
+
+    def test_peut_ecrire_et_injugeable(self):
+        """La seconde revue de B-0171, constat 4 : ce que le hook ne sait pas
+        juger se refuse si son texte seul dit qu'il peut écrire, et dit
+        pourquoi."""
+        for cmd, attendu in (("ls -la", False), ("echo x > a", True), ("r''m a", True), ("\\rm a", True),
+                             ("/bin/rm a", True), ("git status", True), ("cat .git/config", False),
+                             ("python3 -c 'print(1)'", False), ("sed -n p a", True)):
+            with self.subTest(cmd):
+                self.assertEqual(hooks.peut_ecrire(cmd), attendu)
+        self.assertIsNone(hooks.injugeable("echo x > a"))
+        self.assertIsNone(hooks.injugeable("ls", RecursionError()))
+        self.assertIn("RecursionError", hooks.injugeable("echo x > a", RecursionError()) or "")
+        self.assertIn(f"plus de {hooks.DELAI_JUGEMENT} secondes", hooks.injugeable("echo x > a", TimeoutError()) or "")
+        self.assertIn(f"au-delà de {commandes.LONGUEUR_MAX}", hooks.injugeable("ls; " * 3000 + "echo x > a") or "")
+        self.assertIsNone(hooks.injugeable("ls; " * 3000))
 
     def test_jetons_ansi_c_et_substitutions(self):
         """La revue de B-0171, constats 1 et 6 : une substitution reste un

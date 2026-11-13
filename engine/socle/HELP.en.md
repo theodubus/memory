@@ -238,15 +238,22 @@ protected file, and a file that is cited, itself or its folder, by a
 request pending or approved whose approved change is not committed yet.
 The accepted risk: erasing a change of the human in the working tree that
 they neither committed nor submitted in a request. A path the shell
-writes, the hook expands as the shell would (variables, patterns, braces,
-`~`, `cd`, `pushd`), from the agent's current directory; a subshell, a
-substitution or a pipeline passes nothing on to what follows. A path it
-cannot expand (a variable it does not know, `$(…)`) is refused if the
-directory that the part written out in full before it names, moved up by
-the `..` that follow it, is in the project or contains it: write it out in
-full, or under a directory outside the project (`/tmp/…`). Accepted risk:
-an unknown part that is itself `..` (`/tmp/$X` with `X=../..`), which only
-the protected-files check catches afterwards.
+writes, the hook expands, as best it can, as the shell would (variables,
+patterns, braces, `~`, `cd`, `pushd`), from the agent's current directory,
+assuming a subshell, a substitution or a pipeline passes nothing on to
+what follows. A path it cannot expand (a variable it does not know,
+`$(…)`) is refused if the directory that the part written out in full
+before it names, moved up by the `..` that follow it, is in the project or
+contains it: write it out in full, or under a directory outside the
+project (`/tmp/…`). A command it cannot judge (more than 10,000 characters
+outside the bodies of its heredocs, more than 32 parentheses or braces
+open at once, a judgment that crashes or takes over 5 seconds) is refused
+if it can write: split it. This hook is only a first barrier against the
+agent's mistakes: it does not model all of bash, some shell forms escape
+it (an unknown part that is itself `..`, an option set by the shell's
+profile, a variable Claude Code sets only for its hooks…), and the
+guarantee is the protected-files check, at the end of the turn, at commit
+and in CI.
 
 **Doing what the agent cannot do.** Pushing to the default branch,
 publishing, setting up a service, deleting a remote branch, setting a tag

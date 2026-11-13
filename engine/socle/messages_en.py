@@ -130,6 +130,20 @@ MESSAGES: dict[str, str] = {
         "protected file; such a path passes only if the part written out in full before it, moved up by the `..` "
         "that follow it, puts it outside the project (`/tmp/$X`). Write the path out in full, or assign the variable "
         "earlier in the same command (`F=/tmp/x; echo y > \"$F\"`) (B-0171).",
+    "écriture par le shell dans une commande que le hook ne sait pas juger ({pourquoi}) : il ne peut dire si elle "
+    "écrit un fichier protégé. La découper en commandes plus simples, lancées une à une ; un long texte s'écrit par "
+    "l'outil d'écriture de fichiers, ou dans le corps d'un heredoc, qui ne compte pas (B-0171).":
+        "write by the shell in a command the hook cannot judge ({pourquoi}): it cannot tell whether it writes a "
+        "protected file. Split it into simpler commands, run one by one; a long text is written with the file-writing "
+        "tool, or in the body of a heredoc, which does not count (B-0171).",
+    "son jugement a pris plus de {n} secondes":
+        "judging it took more than {n} seconds",
+    "son découpage a levé {erreur}":
+        "parsing it raised {erreur}",
+    "{n} caractères hors du corps de ses heredocs, au-delà de {max}":
+        "{n} characters outside the bodies of its heredocs, beyond {max}",
+    "{n} parenthèses ou accolades ouvertes à la fois, au-delà de {max}":
+        "{n} parentheses or braces open at once, beyond {max}",
     "écriture d'un fichier protégé ({cible}) par le shell : seul l'humain modifie la politique, les hooks, la CI et "
     "le moteur (relance de l'installeur). Un fichier protégé changé par erreur, hors des réglages de Claude Code, se "
     "remet à son état du dernier commit : {formes} (D-0098).":
@@ -2594,6 +2608,10 @@ MESSAGES: dict[str, str] = {
     "cible inconnue, `$_`, une référence (`declare -n`), des accolades au-delà du plafond":
         "path written by the shell that the hook cannot expand: a `..` after an unknown part, a `cd` to an unknown "
         "target, `$_`, a reference (`declare -n`), braces beyond the cap",
+    "fichier protégé écrit par le shell dans une commande trop imbriquée ou trop longue pour être jugée, ou dont le "
+    "découpage plante":
+        "protected file written by the shell in a command too nested or too long to be judged, or whose parsing "
+        "crashes",
     "fichier protégé écrit par le shell par un chemin relatif au dossier courant de l'agent, un motif ou `$PWD`":
         "protected file written by the shell through a path relative to the agent's current directory, a pattern or "
         "`$PWD`",
@@ -2723,6 +2741,10 @@ MESSAGES: dict[str, str] = {
         "a commit without hooks in a throwaway repository, outside the project, passes the agent's hook",
     "l'installeur relancé dans le mode du verrou, ou sur un dossier temporaire, passe le hook de l'agent":
         "the installer run again in the lock's mode, or on a temporary directory, passes the agent's hook",
+    "une commande trop imbriquée qui n'écrit rien, un long heredoc et 500 `cd` vers un dossier hors du projet "
+    "passent le hook de l'agent (B-0171)":
+        "a too deeply nested command that writes nothing, a long heredoc and 500 `cd` to a directory outside the "
+        "project pass the agent's hook (B-0171)",
     "un chemin écrit par le shell à travers une variable sous un dossier hors du projet, une variable affectée vers "
     "un fichier libre ou un motif qui ne nomme aucun fichier protégé passent le hook de l'agent (B-0171)":
         "a path written by the shell through a variable under a directory outside the project, a variable assigned "
