@@ -1,17 +1,17 @@
 <!-- socle: couche=actif zone=publique -->
 # Chantier actif
 
-Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
+Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
 Le socle est installé sur chess (J-2026-11-12-A) ; on attend les
 comptes rendus de chess (mise à jour, feuille de route B-0126) et, pour
-B-0179, du pilote. Lot en cours, dans l'ordre validé (D-0106, D-0107) :
-B-0173 ; sa mesure est sur la branche, non poussée, en revue ; restent
-ses corrections, le push, et les règles de consommation dans le skill
-`.claude/skills/delegate-lot/SKILL.md`. Puis B-0010 (haute), B-0142,
-B-0171, B-0176 ; ensuite B-0151, B-0156, B-0167, B-0172.
+B-0179, du pilote. Le lot de B-0173 est livré (J-2026-11-13-A) ; ses
+règles, dans `.claude/skills/delegate-lot/SKILL.md`, ferment son critère
+3 quand elles auront servi sur un lot. Prochain lot, en session
+neuve : B-0010 (haute, D-0107), puis B-0142, B-0171, B-0176 ; ensuite
+B-0151, B-0156, B-0167, B-0172.
 
 B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
 
@@ -29,7 +29,8 @@ B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
   attendues, seules celles du socle se corrigent ici ; Théo : « pas grave
   si le pilote n'est pas idéal partout, c'est un crashtest pour le socle
   donc normal » (J-2026-10-31-E).
-- La branche de travail est `ccr-82da0a2e-iccil9` (J-2026-11-09-M).
+- Chaque session travaille sur la branche que lui donne son
+  environnement, partie de la branche par défaut (J-2026-11-13-A).
 - Aucun autre dépôt dans la session, ni lecture de JustCook ou de
   `theodubus/socle` ; Théo : « N'ajoute aucun autre dépôt à la session, et
   ne lis ni JustCook ni theodubus/socle (donner leurs liens reste
