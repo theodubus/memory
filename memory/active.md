@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-B-0209 fait, à relire (la revue attend la fenêtre neuve) : son correctif
-dans `docs/fabrication/passation/`. Puis B-0142. Pilote en pause.
+B-0209 fait et poussé, pas encore relu : la revue attend la fenêtre neuve
+(J-2026-11-13-M). Puis B-0142. Pilote en pause.
 
 ## Consignes en cours
 
