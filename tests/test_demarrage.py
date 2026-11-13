@@ -15,6 +15,7 @@ import shlex
 import shutil
 import sys
 import tempfile
+import time
 import tomllib
 import unittest
 from pathlib import Path
@@ -52,6 +53,16 @@ def sujet(n: int, statut: str = "ouvert", priorite: str = "") -> str:
 def demande(n: int) -> str:
     return (f"<!-- socle: couche=demandes zone=publique -->\n# D-{n:04d} — La demande numéro {n}, en attente de "
             f"l'humain\n\n> date : 2026-11-12\n\n## Question posée\n\nTrancher.\n")
+
+
+def chantier_actif(zone: str, taille: int) -> str:
+    """Un chantier actif de `taille` octets exactement, en lignes entières."""
+    texte = f"<!-- socle: couche=actif zone={zone} -->\n# Chantier actif\n\n## En cours\n\n"
+    k = 1
+    while len(texte.encode("utf-8")) + 60 < taille:
+        texte += f"- Étape {k} du chantier, dite sur une ligne entière.\n"
+        k += 1
+    return texte + "x" * (taille - len(texte.encode("utf-8")) - 1) + "\n"
 
 
 def octets(texte: str) -> int:
@@ -131,14 +142,14 @@ class Demarrage(unittest.TestCase):
 
     def test_l_essentiel_tient_dans_les_2000_premiers_octets_d_un_etat_qui_les_depasse(self):
         """Le 3e critère de B-0010, sur un état dérivé qui ne tient pas
-        entier dans l'aperçu de Claude Code : ce qui demande d'agir y est, dans
-        cet ordre, et le backlog vient après."""
+        entier dans l'aperçu de Claude Code : ce qui demande d'agir y est en
+        tête, puis ce qui informe, dans cet ordre, et le backlog vient après."""
         sortie = self.sortie()
         self.assertGreater(octets(self.etat_derive(sortie)), 2000)
         premiers = sortie.encode("utf-8")[:2000].decode("utf-8", errors="ignore")
-        ordre = ["== ", "commit   :", "base     :", "CI       :", "mémoire  :", "demandes humaines en attente : 1",
-                 "branche  :", "ce qui revient à l'humain : 1", "  décision : D-0001 — La demande numéro 1",
-                 "hooks    :", "mémoire privée :", "backlog  :"]
+        ordre = ["== ", "ce qui revient à l'humain : 1", "  décision : D-0001 — La demande numéro 1",
+                 "demandes humaines en attente : 1", "commit   :", "base     :", "CI       :", "branche  :",
+                 "mémoire  :", "hooks    :", "mémoire privée :", "backlog  :"]
         positions = []
         for debut in ordre:
             ligne = next((l for l in premiers.splitlines() if l.startswith(debut)), None)
@@ -153,8 +164,7 @@ class Demarrage(unittest.TestCase):
     def test_une_demande_en_attente_ne_compte_pas_deux_fois(self):
         sortie = self.sortie()
         self.assertEqual(sortie.count("D-0001"), 1)
-        self.assertIn("demandes humaines en attente : 1 — chacune sous « ce qui revient à l'humain », avec son lien",
-                      sortie)
+        self.assertIn("demandes humaines en attente : 1 — sous « ce qui revient à l'humain », avec leur lien", sortie)
         self.assertIn("  décision : D-0001 — La demande numéro 1, en attente de l'humain", sortie)
 
     def test_les_listes_de_l_etat_derive_sont_plafonnees_et_ses_lignes_bornees(self):
@@ -166,12 +176,15 @@ class Demarrage(unittest.TestCase):
         self.assertEqual(lignes[i], "base     : main — non fusionné : 7 commit(s)")
         self.assertEqual(len([l for l in lignes[i + 1:] if re.match(r"  [0-9a-f]{7} Le travail", l)]),
                          etat.COMMITS_MONTRES)
-        self.assertEqual(lignes[i + 1 + etat.COMMITS_MONTRES], "  … et 2 autre(s)")
-        # Ce qui revient à l'humain : les demandes en attente, chacune avec son lien.
+        self.assertEqual(lignes[i + 1 + etat.COMMITS_MONTRES],
+                         "  … et 2 autre(s) : `python3 .socle/socle state --short`")
+        # Ce qui revient à l'humain : les demandes en attente, chacune avec son
+        # lien ; au-delà, leur nombre et où les lire.
         i = lignes.index("ce qui revient à l'humain : 7")
         self.assertEqual([l.split(" — ")[0] for l in lignes[i + 1:i + 1 + 2 * etat.ELEMENTS_MONTRES:2]],
                          [f"  décision : D-{n:04d}" for n in range(1, 5)])
-        self.assertEqual(lignes[i + 1 + 2 * etat.ELEMENTS_MONTRES], "  … et 3 autre(s)")
+        self.assertEqual(lignes[i + 1 + 2 * etat.ELEMENTS_MONTRES],
+                         "  … et 3 autre(s) : `python3 .socle/socle state --short`")
         # Les sujets en cours et prêts, leurs titres raccourcis ; les basses.
         titre = sujet(21).splitlines()[1].split(" — ", 1)[1]
         self.assertIn(f"  en cours : B-0021 — {outils.raccourcir(titre, etat.TITRE_DE_SUJET)}", lignes)
@@ -312,7 +325,13 @@ class Demarrage(unittest.TestCase):
         self.assertLess(echec, next(k for k, l in enumerate(lignes) if l.startswith("backlog  :")))
         self.assertIn("- Étape 40 du chantier en cours, dite sur une ligne entière.", lignes)
 
-    def test_la_sortie_du_hook_reste_sous_la_borne_quand_ses_lignes_depassent_la_part_de_l_etat(self):
+    def test_la_coupe_de_l_etat_atteint_les_lignes_du_hook_en_dernier_et_dit_ou_les_lire(self):
+        """Quarante échecs des outils, chacun de plusieurs Ko : la coupe de
+        l'état retire d'abord ce qui se relit ailleurs (les commits, le
+        backlog), puis ce qui informe, puis les blocs du hook depuis la fin,
+        chacun entier ; ce qui revient à l'humain reste. La ligne de coupe
+        renvoie à `socle state --short`, qui redit toutes les lignes du
+        hook."""
         projet = self.projet()
         crue = [f"!! outils de l'adaptateur : `commande {n}` a rendu 1\n    " + "x" * 3000 for n in range(40)]
         with mock.patch.object(hooks, "installer_outils", return_value=list(crue)), \
@@ -323,11 +342,99 @@ class Demarrage(unittest.TestCase):
         lignes = sortie.splitlines()
         self.assertLessEqual(len(sortie.encode("utf-8")), 9500)
         self.assertLessEqual(max(len(l.encode("utf-8")) for l in lignes), etat.LIGNE)
-        # L'état perd sa fin, dit ; le chantier actif garde sa part.
+        for ligne in ("ce qui revient à l'humain : 1", "  décision : D-0001 — La demande numéro 1, en attente de l'humain",
+                      "demandes humaines en attente : 1 — sous « ce qui revient à l'humain », avec leur lien"):
+            self.assertIn(ligne, lignes)
+        montres = [k for k, l in enumerate(lignes) if l.startswith("!! outils de l'adaptateur : ")]
+        self.assertTrue(0 < len(montres) < 40, len(montres))
+        self.assertEqual([lignes[k] for k in montres],
+                         [f"!! outils de l'adaptateur : `commande {n}` a rendu 1" for n in range(len(montres))])
+        self.assertTrue(all(lignes[k + 1].startswith("    xxx") for k in montres))
+        for debut in ("commit   :", "base     :", "CI       :", "mémoire  :", "backlog  :", "  prêt :", "vérifier :"):
+            self.assertFalse(any(l.startswith(debut) for l in lignes), debut)
+        # Le chantier actif garde sa part.
         self.assertIn("- Étape 40 du chantier en cours, dite sur une ligne entière.", lignes)
-        self.assertNotIn("vérifier :", sortie)
-        self.assertRegex(lignes[-1], r" : l'état dérivé, \d+ octets pour une part de 2375 — \d+ ligne\(s\) sur \d+, "
-                                     r"la fin : `python3 \.socle/socle state --short`")
+        self.assertRegex(lignes[-1], r" : l'état dérivé, \d+ octets pour une part de 2375 — \d+ ligne\(s\) sur \d+ ; "
+                                     r"l'état entier : `python3 \.socle/socle state --short`$")
+        # Ce que la ligne de coupe désigne contient ce qui est coupé.
+        court = etat.calculer(projet, contenus=False)
+        self.assertRegex(court, r"(?m)^au dernier démarrage de session \(\d{4}-\d\d-\d\dT[^)]*\), le hook a ajouté :$")
+        self.assertEqual(len(re.findall(r"(?m)^  !! outils de l'adaptateur : `commande \d+` a rendu 1$", court)), 40)
+        for debut in ("commit   :", "backlog  :", "vérifier :"):
+            self.assertIn(debut, court)
+        # Gardées à côté de la trace des hooks, hors de l'arbre ; un démarrage
+        # sans lignes du hook n'en laisse rien.
+        self.assertEqual(etat.chemin_demarrage(self.racine), config.chemin_trace(self.racine).parent / "startup.json")
+        self.assertTrue(etat.chemin_demarrage(self.racine).is_file())
+        self.assertIn(".git", etat.chemin_demarrage(self.racine).relative_to(self.racine).parts)
+        with mock.patch.object(hooks, "installer_outils", return_value=[]), \
+                mock.patch.object(hooks, "installer_hooks_git", return_value=True), \
+                contextlib.redirect_stdout(io.StringIO()):
+            hooks.session_start(projet, {})
+        self.assertFalse(etat.chemin_demarrage(self.racine).exists())
+        self.assertNotIn("le hook a ajouté", etat.calculer(projet, contenus=False))
+
+    def test_une_borne_baissee_garde_les_demandes_et_ce_qui_revient_a_l_humain(self):
+        """À 4 000 octets, la part de l'état ne tient plus ses listes : ce qui
+        se relit ailleurs part, ce qui demande d'agir reste. La borne, passée
+        sous ce qu'il faut au chantier actif, est signalée."""
+        for n in range(2, 7):
+            self.demande(n)
+        self.faits(40)
+        (self.racine / "memory/active.md").write_text(chantier_actif("publique", 3700))
+        sortie = self.sortie(4000)
+        lignes = sortie.splitlines()
+        self.assertLessEqual(octets(sortie), 4000)
+        self.assertIn("ce qui revient à l'humain : 6", lignes)
+        for n in range(1, 5):
+            self.assertIn(f"  décision : D-{n:04d} — La demande numéro {n}, en attente de l'humain", lignes)
+        self.assertIn("  … et 2 autre(s) : `python3 .socle/socle state --short`", lignes)
+        self.assertIn("demandes humaines en attente : 6 — sous « ce qui revient à l'humain », avec leur lien", lignes)
+        self.assertFalse(any(re.match(r"  [0-9a-f]{7} Le travail", l) for l in lignes))
+        self.assertFalse(any(l.startswith(("backlog  :", "  prêt :")) for l in lignes))
+        self.assertIn(" : l'état dérivé, ", lignes[-1])
+        court = etat.calculer(self.projet(), contenus=False)
+        alerte = ("!! le budget de memory/active.md (3700 octets, public et privé ensemble) dépasse la part du "
+                  "chantier actif dans la sortie du démarrage (1540 octets, en-têtes déduits) : à son budget, il y "
+                  "serait coupé à chaque session ; le baisser à 1540 au plus")
+        self.assertTrue(etat.alerte_budget_actif(self.projet())[0].startswith(alerte))
+        self.assertIn(alerte, court)
+        self.assertEqual(etat.alerte_budget_actif(self.projet(9500)), [])
+        self.assertNotIn("!! le budget de", etat.calculer(self.projet(), contenus=False))
+
+    def test_les_demandes_en_attente_se_disent_quoi_qu_il_arrive_a_ce_qui_revient_a_l_humain(self):
+        """Une régression de la première correction : seule la liste de ce
+        qui revient à l'humain nommait les demandes, et un échec de son calcul,
+        ou de celui du balayage de mutation, les taisait toutes."""
+        from socle import human as humain, mutation
+
+        self.demande(2)
+        (self.racine / "memory/requests/D-0003-sans-titre.md").write_text("Une demande sans son en-tête.\n")
+        with mock.patch.object(mutation, "etat_du_balayage", side_effect=RuntimeError("gh hors service")):
+            lignes = self.sortie().splitlines()
+        self.assertIn("ce qui revient à l'humain : 2", lignes)
+        self.assertIn("  décision : D-0001 — La demande numéro 1, en attente de l'humain", lignes)
+        self.assertIn("mutation : état inconnu (RuntimeError: gh hors service)", lignes)
+        with mock.patch.object(humain, "a_faire", side_effect=RuntimeError("panne")):
+            lignes = self.sortie().splitlines()
+            court = etat.calculer(self.projet(), contenus=False)
+        self.assertIn("ce qui revient à l'humain : incalculable (RuntimeError: panne)", lignes)
+        i = lignes.index("demandes humaines en attente : 3")
+        self.assertEqual(lignes[i + 1:i + 6], [
+            "  décision : D-0001 — La demande numéro 1, en attente de l'humain", "    (pas encore poussée : pas de lien)",
+            "  décision : D-0002 — La demande numéro 2, en attente de l'humain", "    (pas encore poussée : pas de lien)",
+            "  illisible : memory/requests/D-0003-sans-titre.md — `python3 .socle/socle check` dit pourquoi"])
+        # Au-delà du plafond, la ligne dit où lire les autres, que l'état entier donne.
+        for n in range(4, 8):
+            self.demande(n)
+        with mock.patch.object(humain, "a_faire", side_effect=RuntimeError("panne")):
+            lignes = self.sortie().splitlines()
+            court = etat.calculer(self.projet(), contenus=False)
+        i = lignes.index("demandes humaines en attente : 7")
+        self.assertEqual(lignes[i + 2 * etat.ELEMENTS_MONTRES],
+                         "  … et 3 autre(s) : `python3 .socle/socle state --short`")
+        self.assertEqual(len(re.findall(r"(?m)^  décision : D-\d{4} — ", court)), 6)
+        self.assertIn("  illisible : memory/requests/D-0003-sans-titre.md", court)
 
     def test_la_borne_vient_des_garde_fous_celle_du_gabarit_a_defaut(self):
         self.assertEqual(self.projet().borne_demarrage(), 9500)
@@ -337,17 +444,56 @@ class Demarrage(unittest.TestCase):
             projet.garde_fous["startup"] = {} if valeur is None else {"max_bytes": valeur}
             self.assertEqual(projet.borne_demarrage(), config.BORNE_DEMARRAGE)
 
-    def test_le_budget_du_chantier_actif_tient_dans_sa_part(self):
-        """Un chantier actif à son budget n'est pas coupé : dans le gabarit,
-        le budget tient dans la part du chantier actif, en-tête déduit."""
+    def test_le_chantier_actif_dans_son_budget_n_est_jamais_coupe_quoi_que_pesent_les_autres(self):
+        """Public et privé, deux parties d'un même groupe : le budget du
+        chantier actif juge leur somme, et leur part la tient, leurs deux
+        en-têtes déduits. À leur budget, ils ne sont jamais coupés, même
+        quand l'état et les faits débordent de la leur et prennent ce que les
+        décisions laissent."""
+        from socle import context as contexte
+
         projet = self.projet()
-        self.assertEqual(etat.budget_actif_permis(projet), 3800 - len("\n--- memory/active.md ---\n"))
+        permis = etat.budget_actif_permis(projet)
+        self.assertEqual(permis, 3800 - len("\n--- memory/active.md ---\n") - len("\n--- memory/private/active.md ---\n"))
         for nom in ("guardrails.toml", "guardrails.en.toml"):
             gf = tomllib.loads((MOTEUR / "socle/templates" / nom).read_text(encoding="utf-8"))
-            budget = gf["budgets"]["memory/active.md"]["max_bytes"]
-            self.assertLessEqual(budget, etat.budget_actif_permis(projet), nom)
-        (self.racine / "memory/active.md").write_text("x" * (etat.budget_actif_permis(projet) - 1) + "\n")
-        self.assertNotIn("!! coupé", self.sortie())
+            self.assertLessEqual(gf["budgets"]["memory/active.md"]["max_bytes"], permis, nom)
+        politique = self.racine / ".socle/policy.toml"
+        politique.write_text(politique.read_text() + '\n[private]\nmode = "chiffre"\n')
+        (self.racine / "memory/private").mkdir()
+        self.faits(80)
+        for n in range(2, 8):
+            self.demande(n)
+        etat.retenir_demarrage(projet, [f"!! outils de l'adaptateur : `commande {n}` a rendu 1\n    " + "x" * 900
+                                        for n in range(4)])
+        budget = projet.budget_octets("memory/active.md")
+        self.assertEqual(budget, 3700)
+        for public, prive in ((budget, 0), (budget // 3, budget - budget // 3), (budget, budget)):
+            with self.subTest(public=public, prive=prive):
+                (self.racine / "memory/active.md").write_text(chantier_actif("publique", public))
+                (self.racine / "memory/private/active.md").unlink(missing_ok=True)
+                if prive:
+                    (self.racine / "memory/private/active.md").write_text(chantier_actif("privee", prive))
+                projet = self.projet()
+                rapport = contexte.executer(contexte.Contexte(projet, etage="git"), ["memoire.budgets"])
+                if public + prive > budget:
+                    self.assertFalse(rapport.reussi)
+                    self.assertIn(f"{public} + {prive} octets pour le chantier actif public et privé, qui partagent "
+                                  f"une part de la sortie du démarrage, pour un budget de {budget} à eux deux",
+                                  rapport.texte())
+                    continue
+                self.assertTrue(rapport.reussi, rapport.texte())
+                lignes = self.sortie().splitlines()
+                self.assertLessEqual(octets("\n".join(lignes)), 9500)
+                self.assertIn(" : l'état dérivé, ", lignes[-1])
+                self.assertIn(" ; les faits, ", lignes[-1])
+                self.assertNotIn("le chantier actif", lignes[-1])
+                self.assertEqual(entre(lignes, "--- memory/active.md ---", "--- memory/private/active.md" if prive
+                                       else "--- memory/canonical.md")[2:],
+                                 chantier_actif("publique", public).rstrip().splitlines())
+                if prive:
+                    self.assertEqual(entre(lignes, "--- memory/private/active.md ---", "--- memory/canonical.md")[2:],
+                                     chantier_actif("privee", prive).rstrip().splitlines())
 
     def test_une_mise_a_jour_signale_un_budget_du_chantier_actif_au_dela_de_sa_part(self):
         """Un projet installé avant gardait 6 000 octets pour son chantier
@@ -357,14 +503,12 @@ class Demarrage(unittest.TestCase):
                                              '"memory/active.md" = { max_bytes = 6000 }'))
         with contextlib.redirect_stdout(io.StringIO()) as flux:
             installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
-        self.assertIn("!! le budget de memory/active.md (6000 octets) dépasse la part du chantier actif dans la sortie "
-                      "du démarrage (3774 octets, en-tête déduit) : à son budget, il y serait coupé à chaque session ; "
-                      "le baisser à 3774 au plus", flux.getvalue())
+        self.assertIn("!! le budget de memory/active.md (6000 octets, public et privé ensemble) dépasse la part du "
+                      "chantier actif dans la sortie du démarrage (3740 octets, en-têtes déduits) : à son budget, il y "
+                      "serait coupé à chaque session ; le baisser à 3740 au plus", flux.getvalue())
         self.assertIn("max_bytes = 6000", gf.read_text())
-        gf.write_text(gf.read_text().replace("max_bytes = 6000", "max_bytes = 3774"))
+        gf.write_text(gf.read_text().replace("max_bytes = 6000", "max_bytes = 3740"))
         self.assertEqual(installeur.alerte_chantier_actif(self.racine), [])
-
-
 class TestBorner(unittest.TestCase):
     """Le partage de la borne, sur des parties de lignes de 100 octets."""
 
@@ -409,6 +553,92 @@ class TestBorner(unittest.TestCase):
         for borne in (50, 1):
             res = etat.borner(parties, borne)
             self.assertLessEqual(sum(len(l.encode()) + 1 for l in res), max(borne, 1))
+
+    @staticmethod
+    def taille(res: list[str]) -> int:
+        return sum(len(l.encode("utf-8")) + 1 for l in res)
+
+    def test_ce_qu_un_groupe_libere_en_coupant_revient_aux_autres_jusqu_a_ce_que_rien_ne_change(self):
+        """Un groupe de grosses lignes coupé ne garde rien de ce qui lui
+        revient : les autres le reprennent, ceux qui le suivent comme ceux qui
+        le précèdent, jusqu'à ce qu'aucune ligne de plus ne tienne."""
+        def gros(g: str) -> etat.Partie:
+            return etat.Partie(g, [g * 389] * 2, lambda k, t: f"{k}/{t} de {g}",
+                               (lambda m, t: ["", f"--- {g} ---"]) if g != "etat" else etat._sans_entete)
+
+        # L'état, le premier, ne garde rien : a, puis b, prennent sa part.
+        res = etat.borner([gros("etat"), self.partie("a", 8), self.partie("b", 8)], 1000)
+        self.assertLessEqual(self.taille(res), 1000)
+        self.assertLess(1000 - self.taille(res), 100)
+        a, b = res.index("--- a ---"), res.index("--- b ---")
+        self.assertGreater(len(res[a + 1:b - 1]), 3)
+        # b, le dernier, ne garde rien : l'état, qui le précède, prend sa part.
+        res = etat.borner([self.partie("etat", 8), self.partie("a", 2), gros("b")], 1000)
+        self.assertLessEqual(self.taille(res), 1000)
+        self.assertLess(1000 - self.taille(res), 100)
+        self.assertNotIn("--- b ---", res)
+        self.assertEqual(len([l for l in res if l.startswith("etat")]), 5)
+
+    def test_un_groupe_a_deux_parties_coupe_la_seconde_d_abord(self):
+        """Le chantier actif public et privé : la seconde partie perd ses
+        lignes, puis son en-tête avec la dernière, avant que la première ne
+        perde les siennes, et ce qu'un autre groupe libère lui revient dans
+        l'ordre inverse ; la ligne de coupe ne dit que les parties coupées."""
+        prive = etat.Partie("a", [f"p{i}".ljust(99, ".") for i in range(1, 7)], lambda k, t: f"{k}/{t} de p",
+                            lambda m, t: ["", "--- p ---"])
+        gros = etat.Partie("b", ["b" * 389] * 2, lambda k, t: f"{k}/{t} de b", lambda m, t: ["", "--- b ---"])
+        vus = set()
+        for borne in range(300, 1700, 20):
+            res = etat.borner([self.partie("etat", 2), self.partie("a", 3), prive, gros], borne)
+            self.assertLessEqual(self.taille(res), borne)
+            public = [l for l in res if l.startswith("a")]
+            privees = [l for l in res if l.startswith("p")]
+            self.assertEqual(public, self.partie("a", 3).lignes[:len(public)])
+            self.assertEqual(privees, prive.lignes[:len(privees)])
+            self.assertEqual("--- p ---" in res, bool(privees))
+            self.assertTrue(len(public) == 3 or not privees, (borne, len(public), len(privees)))
+            note = res[-1] if res[-1].startswith("!! coupé") else ""
+            self.assertEqual("/3 de a" in note, len(public) < 3, borne)
+            self.assertEqual("/6 de p" in note, len(privees) < 6, borne)
+            vus.add((len(public), len(privees)))
+        self.assertIn((3, 6), vus)
+        self.assertTrue(any(0 < p < 6 for _, p in vus) and any(0 < a < 3 for a, _ in vus), vus)
+
+    def test_l_etat_perd_d_abord_ce_qui_se_relit_ailleurs_bloc_par_bloc(self):
+        """Des blocs insécables, chacun son rang : la coupe retire les rangs
+        bas d'abord, chacun depuis la fin ; un en-tête part avec son premier
+        élément, un élément avec son lien."""
+        lignes = [l.ljust(199, ".") for l in ("en-tête : 2", "  élément 1", "    lien 1", "  élément 2", "    lien 2",
+                                              "info", "relu 1", "relu 2")]
+        unites, rangs = [3, 2, 1, 1, 1], [etat.ACTION, etat.ACTION, etat.INFO, etat.RELU, etat.RELU]
+        partie = etat.Partie("etat", lignes, lambda n, t: f"{n}/{t}", unites=unites,
+                             ordre=sorted(range(5), key=lambda k: (rangs[k], -k)))
+        # Dans l'ordre de la coupe : relu 2, relu 1, info, l'élément 2 et son
+        # lien, puis l'en-tête avec l'élément 1 et son lien.
+        possibles = [lignes, lignes[:7], lignes[:6], lignes[:5], lignes[:3], []]
+        rangs_vus = []
+        with mock.patch.dict(etat.PARTS, {"etat": 1.0}, clear=True):
+            for borne in range(1700, 100, -20):
+                res = etat.borner([partie], borne)
+                self.assertLessEqual(self.taille(res), borne)
+                montre = [l for l in res if not l.startswith("!! coupé")]
+                self.assertIn(montre, possibles, borne)
+                rangs_vus.append(possibles.index(montre))
+        self.assertEqual(rangs_vus, sorted(rangs_vus))
+        self.assertEqual(set(rangs_vus), set(range(len(possibles))))
+
+    def test_borner_reste_lineaire_sur_un_chantier_actif_de_20000_lignes(self):
+        """Les tailles se tiennent bloc par bloc : 20 000 lignes se bornent
+        en bien moins d'une seconde (la première correction en prenait 16)."""
+        parties = [etat.Partie("etat", ["x" * 60] * 30, lambda n, t: "e"),
+                   etat.Partie("a", [f"- ligne {i} " + "y" * 50 for i in range(20000)], lambda n, t: "a",
+                               lambda m, t: ["", "--- a ---"]),
+                   etat.Partie("b", [f"F-{i:04d} — " + "z" * 60 for i in range(2000)], lambda n, t: "b",
+                               lambda m, t: ["", f"--- b {m}/{t} ---"])]
+        debut = time.monotonic()
+        res = etat.borner(parties, 9500)
+        self.assertLess(time.monotonic() - debut, 1.0)
+        self.assertLessEqual(self.taille(res), 9500)
 
     def test_parties_injectees_sans_memoire_lisible_donne_le_chantier_actif_seul(self):
         racine = Path(tempfile.mkdtemp(prefix="socle-parties-"))

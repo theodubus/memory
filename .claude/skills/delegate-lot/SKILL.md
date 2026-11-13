@@ -152,9 +152,10 @@ pourquoi, et donner le prompt de la session neuve, dans un bloc de texte
 
 ```text
 Reprends le travail du socle dans ce dépôt, en session neuve.
-Avant tout : lis l'état en entier (python3 .socle/socle state ; si le
-démarrage n'en a donné qu'un aperçu, lis le fichier complet dont il donne
-le chemin), puis memory/active.md, et applique-les.
+Avant tout : lis l'état que le démarrage injecte, borné ; une ligne
+« !! coupé » dit ce qui y manque et où le lire (l'état dérivé entier :
+python3 .socle/socle state --short) : lis-le, puis memory/active.md, et
+applique-les.
 Le lot : <les sujets, dans l'ordre>, selon le skill delegate-lot.
 Ce qui attend : <un compte rendu, une CI, une demande> | rien.
 ```

@@ -100,10 +100,11 @@ receives the project's state, the active work, the titles of the facts and
 the last ten decisions; it works, and the checks verify it at each step.
 This start-up stays under `[startup] max_bytes` of the guardrails, a cap
 set below what Claude Code hands over whole to the agent, of which each
-part has its share: a part beyond its own loses whole lines from its end,
-and the last line says which, by how much, and how to read the rest. The
-active work's budget fits in its share: at its allowed size, it is never
-cut.
+part has its share: a part beyond its own loses whole lines (the state
+first what can be read elsewhere, never what calls for action before it;
+the others from their end), and the last line says which, by how much,
+and how to read the rest. The active work's budget, public and private
+together, fits in its share: at its allowed size, it is never cut.
 
 **Planning.** From the brief, the agent writes a short specification and a
 short architecture in the project's documentation: each choice as an ADR,

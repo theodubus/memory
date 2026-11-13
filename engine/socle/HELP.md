@@ -106,9 +106,11 @@ et les dix dernières décisions ; il travaille, et les contrôles le vérifient
 à chaque étape. Ce démarrage tient sous `[startup] max_bytes` des
 garde-fous, borne posée sous ce que Claude Code remet entier à l'agent,
 dont chaque partie a sa part : une partie qui dépasse la sienne perd des
-lignes entières depuis sa fin, et la dernière ligne dit laquelle, de
-combien, et comment lire le reste. Le budget du chantier actif tient dans
-sa part : à sa taille permise, il n'est jamais coupé.
+lignes entières (l'état, d'abord ce qui se relit ailleurs, jamais ce qui
+demande d'agir avant ; les autres, depuis leur fin), et la dernière ligne
+dit laquelle, de combien, et comment lire le reste. Le budget du chantier
+actif, public et privé ensemble, tient dans sa part : à sa taille
+permise, il n'est jamais coupé.
 
 **Planifier.** Depuis le cadrage, l'agent écrit une spécification et une
 architecture courtes dans la documentation du projet : chaque choix en

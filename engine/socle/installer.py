@@ -605,17 +605,10 @@ def alerte_chantier_actif(cible: Path) -> list[str]:
     installé avant mettent au-dessus de sa part de la sortie du démarrage
     (ADR-0071) : à son budget, le chantier actif y serait coupé à chaque
     session. La mise à jour ne réécrit pas les garde-fous du projet ; elle le
-    dit, avec la valeur qui tient."""
+    dit, avec la valeur qui tient, comme l'état à chaque démarrage."""
     from socle import state as etat
 
-    projet = config.Projet.charger(cible)
-    budget, permis = projet.budget_octets(projet.chemins.actif), etat.budget_actif_permis(projet)
-    if budget is None or budget <= permis:
-        return []
-    return [trad("!! le budget de {chemin} ({budget} octets) dépasse la part du chantier actif dans la sortie du "
-                 "démarrage ({permis} octets, en-tête déduit) : à son budget, il y serait coupé à chaque session ; "
-                 "le baisser à {permis} au plus, ce qui durcit et reste libre, et resserrer le chantier actif",
-                 chemin=projet.chemins.actif, budget=budget, permis=permis)]
+    return etat.alerte_budget_actif(config.Projet.charger(cible))
 
 
 def _refus_cible(cible: Path) -> str | None:

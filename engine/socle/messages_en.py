@@ -456,12 +456,12 @@ MESSAGES: dict[str, str] = {
         "!! template settings missing from {nom} ({n}): declare them if the project needs them, once this engine is "
         "committed (CI judges with the committed engine, and a setting it does not know counts as loosening); "
         "tightening is free, loosening waits for a validated request:\n      {liste}",
-    "!! le budget de {chemin} ({budget} octets) dépasse la part du chantier actif dans la sortie du démarrage "
-    "({permis} octets, en-tête déduit) : à son budget, il y serait coupé à chaque session ; le baisser à {permis} au "
-    "plus, ce qui durcit et reste libre, et resserrer le chantier actif":
-        "!! the budget of {chemin} ({budget} bytes) exceeds the active work's share of the start-up output ({permis} "
-        "bytes, header deducted): at its budget, it would be cut there in every session; lower it to {permis} at "
-        "most, which tightens and stays free, and tighten the active work",
+    "!! le budget de {chemin} ({budget} octets, public et privé ensemble) dépasse la part du chantier actif dans la "
+    "sortie du démarrage ({permis} octets, en-têtes déduits) : à son budget, il y serait coupé à chaque session ; le "
+    "baisser à {permis} au plus, ce qui durcit et reste libre, et resserrer le chantier actif":
+        "!! the budget of {chemin} ({budget} bytes, public and private together) exceeds the active work's share of "
+        "the start-up output ({permis} bytes, headers deducted): at its budget, it would be cut there in every "
+        "session; lower it to {permis} at most, which tightens and stays free, and tighten the active work",
     "{nom} posé":
         "{nom} installed",
     "mémoire initiale posée, journal ouvert par {ident}":
@@ -964,6 +964,10 @@ MESSAGES: dict[str, str] = {
         "Its budget: {budget} bytes, fingerprint lines set aside.",
     "{octets} octets pour un budget de {budget} ({motif}) : archiver dans le journal":
         "{octets} bytes for a budget of {budget} ({motif}): archive into the journal",
+    "{public} + {prive} octets pour le chantier actif public et privé, qui partagent une part de la sortie du "
+    "démarrage, pour un budget de {budget} à eux deux : archiver dans le journal":
+        "{public} + {prive} bytes for the public and private active work, which share one part of the start-up "
+        "output, for a budget of {budget} between them: archive into the journal",
     "{octets} octets pour un budget de {budget} ({motif}) : resserrer la partie propre au projet, hors de la section "
     "du socle, ou relever le budget par une demande validée":
         "{octets} bytes for a budget of {budget} ({motif}): tighten the project's own part, outside the socle's "
@@ -1608,8 +1612,8 @@ MESSAGES: dict[str, str] = {
         "commit   : {sha} on {branche} ({propre})",
     "base     : {defaut} — non fusionné : {n} commit(s)":
         "base     : {defaut} — not merged: {n} commit(s)",
-    "  … et {n} autre(s)":
-        "  … and {n} more",
+    "  … et {n} autre(s) : `python3 .socle/socle state --short`":
+        "  … and {n} more: `python3 .socle/socle state --short`",
     "depuis la base : {code} fichier(s) de code, {docs} de doc, {memoire} de mémoire":
         "since the base: {code} code file(s), {docs} doc, {memoire} memory",
     "  ^ du code a changé et la mémoire non : la fin de tour le refusera":
@@ -1660,8 +1664,12 @@ MESSAGES: dict[str, str] = {
         "the facts",
     "les décisions":
         "the decisions",
-    "{n} ligne(s) sur {total}, la fin : `python3 .socle/socle state --short`":
-        "{n} line(s) of {total}, the end: `python3 .socle/socle state --short`",
+    "{n} ligne(s) sur {total} ; l'état entier : `python3 .socle/socle state --short`":
+        "{n} line(s) of {total}; the whole state: `python3 .socle/socle state --short`",
+    "au dernier démarrage de session ({date}), le hook a ajouté :":
+        "at the last session start ({date}), the hook added:",
+    "mutation : état inconnu ({erreur})":
+        "mutation : state unknown ({erreur})",
     "backlog  : {ouverts} ouvert(s), {en_cours} en cours, {bloques} bloqué(s), {clos} clos":
         "backlog  : {ouverts} open, {en_cours} in progress, {bloques} blocked, {clos} closed",
     "en cours":
@@ -1672,8 +1680,10 @@ MESSAGES: dict[str, str] = {
         "staleness: active work unchanged for {age} days (threshold {jours})",
     "demandes humaines en attente : {n}":
         "pending human requests: {n}",
-    "demandes humaines en attente : {n} — chacune sous « ce qui revient à l'humain », avec son lien":
-        "pending human requests: {n} — each under \"what falls to the human\", with its link",
+    "demandes humaines en attente : {n} — sous « ce qui revient à l'humain », avec leur lien":
+        "pending human requests: {n} — under \"what falls to the human\", with their link",
+    "  illisible : {chemin} — `python3 .socle/socle check` dit pourquoi":
+        "  unreadable: {chemin} — `python3 .socle/socle check` says why",
     "  RENVOYÉE (contexte insuffisant) : {id} — à réécrire en une demande qui la remplace":
         "  SENT BACK (insufficient context): {id} — to rewrite as a request that replaces it",
     "hooks    : aucune trace — ils n'ont encore jamais tiré dans ce clone":

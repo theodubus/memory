@@ -283,20 +283,18 @@ def genre(e: Element) -> str:
     return trad(GENRES[e.genre]) if e.genre in GENRES else e.genre
 
 
-def texte(elements: list[Element], plafond: int | None = None) -> list[str]:
-    """Ce qui revient à l'humain, chaque élément avec son lien ; avec
-    `plafond`, les premiers seulement (les décisions en attente viennent
-    d'abord), et le nombre des autres."""
+def lignes(e: Element) -> list[str]:
+    """Un élément de ce qui revient à l'humain : son genre et ce qu'il est,
+    puis son lien."""
+    return [f"  {genre(e)} : {e.quoi}"] + ([f"    {e.lien}"] if e.lien else [])
+
+
+def texte(elements: list[Element]) -> list[str]:
+    """Ce qui revient à l'humain, chaque élément avec son lien (l'état du
+    démarrage les plafonne lui-même)."""
     if not elements:
         return [trad("ce qui revient à l'humain : rien")]
-    lignes = [trad("ce qui revient à l'humain : {n}", n=len(elements))]
-    for e in elements[:plafond]:
-        lignes.append(f"  {genre(e)} : {e.quoi}")
-        if e.lien:
-            lignes.append(f"    {e.lien}")
-    if plafond is not None and len(elements) > plafond:
-        lignes.append(trad("  … et {n} autre(s)", n=len(elements) - plafond))
-    return lignes
+    return [trad("ce qui revient à l'humain : {n}", n=len(elements))] + [l for e in elements for l in lignes(e)]
 
 
 def dernier_message(transcript: Path) -> str | None:

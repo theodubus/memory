@@ -157,11 +157,13 @@ def session_start(projet: config.Projet, entree: dict) -> int:
 
     tracer(projet.racine, "SessionStart", entree.get("session_id", ""), entree.get("source", ""))
     git_ok = installer_hooks_git(projet.racine)
-    # Ses lignes entrent dans l'état, avant le backlog : toute la sortie du
-    # hook tient sous la borne du démarrage (ADR-0071).
+    # Ses lignes entrent dans l'état, en tête avec les autres lignes d'action :
+    # toute la sortie du hook tient sous la borne du démarrage (ADR-0071).
+    # Gardées, `socle state --short` les redit, où la ligne de coupe renvoie.
     supplement = installer_outils(projet)
     if not git_ok and (projet.racine / config.GIT_HOOKS).is_dir():
         supplement.append(trad("\n!! hooks git non branchés : `git config core.hooksPath .socle/git-hooks`"))
+    etat.retenir_demarrage(projet, supplement)
     print(etat.calculer(projet, supplement=supplement))
     return 0
 

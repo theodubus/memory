@@ -28,46 +28,61 @@ mesurait 4 Ko au plus sur les petits projets d'essai.
    hook `SessionStart` (l'état, les lignes des outils de l'adaptateur en
    session cloud, l'avertissement des hooks git), sauts de ligne compris,
    en octets UTF-8, qui majorent les unités UTF-16 ; 500 de marge sous le
-   seuil. `socle state` lancé à la main imprime la même chose sous la même
-   borne ; `socle state --short` imprime l'état dérivé seul, entier. Le
-   moteur ne connaît pas l'agent : la valeur est de la configuration, que
-   le cliquet traite en budget (la relever assouplit, la baisser durcit ;
-   absente, elle vaut 9 500).
-2. **L'ordre.** a. L'état dérivé : les lignes qui demandent d'agir (les
-   demandes, ce qui revient à l'humain, ce qu'il a écrit lui-même, les
-   hooks, la mémoire privée, les lignes du hook) avant le backlog. L'index
-   des décisions en sort : l'essentiel tient dans les 2 000 premiers
-   octets. b. Le chantier actif entier, public puis privé. c. Les faits
-   par leur titre, publics puis privés, le statut dit quand il n'est pas
-   « mesuré », avec la commande pour en lire un. d. Les dix dernières
-   décisions, par date puis par numéro, la plus récente d'abord, le statut
-   dit quand elle n'est pas acceptée, leur nombre et la commande de
-   l'index entier, à lire avant toute décision de conception. Les statuts
-   se disent dans la langue du projet, et l'en-tête des décisions dit le
-   nombre montré.
+   seuil. Le hook garde ses lignes à côté de la trace des hooks
+   (`startup.json`, non versionné) : `socle state` lancé à la main les
+   redit, datées, sous la même borne, et `socle state --short` imprime
+   l'état dérivé seul, entier, elles comprises. Le moteur ne connaît pas
+   l'agent : la valeur est de la configuration, que le cliquet traite en
+   budget (la relever assouplit, la baisser durcit ; absente, elle vaut
+   9 500).
+2. **L'ordre.** a. L'état dérivé : en tête, ce qui demande d'agir (ce qui
+   revient à l'humain, les demandes en attente, ce qu'il a écrit
+   lui-même, les lignes du hook, l'audit de l'adaptateur, un budget du
+   chantier actif au-delà de sa part) ; puis ce qui informe (commit, base,
+   CI, branche, mémoire, hooks, adoption, mémoire privée) ; puis le
+   backlog. L'index des décisions en sort : l'essentiel tient dans les
+   2 000 premiers octets. b. Le chantier actif entier, public puis privé.
+   c. Les faits par leur titre, publics puis privés, le statut dit quand
+   il n'est pas « mesuré », avec la commande pour en lire un. d. Les dix
+   dernières décisions, par date puis par numéro, la plus récente
+   d'abord, le statut dit quand elle n'est pas acceptée, leur nombre et la
+   commande de l'index entier, à lire avant toute décision de conception.
+   Les statuts se disent dans la langue du projet, et l'en-tête des
+   décisions dit le nombre montré.
 3. **Une part de la borne par partie.** L'état dérivé en a le quart
    (2 375 octets sous 9 500), le chantier actif 40 % (3 800), les faits
    22 % (2 090), les décisions 13 % (1 235) : `PARTS` de
-   `engine/socle/state.py`. Ce qu'une partie laisse de sa part va, dans cet
-   ordre, à celles qui dépassent la leur ; aucune ne prend sur la part
-   d'une autre qui en a besoin.
+   `engine/socle/state.py`. Ce qu'une partie laisse de sa part, ou libère
+   en coupant par blocs entiers, va, dans cet ordre, à celles qui
+   dépassent la leur, jusqu'à ce que rien ne change ; aucune ne prend sur
+   la part d'une autre qui en a besoin. Le partage tient les tailles bloc
+   par bloc, sans les recalculer : il est linéaire en lignes.
 4. **Ce qui borne chaque partie.** Dans l'état dérivé, chaque ligne tient
    en 1 000 octets (l'alerte des hooks non chargés, la plus longue des
    lignes fixes, en fait 953), dont les lignes du hook ; une ligne de la
    sortie d'un échec des outils, en 200 ; une ligne de commit en 80 ; le
    titre d'un sujet en 70. Chacune de ses listes est plafonnée, avec
-   « … et N autre(s) » : cinq commits non fusionnés, cinq sujets prêts,
-   cinq en cours ou bloqués, dix de priorité basse, quatre éléments de ce
-   qui revient à l'humain, de ce qu'il a écrit lui-même, des demandes
-   illisibles et des renvoyées. Une demande en attente ne se dit qu'une
-   fois, sous ce qui revient à l'humain, avec son lien. Une ligne de fait
-   ou de décision tient en 80 octets, son titre raccourci.
-5. **La coupe.** Une partie au-delà de ce qui lui revient perd des lignes
-   entières depuis sa fin, un en-tête avec la dernière ligne qu'il
-   annonce ; le chantier actif ne se coupe ainsi qu'en dernier recours,
-   quand il dépasse sa part et ce que les autres en laissent. Une dernière
-   ligne dit, pour chaque partie coupée, sa taille pour sa part, ce qui en
-   manque et où le lire (`socle state --short`, le fichier,
+   « … et N autre(s) : `socle state --short` » : cinq commits non
+   fusionnés, cinq sujets prêts, cinq en cours ou bloqués, dix de priorité
+   basse, quatre éléments de ce qui revient à l'humain, de ce qu'il a
+   écrit lui-même, des demandes et des renvoyées. Une demande en attente
+   ne se dit qu'une fois, sous ce qui revient à l'humain, avec son lien ;
+   si ce calcul échoue, la ligne des demandes les nomme elle-même, avec
+   leur lien, chaque calcul ayant son repli ; une demande illisible s'y
+   dit telle, par son chemin. Une ligne de fait ou de décision tient en
+   80 octets, son titre raccourci.
+5. **La coupe.** Une partie au-delà de ce qui lui revient perd des blocs
+   entiers. L'état dérivé retire d'abord ce qui se relit ailleurs (les
+   commits, les listes du backlog), puis ce qui informe, et ce qui demande
+   d'agir en dernier, chaque rang depuis sa fin : jamais une ligne
+   d'action avant eux. Un en-tête part avec son premier élément, un
+   élément avec son lien, un bloc du hook (un échec et sa sortie) entier.
+   Les autres parties perdent leur fin, un en-tête avec la dernière ligne
+   qu'il annonce ; le chantier actif, le privé d'abord, seulement au-delà
+   de sa part et de ce que les autres en laissent, jamais dans son budget
+   (point 7). Une dernière ligne dit, pour
+   chaque partie coupée, sa taille pour sa part, ce qui en manque et où
+   le lire (`socle state --short`, qui le contient, le fichier,
    `socle show --index decisions`) : jamais en silence, jamais au milieu
    d'une ligne. Chaque partie coupée paie ce que cette ligne dit d'elle ;
    son début se prend sur ce qui reste de la borne, à défaut sur la
@@ -77,25 +92,31 @@ mesurait 4 Ko au plus sur les petits projets d'essai.
    la lecture d'un index qu'on n'a plus lu en entier ;
    `socle show --index decisions` la donne, `socle new adr` la pose.
 7. **Le budget du chantier actif tient dans sa part.** Il descend de
-   6 000 à 3 700 octets, ici et dans le gabarit : sa part, 3 800, moins
-   son en-tête, permet 3 774 (`budget_actif_permis`). Un chantier actif
-   dans son budget n'est donc jamais coupé, quoi que pèsent les autres
-   parties. Un projet installé avant garde ses garde-fous à la mise à
-   jour : quand leur budget du chantier actif dépasse ce que permet sa
-   part (les 6 000 de chess et de JustCook), l'installeur le signale, avec
-   la valeur qui tient, sans le réécrire. Pas de rétro-compatibilité
-   exigée (J-2026-10-19-A@bb982c98), mais pas de coupe qui se répète sans
-   être dite : la ligne de coupe le redit à chaque démarrage.
+   6 000 à 3 700 octets, ici et dans le gabarit, et vaut pour le chantier
+   actif public et privé ensemble, qui partagent cette part :
+   `memoire.budgets` juge leur somme. Leur donner une part qui couvre
+   deux budgets prendrait 7 400 octets des 9 500, presque rien pour le
+   reste. Sa part, 3 800, moins leurs deux en-têtes, permet 3 740
+   (`budget_actif_permis`). Un chantier actif dans son budget n'est donc
+   jamais coupé, quoi que pèsent les autres parties. Un budget au-delà de
+   ce que permet sa part (les 6 000 de chess et de JustCook, une borne
+   baissée) est signalé avec la valeur qui tient : par l'installeur à la
+   mise à jour, qui garde les garde-fous du projet sans les réécrire, et
+   par l'état à chaque démarrage. Pas de rétro-compatibilité exigée
+   (J-2026-10-19-A@bb982c98), mais pas de coupe qui se répète sans être
+   dite.
 
-Pas de contrôle nouveau : la coupe se voit, et se dit.
+Pas de contrôle nouveau : `memoire.budgets` juge la somme des deux
+chantiers actifs ; la coupe se voit, et se dit.
 
 ## Conséquences
 
-La sortie du démarrage de ce dépôt passe de 25,7 Ko à 9,1 Ko, sans coupe,
-chaque partie mesurée (J-2026-11-13-G@c59b71b7). L'agent lit l'index
+La sortie du démarrage de ce dépôt passe de 25,7 Ko à 9,4 Ko, sans coupe,
+chaque partie mesurée (J-2026-11-13-G@66eb3c28). L'agent lit l'index
 entier, et les faits en entier, à la demande, et ce qu'une ligne de coupe
 désigne : la section du socle d'AGENTS.md le dit. Une mémoire plus grosse
-voit couper la partie qui dépasse, elle seule, et le sait. Les scénarios
+voit couper la partie qui dépasse, elle seule, et le sait ; l'état dérivé
+y garde ce qui demande d'agir. Les scénarios
 de reprise du banc passent sur l'agent simulé ; D-0093 prévoyait de
 revenir en arrière si les essais de reprise échouaient sur un agent réel.
 

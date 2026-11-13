@@ -33,9 +33,11 @@ active_days = 7
 # Code remet entière à l'agent la sortie d'un hook jusqu'à 10 000 caractères,
 # et au-delà un aperçu de 2 000 seulement : 500 octets de marge. Chaque partie
 # en a sa part : un quart pour l'état, 40 % pour le chantier actif (son budget
-# ci-dessus y tient), 22 % pour les faits, 13 % pour les décisions. Une partie
-# au-delà de ce qui lui revient perd des lignes entières depuis sa fin, et une
-# dernière ligne dit ce qui manque et où le lire.
+# ci-dessus, public et privé ensemble, y tient), 22 % pour les faits, 13 % pour
+# les décisions. Une partie au-delà de ce qui lui revient perd des lignes
+# entières (l'état, d'abord ce qui se relit ailleurs, jamais ce qui demande
+# d'agir avant ; les autres, depuis leur fin), et une dernière ligne dit ce
+# qui manque et où le lire.
 max_bytes = 9500
 
 [references]
