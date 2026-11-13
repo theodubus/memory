@@ -1,0 +1,17 @@
+<!-- socle: couche=backlog zone=publique -->
+# B-0200 — La fusion de sa pull request par l'agent, une option de la politique que l'humain active
+
+> statut : ouvert · origine : J-2026-11-13-F · lu : backlog@e0c4802b
+
+Ici, l'agent fusionne lui-même sa pull request : CI verte, revue faite,
+aucune demande en attente sur son contenu (D-0092, « Règles propres à ce
+dépôt » d'AGENTS.md). chess a écrit la même règle de son côté
+(`docs/fabrication/chess/mise-a-jour-2026-11-13.md`). Le produit
+l'offrirait comme une option de la politique, que l'humain seul active ;
+la fusion reste refusée par le hook tant qu'elle n'est pas activée
+(politique, point 4). Consigne de Théo du 13 novembre : tout ce qui est
+utile intègre le socle (J-2026-11-13-F).
+
+## Fait quand
+
+- [ ] une option de la politique permet à l'agent de fusionner sa pull request aux conditions de D-0092, le hook le refuse sans elle, et un test le montre

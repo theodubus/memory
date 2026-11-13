@@ -13,6 +13,9 @@ automatiquement les dérives). L'organisation n'est donc pas un glissement
 par des questions de cadrage. Le mode à plusieurs agents (B-0055) et la
 planification (B-0101) en dépendent.
 
+Le 13 novembre, Théo : « Tout ce qui est utile doit intégrer le socle »
+(J-2026-11-13-F). B-0199 à B-0202 en sont les premières pièces.
+
 ## Fait quand
 
 - [ ] une demande nouvelle, cadrée par des questions, est posée à Théo

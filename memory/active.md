@@ -20,6 +20,8 @@ mise à jour complété de ce qui a changé.
 Leur texte exact est dans l'entrée du journal citée.
 
 - Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
+- Tout ce qui est utile intègre le socle : ce qu'invente ce dépôt et
+  qui servirait à un projet va au produit (J-2026-11-13-F).
 - Un lot par session : un lot rendu que la fenêtre ne permet pas de
   suivre d'un autre entier, tout se range pour une session neuve, même
   sur un autre compte, et la session le dit avec son prompt
@@ -60,5 +62,7 @@ Leur texte exact est dans l'entrée du journal citée.
 1. Finir le lot selon `docs/fabrication/passation/README.md`.
 2. Avant toute nouvelle fonction : B-0142 (avec la gêne 6 de chess), les
    deux contournements de B-0171, B-0176, B-0196 ; puis B-0151, B-0156,
-   B-0167, B-0172, B-0197. Ensuite la planification (B-0101), puis la
-   répartition entre agents (B-0055).
+   B-0167, B-0172, B-0197 ; et, pour faire entrer dans le produit ce que
+   ce dépôt a seul : B-0202, puis B-0199 à B-0201 après la mise à jour de
+   chess. Ensuite la planification (B-0101), puis la répartition entre
+   agents (B-0055).
