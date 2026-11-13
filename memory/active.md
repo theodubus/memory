@@ -13,6 +13,10 @@ pilote. Les règles de B-0173, dans `.claude/skills/delegate-lot/SKILL.md`,
 ferment son critère 3 quand elles auront servi sur un lot. B-0048 et
 B-0018 restent ouverts, gardés en tête (D-0026).
 
+chess a reçu la version d'avant B-0173 ; Théo veut savoir quand une
+nouvelle mise à jour en vaut la peine (J-2026-11-13-C) : le dire à la
+fusion de B-0010, dont le démarrage borné est le premier gain pour chess.
+
 ## Consignes en cours
 
 Leur texte exact est dans l'entrée du journal citée.
