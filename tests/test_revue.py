@@ -23,7 +23,9 @@ SUJET = ("<!-- socle: couche=backlog zone=publique -->\n# B-0001 — Doubler\n\n
          "> statut : {statut} · origine : ADR-0001\n\nSelon ADR-0001.\n\n## Fait quand\n\n- [x] double est écrit\n")
 
 
-class TestDossier(unittest.TestCase):
+class _Lot(unittest.TestCase):
+    """Un dépôt cloné, sa branche de travail, et un lot à y faire."""
+
     def setUp(self):
         self.dossier = Path(tempfile.mkdtemp(prefix="socle-revue-"))
         self.addCleanup(shutil.rmtree, self.dossier, ignore_errors=True)
@@ -48,6 +50,8 @@ class TestDossier(unittest.TestCase):
         (self.racine / "memory/backlog/B-0001-doubler.md").write_text(SUJET.format(statut="fait"))
         git(self.racine, "commit", "-qam", "le lot")
 
+
+class TestDossier(_Lot):
     def test_la_base_est_la_branche_distante_sinon_la_branche_par_defaut(self):
         self.assertEqual(revue.base_du_lot(self.racine), "origin/main")
         git(self.racine, "push", "-q", "-u", "origin", "travail")
@@ -97,6 +101,106 @@ class TestDossier(unittest.TestCase):
 
     def test_sans_changement_rien_a_relire(self):
         self.assertIn("(aucun changement hors de la mémoire : rien à relire)", revue.dossier(self.projet))
+
+
+class TestBarre(_Lot):
+    """ADR-0073 : le relecteur juge le lot contre le critère et le modèle de
+    menace de ses sujets, et classe chaque constat, bloquant ou pour le
+    backlog."""
+
+    GARDE = ("<!-- socle: couche=backlog zone=publique -->\n# B-0003 — Refuser l'écriture du verrou\n\n"
+             "> statut : ouvert · origine : ADR-0001\n\n## Modèle de menace\n\nUn agent distrait, pas hostile : "
+             "une redirection vers le verrou est arrêtée, un interpréteur qui l'écrit passe.\n\n"
+             "## Fait quand\n\n- [x] la redirection est refusée\n- [ ] l'interpréteur est refusé\n")
+
+    def test_la_consigne_donne_la_barre_et_les_deux_classes(self):
+        self.lot()
+        texte = revue.dossier(self.projet)
+        self.assertIn("Ta barre est celle des sujets du lot, plus bas : leur critère « Fait quand »", texte)
+        self.assertIn("**Bloquant** : il contredit un critère coché ou une décision citée", texte)
+        self.assertIn("contourne un garde-fou dans son modèle de menace", texte)
+        self.assertIn("un garde-fou que le lot pose ou change sans modèle de menace écrit est lui-même un constat "
+                      "bloquant", texte)
+        self.assertIn("**Pour le backlog** : tout le reste, dont un contournement hors du modèle de menace", texte)
+        self.assertIn("Seuls les bloquants se corrigent dans le lot.", texte)
+        self.assertIn("Rends deux listes numérotées, « Bloquants » puis « Pour le backlog »", texte)
+        # Les trois parties de la consigne précèdent le diff.
+        self.assertLess(texte.index("Rends deux listes"), texte.index("## Le diff du lot"))
+
+    def test_un_sujet_encore_ouvert_que_le_lot_touche_donne_son_critere_et_son_modele_de_menace(self):
+        base = self.racine / "memory/backlog/B-0003-refuser.md"
+        base.write_text(self.GARDE.replace("- [x] la redirection", "- [ ] la redirection"), encoding="utf-8")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "le sujet du garde-fou")
+        git(self.racine, "push", "-q", "-u", "origin", "travail")
+        (self.racine / "garde.py").write_text("def refuse(cmd):\n    return '>' in cmd\n")
+        base.write_text(self.GARDE, encoding="utf-8")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "la redirection refusée")
+        servis, ouverts = revue.sujets_du_lot(self.projet, "origin/travail")
+        self.assertEqual(([e.id for e in servis], ouverts), (["B-0003"], []))
+        texte = revue.dossier(self.projet)
+        self.assertIn("## Les sujets du lot : leur critère « Fait quand » est ta barre", texte)
+        self.assertIn("## Modèle de menace\n\nUn agent distrait, pas hostile", texte)
+        self.assertIn("- [x] la redirection est refusée\n- [ ] l'interpréteur est refusé", texte)
+        # Un sujet ouvert que le lot ne touche pas n'y est pas.
+        self.assertNotIn("# B-0001 — Doubler", texte)
+
+    def test_un_sujet_que_le_lot_ouvre_ne_donne_que_son_titre(self):
+        self.lot()
+        (self.racine / "memory/backlog/B-0002-tripler.md").write_text(
+            "<!-- socle: couche=backlog zone=publique -->\n# B-0002 — Tripler, renvoyé au backlog\n\n"
+            "> statut : ouvert · origine : ADR-0001\n\nUn constat de la revue, hors du critère.\n",
+            encoding="utf-8")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "un sujet ouvert par le lot")
+        servis, ouverts = revue.sujets_du_lot(self.projet, "origin/main")
+        self.assertEqual(([e.id for e in servis], [e.id for e in ouverts]), (["B-0001"], ["B-0002"]))
+        texte = revue.dossier(self.projet)
+        self.assertIn("## Les sujets que le lot ouvre : ce qu'il renvoie au backlog\n\n"
+                      "- B-0002 — Tripler, renvoyé au backlog", texte)
+        self.assertNotIn("Un constat de la revue, hors du critère.", texte)
+        # Ouvert et clos dans le même lot, il est servi.
+        chemin = self.racine / "memory/backlog/B-0002-tripler.md"
+        chemin.write_text(chemin.read_text(encoding="utf-8").replace("statut : ouvert", "statut : fait · ref : x"),
+                          encoding="utf-8")
+        git(self.racine, "commit", "-qam", "clos")
+        servis, ouverts = revue.sujets_du_lot(self.projet, "origin/main")
+        self.assertEqual(([e.id for e in servis], ouverts), (["B-0001", "B-0002"], []))
+
+    def test_la_seconde_revue_ne_montre_que_la_correction_et_garde_les_sujets_du_lot(self):
+        self.lot()
+        relu = git(self.racine, "rev-parse", "HEAD").strip()
+        (self.racine / "calc.py").write_text("def double(x):\n    return int(x) * 2\n")
+        git(self.racine, "commit", "-qam", "Le bloquant 1 corrigé : une chaîne se double en entier\n\n"
+                                         "Le détail.\n\nCo-Authored-By: t <t@t>\nSocle-Hooks: Stop=1")
+        self.assertEqual(revue.messages_depuis(self.racine, relu),
+                         ["Le bloquant 1 corrigé : une chaîne se double en entier\n\nLe détail."])
+        texte = revue.dossier(self.projet, depuis=relu)
+        self.assertIn("## Seconde revue\n\nSeconde revue : ce diff corrige des constats bloquants", texte)
+        self.assertIn("```text\nLe bloquant 1 corrigé : une chaîne se double en entier\n\nLe détail.\n```", texte)
+        self.assertNotIn("Co-Authored-By", texte)
+        self.assertIn(f"## Le diff de la correction (1 fichier(s), depuis {relu})", texte)
+        self.assertIn("-    return x * 2\n+    return int(x) * 2", texte)
+        self.assertNotIn("-    return x + x", texte)
+        self.assertIn("- [x] double est écrit", texte)
+        self.assertIn("`double(x)` rend `2 * x`, entiers compris.", texte)
+
+    def test_la_commande_donne_la_seconde_revue(self):
+        import argparse
+        import contextlib
+        import io
+
+        from socle import cli
+
+        self.lot()
+        relu = git(self.racine, "rev-parse", "HEAD").strip()
+        with contextlib.redirect_stdout(io.StringIO()) as flux:
+            code = cli.cmd_review(argparse.Namespace(root=str(self.racine), base=None, max_bytes=60_000,
+                                                     since=relu))
+        self.assertEqual(code, 0)
+        self.assertEqual(flux.getvalue(), revue.dossier(config.Projet.charger(self.racine), None, depuis=relu))
+        self.assertIn("(aucun changement hors de la mémoire : rien à relire)", flux.getvalue())
 
 
 class TestRelectureAFroid(unittest.TestCase):

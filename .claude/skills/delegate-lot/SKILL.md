@@ -33,6 +33,8 @@ Sujet : python3 .socle/socle show B-NNNN, puis ce que l'orchestrateur
 ajoute (le choix déjà fait, les fichiers où regarder, les pièges connus).
 
 À livrer, en UN commit, sans push :
+- d'abord le modèle de menace d'un garde-fou (dans le sujet), ou l'ADR
+  d'une conception pas tranchée ;
 - le code, et ses tests qui échouent sur le commit parent ;
 - pour un contrôle ou un refus nouveau, son défaut injecté et son témoin sain ;
 - la documentation touchée ; une ADR si une décision de conception est prise ;
@@ -59,11 +61,12 @@ Les identifiants des sous-agents lancés vont dans le texte des réveils.
 Skill `socle-review`. Le dossier du lot se produit dans le worktree du
 sous-agent et se range dans le dossier temporaire de la session ; le
 relecteur est un autre sous-agent, sans worktree, qui ne reçoit que le
-chemin du dossier, la logistique et les points à éprouver. Ses constats
-retournent au sous-agent qui a implémenté (`SendMessage`), tant que son
-worktree existe ; sinon à un sous-agent neuf, avec la consigne et les
-constats. Un lot dont la correction est lourde se fait relire une seconde
-fois avant le push.
+chemin du dossier, la logistique et les points à éprouver. Il classe
+ses constats (ADR-0073), l'orchestrateur vérifie chaque classement. Seuls
+les bloquants retournent au sous-agent qui a implémenté (`SendMessage`),
+tant que son worktree existe, sinon à un neuf avec la consigne ; les
+autres, l'orchestrateur les ouvre au backlog. Une seconde revue, sur une
+correction lourde de bloquants seule : `socle review --since <commit relu>`.
 
 ## Intégrer, pousser, fusionner
 
@@ -76,11 +79,9 @@ fois avant le push.
 3. Pousser, ouvrir la pull request s'il n'y en a pas (une seule ouverte),
    attendre la CI du commit de tête, puis la fusionner soi-même (D-0092)
    en donnant le commit de tête attendu. L'attente : une boucle en
-   arrière-plan sur la ligne « CI » de `python3 .socle/socle state`, qui
-   s'écrit `CI : <workflow> : <résultat> sur <sha court>`, le résultat
-   avant le commit ; la boucle cherche donc `success sur <sha court>` (ou
-   `failure sur <sha court>`), jamais `<sha> … success`, ni un commit
-   d'avant.
+   arrière-plan qui cherche `success sur <sha court>` (ou `failure sur
+   <sha court>`) dans la ligne « CI » de `python3 .socle/socle state`,
+   jamais un commit d'avant.
 4. Après la fusion : `git fetch origin main`, `git rebase origin/main`,
    pousser ; vérifier que la distribution a tourné ; mettre à jour le
    chantier actif et le journal.
@@ -91,14 +92,13 @@ Le contrôle d'avant push juge la plage qui part contre la tête de la
 branche distante : une fois poussées, une ADR, une entrée de journal et
 une valeur attendue ne se réécrivent plus, elles se complètent.
 
-- Un lot ne part qu'après les corrections de sa revue.
+- Un lot ne part qu'après la correction de ses bloquants.
 - La réponse de l'humain à une demande se commite dans le même push que
   le changement qu'elle autorise, jamais avant (B-0142).
 - Une valeur attendue à changer, un test à supprimer, un fichier protégé
   à rafraîchir : une demande dans le dépôt, relue à froid, poussée, son
   lien donné ; jamais une question dans la conversation.
-- Avant d'ouvrir un sujet, relire le backlog
-  (`python3 .socle/socle show --index backlog`).
+- Avant d'ouvrir un sujet, relire l'index du backlog.
 
 ## La consommation
 
@@ -123,9 +123,7 @@ sous-agent ne relit pas la conversation qui l'a lancé.
 - Une attente de plus d'une heure (une CI longue, une réponse de
   l'humain, la nuit) ne se fait pas dans une conversation longue : la
   session range et s'arrête.
-- Les réveils (skill `socle-resume`) s'arment pendant le lot, pour le cas
-  rare où une étape atteint une limite, et se retirent à la fin d'un tour
-  où rien ne tourne.
+- Les réveils de reprise : le skill `socle-resume`.
 
 ## Changer de session
 
