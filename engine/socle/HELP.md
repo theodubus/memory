@@ -237,7 +237,11 @@ shell, des chemins lus dans un fichier, une variable ou un préfixe devant
 cite, lui ou son dossier, une demande en attente ou validée dont ce
 qu'elle approuve n'est pas commité. Le risque accepté : effacer une
 modification de l'humain dans l'arbre de travail qu'il n'a ni commitée ni
-soumise par une demande.
+soumise par une demande. Un chemin que le shell écrit, le hook le
+développe comme le shell (variables, motifs, accolades, `~`, `pushd`) ; un
+chemin qu'il ne sait pas développer (une variable qu'il ne connaît pas,
+`$(…)`) est refusé s'il peut tomber dans le projet : l'écrire en toutes
+lettres, ou sous un dossier hors du projet (`/tmp/…`).
 
 **Faire ce que l'agent ne peut pas faire.** Pousser sur la branche par
 défaut, publier, régler un service, supprimer une branche distante, poser

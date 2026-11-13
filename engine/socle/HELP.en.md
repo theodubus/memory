@@ -234,7 +234,11 @@ from a file, a variable or a prefix before `git`, a redirection to another
 protected file, and a file that is cited, itself or its folder, by a
 request pending or approved whose approved change is not committed yet.
 The accepted risk: erasing a change of the human in the working tree that
-they neither committed nor submitted in a request.
+they neither committed nor submitted in a request. A path the shell
+writes, the hook expands as the shell would (variables, patterns, braces,
+`~`, `pushd`); a path it cannot expand (a variable it does not know,
+`$(…)`) is refused if it can land in the project: write it out in full, or
+under a directory outside the project (`/tmp/…`).
 
 **Doing what the agent cannot do.** Pushing to the default branch,
 publishing, setting up a service, deleting a remote branch, setting a tag

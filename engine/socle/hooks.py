@@ -20,6 +20,8 @@ rend « les hooks tournent-ils ? » vérifiable.
 
 from __future__ import annotations
 
+import dataclasses
+import glob
 import json
 import os
 import posixpath
@@ -359,6 +361,12 @@ def ecrits(c: commandes.Commande) -> list[str]:
     destination de `cp`, les fichiers d'un `sed -i` ou d'un `perl -i`, et ce
     que `git rm`, `git mv`, `git restore` ou `git checkout -- …` réécrivent.
     Exécuter ou lire un fichier n'est pas l'écrire."""
+    return [c.chemin(x) for x in ecrits_bruts(c)]
+
+
+def ecrits_bruts(c: commandes.Commande) -> list[str]:
+    """Les chemins qu'écrit `ecrits`, tels que la commande les écrit, ni
+    développés ni rapportés au dossier de départ."""
     res = list(c.redirige)
     nom = c.programme
     options, args = commandes.options_et_arguments(c.argv[1:])
@@ -367,7 +375,7 @@ def ecrits(c: commandes.Commande) -> list[str]:
     elif nom in ("cp", "ln", "install", "rsync") and args:
         res.append(args[-1])
     elif nom in ("sed", "perl") and commandes.drapeau(options, "i", ("--in-place",)):
-        res += args if any(o in ("-e", "-f", "--expression", "--file") for o in options) else args[1:]
+        res += _fichiers_d_un_script(nom, c.argv[1:])
     elif nom == "dd":
         res += [a[3:] for a in c.argv[1:] if a.startswith("of=")]
     elif nom == "git":
@@ -381,7 +389,31 @@ def ecrits(c: commandes.Commande) -> list[str]:
             # nom, branche ou chemin (B-0165).
             args = commandes.options_et_arguments(reste)[1]
             res += args[1:] if len(args) > 1 else args
-    return [c.chemin(x) for x in res if x]
+    return [x for x in res if x]
+
+
+def _fichiers_d_un_script(nom: str, argv: list[str]) -> list[str]:
+    """Les fichiers qu'un `sed -i` ou un `perl -i` réécrit : ses arguments,
+    moins le script, celui de `-e`, `-f`, `--expression` (ou d'un groupe qui
+    finit par `e`, `-pe`), sinon le premier argument. Le script n'est pas un
+    chemin : une variable qu'il cite ne fait rien refuser (B-0171)."""
+    fichiers, script, i = [], False, 0
+    prend = ("e", "f") if nom == "sed" else ("e", "E")
+    while i < len(argv):
+        a = argv[i]
+        if a == "--":
+            fichiers += argv[i + 1:]
+            break
+        groupe = a.startswith("-") and not a.startswith("--") and len(a) > 1
+        if a.startswith(("--expression=", "--file=")):
+            script = True
+        elif a in ("--expression", "--file") or (groupe and "i" not in a and a[-1] in prend):
+            script, i = True, i + 2
+            continue
+        elif not a.startswith("-") or a == "-":
+            fichiers.append(a)
+        i += 1
+    return fichiers if script else fichiers[1:]
 
 
 def cibles_ecrites(cmd: str) -> list[str]:
@@ -405,19 +437,113 @@ def _protege(projet: config.Projet, rel: str, cache: dict) -> str | None:
 
 def ecriture_protegee(projet: config.Projet, cmd: str) -> str | None:
     """Le chemin protégé qu'une commande shell écrit, s'il y en a un : un
-    fichier protégé, ou un dossier qui en contient (`rm -rf .socle`). La
-    remise d'un fichier protégé à son état du dernier commit, que
-    `remise_en_etat` admet, n'en est pas une (D-0098)."""
+    fichier protégé, ou un dossier qui en contient (`rm -rf .socle`), écrit
+    en toutes lettres ou que le shell développerait (`$F`, `.socle/pol*`,
+    B-0171). La remise d'un fichier protégé à son état du dernier commit,
+    que `remise_en_etat` admet, n'en est pas une (D-0098)."""
+    return next((quoi for genre, quoi in ecritures_jugees(projet, cmd) if genre == "protege"), None)
+
+
+# Un motif du shell : un joker, ou une classe fermée.
+MOTIF_SHELL = re.compile(r"[*?]|\[.+\]")
+# Les réglages de Claude Code, comme motifs de chemin (`REGLAGES_AGENT`).
+REGLAGES_MOTIFS = ("**/.claude/settings.json", "**/.claude/settings.local.json")
+
+
+def _atteint(racine: Path, lieu: Path) -> bool:
+    """Un chemin sous `lieu` peut-il être dans le projet : `lieu` y est, ou
+    le contient."""
+    lieu, racine = Path(os.path.realpath(lieu)), racine.resolve()
+    return lieu.is_relative_to(racine) or racine.is_relative_to(lieu)
+
+
+def ecritures_jugees(projet: config.Projet, cmd: str) -> list[tuple[str, str]]:
+    """Ce que le hook retient des chemins qu'une commande shell écrit, hors
+    des fichiers qu'une remise admise remet (D-0098), chacun développé comme
+    le shell le ferait (B-0171) : ses accolades, son `~`, les variables de
+    l'environnement du hook et celles que la commande affecte avant, puis
+    ses motifs, contre les fichiers présents et contre les motifs des
+    chemins protégés (un fichier protégé absent le reste). Chaque
+    constat : `("protege", cible)`, `("reglage", chemin)` ou, pour un chemin
+    que le hook ne sait pas développer et qui peut tomber dans le projet,
+    `("illisible", mot)`."""
+    racine = projet.racine
     cache: dict = {}
+    res: list[tuple[str, str]] = []
     for c in commandes.analyser(cmd):
-        for jeton in _ecrits_hors_remise(projet, c, remise_en_etat(projet, c, cmd)):
-            rel = _relatif(projet.racine, jeton.strip("'\""))
-            if rel is None:
-                continue
-            cible = _protege(projet, rel, cache)
+        mots = _ecrits_hors_remise(projet, c, remise_en_etat(projet, c, cmd))
+        if not mots:
+            continue
+        variables = commandes.variables_de(c, {**os.environ, "PWD": str(racine), "OLDPWD": commandes.INCONNU})
+        dossier, _ = commandes.developper(c.dossier, variables)
+        if commandes.INCONNU not in dossier:
+            variables["PWD"] = posixpath.normpath(posixpath.join(str(racine), dossier))
+        for mot in mots:
+            mot = mot.strip("'\"")
+            try:
+                for forme in commandes.accolades(mot):
+                    res += _juger_forme(projet, c, mot, forme, dossier, variables, cache)
+            except (OSError, RuntimeError, ValueError, re.error):
+                # Un hook qui lèverait laisserait passer la commande sans la
+                # juger : ce qui ne se juge pas ne passe pas.
+                res.append(("illisible", f"`{mot}`"))
+    return list(dict.fromkeys(res))
+
+
+def _dit(mot: str, chemin: str) -> str:
+    """Le chemin visé, et le mot qui le vise si le shell le développe."""
+    return trad("{chemin}, par `{mot}`", chemin=chemin, mot=mot) if re.search(r"[$`*?\[{~]", mot) else chemin
+
+
+def _juger_forme(projet: config.Projet, c: commandes.Commande, mot: str, forme: str, dossier: str,
+                 variables: dict, cache: dict) -> list[tuple[str, str]]:
+    """Les constats d'`ecritures_jugees` pour une forme d'un mot que `c`
+    écrit (une par accolade), `dossier` étant celui de `c` développé."""
+    racine = projet.racine
+    d, inconnus = commandes.developper(forme, variables)
+    if not d:
+        return []  # un mot vide : le shell n'écrit rien
+    relatif = not d.startswith(("/", commandes.INCONNU))
+    plein = posixpath.join(str(racine), dossier, d) if relatif else d
+    if commandes.INCONNU in plein:
+        # Ce qui ne se développe pas : la part littérale qui le précède dit
+        # seule où il tombe.
+        avant = plein[:plein.index(commandes.INCONNU)]
+        lieu = Path(posixpath.normpath(avant[:avant.rfind("/") + 1])) if avant.startswith("/") else None
+        if lieu is not None and not _atteint(racine, lieu):
+            return []
+        if not inconnus:
+            return [("illisible", trad("`{mot}`, dans le dossier `{dossier}`", mot=mot, dossier=c.dossier))]
+        if inconnus == [mot]:
+            return [("illisible", f"`{mot}`")]
+        return [("illisible", trad("`{mot}`, dont {parts}", mot=mot, parts=", ".join(f"`{x}`" for x in inconnus)))]
+    res = []
+    if MOTIF_SHELL.search(posixpath.join(dossier, d) if relatif else d):
+        # Le motif contre les fichiers présents, comme le shell, puis contre
+        # les motifs des chemins protégés.
+        echappe = relatif and plein.startswith(str(racine) + "/")
+        for trouve in sorted(glob.glob(glob.escape(str(racine)) + plein[len(str(racine)):] if echappe else plein)):
+            rel = _relatif(racine, trouve)
+            cible = _protege(projet, rel, cache) if rel is not None else None
             if cible:
-                return cible
-    return None
+                res.append(("protege", _dit(mot, cible)))
+            if REGLAGES_AGENT.search(trouve):
+                res.append(("reglage", rel or trouve))
+        plein = posixpath.normpath(plein)
+        base = next((b for b in {str(racine), str(racine.resolve())} if plein.startswith(b + "/")), None)
+        if base is not None:
+            motif = plein[len(base) + 1:]
+            res += [("protege", _dit(mot, m)) for m in projet.chemins_proteges()
+                    if commandes.se_croisent(motif, m, True)]
+            res += [("reglage", mot) for m in REGLAGES_MOTIFS if commandes.se_croisent(motif, m)]
+        return res
+    rel = _relatif(racine, plein)
+    cible = _protege(projet, rel, cache) if rel is not None else None
+    if cible:
+        res.append(("protege", _dit(mot, cible)))
+    if REGLAGES_AGENT.search(posixpath.normpath(plein)):
+        res.append(("reglage", rel or plein))
+    return res
 
 
 # D-0098 : ce que l'agent peut lancer pour remettre un fichier protégé changé
@@ -443,13 +569,14 @@ def _environnement_change(texte: str) -> bool:
 
 def _ecrits_hors_remise(projet: config.Projet, c: commandes.Commande,
                         remise: tuple[list[str], str | None] | None) -> list[str]:
-    """Ce que la commande écrit, moins les fichiers qu'une remise admise
-    remet : ses redirections et ses autres chemins se jugent comme avant."""
+    """Ce que la commande écrit, tel qu'elle l'écrit, moins les fichiers
+    qu'une remise admise remet : ses redirections et ses autres chemins se
+    jugent comme avant."""
     if remise is None or remise[1] is not None:
-        return ecrits(c)
-    sans = commandes.Commande(c.argv, [], c.dossier, c.prefixe)
-    return [c.chemin(x) for x in c.redirige if x] + [
-        x for x in ecrits(sans) if _relatif(projet.racine, x) not in remise[0]]
+        return ecrits_bruts(c)
+    sans = dataclasses.replace(c, redirige=[])
+    return [x for x in c.redirige if x] + [
+        x for x in ecrits_bruts(sans) if _relatif(projet.racine, c.chemin(x)) not in remise[0]]
 
 
 def _cite_chemin(texte: str, rel: str) -> bool:
@@ -904,11 +1031,22 @@ def refus_bash(projet: config.Projet, cmd: str, cwd: str | None = None) -> str |
         return refusee
     # Les réglages de Claude Code restent à l'humain, remise comprise
     # (sa réponse : « Exclure »).
-    reglage = next((x for c in simples for x in ecrits(c) if REGLAGES_AGENT.search(x)), None)
+    # Chaque chemin écrit, développé comme le shell le ferait (B-0171).
+    jugees = ecritures_jugees(projet, cmd)
+    reglage = next((x for c in simples for x in ecrits(c) if REGLAGES_AGENT.search(x)), None) or next(
+        (quoi for genre, quoi in jugees if genre == "reglage"), None)
     if reglage:
         return trad("`{reglage}` : les réglages de Claude Code commandent ses hooks, seul l'humain les "
                     "modifie (un réglage local peut les couper tous).", reglage=reglage)
-    cible = ecriture_protegee(projet, cmd)
+    cible = next((quoi for genre, quoi in jugees if genre == "protege"), None)
+    illisible = next((quoi for genre, quoi in jugees if genre == "illisible"), None)
+    if not cible and illisible:
+        return trad("écriture par le shell vers un chemin que le hook ne sait pas développer : {quoi}. Une "
+                    "variable que ni l'environnement du hook ni la commande ne donnent, une substitution de "
+                    "commande (`$(…)`, accents graves) ou un `cd` vers un tel chemin peuvent viser un fichier "
+                    "protégé ; un tel chemin ne passe que si une part écrite en toutes lettres le place hors du "
+                    "projet (`/tmp/$X`). Écrire le chemin en toutes lettres, ou affecter la variable plus tôt "
+                    "dans la même commande (`F=/tmp/x; echo y > \"$F\"`) (B-0171).", quoi=illisible)
     if cible:
         return trad("écriture d'un fichier protégé ({cible}) par le shell : seul l'humain modifie la "
                     "politique, les hooks, la CI et le moteur (relance de l'installeur). Un fichier protégé "

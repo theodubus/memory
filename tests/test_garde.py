@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
 from socle import commands as commandes, config, hooks, installer as installeur
@@ -144,6 +145,73 @@ class TestGarde(unittest.TestCase):
     def test_ecriture_protegee_d_un_dossier(self):
         self.assertIn(".socle/", hooks.ecriture_protegee(self.projet, "rm -rf .socle"))
         self.assertIsNone(hooks.ecriture_protegee(self.projet, "touch calc.py"))
+
+    def test_un_chemin_protege_que_le_shell_developperait_est_refuse(self):
+        """B-0171 : le hook jugeait les chemins tels qu'ils sont tapés ;
+        `echo x > $F`, `rm .socle/pol*` ou un `pushd` passaient."""
+        illisible = "un chemin que le hook ne sait pas développer"
+        protege = "écriture d'un fichier protégé"
+        with unittest.mock.patch.dict(os.environ, {"TMPDIR": "/tmp", "HOME": str(self.racine)}):
+            for nom in ("F", "X", "D"):
+                os.environ.pop(nom, None)
+            for cmd, raison in (
+                    ("echo x > $F", illisible),
+                    ("echo x > \"${F}\"", illisible),
+                    ("echo x > .socle/$X", illisible),
+                    ("echo x > $(mktemp)", illisible),
+                    ("echo x > `cat cible`", illisible),
+                    ("cd $D && echo x > policy.toml", illisible),
+                    ("cd /tmp && echo x > $X", illisible),
+                    ("echo x > ~/$X", illisible),
+                    ("F=.socle/policy.toml; echo x > $F", protege),
+                    ("export F=.socle/policy.toml && echo x >> \"$F\"", protege),
+                    ("D=.socle; cd $D && echo x > policy.toml", protege),
+                    ("F=/tmp/x; F=.socle/policy.toml; rm $F", protege),
+                    ("echo x > $PWD/.socle/policy.toml", protege),
+                    ("echo x > ~/.socle/policy.toml", protege),
+                    ("rm .socle/pol*", protege),
+                    ("rm -rf .so*", protege),
+                    ("sed -i s/3/9/ .socle/p?licy.toml", protege),
+                    ("echo x > .socle/[op]olicy.toml", protege),
+                    ("echo x > .socle/{policy,notes}.toml", protege),
+                    ("echo x > .socle/git-hooks/post-*", protege),
+                    ("pushd .socle && echo x > policy.toml", protege),
+                    ("pushd /tmp && pushd .. && popd && popd && echo x > .socle/policy.toml", protege),
+                    ("cd .socle && cd /tmp && cd - && echo x > policy.toml", protege),
+                    ("F=.claude/settings.local.json; echo '{}' > $F", "réglages de Claude Code"),
+            ):
+                with self.subTest(cmd):
+                    self.assertIn(raison, hooks.refus_bash(self.projet, cmd) or "")
+                    self.assertEqual(self.decide(*B(cmd)), "refus")
+            self.assertEqual(hooks.ecriture_protegee(self.projet, "rm .socle/pol*"),
+                             ".socle/policy.toml, par `.socle/pol*`")
+            self.assertEqual(hooks.ecritures_jugees(self.projet, "echo x > $X; echo y > notes.txt; rm .socle/pol*"),
+                             [("illisible", "`$X`"), ("protege", ".socle/policy.toml, par `.socle/pol*`")])
+            # Un jugement qui lèverait laisserait passer la commande : il refuse.
+            with unittest.mock.patch.object(hooks.glob, "glob", side_effect=OSError("illisible")):
+                self.assertEqual(hooks.ecritures_jugees(self.projet, "rm -f build/*.o"),
+                                 [("illisible", "`build/*.o`")])
+
+    def test_un_chemin_developpe_hors_du_projet_ou_libre_passe(self):
+        """B-0171 : ce qui ne se développe pas passe quand une part écrite en
+        toutes lettres le place hors du projet ; une variable affectée, un
+        motif ou une accolade qui ne nomment aucun fichier protégé passent."""
+        # Un dossier voisin du projet : le dossier temporaire, lui, le contient,
+        # et `/tmp/$X` y pourrait viser le projet.
+        ailleurs = f"{self.racine}-ailleurs"
+        with unittest.mock.patch.dict(os.environ, {"TMPDIR": ailleurs}):
+            for nom in ("F", "X"):
+                os.environ.pop(nom, None)
+            for cmd in (f"echo x > {ailleurs}/$X", "echo x > \"$TMPDIR/x\"", f"ls > {ailleurs}/x-$(date +%s).txt",
+                        f"F={ailleurs}/x; echo y > $F", "F=notes.txt; echo y > \"$F\"",
+                        f"export F={ailleurs}/y && rm -f $F", "rm -f build/*.o *.pyc",
+                        "echo x > .socle/{notes,brouillon}.txt", f"cd {ailleurs} && echo x > rapport-$X.txt",
+                        f"pushd {ailleurs} && echo x > rapport-$X.txt; popd",
+                        "pushd .socle && popd && echo x > policy.toml", "F=; rm -f $F", "rm -rf */policy.toml",
+                        'sed -i -e "s/$OLD/$NEW/" notes.md'):
+                with self.subTest(cmd):
+                    self.assertIsNone(hooks.refus_bash(self.projet, cmd))
+            self.assertIn("ne sait pas développer", hooks.refus_bash(self.projet, f"echo x > {self.racine}/../$X"))
 
     def test_remise_en_etat_d_un_fichier_protege(self):
         """D-0098 (B-0165) : l'agent remet un fichier protégé changé par
@@ -338,6 +406,54 @@ class TestDecoupage(unittest.TestCase):
         self.assertEqual(simples[1].redirige, ["policy.toml"])
         self.assertEqual(simples[1].chemin("policy.toml"), ".socle/policy.toml")
 
+    def test_analyser_suit_les_variables_affectees_et_pushd(self):
+        """B-0171 : une affectation seule vaut pour la suite, devant une
+        commande pour elle seule ; `pushd`, `popd` et `cd -` se suivent."""
+        simples = commandes.analyser("F=a; export G=b H; I=c ls; read J; echo > $F")
+        self.assertEqual(simples[-1].affectations, [("F", "a"), ("G", "b"), ("J", None)])
+        simples = commandes.analyser("pushd .socle && echo > a; pushd /tmp; popd; popd; echo > b; cd x; cd -")
+        self.assertEqual([(c.programme, c.dossier) for c in simples],
+                         [("pushd", ""), ("echo", ".socle"), ("pushd", ".socle"), ("popd", "/tmp"),
+                          ("popd", ".socle"), ("echo", ""), ("cd", ""), ("cd", "x")])
+        self.assertEqual(commandes.analyser("cd x; cd -; ls")[-1].dossier, "")
+
+    def test_developper_comme_le_shell(self):
+        variables = {"HOME": "/maison", "F": "/tmp/f"}
+        I = commandes.INCONNU
+        self.assertEqual(commandes.developper("~/x", variables), ("/maison/x", []))
+        self.assertEqual(commandes.developper("$F.bak", variables), ("/tmp/f.bak", []))
+        self.assertEqual(commandes.developper("${F}/y", variables), ("/tmp/f/y", []))
+        self.assertEqual(commandes.developper("a/$X/b", variables), (f"a/{I}/b", ["$X"]))
+        self.assertEqual(commandes.developper("${F:-z}", variables), (I, ["${F:-z}"]))
+        self.assertEqual(commandes.developper("x-$(date)`id`$1$", variables)[1], ["$(date)", "`id`", "$1", "$"])
+        self.assertEqual(commandes.developper("prix$/€", variables), ("prix$/€", []))
+        c = commandes.analyser("G=$F/g; read H; echo > $G")[-1]
+        self.assertEqual(commandes.variables_de(c, variables)["G"], "/tmp/f/g")
+        self.assertEqual(commandes.variables_de(c, variables)["H"], I)
+
+    def test_accolades(self):
+        self.assertEqual(commandes.accolades("a{b,c{d,e}}f"), ["abf", "acdf", "acef"])
+        self.assertEqual(commandes.accolades("x{1..3}"), ["x1", "x2", "x3"])
+        self.assertEqual(commandes.accolades("${F}{a}"), ["${F}{a}"])
+        self.assertEqual(commandes.accolades("x{1..100000}"), ["x{1..100000}"])
+
+    def test_un_motif_du_shell_croise_un_motif_de_chemin(self):
+        for shell, chemin, dessous, attendu in (
+                (".socle/pol*", ".socle/policy.toml", False, True),
+                (".socle/p?licy.[st]oml", ".socle/policy.toml", False, True),
+                (".socle/[!p]olicy.toml", ".socle/policy.toml", False, False),
+                ("*/policy.toml", ".socle/policy.toml", False, False),  # `*` ne rend pas le `.` d'un nom
+                (".so*", ".socle/policy.toml", False, False),
+                (".so*", ".socle/policy.toml", True, True),
+                (".socle/pol*", ".socle/policy.toml", True, True),
+                ("build/*.o", ".socle/**", True, False),
+                (".socle/git-hooks/post-*", ".socle/git-hooks/**", False, True),
+                ("memory/requests/D-*.toml", "memory/requests/*.answer.toml", False, True),
+                ("x/*.toml", "**/.claude/settings.json", False, False),
+                (".claude/sett*", "**/.claude/settings.json", False, True)):
+            with self.subTest(shell=shell, chemin=chemin):
+                self.assertEqual(commandes.se_croisent(shell, chemin, dessous), attendu)
+
     def test_jetons_et_heredocs(self):
         self.assertEqual(commandes.jetons('echo "a b" > f'), ["echo", "a b", ">", "f"])
         self.assertEqual(commandes.sans_heredocs("cat <<'EOF'\ncorps\nEOF\nls"), "cat <<'EOF'\nls")
@@ -362,6 +478,15 @@ class TestJugements(unittest.TestCase):
     def test_ecrits(self):
         c = commandes.analyser(f"{G} mv a .socle/b")[0]
         self.assertEqual(hooks.ecrits(c), ["a", ".socle/b"])
+        c = commandes.analyser("cd .socle && echo x > $F")[-1]
+        self.assertEqual((hooks.ecrits(c), hooks.ecrits_bruts(c)), ([".socle/$F"], ["$F"]))
+        # B-0171 : le script d'un `sed -i` ou d'un `perl -i` n'est pas un
+        # chemin écrit ; une variable qu'il cite ne fait rien refuser.
+        for cmd in ('sed -i -e "s/$A/b/" -e s/c/d/ f', "sed -ne s/a/b/p -i f", "sed -i -f $SCRIPT f",
+                    "sed --expression=s/a/b/ -i f", 'perl -i -p -e "s/$x/y/" f', "perl -pi -e s/a/b/ f",
+                    "sed -i.bak s/a/b/ f", "sed -i -- s/a/b/ f"):
+            with self.subTest(cmd):
+                self.assertEqual(hooks.ecrits(commandes.analyser(cmd)[0]), ["f"])
 
     def test_irreversible_et_commande_humaine(self):
         racine = Path(".")

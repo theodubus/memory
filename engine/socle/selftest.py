@@ -1297,6 +1297,22 @@ def _cas() -> list[Cas]:
     def _(a, c):
         return etage_outil(a, c, "Bash", {"command": "mv .github /tmp/github-de-cote"})
 
+    @defaut("protege-developpe", "fichier protégé écrit par le shell à travers une variable affectée, un motif, une "
+            "accolade ou un `pushd`", "agent", "écriture protégée")
+    def _(a, c):
+        # B-0171 : le hook jugeait les chemins tels qu'ils sont tapés.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "F=.socle/policy.toml; echo 'max_attempts = 99' >> \"$F\"", "rm .socle/pol*",
+            "echo 'max_attempts = 99' >> .socle/{policy,adapter}.toml",
+            "pushd .socle && echo 'max_attempts = 99' >> policy.toml")])
+
+    @defaut("ecriture-illisible", "chemin écrit par le shell à travers une variable ou une substitution que le hook "
+            "ne sait pas développer, dans le projet", "agent", "écriture illisible")
+    def _(a, c):
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "echo 'max_attempts = 99' >> $SOCLE_ESSAI_CIBLE", "echo x > .socle/$(ls .socle | head -1)",
+            "cd $SOCLE_ESSAI_DOSSIER && echo 'max_attempts = 99' >> policy.toml")])
+
     @defaut("protege-depuis-un-worktree", "fichier protégé de la copie principale écrit depuis un worktree du dépôt",
             "agent", "écriture protégée")
     def _(a, c):
@@ -1762,6 +1778,18 @@ def _temoins() -> list[tuple[str, Callable]]:
         return (etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} " + "install --target . --owner @moi"})
                 or etage_outil(a, c, "Bash", {"command": f"python3 {lanceur} " + "install --target /tmp/jetable-socle "
                                                          "--mode amont"}))
+
+    @temoin("un chemin écrit par le shell à travers une variable sous un dossier hors du projet, une variable "
+            "affectée vers un fichier libre ou un motif qui ne nomme aucun fichier protégé passent le hook de "
+            "l'agent (B-0171)")
+    def _(a, c):
+        # Un dossier voisin de l'atelier, qui ne contient pas le projet
+        # (le dossier temporaire, lui, le contient).
+        ailleurs = a.dossier.parent / (a.dossier.name + "-ailleurs")
+        return (etage_outil(a, c, "Bash", {"command": f"echo x > {ailleurs}/$SOCLE_ESSAI_CIBLE"})
+                or etage_outil(a, c, "Bash", {"command": "F=notes.txt; echo x > \"$F\" && rm -f build/*.o"})
+                or etage_outil(a, c, "Bash", {"command": f"pushd {ailleurs} && echo x > rapport-$SOCLE_ESSAI_CIBLE"
+                                                         "; popd"}))
 
     @temoin("un fichier protégé changé par erreur, remis à son état du dernier commit, et un fichier apparu sous un "
             "chemin protégé, supprimé, passent le hook de l'agent (D-0098)")
@@ -2451,6 +2479,7 @@ RAISONS_AGENT = {
     "installeur hors mode": "dans un autre mode que celui de son verrou",
     "installeur cible illisible": "une cible que le hook ne sait pas résoudre",
     "écriture protégée": "par le shell : seul l'humain",
+    "écriture illisible": "un chemin que le hook ne sait pas développer",
     "remise hors forme": "Seule passe la remise",
     "remise sous demande": "en attente, ou validée sans que ce qu'elle approuve",
     "écriture à l'aveugle": "à l'aveugle",
