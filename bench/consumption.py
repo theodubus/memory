@@ -43,6 +43,7 @@ CINQ_HEURES = 5 * UNE_HEURE
 TETES_REVUE = ("# Revue adversariale d'un lot", "# Adversarial review of a batch")
 SECTIONS_SOCLE = ("## Socle : mémoire, documentation et tests", "## Socle: memory, documentation and tests")
 SORTIE_DE_HOOK = "tool-results/hook-"
+LECTURE_DE_HOOK = re.compile(r"\b(?:cat|sed|head|tail|less|awk)\b[^|;&]*" + re.escape(SORTIE_DE_HOOK))
 AGENTS_SOCLE = "AGENTS.md, section du socle"
 
 
@@ -102,13 +103,17 @@ def _texte(contenu) -> str:
 
 def _commande_socle(outil: str | None, entree: dict) -> str | None:
     """La nature de ce qu'un appel d'outil rapporte du socle, ou None : la
-    relecture, par n'importe quel outil, d'une sortie de hook que Claude Code
-    a rangée dans un fichier parce qu'elle était trop longue, ou une commande
-    `socle <sous-commande>`."""
-    if SORTIE_DE_HOOK in json.dumps(entree, ensure_ascii=False):
+    relecture d'une sortie de hook que Claude Code a rangée dans un fichier
+    parce qu'elle était trop longue, par Read ou par une commande qui lit un
+    fichier (cat, sed, head, tail, less, awk), ou une commande
+    `socle <sous-commande>`. Écrire ce fichier, ou citer son chemin
+    ailleurs, n'est pas le relire."""
+    if outil == "Read" and SORTIE_DE_HOOK in str(entree.get("file_path") or ""):
         return "sortie de hook relue"
     if outil == "Bash":
         commande = str(entree.get("command") or "")
+        if LECTURE_DE_HOOK.search(commande):
+            return "sortie de hook relue"
         if ".socle/socle " in commande:
             mots = commande.split(".socle/socle ", 1)[1].split()
             sous = mots[0] if mots and re.fullmatch(r"[a-z][a-z-]*", mots[0]) else "?"
@@ -128,7 +133,12 @@ def _section_socle(texte: str) -> str:
 
 
 def _est_dossier_de_revue(texte: str) -> bool:
-    return any(tete in texte for tete in TETES_REVUE)
+    """Le texte commence par l'en-tête d'un dossier de revue, numéro de ligne
+    de Read compris ; cité au milieu d'un texte (une sortie de grep sur le
+    moteur), il n'en est pas un."""
+    premiere = texte.lstrip().split("\n", 1)[0]
+    premiere = re.sub(r"^\s*\d+[\t→]", "", premiere)
+    return any(premiere.startswith(tete) for tete in TETES_REVUE)
 
 
 def lire_conversation(chemin: Path, sous_agent: bool = False) -> Conversation:
@@ -587,9 +597,11 @@ def ajuster_lecture(conversations: list[Conversation], points: list[tuple], poid
     régressent sur le coût cumulé (une pente commune, l'origine propre à
     chaque suite), et l'on garde le poids qui laisse le moins d'écart
     quadratique. None quand rien ne s'y prête : aucun coût entre deux
-    relevés d'une même suite, ou des relevés qui n'avancent pas."""
+    relevés d'une même suite, des relevés qui n'avancent pas, ou des suites
+    trop courtes pour qu'un poids les explique mieux qu'un autre."""
     groupes = _tranches(conversations, points, decalage)
     meilleur = None
+    ecarts = []
     for k in range(1, 301):
         essai = replace(poids, lecture=k / 1000)
         segments = [s for s in _segments(points, groupes, essai) if len(s) > 1]
@@ -600,8 +612,13 @@ def ajuster_lecture(conversations: list[Conversation], points: list[tuple], poid
             return None
         pente = sxy / sxx
         ecart = sum((p - mp - pente * (c - mc)) ** 2 for s, (mp, mc) in zip(segments, moyennes) for p, c in s)
+        ecarts.append(ecart)
         if meilleur is None or ecart < meilleur[1]:
             meilleur = (essai.lecture, ecart, 1 / pente)
+    if ecarts and max(ecarts) - min(ecarts) <= 1e-12:
+        # Des suites de deux relevés s'ajustent exactement à tout poids :
+        # aucun ne les explique mieux qu'un autre.
+        return None
     return (meilleur[0], meilleur[2]) if meilleur else None
 
 
@@ -749,17 +766,29 @@ def _rapport_etalonnage(conversations, poids, points) -> tuple[list[str], dict]:
                       f"| {_k(t['ecriture'])} | {_k(t['cout'])} | {t['points']:.0f} | {pp} |")
     ajuste = ajuster_lecture(conversations, points, poids)
     if ajuste is None:
-        lignes += ["", "Étalonnage impossible : entre deux relevés que rien ne coupe, aucun point pris, ou aucun "
-                   "appel chiffré.", ""]
-        return lignes, {}
-    lecture, par_point = ajuste
-    retenu = replace(poids, lecture=lecture)
-    valeurs = [t["par_point"] for t in _utilisables(etalonner(conversations, points, retenu)) if t["par_point"]]
-    lignes += ["", f"Poids de lecture qui explique le mieux les relevés (hors compactage) : {lecture:.3f} ; "
-               f"un point vaut alors {_v(par_point / 1000)} k jetons pondérés, soit {_k(par_point / poids.ecriture_1h)} "
-               f"jetons écrits pour une heure ou {_k(par_point / lecture)} jetons lus"
-               + (f" ; de {_k(min(valeurs))} à {_k(max(valeurs))} selon l'intervalle (un relevé est arrondi "
-                  "au point près)." if valeurs else ".")]
+        # Des suites de deux relevés s'ajustent à tout poids : le poids donné
+        # est gardé, et le point se lit sur les intervalles, sans prétendre
+        # que ce poids explique les relevés.
+        valeurs = [t["par_point"] for t in _utilisables(etalonner(conversations, points, poids)) if t["par_point"]]
+        if not valeurs:
+            lignes += ["", "Étalonnage impossible : entre deux relevés que rien ne coupe, aucun point pris, ou aucun "
+                       "appel chiffré.", ""]
+            return lignes, {}
+        lecture, par_point = poids.lecture, statistics.median(valeurs)
+        retenu = poids
+        lignes += ["", f"Les relevés ne départagent aucun poids de lecture (trop peu de relevés par suite) : le "
+                   f"poids donné, {lecture:.3f}, est gardé ; un point vaut alors {_v(par_point / 1000)} k jetons "
+                   f"pondérés (médiane des intervalles), de {_k(min(valeurs))} à {_k(max(valeurs))}."]
+    else:
+        lecture, par_point = ajuste
+        retenu = replace(poids, lecture=lecture)
+        valeurs = [t["par_point"] for t in _utilisables(etalonner(conversations, points, retenu)) if t["par_point"]]
+        lignes += ["", f"Poids de lecture qui explique le mieux les relevés (hors compactage) : {lecture:.3f} ; "
+                   f"un point vaut alors {_v(par_point / 1000)} k jetons pondérés, soit "
+                   f"{_k(par_point / poids.ecriture_1h)} jetons écrits pour une heure ou {_k(par_point / lecture)} "
+                   f"jetons lus"
+                   + (f" ; de {_k(min(valeurs))} à {_k(max(valeurs))} selon l'intervalle (un relevé est arrondi "
+                      "au point près)." if valeurs else ".")]
     marge = fourchette(conversations, points, poids)
     if marge:
         (l0, l1), (p0, p1) = marge["lecture"], marge["par_point"]

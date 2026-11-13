@@ -52,9 +52,9 @@ que pèsent la conversation principale, les sous-agents, les reprises et
 les compactages, et ce que le socle injecte, dans la conversation
 principale comme dans les sous-agents. Les 12 points de 18 h 07 à 18 h 10
 sont des appels ordinaires, pas le compactage (5 points, ± 1). Le socle
-pèse peu (4 à 7 % du contexte relu selon la portée, section du socle
+pèse peu (6 à 7 % du contexte relu selon la portée, section du socle
 d'AGENTS.md comprise) : aucune borne à poser ici ; la sortie tronquée du
-hook de démarrage, dont l'agent relit parfois le fichier complet, est
+hook de démarrage, dont l'agent relit parfois une partie du fichier, est
 notée pour B-0010. Reste la méthode, que le relevé chiffre règle par
 règle.
 

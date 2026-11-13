@@ -157,6 +157,33 @@ class TestLecture(Transcription):
         self.assertEqual(octets[1], len((conso.SECTIONS_SOCLE[0] + "\n\n" + "s" * 100).encode()))
         self.assertEqual(octets[3], 30)
 
+    def test_ni_un_chemin_cite_ni_un_entete_cite_ne_sont_des_relectures(self):
+        # écrire le fichier d'une sortie de hook, ou chercher son chemin, n'est pas le relire ;
+        # l'en-tête d'un dossier cité au milieu d'une sortie de grep n'en fait pas un dossier
+        ecrit = {"type": "tool_use", "id": "w1", "name": "Write",
+                 "input": {"file_path": "/racine/tool-results/hook-abc.txt", "content": "x"}}
+        cherche = {"type": "tool_use", "id": "g1", "name": "Bash",
+                   "input": {"command": "grep -rn tool-results/hook- engine/"}}
+        lu = {"type": "tool_use", "id": "r1", "name": "Read",
+              "input": {"file_path": "/racine/tool-results/hook-abc.txt"}}
+        cite = "engine/socle/review.py:12:    " + conso.TETES_REVUE[0]
+        numerote = "     1\t" + conso.TETES_REVUE[0] + "\n\n" + "d" * 50
+        conv = self.lire([
+            _appel(10, "a1", e1h=100, blocs=[ecrit, cherche, lu]),
+            _resultat(11, "w1", "écrit"),
+            _resultat(12, "g1", cite),
+            _resultat(13, "r1", "h" * 30),
+            _appel(20, "a2", lecture=100, blocs=[{"type": "tool_use", "id": "l1", "name": "Read",
+                                                  "input": {"file_path": "/tmp/dossier.md"}}]),
+            _resultat(21, "l1", numerote),
+        ])
+        self.assertEqual([i["nature"] for i in conv.injections], ["sortie de hook relue", "dossier de revue"])
+        self.assertEqual(conv.injections[0]["octets"], 30)
+
+    def test_la_section_du_socle_en_fin_de_fichier(self):
+        texte = "# Projet\n\nrègles\n\n" + conso.SECTIONS_SOCLE[1] + "\n\nfin"
+        self.assertEqual(conso._section_socle(texte), conso.SECTIONS_SOCLE[1] + "\n\nfin")
+
     def test_les_entetes_reconnus_sont_ceux_que_le_moteur_ecrit(self):
         moteur = RACINE / "engine" / "socle"
         self.assertIn(conso.TETES_REVUE[0], (moteur / "review.py").read_text(encoding="utf-8"))
@@ -384,6 +411,9 @@ class TestEtalonnage(unittest.TestCase):
         texte = conso.rapport([self.conv], points=plat)
         self.assertIn("Étalonnage impossible", texte)
         self.assertNotIn("explique le mieux", texte)
+        # deux relevés par suite s'ajustent exactement à tout poids : aucun n'est identifiable
+        deux = [(T0 + timedelta(seconds=15), 0.0), (T0 + timedelta(seconds=135), 0.20)]
+        self.assertIsNone(conso.ajuster_lecture([self.conv], deux, decalage=False))
 
     def test_points_de_semaine_et_leur_arrondi(self):
         semaine = conso.points_de_semaine([(T0, 0.0, 0.53), (T0 + timedelta(seconds=60), 0.39, 0.59),
@@ -435,6 +465,9 @@ class TestRapport(Transcription):
             conso.main([str(self.dossier), "--point", f"{_h(0)},0.0", "--point", f"{_h(65)},0.1",
                         "--control", f"{_h(65 + 7000)},0.2"])
         self.assertIn("Contrôle hors échantillon", sortie.getvalue())
+        # un seul intervalle ne départage aucun poids : le poids donné est gardé, et dit tel
+        self.assertIn("ne départagent aucun poids de lecture", sortie.getvalue())
+        self.assertNotIn("explique le mieux", sortie.getvalue())
 
 
 if __name__ == "__main__":

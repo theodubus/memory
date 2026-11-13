@@ -102,13 +102,14 @@ point, l'arrondi d'un relevé valant un point.
 - **Un point de la fenêtre de cinq heures vaut environ 29 500 jetons
   pondérés** sur Fable (29 200 à 30 000 à l'arrondi des relevés près). Le
   poids de lecture qui explique le mieux les seize relevés (moindres
-  carrés sur les relevés, le compactage exclu) est 0,042 ; l'arrondi admet
+  carrés sur les relevés, le compactage exclu) est 0,042 (le point y vaut
+  29 200 à 29 300 ; 29 500 correspond à 0,043) ; l'arrondi admet
   0,042 à 0,044, et 0,039 à 0,047 si l'on ne garde que les relevés qui
   bornent les deux longues séquences (39 et 12 points). Le troisième
   chiffre du poids n'est donc pas sûr ; la valeur du point l'est. En
   unités directes : environ 14 700 jetons d'écriture de cache d'une heure
-  (14 600 à 15 000), ou environ 700 000 jetons de lecture de cache
-  (660 000 à 710 000). Une écriture d'une heure pèse 45 à 48 lectures
+  (14 600 à 15 000), ou environ 690 000 jetons de lecture de cache
+  (681 000 à 698 000). Une écriture d'une heure pèse 45 à 48 lectures
   (43 à 51 sur les seules longues séquences), contre 20 sous le tarif
   public : le poids 0,1 surestime les lectures de 2,4 fois.
 - **Un point de la semaine vaut environ 7 points de la fenêtre** (62
@@ -175,7 +176,9 @@ contexte : un appel tiède coûte deux fois plus à 520 000 jetons qu'à
 Quatre compactages en quatre jours (un automatique à 902 000 jetons, trois
 demandés entre 606 000 et 659 000). Un seul est mesuré : 5 points, plus 3
 pour l'appel suivant. Les trois autres ne le sont pas ; leur borne basse
-est de 2 à 2,2 points, leur appel suivant de 2,2 à 4,3.
+est de 2 à 2,2 points, leur appel suivant de 2,2 à 4,3, en équivalent
+Fable ; celui du 10 novembre, fait sur Opus, vaut au point d'Opus deux
+fois moins (1,0 et 2,0).
 
 ### Les reprises après une pause
 
@@ -203,7 +206,7 @@ quart de ce que coûtent les sous-agents.
 
 | jour | démarrages (resume / compact) | octets reçus au démarrage | AGENTS.md, section du socle | commandes du socle (sorties) | dossiers de revue lus | relectures du hook | refus des hooks |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 11 nov. | 8 / 1 | 20,5 Ko | 19 × 12,7 Ko | 214, 205 Ko, dont `show` 96 Ko | 12, 195 Ko | 0 | 6, 2,8 Ko |
+| 11 nov. | 8 / 1 | 20,5 Ko | 19 × 12,7 Ko | 214, 205 Ko, dont `show` 96 Ko | 7, 165 Ko | 0 | 6, 2,8 Ko |
 | 12 nov. | 7 / 1 | 18,4 Ko | 13 × 12,7 Ko | 114, 116 Ko, dont `show` 51 Ko | 5, 144 Ko | 1, 8,8 Ko | 6, 3,1 Ko |
 
 Les colonnes comptent la conversation principale et les sous-agents.
@@ -232,21 +235,22 @@ Les colonnes comptent la conversation principale et les sous-agents.
   | portée | sans AGENTS.md (contexte / coût) | avec sa section du socle |
   | --- | ---: | ---: |
   | conversation principale | 5,0 % / 4,4 % | 5,9 % / 5,0 % |
-  | sous-agents | 3,7 % / 2,5 % | 6,7 % / 4,8 % |
+  | sous-agents | 3,5 % / 2,4 % | 6,6 % / 4,7 % |
 
   Dans la conversation principale, les dossiers de revue que
-  l'orchestrateur lit font 1,5 % du contexte, les sorties de `show` 1,1 %,
+  l'orchestrateur lit font 1,2 % du contexte, les sorties de `show` 1,1 %,
   les relectures du fichier du hook 0,5 %, les aperçus de démarrage 0,5 %.
   Dans les sous-agents, la section du socle d'AGENTS.md en fait 3,1 %, les
-  dossiers de revue 2,3 %, les sorties de `show` 1,0 %. Une fois B-0010
-  fait, la sortie du hook, bornée à 10 Ko, entrera entière dans le
-  contexte à chaque démarrage, compactage et reprise : environ 2 % du
+  dossiers de revue 2,1 %, les sorties de `show` 1,0 %. Une fois B-0010
+  fait, la sortie du hook, bornée à 10 Ko, entrera dans le contexte,
+  entière si elle passe sous le seuil d'aperçu de Claude Code, qui n'est
+  pas connu, à chaque démarrage, compactage et reprise : environ 2 % du
   contexte de la conversation principale au lieu de 0,5 %.
 - **Le dossier de revue** se lit au début de la relecture et reste dans
   le contexte du relecteur, qui le relit depuis le cache à chacun de ses
-  appels. Vingt et un sous-agents en ont reçu un (somme de leurs
-  lectures) : de 3,5 à 60 Ko, médiane 23 Ko, certains lus en partie. Il
-  coûte environ 19 000 jetons pondérés par relecteur sur toute sa
+  appels. Dix-huit sous-agents en ont reçu un (somme de leurs
+  lectures) : de 12,8 à 60 Ko, médiane 23,7 Ko, certains lus en partie. Il
+  coûte environ 20 000 jetons pondérés par relecteur sur toute sa
   relecture, soit 0,3 point d'Opus.
 
 La borne à poser revient à B-0010 (l'état sous 10 Ko, D-0093) ; la mesure
@@ -351,7 +355,8 @@ neuve sert quand la limite a coupé sans prévenir.
   l'appel suivant, en appliquant à la borne basse le facteur mesuré), sont
   des estimations.
 - La session neuve est une estimation : son premier appel coûterait 2 à
-  4,5 points (le premier appel après un compactage en coûte de 2,2 à 4,3 ;
+  4,5 points (le premier appel après un compactage en coûte de 2,2 à 4,3 en
+  équivalent Fable ;
   le premier appel d'un sous-agent, s'il écrivait son cache pour une
   heure, 4,5) ; la relecture de la mémoire qui suit n'est mesurée nulle
   part, et l'hypothèse de cinq à dix appels tièdes à 0,55 point lui donne
