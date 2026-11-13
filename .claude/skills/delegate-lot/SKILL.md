@@ -74,10 +74,13 @@ fois avant le push.
    d'ADR : le second intégré se renumérote (B-0176).
 2. Retirer le worktree et sa branche, puis `python3 .socle/socle verify --fast`.
 3. Pousser, ouvrir la pull request s'il n'y en a pas (une seule ouverte),
-   attendre la CI du commit de tête (une boucle en arrière-plan sur la
-   ligne « CI » de `python3 .socle/socle state`, jamais sur un commit
-   d'avant), puis la fusionner soi-même (D-0092) en donnant le commit de
-   tête attendu.
+   attendre la CI du commit de tête, puis la fusionner soi-même (D-0092)
+   en donnant le commit de tête attendu. L'attente : une boucle en
+   arrière-plan sur la ligne « CI » de `python3 .socle/socle state`, qui
+   s'écrit `CI : <workflow> : <résultat> sur <sha court>`, le résultat
+   avant le commit ; la boucle cherche donc `success sur <sha court>` (ou
+   `failure sur <sha court>`), jamais `<sha> … success`, ni un commit
+   d'avant.
 4. Après la fusion : `git fetch origin main`, `git rebase origin/main`,
    pousser ; vérifier que la distribution a tourné ; mettre à jour le
    chantier actif et le journal.

@@ -5,99 +5,57 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Le socle est installé sur chess (J-2026-11-12-A) ; on attend les
-comptes rendus de chess (mise à jour, feuille de route B-0126) et, pour
-B-0179, du pilote. Le lot de B-0173 est livré (J-2026-11-13-A) ; ses
-règles, dans `.claude/skills/delegate-lot/SKILL.md`, ferment son critère
-3 quand elles auront servi sur un lot. Prochain lot, en session
-neuve : B-0010 (haute, D-0107), puis B-0142, B-0171, B-0176 ; ensuite
-B-0151, B-0156, B-0167, B-0172.
-
-B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
+Lot du 13 novembre : B-0010 (haute, D-0107), puis, si la fenêtre le
+permet, B-0142, B-0171, B-0176 ; ensuite B-0151, B-0156, B-0167, B-0172.
+Le socle est installé sur chess (J-2026-11-12-A) ; on attend ses comptes
+rendus (mise à jour, feuille de route B-0126) et, pour B-0179, celui du
+pilote. Les règles de B-0173, dans `.claude/skills/delegate-lot/SKILL.md`,
+ferment son critère 3 quand elles auront servi sur un lot. B-0048 et
+B-0018 restent ouverts, gardés en tête (D-0026).
 
 ## Consignes en cours
 
-- Les modèles : Opus partout depuis le 12 novembre (D-0095,
-  J-2026-11-12-L).
+Leur texte exact est dans l'entrée du journal citée.
+
+- Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
 - Un lot par session : un lot rendu que la fenêtre ne permet pas de
-  suivre d'un autre entier, tout se range pour qu'une session neuve
-  continue, même sur un autre compte, et la session le dit avec le
-  prompt de la session neuve ; les réveils restent armés pendant le lot.
-  Théo : « dès qu'on dois changer de session […] l'indique dans le chat,
-  et donne le prompt à donner à une session neuve » (J-2026-11-12-P).
-- Le pilote est un essai de choc du socle : ses imperfections sont
-  attendues, seules celles du socle se corrigent ici ; Théo : « pas grave
-  si le pilote n'est pas idéal partout, c'est un crashtest pour le socle
-  donc normal » (J-2026-10-31-E).
-- Chaque session travaille sur la branche que lui donne son
-  environnement, partie de la branche par défaut (J-2026-11-13-A).
+  suivre d'un autre entier, tout se range pour une session neuve, même
+  sur un autre compte, et la session le dit avec son prompt
+  (J-2026-11-12-P).
+- Chaque session travaille sur la branche de son environnement, partie
+  de la branche par défaut (J-2026-11-13-A).
 - Aucun autre dépôt dans la session, ni lecture de JustCook ou de
-  `theodubus/socle` ; Théo : « N'ajoute aucun autre dépôt à la session, et
-  ne lis ni JustCook ni theodubus/socle (donner leurs liens reste
-  permis) » (J-2026-11-09-M).
-- La documentation se conçoit avant de s'écrire, commence par ce dont le
-  projet parle et ce qu'il est, ses schémas se vérifient rendus avant le
-  push, et elle n'est faite que validée par Théo ; Théo : « fais un petit
-  effort de conception sur ce qu'est censé être une documentation »
-  (J-2026-10-20-Y).
-- La documentation a un ton formel, clair, sans tutoiement ; elle répond à
-  une liste de questions, chacune à un seul endroit et entière, et chaque
-  fichier a une portée claire ; Théo : « il faut se lister ce a quoi on veut
-  répondre puis se dire ou ça a sa place » (J-2026-10-21-A). Le plan lui est
-  soumis dans la conversation avant la nouvelle version.
-- La documentation ne rapporte pas les essais de l'outil, dit à quoi il
-  sert, reste aussi courte que le fonctionnement le permet, et le guide
-  suit le parcours de l'utilisateur ; Théo : « on dit qu'on l'a testé mais
-  on ne dit pas a quoi sert l'outil », « j'ai du mal à me projeter dans le
-  parcours utilisateur » (J-2026-10-22-A).
-
+  `theodubus/socle` ; donner leurs liens reste permis (J-2026-11-09-M).
+- Le pilote est un essai de choc : seules les imperfections du socle se
+  corrigent ici (J-2026-10-31-E).
+- La documentation se conçoit avant de s'écrire, son plan soumis à Théo
+  dans la conversation ; ton formel, sans tutoiement ; chaque question à
+  un seul endroit ; elle dit à quoi sert l'outil sans rapporter ses
+  essais ; le guide suit le parcours de l'utilisateur ; ses schémas se
+  vérifient rendus ; elle n'est faite que validée (J-2026-10-20-Y,
+  J-2026-10-21-A, J-2026-10-22-A).
 - Une limite d'usage proche décide de l'ordre des sujets, jamais de la
-  profondeur du travail ; Théo : « jamais de faire une certaine partie du
-  travail au rabais » (J-2026-11-09-C).
-- Une attente annoncée dans le récap (CI, banc, match) s'accompagne d'un
-  réveil programmé pour y revenir (Théo, J-2026-10-13-N).
-- Chaque point de « Pour toi » se comprend seul, sans mon raisonnement,
-  que Théo ne lit pas : ce que c'est, pourquoi, ce que change sa réponse ;
-  Théo : « dans ton recap dire "je pose une étiquette" ne suffit pas du
-  tout » (J-2026-10-31-S).
-- Ce qui revient à Théo ne contient que ses gestes, chacun avec ce qu'il
-  fait ; ce que l'agent fera ensuite se dit à part, comme tel ; un constat
-  dit ce qu'il change pour Théo et ce qu'on attend de lui, ou « rien »
-  (sa remarque sur B-0056 et B-0058, J-2026-10-14-F).
-- Les heures données à Théo s'écrivent à l'heure de Paris (UTC+2 jusqu'au
-  25 oct., UTC+1 ensuite) ; Théo : « Et quand tu donnes le temps écris en
-  heure de paris stp ».
-- Travailler avec un autre dépôt peut faire démarrer une session hors de
-  la racine du projet, sans les hooks de l'agent ; Théo : « Juste fais
-  gaffe, travailler avec d'autres repos c'est ce qui avait causé dans
-  l'autre session le déplacement du dossier de conteneur par defaut ».
-  Un autre dépôt se clone hors du dossier des dépôts de la session, sans
+  profondeur du travail (J-2026-11-09-C).
+- Une attente annoncée dans le récap s'accompagne d'un réveil programmé
+  (J-2026-10-13-N).
+- « Pour toi » ne contient que les gestes de Théo, chacun compréhensible
+  seul (ce que c'est, pourquoi, ce que change sa réponse) ; ce que
+  l'agent fera se dit à part (J-2026-10-31-S, J-2026-10-14-F).
+- Les heures données à Théo, à l'heure de Paris (J-2026-10-14-G).
+- Un autre dépôt se clone hors du dossier des dépôts de la session, sans
   être déclaré racine ; à chaque reprise, vérifier que l'état a été
-  injecté, sinon le dire à Théo et ne rien pousser (J-2026-10-14-S).
-
-- Pas de rétro-compatibilité avec une version antérieure du socle : ni
-  sujet de backlog, ni travail pour qu'un projet installé par une version
-  antérieure continue de marcher ; Théo : « ne te mets pas des éléments de
-  backlog de rétro-compatibilité avec une version antérieure / Le projet
-  est EN DEV », « considere que pour le moment personne ne l'a encore
-  utilisé » (J-2026-10-19-A).
-- Le but : « un produit hyper pratique pour des projets, qui combines tous
-  les avantages de mon projet (actuel + prévu) et du leur » (BMAD Method,
-  J-2026-10-19-E) ; BMAD retiré (D-0051), ses avantages se construisent
-  dans le socle, à sa manière : B-0101, B-0055.
-- Sessions d'un agent réel : « Tu as mon autorisation pour utiliser
-  l'abonnement » (Théo, J-2026-10-19-H) ; chacune plafonnée à l'équivalent
-  de 2 dollars, et sa consommation rapportée.
-- En autonomie sur le backlog : « tu peux travailler en autonomie sur la
-  backlog sur tous les éléments qui peuvent se faire n'importe quand et
-  pour lesquels tu n'as pas besoin d'arbitrage / Tu peux t'arrêter quand
-  tu as fini ça ou quand tu as besoin d'un arbitrage » (Théo,
-  J-2026-10-20-C) ; d'abord l'installation en une commande (B-0074).
+  injecté, sinon le dire et ne rien pousser (J-2026-10-14-S).
+- Pas de rétro-compatibilité avec une version antérieure du socle
+  (J-2026-10-19-A).
+- Le but : un produit pratique qui réunit les avantages du socle et ceux
+  de BMAD, construits à sa manière (J-2026-10-19-E, D-0051).
+- Sessions d'un agent réel sur l'abonnement, chacune plafonnée à
+  l'équivalent de 2 dollars, sa consommation rapportée (J-2026-10-19-H).
+- En autonomie sur le backlog, sauf arbitrage (J-2026-10-20-C).
 
 ## Prochaines étapes
 
-1. Attendre les comptes rendus : la mise à jour et la feuille de route de
-   chess ; la CI du pilote à sa reprise (B-0179).
-2. Le prochain lot se lit plus haut. La suite, dans l'ordre du backlog
-   (`socle state`) : la planification (B-0101), puis la répartition entre
-   agents (B-0055) ; gardé en tête : B-0048.
+1. Le lot ci-dessus. Les comptes rendus de chess et du pilote, à leur
+   arrivée dans la conversation : les lire, ouvrir ce qu'ils demandent.
+2. Ensuite, dans l'ordre du backlog : la planification (B-0101), puis la
+   répartition entre agents (B-0055).
