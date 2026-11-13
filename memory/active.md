@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Le lot B-0010 et B-0171 livré (J-2026-11-13-K). Suivant : B-0209. Pilote
-en pause (ADR-0059).
+B-0209 fait, à relire (la revue attend la fenêtre neuve) : son correctif
+dans `docs/fabrication/passation/`. Puis B-0142. Pilote en pause.
 
 ## Consignes en cours
 

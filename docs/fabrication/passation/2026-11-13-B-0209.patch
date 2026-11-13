@@ -1,0 +1,995 @@
+From 8bcc7eb49e2624fcf95958e6dd93bbd9fa497e8e Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 13 Nov 2026 21:33:40 +0000
+Subject: [PATCH 1/3] =?UTF-8?q?La=20sp=C3=A9cification=20de=20B-0209,=20av?=
+ =?UTF-8?q?ant=20son=20code=20:=20la=20revue=20juge=20le=20lot=20contre=20?=
+ =?UTF-8?q?le=20crit=C3=A8re=20et=20le=20mod=C3=A8le=20de=20menace=20de=20?=
+ =?UTF-8?q?ses=20sujets=20(ADR-0073)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01JeB7oYXbUoyuJw8NXQooS9
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=1 PreToolUse=29 Stop=0
+Socle-Hooks-Since-Commit: PreToolUse=29
+---
+ ...ge-le-lot-contre-le-critere-et-le-model.md | 51 +++++++++++++++++++
+ 1 file changed, 51 insertions(+)
+ create mode 100644 memory/decisions/ADR-0073-la-revue-juge-le-lot-contre-le-critere-et-le-model.md
+
+diff --git a/memory/decisions/ADR-0073-la-revue-juge-le-lot-contre-le-critere-et-le-model.md b/memory/decisions/ADR-0073-la-revue-juge-le-lot-contre-le-critere-et-le-model.md
+new file mode 100644
+index 0000000..e12e9a0
+--- /dev/null
++++ b/memory/decisions/ADR-0073-la-revue-juge-le-lot-contre-le-critere-et-le-model.md
+@@ -0,0 +1,51 @@
++<!-- socle: couche=decisions zone=publique -->
++# ADR-0073 — La revue juge le lot contre le critère et le modèle de menace de ses sujets : bloquants corrigés dans le lot, le reste au backlog
++
++> statut : acceptée · date : 2026-11-13 · source : B-0209@f600b5a4, ADR-0042@c8fe8e02 · lu : decisions@b9ecf80c
++
++## Contexte
++
++La revue d'ADR-0042@c8fe8e02 demande au relecteur de prendre le lot en
++défaut sans lui dire où s'arrêter, et le skill `socle-review` dit de
++corriger dans le lot chaque constat fondé. Sur un garde-fou sans fond
++(deviner ce qu'une commande du shell écrit), chaque tour trouve une forme
++de plus, et chaque correction en ouvre d'autres : le lot qui la précède
++a pris quatre revues et trois corrections (B-0209@f600b5a4). Cette
++décision en est la spécification, écrite avant son code.
++
++## Décision
++
++**Les sujets du lot.** Le dossier de `socle review` donne en entier, quel
++que soit leur statut, les sujets du backlog que le lot touche et qui
++existaient à sa base, ou qu'il clôt : leur « Fait quand » est la barre.
++Ceux qu'il ouvre sans les clore, il n'en donne que le titre : ce que le
++lot renvoie au backlog, que le relecteur ne redemande pas. Les décisions
++et les demandes citées par les sujets du lot suivent, en entier.
++
++**Le modèle de menace.** Un sujet qui pose ou change un garde-fou écrit,
++avant son code, son modèle de menace dans une section `## Modèle de
++menace` (ou la décision qu'il cite) : ce que le garde-fou arrête, ce qu'il
++laisse passer. Le dossier le donne avec le sujet ; un garde-fou sans
++modèle de menace est un constat bloquant. Un sujet dont la conception
++n'est pas tranchée écrit sa spécification avant son code. Le gabarit
++d'AGENTS.md le dit, et FORMAT.md la section.
++
++**Deux classes de constats.** La consigne demande de classer chaque
++constat : bloquant (il contredit un critère coché ou une décision citée,
++fait régresser ce qui marchait, perd des données, ou contourne le
++garde-fou dans son modèle de menace) ou pour le backlog (le reste : un
++cas hors du modèle, un critère non coché, un défaut voisin, une
++amélioration). Seuls les bloquants se corrigent dans le lot ; les autres
++deviennent des sujets du backlog.
++
++**La seconde revue.** Seulement si la correction de bloquants est lourde
++(elle change la conception d'une partie, pas quelques lignes), et sur
++elle seule : `socle review --since <commit relu>` donne le diff depuis ce
++commit, les messages de ses commits, et les sujets du lot entier.
++
++## Conséquences
++
++Une revue rend moins de travail dans le lot et plus au backlog, où
++l'humain voit ce qui reste. Le texte du skill `socle-review` change dans
++son gabarit ; sa copie protégée de ce dépôt suit sur une demande. Se
++défait en revenant au texte d'avant du dossier et du skill.
+-- 
+2.43.0
+
+
+From 5b48f8892817fc8502652fd0489ad44f02170388 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 13 Nov 2026 21:56:33 +0000
+Subject: [PATCH 2/3] =?UTF-8?q?La=20revue=20juge=20le=20lot=20contre=20le?=
+ =?UTF-8?q?=20crit=C3=A8re=20et=20le=20mod=C3=A8le=20de=20menace=20de=20se?=
+ =?UTF-8?q?s=20sujets=20:=20le=20dossier=20les=20donne=20et=20fait=20class?=
+ =?UTF-8?q?er=20chaque=20constat,=20seuls=20les=20bloquants=20se=20corrige?=
+ =?UTF-8?q?nt=20dans=20le=20lot=20(B-0209,=20ADR-0073)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Le dossier de socle review donne les sujets que le lot touche, même
+ouverts, et les titres de ceux qu'il ouvre ; --since fait celui d'une
+seconde revue, sur la correction seule. Le gabarit du skill socle-review,
+celui d'AGENTS.md, le guide, FORMAT.md et le skill delegate-lot le disent.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01JeB7oYXbUoyuJw8NXQooS9
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=1 PreToolUse=62 Stop=0
+Socle-Hooks-Since-Commit: PreToolUse=33
+---
+ .claude/skills/delegate-lot/SKILL.md          |  30 +++--
+ docs/fabrication/chess/prompt-mise-a-jour.md  |   1 +
+ engine/socle/FORMAT.md                        |   4 +
+ engine/socle/HELP.en.md                       |  10 +-
+ engine/socle/HELP.md                          |  10 +-
+ engine/socle/cli.py                           |   4 +-
+ engine/socle/messages_en.py                   |  40 +++---
+ engine/socle/review.py                        | 117 ++++++++++++++----
+ engine/socle/templates/AGENTS.en.md           |   6 +-
+ engine/socle/templates/AGENTS.md              |   7 +-
+ .../templates/skills/socle-review/SKILL.en.md |  35 ++++--
+ .../templates/skills/socle-review/SKILL.md    |  37 ++++--
+ ...ge-le-lot-contre-le-critere-et-le-model.md |   8 +-
+ memory/journal/2026-11-4.md                   |  24 ++++
+ tests/test_revue.py                           | 106 +++++++++++++++-
+ 15 files changed, 347 insertions(+), 92 deletions(-)
+ rename memory/backlog/{ => closed}/B-0209-la-revue-juge-le-lot-contre-le-critere-et-le-model.md (86%)
+
+diff --git a/.claude/skills/delegate-lot/SKILL.md b/.claude/skills/delegate-lot/SKILL.md
+index 90a7314..85bbf14 100644
+--- a/.claude/skills/delegate-lot/SKILL.md
++++ b/.claude/skills/delegate-lot/SKILL.md
+@@ -33,6 +33,8 @@ Sujet : python3 .socle/socle show B-NNNN, puis ce que l'orchestrateur
+ ajoute (le choix déjà fait, les fichiers où regarder, les pièges connus).
+ 
+ À livrer, en UN commit, sans push :
++- d'abord le modèle de menace d'un garde-fou (dans le sujet), ou l'ADR
++  d'une conception pas tranchée ;
+ - le code, et ses tests qui échouent sur le commit parent ;
+ - pour un contrôle ou un refus nouveau, son défaut injecté et son témoin sain ;
+ - la documentation touchée ; une ADR si une décision de conception est prise ;
+@@ -59,11 +61,12 @@ Les identifiants des sous-agents lancés vont dans le texte des réveils.
+ Skill `socle-review`. Le dossier du lot se produit dans le worktree du
+ sous-agent et se range dans le dossier temporaire de la session ; le
+ relecteur est un autre sous-agent, sans worktree, qui ne reçoit que le
+-chemin du dossier, la logistique et les points à éprouver. Ses constats
+-retournent au sous-agent qui a implémenté (`SendMessage`), tant que son
+-worktree existe ; sinon à un sous-agent neuf, avec la consigne et les
+-constats. Un lot dont la correction est lourde se fait relire une seconde
+-fois avant le push.
++chemin du dossier, la logistique et les points à éprouver. Il classe
++ses constats (ADR-0073), l'orchestrateur vérifie chaque classement. Seuls
++les bloquants retournent au sous-agent qui a implémenté (`SendMessage`),
++tant que son worktree existe, sinon à un neuf avec la consigne ; les
++autres, l'orchestrateur les ouvre au backlog. Une seconde revue, sur une
++correction lourde de bloquants seule : `socle review --since <commit relu>`.
+ 
+ ## Intégrer, pousser, fusionner
+ 
+@@ -76,11 +79,9 @@ fois avant le push.
+ 3. Pousser, ouvrir la pull request s'il n'y en a pas (une seule ouverte),
+    attendre la CI du commit de tête, puis la fusionner soi-même (D-0092)
+    en donnant le commit de tête attendu. L'attente : une boucle en
+-   arrière-plan sur la ligne « CI » de `python3 .socle/socle state`, qui
+-   s'écrit `CI : <workflow> : <résultat> sur <sha court>`, le résultat
+-   avant le commit ; la boucle cherche donc `success sur <sha court>` (ou
+-   `failure sur <sha court>`), jamais `<sha> … success`, ni un commit
+-   d'avant.
++   arrière-plan qui cherche `success sur <sha court>` (ou `failure sur
++   <sha court>`) dans la ligne « CI » de `python3 .socle/socle state`,
++   jamais un commit d'avant.
+ 4. Après la fusion : `git fetch origin main`, `git rebase origin/main`,
+    pousser ; vérifier que la distribution a tourné ; mettre à jour le
+    chantier actif et le journal.
+@@ -91,14 +92,13 @@ Le contrôle d'avant push juge la plage qui part contre la tête de la
+ branche distante : une fois poussées, une ADR, une entrée de journal et
+ une valeur attendue ne se réécrivent plus, elles se complètent.
+ 
+-- Un lot ne part qu'après les corrections de sa revue.
++- Un lot ne part qu'après la correction de ses bloquants.
+ - La réponse de l'humain à une demande se commite dans le même push que
+   le changement qu'elle autorise, jamais avant (B-0142).
+ - Une valeur attendue à changer, un test à supprimer, un fichier protégé
+   à rafraîchir : une demande dans le dépôt, relue à froid, poussée, son
+   lien donné ; jamais une question dans la conversation.
+-- Avant d'ouvrir un sujet, relire le backlog
+-  (`python3 .socle/socle show --index backlog`).
++- Avant d'ouvrir un sujet, relire l'index du backlog.
+ 
+ ## La consommation
+ 
+@@ -123,9 +123,7 @@ sous-agent ne relit pas la conversation qui l'a lancé.
+ - Une attente de plus d'une heure (une CI longue, une réponse de
+   l'humain, la nuit) ne se fait pas dans une conversation longue : la
+   session range et s'arrête.
+-- Les réveils (skill `socle-resume`) s'arment pendant le lot, pour le cas
+-  rare où une étape atteint une limite, et se retirent à la fin d'un tour
+-  où rien ne tourne.
++- Les réveils de reprise : le skill `socle-resume`.
+ 
+ ## Changer de session
+ 
+diff --git a/docs/fabrication/chess/prompt-mise-a-jour.md b/docs/fabrication/chess/prompt-mise-a-jour.md
+index 6096745..6dbb20e 100644
+--- a/docs/fabrication/chess/prompt-mise-a-jour.md
++++ b/docs/fabrication/chess/prompt-mise-a-jour.md
+@@ -21,6 +21,7 @@ Mets à jour le socle de ce dépôt depuis son dépôt public, sans ajouter ce d
+    - python3 .socle/socle state --short imprime l'état dérivé entier, sans borne ; un fait ou une décision en entier : python3 .socle/socle show <ID> ; l'index des décisions : python3 .socle/socle show --index decisions.
+ 2. Le budget du chantier actif passe à 3 700 octets (public et privé ensemble), pour qu'il tienne dans sa part. Si tes garde-fous gardent un budget plus haut, l'installeur le signale (« !! le budget de memory/active.md … ») avec la valeur qui tient : baisse-le à cette valeur (durcir est libre), puis raccourcis memory/active.md si le contrôle memoire.budgets le demande, ce qui en sort allant au journal.
+ 3. Le hook de l'agent juge un chemin qu'une commande shell écrit tel que le shell le développerait : variables, motifs (*, ?), accolades, ~, cd et pushd suivis, chemins relatifs depuis ton dossier courant. Un chemin qu'il ne sait pas développer (une variable qu'il ne connaît pas, $(…), un cd vers un tel chemin) est refusé s'il peut tomber dans le projet. Si un refus te gêne : écris le chemin en toutes lettres, ou affecte la variable plus tôt dans la même commande (F=/tmp/x; echo y > "$F"). Les faux refus connus : $(mktemp -d) ou $(git rev-parse --show-toplevel) tenus dans une variable ou en cible de cd, une boucle for sur une liste écrite. Le hook reste une première barrière : la garantie est le contrôle protege.fichiers, à la fin du tour, au commit et dans la CI.
++4. La revue adversariale juge un lot contre ses sujets. Le dossier de python3 .socle/socle review donne au relecteur le « Fait quand » de chaque sujet que le lot touche, même ouvert, et les titres de ceux qu'il ouvre ; il lui fait classer chaque constat : bloquant (un critère coché ou une décision contredits, une régression, une perte de données, un contournement d'un garde-fou dans son modèle de menace) ou pour le backlog (le reste). Seuls les bloquants se corrigent dans le lot ; les autres vont au backlog. Une seconde revue seulement si la correction des bloquants est lourde, et sur elle seule : python3 .socle/socle review --since <commit relu>. En conséquence, un sujet qui pose ou change un garde-fou écrit avant son code son modèle de menace, dans une section « ## Modèle de menace » (ce qu'il arrête, ce qu'il laisse passer), et un sujet dont la conception n'est pas tranchée, sa spécification. Le skill socle-review, une copie protégée, change : il est dans la demande de l'installeur.
+ 
+ Pas encore faits, inutile de les signaler de nouveau : l'installeur muet sur une adoption déjà vide et le diff de politique réaffiché (tes gênes 1 et 5), la fin de tour qui refuse l'arbre en 26 lignes avant le push de la demande (3), la réponse validée affichée « en attente » tant qu'elle n'est pas commitée (6), le coût de la relecture à froid (7), la reprise sans list_events (8).
+ 
+diff --git a/engine/socle/FORMAT.md b/engine/socle/FORMAT.md
+index 89bde2b..314126b 100644
+--- a/engine/socle/FORMAT.md
++++ b/engine/socle/FORMAT.md
+@@ -200,6 +200,10 @@ l'attendent.
+ Ce qui rend un sujet fait se dit, s'il le faut, dans une section
+ `## Fait quand`, en cases à cocher (D-0064). Le contrôle du backlog refuse
+ de le clore `fait` tant qu'une case reste vide ; abandonné, il les laisse.
++Un sujet qui pose ou change un garde-fou écrit, avant son code, une section
++`## Modèle de menace` (`## Threat model` en anglais) : ce que le garde-fou
++arrête, ce qu'il laisse passer. La revue d'un lot juge contre elle et
++contre le « Fait quand ».
+ 
+ ```markdown
+ # B-0020 — La recherche par ingrédient livrée
+diff --git a/engine/socle/HELP.en.md b/engine/socle/HELP.en.md
+index f32d750..8cdbb92 100644
+--- a/engine/socle/HELP.en.md
++++ b/engine/socle/HELP.en.md
+@@ -138,9 +138,13 @@ human.
+ 
+ **Having it reviewed.** Before delivering a batch that changes code, a
+ specification or a test, the agent has it reviewed by a reviewer without
+-context, who tries to find fault with it: what breaks, what no test
+-proves, what contradicts a decision. The agent fixes each founded finding
+-and dismisses the others; its recap says how many.
++context, who tries to find fault with it against the “Done when”
++criterion of the batch's topics and, for a guardrail, its threat model,
++written before the code: what the guardrail stops, what it lets through.
++The agent fixes the blocking findings in the batch (a contradicted
++criterion, a regression, a data loss, a bypass within the threat model),
++sends the others to the backlog, where you see them, and dismisses the
++unfounded ones; its recap says how many.
+ 
+ **Delivering.** By default, the agent does everything on one development
+ branch and keeps only one pull request open, to which each finished batch
+diff --git a/engine/socle/HELP.md b/engine/socle/HELP.md
+index 5a170f0..6b87375 100644
+--- a/engine/socle/HELP.md
++++ b/engine/socle/HELP.md
+@@ -144,9 +144,13 @@ Il s'arrête à la fin du lot, ou dès qu'une décision revient à l'humain.
+ 
+ **Faire relire.** Avant de livrer un lot qui change du code, une
+ spécification ou un test, l'agent le fait relire par un relecteur sans
+-contexte, qui cherche à le prendre en défaut : ce qui casse, ce qu'aucun
+-test ne prouve, ce qui contredit une décision. L'agent corrige chaque
+-constat fondé et écarte les autres ; son récap dit combien.
++contexte, qui cherche à le prendre en défaut contre le critère « Fait
++quand » des sujets du lot et, pour un garde-fou, son modèle de menace,
++écrit avant le code : ce que le garde-fou arrête, ce qu'il laisse passer.
++L'agent corrige dans le lot les constats bloquants (un critère contredit,
++une régression, une perte de données, un contournement dans le modèle de
++menace), envoie les autres au backlog, où vous les voyez, et écarte les
++infondés ; son récap dit combien.
+ 
+ **Livrer.** Par défaut, l'agent fait tout sur une branche de
+ développement et garde une seule pull request ouverte, à laquelle chaque
+diff --git a/engine/socle/cli.py b/engine/socle/cli.py
+index e47f589..b5828c8 100644
+--- a/engine/socle/cli.py
++++ b/engine/socle/cli.py
+@@ -406,7 +406,7 @@ def cmd_review(args) -> int:
+             return 2
+         print(texte, end="")
+         return 0
+-    print(revue.dossier(_projet(args), args.base, args.max_bytes), end="")
++    print(revue.dossier(_projet(args), args.base, args.max_bytes, getattr(args, "since", None)), end="")
+     return 0
+ 
+ 
+@@ -870,6 +870,8 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
+     s.add_argument("--base", help=trad("la base du lot (par défaut : la branche distante, sinon la branche par "
+                                        "défaut)"))
+     s.add_argument("--max-bytes", type=int, default=60_000, help=trad("le plafond du diff montré"))
++    s.add_argument("--since", metavar="REF", help=trad("une seconde revue : le diff depuis ce commit, celui de la "
++                                                       "première revue, et les sujets du lot entier"))
+     s.add_argument("--request", metavar="D-NNNN", help=trad("le dossier de la relecture à froid de cette demande, "
+                                                             "pour un lecteur qui n'a que son texte"))
+     s.set_defaults(f=cmd_review)
+diff --git a/engine/socle/messages_en.py b/engine/socle/messages_en.py
+index 2bc0b58..7b7a63d 100644
+--- a/engine/socle/messages_en.py
++++ b/engine/socle/messages_en.py
+@@ -1925,26 +1925,20 @@ MESSAGES: dict[str, str] = {
+         "“Context”: it opens with “The project”, then “The work”, then “The question”, in that order",
+     "« Contexte » : le paragraphe « {nom} » fait moins de {n} mots":
+         "“Context”: the “{nom}” paragraph has fewer than {n} words",
+-    "Tu relis le lot de travail d'un autre agent, sans sa conversation ni son raisonnement : tu as ce dossier, et tu peux lire le dépôt pour vérifier un constat, mais tu ne modifies rien. "
+-    "Pour éprouver une commande (l'installeur, un script), crée d'abord un dossier temporaire hors du dépôt "
+-    "(`mktemp -d`), et n'écris que là : chaque commande qui écrit y vise par son chemin absolu, jamais par le "
+-    "dossier courant, écrit en toutes lettres tel que `mktemp -d` l'a rendu, jamais par une variable, qui ne "
+-    "survit pas d'un appel à l'autre. "
+-    "Ton rôle est de le prendre en défaut. Cherche ce qui casse (un cas limite, une erreur de logique, une "
+-    "régression), ce qu'aucun test ne prouve (une branche du code, un message, un cas que rien n'exerce), et ce qui "
+-    "contredit un sujet, un critère « Fait quand » ou une décision cités plus bas. Ne juge ni le style, ni ce que les "
+-    "contrôles automatiques jugent déjà : la forme de la mémoire, les liens, la présence des tests. Rends des "
+-    "constats numérotés, chacun avec son fichier et sa ligne, ce qui casse et comment le vérifier ; ou « aucun "
+-    "constat ».":
+-        "You review another agent's batch of work, without its conversation or its reasoning: you have this brief, and you may read the repository to check a finding, but you change "
+-        "nothing. To try a command (the installer, a script), first create a temporary directory outside the "
+-        "repository (`mktemp -d`), and write only there: each command that writes aims at it by its absolute path, "
+-        "never through the current directory, written out in full as `mktemp -d` returned it, never through a "
+-        "variable, which does not survive from one call to the next. Your role is to find fault with it. Look for what breaks (an edge case, a logic error, a "
+-        "regression), what no test proves (a code branch, a message, a case nothing exercises), and what contradicts "
+-        "a topic, a “Done when” criterion or a decision cited below. Judge neither style nor what the automatic "
+-        "checks already judge: the form of the memory, the links, the presence of tests. Return numbered findings, "
+-        "each with its file and line, what breaks and how to verify it; or “no finding”.",
++    "Tu relis le lot de travail d'un autre agent, sans sa conversation ni son raisonnement : tu as ce dossier, et tu peux lire le dépôt pour vérifier un constat, mais tu ne modifies rien. Pour éprouver une commande (l'installeur, un script), crée d'abord un dossier temporaire hors du dépôt (`mktemp -d`), et n'écris que là : chaque commande qui écrit y vise par son chemin absolu, jamais par le dossier courant, écrit en toutes lettres tel que `mktemp -d` l'a rendu, jamais par une variable, qui ne survit pas d'un appel à l'autre. Ton rôle est de le prendre en défaut.":
++        "You review another agent's batch of work, without its conversation or its reasoning: you have this brief, and you may read the repository to check a finding, but you change nothing. To try a command (the installer, a script), first create a temporary directory outside the repository (`mktemp -d`), and write only there: each command that writes aims at it by its absolute path, never through the current directory, written out in full as `mktemp -d` returned it, never through a variable, which does not survive from one call to the next. Your role is to find fault with it.",
++    "Ta barre est celle des sujets du lot, plus bas : leur critère « Fait quand », les décisions qu'ils citent, et, pour un sujet qui pose ou change un garde-fou, son modèle de menace, ce que le garde-fou arrête et ce qu'il laisse passer. Cherche ce qui casse (un cas limite, une erreur de logique, une régression), ce qu'aucun test ne prouve, et ce qui contredit un critère ou une décision. Ne juge ni le style, ni ce que les contrôles automatiques jugent déjà : la forme de la mémoire, les liens, la présence des tests.":
++        "Your bar is that of the batch's topics, below: their “Done when” criterion, the decisions they cite, and, for a topic that adds or changes a guardrail, its threat model, what the guardrail stops and what it lets through. Look for what breaks (an edge case, a logic error, a regression), what no test proves, and what contradicts a criterion or a decision. Judge neither style nor what the automatic checks already judge: the form of the memory, the links, the presence of tests.",
++    "Classe chaque constat. **Bloquant** : il contredit un critère coché ou une décision citée, fait régresser ce qui marchait avant le lot, perd des données, ou contourne un garde-fou dans son modèle de menace ; un garde-fou que le lot pose ou change sans modèle de menace écrit est lui-même un constat bloquant. **Pour le backlog** : tout le reste, dont un contournement hors du modèle de menace, un critère que le lot ne coche pas, un défaut voisin, une amélioration. Seuls les bloquants se corrigent dans le lot. Rends deux listes numérotées, « Bloquants » puis « Pour le backlog », chaque constat avec son fichier et sa ligne, ce qui casse et comment le vérifier, et, pour un bloquant, ce qu'il contredit ; ou « aucun constat ».":
++        "Classify each finding. **Blocking**: it contradicts a ticked criterion or a cited decision, breaks what worked before the batch, loses data, or bypasses a guardrail within its threat model; a guardrail the batch adds or changes without a written threat model is itself a blocking finding. **For the backlog**: everything else, including a bypass outside the threat model, a criterion the batch does not tick, a neighbouring defect, an improvement. Only blocking findings are fixed in the batch. Return two numbered lists, “Blocking” then “For the backlog”, each finding with its file and line, what breaks and how to verify it, and, for a blocking one, what it contradicts; or “no finding”.",
++    "Seconde revue : ce diff corrige des constats bloquants d'une première revue, que disent les messages de ses commits ci-dessous ; le reste du lot a déjà été relu. Ne juge que cette correction : un bloquant mal corrigé, ce qu'elle fait régresser, contre les mêmes sujets.":
++        "Second review: this diff fixes blocking findings of a first review, which the messages of its commits below state; the rest of the batch has already been reviewed. Judge only this fix: a blocking finding badly fixed, what it breaks, against the same topics.",
++    "## Seconde revue":
++        "## Second review",
++    "## Le diff de la correction ({n} fichier(s), depuis {base})":
++        "## The fix's diff ({n} file(s), since {base})",
++    "une seconde revue : le diff depuis ce commit, celui de la première revue, et les sujets du lot entier":
++        "a second review: the diff since this commit, the one of the first review, and the topics of the whole batch",
+     "(aucune base connue : ni branche distante, ni branche par défaut ; rien à relire)":
+         "(no known base: neither a remote branch nor a default branch; nothing to review)",
+     "## Le diff du lot ({n} fichier(s), depuis {base})":
+@@ -1953,8 +1947,10 @@ MESSAGES: dict[str, str] = {
+         "(no change outside the memory: nothing to review)",
+     "(diff tronqué : {n} caractère(s) de plus non montrés ; `git diff {base}` les donne)":
+         "(diff truncated: {n} more character(s) not shown; `git diff {base}` gives them)",
+-    "## Les sujets que le lot ferme":
+-        "## The topics the batch closes",
++    "## Les sujets du lot : leur critère « Fait quand » est ta barre":
++        "## The batch's topics: their “Done when” criterion is your bar",
++    "## Les sujets que le lot ouvre : ce qu'il renvoie au backlog":
++        "## The topics the batch opens: what it sends to the backlog",
+     "## Les décisions et les demandes qu'ils citent":
+         "## The decisions and requests they cite",
+     "répondre à une demande ; l'agent y relaie (--relayed) ta réponse donnée dans la conversation":
+diff --git a/engine/socle/review.py b/engine/socle/review.py
+index ee3d85b..7e9dfdc 100644
+--- a/engine/socle/review.py
++++ b/engine/socle/review.py
+@@ -13,8 +13,11 @@ après des semaines ; le skill `socle-request` dit quand.
+ 
+ from __future__ import annotations
+ 
++import re
++from pathlib import Path
++
+ from socle import config, memory as memoire, utils as outils
+-from socle.messages import trad
++from socle.messages import a_traduire, trad
+ 
+ # Au-delà, le diff se tronque, et le dossier le dit : un relecteur qui reçoit
+ # un diff énorme le survole.
+@@ -49,6 +52,40 @@ def sujets_fermes(projet: config.Projet, base: str) -> list:
+             and not memoire.est_prive(e.fichier)]
+ 
+ 
++def sujets_du_lot(projet: config.Projet, base: str) -> tuple[list, list]:
++    """Les sujets du backlog que le lot touche, quel que soit leur statut
++    (ADR-0073) : ceux qu'il sert, qui existaient à sa base ou qu'il clôt,
++    dont le « Fait quand » est la barre du relecteur ; puis ceux qu'il ouvre
++    sans les clore, ce qu'il renvoie au backlog."""
++    touches = set(outils.git(projet.racine, "diff", "--name-only", base, "--", projet.chemins.backlog,
++                             check=False).split())
++    a_la_base = outils.git(projet.racine, "ls-tree", "-r", "--name-only", base, "--", projet.chemins.backlog,
++                           check=False).split()
++    existants = {m.group(1) for nom in a_la_base if (m := re.match(r"(B-\d+)", Path(nom).name))}
++    mem = memoire.Memoire.charger(projet.racine)
++    servis, ouverts = [], []
++    for e in mem.entrees("B"):
++        if e.fichier not in touches or memoire.est_prive(e.fichier):
++            continue
++        (servis if e.id in existants or e.statut in memoire.BACKLOG_CLOS else ouverts).append(e)
++    return servis, ouverts
++
++
++def messages_depuis(racine, depuis: str) -> list[str]:
++    """Les messages des commits depuis `depuis`, du plus ancien au plus
++    récent, sans leurs lignes de fin (`Co-Authored-By:`, `Socle-Hooks:`…) :
++    ce que la correction dit corriger."""
++    brut = outils.git(racine, "log", "--reverse", "--format=%x00%B", f"{depuis}..HEAD", check=False)
++    res = []
++    for message in brut.split("\0"):
++        lignes = message.strip().splitlines()
++        while lignes and (re.match(r"^[A-Za-z][\w-]*: \S", lignes[-1]) or not lignes[-1].strip()):
++            lignes.pop()
++        if lignes:
++            res.append("\n".join(lignes))
++    return res
++
++
+ def decisions_citees(projet: config.Projet, sujets: list) -> list:
+     """Les décisions et les demandes que ces sujets citent, en entier."""
+     mem = memoire.Memoire.charger(projet.racine)
+@@ -89,27 +126,58 @@ def dossier_demande(projet: config.Projet, ident: str) -> str | None:
+                       trouvees[0].texte.strip(), ""])
+ 
+ 
+-def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFOND_DIFF) -> str:
++# La consigne du relecteur (ADR-0042, ADR-0044, ADR-0073), en trois parties :
++# son rôle, sa barre, les deux classes de ses constats.
++CONSIGNE_ROLE = a_traduire(
++    "Tu relis le lot de travail d'un autre agent, sans sa conversation ni son raisonnement : tu as ce dossier, et "
++    "tu peux lire le dépôt pour vérifier un constat, mais tu ne modifies rien. Pour éprouver une commande "
++    "(l'installeur, un script), crée d'abord un dossier temporaire hors du dépôt (`mktemp -d`), et n'écris que "
++    "là : chaque commande qui écrit y vise par son chemin absolu, jamais par le dossier courant, écrit en toutes "
++    "lettres tel que `mktemp -d` l'a rendu, jamais par une variable, qui ne survit pas d'un appel à l'autre. Ton "
++    "rôle est de le prendre en défaut.")
++CONSIGNE_BARRE = a_traduire(
++    "Ta barre est celle des sujets du lot, plus bas : leur critère « Fait quand », les décisions qu'ils citent, "
++    "et, pour un sujet qui pose ou change un garde-fou, son modèle de menace, ce que le garde-fou arrête et ce "
++    "qu'il laisse passer. Cherche ce qui casse (un cas limite, une erreur de logique, une régression), ce "
++    "qu'aucun test ne prouve, et ce qui contredit un critère ou une décision. Ne juge ni le style, ni ce que les "
++    "contrôles automatiques jugent déjà : la forme de la mémoire, les liens, la présence des tests.")
++CONSIGNE_CLASSES = a_traduire(
++    "Classe chaque constat. **Bloquant** : il contredit un critère coché ou une décision citée, fait régresser "
++    "ce qui marchait avant le lot, perd des données, ou contourne un garde-fou dans son modèle de menace ; un "
++    "garde-fou que le lot pose ou change sans modèle de menace écrit est lui-même un constat bloquant. **Pour le "
++    "backlog** : tout le reste, dont un contournement hors du modèle de menace, un critère que le lot ne coche "
++    "pas, un défaut voisin, une amélioration. Seuls les bloquants se corrigent dans le lot. Rends deux listes "
++    "numérotées, « Bloquants » puis « Pour le backlog », chaque constat avec son fichier et sa ligne, ce qui "
++    "casse et comment le vérifier, et, pour un bloquant, ce qu'il contredit ; ou « aucun constat ».")
++CONSIGNE_SECONDE = a_traduire(
++    "Seconde revue : ce diff corrige des constats bloquants d'une première revue, que disent les messages de ses "
++    "commits ci-dessous ; le reste du lot a déjà été relu. Ne juge que cette correction : un bloquant mal "
++    "corrigé, ce qu'elle fait régresser, contre les mêmes sujets.")
++
++
++def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFOND_DIFF,
++            depuis: str | None = None) -> str:
+     """Ce que reçoit le relecteur, en plus du dépôt qu'il peut lire : la
+-    consigne, le diff du lot, les sujets qu'il ferme et les décisions
+-    qu'ils citent."""
++    consigne, le diff du lot, les sujets du lot et les décisions qu'ils
++    citent (ADR-0073). Avec `depuis`, le dossier d'une seconde revue : le
++    diff depuis ce commit, les messages de ses commits, et toujours les
++    sujets du lot entier, depuis `base`."""
+     base = base or base_du_lot(projet.racine)
+-    lignes = [trad("# Revue adversariale d'un lot"), "", trad(
+-        "Tu relis le lot de travail d'un autre agent, sans sa conversation ni son raisonnement : tu as ce dossier, et tu peux lire le dépôt pour vérifier un constat, mais tu ne "
+-        "modifies rien. Pour éprouver une commande (l'installeur, un script), crée d'abord un dossier temporaire "
+-        "hors du dépôt (`mktemp -d`), et n'écris que là : chaque commande qui écrit y vise par son chemin absolu, "
+-        "jamais par le dossier courant, écrit en toutes lettres tel que `mktemp -d` l'a rendu, jamais par une "
+-        "variable, qui ne survit pas d'un appel à l'autre. Ton rôle est de le prendre en défaut. Cherche ce qui casse (un cas limite, une erreur "
+-        "de logique, une régression), ce qu'aucun test ne prouve (une branche du code, un message, un cas que "
+-        "rien n'exerce), et ce qui contredit un sujet, un critère « Fait quand » ou une décision cités plus "
+-        "bas. Ne juge ni le style, ni ce que les contrôles automatiques jugent déjà : la forme de la mémoire, "
+-        "les liens, la présence des tests. Rends des constats numérotés, chacun avec son fichier et sa ligne, "
+-        "ce qui casse et comment le vérifier ; ou « aucun constat »."), ""]
++    lignes = [trad("# Revue adversariale d'un lot"), "", trad(CONSIGNE_ROLE), "", trad(CONSIGNE_BARRE), "",
++              trad(CONSIGNE_CLASSES), ""]
+     if not base:
+         lignes.append(trad("(aucune base connue : ni branche distante, ni branche par défaut ; rien à relire)"))
+         return "\n".join(lignes) + "\n"
+-    diff, fichiers = _diff(projet, base)
+-    lignes += [trad("## Le diff du lot ({n} fichier(s), depuis {base})", n=len(fichiers), base=base), ""]
++    if depuis:
++        lignes += [trad("## Seconde revue"), "", trad(CONSIGNE_SECONDE), ""]
++        for message in messages_depuis(projet.racine, depuis):
++            lignes += ["```text", message, "```", ""]
++        diff, fichiers = _diff(projet, depuis)
++        lignes += [trad("## Le diff de la correction ({n} fichier(s), depuis {base})", n=len(fichiers),
++                        base=depuis), ""]
++    else:
++        diff, fichiers = _diff(projet, base)
++        lignes += [trad("## Le diff du lot ({n} fichier(s), depuis {base})", n=len(fichiers), base=base), ""]
+     if not diff.strip():
+         lignes.append(trad("(aucun changement hors de la mémoire : rien à relire)"))
+     else:
+@@ -117,13 +185,16 @@ def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFO
+         lignes += ["```diff", montre.rstrip("\n"), "```"]
+         if len(montre) < len(diff):
+             lignes.append(trad("(diff tronqué : {n} caractère(s) de plus non montrés ; `git diff {base}` les "
+-                               "donne)", n=len(diff) - len(montre), base=base))
+-    sujets = sujets_fermes(projet, base)
+-    if sujets:
+-        lignes += ["", trad("## Les sujets que le lot ferme"), ""]
+-        for s in sujets:
++                               "donne)", n=len(diff) - len(montre), base=depuis or base))
++    servis, ouverts = sujets_du_lot(projet, base)
++    if servis:
++        lignes += ["", trad("## Les sujets du lot : leur critère « Fait quand » est ta barre"), ""]
++        for s in servis:
+             lignes += [s.texte.strip(), ""]
+-    decisions = decisions_citees(projet, sujets)
++    if ouverts:
++        lignes += ["", trad("## Les sujets que le lot ouvre : ce qu'il renvoie au backlog"), ""]
++        lignes += [f"- {s.id} — {s.titre}" for s in ouverts]
++    decisions = decisions_citees(projet, servis)
+     if decisions:
+         lignes += ["", trad("## Les décisions et les demandes qu'ils citent"), ""]
+         for e in decisions:
+diff --git a/engine/socle/templates/AGENTS.en.md b/engine/socle/templates/AGENTS.en.md
+index 03bdb38..cb82516 100644
+--- a/engine/socle/templates/AGENTS.en.md
++++ b/engine/socle/templates/AGENTS.en.md
+@@ -127,7 +127,11 @@ going; it stops at the end of the batch, or as soon as a decision is up
+ to the human. It does not change a priority the human gave. Before the
+ push of a batch that changes code, a specification or a test, it has it
+ reviewed by a reviewer without context (the `socle-review` skill), and its
+-recap gives the findings.
++recap gives the findings. The reviewer judges the batch against the “Done
++when” of its topics: a topic whose design is not settled writes its
++specification before its code, a topic that adds or changes a guardrail,
++its threat model (its `## Threat model` section). Only blocking findings
++are fixed in the batch; the others go to the backlog.
+ 
+ By default, everything happens on one development branch, with only one
+ pull request open at a time: each finished batch is added to it, the
+diff --git a/engine/socle/templates/AGENTS.md b/engine/socle/templates/AGENTS.md
+index e1f38c7..0413cbe 100644
+--- a/engine/socle/templates/AGENTS.md
++++ b/engine/socle/templates/AGENTS.md
+@@ -128,7 +128,12 @@ priorité basse s'il est commode), puis s'y met ; il s'arrête à la fin du
+ lot, ou dès qu'une décision revient à l'humain. Il ne change pas une
+ priorité que l'humain a donnée. Avant le push d'un lot qui change du code,
+ une spécification ou un test, il le fait relire par un relecteur sans
+-contexte (le skill `socle-review`), et son récap dit les constats.
++contexte (le skill `socle-review`), et son récap dit les constats. Le
++relecteur juge le lot contre le « Fait quand » de ses sujets : un sujet
++dont la conception n'est pas tranchée écrit sa spécification avant son
++code, un sujet qui pose ou change un garde-fou, son modèle de menace (sa
++section `## Modèle de menace`). Seuls les constats bloquants se corrigent
++dans le lot ; les autres vont au backlog.
+ 
+ Par défaut, tout se fait sur une branche de développement, avec une seule
+ pull request ouverte à la fois : chaque lot fini s'y ajoute, l'humain la
+diff --git a/engine/socle/templates/skills/socle-review/SKILL.en.md b/engine/socle/templates/skills/socle-review/SKILL.en.md
+index 89a6bf5..8725d10 100644
+--- a/engine/socle/templates/skills/socle-review/SKILL.en.md
++++ b/engine/socle/templates/skills/socle-review/SKILL.en.md
+@@ -13,7 +13,14 @@ agent that wrote the batch, and who tries to find fault with it.
+ 
+ Before the push that delivers a batch that changes code, a specification
+ or a test; never for a batch that only touches the memory. One pass per
+-batch: no second review after the fixes.
++batch; a second one only if the fix of the blocking findings is heavy (it
++changes the design of a part, not a few lines), and on that fix alone.
++
++The reviewer judges the batch against its topics: their “Done when”
++criterion and, for a guardrail, its threat model. A topic that adds or
++changes a guardrail therefore writes it before its code, in its
++`## Threat model` section: what the guardrail stops, what it lets
++through; a topic whose design is not settled, its specification.
+ 
+ ## How
+ 
+@@ -26,8 +33,11 @@ python3 .socle/socle review
+ ```
+ 
+    It gives the instruction, the batch's diff since the remote branch
+-   (otherwise the default branch), the topics the batch closes and the
+-   decisions they cite. `--base <ref>` changes the batch's base.
++   (otherwise the default branch), the topics the batch touches, in
++   full, those it opens by their title, and the decisions they cite.
++   `--base <ref>` changes the batch's base; for a second review,
++   `--since <reviewed commit>` shows only the diff since the first
++   review's commit, with the messages of the commits that fix it.
+ 3. Hand it to a reviewer who does not have the conversation. Under
+    Claude Code: a subagent (the `Agent` tool), of the session's model,
+    whose only message is this brief, as is: nothing is added to it,
+@@ -45,9 +55,18 @@ python3 .socle/socle review
+ 
+ ## The findings
+ 
+-None blocks on its own. Fix each founded finding, in the batch, before the
+-push; answer the others in one line: why it does not hold. Post nothing on
+-GitHub: the human reads the recap, not the review.
++The reviewer classifies them; the agent checks each classification.
++
++- **Blocking** (it contradicts a ticked criterion or a cited decision,
++  breaks what worked, loses data, or bypasses a guardrail within its
++  threat model): fixed in the batch, before the push.
++- **For the backlog** (the rest: a bypass outside the threat model, a
++  criterion the batch does not tick, a neighbouring defect): not fixed
++  in the batch; it goes to the backlog, one topic per finding or one for
++  several of the same kind.
++- **Unfounded**: dismissed, in one line that says why.
+ 
+-The recap says it in one line: `Review: <n> findings, <k> fixed;
+-dismissed: <reason for each>`, or `Review: no finding`.
++Post nothing on GitHub: the human reads the recap, not the review. The
++recap says it in one line: `Review: <b> blocking, fixed; <n> to the
++backlog (<topics>); dismissed: <reason for each>`, or `Review: no
++finding`.
+diff --git a/engine/socle/templates/skills/socle-review/SKILL.md b/engine/socle/templates/skills/socle-review/SKILL.md
+index c0302da..7929e08 100644
+--- a/engine/socle/templates/skills/socle-review/SKILL.md
++++ b/engine/socle/templates/skills/socle-review/SKILL.md
+@@ -12,8 +12,16 @@ a écrit le lot, et qui cherche à le prendre en défaut.
+ ## Quand
+ 
+ Avant le push qui livre un lot qui change du code, une spécification ou un
+-test ; jamais pour un lot qui ne touche que la mémoire. Une seule passe par
+-lot : pas de seconde revue après les corrections.
++test ; jamais pour un lot qui ne touche que la mémoire. Une passe par lot ;
++une seconde seulement si la correction des constats bloquants est lourde
++(elle change la conception d'une partie, pas quelques lignes), et sur elle
++seule.
++
++Le relecteur juge le lot contre ses sujets : leur critère « Fait quand »,
++et, pour un garde-fou, son modèle de menace. Un sujet qui pose ou change un
++garde-fou l'écrit donc avant son code, dans sa section `## Modèle de
++menace` : ce que le garde-fou arrête, ce qu'il laisse passer ; un sujet
++dont la conception n'est pas tranchée, sa spécification.
+ 
+ ## Comment
+ 
+@@ -26,8 +34,11 @@ python3 .socle/socle review
+ ```
+ 
+    Il donne la consigne, le diff du lot depuis la branche distante (sinon
+-   la branche par défaut), les sujets que le lot ferme et les décisions
+-   qu'ils citent. `--base <ref>` change la base du lot.
++   la branche par défaut), les sujets que le lot touche, en entier, ceux
++   qu'il ouvre par leur titre, et les décisions qu'ils citent.
++   `--base <ref>` change la base du lot ; pour une seconde revue,
++   `--since <commit relu>` ne montre que le diff depuis le commit de la
++   première, avec les messages des commits qui le corrigent.
+ 3. Le confier à un relecteur qui n'a pas la conversation. Sous Claude
+    Code : un sous-agent (outil `Agent`), du modèle de la session, dont le
+    seul message est ce dossier, tel quel : rien ne s'y ajoute, rien ne s'en
+@@ -45,9 +56,17 @@ python3 .socle/socle review
+ 
+ ## Les constats
+ 
+-Aucun ne bloque seul. Corriger chaque constat fondé, dans le lot, avant le
+-push ; répondre aux autres en une ligne : pourquoi il ne tient pas. Ne rien
+-poster sur GitHub : l'humain lit le récap, pas la revue.
++Le relecteur les classe ; l'agent vérifie chaque classement.
++
++- **Bloquant** (il contredit un critère coché ou une décision citée, fait
++  régresser ce qui marchait, perd des données, ou contourne un garde-fou
++  dans son modèle de menace) : corrigé dans le lot, avant le push.
++- **Pour le backlog** (le reste : un contournement hors du modèle de
++  menace, un critère que le lot ne coche pas, un défaut voisin) : pas
++  corrigé dans le lot ; il va au backlog, un sujet par constat ou un pour
++  plusieurs de même nature.
++- **Infondé** : écarté, en une ligne qui dit pourquoi.
+ 
+-Le récap le dit en une ligne : `Revue : <n> constats, <k> corrigés ;
+-écartés : <raison de chacun>`, ou `Revue : aucun constat`.
++Ne rien poster sur GitHub : l'humain lit le récap, pas la revue. Le récap
++le dit en une ligne : `Revue : <b> bloquants, corrigés ; <n> au backlog
++(<sujets>) ; écartés : <raison de chacun>`, ou `Revue : aucun constat`.
+diff --git a/memory/backlog/B-0209-la-revue-juge-le-lot-contre-le-critere-et-le-model.md b/memory/backlog/closed/B-0209-la-revue-juge-le-lot-contre-le-critere-et-le-model.md
+similarity index 86%
+rename from memory/backlog/B-0209-la-revue-juge-le-lot-contre-le-critere-et-le-model.md
+rename to memory/backlog/closed/B-0209-la-revue-juge-le-lot-contre-le-critere-et-le-model.md
+index 079c8c0..b0628c7 100644
+--- a/memory/backlog/B-0209-la-revue-juge-le-lot-contre-le-critere-et-le-model.md
++++ b/memory/backlog/closed/B-0209-la-revue-juge-le-lot-contre-le-critere-et-le-model.md
+@@ -1,7 +1,7 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # B-0209 — La revue juge le lot contre le critère et le modèle de menace de ses sujets : seuls les constats bloquants se corrigent dans le lot
+ 
+-> statut : ouvert · origine : J-2026-11-13-J · priorité : haute · lu : backlog@33a4d320
++> statut : fait · origine : J-2026-11-13-J · priorité : haute · lu : backlog@33a4d320 · ref : J-2026-11-13-M
+ 
+ Le lot de B-0010 et B-0171, le 13 novembre, a pris quatre revues et
+ trois corrections pour deux sujets, quand une revue rend d'ordinaire 3 à
+@@ -25,6 +25,6 @@ suit le même changement.
+ 
+ ## Fait quand
+ 
+-- [ ] le dossier de `socle review` donne au relecteur le critère « Fait quand » des sujets du lot et, pour un garde-fou, son modèle de menace, et lui demande de classer chaque constat : bloquant (contredit un critère, régression, perte de données, contournement dans le modèle de menace) ou pour le backlog ; un test le montre
+-- [ ] le skill `socle-review` dit que seuls les constats bloquants se corrigent dans le lot, les autres vont au backlog, et qu'une seconde revue ne porte que sur la correction de bloquants lourde
+-- [ ] un sujet qui pose ou change un garde-fou écrit son modèle de menace avant son code, et un sujet dont la conception n'est pas tranchée, sa spécification avant son code
++- [x] le dossier de `socle review` donne au relecteur le critère « Fait quand » des sujets du lot et, pour un garde-fou, son modèle de menace, et lui demande de classer chaque constat : bloquant (contredit un critère, régression, perte de données, contournement dans le modèle de menace) ou pour le backlog ; un test le montre
++- [x] le skill `socle-review` dit que seuls les constats bloquants se corrigent dans le lot, les autres vont au backlog, et qu'une seconde revue ne porte que sur la correction de bloquants lourde
++- [x] un sujet qui pose ou change un garde-fou écrit son modèle de menace avant son code, et un sujet dont la conception n'est pas tranchée, sa spécification avant son code
+diff --git a/memory/journal/2026-11-4.md b/memory/journal/2026-11-4.md
+index fb0fa26..8b6eb93 100644
+--- a/memory/journal/2026-11-4.md
++++ b/memory/journal/2026-11-4.md
+@@ -24,3 +24,27 @@ socle ou ce que l'installeur fait complète
+ `docs/fabrication/chess/prompt-mise-a-jour.md`, cumulatif depuis la
+ version que chess a reçue le 13 novembre. B-0199 à B-0201 n'attendent
+ plus la mise à jour de chess. La consigne entre au chantier actif.
++
++## J-2026-11-13-M — B-0209 : la revue juge le lot contre le critère et le modèle de menace de ses sujets
++
++Fait par la session elle-même, sans sous-agent : la fenêtre de cinq heures
++était à 65 % au démarrage, au-delà des 60 % où le skill `delegate-lot`
++n'en lance aucun, et le sujet est petit. La spécification d'abord,
++commitée seule (ADR-0073), comme le sujet le demande à un sujet dont la
++conception n'est pas tranchée.
++
++Le dossier de `socle review` donne en entier les sujets que le lot touche,
++quel que soit leur statut, s'ils existaient à sa base ou qu'il les clôt ;
++ceux qu'il ouvre, par leur titre. Sa consigne, en trois parties, donne la
++barre (le « Fait quand », le modèle de menace d'un garde-fou) et fait
++classer chaque constat : bloquant ou pour le backlog. `--since <commit>`
++fait le dossier d'une seconde revue, sur la correction seule, avec les
++messages de ses commits. Le gabarit du skill `socle-review`, celui
++d'AGENTS.md, le guide, FORMAT.md (la section `## Modèle de menace`) et le
++skill `delegate-lot` le disent ; `delegate-lot` resserré sous ses 8 000
++octets. Le prompt de mise à jour de chess complété (point 4).
++
++Deux copies restent en retard sur leur gabarit : celle, protégée, du skill
++`socle-review` de ce dépôt (une demande, après la revue) ; la section du
++socle de l'AGENTS.md de ce dépôt, à 2 octets de son budget, comme la
++phrase des branches jetables avant elle.
+diff --git a/tests/test_revue.py b/tests/test_revue.py
+index 543e5a3..f353dcd 100644
+--- a/tests/test_revue.py
++++ b/tests/test_revue.py
+@@ -23,7 +23,9 @@ SUJET = ("<!-- socle: couche=backlog zone=publique -->\n# B-0001 — Doubler\n\n
+          "> statut : {statut} · origine : ADR-0001\n\nSelon ADR-0001.\n\n## Fait quand\n\n- [x] double est écrit\n")
+ 
+ 
+-class TestDossier(unittest.TestCase):
++class _Lot(unittest.TestCase):
++    """Un dépôt cloné, sa branche de travail, et un lot à y faire."""
++
+     def setUp(self):
+         self.dossier = Path(tempfile.mkdtemp(prefix="socle-revue-"))
+         self.addCleanup(shutil.rmtree, self.dossier, ignore_errors=True)
+@@ -48,6 +50,8 @@ class TestDossier(unittest.TestCase):
+         (self.racine / "memory/backlog/B-0001-doubler.md").write_text(SUJET.format(statut="fait"))
+         git(self.racine, "commit", "-qam", "le lot")
+ 
++
++class TestDossier(_Lot):
+     def test_la_base_est_la_branche_distante_sinon_la_branche_par_defaut(self):
+         self.assertEqual(revue.base_du_lot(self.racine), "origin/main")
+         git(self.racine, "push", "-q", "-u", "origin", "travail")
+@@ -99,6 +103,106 @@ class TestDossier(unittest.TestCase):
+         self.assertIn("(aucun changement hors de la mémoire : rien à relire)", revue.dossier(self.projet))
+ 
+ 
++class TestBarre(_Lot):
++    """ADR-0073 : le relecteur juge le lot contre le critère et le modèle de
++    menace de ses sujets, et classe chaque constat, bloquant ou pour le
++    backlog."""
++
++    GARDE = ("<!-- socle: couche=backlog zone=publique -->\n# B-0003 — Refuser l'écriture du verrou\n\n"
++             "> statut : ouvert · origine : ADR-0001\n\n## Modèle de menace\n\nUn agent distrait, pas hostile : "
++             "une redirection vers le verrou est arrêtée, un interpréteur qui l'écrit passe.\n\n"
++             "## Fait quand\n\n- [x] la redirection est refusée\n- [ ] l'interpréteur est refusé\n")
++
++    def test_la_consigne_donne_la_barre_et_les_deux_classes(self):
++        self.lot()
++        texte = revue.dossier(self.projet)
++        self.assertIn("Ta barre est celle des sujets du lot, plus bas : leur critère « Fait quand »", texte)
++        self.assertIn("**Bloquant** : il contredit un critère coché ou une décision citée", texte)
++        self.assertIn("contourne un garde-fou dans son modèle de menace", texte)
++        self.assertIn("un garde-fou que le lot pose ou change sans modèle de menace écrit est lui-même un constat "
++                      "bloquant", texte)
++        self.assertIn("**Pour le backlog** : tout le reste, dont un contournement hors du modèle de menace", texte)
++        self.assertIn("Seuls les bloquants se corrigent dans le lot.", texte)
++        self.assertIn("Rends deux listes numérotées, « Bloquants » puis « Pour le backlog »", texte)
++        # Les trois parties de la consigne précèdent le diff.
++        self.assertLess(texte.index("Rends deux listes"), texte.index("## Le diff du lot"))
++
++    def test_un_sujet_encore_ouvert_que_le_lot_touche_donne_son_critere_et_son_modele_de_menace(self):
++        base = self.racine / "memory/backlog/B-0003-refuser.md"
++        base.write_text(self.GARDE.replace("- [x] la redirection", "- [ ] la redirection"), encoding="utf-8")
++        git(self.racine, "add", "-A")
++        git(self.racine, "commit", "-qm", "le sujet du garde-fou")
++        git(self.racine, "push", "-q", "-u", "origin", "travail")
++        (self.racine / "garde.py").write_text("def refuse(cmd):\n    return '>' in cmd\n")
++        base.write_text(self.GARDE, encoding="utf-8")
++        git(self.racine, "add", "-A")
++        git(self.racine, "commit", "-qm", "la redirection refusée")
++        servis, ouverts = revue.sujets_du_lot(self.projet, "origin/travail")
++        self.assertEqual(([e.id for e in servis], ouverts), (["B-0003"], []))
++        texte = revue.dossier(self.projet)
++        self.assertIn("## Les sujets du lot : leur critère « Fait quand » est ta barre", texte)
++        self.assertIn("## Modèle de menace\n\nUn agent distrait, pas hostile", texte)
++        self.assertIn("- [x] la redirection est refusée\n- [ ] l'interpréteur est refusé", texte)
++        # Un sujet ouvert que le lot ne touche pas n'y est pas.
++        self.assertNotIn("# B-0001 — Doubler", texte)
++
++    def test_un_sujet_que_le_lot_ouvre_ne_donne_que_son_titre(self):
++        self.lot()
++        (self.racine / "memory/backlog/B-0002-tripler.md").write_text(
++            "<!-- socle: couche=backlog zone=publique -->\n# B-0002 — Tripler, renvoyé au backlog\n\n"
++            "> statut : ouvert · origine : ADR-0001\n\nUn constat de la revue, hors du critère.\n",
++            encoding="utf-8")
++        git(self.racine, "add", "-A")
++        git(self.racine, "commit", "-qm", "un sujet ouvert par le lot")
++        servis, ouverts = revue.sujets_du_lot(self.projet, "origin/main")
++        self.assertEqual(([e.id for e in servis], [e.id for e in ouverts]), (["B-0001"], ["B-0002"]))
++        texte = revue.dossier(self.projet)
++        self.assertIn("## Les sujets que le lot ouvre : ce qu'il renvoie au backlog\n\n"
++                      "- B-0002 — Tripler, renvoyé au backlog", texte)
++        self.assertNotIn("Un constat de la revue, hors du critère.", texte)
++        # Ouvert et clos dans le même lot, il est servi.
++        chemin = self.racine / "memory/backlog/B-0002-tripler.md"
++        chemin.write_text(chemin.read_text(encoding="utf-8").replace("statut : ouvert", "statut : fait · ref : x"),
++                          encoding="utf-8")
++        git(self.racine, "commit", "-qam", "clos")
++        servis, ouverts = revue.sujets_du_lot(self.projet, "origin/main")
++        self.assertEqual(([e.id for e in servis], ouverts), (["B-0001", "B-0002"], []))
++
++    def test_la_seconde_revue_ne_montre_que_la_correction_et_garde_les_sujets_du_lot(self):
++        self.lot()
++        relu = git(self.racine, "rev-parse", "HEAD").strip()
++        (self.racine / "calc.py").write_text("def double(x):\n    return int(x) * 2\n")
++        git(self.racine, "commit", "-qam", "Le bloquant 1 corrigé : une chaîne se double en entier\n\n"
++                                         "Le détail.\n\nCo-Authored-By: t <t@t>\nSocle-Hooks: Stop=1")
++        self.assertEqual(revue.messages_depuis(self.racine, relu),
++                         ["Le bloquant 1 corrigé : une chaîne se double en entier\n\nLe détail."])
++        texte = revue.dossier(self.projet, depuis=relu)
++        self.assertIn("## Seconde revue\n\nSeconde revue : ce diff corrige des constats bloquants", texte)
++        self.assertIn("```text\nLe bloquant 1 corrigé : une chaîne se double en entier\n\nLe détail.\n```", texte)
++        self.assertNotIn("Co-Authored-By", texte)
++        self.assertIn(f"## Le diff de la correction (1 fichier(s), depuis {relu})", texte)
++        self.assertIn("-    return x * 2\n+    return int(x) * 2", texte)
++        self.assertNotIn("-    return x + x", texte)
++        self.assertIn("- [x] double est écrit", texte)
++        self.assertIn("`double(x)` rend `2 * x`, entiers compris.", texte)
++
++    def test_la_commande_donne_la_seconde_revue(self):
++        import argparse
++        import contextlib
++        import io
++
++        from socle import cli
++
++        self.lot()
++        relu = git(self.racine, "rev-parse", "HEAD").strip()
++        with contextlib.redirect_stdout(io.StringIO()) as flux:
++            code = cli.cmd_review(argparse.Namespace(root=str(self.racine), base=None, max_bytes=60_000,
++                                                     since=relu))
++        self.assertEqual(code, 0)
++        self.assertEqual(flux.getvalue(), revue.dossier(config.Projet.charger(self.racine), None, depuis=relu))
++        self.assertIn("(aucun changement hors de la mémoire : rien à relire)", flux.getvalue())
++
++
+ class TestRelectureAFroid(unittest.TestCase):
+     """ADR-0046 : le lecteur n'a que le texte de la demande, dans le rôle de
+     l'humain qui revient sur le projet après des semaines."""
+-- 
+2.43.0
+
+
+From 581a4ee80228b712a3952fdca970c901cadaf042 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 13 Nov 2026 22:08:52 +0000
+Subject: [PATCH 3/3] =?UTF-8?q?Le=20dossier=20de=20la=20revue=20donne=20le?=
+ =?UTF-8?q?s=20d=C3=A9cisions=20que=20le=20lot=20=C3=A9crit=20:=20sa=20sp?=
+ =?UTF-8?q?=C3=A9cification=20manquait,=20ses=20sujets=20plus=20anciens=20?=
+ =?UTF-8?q?ne=20la=20citant=20pas=20(B-0209,=20ADR-0073)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01JeB7oYXbUoyuJw8NXQooS9
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=2 PreToolUse=68 Stop=0
+Socle-Hooks-Since-Commit: PreToolUse=6
+---
+ engine/socle/messages_en.py                   |  2 ++
+ engine/socle/review.py                        | 22 ++++++++++++++++---
+ ...ge-le-lot-contre-le-critere-et-le-model.md |  6 +++--
+ memory/journal/2026-11-4.md                   |  4 +++-
+ tests/test_revue.py                           | 17 ++++++++++++++
+ 5 files changed, 45 insertions(+), 6 deletions(-)
+
+diff --git a/engine/socle/messages_en.py b/engine/socle/messages_en.py
+index 7b7a63d..5d001a7 100644
+--- a/engine/socle/messages_en.py
++++ b/engine/socle/messages_en.py
+@@ -1951,6 +1951,8 @@ MESSAGES: dict[str, str] = {
+         "## The batch's topics: their “Done when” criterion is your bar",
+     "## Les sujets que le lot ouvre : ce qu'il renvoie au backlog":
+         "## The topics the batch opens: what it sends to the backlog",
++    "## Les décisions et les demandes que le lot écrit":
++        "## The decisions and requests the batch writes",
+     "## Les décisions et les demandes qu'ils citent":
+         "## The decisions and requests they cite",
+     "répondre à une demande ; l'agent y relaie (--relayed) ta réponse donnée dans la conversation":
+diff --git a/engine/socle/review.py b/engine/socle/review.py
+index 7e9dfdc..8f6786d 100644
+--- a/engine/socle/review.py
++++ b/engine/socle/review.py
+@@ -86,6 +86,17 @@ def messages_depuis(racine, depuis: str) -> list[str]:
+     return res
+ 
+ 
++def decisions_ecrites(projet: config.Projet, base: str) -> list:
++    """Les décisions et les demandes que le lot ajoute à la mémoire : la
++    spécification ou le modèle de menace écrits avant son code, que ses
++    sujets, plus anciens, ne citent pas (ADR-0073)."""
++    ajoutes = set(outils.git(projet.racine, "diff", "--name-only", "--diff-filter=A", base, "--",
++                             projet.chemins.memoire, check=False).split())
++    mem = memoire.Memoire.charger(projet.racine)
++    return [e for e in mem.entrees() if e.fichier in ajoutes and e.id.startswith(("ADR-", "D-"))
++            and not memoire.est_prive(e.fichier)]
++
++
+ def decisions_citees(projet: config.Projet, sujets: list) -> list:
+     """Les décisions et les demandes que ces sujets citent, en entier."""
+     mem = memoire.Memoire.charger(projet.racine)
+@@ -158,8 +169,8 @@ CONSIGNE_SECONDE = a_traduire(
+ def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFOND_DIFF,
+             depuis: str | None = None) -> str:
+     """Ce que reçoit le relecteur, en plus du dépôt qu'il peut lire : la
+-    consigne, le diff du lot, les sujets du lot et les décisions qu'ils
+-    citent (ADR-0073). Avec `depuis`, le dossier d'une seconde revue : le
++    consigne, le diff du lot, les sujets du lot, les décisions qu'il écrit
++    et celles qu'ils citent (ADR-0073). Avec `depuis`, le dossier d'une seconde revue : le
+     diff depuis ce commit, les messages de ses commits, et toujours les
+     sujets du lot entier, depuis `base`."""
+     base = base or base_du_lot(projet.racine)
+@@ -194,7 +205,12 @@ def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFO
+     if ouverts:
+         lignes += ["", trad("## Les sujets que le lot ouvre : ce qu'il renvoie au backlog"), ""]
+         lignes += [f"- {s.id} — {s.titre}" for s in ouverts]
+-    decisions = decisions_citees(projet, servis)
++    ecrites = decisions_ecrites(projet, base)
++    if ecrites:
++        lignes += ["", trad("## Les décisions et les demandes que le lot écrit"), ""]
++        for e in ecrites:
++            lignes += [e.texte.strip(), ""]
++    decisions = [e for e in decisions_citees(projet, servis) if e.id not in {d.id for d in ecrites}]
+     if decisions:
+         lignes += ["", trad("## Les décisions et les demandes qu'ils citent"), ""]
+         for e in decisions:
+diff --git a/memory/decisions/ADR-0073-la-revue-juge-le-lot-contre-le-critere-et-le-model.md b/memory/decisions/ADR-0073-la-revue-juge-le-lot-contre-le-critere-et-le-model.md
+index e12e9a0..00da82e 100644
+--- a/memory/decisions/ADR-0073-la-revue-juge-le-lot-contre-le-critere-et-le-model.md
++++ b/memory/decisions/ADR-0073-la-revue-juge-le-lot-contre-le-critere-et-le-model.md
+@@ -19,8 +19,10 @@ décision en est la spécification, écrite avant son code.
+ que soit leur statut, les sujets du backlog que le lot touche et qui
+ existaient à sa base, ou qu'il clôt : leur « Fait quand » est la barre.
+ Ceux qu'il ouvre sans les clore, il n'en donne que le titre : ce que le
+-lot renvoie au backlog, que le relecteur ne redemande pas. Les décisions
+-et les demandes citées par les sujets du lot suivent, en entier.
++lot renvoie au backlog, que le relecteur ne redemande pas. Suivent, en
++entier, les décisions et les demandes que le lot ajoute (sa
++spécification, un modèle de menace écrit en décision), que ses sujets,
++plus anciens, ne citent pas ; puis celles que citent ses sujets.
+ 
+ **Le modèle de menace.** Un sujet qui pose ou change un garde-fou écrit,
+ avant son code, son modèle de menace dans une section `## Modèle de
+diff --git a/memory/journal/2026-11-4.md b/memory/journal/2026-11-4.md
+index 8b6eb93..bdf61f6 100644
+--- a/memory/journal/2026-11-4.md
++++ b/memory/journal/2026-11-4.md
+@@ -35,7 +35,9 @@ conception n'est pas tranchée.
+ 
+ Le dossier de `socle review` donne en entier les sujets que le lot touche,
+ quel que soit leur statut, s'ils existaient à sa base ou qu'il les clôt ;
+-ceux qu'il ouvre, par leur titre. Sa consigne, en trois parties, donne la
++ceux qu'il ouvre, par leur titre ; les décisions qu'il écrit, que ses
++sujets ne citent pas (sa propre spécification manquait au premier dossier
++de ce lot). Sa consigne, en trois parties, donne la
+ barre (le « Fait quand », le modèle de menace d'un garde-fou) et fait
+ classer chaque constat : bloquant ou pour le backlog. `--since <commit>`
+ fait le dossier d'une seconde revue, sur la correction seule, avec les
+diff --git a/tests/test_revue.py b/tests/test_revue.py
+index f353dcd..f890adc 100644
+--- a/tests/test_revue.py
++++ b/tests/test_revue.py
+@@ -186,6 +186,23 @@ class TestBarre(_Lot):
+         self.assertIn("- [x] double est écrit", texte)
+         self.assertIn("`double(x)` rend `2 * x`, entiers compris.", texte)
+ 
++    def test_la_specification_que_le_lot_ecrit_est_dans_le_dossier_sans_etre_citee(self):
++        self.lot()
++        (self.racine / "memory/decisions/ADR-0002-le-modele-de-menace.md").write_text(
++            "<!-- socle: couche=decisions zone=publique -->\n# ADR-0002 — Le modèle de menace du doublement\n\n"
++            "> statut : acceptée · date : 2026-11-13\n\n## Décision\n\nUne chaîne n'est pas doublée.\n",
++            encoding="utf-8")
++        git(self.racine, "add", "-A")
++        git(self.racine, "commit", "-qm", "la spécification")
++        self.assertEqual([e.id for e in revue.decisions_ecrites(self.projet, "origin/main")], ["ADR-0002"])
++        texte = revue.dossier(self.projet)
++        self.assertIn("## Les décisions et les demandes que le lot écrit\n\n# ADR-0002 — Le modèle de menace du "
++                      "doublement", texte)
++        self.assertIn("Une chaîne n'est pas doublée.", texte)
++        # Celle que le sujet cite, déjà là à la base, suit à part.
++        self.assertIn("## Les décisions et les demandes qu'ils citent\n\n# ADR-0001", texte)
++        self.assertEqual(revue.decisions_ecrites(self.projet, "HEAD"), [])
++
+     def test_la_commande_donne_la_seconde_revue(self):
+         import argparse
+         import contextlib
+-- 
+2.43.0
+
