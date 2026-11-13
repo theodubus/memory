@@ -5,17 +5,15 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot du 13 novembre : B-0010 (haute, D-0107), puis, si la fenêtre le
-permet, B-0142, B-0171, B-0176 ; ensuite B-0151, B-0156, B-0167, B-0172.
-Le socle est installé sur chess (J-2026-11-12-A) ; on attend ses comptes
-rendus (mise à jour, feuille de route B-0126) et, pour B-0179, celui du
-pilote. Les règles de B-0173, dans `.claude/skills/delegate-lot/SKILL.md`,
-ferment son critère 3 quand elles auront servi sur un lot. B-0048 et
-B-0018 restent ouverts, gardés en tête (D-0026).
-
-chess a reçu la version d'avant B-0173 ; Théo veut savoir quand une
-nouvelle mise à jour en vaut la peine (J-2026-11-13-C) : le dire à la
-fusion de B-0010, dont le démarrage borné est le premier gain pour chess.
+Le lot B-0010 et B-0171 attend une session neuve, sur un autre compte :
+ses deux commits et les constats de la revue de B-0010 sont en
+correctifs sous `docs/fabrication/passation/`, dont le README dit comment
+reprendre (J-2026-11-13-E). Le pilote est en pause (ADR-0059) : B-0179
+n'attend que sa reprise. Une question à Théo attend sa réponse : passer
+en priorité haute les deux contournements du hook trouvés par B-0171
+(les numéros que leur donnera l'intégration). À la fusion du lot, lui
+dire que chess peut être mis à jour (J-2026-11-13-C), avec le prompt de
+mise à jour complété de ce qui a changé.
 
 ## Consignes en cours
 
@@ -59,7 +57,8 @@ Leur texte exact est dans l'entrée du journal citée.
 
 ## Prochaines étapes
 
-1. Le lot ci-dessus. Les comptes rendus de chess et du pilote, à leur
-   arrivée dans la conversation : les lire, ouvrir ce qu'ils demandent.
-2. Ensuite, dans l'ordre du backlog : la planification (B-0101), puis la
+1. Finir le lot selon `docs/fabrication/passation/README.md`.
+2. Avant toute nouvelle fonction : B-0142 (avec la gêne 6 de chess), les
+   deux contournements de B-0171, B-0176, B-0196 ; puis B-0151, B-0156,
+   B-0167, B-0172, B-0197. Ensuite la planification (B-0101), puis la
    répartition entre agents (B-0055).
