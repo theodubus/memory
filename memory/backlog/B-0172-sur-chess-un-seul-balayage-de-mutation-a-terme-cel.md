@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0172 — Sur chess, un seul balayage de mutation à terme : celui du socle, quand il sait faire ce que fait celui de chess
 
-> statut : ouvert · origine : J-2026-11-11-Q · après : B-0126 · lu : backlog@65c7a36c
+> statut : ouvert · origine : J-2026-11-11-Q · après : B-0126 · priorité : basse · lu : backlog@65c7a36c
 
 chess a son propre balayage de mutation : un job par fichier, un profil
 de compilation dédié, des plafonds mesurés avec leurs raisons
@@ -18,6 +18,8 @@ seul balayage, celui du socle : un job par fichier, le profil porté par
 l'adaptateur, les plafonds repris de ceux de chess
 (`docs/fabrication/chess/mutation-caps.toml`), puis le retrait de celui de
 chess. Ce qui manque au socle pour cela se mesure d'abord sur chess.
+
+Le 13 novembre, Théo retient la priorité basse proposée (D-0108@96eeead5).
 
 ## Fait quand
 

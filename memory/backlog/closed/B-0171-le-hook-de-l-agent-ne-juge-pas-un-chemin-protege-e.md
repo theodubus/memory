@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0171 — Le hook de l'agent ne juge pas un chemin protégé écrit par une variable ou un motif du shell
 
-> statut : ouvert · origine : J-2026-11-11-O · priorité : haute · lu : backlog@65c7a36c
+> statut : fait · origine : J-2026-11-11-O · priorité : haute · lu : backlog@65c7a36c · ref : J-2026-11-13-H
 
 Le hook de l'agent juge les chemins qu'une commande écrit tels qu'ils sont
 tapés : une variable ou un motif que le shell développerait n'y est pas
@@ -19,4 +19,4 @@ un contournement possible d'un garde-fou.
 
 ## Fait quand
 
-- [ ] une écriture du shell vers un chemin protégé écrit par une variable ou un motif est refusée par le hook, et un test le montre
+- [x] une écriture du shell vers un chemin protégé écrit par une variable ou un motif est refusée par le hook, et un test le montre

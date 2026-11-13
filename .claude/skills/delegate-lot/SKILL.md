@@ -139,8 +139,9 @@ Ranger d'abord, pour qu'une session neuve, sur ce compte ou un autre,
 reparte du dépôt seul :
 
 1. tout poussé, rien qui ne vive que dans le conteneur (un commit pas
-   encore relu part en correctif, `git format-patch`, sous
-   `docs/fabrication/passation/`) ; la pull request fusionnée ;
+   encore relu part en correctif, `git format-patch`, dans un dossier
+   de passation sous docs/fabrication, retiré quand le lot s'intègre) ;
+   la pull request fusionnée ;
 2. les worktrees et leurs branches retirés ;
 3. le chantier actif dit le lot suivant et ce qui attend (un compte
    rendu, une CI, une demande) ;
@@ -152,9 +153,10 @@ pourquoi, et donner le prompt de la session neuve, dans un bloc de texte
 
 ```text
 Reprends le travail du socle dans ce dépôt, en session neuve.
-Avant tout : lis l'état en entier (python3 .socle/socle state ; si le
-démarrage n'en a donné qu'un aperçu, lis le fichier complet dont il donne
-le chemin), puis memory/active.md, et applique-les.
+Avant tout : lis l'état que le démarrage injecte, borné ; une ligne
+« !! coupé » dit ce qui y manque et où le lire (l'état dérivé entier :
+python3 .socle/socle state --short) : lis-le, puis memory/active.md, et
+applique-les.
 Le lot : <les sujets, dans l'ordre>, selon le skill delegate-lot.
 Ce qui attend : <un compte rendu, une CI, une demande> | rien.
 ```

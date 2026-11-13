@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0199 — La conduite d'un lot dans le produit : sous-agents, revue, intégration, fusion, une session par lot, seuils de consommation, passation
 
-> statut : ouvert · origine : J-2026-11-13-F · lu : backlog@225764b5
+> statut : ouvert · origine : J-2026-11-13-F · priorité : haute · lu : backlog@225764b5
 
 Théo, le 13 novembre : « Tout ce qui est utile doit intégrer le socle »
 (J-2026-11-13-F). Ce dépôt mène ses lots par une procédure à lui, le skill
@@ -22,6 +22,10 @@ profondeur, un réveil pour toute attente annoncée) ; ses préférences
 propres restent à la couche des consignes (B-0161). C'est la première
 pièce de B-0162 (la proposition 7 de D-0093), que la consigne du 13 rend
 voulue ; le skill de ce dépôt se réduit ensuite à ce qui lui est propre.
+
+Le 13 novembre, Théo retient la priorité haute proposée (D-0108@96eeead5) :
+le sujet fait partie de ceux à finir avant de revenir aux nouvelles
+fonctions.
 
 ## Fait quand
 

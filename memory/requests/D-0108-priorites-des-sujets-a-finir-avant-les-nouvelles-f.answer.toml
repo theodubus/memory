@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0108-priorites-des-sujets-a-finir-avant-les-nouvelles-f.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-13"
+canal = "conversation"
+citation = "Ok pour moyenne sur B-0204 et B-0205 et ok pour tes propositions de priorité, bien garder en tête ce set d'éléments de backlogs (qui peut réduire ou grossir en fonction des trouvailles) à faire avant de repasser à l'ajout de feature classiques \n\nJ'ai un reset hebdo en réserve que je lancerai quand la limite hebdo sera proche"
+empreinte = "sha256:47f8583c262ccbe721193025f2b7625fb7e100562211ceffdcd7131e9ebee5d6"
