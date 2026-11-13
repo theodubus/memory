@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0109-un-sujet-en-priorite-haute-pour-la-revue-le-lot-ju.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-13"
+canal = "conversation"
+citation = "Oui tu peux ouvrir un sujet en priorité haute pour la revue, et à ajouter ducoup a l'ensemble des sujets a traiter dans les corrections et tout"
+empreinte = "sha256:e89f349ead73bc0639400f450cc8541be6d50563f73aa92690409a17a99d5231"
