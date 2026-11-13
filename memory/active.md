@@ -5,12 +5,10 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Le lot B-0010 et B-0171, repris de la passation (J-2026-11-13-E) :
-intégré en deux commits, non poussés ; leurs revues se corrigent par des
-sous-agents, puis une seconde revue chacun, puis push et fusion. À la
+Le lot B-0010 et B-0171 (J-2026-11-13-E) : intégré, revues corrigées
+par des sous-agents, puis une seconde revue chacun, push et fusion. À la
 fusion, dire à Théo que chess peut être mis à jour (J-2026-11-13-C), avec
-le prompt de mise à jour complété de ce qui a changé. Le pilote est en
-pause (ADR-0059) : B-0179 n'attend que sa reprise.
+le prompt de mise à jour complété. Pilote en pause (ADR-0059).
 
 ## Consignes en cours
 
@@ -19,10 +17,8 @@ Leur texte exact est dans l'entrée du journal citée.
 - Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
 - Tout ce qui est utile intègre le socle : ce qu'invente ce dépôt et
   qui servirait à un projet va au produit (J-2026-11-13-F).
-- Un lot par session : un lot rendu que la fenêtre ne permet pas de
-  suivre d'un autre entier, tout se range pour une session neuve, même
-  sur un autre compte, et la session le dit avec son prompt
-  (J-2026-11-12-P).
+- Un lot par session ; sinon tout se range pour une session neuve, qui
+  peut être sur un autre compte, avec son prompt (J-2026-11-12-P).
 - Chaque session travaille sur la branche de son environnement, partie
   de la branche par défaut (J-2026-11-13-A).
 - Aucun autre dépôt dans la session, ni lecture de JustCook ou de
@@ -53,9 +49,8 @@ Leur texte exact est dans l'entrée du journal citée.
 - Sessions d'un agent réel sur l'abonnement, chacune plafonnée à
   l'équivalent de 2 dollars, sa consommation rapportée (J-2026-10-19-H).
 - En autonomie sur le backlog, sauf arbitrage (J-2026-10-20-C).
-- Un ensemble de sujets à finir avant de revenir aux nouvelles
-  fonctions, qui peut se réduire ou grossir selon les trouvailles : la
-  liste des prochaines étapes (J-2026-11-13-I, D-0108).
+- Les prochaines étapes, à finir avant les nouvelles fonctions ; la
+  liste se réduit ou grossit selon les trouvailles (J-2026-11-13-I).
 - Théo a une remise à zéro hebdomadaire en réserve : le lui dire quand la
   semaine approche de 85 %, au lieu de ranger sans prévenir
   (J-2026-11-13-I).
