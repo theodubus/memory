@@ -186,6 +186,23 @@ class TestBarre(_Lot):
         self.assertIn("- [x] double est écrit", texte)
         self.assertIn("`double(x)` rend `2 * x`, entiers compris.", texte)
 
+    def test_la_specification_que_le_lot_ecrit_est_dans_le_dossier_sans_etre_citee(self):
+        self.lot()
+        (self.racine / "memory/decisions/ADR-0002-le-modele-de-menace.md").write_text(
+            "<!-- socle: couche=decisions zone=publique -->\n# ADR-0002 — Le modèle de menace du doublement\n\n"
+            "> statut : acceptée · date : 2026-11-13\n\n## Décision\n\nUne chaîne n'est pas doublée.\n",
+            encoding="utf-8")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "la spécification")
+        self.assertEqual([e.id for e in revue.decisions_ecrites(self.projet, "origin/main")], ["ADR-0002"])
+        texte = revue.dossier(self.projet)
+        self.assertIn("## Les décisions et les demandes que le lot écrit\n\n# ADR-0002 — Le modèle de menace du "
+                      "doublement", texte)
+        self.assertIn("Une chaîne n'est pas doublée.", texte)
+        # Celle que le sujet cite, déjà là à la base, suit à part.
+        self.assertIn("## Les décisions et les demandes qu'ils citent\n\n# ADR-0001", texte)
+        self.assertEqual(revue.decisions_ecrites(self.projet, "HEAD"), [])
+
     def test_la_commande_donne_la_seconde_revue(self):
         import argparse
         import contextlib

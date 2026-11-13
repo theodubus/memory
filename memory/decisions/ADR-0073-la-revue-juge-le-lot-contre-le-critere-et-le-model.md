@@ -19,8 +19,10 @@ décision en est la spécification, écrite avant son code.
 que soit leur statut, les sujets du backlog que le lot touche et qui
 existaient à sa base, ou qu'il clôt : leur « Fait quand » est la barre.
 Ceux qu'il ouvre sans les clore, il n'en donne que le titre : ce que le
-lot renvoie au backlog, que le relecteur ne redemande pas. Les décisions
-et les demandes citées par les sujets du lot suivent, en entier.
+lot renvoie au backlog, que le relecteur ne redemande pas. Suivent, en
+entier, les décisions et les demandes que le lot ajoute (sa
+spécification, un modèle de menace écrit en décision), que ses sujets,
+plus anciens, ne citent pas ; puis celles que citent ses sujets.
 
 **Le modèle de menace.** Un sujet qui pose ou change un garde-fou écrit,
 avant son code, son modèle de menace dans une section `## Modèle de

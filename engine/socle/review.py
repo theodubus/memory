@@ -86,6 +86,17 @@ def messages_depuis(racine, depuis: str) -> list[str]:
     return res
 
 
+def decisions_ecrites(projet: config.Projet, base: str) -> list:
+    """Les décisions et les demandes que le lot ajoute à la mémoire : la
+    spécification ou le modèle de menace écrits avant son code, que ses
+    sujets, plus anciens, ne citent pas (ADR-0073)."""
+    ajoutes = set(outils.git(projet.racine, "diff", "--name-only", "--diff-filter=A", base, "--",
+                             projet.chemins.memoire, check=False).split())
+    mem = memoire.Memoire.charger(projet.racine)
+    return [e for e in mem.entrees() if e.fichier in ajoutes and e.id.startswith(("ADR-", "D-"))
+            and not memoire.est_prive(e.fichier)]
+
+
 def decisions_citees(projet: config.Projet, sujets: list) -> list:
     """Les décisions et les demandes que ces sujets citent, en entier."""
     mem = memoire.Memoire.charger(projet.racine)
@@ -158,8 +169,8 @@ CONSIGNE_SECONDE = a_traduire(
 def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFOND_DIFF,
             depuis: str | None = None) -> str:
     """Ce que reçoit le relecteur, en plus du dépôt qu'il peut lire : la
-    consigne, le diff du lot, les sujets du lot et les décisions qu'ils
-    citent (ADR-0073). Avec `depuis`, le dossier d'une seconde revue : le
+    consigne, le diff du lot, les sujets du lot, les décisions qu'il écrit
+    et celles qu'ils citent (ADR-0073). Avec `depuis`, le dossier d'une seconde revue : le
     diff depuis ce commit, les messages de ses commits, et toujours les
     sujets du lot entier, depuis `base`."""
     base = base or base_du_lot(projet.racine)
@@ -194,7 +205,12 @@ def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFO
     if ouverts:
         lignes += ["", trad("## Les sujets que le lot ouvre : ce qu'il renvoie au backlog"), ""]
         lignes += [f"- {s.id} — {s.titre}" for s in ouverts]
-    decisions = decisions_citees(projet, servis)
+    ecrites = decisions_ecrites(projet, base)
+    if ecrites:
+        lignes += ["", trad("## Les décisions et les demandes que le lot écrit"), ""]
+        for e in ecrites:
+            lignes += [e.texte.strip(), ""]
+    decisions = [e for e in decisions_citees(projet, servis) if e.id not in {d.id for d in ecrites}]
     if decisions:
         lignes += ["", trad("## Les décisions et les demandes qu'ils citent"), ""]
         for e in decisions:

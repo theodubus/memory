@@ -1951,6 +1951,8 @@ MESSAGES: dict[str, str] = {
         "## The batch's topics: their “Done when” criterion is your bar",
     "## Les sujets que le lot ouvre : ce qu'il renvoie au backlog":
         "## The topics the batch opens: what it sends to the backlog",
+    "## Les décisions et les demandes que le lot écrit":
+        "## The decisions and requests the batch writes",
     "## Les décisions et les demandes qu'ils citent":
         "## The decisions and requests they cite",
     "répondre à une demande ; l'agent y relaie (--relayed) ta réponse donnée dans la conversation":
