@@ -121,14 +121,15 @@ MESSAGES: dict[str, str] = {
         "`{mot}`, in the directory `{dossier}`",
     "écriture par le shell vers un chemin que le hook ne sait pas développer : {quoi}. Une variable que ni "
     "l'environnement du hook ni la commande ne donnent, une substitution de commande (`$(…)`, accents graves) ou un "
-    "`cd` vers un tel chemin peuvent viser un fichier protégé ; un tel chemin ne passe que si une part écrite en "
-    "toutes lettres le place hors du projet (`/tmp/$X`). Écrire le chemin en toutes lettres, ou affecter la variable "
-    "plus tôt dans la même commande (`F=/tmp/x; echo y > \"$F\"`) (B-0171).":
+    "`cd` vers un tel chemin peuvent viser un fichier protégé ; un tel chemin ne passe que si la part écrite en "
+    "toutes lettres qui le précède, remontée des `..` qui le suivent, le place hors du projet (`/tmp/$X`). Écrire le "
+    "chemin en toutes lettres, ou affecter la variable plus tôt dans la même commande (`F=/tmp/x; echo y > "
+    "\"$F\"`) (B-0171).":
         "write by the shell to a path the hook cannot expand: {quoi}. A variable that neither the hook's environment "
         "nor the command gives, a command substitution (`$(…)`, backticks) or a `cd` to such a path can target a "
-        "protected file; such a path passes only if a part written out in full puts it outside the project "
-        "(`/tmp/$X`). Write the path out in full, or assign the variable earlier in the same command (`F=/tmp/x; "
-        "echo y > \"$F\"`) (B-0171).",
+        "protected file; such a path passes only if the part written out in full before it, moved up by the `..` "
+        "that follow it, puts it outside the project (`/tmp/$X`). Write the path out in full, or assign the variable "
+        "earlier in the same command (`F=/tmp/x; echo y > \"$F\"`) (B-0171).",
     "écriture d'un fichier protégé ({cible}) par le shell : seul l'humain modifie la politique, les hooks, la CI et "
     "le moteur (relance de l'installeur). Un fichier protégé changé par erreur, hors des réglages de Claude Code, se "
     "remet à son état du dernier commit : {formes} (D-0098).":
@@ -2571,6 +2572,21 @@ MESSAGES: dict[str, str] = {
     "chemin écrit par le shell à travers une variable ou une substitution que le hook ne sait pas développer, dans "
     "le projet":
         "path written by the shell through a variable or a substitution the hook cannot expand, in the project",
+    "fichier protégé écrit par le shell après un sous-shell, une substitution, un pipeline ou une tâche de fond, dont "
+    "le dossier et les variables ne passent pas à la suite":
+        "protected file written by the shell after a subshell, a substitution, a pipeline or a background job, whose "
+        "directory and variables do not carry over",
+    "fichier protégé écrit par le shell à travers `cd \"$OLDPWD\"`, une option de `cd`, les mots d'une variable, "
+    "`$'…'`, `+=`, `shopt`, une classe POSIX ou un script collé à `sed -e`":
+        "protected file written by the shell through `cd \"$OLDPWD\"`, an option of `cd`, the words of a variable, "
+        "`$'…'`, `+=`, `shopt`, a POSIX class or a script attached to `sed -e`",
+    "chemin écrit par le shell que le hook ne sait pas développer : un `..` après une part inconnue, un `cd` vers une "
+    "cible inconnue, `$_`, une référence (`declare -n`), des accolades au-delà du plafond":
+        "path written by the shell that the hook cannot expand: a `..` after an unknown part, a `cd` to an unknown "
+        "target, `$_`, a reference (`declare -n`), braces beyond the cap",
+    "fichier protégé écrit par le shell par un chemin relatif au dossier courant de l'agent, un motif ou `$PWD`":
+        "protected file written by the shell through a path relative to the agent's current directory, a pattern or "
+        "`$PWD`",
     "fichier protégé remis à un autre état que le dernier commit, ou tout un dossier":
         "protected file put back to a state other than the last commit, or a whole folder",
     "remise admise d'un fichier protégé dont la redirection écrit un autre fichier protégé":
@@ -2701,6 +2717,12 @@ MESSAGES: dict[str, str] = {
     "un fichier libre ou un motif qui ne nomme aucun fichier protégé passent le hook de l'agent (B-0171)":
         "a path written by the shell through a variable under a directory outside the project, a variable assigned "
         "to a free file or a pattern that names no protected file pass the agent's hook (B-0171)",
+    "après un sous-shell, un fichier libre, une valeur par défaut hors du projet, un `sed` sans `-i` qui lit un "
+    "fichier protégé et, depuis un dossier hors du projet, un motif relatif passent le hook de l'agent (B-0171, "
+    "B-0205)":
+        "after a subshell, a free file, a default value outside the project, a `sed` without `-i` that reads a "
+        "protected file and, from a directory outside the project, a relative pattern pass the agent's hook (B-0171, "
+        "B-0205)",
     "un commit d'agent qui porte la trace de ses hooks passe la CI":
         "an agent commit that carries the trace of its hooks passes the CI",
     "une valeur attendue changée sous une spécification que l'humain a commitée passe la CI":

@@ -6,6 +6,7 @@ refusées à tort."""
 import contextlib
 import io
 import os
+import posixpath
 import shutil
 import subprocess
 import tempfile
@@ -212,6 +213,197 @@ class TestGarde(unittest.TestCase):
                 with self.subTest(cmd):
                     self.assertIsNone(hooks.refus_bash(self.projet, cmd))
             self.assertIn("ne sait pas développer", hooks.refus_bash(self.projet, f"echo x > {self.racine}/../$X"))
+
+    def jugees(self, cas: list[tuple[str, str]], cwd: str | None = None):
+        """Chaque commande refusée pour sa raison (`protege`, `illisible`,
+        `reglage`), ou qui passe (`None`)."""
+        raisons = {"protege": "écriture d'un fichier protégé", "illisible": "ne sait pas développer",
+                   "reglage": "réglages de Claude Code"}
+        for cmd, attendu in cas:
+            with self.subTest(cmd=cmd, cwd=cwd):
+                raison = hooks.refus_bash(self.projet, cmd, cwd)
+                if attendu is None:
+                    self.assertIsNone(raison)
+                else:
+                    self.assertIn(raisons[attendu], raison or "")
+
+    def environnement(self, **valeurs):
+        """L'environnement du hook pour un test : `HOME` à la racine, sans les
+        variables que les cas supposent inconnues."""
+        pile = contextlib.ExitStack()
+        pile.enter_context(unittest.mock.patch.dict(os.environ, {"HOME": str(self.racine), **valeurs}))
+        for nom in ("D", "F", "R", "T", "X", "TMPDIR", "OLDPWD", "GLOBIGNORE"):
+            if nom not in valeurs:
+                os.environ.pop(nom, None)
+        return pile
+
+    def test_un_sous_shell_une_substitution_un_pipeline_ne_transmettent_rien(self):
+        """La revue de B-0171, constat 1 : le dossier, la pile et les variables
+        d'un sous-shell, d'une substitution, d'un élément de pipeline ou d'une
+        tâche de fond passaient à la suite ; `(pushd /tmp); …`, refusé avant
+        que `pushd` soit suivi, passait de nouveau."""
+        with self.environnement():
+            self.jugees([("X=$(cd /tmp && pwd); echo x > .socle/policy.toml", "protege"),
+                         ("(cd /tmp && ls) && echo x > .socle/policy.toml", "protege"),
+                         ("cd /tmp | true; echo x > .socle/policy.toml", "protege"),
+                         ("true | cd /tmp; echo x > .socle/policy.toml", "protege"),
+                         ("F=.socle/policy.toml; (F=/tmp/x); echo x > $F", "protege"),
+                         ("F=.socle/policy.toml; F=/tmp/x | true; echo x > $F", "protege"),
+                         ("(pushd /tmp); echo x > .socle/policy.toml", "protege"),
+                         ("ICI=$(pushd /tmp); echo x > .socle/policy.toml", "protege"),
+                         ("X=` cd /tmp `; echo x > .socle/policy.toml", "protege"),
+                         ("diff <(cd /tmp) x; echo x > .socle/policy.toml", "protege"),
+                         ("cd /tmp && ls & echo x > .socle/policy.toml", "protege"),
+                         ("(cd /tmp);echo x > .socle/policy.toml", "protege"),
+                         # Ce qu'une substitution lance se juge, dans le dossier
+                         # où elle part.
+                         ("X=$(echo x > .socle/policy.toml)", "protege"),
+                         ("cd .socle && echo $(echo x > policy.toml)", "protege"),
+                         ("(cd /tmp && echo x > notes.txt) && echo x > notes.txt", None)])
+
+    def test_un_cd_vers_une_cible_inconnue_rend_le_dossier_inconnu(self):
+        """La revue de B-0171, constats 2 et 11 : la cible inconnue d'un `cd`
+        était rattachée au dossier courant (`/tmp/$OLDPWD`), développée avec
+        les variables de la commande qui écrit, et les options de `cd`
+        étaient prises pour sa cible."""
+        with self.environnement():
+            self.jugees([("cd /tmp && cd \"$OLDPWD\" && echo x > .socle/policy.toml", "protege"),
+                         ("cd \"$OLDPWD\" && echo x > .socle/policy.toml", "illisible"),
+                         ("cd /tmp && cd \"$(git rev-parse --show-toplevel)\" && echo x > .socle/policy.toml",
+                          "illisible"),
+                         ("cd /tmp && cd $(git rev-parse --show-toplevel) && echo x > .socle/policy.toml", "illisible"),
+                         ("cd /tmp && cd $D && echo x > policy.toml", "illisible"),
+                         ("cd /tmp && cd $HOME && echo x > .socle/policy.toml", "protege"),
+                         ("cd /tmp && cd ~ && echo x > .socle/policy.toml", "protege"),
+                         ("X=.socle; cd $X; X=/tmp; echo x > policy.toml", "protege"),
+                         ("cd /tmp && pushd $D && echo x > policy.toml", "illisible"),
+                         ("cd -P .socle && echo x > policy.toml", "protege"),
+                         ("cd -- .socle && echo x > policy.toml", "protege"),
+                         ("cd -L -e .socle && echo x > policy.toml", "protege"),
+                         ("cd -@ .socle && echo x > policy.toml", "protege"),
+                         ("cd /tmp && cd $D && echo x > /tmp/x", None),
+                         ("D=/tmp; cd $D && echo x > rapport.txt", None)])
+
+    def test_les_mots_d_une_variable_se_jugent_chacun(self):
+        """La revue de B-0171, constat 3 : hors des guillemets, le shell coupe
+        la valeur d'une variable en mots, que le hook ne jugeait pas."""
+        with self.environnement():
+            self.jugees([("FICHIERS=\"calc.py .socle/policy.toml\"; sed -i s/a/b/ $FICHIERS", "protege"),
+                         ("F=\".socle/policy.toml calc.py\"; rm -f $F", "protege"),
+                         ("IFS=:; F=calc.py:.socle/policy.toml; rm -f $F", "protege"),
+                         ("F=\"calc.py notes.txt\"; rm -f $F", None)])
+
+    def test_un_point_point_apres_une_part_inconnue(self):
+        """La revue de B-0171, constat 4 : un `..` après la part inconnue
+        remonte ce que la part écrite avant elle place hors du projet."""
+        ailleurs = f"{self.racine}-ailleurs"
+        with self.environnement():
+            self.jugees([(f"echo x > {ailleurs}/$X/../..{self.racine}/.socle/policy.toml", "illisible"),
+                         (f"echo x > {ailleurs}/..$X{self.racine}/.socle/policy.toml", "illisible"),
+                         (f"echo x > {ailleurs}/.$X/{self.racine.name}/.socle/policy.toml", "illisible"),
+                         (f"echo x > {ailleurs}/a/b/$X/../y", None),
+                         (f"echo x > {ailleurs}/$X.log", None)])
+
+    def test_les_variables_speciales_du_shell_ne_viennent_pas_du_hook(self):
+        """La revue de B-0171, constat 5 : `$_` valait, pour le hook, le chemin
+        de python3 ; une variable que le shell tient lui-même n'est pas celle
+        de l'environnement du hook."""
+        with self.environnement(_="/usr/bin/python3", OLDPWD="/usr", RANDOM="4", IFS="/"):
+            self.jugees([("ls .socle/policy.toml && echo x >> \"$_\"", "illisible"),
+                         ("echo x > $OLDPWD/x", "illisible"),
+                         ("echo x > /usr/$RANDOM/../..$PWD/.socle/policy.toml", "illisible"),
+                         ("echo x > $PWD/.socle/policy.toml", "protege"),
+                         ("F=\"calc.py .socle/policy.toml\"; rm -f $F", "protege")])
+
+    def test_les_chaines_ansi_c_et_traduites_se_developpent(self):
+        """La revue de B-0171, constat 6 : `$'…'` et `$"…"` restaient
+        littéraux."""
+        with self.environnement():
+            self.jugees([("echo x > $'.socle/policy.toml'", "protege"),
+                         ("F=$'.socle/policy.toml'; echo x > \"$F\"", "protege"),
+                         ("echo x > $\".socle/policy.toml\"", "protege"),
+                         ("echo x > $'.socle/pol\\x69cy.toml'", "protege"),
+                         ("echo x > $'.socle/pol\\151cy.toml'", "protege"),
+                         ("echo x > $'.socle/\\cpolicy.toml'", "illisible"),
+                         ("echo x > $'notes\\ttab.txt'", None)])
+
+    def test_les_affectations_qui_ajoutent_nomment_ou_font_un_tableau(self):
+        """La revue de B-0171, constat 7 : `+=`, un tableau, une référence
+        (`declare -n`), `unset -f` et `${F:=…}` étaient mal lus."""
+        with self.environnement():
+            self.jugees([("F=.socle/pol; F+=icy.toml; echo x > $F", "protege"),
+                         ("T=(.socle/policy.toml); echo x > $T", "illisible"),
+                         ("T[0]=.socle/policy.toml; echo x > $T", "illisible"),
+                         ("declare -a T=(.socle/policy.toml); echo x > $T", "illisible"),
+                         ("declare -n R=F; F=.socle/policy.toml; echo x > $R", "illisible"),
+                         ("typeset -n R=F; F=.socle/policy.toml; echo x > $R", "illisible"),
+                         ("F=.socle/policy.toml; unset -f F; echo x > $F", "protege"),
+                         ("F=; : ${F:=.socle/policy.toml}; echo x > $F", "illisible"),
+                         ("T=(a b); rm -f /tmp/x", None)])
+
+    def test_les_options_du_shell_et_les_classes_posix(self):
+        """La revue de B-0171, constat 8 : après `shopt` ou `GLOBIGNORE`, un
+        motif peut rendre les noms en `.`, traverser les dossiers, ignorer la
+        casse ; une classe POSIX ne se lisait pas."""
+        with self.environnement():
+            self.jugees([("shopt -s dotglob; rm -f */policy.toml", "protege"),
+                         ("GLOBIGNORE=x; rm -f */policy.toml", "protege"),
+                         ("shopt -s globstar dotglob\nrm -f **/policy.toml", "protege"),
+                         ("shopt -s extglob\nrm -f .socle/@(policy).toml", "illisible"),
+                         ("shopt -s nocaseglob; rm -f .socle/POL*", "protege"),
+                         ("echo x > .socle/[[:alpha:]]olicy.toml", "protege"),
+                         ("echo x > .socle/[[:digit:]]olicy.toml", None),
+                         ("rm -f */policy.toml", None)])
+
+    def test_au_dela_du_plafond_les_accolades_sont_inconnues(self):
+        """La revue de B-0171, constat 9 : au-delà du plafond, une accolade
+        restait entière et passait."""
+        neuf = "{,a}{,b}{,c}{,d}{,e}{,f}{,g}{,h}{,i}"
+        with self.environnement():
+            self.jugees([(f"rm -f .socle/{neuf}policy.toml", "illisible"),
+                         (f"rm -f .socle/{neuf[:-4]}policy.toml", "protege"),
+                         (f"touch {self.racine}-ailleurs/{neuf}x", None),
+                         (f"touch {self.racine}-ailleurs/x{{1..300}}/../../{self.racine.name}/.socle/policy.toml",
+                          "illisible")])
+
+    def test_le_script_colle_d_un_sed_ou_d_un_perl(self):
+        """La revue de B-0171, constat 10 : un script collé à `-e` était pris
+        pour le fichier."""
+        with self.environnement():
+            self.jugees([("sed -i -e\"s/a/b/\" .socle/policy.toml", "protege"),
+                         ("perl -i -pe's/^/x/' .socle/policy.toml", "protege"),
+                         ("sed -nes/a/b/p -i .socle/policy.toml", "protege"),
+                         ("sed -e's/x/i/' .socle/policy.toml", None)])
+
+    def test_le_dossier_courant_de_l_agent(self):
+        """La revue de B-0171, constat 12, et B-0205 : un chemin relatif, un
+        motif et `$PWD` partent du dossier courant de l'agent, non de la
+        racine."""
+        ailleurs = Path(f"{self.racine}-ailleurs")
+        ailleurs.mkdir(exist_ok=True)
+        self.addCleanup(shutil.rmtree, ailleurs, ignore_errors=True)
+        (ailleurs / "f.txt").write_text("x")
+        with self.environnement():
+            self.jugees([("rm -rf ./*", None), ("rm -rf \"$PWD\"/*", None), ("echo x > ~+/x", None),
+                         ("rm -rf .socle", None)], str(ailleurs))
+            self.jugees([("echo x > $PWD/policy.toml", "protege"), ("echo x > policy.toml", "protege"),
+                         ("echo x > ~+/policy.toml", "protege"), ("rm pol*", "protege"),
+                         ("echo x > ../calc.py", None)], str(self.racine / ".socle"))
+            self.jugees([("echo x > ../.socle/policy.toml", "protege"), ("rm ../.socle/pol*", "protege"),
+                         ("echo x > ../notes.txt", None)], str(self.racine / "memory"))
+            self.assertEqual(hooks.depart_de(self.racine, "memory"), f"{self.racine}/memory")
+            self.assertEqual(hooks.depart_de(self.racine, None), str(self.racine))
+
+    def test_les_valeurs_par_defaut_se_developpent(self):
+        """La revue de B-0171, constat 13 : `${X:-défaut}` était refusé même
+        quand `X` est connu hors du projet."""
+        ailleurs = f"{self.racine}-ailleurs"
+        with self.environnement(TMPDIR=ailleurs):
+            self.jugees([("echo x > \"${TMPDIR:-/tmp}/x\"", None), ("echo x > \"${TMPDIR-/tmp}/x\"", None),
+                         (f"T=; echo x > \"${{T:-{ailleurs}}}/x\"", None),
+                         ("T=; echo x > \"${T:-.socle}/policy.toml\"", "protege"),
+                         ("echo x > \"${X:-/tmp}/x\"", "illisible"),
+                         ("T=; echo x > \"${T-/tmp}/x\"", "illisible")])
 
     def test_remise_en_etat_d_un_fichier_protege(self):
         """D-0098 (B-0165) : l'agent remet un fichier protégé changé par
@@ -424,18 +616,142 @@ class TestDecoupage(unittest.TestCase):
         self.assertEqual(commandes.developper("$F.bak", variables), ("/tmp/f.bak", []))
         self.assertEqual(commandes.developper("${F}/y", variables), ("/tmp/f/y", []))
         self.assertEqual(commandes.developper("a/$X/b", variables), (f"a/{I}/b", ["$X"]))
-        self.assertEqual(commandes.developper("${F:-z}", variables), (I, ["${F:-z}"]))
+        self.assertEqual(commandes.developper("${F:-z}", variables), ("/tmp/f", []))
         self.assertEqual(commandes.developper("x-$(date)`id`$1$", variables)[1], ["$(date)", "`id`", "$1", "$"])
         self.assertEqual(commandes.developper("prix$/€", variables), ("prix$/€", []))
         c = commandes.analyser("G=$F/g; read H; echo > $G")[-1]
         self.assertEqual(commandes.variables_de(c, variables)["G"], "/tmp/f/g")
         self.assertEqual(commandes.variables_de(c, variables)["H"], I)
 
+    def test_developper_les_valeurs_par_defaut_et_les_formes_inconnues(self):
+        """La revue de B-0171, constats 6 et 13 : `${X:-défaut}` et ses
+        voisins se développent ; `$'…'` que le découpage n'a pas su lire, un
+        motif étendu et une expression arithmétique sont inconnus, jamais
+        littéraux."""
+        variables = {"F": "/tmp/f", "V": ""}
+        I = commandes.INCONNU
+        for mot, attendu in (("${F:-z}", "/tmp/f"), ("${F-z}", "/tmp/f"), ("${V:-z}", "z"), ("${F:+a}", "a"),
+                             ("${V:+a}", ""), ("${F+a}", "a"), ("${F:=z}", "/tmp/f"), ("${V:=$F}", "/tmp/f"),
+                             ("${F:?m}", "/tmp/f"), ("${V:-${F}/y}", "/tmp/f/y"), ("${X:-z}", I), ("${V-z}", I),
+                             ("${V:?m}", I), ("${F#/}", I), ("${#F}", I), ("${!F}", I), ("$'a\\cb'", I),
+                             ("@(a|b)", I), ("x!(y)", "x" + I), ("$((1+2))", I)):
+            with self.subTest(mot):
+                self.assertEqual(commandes.developper(mot, variables)[0], attendu)
+        self.assertEqual(commandes.developper("${X:-z}/y", variables), (f"{I}/y", ["${X:-z}"]))
+
+    def test_developper_le_tilde(self):
+        """La revue de B-0171, constat 14 : `~+`, `~-` et `~nom`."""
+        variables = {"HOME": "/maison", "PWD": "/ici", "OLDPWD": "/avant"}
+        I = commandes.INCONNU
+        self.assertEqual(commandes.developper("~+/x", variables), ("/ici/x", []))
+        self.assertEqual(commandes.developper("~-/x", variables), ("/avant/x", []))
+        self.assertEqual(commandes.developper("~-/x", {}), (f"{I}/x", ["~-"]))
+        self.assertEqual(commandes.developper("~root/x", variables)[0], posixpath.expanduser("~root") + "/x")
+        self.assertEqual(commandes.developper("~personne-de-connu/x", variables), ("~personne-de-connu/x", []))
+
+    def test_les_affectations_de_chaque_forme(self):
+        """La revue de B-0171, constats 7 et 14 : chaque forme qui affecte
+        une variable, et ce que le hook en retient."""
+        env = {"PWD": "/p"}
+        I = commandes.INCONNU
+        for texte, attendu in (
+                ("F=a; unset F", ""), ("F=a; unset -v F", ""), ("F=a; unset -f F", "a"), ("F=a; unset 'F[0]'", I),
+                ("printf -v F %s a", I), ("for F in a b", I), ("select F in a b", I), ("read -a F", I),
+                ("read -r F", I), ("mapfile -t F", I), ("readarray F", I),
+                ("declare F=a", "a"), ("typeset F=a", "a"), ("local F=a", "a"), ("readonly F=a", "a"),
+                ("export F=a", "a"), ("export -n F=a", "a"), ("declare -x F=a", "a"),
+                ("declare -n F=G", I), ("typeset -n F=G", I), ("local -n F=G", I), ("declare -a F", I),
+                ("declare -l F=A", I), ("declare -gu F=a", I), ("readonly -a F=(a)", I),
+                ("F=a; F+=b", "ab"), ("F=a; export F+=b", "ab"), ("F=(a b)", I), ("F[0]=a", I), ("F+=(a)", I),
+                ("F=a; : ${F:=b}", I), ("F=a; echo ${F=b}", I)):
+            with self.subTest(texte):
+                c = commandes.analyser(texte + "; ls", environnement=env)[-1]
+                self.assertEqual(commandes.variables_de(c, env).get("F"), attendu)
+        c = commandes.analyser("_=x; ls", environnement={"_": "/usr/bin/python3"})[-1]
+        self.assertNotIn("_", commandes.variables_de(c, {"_": "/usr/bin/python3"}))
+        self.assertEqual(commandes.environnement_du_shell({"_": "x", "OLDPWD": "/o", "IFS": "/", "HOME": "/h"}, "/p"),
+                         {"HOME": "/h", "PWD": "/p"})
+
+    def test_le_dossier_de_chaque_forme_de_cd_et_de_pile(self):
+        """La revue de B-0171, constats 2, 11 et 14 : le dossier où une
+        commande s'exécute, développé au moment de chaque `cd`, `pushd` ou
+        `popd`."""
+        env = {"PWD": "/p", "HOME": "/maison"}
+        I = commandes.INCONNU
+        for texte, lieu in (
+                ("cd /a", "/a"), ("cd a/b/..", "/p/a"), ("cd -P /a", "/a"), ("cd -- /a", "/a"),
+                ("cd -L -e /a", "/a"), ("cd -@ /a", "/a"), ("cd", "/maison"), ("cd ~/x", "/maison/x"),
+                ("cd ~+/x", "/p/x"), ("cd /a; cd ~-", "/p"), ("cd /a; cd -", "/p"), ("cd -", I),
+                ("cd $D", I), ("cd /a/$D/..", f"/a/{I}/.."), ("X=/a; cd $X; X=/b", "/a"), ("cd $(pwd)", I),
+                ("cd /a; cd \"$OLDPWD\"", "/p"), ("cd \"$OLDPWD\"", I),
+                ("pushd /a", "/a"), ("pushd /a; popd", "/p"), ("pushd -n /a", "/p"),
+                ("pushd -n /a; pushd /b; popd", "/p"), ("pushd /a; pushd -n /b; popd", "/b"),
+                ("pushd /a; popd -n; popd", "/a"), ("pushd /a; pushd", "/p"), ("pushd /a; pushd; pushd", "/a"),
+                ("pushd", "/p"), ("popd", "/p"), ("pushd /a; pushd +1", I), ("pushd /a; popd -1", I),
+                ("pushd /a; pushd +1; popd", I),
+                ("(cd /a)", "/p"), ("X=$(cd /a)", "/p"), ("cd /a | true", "/p"), ("cd /a &", "/p"),
+                ("cd /a && true &", "/p"), ("cd /a; true &", "/a"), ("(cd /a; cd /b) && cd c", "/p/c")):
+            with self.subTest(texte):
+                self.assertEqual(commandes.analyser(texte + "; ls", environnement=env)[-1].lieu, lieu)
+        self.assertEqual(commandes.analyser("cd /a; ls")[-1].lieu, "/a")
+        self.assertEqual(commandes.analyser("cd a; ls")[-1].lieu, "a")
+
+    def test_un_sous_shell_ne_transmet_ni_dossier_ni_variable(self):
+        """La revue de B-0171, constat 1 : le dossier écrit, la pile et les
+        variables d'un sous-shell, d'une substitution, d'un élément de
+        pipeline ou d'une tâche de fond ne passent pas à la suite ; ce que
+        lance une substitution se juge."""
+        for texte in ("(cd /tmp; F=x); ls", "X=$(cd /tmp; F=x); ls", "X=`cd /tmp; F=x`; ls", "cd /tmp | F=x; ls",
+                      "F=x | cd /tmp; ls", "cd /tmp && F=x & ls", "(pushd /tmp); popd; ls",
+                      "diff <(cd /tmp; F=x) y; ls", "(cd /tmp);ls", "(cd /tmp)\nls"):
+            with self.subTest(texte):
+                c = commandes.analyser(texte)[-1]
+                self.assertEqual((c.programme, c.dossier), ("ls", ""))
+                self.assertNotIn("F", [nom for nom, _ in c.affectations])
+        self.assertIn(["rm", "a"], [c.argv for c in commandes.analyser("X=$(rm a); echo \"$(ls)\" `rm b`")])
+        self.assertIn(["rm", "b"], [c.argv for c in commandes.analyser("X=$(rm a); echo \"$(ls)\" `rm b`")])
+        self.assertEqual([c.argv for c in commandes.analyser("echo $(pwd)/x > f")][-1], ["echo", "$(pwd)/x"])
+
+    def test_normaliser_et_lieu_sur(self):
+        """La revue de B-0171, constat 4 : un `..` ne remonte pas une part
+        inconnue, et remonte, pour le jugement, la part écrite avant elle."""
+        I = commandes.INCONNU
+        for chemin, normal, lieu in (
+                ("/a/./b/../c", "/a/c", None), ("a/../..", "..", None), ("/..", "/", None),
+                (f"/a/{I}/..", f"/a/{I}/..", "/"), (f"/a/b/{I}/../c", f"/a/b/{I}/../c", "/a"),
+                (f"/a/b/{I}/x/../c", f"/a/b/{I}/c", "/a/b"), (f"/a/b/..{I}/c", f"/a/b/..{I}/c", "/a"),
+                (f"/a/b/.{I}/c", f"/a/b/.{I}/c", "/a"), (f"/a/b/{I}.log", f"/a/b/{I}.log", "/a/b"),
+                (f"/a/b/{I}/../../..", f"/a/b/{I}/../../..", "/"), (f"{I}/x", f"{I}/x", None)):
+            with self.subTest(chemin):
+                self.assertEqual(commandes.normaliser(chemin), normal)
+                if I in chemin:
+                    self.assertEqual(commandes.lieu_sur(normal), lieu)
+
+    def test_jetons_ansi_c_et_substitutions(self):
+        """La revue de B-0171, constats 1 et 6 : une substitution reste un
+        mot, `$'…'` et `$"…"` se lisent comme le shell."""
+        self.assertEqual(commandes.jetons("echo $'a\\x2fb\\'c' $\"d e\" $'\\cA'"), ["echo", "a/b'c", "d e", "$'\\cA'"])
+        self.assertEqual(commandes.jetons("X=$(cd /tmp && pwd)/y; T=(a b) @(c|d)"),
+                         ["X=$(cd /tmp && pwd)/y", ";", "T=(a b)", "@(c|d)"])
+        self.assertEqual(commandes.jetons("(a);b)>f"), ["(", "a", ")", ";", "b", ")", ">", "f"])
+        self.assertEqual(commandes.jetons("echo x # l'apostrophe d'un commentaire $(rm a)"), ["echo", "x"])
+        self.assertEqual([c.programme for c in commandes.analyser("echo x # l'apostrophe $(rm a) `rm b`")], ["echo"])
+
     def test_accolades(self):
         self.assertEqual(commandes.accolades("a{b,c{d,e}}f"), ["abf", "acdf", "acef"])
         self.assertEqual(commandes.accolades("x{1..3}"), ["x1", "x2", "x3"])
+        self.assertEqual(commandes.accolades("x{1..10..4}"), ["x1", "x5", "x9"])
         self.assertEqual(commandes.accolades("${F}{a}"), ["${F}{a}"])
-        self.assertEqual(commandes.accolades("x{1..100000}"), ["x{1..100000}"])
+        # La revue de B-0171, constat 9 : au-delà du plafond, ce que nomment
+        # les accolades est inconnu ; la part d'avant elles, et les `..`
+        # que leurs points pourraient former, disent seules où il tombe.
+        I = commandes.INCONNU
+        self.assertEqual(commandes.accolades("x{1..100000}"), [f"x{I}"])
+        neuf = "{,a}{,b}{,c}{,d}{,e}{,f}{,g}{,h}{,i}"
+        self.assertEqual(commandes.accolades(f".socle/{neuf}policy.toml"), [f".socle/{I}"])
+        self.assertEqual(len(commandes.accolades(f".socle/{neuf[:-4]}policy.toml")), 256)
+        self.assertEqual(commandes.accolades("/x/{1..300}/../y"), [f"/x/{I}/.."])
+        self.assertEqual(commandes.accolades("/x/{.,a}{.,b}{1..300}/y"), [f"/x/{I}/.."])
 
     def test_un_motif_du_shell_croise_un_motif_de_chemin(self):
         for shell, chemin, dessous, attendu in (
@@ -453,6 +769,26 @@ class TestDecoupage(unittest.TestCase):
                 (".claude/sett*", "**/.claude/settings.json", False, True)):
             with self.subTest(shell=shell, chemin=chemin):
                 self.assertEqual(commandes.se_croisent(shell, chemin, dessous), attendu)
+
+    def test_un_motif_elargi_et_les_classes_posix(self):
+        """La revue de B-0171, constat 8 : `dotglob`, `globstar`,
+        `nocaseglob`, et les classes POSIX d'un `[…]`."""
+        for shell, chemin, permissif, attendu in (
+                ("*/policy.toml", ".socle/policy.toml", True, True),
+                ("**/policy.toml", ".socle/policy.toml", True, True),
+                ("**", ".socle/git-hooks/x", True, True),
+                (".socle/POL*", ".socle/policy.toml", True, True),
+                (".socle/POL*", ".socle/policy.toml", False, False),
+                (".socle/[[:alpha:]]olicy.toml", ".socle/policy.toml", False, True),
+                (".socle/[[:digit:]]olicy.toml", ".socle/policy.toml", False, False),
+                (".socle/[![:digit:]]olicy.toml", ".socle/policy.toml", False, True),
+                (".socle/[[:upper:]]olicy.toml", ".socle/policy.toml", True, True),
+                (".socle/[[=p=]]olicy.toml", ".socle/policy.toml", False, True),
+                (".socle/[[:inconnue:]]olicy.toml", ".socle/policy.toml", False, True),
+                (".socle/[]p]olicy.toml", ".socle/policy.toml", False, True),
+                ("[.]socle/policy.toml", ".socle/policy.toml", False, False)):
+            with self.subTest(shell=shell, permissif=permissif):
+                self.assertEqual(commandes.se_croisent(shell, chemin, permissif=permissif), attendu)
 
     def test_jetons_et_heredocs(self):
         self.assertEqual(commandes.jetons('echo "a b" > f'), ["echo", "a b", ">", "f"])
@@ -484,9 +820,18 @@ class TestJugements(unittest.TestCase):
         # chemin écrit ; une variable qu'il cite ne fait rien refuser.
         for cmd in ('sed -i -e "s/$A/b/" -e s/c/d/ f', "sed -ne s/a/b/p -i f", "sed -i -f $SCRIPT f",
                     "sed --expression=s/a/b/ -i f", 'perl -i -p -e "s/$x/y/" f', "perl -pi -e s/a/b/ f",
-                    "sed -i.bak s/a/b/ f", "sed -i -- s/a/b/ f"):
+                    "sed -i.bak s/a/b/ f", "sed -i -- s/a/b/ f",
+                    # La revue de B-0171, constat 10 : un script collé à son
+                    # option ; `-i` prend le reste de son groupe pour suffixe.
+                    'sed -i -e"s/$A/b/" f', "perl -i -pe's/^/x/' f", "sed -nes/a/b/p -i f", "sed -ie s/a/b/ f",
+                    "perl -pie s/a/b/ f", "perl -pi.bak -es/a/b/ f", "perl -0777 -i -pe s/a/b/ f",
+                    "sed -l 80 -i s/a/b/ f", "sed --line-length 80 --in-place=.bak -e s/a/b/ f"):
             with self.subTest(cmd):
                 self.assertEqual(hooks.ecrits(commandes.analyser(cmd)[0]), ["f"])
+        # Sans `-i`, rien n'est réécrit, même si le script porte un `i`.
+        for cmd in ("sed -e's/x/i/' f", "sed -n s/i/j/p f", "perl -pe 's/i/j/' f"):
+            with self.subTest(cmd):
+                self.assertEqual(hooks.ecrits(commandes.analyser(cmd)[0]), [])
 
     def test_irreversible_et_commande_humaine(self):
         racine = Path(".")

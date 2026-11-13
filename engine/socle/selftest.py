@@ -502,13 +502,13 @@ def pousser(a: Atelier, c: Path, message: str = "essai"):
     a.git(c, "push", "-q", "--no-verify", "-u", "origin", f"travail:{c.name}")
 
 
-def tous_refuses(a: Atelier, c: Path, essais: list[tuple[str, dict]]) -> str:
+def tous_refuses(a: Atelier, c: Path, essais: list[tuple[str, dict]], cwd: Path | None = None) -> str:
     """Chaque appel doit être refusé par le hook de l'agent : leurs raisons,
     ou le premier qui passe, sans raison, pour que le défaut se dise non
-    attrapé."""
+    attrapé. `cwd`, le dossier courant de l'agent."""
     raisons = []
     for outil, args in essais:
-        refus = etage_outil(a, c, outil, args)
+        refus = etage_outil(a, c, outil, args, cwd)
         if not refus:
             return f"passé sans refus : {outil} {json.dumps(args, ensure_ascii=False)[:200]}"
         raisons.append(refus)
@@ -1313,6 +1313,55 @@ def _cas() -> list[Cas]:
             "echo 'max_attempts = 99' >> $SOCLE_ESSAI_CIBLE", "echo x > .socle/$(ls .socle | head -1)",
             "cd $SOCLE_ESSAI_DOSSIER && echo 'max_attempts = 99' >> policy.toml")])
 
+    @defaut("protege-etat-du-shell", "fichier protégé écrit par le shell après un sous-shell, une substitution, un "
+            "pipeline ou une tâche de fond, dont le dossier et les variables ne passent pas à la suite", "agent",
+            "écriture protégée")
+    def _(a, c):
+        # La revue de B-0171, constat 1 : leur état passait à la suite.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "(cd /tmp && ls) && echo 'max_attempts = 99' >> .socle/policy.toml",
+            "X=$(pushd /tmp); echo 'max_attempts = 99' >> .socle/policy.toml",
+            "cd /tmp | true; echo 'max_attempts = 99' >> .socle/policy.toml",
+            "F=.socle/policy.toml; (F=/tmp/x); echo 'max_attempts = 99' >> $F",
+            "cd /tmp && ls & echo 'max_attempts = 99' >> .socle/policy.toml")])
+
+    @defaut("protege-forme-du-shell", "fichier protégé écrit par le shell à travers `cd \"$OLDPWD\"`, une option de "
+            "`cd`, les mots d'une variable, `$'…'`, `+=`, `shopt`, une classe POSIX ou un script collé à `sed -e`",
+            "agent", "écriture protégée")
+    def _(a, c):
+        # La revue de B-0171, constats 2, 3, 6, 7, 8, 10 et 11.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "cd /tmp && cd \"$OLDPWD\" && echo 'max_attempts = 99' >> .socle/policy.toml",
+            "cd -P .socle && echo 'max_attempts = 99' >> policy.toml",
+            "F=\"calc.py .socle/policy.toml\"; sed -i s/3/9/ $F",
+            "echo 'max_attempts = 99' >> $'.socle/policy.toml'",
+            "F=.socle/pol; F+=icy.toml; echo 'max_attempts = 99' >> $F",
+            "shopt -s dotglob; rm -f */policy.toml",
+            "echo 'max_attempts = 99' >> .socle/[[:alpha:]]olicy.toml",
+            "sed -i -e\"s/3/9/\" .socle/policy.toml")])
+
+    @defaut("ecriture-illisible-remontee", "chemin écrit par le shell que le hook ne sait pas développer : un `..` "
+            "après une part inconnue, un `cd` vers une cible inconnue, `$_`, une référence (`declare -n`), des "
+            "accolades au-delà du plafond", "agent", "écriture illisible")
+    def _(a, c):
+        # La revue de B-0171, constats 2, 4, 5, 7 et 9 : chacun passait.
+        ailleurs = a.dossier.parent / (a.dossier.name + "-ailleurs")
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            f"echo 'max_attempts = 99' >> {ailleurs}/$SOCLE_ESSAI_CIBLE/../..{c}/.socle/policy.toml",
+            "cd /tmp && cd \"$(git rev-parse --show-toplevel)\" && echo 'max_attempts = 99' >> .socle/policy.toml",
+            "ls .socle/policy.toml && echo 'max_attempts = 99' >> \"$_\"",
+            "declare -n R=F; F=.socle/policy.toml; echo 'max_attempts = 99' >> $R",
+            "rm -f .socle/{,a}{,b}{,c}{,d}{,e}{,f}{,g}{,h}{,i}policy.toml")])
+
+    @defaut("protege-dossier-courant", "fichier protégé écrit par le shell par un chemin relatif au dossier courant "
+            "de l'agent, un motif ou `$PWD`", "agent", "écriture protégée")
+    def _(a, c):
+        # B-0205, et la revue de B-0171, constat 12 : le hook jugeait un
+        # chemin relatif depuis la racine.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "echo 'max_attempts = 99' >> policy.toml", "echo 'max_attempts = 99' >> $PWD/policy.toml",
+            "rm pol*")], c / ".socle")
+
     @defaut("protege-depuis-un-worktree", "fichier protégé de la copie principale écrit depuis un worktree du dépôt",
             "agent", "écriture protégée")
     def _(a, c):
@@ -1790,6 +1839,18 @@ def _temoins() -> list[tuple[str, Callable]]:
                 or etage_outil(a, c, "Bash", {"command": "F=notes.txt; echo x > \"$F\" && rm -f build/*.o"})
                 or etage_outil(a, c, "Bash", {"command": f"pushd {ailleurs} && echo x > rapport-$SOCLE_ESSAI_CIBLE"
                                                          "; popd"}))
+
+    @temoin("après un sous-shell, un fichier libre, une valeur par défaut hors du projet, un `sed` sans `-i` qui lit "
+            "un fichier protégé et, depuis un dossier hors du projet, un motif relatif passent le hook de l'agent "
+            "(B-0171, B-0205)")
+    def _(a, c):
+        # La revue de B-0171, constats 12 et 13 : ces faux refus ne sont
+        # pas venus avec les corrections.
+        ailleurs = a.dossier.parent / (a.dossier.name + "-ailleurs")
+        return (etage_outil(a, c, "Bash", {"command": "(cd /tmp && ls) && echo x > notes.txt"})
+                or etage_outil(a, c, "Bash", {"command": f"D={ailleurs}; echo x > \"${{D:-/tmp}}/rapport.txt\""})
+                or etage_outil(a, c, "Bash", {"command": "sed -n -e's/i/j/p' .socle/policy.toml"})
+                or etage_outil(a, c, "Bash", {"command": "rm -rf ./*"}, cwd=ailleurs))
 
     @temoin("un fichier protégé changé par erreur, remis à son état du dernier commit, et un fichier apparu sous un "
             "chemin protégé, supprimé, passent le hook de l'agent (D-0098)")

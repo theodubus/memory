@@ -240,10 +240,16 @@ cite, lui ou son dossier, une demande en attente ou validée dont ce
 qu'elle approuve n'est pas commité. Le risque accepté : effacer une
 modification de l'humain dans l'arbre de travail qu'il n'a ni commitée ni
 soumise par une demande. Un chemin que le shell écrit, le hook le
-développe comme le shell (variables, motifs, accolades, `~`, `pushd`) ; un
-chemin qu'il ne sait pas développer (une variable qu'il ne connaît pas,
-`$(…)`) est refusé s'il peut tomber dans le projet : l'écrire en toutes
-lettres, ou sous un dossier hors du projet (`/tmp/…`).
+développe comme le shell (variables, motifs, accolades, `~`, `cd`,
+`pushd`), depuis le dossier courant de l'agent ; un sous-shell, une
+substitution ou un pipeline ne transmettent rien à la suite. Un chemin
+qu'il ne sait pas développer (une variable qu'il ne connaît pas, `$(…)`)
+est refusé si le dossier qu'écrit en toutes lettres la part qui le
+précède, remonté des `..` qui le suivent, est dans le projet ou le
+contient : l'écrire en toutes lettres, ou sous un dossier hors du projet
+(`/tmp/…`). Risque accepté : une part inconnue qui vaut elle-même `..`
+(`/tmp/$X` avec `X=../..`), que seul le contrôle des fichiers protégés
+attrape ensuite.
 
 **Faire ce que l'agent ne peut pas faire.** Pousser sur la branche par
 défaut, publier, régler un service, supprimer une branche distante, poser

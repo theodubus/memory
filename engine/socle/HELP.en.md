@@ -238,9 +238,14 @@ request pending or approved whose approved change is not committed yet.
 The accepted risk: erasing a change of the human in the working tree that
 they neither committed nor submitted in a request. A path the shell
 writes, the hook expands as the shell would (variables, patterns, braces,
-`~`, `pushd`); a path it cannot expand (a variable it does not know,
-`$(…)`) is refused if it can land in the project: write it out in full, or
-under a directory outside the project (`/tmp/…`).
+`~`, `cd`, `pushd`), from the agent's current directory; a subshell, a
+substitution or a pipeline passes nothing on to what follows. A path it
+cannot expand (a variable it does not know, `$(…)`) is refused if the
+directory that the part written out in full before it names, moved up by
+the `..` that follow it, is in the project or contains it: write it out in
+full, or under a directory outside the project (`/tmp/…`). Accepted risk:
+an unknown part that is itself `..` (`/tmp/$X` with `X=../..`), which only
+the protected-files check catches afterwards.
 
 **Doing what the agent cannot do.** Pushing to the default branch,
 publishing, setting up a service, deleting a remote branch, setting a tag

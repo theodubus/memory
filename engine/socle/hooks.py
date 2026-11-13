@@ -374,13 +374,13 @@ def ecrits_bruts(c: commandes.Commande) -> list[str]:
     développés ni rapportés au dossier de départ."""
     res = list(c.redirige)
     nom = c.programme
-    options, args = commandes.options_et_arguments(c.argv[1:])
+    args = commandes.options_et_arguments(c.argv[1:])[1]
     if nom in ECRIVAINS:
         res += args
     elif nom in ("cp", "ln", "install", "rsync") and args:
         res.append(args[-1])
-    elif nom in ("sed", "perl") and commandes.drapeau(options, "i", ("--in-place",)):
-        res += _fichiers_d_un_script(nom, c.argv[1:])
+    elif nom in ("sed", "perl") and (script := _fichiers_d_un_script(nom, c.argv[1:]))[0]:
+        res += script[1]
     elif nom == "dd":
         res += [a[3:] for a in c.argv[1:] if a.startswith("of=")]
     elif nom == "git":
@@ -397,28 +397,49 @@ def ecrits_bruts(c: commandes.Commande) -> list[str]:
     return [x for x in res if x]
 
 
-def _fichiers_d_un_script(nom: str, argv: list[str]) -> list[str]:
-    """Les fichiers qu'un `sed -i` ou un `perl -i` réécrit : ses arguments,
-    moins le script, celui de `-e`, `-f`, `--expression` (ou d'un groupe qui
-    finit par `e`, `-pe`), sinon le premier argument. Le script n'est pas un
-    chemin : une variable qu'il cite ne fait rien refuser (B-0171)."""
-    fichiers, script, i = [], False, 0
-    prend = ("e", "f") if nom == "sed" else ("e", "E")
+# Les options courtes d'un `sed` ou d'un `perl` qui prennent une valeur,
+# collée au groupe (`-es/a/b/`) ou, sauf celles qui la veulent collée,
+# l'argument suivant ; et celles qui donnent le script (B-0171).
+OPTIONS_A_VALEUR = {"sed": "efl", "perl": "eE0lIMmdDxCV"}
+OPTIONS_COLLEES = {"sed": "", "perl": "0lIMmdDxCV"}
+OPTIONS_SCRIPT = {"sed": "ef", "perl": "eE"}
+
+
+def _fichiers_d_un_script(nom: str, argv: list[str]) -> tuple[bool, list[str]]:
+    """Si un `sed` ou un `perl` réécrit ses fichiers (`-i`, `--in-place`), et
+    lesquels : ses arguments, moins le script et les valeurs de ses options.
+    Le script est celui de `-e`, `-f`, `--expression`, collé au groupe
+    (`-e"s/a/b/"`, `-pe's/a/b/'`) ou l'argument suivant, sinon le premier
+    argument ; `-i` prend le reste de son groupe pour suffixe (`-i.bak`, et
+    `-ie`, dont le `e` est un suffixe). Le script n'est pas un chemin : une
+    variable qu'il cite ne fait rien refuser (B-0171)."""
+    en_place, script, fichiers, i = False, False, [], 0
     while i < len(argv):
         a = argv[i]
-        if a == "--":
-            fichiers += argv[i + 1:]
-            break
-        groupe = a.startswith("-") and not a.startswith("--") and len(a) > 1
-        if a.startswith(("--expression=", "--file=")):
-            script = True
-        elif a in ("--expression", "--file") or (groupe and "i" not in a and a[-1] in prend):
-            script, i = True, i + 2
-            continue
-        elif not a.startswith("-") or a == "-":
-            fichiers.append(a)
         i += 1
-    return fichiers if script else fichiers[1:]
+        if a == "--":
+            fichiers += argv[i:]
+            break
+        if a.startswith("--"):
+            cle = a.split("=", 1)[0]
+            en_place = en_place or cle == "--in-place"
+            script = script or cle in ("--expression", "--file")
+            if cle in ("--expression", "--file", "--line-length") and "=" not in a:
+                i += 1
+            continue
+        if not a.startswith("-") or a == "-":
+            fichiers.append(a)
+            continue
+        for k, o in enumerate(a[1:], 1):
+            if o == "i":
+                en_place = True
+                break
+            if o in OPTIONS_A_VALEUR[nom]:
+                script = script or o in OPTIONS_SCRIPT[nom]
+                if k == len(a) - 1 and o not in OPTIONS_COLLEES[nom]:
+                    i += 1
+                break
+    return en_place, fichiers if script else fichiers[1:]
 
 
 def cibles_ecrites(cmd: str) -> list[str]:
@@ -462,32 +483,50 @@ def _atteint(racine: Path, lieu: Path) -> bool:
     return lieu.is_relative_to(racine) or racine.is_relative_to(lieu)
 
 
-def ecritures_jugees(projet: config.Projet, cmd: str) -> list[tuple[str, str]]:
+def depart_de(racine: Path, cwd: str | None) -> str:
+    """Le dossier, absolu, où part une commande de l'agent : son dossier
+    courant (`cwd` de l'entrée du hook) s'il est connu, sinon la racine
+    (B-0205)."""
+    return posixpath.normpath(posixpath.join(str(racine), cwd)) if cwd else str(racine)
+
+
+def _globbing_elargi(simples: list[commandes.Commande]) -> bool:
+    """Un `shopt`, ou une affectation de `GLOBIGNORE`, dans la commande : ses
+    motifs peuvent rendre les noms en `.` (`dotglob`), traverser les
+    dossiers (`globstar`) ou ignorer la casse (`nocaseglob`)."""
+    return any(c.programme == "shopt" or any(nom == "GLOBIGNORE" for nom, _ in c.affectations)
+               or any(p.startswith("GLOBIGNORE=") for p in c.prefixe) for c in simples)
+
+
+def ecritures_jugees(projet: config.Projet, cmd: str, cwd: str | None = None) -> list[tuple[str, str]]:
     """Ce que le hook retient des chemins qu'une commande shell écrit, hors
     des fichiers qu'une remise admise remet (D-0098), chacun développé comme
     le shell le ferait (B-0171) : ses accolades, son `~`, les variables de
-    l'environnement du hook et celles que la commande affecte avant, puis
-    ses motifs, contre les fichiers présents et contre les motifs des
-    chemins protégés (un fichier protégé absent le reste). Chaque
-    constat : `("protege", cible)`, `("reglage", chemin)` ou, pour un chemin
-    que le hook ne sait pas développer et qui peut tomber dans le projet,
+    l'environnement du hook (hors des variables spéciales du shell) et
+    celles que la commande affecte avant, chaque valeur entière et chacun de
+    ses mots, puis ses motifs, contre les fichiers présents et contre les
+    motifs des chemins protégés (un fichier protégé absent le reste). Un
+    chemin relatif, un motif et `$PWD` partent du dossier courant de l'agent
+    (`cwd`) s'il est connu, sinon de la racine (B-0205). Chaque constat :
+    `("protege", cible)`, `("reglage", chemin)` ou, pour un chemin que le
+    hook ne sait pas développer et qui peut tomber dans le projet,
     `("illisible", mot)`."""
-    racine = projet.racine
+    depart = depart_de(projet.racine, cwd)
+    environnement = commandes.environnement_du_shell(os.environ, depart)
+    simples = commandes.analyser(cmd, environnement=environnement)
+    elargi = _globbing_elargi(simples)
     cache: dict = {}
     res: list[tuple[str, str]] = []
-    for c in commandes.analyser(cmd):
-        mots = _ecrits_hors_remise(projet, c, remise_en_etat(projet, c, cmd))
+    for c in simples:
+        mots = _ecrits_hors_remise(projet, c, remise_en_etat(projet, c, cmd, depart), depart)
         if not mots:
             continue
-        variables = commandes.variables_de(c, {**os.environ, "PWD": str(racine), "OLDPWD": commandes.INCONNU})
-        dossier, _ = commandes.developper(c.dossier, variables)
-        if commandes.INCONNU not in dossier:
-            variables["PWD"] = posixpath.normpath(posixpath.join(str(racine), dossier))
+        variables = commandes.variables_de(c, environnement)
         for mot in mots:
             mot = mot.strip("'\"")
             try:
                 for forme in commandes.accolades(mot):
-                    res += _juger_forme(projet, c, mot, forme, dossier, variables, cache)
+                    res += _juger_forme(projet, c, mot, forme, variables, cache, depart, elargi)
             except (OSError, RuntimeError, ValueError, re.error):
                 # Un hook qui lèverait laisserait passer la commande sans la
                 # juger : ce qui ne se juge pas ne passe pas.
@@ -497,50 +536,67 @@ def ecritures_jugees(projet: config.Projet, cmd: str) -> list[tuple[str, str]]:
 
 def _dit(mot: str, chemin: str) -> str:
     """Le chemin visé, et le mot qui le vise si le shell le développe."""
-    return trad("{chemin}, par `{mot}`", chemin=chemin, mot=mot) if re.search(r"[$`*?\[{~]", mot) else chemin
+    return trad("{chemin}, par `{mot}`", chemin=chemin, mot=mot) if re.search(r"[$`*?\[{~(]", mot) else chemin
 
 
-def _juger_forme(projet: config.Projet, c: commandes.Commande, mot: str, forme: str, dossier: str,
-                 variables: dict, cache: dict) -> list[tuple[str, str]]:
+def _juger_forme(projet: config.Projet, c: commandes.Commande, mot: str, forme: str, variables: dict,
+                 cache: dict, depart: str, elargi: bool) -> list[tuple[str, str]]:
     """Les constats d'`ecritures_jugees` pour une forme d'un mot que `c`
-    écrit (une par accolade), `dossier` étant celui de `c` développé."""
-    racine = projet.racine
+    écrit (une par accolade). Développé, le mot se juge entier et, s'il
+    porte une variable ou une substitution, mot par mot : hors des
+    guillemets, le shell le couperait en mots, que le découpage ne
+    distingue plus d'un mot entre guillemets (B-0171)."""
     d, inconnus = commandes.developper(forme, variables)
-    if not d:
-        return []  # un mot vide : le shell n'écrit rien
+    champs = [d]
+    if re.search(r"[$`]", forme):
+        separateurs = variables.get("IFS")
+        separateurs = " \t\n" if separateurs is None or commandes.INCONNU in separateurs else separateurs
+        if separateurs:
+            champs += [x for x in re.split("[" + re.escape(separateurs) + "]+", d) if x]
+    res: list[tuple[str, str]] = []
+    for champ in dict.fromkeys(champs):
+        if champ:  # un mot vide : le shell n'écrit rien
+            res += _juger_chemin(projet, c, mot, champ, inconnus, cache, depart, elargi)
+    return res
+
+
+def _juger_chemin(projet: config.Projet, c: commandes.Commande, mot: str, d: str, inconnus: list[str],
+                  cache: dict, depart: str, elargi: bool) -> list[tuple[str, str]]:
+    """Les constats pour un chemin développé `d` que `c` écrit par `mot`."""
+    racine = projet.racine
     relatif = not d.startswith(("/", commandes.INCONNU))
-    plein = posixpath.join(str(racine), dossier, d) if relatif else d
+    plein = commandes.normaliser(posixpath.join(c.lieu, d) if relatif else d)
     if commandes.INCONNU in plein:
-        # Ce qui ne se développe pas : la part littérale qui le précède dit
-        # seule où il tombe.
-        avant = plein[:plein.index(commandes.INCONNU)]
-        lieu = Path(posixpath.normpath(avant[:avant.rfind("/") + 1])) if avant.startswith("/") else None
-        if lieu is not None and not _atteint(racine, lieu):
+        # Ce qui ne se développe pas : la part écrite en toutes lettres qui
+        # le précède, remontée des `..` qui le suivent, dit seule où il tombe.
+        lieu = commandes.lieu_sur(plein)
+        if lieu is not None and not _atteint(racine, Path(lieu)):
             return []
-        if not inconnus:
+        if commandes.INCONNU not in d:
             return [("illisible", trad("`{mot}`, dans le dossier `{dossier}`", mot=mot, dossier=c.dossier))]
-        if inconnus == [mot]:
+        if inconnus in ([mot], []):
             return [("illisible", f"`{mot}`")]
         return [("illisible", trad("`{mot}`, dont {parts}", mot=mot, parts=", ".join(f"`{x}`" for x in inconnus)))]
     res = []
-    if MOTIF_SHELL.search(posixpath.join(dossier, d) if relatif else d):
+    dedans = plein.startswith(depart + "/")
+    if MOTIF_SHELL.search(plein[len(depart):] if dedans else plein):
         # Le motif contre les fichiers présents, comme le shell, puis contre
-        # les motifs des chemins protégés.
-        echappe = relatif and plein.startswith(str(racine) + "/")
-        for trouve in sorted(glob.glob(glob.escape(str(racine)) + plein[len(str(racine)):] if echappe else plein)):
+        # les motifs des chemins protégés ; le dossier de départ, que la
+        # commande n'écrit pas, ne se lit pas comme un motif.
+        for trouve in sorted(glob.glob(glob.escape(depart) + plein[len(depart):] if dedans else plein,
+                                       recursive=elargi, include_hidden=elargi)):
             rel = _relatif(racine, trouve)
             cible = _protege(projet, rel, cache) if rel is not None else None
             if cible:
                 res.append(("protege", _dit(mot, cible)))
             if REGLAGES_AGENT.search(trouve):
                 res.append(("reglage", rel or trouve))
-        plein = posixpath.normpath(plein)
         base = next((b for b in {str(racine), str(racine.resolve())} if plein.startswith(b + "/")), None)
         if base is not None:
             motif = plein[len(base) + 1:]
             res += [("protege", _dit(mot, m)) for m in projet.chemins_proteges()
-                    if commandes.se_croisent(motif, m, True)]
-            res += [("reglage", mot) for m in REGLAGES_MOTIFS if commandes.se_croisent(motif, m)]
+                    if commandes.se_croisent(motif, m, True, elargi)]
+            res += [("reglage", mot) for m in REGLAGES_MOTIFS if commandes.se_croisent(motif, m, permissif=elargi)]
         return res
     rel = _relatif(racine, plein)
     cible = _protege(projet, rel, cache) if rel is not None else None
@@ -573,15 +629,16 @@ def _environnement_change(texte: str) -> bool:
 
 
 def _ecrits_hors_remise(projet: config.Projet, c: commandes.Commande,
-                        remise: tuple[list[str], str | None] | None) -> list[str]:
+                        remise: tuple[list[str], str | None] | None, depart: str | None = None) -> list[str]:
     """Ce que la commande écrit, tel qu'elle l'écrit, moins les fichiers
     qu'une remise admise remet : ses redirections et ses autres chemins se
-    jugent comme avant."""
+    jugent comme avant. `depart`, le dossier où part la commande."""
     if remise is None or remise[1] is not None:
         return ecrits_bruts(c)
     sans = dataclasses.replace(c, redirige=[])
     return [x for x in c.redirige if x] + [
-        x for x in ecrits_bruts(sans) if _relatif(projet.racine, c.chemin(x)) not in remise[0]]
+        x for x in ecrits_bruts(sans)
+        if _relatif(projet.racine, posixpath.join(depart or str(projet.racine), c.chemin(x))) not in remise[0]]
 
 
 def _cite_chemin(texte: str, rel: str) -> bool:
@@ -618,8 +675,8 @@ def _demande_qui_epargne(projet: config.Projet, rel: str):
     return None
 
 
-def remise_en_etat(projet: config.Projet, c: commandes.Commande,
-                   texte: str = "") -> tuple[list[str], str | None] | None:
+def remise_en_etat(projet: config.Projet, c: commandes.Commande, texte: str = "",
+                   depart: str | None = None) -> tuple[list[str], str | None] | None:
     """D-0098 : une commande simple qui remet des fichiers protégés à leur
     état du dernier commit. `None` si elle n'en vise aucun ; sinon les
     chemins protégés qu'elle remet, et la raison de son refus, ou `None`
@@ -630,8 +687,10 @@ def remise_en_etat(projet: config.Projet, c: commandes.Commande,
     pas. Un fichier que cite une demande dont ce qu'elle approuve n'est pas
     commité, lui ou son dossier, ne se remet pas : c'est peut-être la
     modification que l'humain y soumet. `texte`, la commande entière, fait
-    refuser la remise quand elle change l'environnement de git."""
+    refuser la remise quand elle change l'environnement de git ; `depart`,
+    le dossier où elle part, situe ses chemins relatifs (B-0205)."""
     racine = projet.racine
+    depart = depart or str(racine)
 
     def refus(chemins: list[str], pourquoi: str) -> tuple[list[str], str]:
         return chemins, trad("remise en état d'un fichier protégé refusée ({pourquoi}). Seule passe la remise "
@@ -669,7 +728,7 @@ def remise_en_etat(projet: config.Projet, c: commandes.Commande,
     else:
         return None
     cache: dict = {}
-    proteges = [(a, rel) for a in args if (rel := _relatif(racine, c.chemin(a))) is not None
+    proteges = [(a, rel) for a in args if (rel := _relatif(racine, posixpath.join(depart, c.chemin(a)))) is not None
                 and _protege(projet, rel, cache)]
     if not proteges:
         return None
@@ -1030,14 +1089,16 @@ def refus_bash(projet: config.Projet, cmd: str, cwd: str | None = None) -> str |
     faute = _fuite_bash(projet, cmd)
     if faute:
         return faute
-    remises = [(c, remise_en_etat(projet, c, cmd)) for c in simples]
+    depart = depart_de(racine, cwd)
+    remises = [(c, remise_en_etat(projet, c, cmd, depart)) for c in simples]
     refusee = next((r[1] for _, r in remises if r is not None and r[1]), None)
     if refusee:
         return refusee
     # Les réglages de Claude Code restent à l'humain, remise comprise
     # (sa réponse : « Exclure »).
-    # Chaque chemin écrit, développé comme le shell le ferait (B-0171).
-    jugees = ecritures_jugees(projet, cmd)
+    # Chaque chemin écrit, développé comme le shell le ferait (B-0171),
+    # depuis le dossier courant de l'agent (B-0205).
+    jugees = ecritures_jugees(projet, cmd, cwd)
     reglage = next((x for c in simples for x in ecrits(c) if REGLAGES_AGENT.search(x)), None) or next(
         (quoi for genre, quoi in jugees if genre == "reglage"), None)
     if reglage:
@@ -1049,9 +1110,10 @@ def refus_bash(projet: config.Projet, cmd: str, cwd: str | None = None) -> str |
         return trad("écriture par le shell vers un chemin que le hook ne sait pas développer : {quoi}. Une "
                     "variable que ni l'environnement du hook ni la commande ne donnent, une substitution de "
                     "commande (`$(…)`, accents graves) ou un `cd` vers un tel chemin peuvent viser un fichier "
-                    "protégé ; un tel chemin ne passe que si une part écrite en toutes lettres le place hors du "
-                    "projet (`/tmp/$X`). Écrire le chemin en toutes lettres, ou affecter la variable plus tôt "
-                    "dans la même commande (`F=/tmp/x; echo y > \"$F\"`) (B-0171).", quoi=illisible)
+                    "protégé ; un tel chemin ne passe que si la part écrite en toutes lettres qui le précède, "
+                    "remontée des `..` qui le suivent, le place hors du projet (`/tmp/$X`). Écrire le chemin en "
+                    "toutes lettres, ou affecter la variable plus tôt dans la même commande (`F=/tmp/x; echo y > "
+                    "\"$F\"`) (B-0171).", quoi=illisible)
     if cible:
         return trad("écriture d'un fichier protégé ({cible}) par le shell : seul l'humain modifie la "
                     "politique, les hooks, la CI et le moteur (relance de l'installeur). Un fichier protégé "
