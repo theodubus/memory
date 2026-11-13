@@ -5,10 +5,9 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Le lot B-0010 et B-0171 (J-2026-11-13-E) : intégré, revues corrigées
-par des sous-agents, puis une seconde revue chacun, push et fusion. À la
-fusion, dire à Théo que chess peut être mis à jour (J-2026-11-13-C), avec
-le prompt de mise à jour complété. Pilote en pause (ADR-0059).
+Le lot B-0010 et B-0171 livré (J-2026-11-13-K). Théo met chess à jour
+avec `docs/fabrication/chess/prompt-mise-a-jour.md` ; son compte rendu se
+consigne comme celui du 13 (J-2026-11-13-D). Pilote en pause (ADR-0059).
 
 ## Consignes en cours
 
@@ -57,15 +56,14 @@ Leur texte exact est dans l'entrée du journal citée.
 
 ## Prochaines étapes
 
-Avant toute nouvelle fonction (J-2026-11-13-I, D-0108) :
+Avant toute nouvelle fonction (J-2026-11-13-I, D-0108, D-0109) :
 
-1. Finir le lot B-0010 et B-0171.
-2. B-0209 (la revue jugée contre le critère et le modèle de menace).
-3. B-0142 (avec la gêne 6 de chess), B-0202 avec B-0175, B-0196.
-4. La mise à jour de chess, puis B-0151 et B-0199.
-5. Le reste, par priorité : B-0173 (son dernier critère),
-   B-0208, B-0179 à la reprise du pilote ; B-0206, B-0207,
-   B-0204, B-0205, B-0176, B-0167, B-0197, B-0200, B-0201, B-0156 ; en
-   basse B-0195, B-0172, B-0198, B-0203.
-6. Ensuite la planification (B-0101), puis la répartition entre agents
+1. B-0209 (la revue jugée contre le critère et le modèle de menace).
+2. B-0142 (avec la gêne 6 de chess), B-0202 avec B-0175, B-0196.
+3. Le compte rendu de chess, puis B-0151 et B-0199.
+4. Le reste, par priorité : B-0173 (son dernier critère), B-0208,
+   B-0179 à la reprise du pilote ; B-0204 à B-0207, B-0211, B-0176,
+   B-0167, B-0197, B-0200, B-0201, B-0156, B-0210 ; en basse B-0195,
+   B-0172, B-0198, B-0203.
+5. Ensuite la planification (B-0101), puis la répartition entre agents
    (B-0055).

@@ -139,8 +139,9 @@ Ranger d'abord, pour qu'une session neuve, sur ce compte ou un autre,
 reparte du dépôt seul :
 
 1. tout poussé, rien qui ne vive que dans le conteneur (un commit pas
-   encore relu part en correctif, `git format-patch`, sous
-   `docs/fabrication/passation/`) ; la pull request fusionnée ;
+   encore relu part en correctif, `git format-patch`, dans un dossier
+   de passation sous docs/fabrication, retiré quand le lot s'intègre) ;
+   la pull request fusionnée ;
 2. les worktrees et leurs branches retirés ;
 3. le chantier actif dit le lot suivant et ce qui attend (un compte
    rendu, une CI, une demande) ;
