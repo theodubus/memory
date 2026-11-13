@@ -600,6 +600,24 @@ def reglages_nouveaux(projet: str, modele: str) -> list[tuple[str, str]]:
     return nouveaux
 
 
+def alerte_chantier_actif(cible: Path) -> list[str]:
+    """Un budget du chantier actif que les garde-fous gardés d'un projet
+    installé avant mettent au-dessus de sa part de la sortie du démarrage
+    (ADR-0071) : à son budget, le chantier actif y serait coupé à chaque
+    session. La mise à jour ne réécrit pas les garde-fous du projet ; elle le
+    dit, avec la valeur qui tient."""
+    from socle import state as etat
+
+    projet = config.Projet.charger(cible)
+    budget, permis = projet.budget_octets(projet.chemins.actif), etat.budget_actif_permis(projet)
+    if budget is None or budget <= permis:
+        return []
+    return [trad("!! le budget de {chemin} ({budget} octets) dépasse la part du chantier actif dans la sortie du "
+                 "démarrage ({permis} octets, en-tête déduit) : à son budget, il y serait coupé à chaque session ; "
+                 "le baisser à {permis} au plus, ce qui durcit et reste libre, et resserrer le chantier actif",
+                 chemin=projet.chemins.actif, budget=budget, permis=permis)]
+
+
 def _refus_cible(cible: Path) -> str | None:
     """Pourquoi le socle ne s'installe pas là, ou `None`."""
     if not outils.est_depot(cible):
@@ -743,6 +761,7 @@ def _poser_configuration(cible: Path, texte_adaptateur: str, ancien: dict, prive
                         nom=nom, n=len(nouveaux),
                         liste="\n      ".join(f"`{cle}` — {quoi}" if quoi else f"`{cle}`"
                                               for cle, quoi in nouveaux)))
+                journal += alerte_chantier_actif(cible)
         else:
             outils.ecrire(p, contenu)
             journal.append(trad("{nom} posé", nom=nom))

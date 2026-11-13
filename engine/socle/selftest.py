@@ -851,7 +851,7 @@ def _cas() -> list[Cas]:
 
     @defaut("budget-releve", "budget de mémoire relevé", "ci", "cliquet.garde-fous")
     def _(a, c):
-        remplacer(c, ".socle/guardrails.toml", '"memory/active.md" = { max_bytes = 4000 }', '"memory/active.md" = { max_bytes = 60000 }')
+        remplacer(c, ".socle/guardrails.toml", '"memory/active.md" = { max_bytes = 3700 }', '"memory/active.md" = { max_bytes = 60000 }')
         return etage_ci(a, c)
 
     @defaut("correctif-sans-test", "correctif sans test de régression", "ci", "tests.regression")
@@ -1891,7 +1891,7 @@ def _temoins() -> list[tuple[str, Callable]]:
 
     @temoin("durcir un garde-fou est libre")
     def _(a, c):
-        remplacer(c, ".socle/guardrails.toml", '"memory/active.md" = { max_bytes = 4000 }', '"memory/active.md" = { max_bytes = 3000 }')
+        remplacer(c, ".socle/guardrails.toml", '"memory/active.md" = { max_bytes = 3700 }', '"memory/active.md" = { max_bytes = 3000 }')
         return etage_ci(a, c)
 
     @temoin("un module nouveau entre au cliquet de mutation « à mesurer » : la CI passe")
@@ -1966,7 +1966,7 @@ def _temoins() -> list[tuple[str, Callable]]:
 
     @temoin("un garde-fou assoupli par l'humain, qui l'approuve, passe la CI")
     def _(a, c):
-        remplacer(c, ".socle/guardrails.toml", '"memory/active.md" = { max_bytes = 4000 }',
+        remplacer(c, ".socle/guardrails.toml", '"memory/active.md" = { max_bytes = 3700 }',
                   '"memory/active.md" = { max_bytes = 9000 }')
         r = a.socle(c, "approve", "--keys", 'budgets."memory/active.md".max_bytes', "--text", "Plus de place")
         return (r.stdout + r.stderr) if r.returncode != 0 else etage_ci(a, c)

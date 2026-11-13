@@ -104,9 +104,11 @@ Les tâches se confient à l'agent comme d'habitude. Au démarrage de chaque
 session, il reçoit l'état du projet, le chantier actif, les titres des faits
 et les dix dernières décisions ; il travaille, et les contrôles le vérifient
 à chaque étape. Ce démarrage tient sous `[startup] max_bytes` des
-garde-fous, borne posée sous ce que Claude Code remet entier à l'agent :
-au-delà, des lignes entières se coupent depuis la fin, les décisions
-d'abord, et la dernière ligne dit ce qui manque et comment le lire.
+garde-fous, borne posée sous ce que Claude Code remet entier à l'agent,
+dont chaque partie a sa part : une partie qui dépasse la sienne perd des
+lignes entières depuis sa fin, et la dernière ligne dit laquelle, de
+combien, et comment lire le reste. Le budget du chantier actif tient dans
+sa part : à sa taille permise, il n'est jamais coupé.
 
 **Planifier.** Depuis le cadrage, l'agent écrit une spécification et une
 architecture courtes dans la documentation du projet : chaque choix en

@@ -3,21 +3,21 @@
 Ce dépôt fabrique le **socle** : un moteur Python, bibliothèque standard
 seule, qui rend fiables la mémoire, la documentation et les tests d'un projet
 de code entretenu par un agent. L'agent écrit, des contrôles automatiques
-attrapent les erreurs, et l'humain n'arbitre que ce qu'aucun contrôle ne peut
-trancher. Le cadrage fondateur : `memory/archives/cadrage-2026-10-10.md` ;
-`docs/fabrication/architecture.md` dit où chacune de ses exigences est
-appliquée.
+attrapent les erreurs, l'humain n'arbitre que ce qu'aucun contrôle ne
+tranche. Le cadrage fondateur : `memory/archives/cadrage-2026-10-10.md` ;
+`docs/fabrication/architecture.md` dit où s'applique chacune de ses
+exigences.
 
 Ce dépôt est en **mode amont** : premier utilisateur du socle qu'il
-fabrique, il en a la source sous `engine/socle/`, dont l'empreinte n'est
-pas figée ; ses fichiers de projet vivent dans `.socle/`.
+fabrique, il en a la source sous `engine/socle/`, à l'empreinte non
+figée ; ses fichiers de projet vivent dans `.socle/`.
 
 ## Structure
 
 Le dépôt a deux parts (ADR-0033). **Le produit**, `engine/socle/`, est la
 seule chose qu'un projet reçoit : rien n'y renvoie à l'atelier. **L'atelier**
 est tout le reste : les tests, les bancs, la documentation de fabrication et
-la mémoire de ce dépôt, qui est l'historique de fabrication de l'outil.
+la mémoire de ce dépôt, l'historique de sa fabrication.
 
 - `engine/socle/` — le moteur : lecture de la mémoire, contrôles, hooks,
   installeur, auto-test. `engine/socle/FORMAT.md` fait foi pour le format de
@@ -46,8 +46,8 @@ python3 .socle/socle install --target ../projet --adapter auto --owner @moi
 
 - **Tout contrôle nouveau a son défaut injecté** dans `engine/socle/selftest.py`,
   et un témoin sain qui passe : un garde-fou qu'on n'a jamais vu échouer ne
-  prouve rien. `tests/test_autotest.py` l'exige de chaque contrôle du
-  registre et de chaque refus reconnu.
+  prouve rien. `tests/test_autotest.py` l'exige de chaque contrôle et
+  refus reconnu.
 - **Le moteur ne connaît ni langage ni agent** : ce qui dépend du langage va
   dans un adaptateur, ce qui dépend de l'agent dans les hooks.
 - **Bibliothèque standard de Python 3.11+ seulement** (`ADR-0001`), vérifié
@@ -142,8 +142,9 @@ code.
 ### Lire la mémoire à la demande
 
 Le démarrage n'injecte que l'état, le chantier actif, les titres des faits
-et les dix dernières décisions. Le reste se lit quand il sert, sans
-attendre qu'on le demande :
+et les dix dernières décisions, sous une borne ; ce qu'une ligne `!! coupé`
+dit manquer se lit aussitôt. Le reste se lit quand il sert, sans attendre
+qu'on le demande :
 
 - un identifiant cité (`F-`, `B-`, `ADR-`, `D-`, `J-`) se lit avant de
   s'appuyer dessus : `python3 .socle/socle show <ID>`, qui donne aussi son

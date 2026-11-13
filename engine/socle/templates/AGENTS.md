@@ -81,8 +81,9 @@ code.
 ### Lire la mémoire à la demande
 
 Le démarrage n'injecte que l'état, le chantier actif, les titres des faits
-et les dix dernières décisions. Le reste se lit quand il sert, sans
-attendre qu'on le demande :
+et les dix dernières décisions, sous une borne ; ce qu'une ligne `!! coupé`
+dit manquer se lit aussitôt. Le reste se lit quand il sert, sans attendre
+qu'on le demande :
 
 - un identifiant cité (`F-`, `B-`, `ADR-`, `D-`, `J-`) se lit avant de
   s'appuyer dessus : `python3 .socle/socle show <ID>`, qui donne aussi son

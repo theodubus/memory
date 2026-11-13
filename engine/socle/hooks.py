@@ -171,6 +171,8 @@ def session_start(projet: config.Projet, entree: dict) -> int:
 SESSION_CLOUD = "CLAUDE_CODE_REMOTE"
 # Sous le délai du hook de démarrage (`.claude/settings.json`).
 DELAI_OUTILS = 270
+# Une ligne de la sortie d'un échec des outils, en octets au plus.
+LIGNE_DE_SORTIE = 200
 
 
 def installer_outils(projet: config.Projet) -> list[str]:
@@ -211,7 +213,10 @@ def installer_outils(projet: config.Projet) -> list[str]:
             lignes.append(trad("outils de l'adaptateur installés (session cloud) : `{commande}`", commande=c))
             continue
         reussi = False
-        queue = "\n    ".join((p.stdout + p.stderr).strip().splitlines()[-5:])
+        # Ses cinq dernières lignes, chacune bornée : une ligne de pip peut
+        # faire plusieurs Ko, que la borne du démarrage compte (ADR-0071).
+        queue = "\n    ".join(outils.raccourcir(l, LIGNE_DE_SORTIE)
+                              for l in (p.stdout + p.stderr).strip().splitlines()[-5:])
         lignes.append(trad("!! outils de l'adaptateur : `{commande}` a rendu {code} ; la relancer avant de "
                            "vérifier\n    {queue}", commande=c, code=p.returncode, queue=queue))
     if reussi:

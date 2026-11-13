@@ -455,6 +455,12 @@ MESSAGES: dict[str, str] = {
         "!! template settings missing from {nom} ({n}): declare them if the project needs them, once this engine is "
         "committed (CI judges with the committed engine, and a setting it does not know counts as loosening); "
         "tightening is free, loosening waits for a validated request:\n      {liste}",
+    "!! le budget de {chemin} ({budget} octets) dépasse la part du chantier actif dans la sortie du démarrage "
+    "({permis} octets, en-tête déduit) : à son budget, il y serait coupé à chaque session ; le baisser à {permis} au "
+    "plus, ce qui durcit et reste libre, et resserrer le chantier actif":
+        "!! the budget of {chemin} ({budget} bytes) exceeds the active work's share of the start-up output ({permis} "
+        "bytes, header deducted): at its budget, it would be cut there in every session; lower it to {permis} at "
+        "most, which tightens and stays free, and tighten the active work",
     "{nom} posé":
         "{nom} installed",
     "mémoire initiale posée, journal ouvert par {ident}":
@@ -1281,6 +1287,8 @@ MESSAGES: dict[str, str] = {
         "ready: {id} — {titre} (high priority)",
     "prêts aussi, de priorité basse : {ids}":
         "also ready, low priority: {ids}",
+    "{ids} … et {n} autre(s)":
+        "{ids} … and {n} more",
     "… et {n} autre(s) prêt(s)":
         "… and {n} more ready",
     "{n} sujet(s) attendent un sujet ouvert":
@@ -1625,8 +1633,14 @@ MESSAGES: dict[str, str] = {
         "the end of the active work, {n} line(s) of {total}: read {chemin}",
     "--- {chemin} : {n} fait(s) par leur titre ; un en entier : `python3 .socle/socle show F-NNNN` ---":
         "--- {chemin}: {n} fact(s) by their title; one in full: `python3 .socle/socle show F-NNNN` ---",
+    "--- {chemin} : {n} fait(s) sur {total} par leur titre ; un en entier : `python3 .socle/socle show F-NNNN` ---":
+        "--- {chemin}: {n} fact(s) of {total} by their title; one in full: `python3 .socle/socle show F-NNNN` ---",
     "{n} fait(s) sur {total} : lire {chemin}":
         "{n} fact(s) of {total}: read {chemin}",
+    "--- la dernière décision sur {total} ; avant toute décision de conception, l'index entier : `python3 "
+    ".socle/socle show --index decisions` ---":
+        "--- the last decision of {total}; before any design decision, the whole index: `python3 .socle/socle show "
+        "--index decisions` ---",
     "--- les {n} dernières décisions sur {total}, la plus récente d'abord ; avant toute décision de conception, "
     "l'index entier : `python3 .socle/socle show --index decisions` ---":
         "--- the last {n} decisions of {total}, the most recent first; before any design decision, the whole "
@@ -1635,6 +1649,18 @@ MESSAGES: dict[str, str] = {
         "{n} of the last {total} decisions: `python3 .socle/socle show --index decisions`",
     "!! coupé à la borne du démarrage ({borne} octets, `[startup] max_bytes` des garde-fous) : {manque}":
         "!! cut at the start-up cap ({borne} bytes, `[startup] max_bytes` of the guardrails): {manque}",
+    "{groupe}, {demande} octets pour une part de {part} — {coupees}":
+        "{groupe}, {demande} bytes for a share of {part} — {coupees}",
+    "l'état dérivé":
+        "the derived state",
+    "le chantier actif":
+        "the active work",
+    "les faits":
+        "the facts",
+    "les décisions":
+        "the decisions",
+    "{n} ligne(s) sur {total}, la fin : `python3 .socle/socle state --short`":
+        "{n} line(s) of {total}, the end: `python3 .socle/socle state --short`",
     "backlog  : {ouverts} ouvert(s), {en_cours} en cours, {bloques} bloqué(s), {clos} clos":
         "backlog  : {ouverts} open, {en_cours} in progress, {bloques} blocked, {clos} closed",
     "en cours":
@@ -1645,8 +1671,8 @@ MESSAGES: dict[str, str] = {
         "staleness: active work unchanged for {age} days (threshold {jours})",
     "demandes humaines en attente : {n}":
         "pending human requests: {n}",
-    " (du {date})":
-        " (of {date})",
+    "demandes humaines en attente : {n} — chacune sous « ce qui revient à l'humain », avec son lien":
+        "pending human requests: {n} — each under \"what falls to the human\", with its link",
     "  RENVOYÉE (contexte insuffisant) : {id} — à réécrire en une demande qui la remplace":
         "  SENT BACK (insufficient context): {id} — to rewrite as a request that replaces it",
     "hooks    : aucune trace — ils n'ont encore jamais tiré dans ce clone":
@@ -1771,8 +1797,8 @@ MESSAGES: dict[str, str] = {
         "the human's guide: their steps, each with its command",
     "où en est le projet, calculé à chaque fois (injecté au démarrage de l'agent)":
         "where the project stands, computed every time (injected when the agent starts)",
-    "sans le contenu de l'actif et du canonique":
-        "without the content of the active work and the canonical memory",
+    "l'état dérivé seul, entier : sans le chantier actif, les faits ni les décisions, sans borne ni plafond":
+        "the derived state alone, whole: without the active work, the facts or the decisions, with no cap or limit",
     "contrôles du socle, un code de sortie":
         "the socle's checks, one exit code",
     "révision de base (défaut : divergence avec la branche par défaut)":

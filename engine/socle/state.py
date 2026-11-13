@@ -119,18 +119,58 @@ def page_protection(projet: config.Projet) -> str | None:
     return f"{url}/settings/rules" if url.startswith("https://github.com/") else None
 
 
+# La sortie du démarrage (ADR-0071) : chaque groupe a sa part de la borne
+# `[startup] max_bytes`, en fraction. 9 500 octets donnent 2 375 à l'état
+# dérivé, 3 800 au chantier actif, 2 090 aux faits, 1 235 aux décisions. Le
+# budget du chantier actif des garde-fous (3 700 dans le gabarit) tient dans
+# sa part, en-tête déduit (`budget_actif_permis`) : un chantier actif dans son
+# budget n'est pas coupé.
+PARTS = {"etat": 0.25, "actif": 0.40, "faits": 0.22, "decisions": 0.13}
+# Une ligne de l'état dérivé, en octets au plus (l'alerte des hooks non
+# chargés, la plus longue des lignes fixes, en fait 953) ; une ligne de
+# titre (un commit, un fait, une décision), bien moins ; le titre d'un sujet
+# du backlog, que sa ligne précède et que sa priorité peut suivre, moins
+# encore.
+LIGNE = 1000
+TITRE = 80
+TITRE_DE_SUJET = 70
+# Les éléments montrés de chaque liste de l'état dérivé : `git log`, `socle
+# show --index backlog` et `socle state --short` donnent le reste.
+COMMITS_MONTRES = 5
+PRETS_MONTRES = 5
+ELEMENTS_MONTRES = 4
+BASSES_MONTREES = 10
+
+
+def budget_actif_permis(projet: config.Projet) -> int:
+    """La taille, en octets, que le chantier actif peut avoir sans être
+    coupé au démarrage : sa part de la borne, moins son en-tête."""
+    return int(projet.borne_demarrage() * PARTS["actif"]) - _octets(["", f"--- {projet.chemins.actif} ---"])
+
+
+def _liste(elements: list, plafond: int | None, rendre: Callable[[object], list[str]]) -> list[str]:
+    """Les lignes des `plafond` premiers éléments, puis le nombre des autres."""
+    res = [l for e in elements[:plafond] for l in rendre(e)]
+    if plafond is not None and len(elements) > plafond:
+        res.append(trad("  … et {n} autre(s)", n=len(elements) - plafond))
+    return res
+
+
 def calculer(projet: config.Projet, contenus: bool = True, supplement: list[str] | tuple = ()) -> str:
     """L'état du démarrage : l'état dérivé, puis, avec `contenus`, le
     chantier actif, les faits par leur titre et les dix dernières décisions,
-    sous la borne des garde-fous (`[startup] max_bytes`, ADR-0071), que
-    Claude Code remet entière à l'agent. `supplement` : les lignes que le
-    hook de démarrage ajoute (les outils de l'adaptateur, les hooks git),
-    comptées dans la borne. Les lignes d'action (les demandes, l'humain, les
-    hooks) précèdent le backlog, dont la liste des prêts est la plus
-    longue : l'essentiel tient dans les premiers octets."""
+    chaque groupe dans sa part de la borne des garde-fous (`[startup]
+    max_bytes`, ADR-0071), que Claude Code remet entière à l'agent ; l'état
+    dérivé y a ses lignes bornées et ses listes plafonnées. `supplement` :
+    les lignes que le hook de démarrage ajoute (les outils de l'adaptateur,
+    les hooks git), comptées dans la part de l'état. Les lignes d'action
+    (les demandes, l'humain, les hooks) précèdent le backlog : l'essentiel
+    tient dans les premiers octets. Sans `contenus` (`socle state
+    --short`), l'état dérivé seul, entier : ni borne, ni plafond."""
     racine = projet.racine
     lignes = []
     nom = racine.name
+    plafond = ELEMENTS_MONTRES if contenus else None
     from socle import hooks
     from socle.checks_ratchet import REMEDE_HOOKS
 
@@ -146,19 +186,19 @@ def calculer(projet: config.Projet, contenus: bool = True, supplement: list[str]
         lignes.append("")
     lignes.append(trad("== {nom} — état dérivé par `socle state`, rien de recopié ==", nom=nom))
     try:
-        lignes += _git(racine, projet)
+        lignes += _git(racine, projet, borne=contenus)
     except outils.ErreurGit as e:
         lignes.append(trad("git : indisponible ({erreur})", erreur=e))
     mem, backlog = None, []
     try:
         mem = memoire.Memoire.charger(racine)
         lignes += _memoire(mem, projet)
-        backlog = _backlog(mem)
+        backlog = _backlog(mem, borne=contenus)
     except Exception as e:  # l'état ne bloque jamais le démarrage
         lignes.append(trad("mémoire : illisible ({erreur}) — lancer `python3 .socle/socle check`",
                            erreur=f"{type(e).__name__}: {e}"))
     try:
-        lignes += _demandes(racine)
+        lignes += _demandes(racine, plafond)
     except Exception as e:
         lignes.append(trad("demandes : illisibles ({erreur})", erreur=f"{type(e).__name__}: {e}"))
     try:
@@ -187,7 +227,7 @@ def calculer(projet: config.Projet, contenus: bool = True, supplement: list[str]
                                nom=nom))
         else:
             lignes.append(trad("branche  : protection inconnue ({detail})", detail=detail))
-        lignes += humain.texte(elements)
+        lignes += humain.texte(elements, plafond)
     except Exception as e:
         lignes.append(trad("ce qui revient à l'humain : incalculable ({erreur})", erreur=f"{type(e).__name__}: {e}"))
     try:
@@ -197,9 +237,7 @@ def calculer(projet: config.Projet, contenus: bool = True, supplement: list[str]
         if faits:
             lignes.append(trad("écrit par l'humain lui-même depuis le dernier commit de l'agent : {n} — à lui "
                                "citer, avec le lien", n=len(faits)))
-            for e in faits:
-                lignes.append(f"  {humain.genre(e)} : {e.quoi}")
-                lignes.append(f"    {e.lien}")
+            lignes += _liste(faits, plafond, lambda e: [f"  {humain.genre(e)} : {e.quoi}", f"    {e.lien}"])
     except Exception as e:
         lignes.append(trad("ce que l'humain a écrit lui-même : incalculable ({erreur})",
                            erreur=f"{type(e).__name__}: {e}"))
@@ -218,65 +256,103 @@ def calculer(projet: config.Projet, contenus: bool = True, supplement: list[str]
     lignes.append(trad("vérifier : `python3 .socle/socle verify --fast` (tout : sans `--fast`)"))
     if not contenus:
         return "\n".join(lignes)
-    return "\n".join(borner(lignes, parties_injectees(projet, mem), projet.borne_demarrage()))
+    etat = Partie("etat", [outils.raccourcir(l, LIGNE) for l in lignes],
+                  lambda n, total: trad("{n} ligne(s) sur {total}, la fin : `python3 .socle/socle state --short`",
+                                        n=n, total=total))
+    return "\n".join(borner([etat, *parties_injectees(projet, mem)], projet.borne_demarrage()))
+
+
+def _sans_entete(montrees: int, total: int) -> list[str]:
+    return []
 
 
 @dataclass
 class Partie:
-    """Ce que le démarrage injecte après l'état dérivé : un en-tête, des
-    lignes, et ce que dit la coupe quand elle en retire `n` sur `total`."""
+    """Une partie de la sortie du démarrage : le groupe dont elle partage la
+    part de la borne (`PARTS`), ses lignes, ce que dit la coupe quand elle en
+    retire `n` sur `total`, et son en-tête selon les lignes montrées."""
 
-    entete: list[str]
+    groupe: str
     lignes: list[str]
     manque: Callable[[int, int], str]
+    entete: Callable[[int, int], list[str]] = _sans_entete
 
 
 # Les décisions que le démarrage injecte ; l'index entier se lit à la demande.
 DERNIERES_DECISIONS = 10
+# Ce que dit la ligne de coupe de chaque groupe.
+GROUPES = {"etat": a_traduire("l'état dérivé"), "actif": a_traduire("le chantier actif"),
+           "faits": a_traduire("les faits"), "decisions": a_traduire("les décisions")}
+
+
+def ligne_de_titre(ident: str, titre: str, suffixe: str = "") -> str:
+    """`ID — titre (suffixe)`, en `TITRE` octets au plus : le titre se
+    raccourcit, l'identifiant et le suffixe restent."""
+    debut = f"{ident} — "
+    place = TITRE - len(debut.encode("utf-8")) - len(suffixe.encode("utf-8"))
+    return debut + outils.raccourcir(titre, max(place, 3)) + suffixe
 
 
 def parties_injectees(projet: config.Projet, mem: memoire.Memoire | None) -> list[Partie]:
     """Le chantier actif, public puis privé, entier ; les faits par leur
     titre, publics puis privés, le statut dit quand il n'est pas « mesuré » ;
     les dix dernières décisions, la plus récente d'abord, le statut dit
-    quand elle n'est pas acceptée. Une mémoire privée illisible ici n'en
-    donne rien : l'état dérivé le dit plus haut."""
+    quand elle n'est pas acceptée ; les titres raccourcis, les statuts dans
+    la langue du projet. Une mémoire privée illisible ici n'en donne rien :
+    l'état dérivé le dit plus haut."""
+    from socle import language as langue
+
     racine, ch = projet.racine, projet.chemins
+    lg = langue.du_projet(projet)
     res = []
     for chemin in (ch.actif, ch.dans_prive(ch.actif)):
         texte = outils.lire_a(racine, None, chemin)
         if not texte or not texte.strip() or (memoire.est_prive(chemin) and not memoire.lisible(texte)):
             continue
-        res.append(Partie(["", f"--- {chemin} ---"], texte.rstrip().splitlines(),
+        res.append(Partie("actif", texte.rstrip().splitlines(),
                           lambda n, total, c=chemin: trad("la fin du chantier actif, {n} ligne(s) sur {total} : lire "
-                                                          "{chemin}", n=n, total=total, chemin=c)))
+                                                          "{chemin}", n=n, total=total, chemin=c),
+                          lambda montrees, total, c=chemin: ["", f"--- {c} ---"]))
     if mem is None:
         return res
+
+    def statut(e: memoire.Entree, attendu: str) -> str:
+        if e.statut == attendu:
+            return ""
+        table = langue.STATUTS.get(e.type, {})
+        libelle = langue.mot(table, e.statut, lg) if e.statut in table else memoire.nettoyer(e.meta.get("statut", ""))
+        return f" ({libelle})"
+
     for chemin in (ch.canonique, ch.dans_prive(ch.canonique)):
         f = mem.fichiers.get(chemin)
         faits = [e for e in (f.entrees if f else []) if e.type == "F" and not e.archivee and not e.basculee]
         if not faits:
             continue
-        lignes = [f"{e.id} — {e.titre}" if e.statut == "mesure" else
-                  f"{e.id} — {e.titre} ({memoire.nettoyer(e.meta.get('statut', ''))})" for e in faits]
-        res.append(Partie(["", trad("--- {chemin} : {n} fait(s) par leur titre ; un en entier : `python3 .socle/socle "
-                                    "show F-NNNN` ---", chemin=chemin, n=len(faits))], lignes,
-                          lambda n, total, c=chemin: trad("{n} fait(s) sur {total} : lire {chemin}", n=n,
-                                                          total=total, chemin=c)))
+        res.append(Partie(
+            "faits", [ligne_de_titre(e.id, e.titre, statut(e, "mesure")) for e in faits],
+            lambda n, total, c=chemin: trad("{n} fait(s) sur {total} : lire {chemin}", n=n, total=total, chemin=c),
+            lambda montrees, total, c=chemin: ["", trad(
+                "--- {chemin} : {n} fait(s) par leur titre ; un en entier : `python3 .socle/socle show F-NNNN` ---",
+                chemin=c, n=montrees) if montrees == total else trad(
+                "--- {chemin} : {n} fait(s) sur {total} par leur titre ; un en entier : `python3 .socle/socle show "
+                "F-NNNN` ---", chemin=c, n=montrees, total=total)]))
     decisions = [e for e in mem.entrees("ADR") if not e.archivee and not e.basculee]
     if decisions:
         # Les plus récentes : par date, puis par numéro (une décision privée
         # a sa propre suite de numéros).
         decisions.sort(key=lambda e: (e.meta.get("date", ""), e.id.rsplit("-", 1)[-1], e.prive), reverse=True)
-        dernieres = decisions[:DERNIERES_DECISIONS]
+        nombre = len(decisions)
         res.append(Partie(
-            ["", trad("--- les {n} dernières décisions sur {total}, la plus récente d'abord ; avant toute décision de "
-                      "conception, l'index entier : `python3 .socle/socle show --index decisions` ---",
-                      n=len(dernieres), total=len(decisions))],
-            [f"{e.id} — {e.titre}" if e.statut == "acceptee" else f"{e.id} — {e.titre} ({e.statut})"
-             for e in dernieres],
+            "decisions", [ligne_de_titre(e.id, e.titre, statut(e, "acceptee"))
+                          for e in decisions[:DERNIERES_DECISIONS]],
             lambda n, total: trad("{n} des {total} dernières décisions : `python3 .socle/socle show --index "
-                                  "decisions`", n=n, total=total)))
+                                  "decisions`", n=n, total=total),
+            lambda montrees, total: ["", trad(
+                "--- la dernière décision sur {total} ; avant toute décision de conception, l'index entier : "
+                "`python3 .socle/socle show --index decisions` ---", total=nombre) if montrees == 1 else trad(
+                "--- les {n} dernières décisions sur {total}, la plus récente d'abord ; avant toute décision de "
+                "conception, l'index entier : `python3 .socle/socle show --index decisions` ---",
+                n=montrees, total=nombre)]))
     return res
 
 
@@ -287,39 +363,86 @@ def _octets(lignes: list[str]) -> int:
     return sum(len(l.encode("utf-8")) + 1 for l in lignes)
 
 
-def borner(essentiel: list[str], parties: list[Partie], borne: int) -> list[str]:
-    """L'état dérivé, puis les parties, en `borne` octets au plus, sauts de
-    ligne compris. Au-delà, des lignes entières se retirent depuis la fin
-    (les décisions, puis les faits ; le chantier actif en dernier recours),
-    un en-tête avec la dernière ligne qu'il annonce, et une dernière ligne
-    dit ce qui manque et comment le lire : jamais en silence, jamais au
-    milieu d'une ligne. L'état dérivé ne se coupe pas : ses listes sont
-    plafonnées."""
-    gardees = [list(p.lignes) for p in parties]
-    coupees = [0] * len(parties)
+def borner(parties: list[Partie], borne: int) -> list[str]:
+    """Les parties, en `borne` octets au plus, sauts de ligne compris. Chaque
+    groupe a sa part de la borne (`PARTS`) ; ce qu'un groupe laisse de sa
+    part va à ceux qui dépassent la leur, dans l'ordre. Un groupe au-delà de
+    ce qui lui revient perd des lignes entières depuis sa fin, un en-tête
+    avec la dernière ligne qu'il annonce : jamais une partie ne mange la part
+    d'une autre. Une dernière ligne dit ce qui est coupé, de quel groupe,
+    sa taille pour sa part, et où lire le reste : jamais en silence, jamais
+    au milieu d'une ligne. La place de cette ligne se prend sur les groupes
+    coupés."""
+    montrees = [len(p.lignes) for p in parties]
+    groupes = list(dict.fromkeys(p.groupe for p in parties))
+    membres = {g: [i for i, p in enumerate(parties) if p.groupe == g] for g in groupes}
+
+    def taille(i: int) -> int:
+        p, k = parties[i], montrees[i]
+        return _octets(p.entete(k, len(p.lignes)) + p.lignes[:k]) if k else 0
+
+    def taille_groupe(g: str) -> int:
+        return sum(taille(i) for i in membres[g])
+
+    def retirer(g: str) -> bool:
+        """La dernière ligne montrée du groupe, dans sa dernière partie."""
+        for i in reversed(membres[g]):
+            if montrees[i]:
+                montrees[i] -= 1
+                return True
+        return False
+
+    def coupe(g: str) -> bool:
+        return any(montrees[i] < len(parties[i].lignes) for i in membres[g])
+
+    part = {g: int(borne * PARTS.get(g, 0)) for g in groupes}
+    demande = {g: taille_groupe(g) for g in groupes}
+
+    def segment(g: str) -> str:
+        """Ce que la ligne de coupe dit du groupe : sa taille pour sa part,
+        ce qui en est coupé, où le lire."""
+        coupees = ", ".join(parties[i].manque(len(parties[i].lignes) - montrees[i], len(parties[i].lignes))
+                            for i in membres[g] if montrees[i] < len(parties[i].lignes))
+        return trad("{groupe}, {demande} octets pour une part de {part} — {coupees}",
+                    groupe=trad(GROUPES.get(g, g)), demande=demande[g], part=part[g], coupees=coupees)
+
+    def place(g: str) -> int:
+        """Ce qu'occupe le groupe : ses lignes, et ce que la coupe dit de lui."""
+        return taille_groupe(g) + (len(segment(g).encode("utf-8")) + len(" ; ") if coupe(g) else 0)
+
+    permis = {g: min(demande[g], part[g]) for g in groupes}
+    reste = borne - sum(permis.values())
+    for g in groupes:
+        plus = max(0, min(reste, demande[g] - permis[g]))
+        permis[g] += plus
+        reste -= plus
+    for g in groupes:
+        while place(g) > permis[g] and retirer(g):
+            pass
 
     def note() -> list[str]:
-        manque = [p.manque(n, len(p.lignes)) for p, n in zip(parties, coupees) if n]
+        manque = [segment(g) for g in groupes if coupe(g)]
         if not manque:
             return []
         return [trad("!! coupé à la borne du démarrage ({borne} octets, `[startup] max_bytes` des garde-fous) : "
                      "{manque}", borne=borne, manque=" ; ".join(manque))]
 
-    taille = _octets(essentiel) + sum(_octets(p.entete + g) for p, g in zip(parties, gardees) if g)
-    i = len(parties) - 1
-    while i >= 0 and taille + _octets(note()) > borne:
-        if not gardees[i]:
-            i -= 1
-            continue
-        taille -= _octets([gardees[i].pop()])
-        coupees[i] += 1
-        if not gardees[i]:
-            taille -= _octets(parties[i].entete)
-    res = list(essentiel)
-    for p, g in zip(parties, gardees):
-        if g:
-            res += p.entete + g
-    return res + note()
+    # Le début de la ligne de coupe, sur ce qui reste de la borne, ou sur les
+    # groupes coupés, le dernier d'abord.
+    while sum(taille(i) for i in range(len(parties))) + _octets(note()) > borne:
+        if not any(retirer(g) for g in reversed(groupes) if coupe(g)) and \
+                not any(retirer(g) for g in reversed(groupes)):
+            break
+    res = []
+    for i, p in enumerate(parties):
+        if montrees[i]:
+            res += p.entete(montrees[i], len(p.lignes)) + p.lignes[:montrees[i]]
+    fin = note()
+    if fin:
+        # Une borne plus petite que la ligne de coupe : elle, raccourcie à
+        # ce qui reste.
+        fin = [outils.raccourcir(fin[0], max(0, borne - _octets(res) - 1))]
+    return res + fin
 
 
 def audit_adaptateur(projet: config.Projet) -> list[str]:
@@ -342,14 +465,9 @@ def audit_adaptateur(projet: config.Projet) -> list[str]:
                  "(un autre adaptateur, ou ces fichiers déclarés tiers)", couvert=couvert, liste=liste)]
 
 
-# Les listes de l'état dérivé, plafonnées pour qu'il tienne dans les premiers
-# octets du démarrage (ADR-0071) : `git log` et `socle show --index backlog`
-# donnent le reste.
-COMMITS_MONTRES = 5
-PRETS_MONTRES = 5
-
-
-def _git(racine, projet) -> list[str]:
+def _git(racine, projet, borne: bool = False) -> list[str]:
+    """Le commit, la base et ce qui n'y est pas fusionné, la CI ; avec
+    `borne`, les commits plafonnés et leur sujet raccourci."""
     if not outils.est_depot(racine) or not outils.a_des_commits(racine):
         return [trad("commit   : aucun (dépôt neuf)")]
     res = []
@@ -365,9 +483,8 @@ def _git(racine, projet) -> list[str]:
         if outils.branche_par_defaut_devinee(racine):
             res.append(trad("  ^ devinée : ce clone n'a ni `origin/HEAD`, ni `main`, ni `master` ; si la branche par "
                             "défaut du dépôt distant est une autre, `git fetch origin <elle>` la fait connaître"))
-        res += [f"  {l}" for l in non[:COMMITS_MONTRES]]
-        if len(non) > COMMITS_MONTRES:
-            res.append(trad("  … et {n} autre(s)", n=len(non) - COMMITS_MONTRES))
+        res += _liste(non, COMMITS_MONTRES if borne else None,
+                      lambda l: [outils.raccourcir(f"  {l}", TITRE) if borne else f"  {l}"])
         base = outils.base_de_travail(racine)
         if base:
             changes = projet.hors_tiers(outils.fichiers_changes(racine, base))
@@ -410,33 +527,38 @@ def _memoire(mem: memoire.Memoire, projet) -> list[str]:
     return res
 
 
-def _backlog(mem: memoire.Memoire) -> list[str]:
+def _backlog(mem: memoire.Memoire, borne: bool = False) -> list[str]:
     """Le backlog : ses comptes, ce qui est en cours ou bloqué, et ce qui
-    vient ensuite."""
+    vient ensuite ; avec `borne`, chaque liste plafonnée et les titres
+    raccourcis."""
     backlog = [e for e in mem.entrees("B") if not e.archivee]
     par = Counter(e.statut for e in backlog)
     res = [trad("backlog  : {ouverts} ouvert(s), {en_cours} en cours, {bloques} bloqué(s), {clos} clos",
                 ouverts=par.get("ouvert", 0), en_cours=par.get("en-cours", 0), bloques=par.get("bloque", 0),
                 clos=par.get("fait", 0) + par.get("abandonne", 0))]
+    titre = TITRE_DE_SUJET if borne else None
     for statut, libelle in (("en-cours", a_traduire("en cours")), ("bloque", a_traduire("bloqué"))):
-        for e in [e for e in backlog if e.statut == statut][:8]:
-            res.append(f"  {trad(libelle)} : {e.id} — {e.titre}")
-    res += [f"  {l}" for l in memoire.lignes_ordre(mem, plafond=PRETS_MONTRES)]
+        res += _liste([e for e in backlog if e.statut == statut], PRETS_MONTRES if borne else None,
+                      lambda e, l=libelle: [f"  {trad(l)} : {e.id} — "
+                                            f"{outils.raccourcir(e.titre, titre) if titre else e.titre}"])
+    res += [f"  {l}" for l in memoire.lignes_ordre(mem, plafond=PRETS_MONTRES if borne else None, titre=titre,
+                                                    basses=BASSES_MONTREES if borne else None)]
     return res
 
 
-def _demandes(racine) -> list[str]:
+def _demandes(racine, plafond: int | None = None) -> list[str]:
+    """Le nombre des demandes en attente ; chacune se dit sous « ce qui
+    revient à l'humain », avec son lien, et n'y compte pas deux fois : ici,
+    seulement celles qui ne s'y disent pas, illisibles. Puis les demandes
+    renvoyées."""
     toutes = demandes.toutes(racine)
     attente = [d for d in toutes if d.reponse is None and d.statut == "en attente"]
-    res = [trad("demandes humaines en attente : {n}", n=len(attente))]
-    for d in attente:
-        date = d.entree.meta.get("date", "") if d.entree else ""
-        res.append(f"  {d.id} — {d.entree.titre if d.entree else d.chemin}"
-                   + (trad(" (du {date})", date=date) if date else ""))
-    renvoyees = [d for d in toutes if d.statut == "renvoyée"]
-    for d in renvoyees:
-        res.append(trad("  RENVOYÉE (contexte insuffisant) : {id} — à réécrire en une demande qui la remplace",
-                        id=d.id))
+    res = [trad("demandes humaines en attente : {n} — chacune sous « ce qui revient à l'humain », avec son lien",
+                n=len(attente)) if any(d.entree for d in attente) else
+           trad("demandes humaines en attente : {n}", n=len(attente))]
+    res += _liste([d for d in attente if not d.entree], plafond, lambda d: [f"  {d.chemin}"])
+    res += _liste([d for d in toutes if d.statut == "renvoyée"], plafond, lambda d: [trad(
+        "  RENVOYÉE (contexte insuffisant) : {id} — à réécrire en une demande qui la remplace", id=d.id)])
     return res
 
 

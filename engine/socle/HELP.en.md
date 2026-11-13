@@ -99,9 +99,11 @@ Tasks are given to the agent as usual. At the start of each session, it
 receives the project's state, the active work, the titles of the facts and
 the last ten decisions; it works, and the checks verify it at each step.
 This start-up stays under `[startup] max_bytes` of the guardrails, a cap
-set below what Claude Code hands over whole to the agent: beyond it,
-whole lines are cut from the end, the decisions first, and the last line
-says what is missing and how to read it.
+set below what Claude Code hands over whole to the agent, of which each
+part has its share: a part beyond its own loses whole lines from its end,
+and the last line says which, by how much, and how to read the rest. The
+active work's budget fits in its share: at its allowed size, it is never
+cut.
 
 **Planning.** From the brief, the agent writes a short specification and a
 short architecture in the project's documentation: each choice as an ADR,

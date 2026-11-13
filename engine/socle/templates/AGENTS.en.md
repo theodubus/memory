@@ -80,7 +80,8 @@ code.
 ### Reading the memory on demand
 
 Startup only injects the state, the active work, the titles of the facts
-and the last ten decisions. The rest is read when it is needed, without
+and the last ten decisions, under a cap; what a `!! cut` line says is
+missing is read at once. The rest is read when it is needed, without
 waiting to be asked:
 
 - a cited identifier (`F-`, `B-`, `ADR-`, `D-`, `J-`) is read before relying
