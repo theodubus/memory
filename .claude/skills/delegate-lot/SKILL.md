@@ -74,10 +74,13 @@ fois avant le push.
    d'ADR : le second intégré se renumérote (B-0176).
 2. Retirer le worktree et sa branche, puis `python3 .socle/socle verify --fast`.
 3. Pousser, ouvrir la pull request s'il n'y en a pas (une seule ouverte),
-   attendre la CI du commit de tête (une boucle en arrière-plan sur la
-   ligne « CI » de `python3 .socle/socle state`, jamais sur un commit
-   d'avant), puis la fusionner soi-même (D-0092) en donnant le commit de
-   tête attendu.
+   attendre la CI du commit de tête, puis la fusionner soi-même (D-0092)
+   en donnant le commit de tête attendu. L'attente : une boucle en
+   arrière-plan sur la ligne « CI » de `python3 .socle/socle state`, qui
+   s'écrit `CI : <workflow> : <résultat> sur <sha court>`, le résultat
+   avant le commit ; la boucle cherche donc `success sur <sha court>` (ou
+   `failure sur <sha court>`), jamais `<sha> … success`, ni un commit
+   d'avant.
 4. Après la fusion : `git fetch origin main`, `git rebase origin/main`,
    pousser ; vérifier que la distribution a tourné ; mettre à jour le
    chantier actif et le journal.
@@ -107,8 +110,14 @@ fort ; un sous-agent repris après plus de cinq minutes aussi. Un
 sous-agent ne relit pas la conversation qui l'a lancé.
 
 - Un lot par session : la session courte orchestre à bas prix.
-- Deux sous-agents à la fois au plus. Un petit sujet ou un correctif de
-  quelques lignes, la session le fait elle-même.
+- Deux sous-agents à la fois au plus, un seul quand la semaine dépasse
+  75 %. Un petit sujet ou un correctif de quelques lignes, la session le
+  fait elle-même.
+- Mesuré le 13 novembre (J-2026-11-13-E) : un sous-agent qui implémente
+  lit environ 320 000 jetons, un relecteur 240 000, soit 3 à 4 points
+  de la semaine chacun. Avant d'en lancer un, et à chaque compte rendu,
+  lire les deux fenêtres ; au-delà de 85 % de la semaine ou de 60 % des
+  cinq heures, n'en lancer aucun : ranger (« Changer de session »).
 - Un sous-agent ne se reprend pas après une pause : un neuf reçoit la
   consigne et les constats.
 - Une attente de plus d'une heure (une CI longue, une réponse de
@@ -129,8 +138,9 @@ plus d'une heure s'annonce. La part consommée de la fenêtre se lit dans
 Ranger d'abord, pour qu'une session neuve, sur ce compte ou un autre,
 reparte du dépôt seul :
 
-1. tout poussé, rien qui ne vive que dans le conteneur ; la pull request
-   fusionnée, ou son état dit au chantier actif ;
+1. tout poussé, rien qui ne vive que dans le conteneur (un commit pas
+   encore relu part en correctif, `git format-patch`, sous
+   `docs/fabrication/passation/`) ; la pull request fusionnée ;
 2. les worktrees et leurs branches retirés ;
 3. le chantier actif dit le lot suivant et ce qui attend (un compte
    rendu, une CI, une demande) ;
