@@ -5,7 +5,10 @@ pas ce dépôt. Il met à jour le socle installé le 13 novembre
 (`docs/fabrication/chess/mise-a-jour-2026-11-13.md`) vers la version qui
 borne la sortie du démarrage (B-0010) et fait développer au hook les chemins
 qu'une commande shell écrit (B-0171), et dit à l'agent de chess ce qui
-change pour lui, comme Théo l'a demandé.
+change pour lui, comme Théo l'a demandé. Il est cumulatif : chess n'est mis à
+jour qu'une fois l'ensemble à finir avant les nouvelles fonctions fait, et
+chaque lot qui change ce que chess reçoit le complète d'ici là
+(J-2026-11-13-L).
 
 ````text
 Mets à jour le socle de ce dépôt depuis son dépôt public, sans ajouter ce dépôt à la session. Lis d'abord ce qui change, puis fais la mise à jour.
