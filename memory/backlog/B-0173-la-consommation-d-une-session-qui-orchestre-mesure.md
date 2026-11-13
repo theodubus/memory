@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0173 — La consommation d'une session qui orchestre : mesurer ce qui pèse, puis écrire les règles qui la bornent
 
-> statut : ouvert · origine : J-2026-11-11-R · après : B-0126 · lu : backlog@e69f45bc
+> statut : ouvert · origine : J-2026-11-11-R · priorité : haute · lu : backlog@e69f45bc
 
 Le 11 novembre, une session qui orchestre des sous-agents a vidé deux
 fenêtres de cinq heures, la seconde en moins d'une demi-heure, et pris
@@ -30,8 +30,36 @@ de sous-agents à la fois, quand reprendre un sous-agent plutôt qu'en
 lancer un neuf, quel modèle pour quel travail, que faire à l'approche
 d'une limite.
 
+Le 12 novembre, Théo en fait une priorité (J-2026-11-12-L) : « a chaque
+fois que tu relis apres limite on se mange 50% de la limite de session
+d'un coup / Traiter ce problème est classé prioritaire ? ». Mesuré sur
+cette session : à chaque reprise après une limite, la conversation longue
+et ses sous-agents se relisent au prix fort, et la moitié de la fenêtre de
+cinq heures part avant tout travail. Pistes à peser d'abord : compacter à
+la fin de chaque lot et avant une attente longue ; intégrer soi-même les
+petits lots plutôt que de reprendre un sous-agent ; un réveil qui ouvre
+une session neuve, lue depuis la mémoire, au lieu de reprendre la longue.
+Le sujet n'attend plus chess, qui est installé.
+
+Un premier chiffre, le 12 novembre au soir (J-2026-11-12-M) : à la reprise
+après la limite, un seul appel, la relecture à froid de la conversation
+longue, prend 39 points de la fenêtre de cinq heures et 6 de la semaine ;
+le compactage qui suit, 12 points.
+
+Mesuré le 12 novembre (J-2026-11-12-N) : le relevé
+`docs/fabrication/consommation.md` donne, pour les 11 et 12 novembre, ce
+que pèsent la conversation principale, les sous-agents, les reprises et
+les compactages, et ce que le socle injecte, dans la conversation
+principale comme dans les sous-agents. Les 12 points de 18 h 07 à 18 h 10
+sont des appels ordinaires, pas le compactage (5 points, ± 1). Le socle
+pèse peu (6 à 7 % du contexte relu selon la portée, section du socle
+d'AGENTS.md comprise) : aucune borne à poser ici ; la sortie tronquée du
+hook de démarrage, dont l'agent relit parfois une partie du fichier, est
+notée pour B-0010. Reste la méthode, que le relevé chiffre règle par
+règle.
+
 ## Fait quand
 
-- [ ] une mesure dit, sur une journée d'orchestration, ce que pèsent la conversation principale, les sous-agents et les reprises après une pause
-- [ ] ce que le socle injecte à chaque démarrage, compactage et reprise est mesuré, et borné si c'est lui qui pèse (B-0010)
+- [x] une mesure dit, sur une journée d'orchestration, ce que pèsent la conversation principale, les sous-agents et les reprises après une pause
+- [x] ce que le socle injecte à chaque démarrage, compactage et reprise est mesuré, et borné si c'est lui qui pèse (B-0010)
 - [ ] la méthode de délégation dit quand compacter, combien de sous-agents à la fois, quand en reprendre un, quel modèle pour quoi, et que faire à l'approche d'une limite

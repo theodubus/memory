@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0107-b-0010-en-priorite-haute-juste-apres-b-0173.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-12"
+canal = "conversation"
+citation = "Ok pour augmenter la priorité de B0010 juste apres B0173"
+empreinte = "sha256:1c98ba45c3292882f1368bb54f39788906280039aee2d0df6faff18586054650"

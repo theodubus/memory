@@ -1,34 +1,36 @@
 <!-- socle: couche=actif zone=publique -->
 # Chantier actif
 
-Réécrit au fil du travail et borné. Ce qui en sort s'archive dans le journal.
+Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Le socle est installé sur chess (J-2026-11-12-A) ; reste sa feuille de
-route, dans la session de chess (B-0126). Ce que
-l'installation a montré est corrigé et publié (J-2026-11-12-I). Reste
-la mise à jour de chess. B-0179 est corrigé ; le pilote le prouvera à
-sa reprise (J-2026-11-10-N).
-Cette session orchestre ; des sous-agents sur Opus implémentent, chacun
-dans un worktree, relus avant tout push (J-2026-11-11-G). Ensuite : B-0151,
-B-0010, B-0156, B-0167, B-0172, B-0173.
+Le socle est installé sur chess (J-2026-11-12-A) ; on attend les
+comptes rendus de chess (mise à jour, feuille de route B-0126) et, pour
+B-0179, du pilote. Le lot de B-0173 est livré (J-2026-11-13-A) ; ses
+règles, dans `.claude/skills/delegate-lot/SKILL.md`, ferment son critère
+3 quand elles auront servi sur un lot. Prochain lot, en session
+neuve : B-0010 (haute, D-0107), puis B-0142, B-0171, B-0176 ; ensuite
+B-0151, B-0156, B-0167, B-0172.
 
 B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
 
 ## Consignes en cours
 
-- Le contexte long et les modèles : Théo compacte la conversation ;
-  chaque sujet va à un sous-agent au contexte neuf, dont l'agent choisit
-  le modèle (J-2026-11-10-O). Jusqu'au 16 novembre, Fable là où il vaut
-  son prix (recul, détails, planification, chess), Opus pour les
-  implémentations, puis Opus partout ; Théo : « a utiliser la ou ça en
-  vaut la peine » (D-0095, J-2026-11-10-T).
+- Les modèles : Opus partout depuis le 12 novembre (D-0095,
+  J-2026-11-12-L).
+- Un lot par session : un lot rendu que la fenêtre ne permet pas de
+  suivre d'un autre entier, tout se range pour qu'une session neuve
+  continue, même sur un autre compte, et la session le dit avec le
+  prompt de la session neuve ; les réveils restent armés pendant le lot.
+  Théo : « dès qu'on dois changer de session […] l'indique dans le chat,
+  et donne le prompt à donner à une session neuve » (J-2026-11-12-P).
 - Le pilote est un essai de choc du socle : ses imperfections sont
   attendues, seules celles du socle se corrigent ici ; Théo : « pas grave
   si le pilote n'est pas idéal partout, c'est un crashtest pour le socle
   donc normal » (J-2026-10-31-E).
-- La branche de travail est `ccr-82da0a2e-iccil9` (J-2026-11-09-M).
+- Chaque session travaille sur la branche que lui donne son
+  environnement, partie de la branche par défaut (J-2026-11-13-A).
 - Aucun autre dépôt dans la session, ni lecture de JustCook ou de
   `theodubus/socle` ; Théo : « N'ajoute aucun autre dépôt à la session, et
   ne lis ni JustCook ni theodubus/socle (donner leurs liens reste
@@ -94,10 +96,8 @@ B-0048 et B-0018 restent ouverts, gardés en tête (D-0026, `rien`).
 
 ## Prochaines étapes
 
-1. Maintenant : le pilote neuf (B-0104), sa session de travail lancée ;
-   ses retours, au fil de l'eau (J-2026-10-31-C), se corrigent ici et
-   lui parviennent à la mise à jour de son socle.
-2. La suite se lit dans l'ordre du backlog (`socle state`) : après le
-   pilote, la planification (B-0101), puis la répartition entre agents
-   (B-0055) ; B-0010, B-0012 et B-0095 attendent le pilote ; gardé en
-   tête : B-0048.
+1. Attendre les comptes rendus : la mise à jour et la feuille de route de
+   chess ; la CI du pilote à sa reprise (B-0179).
+2. Le prochain lot se lit plus haut. La suite, dans l'ordre du backlog
+   (`socle state`) : la planification (B-0101), puis la répartition entre
+   agents (B-0055) ; gardé en tête : B-0048.

@@ -51,6 +51,10 @@ Le 12 novembre, le socle est installé sur chess et fusionné
 version publiée, a tenu lieu de second essai à blanc. Reste la feuille de
 route, dans la session de chess.
 
+Le 12 novembre, Théo dit avoir lancé les deux blocs du prompt
+d'installation depuis longtemps (J-2026-11-12-L) : la feuille de route se
+pose donc dans la session de chess ; ce sujet se clôt à son compte rendu.
+
 ## Fait quand
 
 - [x] les lots à livrer avant chess, ceux du jalon 1 (B-0154), sont fusionnés et publiés (ADR-0059)

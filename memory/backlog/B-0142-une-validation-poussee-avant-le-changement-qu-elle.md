@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0142 — Une validation poussée avant le changement qu'elle couvre ne le couvre plus : le push de ce changement est refusé
 
-> statut : ouvert · origine : J-2026-11-09-D · lu : backlog@e83a97a5
+> statut : ouvert · origine : J-2026-11-09-D · priorité : haute · lu : backlog@e83a97a5
 
 La CI d'un push, et le hook avant push qui la reproduit, ne comptent que
 les validations ajoutées dans la plage du push (B-0043) : une validation
@@ -19,6 +19,13 @@ les changements qu'elle couvre ; ou une validation couvre, à travers les
 pushes, le premier changement du test qu'elle nomme ; ou le hook avant
 push le signale au push de la réponse. La deuxième touche la rigueur de
 `tests.attendus` : une demande.
+
+Le cas s'est reproduit deux jours de suite : pour des fichiers protégés le
+11 novembre (D-0103), pour une valeur attendue le 12 (D-0105,
+J-2026-11-12-H). Chaque fois, la réponse de l'humain a dû être consignée
+une seconde fois. B-0191, ouvert ce jour-là sans voir ce sujet, en était
+le doublon ; sa piste : lire les validations depuis la branche par défaut,
+comme les renommages des clés de l'adoption (B-0189).
 
 Fait quand :
 - [ ] un test changé sous une validation déjà poussée se pousse sans validation nouvelle, ou l'agent est averti avant de pousser la réponse seule, et un test le montre

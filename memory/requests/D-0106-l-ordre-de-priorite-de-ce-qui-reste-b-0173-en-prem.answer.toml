@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0106-l-ordre-de-priorite-de-ce-qui-reste-b-0173-en-prem.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-12"
+canal = "conversation"
+citation = "L'ordre de priorité que tu m'as donné me convient"
+empreinte = "sha256:0ac2426548d7f6687eb8aafcd69cc169fbad02d9ce6329e0e35ced295651e0e5"
