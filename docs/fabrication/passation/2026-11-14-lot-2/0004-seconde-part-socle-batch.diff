@@ -632,28 +632,6 @@ index 16e064e..4c0780c 100644
 +- [x] l'installeur pose un skill du socle qui conduit un lot, ses règles de consommation et le changement de session compris, et l'auto-test vérifie qu'il est posé et protégé
 +- [x] `.claude/skills/delegate-lot/SKILL.md` ne garde que ce qui est propre à ce dépôt
  - [x] un lot se forme des sujets prêts qui touchent les mêmes fichiers, garde-fou ou tests ; la mémoire le relie à ses sujets, l'état montre le prochain, et un test le montre
-diff --git a/memory/decisions/ADR-0079-un-lot-se-garde-au-backlog-comme-un-sujet-de-forme.md b/memory/decisions/ADR-0079-un-lot-se-garde-au-backlog-comme-un-sujet-de-forme.md
-index 23e1748..6de9b32 100644
---- a/memory/decisions/ADR-0079-un-lot-se-garde-au-backlog-comme-un-sujet-de-forme.md
-+++ b/memory/decisions/ADR-0079-un-lot-se-garde-au-backlog-comme-un-sujet-de-forme.md
-@@ -1,7 +1,7 @@
- <!-- socle: couche=decisions zone=publique -->
- # ADR-0079 — Un lot se garde au backlog comme un sujet de forme lot, qui attend ses sujets ; sa conduite est le skill socle-batch
- 
--> statut : acceptée · date : 2026-11-14 · source : B-0199@528031a5, B-0220@0df68693, J-2026-11-14-M@567221ed, ADR-0037@10b3bfbe, ADR-0034@abef67cd, ADR-0033@44523582, ADR-0027@d32b4ef9 · lu : decisions@9ecc00fd
-+> statut : acceptée · date : 2026-11-14 · source : B-0199@cd6d6230, B-0220@0df68693, J-2026-11-14-M@567221ed, ADR-0037@10b3bfbe, ADR-0034@abef67cd, ADR-0033@44523582, ADR-0027@d32b4ef9 · lu : decisions@9ecc00fd
- 
- ## Contexte
- 
-@@ -11,7 +11,7 @@ le produit (J-2026-11-13-F@8a674408), et qu'on apprenne au socle à réunir les
- sujets qui se traitent facilement ensemble (J-2026-11-14-M@567221ed).
- Les lots ne vivaient que dans la prose du chantier actif, que rien ne
- relie aux sujets ni ne montre l'état : une session neuve ne les retrouve
--que si le chantier actif les a gardés. B-0199@528031a5 demande le skill
-+que si le chantier actif les a gardés. B-0199@cd6d6230 demande le skill
- du produit, la mémoire qui relie un lot à ses sujets et l'état qui
- montre le prochain ; B-0220@0df68693, l'étape d'après la fusion, qui
- poussait une branche vide de tout travail et recréait la branche
 diff --git a/tests/test_skills.py b/tests/test_skills.py
 index 3a73547..fa0c986 100644
 --- a/tests/test_skills.py

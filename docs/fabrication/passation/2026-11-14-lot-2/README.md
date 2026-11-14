@@ -1,7 +1,7 @@
 # Passation du lot 2, le 14 novembre
 
 Le lot 2 (B-0151, B-0199 et B-0220) est relu et intégré, sauf sa seconde
-part, qui attend une demande à Théo : la copie protégée d'un skill nouveau
+part, qui attend la demande D-0114 : la copie protégée d'un skill nouveau
 et deux valeurs attendues d'un test. Elle est ici en correctif, avec ses
 deux bloquants de la revue corrigés (J-2026-11-14-X).
 
@@ -17,13 +17,13 @@ deux bloquants de la revue corrigés (J-2026-11-14-X).
   échouent : ils attendent la liste des skills du socle posés, qui le
   nomme désormais.
 - `socle-batch-SKILL.md`, le gabarit français du skill tel que le
-  correctif le pose, pour le lire rendu : la copie protégée que la
-  demande autorise lui sera identique.
+  correctif le pose, pour le lire rendu : la copie protégée que D-0114
+  autorise lui sera identique.
 
-## Après la réponse
+## Après la réponse à D-0114
 
 1. Le correctif appliqué ; les deux valeurs attendues de
-   `tests/test_skills.py` changées comme la demande le dit ; la copie posée
+   `tests/test_skills.py` changées comme D-0114 le dit ; la copie posée
    par l'installeur, dans le mode du verrou (`install --target . --mode
    amont`), les autres copies protégées qu'il change remises à leur état
    du dernier commit (D-0098).
