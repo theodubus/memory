@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0212 — La revue d'un lot déjà poussé : la base par défaut de socle review, la branche distante, contient le lot, et le dossier n'a plus ni diff ni sujets
 
-> statut : ouvert · origine : J-2026-11-14-A · lu : backlog@f9baa385
+> statut : fait · origine : J-2026-11-14-A · lu : backlog@f9baa385 · ref : J-2026-11-14-G
 
 La revue de B-0209 (J-2026-11-14-A), constat 3. `socle review` mesure le
 lot depuis la branche distante de la branche courante, ce qu'elle n'a pas
@@ -19,4 +19,4 @@ lancer.
 
 ## Fait quand
 
-- [ ] le dossier d'un lot déjà poussé, sans `--base`, donne son diff et ses sujets, ou dit pourquoi il est vide et quoi lancer, et un test le montre
+- [x] le dossier d'un lot déjà poussé, sans `--base`, donne son diff et ses sujets, ou dit pourquoi il est vide et quoi lancer, et un test le montre

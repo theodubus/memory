@@ -236,6 +236,79 @@ class TestBarre(_Lot):
         self.assertIn("(aucun changement hors de la mémoire : rien à relire)", flux.getvalue())
 
 
+class TestLotDejaPousse(_Lot):
+    """B-0212, ADR-0075 : un lot poussé avant sa revue, le cas ordinaire en
+    session cloud, laissait un dossier vide, sans diff ni sujets, que le
+    relecteur jugeait sans constat."""
+
+    def setUp(self):
+        super().setUp()
+        self.commun = git(self.racine, "rev-parse", "origin/main").strip()
+
+    def correction(self):
+        (self.racine / "calc.py").write_text("def double(x):\n    return int(x) * 2\n")
+        git(self.racine, "commit", "-qam", "Le bloquant 1 corrigé")
+
+    def test_un_lot_deja_pousse_se_mesure_depuis_l_ancetre_commun_et_le_dit(self):
+        self.lot()
+        git(self.racine, "push", "-q", "-u", "origin", "travail")
+        texte = revue.dossier(self.projet)
+        self.assertIn("+    return x * 2", texte)
+        self.assertIn("- [x] double est écrit", texte)
+        self.assertIn("`double(x)` rend `2 * x`, entiers compris.", texte)
+        self.assertIn(f"## Le diff du lot (1 fichier(s), depuis {self.commun})", texte)
+        self.assertTrue(revue.contient_le_lot(self.projet, "origin/travail"))
+        self.assertFalse(revue.contient_le_lot(self.projet, self.commun))
+        base, note = revue.base_par_defaut(self.projet)
+        self.assertEqual(base, self.commun)
+        self.assertIn("la branche distante origin/travail contient déjà le lot", note)
+        self.assertIn("`socle review --base <le commit d'avant le lot>`", note)
+        self.assertIn(note, texte)
+        # Une base donnée est prise telle quelle.
+        self.assertIn("(aucun changement hors de la mémoire : rien à relire)",
+                      revue.dossier(self.projet, "origin/travail"))
+
+    def test_un_lot_pas_encore_pousse_se_mesure_toujours_depuis_la_branche_distante(self):
+        git(self.racine, "push", "-q", "-u", "origin", "travail")
+        self.lot()
+        self.assertEqual(revue.base_par_defaut(self.projet), ("origin/travail", None))
+        self.assertIn("## Le diff du lot (1 fichier(s), depuis origin/travail)", revue.dossier(self.projet))
+        # Sans branche distante, la branche par défaut, sans note.
+        git(self.racine, "branch", "-q", "--unset-upstream")
+        self.assertEqual(revue.base_par_defaut(self.projet), ("origin/main", None))
+
+    def test_la_seconde_revue_d_un_lot_deja_pousse_garde_ses_sujets(self):
+        self.lot()
+        relu = git(self.racine, "rev-parse", "HEAD").strip()
+        git(self.racine, "push", "-q", "-u", "origin", "travail")
+        self.correction()
+        # La correction pas encore poussée : le commit relu l'est déjà.
+        self.assertTrue(revue.contient_le_lot(self.projet, "origin/travail", relu))
+        self.assertEqual(revue.base_par_defaut(self.projet, relu)[0], self.commun)
+        git(self.racine, "push", "-q")
+        texte = revue.dossier(self.projet, depuis=relu)
+        self.assertIn("la branche distante origin/travail contient déjà le lot", texte)
+        self.assertIn(f"## Le diff de la correction (1 fichier(s), depuis {relu})", texte)
+        self.assertIn("+    return int(x) * 2", texte)
+        self.assertIn("- [x] double est écrit", texte)
+
+    def test_un_lot_deja_dans_la_branche_par_defaut_dit_pourquoi_le_dossier_est_vide(self):
+        self.lot()
+        git(self.racine, "push", "-q", "-u", "origin", "travail")
+        git(self.dossier / "source", "merge", "-q", "--ff-only", "travail")
+        git(self.racine, "fetch", "-q", "origin")
+        base, note = revue.base_par_defaut(self.projet)
+        self.assertEqual(base, "origin/travail")
+        self.assertIn("la branche distante origin/travail contient déjà le lot, et la branche par défaut "
+                      "origin/main aussi", note)
+        self.assertIn("`socle review --base <ce commit>`", note)
+        texte = revue.dossier(self.projet)
+        self.assertIn(note, texte)
+        self.assertIn("(aucun changement hors de la mémoire : rien à relire)", texte)
+        # La commande qu'elle donne relit le lot.
+        self.assertIn("+    return x * 2", revue.dossier(self.projet, self.commun))
+
+
 class TestRelectureAFroid(unittest.TestCase):
     """ADR-0046 : le lecteur n'a que le texte de la demande, dans le rôle de
     l'humain qui revient sur le projet après des semaines."""

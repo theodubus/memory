@@ -1874,8 +1874,10 @@ MESSAGES: dict[str, str] = {
         "the permalink of a file or an entry, to give to the human",
     "le dossier de la revue adversariale d'un lot, pour un relecteur sans contexte":
         "the brief of a batch's adversarial review, for a reviewer without context",
-    "la base du lot (par défaut : la branche distante, sinon la branche par défaut)":
-        "the base of the batch (by default: the remote branch, otherwise the default branch)",
+    "la base du lot (par défaut : la branche distante, sinon la branche par défaut ; l'ancêtre commun avec "
+    "celle-ci quand la branche distante contient déjà le lot)":
+        "the base of the batch (by default: the remote branch, otherwise the default branch; the common ancestor "
+        "with the latter when the remote branch already contains the batch)",
     "le plafond du diff montré":
         "the cap of the diff shown",
     "# Revue adversariale d'un lot":
@@ -1945,6 +1947,15 @@ MESSAGES: dict[str, str] = {
         "## The batch's diff ({n} file(s), since {base})",
     "(aucun changement hors de la mémoire : rien à relire)":
         "(no change outside the memory: nothing to review)",
+    "(la branche distante {amont} contient déjà le lot : il se mesure depuis {commun}, l'ancêtre commun de HEAD et "
+    "de {defaut} ; s'il commence plus tard, `socle review --base <le commit d'avant le lot>`)":
+        "(the remote branch {amont} already contains the batch: it is measured since {commun}, the common ancestor "
+        "of HEAD and {defaut}; if it starts later, `socle review --base <the commit before the batch>`)",
+    "(la branche distante {amont} contient déjà le lot, et la branche par défaut {defaut} aussi : rien à relire "
+    "depuis elles. Un lot déjà poussé se relit depuis le commit d'avant lui : `socle review --base <ce commit>`)":
+        "(the remote branch {amont} already contains the batch, and so does the default branch {defaut}: nothing "
+        "to review since them. A batch already pushed is reviewed since the commit before it: `socle review "
+        "--base <that commit>`)",
     "(diff tronqué : {n} caractère(s) de plus non montrés ; `git diff {base}` les donne)":
         "(diff truncated: {n} more character(s) not shown; `git diff {base}` gives them)",
     "## Les sujets du lot : leur critère « Fait quand » est ta barre":
