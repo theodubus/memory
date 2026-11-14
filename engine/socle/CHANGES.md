@@ -7,6 +7,20 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-14-d — Un lot se garde au backlog
+
+Un lot, les sujets qu'on mène ensemble parce qu'ils touchent les mêmes
+fichiers, le même garde-fou ou les mêmes tests et qu'une seule revue les
+juge, se garde désormais au backlog : un sujet marqué `forme : lot`, dont
+`après` nomme ses sujets et le lot d'avant. L'état montre le prochain lot à
+côté du prochain jalon, avec ce qui en reste et où en est chacun de ses
+sujets. Un lot n'est jamais un sujet prêt, et il ne se clôt pas avant ses
+sujets.
+
+À faire : poser en lot les sujets qu'on prévoit de mener ensemble, au lieu
+de ne les écrire que dans le chantier actif ; clore le lot quand ses sujets
+le sont.
+
 ## 2026-11-14-c — Les notes de version
 
 Ce fichier existe. Une mise à jour qui recopie le moteur imprime, entre ce

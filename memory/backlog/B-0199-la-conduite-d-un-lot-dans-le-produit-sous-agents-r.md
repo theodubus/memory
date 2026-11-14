@@ -36,8 +36,14 @@ mêmes tests, une seule revue les jugeant ensemble ; et garder le lot dans
 la mémoire, relié à ses sujets, pour que l'état le montre et qu'une
 session neuve le retrouve.
 
+Le 14 novembre (J-2026-11-14-U, ADR-0079) : les lots sont dans la
+mémoire (`forme : lot`) et l'état montre le prochain. Le skill du
+produit, `socle-batch`, est écrit, mais le poser change la valeur
+attendue de deux tests qui comptent les skills du socle : il attend,
+avec la copie protégée de ce dépôt, une demande validée.
+
 ## Fait quand
 
 - [ ] l'installeur pose un skill du socle qui conduit un lot, ses règles de consommation et le changement de session compris, et l'auto-test vérifie qu'il est posé et protégé
 - [ ] `.claude/skills/delegate-lot/SKILL.md` ne garde que ce qui est propre à ce dépôt
-- [ ] un lot se forme des sujets prêts qui touchent les mêmes fichiers, garde-fou ou tests ; la mémoire le relie à ses sujets, l'état montre le prochain, et un test le montre
+- [x] un lot se forme des sujets prêts qui touchent les mêmes fichiers, garde-fou ou tests ; la mémoire le relie à ses sujets, l'état montre le prochain, et un test le montre

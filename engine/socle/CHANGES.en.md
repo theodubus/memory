@@ -7,6 +7,20 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-14-d — A batch is kept in the backlog
+
+A batch, the subjects led together because they touch the same files, the
+same guardrail or the same tests and one review judges them, is now kept in
+the backlog: a subject marked `form: batch`, whose `after` names its
+subjects and the batch before it. The state shows the next batch beside the
+next milestone, with what remains of it and where each of its subjects
+stands. A batch is never a ready subject, and it does not close before its
+subjects.
+
+To do: record as a batch the subjects planned to be led together, instead of
+writing them only in the active work; close the batch when its subjects are
+closed.
+
 ## 2026-11-14-c — The release notes
 
 This file exists. An update that copies the engine prints, between what it

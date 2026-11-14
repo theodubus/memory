@@ -1329,6 +1329,16 @@ MESSAGES: dict[str, str] = {
         "next milestone: {id} — {titre}; left: {restants}",
     "rien, il se clôt":
         "nothing, it can close",
+    "prochain lot : {id} — {titre} ; {clos} clos sur {total} ; reste : {restants}":
+        "next batch: {id} — {titre}; {clos} closed out of {total}; left: {restants}",
+    "prêt":
+        "ready",
+    "attend":
+        "waiting",
+    "sans réponse":
+        "unanswered",
+    "inconnu":
+        "unknown",
     "Selon l'ordre du backlog :":
         "According to the backlog's order:",
     "prêt : {id} — {titre}":

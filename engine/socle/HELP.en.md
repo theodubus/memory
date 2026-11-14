@@ -115,7 +115,9 @@ what it waits on (`after`: another topic, or a request until it is
 answered) and what makes it done (a “Done when” section, as checkboxes,
 all checked before closing it), grouped in milestones. It submits each
 document as a request. Just ask it to; the state then gives the next
-milestone and the ready topics.
+milestone and the ready topics. Topics that are handled together, because
+they touch the same files or the same tests, the agent gathers into a
+batch (`form: batch`), which the state shows with the progress of each.
 
 **Specifications and test cases.** The project declares where its
 specifications live (`[specs] paths` in the guardrails): the state tells
@@ -175,7 +177,7 @@ and what your answer changes.
 
 At any time, `python3 .socle/socle state` gives the project's state: the
 commit, the CI, the backlog and what comes next (the next milestone, the
-ready topics), the pending requests, what is up to the human.
+next batch, the ready topics), the pending requests, what is up to the human.
 The memory is read in `memory/`.
 
 A project procedure that comes back, the agent writes as a skill in

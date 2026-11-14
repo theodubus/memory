@@ -122,7 +122,10 @@ avec ce qu'elle attend (`après` : un autre sujet, ou une demande jusqu'à
 sa réponse) et ce qui la rend faite (une section « Fait quand », en cases
 à cocher, toutes cochées avant de la clore), groupée en jalons. Il soumet
 chaque document en demande. Il suffit de le lui demander ; l'état donne
-ensuite le prochain jalon et les sujets prêts.
+ensuite le prochain jalon et les sujets prêts. Les sujets qui se
+traitent ensemble, parce qu'ils touchent les mêmes fichiers ou les mêmes
+tests, l'agent les réunit en un lot (`forme : lot`), que l'état montre
+avec l'avancement de chacun.
 
 **Spécifications et cas d'essai.** Le projet déclare où vivent ses
 spécifications (`[specs] paths` des garde-fous) : l'état vous signale
@@ -182,8 +185,8 @@ Chaque point de « Pour toi » se comprend seul : ce que c'est, pourquoi,
 et ce que change votre réponse.
 
 À tout moment, `python3 .socle/socle state` donne l'état du projet : le
-commit, la CI, le backlog et ce qui vient ensuite (le prochain jalon, les
-sujets prêts), les demandes en attente, ce qui revient à l'humain. La mémoire se lit dans `memory/`.
+commit, la CI, le backlog et ce qui vient ensuite (le prochain jalon, le
+prochain lot, les sujets prêts), les demandes en attente, ce qui revient à l'humain. La mémoire se lit dans `memory/`.
 
 Une procédure du projet qui revient, l'agent l'écrit en skill dans
 `.claude/skills/`, avec une entrée au journal : il la charge ensuite à la

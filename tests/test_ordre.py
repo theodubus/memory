@@ -236,3 +236,65 @@ class TestFaitQuand(unittest.TestCase):
         # Ouvert, ou abandonné, il peut garder des critères non cochés.
         self.assertEqual(self.fautes(sujet("B-0001") + self.TEXTE), [])
         self.assertEqual(self.fautes(sujet("B-0001", "abandonné") + self.TEXTE), [])
+
+
+class TestLot(unittest.TestCase):
+    """ADR-0079 : un lot est un sujet `forme : lot` qui attend les sujets
+    qu'on mène ensemble ; l'état montre le prochain et où en sont ses
+    sujets, et il se clôt quand ils le sont."""
+
+    def memoire(self, lot_fait: bool = False) -> memoire.Memoire:
+        mem = memoire_de(
+            sujet("B-0001", "fait"),
+            sujet("B-0002", "en cours"),
+            sujet("B-0003", apres="B-0005"),           # attend B-0005, hors du lot
+            sujet("B-0004"),
+            sujet("B-0005"),
+            sujet("B-0010", "fait" if lot_fait else "ouvert", forme="lot", apres="B-0001, B-0002, B-0003, D-0001"),
+            sujet("B-0011", forme="lot", apres="B-0010, B-0004"),
+        )
+        avec_demande(mem, "D-0001")
+        return mem
+
+    def test_est_lot_se_lit_dans_les_deux_langues(self):
+        fr = memoire_de(sujet("B-0003", apres="B-0001", forme="lot")).entree("B-0003")
+        en = memoire_de(sujet("B-0003", "open", apres="B-0001", forme="batch", en=True)).entree("B-0003")
+        self.assertTrue(memoire.est_lot(fr) and memoire.est_lot(en))
+        self.assertFalse(memoire.est_jalon(fr))
+        self.assertFalse(memoire.est_lot(memoire_de(sujet("B-0003", forme="jalon")).entree("B-0003")))
+
+    def test_la_memoire_relie_le_lot_a_ses_sujets_et_l_etat_montre_le_prochain(self):
+        from socle import state as etat
+
+        mem = self.memoire()
+        o = memoire.ordre(mem)
+        # B-0011 attend le lot B-0010 : il n'est pas le prochain.
+        self.assertEqual(o.lot.id, "B-0010")
+        self.assertEqual(o.avancement, [("B-0001", "fait"), ("B-0002", "en-cours"), ("B-0003", "attend"),
+                                        ("D-0001", "sans-reponse")])
+        # Un lot n'est jamais un sujet à prendre, ni un sujet en attente.
+        self.assertEqual([e.id for e in o.prets], ["B-0004", "B-0005"])
+        self.assertEqual(o.en_attente, 1)
+        ligne = ("prochain lot : B-0010 — Le sujet B-0010 ; 1 clos sur 4 ; "
+                 "reste : B-0002 (en cours), B-0003 (attend), D-0001 (sans réponse)")
+        self.assertEqual(memoire.lignes_ordre(mem)[0], ligne)
+        self.assertIn(f"  {ligne}", [l for _, bloc in etat._backlog(mem) for l in bloc])
+
+    def test_un_lot_dont_tout_est_clos_se_dit_a_clore(self):
+        mem = memoire_de(sujet("B-0001", "fait"), sujet("B-0002", "abandonné"),
+                         sujet("B-0003", forme="lot", apres="B-0001, B-0002, D-0001"))
+        avec_demande(mem, "D-0001", repondue=True)
+        self.assertEqual(memoire.lignes_ordre(mem),
+                         ["prochain lot : B-0003 — Le sujet B-0003 ; 3 clos sur 3 ; reste : rien, il se clôt"])
+        self.assertEqual(erreurs(mem), [])
+
+    def test_le_lot_en_cours_passe_devant_et_un_lot_fait_avant_ses_sujets_est_refuse(self):
+        mem = memoire_de(sujet("B-0001"), sujet("B-0002"), sujet("B-0003", forme="lot", apres="B-0001"),
+                         sujet("B-0004", "en cours", forme="lot", apres="B-0002"))
+        self.assertEqual(memoire.ordre(mem).lot.id, "B-0004")
+        self.assertEqual(memoire.lignes_ordre(self.memoire(lot_fait=True))[0],
+                         "prochain lot : B-0011 — Le sujet B-0011 ; 0 clos sur 1 ; reste : B-0004 (prêt)")
+        self.assertEqual(erreurs(self.memoire(lot_fait=True)),
+                         ["`B-0010` est fait avant `B-0002`, qu'il attend, encore « en-cours »",
+                          "`B-0010` est fait avant `B-0003`, qu'il attend, encore « ouvert »",
+                          "`B-0010` est fait avant `D-0001`, qu'il attend, encore sans réponse"])

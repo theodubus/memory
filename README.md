@@ -29,5 +29,6 @@ en développement. Où en est le travail se calcule :
 | [La page d'accueil du socle](engine/README.md) | ce qu'est le socle, son fonctionnement, son installation : le README du dépôt public |
 | [Le guide d'utilisation](engine/socle/HELP.md) | l'usage d'un projet équipé, étape par étape, et la référence des commandes |
 | [Le format de la mémoire](engine/socle/FORMAT.md) | la spécification de la mémoire |
+| [Les notes de version](engine/socle/CHANGES.md) | ce que chaque changement du socle change pour un projet installé, et ce que son agent doit en faire |
 | [L'atelier](docs/fabrication/README.md) | la fabrication : architecture, bancs, relevés |
 | [Les instructions de ce dépôt](AGENTS.md) | comment l'agent y travaille, et les commandes de l'atelier |
