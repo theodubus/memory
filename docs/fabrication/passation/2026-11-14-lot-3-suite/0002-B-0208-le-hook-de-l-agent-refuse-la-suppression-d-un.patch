@@ -1,8 +1,8 @@
-From 4e4eabf443bf449b133adec8251206a5b336b57f Mon Sep 17 00:00:00 2001
+From d53aa55f84a5c927f98d0e474042352c70d0bbde Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
 Date: Sat, 14 Nov 2026 15:26:43 +0000
-Subject: [PATCH 2/3] B-0208 : le hook de l'agent refuse la suppression d'un
- dossier qui contient le projet (J-2026-11-14-AB)
+Subject: [PATCH 2/9] B-0208 : le hook de l'agent refuse la suppression d'un
+ dossier qui contient le projet (J-2026-11-14-AC)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -564,14 +564,14 @@ index 4d5cbae..0000000
 -- [ ] la suppression d'un dossier qui contient le projet est refusée par le hook, et un test le montre
 diff --git a/memory/backlog/B-0228-le-hook-de-l-agent-laisse-supprimer-un-dossier-qui.md b/memory/backlog/B-0228-le-hook-de-l-agent-laisse-supprimer-un-dossier-qui.md
 new file mode 100644
-index 0000000..fc50f29
+index 0000000..dbfc54e
 --- /dev/null
 +++ b/memory/backlog/B-0228-le-hook-de-l-agent-laisse-supprimer-un-dossier-qui.md
 @@ -0,0 +1,34 @@
 +<!-- socle: couche=backlog zone=publique -->
 +# B-0228 — Le hook de l'agent laisse supprimer un dossier qui contient le projet par un autre programme que rm, mv, git clean ou find (rsync --delete, git worktree remove, python3 -c)
 +
-+> statut : ouvert · origine : J-2026-11-14-AB · lu : backlog@2e470e0c
++> statut : ouvert · origine : J-2026-11-14-AC · lu : backlog@2e470e0c
 +
 +B-0208@78acac59 fait refuser par le hook de l'agent la suppression d'un
 +dossier qui contient le projet par les formes que nommait sa piste : les
@@ -604,14 +604,14 @@ index 0000000..fc50f29
 +- [ ] la suppression d'un dossier qui contient le projet par `rsync --delete`, `git worktree remove` ou `python3 -c` qui cite son chemin est refusée par le hook, et un test le montre
 diff --git a/memory/backlog/closed/B-0208-le-hook-de-l-agent-laisse-supprimer-un-dossier-qui.md b/memory/backlog/closed/B-0208-le-hook-de-l-agent-laisse-supprimer-un-dossier-qui.md
 new file mode 100644
-index 0000000..9c871f0
+index 0000000..0ecb3fe
 --- /dev/null
 +++ b/memory/backlog/closed/B-0208-le-hook-de-l-agent-laisse-supprimer-un-dossier-qui.md
 @@ -0,0 +1,63 @@
 +<!-- socle: couche=backlog zone=publique -->
 +# B-0208 — Le hook de l'agent laisse supprimer un dossier qui contient le projet (rm -rf .., un ancêtre de la racine)
 +
-+> statut : fait · origine : J-2026-11-13-H · priorité : haute · ref : J-2026-11-14-AB · lu : backlog@f4a491f0
++> statut : fait · origine : J-2026-11-13-H · priorité : haute · ref : J-2026-11-14-AC · lu : backlog@f4a491f0
 +
 +Le hook de l'agent juge un chemin écrit par ce qu'il est dans le projet
 +(`_relatif`), et ne voit pas une suppression qui l'emporte tout entier :
@@ -672,15 +672,15 @@ index 0000000..9c871f0
 +
 +- [x] la suppression d'un dossier qui contient le projet est refusée par le hook, et un test le montre
 diff --git a/memory/journal/2026-11-4.md b/memory/journal/2026-11-4.md
-index 93ea1ac..0541927 100644
+index 4792dc0..da250c5 100644
 --- a/memory/journal/2026-11-4.md
 +++ b/memory/journal/2026-11-4.md
-@@ -819,3 +819,37 @@ l'agent, et les notes de version l'annoncent (`2026-11-14-f`). Aucun code
+@@ -848,3 +848,37 @@ l'agent, et les notes de version l'annoncent (`2026-11-14-f`). Aucun code
  ne change : la règle dit seulement quels trous du hook se corrigent. Elle
  borne le modèle de menace de B-0208, B-0205 et B-0206. La règle 1, celle
  de la revue, va avec le lot de la revue (B-0223).
 +
-+## J-2026-11-14-AB — B-0208 fait : le hook de l'agent refuse la suppression d'un dossier qui contient le projet
++## J-2026-11-14-AC — B-0208 fait : le hook de l'agent refuse la suppression d'un dossier qui contient le projet
 +
 +Dans le lot du hook (B-0221), B-0208, de priorité haute. Son modèle de
 +menace, écrit dans le sujet avant le code et borné à la règle 2 de D-0112

@@ -1,0 +1,1300 @@
+From 061ac5354c2185b7f3b144b77141bbf208798e24 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sat, 14 Nov 2026 20:00:44 +0000
+Subject: [PATCH 8/9] =?UTF-8?q?La=20revue=20du=20lot=203=20:=20ses=20cinq?=
+ =?UTF-8?q?=20bloquants=20corrig=C3=A9s,=20find,=20fonctions,=20boucles=20?=
+ =?UTF-8?q?qui=20reviennent=20(J-2026-11-14-AI)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- find : les réglages de Claude Code se jugent contre ceux qui sont
+  présents (find build -delete passe de nouveau) ; le * d'un -path se lit
+  comme ** sur le chemin qu'écrit find ; un filtre ne garde que l'action
+  qui le suit, hors d'un !, d'un -o ou d'une virgule, et un find sans
+  filtre qui garde sa suppression depuis la racine est la suppression du
+  projet, même avec -type ou -empty ; des opérateurs échappés ou entre
+  guillemets (\(, \), \;) sont un mot pour le découpage.
+- Le corps d'une fonction rend en se fermant l'état d'avant lui.
+- Une commande composée revenue à son dossier connu le garde ; la valeur
+  d'un for de plusieurs mots dont l'un n'est pas un seul nom, ou un **,
+  rend la cible d'un cd inconnue.
+- Le guide et les notes 2026-11-14-f, g, i et k corrigés en place ;
+  l'auto-test a les formes nouvelles.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01JeB7oVGq92bFy8jRyrZ2cP
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=1 PreToolUse=248 Stop=4
+Socle-Hooks-Since-Commit: PreToolUse=248
+---
+ docs/fabrication/architecture.md |   4 +-
+ engine/socle/CHANGES.en.md       |  44 +++--
+ engine/socle/CHANGES.md          |  48 ++++--
+ engine/socle/HELP.en.md          |  13 +-
+ engine/socle/HELP.md             |  13 +-
+ engine/socle/commands.py         | 119 +++++++++++--
+ engine/socle/hooks.py            | 287 ++++++++++++++++++++++---------
+ engine/socle/messages_en.py      |  24 +--
+ engine/socle/selftest.py         |  28 +--
+ memory/journal/2026-11-4.md      |  62 +++++++
+ tests/test_garde.py              | 162 ++++++++++++++++-
+ 11 files changed, 650 insertions(+), 154 deletions(-)
+
+diff --git a/docs/fabrication/architecture.md b/docs/fabrication/architecture.md
+index d1545aa..0b51b91 100644
+--- a/docs/fabrication/architecture.md
++++ b/docs/fabrication/architecture.md
+@@ -44,8 +44,8 @@ vérifiées.
+ | `checks_ratchet.py` | le remède des hooks non chargés, qui fait montrer le travail en cours dans la conversation (B-0108) ; cliquet des garde-fous (retirer un fichier de cas ou une spécification déclarés assouplit, D-0066 ; une correspondance ou une valeur liée qui suit ses fichiers renommés n'assouplit rien, ADR-0027), fichiers protégés (un renommage compte ses deux chemins ; tant que la branche par défaut n'a pas le socle, la plage d'un push est l'installation, comme celle de sa pull request, B-0096 ; à la fin du tour, une demande en attente, poussée, qui cite le fichier et son empreinte le laisse dans l'arbre, comme une mise à jour en session cloud qui attend l'humain, B-0115 ; si la branche par défaut exige la CI du socle, il se commite et se pousse aussi, la CI seule le refusant jusqu'à la réponse, D-0071 ; dans l'arbre de travail, une mise à jour du socle se reconnaît à son verrou, changé depuis la base, dont l'empreinte est celle du moteur de l'arbre et celle du moteur qu'un passage de l'installeur a copié (`copied`, qu'une relance depuis le projet ne garde que si le moteur n'a pas changé) : ce qu'elle a posé, le verrou, le moteur et son lanceur, et ce que le verrou consigne sous `[installed]` avec l'empreinte que le fichier a encore, garde une erreur par fichier, sans commande de remise, sous une ligne commune que seule la fin de tour imprime à sa place ; un fichier qu'elle n'a pas posé tel qu'il est garde sa ligne et sa remise, ADR-0077), empreinte du moteur, configuration et trace des hooks |
+ | `checks_skills.py` | les skills (ADR-0034) : `skills.contrat`, un en-tête qui nomme le skill comme son dossier et une description qui dit quand s'en servir, le préfixe `socle-` réservé ; `skills.commandes`, chaque bloc de code du shell jugé par la fonction du hook de l'agent |
+ | `tests_reader.py` | extraction des fonctions de test selon l'adaptateur (blocs à accolades, indentés ou fermés par `end`) ; un en-tête de fonction écrit dans une chaîne ou un commentaire de plusieurs lignes n'en est pas un (B-0025) ; transitivité des assertions |
+-| `hooks.py` | les points d'entrée des hooks de l'agent et de git ; le hook avant outil juge tout contre la racine de la session et, si l'action a lieu dans un autre worktree du même dépôt équipé du socle (celui du fichier écrit ou du dossier courant), en plus contre ce worktree : refusée dans l'un des deux arbres, elle est refusée, et une référence citée vaut si elle existe dans l'un ou l'autre ; fin de tour et démarrage jugent la racine de la session (ADR-0064) ; le hook avant push ne juge pas comme la CI la plage d'une branche jetable, que la CI ne juge pas aux envois, et ne relâche les références que si chaque branche qui reçoit le push est jetable (D-0087) ; la trace, où chaque commit nomme son worktree : un commit dans un autre worktree, dans la même commande, n'est pas un second commit (B-0136) ; le hook avant push juge le dernier commit, non l'arbre, dont un changement non commité ne part pas (B-0115) ; la plage qu'il envoie, jugée comme la CI la jugera, laisse partir le fichier protégé qu'une demande en attente couvre, comme l'étage git (D-0071) ; le refus du widget de questions de l'agent, où une décision se lit en texte brut (B-0105) ; en session cloud, le démarrage complète un clone superficiel (`git fetch --unshallow`, B-0202), puis installe les outils de l'adaptateur par les commandes que la CI lance pour eux, une fois par conteneur (ADR-0035), sous un seul délai, sans bloquer sur un échec ; dont chaque refus et l'étage qui l'a prononcé ; chaque commande shell de l'agent jugée commande simple par commande simple, par une fonction que `skills.commandes` partage (`refus_bash`) : écriture d'un fichier protégé ou d'un réglage de Claude Code, commande réservée à l'humain, commit ou push qui saute les hooks du projet (`--no-verify`, B-0023), push forcé ou vers la branche par défaut, publication, suppression distante (B-0044, L2) ; un correctif sans test, dit dès le commit, se juge sur un commit amendé contre le parent de celui qu'il remplace, l'amendement lu dans la commande de git (B-0084), et, dans un projet à plusieurs adaptateurs, langage par langage du code corrigé (ADR-0051) ; un hook git retient l'index qu'il juge, puis retire de l'environnement ce qui désigne un dépôt (`GIT_DIR`…), que git lui passe depuis un worktree secondaire et dont les tests du projet hériteraient (B-0057) ; le hook de fin de tour bloque le premier arrêt d'un tour rouge, mais pas une relance qu'il a provoquée sur les mêmes contrôles en échec et le même arbre, sans la sortie des outils, qui change à chaque relance : le rapport va alors à l'humain en message, sans compter de tentative (ADR-0061) ; ce rapport dit en une ligne les fichiers protégés qu'une mise à jour a posés, que `socle check` liste (`Rapport.texte(regrouper=True)`, ADR-0077) ; le hook avant outil refuse l'installeur visé sur un projet équipé (la racine, ou une cible qui porte son verrou) dans un autre mode que celui de son verrou, et laisse passer la mise à jour dans ce mode et une cible sans verrou ; il refuse aussi une cible qu'il ne sait pas résoudre (une variable, une substitution, `~autre`, dans la cible ou dans le `cd` qui la précède), et la ligne de commande refuse les options abrégées (B-0141, ADR-0062) ; il laisse l'agent remettre un fichier protégé à son état du dernier commit, nommé en toutes lettres, ou supprimer un fichier apparu sous un chemin protégé que git ne suit pas, sauf si une demande dont ce qu'elle approuve n'est pas commité le cite, lui ou son dossier ; ses redirections, un préfixe ou une variable devant `git`, `checkout` sans `--` et `--pathspec-from-file` se jugent (`remise_en_etat`, D-0098, ADR-0065) ; un chemin que le shell écrit se juge développé comme le shell le ferait, depuis le dossier courant de l'agent (B-0205) : accolades, `~`, variables de l'environnement du hook (hors des variables spéciales du shell, `$_`, `$OLDPWD`) et de la commande, `${X:-y}`, chaque valeur entière et mot par mot, motifs contre les fichiers présents et contre les motifs des chemins protégés, élargis après un `shopt`, et ce qu'il ne sait pas développer est refusé si la part écrite en toutes lettres avant lui, remontée des `..` qui le suivent, ne le place pas hors du projet ; le script d'un `sed -i` ou d'un `perl -i`, séparé ou collé, n'est pas un chemin écrit, `perl -0` et `-l` ne prenant que des chiffres (`ecritures_jugees`, B-0171, ADR-0072) ; `cp`, `ln`, `install` et `mv` écrivent le dossier de `-t`, `sort` le fichier de `-o` ; `find -delete`, ou `-exec` d'un écrivain de `{}`, se juge par ses départs et ses filtres de nom ou de chemin contre les motifs des chemins protégés, à toute profondeur, et contre les fichiers protégés présents d'un motif de dossier ; `python -c` et `xargs` d'un écrivain de ce qu'il lit, écrivains qu'il ne sait pas lire, se jugent par les chemins protégés qu'ils citent en toutes lettres, le script de l'un, la commande entière de l'autre (`_ecrivains_illisibles`, B-0206) ; une commande qu'il ne sait pas juger, plus de 10 000 caractères hors du corps de ses heredocs, plus de 32 parenthèses ou accolades ouvertes à la fois (`commandes.demesure`), un jugement qui lève ou passe 5 secondes, est refusée si elle peut écrire (`injugeable`) ; la suppression d'un dossier qui contient la racine, par les arguments de `rm`, les sources d'un `mv`, ce que balaie `git clean` ou les départs d'un `find` qui supprime, son chemin développé de même, et celle de la racine par un `find` qui ne filtre rien, sont refusées (`suppressions`, B-0208). C'est une première barrière contre les erreurs d'un agent coopératif, qui juge, quelle qu'en soit la forme, ce que rien ne rattrape ensuite, et laisse hors de son modèle l'écriture d'un fichier protégé sous une forme de contournement (ADR-0080) ; la garantie est `protege.fichiers`. Il ne voit pas une part inconnue qui vaut elle-même `..`, une option du shell posée par le profil, une variable que Claude Code ne pose que pour ses hooks, les formes que la seconde revue de B-0171 a trouvées (B-0211), ni une suppression par un autre programme (`rsync --delete`, `git worktree remove`, `python3 -c`, B-0228) |
+-| `commands.py` | le découpage d'une commande shell en commandes simples, par `shlex` : séparateurs, redirections, `cd` (et ses options), `cd -`, `pushd` et `popd` suivis, chaque cible développée au moment du `cd`, variables affectées retenues (`+=`, une déclaration de tableau ou de référence rend la variable inconnue), un sous-shell, une substitution, un élément de pipeline ou une tâche de fond supposés ne rien transmettre à la suite, ce que lance une substitution nue qu'il délimite jugé, chaque variable développée une fois, `$'…'` lu, `bash -c` (quel que soit le groupe d'options qui porte `c`, `--` sauté, B-0206) et `eval` ouverts, préfixes (`env`, `sudo`, `python -m`) retirés ; le corps d'un heredoc n'est que du texte ; un mot développé comme le shell (`developper`, `accolades`, `normaliser`), ce qui ne se développe pas marqué, et un motif du shell, classes POSIX comprises, comparé à un motif de chemin (`se_croisent`) (B-0171, ADR-0072). Les mots réservés qui précèdent une commande (`then`, `do`, `!`, `{`…) se retirent comme un préfixe ; ce qu'une condition ou une boucle change, son dossier et ses variables, devient inconnu après elle et dans la branche `else` qui suit, et la variable d'un `for` prend dans son corps les mots de sa liste (B-0204). Un `#` n'ouvre un commentaire qu'en tête d'un mot, retiré sans sa fin de ligne, et les guillemets d'une substitution entre guillemets se lisent comme le shell (`"$(cmd "arg")"`, B-0207). Il ne suit pas les motifs d'un `case`, ce que lance une substitution entre guillemets, l'état d'un `eval`, d'une fonction ou de `CDPATH`, un `cd` qui échoue, `env -C`, un heredoc vu où il n'y en a pas (B-0207), ni un opérateur entre guillemets, `lastpipe`, `((…))`, `let`, `getopts` (B-0211) |
++| `hooks.py` | les points d'entrée des hooks de l'agent et de git ; le hook avant outil juge tout contre la racine de la session et, si l'action a lieu dans un autre worktree du même dépôt équipé du socle (celui du fichier écrit ou du dossier courant), en plus contre ce worktree : refusée dans l'un des deux arbres, elle est refusée, et une référence citée vaut si elle existe dans l'un ou l'autre ; fin de tour et démarrage jugent la racine de la session (ADR-0064) ; le hook avant push ne juge pas comme la CI la plage d'une branche jetable, que la CI ne juge pas aux envois, et ne relâche les références que si chaque branche qui reçoit le push est jetable (D-0087) ; la trace, où chaque commit nomme son worktree : un commit dans un autre worktree, dans la même commande, n'est pas un second commit (B-0136) ; le hook avant push juge le dernier commit, non l'arbre, dont un changement non commité ne part pas (B-0115) ; la plage qu'il envoie, jugée comme la CI la jugera, laisse partir le fichier protégé qu'une demande en attente couvre, comme l'étage git (D-0071) ; le refus du widget de questions de l'agent, où une décision se lit en texte brut (B-0105) ; en session cloud, le démarrage complète un clone superficiel (`git fetch --unshallow`, B-0202), puis installe les outils de l'adaptateur par les commandes que la CI lance pour eux, une fois par conteneur (ADR-0035), sous un seul délai, sans bloquer sur un échec ; dont chaque refus et l'étage qui l'a prononcé ; chaque commande shell de l'agent jugée commande simple par commande simple, par une fonction que `skills.commandes` partage (`refus_bash`) : écriture d'un fichier protégé ou d'un réglage de Claude Code, commande réservée à l'humain, commit ou push qui saute les hooks du projet (`--no-verify`, B-0023), push forcé ou vers la branche par défaut, publication, suppression distante (B-0044, L2) ; un correctif sans test, dit dès le commit, se juge sur un commit amendé contre le parent de celui qu'il remplace, l'amendement lu dans la commande de git (B-0084), et, dans un projet à plusieurs adaptateurs, langage par langage du code corrigé (ADR-0051) ; un hook git retient l'index qu'il juge, puis retire de l'environnement ce qui désigne un dépôt (`GIT_DIR`…), que git lui passe depuis un worktree secondaire et dont les tests du projet hériteraient (B-0057) ; le hook de fin de tour bloque le premier arrêt d'un tour rouge, mais pas une relance qu'il a provoquée sur les mêmes contrôles en échec et le même arbre, sans la sortie des outils, qui change à chaque relance : le rapport va alors à l'humain en message, sans compter de tentative (ADR-0061) ; ce rapport dit en une ligne les fichiers protégés qu'une mise à jour a posés, que `socle check` liste (`Rapport.texte(regrouper=True)`, ADR-0077) ; le hook avant outil refuse l'installeur visé sur un projet équipé (la racine, ou une cible qui porte son verrou) dans un autre mode que celui de son verrou, et laisse passer la mise à jour dans ce mode et une cible sans verrou ; il refuse aussi une cible qu'il ne sait pas résoudre (une variable, une substitution, `~autre`, dans la cible ou dans le `cd` qui la précède), et la ligne de commande refuse les options abrégées (B-0141, ADR-0062) ; il laisse l'agent remettre un fichier protégé à son état du dernier commit, nommé en toutes lettres, ou supprimer un fichier apparu sous un chemin protégé que git ne suit pas, sauf si une demande dont ce qu'elle approuve n'est pas commité le cite, lui ou son dossier ; ses redirections, un préfixe ou une variable devant `git`, `checkout` sans `--` et `--pathspec-from-file` se jugent (`remise_en_etat`, D-0098, ADR-0065) ; un chemin que le shell écrit se juge développé comme le shell le ferait, depuis le dossier courant de l'agent (B-0205) : accolades, `~`, variables de l'environnement du hook (hors des variables spéciales du shell, `$_`, `$OLDPWD`) et de la commande, `${X:-y}`, chaque valeur entière et mot par mot, motifs contre les fichiers présents et contre les motifs des chemins protégés, élargis après un `shopt`, et ce qu'il ne sait pas développer est refusé si la part écrite en toutes lettres avant lui, remontée des `..` qui le suivent, ne le place pas hors du projet ; le script d'un `sed -i` ou d'un `perl -i`, séparé ou collé, n'est pas un chemin écrit, `perl -0` et `-l` ne prenant que des chiffres (`ecritures_jugees`, B-0171, ADR-0072) ; `cp`, `ln`, `install` et `mv` écrivent le dossier de `-t`, `sort` le fichier de `-o` ; `find -delete`, ou `-exec` d'un écrivain de `{}`, se juge par ses départs et les filtres de nom ou de chemin qui gardent son action (`_expression_find` : un filtre ne garde que ce qui le suit dans sa conjonction, hors d'un `!` et de l'autre branche d'un `-o` ou d'une `,`), le `*` d'un `-path` lu comme `**` sur le chemin qu'écrit `find`, contre les motifs des chemins protégés, à toute profondeur, contre les fichiers protégés présents d'un motif de dossier, et contre les réglages de Claude Code présents, ceux de la racine ignorés par git compris, ou contre leurs motifs si le filtre nomme `.claude` ou `settings` (la revue du lot 3, J-2026-11-14-AH) ; `python -c` et `xargs` d'un écrivain de ce qu'il lit, écrivains qu'il ne sait pas lire, se jugent par les chemins protégés qu'ils citent en toutes lettres, le script de l'un, la commande entière de l'autre (`_ecrivains_illisibles`, B-0206) ; une commande qu'il ne sait pas juger, plus de 10 000 caractères hors du corps de ses heredocs, plus de 32 parenthèses ou accolades ouvertes à la fois (`commandes.demesure`), un jugement qui lève ou passe 5 secondes, est refusée si elle peut écrire (`injugeable`) ; la suppression d'un dossier qui contient la racine, par les arguments de `rm`, les sources d'un `mv`, ce que balaie `git clean` ou les départs d'un `find` qui supprime, son chemin développé de même, et celle de la racine par un `find` qu'aucun filtre de nom ou de chemin ne garde, même avec `-type` ou `-empty`, sont refusées (`suppressions`, B-0208). C'est une première barrière contre les erreurs d'un agent coopératif, qui juge, quelle qu'en soit la forme, ce que rien ne rattrape ensuite, et laisse hors de son modèle l'écriture d'un fichier protégé sous une forme de contournement (ADR-0080) ; la garantie est `protege.fichiers`. Il ne voit pas une part inconnue qui vaut elle-même `..`, une option du shell posée par le profil, une variable que Claude Code ne pose que pour ses hooks, les formes que la seconde revue de B-0171 a trouvées (B-0211), ni une suppression par un autre programme (`rsync --delete`, `git worktree remove`, `python3 -c`, B-0228) |
++| `commands.py` | le découpage d'une commande shell en commandes simples, par `shlex` : séparateurs, redirections, `cd` (et ses options), `cd -`, `pushd` et `popd` suivis, chaque cible développée au moment du `cd`, variables affectées retenues (`+=`, une déclaration de tableau ou de référence rend la variable inconnue), un sous-shell, une substitution, un élément de pipeline ou une tâche de fond supposés ne rien transmettre à la suite, ce que lance une substitution nue qu'il délimite jugé, chaque variable développée une fois, `$'…'` lu, `bash -c` (quel que soit le groupe d'options qui porte `c`, `--` sauté, B-0206) et `eval` ouverts, préfixes (`env`, `sudo`, `python -m`) retirés ; le corps d'un heredoc n'est que du texte ; un mot développé comme le shell (`developper`, `accolades`, `normaliser`), ce qui ne se développe pas marqué, et un motif du shell, classes POSIX comprises, comparé à un motif de chemin (`se_croisent`) (B-0171, ADR-0072). Les mots réservés qui précèdent une commande (`then`, `do`, `!`, `{`…) se retirent comme un préfixe ; ce qu'une condition ou une boucle change, son dossier et ses variables, devient inconnu après elle et dans la branche `else` qui suit, sauf un dossier connu où elle revient, et la variable d'un `for` prend dans son corps les mots de sa liste (B-0204) ; le corps d'une fonction (`nom() { …; }`) se lit, et rend en se fermant l'état d'avant lui ; des opérateurs échappés ou entre guillemets (`\(`, `';'`) sont un mot (la revue du lot 3, J-2026-11-14-AH). Un `#` n'ouvre un commentaire qu'en tête d'un mot, retiré sans sa fin de ligne, et les guillemets d'une substitution entre guillemets se lisent comme le shell (`"$(cmd "arg")"`, B-0207). Il ne suit pas les motifs d'un `case`, ce que lance une substitution entre guillemets, l'état d'un `eval`, l'appel d'une fonction, `CDPATH`, un `cd` qui échoue, `env -C`, un heredoc vu où il n'y en a pas (B-0207), ni `lastpipe`, `((…))`, `let`, `getopts` (B-0211) |
+ | `state.py` | l'état dérivé, dont l'ordre du backlog, que le rappel de fin de tour redonne ; si GitHub exige la CI du socle avant de fusionner sur la branche par défaut (ensemble de règles ou protection classique, lus par `gh`), sinon une action de l'humain avec le lien de la page (B-0044, L2, R1) ; la sortie du démarrage, hook compris, sous `[startup] max_bytes`, chaque partie dans sa part, ce qu'une partie laisse ou libère allant aux autres jusqu'à ce que rien ne change : l'état dérivé, en tête ce qui demande d'agir (ce qui revient à l'humain, les demandes, même quand le reste ne se calcule pas, ce qu'il a écrit, les lignes du hook), puis ce qui informe, puis le backlog, ses lignes bornées et ses listes plafonnées, chacune disant où lire la suite ; puis le chantier actif, public et privé, les faits par leur titre et les dix dernières décisions ; une partie au-delà de ce qui lui revient perd des blocs entiers, l'état d'abord ce qui se relit ailleurs, un en-tête jamais sans ses éléments, les autres depuis leur fin, et la coupe dit laquelle, de combien et où lire le reste ; les lignes du hook gardées, `socle state --short` les redit ; le budget du chantier actif au-dessus de sa part signalé à chaque démarrage (ADR-0071) |
+ | `human.py` | les spécifications déclarées qu'aucune demande n'a soumises à l'humain (D-0066) ; les branches distantes à supprimer (contenues dans la branche par défaut, ou dans la branche de travail poussée, B-0145) et celles à examiner (non fusionnées, sans activité depuis une semaine, B-0112), avec la commande qui étiquette d'abord les commits cités que seule l'une d'elles garde, ni pull request ni étiquette (B-0116) ; ce qui revient à l'humain ; ce qu'il a écrit lui-même depuis le dernier commit de l'agent (approbations, réponses de son terminal), que l'état liste pour que l'agent le cite ; la lecture du dernier message de l'agent pour le récap |
+ | `private.py` | la mémoire privée : modes compagnon et chiffré, verrou, accès, couches privées par défaut, contrôles `prive.*` ; un terme privé cherché sous ses variantes d'écriture, dans le contenu, les noms de fichier et de branche ; rien d'écrit sans accès ; la mémoire privée lue à une révision |
+diff --git a/engine/socle/CHANGES.en.md b/engine/socle/CHANGES.en.md
+index b4b3b24..74e6abe 100644
+--- a/engine/socle/CHANGES.en.md
++++ b/engine/socle/CHANGES.en.md
+@@ -13,14 +13,23 @@ The agent's hook now judges these writes to a protected file: `cp`, `ln`,
+ `install` and `mv` write the directory of `-t`, `sort` the file of `-o`;
+ `bash -ec '…'`, `bash -lc '…'` and `bash -c -- '…'` open their command;
+ `find -delete`, or `find -exec rm {} +`, is judged by its starting points
+-and its name or path filters, at any depth: `find . -name '*.pyc' -delete`
+-passes, `find . -name '*.toml' -delete` is refused. `python -c` and `xargs`
+-of a writer, which the hook cannot read, are judged by the protected paths
+-they cite in full: `echo <protected file> | xargs rm` is refused, as is a
+-`python -c` that cites a protected file, even to read it.
++and the name or path filters that guard its action, at any depth: `find .
++-name '*.pyc' -delete` passes, `find . -name '*.toml' -delete` is refused.
++A filter guards only the action that follows it, outside a `!` and the
++other branch of a `-o`; the `*` of a `-path` crosses directories, as in
++`find`. `python -c` and `xargs` of a writer, which the hook cannot read,
++are judged by the protected paths they cite in full: `echo <protected
++file> | xargs rm` is refused, as is a `python -c` that cites a protected
++file, even to read it.
+ 
+ To do: read a protected file with `cat` or the file-reading tool, rather
+-than with a `python -c` that cites it, which the hook now refuses.
++than with a `python -c` that cites it, which the hook now refuses; it also
++refuses a `python -c` that cites a directory containing a protected file,
++even to list it (`os.listdir('.socle')`): list it with `ls`. The hook
++likewise refuses a `find` that deletes or writes what it finds from the
++root without a name or path filter, even with `-type` or `-empty` (`find .
++-type d -empty -delete`, `find . -type f -exec sed -i … {} +`): give it a
++name or path filter, or start it from a directory of the project.
+ 
+ ## 2026-11-14-j — The agent's hook no longer loses the command after a hash or nested quotes
+ 
+@@ -41,8 +50,12 @@ The agent's hook now judges a command written behind a shell reserved word
+ a protected file, an irreversible action or a command reserved for the human
+ in the body of a condition or a loop no longer passes, as outside it. What a
+ condition or a loop changes, its directory and its variables, becomes
+-unknown after it; a `for` variable takes in its body the words of its list,
+-so that `for f in *.md; do sed -i … "$f"; done` is judged by its pattern.
++unknown after it, except a directory it comes back to (`for d in */; do cd
++"$d"; …; cd ..; done`); a `for` variable takes in its body the words of its
++list, so that `for f in *.md; do sed -i … "$f"; done` is judged by its
++pattern. The body of a function (`f() { …; }`) is judged, but what it
++changes does not hold for what follows: it does not run where it is
++written.
+ 
+ To do: nothing, unless the hook now refuses a loop that writes to a variable
+ it does not know (`while read f; do sed -i … "$f"; done`): write the list of
+@@ -69,10 +82,12 @@ and the hooks, and no check catches it afterwards. It now refuses deleting
+ such a directory through the arguments of `rm`, the sources of an `mv`,
+ what `git clean` sweeps and the starting points of a `find` that deletes
+ (`-delete`, `-exec rm`), its path expanded like any path the hook judges;
+-and deleting the project by a `find` that starts from its root without
+-filtering anything (`find . -delete`). A directory next to the project, a
+-directory of the project and a `find` that filters what it deletes under
+-the root stay free.
++and deleting the project by a `find` that starts from its root with no
++name or path filter guarding what it deletes (`find . -delete`, `find .
++-type f -delete`, `find . -delete -name '*.pyc'`, whose filter comes after
++the action, or `find . -path ./.git -prune -o -delete`). A directory next
++to the project, a directory of the project (`find build -delete`) and a
++`find` that filters what it deletes under the root stay free.
+ 
+ To do: nothing. Such a refusal is lifted by targeting a directory of the
+ project, or outside it a directory that does not contain it, written out
+@@ -88,7 +103,10 @@ irreversible external action, a leak of the private memory into what gets
+ published. A write to a protected file in a form one writes only to get
+ around it (an `eval`, `IFS`, a path built on the fly in another language)
+ is outside its model: the `protege.fichiers` check refuses it afterwards.
+-The hook itself does not change.
++The hook itself does not change. Deleting the project still escapes it
++when a program other than `rm`, `mv`, `git clean` or `find` does it
++(`rsync --delete`, `git worktree remove`, a `python3 -c` that calls
++`shutil.rmtree`, `xargs rm`): nothing catches it.
+ 
+ To do: a hole of the hook of that last kind, found by a review, opens no
+ backlog subject; a hole through which passes what nothing catches opens
+diff --git a/engine/socle/CHANGES.md b/engine/socle/CHANGES.md
+index 4eefb91..ab7c902 100644
+--- a/engine/socle/CHANGES.md
++++ b/engine/socle/CHANGES.md
+@@ -13,15 +13,25 @@ Le hook de l'agent juge désormais ces écritures d'un fichier protégé :
+ `cp`, `ln`, `install` et `mv` écrivent le dossier de `-t`, `sort` le
+ fichier de `-o` ; `bash -ec '…'`, `bash -lc '…'` et `bash -c -- '…'`
+ ouvrent leur commande ; `find -delete`, ou `find -exec rm {} +`, se juge
+-par ses points de départ et ses filtres de nom ou de chemin, à toute
+-profondeur : `find . -name '*.pyc' -delete` passe, `find . -name '*.toml'
+--delete` est refusé. `python -c` et `xargs` d'un écrivain, que le hook ne
+-sait pas lire, se jugent par les chemins protégés qu'ils citent en toutes
+-lettres : `echo <fichier protégé> | xargs rm` est refusé, comme un
+-`python -c` qui cite un fichier protégé, même pour le lire.
++par ses points de départ et les filtres de nom ou de chemin qui gardent
++son action, à toute profondeur : `find . -name '*.pyc' -delete` passe,
++`find . -name '*.toml' -delete` est refusé. Un filtre ne garde que
++l'action qui le suit, hors d'un `!` et de l'autre branche d'un `-o` ;
++le `*` d'un `-path` traverse les dossiers, comme dans `find`. `python -c`
++et `xargs` d'un écrivain, que le hook ne sait pas lire, se jugent par les
++chemins protégés qu'ils citent en toutes lettres : `echo <fichier
++protégé> | xargs rm` est refusé, comme un `python -c` qui cite un
++fichier protégé, même pour le lire.
+ 
+ À faire : lire un fichier protégé par `cat` ou par l'outil de lecture,
+-plutôt que par un `python -c` qui le cite, que le hook refuse désormais.
++plutôt que par un `python -c` qui le cite, que le hook refuse désormais ;
++il refuse aussi un `python -c` qui cite un dossier contenant un fichier
++protégé, même pour le lister (`os.listdir('.socle')`) : le lister par
++`ls`. Le hook refuse de même un `find` qui supprime ou écrit ce qu'il
++trouve depuis la racine sans filtre de nom ou de chemin, même avec
++`-type` ou `-empty` (`find . -type d -empty -delete`, `find . -type f
++-exec sed -i … {} +`) : lui donner un filtre de nom ou de chemin, ou le
++faire partir d'un dossier du projet.
+ 
+ ## 2026-11-14-j — Le hook de l'agent ne perd plus la commande qui suit un dièse ou des guillemets imbriqués
+ 
+@@ -43,9 +53,12 @@ réservé du shell (`then`, `else`, `elif`, `do`, `!`, `{`, `if`, `while`,
+ `until`) : une écriture d'un fichier protégé, une action irréversible ou une
+ commande réservée à l'humain dans le corps d'une condition ou d'une boucle
+ ne passe plus, comme hors d'elle. Ce qu'une condition ou une boucle change,
+-son dossier et ses variables, devient inconnu après elle ; la variable d'un
+-`for` prend dans son corps les mots de sa liste, si bien que `for f in
+-*.md; do sed -i … "$f"; done` se juge par son motif.
++son dossier et ses variables, devient inconnu après elle, sauf un dossier
++où elle revient (`for d in */; do cd "$d"; …; cd ..; done`) ; la variable
++d'un `for` prend dans son corps les mots de sa liste, si bien que `for f
++in *.md; do sed -i … "$f"; done` se juge par son motif. Le corps d'une
++fonction (`f() { …; }`) se juge, mais ce qu'il change ne vaut pas pour la
++suite : il ne s'exécute pas là où il s'écrit.
+ 
+ À faire : rien, sauf si le hook refuse désormais une boucle qui écrit vers
+ une variable qu'il ne connaît pas (`while read f; do sed -i … "$f"; done`) :
+@@ -74,9 +87,12 @@ ensuite. Il refuse désormais la suppression d'un tel dossier par les
+ arguments de `rm`, les sources d'un `mv`, ce que balaie `git clean` et les
+ points de départ d'un `find` qui supprime (`-delete`, `-exec rm`), son
+ chemin développé comme tout chemin que le hook juge ; et celle du projet
+-par un `find` qui part de sa racine sans rien filtrer (`find . -delete`).
+-Un dossier voisin du projet, un dossier du projet et un `find` qui filtre
+-ce qu'il supprime sous la racine restent libres.
++par un `find` qui part de sa racine sans qu'un filtre de nom ou de chemin
++garde ce qu'il supprime (`find . -delete`, `find . -type f -delete`, `find
++. -delete -name '*.pyc'`, dont le filtre vient après l'action, ou `find .
++-path ./.git -prune -o -delete`). Un dossier voisin du projet, un dossier
++du projet (`find build -delete`) et un `find` qui filtre ce qu'il
++supprime sous la racine restent libres.
+ 
+ À faire : rien. Un tel refus se lève en visant un dossier du projet, ou
+ hors de lui un dossier qui ne le contient pas, écrit en toutes lettres.
+@@ -91,7 +107,11 @@ contient, une action externe irréversible, une fuite de la mémoire privée
+ dans ce qui se publie. Une écriture d'un fichier protégé sous une forme
+ qu'on n'écrit que pour contourner (un `eval`, `IFS`, un chemin construit au
+ vol dans un autre langage) est hors de son modèle : le contrôle
+-`protege.fichiers` la refuse ensuite. Le hook lui-même ne change pas.
++`protege.fichiers` la refuse ensuite. Le hook lui-même ne change pas. La
++suppression du projet lui échappe encore quand un autre programme que
++`rm`, `mv`, `git clean` ou `find` la fait (`rsync --delete`, `git worktree
++remove`, un `python3 -c` qui appelle `shutil.rmtree`, `xargs rm`) : rien
++ne la rattrape.
+ 
+ À faire : un trou du hook de cette dernière sorte, qu'une revue trouve,
+ n'ouvre pas de sujet au backlog ; un trou par lequel passe ce que rien ne
+diff --git a/engine/socle/HELP.en.md b/engine/socle/HELP.en.md
+index 91ea2dc..ba69cef 100644
+--- a/engine/socle/HELP.en.md
++++ b/engine/socle/HELP.en.md
+@@ -258,12 +258,19 @@ open at once, a judgment that crashes or takes over 5 seconds) is refused
+ if it can write: split it. It also refuses deleting a directory that
+ contains the project (`rm -rf ..`, an `mv`, a `git clean` or a `find` that
+ deletes from such a directory), and deleting the project by a `find` that
+-filters nothing (`find . -delete`); a directory next to the project stays
+-free. This hook stops the mistakes of a cooperative agent, one that does
++starts from its root with no name or path filter guarding what it deletes
++(`find . -delete`, `find . -type f -delete`, `find . -delete -name
++'*.pyc'`, whose filter comes after the action); a directory next to the
++project, and a directory of the project, stay free. This hook stops the mistakes of a cooperative agent, one that does
+ not try to get around its guardrails, before they take effect. It judges the shell forms an agent writes in its work, and,
+ whatever its form, what nothing catches afterwards: deleting the project
+ or a directory that contains it, an irreversible external action, a leak
+-of the private memory into what gets published. It does not model all of
++of the private memory into what gets published. Deleting the project
++still escapes it when a program other than `rm`, `mv`, `git clean` or
++`find` does it (`rsync --delete`, `git worktree remove`, a `python3 -c`
++that calls `shutil.rmtree`, `xargs rm`): nothing catches it, and these
++commands are not run against the project or a directory that contains
++it. It does not model all of
+ bash: a write to a protected file in a form one writes only to get around
+ it (an `eval`, `IFS`, a path built on the fly in another language) is
+ outside its model, as are forms that escape it (an unknown part that is
+diff --git a/engine/socle/HELP.md b/engine/socle/HELP.md
+index 96a867a..fe0fc57 100644
+--- a/engine/socle/HELP.md
++++ b/engine/socle/HELP.md
+@@ -264,13 +264,20 @@ ou accolades ouvertes à la fois, un jugement qui plante ou passe
+ 5 secondes) est refusée si elle peut écrire : la découper. Il refuse
+ aussi la suppression d'un dossier qui contient le projet (`rm -rf ..`, un
+ `mv`, un `git clean` ou un `find` qui supprime depuis un tel dossier), et
+-celle du projet par un `find` qui ne filtre rien (`find . -delete`) ; un
+-dossier voisin du projet reste libre. Ce hook arrête les erreurs d'un agent
++celle du projet par un `find` qui part de sa racine sans qu'un filtre de
++nom ou de chemin garde ce qu'il supprime (`find . -delete`, `find . -type
++f -delete`, `find . -delete -name '*.pyc'`, dont le filtre vient après
++l'action) ; un dossier voisin du projet, et un dossier du projet, restent
++libres. Ce hook arrête les erreurs d'un agent
+ coopératif, qui ne cherche pas à contourner ses garde-fous, avant qu'elles agissent. Il juge les formes du shell
+ qu'un agent écrit dans son travail, et, quelle qu'en soit la forme, ce que
+ rien ne rattrape ensuite : supprimer le projet ou un dossier qui le
+ contient, une action externe irréversible, une fuite de la mémoire privée
+-dans ce qui se publie. Il ne modélise pas tout bash : une écriture d'un
++dans ce qui se publie. La suppression du projet lui échappe encore quand
++un autre programme que `rm`, `mv`, `git clean` ou `find` la fait
++(`rsync --delete`, `git worktree remove`, un `python3 -c` qui appelle
++`shutil.rmtree`, `xargs rm`) : rien ne la rattrape, et ces commandes ne
++se lancent pas vers le projet ni vers un dossier qui le contient. Il ne modélise pas tout bash : une écriture d'un
+ fichier protégé sous une forme qu'on n'écrit que pour contourner (un
+ `eval`, `IFS`, un chemin construit au vol dans un autre langage) est hors
+ de son modèle, comme des formes qui lui échappent (une part inconnue qui
+diff --git a/engine/socle/commands.py b/engine/socle/commands.py
+index 6ef437a..911e190 100644
+--- a/engine/socle/commands.py
++++ b/engine/socle/commands.py
+@@ -65,9 +65,12 @@ INCONNU = "\0"
+ RESERVES = ("if", "then", "else", "elif", "while", "until", "do", "!", "{")
+ # Ce qui ouvre une commande composée, et ce qui la ferme. Ce qu'une
+ # condition ou une boucle change devient inconnu après elle, et dans la
+-# branche `else` ou `elif` qui suit ; un groupe `{ …; }` s'exécute une fois.
++# branche `else` ou `elif` qui suit ; un groupe `{ …; }` s'exécute une fois,
++# et le corps d'une fonction (`nom() { …; }`) pas là où il s'écrit.
+ OUVRANTS = ("if", "while", "until", "for", "select", "{")
+ FERMANTS = ("fi", "done", "}")
++# Le nom d'une fonction que définit `nom ( )`.
++NOM_DE_FONCTION = re.compile(r"[\w.:+@-]+")
+ # Les variables que le shell tient lui-même : leur valeur dans
+ # l'environnement du hook n'est pas celle du shell de l'agent (`_`, le
+ # chemin de python3 ; `OLDPWD`, le dossier d'un autre shell). Un shell neuf
+@@ -80,6 +83,10 @@ SPECIALES = frozenset({
+ # Le repère, dans le texte que lit `shlex`, d'une part mise de côté
+ # (`_preparer`).
+ REPERE = re.compile("\x01(\\d+)\x01")
++# Ce qui marque un mot fait d'opérateurs échappés ou entre guillemets
++# (`\(`, `';'`) : un mot, que le découpage ne lit pas comme un opérateur
++# (`find … \( … \) -exec … \;`, la revue du lot 3, J-2026-11-14-AH).
++CITE = "\x02"
+ # Les opérateurs du shell, les plus longs d'abord : `shlex` rend d'un bloc
+ # une suite de ponctuations (`);`, `)>`).
+ OPERATEURS = (";;&", "&>>", "<<<", ";;", ";&", "&&", "||", "|&", "&>", ">>", ">|", ">&", "<&", "<<", "<>",
+@@ -257,8 +264,11 @@ def _preparer(texte: str) -> tuple[str, list[tuple[str, str | None]]]:
+     guillemets seulement, sauf une substitution entre guillemets, mise de
+     côté pour que `shlex` n'y lise pas d'autres guillemets. Un `#` en tête
+     d'un mot ouvre un commentaire, retiré jusqu'à la fin de la ligne, qui
+-    reste ; ailleurs (`x#`, `$#`), il fait partie du mot (B-0207)."""
+-    texte = texte.replace("\x01", "")
++    reste ; ailleurs (`x#`, `$#`), il fait partie du mot (B-0207). Des
++    opérateurs échappés ou entre guillemets (`\\(`, `';'`, `"&"`, `$'('`)
++    sont un mot, marqué de `CITE` : `shlex`, qui retire les guillemets, les
++    rendrait comme des opérateurs (la revue du lot 3, J-2026-11-14-AH)."""
++    texte = texte.replace("\x01", "").replace(CITE, "")
+     res: list[str] = []
+     parts: list[tuple[str, str | None]] = []
+     i, n = 0, len(texte)
+@@ -269,16 +279,31 @@ def _preparer(texte: str) -> tuple[str, list[tuple[str, str | None]]]:
+         res.append(f"\x01{len(parts) - 1}\x01")
+         i = fin
+ 
++    def cite(fin: int, contenu: str):
++        """Des opérateurs échappés ou entre guillemets : un mot."""
++        nonlocal i
++        parts.append((CITE + contenu, None))
++        res.append(f"\x01{len(parts) - 1}\x01")
++        i = fin
++
+     while i < n:
+         ch = texte[i]
+-        if ch == "\\":
++        if ch == "\\" and texte[i + 1:i + 2] and texte[i + 1] in ";&|()<>":
++            cite(i + 2, texte[i + 1])
++        elif ch == "\\":
+             res.append(texte[i:i + 2])
+             i += 2
+         elif ch == "'":
+             fin = texte.find("'", i + 1)
+             fin = n if fin < 0 else fin + 1
++            if fin - i > 2 and texte[fin - 1] == "'" and _operateur(texte[i + 1:fin - 1]):
++                cite(fin, texte[i + 1:fin - 1])
++                continue
+             res.append(texte[i:fin])
+             i = fin
++        elif ch == '"' and (fin := _fin_guillemets(texte, i)) - i > 2 and texte[fin - 1] == '"' \
++                and _operateur(texte[i + 1:fin - 1]):
++            cite(fin, texte[i + 1:fin - 1])
+         elif ch == '"':
+             fin = _fin_guillemets(texte, i)
+             res.append('"')
+@@ -306,6 +331,8 @@ def _preparer(texte: str) -> tuple[str, list[tuple[str, str | None]]]:
+             fin, valeur = _ansi_c(texte, i + 2)
+             if valeur is None:
+                 mettre(fin)
++            elif _operateur(valeur):
++                cite(fin, valeur)
+             else:
+                 res.append("'" + valeur.replace("'", "'\\''") + "'")
+                 i = fin
+@@ -352,13 +379,19 @@ def _jetons(texte: str) -> list[tuple[str, list[str]]]:
+             res += [(o, []) for o in _operateurs(j)]
+             continue
+         internes = [interne for k in REPERE.findall(j) if (interne := parts[int(k)][1]) is not None]
+-        res.append((REPERE.sub(lambda m: parts[int(m.group(1))][0], j), internes))
++        mot = REPERE.sub(lambda m: parts[int(m.group(1))][0], j)
++        if CITE in mot:
++            # Un mot fait d'opérateurs cités garde sa marque, que le
++            # découpage retire en le lisant comme un mot.
++            nu = mot.replace(CITE, "")
++            mot = CITE + nu if _operateur(nu) else nu
++        res.append((mot, internes))
+     return res
+ 
+ 
+ def jetons(texte: str) -> list[str]:
+     """Les mots et les opérateurs de la commande, guillemets retirés."""
+-    return [j for j, _ in _jetons(texte)]
++    return [j.lstrip(CITE) for j, _ in _jetons(texte)]
+ 
+ 
+ def _operateur(jeton: str) -> bool:
+@@ -398,6 +431,32 @@ def _script_du_shell(argv: list[str]) -> str | None:
+     return argv[i] if vu and i < len(argv) else None
+ 
+ 
++def _definition(mots: list[str]) -> int | None:
++    """Les mots lus devant un `( )` définissent-ils une fonction : un nom,
++    précédé ou non de `function` et de mots réservés (`then f() {`) ; le
++    nombre de ces mots réservés, ou `None`."""
++    if not mots or not NOM_DE_FONCTION.fullmatch(mots[-1]) or mots[-1] in RESERVES + FERMANTS + ("function",):
++        return None
++    k = len(mots) - 1 - (mots[-2:-1] == ["function"])
++    return k if all(m in RESERVES for m in mots[:k]) else None
++
++
++def _cible_suivie(d: str, cible: str) -> str:
++    """La cible développée `d` d'un `cd` (`cible` telle qu'écrite), ce que le
++    hook ne sait pas suivre remplacé par `INCONNU` : un `**`, qui traverse
++    peut-être plusieurs dossiers (`globstar`), et la valeur d'une variable
++    faite de plusieurs mots (la liste d'un `for`) dont l'un n'est pas un
++    seul nom de dossier (`a/b`, `..`, `~`, `/tmp`). Faite de noms seuls,
++    elle se lit comme un nom, que chaque mot vaut : un `..` la remonte
++    (la revue du lot 3, J-2026-11-14-AH)."""
++    d = re.sub(r"[^/]*\*\*[^/]*", INCONNU, d)
++    champs = d.split() if re.search(r"[$`]", cible) else []
++    if len(champs) > 1 and not all(re.fullmatch(r"[^/~\0][^/\0]*/*", x) and x.rstrip("/") not in (".", "..")
++                                   for x in champs):
++        return INCONNU
++    return d
++
++
+ def _sans_prefixes(argv: list[str]) -> list[str]:
+     """La commande lancée derrière ses affectations et ses préfixes."""
+     while argv:
+@@ -527,9 +586,12 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
+     # d'avant elle, ceux du début de sa liste et de son pipeline, et, pour
+     # un `for`, sa variable et les mots de sa liste.
+     composes: list[tuple[str, _Etat, _Etat, _Etat, bool, tuple[str, str | None] | None]] = []
++    # Un `nom ( )` vient de se lire : le `{` qui suit ouvre le corps d'une
++    # fonction (la revue du lot 3, J-2026-11-14-AH).
++    definition = False
+ 
+     def lieu_de(cible: str) -> str:
+-        d = developper(cible, _visibles(env, etat.variables(env)))[0]
++        d = _cible_suivie(developper(cible, _visibles(env, etat.variables(env)))[0], cible)
+         if d.startswith(("/", INCONNU)):
+             return normaliser(d)
+         return normaliser(posixpath.join(etat.lieu, d)) if d else etat.lieu
+@@ -554,14 +616,33 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
+         ni combien de tours, le shell prendra (B-0204)."""
+         mot, avant = composes[-1][0], composes[-1][1]
+         suite = etat.vues[len(avant.vues):] if len(etat.vues) >= len(avant.vues) else etat.vues
+-        etat.vues.extend((nom, None) for nom in dict.fromkeys(nom for nom, _ in suite))
+-        if (etat.dossier, etat.lieu) != (avant.dossier, avant.lieu):
++        changees = dict.fromkeys(nom for nom, _ in suite)
++        etat.vues.extend((nom, None) for nom in changees)
++        if INCONNU in etat.lieu or INCONNU in avant.lieu:
++            if (etat.dossier, etat.lieu) != (avant.dossier, avant.lieu):
++                changer(f"$({mot} …)", INCONNU)
++        elif etat.lieu != avant.lieu:
+             changer(f"$({mot} …)", INCONNU)
++        else:
++            # Revenue à son dossier, connu (`cd x; …; cd ..`) : un tour la
++            # laisse où elle était, comme une branche ; le dossier se dit
++            # comme avant elle (la revue du lot 3, J-2026-11-14-AH).
++            etat.dossier = avant.dossier
++            if "PWD" in changees:
++                etat.vues.append(("PWD", etat.lieu))
+ 
+     def reserves():
+         """Retire les mots réservés en tête de la commande, et suit les
+-        commandes composées qu'ils ouvrent ou ferment (B-0204)."""
+-        nonlocal mots, debut_liste, debut_tube, en_tube
++        commandes composées qu'ils ouvrent ou ferment (B-0204). Le corps
++        d'une fonction s'ouvre comme un groupe, et rend en se fermant
++        l'état d'avant lui : il ne s'exécute pas là où il s'écrit."""
++        nonlocal mots, debut_liste, debut_tube, en_tube, etat, definition
++        fonction = definition and bool(mots)
++        if mots:
++            definition = False
++        if fonction and mots[0] == "{":
++            mots = mots[1:]
++            ouvrir("()")
+         while mots and mots[0] in RESERVES:
+             mot, mots = mots[0], mots[1:]
+             if mot in OUVRANTS:
+@@ -579,7 +660,9 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
+         if mots[:1] and mots[0] in FERMANTS and composes:
+             if mots[0] != "}":
+                 incertain()
+-            _, avant, debut_liste, debut_tube, en_tube, _ = composes.pop()
++            ouvert, avant, debut_liste, debut_tube, en_tube, _ = composes.pop()
++            if ouvert == "()":
++                etat = avant.copie()
+             return avant
+         return None
+ 
+@@ -646,7 +729,7 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
+         j, internes = jets[i]
+         if not _operateur(j):
+             sous_shells(internes)
+-            mots.append(j)
++            mots.append(j.lstrip(CITE))
+             i += 1
+             continue
+         suivant, internes = jets[i + 1] if i + 1 < len(jets) else ("", [])
+@@ -658,13 +741,21 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
+                 continue
+             sous_shells(internes)
+             if not (j.endswith("&") and (suivant.isdigit() or suivant == "-")):
+-                redir.append(suivant)
++                redir.append(suivant.lstrip(CITE))
+             i += 2
+             continue
+         if "<" in j:
+             sous_shells(internes)
+             i += 2
+             continue
++        if j == "(" and suivant == ")" and not redir and (k := _definition(mots)) is not None:
++            # `nom ( )`, ou `function nom ( )` : les mots réservés qui le
++            # précèdent se suivent, et le `{` qui suit ouvre son corps.
++            mots = mots[:k]
++            reserves()
++            mots, definition = [], True
++            i += 2
++            continue
+         clore()
+         if j == "(":
+             englobants.append((etat.copie(), debut_liste, debut_tube, en_tube))
+diff --git a/engine/socle/hooks.py b/engine/socle/hooks.py
+index d84d4eb..5a48296 100644
+--- a/engine/socle/hooks.py
++++ b/engine/socle/hooks.py
+@@ -439,7 +439,7 @@ def ecrits_bruts(c: commandes.Commande) -> list[str]:
+     elif nom == "find":
+         # Ce qu'écrivent ses `-exec` hors des fichiers qu'il trouve, que
+         # `_supprime_par_find` juge (B-0206).
+-        res += [x for sous in _lire_find(c)[2] for x in ecrits_bruts(sous) if SONDE not in x]
++        res += [x for sous, _ in _lire_find(c)[1] if sous is not None for x in ecrits_bruts(sous) if SONDE not in x]
+     elif nom in ("sed", "perl") and (script := _fichiers_d_un_script(nom, c.argv[1:]))[0]:
+         res += script[1]
+     elif nom == "dd":
+@@ -464,16 +464,16 @@ def suppressions(c: commandes.Commande) -> list[tuple[str, bool]]:
+     sources d'un `mv` (pas sa destination), ce que balaie `git clean` (ses
+     chemins, ou son dossier, sous ses `-C`) et les points de départ d'un
+     `find` qui supprime (`-delete`, ou `-exec rm`). Chacun avec `True` quand
+-    supprimer la racine du projet elle-même compte : un `find` qui ne filtre
+-    rien la viderait. Pour les autres, la racine est déjà un dossier qui
+-    contient un fichier protégé."""
++    supprimer la racine du projet elle-même compte : un `find` qu'aucun
++    filtre de nom ou de chemin ne garde la viderait. Pour les autres, la
++    racine est déjà un dossier qui contient un fichier protégé."""
+     nom, argv = c.programme, c.argv[1:]
+     if nom == "rm":
+         return [(x, False) for x in commandes.options_et_arguments(argv)[1] if x]
+     if nom == "mv":
+         return [(x, False) for x in _sources_de_mv(argv) if x]
+     if nom == "find":
+-        return _departs_de_find(argv)
++        return _departs_de_find(c)
+     if nom == "git" and commandes.git_sous_commande(c.argv)[0] == "clean":
+         return [(x, False) for x in _balaye_par_git_clean(c.argv)]
+     return []
+@@ -505,47 +505,125 @@ def _sources_de_mv(argv: list[str]) -> list[str]:
+     return args if vers_t else args[:-1]
+ 
+ 
+-# Ce qui, dans l'expression d'un `find`, ne filtre rien : ses options, et les
+-# actions qui ne choisissent pas ce qu'elles touchent ; le nombre de valeurs
+-# qui suivent chacune. Tout autre mot est un test, ou un opérateur (`!`,
+-# `-o`) : il filtre (B-0208).
+-FIND_NEUTRES = {
+-    **dict.fromkeys(("-delete", "-depth", "-d", "-xdev", "-mount", "-noleaf", "-ignore_readdir_race",
+-                     "-noignore_readdir_race", "-daystart", "-follow", "-warn", "-nowarn", "-print", "-print0",
+-                     "-ls", "-true", "-prune", "(", ")", "-a", "-and", ","), 0),
+-    **dict.fromkeys(("-maxdepth", "-mindepth", "-regextype", "-printf", "-fprint", "-fprint0", "-fls",
+-                     "-files0-from"), 1),
++# Les tests, options et actions d'un `find` qui prennent des valeurs, et
++# combien ; un autre mot en `-` n'en prend pas. Les filtres que le hook sait
++# lire : de nom, sur le dernier élément du chemin, et de chemin, sur le
++# chemin entier tel que `find` l'écrit (B-0206).
++FIND_VALEURS = {
++    **dict.fromkeys(("-name", "-iname", "-path", "-ipath", "-wholename", "-iwholename", "-regex", "-iregex",
++                     "-lname", "-ilname", "-type", "-xtype", "-size", "-perm", "-user", "-group", "-uid", "-gid",
++                     "-links", "-inum", "-samefile", "-newer", "-anewer", "-cnewer", "-amin", "-atime", "-cmin",
++                     "-ctime", "-mmin", "-mtime", "-used", "-fstype", "-context", "-maxdepth", "-mindepth",
++                     "-regextype", "-printf", "-fprint", "-fprint0", "-fls", "-files0-from"), 1),
+     "-fprintf": 2,
+ }
++FIND_NOMS = ("-name", "-iname")
++FIND_CHEMINS = ("-path", "-ipath", "-wholename", "-iwholename")
+ FIND_EXEC = ("-exec", "-execdir", "-ok", "-okdir")
++# Ce qui garde une action d'un `find` : si un chemin peut l'atteindre sans
++# qu'un filtre de nom ou de chemin lui réponde, et ces filtres
++# (`("nom", motif)`, `("chemin", motif)`).
++LIBRE: tuple[bool, tuple] = (True, ())
++
++
++def _et(a: tuple[bool, tuple], b: tuple[bool, tuple]) -> tuple[bool, tuple]:
++    return a[0] and b[0], tuple(dict.fromkeys(a[1] + b[1]))
++
++
++def _ou(a: tuple[bool, tuple], b: tuple[bool, tuple]) -> tuple[bool, tuple]:
++    return a[0] or b[0], tuple(dict.fromkeys(a[1] + b[1]))
++
++
++def _expression_find(argv: list[str], i: int) -> list[tuple[list[str] | None, tuple[bool, tuple]]]:
++    """Les actions de l'expression d'un `find` (`argv` depuis `i`) qui
++    touchent ce qu'il trouve : `-delete` (`None`), et la commande de chaque
++    `-exec`, `-execdir`, `-ok`, `-okdir` ; chacune avec ce qui la garde. Un
++    filtre de nom ou de chemin ne garde que ce qui le suit dans sa
++    conjonction : placé après l'action, nié (`!`, `-not`), ou de l'autre
++    côté d'un `-o` (`-or`) ou d'une `,`, il ne la garde pas ; une parenthèse
++    garde ce qui la suit si chacune de ses branches a un filtre (la revue
++    du lot 3, J-2026-11-14-AH)."""
++    actions: list[tuple[list[str] | None, tuple[bool, tuple]]] = []
++    pos = i
++    fins = (None, ")", ",", "-o", "-or")
++
++    def mot() -> str | None:
++        return argv[pos] if pos < len(argv) else None
++
++    def liste(garde):
++        nonlocal pos
++        valeur = ou(garde)
++        while mot() == ",":
++            pos += 1
++            valeur = ou(garde)
++        return valeur
++
++    def ou(garde):
++        nonlocal pos
++        valeur = et(garde)
++        while mot() in ("-o", "-or"):
++            pos += 1
++            # L'autre branche, prise quand la première est fausse : rien de ce
++            # qui la précède ne la garde.
++            valeur = _ou(valeur, et(garde))
++        return valeur
++
++    def et(garde):
++        nonlocal pos
++        valeur = un(garde)
++        while mot() not in fins:
++            if mot() in ("-a", "-and"):
++                pos += 1
++            valeur = _et(valeur, un(_et(garde, valeur)))
++        return valeur
++
++    def un(garde):
++        nonlocal pos
++        m = mot()
++        if m in fins:
++            return LIBRE
++        pos += 1
++        if m in ("!", "-not"):
++            while mot() in ("!", "-not"):
++                pos += 1
++            un(garde)
++            return LIBRE
++        if m == "(":
++            valeur = liste(garde)
++            if mot() == ")":
++                pos += 1
++            return valeur
++        if (m in FIND_NOMS or m in FIND_CHEMINS) and pos < len(argv):
++            pos += 1
++            return False, (("nom" if m in FIND_NOMS else "chemin", argv[pos - 1]),)
++        if m == "-delete":
++            actions.append((None, garde))
++        elif m in FIND_EXEC:
++            # Jusqu'à `;` (`\;`) ou `+` ; sans eux, au bout de la commande.
++            j = next((k for k in range(pos, len(argv)) if argv[k] in (";", "+")), len(argv))
++            actions.append((argv[pos:j], garde))
++            pos = j + 1
++        else:
++            pos += FIND_VALEURS.get(m, 1 if re.fullmatch(r"-newer[aBcmt]{2}", m) else 0)
++        return LIBRE
++
++    while pos < len(argv):
++        liste(LIBRE)
++        pos += 1  # une `)` sans `(`
++    return actions
+ 
+ 
+-def _departs_de_find(argv: list[str]) -> list[tuple[str, bool]]:
++def _departs_de_find(c: commandes.Commande) -> list[tuple[str, bool]]:
+     """Les points de départ d'un `find` qui supprime ce qu'il trouve
+     (`-delete`, ou `-exec`, `-execdir`, `-ok`, `-okdir` qui lancent `rm`),
+-    `.` s'il n'en nomme aucun ; chacun avec `True` quand son expression ne
+-    filtre rien : il supprimerait le point de départ et tout ce qu'il
+-    contient. Rien pour un `find` qui ne supprime pas."""
+-    i = 0
+-    while i < len(argv) and (argv[i] in ("-H", "-L", "-P", "-D") or re.fullmatch(r"-O\d*", argv[i])):
+-        i += 2 if argv[i] == "-D" else 1
+-    departs = []
+-    while i < len(argv) and not argv[i].startswith("-") and argv[i] not in ("(", ")", "!", ","):
+-        departs.append(argv[i])
+-        i += 1
+-    supprime, filtre = False, False
+-    while i < len(argv):
+-        a = argv[i]
+-        i += 1
+-        if a in FIND_EXEC:
+-            supprime = supprime or (i < len(argv) and argv[i].rsplit("/", 1)[-1] == "rm")
+-            i = next((j for j in range(i, len(argv)) if argv[j] in (";", "+")), len(argv)) + 1
+-        elif a in FIND_NEUTRES:
+-            supprime = supprime or a == "-delete"
+-            i += FIND_NEUTRES[a]
+-        else:
+-            filtre = True
+-    return [(x, not filtre) for x in departs or ["."]] if supprime else []
++    `.` s'il n'en nomme aucun ; chacun avec `True` quand une de ces actions
++    n'est gardée par aucun filtre de nom ou de chemin (`_expression_find`) :
++    il supprimerait le point de départ et tout ce qu'il contient, quels que
++    soient ses autres tests (`-type`, `-empty`). Rien pour un `find` qui ne
++    supprime pas."""
++    departs, actions = _lire_find(c)
++    gardes = [garde for sous, garde in actions if sous is None or sous.argv[0].rsplit("/", 1)[-1] == "rm"]
++    return [(x, any(libre for libre, _ in gardes)) for x in departs] if gardes else []
+ 
+ 
+ def _balaye_par_git_clean(argv: list[str]) -> list[str]:
+@@ -695,13 +773,13 @@ def _dossier_cible(c: commandes.Commande) -> str | None:
+     return _valeur_d_option(c.argv[1:], "t", "--target-directory", OPTIONS_A_VALEUR_COPIE[c.programme])
+ 
+ 
+-def _lire_find(c: commandes.Commande) -> tuple[list[str], tuple[list[str], list[str]] | None,
+-                                               list[commandes.Commande], bool]:
+-    """Ce que juge le hook d'un `find` : ses points de départ ; ses filtres
+-    de nom (`-name`, `-iname`) et de chemin (`-path`, `-wholename`…), ou
+-    `None` sans filtre ou s'il ne sait pas les lire (`!`, `-not`, `-regex`) ;
+-    les commandes de ses `-exec`, `-execdir`, `-ok` et `-okdir`, `{}`
+-    remplacé par `SONDE` ; et s'il a `-delete` (B-0206)."""
++def _lire_find(c: commandes.Commande) -> tuple[list[str], list[tuple[commandes.Commande | None,
++                                                                     tuple[bool, tuple]]]]:
++    """Ce que juge le hook d'un `find` : ses points de départ, `.` s'il n'en
++    nomme aucun ; et ses actions qui touchent ce qu'il trouve, chacune avec
++    ce qui la garde (`_expression_find`) : `None` pour `-delete`, la
++    commande d'un `-exec`, `-execdir`, `-ok` ou `-okdir`, `{}` remplacé par
++    `SONDE` (B-0206)."""
+     argv, i = c.argv, 1
+     while i < len(argv) and (argv[i] in ("-H", "-L", "-P", "-D") or re.fullmatch(r"-O\d*", argv[i])):
+         i += 2 if argv[i] == "-D" else 1
+@@ -709,30 +787,53 @@ def _lire_find(c: commandes.Commande) -> tuple[list[str], tuple[list[str], list[
+     while i < len(argv) and not argv[i].startswith("-") and argv[i] not in ("(", ")", "!", ","):
+         departs.append(argv[i])
+         i += 1
+-    noms, chemins, inconnu, supprime, sous = [], [], False, False, []
+-    while i < len(argv):
+-        a = argv[i]
+-        i += 1
+-        if a in ("-name", "-iname") and i < len(argv):
+-            noms.append(argv[i])
+-            i += 1
+-        elif a in ("-path", "-ipath", "-wholename", "-iwholename") and i < len(argv):
+-            chemins.append(argv[i])
+-            i += 1
+-        elif a in ("!", "-not", "-regex", "-iregex"):
+-            inconnu = True
+-        elif a == "-delete":
+-            supprime = True
+-        elif a in ("-exec", "-execdir", "-ok", "-okdir"):
+-            # Jusqu'à `;` ou `+` ; un `\;` que le découpage lit comme un
+-            # séparateur la laisse aller au bout de la commande.
+-            j = next((k for k in range(i, len(argv)) if argv[k] in (";", "+")), len(argv))
+-            if j > i:
+-                sous.append(dataclasses.replace(c, argv=[x.replace("{}", SONDE) for x in argv[i:j]],
+-                                                redirige=[], prefixe=[]))
+-            i = j + 1
+-    filtres = None if inconnu or not (noms or chemins) else (noms, chemins)
+-    return departs or ["."], filtres, sous, supprime
++    actions = [(None if sous is None else dataclasses.replace(c, argv=[x.replace("{}", SONDE) for x in sous],
++                                                               redirige=[], prefixe=[]), garde)
++               for sous, garde in _expression_find(argv, i) if sous is None or sous]
++    return departs or ["."], actions
++
++
++def _filtres_de_find(c: commandes.Commande) -> tuple[list[str], tuple | None] | None:
++    """Les points de départ d'un `find` qui supprime ou écrit ce qu'il trouve
++    (`-delete`, un `-exec` d'un écrivain de `{}`), et les filtres de nom et
++    de chemin qui gardent ces actions (`(noms, chemins)`), ou `None` quand
++    l'une d'elles n'en a pas : elle touche tout ce qui est sous ses départs.
++    `None` pour un `find` qui n'écrit rien de ce qu'il trouve (B-0206)."""
++    departs, actions = _lire_find(c)
++    gardes = [garde for sous, garde in actions if sous is None or any(SONDE in x for x in ecrits_bruts(sous))]
++    if not gardes:
++        return None
++    if any(libre for libre, _ in gardes):
++        return departs, None
++    filtres = list(dict.fromkeys(f for _, fs in gardes for f in fs))
++    return departs, ([v for genre, v in filtres if genre == "nom"], [v for genre, v in filtres if genre == "chemin"])
++
++
++def _motifs_de_chemin(tete: str, haut: str, motif: str) -> list[str]:
++    """Les motifs, rapportés à la racine du projet, des chemins que vise le
++    filtre de chemin d'un `find` (`-path`, `-ipath`, `-wholename`) : il
++    répond au chemin entier tel que `find` l'écrit, `tete` (son départ, et
++    ce qui mène de lui à la racine) devant ce qui correspond, sous la
++    racine, à `haut` ; son `*` traverse les `/` et rend les noms en `.`, et
++    se lit comme `**`. Une étoile qui suit une part de `tete` en rend la
++    suite, et ce qui vient après dans le projet ; un motif qui ne peut pas
++    commencer comme `tete` ne vise rien (la revue du lot 3,
++    J-2026-11-14-AH)."""
++    def etoiles(m: str) -> str:
++        return re.sub(r"\*+", "**", m)
++
++    if motif.startswith(tete):
++        return [haut + etoiles(motif[len(tete):])]
++    litteral = re.match(r"[^*?\[\\]*", motif).group()
++    suite = motif[len(litteral):]
++    if not tete.startswith(litteral):
++        return []
++    if not suite:
++        return [haut.rstrip("/") or "**"]  # le départ lui-même, ou un dossier qui le contient
++    if suite.startswith("*"):
++        reste = suite.lstrip("*")
++        return ["**" + etoiles(reste)] + ([haut + etoiles(reste[1:])] if reste.startswith("/") else [])
++    return ["**"]  # un `?`, un `[…]` ou un `\` dans le départ : le hook ne le suit pas
+ 
+ 
+ def _proteges_presents(projet: config.Projet, cache: dict) -> list[str]:
+@@ -745,16 +846,32 @@ def _proteges_presents(projet: config.Projet, cache: dict) -> list[str]:
+     return cache["proteges presents"]
+ 
+ 
++def _reglages_presents(projet: config.Projet, cache: dict) -> list[str]:
++    """Les réglages de Claude Code présents dans le projet : ceux que git
++    voit, et ceux de la racine, que git ignore souvent
++    (`settings.local.json`)."""
++    if "reglages presents" not in cache:
++        if "suivis" not in cache:
++            cache["suivis"] = outils.fichiers_courants(projet.racine)
++        racine = [x for x in (".claude/settings.json", ".claude/settings.local.json") if (projet.racine / x).is_file()]
++        cache["reglages presents"] = list(dict.fromkeys(racine + [f for f in cache["suivis"]
++                                                                  if REGLAGES_AGENT.search(f)]))
++    return cache["reglages presents"]
++
++
+ def _supprime_par_find(projet: config.Projet, c: commandes.Commande, environnement: dict,
+                        cache: dict) -> list[tuple[str, str]]:
+     """Les constats d'un `find` qui supprime ou écrit ce qu'il trouve
+-    (`-delete`, `-exec rm {} +`) : ses points de départ et ses filtres,
+-    jugés contre les motifs des chemins protégés à toute profondeur (un
+-    `find` voit les noms en `.`) ; un départ que le hook ne sait pas
+-    développer et qui peut tomber dans le projet est illisible (B-0206)."""
+-    departs, filtres, sous, supprime = _lire_find(c)
+-    if not supprime and not any(SONDE in x for s in sous for x in ecrits_bruts(s)):
++    (`-delete`, `-exec rm {} +`) : ses points de départ et les filtres qui
++    gardent ces actions (`_filtres_de_find`), jugés contre les motifs des
++    chemins protégés à toute profondeur (un `find` voit les noms en `.`), et
++    contre les réglages de Claude Code présents ; un départ que le hook ne
++    sait pas développer et qui peut tomber dans le projet est illisible
++    (B-0206)."""
++    lu = _filtres_de_find(c)
++    if lu is None:
+         return []
++    departs, filtres = lu
+     racine = projet.racine.resolve()
+     variables = commandes.variables_de(c, environnement)
+     res: list[tuple[str, str]] = []
+@@ -767,11 +884,15 @@ def _supprime_par_find(projet: config.Projet, c: commandes.Commande, environneme
+                 res.append(("illisible", f"`{depart}`"))
+             continue
+         lieu = Path(os.path.realpath(plein))
++        # Ce que `find` écrit devant un chemin du projet : son départ, et ce
++        # qui mène de lui à la racine s'il la contient.
++        tete = d.rstrip("/") + "/"
+         if lieu.is_relative_to(racine):
+             base = lieu.relative_to(racine).as_posix()
+             base = "" if base == "." else base
+         elif racine.is_relative_to(lieu):
+             base = ""  # un dossier qui contient le projet : tout le projet, à toute profondeur
++            tete += racine.relative_to(lieu).as_posix() + "/"
+         else:
+             continue
+         haut = (base + "/") if base else ""
+@@ -780,14 +901,15 @@ def _supprime_par_find(projet: config.Projet, c: commandes.Commande, environneme
+         else:
+             noms, chemins = filtres
+             motifs = [m for n in noms for m in (haut + n, haut + "**/" + n)]
+-            for p in chemins:
+-                debut = depart.rstrip("/") + "/"
+-                motifs.append(haut + p[len(debut):] if p.startswith(debut) else "**/" + p.lstrip("./"))
++            motifs += [m for p in chemins for m in _motifs_de_chemin(tete, haut, p)]
+         # Un filtre nomme ce que `find` trouve ; sans filtre, il trouve tout ce
+         # qui est sous son départ. Un filtre se juge contre les fichiers
+         # protégés présents d'un motif de dossier (`.socle/git-hooks/**`),
+         # que tout nom croiserait (`-name '*.pyc'`), et contre les autres
+-        # motifs (un fichier protégé absent le reste).
++        # motifs (un fichier protégé absent le reste) ; un réglage de Claude
++        # Code, à toute profondeur, contre ceux qui sont présents, et contre
++        # leurs motifs si le filtre les nomme (`.claude`, `settings`) : git
++        # ne voit pas un réglage ignoré sous un dossier du projet.
+         dessous = filtres is None
+         for motif in dict.fromkeys(motifs):
+             for m in projet.chemins_proteges():
+@@ -797,7 +919,10 @@ def _supprime_par_find(projet: config.Projet, c: commandes.Commande, environneme
+                     touches = [f for f in _proteges_presents(projet, cache) if outils.correspond(f, [m])
+                                and commandes.se_croisent(motif, f, False, True)]
+                 res += [("protege", trad("{chemin}, par `{mot}`", chemin=t, mot=f"find {depart}")) for t in touches]
+-            res += [("reglage", motif) for m in REGLAGES_MOTIFS if commandes.se_croisent(motif, m, dessous, True)]
++            res += [("reglage", f) for f in _reglages_presents(projet, cache)
++                    if commandes.se_croisent(motif, f, dessous, True)]
++            if not dessous and re.search(r"claude|settings", motif, re.I):
++                res += [("reglage", motif) for m in REGLAGES_MOTIFS if commandes.se_croisent(motif, m, False, True)]
+     return res
+ 
+ 
+diff --git a/engine/socle/messages_en.py b/engine/socle/messages_en.py
+index b998ad0..570d7d8 100644
+--- a/engine/socle/messages_en.py
++++ b/engine/socle/messages_en.py
+@@ -2699,14 +2699,14 @@ MESSAGES: dict[str, str] = {
+         "substitution with nested quotes",
+     "dossier qui contient le projet supprimé par le shell : `rm -rf ..`, un `cd` puis `../..`, les sources d'un "
+     "`mv`, `git clean` sous `-C ..`, un `find` qui supprime depuis un dossier qui le contient, ou depuis la racine "
+-    "sans rien filtrer":
++    "sans filtre de nom ou de chemin qui garde sa suppression":
+         "directory that contains the project deleted by the shell: `rm -rf ..`, a `cd` then `../..`, the sources of an "
+         "`mv`, `git clean` under `-C ..`, a `find` that deletes from a directory that contains it, or from the root "
+-        "without filtering anything",
++        "without a name or path filter guarding its deletion",
+     "fichier protégé écrit par le shell derrière un mot réservé (`then`, `else`, `do`, `!`, `{`), par la "
+-    "variable d'un `for` ou après un groupe dans un pipeline":
++    "variable d'un `for`, après un groupe dans un pipeline ou après la définition d'une fonction":
+         "protected file written by the shell behind a reserved word (`then`, `else`, `do`, `!`, `{`), through a "
+-        "`for` variable or after a group in a pipeline",
++        "`for` variable, after a group in a pipeline or after a function definition",
+     "chemin écrit par le shell après une condition ou une boucle qui change le dossier ou une variable, ou dans la "
+     "branche qui suit":
+         "path written by the shell after a condition or a loop that changes the directory or a variable, or in the "
+@@ -2849,9 +2849,10 @@ MESSAGES: dict[str, str] = {
+     "un fichier protégé passent le hook de l'agent (B-0207)":
+         "a `#` in a word, a redirection in a comment and a substitution with nested quotes that reads a protected "
+         "file pass the agent's hook (B-0207)",
+-    "une boucle sur des fichiers libres, une condition et un groupe qui écrivent un fichier libre passent le hook "
+-    "de l'agent (B-0204)":
+-        "a loop over free files, a condition and a group that write a free file pass the agent's hook (B-0204)",
++    "une boucle sur des fichiers libres, une condition et un groupe qui écrivent un fichier libre, et une boucle "
++    "qui revient à son dossier, passent le hook de l'agent (B-0204)":
++        "a loop over free files, a condition and a group that write a free file, and a loop that comes back to its "
++        "directory, pass the agent's hook (B-0204)",
+     "un chemin écrit par le shell à travers une variable sous un dossier hors du projet, une variable affectée vers "
+     "un fichier libre ou un motif qui ne nomme aucun fichier protégé passent le hook de l'agent (B-0171)":
+         "a path written by the shell through a variable under a directory outside the project, a variable assigned "
+@@ -2862,10 +2863,11 @@ MESSAGES: dict[str, str] = {
+         "after a subshell, a free file, a default value outside the project, a `sed` without `-i` that reads a "
+         "protected file and, from a directory outside the project, a relative pattern pass the agent's hook (B-0171, "
+         "B-0205)",
+-    "la suppression d'un dossier voisin du projet, d'un dossier du projet, et un `find` qui filtre ce qu'il supprime "
+-    "sous la racine passent le hook de l'agent (B-0208)":
+-        "deleting a directory next to the project, a directory of the project, and a `find` that filters what it "
+-        "deletes under the root pass the agent's hook (B-0208)",
++    "la suppression d'un dossier voisin du projet, d'un dossier du projet, un `find` sans filtre sous un dossier "
++    "du projet et un `find` qui filtre ce qu'il supprime sous la racine passent le hook de l'agent (B-0208)":
++        "deleting a directory next to the project, a directory of the project, a `find` without a filter under a "
++        "directory of the project and a `find` that filters what it deletes under the root pass the agent's hook "
++        "(B-0208)",
+     "message de commit passé par un fichier relatif au dossier courant de l'agent, qui cite un terme privé":
+         "commit message passed through a file relative to the agent's current directory, which cites a private term",
+     "mode compagnon : un message de commit passé par un fichier du dossier courant de l'agent, qui ne cite aucun "
+diff --git a/engine/socle/selftest.py b/engine/socle/selftest.py
+index c2f61c1..dc909d8 100644
+--- a/engine/socle/selftest.py
++++ b/engine/socle/selftest.py
+@@ -1452,16 +1452,18 @@ def _cas() -> list[Cas]:
+ 
+     @defaut("suppression-du-projet", "dossier qui contient le projet supprimé par le shell : `rm -rf ..`, un "
+             "`cd` puis `../..`, les sources d'un `mv`, `git clean` sous `-C ..`, un `find` qui supprime depuis un "
+-            "dossier qui le contient, ou depuis la racine sans rien filtrer", "agent", "suppression du projet")
++            "dossier qui le contient, ou depuis la racine sans filtre de nom ou de chemin qui garde sa suppression",
++            "agent", "suppression du projet")
+     def _(a, c):
+         # B-0208 : rien ne rattrape ensuite la suppression du projet.
+         return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+             "rm -rf ..", "cd .socle && rm -rf ../..", "mv .. /tmp/ailleurs", "git -C .. clean -ffdx",
+-            "find .. -name '*.pyc' -delete", "find . -delete")])
++            "find .. -name '*.pyc' -delete", "find . -delete", "find . -delete -name '*.pyc'",
++            "find . \\( -type f \\) -delete")])
+ 
+     @defaut("protege-mot-reserve", "fichier protégé écrit par le shell derrière un mot réservé (`then`, `else`, "
+-            "`do`, `!`, `{`), par la variable d'un `for` ou après un groupe dans un pipeline", "agent",
+-            "écriture protégée")
++            "`do`, `!`, `{`), par la variable d'un `for`, après un groupe dans un pipeline ou après la définition "
++            "d'une fonction", "agent", "écriture protégée")
+     def _(a, c):
+         # B-0204 : `then rm …` se lisait comme le programme `then`.
+         return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+@@ -1469,7 +1471,8 @@ def _cas() -> list[Cas]:
+             "if false; then :; else sed -i s/3/9/ .socle/policy.toml; fi",
+             "! sed -i s/3/9/ .socle/policy.toml",
+             "for f in .socle/*.toml; do sed -i s/3/9/ \"$f\"; done",
+-            "{ cd /tmp; } | cat; echo 'max_attempts = 99' >> .socle/policy.toml")])
++            "{ cd /tmp; } | cat; echo 'max_attempts = 99' >> .socle/policy.toml",
++            "build() { cd /tmp; }; echo 'max_attempts = 99' >> .socle/policy.toml")])
+ 
+     @defaut("protege-diese-guillemets", "fichier protégé écrit par le shell après un commentaire en fin de ligne, un "
+             "`#` au milieu d'un mot ou une substitution aux guillemets imbriqués", "agent", "écriture protégée")
+@@ -1487,6 +1490,7 @@ def _cas() -> list[Cas]:
+         # B-0206 : chacune de ces écritures passait le hook.
+         return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+             "cp -t .socle/git-hooks calc.py", "find .socle -name policy.toml -delete",
++            "find . -path '*/.socle/*' -delete",
+             "echo .socle/policy.toml | xargs sed -i s/3/9/", "bash -ec 'sed -i s/3/9/ .socle/policy.toml'",
+             "sort -o .socle/policy.toml calc.py",
+             "python3 -c \"open('.socle/policy.toml', 'a').write('max_attempts = 99')\"")])
+@@ -1990,13 +1994,15 @@ def _temoins() -> list[tuple[str, Callable]]:
+                 or etage_outil(a, c, "Bash", {"command": "sed -n -e's/i/j/p' .socle/policy.toml"})
+                 or etage_outil(a, c, "Bash", {"command": "rm -rf ./*"}, cwd=ailleurs))
+ 
+-    @temoin("une boucle sur des fichiers libres, une condition et un groupe qui écrivent un fichier libre passent le "
+-            "hook de l'agent (B-0204)")
++    @temoin("une boucle sur des fichiers libres, une condition et un groupe qui écrivent un fichier libre, et une "
++            "boucle qui revient à son dossier, passent le hook de l'agent (B-0204)")
+     def _(a, c):
+         return (etage_outil(a, c, "Bash", {"command": "for f in *.py; do sed -i s/3/9/ \"$f\"; done"})
+                 or etage_outil(a, c, "Bash", {"command": "if [ -f calc.py ]; then echo ok > notes.txt; else rm -f "
+                                                          "notes.txt; fi"})
+-                or etage_outil(a, c, "Bash", {"command": "{ echo a; echo b; } > notes.txt"}))
++                or etage_outil(a, c, "Bash", {"command": "{ echo a; echo b; } > notes.txt"})
++                or etage_outil(a, c, "Bash", {"command": "for d in */; do cd \"$d\"; ls; cd ..; done; "
++                                                         "echo ok > notes.txt"}))
+ 
+     @temoin("un `#` dans un mot, une redirection dans un commentaire et une substitution aux guillemets imbriqués "
+             "qui lit un fichier protégé passent le hook de l'agent (B-0207)")
+@@ -2025,14 +2031,16 @@ def _temoins() -> list[tuple[str, Callable]]:
+                                                          + "une ligne de texte\n" * 1000 + "FIN"})
+                 or etage_outil(a, c, "Bash", {"command": f"cd {ailleurs}; " + "cd a; " * 500 + "echo x > notes.txt"}))
+ 
+-    @temoin("la suppression d'un dossier voisin du projet, d'un dossier du projet, et un `find` qui filtre ce qu'il "
+-            "supprime sous la racine passent le hook de l'agent (B-0208)")
++    @temoin("la suppression d'un dossier voisin du projet, d'un dossier du projet, un `find` sans filtre sous un "
++            "dossier du projet et un `find` qui filtre ce qu'il supprime sous la racine passent le hook de l'agent "
++            "(B-0208)")
+     def _(a, c):
+         # Le pendant sain de `suppression-du-projet` : seul ce qui contient
+         # le projet est refusé.
+         ailleurs = a.dossier.parent / (a.dossier.name + "-ailleurs")
+         return (etage_outil(a, c, "Bash", {"command": f"rm -rf {ailleurs} && rm -rf build"})
+                 or etage_outil(a, c, "Bash", {"command": "find . -name '*.pyc' -delete && mv calc.py .."})
++                or etage_outil(a, c, "Bash", {"command": "find build -delete"})
+                 or etage_outil(a, c, "Bash", {"command": f"cd {ailleurs} && rm -rf ./*"}))
+ 
+     @temoin("un fichier protégé changé par erreur, remis à son état du dernier commit, et un fichier apparu sous un "
+diff --git a/memory/journal/2026-11-4.md b/memory/journal/2026-11-4.md
+index befbc0c..9c05d08 100644
+--- a/memory/journal/2026-11-4.md
++++ b/memory/journal/2026-11-4.md
+@@ -1043,3 +1043,65 @@ derrière `time`, `function f {…}`, un `#` après une espace échappée,
+ `sudo` dans un `-exec`, un `-name` qui désigne un dossier protégé,
+ `node -e` et `perl -e`, `git -C docs commit -F`, un `python -c` de plus
+ de 10 000 caractères ; `find .. -exec mv` est déjà dans B-0228.
++
++## J-2026-11-14-AI — Les cinq bloquants de la revue du lot 3 corrigés : find, fonctions, boucles qui reviennent
++
++Les cinq bloquants de la revue du lot 3 (J-2026-11-14-AH), corrigés dans
++le lot, contre les modèles de menace de B-0204, B-0206 et B-0208 et
++ADR-0080 :
++
++1. Les réglages de Claude Code se jugent, pour un `find`, contre ceux qui
++   sont présents (ceux que git voit, et ceux de la racine, ignorés
++   compris), comme les motifs de dossier, et contre leurs motifs si le
++   filtre nomme `.claude` ou `settings` (git ne voit pas un réglage ignoré
++   sous un dossier du projet) : `find build -delete` passe de nouveau, et
++   le refus d'un `find` parti de la racine nomme ce qu'il touche, plus
++   `**`.
++2. Le motif d'un `-path` répond au chemin entier tel que `find` l'écrit,
++   son départ en tête, et son `*` se lit comme `**`
++   (`hooks._motifs_de_chemin`) : `-path '*/.socle/*'` est refusé.
++3. L'expression d'un `find` se lit comme `find` la lit
++   (`hooks._expression_find`) : un filtre de nom ou de chemin ne garde que
++   l'action qui le suit dans sa conjonction, hors d'un `!` et de l'autre
++   branche d'un `-o` ou d'une `,`. Un `find` qui supprime depuis la racine
++   sans filtre qui garde son action est la suppression du projet, même avec
++   `-type` ou `-empty`. Les parenthèses échappées de `find` (`\(`, `\)`,
++   et `\;`) se coupaient comme des opérateurs du shell, et `find . \( -type
++   f \) -delete` passait : le découpage lit désormais des opérateurs
++   échappés ou entre guillemets comme un mot (`commandes.CITE`), le premier
++   point de B-0211, abandonné, que la suppression du projet rouvre
++   (ADR-0080).
++4. `nom ( ) {` ouvre le corps d'une fonction, qui se juge, et dont le `}`
++   rend l'état d'avant lui.
++5. Une commande composée revenue à son dossier, connu, le garde : le lieu
++   normalisé se compare seul. `cd "$d"` puis `cd ..`, `$d` pris dans `*/`,
++   revient au départ (un `*` ne rend qu'un nom, et `cd` est logique) ; un
++   `cd` qui échoue reste un risque accepté (B-0204). La valeur d'un `for`
++   faite de plusieurs mots dont l'un n'est pas un seul nom (`a/b`, `..`,
++   `~`), ou un `**`, rend la cible d'un `cd` inconnue.
++
++Aussi : le guide et les entrées `2026-11-14-f` et `g` nomment les
++suppressions du projet qui échappent encore au hook (B-0228) ; `i` dit la
++boucle qui revient et le corps d'une fonction ; `k` dit les deux refus
++qu'elle taisait (un `find` sans filtre depuis la racine, même avec `-type`
++ou `-empty` ; un `python -c` qui cite un dossier contenant un fichier
++protégé). Le test de B-0206 retrouve ses deux branches par des variantes en
++`-exec sed` (déjà refusées ainsi). Deux valeurs attendues d'un test du lot,
++jamais sur la branche par défaut, changent : `find a ! -name x -delete`
++compte désormais la racine, et `find . ! -name '*.py' -delete` est refusé
++comme la suppression du projet, non plus comme un réglage.
++
++Tests : six méthodes nouvelles de `tests/test_garde.py`, une par bloquant
++et une pour le découpage, et les deux valeurs changées, échouent sur le
++commit parent, 55 cas ; les témoins sains passent (`find build -delete`,
++`find . -name '*.pyc' -delete`, une boucle qui revient à son dossier). Les
++défauts injectés `suppression-du-projet`, `protege-mot-reserve` et
++`protege-ecrivain-par-option` et deux témoins de l'auto-test ont les formes
++nouvelles. `find . -path '*/policy.toml' -delete` était déjà refusé sur le
++commit parent.
++
++Reste, hors du lot : l'appel d'une fonction qui change de dossier ne se
++suit pas, comme sur la branche par défaut ; `function f { …; }`, sans
++parenthèses, ne se lit pas comme une définition ; un `-name` qui désigne
++un dossier protégé sous `-exec rm -rf` ; une conjonction de filtres se
++juge par chacun de ses filtres, et refuse plus que ce qu'elle vise.
+diff --git a/tests/test_garde.py b/tests/test_garde.py
+index 35a60be..18ad914 100644
+--- a/tests/test_garde.py
++++ b/tests/test_garde.py
+@@ -440,7 +440,8 @@ class TestGarde(unittest.TestCase):
+         self.assertEqual(lus("git clean -fde garde"), [(".", False)])
+         self.assertEqual(lus("git clean -fdn && git clean --dry-run -fd"), [])
+         self.assertEqual(lus("find -L a b -maxdepth 2 -delete"), [("a", True), ("b", True)])
+-        self.assertEqual(lus("find a ! -name x -delete"), [("a", False)])
++        # Un filtre nié ne garde rien (la revue du lot 3, J-2026-11-14-AH).
++        self.assertEqual(lus("find a ! -name x -delete"), [("a", True)])
+         self.assertEqual(lus("find a -execdir /bin/rm {} +"), [("a", True)])
+         self.assertEqual(lus("find a -exec cat {} + -name x"), [])
+         self.assertEqual(lus("cp a b && touch c && git rm d"), [])
+@@ -570,9 +571,12 @@ class TestGarde(unittest.TestCase):
+         `python -c` et `xargs` se jugent par les chemins protégés qu'ils
+         citent en toutes lettres, `find` par ses départs et ses filtres."""
+         protege, reglage = "écriture d'un fichier protégé", "réglages de Claude Code"
++        illisible = "un chemin que le hook ne sait pas développer"
+         sed = "sed -i s/3/9/ .socle/policy.toml"
+         # Un départ qui contient le projet, ou peut le contenir, est refusé
+-        # d'abord comme sa suppression (B-0208).
++        # d'abord comme sa suppression (B-0208) ; un `find` qui écrit sans
++        # supprimer, comme l'écriture d'un fichier protégé, ou d'un chemin
++        # illisible.
+         contient = "suppression par le shell d'un dossier qui contient le projet"
+         with unittest.mock.patch.dict(os.environ, {"HOME": str(self.racine)}):
+             os.environ.pop("X", None)
+@@ -592,7 +596,9 @@ class TestGarde(unittest.TestCase):
+                     ("cd .socle && find .. -name policy.toml -delete", protege),
+                     ("find .. -name policy.toml -delete", contient),
+                     ("cd .socle && find . -name policy.toml -exec sed -i s/3/9/ {} +", protege),
+-                    ("find . ! -name '*.py' -delete", reglage), ("find $X -name '*.pyc' -delete", contient),
++                    ("find . ! -name '*.py' -delete", contient), ("find $X -name '*.pyc' -delete", contient),
++                    ("find .. -name policy.toml -exec sed -i s/3/9/ {} +", protege),
++                    ("find $X -name '*.pyc' -exec sed -i s/3/9/ {} +", illisible),
+                     (f"bash -ec '{sed}'", protege), (f"bash -lc '{sed}'", protege), (f"bash -c -- '{sed}'", protege),
+                     (f"bash -o pipefail -c '{sed}'", protege), (f"sh -euc '{sed}'", protege),
+                     ("sort -o .socle/policy.toml /tmp/x", protege), ("sort -uo .socle/policy.toml /tmp/x", protege),
+@@ -619,6 +625,128 @@ class TestGarde(unittest.TestCase):
+                 with self.subTest(cmd):
+                     self.assertIsNone(hooks.refus_bash(self.projet, cmd))
+ 
++    def test_un_find_sous_un_dossier_du_projet_ne_vise_pas_les_reglages(self):
++        """La revue du lot 3, bloquant 1 (J-2026-11-14-AH) : un `find` sans
++        filtre de nom sous un dossier du projet était refusé au motif des
++        réglages de Claude Code, que `**/.claude/settings.json` croisait
++        partout ; ils se jugent contre ceux qui sont présents, ignorés par git
++        compris, et le refus d'un `find` parti de la racine dit ce qu'il
++        touche, pas `**`."""
++        local, exclus = self.racine / ".claude/settings.local.json", self.racine / ".git/info/exclude"
++        avant = exclus.read_text() if exclus.exists() else ""
++        exclus.parent.mkdir(exist_ok=True)
++        exclus.write_text(avant + "\n/.claude/settings.local.json\n")
++        local.write_text("{}")
++        self.addCleanup(exclus.write_text, avant)
++        self.addCleanup(local.unlink)
++        with self.environnement():
++            self.jugees([("find build -delete", None), ("find tests/fixtures/tmp -type f -delete", None),
++                         ("find dist -mindepth 1 -delete", None), ("find tests -type f -exec rm {} +", None),
++                         ("cd tests && find . -type f -exec sed -i s/a/b/ {} +", None),
++                         ("find . -type d -empty -delete", "supprime"),
++                         ("find . -type f -exec sed -i s/a/b/ {} +", "reglage"), ("find .claude -delete", "reglage"),
++                         ("find . -name 'settings*.json' -delete", "reglage"),
++                         ("find .claude -name settings.local.json -delete", "reglage"),
++                         ("find .claude -type f -exec sed -i s/a/b/ {} +", "reglage"),
++                         ("find build -name '*.json' -delete", None),
++                         ("find .claude/worktrees -name settings.local.json -delete", "reglage")])
++            for cmd, cite in (("find . -type d -empty -delete", str(self.racine)),
++                              ("find . -type f -exec sed -i s/a/b/ {} +", "`.claude/settings.json`"),
++                              ("find .claude -name settings.local.json -delete", "`.claude/settings.local.json`")):
++                with self.subTest(cmd):
++                    raison = hooks.refus_bash(self.projet, cmd) or ""
++                    self.assertIn(cite, raison)
++                    self.assertNotIn("`**`", raison)
++
++    def test_le_filtre_de_chemin_d_un_find_se_lit_comme_find_le_lit(self):
++        """La revue du lot 3, bloquant 2 (J-2026-11-14-AH) : le motif d'un
++        `-path` répond au chemin entier tel que `find` l'écrit, et son `*`
++        traverse les `/` et rend les noms en `.` ; `-path '*/.socle/*'`
++        gagnait un dossier de trop et passait."""
++        with self.environnement():
++            self.jugees([("find . -path '*/.socle/*' -delete", "protege"),
++                         ("find . -path '*/policy.toml' -delete", "protege"),
++                         ("find . -ipath '*/.SOCLE/*' -delete", "protege"),
++                         ("find . -path '*/.github/workflows/*' -exec sed -i s/a/b/ {} +", "protege"),
++                         ("find . -wholename '*socle/git-hooks*' -exec sed -i s/a/b/ {} +", "protege"),
++                         ("find . -path './.socle/*' -exec sed -i s/a/b/ {} +", "protege"),
++                         ("find . -path './*/pre-commit' -exec sed -i s/a/b/ {} +", "protege"),
++                         ("cd memory && find .. -path '*/requests/*.answer.toml' -exec sed -i s/a/b/ {} +",
++                          "protege"),
++                         ("find .socle -path '.socle/*' -exec sed -i s/a/b/ {} +", "protege"),
++                         ("find . -path './build/*' -delete", None), ("find . -path '*/build/*' -delete", None),
++                         ("find . -path '*/__pycache__/*' -delete", None), ("find . -path 'engine/*' -delete", None),
++                         ("find memory -path 'memory/tmp/*' -delete", None),
++                         ("find . -path './memory/*.bak' -exec rm {} +", None)])
++
++    def test_un_filtre_de_find_ne_garde_que_ce_qu_il_precede(self):
++        """La revue du lot 3, bloquant 3 (J-2026-11-14-AH) : le filtre d'un
++        `find` se lisait quelle que soit sa place ou son opérateur ;
++        `find . -delete -name '*.pyc'` vide le projet, `.git` compris, et
++        passait, comme un `-o` dont l'autre branche n'a pas de filtre, ou des
++        parenthèses échappées que le découpage lisait comme des opérateurs.
++        Un `find` parti de la racine qu'aucun filtre de nom ou de chemin ne
++        garde est la suppression du projet, même avec `-type` ou `-empty`."""
++        with self.environnement():
++            self.jugees([("find . -delete -name '*.pyc'", "supprime"),
++                         ("find . -path ./.git -prune -o -type f -delete", "supprime"),
++                         ("find . -mindepth 1 -maxdepth 1 -name .git -prune -o -exec rm -rf {} +", "supprime"),
++                         ("find . -name '*.pyc' -o -delete", "supprime"), ("find . -name x , -delete", "supprime"),
++                         ("find . -not -name '*.py' -delete", "supprime"), ("find . -type f -delete", "supprime"),
++                         ("find . -name x -or -exec rm {} +", "supprime"),
++                         ("find . \\( -type f \\) -delete", "supprime"), ("find . '(' -type f ')' -delete", "supprime"),
++                         ("find . -name x -exec rm {} \\; -o -delete", "supprime"),
++                         ("find . \\( -name '*.pyc' -o -type f \\) -delete", "supprime"),
++                         ("find .socle -delete -name '*.pyc'", "protege"),
++                         ("find .socle \\( -name policy.toml \\) -delete", "protege"),
++                         ("find .socle -name '*.pyc' -o -exec sed -i s/3/9/ {} +", "protege"),
++                         ("find . -name '*.pyc' -delete", None), ("find . -type f -name '*.pyc' -delete", None),
++                         ("find . \\( -name '*.pyc' -o -name '*.pyo' \\) -delete", None),
++                         ("find . -name '*.pyc' -o -name '*.pyo' -delete", None),
++                         ("find . -path ./.git -prune -o -name '*.orig' -delete", None),
++                         ("find . -name '*.pyc' -delete -o -print", None),
++                         ("find . -name '*.pyc' -exec rm {} \\;", None),
++                         ("find . -name __pycache__ -prune -o -name '*.pyc' -print", None),
++                         ("find build -delete -name '*.o'", None)])
++
++    def test_le_corps_d_une_fonction_ne_s_execute_pas_la_ou_il_s_ecrit(self):
++        """La revue du lot 3, bloquant 4 (J-2026-11-14-AH) : le corps d'une
++        fonction `nom() { …; }` se lisait comme exécuté, et son `cd` valait
++        pour la suite ; il rend en se fermant l'état d'avant lui. Ce qu'il
++        écrit se juge toujours."""
++        with self.environnement():
++            self.jugees([("build() { cd engine; }; echo x > .socle/policy.toml", "protege"),
++                         ("f() { cd /tmp; }; sed -i s/3/9/ .socle/policy.toml", "protege"),
++                         ("f () { cd /tmp; F=/tmp/x; }; echo x > .socle/policy.toml", "protege"),
++                         ("function f() { cd /tmp; }; echo x > .socle/policy.toml", "protege"),
++                         ("f()\n{\n  cd /tmp\n}\necho x > .socle/policy.toml", "protege"),
++                         ("if true; then f() { cd /tmp; }; fi; echo x > .socle/policy.toml", "protege"),
++                         ("f() { touch .socle/policy.toml; }", "protege"),
++                         ("f() { cd /tmp; ls; }; echo ok > notes.txt", None),
++                         ("f() { echo x > /tmp/y; }; f; echo ok > notes.txt", None)])
++
++    def test_une_boucle_qui_revient_a_son_dossier_le_garde(self):
++        """La revue du lot 3, bloquant 5 (J-2026-11-14-AH) : une boucle ou
++        une condition qui revient à son dossier (`cd x; …; cd ..`) le rendait
++        inconnu, et l'écriture qui la suivait était refusée ; son lieu
++        normalisé, connu, se compare seul. La valeur d'un `for` faite de
++        plusieurs mots dont l'un n'est pas un seul nom de dossier, ou un
++        `**`, ne se suit pas."""
++        with self.environnement():
++            self.jugees([("for d in */; do cd \"$d\"; ls; cd ..; done; echo ok > status.txt", None),
++                         ("for d in memory tests; do cd $d; ls; cd ..; done; echo ok > status.txt", None),
++                         ("for f in *.py; do cd memory; ls; cd ..; done; echo ok > status.txt", None),
++                         ("while false; do cd memory; cd ..; done; echo ok > status.txt", None),
++                         ("if true; then cd memory; ls; cd ..; fi; echo ok > status.txt", None),
++                         ("for d in a b; do pushd $d; popd; done; echo ok > status.txt", None),
++                         ("for d in */; do cd $d; cd ..; done; echo x > \"$PWD/status.txt\"", None),
++                         ("cd .socle; for d in */; do cd \"$d\"; ls; cd ..; done; echo x > policy.toml", "protege"),
++                         ("for d in memory; do cd $d; done; echo x > .socle/policy.toml", "illisible"),
++                         ("for d in a ..; do cd \"$d\"; cd ..; done; echo x > notes.txt", "illisible"),
++                         ("for d in a/b c; do cd $d; cd ..; done; echo x > notes.txt", "illisible"),
++                         ("for d in **/; do cd \"$d\"; cd ..; done; echo x > notes.txt", "illisible"),
++                         ("for d in .socle/git-hooks c; do cd $d; echo x > pre-commit; done", "illisible")])
++
+     def test_remise_en_etat_d_un_fichier_protege(self):
+         """D-0098 (B-0165) : l'agent remet un fichier protégé changé par
+         erreur à son état du dernier commit, et supprime un fichier apparu
+@@ -953,6 +1081,34 @@ class TestDecoupage(unittest.TestCase):
+         fin = commandes.analyser("cd /a; for x in 1; do cd /b; done > f", environnement=env)[-1]
+         self.assertEqual((fin.redirige, fin.lieu), (["f"], "/a"))
+ 
++    def test_une_fonction_une_boucle_qui_revient_et_des_operateurs_cites(self):
++        """La revue du lot 3 (J-2026-11-14-AH) : le corps d'une fonction rend
++        en se fermant l'état d'avant lui ; une commande composée revenue à son
++        dossier connu le garde ; des opérateurs échappés ou entre guillemets
++        sont des mots."""
++        env = {"PWD": "/p"}
++        I = commandes.INCONNU
++        for texte, lieu in (
++                ("f() { cd /a; }", "/p"), ("function f() { cd /a; }", "/p"), ("if a; then f() { cd /a; }; fi", "/p"),
++                ("f()\n{\ncd /a\n}", "/p"), ("{ cd /a; }", "/a"), ("for d in */; do cd $d; cd ..; done", "/p"),
++                ("for d in a b; do cd $d; cd ..; done", "/p"), ("while a; do cd x; cd ..; done", "/p"),
++                ("for d in a ..; do cd $d; cd ..; done", I), ("for d in a/b c; do cd $d; cd ../..; done", I),
++                ("for d in **/; do cd $d; cd ..; done", I), ("for d in a; do cd $d; done", I)):
++            with self.subTest(texte):
++                self.assertEqual(commandes.analyser(texte + "; ls", environnement=env)[-1].lieu, lieu)
++        for texte, valeur in (("f() { X=1; }", None), ("X=0; f() { X=1; }", "0"),
++                              ("for d in */; do cd $d; cd ..; done", "/p")):
++            with self.subTest(texte):
++                c = commandes.analyser(texte + "; ls", environnement=env)[-1]
++                nom = "PWD" if "cd" in texte else "X"
++                self.assertEqual(commandes.variables_de(c, env).get(nom), valeur)
++        self.assertEqual([c.argv for c in commandes.analyser("f() { rm a; }; g ( ) { rm b; }")],
++                         [["rm", "a"], ["rm", "b"]])
++        self.assertEqual([c.argv for c in commandes.analyser("find . \\( -name a \\) -exec rm {} \\; ; ls")],
++                         [["find", ".", "(", "-name", "a", ")", "-exec", "rm", "{}", ";"], ["ls"]])
++        self.assertEqual([c.argv for c in commandes.analyser("echo '|' \";\" '()' a\\;b > f")],
++                         [["echo", "|", ";", "()", "a;b"]])
++
+     def test_normaliser_et_lieu_sur(self):
+         """La revue de B-0171, constat 4 : un `..` ne remonte pas une part
+         inconnue, et remonte, pour le jugement, la part écrite avant elle."""
+-- 
+2.43.0
+
