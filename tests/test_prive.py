@@ -454,6 +454,27 @@ class TestTermes(Compagnon):
         self.assertEqual(hooks.textes_publies(self.racine, hooks.commandes.analyser(f"git commit -F {corps}")),
                          ["Avance sur Mistral.\n"])
 
+    def test_le_fichier_publie_se_lit_depuis_le_dossier_courant_de_l_agent(self):
+        """B-0205 : après un `cd docs`, `git commit -F message.txt` faisait
+        lire au hook le `message.txt` de la racine, et non celui du dossier
+        courant de l'agent, que git publie."""
+        projet = config.Projet.charger(self.racine)
+        (self.racine / "docs").mkdir(exist_ok=True)
+        (self.racine / "docs/message.txt").write_text("Avance sur Mistral.\n")
+        (self.racine / "message.txt").write_text("Avance.\n")
+        docs = str(self.racine / "docs")
+        for cmd in ("git commit -F message.txt", "gh pr create --title Essai --body-file message.txt",
+                    "gh api repos/o/r/issues -F body=@message.txt"):
+            with self.subTest(cmd):
+                self.assertIn("fuite de la mémoire privée", hooks.refus_bash(projet, cmd, docs) or "")
+                self.assertIsNone(hooks.refus_bash(projet, cmd))
+        self.assertIn("fuite de la mémoire privée", hooks.refus_bash(projet, "cd docs && git commit -F message.txt")
+                      or "")
+        self.assertIsNone(hooks.refus_bash(projet, "cd .. && git commit -F message.txt", docs))
+        analyse = hooks.commandes.analyser("git commit -F message.txt")
+        self.assertEqual(hooks.textes_publies(self.racine, analyse, "docs"), ["Avance sur Mistral.\n"])
+        self.assertEqual(hooks.textes_publies(self.racine, analyse), ["Avance.\n"])
+
     def test_le_hook_avant_push_lit_le_nom_de_la_branche(self):
         projet = config.Projet.charger(self.racine)
         tete = git(self.racine, "rev-parse", "HEAD").strip()

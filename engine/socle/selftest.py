@@ -1124,6 +1124,15 @@ def _cas() -> list[Cas]:
         corps.write_text("Avance sur Mistral.\n")
         return etage_outil(a, c, "Bash", {"command": f"gh pr create --title Essai --body-file {corps}"})
 
+    @defaut("fuite-fichier-du-dossier-courant", "message de commit passé par un fichier relatif au dossier courant "
+            "de l'agent, qui cite un terme privé", "agent", "fuite")
+    def _(a, c):
+        # B-0205 : le hook lisait le fichier de la racine, qui ne cite rien.
+        c = a.clone_prive("compagnon")
+        ajouter(c, "docs/message.txt", "Avance sur Mistral.\n")
+        ajouter(c, "message.txt", "Avance.\n")
+        return etage_outil(a, c, "Bash", {"command": "git commit -F message.txt"}, cwd=c / "docs")
+
     @defaut("prive-dans-un-bloc-de-code", "identifiant privé dans un bloc de code d'un fichier public", "ci",
             "memoire.prive")
     def _(a, c):
@@ -2353,6 +2362,16 @@ def _temoins() -> list[tuple[str, Callable]]:
         if not sortie and not a.git(c, "show", "HEAD:memory/private/canonical.md").startswith("ESSAI:"):
             sortie = "le fichier privé est commité en clair"
         return sortie
+
+    @temoin("mode compagnon : un message de commit passé par un fichier du dossier courant de l'agent, qui ne cite "
+            "aucun terme privé, passe le hook de l'agent, quand la racine a un fichier du même nom qui en cite un "
+            "(B-0205)")
+    def _(a, c):
+        # Le pendant sain de `fuite-fichier-du-dossier-courant`.
+        c = a.clone_prive("compagnon")
+        ajouter(c, "docs/message.txt", "Avance.\n")
+        ajouter(c, "message.txt", "Avance sur Mistral.\n")
+        return etage_outil(a, c, "Bash", {"command": "git commit -F message.txt"}, cwd=c / "docs")
 
     @temoin("ajouter un terme à la liste privée est libre : le commit et la CI passent")
     def _(a, c):

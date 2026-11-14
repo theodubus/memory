@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0205 — Le hook de l'agent juge un chemin relatif depuis la racine de la session, pas depuis le dossier courant de l'agent
 
-> statut : ouvert · origine : J-2026-11-13-H · lu : backlog@f4a491f0
+> statut : fait · origine : J-2026-11-13-H · ref : J-2026-11-14-AD · lu : backlog@f4a491f0
 
 Le hook de l'agent rapporte un chemin écrit relatif à la racine de l'arbre
 qu'il juge, quel que soit le dossier courant de l'agent (`cwd` de son
@@ -25,4 +25,4 @@ un `cd engine`, `git commit -F message.txt` fait lire au hook le
 ## Fait quand
 
 - [x] une écriture d'un fichier protégé par un chemin relatif au dossier courant de l'agent, sous la racine, est refusée par le hook, et un test le montre
-- [ ] le fichier qu'une commande publie (`-F`, `--body-file`) se lit depuis le dossier courant de l'agent, et un test le montre
+- [x] le fichier qu'une commande publie (`-F`, `--body-file`) se lit depuis le dossier courant de l'agent, et un test le montre

@@ -1377,7 +1377,7 @@ def refus_bash(projet: config.Projet, cmd: str, cwd: str | None = None) -> str |
                         "\"<question>\" <réponse> --relayed --by <nom> --quote-file <texte exact>` pour une "
                         "décision prise en séance, ou `socle reviewed --relayed --by <nom> "
                         "--quote-file <texte exact>` pour une relecture avant publication.")
-    faute = _fuite_bash(projet, cmd)
+    faute = _fuite_bash(projet, cmd, cwd)
     if faute:
         return faute
     depart = depart_de(racine, cwd)
@@ -1557,9 +1557,12 @@ def _fuites_dans(projet: config.Projet, texte: str) -> str | None:
 OPTIONS_FICHIER = {"--body-file", "--notes-file", "--file", "-F", "--field", "-f", "--raw-field"}
 
 
-def textes_publies(racine: Path, simples: list) -> list[str]:
+def textes_publies(racine: Path, simples: list, cwd: str | None = None) -> list[str]:
     """Ce que les commandes `git` et `gh` publient depuis un fichier :
-    `--body-file x`, `-F x`, et `gh api -F champ=@x`."""
+    `--body-file x`, `-F x`, et `gh api -F champ=@x`. Un chemin relatif se
+    lit depuis le dossier courant de l'agent (`cwd`) s'il est connu, sinon
+    depuis la racine, et après les `cd` de la commande (B-0205)."""
+    depart = Path(depart_de(racine, cwd))
     res = []
     for c in simples:
         if c.programme not in ("git", "gh"):
@@ -1579,7 +1582,7 @@ def textes_publies(racine: Path, simples: list) -> list[str]:
                 continue
             chemin = Path(os.path.expanduser(c.chemin(valeur)))
             try:
-                res.append((chemin if chemin.is_absolute() else racine / chemin).read_text(
+                res.append((chemin if chemin.is_absolute() else depart / chemin).read_text(
                     encoding="utf-8", errors="replace")[:1_000_000])
             except OSError:
                 continue
@@ -1601,7 +1604,7 @@ def _noms_publies(racine: Path, simples: list) -> list[str]:
     return res
 
 
-def _fuite_bash(projet: config.Projet, cmd: str) -> str | None:
+def _fuite_bash(projet: config.Projet, cmd: str, cwd: str | None = None) -> str | None:
     if prive.mode(projet) is None or _vers_le_prive(projet.racine, cmd):
         return None
     if PUSH_BASH.search(cmd):
@@ -1612,7 +1615,7 @@ def _fuite_bash(projet: config.Projet, cmd: str) -> str | None:
     simples = commandes.analyser(cmd)
     publie = _noms_publies(projet.racine, simples)
     if PUBLIE_BASH.search(cmd):
-        publie += [cmd] + textes_publies(projet.racine, simples)
+        publie += [cmd] + textes_publies(projet.racine, simples, cwd)
     return _fuites_dans(projet, "\n".join(publie)) if publie else None
 
 

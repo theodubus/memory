@@ -7,6 +7,18 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-14-h — Le hook de l'agent lit depuis son dossier courant le fichier qu'une commande publie
+
+Pour juger une fuite de la mémoire privée, le hook de l'agent lit le
+fichier qu'une commande publie (`git commit -F`, `gh … --body-file`, `gh
+api -F champ=@x`). Il lisait un chemin relatif depuis la racine du projet,
+quel que soit le dossier courant de l'agent : après un `cd docs`, `git
+commit -F message.txt` lui faisait lire le `message.txt` de la racine, et
+non celui que git publie. Il le lit désormais depuis le dossier courant de
+l'agent, comme les chemins qu'une commande écrit.
+
+À faire : rien.
+
 ## 2026-11-14-g — Le hook de l'agent refuse la suppression d'un dossier qui contient le projet
 
 Le hook de l'agent laissait passer `rm -rf ..` lancé depuis la racine, et

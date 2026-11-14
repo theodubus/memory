@@ -2837,6 +2837,12 @@ MESSAGES: dict[str, str] = {
     "sous la racine passent le hook de l'agent (B-0208)":
         "deleting a directory next to the project, a directory of the project, and a `find` that filters what it "
         "deletes under the root pass the agent's hook (B-0208)",
+    "message de commit passé par un fichier relatif au dossier courant de l'agent, qui cite un terme privé":
+        "commit message passed through a file relative to the agent's current directory, which cites a private term",
+    "mode compagnon : un message de commit passé par un fichier du dossier courant de l'agent, qui ne cite aucun "
+    "terme privé, passe le hook de l'agent, quand la racine a un fichier du même nom qui en cite un (B-0205)":
+        "companion mode: a commit message passed through a file of the agent's current directory, which cites no "
+        "private term, passes the agent's hook, when the root has a file of the same name that cites one (B-0205)",
     "un commit d'agent qui porte la trace de ses hooks passe la CI":
         "an agent commit that carries the trace of its hooks passes the CI",
     "une valeur attendue changée sous une spécification que l'humain a commitée passe la CI":

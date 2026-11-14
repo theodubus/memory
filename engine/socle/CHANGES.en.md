@@ -7,6 +7,18 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-14-h — The agent's hook reads the file a command publishes from its current directory
+
+To judge a leak of the private memory, the agent's hook reads the file a
+command publishes (`git commit -F`, `gh … --body-file`, `gh api -F
+field=@x`). It read a relative path from the project's root, whatever the
+agent's current directory: after a `cd docs`, `git commit -F message.txt`
+made it read the root's `message.txt`, not the one git publishes. It now
+reads it from the agent's current directory, like the paths a command
+writes.
+
+To do: nothing.
+
 ## 2026-11-14-g — The agent's hook refuses deleting a directory that contains the project
 
 The agent's hook let through `rm -rf ..` run from the root, and deleting a
