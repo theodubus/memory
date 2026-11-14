@@ -25,13 +25,17 @@ point de divergence avec la branche par défaut (`base_non_poussee`).
 Pour chaque réponse `valider` qu'elle ajoute, il relève ce que la demande
 nomme : les tests que juge `tests.attendus`, nommés en mot entier, les
 fichiers de cas qu'elle cite, les fichiers protégés qu'elle cite avec une
-empreinte sur la même ligne. Si elle en nomme et que la branche, depuis
-la branche par défaut, n'en change aucun, il avertit : poussée seule, la
-réponse ne couvrira pas ce changement ; la pousser avec lui.
+empreinte sur la même ligne. Si elle en nomme et qu'aucun n'a changé, il
+avertit : poussée seule, la réponse ne couvrira pas ce changement ; la
+pousser avec lui.
 
-Le changement se mesure sur la branche entière, pas sur la seule plage :
-un fichier protégé poussé sous une demande en attente (D-0071@9b06b40c)
-précède sa réponse, qui part ensuite seule sans dommage. Comme une valeur
+Un test et un fichier de cas se mesurent sur la plage pas encore
+poussée : un test ne précède jamais sa réponse (`tests.attendus` le
+refuse), et un test changé plus tôt sur la branche, sous une validation
+antérieure, ne doit pas faire taire l'avertissement (la revue du lot l'a
+trouvé). Un fichier protégé se mesure sur la branche entière : poussé
+sous une demande en attente (D-0071@9b06b40c), il précède sa réponse, qui
+part ensuite seule sans dommage. Comme une valeur
 attendue hors des assertions (ADR-0024@699e330b), c'est dit, pas refusé.
 
 Les hooks avant commit et avant push, qui se taisent quand tout passe,

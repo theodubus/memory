@@ -1114,7 +1114,12 @@ def reponse_seule(ctx, r):
     if not any(memoire.est_reponse(c) for c in outils.fichiers_changes(ctx.racine, base, ctx.tete)):
         return
     for d in demandes.validations_ajoutees(ctx.racine, base, ctx.tete):
-        nommes = _tests_nommes(ctx, d.texte) + _fichiers_nommes(ctx, d.texte)
+        # Un test ne précède jamais sa réponse (`tests.attendus` le refuse) :
+        # il se mesure sur la plage pas encore poussée, et un test changé plus
+        # tôt sur la branche, sous une validation antérieure, ne compte pas
+        # (la revue de B-0142). Seul un fichier protégé se mesure sur la
+        # branche entière (D-0071).
+        nommes = _tests_nommes(ctx, d.texte, base) + _fichiers_nommes(ctx, d.texte)
         if not nommes or any(change for _, change in nommes):
             continue
         noms = [n for n, _ in nommes]
@@ -1127,15 +1132,27 @@ def reponse_seule(ctx, r):
             d.chemin_reponse or d.chemin)
 
 
-def _tests_nommes(ctx, texte: str) -> list[tuple[str, bool]]:
+def _tests_nommes(ctx, texte: str, depuis: str | None = None) -> list[tuple[str, bool]]:
     """Les tests que le texte nomme en mot entier, comme `tests.attendus`
     les reconnaît, et les fichiers de cas qu'il cite, chacun avec un
-    booléen : la branche l'a-t-elle changé depuis sa base ?"""
+    booléen : a-t-il changé depuis `depuis` (par défaut, la base de la
+    branche) ?"""
     from collections import defaultdict
 
     from socle import checks_tests as controles_tests, tests_reader as tests_lecture
 
-    changes = set(ctx.changes)
+    if depuis:
+        changes = set(outils.fichiers_changes(ctx.racine, depuis, ctx.tete))
+        fichiers_avant = outils.fichiers_a(ctx.racine, depuis)
+
+        def lire_avant(vue, c):
+            return outils.lire_a(ctx.racine, depuis, c)
+    else:
+        changes = set(ctx.changes)
+        fichiers_avant = None
+
+        def lire_avant(vue, c):
+            return vue.lire_base(c)
     res: dict[str, bool] = {}
 
     def forme(f) -> str:
@@ -1157,15 +1174,17 @@ def _tests_nommes(ctx, texte: str) -> list[tuple[str, bool]]:
         apres = controles_tests.fichiers_tests(vue, vue.fichiers)
         for c in apres:
             maintenant = nommes(vue.lire(c), c)
-            avant = nommes(vue.lire_base(c), c) if c in changes else maintenant
+            avant = nommes(lire_avant(vue, c), c) if c in changes else maintenant
             for nom in set(maintenant) | set(avant):
                 res[nom] = res.get(nom, False) or sorted(maintenant.get(nom, [])) != sorted(avant.get(nom, []))
-        for c in controles_tests.fichiers_tests(vue, vue.fichiers_base):
+        base_vue = vue.fichiers_base if fichiers_avant is None else vue.projet.hors_tiers(fichiers_avant)
+        for c in controles_tests.fichiers_tests(vue, base_vue):
             if c in changes and c not in apres:
-                for nom in nommes(vue.lire_base(c), c):
+                for nom in nommes(lire_avant(vue, c), c):
                     res[nom] = True  # le fichier de tests est parti, et le test avec lui
     motifs = ctx.projet.gf("tests", "case_paths", defaut=[]) or []
-    for c in outils.filtrer(sorted(set(ctx.fichiers) | set(ctx.fichiers_base)), motifs) if motifs else []:
+    avant = set(ctx.fichiers_base) if fichiers_avant is None else set(fichiers_avant)
+    for c in outils.filtrer(sorted(set(ctx.fichiers) | avant), motifs) if motifs else []:
         if controles_tests._nomme(texte, c):
             res[c] = c in changes
     return sorted(res.items())

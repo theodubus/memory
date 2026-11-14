@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-B-0209 livré (J-2026-11-14-B) ; D-0110 attend Théo. B-0142 en cours.
-Pilote en pause.
+B-0209 et B-0142 livrés (J-2026-11-14-B, J-2026-11-14-D) ; D-0110 attend
+Théo. Pilote en pause.
 
 ## Consignes en cours
 
@@ -60,7 +60,7 @@ Leur texte exact est dans l'entrée du journal citée.
 
 Avant toute nouvelle fonction (J-2026-11-13-I, D-0108, D-0109) :
 
-1. B-0142 (avec la gêne 6 de chess), B-0202 avec B-0175, B-0196, et
+1. B-0202 avec B-0175, B-0196, B-0216, et
    B-0212 (la revue d'un lot déjà poussé, trouvée par celle de B-0209).
 2. B-0151 et B-0199.
 3. Le reste, par priorité : B-0173 (son dernier critère), B-0208,

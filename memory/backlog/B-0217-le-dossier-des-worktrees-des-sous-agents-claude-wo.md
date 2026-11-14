@@ -1,0 +1,14 @@
+<!-- socle: couche=backlog zone=publique -->
+# B-0217 — Le dossier des worktrees des sous-agents, .claude/worktrees, n'est pas ignoré : le hook de fin de tour de l'environnement cloud demande de le commiter
+
+> statut : ouvert · origine : J-2026-11-14-D · priorité : basse · lu : backlog@f3069fbc
+
+Un sous-agent lancé avec un worktree (skill `delegate-lot`) a son dossier
+sous le dossier .claude/worktrees, que le `.gitignore` de ce dépôt n'ignore pas.
+Le hook de fin de tour de l'environnement cloud voit des fichiers non
+suivis et demande de les commiter (J-2026-11-14-D). La session l'a exclu
+localement, dans `.git/info/exclude`, qui ne survit pas au conteneur.
+
+## Fait quand
+
+- [ ] le dossier .claude/worktrees est ignoré par le dépôt, et par un projet que l'installeur équipe si le produit lance des sous-agents en worktree

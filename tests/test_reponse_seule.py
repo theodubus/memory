@@ -128,6 +128,29 @@ class TestReponsePousseeSeule(unittest.TestCase):
         self.assertEqual(code, 0, sortie)
         self.assertNotIn("Poussée seule", sortie)
 
+    def test_un_test_deja_change_sur_la_branche_sous_une_validation_d_avant_ne_fait_pas_taire(self):
+        """La revue de B-0142, constat bloquant 1 : `test_double`, déjà
+        changé et poussé sur la branche avec la réponse de D-0001, est nommé
+        de nouveau par D-0002, dont la réponse part seule. Le push du test
+        qui suivra sera refusé : l'avertissement doit le dire."""
+        self.demander("Valider que `test_double` attende 6.")
+        self.repondre()
+        (self.racine / "tests/test_calc.py").write_text(TEST.format(attendu=6))
+        self.commit("La réponse de D-0001 et son test")
+        git(self.racine, "push", "-q", "--no-verify", "origin", "travail")
+        texte = DEMANDE.format(objet="Valider que `test_double` attende 8.").replace("D-0001", "D-0002")
+        (self.racine / "memory/requests/D-0002-facteur.md").write_text(texte)
+        self.commit("La seconde demande")
+        git(self.racine, "push", "-q", "--no-verify", "origin", "travail")
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()) as erreurs:
+            code = cli.main(["--root", str(self.racine), "answer", "D-0002", "valider", "--relayed", "--by", "Théo",
+                             "--quote", "oui, valide"])
+        self.assertEqual(code, 0, erreurs.getvalue())
+        dans_l_arbre = self.avertissements()
+        self.assertEqual(len(dans_l_arbre), 1, dans_l_arbre)
+        self.assertIn("réponse `valider` de D-0002", dans_l_arbre[0])
+        self.assertIn("`test_double`", dans_l_arbre[0])
+
     def test_une_reponse_deja_poussee_est_hors_de_la_plage(self):
         self.demander("Valider que `test_double` attende 6.")
         self.repondre()
