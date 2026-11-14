@@ -2693,6 +2693,14 @@ MESSAGES: dict[str, str] = {
         "directory that contains the project deleted by the shell: `rm -rf ..`, a `cd` then `../..`, the sources of an "
         "`mv`, `git clean` under `-C ..`, a `find` that deletes from a directory that contains it, or from the root "
         "without filtering anything",
+    "fichier protégé écrit par le shell derrière un mot réservé (`then`, `else`, `do`, `!`, `{`), par la "
+    "variable d'un `for` ou après un groupe dans un pipeline":
+        "protected file written by the shell behind a reserved word (`then`, `else`, `do`, `!`, `{`), through a "
+        "`for` variable or after a group in a pipeline",
+    "chemin écrit par le shell après une condition ou une boucle qui change le dossier ou une variable, ou dans la "
+    "branche qui suit":
+        "path written by the shell after a condition or a loop that changes the directory or a variable, or in the "
+        "branch that follows",
     "fichier protégé remis à un autre état que le dernier commit, ou tout un dossier":
         "protected file put back to a state other than the last commit, or a whole folder",
     "remise admise d'un fichier protégé dont la redirection écrit un autre fichier protégé":
@@ -2823,6 +2831,9 @@ MESSAGES: dict[str, str] = {
     "passent le hook de l'agent (B-0171)":
         "a too deeply nested command that writes nothing, a long heredoc and 500 `cd` to a directory outside the "
         "project pass the agent's hook (B-0171)",
+    "une boucle sur des fichiers libres, une condition et un groupe qui écrivent un fichier libre passent le hook "
+    "de l'agent (B-0204)":
+        "a loop over free files, a condition and a group that write a free file pass the agent's hook (B-0204)",
     "un chemin écrit par le shell à travers une variable sous un dossier hors du projet, une variable affectée vers "
     "un fichier libre ou un motif qui ne nomme aucun fichier protégé passent le hook de l'agent (B-0171)":
         "a path written by the shell through a variable under a directory outside the project, a variable assigned "

@@ -505,6 +505,42 @@ class TestGarde(unittest.TestCase):
                          ("perl -0777 -ne 'print' .socle/policy.toml", None),
                          ("perl -lne 'print' .socle/policy.toml", None)])
 
+    def test_une_commande_derriere_un_mot_reserve_se_juge(self):
+        """B-0204 : `then rm …` se lisait comme le programme `then` ; ni ses
+        écritures ni ce qu'elle a d'irréversible ne se jugeaient. Ce qu'une
+        condition ou une boucle change devient inconnu après elle."""
+        protege, illisible = "écriture d'un fichier protégé", "un chemin que le hook ne sait pas développer"
+        with unittest.mock.patch.dict(os.environ, {"HOME": str(self.racine)}):
+            os.environ.pop("X", None)
+            for cmd, raison in (
+                    ("if true; then sed -i s/3/9/ .socle/policy.toml; fi", protege),
+                    ("! touch .socle/policy.toml", protege),
+                    ("if false; then :; elif true; then :; else touch .socle/policy.toml; fi", protege),
+                    ("while true; do touch .socle/policy.toml; done", protege),
+                    ("until false; do chmod +x .socle/socle; done", protege),
+                    ("{ touch .socle/policy.toml; }", protege),
+                    ("for f in .socle/*.toml; do sed -i s/3/9/ \"$f\"; done", protege),
+                    ("for f in calc.py .socle/{policy,adapter}.toml; do sed -i s/3/9/ $f; done", protege),
+                    (f"if true; then {G} {P} --force origin travail; fi", "politique, point 4"),
+                    ("{ cd /tmp; } | cat; echo x > .socle/policy.toml", protege),
+                    ("if $X; then cd /tmp; fi & echo x > .socle/policy.toml", protege),
+                    ("if $X; then cd /tmp; fi; echo x > .socle/policy.toml", illisible),
+                    ("if $X; then cd /tmp; else echo x > .socle/policy.toml; fi", illisible),
+                    ("if $X; then F=.socle/policy.toml; else F=/tmp/x; fi; echo x > $F", illisible),
+                    ("while read f; do sed -i s/3/9/ \"$f\"; done < /tmp/liste", illisible)):
+                with self.subTest(cmd):
+                    self.assertIn(raison, hooks.refus_bash(self.projet, cmd) or "")
+                    self.assertEqual(self.decide(*B(cmd)), "refus")
+            for cmd in ("for f in tests/*.py calc.py; do python3 -m unittest \"$f\"; done",
+                        "for f in *.py; do sed -i s/3/9/ \"$f\"; done",
+                        "if [ -f calc.py ]; then echo ok > notes.txt; else rm -f notes.txt; fi",
+                        "while read l; do echo \"$l\"; done < calc.py", "{ echo a; echo b; } > notes.txt",
+                        "for d in /tmp /var; do (cd $d && ls); done", "{ cd /tmp; }; echo x > policy.toml",
+                        "if true; then cd /tmp; fi; echo x > /tmp/notes.txt", "! grep -q x calc.py",
+                        "cd /tmp && for i in 1 2; do echo $i > f$i.txt; done > sortie.txt"):
+                with self.subTest(cmd):
+                    self.assertIsNone(hooks.refus_bash(self.projet, cmd))
+
     def test_remise_en_etat_d_un_fichier_protege(self):
         """D-0098 (B-0165) : l'agent remet un fichier protégé changé par
         erreur à son état du dernier commit, et supprime un fichier apparu
@@ -811,6 +847,33 @@ class TestDecoupage(unittest.TestCase):
         self.assertIn(["rm", "a"], [c.argv for c in commandes.analyser("X=$(rm a); echo \"$(ls)\" `rm b`")])
         self.assertIn(["rm", "b"], [c.argv for c in commandes.analyser("X=$(rm a); echo \"$(ls)\" `rm b`")])
         self.assertEqual([c.argv for c in commandes.analyser("echo $(pwd)/x > f")][-1], ["echo", "$(pwd)/x"])
+
+    def test_les_mots_reserves_et_les_commandes_composees(self):
+        """B-0204 : les mots réservés se retirent comme un préfixe ; ce
+        qu'une condition ou une boucle change devient inconnu après elle et
+        dans la branche qui suit ; un groupe s'exécute une fois ; une
+        commande composée dans un pipeline ne transmet rien."""
+        env = {"PWD": "/p"}
+        I = commandes.INCONNU
+        self.assertEqual([c.argv for c in commandes.analyser("if a; then b; elif c; then d; else ! e; fi")],
+                         [["a"], ["b"], ["c"], ["d"], ["e"]])
+        self.assertEqual([c.argv for c in commandes.analyser("while a; do { b; }; done; until c; do d; done")],
+                         [["a"], ["b"], ["c"], ["d"]])
+        for texte, lieu in (
+                ("if a; then cd /a; fi", I), ("if a; then cd /a; else ls", I), ("while a; do cd /a; done", I),
+                ("if a; then ls; fi", "/p"), ("{ cd /a; }", "/a"), ("{ cd /a; } | cat", "/p"),
+                ("if a; then cd /a; fi | cat", "/p"), ("if a; then cd /a; fi &", "/p"), ("if a; then cd /a", "/a")):
+            with self.subTest(texte):
+                self.assertEqual(commandes.analyser(texte + "; ls", environnement=env)[-1].lieu, lieu)
+        for texte, valeur in (("for F in a b; do ls", "a b"), ("for F in x{1,2}; do ls", "x1 x2"),
+                              ("for F in a; do :; done", I), ("for F; do ls", I), ("F=a; if b; then F=c; fi", I),
+                              ("for F in a b", I)):
+            with self.subTest(texte):
+                c = commandes.analyser(texte + "; ls", environnement=env)[-1]
+                self.assertEqual(commandes.variables_de(c, env).get("F"), valeur)
+        # Les redirections d'une boucle s'ouvrent dans le dossier d'avant elle.
+        fin = commandes.analyser("cd /a; for x in 1; do cd /b; done > f", environnement=env)[-1]
+        self.assertEqual((fin.redirige, fin.lieu), (["f"], "/a"))
 
     def test_normaliser_et_lieu_sur(self):
         """La revue de B-0171, constat 4 : un `..` ne remonte pas une part

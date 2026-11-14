@@ -7,6 +7,20 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-14-i — The agent's hook reads conditions and loops
+
+The agent's hook now judges a command written behind a shell reserved word
+(`then`, `else`, `elif`, `do`, `!`, `{`, `if`, `while`, `until`): a write to
+a protected file, an irreversible action or a command reserved for the human
+in the body of a condition or a loop no longer passes, as outside it. What a
+condition or a loop changes, its directory and its variables, becomes
+unknown after it; a `for` variable takes in its body the words of its list,
+so that `for f in *.md; do sed -i … "$f"; done` is judged by its pattern.
+
+To do: nothing, unless the hook now refuses a loop that writes to a variable
+it does not know (`while read f; do sed -i … "$f"; done`): write the list of
+files out in full, in a `for`, or handle them with the file-writing tool.
+
 ## 2026-11-14-h — The agent's hook reads the file a command publishes from its current directory
 
 To judge a leak of the private memory, the agent's hook reads the file a

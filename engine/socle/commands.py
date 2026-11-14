@@ -19,11 +19,15 @@ de son `~` et de ses variables, et marque ce qu'il ne sait pas développer ;
 nomment ; `demesure`, qu'une commande est trop longue ou trop imbriquée
 pour être découpée sans risque (B-0171, ADR-0072).
 
-Heuristique, comme tout ce qui lit du shell sans l'exécuter : les mots
-réservés (`if`, `then`, `{`, B-0204), les alias, les fonctions, `source`,
-l'état qu'un `eval` laisse et ce que lance une substitution entre
-guillemets (`"$(…)"`) ne sont pas suivis. Le hook n'est qu'un étage ; la CI
-juge ce qui est commité.
+Les mots réservés qui précèdent une commande (`if`, `then`, `do`, `!`,
+`{`…) se retirent comme un préfixe ; ce qu'une condition ou une boucle
+change, son dossier et ses variables, devient inconnu après elle, et la
+variable d'un `for` prend dans son corps les mots de sa liste (B-0204).
+
+Heuristique, comme tout ce qui lit du shell sans l'exécuter : les motifs
+d'un `case`, les alias, les fonctions, `source`, l'état qu'un `eval` laisse
+et ce que lance une substitution entre guillemets (`"$(…)"`) ne sont pas
+suivis. Le hook n'est qu'un étage ; la CI juge ce qui est commité.
 """
 
 from __future__ import annotations
@@ -56,6 +60,14 @@ VALEURS_READ = ("-p", "-d", "-n", "-N", "-t", "-u", "-a")
 # Une part d'un mot que le hook ne sait pas développer : une variable
 # inconnue, une substitution de commande.
 INCONNU = "\0"
+# Les mots réservés du shell qui précèdent une commande simple : le
+# découpage les retire, comme un préfixe (B-0204).
+RESERVES = ("if", "then", "else", "elif", "while", "until", "do", "!", "{")
+# Ce qui ouvre une commande composée, et ce qui la ferme. Ce qu'une
+# condition ou une boucle change devient inconnu après elle, et dans la
+# branche `else` ou `elif` qui suit ; un groupe `{ …; }` s'exécute une fois.
+OUVRANTS = ("if", "while", "until", "for", "select", "{")
+FERMANTS = ("fi", "done", "}")
 # Les variables que le shell tient lui-même : leur valeur dans
 # l'environnement du hook n'est pas celle du shell de l'agent (`_`, le
 # chemin de python3 ; `OLDPWD`, le dossier d'un autre shell). Un shell neuf
@@ -452,6 +464,10 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
     # sous-shell `( … )` : l'état d'avant eux.
     debut_liste, debut_tube, en_tube = etat.copie(), etat.copie(), False
     englobants: list[tuple[_Etat, _Etat, _Etat, bool]] = []
+    # Les commandes composées ouvertes (B-0204) : le mot qui l'ouvre, l'état
+    # d'avant elle, ceux du début de sa liste et de son pipeline, et, pour
+    # un `for`, sa variable et les mots de sa liste.
+    composes: list[tuple[str, _Etat, _Etat, _Etat, bool, tuple[str, str | None] | None]] = []
 
     def lieu_de(cible: str) -> str:
         d = developper(cible, _visibles(env, etat.variables(env)))[0]
@@ -470,8 +486,55 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
         for interne in internes:
             res.extend(_analyser(interne, etat.copie(), env))
 
+    def ouvrir(mot: str, boucle: tuple[str, str | None] | None = None):
+        composes.append((mot, etat.copie(), debut_liste, debut_tube, en_tube, boucle))
+
+    def incertain():
+        """Ce que la commande composée ouverte a changé, son dossier et ses
+        variables, devient inconnu : le hook ne sait pas quelle branche,
+        ni combien de tours, le shell prendra (B-0204)."""
+        mot, avant = composes[-1][0], composes[-1][1]
+        suite = etat.vues[len(avant.vues):] if len(etat.vues) >= len(avant.vues) else etat.vues
+        etat.vues.extend((nom, None) for nom in dict.fromkeys(nom for nom, _ in suite))
+        if (etat.dossier, etat.lieu) != (avant.dossier, avant.lieu):
+            changer(f"$({mot} …)", INCONNU)
+
+    def reserves():
+        """Retire les mots réservés en tête de la commande, et suit les
+        commandes composées qu'ils ouvrent ou ferment (B-0204)."""
+        nonlocal mots, debut_liste, debut_tube, en_tube
+        while mots and mots[0] in RESERVES:
+            mot, mots = mots[0], mots[1:]
+            if mot in OUVRANTS:
+                ouvrir(mot)
+            elif mot in ("else", "elif") and composes:
+                incertain()
+            elif mot == "do" and composes and composes[-1][5]:
+                # Le corps d'un `for` : sa variable prend les mots de sa
+                # liste, que le jugement lit un à un.
+                etat.vues.append(composes[-1][5])
+        if mots[:1] in (["for"], ["select"]):
+            nom, liste = (mots[1:2] or [""])[0], mots[2:]
+            valeur = " ".join(f for w in liste[1:] for f in accolades(w)) if liste[:1] == ["in"] else None
+            ouvrir(mots[0], (nom, valeur) if re.fullmatch(r"[A-Za-z_]\w*", nom) else None)
+        if mots[:1] and mots[0] in FERMANTS and composes:
+            if mots[0] != "}":
+                incertain()
+            _, avant, debut_liste, debut_tube, en_tube, _ = composes.pop()
+            return avant
+        return None
+
     def clore():
         nonlocal mots, redir
+        avant = reserves()
+        if avant is not None:
+            # Le mot qui ferme une commande composée : ses redirections
+            # s'ouvrent dans le dossier d'avant elle.
+            if redir:
+                res.append(Commande(mots, redir, avant.dossier, [], list(avant.vues), avant.lieu,
+                                    avant.variables(env), env))
+            mots, redir = [], []
+            return
         argv = _sans_prefixes(mots)
         if not argv and mots and all(AFFECTATION.fullmatch(m) for m in mots):
             # Une affectation seule vaut pour la suite ; devant une commande,

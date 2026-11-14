@@ -1459,6 +1459,27 @@ def _cas() -> list[Cas]:
             "rm -rf ..", "cd .socle && rm -rf ../..", "mv .. /tmp/ailleurs", "git -C .. clean -ffdx",
             "find .. -name '*.pyc' -delete", "find . -delete")])
 
+    @defaut("protege-mot-reserve", "fichier protégé écrit par le shell derrière un mot réservé (`then`, `else`, "
+            "`do`, `!`, `{`), par la variable d'un `for` ou après un groupe dans un pipeline", "agent",
+            "écriture protégée")
+    def _(a, c):
+        # B-0204 : `then rm …` se lisait comme le programme `then`.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "if true; then echo 'max_attempts = 99' >> .socle/policy.toml; fi",
+            "if false; then :; else sed -i s/3/9/ .socle/policy.toml; fi",
+            "! sed -i s/3/9/ .socle/policy.toml",
+            "for f in .socle/*.toml; do sed -i s/3/9/ \"$f\"; done",
+            "{ cd /tmp; } | cat; echo 'max_attempts = 99' >> .socle/policy.toml")])
+
+    @defaut("ecriture-illisible-composee", "chemin écrit par le shell après une condition ou une boucle qui change "
+            "le dossier ou une variable, ou dans la branche qui suit", "agent", "écriture illisible")
+    def _(a, c):
+        # B-0204 : le hook ne sait pas quelle branche le shell prendra.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "if [ -n \"$SOCLE_ESSAI_CIBLE\" ]; then cd /tmp; fi; echo 'max_attempts = 99' >> .socle/policy.toml",
+            "if [ -n \"$SOCLE_ESSAI_CIBLE\" ]; then cd /tmp; else echo 'max_attempts = 99' >> .socle/policy.toml; fi",
+            "if [ -n \"$SOCLE_ESSAI_CIBLE\" ]; then F=.socle/policy.toml; else F=/tmp/x; fi; echo x >> \"$F\"")])
+
     @defaut("protege-depuis-un-worktree", "fichier protégé de la copie principale écrit depuis un worktree du dépôt",
             "agent", "écriture protégée")
     def _(a, c):
@@ -1948,6 +1969,14 @@ def _temoins() -> list[tuple[str, Callable]]:
                 or etage_outil(a, c, "Bash", {"command": f"D={ailleurs}; echo x > \"${{D:-/tmp}}/rapport.txt\""})
                 or etage_outil(a, c, "Bash", {"command": "sed -n -e's/i/j/p' .socle/policy.toml"})
                 or etage_outil(a, c, "Bash", {"command": "rm -rf ./*"}, cwd=ailleurs))
+
+    @temoin("une boucle sur des fichiers libres, une condition et un groupe qui écrivent un fichier libre passent le "
+            "hook de l'agent (B-0204)")
+    def _(a, c):
+        return (etage_outil(a, c, "Bash", {"command": "for f in *.py; do sed -i s/3/9/ \"$f\"; done"})
+                or etage_outil(a, c, "Bash", {"command": "if [ -f calc.py ]; then echo ok > notes.txt; else rm -f "
+                                                         "notes.txt; fi"})
+                or etage_outil(a, c, "Bash", {"command": "{ echo a; echo b; } > notes.txt"}))
 
     @temoin("une commande trop imbriquée qui n'écrit rien, un long heredoc et 500 `cd` vers un dossier hors du "
             "projet passent le hook de l'agent (B-0171)")

@@ -7,6 +7,22 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-14-i — Le hook de l'agent lit les conditions et les boucles
+
+Le hook de l'agent juge désormais une commande écrite derrière un mot
+réservé du shell (`then`, `else`, `elif`, `do`, `!`, `{`, `if`, `while`,
+`until`) : une écriture d'un fichier protégé, une action irréversible ou une
+commande réservée à l'humain dans le corps d'une condition ou d'une boucle
+ne passe plus, comme hors d'elle. Ce qu'une condition ou une boucle change,
+son dossier et ses variables, devient inconnu après elle ; la variable d'un
+`for` prend dans son corps les mots de sa liste, si bien que `for f in
+*.md; do sed -i … "$f"; done` se juge par son motif.
+
+À faire : rien, sauf si le hook refuse désormais une boucle qui écrit vers
+une variable qu'il ne connaît pas (`while read f; do sed -i … "$f"; done`) :
+écrire la liste des fichiers en toutes lettres, dans un `for`, ou les
+traiter par l'outil d'écriture de fichiers.
+
 ## 2026-11-14-h — Le hook de l'agent lit depuis son dossier courant le fichier qu'une commande publie
 
 Pour juger une fuite de la mémoire privée, le hook de l'agent lit le
