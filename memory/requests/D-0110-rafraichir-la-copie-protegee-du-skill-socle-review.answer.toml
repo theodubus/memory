@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0110-rafraichir-la-copie-protegee-du-skill-socle-review.md, dont l'empreinte suit.
+reponse = "valider"
+texte = "« D0010 » lu comme D-0110 : D-0010 est une approbation du 11 octobre, née avec sa réponse ; D-0110 est la seule demande en attente."
+par = "Théo"
+date = "2026-11-14"
+canal = "conversation"
+citation = "Je valide D0010"
+empreinte = "sha256:c1a88c808c0c9d5e4cadd4c001b806c4cbd1d6897d9f8048c5a7dd99342bb88c"
