@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0221 — Lot du hook : ce qu'il laisse supprimer, les mots et les écritures du shell qu'il ne voit pas, et la règle qui borne ses trous
 
-> statut : ouvert · origine : J-2026-11-14-M · forme : lot · après : B-0208, B-0204, B-0205, B-0206, B-0207 · lu : backlog@30fa1fa0
+> statut : fait · origine : J-2026-11-14-M · forme : lot · après : B-0208, B-0204, B-0205, B-0206, B-0207 · ref : J-2026-11-14-AM · lu : backlog@30fa1fa0
 
 Le troisième lot d'avant les nouvelles fonctions (le chantier actif) : le
 hook de l'agent. Ses sujets touchent tous le découpage des commandes du
