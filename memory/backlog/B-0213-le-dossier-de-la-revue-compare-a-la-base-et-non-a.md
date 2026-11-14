@@ -36,8 +36,15 @@ f73f0b4) :
   ensemble ; la pointe d'avant le dernier push (`<amont>@{1}`, dans le
   reflog) pourrait être proposée comme base.
 
+Écartés le 14 novembre, sur la décision de Théo (D-0111, J-2026-11-14-L),
+comme cas exotiques : le lot de mémoire seule (la revue ne le relit pas)
+et le `--since` posé sur la branche par défaut. Les autres cas restent,
+jugés par la même règle quand le sujet se traite : ce qui ne peut se
+produire dans l'usage normal et dont l'effet se voit s'écarte d'une
+raison.
+
 ## Fait quand
 
 - [ ] le dossier mesure le lot depuis l'ancêtre commun, refuse une référence inconnue ou qui n'est pas un ancêtre, et un test le montre
 - [ ] un sujet touché sans que son « Fait quand » ou son statut change n'est pas donné comme barre, et un test le montre
-- [ ] les cas relevés par la revue de B-0212 sont traités, ou écartés d'une raison, et un test montre chaque cas traité
+- [ ] les cas restants relevés par la revue de B-0212 sont traités, ou écartés d'une raison, et un test montre chaque cas traité

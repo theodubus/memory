@@ -24,9 +24,12 @@ lance vers l'origine.
   faux pour un `git clone <chemin>` ordinaire, qui copie toute la base
   d'objets ; le défaut injecté `commit-sans-ref` ne couvre que le premier.
 
+Écartés le 14 novembre, sur la décision de Théo (D-0111, J-2026-11-14-L),
+comme cas exotiques : les deux fetch sans délai (une origine qui pend ou
+demande des identifiants) et la phrase du modèle de menace de B-0175 sur
+le clone local ordinaire.
+
 ## Fait quand
 
 - [ ] le partage du délai du démarrage est décidé par une ADR et montré par un test
 - [ ] un échec de l'historique ne coûte pas son délai entier à chaque démarrage du même conteneur, et un test le montre
-- [ ] les fetch de `recuperer_pull_requests` ont un délai et aucune invite d'identifiants
-- [ ] le modèle de menace de B-0175 dit le cas du clone local ordinaire

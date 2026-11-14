@@ -61,6 +61,16 @@ lit un shell, n'ouvrir une redirection que sur un `<` nu, lire les
 guillemets d'une substitution comme le shell (déjà la piste ci-dessus), et
 reconnaître les préfixes uniques des options longues de sed.
 
+Réduit le 14 novembre, sur la décision de Théo (D-0111, J-2026-11-14-L) :
+ne restent que les formes qu'un agent coopératif écrit dans son travail,
+le dièse (un commentaire en fin de ligne fait perdre la commande
+suivante) et la substitution aux guillemets imbriqués (`"$(cmd "arg")"`,
+une forme courante, désaccorde les guillemets et perd la commande qui
+suit). Les autres (substitution entre guillemets qui écrit, `eval`,
+fonction, `CDPATH`, `cd` qui échoue, `env -C`, heredoc vu à tort, `"<"`,
+options abrégées de sed) restent des risques acceptés, que
+`protege.fichiers` attrape ensuite.
+
 ## Fait quand
 
-- [ ] chacune de ces écritures d'un fichier protégé est refusée par le hook, et un test le montre
+- [ ] une écriture d'un fichier protégé après un commentaire en fin de ligne, ou après une substitution aux guillemets imbriqués, est refusée par le hook, et un test le montre

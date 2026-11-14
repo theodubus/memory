@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0211 — Le hook de l'agent laisse passer les formes du shell que la seconde revue de B-0171 a trouvées, risques acceptés
 
-> statut : ouvert · origine : J-2026-11-13-H · lu : backlog@c37b771c
+> statut : abandonné · origine : J-2026-11-13-H · ref : J-2026-11-14-L · lu : backlog@c37b771c
 
 La seconde revue sans contexte de B-0171 a trouvé des formes du shell par
 lesquelles une écriture d'un fichier protégé passe le hook de l'agent.
@@ -63,6 +63,11 @@ lui ; juger aussi la forme écrite d'un chemin entre apostrophes ; lire
 `unset IFS` comme la coupure par défaut ; élargir les motifs après
 `bash -O` ; faire juger par `_attrape_par` la raison de chaque appel d'un
 défaut.
+
+Abandonné le 14 novembre, sur la décision de Théo (D-0111, J-2026-11-14-L) :
+ces formes, qu'un agent coopératif n'écrit pas dans son travail, restent
+des risques acceptés, que `protege.fichiers` attrape ensuite ; elles
+n'ouvrent plus de sujet.
 
 ## Fait quand
 
