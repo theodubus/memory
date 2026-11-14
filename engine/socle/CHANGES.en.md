@@ -7,6 +7,22 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-14-f — The threat model of the agent's hook
+
+The guide now says what the agent's hook stops: the mistakes of a
+cooperative agent, before they take effect. It judges the shell forms an
+agent writes in its work, and, whatever its form, what nothing catches
+afterwards: deleting the project or a directory that contains it, an
+irreversible external action, a leak of the private memory into what gets
+published. A write to a protected file in a form one writes only to get
+around it (an `eval`, `IFS`, a path built on the fly in another language)
+is outside its model: the `protege.fichiers` check refuses it afterwards.
+The hook itself does not change.
+
+To do: a hole of the hook of that last kind, found by a review, opens no
+backlog subject; a hole through which passes what nothing catches opens
+one, whatever its form.
+
 ## 2026-11-14-e — The socle-batch skill leads a batch
 
 A new socle skill, `socle-batch`, put in place and protected like the others

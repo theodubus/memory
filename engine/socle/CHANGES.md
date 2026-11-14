@@ -7,6 +7,22 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-14-f — Le modèle de menace du hook de l'agent
+
+Le guide dit désormais ce que le hook de l'agent arrête : les erreurs d'un
+agent coopératif, avant qu'elles agissent. Il juge les formes du shell
+qu'un agent écrit dans son travail, et, quelle qu'en soit la forme, ce que
+rien ne rattrape ensuite : supprimer le projet ou un dossier qui le
+contient, une action externe irréversible, une fuite de la mémoire privée
+dans ce qui se publie. Une écriture d'un fichier protégé sous une forme
+qu'on n'écrit que pour contourner (un `eval`, `IFS`, un chemin construit au
+vol dans un autre langage) est hors de son modèle : le contrôle
+`protege.fichiers` la refuse ensuite. Le hook lui-même ne change pas.
+
+À faire : un trou du hook de cette dernière sorte, qu'une revue trouve,
+n'ouvre pas de sujet au backlog ; un trou par lequel passe ce que rien ne
+rattrape en ouvre un, quelle qu'en soit la forme.
+
 ## 2026-11-14-e — Le skill socle-batch conduit un lot
 
 Un skill nouveau du socle, `socle-batch`, posé et protégé comme les autres
