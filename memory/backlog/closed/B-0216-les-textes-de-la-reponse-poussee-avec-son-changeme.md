@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0216 — Les textes de la réponse poussée avec son changement disent « même tour » au lieu de « même push », et omettent le fichier protégé qui peut la précéder ; la copie protégée de socle-request en retard
 
-> statut : ouvert · origine : J-2026-11-14-D · lu : backlog@f57ca0fd
+> statut : fait · origine : J-2026-11-14-D · ref : J-2026-11-14-W · lu : backlog@f57ca0fd
 
 La revue de B-0142 (J-2026-11-14-D), constat 3. Le gabarit du skill
 `socle-request` (français et anglais) et ADR-0074 disent de pousser la
@@ -19,4 +19,4 @@ demande, attend que ce texte soit juste.
 ## Fait quand
 
 - [x] tous les textes disent « dans le même push », et le cas du fichier protégé qui précède sa réponse
-- [ ] la copie protégée de ce dépôt suit son gabarit, sur une demande validée
+- [x] la copie protégée de ce dépôt suit son gabarit, sur une demande validée
