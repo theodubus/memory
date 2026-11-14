@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0207 — Le découpage du hook de l'agent perd la commande qui suit un dièse, et ne suit ni ce que lance une substitution entre guillemets, ni l'état d'un eval, d'une fonction ou de CDPATH
 
-> statut : ouvert · origine : J-2026-11-13-H · lu : backlog@f4a491f0
+> statut : fait · origine : J-2026-11-13-H · ref : J-2026-11-14-AF · lu : backlog@f4a491f0
 
 Trouvés en corrigeant la revue de B-0171, voisins de ce qu'elle citait ;
 chacun passait avant B-0171 et passe toujours, et seul `protege.fichiers`
@@ -71,6 +71,31 @@ fonction, `CDPATH`, `cd` qui échoue, `env -C`, heredoc vu à tort, `"<"`,
 options abrégées de sed) restent des risques acceptés, que
 `protege.fichiers` attrape ensuite.
 
+## Modèle de menace
+
+La règle 2 de D-0112 : le hook juge les formes du shell qu'un agent
+coopératif écrit dans son travail. Un commentaire en fin de ligne, `$#`, un
+`#` dans une adresse ou un format (`--format="%h # %s"`), et une
+substitution entre guillemets dont l'argument a ses propres guillemets
+(`"$(git log -1 --format="%s")"`, `"$(dirname "$F")"`) en sont.
+
+Ce que le changement arrête : une écriture d'un fichier protégé, une action
+irréversible ou une commande réservée à l'humain sur la ligne qui suit un
+commentaire, après un `#` au milieu d'un mot (`x#`, `$#`), ou après une
+substitution aux guillemets imbriqués : le découpage retire lui-même un
+commentaire, seulement en tête d'un mot et sans sa fin de ligne, et lit les
+guillemets d'une substitution entre guillemets comme le shell, accents
+graves compris. Un `cd` qu'une telle substitution cite entre ses propres
+guillemets (`"$(echo "; cd /tmp; ")"`) n'est plus lu comme une commande.
+
+Ce qu'il laisse passer : ce que lance la substitution entre guillemets
+elle-même (`echo "$(rm …)"`), et les autres formes de ce sujet (`eval`,
+fonction, `CDPATH`, `cd` qui échoue, `env -C`, heredoc vu à tort, `"<"`,
+options abrégées de sed), qui restent des risques acceptés (D-0111) ; un
+`${…}` aux guillemets imbriqués entre guillemets, et un commentaire dans
+le corps d'une substitution, qu'on n'écrit guère. `protege.fichiers`
+attrape ensuite l'écriture d'un fichier protégé.
+
 ## Fait quand
 
-- [ ] une écriture d'un fichier protégé après un commentaire en fin de ligne, ou après une substitution aux guillemets imbriqués, est refusée par le hook, et un test le montre
+- [x] une écriture d'un fichier protégé après un commentaire en fin de ligne, ou après une substitution aux guillemets imbriqués, est refusée par le hook, et un test le montre

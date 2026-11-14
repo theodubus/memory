@@ -7,6 +7,18 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-14-j — The agent's hook no longer loses the command after a hash or nested quotes
+
+The agent's hook reads a `#` as the shell does: it opens a comment only at
+the start of a word, and the comment stops at the end of its line. A `#` in
+the middle of a word (`x#`, `$#`, an address) no longer loses the command
+that follows, nor does an end-of-line comment lose the one on the next line.
+A substitution between quotes whose argument has its own quotes (`"$(cmd
+"arg")"`) is also read as the shell reads it: the command that follows it is
+judged. What the substitution itself runs is still not judged.
+
+To do: nothing.
+
 ## 2026-11-14-i — The agent's hook reads conditions and loops
 
 The agent's hook now judges a command written behind a shell reserved word

@@ -7,6 +7,19 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-14-j — Le hook de l'agent ne perd plus la commande qui suit un dièse ou des guillemets imbriqués
+
+Le hook de l'agent lit un `#` comme le shell : il n'ouvre un commentaire
+qu'en tête d'un mot, et le commentaire s'arrête à la fin de sa ligne. Un
+`#` au milieu d'un mot (`x#`, `$#`, une adresse) ne fait plus perdre la
+commande qui suit, ni un commentaire en fin de ligne celle de la ligne
+suivante. Une substitution entre guillemets dont l'argument a ses propres
+guillemets (`"$(cmd "arg")"`) se lit aussi comme le shell la lit : la
+commande qui la suit se juge. Ce que lance la substitution elle-même ne se
+juge toujours pas.
+
+À faire : rien.
+
 ## 2026-11-14-i — Le hook de l'agent lit les conditions et les boucles
 
 Le hook de l'agent juge désormais une commande écrite derrière un mot

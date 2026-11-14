@@ -2687,6 +2687,10 @@ MESSAGES: dict[str, str] = {
     "fichier protégé écrit par le shell par un chemin relatif au dossier courant de l'agent, un motif ou `$PWD`":
         "protected file written by the shell through a path relative to the agent's current directory, a pattern or "
         "`$PWD`",
+    "fichier protégé écrit par le shell après un commentaire en fin de ligne, un `#` au milieu d'un mot ou une "
+    "substitution aux guillemets imbriqués":
+        "protected file written by the shell after an end-of-line comment, a `#` in the middle of a word or a "
+        "substitution with nested quotes",
     "dossier qui contient le projet supprimé par le shell : `rm -rf ..`, un `cd` puis `../..`, les sources d'un "
     "`mv`, `git clean` sous `-C ..`, un `find` qui supprime depuis un dossier qui le contient, ou depuis la racine "
     "sans rien filtrer":
@@ -2831,6 +2835,10 @@ MESSAGES: dict[str, str] = {
     "passent le hook de l'agent (B-0171)":
         "a too deeply nested command that writes nothing, a long heredoc and 500 `cd` to a directory outside the "
         "project pass the agent's hook (B-0171)",
+    "un `#` dans un mot, une redirection dans un commentaire et une substitution aux guillemets imbriqués qui lit "
+    "un fichier protégé passent le hook de l'agent (B-0207)":
+        "a `#` in a word, a redirection in a comment and a substitution with nested quotes that reads a protected "
+        "file pass the agent's hook (B-0207)",
     "une boucle sur des fichiers libres, une condition et un groupe qui écrivent un fichier libre passent le hook "
     "de l'agent (B-0204)":
         "a loop over free files, a condition and a group that write a free file pass the agent's hook (B-0204)",

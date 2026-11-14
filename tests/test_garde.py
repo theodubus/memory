@@ -541,6 +541,30 @@ class TestGarde(unittest.TestCase):
                 with self.subTest(cmd):
                     self.assertIsNone(hooks.refus_bash(self.projet, cmd))
 
+    def test_un_diese_ou_des_guillemets_imbriques_ne_perdent_pas_la_suite(self):
+        """B-0207 : `shlex` lisait un `#` comme un commentaire au milieu d'un
+        mot, et ce commentaire avalait la fin de la ligne ; une substitution
+        aux guillemets imbriqués désaccordait les guillemets. La commande
+        qui suivait se perdait."""
+        protege = "écriture d'un fichier protégé"
+        for cmd in ("echo x # une note\nsed -i s/3/9/ .socle/policy.toml",
+                    "echo x#; sed -i s/3/9/ .socle/policy.toml",
+                    "[ $# -eq 0 ]; sed -i s/3/9/ .socle/policy.toml",
+                    f"echo \"$({G} log -1 --format=\"%h # %s\")\"; sed -i s/3/9/ .socle/policy.toml",
+                    "X=\"$(echo \"l'apostrophe\")\"; sed -i s/3/9/ .socle/policy.toml",
+                    "X=\"$(echo \"; cd /tmp; \")\"; echo x >> .socle/policy.toml",
+                    "X=\"`echo \"; cd /tmp; \"`\"; echo x >> .socle/policy.toml",
+                    "D=\"$(dirname \"$(pwd)\")\" && echo x >> .socle/policy.toml"):
+            with self.subTest(cmd):
+                self.assertIn(protege, hooks.refus_bash(self.projet, cmd) or "")
+                self.assertEqual(self.decide(*B(cmd)), "refus")
+        for cmd in ("echo \"a#b\" > notes.txt", "echo x # > .socle/policy.toml", "# un commentaire\nls",
+                    f"echo \"$({G} log -1 --format=\"%h %s\")\" > notes.txt", "grep -c '#' calc.py > /tmp/n",
+                    "echo x; # rm -rf .socle", "echo \"$(cat .socle/policy.toml)\" > notes.txt",
+                    "curl -s \"https://example.org/a#b\" -o /tmp/page.html"):
+            with self.subTest(cmd):
+                self.assertIsNone(hooks.refus_bash(self.projet, cmd))
+
     def test_remise_en_etat_d_un_fichier_protege(self):
         """D-0098 (B-0165) : l'agent remet un fichier protégé changé par
         erreur à son état du dernier commit, et supprime un fichier apparu
@@ -930,6 +954,25 @@ class TestDecoupage(unittest.TestCase):
         self.assertEqual(commandes.jetons("(a);b)>f"), ["(", "a", ")", ";", "b", ")", ">", "f"])
         self.assertEqual(commandes.jetons("echo x # l'apostrophe d'un commentaire $(rm a)"), ["echo", "x"])
         self.assertEqual([c.programme for c in commandes.analyser("echo x # l'apostrophe $(rm a) `rm b`")], ["echo"])
+
+    def test_un_diese_et_les_guillemets_d_une_substitution(self):
+        """B-0207 : un `#` n'ouvre un commentaire qu'en tête d'un mot, et le
+        commentaire laisse sa fin de ligne ; une substitution entre
+        guillemets a ses propres guillemets."""
+        for texte, attendu in (
+                ("echo x # c\nls", ["echo", "x", "\n", "ls"]), ("echo x#; ls", ["echo", "x#", ";", "ls"]),
+                ("[ $# -eq 0 ]; ls", ["[", "$#", "-eq", "0", "]", ";", "ls"]), ("a;#c\nb", ["a", ";", "\n", "b"]),
+                ("echo ${#F} a#b \\#c", ["echo", "${#F}", "a#b", "#c"]), ("echo $(a)#b", ["echo", "$(a)#b"]),
+                ('X="$(a "b c")"; ls', ['X=$(a "b c")', ";", "ls"]),
+                ('echo "x $(a "; b") y"', ["echo", 'x $(a "; b") y']),
+                ('echo "`a "b"`" c', ["echo", '`a "b"`', "c"]),
+                ('echo "$(a "$(b "c")")"; ls', ["echo", '$(a "$(b "c")")', ";", "ls"])):
+            with self.subTest(texte):
+                self.assertEqual(commandes.jetons(texte), attendu)
+        # Ce que lance une substitution entre guillemets ne se juge pas
+        # (un risque accepté) ; un `cd` cité entre ses guillemets non plus.
+        simples = commandes.analyser('X="$(echo "; cd /tmp; ")"; ls')
+        self.assertEqual([(c.argv, c.dossier) for c in simples], [(["ls"], "")])
 
     def test_accolades(self):
         self.assertEqual(commandes.accolades("a{b,c{d,e}}f"), ["abf", "acdf", "acef"])

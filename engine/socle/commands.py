@@ -153,9 +153,26 @@ def sans_heredocs(texte: str) -> str:
 
 
 def _fin_guillemets(texte: str, i: int) -> int:
-    """L'index après la chaîne `"…"` ouverte en `i`, comme `shlex` la lit."""
+    """L'index après la chaîne `"…"` ouverte en `i`, comme le shell la lit :
+    une substitution qu'elle contient (`$(…)`, accents graves) a ses propres
+    guillemets (`"$(cmd "arg")"`, B-0207)."""
     j, n = i + 1, len(texte)
     while j < n and texte[j] != '"':
+        if texte[j] == "\\":
+            j += 2
+        elif texte.startswith("$(", j):
+            j = _fermante(texte, j + 1)
+        elif texte[j] == "`":
+            j = _fin_accents(texte, j)
+        else:
+            j += 1
+    return min(j + 1, n)
+
+
+def _fin_accents(texte: str, i: int) -> int:
+    """L'index après la substitution entre accents graves ouverte en `i`."""
+    j, n = i + 1, len(texte)
+    while j < n and texte[j] != "`":
         j += 2 if texte[j] == "\\" else 1
     return min(j + 1, n)
 
@@ -237,8 +254,10 @@ def _preparer(texte: str) -> tuple[str, list[tuple[str, str | None]]]:
     sait pas lire. Rend aussi ces parts : (texte d'origine, commande qu'elle
     lance dans un sous-shell, ou `None`). Une chaîne `$'…'` simple devient
     la chaîne qu'elle nomme, `$"…"` une chaîne entre guillemets. Hors des
-    guillemets seulement, comme `shlex` les lit ; un `#` y ouvre, comme pour
-    lui, un commentaire jusqu'à la fin de la ligne."""
+    guillemets seulement, sauf une substitution entre guillemets, mise de
+    côté pour que `shlex` n'y lise pas d'autres guillemets. Un `#` en tête
+    d'un mot ouvre un commentaire, retiré jusqu'à la fin de la ligne, qui
+    reste ; ailleurs (`x#`, `$#`), il fait partie du mot (B-0207)."""
     texte = texte.replace("\x01", "")
     res: list[str] = []
     parts: list[tuple[str, str | None]] = []
@@ -262,13 +281,27 @@ def _preparer(texte: str) -> tuple[str, list[tuple[str, str | None]]]:
             i = fin
         elif ch == '"':
             fin = _fin_guillemets(texte, i)
-            res.append(texte[i:fin])
+            res.append('"')
+            k = i + 1
+            while k < fin:
+                if texte[k] == "\\":
+                    res.append(texte[k:k + 2])
+                    k += 2
+                elif texte.startswith("$(", k) or texte[k] == "`":
+                    # Ce qu'elle lance ne se juge pas (un risque accepté,
+                    # D-0111) ; ses guillemets ne se lisent plus comme ceux
+                    # de la chaîne.
+                    bout = _fermante(texte, k + 1) if texte[k] == "$" else _fin_accents(texte, k)
+                    parts.append((texte[k:bout], None))
+                    res.append(f"\x01{len(parts) - 1}\x01")
+                    k = bout
+                else:
+                    res.append(texte[k])
+                    k += 1
             i = fin
-        elif ch == "#":
+        elif ch == "#" and (not res or res[-1][-1:] in (" ", "\t", "\n", ";", "&", "|", "(", ")", "<", ">")):
             fin = texte.find("\n", i)
-            fin = n if fin < 0 else fin
-            res.append(texte[i:fin])
-            i = fin
+            i = n if fin < 0 else fin
         elif texte.startswith("$'", i):
             fin, valeur = _ansi_c(texte, i + 2)
             if valeur is None:
@@ -306,6 +339,9 @@ def _jetons(texte: str) -> list[tuple[str, list[str]]]:
     lex = shlex.shlex(prepare, posix=True, punctuation_chars=";&|()<>\n")
     lex.whitespace = " \t\r"
     lex.whitespace_split = True
+    # `_preparer` a retiré les commentaires : un `#` qui reste est dans un
+    # mot, et `shlex` en avalerait la fin de la ligne (B-0207).
+    lex.commenters = ""
     try:
         bruts = list(lex)
     except ValueError:  # guillemets non fermés : on juge chaque mot tel quel

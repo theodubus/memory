@@ -1471,6 +1471,16 @@ def _cas() -> list[Cas]:
             "for f in .socle/*.toml; do sed -i s/3/9/ \"$f\"; done",
             "{ cd /tmp; } | cat; echo 'max_attempts = 99' >> .socle/policy.toml")])
 
+    @defaut("protege-diese-guillemets", "fichier protégé écrit par le shell après un commentaire en fin de ligne, un "
+            "`#` au milieu d'un mot ou une substitution aux guillemets imbriqués", "agent", "écriture protégée")
+    def _(a, c):
+        # B-0207 : la commande qui suivait se perdait.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "echo ok # une note\necho 'max_attempts = 99' >> .socle/policy.toml",
+            "[ $# -eq 0 ]; echo 'max_attempts = 99' >> .socle/policy.toml",
+            "X=\"$(echo \"l'apostrophe\")\"; sed -i s/3/9/ .socle/policy.toml",
+            "X=\"$(echo \"; cd /tmp; \")\"; echo 'max_attempts = 99' >> .socle/policy.toml")])
+
     @defaut("ecriture-illisible-composee", "chemin écrit par le shell après une condition ou une boucle qui change "
             "le dossier ou une variable, ou dans la branche qui suit", "agent", "écriture illisible")
     def _(a, c):
@@ -1977,6 +1987,13 @@ def _temoins() -> list[tuple[str, Callable]]:
                 or etage_outil(a, c, "Bash", {"command": "if [ -f calc.py ]; then echo ok > notes.txt; else rm -f "
                                                          "notes.txt; fi"})
                 or etage_outil(a, c, "Bash", {"command": "{ echo a; echo b; } > notes.txt"}))
+
+    @temoin("un `#` dans un mot, une redirection dans un commentaire et une substitution aux guillemets imbriqués "
+            "qui lit un fichier protégé passent le hook de l'agent (B-0207)")
+    def _(a, c):
+        return (etage_outil(a, c, "Bash", {"command": "echo \"a#b\" > notes.txt"})
+                or etage_outil(a, c, "Bash", {"command": "echo ok # > .socle/policy.toml"})
+                or etage_outil(a, c, "Bash", {"command": "echo \"$(grep -c \"=\" .socle/policy.toml)\" > notes.txt"}))
 
     @temoin("une commande trop imbriquée qui n'écrit rien, un long heredoc et 500 `cd` vers un dossier hors du "
             "projet passent le hook de l'agent (B-0171)")
