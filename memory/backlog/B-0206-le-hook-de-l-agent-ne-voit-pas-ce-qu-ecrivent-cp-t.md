@@ -36,6 +36,14 @@ ranger `find -delete`, `find -exec <écrivain>`, `xargs <écrivain>` et
 refusé dans le projet, comme un chemin inconnu), et juger `python -c` par
 les chemins protégés qu'il cite.
 
+Le 14 novembre, Théo veut ce sujet traité s'il ne génère pas lui aussi
+des cas sans fin (D-0111, J-2026-11-14-L). La liste est finie ; seul
+`python -c` ouvre un langage entier. Il se borne par son modèle de
+menace : un écrivain que le hook ne sait pas lire (`python -c`, `xargs`)
+est jugé par les chemins protégés qu'il cite en toutes lettres ; un chemin
+construit au vol dans un autre langage est hors du modèle, un risque
+accepté que `protege.fichiers` attrape ensuite, et n'ouvre pas de sujet.
+
 ## Fait quand
 
 - [ ] chacune de ces écritures d'un fichier protégé est refusée par le hook, et un test le montre

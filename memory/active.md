@@ -5,9 +5,9 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Le lot B-0212, B-0202 et B-0175 relu (J-2026-11-14-G à J), à
-fusionner. Ouvert avec Théo, sans demande : borner la croissance du
-backlog (J-2026-11-14-K). Pilote en pause.
+Le backlog trié par D-0111 ; D-0112 validée, ses règles à écrire avec
+les lots 3 et 5. Feu vert de Théo pour le lot 1, en session neuve
+(J-2026-11-14-N). Pilote en pause.
 
 ## Consignes en cours
 
@@ -24,12 +24,11 @@ Leur texte exact est dans l'entrée du journal citée.
   `theodubus/socle` ; donner leurs liens reste permis (J-2026-11-09-M).
 - Le pilote est un essai de choc : seules les imperfections du socle se
   corrigent ici (J-2026-10-31-E).
-- La documentation se conçoit avant de s'écrire, son plan soumis à Théo
-  dans la conversation ; ton formel, sans tutoiement ; chaque question à
-  un seul endroit ; elle dit à quoi sert l'outil sans rapporter ses
-  essais ; le guide suit le parcours de l'utilisateur ; ses schémas se
-  vérifient rendus ; elle n'est faite que validée (J-2026-10-20-Y,
-  J-2026-10-21-A, J-2026-10-22-A).
+- La documentation se conçoit avant de s'écrire, son plan soumis à Théo ;
+  ton formel ; chaque question à un seul endroit ; elle dit à quoi sert
+  l'outil ; le guide suit le parcours de l'utilisateur ; ses schémas se
+  vérifient rendus ; faite que validée (J-2026-10-20-Y, J-2026-10-21-A,
+  J-2026-10-22-A).
 - Une limite d'usage proche décide de l'ordre des sujets, jamais de la
   profondeur du travail (J-2026-11-09-C).
 - Une attente annoncée dans le récap s'accompagne d'un réveil programmé
@@ -59,14 +58,16 @@ Leur texte exact est dans l'entrée du journal citée.
 
 ## Prochaines étapes
 
-Avant toute nouvelle fonction (J-2026-11-13-I, D-0108, D-0109) :
+Avant toute nouvelle fonction (J-2026-11-13-I, D-0108, D-0109, D-0111),
+par lots :
 
-1. B-0196, B-0216.
+1. B-0196, B-0216, avec B-0215 (même contrôle).
 2. B-0151 et B-0199.
-3. Le reste, par priorité : B-0173 (son dernier critère), B-0208,
-   B-0179 à la reprise du pilote ; B-0204 à B-0207, B-0211, B-0176,
-   B-0167, B-0197, B-0200, B-0201, B-0156, B-0210, B-0218 ; en basse B-0195,
-   B-0172, B-0198, B-0203.
-4. La mise à jour de chess, avec le prompt complété.
-5. Ensuite la planification (B-0101), puis la répartition entre agents
+3. Le hook : B-0208 (haute), B-0204 à B-0207, la règle 2 de D-0112.
+4. B-0173 (son dernier critère) ; B-0179 à la reprise du pilote.
+5. La revue : B-0213, B-0214, la règle 1 de D-0112.
+6. Le reste : B-0176, B-0167, B-0197, B-0200, B-0201, B-0156, B-0210,
+   B-0218 ; en basse B-0219, B-0217, B-0195, B-0172, B-0198, B-0203.
+7. La mise à jour de chess, avec le prompt complété.
+8. Ensuite la planification (B-0101), puis la répartition entre agents
    (B-0055).

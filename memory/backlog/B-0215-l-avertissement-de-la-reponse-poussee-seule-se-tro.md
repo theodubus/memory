@@ -23,7 +23,14 @@ hors de son modèle de menace.
 - Une exception du contrôle deviendrait une erreur qui refuse le commit
   ou le push ; rien ne la protège.
 
+Écartés le 14 novembre, sur la décision de Théo (D-0111, J-2026-11-14-L),
+comme cas exotiques d'un simple avertissement : la base non poussée dans
+les quatre cas de git (HEAD détaché, branche élaguée ou suivie ailleurs,
+push d'une autre branche), le test nommé par sa description, le lien
+Markdown. Restent, parce qu'ils se produisent dans l'usage normal : la clé
+des seuils, le scénario même de B-0142, et l'exception non protégée, qui
+refuserait un commit.
+
 ## Fait quand
 
-- [ ] la base non poussée suit le push réel dans les quatre cas, et un test le montre
-- [ ] une clé des seuils et un lien Markdown sont suivis, une exception n'est qu'un avertissement, et un test le montre
+- [ ] une clé des seuils est suivie comme un test, une exception du contrôle n'est qu'un avertissement, et un test le montre
