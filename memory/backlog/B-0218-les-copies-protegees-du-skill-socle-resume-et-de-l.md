@@ -18,6 +18,10 @@ Pistes : en mode amont, l'état ou un contrôle signale une copie protégée
 différente de son gabarit ; le rafraîchissement de toutes les copies en
 retard sur une seule demande, une fois B-0214 et B-0216 faits.
 
+La revue de B-0212 (J-2026-11-14-H), constat 8 : B-0212 change le gabarit
+du skill `socle-review`, que D-0110 venait de recopier ; la copie protégée
+est de nouveau en retard. Tout changement d'un gabarit crée ce retard.
+
 ## Fait quand
 
 - [ ] en mode amont, une copie protégée différente de son gabarit est signalée, et un test le montre

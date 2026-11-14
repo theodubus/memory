@@ -18,7 +18,26 @@ la plage que juge le dossier de `socle review`.
   montre à l'envers des changements étrangers, et les messages de commits
   fusionnés.
 
+La revue de B-0212 (J-2026-11-14-H), constats 1 à 6 et 9, de même nature,
+sur la base que choisit ADR-0075 (`engine/socle/review.py`, commit
+f73f0b4) :
+
+- un lot de mémoire seule, pas encore poussé, passe pour un lot déjà
+  poussé : le dossier donne le lot précédent ;
+- une branche distante en avance sur HEAD par du code n'est pas
+  reconnue : le « diff du lot » est l'inverse du commit poussé d'ailleurs ;
+- un lot poussé à moitié ne montre que sa partie non poussée, sans note ;
+- sans ancêtre commun (clone superficiel), ou quand la branche par défaut
+  n'est que devinée, la note donne une raison fausse ;
+- sous `--since`, la note du dossier vide propose une commande sans
+  `--since`, et un `--since` sur la branche par défaut fait disparaître
+  les sujets ;
+- des lots poussés qui s'accumulent sur la même pull request se relisent
+  ensemble ; la pointe d'avant le dernier push (`<amont>@{1}`, dans le
+  reflog) pourrait être proposée comme base.
+
 ## Fait quand
 
 - [ ] le dossier mesure le lot depuis l'ancêtre commun, refuse une référence inconnue ou qui n'est pas un ancêtre, et un test le montre
 - [ ] un sujet touché sans que son « Fait quand » ou son statut change n'est pas donné comme barre, et un test le montre
+- [ ] les cas relevés par la revue de B-0212 sont traités, ou écartés d'une raison, et un test montre chaque cas traité
