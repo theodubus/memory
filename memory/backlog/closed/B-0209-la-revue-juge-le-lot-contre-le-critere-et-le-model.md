@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0209 — La revue juge le lot contre le critère et le modèle de menace de ses sujets : seuls les constats bloquants se corrigent dans le lot
 
-> statut : ouvert · origine : J-2026-11-13-J · priorité : haute · lu : backlog@33a4d320
+> statut : fait · origine : J-2026-11-13-J · priorité : haute · lu : backlog@33a4d320 · ref : J-2026-11-13-M
 
 Le lot de B-0010 et B-0171, le 13 novembre, a pris quatre revues et
 trois corrections pour deux sujets, quand une revue rend d'ordinaire 3 à
@@ -25,6 +25,6 @@ suit le même changement.
 
 ## Fait quand
 
-- [ ] le dossier de `socle review` donne au relecteur le critère « Fait quand » des sujets du lot et, pour un garde-fou, son modèle de menace, et lui demande de classer chaque constat : bloquant (contredit un critère, régression, perte de données, contournement dans le modèle de menace) ou pour le backlog ; un test le montre
-- [ ] le skill `socle-review` dit que seuls les constats bloquants se corrigent dans le lot, les autres vont au backlog, et qu'une seconde revue ne porte que sur la correction de bloquants lourde
-- [ ] un sujet qui pose ou change un garde-fou écrit son modèle de menace avant son code, et un sujet dont la conception n'est pas tranchée, sa spécification avant son code
+- [x] le dossier de `socle review` donne au relecteur le critère « Fait quand » des sujets du lot et, pour un garde-fou, son modèle de menace, et lui demande de classer chaque constat : bloquant (contredit un critère, régression, perte de données, contournement dans le modèle de menace) ou pour le backlog ; un test le montre
+- [x] le skill `socle-review` dit que seuls les constats bloquants se corrigent dans le lot, les autres vont au backlog, et qu'une seconde revue ne porte que sur la correction de bloquants lourde
+- [x] un sujet qui pose ou change un garde-fou écrit son modèle de menace avant son code, et un sujet dont la conception n'est pas tranchée, sa spécification avant son code
