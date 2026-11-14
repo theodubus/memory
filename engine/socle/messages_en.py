@@ -2699,14 +2699,14 @@ MESSAGES: dict[str, str] = {
         "substitution with nested quotes",
     "dossier qui contient le projet supprimé par le shell : `rm -rf ..`, un `cd` puis `../..`, les sources d'un "
     "`mv`, `git clean` sous `-C ..`, un `find` qui supprime depuis un dossier qui le contient, ou depuis la racine "
-    "sans rien filtrer":
+    "sans filtre de nom ou de chemin qui garde sa suppression":
         "directory that contains the project deleted by the shell: `rm -rf ..`, a `cd` then `../..`, the sources of an "
         "`mv`, `git clean` under `-C ..`, a `find` that deletes from a directory that contains it, or from the root "
-        "without filtering anything",
+        "without a name or path filter guarding its deletion",
     "fichier protégé écrit par le shell derrière un mot réservé (`then`, `else`, `do`, `!`, `{`), par la "
-    "variable d'un `for` ou après un groupe dans un pipeline":
+    "variable d'un `for`, après un groupe dans un pipeline ou après la définition d'une fonction":
         "protected file written by the shell behind a reserved word (`then`, `else`, `do`, `!`, `{`), through a "
-        "`for` variable or after a group in a pipeline",
+        "`for` variable, after a group in a pipeline or after a function definition",
     "chemin écrit par le shell après une condition ou une boucle qui change le dossier ou une variable, ou dans la "
     "branche qui suit":
         "path written by the shell after a condition or a loop that changes the directory or a variable, or in the "
@@ -2849,9 +2849,10 @@ MESSAGES: dict[str, str] = {
     "un fichier protégé passent le hook de l'agent (B-0207)":
         "a `#` in a word, a redirection in a comment and a substitution with nested quotes that reads a protected "
         "file pass the agent's hook (B-0207)",
-    "une boucle sur des fichiers libres, une condition et un groupe qui écrivent un fichier libre passent le hook "
-    "de l'agent (B-0204)":
-        "a loop over free files, a condition and a group that write a free file pass the agent's hook (B-0204)",
+    "une boucle sur des fichiers libres, une condition et un groupe qui écrivent un fichier libre, et une boucle "
+    "qui revient à son dossier, passent le hook de l'agent (B-0204)":
+        "a loop over free files, a condition and a group that write a free file, and a loop that comes back to its "
+        "directory, pass the agent's hook (B-0204)",
     "un chemin écrit par le shell à travers une variable sous un dossier hors du projet, une variable affectée vers "
     "un fichier libre ou un motif qui ne nomme aucun fichier protégé passent le hook de l'agent (B-0171)":
         "a path written by the shell through a variable under a directory outside the project, a variable assigned "
@@ -2862,10 +2863,11 @@ MESSAGES: dict[str, str] = {
         "after a subshell, a free file, a default value outside the project, a `sed` without `-i` that reads a "
         "protected file and, from a directory outside the project, a relative pattern pass the agent's hook (B-0171, "
         "B-0205)",
-    "la suppression d'un dossier voisin du projet, d'un dossier du projet, et un `find` qui filtre ce qu'il supprime "
-    "sous la racine passent le hook de l'agent (B-0208)":
-        "deleting a directory next to the project, a directory of the project, and a `find` that filters what it "
-        "deletes under the root pass the agent's hook (B-0208)",
+    "la suppression d'un dossier voisin du projet, d'un dossier du projet, un `find` sans filtre sous un dossier "
+    "du projet et un `find` qui filtre ce qu'il supprime sous la racine passent le hook de l'agent (B-0208)":
+        "deleting a directory next to the project, a directory of the project, a `find` without a filter under a "
+        "directory of the project and a `find` that filters what it deletes under the root pass the agent's hook "
+        "(B-0208)",
     "message de commit passé par un fichier relatif au dossier courant de l'agent, qui cite un terme privé":
         "commit message passed through a file relative to the agent's current directory, which cites a private term",
     "mode compagnon : un message de commit passé par un fichier du dossier courant de l'agent, qui ne cite aucun "

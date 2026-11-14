@@ -65,9 +65,12 @@ INCONNU = "\0"
 RESERVES = ("if", "then", "else", "elif", "while", "until", "do", "!", "{")
 # Ce qui ouvre une commande composée, et ce qui la ferme. Ce qu'une
 # condition ou une boucle change devient inconnu après elle, et dans la
-# branche `else` ou `elif` qui suit ; un groupe `{ …; }` s'exécute une fois.
+# branche `else` ou `elif` qui suit ; un groupe `{ …; }` s'exécute une fois,
+# et le corps d'une fonction (`nom() { …; }`) pas là où il s'écrit.
 OUVRANTS = ("if", "while", "until", "for", "select", "{")
 FERMANTS = ("fi", "done", "}")
+# Le nom d'une fonction que définit `nom ( )`.
+NOM_DE_FONCTION = re.compile(r"[\w.:+@-]+")
 # Les variables que le shell tient lui-même : leur valeur dans
 # l'environnement du hook n'est pas celle du shell de l'agent (`_`, le
 # chemin de python3 ; `OLDPWD`, le dossier d'un autre shell). Un shell neuf
@@ -80,6 +83,10 @@ SPECIALES = frozenset({
 # Le repère, dans le texte que lit `shlex`, d'une part mise de côté
 # (`_preparer`).
 REPERE = re.compile("\x01(\\d+)\x01")
+# Ce qui marque un mot fait d'opérateurs échappés ou entre guillemets
+# (`\(`, `';'`) : un mot, que le découpage ne lit pas comme un opérateur
+# (`find … \( … \) -exec … \;`, la revue du lot 3, J-2026-11-14-AH).
+CITE = "\x02"
 # Les opérateurs du shell, les plus longs d'abord : `shlex` rend d'un bloc
 # une suite de ponctuations (`);`, `)>`).
 OPERATEURS = (";;&", "&>>", "<<<", ";;", ";&", "&&", "||", "|&", "&>", ">>", ">|", ">&", "<&", "<<", "<>",
@@ -257,8 +264,11 @@ def _preparer(texte: str) -> tuple[str, list[tuple[str, str | None]]]:
     guillemets seulement, sauf une substitution entre guillemets, mise de
     côté pour que `shlex` n'y lise pas d'autres guillemets. Un `#` en tête
     d'un mot ouvre un commentaire, retiré jusqu'à la fin de la ligne, qui
-    reste ; ailleurs (`x#`, `$#`), il fait partie du mot (B-0207)."""
-    texte = texte.replace("\x01", "")
+    reste ; ailleurs (`x#`, `$#`), il fait partie du mot (B-0207). Des
+    opérateurs échappés ou entre guillemets (`\\(`, `';'`, `"&"`, `$'('`)
+    sont un mot, marqué de `CITE` : `shlex`, qui retire les guillemets, les
+    rendrait comme des opérateurs (la revue du lot 3, J-2026-11-14-AH)."""
+    texte = texte.replace("\x01", "").replace(CITE, "")
     res: list[str] = []
     parts: list[tuple[str, str | None]] = []
     i, n = 0, len(texte)
@@ -269,16 +279,31 @@ def _preparer(texte: str) -> tuple[str, list[tuple[str, str | None]]]:
         res.append(f"\x01{len(parts) - 1}\x01")
         i = fin
 
+    def cite(fin: int, contenu: str):
+        """Des opérateurs échappés ou entre guillemets : un mot."""
+        nonlocal i
+        parts.append((CITE + contenu, None))
+        res.append(f"\x01{len(parts) - 1}\x01")
+        i = fin
+
     while i < n:
         ch = texte[i]
-        if ch == "\\":
+        if ch == "\\" and texte[i + 1:i + 2] and texte[i + 1] in ";&|()<>":
+            cite(i + 2, texte[i + 1])
+        elif ch == "\\":
             res.append(texte[i:i + 2])
             i += 2
         elif ch == "'":
             fin = texte.find("'", i + 1)
             fin = n if fin < 0 else fin + 1
+            if fin - i > 2 and texte[fin - 1] == "'" and _operateur(texte[i + 1:fin - 1]):
+                cite(fin, texte[i + 1:fin - 1])
+                continue
             res.append(texte[i:fin])
             i = fin
+        elif ch == '"' and (fin := _fin_guillemets(texte, i)) - i > 2 and texte[fin - 1] == '"' \
+                and _operateur(texte[i + 1:fin - 1]):
+            cite(fin, texte[i + 1:fin - 1])
         elif ch == '"':
             fin = _fin_guillemets(texte, i)
             res.append('"')
@@ -306,6 +331,8 @@ def _preparer(texte: str) -> tuple[str, list[tuple[str, str | None]]]:
             fin, valeur = _ansi_c(texte, i + 2)
             if valeur is None:
                 mettre(fin)
+            elif _operateur(valeur):
+                cite(fin, valeur)
             else:
                 res.append("'" + valeur.replace("'", "'\\''") + "'")
                 i = fin
@@ -352,13 +379,19 @@ def _jetons(texte: str) -> list[tuple[str, list[str]]]:
             res += [(o, []) for o in _operateurs(j)]
             continue
         internes = [interne for k in REPERE.findall(j) if (interne := parts[int(k)][1]) is not None]
-        res.append((REPERE.sub(lambda m: parts[int(m.group(1))][0], j), internes))
+        mot = REPERE.sub(lambda m: parts[int(m.group(1))][0], j)
+        if CITE in mot:
+            # Un mot fait d'opérateurs cités garde sa marque, que le
+            # découpage retire en le lisant comme un mot.
+            nu = mot.replace(CITE, "")
+            mot = CITE + nu if _operateur(nu) else nu
+        res.append((mot, internes))
     return res
 
 
 def jetons(texte: str) -> list[str]:
     """Les mots et les opérateurs de la commande, guillemets retirés."""
-    return [j for j, _ in _jetons(texte)]
+    return [j.lstrip(CITE) for j, _ in _jetons(texte)]
 
 
 def _operateur(jeton: str) -> bool:
@@ -396,6 +429,32 @@ def _script_du_shell(argv: list[str]) -> str | None:
         else:
             break
     return argv[i] if vu and i < len(argv) else None
+
+
+def _definition(mots: list[str]) -> int | None:
+    """Les mots lus devant un `( )` définissent-ils une fonction : un nom,
+    précédé ou non de `function` et de mots réservés (`then f() {`) ; le
+    nombre de ces mots réservés, ou `None`."""
+    if not mots or not NOM_DE_FONCTION.fullmatch(mots[-1]) or mots[-1] in RESERVES + FERMANTS + ("function",):
+        return None
+    k = len(mots) - 1 - (mots[-2:-1] == ["function"])
+    return k if all(m in RESERVES for m in mots[:k]) else None
+
+
+def _cible_suivie(d: str, cible: str) -> str:
+    """La cible développée `d` d'un `cd` (`cible` telle qu'écrite), ce que le
+    hook ne sait pas suivre remplacé par `INCONNU` : un `**`, qui traverse
+    peut-être plusieurs dossiers (`globstar`), et la valeur d'une variable
+    faite de plusieurs mots (la liste d'un `for`) dont l'un n'est pas un
+    seul nom de dossier (`a/b`, `..`, `~`, `/tmp`). Faite de noms seuls,
+    elle se lit comme un nom, que chaque mot vaut : un `..` la remonte
+    (la revue du lot 3, J-2026-11-14-AH)."""
+    d = re.sub(r"[^/]*\*\*[^/]*", INCONNU, d)
+    champs = d.split() if re.search(r"[$`]", cible) else []
+    if len(champs) > 1 and not all(re.fullmatch(r"[^/~\0][^/\0]*/*", x) and x.rstrip("/") not in (".", "..")
+                                   for x in champs):
+        return INCONNU
+    return d
 
 
 def _sans_prefixes(argv: list[str]) -> list[str]:
@@ -527,9 +586,12 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
     # d'avant elle, ceux du début de sa liste et de son pipeline, et, pour
     # un `for`, sa variable et les mots de sa liste.
     composes: list[tuple[str, _Etat, _Etat, _Etat, bool, tuple[str, str | None] | None]] = []
+    # Un `nom ( )` vient de se lire : le `{` qui suit ouvre le corps d'une
+    # fonction (la revue du lot 3, J-2026-11-14-AH).
+    definition = False
 
     def lieu_de(cible: str) -> str:
-        d = developper(cible, _visibles(env, etat.variables(env)))[0]
+        d = _cible_suivie(developper(cible, _visibles(env, etat.variables(env)))[0], cible)
         if d.startswith(("/", INCONNU)):
             return normaliser(d)
         return normaliser(posixpath.join(etat.lieu, d)) if d else etat.lieu
@@ -554,14 +616,33 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
         ni combien de tours, le shell prendra (B-0204)."""
         mot, avant = composes[-1][0], composes[-1][1]
         suite = etat.vues[len(avant.vues):] if len(etat.vues) >= len(avant.vues) else etat.vues
-        etat.vues.extend((nom, None) for nom in dict.fromkeys(nom for nom, _ in suite))
-        if (etat.dossier, etat.lieu) != (avant.dossier, avant.lieu):
+        changees = dict.fromkeys(nom for nom, _ in suite)
+        etat.vues.extend((nom, None) for nom in changees)
+        if INCONNU in etat.lieu or INCONNU in avant.lieu:
+            if (etat.dossier, etat.lieu) != (avant.dossier, avant.lieu):
+                changer(f"$({mot} …)", INCONNU)
+        elif etat.lieu != avant.lieu:
             changer(f"$({mot} …)", INCONNU)
+        else:
+            # Revenue à son dossier, connu (`cd x; …; cd ..`) : un tour la
+            # laisse où elle était, comme une branche ; le dossier se dit
+            # comme avant elle (la revue du lot 3, J-2026-11-14-AH).
+            etat.dossier = avant.dossier
+            if "PWD" in changees:
+                etat.vues.append(("PWD", etat.lieu))
 
     def reserves():
         """Retire les mots réservés en tête de la commande, et suit les
-        commandes composées qu'ils ouvrent ou ferment (B-0204)."""
-        nonlocal mots, debut_liste, debut_tube, en_tube
+        commandes composées qu'ils ouvrent ou ferment (B-0204). Le corps
+        d'une fonction s'ouvre comme un groupe, et rend en se fermant
+        l'état d'avant lui : il ne s'exécute pas là où il s'écrit."""
+        nonlocal mots, debut_liste, debut_tube, en_tube, etat, definition
+        fonction = definition and bool(mots)
+        if mots:
+            definition = False
+        if fonction and mots[0] == "{":
+            mots = mots[1:]
+            ouvrir("()")
         while mots and mots[0] in RESERVES:
             mot, mots = mots[0], mots[1:]
             if mot in OUVRANTS:
@@ -579,7 +660,9 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
         if mots[:1] and mots[0] in FERMANTS and composes:
             if mots[0] != "}":
                 incertain()
-            _, avant, debut_liste, debut_tube, en_tube, _ = composes.pop()
+            ouvert, avant, debut_liste, debut_tube, en_tube, _ = composes.pop()
+            if ouvert == "()":
+                etat = avant.copie()
             return avant
         return None
 
@@ -646,7 +729,7 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
         j, internes = jets[i]
         if not _operateur(j):
             sous_shells(internes)
-            mots.append(j)
+            mots.append(j.lstrip(CITE))
             i += 1
             continue
         suivant, internes = jets[i + 1] if i + 1 < len(jets) else ("", [])
@@ -658,11 +741,19 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
                 continue
             sous_shells(internes)
             if not (j.endswith("&") and (suivant.isdigit() or suivant == "-")):
-                redir.append(suivant)
+                redir.append(suivant.lstrip(CITE))
             i += 2
             continue
         if "<" in j:
             sous_shells(internes)
+            i += 2
+            continue
+        if j == "(" and suivant == ")" and not redir and (k := _definition(mots)) is not None:
+            # `nom ( )`, ou `function nom ( )` : les mots réservés qui le
+            # précèdent se suivent, et le `{` qui suit ouvre son corps.
+            mots = mots[:k]
+            reserves()
+            mots, definition = [], True
             i += 2
             continue
         clore()

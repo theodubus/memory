@@ -439,7 +439,7 @@ def ecrits_bruts(c: commandes.Commande) -> list[str]:
     elif nom == "find":
         # Ce qu'écrivent ses `-exec` hors des fichiers qu'il trouve, que
         # `_supprime_par_find` juge (B-0206).
-        res += [x for sous in _lire_find(c)[2] for x in ecrits_bruts(sous) if SONDE not in x]
+        res += [x for sous, _ in _lire_find(c)[1] if sous is not None for x in ecrits_bruts(sous) if SONDE not in x]
     elif nom in ("sed", "perl") and (script := _fichiers_d_un_script(nom, c.argv[1:]))[0]:
         res += script[1]
     elif nom == "dd":
@@ -464,16 +464,16 @@ def suppressions(c: commandes.Commande) -> list[tuple[str, bool]]:
     sources d'un `mv` (pas sa destination), ce que balaie `git clean` (ses
     chemins, ou son dossier, sous ses `-C`) et les points de départ d'un
     `find` qui supprime (`-delete`, ou `-exec rm`). Chacun avec `True` quand
-    supprimer la racine du projet elle-même compte : un `find` qui ne filtre
-    rien la viderait. Pour les autres, la racine est déjà un dossier qui
-    contient un fichier protégé."""
+    supprimer la racine du projet elle-même compte : un `find` qu'aucun
+    filtre de nom ou de chemin ne garde la viderait. Pour les autres, la
+    racine est déjà un dossier qui contient un fichier protégé."""
     nom, argv = c.programme, c.argv[1:]
     if nom == "rm":
         return [(x, False) for x in commandes.options_et_arguments(argv)[1] if x]
     if nom == "mv":
         return [(x, False) for x in _sources_de_mv(argv) if x]
     if nom == "find":
-        return _departs_de_find(argv)
+        return _departs_de_find(c)
     if nom == "git" and commandes.git_sous_commande(c.argv)[0] == "clean":
         return [(x, False) for x in _balaye_par_git_clean(c.argv)]
     return []
@@ -505,47 +505,125 @@ def _sources_de_mv(argv: list[str]) -> list[str]:
     return args if vers_t else args[:-1]
 
 
-# Ce qui, dans l'expression d'un `find`, ne filtre rien : ses options, et les
-# actions qui ne choisissent pas ce qu'elles touchent ; le nombre de valeurs
-# qui suivent chacune. Tout autre mot est un test, ou un opérateur (`!`,
-# `-o`) : il filtre (B-0208).
-FIND_NEUTRES = {
-    **dict.fromkeys(("-delete", "-depth", "-d", "-xdev", "-mount", "-noleaf", "-ignore_readdir_race",
-                     "-noignore_readdir_race", "-daystart", "-follow", "-warn", "-nowarn", "-print", "-print0",
-                     "-ls", "-true", "-prune", "(", ")", "-a", "-and", ","), 0),
-    **dict.fromkeys(("-maxdepth", "-mindepth", "-regextype", "-printf", "-fprint", "-fprint0", "-fls",
-                     "-files0-from"), 1),
+# Les tests, options et actions d'un `find` qui prennent des valeurs, et
+# combien ; un autre mot en `-` n'en prend pas. Les filtres que le hook sait
+# lire : de nom, sur le dernier élément du chemin, et de chemin, sur le
+# chemin entier tel que `find` l'écrit (B-0206).
+FIND_VALEURS = {
+    **dict.fromkeys(("-name", "-iname", "-path", "-ipath", "-wholename", "-iwholename", "-regex", "-iregex",
+                     "-lname", "-ilname", "-type", "-xtype", "-size", "-perm", "-user", "-group", "-uid", "-gid",
+                     "-links", "-inum", "-samefile", "-newer", "-anewer", "-cnewer", "-amin", "-atime", "-cmin",
+                     "-ctime", "-mmin", "-mtime", "-used", "-fstype", "-context", "-maxdepth", "-mindepth",
+                     "-regextype", "-printf", "-fprint", "-fprint0", "-fls", "-files0-from"), 1),
     "-fprintf": 2,
 }
+FIND_NOMS = ("-name", "-iname")
+FIND_CHEMINS = ("-path", "-ipath", "-wholename", "-iwholename")
 FIND_EXEC = ("-exec", "-execdir", "-ok", "-okdir")
+# Ce qui garde une action d'un `find` : si un chemin peut l'atteindre sans
+# qu'un filtre de nom ou de chemin lui réponde, et ces filtres
+# (`("nom", motif)`, `("chemin", motif)`).
+LIBRE: tuple[bool, tuple] = (True, ())
 
 
-def _departs_de_find(argv: list[str]) -> list[tuple[str, bool]]:
+def _et(a: tuple[bool, tuple], b: tuple[bool, tuple]) -> tuple[bool, tuple]:
+    return a[0] and b[0], tuple(dict.fromkeys(a[1] + b[1]))
+
+
+def _ou(a: tuple[bool, tuple], b: tuple[bool, tuple]) -> tuple[bool, tuple]:
+    return a[0] or b[0], tuple(dict.fromkeys(a[1] + b[1]))
+
+
+def _expression_find(argv: list[str], i: int) -> list[tuple[list[str] | None, tuple[bool, tuple]]]:
+    """Les actions de l'expression d'un `find` (`argv` depuis `i`) qui
+    touchent ce qu'il trouve : `-delete` (`None`), et la commande de chaque
+    `-exec`, `-execdir`, `-ok`, `-okdir` ; chacune avec ce qui la garde. Un
+    filtre de nom ou de chemin ne garde que ce qui le suit dans sa
+    conjonction : placé après l'action, nié (`!`, `-not`), ou de l'autre
+    côté d'un `-o` (`-or`) ou d'une `,`, il ne la garde pas ; une parenthèse
+    garde ce qui la suit si chacune de ses branches a un filtre (la revue
+    du lot 3, J-2026-11-14-AH)."""
+    actions: list[tuple[list[str] | None, tuple[bool, tuple]]] = []
+    pos = i
+    fins = (None, ")", ",", "-o", "-or")
+
+    def mot() -> str | None:
+        return argv[pos] if pos < len(argv) else None
+
+    def liste(garde):
+        nonlocal pos
+        valeur = ou(garde)
+        while mot() == ",":
+            pos += 1
+            valeur = ou(garde)
+        return valeur
+
+    def ou(garde):
+        nonlocal pos
+        valeur = et(garde)
+        while mot() in ("-o", "-or"):
+            pos += 1
+            # L'autre branche, prise quand la première est fausse : rien de ce
+            # qui la précède ne la garde.
+            valeur = _ou(valeur, et(garde))
+        return valeur
+
+    def et(garde):
+        nonlocal pos
+        valeur = un(garde)
+        while mot() not in fins:
+            if mot() in ("-a", "-and"):
+                pos += 1
+            valeur = _et(valeur, un(_et(garde, valeur)))
+        return valeur
+
+    def un(garde):
+        nonlocal pos
+        m = mot()
+        if m in fins:
+            return LIBRE
+        pos += 1
+        if m in ("!", "-not"):
+            while mot() in ("!", "-not"):
+                pos += 1
+            un(garde)
+            return LIBRE
+        if m == "(":
+            valeur = liste(garde)
+            if mot() == ")":
+                pos += 1
+            return valeur
+        if (m in FIND_NOMS or m in FIND_CHEMINS) and pos < len(argv):
+            pos += 1
+            return False, (("nom" if m in FIND_NOMS else "chemin", argv[pos - 1]),)
+        if m == "-delete":
+            actions.append((None, garde))
+        elif m in FIND_EXEC:
+            # Jusqu'à `;` (`\;`) ou `+` ; sans eux, au bout de la commande.
+            j = next((k for k in range(pos, len(argv)) if argv[k] in (";", "+")), len(argv))
+            actions.append((argv[pos:j], garde))
+            pos = j + 1
+        else:
+            pos += FIND_VALEURS.get(m, 1 if re.fullmatch(r"-newer[aBcmt]{2}", m) else 0)
+        return LIBRE
+
+    while pos < len(argv):
+        liste(LIBRE)
+        pos += 1  # une `)` sans `(`
+    return actions
+
+
+def _departs_de_find(c: commandes.Commande) -> list[tuple[str, bool]]:
     """Les points de départ d'un `find` qui supprime ce qu'il trouve
     (`-delete`, ou `-exec`, `-execdir`, `-ok`, `-okdir` qui lancent `rm`),
-    `.` s'il n'en nomme aucun ; chacun avec `True` quand son expression ne
-    filtre rien : il supprimerait le point de départ et tout ce qu'il
-    contient. Rien pour un `find` qui ne supprime pas."""
-    i = 0
-    while i < len(argv) and (argv[i] in ("-H", "-L", "-P", "-D") or re.fullmatch(r"-O\d*", argv[i])):
-        i += 2 if argv[i] == "-D" else 1
-    departs = []
-    while i < len(argv) and not argv[i].startswith("-") and argv[i] not in ("(", ")", "!", ","):
-        departs.append(argv[i])
-        i += 1
-    supprime, filtre = False, False
-    while i < len(argv):
-        a = argv[i]
-        i += 1
-        if a in FIND_EXEC:
-            supprime = supprime or (i < len(argv) and argv[i].rsplit("/", 1)[-1] == "rm")
-            i = next((j for j in range(i, len(argv)) if argv[j] in (";", "+")), len(argv)) + 1
-        elif a in FIND_NEUTRES:
-            supprime = supprime or a == "-delete"
-            i += FIND_NEUTRES[a]
-        else:
-            filtre = True
-    return [(x, not filtre) for x in departs or ["."]] if supprime else []
+    `.` s'il n'en nomme aucun ; chacun avec `True` quand une de ces actions
+    n'est gardée par aucun filtre de nom ou de chemin (`_expression_find`) :
+    il supprimerait le point de départ et tout ce qu'il contient, quels que
+    soient ses autres tests (`-type`, `-empty`). Rien pour un `find` qui ne
+    supprime pas."""
+    departs, actions = _lire_find(c)
+    gardes = [garde for sous, garde in actions if sous is None or sous.argv[0].rsplit("/", 1)[-1] == "rm"]
+    return [(x, any(libre for libre, _ in gardes)) for x in departs] if gardes else []
 
 
 def _balaye_par_git_clean(argv: list[str]) -> list[str]:
@@ -695,13 +773,13 @@ def _dossier_cible(c: commandes.Commande) -> str | None:
     return _valeur_d_option(c.argv[1:], "t", "--target-directory", OPTIONS_A_VALEUR_COPIE[c.programme])
 
 
-def _lire_find(c: commandes.Commande) -> tuple[list[str], tuple[list[str], list[str]] | None,
-                                               list[commandes.Commande], bool]:
-    """Ce que juge le hook d'un `find` : ses points de départ ; ses filtres
-    de nom (`-name`, `-iname`) et de chemin (`-path`, `-wholename`…), ou
-    `None` sans filtre ou s'il ne sait pas les lire (`!`, `-not`, `-regex`) ;
-    les commandes de ses `-exec`, `-execdir`, `-ok` et `-okdir`, `{}`
-    remplacé par `SONDE` ; et s'il a `-delete` (B-0206)."""
+def _lire_find(c: commandes.Commande) -> tuple[list[str], list[tuple[commandes.Commande | None,
+                                                                     tuple[bool, tuple]]]]:
+    """Ce que juge le hook d'un `find` : ses points de départ, `.` s'il n'en
+    nomme aucun ; et ses actions qui touchent ce qu'il trouve, chacune avec
+    ce qui la garde (`_expression_find`) : `None` pour `-delete`, la
+    commande d'un `-exec`, `-execdir`, `-ok` ou `-okdir`, `{}` remplacé par
+    `SONDE` (B-0206)."""
     argv, i = c.argv, 1
     while i < len(argv) and (argv[i] in ("-H", "-L", "-P", "-D") or re.fullmatch(r"-O\d*", argv[i])):
         i += 2 if argv[i] == "-D" else 1
@@ -709,30 +787,53 @@ def _lire_find(c: commandes.Commande) -> tuple[list[str], tuple[list[str], list[
     while i < len(argv) and not argv[i].startswith("-") and argv[i] not in ("(", ")", "!", ","):
         departs.append(argv[i])
         i += 1
-    noms, chemins, inconnu, supprime, sous = [], [], False, False, []
-    while i < len(argv):
-        a = argv[i]
-        i += 1
-        if a in ("-name", "-iname") and i < len(argv):
-            noms.append(argv[i])
-            i += 1
-        elif a in ("-path", "-ipath", "-wholename", "-iwholename") and i < len(argv):
-            chemins.append(argv[i])
-            i += 1
-        elif a in ("!", "-not", "-regex", "-iregex"):
-            inconnu = True
-        elif a == "-delete":
-            supprime = True
-        elif a in ("-exec", "-execdir", "-ok", "-okdir"):
-            # Jusqu'à `;` ou `+` ; un `\;` que le découpage lit comme un
-            # séparateur la laisse aller au bout de la commande.
-            j = next((k for k in range(i, len(argv)) if argv[k] in (";", "+")), len(argv))
-            if j > i:
-                sous.append(dataclasses.replace(c, argv=[x.replace("{}", SONDE) for x in argv[i:j]],
-                                                redirige=[], prefixe=[]))
-            i = j + 1
-    filtres = None if inconnu or not (noms or chemins) else (noms, chemins)
-    return departs or ["."], filtres, sous, supprime
+    actions = [(None if sous is None else dataclasses.replace(c, argv=[x.replace("{}", SONDE) for x in sous],
+                                                               redirige=[], prefixe=[]), garde)
+               for sous, garde in _expression_find(argv, i) if sous is None or sous]
+    return departs or ["."], actions
+
+
+def _filtres_de_find(c: commandes.Commande) -> tuple[list[str], tuple | None] | None:
+    """Les points de départ d'un `find` qui supprime ou écrit ce qu'il trouve
+    (`-delete`, un `-exec` d'un écrivain de `{}`), et les filtres de nom et
+    de chemin qui gardent ces actions (`(noms, chemins)`), ou `None` quand
+    l'une d'elles n'en a pas : elle touche tout ce qui est sous ses départs.
+    `None` pour un `find` qui n'écrit rien de ce qu'il trouve (B-0206)."""
+    departs, actions = _lire_find(c)
+    gardes = [garde for sous, garde in actions if sous is None or any(SONDE in x for x in ecrits_bruts(sous))]
+    if not gardes:
+        return None
+    if any(libre for libre, _ in gardes):
+        return departs, None
+    filtres = list(dict.fromkeys(f for _, fs in gardes for f in fs))
+    return departs, ([v for genre, v in filtres if genre == "nom"], [v for genre, v in filtres if genre == "chemin"])
+
+
+def _motifs_de_chemin(tete: str, haut: str, motif: str) -> list[str]:
+    """Les motifs, rapportés à la racine du projet, des chemins que vise le
+    filtre de chemin d'un `find` (`-path`, `-ipath`, `-wholename`) : il
+    répond au chemin entier tel que `find` l'écrit, `tete` (son départ, et
+    ce qui mène de lui à la racine) devant ce qui correspond, sous la
+    racine, à `haut` ; son `*` traverse les `/` et rend les noms en `.`, et
+    se lit comme `**`. Une étoile qui suit une part de `tete` en rend la
+    suite, et ce qui vient après dans le projet ; un motif qui ne peut pas
+    commencer comme `tete` ne vise rien (la revue du lot 3,
+    J-2026-11-14-AH)."""
+    def etoiles(m: str) -> str:
+        return re.sub(r"\*+", "**", m)
+
+    if motif.startswith(tete):
+        return [haut + etoiles(motif[len(tete):])]
+    litteral = re.match(r"[^*?\[\\]*", motif).group()
+    suite = motif[len(litteral):]
+    if not tete.startswith(litteral):
+        return []
+    if not suite:
+        return [haut.rstrip("/") or "**"]  # le départ lui-même, ou un dossier qui le contient
+    if suite.startswith("*"):
+        reste = suite.lstrip("*")
+        return ["**" + etoiles(reste)] + ([haut + etoiles(reste[1:])] if reste.startswith("/") else [])
+    return ["**"]  # un `?`, un `[…]` ou un `\` dans le départ : le hook ne le suit pas
 
 
 def _proteges_presents(projet: config.Projet, cache: dict) -> list[str]:
@@ -745,16 +846,32 @@ def _proteges_presents(projet: config.Projet, cache: dict) -> list[str]:
     return cache["proteges presents"]
 
 
+def _reglages_presents(projet: config.Projet, cache: dict) -> list[str]:
+    """Les réglages de Claude Code présents dans le projet : ceux que git
+    voit, et ceux de la racine, que git ignore souvent
+    (`settings.local.json`)."""
+    if "reglages presents" not in cache:
+        if "suivis" not in cache:
+            cache["suivis"] = outils.fichiers_courants(projet.racine)
+        racine = [x for x in (".claude/settings.json", ".claude/settings.local.json") if (projet.racine / x).is_file()]
+        cache["reglages presents"] = list(dict.fromkeys(racine + [f for f in cache["suivis"]
+                                                                  if REGLAGES_AGENT.search(f)]))
+    return cache["reglages presents"]
+
+
 def _supprime_par_find(projet: config.Projet, c: commandes.Commande, environnement: dict,
                        cache: dict) -> list[tuple[str, str]]:
     """Les constats d'un `find` qui supprime ou écrit ce qu'il trouve
-    (`-delete`, `-exec rm {} +`) : ses points de départ et ses filtres,
-    jugés contre les motifs des chemins protégés à toute profondeur (un
-    `find` voit les noms en `.`) ; un départ que le hook ne sait pas
-    développer et qui peut tomber dans le projet est illisible (B-0206)."""
-    departs, filtres, sous, supprime = _lire_find(c)
-    if not supprime and not any(SONDE in x for s in sous for x in ecrits_bruts(s)):
+    (`-delete`, `-exec rm {} +`) : ses points de départ et les filtres qui
+    gardent ces actions (`_filtres_de_find`), jugés contre les motifs des
+    chemins protégés à toute profondeur (un `find` voit les noms en `.`), et
+    contre les réglages de Claude Code présents ; un départ que le hook ne
+    sait pas développer et qui peut tomber dans le projet est illisible
+    (B-0206)."""
+    lu = _filtres_de_find(c)
+    if lu is None:
         return []
+    departs, filtres = lu
     racine = projet.racine.resolve()
     variables = commandes.variables_de(c, environnement)
     res: list[tuple[str, str]] = []
@@ -767,11 +884,15 @@ def _supprime_par_find(projet: config.Projet, c: commandes.Commande, environneme
                 res.append(("illisible", f"`{depart}`"))
             continue
         lieu = Path(os.path.realpath(plein))
+        # Ce que `find` écrit devant un chemin du projet : son départ, et ce
+        # qui mène de lui à la racine s'il la contient.
+        tete = d.rstrip("/") + "/"
         if lieu.is_relative_to(racine):
             base = lieu.relative_to(racine).as_posix()
             base = "" if base == "." else base
         elif racine.is_relative_to(lieu):
             base = ""  # un dossier qui contient le projet : tout le projet, à toute profondeur
+            tete += racine.relative_to(lieu).as_posix() + "/"
         else:
             continue
         haut = (base + "/") if base else ""
@@ -780,14 +901,15 @@ def _supprime_par_find(projet: config.Projet, c: commandes.Commande, environneme
         else:
             noms, chemins = filtres
             motifs = [m for n in noms for m in (haut + n, haut + "**/" + n)]
-            for p in chemins:
-                debut = depart.rstrip("/") + "/"
-                motifs.append(haut + p[len(debut):] if p.startswith(debut) else "**/" + p.lstrip("./"))
+            motifs += [m for p in chemins for m in _motifs_de_chemin(tete, haut, p)]
         # Un filtre nomme ce que `find` trouve ; sans filtre, il trouve tout ce
         # qui est sous son départ. Un filtre se juge contre les fichiers
         # protégés présents d'un motif de dossier (`.socle/git-hooks/**`),
         # que tout nom croiserait (`-name '*.pyc'`), et contre les autres
-        # motifs (un fichier protégé absent le reste).
+        # motifs (un fichier protégé absent le reste) ; un réglage de Claude
+        # Code, à toute profondeur, contre ceux qui sont présents, et contre
+        # leurs motifs si le filtre les nomme (`.claude`, `settings`) : git
+        # ne voit pas un réglage ignoré sous un dossier du projet.
         dessous = filtres is None
         for motif in dict.fromkeys(motifs):
             for m in projet.chemins_proteges():
@@ -797,7 +919,10 @@ def _supprime_par_find(projet: config.Projet, c: commandes.Commande, environneme
                     touches = [f for f in _proteges_presents(projet, cache) if outils.correspond(f, [m])
                                and commandes.se_croisent(motif, f, False, True)]
                 res += [("protege", trad("{chemin}, par `{mot}`", chemin=t, mot=f"find {depart}")) for t in touches]
-            res += [("reglage", motif) for m in REGLAGES_MOTIFS if commandes.se_croisent(motif, m, dessous, True)]
+            res += [("reglage", f) for f in _reglages_presents(projet, cache)
+                    if commandes.se_croisent(motif, f, dessous, True)]
+            if not dessous and re.search(r"claude|settings", motif, re.I):
+                res += [("reglage", motif) for m in REGLAGES_MOTIFS if commandes.se_croisent(motif, m, False, True)]
     return res
 
 

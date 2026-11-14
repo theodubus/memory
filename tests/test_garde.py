@@ -440,7 +440,8 @@ class TestGarde(unittest.TestCase):
         self.assertEqual(lus("git clean -fde garde"), [(".", False)])
         self.assertEqual(lus("git clean -fdn && git clean --dry-run -fd"), [])
         self.assertEqual(lus("find -L a b -maxdepth 2 -delete"), [("a", True), ("b", True)])
-        self.assertEqual(lus("find a ! -name x -delete"), [("a", False)])
+        # Un filtre nié ne garde rien (la revue du lot 3, J-2026-11-14-AH).
+        self.assertEqual(lus("find a ! -name x -delete"), [("a", True)])
         self.assertEqual(lus("find a -execdir /bin/rm {} +"), [("a", True)])
         self.assertEqual(lus("find a -exec cat {} + -name x"), [])
         self.assertEqual(lus("cp a b && touch c && git rm d"), [])
@@ -570,9 +571,12 @@ class TestGarde(unittest.TestCase):
         `python -c` et `xargs` se jugent par les chemins protégés qu'ils
         citent en toutes lettres, `find` par ses départs et ses filtres."""
         protege, reglage = "écriture d'un fichier protégé", "réglages de Claude Code"
+        illisible = "un chemin que le hook ne sait pas développer"
         sed = "sed -i s/3/9/ .socle/policy.toml"
         # Un départ qui contient le projet, ou peut le contenir, est refusé
-        # d'abord comme sa suppression (B-0208).
+        # d'abord comme sa suppression (B-0208) ; un `find` qui écrit sans
+        # supprimer, comme l'écriture d'un fichier protégé, ou d'un chemin
+        # illisible.
         contient = "suppression par le shell d'un dossier qui contient le projet"
         with unittest.mock.patch.dict(os.environ, {"HOME": str(self.racine)}):
             os.environ.pop("X", None)
@@ -592,7 +596,9 @@ class TestGarde(unittest.TestCase):
                     ("cd .socle && find .. -name policy.toml -delete", protege),
                     ("find .. -name policy.toml -delete", contient),
                     ("cd .socle && find . -name policy.toml -exec sed -i s/3/9/ {} +", protege),
-                    ("find . ! -name '*.py' -delete", reglage), ("find $X -name '*.pyc' -delete", contient),
+                    ("find . ! -name '*.py' -delete", contient), ("find $X -name '*.pyc' -delete", contient),
+                    ("find .. -name policy.toml -exec sed -i s/3/9/ {} +", protege),
+                    ("find $X -name '*.pyc' -exec sed -i s/3/9/ {} +", illisible),
                     (f"bash -ec '{sed}'", protege), (f"bash -lc '{sed}'", protege), (f"bash -c -- '{sed}'", protege),
                     (f"bash -o pipefail -c '{sed}'", protege), (f"sh -euc '{sed}'", protege),
                     ("sort -o .socle/policy.toml /tmp/x", protege), ("sort -uo .socle/policy.toml /tmp/x", protege),
@@ -618,6 +624,128 @@ class TestGarde(unittest.TestCase):
                         "python3 -c \"print(open('calc.py').read())\"", "python3 -m unittest tests.test_calc"):
                 with self.subTest(cmd):
                     self.assertIsNone(hooks.refus_bash(self.projet, cmd))
+
+    def test_un_find_sous_un_dossier_du_projet_ne_vise_pas_les_reglages(self):
+        """La revue du lot 3, bloquant 1 (J-2026-11-14-AH) : un `find` sans
+        filtre de nom sous un dossier du projet était refusé au motif des
+        réglages de Claude Code, que `**/.claude/settings.json` croisait
+        partout ; ils se jugent contre ceux qui sont présents, ignorés par git
+        compris, et le refus d'un `find` parti de la racine dit ce qu'il
+        touche, pas `**`."""
+        local, exclus = self.racine / ".claude/settings.local.json", self.racine / ".git/info/exclude"
+        avant = exclus.read_text() if exclus.exists() else ""
+        exclus.parent.mkdir(exist_ok=True)
+        exclus.write_text(avant + "\n/.claude/settings.local.json\n")
+        local.write_text("{}")
+        self.addCleanup(exclus.write_text, avant)
+        self.addCleanup(local.unlink)
+        with self.environnement():
+            self.jugees([("find build -delete", None), ("find tests/fixtures/tmp -type f -delete", None),
+                         ("find dist -mindepth 1 -delete", None), ("find tests -type f -exec rm {} +", None),
+                         ("cd tests && find . -type f -exec sed -i s/a/b/ {} +", None),
+                         ("find . -type d -empty -delete", "supprime"),
+                         ("find . -type f -exec sed -i s/a/b/ {} +", "reglage"), ("find .claude -delete", "reglage"),
+                         ("find . -name 'settings*.json' -delete", "reglage"),
+                         ("find .claude -name settings.local.json -delete", "reglage"),
+                         ("find .claude -type f -exec sed -i s/a/b/ {} +", "reglage"),
+                         ("find build -name '*.json' -delete", None),
+                         ("find .claude/worktrees -name settings.local.json -delete", "reglage")])
+            for cmd, cite in (("find . -type d -empty -delete", str(self.racine)),
+                              ("find . -type f -exec sed -i s/a/b/ {} +", "`.claude/settings.json`"),
+                              ("find .claude -name settings.local.json -delete", "`.claude/settings.local.json`")):
+                with self.subTest(cmd):
+                    raison = hooks.refus_bash(self.projet, cmd) or ""
+                    self.assertIn(cite, raison)
+                    self.assertNotIn("`**`", raison)
+
+    def test_le_filtre_de_chemin_d_un_find_se_lit_comme_find_le_lit(self):
+        """La revue du lot 3, bloquant 2 (J-2026-11-14-AH) : le motif d'un
+        `-path` répond au chemin entier tel que `find` l'écrit, et son `*`
+        traverse les `/` et rend les noms en `.` ; `-path '*/.socle/*'`
+        gagnait un dossier de trop et passait."""
+        with self.environnement():
+            self.jugees([("find . -path '*/.socle/*' -delete", "protege"),
+                         ("find . -path '*/policy.toml' -delete", "protege"),
+                         ("find . -ipath '*/.SOCLE/*' -delete", "protege"),
+                         ("find . -path '*/.github/workflows/*' -exec sed -i s/a/b/ {} +", "protege"),
+                         ("find . -wholename '*socle/git-hooks*' -exec sed -i s/a/b/ {} +", "protege"),
+                         ("find . -path './.socle/*' -exec sed -i s/a/b/ {} +", "protege"),
+                         ("find . -path './*/pre-commit' -exec sed -i s/a/b/ {} +", "protege"),
+                         ("cd memory && find .. -path '*/requests/*.answer.toml' -exec sed -i s/a/b/ {} +",
+                          "protege"),
+                         ("find .socle -path '.socle/*' -exec sed -i s/a/b/ {} +", "protege"),
+                         ("find . -path './build/*' -delete", None), ("find . -path '*/build/*' -delete", None),
+                         ("find . -path '*/__pycache__/*' -delete", None), ("find . -path 'engine/*' -delete", None),
+                         ("find memory -path 'memory/tmp/*' -delete", None),
+                         ("find . -path './memory/*.bak' -exec rm {} +", None)])
+
+    def test_un_filtre_de_find_ne_garde_que_ce_qu_il_precede(self):
+        """La revue du lot 3, bloquant 3 (J-2026-11-14-AH) : le filtre d'un
+        `find` se lisait quelle que soit sa place ou son opérateur ;
+        `find . -delete -name '*.pyc'` vide le projet, `.git` compris, et
+        passait, comme un `-o` dont l'autre branche n'a pas de filtre, ou des
+        parenthèses échappées que le découpage lisait comme des opérateurs.
+        Un `find` parti de la racine qu'aucun filtre de nom ou de chemin ne
+        garde est la suppression du projet, même avec `-type` ou `-empty`."""
+        with self.environnement():
+            self.jugees([("find . -delete -name '*.pyc'", "supprime"),
+                         ("find . -path ./.git -prune -o -type f -delete", "supprime"),
+                         ("find . -mindepth 1 -maxdepth 1 -name .git -prune -o -exec rm -rf {} +", "supprime"),
+                         ("find . -name '*.pyc' -o -delete", "supprime"), ("find . -name x , -delete", "supprime"),
+                         ("find . -not -name '*.py' -delete", "supprime"), ("find . -type f -delete", "supprime"),
+                         ("find . -name x -or -exec rm {} +", "supprime"),
+                         ("find . \\( -type f \\) -delete", "supprime"), ("find . '(' -type f ')' -delete", "supprime"),
+                         ("find . -name x -exec rm {} \\; -o -delete", "supprime"),
+                         ("find . \\( -name '*.pyc' -o -type f \\) -delete", "supprime"),
+                         ("find .socle -delete -name '*.pyc'", "protege"),
+                         ("find .socle \\( -name policy.toml \\) -delete", "protege"),
+                         ("find .socle -name '*.pyc' -o -exec sed -i s/3/9/ {} +", "protege"),
+                         ("find . -name '*.pyc' -delete", None), ("find . -type f -name '*.pyc' -delete", None),
+                         ("find . \\( -name '*.pyc' -o -name '*.pyo' \\) -delete", None),
+                         ("find . -name '*.pyc' -o -name '*.pyo' -delete", None),
+                         ("find . -path ./.git -prune -o -name '*.orig' -delete", None),
+                         ("find . -name '*.pyc' -delete -o -print", None),
+                         ("find . -name '*.pyc' -exec rm {} \\;", None),
+                         ("find . -name __pycache__ -prune -o -name '*.pyc' -print", None),
+                         ("find build -delete -name '*.o'", None)])
+
+    def test_le_corps_d_une_fonction_ne_s_execute_pas_la_ou_il_s_ecrit(self):
+        """La revue du lot 3, bloquant 4 (J-2026-11-14-AH) : le corps d'une
+        fonction `nom() { …; }` se lisait comme exécuté, et son `cd` valait
+        pour la suite ; il rend en se fermant l'état d'avant lui. Ce qu'il
+        écrit se juge toujours."""
+        with self.environnement():
+            self.jugees([("build() { cd engine; }; echo x > .socle/policy.toml", "protege"),
+                         ("f() { cd /tmp; }; sed -i s/3/9/ .socle/policy.toml", "protege"),
+                         ("f () { cd /tmp; F=/tmp/x; }; echo x > .socle/policy.toml", "protege"),
+                         ("function f() { cd /tmp; }; echo x > .socle/policy.toml", "protege"),
+                         ("f()\n{\n  cd /tmp\n}\necho x > .socle/policy.toml", "protege"),
+                         ("if true; then f() { cd /tmp; }; fi; echo x > .socle/policy.toml", "protege"),
+                         ("f() { touch .socle/policy.toml; }", "protege"),
+                         ("f() { cd /tmp; ls; }; echo ok > notes.txt", None),
+                         ("f() { echo x > /tmp/y; }; f; echo ok > notes.txt", None)])
+
+    def test_une_boucle_qui_revient_a_son_dossier_le_garde(self):
+        """La revue du lot 3, bloquant 5 (J-2026-11-14-AH) : une boucle ou
+        une condition qui revient à son dossier (`cd x; …; cd ..`) le rendait
+        inconnu, et l'écriture qui la suivait était refusée ; son lieu
+        normalisé, connu, se compare seul. La valeur d'un `for` faite de
+        plusieurs mots dont l'un n'est pas un seul nom de dossier, ou un
+        `**`, ne se suit pas."""
+        with self.environnement():
+            self.jugees([("for d in */; do cd \"$d\"; ls; cd ..; done; echo ok > status.txt", None),
+                         ("for d in memory tests; do cd $d; ls; cd ..; done; echo ok > status.txt", None),
+                         ("for f in *.py; do cd memory; ls; cd ..; done; echo ok > status.txt", None),
+                         ("while false; do cd memory; cd ..; done; echo ok > status.txt", None),
+                         ("if true; then cd memory; ls; cd ..; fi; echo ok > status.txt", None),
+                         ("for d in a b; do pushd $d; popd; done; echo ok > status.txt", None),
+                         ("for d in */; do cd $d; cd ..; done; echo x > \"$PWD/status.txt\"", None),
+                         ("cd .socle; for d in */; do cd \"$d\"; ls; cd ..; done; echo x > policy.toml", "protege"),
+                         ("for d in memory; do cd $d; done; echo x > .socle/policy.toml", "illisible"),
+                         ("for d in a ..; do cd \"$d\"; cd ..; done; echo x > notes.txt", "illisible"),
+                         ("for d in a/b c; do cd $d; cd ..; done; echo x > notes.txt", "illisible"),
+                         ("for d in **/; do cd \"$d\"; cd ..; done; echo x > notes.txt", "illisible"),
+                         ("for d in .socle/git-hooks c; do cd $d; echo x > pre-commit; done", "illisible")])
 
     def test_remise_en_etat_d_un_fichier_protege(self):
         """D-0098 (B-0165) : l'agent remet un fichier protégé changé par
@@ -952,6 +1080,34 @@ class TestDecoupage(unittest.TestCase):
         # Les redirections d'une boucle s'ouvrent dans le dossier d'avant elle.
         fin = commandes.analyser("cd /a; for x in 1; do cd /b; done > f", environnement=env)[-1]
         self.assertEqual((fin.redirige, fin.lieu), (["f"], "/a"))
+
+    def test_une_fonction_une_boucle_qui_revient_et_des_operateurs_cites(self):
+        """La revue du lot 3 (J-2026-11-14-AH) : le corps d'une fonction rend
+        en se fermant l'état d'avant lui ; une commande composée revenue à son
+        dossier connu le garde ; des opérateurs échappés ou entre guillemets
+        sont des mots."""
+        env = {"PWD": "/p"}
+        I = commandes.INCONNU
+        for texte, lieu in (
+                ("f() { cd /a; }", "/p"), ("function f() { cd /a; }", "/p"), ("if a; then f() { cd /a; }; fi", "/p"),
+                ("f()\n{\ncd /a\n}", "/p"), ("{ cd /a; }", "/a"), ("for d in */; do cd $d; cd ..; done", "/p"),
+                ("for d in a b; do cd $d; cd ..; done", "/p"), ("while a; do cd x; cd ..; done", "/p"),
+                ("for d in a ..; do cd $d; cd ..; done", I), ("for d in a/b c; do cd $d; cd ../..; done", I),
+                ("for d in **/; do cd $d; cd ..; done", I), ("for d in a; do cd $d; done", I)):
+            with self.subTest(texte):
+                self.assertEqual(commandes.analyser(texte + "; ls", environnement=env)[-1].lieu, lieu)
+        for texte, valeur in (("f() { X=1; }", None), ("X=0; f() { X=1; }", "0"),
+                              ("for d in */; do cd $d; cd ..; done", "/p")):
+            with self.subTest(texte):
+                c = commandes.analyser(texte + "; ls", environnement=env)[-1]
+                nom = "PWD" if "cd" in texte else "X"
+                self.assertEqual(commandes.variables_de(c, env).get(nom), valeur)
+        self.assertEqual([c.argv for c in commandes.analyser("f() { rm a; }; g ( ) { rm b; }")],
+                         [["rm", "a"], ["rm", "b"]])
+        self.assertEqual([c.argv for c in commandes.analyser("find . \\( -name a \\) -exec rm {} \\; ; ls")],
+                         [["find", ".", "(", "-name", "a", ")", "-exec", "rm", "{}", ";"], ["ls"]])
+        self.assertEqual([c.argv for c in commandes.analyser("echo '|' \";\" '()' a\\;b > f")],
+                         [["echo", "|", ";", "()", "a;b"]])
 
     def test_normaliser_et_lieu_sur(self):
         """La revue de B-0171, constat 4 : un `..` ne remonte pas une part

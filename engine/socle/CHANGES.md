@@ -13,15 +13,25 @@ Le hook de l'agent juge désormais ces écritures d'un fichier protégé :
 `cp`, `ln`, `install` et `mv` écrivent le dossier de `-t`, `sort` le
 fichier de `-o` ; `bash -ec '…'`, `bash -lc '…'` et `bash -c -- '…'`
 ouvrent leur commande ; `find -delete`, ou `find -exec rm {} +`, se juge
-par ses points de départ et ses filtres de nom ou de chemin, à toute
-profondeur : `find . -name '*.pyc' -delete` passe, `find . -name '*.toml'
--delete` est refusé. `python -c` et `xargs` d'un écrivain, que le hook ne
-sait pas lire, se jugent par les chemins protégés qu'ils citent en toutes
-lettres : `echo <fichier protégé> | xargs rm` est refusé, comme un
-`python -c` qui cite un fichier protégé, même pour le lire.
+par ses points de départ et les filtres de nom ou de chemin qui gardent
+son action, à toute profondeur : `find . -name '*.pyc' -delete` passe,
+`find . -name '*.toml' -delete` est refusé. Un filtre ne garde que
+l'action qui le suit, hors d'un `!` et de l'autre branche d'un `-o` ;
+le `*` d'un `-path` traverse les dossiers, comme dans `find`. `python -c`
+et `xargs` d'un écrivain, que le hook ne sait pas lire, se jugent par les
+chemins protégés qu'ils citent en toutes lettres : `echo <fichier
+protégé> | xargs rm` est refusé, comme un `python -c` qui cite un
+fichier protégé, même pour le lire.
 
 À faire : lire un fichier protégé par `cat` ou par l'outil de lecture,
-plutôt que par un `python -c` qui le cite, que le hook refuse désormais.
+plutôt que par un `python -c` qui le cite, que le hook refuse désormais ;
+il refuse aussi un `python -c` qui cite un dossier contenant un fichier
+protégé, même pour le lister (`os.listdir('.socle')`) : le lister par
+`ls`. Le hook refuse de même un `find` qui supprime ou écrit ce qu'il
+trouve depuis la racine sans filtre de nom ou de chemin, même avec
+`-type` ou `-empty` (`find . -type d -empty -delete`, `find . -type f
+-exec sed -i … {} +`) : lui donner un filtre de nom ou de chemin, ou le
+faire partir d'un dossier du projet.
 
 ## 2026-11-14-j — Le hook de l'agent ne perd plus la commande qui suit un dièse ou des guillemets imbriqués
 
@@ -43,9 +53,12 @@ réservé du shell (`then`, `else`, `elif`, `do`, `!`, `{`, `if`, `while`,
 `until`) : une écriture d'un fichier protégé, une action irréversible ou une
 commande réservée à l'humain dans le corps d'une condition ou d'une boucle
 ne passe plus, comme hors d'elle. Ce qu'une condition ou une boucle change,
-son dossier et ses variables, devient inconnu après elle ; la variable d'un
-`for` prend dans son corps les mots de sa liste, si bien que `for f in
-*.md; do sed -i … "$f"; done` se juge par son motif.
+son dossier et ses variables, devient inconnu après elle, sauf un dossier
+où elle revient (`for d in */; do cd "$d"; …; cd ..; done`) ; la variable
+d'un `for` prend dans son corps les mots de sa liste, si bien que `for f
+in *.md; do sed -i … "$f"; done` se juge par son motif. Le corps d'une
+fonction (`f() { …; }`) se juge, mais ce qu'il change ne vaut pas pour la
+suite : il ne s'exécute pas là où il s'écrit.
 
 À faire : rien, sauf si le hook refuse désormais une boucle qui écrit vers
 une variable qu'il ne connaît pas (`while read f; do sed -i … "$f"; done`) :
@@ -74,9 +87,12 @@ ensuite. Il refuse désormais la suppression d'un tel dossier par les
 arguments de `rm`, les sources d'un `mv`, ce que balaie `git clean` et les
 points de départ d'un `find` qui supprime (`-delete`, `-exec rm`), son
 chemin développé comme tout chemin que le hook juge ; et celle du projet
-par un `find` qui part de sa racine sans rien filtrer (`find . -delete`).
-Un dossier voisin du projet, un dossier du projet et un `find` qui filtre
-ce qu'il supprime sous la racine restent libres.
+par un `find` qui part de sa racine sans qu'un filtre de nom ou de chemin
+garde ce qu'il supprime (`find . -delete`, `find . -type f -delete`, `find
+. -delete -name '*.pyc'`, dont le filtre vient après l'action, ou `find .
+-path ./.git -prune -o -delete`). Un dossier voisin du projet, un dossier
+du projet (`find build -delete`) et un `find` qui filtre ce qu'il
+supprime sous la racine restent libres.
 
 À faire : rien. Un tel refus se lève en visant un dossier du projet, ou
 hors de lui un dossier qui ne le contient pas, écrit en toutes lettres.
@@ -91,7 +107,11 @@ contient, une action externe irréversible, une fuite de la mémoire privée
 dans ce qui se publie. Une écriture d'un fichier protégé sous une forme
 qu'on n'écrit que pour contourner (un `eval`, `IFS`, un chemin construit au
 vol dans un autre langage) est hors de son modèle : le contrôle
-`protege.fichiers` la refuse ensuite. Le hook lui-même ne change pas.
+`protege.fichiers` la refuse ensuite. Le hook lui-même ne change pas. La
+suppression du projet lui échappe encore quand un autre programme que
+`rm`, `mv`, `git clean` ou `find` la fait (`rsync --delete`, `git worktree
+remove`, un `python3 -c` qui appelle `shutil.rmtree`, `xargs rm`) : rien
+ne la rattrape.
 
 À faire : un trou du hook de cette dernière sorte, qu'une revue trouve,
 n'ouvre pas de sujet au backlog ; un trou par lequel passe ce que rien ne

@@ -1452,16 +1452,18 @@ def _cas() -> list[Cas]:
 
     @defaut("suppression-du-projet", "dossier qui contient le projet supprimé par le shell : `rm -rf ..`, un "
             "`cd` puis `../..`, les sources d'un `mv`, `git clean` sous `-C ..`, un `find` qui supprime depuis un "
-            "dossier qui le contient, ou depuis la racine sans rien filtrer", "agent", "suppression du projet")
+            "dossier qui le contient, ou depuis la racine sans filtre de nom ou de chemin qui garde sa suppression",
+            "agent", "suppression du projet")
     def _(a, c):
         # B-0208 : rien ne rattrape ensuite la suppression du projet.
         return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
             "rm -rf ..", "cd .socle && rm -rf ../..", "mv .. /tmp/ailleurs", "git -C .. clean -ffdx",
-            "find .. -name '*.pyc' -delete", "find . -delete")])
+            "find .. -name '*.pyc' -delete", "find . -delete", "find . -delete -name '*.pyc'",
+            "find . \\( -type f \\) -delete")])
 
     @defaut("protege-mot-reserve", "fichier protégé écrit par le shell derrière un mot réservé (`then`, `else`, "
-            "`do`, `!`, `{`), par la variable d'un `for` ou après un groupe dans un pipeline", "agent",
-            "écriture protégée")
+            "`do`, `!`, `{`), par la variable d'un `for`, après un groupe dans un pipeline ou après la définition "
+            "d'une fonction", "agent", "écriture protégée")
     def _(a, c):
         # B-0204 : `then rm …` se lisait comme le programme `then`.
         return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
@@ -1469,7 +1471,8 @@ def _cas() -> list[Cas]:
             "if false; then :; else sed -i s/3/9/ .socle/policy.toml; fi",
             "! sed -i s/3/9/ .socle/policy.toml",
             "for f in .socle/*.toml; do sed -i s/3/9/ \"$f\"; done",
-            "{ cd /tmp; } | cat; echo 'max_attempts = 99' >> .socle/policy.toml")])
+            "{ cd /tmp; } | cat; echo 'max_attempts = 99' >> .socle/policy.toml",
+            "build() { cd /tmp; }; echo 'max_attempts = 99' >> .socle/policy.toml")])
 
     @defaut("protege-diese-guillemets", "fichier protégé écrit par le shell après un commentaire en fin de ligne, un "
             "`#` au milieu d'un mot ou une substitution aux guillemets imbriqués", "agent", "écriture protégée")
@@ -1487,6 +1490,7 @@ def _cas() -> list[Cas]:
         # B-0206 : chacune de ces écritures passait le hook.
         return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
             "cp -t .socle/git-hooks calc.py", "find .socle -name policy.toml -delete",
+            "find . -path '*/.socle/*' -delete",
             "echo .socle/policy.toml | xargs sed -i s/3/9/", "bash -ec 'sed -i s/3/9/ .socle/policy.toml'",
             "sort -o .socle/policy.toml calc.py",
             "python3 -c \"open('.socle/policy.toml', 'a').write('max_attempts = 99')\"")])
@@ -1990,13 +1994,15 @@ def _temoins() -> list[tuple[str, Callable]]:
                 or etage_outil(a, c, "Bash", {"command": "sed -n -e's/i/j/p' .socle/policy.toml"})
                 or etage_outil(a, c, "Bash", {"command": "rm -rf ./*"}, cwd=ailleurs))
 
-    @temoin("une boucle sur des fichiers libres, une condition et un groupe qui écrivent un fichier libre passent le "
-            "hook de l'agent (B-0204)")
+    @temoin("une boucle sur des fichiers libres, une condition et un groupe qui écrivent un fichier libre, et une "
+            "boucle qui revient à son dossier, passent le hook de l'agent (B-0204)")
     def _(a, c):
         return (etage_outil(a, c, "Bash", {"command": "for f in *.py; do sed -i s/3/9/ \"$f\"; done"})
                 or etage_outil(a, c, "Bash", {"command": "if [ -f calc.py ]; then echo ok > notes.txt; else rm -f "
                                                          "notes.txt; fi"})
-                or etage_outil(a, c, "Bash", {"command": "{ echo a; echo b; } > notes.txt"}))
+                or etage_outil(a, c, "Bash", {"command": "{ echo a; echo b; } > notes.txt"})
+                or etage_outil(a, c, "Bash", {"command": "for d in */; do cd \"$d\"; ls; cd ..; done; "
+                                                         "echo ok > notes.txt"}))
 
     @temoin("un `#` dans un mot, une redirection dans un commentaire et une substitution aux guillemets imbriqués "
             "qui lit un fichier protégé passent le hook de l'agent (B-0207)")
@@ -2025,14 +2031,16 @@ def _temoins() -> list[tuple[str, Callable]]:
                                                          + "une ligne de texte\n" * 1000 + "FIN"})
                 or etage_outil(a, c, "Bash", {"command": f"cd {ailleurs}; " + "cd a; " * 500 + "echo x > notes.txt"}))
 
-    @temoin("la suppression d'un dossier voisin du projet, d'un dossier du projet, et un `find` qui filtre ce qu'il "
-            "supprime sous la racine passent le hook de l'agent (B-0208)")
+    @temoin("la suppression d'un dossier voisin du projet, d'un dossier du projet, un `find` sans filtre sous un "
+            "dossier du projet et un `find` qui filtre ce qu'il supprime sous la racine passent le hook de l'agent "
+            "(B-0208)")
     def _(a, c):
         # Le pendant sain de `suppression-du-projet` : seul ce qui contient
         # le projet est refusé.
         ailleurs = a.dossier.parent / (a.dossier.name + "-ailleurs")
         return (etage_outil(a, c, "Bash", {"command": f"rm -rf {ailleurs} && rm -rf build"})
                 or etage_outil(a, c, "Bash", {"command": "find . -name '*.pyc' -delete && mv calc.py .."})
+                or etage_outil(a, c, "Bash", {"command": "find build -delete"})
                 or etage_outil(a, c, "Bash", {"command": f"cd {ailleurs} && rm -rf ./*"}))
 
     @temoin("un fichier protégé changé par erreur, remis à son état du dernier commit, et un fichier apparu sous un "

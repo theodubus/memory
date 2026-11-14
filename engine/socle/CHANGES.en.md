@@ -13,14 +13,23 @@ The agent's hook now judges these writes to a protected file: `cp`, `ln`,
 `install` and `mv` write the directory of `-t`, `sort` the file of `-o`;
 `bash -ec '…'`, `bash -lc '…'` and `bash -c -- '…'` open their command;
 `find -delete`, or `find -exec rm {} +`, is judged by its starting points
-and its name or path filters, at any depth: `find . -name '*.pyc' -delete`
-passes, `find . -name '*.toml' -delete` is refused. `python -c` and `xargs`
-of a writer, which the hook cannot read, are judged by the protected paths
-they cite in full: `echo <protected file> | xargs rm` is refused, as is a
-`python -c` that cites a protected file, even to read it.
+and the name or path filters that guard its action, at any depth: `find .
+-name '*.pyc' -delete` passes, `find . -name '*.toml' -delete` is refused.
+A filter guards only the action that follows it, outside a `!` and the
+other branch of a `-o`; the `*` of a `-path` crosses directories, as in
+`find`. `python -c` and `xargs` of a writer, which the hook cannot read,
+are judged by the protected paths they cite in full: `echo <protected
+file> | xargs rm` is refused, as is a `python -c` that cites a protected
+file, even to read it.
 
 To do: read a protected file with `cat` or the file-reading tool, rather
-than with a `python -c` that cites it, which the hook now refuses.
+than with a `python -c` that cites it, which the hook now refuses; it also
+refuses a `python -c` that cites a directory containing a protected file,
+even to list it (`os.listdir('.socle')`): list it with `ls`. The hook
+likewise refuses a `find` that deletes or writes what it finds from the
+root without a name or path filter, even with `-type` or `-empty` (`find .
+-type d -empty -delete`, `find . -type f -exec sed -i … {} +`): give it a
+name or path filter, or start it from a directory of the project.
 
 ## 2026-11-14-j — The agent's hook no longer loses the command after a hash or nested quotes
 
@@ -41,8 +50,12 @@ The agent's hook now judges a command written behind a shell reserved word
 a protected file, an irreversible action or a command reserved for the human
 in the body of a condition or a loop no longer passes, as outside it. What a
 condition or a loop changes, its directory and its variables, becomes
-unknown after it; a `for` variable takes in its body the words of its list,
-so that `for f in *.md; do sed -i … "$f"; done` is judged by its pattern.
+unknown after it, except a directory it comes back to (`for d in */; do cd
+"$d"; …; cd ..; done`); a `for` variable takes in its body the words of its
+list, so that `for f in *.md; do sed -i … "$f"; done` is judged by its
+pattern. The body of a function (`f() { …; }`) is judged, but what it
+changes does not hold for what follows: it does not run where it is
+written.
 
 To do: nothing, unless the hook now refuses a loop that writes to a variable
 it does not know (`while read f; do sed -i … "$f"; done`): write the list of
@@ -69,10 +82,12 @@ and the hooks, and no check catches it afterwards. It now refuses deleting
 such a directory through the arguments of `rm`, the sources of an `mv`,
 what `git clean` sweeps and the starting points of a `find` that deletes
 (`-delete`, `-exec rm`), its path expanded like any path the hook judges;
-and deleting the project by a `find` that starts from its root without
-filtering anything (`find . -delete`). A directory next to the project, a
-directory of the project and a `find` that filters what it deletes under
-the root stay free.
+and deleting the project by a `find` that starts from its root with no
+name or path filter guarding what it deletes (`find . -delete`, `find .
+-type f -delete`, `find . -delete -name '*.pyc'`, whose filter comes after
+the action, or `find . -path ./.git -prune -o -delete`). A directory next
+to the project, a directory of the project (`find build -delete`) and a
+`find` that filters what it deletes under the root stay free.
 
 To do: nothing. Such a refusal is lifted by targeting a directory of the
 project, or outside it a directory that does not contain it, written out
@@ -88,7 +103,10 @@ irreversible external action, a leak of the private memory into what gets
 published. A write to a protected file in a form one writes only to get
 around it (an `eval`, `IFS`, a path built on the fly in another language)
 is outside its model: the `protege.fichiers` check refuses it afterwards.
-The hook itself does not change.
+The hook itself does not change. Deleting the project still escapes it
+when a program other than `rm`, `mv`, `git clean` or `find` does it
+(`rsync --delete`, `git worktree remove`, a `python3 -c` that calls
+`shutil.rmtree`, `xargs rm`): nothing catches it.
 
 To do: a hole of the hook of that last kind, found by a review, opens no
 backlog subject; a hole through which passes what nothing catches opens
