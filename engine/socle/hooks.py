@@ -176,8 +176,10 @@ SESSION_CLOUD = "CLAUDE_CODE_REMOTE"
 # Le travail du démarrage en session cloud, l'historique puis les outils,
 # sous le délai de son hook (`.claude/settings.json`).
 DELAI_OUTILS = 270
-# L'historique en prend au plus cette part, que les outils ne perdent pas.
+# L'historique en prend au plus cette part ; les outils ont le reste.
 DELAI_HISTORIQUE = 120
+# Arrêté au délai, git a ce temps pour retirer ses verrous avant d'être tué.
+ARRET_HISTORIQUE = 10
 # Une ligne de la sortie d'un échec des outils, en octets au plus.
 LIGNE_DE_SORTIE = 200
 # La commande qui complète un clone superficiel, telle que l'agent la relance.
@@ -196,17 +198,27 @@ def completer_historique(racine: Path, fin: float | None = None) -> list[str]:
     if r.returncode != 0 or r.stdout.strip() != "true":
         return []
     reste = (fin if fin is not None else time.monotonic() + DELAI_OUTILS) - time.monotonic()
+    # Aucune invite d'identifiants : personne ne la verrait.
+    p = subprocess.Popen(["git", "fetch", "--quiet", "--unshallow"], cwd=racine, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="replace",
+                         env=dict(os.environ, GIT_TERMINAL_PROMPT="0"))
     try:
-        # Aucune invite d'identifiants : personne ne la verrait.
-        p = subprocess.run(["git", "fetch", "--quiet", "--unshallow"], cwd=racine, capture_output=True, text=True,
-                           encoding="utf-8", errors="replace", timeout=max(1, min(DELAI_HISTORIQUE, reste)),
-                           env=dict(os.environ, GIT_TERMINAL_PROMPT="0"))
+        sortie, erreurs = p.communicate(timeout=max(1, min(DELAI_HISTORIQUE, reste)))
     except subprocess.TimeoutExpired:
+        # Tué d'emblée (SIGKILL), git laisserait `.git/shallow.lock`, et le
+        # clone resterait superficiel, la commande relancée à la main
+        # comprise : arrêté (SIGTERM), il retire ses verrous.
+        p.terminate()
+        try:
+            p.communicate(timeout=ARRET_HISTORIQUE)
+        except subprocess.TimeoutExpired:
+            p.kill()
+            p.communicate()
         return [trad("!! clone superficiel : `{commande}` dépasse le délai du démarrage ; le relancer avant de "
                      "commiter, sans quoi les commits que la mémoire cite manquent", commande=COMPLETER)]
     if p.returncode == 0:
         return [trad("historique du clone complété (session cloud) : `{commande}`", commande=COMPLETER)]
-    derniere = (p.stdout + p.stderr).strip().splitlines()[-1:] or [""]
+    derniere = (sortie + erreurs).strip().splitlines()[-1:] or [""]
     return [trad("!! clone superficiel : `{commande}` a rendu {code} ; le relancer avant de commiter, sans quoi "
                  "les commits que la mémoire cite manquent\n    {queue}", commande=COMPLETER, code=p.returncode,
                  queue=outils.raccourcir(derniere[0], LIGNE_DE_SORTIE))]

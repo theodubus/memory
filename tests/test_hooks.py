@@ -1,7 +1,10 @@
 import contextlib
 import io
+import os
 import shutil
 import subprocess
+import sys
+import time
 import tempfile
 import unittest
 import unittest.mock
@@ -1008,18 +1011,42 @@ class TestHistoriqueEnSessionCloud(unittest.TestCase):
         self.assertTrue(self.superficiel())
         self.assertIn("a rendu 128", self.completer()[0])
 
-    def test_le_delai_epuise_se_dit_sans_bloquer(self):
-        lancer = subprocess.run
-
-        def lent(args, **options):
-            if args[:2] == ["git", "fetch"]:
-                self.assertLessEqual(options["timeout"], hooks.DELAI_HISTORIQUE)
-                raise subprocess.TimeoutExpired(args, options["timeout"])
-            return lancer(args, **options)
-        with unittest.mock.patch.object(hooks.subprocess, "run", side_effect=lent):
-            lignes = self.completer()
+    def test_le_delai_epuise_se_dit_sans_bloquer_ni_laisser_de_verrou(self):
+        """Un vrai fetch, ralenti par un relais devant `git upload-pack` :
+        tué d'emblée au délai, git laissait `.git/shallow.lock`, et le clone
+        restait superficiel, la commande relancée à la main comprise (revue
+        de B-0202)."""
+        for n in range(40):
+            (self.origine / "lourd.bin").write_bytes(os.urandom(20_000))
+            git(self.origine, "add", "-A")
+            git(self.origine, "commit", "-qm", f"lourd {n}", "--no-verify")
+        shutil.rmtree(self.clone)
+        git(self.dossier, "clone", "-q", "--depth", "1", f"file://{self.origine}", str(self.clone))
+        relais = self.dossier / "relais.py"
+        relais.write_text(
+            "import subprocess, sys, time\n"
+            "p = subprocess.Popen(['git', 'upload-pack'] + sys.argv[1:], stdout=subprocess.PIPE)\n"
+            "while True:\n"
+            "    b = p.stdout.read1(2048)\n"
+            "    if not b:\n"
+            "        break\n"
+            "    sys.stdout.buffer.write(b)\n"
+            "    sys.stdout.buffer.flush()\n"
+            "    time.sleep(0.2)\n"
+            "sys.exit(p.wait())\n", encoding="utf-8")
+        git(self.clone, "config", "remote.origin.uploadpack", f"{sys.executable} {relais}")
+        debut = time.monotonic()
+        with unittest.mock.patch.dict("os.environ", {hooks.SESSION_CLOUD: "true"}):
+            lignes = hooks.completer_historique(self.clone, time.monotonic() + 3)
         self.assertEqual(len(lignes), 1)
         self.assertIn("`git fetch --unshallow` dépasse le délai du démarrage", lignes[0])
+        self.assertFalse((self.clone / ".git" / "shallow.lock").exists())
+        self.assertLess(time.monotonic() - debut, 3 + hooks.ARRET_HISTORIQUE + 5)
+        self.assertTrue(self.superficiel())
+        # Le remède que la ligne donne marche, et le démarrage suivant aussi.
+        git(self.clone, "config", "--unset", "remote.origin.uploadpack")
+        self.assertIn("historique du clone complété", self.completer()[0])
+        self.assertFalse(self.superficiel())
 
 
 DECISION_ARBRE = """<!-- socle: couche=decisions zone=publique -->

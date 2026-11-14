@@ -5,10 +5,10 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-B-0209 et B-0142 livrés ; D-0110 validée, la copie de socle-review
-rafraîchie (J-2026-11-14-F). Lot : B-0212 fait (ADR-0075,
-J-2026-11-14-G), puis B-0202 avec B-0175.
-Pilote en pause.
+D-0110 appliquée (J-2026-11-14-F) ; le lot B-0212, B-0202 et B-0175
+fait et relu (J-2026-11-14-G à J), à fusionner. Une question ouverte à
+Théo, sans demande : deux règles contre la croissance du backlog
+(J-2026-11-14-H). Pilote en pause.
 
 ## Consignes en cours
 
@@ -62,7 +62,7 @@ Leur texte exact est dans l'entrée du journal citée.
 
 Avant toute nouvelle fonction (J-2026-11-13-I, D-0108, D-0109) :
 
-1. B-0202 avec B-0175, B-0196, B-0216.
+1. B-0196, B-0216.
 2. B-0151 et B-0199.
 3. Le reste, par priorité : B-0173 (son dernier critère), B-0208,
    B-0179 à la reprise du pilote ; B-0204 à B-0207, B-0211, B-0176,
