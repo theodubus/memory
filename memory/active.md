@@ -5,18 +5,17 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-D-0110 appliquée (J-2026-11-14-F) ; le lot B-0212, B-0202 et B-0175
-fait et relu (J-2026-11-14-G à J), à fusionner. Une question ouverte à
-Théo, sans demande : deux règles contre la croissance du backlog
-(J-2026-11-14-H). Pilote en pause.
+Le lot B-0212, B-0202 et B-0175 relu (J-2026-11-14-G à J), à
+fusionner. Ouvert avec Théo, sans demande : borner la croissance du
+backlog (J-2026-11-14-K). Pilote en pause.
 
 ## Consignes en cours
 
 Leur texte exact est dans l'entrée du journal citée.
 
 - Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
-- Tout ce qui est utile intègre le socle : ce qu'invente ce dépôt et
-  qui servirait à un projet va au produit (J-2026-11-13-F).
+- Tout ce qui est utile intègre le socle, une règle du backlog comprise
+  (J-2026-11-13-F) ; un sujet important se garde (J-2026-11-14-K).
 - Un lot par session ; sinon tout se range pour une session neuve, qui
   peut être sur un autre compte, avec son prompt (J-2026-11-12-P).
 - Chaque session travaille sur la branche de son environnement, partie
