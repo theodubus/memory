@@ -93,8 +93,9 @@ branche distante : une fois poussées, une ADR, une entrée de journal et
 une valeur attendue ne se réécrivent plus, elles se complètent.
 
 - Un lot ne part qu'après la correction de ses bloquants.
-- La réponse de l'humain à une demande se commite dans le même push que
-  le changement qu'elle autorise, jamais avant (B-0142).
+- La réponse de l'humain se commite dans le même push que le changement
+  qu'elle autorise, jamais avant (B-0142) ; seul un fichier protégé peut
+  la précéder, sous la demande en attente (D-0071).
 - Une valeur attendue à changer, un test à supprimer, un fichier protégé
   à rafraîchir : une demande dans le dépôt, relue à froid, poussée, son
   lien donné ; jamais une question dans la conversation.

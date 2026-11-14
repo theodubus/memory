@@ -1,14 +1,18 @@
 <!-- socle: couche=decisions zone=publique -->
 # ADR-0076 — Une réponse « valider » pas encore poussée sans le changement qu'elle autorise est signalée, pas refusée : une clé des garde-fous se suit comme un test, et le contrôle qui plante avertit
 
-> statut : acceptée · date : 2026-11-14 · source : ADR-0074@4eeb99c5, B-0215@361bbd0e, B-0216@ae4f7f09, D-0111@034d5e87, D-0040@308c950b, D-0071@9b06b40c, ADR-0024@699e330b · lu : decisions@b1d7ba83
+> statut : acceptée · date : 2026-11-14 · source : ADR-0074@4eeb99c5, B-0142@e05ad571, B-0215@361bbd0e, B-0216@ae4f7f09, D-0111@034d5e87, D-0040@308c950b, D-0071@9b06b40c, ADR-0024@699e330b · lu : decisions@b1d7ba83
 
 ## Contexte
 
 La CI d'un push et le hook avant push ne comptent que les validations
 ajoutées dans leur plage (B-0043@39049de5) : une réponse `valider` poussée avant
 le changement qu'elle autorise ne le couvre plus au push suivant, refusé,
-et l'humain voit sa réponse consignée deux fois. ADR-0074 en a fait un
+et l'humain voit sa réponse consignée deux fois. C'est arrivé trois fois
+(B-0142@e05ad571). Faire valoir une validation à travers les pushes
+relâcherait `tests.attendus` et `protege.fichiers` : une demande à
+l'humain. L'autre face, la gêne 6 de chess : une réponse gardée hors du
+dépôt jusqu'à son changement s'affiche « en attente ». ADR-0074 en a fait un
 avertissement, `demandes.reponse-seule`. Sa revue (J-2026-11-14-D@9e26ceef) y a
 trouvé deux manques que l'usage normal rencontre, gardés par D-0111 :
 une clé des garde-fous, que seule une réponse `valider` autorise aussi à
