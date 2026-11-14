@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0206 — Le hook de l'agent ne voit pas ce qu'écrivent cp -t, xargs, find -delete, bash -ec, sort -o ou python -c
 
-> statut : ouvert · origine : J-2026-11-13-H · lu : backlog@f4a491f0
+> statut : fait · origine : J-2026-11-13-H · ref : J-2026-11-14-AG · lu : backlog@f4a491f0
 
 Le hook de l'agent ne range pas parmi les écritures ce que ces commandes
 écrivent ; une écriture d'un fichier protégé y passe le hook, et seul
@@ -44,6 +44,50 @@ est jugé par les chemins protégés qu'il cite en toutes lettres ; un chemin
 construit au vol dans un autre langage est hors du modèle, un risque
 accepté que `protege.fichiers` attrape ensuite, et n'ouvre pas de sujet.
 
+## Modèle de menace
+
+La règle 2 de D-0112 : le hook juge les formes du shell qu'un agent
+coopératif écrit dans son travail. `cp -t`, `install -t`, `find -delete`,
+`find -exec rm {} +`, `xargs rm`, `bash -ec`, `sort -o` et `python3 -c` en
+sont ; la liste de ce sujet est finie (D-0111).
+
+Ce que le changement arrête :
+
+- `cp`, `ln` et `install` écrivent le dossier de `-t` (`-tDIR`, `-rt DIR`,
+  `--target-directory`), et non leur dernier argument ; `sort` écrit le
+  fichier de `-o` (`--output`) ;
+- `bash`, `sh`, `zsh` et `dash` ouvrent leur commande quel que soit le
+  groupe d'options qui porte `c` (`-ec`, `-lc`, `-o pipefail -c`), `--`
+  sauté ;
+- `find -delete`, et `find -exec` (`-execdir`, `-ok`, `-okdir`) d'un
+  écrivain de `{}` (`rm`, `sed -i`…), suppriment ce que nomment leurs
+  points de départ et leurs filtres (`-name`, `-path`), jugés contre les
+  motifs des chemins protégés à toute profondeur : `find .socle -name
+  policy.toml -delete` et `find . -name '*.toml' -delete` sont refusés,
+  `find . -name '*.pyc' -delete` passe ; un `!`, `-not` ou `-regex` rend
+  le filtre inconnu, et la suppression de tout ce qui est sous le départ ;
+- deux écrivains que le hook ne sait pas lire se jugent par les chemins
+  protégés qu'ils citent en toutes lettres : `xargs` d'un écrivain de ce
+  qu'il lit, par ceux de la commande entière (`echo .socle/policy.toml |
+  xargs rm`), et `python -c`, par ceux de son script, qu'il les lise ou
+  les écrive. Un chemin cité vaut s'il est protégé, ou s'il est un dossier
+  qui en contient, écrit avec une barre oblique ou un point de tête
+  (`.socle`, `memory/requests`) ; ni la racine, ni un dossier qui la
+  contient, ni un mot sans barre ni point (`memory`, un nom de module)
+  n'en sont.
+
+Ce qu'il laisse passer : un chemin construit au vol dans un autre langage
+(`Path('.socle') / 'policy' + '.toml'` ne cite pas le fichier), hors du
+modèle par la règle 2 ; ce que lit `xargs` sur un fichier (`-a`) ou par
+une redirection ; ce que `find` écrit par `-fprint` ou `-exec sh -c` ; un
+script python lu sur son entrée (`python3 - <<EOF`), qui n'est pas dans
+cette liste et va au backlog. `protege.fichiers` attrape ensuite
+l'écriture d'un fichier protégé.
+
+Ce qu'il refuse de plus : un `python -c` qui lit un fichier protégé qu'il
+cite (`open('.socle/policy.toml')`), que le hook ne distingue pas d'une
+écriture : un fichier protégé se lit par `cat` ou par l'outil de lecture.
+
 ## Fait quand
 
-- [ ] chacune de ces écritures d'un fichier protégé est refusée par le hook, et un test le montre
+- [x] chacune de ces écritures d'un fichier protégé est refusée par le hook, et un test le montre

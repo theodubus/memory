@@ -219,7 +219,7 @@ class TestGarde(unittest.TestCase):
         """Chaque commande refusée pour sa raison (`protege`, `illisible`,
         `reglage`), ou qui passe (`None`)."""
         raisons = {"protege": "écriture d'un fichier protégé", "illisible": "ne sait pas développer",
-                   "reglage": "réglages de Claude Code"}
+                   "reglage": "réglages de Claude Code", "supprime": "d'un dossier qui contient le projet"}
         for cmd, attendu in cas:
             with self.subTest(cmd=cmd, cwd=cwd):
                 raison = hooks.refus_bash(self.projet, cmd, cwd)
@@ -395,6 +395,57 @@ class TestGarde(unittest.TestCase):
             self.assertEqual(hooks.depart_de(self.racine, "memory"), f"{self.racine}/memory")
             self.assertEqual(hooks.depart_de(self.racine, None), str(self.racine))
 
+    def test_la_suppression_d_un_dossier_qui_contient_le_projet(self):
+        """B-0208 : `rm -rf ..` depuis la racine, ou la suppression d'un dossier
+        qui la contient, passaient le hook ; `rm -rf .` seul était refusé. Un
+        dossier voisin du projet reste libre, comme un `find` qui filtre ce
+        qu'il supprime sous la racine."""
+        ailleurs = Path(f"{self.racine}-ailleurs")
+        ailleurs.mkdir(exist_ok=True)
+        self.addCleanup(shutil.rmtree, ailleurs, ignore_errors=True)
+        parent = self.racine.parent
+        with self.environnement():
+            self.jugees([("rm -rf ..", "supprime"), ("rm -rf ../", "supprime"), ("rm ..", "supprime"),
+                         (f"rm -rf {parent}", "supprime"), (f"rm -rf {str(parent)[:-1]}*", "supprime"),
+                         ("rm -rf ~/..", "supprime"), ("cd .socle && rm -rf ../..", "supprime"),
+                         ("D=..; rm -rf \"$D\"", "supprime"), ("rm -rf {..,/tmp/rien}", "supprime"),
+                         ("mv .. /tmp/ailleurs", "supprime"), ("mv -t /tmp/ailleurs ..", "supprime"),
+                         ("git -C .. clean -ffdx", "supprime"), ("cd .. && git clean -ffdx", "supprime"),
+                         ("find .. -name '*.pyc' -delete", "supprime"), ("find .. -exec rm -rf {} +", "supprime"),
+                         ("find . -delete", "supprime"), ("find -delete", "supprime"),
+                         ("find . -mindepth 1 -exec rm -rf {} +", "supprime"), ("find $X -delete", "supprime"),
+                         ("rm -rf $X/..", "illisible"), ("rm -rf .", "protege"),
+                         (f"rm -rf {ailleurs}", None), (f"rm -rf ../{ailleurs.name}", None), ("rm -rf build", None),
+                         ("mv calc.py ..", None), ("git clean -fdx -e .env", None), ("git -C .. clean -n", None),
+                         ("find . -name '*.pyc' -delete", None),
+                         ("find . -type d -name __pycache__ -exec rm -rf {} +", None),
+                         (f"find {ailleurs} -delete", None), (f"find {ailleurs}/$X -delete", None),
+                         ("find .. -name x", None)])
+            # Depuis le dossier courant de l'agent : `..` y est la racine,
+            # refusée comme un dossier qui contient un fichier protégé.
+            self.jugees([("rm -rf ../..", "supprime"), ("rm -rf ..", "protege")], str(self.racine / "memory"))
+            self.jugees([("rm -rf .", None), ("rm -rf ..", "supprime")], str(ailleurs))
+
+    def test_ce_qu_une_commande_supprime(self):
+        """B-0208 : les chemins que `suppressions` lit, tels qu'ils sont
+        écrits, et si la racine elle-même compte."""
+        def lus(cmd):
+            return [x for c in commandes.analyser(cmd) for x in hooks.suppressions(c)]
+
+        self.assertEqual(lus("rm -rf -- a b"), [("a", False), ("b", False)])
+        self.assertEqual(lus("mv -f a b c"), [("a", False), ("b", False)])
+        self.assertEqual(lus("mv -t c a b && mv --target-directory=c d"), [("a", False), ("b", False), ("d", False)])
+        self.assertEqual(lus("mv -S .bak a b"), [("a", False)])
+        self.assertEqual(lus("git -C x -C y clean -fdx -e garde z"), [("x/y/z", False)])
+        self.assertEqual(lus("git clean -fde garde"), [(".", False)])
+        self.assertEqual(lus("git clean -fdn && git clean --dry-run -fd"), [])
+        self.assertEqual(lus("find -L a b -maxdepth 2 -delete"), [("a", True), ("b", True)])
+        # Un filtre nié ne garde rien (la revue du lot 3, J-2026-11-14-AH).
+        self.assertEqual(lus("find a ! -name x -delete"), [("a", True)])
+        self.assertEqual(lus("find a -execdir /bin/rm {} +"), [("a", True)])
+        self.assertEqual(lus("find a -exec cat {} + -name x"), [])
+        self.assertEqual(lus("cp a b && touch c && git rm d"), [])
+
     def test_les_valeurs_par_defaut_se_developpent(self):
         """La revue de B-0171, constat 13 : `${X:-défaut}` était refusé même
         quand `X` est connu hors du projet."""
@@ -454,6 +505,284 @@ class TestGarde(unittest.TestCase):
                          ("perl -0x1FFpi -e 's/O/X/' .socle/policy.toml", "protege"),
                          ("perl -0777 -ne 'print' .socle/policy.toml", None),
                          ("perl -lne 'print' .socle/policy.toml", None)])
+
+    def test_une_commande_derriere_un_mot_reserve_se_juge(self):
+        """B-0204 : `then rm …` se lisait comme le programme `then` ; ni ses
+        écritures ni ce qu'elle a d'irréversible ne se jugeaient. Ce qu'une
+        condition ou une boucle change devient inconnu après elle."""
+        protege, illisible = "écriture d'un fichier protégé", "un chemin que le hook ne sait pas développer"
+        with unittest.mock.patch.dict(os.environ, {"HOME": str(self.racine)}):
+            os.environ.pop("X", None)
+            for cmd, raison in (
+                    ("if true; then sed -i s/3/9/ .socle/policy.toml; fi", protege),
+                    ("! touch .socle/policy.toml", protege),
+                    ("if false; then :; elif true; then :; else touch .socle/policy.toml; fi", protege),
+                    ("while true; do touch .socle/policy.toml; done", protege),
+                    ("until false; do chmod +x .socle/socle; done", protege),
+                    ("{ touch .socle/policy.toml; }", protege),
+                    ("for f in .socle/*.toml; do sed -i s/3/9/ \"$f\"; done", protege),
+                    ("for f in calc.py .socle/{policy,adapter}.toml; do sed -i s/3/9/ $f; done", protege),
+                    (f"if true; then {G} {P} --force origin travail; fi", "politique, point 4"),
+                    ("{ cd /tmp; } | cat; echo x > .socle/policy.toml", protege),
+                    ("if $X; then cd /tmp; fi & echo x > .socle/policy.toml", protege),
+                    ("if $X; then cd /tmp; fi; echo x > .socle/policy.toml", illisible),
+                    ("if $X; then cd /tmp; else echo x > .socle/policy.toml; fi", illisible),
+                    ("if $X; then F=.socle/policy.toml; else F=/tmp/x; fi; echo x > $F", illisible),
+                    ("while read f; do sed -i s/3/9/ \"$f\"; done < /tmp/liste", illisible)):
+                with self.subTest(cmd):
+                    self.assertIn(raison, hooks.refus_bash(self.projet, cmd) or "")
+                    self.assertEqual(self.decide(*B(cmd)), "refus")
+            for cmd in ("for f in tests/*.py calc.py; do python3 -m unittest \"$f\"; done",
+                        "for f in *.py; do sed -i s/3/9/ \"$f\"; done",
+                        "if [ -f calc.py ]; then echo ok > notes.txt; else rm -f notes.txt; fi",
+                        "while read l; do echo \"$l\"; done < calc.py", "{ echo a; echo b; } > notes.txt",
+                        "for d in /tmp /var; do (cd $d && ls); done", "{ cd /tmp; }; echo x > policy.toml",
+                        "if true; then cd /tmp; fi; echo x > /tmp/notes.txt", "! grep -q x calc.py",
+                        "cd /tmp && for i in 1 2; do echo $i > f$i.txt; done > sortie.txt"):
+                with self.subTest(cmd):
+                    self.assertIsNone(hooks.refus_bash(self.projet, cmd))
+
+    def test_un_diese_ou_des_guillemets_imbriques_ne_perdent_pas_la_suite(self):
+        """B-0207 : `shlex` lisait un `#` comme un commentaire au milieu d'un
+        mot, et ce commentaire avalait la fin de la ligne ; une substitution
+        aux guillemets imbriqués désaccordait les guillemets. La commande
+        qui suivait se perdait."""
+        protege = "écriture d'un fichier protégé"
+        for cmd in ("echo x # une note\nsed -i s/3/9/ .socle/policy.toml",
+                    "echo x#; sed -i s/3/9/ .socle/policy.toml",
+                    "[ $# -eq 0 ]; sed -i s/3/9/ .socle/policy.toml",
+                    f"echo \"$({G} log -1 --format=\"%h # %s\")\"; sed -i s/3/9/ .socle/policy.toml",
+                    "X=\"$(echo \"l'apostrophe\")\"; sed -i s/3/9/ .socle/policy.toml",
+                    "X=\"$(echo \"; cd /tmp; \")\"; echo x >> .socle/policy.toml",
+                    "X=\"`echo \"; cd /tmp; \"`\"; echo x >> .socle/policy.toml",
+                    "D=\"$(dirname \"$(pwd)\")\" && echo x >> .socle/policy.toml"):
+            with self.subTest(cmd):
+                self.assertIn(protege, hooks.refus_bash(self.projet, cmd) or "")
+                self.assertEqual(self.decide(*B(cmd)), "refus")
+        for cmd in ("echo \"a#b\" > notes.txt", "echo x # > .socle/policy.toml", "# un commentaire\nls",
+                    f"echo \"$({G} log -1 --format=\"%h %s\")\" > notes.txt", "grep -c '#' calc.py > /tmp/n",
+                    "echo x; # rm -rf .socle", "echo \"$(cat .socle/policy.toml)\" > notes.txt",
+                    "curl -s \"https://example.org/a#b\" -o /tmp/page.html"):
+            with self.subTest(cmd):
+                self.assertIsNone(hooks.refus_bash(self.projet, cmd))
+
+    def test_cp_t_find_xargs_bash_ec_sort_o_et_python_c(self):
+        """B-0206 : ces écritures d'un fichier protégé passaient le hook ;
+        `python -c` et `xargs` se jugent par les chemins protégés qu'ils
+        citent en toutes lettres, `find` par ses départs et ses filtres."""
+        protege, reglage = "écriture d'un fichier protégé", "réglages de Claude Code"
+        illisible = "un chemin que le hook ne sait pas développer"
+        sed = "sed -i s/3/9/ .socle/policy.toml"
+        # Un départ qui contient le projet, ou peut le contenir, est refusé
+        # d'abord comme sa suppression (B-0208) ; un `find` qui écrit sans
+        # supprimer, comme l'écriture d'un fichier protégé, ou d'un chemin
+        # illisible.
+        contient = "suppression par le shell d'un dossier qui contient le projet"
+        with unittest.mock.patch.dict(os.environ, {"HOME": str(self.racine)}):
+            os.environ.pop("X", None)
+            for cmd, raison in (
+                    ("cp -t .socle/git-hooks /tmp/x", protege), ("install -t .socle/git-hooks /tmp/x", protege),
+                    ("cp -rt .socle/git-hooks /tmp/x", protege), ("mv -t.socle/git-hooks /tmp/x", protege),
+                    ("cp --target-directory=.socle/git-hooks /tmp/x", protege),
+                    ("ln -s -t .socle/git-hooks /tmp/x", protege),
+                    ("echo .socle/policy.toml | xargs rm", protege),
+                    ("find .socle -name policy.toml | xargs rm -f", protege),
+                    ("xargs -I{} cp {} .socle/git-hooks < /tmp/liste", protege),
+                    ("find .socle -name policy.toml -delete", protege),
+                    ("find .socle -name policy.toml -exec rm {} +", protege),
+                    ("find . -name policy.toml -exec rm -f {} \\;", protege),
+                    ("find . -name '*.toml' -delete", protege), ("find . -name pre-commit -delete", protege),
+                    ("find . -path ./.socle/policy.toml -delete", protege),
+                    ("cd .socle && find .. -name policy.toml -delete", protege),
+                    ("find .. -name policy.toml -delete", contient),
+                    ("cd .socle && find . -name policy.toml -exec sed -i s/3/9/ {} +", protege),
+                    ("find . ! -name '*.py' -delete", contient), ("find $X -name '*.pyc' -delete", contient),
+                    ("find .. -name policy.toml -exec sed -i s/3/9/ {} +", protege),
+                    ("find $X -name '*.pyc' -exec sed -i s/3/9/ {} +", illisible),
+                    (f"bash -ec '{sed}'", protege), (f"bash -lc '{sed}'", protege), (f"bash -c -- '{sed}'", protege),
+                    (f"bash -o pipefail -c '{sed}'", protege), (f"sh -euc '{sed}'", protege),
+                    ("sort -o .socle/policy.toml /tmp/x", protege), ("sort -uo .socle/policy.toml /tmp/x", protege),
+                    ("sort --output=.socle/policy.toml /tmp/x", protege),
+                    ("python3 -c \"open('.socle/policy.toml','w').write('x')\"", protege),
+                    ("python3 -I -c \"import shutil; shutil.rmtree('.socle')\"", protege),
+                    ("python3 -c \"print(open('.socle/policy.toml').read())\"", protege),
+                    ("python3 -c \"open('.claude/settings.local.json','w').write('{}')\"", reglage)):
+                with self.subTest(cmd):
+                    self.assertIn(raison, hooks.refus_bash(self.projet, cmd) or "")
+                    self.assertEqual(self.decide(*B(cmd)), "refus")
+            self.assertIn("cité par `python3 -c`, un écrivain que le hook ne sait pas lire",
+                          hooks.refus_bash(self.projet, "python3 -c \"open('.socle/policy.toml')\"") or "")
+            for cmd in ("cp -t /tmp/dest calc.py", "cp calc.py /tmp/x", "install -m 755 -t /tmp/bin calc.py",
+                        "find . -name '*.pyc' -delete", "find . -name __pycache__ -prune -o -name '*.pyc' -print",
+                        "find build -name '*.o' -exec rm {} +", "find . -name '*.py' -exec grep -l x {} +",
+                        "find /opt/ailleurs -name policy.toml -delete", "find . -path './build/*' -delete",
+                        "find /opt/$X -name '*.pyc' -delete", "find . -type f | xargs sed -i s/a/b/",
+                        "find . -name '*.pyc' | xargs rm -f", "ls .socle | xargs -I{} echo {}",
+                        "echo /tmp/x | xargs -I{} cp {} /tmp/y", "sort -o /tmp/tri.txt calc.py",
+                        "sort calc.py | uniq > /tmp/x", "bash -ec 'echo ok > /tmp/x'", "bash -x script.sh -c",
+                        "python3 -c \"import sys; sys.path.insert(0, 'engine'); from socle import memory\"",
+                        "python3 -c \"print(open('calc.py').read())\"", "python3 -m unittest tests.test_calc"):
+                with self.subTest(cmd):
+                    self.assertIsNone(hooks.refus_bash(self.projet, cmd))
+
+    def test_un_find_sous_un_dossier_du_projet_ne_vise_pas_les_reglages(self):
+        """La revue du lot 3, bloquant 1 (J-2026-11-14-AH) : un `find` sans
+        filtre de nom sous un dossier du projet était refusé au motif des
+        réglages de Claude Code, que `**/.claude/settings.json` croisait
+        partout ; ils se jugent contre ceux qui sont présents, ignorés par git
+        compris, et le refus d'un `find` parti de la racine dit ce qu'il
+        touche, pas `**`."""
+        local, exclus = self.racine / ".claude/settings.local.json", self.racine / ".git/info/exclude"
+        avant = exclus.read_text() if exclus.exists() else ""
+        exclus.parent.mkdir(exist_ok=True)
+        exclus.write_text(avant + "\n/.claude/settings.local.json\n")
+        local.write_text("{}")
+        self.addCleanup(exclus.write_text, avant)
+        self.addCleanup(local.unlink)
+        with self.environnement():
+            self.jugees([("find build -delete", None), ("find tests/fixtures/tmp -type f -delete", None),
+                         ("find dist -mindepth 1 -delete", None), ("find tests -type f -exec rm {} +", None),
+                         ("cd tests && find . -type f -exec sed -i s/a/b/ {} +", None),
+                         ("find . -type d -empty -delete", "supprime"),
+                         ("find . -type f -exec sed -i s/a/b/ {} +", "reglage"), ("find .claude -delete", "reglage"),
+                         ("find . -name 'settings*.json' -delete", "reglage"),
+                         ("find .claude -name settings.local.json -delete", "reglage"),
+                         ("find .claude -type f -exec sed -i s/a/b/ {} +", "reglage"),
+                         ("find build -name '*.json' -delete", None),
+                         ("find .claude/worktrees -name settings.local.json -delete", "reglage")])
+            for cmd, cite in (("find . -type d -empty -delete", str(self.racine)),
+                              ("find . -type f -exec sed -i s/a/b/ {} +", "`.claude/settings.json`"),
+                              ("find .claude -name settings.local.json -delete", "`.claude/settings.local.json`")):
+                with self.subTest(cmd):
+                    raison = hooks.refus_bash(self.projet, cmd) or ""
+                    self.assertIn(cite, raison)
+                    self.assertNotIn("`**`", raison)
+
+    def test_le_filtre_de_chemin_d_un_find_se_lit_comme_find_le_lit(self):
+        """La revue du lot 3, bloquant 2 (J-2026-11-14-AH) : le motif d'un
+        `-path` répond au chemin entier tel que `find` l'écrit, et son `*`
+        traverse les `/` et rend les noms en `.` ; `-path '*/.socle/*'`
+        gagnait un dossier de trop et passait."""
+        with self.environnement():
+            self.jugees([("find . -path '*/.socle/*' -delete", "protege"),
+                         ("find . -path '*/policy.toml' -delete", "protege"),
+                         ("find . -ipath '*/.SOCLE/*' -delete", "protege"),
+                         ("find . -path '*/.github/workflows/*' -exec sed -i s/a/b/ {} +", "protege"),
+                         ("find . -wholename '*socle/git-hooks*' -exec sed -i s/a/b/ {} +", "protege"),
+                         ("find . -path './.socle/*' -exec sed -i s/a/b/ {} +", "protege"),
+                         ("find . -path './*/pre-commit' -exec sed -i s/a/b/ {} +", "protege"),
+                         ("cd memory && find .. -path '*/requests/*.answer.toml' -exec sed -i s/a/b/ {} +",
+                          "protege"),
+                         ("find .socle -path '.socle/*' -exec sed -i s/a/b/ {} +", "protege"),
+                         ("find . -path './build/*' -delete", None), ("find . -path '*/build/*' -delete", None),
+                         ("find . -path '*/__pycache__/*' -delete", None), ("find . -path 'engine/*' -delete", None),
+                         ("find memory -path 'memory/tmp/*' -delete", None),
+                         ("find . -path './memory/*.bak' -exec rm {} +", None)])
+
+    def test_un_filtre_de_find_ne_garde_que_ce_qu_il_precede(self):
+        """La revue du lot 3, bloquant 3 (J-2026-11-14-AH) : le filtre d'un
+        `find` se lisait quelle que soit sa place ou son opérateur ;
+        `find . -delete -name '*.pyc'` vide le projet, `.git` compris, et
+        passait, comme un `-o` dont l'autre branche n'a pas de filtre, ou des
+        parenthèses échappées que le découpage lisait comme des opérateurs.
+        Un `find` parti de la racine qu'aucun filtre de nom ou de chemin ne
+        garde est la suppression du projet, même avec `-type` ou `-empty`."""
+        with self.environnement():
+            self.jugees([("find . -delete -name '*.pyc'", "supprime"),
+                         ("find . -path ./.git -prune -o -type f -delete", "supprime"),
+                         ("find . -mindepth 1 -maxdepth 1 -name .git -prune -o -exec rm -rf {} +", "supprime"),
+                         ("find . -name '*.pyc' -o -delete", "supprime"), ("find . -name x , -delete", "supprime"),
+                         ("find . -not -name '*.py' -delete", "supprime"), ("find . -type f -delete", "supprime"),
+                         ("find . -name x -or -exec rm {} +", "supprime"),
+                         ("find . \\( -type f \\) -delete", "supprime"), ("find . '(' -type f ')' -delete", "supprime"),
+                         ("find . -name x -exec rm {} \\; -o -delete", "supprime"),
+                         ("find . \\( -name '*.pyc' -o -type f \\) -delete", "supprime"),
+                         ("find .socle -delete -name '*.pyc'", "protege"),
+                         ("find .socle \\( -name policy.toml \\) -delete", "protege"),
+                         ("find .socle -name '*.pyc' -o -exec sed -i s/3/9/ {} +", "protege"),
+                         ("find . -name '*.pyc' -delete", None), ("find . -type f -name '*.pyc' -delete", None),
+                         ("find . \\( -name '*.pyc' -o -name '*.pyo' \\) -delete", None),
+                         ("find . -name '*.pyc' -o -name '*.pyo' -delete", None),
+                         ("find . -path ./.git -prune -o -name '*.orig' -delete", None),
+                         ("find . -name '*.pyc' -delete -o -print", None),
+                         ("find . -name '*.pyc' -exec rm {} \\;", None),
+                         ("find . -name __pycache__ -prune -o -name '*.pyc' -print", None),
+                         ("find build -delete -name '*.o'", None)])
+
+    def test_le_corps_d_une_fonction_ne_s_execute_pas_la_ou_il_s_ecrit(self):
+        """La revue du lot 3, bloquant 4 (J-2026-11-14-AH) : le corps d'une
+        fonction `nom() { …; }` se lisait comme exécuté, et son `cd` valait
+        pour la suite ; il rend en se fermant l'état d'avant lui. Ce qu'il
+        écrit se juge toujours."""
+        with self.environnement():
+            self.jugees([("build() { cd engine; }; echo x > .socle/policy.toml", "protege"),
+                         ("f() { cd /tmp; }; sed -i s/3/9/ .socle/policy.toml", "protege"),
+                         ("f () { cd /tmp; F=/tmp/x; }; echo x > .socle/policy.toml", "protege"),
+                         ("function f() { cd /tmp; }; echo x > .socle/policy.toml", "protege"),
+                         ("f()\n{\n  cd /tmp\n}\necho x > .socle/policy.toml", "protege"),
+                         ("if true; then f() { cd /tmp; }; fi; echo x > .socle/policy.toml", "protege"),
+                         ("f() { touch .socle/policy.toml; }", "protege"),
+                         ("f() { cd /tmp; ls; }; echo ok > notes.txt", None),
+                         ("f() { echo x > /tmp/y; }; f; echo ok > notes.txt", None)])
+
+    def test_une_boucle_qui_revient_a_son_dossier_le_garde(self):
+        """La revue du lot 3, bloquant 5 (J-2026-11-14-AH) : une boucle ou
+        une condition qui revient à son dossier (`cd x; …; cd ..`) le rendait
+        inconnu, et l'écriture qui la suivait était refusée ; son lieu
+        normalisé, connu, se compare seul. La valeur d'un `for` faite de
+        plusieurs mots dont l'un n'est pas un seul nom de dossier, ou un
+        `**`, ne se suit pas."""
+        with self.environnement():
+            self.jugees([("for d in */; do cd \"$d\"; ls; cd ..; done; echo ok > status.txt", None),
+                         ("for d in memory tests; do cd $d; ls; cd ..; done; echo ok > status.txt", None),
+                         ("for f in *.py; do cd memory; ls; cd ..; done; echo ok > status.txt", None),
+                         ("while false; do cd memory; cd ..; done; echo ok > status.txt", None),
+                         ("if true; then cd memory; ls; cd ..; fi; echo ok > status.txt", None),
+                         ("for d in a b; do pushd $d; popd; done; echo ok > status.txt", None),
+                         ("for d in */; do cd $d; cd ..; done; echo x > \"$PWD/status.txt\"", None),
+                         ("cd .socle; for d in */; do cd \"$d\"; ls; cd ..; done; echo x > policy.toml", "protege"),
+                         ("for d in memory; do cd $d; done; echo x > .socle/policy.toml", "illisible"),
+                         ("for d in a ..; do cd \"$d\"; cd ..; done; echo x > notes.txt", "illisible"),
+                         ("for d in a/b c; do cd $d; cd ..; done; echo x > notes.txt", "illisible"),
+                         ("for d in **/; do cd \"$d\"; cd ..; done; echo x > notes.txt", "illisible"),
+                         ("for d in .socle/git-hooks c; do cd $d; echo x > pre-commit; done", "protege")])
+
+    def test_la_variable_d_un_for_prend_les_mots_de_sa_liste_un_a_un(self):
+        """La seconde passation du lot 3 (J-2026-11-14-AJ) : la valeur d'un
+        `for` de plusieurs mots se lisait comme un seul nom, et `for d in
+        .socle memory; do cd $d; echo x > policy.toml; done` passait, comme
+        `for f in a policy.toml; do echo x > .socle/$f; done` ; le corps se
+        juge une fois par mot de sa liste (B-0204). Un `break` ou un
+        `continue` vu ailleurs que là où le tour finit rend inconnus le
+        dossier du tour d'après et celui d'après la boucle."""
+        with self.environnement():
+            self.jugees([("for d in .socle memory; do cd $d; echo x > policy.toml; done", "protege"),
+                         ("for d in memory .socle; do cd \"$d\"; echo x > policy.toml; cd ..; done", "protege"),
+                         ("for f in a policy.toml; do echo x > .socle/$f; done", "protege"),
+                         ("for f in calc.py {a,policy}.toml; do sed -i s/3/9/ \".socle/$f\"; done", "protege"),
+                         ("X='a policy.toml'; for f in $X; do echo x > \".socle/$f\"; done", "protege"),
+                         ("for d in a b; do for e in c .socle; do cd $e; echo x > policy.toml; cd ..; done; done",
+                          "protege"),
+                         ("for d in .socle memory; do cd $d; break; cd ..; done; echo x > policy.toml", "illisible"),
+                         ("for d in memory .socle; do cd $d; [ -e x ] && continue; cd ..; echo x > policy.toml; done",
+                          "illisible"),
+                         ("while true; do cd .socle; break; cd ..; done; echo x > policy.toml", "illisible"),
+                         ("for d in */; do cd \"$d\"; ls; cd ..; done", None),
+                         ("for d in memory tests; do cd $d; ls > /tmp/liste; cd ..; done; echo ok > status.txt", None),
+                         ("for d in memory tests; do cd \"$d\" || continue; ls; cd ..; done; echo ok > status.txt",
+                          None),
+                         ("for f in a b; do [ -e \"$f\" ] || continue; cp \"$f\" \"/tmp/$f\"; done; echo ok > notes.txt",
+                          None),
+                         ("for d in memory tests; do cd $d; ls; cd ..; [ -e x ] && break; done; echo ok > notes.txt",
+                          None),
+                         ("for f in a b c; do echo $f > \"notes-$f.txt\"; done", None),
+                         ("for d in */; do cd \"$d\" || { echo \"skip $d\" >&2; continue; }; ls; cd ..; done; "
+                          "echo fin > notes.txt", None),
+                         ("for d in */; do cd \"$d\"; for f in *.log; do grep -q E \"$f\" && break; done; cd ..; done; "
+                          "echo fin > notes.txt", None),
+                         ("for a in " + " ".join(["1"] * 80) + "; do x=$(for b in " + " ".join(["1"] * 80)
+                          + "; do y=$(for c in " + " ".join(["1"] * 80) + "; do :; done); done); done; rm -rf ..",
+                          "supprime")])
 
     def test_remise_en_etat_d_un_fichier_protege(self):
         """D-0098 (B-0165) : l'agent remet un fichier protégé changé par
@@ -762,6 +1091,114 @@ class TestDecoupage(unittest.TestCase):
         self.assertIn(["rm", "b"], [c.argv for c in commandes.analyser("X=$(rm a); echo \"$(ls)\" `rm b`")])
         self.assertEqual([c.argv for c in commandes.analyser("echo $(pwd)/x > f")][-1], ["echo", "$(pwd)/x"])
 
+    def test_les_mots_reserves_et_les_commandes_composees(self):
+        """B-0204 : les mots réservés se retirent comme un préfixe ; ce
+        qu'une condition ou une boucle change devient inconnu après elle et
+        dans la branche qui suit ; un groupe s'exécute une fois ; une
+        commande composée dans un pipeline ne transmet rien."""
+        env = {"PWD": "/p"}
+        I = commandes.INCONNU
+        self.assertEqual([c.argv for c in commandes.analyser("if a; then b; elif c; then d; else ! e; fi")],
+                         [["a"], ["b"], ["c"], ["d"], ["e"]])
+        self.assertEqual([c.argv for c in commandes.analyser("while a; do { b; }; done; until c; do d; done")],
+                         [["a"], ["b"], ["c"], ["d"]])
+        for texte, lieu in (
+                ("if a; then cd /a; fi", I), ("if a; then cd /a; else ls", I), ("while a; do cd /a; done", I),
+                ("if a; then ls; fi", "/p"), ("{ cd /a; }", "/a"), ("{ cd /a; } | cat", "/p"),
+                ("if a; then cd /a; fi | cat", "/p"), ("if a; then cd /a; fi &", "/p"), ("if a; then cd /a", "/a")):
+            with self.subTest(texte):
+                self.assertEqual(commandes.analyser(texte + "; ls", environnement=env)[-1].lieu, lieu)
+        for texte, valeur in (("for F in a b; do ls", "a b"), ("for F in x{1,2}; do ls", "x1 x2"),
+                              ("for F in a; do :; done", I), ("for F; do ls", I), ("F=a; if b; then F=c; fi", I),
+                              ("for F in a b", I)):
+            with self.subTest(texte):
+                c = commandes.analyser(texte + "; ls", environnement=env)[-1]
+                self.assertEqual(commandes.variables_de(c, env).get("F"), valeur)
+        # Les redirections d'une boucle s'ouvrent dans le dossier d'avant elle.
+        fin = commandes.analyser("cd /a; for x in 1; do cd /b; done > f", environnement=env)[-1]
+        self.assertEqual((fin.redirige, fin.lieu), (["f"], "/a"))
+
+    def test_le_corps_d_un_for_se_lit_une_fois_par_mot(self):
+        """La seconde passation du lot 3 (J-2026-11-14-AJ) : le corps d'un
+        `for` dont la liste a plusieurs mots se lit une fois par mot, sa
+        variable liée à ce mot ; au-delà de ce que le dépliage permet, elle
+        est inconnue. Le `select` ne se déplie pas : sa variable est
+        inconnue."""
+        env = {"PWD": "/p"}
+        I = commandes.INCONNU
+        lus = [(c.argv, c.lieu) for c in commandes.analyser("for d in a b; do cd $d; ls; cd ..; done", environnement=env)]
+        self.assertEqual([x for x in lus if x[0] == ["ls"]], [(["ls"], "/p/a"), (["ls"], "/p/b")])
+        for texte, valeurs in (("for f in a b; do echo $f; done", ["a", "b"]),
+                               ("for f in x{1,2} y; do echo $f; done", ["x1", "x2", "y"]),
+                               ("X='a b'; for f in $X c; do echo $f; done", ["a", "b", "c"]),
+                               ("for f in *.py; do echo $f; done", ["*.py"]),
+                               ("select f in a b; do echo $f; done", [I])):
+            with self.subTest(texte):
+                echos = [c for c in commandes.analyser(texte, environnement=env) if c.programme == "echo"]
+                self.assertEqual([commandes.variables_de(c, env).get("f") for c in echos], valeurs)
+        long = "for f in " + " ".join(f"x{n}" for n in range(10000)) + "; do echo $f; done"
+        echos = [c for c in commandes.analyser(long, environnement=env) if c.programme == "echo"]
+        self.assertEqual([commandes.variables_de(c, env).get("f") for c in echos], [I])
+        for texte, lieu in (("for d in a b; do cd $d; break; cd ..; done", I),
+                            ("for d in a b; do cd $d || continue; cd ..; done", "/p"),
+                            ("for d in a b; do [ -e x ] || continue; cd $d; cd ..; done", "/p"),
+                            ("for d in a b; do cd $d; cd ..; done", "/p"), ("cd $X", "/p/a b")):
+            with self.subTest(texte):
+                self.assertEqual(commandes.analyser(texte + "; ls", environnement={**env, "X": "a b"})[-1].lieu,
+                                 lieu)
+
+    def test_la_seconde_revue_du_lot_3(self):
+        """La seconde revue du lot 3 (J-2026-11-14-AL) : la borne du
+        dépliage vaut pour toute la commande, sous-shells compris ; une cible
+        de `cd` faite d'une variable à espaces se lit comme un nom ; un saut
+        vaut pour sa boucle la plus intérieure, et derrière `cd … ||`, dans un
+        groupe comme seul, il ne se lit pas."""
+        env = {"PWD": "/p"}
+        I = commandes.INCONNU
+        uns = " ".join(["1"] * 80)
+        texte = f"for a in {uns}; do x=$(for b in {uns}; do y=$(for c in {uns}; do :; done); done); done; ls"
+        self.assertLess(len(commandes.analyser(texte, environnement=env)), 40_000)
+        for texte, pwd, lieu in (("cd build; cd -", "/p q", "/p q"), ("cd \"$PWD/build\"", "/p q", "/p q/build"),
+                                 ("D='my dir'; cd \"$D\"", "/p", "/p/my dir"),
+                                 ("for d in a b; do cd \"$d\" || { echo x; continue; }; cd ..; done", "/p", "/p"),
+                                 ("for d in a b; do cd \"$d\" || if true; then break; fi; cd ..; done", "/p", "/p"),
+                                 ("for d in a b; do cd $d; for f in x y; do [ f ] && break; done; cd ..; done", "/p", "/p"),
+                                 ("for d in a b; do cd $d; while read l; do break; done; cd ..; done", "/p", "/p"),
+                                 ("for d in a b; do cd $d; for f in x y; do break 2; done; cd ..; done", "/p", I),
+                                 ("for d in a b; do cd $d; for f in x y; do break $n; done; cd ..; done", "/p", I),
+                                 ("for d in a b; do cd $d; f() { break; }; cd ..; done", "/p", "/p"),
+                                 ("for d in a b; do cd $d || { echo x; }; continue; cd ..; done", "/p", I)):
+            with self.subTest(texte):
+                self.assertEqual(commandes.analyser(texte + "; ls", environnement={"PWD": pwd})[-1].lieu, lieu)
+
+    def test_une_fonction_une_boucle_qui_revient_et_des_operateurs_cites(self):
+        """La revue du lot 3 (J-2026-11-14-AH) : le corps d'une fonction rend
+        en se fermant l'état d'avant lui ; une commande composée revenue à son
+        dossier connu le garde ; des opérateurs échappés ou entre guillemets
+        sont des mots."""
+        env = {"PWD": "/p"}
+        I = commandes.INCONNU
+        for texte, lieu in (
+                ("f() { cd /a; }", "/p"), ("function f() { cd /a; }", "/p"), ("if a; then f() { cd /a; }; fi", "/p"),
+                ("f()\n{\ncd /a\n}", "/p"), ("{ cd /a; }", "/a"), ("for d in */; do cd $d; cd ..; done", "/p"),
+                ("for d in a b; do cd $d; cd ..; done", "/p"), ("while a; do cd x; cd ..; done", "/p"),
+                ("for d in a ..; do cd $d; cd ..; done", I), ("for d in a/b c; do cd $d; cd ../..; done", I),
+                ("for d in **/; do cd $d; cd ..; done", I), ("for d in a; do cd $d; done", I)):
+            with self.subTest(texte):
+                self.assertEqual(commandes.analyser(texte + "; ls", environnement=env)[-1].lieu, lieu)
+        for texte, valeur in (("f() { X=1; }", None), ("X=0; f() { X=1; }", "0"),
+                              ("for d in */; do cd $d; cd ..; done", "/p")):
+            with self.subTest(texte):
+                c = commandes.analyser(texte + "; ls", environnement=env)[-1]
+                nom = "PWD" if "cd" in texte else "X"
+                self.assertEqual(commandes.variables_de(c, env).get(nom), valeur)
+        self.assertEqual([c.argv for c in commandes.analyser("f() { rm a; }; g ( ) { rm b; }")],
+                         [["rm", "a"], ["rm", "b"]])
+        self.assertEqual([c.argv for c in commandes.analyser("find . \\( -name a \\) -exec rm {} \\; ; ls")],
+                         [["find", ".", "(", "-name", "a", ")", "-exec", "rm", "{}", ";"], ["ls"]])
+        self.assertEqual([c.argv for c in commandes.analyser("echo '|' \";\" '()' a\\;b > f")],
+                         [["echo", "|", ";", "()", "a;b"]])
+
     def test_normaliser_et_lieu_sur(self):
         """La revue de B-0171, constat 4 : un `..` ne remonte pas une part
         inconnue, et remonte, pour le jugement, la part écrite avant elle."""
@@ -817,6 +1254,25 @@ class TestDecoupage(unittest.TestCase):
         self.assertEqual(commandes.jetons("(a);b)>f"), ["(", "a", ")", ";", "b", ")", ">", "f"])
         self.assertEqual(commandes.jetons("echo x # l'apostrophe d'un commentaire $(rm a)"), ["echo", "x"])
         self.assertEqual([c.programme for c in commandes.analyser("echo x # l'apostrophe $(rm a) `rm b`")], ["echo"])
+
+    def test_un_diese_et_les_guillemets_d_une_substitution(self):
+        """B-0207 : un `#` n'ouvre un commentaire qu'en tête d'un mot, et le
+        commentaire laisse sa fin de ligne ; une substitution entre
+        guillemets a ses propres guillemets."""
+        for texte, attendu in (
+                ("echo x # c\nls", ["echo", "x", "\n", "ls"]), ("echo x#; ls", ["echo", "x#", ";", "ls"]),
+                ("[ $# -eq 0 ]; ls", ["[", "$#", "-eq", "0", "]", ";", "ls"]), ("a;#c\nb", ["a", ";", "\n", "b"]),
+                ("echo ${#F} a#b \\#c", ["echo", "${#F}", "a#b", "#c"]), ("echo $(a)#b", ["echo", "$(a)#b"]),
+                ('X="$(a "b c")"; ls', ['X=$(a "b c")', ";", "ls"]),
+                ('echo "x $(a "; b") y"', ["echo", 'x $(a "; b") y']),
+                ('echo "`a "b"`" c', ["echo", '`a "b"`', "c"]),
+                ('echo "$(a "$(b "c")")"; ls', ["echo", '$(a "$(b "c")")', ";", "ls"])):
+            with self.subTest(texte):
+                self.assertEqual(commandes.jetons(texte), attendu)
+        # Ce que lance une substitution entre guillemets ne se juge pas
+        # (un risque accepté) ; un `cd` cité entre ses guillemets non plus.
+        simples = commandes.analyser('X="$(echo "; cd /tmp; ")"; ls')
+        self.assertEqual([(c.argv, c.dossier) for c in simples], [(["ls"], "")])
 
     def test_accolades(self):
         self.assertEqual(commandes.accolades("a{b,c{d,e}}f"), ["abf", "acdf", "acef"])
@@ -891,6 +1347,23 @@ class TestDecoupage(unittest.TestCase):
 class TestJugements(unittest.TestCase):
     def test_programme(self):
         self.assertEqual(commandes.analyser("/usr/bin/git status")[0].programme, "git")
+
+    def test_ecrits_d_une_destination_par_option(self):
+        """B-0206 : `cp -t`, `install -t`, `mv -t` et `sort -o` écrivent la
+        valeur de leur option ; `bash` ouvre sa commande quel que soit le
+        groupe qui porte `-c`."""
+        for cmd, ecrits in (("cp -t d a b", ["d"]), ("cp -rtd a", ["d"]), ("cp -Stx a d", ["d"]),
+                            ("install -m 755 -t d a", ["d"]), ("install -mt d a", ["a"]), ("cp --targ=d a", ["d"]),
+                            ("mv -t d a", ["d", "a"]), ("mv -td a", ["a", "d"]), ("cp a b d", ["d"]),
+                            ("sort -o f a", ["f"]), ("sort -k2 -uof a", ["f"]), ("sort --output f a", ["f"]),
+                            ("sort -t o a", []), ("find . -exec cp {} d \\;", ["d"]), ("find . -delete", [])):
+            with self.subTest(cmd):
+                self.assertEqual(hooks.ecrits(commandes.analyser(cmd)[0]), ecrits)
+        for cmd, lance in (("bash -ec 'rm a'", True), ("bash -o pipefail -c 'rm a'", True), ("sh -c -- 'rm a'", True),
+                           ("bash --norc -lc 'rm a'", True), ("bash -x s.sh -c 'rm a'", False), ("bash -c", False),
+                           ("bash +o posix -ec 'rm a'", True)):
+            with self.subTest(cmd):
+                self.assertEqual(["rm", "a"] in [c.argv for c in commandes.analyser(cmd)], lance)
 
     def test_ecrits(self):
         c = commandes.analyser(f"{G} mv a .socle/b")[0]
