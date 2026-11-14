@@ -6,8 +6,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 ## En cours
 
 Le backlog trié par D-0111 ; D-0112 validée, ses règles à écrire avec
-les lots 3 et 5. Aucun lot avant le feu vert de Théo (J-2026-11-14-M).
-Pilote en pause.
+les lots 3 et 5. Feu vert de Théo pour le lot 1, en session neuve
+(J-2026-11-14-N). Pilote en pause.
 
 ## Consignes en cours
 
