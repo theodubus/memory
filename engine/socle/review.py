@@ -74,15 +74,18 @@ def sujets_du_lot(projet: config.Projet, base: str) -> tuple[list, list]:
 def messages_depuis(racine, depuis: str) -> list[str]:
     """Les messages des commits depuis `depuis`, du plus ancien au plus
     récent, sans leurs lignes de fin (`Co-Authored-By:`, `Socle-Hooks:`…) :
-    ce que la correction dit corriger."""
+    ce que la correction dit corriger. Seul le dernier paragraphe se retire,
+    s'il n'est fait que de lignes de fin, et jamais le titre : un titre
+    `fix: …` ou `Corrige: B-NNNN` reste."""
     brut = outils.git(racine, "log", "--reverse", "--format=%x00%B", f"{depuis}..HEAD", check=False)
     res = []
     for message in brut.split("\0"):
-        lignes = message.strip().splitlines()
-        while lignes and (re.match(r"^[A-Za-z][\w-]*: \S", lignes[-1]) or not lignes[-1].strip()):
-            lignes.pop()
-        if lignes:
-            res.append("\n".join(lignes))
+        paragraphes = [p.strip("\n") for p in re.split(r"\n[ \t]*\n", message.strip()) if p.strip()]
+        if len(paragraphes) > 1 and all(re.match(r"^[A-Za-z][\w-]*: \S", ligne)
+                                        for ligne in paragraphes[-1].splitlines()):
+            paragraphes.pop()
+        if paragraphes:
+            res.append("\n\n".join(paragraphes))
     return res
 
 

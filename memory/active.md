@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-B-0209 fait et poussé, pas encore relu : la revue attend la fenêtre neuve
-(J-2026-11-13-M). Puis B-0142. Pilote en pause.
+B-0209 relu, son bloquant corrigé (J-2026-11-14-A) ; D-0110, la copie
+protégée de socle-review, attend Théo. Puis B-0142. Pilote en pause.
 
 ## Consignes en cours
 

@@ -186,6 +186,22 @@ class TestBarre(_Lot):
         self.assertIn("- [x] double est écrit", texte)
         self.assertIn("`double(x)` rend `2 * x`, entiers compris.", texte)
 
+    def test_la_seconde_revue_garde_le_titre_d_un_correctif(self):
+        """La revue de B-0209, constat bloquant 1 : un titre `fix: …` ou un
+        trailer seul ressemblent à une ligne de fin, mais restent."""
+        self.lot()
+        relu = git(self.racine, "rev-parse", "HEAD").strip()
+        (self.racine / "calc.py").write_text("def double(x):\n    return int(x) * 2\n")
+        git(self.racine, "commit", "-qam", "fix: une chaîne se double en entier\n\nCo-Authored-By: t <t@t>")
+        (self.racine / "calc.py").write_text("def double(x):\n    return 2 * int(x)\n")
+        git(self.racine, "commit", "-qam", "Corrige: B-0001")
+        (self.racine / "calc.py").write_text("def double(x):\n    return int(x) + int(x)\n")
+        git(self.racine, "commit", "-qam", "Le cas vide\n\nLe détail.\nNote: le cas vide reste ouvert\n\n"
+                                         "Co-Authored-By: t <t@t>")
+        self.assertEqual(revue.messages_depuis(self.racine, relu),
+                         ["fix: une chaîne se double en entier", "Corrige: B-0001",
+                          "Le cas vide\n\nLe détail.\nNote: le cas vide reste ouvert"])
+
     def test_la_specification_que_le_lot_ecrit_est_dans_le_dossier_sans_etre_citee(self):
         self.lot()
         (self.racine / "memory/decisions/ADR-0002-le-modele-de-menace.md").write_text(
