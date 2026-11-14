@@ -461,3 +461,36 @@ class TestCommitDUnePullRequest(unittest.TestCase):
         self.assertFalse(outils.recuperer_pull_requests(clone))
         # Un commit qui n'existe nulle part reste refusé.
         self.assertIn("ni dans ses pull requests", controles_memoire.verifier_ref(ctx, "commit", "0123456"))
+
+    def test_un_clone_d_un_clone_retrouve_les_pull_requests_que_son_origine_a_recuperees(self):
+        """B-0175 : un clone local (`--no-local`) d'un clone de GitHub n'a pas
+        les `refs/pull/*` ; son origine n'en a que les copies qu'elle a
+        récupérées, `refs/socle/pull/*`. Un objet que l'origine garde sans
+        aucun ref reste refusé."""
+        dossier = Path(tempfile.mkdtemp(prefix="socle-pull-"))
+        self.addCleanup(shutil.rmtree, dossier, ignore_errors=True)
+        travail, clone = dossier / "travail", dossier / "clone"
+        travail.mkdir()
+        git(travail, "init", "-q", "-b", "main")
+        (travail / "a.txt").write_text("a\n")
+        git(travail, "add", "-A")
+        git(travail, "commit", "-qm", "départ", "--no-verify")
+        shas = []
+        for nom in ("garde", "perdu"):
+            git(travail, "checkout", "-q", "-b", nom)
+            (travail / f"{nom}.txt").write_text(f"{nom}\n")
+            git(travail, "add", "-A")
+            git(travail, "commit", "-qm", nom, "--no-verify")
+            shas.append(git(travail, "rev-parse", "HEAD").strip())
+            git(travail, "checkout", "-q", "main")
+            git(travail, "branch", "-q", "-D", nom)
+        garde, perdu = shas
+        # La copie d'une tête de pull request, telle que B-0117 la récupère.
+        git(travail, "update-ref", "refs/socle/pull/10", garde)
+        self.assertTrue(outils.objet_existe(travail, perdu))
+        git(dossier, "clone", "-q", "--no-local", str(travail), str(clone))
+        self.assertFalse(outils.objet_existe(clone, garde))
+        ctx = contexte.Contexte(config.Projet.charger(clone), etage="ci")
+        self.assertIsNone(controles_memoire.verifier_ref(ctx, "commit", garde[:7]))
+        self.assertIn("ni dans ses pull requests", controles_memoire.verifier_ref(ctx, "commit", perdu[:7]))
+        self.assertFalse(outils.objet_existe(clone, perdu))

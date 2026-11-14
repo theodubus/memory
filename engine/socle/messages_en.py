@@ -2262,6 +2262,16 @@ MESSAGES: dict[str, str] = {
         "!! adapter tools: `{commande}` exceeds the start-up time limit; run it again before verifying",
     "outils de l'adaptateur installés (session cloud) : `{commande}`":
         "adapter tools installed (cloud session): `{commande}`",
+    "!! clone superficiel : `{commande}` dépasse le délai du démarrage ; le relancer avant de commiter, sans quoi les "
+    "commits que la mémoire cite manquent":
+        "!! shallow clone: `{commande}` exceeds the start-up time limit; run it again before committing, or the "
+        "commits the memory cites are missing",
+    "historique du clone complété (session cloud) : `{commande}`":
+        "clone history completed (cloud session): `{commande}`",
+    "!! clone superficiel : `{commande}` a rendu {code} ; le relancer avant de commiter, sans quoi les commits que la "
+    "mémoire cite manquent\n    {queue}":
+        "!! shallow clone: `{commande}` returned {code}; run it again before committing, or the commits the memory "
+        "cites are missing\n    {queue}",
     "outils de l'adaptateur {ligne}":
         "adapter tools {ligne}",
     "en attente de leur fichier de build, comme dans la CI : {commandes}":
@@ -2464,6 +2474,8 @@ MESSAGES: dict[str, str] = {
         "doc value diverging from its source",
     "lien ou identifiant mort":
         "dead link or identifier",
+    "commit cité que l'origine ne garde par aucun ref, absent d'un clone neuf":
+        "cited commit that the origin keeps by no ref, missing from a fresh clone",
     "code modifié sans doc associée":
         "code changed without its associated doc",
     "test sans assertion":
@@ -2776,6 +2788,10 @@ MESSAGES: dict[str, str] = {
         "a path from another repository, undeclared, is reported without refusal",
     "une référence de commit en fin de phrase passe la CI":
         "a commit reference at the end of a sentence passes the CI",
+    "un commit cité que l'origine ne garde que par une tête de pull request récupérée passe la CI d'un clone neuf "
+    "hors de GitHub (B-0175)":
+        "a cited commit that the origin keeps only by a fetched pull request head passes the CI of a fresh clone "
+        "outside GitHub (B-0175)",
     "durcir un garde-fou est libre":
         "tightening a guardrail is free",
     "un module nouveau entre au cliquet de mutation « à mesurer » : la CI passe":

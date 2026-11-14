@@ -953,6 +953,75 @@ class TestOutilsEnSessionCloud(unittest.TestCase):
         self.assertEqual(lancer.call_args[0][0], "python3 -m pip install pytest mutmut")
 
 
+class TestHistoriqueEnSessionCloud(unittest.TestCase):
+    """B-0202 : le clone d'une session cloud était superficiel, et
+    `memoire.references` refusait le premier commit, faute des commits que
+    le journal cite ; le hook de démarrage complète l'historique."""
+
+    def setUp(self):
+        self.dossier = Path(tempfile.mkdtemp(prefix="socle-historique-"))
+        self.addCleanup(shutil.rmtree, self.dossier, ignore_errors=True)
+        self.origine, self.clone = self.dossier / "origine", self.dossier / "clone"
+        self.origine.mkdir()
+        git(self.origine, "init", "-q", "-b", "main")
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(self.origine, "python-pytest", "@essai", source=MOTEUR)
+        for n in range(3):
+            (self.origine / f"f{n}.txt").write_text(f"{n}\n")
+            git(self.origine, "add", "-A")
+            git(self.origine, "commit", "-qm", f"commit {n}", "--no-verify")
+        # `file://` : un clone local ignorerait `--depth`.
+        git(self.dossier, "clone", "-q", "--depth", "1", f"file://{self.origine}", str(self.clone))
+        self.assertTrue(self.superficiel())
+
+    def superficiel(self) -> bool:
+        return git(self.clone, "rev-parse", "--is-shallow-repository").strip() == "true"
+
+    def completer(self, cloud: str = "true") -> list[str]:
+        with unittest.mock.patch.dict("os.environ", {hooks.SESSION_CLOUD: cloud}):
+            return hooks.completer_historique(self.clone)
+
+    def test_hors_session_cloud_le_clone_reste_superficiel(self):
+        self.assertEqual(self.completer(""), [])
+        self.assertTrue(self.superficiel())
+
+    def test_en_session_cloud_le_demarrage_complete_l_historique(self):
+        projet = config.Projet.charger(self.clone)
+        projet.adaptateur["ci_setup"] = "      - name: Outils\n        run: true\n"
+        sortie = io.StringIO()
+        with unittest.mock.patch.dict("os.environ", {hooks.SESSION_CLOUD: "true"}), \
+                contextlib.redirect_stdout(sortie):
+            hooks.session_start(projet, {})
+        self.assertIn("historique du clone complété (session cloud) : `git fetch --unshallow`", sortie.getvalue())
+        self.assertIn("== ", sortie.getvalue())  # l'état suit
+        self.assertFalse(self.superficiel())
+        self.assertEqual(git(self.clone, "rev-list", "--count", "HEAD").strip(), "3")
+        # Complet, il n'y a plus rien à faire, ni à dire.
+        self.assertEqual(self.completer(), [])
+
+    def test_un_echec_se_dit_sans_bloquer_et_se_retente(self):
+        shutil.rmtree(self.origine)
+        lignes = self.completer()
+        self.assertEqual(len(lignes), 1)
+        self.assertTrue(lignes[0].startswith("!! clone superficiel : `git fetch --unshallow` a rendu 128"), lignes)
+        self.assertLessEqual(len(lignes[0].encode()), 400)
+        self.assertTrue(self.superficiel())
+        self.assertIn("a rendu 128", self.completer()[0])
+
+    def test_le_delai_epuise_se_dit_sans_bloquer(self):
+        lancer = subprocess.run
+
+        def lent(args, **options):
+            if args[:2] == ["git", "fetch"]:
+                self.assertLessEqual(options["timeout"], hooks.DELAI_HISTORIQUE)
+                raise subprocess.TimeoutExpired(args, options["timeout"])
+            return lancer(args, **options)
+        with unittest.mock.patch.object(hooks.subprocess, "run", side_effect=lent):
+            lignes = self.completer()
+        self.assertEqual(len(lignes), 1)
+        self.assertIn("`git fetch --unshallow` dépasse le délai du démarrage", lignes[0])
+
+
 DECISION_ARBRE = """<!-- socle: couche=decisions zone=publique -->
 # ADR-0002 — Écrire dans le worktree
 
