@@ -273,7 +273,12 @@ previous commit.
 **Updating the socle.** Run the installation command again from an
 up-to-date clone of the engine (`git clone --depth 1
 https://github.com/theodubus/socle /tmp/socle`). The project's files are never overwritten;
-the diff of the policy is shown. The agent's hook refuses the installer aimed
+the diff of the policy is shown. Between what it put in place and the
+audit, the installer prints the [release notes](CHANGES.en.md) that the
+project's engine copy did not have, all of them if it had none: what each
+change does to the project, and what the agent must do. The commit message
+it proposes names their identifiers, for the agent that did not see the
+update go by. The agent's hook refuses the installer aimed
 at an equipped project in another mode than its lock's, or at a target
 written through a variable: the update keeps the mode, and its target is
 written out in full. The one exception: a copy of a maintained
@@ -308,8 +313,9 @@ Update the socle of this repository from its public repository, without adding t
 1. If the clone is shallow (git rev-parse --is-shallow-repository answers true), complete its history: git fetch --unshallow.
 2. git clone --depth 1 https://github.com/theodubus/socle /tmp/socle
 3. On your working branch, from the root of the repository: PYTHONPATH=/tmp/socle python3 -m socle install --target . ; if the project has several adapters (copies in .socle/adapters/), name them all with --adapter, the main one first, as at installation.
-4. Follow the installer's "What now" steps, including the request that cites the changed protected files, then push and open the pull request.
-5. Tell me what is up to me.
+4. Read the release notes the installer prints, and do what each one asks.
+5. Follow the installer's "What now" steps, including the request that cites the changed protected files, then push and open the pull request.
+6. Tell me what is up to me.
 ```
 
 **Setting up the private memory** (companion mode). Create an empty private
