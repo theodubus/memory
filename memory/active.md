@@ -5,8 +5,9 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot 1 livré (J-2026-11-14-R) ; D-0112 validée, ses règles à écrire
-avec les lots 3 et 5. Pilote en pause.
+Lot 2 fait, pas relu (J-2026-11-14-S) : reprendre par
+`docs/fabrication/passation/2026-11-14-lot-2/README.md`. D-0113 attend
+Théo. Les règles de D-0112 avec les lots 3 et 5. Pilote en pause.
 
 ## Consignes en cours
 
@@ -60,9 +61,8 @@ Leur texte exact est dans l'entrée du journal citée.
 Avant toute nouvelle fonction (J-2026-11-13-I, D-0108, D-0109, D-0111),
 par lots :
 
-1. Fait, sauf la demande de B-0216 (la copie protégée de socle-request,
-   relue à froid), qui ouvre le lot 2.
-2. B-0151 et B-0199.
+1. Fait.
+2. B-0151, B-0199, B-0220 : revue et fin, depuis la passation.
 3. Le hook : B-0208 (haute), B-0204 à B-0207, la règle 2 de D-0112.
 4. B-0173 (son dernier critère) ; B-0179 à la reprise du pilote.
 5. La revue : B-0213, B-0214, la règle 1 de D-0112.

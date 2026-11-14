@@ -1,0 +1,785 @@
+From 0e53f8efa61d75669a7297ab49522e6016e4d093 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sat, 14 Nov 2026 12:13:50 +0000
+Subject: [PATCH 2/3] =?UTF-8?q?Les=20lots=20dans=20la=20m=C3=A9moire,=20l'?=
+ =?UTF-8?q?=C3=A9tat=20qui=20montre=20le=20prochain,=20les=20lots=203=20?=
+ =?UTF-8?q?=C3=A0=206=20pos=C3=A9s=20;=20apr=C3=A8s=20la=20fusion,=20rien?=
+ =?UTF-8?q?=20ne=20se=20pousse=20sans=20travail=20neuf=20(B-0199,=20B-0220?=
+ =?UTF-8?q?,=20J-2026-11-14-U)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+ADR-0079 tranche la conception : un lot est un sujet du backlog
+`forme : lot` (`form: batch`) qui attend ses sujets et le lot d'avant ;
+l'état montre le prochain lot et l'avancement de ses sujets ; un lot
+n'est jamais prêt, et memoire.ordre refuse déjà de le clore avant eux.
+Former un lot est une règle du format et du guide, sans aide du moteur.
+
+Les lots 3 à 6 du chantier actif sont posés (B-0221 à B-0224).
+delegate-lot ne pousse plus après la fusion : le chantier actif et le
+journal s'écrivent avant (B-0220, clos). B-0199 garde ouverts ses deux
+premiers critères : le skill socle-batch change la valeur attendue de
+deux tests qui comptent les skills du socle, et attend une demande
+validée.
+
+Intégré par l'orchestrateur après B-0151 : l'ADR et l'entrée de journal
+renumérotées (ADR-0079, J-2026-11-14-U), le point des lots du prompt de
+chess en 8, l'entrée 2026-11-14-d des notes de version, la ligne des notes
+au README, les empreintes de lecture recitées.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01JeB7oW9fZd54XRYJx3YME3
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=1 PreToolUse=346 Stop=6
+Socle-Hooks-Since-Commit: PreToolUse=302
+---
+ .claude/skills/delegate-lot/SKILL.md          | 17 ++---
+ README.md                                     |  1 +
+ docs/fabrication/architecture.md              |  2 +-
+ docs/fabrication/chess/prompt-mise-a-jour.md  |  1 +
+ engine/socle/CHANGES.en.md                    | 14 ++++
+ engine/socle/CHANGES.md                       | 14 ++++
+ engine/socle/FORMAT.md                        | 17 ++++-
+ engine/socle/HELP.en.md                       |  6 +-
+ engine/socle/HELP.md                          |  9 ++-
+ engine/socle/language.py                      |  4 +-
+ engine/socle/memory.py                        | 65 ++++++++++++++--
+ engine/socle/messages_en.py                   | 10 +++
+ ...-d-un-lot-dans-le-produit-sous-agents-r.md |  8 +-
+ ...k-ce-qu-il-laisse-supprimer-les-mots-et.md | 14 ++++
+ ...onsommation-et-du-pilote-le-dernier-cri.md | 11 +++
+ ...evue-son-dossier-ses-textes-et-ses-test.md | 13 ++++
+ ...e-avant-les-nouvelles-fonctions-les-suj.md | 11 +++
+ ...sion-l-etape-4-de-delegate-lot-pousse-l.md |  4 +-
+ ...arde-au-backlog-comme-un-sujet-de-forme.md | 75 +++++++++++++++++++
+ memory/journal/2026-11-4.md                   | 43 +++++++++++
+ tests/test_ordre.py                           | 62 +++++++++++++++
+ 21 files changed, 370 insertions(+), 31 deletions(-)
+ create mode 100644 memory/backlog/B-0221-lot-du-hook-ce-qu-il-laisse-supprimer-les-mots-et.md
+ create mode 100644 memory/backlog/B-0222-lot-de-la-consommation-et-du-pilote-le-dernier-cri.md
+ create mode 100644 memory/backlog/B-0223-lot-de-la-revue-son-dossier-ses-textes-et-ses-test.md
+ create mode 100644 memory/backlog/B-0224-lot-du-reste-avant-les-nouvelles-fonctions-les-suj.md
+ rename memory/backlog/{ => closed}/B-0220-apres-la-fusion-l-etape-4-de-delegate-lot-pousse-l.md (87%)
+ create mode 100644 memory/decisions/ADR-0079-un-lot-se-garde-au-backlog-comme-un-sujet-de-forme.md
+
+diff --git a/.claude/skills/delegate-lot/SKILL.md b/.claude/skills/delegate-lot/SKILL.md
+index dc466ff..3fe20aa 100644
+--- a/.claude/skills/delegate-lot/SKILL.md
++++ b/.claude/skills/delegate-lot/SKILL.md
+@@ -8,8 +8,7 @@ description: Mener un lot du backlog en orchestrateur, un sous-agent par sujet d
+ La session principale orchestre : elle annonce le lot, écrit les consignes,
+ fait relire, intègre et livre. Elle n'implémente pas, sauf un changement de
+ quelques lignes, qu'elle fait elle-même plutôt que de reprendre un
+-sous-agent. Ce skill dit comment faire ; l'organisation et ses raisons sont
+-dans la mémoire (D-0096, J-2026-11-11-G).
++sous-agent. Ses raisons : D-0096, J-2026-11-11-G.
+ 
+ ## Avant de lancer
+ 
+@@ -82,9 +81,10 @@ correction lourde de bloquants seule : `socle review --since <commit relu>`.
+    arrière-plan qui cherche `success sur <sha court>` (ou `failure sur
+    <sha court>`) dans la ligne « CI » de `python3 .socle/socle state`,
+    jamais un commit d'avant.
+-4. Après la fusion : `git fetch origin main`, `git rebase origin/main`,
+-   pousser ; vérifier que la distribution a tourné ; mettre à jour le
+-   chantier actif et le journal.
++4. Le chantier actif et le journal s'écrivent avant, au dernier commit
++   de la pull request. Après la fusion : la distribution a-t-elle tourné ;
++   `git fetch origin main`, `git rebase origin/main`, sans pousser : la
++   branche part avec le premier commit du lot suivant (B-0220).
+ 
+ ## Ce qui ne se rattrape pas après un push
+ 
+@@ -107,8 +107,7 @@ Ce qui pèse (B-0173, `docs/fabrication/consommation.md`) : chaque appel
+ relit toute la conversation, et chaque pas de l'orchestration en est un
+ (lancer un sous-agent, recevoir son compte rendu, intégrer, regarder la
+ CI) ; après plus d'une heure d'arrêt, la conversation se relit au prix
+-fort ; un sous-agent repris après plus de cinq minutes aussi. Un
+-sous-agent ne relit pas la conversation qui l'a lancé.
++fort ; un sous-agent repris après plus de cinq minutes aussi.
+ 
+ - Un lot par session : la session courte orchestre à bas prix.
+ - Deux sous-agents à la fois au plus, un seul quand la semaine dépasse
+@@ -142,8 +141,8 @@ reparte du dépôt seul :
+    de passation sous docs/fabrication, retiré quand le lot s'intègre) ;
+    la pull request fusionnée ;
+ 2. les worktrees et leurs branches retirés ;
+-3. le chantier actif dit le lot suivant et ce qui attend (un compte
+-   rendu, une CI, une demande) ;
++3. le chantier actif, écrit avant la fusion, dit le lot suivant et ce
++   qui attend (un compte rendu, une CI, une demande) ;
+ 4. les réveils retirés.
+ 
+ Puis le dire dans la conversation : qu'il faut changer de session, et
+diff --git a/README.md b/README.md
+index 2945dba..a594624 100644
+--- a/README.md
++++ b/README.md
+@@ -29,5 +29,6 @@ en développement. Où en est le travail se calcule :
+ | [La page d'accueil du socle](engine/README.md) | ce qu'est le socle, son fonctionnement, son installation : le README du dépôt public |
+ | [Le guide d'utilisation](engine/socle/HELP.md) | l'usage d'un projet équipé, étape par étape, et la référence des commandes |
+ | [Le format de la mémoire](engine/socle/FORMAT.md) | la spécification de la mémoire |
++| [Les notes de version](engine/socle/CHANGES.md) | ce que chaque changement du socle change pour un projet installé, et ce que son agent doit en faire |
+ | [L'atelier](docs/fabrication/README.md) | la fabrication : architecture, bancs, relevés |
+ | [Les instructions de ce dépôt](AGENTS.md) | comment l'agent y travaille, et les commandes de l'atelier |
+diff --git a/docs/fabrication/architecture.md b/docs/fabrication/architecture.md
+index a7975cf..c8cad67 100644
+--- a/docs/fabrication/architecture.md
++++ b/docs/fabrication/architecture.md
+@@ -34,7 +34,7 @@ vérifiées.
+ | `cli.py` | les commandes, rangées par public dans l'aide (l'humain, l'agent, les hooks et la CI), dont `new request --questions`, les questions de cadrage d'un sujet (D-0067) : `help`, `state`, `show`, `review`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `private`, `reviewed`, `answer`, `approve`, `install`, `init`, `selftest`, `fingerprint`, `mutation-verdict`, `mutation-run`, `renumber`, `archive`, `checks` ; sans commande, l'aide de l'humain |
+ | `HELP.md` | le guide de l'humain, source unique : ses gestes, chacun avec sa commande ; `socle help` l'affiche |
+ | `CHANGES.md` | les notes de version, et leur version anglaise : une entrée par changement qui touche un projet installé, sous un identifiant stable (sa date et une lettre), ce qu'il change et ce que l'agent du projet doit faire ; l'installeur donne à la mise à jour celles que la copie du moteur du projet n'avait pas, et `tests/test_notes_de_version.py` exige les mêmes identifiants dans les deux langues (ADR-0078) |
+-| `memory.py` | lecture des cinq couches : en-têtes, entrées, identifiants, métadonnées, références ; l'ordre du backlog (`après`, qui nomme des sujets ou des demandes attendues jusqu'à leur réponse, D-0064 ; jalons ; priorité haute ou basse, D-0062), d'où se calculent le prochain jalon, les sujets prêts rangés par priorité et, à part, ceux de priorité basse (D-0052) ; les critères de « Fait quand » d'un sujet |
++| `memory.py` | lecture des cinq couches : en-têtes, entrées, identifiants, métadonnées, références ; l'ordre du backlog (`après`, qui nomme des sujets ou des demandes attendues jusqu'à leur réponse, D-0064 ; jalons ; lots, ADR-0079 ; priorité haute ou basse, D-0062), d'où se calculent le prochain jalon, le prochain lot et l'avancement de ses sujets, les sujets prêts rangés par priorité et, à part, ceux de priorité basse (D-0052) ; les critères de « Fait quand » d'un sujet |
+ | `requests.py` | le contrat des demandes, son lint, les réponses humaines gelées ; les réponses de base, les mêmes dans toute demande, et le refus de leurs synonymes (D-0053), les questions de départ comprises (D-0054) ; le contexte d'une demande commence par « Le projet », « Le chantier » et « La question », pour l'humain qui revient après des semaines, ses trois premiers paragraphes ; une demande posée avant le moteur qui apporte la règle, telle quelle avant la mise à jour de son verrou, ou datée d'avant elle, en étant dispensée (ADR-0046) ; une ligne d'empreinte, un fichier protégé et son empreinte nouvelle sans rien d'autre, dans les mises en liste que `ligne_d_empreinte` énumère (puce, numéro, tableau, gras, accents graves, deux-points, flèche), jamais un répertoire, un motif ou un lien, que le lint ne demande pas de décrire et que le budget de la demande ne compte pas, pour que la liste d'une mise à jour ne coûte rien à son contexte, et le contrat, que `socle new request` imprime sous l'identifiant (ADR-0058) |
+ | `context.py` | le registre des contrôles, leurs étages, la base de comparaison, le mode adoption ; les fichiers d'un outil tiers, hors de toutes les listes que les contrôles lisent (ADR-0031), et les commits qui ne touchent qu'eux, hors de la liste des commits que jugent la trace des hooks et les dispenses de test (`commits_du_projet`) ; dans un projet à plusieurs adaptateurs, un contrôle qui lit l'adaptateur tourne une fois par adaptateur, avec ses seuls motifs : un constat que chacun rend à l'identique se dit une fois, les autres nomment le leur (ADR-0051) |
+ | `readings.py` | la lecture prouvée, une seule fonction pour le contrôle et le hook (ADR-0023) ; l'empreinte d'une entrée sans sa ligne de métadonnées, celle du texte entier restant acceptée (ADR-0053) |
+diff --git a/docs/fabrication/chess/prompt-mise-a-jour.md b/docs/fabrication/chess/prompt-mise-a-jour.md
+index 638f66b..52e11b7 100644
+--- a/docs/fabrication/chess/prompt-mise-a-jour.md
++++ b/docs/fabrication/chess/prompt-mise-a-jour.md
+@@ -26,6 +26,7 @@ Mets à jour le socle de ce dépôt depuis son dépôt public, sans ajouter ce d
+ 5. Une réponse que je donne dans la conversation se consigne aussitôt, dans l'arbre (python3 .socle/socle answer D-NNNN valider --relayed …) : l'état lit l'arbre, et la lit répondue avant son commit ; je ne la vois plus « en attente ». Elle se commite et se pousse avec le changement qu'elle autorise (une valeur attendue, une clé des garde-fous, un fichier protégé), dans le même push, jamais avant : la CI d'un push ne compte que les validations de sa plage. Seul un fichier protégé peut la précéder, poussé sous la demande en attente, comme ceux de la mise à jour : ma réponse part ensuite seule, sans dommage. Un contrôle nouveau, demandes.reponse-seule, t'en avertit quand la réponse partirait seule, sans le test, le fichier de cas, la clé des garde-fous ou le fichier protégé qu'elle nomme : dans verify --fast, au commit et avant que le push parte, sur la sortie du hook. C'est un avertissement, pas un refus. Le skill socle-request le dit ; c'est une copie protégée, elle est dans la demande de l'installeur.
+ 6. Entre l'installation et le push de sa demande, la fin de tour dit la mise à jour en une ligne, et non plus une ligne par fichier (ta gêne 3) : « une mise à jour du socle attend sa demande : la poser », avec le nombre de fichiers et la commande qui les liste avec leurs empreintes (python3 .socle/socle check --stage agent --only protege.fichiers). Les fichiers que la mise à jour a posés n'ont plus de commande de remise : ne les remets pas, pose la demande. Un fichier protégé qu'elle n'a pas posé tel qu'il est, changé avant ou après le passage de l'installeur, garde sa ligne et sa commande de remise. Le verrou du moteur, qui change, nomme désormais sous [installed] les fichiers protégés que l'installeur a posés hors du moteur, avec leur empreinte : c'est ainsi que la fin de tour les reconnaît.
+ 7. L'installeur donne désormais les notes de version du socle : à chaque mise à jour qui recopie le moteur, il imprime, entre ce qu'il a posé et l'audit, les entrées que ta copie du moteur n'avait pas, chacune avec ce que tu dois faire (« À faire : »), et le message de commit qu'il propose nomme leurs identifiants dans un second paragraphe. Elles sont dans .socle/engine/socle/CHANGES.md. Ta copie n'en a pas : il te les donne toutes. Celles datées d'avant le 13 novembre décrivent ce que tu as déjà ; les autres reprennent les points ci-dessus. Garde ce second paragraphe dans le commit de la mise à jour.
++8. Un lot se garde désormais au backlog, et non plus dans la seule prose du chantier actif : un sujet marqué forme : lot, dont après nomme les sujets que tu mènes ensemble (ceux qui touchent les mêmes fichiers, le même garde-fou ou les mêmes tests, qu'une seule revue juge ensemble) et le lot d'avant. L'état montre le prochain lot à côté du prochain jalon, avec ce qui en reste et où en est chacun (prêt, en cours, attend, sans réponse pour une demande). Un lot n'est jamais un sujet prêt, et il se clôt quand ses sujets le sont : memoire.ordre refuse de le clore avant.
+ 
+ Pas encore faits, inutile de les signaler de nouveau : l'installeur muet sur une adoption déjà vide et le diff de politique réaffiché (tes gênes 1 et 5), le coût de la relecture à froid (7), la reprise sans list_events (8).
+ 
+diff --git a/engine/socle/CHANGES.en.md b/engine/socle/CHANGES.en.md
+index 24eaa8a..07094bd 100644
+--- a/engine/socle/CHANGES.en.md
++++ b/engine/socle/CHANGES.en.md
+@@ -7,6 +7,20 @@ letter. On an update, the installer gives the entries that the project's
+ engine copy did not have, and the commit message it proposes names their
+ identifiers.
+ 
++## 2026-11-14-d — A batch is kept in the backlog
++
++A batch, the subjects led together because they touch the same files, the
++same guardrail or the same tests and one review judges them, is now kept in
++the backlog: a subject marked `form: batch`, whose `after` names its
++subjects and the batch before it. The state shows the next batch beside the
++next milestone, with what remains of it and where each of its subjects
++stands. A batch is never a ready subject, and it does not close before its
++subjects.
++
++To do: record as a batch the subjects planned to be led together, instead of
++writing them only in the active work; close the batch when its subjects are
++closed.
++
+ ## 2026-11-14-c — The release notes
+ 
+ This file exists. An update that copies the engine prints, between what it
+diff --git a/engine/socle/CHANGES.md b/engine/socle/CHANGES.md
+index f046805..1f2b3af 100644
+--- a/engine/socle/CHANGES.md
++++ b/engine/socle/CHANGES.md
+@@ -7,6 +7,20 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
+ moteur du projet n'avait pas, et le message de commit qu'il propose nomme
+ leurs identifiants.
+ 
++## 2026-11-14-d — Un lot se garde au backlog
++
++Un lot, les sujets qu'on mène ensemble parce qu'ils touchent les mêmes
++fichiers, le même garde-fou ou les mêmes tests et qu'une seule revue les
++juge, se garde désormais au backlog : un sujet marqué `forme : lot`, dont
++`après` nomme ses sujets et le lot d'avant. L'état montre le prochain lot à
++côté du prochain jalon, avec ce qui en reste et où en est chacun de ses
++sujets. Un lot n'est jamais un sujet prêt, et il ne se clôt pas avant ses
++sujets.
++
++À faire : poser en lot les sujets qu'on prévoit de mener ensemble, au lieu
++de ne les écrire que dans le chantier actif ; clore le lot quand ses sujets
++le sont.
++
+ ## 2026-11-14-c — Les notes de version
+ 
+ Ce fichier existe. Une mise à jour qui recopie le moteur imprime, entre ce
+diff --git a/engine/socle/FORMAT.md b/engine/socle/FORMAT.md
+index 9c74b59..f3c32de 100644
+--- a/engine/socle/FORMAT.md
++++ b/engine/socle/FORMAT.md
+@@ -179,12 +179,19 @@ L'ordre du travail se tient au backlog. Un sujet attend d'autres sujets
+ par `après : B-0012, B-0014`, et une demande, `après : D-0007`, jusqu'à sa
+ réponse (D-0064) ; une condition hors de la mémoire devient un sujet
+ `pour : humain`, qu'il attend. Un jalon est un sujet marqué `forme : jalon`,
+-qui attend ses tâches (et le jalon d'avant, s'il y en a un). Un sujet peut
++qui attend ses tâches (et le jalon d'avant, s'il y en a un). Un lot est un
++sujet marqué `forme : lot`, qui attend les sujets qu'on mène ensemble (et
++le lot d'avant, s'il y en a un) : les sujets prêts qui touchent les mêmes
++fichiers, le même garde-fou ou les mêmes tests, qu'une seule revue juge
++ensemble ; son corps dit ce qui les réunit, et nomme dans le texte ce qui
++n'est pas un sujet. Un jalon ni un lot ne sont jamais prêts. Un sujet peut
+ avoir une priorité, `priorité : haute` ou `priorité : basse` (D-0062) ; la
+ normale ne s'écrit pas, et l'agent ne change pas celle que l'humain a
+ donnée. L'état en calcule ce qui vient ensuite : le prochain jalon, ouvert,
+ qu'aucun jalon ouvert ne précède, de proche en proche à travers les sujets
+-et les demandes qu'il attend, avec ce qui lui reste ; les sujets
++et les demandes qu'il attend, avec ce qui lui reste ; le prochain lot,
++ouvert, qu'aucun lot ouvert ne précède, celui qui est en cours d'abord, et
++où en est chacun de ses sujets et de ses demandes ; les sujets
+ prêts, ouverts et pas encore en cours, dont tout ce qu'ils attendent est
+ clos ou répondu, ceux du prochain jalon d'abord, puis par priorité ; à
+ part, les prêts de priorité basse, que l'agent prend quand c'est commode ;
+@@ -192,8 +199,9 @@ et le nombre de sujets qui attendent encore. Le rappel de fin de tour le
+ redonne. Le contrôle de l'ordre refuse un `après` qui nomme autre chose
+ qu'un sujet ou une demande, un sujet qui s'attend lui-même de proche en
+ proche, un sujet `fait` avant ce qu'il attend (un jalon ne se clôt pas
+-sur des tâches ouvertes, ni un sujet sur une demande sans réponse), et une
+-priorité ni haute ni basse. Un sujet abandonné peut laisser ce qu'il
++sur des tâches ouvertes, ni un lot sur des sujets ouverts, ni un sujet sur
++une demande sans réponse), et une priorité ni haute ni basse. Un sujet
++abandonné peut laisser ce qu'il
+ attendait ; un sujet clos, fait ou abandonné, ne retient plus ceux qui
+ l'attendent.
+ 
+@@ -472,6 +480,7 @@ interne, que `socle show` dit dans la langue du projet.
+ | champ `priorite` | priorité | priority |
+ | valeur `seance` | séance | session |
+ | valeur `jalon` | jalon | milestone |
++| valeur `lot` | lot | batch |
+ | valeur `haute` | haute | high |
+ | valeur `basse` | basse | low |
+ | section de sujet `fait-quand` | Fait quand | Done when |
+diff --git a/engine/socle/HELP.en.md b/engine/socle/HELP.en.md
+index 5193fb3..5de6e8f 100644
+--- a/engine/socle/HELP.en.md
++++ b/engine/socle/HELP.en.md
+@@ -115,7 +115,9 @@ what it waits on (`after`: another topic, or a request until it is
+ answered) and what makes it done (a “Done when” section, as checkboxes,
+ all checked before closing it), grouped in milestones. It submits each
+ document as a request. Just ask it to; the state then gives the next
+-milestone and the ready topics.
++milestone and the ready topics. Topics that are handled together, because
++they touch the same files or the same tests, the agent gathers into a
++batch (`form: batch`), which the state shows with the progress of each.
+ 
+ **Specifications and test cases.** The project declares where its
+ specifications live (`[specs] paths` in the guardrails): the state tells
+@@ -175,7 +177,7 @@ and what your answer changes.
+ 
+ At any time, `python3 .socle/socle state` gives the project's state: the
+ commit, the CI, the backlog and what comes next (the next milestone, the
+-ready topics), the pending requests, what is up to the human.
++next batch, the ready topics), the pending requests, what is up to the human.
+ The memory is read in `memory/`.
+ 
+ A project procedure that comes back, the agent writes as a skill in
+diff --git a/engine/socle/HELP.md b/engine/socle/HELP.md
+index 520eaf4..4fdc43f 100644
+--- a/engine/socle/HELP.md
++++ b/engine/socle/HELP.md
+@@ -122,7 +122,10 @@ avec ce qu'elle attend (`après` : un autre sujet, ou une demande jusqu'à
+ sa réponse) et ce qui la rend faite (une section « Fait quand », en cases
+ à cocher, toutes cochées avant de la clore), groupée en jalons. Il soumet
+ chaque document en demande. Il suffit de le lui demander ; l'état donne
+-ensuite le prochain jalon et les sujets prêts.
++ensuite le prochain jalon et les sujets prêts. Les sujets qui se
++traitent ensemble, parce qu'ils touchent les mêmes fichiers ou les mêmes
++tests, l'agent les réunit en un lot (`forme : lot`), que l'état montre
++avec l'avancement de chacun.
+ 
+ **Spécifications et cas d'essai.** Le projet déclare où vivent ses
+ spécifications (`[specs] paths` des garde-fous) : l'état vous signale
+@@ -182,8 +185,8 @@ Chaque point de « Pour toi » se comprend seul : ce que c'est, pourquoi,
+ et ce que change votre réponse.
+ 
+ À tout moment, `python3 .socle/socle state` donne l'état du projet : le
+-commit, la CI, le backlog et ce qui vient ensuite (le prochain jalon, les
+-sujets prêts), les demandes en attente, ce qui revient à l'humain. La mémoire se lit dans `memory/`.
++commit, la CI, le backlog et ce qui vient ensuite (le prochain jalon, le
++prochain lot, les sujets prêts), les demandes en attente, ce qui revient à l'humain. La mémoire se lit dans `memory/`.
+ 
+ Une procédure du projet qui revient, l'agent l'écrit en skill dans
+ `.claude/skills/`, avec une entrée au journal : il la charge ensuite à la
+diff --git a/engine/socle/language.py b/engine/socle/language.py
+index 1101c72..7e9c6b6 100644
+--- a/engine/socle/language.py
++++ b/engine/socle/language.py
+@@ -58,8 +58,8 @@ STATUTS = {
+ 
+ # Valeurs d'un champ qui se comparent : `pour : humain`.
+ VALEURS = {"humain": {"fr": "humain", "en": "human"}, "seance": {"fr": "séance", "en": "session"},
+-           "jalon": {"fr": "jalon", "en": "milestone"}, "haute": {"fr": "haute", "en": "high"},
+-           "basse": {"fr": "basse", "en": "low"}}
++           "jalon": {"fr": "jalon", "en": "milestone"}, "lot": {"fr": "lot", "en": "batch"},
++           "haute": {"fr": "haute", "en": "high"}, "basse": {"fr": "basse", "en": "low"}}
+ 
+ # La section d'un sujet du backlog qui dit ce qui le rend fait (D-0064) :
+ # des cases à cocher, toutes cochées avant de le clore « fait ».
+diff --git a/engine/socle/memory.py b/engine/socle/memory.py
+index 4bd35f7..da155d1 100644
+--- a/engine/socle/memory.py
++++ b/engine/socle/memory.py
+@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
+ from pathlib import Path
+ 
+ from socle import config, language as langue, utils as outils
+-from socle.messages import trad
++from socle.messages import a_traduire, trad
+ 
+ TYPES = {
+     "F": "canonique",
+@@ -578,7 +578,8 @@ def lignes_index(mem: "Memoire", index: str, sauf: set[str] = frozenset()) -> li
+ 
+ # --------------------------------------------------------------------------
+ # L'ordre du backlog : un sujet attend d'autres sujets (`après`), un jalon
+-# est un sujet qui attend ses tâches ; ce qui vient ensuite se calcule.
++# est un sujet qui attend ses tâches, un lot un sujet qui attend les sujets
++# qu'on mène ensemble ; ce qui vient ensuite se calcule.
+ # --------------------------------------------------------------------------
+ 
+ 
+@@ -592,6 +593,13 @@ def est_jalon(e: Entree) -> bool:
+     return langue.valeur(nettoyer(e.meta.get("forme", ""))) == "jalon"
+ 
+ 
++def est_lot(e: Entree) -> bool:
++    """Un lot (`forme : lot`, `form: batch`) : les sujets qu'on mène
++    ensemble, qu'il attend par `après`, avec le lot d'avant (ADR-0079). Il
++    n'est jamais à prendre ; il se clôt quand ses sujets le sont."""
++    return langue.valeur(nettoyer(e.meta.get("forme", ""))) == "lot"
++
++
+ PRIORITES = ("haute", "basse")
+ 
+ 
+@@ -632,7 +640,8 @@ def criteres(e: Entree) -> list[tuple[bool, str]]:
+ class Ordre:
+     """Ce qui vient ensuite : les sujets prêts (ouverts, pas encore en cours,
+     dont tout ce qu'ils attendent est clos), le prochain jalon et ce qui lui
+-    reste, et le nombre de sujets qui attendent un sujet non clos."""
++    reste, le nombre de sujets qui attendent un sujet non clos, et le
++    prochain lot avec l'avancement de ses sujets."""
+ 
+     prets: list[Entree]
+     jalon: Entree | None
+@@ -641,13 +650,18 @@ class Ordre:
+     # Les sujets prêts de priorité basse, à part : l'agent les prend quand
+     # c'est commode, et le dit (D-0062).
+     basses: list[Entree] = field(default_factory=list)
++    # Le prochain lot, et où en est ce qu'il attend hors des lots :
++    # (identifiant, mot interne), dans l'ordre de son `après` (ADR-0079).
++    lot: Entree | None = None
++    avancement: list[tuple[str, str]] = field(default_factory=list)
+ 
+ 
+ def ordre(mem: "Memoire") -> Ordre | None:
+-    """L'ordre du backlog, s'il en a un : sans `après`, jalon ni priorité, rien."""
++    """L'ordre du backlog, s'il en a un : sans `après`, jalon, lot ni
++    priorité, rien."""
+     sujets = {e.id: e for e in mem.entrees("B") if not e.archivee and not e.basculee}
+     demandes = {e.id: e for e in mem.entrees("D") if not e.basculee}
+-    if not any(dependances(e) or est_jalon(e) or priorite(e) for e in sujets.values()):
++    if not any(dependances(e) or est_jalon(e) or est_lot(e) or priorite(e) for e in sujets.values()):
+         return None
+ 
+     def ouvert(i: str) -> bool:
+@@ -676,8 +690,16 @@ def ordre(mem: "Memoire") -> Ordre | None:
+               if est_jalon(sujets[i]) and not any(d in sujets and est_jalon(sujets[d]) for d in attendus(i))]
+     jalon = jalons[0] if jalons else None
+     restants = sorted(attendus(jalon)) if jalon else []
++    # Le prochain lot : celui qu'aucun lot ouvert ne précède, l'en cours
++    # d'abord, puis par identifiant.
++    lots = sorted((i for i in ouverts
++                   if est_lot(sujets[i]) and not any(d in sujets and est_lot(sujets[d]) for d in attendus(i))),
++                  key=lambda i: (sujets[i].statut != "en-cours", i))
++    lot = sujets[lots[0]] if lots else None
+     # Un sujet en cours ou bloqué n'est plus à prendre : l'état le dit à part.
+-    a_prendre = [i for i in ouverts if sujets[i].statut == "ouvert" and not est_jalon(sujets[i])]
++    # Un jalon ni un lot ne se prennent : ils attendent leurs sujets.
++    a_prendre = [i for i in ouverts
++                 if sujets[i].statut == "ouvert" and not est_jalon(sujets[i]) and not est_lot(sujets[i])]
+     # Ceux du prochain jalon d'abord, puis par priorité ; les basses à part.
+     rang = {"haute": 0, None: 1}
+     prets = sorted((i for i in a_prendre if not any(ouvert(d) for d in dependances(sujets[i]))),
+@@ -685,8 +707,31 @@ def ordre(mem: "Memoire") -> Ordre | None:
+     basses = [i for i in prets if priorite(sujets[i]) == "basse"]
+     prets = [i for i in prets if i not in basses]
+     attente = len(a_prendre) - len(prets) - len(basses)
++
++    def ou_en_est(i: str) -> str:
++        """Où en est ce qu'un lot attend, en mot interne : le statut d'un
++        sujet qui n'est plus ouvert, sinon `pret` ou `attend` ; pour une
++        demande, `repondue` ou `sans-reponse` ; `inconnu` pour le reste."""
++        if i in demandes:
++            return "repondue" if demande_close(mem, demandes[i]) else "sans-reponse"
++        if i not in sujets:
++            return "inconnu"
++        if sujets[i].statut != "ouvert":
++            return sujets[i].statut
++        return "attend" if any(ouvert(d) for d in dependances(sujets[i])) else "pret"
++
++    avancement = [(d, ou_en_est(d)) for d in dict.fromkeys(dependances(lot))
++                  if not (d in sujets and est_lot(sujets[d]))] if lot else []
+     return Ordre([sujets[i] for i in prets], sujets[jalon] if jalon else None, restants, attente,
+-                 [sujets[i] for i in basses])
++                 [sujets[i] for i in basses], lot, avancement)
++
++
++# Où en est ce qu'un lot attend, tel que l'état le dit ; un sujet clos ou
++# une demande répondue ne se détaille pas.
++AVANCEMENT = {"en-cours": a_traduire("en cours"), "bloque": a_traduire("bloqué"), "pret": a_traduire("prêt"),
++              "attend": a_traduire("attend"), "sans-reponse": a_traduire("sans réponse"),
++              "inconnu": a_traduire("inconnu")}
++CLOS_DANS_UN_LOT = ("fait", "abandonne", "repondue")
+ 
+ 
+ def lignes_ordre(mem: "Memoire", plafond: int | None = 8, titre: int | None = None,
+@@ -705,6 +750,12 @@ def lignes_ordre(mem: "Memoire", plafond: int | None = 8, titre: int | None = No
+     if o.jalon:
+         res.append(trad("prochain jalon : {id} — {titre} ; reste : {restants}", id=o.jalon.id, titre=t(o.jalon),
+                         restants=", ".join(o.restants) if o.restants else trad("rien, il se clôt")))
++    if o.lot:
++        reste = [(i, a) for i, a in o.avancement if a not in CLOS_DANS_UN_LOT]
++        res.append(trad("prochain lot : {id} — {titre} ; {clos} clos sur {total} ; reste : {restants}",
++                        id=o.lot.id, titre=t(o.lot), clos=len(o.avancement) - len(reste), total=len(o.avancement),
++                        restants=", ".join(f"{i} ({trad(AVANCEMENT.get(a, a))})" for i, a in reste)
++                        if reste else trad("rien, il se clôt")))
+     res += [trad("prêt : {id} — {titre} (priorité haute)", id=e.id, titre=t(e)) if priorite(e) == "haute"
+             else trad("prêt : {id} — {titre}", id=e.id, titre=t(e)) for e in o.prets[:plafond]]
+     if plafond is not None and len(o.prets) > plafond:
+diff --git a/engine/socle/messages_en.py b/engine/socle/messages_en.py
+index 6fbf306..ad035a9 100644
+--- a/engine/socle/messages_en.py
++++ b/engine/socle/messages_en.py
+@@ -1329,6 +1329,16 @@ MESSAGES: dict[str, str] = {
+         "next milestone: {id} — {titre}; left: {restants}",
+     "rien, il se clôt":
+         "nothing, it can close",
++    "prochain lot : {id} — {titre} ; {clos} clos sur {total} ; reste : {restants}":
++        "next batch: {id} — {titre}; {clos} closed out of {total}; left: {restants}",
++    "prêt":
++        "ready",
++    "attend":
++        "waiting",
++    "sans réponse":
++        "unanswered",
++    "inconnu":
++        "unknown",
+     "Selon l'ordre du backlog :":
+         "According to the backlog's order:",
+     "prêt : {id} — {titre}":
+diff --git a/memory/backlog/B-0199-la-conduite-d-un-lot-dans-le-produit-sous-agents-r.md b/memory/backlog/B-0199-la-conduite-d-un-lot-dans-le-produit-sous-agents-r.md
+index 6cbeba1..16e064e 100644
+--- a/memory/backlog/B-0199-la-conduite-d-un-lot-dans-le-produit-sous-agents-r.md
++++ b/memory/backlog/B-0199-la-conduite-d-un-lot-dans-le-produit-sous-agents-r.md
+@@ -36,8 +36,14 @@ mêmes tests, une seule revue les jugeant ensemble ; et garder le lot dans
+ la mémoire, relié à ses sujets, pour que l'état le montre et qu'une
+ session neuve le retrouve.
+ 
++Le 14 novembre (J-2026-11-14-U, ADR-0079) : les lots sont dans la
++mémoire (`forme : lot`) et l'état montre le prochain. Le skill du
++produit, `socle-batch`, est écrit, mais le poser change la valeur
++attendue de deux tests qui comptent les skills du socle : il attend,
++avec la copie protégée de ce dépôt, une demande validée.
++
+ ## Fait quand
+ 
+ - [ ] l'installeur pose un skill du socle qui conduit un lot, ses règles de consommation et le changement de session compris, et l'auto-test vérifie qu'il est posé et protégé
+ - [ ] `.claude/skills/delegate-lot/SKILL.md` ne garde que ce qui est propre à ce dépôt
+-- [ ] un lot se forme des sujets prêts qui touchent les mêmes fichiers, garde-fou ou tests ; la mémoire le relie à ses sujets, l'état montre le prochain, et un test le montre
++- [x] un lot se forme des sujets prêts qui touchent les mêmes fichiers, garde-fou ou tests ; la mémoire le relie à ses sujets, l'état montre le prochain, et un test le montre
+diff --git a/memory/backlog/B-0221-lot-du-hook-ce-qu-il-laisse-supprimer-les-mots-et.md b/memory/backlog/B-0221-lot-du-hook-ce-qu-il-laisse-supprimer-les-mots-et.md
+new file mode 100644
+index 0000000..115b4e4
+--- /dev/null
++++ b/memory/backlog/B-0221-lot-du-hook-ce-qu-il-laisse-supprimer-les-mots-et.md
+@@ -0,0 +1,14 @@
++<!-- socle: couche=backlog zone=publique -->
++# B-0221 — Lot du hook : ce qu'il laisse supprimer, les mots et les écritures du shell qu'il ne voit pas, et la règle qui borne ses trous
++
++> statut : ouvert · origine : J-2026-11-14-M · forme : lot · après : B-0208, B-0204, B-0205, B-0206, B-0207 · lu : backlog@30fa1fa0
++
++Le troisième lot d'avant les nouvelles fonctions (le chantier actif) : le
++hook de l'agent. Ses sujets touchent tous le découpage des commandes du
++shell et le jugement des chemins (`engine/socle/hooks.py`,
++`engine/socle/commands.py`) et leurs tests ; une seule revue les juge
++contre le même modèle de menace. B-0208 d'abord, de priorité haute.
++
++Hors des sujets, le lot écrit aussi la règle 2 de D-0112, que Théo a
++validée (J-2026-11-14-M) : ce que le hook juge, et quels trous se
++corrigent ; elle borne ce que B-0206 et B-0207 doivent couvrir.
+diff --git a/memory/backlog/B-0222-lot-de-la-consommation-et-du-pilote-le-dernier-cri.md b/memory/backlog/B-0222-lot-de-la-consommation-et-du-pilote-le-dernier-cri.md
+new file mode 100644
+index 0000000..62c0d37
+--- /dev/null
++++ b/memory/backlog/B-0222-lot-de-la-consommation-et-du-pilote-le-dernier-cri.md
+@@ -0,0 +1,11 @@
++<!-- socle: couche=backlog zone=publique -->
++# B-0222 — Lot de la consommation et du pilote : le dernier critère de B-0173, et la CI posée avant le premier fichier Gradle
++
++> statut : ouvert · origine : J-2026-11-14-M · forme : lot · après : B-0221, B-0173, B-0179 · lu : backlog@f69fc579
++
++Le quatrième lot : le dernier critère de B-0173 (la méthode de délégation
++dit quand compacter, combien de sous-agents à la fois, quand en reprendre
++un, quel modèle pour quoi, et que faire à l'approche d'une limite), qui
++complète la procédure des lots ; et B-0179, la CI posée par l'installeur,
++à la reprise du pilote, qui l'a relevé. Deux petits sujets de priorité
++haute, menés dans la même session.
+diff --git a/memory/backlog/B-0223-lot-de-la-revue-son-dossier-ses-textes-et-ses-test.md b/memory/backlog/B-0223-lot-de-la-revue-son-dossier-ses-textes-et-ses-test.md
+new file mode 100644
+index 0000000..fa2a9cb
+--- /dev/null
++++ b/memory/backlog/B-0223-lot-de-la-revue-son-dossier-ses-textes-et-ses-test.md
+@@ -0,0 +1,13 @@
++<!-- socle: couche=backlog zone=publique -->
++# B-0223 — Lot de la revue : son dossier, ses textes et ses tests, et la règle qui trie ses constats non bloquants
++
++> statut : ouvert · origine : J-2026-11-14-M · forme : lot · après : B-0222, B-0213, B-0214 · lu : backlog@f69fc579
++
++Le cinquième lot : la revue adversariale. Ses sujets touchent le dossier
++de la revue (`engine/socle/review.py`), le skill `socle-review` et leurs
++tests ; une seule revue les juge ensemble.
++
++Hors des sujets, le lot écrit aussi la règle 1 de D-0112, que Théo a
++validée (J-2026-11-14-M) : le tri des constats non bloquants, dans le
++skill de la revue, la consigne du relecteur et les instructions des
++projets.
+diff --git a/memory/backlog/B-0224-lot-du-reste-avant-les-nouvelles-fonctions-les-suj.md b/memory/backlog/B-0224-lot-du-reste-avant-les-nouvelles-fonctions-les-suj.md
+new file mode 100644
+index 0000000..4c5b7f3
+--- /dev/null
++++ b/memory/backlog/B-0224-lot-du-reste-avant-les-nouvelles-fonctions-les-suj.md
+@@ -0,0 +1,11 @@
++<!-- socle: couche=backlog zone=publique -->
++# B-0224 — Lot du reste avant les nouvelles fonctions : les sujets ouverts qui ne rejoignent aucun autre lot
++
++> statut : ouvert · origine : J-2026-11-14-M · forme : lot · après : B-0223, B-0176, B-0167, B-0197, B-0200, B-0201, B-0156, B-0210, B-0218, B-0219, B-0217, B-0195, B-0172, B-0198, B-0203 · lu : backlog@f69fc579
++
++Le sixième lot, le dernier avant les nouvelles fonctions : les sujets
++ouverts qu'aucun autre lot ne réunit. Ils ne touchent pas les mêmes
++fichiers : à son tour, ce lot se découpe en lots plus petits, formés au
++moment de les mener, sans changer l'ordre qu'il donne. Les six derniers
++(B-0219, B-0217, B-0195, B-0172, B-0198, B-0203) sont de priorité basse,
++pris quand c'est commode.
+diff --git a/memory/backlog/B-0220-apres-la-fusion-l-etape-4-de-delegate-lot-pousse-l.md b/memory/backlog/closed/B-0220-apres-la-fusion-l-etape-4-de-delegate-lot-pousse-l.md
+similarity index 87%
+rename from memory/backlog/B-0220-apres-la-fusion-l-etape-4-de-delegate-lot-pousse-l.md
+rename to memory/backlog/closed/B-0220-apres-la-fusion-l-etape-4-de-delegate-lot-pousse-l.md
+index 0e2a2aa..bf1330e 100644
+--- a/memory/backlog/B-0220-apres-la-fusion-l-etape-4-de-delegate-lot-pousse-l.md
++++ b/memory/backlog/closed/B-0220-apres-la-fusion-l-etape-4-de-delegate-lot-pousse-l.md
+@@ -1,7 +1,7 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # B-0220 — Après la fusion, l'étape 4 de delegate-lot pousse la branche rebasée et recrée la branche distante que GitHub a supprimée
+ 
+-> statut : ouvert · origine : J-2026-11-14-S · lu : backlog@66065ac9
++> statut : fait · origine : J-2026-11-14-S · ref : J-2026-11-14-U · lu : backlog@66065ac9
+ 
+ Relevé de Théo le 14 novembre (J-2026-11-14-S). L'étape 4 de
+ « Intégrer, pousser, fusionner » du skill `delegate-lot` dit, après la
+@@ -18,4 +18,4 @@ B-0199 porte cette étape dans le produit : la corriger là.
+ 
+ ## Fait quand
+ 
+-- [ ] après la fusion, la procédure ne pousse pas une branche qui n'a rien de plus que la branche par défaut ; ce qu'elle écrit après la fusion (chantier actif, journal) part avec le travail suivant, ou se fait avant la fusion
++- [x] après la fusion, la procédure ne pousse pas une branche qui n'a rien de plus que la branche par défaut ; ce qu'elle écrit après la fusion (chantier actif, journal) part avec le travail suivant, ou se fait avant la fusion
+diff --git a/memory/decisions/ADR-0079-un-lot-se-garde-au-backlog-comme-un-sujet-de-forme.md b/memory/decisions/ADR-0079-un-lot-se-garde-au-backlog-comme-un-sujet-de-forme.md
+new file mode 100644
+index 0000000..23e1748
+--- /dev/null
++++ b/memory/decisions/ADR-0079-un-lot-se-garde-au-backlog-comme-un-sujet-de-forme.md
+@@ -0,0 +1,75 @@
++<!-- socle: couche=decisions zone=publique -->
++# ADR-0079 — Un lot se garde au backlog comme un sujet de forme lot, qui attend ses sujets ; sa conduite est le skill socle-batch
++
++> statut : acceptée · date : 2026-11-14 · source : B-0199@528031a5, B-0220@0df68693, J-2026-11-14-M@567221ed, ADR-0037@10b3bfbe, ADR-0034@abef67cd, ADR-0033@44523582, ADR-0027@d32b4ef9 · lu : decisions@9ecc00fd
++
++## Contexte
++
++Ce dépôt mène ses lots par une procédure à lui, le skill `delegate-lot`,
++que l'installeur ne pose pas ; Théo veut que ce qui est utile entre dans
++le produit (J-2026-11-13-F@8a674408), et qu'on apprenne au socle à réunir les
++sujets qui se traitent facilement ensemble (J-2026-11-14-M@567221ed).
++Les lots ne vivaient que dans la prose du chantier actif, que rien ne
++relie aux sujets ni ne montre l'état : une session neuve ne les retrouve
++que si le chantier actif les a gardés. B-0199@528031a5 demande le skill
++du produit, la mémoire qui relie un lot à ses sujets et l'état qui
++montre le prochain ; B-0220@0df68693, l'étape d'après la fusion, qui
++poussait une branche vide de tout travail et recréait la branche
++distante supprimée.
++
++## Décision
++
++1. **Un lot est un sujet du backlog** marqué `forme : lot` (`form:
++   batch` en anglais), qui attend ses sujets par `après`, et le lot
++   d'avant s'il y en a un, comme un jalon (ADR-0037@10b3bfbe) : aucune
++   notion de plus, aucun fichier de plus. Son corps dit ce qui réunit ses
++   sujets ; ce qui n'est pas un sujet (une règle qu'une demande autorise)
++   s'y nomme dans le texte. Le lot n'est pas un sujet à prendre : il
++   n'est jamais « prêt ».
++2. **L'état montre le prochain lot**, à côté du prochain jalon : ouvert,
++   qu'aucun lot ouvert ne précède de proche en proche, celui qui est en
++   cours d'abord, puis par identifiant ; et l'avancement de chacun de
++   ses sujets (clos, en cours, bloqué, prêt, ou qui attend) et de ses
++   demandes (répondue ou sans réponse). Le rappel de fin de tour le
++   redonne. Le rang des sujets prêts ne change pas : un lot ne passe pas
++   devant une priorité que l'humain a donnée.
++3. **Un lot se clôt quand ses sujets le sont** : `memoire.ordre` refuse
++   déjà un sujet fait avant ce qu'il attend ; aucun contrôle nouveau.
++4. **Former un lot** : réunir les sujets prêts qui touchent les mêmes
++   fichiers, le même garde-fou ou les mêmes tests, pour qu'une seule
++   revue les juge ensemble. La règle s'écrit dans le format et dans le
++   skill ; le moteur n'aide pas à la former : les fichiers qu'un sujet
++   touchera ne se lisent que dans sa prose, et une aide qui devinerait
++   se tromperait sans qu'un test le voie.
++5. **La conduite d'un lot est le skill `socle-batch`**, posé et protégé
++   comme les autres skills du socle, dans les deux langues : son nom en
++   anglais au préfixe du socle (ADR-0027@d32b4ef9, ADR-0034@abef67cd),
++   `batch` traduisant `lot` comme dans le vocabulaire de la mémoire. Il
++   ne dit que des règles générales, sans rien de l'atelier
++   (ADR-0033@44523582) : annoncer et former le lot ; un sous-agent par
++   sujet, deux à la fois au plus ; la revue sans contexte avant tout push
++   (`socle-review`) ; l'intégration et la renumérotation des collisions ;
++   l'attente de la CI sur le commit de tête ; la fusion telle que les
++   instructions du projet la donnent ; une session par lot ; les seuils
++   des fenêtres de cinq heures et de la semaine ; le changement de
++   session avec le prompt de la suivante, un commit pas encore relu
++   sauvé en correctif avant de passer la main. Un agent sans sous-agents
++   mène le lot seul, dans le même ordre.
++6. **Après la fusion, rien ne se pousse sans travail neuf** (B-0220) : le
++   chantier actif et le journal s'écrivent avant la fusion, dans le
++   dernier commit de la pull request, ou partent avec le travail suivant ;
++   la branche locale repart de la branche par défaut et ne se pousse
++   qu'avec le premier commit du lot suivant.
++
++## Conséquences
++
++Un lot survit à la fin d'une session : l'état le donne à la suivante.
++`delegate-lot` ne garde que ce qui est propre à ce dépôt et renvoie au
++gabarit du produit. La copie protégée du skill dans ce dépôt, et les
++deux tests qui comptent les skills du socle, ne changent qu'avec une
++demande validée (politique, points 1 et 2). Un sujet peut appartenir à
++deux lots, et un lot sans `après` passe : ni l'un ni l'autre n'est
++refusé. Pour défaire : retirer `est_lot` et la ligne du prochain lot de
++`engine/socle/memory.py`, et le dossier du skill de
++`engine/socle/templates/skills/` ; un sujet `forme : lot` se lit alors
++comme un sujet ordinaire qui attend ses sujets.
+diff --git a/memory/journal/2026-11-4.md b/memory/journal/2026-11-4.md
+index 6e49597..b78d000 100644
+--- a/memory/journal/2026-11-4.md
++++ b/memory/journal/2026-11-4.md
+@@ -595,3 +595,46 @@ toutes, une copie qui en a une partie reçoit les autres et plus rien à la
+ relance, rien sans recopie du moteur ni en mode amont ni à une première
+ installation, un projet en anglais les reçoit en anglais, et le message de
+ commit les nomme.
++
++## J-2026-11-14-U — Les lots dans la mémoire (forme : lot) et l'état qui montre le prochain ; les lots 3 à 6 posés ; l'étape d'après la fusion corrigée ; le skill socle-batch attend une demande
++
++> ref : B-0199, B-0220, ADR-0079
++
++Lot 2, B-0199 et B-0220, par un sous-agent. La conception, tranchée
++d'abord dans ADR-0079 : un lot est un sujet du backlog `forme : lot`
++(`form: batch`), qui attend ses sujets par `après` et le lot d'avant,
++comme un jalon ; l'état montre le prochain lot à côté du prochain jalon,
++avec ce qui en reste et où en est chacun ; un lot n'est jamais prêt, et
++`memoire.ordre` refuse déjà de le clore avant ses sujets. Former un lot
++(les sujets prêts qui touchent les mêmes fichiers, le même garde-fou ou
++les mêmes tests) est une règle écrite, sans aide du moteur : les fichiers
++qu'un sujet touchera ne se lisent que dans sa prose.
++
++Livré : `est_lot`, le prochain lot et son avancement dans
++`engine/socle/memory.py`, la valeur `lot`/`batch`, le format, le guide,
++l'architecture et le prompt de mise à jour de chess (point 7). Quatre
++tests de `tests/test_ordre.py` (classe `TestLot`) montrent la mémoire qui
++relie le lot à ses sujets, l'état qui montre le prochain, un lot en
++cours qui passe devant et un lot fait avant ses sujets refusé. Les lots
++3 à 6 du chantier actif sont posés : B-0221 (le hook), B-0222 (la
++consommation et le pilote), B-0223 (la revue), B-0224 (le reste), chacun
++après le précédent ; les règles 2 et 1 de D-0112, qui ne sont pas des
++sujets, nommées dans le texte des lots 3 et 5.
++
++B-0220 : l'étape 4 de `delegate-lot` ne pousse plus après la fusion ; le
++chantier actif et le journal s'écrivent avant, au dernier commit de la
++pull request, et la branche ne part qu'avec le premier commit du lot
++suivant. Le passage de session le dit aussi (le chantier actif écrit
++avant la fusion). Clos.
++
++Le skill du produit, `socle-batch` (ADR-0079, point 5), est écrit dans
++les deux langues mais n'est pas dans ce commit : le poser fait passer de
++quatre à cinq les skills du socle, et deux tests de `tests/test_skills.py`
++(`test_l_installeur_les_pose_et_la_politique_les_protege`,
++`test_dans_les_deux_langues_ils_passent_leurs_controles`) en attendent
++quatre ; changer leur valeur attendue exige une demande validée
++(politique, point 2), comme la copie protégée du skill dans ce dépôt.
++Le skill, ses tests, les deux valeurs attendues, la réduction de
++`delegate-lot` à ce qui est propre à ce dépôt et les instructions des
++projets attendent cette demande, en correctif rendu à l'orchestrateur.
++B-0199 reste ouvert : son troisième critère est coché.
+diff --git a/tests/test_ordre.py b/tests/test_ordre.py
+index f541c03..8cebe80 100644
+--- a/tests/test_ordre.py
++++ b/tests/test_ordre.py
+@@ -236,3 +236,65 @@ class TestFaitQuand(unittest.TestCase):
+         # Ouvert, ou abandonné, il peut garder des critères non cochés.
+         self.assertEqual(self.fautes(sujet("B-0001") + self.TEXTE), [])
+         self.assertEqual(self.fautes(sujet("B-0001", "abandonné") + self.TEXTE), [])
++
++
++class TestLot(unittest.TestCase):
++    """ADR-0079 : un lot est un sujet `forme : lot` qui attend les sujets
++    qu'on mène ensemble ; l'état montre le prochain et où en sont ses
++    sujets, et il se clôt quand ils le sont."""
++
++    def memoire(self, lot_fait: bool = False) -> memoire.Memoire:
++        mem = memoire_de(
++            sujet("B-0001", "fait"),
++            sujet("B-0002", "en cours"),
++            sujet("B-0003", apres="B-0005"),           # attend B-0005, hors du lot
++            sujet("B-0004"),
++            sujet("B-0005"),
++            sujet("B-0010", "fait" if lot_fait else "ouvert", forme="lot", apres="B-0001, B-0002, B-0003, D-0001"),
++            sujet("B-0011", forme="lot", apres="B-0010, B-0004"),
++        )
++        avec_demande(mem, "D-0001")
++        return mem
++
++    def test_est_lot_se_lit_dans_les_deux_langues(self):
++        fr = memoire_de(sujet("B-0003", apres="B-0001", forme="lot")).entree("B-0003")
++        en = memoire_de(sujet("B-0003", "open", apres="B-0001", forme="batch", en=True)).entree("B-0003")
++        self.assertTrue(memoire.est_lot(fr) and memoire.est_lot(en))
++        self.assertFalse(memoire.est_jalon(fr))
++        self.assertFalse(memoire.est_lot(memoire_de(sujet("B-0003", forme="jalon")).entree("B-0003")))
++
++    def test_la_memoire_relie_le_lot_a_ses_sujets_et_l_etat_montre_le_prochain(self):
++        from socle import state as etat
++
++        mem = self.memoire()
++        o = memoire.ordre(mem)
++        # B-0011 attend le lot B-0010 : il n'est pas le prochain.
++        self.assertEqual(o.lot.id, "B-0010")
++        self.assertEqual(o.avancement, [("B-0001", "fait"), ("B-0002", "en-cours"), ("B-0003", "attend"),
++                                        ("D-0001", "sans-reponse")])
++        # Un lot n'est jamais un sujet à prendre, ni un sujet en attente.
++        self.assertEqual([e.id for e in o.prets], ["B-0004", "B-0005"])
++        self.assertEqual(o.en_attente, 1)
++        ligne = ("prochain lot : B-0010 — Le sujet B-0010 ; 1 clos sur 4 ; "
++                 "reste : B-0002 (en cours), B-0003 (attend), D-0001 (sans réponse)")
++        self.assertEqual(memoire.lignes_ordre(mem)[0], ligne)
++        self.assertIn(f"  {ligne}", [l for _, bloc in etat._backlog(mem) for l in bloc])
++
++    def test_un_lot_dont_tout_est_clos_se_dit_a_clore(self):
++        mem = memoire_de(sujet("B-0001", "fait"), sujet("B-0002", "abandonné"),
++                         sujet("B-0003", forme="lot", apres="B-0001, B-0002, D-0001"))
++        avec_demande(mem, "D-0001", repondue=True)
++        self.assertEqual(memoire.lignes_ordre(mem),
++                         ["prochain lot : B-0003 — Le sujet B-0003 ; 3 clos sur 3 ; reste : rien, il se clôt"])
++        self.assertEqual(erreurs(mem), [])
++
++    def test_le_lot_en_cours_passe_devant_et_un_lot_fait_avant_ses_sujets_est_refuse(self):
++        mem = memoire_de(sujet("B-0001"), sujet("B-0002"), sujet("B-0003", forme="lot", apres="B-0001"),
++                         sujet("B-0004", "en cours", forme="lot", apres="B-0002"))
++        self.assertEqual(memoire.ordre(mem).lot.id, "B-0004")
++        self.assertEqual(memoire.lignes_ordre(self.memoire(lot_fait=True))[0],
++                         "prochain lot : B-0011 — Le sujet B-0011 ; 0 clos sur 1 ; reste : B-0004 (prêt)")
++        self.assertEqual(erreurs(self.memoire(lot_fait=True)),
++                         ["`B-0010` est fait avant `B-0002`, qu'il attend, encore « en-cours »",
++                          "`B-0010` est fait avant `B-0003`, qu'il attend, encore « ouvert »",
++                          "`B-0010` est fait avant `D-0001`, qu'il attend, encore sans réponse"])
+-- 
+2.43.0
+
