@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0199 — La conduite d'un lot dans le produit : sous-agents, revue, intégration, fusion, une session par lot, seuils de consommation, passation
 
-> statut : ouvert · origine : J-2026-11-13-F · priorité : haute · lu : backlog@225764b5
+> statut : fait · origine : J-2026-11-13-F · ref : J-2026-11-14-Z · priorité : haute · lu : backlog@225764b5
 
 Théo, le 13 novembre : « Tout ce qui est utile doit intégrer le socle »
 (J-2026-11-13-F). Ce dépôt mène ses lots par une procédure à lui, le skill
@@ -42,8 +42,14 @@ produit, `socle-batch`, est écrit, mais le poser change la valeur
 attendue de deux tests qui comptent les skills du socle : il attend,
 avec la copie protégée de ce dépôt, une demande validée.
 
+La revue du lot 2 (J-2026-11-14-X) : le premier critère dit
+« l'auto-test » ; ce qui vérifie que le skill est posé et protégé est un
+test du moteur, `tests/test_skills.py` (`TestLaConduiteDUnLot`), comme
+pour les autres skills du socle. L'auto-test injecte des défauts aux
+contrôles, et poser un skill n'en est pas un.
+
 ## Fait quand
 
-- [ ] l'installeur pose un skill du socle qui conduit un lot, ses règles de consommation et le changement de session compris, et l'auto-test vérifie qu'il est posé et protégé
-- [ ] `.claude/skills/delegate-lot/SKILL.md` ne garde que ce qui est propre à ce dépôt
+- [x] l'installeur pose un skill du socle qui conduit un lot, ses règles de consommation et le changement de session compris, et l'auto-test vérifie qu'il est posé et protégé
+- [x] `.claude/skills/delegate-lot/SKILL.md` ne garde que ce qui est propre à ce dépôt
 - [x] un lot se forme des sujets prêts qui touchent les mêmes fichiers, garde-fou ou tests ; la mémoire le relie à ses sujets, l'état montre le prochain, et un test le montre

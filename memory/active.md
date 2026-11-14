@@ -5,10 +5,11 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot 2 relu et livré (J-2026-11-14-X), sauf sa seconde part, qui attend
-la demande D-0114 : la reprendre par
-`docs/fabrication/passation/2026-11-14-lot-2/README.md`. Les règles de
-D-0112 avec les lots 3 et 5. Pilote en pause.
+Lot 2 fini (J-2026-11-14-Z) : `socle-batch` posé, le skill du produit
+qui mène un lot, que `delegate-lot` complète ici. Ensuite le lot 3
+(B-0221), que Théo laisse commencer dans cette session si la
+consommation le permet. Les règles de D-0112 avec les lots 3 et 5.
+Pilote en pause.
 
 ## Consignes en cours
 
@@ -63,7 +64,7 @@ Avant toute nouvelle fonction (J-2026-11-13-I, D-0108, D-0109, D-0111),
 par lots :
 
 1. Fait.
-2. Fait, sauf la seconde part de B-0199, sur la réponse à D-0114.
+2. Fait.
 3. Les lots suivants sont au backlog (`forme : lot`), l'état montre le
    prochain : B-0221, le hook, avec la règle 2 de D-0112 ; B-0222, la
    consommation et le pilote ; B-0223, la revue, avec la règle 1 de

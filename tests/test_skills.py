@@ -124,8 +124,8 @@ class TestSkillsDuSocle(unittest.TestCase):
         for nom in controles.DU_SOCLE:
             texte = (self.racine / installeur.SKILLS / nom / "SKILL.md").read_text()
             self.assertTrue(texte.startswith(f"---\nname: {nom}\n"))
-        self.assertEqual(sorted(controles.DU_SOCLE), ["socle-private-memory", "socle-request", "socle-resume",
-                                                      "socle-review"])
+        self.assertEqual(sorted(controles.DU_SOCLE), ["socle-batch", "socle-private-memory", "socle-request",
+                                                      "socle-resume", "socle-review"])
         self.assertIn(".claude/skills/socle-*/**", config.Projet.charger(self.racine).chemins_proteges())
         self.assertEqual(juger(self.racine), {"skills.contrat": [], "skills.commandes": []})
 
@@ -143,8 +143,8 @@ class TestSkillsDuSocle(unittest.TestCase):
 
     def test_dans_les_deux_langues_ils_passent_leurs_controles(self):
         self.assertEqual(installeur.poser_skills(self.racine, "en"),
-                         ["skills du socle posés dans .claude/skills : socle-private-memory, socle-request, "
-                          "socle-resume, socle-review"])
+                         ["skills du socle posés dans .claude/skills : socle-batch, socle-private-memory, "
+                          "socle-request, socle-resume, socle-review"])
         texte = (self.racine / ".claude/skills/socle-request/SKILL.md").read_text()
         self.assertIn("description: Write a request for a human decision", texte)
         self.assertEqual(juger(self.racine), {"skills.contrat": [], "skills.commandes": []})
@@ -239,6 +239,59 @@ class TestLaReprise(unittest.TestCase):
     def test_un_sous_agent_ne_touche_a_aucun_reveil(self):
         for lg, regle in (("fr", "Un sous-agent ne touche à aucun réveil"), ("en", "A subagent\ntouches no wake-up")):
             self.assertIn(regle, self.lire(lg), lg)
+
+
+class TestLaConduiteDUnLot(unittest.TestCase):
+    """B-0199, ADR-0079 : le skill qui conduit un lot, posé et protégé
+    comme les autres skills du socle, sans rien de l'atelier qui le
+    fabrique (ADR-0033)."""
+
+    def setUp(self):
+        self.racine = depot({"app.py": "print('ok')\n"})
+
+    def tearDown(self):
+        shutil.rmtree(self.racine, ignore_errors=True)
+
+    def texte(self, lg: str) -> str:
+        installeur.poser_skills(self.racine, lg)
+        return (self.racine / installeur.SKILLS / "socle-batch" / "SKILL.md").read_text(encoding="utf-8")
+
+    def test_il_est_pose_protege_et_passe_ses_controles_dans_les_deux_langues(self):
+        from socle import utils as outils
+
+        with redirect_stdout(io.StringIO()):
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+        proteges = config.Projet.charger(self.racine).chemins_proteges()
+        self.assertTrue(outils.correspond(".claude/skills/socle-batch/SKILL.md", proteges))
+        for lg in ("fr", "en"):
+            texte = self.texte(lg)
+            self.assertTrue(texte.startswith("---\nname: socle-batch\n"), lg)
+            # Le plafond des garde-fous d'un projet neuf.
+            self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
+            self.assertEqual(juger(self.racine), {"skills.contrat": [], "skills.commandes": []}, lg)
+
+    def test_il_ne_renvoie_pas_a_l_atelier(self):
+        atelier = re.compile(r"\b(?:ADR|[BDFJ])-\d|fabrication|chess|Théo|delegate-lot|Opus|Sonnet|Haiku|Fable")
+        for lg in ("fr", "en"):
+            self.assertIsNone(atelier.search(self.texte(lg)), lg)
+
+    def test_il_dit_la_consommation_le_changement_de_session_et_l_apres_fusion(self):
+        """B-0220 : après la fusion, rien ne se pousse sans travail neuf ;
+        le chantier actif et le journal s'écrivent avant."""
+        attendus = {
+            "fr": ["deux à la fois au plus", "75 %", "85 %", "60 % de la fenêtre de cinq heures",
+                   "Un lot par session", "git format-patch", "prompt de la suivante",
+                   "Le chantier actif et le journal s'écrivent avant la fusion",
+                   "ne se pousse qu'avec le premier commit du lot suivant", "**Sans sous-agents**"],
+            "en": ["two at a time at most", "75%", "85%", "60% of the five-hour window",
+                   "One batch per session", "git format-patch", "prompt of the next one",
+                   "The active work and the journal are written before the merge",
+                   "is pushed only with the first commit of the next batch", "**Without subagents**"],
+        }
+        for lg, phrases in attendus.items():
+            texte = " ".join(self.texte(lg).split())
+            for phrase in phrases:
+                self.assertIn(phrase, texte, lg)
 
 
 class TestRefusBash(unittest.TestCase):
