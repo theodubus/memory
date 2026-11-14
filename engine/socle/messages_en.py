@@ -115,6 +115,10 @@ MESSAGES: dict[str, str] = {
         "them all off).",
     "{chemin}, par `{mot}`":
         "{chemin}, through `{mot}`",
+    "{chemin}, cité par `{qui}`, un écrivain que le hook ne sait pas lire : il peut l'écrire ; un fichier protégé "
+    "se lit par `cat` ou par l'outil de lecture":
+        "{chemin}, cited by `{qui}`, a writer the hook cannot read: it may write it; a protected file is read with "
+        "`cat` or the file-reading tool",
     "`{mot}`, dont {parts}":
         "`{mot}`, including {parts}",
     "`{mot}`, dans le dossier `{dossier}`":
@@ -2687,6 +2691,8 @@ MESSAGES: dict[str, str] = {
     "fichier protégé écrit par le shell par un chemin relatif au dossier courant de l'agent, un motif ou `$PWD`":
         "protected file written by the shell through a path relative to the agent's current directory, a pattern or "
         "`$PWD`",
+    "fichier protégé écrit par `cp -t`, `find -delete`, `xargs`, `bash -ec`, `sort -o` ou `python -c`":
+        "protected file written by `cp -t`, `find -delete`, `xargs`, `bash -ec`, `sort -o` or `python -c`",
     "fichier protégé écrit par le shell après un commentaire en fin de ligne, un `#` au milieu d'un mot ou une "
     "substitution aux guillemets imbriqués":
         "protected file written by the shell after an end-of-line comment, a `#` in the middle of a word or a "
@@ -2835,6 +2841,10 @@ MESSAGES: dict[str, str] = {
     "passent le hook de l'agent (B-0171)":
         "a too deeply nested command that writes nothing, a long heredoc and 500 `cd` to a directory outside the "
         "project pass the agent's hook (B-0171)",
+    "`find -delete` d'un motif libre, `xargs` et `python -c` qui ne citent aucun fichier protégé et `cp -t` vers "
+    "un dossier hors du projet passent le hook de l'agent (B-0206)":
+        "`find -delete` of a free pattern, `xargs` and `python -c` that cite no protected file and `cp -t` to a "
+        "directory outside the project pass the agent's hook (B-0206)",
     "un `#` dans un mot, une redirection dans un commentaire et une substitution aux guillemets imbriqués qui lit "
     "un fichier protégé passent le hook de l'agent (B-0207)":
         "a `#` in a word, a redirection in a comment and a substitution with nested quotes that reads a protected "

@@ -565,6 +565,60 @@ class TestGarde(unittest.TestCase):
             with self.subTest(cmd):
                 self.assertIsNone(hooks.refus_bash(self.projet, cmd))
 
+    def test_cp_t_find_xargs_bash_ec_sort_o_et_python_c(self):
+        """B-0206 : ces écritures d'un fichier protégé passaient le hook ;
+        `python -c` et `xargs` se jugent par les chemins protégés qu'ils
+        citent en toutes lettres, `find` par ses départs et ses filtres."""
+        protege, reglage = "écriture d'un fichier protégé", "réglages de Claude Code"
+        sed = "sed -i s/3/9/ .socle/policy.toml"
+        # Un départ qui contient le projet, ou peut le contenir, est refusé
+        # d'abord comme sa suppression (B-0208).
+        contient = "suppression par le shell d'un dossier qui contient le projet"
+        with unittest.mock.patch.dict(os.environ, {"HOME": str(self.racine)}):
+            os.environ.pop("X", None)
+            for cmd, raison in (
+                    ("cp -t .socle/git-hooks /tmp/x", protege), ("install -t .socle/git-hooks /tmp/x", protege),
+                    ("cp -rt .socle/git-hooks /tmp/x", protege), ("mv -t.socle/git-hooks /tmp/x", protege),
+                    ("cp --target-directory=.socle/git-hooks /tmp/x", protege),
+                    ("ln -s -t .socle/git-hooks /tmp/x", protege),
+                    ("echo .socle/policy.toml | xargs rm", protege),
+                    ("find .socle -name policy.toml | xargs rm -f", protege),
+                    ("xargs -I{} cp {} .socle/git-hooks < /tmp/liste", protege),
+                    ("find .socle -name policy.toml -delete", protege),
+                    ("find .socle -name policy.toml -exec rm {} +", protege),
+                    ("find . -name policy.toml -exec rm -f {} \\;", protege),
+                    ("find . -name '*.toml' -delete", protege), ("find . -name pre-commit -delete", protege),
+                    ("find . -path ./.socle/policy.toml -delete", protege),
+                    ("cd .socle && find .. -name policy.toml -delete", protege),
+                    ("find .. -name policy.toml -delete", contient),
+                    ("cd .socle && find . -name policy.toml -exec sed -i s/3/9/ {} +", protege),
+                    ("find . ! -name '*.py' -delete", reglage), ("find $X -name '*.pyc' -delete", contient),
+                    (f"bash -ec '{sed}'", protege), (f"bash -lc '{sed}'", protege), (f"bash -c -- '{sed}'", protege),
+                    (f"bash -o pipefail -c '{sed}'", protege), (f"sh -euc '{sed}'", protege),
+                    ("sort -o .socle/policy.toml /tmp/x", protege), ("sort -uo .socle/policy.toml /tmp/x", protege),
+                    ("sort --output=.socle/policy.toml /tmp/x", protege),
+                    ("python3 -c \"open('.socle/policy.toml','w').write('x')\"", protege),
+                    ("python3 -I -c \"import shutil; shutil.rmtree('.socle')\"", protege),
+                    ("python3 -c \"print(open('.socle/policy.toml').read())\"", protege),
+                    ("python3 -c \"open('.claude/settings.local.json','w').write('{}')\"", reglage)):
+                with self.subTest(cmd):
+                    self.assertIn(raison, hooks.refus_bash(self.projet, cmd) or "")
+                    self.assertEqual(self.decide(*B(cmd)), "refus")
+            self.assertIn("cité par `python3 -c`, un écrivain que le hook ne sait pas lire",
+                          hooks.refus_bash(self.projet, "python3 -c \"open('.socle/policy.toml')\"") or "")
+            for cmd in ("cp -t /tmp/dest calc.py", "cp calc.py /tmp/x", "install -m 755 -t /tmp/bin calc.py",
+                        "find . -name '*.pyc' -delete", "find . -name __pycache__ -prune -o -name '*.pyc' -print",
+                        "find build -name '*.o' -exec rm {} +", "find . -name '*.py' -exec grep -l x {} +",
+                        "find /opt/ailleurs -name policy.toml -delete", "find . -path './build/*' -delete",
+                        "find /opt/$X -name '*.pyc' -delete", "find . -type f | xargs sed -i s/a/b/",
+                        "find . -name '*.pyc' | xargs rm -f", "ls .socle | xargs -I{} echo {}",
+                        "echo /tmp/x | xargs -I{} cp {} /tmp/y", "sort -o /tmp/tri.txt calc.py",
+                        "sort calc.py | uniq > /tmp/x", "bash -ec 'echo ok > /tmp/x'", "bash -x script.sh -c",
+                        "python3 -c \"import sys; sys.path.insert(0, 'engine'); from socle import memory\"",
+                        "python3 -c \"print(open('calc.py').read())\"", "python3 -m unittest tests.test_calc"):
+                with self.subTest(cmd):
+                    self.assertIsNone(hooks.refus_bash(self.projet, cmd))
+
     def test_remise_en_etat_d_un_fichier_protege(self):
         """D-0098 (B-0165) : l'agent remet un fichier protégé changé par
         erreur à son état du dernier commit, et supprime un fichier apparu
@@ -1047,6 +1101,23 @@ class TestDecoupage(unittest.TestCase):
 class TestJugements(unittest.TestCase):
     def test_programme(self):
         self.assertEqual(commandes.analyser("/usr/bin/git status")[0].programme, "git")
+
+    def test_ecrits_d_une_destination_par_option(self):
+        """B-0206 : `cp -t`, `install -t`, `mv -t` et `sort -o` écrivent la
+        valeur de leur option ; `bash` ouvre sa commande quel que soit le
+        groupe qui porte `-c`."""
+        for cmd, ecrits in (("cp -t d a b", ["d"]), ("cp -rtd a", ["d"]), ("cp -Stx a d", ["d"]),
+                            ("install -m 755 -t d a", ["d"]), ("install -mt d a", ["a"]), ("cp --targ=d a", ["d"]),
+                            ("mv -t d a", ["d", "a"]), ("mv -td a", ["a", "d"]), ("cp a b d", ["d"]),
+                            ("sort -o f a", ["f"]), ("sort -k2 -uof a", ["f"]), ("sort --output f a", ["f"]),
+                            ("sort -t o a", []), ("find . -exec cp {} d \\;", ["d"]), ("find . -delete", [])):
+            with self.subTest(cmd):
+                self.assertEqual(hooks.ecrits(commandes.analyser(cmd)[0]), ecrits)
+        for cmd, lance in (("bash -ec 'rm a'", True), ("bash -o pipefail -c 'rm a'", True), ("sh -c -- 'rm a'", True),
+                           ("bash --norc -lc 'rm a'", True), ("bash -x s.sh -c 'rm a'", False), ("bash -c", False),
+                           ("bash +o posix -ec 'rm a'", True)):
+            with self.subTest(cmd):
+                self.assertEqual(["rm", "a"] in [c.argv for c in commandes.analyser(cmd)], lance)
 
     def test_ecrits(self):
         c = commandes.analyser(f"{G} mv a .socle/b")[0]

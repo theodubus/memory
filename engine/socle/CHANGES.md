@@ -7,6 +7,22 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-14-k — Le hook de l'agent voit ce qu'écrivent cp -t, find -delete, xargs, bash -ec, sort -o et python -c
+
+Le hook de l'agent juge désormais ces écritures d'un fichier protégé :
+`cp`, `ln`, `install` et `mv` écrivent le dossier de `-t`, `sort` le
+fichier de `-o` ; `bash -ec '…'`, `bash -lc '…'` et `bash -c -- '…'`
+ouvrent leur commande ; `find -delete`, ou `find -exec rm {} +`, se juge
+par ses points de départ et ses filtres de nom ou de chemin, à toute
+profondeur : `find . -name '*.pyc' -delete` passe, `find . -name '*.toml'
+-delete` est refusé. `python -c` et `xargs` d'un écrivain, que le hook ne
+sait pas lire, se jugent par les chemins protégés qu'ils citent en toutes
+lettres : `echo <fichier protégé> | xargs rm` est refusé, comme un
+`python -c` qui cite un fichier protégé, même pour le lire.
+
+À faire : lire un fichier protégé par `cat` ou par l'outil de lecture,
+plutôt que par un `python -c` qui le cite, que le hook refuse désormais.
+
 ## 2026-11-14-j — Le hook de l'agent ne perd plus la commande qui suit un dièse ou des guillemets imbriqués
 
 Le hook de l'agent lit un `#` comme le shell : il n'ouvre un commentaire

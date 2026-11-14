@@ -1481,6 +1481,16 @@ def _cas() -> list[Cas]:
             "X=\"$(echo \"l'apostrophe\")\"; sed -i s/3/9/ .socle/policy.toml",
             "X=\"$(echo \"; cd /tmp; \")\"; echo 'max_attempts = 99' >> .socle/policy.toml")])
 
+    @defaut("protege-ecrivain-par-option", "fichier protégé écrit par `cp -t`, `find -delete`, `xargs`, `bash -ec`, "
+            "`sort -o` ou `python -c`", "agent", "écriture protégée")
+    def _(a, c):
+        # B-0206 : chacune de ces écritures passait le hook.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "cp -t .socle/git-hooks calc.py", "find .socle -name policy.toml -delete",
+            "echo .socle/policy.toml | xargs sed -i s/3/9/", "bash -ec 'sed -i s/3/9/ .socle/policy.toml'",
+            "sort -o .socle/policy.toml calc.py",
+            "python3 -c \"open('.socle/policy.toml', 'a').write('max_attempts = 99')\"")])
+
     @defaut("ecriture-illisible-composee", "chemin écrit par le shell après une condition ou une boucle qui change "
             "le dossier ou une variable, ou dans la branche qui suit", "agent", "écriture illisible")
     def _(a, c):
@@ -1994,6 +2004,15 @@ def _temoins() -> list[tuple[str, Callable]]:
         return (etage_outil(a, c, "Bash", {"command": "echo \"a#b\" > notes.txt"})
                 or etage_outil(a, c, "Bash", {"command": "echo ok # > .socle/policy.toml"})
                 or etage_outil(a, c, "Bash", {"command": "echo \"$(grep -c \"=\" .socle/policy.toml)\" > notes.txt"}))
+
+    @temoin("`find -delete` d'un motif libre, `xargs` et `python -c` qui ne citent aucun fichier protégé et `cp -t` "
+            "vers un dossier hors du projet passent le hook de l'agent (B-0206)")
+    def _(a, c):
+        ailleurs = a.dossier.parent / (a.dossier.name + "-ailleurs")
+        return (etage_outil(a, c, "Bash", {"command": "find . -name '*.pyc' -delete"})
+                or etage_outil(a, c, "Bash", {"command": "find . -name '*.py' | xargs sed -i s/3/9/"})
+                or etage_outil(a, c, "Bash", {"command": "python3 -c \"print(open('calc.py').read())\""})
+                or etage_outil(a, c, "Bash", {"command": f"cp -t {ailleurs} calc.py"}))
 
     @temoin("une commande trop imbriquée qui n'écrit rien, un long heredoc et 500 `cd` vers un dossier hors du "
             "projet passent le hook de l'agent (B-0171)")

@@ -375,6 +375,29 @@ def _operateurs(jeton: str) -> list[str]:
     return res
 
 
+def _script_du_shell(argv: list[str]) -> str | None:
+    """La commande que lance un `bash -c`, quel que soit le groupe d'options
+    qui porte le `c` (`-ec`, `-lc`, `-o pipefail -c`), `--` sauté : le
+    premier argument après les options ; `None` sans `-c` (B-0206)."""
+    vu, i = False, 1
+    while i < len(argv):
+        a = argv[i]
+        if a in ("--", "-"):
+            i += 1
+            break
+        if a in ("--rcfile", "--init-file"):
+            i += 2
+        elif a.startswith("--"):
+            i += 1
+        elif a[:1] in ("-", "+") and len(a) > 1:
+            vu = vu or (a[0] == "-" and "c" in a[1:])
+            # `-o pipefail`, `+O extglob` : la valeur suit.
+            i += 2 if a[-1] in "oO" else 1
+        else:
+            break
+    return argv[i] if vu and i < len(argv) else None
+
+
 def _sans_prefixes(argv: list[str]) -> list[str]:
     """La commande lancée derrière ses affectations et ses préfixes."""
     while argv:
@@ -609,8 +632,8 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
                     etat.pile.pop()
                 elif nom == "popd" and etat.pile:
                     changer(*etat.pile.pop())
-            elif nom in ("bash", "sh", "zsh", "dash") and "-c" in argv[1:-1]:
-                res.extend(_analyser(argv[argv.index("-c") + 1], etat.copie(), env))
+            elif nom in ("bash", "sh", "zsh", "dash") and (script := _script_du_shell(argv)) is not None:
+                res.extend(_analyser(script, etat.copie(), env))
             elif nom == "eval":
                 res.extend(_analyser(" ".join(argv[1:]), etat.copie(), env))
             etat.vues.extend(_affectations(argv))

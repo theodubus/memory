@@ -7,6 +7,21 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-14-k — The agent's hook sees what cp -t, find -delete, xargs, bash -ec, sort -o and python -c write
+
+The agent's hook now judges these writes to a protected file: `cp`, `ln`,
+`install` and `mv` write the directory of `-t`, `sort` the file of `-o`;
+`bash -ec '…'`, `bash -lc '…'` and `bash -c -- '…'` open their command;
+`find -delete`, or `find -exec rm {} +`, is judged by its starting points
+and its name or path filters, at any depth: `find . -name '*.pyc' -delete`
+passes, `find . -name '*.toml' -delete` is refused. `python -c` and `xargs`
+of a writer, which the hook cannot read, are judged by the protected paths
+they cite in full: `echo <protected file> | xargs rm` is refused, as is a
+`python -c` that cites a protected file, even to read it.
+
+To do: read a protected file with `cat` or the file-reading tool, rather
+than with a `python -c` that cites it, which the hook now refuses.
+
 ## 2026-11-14-j — The agent's hook no longer loses the command after a hash or nested quotes
 
 The agent's hook reads a `#` as the shell does: it opens a comment only at
