@@ -1,8 +1,8 @@
 diff --git a/.claude/skills/delegate-lot/SKILL.md b/.claude/skills/delegate-lot/SKILL.md
-index 3fe20aa..6639e7a 100644
+index 3fe20aa..621c558 100644
 --- a/.claude/skills/delegate-lot/SKILL.md
 +++ b/.claude/skills/delegate-lot/SKILL.md
-@@ -1,160 +1,59 @@
+@@ -1,160 +1,64 @@
  ---
  name: delegate-lot
 -description: Mener un lot du backlog en orchestrateur, un sous-agent par sujet dans un worktree, relu par un autre avant tout push, puis intégré, poussé et fusionné. À utiliser dans ce dépôt quand la session annonce un lot et le confie à des sous-agents, à chaque étape du lot, et à la reprise d'un lot en cours après un compactage ou un changement de modèle.
@@ -112,8 +112,10 @@ index 3fe20aa..6639e7a 100644
 +Le modèle est celui que dit le chantier actif. La consigne est celle du
 +produit, avec, en tête : « Tu implémentes un sujet du socle dans ton
 +worktree du dépôt memory. AGENTS.md s'applique. » ; dans « À livrer » :
-+pour un contrôle ou un refus nouveau, son défaut injecté et son témoin
-+sain, et le sujet rangé (`socle archive`) ; dans « Interdits » : ouvrir
++des tests qui échouent sur le commit parent, pour tout code ; pour un
++contrôle ou un refus nouveau, son défaut injecté et son témoin sain ; le
++sujet rangé (`socle archive`) ; `verify --fast` une fois, à la fin ;
++dans « Interdits » : ouvrir
 +une pull request, lire ou ajouter un autre dépôt ; puis « Économie : lire
 +ce qui sert, pas les fichiers entiers ; pas de suite complète relancée
 +sans raison. » Les identifiants des sous-agents lancés vont dans le texte
@@ -139,12 +141,13 @@ index 3fe20aa..6639e7a 100644
  - La réponse de l'humain se commite dans le même push que le changement
    qu'elle autorise, jamais avant (B-0142) ; seul un fichier protégé peut
    la précéder, sous la demande en attente (D-0071).
--- Une valeur attendue à changer, un test à supprimer, un fichier protégé
--  à rafraîchir : une demande dans le dépôt, relue à froid, poussée, son
+ - Une valeur attendue à changer, un test à supprimer, un fichier protégé
+   à rafraîchir : une demande dans le dépôt, relue à froid, poussée, son
 -  lien donné ; jamais une question dans la conversation.
 -- Avant d'ouvrir un sujet, relire l'index du backlog.
 -
 -## La consommation
++  lien donné ; jamais une question dans la conversation (J-2026-11-12-F).
  
 -Ce qui pèse (B-0173, `docs/fabrication/consommation.md`) : chaque appel
 -relit toute la conversation, et chaque pas de l'orchestration en est un
@@ -322,10 +325,10 @@ index 0413cbe..ede6466 100644
  relecteur juge le lot contre le « Fait quand » de ses sujets : un sujet
 diff --git a/engine/socle/templates/skills/socle-batch/SKILL.en.md b/engine/socle/templates/skills/socle-batch/SKILL.en.md
 new file mode 100644
-index 0000000..35544da
+index 0000000..230448a
 --- /dev/null
 +++ b/engine/socle/templates/skills/socle-batch/SKILL.en.md
-@@ -0,0 +1,133 @@
+@@ -0,0 +1,132 @@
 +---
 +name: socle-batch
 +description: Run a batch of backlog topics, from forming it to delivering it: one subagent per topic, the review without context before any push, integration, CI, merge, one session per batch and the handover to the next. Use when the agent forms or announces a batch, at each of its steps, and when resuming a batch in progress.
@@ -406,12 +409,11 @@ index 0000000..35544da
 +   done, no pending request on its content, giving the expected head
 +   commit.
 +5. The active work and the journal are written before the merge, in the
-+   last commit of the pull request, or leave with the next work. After the
-+   merge, the local branch restarts from the default branch and is pushed
-+   only with the first commit of the next batch: pushed with nothing more,
-+   it would recreate the remote branch the merge deleted.
-+6. Its topics closed, the batch closes `done`, then
-+   `python3 .socle/socle archive`.
++   last commit of the pull request, with the batch's closure: its topics
++   closed, it becomes `done`, then `python3 .socle/socle archive`. After
++   the merge, the local branch restarts from the default branch and is
++   pushed only with the first commit of the next batch: pushed with
++   nothing more, it would recreate the remote branch the merge deleted.
 +
 +## Consumption
 +
@@ -461,10 +463,10 @@ index 0000000..35544da
 +```
 diff --git a/engine/socle/templates/skills/socle-batch/SKILL.md b/engine/socle/templates/skills/socle-batch/SKILL.md
 new file mode 100644
-index 0000000..95a8ad2
+index 0000000..9489e9e
 --- /dev/null
 +++ b/engine/socle/templates/skills/socle-batch/SKILL.md
-@@ -0,0 +1,134 @@
+@@ -0,0 +1,132 @@
 +---
 +name: socle-batch
 +description: Mener un lot de sujets du backlog, de sa formation à sa livraison : un sous-agent par sujet, la revue sans contexte avant tout push, l'intégration, la CI, la fusion, une session par lot et le passage à la suivante. À utiliser quand l'agent forme ou annonce un lot, à chacune de ses étapes, et à la reprise d'un lot en cours.
@@ -544,13 +546,11 @@ index 0000000..95a8ad2
 +   le commit de tête, revue faite, aucune demande en attente sur son
 +   contenu, en donnant le commit de tête attendu.
 +5. Le chantier actif et le journal s'écrivent avant la fusion, dans le
-+   dernier commit de la pull request, ou partent avec le travail suivant.
-+   Après la fusion, la branche locale repart de la branche par défaut et
-+   ne se pousse qu'avec le premier commit du lot suivant : poussée sans
-+   rien de plus, elle recréerait la branche distante que la fusion a
-+   supprimée.
-+6. Ses sujets clos, le lot se clôt `fait`, puis `python3 .socle/socle
-+   archive`.
++   dernier commit de la pull request, avec la clôture du lot : ses sujets
++   clos, il passe `fait`, puis `python3 .socle/socle archive`. Après la
++   fusion, la branche locale repart de la branche par défaut et ne se
++   pousse qu'avec le premier commit du lot suivant : poussée sans rien de
++   plus, elle recréerait la branche distante que la fusion a supprimée.
 +
 +## La consommation
 +
@@ -600,10 +600,10 @@ index 0000000..95a8ad2
 +Ce qui attend : <un compte rendu, une CI, une demande> | rien.
 +```
 diff --git a/memory/backlog/B-0199-la-conduite-d-un-lot-dans-le-produit-sous-agents-r.md b/memory/backlog/closed/B-0199-la-conduite-d-un-lot-dans-le-produit-sous-agents-r.md
-similarity index 92%
+similarity index 83%
 rename from memory/backlog/B-0199-la-conduite-d-un-lot-dans-le-produit-sous-agents-r.md
 rename to memory/backlog/closed/B-0199-la-conduite-d-un-lot-dans-le-produit-sous-agents-r.md
-index 16e064e..1bbad2d 100644
+index 16e064e..4c0780c 100644
 --- a/memory/backlog/B-0199-la-conduite-d-un-lot-dans-le-produit-sous-agents-r.md
 +++ b/memory/backlog/closed/B-0199-la-conduite-d-un-lot-dans-le-produit-sous-agents-r.md
 @@ -1,7 +1,7 @@
@@ -615,8 +615,16 @@ index 16e064e..1bbad2d 100644
  
  Théo, le 13 novembre : « Tout ce qui est utile doit intégrer le socle »
  (J-2026-11-13-F). Ce dépôt mène ses lots par une procédure à lui, le skill
-@@ -44,6 +44,6 @@ avec la copie protégée de ce dépôt, une demande validée.
+@@ -42,8 +42,14 @@ produit, `socle-batch`, est écrit, mais le poser change la valeur
+ attendue de deux tests qui comptent les skills du socle : il attend,
+ avec la copie protégée de ce dépôt, une demande validée.
  
++La revue du lot 2 (J-2026-11-14-X) : le premier critère dit
++« l'auto-test » ; ce qui vérifie que le skill est posé et protégé est un
++test du moteur, `tests/test_skills.py` (`TestLaConduiteDUnLot`), comme
++pour les autres skills du socle. L'auto-test injecte des défauts aux
++contrôles, et poser un skill n'en est pas un.
++
  ## Fait quand
  
 -- [ ] l'installeur pose un skill du socle qui conduit un lot, ses règles de consommation et le changement de session compris, et l'auto-test vérifie qu'il est posé et protégé
@@ -624,28 +632,6 @@ index 16e064e..1bbad2d 100644
 +- [x] l'installeur pose un skill du socle qui conduit un lot, ses règles de consommation et le changement de session compris, et l'auto-test vérifie qu'il est posé et protégé
 +- [x] `.claude/skills/delegate-lot/SKILL.md` ne garde que ce qui est propre à ce dépôt
  - [x] un lot se forme des sujets prêts qui touchent les mêmes fichiers, garde-fou ou tests ; la mémoire le relie à ses sujets, l'état montre le prochain, et un test le montre
-diff --git a/memory/decisions/ADR-0079-un-lot-se-garde-au-backlog-comme-un-sujet-de-forme.md b/memory/decisions/ADR-0079-un-lot-se-garde-au-backlog-comme-un-sujet-de-forme.md
-index 23e1748..6de9b32 100644
---- a/memory/decisions/ADR-0079-un-lot-se-garde-au-backlog-comme-un-sujet-de-forme.md
-+++ b/memory/decisions/ADR-0079-un-lot-se-garde-au-backlog-comme-un-sujet-de-forme.md
-@@ -1,7 +1,7 @@
- <!-- socle: couche=decisions zone=publique -->
- # ADR-0079 — Un lot se garde au backlog comme un sujet de forme lot, qui attend ses sujets ; sa conduite est le skill socle-batch
- 
--> statut : acceptée · date : 2026-11-14 · source : B-0199@528031a5, B-0220@0df68693, J-2026-11-14-M@567221ed, ADR-0037@10b3bfbe, ADR-0034@abef67cd, ADR-0033@44523582, ADR-0027@d32b4ef9 · lu : decisions@9ecc00fd
-+> statut : acceptée · date : 2026-11-14 · source : B-0199@cd6d6230, B-0220@0df68693, J-2026-11-14-M@567221ed, ADR-0037@10b3bfbe, ADR-0034@abef67cd, ADR-0033@44523582, ADR-0027@d32b4ef9 · lu : decisions@9ecc00fd
- 
- ## Contexte
- 
-@@ -11,7 +11,7 @@ le produit (J-2026-11-13-F@8a674408), et qu'on apprenne au socle à réunir les
- sujets qui se traitent facilement ensemble (J-2026-11-14-M@567221ed).
- Les lots ne vivaient que dans la prose du chantier actif, que rien ne
- relie aux sujets ni ne montre l'état : une session neuve ne les retrouve
--que si le chantier actif les a gardés. B-0199@528031a5 demande le skill
-+que si le chantier actif les a gardés. B-0199@cd6d6230 demande le skill
- du produit, la mémoire qui relie un lot à ses sujets et l'état qui
- montre le prochain ; B-0220@0df68693, l'étape d'après la fusion, qui
- poussait une branche vide de tout travail et recréait la branche
 diff --git a/tests/test_skills.py b/tests/test_skills.py
 index 3a73547..fa0c986 100644
 --- a/tests/test_skills.py

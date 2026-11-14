@@ -8,22 +8,20 @@ tranche. Le cadrage fondateur : `memory/archives/cadrage-2026-10-10.md` ;
 `docs/fabrication/architecture.md` dit où s'applique chacune de ses
 exigences.
 
-Ce dépôt est en **mode amont** : premier utilisateur du socle qu'il
-fabrique, il en a la source sous `engine/socle/`, à l'empreinte non
-figée ; ses fichiers de projet vivent dans `.socle/`.
+Ce dépôt est en **mode amont** : il a la source du socle sous
+`engine/socle/`, à l'empreinte non figée ; ses fichiers de projet vivent
+dans `.socle/`.
 
 ## Structure
 
 Le dépôt a deux parts (ADR-0033). **Le produit**, `engine/socle/`, est la
 seule chose qu'un projet reçoit : rien n'y renvoie à l'atelier. **L'atelier**
 est tout le reste : les tests, les bancs, la documentation de fabrication et
-la mémoire de ce dépôt, l'historique de sa fabrication.
+la mémoire de ce dépôt.
 
 - `engine/socle/` — le moteur : lecture de la mémoire, contrôles, hooks,
-  installeur, auto-test. `engine/socle/FORMAT.md` fait foi pour le format de
-  la mémoire.
-- `engine/socle/adapters/` — les adaptateurs maintenus.
-- `engine/socle/templates/` — les gabarits de l'installeur.
+  installeur, auto-test, adaptateurs maintenus, gabarits.
+  `engine/socle/FORMAT.md` fait foi pour le format de la mémoire.
 - `tests/` — les tests du moteur (`unittest`), dont l'auto-test.
 - `engine/README.md` (la page publique), `README.md`, `engine/socle/HELP.md`
   (le guide d'un projet équipé), `docs/fabrication/` (l'atelier :
@@ -55,6 +53,8 @@ python3 .socle/socle install --target ../projet --adapter auto --owner @moi
 - **Commentaires, messages, documentation et identifiants du code en
   français ; commandes, options et noms de fichiers en anglais** (`ADR-0027`) : un module s'importe sous son nom français
   (`from socle import memory as memoire`).
+- **Un changement que reçoit un projet installé** a son entrée dans les
+  notes de version, `engine/socle/CHANGES.md` et l'anglaise (ADR-0078).
 - **L'agent fusionne lui-même sa pull request** (D-0092), jamais celle
   d'un autre : CI verte, revue adversariale faite, aucune demande en
   attente sur son contenu ; le récap donne son lien.

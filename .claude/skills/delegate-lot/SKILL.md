@@ -8,8 +8,7 @@ description: Mener un lot du backlog en orchestrateur, un sous-agent par sujet d
 La session principale orchestre : elle annonce le lot, écrit les consignes,
 fait relire, intègre et livre. Elle n'implémente pas, sauf un changement de
 quelques lignes, qu'elle fait elle-même plutôt que de reprendre un
-sous-agent. Ce skill dit comment faire ; l'organisation et ses raisons sont
-dans la mémoire (D-0096, J-2026-11-11-G).
+sous-agent. Ses raisons : D-0096, J-2026-11-11-G.
 
 ## Avant de lancer
 
@@ -82,9 +81,10 @@ correction lourde de bloquants seule : `socle review --since <commit relu>`.
    arrière-plan qui cherche `success sur <sha court>` (ou `failure sur
    <sha court>`) dans la ligne « CI » de `python3 .socle/socle state`,
    jamais un commit d'avant.
-4. Après la fusion : `git fetch origin main`, `git rebase origin/main`,
-   pousser ; vérifier que la distribution a tourné ; mettre à jour le
-   chantier actif et le journal.
+4. Le chantier actif et le journal s'écrivent avant, au dernier commit
+   de la pull request. Après la fusion : la distribution a-t-elle tourné ;
+   `git fetch origin main`, `git rebase origin/main`, sans pousser : la
+   branche part avec le premier commit du lot suivant (B-0220).
 
 ## Ce qui ne se rattrape pas après un push
 
@@ -107,8 +107,7 @@ Ce qui pèse (B-0173, `docs/fabrication/consommation.md`) : chaque appel
 relit toute la conversation, et chaque pas de l'orchestration en est un
 (lancer un sous-agent, recevoir son compte rendu, intégrer, regarder la
 CI) ; après plus d'une heure d'arrêt, la conversation se relit au prix
-fort ; un sous-agent repris après plus de cinq minutes aussi. Un
-sous-agent ne relit pas la conversation qui l'a lancé.
+fort ; un sous-agent repris après plus de cinq minutes aussi.
 
 - Un lot par session : la session courte orchestre à bas prix.
 - Deux sous-agents à la fois au plus, un seul quand la semaine dépasse
@@ -142,8 +141,8 @@ reparte du dépôt seul :
    de passation sous docs/fabrication, retiré quand le lot s'intègre) ;
    la pull request fusionnée ;
 2. les worktrees et leurs branches retirés ;
-3. le chantier actif dit le lot suivant et ce qui attend (un compte
-   rendu, une CI, une demande) ;
+3. le chantier actif, écrit avant la fusion, dit le lot suivant et ce
+   qui attend (un compte rendu, une CI, une demande) ;
 4. les réveils retirés.
 
 Puis le dire dans la conversation : qu'il faut changer de session, et

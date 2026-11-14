@@ -5,9 +5,10 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot 2 fait, pas relu (J-2026-11-14-S) : reprendre par
-`docs/fabrication/passation/2026-11-14-lot-2/README.md`. D-0113 attend
-Théo. Les règles de D-0112 avec les lots 3 et 5. Pilote en pause.
+Lot 2 relu et livré (J-2026-11-14-X), sauf sa seconde part, qui attend
+la demande D-0114 : la reprendre par
+`docs/fabrication/passation/2026-11-14-lot-2/README.md`. Les règles de
+D-0112 avec les lots 3 et 5. Pilote en pause.
 
 ## Consignes en cours
 
@@ -62,12 +63,11 @@ Avant toute nouvelle fonction (J-2026-11-13-I, D-0108, D-0109, D-0111),
 par lots :
 
 1. Fait.
-2. B-0151, B-0199, B-0220 : revue et fin, depuis la passation.
-3. Le hook : B-0208 (haute), B-0204 à B-0207, la règle 2 de D-0112.
-4. B-0173 (son dernier critère) ; B-0179 à la reprise du pilote.
-5. La revue : B-0213, B-0214, la règle 1 de D-0112.
-6. Le reste : B-0176, B-0167, B-0197, B-0200, B-0201, B-0156, B-0210,
-   B-0218 ; en basse B-0219, B-0217, B-0195, B-0172, B-0198, B-0203.
-7. La mise à jour de chess, avec le prompt complété.
-8. Ensuite la planification (B-0101), puis la répartition entre agents
+2. Fait, sauf la seconde part de B-0199, sur la réponse à D-0114.
+3. Les lots suivants sont au backlog (`forme : lot`), l'état montre le
+   prochain : B-0221, le hook, avec la règle 2 de D-0112 ; B-0222, la
+   consommation et le pilote ; B-0223, la revue, avec la règle 1 de
+   D-0112 ; B-0224, le reste, B-0225 et B-0226 compris.
+4. La mise à jour de chess, avec le prompt complété.
+5. Ensuite la planification (B-0101), puis la répartition entre agents
    (B-0055).
