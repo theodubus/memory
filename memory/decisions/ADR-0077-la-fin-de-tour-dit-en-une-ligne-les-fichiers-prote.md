@@ -1,7 +1,7 @@
 <!-- socle: couche=decisions zone=publique -->
 # ADR-0077 — La fin de tour dit en une ligne les fichiers protégés qu'une mise à jour a posés, reconnus par le verrou du moteur
 
-> statut : acceptée · date : 2026-11-14 · source : B-0196@e0d085e8, ADR-0056@a5d4f150, ADR-0065@88e1a34b, ADR-0061@514e0797 · lu : decisions@b1d7ba83
+> statut : acceptée · date : 2026-11-14 · source : B-0196@e7e000e8, ADR-0056@a5d4f150, ADR-0065@88e1a34b, ADR-0061@514e0797 · lu : decisions@b1d7ba83
 
 ## Contexte
 
@@ -9,7 +9,7 @@ Entre l'installation d'une mise à jour et le push de sa demande, la fin
 de tour refusait l'arbre par une erreur de `protege.fichiers` pour
 chaque fichier protégé changé, chacune avec sa commande de remise en état
 (ADR-0065@88e1a34b) : 26 lignes sur chess, relues à chaque tentative,
-pour une seule cause, la demande pas encore posée (B-0196@e0d085e8). La
+pour une seule cause, la demande pas encore posée (B-0196@e7e000e8). La
 commande de remise y est même un mauvais conseil : suivie, elle défait la
 mise à jour. Il faut reconnaître, fichier par fichier, ce qu'une mise à
 jour a posé, sans couvrir ce qu'un agent changerait pendant qu'elle a
@@ -19,10 +19,16 @@ lieu.
 
 1. **Le signe d'une mise à jour** : en mode projet, le verrou du moteur a
    changé dans l'arbre depuis la base, et l'empreinte qu'il porte est
-   celle du moteur de l'arbre. Seul l'installeur l'écrit ainsi, juste
-   après avoir copié le moteur ; un fichier du moteur changé ensuite rompt
-   l'égalité, et plus rien n'est regroupé (`moteur.empreinte` échoue
-   alors aussi). La version ne dit rien : elle n'a pas changé d'une
+   celle du moteur de l'arbre et celle du moteur qu'un passage de
+   l'installeur a copié, qu'il écrit sous `copied`. Lancé depuis le
+   projet, l'installeur garde le moteur tel quel et récrit le verrou avec
+   son empreinte, même s'il a changé : il ne récrit `copied` que si le
+   moteur est encore celui qu'un passage précédent a copié (la revue du
+   lot l'a trouvé : un module reformaté par l'agent, puis l'installeur
+   relancé depuis le projet, passait dans la ligne commune). Un fichier du
+   moteur changé après la copie rompt l'égalité, et plus rien n'est
+   regroupé (`moteur.empreinte` échoue alors aussi, tant que le verrou
+   n'est pas récrit). La version ne dit rien : elle n'a pas changé d'une
    publication à l'autre.
 2. **Ce que la mise à jour a posé** : le verrou ; le moteur et son
    lanceur, que l'empreinte couvre, un fichier supprimé du dossier du
@@ -59,7 +65,7 @@ forgerait l'origine en écrivant le verrou, ce que son hook refuse,
 entrerait dans la ligne commune : il reste une erreur, et l'humain le lit
 dans la demande et la pull request. Le verrou d'un projet mis à jour
 porte quelques lignes de plus ; une mise à jour faite par un installeur
-d'avant ne les écrit pas, et seuls le moteur et le verrou s'y regroupent.
+d'avant ne les écrit pas, et rien ne s'y regroupe.
 Se défait en retirant `poses_par_la_mise_a_jour` de
 `engine/socle/checks_ratchet.py`, `_consigner_installes` de
 `engine/socle/installer.py` et l'option `regrouper` du rapport.

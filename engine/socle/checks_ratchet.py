@@ -326,14 +326,18 @@ def poses_par_la_mise_a_jour(ctx) -> set[str]:
     """Les fichiers protégés de l'arbre de travail qu'une mise à jour du
     socle a posés tels qu'ils sont ; vide hors d'une mise à jour (ADR-0077).
     Le signe : le verrou du moteur a changé depuis la base, et l'empreinte
-    qu'il porte est celle du moteur de l'arbre, ce que seul l'installeur
-    écrit. Posés par elle : le verrou, le moteur et son lanceur, que cette
-    empreinte couvre, et les fichiers que le verrou nomme sous `[installed]`
-    avec l'empreinte qu'ils ont encore."""
+    qu'il porte est celle du moteur de l'arbre et celle du moteur qu'un
+    passage de l'installeur a copié (`copied`), ce que seul l'installeur
+    écrit. Un passage lancé depuis le projet recalcule l'empreinte du moteur
+    sans le copier : il n'écrit `copied` que si le moteur n'a pas changé
+    depuis la copie. Posés par elle : le verrou, le moteur et son lanceur,
+    que cette empreinte couvre, et les fichiers que le verrou nomme sous
+    `[installed]` avec l'empreinte qu'ils ont encore."""
     projet = ctx.projet
     verrou = projet.lock
     chemin_verrou = projet.chemins.lock
     if (ctx.tete is not None or projet.mode == config.MODE_AMONT or not verrou.get("fingerprint")
+            or verrou.get("copied") != verrou["fingerprint"]
             or ctx.lire(chemin_verrou) == ctx.lire_base(chemin_verrou)):
         return set()
     if empreinte.calculer(ctx.racine, projet.dossier_moteur)[0] != verrou["fingerprint"]:

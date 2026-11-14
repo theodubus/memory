@@ -934,9 +934,14 @@ class TestFinDeTourApresUneMiseAJour(unittest.TestCase):
     def git(self, *args):
         subprocess.run(["git", *args], cwd=self.racine, check=True, capture_output=True)
 
-    def mettre_a_jour(self):
+    def mettre_a_jour(self, source=MOTEUR):
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+            installeur.installer(self.racine, "python", "@essai", source=source)
+
+    def relancer_depuis_le_projet(self):
+        # `python3 .socle/socle install --target .` : le moteur reste tel
+        # quel, le verrou se récrit.
+        self.mettre_a_jour(self.racine / ".socle/engine")
 
     def fin_de_tour(self) -> str:
         import json
@@ -1041,6 +1046,37 @@ class TestFinDeTourApresUneMiseAJour(unittest.TestCase):
         self.assertNotIn(self.COMMUNE, raison)
         self.assertIn("git restore --source=HEAD --staged --worktree -- .socle/engine/socle/utils.py", raison)
         self.assertIn("git restore --source=HEAD --staged --worktree -- .socle/engine.lock", raison)
+
+    def test_l_installeur_relance_depuis_le_projet_ne_couvre_pas_un_moteur_change(self):
+        """Revue du lot : lancé depuis le projet, l'installeur garde le moteur
+        tel quel et récrit le verrou avec son empreinte ; un module changé
+        par l'agent passait dans la ligne commune, sans sa remise."""
+        utils = self.racine / ".socle/engine/socle/utils.py"
+        utils.write_text(utils.read_text() + "# reformaté par l'agent\n")
+        self.relancer_depuis_le_projet()
+        self.assertNotIn("copied", config.Projet.charger(self.racine).lock)
+        self.assertEqual(self.poses(), set())
+        raison = self.fin_de_tour()
+        self.assertNotIn(self.COMMUNE, raison)
+        self.assertIn("git restore --source=HEAD --staged --worktree -- .socle/engine/socle/utils.py", raison)
+
+    def test_une_relance_depuis_le_projet_apres_la_mise_a_jour(self):
+        # Le moteur copié, inchangé : la relance garde la mise à jour.
+        self.mettre_a_jour()
+        self.relancer_depuis_le_projet()
+        verrou = config.Projet.charger(self.racine).lock
+        self.assertEqual(verrou.get("copied"), verrou["fingerprint"])
+        self.assertEqual(self.fin_de_tour().count(self.COMMUNE), 1)
+        # Un module changé ensuite, puis une relance : plus rien ne compte à
+        # la mise à jour, et le module garde sa ligne.
+        rapport = self.racine / ".socle/engine/socle/report.py"
+        rapport.write_text(rapport.read_text() + "# reformaté par l'agent\n")
+        self.relancer_depuis_le_projet()
+        self.assertNotIn("copied", config.Projet.charger(self.racine).lock)
+        self.assertEqual(self.poses(), set())
+        raison = self.fin_de_tour()
+        self.assertNotIn(self.COMMUNE, raison)
+        self.assertIn("git restore --source=HEAD --staged --worktree -- .socle/engine/socle/report.py", raison)
 
 
 class TestOutilsEnSessionCloud(unittest.TestCase):

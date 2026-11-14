@@ -624,9 +624,12 @@ def _refus_cible(cible: Path) -> str | None:
     return None
 
 
-def _poser_moteur(cible: Path, mode: str, source: Path, ch: config.Chemins) -> tuple[str, list[str]]:
-    """Le moteur, remplacé en bloc, et son verrou ; rend le dossier du moteur."""
+def _poser_moteur(cible: Path, mode: str, source: Path, ch: config.Chemins,
+                  ancien: dict | None = None) -> tuple[str, list[str]]:
+    """Le moteur, remplacé en bloc, et son verrou ; rend le dossier du moteur.
+    `ancien` : le verrou d'avant ce passage."""
     journal = []
+    copie = False
     # 1. Le moteur, remplacé en bloc.
     if mode == config.MODE_AMONT:
         dossier_moteur = str(source.relative_to(cible)) if source.is_relative_to(cible) else "engine"
@@ -643,6 +646,7 @@ def _poser_moteur(cible: Path, mode: str, source: Path, ch: config.Chemins) -> t
             if dest.exists():
                 shutil.rmtree(dest)
             shutil.copytree(source / "socle", dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc", ".*"))
+            copie = True
             journal.append(trad("moteur {version} copié dans {dossier_moteur}/socle", version=VERSION,
                                 dossier_moteur=dossier_moteur))
     # Le message du lanceur sous un Python trop ancien s'écrit avant que le
@@ -665,6 +669,13 @@ def _poser_moteur(cible: Path, mode: str, source: Path, ch: config.Chemins) -> t
                             dossier_moteur=dossier_moteur))
     else:
         calculee, n = empreinte.calculer(cible, dossier_moteur)
+        # L'empreinte du moteur que ce passage a copié, ou qu'un passage
+        # précédent a copié, s'il n'a pas changé depuis : un passage lancé
+        # depuis le projet garde le moteur tel quel et en recalcule
+        # l'empreinte, ce qui n'en fait pas celui d'une mise à jour
+        # (ADR-0077).
+        copiee = calculee if copie else (ancien or {}).get("copied")
+        ligne_copie = f'copied = "{calculee}"\n' if copiee == calculee else ""
         outils.ecrire(cible / ch.lock, (
             trad("# Verrou du moteur — écrit par l'installeur, jamais à la main.\n"
                  "# La CI recalcule l'empreinte ; un moteur altéré dans le projet fait échouer "
@@ -673,7 +684,8 @@ def _poser_moteur(cible: Path, mode: str, source: Path, ch: config.Chemins) -> t
             f'mode = "{mode}"\n'
             f'engine_dir = "{dossier_moteur}"\n'
             f'fingerprint = "{calculee}"\n'
-            f"files = {n}\n"
+            + ligne_copie
+            + f"files = {n}\n"
             f"format = {config.FORMAT}\n"
         ))
         journal.append(trad("verrou : {empreinte} sur {n} fichiers", empreinte=empreinte.courte(calculee), n=n))
@@ -1148,7 +1160,7 @@ def _installer(cible: Path, adaptateur: str | list[str], proprietaire: str, adop
     avant = _etat_des_proteges(cible) if ancien and mode != config.MODE_AMONT else None
 
     # 1. Le moteur, remplacé en bloc, et son verrou.
-    dossier_moteur, poses = _poser_moteur(cible, mode, source, ch)
+    dossier_moteur, poses = _poser_moteur(cible, mode, source, ch, ancien)
     journal += poses
 
     # 2. Les fichiers du projet : posés s'ils manquent, jamais écrasés.

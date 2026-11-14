@@ -37,7 +37,8 @@ changé hors d'une mise à jour ; pendant une mise à jour, un fichier
 qu'elle n'a pas posé tel qu'il est, changé avant le passage de
 l'installeur (même si celui-ci le fusionne ensuite, comme les réglages de
 Claude Code) ou après ; tout fichier, si le moteur de l'arbre n'est plus
-celui que le verrou décrit.
+celui qu'un passage de l'installeur a copié, même si l'installeur, relancé
+depuis le projet, en a récrit l'empreinte au verrou.
 
 Ce qu'il laisse passer : rien de plus au commit ni à la CI. À la fin du
 tour, un fichier dont l'agent forgerait l'origine en écrivant le verrou
