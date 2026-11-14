@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0112-ecrire-dans-le-produit-les-deux-regles-qui-bornent.md, dont l'empreinte suit.
+reponse = "valider"
+texte = "« D0112 » lu comme D-0112, la seule demande en attente."
+par = "Théo"
+date = "2026-11-14"
+canal = "conversation"
+citation = "Valider D0112"
+empreinte = "sha256:22eeed194e8ebe6c1b019c65a528a71619db1038e75f0d371b6465faaff6ba75"

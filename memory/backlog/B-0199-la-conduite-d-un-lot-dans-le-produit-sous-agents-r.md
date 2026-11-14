@@ -27,7 +27,17 @@ Le 13 novembre, Théo retient la priorité haute proposée (D-0108@96eeead5) :
 le sujet fait partie de ceux à finir avant de revenir aux nouvelles
 fonctions.
 
+Le 14 novembre, Théo demande d'apprendre à l'atelier et au socle à
+traiter ensemble les sujets qui se traitent facilement ensemble
+(J-2026-11-14-M) ; les lots ne vivaient alors que dans la prose du
+chantier actif. Former un lot fait partie de sa conduite : réunir les
+sujets prêts qui touchent les mêmes fichiers, le même garde-fou ou les
+mêmes tests, une seule revue les jugeant ensemble ; et garder le lot dans
+la mémoire, relié à ses sujets, pour que l'état le montre et qu'une
+session neuve le retrouve.
+
 ## Fait quand
 
 - [ ] l'installeur pose un skill du socle qui conduit un lot, ses règles de consommation et le changement de session compris, et l'auto-test vérifie qu'il est posé et protégé
 - [ ] `.claude/skills/delegate-lot/SKILL.md` ne garde que ce qui est propre à ce dépôt
+- [ ] un lot se forme des sujets prêts qui touchent les mêmes fichiers, garde-fou ou tests ; la mémoire le relie à ses sujets, l'état montre le prochain, et un test le montre

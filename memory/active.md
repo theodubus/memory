@@ -5,9 +5,9 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Le lot B-0212, B-0202 et B-0175 fusionné (#45). Le backlog trié par
-D-0111 (J-2026-11-14-L) ; D-0112, les deux règles dans le produit,
-attend Théo. Pilote en pause.
+Le backlog trié par D-0111 ; D-0112 validée, ses règles à écrire avec
+les lots 3 et 5. Aucun lot avant le feu vert de Théo (J-2026-11-14-M).
+Pilote en pause.
 
 ## Consignes en cours
 
@@ -63,9 +63,9 @@ par lots :
 
 1. B-0196, B-0216, avec B-0215 (même contrôle).
 2. B-0151 et B-0199.
-3. Le hook : B-0208 (haute), avec B-0204 à B-0207 (D-0111).
+3. Le hook : B-0208 (haute), B-0204 à B-0207, la règle 2 de D-0112.
 4. B-0173 (son dernier critère) ; B-0179 à la reprise du pilote.
-5. La revue : B-0213, B-0214, et les règles de D-0112 si validées.
+5. La revue : B-0213, B-0214, la règle 1 de D-0112.
 6. Le reste : B-0176, B-0167, B-0197, B-0200, B-0201, B-0156, B-0210,
    B-0218 ; en basse B-0219, B-0217, B-0195, B-0172, B-0198, B-0203.
 7. La mise à jour de chess, avec le prompt complété.
