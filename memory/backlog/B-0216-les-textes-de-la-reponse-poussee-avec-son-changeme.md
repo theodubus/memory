@@ -18,5 +18,5 @@ demande, attend que ce texte soit juste.
 
 ## Fait quand
 
-- [ ] tous les textes disent « dans le même push », et le cas du fichier protégé qui précède sa réponse
+- [x] tous les textes disent « dans le même push », et le cas du fichier protégé qui précède sa réponse
 - [ ] la copie protégée de ce dépôt suit son gabarit, sur une demande validée

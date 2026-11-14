@@ -198,6 +198,56 @@ class TestReponsePousseeSeule(unittest.TestCase):
         (self.racine / "docs/double.cas.json").write_text('[\n  {"entree": 2, "attendu": 6}\n]\n')
         self.assertEqual(self.avertissements(), [])
 
+    def test_une_cle_des_seuils_nommee_est_suivie_comme_un_test(self):
+        """B-0215 : `cliquet.garde-fous` ne compte lui aussi que les
+        validations de sa plage (D-0040) ; la réponse qui part sans la clé
+        qu'elle autorise à relâcher ne la couvrira pas."""
+        self.demander("Valider que `staleness.active_days` passe de 7 à 14 jours.")
+        self.repondre()
+        avertis = self.avertissements()
+        self.assertEqual(len(avertis), 1, avertis)
+        self.assertIn("`staleness.active_days`", avertis[0])
+        gf = self.racine / ".socle/guardrails.toml"
+        gf.write_text(gf.read_text().replace("active_days = 7", "active_days = 14", 1))
+        self.assertEqual(self.avertissements(), [])
+        self.commit("La réponse et la clé qu'elle relâche")
+        self.assertEqual(self.avertissements("git", self.tete()), [])
+        code, sortie = self.avant_push()
+        self.assertEqual(code, 0, sortie)
+        self.assertNotIn("Poussée seule", sortie)
+
+    def test_une_cle_que_la_demande_ne_nomme_pas_ne_compte_pas(self):
+        """Une clé changée que la demande ne cite pas ne fait pas taire
+        l'avertissement du test qu'elle nomme."""
+        self.demander("Valider que `test_double` attende 6.")
+        self.repondre()
+        gf = self.racine / ".socle/guardrails.toml"
+        gf.write_text(gf.read_text().replace("active_days = 7", "active_days = 5", 1))
+        avertis = self.avertissements()
+        self.assertEqual(len(avertis), 1, avertis)
+        self.assertNotIn("staleness", avertis[0])
+
+    def test_une_exception_du_controle_n_est_qu_un_avertissement(self):
+        """B-0215 : le contrôle qui plante avertit ; il ne refuse ni le
+        commit, ni le push, ni la fin du tour."""
+        self.demander("Valider que `test_double` attende 6.")
+        self.repondre()
+        self.commit("La réponse de Théo")
+        panne = unittest.mock.patch.object(outils, "base_non_poussee", side_effect=RuntimeError("panne de git"))
+        with panne:
+            ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="git",
+                                    base=outils.base_de_travail(self.racine), tete=self.tete())
+            r = Rapport()
+            contexte._lancer(contexte.REGISTRE["demandes.reponse-seule"], ctx, r)
+            self.assertEqual(r.erreurs(), [])
+            avertis = [c.message for c in r.constats if c.controle == "demandes.reponse-seule"]
+            self.assertEqual(len(avertis), 1, avertis)
+            self.assertIn("RuntimeError: panne de git", avertis[0])
+            code, sortie = self.avant_push()
+        self.assertEqual(code, 0, sortie)
+        self.assertIn("socle — avertissement (demandes.reponse-seule) : ", sortie)
+        self.assertIn("panne de git", sortie)
+
     def test_la_base_non_poussee(self):
         self.demander("Valider que `test_double` attende 6.")
         poussee = self.tete()

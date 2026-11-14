@@ -3127,4 +3127,8 @@ MESSAGES: dict[str, str] = {
         "`approve` answer pushed without the test it authorizes to change",
     "une réponse « valider » poussée avec le test qu'elle autorise à changer part sans avertissement":
         "an `approve` answer pushed with the test it authorizes to change leaves without a warning",
+    "réponse « valider » poussée sans la clé des garde-fous qu'elle autorise à relâcher":
+        "`approve` answer pushed without the guardrail key it authorizes to relax",
+    "une réponse « valider » poussée avec la clé des garde-fous qu'elle autorise à relâcher part sans avertissement":
+        "an `approve` answer pushed with the guardrail key it authorizes to relax leaves without a warning",
 }

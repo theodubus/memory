@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0215 — L'avertissement de la réponse poussée seule se trompe de base ou de nom : HEAD détaché, branche distante élaguée ou suivie ailleurs, push d'une autre branche, clé des seuils, nom de test trop courant, lien Markdown, plantage non protégé
 
-> statut : ouvert · origine : J-2026-11-14-D · lu : backlog@12e5b66a
+> statut : fait · origine : J-2026-11-14-D · lu : backlog@12e5b66a · ref : J-2026-11-14-O
 
 La revue de B-0142 (J-2026-11-14-D), constats 1, 2, 4, 5 et 6 : le
 contrôle `demandes.reponse-seule`, un avertissement, se trompe dans des cas
@@ -31,6 +31,26 @@ Markdown. Restent, parce qu'ils se produisent dans l'usage normal : la clé
 des seuils, le scénario même de B-0142, et l'exception non protégée, qui
 refuserait un commit.
 
+## Modèle de menace
+
+Le garde-fou reste un avertissement (ADR-0076, qui remplace ADR-0074) ;
+la rigueur de `cliquet.garde-fous`, de `tests.attendus` et de
+`protege.fichiers` ne change pas.
+
+Ce qu'il arrête, en plus : l'agent distrait qui pousse seule la réponse
+`valider` d'une demande qui cite une clé des garde-fous à relâcher, la
+clé citable en toutes lettres comme le cliquet la cherche (D-0040), sans
+la plage qui la change ; et le commit, le push ou la fin de tour qu'un
+contrôle en panne refuserait : une exception levée dans
+`demandes.reponse-seule` devient un avertissement qui la nomme.
+
+Ce qu'il laisse passer : une clé que la demande nomme autrement que
+sous sa forme citable, ou qui n'existe ni avant ni après et que les
+règles du cliquet ne nomment que par un motif (le plafond de mutation
+d'un module neuf) ; les cas que D-0111 écarte. Une demande qui cite une
+clé en passant, sans la relâcher, fait avertir à tort tant que rien de ce
+qu'elle nomme ne change.
+
 ## Fait quand
 
-- [ ] une clé des seuils est suivie comme un test, une exception du contrôle n'est qu'un avertissement, et un test le montre
+- [x] une clé des seuils est suivie comme un test, une exception du contrôle n'est qu'un avertissement, et un test le montre
