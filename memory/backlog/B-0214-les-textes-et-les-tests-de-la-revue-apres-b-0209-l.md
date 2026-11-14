@@ -23,6 +23,12 @@ et de test.
   octets de son budget de 16 000, elle ne peut les recevoir sans qu'on y
   fasse de la place.
 
+La revue de B-0212 (J-2026-11-14-H), constat 7 : trois des tests de
+`TestLotDejaPousse` (`tests/test_revue.py`) échouent sur le commit
+parent par `AttributeError`, avant leur assertion de comportement ; le
+défaut qu'ils visent (les sujets de `--since` perdus quand tout est
+poussé) est réel, mais aucun test ne le prouve sur le parent.
+
 ## Fait quand
 
 - [ ] les textes de la revue disent ce que donne le dossier et où s'écrit le modèle de menace, d'une seule manière

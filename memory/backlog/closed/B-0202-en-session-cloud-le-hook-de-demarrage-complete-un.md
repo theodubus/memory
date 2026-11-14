@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0202 — En session cloud, le hook de démarrage complète un clone superficiel
 
-> statut : ouvert · origine : J-2026-11-13-F · priorité : haute · lu : backlog@aa0df9d8
+> statut : fait · origine : J-2026-11-13-F · priorité : haute · lu : backlog@aa0df9d8 · ref : J-2026-11-14-I
 
 Le 13 novembre, le clone de la session cloud était superficiel : le
 premier commit a été refusé par `memoire.references`, qui ne trouvait pas
@@ -16,4 +16,4 @@ fonctions.
 
 ## Fait quand
 
-- [ ] en session cloud, sur un clone superficiel, le hook de démarrage complète l'historique, et un test le montre
+- [x] en session cloud, sur un clone superficiel, le hook de démarrage complète l'historique, et un test le montre
