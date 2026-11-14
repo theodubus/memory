@@ -31,15 +31,25 @@ peut-être pas, ce qu'une condition ou une boucle change (son dossier, ses
 variables) devient inconnu après elle, et dans la branche `else` ou `elif`
 qui suit ; une condition ou une boucle dans un pipeline ou en tâche de fond
 ne transmet rien à la suite, comme une commande simple. La variable d'un
-`for` prend les mots de sa liste, que le jugement lit un à un : `for f in
-*.md; do sed -i … "$f"; done` se juge par le motif `*.md`.
+`for` prend les mots de sa liste, que le jugement lit un à un : le corps se
+lit une fois par mot, sa variable liée à ce mot (`for d in .socle memory;
+do cd $d; …; done` se juge dans `.socle`, puis dans `memory`), et `for f in
+*.md; do sed -i … "$f"; done` se juge par le motif `*.md`. Une boucle
+revenue à son dossier le garde, sauf si un `break` ou un `continue` s'y lit
+dans un autre dossier que celui où le tour finit : le tour d'après et la
+suite de la boucle peuvent alors partir de l'un comme de l'autre, et leur
+dossier est inconnu.
 
 Ce qu'il laisse passer : une branche est lue comme prise tant qu'on y est
 (un `cd` dans un `then` vaut pour la suite de ce `then`), comme un `cd` qui
-échoue (un risque accepté, D-0111) ; dans une boucle, ce qu'un tour change
-ne se voit que des commandes qui le suivent dans le corps, pas du tour
-d'après ; les motifs d'un `case` et le corps d'une fonction restent lus
-comme avant. `protege.fichiers` attrape ensuite l'écriture d'un fichier
+échoue (un risque accepté, D-0111) : un saut écrit derrière un `||` qui suit
+un `cd` (`cd "$d" || continue`) ne se lit pas ; dans un `while` ou un
+`until`, ce qu'un tour change ne se voit que des commandes qui le suivent
+dans le corps, pas du tour d'après, comme dans un `for` dont le dépliage
+dépasserait sa borne (sa variable y est alors inconnue) ; un `select` ne se
+déplie pas, sa variable est inconnue ; les motifs d'un `case` restent lus
+comme avant, et le corps d'une fonction se juge sans que ce qu'il change
+vaille pour la suite. `protege.fichiers` attrape ensuite l'écriture d'un fichier
 protégé.
 
 Ce qu'il refuse de plus, sans contournement : une écriture dans le corps

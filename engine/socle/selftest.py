@@ -1471,6 +1471,8 @@ def _cas() -> list[Cas]:
             "if false; then :; else sed -i s/3/9/ .socle/policy.toml; fi",
             "! sed -i s/3/9/ .socle/policy.toml",
             "for f in .socle/*.toml; do sed -i s/3/9/ \"$f\"; done",
+            "for d in .socle memory; do cd $d; echo 'max_attempts = 99' >> policy.toml; done",
+            "for f in a policy.toml; do echo 'max_attempts = 99' >> .socle/$f; done",
             "{ cd /tmp; } | cat; echo 'max_attempts = 99' >> .socle/policy.toml",
             "build() { cd /tmp; }; echo 'max_attempts = 99' >> .socle/policy.toml")])
 
@@ -1502,7 +1504,8 @@ def _cas() -> list[Cas]:
         return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
             "if [ -n \"$SOCLE_ESSAI_CIBLE\" ]; then cd /tmp; fi; echo 'max_attempts = 99' >> .socle/policy.toml",
             "if [ -n \"$SOCLE_ESSAI_CIBLE\" ]; then cd /tmp; else echo 'max_attempts = 99' >> .socle/policy.toml; fi",
-            "if [ -n \"$SOCLE_ESSAI_CIBLE\" ]; then F=.socle/policy.toml; else F=/tmp/x; fi; echo x >> \"$F\"")])
+            "if [ -n \"$SOCLE_ESSAI_CIBLE\" ]; then F=.socle/policy.toml; else F=/tmp/x; fi; echo x >> \"$F\"",
+            "for d in .socle memory; do cd $d; break; cd ..; done; echo 'max_attempts = 99' >> policy.toml")])
 
     @defaut("protege-depuis-un-worktree", "fichier protégé de la copie principale écrit depuis un worktree du dépôt",
             "agent", "écriture protégée")
@@ -2002,7 +2005,9 @@ def _temoins() -> list[tuple[str, Callable]]:
                                                          "notes.txt; fi"})
                 or etage_outil(a, c, "Bash", {"command": "{ echo a; echo b; } > notes.txt"})
                 or etage_outil(a, c, "Bash", {"command": "for d in */; do cd \"$d\"; ls; cd ..; done; "
-                                                         "echo ok > notes.txt"}))
+                                                         "echo ok > notes.txt"})
+                or etage_outil(a, c, "Bash", {"command": "for d in memory tests; do cd \"$d\" || continue; ls; cd ..; "
+                                                         "done; echo ok > notes.txt"}))
 
     @temoin("un `#` dans un mot, une redirection dans un commentaire et une substitution aux guillemets imbriqués "
             "qui lit un fichier protégé passent le hook de l'agent (B-0207)")

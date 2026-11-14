@@ -745,7 +745,37 @@ class TestGarde(unittest.TestCase):
                          ("for d in a ..; do cd \"$d\"; cd ..; done; echo x > notes.txt", "illisible"),
                          ("for d in a/b c; do cd $d; cd ..; done; echo x > notes.txt", "illisible"),
                          ("for d in **/; do cd \"$d\"; cd ..; done; echo x > notes.txt", "illisible"),
-                         ("for d in .socle/git-hooks c; do cd $d; echo x > pre-commit; done", "illisible")])
+                         ("for d in .socle/git-hooks c; do cd $d; echo x > pre-commit; done", "protege")])
+
+    def test_la_variable_d_un_for_prend_les_mots_de_sa_liste_un_a_un(self):
+        """La seconde passation du lot 3 (J-2026-11-14-AJ) : la valeur d'un
+        `for` de plusieurs mots se lisait comme un seul nom, et `for d in
+        .socle memory; do cd $d; echo x > policy.toml; done` passait, comme
+        `for f in a policy.toml; do echo x > .socle/$f; done` ; le corps se
+        juge une fois par mot de sa liste (B-0204). Un `break` ou un
+        `continue` vu ailleurs que là où le tour finit rend inconnus le
+        dossier du tour d'après et celui d'après la boucle."""
+        with self.environnement():
+            self.jugees([("for d in .socle memory; do cd $d; echo x > policy.toml; done", "protege"),
+                         ("for d in memory .socle; do cd \"$d\"; echo x > policy.toml; cd ..; done", "protege"),
+                         ("for f in a policy.toml; do echo x > .socle/$f; done", "protege"),
+                         ("for f in calc.py {a,policy}.toml; do sed -i s/3/9/ \".socle/$f\"; done", "protege"),
+                         ("X='a policy.toml'; for f in $X; do echo x > \".socle/$f\"; done", "protege"),
+                         ("for d in a b; do for e in c .socle; do cd $e; echo x > policy.toml; cd ..; done; done",
+                          "protege"),
+                         ("for d in .socle memory; do cd $d; break; cd ..; done; echo x > policy.toml", "illisible"),
+                         ("for d in memory .socle; do cd $d; [ -e x ] && continue; cd ..; echo x > policy.toml; done",
+                          "illisible"),
+                         ("while true; do cd .socle; break; cd ..; done; echo x > policy.toml", "illisible"),
+                         ("for d in */; do cd \"$d\"; ls; cd ..; done", None),
+                         ("for d in memory tests; do cd $d; ls > /tmp/liste; cd ..; done; echo ok > status.txt", None),
+                         ("for d in memory tests; do cd \"$d\" || continue; ls; cd ..; done; echo ok > status.txt",
+                          None),
+                         ("for f in a b; do [ -e \"$f\" ] || continue; cp \"$f\" \"/tmp/$f\"; done; echo ok > notes.txt",
+                          None),
+                         ("for d in memory tests; do cd $d; ls; cd ..; [ -e x ] && break; done; echo ok > notes.txt",
+                          None),
+                         ("for f in a b c; do echo $f > \"notes-$f.txt\"; done", None)])
 
     def test_remise_en_etat_d_un_fichier_protege(self):
         """D-0098 (B-0165) : l'agent remet un fichier protégé changé par
@@ -1080,6 +1110,35 @@ class TestDecoupage(unittest.TestCase):
         # Les redirections d'une boucle s'ouvrent dans le dossier d'avant elle.
         fin = commandes.analyser("cd /a; for x in 1; do cd /b; done > f", environnement=env)[-1]
         self.assertEqual((fin.redirige, fin.lieu), (["f"], "/a"))
+
+    def test_le_corps_d_un_for_se_lit_une_fois_par_mot(self):
+        """La seconde passation du lot 3 (J-2026-11-14-AJ) : le corps d'un
+        `for` dont la liste a plusieurs mots se lit une fois par mot, sa
+        variable liée à ce mot ; au-delà de ce que le dépliage permet, elle
+        est inconnue. Le `select` ne se déplie pas : sa variable est
+        inconnue."""
+        env = {"PWD": "/p"}
+        I = commandes.INCONNU
+        lus = [(c.argv, c.lieu) for c in commandes.analyser("for d in a b; do cd $d; ls; cd ..; done", environnement=env)]
+        self.assertEqual([x for x in lus if x[0] == ["ls"]], [(["ls"], "/p/a"), (["ls"], "/p/b")])
+        for texte, valeurs in (("for f in a b; do echo $f; done", ["a", "b"]),
+                               ("for f in x{1,2} y; do echo $f; done", ["x1", "x2", "y"]),
+                               ("X='a b'; for f in $X c; do echo $f; done", ["a", "b", "c"]),
+                               ("for f in *.py; do echo $f; done", ["*.py"]),
+                               ("select f in a b; do echo $f; done", [I])):
+            with self.subTest(texte):
+                echos = [c for c in commandes.analyser(texte, environnement=env) if c.programme == "echo"]
+                self.assertEqual([commandes.variables_de(c, env).get("f") for c in echos], valeurs)
+        long = "for f in " + " ".join(f"x{n}" for n in range(3000)) + "; do echo $f; done"
+        echos = [c for c in commandes.analyser(long, environnement=env) if c.programme == "echo"]
+        self.assertEqual([commandes.variables_de(c, env).get("f") for c in echos], [I])
+        for texte, lieu in (("for d in a b; do cd $d; break; cd ..; done", I),
+                            ("for d in a b; do cd $d || continue; cd ..; done", "/p"),
+                            ("for d in a b; do [ -e x ] || continue; cd $d; cd ..; done", "/p"),
+                            ("for d in a b; do cd $d; cd ..; done", "/p"), ("cd $X", I)):
+            with self.subTest(texte):
+                self.assertEqual(commandes.analyser(texte + "; ls", environnement={**env, "X": "a b"})[-1].lieu,
+                                 lieu)
 
     def test_une_fonction_une_boucle_qui_revient_et_des_operateurs_cites(self):
         """La revue du lot 3 (J-2026-11-14-AH) : le corps d'une fonction rend

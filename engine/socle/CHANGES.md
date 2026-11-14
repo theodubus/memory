@@ -54,9 +54,11 @@ réservé du shell (`then`, `else`, `elif`, `do`, `!`, `{`, `if`, `while`,
 commande réservée à l'humain dans le corps d'une condition ou d'une boucle
 ne passe plus, comme hors d'elle. Ce qu'une condition ou une boucle change,
 son dossier et ses variables, devient inconnu après elle, sauf un dossier
-où elle revient (`for d in */; do cd "$d"; …; cd ..; done`) ; la variable
-d'un `for` prend dans son corps les mots de sa liste, si bien que `for f
-in *.md; do sed -i … "$f"; done` se juge par son motif. Le corps d'une
+où elle revient (`for d in */; do cd "$d"; …; cd ..; done`) sans qu'un
+`break` ou un `continue` l'ait quittée ailleurs ; le corps d'un `for` se
+juge une fois par mot de sa liste, sa variable liée à ce mot, si bien que
+`for d in .socle memory; do cd $d; …; done` se juge dans chacun des deux
+dossiers, et `for f in *.md; do sed -i … "$f"; done` par son motif. Le corps d'une
 fonction (`f() { …; }`) se juge, mais ce qu'il change ne vaut pas pour la
 suite : il ne s'exécute pas là où il s'écrit.
 

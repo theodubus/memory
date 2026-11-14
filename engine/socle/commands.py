@@ -21,8 +21,9 @@ pour être découpée sans risque (B-0171, ADR-0072).
 
 Les mots réservés qui précèdent une commande (`if`, `then`, `do`, `!`,
 `{`…) se retirent comme un préfixe ; ce qu'une condition ou une boucle
-change, son dossier et ses variables, devient inconnu après elle, et la
-variable d'un `for` prend dans son corps les mots de sa liste (B-0204).
+change, son dossier et ses variables, devient inconnu après elle, et le
+corps d'un `for` se lit une fois par mot de sa liste, sa variable liée à ce
+mot (B-0204).
 
 Heuristique, comme tout ce qui lit du shell sans l'exécuter : les motifs
 d'un `case`, les alias, les fonctions, `source`, l'état qu'un `eval` laisse
@@ -69,6 +70,11 @@ RESERVES = ("if", "then", "else", "elif", "while", "until", "do", "!", "{")
 # et le corps d'une fonction (`nom() { …; }`) pas là où il s'écrit.
 OUVRANTS = ("if", "while", "until", "for", "select", "{")
 FERMANTS = ("fi", "done", "}")
+# Le plus de jetons qu'un texte compte, ses `for` dépliés : au-delà, la
+# variable d'un `for` de plusieurs mots est inconnue dans son corps.
+JETONS_DEPLIES_MAX = 10_000
+# Ce qui saute à la suite d'une boucle, ou à son tour d'après.
+SAUTS = ("break", "continue")
 # Le nom d'une fonction que définit `nom ( )`.
 NOM_DE_FONCTION = re.compile(r"[\w.:+@-]+")
 # Les variables que le shell tient lui-même : leur valeur dans
@@ -444,17 +450,80 @@ def _definition(mots: list[str]) -> int | None:
 def _cible_suivie(d: str, cible: str) -> str:
     """La cible développée `d` d'un `cd` (`cible` telle qu'écrite), ce que le
     hook ne sait pas suivre remplacé par `INCONNU` : un `**`, qui traverse
-    peut-être plusieurs dossiers (`globstar`), et la valeur d'une variable
-    faite de plusieurs mots (la liste d'un `for`) dont l'un n'est pas un
-    seul nom de dossier (`a/b`, `..`, `~`, `/tmp`). Faite de noms seuls,
-    elle se lit comme un nom, que chaque mot vaut : un `..` la remonte
-    (la revue du lot 3, J-2026-11-14-AH)."""
+    peut-être plusieurs dossiers (`globstar`), et une variable que le shell
+    couperait en plusieurs mots, dont aucun ne fait seul le dossier (la
+    seconde passation du lot 3, J-2026-11-14-AJ)."""
     d = re.sub(r"[^/]*\*\*[^/]*", INCONNU, d)
-    champs = d.split() if re.search(r"[$`]", cible) else []
-    if len(champs) > 1 and not all(re.fullmatch(r"[^/~\0][^/\0]*/*", x) and x.rstrip("/") not in (".", "..")
-                                   for x in champs):
+    if re.search(r"[$`]", cible) and len(d.split()) > 1:
         return INCONNU
     return d
+
+
+def _mots_de_la_liste(liste: list[str], variables) -> list[str] | None:
+    """Les mots que prend, un par tour, la variable d'un `for` dont la liste
+    s'écrit `liste` : chaque accolade développée, et un mot qui porte une
+    variable coupé comme le shell le couperait ; un motif reste un motif,
+    que le jugement lit contre les fichiers. `None` si l'un ne se développe
+    pas."""
+    res: list[str] = []
+    for mot in liste:
+        for forme in accolades(mot):
+            if not re.search(r"[$`]", forme):
+                res.append(forme)
+                continue
+            d = developper(forme, variables)[0]
+            if INCONNU in d:
+                return None
+            separateurs = variables.get("IFS")
+            separateurs = " \t\n" if separateurs is None or INCONNU in separateurs else separateurs
+            res += [x for x in re.split("[" + re.escape(separateurs) + "]+", d) if x] if separateurs else [d] * bool(d)
+    return res
+
+
+class _Tour(str):
+    """Le jeton que le dépliage d'un `for` pose devant chaque tour de son
+    corps : sa variable y prend le mot de son rang. Aucun mot du texte n'en
+    est un."""
+    rang: int
+
+
+def _tour(rang: int) -> _Tour:
+    jeton = _Tour("")
+    jeton.rang = rang
+    return jeton
+
+
+def _boucle() -> dict:
+    """Ce que le découpage suit d'une boucle ouverte : sa variable (`nom`),
+    ce qu'elle vaut dans un corps qui ne se déplie pas (`lien`), les mots de
+    sa liste (`valeurs`), si son corps s'est déplié (`deplie`), et le
+    dossier de chaque saut lu dans son corps (`sauts`)."""
+    return {"nom": None, "lien": None, "valeurs": None, "deplie": False, "sauts": []}
+
+
+def _fin_du_corps(jets: list[tuple[str, list[str]]], i: int) -> int | None:
+    """L'indice du `done` qui ferme le corps de boucle que le `do` de
+    `jets[i]` ouvre, les boucles qu'il contient sautées ; `None` s'il ne se
+    ferme pas dans le texte."""
+    profondeur, debut, k = 1, True, i + 1
+    while k < len(jets):
+        j = jets[k][0]
+        if _operateur(j):
+            if ">" in j or "<" in j:
+                # Une redirection et sa cible, là où une commande peut commencer.
+                k += 1 if "<" not in j and k + 1 < len(jets) and _operateur(jets[k + 1][0]) else 2
+                continue
+            debut = True
+        elif debut and not isinstance(j, _Tour):
+            if j == "do":
+                profondeur += 1
+            elif j == "done":
+                profondeur -= 1
+                if not profondeur:
+                    return k
+            debut = j in RESERVES
+        k += 1
+    return None
 
 
 def _sans_prefixes(argv: list[str]) -> list[str]:
@@ -584,8 +653,13 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
     englobants: list[tuple[_Etat, _Etat, _Etat, bool]] = []
     # Les commandes composées ouvertes (B-0204) : le mot qui l'ouvre, l'état
     # d'avant elle, ceux du début de sa liste et de son pipeline, et, pour
-    # un `for`, sa variable et les mots de sa liste.
-    composes: list[tuple[str, _Etat, _Etat, _Etat, bool, tuple[str, str | None] | None]] = []
+    # une boucle, ce que dit `_boucle`.
+    composes: list[tuple[str, _Etat, _Etat, _Etat, bool, dict | None]] = []
+    # Les tours d'un `for` déplié : sa boucle, et le mot que prend sa variable.
+    tours: list[tuple[dict, str]] = []
+    # La commande lue juste avant un `||` était un `cd` : sous l'hypothèse
+    # du `cd` qui réussit (B-0204), ce qui suit le `||` ne s'exécute pas.
+    ou_apres_cd = False
     # Un `nom ( )` vient de se lire : le `{` qui suit ouvre le corps d'une
     # fonction (la revue du lot 3, J-2026-11-14-AH).
     definition = False
@@ -607,21 +681,57 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
         for interne in internes:
             res.extend(_analyser(interne, etat.copie(), env))
 
-    def ouvrir(mot: str, boucle: tuple[str, str | None] | None = None):
+    def ouvrir(mot: str, boucle: dict | None = None):
         composes.append((mot, etat.copie(), debut_liste, debut_tube, en_tube, boucle))
+
+    def ailleurs(boucle: dict | None) -> bool:
+        """Un `break` ou un `continue` de la boucle s'est lu dans un autre
+        dossier que celui où le tour finit : le tour d'après, et la suite de
+        la boucle, peuvent partir de l'un comme de l'autre."""
+        return bool(boucle) and any(lieu != etat.lieu for lieu in boucle["sauts"])
+
+    def tour(rang: int):
+        """Un tour d'un `for` déplié commence : sa variable prend son mot ;
+        un saut lu ailleurs qu'où le tour d'avant finit rend son dossier
+        inconnu."""
+        boucle, valeur = tours[rang]
+        if ailleurs(boucle):
+            changer("$(for …)", INCONNU)
+        etat.vues.append((boucle["nom"], valeur))
+
+    def deplier(i: int, boucle: dict):
+        """Le corps du `for` qu'ouvre le `do` de `jets[i]`, dont la liste a
+        plusieurs mots, se répète, un tour par mot, chacun précédé de
+        son `_Tour` (la seconde passation du lot 3, J-2026-11-14-AJ). Sans son
+        `done`, il se lit une fois, sa variable valant tous les mots ;
+        au-delà de `JETONS_DEPLIES_MAX`, une fois, sa variable inconnue."""
+        boucle["deplie"] = True
+        fin = _fin_du_corps(jets, i)
+        if fin is None:
+            return
+        corps, valeurs = jets[i + 1:fin], boucle["valeurs"]
+        if len(jets) + (len(valeurs) - 1) * len(corps) + len(valeurs) > JETONS_DEPLIES_MAX:
+            boucle["lien"] = (boucle["nom"], None)
+            return
+        boucle["lien"] = None
+        deplie = []
+        for valeur in valeurs:
+            tours.append((boucle, valeur))
+            deplie += [(_tour(len(tours) - 1), [])] + corps
+        jets[i + 1:fin] = deplie
 
     def incertain():
         """Ce que la commande composée ouverte a changé, son dossier et ses
         variables, devient inconnu : le hook ne sait pas quelle branche,
         ni combien de tours, le shell prendra (B-0204)."""
-        mot, avant = composes[-1][0], composes[-1][1]
+        mot, avant, boucle = composes[-1][0], composes[-1][1], composes[-1][5]
         suite = etat.vues[len(avant.vues):] if len(etat.vues) >= len(avant.vues) else etat.vues
         changees = dict.fromkeys(nom for nom, _ in suite)
         etat.vues.extend((nom, None) for nom in changees)
         if INCONNU in etat.lieu or INCONNU in avant.lieu:
-            if (etat.dossier, etat.lieu) != (avant.dossier, avant.lieu):
+            if (etat.dossier, etat.lieu) != (avant.dossier, avant.lieu) or ailleurs(boucle):
                 changer(f"$({mot} …)", INCONNU)
-        elif etat.lieu != avant.lieu:
+        elif etat.lieu != avant.lieu or ailleurs(boucle):
             changer(f"$({mot} …)", INCONNU)
         else:
             # Revenue à son dossier, connu (`cd x; …; cd ..`) : un tour la
@@ -646,17 +756,25 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
         while mots and mots[0] in RESERVES:
             mot, mots = mots[0], mots[1:]
             if mot in OUVRANTS:
-                ouvrir(mot)
+                ouvrir(mot, _boucle() if mot in ("while", "until") else None)
             elif mot in ("else", "elif") and composes:
                 incertain()
-            elif mot == "do" and composes and composes[-1][5]:
-                # Le corps d'un `for` : sa variable prend les mots de sa
-                # liste, que le jugement lit un à un.
-                etat.vues.append(composes[-1][5])
+            elif mot == "do" and composes and composes[-1][5] and composes[-1][5]["lien"]:
+                # Le corps d'un `for` qui ne se déplie pas : sa variable prend
+                # le seul mot de sa liste, ou tous, ou une valeur inconnue.
+                etat.vues.append(composes[-1][5]["lien"])
         if mots[:1] in (["for"], ["select"]):
             nom, liste = (mots[1:2] or [""])[0], mots[2:]
-            valeur = " ".join(f for w in liste[1:] for f in accolades(w)) if liste[:1] == ["in"] else None
-            ouvrir(mots[0], (nom, valeur) if re.fullmatch(r"[A-Za-z_]\w*", nom) else None)
+            valeurs = None
+            if liste[:1] == ["in"] and mots[0] == "for":
+                valeurs = _mots_de_la_liste(liste[1:], _visibles(env, etat.variables(env)))
+            boucle = _boucle()
+            if re.fullmatch(r"[A-Za-z_]\w*", nom):
+                # Un `select` ne se déplie pas : l'humain choisit ses tours.
+                valeur = None if mots[0] == "select" or liste[:1] != ["in"] else " ".join(
+                    valeurs if valeurs is not None else (f for w in liste[1:] for f in accolades(w)))
+                boucle.update(nom=nom, lien=(nom, valeur), valeurs=valeurs)
+            ouvrir(mots[0], boucle)
         if mots[:1] and mots[0] in FERMANTS and composes:
             if mots[0] != "}":
                 incertain()
@@ -719,6 +837,14 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
                 res.extend(_analyser(script, etat.copie(), env))
             elif nom == "eval":
                 res.extend(_analyser(" ".join(argv[1:]), etat.copie(), env))
+            elif nom in SAUTS and not ou_apres_cd:
+                # Un saut, vers la suite d'une boucle ou son tour d'après :
+                # son dossier se compare à celui où le tour finit. Sans en
+                # compter les niveaux (`break 2`), il vaut pour chaque boucle
+                # ouverte.
+                for x in composes:
+                    if x[5] is not None:
+                        x[5]["sauts"].append(etat.lieu)
             etat.vues.extend(_affectations(argv))
             etat.vues.extend((m.group(1), None) for x in mots + redir for m in DEFAUT_AFFECTE.finditer(x))
             res.append(c)
@@ -727,6 +853,13 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
     i = 0
     while i < len(jets):
         j, internes = jets[i]
+        if isinstance(j, _Tour):
+            tour(j.rang)
+            i += 1
+            continue
+        if (j == "do" and not mots and composes and (b := composes[-1][5]) and b["valeurs"]
+                and len(b["valeurs"]) > 1 and not b["deplie"]):
+            deplier(i, b)
         if not _operateur(j):
             sous_shells(internes)
             mots.append(j.lstrip(CITE))
@@ -756,7 +889,9 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
             mots, definition = [], True
             i += 2
             continue
+        lues = len(res)
         clore()
+        ou_apres_cd = j == "||" and len(res) > lues and res[-1].programme in ("cd", "pushd", "popd")
         if j == "(":
             englobants.append((etat.copie(), debut_liste, debut_tube, en_tube))
             debut_liste, debut_tube, en_tube = etat.copie(), etat.copie(), False

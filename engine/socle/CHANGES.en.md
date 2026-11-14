@@ -51,9 +51,11 @@ a protected file, an irreversible action or a command reserved for the human
 in the body of a condition or a loop no longer passes, as outside it. What a
 condition or a loop changes, its directory and its variables, becomes
 unknown after it, except a directory it comes back to (`for d in */; do cd
-"$d"; …; cd ..; done`); a `for` variable takes in its body the words of its
-list, so that `for f in *.md; do sed -i … "$f"; done` is judged by its
-pattern. The body of a function (`f() { …; }`) is judged, but what it
+"$d"; …; cd ..; done`) without a `break` or a `continue` having left it
+elsewhere; the body of a `for` is judged once per word of its list, its
+variable bound to that word, so that `for d in .socle memory; do cd $d; …;
+done` is judged in each of the two directories, and `for f in *.md; do sed
+-i … "$f"; done` by its pattern. The body of a function (`f() { …; }`) is judged, but what it
 changes does not hold for what follows: it does not run where it is
 written.
 
