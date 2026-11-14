@@ -15,6 +15,14 @@ Pistes : élaguer là où le socle va déjà chercher la branche distante (le
 hook de démarrage, le hook avant push), ou faire dire au message que la
 liste date du dernier fetch, et comment la rafraîchir.
 
+Théo le relève de nouveau le 14 novembre (J-2026-11-14-S) : « l'état
+demande de supprimer une branche distante déjà supprimée tant que le
+clone n'a pas élagué ses références (git fetch --prune) ». La branche
+donnée ce jour-là à la session suivante, `ccr-396af4f0-yv89xr`, existait
+bien sur GitHub, recréée après la fusion par le défaut de B-0220 : les
+deux défauts se ressemblent dans ce que Théo voit, et pas dans leur
+cause.
+
 ## Fait quand
 
 - [ ] une branche distante supprimée n'est plus donnée à supprimer, ou le message dit d'où vient la liste ; un test qui échoue sur le commit parent le prouve
