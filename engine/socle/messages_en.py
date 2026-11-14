@@ -119,6 +119,16 @@ MESSAGES: dict[str, str] = {
         "`{mot}`, including {parts}",
     "`{mot}`, dans le dossier `{dossier}`":
         "`{mot}`, in the directory `{dossier}`",
+    "`{mot}`, que le hook ne sait pas développer":
+        "`{mot}`, which the hook cannot expand",
+    "suppression par le shell d'un dossier qui contient le projet, ou peut le contenir ({quoi}) : elle emporterait le "
+    "code, la mémoire, la politique et les hooks, et aucun contrôle ne la rattrape ensuite. Viser un dossier du "
+    "projet, ou hors de lui un dossier qui ne le contient pas (`/tmp/…`), son chemin écrit en toutes lettres "
+    "(B-0208).":
+        "deletion by the shell of a directory that contains the project, or may contain it ({quoi}): it would take "
+        "away the code, the memory, the policy and the hooks, and no check catches it afterwards. Target a directory "
+        "of the project, or outside it a directory that does not contain it (`/tmp/…`), its path written out in full "
+        "(B-0208).",
     "écriture par le shell vers un chemin que le hook ne sait pas développer : {quoi}. Une variable que ni "
     "l'environnement du hook ni la commande ne donnent, une substitution de commande (`$(…)`, accents graves) ou un "
     "`cd` vers un tel chemin peuvent viser un fichier protégé ; un tel chemin ne passe que si la part écrite en "
@@ -2677,6 +2687,12 @@ MESSAGES: dict[str, str] = {
     "fichier protégé écrit par le shell par un chemin relatif au dossier courant de l'agent, un motif ou `$PWD`":
         "protected file written by the shell through a path relative to the agent's current directory, a pattern or "
         "`$PWD`",
+    "dossier qui contient le projet supprimé par le shell : `rm -rf ..`, un `cd` puis `../..`, les sources d'un "
+    "`mv`, `git clean` sous `-C ..`, un `find` qui supprime depuis un dossier qui le contient, ou depuis la racine "
+    "sans rien filtrer":
+        "directory that contains the project deleted by the shell: `rm -rf ..`, a `cd` then `../..`, the sources of an "
+        "`mv`, `git clean` under `-C ..`, a `find` that deletes from a directory that contains it, or from the root "
+        "without filtering anything",
     "fichier protégé remis à un autre état que le dernier commit, ou tout un dossier":
         "protected file put back to a state other than the last commit, or a whole folder",
     "remise admise d'un fichier protégé dont la redirection écrit un autre fichier protégé":
@@ -2817,6 +2833,10 @@ MESSAGES: dict[str, str] = {
         "after a subshell, a free file, a default value outside the project, a `sed` without `-i` that reads a "
         "protected file and, from a directory outside the project, a relative pattern pass the agent's hook (B-0171, "
         "B-0205)",
+    "la suppression d'un dossier voisin du projet, d'un dossier du projet, et un `find` qui filtre ce qu'il supprime "
+    "sous la racine passent le hook de l'agent (B-0208)":
+        "deleting a directory next to the project, a directory of the project, and a `find` that filters what it "
+        "deletes under the root pass the agent's hook (B-0208)",
     "un commit d'agent qui porte la trace de ses hooks passe la CI":
         "an agent commit that carries the trace of its hooks passes the CI",
     "une valeur attendue changée sous une spécification que l'humain a commitée passe la CI":

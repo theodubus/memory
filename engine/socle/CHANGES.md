@@ -7,6 +7,23 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-14-g — Le hook de l'agent refuse la suppression d'un dossier qui contient le projet
+
+Le hook de l'agent laissait passer `rm -rf ..` lancé depuis la racine, et
+la suppression d'un dossier qui la contient (le dossier de l'utilisateur,
+celui des worktrees d'un sous-agent) : elle emporterait le code, la
+mémoire, la politique et les hooks, et aucun contrôle ne la rattrape
+ensuite. Il refuse désormais la suppression d'un tel dossier par les
+arguments de `rm`, les sources d'un `mv`, ce que balaie `git clean` et les
+points de départ d'un `find` qui supprime (`-delete`, `-exec rm`), son
+chemin développé comme tout chemin que le hook juge ; et celle du projet
+par un `find` qui part de sa racine sans rien filtrer (`find . -delete`).
+Un dossier voisin du projet, un dossier du projet et un `find` qui filtre
+ce qu'il supprime sous la racine restent libres.
+
+À faire : rien. Un tel refus se lève en visant un dossier du projet, ou
+hors de lui un dossier qui ne le contient pas, écrit en toutes lettres.
+
 ## 2026-11-14-f — Le modèle de menace du hook de l'agent
 
 Le guide dit désormais ce que le hook de l'agent arrête : les erreurs d'un

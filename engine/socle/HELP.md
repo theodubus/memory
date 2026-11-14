@@ -261,9 +261,12 @@ projet ou le contient : l'écrire en toutes lettres, ou sous un dossier
 hors du projet (`/tmp/…`). Une commande qu'il ne sait pas juger (plus de
 10 000 caractères hors du corps de ses heredocs, plus de 32 parenthèses
 ou accolades ouvertes à la fois, un jugement qui plante ou passe
-5 secondes) est refusée si elle peut écrire : la découper. Ce hook
-arrête les erreurs d'un agent coopératif, qui ne cherche pas à contourner
-ses garde-fous, avant qu'elles agissent. Il juge les formes du shell
+5 secondes) est refusée si elle peut écrire : la découper. Il refuse
+aussi la suppression d'un dossier qui contient le projet (`rm -rf ..`, un
+`mv`, un `git clean` ou un `find` qui supprime depuis un tel dossier), et
+celle du projet par un `find` qui ne filtre rien (`find . -delete`) ; un
+dossier voisin du projet reste libre. Ce hook arrête les erreurs d'un agent
+coopératif, qui ne cherche pas à contourner ses garde-fous, avant qu'elles agissent. Il juge les formes du shell
 qu'un agent écrit dans son travail, et, quelle qu'en soit la forme, ce que
 rien ne rattrape ensuite : supprimer le projet ou un dossier qui le
 contient, une action externe irréversible, une fuite de la mémoire privée

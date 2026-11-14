@@ -219,7 +219,7 @@ class TestGarde(unittest.TestCase):
         """Chaque commande refusée pour sa raison (`protege`, `illisible`,
         `reglage`), ou qui passe (`None`)."""
         raisons = {"protege": "écriture d'un fichier protégé", "illisible": "ne sait pas développer",
-                   "reglage": "réglages de Claude Code"}
+                   "reglage": "réglages de Claude Code", "supprime": "d'un dossier qui contient le projet"}
         for cmd, attendu in cas:
             with self.subTest(cmd=cmd, cwd=cwd):
                 raison = hooks.refus_bash(self.projet, cmd, cwd)
@@ -394,6 +394,56 @@ class TestGarde(unittest.TestCase):
                          ("echo x > ../notes.txt", None)], str(self.racine / "memory"))
             self.assertEqual(hooks.depart_de(self.racine, "memory"), f"{self.racine}/memory")
             self.assertEqual(hooks.depart_de(self.racine, None), str(self.racine))
+
+    def test_la_suppression_d_un_dossier_qui_contient_le_projet(self):
+        """B-0208 : `rm -rf ..` depuis la racine, ou la suppression d'un dossier
+        qui la contient, passaient le hook ; `rm -rf .` seul était refusé. Un
+        dossier voisin du projet reste libre, comme un `find` qui filtre ce
+        qu'il supprime sous la racine."""
+        ailleurs = Path(f"{self.racine}-ailleurs")
+        ailleurs.mkdir(exist_ok=True)
+        self.addCleanup(shutil.rmtree, ailleurs, ignore_errors=True)
+        parent = self.racine.parent
+        with self.environnement():
+            self.jugees([("rm -rf ..", "supprime"), ("rm -rf ../", "supprime"), ("rm ..", "supprime"),
+                         (f"rm -rf {parent}", "supprime"), (f"rm -rf {str(parent)[:-1]}*", "supprime"),
+                         ("rm -rf ~/..", "supprime"), ("cd .socle && rm -rf ../..", "supprime"),
+                         ("D=..; rm -rf \"$D\"", "supprime"), ("rm -rf {..,/tmp/rien}", "supprime"),
+                         ("mv .. /tmp/ailleurs", "supprime"), ("mv -t /tmp/ailleurs ..", "supprime"),
+                         ("git -C .. clean -ffdx", "supprime"), ("cd .. && git clean -ffdx", "supprime"),
+                         ("find .. -name '*.pyc' -delete", "supprime"), ("find .. -exec rm -rf {} +", "supprime"),
+                         ("find . -delete", "supprime"), ("find -delete", "supprime"),
+                         ("find . -mindepth 1 -exec rm -rf {} +", "supprime"), ("find $X -delete", "supprime"),
+                         ("rm -rf $X/..", "illisible"), ("rm -rf .", "protege"),
+                         (f"rm -rf {ailleurs}", None), (f"rm -rf ../{ailleurs.name}", None), ("rm -rf build", None),
+                         ("mv calc.py ..", None), ("git clean -fdx -e .env", None), ("git -C .. clean -n", None),
+                         ("find . -name '*.pyc' -delete", None),
+                         ("find . -type d -name __pycache__ -exec rm -rf {} +", None),
+                         (f"find {ailleurs} -delete", None), (f"find {ailleurs}/$X -delete", None),
+                         ("find .. -name x", None)])
+            # Depuis le dossier courant de l'agent : `..` y est la racine,
+            # refusée comme un dossier qui contient un fichier protégé.
+            self.jugees([("rm -rf ../..", "supprime"), ("rm -rf ..", "protege")], str(self.racine / "memory"))
+            self.jugees([("rm -rf .", None), ("rm -rf ..", "supprime")], str(ailleurs))
+
+    def test_ce_qu_une_commande_supprime(self):
+        """B-0208 : les chemins que `suppressions` lit, tels qu'ils sont
+        écrits, et si la racine elle-même compte."""
+        def lus(cmd):
+            return [x for c in commandes.analyser(cmd) for x in hooks.suppressions(c)]
+
+        self.assertEqual(lus("rm -rf -- a b"), [("a", False), ("b", False)])
+        self.assertEqual(lus("mv -f a b c"), [("a", False), ("b", False)])
+        self.assertEqual(lus("mv -t c a b && mv --target-directory=c d"), [("a", False), ("b", False), ("d", False)])
+        self.assertEqual(lus("mv -S .bak a b"), [("a", False)])
+        self.assertEqual(lus("git -C x -C y clean -fdx -e garde z"), [("x/y/z", False)])
+        self.assertEqual(lus("git clean -fde garde"), [(".", False)])
+        self.assertEqual(lus("git clean -fdn && git clean --dry-run -fd"), [])
+        self.assertEqual(lus("find -L a b -maxdepth 2 -delete"), [("a", True), ("b", True)])
+        self.assertEqual(lus("find a ! -name x -delete"), [("a", False)])
+        self.assertEqual(lus("find a -execdir /bin/rm {} +"), [("a", True)])
+        self.assertEqual(lus("find a -exec cat {} + -name x"), [])
+        self.assertEqual(lus("cp a b && touch c && git rm d"), [])
 
     def test_les_valeurs_par_defaut_se_developpent(self):
         """La revue de B-0171, constat 13 : `${X:-défaut}` était refusé même

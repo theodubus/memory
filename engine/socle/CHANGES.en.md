@@ -7,6 +7,24 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-14-g — The agent's hook refuses deleting a directory that contains the project
+
+The agent's hook let through `rm -rf ..` run from the root, and deleting a
+directory that contains it (the user's directory, the one that holds a
+subagent's worktrees): it would take away the code, the memory, the policy
+and the hooks, and no check catches it afterwards. It now refuses deleting
+such a directory through the arguments of `rm`, the sources of an `mv`,
+what `git clean` sweeps and the starting points of a `find` that deletes
+(`-delete`, `-exec rm`), its path expanded like any path the hook judges;
+and deleting the project by a `find` that starts from its root without
+filtering anything (`find . -delete`). A directory next to the project, a
+directory of the project and a `find` that filters what it deletes under
+the root stay free.
+
+To do: nothing. Such a refusal is lifted by targeting a directory of the
+project, or outside it a directory that does not contain it, written out
+in full.
+
 ## 2026-11-14-f — The threat model of the agent's hook
 
 The guide now says what the agent's hook stops: the mistakes of a

@@ -1441,6 +1441,15 @@ def _cas() -> list[Cas]:
             "echo 'max_attempts = 99' >> policy.toml", "echo 'max_attempts = 99' >> $PWD/policy.toml",
             "rm pol*")], c / ".socle")
 
+    @defaut("suppression-du-projet", "dossier qui contient le projet supprimé par le shell : `rm -rf ..`, un "
+            "`cd` puis `../..`, les sources d'un `mv`, `git clean` sous `-C ..`, un `find` qui supprime depuis un "
+            "dossier qui le contient, ou depuis la racine sans rien filtrer", "agent", "suppression du projet")
+    def _(a, c):
+        # B-0208 : rien ne rattrape ensuite la suppression du projet.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "rm -rf ..", "cd .socle && rm -rf ../..", "mv .. /tmp/ailleurs", "git -C .. clean -ffdx",
+            "find .. -name '*.pyc' -delete", "find . -delete")])
+
     @defaut("protege-depuis-un-worktree", "fichier protégé de la copie principale écrit depuis un worktree du dépôt",
             "agent", "écriture protégée")
     def _(a, c):
@@ -1941,6 +1950,16 @@ def _temoins() -> list[tuple[str, Callable]]:
                 or etage_outil(a, c, "Bash", {"command": f"cat > {ailleurs}/long.txt <<'FIN'\n"
                                                          + "une ligne de texte\n" * 1000 + "FIN"})
                 or etage_outil(a, c, "Bash", {"command": f"cd {ailleurs}; " + "cd a; " * 500 + "echo x > notes.txt"}))
+
+    @temoin("la suppression d'un dossier voisin du projet, d'un dossier du projet, et un `find` qui filtre ce qu'il "
+            "supprime sous la racine passent le hook de l'agent (B-0208)")
+    def _(a, c):
+        # Le pendant sain de `suppression-du-projet` : seul ce qui contient
+        # le projet est refusé.
+        ailleurs = a.dossier.parent / (a.dossier.name + "-ailleurs")
+        return (etage_outil(a, c, "Bash", {"command": f"rm -rf {ailleurs} && rm -rf build"})
+                or etage_outil(a, c, "Bash", {"command": "find . -name '*.pyc' -delete && mv calc.py .."})
+                or etage_outil(a, c, "Bash", {"command": f"cd {ailleurs} && rm -rf ./*"}))
 
     @temoin("un fichier protégé changé par erreur, remis à son état du dernier commit, et un fichier apparu sous un "
             "chemin protégé, supprimé, passent le hook de l'agent (D-0098)")
@@ -2648,6 +2667,7 @@ RAISONS_AGENT = {
     "écriture protégée": "par le shell : seul l'humain",
     "écriture illisible": "un chemin que le hook ne sait pas développer",
     "commande injugeable": "une commande que le hook ne sait pas juger",
+    "suppression du projet": "d'un dossier qui contient le projet",
     "remise hors forme": "Seule passe la remise",
     "remise sous demande": "en attente, ou validée sans que ce qu'elle approuve",
     "écriture à l'aveugle": "à l'aveugle",

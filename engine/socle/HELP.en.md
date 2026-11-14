@@ -255,9 +255,12 @@ contains it: write it out in full, or under a directory outside the
 project (`/tmp/…`). A command it cannot judge (more than 10,000 characters
 outside the bodies of its heredocs, more than 32 parentheses or braces
 open at once, a judgment that crashes or takes over 5 seconds) is refused
-if it can write: split it. This hook stops the mistakes of a cooperative
-agent, one that does not try to get around its guardrails, before they
-take effect. It judges the shell forms an agent writes in its work, and,
+if it can write: split it. It also refuses deleting a directory that
+contains the project (`rm -rf ..`, an `mv`, a `git clean` or a `find` that
+deletes from such a directory), and deleting the project by a `find` that
+filters nothing (`find . -delete`); a directory next to the project stays
+free. This hook stops the mistakes of a cooperative agent, one that does
+not try to get around its guardrails, before they take effect. It judges the shell forms an agent writes in its work, and,
 whatever its form, what nothing catches afterwards: deleting the project
 or a directory that contains it, an irreversible external action, a leak
 of the private memory into what gets published. It does not model all of
