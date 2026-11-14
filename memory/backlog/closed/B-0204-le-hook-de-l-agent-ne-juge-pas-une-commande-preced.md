@@ -35,18 +35,21 @@ ne transmet rien à la suite, comme une commande simple. La variable d'un
 lit une fois par mot, sa variable liée à ce mot (`for d in .socle memory;
 do cd $d; …; done` se juge dans `.socle`, puis dans `memory`), et `for f in
 *.md; do sed -i … "$f"; done` se juge par le motif `*.md`. Une boucle
-revenue à son dossier le garde, sauf si un `break` ou un `continue` s'y lit
-dans un autre dossier que celui où le tour finit : le tour d'après et la
-suite de la boucle peuvent alors partir de l'un comme de l'autre, et leur
-dossier est inconnu.
+revenue à son dossier le garde, sauf si un `break` ou un `continue` de
+cette boucle (la plus intérieure qui l'entoure, ou les `n` d'un `break n`)
+s'y lit dans un autre dossier que celui où le tour finit : le tour d'après
+et la suite de la boucle peuvent alors partir de l'un comme de l'autre, et
+leur dossier est inconnu.
 
 Ce qu'il laisse passer : une branche est lue comme prise tant qu'on y est
 (un `cd` dans un `then` vaut pour la suite de ce `then`), comme un `cd` qui
 échoue (un risque accepté, D-0111) : un saut écrit derrière un `||` qui suit
-un `cd` (`cd "$d" || continue`) ne se lit pas ; dans un `while` ou un
-`until`, ce qu'un tour change ne se voit que des commandes qui le suivent
-dans le corps, pas du tour d'après, comme dans un `for` dont le dépliage
-dépasserait sa borne (sa variable y est alors inconnue) ; un `select` ne se
+un `cd`, seul ou dans le groupe qui suit (`cd "$d" || continue`, `cd "$d"
+|| { echo …; continue; }`), ne se lit pas ; dans un `while` ou un `until`,
+ce qu'un tour change ne se voit que des commandes qui le suivent dans le
+corps, pas du tour d'après, comme dans un `for` dont la liste ne se
+développe pas (`$(cat liste)`, `"$@"`) ou dont le dépliage dépasserait sa
+borne, commune à toute la commande (sa variable y est alors inconnue) ; un `select` ne se
 déplie pas, sa variable est inconnue ; les motifs d'un `case` restent lus
 comme avant, et le corps d'une fonction se juge sans que ce qu'il change
 vaille pour la suite. `protege.fichiers` attrape ensuite l'écriture d'un fichier

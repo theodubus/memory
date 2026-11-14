@@ -70,9 +70,12 @@ RESERVES = ("if", "then", "else", "elif", "while", "until", "do", "!", "{")
 # et le corps d'une fonction (`nom() { …; }`) pas là où il s'écrit.
 OUVRANTS = ("if", "while", "until", "for", "select", "{")
 FERMANTS = ("fi", "done", "}")
-# Le plus de jetons qu'un texte compte, ses `for` dépliés : au-delà, la
-# variable d'un `for` de plusieurs mots est inconnue dans son corps.
-JETONS_DEPLIES_MAX = 10_000
+# Ce que le dépliage des `for` d'une commande peut ajouter à ce que le
+# découpage lit, en caractères, le texte des substitutions et des `bash -c`
+# que chaque tour relit compris, pour toute la commande, ses sous-shells
+# comme son texte : au-delà, la variable d'un `for` de plusieurs mots est
+# inconnue dans son corps (la seconde revue du lot 3, J-2026-11-14-AL).
+DEPLIAGE_MAX = 100_000
 # Ce qui saute à la suite d'une boucle, ou à son tour d'après.
 SAUTS = ("break", "continue")
 # Le nom d'une fonction que définit `nom ( )`.
@@ -447,16 +450,15 @@ def _definition(mots: list[str]) -> int | None:
     return k if all(m in RESERVES for m in mots[:k]) else None
 
 
-def _cible_suivie(d: str, cible: str) -> str:
-    """La cible développée `d` d'un `cd` (`cible` telle qu'écrite), ce que le
-    hook ne sait pas suivre remplacé par `INCONNU` : un `**`, qui traverse
-    peut-être plusieurs dossiers (`globstar`), et une variable que le shell
-    couperait en plusieurs mots, dont aucun ne fait seul le dossier (la
-    seconde passation du lot 3, J-2026-11-14-AJ)."""
-    d = re.sub(r"[^/]*\*\*[^/]*", INCONNU, d)
-    if re.search(r"[$`]", cible) and len(d.split()) > 1:
-        return INCONNU
-    return d
+def _cible_suivie(d: str) -> str:
+    """La cible développée `d` d'un `cd`, ce que le hook ne sait pas suivre
+    remplacé par `INCONNU` : un `**`, qui traverse peut-être plusieurs
+    dossiers (`globstar`). Une variable faite de plusieurs mots se lit comme
+    un seul nom, celui d'un dossier dont le chemin porte une espace : le
+    découpage ne voit plus les guillemets qui la gardent entière, et la
+    liste d'un `for` se lit mot par mot (la seconde revue du lot 3,
+    J-2026-11-14-AL)."""
+    return re.sub(r"[^/]*\*\*[^/]*", INCONNU, d)
 
 
 def _mots_de_la_liste(liste: list[str], variables) -> list[str] | None:
@@ -638,10 +640,10 @@ def analyser(texte: str, dossier: str = "", affectations: list[tuple[str, str | 
     env = dict(environnement or {})
     depart = env.get("PWD", "")
     lieu = normaliser(posixpath.join(depart, dossier)) if dossier else depart
-    return _analyser(texte, _Etat(dossier, lieu, list(affectations or []), [], dossier), env)
+    return _analyser(texte, _Etat(dossier, lieu, list(affectations or []), [], dossier), env, [DEPLIAGE_MAX])
 
 
-def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
+def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int]) -> list[Commande]:
     res: list[Commande] = []
     mots: list[str] = []
     redir: list[str] = []
@@ -660,12 +662,16 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
     # La commande lue juste avant un `||` était un `cd` : sous l'hypothèse
     # du `cd` qui réussit (B-0204), ce qui suit le `||` ne s'exécute pas.
     ou_apres_cd = False
+    # Les commandes composées ouvertes juste après un tel `||` (`cd "$d" ||
+    # { echo …; continue; }`), par leur rang dans `composes` : leurs sauts ne
+    # se lisent pas non plus.
+    echecs: list[int] = []
     # Un `nom ( )` vient de se lire : le `{` qui suit ouvre le corps d'une
     # fonction (la revue du lot 3, J-2026-11-14-AH).
     definition = False
 
     def lieu_de(cible: str) -> str:
-        d = _cible_suivie(developper(cible, _visibles(env, etat.variables(env)))[0], cible)
+        d = _cible_suivie(developper(cible, _visibles(env, etat.variables(env)))[0])
         if d.startswith(("/", INCONNU)):
             return normaliser(d)
         return normaliser(posixpath.join(etat.lieu, d)) if d else etat.lieu
@@ -679,7 +685,7 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
 
     def sous_shells(internes: list[str]):
         for interne in internes:
-            res.extend(_analyser(interne, etat.copie(), env))
+            res.extend(_analyser(interne, etat.copie(), env, budget))
 
     def ouvrir(mot: str, boucle: dict | None = None):
         composes.append((mot, etat.copie(), debut_liste, debut_tube, en_tube, boucle))
@@ -704,15 +710,20 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
         plusieurs mots, se répète, un tour par mot, chacun précédé de
         son `_Tour` (la seconde passation du lot 3, J-2026-11-14-AJ). Sans son
         `done`, il se lit une fois, sa variable valant tous les mots ;
-        au-delà de `JETONS_DEPLIES_MAX`, une fois, sa variable inconnue."""
+        au-delà de ce qui reste de `DEPLIAGE_MAX` (`budget`), une fois, sa
+        variable inconnue."""
         boucle["deplie"] = True
         fin = _fin_du_corps(jets, i)
         if fin is None:
             return
         corps, valeurs = jets[i + 1:fin], boucle["valeurs"]
-        if len(jets) + (len(valeurs) - 1) * len(corps) + len(valeurs) > JETONS_DEPLIES_MAX:
+        # Ce que chaque tour ajoute : ses mots, et ce que relisent ses
+        # substitutions et ses `bash -c`, que chaque copie relit.
+        cout = len(valeurs) * (1 + sum(1 + len(j) + sum(map(len, internes)) for j, internes in corps))
+        if cout > budget[0]:
             boucle["lien"] = (boucle["nom"], None)
             return
+        budget[0] -= cout
         boucle["lien"] = None
         deplie = []
         for valeur in valeurs:
@@ -757,6 +768,8 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
             mot, mots = mots[0], mots[1:]
             if mot in OUVRANTS:
                 ouvrir(mot, _boucle() if mot in ("while", "until") else None)
+                if ou_apres_cd:
+                    echecs.append(len(composes))
             elif mot in ("else", "elif") and composes:
                 incertain()
             elif mot == "do" and composes and composes[-1][5] and composes[-1][5]["lien"]:
@@ -778,6 +791,8 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
         if mots[:1] and mots[0] in FERMANTS and composes:
             if mots[0] != "}":
                 incertain()
+            if echecs and echecs[-1] == len(composes):
+                echecs.pop()
             ouvert, avant, debut_liste, debut_tube, en_tube, _ = composes.pop()
             if ouvert == "()":
                 etat = avant.copie()
@@ -834,17 +849,23 @@ def _analyser(texte: str, etat: _Etat, env: dict) -> list[Commande]:
                 elif nom == "popd" and etat.pile:
                     changer(*etat.pile.pop())
             elif nom in ("bash", "sh", "zsh", "dash") and (script := _script_du_shell(argv)) is not None:
-                res.extend(_analyser(script, etat.copie(), env))
+                res.extend(_analyser(script, etat.copie(), env, budget))
             elif nom == "eval":
-                res.extend(_analyser(" ".join(argv[1:]), etat.copie(), env))
-            elif nom in SAUTS and not ou_apres_cd:
+                res.extend(_analyser(" ".join(argv[1:]), etat.copie(), env, budget))
+            elif nom in SAUTS and not ou_apres_cd and not echecs:
                 # Un saut, vers la suite d'une boucle ou son tour d'après :
-                # son dossier se compare à celui où le tour finit. Sans en
-                # compter les niveaux (`break 2`), il vaut pour chaque boucle
-                # ouverte.
-                for x in composes:
+                # son dossier se compare à celui où le tour finit. Il vaut
+                # pour la boucle la plus intérieure, ou pour les `n` plus
+                # intérieures (`break 2`), toutes si `n` ne se lit pas ; il
+                # ne sort pas du corps d'une fonction, qui ne s'exécute pas
+                # là où il s'écrit.
+                n = (int(argv[1]) if argv[1].isdigit() else len(composes)) if len(argv) > 1 else 1
+                for x in reversed(composes):
+                    if x[0] == "()" or n <= 0:
+                        break
                     if x[5] is not None:
                         x[5]["sauts"].append(etat.lieu)
+                        n -= 1
             etat.vues.extend(_affectations(argv))
             etat.vues.extend((m.group(1), None) for x in mots + redir for m in DEFAUT_AFFECTE.finditer(x))
             res.append(c)

@@ -62,6 +62,8 @@ written.
 To do: nothing, unless the hook now refuses a loop that writes to a variable
 it does not know (`while read f; do sed -i … "$f"; done`): write the list of
 files out in full, in a `for`, or handle them with the file-writing tool.
+Nested `for` loops of several thousand iterations, which it does not
+unfold, have the same unknown variable: split them into shorter commands.
 
 ## 2026-11-14-h — The agent's hook reads the file a command publishes from its current directory
 

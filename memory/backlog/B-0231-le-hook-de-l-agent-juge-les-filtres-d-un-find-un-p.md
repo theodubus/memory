@@ -11,6 +11,13 @@ croiserait un réglage de Claude Code, alors que la conjonction ne vise que
 `build/`. Un faux refus dans l'usage normal (un nettoyage ciblé), vu par
 l'implémenteur des corrections ; aucun trou.
 
+La seconde revue du lot 3 (J-2026-11-14-AL) en a vu un autre de même
+nature : le `*` de tête d'un `-path` se lit depuis la racine du projet,
+même quand le `find` part d'un sous-dossier, et `find build -path
+'*.toml' -delete` est refusé pour `.socle/policy.toml`, que `find build`
+n'atteint pas. Le motif d'un `-path` ne vise que ce qui est sous les
+départs du `find`.
+
 La piste : un fichier protégé n'est touché que s'il satisfait chaque
 filtre de la conjonction ; juger l'intersection, et refuser seulement ce
 que tous les filtres d'une même conjonction peuvent viser ensemble.
@@ -18,3 +25,4 @@ que tous les filtres d'une même conjonction peuvent viser ensemble.
 ## Fait quand
 
 - [ ] `find . -name '*.json' -path './build/*' -delete` passe le hook, `find . -name '*.json' -path './.claude/*' -delete` reste refusé, et un test le montre
+- [ ] `find build -path '*.toml' -delete` passe le hook, `find . -path '*.toml' -delete` reste refusé, et un test le montre

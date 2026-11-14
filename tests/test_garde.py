@@ -775,7 +775,14 @@ class TestGarde(unittest.TestCase):
                           None),
                          ("for d in memory tests; do cd $d; ls; cd ..; [ -e x ] && break; done; echo ok > notes.txt",
                           None),
-                         ("for f in a b c; do echo $f > \"notes-$f.txt\"; done", None)])
+                         ("for f in a b c; do echo $f > \"notes-$f.txt\"; done", None),
+                         ("for d in */; do cd \"$d\" || { echo \"skip $d\" >&2; continue; }; ls; cd ..; done; "
+                          "echo fin > notes.txt", None),
+                         ("for d in */; do cd \"$d\"; for f in *.log; do grep -q E \"$f\" && break; done; cd ..; done; "
+                          "echo fin > notes.txt", None),
+                         ("for a in " + " ".join(["1"] * 80) + "; do x=$(for b in " + " ".join(["1"] * 80)
+                          + "; do y=$(for c in " + " ".join(["1"] * 80) + "; do :; done); done); done; rm -rf ..",
+                          "supprime")])
 
     def test_remise_en_etat_d_un_fichier_protege(self):
         """D-0098 (B-0165) : l'agent remet un fichier protégé changé par
@@ -1129,16 +1136,40 @@ class TestDecoupage(unittest.TestCase):
             with self.subTest(texte):
                 echos = [c for c in commandes.analyser(texte, environnement=env) if c.programme == "echo"]
                 self.assertEqual([commandes.variables_de(c, env).get("f") for c in echos], valeurs)
-        long = "for f in " + " ".join(f"x{n}" for n in range(3000)) + "; do echo $f; done"
+        long = "for f in " + " ".join(f"x{n}" for n in range(10000)) + "; do echo $f; done"
         echos = [c for c in commandes.analyser(long, environnement=env) if c.programme == "echo"]
         self.assertEqual([commandes.variables_de(c, env).get("f") for c in echos], [I])
         for texte, lieu in (("for d in a b; do cd $d; break; cd ..; done", I),
                             ("for d in a b; do cd $d || continue; cd ..; done", "/p"),
                             ("for d in a b; do [ -e x ] || continue; cd $d; cd ..; done", "/p"),
-                            ("for d in a b; do cd $d; cd ..; done", "/p"), ("cd $X", I)):
+                            ("for d in a b; do cd $d; cd ..; done", "/p"), ("cd $X", "/p/a b")):
             with self.subTest(texte):
                 self.assertEqual(commandes.analyser(texte + "; ls", environnement={**env, "X": "a b"})[-1].lieu,
                                  lieu)
+
+    def test_la_seconde_revue_du_lot_3(self):
+        """La seconde revue du lot 3 (J-2026-11-14-AL) : la borne du
+        dépliage vaut pour toute la commande, sous-shells compris ; une cible
+        de `cd` faite d'une variable à espaces se lit comme un nom ; un saut
+        vaut pour sa boucle la plus intérieure, et derrière `cd … ||`, dans un
+        groupe comme seul, il ne se lit pas."""
+        env = {"PWD": "/p"}
+        I = commandes.INCONNU
+        uns = " ".join(["1"] * 80)
+        texte = f"for a in {uns}; do x=$(for b in {uns}; do y=$(for c in {uns}; do :; done); done); done; ls"
+        self.assertLess(len(commandes.analyser(texte, environnement=env)), 40_000)
+        for texte, pwd, lieu in (("cd build; cd -", "/p q", "/p q"), ("cd \"$PWD/build\"", "/p q", "/p q/build"),
+                                 ("D='my dir'; cd \"$D\"", "/p", "/p/my dir"),
+                                 ("for d in a b; do cd \"$d\" || { echo x; continue; }; cd ..; done", "/p", "/p"),
+                                 ("for d in a b; do cd \"$d\" || if true; then break; fi; cd ..; done", "/p", "/p"),
+                                 ("for d in a b; do cd $d; for f in x y; do [ f ] && break; done; cd ..; done", "/p", "/p"),
+                                 ("for d in a b; do cd $d; while read l; do break; done; cd ..; done", "/p", "/p"),
+                                 ("for d in a b; do cd $d; for f in x y; do break 2; done; cd ..; done", "/p", I),
+                                 ("for d in a b; do cd $d; for f in x y; do break $n; done; cd ..; done", "/p", I),
+                                 ("for d in a b; do cd $d; f() { break; }; cd ..; done", "/p", "/p"),
+                                 ("for d in a b; do cd $d || { echo x; }; continue; cd ..; done", "/p", I)):
+            with self.subTest(texte):
+                self.assertEqual(commandes.analyser(texte + "; ls", environnement={"PWD": pwd})[-1].lieu, lieu)
 
     def test_une_fonction_une_boucle_qui_revient_et_des_operateurs_cites(self):
         """La revue du lot 3 (J-2026-11-14-AH) : le corps d'une fonction rend

@@ -2007,6 +2007,9 @@ def _temoins() -> list[tuple[str, Callable]]:
                 or etage_outil(a, c, "Bash", {"command": "for d in */; do cd \"$d\"; ls; cd ..; done; "
                                                          "echo ok > notes.txt"})
                 or etage_outil(a, c, "Bash", {"command": "for d in memory tests; do cd \"$d\" || continue; ls; cd ..; "
+                                                         "done; echo ok > notes.txt"})
+                or etage_outil(a, c, "Bash", {"command": "for d in */; do cd \"$d\" || { echo \"$d\" >&2; continue; }; "
+                                                         "for f in *.log; do grep -q E \"$f\" && break; done; cd ..; "
                                                          "done; echo ok > notes.txt"}))
 
     @temoin("un `#` dans un mot, une redirection dans un commentaire et une substitution aux guillemets imbriqués "

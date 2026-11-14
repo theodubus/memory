@@ -65,7 +65,9 @@ suite : il ne s'exécute pas là où il s'écrit.
 À faire : rien, sauf si le hook refuse désormais une boucle qui écrit vers
 une variable qu'il ne connaît pas (`while read f; do sed -i … "$f"; done`) :
 écrire la liste des fichiers en toutes lettres, dans un `for`, ou les
-traiter par l'outil d'écriture de fichiers.
+traiter par l'outil d'écriture de fichiers. Des `for` imbriqués de
+plusieurs milliers de tours, qu'il ne déplie pas, ont la même variable
+inconnue : les découper en commandes plus courtes.
 
 ## 2026-11-14-h — Le hook de l'agent lit depuis son dossier courant le fichier qu'une commande publie
 
