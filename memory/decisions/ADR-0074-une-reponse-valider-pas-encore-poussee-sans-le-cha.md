@@ -1,7 +1,7 @@
 <!-- socle: couche=decisions zone=publique -->
 # ADR-0074 — Une réponse « valider » pas encore poussée sans le changement qu'elle autorise est signalée, pas refusée
 
-> statut : acceptée · date : 2026-11-14 · source : B-0142@e05ad571, D-0071@9b06b40c, ADR-0024@699e330b · lu : decisions@2402f6cc
+> statut : remplacée · date : 2026-11-14 · source : B-0142@e05ad571, D-0071@9b06b40c, ADR-0024@699e330b · lu : decisions@2402f6cc · remplacée-par : ADR-0076
 
 ## Contexte
 

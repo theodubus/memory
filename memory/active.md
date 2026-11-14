@@ -5,9 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Le backlog trié par D-0111 ; D-0112 validée, ses règles à écrire avec
-les lots 3 et 5. Feu vert de Théo pour le lot 1, en session neuve
-(J-2026-11-14-N). Pilote en pause.
+Lot 1 livré (J-2026-11-14-R) ; D-0112 validée, ses règles à écrire
+avec les lots 3 et 5. Pilote en pause.
 
 ## Consignes en cours
 
@@ -61,7 +60,8 @@ Leur texte exact est dans l'entrée du journal citée.
 Avant toute nouvelle fonction (J-2026-11-13-I, D-0108, D-0109, D-0111),
 par lots :
 
-1. B-0196, B-0216, avec B-0215 (même contrôle).
+1. Fait, sauf la demande de B-0216 (la copie protégée de socle-request,
+   relue à froid), qui ouvre le lot 2.
 2. B-0151 et B-0199.
 3. Le hook : B-0208 (haute), B-0204 à B-0207, la règle 2 de D-0112.
 4. B-0173 (son dernier critère) ; B-0179 à la reprise du pilote.

@@ -898,6 +898,187 @@ class TestFinDeTourSurLesSeulsTests(unittest.TestCase):
         self.assertFalse(self.lancees())
 
 
+class TestFinDeTourApresUneMiseAJour(unittest.TestCase):
+    """B-0196 : entre une mise à jour du socle et le push de sa demande, la
+    fin de tour refusait l'arbre par une ligne et une commande de remise par
+    fichier protégé changé (26 sur chess). Elle le dit en une ligne ; un
+    fichier protégé que la mise à jour n'a pas posé garde la sienne, et
+    `socle check` les liste tous (ADR-0077)."""
+
+    COMMUNE = "une mise à jour du socle attend sa demande : la poser"
+    SKILL = ".claude/skills/socle-resume/SKILL.md"
+    HOOK = ".socle/git-hooks/pre-commit"
+
+    def setUp(self):
+        # Le projet a le moteur d'avant : une copie du moteur avec un module
+        # de plus et un module changé, et des copies des gabarits d'avant.
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-maj-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        ancien = Path(tempfile.mkdtemp(prefix="socle-ancien-"))
+        self.addCleanup(shutil.rmtree, ancien, ignore_errors=True)
+        shutil.copytree(MOTEUR / "socle", ancien / "socle", ignore=shutil.ignore_patterns("__pycache__"))
+        (ancien / "socle/ancien.py").write_text('"""Un module que la version nouvelle retire."""\n')
+        utils = ancien / "socle/utils.py"
+        utils.write_text(utils.read_text() + "# la version d'avant\n")
+        self.git("init", "-q", "-b", "main")
+        (self.racine / "app").mkdir()
+        (self.racine / "app/calc.py").write_text("x = 1\n")
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            installeur.installer(self.racine, "python", "@essai", source=ancien)
+        for chemin in (self.SKILL, self.HOOK):
+            p = self.racine / chemin
+            p.write_text(p.read_text() + "# la version d'avant\n")
+        self.git("add", "-A")
+        self.git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "base", "--no-verify")
+
+    def git(self, *args):
+        subprocess.run(["git", *args], cwd=self.racine, check=True, capture_output=True)
+
+    def mettre_a_jour(self, source=MOTEUR):
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            installeur.installer(self.racine, "python", "@essai", source=source)
+
+    def relancer_depuis_le_projet(self):
+        # `python3 .socle/socle install --target .` : le moteur reste tel
+        # quel, le verrou se récrit.
+        self.mettre_a_jour(self.racine / ".socle/engine")
+
+    def fin_de_tour(self) -> str:
+        import json
+
+        from socle import verification
+
+        sortie = io.StringIO()
+        with unittest.mock.patch.object(verification, "etapes_rapides", lambda *a, **k: None), \
+                contextlib.redirect_stdout(sortie), contextlib.redirect_stderr(io.StringIO()):
+            hooks.stop(config.Projet.charger(self.racine), {"session_id": "t"})
+        reponse = json.loads(sortie.getvalue())
+        self.assertEqual(reponse["decision"], "block")
+        return reponse["reason"]
+
+    def contexte(self):
+        from socle import context as contexte, utils as outils
+
+        return contexte.Contexte(config.Projet.charger(self.racine), etage="agent",
+                                 base=outils.base_de_travail(self.racine))
+
+    def erreurs(self) -> list:
+        from socle import checks_ratchet
+        from socle.report import Rapport
+
+        r = Rapport()
+        checks_ratchet.proteges(self.contexte(), r)
+        return r.erreurs("protege.fichiers")
+
+    def poses(self) -> set[str]:
+        from socle import checks_ratchet
+
+        return checks_ratchet.poses_par_la_mise_a_jour(self.contexte())
+
+    def test_la_fin_de_tour_dit_la_mise_a_jour_en_une_ligne(self):
+        self.mettre_a_jour()
+        poses = sorted(c.chemin for c in self.erreurs())
+        self.assertEqual(poses, sorted([".socle/engine.lock", ".socle/engine/socle/ancien.py",
+                                        ".socle/engine/socle/utils.py", self.HOOK, self.SKILL]))
+        self.assertLessEqual(set(poses), self.poses())
+        self.assertIn(".socle/socle", self.poses())  # le lanceur, que l'empreinte couvre
+        raison = self.fin_de_tour()
+        self.assertEqual(raison.count(self.COMMUNE), 1)
+        self.assertIn("5 fichier(s) protégé(s) qu'elle a posé(s)", raison)
+        self.assertIn("--only protege.fichiers` les liste avec leurs empreintes", raison)
+        self.assertNotIn("git restore", raison)
+        for chemin in poses:
+            self.assertNotIn(chemin + " —", raison)
+        # La liste reste entière à la demande, sans commande de remise, et
+        # `socle approve` les trouve tous.
+        from socle.report import Rapport
+
+        liste = Rapport(constats=self.erreurs()).texte()
+        self.assertNotIn(self.COMMUNE, liste)
+        self.assertNotIn("git restore", liste)
+        for chemin in poses:
+            self.assertIn(f"{chemin} — fichier protégé posé par la mise à jour du socle", liste)
+        self.assertEqual(cli.fichiers_a_approuver(config.Projet.charger(self.racine)), poses)
+        # Le verrou nomme ce que l'installeur a posé hors du moteur.
+        installes = config.Projet.charger(self.racine).lock["installed"]
+        self.assertEqual(sorted(installes), sorted([self.HOOK, self.SKILL]))
+        # Relancé, l'installeur ne change plus ces fichiers : leurs entrées
+        # restent, puisqu'elles valent encore.
+        self.mettre_a_jour()
+        self.assertEqual(config.Projet.charger(self.racine).lock["installed"], installes)
+        self.assertEqual(self.fin_de_tour().count(self.COMMUNE), 1)
+
+    def test_un_fichier_que_la_mise_a_jour_n_a_pas_pose_garde_sa_ligne(self):
+        # Changé avant l'installeur, qui le fusionne ensuite : il ne compte
+        # pas à la mise à jour. Changés après : non plus.
+        reglages = self.racine / ".claude/settings.json"
+        reglages.write_text(reglages.read_text().replace("{", '{"permissions": {"allow": ["Bash(*)"]},', 1))
+        self.mettre_a_jour()
+        self.assertNotIn(".claude/settings.json", config.Projet.charger(self.racine).lock["installed"])
+        politique = self.racine / ".socle/policy.toml"
+        politique.write_text(politique.read_text() + "# changé pendant la mise à jour\n")
+        skill = self.racine / self.SKILL
+        skill.write_text(skill.read_text() + "# changé après la mise à jour\n")
+        raison = self.fin_de_tour()
+        self.assertEqual(raison.count(self.COMMUNE), 1)
+        self.assertIn("4 fichier(s) protégé(s) qu'elle a posé(s)", raison)
+        for chemin in (".socle/policy.toml", self.SKILL):
+            self.assertIn(f"{chemin} — fichier protégé modifié sans validation humaine", raison)
+            self.assertIn(f"git restore --source=HEAD --staged --worktree -- {chemin}", raison)
+        self.assertIn(".claude/settings.json — fichier protégé modifié sans validation humaine", raison)
+
+    def test_hors_mise_a_jour_chaque_fichier_garde_sa_ligne(self):
+        for chemin in (".socle/policy.toml", self.HOOK):
+            p = self.racine / chemin
+            p.write_text(p.read_text() + "# changé hors mise à jour\n")
+        self.assertEqual(self.poses(), set())
+        raison = self.fin_de_tour()
+        self.assertNotIn(self.COMMUNE, raison)
+        for chemin in (".socle/policy.toml", self.HOOK):
+            self.assertIn(f"git restore --source=HEAD --staged --worktree -- {chemin}", raison)
+
+    def test_un_moteur_change_apres_la_mise_a_jour_ne_regroupe_rien(self):
+        self.mettre_a_jour()
+        utils = self.racine / ".socle/engine/socle/utils.py"
+        utils.write_text(utils.read_text() + "# changé après la mise à jour\n")
+        self.assertEqual(self.poses(), set())
+        raison = self.fin_de_tour()
+        self.assertNotIn(self.COMMUNE, raison)
+        self.assertIn("git restore --source=HEAD --staged --worktree -- .socle/engine/socle/utils.py", raison)
+        self.assertIn("git restore --source=HEAD --staged --worktree -- .socle/engine.lock", raison)
+
+    def test_l_installeur_relance_depuis_le_projet_ne_couvre_pas_un_moteur_change(self):
+        """Revue du lot : lancé depuis le projet, l'installeur garde le moteur
+        tel quel et récrit le verrou avec son empreinte ; un module changé
+        par l'agent passait dans la ligne commune, sans sa remise."""
+        utils = self.racine / ".socle/engine/socle/utils.py"
+        utils.write_text(utils.read_text() + "# reformaté par l'agent\n")
+        self.relancer_depuis_le_projet()
+        self.assertNotIn("copied", config.Projet.charger(self.racine).lock)
+        self.assertEqual(self.poses(), set())
+        raison = self.fin_de_tour()
+        self.assertNotIn(self.COMMUNE, raison)
+        self.assertIn("git restore --source=HEAD --staged --worktree -- .socle/engine/socle/utils.py", raison)
+
+    def test_une_relance_depuis_le_projet_apres_la_mise_a_jour(self):
+        # Le moteur copié, inchangé : la relance garde la mise à jour.
+        self.mettre_a_jour()
+        self.relancer_depuis_le_projet()
+        verrou = config.Projet.charger(self.racine).lock
+        self.assertEqual(verrou.get("copied"), verrou["fingerprint"])
+        self.assertEqual(self.fin_de_tour().count(self.COMMUNE), 1)
+        # Un module changé ensuite, puis une relance : plus rien ne compte à
+        # la mise à jour, et le module garde sa ligne.
+        rapport = self.racine / ".socle/engine/socle/report.py"
+        rapport.write_text(rapport.read_text() + "# reformaté par l'agent\n")
+        self.relancer_depuis_le_projet()
+        self.assertNotIn("copied", config.Projet.charger(self.racine).lock)
+        self.assertEqual(self.poses(), set())
+        raison = self.fin_de_tour()
+        self.assertNotIn(self.COMMUNE, raison)
+        self.assertIn("git restore --source=HEAD --staged --worktree -- .socle/engine/socle/report.py", raison)
+
+
 class TestOutilsEnSessionCloud(unittest.TestCase):
     """D-0048 : en session cloud, le conteneur repart de zéro, et le pilote
     n'avait pas pytest ; le hook de démarrage installe les outils de
