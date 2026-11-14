@@ -5,10 +5,11 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot 2 fini (J-2026-11-14-Z). Lot 3 (B-0221) fait en grande partie, pas
-relu (J-2026-11-14-AA) : le reprendre dans une session neuve par
-`docs/fabrication/passation/2026-11-14-lot-3/README.md`. La règle 1 de
-D-0112 avec le lot 5. Pilote en pause.
+Lot 3 (B-0221) intégré, relu une fois et corrigé ; reste un bloquant,
+la seconde revue et la livraison, renvoyés à une session neuve par la
+fenêtre de cinq heures : le reprendre par
+`docs/fabrication/passation/2026-11-14-lot-3-suite/README.md`. La règle 1
+de D-0112 avec le lot 5. Pilote en pause.
 
 ## Consignes en cours
 

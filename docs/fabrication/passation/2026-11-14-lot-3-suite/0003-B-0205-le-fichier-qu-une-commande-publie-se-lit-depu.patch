@@ -1,8 +1,8 @@
-From be25abcc90882953610b03302751e1fc407f9c7e Mon Sep 17 00:00:00 2001
+From 6d743fc934d0d5bd53035732d20fbf6aca127031 Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
 Date: Sat, 14 Nov 2026 15:29:31 +0000
-Subject: [PATCH 3/3] B-0205 : le fichier qu'une commande publie se lit depuis
- le dossier courant de l'agent (J-2026-11-14-AC)
+Subject: [PATCH 3/9] B-0205 : le fichier qu'une commande publie se lit depuis
+ le dossier courant de l'agent (J-2026-11-14-AD)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -202,7 +202,7 @@ diff --git a/memory/backlog/B-0205-le-hook-de-l-agent-juge-un-chemin-relatif-dep
 similarity index 91%
 rename from memory/backlog/B-0205-le-hook-de-l-agent-juge-un-chemin-relatif-depuis-l.md
 rename to memory/backlog/closed/B-0205-le-hook-de-l-agent-juge-un-chemin-relatif-depuis-l.md
-index db0effb..aa3dd61 100644
+index db0effb..e922b7a 100644
 --- a/memory/backlog/B-0205-le-hook-de-l-agent-juge-un-chemin-relatif-depuis-l.md
 +++ b/memory/backlog/closed/B-0205-le-hook-de-l-agent-juge-un-chemin-relatif-depuis-l.md
 @@ -1,7 +1,7 @@
@@ -210,7 +210,7 @@ index db0effb..aa3dd61 100644
  # B-0205 — Le hook de l'agent juge un chemin relatif depuis la racine de la session, pas depuis le dossier courant de l'agent
  
 -> statut : ouvert · origine : J-2026-11-13-H · lu : backlog@f4a491f0
-+> statut : fait · origine : J-2026-11-13-H · ref : J-2026-11-14-AC · lu : backlog@f4a491f0
++> statut : fait · origine : J-2026-11-13-H · ref : J-2026-11-14-AD · lu : backlog@f4a491f0
  
  Le hook de l'agent rapporte un chemin écrit relatif à la racine de l'arbre
  qu'il juge, quel que soit le dossier courant de l'agent (`cwd` de son
@@ -221,15 +221,15 @@ index db0effb..aa3dd61 100644
 -- [ ] le fichier qu'une commande publie (`-F`, `--body-file`) se lit depuis le dossier courant de l'agent, et un test le montre
 +- [x] le fichier qu'une commande publie (`-F`, `--body-file`) se lit depuis le dossier courant de l'agent, et un test le montre
 diff --git a/memory/journal/2026-11-4.md b/memory/journal/2026-11-4.md
-index 0541927..219f109 100644
+index da250c5..d503ab5 100644
 --- a/memory/journal/2026-11-4.md
 +++ b/memory/journal/2026-11-4.md
-@@ -853,3 +853,21 @@ l'architecture et les notes de version (`2026-11-14-g`) le disent.
+@@ -882,3 +882,21 @@ l'architecture et les notes de version (`2026-11-14-g`) le disent.
  Hors du sujet, dans le modèle : un autre programme qui supprime (`rsync
  --delete`, `git worktree remove`, `python3 -c`), une expression de `find`
  qui viserait tout le projet, va à B-0228.
 +
-+## J-2026-11-14-AC — B-0205 fait : le fichier qu'une commande publie se lit depuis le dossier courant de l'agent
++## J-2026-11-14-AD — B-0205 fait : le fichier qu'une commande publie se lit depuis le dossier courant de l'agent
 +
 +Dans le lot du hook (B-0221), le dernier critère de B-0205 : pour juger une
 +fuite de la mémoire privée, `hooks.textes_publies` lit le fichier qu'un
