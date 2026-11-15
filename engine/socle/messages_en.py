@@ -2743,6 +2743,10 @@ MESSAGES: dict[str, str] = {
         "directory that contains the project deleted by the shell: `rm -rf ..`, a `cd` then `../..`, the sources of an "
         "`mv`, `git clean` under `-C ..`, a `find` that deletes from a directory that contains it, or from the root "
         "without a name or path filter guarding its deletion",
+    "dossier qui contient le projet supprimé, ou push forcé, dans le corps d'une fonction `function nom { …; }` "
+    "écrite sans parenthèses, son corps sur la même ligne ou la suivante":
+        "directory that contains the project deleted, or force push, in the body of a function `function name { …; }` "
+        "written without parentheses, its body on the same line or the next one",
     "fichier protégé écrit par le shell derrière un mot réservé (`then`, `else`, `do`, `!`, `{`), par la "
     "variable d'un `for`, après un groupe dans un pipeline ou après la définition d'une fonction":
         "protected file written by the shell behind a reserved word (`then`, `else`, `do`, `!`, `{`), through a "
@@ -2908,6 +2912,10 @@ MESSAGES: dict[str, str] = {
         "deleting a directory next to the project, a directory of the project, a `find` without a filter under a "
         "directory of the project and a `find` that filters what it deletes under the root pass the agent's hook "
         "(B-0208)",
+    "une fonction `function nom { …; }` sans parenthèses dont le corps ne fait rien d'irréversible passe le hook de "
+    "l'agent, et son corps ne s'exécute pas là où il s'écrit (B-0232)":
+        "a function `function name { …; }` without parentheses whose body does nothing irreversible passes the "
+        "agent's hook, and its body does not run where it is written (B-0232)",
     "message de commit passé par un fichier relatif au dossier courant de l'agent, qui cite un terme privé":
         "commit message passed through a file relative to the agent's current directory, which cites a private term",
     "mode compagnon : un message de commit passé par un fichier du dossier courant de l'agent, qui ne cite aucun "

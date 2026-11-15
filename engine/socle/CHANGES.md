@@ -7,6 +7,24 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-15-d — Le hook de l'agent juge le corps d'une fonction écrite sans parenthèses
+
+Le hook de l'agent lit `function nom { …; }`, sans parenthèses, comme
+`nom() { …; }` : chaque commande de son corps se juge, que le corps
+suive le nom sur la même ligne ou sur la suivante, et ce qu'il change ne
+vaut pas pour la suite. Jusqu'ici, la commande lue avait pour programme
+`function`, et rien de son corps ne se jugeait : `function f { git push
+--force origin main; }; f` et `function f { rm -rf ..; }; f` passaient.
+Un autre corps que bash admet (`if`, `while`, `for`, un sous-shell) se
+juge comme s'il s'exécutait là où il s'écrit : un dossier qu'il change
+devient inconnu après lui, et une écriture dans le projet qui le suit est
+refusée, comme après `nom() if …`. Un groupe écrit en tête du sous-shell
+qui sert de corps à une fonction (`f() ( { cd x; }; … )`) ne se lit plus
+comme le corps de cette fonction.
+
+À faire : rien. Un push forcé ou une suppression du projet écrits dans
+une telle fonction, que le hook laissait passer, sont refusés.
+
 ## 2026-11-15-c — La revue trie les constats exotiques, et son relecteur reçoit le modèle le plus capable
 
 Un constat de la revue qui ne bloque pas va au backlog s'il peut se

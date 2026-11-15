@@ -7,6 +7,24 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-15-d — The agent's hook judges the body of a function written without parentheses
+
+The agent's hook reads `function name { …; }`, without parentheses, like
+`name() { …; }`: each command of its body is judged, whether the body
+follows the name on the same line or on the next one, and what it changes
+does not carry over to what follows. Until now, the command read had
+`function` for its program, and nothing in its body was judged: `function
+f { git push --force origin main; }; f` and `function f { rm -rf ..; };
+f` passed. Another body that bash accepts (`if`, `while`, `for`, a
+subshell) is judged as if it ran where it is written: a directory it
+changes becomes unknown after it, and a write into the project that
+follows it is refused, as after `name() if …`. A group written at the head
+of the subshell that serves as a function's body (`f() ( { cd x; }; … )`)
+is no longer read as the body of that function.
+
+To do: nothing. A force push or a deletion of the project written in such
+a function, which the hook let through, is refused.
+
 ## 2026-11-15-c — The review sorts out exotic findings, and its reviewer receives the most capable model
 
 A review finding that does not block goes to the backlog if it can occur

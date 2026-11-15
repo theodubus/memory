@@ -450,6 +450,19 @@ def _definition(mots: list[str]) -> int | None:
     return k if all(m in RESERVES for m in mots[:k]) else None
 
 
+def _fonction_sans_parentheses(mots: list[str]) -> int | None:
+    """Les mots lus devant le premier mot d'un corps, ou devant un saut de
+    ligne, définissent-ils une fonction sans parenthèses, `function nom` :
+    le mot réservé en tête de la commande, précédé ou non de mots réservés
+    (`then function f {`), puis un nom, quel qu'il soit (bash admet
+    `function f/x` et `function if`, et les appelle) ; le nombre de ces mots
+    réservés, ou `None` (B-0232)."""
+    if len(mots) < 2 or mots[-2] != "function":
+        return None
+    k = len(mots) - 2
+    return k if all(m in RESERVES for m in mots[:k]) else None
+
+
 def _cible_suivie(d: str) -> str:
     """La cible développée `d` d'un `cd`, ce que le hook ne sait pas suivre
     remplacé par `INCONNU` : un `**`, qui traverse peut-être plusieurs
@@ -666,8 +679,9 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int]) -> list[Com
     # { echo …; continue; }`), par leur rang dans `composes` : leurs sauts ne
     # se lisent pas non plus.
     echecs: list[int] = []
-    # Un `nom ( )` vient de se lire : le `{` qui suit ouvre le corps d'une
-    # fonction (la revue du lot 3, J-2026-11-14-AH).
+    # Un `nom ( )` ou un `function nom` vient de se lire : le `{` qui suit,
+    # sur la même ligne ou après des sauts de ligne, ouvre le corps d'une
+    # fonction (la revue du lot 3, J-2026-11-14-AH ; B-0232).
     definition = False
 
     def lieu_de(cible: str) -> str:
@@ -751,6 +765,14 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int]) -> list[Com
             etat.dossier = avant.dossier
             if "PWD" in changees:
                 etat.vues.append(("PWD", etat.lieu))
+
+    def definir(k: int):
+        """Une définition de fonction vient de se lire : ses `k` mots
+        réservés de tête se suivent, et la commande qui suit est son corps."""
+        nonlocal mots, definition
+        mots = mots[:k]
+        reserves()
+        mots, definition = [], True
 
     def reserves():
         """Retire les mots réservés en tête de la commande, et suit les
@@ -882,6 +904,10 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int]) -> list[Com
                 and len(b["valeurs"]) > 1 and not b["deplie"]):
             deplier(i, b)
         if not _operateur(j):
+            if not redir and (k := _fonction_sans_parentheses(mots)) is not None:
+                # `function nom`, sans parenthèses : ce mot commence son
+                # corps, comme après `nom ( )` (B-0232).
+                definir(k)
             sous_shells(internes)
             mots.append(j.lstrip(CITE))
             i += 1
@@ -905,13 +931,21 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int]) -> list[Com
         if j == "(" and suivant == ")" and not redir and (k := _definition(mots)) is not None:
             # `nom ( )`, ou `function nom ( )` : les mots réservés qui le
             # précèdent se suivent, et le `{` qui suit ouvre son corps.
-            mots = mots[:k]
-            reserves()
-            mots, definition = [], True
+            definir(k)
             i += 2
+            continue
+        if j == "\n" and not redir and (k := _fonction_sans_parentheses(mots)) is not None:
+            # `function nom`, son corps sur une ligne suivante (B-0232).
+            definir(k)
+            i += 1
             continue
         lues = len(res)
         clore()
+        if j != "\n":
+            # Le corps d'une fonction est la commande qui suit sa définition,
+            # par-delà des sauts de ligne seulement : un sous-shell l'est, et
+            # un groupe qu'il contient ne se lit plus comme lui (B-0232).
+            definition = False
         ou_apres_cd = j == "||" and len(res) > lues and res[-1].programme in ("cd", "pushd", "popd")
         if j == "(":
             englobants.append((etat.copie(), debut_liste, debut_tube, en_tube))

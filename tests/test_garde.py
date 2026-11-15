@@ -725,6 +725,39 @@ class TestGarde(unittest.TestCase):
                          ("f() { cd /tmp; ls; }; echo ok > notes.txt", None),
                          ("f() { echo x > /tmp/y; }; f; echo ok > notes.txt", None)])
 
+    def test_le_corps_de_function_sans_parentheses_se_juge(self):
+        """B-0232 : écrite `function f { …; }`, sans parenthèses, la commande
+        lue avait pour programme `function`, et rien de son corps ne se
+        jugeait : un push forcé ou la suppression du projet y passaient. Son
+        corps se lit comme celui de `f() { …; }`, sur la même ligne ou la
+        suivante, et tout autre corps que bash admet se juge ; une définition
+        ne vaut que pour la commande qui la suit, et un groupe écrit dans un
+        corps sous-shell n'est plus lu comme le corps d'une fonction."""
+        for cmd in (f"function f {{ {G} {P} --force origin main; }}; f",
+                    f"function f\n{{\n  {G} {P} --force origin main\n}}\nf",
+                    f"function f # une note\n\n{{ {G} {P} --force origin main; }}",
+                    f"function f if {G} {P} --force origin main; then :; fi",
+                    f"function f while {G} {P} --force origin main; do :; done",
+                    f"if true; then function f {{ {G} {P} --force origin main; }}; fi"):
+            with self.subTest(cmd):
+                self.assertIn("push forcé", hooks.refus_bash(self.projet, cmd) or "")
+                self.assertEqual(self.decide(*B(cmd)), "refus")
+        self.assertEqual(self.decide(*B("function f { ls; }; f")), "passe")
+        nom = self.racine.name
+        with self.environnement():
+            self.jugees([("function f { rm -rf ..; }; f", "supprime"), ("function f\n{ rm -rf ..; }", "supprime"),
+                         ("function f/x { rm -rf ..; }; f/x", "supprime"), ("function if { rm -rf ..; }", "supprime"),
+                         ("! function f { rm -rf ..; }", "supprime"), ("function f ( rm -rf .. )", "supprime"),
+                         ("function f until rm -rf ..; do :; done", "supprime"),
+                         ("function f for d in a b; do rm -rf ..; done", "supprime"),
+                         ("function f { cd /tmp; }; echo x > .socle/policy.toml", "protege"),
+                         (f"function f\n( {{ cd memory; }}; rm -rf ../../{nom} )", "protege"),
+                         (f"f ( ) ( {{ cd memory; }}; rm -rf ../../{nom} )", "protege"),
+                         ("function f if true; then cd memory; fi; echo x > notes.txt", "illisible"),
+                         ("function f { ls; }; f", None), ("function f { cd .socle; }; echo ok > policy.toml", None),
+                         ("function nettoyer\n{\n  rm -rf build\n}\nnettoyer", None),
+                         ("echo function f { ls; }", None), ("function f [[ -n x ]]; echo ok > notes.txt", None)])
+
     def test_une_boucle_qui_revient_a_son_dossier_le_garde(self):
         """La revue du lot 3, bloquant 5 (J-2026-11-14-AH) : une boucle ou
         une condition qui revient à son dossier (`cd x; …; cd ..`) le rendait
@@ -1198,6 +1231,30 @@ class TestDecoupage(unittest.TestCase):
                          [["find", ".", "(", "-name", "a", ")", "-exec", "rm", "{}", ";"], ["ls"]])
         self.assertEqual([c.argv for c in commandes.analyser("echo '|' \";\" '()' a\\;b > f")],
                          [["echo", "|", ";", "()", "a;b"]])
+
+    def test_function_sans_parentheses_ouvre_le_corps_d_une_fonction(self):
+        """B-0232 : `function nom`, sans parenthèses, se lit comme `nom ( )` :
+        le mot qui suit, ou celui de la ligne suivante, commence son corps,
+        que le découpage rend commande par commande, et qui rend en se
+        fermant l'état d'avant lui ; `function` en argument n'en définit
+        pas. La définition ne vaut que pour la commande qui la suit."""
+        env = {"PWD": "/p"}
+        for texte, lieu in (("function f { cd /a; }", "/p"), ("function f\n{\ncd /a\n}", "/p"),
+                            ("function f # c\n\n{ cd /a; }", "/p"), ("if a; then function f { cd /a; }; fi", "/p"),
+                            ("{ function f { cd /a; }; }", "/p"), ("function f/x { cd /a; }", "/p"),
+                            ("function f ( ) ( ls ); { cd /a; }", "/a"), ("function f\n( ls ); { cd /a; }", "/a")):
+            with self.subTest(texte):
+                self.assertEqual(commandes.analyser(texte + "; ls", environnement=env)[-1].lieu, lieu)
+        for texte in ("f ( ) ( { cd /a; }; ls )", "function f\n( { cd /a; }; ls )"):
+            with self.subTest(texte):
+                self.assertEqual(commandes.analyser(texte, environnement=env)[-1].lieu, "/a")
+        for texte, argv in (("function f { rm a; }; function g\n{ rm b; }", [["rm", "a"], ["rm", "b"]]),
+                            ("function if { rm a; }; function function { rm b; }", [["rm", "a"], ["rm", "b"]]),
+                            ("function f if a; then rm b; fi", [["a"], ["rm", "b"]]),
+                            ("if c; then function f while a; do rm b; done; fi", [["c"], ["a"], ["rm", "b"]]),
+                            ("echo function f { rm a; }", [["echo", "function", "f", "{", "rm", "a"], ["}"]])):
+            with self.subTest(texte):
+                self.assertEqual([c.argv for c in commandes.analyser(texte)], argv)
 
     def test_normaliser_et_lieu_sur(self):
         """La revue de B-0171, constat 4 : un `..` ne remonte pas une part

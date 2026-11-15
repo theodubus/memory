@@ -1461,6 +1461,19 @@ def _cas() -> list[Cas]:
             "find .. -name '*.pyc' -delete", "find . -delete", "find . -delete -name '*.pyc'",
             "find . \\( -type f \\) -delete")])
 
+    @defaut("fonction-sans-parentheses", "dossier qui contient le projet supprimé, ou push forcé, dans le corps d'une "
+            "fonction `function nom { …; }` écrite sans parenthèses, son corps sur la même ligne ou la suivante",
+            "agent", "suppression du projet")
+    def _(a, c):
+        # B-0232 : la commande lue avait pour programme `function`, et rien de
+        # son corps ne se jugeait. Un défaut à part, et non une forme de plus
+        # de `suppression-du-projet` : c'est la lecture de la définition qui
+        # se prouve, pour ce que rien ne rattrape, la suppression comme le push.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "function f { rm -rf ..; }; f", "function f\n{\n  rm -rf ..\n}\nf",
+            "function f { git push --force origin travail; }; f",
+            "function f if git push --force origin travail; then :; fi")])
+
     @defaut("protege-mot-reserve", "fichier protégé écrit par le shell derrière un mot réservé (`then`, `else`, "
             "`do`, `!`, `{`), par la variable d'un `for`, après un groupe dans un pipeline ou après la définition "
             "d'une fonction", "agent", "écriture protégée")
@@ -2050,6 +2063,15 @@ def _temoins() -> list[tuple[str, Callable]]:
                 or etage_outil(a, c, "Bash", {"command": "find . -name '*.pyc' -delete && mv calc.py .."})
                 or etage_outil(a, c, "Bash", {"command": "find build -delete"})
                 or etage_outil(a, c, "Bash", {"command": f"cd {ailleurs} && rm -rf ./*"}))
+
+    @temoin("une fonction `function nom { …; }` sans parenthèses dont le corps ne fait rien d'irréversible passe le "
+            "hook de l'agent, et son corps ne s'exécute pas là où il s'écrit (B-0232)")
+    def _(a, c):
+        # Le pendant sain de `fonction-sans-parentheses` : le corps se juge
+        # comme toute commande, et rend en se fermant l'état d'avant lui.
+        return (etage_outil(a, c, "Bash", {"command": "function f { ls; }; f"})
+                or etage_outil(a, c, "Bash", {"command": "function nettoyer\n{\n  rm -rf build\n}\nnettoyer"})
+                or etage_outil(a, c, "Bash", {"command": "function f { cd .socle; }; echo ok > policy.toml"}))
 
     @temoin("un fichier protégé changé par erreur, remis à son état du dernier commit, et un fichier apparu sous un "
             "chemin protégé, supprimé, passent le hook de l'agent (D-0098)")
