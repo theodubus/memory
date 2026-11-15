@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0116-changer-trois-tests-de-la-revue-la-consigne-du-rel.md, dont l'empreinte suit.
+reponse = "valider"
+texte = "« D0016 » lu comme D-0116, la seule demande en attente : D-0016 est une demande d'octobre, déjà répondue."
+par = "Théo"
+date = "2026-11-15"
+canal = "conversation"
+citation = "Valider D0016"
+empreinte = "sha256:975ba3c428e870a7bc806d288aa79ae181df3eec36aa6a21e609d73423375d9d"
