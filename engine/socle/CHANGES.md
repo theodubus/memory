@@ -15,12 +15,13 @@ actif, journal), puis demande le compactage à l'humain, à la fin d'un lot
 si l'humain garde la session au-delà, et avant toute attente qui peut
 passer l'heure sans changer de session ; près d'une limite, le seuil qui
 fait changer de session prime ; après la pause, compacter relit toute la
-conversation au prix fort. La conversation qui orchestre tourne sur le
-modèle qui consomme le moins de la limite par jeton parmi ceux qui
-suffisent à orchestrer, que l'humain choisit sur le conseil de l'agent ;
-un modèle plus coûteux seulement pour une tâche courte et bornée où sa
-qualité compte ; le modèle que fixent les instructions du projet prime, et
-un sous-agent reçoit le sien explicitement à son lancement.
+conversation au prix fort. Le modèle est celui que demande la qualité du
+travail, jamais un moindre pour tenir une limite : une limite retarde un
+lot, elle ne l'allège pas. Entre ceux qui le font aussi bien, celui qui
+consomme le moins de la limite par jeton, surtout pour la conversation
+qui orchestre ; l'humain choisit celui de la session, sur le conseil de
+l'agent ; le modèle que fixent les instructions du projet prime, et un
+sous-agent reçoit le sien explicitement à son lancement.
 
 À faire : le skill est dans la demande des fichiers protégés de la mise à
 jour ; une fois posé, demander le compactage aux moments qu'il dit,

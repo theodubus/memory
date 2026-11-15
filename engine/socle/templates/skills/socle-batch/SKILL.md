@@ -110,14 +110,15 @@ reprise après plus d'une heure d'arrêt la relit au prix fort.
   attente qui peut passer l'heure sans changer de session (une CI longue,
   une réponse de l'humain, la nuit). Près d'une limite, le seuil plus haut
   prime : changer de session. Après la pause, il est trop tard : compacter
-  relit alors toute la conversation au prix fort avant de la résumer.
-- Le modèle : la conversation qui orchestre, longue et relue à chaque
-  appel, sur celui qui consomme le moins de la limite par jeton parmi ceux
-  qui suffisent à orchestrer (l'humain le choisit, sur le conseil de
-  l'agent) ; un plus coûteux seulement pour une tâche courte et bornée où
-  sa qualité compte ; celui que fixent les instructions du projet prime.
-  Un sous-agent reçoit le sien explicitement à son lancement (outil
-  `Agent` : `model`).
+  relit alors toute la conversation au prix fort.
+- Le modèle : celui que demande la qualité du travail, jamais un moindre
+  pour tenir une limite : une limite retarde un lot, elle ne l'allège
+  pas. Entre ceux qui le font aussi bien, celui qui consomme le moins de
+  la limite par jeton, surtout pour la conversation qui orchestre, relue
+  à chaque appel ; l'humain choisit celui de la session, sur le conseil
+  de l'agent. Celui que fixent les
+  instructions du projet prime. Un sous-agent reçoit le sien
+  explicitement à son lancement (outil `Agent` : `model`).
 
 ## Changer de session
 

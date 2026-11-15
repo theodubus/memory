@@ -30,7 +30,8 @@ Leur texte exact est dans l'entrée du journal citée.
   vérifient rendus ; faite que validée (J-2026-10-20-Y, J-2026-10-21-A,
   J-2026-10-22-A).
 - Une limite d'usage proche décide de l'ordre des sujets, jamais de la
-  profondeur du travail (J-2026-11-09-C).
+  profondeur du travail ni du modèle : aucun lot bâclé pour la tenir
+  (J-2026-11-09-C, J-2026-11-15-D).
 - Une attente annoncée dans le récap s'accompagne d'un réveil programmé
   (J-2026-10-13-N).
 - « Pour toi » ne contient que les gestes de Théo, chacun compréhensible

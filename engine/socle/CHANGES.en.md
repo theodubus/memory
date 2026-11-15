@@ -15,12 +15,13 @@ journal), then asks the human to compact, at the end of a batch if the
 human keeps the session beyond it, and before any wait that may exceed an
 hour without changing sessions; near a limit, the threshold that changes
 sessions prevails; after the pause, compacting rereads the whole
-conversation at full price. The orchestrating conversation runs on the
-model that uses the least of the limit per token among those that suffice
-to orchestrate, which the human chooses on the agent's advice; a costlier
-model only for a short, bounded task where its quality matters; the model
-set by the project's instructions prevails, and a subagent receives its
-own explicitly at launch.
+conversation at full price. The model is the one the quality of the work
+calls for, never a lesser one to stay within a limit: a limit delays a
+batch, it does not lighten it. Among those that do it equally well, the
+one that uses the least of the limit per token, above all for the
+orchestrating conversation; the human chooses the session's, on the
+agent's advice; the model set by the project's instructions prevails, and
+a subagent receives its own explicitly at launch.
 
 To do: the skill is in the request for the update's protected files; once
 it is in place, ask for compaction at the moments it gives, advise the
