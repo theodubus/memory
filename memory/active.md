@@ -5,10 +5,10 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot 4 (B-0222) fait, relu, livré par sa pull request (J-2026-11-15-E) ;
-D-0115, la copie protégée de `socle-batch`, attend Théo. B-0179 bloqué
-jusqu'à la reprise du pilote, en pause (J-2026-11-15-A). La règle 1 de
-D-0112 avec le lot 5.
+Lot 5 (B-0223) : B-0213, puis B-0214, avec la règle 1 de D-0112.
+D-0115 validée, la copie protégée de `socle-batch` posée
+(J-2026-11-15-F). B-0179 bloqué jusqu'à la reprise du pilote, en pause
+(J-2026-11-15-A).
 
 ## Consignes en cours
 
