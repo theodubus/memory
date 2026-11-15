@@ -313,6 +313,11 @@ sert à rien, l'agent ne lit que 2 Ko.
   compacter, ne lancer ni sous-agent ni attente. La reprise se fait alors
   sur une conversation courte.
 
+Ces règles sont désormais écrites dans la section « La consommation » du
+skill du produit `socle-batch`
+(`engine/socle/templates/skills/socle-batch/SKILL.md`), qui n'en reprend
+pas les mesures.
+
 ### La piste de la session neuve
 
 Un réveil qui ouvre une session neuve, lue depuis la mémoire, au lieu de

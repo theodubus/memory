@@ -104,6 +104,18 @@ resuming after more than an hour's pause rereads it at full price.
   receives the instructions and the findings.
 - A wait of more than an hour (a long CI, an answer from the human, the
   night) is not done in a long conversation.
+- The agent does not compact by itself: it writes the memory (active
+  work, journal), then asks the human to (under Claude Code, `/compact`),
+  at the end of a batch if the session goes on beyond it, and before any
+  wait that may exceed an hour without changing sessions (a long CI, an
+  answer from the human, a nearby limit, the night). After the pause, it
+  is too late: compacting then rereads the whole conversation at full
+  price before summarising it.
+- The model: the orchestrating conversation, long and reread at each
+  call, on the one that uses the least of the limit per token; a costlier
+  one only for a short, bounded task where its quality matters; the one
+  set by the project's instructions prevails. A subagent receives its own
+  explicitly at launch (`Agent` tool: `model`).
 
 ## Changing sessions
 

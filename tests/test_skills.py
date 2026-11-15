@@ -293,6 +293,34 @@ class TestLaConduiteDUnLot(unittest.TestCase):
             for phrase in phrases:
                 self.assertIn(phrase, texte, lg)
 
+    def test_il_dit_quand_compacter_et_quel_modele_pour_quel_travail(self):
+        """B-0173 : l'agent demande le compactage, mémoire écrite, à la fin
+        d'un lot et avant une attente longue, jamais après ; la
+        conversation qui orchestre sur le modèle qui pèse le moins, et un
+        sous-agent reçoit le sien à son lancement."""
+        attendus = {
+            "fr": ["L'agent ne compacte pas lui-même", "il écrit la mémoire (chantier actif, journal)",
+                   "le demande à l'humain", "`/compact`", "à la fin d'un lot si la session continue",
+                   "avant toute attente qui peut passer l'heure sans changer de session",
+                   "Après la pause, il est trop tard",
+                   "sur celui qui consomme le moins de la limite par jeton",
+                   "seulement pour une tâche courte et bornée où sa qualité compte",
+                   "celui que fixent les instructions du projet prime",
+                   "Un sous-agent reçoit le sien explicitement à son lancement"],
+            "en": ["The agent does not compact by itself", "it writes the memory (active work, journal)",
+                   "asks the human to", "`/compact`", "at the end of a batch if the session goes on",
+                   "before any wait that may exceed an hour without changing sessions",
+                   "After the pause, it is too late",
+                   "on the one that uses the least of the limit per token",
+                   "only for a short, bounded task where its quality matters",
+                   "the one set by the project's instructions prevails",
+                   "A subagent receives its own explicitly at launch"],
+        }
+        for lg, phrases in attendus.items():
+            texte = " ".join(self.texte(lg).split())
+            for phrase in phrases:
+                self.assertIn(phrase, texte, lg)
+
 
 class TestRefusBash(unittest.TestCase):
     def test_le_meme_jugement_que_le_hook(self):

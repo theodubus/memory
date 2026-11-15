@@ -104,6 +104,18 @@ reprise après plus d'une heure d'arrêt la relit au prix fort.
   neuf reçoit la consigne et les constats.
 - Une attente de plus d'une heure (une CI longue, une réponse de
   l'humain, la nuit) ne se fait pas dans une conversation longue.
+- L'agent ne compacte pas lui-même : il écrit la mémoire (chantier actif,
+  journal), puis le demande à l'humain (sous Claude Code, `/compact`), à
+  la fin d'un lot si la session continue au-delà, et avant toute attente
+  qui peut passer l'heure sans changer de session (une CI longue, une
+  réponse de l'humain, une limite proche, la nuit). Après la pause, il est
+  trop tard : compacter relit alors toute la conversation au prix fort
+  avant de la résumer.
+- Le modèle : la conversation qui orchestre, longue et relue à chaque
+  appel, sur celui qui consomme le moins de la limite par jeton ; un plus
+  coûteux seulement pour une tâche courte et bornée où sa qualité compte ;
+  celui que fixent les instructions du projet prime. Un sous-agent reçoit
+  le sien explicitement à son lancement (outil `Agent` : `model`).
 
 ## Changer de session
 
