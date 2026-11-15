@@ -5,10 +5,10 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot 5 (B-0223) en passation (`docs/fabrication/passation-lot5/`,
-J-2026-11-15-H) : B-0213 et B-0214 faits (J-2026-11-15-I), pas relus ;
-restent la revue, la livraison. B-0179 bloqué, en pause
-(J-2026-11-15-A).
+Lot 5 (B-0223), repris de sa passation (J-2026-11-15-J) : B-0213 et
+B-0214 faits (J-2026-11-15-I), pas relus ; restent la revue et la
+livraison. À sa clôture, B-0224 devient un jalon, découpé en vrais lots
+(D-0118). B-0179 bloqué, en pause (J-2026-11-15-A).
 
 ## Consignes en cours
 

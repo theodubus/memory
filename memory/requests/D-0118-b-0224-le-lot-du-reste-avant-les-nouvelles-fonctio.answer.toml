@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0118-b-0224-le-lot-du-reste-avant-les-nouvelles-fonctio.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-15"
+canal = "conversation"
+citation = "Oui, fais-en un jalon et découpe-le à la clôture du lot 5"
+empreinte = "sha256:87af571ac763091c91dc9fb2177c00cfae8360e3b347d9635a61b946e92ce54d"
