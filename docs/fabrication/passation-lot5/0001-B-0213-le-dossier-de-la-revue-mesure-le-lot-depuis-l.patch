@@ -1,0 +1,1047 @@
+From e9d00d8655bf57344ee5d84c5d359fa7f644cd0f Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sun, 15 Nov 2026 13:33:52 +0000
+Subject: [PATCH] =?UTF-8?q?B-0213=20:=20le=20dossier=20de=20la=20revue=20m?=
+ =?UTF-8?q?esure=20le=20lot=20depuis=20l'anc=C3=AAtre=20commun=20de=20sa?=
+ =?UTF-8?q?=20base=20et=20de=20HEAD,=20refuse=20une=20r=C3=A9f=C3=A9rence?=
+ =?UTF-8?q?=20qu'il=20ne=20peut=20mesurer,=20et=20ne=20prend=20pour=20barr?=
+ =?UTF-8?q?e=20que=20les=20sujets=20dont=20le=20lot=20change=20le=20statut?=
+ =?UTF-8?q?=20ou=20le=20=C2=AB=20Fait=20quand=20=C2=BB=20(ADR-0081,=20J-20?=
+ =?UTF-8?q?26-11-15-G)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+La spécification, ADR-0081, complète ADR-0075 : toute base se mesure
+depuis son ancêtre commun avec HEAD ; `--base` ou `--since` inconnus, un
+`--since` qui n'est pas un ancêtre de HEAD, une base sans ancêtre commun
+sont refusés (code 2) ; un sujet touché en passant ne fait plus la
+barre. Les notes du dossier disent un lot poussé en partie, le nombre de
+commits d'un lot déjà poussé, la vraie raison d'un dossier vide, et
+gardent `--since`. Treize tests, dont douze échouent sur le parent.
+
+Corrige: B-0213
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01JeB7oWxwfuoxZJWSRUBJ11
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=1 PreToolUse=169 Stop=3
+Socle-Hooks-Since-Commit: PreToolUse=169
+---
+ docs/fabrication/architecture.md              |   2 +-
+ engine/socle/CHANGES.en.md                    |  20 ++
+ engine/socle/CHANGES.md                       |  20 ++
+ engine/socle/cli.py                           |  15 +-
+ engine/socle/messages_en.py                   |  50 +++-
+ engine/socle/review.py                        | 173 +++++++++---
+ .../templates/skills/socle-review/SKILL.en.md |  16 +-
+ .../templates/skills/socle-review/SKILL.md    |  16 +-
+ memory/active.md                              |   3 +-
+ ...-de-la-revue-compare-a-la-base-et-non-a.md |  16 +-
+ ...de-la-revue-mesure-le-lot-depuis-l-ance.md |  89 ++++++
+ memory/journal/2026-11-5.md                   |  57 ++++
+ tests/test_revue.py                           | 255 +++++++++++++++++-
+ 13 files changed, 663 insertions(+), 69 deletions(-)
+ rename memory/backlog/{ => closed}/B-0213-le-dossier-de-la-revue-compare-a-la-base-et-non-a.md (77%)
+ create mode 100644 memory/decisions/ADR-0081-le-dossier-de-la-revue-mesure-le-lot-depuis-l-ance.md
+
+diff --git a/docs/fabrication/architecture.md b/docs/fabrication/architecture.md
+index 2d16a41..7544ec7 100644
+--- a/docs/fabrication/architecture.md
++++ b/docs/fabrication/architecture.md
+@@ -58,7 +58,7 @@ vérifiées.
+ | `fingerprint.py` | l'empreinte du moteur ; le mot qu'une demande cite pour un fichier protégé supprimé, `supprimé` ou `deleted`, reconnus l'un et l'autre (B-0163) |
+ | `installer.py` | installation, mise à jour, adoption ; la suppression automatique des branches fusionnées conseillée avec la protection de la branche par défaut (B-0112) ; en session cloud, une mise à jour s'approuve dans une session neuve, par une demande (B-0107), sous laquelle ses fichiers protégés se commitent quand la CI du socle est exigée (D-0071), en deux temps, la demande seule d'abord, puis les fichiers protégés avec ce qui les cite (B-0148), « Et maintenant » disant de la poser par `socle new request`, qui en dit le contrat, et d'y écrire chaque fichier sur une ligne d'empreinte (ADR-0058), et que la CI de la demande poussée seule, jugée par le moteur d'avant, peut la refuser jusqu'au commit des fichiers protégés ; adaptateur déduit du dépôt ; mémoire privée posée à l'installation, ou ajoutée à un projet installé ; diff de politique à la mise à jour ; à la mise à jour, les garde-fous du projet gardés, et les réglages du gabarit qu'ils n'écrivent pas, même en commentaire, nommés avec ce qu'ils font, à déclarer une fois le moteur nouveau commité, l'ancien qui juge la CI comptant une clé inconnue pour un assouplissement (B-0123) ; un fichier d'instructions que la section du socle, posée ou régénérée, fait passer au-delà de son budget, signalé avec ses deux issues, le resserrer ou relever le budget par une demande, le contrôle des budgets disant de même pour lui au lieu d'« archiver dans le journal » (B-0129) ; le code existant entre « à mesurer » au cliquet de mutation, ou reprend les plafonds déjà mesurés d'un fichier que l'humain donne (`--mutation-caps`, B-0009, relevé sur chess) ; un audit court, puis « Et maintenant », les étapes de l'humain avec leur commande, dont les outils que la CI installe pour l'adaptateur, à donner aussi à l'agent (B-0090) ; le code de sortie, 0 quand seule l'approbation de l'humain attend (ADR-0056) ; à la mise à jour, le verrou consigne sous `[installed]`, avec leur empreinte, les fichiers protégés que le passage a changés hors du moteur et qui étaient avant lui tels que la base ou un passage précédent les avait laissés (ADR-0077) ; ne s'installe qu'à la racine du dépôt ; relancé, il ne perd rien : le moteur reste en place s'il est lancé depuis le projet, un CLAUDE.md propre au projet passe dans AGENTS.md, une seconde adoption complète sa liste, et ce que le .gitignore du projet écarterait reçoit une exception (B-0044, L1) ; un état au démarrage propre au projet (son hook `SessionStart`) gardé et signalé, chaque session en recevant deux (B-0054) ; le nom de l'humain qui installe, donné par `--human` ou pris dans git, posé dans la politique d'un projet neuf : il signe les réponses que l'agent relaie, qui ne devine pas un nom (B-0073) ; en session cloud, l'identité git est celle de l'agent et ne se prend pas (B-0094) ; la protection de la branche n'exige que la CI, la revue des propriétaires du code supposant un autre humain qui relit (B-0093) ; la session cloud qui l'installe ne se reprend pas, ajouter le dépôt du socle en faisant une session à deux dépôts (B-0097), et la session suivante attend la fusion de l'installation, une session neuve partant de la branche par défaut (B-0098) ; les skills du socle posés dans `.claude/skills/`, dans la langue de la mémoire, remplacés à chaque mise à jour, et protégés par la politique d'un projet neuf (ADR-0034) ; la CI posée écarte des envois les branches jetables (`[branches] disposable`, `proto/` par défaut, des préfixes sans caractère de motif, que la CI et les contrôles locaux lisent de même ; les étiquettes nommées pour garder leur CI, D-0087) ; plusieurs `--adapter`, et en automatique un par langage reconnu : le premier nommé prend `.socle/adapter.toml`, les autres `.socle/adapters/<nom>.toml`, protégés par le moteur ; à la mise à jour, une copie d'un adaptateur maintenu, la principale comprise, rafraîchie si le projet ne l'a pas adaptée, c'est-à-dire si son texte est une version que le moteur du projet a portée, dans le moteur installé ou dans l'historique git, et gardée sinon, l'installeur disant quand son adaptateur maintenu a changé depuis le moteur installé, et la CI se générant des adaptateurs du projet tels qu'ils sont (ADR-0052) ; la CI et le balayage installent les outils de tous, les modules de chacun entrant au cliquet (ADR-0051) ; en automatique, un langage dont le manifeste n'est que dans un sous-dossier ne reçoit pas d'adaptateur, ce que l'installeur dit avec ses deux issues ; `--adapter` prend le fichier d'un adaptateur propre au projet, jugé par le contrat des adaptateurs avant d'être posé ; l'audit dit qu'il n'a pas lancé les capacités, et le budget d'adoption garde une marge d'un dixième (ADR-0066) ; à la mise à jour qui recopie le moteur, les notes de version (`engine/socle/CHANGES.md`, `engine/socle/CHANGES.en.md`) que la copie du projet n'avait pas, lues par leurs identifiants avant qu'elle ne soit remplacée, toutes si elle n'en avait aucune, rien à une première installation, en mode amont ni lancé depuis le projet, imprimées avant l'audit dans la langue du projet, et leurs identifiants dans le message de commit que propose « Et maintenant » (ADR-0078) |
+ | `language.py` | la langue de la mémoire : le vocabulaire du format par langue, ramené à des clés internes à la lecture, et celui du projet à l'écriture |
+-| `review.py` | le dossier de la revue adversariale d'un lot (ADR-0042) : la consigne, qui dit au relecteur de n'écrire que dans un dossier temporaire créé hors du dépôt (B-0141), le diff du lot depuis la branche distante, sinon la branche par défaut, ou, si la branche distante contient déjà le lot, depuis l'ancêtre commun avec la branche par défaut, en le disant (ADR-0075), la mémoire mise à part et tronqué au-delà d'un plafond, les sujets qu'il ferme avec leur « Fait quand », et les décisions qu'ils citent ; le moteur ne lance pas le relecteur ; avec `--request`, le dossier de la relecture à froid d'une demande : une consigne, puis son seul texte, pour un lecteur dans le rôle de l'humain qui revient sur le projet (ADR-0046) |
++| `review.py` | le dossier de la revue adversariale d'un lot (ADR-0042) : la consigne, qui dit au relecteur de n'écrire que dans un dossier temporaire créé hors du dépôt (B-0141), le diff du lot depuis l'ancêtre commun de HEAD et de sa base, la branche distante, sinon la branche par défaut, ou, si la branche distante contient déjà le lot, l'ancêtre commun avec la branche par défaut, en le disant, comme ce que la branche distante porte déjà du lot ou de ceux d'avant (ADR-0075, ADR-0081), la mémoire mise à part et tronqué au-delà d'un plafond ; une référence inconnue, un `--since` qui n'est pas un ancêtre de HEAD ou une base sans ancêtre commun avec lui refusés ; les sujets dont le lot change le statut ou le « Fait quand », avec leur critère, et les décisions qu'ils citent ; le moteur ne lance pas le relecteur ; avec `--request`, le dossier de la relecture à froid d'une demande : une consigne, puis son seul texte, pour un lecteur dans le rôle de l'humain qui revient sur le projet (ADR-0046) |
+ | `messages.py`, `messages_en.py` | les messages du moteur dans la langue de la mémoire du projet : un message s'écrit en français dans le code, enveloppé par `trad`, et ce texte est la clé du catalogue anglais ; la ligne de commande pose la langue avant même d'analyser la commande, l'installeur et `socle init` la leur ; `socle checks` traduit la première phrase de chaque contrôle, `socle help` lit `HELP.en.md` ; `tests/test_messages.py` exige qu'aucun message enveloppé ne manque au catalogue, et refuse un message en prose écrit en dur là où le moteur en émet (ADR-0028) ; le catalogue traduit aussi, à l'affichage, les textes des adaptateurs maintenus, les noms de leurs étapes de CI, les descriptions de l'auto-test et le statut d'une demande, et l'installeur, le message du lanceur ; le marqueur d'une valeur liée et la raison d'un plafond mesuré se lisent dans les deux langues (B-0059) |
+ | `config.py` | la configuration du projet et la table de ses chemins ; ses adaptateurs, le principal d'abord, et la vue du projet par l'un d'eux (ADR-0051) |
+ | `initialization.py` | les trois entrées d'initialisation : document archivé tel quel, audit du dépôt en lecture seule, questions de départ |
+diff --git a/engine/socle/CHANGES.en.md b/engine/socle/CHANGES.en.md
+index 64e06c1..4dd1859 100644
+--- a/engine/socle/CHANGES.en.md
++++ b/engine/socle/CHANGES.en.md
+@@ -7,6 +7,26 @@ letter. On an update, the installer gives the entries that the project's
+ engine copy did not have, and the commit message it proposes names their
+ identifiers.
+ 
++## 2026-11-15-b — The review brief measures the batch since the common ancestor, and refuses an unknown reference
++
++`python3 .socle/socle review` measures the batch since the common
++ancestor of HEAD and its base: the default branch that moved on, or a
++commit pushed from elsewhere to the remote branch, no longer enter the
++diff or the topics. Only the topics whose status or "Done when" the batch
++changes make the reviewer's bar; a changed `after`, an added finding or a
++closed topic filed away by `socle archive` are no longer there. An
++unknown `--base` or `--since`, a `--since` that is not an ancestor of
++HEAD, a base with no common ancestor with HEAD are refused (code 2),
++instead of an empty brief. The brief says what the remote branch already
++carries of the batch, over how many commits it measures a batch already
++pushed, and the real reason for an empty brief (default branch guessed,
++shallow clone); under `--since`, the command it proposes keeps `--since`.
++The `socle-review` skill, a protected copy, changes.
++
++To do: a batch already pushed in whole or in part, or on a branch that
++carries batches already reviewed, is reviewed with `python3 .socle/socle
++review --base <the commit before the batch>`.
++
+ ## 2026-11-15-a — The socle-batch skill says when to compact and which model for which work
+ 
+ The "Consumption" section of the `socle-batch` skill has two more rules.
+diff --git a/engine/socle/CHANGES.md b/engine/socle/CHANGES.md
+index 32e71b6..11705da 100644
+--- a/engine/socle/CHANGES.md
++++ b/engine/socle/CHANGES.md
+@@ -7,6 +7,26 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
+ moteur du projet n'avait pas, et le message de commit qu'il propose nomme
+ leurs identifiants.
+ 
++## 2026-11-15-b — Le dossier de la revue mesure le lot depuis l'ancêtre commun, et refuse une référence inconnue
++
++`python3 .socle/socle review` mesure le lot depuis l'ancêtre commun de
++HEAD et de sa base : la branche par défaut qui a avancé, ou un commit
++poussé d'ailleurs sur la branche distante, n'entrent plus dans le diff ni
++dans les sujets. Seuls les sujets dont le lot change le statut ou le
++« Fait quand » font la barre du relecteur ; un `après` changé, un constat
++ajouté ou un sujet clos rangé par `socle archive` n'y sont plus. Un
++`--base` ou un `--since` inconnus, un `--since` qui n'est pas un ancêtre
++de HEAD, une base sans ancêtre commun avec HEAD sont refusés (code 2), au
++lieu d'un dossier vide. Le dossier dit ce que la branche distante porte
++déjà du lot, sur combien de commits il mesure un lot déjà poussé, et la
++vraie raison d'un dossier vide (branche par défaut devinée, clone
++superficiel) ; sous `--since`, la commande qu'il propose garde `--since`.
++Le skill `socle-review`, une copie protégée, change.
++
++À faire : un lot déjà poussé en tout ou en partie, ou sur une branche qui
++porte des lots déjà relus, se relit par `python3 .socle/socle review
++--base <le commit d'avant le lot>`.
++
+ ## 2026-11-15-a — Le skill socle-batch dit quand compacter et quel modèle pour quel travail
+ 
+ La section « La consommation » du skill `socle-batch` a deux règles de
+diff --git a/engine/socle/cli.py b/engine/socle/cli.py
+index 1e08a6e..93fb5ab 100644
+--- a/engine/socle/cli.py
++++ b/engine/socle/cli.py
+@@ -406,7 +406,14 @@ def cmd_review(args) -> int:
+             return 2
+         print(texte, end="")
+         return 0
+-    print(revue.dossier(_projet(args), args.base, args.max_bytes, getattr(args, "since", None)), end="")
++    try:
++        texte = revue.dossier(_projet(args), args.base, args.max_bytes, getattr(args, "since", None))
++    except revue.ReferenceRefusee as refus:
++        # Une référence qui ne mesure pas le lot (ADR-0081) : un dossier vide
++        # ou étranger, qu'un relecteur jugerait sans constat, ne part pas.
++        print(refus, file=sys.stderr)
++        return 2
++    print(texte, end="")
+     return 0
+ 
+ 
+@@ -867,9 +874,9 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
+ 
+     s = sp.add_parser("review", help=trad("le dossier de la revue adversariale d'un lot, pour un relecteur sans "
+                                           "contexte"))
+-    s.add_argument("--base", help=trad("la base du lot (par défaut : la branche distante, sinon la branche par "
+-                                       "défaut ; l'ancêtre commun avec celle-ci quand la branche distante contient "
+-                                       "déjà le lot)"))
++    s.add_argument("--base", help=trad("la base du lot, qui se mesure depuis son ancêtre commun avec HEAD (par "
++                                       "défaut : la branche distante, sinon la branche par défaut ; l'ancêtre commun "
++                                       "avec celle-ci quand la branche distante contient déjà le lot)"))
+     s.add_argument("--max-bytes", type=int, default=60_000, help=trad("le plafond du diff montré"))
+     s.add_argument("--since", metavar="REF", help=trad("une seconde revue : le diff depuis ce commit, celui de la "
+                                                        "première revue, et les sujets du lot entier"))
+diff --git a/engine/socle/messages_en.py b/engine/socle/messages_en.py
+index 570d7d8..abbc1e9 100644
+--- a/engine/socle/messages_en.py
++++ b/engine/socle/messages_en.py
+@@ -1929,10 +1929,11 @@ MESSAGES: dict[str, str] = {
+         "the permalink of a file or an entry, to give to the human",
+     "le dossier de la revue adversariale d'un lot, pour un relecteur sans contexte":
+         "the brief of a batch's adversarial review, for a reviewer without context",
+-    "la base du lot (par défaut : la branche distante, sinon la branche par défaut ; l'ancêtre commun avec "
+-    "celle-ci quand la branche distante contient déjà le lot)":
+-        "the base of the batch (by default: the remote branch, otherwise the default branch; the common ancestor "
+-        "with the latter when the remote branch already contains the batch)",
++    "la base du lot, qui se mesure depuis son ancêtre commun avec HEAD (par défaut : la branche distante, sinon la "
++    "branche par défaut ; l'ancêtre commun avec celle-ci quand la branche distante contient déjà le lot)":
++        "the base of the batch, measured since its common ancestor with HEAD (by default: the remote branch, "
++        "otherwise the default branch; the common ancestor with the latter when the remote branch already contains "
++        "the batch)",
+     "le plafond du diff montré":
+         "the cap of the diff shown",
+     "# Revue adversariale d'un lot":
+@@ -2003,14 +2004,47 @@ MESSAGES: dict[str, str] = {
+     "(aucun changement hors de la mémoire : rien à relire)":
+         "(no change outside the memory: nothing to review)",
+     "(la branche distante {amont} contient déjà le lot : il se mesure depuis {commun}, l'ancêtre commun de HEAD et "
+-    "de {defaut} ; s'il commence plus tard, `socle review --base <le commit d'avant le lot>`)":
++    "de {defaut}, sur {n} commit(s) hors de la mémoire ; s'il commence plus tard, `socle review --base <le commit "
++    "d'avant le lot>{seconde}`)":
+         "(the remote branch {amont} already contains the batch: it is measured since {commun}, the common ancestor "
+-        "of HEAD and {defaut}; if it starts later, `socle review --base <the commit before the batch>`)",
++        "of HEAD and {defaut}, over {n} commit(s) outside the memory; if it starts later, `socle review --base "
++        "<the commit before the batch>{seconde}`)",
+     "(la branche distante {amont} contient déjà le lot, et la branche par défaut {defaut} aussi : rien à relire "
+-    "depuis elles. Un lot déjà poussé se relit depuis le commit d'avant lui : `socle review --base <ce commit>`)":
++    "depuis elles. Un lot déjà poussé se relit depuis le commit d'avant lui : `socle review --base <ce "
++    "commit>{seconde}`)":
+         "(the remote branch {amont} already contains the batch, and so does the default branch {defaut}: nothing "
+         "to review since them. A batch already pushed is reviewed since the commit before it: `socle review "
+-        "--base <that commit>`)",
++        "--base <that commit>{seconde}`)",
++    "(la branche distante {amont} porte déjà {n} commit(s) hors de la mémoire depuis {commun}, l'ancêtre commun de "
++    "HEAD et de {defaut}, que ce dossier ne montre pas : si le lot en comprend, `socle review --base <le commit "
++    "d'avant le lot>{seconde}`)":
++        "(the remote branch {amont} already carries {n} commit(s) outside the memory since {commun}, the common "
++        "ancestor of HEAD and {defaut}, which this brief does not show: if the batch includes some, `socle review "
++        "--base <the commit before the batch>{seconde}`)",
++    "(la branche distante {amont} contient déjà le lot, et ce clone ne connaît pas la branche par défaut : ni "
++    "`origin/HEAD`, ni `main`, ni `master`. Un lot déjà poussé se relit depuis le commit d'avant lui : `socle "
++    "review --base <ce commit>{seconde}`)":
++        "(the remote branch {amont} already contains the batch, and this clone does not know the default branch: "
++        "neither `origin/HEAD`, nor `main`, nor `master`. A batch already pushed is reviewed since the commit "
++        "before it: `socle review --base <that commit>{seconde}`)",
++    "(la branche distante {amont} contient déjà le lot, et HEAD n'a pas d'ancêtre commun avec la branche par "
++    "défaut {defaut} dans ce clone, superficiel peut-être (`git fetch --unshallow`). Un lot déjà poussé se relit "
++    "depuis le commit d'avant lui : `socle review --base <ce commit>{seconde}`)":
++        "(the remote branch {amont} already contains the batch, and HEAD has no common ancestor with the default "
++        "branch {defaut} in this clone, a shallow one perhaps (`git fetch --unshallow`). A batch already pushed is "
++        "reviewed since the commit before it: `socle review --base <that commit>{seconde}`)",
++    "## Le diff du lot ({n} fichier(s), depuis {commun}, l'ancêtre commun de HEAD et de {base})":
++        "## The batch's diff ({n} file(s), since {commun}, the common ancestor of HEAD and {base})",
++    "{option} {ref} : aucune branche, étiquette ni commit de ce nom dans ce dépôt ; rien n'est relu":
++        "{option} {ref}: no branch, tag or commit of that name in this repository; nothing is reviewed",
++    "--since {ref} n'est pas un ancêtre de HEAD : une seconde revue se mesure depuis le commit relu par la "
++    "première, que la branche contient ; rien n'est relu":
++        "--since {ref} is not an ancestor of HEAD: a second review is measured since the commit the first one "
++        "reviewed, which the branch contains; nothing is reviewed",
++    "aucun ancêtre commun entre HEAD et {base} dans ce clone : rien ne mesure le lot. Un clone superficiel "
++    "s'approfondit par `git fetch --unshallow` ; sinon, `socle review --base <le commit d'avant le lot>`":
++        "no common ancestor between HEAD and {base} in this clone: nothing measures the batch. A shallow clone is "
++        "deepened by `git fetch --unshallow`; otherwise, `socle review --base <the commit before the batch>`",
+     "(diff tronqué : {n} caractère(s) de plus non montrés ; `git diff {base}` les donne)":
+         "(diff truncated: {n} more character(s) not shown; `git diff {base}` gives them)",
+     "## Les sujets du lot : leur critère « Fait quand » est ta barre":
+diff --git a/engine/socle/review.py b/engine/socle/review.py
+index 6c4a51b..3fcc6fb 100644
+--- a/engine/socle/review.py
++++ b/engine/socle/review.py
+@@ -14,7 +14,6 @@ après des semaines ; le skill `socle-request` dit quand.
+ from __future__ import annotations
+ 
+ import re
+-from pathlib import Path
+ 
+ from socle import config, memory as memoire, utils as outils
+ from socle.messages import a_traduire, trad
+@@ -37,42 +36,110 @@ def base_du_lot(racine) -> str | None:
+     return _amont(racine) or outils.branche_par_defaut(racine)
+ 
+ 
++class ReferenceRefusee(ValueError):
++    """Une base ou un `--since` qui ne mesure pas le lot (ADR-0081) : le
++    dossier ne se fait pas, au lieu d'un dossier vide ou étranger."""
++
++
++def debut_du_lot(racine, base: str) -> str | None:
++    """Le commit d'où se mesure le lot : l'ancêtre commun de `base` et de
++    HEAD (ADR-0081). Une base qui a avancé sans la branche n'apporte ainsi
++    au lot ni ses changements ni ses sujets. `None` sans ancêtre commun."""
++    return outils.git(racine, "merge-base", base, "HEAD", check=False).strip() or None
++
++
++def _debut(racine, base: str) -> str:
++    return debut_du_lot(racine, base) or base
++
++
++def _hors_memoire(projet: config.Projet) -> list[str]:
++    return ["--", ".", f":(exclude){projet.chemins.memoire}"]
++
++
++def _commits_hors_memoire(projet: config.Projet, depuis: str, jusqua: str) -> int:
++    """Les commits de `depuis..jusqua` qui changent autre chose que la mémoire."""
++    sortie = outils.git(projet.racine, "rev-list", "--count", f"{depuis}..{jusqua}", *_hors_memoire(projet),
++                        check=False).strip()
++    return int(sortie) if sortie.isdigit() else 0
++
++
++def refus_des_references(projet: config.Projet, base: str | None, depuis: str | None) -> str | None:
++    """Pourquoi `--base` ou `--since` ne mesurent pas le lot, `None` s'ils
++    le mesurent (ADR-0081) : une référence inconnue, un `--since` qui n'est
++    pas un ancêtre de HEAD."""
++    for option, ref in (("--base", base), ("--since", depuis)):
++        if ref and not outils.rev_existe(projet.racine, ref):
++            return trad("{option} {ref} : aucune branche, étiquette ni commit de ce nom dans ce dépôt ; rien "
++                        "n'est relu", option=option, ref=ref)
++    if depuis and not outils.git_reussit(projet.racine, "merge-base", "--is-ancestor", depuis, "HEAD"):
++        return trad("--since {ref} n'est pas un ancêtre de HEAD : une seconde revue se mesure depuis le commit relu "
++                    "par la première, que la branche contient ; rien n'est relu", ref=depuis)
++    return None
++
++
+ def contient_le_lot(projet: config.Projet, base: str, depuis: str | None = None) -> bool:
+     """`base` contient déjà le lot (ADR-0075) : avec `depuis`, le commit relu
+     par la première revue y est déjà ; sans, rien n'en diffère hors de la
+-    mémoire, ni un commit, ni l'arbre."""
++    mémoire depuis leur ancêtre commun (ADR-0081), ni un commit, ni
++    l'arbre : un commit que `base` a reçu d'ailleurs n'y change rien."""
+     if depuis:
+         return outils.git_reussit(projet.racine, "merge-base", "--is-ancestor", depuis, base)
+-    return outils.git_reussit(projet.racine, "diff", "--quiet", base, "--", ".",
+-                              f":(exclude){projet.chemins.memoire}")
++    return outils.git_reussit(projet.racine, "diff", "--quiet", _debut(projet.racine, base), *_hors_memoire(projet))
+ 
+ 
+ def base_par_defaut(projet: config.Projet, depuis: str | None = None) -> tuple[str | None, str | None]:
+-    """La base du lot sans `--base`, et ce que le dossier en dit (ADR-0075).
+-    Une branche distante qui contient déjà le lot, poussé avant sa revue,
+-    n'y laisse rien : il se mesure alors depuis l'ancêtre commun de HEAD et
+-    de la branche par défaut. Si celui-ci le contient aussi, la base reste,
+-    et la note dit pourquoi le dossier est vide, et quoi lancer."""
+-    base = base_du_lot(projet.racine)
+-    if not base or base != _amont(projet.racine) or not contient_le_lot(projet, base, depuis):
++    """La base du lot sans `--base`, et ce que le dossier en dit (ADR-0075,
++    ADR-0081). Une branche distante qui contient déjà le lot, poussé avant
++    sa revue, n'y laisse rien : il se mesure alors depuis l'ancêtre commun
++    de HEAD et de la branche par défaut. Si celui-ci le contient aussi, ou
++    qu'il n'y en a pas, la base reste, et la note dit pourquoi le dossier
++    est vide, et quoi lancer. Une branche distante qui porte déjà des
++    commits du lot, ou d'un lot d'avant, le dit aussi."""
++    racine = projet.racine
++    base = base_du_lot(racine)
++    amont = _amont(racine)
++    if not base or base != amont:
+         return base, None
+-    defaut = outils.branche_par_defaut(projet.racine) or base
+-    commun = outils.base_de_travail(projet.racine)
+-    if commun and not contient_le_lot(projet, commun, depuis):
++    defaut = outils.branche_par_defaut(racine) or base
++    devinee = outils.branche_par_defaut_devinee(racine)
++    commun = None if devinee else outils.base_de_travail(racine)
++    seconde = f" --since {depuis}" if depuis else ""
++    if not contient_le_lot(projet, base, depuis):
++        n = _commits_hors_memoire(projet, commun, _debut(racine, base)) if commun else 0
++        if not n:
++            return base, None
++        return base, trad("(la branche distante {amont} porte déjà {n} commit(s) hors de la mémoire depuis {commun}, "
++                          "l'ancêtre commun de HEAD et de {defaut}, que ce dossier ne montre pas : si le lot en "
++                          "comprend, `socle review --base <le commit d'avant le lot>{seconde}`)",
++                          amont=base, n=n, commun=commun, defaut=defaut, seconde=seconde)
++    if devinee:
++        return base, trad("(la branche distante {amont} contient déjà le lot, et ce clone ne connaît pas la branche "
++                          "par défaut : ni `origin/HEAD`, ni `main`, ni `master`. Un lot déjà poussé se relit depuis "
++                          "le commit d'avant lui : `socle review --base <ce commit>{seconde}`)",
++                          amont=base, seconde=seconde)
++    if not commun:
++        return base, trad("(la branche distante {amont} contient déjà le lot, et HEAD n'a pas d'ancêtre commun avec la "
++                          "branche par défaut {defaut} dans ce clone, superficiel peut-être (`git fetch --unshallow`). "
++                          "Un lot déjà poussé se relit depuis le commit d'avant lui : `socle review --base <ce "
++                          "commit>{seconde}`)", amont=base, defaut=defaut, seconde=seconde)
++    if not contient_le_lot(projet, commun, depuis):
+         return commun, trad("(la branche distante {amont} contient déjà le lot : il se mesure depuis {commun}, "
+-                            "l'ancêtre commun de HEAD et de {defaut} ; s'il commence plus tard, `socle review "
+-                            "--base <le commit d'avant le lot>`)", amont=base, commun=commun, defaut=defaut)
++                            "l'ancêtre commun de HEAD et de {defaut}, sur {n} commit(s) hors de la mémoire ; s'il "
++                            "commence plus tard, `socle review --base <le commit d'avant le lot>{seconde}`)",
++                            amont=base, commun=commun, defaut=defaut, seconde=seconde,
++                            n=_commits_hors_memoire(projet, commun, "HEAD"))
+     return base, trad("(la branche distante {amont} contient déjà le lot, et la branche par défaut {defaut} aussi : "
+                       "rien à relire depuis elles. Un lot déjà poussé se relit depuis le commit d'avant lui : "
+-                      "`socle review --base <ce commit>`)", amont=base, defaut=defaut)
++                      "`socle review --base <ce commit>{seconde}`)", amont=base, defaut=defaut, seconde=seconde)
+ 
+ 
+ def _diff(projet: config.Projet, base: str) -> tuple[str, list[str]]:
+-    """Le diff du lot contre `base`, l'arbre compris, la mémoire mise à part :
+-    elle se donne par ses sujets, plus bas."""
+-    exclure = f":(exclude){projet.chemins.memoire}"
+-    diff = outils.git(projet.racine, "diff", base, "--", ".", exclure, check=False)
+-    fichiers = outils.git(projet.racine, "diff", "--name-only", base, "--", ".", exclure, check=False).split()
++    """Le diff du lot depuis l'ancêtre commun de `base` et de HEAD
++    (ADR-0081), l'arbre compris, la mémoire mise à part : elle se donne par
++    ses sujets, plus bas."""
++    debut = _debut(projet.racine, base)
++    diff = outils.git(projet.racine, "diff", debut, *_hors_memoire(projet), check=False)
++    fichiers = outils.git(projet.racine, "diff", "--name-only", debut, *_hors_memoire(projet), check=False).split()
+     return diff, fichiers
+ 
+ 
+@@ -87,21 +154,27 @@ def sujets_fermes(projet: config.Projet, base: str) -> list:
+ 
+ 
+ def sujets_du_lot(projet: config.Projet, base: str) -> tuple[list, list]:
+-    """Les sujets du backlog que le lot touche, quel que soit leur statut
+-    (ADR-0073) : ceux qu'il sert, qui existaient à sa base ou qu'il clôt,
+-    dont le « Fait quand » est la barre du relecteur ; puis ceux qu'il ouvre
+-    sans les clore, ce qu'il renvoie au backlog."""
+-    touches = set(outils.git(projet.racine, "diff", "--name-only", base, "--", projet.chemins.backlog,
++    """Les sujets du backlog que le lot touche (ADR-0073), mesurés depuis
++    l'ancêtre commun de `base` et de HEAD (ADR-0081) : ceux qu'il sert,
++    dont le « Fait quand » est la barre du relecteur, qui existaient à son
++    début et dont il change le statut ou le « Fait quand », ou qu'il ouvre
++    et clôt ; puis ceux qu'il ouvre sans les clore, ce qu'il renvoie au
++    backlog. Un sujet dont il ne change que le reste (un `après`, un
++    constat ajouté, sa place parmi les clos) n'est ni l'un ni l'autre."""
++    debut = _debut(projet.racine, base)
++    touches = set(outils.git(projet.racine, "diff", "--name-only", debut, "--", projet.chemins.backlog,
+                              check=False).split())
+-    a_la_base = outils.git(projet.racine, "ls-tree", "-r", "--name-only", base, "--", projet.chemins.backlog,
+-                           check=False).split()
+-    existants = {m.group(1) for nom in a_la_base if (m := re.match(r"(B-\d+)", Path(nom).name))}
++    avant = memoire.Memoire.charger(projet.racine, debut)
+     mem = memoire.Memoire.charger(projet.racine)
+     servis, ouverts = [], []
+     for e in mem.entrees("B"):
+         if e.fichier not in touches or memoire.est_prive(e.fichier):
+             continue
+-        (servis if e.id in existants or e.statut in memoire.BACKLOG_CLOS else ouverts).append(e)
++        ancien = avant.entree(e.id)
++        if ancien is None:
++            (servis if e.statut in memoire.BACKLOG_CLOS else ouverts).append(e)
++        elif e.statut != ancien.statut or memoire.criteres(e) != memoire.criteres(ancien):
++            servis.append(e)
+     return servis, ouverts
+ 
+ 
+@@ -126,9 +199,10 @@ def messages_depuis(racine, depuis: str) -> list[str]:
+ def decisions_ecrites(projet: config.Projet, base: str) -> list:
+     """Les décisions et les demandes que le lot ajoute à la mémoire : la
+     spécification ou le modèle de menace écrits avant son code, que ses
+-    sujets, plus anciens, ne citent pas (ADR-0073)."""
+-    ajoutes = set(outils.git(projet.racine, "diff", "--name-only", "--diff-filter=A", base, "--",
+-                             projet.chemins.memoire, check=False).split())
++    sujets, plus anciens, ne citent pas (ADR-0073), depuis l'ancêtre commun
++    de `base` et de HEAD (ADR-0081)."""
++    ajoutes = set(outils.git(projet.racine, "diff", "--name-only", "--diff-filter=A", _debut(projet.racine, base),
++                             "--", projet.chemins.memoire, check=False).split())
+     mem = memoire.Memoire.charger(projet.racine)
+     return [e for e in mem.entrees() if e.fichier in ajoutes and e.id.startswith(("ADR-", "D-"))
+             and not memoire.est_prive(e.fichier)]
+@@ -210,7 +284,12 @@ def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFO
+     et celles qu'ils citent (ADR-0073). Avec `depuis`, le dossier d'une seconde revue : le
+     diff depuis ce commit, les messages de ses commits, et toujours les
+     sujets du lot entier, depuis `base`. Sans `base`, celle de
+-    `base_par_defaut` (ADR-0075)."""
++    `base_par_defaut` (ADR-0075). Le lot se mesure depuis l'ancêtre commun
++    de la base et de HEAD ; une référence qui ne le mesure pas lève
++    `ReferenceRefusee` (ADR-0081)."""
++    refus = refus_des_references(projet, base, depuis)
++    if refus:
++        raise ReferenceRefusee(refus)
+     note = None
+     if not base:
+         base, note = base_par_defaut(projet, depuis)
+@@ -219,6 +298,16 @@ def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFO
+     if not base:
+         lignes.append(trad("(aucune base connue : ni branche distante, ni branche par défaut ; rien à relire)"))
+         return "\n".join(lignes) + "\n"
++    debut = debut_du_lot(projet.racine, base)
++    if not debut:
++        raise ReferenceRefusee(trad("aucun ancêtre commun entre HEAD et {base} dans ce clone : rien ne mesure le lot. "
++                                    "Un clone superficiel s'approfondit par `git fetch --unshallow` ; sinon, `socle "
++                                    "review --base <le commit d'avant le lot>`", base=base))
++    # La base elle-même quand elle est l'ancêtre commun : son nom se lit
++    # mieux que son SHA.
++    tel_quel = outils.git(projet.racine, "rev-parse", "--verify", "-q", f"{base}^{{commit}}",
++                          check=False).strip() == debut
++    origine = base if tel_quel else debut
+     if note:
+         lignes += [note, ""]
+     if depuis:
+@@ -229,8 +318,12 @@ def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFO
+         lignes += [trad("## Le diff de la correction ({n} fichier(s), depuis {base})", n=len(fichiers),
+                         base=depuis), ""]
+     else:
+-        diff, fichiers = _diff(projet, base)
+-        lignes += [trad("## Le diff du lot ({n} fichier(s), depuis {base})", n=len(fichiers), base=base), ""]
++        diff, fichiers = _diff(projet, debut)
++        if tel_quel:
++            lignes += [trad("## Le diff du lot ({n} fichier(s), depuis {base})", n=len(fichiers), base=base), ""]
++        else:
++            lignes += [trad("## Le diff du lot ({n} fichier(s), depuis {commun}, l'ancêtre commun de HEAD et de "
++                            "{base})", n=len(fichiers), commun=debut, base=base), ""]
+     if not diff.strip():
+         lignes.append(trad("(aucun changement hors de la mémoire : rien à relire)"))
+     else:
+@@ -238,8 +331,8 @@ def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFO
+         lignes += ["```diff", montre.rstrip("\n"), "```"]
+         if len(montre) < len(diff):
+             lignes.append(trad("(diff tronqué : {n} caractère(s) de plus non montrés ; `git diff {base}` les "
+-                               "donne)", n=len(diff) - len(montre), base=depuis or base))
+-    servis, ouverts = sujets_du_lot(projet, base)
++                               "donne)", n=len(diff) - len(montre), base=depuis or origine))
++    servis, ouverts = sujets_du_lot(projet, debut)
+     if servis:
+         lignes += ["", trad("## Les sujets du lot : leur critère « Fait quand » est ta barre"), ""]
+         for s in servis:
+@@ -247,7 +340,7 @@ def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFO
+     if ouverts:
+         lignes += ["", trad("## Les sujets que le lot ouvre : ce qu'il renvoie au backlog"), ""]
+         lignes += [f"- {s.id} — {s.titre}" for s in ouverts]
+-    ecrites = decisions_ecrites(projet, base)
++    ecrites = decisions_ecrites(projet, debut)
+     if ecrites:
+         lignes += ["", trad("## Les décisions et les demandes que le lot écrit"), ""]
+         for e in ecrites:
+diff --git a/engine/socle/templates/skills/socle-review/SKILL.en.md b/engine/socle/templates/skills/socle-review/SKILL.en.md
+index ee81221..d56f9ad 100644
+--- a/engine/socle/templates/skills/socle-review/SKILL.en.md
++++ b/engine/socle/templates/skills/socle-review/SKILL.en.md
+@@ -32,14 +32,20 @@ through; a topic whose design is not settled, its specification.
+ python3 .socle/socle review
+ ```
+ 
+-   It gives the instruction, the batch's diff since the remote branch
+-   (otherwise the default branch; if the remote branch already contains
+-   the batch, pushed before its review, since the common ancestor with
+-   the default branch, and it says so), the topics the batch touches, in
++   It gives the instruction, the batch's diff since the common ancestor
++   of HEAD and its base, the remote branch (otherwise the default
++   branch; if the remote branch already contains the batch, pushed before
++   its review, the common ancestor with the default branch, and it says
++   so), the topics whose status or “Done when” the batch changes, in
+    full, those it opens by their title, and the decisions they cite.
+    `--base <ref>` changes the batch's base; for a second review,
+    `--since <reviewed commit>` shows only the diff since the first
+-   review's commit, with the messages of the commits that fix it.
++   review's commit, with the messages of the commits that fix it. An
++   unknown reference, or a `--since` that is not an ancestor of HEAD, is
++   refused. A batch already pushed in whole or in part (a cloud session
++   pushes at the end of each turn), or a branch that carries batches
++   already reviewed, which the brief's note points out: `--base <the
++   commit before the batch>`, the head the batch started from.
+ 3. Hand it to a reviewer who does not have the conversation. Under
+    Claude Code: a subagent (the `Agent` tool), of the session's model,
+    whose only message is this brief, as is: nothing is added to it,
+diff --git a/engine/socle/templates/skills/socle-review/SKILL.md b/engine/socle/templates/skills/socle-review/SKILL.md
+index c37c514..79d345e 100644
+--- a/engine/socle/templates/skills/socle-review/SKILL.md
++++ b/engine/socle/templates/skills/socle-review/SKILL.md
+@@ -33,14 +33,20 @@ dont la conception n'est pas tranchée, sa spécification.
+ python3 .socle/socle review
+ ```
+ 
+-   Il donne la consigne, le diff du lot depuis la branche distante (sinon
+-   la branche par défaut ; si la branche distante contient déjà le lot,
+-   poussé avant sa revue, depuis l'ancêtre commun avec la branche par
+-   défaut, et il le dit), les sujets que le lot touche, en entier, ceux
++   Il donne la consigne, le diff du lot depuis l'ancêtre commun de HEAD
++   et de sa base, la branche distante (sinon la branche par défaut ; si
++   la branche distante contient déjà le lot, poussé avant sa revue,
++   l'ancêtre commun avec la branche par défaut, et il le dit), les sujets
++   dont le lot change le statut ou le « Fait quand », en entier, ceux
+    qu'il ouvre par leur titre, et les décisions qu'ils citent.
+    `--base <ref>` change la base du lot ; pour une seconde revue,
+    `--since <commit relu>` ne montre que le diff depuis le commit de la
+-   première, avec les messages des commits qui le corrigent.
++   première, avec les messages des commits qui le corrigent. Une
++   référence inconnue, ou un `--since` qui n'est pas un ancêtre de HEAD,
++   est refusée. Un lot déjà poussé en tout ou en partie (une session
++   cloud pousse à chaque fin de tour), ou une branche qui porte des lots
++   déjà relus, que la note du dossier signale : `--base <le commit d'avant
++   le lot>`, la tête d'où le lot est parti.
+ 3. Le confier à un relecteur qui n'a pas la conversation. Sous Claude
+    Code : un sous-agent (outil `Agent`), du modèle de la session, dont le
+    seul message est ce dossier, tel quel : rien ne s'y ajoute, rien ne s'en
+diff --git a/memory/active.md b/memory/active.md
+index 75ef331..66db5cc 100644
+--- a/memory/active.md
++++ b/memory/active.md
+@@ -5,7 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
+ 
+ ## En cours
+ 
+-Lot 5 (B-0223) : B-0213, puis B-0214, avec la règle 1 de D-0112.
++Lot 5 (B-0223) : B-0213 fait (J-2026-11-15-G), puis B-0214, avec la
++règle 1 de D-0112.
+ D-0115 validée, la copie protégée de `socle-batch` posée
+ (J-2026-11-15-F). B-0179 bloqué jusqu'à la reprise du pilote, en pause
+ (J-2026-11-15-A).
+diff --git a/memory/backlog/B-0213-le-dossier-de-la-revue-compare-a-la-base-et-non-a.md b/memory/backlog/closed/B-0213-le-dossier-de-la-revue-compare-a-la-base-et-non-a.md
+similarity index 77%
+rename from memory/backlog/B-0213-le-dossier-de-la-revue-compare-a-la-base-et-non-a.md
+rename to memory/backlog/closed/B-0213-le-dossier-de-la-revue-compare-a-la-base-et-non-a.md
+index 0afe027..764d635 100644
+--- a/memory/backlog/B-0213-le-dossier-de-la-revue-compare-a-la-base-et-non-a.md
++++ b/memory/backlog/closed/B-0213-le-dossier-de-la-revue-compare-a-la-base-et-non-a.md
+@@ -1,7 +1,7 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # B-0213 — Le dossier de la revue compare à la base et non à l'ancêtre commun, accepte un --since inconnu ou étranger, et donne pour barre des sujets touchés en passant
+ 
+-> statut : ouvert · origine : J-2026-11-14-A · lu : backlog@c15dd9a2
++> statut : fait · origine : J-2026-11-14-A · lu : backlog@c15dd9a2 · ref : J-2026-11-15-G
+ 
+ La revue de B-0209 (J-2026-11-14-A), constats 1, 2 et 4, de même nature :
+ la plage que juge le dossier de `socle review`.
+@@ -43,8 +43,16 @@ jugés par la même règle quand le sujet se traite : ce qui ne peut se
+ produire dans l'usage normal et dont l'effet se voit s'écarte d'une
+ raison.
+ 
++Traité le 15 novembre (J-2026-11-15-G), selon ADR-0081 : tous les cas
++restants, chacun montré par un test. Pour les lots poussés qui
++s'accumulent, la note dit sur combien de commits porte la mesure, et le
++skill `socle-review` dit de donner `--base <le commit d'avant le lot>` ;
++`<amont>@{1}` n'est pas proposé, parce qu'un fetch le déplace aussi et
++qu'un lot poussé en plusieurs fins de tour le ferait commencer au milieu
++du lot, une relecture partielle que rien ne rattrape.
++
+ ## Fait quand
+ 
+-- [ ] le dossier mesure le lot depuis l'ancêtre commun, refuse une référence inconnue ou qui n'est pas un ancêtre, et un test le montre
+-- [ ] un sujet touché sans que son « Fait quand » ou son statut change n'est pas donné comme barre, et un test le montre
+-- [ ] les cas restants relevés par la revue de B-0212 sont traités, ou écartés d'une raison, et un test montre chaque cas traité
++- [x] le dossier mesure le lot depuis l'ancêtre commun, refuse une référence inconnue ou qui n'est pas un ancêtre, et un test le montre
++- [x] un sujet touché sans que son « Fait quand » ou son statut change n'est pas donné comme barre, et un test le montre
++- [x] les cas restants relevés par la revue de B-0212 sont traités, ou écartés d'une raison, et un test montre chaque cas traité
+diff --git a/memory/decisions/ADR-0081-le-dossier-de-la-revue-mesure-le-lot-depuis-l-ance.md b/memory/decisions/ADR-0081-le-dossier-de-la-revue-mesure-le-lot-depuis-l-ance.md
+new file mode 100644
+index 0000000..afd9eee
+--- /dev/null
++++ b/memory/decisions/ADR-0081-le-dossier-de-la-revue-mesure-le-lot-depuis-l-ance.md
+@@ -0,0 +1,89 @@
++<!-- socle: couche=decisions zone=publique -->
++# ADR-0081 — Le dossier de la revue mesure le lot depuis l'ancêtre commun de sa base et de HEAD, refuse une référence qu'il ne peut mesurer, et ne prend pour barre que les sujets dont le lot change le statut ou le « Fait quand »
++
++> statut : acceptée · date : 2026-11-15 · source : B-0213@8d5cff54, ADR-0075@831cdb1a, ADR-0073@1e48220c, ADR-0042@c8fe8e02, D-0111@034d5e87 · lu : decisions@c07371eb
++
++## Contexte
++
++Le dossier de `socle review` compare l'arbre à sa base par `git diff
++<base>` (ADR-0042@c8fe8e02). Quand la base a avancé sans la branche (la
++branche par défaut a reçu d'autres fusions, la branche distante un commit
++poussé d'ailleurs), ses changements entrent dans le lot, à l'envers, et
++les sujets qu'elle seule a touchés deviennent la barre du relecteur.
++ADR-0075@831cdb1a n'a pris l'ancêtre commun que pour le lot déjà poussé,
++et renvoie le cas général à B-0213@8d5cff54. Le même sujet relève qu'une
++référence inconnue donne « rien à relire », code 0 ; qu'un `--since` qui
++n'est pas un ancêtre de HEAD montre des changements étrangers ; qu'un
++sujet touché en passant (un `après` changé, un constat ajouté, un sujet
++clos rangé par `socle archive`) est donné en entier comme barre ; et, de
++la revue de B-0212@11c126ca, des notes fausses ou muettes. Cette
++décision est la spécification de B-0213, écrite avant son code.
++
++## Décision
++
++**La mesure.** Le lot se mesure depuis l'ancêtre commun de sa base et de
++HEAD, quelle que soit la base : la branche distante, la branche par
++défaut, l'ancêtre commun d'ADR-0075@831cdb1a ou un `--base` donné. Le
++diff (l'arbre compris, la mémoire mise à part), les sujets et les
++décisions que le lot écrit en partent. Quand cet ancêtre n'est pas la
++base elle-même, le titre du diff le dit. Une branche distante qui a
++reçu d'ailleurs un commit que HEAD n'a pas n'entre donc plus dans le
++lot, ni à l'endroit ni à l'envers ; et elle contient le lot dès que rien
++de HEAD et de l'arbre ne manque, hors de la mémoire, depuis cet ancêtre.
++
++**Les refus.** `socle review` refuse, code 2, le message sur la sortie
++d'erreur : un `--base` ou un `--since` que le dépôt ne connaît pas ; un
++`--since` qui n'est pas un ancêtre de HEAD (il désigne le commit relu
++par la première revue, que la branche contient) ; une base sans ancêtre
++commun avec HEAD (un clone superficiel, une autre histoire). Un `--base`
++qui n'est pas un ancêtre de HEAD reste admis : il se mesure depuis
++l'ancêtre commun, c'est le cas de la branche par défaut qui a avancé.
++
++**La barre.** Un sujet que le lot touche n'est donné en entier, comme
++barre, que si le lot change son statut ou son « Fait quand », ses cases
++ou leur texte, depuis l'ancêtre commun, ou s'il est nouveau et clos ; un
++sujet nouveau encore ouvert garde son titre seul (ADR-0073@1e48220c). Un
++sujet dont le lot ne change que le reste, ses métadonnées (un `après`),
++sa description, ou sa place (`socle archive`), n'est pas dans le
++dossier : ce n'est pas ce que le lot prétend faire.
++
++**Les notes.** Sans `--base`, le dossier dit ce qu'il ne montre pas :
++- la branche distante porte déjà des commits hors de la mémoire depuis
++  l'ancêtre commun de HEAD et de la branche par défaut (un lot poussé en
++  partie, ou des lots qui précèdent) : combien, et la commande pour un
++  lot qui commence plus tôt ;
++- la branche distante contient déjà le lot (ADR-0075@831cdb1a) : sur
++  combien de commits porte la mesure depuis l'ancêtre commun ; ou, s'il
++  n'y en a pas, la vraie raison : la branche par défaut n'est que
++  devinée, HEAD n'a pas d'ancêtre commun avec elle dans ce clone, ou
++  elle contient aussi le lot ;
++- sous `--since`, la commande qu'elle propose garde `--since`.
++
++La branche distante d'avant le dernier push (`<amont>@{1}`) n'est pas
++proposée comme base : un fetch la déplace aussi, et un lot poussé en
++plusieurs fois, une fin de tour chacune en session cloud, la ferait
++commencer au milieu du lot. Ce serait une relecture partielle que rien
++ne rattrape, pire que la relecture de trop qu'elle éviterait ; la note
++et le skill `socle-review` disent de donner `--base <le commit d'avant
++le lot>`, que l'agent connaît : la tête d'où le lot est parti.
++
++**Le rapport aux décisions d'avant.** Cette décision complète
++ADR-0075@831cdb1a, qui reste acceptée : sans `--base`, la base est
++toujours choisie comme elle le dit, et un `--base` donné reste la base,
++sans repli sur l'ancêtre commun avec la branche par défaut ; elle se
++mesure seulement, comme toute base, depuis son ancêtre commun avec HEAD.
++Elle précise « les sujets que le lot touche » d'ADR-0073@1e48220c.
++Restent écartés, sur la décision de Théo (D-0111@034d5e87) : le lot de
++mémoire seule, que la revue ne relit pas, et le `--since` posé sur la
++branche par défaut.
++
++## Conséquences
++
++Le diff, les sujets et les décisions du dossier sont ceux du lot, même
++quand sa base a avancé ; une faute de frappe dans une option se voit
++aussitôt, au lieu d'un dossier vide qu'un relecteur jugeait sans constat.
++Un sujet dont le lot ne change que le texte ou l'ordre ne fait plus la
++barre : un lot qui avance un sujet sans en cocher de case ni en changer
++le statut ne le donne plus à juger. La mesure coûte une lecture de la
++mémoire à l'ancêtre commun. Se défait en revenant à `git diff <base>`
++et à la seule liste des fichiers touchés dans `engine/socle/review.py`.
+diff --git a/memory/journal/2026-11-5.md b/memory/journal/2026-11-5.md
+index a6a107e..e914bd3 100644
+--- a/memory/journal/2026-11-5.md
++++ b/memory/journal/2026-11-5.md
+@@ -129,3 +129,60 @@ qu'il contient : B-0227, de nouveau. Elles restent hors de ce commit, et
+ se remettent après lui, la réponse dans `HEAD`.
+ 
+ Ensuite, le lot 5 (B-0223).
++
++## J-2026-11-15-G — B-0213 fait : le dossier de la revue mesure le lot depuis l'ancêtre commun de sa base et de HEAD, refuse une référence qu'il ne peut mesurer, et ne prend pour barre que les sujets dont le lot change le statut ou le « Fait quand » (ADR-0081)
++
++> ref : B-0213, ADR-0081, ADR-0075, ADR-0073, D-0111, B-0223
++
++Le premier sujet du lot 5 (B-0223), par un sous-agent. Sa spécification,
++ADR-0081, écrite avant le code, complète ADR-0075, qui reste acceptée :
++sans `--base`, la base se choisit toujours comme elle le dit ; toute base
++se mesure désormais depuis son ancêtre commun avec HEAD. Le code est
++`engine/socle/review.py` et `cmd_review` ; treize tests nouveaux dans
++`tests/test_revue.py`, dont douze échouent sur le commit parent, chacun
++sur l'assertion du comportement qu'il vise ; le treizième garde la
++précision d'une note (un commit de mémoire seule déjà poussé n'en fait
++pas). Aucune valeur attendue d'un test existant n'a changé.
++
++Traités, de la revue de B-0209 (constats 1, 2 et 4) :
++
++- la mesure depuis l'ancêtre commun : la branche par défaut qui avance
++  n'apporte plus au lot ni son code ni le sujet qu'elle seule clôt ;
++- la barre : un sujet n'y est que si le lot change son statut ou son
++  « Fait quand » ; un `après` changé, un constat ajouté, un sujet clos
++  rangé dans `closed/` n'y sont plus ;
++- les refus, code 2 : un `--base` ou un `--since` inconnus, un `--since`
++  qui n'est pas un ancêtre de HEAD, une base sans ancêtre commun avec
++  lui ; un `--base` qui a avancé reste admis, mesuré depuis l'ancêtre
++  commun.
++
++Traités, de la revue de B-0212 (constats 1 à 6 et 9) :
++
++- la branche distante en avance par un commit poussé d'ailleurs : il
++  n'entre plus dans le lot, ni à l'envers ;
++- le lot poussé en partie : la note dit combien de commits hors de la
++  mémoire la branche distante porte déjà depuis l'ancêtre commun avec la
++  branche par défaut, et la commande ;
++- le clone superficiel et la branche par défaut devinée : chacun sa note,
++  la vraie raison ; sous `--since`, la commande d'une note garde
++  `--since` ;
++- les lots poussés qui s'accumulent : la note dit sur combien de commits
++  porte la mesure, et le skill `socle-review` dit de donner
++  `--base <le commit d'avant le lot>`, la tête d'où le lot est parti.
++  `<amont>@{1}` n'est pas proposé : un fetch le déplace aussi, et un lot
++  poussé en plusieurs fins de tour le ferait commencer au milieu du lot,
++  une relecture partielle que rien ne rattrape.
++
++Écartés, sur la décision de Théo du 14 novembre (D-0111), déjà dans le
++sujet : le lot de mémoire seule pas encore poussé (la revue ne relit pas
++la mémoire, et un tel lot n'en a pas) et le `--since` posé sur la
++branche par défaut (un geste qu'on ne fait pas : le commit relu est sur
++la branche de travail, et le dossier montre aussitôt qu'il n'a pas de
++sujets).
++
++`sujets_du_lot` garde sa forme, un couple : la liste des sujets qui font
++la barre, puis celle des sujets que le lot ouvre sans les clore. La ligne
++de `review.py` dans `docs/fabrication/architecture.md` nomme désormais
++ces sujets ainsi, ce que B-0214 relevait pour ce fichier. Le skill
++`socle-review` change dans son gabarit, en français et en anglais ; sa
++copie protégée suit avec B-0218. Notes de version : 2026-11-15-b.
+diff --git a/tests/test_revue.py b/tests/test_revue.py
+index 0f01c5e..5a5bad9 100644
+--- a/tests/test_revue.py
++++ b/tests/test_revue.py
+@@ -8,7 +8,7 @@ import tempfile
+ import unittest
+ from pathlib import Path
+ 
+-from socle import config, review as revue
++from socle import config, review as revue, utils as outils
+ 
+ 
+ def git(cwd, *args):
+@@ -23,6 +23,22 @@ SUJET = ("<!-- socle: couche=backlog zone=publique -->\n# B-0001 — Doubler\n\n
+          "> statut : {statut} · origine : ADR-0001\n\nSelon ADR-0001.\n\n## Fait quand\n\n- [x] double est écrit\n")
+ 
+ 
++def commande(racine, **options):
++    """`socle review` lancé sur `racine` : son code, sa sortie, ses erreurs."""
++    import argparse
++    import contextlib
++    import io
++
++    from socle import cli
++
++    args = argparse.Namespace(root=str(racine), base=None, max_bytes=60_000, since=None)
++    for cle, valeur in options.items():
++        setattr(args, cle, valeur)
++    with contextlib.redirect_stdout(io.StringIO()) as out, contextlib.redirect_stderr(io.StringIO()) as err:
++        code = cli.cmd_review(args)
++    return code, out.getvalue(), err.getvalue()
++
++
+ class _Lot(unittest.TestCase):
+     """Un dépôt cloné, sa branche de travail, et un lot à y faire."""
+ 
+@@ -168,6 +184,39 @@ class TestBarre(_Lot):
+         servis, ouverts = revue.sujets_du_lot(self.projet, "origin/main")
+         self.assertEqual(([e.id for e in servis], ouverts), (["B-0001", "B-0002"], []))
+ 
++    VOISIN = ("<!-- socle: couche=backlog zone=publique -->\n# B-0002 — Un voisin\n\n"
++              "> statut : ouvert · origine : ADR-0001\n\nLe voisin.\n\n## Fait quand\n\n- [ ] le voisin est fait\n")
++    ANCIEN = ("<!-- socle: couche=backlog zone=publique -->\n# B-0004 — Un ancien\n\n"
++              "> statut : fait · origine : ADR-0001 · ref : x\n\nL'ancien.\n\n## Fait quand\n\n- [x] l'ancien\n")
++
++    def test_un_sujet_touche_en_passant_n_est_pas_la_barre(self):
++        """B-0213, ADR-0081 : un `après` changé, un constat ajouté, un sujet
++        clos rangé par `socle archive` ne font pas la barre du relecteur."""
++        backlog = self.racine / "memory/backlog"
++        (backlog / "B-0002-voisin.md").write_text(self.VOISIN, encoding="utf-8")
++        (backlog / "B-0004-ancien.md").write_text(self.ANCIEN, encoding="utf-8")
++        git(self.racine, "add", "-A")
++        git(self.racine, "commit", "-qm", "deux sujets")
++        git(self.racine, "push", "-q", "-u", "origin", "travail")
++        self.lot()
++        (backlog / "B-0002-voisin.md").write_text(
++            self.VOISIN.replace("origine : ADR-0001", "origine : ADR-0001 · après : B-0001")
++            .replace("Le voisin.", "Le voisin.\n\nUn constat ajouté par une revue."), encoding="utf-8")
++        (backlog / "closed").mkdir()
++        git(self.racine, "mv", "memory/backlog/B-0004-ancien.md", "memory/backlog/closed/B-0004-ancien.md")
++        git(self.racine, "commit", "-qam", "en passant")
++        texte = revue.dossier(self.projet)
++        self.assertNotIn("# B-0002 — Un voisin", texte)
++        self.assertNotIn("# B-0004 — Un ancien", texte)
++        self.assertIn("- [x] double est écrit", texte)
++        servis, ouverts = revue.sujets_du_lot(self.projet, "origin/travail")
++        self.assertEqual(([e.id for e in servis], ouverts), (["B-0001"], []))
++        # Une case cochée, ou un statut changé, le remettent dans la barre.
++        (backlog / "B-0002-voisin.md").write_text(self.VOISIN.replace("- [ ] le voisin", "- [x] le voisin"),
++                                                  encoding="utf-8")
++        self.assertEqual([e.id for e in revue.sujets_du_lot(self.projet, "origin/travail")[0]],
++                         ["B-0001", "B-0002"])
++
+     def test_la_seconde_revue_ne_montre_que_la_correction_et_garde_les_sujets_du_lot(self):
+         self.lot()
+         relu = git(self.racine, "rev-parse", "HEAD").strip()
+@@ -309,6 +358,210 @@ class TestLotDejaPousse(_Lot):
+         self.assertIn("+    return x * 2", revue.dossier(self.projet, self.commun))
+ 
+ 
++    def test_un_lot_pousse_en_partie_le_dit(self):
++        """La revue de B-0212 : un lot poussé à moitié ne montrait que sa
++        partie non poussée, sans le dire."""
++        (self.racine / "calc.py").write_text("def double(x):\n    return x * 2\n")
++        git(self.racine, "commit", "-qam", "la première moitié")
++        git(self.racine, "push", "-q", "-u", "origin", "travail")
++        (self.racine / "calc.py").write_text("def double(x):\n    return 2 * x\n")
++        git(self.racine, "commit", "-qam", "la seconde moitié")
++        texte = revue.dossier(self.projet)
++        note = (f"(la branche distante origin/travail porte déjà 1 commit(s) hors de la mémoire depuis {self.commun}, "
++                "l'ancêtre commun de HEAD et de origin/main, que ce dossier ne montre pas : si le lot en comprend, "
++                "`socle review --base <le commit d'avant le lot>`)")
++        self.assertIn(note, texte)
++        self.assertEqual(revue.base_par_defaut(self.projet), ("origin/travail", note))
++        self.assertIn("## Le diff du lot (1 fichier(s), depuis origin/travail)", texte)
++
++    def test_un_commit_de_memoire_seule_deja_pousse_ne_fait_pas_de_note(self):
++        (self.racine / "memory/journal").mkdir(parents=True)
++        (self.racine / "memory/journal/2026-11-1.md").write_text("<!-- socle: couche=journal zone=publique -->\n",
++                                                               encoding="utf-8")
++        git(self.racine, "add", "-A")
++        git(self.racine, "commit", "-qm", "la mémoire seule")
++        git(self.racine, "push", "-q", "-u", "origin", "travail")
++        self.lot()
++        self.assertEqual(revue.base_par_defaut(self.projet), ("origin/travail", None))
++
++    def test_des_lots_deja_pousses_disent_sur_combien_de_commits_porte_la_mesure(self):
++        """La revue de B-0212 : des lots poussés qui s'accumulent se relisent
++        ensemble ; la note dit sur combien de commits, et comment réduire."""
++        self.lot()
++        git(self.racine, "push", "-q", "-u", "origin", "travail")
++        self.correction()
++        (self.racine / "memory/journal").mkdir(parents=True)
++        (self.racine / "memory/journal/2026-11-1.md").write_text("<!-- socle: couche=journal zone=publique -->\n",
++                                                               encoding="utf-8")
++        git(self.racine, "add", "-A")
++        git(self.racine, "commit", "-qm", "la mémoire seule")
++        git(self.racine, "push", "-q")
++        base, note = revue.base_par_defaut(self.projet)
++        self.assertEqual(base, self.commun)
++        self.assertIn(f"il se mesure depuis {self.commun}, l'ancêtre commun de HEAD et de origin/main, sur 2 "
++                      "commit(s) hors de la mémoire ; s'il commence plus tard, `socle review --base <le commit "
++                      "d'avant le lot>`)", note)
++
++    def test_sous_since_la_commande_de_la_note_garde_since(self):
++        """La revue de B-0212 : sous `--since`, la note proposait une
++        commande sans `--since`, qui donne une première revue."""
++        self.lot()
++        relu = git(self.racine, "rev-parse", "HEAD").strip()
++        git(self.racine, "push", "-q", "-u", "origin", "travail")
++        self.correction()
++        git(self.racine, "push", "-q")
++        texte = revue.dossier(self.projet, depuis=relu)
++        self.assertIn(f"`socle review --base <le commit d'avant le lot> --since {relu}`)", texte)
++        self.assertNotIn("`socle review --base <le commit d'avant le lot>`)", texte)
++
++    def test_une_branche_par_defaut_devinee_le_dit(self):
++        """La revue de B-0212 : quand la branche par défaut n'est que
++        devinée, la note disait qu'elle contient aussi le lot."""
++        self.lot()
++        git(self.racine, "push", "-q", "-u", "origin", "travail")
++        git(self.racine, "remote", "set-head", "origin", "-d")
++        git(self.racine, "update-ref", "-d", "refs/remotes/origin/main")
++        git(self.racine, "branch", "-q", "-D", "main")
++        base, note = revue.base_par_defaut(self.projet)
++        self.assertIn("(la branche distante origin/travail contient déjà le lot, et ce clone ne connaît pas la "
++                      "branche par défaut : ni `origin/HEAD`, ni `main`, ni `master`.", note)
++        self.assertNotIn("aussi", note)
++        self.assertEqual(base, "origin/travail")
++        self.assertTrue(outils.branche_par_defaut_devinee(self.racine))
++
++    def test_un_clone_superficiel_sans_ancetre_commun_le_dit(self):
++        """La revue de B-0212 : sans ancêtre commun, un clone superficiel,
++        la note disait que la branche par défaut contient aussi le lot ; une
++        base sans ancêtre commun avec HEAD est refusée (ADR-0081)."""
++        source = self.dossier / "source"
++        git(source, "switch", "-q", "-c", "travail")
++        (source / "calc.py").write_text("def double(x):\n    return x * 2\n")
++        git(source, "commit", "-qam", "le lot")
++        git(source, "switch", "-q", "main")
++        (source / "autre.py").write_text("AUTRE = 1\n")
++        git(source, "add", "-A")
++        git(source, "commit", "-qm", "main avance")
++        superficiel = self.dossier / "superficiel"
++        git(self.dossier, "clone", "-q", "--depth", "1", "--no-single-branch", source.as_uri(), str(superficiel))
++        git(superficiel, "switch", "-q", "travail")
++        projet = config.Projet(racine=superficiel)
++        base, note = revue.base_par_defaut(projet)
++        self.assertIn("(la branche distante origin/travail contient déjà le lot, et HEAD n'a pas d'ancêtre commun "
++                      "avec la branche par défaut origin/main dans ce clone, superficiel peut-être (`git fetch "
++                      "--unshallow`).", note)
++        self.assertEqual(base, "origin/travail")
++        code, out, err = commande(superficiel, base="origin/main")
++        self.assertEqual((code, out), (2, ""))
++        self.assertIn("aucun ancêtre commun entre HEAD et origin/main dans ce clone", err)
++
++
++class TestMesure(_Lot):
++    """B-0213, ADR-0081 : le lot se mesure depuis l'ancêtre commun de sa base
++    et de HEAD, et une référence qui ne le mesure pas est refusée."""
++
++    SUJET_DE_MAIN = ("<!-- socle: couche=backlog zone=publique -->\n# B-0005 — Un sujet de main\n\n"
++                     "> statut : {statut} · origine : ADR-0001\n\nSur main.\n\n## Fait quand\n\n- [{case}] fait\n")
++
++    def avancer_main(self):
++        """La branche par défaut avance sans la branche : du code, et un
++        sujet qu'elle seule clôt."""
++        source = self.dossier / "source"
++        (source / "autre.py").write_text("ECRIT_SUR_MAIN = 1\n")
++        (source / "memory/backlog/B-0005-de-main.md").write_text(
++            self.SUJET_DE_MAIN.format(statut="fait · ref : x", case="x"), encoding="utf-8")
++        git(source, "add", "-A")
++        git(source, "commit", "-qm", "main avance")
++        git(self.racine, "fetch", "-q", "origin")
++
++    def test_la_branche_par_defaut_qui_avance_n_entre_pas_dans_le_lot(self):
++        source = self.dossier / "source"
++        (source / "memory/backlog/B-0005-de-main.md").write_text(
++            self.SUJET_DE_MAIN.format(statut="ouvert", case=" "), encoding="utf-8")
++        git(source, "add", "-A")
++        git(source, "commit", "-qm", "un sujet de main")
++        git(self.racine, "fetch", "-q", "origin")
++        git(self.racine, "reset", "-q", "--hard", "origin/main")
++        commun = git(self.racine, "rev-parse", "HEAD").strip()
++        self.lot()
++        self.avancer_main()
++        texte = revue.dossier(self.projet)
++        self.assertNotIn("ECRIT_SUR_MAIN", texte)
++        self.assertNotIn("# B-0005 — Un sujet de main", texte)
++        self.assertIn("+    return x * 2", texte)
++        self.assertIn("- [x] double est écrit", texte)
++        self.assertIn(f"## Le diff du lot (1 fichier(s), depuis {commun}, l'ancêtre commun de HEAD et de "
++                      "origin/main)", texte)
++        self.assertEqual([e.id for e in revue.sujets_du_lot(self.projet, "origin/main")[0]], ["B-0001"])
++        self.assertEqual(revue.debut_du_lot(self.racine, "origin/main"), commun)
++
++    def test_un_commit_pousse_d_ailleurs_n_entre_pas_dans_le_lot(self):
++        """La revue de B-0212 : une branche distante en avance sur HEAD par
++        du code donnait pour diff du lot l'inverse du commit poussé
++        d'ailleurs."""
++        git(self.racine, "push", "-q", "-u", "origin", "travail")
++        commun = git(self.racine, "rev-parse", "HEAD").strip()
++        source = self.dossier / "source"
++        git(source, "switch", "-q", "travail")
++        (source / "ailleurs.py").write_text("ECRIT_AILLEURS = 1\n")
++        git(source, "add", "-A")
++        git(source, "commit", "-qm", "poussé d'ailleurs")
++        git(source, "switch", "-q", "main")
++        git(self.racine, "fetch", "-q", "origin")
++        # Rien du lot n'y manque encore : elle le contient.
++        self.assertTrue(revue.contient_le_lot(self.projet, "origin/travail"))
++        self.lot()
++        texte = revue.dossier(self.projet)
++        self.assertNotIn("ECRIT_AILLEURS", texte)
++        self.assertIn("+    return x * 2", texte)
++        self.assertIn(f"## Le diff du lot (1 fichier(s), depuis {commun}, l'ancêtre commun de HEAD et de "
++                      "origin/travail)", texte)
++        self.assertFalse(revue.contient_le_lot(self.projet, "origin/travail"))
++
++    def test_une_reference_inconnue_est_refusee(self):
++        self.lot()
++        for option in ("base", "since"):
++            code, out, err = commande(self.racine, **{option: "origin/inconnue"})
++            self.assertEqual((code, out), (2, ""), option)
++            self.assertIn(f"--{option} origin/inconnue : aucune branche, étiquette ni commit de ce nom dans ce "
++                          "dépôt", err)
++        with self.assertRaises(revue.ReferenceRefusee):
++            revue.dossier(self.projet, "origin/inconnue")
++        self.assertIsNone(revue.refus_des_references(self.projet, "origin/main", None))
++
++    def test_un_since_qui_n_est_pas_un_ancetre_de_head_est_refuse(self):
++        self.lot()
++        self.avancer_main()
++        etranger = git(self.racine, "rev-parse", "origin/main").strip()
++        code, out, err = commande(self.racine, since=etranger)
++        self.assertEqual((code, out), (2, ""))
++        self.assertIn(f"--since {etranger} n'est pas un ancêtre de HEAD", err)
++        relu = git(self.racine, "rev-parse", "HEAD").strip()
++        self.assertIsNone(revue.refus_des_references(self.projet, None, relu))
++        self.assertEqual(commande(self.racine, since=relu)[0], 0)
++
++    def test_une_base_qui_n_est_pas_un_ancetre_se_mesure_depuis_l_ancetre_commun(self):
++        """Une base qui a avancé reste admise : la branche par défaut après
++        d'autres fusions."""
++        self.lot()
++        self.avancer_main()
++        code, out, _ = commande(self.racine, base="origin/main")
++        self.assertEqual(code, 0)
++        self.assertIn("l'ancêtre commun de HEAD et de origin/main)", out)
++        self.assertNotIn("ECRIT_SUR_MAIN", out)
++
++    def test_une_base_sans_ancetre_commun_est_refusee(self):
++        self.lot()
++        git(self.racine, "switch", "-q", "--orphan", "orpheline")
++        (self.racine / "seul.txt").write_text("seul\n")
++        git(self.racine, "add", "seul.txt")
++        git(self.racine, "commit", "-qm", "une autre histoire")
++        git(self.racine, "switch", "-q", "-f", "travail")
++        code, out, err = commande(self.racine, base="orpheline")
++        self.assertEqual((code, out), (2, ""))
++        self.assertIn("aucun ancêtre commun entre HEAD et orpheline dans ce clone : rien ne mesure le lot", err)
++        self.assertIsNone(revue.debut_du_lot(self.racine, "orpheline"))
++
++
+ class TestRelectureAFroid(unittest.TestCase):
+     """ADR-0046 : le lecteur n'a que le texte de la demande, dans le rôle de
+     l'humain qui revient sur le projet après des semaines."""
+-- 
+2.43.0
+

@@ -29,8 +29,20 @@ parent par `AttributeError`, avant leur assertion de comportement ; le
 défaut qu'ils visent (les sujets de `--since` perdus quand tout est
 poussé) est réel, mais aucun test ne le prouve sur le parent.
 
+Le 15 novembre, Théo valide D-0116 (J-2026-11-15-H) : la consigne du
+relecteur suit la règle 1 de D-0112, et `sujets_fermes` se retire, les
+trois tests que D-0116 nomme changeant comme elle le dit ; sa réponse se
+consigne dans le push de ce changement. L'attente sur le titre disparu
+reste (D-0116 ne la retire plus). Le même jour, D-0117 : le relecteur
+reçoit, explicitement, le modèle le plus capable disponible jusqu'à
+Opus, jamais un moindre que celui qui a implémenté ; Fable seulement si
+l'humain le demande ; découplé du modèle de la session, que la règle du
+modèle de `socle-batch` peut faire moins coûteux.
+
 ## Fait quand
 
 - [ ] les textes de la revue disent ce que donne le dossier et où s'écrit le modèle de menace, d'une seule manière
 - [ ] les deux cas ont leur test, et `sujets_fermes` est retiré ou sert
 - [ ] la section du socle de l'AGENTS.md de ce dépôt suit son gabarit, sous son budget
+- [ ] le skill de revue du produit, en français et en anglais, donne au relecteur le modèle de D-0117, explicitement à son lancement, et un test le montre
+- [ ] la consigne du relecteur et les trois tests de D-0116 suivent D-0116, sa réponse consignée dans le même push

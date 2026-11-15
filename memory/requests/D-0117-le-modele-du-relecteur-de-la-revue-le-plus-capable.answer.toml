@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0117-le-modele-du-relecteur-de-la-revue-le-plus-capable.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-15"
+canal = "conversation"
+citation = "Pour le modele relecteur : oui modele le plus capable dispo jusqu'à Opus,\nSi fable est dispo on le met pas par defaut (jsp si c'était clair pour toi), sauf si l'humain le veut\n\nConsigne bien tout pour que ce soit fait, et quand tu seras prêt donne le prompt pour une nouvelle session"
+empreinte = "sha256:355bb779fb482a0f4de2cc050d163769af4d1da54914a1560629386244b9b70e"
