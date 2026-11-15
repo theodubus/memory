@@ -14,14 +14,18 @@ contains it, through programs other than `rm`, `mv`, `git clean` and
 `find`: the destination of an `rsync --delete` (and its variants,
 `--del`, `--delete-after`…), the sources of an `rsync
 --remove-source-files`, the path of a `git worktree remove` or a `git
-worktree move`, and the paths a `python -c` writes out in full for
-`shutil.rmtree`, `shutil.move`, `os.rename` or `os.replace`. A `find
--exec` of one of them counts as a `find -exec rm`. Until now, `rsync -a
---delete empty/ ..`, `git worktree remove .` run by a subagent in its
-worktree and `python3 -c "import shutil; shutil.rmtree('..')"` passed.
+worktree move`, also read the way git looks it up first, by the end of
+the path of one of its worktrees (`git worktree remove agent-x`, run in
+`.claude/worktrees/agent-x`), and the paths a `python -c` writes out in
+full for `shutil.rmtree`, `shutil.move`, `os.rename` or `os.replace`. A
+`find -exec` of one of them counts as a `find -exec rm`. Until now,
+`rsync -a --delete empty/ ..`, `git worktree remove .` run by a subagent
+in its worktree and `python3 -c "import shutil; shutil.rmtree('..')"`
+passed.
 The orchestrator, at the project root, still removes a subagent's
-worktree (`git worktree remove -f -f .claude/worktrees/agent-x`), and a
-directory of the project or next to it stays free.
+worktree (`git worktree remove -f -f .claude/worktrees/agent-x`, or
+`agent-x`), a subagent another one's, and a directory of the project or
+next to it stays free.
 
 To do: nothing. To empty a directory, target a directory of the project,
 or outside it a directory that does not contain it, its path written out

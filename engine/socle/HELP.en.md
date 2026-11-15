@@ -263,7 +263,9 @@ deletes from such a directory, the destination of an `rsync --delete`,
 the sources of an `rsync --remove-source-files`, the path of a `git
 worktree remove`, a `python3 -c` that passes it written out in full to
 `shutil.rmtree`), deleting the project itself by these other programs (a
-subagent removing its own worktree, `git worktree remove .`), and
+subagent removing its own worktree, `git worktree remove .`, or by the
+end of its path, which git looks up first among its worktrees: `git
+worktree remove agent-x`), and
 deleting the project by a `find` that starts from its root with no name
 or path filter guarding what it deletes (`find . -delete`, `find . -type
 f -delete`, `find . -delete -name '*.pyc'`, whose filter comes after the

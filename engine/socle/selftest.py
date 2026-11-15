@@ -1475,7 +1475,19 @@ def _cas() -> list[Cas]:
             f"git worktree remove -f -f {c}", f"cd .. && git worktree remove {c.name}",
             "python3 -c \"import shutil; shutil.rmtree('..')\"",
             f"python3 -I -c \"import shutil; shutil.rmtree('{c}')\"",
-            "find .. -maxdepth 0 -exec rsync -a --delete vide/ {} \\;")])
+            "find .. -maxdepth 0 -exec git worktree remove {} \\;")])
+
+    @defaut("worktree-par-son-suffixe", "worktree de l'agent retiré ou déplacé depuis lui par `git worktree remove` "
+            "ou `move` qui le nomme par la fin de son chemin (`agent-x`, `.claude/worktrees/agent-x`), que git "
+            "cherche parmi ses worktrees avant de le lire comme un chemin relatif", "agent", "suppression du projet")
+    def _(a, c):
+        # La revue du lot B-0234 (J-2026-11-15-O) : le hook ne lisait le
+        # worktree que comme un chemin relatif au dossier de la commande.
+        arbre = c / ".claude/worktrees/sous-agent"
+        a.git(c, "worktree", "add", "-q", "-b", "sous-agent", str(arbre))
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "git worktree remove .claude/worktrees/sous-agent", "git worktree remove -f -f sous-agent",
+            "git worktree move sous-agent /tmp/ailleurs")], cwd=arbre)
 
     @defaut("fonction-sans-parentheses", "dossier qui contient le projet supprimé, ou push forcé, dans le corps d'une "
             "fonction `function nom { …; }` écrite sans parenthèses, son corps sur la même ligne ou la suivante",
@@ -2092,6 +2104,18 @@ def _temoins() -> list[tuple[str, Callable]]:
                 or etage_outil(a, c, "Bash", {"command": f"rsync -a --delete build/ {ailleurs}/sauve"})
                 or etage_outil(a, c, "Bash", {"command": f"rsync -a --delete ./ {ailleurs}/sauve"})
                 or etage_outil(a, c, "Bash", {"command": "python3 -c \"import shutil; shutil.rmtree('build')\""}))
+
+    @temoin("l'orchestrateur, à la racine, retire le worktree d'un sous-agent par la fin de son chemin, et un "
+            "sous-agent retire ou déplace un worktree voisin du sien, sans refus du hook de l'agent (B-0228)")
+    def _(a, c):
+        # Le pendant sain de `worktree-par-son-suffixe` : seul est refusé ce
+        # qui finit le chemin de l'arbre jugé, ou d'un dossier qui le contient.
+        arbre = c / ".claude/worktrees/sous-agent"
+        a.git(c, "worktree", "add", "-q", "-b", "sous-agent", str(arbre))
+        return (etage_outil(a, c, "Bash", {"command": "git worktree remove -f -f sous-agent"})
+                or etage_outil(a, c, "Bash", {"command": "git worktree remove -f -f voisin"}, cwd=arbre)
+                or etage_outil(a, c, "Bash", {"command": "git worktree remove .claude/worktrees/voisin"}, cwd=arbre)
+                or etage_outil(a, c, "Bash", {"command": "git worktree move voisin /tmp/ailleurs"}, cwd=arbre))
 
     @temoin("une fonction `function nom { …; }` sans parenthèses dont le corps ne fait rien d'irréversible passe le "
             "hook de l'agent, et son corps ne s'exécute pas là où il s'écrit (B-0232)")

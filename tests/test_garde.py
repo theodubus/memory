@@ -559,6 +559,53 @@ class TestGarde(unittest.TestCase):
                 with self.subTest(commande):
                     self.assertEqual(decide(commande, self.racine), "passe")
 
+    def test_un_sous_agent_ne_retire_pas_son_worktree_par_son_suffixe(self):
+        """La revue du lot B-0234, constat 1 (J-2026-11-15-O) : git cherche
+        d'abord le worktree dont le chemin finit par l'argument de `git
+        worktree remove` ou `move`, à une frontière de dossier, s'il est le
+        seul, puis le chemin relatif. Le hook ne lisait que le chemin
+        relatif : un sous-agent retirait son worktree en le nommant par la
+        fin de son chemin. L'orchestrateur, à la racine, le retire toujours
+        ainsi, et un sous-agent retire un worktree voisin du sien."""
+        arbre = self.racine / ".claude/worktrees/agent-s"
+        subprocess.run(["git", "worktree", "add", "-q", "-b", "agent-s", str(arbre)], cwd=self.racine, check=True)
+        self.addCleanup(subprocess.run, ["git", "worktree", "remove", "--force", str(arbre)], cwd=self.racine)
+        ailleurs = Path(f"{self.racine}-ailleurs")
+        (ailleurs / "agent-s").mkdir(parents=True, exist_ok=True)
+        self.addCleanup(shutil.rmtree, ailleurs, ignore_errors=True)
+
+        def decide(commande, cwd):
+            flux = io.StringIO()
+            with contextlib.redirect_stdout(flux):
+                hooks.pre_tool_use(self.projet, {"session_id": "garde", "tool_name": "Bash", "cwd": str(cwd),
+                                                 "tool_input": {"command": commande}})
+            return "refus" if '"deny"' in flux.getvalue() else "passe"
+
+        with self.environnement():
+            for commande in ("git worktree remove .claude/worktrees/agent-s", "git worktree remove -f -f agent-s",
+                             "git worktree remove --force worktrees/agent-s", "git worktree remove 'agent-s'",
+                             "git worktree move agent-s /tmp/ailleurs", f"git -C {self.racine} worktree remove agent-s",
+                             "W=agent-s; git worktree remove -f -f \"$W\"",
+                             f"cd {ailleurs} && git worktree remove \"agent-$X\"",
+                             f"cd {ailleurs} && git worktree remove agent-?",
+                             f"cd {ailleurs} && find agent-s -maxdepth 0 -exec git worktree remove {{}} \\;"):
+                with self.subTest(commande):
+                    self.assertEqual(decide(commande, arbre), "refus")
+            # Le refus nomme ce que git trouverait, et par quel mot.
+            jugees = hooks.ecritures_jugees(config.Projet.charger(arbre), "git worktree remove -f -f agent-s",
+                                            str(arbre))
+            self.assertIn("que git trouve par la fin de son chemin, `agent-s`", " ".join(q for _, q in jugees))
+            for commande in ("git worktree remove -f -f agent-s", "git worktree remove .claude/worktrees/agent-s",
+                             "git worktree move agent-s /tmp/ailleurs"):
+                with self.subTest(commande, depuis="racine"):
+                    self.assertEqual(decide(commande, self.racine), "passe")
+            for commande in ("git worktree remove -f -f agent-voisin", "git worktree remove ../agent-voisin",
+                             "git worktree remove .claude/worktrees/agent-voisin", "git worktree remove agent-s2",
+                             "git worktree remove gent-s", "git worktree move agent-voisin /tmp/ailleurs",
+                             "find build -name '*.tmp' -exec git worktree remove {} \\;"):
+                with self.subTest(commande, depuis="sous-agent"):
+                    self.assertEqual(decide(commande, arbre), "passe")
+
     def test_les_valeurs_par_defaut_se_developpent(self):
         """La revue de B-0171, constat 13 : `${X:-défaut}` était refusé même
         quand `X` est connu hors du projet."""

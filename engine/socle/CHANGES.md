@@ -14,15 +14,18 @@ le contient, par d'autres programmes que `rm`, `mv`, `git clean` et
 `find` : la destination d'un `rsync --delete` (et ses variantes,
 `--del`, `--delete-after`…), les sources d'un `rsync
 --remove-source-files`, le chemin d'un `git worktree remove` ou d'un `git
-worktree move`, et les chemins qu'un `python -c` écrit en toutes lettres
-pour `shutil.rmtree`, `shutil.move`, `os.rename` ou `os.replace`. Un
-`find -exec` de l'un d'eux compte comme un `find -exec rm`. Jusqu'ici,
+worktree move`, lu aussi comme git le cherche d'abord, par la fin du
+chemin d'un de ses worktrees (`git worktree remove agent-x`, lancé dans
+`.claude/worktrees/agent-x`), et les chemins qu'un `python -c` écrit en
+toutes lettres pour `shutil.rmtree`, `shutil.move`, `os.rename` ou
+`os.replace`. Un `find -exec` de l'un d'eux compte comme un `find -exec
+rm`. Jusqu'ici,
 `rsync -a --delete vide/ ..`, `git worktree remove .` lancé par un
 sous-agent dans son worktree et `python3 -c "import shutil;
 shutil.rmtree('..')"` passaient. L'orchestrateur, à la racine du projet,
 retire toujours le worktree d'un sous-agent (`git worktree remove -f -f
-.claude/worktrees/agent-x`), et un dossier du projet ou voisin de lui
-reste libre.
+.claude/worktrees/agent-x`, ou `agent-x`), un sous-agent celui d'un autre,
+et un dossier du projet ou voisin de lui reste libre.
 
 À faire : rien. Pour vider un dossier, viser un dossier du projet, ou
 hors de lui un dossier qui ne le contient pas, son chemin écrit en toutes

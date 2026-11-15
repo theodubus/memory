@@ -270,7 +270,9 @@ destination d'un `rsync --delete`, les sources d'un `rsync
 --remove-source-files`, le chemin d'un `git worktree remove`, un `python3
 -c` qui le passe en toutes lettres à `shutil.rmtree`), celle du projet
 lui-même par ces autres programmes (un sous-agent qui retire son propre
-worktree, `git worktree remove .`), et celle du projet par un `find` qui
+worktree, `git worktree remove .`, ou par la fin de son chemin, que git
+cherche d'abord parmi ses worktrees : `git worktree remove agent-x`), et
+celle du projet par un `find` qui
 part de sa racine sans qu'un filtre de nom ou de chemin garde ce qu'il
 supprime (`find . -delete`, `find . -type f -delete`, `find . -delete
 -name '*.pyc'`, dont le filtre vient après l'action) ; un dossier voisin

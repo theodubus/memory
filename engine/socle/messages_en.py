@@ -115,6 +115,8 @@ MESSAGES: dict[str, str] = {
         "them all off).",
     "{chemin}, par `{mot}`":
         "{chemin}, through `{mot}`",
+    "{chemin}, que git trouve par la fin de son chemin, `{mot}`":
+        "{chemin}, which git finds by the end of its path, `{mot}`",
     "{chemin}, cité par `{qui}`, un écrivain que le hook ne sait pas lire : il peut l'écrire ; un fichier protégé "
     "se lit par `cat` ou par l'outil de lecture":
         "{chemin}, cited by `{qui}`, a writer the hook cannot read: it may write it; a protected file is read with "
@@ -2743,6 +2745,12 @@ MESSAGES: dict[str, str] = {
         "directory that contains the project deleted by the shell: `rm -rf ..`, a `cd` then `../..`, the sources of an "
         "`mv`, `git clean` under `-C ..`, a `find` that deletes from a directory that contains it, or from the root "
         "without a name or path filter guarding its deletion",
+    "worktree de l'agent retiré ou déplacé depuis lui par `git worktree remove` ou `move` qui le nomme par la fin de "
+    "son chemin (`agent-x`, `.claude/worktrees/agent-x`), que git cherche parmi ses worktrees avant de le lire comme "
+    "un chemin relatif":
+        "the agent's worktree removed or moved from inside it by `git worktree remove` or `move` naming it by the end "
+        "of its path (`agent-x`, `.claude/worktrees/agent-x`), which git looks up among its worktrees before reading "
+        "it as a relative path",
     "dossier qui contient le projet, ou le projet lui-même, supprimé par un autre programme que `rm`, `mv`, `git "
     "clean` ou `find` : la destination d'un `rsync --delete`, les sources d'un `rsync --remove-source-files`, le "
     "worktree de l'agent retiré par `git worktree remove`, un `python3 -c` qui passe son chemin en toutes lettres à "
@@ -2920,6 +2928,10 @@ MESSAGES: dict[str, str] = {
         "deleting a directory next to the project, a directory of the project, a `find` without a filter under a "
         "directory of the project and a `find` that filters what it deletes under the root pass the agent's hook "
         "(B-0208)",
+    "l'orchestrateur, à la racine, retire le worktree d'un sous-agent par la fin de son chemin, et un sous-agent "
+    "retire ou déplace un worktree voisin du sien, sans refus du hook de l'agent (B-0228)":
+        "the orchestrator, at the root, removes a subagent's worktree by the end of its path, and a subagent removes "
+        "or moves a worktree next to its own, without a refusal from the agent's hook (B-0228)",
     "l'orchestrateur, à la racine du projet, retire le worktree d'un sous-agent, et `rsync --delete`, `git worktree "
     "remove` ou `python3 -c` qui suppriment un dossier du projet ou voisin de lui passent le hook de l'agent "
     "(B-0228)":

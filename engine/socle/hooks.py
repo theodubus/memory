@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import ast
 import dataclasses
+import fnmatch
 import glob
 import json
 import os
@@ -569,16 +570,33 @@ def _git_global(argv: list[str]) -> tuple[str, int]:
     return base, i
 
 
-def _retire_par_git_worktree(argv: list[str]) -> list[str]:
+def _retire_par_git_worktree(argv: list[str], suffixe: bool = False) -> list[str]:
     """Le worktree que retire `git worktree remove` (`-f`, `--force`,
     répétés), ou que déplace `git worktree move`, comme les sources d'un
-    `mv` (`argv` entier, depuis `git`), rapporté à ses `-C` (B-0228)."""
+    `mv` (`argv` entier, depuis `git`), rapporté à ses `-C` (B-0228). Avec
+    `suffixe`, son argument tel qu'il est écrit, que git cherche d'abord
+    comme la fin du chemin d'un de ses worktrees, quels que soient ses `-C`
+    (`_trouve_par_son_suffixe`)."""
     base, i = _git_global(argv)
     reste = argv[i + 1:]
     if not reste or reste[0] not in ("remove", "move"):
         return []
-    chemins = commandes.options_et_arguments(reste[1:])[1][:1]
-    return [posixpath.join(base, x) if base else x for x in chemins if x]
+    chemins = [x for x in commandes.options_et_arguments(reste[1:])[1][:1] if x]
+    return chemins if suffixe or not base else [posixpath.join(base, x) for x in chemins]
+
+
+def _nommes_par_leur_suffixe(c: commandes.Commande) -> list[str]:
+    """Ce que git cherche d'abord comme la fin du chemin d'un de ses
+    worktrees, tel que la commande l'écrit : l'argument d'un `git worktree
+    remove` ou `move`, et les points de départ d'un `find` qui le lui passe
+    par `-exec` (`{}`), avec ce qu'il trouve sous eux (`départ/*`)."""
+    if c.programme == "git" and commandes.git_sous_commande(c.argv)[0] == "worktree":
+        return _retire_par_git_worktree(c.argv, suffixe=True)
+    if c.programme == "find":
+        departs, actions = _lire_find(c)
+        if any(sous is not None and SONDE in _nommes_par_leur_suffixe(sous) for sous, _ in actions):
+            return [y for x in departs for y in (x, posixpath.join(x, "*"))]
+    return []
 
 
 # Les fonctions de python qui suppriment, avec ce qu'il contient, le chemin
@@ -1335,12 +1353,14 @@ def ecritures_jugees(projet: config.Projet, cmd: str, cwd: str | None = None,
         res += _ecrivains_illisibles(projet, c, cmd, environnement, cache)
         mots = _ecrits_hors_remise(projet, c, remise_en_etat(projet, c, cmd, depart), depart)
         supprimes = dict(suppressions(c))
-        if not mots and not supprimes:
+        suffixes = _nommes_par_leur_suffixe(c)
+        if not mots and not supprimes and not suffixes:
             continue
         variables = commandes.variables_de(c, environnement)
-        for mot in dict.fromkeys(mots + list(supprimes)):
+        for mot in dict.fromkeys(mots + list(supprimes) + suffixes):
             _dans_le_delai(limite)
-            genre = {"ecrit": mot in mots, "supprime": mot in supprimes, "racine_comprise": supprimes.get(mot, False)}
+            genre = {"ecrit": mot in mots, "supprime": mot in supprimes, "racine_comprise": supprimes.get(mot, False),
+                     "suffixe": mot in suffixes}
             mot = mot.strip("'\"")
             try:
                 for forme in commandes.accolades(mot):
@@ -1358,12 +1378,14 @@ def _dit(mot: str, chemin: str) -> str:
 
 
 def _juger_forme(projet: config.Projet, c: commandes.Commande, mot: str, forme: str, variables: dict,
-                 cache: dict, depart: str, elargi: bool, **genre) -> list[tuple[str, str]]:
+                 cache: dict, depart: str, elargi: bool, suffixe: bool = False, **genre) -> list[tuple[str, str]]:
     """Les constats d'`ecritures_jugees` pour une forme d'un mot que `c`
     écrit ou supprime (une par accolade ; `genre`, comme `_juger_chemin`). Développé, le mot se juge entier et, s'il
     porte une variable ou une substitution, mot par mot : hors des
     guillemets, le shell le couperait en mots, que le découpage ne
-    distingue plus d'un mot entre guillemets (B-0171)."""
+    distingue plus d'un mot entre guillemets (B-0171). Un mot que git
+    cherche comme la fin du chemin d'un worktree (`suffixe`) se juge aussi
+    ainsi (`_trouve_par_son_suffixe`)."""
     d, inconnus = commandes.developper(forme, variables)
     champs = [d]
     if re.search(r"[$`]", forme):
@@ -1373,9 +1395,36 @@ def _juger_forme(projet: config.Projet, c: commandes.Commande, mot: str, forme: 
             champs += [x for x in re.split("[" + re.escape(separateurs) + "]+", d) if x]
     res: list[tuple[str, str]] = []
     for champ in dict.fromkeys(champs):
-        if champ:  # un mot vide : le shell n'écrit rien
+        if not champ:  # un mot vide : le shell n'écrit rien
+            continue
+        if suffixe:
+            res += _trouve_par_son_suffixe(projet.racine, mot, champ)
+        if genre["ecrit"] or genre["supprime"]:
             res += _juger_chemin(projet, c, mot, champ, inconnus, cache, depart, elargi, **genre)
     return res
+
+
+def _trouve_par_son_suffixe(racine: Path, mot: str, d: str) -> list[tuple[str, str]]:
+    """Le constat pour l'argument `d`, développé, d'un `git worktree remove`
+    ou `move`. Git cherche d'abord, parmi ses worktrees, celui dont le
+    chemin finit par lui, à une frontière de dossier, s'il est le seul, et
+    ne le lit qu'ensuite comme un chemin relatif (`find_worktree`,
+    J-2026-11-15-O) : `git worktree remove agent-x`, lancé dans
+    `.claude/worktrees/agent-x`, le retire. Refusé si la racine, ou un
+    dossier qui la contient, a un chemin qui finit par lui, sans égard à la
+    casse (`core.ignorecase`) ; une part inconnue vaut tout texte, et un
+    motif, ce qu'il filtre. Sans appel à git, qui dirait si ce dossier est
+    un worktree et le seul de ce suffixe : un refus de trop accepté. Un
+    chemin absolu, que git compare entier, se juge comme un chemin."""
+    if d.startswith("/"):
+        return []
+    fin, motif = d.casefold(), "*/" + d.replace(commandes.INCONNU, "*").casefold()
+    for r in dict.fromkeys((racine, racine.resolve())):
+        for p in (r, *r.parents):
+            if str(p).casefold().endswith("/" + fin) or fnmatch.fnmatchcase(str(p).casefold(), motif):
+                return [("supprime", trad("{chemin}, que git trouve par la fin de son chemin, `{mot}`",
+                                          chemin=str(p), mot=mot))]
+    return []
 
 
 def _juger_chemin(projet: config.Projet, c: commandes.Commande, mot: str, d: str, inconnus: list[str],
