@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0119-le-modele-fable-un-lot-implemente-sur-fable-le-lot.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-15"
+canal = "conversation"
+citation = "Si un lot est implémenté par fable (et bien le lot hein, pas la session d'orchestration), demander à l'utilisateur avant s'il veut aussi lancer fable sur la revue \n\nBtw je sais pas si t'avais en tête mais tout comme la revue, pour l'implementation on ne lance rien sur fable sauf si l'humain le veut \n\nEnregiste la reponse, print le tableau des choses a faire avant ajout des nouvelles features et redonne le prompt de session a jour (s'il a besoin d'etre changé)"
+empreinte = "sha256:caefbc571d96722a4faced45e5c7487c95478c273199618541348200ac3a515e"
