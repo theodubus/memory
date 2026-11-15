@@ -40,6 +40,12 @@ minutes. L'outil lance le sous-agent en arrière-plan quoi qu'on demande :
 la conversation principale attend son commit. L'auto-test ne sait pas
 jouer un seul cas, ce qui allonge l'essai d'un défaut injecté.
 
+Le 15 novembre (J-2026-11-15-C), un cas de plus, relevé par la revue de
+B-0173 : le skill `socle-batch` fait demander le compactage à l'humain à
+la fin d'un lot et avant une attente longue ; absent (la nuit), il ne
+compacte pas, et à son retour il est trop tard. Rien ne dit alors quoi
+faire ; une session neuve coûterait moins que la reprise à froid.
+
 ## Fait quand
 
 - [ ] Théo a choisi la solution sur un essai, et le socle la met en œuvre

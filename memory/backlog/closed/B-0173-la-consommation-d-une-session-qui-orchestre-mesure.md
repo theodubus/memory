@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0173 — La consommation d'une session qui orchestre : mesurer ce qui pèse, puis écrire les règles qui la bornent
 
-> statut : ouvert · origine : J-2026-11-11-R · priorité : haute · lu : backlog@e69f45bc
+> statut : fait · origine : J-2026-11-11-R · priorité : haute · lu : backlog@e69f45bc · ref : J-2026-11-15-B
 
 Le 11 novembre, une session qui orchestre des sous-agents a vidé deux
 fenêtres de cinq heures, la seconde en moins d'une demi-heure, et pris
@@ -62,4 +62,4 @@ règle.
 
 - [x] une mesure dit, sur une journée d'orchestration, ce que pèsent la conversation principale, les sous-agents et les reprises après une pause
 - [x] ce que le socle injecte à chaque démarrage, compactage et reprise est mesuré, et borné si c'est lui qui pèse (B-0010)
-- [ ] la méthode de délégation dit quand compacter, combien de sous-agents à la fois, quand en reprendre un, quel modèle pour quoi, et que faire à l'approche d'une limite
+- [x] la méthode de délégation dit quand compacter, combien de sous-agents à la fois, quand en reprendre un, quel modèle pour quoi, et que faire à l'approche d'une limite

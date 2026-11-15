@@ -293,6 +293,41 @@ class TestLaConduiteDUnLot(unittest.TestCase):
             for phrase in phrases:
                 self.assertIn(phrase, texte, lg)
 
+    def test_il_dit_quand_compacter_et_quel_modele_pour_quel_travail(self):
+        """B-0173 : l'agent demande le compactage, mémoire écrite, à la fin
+        d'un lot et avant une attente longue, jamais après. Le modèle se
+        choisit pour la qualité du travail, jamais un moindre pour tenir une
+        limite (J-2026-11-15-D) ; entre ceux qui font aussi bien, celui qui
+        pèse le moins ; un sous-agent reçoit le sien à son lancement."""
+        attendus = {
+            "fr": ["L'agent ne compacte pas lui-même", "il écrit la mémoire (chantier actif, journal)",
+                   "le demande à l'humain", "`/compact`", "à la fin d'un lot si l'humain garde la session",
+                   "avant toute attente qui peut passer l'heure sans changer de session",
+                   "Près d'une limite, le seuil plus haut prime : changer de session",
+                   "Après la pause, il est trop tard",
+                   "celui que demande la qualité du travail, jamais un moindre pour tenir une limite",
+                   "une limite retarde un lot, elle ne l'allège pas",
+                   "Entre ceux qui le font aussi bien, celui qui consomme le moins de la limite par jeton",
+                   "l'humain choisit celui de la session, sur le conseil de l'agent",
+                   "Celui que fixent les instructions du projet prime",
+                   "Un sous-agent reçoit le sien explicitement à son lancement"],
+            "en": ["The agent does not compact by itself", "it writes the memory (active work, journal)",
+                   "asks the human to", "`/compact`", "at the end of a batch if the human keeps the session",
+                   "before any wait that may exceed an hour without changing sessions",
+                   "Near a limit, the threshold above prevails: change sessions",
+                   "After the pause, it is too late",
+                   "the one the quality of the work calls for, never a lesser one to stay within a limit",
+                   "a limit delays a batch, it does not lighten it",
+                   "Among those that do it equally well, the one that uses the least of the limit per token",
+                   "the human chooses the session's, on the agent's advice",
+                   "The one set by the project's instructions prevails",
+                   "A subagent receives its own explicitly at launch"],
+        }
+        for lg, phrases in attendus.items():
+            texte = " ".join(self.texte(lg).split())
+            for phrase in phrases:
+                self.assertIn(phrase, texte, lg)
+
 
 class TestRefusBash(unittest.TestCase):
     def test_le_meme_jugement_que_le_hook(self):
