@@ -12,17 +12,20 @@ identifiers.
 The "Consumption" section of the `socle-batch` skill has two more rules.
 The agent does not compact by itself: it writes the memory (active work,
 journal), then asks the human to compact, at the end of a batch if the
-session goes on beyond it, and before any wait that may exceed an hour
-without changing sessions; after the pause, compacting rereads the whole
+human keeps the session beyond it, and before any wait that may exceed an
+hour without changing sessions; near a limit, the threshold that changes
+sessions prevails; after the pause, compacting rereads the whole
 conversation at full price. The orchestrating conversation runs on the
-model that uses the least of the limit per token, a costlier model only for
-a short, bounded task where its quality matters; the model set by the
-project's instructions prevails, and a subagent receives its own explicitly
-at launch.
+model that uses the least of the limit per token among those that suffice
+to orchestrate, which the human chooses on the agent's advice; a costlier
+model only for a short, bounded task where its quality matters; the model
+set by the project's instructions prevails, and a subagent receives its
+own explicitly at launch.
 
 To do: the skill is in the request for the update's protected files; once
-it is in place, ask for compaction at the moments it gives, and name the
-model of each subagent at launch.
+it is in place, ask for compaction at the moments it gives, advise the
+human on the session's model, and name the model of each subagent at
+launch.
 
 ## 2026-11-14-k — The agent's hook sees what cp -t, find -delete, xargs, bash -ec, sort -o and python -c write
 

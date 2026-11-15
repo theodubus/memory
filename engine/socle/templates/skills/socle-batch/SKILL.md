@@ -106,16 +106,18 @@ reprise après plus d'une heure d'arrêt la relit au prix fort.
   l'humain, la nuit) ne se fait pas dans une conversation longue.
 - L'agent ne compacte pas lui-même : il écrit la mémoire (chantier actif,
   journal), puis le demande à l'humain (sous Claude Code, `/compact`), à
-  la fin d'un lot si la session continue au-delà, et avant toute attente
-  qui peut passer l'heure sans changer de session (une CI longue, une
-  réponse de l'humain, une limite proche, la nuit). Après la pause, il est
-  trop tard : compacter relit alors toute la conversation au prix fort
-  avant de la résumer.
+  la fin d'un lot si l'humain garde la session au-delà, et avant toute
+  attente qui peut passer l'heure sans changer de session (une CI longue,
+  une réponse de l'humain, la nuit). Près d'une limite, le seuil plus haut
+  prime : changer de session. Après la pause, il est trop tard : compacter
+  relit alors toute la conversation au prix fort avant de la résumer.
 - Le modèle : la conversation qui orchestre, longue et relue à chaque
-  appel, sur celui qui consomme le moins de la limite par jeton ; un plus
-  coûteux seulement pour une tâche courte et bornée où sa qualité compte ;
-  celui que fixent les instructions du projet prime. Un sous-agent reçoit
-  le sien explicitement à son lancement (outil `Agent` : `model`).
+  appel, sur celui qui consomme le moins de la limite par jeton parmi ceux
+  qui suffisent à orchestrer (l'humain le choisit, sur le conseil de
+  l'agent) ; un plus coûteux seulement pour une tâche courte et bornée où
+  sa qualité compte ; celui que fixent les instructions du projet prime.
+  Un sous-agent reçoit le sien explicitement à son lancement (outil
+  `Agent` : `model`).
 
 ## Changer de session
 

@@ -313,10 +313,15 @@ sert à rien, l'agent ne lit que 2 Ko.
   compacter, ne lancer ni sous-agent ni attente. La reprise se fait alors
   sur une conversation courte.
 
-Ces règles sont désormais écrites dans la section « La consommation » du
-skill du produit `socle-batch`
-(`engine/socle/templates/skills/socle-batch/SKILL.md`), qui n'en reprend
-pas les mesures.
+La section « La consommation » du skill du produit `socle-batch`
+(`engine/socle/templates/skills/socle-batch/SKILL.md`) en reprend, sans
+leurs mesures : le compactage à la fin d'un lot et avant une attente qui
+peut passer l'heure, le nombre de sous-agents à la fois (deux au plus,
+sans l'exception de trois), quand en reprendre un, le modèle, et la
+conduite à l'approche d'une limite, qui y fait changer de session plutôt
+que compacter. Elle ne reprend ni le
+compactage en cours de lot vers 500 000 jetons, ni l'exception des 70 000
+jetons pour reprendre un sous-agent.
 
 ### La piste de la session neuve
 
