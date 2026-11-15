@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0222 — Lot de la consommation et du pilote : le dernier critère de B-0173, et la CI posée avant le premier fichier Gradle
 
-> statut : en cours · origine : J-2026-11-14-M · forme : lot · après : B-0221, B-0173 · lu : backlog@f69fc579
+> statut : fait · origine : J-2026-11-14-M · forme : lot · après : B-0221, B-0173 · ref : J-2026-11-15-E · lu : backlog@f69fc579
 
 Le quatrième lot : le dernier critère de B-0173 (la méthode de délégation
 dit quand compacter, combien de sous-agents à la fois, quand en reprendre

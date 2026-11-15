@@ -5,9 +5,10 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot 3 (B-0221) fait, relu deux fois, livré par sa pull request
-(J-2026-11-14-AM) ; ses suites du hook vont au lot B-0224. La règle 1 de
-D-0112 avec le lot 5. Pilote en pause.
+Lot 4 (B-0222) fait, relu, livré par sa pull request (J-2026-11-15-E) ;
+D-0115, la copie protégée de `socle-batch`, attend Théo. B-0179 bloqué
+jusqu'à la reprise du pilote, en pause (J-2026-11-15-A). La règle 1 de
+D-0112 avec le lot 5.
 
 ## Consignes en cours
 
@@ -65,8 +66,7 @@ par lots :
 1. Fait.
 2. Fait.
 3. Les lots suivants sont au backlog (`forme : lot`), l'état montre le
-   prochain : B-0222, la consommation et le pilote ; B-0223, la revue,
-   avec la règle 1 de D-0112 ; B-0224, le reste, les suites du hook
+   prochain : B-0223, la revue, avec la règle 1 de D-0112 ; B-0224, le reste, les suites du hook
    (B-0232 d'abord, de priorité haute), B-0225 et B-0226 compris.
 4. La mise à jour de chess, avec le prompt complété.
 5. Ensuite la planification (B-0101), puis la répartition entre agents
