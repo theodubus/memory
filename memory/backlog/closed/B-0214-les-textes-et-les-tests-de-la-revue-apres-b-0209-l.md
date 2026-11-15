@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0214 — Les textes et les tests de la revue après B-0209 : le dossier décrit à moitié, le modèle de menace d'une décision, une fonction sans emploi, deux cas sans test, l'AGENTS.md de ce dépôt en retard
 
-> statut : ouvert · origine : J-2026-11-14-A · priorité : basse · lu : backlog@213ad9b5
+> statut : fait · origine : J-2026-11-14-A · priorité : basse · lu : backlog@213ad9b5 · ref : J-2026-11-15-I
 
 La revue de B-0209 (J-2026-11-14-A), constats 5 à 9, des restes de texte
 et de test.
@@ -41,8 +41,8 @@ modèle de `socle-batch` peut faire moins coûteux.
 
 ## Fait quand
 
-- [ ] les textes de la revue disent ce que donne le dossier et où s'écrit le modèle de menace, d'une seule manière
-- [ ] les deux cas ont leur test, et `sujets_fermes` est retiré ou sert
-- [ ] la section du socle de l'AGENTS.md de ce dépôt suit son gabarit, sous son budget
-- [ ] le skill de revue du produit, en français et en anglais, donne au relecteur le modèle de D-0117, explicitement à son lancement, et un test le montre
-- [ ] la consigne du relecteur et les trois tests de D-0116 suivent D-0116, sa réponse consignée dans le même push
+- [x] les textes de la revue disent ce que donne le dossier et où s'écrit le modèle de menace, d'une seule manière
+- [x] les deux cas ont leur test, et `sujets_fermes` est retiré ou sert
+- [x] la section du socle de l'AGENTS.md de ce dépôt suit son gabarit, sous son budget
+- [x] le skill de revue du produit, en français et en anglais, donne au relecteur le modèle de D-0117, explicitement à son lancement, et un test le montre
+- [x] la consigne du relecteur et les trois tests de D-0116 suivent D-0116, sa réponse consignée dans le même push

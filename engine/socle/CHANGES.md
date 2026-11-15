@@ -7,6 +7,25 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-15-c — La revue trie les constats exotiques, et son relecteur reçoit le modèle le plus capable
+
+Un constat de la revue qui ne bloque pas va au backlog s'il peut se
+produire dans l'usage normal du projet, ou si rien ne rattrape ensuite son
+effet ; un constat exotique dont l'effet est rattrapé (par un contrôle, la
+CI ou une erreur que l'agent voit aussitôt), ou un constat infondé, est
+écarté, et le récap dit pourquoi. La consigne du relecteur
+(`python3 .socle/socle review`) le dit, et lui fait rendre trois listes,
+« Bloquants », « Pour le backlog » puis « Écartés ». Sous Claude Code, le
+relecteur reçoit explicitement, à son lancement, le modèle le plus capable
+disponible jusqu'à Opus, jamais un moindre que celui qui a implémenté le
+lot, quel que soit celui de la session ; Fable seulement si l'humain le
+demande. Le modèle de menace d'un garde-fou s'écrit dans la section du
+sujet ou dans la décision qu'il cite. La section du socle d'AGENTS.md
+change (la règle du tri, un texte resserré), ainsi que le skill
+`socle-review`, une copie protégée, et le guide `HELP.md`.
+
+À faire : rien, sinon suivre le tri à la prochaine revue.
+
 ## 2026-11-15-b — Le dossier de la revue mesure le lot depuis l'ancêtre commun, et refuse une référence inconnue
 
 `python3 .socle/socle review` mesure le lot depuis l'ancêtre commun de

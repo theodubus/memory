@@ -143,16 +143,6 @@ def _diff(projet: config.Projet, base: str) -> tuple[str, list[str]]:
     return diff, fichiers
 
 
-def sujets_fermes(projet: config.Projet, base: str) -> list:
-    """Les sujets du backlog que le lot touche et qui sont clos : ce qu'il
-    prétend avoir fait, que le relecteur confronte au code."""
-    touches = set(outils.git(projet.racine, "diff", "--name-only", base, "--", projet.chemins.backlog,
-                             check=False).split())
-    mem = memoire.Memoire.charger(projet.racine)
-    return [e for e in mem.entrees("B") if e.fichier in touches and e.statut in memoire.BACKLOG_CLOS
-            and not memoire.est_prive(e.fichier)]
-
-
 def sujets_du_lot(projet: config.Projet, base: str) -> tuple[list, list]:
     """Les sujets du backlog que le lot touche (ADR-0073), mesurés depuis
     l'ancêtre commun de `base` et de HEAD (ADR-0081) : ceux qu'il sert,
@@ -249,7 +239,7 @@ def dossier_demande(projet: config.Projet, ident: str) -> str | None:
 
 
 # La consigne du relecteur (ADR-0042, ADR-0044, ADR-0073), en trois parties :
-# son rôle, sa barre, les deux classes de ses constats.
+# son rôle, sa barre, les classes de ses constats (D-0112, D-0116).
 CONSIGNE_ROLE = a_traduire(
     "Tu relis le lot de travail d'un autre agent, sans sa conversation ni son raisonnement : tu as ce dossier, et "
     "tu peux lire le dépôt pour vérifier un constat, mais tu ne modifies rien. Pour éprouver une commande "
@@ -267,10 +257,14 @@ CONSIGNE_CLASSES = a_traduire(
     "Classe chaque constat. **Bloquant** : il contredit un critère coché ou une décision citée, fait régresser "
     "ce qui marchait avant le lot, perd des données, ou contourne un garde-fou dans son modèle de menace ; un "
     "garde-fou que le lot pose ou change sans modèle de menace écrit est lui-même un constat bloquant. **Pour le "
-    "backlog** : tout le reste, dont un contournement hors du modèle de menace, un critère que le lot ne coche "
-    "pas, un défaut voisin, une amélioration. Seuls les bloquants se corrigent dans le lot. Rends deux listes "
-    "numérotées, « Bloquants » puis « Pour le backlog », chaque constat avec son fichier et sa ligne, ce qui "
-    "casse et comment le vérifier, et, pour un bloquant, ce qu'il contredit ; ou « aucun constat ».")
+    "backlog** : un constat qui ne bloque pas, s'il peut se produire dans l'usage normal du projet, ou si rien "
+    "ne rattrape ensuite son effet ; un contournement hors du modèle de menace, un critère que le lot ne coche "
+    "pas, un défaut voisin, une amélioration, jugés de même. **Écarté** : un constat exotique (un geste rare, "
+    "une forme qu'on n'écrit que pour contourner, un cas jamais reproduit) dont l'effet est rattrapé, par un "
+    "contrôle, la CI ou une erreur que l'agent voit aussitôt ; et un constat infondé. Seuls les bloquants se "
+    "corrigent dans le lot. Rends trois listes numérotées, « Bloquants », « Pour le backlog » puis « Écartés », "
+    "chaque constat avec son fichier et sa ligne, ce qui casse et comment le vérifier, pour un bloquant ce qu'il "
+    "contredit, pour un écarté pourquoi ; ou « aucun constat ».")
 CONSIGNE_SECONDE = a_traduire(
     "Seconde revue : ce diff corrige des constats bloquants d'une première revue, que disent les messages de ses "
     "commits ci-dessous ; le reste du lot a déjà été relu. Ne juge que cette correction : un bloquant mal "

@@ -329,6 +329,93 @@ class TestLaConduiteDUnLot(unittest.TestCase):
                 self.assertIn(phrase, texte, lg)
 
 
+class TestLaRevue(unittest.TestCase):
+    """B-0214 : le skill de la revue, posé dans les deux langues, donne au
+    relecteur son modèle (D-0117), trie les constats selon la règle 1 de
+    D-0112, et dit ce que donne le dossier et où s'écrit le modèle de
+    menace, de la même manière que les instructions et FORMAT.md
+    (ADR-0073)."""
+
+    def setUp(self):
+        self.racine = depot({"app.py": "print('ok')\n"})
+
+    def tearDown(self):
+        shutil.rmtree(self.racine, ignore_errors=True)
+
+    def texte(self, lg: str) -> str:
+        installeur.poser_skills(self.racine, lg)
+        return (self.racine / installeur.SKILLS / "socle-review" / "SKILL.md").read_text(encoding="utf-8")
+
+    def test_il_est_pose_sous_son_budget_et_passe_ses_controles(self):
+        for lg in ("fr", "en"):
+            texte = self.texte(lg)
+            self.assertTrue(texte.startswith("---\nname: socle-review\n"), lg)
+            self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
+            self.assertEqual(juger(self.racine), {"skills.contrat": [], "skills.commandes": []}, lg)
+
+    def test_le_relecteur_recoit_le_modele_le_plus_capable_a_son_lancement(self):
+        """D-0117 : explicitement, à son lancement, le plus capable jusqu'à
+        Opus, jamais un moindre que celui qui a implémenté ; Fable sur la
+        demande de l'humain seule ; découplé du modèle de la session."""
+        attendus = {
+            "fr": ("du modèle de la session", [
+                "Il reçoit explicitement à son lancement (`model`) le modèle le plus capable disponible jusqu'à "
+                "Opus, jamais un moindre que celui qui a implémenté le lot",
+                "quel que soit celui de la session, que la règle du modèle de `socle-batch` peut faire moins coûteux",
+                "Fable, s'il est disponible, seulement si l'humain le demande"]),
+            "en": ("of the session's model", [
+                "It receives explicitly at launch (`model`) the most capable model available up to Opus, never a "
+                "lesser one than the one that implemented the batch",
+                "whatever the session's, which the model rule of `socle-batch` may make cheaper",
+                "Fable, if available, only if the human asks for it"]),
+        }
+        for lg, (ancien, phrases) in attendus.items():
+            texte = " ".join(self.texte(lg).split())
+            for phrase in phrases:
+                self.assertIn(phrase, texte, lg)
+            self.assertNotIn(ancien, texte, lg)
+
+    def test_les_constats_le_dossier_et_le_modele_de_menace_d_une_seule_maniere(self):
+        """D-0112, règle 1 : ce qui va au backlog, ce qui s'écarte ; ADR-0073 :
+        le modèle de menace dans la section du sujet ou dans la décision
+        qu'il cite, et le dossier donne les décisions que le lot écrit."""
+        from socle.templates import DOSSIER
+
+        attendus = {
+            "fr": ["**Pour le backlog** : un constat qui ne bloque pas va au backlog s'il peut se produire dans "
+                   "l'usage normal du projet, ou si rien ne rattrape ensuite son effet",
+                   "**Écarté** : un constat exotique (un geste rare, une forme qu'on n'écrit que pour contourner, un "
+                   "cas jamais reproduit) dont l'effet est rattrapé, par un contrôle, la CI ou une erreur que "
+                   "l'agent voit aussitôt ; et un constat infondé. Une ligne du récap dit pourquoi chacun est écarté.",
+                   "dans sa section `## Modèle de menace` ou dans la décision qu'il cite",
+                   "les décisions et les demandes que le lot écrit, puis celles que ses sujets citent"],
+            "en": ["**For the backlog**: a finding that does not block goes to the backlog if it can occur in the "
+                   "project's normal use, or if nothing catches its effect afterwards",
+                   "**Dismissed**: an exotic finding", "One line of the recap says why each is dismissed.",
+                   "in its `## Threat model` section or in the decision it cites",
+                   "the decisions and requests the batch writes, then those its topics cite"],
+        }
+        for lg, phrases in attendus.items():
+            texte = " ".join(self.texte(lg).split())
+            for phrase in phrases:
+                self.assertIn(phrase, texte, lg)
+        instructions = {
+            "AGENTS.md": ["(sa section `## Modèle de menace`, ou la décision qu'il cite)",
+                          "un autre va au backlog s'il peut se produire dans l'usage normal du projet, ou si rien ne "
+                          "rattrape ensuite son effet ; sinon, exotique et rattrapé, ou infondé, il s'écarte"],
+            "AGENTS.en.md": ["(its `## Threat model` section, or the decision it cites)",
+                             "another goes to the backlog if it can occur in the project's normal use, or if nothing "
+                             "catches its effect afterwards; otherwise, exotic and caught, or unfounded, it is "
+                             "dismissed"],
+            "../FORMAT.md": ["dans une section `## Modèle de menace` (`## Threat model` en anglais) ou dans la "
+                             "décision qu'il cite"],
+        }
+        for nom, phrases in instructions.items():
+            texte = " ".join((DOSSIER / nom).read_text(encoding="utf-8").split())
+            for phrase in phrases:
+                self.assertIn(phrase, texte, nom)
+
+
 class TestRefusBash(unittest.TestCase):
     def test_le_meme_jugement_que_le_hook(self):
         projet = config.Projet.charger(Path(__file__).resolve().parent.parent)

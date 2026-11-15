@@ -83,17 +83,16 @@ class TestDossier(_Lot):
         self.assertIn("+    return x * 2", texte)
         # La mémoire ne passe pas par le diff, mais par ses sujets.
         self.assertNotIn("diff --git a/memory/", texte)
-        self.assertEqual([e.id for e in revue.sujets_fermes(self.projet, "origin/main")], ["B-0001"])
+        servis, ouverts = revue.sujets_du_lot(self.projet, "origin/main")
+        self.assertEqual(([e.id for e in servis], ouverts), (["B-0001"], []))
         self.assertIn("- [x] double est écrit", texte)
-        self.assertEqual([e.id for e in revue.decisions_citees(self.projet, revue.sujets_fermes(self.projet,
-                                                                                               "origin/main"))],
-                         ["ADR-0001"])
+        self.assertEqual([e.id for e in revue.decisions_citees(self.projet, servis)], ["ADR-0001"])
         self.assertIn("`double(x)` rend `2 * x`, entiers compris.", texte)
 
     def test_un_sujet_encore_ouvert_n_est_pas_dans_le_dossier(self):
         (self.racine / "calc.py").write_text("def double(x):\n    return x * 2\n")
         git(self.racine, "commit", "-qam", "le code seul")
-        self.assertEqual(revue.sujets_fermes(self.projet, "origin/main"), [])
+        self.assertEqual(revue.sujets_du_lot(self.projet, "origin/main"), ([], []))
         self.assertNotIn("## Les sujets que le lot ferme", revue.dossier(self.projet))
 
     def test_un_gros_diff_se_tronque_et_le_dit(self):
@@ -121,15 +120,15 @@ class TestDossier(_Lot):
 
 class TestBarre(_Lot):
     """ADR-0073 : le relecteur juge le lot contre le critère et le modèle de
-    menace de ses sujets, et classe chaque constat, bloquant ou pour le
-    backlog."""
+    menace de ses sujets, et classe chaque constat, bloquant, pour le
+    backlog ou écarté (D-0112, D-0116)."""
 
     GARDE = ("<!-- socle: couche=backlog zone=publique -->\n# B-0003 — Refuser l'écriture du verrou\n\n"
              "> statut : ouvert · origine : ADR-0001\n\n## Modèle de menace\n\nUn agent distrait, pas hostile : "
              "une redirection vers le verrou est arrêtée, un interpréteur qui l'écrit passe.\n\n"
              "## Fait quand\n\n- [x] la redirection est refusée\n- [ ] l'interpréteur est refusé\n")
 
-    def test_la_consigne_donne_la_barre_et_les_deux_classes(self):
+    def test_la_consigne_donne_la_barre_et_les_trois_classes(self):
         self.lot()
         texte = revue.dossier(self.projet)
         self.assertIn("Ta barre est celle des sujets du lot, plus bas : leur critère « Fait quand »", texte)
@@ -137,11 +136,13 @@ class TestBarre(_Lot):
         self.assertIn("contourne un garde-fou dans son modèle de menace", texte)
         self.assertIn("un garde-fou que le lot pose ou change sans modèle de menace écrit est lui-même un constat "
                       "bloquant", texte)
-        self.assertIn("**Pour le backlog** : tout le reste, dont un contournement hors du modèle de menace", texte)
+        self.assertIn("**Pour le backlog** : un constat qui ne bloque pas, s'il peut se produire dans l'usage normal "
+                      "du projet, ou si rien ne rattrape ensuite son effet", texte)
+        self.assertIn("**Écarté** : un constat exotique", texte)
         self.assertIn("Seuls les bloquants se corrigent dans le lot.", texte)
-        self.assertIn("Rends deux listes numérotées, « Bloquants » puis « Pour le backlog »", texte)
+        self.assertIn("Rends trois listes numérotées, « Bloquants », « Pour le backlog » puis « Écartés »", texte)
         # Les trois parties de la consigne précèdent le diff.
-        self.assertLess(texte.index("Rends deux listes"), texte.index("## Le diff du lot"))
+        self.assertLess(texte.index("Rends trois listes"), texte.index("## Le diff du lot"))
 
     def test_un_sujet_encore_ouvert_que_le_lot_touche_donne_son_critere_et_son_modele_de_menace(self):
         base = self.racine / "memory/backlog/B-0003-refuser.md"
@@ -216,6 +217,71 @@ class TestBarre(_Lot):
                                                   encoding="utf-8")
         self.assertEqual([e.id for e in revue.sujets_du_lot(self.projet, "origin/travail")[0]],
                          ["B-0001", "B-0002"])
+
+    def test_un_sujet_que_le_lot_clot_et_range_reste_la_barre(self):
+        """B-0214 : le lot clôt son sujet, puis `socle archive` le range
+        dans `closed/` ; rangé, indexé ou commité, il reste la barre, avec
+        la décision qu'il cite."""
+        from socle import archive as archivage
+
+        self.lot()
+        self.assertEqual(archivage.ranger_backlog(self.racine),
+                         [("memory/backlog/B-0001-doubler.md", "memory/backlog/closed/B-0001-doubler.md")])
+        for etape in ("indexé", "commité"):
+            if etape == "commité":
+                git(self.racine, "commit", "-qm", "rangé")
+            servis, ouverts = revue.sujets_du_lot(self.projet, "origin/main")
+            self.assertEqual(([e.fichier for e in servis], ouverts),
+                             (["memory/backlog/closed/B-0001-doubler.md"], []), etape)
+            texte = revue.dossier(self.projet)
+            self.assertIn("## Les sujets du lot : leur critère « Fait quand » est ta barre\n\n# B-0001 — Doubler",
+                          texte, etape)
+            self.assertIn("- [x] double est écrit", texte, etape)
+            self.assertIn("## Les décisions et les demandes qu'ils citent\n\n# ADR-0001", texte, etape)
+
+    # Le préfixe des identifiants privés, à part : écrit en toutes lettres
+    # dans un fichier public, le contrôle de la mémoire privée le refuse.
+    P = "P"
+    PRIVE = ("<!-- socle: couche=backlog zone=privee -->\n# {ident} — {titre} le client Orion\n\n"
+             "> statut : {statut} · origine : ADR-0001\n\nLe client Orion.\n\n## Fait quand\n\n"
+             "- [{case}] Orion démarché\n")
+
+    def test_un_sujet_prive_n_est_pas_dans_le_dossier(self):
+        """B-0214 : la mémoire privée ne sort pas vers le relecteur. Un sujet
+        privé que le lot clôt, un autre qu'il ouvre, et la décision privée
+        qu'il écrit ne sont ni la barre, ni ce qu'il renvoie au backlog, ni
+        ses décisions ; le sujet public du lot l'est toujours."""
+        clos, ouvert, decision = f"{self.P}B-0002", f"{self.P}B-0003", f"{self.P}ADR-0002"
+        prive = self.racine / "memory/private"
+        (prive / "backlog").mkdir(parents=True)
+        (prive / "decisions").mkdir()
+        sujet = prive / f"backlog/{clos}-demarcher.md"
+        sujet.write_text(self.PRIVE.format(ident=clos, titre="Démarcher", statut="ouvert", case=" "),
+                         encoding="utf-8")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "un sujet privé")
+        git(self.racine, "push", "-q", "-u", "origin", "travail")
+        self.lot()
+        sujet.write_text(self.PRIVE.format(ident=clos, titre="Démarcher", statut="fait · ref : x", case="x"),
+                         encoding="utf-8")
+        (prive / f"backlog/{ouvert}-relancer.md").write_text(
+            self.PRIVE.format(ident=ouvert, titre="Relancer", statut="ouvert", case=" "), encoding="utf-8")
+        (prive / f"decisions/{decision}-viser-orion.md").write_text(
+            f"<!-- socle: couche=decisions zone=privee -->\n# {decision} — Viser Orion\n\n"
+            "> statut : acceptée · date : 2026-11-15\n\n## Décision\n\nOrion d'abord.\n", encoding="utf-8")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "le lot privé")
+        from socle import memory as memoire
+
+        mem = memoire.Memoire.charger(self.racine)
+        self.assertEqual({e.id for e in mem.entrees() if memoire.est_prive(e.fichier)}, {clos, ouvert, decision})
+        servis, ouverts = revue.sujets_du_lot(self.projet, "origin/travail")
+        self.assertEqual(([e.id for e in servis], ouverts), (["B-0001"], []))
+        self.assertEqual(revue.decisions_ecrites(self.projet, "origin/travail"), [])
+        texte = revue.dossier(self.projet)
+        self.assertIn("- [x] double est écrit", texte)
+        for prive_ in ("Orion", clos, ouvert, decision, "memory/private"):
+            self.assertNotIn(prive_, texte)
 
     def test_la_seconde_revue_ne_montre_que_la_correction_et_garde_les_sujets_du_lot(self):
         self.lot()

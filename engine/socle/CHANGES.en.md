@@ -7,6 +7,24 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-15-c — The review sorts out exotic findings, and its reviewer receives the most capable model
+
+A review finding that does not block goes to the backlog if it can occur
+in the project's normal use, or if nothing catches its effect afterwards;
+an exotic finding whose effect is caught (by a check, the CI or an error
+the agent sees at once), or an unfounded finding, is dismissed, and the
+recap says why. The reviewer's instruction
+(`python3 .socle/socle review`) says so, and has it return three lists,
+"Blocking", "For the backlog" then "Dismissed". Under Claude Code, the reviewer receives
+explicitly, at launch, the most capable model available up to Opus, never
+a lesser one than the one that implemented the batch, whatever the
+session's; Fable only if the human asks for it. A guardrail's threat
+model is written in the topic's section or in the decision it cites. The
+socle section of AGENTS.md changes (the sorting rule, a tightened text),
+as do the `socle-review` skill, a protected copy, and the `HELP.md` guide.
+
+To do: nothing, except following the sorting at the next review.
+
 ## 2026-11-15-b — The review brief measures the batch since the common ancestor, and refuses an unknown reference
 
 `python3 .socle/socle review` measures the batch since the common
