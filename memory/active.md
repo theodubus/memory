@@ -56,9 +56,8 @@ Leur texte exact est dans l'entrée du journal citée.
 - Chess n'est mis à jour qu'une fois l'ensemble fini ; d'ici là, tout
   lot qui change ce que chess reçoit complète
   `docs/fabrication/chess/prompt-mise-a-jour.md` (J-2026-11-13-L).
-- Théo a une remise à zéro hebdomadaire en réserve : le lui dire quand la
-  semaine approche de 85 %, au lieu de ranger sans prévenir
-  (J-2026-11-13-I).
+- Jusqu'à lundi 3 h : un lot sur les 15 % restants, sous-agent lancé
+  si sa part et le rangement tiennent, rangé à 95 % (J-2026-11-15-P).
 
 ## Prochaines étapes
 
