@@ -14,7 +14,9 @@ Prochain lot : B-0234, le hook, B-0232 d'abord. B-0179 bloqué, en pause
 Leur texte exact est dans l'entrée du journal citée.
 
 - Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
-- Relecteur : le plus capable jusqu'à Opus ; Fable sur demande (D-0117).
+- Relecteur : le plus capable jusqu'à Opus (D-0117). Fable, implémenteur
+  ou relecteur, seulement si Théo le veut ; un lot implémenté sur Fable :
+  lui demander avant la revue s'il veut Fable pour elle (D-0119).
 - Tout ce qui est utile intègre le socle, une règle du backlog comprise
   (J-2026-11-13-F) ; un sujet important se garde (J-2026-11-14-K).
 - Un lot par session ; sinon tout se range pour une session neuve, qui
