@@ -5,16 +5,16 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot 4 (B-0222) fait, relu, livré par sa pull request (J-2026-11-15-E) ;
-D-0115, la copie protégée de `socle-batch`, attend Théo. B-0179 bloqué
-jusqu'à la reprise du pilote, en pause (J-2026-11-15-A). La règle 1 de
-D-0112 avec le lot 5.
+Lot 5 (B-0223) fait, relu, livré par sa pull request (J-2026-11-15-K).
+Prochain lot : B-0234, le hook, B-0232 d'abord. B-0179 bloqué, en pause
+(J-2026-11-15-A).
 
 ## Consignes en cours
 
 Leur texte exact est dans l'entrée du journal citée.
 
 - Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
+- Relecteur : le plus capable jusqu'à Opus ; Fable sur demande (D-0117).
 - Tout ce qui est utile intègre le socle, une règle du backlog comprise
   (J-2026-11-13-F) ; un sujet important se garde (J-2026-11-14-K).
 - Un lot par session ; sinon tout se range pour une session neuve, qui
@@ -65,9 +65,8 @@ par lots :
 
 1. Fait.
 2. Fait.
-3. Les lots suivants sont au backlog (`forme : lot`), l'état montre le
-   prochain : B-0223, la revue, avec la règle 1 de D-0112 ; B-0224, le reste, les suites du hook
-   (B-0232 d'abord, de priorité haute), B-0225 et B-0226 compris.
+3. Le jalon B-0224 (D-0118) : ses sept lots, B-0234 à B-0240, dans
+   l'ordre ; l'état montre le prochain.
 4. La mise à jour de chess, avec le prompt complété.
 5. Ensuite la planification (B-0101), puis la répartition entre agents
    (B-0055).

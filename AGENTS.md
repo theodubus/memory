@@ -1,57 +1,46 @@
 # memory — le socle de mémoire, documentation et tests pour agents de code
 
-Ce dépôt fabrique le **socle** : un moteur Python, bibliothèque standard
-seule, qui rend fiables la mémoire, la documentation et les tests d'un projet
-de code entretenu par un agent. L'agent écrit, des contrôles automatiques
-attrapent les erreurs, l'humain n'arbitre que ce qu'aucun contrôle ne
-tranche. Le cadrage fondateur : `memory/archives/cadrage-2026-10-10.md` ;
-`docs/fabrication/architecture.md` dit où s'applique chacune de ses
-exigences.
-
-Ce dépôt est en **mode amont** : il a la source du socle sous
-`engine/socle/`, à l'empreinte non figée ; ses fichiers de projet vivent
-dans `.socle/`.
+Ce dépôt fabrique le **socle**, un moteur Python qui rend fiables la
+mémoire, la documentation et les tests d'un projet de code entretenu par
+un agent : l'agent écrit, des contrôles attrapent les erreurs, l'humain
+n'arbitre que ce qu'aucun ne tranche. Cadrage :
+`memory/archives/cadrage-2026-10-10.md`, dont
+`docs/fabrication/architecture.md` situe chaque exigence. **Mode amont** :
+la source du socle, sous `engine/socle/`, a une empreinte non figée ; les
+fichiers de projet sont dans `.socle/`.
 
 ## Structure
 
-Le dépôt a deux parts (ADR-0033). **Le produit**, `engine/socle/`, est la
-seule chose qu'un projet reçoit : rien n'y renvoie à l'atelier. **L'atelier**
-est tout le reste : les tests, les bancs, la documentation de fabrication et
-la mémoire de ce dépôt.
-
-- `engine/socle/` — le moteur : lecture de la mémoire, contrôles, hooks,
-  installeur, auto-test, adaptateurs maintenus, gabarits.
-  `engine/socle/FORMAT.md` fait foi pour le format de la mémoire.
-- `tests/` — les tests du moteur (`unittest`), dont l'auto-test.
-- `engine/README.md` (la page publique), `README.md`, `engine/socle/HELP.md`
-  (le guide d'un projet équipé), `docs/fabrication/` (l'atelier :
-  architecture, bancs, relevés, `chess`).
-- `bench/` — les bancs (`docs/fabrication/banc.md`).
-- `.github/workflows/distribution.yml` — publie le moteur seul dans
-  `theodubus/socle` à chaque fusion sur `main` (D-0056).
+**Le produit**, `engine/socle/`, est tout ce qu'un projet reçoit : le
+moteur, ses adaptateurs, ses gabarits, `engine/socle/FORMAT.md`, qui fait
+foi pour le format de la mémoire, et `engine/socle/HELP.md`, le guide
+d'un projet équipé. Rien n'y renvoie à **l'atelier**, le reste
+(ADR-0033) : `tests/` (`unittest`, dont l'auto-test), `bench/` (les
+bancs, `docs/fabrication/banc.md`), `docs/fabrication/` et la mémoire.
+`engine/README.md` est la page publique ;
+`.github/workflows/distribution.yml` publie le moteur seul dans
+`theodubus/socle` à chaque fusion sur `main` (D-0056).
 
 ## Commandes
 
 ```sh
-python3 .socle/socle verify --fast       # compilation, tests, contrôles
 python3 .socle/socle ci                  # tout, dont l'auto-test
 python3 .socle/socle selftest --verbose  # les défauts injectés, un par un
 python3 bench/bench.py --agent simule    # le banc, sur un agent simulé
-python3 .socle/socle install --target ../projet --adapter auto --owner @moi
 ```
 
 ## Règles propres à ce dépôt
 
-- **Tout contrôle nouveau a son défaut injecté** dans `engine/socle/selftest.py`,
-  et un témoin sain qui passe : un garde-fou qu'on n'a jamais vu échouer ne
-  prouve rien. `tests/test_autotest.py` l'exige de chaque contrôle et
-  refus reconnu.
-- **Le moteur ne connaît ni langage ni agent** : ce qui dépend du langage va
-  dans un adaptateur, ce qui dépend de l'agent dans les hooks.
-- **Bibliothèque standard de Python 3.11+ seulement** (`ADR-0001`), vérifié
+- **Tout contrôle ou refus nouveau a son défaut injecté**
+  (`engine/socle/selftest.py`) et un témoin sain : un garde-fou jamais vu
+  échouer ne prouve rien ; `tests/test_autotest.py` l'exige.
+- **Le moteur ne connaît ni langage ni agent** : le langage va dans un
+  adaptateur, l'agent dans les hooks.
+- **Bibliothèque standard de Python 3.11+ seule** (`ADR-0001`), vérifié
   par `tests/test_moteur.py`.
 - **Commentaires, messages, documentation et identifiants du code en
-  français ; commandes, options et noms de fichiers en anglais** (`ADR-0027`) : un module s'importe sous son nom français
+  français ; commandes, options et noms de fichiers en anglais**
+  (`ADR-0027`) : un module s'importe sous son nom français
   (`from socle import memory as memoire`).
 - **Un changement que reçoit un projet installé** a son entrée dans les
   notes de version, `engine/socle/CHANGES.md` et l'anglaise (ADR-0078).
@@ -75,21 +64,20 @@ mémoire. Sous Claude Code, le hook `SessionStart` le fait seul ; sous un
 autre agent, le lancer d'abord. Rien de ce qui n'y figure pas n'est acquis.
 Ce que l'humain a écrit lui-même depuis le dernier commit de l'agent (une
 approbation, une réponse dans son terminal), l'état le liste : le lui citer
-dans la réponse suivante, par son identifiant et son lien, puisque la
-commande lui a donné un numéro qu'il ne retrouve pas dans la conversation.
+dans la réponse suivante, par son identifiant et son lien, que la
+conversation ne lui a pas donnés.
 
-Si l'état n'a pas été injecté au démarrage d'une session de Claude Code, les
-hooks de l'agent ne sont pas chargés : la session a démarré hors de la racine
-du projet. Le dire à l'humain avant tout travail, et ne rien pousser ;
-`socle state` l'affiche aussi en tête, et le hook avant commit refuse alors
-le commit. Ne jamais écrire soi-même un réglage de Claude Code pour rétablir
-les hooks.
+Si l'état n'a pas été injecté au démarrage d'une session de Claude Code, ses
+hooks ne sont pas chargés (la session a démarré hors de la racine du
+projet ; `socle state` le dit en tête, et le hook avant commit refuse alors
+le commit) : le dire à l'humain avant tout travail, ne rien pousser, et ne
+jamais écrire soi-même un réglage de Claude Code pour les rétablir.
 
 Une consigne de l'humain donnée dans la conversation, qui vaut au-delà du tour
 (une règle, une préférence, une interdiction), s'écrit dans la mémoire avant de
 continuer : au chantier actif si elle touche le travail en cours, sinon au
-journal, avec son texte exact. Le résumé d'un compactage ne la garde pas
-toujours, et une session neuve n'a que la mémoire.
+journal, avec son texte exact : un compactage peut la perdre, et une
+session neuve n'a que la mémoire.
 
 ### La mémoire, dans `memory/`
 
@@ -110,7 +98,7 @@ Un identifiant se calcule (`python3 .socle/socle new <type> "titre"`), il ne
 se devine pas. En cas de conflit, l'ordre d'autorité est : le code et les
 tests, puis la mémoire canonique, puis le journal.
 
-**Mémoire privée**, si la politique en choisit une (`[private] mode`) : rien de privé ne se recopie en public, ni un identifiant `P…`, ni son contenu, ni dans un message de commit, une pull request ou un commentaire ; indisponible (l'état le dit), on ne conclut pas sur ce qui en dépend. Où écrire, basculer une entrée, commiter en mode compagnon, faire relire avant publication : le skill `socle-private-memory`.
+**Mémoire privée**, si la politique en choisit une (`[private] mode`) : rien de privé ne se recopie en public, ni un identifiant `P…`, ni son contenu, ni dans un message de commit, une pull request ou un commentaire ; indisponible (l'état le dit), on ne conclut pas sur ce qui en dépend. Comment y travailler : le skill `socle-private-memory`.
 
 ### Politique d'autonomie (`.socle/policy.toml`, modifiée par l'humain seul)
 
@@ -164,12 +152,12 @@ refusée ; il faut relire l'entrée. `socle new` pose l'empreinte de l'index.
 ### Les skills
 
 Une procédure rare se lit dans son skill, que l'agent charge sur sa
-description : `socle-request` (poser une demande, relayer une réponse,
-consigner une décision en séance), `socle-private-memory` (la mémoire
-privée), `socle-review` (la revue adversariale d'un lot, avant sa
-livraison) et `socle-resume` (en session cloud, à chaque tour qui agit :
-reprendre seul après une limite d'usage), dans `.claude/skills/`, posés par l'installeur et
-protégés ; un autre agent lit leur `SKILL.md` à ce chemin.
+description : `socle-request` (les demandes, une décision en séance),
+`socle-private-memory` (la mémoire privée), `socle-batch` (mener un lot),
+`socle-review` (la revue d'un lot, avant sa livraison) et `socle-resume`
+(en session cloud, à chaque tour qui agit : reprendre après une limite
+d'usage), dans `.claude/skills/`, posés par l'installeur et protégés ; un
+autre agent lit leur `SKILL.md` à ce chemin.
 
 Une procédure du projet qui se refait (le journal montre la première fois)
 s'écrit en skill à la deuxième, dans `.claude/skills/<nom>/SKILL.md` : un
@@ -187,9 +175,18 @@ sans attendre de message. Il annonce d'abord le lot, pas forcément tout ce
 qui est prêt (les sujets, leur taille, le jalon qu'ils servent ; un sujet de
 priorité basse s'il est commode), puis s'y met ; il s'arrête à la fin du
 lot, ou dès qu'une décision revient à l'humain. Il ne change pas une
-priorité que l'humain a donnée. Avant le push d'un lot qui change du code,
-une spécification ou un test, il le fait relire par un relecteur sans
-contexte (le skill `socle-review`), et son récap dit les constats.
+priorité que l'humain a donnée. Le lot se garde au backlog (`forme : lot`)
+et se mène selon le skill `socle-batch`. Avant le push d'un lot qui change
+du code, une spécification ou un test, il le fait relire par un relecteur
+sans contexte, contre le « Fait quand » de ses sujets (le skill
+`socle-review`). Un sujet dont la conception n'est pas tranchée écrit sa
+spécification avant son code ; un sujet qui pose ou change un garde-fou,
+son modèle de menace (sa section `## Modèle de menace`, ou la décision
+qu'il cite). Seuls les constats bloquants se corrigent dans le lot ; un
+autre va au backlog s'il peut se produire dans l'usage normal du projet,
+ou si rien ne rattrape ensuite son effet ; sinon, exotique et rattrapé,
+ou infondé, il s'écarte. Le récap dit les constats, et pourquoi chaque
+écarté l'est.
 
 Par défaut, tout se fait sur une branche de développement, avec une seule
 pull request ouverte à la fois : chaque lot fini s'y ajoute, l'humain la
@@ -197,7 +194,9 @@ fusionne quand il veut, et la branche repart alors de la branche par
 défaut. Une pull request par sujet, seulement si l'humain l'a choisi (un
 fait de la mémoire le dit). Une session neuve qui trouve ouverte la pull
 request d'une autre demande à l'humain de la fusionner d'abord, ou de
-l'autoriser à y continuer.
+l'autoriser à y continuer. Un prototype qu'on ne compte pas fusionner se
+fait sur une branche jetable, nommée d'un préfixe de `[branches] disposable`
+des garde-fous (`proto/` par défaut) : la CI ne la juge pas aux envois.
 
 ### Avant de conclure
 
@@ -223,7 +222,7 @@ l'autoriser à y continuer.
 | Où | Quoi |
 | --- | --- |
 | `.claude/settings.json` | hooks de Claude Code : `SessionStart` (état dérivé ; en session cloud, les outils de l'adaptateur), `PreToolUse` (refus), `Stop` (contrôles de fin de tour) |
-| `.socle/git-hooks/` | hooks git : `pre-commit` (contrôles rapides), `prepare-commit-msg` (trailers `Socle-Hooks`, `Socle-Hooks-Since-Commit`), `commit-msg` (fuites de la mémoire privée ; une fonction sans test ni dispense, un correctif sans test, un commit d'agent sans hook de l'agent, en avertissement), `pre-push` (`verify --fast` sur le dernier commit, la plage qui part jugée comme la CI la jugera, relecture avant publication) |
+| `.socle/git-hooks/` | hooks git : `pre-commit` (contrôles rapides), `prepare-commit-msg` (trailers `Socle-Hooks`, `Socle-Hooks-Since-Commit`), `commit-msg` (fuites de la mémoire privée ; en avertissement, une fonction sans test ni dispense, un correctif sans test, un commit d'agent sans ses hooks), `pre-push` (`verify --fast` sur le dernier commit, la plage qui part jugée comme en CI, relecture avant publication) |
 | `.github/workflows/socle.yml` | CI : capacités de l'adaptateur, tous les contrôles contre la base, auto-test du socle |
 | `.git/socle/hooks.log` | trace locale de chaque hook qui tire, non versionnée, commune à tous les worktrees du dépôt |
 

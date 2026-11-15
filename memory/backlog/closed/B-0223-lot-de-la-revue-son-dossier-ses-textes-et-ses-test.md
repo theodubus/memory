@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0223 — Lot de la revue : son dossier, ses textes et ses tests, et la règle qui trie ses constats non bloquants
 
-> statut : ouvert · origine : J-2026-11-14-M · forme : lot · après : B-0222, B-0213, B-0214 · lu : backlog@f69fc579
+> statut : fait · origine : J-2026-11-14-M · forme : lot · après : B-0222, B-0213, B-0214 · lu : backlog@f69fc579 · ref : J-2026-11-15-K
 
 Le cinquième lot : la revue adversariale. Ses sujets touchent le dossier
 de la revue (`engine/socle/review.py`), le skill `socle-review` et leurs
