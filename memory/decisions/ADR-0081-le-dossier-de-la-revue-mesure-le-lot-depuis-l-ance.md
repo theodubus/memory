@@ -57,6 +57,13 @@ dossier : ce n'est pas ce que le lot prétend faire.
   n'y en a pas, la vraie raison : la branche par défaut n'est que
   devinée, HEAD n'a pas d'ancêtre commun avec elle dans ce clone, ou
   elle contient aussi le lot ;
+- la branche distante est restée en arrière de la branche par défaut,
+  que la branche a reprise depuis son dernier push (une fusion par
+  écrasement, l'image locale de la branche distante gardée sans
+  `fetch --prune`) : son ancêtre commun avec HEAD précède alors celui de
+  la branche par défaut, et ramènerait le lot fusionné avec ses sujets ;
+  le lot se mesure depuis ce dernier, et la note le dit (la revue du
+  lot 5) ;
 - sous `--since`, la commande qu'elle propose garde `--since`.
 
 La branche distante d'avant le dernier push (`<amont>@{1}`) n'est pas

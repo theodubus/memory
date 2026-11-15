@@ -104,6 +104,18 @@ def base_par_defaut(projet: config.Projet, depuis: str | None = None) -> tuple[s
     devinee = outils.branche_par_defaut_devinee(racine)
     commun = None if devinee else outils.base_de_travail(racine)
     seconde = f" --since {depuis}" if depuis else ""
+    # Une branche distante restée en arrière de la branche par défaut, que
+    # la branche a reprise depuis son dernier push (une fusion par
+    # écrasement, son image locale gardée) : son ancêtre commun avec HEAD
+    # précède celui de la branche par défaut, et ramènerait le lot fusionné.
+    debut_amont = debut_du_lot(racine, base)
+    if commun and debut_amont and debut_amont != commun and outils.git_reussit(
+            racine, "merge-base", "--is-ancestor", debut_amont, commun):
+        return commun, trad("(la branche distante {amont} est restée en arrière de {defaut}, que la branche a reprise "
+                            "depuis son dernier push, après une fusion par écrasement peut-être : le lot se mesure "
+                            "depuis {commun}, l'ancêtre commun de HEAD et de {defaut} ; s'il commence plus tard, "
+                            "`socle review --base <le commit d'avant le lot>{seconde}`)",
+                            amont=base, defaut=defaut, commun=commun, seconde=seconde)
     if not contient_le_lot(projet, base, depuis):
         n = _commits_hors_memoire(projet, commun, _debut(racine, base)) if commun else 0
         if not n:

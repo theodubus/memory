@@ -36,8 +36,8 @@ python3 .socle/socle review
    It gives the instruction, the batch's diff since the common ancestor
    of HEAD and its base, the remote branch (otherwise the default
    branch; if the remote branch already contains the batch, pushed before
-   its review, the common ancestor with the default branch, and it says
-   so), the topics whose status or “Done when” the batch changes, in
+   its review, or stayed behind the default branch after a squash merge,
+   the common ancestor with the default branch, and it says so), the topics whose status or “Done when” the batch changes, in
    full, those it opens by their title, the decisions and requests the
    batch writes, then those its topics cite.
    `--base <ref>` changes the batch's base; for a second review,

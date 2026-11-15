@@ -40,6 +40,8 @@ lieu d'un dossier vide. Le dossier dit ce que la branche distante porte
 déjà du lot, sur combien de commits il mesure un lot déjà poussé, et la
 vraie raison d'un dossier vide (branche par défaut devinée, clone
 superficiel) ; sous `--since`, la commande qu'il propose garde `--since`.
+Après une fusion par écrasement, une branche repartie de la branche par
+défaut ne ramène plus le lot fusionné dans la revue du suivant.
 Le skill `socle-review`, une copie protégée, change.
 
 À faire : un lot déjà poussé en tout ou en partie, ou sur une branche qui

@@ -39,6 +39,8 @@ instead of an empty brief. The brief says what the remote branch already
 carries of the batch, over how many commits it measures a batch already
 pushed, and the real reason for an empty brief (default branch guessed,
 shallow clone); under `--since`, the command it proposes keeps `--since`.
+After a squash merge, a branch restarted from the default branch no
+longer brings the merged batch back into the review of the next one.
 The `socle-review` skill, a protected copy, changes.
 
 To do: a batch already pushed in whole or in part, or on a branch that

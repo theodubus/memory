@@ -2003,6 +2003,12 @@ MESSAGES: dict[str, str] = {
         "## The batch's diff ({n} file(s), since {base})",
     "(aucun changement hors de la mémoire : rien à relire)":
         "(no change outside the memory: nothing to review)",
+    "(la branche distante {amont} est restée en arrière de {defaut}, que la branche a reprise depuis son dernier "
+    "push, après une fusion par écrasement peut-être : le lot se mesure depuis {commun}, l'ancêtre commun de HEAD et "
+    "de {defaut} ; s'il commence plus tard, `socle review --base <le commit d'avant le lot>{seconde}`)":
+        "(the remote branch {amont} stayed behind {defaut}, which the branch took up again since its last push, "
+        "after a squash merge perhaps: the batch is measured since {commun}, the common ancestor of HEAD and "
+        "{defaut}; if it starts later, `socle review --base <the commit before the batch>{seconde}`)",
     "(la branche distante {amont} contient déjà le lot : il se mesure depuis {commun}, l'ancêtre commun de HEAD et "
     "de {defaut}, sur {n} commit(s) hors de la mémoire ; s'il commence plus tard, `socle review --base <le commit "
     "d'avant le lot>{seconde}`)":

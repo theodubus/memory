@@ -36,8 +36,9 @@ python3 .socle/socle review
 
    Il donne la consigne, le diff du lot depuis l'ancêtre commun de HEAD
    et de sa base, la branche distante (sinon la branche par défaut ; si
-   la branche distante contient déjà le lot, poussé avant sa revue,
-   l'ancêtre commun avec la branche par défaut, et il le dit), les sujets
+   la branche distante contient déjà le lot, poussé avant sa revue, ou
+   est restée en arrière de la branche par défaut après une fusion par
+   écrasement, l'ancêtre commun avec la branche par défaut, et il le dit), les sujets
    dont le lot change le statut ou le « Fait quand », en entier, ceux
    qu'il ouvre par leur titre, les décisions et les demandes que le lot
    écrit, puis celles que ses sujets citent.

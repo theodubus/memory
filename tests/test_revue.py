@@ -383,6 +383,31 @@ class TestLotDejaPousse(_Lot):
         self.assertIn("(aucun changement hors de la mémoire : rien à relire)",
                       revue.dossier(self.projet, "origin/travail"))
 
+    def test_apres_une_fusion_par_ecrasement_le_lot_suivant_ne_reprend_pas_le_lot_fusionne(self):
+        """La revue du lot 5 : une pull request fusionnée par écrasement, la
+        branche distante supprimée sur GitHub mais son image locale restée
+        (aucun `fetch --prune`), la branche repartie de la branche par
+        défaut ; le lot suivant ne se mesure pas depuis le début du lot
+        fusionné, qui reviendrait avec son sujet clos."""
+        self.lot()
+        git(self.racine, "push", "-q", "-u", "origin", "travail")
+        source = self.dossier / "source"
+        git(source, "merge", "-q", "--squash", "travail")
+        git(source, "commit", "-qm", "le lot (#1)")
+        git(source, "branch", "-q", "-D", "travail")
+        git(self.racine, "fetch", "-q", "origin")
+        git(self.racine, "reset", "-q", "--hard", "origin/main")
+        (self.racine / "calc.py").write_text("def double(x):\n    return x * 2\n\n\ndef triple(x):\n    return x * 3\n")
+        git(self.racine, "commit", "-qam", "le lot suivant")
+        fusion = git(self.racine, "rev-parse", "origin/main").strip()
+        base, note = revue.base_par_defaut(self.projet)
+        self.assertEqual(base, fusion)
+        self.assertIn("la branche distante origin/travail est restée en arrière de", note)
+        texte = revue.dossier(self.projet)
+        self.assertIn("+def triple(x):", texte)
+        self.assertNotIn("+    return x * 2", texte)
+        self.assertNotIn("- [x] double est écrit", texte)
+
     def test_un_lot_pas_encore_pousse_se_mesure_toujours_depuis_la_branche_distante(self):
         git(self.racine, "push", "-q", "-u", "origin", "travail")
         self.lot()

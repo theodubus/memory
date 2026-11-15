@@ -5,10 +5,9 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot 5 (B-0223), repris de sa passation (J-2026-11-15-J) : B-0213 et
-B-0214 faits (J-2026-11-15-I), pas relus ; restent la revue et la
-livraison. À sa clôture, B-0224 devient un jalon, découpé en vrais lots
-(D-0118). B-0179 bloqué, en pause (J-2026-11-15-A).
+Lot 5 (B-0223) fait, relu, livré par sa pull request (J-2026-11-15-K).
+Prochain lot : B-0234, le hook, B-0232 d'abord. B-0179 bloqué, en pause
+(J-2026-11-15-A).
 
 ## Consignes en cours
 
@@ -66,8 +65,8 @@ par lots :
 
 1. Fait.
 2. Fait.
-3. Les lots au backlog (`forme : lot`) : B-0223, la revue ; B-0224, le
-   reste, les suites du hook (B-0232 d'abord), B-0225 et B-0226.
+3. Le jalon B-0224 (D-0118) : ses sept lots, B-0234 à B-0240, dans
+   l'ordre ; l'état montre le prochain.
 4. La mise à jour de chess, avec le prompt complété.
 5. Ensuite la planification (B-0101), puis la répartition entre agents
    (B-0055).
