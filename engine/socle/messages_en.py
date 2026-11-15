@@ -2743,6 +2743,14 @@ MESSAGES: dict[str, str] = {
         "directory that contains the project deleted by the shell: `rm -rf ..`, a `cd` then `../..`, the sources of an "
         "`mv`, `git clean` under `-C ..`, a `find` that deletes from a directory that contains it, or from the root "
         "without a name or path filter guarding its deletion",
+    "dossier qui contient le projet, ou le projet lui-même, supprimé par un autre programme que `rm`, `mv`, `git "
+    "clean` ou `find` : la destination d'un `rsync --delete`, les sources d'un `rsync --remove-source-files`, le "
+    "worktree de l'agent retiré par `git worktree remove`, un `python3 -c` qui passe son chemin en toutes lettres à "
+    "`shutil.rmtree`, un `find -exec` de l'un d'eux":
+        "directory that contains the project, or the project itself, deleted by a program other than `rm`, `mv`, "
+        "`git clean` or `find`: the destination of an `rsync --delete`, the sources of an `rsync "
+        "--remove-source-files`, the agent's worktree removed by `git worktree remove`, a `python3 -c` that passes "
+        "its path written out in full to `shutil.rmtree`, a `find -exec` of one of them",
     "dossier qui contient le projet supprimé, ou push forcé, dans le corps d'une fonction `function nom { …; }` "
     "écrite sans parenthèses, son corps sur la même ligne ou la suivante":
         "directory that contains the project deleted, or force push, in the body of a function `function name { …; }` "
@@ -2912,6 +2920,11 @@ MESSAGES: dict[str, str] = {
         "deleting a directory next to the project, a directory of the project, a `find` without a filter under a "
         "directory of the project and a `find` that filters what it deletes under the root pass the agent's hook "
         "(B-0208)",
+    "l'orchestrateur, à la racine du projet, retire le worktree d'un sous-agent, et `rsync --delete`, `git worktree "
+    "remove` ou `python3 -c` qui suppriment un dossier du projet ou voisin de lui passent le hook de l'agent "
+    "(B-0228)":
+        "the orchestrator, at the project root, removes a subagent's worktree, and `rsync --delete`, `git worktree "
+        "remove` or `python3 -c` deleting a directory of the project or next to it pass the agent's hook (B-0228)",
     "une fonction `function nom { …; }` sans parenthèses dont le corps ne fait rien d'irréversible passe le hook de "
     "l'agent, et son corps ne s'exécute pas là où il s'écrit (B-0232)":
         "a function `function name { …; }` without parentheses whose body does nothing irreversible passes the "

@@ -446,6 +446,119 @@ class TestGarde(unittest.TestCase):
         self.assertEqual(lus("find a -exec cat {} + -name x"), [])
         self.assertEqual(lus("cp a b && touch c && git rm d"), [])
 
+    def test_la_suppression_du_projet_par_un_autre_programme(self):
+        """B-0228 : la destination d'un `rsync --delete`, un `git worktree
+        remove` du worktree où l'agent travaille et un `python -c` qui passe
+        son chemin en toutes lettres à `shutil.rmtree` supprimaient le projet,
+        ou un dossier qui le contient, sans que le hook le voie. Le worktree
+        d'un sous-agent retiré depuis la racine, un dossier du projet ou
+        voisin de lui, et ce qui n'est pas supprimé restent libres."""
+        ailleurs = Path(f"{self.racine}-ailleurs")
+        ailleurs.mkdir(exist_ok=True)
+        self.addCleanup(shutil.rmtree, ailleurs, ignore_errors=True)
+        parent, nom = self.racine.parent, self.racine.name
+
+        def py(script):
+            return f"python3 -c \"{script}\""
+
+        with self.environnement():
+            self.jugees([
+                ("rsync -a --delete vide/ ..", "supprime"), ("rsync -a --del vide/ ../", "supprime"),
+                ("rsync -av --delete-after --exclude .git vide/ ..", "supprime"),
+                ("rsync -a vide/ .. --delete-excluded --exclude .git", "supprime"),
+                (f"rsync -rt --delete-before -e ssh vide/ {parent}", "supprime"),
+                ("rsync -aT /tmp/t --delete-delay vide/ ~/..", "supprime"),
+                ("rsync -a --delete-during vide/ .", "supprime"),
+                ("rsync -a --remove-source-files .. /tmp/sauve", "supprime"),
+                ("rsync -a --remove-source-files . /tmp/sauve", "supprime"),
+                ("git worktree remove .", "supprime"), ("git worktree remove --force ./", "supprime"),
+                (f"git worktree remove -f -f {self.racine}", "supprime"),
+                (f"cd .. && git worktree remove -f {nom}", "supprime"),
+                (f"git -C .. worktree remove {nom}", "supprime"), ("git worktree remove ..", "supprime"),
+                ("git worktree move . /tmp/ailleurs", "supprime"),
+                (py("import shutil; shutil.rmtree('..')"), "supprime"),
+                ("python -c 'import shutil; shutil.rmtree(\"..\")'", "supprime"),
+                ("python3 -I -c \"import shutil; shutil.rmtree('.')\"", "supprime"),
+                (py(f"import shutil; shutil.rmtree('{self.racine}', ignore_errors=True)"), "supprime"),
+                (py(f"from shutil import rmtree; rmtree(path='{parent}')"), "supprime"),
+                (py("import shutil, pathlib; shutil.rmtree(pathlib.Path('..').resolve())"), "supprime"),
+                (py("import os, shutil; shutil.rmtree(os.path.join('..', '..'))"), "supprime"),
+                (py("import shutil; shutil.move('..', '/tmp/ailleurs')"), "supprime"),
+                (py("import os; os.rename('.', '/tmp/ailleurs')"), "supprime"),
+                (py("from pathlib import Path; Path('..').rename('/tmp/ailleurs')"), "supprime"),
+                ("find .. -maxdepth 0 -exec rsync -a --delete vide/ {} \\;", "supprime"),
+                ("find . -maxdepth 0 -exec git worktree remove {} \\;", "supprime"),
+                ("rsync -a --delete build/ dist/", None), (f"rsync -a --delete vide/ {ailleurs}", None),
+                ("rsync -a vide/ ..", None), ("rsync -an --delete vide/ ..", None),
+                ("rsync -a --delete .. /tmp/sauve", None), ("rsync -a --delete vide/ hote:..", None),
+                ("rsync -a --delete vide/ /tmp/sauve -T ..", None),
+                ("rsync -a --remove-source-files build/ /tmp/sauve", None),
+                ("git worktree remove .claude/worktrees/agent-x", None),
+                ("git worktree remove -f -f .claude/worktrees/agent-x", None),
+                ("git -C .claude/worktrees worktree remove agent-x", None),
+                (f"git worktree remove {ailleurs}", None), ("git worktree list", None),
+                (py("import shutil; shutil.rmtree('build')"), None),
+                (py(f"import shutil; shutil.rmtree('{ailleurs}')"), None),
+                (py("import shutil; shutil.move('/tmp/a', '..')"), None),
+                (py("import sys; sys.path.insert(0, '..'); print('..'.replace('.', 'x'))"), None),
+                ("find . -name '*.pyc' -exec mv {} /tmp/corbeille \\;", None)])
+            # Depuis un dossier du projet, ou depuis le worktree d'un
+            # sous-agent : le chemin part du dossier de la commande.
+            self.jugees([("git worktree remove ..", "supprime"), ("rsync -a --delete vide/ ..", "supprime"),
+                         (py("import shutil; shutil.rmtree('..')"), "supprime"),
+                         ("git worktree remove ../build", None)], str(self.racine / "memory"))
+
+    def test_ce_qu_un_autre_programme_supprime(self):
+        """B-0228 : les chemins que `suppressions` lit d'un `rsync`, d'un `git
+        worktree` et d'un `python -c`, tels qu'ils sont écrits, la racine
+        comprise."""
+        def lus(cmd):
+            return [x for c in commandes.analyser(cmd) for x in hooks.suppressions(c)]
+
+        self.assertEqual(lus("rsync -a --delete -e ssh a b/ c"), [("c", True)])
+        self.assertEqual(lus("rsync -avT tmp a c --exclude x --delete"), [("c", True)])
+        self.assertEqual(lus("rsync --delete --filter=x --rsh 'ssh -p 2' a c"), [("c", True)])
+        self.assertEqual(lus("rsync -n --delete a c && rsync --dry-run --delete a c && rsync --delete a"), [])
+        self.assertEqual(lus("rsync --delete a h:c && rsync --delete a rsync://h/c && rsync -a a c"), [])
+        self.assertEqual(lus("rsync --remove-source-files a h:b c"), [("a", True)])
+        self.assertEqual(lus("git -C x worktree remove -f -f y && git worktree move a b"), [("x/y", True), ("a", True)])
+        self.assertEqual(lus("git worktree list && git worktree add y"), [])
+        self.assertEqual(lus("python3 -c \"import shutil; shutil.rmtree('a'); shutil.rmtree(b); x = 'c'\""),
+                         [("a", True)])
+        self.assertEqual(lus("python3 -c \"import shutil; shutil.rmtree(os.getcwd())\""), [])
+        self.assertEqual(lus("python3 -c \"import os; os.replace(src='a', dst='b'); 'c'.replace('c', 'd')\""),
+                         [("a", True)])
+        self.assertEqual(lus("python3 -c \"import shutil; shutil.rmtree(Path('a') / 'b')\""), [("a/b", True)])
+        self.assertEqual(lus("python3 -c 'shutil.rmtree((('"), [])
+        self.assertEqual(lus("find a -exec rsync --delete v/ {} \\;"), [("a", True)])
+        self.assertEqual(lus("find a -name x -exec mv {} /tmp \\;"), [("a", False)])
+
+    def test_un_sous_agent_ne_retire_pas_son_worktree(self):
+        """B-0228 : un sous-agent qui travaille dans un worktree ne le retire
+        pas depuis l'intérieur, jugé contre son arbre (B-0164) ; l'orchestrateur,
+        à la racine, retire celui d'un sous-agent."""
+        arbre = self.racine / ".claude/worktrees/agent-x"
+        subprocess.run(["git", "worktree", "add", "-q", "-b", "agent-x", str(arbre)], cwd=self.racine, check=True)
+        self.addCleanup(subprocess.run, ["git", "worktree", "remove", "--force", str(arbre)], cwd=self.racine)
+
+        def decide(commande, cwd):
+            flux = io.StringIO()
+            with contextlib.redirect_stdout(flux):
+                hooks.pre_tool_use(self.projet, {"session_id": "garde", "tool_name": "Bash", "cwd": str(cwd),
+                                                 "tool_input": {"command": commande}})
+            return "refus" if '"deny"' in flux.getvalue() else "passe"
+
+        with self.environnement():
+            for commande in ("git worktree remove .", "git worktree remove --force .", f"git worktree remove {arbre}",
+                             "cd .. && git worktree remove -f -f agent-x",
+                             f"git -C {self.racine} worktree remove .claude/worktrees/agent-x"):
+                with self.subTest(commande):
+                    self.assertEqual(decide(commande, arbre), "refus")
+            for commande in ("git worktree remove .claude/worktrees/agent-x",
+                             "git worktree remove -f -f .claude/worktrees/agent-x"):
+                with self.subTest(commande):
+                    self.assertEqual(decide(commande, self.racine), "passe")
+
     def test_les_valeurs_par_defaut_se_developpent(self):
         """La revue de B-0171, constat 13 : `${X:-défaut}` était refusé même
         quand `X` est connu hors du projet."""

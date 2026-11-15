@@ -1461,6 +1461,22 @@ def _cas() -> list[Cas]:
             "find .. -name '*.pyc' -delete", "find . -delete", "find . -delete -name '*.pyc'",
             "find . \\( -type f \\) -delete")])
 
+    @defaut("suppression-par-un-autre-programme", "dossier qui contient le projet, ou le projet lui-même, supprimé par "
+            "un autre programme que `rm`, `mv`, `git clean` ou `find` : la destination d'un `rsync --delete`, les "
+            "sources d'un `rsync --remove-source-files`, le worktree de l'agent retiré par `git worktree remove`, un "
+            "`python3 -c` qui passe son chemin en toutes lettres à `shutil.rmtree`, un `find -exec` de l'un d'eux",
+            "agent", "suppression du projet")
+    def _(a, c):
+        # B-0228 : la lecture de ces programmes se prouve à part de celle de
+        # `rm` et des siens (`suppression-du-projet`) ; leur refus est le même.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "rsync -a --delete vide/ ..", "rsync -a vide/ .. --delete-after --exclude .git",
+            "rsync -a --remove-source-files . /tmp/sauve", "git worktree remove --force .",
+            f"git worktree remove -f -f {c}", f"cd .. && git worktree remove {c.name}",
+            "python3 -c \"import shutil; shutil.rmtree('..')\"",
+            f"python3 -I -c \"import shutil; shutil.rmtree('{c}')\"",
+            "find .. -maxdepth 0 -exec rsync -a --delete vide/ {} \\;")])
+
     @defaut("fonction-sans-parentheses", "dossier qui contient le projet supprimé, ou push forcé, dans le corps d'une "
             "fonction `function nom { …; }` écrite sans parenthèses, son corps sur la même ligne ou la suivante",
             "agent", "suppression du projet")
@@ -2063,6 +2079,19 @@ def _temoins() -> list[tuple[str, Callable]]:
                 or etage_outil(a, c, "Bash", {"command": "find . -name '*.pyc' -delete && mv calc.py .."})
                 or etage_outil(a, c, "Bash", {"command": "find build -delete"})
                 or etage_outil(a, c, "Bash", {"command": f"cd {ailleurs} && rm -rf ./*"}))
+
+    @temoin("l'orchestrateur, à la racine du projet, retire le worktree d'un sous-agent, et `rsync --delete`, `git "
+            "worktree remove` ou `python3 -c` qui suppriment un dossier du projet ou voisin de lui passent le hook de "
+            "l'agent (B-0228)")
+    def _(a, c):
+        # Le pendant sain de `suppression-par-un-autre-programme` : seul ce
+        # qui contient le projet, ou le projet lui-même, est refusé.
+        ailleurs = a.dossier.parent / (a.dossier.name + "-ailleurs")
+        return (etage_outil(a, c, "Bash", {"command": "git worktree remove .claude/worktrees/agent-x"})
+                or etage_outil(a, c, "Bash", {"command": "git worktree remove -f -f .claude/worktrees/agent-x"})
+                or etage_outil(a, c, "Bash", {"command": f"rsync -a --delete build/ {ailleurs}/sauve"})
+                or etage_outil(a, c, "Bash", {"command": f"rsync -a --delete ./ {ailleurs}/sauve"})
+                or etage_outil(a, c, "Bash", {"command": "python3 -c \"import shutil; shutil.rmtree('build')\""}))
 
     @temoin("une fonction `function nom { …; }` sans parenthèses dont le corps ne fait rien d'irréversible passe le "
             "hook de l'agent, et son corps ne s'exécute pas là où il s'écrit (B-0232)")
