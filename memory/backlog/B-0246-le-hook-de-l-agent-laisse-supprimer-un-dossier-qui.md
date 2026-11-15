@@ -31,6 +31,16 @@ départs d'un producteur `find` ou `ls`, comme B-0230 le fera de leurs
 qu'il passe à `os.system`, `subprocess.*` (`shell=True`) ou la liste de
 chaînes qu'il leur passe.
 
+La revue du lot B-0234 (J-2026-11-15-O), deuxième constat pour le
+backlog, y ajoute un chemin qu'un `python -c` écrit en toutes lettres sous
+une autre forme que celles que lit B-0228 (une chaîne, `Path(…)`,
+`os.path.join(…)`) : `shutil.rmtree(os.path.abspath('..'))`, de même avec
+`os.path.realpath` ou `os.path.expanduser('~')`, une f-chaîne sans
+variable (`f'..'`), `Path('..').resolve(strict=True)`. `abspath` est
+courant ; la piste : les lire dans `_chemin_ecrit`
+(`engine/socle/hooks.py`).
+
 ## Fait quand
 
 - [ ] `echo .. | xargs rm -rf` et `python3 -c "import os; os.system('rm -rf ..')"` sont refusés par le hook, `find . -name '*.pyc' | xargs rm -f` passe, et un test le montre
+- [ ] `python3 -c "import shutil, os; shutil.rmtree(os.path.abspath('..'))"` et ses pareils (`realpath`, `expanduser`, une f-chaîne sans variable, `Path('..').resolve(strict=True)`) sont refusés par le hook, et un test le montre

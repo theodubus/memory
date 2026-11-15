@@ -5,9 +5,9 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot 5 (B-0223) fait, relu, livré par sa pull request (J-2026-11-15-K).
-Prochain lot : B-0234, le hook, B-0232 d'abord. B-0179 bloqué, en pause
-(J-2026-11-15-A).
+Lot B-0234 poussé, relu ; restent ses trois bloquants
+(J-2026-11-15-O), une seconde revue (`--since 9aa1bbe`), le prompt de
+chess, la livraison. B-0179 en pause (J-2026-11-15-A).
 
 ## Consignes en cours
 
