@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0173 — La consommation d'une session qui orchestre : mesurer ce qui pèse, puis écrire les règles qui la bornent
 
-> statut : ouvert · origine : J-2026-11-11-R · priorité : haute · lu : backlog@e69f45bc
+> statut : en cours · origine : J-2026-11-11-R · priorité : haute · lu : backlog@e69f45bc
 
 Le 11 novembre, une session qui orchestre des sous-agents a vidé deux
 fenêtres de cinq heures, la seconde en moins d'une demi-heure, et pris

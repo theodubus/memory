@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0179 — La CI posée échoue quand un adaptateur est là avant le premier fichier de son langage : le cache de Gradle exige un fichier Gradle
 
-> statut : ouvert · origine : J-2026-11-11-Y · priorité : haute · lu : backlog@83423479
+> statut : bloqué · origine : J-2026-11-11-Y · priorité : haute · lu : backlog@83423479
 
 Retour du pilote, relayé par Théo le 11 novembre (J-2026-11-11-Y), que la
 session du socle n'a pas lu dans le dépôt du pilote. Passé à la version publiée
@@ -26,6 +26,11 @@ la seconde garde le cache et ne dépend pas du moment de l'installation.
 
 Théo ne demande pas la correction tout de suite, le pilote étant en pause ;
 elle est à faire avant sa reprise.
+
+Bloqué depuis le 15 novembre (J-2026-11-15-A) : le dernier critère attend
+la mise à jour du pilote, qui est en pause sur la consigne de Théo
+(J-2026-11-13-E) et dont le dépôt ne se lit pas d'ici (J-2026-11-09-M).
+Le sujet se rouvre à la reprise du pilote, que Théo décide.
 
 ## Fait quand
 
