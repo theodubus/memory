@@ -7,6 +7,26 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-15-b — The review brief measures the batch since the common ancestor, and refuses an unknown reference
+
+`python3 .socle/socle review` measures the batch since the common
+ancestor of HEAD and its base: the default branch that moved on, or a
+commit pushed from elsewhere to the remote branch, no longer enter the
+diff or the topics. Only the topics whose status or "Done when" the batch
+changes make the reviewer's bar; a changed `after`, an added finding or a
+closed topic filed away by `socle archive` are no longer there. An
+unknown `--base` or `--since`, a `--since` that is not an ancestor of
+HEAD, a base with no common ancestor with HEAD are refused (code 2),
+instead of an empty brief. The brief says what the remote branch already
+carries of the batch, over how many commits it measures a batch already
+pushed, and the real reason for an empty brief (default branch guessed,
+shallow clone); under `--since`, the command it proposes keeps `--since`.
+The `socle-review` skill, a protected copy, changes.
+
+To do: a batch already pushed in whole or in part, or on a branch that
+carries batches already reviewed, is reviewed with `python3 .socle/socle
+review --base <the commit before the batch>`.
+
 ## 2026-11-15-a — The socle-batch skill says when to compact and which model for which work
 
 The "Consumption" section of the `socle-batch` skill has two more rules.

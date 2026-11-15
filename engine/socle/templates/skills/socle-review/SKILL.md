@@ -33,14 +33,20 @@ dont la conception n'est pas tranchée, sa spécification.
 python3 .socle/socle review
 ```
 
-   Il donne la consigne, le diff du lot depuis la branche distante (sinon
-   la branche par défaut ; si la branche distante contient déjà le lot,
-   poussé avant sa revue, depuis l'ancêtre commun avec la branche par
-   défaut, et il le dit), les sujets que le lot touche, en entier, ceux
+   Il donne la consigne, le diff du lot depuis l'ancêtre commun de HEAD
+   et de sa base, la branche distante (sinon la branche par défaut ; si
+   la branche distante contient déjà le lot, poussé avant sa revue,
+   l'ancêtre commun avec la branche par défaut, et il le dit), les sujets
+   dont le lot change le statut ou le « Fait quand », en entier, ceux
    qu'il ouvre par leur titre, et les décisions qu'ils citent.
    `--base <ref>` change la base du lot ; pour une seconde revue,
    `--since <commit relu>` ne montre que le diff depuis le commit de la
-   première, avec les messages des commits qui le corrigent.
+   première, avec les messages des commits qui le corrigent. Une
+   référence inconnue, ou un `--since` qui n'est pas un ancêtre de HEAD,
+   est refusée. Un lot déjà poussé en tout ou en partie (une session
+   cloud pousse à chaque fin de tour), ou une branche qui porte des lots
+   déjà relus, que la note du dossier signale : `--base <le commit d'avant
+   le lot>`, la tête d'où le lot est parti.
 3. Le confier à un relecteur qui n'a pas la conversation. Sous Claude
    Code : un sous-agent (outil `Agent`), du modèle de la session, dont le
    seul message est ce dossier, tel quel : rien ne s'y ajoute, rien ne s'en

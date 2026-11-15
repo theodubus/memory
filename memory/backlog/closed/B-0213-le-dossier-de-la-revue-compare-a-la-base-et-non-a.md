@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0213 — Le dossier de la revue compare à la base et non à l'ancêtre commun, accepte un --since inconnu ou étranger, et donne pour barre des sujets touchés en passant
 
-> statut : ouvert · origine : J-2026-11-14-A · lu : backlog@c15dd9a2
+> statut : fait · origine : J-2026-11-14-A · lu : backlog@c15dd9a2 · ref : J-2026-11-15-G
 
 La revue de B-0209 (J-2026-11-14-A), constats 1, 2 et 4, de même nature :
 la plage que juge le dossier de `socle review`.
@@ -43,8 +43,16 @@ jugés par la même règle quand le sujet se traite : ce qui ne peut se
 produire dans l'usage normal et dont l'effet se voit s'écarte d'une
 raison.
 
+Traité le 15 novembre (J-2026-11-15-G), selon ADR-0081 : tous les cas
+restants, chacun montré par un test. Pour les lots poussés qui
+s'accumulent, la note dit sur combien de commits porte la mesure, et le
+skill `socle-review` dit de donner `--base <le commit d'avant le lot>` ;
+`<amont>@{1}` n'est pas proposé, parce qu'un fetch le déplace aussi et
+qu'un lot poussé en plusieurs fins de tour le ferait commencer au milieu
+du lot, une relecture partielle que rien ne rattrape.
+
 ## Fait quand
 
-- [ ] le dossier mesure le lot depuis l'ancêtre commun, refuse une référence inconnue ou qui n'est pas un ancêtre, et un test le montre
-- [ ] un sujet touché sans que son « Fait quand » ou son statut change n'est pas donné comme barre, et un test le montre
-- [ ] les cas restants relevés par la revue de B-0212 sont traités, ou écartés d'une raison, et un test montre chaque cas traité
+- [x] le dossier mesure le lot depuis l'ancêtre commun, refuse une référence inconnue ou qui n'est pas un ancêtre, et un test le montre
+- [x] un sujet touché sans que son « Fait quand » ou son statut change n'est pas donné comme barre, et un test le montre
+- [x] les cas restants relevés par la revue de B-0212 sont traités, ou écartés d'une raison, et un test montre chaque cas traité

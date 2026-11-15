@@ -32,14 +32,20 @@ through; a topic whose design is not settled, its specification.
 python3 .socle/socle review
 ```
 
-   It gives the instruction, the batch's diff since the remote branch
-   (otherwise the default branch; if the remote branch already contains
-   the batch, pushed before its review, since the common ancestor with
-   the default branch, and it says so), the topics the batch touches, in
+   It gives the instruction, the batch's diff since the common ancestor
+   of HEAD and its base, the remote branch (otherwise the default
+   branch; if the remote branch already contains the batch, pushed before
+   its review, the common ancestor with the default branch, and it says
+   so), the topics whose status or “Done when” the batch changes, in
    full, those it opens by their title, and the decisions they cite.
    `--base <ref>` changes the batch's base; for a second review,
    `--since <reviewed commit>` shows only the diff since the first
-   review's commit, with the messages of the commits that fix it.
+   review's commit, with the messages of the commits that fix it. An
+   unknown reference, or a `--since` that is not an ancestor of HEAD, is
+   refused. A batch already pushed in whole or in part (a cloud session
+   pushes at the end of each turn), or a branch that carries batches
+   already reviewed, which the brief's note points out: `--base <the
+   commit before the batch>`, the head the batch started from.
 3. Hand it to a reviewer who does not have the conversation. Under
    Claude Code: a subagent (the `Agent` tool), of the session's model,
    whose only message is this brief, as is: nothing is added to it,

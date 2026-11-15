@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from socle import config, review as revue
+from socle import config, review as revue, utils as outils
 
 
 def git(cwd, *args):
@@ -21,6 +21,22 @@ ADR = ("<!-- socle: couche=decisions zone=publique -->\n# ADR-0001 — Doubler l
        "> statut : acceptée · date : 2026-11-02\n\n## Décision\n\n`double(x)` rend `2 * x`, entiers compris.\n")
 SUJET = ("<!-- socle: couche=backlog zone=publique -->\n# B-0001 — Doubler\n\n"
          "> statut : {statut} · origine : ADR-0001\n\nSelon ADR-0001.\n\n## Fait quand\n\n- [x] double est écrit\n")
+
+
+def commande(racine, **options):
+    """`socle review` lancé sur `racine` : son code, sa sortie, ses erreurs."""
+    import argparse
+    import contextlib
+    import io
+
+    from socle import cli
+
+    args = argparse.Namespace(root=str(racine), base=None, max_bytes=60_000, since=None)
+    for cle, valeur in options.items():
+        setattr(args, cle, valeur)
+    with contextlib.redirect_stdout(io.StringIO()) as out, contextlib.redirect_stderr(io.StringIO()) as err:
+        code = cli.cmd_review(args)
+    return code, out.getvalue(), err.getvalue()
 
 
 class _Lot(unittest.TestCase):
@@ -168,6 +184,39 @@ class TestBarre(_Lot):
         servis, ouverts = revue.sujets_du_lot(self.projet, "origin/main")
         self.assertEqual(([e.id for e in servis], ouverts), (["B-0001", "B-0002"], []))
 
+    VOISIN = ("<!-- socle: couche=backlog zone=publique -->\n# B-0002 — Un voisin\n\n"
+              "> statut : ouvert · origine : ADR-0001\n\nLe voisin.\n\n## Fait quand\n\n- [ ] le voisin est fait\n")
+    ANCIEN = ("<!-- socle: couche=backlog zone=publique -->\n# B-0004 — Un ancien\n\n"
+              "> statut : fait · origine : ADR-0001 · ref : x\n\nL'ancien.\n\n## Fait quand\n\n- [x] l'ancien\n")
+
+    def test_un_sujet_touche_en_passant_n_est_pas_la_barre(self):
+        """B-0213, ADR-0081 : un `après` changé, un constat ajouté, un sujet
+        clos rangé par `socle archive` ne font pas la barre du relecteur."""
+        backlog = self.racine / "memory/backlog"
+        (backlog / "B-0002-voisin.md").write_text(self.VOISIN, encoding="utf-8")
+        (backlog / "B-0004-ancien.md").write_text(self.ANCIEN, encoding="utf-8")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "deux sujets")
+        git(self.racine, "push", "-q", "-u", "origin", "travail")
+        self.lot()
+        (backlog / "B-0002-voisin.md").write_text(
+            self.VOISIN.replace("origine : ADR-0001", "origine : ADR-0001 · après : B-0001")
+            .replace("Le voisin.", "Le voisin.\n\nUn constat ajouté par une revue."), encoding="utf-8")
+        (backlog / "closed").mkdir()
+        git(self.racine, "mv", "memory/backlog/B-0004-ancien.md", "memory/backlog/closed/B-0004-ancien.md")
+        git(self.racine, "commit", "-qam", "en passant")
+        texte = revue.dossier(self.projet)
+        self.assertNotIn("# B-0002 — Un voisin", texte)
+        self.assertNotIn("# B-0004 — Un ancien", texte)
+        self.assertIn("- [x] double est écrit", texte)
+        servis, ouverts = revue.sujets_du_lot(self.projet, "origin/travail")
+        self.assertEqual(([e.id for e in servis], ouverts), (["B-0001"], []))
+        # Une case cochée, ou un statut changé, le remettent dans la barre.
+        (backlog / "B-0002-voisin.md").write_text(self.VOISIN.replace("- [ ] le voisin", "- [x] le voisin"),
+                                                  encoding="utf-8")
+        self.assertEqual([e.id for e in revue.sujets_du_lot(self.projet, "origin/travail")[0]],
+                         ["B-0001", "B-0002"])
+
     def test_la_seconde_revue_ne_montre_que_la_correction_et_garde_les_sujets_du_lot(self):
         self.lot()
         relu = git(self.racine, "rev-parse", "HEAD").strip()
@@ -307,6 +356,210 @@ class TestLotDejaPousse(_Lot):
         self.assertIn("(aucun changement hors de la mémoire : rien à relire)", texte)
         # La commande qu'elle donne relit le lot.
         self.assertIn("+    return x * 2", revue.dossier(self.projet, self.commun))
+
+
+    def test_un_lot_pousse_en_partie_le_dit(self):
+        """La revue de B-0212 : un lot poussé à moitié ne montrait que sa
+        partie non poussée, sans le dire."""
+        (self.racine / "calc.py").write_text("def double(x):\n    return x * 2\n")
+        git(self.racine, "commit", "-qam", "la première moitié")
+        git(self.racine, "push", "-q", "-u", "origin", "travail")
+        (self.racine / "calc.py").write_text("def double(x):\n    return 2 * x\n")
+        git(self.racine, "commit", "-qam", "la seconde moitié")
+        texte = revue.dossier(self.projet)
+        note = (f"(la branche distante origin/travail porte déjà 1 commit(s) hors de la mémoire depuis {self.commun}, "
+                "l'ancêtre commun de HEAD et de origin/main, que ce dossier ne montre pas : si le lot en comprend, "
+                "`socle review --base <le commit d'avant le lot>`)")
+        self.assertIn(note, texte)
+        self.assertEqual(revue.base_par_defaut(self.projet), ("origin/travail", note))
+        self.assertIn("## Le diff du lot (1 fichier(s), depuis origin/travail)", texte)
+
+    def test_un_commit_de_memoire_seule_deja_pousse_ne_fait_pas_de_note(self):
+        (self.racine / "memory/journal").mkdir(parents=True)
+        (self.racine / "memory/journal/2026-11-1.md").write_text("<!-- socle: couche=journal zone=publique -->\n",
+                                                               encoding="utf-8")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "la mémoire seule")
+        git(self.racine, "push", "-q", "-u", "origin", "travail")
+        self.lot()
+        self.assertEqual(revue.base_par_defaut(self.projet), ("origin/travail", None))
+
+    def test_des_lots_deja_pousses_disent_sur_combien_de_commits_porte_la_mesure(self):
+        """La revue de B-0212 : des lots poussés qui s'accumulent se relisent
+        ensemble ; la note dit sur combien de commits, et comment réduire."""
+        self.lot()
+        git(self.racine, "push", "-q", "-u", "origin", "travail")
+        self.correction()
+        (self.racine / "memory/journal").mkdir(parents=True)
+        (self.racine / "memory/journal/2026-11-1.md").write_text("<!-- socle: couche=journal zone=publique -->\n",
+                                                               encoding="utf-8")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "la mémoire seule")
+        git(self.racine, "push", "-q")
+        base, note = revue.base_par_defaut(self.projet)
+        self.assertEqual(base, self.commun)
+        self.assertIn(f"il se mesure depuis {self.commun}, l'ancêtre commun de HEAD et de origin/main, sur 2 "
+                      "commit(s) hors de la mémoire ; s'il commence plus tard, `socle review --base <le commit "
+                      "d'avant le lot>`)", note)
+
+    def test_sous_since_la_commande_de_la_note_garde_since(self):
+        """La revue de B-0212 : sous `--since`, la note proposait une
+        commande sans `--since`, qui donne une première revue."""
+        self.lot()
+        relu = git(self.racine, "rev-parse", "HEAD").strip()
+        git(self.racine, "push", "-q", "-u", "origin", "travail")
+        self.correction()
+        git(self.racine, "push", "-q")
+        texte = revue.dossier(self.projet, depuis=relu)
+        self.assertIn(f"`socle review --base <le commit d'avant le lot> --since {relu}`)", texte)
+        self.assertNotIn("`socle review --base <le commit d'avant le lot>`)", texte)
+
+    def test_une_branche_par_defaut_devinee_le_dit(self):
+        """La revue de B-0212 : quand la branche par défaut n'est que
+        devinée, la note disait qu'elle contient aussi le lot."""
+        self.lot()
+        git(self.racine, "push", "-q", "-u", "origin", "travail")
+        git(self.racine, "remote", "set-head", "origin", "-d")
+        git(self.racine, "update-ref", "-d", "refs/remotes/origin/main")
+        git(self.racine, "branch", "-q", "-D", "main")
+        base, note = revue.base_par_defaut(self.projet)
+        self.assertIn("(la branche distante origin/travail contient déjà le lot, et ce clone ne connaît pas la "
+                      "branche par défaut : ni `origin/HEAD`, ni `main`, ni `master`.", note)
+        self.assertNotIn("aussi", note)
+        self.assertEqual(base, "origin/travail")
+        self.assertTrue(outils.branche_par_defaut_devinee(self.racine))
+
+    def test_un_clone_superficiel_sans_ancetre_commun_le_dit(self):
+        """La revue de B-0212 : sans ancêtre commun, un clone superficiel,
+        la note disait que la branche par défaut contient aussi le lot ; une
+        base sans ancêtre commun avec HEAD est refusée (ADR-0081)."""
+        source = self.dossier / "source"
+        git(source, "switch", "-q", "-c", "travail")
+        (source / "calc.py").write_text("def double(x):\n    return x * 2\n")
+        git(source, "commit", "-qam", "le lot")
+        git(source, "switch", "-q", "main")
+        (source / "autre.py").write_text("AUTRE = 1\n")
+        git(source, "add", "-A")
+        git(source, "commit", "-qm", "main avance")
+        superficiel = self.dossier / "superficiel"
+        git(self.dossier, "clone", "-q", "--depth", "1", "--no-single-branch", source.as_uri(), str(superficiel))
+        git(superficiel, "switch", "-q", "travail")
+        projet = config.Projet(racine=superficiel)
+        base, note = revue.base_par_defaut(projet)
+        self.assertIn("(la branche distante origin/travail contient déjà le lot, et HEAD n'a pas d'ancêtre commun "
+                      "avec la branche par défaut origin/main dans ce clone, superficiel peut-être (`git fetch "
+                      "--unshallow`).", note)
+        self.assertEqual(base, "origin/travail")
+        code, out, err = commande(superficiel, base="origin/main")
+        self.assertEqual((code, out), (2, ""))
+        self.assertIn("aucun ancêtre commun entre HEAD et origin/main dans ce clone", err)
+
+
+class TestMesure(_Lot):
+    """B-0213, ADR-0081 : le lot se mesure depuis l'ancêtre commun de sa base
+    et de HEAD, et une référence qui ne le mesure pas est refusée."""
+
+    SUJET_DE_MAIN = ("<!-- socle: couche=backlog zone=publique -->\n# B-0005 — Un sujet de main\n\n"
+                     "> statut : {statut} · origine : ADR-0001\n\nSur main.\n\n## Fait quand\n\n- [{case}] fait\n")
+
+    def avancer_main(self):
+        """La branche par défaut avance sans la branche : du code, et un
+        sujet qu'elle seule clôt."""
+        source = self.dossier / "source"
+        (source / "autre.py").write_text("ECRIT_SUR_MAIN = 1\n")
+        (source / "memory/backlog/B-0005-de-main.md").write_text(
+            self.SUJET_DE_MAIN.format(statut="fait · ref : x", case="x"), encoding="utf-8")
+        git(source, "add", "-A")
+        git(source, "commit", "-qm", "main avance")
+        git(self.racine, "fetch", "-q", "origin")
+
+    def test_la_branche_par_defaut_qui_avance_n_entre_pas_dans_le_lot(self):
+        source = self.dossier / "source"
+        (source / "memory/backlog/B-0005-de-main.md").write_text(
+            self.SUJET_DE_MAIN.format(statut="ouvert", case=" "), encoding="utf-8")
+        git(source, "add", "-A")
+        git(source, "commit", "-qm", "un sujet de main")
+        git(self.racine, "fetch", "-q", "origin")
+        git(self.racine, "reset", "-q", "--hard", "origin/main")
+        commun = git(self.racine, "rev-parse", "HEAD").strip()
+        self.lot()
+        self.avancer_main()
+        texte = revue.dossier(self.projet)
+        self.assertNotIn("ECRIT_SUR_MAIN", texte)
+        self.assertNotIn("# B-0005 — Un sujet de main", texte)
+        self.assertIn("+    return x * 2", texte)
+        self.assertIn("- [x] double est écrit", texte)
+        self.assertIn(f"## Le diff du lot (1 fichier(s), depuis {commun}, l'ancêtre commun de HEAD et de "
+                      "origin/main)", texte)
+        self.assertEqual([e.id for e in revue.sujets_du_lot(self.projet, "origin/main")[0]], ["B-0001"])
+        self.assertEqual(revue.debut_du_lot(self.racine, "origin/main"), commun)
+
+    def test_un_commit_pousse_d_ailleurs_n_entre_pas_dans_le_lot(self):
+        """La revue de B-0212 : une branche distante en avance sur HEAD par
+        du code donnait pour diff du lot l'inverse du commit poussé
+        d'ailleurs."""
+        git(self.racine, "push", "-q", "-u", "origin", "travail")
+        commun = git(self.racine, "rev-parse", "HEAD").strip()
+        source = self.dossier / "source"
+        git(source, "switch", "-q", "travail")
+        (source / "ailleurs.py").write_text("ECRIT_AILLEURS = 1\n")
+        git(source, "add", "-A")
+        git(source, "commit", "-qm", "poussé d'ailleurs")
+        git(source, "switch", "-q", "main")
+        git(self.racine, "fetch", "-q", "origin")
+        # Rien du lot n'y manque encore : elle le contient.
+        self.assertTrue(revue.contient_le_lot(self.projet, "origin/travail"))
+        self.lot()
+        texte = revue.dossier(self.projet)
+        self.assertNotIn("ECRIT_AILLEURS", texte)
+        self.assertIn("+    return x * 2", texte)
+        self.assertIn(f"## Le diff du lot (1 fichier(s), depuis {commun}, l'ancêtre commun de HEAD et de "
+                      "origin/travail)", texte)
+        self.assertFalse(revue.contient_le_lot(self.projet, "origin/travail"))
+
+    def test_une_reference_inconnue_est_refusee(self):
+        self.lot()
+        for option in ("base", "since"):
+            code, out, err = commande(self.racine, **{option: "origin/inconnue"})
+            self.assertEqual((code, out), (2, ""), option)
+            self.assertIn(f"--{option} origin/inconnue : aucune branche, étiquette ni commit de ce nom dans ce "
+                          "dépôt", err)
+        with self.assertRaises(revue.ReferenceRefusee):
+            revue.dossier(self.projet, "origin/inconnue")
+        self.assertIsNone(revue.refus_des_references(self.projet, "origin/main", None))
+
+    def test_un_since_qui_n_est_pas_un_ancetre_de_head_est_refuse(self):
+        self.lot()
+        self.avancer_main()
+        etranger = git(self.racine, "rev-parse", "origin/main").strip()
+        code, out, err = commande(self.racine, since=etranger)
+        self.assertEqual((code, out), (2, ""))
+        self.assertIn(f"--since {etranger} n'est pas un ancêtre de HEAD", err)
+        relu = git(self.racine, "rev-parse", "HEAD").strip()
+        self.assertIsNone(revue.refus_des_references(self.projet, None, relu))
+        self.assertEqual(commande(self.racine, since=relu)[0], 0)
+
+    def test_une_base_qui_n_est_pas_un_ancetre_se_mesure_depuis_l_ancetre_commun(self):
+        """Une base qui a avancé reste admise : la branche par défaut après
+        d'autres fusions."""
+        self.lot()
+        self.avancer_main()
+        code, out, _ = commande(self.racine, base="origin/main")
+        self.assertEqual(code, 0)
+        self.assertIn("l'ancêtre commun de HEAD et de origin/main)", out)
+        self.assertNotIn("ECRIT_SUR_MAIN", out)
+
+    def test_une_base_sans_ancetre_commun_est_refusee(self):
+        self.lot()
+        git(self.racine, "switch", "-q", "--orphan", "orpheline")
+        (self.racine / "seul.txt").write_text("seul\n")
+        git(self.racine, "add", "seul.txt")
+        git(self.racine, "commit", "-qm", "une autre histoire")
+        git(self.racine, "switch", "-q", "-f", "travail")
+        code, out, err = commande(self.racine, base="orpheline")
+        self.assertEqual((code, out), (2, ""))
+        self.assertIn("aucun ancêtre commun entre HEAD et orpheline dans ce clone : rien ne mesure le lot", err)
+        self.assertIsNone(revue.debut_du_lot(self.racine, "orpheline"))
 
 
 class TestRelectureAFroid(unittest.TestCase):

@@ -1929,10 +1929,11 @@ MESSAGES: dict[str, str] = {
         "the permalink of a file or an entry, to give to the human",
     "le dossier de la revue adversariale d'un lot, pour un relecteur sans contexte":
         "the brief of a batch's adversarial review, for a reviewer without context",
-    "la base du lot (par défaut : la branche distante, sinon la branche par défaut ; l'ancêtre commun avec "
-    "celle-ci quand la branche distante contient déjà le lot)":
-        "the base of the batch (by default: the remote branch, otherwise the default branch; the common ancestor "
-        "with the latter when the remote branch already contains the batch)",
+    "la base du lot, qui se mesure depuis son ancêtre commun avec HEAD (par défaut : la branche distante, sinon la "
+    "branche par défaut ; l'ancêtre commun avec celle-ci quand la branche distante contient déjà le lot)":
+        "the base of the batch, measured since its common ancestor with HEAD (by default: the remote branch, "
+        "otherwise the default branch; the common ancestor with the latter when the remote branch already contains "
+        "the batch)",
     "le plafond du diff montré":
         "the cap of the diff shown",
     "# Revue adversariale d'un lot":
@@ -2003,14 +2004,47 @@ MESSAGES: dict[str, str] = {
     "(aucun changement hors de la mémoire : rien à relire)":
         "(no change outside the memory: nothing to review)",
     "(la branche distante {amont} contient déjà le lot : il se mesure depuis {commun}, l'ancêtre commun de HEAD et "
-    "de {defaut} ; s'il commence plus tard, `socle review --base <le commit d'avant le lot>`)":
+    "de {defaut}, sur {n} commit(s) hors de la mémoire ; s'il commence plus tard, `socle review --base <le commit "
+    "d'avant le lot>{seconde}`)":
         "(the remote branch {amont} already contains the batch: it is measured since {commun}, the common ancestor "
-        "of HEAD and {defaut}; if it starts later, `socle review --base <the commit before the batch>`)",
+        "of HEAD and {defaut}, over {n} commit(s) outside the memory; if it starts later, `socle review --base "
+        "<the commit before the batch>{seconde}`)",
     "(la branche distante {amont} contient déjà le lot, et la branche par défaut {defaut} aussi : rien à relire "
-    "depuis elles. Un lot déjà poussé se relit depuis le commit d'avant lui : `socle review --base <ce commit>`)":
+    "depuis elles. Un lot déjà poussé se relit depuis le commit d'avant lui : `socle review --base <ce "
+    "commit>{seconde}`)":
         "(the remote branch {amont} already contains the batch, and so does the default branch {defaut}: nothing "
         "to review since them. A batch already pushed is reviewed since the commit before it: `socle review "
-        "--base <that commit>`)",
+        "--base <that commit>{seconde}`)",
+    "(la branche distante {amont} porte déjà {n} commit(s) hors de la mémoire depuis {commun}, l'ancêtre commun de "
+    "HEAD et de {defaut}, que ce dossier ne montre pas : si le lot en comprend, `socle review --base <le commit "
+    "d'avant le lot>{seconde}`)":
+        "(the remote branch {amont} already carries {n} commit(s) outside the memory since {commun}, the common "
+        "ancestor of HEAD and {defaut}, which this brief does not show: if the batch includes some, `socle review "
+        "--base <the commit before the batch>{seconde}`)",
+    "(la branche distante {amont} contient déjà le lot, et ce clone ne connaît pas la branche par défaut : ni "
+    "`origin/HEAD`, ni `main`, ni `master`. Un lot déjà poussé se relit depuis le commit d'avant lui : `socle "
+    "review --base <ce commit>{seconde}`)":
+        "(the remote branch {amont} already contains the batch, and this clone does not know the default branch: "
+        "neither `origin/HEAD`, nor `main`, nor `master`. A batch already pushed is reviewed since the commit "
+        "before it: `socle review --base <that commit>{seconde}`)",
+    "(la branche distante {amont} contient déjà le lot, et HEAD n'a pas d'ancêtre commun avec la branche par "
+    "défaut {defaut} dans ce clone, superficiel peut-être (`git fetch --unshallow`). Un lot déjà poussé se relit "
+    "depuis le commit d'avant lui : `socle review --base <ce commit>{seconde}`)":
+        "(the remote branch {amont} already contains the batch, and HEAD has no common ancestor with the default "
+        "branch {defaut} in this clone, a shallow one perhaps (`git fetch --unshallow`). A batch already pushed is "
+        "reviewed since the commit before it: `socle review --base <that commit>{seconde}`)",
+    "## Le diff du lot ({n} fichier(s), depuis {commun}, l'ancêtre commun de HEAD et de {base})":
+        "## The batch's diff ({n} file(s), since {commun}, the common ancestor of HEAD and {base})",
+    "{option} {ref} : aucune branche, étiquette ni commit de ce nom dans ce dépôt ; rien n'est relu":
+        "{option} {ref}: no branch, tag or commit of that name in this repository; nothing is reviewed",
+    "--since {ref} n'est pas un ancêtre de HEAD : une seconde revue se mesure depuis le commit relu par la "
+    "première, que la branche contient ; rien n'est relu":
+        "--since {ref} is not an ancestor of HEAD: a second review is measured since the commit the first one "
+        "reviewed, which the branch contains; nothing is reviewed",
+    "aucun ancêtre commun entre HEAD et {base} dans ce clone : rien ne mesure le lot. Un clone superficiel "
+    "s'approfondit par `git fetch --unshallow` ; sinon, `socle review --base <le commit d'avant le lot>`":
+        "no common ancestor between HEAD and {base} in this clone: nothing measures the batch. A shallow clone is "
+        "deepened by `git fetch --unshallow`; otherwise, `socle review --base <the commit before the batch>`",
     "(diff tronqué : {n} caractère(s) de plus non montrés ; `git diff {base}` les donne)":
         "(diff truncated: {n} more character(s) not shown; `git diff {base}` gives them)",
     "## Les sujets du lot : leur critère « Fait quand » est ta barre":
