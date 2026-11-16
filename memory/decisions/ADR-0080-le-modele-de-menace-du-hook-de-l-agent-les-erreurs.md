@@ -1,7 +1,7 @@
 <!-- socle: couche=decisions zone=publique -->
 # ADR-0080 — Le modèle de menace du hook de l'agent : les erreurs d'un agent coopératif, et ce que rien ne rattrape
 
-> statut : acceptée · date : 2026-11-14 · source : D-0112@c8501606, J-2026-11-14-M@567221ed, ADR-0072@1a8b5c2d, ADR-0073@1e48220c, D-0111@034d5e87, B-0206@2ebfe7b8, B-0208@59067330 · lu : decisions@35ba5f6e
+> statut : remplacée · date : 2026-11-14 · source : D-0112@c8501606, J-2026-11-14-M@567221ed, ADR-0072@1a8b5c2d, ADR-0073@1e48220c, D-0111@034d5e87, B-0206@2ebfe7b8, B-0208@59067330 · lu : decisions@35ba5f6e · remplacée-par : ADR-0082
 
 ## Contexte
 

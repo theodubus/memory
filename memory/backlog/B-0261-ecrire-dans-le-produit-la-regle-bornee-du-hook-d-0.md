@@ -15,8 +15,8 @@ accident. La règle 1 de D-0112 (le tri de la revue) reste.
 
 À écrire, avec le texte de la règle tel que D-0120 le donne :
 
-- une décision qui remplace la règle 2 d'ADR-0080 (ADR-0080 passe
-  `remplacée` sur ce point) ;
+- une décision qui remplace ADR-0080 : ADR-0082, écrite le 16 novembre
+  (J-2026-11-16-H), ADR-0080 passée `remplacée` ;
 - le guide d'un projet équipé (`engine/socle/HELP.md` et sa version
   anglaise), avec la liste des formes connues non jugées : celles que
   ferment sans correction J-2026-11-16-G (les sujets abandonnés et les

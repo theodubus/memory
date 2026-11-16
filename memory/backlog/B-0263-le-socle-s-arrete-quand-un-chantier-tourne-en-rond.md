@@ -1,5 +1,5 @@
 <!-- socle: couche=backlog zone=publique -->
-# B-0263 — Le socle s'arrête quand un chantier tourne en rond : un lot qui ouvre plus de sujets qu'il n'en ferme, ou des revues qui trouvent passe après passe des bloquants de même nature, deviennent une demande à l'humain
+# B-0263 — L'agent voit lui-même qu'un chantier tourne en rond, et en parle à l'humain avec une proposition : un lot garde l'historique de ses revues et s'arrête sur un recul écrit
 
 > statut : ouvert · origine : J-2026-11-16-G · priorité : haute · lu : backlog@d9da377d
 
@@ -8,30 +8,45 @@ tourne en rond avec un sujet infini, et sans intervention de ma part on
 se retrouve a avancer dans le vide sans prise de recul. Que peut on faire
 pour que le socle évite ça ». La première fois : le hook, le 13 novembre,
 trente contournements en deux revues (ADR-0072) ; la seconde : le lot
-B-0234, deux sujets, trois passes de revue, six bloquants corrigés puis
-deux de plus, dix sujets ouverts (D-0120). Les deux fois, chaque pas
-semblait juste selon les règles, et seul Théo a demandé si l'ensemble
-convergeait.
+B-0234, deux sujets, trois passes de revue, huit bloquants, dix sujets
+ouverts (ADR-0082). Les deux fois, chaque pas semblait juste selon les
+règles, et seul Théo a demandé si l'ensemble convergeait.
 
-Ce que le socle ne voit pas : la politique arrête un agent après trois
-tentatives d'un contrôle rouge (point 7), pas après trois passes de revue
-qui trouvent des bloquants ; rien ne compare ce qu'un lot ouvre à ce qu'il
-ferme, ni le solde du backlog d'un domaine sur quelques jours.
+L'agent avait proposé des signaux comptés par l'état et montrés à Théo.
+Sa réponse, le même jour, mot pour mot (J-2026-11-16-H) :
 
-La piste, à spécifier avant le code et à soumettre à Théo : des signaux
-que l'état calcule, et qui font une ligne de « ce qui revient à
-l'humain » et une demande qui résume, au lieu d'une passe de plus :
+> Pour ta proposition pour éviter la non convergence va suffit ? Malgré le changement de session ça garde bien la trace des revues ? Et quid de si on ouvre toujours autant de sujets (et pas plus), + cette proposition laisse le fait d'exposer des métriques à l'humain, ce qui est pénible, alors qu'avec la bonne structure on peut faire en sorte que l'agent se rende compte lui meme qu'on ne converge pas  et qu'il puisse en parler à l'humain avec une proposition à ce moment là
 
-- un lot qui a ouvert plus de sujets qu'il n'en a fermés ;
-- une revue dont la passe suivante trouve encore des bloquants (une
-  troisième passe se demande, elle ne se lance pas seule) ;
-- le solde du backlog d'un domaine (les sujets d'un même module ou d'un
-  même mot du titre) qui grossit sur quelques jours.
+Ce qui manque aujourd'hui : l'historique des passes de revue d'un lot
+n'est que dans le journal, en prose, et non dans le lot ; aucun moment de
+la méthode n'oblige l'agent à se demander si le lot converge ; et un
+compte (un lot qui ouvre plus de sujets qu'il n'en ferme) manque le
+chantier qui en ouvre autant qu'il en ferme, sans fin.
 
-La demande dit ce qui tourne, avec ses chiffres, et propose de borner la
-règle qui le fait tourner, comme D-0120 l'a fait pour le hook.
+La piste, à spécifier avant le code et à soumettre à Théo :
+
+1. Le lot garde son historique : chaque passe de revue s'écrit dans le
+   sujet du lot (sa date, ses commits, ses bloquants et la nature de
+   chacun, les sujets qu'elle ouvre, ceux que le lot ferme). Il survit à un
+   changement de session, puisqu'il est dans le lot.
+2. Des moments de recul, avant toute passe au-delà de la première et à la
+   clôture : l'outil (le dossier de `socle review --since`, `socle
+   archive`) met l'historique devant l'agent, avec la question de la
+   nature, non du nombre : cette passe trouve-t-elle des bloquants de même
+   nature que la précédente (chaque correction crée la suivante) ? les
+   sujets que le lot ouvre sont-ils de même nature que ceux qu'il ferme ?
+   les lots fermés du même domaine, lus à la formation, l'ont-ils déjà
+   rouvert ?
+3. L'agent y répond dans le lot, d'un paragraphe de recul : continuer, et
+   pourquoi ; ou s'arrêter. Une passe de plus, ou la clôture, sans ce
+   paragraphe est refusée, par un contrôle qui a son défaut injecté.
+4. S'arrêter, c'est une demande à Théo : ce qui tourne, la règle qui le
+   fait tourner, et une proposition qui la borne, comme D-0120 l'a fait
+   pour le hook. Théo ne voit aucune métrique ; il voit la demande quand
+   l'agent conclut.
 
 ## Fait quand
 
-- [ ] la spécification des signaux et de leur seuil est soumise à Théo avant son code
-- [ ] un lot qui ouvre plus de sujets qu'il n'en ferme, et une troisième passe de revue avec bloquants, font une ligne de l'état et arrêtent le lot sur une demande, et un test le montre
+- [ ] la spécification de l'historique, des moments de recul et de l'arrêt est soumise à Théo avant son code
+- [ ] une passe de revue au-delà de la première, et la clôture d'un lot, exigent un paragraphe de recul qui lit l'historique du lot ; sans lui, elles sont refusées, et un test et un défaut injecté le montrent
+- [ ] l'historique des passes d'un lot se lit d'une session neuve, et un test le montre
