@@ -7,6 +7,17 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-16-b — The state says what waiting topics wait on: a topic or a request
+
+The last line of the backlog order, in the state and in the end-of-turn
+reminder, said "n topic(s) wait on an open topic" of every topic that was
+not ready, including one that only waits on an unanswered request. It now
+splits in two: "n topic(s) wait on an open topic" counts those waiting on a
+topic, "n topic(s) wait on an unanswered request" those waiting on a
+request; a topic waiting on both counts in both lines.
+
+To do: nothing.
+
 ## 2026-11-16-a — The agent's hook bounded to the forms an agent writes: the guide gives the rule and the known forms it does not judge
 
 The guide (`python3 .socle/socle help`) says what the agent's hook

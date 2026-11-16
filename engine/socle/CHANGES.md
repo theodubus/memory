@@ -7,6 +7,18 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-16-b — L'état dit ce qu'attendent les sujets en attente : un sujet ou une demande
+
+La dernière ligne de l'ordre du backlog, dans l'état et dans le rappel de
+fin de tour, disait « n sujet(s) attendent un sujet ouvert » de tout sujet
+qui n'était pas prêt, y compris de celui qui n'attend qu'une demande sans
+réponse. Elle se dédouble : « n sujet(s) attendent un sujet ouvert » compte
+ceux qui attendent un sujet, « n sujet(s) attendent une demande sans
+réponse » ceux qui attendent une demande ; un sujet qui attend les deux
+compte dans les deux lignes.
+
+À faire : rien.
+
 ## 2026-11-16-a — Le hook de l'agent borné aux formes qu'un agent écrit : le guide donne la règle et les formes connues qu'il ne juge pas
 
 Le guide (`python3 .socle/socle help`) dit ce que juge le hook de

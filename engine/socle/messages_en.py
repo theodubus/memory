@@ -1369,6 +1369,8 @@ MESSAGES: dict[str, str] = {
         "… and {n} more ready",
     "{n} sujet(s) attendent un sujet ouvert":
         "{n} topic(s) wait on an open topic",
+    "{n} sujet(s) attendent une demande sans réponse":
+        "{n} topic(s) wait on an unanswered request",
     "Du code a changé et la mémoire non : la fin de tour attend sa mise à jour.":
         "Code changed and the memory did not: the end of turn waits for its update.",
     "Durcir un garde-fou est libre ; l'assouplir exige une demande validée qui cite la clé (politique, point 1).":
