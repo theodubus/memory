@@ -7,6 +7,36 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-16-a — The agent's hook bounded to the forms an agent writes: the guide gives the rule and the known forms it does not judge
+
+The guide (`python3 .socle/socle help`) says what the agent's hook
+judges: the shell forms an agent writes in its work, for every effect;
+for what nothing catches afterwards (deleting the project or a directory
+that contains it, an irreversible external action, a leak of the private
+memory, the part of the memory that is not published), it also refuses
+what it cannot read. A hole opens a topic only if its form is one an
+agent writes (seen in an agent session, a skill or current
+documentation); another form is entered in one line in the list of known
+forms the hook does not judge, which the guide now gives: `time` before a
+compound command, the patterns of a `case`, `find -exec sudo …`, a
+`return` in a function, the indirect call of a function, a function
+named like a command or defined by an `eval`, `eval -- f`, `git
+--config-env`, what an `eval` changes other than a call, a function
+called from another directory, `echo .. | xargs rm`, `xargs git worktree
+remove`, what a `python3 -c` launches or builds, `coproc`. Until now, the
+guide said the hook judged, whatever its form, what nothing catches.
+
+The reviewer's brief (`python3 .socle/socle review`) and the
+`socle-review` skill, a protected copy, say it too: a shell form an agent
+does not write in its work, and that escapes the hook, is classed neither
+as blocking, even if refused before the batch by accident, nor for the
+backlog; it is dismissed, in one line, for the list. The sorting of other
+findings does not change. The hook itself does not change.
+
+To do: nothing. Deleting the project through `find … | xargs rm` still
+escapes it: do not run it against the project or a directory that
+contains it.
+
 ## 2026-11-15-e — The agent's hook refuses deleting the project through rsync --delete, git worktree remove and python -c
 
 The agent's hook refuses deleting the project, or a directory that

@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0261 — Écrire dans le produit la règle bornée du hook (D-0120) : la décision qui remplace la règle 2 d'ADR-0080, le guide, la consigne du relecteur, et la liste des formes connues que le hook ne juge pas
 
-> statut : ouvert · origine : J-2026-11-16-G · priorité : haute · ref : D-0120 · lu : backlog@d9da377d
+> statut : fait · origine : J-2026-11-16-G · priorité : haute · ref : D-0120, J-2026-11-16-O · lu : backlog@d9da377d
 
 Théo a validé D-0120@f10e0e80 le 16 novembre (J-2026-11-16-G) : le hook
 de l'agent juge les formes du shell qu'un agent écrit dans son travail,
@@ -28,4 +28,4 @@ accident. La règle 1 de D-0112 (le tri de la revue) reste.
 
 ## Fait quand
 
-- [ ] la décision qui remplace la règle 2 d'ADR-0080, le guide (avec la liste des formes connues non jugées) et la consigne du relecteur disent la règle de D-0120, et un test le montre pour la consigne du relecteur
+- [x] la décision qui remplace la règle 2 d'ADR-0080, le guide (avec la liste des formes connues non jugées) et la consigne du relecteur disent la règle de D-0120, et un test le montre pour la consigne du relecteur

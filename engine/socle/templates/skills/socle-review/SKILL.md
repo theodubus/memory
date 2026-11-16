@@ -84,6 +84,13 @@ Le relecteur les classe ; l'agent vérifie chaque classement.
   rattrapé, par un contrôle, la CI ou une erreur que l'agent voit
   aussitôt ; et un constat infondé. Une ligne du récap dit pourquoi
   chacun est écarté.
+- **Une forme du shell qu'un agent n'écrit pas** dans son travail (ni
+  vue dans une session d'agent, ni dans un skill, ni dans une
+  documentation courante), et qui échappe au hook de l'agent : elle ne se
+  classe pas bloquante, même refusée avant le lot par accident, ni pour
+  le backlog, quel qu'en soit l'effet. Elle s'écarte, et va d'une ligne à
+  la liste des formes connues que le hook ne juge pas, que tient le guide
+  du socle (`python3 .socle/socle help`).
 
 Ne rien poster sur GitHub : l'humain lit le récap, pas la revue. Le récap
 le dit en une ligne : `Revue : <b> bloquants, corrigés ; <n> au backlog

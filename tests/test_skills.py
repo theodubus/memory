@@ -415,6 +415,25 @@ class TestLaRevue(unittest.TestCase):
             for phrase in phrases:
                 self.assertIn(phrase, texte, nom)
 
+    def test_une_forme_du_shell_qu_un_agent_n_ecrit_pas_s_ecarte_pour_la_liste(self):
+        """D-0120, ADR-0082 : ni bloquante, même refusée avant le lot par
+        accident, ni pour le backlog ; écartée, d'une ligne, pour la liste
+        des formes connues que le hook ne juge pas."""
+        attendus = {
+            "fr": "**Une forme du shell qu'un agent n'écrit pas** dans son travail (ni vue dans une session "
+                  "d'agent, ni dans un skill, ni dans une documentation courante), et qui échappe au hook de "
+                  "l'agent : elle ne se classe pas bloquante, même refusée avant le lot par accident, ni pour le "
+                  "backlog, quel qu'en soit l'effet. Elle s'écarte, et va d'une ligne à la liste des formes connues "
+                  "que le hook ne juge pas, que tient le guide du socle (`python3 .socle/socle help`).",
+            "en": "**A shell form an agent does not write** in its work (seen neither in an agent session, nor in "
+                  "a skill, nor in current documentation), and that escapes the agent's hook: it is not classed as "
+                  "blocking, even if refused before the batch by accident, nor for the backlog, whatever its "
+                  "effect. It is dismissed, and goes in one line to the list of known forms the hook does not "
+                  "judge, which the socle's guide keeps (`python3 .socle/socle help`).",
+        }
+        for lg, phrase in attendus.items():
+            self.assertIn(phrase, " ".join(self.texte(lg).split()), lg)
+
 
 class TestRefusBash(unittest.TestCase):
     def test_le_meme_jugement_que_le_hook(self):

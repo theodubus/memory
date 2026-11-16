@@ -7,6 +7,37 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-16-a — Le hook de l'agent borné aux formes qu'un agent écrit : le guide donne la règle et les formes connues qu'il ne juge pas
+
+Le guide (`python3 .socle/socle help`) dit ce que juge le hook de
+l'agent : les formes du shell qu'un agent écrit dans son travail, pour
+tout effet ; pour ce que rien ne rattrape ensuite (supprimer le projet ou
+un dossier qui le contient, une action externe irréversible, une fuite de
+la mémoire privée, la part de la mémoire qui ne se publie pas), il refuse
+aussi ce qu'il ne sait pas lire. Un trou n'ouvre un sujet que si sa forme
+est de celles qu'un agent écrit (vue dans une session d'agent, un skill
+ou une documentation courante) ; une autre forme s'inscrit d'une ligne
+dans la liste des formes connues que le hook ne juge pas, que le guide
+donne désormais : `time` devant une commande composée, les motifs d'un
+`case`, `find -exec sudo …`, un `return` dans une fonction, l'appel
+indirect d'une fonction, une fonction nommée comme une commande ou
+définie par un `eval`, `eval -- f`, `git --config-env`, ce qu'un `eval`
+change d'autre qu'un appel, une fonction appelée depuis un autre dossier,
+`echo .. | xargs rm`, `xargs git worktree remove`, ce que lance ou
+construit un `python3 -c`, `coproc`. Jusqu'ici, le guide disait que le
+hook jugeait, quelle qu'en soit la forme, ce que rien ne rattrape.
+
+La consigne du relecteur (`python3 .socle/socle review`) et le skill
+`socle-review`, une copie protégée, le disent aussi : une forme du shell
+qu'un agent n'écrit pas dans son travail, et qui échappe au hook, ne se
+classe ni bloquante, même refusée avant le lot par accident, ni pour le
+backlog ; elle s'écarte, d'une ligne, pour la liste. Le tri des autres
+constats ne change pas. Le hook lui-même ne change pas.
+
+À faire : rien. Une suppression du projet par `find … | xargs rm` lui
+échappe encore : ne pas la lancer vers le projet ni vers un dossier qui
+le contient.
+
 ## 2026-11-15-e — Le hook de l'agent refuse la suppression du projet par rsync --delete, git worktree remove et python -c
 
 Le hook de l'agent refuse la suppression du projet, ou d'un dossier qui
