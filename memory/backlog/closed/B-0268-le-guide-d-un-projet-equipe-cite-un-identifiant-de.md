@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0268 — Le guide d'un projet équipé cite un identifiant de l'atelier (D-0098), et aucun test ne garde HELP.md de l'atelier
 
-> statut : fait · origine : J-2026-11-16-O · ref : J-2026-11-16-Q · lu : backlog@19d900ab
+> statut : fait · origine : J-2026-11-16-O · ref : J-2026-11-16-Q · lu : backlog@ff00445d
 
 Vu en menant B-0261 (J-2026-11-16-O). Le guide d'un projet équipé,
 `engine/socle/HELP.md`, section 4 (« Approuver ses propres changements
