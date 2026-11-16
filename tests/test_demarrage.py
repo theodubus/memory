@@ -45,9 +45,15 @@ def fait(n: int, statut: str = "mesuré · preuve : fichier:calc.py") -> str:
 
 
 def sujet(n: int, statut: str = "ouvert", priorite: str = "") -> str:
-    meta = f"> statut : {statut} · origine : fichier:calc.py" + (f" · priorité : {priorite}" if priorite else "")
-    return (f"<!-- socle: couche=backlog zone=publique -->\n# B-{n:04d} — Le sujet numéro {n}, au titre assez long "
+    """La tâche `T-n` du besoin `B-0100` (ADR-0083)."""
+    meta = f"> statut : {statut} · origine : fichier:calc.py · besoin : B-0100" + (
+        f" · priorité : {priorite}" if priorite else "")
+    return (f"<!-- socle: couche=backlog zone=publique -->\n# T-{n:04d} — Le sujet numéro {n}, au titre assez long "
             f"pour qu'une ligne de l'état dérivé le raccourcisse\n\n{meta}\n\nPour l'essai.\n")
+
+
+BESOIN = ("<!-- socle: couche=backlog zone=publique -->\n# B-0100 — Le besoin des tâches\n\n"
+          "> statut : ouvert · origine : fichier:calc.py\n\nPour l'essai.\n")
 
 
 def demande(n: int) -> str:
@@ -100,8 +106,9 @@ class Demarrage(unittest.TestCase):
         self.actif(40)
         backlog = self.racine / "memory/backlog"
         backlog.mkdir(exist_ok=True)
+        (backlog / "B-0100-le-besoin.md").write_text(BESOIN)
         for n in range(1, 22):
-            (backlog / f"B-{n:04d}-sujet-{n}.md").write_text(sujet(
+            (backlog / f"T-{n:04d}-sujet-{n}.md").write_text(sujet(
                 n, "en cours" if n == 21 else "ouvert", "haute" if n == 3 else "basse" if n > 8 else ""))
         self.demande(1)
         git(self.racine, "add", "-A")
@@ -187,21 +194,22 @@ class Demarrage(unittest.TestCase):
                          "  … et 3 autre(s) : `python3 .socle/socle state --short`")
         # Les sujets en cours et prêts, leurs titres raccourcis ; les basses.
         titre = sujet(21).splitlines()[1].split(" — ", 1)[1]
-        self.assertIn(f"  en cours : B-0021 — {outils.raccourcir(titre, etat.TITRE_DE_SUJET)}", lignes)
+        self.assertIn(f"  en cours : T-0021 — {outils.raccourcir(titre, etat.TITRE_DE_SUJET)}", lignes)
         self.assertTrue(outils.raccourcir(titre, etat.TITRE_DE_SUJET).endswith("…"))
-        prets = [l for l in lignes if l.startswith("  prêt : ")]
+        prets = [l for l in lignes if l.startswith("  tâche prête : ")]
         self.assertEqual(len(prets), etat.PRETS_MONTRES)
         titre = sujet(3).splitlines()[1].split(" — ", 1)[1]
-        self.assertEqual(prets[0], f"  prêt : B-0003 — {outils.raccourcir(titre, etat.TITRE_DE_SUJET)} (priorité haute)")
-        self.assertIn("  … et 3 autre(s) prêt(s)", lignes)
-        self.assertIn("  prêts aussi, de priorité basse : " + ", ".join(f"B-{n:04d}" for n in range(9, 19))
+        self.assertEqual(prets[0], f"  tâche prête : T-0003 — {outils.raccourcir(titre, etat.TITRE_DE_SUJET)} "
+                                   "(priorité haute)")
+        self.assertIn("  … et 3 autre(s) tâche(s) prête(s)", lignes)
+        self.assertIn("  prêtes aussi, de priorité basse : " + ", ".join(f"T-{n:04d}" for n in range(9, 19))
                       + " … et 2 autre(s)", lignes)
         self.assertLessEqual(max(len(l.encode("utf-8")) for l in lignes), etat.LIGNE)
         # `socle state --short` : l'état dérivé entier, sans plafond.
         court = etat.calculer(self.projet(), contenus=False)
         self.assertEqual(len(re.findall(r"(?m)^  [0-9a-f]{7} Le travail", court)), 7)
         self.assertEqual(len(re.findall(r"(?m)^  décision : D-", court)), 7)
-        self.assertEqual(len(re.findall(r"(?m)^  prêt : ", court)), 8)
+        self.assertEqual(len(re.findall(r"(?m)^  tâche prête : ", court)), 8)
         self.assertNotIn("… et", court)
 
     def test_sous_la_borne_rien_ne_se_coupe(self):

@@ -154,7 +154,7 @@ class TestCommandes(unittest.TestCase):
         self.assertFalse([f for f in fautes if "« Options »" in f or "« Conséquences »" in f], fautes)
         # Réservé aux demandes.
         with contextlib.redirect_stderr(io.StringIO()):
-            self.assertEqual(cli.cmd_new(argparse.Namespace(root=str(self.racine), type="backlog", questions=True,
+            self.assertEqual(cli.cmd_new(argparse.Namespace(root=str(self.racine), type="need", questions=True,
                                                             title="Un sujet")), 2)
 
     def test_prochaines_etapes_du_chantier_actif(self):

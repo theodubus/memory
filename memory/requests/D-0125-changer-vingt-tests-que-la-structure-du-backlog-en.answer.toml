@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0125-changer-vingt-tests-que-la-structure-du-backlog-en.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-16"
+canal = "conversation"
+citation = "Valider D0125"
+empreinte = "sha256:b5339101db5aa3ee87865db2a190bff857ed5a953bbaa8f6a6cb583b0e5c03f2"

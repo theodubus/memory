@@ -397,7 +397,7 @@ class TestSousLeursModulesRenommes(Projet):
         code, sortie = self.sortie(cli.cmd_state, short=True)
         self.assertEqual(code, 0)
         self.assertIn("commit", sortie)
-        self.assertEqual(self.sortie(cli.cmd_next_id, type="backlog", private=False), (0, "B-0002\n"))
+        self.assertEqual(self.sortie(cli.cmd_next_id, type="need", private=False), (0, "B-0002\n"))
         code, sortie = self.sortie(cli.cmd_fingerprint, files=["calc.py"])
         self.assertTrue(sortie.rstrip().endswith("calc.py"), sortie)
         self.assertEqual(self.sortie(cli.cmd_archive)[0], 0)

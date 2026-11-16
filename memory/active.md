@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot L-0013 : T-0046, T-0047 relus ; D-0125 attend ; T-0048 à faire
-(`docs/fabrication/passation-l0013/LISEZMOI.md`). Puis L-0012, L-0014.
+Lot L-0013 (J-2026-11-16-Z) : T-0046, T-0047 livrés avec D-0125 ;
+T-0048, sa revue (passe 3), la clôture. Puis L-0012, L-0014.
 
 ## Consignes en cours
 
