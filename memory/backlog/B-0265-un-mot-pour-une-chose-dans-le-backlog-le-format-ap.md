@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0265 — Un mot pour une chose dans le backlog : le format appelle « sujet » un sujet, un lot et un jalon, et « tâche » ce qu'attend un jalon
 
-> statut : ouvert · origine : J-2026-11-16-I · priorité : haute · lu : backlog@c0a47b1b
+> statut : en cours · origine : J-2026-11-16-I · priorité : haute · après : D-0123 · lu : backlog@c0a47b1b
 
 Théo, le 16 novembre (J-2026-11-16-I) : « attention au vocabulaire, un
 mot veut dire soit une chose, soit une autre ». Le format du produit

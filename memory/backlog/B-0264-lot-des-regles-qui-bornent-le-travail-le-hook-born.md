@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0264 — Lot des règles qui bornent le travail : le hook borné aux formes qu'un agent écrit (D-0120), chaque modèle sur sa dernière version, l'arrêt d'un chantier qui tourne en rond
 
-> statut : ouvert · origine : J-2026-11-16-G · forme : lot · après : B-0234, B-0261, B-0251, B-0263, B-0265, B-0153, B-0267 · lu : backlog@d9da377d
+> statut : en cours · origine : J-2026-11-16-G · forme : lot · après : B-0234, B-0261, B-0251, B-0263, B-0265, B-0153, B-0267 · lu : backlog@d9da377d
 
 Le lot qui suit B-0234, placé avant B-0235 à la demande de Théo, qui veut
 B-0251 fait prochainement (J-2026-11-16-G). Trois règles de la méthode,
