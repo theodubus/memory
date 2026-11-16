@@ -21,3 +21,24 @@ B-0270 y entre le 16 novembre (J-2026-11-16-S), relevé par la revue du lot L-00
 T-0049 et T-0050, les tâches de B-0265 qui restent, passent au lot L-0014 le
 16 novembre (J-2026-11-16-V) : la consigne de la session était B-0265, B-0263
 puis B-0270, et T-0049 demande une session à lui seul.
+
+## Revues
+
+### Passe 1 — 2026-11-16
+
+Commits : 42c246b..8719a8f
+
+- Bloquant : la migration garde la priorité d'un lot ou d'un jalon
+- Bloquant : une citation par un ancien numéro échappe à la lecture prouvée
+- Bloquant : deux refus des formes du backlog sans défaut injecté
+- Ouvre : T-0051, T-0052, T-0053
+
+Recul : les trois bloquants de cette passe, la première du lot, viennent de la migration et des contrôles neufs de la structure du backlog, sans passe précédente à qui les comparer ; les entrées que le lot ouvre, T-0051 à T-0053, sont de la nature de celles qu'il ferme, des défauts de cette même structure, réunis au lot L-0014 ; aucun lot clos n'avait touché ces fichiers neufs. La correction est légère, et la passe suivante relit une autre tâche, T-0047 : continuer.
+
+### Passe 2 — 2026-11-16
+
+Commits : 36be954..1f8e85f
+
+- Bloquant : la clôture d'un lot ne juge que la forme du dernier recul · cause nouvelle
+- Bloquant : l'arrêt se lève par une demande qui ne vise pas le lot · cause nouvelle
+- Ouvre : T-0054, T-0055, B-0273
