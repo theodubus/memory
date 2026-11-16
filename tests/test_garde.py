@@ -446,6 +446,166 @@ class TestGarde(unittest.TestCase):
         self.assertEqual(lus("find a -exec cat {} + -name x"), [])
         self.assertEqual(lus("cp a b && touch c && git rm d"), [])
 
+    def test_la_suppression_du_projet_par_un_autre_programme(self):
+        """B-0228 : la destination d'un `rsync --delete`, un `git worktree
+        remove` du worktree où l'agent travaille et un `python -c` qui passe
+        son chemin en toutes lettres à `shutil.rmtree` supprimaient le projet,
+        ou un dossier qui le contient, sans que le hook le voie. Le worktree
+        d'un sous-agent retiré depuis la racine, un dossier du projet ou
+        voisin de lui, et ce qui n'est pas supprimé restent libres."""
+        ailleurs = Path(f"{self.racine}-ailleurs")
+        ailleurs.mkdir(exist_ok=True)
+        self.addCleanup(shutil.rmtree, ailleurs, ignore_errors=True)
+        parent, nom = self.racine.parent, self.racine.name
+
+        def py(script):
+            return f"python3 -c \"{script}\""
+
+        with self.environnement():
+            self.jugees([
+                ("rsync -a --delete vide/ ..", "supprime"), ("rsync -a --del vide/ ../", "supprime"),
+                ("rsync -av --delete-after --exclude .git vide/ ..", "supprime"),
+                ("rsync -a vide/ .. --delete-excluded --exclude .git", "supprime"),
+                (f"rsync -rt --delete-before -e ssh vide/ {parent}", "supprime"),
+                ("rsync -aT /tmp/t --delete-delay vide/ ~/..", "supprime"),
+                ("rsync -a --delete-during vide/ .", "supprime"),
+                ("rsync -a --remove-source-files .. /tmp/sauve", "supprime"),
+                ("rsync -a --remove-source-files . /tmp/sauve", "supprime"),
+                ("git worktree remove .", "supprime"), ("git worktree remove --force ./", "supprime"),
+                (f"git worktree remove -f -f {self.racine}", "supprime"),
+                (f"cd .. && git worktree remove -f {nom}", "supprime"),
+                (f"git -C .. worktree remove {nom}", "supprime"), ("git worktree remove ..", "supprime"),
+                ("git worktree move . /tmp/ailleurs", "supprime"),
+                (py("import shutil; shutil.rmtree('..')"), "supprime"),
+                ("python -c 'import shutil; shutil.rmtree(\"..\")'", "supprime"),
+                ("python3 -I -c \"import shutil; shutil.rmtree('.')\"", "supprime"),
+                (py(f"import shutil; shutil.rmtree('{self.racine}', ignore_errors=True)"), "supprime"),
+                (py(f"from shutil import rmtree; rmtree(path='{parent}')"), "supprime"),
+                (py("import shutil, pathlib; shutil.rmtree(pathlib.Path('..').resolve())"), "supprime"),
+                (py("import os, shutil; shutil.rmtree(os.path.join('..', '..'))"), "supprime"),
+                (py("import shutil; shutil.move('..', '/tmp/ailleurs')"), "supprime"),
+                (py("import os; os.rename('.', '/tmp/ailleurs')"), "supprime"),
+                (py("from pathlib import Path; Path('..').rename('/tmp/ailleurs')"), "supprime"),
+                ("find .. -maxdepth 0 -exec rsync -a --delete vide/ {} \\;", "supprime"),
+                ("find . -maxdepth 0 -exec git worktree remove {} \\;", "supprime"),
+                ("rsync -a --delete build/ dist/", None), (f"rsync -a --delete vide/ {ailleurs}", None),
+                ("rsync -a vide/ ..", None), ("rsync -an --delete vide/ ..", None),
+                ("rsync -a --delete .. /tmp/sauve", None), ("rsync -a --delete vide/ hote:..", None),
+                ("rsync -a --delete vide/ /tmp/sauve -T ..", None),
+                ("rsync -a --remove-source-files build/ /tmp/sauve", None),
+                ("git worktree remove .claude/worktrees/agent-x", None),
+                ("git worktree remove -f -f .claude/worktrees/agent-x", None),
+                ("git -C .claude/worktrees worktree remove agent-x", None),
+                (f"git worktree remove {ailleurs}", None), ("git worktree list", None),
+                (py("import shutil; shutil.rmtree('build')"), None),
+                (py(f"import shutil; shutil.rmtree('{ailleurs}')"), None),
+                (py("import shutil; shutil.move('/tmp/a', '..')"), None),
+                (py("import sys; sys.path.insert(0, '..'); print('..'.replace('.', 'x'))"), None),
+                ("find . -name '*.pyc' -exec mv {} /tmp/corbeille \\;", None)])
+            # Depuis un dossier du projet, ou depuis le worktree d'un
+            # sous-agent : le chemin part du dossier de la commande.
+            self.jugees([("git worktree remove ..", "supprime"), ("rsync -a --delete vide/ ..", "supprime"),
+                         (py("import shutil; shutil.rmtree('..')"), "supprime"),
+                         ("git worktree remove ../build", None)], str(self.racine / "memory"))
+
+    def test_ce_qu_un_autre_programme_supprime(self):
+        """B-0228 : les chemins que `suppressions` lit d'un `rsync`, d'un `git
+        worktree` et d'un `python -c`, tels qu'ils sont écrits, la racine
+        comprise."""
+        def lus(cmd):
+            return [x for c in commandes.analyser(cmd) for x in hooks.suppressions(c)]
+
+        self.assertEqual(lus("rsync -a --delete -e ssh a b/ c"), [("c", True)])
+        self.assertEqual(lus("rsync -avT tmp a c --exclude x --delete"), [("c", True)])
+        self.assertEqual(lus("rsync --delete --filter=x --rsh 'ssh -p 2' a c"), [("c", True)])
+        self.assertEqual(lus("rsync -n --delete a c && rsync --dry-run --delete a c && rsync --delete a"), [])
+        self.assertEqual(lus("rsync --delete a h:c && rsync --delete a rsync://h/c && rsync -a a c"), [])
+        self.assertEqual(lus("rsync --remove-source-files a h:b c"), [("a", True)])
+        self.assertEqual(lus("git -C x worktree remove -f -f y && git worktree move a b"), [("x/y", True), ("a", True)])
+        self.assertEqual(lus("git worktree list && git worktree add y"), [])
+        self.assertEqual(lus("python3 -c \"import shutil; shutil.rmtree('a'); shutil.rmtree(b); x = 'c'\""),
+                         [("a", True)])
+        self.assertEqual(lus("python3 -c \"import shutil; shutil.rmtree(os.getcwd())\""), [])
+        self.assertEqual(lus("python3 -c \"import os; os.replace(src='a', dst='b'); 'c'.replace('c', 'd')\""),
+                         [("a", True)])
+        self.assertEqual(lus("python3 -c \"import shutil; shutil.rmtree(Path('a') / 'b')\""), [("a/b", True)])
+        self.assertEqual(lus("python3 -c 'shutil.rmtree((('"), [])
+        self.assertEqual(lus("find a -exec rsync --delete v/ {} \\;"), [("a", True)])
+        self.assertEqual(lus("find a -name x -exec mv {} /tmp \\;"), [("a", False)])
+
+    def test_un_sous_agent_ne_retire_pas_son_worktree(self):
+        """B-0228 : un sous-agent qui travaille dans un worktree ne le retire
+        pas depuis l'intérieur, jugé contre son arbre (B-0164) ; l'orchestrateur,
+        à la racine, retire celui d'un sous-agent."""
+        arbre = self.racine / ".claude/worktrees/agent-x"
+        subprocess.run(["git", "worktree", "add", "-q", "-b", "agent-x", str(arbre)], cwd=self.racine, check=True)
+        self.addCleanup(subprocess.run, ["git", "worktree", "remove", "--force", str(arbre)], cwd=self.racine)
+
+        def decide(commande, cwd):
+            flux = io.StringIO()
+            with contextlib.redirect_stdout(flux):
+                hooks.pre_tool_use(self.projet, {"session_id": "garde", "tool_name": "Bash", "cwd": str(cwd),
+                                                 "tool_input": {"command": commande}})
+            return "refus" if '"deny"' in flux.getvalue() else "passe"
+
+        with self.environnement():
+            for commande in ("git worktree remove .", "git worktree remove --force .", f"git worktree remove {arbre}",
+                             "cd .. && git worktree remove -f -f agent-x",
+                             f"git -C {self.racine} worktree remove .claude/worktrees/agent-x"):
+                with self.subTest(commande):
+                    self.assertEqual(decide(commande, arbre), "refus")
+            for commande in ("git worktree remove .claude/worktrees/agent-x",
+                             "git worktree remove -f -f .claude/worktrees/agent-x"):
+                with self.subTest(commande):
+                    self.assertEqual(decide(commande, self.racine), "passe")
+
+    def test_un_sous_agent_ne_retire_pas_son_worktree_par_son_suffixe(self):
+        """La revue du lot B-0234, constat 1 (J-2026-11-15-O) : git cherche
+        d'abord le worktree dont le chemin finit par l'argument de `git
+        worktree remove` ou `move`, à une frontière de dossier, s'il est le
+        seul, puis le chemin relatif. Le hook ne lisait que le chemin
+        relatif : un sous-agent retirait son worktree en le nommant par la
+        fin de son chemin. L'orchestrateur, à la racine, le retire toujours
+        ainsi, et un sous-agent retire un worktree voisin du sien."""
+        arbre = self.racine / ".claude/worktrees/agent-s"
+        subprocess.run(["git", "worktree", "add", "-q", "-b", "agent-s", str(arbre)], cwd=self.racine, check=True)
+        self.addCleanup(subprocess.run, ["git", "worktree", "remove", "--force", str(arbre)], cwd=self.racine)
+        ailleurs = Path(f"{self.racine}-ailleurs")
+        (ailleurs / "agent-s").mkdir(parents=True, exist_ok=True)
+        self.addCleanup(shutil.rmtree, ailleurs, ignore_errors=True)
+
+        def decide(commande, cwd):
+            flux = io.StringIO()
+            with contextlib.redirect_stdout(flux):
+                hooks.pre_tool_use(self.projet, {"session_id": "garde", "tool_name": "Bash", "cwd": str(cwd),
+                                                 "tool_input": {"command": commande}})
+            return "refus" if '"deny"' in flux.getvalue() else "passe"
+
+        with self.environnement():
+            for commande in ("git worktree remove .claude/worktrees/agent-s", "git worktree remove -f -f agent-s",
+                             "git worktree remove --force worktrees/agent-s", "git worktree remove 'agent-s'",
+                             "git worktree move agent-s /tmp/ailleurs", f"git -C {self.racine} worktree remove agent-s",
+                             "W=agent-s; git worktree remove -f -f \"$W\"",
+                             f"cd {ailleurs} && git worktree remove \"agent-$X\"",
+                             f"cd {ailleurs} && git worktree remove agent-?",
+                             f"cd {ailleurs} && find agent-s -maxdepth 0 -exec git worktree remove {{}} \\;"):
+                with self.subTest(commande):
+                    self.assertEqual(decide(commande, arbre), "refus")
+            # Le refus nomme ce que git trouverait, et par quel mot.
+            jugees = hooks.ecritures_jugees(config.Projet.charger(arbre), "git worktree remove -f -f agent-s",
+                                            str(arbre))
+            self.assertIn("que git trouve par la fin de son chemin, `agent-s`", " ".join(q for _, q in jugees))
+            for commande in ("git worktree remove -f -f agent-s", "git worktree remove .claude/worktrees/agent-s",
+                             "git worktree move agent-s /tmp/ailleurs"):
+                with self.subTest(commande, depuis="racine"):
+                    self.assertEqual(decide(commande, self.racine), "passe")
+            for commande in ("git worktree remove -f -f agent-voisin", "git worktree remove ../agent-voisin",
+                             "git worktree remove .claude/worktrees/agent-voisin", "git worktree remove agent-s2",
+                             "git worktree remove gent-s", "git worktree move agent-voisin /tmp/ailleurs",
+                             "find build -name '*.tmp' -exec git worktree remove {} \\;"):
+                with self.subTest(commande, depuis="sous-agent"):
+                    self.assertEqual(decide(commande, arbre), "passe")
+
     def test_les_valeurs_par_defaut_se_developpent(self):
         """La revue de B-0171, constat 13 : `${X:-défaut}` était refusé même
         quand `X` est connu hors du projet."""
@@ -724,6 +884,162 @@ class TestGarde(unittest.TestCase):
                          ("f() { touch .socle/policy.toml; }", "protege"),
                          ("f() { cd /tmp; ls; }; echo ok > notes.txt", None),
                          ("f() { echo x > /tmp/y; }; f; echo ok > notes.txt", None)])
+
+    def test_le_corps_de_function_sans_parentheses_se_juge(self):
+        """B-0232 : écrite `function f { …; }`, sans parenthèses, la commande
+        lue avait pour programme `function`, et rien de son corps ne se
+        jugeait : un push forcé ou la suppression du projet y passaient. Son
+        corps se lit comme celui de `f() { …; }`, sur la même ligne ou la
+        suivante, et tout autre corps que bash admet se juge ; une définition
+        ne vaut que pour la commande qui la suit, et un groupe écrit dans un
+        corps sous-shell n'est plus lu comme le corps d'une fonction."""
+        for cmd in (f"function f {{ {G} {P} --force origin main; }}; f",
+                    f"function f\n{{\n  {G} {P} --force origin main\n}}\nf",
+                    f"function f # une note\n\n{{ {G} {P} --force origin main; }}",
+                    f"function f if {G} {P} --force origin main; then :; fi",
+                    f"function f while {G} {P} --force origin main; do :; done",
+                    f"if true; then function f {{ {G} {P} --force origin main; }}; fi"):
+            with self.subTest(cmd):
+                self.assertIn("push forcé", hooks.refus_bash(self.projet, cmd) or "")
+                self.assertEqual(self.decide(*B(cmd)), "refus")
+        self.assertEqual(self.decide(*B("function f { ls; }; f")), "passe")
+        nom = self.racine.name
+        with self.environnement():
+            self.jugees([("function f { rm -rf ..; }; f", "supprime"), ("function f\n{ rm -rf ..; }", "supprime"),
+                         ("function f/x { rm -rf ..; }; f/x", "supprime"), ("function if { rm -rf ..; }", "supprime"),
+                         ("! function f { rm -rf ..; }", "supprime"), ("function f ( rm -rf .. )", "supprime"),
+                         ("function f until rm -rf ..; do :; done", "supprime"),
+                         ("function f for d in a b; do rm -rf ..; done", "supprime"),
+                         ("function f { cd /tmp; }; echo x > .socle/policy.toml", "protege"),
+                         (f"function f\n( {{ cd memory; }}; rm -rf ../../{nom} )", "protege"),
+                         (f"f ( ) ( {{ cd memory; }}; rm -rf ../../{nom} )", "protege"),
+                         ("function f if true; then cd memory; fi; echo x > notes.txt", "illisible"),
+                         ("function f { ls; }; f", None), ("function f { cd .socle; }; echo ok > policy.toml", None),
+                         ("function nettoyer\n{\n  rm -rf build\n}\nnettoyer", None),
+                         ("echo function f { ls; }", None), ("function f [[ -n x ]]; echo ok > notes.txt", None)])
+
+    def test_l_appel_d_une_fonction_qui_change_de_dossier_rend_la_suite_inconnue(self):
+        """La seconde revue du lot B-0234, bloquant 2 (J-2026-11-15-O) : le
+        corps `{ … }` d'une fonction rend en se fermant l'état d'avant lui ;
+        à l'appel, le hook ne suivait pas ce que le corps change, et une
+        suppression du projet depuis le dossier qu'il laisse derrière lui
+        passait. L'appel d'une telle fonction rend inconnu ce qu'elle change,
+        et ce qui suit se juge comme un état inconnu (ADR-0072, point 6), y
+        compris la forme `f() { … }` (troisième constat), un appel derrière
+        un mot réservé, dans un groupe, par une fonction qui en appelle une
+        autre, ou après une redéfinition."""
+        nom = self.racine.name
+        with self.environnement():
+            self.jugees([(f"function f {{ cd memory; }}; f; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ cd memory; }}; f; rm -rf ../../{nom}", "illisible"),
+                         (f"function f\n{{ cd memory; }}\nf\nrm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ cd memory; }}; ! f; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ cd memory; }}; if true; then f; fi; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ cd memory; }}; {{ f; }}; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ cd memory; }}; g() {{ f; }}; g; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ ls; }}; f() {{ cd memory; }}; f; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ X=memory; }}; f; cd $X; rm -rf ../../{nom}", "illisible"),
+                         # Garde libre l'usage normal : une fonction qui ne
+                         # change ni dossier ni variable, un préfixe programme
+                         # qui lance un externe et non la fonction.
+                         ("f() { ls; }; f; rm -rf build", None),
+                         ("f() { echo x > /tmp/y; }; f; echo ok > notes.txt", None),
+                         ("f() { cd memory; }; command f; echo ok > notes.txt", None),
+                         ("f() { cd memory; }; f; ls", None)])
+
+    def test_l_appel_d_une_fonction_se_resout_au_moment_de_l_appel(self):
+        """La seconde passe de la seconde revue du lot B-0234, bloquant 1
+        (J-2026-11-16-B) : ce que change une fonction se calculait à la
+        fermeture de son corps, avec les fonctions connues alors, et une
+        fonction qui en appelle une autre définie après elle ne changeait
+        rien ; le nom d'une fonction définie dans une autre remplaçait celui
+        de la fonction qui la contient. Les noms qu'appelle un corps se
+        résolvent à l'appel, de proche en proche, avec les fonctions connues
+        alors, chacune une fois (un cycle, une récursion) ; une fonction
+        s'appelle par son nom entier (`f/x`)."""
+        nom = self.racine.name
+        with self.environnement():
+            self.jugees([(f"g() {{ f; }}; f() {{ cd memory; }}; g; rm -rf ../../{nom}", "illisible"),
+                         (f"function g\n{{ f; }}\nfunction f\n{{ cd memory; }}\ng\nrm -rf ../../{nom}", "illisible"),
+                         (f"h() {{ g; }}; g() {{ f; }}; f() {{ cd memory; }}; h; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ g() {{ cd memory; }}; g; }}; f; rm -rf ../../{nom}", "illisible"),
+                         (f"function f\n{{ function g\n{{ cd memory; }}\ng\n}}\nf\nrm -rf ../../{nom}", "illisible"),
+                         (f"X=.; g() {{ f; }}; f() {{ X=memory; }}; g; cd $X; rm -rf ../../{nom}", "illisible"),
+                         (f"function f/x\n{{ cd memory; }}\nf/x\nrm -rf ../../{nom}", "illisible"),
+                         # Un cycle ou une récursion se lit une fois, et
+                         # l'usage normal reste libre.
+                         ("f() { f; }; f; rm -rf build", None),
+                         ("f() { g; }; g() { f; }; f; rm -rf build", None),
+                         ("g() { f; }; f() { ls; }; g; rm -rf build", None),
+                         ("f() { cd memory; }; g() { ls; }; g; rm -rf build", None)])
+
+    def test_time_appelle_la_fonction_dans_le_shell_courant(self):
+        """La seconde passe de la seconde revue du lot B-0234, bloquant 2
+        (J-2026-11-16-B) : `time` tombait parmi les préfixes, et l'appel
+        n'admettait devant lui que des affectations ; bash lance la fonction
+        dans le shell courant derrière `time`, `time -p` et `time --`.
+        Derrière une affectation, `time` est un programme externe."""
+        nom = self.racine.name
+        with self.environnement():
+            self.jugees([(f"function f\n{{ cd memory; }}\ntime f\nrm -rf ../../{nom}", "illisible"),
+                         (f"function f\n{{ cd memory; }}\ntime -p f\nrm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ cd memory; }}; time f; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ cd memory; }}; time -p f; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ cd memory; }}; time -- f; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ cd memory; }}; time X=1 f; rm -rf ../../{nom}", "illisible"),
+                         ("f() { ls; }; time f; rm -rf build", None),
+                         ("f() { cd memory; }; time f | cat; rm -rf build", None),
+                         ("f() { cd memory; }; X=1 time f; rm -rf build", None)])
+
+    def test_l_appel_dans_un_eval_ou_une_substitution(self):
+        """La seconde passe de la seconde revue du lot B-0234, bloquant 3
+        (J-2026-11-16-B), et B-0250 : le texte d'une substitution et celui
+        d'un `eval` se lisaient sans les fonctions de la commande ; bash les
+        y appelle, `eval` dans le shell courant. Ils se lisent avec une copie
+        des fonctions connues, et ce qu'appelle un `eval` vaut pour la
+        suite ; un `bash -c`, un autre processus, ne les connaît pas."""
+        nom = self.racine.name
+        with self.environnement():
+            self.jugees([(f'function f\n{{ cd memory; }}\neval "f; rm -rf ../../{nom}"', "illisible"),
+                         (f"function f\n{{ cd memory; }}\nx=$(f; rm -rf ../../{nom})", "illisible"),
+                         (f"function f\n{{ cd memory; }}\neval f\nrm -rf ../../{nom}", "illisible"),
+                         (f'f() {{ cd memory; }}; eval "f; rm -rf ../../{nom}"', "illisible"),
+                         (f"f() {{ cd memory; }}; x=$(f; rm -rf ../../{nom})", "illisible"),
+                         (f"f() {{ cd memory; }}; eval f; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ cd memory; }}; echo `f; rm -rf ../../{nom}`", "illisible"),
+                         (f"f() {{ cd memory; }}; cat <(f; rm -rf ../../{nom})", "illisible"),
+                         (f'f() {{ cd memory; }}; eval "eval f"; rm -rf ../../{nom}', "illisible"),
+                         (f"g() {{ eval f; }}; f() {{ cd memory; }}; g; rm -rf ../../{nom}", "illisible"),
+                         ("f() { ls; }; x=$(f); rm -rf build", None),
+                         ("f() { ls; }; eval f; rm -rf build", None),
+                         ("f() { cd memory; }; x=$(f); rm -rf build", None),
+                         ('f() { cd memory; }; bash -c "f; rm -rf build"', None)])
+
+    def test_un_mot_reserve_cite_ou_echappe_se_lit_comme_un_mot(self):
+        """La seconde revue du lot B-0234, bloquant 3 (J-2026-11-15-O) : un
+        mot réservé entre guillemets ou échappé (`"function"`, `\\function`,
+        `$'function'`, `'function'`) se lisait comme réservé ; bash le lance
+        comme une commande, puis exécute sur place le groupe qui suit. Il se
+        marque comme `CITE` le fait pour les opérateurs, et ne se lit plus
+        comme réservé ; un `}` cité ne ferme plus trop tôt le corps d'une
+        fonction (quatrième constat)."""
+        nom = self.racine.name
+        for ouvre in ('"function"', "\\function", "$'function'", "'function'"):
+            cmd = f"{ouvre} f\n{{ git {P} --force origin main; }}"
+            with self.subTest(cmd):
+                self.assertIn("push forcé", hooks.refus_bash(self.projet, cmd) or "")
+        with self.environnement():
+            self.jugees([(f'"function" f\n{{ cd memory; }}\nrm -rf ../../{nom}', "protege"),
+                         (f"\\function f\n{{ cd memory; }}\nrm -rf ../../{nom}", "protege"),
+                         (f"$'function' f\n{{ cd memory; }}\nrm -rf ../../{nom}", "protege"),
+                         (f"'function' f\n{{ cd memory; }}\nrm -rf ../../{nom}", "protege"),
+                         (f'"function" f\n{{ cd memory; }}\nrm -rf ../..', "supprime"),
+                         (f'f() {{ cd memory; "}}"; rm -rf ../../{nom}; }}; f', "protege"),
+                         (f'function f\n{{ cd memory; "}}"; rm -rf ../../{nom}; }}\nf', "protege"),
+                         # Un mot réservé cité reste un mot, jamais une
+                         # structure : il ne définit ni ne ferme rien.
+                         ('echo "}" ; echo done', None), ('echo "function" f', None),
+                         ('grep -n "function" notes.txt', None)])
 
     def test_une_boucle_qui_revient_a_son_dossier_le_garde(self):
         """La revue du lot 3, bloquant 5 (J-2026-11-14-AH) : une boucle ou
@@ -1198,6 +1514,93 @@ class TestDecoupage(unittest.TestCase):
                          [["find", ".", "(", "-name", "a", ")", "-exec", "rm", "{}", ";"], ["ls"]])
         self.assertEqual([c.argv for c in commandes.analyser("echo '|' \";\" '()' a\\;b > f")],
                          [["echo", "|", ";", "()", "a;b"]])
+
+    def test_function_sans_parentheses_ouvre_le_corps_d_une_fonction(self):
+        """B-0232 : `function nom`, sans parenthèses, se lit comme `nom ( )` :
+        le mot qui suit, ou celui de la ligne suivante, commence son corps,
+        que le découpage rend commande par commande, et qui rend en se
+        fermant l'état d'avant lui ; `function` en argument n'en définit
+        pas. La définition ne vaut que pour la commande qui la suit."""
+        env = {"PWD": "/p"}
+        for texte, lieu in (("function f { cd /a; }", "/p"), ("function f\n{\ncd /a\n}", "/p"),
+                            ("function f # c\n\n{ cd /a; }", "/p"), ("if a; then function f { cd /a; }; fi", "/p"),
+                            ("{ function f { cd /a; }; }", "/p"), ("function f/x { cd /a; }", "/p"),
+                            ("function f ( ) ( ls ); { cd /a; }", "/a"), ("function f\n( ls ); { cd /a; }", "/a")):
+            with self.subTest(texte):
+                self.assertEqual(commandes.analyser(texte + "; ls", environnement=env)[-1].lieu, lieu)
+        for texte in ("f ( ) ( { cd /a; }; ls )", "function f\n( { cd /a; }; ls )"):
+            with self.subTest(texte):
+                self.assertEqual(commandes.analyser(texte, environnement=env)[-1].lieu, "/a")
+        for texte, argv in (("function f { rm a; }; function g\n{ rm b; }", [["rm", "a"], ["rm", "b"]]),
+                            ("function if { rm a; }; function function { rm b; }", [["rm", "a"], ["rm", "b"]]),
+                            ("function f if a; then rm b; fi", [["a"], ["rm", "b"]]),
+                            ("if c; then function f while a; do rm b; done; fi", [["c"], ["a"], ["rm", "b"]]),
+                            ("echo function f { rm a; }", [["echo", "function", "f", "{", "rm", "a"], ["}"]])):
+            with self.subTest(texte):
+                self.assertEqual([c.argv for c in commandes.analyser(texte)], argv)
+
+    def test_l_appel_d_une_fonction_qui_change_de_dossier(self):
+        """La seconde revue du lot B-0234, bloquant 2 (J-2026-11-15-O) :
+        l'appel d'une fonction dont le corps `{ … }` change le dossier le
+        rend inconnu (`cd` restitué à la fermeture du corps, suivi à
+        l'appel) ; une variable que le corps affecte devient inconnue. Une
+        fonction qui ne change rien, ou un préfixe programme, ne fuit rien."""
+        env = {"PWD": "/p"}
+        I = commandes.INCONNU
+        for texte, lieu in (("f() { cd /a; }; f", I), ("function f { cd a; }; f", I),
+                            ("f() { cd /a; }; g() { f; }; g", I), ("f() { ls; }; f() { cd /a; }; f", I),
+                            ("f() { cd /a; }; ! f", I), ("f() { cd /a; }; { f; }", I),
+                            ("f() { cd /a; }; f", I), ("f() { ls; }; f", "/p"),
+                            ("f() { echo x > /tmp/y; }; f", "/p"), ("f() { cd /a; }; command f", "/p"),
+                            ("f() { cd a; cd ..; }; f", "/p")):
+            with self.subTest(texte):
+                self.assertEqual(commandes.analyser(texte + "; ls", environnement=env)[-1].lieu, lieu)
+        c = commandes.analyser("f() { X=1; }; f; cd $X; ls", environnement=env)[-1]
+        self.assertEqual(c.lieu, I)
+
+    def test_l_appel_d_une_fonction_se_resout_a_l_appel(self):
+        """La seconde passe de la seconde revue du lot B-0234 (J-2026-11-16-B,
+        B-0250) : les noms qu'appelle un corps se résolvent à l'appel, avec
+        les fonctions connues alors ; une fonction définie dans une autre
+        garde son nom ; `time` appelle la fonction ; une substitution et un
+        `eval` la connaissent, un `bash -c` non ; un chemin (`./f`) n'est
+        pas une fonction."""
+        env = {"PWD": "/p"}
+        I = commandes.INCONNU
+        for texte, lieu in (("g() { f; }; f() { cd /a; }; g", I), ("f() { g() { cd /a; }; g; }; f", I),
+                            ("f() { f; }; f", "/p"), ("f() { g; }; g() { f; }; f", "/p"),
+                            ("f() { cd /a; }; if c; then f() { ls; }; fi; f", I),
+                            ("f() { cd /a; }; time -p f", I), ("f() { cd /a; }; time -- f", I),
+                            ("f() { cd /a; }; X=1 time f", "/p"), ("f() { cd /a; }; time -p -x f", "/p"),
+                            ("f() { cd /a; }; eval f", I), ("f() { cd /a; }; eval 'eval f'", I),
+                            ("f() { cd /a; }; x=$(f)", "/p"), ("function f/x { cd /a; }; f/x", I),
+                            ("f() { cd /a; }; ./f", "/p")):
+            with self.subTest(texte):
+                self.assertEqual(commandes.analyser(texte + "; ls", environnement=env)[-1].lieu, lieu)
+        # Ce que lance une substitution ou un `eval` se lit depuis le dossier
+        # que l'appel y laisse ; un `bash -c` ne connaît pas la fonction.
+        for texte, lieu in (("f() { cd /a; }; x=$(f; ls)", I), ("f() { cd /a; }; eval 'f; ls'", I),
+                            ("f() { cd /a; }; echo `f; ls`", I), ("f() { cd /a; }; bash -c 'f; ls'", "/p")):
+            with self.subTest(texte):
+                cs = commandes.analyser(texte, environnement=env)
+                self.assertEqual(next(c.lieu for c in cs if c.argv == ["ls"]), lieu)
+
+    def test_un_mot_reserve_cite_est_un_mot(self):
+        """La seconde revue du lot B-0234, bloquant 3 (J-2026-11-15-O) : un
+        mot réservé cité ou échappé se marque comme un opérateur cité et ne
+        se lit plus comme une structure ; `jetons` retire la marque."""
+        env = {"PWD": "/p"}
+        # Le groupe `{ cd /a; }` qui suit un `"function"` cité s'exécute sur
+        # place : ce n'est pas le corps d'une fonction.
+        for texte in ('"function" f\n{ cd /a; }', "\\function f\n{ cd /a; }",
+                      "$'function' f\n{ cd /a; }", "'function' f\n{ cd /a; }"):
+            with self.subTest(texte):
+                self.assertEqual(commandes.analyser(texte + "; ls", environnement=env)[-1].lieu, "/a")
+        # Un `}` cité ne ferme pas le corps : le `cd /a` reste dans le corps,
+        # rendu à la fermeture, et ne vaut pas pour la suite.
+        self.assertEqual(commandes.analyser('f() { cd /a; "}"; ls; }; ls', environnement=env)[-1].lieu, "/p")
+        self.assertEqual(commandes.jetons('"function" f "}" "then"'), ["function", "f", "}", "then"])
+        self.assertEqual([c.argv for c in commandes.analyser('"function" f')], [["function", "f"]])
 
     def test_normaliser_et_lieu_sur(self):
         """La revue de B-0171, constat 4 : un `..` ne remonte pas une part

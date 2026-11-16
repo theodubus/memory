@@ -18,7 +18,10 @@ La piste : quand le programme est `python`/`python3` (préfixes retirés),
 sans `-c` ni `-m` ni script en argument, et que son entrée est un heredoc,
 juger le corps du heredoc comme le script d'un `python -c` (les chemins
 protégés cités en toutes lettres) ; un script lu par `<` d'un fichier
-reste hors de portée.
+reste hors de portée. Ce script se juge aussi par ce qu'il supprime, comme
+celui d'un `python -c` dans `hooks.suppressions` depuis B-0228
+(`shutil.rmtree('..')`, que rien ne rattrape) : le corps du heredoc passe
+par la même lecture (`_supprimes_par_python`).
 
 ## Fait quand
 

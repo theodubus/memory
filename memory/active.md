@@ -5,15 +5,17 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot 5 (B-0223) fait, relu, livré par sa pull request (J-2026-11-15-K).
-Prochain lot : B-0234, le hook, B-0232 d'abord. B-0179 bloqué, en pause
-(J-2026-11-15-A).
+Lot B-0234 clos, à livrer par sa pull request (J-2026-11-16-G).
+Prochain lot : B-0264, les règles qui bornent le travail, avant
+B-0235. B-0179 en pause (J-2026-11-15-A).
 
 ## Consignes en cours
 
 Leur texte exact est dans l'entrée du journal citée.
 
 - Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
+- Le hook borné aux formes qu'un agent écrit ; une forme exotique va
+  à la liste, sans sujet ni bloquant (D-0120, J-2026-11-16-G).
 - Relecteur : le plus capable jusqu'à Opus (D-0117). Fable, implémenteur
   ou relecteur, seulement si Théo le veut ; un lot implémenté sur Fable :
   lui demander avant la revue s'il veut Fable pour elle (D-0119).
@@ -56,9 +58,6 @@ Leur texte exact est dans l'entrée du journal citée.
 - Chess n'est mis à jour qu'une fois l'ensemble fini ; d'ici là, tout
   lot qui change ce que chess reçoit complète
   `docs/fabrication/chess/prompt-mise-a-jour.md` (J-2026-11-13-L).
-- Théo a une remise à zéro hebdomadaire en réserve : le lui dire quand la
-  semaine approche de 85 %, au lieu de ranger sans prévenir
-  (J-2026-11-13-I).
 
 ## Prochaines étapes
 
