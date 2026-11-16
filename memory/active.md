@@ -8,7 +8,9 @@ Réécrit et borné ; ce qui en sort va au journal.
 Lot B-0234 : la seconde revue a trouvé trois bloquants
 (J-2026-11-16-B), corrigés par 667e250 ; restent la revue de cette
 correction (`socle review --since 08b925a`), puis la clôture et la
-livraison (J-2026-11-16-D). B-0179 en pause (J-2026-11-15-A).
+livraison (J-2026-11-16-D) : Théo veut le lot fini dans cette session,
+sans en lancer d'autre (J-2026-11-16-E). B-0179 en pause
+(J-2026-11-15-A).
 
 ## Consignes en cours
 
