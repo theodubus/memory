@@ -44,3 +44,4 @@ courant ; la piste : les lire dans `_chemin_ecrit`
 
 - [ ] `echo .. | xargs rm -rf` et `python3 -c "import os; os.system('rm -rf ..')"` sont refusés par le hook, `find . -name '*.pyc' | xargs rm -f` passe, et un test le montre
 - [ ] `python3 -c "import shutil, os; shutil.rmtree(os.path.abspath('..'))"` et ses pareils (`realpath`, `expanduser`, une f-chaîne sans variable, `Path('..').resolve(strict=True)`) sont refusés par le hook, et un test le montre
+- [ ] depuis le worktree d'un sous-agent, `echo agent-s | xargs git worktree remove` est refusé comme `git worktree remove agent-s` (la recherche de git par la fin du chemin, `_nommes_par_leur_suffixe`, J-2026-11-16-B), et un test le montre
