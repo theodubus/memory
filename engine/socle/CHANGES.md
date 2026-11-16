@@ -29,13 +29,18 @@ formes.
 
 La mise à jour migre le backlog : chaque lot devient `L-` et chaque jalon
 `JA-`, clos compris, en gardant son ancien numéro (`ancien : B-NNNN`), que
-`socle show` et les contrôles des références résolvent ; toute autre entrée
-reste un besoin, sa section « Fait quand » renommée « Satisfait quand » ;
-chaque besoin qu'attend un lot ouvert reçoit une tâche qui reprend ses
-critères, vers laquelle sa section renvoie, et que le lot attend à sa
-place ; un jalon attend les besoins de ses lots. Les mentions se récrivent
-dans le backlog et le chantier actif ; le journal, les décisions et les
-demandes gardent l'ancien numéro.
+`socle show` et les contrôles des références résolvent, et sans sa
+priorité : un lot ou un jalon n'était déjà jamais pris, elle ne changeait
+aucun ordre, et `memoire.formes` la refuse désormais ; la mise à jour
+nomme chaque entrée dont elle l'a retirée. Toute autre entrée reste un
+besoin, sa section « Fait quand » renommée « Satisfait quand » ; chaque
+besoin qu'attend un lot ouvert reçoit une tâche qui reprend ses critères,
+vers laquelle sa section renvoie, et que le lot attend à sa place ; un
+jalon attend les besoins de ses lots. Les mentions se récrivent dans le
+backlog et le chantier actif ; le journal, les décisions et les demandes
+gardent l'ancien numéro. Une citation par l'ancien numéro (`B-NNNN@…`) se
+juge contre l'entrée renumérotée, comme celle de son identifiant actuel :
+une empreinte périmée ou inventée y est refusée.
 
 À faire : relire ce que la mise à jour a migré (`python3 .socle/socle
 state`, le backlog), et commiter la migration avec elle. Puis, en prenant

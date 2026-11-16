@@ -50,8 +50,11 @@ et les textes. Ce qu'elle ne tranchait pas, tranché ici :
    l'ancien numéro résolu.
 7. *La migration*, à chaque mise à jour, idempotente sur le contenu (le
    format du verrou reste `3`) : les lots et les jalons prennent leur
-   préfixe par ordre de leur ancien numéro, leur champ `forme` retiré ;
-   les tâches se numérotent dans l'ordre des lots puis de leur `après`.
+   préfixe par ordre de leur ancien numéro, leur champ `forme` retiré,
+   et leur priorité, que le point 3 refuse : avant cette décision déjà, un
+   lot ou un jalon n'était jamais pris (le moteur l'écartait des entrées à
+   prendre), et sa priorité ne changeait aucun ordre ; le bilan de la mise
+   à jour nomme chaque entrée dont elle l'a retirée. Les tâches se numérotent dans l'ordre des lots puis de leur `après`.
    Une tâche posée par la migration prend le titre, l'origine et le statut
    de son besoin, ses critères, ou, s'il n'en a pas, un seul critère non
    coché qui le nomme ; ni priorité ni `après`, qu'elle hérite. La section

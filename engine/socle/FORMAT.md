@@ -252,11 +252,14 @@ une tâche ouverte, ou fait sans tâche faite. Ce qui est clos avant la
 migration reste tel quel.
 
 Une entrée renumérotée garde son ancien numéro (`ancien : B-0235`) :
-`socle show` et les contrôles des références le résolvent vers elle, le
+`socle show`, les contrôles des références et la lecture prouvée le
+résolvent vers elle (une citation par l'ancien numéro se juge contre sa
+version actuelle), le
 journal, les décisions et les demandes le gardent, et il ne se réattribue
 jamais. La mise à jour migre un backlog d'avant ADR-0083 : un lot
 (`forme : lot`) devient `L-` et un jalon (`forme : jalon`) `JA-`, clos
-compris ; toute autre entrée reste un besoin, sa section « Fait quand »
+compris, sans sa priorité, qui ne changeait aucun ordre (l'installeur
+nomme chacun) ; toute autre entrée reste un besoin, sa section « Fait quand »
 renommée ; chaque besoin qu'attend un lot ouvert reçoit une tâche qui
 reprend ses critères, vers laquelle sa section renvoie, et que le lot
 attend à sa place ; un jalon attend les besoins de ses lots ; les

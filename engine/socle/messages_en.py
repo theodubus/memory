@@ -3326,6 +3326,8 @@ MESSAGES: dict[str, str] = {
         'backlog: {n} batch(es) and milestone(s) renumbered ({liste}); the former number resolves',
     'backlog : {n} tâche(s) posée(s) pour les besoins des lots ouverts ({premiere} à {derniere}), leurs critères à récrire en livrables':
         'backlog: {n} task(s) set for the needs of the open batches ({premiere} to {derniere}), their criteria to be rewritten as deliverables',
+    "backlog : priorité retirée de {n} lot(s) et jalon(s) ({liste}) : ils n'étaient déjà jamais prêts, elle ne changeait aucun ordre ; elle se donne à un besoin ou à une tâche":
+        'backlog: priority removed from {n} batch(es) and milestone(s) ({liste}): they were already never ready, it changed no order; it is given to a need or a task',
     'backlog : « Fait quand » devient « Satisfait quand » dans {n} besoin(s)':
         'backlog: “Done when” becomes “Satisfied when” in {n} need(s)',
     'besoin':
@@ -3388,6 +3390,16 @@ MESSAGES: dict[str, str] = {
         'task two batches wait on',
     'tâche qui ne nomme pas son besoin':
         'task that does not name its need',
+    'tâche dont le champ `besoin` nomme un lot, et non un besoin':
+        'task whose `need` field names a batch, not a need',
+    'tâche nouvelle sans sa section « Fait quand »':
+        'new task without its “Done when” section',
+    "entrée renumérotée citée par son ancien numéro, sous une empreinte inventée":
+        'renumbered entry cited by its former number, under an invented fingerprint',
+    "une entrée renumérotée par la migration, qui porte `ancien`, et sa citation par l'ancien numéro sous l'empreinte de sa version actuelle passent le commit et la CI":
+        'an entry renumbered by the migration, which carries `former`, and its citation by the former number under the fingerprint of its current version pass the commit and the CI',
+    "la migration n'a pas posé `ancien : B-0001` sur {id}":
+        'the migration did not set `former : B-0001` on {id}',
     'un besoin attend des besoins et des demandes':
         'a need waits on needs and requests',
     'un besoin clos après sa tâche faite, rangés avec les clos par `socle archive`, passent la CI':

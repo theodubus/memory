@@ -3,7 +3,9 @@ socle : mécanique, et idempotente sur le contenu.
 
 - un lot (`forme : lot`) devient `L-`, un jalon (`forme : jalon`) `JA-`,
   clos compris, par ordre de leur ancien numéro, que chacun garde
-  (`ancien : B-NNNN`) ; leur champ `forme` disparaît ;
+  (`ancien : B-NNNN`) ; leur champ `forme` disparaît, et leur priorité,
+  que `memoire.formes` refuse : un lot ni un jalon n'étaient déjà jamais
+  prêts, elle ne changeait aucun ordre (le bilan nomme chacun) ;
 - toute autre entrée reste un besoin ; sa section « Fait quand » devient
   « Satisfait quand », une fois, tant que le backlog n'a ni tâche, ni lot,
   ni jalon à leur préfixe ;
@@ -34,14 +36,16 @@ PROVISOIRE = "00000000"
 @dataclass
 class Bilan:
     """Ce que la migration a fait : (ancien, nouveau) des renumérotées, les
-    tâches posées, les sections renommées."""
+    tâches posées, les sections renommées, les lots et les jalons dont la
+    priorité est retirée, par leur nouveau numéro."""
 
     renumerotees: list[tuple[str, str]] = field(default_factory=list)
     taches: list[str] = field(default_factory=list)
     sections: int = 0
+    priorites: list[str] = field(default_factory=list)
 
     def __bool__(self) -> bool:
-        return bool(self.renumerotees or self.taches or self.sections)
+        return bool(self.renumerotees or self.taches or self.sections or self.priorites)
 
 
 def forme_ecrite(e: memoire.Entree) -> str:
@@ -172,14 +176,19 @@ def migrer_backlog(racine: Path, lg: str | None = None) -> Bilan:
                     liste.append(nouveaux.get(d, d))
             apres_nouveau[ancien] = list(dict.fromkeys(liste))
 
-    # 3. Les fichiers des renumérotées : `forme` retiré, `après` récrit,
-    # `ancien` ajouté une fois les mentions récrites.
+    # 3. Les fichiers des renumérotées : `forme` et la priorité retirés,
+    # `après` récrit, `ancien` ajouté une fois les mentions récrites. Un lot
+    # ni un jalon n'étaient prêts, avant ADR-0083 déjà : leur priorité ne
+    # changeait aucun ordre, et `memoire.formes` la refuse désormais.
     champ_ancien = langue.mot(langue.CHAMPS, "ancien", lg)
     renommes: dict[str, str] = {}
     for ancien, nouvel in bilan.renumerotees:
         e = entrees[ancien]
         apres = apres_nouveau.get(ancien) or None
-        textes[e.fichier] = _remeta(textes.get(e.fichier, mem.fichiers[e.fichier].texte), retirer={"forme"},
+        if "priorite" in e.meta:
+            bilan.priorites.append(nouvel)
+        textes[e.fichier] = _remeta(textes.get(e.fichier, mem.fichiers[e.fichier].texte),
+                                    retirer={"forme", "priorite"},
                                     remplacer={"apres": ", ".join(apres) if apres else None})
         dossier, nom = e.fichier.rsplit("/", 1)
         renommes[e.fichier] = f"{dossier}/{nouvel}{nom[len(ancien):]}"

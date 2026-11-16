@@ -28,13 +28,18 @@ tasks, the ready tasks, the needs to split and those to close. The commands
 
 The update migrates the backlog: each batch becomes `L-` and each milestone
 `JA-`, closed ones included, keeping its former number (`former : B-NNNN`),
-which `socle show` and the reference checks resolve; every other entry
-stays a need, its “Done when” section renamed “Satisfied when”; each need
-an open batch waits on gets a task that takes its criteria, to which its
-section refers, and that the batch waits on in its place; a milestone
-waits on its batches' needs. Mentions are rewritten in the backlog and the
-active work; the journal, the decisions and the requests keep the former
-number.
+which `socle show` and the reference checks resolve, and without its
+priority: a batch or a milestone was already never taken, it changed no
+order, and `memoire.formes` now refuses it; the update names each entry it
+removed it from. Every other entry stays a need, its “Done when” section
+renamed “Satisfied when”; each need an open batch waits on gets a task
+that takes its criteria, to which its section refers, and that the batch
+waits on in its place; a milestone waits on its batches' needs. Mentions
+are rewritten in the backlog and the active work; the journal, the
+decisions and the requests keep the former number. A citation by the
+former number (`B-NNNN@…`) is judged against the renumbered entry, like
+one by its current identifier: a stale or invented fingerprint is refused
+there.
 
 To do: review what the update migrated (`python3 .socle/socle state`, the
 backlog), and commit the migration with it. Then, when taking each need:

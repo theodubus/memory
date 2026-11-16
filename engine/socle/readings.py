@@ -118,14 +118,16 @@ def deja_citee(soi: memoire.Entree | None, citation: str, avant: memoire.Memoire
 def entree_lue(plage: Plage, chemin: str, soi: memoire.Entree | None, ident: str, h: str) -> bool:
     """`ident@h` désigne la version actuelle de l'entrée, ou celle du commit
     où la citation paraît : son empreinte sans la ligne de métadonnées, ou
-    celle du texte entier, que portent les citations d'avant D-0086."""
-    e = plage.courante.entree(ident)
+    celle du texte entier, que portent les citations d'avant D-0086. Un
+    ancien numéro (ADR-0083) se résout : son empreinte se juge contre
+    l'entrée qui le porte, comme celle de l'identifiant actuel."""
+    e = plage.courante.resoudre(ident)
     if e is not None and h in memoire.empreintes_entree(e):
         return True
     k = plage.parution(chemin, f"{ident}@{h}", soi)
     if k is None:
         return False
-    e = plage.a(plage.commits[k]).entree(ident)
+    e = plage.a(plage.commits[k]).resoudre(ident)
     return e is not None and h in memoire.empreintes_entree(e)
 
 

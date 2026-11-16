@@ -691,6 +691,25 @@ def _clore(c: Path, ident: str):
                         lambda m: "> statut : fait" + (m[1] or "") + " · ref : fichier:calc.py", p.read_text(), count=1))
 
 
+def _renumeroter_en_lot(c: Path, ident: str) -> str:
+    """Le besoin `ident`, écrit lot comme avant ADR-0083 (`forme : lot`),
+    renuméroté par la migration de la mise à jour : il prend le préfixe `L-`
+    et garde son ancien numéro (`ancien : ident`). Rend son numéro nouveau,
+    que les branches d'autres cas, poussées sur l'origine, peuvent décaler."""
+    from socle import migration
+
+    remplacer(c, _sujet(c, ident), "> statut : ouvert", "> statut : ouvert · forme : lot")
+    return dict(migration.migrer_backlog(c).renumerotees)[ident]
+
+
+def _citer_par_l_ancien_numero(a: Atelier, c: Path, ancien: str, h: str):
+    """Une entrée de journal qui cite une entrée renumérotée par son ancien
+    numéro, sous l'empreinte `h`."""
+    ajouter(c, "memory/journal/" + a.journal[2:9] + ".md",
+            f"\n## {a.journal[:-1]}B — Constat\n\nVoir {ancien}@{h}.\n")
+    maj_memoire(c, "Le backlog migré en quatre formes.")
+
+
 def _declarer_ui_tierce(a: Atelier, c: Path):
     """L'interface, travaillée par d'autres sessions d'agents, déclarée tierce
     par l'humain qui l'approuve, dans un commit à lui (B-0169)."""
@@ -1324,6 +1343,18 @@ def _cas() -> list[Cas]:
     @defaut("tache-sans-besoin", "tâche qui ne nomme pas son besoin", "git", "memoire.formes")
     def _(a, c):
         ajouter_sujet(c, tache_essai(a, c).replace(" · besoin : B-0001", ""))
+        return etage_git(a, c)
+
+    @defaut("besoin-qui-n-est-pas-un-besoin", "tâche dont le champ `besoin` nomme un lot, et non un besoin", "git",
+            "memoire.formes")
+    def _(a, c):
+        ajouter_sujet(c, tache_essai(a, c).replace(" · besoin : B-0001", " · besoin : L-0001"))
+        ajouter_sujet(c, lot_essai(a, c, "L-0001", "T-0001"))
+        return etage_git(a, c)
+
+    @defaut("tache-nouvelle-sans-section", "tâche nouvelle sans sa section « Fait quand »", "git", "memoire.formes")
+    def _(a, c):
+        ajouter_sujet(c, tache_essai(a, c).split("\n## Fait quand")[0] + "\n")
         return etage_git(a, c)
 
     @defaut("tache-dans-deux-lots", "tâche que deux lots attendent", "git", "memoire.formes")
@@ -2053,6 +2084,13 @@ def _cas() -> list[Cas]:
                 f"\n## {a.journal[:-1]}B — Constat\n\nVoir F-0001@{perimee}.\n")
         return etage_git(a, c)
 
+    @defaut("citation-par-un-ancien-numero", "entrée renumérotée citée par son ancien numéro, sous une empreinte "
+            "inventée", "git", "memoire.lectures")
+    def _(a, c):
+        _renumeroter_en_lot(c, "B-0001")
+        _citer_par_l_ancien_numero(a, c, "B-0001", "deadbeef")
+        return etage_git(a, c)
+
     @defaut("identifiant-pris-deux-fois", "identifiant que la branche par défaut a pris aussi", "ci", "memoire.collisions")
     def _(a, c):
         r = a.socle(c, "check", "--stage", "ci", "--base", _collision(a, c))
@@ -2368,6 +2406,15 @@ def _temoins() -> list[tuple[str, Callable]]:
                          f"> statut : ouvert · origine : {a.journal} · après : B-0001 · "
                          f"lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n")
         maj_memoire(c, "Le jalon de la multiplication posé.")
+        return etage_git(a, c) or etage_ci(a, c)
+
+    @temoin("une entrée renumérotée par la migration, qui porte `ancien`, et sa citation par l'ancien numéro sous "
+            "l'empreinte de sa version actuelle passent le commit et la CI")
+    def _(a, c):
+        nouvel = _renumeroter_en_lot(c, "B-0001")
+        if "ancien : B-0001" not in (c / _sujet(c, nouvel)).read_text():
+            return trad("la migration n'a pas posé `ancien : B-0001` sur {id}", id=nouvel)
+        _citer_par_l_ancien_numero(a, c, "B-0001", empreinte(a, c, nouvel))
         return etage_git(a, c) or etage_ci(a, c)
 
     @temoin("un besoin et sa tâche posés par `socle new need --task`, un lot qui attend la tâche et un jalon qui "

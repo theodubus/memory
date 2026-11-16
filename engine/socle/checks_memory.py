@@ -650,12 +650,15 @@ def lectures(ctx, r):
     defs = mem.definitions()
     nouveaux = set(defs) - set(base.definitions())
     plage = lp.Plage(ctx.racine, base, mem, [c["sha"] for c in ctx.commits])
+    # Un ancien numéro (ADR-0083) se résout, et son empreinte se juge contre
+    # l'entrée qui le porte désormais.
+    anciens = mem.anciens()
 
     for chemin, texte in sorted(textes_scannes(ctx).items()):
         avant = ctx.lire_base(chemin) or ""
         for ident, h, ligne in memoire.citations(texte):
             soi = lp.entree_englobante(mem, chemin, ligne)
-            if ident not in defs or lp.deja_citee(soi, f"{ident}@{h}", base, avant):
+            if (ident not in defs and ident not in anciens) or lp.deja_citee(soi, f"{ident}@{h}", base, avant):
                 continue
             if not lp.entree_lue(plage, chemin, soi, ident, h):
                 r.erreur("memoire.lectures", trad("`{ident}@{h}` ne correspond pas à la version actuelle de "

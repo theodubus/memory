@@ -12,8 +12,9 @@ import types
 import unittest
 from pathlib import Path
 
-from socle import (checks_memory as controles_memoire, cli, config, context as contexte, installer as installeur,
-                   memory as memoire, messages, migration, readings as lectures, selftest as autotest)
+from socle import (checks_memory as controles_memoire, cli, config, context as contexte, hooks,
+                   installer as installeur, memory as memoire, messages, migration, readings as lectures,
+                   selftest as autotest)
 from socle.report import Rapport
 from tests.test_bascule import MOTEUR, git
 
@@ -168,6 +169,11 @@ class TestFormes(unittest.TestCase):
         for nom, entrees in cas.items():
             with self.subTest(nom):
                 self.assertEqual(len(formes(memoire_de(*entrees))), 1, formes(memoire_de(*entrees)))
+
+    def test_le_besoin_d_une_tache_est_un_besoin(self):
+        """Revue du lot L-0013 : ce refus n'avait ni test ni défaut injecté."""
+        mem = memoire_de(entree("T-0001", meta="besoin : L-0001"), entree("L-0001", meta="après : T-0001"))
+        self.assertEqual(formes(mem), ["`T-0001` : `besoin : L-0001` ne nomme pas un besoin du backlog"])
 
     def test_une_entree_nouvelle_porte_sa_section(self):
         base = memoire_de(entree("B-0001"))
@@ -334,6 +340,56 @@ class TestMigration(Projet):
                       "JA-0001)", sortie.getvalue())
         self.assertIn("backlog : 2 tâche(s) posée(s)", sortie.getvalue())
         self.assertTrue(list((self.racine / "memory/backlog/closed").glob("L-0001-*.md")))
+
+    def test_la_priorite_d_un_lot_et_d_un_jalon_se_retire_et_le_bilan_les_nomme(self):
+        """Revue du lot L-0013 : l'ancien format permettait une priorité sur
+        un jalon, que `memoire.formes` refusait après la migration."""
+        self.poser("B-0001", corps=CRITERES)
+        self.poser("B-0002", "forme : lot · après : B-0001 · priorité : haute")
+        self.poser("B-0003", "forme : jalon · après : B-0002 · priorité : basse")
+        base = self.commiter("le backlog d'avant")
+        with contextlib.redirect_stdout(io.StringIO()) as sortie:
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+        self.assertIn("backlog : priorité retirée de 2 lot(s) et jalon(s) (L-0001, JA-0001)", sortie.getvalue())
+        mem = memoire.Memoire.charger(self.racine)
+        self.assertEqual([memoire.priorite(mem.entree(i)) for i in ("L-0001", "JA-0001")], [None, None])
+        self.commiter("la mise à jour")
+        self.assertEqual(self.erreurs(base), [])
+        # Le bilan, en anglais aussi.
+        with messages.dans("en"):
+            self.assertIn("priority removed from 2 batch(es) and milestone(s) (L-0001, JA-0001)",
+                          messages.trad("backlog : priorité retirée de {n} lot(s) et jalon(s) ({liste}) : ils "
+                                        "n'étaient déjà jamais prêts, elle ne changeait aucun ordre ; elle se donne "
+                                        "à un besoin ou à une tâche", n=2, liste="L-0001, JA-0001"))
+
+    def migre(self) -> tuple[str, str]:
+        """Le backlog d'avant migré et commité : (le commit, le journal)."""
+        self.avant()
+        migration.migrer_backlog(self.racine)
+        from socle import archive as archivage
+
+        archivage.ranger_backlog(self.racine)
+        return self.commiter("la migration"), str(next((self.racine / "memory/journal").glob("*.md")))
+
+    def test_une_citation_par_l_ancien_numero_se_juge_contre_l_entree_actuelle(self):
+        """Revue du lot L-0013 : `B-0005@<inventée>`, ancien numéro de L-0002,
+        passait le contrôle et le hook ; seul `L-0002@<inventée>` tombait."""
+        base, journal = self.migre()
+        juste = memoire.empreinte_entree(memoire.Memoire.charger(self.racine).entree("L-0002"))
+        rel = str(Path(journal).relative_to(self.racine))
+        avant = Path(journal).read_text()
+        projet = config.Projet.charger(self.racine)
+        for h, refus in (("deadbeef", True), (juste, False)):
+            with self.subTest(h):
+                apres = avant + f"\n## {self.journal[:-1]}Z — Constat\n\nVoir B-0005@{h}.\n"
+                fautes = hooks.references_inventees(projet, rel, avant, apres)
+                self.assertEqual(any(f"`B-0005@{h}`" in f and "empreinte" in f for f in fautes), refus, fautes)
+                Path(journal).write_text(apres)
+                self.commiter(f"le constat {h}")
+                erreurs = [e for e in self.erreurs(base) if e.startswith("memoire.lectures")]
+                self.assertEqual(len(erreurs), int(refus), erreurs)
+                self.assertTrue(not refus or "`B-0005@deadbeef`" in erreurs[0], erreurs)
+                git(self.racine, "reset", "-q", "--hard", base)
 
     def test_poser_lectures_cite_l_index_sans_les_taches(self):
         self.avant()

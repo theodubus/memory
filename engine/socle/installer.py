@@ -1214,6 +1214,10 @@ def _installer(cible: Path, adaptateur: str | list[str], proprietaire: str, adop
             journal.append(trad("backlog : {n} lot(s) et jalon(s) renumérotés ({liste}) ; l'ancien numéro se "
                                 "résout", n=len(bilan.renumerotees),
                                 liste=", ".join(f"{a} → {n}" for a, n in bilan.renumerotees)))
+        if bilan.priorites:
+            journal.append(trad("backlog : priorité retirée de {n} lot(s) et jalon(s) ({liste}) : ils n'étaient "
+                                "déjà jamais prêts, elle ne changeait aucun ordre ; elle se donne à un besoin ou à "
+                                "une tâche", n=len(bilan.priorites), liste=", ".join(bilan.priorites)))
         if bilan.taches:
             journal.append(trad("backlog : {n} tâche(s) posée(s) pour les besoins des lots ouverts ({premiere} à "
                                 "{derniere}), leurs critères à récrire en livrables", n=len(bilan.taches),
