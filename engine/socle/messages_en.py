@@ -3433,6 +3433,8 @@ MESSAGES: dict[str, str] = {
     # L'historique des revues d'un lot (ADR-0084).
     '`{id}` est clos « fait » sans le recul de sa dernière passe de revue : {raison}':
         '`{id}` is closed "done" without the step back of its last review pass: {raison}',
+    '`{id}` est clos « fait » avant ce que sa dernière passe de revue exige : {raison}':
+        '`{id}` is closed "done" before what its last review pass requires: {raison}',
     "le lot dont c'est la passe de revue, qui s'écrit dans sa section « Revues » (par défaut : le lot en cours du "
     "backlog)":
         'the batch this review pass belongs to, written in its "Reviews" section (default: the batch in progress '
@@ -3453,20 +3455,23 @@ MESSAGES: dict[str, str] = {
         'by that cause, or a new cause, "new cause".',
     "Y répondre dans la passe {n}, d'un paragraphe qui commence par « Recul : », de soixante mots au moins, dont "
     "le dernier mot est « continuer », ce qui rendra la passe suivante différente écrit avant, ou « s'arrêter ». "
-    "S'arrêter, c'est une demande à l'humain, que le paragraphe nomme (`D-NNNN`) et que le lot attend par son "
-    "`après` : ce qui tourne, en clair, la règle qui le fait tourner, et une proposition qui la borne. L'agent "
-    "avance ailleurs jusqu'à sa réponse.":
+    "S'arrêter, c'est une demande à l'humain, qui cite le lot ({lot}), que le paragraphe nomme (`D-NNNN`) et que "
+    "le lot attend par son `après` : ce qui tourne, en clair, la règle qui le fait tourner, et une proposition qui "
+    "la borne. L'agent avance ailleurs jusqu'à sa réponse, seule à lever l'arrêt.":
         'Answer them in pass {n}, in a paragraph that starts with "Step back:", of at least sixty words, whose last '
         'word is "continue", with what will make the next pass different written before it, or "stop". Stopping '
-        'is a request to the human, which the paragraph names (`D-NNNN`) and which the batch waits for through its '
-        '`after`: what goes round, in plain words, the rule that makes it go round, and a proposal that bounds it. '
-        'The agent moves on elsewhere until the answer.',
-    "Le recul de la passe {n} finit donc par « s'arrêter » : une demande à l'humain, que le paragraphe nomme "
-    "(`D-NNNN`) et que le lot attend par son `après` : ce qui tourne, en clair, la règle qui le fait tourner, et "
-    "une proposition qui la borne. L'agent avance ailleurs jusqu'à sa réponse.":
-        'The step back of pass {n} therefore ends with "stop": a request to the human, which the paragraph names '
-        '(`D-NNNN`) and which the batch waits for through its `after`: what goes round, in plain words, the rule '
-        'that makes it go round, and a proposal that bounds it. The agent moves on elsewhere until the answer.',
+        'is a request to the human, which cites the batch ({lot}), which the paragraph names (`D-NNNN`) and which '
+        'the batch waits for through its `after`: what goes round, in plain words, the rule that makes it go round, '
+        'and a proposal that bounds it. The agent moves on elsewhere until the answer, the only thing that lifts '
+        'the stop.',
+    "Le recul de la passe {n} finit donc par « s'arrêter » : une demande à l'humain, qui cite le lot ({lot}), que "
+    "le paragraphe nomme (`D-NNNN`) et que le lot attend par son `après` : ce qui tourne, en clair, la règle qui le "
+    "fait tourner, et une proposition qui la borne. L'agent avance ailleurs jusqu'à sa réponse, seule à lever "
+    "l'arrêt.":
+        'The step back of pass {n} therefore ends with "stop": a request to the human, which cites the batch '
+        '({lot}), which the paragraph names (`D-NNNN`) and which the batch waits for through its `after`: what goes '
+        'round, in plain words, the rule that makes it go round, and a proposal that bounds it. The agent moves on '
+        'elsewhere until the answer, the only thing that lifts the stop.',
     'Les bloquants de cette passe ont-ils la même cause que ceux de la précédente ?':
         "Do this pass's blockers have the same cause as the previous pass's?",
     "Les entrées que le lot ouvre sont-elles de même nature que celles qu'il ferme ?":
@@ -3514,6 +3519,12 @@ MESSAGES: dict[str, str] = {
         'the step back of pass {n} stops without naming its request (`D-NNNN`), the decision it puts to the human',
     "le lot s'est arrêté à la passe {n}, et attend la réponse à {demandes} : il avance ailleurs jusque-là":
         'the batch stopped at pass {n}, and waits for the answer to {demandes}: it moves on elsewhere until then',
+    "l'arrêt de la passe {n} n'est levé par aucune des demandes que nomme son recul ({demandes}) : seule le lève la "
+    "réponse de l'humain à une demande qui cite le lot ({lot}) ; une demande retirée, ou qui ne le cite pas, ne le "
+    "lève pas":
+        'the stop of pass {n} is lifted by none of the requests its step back names ({demandes}): only the '
+        'human\'s answer to a request that cites the batch ({lot}) lifts it; a withdrawn request, or one that does '
+        'not cite it, does not',
     "(aucun lot en cours au backlog : cette passe ne s'écrit dans aucun lot ; `socle review --batch L-NNNN` nomme "
     "le sien)":
         '(no batch in progress in the backlog: this pass is written in no batch; `socle review --batch L-NNNN` '
@@ -3538,10 +3549,29 @@ MESSAGES: dict[str, str] = {
         'reviewed batch closed "done" without the step back of its last pass',
     "passe de plus d'un lot arrêté dont la demande attend sa réponse":
         'one more pass of a stopped batch whose request waits for its answer',
-    'un lot arrêté dont la demande a sa réponse, `socle review` produit sa passe suivante':
-        'a stopped batch whose request has its answer, `socle review` produces its next pass',
-    'un lot relu clos « fait » avec le recul de sa dernière passe passe le commit et la CI':
-        'a reviewed batch closed "done" with the step back of its last pass passes the commit and the CI',
+    "passe de plus d'un lot arrêté sur une demande ancienne, répondue, qui ne cite pas le lot":
+        'one more pass of a batch stopped on an old, answered request that does not cite the batch',
+    "lot relu clos « fait » dont la dernière passe, la deuxième, a un bloquant sans le regard du relecteur":
+        'reviewed batch closed "done" whose last pass, the second, has a blocker without the reviewer\'s view',
+    "lot relu clos « fait » sur « continuer » après deux passes de suite où le relecteur voit une même cause revenir":
+        'reviewed batch closed "done" on "continue" after two passes in a row where the reviewer sees a same cause '
+        'come back',
+    'lot relu clos « fait » sur un arrêt dont la demande attend sa réponse':
+        'reviewed batch closed "done" on a stop whose request waits for its answer',
+    'un lot arrêté dont la demande, qui cite le lot, a sa réponse, `socle review` produit sa passe suivante':
+        'a stopped batch whose request, which cites the batch, has its answer, `socle review` produces its next '
+        'pass',
+    "un lot relu clos « fait » avec le recul de sa dernière passe, et le regard du relecteur sur son bloquant, passe "
+    "le commit et la CI":
+        'a reviewed batch closed "done" with the step back of its last pass, and the reviewer\'s view on its '
+        'blocker, passes the commit and the CI',
+    "un lot relu clos « fait » sur « continuer » après une seule passe où le relecteur voit une cause revenir passe "
+    "le commit et la CI":
+        'a reviewed batch closed "done" on "continue" after a single pass where the reviewer sees a cause come back '
+        'passes the commit and the CI',
+    "un lot relu clos « fait » sur un arrêt dont la demande, qui cite le lot, a sa réponse passe le commit et la CI":
+        'a reviewed batch closed "done" on a stop whose request, which cites the batch, has its answer passes the '
+        'commit and the CI',
     "une deuxième passe de revue après le recul de la première, `socle review` la produit et l'écrit dans le lot":
         "a second review pass after the first one's step back, `socle review` produces it and writes it in the "
         "batch",

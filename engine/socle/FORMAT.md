@@ -286,21 +286,27 @@ passe précédente ? les entrées que le lot ouvre sont-elles de même nature
 que celles qu'il ferme ? les lots clos qui ont touché les mêmes fichiers
 ont-ils déjà ouvert ce genre d'entrées ?), et dont le dernier mot est sa
 décision : « continuer », ce qui rendra la passe suivante différente écrit
-avant, ou « s'arrêter ». S'arrêter, c'est une demande à l'humain, que le
-paragraphe nomme et que le lot attend par son `après` : ce qui tourne, la
-règle qui le fait tourner, et une proposition qui la borne.
+avant, ou « s'arrêter ». S'arrêter, c'est une demande à l'humain, qui
+cite le lot (`L-NNNN`), que le paragraphe nomme et que le lot attend par
+son `après` : ce qui tourne, la règle qui le fait tourner, et une
+proposition qui la borne.
 
 `socle review` refuse une passe tant que la précédente n'a pas son recul,
 ou, à partir de la deuxième, le regard du relecteur sur chacun de ses
 bloquants ; il refuse « continuer » après deux passes de suite où le
-relecteur voit une même cause revenir, et toute passe tant que la demande
-d'un arrêt attend sa réponse. Son refus montre l'historique, les entrées
-ouvertes et closes depuis le début du lot, les lots clos qui ont touché
-les mêmes fichiers, et les trois questions. Tant que rien ne change hors de
-la mémoire, il redonne la même passe sans l'écrire de nouveau. Le contrôle
-du backlog refuse un lot relu clos `fait` dont la dernière passe n'a pas
-son recul ; un lot qui ne change ni code, ni spécification, ni test n'a ni
-passe ni recul.
+relecteur voit une même cause revenir, et toute passe tant que l'arrêt
+n'est pas levé. Seule le lève la réponse de l'humain à une demande que le
+recul nomme et qui cite le lot, par son identifiant ou un ancien numéro ;
+une demande retirée ne le lève pas, ni une demande ancienne, même
+répondue, qui ne cite pas le lot. Son refus montre l'historique, les
+entrées ouvertes et closes depuis le début du lot, les lots clos qui ont
+touché les mêmes fichiers, et les trois questions. Tant que rien ne change
+hors de la mémoire, il redonne la même passe sans l'écrire de nouveau. Le
+contrôle du backlog applique les mêmes règles à la dernière passe d'un lot
+relu clos `fait` : il le refuse sans son recul, sans le regard du
+relecteur sur un bloquant, sur un « continuer » après deux passes où une
+même cause revient, ou sur un arrêt que rien n'a levé ; un lot qui ne
+change ni code, ni spécification, ni test n'a ni passe ni recul.
 
 ```markdown
 ## Revues

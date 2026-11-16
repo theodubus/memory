@@ -32,6 +32,10 @@ LOT = (ENTETE + "# {id} — Le lot du doublement\n\n> statut : {statut} · origi
 DEMANDE = ("<!-- socle: couche=demandes zone=publique -->\n# D-0001 — Borner la règle qui fait tourner le lot\n\n"
            "> date : 2026-11-16\n\nLa règle tourne ; une proposition la borne.\n")
 REPONSE = 'reponse = "valider"\npar = "Théo"\ndate = "2026-11-16"\n'
+# La demande d'un arrêt cite le lot qu'elle arrête : seule sa réponse le lève
+# (ADR-0084, point 6).
+DEMANDE_DU_LOT = DEMANDE.replace("fait tourner le lot", "fait tourner le lot L-0001")
+RETIREE = "> date : 2026-11-16 · retirée : posée trop tôt"
 
 
 def recul(decision: str, *, mots: int = 64, demande: str = "") -> str:
@@ -337,7 +341,7 @@ class TestLeRecul(_Depot):
 
     def test_un_arret_attend_la_reponse_a_sa_demande(self):
         (self.racine / "memory/requests").mkdir()
-        (self.racine / "memory/requests/D-0001-borner-la-regle.md").write_text(DEMANDE)
+        (self.racine / "memory/requests/D-0001-borner-la-regle.md").write_text(DEMANDE_DU_LOT)
         self.deux_passes_ou_une_cause_revient("s'arrêter", demande="D-0001")
         with self.assertRaises(revue.PasseRefusee) as refus:
             self.relire()
@@ -347,6 +351,52 @@ class TestLeRecul(_Depot):
         self.assertNotIn("Trois questions", texte)
         # Sa réponse donnée, la passe suivante se produit.
         (self.racine / "memory/requests/D-0001-borner-la-regle.answer.toml").write_text(REPONSE)
+        texte, note = self.relire()
+        self.assertIn("passe 4 du lot L-0001 écrite", note)
+
+    def ecrire_demande(self, ident: str, texte: str, repondue: bool = False):
+        dossier = self.racine / "memory/requests"
+        dossier.mkdir(exist_ok=True)
+        (dossier / f"{ident}-une-demande.md").write_text(texte.replace("D-0001", ident))
+        if repondue:
+            (dossier / f"{ident}-une-demande.answer.toml").write_text(REPONSE)
+
+    def test_une_demande_ancienne_repondue_qui_ne_cite_pas_le_lot_ne_leve_pas_l_arret(self):
+        self.ecrire_demande("D-0001", DEMANDE, repondue=True)
+        self.deux_passes_ou_une_cause_revient("s'arrêter", demande="D-0001")
+        with self.assertRaises(revue.PasseRefusee) as refus:
+            self.relire()
+        texte = str(refus.exception)
+        self.assertIn("la passe 4 du lot L-0001 est refusée — l'arrêt de la passe 3 n'est levé par aucune des "
+                      "demandes que nomme son recul (D-0001) : seule le lève la réponse de l'humain à une demande qui "
+                      "cite le lot (L-0001) ; une demande retirée, ou qui ne le cite pas, ne le lève pas", texte)
+        self.assertIn("finit donc par « s'arrêter » : une demande à l'humain, qui cite le lot (L-0001), que le "
+                      "paragraphe nomme", texte)
+        self.assertEqual(len(memoire.passes(self.lot())), 3)
+        # La même, avec la demande du lot répondue : la passe se produit.
+        self.ecrire_demande("D-0001", DEMANDE_DU_LOT, repondue=True)
+        texte, note = self.relire()
+        self.assertIn("passe 4 du lot L-0001 écrite", note)
+
+    def test_une_demande_du_lot_retiree_ne_leve_pas_l_arret_meme_repondue(self):
+        self.ecrire_demande("D-0001", DEMANDE_DU_LOT.replace("> date : 2026-11-16", RETIREE))
+        self.deux_passes_ou_une_cause_revient("s'arrêter", demande="D-0001")
+        for _ in range(2):
+            with self.assertRaises(revue.PasseRefusee) as refus:
+                self.relire()
+            self.assertIn("l'arrêt de la passe 3 n'est levé par aucune des demandes que nomme son recul (D-0001)",
+                          str(refus.exception))
+            self.ecrire_demande("D-0001", DEMANDE_DU_LOT.replace("> date : 2026-11-16", RETIREE), repondue=True)
+
+    def test_parmi_les_demandes_du_recul_une_du_lot_repondue_suffit(self):
+        self.ecrire_demande("D-0001", DEMANDE, repondue=True)
+        self.ecrire_demande("D-0002", DEMANDE_DU_LOT)
+        self.deux_passes_ou_une_cause_revient("s'arrêter", demande="D-0001 et D-0002")
+        with self.assertRaises(revue.PasseRefusee) as refus:
+            self.relire()
+        self.assertIn("le lot s'est arrêté à la passe 3, et attend la réponse à D-0002 : il avance ailleurs "
+                      "jusque-là", str(refus.exception))
+        self.ecrire_demande("D-0002", DEMANDE_DU_LOT, repondue=True)
         texte, note = self.relire()
         self.assertIn("passe 4 du lot L-0001 écrite", note)
 
@@ -448,6 +498,90 @@ class TestLaCloture(unittest.TestCase):
         self.assertEqual(self.erreurs(""), [])
         # Ouvert, il n'a pas encore à l'avoir.
         self.assertEqual(self.erreurs(self.PASSES.format(recul1="", recul2=""), statut="en cours"), [])
+
+
+class TestLaClotureSuitLesReglesDeLaPasse(unittest.TestCase):
+    """La clôture « fait » d'un lot relu applique à sa dernière passe les
+    règles qui refuseraient une passe de plus (`memoire.refus_de_la_suite`),
+    sans ce que git donne : le regard du relecteur à partir de la deuxième
+    passe, « continuer » après deux passes où une même cause revient, et
+    l'arrêt, que seule lève la réponse à une demande qui cite le lot."""
+
+    def memoire_du_lot(self, *suivantes: str, demandes: dict | None = None,
+                       repondues: tuple = ()) -> memoire.Memoire:
+        """Le lot L-0001 clos « fait », sa passe 1 avec son recul, puis une
+        passe par texte de `suivantes` ; les demandes `demandes`, celles de
+        `repondues` avec leur réponse."""
+        revues = (f"\n## Revues\n\n### Passe 1 — 2026-11-14\n\nCommits : 1a2b3c4..5d6e7f8\n\n"
+                  f"{bloquants('une cause')}\n{recul('continuer')}\n")
+        for i, texte in enumerate(suivantes, start=2):
+            revues += f"\n### Passe {i} — 2026-11-14\n\nCommits : 5d6e7f8..9a8b7c6\n\n{texte}\n"
+        mem = memoire.Memoire(Path("."), None)
+        chemin = "memory/backlog/closed/L-0001-un-lot.md"
+        mem.fichiers[chemin] = memoire.analyser(chemin, ENTETE + "# L-0001 — Un lot\n\n> statut : fait · origine : "
+                                                "J-2026-11-16-A · ref : J-2026-11-16-A\n\nSon corps.\n" + revues)
+        for ident, texte in (demandes or {}).items():
+            c = f"memory/requests/{ident}-une-demande.md"
+            mem.fichiers[c] = memoire.analyser(c, texte.replace("D-0001", ident))
+            if ident in repondues:
+                mem.repondues.add(c)
+        return mem
+
+    def erreurs(self, *suivantes: str, **demandes) -> list[str]:
+        r = Rapport()
+        controles_memoire.backlog(types.SimpleNamespace(memoire=self.memoire_du_lot(*suivantes, **demandes)), r)
+        return [c.message for c in r.erreurs("memoire.backlog")]
+
+    def test_continuer_apres_deux_passes_ou_une_meme_cause_revient_ne_clot_pas(self):
+        meme = bloquants("la lecture encore · même cause") + "\n" + recul("continuer")
+        self.assertEqual(self.erreurs(meme, meme), [
+            "`L-0001` est clos « fait » avant ce que sa dernière passe de revue exige : le relecteur a vu une même "
+            "cause revenir deux passes de suite, aux passes 2 et 3 : « continuer » est refusé, le lot s'arrête"])
+        # Une seule passe où la cause revient : il se clôt.
+        self.assertEqual(self.erreurs(meme, bloquants("un oubli · cause nouvelle") + "\n" + recul("continuer")), [])
+
+    def test_un_bloquant_sans_le_regard_du_relecteur_ne_clot_pas(self):
+        erreurs = self.erreurs(bloquants("un oubli") + "\n" + recul("continuer"))
+        self.assertEqual(erreurs, ["`L-0001` est clos « fait » avant ce que sa dernière passe de revue exige : la "
+                                   "passe 2 ne consigne pas le regard du relecteur sur 1 bloquant(s), « · même cause » "
+                                   "ou « · cause nouvelle » au bout de sa ligne : un oubli"])
+        self.assertEqual(self.erreurs(bloquants("un oubli · cause nouvelle") + "\n" + recul("continuer")), [])
+
+    def test_un_arret_ne_clot_qu_apres_la_reponse_a_la_demande_du_lot(self):
+        arret = bloquants("la lecture encore · même cause") + "\n" + recul("s'arrêter", demande="D-0001")
+        self.assertEqual(self.erreurs(arret, demandes={"D-0001": DEMANDE_DU_LOT}), [
+            "`L-0001` est clos « fait » avant ce que sa dernière passe de revue exige : le lot s'est arrêté à la "
+            "passe 2, et attend la réponse à D-0001 : il avance ailleurs jusque-là"])
+        self.assertEqual(self.erreurs(arret, demandes={"D-0001": DEMANDE_DU_LOT}, repondues=("D-0001",)), [])
+        # Une demande ancienne répondue qui ne cite pas le lot, ou une demande
+        # du lot retirée, ne le lève pas ; un arrêt sans demande non plus.
+        for demande in (DEMANDE, DEMANDE_DU_LOT.replace("> date : 2026-11-16", RETIREE)):
+            with self.subTest(demande=demande[:90]):
+                erreurs = self.erreurs(arret, demandes={"D-0001": demande}, repondues=("D-0001",))
+                self.assertEqual(len(erreurs), 1)
+                self.assertIn("n'est levé par aucune des demandes que nomme son recul (D-0001)", erreurs[0])
+        self.assertIn("s'arrête sans nommer sa demande", self.erreurs(recul("s'arrêter"))[0])
+
+    def test_une_fonction_pour_la_passe_et_la_cloture(self):
+        mem = self.memoire_du_lot(bloquants("la lecture encore · même cause") + "\n" +
+                                  recul("s'arrêter", demande="D-0001 et D-0002"),
+                                  demandes={"D-0001": DEMANDE, "D-0002": DEMANDE_DU_LOT}, repondues=("D-0001",))
+        lot = mem.entree("L-0001")
+        self.assertTrue(memoire.cite_le_lot(mem.entree("D-0002"), lot))
+        self.assertFalse(memoire.cite_le_lot(mem.entree("D-0001"), lot))
+        self.assertEqual([memoire.leve_l_arret(mem, lot, d) for d in ("D-0001", "D-0002", "D-0099")],
+                         [False, False, False])
+        self.assertEqual(memoire.refus_de_la_suite(mem, lot, memoire.passes(lot)),
+                         ("attente", "le lot s'est arrêté à la passe 2, et attend la réponse à D-0002 : il avance "
+                                     "ailleurs jusque-là"))
+        mem.repondues.add(mem.entree("D-0002").fichier)
+        self.assertTrue(memoire.leve_l_arret(mem, lot, "D-0002"))
+        self.assertIsNone(memoire.refus_de_la_suite(mem, lot, memoire.passes(lot)))
+        # Un ancien numéro du lot le cite aussi.
+        ancien = memoire.analyser("memory/backlog/L-0001-un-lot.md", ENTETE + "# L-0001 — Un lot\n\n> statut : fait "
+                                  "· origine : J-2026-11-16-A · ancien : B-0269\n").entrees[0]
+        self.assertTrue(memoire.cite_le_lot(memoire.analyser("memory/requests/D-0003-x.md", DEMANDE.replace(
+            "fait tourner le lot", "fait tourner le lot B-0269")).entrees[0], ancien))
 
 
 class TestUnCloneNeuf(_Depot):

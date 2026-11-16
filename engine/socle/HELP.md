@@ -176,10 +176,12 @@ mêmes fichiers en ont-ils déjà ouvert de semblables ? Il y décide de
 continuer, en disant ce qui rendra la passe suivante différente, ou de
 s'arrêter. Le socle refuse la passe, ou la clôture, sans ce paragraphe,
 et refuse de continuer quand le relecteur voit une même cause revenir
-deux passes de suite. S'arrêter, c'est vous poser une demande : ce qui
-tourne, en clair, la règle qui le fait tourner, et une proposition qui la
-borne. Vous ne voyez aucun chiffre : vous voyez la demande, et le lot
-attend votre réponse pendant que l'agent avance ailleurs.
+deux passes de suite. S'arrêter, c'est vous poser une demande qui cite le
+lot : ce qui tourne, en clair, la règle qui le fait tourner, et une
+proposition qui la borne. Vous ne voyez aucun chiffre : vous voyez la
+demande, et le lot attend votre réponse pendant que l'agent avance
+ailleurs ; seule elle lève l'arrêt, ni une demande retirée, ni une
+ancienne d'un autre sujet.
 
 **Livrer.** Par défaut, l'agent fait tout sur une branche de
 développement et garde une seule pull request ouverte, à laquelle chaque

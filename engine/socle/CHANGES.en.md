@@ -23,15 +23,20 @@ questions of nature in at least sixty words, and ends with “continue” or
 and closed since the start of the batch, the closed batches that touched
 the same files and the three questions. It refuses “continue” after two
 passes in a row where the reviewer sees a same cause come back, and any
-pass while the request of a stop waits for its answer. The
-`memoire.backlog` check refuses a reviewed batch closed `done` without
-the step back of its last pass.
+pass while the stop is not lifted: only the human's answer to a request
+that the step back names and that cites the batch lifts it, never a
+withdrawn request, nor an old one, even answered, that does not cite it.
+The `memoire.backlog` check applies the same rules to the last pass of a
+reviewed batch closed `done`: it refuses it without its step back,
+without the reviewer's view on a blocker, on a “continue” after two
+causes that came back, or on a stop that nothing has lifted.
 
 To do: mark `in progress` the batch being carried out, so that its
 passes are written in it; when the reviewer returns, record the blockers
 there; write the step back before the next pass and before the closing;
-stopping means putting a request to the human, which says what goes
-round, the rule that makes it go round and a proposal that bounds it.
+stopping means putting a request to the human, which cites the batch and
+says what goes round, the rule that makes it go round and a proposal that
+bounds it.
 The `socle-review` and `socle-batch` skills say so; they are protected
 copies, in the installer's request.
 

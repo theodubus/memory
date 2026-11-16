@@ -129,12 +129,13 @@ as long as nothing changes outside the memory.
    word is its decision: “continue”, with what will make the next pass
    different written before it, or “stop”.
 3. Stopping: put a request to the human (skill `socle-request`) that
-   says what goes round, in plain words, the rule that makes it go
-   round, and a proposal that bounds it; the step back names it
-   (`D-NNNN`), and the batch waits for it through its `after`. `socle
-   review` refuses one more pass until its answer: move on elsewhere.
-   After two passes in a row where the reviewer sees a same cause come
-   back, it refuses “continue”: the batch stops.
+   cites the batch and says what goes round, in plain words, the rule
+   that makes it go round, and a proposal that bounds it; the step back
+   names it (`D-NNNN`), and the batch waits for it through its `after`.
+   `socle review` refuses one more pass until its answer, the only thing
+   that lifts the stop: move on elsewhere. After two passes in a row
+   where the reviewer sees a same cause come back, it refuses “continue”:
+   the batch stops.
 
 The backlog check refuses a reviewed batch closed `done` whose last pass
-has no step back.
+would refuse the next one.

@@ -128,12 +128,12 @@ hors de la mémoire.
    Son dernier mot est sa décision : « continuer », ce qui rendra la
    passe suivante différente écrit avant, ou « s'arrêter ».
 3. S'arrêter : poser une demande à l'humain (skill `socle-request`) qui
-   dit ce qui tourne, en clair, la règle qui le fait tourner, et une
-   proposition qui la borne ; le recul la nomme (`D-NNNN`), et le lot
-   l'attend par son `après`. `socle review` refuse une passe de plus
-   jusqu'à sa réponse : avancer ailleurs. Après deux passes de suite où le
-   relecteur voit une même cause revenir, il refuse « continuer » : le lot
-   s'arrête.
+   cite le lot et dit ce qui tourne, en clair, la règle qui le fait
+   tourner, et une proposition qui la borne ; le recul la nomme
+   (`D-NNNN`), et le lot l'attend par son `après`. `socle review` refuse
+   une passe de plus jusqu'à sa réponse, seule à lever l'arrêt : avancer
+   ailleurs. Après deux passes de suite où le relecteur voit une même
+   cause revenir, il refuse « continuer » : le lot s'arrête.
 
 Le contrôle du backlog refuse un lot relu clos `fait` dont la dernière
-passe n'a pas son recul.
+passe refuserait la suivante.

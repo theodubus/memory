@@ -425,13 +425,14 @@ QUESTIONS_DU_RECUL = (
 CONSIGNE_RECUL = a_traduire(
     "Y répondre dans la passe {n}, d'un paragraphe qui commence par « Recul : », de soixante mots au moins, dont "
     "le dernier mot est « continuer », ce qui rendra la passe suivante différente écrit avant, ou « s'arrêter ». "
-    "S'arrêter, c'est une demande à l'humain, que le paragraphe nomme (`D-NNNN`) et que le lot attend par son "
-    "`après` : ce qui tourne, en clair, la règle qui le fait tourner, et une proposition qui la borne. L'agent "
-    "avance ailleurs jusqu'à sa réponse.")
+    "S'arrêter, c'est une demande à l'humain, qui cite le lot ({lot}), que le paragraphe nomme (`D-NNNN`) et que "
+    "le lot attend par son `après` : ce qui tourne, en clair, la règle qui le fait tourner, et une proposition qui "
+    "la borne. L'agent avance ailleurs jusqu'à sa réponse, seule à lever l'arrêt.")
 CONSIGNE_ARRET = a_traduire(
-    "Le recul de la passe {n} finit donc par « s'arrêter » : une demande à l'humain, que le paragraphe nomme "
-    "(`D-NNNN`) et que le lot attend par son `après` : ce qui tourne, en clair, la règle qui le fait tourner, et "
-    "une proposition qui la borne. L'agent avance ailleurs jusqu'à sa réponse.")
+    "Le recul de la passe {n} finit donc par « s'arrêter » : une demande à l'humain, qui cite le lot ({lot}), que "
+    "le paragraphe nomme (`D-NNNN`) et que le lot attend par son `après` : ce qui tourne, en clair, la règle qui le "
+    "fait tourner, et une proposition qui la borne. L'agent avance ailleurs jusqu'à sa réponse, seule à lever "
+    "l'arrêt.")
 # Au-delà, une liste du refus se coupe, et le dit.
 PLAFOND_LISTE = 30
 # Les fichiers et les commits que lit la recherche des lots voisins.
@@ -553,49 +554,18 @@ def _texte_du_refus(projet: config.Projet, lot: memoire.Entree, suivante: int, r
     return "\n".join(lignes).rstrip() + "\n"
 
 
-def _revient(p: memoire.Passe) -> bool:
-    """Le relecteur voit une cause revenir : à partir de la deuxième passe."""
-    return p.numero >= 2 and p.voit_revenir
-
-
 def refus_de_la_passe(projet: config.Projet, lot: memoire.Entree, deja: list, debut: str) -> str | None:
     """Pourquoi la passe qui suit `deja` est refusée (D-0124, points 2, 5
-    et 6), `None` si elle ne l'est pas : la dernière passe sans le regard
-    du relecteur sur un bloquant (à partir de la deuxième) ou sans son
-    recul ; un « continuer » après deux passes de suite où une même cause
-    revient ; un arrêt sans sa demande, ou dont la demande attend sa
-    réponse."""
-    derniere = deja[-1]
-    suivante = derniere.numero + 1
-    consigne = trad(CONSIGNE_RECUL, n=derniere.numero)
-    sans = [cause for cause, regard in derniere.bloquants if regard is None] if derniere.numero >= 2 else []
-    if sans:
-        raison = trad("la passe {n} ne consigne pas le regard du relecteur sur {m} bloquant(s), « · même cause » ou "
-                      "« · cause nouvelle » au bout de sa ligne : {causes}", n=derniere.numero, m=len(sans),
-                      causes=" ; ".join(sans))
-        return _texte_du_refus(projet, lot, suivante, raison, debut, consigne)
-    raison = memoire.refus_du_recul(derniere)
-    if raison:
-        return _texte_du_refus(projet, lot, suivante, raison, debut, consigne)
-    decision = memoire.decision_du_recul(derniere.recul)
-    precedente = deja[-2] if len(deja) > 1 else None
-    if decision == "continuer" and precedente and _revient(precedente) and _revient(derniere):
-        raison = trad("le relecteur a vu une même cause revenir deux passes de suite, aux passes {a} et {b} : "
-                      "« continuer » est refusé, le lot s'arrête", a=precedente.numero, b=derniere.numero)
-        return _texte_du_refus(projet, lot, suivante, raison, debut, trad(CONSIGNE_ARRET, n=derniere.numero))
-    if decision == "s-arreter":
-        demandes = memoire.demandes_du_recul(derniere)
-        if not demandes:
-            raison = trad("le recul de la passe {n} s'arrête sans nommer sa demande (`D-NNNN`), la décision qu'il "
-                          "pose à l'humain", n=derniere.numero)
-            return _texte_du_refus(projet, lot, suivante, raison, debut, trad(CONSIGNE_ARRET, n=derniere.numero))
-        mem = memoire.Memoire.charger(projet.racine)
-        attendues = [d for d in demandes if mem.entree(d) is None or not memoire.demande_close(mem, mem.entree(d))]
-        if attendues:
-            raison = trad("le lot s'est arrêté à la passe {n}, et attend la réponse à {demandes} : il avance ailleurs "
-                          "jusque-là", n=derniere.numero, demandes=", ".join(attendues))
-            return _texte_du_refus(projet, lot, suivante, raison, debut, None)
-    return None
+    et 6), `None` si elle ne l'est pas : les règles que la clôture du lot
+    applique aussi (`memoire.refus_de_la_suite`), et, pour écrire le recul
+    ou l'arrêt, ce que git donne et les trois questions."""
+    refus = memoire.refus_de_la_suite(memoire.Memoire.charger(projet.racine), lot, deja)
+    if refus is None:
+        return None
+    nature, raison = refus
+    n = deja[-1].numero
+    consigne = {"regard": CONSIGNE_RECUL, "recul": CONSIGNE_RECUL, "arret": CONSIGNE_ARRET}.get(nature)
+    return _texte_du_refus(projet, lot, n + 1, raison, debut, trad(consigne, n=n, lot=lot.id) if consigne else None)
 
 
 def ecrire_passe(projet: config.Projet, lot: memoire.Entree, numero: int, debut: str, tete: str, jour: str) -> str:

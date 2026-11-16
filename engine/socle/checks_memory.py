@@ -760,8 +760,11 @@ def backlog(ctx, r):
     closes ; une entrée faite a coché tout ce que dit sa section, « Satisfait quand » pour un besoin, « Fait
     quand » pour les autres formes (ADR-0083).
 
-    Un lot relu ne se clôt « fait » que si la dernière passe de sa section « Revues » a son recul (D-0124,
-    ADR-0084) ; un lot sans passe, qui ne changeait ni code, ni spécification, ni test, n'en a pas."""
+    Un lot relu ne se clôt « fait » que si la dernière passe de sa section « Revues » le permet, selon les règles
+    qui refuseraient une passe de plus (D-0124, ADR-0084) : son recul, le regard du relecteur sur chacun de ses
+    bloquants à partir de la deuxième, pas de « continuer » après deux passes de suite où une même cause revient, et
+    un arrêt levé par la réponse de l'humain à une demande qui cite le lot ; un lot sans passe, qui ne changeait ni
+    code, ni spécification, ni test, n'en a pas."""
     for e in ctx.memoire.entrees(memoire.BACKLOG):
         if e.basculee:
             continue
@@ -776,11 +779,15 @@ def backlog(ctx, r):
                                              "{criteres}", id=e.id, criteres=" ; ".join(ouverts[:3]),
                                              section=SECTIONS[memoire.est_besoin(e)]),
                      e.fichier, e.ligne)
+        # Les règles qui refuseraient une passe de plus, sans ce que git donne.
         passes = memoire.passes(e) if memoire.est_lot(e) and e.statut == "fait" else []
-        refus = memoire.refus_du_recul(passes[-1]) if passes else None
+        refus = memoire.refus_de_la_suite(ctx.memoire, e, passes) if passes else None
         if refus:
+            nature, raison = refus
             r.erreur("memoire.backlog", trad("`{id}` est clos « fait » sans le recul de sa dernière passe de revue : "
-                                             "{raison}", id=e.id, raison=refus), e.fichier, e.ligne)
+                                             "{raison}", id=e.id, raison=raison) if nature == "recul" else
+                     trad("`{id}` est clos « fait » avant ce que sa dernière passe de revue exige : {raison}",
+                          id=e.id, raison=raison), e.fichier, e.ligne)
         if clos and not e.refs("ref"):
             r.erreur("memoire.backlog", trad("`{id}` est clos (« {statut} ») sans `ref` vers ce qui l'a clos",
                                              id=e.id, statut=e.statut), e.fichier, e.ligne)

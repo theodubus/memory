@@ -859,6 +859,72 @@ def demandes_du_recul(p: Passe) -> list[str]:
     return list(dict.fromkeys(i for i, _ in mentions(p.recul or "") if type_d_id(i) == "D"))
 
 
+def cite_le_lot(e: Entree, lot: Entree) -> bool:
+    """L'entrée `e` cite le lot dans son texte, par son identifiant ou par
+    un ancien numéro."""
+    return bool({lot.id, *lot.anciens} & {i for i, _ in mentions(e.texte)})
+
+
+def leve_l_arret(mem: "Memoire", lot: Entree, demande: str) -> bool:
+    """La demande `demande`, qu'un recul « s'arrêter » nomme, lève l'arrêt
+    du lot (ADR-0084, point 6) : elle cite le lot, et l'humain y a répondu.
+    Retirée, ou ancienne et d'un autre sujet, elle ne le lève pas."""
+    e = mem.entree(demande)
+    return e is not None and e.fichier in mem.repondues and "retiree" not in e.meta and cite_le_lot(e, lot)
+
+
+def _revient(p: Passe) -> bool:
+    """Le relecteur voit une cause revenir : à partir de la deuxième passe."""
+    return p.numero >= 2 and p.voit_revenir
+
+
+def refus_de_la_suite(mem: "Memoire", lot: Entree, deja: list[Passe]) -> tuple[str, str] | None:
+    """Pourquoi rien ne suit la dernière passe de `deja`, ni une passe de
+    plus, que `socle review` refuse, ni la clôture « fait » du lot, que le
+    contrôle du backlog refuse (D-0124, points 2, 3, 5 et 6 ; ADR-0084) :
+    les mêmes règles, sans ce que git donne. `None` si rien ne l'arrête ;
+    sinon (nature, raison), la nature disant ce que l'agent fait ensuite :
+    `regard`, consigner le regard du relecteur sur un bloquant, à partir de
+    la deuxième passe ; `recul`, écrire le recul ; `arret`, s'arrêter sur
+    une demande qui cite le lot, après deux passes de suite où une même
+    cause revient, ou sur un arrêt qu'aucune demande nommée ne lève ;
+    `attente`, attendre la réponse de l'humain à la demande de l'arrêt."""
+    derniere = deja[-1]
+    n = derniere.numero
+    sans = [cause for cause, regard in derniere.bloquants if regard is None] if n >= 2 else []
+    if sans:
+        return "regard", trad("la passe {n} ne consigne pas le regard du relecteur sur {m} bloquant(s), « · même "
+                              "cause » ou « · cause nouvelle » au bout de sa ligne : {causes}", n=n, m=len(sans),
+                              causes=" ; ".join(sans))
+    raison = refus_du_recul(derniere)
+    if raison:
+        return "recul", raison
+    decision = decision_du_recul(derniere.recul)
+    precedente = deja[-2] if len(deja) > 1 else None
+    if decision == "continuer" and precedente and _revient(precedente) and _revient(derniere):
+        return "arret", trad("le relecteur a vu une même cause revenir deux passes de suite, aux passes {a} et {b} "
+                             ": « continuer » est refusé, le lot s'arrête", a=precedente.numero, b=n)
+    if decision != "s-arreter":
+        return None
+    demandes = demandes_du_recul(derniere)
+    if not demandes:
+        return "arret", trad("le recul de la passe {n} s'arrête sans nommer sa demande (`D-NNNN`), la décision qu'il "
+                             "pose à l'humain", n=n)
+    if any(leve_l_arret(mem, lot, d) for d in demandes):
+        return None
+    # Une demande que la mémoire n'a pas encore se dit attendue, comme une
+    # demande du lot qui attend sa réponse.
+    attendues = [d for d in demandes if (e := mem.entree(d)) is None or (
+        cite_le_lot(e, lot) and e.fichier not in mem.repondues and "retiree" not in e.meta)]
+    if attendues:
+        return "attente", trad("le lot s'est arrêté à la passe {n}, et attend la réponse à {demandes} : il avance "
+                               "ailleurs jusque-là", n=n, demandes=", ".join(attendues))
+    return "arret", trad("l'arrêt de la passe {n} n'est levé par aucune des demandes que nomme son recul "
+                         "({demandes}) : seule le lève la réponse de l'humain à une demande qui cite le lot ({lot}) ; "
+                         "une demande retirée, ou qui ne le cite pas, ne le lève pas", n=n,
+                         demandes=", ".join(demandes), lot=lot.id)
+
+
 @dataclass
 class Ordre:
     """Ce qui vient ensuite : les tâches prêtes (ouvertes, pas encore en

@@ -37,21 +37,38 @@ qu'elle ne tranchait pas, tranché ici :
    moins, et son dernier mot, ponctuation, accents et apostrophe mis à
    part, est « continuer » (« continue ») ou « s'arrêter » (« stop ») ; ce
    qui rendra la passe suivante différente s'écrit avant. Un recul qui
-   s'arrête nomme la demande qu'il pose (`D-NNNN`), que le lot attend
-   aussi par son `après`.
+   s'arrête nomme la demande qu'il pose (`D-NNNN`), qui cite le lot et
+   que le lot attend aussi par son `après`.
 4. *Le recul de la dernière passe se reconnaît* quand `socle review`
    produit la passe suivante, et à la clôture par `memoire.backlog`. Une
    passe est la même tant que rien n'a changé hors de la mémoire depuis le
    commit de tête qu'elle a relu : `socle review` en redonne le dossier,
-   sans l'écrire de nouveau ni exiger son recul.
+   sans l'écrire de nouveau ni exiger son recul. La clôture « fait » d'un
+   lot relu applique à sa dernière passe les règles qui refuseraient une
+   passe de plus, le recul et les points 5 et 6, sans ce que git donne :
+   une seule fonction, `memoire.refus_de_la_suite`, les dit pour les deux.
+   Après sa dernière passe, l'agent corrige et clôt : un « continuer »
+   après deux passes où une même cause revient, un arrêt qu'aucune réponse
+   n'a levé, ou un bloquant sans le regard du relecteur, ne se clôt pas
+   « fait ».
 5. *Deux passes de suite où une même cause revient* : deux passes
    consécutives dont chacune a au moins un bloquant que le relecteur dit
    de même cause qu'un ancien. Le « continuer » de la seconde est refusé.
    À partir de la deuxième passe, un bloquant sans le regard du relecteur
    laisse la passe ouverte : la suivante est refusée.
-6. *L'arrêt.* `socle review` refuse une passe de plus tant qu'une demande
-   que nomme le recul qui s'arrête attend sa réponse, ou si ce recul n'en
-   nomme aucune.
+6. *L'arrêt.* Seule la réponse de l'humain à la demande du lot le lève
+   (D-0124, point 6) : une demande que nomme le recul qui s'arrête le lève
+   si elle cite le lot dans son texte, par son identifiant `L-NNNN` ou un
+   ancien numéro, et si l'humain y a répondu. Une demande retirée ne le
+   lève pas, ni une demande ancienne, même répondue, qui ne cite pas le
+   lot ; s'il en nomme plusieurs, une qui remplit les deux conditions
+   suffit. `socle review` refuse une passe de plus, et le contrôle la
+   clôture « fait », tant qu'aucune ne le lève, ou si le recul n'en nomme
+   aucune. Une demande du lot qui attend sa réponse, ou que la mémoire n'a
+   pas encore, se dit attendue : le lot avance ailleurs ; d'une autre, le
+   refus dit qu'elle ne lève pas l'arrêt. Une demande retirée reste close
+   pour l'ordre du backlog (`memoire.demande_close`) : l'arrêt n'en juge
+   pas ainsi.
 7. *Le lot en cours.* `socle review --batch L-NNNN` le nomme ; sinon,
    c'est le seul lot `en cours` du backlog public. Aucun : le dossier est
    celui d'avant, rien ne s'écrit, et une ligne d'erreur le dit. Plusieurs,
@@ -71,20 +88,30 @@ qu'elle ne tranchait pas, tranché ici :
 
 Ce que le garde-fou arrête : un agent coopératif, emporté par le lot, qui
 enchaîne les passes, ou clôt le lot, sans s'être demandé s'il converge ;
-un « continuer » après deux passes où le relecteur a vu une cause revenir ;
-une passe de plus pendant que la demande d'un arrêt attend Théo. Ce qu'il
-laisse passer : un recul écrit pour la forme, que le second regard et les
-soixante mots bornent sans l'empêcher ; un regard du relecteur mal
-consigné ; une revue faite hors de `socle review`, ou d'un lot qui n'est
-pas `en cours` (la ligne d'erreur le dit) ; un lot qui change du code sans
-aucune passe, que la revue exigée par le skill `socle-batch` couvre. Un
-agent hostile n'est pas dans le modèle : il écrirait de faux reculs.
+un « continuer » après deux passes où le relecteur a vu une cause revenir,
+pour une passe de plus comme pour la clôture ; une passe de plus, ou la
+clôture « fait », pendant que la demande d'un arrêt attend Théo ; un arrêt
+levé sans sa réponse, par une demande retirée, ou par une demande
+ancienne, déjà répondue, d'un autre sujet. Ce qu'il laisse passer : un
+recul écrit pour la forme, que le second regard et les soixante mots
+bornent sans l'empêcher ; un regard du relecteur mal consigné ; une
+demande du lot répondue avant l'arrêt, que le recul nomme : la règle ne
+date pas la demande, et la citer pour la forme serait un faux recul ; un
+lot arrêté clos `abandonné`, que Théo peut avoir choisi ; une revue faite
+hors de `socle review`, ou d'un lot qui n'est pas `en cours` (la ligne
+d'erreur le dit) ; un lot qui change du code sans aucune passe, que la
+revue exigée par le skill `socle-batch` couvre. Un agent hostile n'est pas
+dans le modèle : il écrirait de faux reculs.
 
 ## Conséquences
 
-Un lot garde ses passes, lisibles d'une session neuve ; trois refus de
-`socle review` et le contrôle de la clôture ont chacun leur défaut injecté
-et leur témoin sain. Le format, le guide et les skills `socle-batch` et
+Un lot garde ses passes, lisibles d'une session neuve ; quatre refus de
+`socle review` (sans recul, « continuer » après deux causes revenues, un
+arrêt dont la demande attend sa réponse, un arrêt qu'aucune demande du lot
+répondue ne lève) et quatre de la clôture (sans recul, sans le regard du
+relecteur, « continuer » après deux causes revenues, un arrêt dont la
+demande attend sa réponse) ont chacun leur défaut injecté et leur témoin
+sain. Le format, le guide et les skills `socle-batch` et
 `socle-review` le disent, dans les deux langues ; chess le reçoit à sa
 mise à jour. Défaire : une décision qui retire les refus et le contrôle ;
 les sections « Revues » écrites restent lisibles comme du texte.

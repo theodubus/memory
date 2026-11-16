@@ -23,15 +23,20 @@ soixante mots au moins à trois questions de nature, et finit par
 l'historique, les entrées ouvertes et closes depuis le début du lot, les
 lots clos qui ont touché les mêmes fichiers et les trois questions. Il
 refuse « continuer » après deux passes de suite où le relecteur voit une
-même cause revenir, et toute passe tant que la demande d'un arrêt attend
-sa réponse. Le contrôle `memoire.backlog` refuse un lot relu clos `fait`
-sans le recul de sa dernière passe.
+même cause revenir, et toute passe tant que l'arrêt n'est pas levé : seule
+le lève la réponse de l'humain à une demande que le recul nomme et qui
+cite le lot, jamais une demande retirée, ni une ancienne, même répondue,
+qui ne le cite pas. Le contrôle `memoire.backlog` applique les mêmes
+règles à la dernière passe d'un lot relu clos `fait` : il le refuse sans
+son recul, sans le regard du relecteur sur un bloquant, sur un
+« continuer » après deux causes revenues, ou sur un arrêt que rien n'a
+levé.
 
 À faire : marquer `en cours` le lot qu'on mène, pour que ses passes s'y
 écrivent ; au retour du relecteur, y consigner les bloquants ; écrire le
 recul avant la passe suivante et avant la clôture ; s'arrêter, c'est
-poser une demande à l'humain, qui dit ce qui tourne, la règle qui le fait
-tourner et une proposition qui la borne. Les skills `socle-review` et
+poser une demande à l'humain, qui cite le lot et dit ce qui tourne, la
+règle qui le fait tourner et une proposition qui la borne. Les skills `socle-review` et
 `socle-batch` le disent ; ce sont des copies protégées, dans la demande de
 l'installeur.
 

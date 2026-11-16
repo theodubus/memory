@@ -167,10 +167,12 @@ files already opened similar ones? In it, the agent decides to continue,
 saying what will make the next pass different, or to stop. The socle
 refuses the pass, or the closing, without this paragraph, and refuses to
 continue when the reviewer sees a same cause come back two passes in a
-row. Stopping means putting a request to you: what goes round, in plain
-words, the rule that makes it go round, and a proposal that bounds it.
-You see no figure: you see the request, and the batch waits for your
-answer while the agent moves on elsewhere.
+row. Stopping means putting to you a request that cites the batch: what
+goes round, in plain words, the rule that makes it go round, and a
+proposal that bounds it. You see no figure: you see the request, and the
+batch waits for your answer while the agent moves on elsewhere; only that
+answer lifts the stop, neither a withdrawn request nor an old one on
+another subject.
 
 **Delivering.** By default, the agent does everything on one development
 branch and keeps only one pull request open, to which each finished batch
