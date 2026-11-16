@@ -385,6 +385,23 @@ class TestBarre(_Lot):
         self.assertIn("(aucun changement hors de la mémoire : rien à relire)", flux.getvalue())
 
 
+class TestLeGuideNeRenvoiePasALAtelier(unittest.TestCase):
+    """B-0268 : le guide citait `D-0098`, une demande de la mémoire de ce
+    dépôt, qu'un projet équipé ne connaît pas (ADR-0033). Comme les notes de
+    version, il ne cite ni identifiant de la mémoire, ni l'atelier."""
+
+    def test_le_guide_ne_cite_ni_identifiant_de_la_memoire_ni_l_atelier(self):
+        from socle import memory as memoire
+
+        paquet = Path(revue.__file__).resolve().parent
+        for nom in ("HELP.md", "HELP.en.md"):
+            with self.subTest(guide=nom):
+                texte = (paquet / nom).read_text(encoding="utf-8")
+                self.assertEqual([m.group(0) for m in memoire.ID_RE.finditer(texte)], [])
+                for mot in ("docs/fabrication", "chess", "Théo", "atelier", "workshop"):
+                    self.assertNotIn(mot, texte)
+
+
 class TestLesFormesConnuesDuGuide(unittest.TestCase):
     """ADR-0082 : le guide d'un projet équipé dit la règle de D-0120 telle
     quelle, et donne la liste des formes connues que le hook ne juge pas,

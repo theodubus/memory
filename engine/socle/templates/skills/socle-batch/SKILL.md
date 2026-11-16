@@ -26,6 +26,15 @@ changement de quelques lignes.
    `socle-resume`).
 4. Partir d'une branche de travail propre et poussée.
 
+Former un lot balaie tout le backlog ouvert, pas seulement le prochain
+jalon : chaque sujet prêt auquel la règle d'un lot s'applique (les mêmes
+fichiers, le même garde-fou ou les mêmes tests) y entre, sans le demander
+à l'humain. Un sujet qu'on ouvre ensuite rejoint aussitôt le lot ouvert
+dont la règle s'applique à lui (l'`après` du lot le nomme), sans le
+demander non plus. Un lot qui ne tient plus en une session se coupe en
+deux lots, sur leurs fichiers, le second attendant le premier. Le récap
+dit chaque placement ; la priorité reste à l'humain.
+
 ## Un sous-agent par sujet
 
 Sous Claude Code : outil `Agent`, dans une copie isolée du dépôt
@@ -117,8 +126,20 @@ reprise après plus d'une heure d'arrêt la relit au prix fort.
   la limite par jeton, surtout pour la conversation qui orchestre, relue
   à chaque appel ; l'humain choisit celui de la session, sur le conseil
   de l'agent. Celui que fixent les
-  instructions du projet prime. Un sous-agent reçoit le sien
-  explicitement à son lancement (outil `Agent` : `model`).
+  instructions du projet prime. Un sous-agent reçoit le sien à son
+  lancement (outil `Agent` : `model`), ou celui de la session par
+  héritage, comme suit.
+- Chaque modèle demandé tourne sur la dernière version de sa famille, pour
+  un sous-agent comme pour la session : un alias (`opus`, `sonnet`…) peut
+  désigner une version plus ancienne que celle de la session, sans que
+  rien le dise. Le vérifier dès que la session le donne : sous Claude Code
+  en session cloud, le résultat de chaque tour (`list_events`, `kinds:
+  ["result"]`) nomme dans `modelUsage` chaque modèle qui a servi pendant le
+  tour ; la notification d'un sous-agent coupé nomme aussi le sien. Quand l'alias désigne une version plus ancienne que la
+  dernière de sa famille : lancer le sous-agent sans `model`, pour qu'il
+  hérite de la session si elle tourne sur la version voulue ; sinon le
+  dire à l'humain, qui choisit le modèle de la session. Le récap du lot
+  dit la version qui a servi chaque sous-agent.
 
 ## Changer de session
 

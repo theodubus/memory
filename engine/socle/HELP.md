@@ -241,7 +241,7 @@ sans validation est refusé. Quand le changement vient de l'humain :
 `python3 .socle/socle approve --text "<raison>"`, puis commiter. Cette
 commande est réservée à l'humain. L'agent, lui, n'écrit jamais dans un
 fichier protégé, sauf pour le remettre à son état du dernier commit quand
-il l'a changé par erreur (D-0098), hors des réglages de Claude Code, que
+il l'a changé par erreur, hors des réglages de Claude Code, que
 l'humain garde pour lui : `git restore --source=HEAD --staged
 --worktree -- <chemin>` ou `git checkout HEAD -- <chemin>`, chaque chemin
 écrit en toutes lettres, ou `rm <chemin>` pour un fichier apparu sous un

@@ -7,6 +7,44 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-16-e — Le guide ne cite plus un identifiant de la mémoire du dépôt du socle
+
+Le guide (`python3 .socle/socle help`), à « Approuver ses propres
+changements protégés », citait un identifiant de la mémoire du dépôt qui
+fabrique le socle, qu'un projet équipé ne connaît pas. Il ne le cite
+plus ; un test garde le guide de tout identifiant de cette mémoire.
+
+À faire : rien.
+
+## 2026-11-16-d — Former un lot balaie tout le backlog ouvert, et un sujet ouvert rejoint aussitôt son lot
+
+Le skill `socle-batch` dit désormais qu'en formant un lot, l'agent balaie
+tout le backlog ouvert, pas seulement le prochain jalon : chaque sujet prêt
+auquel la règle d'un lot s'applique (les mêmes fichiers, le même garde-fou
+ou les mêmes tests) y entre, sans le demander à l'humain ; qu'un sujet
+ouvert ensuite rejoint aussitôt le lot ouvert dont la règle s'applique à
+lui ; et qu'un lot qui ne tient plus en une session se coupe en deux lots,
+sur leurs fichiers. Le récap dit chaque placement ; la priorité reste à
+l'humain.
+
+À faire : rien de plus que de suivre le skill ; c'est une copie protégée,
+dans la demande de l'installeur.
+
+## 2026-11-16-c — Chaque modèle demandé tourne sur la dernière version de sa famille
+
+Le skill `socle-batch` dit désormais que chaque modèle demandé, pour un
+sous-agent comme pour la session, tourne sur la dernière version de sa
+famille : sous Claude Code, l'alias `opus` de l'outil `Agent` a désigné un
+Opus plus ancien que celui de la session, sans que rien le dise. L'agent
+le vérifie dès que la session le donne (`modelUsage` dans le résultat de
+chaque tour, en session cloud), lance un sous-agent sans `model` pour
+qu'il hérite de la session quand l'alias désigne une version plus
+ancienne, ou le dit à l'humain ; le récap du lot dit la version qui a
+servi chaque sous-agent.
+
+À faire : rien de plus que de suivre le skill ; c'est une copie protégée,
+dans la demande de l'installeur.
+
 ## 2026-11-16-b — L'état dit ce qu'attendent les sujets en attente : un sujet ou une demande
 
 La dernière ligne de l'ordre du backlog, dans l'état et dans le rappel de

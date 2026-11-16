@@ -26,6 +26,15 @@ itself only a change of a few lines.
    `socle-resume`).
 4. Start from a clean, pushed work branch.
 
+Forming a batch sweeps the whole open backlog, not only the next
+milestone: every ready topic to which the rule of a batch applies (the
+same files, the same guardrail or the same tests) goes into it, without
+asking the human. A topic opened later joins at once the open batch whose
+rule applies to it (the batch's `after:` names it), without asking either.
+A batch that no longer fits in one session splits into two batches, along
+their files, the second waiting for the first. The recap states each
+placement; the priority remains the human's.
+
 ## One subagent per topic
 
 Under Claude Code: the `Agent` tool, in an isolated copy of the repository
@@ -117,8 +126,19 @@ resuming after more than an hour's pause rereads it at full price.
   the limit per token, above all for the orchestrating conversation,
   reread at each call; the human chooses the session's, on the agent's
   advice. The one set by the project's
-  instructions prevails. A subagent receives its own explicitly at launch
-  (`Agent` tool: `model`).
+  instructions prevails. A subagent receives its own at launch
+  (`Agent` tool: `model`), or the session's by inheritance, as follows.
+- Each requested model runs on the latest version of its family, for a
+  subagent as for the session: an alias (`opus`, `sonnet`…) may designate
+  an older version than the session's, with nothing saying so. Check it as soon
+  as the session gives it: under Claude Code in a cloud session, the result
+  of each turn (`list_events`, `kinds: ["result"]`) names in `modelUsage`
+  each model that served during the turn; the notification of a subagent
+  cut off names its own too. When the alias designates an
+  older version than the latest of its family: launch the subagent without
+  `model`, so that it inherits the session's if the session runs on the
+  wanted version; otherwise tell the human, who chooses the session's
+  model. The batch recap states the version that served each subagent.
 
 ## Changing sessions
 

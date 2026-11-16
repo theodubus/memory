@@ -236,7 +236,7 @@ without approval is refused. When the change comes from the human:
 `python3 .socle/socle approve --text "<reason>"`, then commit. This
 command is reserved to the human. The agent never writes to a protected
 file, except to put it back as it was at the last commit when it changed
-it by mistake (D-0098), Claude Code's settings excepted, which the human
+it by mistake, Claude Code's settings excepted, which the human
 keeps for themselves: `git restore --source=HEAD --staged --worktree --
 <path>` or `git checkout HEAD -- <path>`, each path written out in full,
 or `rm <path>` for a file that appeared under a protected path and that

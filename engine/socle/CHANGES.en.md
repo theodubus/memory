@@ -7,6 +7,44 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-16-e — The guide no longer cites an identifier of the socle repository's memory
+
+The guide (`python3 .socle/socle help`), under approving one's own
+protected changes, cited an identifier of the memory of the repository
+that makes the socle, which an equipped project does not know. It no
+longer does; a test keeps the guide free of any identifier of that memory.
+
+To do: nothing.
+
+## 2026-11-16-d — Forming a batch sweeps the whole open backlog, and an opened topic joins its batch at once
+
+The `socle-batch` skill now says that when forming a batch, the agent
+sweeps the whole open backlog, not only the next milestone: every ready
+topic to which the rule of a batch applies (the same files, the same
+guardrail or the same tests) goes into it, without asking the human; that
+a topic opened later joins at once the open batch whose rule applies to
+it; and that a batch that no longer fits in one session splits into two
+batches, along their files. The recap states each placement; the priority
+remains the human's.
+
+To do: nothing beyond following the skill; it is a protected copy, in the
+installer's request.
+
+## 2026-11-16-c — Each requested model runs on the latest version of its family
+
+The `socle-batch` skill now says that each requested model, for a
+subagent as for the session, runs on the latest version of its family:
+under Claude Code, the `opus` alias of the `Agent` tool designated an
+older Opus than the session's, with nothing saying so. The agent checks it
+as soon as the session gives it (`modelUsage` in the result of each turn,
+in a cloud session), launches a subagent without `model` so that it
+inherits the session's when the alias designates an older version, or
+tells the human; the batch recap states the version that served each
+subagent.
+
+To do: nothing beyond following the skill; it is a protected copy, in the
+installer's request.
+
 ## 2026-11-16-b — The state says what waiting topics wait on: a topic or a request
 
 The last line of the backlog order, in the state and in the end-of-turn
