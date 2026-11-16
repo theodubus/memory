@@ -56,7 +56,10 @@ python3 .socle/socle review
    explicitement à son lancement (`model`) le modèle le plus capable
    disponible jusqu'à Opus, jamais un moindre que celui qui a implémenté
    le lot, quel que soit celui de la session, que la règle du modèle de
-   `socle-batch` peut faire moins coûteux ; Fable, s'il est disponible,
+   `socle-batch` peut faire moins coûteux, sur la dernière version de sa
+   famille : si l'alias en désigne une plus ancienne, il hérite de la
+   session, sans `model`, comme cette règle le dit, et son compte rendu
+   nomme le modèle qui l'a servi ; Fable, s'il est disponible,
    seulement si l'humain le demande. Il reçoit aussi les instructions du
    projet et peut lire le dépôt, mais ni la conversation ni le
    raisonnement de l'agent, et le dossier lui dit de ne rien modifier :

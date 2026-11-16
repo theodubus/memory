@@ -53,7 +53,10 @@ python3 .socle/socle review
    as is: nothing is added to it, nothing removed. It receives explicitly
    at launch (`model`) the most capable model available up to Opus, never
    a lesser one than the one that implemented the batch, whatever the
-   session's, which the model rule of `socle-batch` may make cheaper;
+   session's, which the model rule of `socle-batch` may make cheaper, on
+   the latest version of its family: if the alias designates an older
+   one, it inherits the session's, without `model`, as that rule says, and
+   its report names the model that served it;
    Fable, if available, only if the human asks for it. It also receives
    the project's instructions and can read the repository, but neither the
    conversation nor the agent's reasoning, and the brief tells it to

@@ -297,8 +297,8 @@ misreads in it, and the release note that enters it.
   as a simple command (2026-11-16-a).
 - The patterns of a `case`: each branch is read as if it ran
   (2026-11-16-a).
-- `find -exec sudo …`: the launched command is read without removing
-  its prefix (2026-11-16-a).
+- `find -exec sudo …`, `env`, `nice` or another prefix: the launched
+  command is read without removing its prefix (2026-11-16-a).
 - A `return` in the body of a function: only the directory where the
   body ends counts (2026-11-16-a).
 - The indirect call of a function (`$fn`, `"${fn}"`, `run f` through a
@@ -312,7 +312,9 @@ misreads in it, and the release note that enters it.
 - What an `eval` changes other than a function call (`eval "cd x"`):
   does not hold for what follows (2026-11-16-a).
 - A function called from another directory than the one it is written
-  in: its body is judged at its definition (2026-11-16-a).
+  in, or that calls another one defined after it, or through a
+  substitution or an `eval` in its body: its body is judged at its
+  definition (2026-11-16-a).
 - `echo .. | xargs rm`: `xargs` is judged only by the protected paths it
   cites (2026-11-16-a).
 - `xargs git worktree remove`: the path read from the input is not

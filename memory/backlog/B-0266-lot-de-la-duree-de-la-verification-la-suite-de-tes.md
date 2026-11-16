@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0266 — Lot de la durée de la vérification : la suite de tests sur plusieurs cœurs, la durée des étapes rapides dite et sous un seuil
 
-> statut : ouvert · origine : J-2026-11-16-I · forme : lot · après : B-0264, B-0257, B-0258 · lu : backlog@c0a47b1b
+> statut : ouvert · origine : J-2026-11-16-I · forme : lot · après : B-0269, B-0257, B-0258 · lu : backlog@c0a47b1b
 
 Placé par Théo juste après B-0264, avant B-0235 (J-2026-11-16-I) :
 `verify --fast` dure près de douze minutes sur un seul cœur, et chaque

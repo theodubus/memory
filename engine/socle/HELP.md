@@ -303,8 +303,8 @@ dit ce que le hook y lit mal, et la note de version qui l'inscrit.
   comme une commande simple (2026-11-16-a).
 - Les motifs d'un `case` : chaque branche se lit comme si elle
   s'exécutait (2026-11-16-a).
-- `find -exec sudo …` : la commande lancée se lit sans retirer son
-  préfixe (2026-11-16-a).
+- `find -exec sudo …`, `env`, `nice` ou un autre préfixe : la commande
+  lancée se lit sans retirer son préfixe (2026-11-16-a).
 - Un `return` dans le corps d'une fonction : seul compte le dossier où
   finit le corps (2026-11-16-a).
 - L'appel indirect d'une fonction (`$fn`, `"${fn}"`, `run f` par un
@@ -318,8 +318,10 @@ dit ce que le hook y lit mal, et la note de version qui l'inscrit.
   la sous-commande (2026-11-16-a).
 - Ce qu'un `eval` change d'autre que l'appel d'une fonction
   (`eval "cd x"`) : ne vaut pas pour la suite (2026-11-16-a).
-- Une fonction appelée depuis un autre dossier que celui où elle s'écrit :
-  son corps se juge à sa définition (2026-11-16-a).
+- Une fonction appelée depuis un autre dossier que celui où elle s'écrit,
+  ou qui en appelle une autre définie après elle, ou par une substitution
+  ou un `eval` dans son corps : son corps se juge à sa définition
+  (2026-11-16-a).
 - `echo .. | xargs rm` : `xargs` ne se juge que par les chemins protégés
   qu'il cite (2026-11-16-a).
 - `xargs git worktree remove` : le chemin lu sur l'entrée ne se juge pas

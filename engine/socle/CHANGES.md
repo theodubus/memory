@@ -23,7 +23,9 @@ tout le backlog ouvert, pas seulement le prochain jalon : chaque sujet prêt
 auquel la règle d'un lot s'applique (les mêmes fichiers, le même garde-fou
 ou les mêmes tests) y entre, sans le demander à l'humain ; qu'un sujet
 ouvert ensuite rejoint aussitôt le lot ouvert dont la règle s'applique à
-lui ; et qu'un lot qui ne tient plus en une session se coupe en deux lots,
+lui, s'il est prêt, dans le prochain lot pas encore en cours, jamais dans
+le lot en cours, où seuls les bloquants de sa revue se corrigent ; et qu'un
+lot qui ne tient plus en une session se coupe en deux lots,
 sur leurs fichiers. Le récap dit chaque placement ; la priorité reste à
 l'humain.
 
@@ -35,12 +37,13 @@ dans la demande de l'installeur.
 Le skill `socle-batch` dit désormais que chaque modèle demandé, pour un
 sous-agent comme pour la session, tourne sur la dernière version de sa
 famille : sous Claude Code, l'alias `opus` de l'outil `Agent` a désigné un
-Opus plus ancien que celui de la session, sans que rien le dise. L'agent
-le vérifie dès que la session le donne (`modelUsage` dans le résultat de
-chaque tour, en session cloud), lance un sous-agent sans `model` pour
-qu'il hérite de la session quand l'alias désigne une version plus
-ancienne, ou le dit à l'humain ; le récap du lot dit la version qui a
-servi chaque sous-agent.
+Opus plus ancien que celui de la session, sans que rien le dise. Le
+compte rendu de chaque sous-agent nomme le modèle qui l'a servi
+(`modelUsage` le confirme en session cloud, une fois le tour fini) ;
+l'agent lance un sous-agent sans `model` pour qu'il hérite de la session
+quand l'alias désigne une version plus ancienne, ou le dit à l'humain ; le
+relecteur suit la même règle (le skill `socle-review`) ; le récap du lot
+dit la version qui a servi chaque sous-agent.
 
 À faire : rien de plus que de suivre le skill ; c'est une copie protégée,
 dans la demande de l'installeur.
