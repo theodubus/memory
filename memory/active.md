@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot B-0269 : B-0265 attend D-0123, B-0263 D-0124, puis
-B-0270. Puis B-0266. B-0179 attend.
+Lot B-0269 (J-2026-11-16-T) : B-0265, puis B-0263, puis B-0270.
+Puis B-0266. B-0179 attend.
 
 ## Consignes en cours
 
