@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot L-0013 (J-2026-11-16-V) : T-0046 relu, bloquants en correction ;
-D-0125 à poser ; T-0047, puis T-0048. Puis L-0012, L-0014.
+Lot L-0013 (J-2026-11-16-W) : T-0046 relu, corrigé ; D-0125 posée ;
+T-0047 à intégrer, relire ; puis T-0048. Puis L-0012, L-0014.
 
 ## Consignes en cours
 
@@ -35,15 +35,15 @@ Leur texte exact est dans l'entrée du journal citée.
   l'outil ; le guide suit le parcours de l'utilisateur ; ses schémas se
   vérifient rendus ; faite que validée (J-2026-10-20-Y, J-2026-10-21-A,
   J-2026-10-22-A).
-- Une limite d'usage proche décide de l'ordre des sujets, jamais de la
-  profondeur du travail ni du modèle : aucun lot bâclé pour la tenir
-  (J-2026-11-09-C, J-2026-11-15-D).
+- Une limite d'usage proche décide de l'ordre, jamais de la profondeur
+  du travail ni du modèle ; la passation se fait avant elle
+  (J-2026-11-09-C, J-2026-11-15-D, J-2026-11-16-W).
 - Une attente annoncée dans le récap s'accompagne d'un réveil programmé
   (J-2026-10-13-N).
 - « Pour toi » ne contient que les gestes de Théo, chacun compréhensible
   seul (ce que c'est, pourquoi, ce que change sa réponse) ; ce que
   l'agent fera se dit à part (J-2026-10-31-S, J-2026-10-14-F).
-- Les heures données à Théo, à l'heure de Paris (J-2026-10-14-G).
+- Les heures dites à Théo, à l'heure de Paris (J-2026-10-14-G).
 - Un autre dépôt se clone hors du dossier des dépôts de la session, sans
   être déclaré racine ; à chaque reprise, vérifier que l'état a été
   injecté, sinon le dire et ne rien pousser (J-2026-10-14-S).

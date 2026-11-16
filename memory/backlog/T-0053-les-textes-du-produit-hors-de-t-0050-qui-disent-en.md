@@ -13,8 +13,10 @@ l'aide de `socle review` (`engine/socle/cli.py`), les libellés des
 défauts injectés et un témoin de `engine/socle/selftest.py`. Et le guide
 dit « tâche » du travail en général (`engine/socle/HELP.md`, lignes 13 et
 105, et l'anglais), quinze lignes avant de définir la tâche `T-`. Le
-livrable, un commit : ces textes disent l'entrée, le besoin, la tâche, le
-lot ou le jalon, chacun pour sa chose.
+Et la page publique, `engine/README.md`, qui dit encore « les sujets à
+traiter », « les jalons » et « enchaîne les sujets » au sens d'avant
+(J-2026-11-16-W). Le livrable, un commit : ces textes disent l'entrée, le
+besoin, la tâche, le lot ou le jalon, chacun pour sa chose.
 
 ## Fait quand
 
