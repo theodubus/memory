@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0267 — Un sujet ouvert rejoint aussitôt le lot qui touche les mêmes fichiers, et former un lot balaie tout le backlog ouvert selon la règle, sans le demander à l'humain
 
-> statut : ouvert · origine : J-2026-11-16-J · priorité : haute · lu : backlog@c0a47b1b
+> statut : fait · ref : J-2026-11-16-Q · origine : J-2026-11-16-J · priorité : haute · lu : backlog@c0a47b1b
 
 Théo, le 16 novembre (J-2026-11-16-J), quand l'agent lui a soumis des
 sujets qui allaient avec des lots : « je t'ai demandé de faire des
@@ -28,4 +28,4 @@ priorité restant à l'humain.
 
 ## Fait quand
 
-- [ ] le skill `socle-batch` et son gabarit disent qu'un sujet ouvert rejoint aussitôt le lot dont la règle s'applique à lui, qu'un lot se forme en balayant tout le backlog ouvert, et qu'un lot trop grand pour une session se coupe en deux
+- [x] le skill `socle-batch` et son gabarit disent qu'un sujet ouvert rejoint aussitôt le lot dont la règle s'applique à lui, qu'un lot se forme en balayant tout le backlog ouvert, et qu'un lot trop grand pour une session se coupe en deux

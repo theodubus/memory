@@ -190,6 +190,24 @@ class TestDemandeAttendue(unittest.TestCase):
                          "prochain jalon : B-0002 — Le sujet B-0002 ; reste : B-0001, D-0001")
         self.assertEqual(erreurs(mem), [])
 
+    def test_l_etat_dit_ce_qu_attendent_ses_sujets_un_sujet_ou_une_demande(self):
+        """B-0153 : l'état disait « attendent un sujet ouvert » d'un sujet qui
+        attend une demande sans réponse ; il dit maintenant ce qu'attend
+        chacun, et un sujet qui attend les deux compte dans les deux."""
+        mem = memoire_de(sujet("B-0001"), sujet("B-0002", apres="D-0001"), sujet("B-0003", apres="B-0001"),
+                         sujet("B-0004", apres="B-0001, D-0001"))
+        avec_demande(mem, "D-0001")
+        o = memoire.ordre(mem)
+        self.assertEqual((o.en_attente, o.attendent_un_sujet, o.attendent_une_demande), (3, 2, 2))
+        self.assertEqual(memoire.lignes_ordre(mem)[-2:], ["2 sujet(s) attendent un sujet ouvert",
+                                                          "2 sujet(s) attendent une demande sans réponse"])
+        seule = memoire_de(sujet("B-0001", apres="D-0001"))
+        avec_demande(seule, "D-0001")
+        self.assertEqual(memoire.lignes_ordre(seule), ["1 sujet(s) attendent une demande sans réponse"])
+        from socle import messages
+        with messages.dans("en"):
+            self.assertEqual(memoire.lignes_ordre(seule), ["1 topic(s) wait on an unanswered request"])
+
     def test_un_sujet_fait_avant_la_reponse_qu_il_attend_est_refuse(self):
         mem = memoire_de(sujet("B-0001", "fait", apres="D-0001"))
         avec_demande(mem, "D-0001")

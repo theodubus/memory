@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0251 — L'option model opus de l'outil Agent peut désigner un Opus plus ancien que celui de la session : un sous-agent servi par un moindre modèle sans que rien le dise
 
-> statut : ouvert · origine : J-2026-11-16-A · priorité : haute · ref : J-2026-11-16-G · lu : backlog@1fd23187
+> statut : fait · origine : J-2026-11-16-A · priorité : haute · ref : J-2026-11-16-Q, J-2026-11-16-G · lu : backlog@1fd23187
 
 Le skill `socle-batch` fait donner à chaque sous-agent son modèle
 explicitement, à son lancement (outil `Agent` : `model`). Sous Claude
@@ -30,5 +30,5 @@ l'écrire au récap. Le gabarit du skill du produit le dit aussi.
 
 ## Fait quand
 
-- [ ] le skill `socle-batch` et son gabarit disent que chaque modèle demandé, pour un sous-agent comme pour la session, tourne sur la dernière version de sa famille, comment le vérifier, et quoi faire quand un alias désigne une version plus ancienne
-- [ ] le récap d'un lot dit la version qui a servi chaque sous-agent
+- [x] le skill `socle-batch` et son gabarit disent que chaque modèle demandé, pour un sous-agent comme pour la session, tourne sur la dernière version de sa famille, comment le vérifier, et quoi faire quand un alias désigne une version plus ancienne
+- [x] le récap d'un lot dit la version qui a servi chaque sous-agent

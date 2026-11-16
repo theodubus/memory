@@ -13,7 +13,9 @@ ADR-0079.
 
 ## Les sous-agents
 
-Le modèle est celui que dit le chantier actif. La consigne est celle du
+Le modèle est celui que dit le chantier actif ; un sous-agent qui doit
+tourner sur celui de la session se lance sans `model`, l'alias `opus`
+ayant désigné un Opus plus ancien que celui de la session (B-0251). La consigne est celle du
 produit, avec, en tête : « Tu implémentes un sujet du socle dans ton
 worktree du dépôt memory. AGENTS.md s'applique. » ; dans « À livrer » :
 des tests qui échouent sur le commit parent, pour tout code ; pour un
