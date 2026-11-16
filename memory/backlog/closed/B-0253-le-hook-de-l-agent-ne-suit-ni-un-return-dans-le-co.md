@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0253 — Le hook de l'agent ne suit ni un return dans le corps d'une fonction, ni un appel indirect, ni une fonction nommée comme un builtin ou définie par un eval : la suppression du projet y passe
 
-> statut : ouvert · origine : J-2026-11-16-B · priorité : haute · lu : backlog@0baae0e5
+> statut : abandonné · origine : J-2026-11-16-B · priorité : haute · ref : J-2026-11-16-G · lu : backlog@0baae0e5
 
 La seconde revue du lot B-0234 (J-2026-11-16-B) a trouvé des appels de
 fonction que le découpage (`commands._analyser`, `fonctions`) ne suit pas,
@@ -23,6 +23,8 @@ priorité haute (ADR-0080, sa première conséquence). La piste : un
 mot qui n'est pas connu en toutes lettres, vers une fonction retenue,
 rend inconnu ce qu'elle change ; une fonction qui porte le nom d'un
 builtin que le hook suit se juge comme une fonction.
+
+Abandonné le 16 novembre selon D-0120 (J-2026-11-16-G) : un `return` dans une fonction, un appel indirect, une fonction nommée comme une commande ou définie par un `eval`, qu'aucun agent n'écrit dans son travail, va à la liste des formes connues que le hook ne juge pas (B-0261).
 
 ## Fait quand
 

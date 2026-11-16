@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0256 — Le hook de l'agent ne suit ni l'état qu'un eval laisse, ni le dossier où s'appelle une fonction : la suppression du projet y passe
 
-> statut : ouvert · origine : J-2026-11-16-C · priorité : haute · lu : backlog@b973ac90
+> statut : abandonné · origine : J-2026-11-16-C · priorité : haute · ref : J-2026-11-16-G · lu : backlog@b973ac90
 
 Vus en corrigeant les trois bloquants de la seconde passe de la revue du
 lot B-0234 (J-2026-11-16-C), voisins d'eux : le découpage
@@ -29,6 +29,8 @@ dossier, puis chaque variable), comme après l'appel d'une fonction, ou
 suivre l'état où sa lecture finit ; relire le corps d'une fonction à
 chaque appel, depuis le dossier de l'appel, pour juger ce qu'il écrit ou
 supprime par un chemin relatif.
+
+Abandonné le 16 novembre selon D-0120 (J-2026-11-16-G) : ce qu'un `eval` change, et le corps d'une fonction jugé à sa définition, qu'aucun agent n'écrit dans son travail, va à la liste des formes connues que le hook ne juge pas (B-0261).
 
 ## Fait quand
 

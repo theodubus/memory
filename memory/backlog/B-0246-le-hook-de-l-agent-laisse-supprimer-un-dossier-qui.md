@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0246 — Le hook de l'agent laisse supprimer un dossier qui contient le projet par xargs rm ou par une commande que lance python -c (echo .. | xargs rm -rf, os.system)
 
-> statut : ouvert · origine : J-2026-11-15-N · priorité : haute · lu : backlog@cec3243f
+> statut : ouvert · origine : J-2026-11-15-N · priorité : haute · ref : J-2026-11-16-G · lu : backlog@cec3243f
 
 B-0228 fait refuser par le hook de l'agent la suppression du projet, ou
 d'un dossier qui le contient, par `rsync --delete`, `git worktree remove`
@@ -40,8 +40,8 @@ variable (`f'..'`), `Path('..').resolve(strict=True)`. `abspath` est
 courant ; la piste : les lire dans `_chemin_ecrit`
 (`engine/socle/hooks.py`).
 
+Réduit le 16 novembre selon D-0120 (J-2026-11-16-G) : gardé pour `find … | xargs rm`, qu'un agent écrit dans son travail, jugé comme un `find` qui supprime ; `echo .. | xargs rm`, la commande que lance un `python -c`, un chemin que son script construit (`os.path.abspath('..')`) et `xargs git worktree remove` vont à la liste des formes connues que le hook ne juge pas (B-0261).
+
 ## Fait quand
 
-- [ ] `echo .. | xargs rm -rf` et `python3 -c "import os; os.system('rm -rf ..')"` sont refusés par le hook, `find . -name '*.pyc' | xargs rm -f` passe, et un test le montre
-- [ ] `python3 -c "import shutil, os; shutil.rmtree(os.path.abspath('..'))"` et ses pareils (`realpath`, `expanduser`, une f-chaîne sans variable, `Path('..').resolve(strict=True)`) sont refusés par le hook, et un test le montre
-- [ ] depuis le worktree d'un sous-agent, `echo agent-s | xargs git worktree remove` est refusé comme `git worktree remove agent-s` (la recherche de git par la fin du chemin, `_nommes_par_leur_suffixe`, J-2026-11-16-B), et un test le montre
+- [ ] `find .. -maxdepth 0 | xargs rm -rf` est refusé comme un `find` qui supprime depuis ce dossier, `find . -name '*.pyc' | xargs rm -f` passe, et un test le montre

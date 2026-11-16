@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0120-borner-le-hook-de-l-agent-aux-formes-qu-un-agent-e.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-16"
+canal = "conversation"
+citation = "Ok pour D0120 je valide"
+empreinte = "sha256:d007e77c0490d093b036abf3d29a9f7a8edeb61dd5ba73d00c87b9685c11d8f8"
