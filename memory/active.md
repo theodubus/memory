@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot L-0013 (J-2026-11-16-AA) : T-0046, T-0047 livrés avec D-0125 ;
-T-0048, sa revue (passe 3), la clôture. Puis L-0012, L-0014.
+Lot L-0013 (J-2026-11-16-AB) : T-0046, T-0047 livrés avec D-0125 ;
+T-0048, sa revue (passe 3), la clôture. Puis L-0012, L-0014, L-0015.
 
 ## Consignes en cours
 
