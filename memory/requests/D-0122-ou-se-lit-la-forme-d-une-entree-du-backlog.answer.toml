@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0122-ou-se-lit-la-forme-d-une-entree-du-backlog.md, dont l'empreinte suit.
+reponse = "1b"
+texte = ""
+par = "Théo"
+date = "2026-11-16"
+canal = "conversation"
+citation = "1b confirmé"
+empreinte = "sha256:658fa8d71c50e9462ae269f33ef42e08768d9cc8d0f21914dd6aeadd2b37fc15"

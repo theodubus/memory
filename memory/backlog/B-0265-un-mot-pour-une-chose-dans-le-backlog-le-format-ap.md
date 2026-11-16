@@ -50,12 +50,23 @@ une fois le besoin et sa tâche quand la correction est évidente. Le
 backlog ouvert se reclasse, et chaque besoin à plusieurs livrables se
 découpe en tâches.
 
-Deux choix reviennent à Théo, posés le 16 novembre, sans réponse encore :
-la forme dans un champ de l'entrée (les identifiants `B-` gardés) ou des
-préfixes distincts ; et le moment (en premier au lot B-0264, ou après ses
-règles).
+Les deux choix, tranchés par Théo le 16 novembre (J-2026-11-16-M) :
+D-0121@ec62e9fd, `2a`, la structure s'écrit en premier, au lot B-0264 ;
+D-0122@dbcc64c1, `1b`, chaque forme d'entrée a son préfixe, pour la
+qualité à long terme. La spécification, soumise à Théo avant le code,
+tranche : les préfixes (`B-` gardé pour le besoin, B comme besoin, ce qui
+limite la renumérotation ; `T-` pour une tâche ; `L-` pour un lot ; un
+préfixe pour le jalon, `J-` étant pris par le journal) ; l'ancien
+identifiant que garde chaque entrée renumérotée (`ancien : B-NNNN`), que
+`socle show` et les contrôles de références résolvent, le journal en ajout
+seul citant les anciens numéros ; la migration de ce dépôt, et celle d'un
+projet équipé par l'installeur, chess compris ; les contrôles qui
+empêchent de remélanger, chacun avec son défaut injecté. Le backlog
+ouvert se reclasse alors, chaque besoin à plusieurs livrables découpé en
+tâches, et les lots du jalon B-0224 refaits avec des tâches.
 
 ## Fait quand
 
 - [ ] le format, les skills du produit, le guide et les messages de l'état n'appellent plus « sujet » un lot ni un jalon, ni « tâche » un sujet, et un test le montre pour les messages de l'état
-- [ ] la structure besoin, tâche, lot, jalon, selon les deux choix de Théo, s'écrit dans le format et les contrôles, chacun avec son défaut injecté, et le backlog ouvert y est reclassé
+- [ ] la spécification de la structure et de ses préfixes (D-0122) est soumise à Théo avant son code
+- [ ] la structure besoin, tâche, lot, jalon, avec un préfixe par forme (D-0122), s'écrit dans le format et les contrôles, chacun avec son défaut injecté, et le backlog ouvert y est reclassé

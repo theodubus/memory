@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0121-quand-ecrire-la-structure-du-backlog.md, dont l'empreinte suit.
+reponse = "2a"
+texte = ""
+par = "Théo"
+date = "2026-11-16"
+canal = "conversation"
+citation = "2a"
+empreinte = "sha256:16f89588352d420df0869966ec217d7cd0a590ca0d731662f5bef83dc02d7dca"

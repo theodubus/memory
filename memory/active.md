@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot B-0234 livré. Prochains lots : B-0264, puis
-B-0266, avant B-0235. B-0179 en pause.
+Prochain lot : B-0264, la structure du backlog d'abord (B-0265,
+D-0122), puis B-0266. B-0179 attend.
 
 ## Consignes en cours
 
