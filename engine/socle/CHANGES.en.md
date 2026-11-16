@@ -81,6 +81,8 @@ criteria as results, its tasks' as deliverables a test checks. A review
 finding becomes a task if its fix is clear, a need otherwise. The
 `socle-batch` and `socle-review` skills say so; they are protected copies,
 in the installer's request.
+The guide, the public page and the framing-questions and initialization
+templates say “need” where they said “topic”.
 
 ## 2026-11-16-e — The guide no longer cites an identifier of the socle repository's memory
 

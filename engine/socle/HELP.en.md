@@ -10,7 +10,7 @@ The path in short:
 
 1. **Getting started**, once: describe the project, give the agent its
    tools, push, protect the branch.
-2. **Working with the agent**: give it tasks, read its recaps.
+2. **Working with the agent**: give it work, read its recaps.
 3. **Answering the agent** when a decision belongs to the human.
 4. **Occasional actions**: approve one's own changes, update, act where the
    agent cannot.
@@ -96,7 +96,7 @@ session receives two states.
 
 ## 2. Working with the agent
 
-Tasks are given to the agent as usual. At the start of each session, it
+Work is given to the agent as usual. At the start of each session, it
 receives the project's state, the active work, the titles of the facts and
 the last ten decisions; it works, and the checks verify it at each step.
 This start-up stays under `[startup] max_bytes` of the guardrails, a cap
@@ -156,23 +156,11 @@ project's normal use or whose effect nothing catches afterwards, as a
 task if its fix is clear, as a need otherwise, and dismisses the others, exotic and caught, or unfounded. Its recap says how
 many, and why each is dismissed.
 
-**Seeing that a batch goes round in circles.** The batch keeps the
-history of its review passes in its entry, under “Reviews”: a new session
-reads it as it is. Before any pass beyond the first, and before closing
-it, the agent writes a step-back paragraph there, which answers three
-questions of nature, not of number: do the blockers have the same cause
-as the previous pass's? are the entries the batch opens of the same
-nature as those it closes? have the closed batches that touched the same
-files already opened similar ones? In it, the agent decides to continue,
-saying what will make the next pass different, or to stop. The socle
-refuses the pass, or the closing, without this paragraph, and refuses to
-continue when the reviewer sees a same cause come back two passes in a
-row. Stopping means putting to you a request that cites the batch: what
-goes round, in plain words, the rule that makes it go round, and a
-proposal that bounds it. You see no figure: you see the request, and the
-batch waits for your answer while the agent moves on elsewhere; only that
-answer lifts the stop, neither a withdrawn request nor an old one on
-another subject.
+**When a batch goes round in circles.** The agent keeps the history of
+each batch's reviews, and notices it by itself. It then stops and puts a
+request to you: what goes round, the rule that makes it go round, and a
+proposal to get out of it. The batch waits for your answer while the
+agent moves on elsewhere.
 
 **Delivering.** By default, the agent does everything on one development
 branch and keeps only one pull request open, to which each finished batch

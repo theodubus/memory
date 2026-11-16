@@ -18,6 +18,11 @@ traiter », « les jalons » et « enchaîne les sujets » au sens d'avant
 (J-2026-11-16-W). Le livrable, un commit : ces textes disent l'entrée, le
 besoin, la tâche, le lot ou le jalon, chacun pour sa chose.
 
+Faits le 16 novembre à la demande de Théo (J-2026-11-16-AA) : la page
+publique, les gabarits des questions de cadrage et de l'initialisation, et
+les deux emplois de « tâche » dans le guide. Restent la docstring de
+`memoire.lectures`, l'aide de `socle review` et l'auto-test.
+
 ## Fait quand
 
 - [ ] les textes nommés ici n'appellent plus « sujet » une entrée du backlog, ni « tâche » autre chose qu'une tâche `T-`, et un test le montre pour le guide

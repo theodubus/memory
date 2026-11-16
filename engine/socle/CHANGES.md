@@ -82,6 +82,8 @@ récrire ses critères en résultats, ceux de ses tâches en livrables qu'un
 test vérifie. Un constat de revue devient une tâche si sa correction est
 claire, un besoin sinon. Les skills `socle-batch` et `socle-review` le
 disent ; ce sont des copies protégées, dans la demande de l'installeur.
+Le guide, la page publique et les gabarits des questions de cadrage et
+de l'initialisation disent « besoin » là où ils disaient « sujet ».
 
 ## 2026-11-16-e — Le guide ne cite plus un identifiant de la mémoire du dépôt du socle
 

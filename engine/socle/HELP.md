@@ -10,7 +10,7 @@ Le parcours en bref :
 
 1. **Démarrer**, une fois : décrire le projet, donner ses outils à
    l'agent, pousser, protéger la branche.
-2. **Travailler avec l'agent** : lui confier des tâches, lire ses
+2. **Travailler avec l'agent** : lui confier du travail, lire ses
    récapitulatifs.
 3. **Répondre à l'agent** quand une décision revient à l'humain.
 4. **Les gestes occasionnels** : approuver ses propres changements, mettre
@@ -102,7 +102,7 @@ reçoit deux états.
 
 ## 2. Travailler avec l'agent
 
-Les tâches se confient à l'agent comme d'habitude. Au démarrage de chaque
+Le travail se confie à l'agent comme d'habitude. Au démarrage de chaque
 session, il reçoit l'état du projet, le chantier actif, les titres des faits
 et les dix dernières décisions ; il travaille, et les contrôles le vérifient
 à chaque étape. Ce démarrage tient sous `[startup] max_bytes` des
@@ -165,23 +165,11 @@ l'effet, en tâche si leur correction est claire, en besoin sinon, et
 écarte les autres, exotiques et rattrapés, ou infondés. Son
 récap dit combien, et pourquoi chacun est écarté.
 
-**Voir qu'un lot tourne en rond.** Le lot garde l'historique de ses
-passes de revue dans son entrée, sous « Revues » : une session neuve le
-lit tel quel. Avant toute passe au-delà de la première, et avant de le
-clore, l'agent y écrit un paragraphe de recul, qui répond à trois
-questions de nature, non de nombre : les bloquants ont-ils la même cause
-que ceux de la passe précédente ? les entrées que le lot ouvre sont-elles
-de même nature que celles qu'il ferme ? les lots clos qui ont touché les
-mêmes fichiers en ont-ils déjà ouvert de semblables ? Il y décide de
-continuer, en disant ce qui rendra la passe suivante différente, ou de
-s'arrêter. Le socle refuse la passe, ou la clôture, sans ce paragraphe,
-et refuse de continuer quand le relecteur voit une même cause revenir
-deux passes de suite. S'arrêter, c'est vous poser une demande qui cite le
-lot : ce qui tourne, en clair, la règle qui le fait tourner, et une
-proposition qui la borne. Vous ne voyez aucun chiffre : vous voyez la
-demande, et le lot attend votre réponse pendant que l'agent avance
-ailleurs ; seule elle lève l'arrêt, ni une demande retirée, ni une
-ancienne d'un autre sujet.
+**Quand un lot tourne en rond.** L'agent garde l'historique des revues
+de chaque lot, et s'en aperçoit lui-même. Il s'arrête alors et vous pose
+une demande : ce qui tourne, la règle qui le fait tourner, et une
+proposition pour en sortir. Le lot attend votre réponse pendant que
+l'agent avance ailleurs.
 
 **Livrer.** Par défaut, l'agent fait tout sur une branche de
 développement et garde une seule pull request ouverte, à laquelle chaque
