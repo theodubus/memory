@@ -5,9 +5,10 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot B-0234 : ses trois bloquants corrigés, le prompt de chess
-complété ; la seconde revue (`--since 9aa1bbe`) en cours, puis la
-livraison (J-2026-11-16-A). B-0179 en pause (J-2026-11-15-A).
+Lot B-0234 : la seconde revue a trouvé trois bloquants
+(J-2026-11-16-B), corrigés par 667e250 ; restent la revue de cette
+correction (`socle review --since 08b925a`), puis la clôture et la
+livraison (J-2026-11-16-D). B-0179 en pause (J-2026-11-15-A).
 
 ## Consignes en cours
 
@@ -56,8 +57,6 @@ Leur texte exact est dans l'entrée du journal citée.
 - Chess n'est mis à jour qu'une fois l'ensemble fini ; d'ici là, tout
   lot qui change ce que chess reçoit complète
   `docs/fabrication/chess/prompt-mise-a-jour.md` (J-2026-11-13-L).
-- Jusqu'à lundi 3 h : un lot sur les 15 % restants, sous-agent lancé
-  si sa part et le rangement tiennent, rangé à 95 % (J-2026-11-15-P).
 
 ## Prochaines étapes
 
