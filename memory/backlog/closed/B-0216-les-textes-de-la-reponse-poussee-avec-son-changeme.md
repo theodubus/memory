@@ -16,7 +16,7 @@ La copie protégée `.claude/skills/socle-request/SKILL.md` de ce dépôt est
 en retard sur son gabarit depuis B-0142 : son rafraîchissement, sur une
 demande, attend que ce texte soit juste.
 
-## Fait quand
+## Satisfait quand
 
 - [x] tous les textes disent « dans le même push », et le cas du fichier protégé qui précède sa réponse
 - [x] la copie protégée de ce dépôt suit son gabarit, sur une demande validée

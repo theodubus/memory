@@ -21,7 +21,6 @@ agent écrit dans son travail. La piste : juger `producteur | xargs
 -r` et `git ls-files` comme un `find` sans filtre ; citer aussi les
 arguments qui suivent le script d'un `python -c`.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] `grep -rl x . | xargs sed -i …` et `find . -type f | xargs sed -i …` sont refusés, `find . -name '*.py' | xargs sed -i …` passe, et un test le montre
-- [ ] un `python -c` qui reçoit un fichier protégé en argument est refusé, et un test le montre
+- [ ] le « Fait quand » de T-0002 est tenu

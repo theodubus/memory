@@ -12,6 +12,6 @@ la fusion reste refusée par le hook tant qu'elle n'est pas activée
 (politique, point 4). Consigne de Théo du 13 novembre : tout ce qui est
 utile intègre le socle (J-2026-11-13-F).
 
-## Fait quand
+## Satisfait quand
 
-- [ ] une option de la politique permet à l'agent de fusionner sa pull request aux conditions de D-0092, le hook le refuse sans elle, et un test le montre
+- [ ] le « Fait quand » de T-0020 est tenu

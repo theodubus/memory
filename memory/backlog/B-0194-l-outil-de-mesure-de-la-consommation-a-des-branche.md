@@ -16,6 +16,6 @@ sans appel dans `concurrence` ; l'en-tête anglais de la section du socle.
 L'outil est de l'atelier et ses chiffres sont recalculés par deux
 revues ; ces tests protègent ses mesures à venir.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] chacune de ces mutations fait échouer un test
+- [ ] le « Fait quand » de T-0038 est tenu

@@ -16,7 +16,7 @@ réunit des sujets dans un lot (les mêmes fichiers, le même garde-fou ou les
 mêmes tests, qu'une seule revue juge ensemble). Rien ne dit qu'un sujet
 qu'on ouvre rejoint aussitôt le lot ouvert qui touche ses fichiers, ni
 qu'on balaie tout le backlog ouvert en formant un lot : douze sujets sont
-restés hors des lots du jalon B-0224 jusqu'au 16 novembre, et l'agent les
+restés hors des lots du jalon JA-0005 jusqu'au 16 novembre, et l'agent les
 a soumis à Théo au lieu de les placer.
 
 La piste : le skill `socle-batch` et son gabarit disent qu'un sujet ouvert
@@ -26,6 +26,6 @@ pas seulement le jalon ; et qu'un lot qui ne tient plus en une session se
 coupe en deux lots, sur leurs fichiers. Le récap dit les placements, la
 priorité restant à l'humain.
 
-## Fait quand
+## Satisfait quand
 
 - [x] le skill `socle-batch` et son gabarit disent qu'un sujet ouvert rejoint aussitôt le lot dont la règle s'applique à lui, qu'un lot se forme en balayant tout le backlog ouvert, et qu'un lot trop grand pour une session se coupe en deux

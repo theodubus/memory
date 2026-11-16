@@ -47,10 +47,8 @@ est protégé : son changement passe par une demande à Théo.
 un autre (un seul passage ne le prouve pas) ; qu'en CI, où l'auto-test
 tourne déjà sur quatre fils, le cumul ne ralentit rien.
 
-Théo le passe en priorité haute le 16 novembre, au lot B-0266, juste après B-0264 (J-2026-11-16-I) : une vérification plus courte rend chaque lot suivant moins cher.
+Théo le passe en priorité haute le 16 novembre, au lot L-0012, juste après L-0011 (J-2026-11-16-I) : une vérification plus courte rend chaque lot suivant moins cher.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] la durée de `verify --fast --redo` est relevée dans une session de travail, avant et après
-- [ ] la suite lancée en parallèle passe trois fois de suite, en local et en CI
-- [ ] après le changement, `verify --fast --redo` prend moins de cinq minutes dans une session de travail
+- [ ] le « Fait quand » de T-0044 est tenu

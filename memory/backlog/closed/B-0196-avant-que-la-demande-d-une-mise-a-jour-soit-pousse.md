@@ -47,6 +47,6 @@ d'avoir la sienne ; il reste une erreur que `socle check` nomme, et que
 l'humain lit dans la demande et la pull request. Hors de l'arbre de
 travail (le hook avant commit, qui juge l'index ; la CI), rien ne change.
 
-## Fait quand
+## Satisfait quand
 
 - [x] après une mise à jour dont la demande n'est pas posée, la fin de tour le dit en une ligne au lieu d'une ligne par fichier, et un test le montre

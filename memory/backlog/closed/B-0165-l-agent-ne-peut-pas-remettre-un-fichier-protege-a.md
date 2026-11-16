@@ -14,7 +14,7 @@ d'effacer un changement que l'humain n'a pas encore commité : c'est à
 l'humain de dire s'il la veut, et sous quelle condition (par exemple,
 seulement les fichiers que l'agent a lui-même changés dans le tour).
 
-## Fait quand
+## Satisfait quand
 
 - [x] l'humain a tranché la piste, et, s'il la veut, l'agent remet un fichier protégé qu'il a changé par erreur à son état commité sans pouvoir effacer un changement de l'humain, et un test le montre
 

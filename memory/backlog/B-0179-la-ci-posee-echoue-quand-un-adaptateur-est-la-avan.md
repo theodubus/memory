@@ -32,7 +32,7 @@ la mise à jour du pilote, qui est en pause sur la consigne de Théo
 (J-2026-11-13-E) et dont le dépôt ne se lit pas d'ici (J-2026-11-09-M).
 Le sujet se rouvre à la reprise du pilote, que Théo décide.
 
-## Fait quand
+## Satisfait quand
 
 - [x] la CI posée passe sur un projet `python-pytest` et `kotlin` sans aucun fichier `.kt` ni fichier Gradle, ce qu'un cas de l'auto-test ou un test prouve
 - [x] les autres adaptateurs maintenus dont le `ci_setup` demande un cache sont vérifiés de même, et corrigés s'il le faut

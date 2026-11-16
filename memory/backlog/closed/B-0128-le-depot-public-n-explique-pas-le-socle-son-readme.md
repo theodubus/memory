@@ -14,7 +14,7 @@ les explications privées » (J-2026-11-05-A).
 dépôt devient celui de l'atelier, qui y renvoie, sans rien recopier. Le
 plan se soumet à Théo avant d'écrire, et le schéma se vérifie rendu.
 
-## Fait quand
+## Satisfait quand
 
 - [x] le plan soumis à Théo et validé
 - [x] le README public dit ce qu'est le socle, le problème, le fonctionnement, l'installation

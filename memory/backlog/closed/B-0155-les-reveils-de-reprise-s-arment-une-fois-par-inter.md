@@ -10,6 +10,6 @@ armer une fois par intervention, avec le lot : la mémoire et git disent
 où en est le travail. Un réveil armé à une heure déjà passée s'est aussi
 déclenché à tort deux fois le 10 novembre : ne jamais l'armer ainsi.
 
-## Fait quand
+## Satisfait quand
 
 - [x] le skill arme les réveils une fois par intervention, ne les récrit qu'au lancement d'un sous-agent, et ne les arme jamais dans le passé

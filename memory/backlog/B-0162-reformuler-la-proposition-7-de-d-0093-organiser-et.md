@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0162 — Reformuler la proposition 7 de D-0093 : organiser et fiabiliser, et ce que chaque projet en prend
 
-> statut : ouvert · origine : J-2026-11-10-N · lu : backlog@eb4d69d1 · après : B-0157
+> statut : ouvert · origine : J-2026-11-10-N · lu : backlog@eb4d69d1 · après : B-0126
 
 Théo a validé D-0093@333ad9d0 sauf sa proposition 7, séparer le noyau de la
 méthode, « a formuler et a refaire valider ultérieurement ». Son
@@ -16,6 +16,6 @@ planification (B-0101) en dépendent.
 Le 13 novembre, Théo : « Tout ce qui est utile doit intégrer le socle »
 (J-2026-11-13-F). B-0199 à B-0202 en sont les premières pièces.
 
-## Fait quand
+## Satisfait quand
 
 - [ ] une demande nouvelle, cadrée par des questions, est posée à Théo

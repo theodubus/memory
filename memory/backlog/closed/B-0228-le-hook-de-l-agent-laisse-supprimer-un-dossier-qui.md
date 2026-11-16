@@ -100,6 +100,6 @@ que rien ne rattrape non plus, vont à B-0246, de priorité haute
 B-0229, qui le jugera comme celui d'un `python -c`, ses suppressions
 comprises.
 
-## Fait quand
+## Satisfait quand
 
 - [x] la suppression d'un dossier qui contient le projet par `rsync --delete`, `git worktree remove` ou `python3 -c` qui cite son chemin est refusée par le hook, et un test le montre

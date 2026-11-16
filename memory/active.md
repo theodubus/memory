@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot B-0269 : `docs/fabrication/passation-b0269/LISEZMOI.md`.
-Puis B-0266. B-0179 attend.
+Lot L-0013 (J-2026-11-16-T) : T-0046 fait (J-2026-11-16-U) ; puis
+T-0049, T-0050, T-0047, T-0048. Puis L-0012. B-0179 attend.
 
 ## Consignes en cours
 
@@ -15,7 +15,7 @@ Leur texte exact est dans l'entrée du journal citée.
 - Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
 - Le hook borné aux formes qu'un agent écrit ; une forme exotique va
   à la liste, sans sujet ni bloquant (ADR-0082).
-- Un mot pour une chose ; un sujet va sans demander au lot dont la
+- Un mot pour une chose ; une tâche va sans demander au lot dont la
   règle s'applique (J-2026-11-16-I, J-2026-11-16-J).
 - Relecteur : le plus capable jusqu'à Opus (D-0117). Fable, implémenteur
   ou relecteur, seulement si Théo le veut ; un lot implémenté sur Fable :
@@ -67,8 +67,7 @@ par lots :
 
 1. Fait.
 2. Fait.
-3. Le jalon B-0224 (D-0118) : ses sept lots, B-0234 à B-0240, dans
-   l'ordre ; l'état montre le prochain.
+3. Le jalon JA-0005 (D-0118), lot par lot ; l'état montre le prochain.
 4. La mise à jour de chess, avec le prompt complété.
 5. Ensuite la planification (B-0101), puis la répartition entre agents
    (B-0055).

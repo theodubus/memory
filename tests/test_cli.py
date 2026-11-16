@@ -129,7 +129,7 @@ class TestCommandes(unittest.TestCase):
                 return super().write(s)
 
         with contextlib.redirect_stdout(TubeCoupe()), self.assertRaises(BrokenPipeError):
-            cli.cmd_new(argparse.Namespace(root=str(self.racine), type="backlog", title="Un sujet coupé"))
+            cli.cmd_new(argparse.Namespace(root=str(self.racine), type="need", title="Un sujet coupé"))
         self.assertTrue((self.racine / "memory/backlog/B-0002-un-sujet-coupe.md").is_file())
 
     def test_new_request_questions_pose_des_questions_de_cadrage(self):

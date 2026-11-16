@@ -3,7 +3,7 @@
 
 > statut : ouvert · origine : J-2026-11-16-S · lu : backlog@ff00445d
 
-Relevé par la revue du lot B-0264 (J-2026-11-16-S). Le gabarit du skill
+Relevé par la revue du lot L-0011 (J-2026-11-16-S). Le gabarit du skill
 `socle-review` dit qu'une forme du shell qu'un agent n'écrit pas, et qui
 échappe au hook, s'écarte « d'une ligne, pour la liste des formes connues
 que le hook ne juge pas », que tient le guide. Dans un projet équipé, le
@@ -15,6 +15,6 @@ La piste : le skill dit, dans un projet équipé, d'écrire la forme au
 récap et de la signaler en amont (où et comment, à décider), la liste du
 guide ne changeant que dans le dépôt du socle.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] le skill `socle-review` et son gabarit disent ce que l'agent d'un projet équipé fait d'une forme exotique, sans geste qu'il ne peut pas faire
+- [ ] le « Fait quand » de T-0048 est tenu

@@ -11,6 +11,6 @@ jalons ouverts qu'aucun jalon attendu ne précède, et lit comme un sujet
 chaque attendu, demandes comprises. `socle check` passe : le contrôle de
 l'ordre ne lit les attendus qu'après les avoir triés.
 
-## Fait quand
+## Satisfait quand
 
 - [x] l'état calcule l'ordre d'un backlog où un jalon attend un sujet qui attend une demande sans réponse, et un test le montre

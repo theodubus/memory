@@ -31,7 +31,7 @@ départs d'un producteur `find` ou `ls`, comme B-0230 le fera de leurs
 qu'il passe à `os.system`, `subprocess.*` (`shell=True`) ou la liste de
 chaînes qu'il leur passe.
 
-La revue du lot B-0234 (J-2026-11-15-O), deuxième constat pour le
+La revue du lot L-0004 (J-2026-11-15-O), deuxième constat pour le
 backlog, y ajoute un chemin qu'un `python -c` écrit en toutes lettres sous
 une autre forme que celles que lit B-0228 (une chaîne, `Path(…)`,
 `os.path.join(…)`) : `shutil.rmtree(os.path.abspath('..'))`, de même avec
@@ -42,6 +42,6 @@ courant ; la piste : les lire dans `_chemin_ecrit`
 
 Réduit le 16 novembre selon D-0120 (J-2026-11-16-G) : gardé pour `find … | xargs rm`, qu'un agent écrit dans son travail, jugé comme un `find` qui supprime ; `echo .. | xargs rm`, la commande que lance un `python -c`, un chemin que son script construit (`os.path.abspath('..')`) et `xargs git worktree remove` vont à la liste des formes connues que le hook ne juge pas (B-0261).
 
-## Fait quand
+## Satisfait quand
 
-- [ ] `find .. -maxdepth 0 | xargs rm -rf` est refusé comme un `find` qui supprime depuis ce dossier, `find . -name '*.pyc' | xargs rm -f` passe, et un test le montre
+- [ ] le « Fait quand » de T-0004 est tenu

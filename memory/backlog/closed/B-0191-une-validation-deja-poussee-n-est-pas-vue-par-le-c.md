@@ -18,6 +18,6 @@ Piste : pour une validation, comme pour les renommages des clés de
 l'adoption (B-0189), lire depuis la branche par défaut plutôt que dans la
 seule plage qui part.
 
-## Fait quand
+## Satisfait quand
 
 - ~~une validation de l'humain déjà poussée sur la branche, absente de la branche par défaut, compte avant le push comme elle compte en CI, pour une valeur attendue comme pour un fichier protégé ; un test le montre~~ — doublon de B-0142, qui porte ce critère

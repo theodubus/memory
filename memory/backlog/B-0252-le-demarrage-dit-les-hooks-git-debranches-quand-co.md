@@ -19,6 +19,6 @@ La piste : tenir pour branché un `core.hooksPath` qui se résout vers
 `<racine>/.socle/git-hooks` ; un chemin absolu vers les hooks d'un autre
 worktree reste un choix local, signalé.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] le démarrage ne dit plus les hooks git débranchés quand `core.hooksPath` désigne `.socle/git-hooks` de la racine par son chemin absolu, et un test le montre
+- [ ] le « Fait quand » de T-0042 est tenu

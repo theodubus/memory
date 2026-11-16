@@ -15,6 +15,6 @@ L'état la dirait à supprimer, en nommant la branche poussée qui la
 contient ; la branche par défaut et celles que la politique garde restent
 exclues, comme la branche courante.
 
-## Fait quand
+## Satisfait quand
 
 - [x] l'état liste à supprimer une branche distante que la branche de travail poussée contient en entier, et un test le montre

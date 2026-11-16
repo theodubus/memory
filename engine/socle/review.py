@@ -169,15 +169,23 @@ def sujets_du_lot(projet: config.Projet, base: str) -> tuple[list, list]:
     avant = memoire.Memoire.charger(projet.racine, debut)
     mem = memoire.Memoire.charger(projet.racine)
     servis, ouverts = [], []
-    for e in mem.entrees("B"):
+    for e in mem.entrees(memoire.BACKLOG):
         if e.fichier not in touches or memoire.est_prive(e.fichier):
             continue
-        ancien = avant.entree(e.id)
+        # Sous son numéro, ou sous l'ancien d'une entrée renumérotée (ADR-0083).
+        ancien = next((avant.entree(i) for i in (e.id, *e.anciens) if avant.entree(i)), None)
         if ancien is None:
             (servis if e.statut in memoire.BACKLOG_CLOS else ouverts).append(e)
-        elif e.statut != ancien.statut or memoire.criteres(e) != memoire.criteres(ancien):
+        elif e.statut != ancien.statut or _cases(e) != _cases(ancien):
             servis.append(e)
     return servis, ouverts
+
+
+def _cases(e) -> list:
+    """Les critères d'une entrée, dans ses deux sections possibles : « Fait
+    quand » et « Satisfait quand » (ADR-0083) ; une section renommée ne
+    change pas la barre."""
+    return [x for s in (memoire.SECTION_FAIT_QUAND, memoire.SECTION_SATISFAIT_QUAND) for x in memoire.criteres(e, s)]
 
 
 def messages_depuis(racine, depuis: str) -> list[str]:

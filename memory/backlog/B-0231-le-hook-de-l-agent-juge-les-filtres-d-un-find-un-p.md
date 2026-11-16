@@ -22,7 +22,6 @@ La piste : un fichier protégé n'est touché que s'il satisfait chaque
 filtre de la conjonction ; juger l'intersection, et refuser seulement ce
 que tous les filtres d'une même conjonction peuvent viser ensemble.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] `find . -name '*.json' -path './build/*' -delete` passe le hook, `find . -name '*.json' -path './.claude/*' -delete` reste refusé, et un test le montre
-- [ ] `find build -path '*.toml' -delete` passe le hook, `find . -path '*.toml' -delete` reste refusé, et un test le montre
+- [ ] le « Fait quand » de T-0003 est tenu

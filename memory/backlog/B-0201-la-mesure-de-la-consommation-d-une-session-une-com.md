@@ -8,9 +8,9 @@ Claude Code et dit ce qui pèse dans une session (`bench/consumption.py`,
 son relevé `docs/fabrication/consommation.md`). Il sert à tout projet :
 savoir ce qu'une session a coûté, et ce qui l'a fait coûter. Consigne de
 Théo du 13 novembre : tout ce qui est utile intègre le socle
-(J-2026-11-13-F). À rapprocher du jalon 3 (B-0159), qui mesure l'usage
+(J-2026-11-13-F). À rapprocher du jalon 3 (JA-0003), qui mesure l'usage
 réel dans chaque projet.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] une commande du socle donne la consommation d'une session et ce qui y pèse, et un test la couvre
+- [ ] le « Fait quand » de T-0033 est tenu

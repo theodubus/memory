@@ -3,7 +3,7 @@
 
 > statut : ouvert · origine : J-2026-11-16-S · lu : backlog@ff00445d
 
-Relevé par la revue du lot B-0264 (J-2026-11-16-S). ADR-0033 veut que
+Relevé par la revue du lot L-0011 (J-2026-11-16-S). ADR-0033 veut que
 le produit ne renvoie jamais à l'atelier ; les commentaires du moteur
 citent pourtant des identifiants de la mémoire de ce dépôt (seize dans
 `engine/socle/memory.py` avant le lot, soixante-seize dans
@@ -16,6 +16,6 @@ La piste : décider si ADR-0033 s'applique aux commentaires du code (lire
 son point 2) ; si oui, un test qui le garde, et le nettoyage des renvois,
 remplacés par leur raison en clair.
 
-## Fait quand
+## Satisfait quand
 
 - [ ] la règle d'ADR-0033 pour les commentaires du moteur est tranchée, et, si elle s'applique, un test la garde et le moteur la tient

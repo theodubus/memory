@@ -29,7 +29,6 @@ comme cas exotiques : les deux fetch sans délai (une origine qui pend ou
 demande des identifiants) et la phrase du modèle de menace de B-0175 sur
 le clone local ordinaire.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] le partage du délai du démarrage est décidé par une ADR et montré par un test
-- [ ] un échec de l'historique ne coûte pas son délai entier à chaque démarrage du même conteneur, et un test le montre
+- [ ] le « Fait quand » de T-0036 est tenu

@@ -20,12 +20,12 @@ accident. La règle 1 de D-0112 (le tri de la revue) reste.
 - le guide d'un projet équipé (`engine/socle/HELP.md` et sa version
   anglaise), avec la liste des formes connues non jugées : celles que
   ferment sans correction J-2026-11-16-G (les sujets abandonnés et les
-  deux derniers constats du lot B-0234) ;
+  deux derniers constats du lot L-0004) ;
 - la consigne du relecteur (`socle review`, et le gabarit du skill
   `socle-review`), pour qu'une forme exotique, même refusée avant le lot
   par accident, ne soit pas classée bloquante ;
 - les notes de version, et le prompt de mise à jour de chess.
 
-## Fait quand
+## Satisfait quand
 
 - [x] la décision qui remplace la règle 2 d'ADR-0080, le guide (avec la liste des formes connues non jugées) et la consigne du relecteur disent la règle de D-0120, et un test le montre pour la consigne du relecteur

@@ -19,7 +19,7 @@ le moteur peut fournir au relecteur le contexte de la revue (le diff, les
 sujets du lot, les spécifications citées). Ce qu'elle trouve se mesure au
 banc.
 
-## Fait quand
+## Satisfait quand
 
 - [x] la procédure de revue est écrite, côté agent, et les instructions disent quand s'en servir
 - [x] le banc mesure ce qu'elle trouve sur des défauts connus

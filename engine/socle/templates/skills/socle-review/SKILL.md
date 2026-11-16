@@ -17,11 +17,11 @@ une seconde seulement si la correction des constats bloquants est lourde
 (elle change la conception d'une partie, pas quelques lignes), et sur elle
 seule.
 
-Le relecteur juge le lot contre ses sujets : leur critère « Fait quand »,
-et, pour un garde-fou, son modèle de menace. Un sujet qui pose ou change un
+Le relecteur juge le lot contre ses tâches : leur critère « Fait quand »,
+et, pour un garde-fou, son modèle de menace. Un besoin qui pose ou change un
 garde-fou l'écrit donc avant son code, dans sa section `## Modèle de
 menace` ou dans la décision qu'il cite : ce que le garde-fou arrête, ce
-qu'il laisse passer ; un sujet dont la conception n'est pas tranchée, sa
+qu'il laisse passer ; un besoin dont la conception n'est pas tranchée, sa
 spécification.
 
 ## Comment
@@ -80,8 +80,8 @@ Le relecteur les classe ; l'agent vérifie chaque classement.
   dans son modèle de menace) : corrigé dans le lot, avant le push.
 - **Pour le backlog** : un constat qui ne bloque pas va au backlog s'il
   peut se produire dans l'usage normal du projet, ou si rien ne rattrape
-  ensuite son effet ; un sujet par constat, ou un pour plusieurs de même
-  nature.
+  ensuite son effet : une tâche par constat si sa correction est claire,
+  un besoin sinon, ou une entrée pour plusieurs de même nature.
 - **Écarté** : un constat exotique (un geste rare, une forme qu'on
   n'écrit que pour contourner, un cas jamais reproduit) dont l'effet est
   rattrapé, par un contrôle, la CI ou une erreur que l'agent voit
@@ -97,4 +97,4 @@ Le relecteur les classe ; l'agent vérifie chaque classement.
 
 Ne rien poster sur GitHub : l'humain lit le récap, pas la revue. Le récap
 le dit en une ligne : `Revue : <b> bloquants, corrigés ; <n> au backlog
-(<sujets>) ; écartés : <raison de chacun>`, ou `Revue : aucun constat`.
+(<entrées>) ; écartés : <raison de chacun>`, ou `Revue : aucun constat`.

@@ -7,6 +7,43 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-16-f — The backlog in four forms, each with its prefix: need, task, batch and milestone
+
+A backlog entry now has one of four forms, which its prefix states: a need
+(`B-`), a defect to fix or a feature to add, with its “Satisfied when”
+section, a result; a task (`T-`), a deliverable that names its need
+(`need : B-NNNN`), with its “Done when” section, which a test checks; a
+batch (`L-`), the tasks carried out and reviewed together; a milestone
+(`JA-`), the needs that serve one goal. The `form` field goes away. Each
+form waits only on what is its own: a batch, on its tasks and the previous
+batch; a milestone, on its needs and the previous milestone. Only a task is
+ready; it takes its need's priority and waits on what its need waits on. A
+need closes when its tasks are closed, at least one of them done. The
+state gives the next milestone and its open needs, the next batch and its
+tasks, the ready tasks, the needs to split and those to close. The commands
+`socle new need`, `socle new task "…" --need B-NNNN`, `socle new batch` and
+`socle new milestone` replace `socle new backlog`, which goes away;
+`socle new need "…" --task "…"` sets the need and its task. A new check,
+`memoire.formes`, refuses mixing the forms again.
+
+The update migrates the backlog: each batch becomes `L-` and each milestone
+`JA-`, closed ones included, keeping its former number (`former : B-NNNN`),
+which `socle show` and the reference checks resolve; every other entry
+stays a need, its “Done when” section renamed “Satisfied when”; each need
+an open batch waits on gets a task that takes its criteria, to which its
+section refers, and that the batch waits on in its place; a milestone
+waits on its batches' needs. Mentions are rewritten in the backlog and the
+active work; the journal, the decisions and the requests keep the former
+number.
+
+To do: review what the update migrated (`python3 .socle/socle state`, the
+backlog), and commit the migration with it. Then, when taking each need:
+split it into tasks if it calls for several deliverables, and rewrite its
+criteria as results, its tasks' as deliverables a test checks. A review
+finding becomes a task if its fix is clear, a need otherwise. The
+`socle-batch` and `socle-review` skills say so; they are protected copies,
+in the installer's request.
+
 ## 2026-11-16-e — The guide no longer cites an identifier of the socle repository's memory
 
 The guide (`python3 .socle/socle help`), under approving one's own

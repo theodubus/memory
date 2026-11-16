@@ -13,7 +13,7 @@ sont écrits, refusent ensuite de l'écrire. Le budget du fichier
 d'instructions a été posé à 66 octets de sa taille. Le guide dit que la
 session qui installe tourne sans les hooks, ce qui n'est plus vrai.
 
-## Fait quand
+## Satisfait quand
 
 - [x] en automatique, un langage dont le manifeste n'est que dans un sous-dossier ne reçoit pas d'adaptateur lancé à la racine, et l'installeur le dit
 - [x] la fin de l'installation dit que les capacités de l'adaptateur n'ont pas été lancées, et « Et maintenant » fait lancer la vérification rapide avant le premier commit

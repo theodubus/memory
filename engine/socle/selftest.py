@@ -112,6 +112,22 @@ BACKLOG_ESSAI = """
 
 Demandé pour l'essai.
 """
+# La section d'un besoin nouveau (ADR-0083).
+SATISFAIT_ESSAI = "\n## Satisfait quand\n\n- [ ] le module le fait\n"
+
+
+def tache_essai(a, c: Path, statut: str = "ouvert", criteres: str = "- [x] le test passe") -> str:
+    """La tâche T-0001 du besoin B-0001, dans sa forme : son besoin, sa
+    lecture de l'index, son « Fait quand »."""
+    return (f"\n## T-0001 — Écrire triple et son test\n\n> statut : {statut} · origine : {a.journal} · "
+            f"besoin : B-0001 · lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n\n"
+            f"## Fait quand\n\n{criteres}\n")
+
+
+def lot_essai(a, c: Path, ident: str, apres: str, champs: str = "") -> str:
+    """Un lot qui attend `apres`."""
+    return (f"\n## {ident} — Le lot de la multiplication\n\n> statut : ouvert · origine : {a.journal} · "
+            f"après : {apres}{champs} · lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n")
 
 
 @dataclass
@@ -633,7 +649,7 @@ def _collision(a: "Atelier", c: Path) -> str:
 
     def prendre(titre: str):
         ajouter_sujet(c, f"\n## B-0002 — {titre}\n\n> statut : ouvert · origine : {a.journal} · "
-                f"lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n")
+                f"lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n{SATISFAIT_ESSAI}")
 
     a.git(c, "switch", "-q", "-c", "autre")
     prendre("Documenter le module")
@@ -646,12 +662,13 @@ def _collision(a: "Atelier", c: Path) -> str:
 
 
 def ajouter_sujet(c: Path, bloc: str):
-    """Un sujet de plus au backlog, écrit `## B-… — titre`, ses métadonnées,
-    son corps : dans son propre fichier, son titre remonté d'un niveau."""
+    """Une entrée de plus au backlog, écrite `## B-… — titre` (ou `T-`,
+    `L-`, `JA-`), ses métadonnées, son corps : dans son propre fichier, son
+    titre remonté d'un niveau."""
     from socle import config, memory as memoire, utils as outils
 
     ch = config.FORMAT_ACTUEL
-    m = re.match(r"\s*## (B-\d{4}) — (.+)", bloc)
+    m = re.match(r"\s*## ((?:B|T|L|JA)-\d{4}) — (.+)", bloc)
     texte = "<!-- socle: couche=backlog zone=publique -->\n" + bloc.strip("\n").replace("## ", "# ", 1) + "\n"
     rel = f"{ch.backlog}/{m[1]}-{memoire.nom_de_fichier(m[2])}.md"
     # Un sujet clos va d'emblée avec les clos.
@@ -1244,11 +1261,11 @@ def _cas() -> list[Cas]:
         remplacer(c, _sujet(c, "B-0001"), "> statut : ouvert", "> statut : ouvert · après : B-0001")
         return etage_git(a, c)
 
-    @defaut("fait-avant-ce-qu-il-attend", "jalon fait alors que la tâche qu'il attend est ouverte", "git",
+    @defaut("fait-avant-ce-qu-il-attend", "jalon fait alors que le besoin qu'il attend est ouvert", "git",
             "memoire.ordre")
     def _(a, c):
-        ajouter_sujet(c, "\n## B-0002 — Livrer la multiplication\n\n"
-                         f"> statut : fait · origine : {a.journal} · ref : fichier:calc.py · forme : jalon · "
+        ajouter_sujet(c, "\n## JA-0001 — Livrer la multiplication\n\n"
+                         f"> statut : fait · origine : {a.journal} · ref : fichier:calc.py · "
                          f"après : B-0001 · lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n")
         return etage_git(a, c)
 
@@ -1271,13 +1288,100 @@ def _cas() -> list[Cas]:
                          f"lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n")
         return etage_git(a, c)
 
-    @defaut("fait-avec-critere-ouvert", "sujet fait avec un critère de « Fait quand » non coché", "git",
+    @defaut("fait-avec-critere-ouvert", "tâche faite avec un critère de « Fait quand » non coché", "git",
             "memoire.backlog")
     def _(a, c):
-        ajouter_sujet(c, "\n## B-0002 — Livrer la multiplication\n\n"
-                         f"> statut : fait · origine : {a.journal} · ref : fichier:calc.py · "
-                         f"lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n\n"
-                         "## Fait quand\n\n- [x] le test passe\n- [ ] le guide le dit\n")
+        ajouter_sujet(c, tache_essai(a, c, statut="fait · ref : fichier:calc.py",
+                                     criteres="- [x] le test passe\n- [ ] le guide le dit"))
+        return etage_git(a, c)
+
+    @defaut("besoin-fait-case-vide", "besoin fait, sa tâche faite, avec un critère de « Satisfait quand » non "
+            "coché", "git", "memoire.backlog")
+    def _(a, c):
+        ajouter_sujet(c, tache_essai(a, c, statut="fait · ref : fichier:calc.py"))
+        remplacer(c, _sujet(c, "B-0001"), "> statut : ouvert", "> statut : fait · ref : fichier:calc.py")
+        ajouter(c, _sujet(c, "B-0001"), "\n## Satisfait quand\n\n- [x] triple existe\n- [ ] le guide le dit\n")
+        return etage_git(a, c)
+
+    # La structure du backlog (ADR-0083) : un refus, un défaut.
+
+    @defaut("forme-ecrite", "entrée ouverte du backlog qui écrit encore `forme`", "git", "memoire.formes")
+    def _(a, c):
+        remplacer(c, _sujet(c, "B-0001"), "> statut : ouvert", "> statut : ouvert · forme : lot")
+        return etage_git(a, c)
+
+    @defaut("besoin-hors-d-une-tache", "besoin qui écrit `besoin`, le champ d'une tâche", "git", "memoire.formes")
+    def _(a, c):
+        remplacer(c, _sujet(c, "B-0001"), "> statut : ouvert", "> statut : ouvert · besoin : B-0001")
+        return etage_git(a, c)
+
+    @defaut("priorite-d-un-lot", "lot qui écrit une priorité, lui qui n'est jamais prêt", "git", "memoire.formes")
+    def _(a, c):
+        ajouter_sujet(c, tache_essai(a, c))
+        ajouter_sujet(c, lot_essai(a, c, "L-0001", "T-0001", " · priorité : haute"))
+        return etage_git(a, c)
+
+    @defaut("tache-sans-besoin", "tâche qui ne nomme pas son besoin", "git", "memoire.formes")
+    def _(a, c):
+        ajouter_sujet(c, tache_essai(a, c).replace(" · besoin : B-0001", ""))
+        return etage_git(a, c)
+
+    @defaut("tache-dans-deux-lots", "tâche que deux lots attendent", "git", "memoire.formes")
+    def _(a, c):
+        ajouter_sujet(c, tache_essai(a, c))
+        ajouter_sujet(c, lot_essai(a, c, "L-0001", "T-0001"))
+        ajouter_sujet(c, lot_essai(a, c, "L-0002", "T-0001"))
+        return etage_git(a, c)
+
+    @defaut("lot-qui-attend-un-besoin", "lot qui attend un besoin, et non sa tâche", "git", "memoire.formes")
+    def _(a, c):
+        ajouter_sujet(c, lot_essai(a, c, "L-0001", "B-0001"))
+        return etage_git(a, c)
+
+    @defaut("apres-par-un-ancien-numero", "`après` qui nomme l'ancien numéro d'une entrée renumérotée", "git",
+            "memoire.formes")
+    def _(a, c):
+        ajouter_sujet(c, tache_essai(a, c))
+        ajouter_sujet(c, lot_essai(a, c, "L-0001", "T-0001", " · ancien : B-0002"))
+        remplacer(c, _sujet(c, "B-0001"), "> statut : ouvert", "> statut : ouvert · après : B-0002")
+        return etage_git(a, c)
+
+    @defaut("ancien-numero-reattribue", "entrée nouvelle sous l'ancien numéro d'une entrée renumérotée", "git",
+            "memoire.format")
+    def _(a, c):
+        ajouter_sujet(c, tache_essai(a, c))
+        ajouter_sujet(c, lot_essai(a, c, "L-0001", "T-0001", " · ancien : B-0001"))
+        return etage_git(a, c)
+
+    @defaut("besoin-clos-tache-ouverte", "besoin abandonné avec sa tâche encore ouverte", "git", "memoire.formes")
+    def _(a, c):
+        ajouter_sujet(c, tache_essai(a, c))
+        remplacer(c, _sujet(c, "B-0001"), "> statut : ouvert", "> statut : abandonné · ref : fichier:calc.py")
+        return etage_git(a, c)
+
+    @defaut("besoin-fait-sans-tache-faite", "besoin fait sans aucune tâche faite", "git", "memoire.formes")
+    def _(a, c):
+        remplacer(c, _sujet(c, "B-0001"), "> statut : ouvert", "> statut : fait · ref : fichier:calc.py")
+        return etage_git(a, c)
+
+    @defaut("fait-quand-d-un-besoin", "besoin ouvert dont la section est « Fait quand », celle d'une tâche", "git",
+            "memoire.formes")
+    def _(a, c):
+        ajouter(c, _sujet(c, "B-0001"), "\n## Fait quand\n\n- [ ] triple existe\n")
+        return etage_git(a, c)
+
+    @defaut("satisfait-quand-d-une-tache", "tâche ouverte qui porte « Satisfait quand », la section d'un besoin",
+            "git", "memoire.formes")
+    def _(a, c):
+        ajouter_sujet(c, tache_essai(a, c) + SATISFAIT_ESSAI)
+        return etage_git(a, c)
+
+    @defaut("besoin-nouveau-sans-section", "besoin nouveau sans sa section « Satisfait quand »", "git",
+            "memoire.formes")
+    def _(a, c):
+        ajouter_sujet(c, "\n## B-0002 — Ajouter une fonction quadruple\n\n"
+                         f"> statut : ouvert · origine : {a.journal} · lu : backlog@{empreinte(a, c, 'backlog')}"
+                         "\n\nPour l'essai.\n")
         return etage_git(a, c)
 
     # Au-delà du tableau du cadrage.
@@ -2258,15 +2362,32 @@ def _temoins() -> list[tuple[str, Callable]]:
         _poser_skill(c, SKILL_ESSAI)
         return etage_git(a, c) or etage_ci(a, c)
 
-    @temoin("un jalon qui attend une tâche ouverte, dans l'ordre, passe le commit et la CI")
+    @temoin("un jalon qui attend un besoin ouvert, dans l'ordre, passe le commit et la CI")
     def _(a, c):
-        ajouter_sujet(c, "\n## B-0002 — Livrer la multiplication\n\n"
-                         f"> statut : ouvert · origine : {a.journal} · forme : jalon · après : B-0001 · "
+        ajouter_sujet(c, "\n## JA-0001 — Livrer la multiplication\n\n"
+                         f"> statut : ouvert · origine : {a.journal} · après : B-0001 · "
                          f"lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n")
         maj_memoire(c, "Le jalon de la multiplication posé.")
         return etage_git(a, c) or etage_ci(a, c)
 
-    @temoin("un sujet de priorité haute fait après la réponse qu'il attendait, ses critères cochés, passe le "
+    @temoin("un besoin et sa tâche posés par `socle new need --task`, un lot qui attend la tâche et un jalon qui "
+            "attend le besoin, chacun dans sa forme, passent le commit et la CI")
+    def _(a, c):
+        r = a.socle(c, "new", "need", "Ajouter une fonction quadruple", "--task", "Écrire quadruple et son test")
+        if r.returncode != 0 or "T-0001" not in r.stdout:
+            return r.stdout + r.stderr
+        for ident in ("B-0002", "T-0001"):
+            p = c / _sujet(c, ident)
+            p.write_text(re.sub(r"<J-…[^>]*>", a.journal, re.sub(r"- \[ \] <[^>]*>", "- [ ] quadruple existe",
+                                                                     p.read_text())))
+        ajouter_sujet(c, lot_essai(a, c, "L-0001", "T-0001"))
+        ajouter_sujet(c, "\n## JA-0001 — Le module complet\n\n"
+                         f"> statut : ouvert · origine : {a.journal} · après : B-0001, B-0002 · "
+                         f"lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n")
+        maj_memoire(c, "Le lot de la quadruple formé.")
+        return etage_git(a, c) or etage_ci(a, c)
+
+    @temoin("une tâche de priorité haute faite après la réponse qu'elle attendait, ses critères cochés, passe le "
             "commit et la CI")
     def _(a, c):
         (c / "memory/requests/D-0001-refactor.md").write_text(demande_bonne(a, c))
@@ -2276,10 +2397,7 @@ def _temoins() -> list[tuple[str, Callable]]:
         if r.returncode != 0:
             return r.stdout + r.stderr
         (c / "citation.txt").unlink()
-        ajouter_sujet(c, "\n## B-0002 — Livrer la multiplication\n\n"
-                         f"> statut : fait · origine : {a.journal} · ref : fichier:calc.py · après : D-0001 · "
-                         f"priorité : haute · lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n\n"
-                         "## Fait quand\n\n- [x] le test passe\n")
+        ajouter_sujet(c, tache_essai(a, c, statut="fait · ref : fichier:calc.py · après : D-0001 · priorité : haute"))
         maj_memoire(c, "La multiplication livrée.")
         return etage_git(a, c) or etage_ci(a, c)
 
@@ -2732,8 +2850,9 @@ def _temoins() -> list[tuple[str, Callable]]:
         r = a.socle(c, "check", "--stage", "ci", "--base", point)
         return "" if r.returncode == 0 else r.stdout + r.stderr
 
-    @temoin("un sujet clos, rangé avec les clos par `socle archive`, passe la CI")
+    @temoin("un besoin clos après sa tâche faite, rangés avec les clos par `socle archive`, passent la CI")
     def _(a, c):
+        ajouter_sujet(c, tache_essai(a, c, statut="fait · ref : fichier:calc.py"))
         _clore(c, "B-0001")
         r = a.socle(c, "archive")
         if r.returncode != 0 or not list((c / "memory/backlog/closed").glob("B-0001-*.md")):
@@ -2746,7 +2865,8 @@ def _temoins() -> list[tuple[str, Callable]]:
         f1 = f"F-0001@{empreinte(a, c, 'F-0001')}"
         ajouter(c, "memory/decisions/ADR-0001-une-seule-multiplication.md", ADR_ESSAI.format(lu=lu, fait=f1))
         ajouter_sujet(c, "\n## B-0002 — Ajouter une fonction quadruple\n\n"
-                f"> statut : ouvert · origine : {a.journal} · lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n")
+                f"> statut : ouvert · origine : {a.journal} · lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n"
+                f"{SATISFAIT_ESSAI}")
         return etage_git(a, c)
 
     @temoin("un commit d'agent fait dans un autre worktree porte la trace des hooks et passe la CI")

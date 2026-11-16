@@ -11,6 +11,6 @@ cherche le mot `supprimé` dans la demande validée (`proteges`, dans
 serait pas reconnue. Lu dans le code en traitant le budget d'une demande
 (J-2026-11-10-R), non reproduit ; aucun test ne couvre ce cas.
 
-## Fait quand
+## Satisfait quand
 
 - [x] dans un projet en anglais, un fichier protégé supprimé que l'humain approuve passe la CI, et un test le montre

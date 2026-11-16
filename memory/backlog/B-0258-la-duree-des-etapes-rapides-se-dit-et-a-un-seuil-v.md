@@ -23,9 +23,8 @@ Conception à trancher, la spécification avant le code : où s'écrit le
 seuil ; sa valeur par défaut (les cinq minutes viennent du cache d'un
 agent, que le moteur ne connaît pas) ; ce que le cliquet en dit.
 
-Théo le passe en priorité haute le 16 novembre, au lot B-0266, juste après B-0264 (J-2026-11-16-I) : une vérification plus courte rend chaque lot suivant moins cher.
+Théo le passe en priorité haute le 16 novembre, au lot L-0012, juste après L-0011 (J-2026-11-16-I) : une vérification plus courte rend chaque lot suivant moins cher.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] `verify --fast` imprime la durée de chaque étape et le total, et un test le montre
-- [ ] un seuil dépassé donne un avertissement qui nomme l'étape, et un test le montre
+- [ ] le « Fait quand » de T-0045 est tenu

@@ -58,6 +58,6 @@ une expression de `find` qui, depuis la racine, viserait tout le projet
 (`-type f`, `! -name x`), et une part inconnue qui vaut elle-même `..`
 (ADR-0072) : ils vont à B-0228.
 
-## Fait quand
+## Satisfait quand
 
 - [x] la suppression d'un dossier qui contient le projet est refusée par le hook, et un test le montre

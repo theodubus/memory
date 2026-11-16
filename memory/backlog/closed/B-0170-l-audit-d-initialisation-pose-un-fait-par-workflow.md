@@ -8,6 +8,6 @@ l'audit sont « une CI GitHub existe », un par workflow, dont sept ne sont
 pas des CI (lancés à la main, ou planifiés). Ils sont relus à chaque
 session.
 
-## Fait quand
+## Satisfait quand
 
 - [x] les workflows d'un projet tiennent en un fait, qui distingue ceux qui jugent un push ou une pull request des autres

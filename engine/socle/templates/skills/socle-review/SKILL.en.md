@@ -16,11 +16,11 @@ or a test; never for a batch that only touches the memory. One pass per
 batch; a second one only if the fix of the blocking findings is heavy (it
 changes the design of a part, not a few lines), and on that fix alone.
 
-The reviewer judges the batch against its topics: their “Done when”
-criterion and, for a guardrail, its threat model. A topic that adds or
+The reviewer judges the batch against its tasks: their “Done when”
+criterion and, for a guardrail, its threat model. A need that adds or
 changes a guardrail therefore writes it before its code, in its
 `## Threat model` section or in the decision it cites: what the
-guardrail stops, what it lets through; a topic whose design is not
+guardrail stops, what it lets through; a need whose design is not
 settled, its specification.
 
 ## How
@@ -78,8 +78,8 @@ The reviewer classifies them; the agent checks each classification.
   threat model): fixed in the batch, before the push.
 - **For the backlog**: a finding that does not block goes to the
   backlog if it can occur in the project's normal use, or if nothing
-  catches its effect afterwards; one topic per finding, or one for
-  several of the same kind.
+  catches its effect afterwards: one task per finding if its fix is
+  clear, a need otherwise, or one entry for several of the same kind.
 - **Dismissed**: an exotic finding (a rare gesture, a form one only
   writes to get around something, a case never reproduced) whose effect
   is caught, by a check, the CI or an error the agent sees at once; and
@@ -95,5 +95,5 @@ The reviewer classifies them; the agent checks each classification.
 
 Post nothing on GitHub: the human reads the recap, not the review. The
 recap says it in one line: `Review: <b> blocking, fixed; <n> to the
-backlog (<topics>); dismissed: <reason for each>`, or `Review: no
+backlog (<entries>); dismissed: <reason for each>`, or `Review: no
 finding`.

@@ -72,10 +72,6 @@ programmée ». Pour qu'aucun travail ne se fasse en double :
   session qui a continué sur sa propre branche, puisque chaque session a
   la sienne.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] l'essai de B est fait et son relevé écrit, chaque inconnue levée ou dite non levée ; A n'est essayée que si B échoue
-- [ ] Théo a confirmé la variante sur ce relevé
-- [ ] la spécification de la passation programmée et du commutateur est soumise à Théo avant son code, pour la seule variante retenue
-- [ ] en mode « session programmée », le rangement programme la session neuve au lieu de donner le prompt, et un test le montre pour ce qui se teste sans la plateforme
-- [ ] changer de mode annule ce qui est programmé, et la garde contre le travail en double est écrite dans le prompt de passation
+- [ ] le « Fait quand » de T-0041 est tenu

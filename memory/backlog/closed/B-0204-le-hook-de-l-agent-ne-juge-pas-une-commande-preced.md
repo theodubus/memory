@@ -61,6 +61,6 @@ do sed -i … "$f"; done`) se juge désormais, comme `read f; sed -i … "$f"`
 hors d'une boucle : un chemin illisible dans le projet est refusé
 (ADR-0072).
 
-## Fait quand
+## Satisfait quand
 
 - [x] une écriture d'un fichier protégé derrière `then`, `do`, `else` ou `!` est refusée par le hook, et un test le montre

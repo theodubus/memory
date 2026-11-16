@@ -21,6 +21,6 @@ suit s'ouvre comme sans lui.
 
 Abandonné le 16 novembre selon D-0120 (J-2026-11-16-G) : `time` devant une commande composée, qu'aucun agent n'écrit dans son travail, va à la liste des formes connues que le hook ne juge pas (B-0261).
 
-## Fait quand
+## Satisfait quand
 
 - [ ] `time { git push --force origin main; }`, `time if git push --force origin main; then :; fi` et `time function f { rm -rf ..; }` sont refusés par le hook, `time ls` passe, et un test le montre

@@ -8,6 +8,6 @@ sujet ouvert », et la docstring d'`Ordre` de même ; un sujet peut aussi
 attendre une demande sans réponse (D-0064), comme sur le pilote
 (J-2026-11-10-H). Relevé par la revue de B-0146 (J-2026-11-10-J).
 
-## Fait quand
+## Satisfait quand
 
 - [x] l'état dit ce qu'attendent ses sujets en attente, sujet ou demande, et un test le montre

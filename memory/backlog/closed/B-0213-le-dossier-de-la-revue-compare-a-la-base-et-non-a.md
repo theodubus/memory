@@ -51,7 +51,7 @@ skill `socle-review` dit de donner `--base <le commit d'avant le lot>` ;
 qu'un lot poussé en plusieurs fins de tour le ferait commencer au milieu
 du lot, une relecture partielle que rien ne rattrape.
 
-## Fait quand
+## Satisfait quand
 
 - [x] le dossier mesure le lot depuis l'ancêtre commun, refuse une référence inconnue ou qui n'est pas un ancêtre, et un test le montre
 - [x] un sujet touché sans que son « Fait quand » ou son statut change n'est pas donné comme barre, et un test le montre

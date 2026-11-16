@@ -3,7 +3,7 @@
 
 > statut : ouvert · origine : J-2026-11-16-B · priorité : haute · lu : backlog@1e6f341a
 
-La seconde revue du lot B-0234 (J-2026-11-16-B) : `irreversible`
+La seconde revue du lot L-0004 (J-2026-11-16-B) : `irreversible`
 (`engine/socle/hooks.py`) lit l'argv d'un `git push` tel qu'il est écrit,
 et aucun autre étage ne refuse un push forcé (le hook avant envoi ne le
 cherche pas). Passent, avant le lot comme après : `f() { git push "$@";
@@ -18,6 +18,6 @@ connaît pas, `"$@"` dans le corps d'une fonction), comme ADR-0072 juge un
 chemin inconnu, et lire les arguments de l'appel d'une fonction dont le
 corps pousse.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] les trois formes ci-dessus sont refusées par le hook, `git push origin travail` et `B=travail; git push origin "$B"` passent, et un test le montre
+- [ ] le « Fait quand » de T-0006 est tenu

@@ -17,6 +17,6 @@ et peut viser un chemin protégé, au prix de faux refus à mesurer.
 Le 12 novembre, Théo valide la priorité haute proposée (D-0106) : c'est
 un contournement possible d'un garde-fou.
 
-## Fait quand
+## Satisfait quand
 
 - [x] une écriture du shell vers un chemin protégé écrit par une variable ou un motif est refusée par le hook, et un test le montre

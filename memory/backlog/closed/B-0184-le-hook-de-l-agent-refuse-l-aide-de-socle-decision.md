@@ -8,6 +8,6 @@
 à la place de l'humain. Pour connaître leurs arguments, l'agent de chess a
 lu le code ; la session du socle a buté sur le même refus le 11 novembre.
 
-## Fait quand
+## Satisfait quand
 
 - [x] l'aide de ces commandes passe, et rien de plus : une réponse sans `--relayed` ni citation reste refusée ; un test le montre

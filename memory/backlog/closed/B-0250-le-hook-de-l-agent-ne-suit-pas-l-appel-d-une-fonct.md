@@ -3,7 +3,7 @@
 
 > statut : fait · origine : J-2026-11-15-R · priorité : haute · ref : J-2026-11-16-C · lu : backlog@381c20a4
 
-Vu en corrigeant les bloquants 2 et 3 de la revue du lot B-0234
+Vu en corrigeant les bloquants 2 et 3 de la revue du lot L-0004
 (J-2026-11-15-R) : le découpage suit désormais l'appel d'une fonction
 définie dans la commande dont le corps `{ …; }` change le dossier
 (`fonctions`, `commands._analyser`), mais ne transmet pas ces fonctions
@@ -26,6 +26,6 @@ La piste : passer une copie de `fonctions` aux `_analyser` des
 substitutions et d'`eval`, pas à celui d'un `bash -c`, un autre
 processus qui ne les hérite pas (hors `export -f`).
 
-## Fait quand
+## Satisfait quand
 
 - [x] `f() { cd memory; }; x=$(f; rm -rf ../../<racine>)` et `f() { cd memory; }; eval "f; rm -rf ../../<racine>"` sont refusés par le hook, `f() { ls; }; x=$(f); rm -rf build` passe, et un test le montre

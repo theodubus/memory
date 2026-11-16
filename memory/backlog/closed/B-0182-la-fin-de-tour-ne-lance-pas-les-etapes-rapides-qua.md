@@ -11,6 +11,6 @@ où les tests d'intégration vivent hors des sources. Un changement des seuls
 tests n'est alors vérifié qu'au push et en CI. Ce n'est pas voulu : un test
 changé se lance avant la fin du tour.
 
-## Fait quand
+## Satisfait quand
 
 - [x] la fin de tour lance les étapes rapides quand un fichier de tests que l'adaptateur déclare a changé, sources inchangées ; un test le montre

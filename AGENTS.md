@@ -175,7 +175,7 @@ sans attendre de message. Il annonce d'abord le lot, pas forcément tout ce
 qui est prêt (les sujets, leur taille, le jalon qu'ils servent ; un sujet de
 priorité basse s'il est commode), puis s'y met ; il s'arrête à la fin du
 lot, ou dès qu'une décision revient à l'humain. Il ne change pas une
-priorité que l'humain a donnée. Le lot se garde au backlog (`forme : lot`)
+priorité que l'humain a donnée. Le lot se garde au backlog (`socle new batch`)
 et se mène selon le skill `socle-batch`. Avant le push d'un lot qui change
 du code, une spécification ou un test, il le fait relire par un relecteur
 sans contexte, contre le « Fait quand » de ses sujets (le skill

@@ -16,6 +16,6 @@ la pull request suivante ; J-2026-11-14-E l'avait déjà montré.
 
 B-0199 porte cette étape dans le produit : la corriger là.
 
-## Fait quand
+## Satisfait quand
 
 - [x] après la fusion, la procédure ne pousse pas une branche qui n'a rien de plus que la branche par défaut ; ce qu'elle écrit après la fusion (chantier actif, journal) part avec le travail suivant, ou se fait avant la fusion

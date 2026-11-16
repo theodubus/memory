@@ -3,7 +3,7 @@
 
 > statut : ouvert · origine : J-2026-11-15-O · priorité : haute · ref : J-2026-11-16-G · lu : backlog@b85fce13
 
-La revue du lot B-0234 (J-2026-11-15-O), cinquième constat pour le
+La revue du lot L-0004 (J-2026-11-15-O), cinquième constat pour le
 backlog : deux voisins hors du lot, par où passent un push forcé ou la
 suppression du projet.
 
@@ -25,6 +25,6 @@ préfixes, à la manière de `python -m`.
 
 Réduit le 16 novembre selon D-0120 (J-2026-11-16-G) : gardé pour `uv run` et `poetry run`, des préfixes qu'un agent écrit dans son travail ; `coproc` va à la liste des formes connues que le hook ne juge pas (B-0261).
 
-## Fait quand
+## Satisfait quand
 
-- [ ] `uv run rm -rf ..` et `poetry run git push --force origin main` sont refusés par le hook, `uv run pytest` passe, et un test le montre
+- [ ] le « Fait quand » de T-0005 est tenu

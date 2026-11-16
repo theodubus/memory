@@ -17,7 +17,6 @@ sur les deux lignes que Théo a écrites exprès dans celle de chess
 (`[irreversible] tools`, `keep_branches`) : un écart voulu, répété comme
 s'il était nouveau.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] l'installeur dit en une ligne qu'il n'y a rien à inscrire quand l'adoption est vide, et un test le montre
-- [ ] un écart de politique déjà vu à la mise à jour précédente ne se réaffiche pas en entier, et un test le montre
+- [ ] le « Fait quand » de T-0026 est tenu

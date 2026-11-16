@@ -13,6 +13,6 @@ session ne peut pas commiter ce qu'on lui dit de commiter. Relevé par la
 revue de B-0148 (J-2026-11-10-J) ; le README déconseille déjà d'ajouter
 le dépôt du socle à la session.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] « Et maintenant » ne dit à aucune session de commiter ce que le hook avant commit refusera, et un test le montre
+- [ ] le « Fait quand » de T-0029 est tenu

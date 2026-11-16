@@ -14,6 +14,6 @@ tour d'avant a fini sur une limite. Coût : 4 à 6 appels par tour qui
 agit. Chercher une autre source (la transcription locale, la trace des
 hooks) qui dise l'heure et la cause.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] sans `list_events`, la vérification du réveil sait si le tour d'avant a fini sur une limite, ou le skill le dit inconnaissable et ce qu'il fait alors
+- [ ] le « Fait quand » de T-0040 est tenu

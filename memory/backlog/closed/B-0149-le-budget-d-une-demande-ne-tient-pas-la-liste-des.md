@@ -13,6 +13,6 @@ Pistes du pilote : sortir du budget la liste des fichiers protégés d'une
 mise à jour ; accepter une forme courte (chemin et empreinte) ; ou une
 commande du socle qui écrit cette liste dans la demande.
 
-## Fait quand
+## Satisfait quand
 
 - [x] une demande d'approbation d'une mise à jour tient ses fichiers protégés sans sacrifier son contexte, et l'agent sait son contrat avant de l'écrire

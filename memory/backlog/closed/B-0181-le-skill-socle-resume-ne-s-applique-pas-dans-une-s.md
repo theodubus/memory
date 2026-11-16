@@ -11,6 +11,6 @@ l'agent ne reprend pas seul après une limite d'usage. Piste : sans cet
 outil, armer chaque réveil à la borne que le skill prévoit déjà, maintenant
 plus cinq heures et cinq minutes, plus sept jours et cinq minutes.
 
-## Fait quand
+## Satisfait quand
 
 - [x] sans l'outil `list_events`, le skill dit quoi faire, dans ses deux langues : l'agent arme ses réveils à leur borne et reprend seul après une limite

@@ -12,6 +12,6 @@ protégés avec le journal et le chantier actif qui les citent. L'étape 2
 de « Et maintenant » propose un seul commit de tout, alors que l'étape 1
 dit que la demande poussée laisse ensuite commiter les fichiers protégés.
 
-## Fait quand
+## Satisfait quand
 
 - [x] « Et maintenant », en session cloud, dit l'ordre des commits d'une mise à jour, et un test le montre

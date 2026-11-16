@@ -19,6 +19,6 @@ juger la plage quand la branche distante a disparu sans fusion ; ou dire,
 dans le refus du push, que la suppression de la branche n'est pas une
 issue.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] une branche distante supprimée sans fusion ne fait plus accepter la réécriture de ce qui y avait été poussé, ou la raison de ne pas l'empêcher est écrite
+- [ ] le « Fait quand » de T-0018 est tenu

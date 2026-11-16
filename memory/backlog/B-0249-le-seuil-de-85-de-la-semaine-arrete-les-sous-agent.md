@@ -16,6 +16,6 @@ qu'un pourcentage fixe : un sous-agent se lance si ce qui reste couvre sa
 part et celle du rangement ; le rangement commence à une marge fixe de la
 limite.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] le skill `socle-batch` et son gabarit lancent un sous-agent tant que ce qui reste de la fenêtre couvre sa part mesurée et celle du rangement, et le disent
+- [ ] le « Fait quand » de T-0037 est tenu

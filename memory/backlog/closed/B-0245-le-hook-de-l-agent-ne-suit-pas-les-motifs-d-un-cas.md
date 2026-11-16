@@ -20,6 +20,6 @@ après lui, sauf un dossier connu où il revient (`incertain`).
 
 Abandonné le 16 novembre selon D-0120 (J-2026-11-16-G) : les motifs d'un `case`, qu'aucun agent n'écrit dans son travail, va à la liste des formes connues que le hook ne juge pas (B-0261).
 
-## Fait quand
+## Satisfait quand
 
 - [ ] `case a in b) cd /usr;; esac; rm -rf ../<nom de la racine>` est refusé par le hook, `case a in a) ls;; esac; rm -rf build` passe, et un test le montre

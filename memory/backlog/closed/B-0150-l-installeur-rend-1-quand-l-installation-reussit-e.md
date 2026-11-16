@@ -8,6 +8,6 @@ attend des validations (J-2026-11-10-H) : un script le lirait comme un
 échec. Piste du pilote : un code distinct, ou 0 avec l'audit en
 avertissement.
 
-## Fait quand
+## Satisfait quand
 
 - [x] le code de sortie de l'installeur distingue un échec d'une installation réussie qui attend l'humain, et un test le montre

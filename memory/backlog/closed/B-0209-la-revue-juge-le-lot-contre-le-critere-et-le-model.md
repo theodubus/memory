@@ -23,7 +23,7 @@ nouvelles fonctions (D-0109@379b5396). Le skill du projet `delegate-lot`
 (ses consignes au relecteur et au correcteur, sa règle de seconde revue)
 suit le même changement.
 
-## Fait quand
+## Satisfait quand
 
 - [x] le dossier de `socle review` donne au relecteur le critère « Fait quand » des sujets du lot et, pour un garde-fou, son modèle de menace, et lui demande de classer chaque constat : bloquant (contredit un critère, régression, perte de données, contournement dans le modèle de menace) ou pour le backlog ; un test le montre
 - [x] le skill `socle-review` dit que seuls les constats bloquants se corrigent dans le lot, les autres vont au backlog, et qu'une seconde revue ne porte que sur la correction de bloquants lourde

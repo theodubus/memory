@@ -22,7 +22,6 @@ La revue de B-0212 (J-2026-11-14-H), constat 8 : B-0212 change le gabarit
 du skill `socle-review`, que D-0110 venait de recopier ; la copie protégée
 est de nouveau en retard. Tout changement d'un gabarit crée ce retard.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] en mode amont, une copie protégée différente de son gabarit est signalée, et un test le montre
-- [ ] les copies de ce dépôt suivent leurs gabarits, sur une demande validée
+- [ ] le « Fait quand » de T-0009 est tenu

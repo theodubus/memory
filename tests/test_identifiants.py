@@ -140,7 +140,7 @@ class TestBranchesDistantes(Depot):
         git(self.racine, "switch", "-q", "-c", "w")
         # `x`, poussée, a pris B-0001 aussi, et `main` en a un : le suivant
         # est B-0002 ; sans les branches distantes, ce serait le même.
-        code, sortie = self.socle("new", "backlog", "Un sujet de w", "--public")
+        code, sortie = self.socle("new", "need", "Un sujet de w", "--public")
         self.assertEqual(code, 0, sortie)
         self.assertIn("B-0002\t", sortie)
 

@@ -20,6 +20,6 @@ tâche de cible, mutation absente ou limitée aux modules JVM) ; ou des
 commandes qui échouent bruyamment quand aucun module n'a la tâche visée.
 Le pilote adapte sa copie par une demande en attendant.
 
-## Fait quand
+## Satisfait quand
 
 - [ ] un projet Compose Multiplatform ou Android a des commandes de compilation et de tests qui lancent ses tests, ou échouent en le disant, et la spécification des adaptateurs dit ce que la copie `kotlin` suppose

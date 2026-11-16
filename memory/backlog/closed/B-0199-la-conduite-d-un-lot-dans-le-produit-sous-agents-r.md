@@ -48,7 +48,7 @@ test du moteur, `tests/test_skills.py` (`TestLaConduiteDUnLot`), comme
 pour les autres skills du socle. L'auto-test injecte des défauts aux
 contrôles, et poser un skill n'en est pas un.
 
-## Fait quand
+## Satisfait quand
 
 - [x] l'installeur pose un skill du socle qui conduit un lot, ses règles de consommation et le changement de session compris, et l'auto-test vérifie qu'il est posé et protégé
 - [x] `.claude/skills/delegate-lot/SKILL.md` ne garde que ce qui est propre à ce dépôt

@@ -55,6 +55,6 @@ commande simple dont le programme est le mot réservé, et les motifs d'un
 pas vaut pour la suite. Le premier laisse passer un push forcé, le second
 la suppression du projet, qu'une fonction soit là ou non.
 
-## Fait quand
+## Satisfait quand
 
 - [x] `function f { git push --force origin main; }; f` et `function f { rm -rf ..; }; f` sont refusés par le hook, `function f { ls; }; f` passe, et un test le montre

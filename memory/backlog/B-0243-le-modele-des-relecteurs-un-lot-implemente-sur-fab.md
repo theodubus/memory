@@ -21,8 +21,6 @@ de même nature : le modèle qu'un relecteur reçoit.
   décide. D-0117 ne vise que la revue d'un lot : à trancher, avec le coût
   de cette relecture (B-0197).
 
-## Fait quand
+## Satisfait quand
 
-- [ ] le skill `socle-review`, en français et en anglais, dit qu'un lot implémenté sur Fable fait demander à l'humain, avant la revue, s'il veut aussi Fable pour le relecteur (D-0119)
-- [ ] le skill `socle-batch`, en français et en anglais, dit qu'aucun sous-agent n'implémente sur Fable sauf si l'humain le veut (D-0119)
-- [ ] le skill `socle-request` dit le modèle du relecteur à froid, explicitement à son lancement
+- [ ] le « Fait quand » de T-0015 est tenu

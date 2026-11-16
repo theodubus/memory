@@ -7,6 +7,44 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-16-f — Le backlog en quatre formes, chacune son préfixe : besoin, tâche, lot et jalon
+
+Une entrée du backlog a désormais l'une de quatre formes, que son préfixe
+dit : un besoin (`B-`), un défaut à corriger ou une fonction à ajouter,
+avec sa section « Satisfait quand », un résultat ; une tâche (`T-`), un
+livrable qui nomme son besoin (`besoin : B-NNNN`), avec sa section « Fait
+quand », qu'un test vérifie ; un lot (`L-`), les tâches menées et relues
+ensemble ; un jalon (`JA-`), les besoins qui servent un même but. Le champ
+`forme` disparaît. Chaque forme n'attend que ce qui lui revient : un lot,
+ses tâches et le lot d'avant ; un jalon, ses besoins et le jalon d'avant.
+Seule une tâche est prête ; elle prend la priorité de son besoin et attend
+ce qu'il attend. Un besoin se ferme quand ses tâches sont closes, l'une au
+moins faite. L'état dit le prochain jalon et ses besoins ouverts, le
+prochain lot et ses tâches, les tâches prêtes, les besoins à découper et
+ceux à fermer. Les commandes `socle new need`, `socle new task "…" --need
+B-NNNN`, `socle new batch` et `socle new milestone` remplacent `socle new
+backlog`, qui disparaît ; `socle new need "…" --task "…"` pose le besoin et
+sa tâche. Un contrôle nouveau, `memoire.formes`, refuse de remélanger les
+formes.
+
+La mise à jour migre le backlog : chaque lot devient `L-` et chaque jalon
+`JA-`, clos compris, en gardant son ancien numéro (`ancien : B-NNNN`), que
+`socle show` et les contrôles des références résolvent ; toute autre entrée
+reste un besoin, sa section « Fait quand » renommée « Satisfait quand » ;
+chaque besoin qu'attend un lot ouvert reçoit une tâche qui reprend ses
+critères, vers laquelle sa section renvoie, et que le lot attend à sa
+place ; un jalon attend les besoins de ses lots. Les mentions se récrivent
+dans le backlog et le chantier actif ; le journal, les décisions et les
+demandes gardent l'ancien numéro.
+
+À faire : relire ce que la mise à jour a migré (`python3 .socle/socle
+state`, le backlog), et commiter la migration avec elle. Puis, en prenant
+chaque besoin : le découper en tâches s'il demande plusieurs livrables, et
+récrire ses critères en résultats, ceux de ses tâches en livrables qu'un
+test vérifie. Un constat de revue devient une tâche si sa correction est
+claire, un besoin sinon. Les skills `socle-batch` et `socle-review` le
+disent ; ce sont des copies protégées, dans la demande de l'installeur.
+
 ## 2026-11-16-e — Le guide ne cite plus un identifiant de la mémoire du dépôt du socle
 
 Le guide (`python3 .socle/socle help`), à « Approuver ses propres

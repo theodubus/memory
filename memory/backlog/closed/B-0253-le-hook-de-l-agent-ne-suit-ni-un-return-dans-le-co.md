@@ -3,7 +3,7 @@
 
 > statut : abandonné · origine : J-2026-11-16-B · priorité : haute · ref : J-2026-11-16-G · lu : backlog@0baae0e5
 
-La seconde revue du lot B-0234 (J-2026-11-16-B) a trouvé des appels de
+La seconde revue du lot L-0004 (J-2026-11-16-B) a trouvé des appels de
 fonction que le découpage (`commands._analyser`, `fonctions`) ne suit pas,
 avant le lot comme après, et où bash supprime le projet :
 
@@ -26,6 +26,6 @@ builtin que le hook suit se juge comme une fonction.
 
 Abandonné le 16 novembre selon D-0120 (J-2026-11-16-G) : un `return` dans une fonction, un appel indirect, une fonction nommée comme une commande ou définie par un `eval`, qu'aucun agent n'écrit dans son travail, va à la liste des formes connues que le hook ne juge pas (B-0261).
 
-## Fait quand
+## Satisfait quand
 
 - [ ] les quatre formes ci-dessus sont refusées par le hook, `f() { ls; return; }; f; rm -rf build` passe, et un test le montre

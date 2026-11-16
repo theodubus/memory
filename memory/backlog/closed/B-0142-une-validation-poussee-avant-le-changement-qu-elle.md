@@ -71,6 +71,6 @@ suivis compris ; une réponse consignée aussitôt par `socle answer
 `socle-request` dit de la consigner dès qu'elle est donnée, puis de la
 commiter et de la pousser avec le changement qu'elle autorise.
 
-## Fait quand
+## Satisfait quand
 
 - [x] un test changé sous une validation déjà poussée se pousse sans validation nouvelle, ou l'agent est averti avant de pousser la réponse seule, et un test le montre

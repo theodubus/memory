@@ -43,7 +43,7 @@ class Format3(Projet):
 
 class TestBacklogEnDossier(Format3):
     def test_un_sujet_nouveau_a_son_fichier(self):
-        code, sortie = self.socle("new", "backlog", "Un troisième sujet", "--public")
+        code, sortie = self.socle("new", "need", "Un troisième sujet", "--public")
         self.assertEqual(code, 0, sortie)
         self.assertIn("B-0003\tmemory/backlog/B-0003-un-troisieme-sujet.md", sortie)
         texte = (self.racine / "memory/backlog/B-0003-un-troisieme-sujet.md").read_text()

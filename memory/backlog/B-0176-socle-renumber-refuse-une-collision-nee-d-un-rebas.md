@@ -13,6 +13,6 @@ mention, reposer les empreintes. La commande devrait reconnaître, parmi
 deux entrées du même identifiant, celle que la branche ajoute, et
 renuméroter celle-là.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] après un rebase qui fait se heurter deux entrées, `socle renumber <id>` renumérote celle de la branche et ses mentions
+- [ ] le « Fait quand » de T-0019 est tenu

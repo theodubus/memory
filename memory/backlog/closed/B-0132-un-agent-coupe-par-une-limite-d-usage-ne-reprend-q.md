@@ -12,7 +12,7 @@ sous-agents coupés, la nuit comme le jour, et sans jamais réveiller une
 session morte (J-2026-11-08-H). L'agent voit l'utilisation de ses deux
 fenêtres et l'heure de leur remise à zéro.
 
-## Fait quand
+## Satisfait quand
 
 - [x] la spécification soumise à Théo et validée (D-0080, ADR-0050)
 - [x] la procédure écrite et posée dans tout projet (le skill `socle-resume`, D-0081)

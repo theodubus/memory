@@ -17,6 +17,6 @@ défaut quand la branche distante le contient déjà ; ou que le dossier
 dise qu'il est vide parce que la base contient le lot, et la commande à
 lancer.
 
-## Fait quand
+## Satisfait quand
 
 - [x] le dossier d'un lot déjà poussé, sans `--base`, donne son diff et ses sujets, ou dit pourquoi il est vide et quoi lancer, et un test le montre
