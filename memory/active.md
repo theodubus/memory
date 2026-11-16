@@ -5,9 +5,9 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot B-0234 poussé, relu ; restent ses trois bloquants
-(J-2026-11-15-O), une seconde revue (`--since 9aa1bbe`), le prompt de
-chess, la livraison. B-0179 en pause (J-2026-11-15-A).
+Lot B-0234 : ses trois bloquants corrigés, le prompt de chess
+complété ; la seconde revue (`--since 9aa1bbe`) en cours, puis la
+livraison (J-2026-11-16-A). B-0179 en pause (J-2026-11-15-A).
 
 ## Consignes en cours
 
