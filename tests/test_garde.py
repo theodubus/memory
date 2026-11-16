@@ -918,6 +918,61 @@ class TestGarde(unittest.TestCase):
                          ("function nettoyer\n{\n  rm -rf build\n}\nnettoyer", None),
                          ("echo function f { ls; }", None), ("function f [[ -n x ]]; echo ok > notes.txt", None)])
 
+    def test_l_appel_d_une_fonction_qui_change_de_dossier_rend_la_suite_inconnue(self):
+        """La seconde revue du lot B-0234, bloquant 2 (J-2026-11-15-O) : le
+        corps `{ … }` d'une fonction rend en se fermant l'état d'avant lui ;
+        à l'appel, le hook ne suivait pas ce que le corps change, et une
+        suppression du projet depuis le dossier qu'il laisse derrière lui
+        passait. L'appel d'une telle fonction rend inconnu ce qu'elle change,
+        et ce qui suit se juge comme un état inconnu (ADR-0072, point 6), y
+        compris la forme `f() { … }` (troisième constat), un appel derrière
+        un mot réservé, dans un groupe, par une fonction qui en appelle une
+        autre, ou après une redéfinition."""
+        nom = self.racine.name
+        with self.environnement():
+            self.jugees([(f"function f {{ cd memory; }}; f; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ cd memory; }}; f; rm -rf ../../{nom}", "illisible"),
+                         (f"function f\n{{ cd memory; }}\nf\nrm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ cd memory; }}; ! f; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ cd memory; }}; if true; then f; fi; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ cd memory; }}; {{ f; }}; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ cd memory; }}; g() {{ f; }}; g; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ ls; }}; f() {{ cd memory; }}; f; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ X=memory; }}; f; cd $X; rm -rf ../../{nom}", "illisible"),
+                         # Garde libre l'usage normal : une fonction qui ne
+                         # change ni dossier ni variable, un préfixe programme
+                         # qui lance un externe et non la fonction.
+                         ("f() { ls; }; f; rm -rf build", None),
+                         ("f() { echo x > /tmp/y; }; f; echo ok > notes.txt", None),
+                         ("f() { cd memory; }; command f; echo ok > notes.txt", None),
+                         ("f() { cd memory; }; f; ls", None)])
+
+    def test_un_mot_reserve_cite_ou_echappe_se_lit_comme_un_mot(self):
+        """La seconde revue du lot B-0234, bloquant 3 (J-2026-11-15-O) : un
+        mot réservé entre guillemets ou échappé (`"function"`, `\\function`,
+        `$'function'`, `'function'`) se lisait comme réservé ; bash le lance
+        comme une commande, puis exécute sur place le groupe qui suit. Il se
+        marque comme `CITE` le fait pour les opérateurs, et ne se lit plus
+        comme réservé ; un `}` cité ne ferme plus trop tôt le corps d'une
+        fonction (quatrième constat)."""
+        nom = self.racine.name
+        for ouvre in ('"function"', "\\function", "$'function'", "'function'"):
+            cmd = f"{ouvre} f\n{{ git {P} --force origin main; }}"
+            with self.subTest(cmd):
+                self.assertIn("push forcé", hooks.refus_bash(self.projet, cmd) or "")
+        with self.environnement():
+            self.jugees([(f'"function" f\n{{ cd memory; }}\nrm -rf ../../{nom}', "protege"),
+                         (f"\\function f\n{{ cd memory; }}\nrm -rf ../../{nom}", "protege"),
+                         (f"$'function' f\n{{ cd memory; }}\nrm -rf ../../{nom}", "protege"),
+                         (f"'function' f\n{{ cd memory; }}\nrm -rf ../../{nom}", "protege"),
+                         (f'"function" f\n{{ cd memory; }}\nrm -rf ../..', "supprime"),
+                         (f'f() {{ cd memory; "}}"; rm -rf ../../{nom}; }}; f', "protege"),
+                         (f'function f\n{{ cd memory; "}}"; rm -rf ../../{nom}; }}\nf', "protege"),
+                         # Un mot réservé cité reste un mot, jamais une
+                         # structure : il ne définit ni ne ferme rien.
+                         ('echo "}" ; echo done', None), ('echo "function" f', None),
+                         ('grep -n "function" notes.txt', None)])
+
     def test_une_boucle_qui_revient_a_son_dossier_le_garde(self):
         """La revue du lot 3, bloquant 5 (J-2026-11-14-AH) : une boucle ou
         une condition qui revient à son dossier (`cd x; …; cd ..`) le rendait
@@ -1415,6 +1470,42 @@ class TestDecoupage(unittest.TestCase):
                             ("echo function f { rm a; }", [["echo", "function", "f", "{", "rm", "a"], ["}"]])):
             with self.subTest(texte):
                 self.assertEqual([c.argv for c in commandes.analyser(texte)], argv)
+
+    def test_l_appel_d_une_fonction_qui_change_de_dossier(self):
+        """La seconde revue du lot B-0234, bloquant 2 (J-2026-11-15-O) :
+        l'appel d'une fonction dont le corps `{ … }` change le dossier le
+        rend inconnu (`cd` restitué à la fermeture du corps, suivi à
+        l'appel) ; une variable que le corps affecte devient inconnue. Une
+        fonction qui ne change rien, ou un préfixe programme, ne fuit rien."""
+        env = {"PWD": "/p"}
+        I = commandes.INCONNU
+        for texte, lieu in (("f() { cd /a; }; f", I), ("function f { cd a; }; f", I),
+                            ("f() { cd /a; }; g() { f; }; g", I), ("f() { ls; }; f() { cd /a; }; f", I),
+                            ("f() { cd /a; }; ! f", I), ("f() { cd /a; }; { f; }", I),
+                            ("f() { cd /a; }; f", I), ("f() { ls; }; f", "/p"),
+                            ("f() { echo x > /tmp/y; }; f", "/p"), ("f() { cd /a; }; command f", "/p"),
+                            ("f() { cd a; cd ..; }; f", "/p")):
+            with self.subTest(texte):
+                self.assertEqual(commandes.analyser(texte + "; ls", environnement=env)[-1].lieu, lieu)
+        c = commandes.analyser("f() { X=1; }; f; cd $X; ls", environnement=env)[-1]
+        self.assertEqual(c.lieu, I)
+
+    def test_un_mot_reserve_cite_est_un_mot(self):
+        """La seconde revue du lot B-0234, bloquant 3 (J-2026-11-15-O) : un
+        mot réservé cité ou échappé se marque comme un opérateur cité et ne
+        se lit plus comme une structure ; `jetons` retire la marque."""
+        env = {"PWD": "/p"}
+        # Le groupe `{ cd /a; }` qui suit un `"function"` cité s'exécute sur
+        # place : ce n'est pas le corps d'une fonction.
+        for texte in ('"function" f\n{ cd /a; }', "\\function f\n{ cd /a; }",
+                      "$'function' f\n{ cd /a; }", "'function' f\n{ cd /a; }"):
+            with self.subTest(texte):
+                self.assertEqual(commandes.analyser(texte + "; ls", environnement=env)[-1].lieu, "/a")
+        # Un `}` cité ne ferme pas le corps : le `cd /a` reste dans le corps,
+        # rendu à la fermeture, et ne vaut pas pour la suite.
+        self.assertEqual(commandes.analyser('f() { cd /a; "}"; ls; }; ls', environnement=env)[-1].lieu, "/p")
+        self.assertEqual(commandes.jetons('"function" f "}" "then"'), ["function", "f", "}", "then"])
+        self.assertEqual([c.argv for c in commandes.analyser('"function" f')], [["function", "f"]])
 
     def test_normaliser_et_lieu_sur(self):
         """La revue de B-0171, constat 4 : un `..` ne remonte pas une part

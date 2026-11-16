@@ -70,6 +70,13 @@ RESERVES = ("if", "then", "else", "elif", "while", "until", "do", "!", "{")
 # et le corps d'une fonction (`nom() { …; }`) pas là où il s'écrit.
 OUVRANTS = ("if", "while", "until", "for", "select", "{")
 FERMANTS = ("fi", "done", "}")
+# Les mots que le découpage lit comme une structure (`function`, `{`, `}`,
+# `if`, `then`, `do`, `done`, `!`…), et non comme le nom d'une commande. Un
+# mot cité ou échappé dont le texte nu est l'un d'eux n'est pas réservé pour
+# bash (`"function" f`, `\function`, `f() { "}"; … }`) : il se lance comme
+# une commande, et le hook le lit comme un mot, jamais comme une structure
+# (B-0232, la seconde revue du lot B-0234).
+MOTS_STRUCTURE = frozenset(RESERVES + FERMANTS + OUVRANTS + ("function",))
 # Ce que le dépliage des `for` d'une commande peut ajouter à ce que le
 # découpage lit, en caractères, le texte des substitutions et des `bash -c`
 # que chaque tour relit compris, pour toute la commande, ses sous-shells
@@ -92,9 +99,12 @@ SPECIALES = frozenset({
 # Le repère, dans le texte que lit `shlex`, d'une part mise de côté
 # (`_preparer`).
 REPERE = re.compile("\x01(\\d+)\x01")
-# Ce qui marque un mot fait d'opérateurs échappés ou entre guillemets
-# (`\(`, `';'`) : un mot, que le découpage ne lit pas comme un opérateur
-# (`find … \( … \) -exec … \;`, la revue du lot 3, J-2026-11-14-AH).
+# Ce qui marque un mot dont une part est citée ou échappée : le découpage
+# ne le lit ni comme un opérateur (`\(`, `';'` ; `find … \( … \) -exec … \;`,
+# la revue du lot 3, J-2026-11-14-AH), ni comme un mot réservé (`"function"`,
+# `\function`, `"}"` ; la seconde revue du lot B-0234, B-0232). `_preparer`
+# le pose à chaque guillemet et chaque échappement ; `_jetons` ne le garde
+# que devant un mot dont le texte nu est un opérateur ou un mot réservé.
 CITE = "\x02"
 # Les opérateurs du shell, les plus longs d'abord : `shlex` rend d'un bloc
 # une suite de ponctuations (`);`, `)>`).
@@ -300,6 +310,9 @@ def _preparer(texte: str) -> tuple[str, list[tuple[str, str | None]]]:
         if ch == "\\" and texte[i + 1:i + 2] and texte[i + 1] in ";&|()<>":
             cite(i + 2, texte[i + 1])
         elif ch == "\\":
+            # Un échappement : le mot porte `CITE`, pour que `_jetons` ne le
+            # lise pas comme un mot réservé (`\function`, B-0232).
+            res.append(CITE)
             res.append(texte[i:i + 2])
             i += 2
         elif ch == "'":
@@ -308,6 +321,7 @@ def _preparer(texte: str) -> tuple[str, list[tuple[str, str | None]]]:
             if fin - i > 2 and texte[fin - 1] == "'" and _operateur(texte[i + 1:fin - 1]):
                 cite(fin, texte[i + 1:fin - 1])
                 continue
+            res.append(CITE)
             res.append(texte[i:fin])
             i = fin
         elif ch == '"' and (fin := _fin_guillemets(texte, i)) - i > 2 and texte[fin - 1] == '"' \
@@ -316,6 +330,7 @@ def _preparer(texte: str) -> tuple[str, list[tuple[str, str | None]]]:
         elif ch == '"':
             fin = _fin_guillemets(texte, i)
             res.append('"')
+            res.append(CITE)
             k = i + 1
             while k < fin:
                 if texte[k] == "\\":
@@ -343,6 +358,7 @@ def _preparer(texte: str) -> tuple[str, list[tuple[str, str | None]]]:
             elif _operateur(valeur):
                 cite(fin, valeur)
             else:
+                res.append(CITE)
                 res.append("'" + valeur.replace("'", "'\\''") + "'")
                 i = fin
         elif texte.startswith('$"', i):
@@ -390,10 +406,11 @@ def _jetons(texte: str) -> list[tuple[str, list[str]]]:
         internes = [interne for k in REPERE.findall(j) if (interne := parts[int(k)][1]) is not None]
         mot = REPERE.sub(lambda m: parts[int(m.group(1))][0], j)
         if CITE in mot:
-            # Un mot fait d'opérateurs cités garde sa marque, que le
-            # découpage retire en le lisant comme un mot.
+            # Un mot cité dont le texte nu est un opérateur ou un mot réservé
+            # garde sa marque, que le découpage retire en le lisant comme un
+            # mot (`"function"`, `"}"`, B-0232) ; un autre mot la perd.
             nu = mot.replace(CITE, "")
-            mot = CITE + nu if _operateur(nu) else nu
+            mot = CITE + nu if _operateur(nu) or nu in MOTS_STRUCTURE else nu
         res.append((mot, internes))
     return res
 
@@ -667,9 +684,18 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int]) -> list[Com
     debut_liste, debut_tube, en_tube = etat.copie(), etat.copie(), False
     englobants: list[tuple[_Etat, _Etat, _Etat, bool]] = []
     # Les commandes composées ouvertes (B-0204) : le mot qui l'ouvre, l'état
-    # d'avant elle, ceux du début de sa liste et de son pipeline, et, pour
-    # une boucle, ce que dit `_boucle`.
-    composes: list[tuple[str, _Etat, _Etat, _Etat, bool, dict | None]] = []
+    # d'avant elle, ceux du début de sa liste et de son pipeline, pour une
+    # boucle ce que dit `_boucle`, et, pour le corps `{ … }` d'une fonction,
+    # son nom (B-0232).
+    composes: list[tuple[str, _Etat, _Etat, _Etat, bool, dict | None, str | None]] = []
+    # Les fonctions définies dans le texte dont le corps `{ … }` change le
+    # dossier ou des variables : à leur appel, le hook rend inconnu ce
+    # qu'elles changent (le dossier, puis chaque variable), et juge ce qui
+    # suit comme ADR-0072 juge un état inconnu — une suppression du projet
+    # par le dossier qu'un corps de fonction laisse derrière lui passait
+    # sinon (la seconde revue du lot B-0234, B-0232). `nom -> (change le
+    # dossier, variables affectées)`.
+    fonctions: dict[str, tuple[bool, list[str]]] = {}
     # Les tours d'un `for` déplié : sa boucle, et le mot que prend sa variable.
     tours: list[tuple[dict, str]] = []
     # La commande lue juste avant un `||` était un `cd` : sous l'hypothèse
@@ -681,8 +707,10 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int]) -> list[Com
     echecs: list[int] = []
     # Un `nom ( )` ou un `function nom` vient de se lire : le `{` qui suit,
     # sur la même ligne ou après des sauts de ligne, ouvre le corps d'une
-    # fonction (la revue du lot 3, J-2026-11-14-AH ; B-0232).
+    # fonction (la revue du lot 3, J-2026-11-14-AH ; B-0232). `nom_defini`
+    # retient le nom de cette fonction, jusqu'à l'ouverture de son corps.
     definition = False
+    nom_defini = ""
 
     def lieu_de(cible: str) -> str:
         d = _cible_suivie(developper(cible, _visibles(env, etat.variables(env)))[0])
@@ -701,8 +729,8 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int]) -> list[Com
         for interne in internes:
             res.extend(_analyser(interne, etat.copie(), env, budget))
 
-    def ouvrir(mot: str, boucle: dict | None = None):
-        composes.append((mot, etat.copie(), debut_liste, debut_tube, en_tube, boucle))
+    def ouvrir(mot: str, boucle: dict | None = None, nom: str | None = None):
+        composes.append((mot, etat.copie(), debut_liste, debut_tube, en_tube, boucle, nom))
 
     def ailleurs(boucle: dict | None) -> bool:
         """Un `break` ou un `continue` de la boucle s'est lu dans un autre
@@ -768,8 +796,10 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int]) -> list[Com
 
     def definir(k: int):
         """Une définition de fonction vient de se lire : ses `k` mots
-        réservés de tête se suivent, et la commande qui suit est son corps."""
-        nonlocal mots, definition
+        réservés de tête se suivent, et la commande qui suit est son corps.
+        Son nom (`mots[-1]`) attend l'ouverture de son corps (B-0232)."""
+        nonlocal mots, definition, nom_defini
+        nom_defini = mots[-1].lstrip(CITE) if mots else ""
         mots = mots[:k]
         reserves()
         mots, definition = [], True
@@ -785,7 +815,7 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int]) -> list[Com
             definition = False
         if fonction and mots[0] == "{":
             mots = mots[1:]
-            ouvrir("()")
+            ouvrir("()", nom=nom_defini)
         while mots and mots[0] in RESERVES:
             mot, mots = mots[0], mots[1:]
             if mot in OUVRANTS:
@@ -815,8 +845,20 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int]) -> list[Com
                 incertain()
             if echecs and echecs[-1] == len(composes):
                 echecs.pop()
-            ouvert, avant, debut_liste, debut_tube, en_tube, _ = composes.pop()
+            ouvert, avant, debut_liste, debut_tube, en_tube, _, nom_corps = composes.pop()
             if ouvert == "()":
+                # Le corps `{ … }` d'une fonction : s'il a changé le dossier
+                # ou affecté des variables, son appel les rendra inconnus
+                # (B-0232). Son état rendu, comme un groupe non exécuté là.
+                if nom_corps:
+                    suite = etat.vues[len(avant.vues):] if len(etat.vues) >= len(avant.vues) else etat.vues
+                    # Le lieu, normalisé et absolu, dit seul un changement de
+                    # dossier : un corps `cd a; cd ..` y revient (`.` et `` le
+                    # disent autrement, comme la revue du lot 3 l'a vu).
+                    change_dir = etat.lieu != avant.lieu
+                    change_var = list(dict.fromkeys(v for v, _ in suite if v not in ("PWD", "OLDPWD")))
+                    if change_dir or change_var:
+                        fonctions[nom_corps] = (change_dir, change_var)
                 etat = avant.copie()
             return avant
         return None
@@ -832,6 +874,9 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int]) -> list[Com
                                     avant.variables(env), env))
             mots, redir = [], []
             return
+        # Les mots réservés cités ont servi : leur marque tombe pour l'`argv`
+        # (`"function" f` lance la commande `function`, B-0232).
+        mots = [m.lstrip(CITE) for m in mots]
         argv = _sans_prefixes(mots)
         if not argv and mots and all(AFFECTATION.fullmatch(m) for m in mots):
             # Une affectation seule vaut pour la suite ; devant une commande,
@@ -888,6 +933,17 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int]) -> list[Com
                     if x[5] is not None:
                         x[5]["sauts"].append(etat.lieu)
                         n -= 1
+            elif nom in fonctions and all(AFFECTATION.fullmatch(p) for p in c.prefixe):
+                # L'appel d'une fonction définie ici dont le corps change le
+                # dossier ou des variables : ce qu'elle change devient
+                # inconnu, et ce qui suit se juge comme un état inconnu
+                # (B-0232). Un préfixe programme (`command f`, `sudo f`,
+                # `env f`) lance un programme externe, non la fonction, et ne
+                # fuit rien ; une affectation devant (`F=1 f`) l'appelle.
+                change_dir, change_var = fonctions[nom]
+                if change_dir:
+                    changer(f"$({nom})", INCONNU)
+                etat.vues.extend((v, None) for v in change_var)
             etat.vues.extend(_affectations(argv))
             etat.vues.extend((m.group(1), None) for x in mots + redir for m in DEFAUT_AFFECTE.finditer(x))
             res.append(c)
@@ -909,7 +965,10 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int]) -> list[Com
                 # corps, comme après `nom ( )` (B-0232).
                 definir(k)
             sous_shells(internes)
-            mots.append(j.lstrip(CITE))
+            # Un mot réservé cité garde sa marque dans `mots`, pour que les
+            # mots réservés et les définitions ne le lisent pas comme une
+            # structure ; `clore` la retire pour l'`argv` (B-0232).
+            mots.append(j if j[:1] == CITE and j.lstrip(CITE) in MOTS_STRUCTURE else j.lstrip(CITE))
             i += 1
             continue
         suivant, internes = jets[i + 1] if i + 1 < len(jets) else ("", [])

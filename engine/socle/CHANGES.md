@@ -46,8 +46,20 @@ refusée, comme après `nom() if …`. Un groupe écrit en tête du sous-shell
 qui sert de corps à une fonction (`f() ( { cd x; }; … )`) ne se lit plus
 comme le corps de cette fonction.
 
+Deux régressions de cette lecture sont fermées à leur tour. À l'appel
+d'une fonction dont le corps `{ …; }` change le dossier ou une variable,
+le hook rend inconnu ce qu'elle change et juge la suite comme un état
+inconnu : une suppression du projet depuis le dossier qu'un tel appel
+laisse derrière lui (`function f { cd memory; }; f; rm -rf
+../../<racine>`) est refusée, l'usage normal (`f() { ls; }; f; rm -rf
+build`) reste libre. Un mot réservé cité ou échappé (`"function"`,
+`\function`, `$'function'`, et un `}` qui fermait trop tôt un corps)
+n'est plus lu comme réservé : bash le lance comme une commande, et le
+groupe ou le corps qui suit se juge comme bash l'exécute sur place.
+
 À faire : rien. Un push forcé ou une suppression du projet écrits dans
-une telle fonction, que le hook laissait passer, sont refusés.
+une telle fonction, ou passés par son appel ou par un mot réservé cité,
+que le hook laissait passer, sont refusés.
 
 ## 2026-11-15-c — La revue trie les constats exotiques, et son relecteur reçoit le modèle le plus capable
 

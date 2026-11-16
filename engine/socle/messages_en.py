@@ -2763,6 +2763,16 @@ MESSAGES: dict[str, str] = {
     "écrite sans parenthèses, son corps sur la même ligne ou la suivante":
         "directory that contains the project deleted, or force push, in the body of a function `function name { …; }` "
         "written without parentheses, its body on the same line or the next one",
+    "suppression du projet depuis le dossier qu'une fonction appelée laisse derrière elle, son corps `{ … }` ayant "
+    "changé de dossier ou de variable (la seconde revue du lot B-0234, bloquant 2)":
+        "deletion of the project from the directory a called function leaves behind, its body `{ … }` having "
+        "changed the directory or a variable (the second review of batch B-0234, blocker 2)",
+    "mot réservé cité ou échappé lu comme réservé : le groupe qui suit `\"function\"` s'exécute sur place, ou un `}` "
+    "cité ferme trop tôt le corps d'une fonction, et une suppression du projet passe (la seconde revue du lot "
+    "B-0234, bloquant 3)":
+        "quoted or escaped reserved word read as reserved: the group that follows `\"function\"` runs in place, or a "
+        "quoted `}` closes a function's body too early, and a deletion of the project passes (the second review of "
+        "batch B-0234, blocker 3)",
     "fichier protégé écrit par le shell derrière un mot réservé (`then`, `else`, `do`, `!`, `{`), par la "
     "variable d'un `for`, après un groupe dans un pipeline ou après la définition d'une fonction":
         "protected file written by the shell behind a reserved word (`then`, `else`, `do`, `!`, `{`), through a "
@@ -2941,6 +2951,14 @@ MESSAGES: dict[str, str] = {
     "l'agent, et son corps ne s'exécute pas là où il s'écrit (B-0232)":
         "a function `function name { …; }` without parentheses whose body does nothing irreversible passes the "
         "agent's hook, and its body does not run where it is written (B-0232)",
+    "l'appel d'une fonction qui ne change ni dossier ni variable ne rend rien inconnu, et un préfixe programme "
+    "(`command f`) ne l'appelle pas (B-0232)":
+        "a call to a function that changes neither directory nor variable makes nothing unknown, and a program "
+        "prefix (`command f`) does not call it (B-0232)",
+    "un mot réservé cité, lu comme un mot et non comme une structure, passe le hook de l'agent quand il ne vise "
+    "rien de protégé (B-0232)":
+        "a quoted reserved word, read as a word and not as a structure, passes the agent's hook when it targets "
+        "nothing protected (B-0232)",
     "message de commit passé par un fichier relatif au dossier courant de l'agent, qui cite un terme privé":
         "commit message passed through a file relative to the agent's current directory, which cites a private term",
     "mode compagnon : un message de commit passé par un fichier du dossier courant de l'agent, qui ne cite aucun "

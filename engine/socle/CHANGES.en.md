@@ -46,8 +46,20 @@ follows it is refused, as after `name() if …`. A group written at the head
 of the subshell that serves as a function's body (`f() ( { cd x; }; … )`)
 is no longer read as the body of that function.
 
+Two regressions of this reading are closed in turn. On a call to a
+function whose body `{ …; }` changes the directory or a variable, the
+hook makes what it changes unknown and judges what follows as an unknown
+state: a deletion of the project from the directory such a call leaves
+behind (`function f { cd memory; }; f; rm -rf ../../<root>`) is refused,
+normal use (`f() { ls; }; f; rm -rf build`) stays free. A quoted or
+escaped reserved word (`"function"`, `\function`, `$'function'`, and a
+`}` that closed a body too early) is no longer read as reserved: bash
+runs it as a command, and the group or body that follows is judged as
+bash runs it in place.
+
 To do: nothing. A force push or a deletion of the project written in such
-a function, which the hook let through, is refused.
+a function, or let through by its call or by a quoted reserved word,
+which the hook let through, is refused.
 
 ## 2026-11-15-c — The review sorts out exotic findings, and its reviewer receives the most capable model
 

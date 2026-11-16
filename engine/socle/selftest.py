@@ -1502,6 +1502,36 @@ def _cas() -> list[Cas]:
             "function f { git push --force origin travail; }; f",
             "function f if git push --force origin travail; then :; fi")])
 
+    @defaut("appel-de-fonction", "suppression du projet depuis le dossier qu'une fonction appelée laisse derrière "
+            "elle, son corps `{ … }` ayant changé de dossier ou de variable (la seconde revue du lot B-0234, "
+            "bloquant 2)", "agent", "écriture illisible")
+    def _(a, c):
+        # B-0232 : à l'appel d'une fonction dont le corps change le dossier,
+        # le hook ne suivait rien, et `../../<racine>`, sans danger depuis la
+        # racine, visait le projet depuis le dossier laissé derrière. L'appel
+        # rend inconnu ce que le corps change (ADR-0072, point 6). Aussi la
+        # forme `f() { … }` (troisième constat), un appel par une fonction qui
+        # en appelle une autre, et une redéfinition.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            f"function f {{ cd memory; }}; f; rm -rf ../../{c.name}",
+            f"f() {{ cd memory; }}; f; rm -rf ../../{c.name}",
+            f"f() {{ cd memory; }}; g() {{ f; }}; g; rm -rf ../../{c.name}",
+            f"f() {{ ls; }}; f() {{ cd memory; }}; f; rm -rf ../../{c.name}")])
+
+    @defaut("mot-reserve-cite", "mot réservé cité ou échappé lu comme réservé : le groupe qui suit `\"function\"` "
+            "s'exécute sur place, ou un `}` cité ferme trop tôt le corps d'une fonction, et une suppression du "
+            "projet passe (la seconde revue du lot B-0234, bloquant 3)", "agent", "écriture protégée")
+    def _(a, c):
+        # B-0232 : `"function"`, `\function`, `$'function'` et `'function'` se
+        # lisaient comme réservés ; bash les lance comme une commande, puis
+        # exécute sur place le groupe qui suit, dont le `cd`. Un `}` cité ne
+        # ferme plus trop tôt le corps d'une fonction (quatrième constat).
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            f'"function" f\n{{ cd memory; }}\nrm -rf ../../{c.name}',
+            f"\\function f\n{{ cd memory; }}\nrm -rf ../../{c.name}",
+            f"$'function' f\n{{ cd memory; }}\nrm -rf ../../{c.name}",
+            f'f() {{ cd memory; "}}"; rm -rf ../../{c.name}; }}; f')])
+
     @defaut("protege-mot-reserve", "fichier protégé écrit par le shell derrière un mot réservé (`then`, `else`, "
             "`do`, `!`, `{`), par la variable d'un `for`, après un groupe dans un pipeline ou après la définition "
             "d'une fonction", "agent", "écriture protégée")
@@ -2125,6 +2155,24 @@ def _temoins() -> list[tuple[str, Callable]]:
         return (etage_outil(a, c, "Bash", {"command": "function f { ls; }; f"})
                 or etage_outil(a, c, "Bash", {"command": "function nettoyer\n{\n  rm -rf build\n}\nnettoyer"})
                 or etage_outil(a, c, "Bash", {"command": "function f { cd .socle; }; echo ok > policy.toml"}))
+
+    @temoin("l'appel d'une fonction qui ne change ni dossier ni variable ne rend rien inconnu, et un préfixe "
+            "programme (`command f`) ne l'appelle pas (B-0232)")
+    def _(a, c):
+        # Le pendant sain d'`appel-de-fonction` : seul l'appel d'une fonction
+        # dont le corps change le dossier ou une variable rend la suite
+        # inconnue ; l'usage normal reste libre.
+        return (etage_outil(a, c, "Bash", {"command": "f() { ls; }; f; rm -rf build"})
+                or etage_outil(a, c, "Bash", {"command": "f() { echo x > /tmp/y; }; f; echo ok > notes.txt"})
+                or etage_outil(a, c, "Bash", {"command": "f() { cd memory; }; command f; echo ok > notes.txt"}))
+
+    @temoin("un mot réservé cité, lu comme un mot et non comme une structure, passe le hook de l'agent quand il ne "
+            "vise rien de protégé (B-0232)")
+    def _(a, c):
+        # Le pendant sain de `mot-reserve-cite` : un mot réservé entre
+        # guillemets est un argument comme un autre.
+        return (etage_outil(a, c, "Bash", {"command": 'echo "}" ; echo done'})
+                or etage_outil(a, c, "Bash", {"command": 'echo "function" "{" "then"'}))
 
     @temoin("un fichier protégé changé par erreur, remis à son état du dernier commit, et un fichier apparu sous un "
             "chemin protégé, supprimé, passent le hook de l'agent (D-0098)")
