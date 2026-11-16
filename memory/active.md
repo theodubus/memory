@@ -5,9 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot B-0234 clos, à livrer par sa pull request (J-2026-11-16-G).
-Prochain lot : B-0264, les règles qui bornent le travail, avant
-B-0235. B-0179 en pause (J-2026-11-15-A).
+Prochain lot : B-0264, la structure du backlog d'abord (B-0265,
+D-0122), puis B-0266. B-0179 attend.
 
 ## Consignes en cours
 
@@ -15,7 +14,9 @@ Leur texte exact est dans l'entrée du journal citée.
 
 - Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
 - Le hook borné aux formes qu'un agent écrit ; une forme exotique va
-  à la liste, sans sujet ni bloquant (D-0120, J-2026-11-16-G).
+  à la liste, sans sujet ni bloquant (ADR-0082).
+- Un mot pour une chose ; un sujet va sans demander au lot dont la
+  règle s'applique (J-2026-11-16-I, J-2026-11-16-J).
 - Relecteur : le plus capable jusqu'à Opus (D-0117). Fable, implémenteur
   ou relecteur, seulement si Théo le veut ; un lot implémenté sur Fable :
   lui demander avant la revue s'il veut Fable pour elle (D-0119).

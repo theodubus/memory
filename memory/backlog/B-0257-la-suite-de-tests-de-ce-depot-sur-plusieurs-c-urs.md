@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0257 — La suite de tests de ce dépôt sur plusieurs cœurs : verify --fast passe près de douze minutes sur un seul cœur
 
-> statut : ouvert · origine : J-2026-11-16-E · lu : backlog@998104b7
+> statut : ouvert · origine : J-2026-11-16-E · priorité : haute · lu : backlog@998104b7
 
 Un sujet de l'atelier, d'une analyse en lecture seule du 15 novembre sur
 d1d296e, que Théo a fait inscrire (J-2026-11-16-E) ; il n'en fixe ni la
@@ -46,6 +46,8 @@ est protégé : son changement passe par une demande à Théo.
 --redo` dans une session de travail ; qu'aucun fichier de tests n'en gêne
 un autre (un seul passage ne le prouve pas) ; qu'en CI, où l'auto-test
 tourne déjà sur quatre fils, le cumul ne ralentit rien.
+
+Théo le passe en priorité haute le 16 novembre, au lot B-0266, juste après B-0264 (J-2026-11-16-I) : une vérification plus courte rend chaque lot suivant moins cher.
 
 ## Fait quand
 
