@@ -7,6 +7,34 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-16-g — A batch keeps the history of its reviews, and stops on a written step back
+
+`socle review` now writes each review pass of the batch in progress (or
+of the one `--batch L-NNNN` names) in the `## Reviews` section of its
+entry: its date and the reviewed commits. The agent records there the
+cause of each blocker, and the entries the pass opens; a new session
+reads this history as it is. From the second pass on, the brief gives
+the reviewer the causes of the earlier blockers, and has it say, for
+each new blocker, whether it has the same cause as one of them. Before
+any pass beyond the first, `socle review` requires the step back of the
+previous one: a paragraph that starts with “Step back:”, answers three
+questions of nature in at least sixty words, and ends with “continue” or
+“stop”. Otherwise it refuses, showing the history, the entries opened
+and closed since the start of the batch, the closed batches that touched
+the same files and the three questions. It refuses “continue” after two
+passes in a row where the reviewer sees a same cause come back, and any
+pass while the request of a stop waits for its answer. The
+`memoire.backlog` check refuses a reviewed batch closed `done` without
+the step back of its last pass.
+
+To do: mark `in progress` the batch being carried out, so that its
+passes are written in it; when the reviewer returns, record the blockers
+there; write the step back before the next pass and before the closing;
+stopping means putting a request to the human, which says what goes
+round, the rule that makes it go round and a proposal that bounds it.
+The `socle-review` and `socle-batch` skills say so; they are protected
+copies, in the installer's request.
+
 ## 2026-11-16-f — The backlog in four forms, each with its prefix: need, task, batch and milestone
 
 A backlog entry now has one of four forms, which its prefix states: a need

@@ -72,6 +72,23 @@ VALEURS = {"humain": {"fr": "humain", "en": "human"}, "seance": {"fr": "séance"
 FAIT_QUAND = {"fr": "Fait quand", "en": "Done when"}
 SATISFAIT_QUAND = {"fr": "Satisfait quand", "en": "Satisfied when"}
 
+# La section « Revues » d'un lot (D-0124, ADR-0084) : ses passes de revue,
+# leurs bloquants et le regard du relecteur sur chacun, puis le recul et sa
+# décision. `socle review` en écrit une part, l'agent le reste ; le moteur
+# relit les deux.
+REVUES = {
+    "revues": {"fr": "Revues", "en": "Reviews"},
+    "passe": {"fr": "Passe", "en": "Pass"},
+    "commits": {"fr": "Commits", "en": "Commits"},
+    "bloquant": {"fr": "Bloquant", "en": "Blocker"},
+    "ouvre": {"fr": "Ouvre", "en": "Opens"},
+    "meme-cause": {"fr": "même cause", "en": "same cause"},
+    "cause-nouvelle": {"fr": "cause nouvelle", "en": "new cause"},
+    "recul": {"fr": "Recul", "en": "Step back"},
+    "continuer": {"fr": "continuer", "en": "continue"},
+    "s-arreter": {"fr": "s'arrêter", "en": "stop"},
+}
+
 # L'en-tête d'un fichier : `<!-- socle: couche=canonique zone=publique -->`.
 ENTETE = {"couche": {"fr": "couche", "en": "layer"}, "zone": {"fr": "zone", "en": "zone"}}
 COUCHES = {

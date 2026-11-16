@@ -80,7 +80,7 @@ une entrée de journal et une valeur attendue ne se réécrivent plus.
    donnant le commit de tête attendu.
 5. Le chantier actif et le journal s'écrivent avant la fusion, dans le
    dernier commit de la pull request, avec la clôture du lot : ses tâches
-   closes, il passe `fait`, puis `python3 .socle/socle archive`. Après la
+   closes et son recul écrit, il passe `fait`, puis `python3 .socle/socle archive`. Après la
    fusion, la branche locale repart de la branche par défaut et ne se pousse qu'avec le premier commit du lot suivant : poussée seule,
    elle recréerait la branche distante supprimée.
 

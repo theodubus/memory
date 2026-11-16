@@ -7,6 +7,34 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-16-g — Un lot garde l'historique de ses revues, et s'arrête sur un recul écrit
+
+`socle review` écrit désormais chaque passe de revue du lot en cours (ou
+de celui que `--batch L-NNNN` nomme) dans la section `## Revues` de son
+entrée : sa date et les commits relus. L'agent y consigne la cause de
+chaque bloquant, et les entrées que la passe ouvre ; une session neuve lit
+cet historique tel quel. À partir de la deuxième passe, le dossier donne
+au relecteur les causes des bloquants d'avant, et lui fait dire, pour
+chaque bloquant nouveau, s'il a la même cause que l'un d'eux. Avant toute
+passe au-delà de la première, `socle review` exige le recul de la
+précédente : un paragraphe qui commence par « Recul : », répond en
+soixante mots au moins à trois questions de nature, et finit par
+« continuer » ou par « s'arrêter ». Il le refuse sinon, en montrant
+l'historique, les entrées ouvertes et closes depuis le début du lot, les
+lots clos qui ont touché les mêmes fichiers et les trois questions. Il
+refuse « continuer » après deux passes de suite où le relecteur voit une
+même cause revenir, et toute passe tant que la demande d'un arrêt attend
+sa réponse. Le contrôle `memoire.backlog` refuse un lot relu clos `fait`
+sans le recul de sa dernière passe.
+
+À faire : marquer `en cours` le lot qu'on mène, pour que ses passes s'y
+écrivent ; au retour du relecteur, y consigner les bloquants ; écrire le
+recul avant la passe suivante et avant la clôture ; s'arrêter, c'est
+poser une demande à l'humain, qui dit ce qui tourne, la règle qui le fait
+tourner et une proposition qui la borne. Les skills `socle-review` et
+`socle-batch` le disent ; ce sont des copies protégées, dans la demande de
+l'installeur.
+
 ## 2026-11-16-f — Le backlog en quatre formes, chacune son préfixe : besoin, tâche, lot et jalon
 
 Une entrée du backlog a désormais l'une de quatre formes, que son préfixe

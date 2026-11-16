@@ -448,13 +448,17 @@ def cmd_review(args) -> int:
         print(texte, end="")
         return 0
     try:
-        texte = revue.dossier(_projet(args), args.base, args.max_bytes, getattr(args, "since", None))
-    except revue.ReferenceRefusee as refus:
+        texte, note = revue.relire(_projet(args), args.base, args.max_bytes, getattr(args, "since", None),
+                                   getattr(args, "batch", None))
+    except (revue.ReferenceRefusee, revue.PasseRefusee) as refus:
         # Une référence qui ne mesure pas le lot (ADR-0081) : un dossier vide
-        # ou étranger, qu'un relecteur jugerait sans constat, ne part pas.
-        print(refus, file=sys.stderr)
+        # ou étranger, qu'un relecteur jugerait sans constat, ne part pas. Une
+        # passe que l'historique du lot refuse (ADR-0084) non plus.
+        print(refus, file=sys.stderr, end="" if str(refus).endswith("\n") else "\n")
         return 2
     print(texte, end="")
+    if note:
+        print(note, file=sys.stderr)
     return 0
 
 
@@ -926,6 +930,9 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
                                                        "première revue, et les sujets du lot entier"))
     s.add_argument("--request", metavar="D-NNNN", help=trad("le dossier de la relecture à froid de cette demande, "
                                                             "pour un lecteur qui n'a que son texte"))
+    s.add_argument("--batch", metavar="L-NNNN", help=trad("le lot dont c'est la passe de revue, qui s'écrit dans sa "
+                                                          "section « Revues » (par défaut : le lot en cours du "
+                                                          "backlog)"))
     s.set_defaults(f=cmd_review)
 
     s = sp.add_parser("answer", help=trad("répondre à une demande ; l'agent y relaie (--relayed) ta réponse "

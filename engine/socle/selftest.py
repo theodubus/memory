@@ -710,6 +710,58 @@ def _citer_par_l_ancien_numero(a: Atelier, c: Path, ancien: str, h: str):
     maj_memoire(c, "Le backlog migré en quatre formes.")
 
 
+# L'historique des revues d'un lot (ADR-0084) : les corrections successives
+# du code, une par passe, et ce que l'agent consigne au retour du relecteur.
+CORRECTIONS = ("return x * FACTEUR", "return (x * FACTEUR)", "return (FACTEUR * x)", "return ((x * FACTEUR))",
+               "return FACTEUR * (x)")
+
+
+def _recul_essai(decision: str, demande: str = "") -> str:
+    """Un recul d'au moins soixante mots, qui finit par `decision`."""
+    return ("\nRecul : les bloquants de cette passe n'ont pas la cause de ceux de la précédente ; les entrées que "
+            "le lot ouvre sont de la nature de celles qu'il ferme, des corrections du module de calcul ; aucun lot "
+            "clos qui a touché ces fichiers n'en a ouvert de semblables" + (f", et la demande {demande} le dit"
+                                                                             if demande else "") +
+            ". La passe suivante ne relira que la correction de la multiplication, avec le test qui la prouve, ce "
+            f"qui la rend différente de celle-ci, et de toutes celles qui la précèdent dans ce lot : {decision}.\n")
+
+
+def _bloquant_essai(regard: str = "") -> str:
+    return f"\n- Bloquant : la correction change la lecture du facteur{regard}\n- Ouvre : rien\n"
+
+
+def _passes(a: Atelier, c: Path, consignes: list[str]) -> str:
+    """Le lot L-0001 en cours, qui attend la tâche T-0001 ; puis, pour
+    chaque consigne, une correction du code commitée, une passe de `socle
+    review` et la consigne ajoutée au lot ; enfin une passe de plus : la
+    sortie de `socle review` s'il la refuse, rien s'il la produit."""
+    ajouter_sujet(c, tache_essai(a, c))
+    ajouter_sujet(c, lot_essai(a, c, "L-0001", "T-0001").replace("> statut : ouvert", "> statut : en cours"))
+    precedent = "return FACTEUR * x"
+    for i, consigne in enumerate([*consignes, None]):
+        remplacer(c, "calc.py", precedent, CORRECTIONS[i])
+        precedent = CORRECTIONS[i]
+        a.commit(c, f"la passe {i + 1}")
+        r = a.socle(c, "review")
+        if consigne is None:
+            return "" if r.returncode == 0 else r.stdout + r.stderr
+        if r.returncode != 0:
+            raise RuntimeError(r.stdout + r.stderr)
+        ajouter(c, _sujet(c, "L-0001"), consigne)
+    return ""
+
+
+def _lot_relu_clos(a: Atelier, c: Path, recul: str):
+    """La tâche T-0001 faite, et le lot L-0001 qui l'attendait clos « fait »,
+    avec deux passes de revue, la dernière suivie de `recul`."""
+    ajouter_sujet(c, tache_essai(a, c, statut="fait · ref : fichier:calc.py"))
+    ajouter_sujet(c, lot_essai(a, c, "L-0001", "T-0001", " · ref : fichier:calc.py").replace(
+        "> statut : ouvert", "> statut : fait") + "\n## Revues\n\n### Passe 1 — 2026-11-16\n\n"
+        "Commits : 1a2b3c4..5d6e7f8\n" + _bloquant_essai() + _recul_essai("continuer") +
+        "\n### Passe 2 — 2026-11-17\n\nCommits : 5d6e7f8..9a8b7c6\n" + recul)
+    maj_memoire(c, "Le lot de la multiplication relu et clos.")
+
+
 def _declarer_ui_tierce(a: Atelier, c: Path):
     """L'interface, travaillée par d'autres sessions d'agents, déclarée tierce
     par l'humain qui l'approuve, dans un commit à lui (B-0169)."""
@@ -1413,6 +1465,33 @@ def _cas() -> list[Cas]:
         ajouter_sujet(c, "\n## B-0002 — Ajouter une fonction quadruple\n\n"
                          f"> statut : ouvert · origine : {a.journal} · lu : backlog@{empreinte(a, c, 'backlog')}"
                          "\n\nPour l'essai.\n")
+        return etage_git(a, c)
+
+    # L'historique des revues d'un lot (ADR-0084, D-0124 point 8) : deux refus
+    # de `socle review`, et celui du contrôle à la clôture ; puis l'arrêt.
+
+    @defaut("passe-sans-recul", "deuxième passe de revue d'un lot sans le recul de la première", "revue",
+            "revue sans recul")
+    def _(a, c):
+        return _passes(a, c, [_bloquant_essai()])
+
+    @defaut("continuer-apres-deux-causes-revenues", "« continuer » après deux passes de suite où le relecteur voit "
+            "une même cause revenir", "revue", "continuer refusé")
+    def _(a, c):
+        return _passes(a, c, [_bloquant_essai() + _recul_essai("continuer"),
+                              _bloquant_essai(" · même cause") + _recul_essai("continuer"),
+                              _bloquant_essai(" · même cause : passe 2") + _recul_essai("continuer")])
+
+    @defaut("lot-arrete-sans-reponse", "passe de plus d'un lot arrêté dont la demande attend sa réponse", "revue",
+            "lot arrêté")
+    def _(a, c):
+        (c / "memory/requests/D-0001-refactor.md").write_text(demande_bonne(a, c))
+        return _passes(a, c, [_bloquant_essai() + _recul_essai("s'arrêter", "D-0001")])
+
+    @defaut("lot-clos-sans-recul", "lot relu clos « fait » sans le recul de sa dernière passe", "git",
+            "memoire.backlog")
+    def _(a, c):
+        _lot_relu_clos(a, c, _bloquant_essai(" · cause nouvelle"))
         return etage_git(a, c)
 
     # Au-delà du tableau du cadrage.
@@ -2434,6 +2513,35 @@ def _temoins() -> list[tuple[str, Callable]]:
         maj_memoire(c, "Le lot de la quadruple formé.")
         return etage_git(a, c) or etage_ci(a, c)
 
+    # L'historique des revues d'un lot (ADR-0084) : le témoin sain de chaque
+    # refus de `socle review`, et celui du contrôle à la clôture.
+
+    @temoin("une deuxième passe de revue après le recul de la première, `socle review` la produit et l'écrit dans "
+            "le lot")
+    def _(a, c):
+        sortie = _passes(a, c, [_bloquant_essai() + _recul_essai("continuer")])
+        if sortie:
+            return sortie
+        return "" if "### Passe 2 — " in (c / _sujet(c, "L-0001")).read_text() else "### Passe 2 ?"
+
+    @temoin("« continuer » après une seule passe où le relecteur voit une cause revenir, `socle review` produit la "
+            "suivante")
+    def _(a, c):
+        return _passes(a, c, [_bloquant_essai() + _recul_essai("continuer"),
+                              _bloquant_essai(" · même cause") + _recul_essai("continuer"),
+                              _bloquant_essai(" · cause nouvelle") + _recul_essai("continuer")])
+
+    @temoin("un lot arrêté dont la demande a sa réponse, `socle review` produit sa passe suivante")
+    def _(a, c):
+        (c / "memory/requests/D-0001-refactor.md").write_text(demande_bonne(a, c))
+        (c / "memory/requests/D-0001-refactor.answer.toml").write_text('reponse = "valider"\n')
+        return _passes(a, c, [_bloquant_essai() + _recul_essai("s'arrêter", "D-0001")])
+
+    @temoin("un lot relu clos « fait » avec le recul de sa dernière passe passe le commit et la CI")
+    def _(a, c):
+        _lot_relu_clos(a, c, _bloquant_essai(" · cause nouvelle") + _recul_essai("continuer"))
+        return etage_git(a, c) or etage_ci(a, c)
+
     @temoin("une tâche de priorité haute faite après la réponse qu'elle attendait, ses critères cochés, passe le "
             "commit et la CI")
     def _(a, c):
@@ -3094,6 +3202,11 @@ RAISONS_AGENT = {
     "geste sans valider": "que seule une réponse `valider` autorise à changer",
     "question en widget": "widget de questions de l'agent",
     "demandes.reponse-seule": "Poussée seule, elle ne couvrira pas ce changement",
+    # `socle review` ne nomme pas de contrôle non plus : il refuse une passe
+    # de revue que l'historique du lot refuse (ADR-0084).
+    "revue sans recul": "n'a pas son recul",
+    "continuer refusé": "« continuer » est refusé, le lot s'arrête",
+    "lot arrêté": "et attend la réponse à",
 }
 
 

@@ -758,7 +758,10 @@ def collisions(ctx, r):
 def backlog(ctx, r):
     """Chaque entrée du backlog a une origine ; une entrée close a une référence, et elle est rangée avec les
     closes ; une entrée faite a coché tout ce que dit sa section, « Satisfait quand » pour un besoin, « Fait
-    quand » pour les autres formes (ADR-0083)."""
+    quand » pour les autres formes (ADR-0083).
+
+    Un lot relu ne se clôt « fait » que si la dernière passe de sa section « Revues » a son recul (D-0124,
+    ADR-0084) ; un lot sans passe, qui ne changeait ni code, ni spécification, ni test, n'en a pas."""
     for e in ctx.memoire.entrees(memoire.BACKLOG):
         if e.basculee:
             continue
@@ -773,6 +776,11 @@ def backlog(ctx, r):
                                              "{criteres}", id=e.id, criteres=" ; ".join(ouverts[:3]),
                                              section=SECTIONS[memoire.est_besoin(e)]),
                      e.fichier, e.ligne)
+        passes = memoire.passes(e) if memoire.est_lot(e) and e.statut == "fait" else []
+        refus = memoire.refus_du_recul(passes[-1]) if passes else None
+        if refus:
+            r.erreur("memoire.backlog", trad("`{id}` est clos « fait » sans le recul de sa dernière passe de revue : "
+                                             "{raison}", id=e.id, raison=refus), e.fichier, e.ligne)
         if clos and not e.refs("ref"):
             r.erreur("memoire.backlog", trad("`{id}` est clos (« {statut} ») sans `ref` vers ce qui l'a clos",
                                              id=e.id, statut=e.statut), e.fichier, e.ligne)

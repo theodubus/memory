@@ -156,6 +156,22 @@ project's normal use or whose effect nothing catches afterwards, as a
 task if its fix is clear, as a need otherwise, and dismisses the others, exotic and caught, or unfounded. Its recap says how
 many, and why each is dismissed.
 
+**Seeing that a batch goes round in circles.** The batch keeps the
+history of its review passes in its entry, under “Reviews”: a new session
+reads it as it is. Before any pass beyond the first, and before closing
+it, the agent writes a step-back paragraph there, which answers three
+questions of nature, not of number: do the blockers have the same cause
+as the previous pass's? are the entries the batch opens of the same
+nature as those it closes? have the closed batches that touched the same
+files already opened similar ones? In it, the agent decides to continue,
+saying what will make the next pass different, or to stop. The socle
+refuses the pass, or the closing, without this paragraph, and refuses to
+continue when the reviewer sees a same cause come back two passes in a
+row. Stopping means putting a request to you: what goes round, in plain
+words, the rule that makes it go round, and a proposal that bounds it.
+You see no figure: you see the request, and the batch waits for your
+answer while the agent moves on elsewhere.
+
 **Delivering.** By default, the agent does everything on one development
 branch and keeps only one pull request open, to which each finished batch
 is added: merge it whenever you want, once its CI is green. One pull

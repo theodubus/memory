@@ -165,6 +165,22 @@ l'effet, en tâche si leur correction est claire, en besoin sinon, et
 écarte les autres, exotiques et rattrapés, ou infondés. Son
 récap dit combien, et pourquoi chacun est écarté.
 
+**Voir qu'un lot tourne en rond.** Le lot garde l'historique de ses
+passes de revue dans son entrée, sous « Revues » : une session neuve le
+lit tel quel. Avant toute passe au-delà de la première, et avant de le
+clore, l'agent y écrit un paragraphe de recul, qui répond à trois
+questions de nature, non de nombre : les bloquants ont-ils la même cause
+que ceux de la passe précédente ? les entrées que le lot ouvre sont-elles
+de même nature que celles qu'il ferme ? les lots clos qui ont touché les
+mêmes fichiers en ont-ils déjà ouvert de semblables ? Il y décide de
+continuer, en disant ce qui rendra la passe suivante différente, ou de
+s'arrêter. Le socle refuse la passe, ou la clôture, sans ce paragraphe,
+et refuse de continuer quand le relecteur voit une même cause revenir
+deux passes de suite. S'arrêter, c'est vous poser une demande : ce qui
+tourne, en clair, la règle qui le fait tourner, et une proposition qui la
+borne. Vous ne voyez aucun chiffre : vous voyez la demande, et le lot
+attend votre réponse pendant que l'agent avance ailleurs.
+
 **Livrer.** Par défaut, l'agent fait tout sur une branche de
 développement et garde une seule pull request ouverte, à laquelle chaque
 lot fini s'ajoute : la fusionner quand on veut, une fois sa CI verte. Une

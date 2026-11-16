@@ -14,7 +14,9 @@ agent that wrote the batch, and who tries to find fault with it.
 Before the push that delivers a batch that changes code, a specification
 or a test; never for a batch that only touches the memory. One pass per
 batch; a second one only if the fix of the blocking findings is heavy (it
-changes the design of a part, not a few lines), and on that fix alone.
+changes the design of a part, not a few lines), and on that fix alone;
+each pass beyond the first follows the step back of the previous one
+(below).
 
 The reviewer judges the batch against its tasks: their “Done when”
 criterion and, for a guardrail, its threat model. A need that adds or
@@ -47,7 +49,10 @@ python3 .socle/socle review
    refused. A batch already pushed in whole or in part (a cloud session
    pushes at the end of each turn), or a branch that carries batches
    already reviewed, which the brief's note points out: `--base <the
-   commit before the batch>`, the head the batch started from.
+   commit before the batch>`, the head the batch started from. It writes
+   the pass in the entry of the backlog's batch in progress, or of the one
+   `--batch L-NNNN` names, and refuses a pass the batch's history refuses
+   (below).
 3. Hand it to a reviewer who does not have the conversation. Under Claude
    Code: a subagent (the `Agent` tool), whose only message is this brief,
    as is: nothing is added to it, nothing removed. It receives explicitly
@@ -97,3 +102,39 @@ Post nothing on GitHub: the human reads the recap, not the review. The
 recap says it in one line: `Review: <b> blocking, fixed; <n> to the
 backlog (<entries>); dismissed: <reason for each>`, or `Review: no
 finding`.
+
+## The batch's history and the step back
+
+The batch keeps its passes in the `## Reviews` section, the last of its
+entry, readable from a new session: `socle review` writes each pass
+there, its date and the reviewed commits, and gives the same one again
+as long as nothing changes outside the memory.
+
+1. When the reviewer returns, write in the pass one line `- Blocker:
+   <its cause, in a few words>` per blocker, and `- Opens: <the entries
+   the pass opens>`, or `none`. From the second pass on, the brief gives
+   the reviewer the causes of the earlier blockers, and it says, for each
+   new blocker, whether it has the same cause as one of them: its line
+   ends with `· same cause` or `· new cause`, as the reviewer says, never
+   as the agent does.
+2. Before the next pass, and before closing the batch, write the pass's
+   step back, under its blockers: a paragraph that starts with “Step
+   back:”, of at least sixty words, which answers the three questions
+   `socle review` gives when it refuses the pass, with the history, the
+   entries opened and closed since the start of the batch and the closed
+   batches that touched the same files. Do this pass's blockers have the
+   same cause as the previous pass's? Are the entries the batch opens of
+   the same nature as those it closes? Have the closed batches that
+   touched the same files already opened this kind of entries? Its last
+   word is its decision: “continue”, with what will make the next pass
+   different written before it, or “stop”.
+3. Stopping: put a request to the human (skill `socle-request`) that
+   says what goes round, in plain words, the rule that makes it go
+   round, and a proposal that bounds it; the step back names it
+   (`D-NNNN`), and the batch waits for it through its `after`. `socle
+   review` refuses one more pass until its answer: move on elsewhere.
+   After two passes in a row where the reviewer sees a same cause come
+   back, it refuses “continue”: the batch stops.
+
+The backlog check refuses a reviewed batch closed `done` whose last pass
+has no step back.

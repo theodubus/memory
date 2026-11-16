@@ -271,6 +271,57 @@ une section `## Modèle de menace` (`## Threat model` en anglais) ou dans la
 décision qu'il cite. La revue d'un lot juge contre lui et contre le
 « Fait quand » de ses tâches.
 
+Un lot relu garde l'historique de ses passes de revue dans sa section
+`## Revues` (`## Reviews` en anglais), la dernière de son entrée
+(ADR-0084). `socle review` y écrit chaque passe du lot en cours, ou de
+celui que `--batch` nomme : son titre (`### Passe 2 — 2026-11-17`) et les
+commits relus. L'agent y consigne, au retour du relecteur, une ligne
+`- Bloquant : <sa cause, en quelques mots>` par bloquant, suivie, à partir
+de la deuxième passe, du regard du relecteur, `· même cause` ou `· cause
+nouvelle` ; une ligne `- Ouvre : <les entrées que la passe ouvre>` ; puis,
+avant la passe suivante ou la clôture, le recul. C'est un paragraphe qui
+commence par « Recul : », répond en soixante mots au moins à trois
+questions de nature (les bloquants ont-ils la même cause que ceux de la
+passe précédente ? les entrées que le lot ouvre sont-elles de même nature
+que celles qu'il ferme ? les lots clos qui ont touché les mêmes fichiers
+ont-ils déjà ouvert ce genre d'entrées ?), et dont le dernier mot est sa
+décision : « continuer », ce qui rendra la passe suivante différente écrit
+avant, ou « s'arrêter ». S'arrêter, c'est une demande à l'humain, que le
+paragraphe nomme et que le lot attend par son `après` : ce qui tourne, la
+règle qui le fait tourner, et une proposition qui la borne.
+
+`socle review` refuse une passe tant que la précédente n'a pas son recul,
+ou, à partir de la deuxième, le regard du relecteur sur chacun de ses
+bloquants ; il refuse « continuer » après deux passes de suite où le
+relecteur voit une même cause revenir, et toute passe tant que la demande
+d'un arrêt attend sa réponse. Son refus montre l'historique, les entrées
+ouvertes et closes depuis le début du lot, les lots clos qui ont touché
+les mêmes fichiers, et les trois questions. Tant que rien ne change hors de
+la mémoire, il redonne la même passe sans l'écrire de nouveau. Le contrôle
+du backlog refuse un lot relu clos `fait` dont la dernière passe n'a pas
+son recul ; un lot qui ne change ni code, ni spécification, ni test n'a ni
+passe ni recul.
+
+```markdown
+## Revues
+
+### Passe 1 — 2026-11-16
+
+Commits : 3ea6b92..8719a8f
+
+- Bloquant : la correction change la lecture des commandes
+- Ouvre : T-0052
+
+Recul : <soixante mots au moins sur les trois questions> continuer.
+
+### Passe 2 — 2026-11-17
+
+Commits : 8719a8f..1a2b3c4
+
+- Bloquant : la lecture des commandes, encore · même cause
+- Ouvre : rien
+```
+
 ```markdown
 # JA-0002 — La recherche par ingrédient livrée
 
@@ -549,6 +600,16 @@ interne, que `socle show` dit dans la langue du projet.
 | valeur `basse` | basse | low |
 | section de tâche `fait-quand` | Fait quand | Done when |
 | section de besoin `satisfait-quand` | Satisfait quand | Satisfied when |
+| section de lot `revues` | Revues | Reviews |
+| titre de passe `passe` | Passe | Pass |
+| ligne de passe `commits` | Commits | Commits |
+| ligne de passe `bloquant` | Bloquant | Blocker |
+| ligne de passe `ouvre` | Ouvre | Opens |
+| regard du relecteur `meme-cause` | même cause | same cause |
+| regard du relecteur `cause-nouvelle` | cause nouvelle | new cause |
+| paragraphe `recul` | Recul | Step back |
+| décision du recul `continuer` | continuer | continue |
+| décision du recul `s-arreter` | s'arrêter | stop |
 | statut F `mesure` | mesuré | measured |
 | statut F `suppose` | supposé | assumed |
 | statut F `refute` | réfuté | refuted |

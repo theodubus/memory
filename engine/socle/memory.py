@@ -718,6 +718,147 @@ def criteres(e: Entree, section: re.Pattern | None = None) -> list[tuple[bool, s
     return res
 
 
+# --------------------------------------------------------------------------
+# Les revues d'un lot (D-0124, ADR-0084) : sa section « Revues », une passe
+# par dossier de `socle review`, chacune ses bloquants et son recul.
+# --------------------------------------------------------------------------
+
+
+def _mots(cle: str) -> str:
+    return "|".join(re.escape(m) for m in langue.REVUES[cle].values())
+
+
+SECTION_REVUES = _section(langue.REVUES["revues"])
+TITRE_DE_PASSE = re.compile(r"^#{3,6}\s+(?:%s)\s+(?P<n>\d+)\b\s*(?:[—–-]\s*(?P<date>.*?))?\s*$" % _mots("passe"),
+                            re.I)
+LIGNE_COMMITS = re.compile(r"^\s*(?:%s)\s*:\s*(?P<debut>[0-9a-f]{4,40})\.\.(?P<tete>[0-9a-f]{4,40})\s*$"
+                           % _mots("commits"), re.I)
+LIGNE_BLOQUANT = re.compile(r"^\s*[-*]\s+(?:%s)\s*:\s*(?P<texte>.+?)\s*$" % _mots("bloquant"), re.I)
+# Le regard du relecteur sur un bloquant, à partir de la deuxième passe :
+# `· même cause` (suivi, au besoin, de laquelle) ou `· cause nouvelle`.
+REGARD = re.compile(r"\s*·\s*(?:(?P<meme>%s)|(?P<nouvelle>%s))(?![\w-]).*$" % (_mots("meme-cause"),
+                                                                                  _mots("cause-nouvelle")), re.I)
+DEBUT_DU_RECUL = re.compile(r"^\s*(?:%s)\s*:" % _mots("recul"), re.I)
+MOT = re.compile(r"[^\W_]+(?:['’][^\W_]+)*")
+# Un recul répond aux trois questions de nature en soixante mots au moins
+# (D-0124, point 4).
+MOTS_DU_RECUL = 60
+DECISIONS_DU_RECUL = {outils.cle(m): cle for cle in ("continuer", "s-arreter")
+                      for m in langue.REVUES[cle].values()}
+
+
+@dataclass
+class Passe:
+    """Une passe de revue d'un lot, telle que sa section « Revues » la
+    garde : son numéro et sa date, les commits relus (`debut..tete`, tels
+    que `socle review` les a écrits), ses bloquants (leur cause, et le
+    regard du relecteur : `meme`, `nouvelle`, ou `None` s'il n'est pas
+    consigné), et son recul, le paragraphe qui commence par « Recul : »."""
+
+    numero: int
+    date: str
+    debut: str | None = None
+    tete: str | None = None
+    bloquants: list[tuple[str, str | None]] = field(default_factory=list)
+    recul: str | None = None
+
+    @property
+    def voit_revenir(self) -> bool:
+        """Le relecteur y voit au moins une cause revenir."""
+        return any(regard == "meme" for _, regard in self.bloquants)
+
+
+def _bornes_des_revues(e: Entree) -> tuple[int, int] | None:
+    """Où commence et finit la section « Revues » dans le corps d'une
+    entrée : jusqu'au titre suivant de même niveau ou plus haut."""
+    m = SECTION_REVUES.search(e.corps)
+    if not m:
+        return None
+    niveau = len(m.group(0)) - len(m.group(0).lstrip("#"))
+    fin = re.compile(r"^#{1,%d}\s" % niveau, re.M).search(e.corps, m.end())
+    return m.start(), fin.start() if fin else len(e.corps)
+
+
+def section_des_revues(e: Entree) -> str | None:
+    """Le texte de la section « Revues » d'une entrée, titre compris."""
+    bornes = _bornes_des_revues(e)
+    return e.corps[bornes[0]:bornes[1]].strip() if bornes else None
+
+
+def passes(e: Entree) -> list[Passe]:
+    """Les passes de revue qu'un lot garde, dans l'ordre de sa section."""
+    texte = section_des_revues(e)
+    if texte is None:
+        return []
+    res: list[Passe] = []
+    lignes = texte.splitlines()[1:]
+    recul: list[str] | None = None
+    for ligne in lignes:
+        t = TITRE_DE_PASSE.match(ligne)
+        if t:
+            res.append(Passe(int(t["n"]), (t["date"] or "").strip()))
+            recul = None
+            continue
+        if not res:
+            continue
+        p = res[-1]
+        if recul is not None:
+            if not ligne.strip() or ligne.lstrip().startswith(("#", "- ", "* ")):
+                p.recul, recul = " ".join(recul), None
+            else:
+                recul.append(ligne.strip())
+                continue
+        c = LIGNE_COMMITS.match(ligne)
+        if c and p.debut is None:
+            p.debut, p.tete = c["debut"], c["tete"]
+            continue
+        b = LIGNE_BLOQUANT.match(ligne)
+        if b:
+            r = REGARD.search(b["texte"])
+            regard = None if r is None else ("meme" if r["meme"] else "nouvelle")
+            p.bloquants.append(((b["texte"][:r.start()] if r else b["texte"]).strip(), regard))
+            continue
+        if DEBUT_DU_RECUL.match(ligne) and p.recul is None:
+            recul = [ligne.strip()]
+    if recul is not None and res:
+        res[-1].recul = " ".join(recul)
+    return res
+
+
+def mots_du_recul(recul: str) -> list[str]:
+    return MOT.findall(recul)
+
+
+def decision_du_recul(recul: str | None) -> str | None:
+    """`continuer` ou `s-arreter`, le dernier mot du recul, ponctuation,
+    accents et apostrophe mis à part ; `None` s'il n'est ni l'un ni
+    l'autre."""
+    mots = mots_du_recul(recul or "")
+    return DECISIONS_DU_RECUL.get(outils.cle(mots[-1].replace("’", "'"))) if mots else None
+
+
+def refus_du_recul(p: Passe) -> str | None:
+    """Pourquoi la passe n'a pas son recul (D-0124, point 4), `None` si elle
+    l'a : un paragraphe qui commence par « Recul : », de soixante mots au
+    moins, dont le dernier est « continuer » ou « s'arrêter »."""
+    if p.recul is None:
+        return trad("la passe {n} n'a pas son recul : un paragraphe qui commence par « Recul : »", n=p.numero)
+    n = len(mots_du_recul(p.recul))
+    if n < MOTS_DU_RECUL:
+        return trad("le recul de la passe {n} a {mots} mot(s) : il en faut {seuil} au moins, qui répondent aux trois "
+                    "questions", n=p.numero, mots=n, seuil=MOTS_DU_RECUL)
+    if decision_du_recul(p.recul) is None:
+        return trad("le recul de la passe {n} ne finit ni par « continuer » ni par « s'arrêter » : son dernier mot "
+                    "est sa décision, et ce qui rendra la passe suivante différente s'écrit avant", n=p.numero)
+    return None
+
+
+def demandes_du_recul(p: Passe) -> list[str]:
+    """Les demandes que nomme un recul : celle qu'un arrêt pose à
+    l'humain."""
+    return list(dict.fromkeys(i for i, _ in mentions(p.recul or "") if type_d_id(i) == "D"))
+
+
 @dataclass
 class Ordre:
     """Ce qui vient ensuite : les tâches prêtes (ouvertes, pas encore en

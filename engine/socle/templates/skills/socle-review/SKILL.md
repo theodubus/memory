@@ -15,7 +15,8 @@ Avant le push qui livre un lot qui change du code, une spécification ou un
 test ; jamais pour un lot qui ne touche que la mémoire. Une passe par lot ;
 une seconde seulement si la correction des constats bloquants est lourde
 (elle change la conception d'une partie, pas quelques lignes), et sur elle
-seule.
+seule ; chaque passe au-delà de la première suit le recul de la précédente
+(plus bas).
 
 Le relecteur juge le lot contre ses tâches : leur critère « Fait quand »,
 et, pour un garde-fou, son modèle de menace. Un besoin qui pose ou change un
@@ -49,7 +50,9 @@ python3 .socle/socle review
    est refusée. Un lot déjà poussé en tout ou en partie (une session
    cloud pousse à chaque fin de tour), ou une branche qui porte des lots
    déjà relus, que la note du dossier signale : `--base <le commit d'avant
-   le lot>`, la tête d'où le lot est parti.
+   le lot>`, la tête d'où le lot est parti. Il écrit la passe dans l'entrée
+   du lot en cours du backlog, ou de celui que `--batch L-NNNN` nomme, et
+   refuse une passe que l'historique du lot refuse (plus bas).
 3. Le confier à un relecteur qui n'a pas la conversation. Sous Claude Code
    : un sous-agent (outil `Agent`), dont le seul message est ce dossier,
    tel quel : rien ne s'y ajoute, rien ne s'en retire. Il reçoit
@@ -98,3 +101,39 @@ Le relecteur les classe ; l'agent vérifie chaque classement.
 Ne rien poster sur GitHub : l'humain lit le récap, pas la revue. Le récap
 le dit en une ligne : `Revue : <b> bloquants, corrigés ; <n> au backlog
 (<entrées>) ; écartés : <raison de chacun>`, ou `Revue : aucun constat`.
+
+## L'historique du lot et le recul
+
+Le lot garde ses passes dans la section `## Revues`, la dernière de son
+entrée, lisible d'une session neuve : `socle review` y écrit chaque passe,
+sa date et les commits relus, et redonne la même tant que rien ne change
+hors de la mémoire.
+
+1. Au retour du relecteur, écrire dans la passe une ligne `- Bloquant :
+   <sa cause, en quelques mots>` par bloquant, et `- Ouvre : <les
+   entrées que la passe ouvre>`, ou `rien`. À partir de la deuxième
+   passe, le dossier donne au relecteur les causes des bloquants d'avant,
+   et il dit, pour chaque bloquant nouveau, s'il a la même cause que l'un
+   d'eux : sa ligne finit par `· même cause` ou `· cause nouvelle`, selon
+   le relecteur, jamais selon l'agent.
+2. Avant la passe suivante, et avant de clore le lot, écrire le recul de
+   la passe, sous ses bloquants : un paragraphe qui commence par
+   « Recul : », de soixante mots au moins, qui répond aux trois questions
+   que `socle review` donne en refusant la passe, avec l'historique, les
+   entrées ouvertes et closes depuis le début du lot et les lots clos qui
+   ont touché les mêmes fichiers. Les bloquants de cette passe ont-ils la
+   même cause que ceux de la précédente ? Les entrées que le lot ouvre
+   sont-elles de même nature que celles qu'il ferme ? Les lots clos qui
+   ont touché les mêmes fichiers ont-ils déjà ouvert ce genre d'entrées ?
+   Son dernier mot est sa décision : « continuer », ce qui rendra la
+   passe suivante différente écrit avant, ou « s'arrêter ».
+3. S'arrêter : poser une demande à l'humain (skill `socle-request`) qui
+   dit ce qui tourne, en clair, la règle qui le fait tourner, et une
+   proposition qui la borne ; le recul la nomme (`D-NNNN`), et le lot
+   l'attend par son `après`. `socle review` refuse une passe de plus
+   jusqu'à sa réponse : avancer ailleurs. Après deux passes de suite où le
+   relecteur voit une même cause revenir, il refuse « continuer » : le lot
+   s'arrête.
+
+Le contrôle du backlog refuse un lot relu clos `fait` dont la dernière
+passe n'a pas son recul.
