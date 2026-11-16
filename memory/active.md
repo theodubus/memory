@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot L-0013 (J-2026-11-16-T) : T-0046 fait (J-2026-11-16-U) ; puis
-T-0049, T-0050, T-0047, T-0048. Puis L-0012. B-0179 attend.
+Lot L-0013 (J-2026-11-16-V) : T-0046 relu, bloquants en correction ;
+D-0125 à poser ; T-0047, puis T-0048. Puis L-0012, L-0014.
 
 ## Consignes en cours
 

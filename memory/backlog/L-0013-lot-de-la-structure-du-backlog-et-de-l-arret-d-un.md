@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0013 — Lot de la structure du backlog et de l'arrêt d'un chantier qui tourne en rond, coupé du lot L-0011
 
-> statut : en cours · origine : J-2026-11-16-R · après : L-0011, T-0046, T-0049, T-0050, T-0047, T-0048 · lu : backlog@5a24a9b3 · ancien : B-0269
+> statut : en cours · origine : J-2026-11-16-R · après : L-0011, T-0046, T-0047, T-0048 · lu : backlog@5a24a9b3 · ancien : B-0269
 
 Coupé du lot L-0011 le 16 novembre (J-2026-11-16-R) : les deux entrées de
 ce lot dont la spécification attend Théo. D'abord la structure du backlog
@@ -17,3 +17,7 @@ se nomment dans une demande, validée avant leur push ; deux sessions sont
 probables, la seconde pour la migration de ce dépôt et le reclassement.
 
 B-0270 y entre le 16 novembre (J-2026-11-16-S), relevé par la revue du lot L-0011 : il touche le gabarit du skill `socle-review`, comme B-0263.
+
+T-0049 et T-0050, les tâches de B-0265 qui restent, passent au lot L-0014 le
+16 novembre (J-2026-11-16-V) : la consigne de la session était B-0265, B-0263
+puis B-0270, et T-0049 demande une session à lui seul.
