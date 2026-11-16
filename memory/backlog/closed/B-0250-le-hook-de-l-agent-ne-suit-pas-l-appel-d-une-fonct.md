@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0250 — Le hook de l'agent ne suit pas l'appel d'une fonction dans une substitution ni dans un eval : la suppression du projet y passe
 
-> statut : ouvert · origine : J-2026-11-15-R · priorité : haute · lu : backlog@381c20a4
+> statut : fait · origine : J-2026-11-15-R · priorité : haute · ref : J-2026-11-16-C · lu : backlog@381c20a4
 
 Vu en corrigeant les bloquants 2 et 3 de la revue du lot B-0234
 (J-2026-11-15-R) : le découpage suit désormais l'appel d'une fonction
@@ -28,4 +28,4 @@ processus qui ne les hérite pas (hors `export -f`).
 
 ## Fait quand
 
-- [ ] `f() { cd memory; }; x=$(f; rm -rf ../../<racine>)` et `f() { cd memory; }; eval "f; rm -rf ../../<racine>"` sont refusés par le hook, `f() { ls; }; x=$(f); rm -rf build` passe, et un test le montre
+- [x] `f() { cd memory; }; x=$(f; rm -rf ../../<racine>)` et `f() { cd memory; }; eval "f; rm -rf ../../<racine>"` sont refusés par le hook, `f() { ls; }; x=$(f); rm -rf build` passe, et un test le montre

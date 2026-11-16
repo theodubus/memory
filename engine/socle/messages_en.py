@@ -2764,9 +2764,11 @@ MESSAGES: dict[str, str] = {
         "directory that contains the project deleted, or force push, in the body of a function `function name { …; }` "
         "written without parentheses, its body on the same line or the next one",
     "suppression du projet depuis le dossier qu'une fonction appelée laisse derrière elle, son corps `{ … }` ayant "
-    "changé de dossier ou de variable (la seconde revue du lot B-0234, bloquant 2)":
+    "changé de dossier ou de variable, ou appelé une fonction définie après lui, et l'appel derrière `time`, dans un "
+    "`eval` ou dans une substitution (la seconde revue du lot B-0234, ses deux passes)":
         "deletion of the project from the directory a called function leaves behind, its body `{ … }` having "
-        "changed the directory or a variable (the second review of batch B-0234, blocker 2)",
+        "changed the directory or a variable, or called a function defined after it, and the call behind `time`, "
+        "in an `eval` or in a substitution (the second review of batch B-0234, both its passes)",
     "mot réservé cité ou échappé lu comme réservé : le groupe qui suit `\"function\"` s'exécute sur place, ou un `}` "
     "cité ferme trop tôt le corps d'une fonction, et une suppression du projet passe (la seconde revue du lot "
     "B-0234, bloquant 3)":
@@ -2951,10 +2953,12 @@ MESSAGES: dict[str, str] = {
     "l'agent, et son corps ne s'exécute pas là où il s'écrit (B-0232)":
         "a function `function name { …; }` without parentheses whose body does nothing irreversible passes the "
         "agent's hook, and its body does not run where it is written (B-0232)",
-    "l'appel d'une fonction qui ne change ni dossier ni variable ne rend rien inconnu, et un préfixe programme "
-    "(`command f`) ne l'appelle pas (B-0232)":
-        "a call to a function that changes neither directory nor variable makes nothing unknown, and a program "
-        "prefix (`command f`) does not call it (B-0232)",
+    "l'appel d'une fonction qui ne change ni dossier ni variable ne rend rien inconnu, seul, derrière `time`, dans "
+    "un `eval` ou une substitution, ni celui d'une fonction qui en appelle une autre définie après elle, et un "
+    "préfixe programme (`command f`) ou une substitution ne laissent rien fuir (B-0232)":
+        "a call to a function that changes neither directory nor variable makes nothing unknown, alone, behind "
+        "`time`, in an `eval` or a substitution, nor does a call to a function that calls another defined after "
+        "it, and a program prefix (`command f`) or a substitution lets nothing leak (B-0232)",
     "un mot réservé cité, lu comme un mot et non comme une structure, passe le hook de l'agent quand il ne vise "
     "rien de protégé (B-0232)":
         "a quoted reserved word, read as a word and not as a structure, passes the agent's hook when it targets "

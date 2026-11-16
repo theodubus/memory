@@ -578,6 +578,21 @@ def _sans_prefixes(argv: list[str]) -> list[str]:
     return argv
 
 
+def _sur_place(prefixe: list[str]) -> bool:
+    """Le préfixe retiré d'une commande la lance-t-il dans le shell courant,
+    une fonction comprise : des affectations seules (`F=1 f`), derrière le
+    mot réservé `time` en tête et ses options `-p` et `--` (`time -p f`,
+    la seconde revue du lot B-0234, B-0232). Un préfixe programme (`command
+    f`, `sudo f`, `env f`, `F=1 time f`) lance un programme externe, non
+    la fonction."""
+    i = 0
+    if prefixe[:1] == ["time"]:
+        i = 1
+        while prefixe[i:i + 1] in (["-p"], ["--"]):
+            i += 1
+    return all(AFFECTATION.fullmatch(p) for p in prefixe[i:])
+
+
 def _affectation(mot: str) -> tuple[str, str | None] | None:
     """La variable qu'un mot `NOM=valeur` affecte, et sa valeur telle
     qu'écrite : `F+=x` ajoute à la valeur de `F` ; un tableau (`T=(…)`,
@@ -673,7 +688,14 @@ def analyser(texte: str, dossier: str = "", affectations: list[tuple[str, str | 
     return _analyser(texte, _Etat(dossier, lieu, list(affectations or []), [], dossier), env, [DEPLIAGE_MAX])
 
 
-def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int]) -> list[Commande]:
+def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int],
+              fonctions: dict[str, tuple[bool, list[str], list[str]]] | None = None,
+              appels: list[str] | None = None) -> list[Commande]:
+    """Les commandes simples de `texte`, depuis `etat`. `fonctions`, celles
+    que le shell connaît déjà (une copie, pour une substitution ou un
+    `eval`, que bash lance avec les fonctions du shell) ; `appels` reçoit
+    le nom de chaque fonction que le texte appelle hors des corps qu'il
+    définit, qu'un `eval` résout à son tour (B-0250)."""
     res: list[Commande] = []
     mots: list[str] = []
     redir: list[str] = []
@@ -686,16 +708,21 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int]) -> list[Com
     # Les commandes composées ouvertes (B-0204) : le mot qui l'ouvre, l'état
     # d'avant elle, ceux du début de sa liste et de son pipeline, pour une
     # boucle ce que dit `_boucle`, et, pour le corps `{ … }` d'une fonction,
-    # son nom (B-0232).
-    composes: list[tuple[str, _Etat, _Etat, _Etat, bool, dict | None, str | None]] = []
-    # Les fonctions définies dans le texte dont le corps `{ … }` change le
-    # dossier ou des variables : à leur appel, le hook rend inconnu ce
-    # qu'elles changent (le dossier, puis chaque variable), et juge ce qui
-    # suit comme ADR-0072 juge un état inconnu — une suppression du projet
-    # par le dossier qu'un corps de fonction laisse derrière lui passait
-    # sinon (la seconde revue du lot B-0234, B-0232). `nom -> (change le
-    # dossier, variables affectées)`.
-    fonctions: dict[str, tuple[bool, list[str]]] = {}
+    # son nom et les noms qu'il appelle (B-0232).
+    composes: list[tuple[str, _Etat, _Etat, _Etat, bool, dict | None, tuple[str, list[str]] | None]] = []
+    # Les fonctions définies dans le texte, ou que le shell connaît déjà
+    # (une substitution, un `eval`), par leur corps `{ … }` : s'il change le
+    # dossier, les variables qu'il affecte, et les noms qu'il appelle. À
+    # l'appel, le hook rend inconnu ce qu'elles changent (le dossier, puis
+    # chaque variable), avec ce que changent les fonctions qu'elles
+    # appellent, connues au moment de l'appel, de proche en proche ; ce qui
+    # suit se juge comme ADR-0072 juge un état inconnu. Une suppression du
+    # projet par le dossier qu'un corps de fonction laisse derrière lui
+    # passait sinon (la seconde revue du lot B-0234, B-0232).
+    fonctions = dict(fonctions or {})
+    # Ce que change l'appel de chaque nom, résolu (`effets`) : vidé à chaque
+    # fonction définie.
+    resolues: dict[str, tuple[bool, list[str]]] = {}
     # Les tours d'un `for` déplié : sa boucle, et le mot que prend sa variable.
     tours: list[tuple[dict, str]] = []
     # La commande lue juste avant un `||` était un `cd` : sous l'hypothèse
@@ -726,11 +753,47 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int]) -> list[Com
         return cible if cible.startswith(("/", "~")) else depuis.chemin(cible)
 
     def sous_shells(internes: list[str]):
+        # Une substitution hérite des fonctions du shell (B-0250).
         for interne in internes:
-            res.extend(_analyser(interne, etat.copie(), env, budget))
+            res.extend(_analyser(interne, etat.copie(), env, budget, fonctions))
 
     def ouvrir(mot: str, boucle: dict | None = None, nom: str | None = None):
-        composes.append((mot, etat.copie(), debut_liste, debut_tube, en_tube, boucle, nom))
+        composes.append((mot, etat.copie(), debut_liste, debut_tube, en_tube, boucle,
+                         None if nom is None else (nom, [])))
+
+    def effets(nom: str) -> tuple[bool, list[str]]:
+        """Ce que change l'appel de `nom` : s'il change le dossier, et les
+        variables qu'il affecte, avec ce que changent les fonctions qu'il
+        appelle, connues maintenant, de proche en proche ; chacune ne se lit
+        qu'une fois, ce qui garde des cycles et de la récursion (B-0232)."""
+        if nom not in resolues:
+            change_dir, change_var, vues, pile = False, [], set(), [nom]
+            while pile:
+                n = pile.pop()
+                if n in vues or n not in fonctions:
+                    continue
+                vues.add(n)
+                d, v, a = fonctions[n]
+                change_dir = change_dir or d
+                change_var.extend(v)
+                pile.extend(a)
+            resolues[nom] = (change_dir, list(dict.fromkeys(change_var)))
+        return resolues[nom]
+
+    def appeler(nom: str):
+        """`nom` s'appelle dans le shell courant : le corps de fonction
+        ouvert le retient, ou à défaut `appels`, pour le résoudre à son
+        propre appel, une fonction définie plus loin comprise ; ce que
+        change une fonction de ce nom devient inconnu (B-0232)."""
+        corps = next((x[6] for x in reversed(composes) if x[0] == "()"), None)
+        if corps is not None:
+            corps[1].append(nom)
+        elif appels is not None:
+            appels.append(nom)
+        change_dir, change_var = effets(nom)
+        if change_dir:
+            changer(f"$({nom})", INCONNU)
+        etat.vues.extend((v, None) for v in change_var)
 
     def ailleurs(boucle: dict | None) -> bool:
         """Un `break` ou un `continue` de la boucle s'est lu dans un autre
@@ -797,12 +860,15 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int]) -> list[Com
     def definir(k: int):
         """Une définition de fonction vient de se lire : ses `k` mots
         réservés de tête se suivent, et la commande qui suit est son corps.
-        Son nom (`mots[-1]`) attend l'ouverture de son corps (B-0232)."""
+        Son nom (`mots[-1]`) attend l'ouverture de son corps (B-0232) : il ne
+        se pose qu'après les mots réservés, dont le `{` qui ouvre le corps
+        d'une fonction qui la contient, et qui garde son propre nom (`f() {
+        g() { …; }; … }`, la seconde revue du lot B-0234)."""
         nonlocal mots, definition, nom_defini
-        nom_defini = mots[-1].lstrip(CITE) if mots else ""
+        nom = mots[-1].lstrip(CITE) if mots else ""
         mots = mots[:k]
         reserves()
-        mots, definition = [], True
+        mots, definition, nom_defini = [], True, nom
 
     def reserves():
         """Retire les mots réservés en tête de la commande, et suit les
@@ -845,20 +911,25 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int]) -> list[Com
                 incertain()
             if echecs and echecs[-1] == len(composes):
                 echecs.pop()
-            ouvert, avant, debut_liste, debut_tube, en_tube, _, nom_corps = composes.pop()
+            ouvert, avant, debut_liste, debut_tube, en_tube, _, corps = composes.pop()
             if ouvert == "()":
                 # Le corps `{ … }` d'une fonction : s'il a changé le dossier
-                # ou affecté des variables, son appel les rendra inconnus
-                # (B-0232). Son état rendu, comme un groupe non exécuté là.
-                if nom_corps:
+                # ou affecté des variables, et les noms qu'il appelle, que son
+                # appel résoudra (B-0232). Une redéfinition s'ajoute à la
+                # première, qu'elle ne remplace peut-être pas (`if …; then
+                # f() { …; }; fi`). Son état rendu, comme un groupe non
+                # exécuté là.
+                if corps and corps[0]:
                     suite = etat.vues[len(avant.vues):] if len(etat.vues) >= len(avant.vues) else etat.vues
                     # Le lieu, normalisé et absolu, dit seul un changement de
                     # dossier : un corps `cd a; cd ..` y revient (`.` et `` le
                     # disent autrement, comme la revue du lot 3 l'a vu).
                     change_dir = etat.lieu != avant.lieu
-                    change_var = list(dict.fromkeys(v for v, _ in suite if v not in ("PWD", "OLDPWD")))
-                    if change_dir or change_var:
-                        fonctions[nom_corps] = (change_dir, change_var)
+                    change_var = [v for v, _ in suite if v not in ("PWD", "OLDPWD")]
+                    d, v, a = fonctions.get(corps[0], (False, [], []))
+                    fonctions[corps[0]] = (d or change_dir, list(dict.fromkeys(v + change_var)),
+                                           list(dict.fromkeys(a + corps[1])))
+                    resolues.clear()
                 etat = avant.copie()
             return avant
         return None
@@ -918,7 +989,14 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int]) -> list[Com
             elif nom in ("bash", "sh", "zsh", "dash") and (script := _script_du_shell(argv)) is not None:
                 res.extend(_analyser(script, etat.copie(), env, budget))
             elif nom == "eval":
-                res.extend(_analyser(" ".join(argv[1:]), etat.copie(), env, budget))
+                # `eval` lit son texte dans le shell courant, avec ses
+                # fonctions ; celles qu'il appelle s'appellent ici, et ce
+                # qu'elles changent vaut pour la suite (B-0250). Un `bash
+                # -c`, un autre processus, ne les connaît pas.
+                lus: list[str] = []
+                res.extend(_analyser(" ".join(argv[1:]), etat.copie(), env, budget, fonctions, lus))
+                for appelee in lus:
+                    appeler(appelee)
             elif nom in SAUTS and not ou_apres_cd and not echecs:
                 # Un saut, vers la suite d'une boucle ou son tour d'après :
                 # son dossier se compare à celui où le tour finit. Il vaut
@@ -933,17 +1011,16 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int]) -> list[Com
                     if x[5] is not None:
                         x[5]["sauts"].append(etat.lieu)
                         n -= 1
-            elif nom in fonctions and all(AFFECTATION.fullmatch(p) for p in c.prefixe):
-                # L'appel d'une fonction définie ici dont le corps change le
-                # dossier ou des variables : ce qu'elle change devient
-                # inconnu, et ce qui suit se juge comme un état inconnu
-                # (B-0232). Un préfixe programme (`command f`, `sudo f`,
-                # `env f`) lance un programme externe, non la fonction, et ne
-                # fuit rien ; une affectation devant (`F=1 f`) l'appelle.
-                change_dir, change_var = fonctions[nom]
-                if change_dir:
-                    changer(f"$({nom})", INCONNU)
-                etat.vues.extend((v, None) for v in change_var)
+            elif argv and _sur_place(c.prefixe):
+                # L'appel, peut-être, d'une fonction, par son nom entier
+                # (`function f/x` s'appelle `f/x`) : si son corps change le
+                # dossier ou des variables, ou appelle une fonction qui les
+                # change, ce qu'elle change devient inconnu, et ce qui suit se
+                # juge comme un état inconnu (B-0232). Un préfixe programme
+                # (`command f`, `sudo f`, `env f`) lance un programme externe,
+                # non la fonction, et ne fuit rien ; une affectation devant
+                # (`F=1 f`) ou `time` l'appellent.
+                appeler(argv[0])
             etat.vues.extend(_affectations(argv))
             etat.vues.extend((m.group(1), None) for x in mots + redir for m in DEFAUT_AFFECTE.finditer(x))
             res.append(c)

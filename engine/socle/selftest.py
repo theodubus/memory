@@ -1503,20 +1503,29 @@ def _cas() -> list[Cas]:
             "function f if git push --force origin travail; then :; fi")])
 
     @defaut("appel-de-fonction", "suppression du projet depuis le dossier qu'une fonction appelée laisse derrière "
-            "elle, son corps `{ … }` ayant changé de dossier ou de variable (la seconde revue du lot B-0234, "
-            "bloquant 2)", "agent", "écriture illisible")
+            "elle, son corps `{ … }` ayant changé de dossier ou de variable, ou appelé une fonction définie après "
+            "lui, et l'appel derrière `time`, dans un `eval` ou dans une substitution (la seconde revue du lot "
+            "B-0234, ses deux passes)", "agent", "écriture illisible")
     def _(a, c):
         # B-0232 : à l'appel d'une fonction dont le corps change le dossier,
         # le hook ne suivait rien, et `../../<racine>`, sans danger depuis la
         # racine, visait le projet depuis le dossier laissé derrière. L'appel
         # rend inconnu ce que le corps change (ADR-0072, point 6). Aussi la
         # forme `f() { … }` (troisième constat), un appel par une fonction qui
-        # en appelle une autre, et une redéfinition.
+        # en appelle une autre, et une redéfinition. La seconde passe de la
+        # revue (J-2026-11-16-B) : une fonction appelée définie après celle
+        # qui l'appelle, ou dans elle, `time f`, et l'appel dans un `eval` ou
+        # une substitution (B-0250).
         return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
             f"function f {{ cd memory; }}; f; rm -rf ../../{c.name}",
             f"f() {{ cd memory; }}; f; rm -rf ../../{c.name}",
             f"f() {{ cd memory; }}; g() {{ f; }}; g; rm -rf ../../{c.name}",
-            f"f() {{ ls; }}; f() {{ cd memory; }}; f; rm -rf ../../{c.name}")])
+            f"f() {{ ls; }}; f() {{ cd memory; }}; f; rm -rf ../../{c.name}",
+            f"g() {{ f; }}; f() {{ cd memory; }}; g; rm -rf ../../{c.name}",
+            f"f() {{ g() {{ cd memory; }}; g; }}; f; rm -rf ../../{c.name}",
+            f"f() {{ cd memory; }}; time -p f; rm -rf ../../{c.name}",
+            f"f() {{ cd memory; }}; eval f; rm -rf ../../{c.name}",
+            f"f() {{ cd memory; }}; x=$(f; rm -rf ../../{c.name})")])
 
     @defaut("mot-reserve-cite", "mot réservé cité ou échappé lu comme réservé : le groupe qui suit `\"function\"` "
             "s'exécute sur place, ou un `}` cité ferme trop tôt le corps d'une fonction, et une suppression du "
@@ -2156,15 +2165,19 @@ def _temoins() -> list[tuple[str, Callable]]:
                 or etage_outil(a, c, "Bash", {"command": "function nettoyer\n{\n  rm -rf build\n}\nnettoyer"})
                 or etage_outil(a, c, "Bash", {"command": "function f { cd .socle; }; echo ok > policy.toml"}))
 
-    @temoin("l'appel d'une fonction qui ne change ni dossier ni variable ne rend rien inconnu, et un préfixe "
-            "programme (`command f`) ne l'appelle pas (B-0232)")
+    @temoin("l'appel d'une fonction qui ne change ni dossier ni variable ne rend rien inconnu, seul, derrière "
+            "`time`, dans un `eval` ou une substitution, ni celui d'une fonction qui en appelle une autre définie "
+            "après elle, et un préfixe programme (`command f`) ou une substitution ne laissent rien fuir (B-0232)")
     def _(a, c):
         # Le pendant sain d'`appel-de-fonction` : seul l'appel d'une fonction
         # dont le corps change le dossier ou une variable rend la suite
         # inconnue ; l'usage normal reste libre.
         return (etage_outil(a, c, "Bash", {"command": "f() { ls; }; f; rm -rf build"})
                 or etage_outil(a, c, "Bash", {"command": "f() { echo x > /tmp/y; }; f; echo ok > notes.txt"})
-                or etage_outil(a, c, "Bash", {"command": "f() { cd memory; }; command f; echo ok > notes.txt"}))
+                or etage_outil(a, c, "Bash", {"command": "f() { cd memory; }; command f; echo ok > notes.txt"})
+                or etage_outil(a, c, "Bash", {"command": "g() { f; }; f() { ls; }; g; rm -rf build"})
+                or etage_outil(a, c, "Bash", {"command": "f() { ls; }; time -p f; x=$(f); eval f; rm -rf build"})
+                or etage_outil(a, c, "Bash", {"command": "f() { cd memory; }; x=$(f); rm -rf build"}))
 
     @temoin("un mot réservé cité, lu comme un mot et non comme une structure, passe le hook de l'agent quand il ne "
             "vise rien de protégé (B-0232)")

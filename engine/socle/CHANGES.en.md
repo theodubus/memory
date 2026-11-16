@@ -51,15 +51,25 @@ function whose body `{ …; }` changes the directory or a variable, the
 hook makes what it changes unknown and judges what follows as an unknown
 state: a deletion of the project from the directory such a call leaves
 behind (`function f { cd memory; }; f; rm -rf ../../<root>`) is refused,
-normal use (`f() { ls; }; f; rm -rf build`) stays free. A quoted or
-escaped reserved word (`"function"`, `\function`, `$'function'`, and a
-`}` that closed a body too early) is no longer read as reserved: bash
-runs it as a command, and the group or body that follows is judged as
-bash runs it in place.
+normal use (`f() { ls; }; f; rm -rf build`) stays free. The call is
+resolved when it happens, with what the functions the function calls
+change, step by step, including a function defined after it or inside it
+(`g() { f; }; f() { cd memory; }; g`); it counts behind `time` and `time
+-p`, and in an `eval` or a substitution (`eval f`, `x=$(f; …)`), which
+know the command's functions; a `bash -c`, another process, does not
+know them. A quoted or escaped reserved word (`"function"`, `\function`,
+`$'function'`, and a `}` that closed a body too early) is no longer read
+as reserved: bash runs it as a command, and the group or body that
+follows is judged as bash runs it in place.
 
 To do: nothing. A force push or a deletion of the project written in such
 a function, or let through by its call or by a quoted reserved word,
-which the hook let through, is refused.
+which the hook let through, is refused. A new refusal, harmless this
+time: a write or a deletion through a relative path that follows a call
+to a function whose body changes directory (`f() { cd memory; }; f; rm
+-rf build`) is refused, as the hook no longer knows where it starts. To
+run it, write its absolute path in full, or do the `cd` outside the
+function (`cd memory; rm -rf build`).
 
 ## 2026-11-15-c — The review sorts out exotic findings, and its reviewer receives the most capable model
 

@@ -947,6 +947,74 @@ class TestGarde(unittest.TestCase):
                          ("f() { cd memory; }; command f; echo ok > notes.txt", None),
                          ("f() { cd memory; }; f; ls", None)])
 
+    def test_l_appel_d_une_fonction_se_resout_au_moment_de_l_appel(self):
+        """La seconde passe de la seconde revue du lot B-0234, bloquant 1
+        (J-2026-11-16-B) : ce que change une fonction se calculait à la
+        fermeture de son corps, avec les fonctions connues alors, et une
+        fonction qui en appelle une autre définie après elle ne changeait
+        rien ; le nom d'une fonction définie dans une autre remplaçait celui
+        de la fonction qui la contient. Les noms qu'appelle un corps se
+        résolvent à l'appel, de proche en proche, avec les fonctions connues
+        alors, chacune une fois (un cycle, une récursion) ; une fonction
+        s'appelle par son nom entier (`f/x`)."""
+        nom = self.racine.name
+        with self.environnement():
+            self.jugees([(f"g() {{ f; }}; f() {{ cd memory; }}; g; rm -rf ../../{nom}", "illisible"),
+                         (f"function g\n{{ f; }}\nfunction f\n{{ cd memory; }}\ng\nrm -rf ../../{nom}", "illisible"),
+                         (f"h() {{ g; }}; g() {{ f; }}; f() {{ cd memory; }}; h; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ g() {{ cd memory; }}; g; }}; f; rm -rf ../../{nom}", "illisible"),
+                         (f"function f\n{{ function g\n{{ cd memory; }}\ng\n}}\nf\nrm -rf ../../{nom}", "illisible"),
+                         (f"X=.; g() {{ f; }}; f() {{ X=memory; }}; g; cd $X; rm -rf ../../{nom}", "illisible"),
+                         (f"function f/x\n{{ cd memory; }}\nf/x\nrm -rf ../../{nom}", "illisible"),
+                         # Un cycle ou une récursion se lit une fois, et
+                         # l'usage normal reste libre.
+                         ("f() { f; }; f; rm -rf build", None),
+                         ("f() { g; }; g() { f; }; f; rm -rf build", None),
+                         ("g() { f; }; f() { ls; }; g; rm -rf build", None),
+                         ("f() { cd memory; }; g() { ls; }; g; rm -rf build", None)])
+
+    def test_time_appelle_la_fonction_dans_le_shell_courant(self):
+        """La seconde passe de la seconde revue du lot B-0234, bloquant 2
+        (J-2026-11-16-B) : `time` tombait parmi les préfixes, et l'appel
+        n'admettait devant lui que des affectations ; bash lance la fonction
+        dans le shell courant derrière `time`, `time -p` et `time --`.
+        Derrière une affectation, `time` est un programme externe."""
+        nom = self.racine.name
+        with self.environnement():
+            self.jugees([(f"function f\n{{ cd memory; }}\ntime f\nrm -rf ../../{nom}", "illisible"),
+                         (f"function f\n{{ cd memory; }}\ntime -p f\nrm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ cd memory; }}; time f; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ cd memory; }}; time -p f; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ cd memory; }}; time -- f; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ cd memory; }}; time X=1 f; rm -rf ../../{nom}", "illisible"),
+                         ("f() { ls; }; time f; rm -rf build", None),
+                         ("f() { cd memory; }; time f | cat; rm -rf build", None),
+                         ("f() { cd memory; }; X=1 time f; rm -rf build", None)])
+
+    def test_l_appel_dans_un_eval_ou_une_substitution(self):
+        """La seconde passe de la seconde revue du lot B-0234, bloquant 3
+        (J-2026-11-16-B), et B-0250 : le texte d'une substitution et celui
+        d'un `eval` se lisaient sans les fonctions de la commande ; bash les
+        y appelle, `eval` dans le shell courant. Ils se lisent avec une copie
+        des fonctions connues, et ce qu'appelle un `eval` vaut pour la
+        suite ; un `bash -c`, un autre processus, ne les connaît pas."""
+        nom = self.racine.name
+        with self.environnement():
+            self.jugees([(f'function f\n{{ cd memory; }}\neval "f; rm -rf ../../{nom}"', "illisible"),
+                         (f"function f\n{{ cd memory; }}\nx=$(f; rm -rf ../../{nom})", "illisible"),
+                         (f"function f\n{{ cd memory; }}\neval f\nrm -rf ../../{nom}", "illisible"),
+                         (f'f() {{ cd memory; }}; eval "f; rm -rf ../../{nom}"', "illisible"),
+                         (f"f() {{ cd memory; }}; x=$(f; rm -rf ../../{nom})", "illisible"),
+                         (f"f() {{ cd memory; }}; eval f; rm -rf ../../{nom}", "illisible"),
+                         (f"f() {{ cd memory; }}; echo `f; rm -rf ../../{nom}`", "illisible"),
+                         (f"f() {{ cd memory; }}; cat <(f; rm -rf ../../{nom})", "illisible"),
+                         (f'f() {{ cd memory; }}; eval "eval f"; rm -rf ../../{nom}', "illisible"),
+                         (f"g() {{ eval f; }}; f() {{ cd memory; }}; g; rm -rf ../../{nom}", "illisible"),
+                         ("f() { ls; }; x=$(f); rm -rf build", None),
+                         ("f() { ls; }; eval f; rm -rf build", None),
+                         ("f() { cd memory; }; x=$(f); rm -rf build", None),
+                         ('f() { cd memory; }; bash -c "f; rm -rf build"', None)])
+
     def test_un_mot_reserve_cite_ou_echappe_se_lit_comme_un_mot(self):
         """La seconde revue du lot B-0234, bloquant 3 (J-2026-11-15-O) : un
         mot réservé entre guillemets ou échappé (`"function"`, `\\function`,
@@ -1489,6 +1557,33 @@ class TestDecoupage(unittest.TestCase):
                 self.assertEqual(commandes.analyser(texte + "; ls", environnement=env)[-1].lieu, lieu)
         c = commandes.analyser("f() { X=1; }; f; cd $X; ls", environnement=env)[-1]
         self.assertEqual(c.lieu, I)
+
+    def test_l_appel_d_une_fonction_se_resout_a_l_appel(self):
+        """La seconde passe de la seconde revue du lot B-0234 (J-2026-11-16-B,
+        B-0250) : les noms qu'appelle un corps se résolvent à l'appel, avec
+        les fonctions connues alors ; une fonction définie dans une autre
+        garde son nom ; `time` appelle la fonction ; une substitution et un
+        `eval` la connaissent, un `bash -c` non ; un chemin (`./f`) n'est
+        pas une fonction."""
+        env = {"PWD": "/p"}
+        I = commandes.INCONNU
+        for texte, lieu in (("g() { f; }; f() { cd /a; }; g", I), ("f() { g() { cd /a; }; g; }; f", I),
+                            ("f() { f; }; f", "/p"), ("f() { g; }; g() { f; }; f", "/p"),
+                            ("f() { cd /a; }; if c; then f() { ls; }; fi; f", I),
+                            ("f() { cd /a; }; time -p f", I), ("f() { cd /a; }; time -- f", I),
+                            ("f() { cd /a; }; X=1 time f", "/p"), ("f() { cd /a; }; time -p -x f", "/p"),
+                            ("f() { cd /a; }; eval f", I), ("f() { cd /a; }; eval 'eval f'", I),
+                            ("f() { cd /a; }; x=$(f)", "/p"), ("function f/x { cd /a; }; f/x", I),
+                            ("f() { cd /a; }; ./f", "/p")):
+            with self.subTest(texte):
+                self.assertEqual(commandes.analyser(texte + "; ls", environnement=env)[-1].lieu, lieu)
+        # Ce que lance une substitution ou un `eval` se lit depuis le dossier
+        # que l'appel y laisse ; un `bash -c` ne connaît pas la fonction.
+        for texte, lieu in (("f() { cd /a; }; x=$(f; ls)", I), ("f() { cd /a; }; eval 'f; ls'", I),
+                            ("f() { cd /a; }; echo `f; ls`", I), ("f() { cd /a; }; bash -c 'f; ls'", "/p")):
+            with self.subTest(texte):
+                cs = commandes.analyser(texte, environnement=env)
+                self.assertEqual(next(c.lieu for c in cs if c.argv == ["ls"]), lieu)
 
     def test_un_mot_reserve_cite_est_un_mot(self):
         """La seconde revue du lot B-0234, bloquant 3 (J-2026-11-15-O) : un

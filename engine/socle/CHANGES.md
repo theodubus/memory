@@ -52,14 +52,25 @@ le hook rend inconnu ce qu'elle change et juge la suite comme un état
 inconnu : une suppression du projet depuis le dossier qu'un tel appel
 laisse derrière lui (`function f { cd memory; }; f; rm -rf
 ../../<racine>`) est refusée, l'usage normal (`f() { ls; }; f; rm -rf
-build`) reste libre. Un mot réservé cité ou échappé (`"function"`,
+build`) reste libre. L'appel se résout au moment où il se fait, avec ce
+que changent les fonctions que la fonction appelle, de proche en proche,
+une fonction définie après elle ou dans elle comprise (`g() { f; }; f()
+{ cd memory; }; g`) ; il vaut derrière `time` et `time -p`, et dans un
+`eval` ou une substitution (`eval f`, `x=$(f; …)`), qui connaissent les
+fonctions de la commande ; un `bash -c`, un autre processus, ne les
+connaît pas. Un mot réservé cité ou échappé (`"function"`,
 `\function`, `$'function'`, et un `}` qui fermait trop tôt un corps)
 n'est plus lu comme réservé : bash le lance comme une commande, et le
 groupe ou le corps qui suit se juge comme bash l'exécute sur place.
 
 À faire : rien. Un push forcé ou une suppression du projet écrits dans
 une telle fonction, ou passés par son appel ou par un mot réservé cité,
-que le hook laissait passer, sont refusés.
+que le hook laissait passer, sont refusés. Un refus nouveau, sans danger
+cette fois : une écriture ou une suppression par un chemin relatif qui
+suit l'appel d'une fonction dont le corps change de dossier (`f() { cd
+memory; }; f; rm -rf build`) est refusée, le hook ne sachant plus d'où
+elle part. Pour la lancer, écrire son chemin absolu en toutes lettres, ou
+faire le `cd` hors de la fonction (`cd memory; rm -rf build`).
 
 ## 2026-11-15-c — La revue trie les constats exotiques, et son relecteur reçoit le modèle le plus capable
 
