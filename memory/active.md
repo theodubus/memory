@@ -5,7 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot B-0269 (J-2026-11-16-T) : B-0265, puis B-0263, puis B-0270.
+Lot B-0269 : `docs/fabrication/passation-b0269/LISEZMOI.md`.
 Puis B-0266. B-0179 attend.
 
 ## Consignes en cours
