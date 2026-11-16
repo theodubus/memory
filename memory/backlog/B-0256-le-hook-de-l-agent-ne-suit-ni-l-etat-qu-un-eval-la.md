@@ -33,3 +33,4 @@ supprime par un chemin relatif.
 ## Fait quand
 
 - [ ] `eval "cd memory"; rm -rf ../../<racine>` et `f() { rm -rf ../../<racine>; }; cd memory; f` sont refusés par le hook, `eval "cd memory"; ls` et `f() { rm -rf build; }; f` passent, et un test le montre
+- [ ] le corps d'une fonction se juge à son appel, avec les fonctions connues alors : `g() { f; rm -rf ../../<racine>; }; f() { cd memory; }; g`, et ses variantes par une substitution ou un `eval` dans le corps, sont refusés (J-2026-11-16-F), et un test le montre
