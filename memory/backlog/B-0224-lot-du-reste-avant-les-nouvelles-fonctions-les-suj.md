@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0224 — Jalon — fini avant les nouvelles fonctions : les lots 5 à 12
 
-> statut : ouvert · origine : J-2026-11-14-M · forme : jalon · après : B-0223, B-0234, B-0235, B-0236, B-0237, B-0238, B-0239, B-0240 · lu : backlog@f69fc579
+> statut : ouvert · origine : J-2026-11-14-M · forme : jalon · après : B-0223, B-0234, B-0264, B-0266, B-0235, B-0236, B-0237, B-0238, B-0239, B-0240 · lu : backlog@f69fc579
 
 Ce qui reste de la liste que Théo a fixée le 13 novembre, à finir avant
 les nouvelles fonctions (J-2026-11-13-I). Né le 14 novembre sous la
