@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot L-0013 (J-2026-11-16-X) : T-0046 relu, corrigé ; D-0125 posée ;
-T-0047 fait, à relire ; puis T-0048. Puis L-0012, L-0014.
+Lot L-0013 : T-0046, T-0047 relus ; D-0125 attend ; T-0048 à faire
+(`docs/fabrication/passation-l0013/LISEZMOI.md`). Puis L-0012, L-0014.
 
 ## Consignes en cours
 
@@ -43,7 +43,7 @@ Leur texte exact est dans l'entrée du journal citée.
 - « Pour toi » ne contient que les gestes de Théo, chacun compréhensible
   seul (ce que c'est, pourquoi, ce que change sa réponse) ; ce que
   l'agent fera se dit à part (J-2026-10-31-S, J-2026-10-14-F).
-- Les heures dites à Théo, à l'heure de Paris (J-2026-10-14-G).
+- Les heures à Théo, à l'heure de Paris (J-2026-10-14-G).
 - Un autre dépôt se clone hors du dossier des dépôts de la session, sans
   être déclaré racine ; à chaque reprise, vérifier que l'état a été
   injecté, sinon le dire et ne rien pousser (J-2026-10-14-S).

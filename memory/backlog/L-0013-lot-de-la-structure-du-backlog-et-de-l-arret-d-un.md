@@ -42,3 +42,5 @@ Commits : 36be954..1f8e85f
 - Bloquant : la clôture d'un lot ne juge que la forme du dernier recul · cause nouvelle
 - Bloquant : l'arrêt se lève par une demande qui ne vise pas le lot · cause nouvelle
 - Ouvre : T-0054, T-0055, B-0273
+
+Recul : les deux bloquants de cette passe n'ont pas la cause de ceux de la passe 1, venus de la migration : ils viennent de la clôture et de l'arrêt que T-0047 pose, et leur correction applique à la clôture les règles déjà écrites pour la passe, sans conception nouvelle ; les entrées ouvertes, T-0054, T-0055 et B-0273, sont des défauts de l'historique des revues, de la nature de ce que le lot ferme, sauf B-0273, antérieur ; aucun lot clos n'avait touché cette section, neuve. La passe suivante relira une autre tâche, T-0048 : continuer.

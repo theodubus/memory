@@ -25,12 +25,12 @@ Autoriser l'agent à changer les valeurs attendues des vingt tests nommés plus 
 
 Le même push porte ces six fichiers entiers : deux autres tests n'y changent que leurs données d'essai, pas leurs attentes (`test_dependances_et_est_jalon_se_lisent_dans_les_deux_langues`, `test_l_essentiel_tient_dans_les_2000_premiers_octets_d_un_etat_qui_les_depasse`). Cinq autres, déjà dans le commit de la structure, ne changent que la commande qu'ils lancent ou le squelette qu'ils remplissent, pas leurs attentes : `test_new_ecrit_le_sujet_meme_si_sa_sortie_est_coupee`, `test_un_sujet_nouveau_a_son_fichier`, `test_un_identifiant_neuf_saute_ceux_des_branches_poussees`, `test_new_ecrit_dans_la_langue_du_projet`, `test_une_memoire_anglaise_remplie_passe_les_controles`. La politique ne réserve pas ces sept-là à votre accord ; ils sont dits pour que vous les voyiez.
 
-**Les trois skills.** Leurs gabarits, le texte que reçoit chaque projet équipé, disent désormais « tâche », « besoin » et `socle new batch` ; la copie de `socle-batch` fait encore écrire `socle new backlog`, une commande qui n'existe plus. Les copies sont aussi en retard sur des changements de leurs gabarits déjà livrés aux projets : pour `socle-review`, vos décisions des 14, 15 et 16 novembre (le tri des constats du relecteur, son modèle d'IA, les formes du shell que le hook ne juge pas) et le point de départ du diff qu'il juge ; pour `socle-resume`, la reprise après une limite quand manque l'outil de Claude Code qui lit les événements de la session. Chaque copie devient son gabarit, octet pour octet.
+**Les trois skills.** Leurs gabarits, le texte que reçoit chaque projet équipé, disent désormais « tâche », « besoin » et `socle new batch` ; la copie de `socle-batch` fait encore écrire `socle new backlog`, une commande qui n'existe plus. Les copies sont aussi en retard sur des changements de leurs gabarits déjà livrés aux projets : pour `socle-review`, vos décisions des 14, 15 et 16 novembre (le tri des constats du relecteur, son modèle d'IA, les formes du shell que le hook ne juge pas) et le point de départ du diff qu'il juge ; pour `socle-resume`, la reprise après une limite quand manque l'outil de Claude Code qui lit les événements de la session. Et `socle-review` dit l'historique des revues d'un lot et le recul qui l'arrête quand il tourne en rond, dont vous avez validé la spécification le même jour, écrit et relu depuis. Chaque copie devient son gabarit, octet pour octet.
 
 ## Éléments cités
 
-- .claude/skills/socle-batch/SKILL.md sha256:d84357a103ecb244
-- .claude/skills/socle-review/SKILL.md sha256:ffce8d6c84cf4196
+- .claude/skills/socle-batch/SKILL.md sha256:161aba587bb3d261
+- .claude/skills/socle-review/SKILL.md sha256:d86f7336f4a7aa59
 - .claude/skills/socle-resume/SKILL.md sha256:3746f4f208284a39
 
 L'empreinte de ces trois lignes est celle que la copie aura, celle de son gabarit : votre accord porte sur ce texte exact. Plus bas : `D-`, une demande comme celle-ci ; `ADR-`, une décision que l'agent écrit seul quand elle est réversible ; après @, l'empreinte de la version lue.
@@ -44,10 +44,10 @@ L'empreinte de ces trois lignes est celle que la copie aura, celle de son gabari
 
 ## Où regarder
 
-- [Les tests de l'ordre du backlog, avant leur changement](https://github.com/theodubus/memory/blob/51fed60776508eaf30bc5331469b7332a57f04b0/tests/test_ordre.py) : les attentes que le détail plus haut remplace ; les autres fichiers sont dans le même dossier.
-- [Le gabarit de `socle-batch`, le texte nouveau](https://github.com/theodubus/memory/blob/51fed60776508eaf30bc5331469b7332a57f04b0/engine/socle/templates/skills/socle-batch/SKILL.md) et [sa copie actuelle, à remplacer](https://github.com/theodubus/memory/blob/51fed60776508eaf30bc5331469b7332a57f04b0/.claude/skills/socle-batch/SKILL.md) : l'étape 1, `socle new batch` au lieu de `socle new backlog`.
-- [Le gabarit de `socle-review`](https://github.com/theodubus/memory/blob/51fed60776508eaf30bc5331469b7332a57f04b0/engine/socle/templates/skills/socle-review/SKILL.md) et [celui de `socle-resume`](https://github.com/theodubus/memory/blob/51fed60776508eaf30bc5331469b7332a57f04b0/engine/socle/templates/skills/socle-resume/SKILL.md) : les textes que prendront leurs copies.
-- [La spécification écrite, ADR-0083](https://github.com/theodubus/memory/blob/51fed60776508eaf30bc5331469b7332a57f04b0/memory/decisions/ADR-0083-le-backlog-en-quatre-formes-chacune-avec-son-prefi.md) : ce que la structure tranche, dont la priorité qu'un lot ou un jalon perd à la migration.
+- [Les tests de l'ordre du backlog, avant leur changement](https://github.com/theodubus/memory/blob/6ff7147df806c97c39ff46c959e26bf4d5a0691d/tests/test_ordre.py) : les attentes que le détail plus haut remplace ; les autres fichiers sont dans le même dossier.
+- [Le gabarit de `socle-batch`, le texte nouveau](https://github.com/theodubus/memory/blob/6ff7147df806c97c39ff46c959e26bf4d5a0691d/engine/socle/templates/skills/socle-batch/SKILL.md) et [sa copie actuelle, à remplacer](https://github.com/theodubus/memory/blob/6ff7147df806c97c39ff46c959e26bf4d5a0691d/.claude/skills/socle-batch/SKILL.md) : l'étape 1, `socle new batch` au lieu de `socle new backlog`.
+- [Le gabarit de `socle-review`](https://github.com/theodubus/memory/blob/6ff7147df806c97c39ff46c959e26bf4d5a0691d/engine/socle/templates/skills/socle-review/SKILL.md) et [celui de `socle-resume`](https://github.com/theodubus/memory/blob/6ff7147df806c97c39ff46c959e26bf4d5a0691d/engine/socle/templates/skills/socle-resume/SKILL.md) : les textes que prendront leurs copies.
+- [La spécification écrite, ADR-0083](https://github.com/theodubus/memory/blob/6ff7147df806c97c39ff46c959e26bf4d5a0691d/memory/decisions/ADR-0083-le-backlog-en-quatre-formes-chacune-avec-son-prefi.md) : ce que la structure tranche, dont la priorité qu'un lot ou un jalon perd à la migration.
 
 ## Options
 
