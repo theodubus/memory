@@ -136,7 +136,7 @@ Le suffixe après `@` est l'empreinte de la version lue.
 
 - [tests/parallele.py](https://github.com/theodubus/memory/blob/d4e4f56d2f61b29d091805df420922349dee26e9/tests/parallele.py) : le lanceur, 137 lignes ; vérifier qu'il ne fait que lancer chaque fichier de tests et en rendre le bilan.
 - [Le journal, sixième fichier de novembre](https://github.com/theodubus/memory/blob/d4e4f56d2f61b29d091805df420922349dee26e9/memory/journal/2026-11-6.md) : l'entrée J-2026-11-17-I, les mesures et la nature de chacune, mesurée ou déduite.
-- [B-0258](https://github.com/theodubus/memory/blob/d4e4f56d2f61b29d091805df420922349dee26e9/memory/backlog/B-0258-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md) : le besoin du second point et son modèle de menace.
+- [B-0258](https://github.com/theodubus/memory/blob/64e8d4e8ae1fc5a13bc9e02ae74815456ea8d590/memory/backlog/B-0258-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md) : le besoin du second point et son modèle de menace.
 
 ## Options
 
