@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0044 — La suite de tests de ce dépôt sur plusieurs cœurs : verify --fast passe près de douze minutes sur un seul cœur
 
-> statut : ouvert · origine : J-2026-11-16-E · besoin : B-0257 · lu : backlog@9966bbbd
+> statut : ouvert · après : D-0130 · origine : J-2026-11-16-E · besoin : B-0257 · lu : backlog@9966bbbd
 
 La tâche de B-0257, que la migration du backlog en quatre formes a posée dans le lot L-0012 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
 
