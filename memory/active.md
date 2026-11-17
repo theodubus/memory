@@ -14,7 +14,7 @@ Leur texte exact est dans l'entrée du journal citée.
 
 - Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
 - Le hook borné aux formes qu'un agent écrit ; une forme exotique va
-  à la liste, sans sujet ni bloquant (ADR-0082).
+  à la liste, sans sujet ni bloquant : atelier seul (D-0128).
 - Un mot pour une chose ; une tâche va sans demander au lot dont la
   règle s'applique (J-2026-11-16-I, J-2026-11-16-J).
 - Relecteur : le plus capable jusqu'à Opus (D-0117). Fable, implémenteur

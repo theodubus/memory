@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0006 — Lot des copies protégées et des skills : leur retard, leur remise, et ce que le skill socle-batch dit mal
 
-> statut : ouvert · origine : J-2026-11-15-J · après : L-0005, T-0009, T-0010, T-0011, T-0012, T-0013, T-0014, T-0015, T-0016, T-0017 · lu : backlog@19378efe · ancien : B-0236
+> statut : ouvert · origine : J-2026-11-15-J · après : L-0005, T-0009, T-0010, T-0011, T-0012, T-0013, T-0014, T-0015, T-0016, T-0017, T-0060, T-0061 · lu : backlog@19378efe · ancien : B-0236
 
 Les skills du produit et leurs copies protégées dans ce dépôt : les
 copies en retard sur leurs gabarits (B-0218, dont celle de
@@ -15,3 +15,5 @@ La revue du lot 5 y ajoute le tri que `socle-batch` dit encore mal
 (B-0242) et le modèle des relecteurs (B-0243).
 
 Le 16 novembre, selon la règle qui réunit dans un lot les sujets qui touchent les mêmes fichiers ou le même garde-fou, appliquée à tout le backlog ouvert (J-2026-11-16-J) : un changement qui attend une demande et ne vit que dans le conteneur (B-0140), et `socle decision` qui exige une question (B-0185), les demandes et les fichiers protégés comme B-0227.
+
+Le 17 novembre, D-0128 y ajoute B-0276 et ses tâches T-0060 et T-0061 (J-2026-11-17-G) : la procédure des formes du shell sort du skill `socle-review` et du guide, et sa copie protégée se rafraîchit avec les autres.
