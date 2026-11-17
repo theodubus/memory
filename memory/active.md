@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot L-0013 : T-0046 à T-0048 faits ; revue de T-0048, passe 3, commitée
-avec son recul (J-2026-11-17-A), clôture. Puis L-0012, L-0014, L-0015.
+L-0013 clos (J-2026-11-17-C), sa pull request fusionnée par l'agent à
+la CI verte. Ensuite L-0012, puis L-0014, L-0015.
 
 ## Consignes en cours
 

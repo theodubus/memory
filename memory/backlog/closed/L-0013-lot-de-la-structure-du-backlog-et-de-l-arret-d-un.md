@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0013 — Lot de la structure du backlog et de l'arrêt d'un chantier qui tourne en rond, coupé du lot L-0011
 
-> statut : en cours · origine : J-2026-11-16-R · après : L-0011, T-0046, T-0047, T-0048 · lu : backlog@5a24a9b3 · ancien : B-0269
+> statut : fait · origine : J-2026-11-16-R · ref : J-2026-11-17-C · après : L-0011, T-0046, T-0047, T-0048 · lu : backlog@5a24a9b3 · ancien : B-0269
 
 Coupé du lot L-0011 le 16 novembre (J-2026-11-16-R) : les deux entrées de
 ce lot dont la spécification attend Théo. D'abord la structure du backlog
