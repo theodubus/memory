@@ -25,6 +25,31 @@ agent, que le moteur ne connaît pas) ; ce que le cliquet en dit.
 
 Théo le passe en priorité haute le 16 novembre, au lot L-0012, juste après L-0011 (J-2026-11-16-I) : une vérification plus courte rend chaque lot suivant moins cher.
 
+La spécification se soumet à Théo dans la demande D-0130, récrite après
+la passe 1 de la revue du lot (J-2026-11-17-J).
+
+## Modèle de menace
+
+Le seuil `[verify] fast_max_seconds` est un garde-fou qui avertit, sans
+jamais échouer.
+
+Il arrête : une dérive silencieuse du total des étapes rapides au-delà du
+seuil, vue au premier `verify --fast` qui les lance toutes sur la machine
+où il tourne ; elle reste dite, tant que le dernier passage complet
+dépasse le seuil, à chaque vérification servie par la marque des étapes
+déjà passées et dans `socle state`, que le démarrage de chaque session
+injecte. Le relèvement du seuil par l'agent : le cliquet des garde-fous
+connaît la clé, la relever exige une demande validée, la baisser est
+libre ; un défaut injecté le prouve.
+
+Il laisse passer : une dérive sous le seuil ; la durée d'une machine plus
+rapide, qui masque celle d'une plus lente, et la CI, sans seuil ; une
+étape retirée des étapes rapides, ce qui change l'adaptateur, protégé, et
+passe donc par l'humain ; un test mis de côté sous `SOCLE_RAPIDE`, que la
+CI joue toujours ; une étape bloquée, qui finit en erreur de délai, pas
+en durée ; la fin de tour et le push, qui ne relancent pas des étapes
+déjà passées sur le même contenu, et n'ajoutent donc rien.
+
 ## Satisfait quand
 
 - [ ] le « Fait quand » de T-0045 est tenu

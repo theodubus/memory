@@ -12,3 +12,14 @@ seule revue : B-0257, la suite de tests de ce dépôt sur plusieurs cœurs,
 dont le changement de `.socle/adapter.toml`, protégé, passe par une
 demande à Théo ; B-0258, la durée de chaque étape dite et soumise à un
 seuil, dont la spécification se soumet à Théo avant son code.
+
+## Revues
+
+### Passe 1 — 2026-11-17
+
+Commits : cac8a20..8520f6a
+
+- Bloquant : les liens de D-0130 sur un commit que la passation a réécrit, jamais poussé
+- Bloquant : le point 3 de la spécification promet un avertissement en fin de tour et à l'envoi, que la marque des étapes déjà passées rend muet
+- Bloquant : le seuil, un garde-fou nouveau, sans modèle de menace
+- Ouvre : B-0281, T-0066, T-0067, T-0068
