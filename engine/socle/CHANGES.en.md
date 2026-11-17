@@ -34,6 +34,21 @@ five minutes, the state will say so at each session, until it gets shorter
 or the human raises the threshold. Writing the key at 300 in
 `.socle/guardrails.toml` is free and changes nothing.
 
+## 2026-11-17-b — The former number of a renumbered entry: the hook names the current identifier, and `socle url` resolves it
+
+The agent hook refused the former number of a renumbered entry
+(`former: B-NNNN`), written in a new text, calling it invented, while the
+checks resolve it; `socle url` answered “no entry”. The hook now refuses
+it by naming the entry's current identifier, which the new text cites
+instead, alone or on the former number's line (the update's summary,
+“former → current”); the journal that already cites it is extended
+without refusal;
+`socle url` gives the link of the entry that carries it, and says its
+current identifier.
+
+To do: nothing; a number taken from the journal from before the migration
+is cited by the identifier the refusal names.
+
 ## 2026-11-17-a — A shell form the hook does not judge is reported to the socle's repository
 
 The `socle-review` skill said to enter a shell form an agent does not

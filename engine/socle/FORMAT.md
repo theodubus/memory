@@ -252,11 +252,15 @@ une tâche ouverte, ou fait sans tâche faite. Ce qui est clos avant la
 migration reste tel quel.
 
 Une entrée renumérotée garde son ancien numéro (`ancien : B-0235`) :
-`socle show`, les contrôles des références et la lecture prouvée le
-résolvent vers elle (une citation par l'ancien numéro se juge contre sa
-version actuelle), le
+`socle show`, `socle url`, les contrôles des références et la lecture
+prouvée le résolvent vers elle (une citation par l'ancien numéro se juge
+contre sa version actuelle), le
 journal, les décisions et les demandes le gardent, et il ne se réattribue
-jamais. La mise à jour migre un backlog d'avant ADR-0083 : un lot
+jamais. Un texte neuf cite l'identifiant actuel : le hook de l'agent
+refuse d'y écrire l'ancien numéro, sauf sur une ligne qui nomme aussi
+l'identifiant actuel (`B-0235 → L-0002`), et nomme l'identifiant à citer.
+
+La mise à jour migre un backlog d'avant ADR-0083 : un lot
 (`forme : lot`) devient `L-` et un jalon (`forme : jalon`) `JA-`, clos
 compris, sans sa priorité, qui ne changeait aucun ordre (l'installeur
 nomme chacun) ; toute autre entrée reste un besoin, sa section « Fait quand »

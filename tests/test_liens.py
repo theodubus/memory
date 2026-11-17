@@ -156,6 +156,34 @@ class TestLiensDuDepot(unittest.TestCase):
         self.assertEqual(url, f"{DEPOT}/blob/{self.main}/docs/a.md")
         self.assertIn("pas poussée", avertissement)
 
+    def test_l_ancien_numero_d_une_entree_renumerotee_mene_a_elle(self):
+        """T-0051 : `socle url B-0005`, ancien numéro d'un lot renuméroté
+        (ADR-0083), répondait « aucune entrée » ; il donne le lien de
+        l'entrée qui le porte, et le dit."""
+        import contextlib
+        import io
+
+        from socle import cli
+
+        lot = "memory/backlog/L-0001-un-lot.md"
+        (self.clone / "memory/backlog").mkdir(parents=True)
+        (self.clone / lot).write_text("<!-- socle: couche=backlog zone=publique -->\n# L-0001 — Un lot\n\n"
+                                      "> statut : ouvert · ancien : B-0005\n\nPour l'essai.\n")
+        git(self.clone, "add", "-A")
+        git(self.clone, "commit", "-qm", "le lot")
+        git(self.clone, "push", "-q", "origin", "claude/essai")
+        pousse = git(self.clone, "rev-parse", "origin/claude/essai").strip()
+        url, avertissement = liens.lien(self.projet, "B-0005")
+        self.assertEqual(url, f"{DEPOT}/blob/{pousse}/{lot}")
+        self.assertEqual(avertissement, "B-0005 est l'ancien numéro de L-0001")
+        self.assertEqual(liens.lien(self.projet, "L-0001"), (url, ""))
+        self.assertIsNone(liens.lien(self.projet, "B-0006")[0])
+        with contextlib.redirect_stdout(io.StringIO()) as sortie, \
+                contextlib.redirect_stderr(io.StringIO()) as erreurs:
+            code = cli.main(["--root", str(self.clone), "url", "B-0005"])
+        self.assertEqual((code, sortie.getvalue()), (0, f"[B-0005]({url})\n"))
+        self.assertIn("ancien numéro de L-0001", erreurs.getvalue())
+
     def test_liens_morts_d_un_message(self):
         message = (
             "Voir [la doc](docs/a.md), `docs/absent.md` et "

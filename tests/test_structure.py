@@ -391,6 +391,37 @@ class TestMigration(Projet):
                 self.assertTrue(not refus or "`B-0005@deadbeef`" in erreurs[0], erreurs)
                 git(self.racine, "reset", "-q", "--hard", base)
 
+    def test_l_ancien_numero_dans_un_texte_neuf_fait_nommer_l_identifiant_actuel(self):
+        """T-0051 : le hook refusait l'ancien numéro d'une entrée renumérotée
+        en le disant inventé, quand les contrôles le résolvent ; il nomme
+        l'identifiant actuel, que le texte neuf cite alors. Le journal qui le
+        cite déjà se complète sans refus."""
+        _, journal = self.migre()
+        projet = config.Projet.charger(self.racine)
+
+        def ecrire(chemin: Path, texte: str) -> str:
+            entree = {"session_id": "s", "tool_name": "Write",
+                      "tool_input": {"file_path": str(chemin), "content": texte}}
+            with contextlib.redirect_stdout(io.StringIO()) as sortie:
+                hooks.pre_tool_use(projet, entree)
+            return sortie.getvalue()
+
+        note = self.racine / "docs/note.md"
+        refus = ecrire(note, "Le lot B-0005 avance.\n")
+        self.assertIn('"deny"', refus)
+        self.assertIn("ancien numéro — `B-0005` (ligne 1) est l'ancien numéro de L-0002 : un texte neuf cite "
+                      "l'entrée par son identifiant actuel, L-0002", refus)
+        self.assertNotIn("ne désigne aucune entrée", refus)
+        self.assertEqual(ecrire(note, "Le lot L-0002 avance.\n"), "")
+        # Sur la ligne qui nomme aussi l'identifiant actuel, l'ancien passe :
+        # le bilan de la mise à jour se recopie au journal.
+        self.assertEqual(ecrire(note, "Renumérotés : B-0005 → L-0002.\n"), "")
+        self.assertIn("`B-0005` (ligne 2)", ecrire(note, "Le lot L-0002 avance.\nB-0005 aussi.\n"))
+        self.assertEqual(ecrire(Path(journal), Path(journal).read_text() + "\nLe lot B-0005 avance.\n"), "")
+        # Une référence inventée reste dite inventée, avant l'ancien numéro.
+        self.assertIn("référence inventée — `B-0099`", ecrire(note, "B-0005 et B-0099.\n"))
+        self.assertEqual(hooks.references_refusees(projet, "docs/note.md", None, "B-0005.\n")[0], [])
+
     def test_poser_lectures_cite_l_index_sans_les_taches(self):
         self.avant()
         bilan = migration.migrer_backlog(self.racine)

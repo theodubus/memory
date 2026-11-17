@@ -35,6 +35,20 @@ dépasse cinq minutes, l'état le dira à chaque session, jusqu'à ce qu'elle
 raccourcisse ou que l'humain relève le seuil. Écrire la clé à 300 dans
 `.socle/guardrails.toml` est libre et ne change rien.
 
+## 2026-11-17-b — L'ancien numéro d'une entrée renumérotée : le hook nomme l'identifiant actuel, et `socle url` le résout
+
+Le hook de l'agent refusait l'ancien numéro d'une entrée renumérotée
+(`ancien : B-NNNN`), écrit dans un texte neuf, en le disant inventé, alors
+que les contrôles le résolvent ; `socle url` répondait « aucune entrée ».
+Le hook le refuse désormais en nommant l'identifiant actuel de l'entrée,
+que le texte neuf cite à la place, seul ou sur la ligne de l'ancien
+(le bilan de la mise à jour, « ancien → actuel ») ; le journal qui le cite
+déjà se complète sans refus ; `socle url` donne le lien de l'entrée qui le porte, et dit
+son identifiant actuel.
+
+À faire : rien ; un numéro repris du journal d'avant la migration se cite
+par l'identifiant que le refus nomme.
+
 ## 2026-11-17-a — Une forme du shell que le hook ne juge pas se signale au dépôt du socle
 
 Le skill `socle-review` disait d'inscrire une forme du shell qu'un agent

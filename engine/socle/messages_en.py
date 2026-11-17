@@ -37,6 +37,10 @@ MESSAGES: dict[str, str] = {
     "l'identifiant ; ne jamais en inventer un":
         "`{ident}` (line {ligne}) names no entry of the memory — create the entry first, or fix the identifier; "
         "never invent one",
+    "`{ident}` (ligne {ligne}) est l'ancien numéro de {actuel} : un texte neuf cite l'entrée par son identifiant "
+    "actuel, {actuel}, seul ou sur la même ligne que l'ancien":
+        "`{ident}` (line {ligne}) is the former number of {actuel}: a new text cites the entry by its current "
+        "identifier, {actuel}, alone or on the same line as the former one",
     "`commit:{cible}` n'existe pas dans ce dépôt — lire le SHA avec `git rev-parse`, jamais de tête":
         "`commit:{cible}` does not exist in this repository — read the SHA with `git rev-parse`, never from memory",
     "`{id}` passe à « validé » sans demande validée par l'humain : ce statut ne s'écrit que par l'humain (politique, "
@@ -194,6 +198,8 @@ MESSAGES: dict[str, str] = {
         "the CI and the engine. Propose the change in a request.",
     "référence inventée — {fautes}":
         "invented reference — {fautes}",
+    "ancien numéro — {fautes}":
+        "former number — {fautes}",
     "demande hors contrat (elle doit se lire sans le projet en tête) — {fautes} ; la procédure : le skill "
     "`socle-request`":
         "request out of contract (it must read without the project in mind) — {fautes}; the procedure: the skill "
@@ -3426,6 +3432,12 @@ MESSAGES: dict[str, str] = {
         'new task without its “Done when” section',
     "entrée renumérotée citée par son ancien numéro, sous une empreinte inventée":
         'renumbered entry cited by its former number, under an invented fingerprint',
+    "entrée renumérotée mentionnée par son ancien numéro dans un texte neuf":
+        "renumbered entry mentioned by its former number in a new text",
+    "une entrée renumérotée mentionnée dans un texte neuf par son identifiant actuel, seul ou sur la ligne de "
+    "l'ancien, passe le hook de l'agent":
+        "a renumbered entry mentioned in a new text by its current identifier, alone or on the former number's "
+        "line, passes the agent hook",
     "une entrée renumérotée par la migration, qui porte `ancien`, et sa citation par l'ancien numéro sous l'empreinte de sa version actuelle passent le commit et la CI":
         'an entry renumbered by the migration, which carries `former`, and its citation by the former number under the fingerprint of its current version pass the commit and the CI',
     "la migration n'a pas posé `ancien : B-0001` sur {id}":

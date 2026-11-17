@@ -1986,6 +1986,13 @@ def _cas() -> list[Cas]:
         p = c / "docs/calc.md"
         return etage_outil(a, c, "Write", {"file_path": str(p), "content": p.read_text() + "\nVoir F-0099.\n"})
 
+    @defaut("ancien-numero-dans-un-texte-neuf", "entrée renumérotée mentionnée par son ancien numéro dans un texte "
+            "neuf", "agent", "ancien numéro")
+    def _(a, c):
+        _renumeroter_en_lot(c, "B-0001")
+        p = c / "docs/calc.md"
+        return etage_outil(a, c, "Write", {"file_path": str(p), "content": p.read_text() + "\nVoir B-0001.\n"})
+
     @defaut("echecs-repetes", "contrôles rouges trois tours de suite, sans escalade", "agent", "escalade")
     def _(a, c):
         remplacer(c, "calc.py", "return FACTEUR * x", "return x * FACTEUR")
@@ -2603,6 +2610,14 @@ def _temoins() -> list[tuple[str, Callable]]:
             return trad("la migration n'a pas posé `ancien : B-0001` sur {id}", id=nouvel)
         _citer_par_l_ancien_numero(a, c, "B-0001", empreinte(a, c, nouvel))
         return etage_git(a, c) or etage_ci(a, c)
+
+    @temoin("une entrée renumérotée mentionnée dans un texte neuf par son identifiant actuel, seul ou sur la ligne "
+            "de l'ancien, passe le hook de l'agent")
+    def _(a, c):
+        nouvel = _renumeroter_en_lot(c, "B-0001")
+        p = c / "docs/calc.md"
+        return etage_outil(a, c, "Write", {"file_path": str(p), "content": p.read_text() + f"\nVoir {nouvel}.\n"
+                                                                                       f"B-0001 → {nouvel}.\n"})
 
     @temoin("un besoin et sa tâche posés par `socle new need --task`, un lot qui attend la tâche et un jalon qui "
             "attend le besoin, chacun dans sa forme, passent le commit et la CI")
@@ -3338,6 +3353,7 @@ RAISONS_AGENT = {
     "remise sous demande": "en attente, ou validée sans que ce qu'elle approuve",
     "écriture à l'aveugle": "à l'aveugle",
     "référence inventée": "référence inventée",
+    "ancien numéro": "est l'ancien numéro de",
     "escalade": "ARRÊT ET ESCALADE",
     "échec inchangé": "sans changement depuis la tentative précédente",
     "memoire.peremption": "chantier actif inchangé depuis",
