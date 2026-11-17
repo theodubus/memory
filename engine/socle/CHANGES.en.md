@@ -7,6 +7,19 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-17-a — A shell form the hook does not judge is reported to the socle's repository
+
+The `socle-review` skill said to enter a shell form an agent does not
+write, dismissed by the review of a batch, in the guide's list of known
+forms. In an equipped project, the guide sits under the installed engine,
+protected: the agent cannot write it. The skill now says that the recap
+names the form, and that “For you” suggests the human report it to the
+socle's repository (https://github.com/theodubus/socle), which keeps the
+list.
+
+To do: nothing; the `socle-review` skill is a protected copy, in the
+installer's request.
+
 ## 2026-11-16-g — A batch keeps the history of its reviews, and stops on a written step back
 
 `socle review` now writes each review pass of the batch in progress (or

@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0270 — Le skill socle-review fait inscrire une forme exotique dans la liste du guide, qu'un projet équipé ne peut pas écrire (.socle/engine est protégé)
 
-> statut : ouvert · origine : J-2026-11-16-S · lu : backlog@ff00445d
+> statut : fait · origine : J-2026-11-16-S · ref : J-2026-11-17-A · lu : backlog@ff00445d
 
 Relevé par la revue du lot L-0011 (J-2026-11-16-S). Le gabarit du skill
 `socle-review` dit qu'une forme du shell qu'un agent n'écrit pas, et qui
@@ -17,4 +17,4 @@ guide ne changeant que dans le dépôt du socle.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0048 est tenu
+- [x] le « Fait quand » de T-0048 est tenu

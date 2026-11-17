@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot L-0013 (J-2026-11-16-AB) : T-0046, T-0047 livrés avec D-0125 ;
-T-0048, sa revue (passe 3), la clôture. Puis L-0012, L-0014, L-0015.
+Lot L-0013 : T-0046 à T-0048 faits ; revue de T-0048, passe 3, commitée
+avec son recul (J-2026-11-17-A), clôture. Puis L-0012, L-0014, L-0015.
 
 ## Consignes en cours
 
@@ -65,9 +65,7 @@ Leur texte exact est dans l'entrée du journal citée.
 Avant toute nouvelle fonction (J-2026-11-13-I, D-0108, D-0109, D-0111),
 par lots :
 
-1. Fait.
-2. Fait.
-3. Le jalon JA-0005 (D-0118), lot par lot ; l'état montre le prochain.
-4. La mise à jour de chess, avec le prompt complété.
-5. Ensuite la planification (B-0101), puis la répartition entre agents
+1. Le jalon JA-0005 (D-0118), lot par lot ; l'état montre le prochain.
+2. La mise à jour de chess, avec le prompt complété.
+3. Ensuite la planification (B-0101), puis la répartition entre agents
    (B-0055).

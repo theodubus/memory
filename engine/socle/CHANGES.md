@@ -7,6 +7,19 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-17-a — Une forme du shell que le hook ne juge pas se signale au dépôt du socle
+
+Le skill `socle-review` disait d'inscrire une forme du shell qu'un agent
+n'écrit pas, écartée par la revue d'un lot, dans la liste des formes
+connues du guide. Dans un projet équipé, le guide est sous le moteur
+installé, protégé : l'agent ne peut pas l'écrire. Le skill dit désormais
+que le récap nomme la forme, et que « Pour toi » propose à l'humain de la
+signaler au dépôt du socle (https://github.com/theodubus/socle), qui
+tient la liste.
+
+À faire : rien ; le skill `socle-review` est une copie protégée, dans la
+demande de l'installeur.
+
 ## 2026-11-16-g — Un lot garde l'historique de ses revues, et s'arrête sur un recul écrit
 
 `socle review` écrit désormais chaque passe de revue du lot en cours (ou

@@ -6,8 +6,8 @@ description: Have a batch reviewed by a reviewer without context before deliveri
 # The adversarial review of a batch
 
 The socle's checks judge the form of the work; the review judges its
-substance, through a reviewer who does not share the blind spots of the
-agent that wrote the batch, and who tries to find fault with it.
+substance, through a reviewer without the blind spots of the batch's
+author, who tries to find fault with it.
 
 ## When
 
@@ -46,8 +46,8 @@ python3 .socle/socle review
    `--since <reviewed commit>` shows only the diff since the first
    review's commit, with the messages of the commits that fix it. An
    unknown reference, or a `--since` that is not an ancestor of HEAD, is
-   refused. A batch already pushed in whole or in part (a cloud session
-   pushes at the end of each turn), or a branch that carries batches
+   refused. A batch already pushed, even in part (in a cloud session, at
+   the end of each turn), or a branch that carries batches
    already reviewed, which the brief's note points out: `--base <the
    commit before the batch>`, the head the batch started from. It writes
    the pass in the entry of the backlog's batch in progress, or of the one
@@ -55,13 +55,13 @@ python3 .socle/socle review
    (below).
 3. Hand it to a reviewer who does not have the conversation. Under Claude
    Code: a subagent (the `Agent` tool), whose only message is this brief,
-   as is: nothing is added to it, nothing removed. It receives explicitly
+   as is, with nothing added or removed. It receives explicitly
    at launch (`model`) the most capable model available up to Opus, never
    a lesser one than the one that implemented the batch, whatever the
    session's, which the model rule of `socle-batch` may make cheaper, on
    the latest version of its family: if the alias designates an older
-   one, it inherits the session's, without `model`, as that rule says, and
-   its report names the model that served it;
+   one, it inherits the session's, without `model`, and its report names
+   the model that served it;
    Fable, if available, only if the human asks for it. It also receives
    the project's instructions and can read the repository, but neither the
    conversation nor the agent's reasoning, and the brief tells it to
@@ -96,7 +96,10 @@ The reviewer classifies them; the agent checks each classification.
   refused before the batch by accident, nor for the backlog, whatever its
   effect. It is dismissed, and goes in one line to the list of known
   forms the hook does not judge, which the socle's guide keeps
-  (`python3 .socle/socle help`).
+  (`python3 .socle/socle help`). In an equipped project, this guide
+  is protected: the recap names the form, and “For you” suggests
+  reporting it to the socle's repository
+  (https://github.com/theodubus/socle), which keeps the list.
 
 Post nothing on GitHub: the human reads the recap, not the review. The
 recap says it in one line: `Review: <b> blocking, fixed; <n> to the
@@ -120,9 +123,8 @@ as long as nothing changes outside the memory.
 2. Before the next pass, and before closing the batch, write the pass's
    step back, under its blockers: a paragraph that starts with “Step
    back:”, of at least sixty words, which answers the three questions
-   `socle review` gives when it refuses the pass, with the history, the
-   entries opened and closed since the start of the batch and the closed
-   batches that touched the same files. Do this pass's blockers have the
+   `socle review` gives when it refuses the pass, with what it shows
+   there. Do this pass's blockers have the
    same cause as the previous pass's? Are the entries the batch opens of
    the same nature as those it closes? Have the closed batches that
    touched the same files already opened this kind of entries? Its last

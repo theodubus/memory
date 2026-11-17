@@ -434,6 +434,29 @@ class TestLaRevue(unittest.TestCase):
         for lg, phrase in attendus.items():
             self.assertIn(phrase, " ".join(self.texte(lg).split()), lg)
 
+    def test_dans_un_projet_equipe_la_forme_se_signale_au_depot_du_socle(self):
+        """B-0270, T-0048 : dans un projet équipé, le guide est sous le moteur
+        installé, protégé ; l'agent ne peut pas y inscrire la forme. Le skill
+        la lui fait nommer au récap et proposer à l'humain de la signaler au
+        dépôt du socle, qui tient la liste."""
+        from socle import utils as outils
+
+        with redirect_stdout(io.StringIO()):
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+        projet = config.Projet.charger(self.racine)
+        self.assertTrue(outils.correspond(f"{projet.chemins.moteur}/socle/HELP.md", projet.chemins_proteges()))
+        attendus = {
+            "fr": "Dans un projet équipé, ce guide est protégé : le récap nomme la forme, et « Pour toi » propose "
+                  "de la signaler au dépôt du socle (https://github.com/theodubus/socle), qui tient la liste.",
+            "en": "In an equipped project, this guide is protected: the recap names the form, and “For you” "
+                  "suggests reporting it to the socle's repository (https://github.com/theodubus/socle), which "
+                  "keeps the list.",
+        }
+        for lg, phrase in attendus.items():
+            texte = " ".join(self.texte(lg).split())
+            self.assertIn(phrase, texte, lg)
+            self.assertLessEqual(len(self.texte(lg).encode("utf-8")), 8000, lg)
+
 
 class TestRefusBash(unittest.TestCase):
     def test_le_meme_jugement_que_le_hook(self):
