@@ -1,0 +1,654 @@
+From 2ee467030e82a1a0992a8f94cd0c7ca7d5b53e36 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 17 Nov 2026 01:09:28 +0000
+Subject: [PATCH 1/2] =?UTF-8?q?T-0044=20:=20le=20lanceur=20de=20la=20suite?=
+ =?UTF-8?q?=20sur=20plusieurs=20c=C5=93urs,=20tests/parallele.py,=20et=20s?=
+ =?UTF-8?q?on=20test=20;=20la=20suite=20rapide=20passe=20de=20649=20s=20?=
+ =?UTF-8?q?=C3=A0=20175=20s=20au=20mur,=20verte=20trois=20fois=20de=20suit?=
+ =?UTF-8?q?e=20(J-2026-11-17-H)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Chaque fichier tests/**/test_*.py tourne dans son propre processus,
+autant à la fois que de cœurs, les plus gros d'abord ; le lanceur imprime
+la sortie des modules en échec puis un bilan, et rend 1 si un module
+échoue ou ne s'importe pas. La commande de tests de .socle/adapter.toml,
+protégé, n'est pas changée : elle passe par une demande à Théo.
+T-0044 reste ouverte, aucun critère coché.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Mr1cCgrJcX8myjm7dGs2Bj
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=2 PreToolUse=265 Stop=1
+Socle-Hooks-Since-Commit: PreToolUse=3
+---
+ ...e-tests-de-ce-depot-sur-plusieurs-c-urs.md |   2 +
+ memory/journal/2026-11-6.md                   |  63 ++++++
+ tests/parallele.py                            | 137 +++++++++++++
+ tests/test_parallele.py                       | 183 ++++++++++++++++++
+ 4 files changed, 385 insertions(+)
+ create mode 100644 tests/parallele.py
+ create mode 100644 tests/test_parallele.py
+
+diff --git a/memory/backlog/T-0044-la-suite-de-tests-de-ce-depot-sur-plusieurs-c-urs.md b/memory/backlog/T-0044-la-suite-de-tests-de-ce-depot-sur-plusieurs-c-urs.md
+index 7a8a3e2..c9638d1 100644
+--- a/memory/backlog/T-0044-la-suite-de-tests-de-ce-depot-sur-plusieurs-c-urs.md
++++ b/memory/backlog/T-0044-la-suite-de-tests-de-ce-depot-sur-plusieurs-c-urs.md
+@@ -5,6 +5,8 @@
+ 
+ La tâche de B-0257, que la migration du backlog en quatre formes a posée dans le lot L-0012 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+ 
++Où elle en est (J-2026-11-17-H) : le lanceur `tests/parallele.py` et son test sont livrés ; la suite rapide y passe en 175 s au mur contre 649 s par `unittest discover`, verte trois fois de suite en local. Reste le changement de la commande de tests de `.socle/adapter.toml`, protégé, par une demande à Théo, puis le relevé de `verify --fast --redo` après lui et les trois passages en CI.
++
+ ## Fait quand
+ 
+ - [ ] la durée de `verify --fast --redo` est relevée dans une session de travail, avant et après
+diff --git a/memory/journal/2026-11-6.md b/memory/journal/2026-11-6.md
+index ed96367..45694d8 100644
+--- a/memory/journal/2026-11-6.md
++++ b/memory/journal/2026-11-6.md
+@@ -911,3 +911,66 @@ L-0006, celui des skills du produit et de leurs copies protégées. Le
+ numéro D-0128 était libre sur la branche : la demande du lanceur
+ parallèle, rangée dans le correctif de passation de L-0012, le portait
+ aussi ; le correctif est régénéré avec ses numéros décalés.
++
++## J-2026-11-17-H — T-0044 : le lanceur de la suite sur plusieurs cœurs, tests/parallele.py ; la suite rapide passe de 649 s à 175 s au mur, verte trois fois de suite
++
++> ref : T-0044, B-0257, L-0012, ADR-0001
++
++Un sous-agent du lot L-0012 livre `tests/parallele.py`, dans l'atelier, en
++bibliothèque standard seule (ADR-0001) : il lance chaque fichier
++`tests/**/test_*.py` dans son propre processus (`python3 -m unittest
++tests.<module> -q`, depuis la racine, l'environnement hérité, `SOCLE_RAPIDE`
++compris), autant à la fois que de cœurs (`-j N` pour le changer), les plus
++gros fichiers d'abord. Il imprime la sortie de chaque module en échec, puis
++une ligne de bilan (modules, échecs, tests et sautés lus dans le résumé de
++chaque module, durée au mur, les cinq plus longs) ; il rend 1 si un module
++échoue ou ne s'importe pas, ou s'il ne trouve aucun fichier de tests. Son
++test, `tests/test_parallele.py`, le lance sur un dossier factice (un module
++qui passe, un qui échoue, un qui ne s'importe pas, un sous-dossier, deux
++modules qui ne passent que s'ils tournent en même temps) ; il échoue sans
++le lanceur. La suite n'en dépend pas encore : la commande de tests de
++`.socle/adapter.toml`, protégé, change par une demande à Théo.
++
++Les relevés, tous dans le même conteneur de session cloud (4 cœurs,
++Python 3.13.18, 8c5cf3a et les deux fichiers nouveaux), avec
++`SOCLE_RAPIDE=1` et `LC_ALL=C.UTF-8` comme `verify --fast`, pris après la
++fin du relevé de l'orchestrateur (charge 0,94 au départ) :
++
++- Mesuré, par l'orchestrateur, une fois, juste avant : `verify --fast
++  --redo` passe en 650,9 s au mur (il rend 1 sur `memoire.lectures`, sans
++  rapport avec la durée).
++- Mesuré, une fois : `python3 -m unittest discover -s tests -t . -q`,
++  648,7 s au mur, 633,8 s de CPU, 1 172 tests dont 18 sautés, vert.
++- Mesuré, trois fois de suite : `python3 tests/parallele.py`, sur 4 fils,
++  176,1 s, 175,1 s et 173,8 s au mur, environ 635 s de CPU chacun ; 54
++  modules, les mêmes 1 172 tests dont 18 sautés, aucun échec, l'arbre
++  intact après chacun. Le plus long, `test_hooks`, prend 75 à 77 s ;
++  suivent `test_adaptateurs_multiples`, `test_attendus` et `test_adoption`,
++  de 42 à 48 s.
++- Déduit, non mesuré : après le changement de l'adaptateur, `verify
++  --fast --redo` prendrait environ 650,9 − 648,7 + 175 ≈ 180 s dans ce
++  conteneur, sous les cinq minutes du critère ; deux relevés différents
++  entrent dans le calcul, sa précision est celle de l'écart d'un passage à
++  l'autre. Le CPU ne change pas : le gain vient des cœurs, et sa borne est
++  le quart du CPU (environ 160 s), plus la traîne de `test_hooks`.
++- Déduit, lu dans `cmd_ci` : en CI, les étapes de l'adaptateur puis
++  l'auto-test tournent l'un après l'autre, et `test_autotest` saute
++  l'auto-test que la CI lance ensuite : ses quatre fils ne s'ajoutent pas à
++  la suite parallèle. Non mesuré en CI avant le changement de l'adaptateur.
++
++Ce qui pourrait faire qu'un fichier de tests en gêne un autre, cherché dans
++`tests/` et le moteur : chaque module a son processus, donc son
++environnement, son dossier courant et sa langue des messages, que
++`discover` partageait d'un module à l'autre ; aucun test ne change de
++dossier courant ; les chemins fixes sous `/tmp` sont des chaînes que juge
++le hook, jamais créées, et les dossiers de travail viennent de `tempfile` ;
++`tests/__init__.py` coupe la configuration git globale et celle du système
++dans chaque processus ; le dépôt réel n'est que lu (configuration, `HEAD`,
++`socle checks`) ; les hooks qui tirent dans un test écrivent la trace d'un
++dépôt temporaire, pas `.git/socle/hooks.log`. Reste partagé, sans effet
++attendu : les `__pycache__` du moteur, que Python écrit par remplacement
++atomique. Ce relevé est une lecture et trois passages verts, pas une
++preuve.
++
++T-0044 reste ouverte, aucun critère coché : le relevé « après », la CI et
++les cinq minutes attendent le changement de l'adaptateur.
+diff --git a/tests/parallele.py b/tests/parallele.py
+new file mode 100644
+index 0000000..fafcd9d
+--- /dev/null
++++ b/tests/parallele.py
+@@ -0,0 +1,137 @@
++"""Lance la suite de tests de l'atelier sur plusieurs cœurs (B-0257, T-0044).
++
++`python3 -m unittest discover` lance les fichiers de tests l'un après
++l'autre, sur un seul cœur : `verify --fast` y passait près de douze
++minutes. Ce lanceur lance chaque fichier `tests/**/test_*.py` dans son
++propre processus, `python3 -m unittest tests.<module> -q`, depuis la
++racine et avec l'environnement hérité (`SOCLE_RAPIDE` compris, que pose
++`verify --fast`), autant à la fois que de cœurs. Les plus gros fichiers
++partent d'abord : la taille tient lieu de durée attendue.
++
++Il imprime la sortie de chaque module en échec, puis une ligne de bilan :
++modules, échecs, tests, durée au mur et les plus longs. Il rend 1 si un
++module échoue ou ne se lance pas, ou s'il ne trouve aucun fichier de
++tests ; 0 sinon. Bibliothèque standard seule (ADR-0001).
++
++    python3 tests/parallele.py            # depuis la racine du dépôt
++    python3 tests/parallele.py -j 2       # deux modules à la fois
++"""
++
++from __future__ import annotations
++
++import argparse
++import concurrent.futures
++import os
++import re
++import subprocess
++import sys
++import time
++from dataclasses import dataclass
++from pathlib import Path
++
++RACINE = Path(__file__).resolve().parent.parent
++DOSSIER = "tests"
++MOTIF = "test_*.py"
++# Les plus longs que nomme le bilan.
++PLUS_LONGS = 5
++
++
++@dataclass
++class Resultat:
++    module: str
++    code: int
++    duree: float
++    sortie: str
++
++    @property
++    def echoue(self) -> bool:
++        return self.code != 0
++
++
++def modules(racine: Path) -> list[str]:
++    """Les modules de tests sous `racine/tests`, à la manière de `tests.<module>`,
++    les plus gros fichiers d'abord, puis par nom : l'ordre est stable."""
++    dossier = racine / DOSSIER
++    fichiers = [f for f in dossier.rglob(MOTIF) if f.is_file()]
++    fichiers.sort(key=lambda f: (-f.stat().st_size, f.as_posix()))
++    return [".".join(f.relative_to(racine).with_suffix("").parts) for f in fichiers]
++
++
++def lancer(racine: Path, module: str) -> Resultat:
++    """Un module de tests dans son propre processus, depuis la racine, avec
++    l'environnement hérité. Un processus qui ne démarre pas compte en échec."""
++    debut = time.monotonic()
++    try:
++        p = subprocess.run([sys.executable, "-m", "unittest", module, "-q"], cwd=racine,
++                           stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
++                           text=True, encoding="utf-8", errors="replace")
++        code, sortie = p.returncode, p.stdout
++    except OSError as e:
++        code, sortie = -1, f"le module ne se lance pas : {e}"
++    return Resultat(module, code, time.monotonic() - debut, sortie)
++
++
++def executer(racine: Path, fils: int) -> tuple[list[Resultat], float]:
++    """Tous les modules, `fils` à la fois ; les résultats dans l'ordre des
++    noms, et la durée au mur."""
++    noms = modules(racine)
++    debut = time.monotonic()
++    with concurrent.futures.ThreadPoolExecutor(max_workers=fils) as pool:
++        resultats = list(pool.map(lambda m: lancer(racine, m), noms))
++    return sorted(resultats, key=lambda r: r.module), time.monotonic() - debut
++
++
++def _court(r: Resultat) -> str:
++    return r.module.rsplit(".", 1)[-1]
++
++
++def _compte(sortie: str) -> tuple[int, int]:
++    """Les tests lancés et sautés que dit le résumé de `unittest`, ses
++    dernières lignes : ce qu'un test imprime avant ne compte pas."""
++    lances = re.findall(r"^Ran (\d+) tests? in ", sortie, re.M)
++    fin = re.findall(r"^(?:OK|FAILED)\b.*$", sortie, re.M)
++    sautes = re.search(r"\bskipped=(\d+)", fin[-1]) if fin else None
++    return (int(lances[-1]) if lances else 0), (int(sautes.group(1)) if sautes else 0)
++
++
++def bilan(resultats: list[Resultat], mur: float, fils: int) -> str:
++    """La ligne de bilan : modules, ceux en échec, tests lancés et sautés,
++    durée au mur, et les plus longs."""
++    echecs = [_court(r) for r in resultats if r.echoue]
++    comptes = [_compte(r.sortie) for r in resultats]
++    longs = sorted(resultats, key=lambda r: -r.duree)[:PLUS_LONGS]
++    texte = (f"modules : {len(resultats)} · en échec : {len(echecs)}"
++             + (f" ({', '.join(echecs)})" if echecs else "")
++             + f" · tests : {sum(c[0] for c in comptes)} (sautés : {sum(c[1] for c in comptes)})"
++             + f" · mur : {mur:.0f} s sur {fils} fils")
++    if longs:
++        texte += " · les plus longs : " + ", ".join(f"{_court(r)} {r.duree:.0f} s" for r in longs)
++    return texte
++
++
++def main(argv: list[str] | None = None) -> int:
++    parser = argparse.ArgumentParser(description="Lance chaque fichier de tests dans son processus, "
++                                                 "autant à la fois que de cœurs.")
++    parser.add_argument("-j", "--jobs", type=int, default=os.cpu_count() or 1,
++                        help="modules lancés à la fois (par défaut : le nombre de cœurs)")
++    parser.add_argument("--root", type=Path, default=RACINE,
++                        help="la racine qui contient le dossier `tests` (par défaut : celle de ce dépôt)")
++    args = parser.parse_args(argv)
++    if args.jobs < 1:
++        parser.error(f"-j attend un entier positif, pas {args.jobs}")
++    racine = args.root.resolve()
++    if not modules(racine):
++        print(f"aucun fichier {DOSSIER}/**/{MOTIF} sous {racine} : rien à lancer", file=sys.stderr)
++        return 1
++    resultats, mur = executer(racine, args.jobs)
++    for r in resultats:
++        if r.echoue:
++            print(f"=== {r.module} : échec (code {r.code}, {r.duree:.0f} s) ===")
++            print(r.sortie.rstrip())
++            print()
++    print(bilan(resultats, mur, args.jobs))
++    return 1 if any(r.echoue for r in resultats) else 0
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff --git a/tests/test_parallele.py b/tests/test_parallele.py
+new file mode 100644
+index 0000000..c0b61a9
+--- /dev/null
++++ b/tests/test_parallele.py
+@@ -0,0 +1,183 @@
++"""Le lanceur de la suite sur plusieurs cœurs, `tests/parallele.py` (B-0257,
++T-0044) : sur un petit dossier de tests factice, il rend 1 quand un module
++échoue ou ne s'importe pas, imprime leur sortie puis un bilan, transmet
++l'environnement et lance les modules en même temps."""
++
++import os
++import subprocess
++import sys
++import tempfile
++import textwrap
++import unittest
++from pathlib import Path
++
++from tests import parallele
++
++LANCEUR = Path(__file__).resolve().parent / "parallele.py"
++
++PASSE = """
++import unittest
++
++class T(unittest.TestCase):
++    def test_passe(self):
++        self.assertEqual(1 + 1, 2)
++"""
++
++SAUTE = """
++import unittest
++
++class T(unittest.TestCase):
++    @unittest.skip("sauté exprès")
++    def test_saute(self):
++        self.fail("jamais lancé")
++"""
++
++ECHOUE = """
++import unittest
++
++class T(unittest.TestCase):
++    def test_echoue(self):
++        self.assertEqual("valeur-obtenue", "valeur-factice-attendue")
++"""
++
++CASSE = """
++import module_factice_qui_n_existe_pas
++"""
++
++ENVIRONNEMENT = """
++import os
++import unittest
++from pathlib import Path
++
++class T(unittest.TestCase):
++    def test_environnement_et_dossier(self):
++        self.assertEqual(os.environ.get("SOCLE_RAPIDE"), "1")
++        self.assertEqual(Path.cwd().resolve(), Path(__file__).resolve().parent.parent)
++"""
++
++# Chacun pose sa marque, puis attend celle de l'autre : les deux ne passent
++# que s'ils tournent en même temps.
++RENDEZ_VOUS = """
++import time
++import unittest
++from pathlib import Path
++
++ICI = Path(__file__).resolve().parent
++
++class T(unittest.TestCase):
++    def test_rendez_vous(self):
++        (ICI / "{moi}.marque").touch()
++        limite = time.monotonic() + 60
++        while not (ICI / "{autre}.marque").exists():
++            self.assertLess(time.monotonic(), limite, "l'autre module ne tourne pas en même temps")
++            time.sleep(0.05)
++"""
++
++
++class TestLanceurParallele(unittest.TestCase):
++
++    def setUp(self):
++        self.racine = Path(self.enterContext(tempfile.TemporaryDirectory()))
++        (self.racine / "tests").mkdir()
++        (self.racine / "tests/__init__.py").write_text("", encoding="utf-8")
++
++    def ecrire(self, nom: str, texte: str):
++        chemin = self.racine / "tests" / nom
++        chemin.parent.mkdir(parents=True, exist_ok=True)
++        chemin.write_text(textwrap.dedent(texte), encoding="utf-8")
++
++    def lancer(self, *options: str, **env: str) -> subprocess.CompletedProcess:
++        environnement = {**os.environ, "PYTHONIOENCODING": "utf-8"}
++        environnement.pop("SOCLE_RAPIDE", None)
++        environnement.update(env)
++        return subprocess.run([sys.executable, str(LANCEUR), "--root", str(self.racine), *options],
++                              capture_output=True, text=True, encoding="utf-8", env=environnement,
++                              timeout=300)
++
++    def test_un_module_en_echec_et_un_qui_ne_s_importe_pas_rendent_1_et_impriment_leur_sortie(self):
++        self.ecrire("test_passe.py", PASSE)
++        self.ecrire("test_echoue.py", ECHOUE)
++        self.ecrire("test_casse.py", CASSE)
++        p = self.lancer("-j", "2")
++        self.assertEqual(p.returncode, 1, p.stdout + p.stderr)
++        self.assertIn("=== tests.test_echoue : échec (code 1,", p.stdout)
++        self.assertIn("valeur-factice-attendue", p.stdout)
++        self.assertIn("=== tests.test_casse : échec (code 1,", p.stdout)
++        self.assertIn("module_factice_qui_n_existe_pas", p.stdout)
++        self.assertNotIn("tests.test_passe", p.stdout)
++        derniere = p.stdout.rstrip().splitlines()[-1]
++        self.assertTrue(derniere.startswith("modules : 3 · en échec : 2 (test_casse, test_echoue) · tests : 3 "),
++                        derniere)
++        self.assertIn("sur 2 fils", derniere)
++        self.assertIn("les plus longs : ", derniere)
++
++    def test_une_suite_qui_passe_rend_0_et_n_imprime_que_le_bilan(self):
++        self.ecrire("test_passe.py", PASSE)
++        self.ecrire("test_saute.py", SAUTE)
++        p = self.lancer("-j", "1")
++        self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
++        lignes = p.stdout.strip().splitlines()
++        self.assertEqual(len(lignes), 1, p.stdout)
++        self.assertTrue(lignes[0].startswith("modules : 2 · en échec : 0 · tests : 2 (sautés : 1) · mur : "),
++                        lignes[0])
++        self.assertIn("sur 1 fils", lignes[0])
++
++    def test_un_sous_dossier_de_tests_se_lance_aussi(self):
++        self.ecrire("sous/__init__.py", "")
++        self.ecrire("sous/test_echoue.py", ECHOUE)
++        p = self.lancer()
++        self.assertEqual(p.returncode, 1, p.stdout + p.stderr)
++        self.assertIn("=== tests.sous.test_echoue : échec", p.stdout)
++
++    def test_chaque_module_recoit_l_environnement_et_tourne_depuis_la_racine(self):
++        self.ecrire("test_environnement.py", ENVIRONNEMENT)
++        self.assertEqual(self.lancer(SOCLE_RAPIDE="1").returncode, 0)
++        sans = self.lancer()
++        self.assertEqual(sans.returncode, 1, sans.stdout)
++        self.assertIn("=== tests.test_environnement : échec", sans.stdout)
++
++    def test_les_modules_tournent_en_meme_temps(self):
++        self.ecrire("test_un.py", RENDEZ_VOUS.format(moi="un", autre="deux"))
++        self.ecrire("test_deux.py", RENDEZ_VOUS.format(moi="deux", autre="un"))
++        p = self.lancer("-j", "2")
++        self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
++
++    def test_aucun_fichier_de_tests_rend_1(self):
++        p = self.lancer()
++        self.assertEqual(p.returncode, 1)
++        self.assertIn("rien à lancer", p.stderr)
++
++    def test_un_nombre_de_fils_nul_est_refuse(self):
++        self.ecrire("test_passe.py", PASSE)
++        p = self.lancer("-j", "0")
++        self.assertEqual(p.returncode, 2)
++        self.assertIn("-j attend un entier positif", p.stderr)
++
++
++class TestOrdreEtBilan(unittest.TestCase):
++
++    def test_modules_donne_les_plus_gros_fichiers_d_abord_puis_par_nom(self):
++        with tempfile.TemporaryDirectory() as d:
++            racine = Path(d)
++            (racine / "tests/sous").mkdir(parents=True)
++            (racine / "tests/test_petit.py").write_text("#", encoding="utf-8")
++            (racine / "tests/test_b.py").write_text("#" * 50, encoding="utf-8")
++            (racine / "tests/test_a.py").write_text("#" * 50, encoding="utf-8")
++            (racine / "tests/sous/test_gros.py").write_text("#" * 500, encoding="utf-8")
++            (racine / "tests/aide.py").write_text("#" * 900, encoding="utf-8")
++            self.assertEqual(parallele.modules(racine),
++                             ["tests.sous.test_gros", "tests.test_a", "tests.test_b", "tests.test_petit"])
++
++    def test_bilan_compte_le_resume_de_unittest_et_non_ce_qu_un_test_imprime(self):
++        imprime = "Ran 99 tests in 0.000s\nOK (skipped=7)\n"
++        resume = "\n----------------------------------------------------------------------\n" \
++                 "Ran 3 tests in 0.010s\n\nOK (skipped=1)\n"
++        resultats = [parallele.Resultat("tests.test_a", 0, 12.4, imprime + resume),
++                     parallele.Resultat("tests.test_b", 1, 30.6, "Ran 2 tests in 0.1s\n\nFAILED (failures=1)\n")]
++        texte = parallele.bilan(resultats, 31.2, 4)
++        self.assertEqual(texte, "modules : 2 · en échec : 1 (test_b) · tests : 5 (sautés : 1) · mur : 31 s "
++                                "sur 4 fils · les plus longs : test_b 31 s, test_a 12 s")
++
++
++if __name__ == "__main__":
++    unittest.main()
+-- 
+2.43.0
+
+
+From 6d01de50442f1f3a0c17054a20d9aed2f190ce30 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 17 Nov 2026 01:12:56 +0000
+Subject: [PATCH 2/2] =?UTF-8?q?D-0129=20pos=C3=A9e=20:=20la=20commande=20d?=
+ =?UTF-8?q?e=20tests=20de=20l'adaptateur=20pour=20le=20lanceur=20parall?=
+ =?UTF-8?q?=C3=A8le,=20et=20la=20sp=C3=A9cification=20de=20la=20dur=C3=A9e?=
+ =?UTF-8?q?=20des=20=C3=A9tapes=20;=20T-0044=20et=20T-0045=20l'attendent?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Mr1cCgrJcX8myjm7dGs2Bj
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=5 PreToolUse=337 Stop=6
+Socle-Hooks-Since-Commit: PreToolUse=337
+---
+ ...e-tests-de-ce-depot-sur-plusieurs-c-urs.md |   2 +-
+ ...s-etapes-rapides-se-dit-et-a-un-seuil-v.md |   2 +-
+ ...-commande-de-tests-de-l-adaptateur-pour.md | 143 ++++++++++++++++++
+ 3 files changed, 145 insertions(+), 2 deletions(-)
+ create mode 100644 memory/requests/D-0129-changer-la-commande-de-tests-de-l-adaptateur-pour.md
+
+diff --git a/memory/backlog/T-0044-la-suite-de-tests-de-ce-depot-sur-plusieurs-c-urs.md b/memory/backlog/T-0044-la-suite-de-tests-de-ce-depot-sur-plusieurs-c-urs.md
+index c9638d1..e827622 100644
+--- a/memory/backlog/T-0044-la-suite-de-tests-de-ce-depot-sur-plusieurs-c-urs.md
++++ b/memory/backlog/T-0044-la-suite-de-tests-de-ce-depot-sur-plusieurs-c-urs.md
+@@ -1,7 +1,7 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # T-0044 — La suite de tests de ce dépôt sur plusieurs cœurs : verify --fast passe près de douze minutes sur un seul cœur
+ 
+-> statut : ouvert · origine : J-2026-11-16-E · besoin : B-0257 · lu : backlog@9966bbbd
++> statut : ouvert · après : D-0129 · origine : J-2026-11-16-E · besoin : B-0257 · lu : backlog@9966bbbd
+ 
+ La tâche de B-0257, que la migration du backlog en quatre formes a posée dans le lot L-0012 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+ 
+diff --git a/memory/backlog/T-0045-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md b/memory/backlog/T-0045-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md
+index 01723aa..c320ffe 100644
+--- a/memory/backlog/T-0045-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md
++++ b/memory/backlog/T-0045-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md
+@@ -1,7 +1,7 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # T-0045 — La durée des étapes rapides se dit, et a un seuil : verify --fast n'imprime aucune durée, et rien ne signale qu'elle a passé de 143 s à près de douze minutes
+ 
+-> statut : ouvert · origine : J-2026-11-16-E · besoin : B-0258 · lu : backlog@9966bbbd
++> statut : ouvert · après : D-0129 · origine : J-2026-11-16-E · besoin : B-0258 · lu : backlog@9966bbbd
+ 
+ La tâche de B-0258, que la migration du backlog en quatre formes a posée dans le lot L-0012 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+ 
+diff --git a/memory/requests/D-0129-changer-la-commande-de-tests-de-l-adaptateur-pour.md b/memory/requests/D-0129-changer-la-commande-de-tests-de-l-adaptateur-pour.md
+new file mode 100644
+index 0000000..4d38ecf
+--- /dev/null
++++ b/memory/requests/D-0129-changer-la-commande-de-tests-de-l-adaptateur-pour.md
+@@ -0,0 +1,143 @@
++<!-- socle: couche=demandes zone=publique -->
++# D-0129 — Changer la commande de tests de l'adaptateur pour le lanceur parallèle, et valider la spécification de la durée des étapes rapides et de son seuil (lot L-0012)
++
++> date : 2026-11-17
++
++## Décision demandée
++
++Deux points, à valider ensemble ou séparément : changer vous-même une
++ligne de l'adaptateur pour que les tests du dépôt tournent sur tous les
++cœurs, et valider la spécification ci-dessous avant que l'agent n'en
++écrive le code.
++
++## Contexte
++
++**Le projet.** Ce dépôt fabrique le socle, un outil qui s'installe dans le
++dépôt d'un projet de code entretenu par un agent IA comme Claude Code : il
++garde la mémoire du projet, vérifie ce que l'agent produit, et vous pose en
++« demandes », comme celle-ci, les décisions qui vous reviennent. Chess,
++votre jeu d'échecs, est le projet pilote qui l'utilise.
++
++**Le chantier.** Avant toute nouvelle fonction, l'agent termine une suite
++de lots, chacun un groupe de tâches menées puis relues ensemble. Le lot de
++la structure du backlog a été livré le 17 novembre. Le lot présent, que
++vous avez placé juste après le 16 novembre, raccourcit la vérification
++rapide, `verify --fast` : la commande qui lance les contrôles et les tests
++du dépôt à la fin de chaque tour de l'agent et avant chaque envoi. Elle
++prenait 143 secondes le 13 octobre, sur une autre machine ; elle en prend
++aujourd'hui près de onze minutes, sans que rien ne l'ait signalé. Chaque
++lot en paie le prix : chaque envoi attend autant, et un sous-agent qui
++attend plus de cinq minutes relit tout son contexte au prix fort.
++
++**La question.** Les deux remèdes vous reviennent. Le premier lance les
++tests sur tous les cœurs de la machine au lieu d'un seul ; sa commande est
++dans l'adaptateur du dépôt (`.socle/adapter.toml`, le fichier qui dit au
++socle comment compiler et tester le code), un fichier protégé que l'agent
++ne peut pas écrire. Le second fait dire au socle la durée de chaque étape,
++et avertir au-delà d'un seuil : sa conception n'est pas tranchée, et se
++valide avant son code.
++
++**Ce qui est mesuré.** Dans le conteneur de cette session (4 cœurs), le
++17 novembre : `verify --fast --redo` (tout relancé) prend 650,9 s ; les
++tests seuls, lancés l'un après l'autre, 648,7 s. Un lanceur écrit pour ce
++lot, `tests/parallele.py`, lance chaque fichier de tests dans son propre
++processus, quatre à la fois : 176, 175 et 174 s au mur, trois fois de
++suite, les mêmes 1 172 tests verts. Après le changement, la vérification
++devrait prendre environ 180 s ; c'est déduit, pas encore mesuré.
++
++**Le premier point : la ligne de l'adaptateur.** Dans la section
++`[capabilities.tests]`, la ligne
++`command = "python3 -m unittest discover -s tests -t . -q"` devient
++`command = "python3 tests/parallele.py"`, rien d'autre. Le geste, si vous
++validez : sur GitHub, ouvrir `.socle/adapter.toml` sur la branche
++`claude/socle-b0269-suite-557l9b`, remplacer cette ligne, et commiter sur
++la branche. L'empreinte citée plus bas est celle du fichier ainsi changé ;
++votre réponse, consignée par l'agent, couvre ce changement auprès du
++contrôle des fichiers protégés. Dans un terminal, le même changement se
++fait à la main, suivi de `python3 .socle/socle approve --text "<raison>"`.
++
++**Le second point : la spécification de la durée des étapes.**
++
++1. Chaque vérification qui lance une étape de l'adaptateur (`verify`,
++   `verify --fast`, et la CI) imprime sa durée au mur, en secondes, au
++   bout de sa ligne, puis le total des étapes lancées. Des étapes rapides
++   déjà passées sur le même contenu, que la vérification ne relance pas,
++   le disent sans durée.
++2. Un seuil, la clé `[verify] fast_max_seconds` des garde-fous du projet
++   (`.socle/guardrails.toml`, le fichier de ses limites), porte sur le
++   total des étapes rapides, quand `verify --fast` les a toutes lancées.
++   Le gabarit d'un projet neuf le pose à 300 secondes ; un projet qui ne
++   l'écrit pas reçoit la même valeur.
++3. Au-delà du seuil, un avertissement, jamais un échec : il donne le
++   total, le seuil, et l'étape la plus longue avec sa durée. La
++   vérification passe ; la fin de tour et l'envoi le montrent comme les
++   autres avertissements.
++4. Relever le seuil l'assouplit : comme pour un budget de taille, cela
++   exige une demande que vous validez ; le baisser est libre. La durée
++   mesurée, elle, ne se compare pas d'une fois à l'autre : elle dépend de
++   la machine.
++5. En CI, les durées s'impriment, sans seuil : la CI lance toutes les
++   étapes, sur une autre machine.
++6. Le contrôle a son défaut injecté (une étape lente sous un seuil d'une
++   seconde) et un cas sain dans l'auto-test du socle ; le guide et une
++   note de version le disent aux projets qui le reçoivent.
++
++## Éléments cités
++
++- L-0012@43dd66c3 — le lot présent, la durée de la vérification, que vous avez placé le 16 novembre.
++- B-0257@4a64e0f3 — le besoin de lancer la suite de tests sur plusieurs cœurs, avec les mesures du 15 novembre.
++- T-0044@8416a993 — sa tâche : la durée relevée avant et après, la suite parallèle verte trois fois, moins de cinq minutes.
++- B-0258@0b668def — le besoin que la durée des étapes se dise et ait un seuil, dont la conception restait à trancher.
++- T-0045@2be8b0ed — sa tâche : la durée de chaque étape imprimée, et l'avertissement d'un seuil dépassé.
++- J-2026-11-17-H@b8b0bde3 — l'entrée du journal qui consigne le lanceur et ses mesures.
++- ADR-0001@692e0dfc — la décision qui borne le moteur à la bibliothèque standard de Python, que le lanceur respecte.
++- .socle/adapter.toml sha256:5dffd22cd3ada2b2
++
++## Où regarder
++
++- [tests/parallele.py](https://github.com/theodubus/memory/blob/fe4789942aeb24df67ef04d9a55925cd686eb1e5/tests/parallele.py) : le lanceur, 137 lignes ; vérifier qu'il ne fait que lancer chaque fichier de tests et en rendre le bilan.
++- [Le journal du 17 novembre](https://github.com/theodubus/memory/blob/fe4789942aeb24df67ef04d9a55925cd686eb1e5/memory/journal/2026-11-6.md) : l'entrée J-2026-11-17-H, les mesures et la nature de chacune.
++- [B-0258](https://github.com/theodubus/memory/blob/fe4789942aeb24df67ef04d9a55925cd686eb1e5/memory/backlog/B-0258-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md) : le besoin du second point, et ce qu'il laissait à trancher.
++
++## Options
++
++- **Les deux points.** Effort : une ligne pour vous, puis environ une
++  demi-journée de lot pour l'agent. Risque : faible ; le lanceur est
++  testé, et le seuil ne fait qu'avertir. Réversible : la ligne se remet,
++  le seuil se règle.
++- **Le premier seul.** Effort : une ligne pour vous. Risque : la durée
++  reste muette, une nouvelle dérive ne se verrait pas. Réversible :
++  l'agent réécrit la spécification selon votre remarque.
++- **Le second seul.** Effort : le lot de l'agent seul. Risque : la
++  vérification reste à onze minutes, et l'avertissement le dira à chaque
++  fin de tour. Réversible : la ligne peut changer plus tard.
++- **Aucun.** Effort : nul. Risque : chaque lot continue de payer onze
++  minutes par vérification. Réversible : les deux tâches restent
++  ouvertes.
++
++## Conséquences
++
++- Si vous validez : après votre commit, l'agent relève la durée de
++  `verify --fast --redo`, attend trois CI vertes, puis implémente la
++  spécification, la fait relire et livre le lot.
++- Si vous refusez : l'adaptateur garde sa commande, et l'agent reprend les
++  deux tâches selon votre réponse.
++- Sans réponse : le lot attend ; l'agent ne touche à rien d'autre de ce
++  lot, et la vérification reste à onze minutes.
++
++## Recommandation
++
++Valider les deux points. Vérifié : les durées ci-dessus, mesurées une
++fois pour la suite séquentielle et trois fois pour la suite parallèle,
++tous les tests verts à chaque fois ; les neuf tests du lanceur. Supposé :
++la durée d'environ 180 s après le changement, déduite de deux relevés ;
++le gain en CI, que la machine de GitHub fixera ; qu'un seuil de 300 s
++convienne aux autres projets, sans mesure faite chez eux.
++
++## Réponses possibles
++
++- `valider` — vous changez la ligne de l'adaptateur, et la spécification est validée telle quelle.
++- `adaptateur-seul` — vous changez la ligne ; la spécification revient à l'agent avec votre remarque.
++- `specification-seule` — l'adaptateur garde sa commande ; la spécification est validée.
++- `refuser` — ni l'un ni l'autre ; l'agent reprend les deux tâches selon votre remarque.
++- `contexte-insuffisant` — la demande revient à l'agent, qui la réécrit en une demande qui la remplace.
+-- 
+2.43.0
+
