@@ -3732,4 +3732,6 @@ MESSAGES: dict[str, str] = {
         'read by batch (default) or by need, each with its tasks and the batch of each',
     'en markdown, détailler tous les lots, ou tous les besoins':
         'in markdown, detail every batch, or every need',
+    "  la suite : `python3 .socle/socle roadmap` (détaillée : `--format markdown`)":
+        "  the roadmap: `python3 .socle/socle roadmap` (detailed: `--format markdown`)",
 }

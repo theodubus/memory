@@ -129,7 +129,11 @@ jusqu'à sa réponse), et ses cases sont toutes cochées avant de la clore.
 Il soumet chaque document en demande. Il suffit de le lui demander ;
 l'état donne ensuite le prochain jalon, le prochain lot et l'avancement
 de ses tâches, les tâches prêtes, et les besoins à découper en tâches ou
-à fermer.
+à fermer. La suite entière, d'un coup d'œil, se lit dans un terminal par
+`python3 .socle/socle roadmap` (une ligne par jalon et par lot ;
+`--format markdown` détaille le lot en cours et les deux suivants,
+`--by need` lit par besoin), sur la page de chaque exécution de la CI, et
+dans la conversation : demandez « la suite » à l'agent.
 
 **Spécifications et cas d'essai.** Le projet déclare où vivent ses
 spécifications (`[specs] paths` des garde-fous) : l'état vous signale
@@ -457,6 +461,7 @@ Chaque refus dit ce qu'il a vu et comment en sortir. La plupart s'adressent
 | `install` | installer ou mettre à jour le socle |
 | `init` | décrire le projet |
 | `state` | l'état du projet |
+| `roadmap` | la suite du projet : jalons, lots, tâches et besoins |
 | `answer`, `decision`, `reviewed` | répondre à une demande, consigner une décision en séance, une relecture |
 | `approve` | approuver ses propres changements protégés |
 | `private install` | mettre en place la mémoire privée |

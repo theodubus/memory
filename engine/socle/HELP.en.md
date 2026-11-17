@@ -121,7 +121,11 @@ another entry, or a request until it is answered), and its boxes are all
 checked before closing it. It submits each document as a request. Just
 ask it to; the state then gives the next milestone, the next batch and
 the progress of its tasks, the ready tasks, and the needs to split into
-tasks or to close.
+tasks or to close. The whole roadmap, at a glance, reads in a terminal with
+`python3 .socle/socle roadmap` (one line per milestone and per batch;
+`--format markdown` details the batch in progress and the next two,
+`--by need` reads by need), on the page of each CI run, and in the
+conversation: ask the agent for “the roadmap”.
 
 **Specifications and test cases.** The project declares where its
 specifications live (`[specs] paths` in the guardrails): the state tells
@@ -449,6 +453,7 @@ agent, which fixes them alone. Those that concern the human:
 | `install` | install or update the socle |
 | `init` | describe the project |
 | `state` | the project's state |
+| `roadmap` | the project's roadmap: milestones, batches, tasks and needs |
 | `answer`, `decision`, `reviewed` | answer a request, record a decision in session, a review |
 | `approve` | approve one's own protected changes |
 | `private install` | set up the private memory |

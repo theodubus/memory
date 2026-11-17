@@ -35,6 +35,23 @@ dépasse cinq minutes, l'état le dira à chaque session, jusqu'à ce qu'elle
 raccourcisse ou que l'humain relève le seuil. Écrire la clé à 300 dans
 `.socle/guardrails.toml` est libre et ne change rien.
 
+## 2026-11-17-f — La suite du projet dans l'état, les instructions, la clôture d'un lot et la CI
+
+La suite (`socle roadmap`) se montre là où on la cherche. L'état a une
+ligne qui renvoie à la commande. Les instructions du socle, dans
+`AGENTS.md`, disent à l'agent de coller le format détaillé
+(`--format markdown`) dans sa réponse quand l'humain demande la suite. Le
+skill `socle-batch` fait coller le format compact dans le récap de la
+clôture d'un lot. La CI posée écrit le format détaillé dans le résumé de
+chaque exécution, lisible sur GitHub sans agent : une étape « Suite du
+projet », avant la mémoire privée, dont rien n'y entre, et qui ne fait
+pas échouer la CI si elle échoue. Le guide le dit en une phrase.
+
+À faire : rien ; le workflow `.github/workflows/socle.yml` et le skill
+`socle-batch` sont des copies protégées, dans la demande de
+l'installeur, et la section du socle d'`AGENTS.md` est régénérée par la
+mise à jour.
+
 ## 2026-11-17-e — La suite du projet d'un coup d'œil : `socle roadmap`
 
 Une commande nouvelle, pour l'humain comme pour l'agent :

@@ -9,6 +9,7 @@ import contextlib
 import io
 import types
 import unittest
+from pathlib import Path
 from unittest import mock
 
 from socle import cli, memory as memoire, messages, roadmap as suite
@@ -259,6 +260,105 @@ class TestCommande(Projet):
         from socle import config
 
         return config.Projet.charger(self.racine)
+
+
+ETAPE_DE_LA_CI = 'run: python3 .socle/socle roadmap --format markdown >> "$GITHUB_STEP_SUMMARY"'
+
+
+class TestDeclencheurs(Projet):
+    """T-0058 : le guide, les instructions du socle, la clôture d'un lot, le
+    résumé de la CI, une ligne de l'état, et le skill de l'atelier qui mène
+    un lot."""
+
+    def test_l_etat_a_une_ligne_qui_renvoie_a_la_commande(self):
+        from socle import state as etat
+
+        mem = backlog_d_essai()
+        bloc = etat._backlog(mem)[0][1]
+        self.assertTrue(bloc[0].startswith("backlog  : "))
+        self.assertEqual(bloc[1], "  la suite : `python3 .socle/socle roadmap` (détaillée : `--format markdown`)")
+        with messages.dans("en"):
+            self.assertEqual(etat._backlog(mem)[0][1][1],
+                             "  the roadmap: `python3 .socle/socle roadmap` (detailed: `--format markdown`)")
+        self.commiter("base")
+        from socle import config
+
+        self.assertIn("\n  la suite : `python3 .socle/socle roadmap`",
+                      etat.calculer(config.Projet.charger(self.racine), contenus=False))
+
+    def test_la_ci_posee_ecrit_le_format_detaille_dans_le_resume_de_son_execution(self):
+        import os
+        import subprocess
+        from socle.templates import gabarit
+
+        for lg in ("fr", "en"):
+            ci = gabarit("socle.yml" if lg == "fr" else "socle.en.yml", lg)
+            etape = ci.index(ETAPE_DE_LA_CI)
+            # Une étape qui informe : son échec ne fait pas échouer la CI.
+            self.assertIn("continue-on-error: true\n        " + ETAPE_DE_LA_CI, ci, lg)
+            # Avant la mémoire privée : rien de privé n'entre dans le résumé.
+            self.assertLess(etape, ci.index("private recover"), lg)
+            self.assertLess(etape, ci.index("socle ci --base"), lg)
+        # Posée dans le projet, elle écrit la suite détaillée dans le résumé.
+        posee = (self.racine / ".github/workflows/socle.yml").read_text(encoding="utf-8")
+        self.assertIn(ETAPE_DE_LA_CI, posee)
+        self.poser("B-0001", titre="Ajouter triple")
+        self.poser("T-0001", "besoin : B-0001", titre="Écrire triple")
+        self.poser("L-0001", "après : T-0001", "en cours", titre="Le premier lot")
+        self.commiter("backlog")
+        resume = self.racine.parent / f"{self.racine.name}-resume.md"
+        self.addCleanup(resume.unlink, missing_ok=True)
+        commande = ETAPE_DE_LA_CI.removeprefix("run: ")
+        env = {k: v for k, v in os.environ.items() if not k.startswith(("CLAUDE", "GIT_"))}
+        sortie = subprocess.run(["bash", "-c", commande], cwd=self.racine, capture_output=True, text=True,
+                                env={**env, "GITHUB_STEP_SUMMARY": str(resume)})
+        self.assertEqual(sortie.returncode, 0, sortie.stderr)
+        texte = resume.read_text(encoding="utf-8")
+        self.assertTrue(texte.startswith("## La suite du projet\n"), texte)
+        self.assertIn("#### ▶ L-0001 — Le premier lot — en cours", texte)
+        self.assertIn("- T-0001 — Écrire triple · besoin B-0001 · prête", texte)
+
+    def test_le_skill_socle_batch_colle_le_format_compact_au_recap_de_la_cloture(self):
+        from socle import installer as installeur
+
+        attendus = {"fr": "le récap de la clôture colle la sortie de `python3 .socle/socle roadmap`",
+                    "en": "the closing recap pastes the output of `python3 .socle/socle roadmap`"}
+        for lg, phrase in attendus.items():
+            installeur.poser_skills(self.racine, lg)
+            texte = (self.racine / installeur.SKILLS / "socle-batch" / "SKILL.md").read_text(encoding="utf-8")
+            self.assertIn(phrase, " ".join(texte.split()), lg)
+            self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
+            self.assertNotIn("--format markdown", texte, lg)
+
+    def test_les_instructions_disent_de_coller_le_format_detaille_quand_l_humain_demande_la_suite(self):
+        from socle.templates import gabarit
+
+        attendus = {"fr": "la suite, quand l'humain la demande : coller dans la réponse la sortie de "
+                          "`python3 .socle/socle roadmap --format markdown`",
+                    "en": "the roadmap, when the human asks for it: paste into the reply the output of "
+                          "`python3 .socle/socle roadmap --format markdown`"}
+        for lg, phrase in attendus.items():
+            self.assertIn(phrase, " ".join(gabarit("AGENTS.md", lg).split()), lg)
+        agents = " ".join((self.racine / "AGENTS.md").read_text(encoding="utf-8").split())
+        self.assertIn(attendus["fr"], agents)
+
+    def test_le_guide_le_dit_en_une_phrase(self):
+        from socle import cli as ligne
+
+        for nom, phrase in (("HELP.md", "La suite entière, d'un coup d'œil, se lit dans un terminal par "
+                                        "`python3 .socle/socle roadmap`"),
+                            ("HELP.en.md", "The whole roadmap, at a glance, reads in a terminal with "
+                                           "`python3 .socle/socle roadmap`")):
+            guide = (Path(ligne.__file__).parent / nom).read_text(encoding="utf-8")
+            self.assertIn(phrase, " ".join(guide.split()), nom)
+            self.assertIn("| `roadmap` |", guide, nom)
+
+    def test_le_skill_de_l_atelier_l_appelle_a_l_annonce_et_a_la_cloture_d_un_lot(self):
+        racine = Path(__file__).resolve().parent.parent
+        skill = " ".join((racine / ".claude/skills/delegate-lot/SKILL.md").read_text(encoding="utf-8").split())
+        self.assertIn("À l'annonce d'un lot, puis à sa clôture, lancer `python3 .socle/socle roadmap`", skill)
+        self.assertIn("« Tu implémentes une tâche du socle dans ton worktree du dépôt memory.", skill)
+        self.assertNotRegex(skill, r"\bsujets?\b")
 
 
 if __name__ == "__main__":
