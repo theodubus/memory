@@ -50,8 +50,8 @@ devrait prendre environ 180 s ; c'est déduit, pas encore mesuré.
 `command = "python3 -m unittest discover -s tests -t . -q"` devient
 `command = "python3 tests/parallele.py"`, rien d'autre. Le geste, si vous
 validez : sur GitHub, ouvrir `.socle/adapter.toml` sur la branche
-`claude/socle-b0269-suite-557l9b`, remplacer cette ligne, et commiter sur
-la branche. L'empreinte citée plus bas est celle du fichier ainsi changé ;
+`claude/socle-l0012-passation-xw9g3i`, remplacer cette ligne, et commiter
+sur la branche. L'empreinte citée plus bas est celle du fichier ainsi changé ;
 votre réponse, consignée par l'agent, couvre ce changement auprès du
 contrôle des fichiers protégés. Dans un terminal, le même changement se
 fait à la main, suivi de `python3 .socle/socle approve --text "<raison>"`.
