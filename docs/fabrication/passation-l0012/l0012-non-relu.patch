@@ -1,11 +1,11 @@
-From 2ee467030e82a1a0992a8f94cd0c7ca7d5b53e36 Mon Sep 17 00:00:00 2001
+From 94df5633aa23991e322ae2987130f8808d4dfe2e Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
 Date: Tue, 17 Nov 2026 01:09:28 +0000
 Subject: [PATCH 1/2] =?UTF-8?q?T-0044=20:=20le=20lanceur=20de=20la=20suite?=
  =?UTF-8?q?=20sur=20plusieurs=20c=C5=93urs,=20tests/parallele.py,=20et=20s?=
  =?UTF-8?q?on=20test=20;=20la=20suite=20rapide=20passe=20de=20649=20s=20?=
  =?UTF-8?q?=C3=A0=20175=20s=20au=20mur,=20verte=20trois=20fois=20de=20suit?=
- =?UTF-8?q?e=20(J-2026-11-17-H)?=
+ =?UTF-8?q?e=20(J-2026-11-17-I)?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -32,28 +32,28 @@ Socle-Hooks-Since-Commit: PreToolUse=3
  create mode 100644 tests/test_parallele.py
 
 diff --git a/memory/backlog/T-0044-la-suite-de-tests-de-ce-depot-sur-plusieurs-c-urs.md b/memory/backlog/T-0044-la-suite-de-tests-de-ce-depot-sur-plusieurs-c-urs.md
-index 7a8a3e2..c9638d1 100644
+index 7a8a3e2..82f6018 100644
 --- a/memory/backlog/T-0044-la-suite-de-tests-de-ce-depot-sur-plusieurs-c-urs.md
 +++ b/memory/backlog/T-0044-la-suite-de-tests-de-ce-depot-sur-plusieurs-c-urs.md
 @@ -5,6 +5,8 @@
  
  La tâche de B-0257, que la migration du backlog en quatre formes a posée dans le lot L-0012 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
  
-+Où elle en est (J-2026-11-17-H) : le lanceur `tests/parallele.py` et son test sont livrés ; la suite rapide y passe en 175 s au mur contre 649 s par `unittest discover`, verte trois fois de suite en local. Reste le changement de la commande de tests de `.socle/adapter.toml`, protégé, par une demande à Théo, puis le relevé de `verify --fast --redo` après lui et les trois passages en CI.
++Où elle en est (J-2026-11-17-I) : le lanceur `tests/parallele.py` et son test sont livrés ; la suite rapide y passe en 175 s au mur contre 649 s par `unittest discover`, verte trois fois de suite en local. Reste le changement de la commande de tests de `.socle/adapter.toml`, protégé, par une demande à Théo, puis le relevé de `verify --fast --redo` après lui et les trois passages en CI.
 +
  ## Fait quand
  
  - [ ] la durée de `verify --fast --redo` est relevée dans une session de travail, avant et après
 diff --git a/memory/journal/2026-11-6.md b/memory/journal/2026-11-6.md
-index ed96367..45694d8 100644
+index 18a2a2f..ea0f4f3 100644
 --- a/memory/journal/2026-11-6.md
 +++ b/memory/journal/2026-11-6.md
-@@ -911,3 +911,66 @@ L-0006, celui des skills du produit et de leurs copies protégées. Le
- numéro D-0128 était libre sur la branche : la demande du lanceur
- parallèle, rangée dans le correctif de passation de L-0012, le portait
- aussi ; le correctif est régénéré avec ses numéros décalés.
+@@ -946,3 +946,66 @@ besoins entrent au jalon JA-0005, B-0276 compris, oublié au tour d'avant.
+ Cette entrée prend le numéro de celle du correctif de passation, comme
+ D-0129 celui de sa demande : le correctif est régénéré, ses numéros
+ décalés une seconde fois.
 +
-+## J-2026-11-17-H — T-0044 : le lanceur de la suite sur plusieurs cœurs, tests/parallele.py ; la suite rapide passe de 649 s à 175 s au mur, verte trois fois de suite
++## J-2026-11-17-I — T-0044 : le lanceur de la suite sur plusieurs cœurs, tests/parallele.py ; la suite rapide passe de 649 s à 175 s au mur, verte trois fois de suite
 +
 +> ref : T-0044, B-0257, L-0012, ADR-0001
 +
@@ -451,10 +451,10 @@ index 0000000..c0b61a9
 2.43.0
 
 
-From 6d01de50442f1f3a0c17054a20d9aed2f190ce30 Mon Sep 17 00:00:00 2001
+From 5c7b6029542207940d24f3326795d889941f1313 Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
 Date: Tue, 17 Nov 2026 01:12:56 +0000
-Subject: [PATCH 2/2] =?UTF-8?q?D-0129=20pos=C3=A9e=20:=20la=20commande=20d?=
+Subject: [PATCH 2/2] =?UTF-8?q?D-0130=20pos=C3=A9e=20:=20la=20commande=20d?=
  =?UTF-8?q?e=20tests=20de=20l'adaptateur=20pour=20le=20lanceur=20parall?=
  =?UTF-8?q?=C3=A8le,=20et=20la=20sp=C3=A9cification=20de=20la=20dur=C3=A9e?=
  =?UTF-8?q?=20des=20=C3=A9tapes=20;=20T-0044=20et=20T-0045=20l'attendent?=
@@ -465,17 +465,17 @@ Content-Transfer-Encoding: 8bit
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01Mr1cCgrJcX8myjm7dGs2Bj
 Socle-Agent: claude-code
-Socle-Hooks: SessionStart=5 PreToolUse=337 Stop=6
-Socle-Hooks-Since-Commit: PreToolUse=337
+Socle-Hooks: SessionStart=8 PreToolUse=367 Stop=9
+Socle-Hooks-Since-Commit: PreToolUse=367
 ---
  ...e-tests-de-ce-depot-sur-plusieurs-c-urs.md |   2 +-
  ...s-etapes-rapides-se-dit-et-a-un-seuil-v.md |   2 +-
  ...-commande-de-tests-de-l-adaptateur-pour.md | 143 ++++++++++++++++++
  3 files changed, 145 insertions(+), 2 deletions(-)
- create mode 100644 memory/requests/D-0129-changer-la-commande-de-tests-de-l-adaptateur-pour.md
+ create mode 100644 memory/requests/D-0130-changer-la-commande-de-tests-de-l-adaptateur-pour.md
 
 diff --git a/memory/backlog/T-0044-la-suite-de-tests-de-ce-depot-sur-plusieurs-c-urs.md b/memory/backlog/T-0044-la-suite-de-tests-de-ce-depot-sur-plusieurs-c-urs.md
-index c9638d1..e827622 100644
+index 82f6018..aca7c20 100644
 --- a/memory/backlog/T-0044-la-suite-de-tests-de-ce-depot-sur-plusieurs-c-urs.md
 +++ b/memory/backlog/T-0044-la-suite-de-tests-de-ce-depot-sur-plusieurs-c-urs.md
 @@ -1,7 +1,7 @@
@@ -483,12 +483,12 @@ index c9638d1..e827622 100644
  # T-0044 — La suite de tests de ce dépôt sur plusieurs cœurs : verify --fast passe près de douze minutes sur un seul cœur
  
 -> statut : ouvert · origine : J-2026-11-16-E · besoin : B-0257 · lu : backlog@9966bbbd
-+> statut : ouvert · après : D-0129 · origine : J-2026-11-16-E · besoin : B-0257 · lu : backlog@9966bbbd
++> statut : ouvert · après : D-0130 · origine : J-2026-11-16-E · besoin : B-0257 · lu : backlog@9966bbbd
  
  La tâche de B-0257, que la migration du backlog en quatre formes a posée dans le lot L-0012 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
  
 diff --git a/memory/backlog/T-0045-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md b/memory/backlog/T-0045-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md
-index 01723aa..c320ffe 100644
+index 01723aa..ec20a0e 100644
 --- a/memory/backlog/T-0045-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md
 +++ b/memory/backlog/T-0045-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md
 @@ -1,7 +1,7 @@
@@ -496,18 +496,18 @@ index 01723aa..c320ffe 100644
  # T-0045 — La durée des étapes rapides se dit, et a un seuil : verify --fast n'imprime aucune durée, et rien ne signale qu'elle a passé de 143 s à près de douze minutes
  
 -> statut : ouvert · origine : J-2026-11-16-E · besoin : B-0258 · lu : backlog@9966bbbd
-+> statut : ouvert · après : D-0129 · origine : J-2026-11-16-E · besoin : B-0258 · lu : backlog@9966bbbd
++> statut : ouvert · après : D-0130 · origine : J-2026-11-16-E · besoin : B-0258 · lu : backlog@9966bbbd
  
  La tâche de B-0258, que la migration du backlog en quatre formes a posée dans le lot L-0012 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
  
-diff --git a/memory/requests/D-0129-changer-la-commande-de-tests-de-l-adaptateur-pour.md b/memory/requests/D-0129-changer-la-commande-de-tests-de-l-adaptateur-pour.md
+diff --git a/memory/requests/D-0130-changer-la-commande-de-tests-de-l-adaptateur-pour.md b/memory/requests/D-0130-changer-la-commande-de-tests-de-l-adaptateur-pour.md
 new file mode 100644
-index 0000000..4d38ecf
+index 0000000..390d2da
 --- /dev/null
-+++ b/memory/requests/D-0129-changer-la-commande-de-tests-de-l-adaptateur-pour.md
++++ b/memory/requests/D-0130-changer-la-commande-de-tests-de-l-adaptateur-pour.md
 @@ -0,0 +1,143 @@
 +<!-- socle: couche=demandes zone=publique -->
-+# D-0129 — Changer la commande de tests de l'adaptateur pour le lanceur parallèle, et valider la spécification de la durée des étapes rapides et de son seuil (lot L-0012)
++# D-0130 — Changer la commande de tests de l'adaptateur pour le lanceur parallèle, et valider la spécification de la durée des étapes rapides et de son seuil (lot L-0012)
 +
 +> date : 2026-11-17
 +
@@ -594,17 +594,17 @@ index 0000000..4d38ecf
 +
 +- L-0012@43dd66c3 — le lot présent, la durée de la vérification, que vous avez placé le 16 novembre.
 +- B-0257@4a64e0f3 — le besoin de lancer la suite de tests sur plusieurs cœurs, avec les mesures du 15 novembre.
-+- T-0044@8416a993 — sa tâche : la durée relevée avant et après, la suite parallèle verte trois fois, moins de cinq minutes.
++- T-0044@8d037e37 — sa tâche : la durée relevée avant et après, la suite parallèle verte trois fois, moins de cinq minutes.
 +- B-0258@0b668def — le besoin que la durée des étapes se dise et ait un seuil, dont la conception restait à trancher.
 +- T-0045@2be8b0ed — sa tâche : la durée de chaque étape imprimée, et l'avertissement d'un seuil dépassé.
-+- J-2026-11-17-H@b8b0bde3 — l'entrée du journal qui consigne le lanceur et ses mesures.
++- J-2026-11-17-I@47fe7455 — l'entrée du journal qui consigne le lanceur et ses mesures.
 +- ADR-0001@692e0dfc — la décision qui borne le moteur à la bibliothèque standard de Python, que le lanceur respecte.
 +- .socle/adapter.toml sha256:5dffd22cd3ada2b2
 +
 +## Où regarder
 +
 +- [tests/parallele.py](https://github.com/theodubus/memory/blob/fe4789942aeb24df67ef04d9a55925cd686eb1e5/tests/parallele.py) : le lanceur, 137 lignes ; vérifier qu'il ne fait que lancer chaque fichier de tests et en rendre le bilan.
-+- [Le journal du 17 novembre](https://github.com/theodubus/memory/blob/fe4789942aeb24df67ef04d9a55925cd686eb1e5/memory/journal/2026-11-6.md) : l'entrée J-2026-11-17-H, les mesures et la nature de chacune.
++- [Le journal du 17 novembre](https://github.com/theodubus/memory/blob/fe4789942aeb24df67ef04d9a55925cd686eb1e5/memory/journal/2026-11-6.md) : l'entrée J-2026-11-17-I, les mesures et la nature de chacune.
 +- [B-0258](https://github.com/theodubus/memory/blob/fe4789942aeb24df67ef04d9a55925cd686eb1e5/memory/backlog/B-0258-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md) : le besoin du second point, et ce qu'il laissait à trancher.
 +
 +## Options
