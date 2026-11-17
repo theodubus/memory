@@ -35,6 +35,26 @@ dépasse cinq minutes, l'état le dira à chaque session, jusqu'à ce qu'elle
 raccourcisse ou que l'humain relève le seuil. Écrire la clé à 300 dans
 `.socle/guardrails.toml` est libre et ne change rien.
 
+## 2026-11-17-e — La suite du projet d'un coup d'œil : `socle roadmap`
+
+Une commande nouvelle, pour l'humain comme pour l'agent :
+`python3 .socle/socle roadmap` donne la suite du projet, calculée depuis le
+backlog comme l'état, rien d'écrit à la main. En compact (par défaut),
+une ligne par jalon, avec ses besoins clos sur le total, et une ligne par
+lot, dans leur ordre d'exécution déduit de leurs `après`, le lot en cours
+marqué et l'avancement de ses tâches ; puis ce qui est hors des lots,
+compté. `--format markdown` donne le format détaillé : le lot en cours et
+les deux suivants tâche par tâche (chaque tâche avec son besoin, sa
+priorité et où elle en est), les autres en une ligne (`--all` les
+détaille tous), et, nommés, les tâches dans aucun lot, les besoins à
+découper et à fermer, les entrées bloquées, celles `pour : humain` et les
+demandes en attente avec leur lien. `--by need` lit par besoin, chacun
+avec ses tâches et le lot de chacune. Deux lots qui attendent un même lot
+sans que l'un attende l'autre sont signalés : leur ordre n'est pas
+déduit, il se choisit par un `après` de l'un vers l'autre.
+
+À faire : rien.
+
 ## 2026-11-17-d — Les derniers textes du moteur qui disaient « sujet » d'une entrée du backlog
 
 La description de `memoire.lectures`, que `socle checks` affiche, dit « une

@@ -228,6 +228,17 @@ tâche ouverte ni rien d'ouvert qu'ils attendent ; et le nombre d'entrées
 qui attendent encore, selon ce qu'elles attendent : une entrée du backlog,
 une demande sans réponse, ou les deux. Le rappel de fin de tour le redonne.
 
+`socle roadmap` en tire la suite entière, par les mêmes règles : chaque
+jalon et ses besoins clos sur le total ; les lots ouverts dans leur ordre
+d'exécution, chacun après les lots qu'il attend de proche en proche, l'en
+cours d'abord à choix égal, et où en est chacune de leurs tâches (faite,
+en cours, prête, ce qu'elle attend encore, bloquée) ; hors des lots, les
+tâches ouvertes qu'aucun lot n'attend, les besoins à découper et à
+fermer, les entrées bloquées, celles `pour : humain`, les demandes en
+attente, et les besoins ouverts qu'aucun jalon n'attend. Deux lots qui
+attendent un même lot sans que l'un attende l'autre y sont signalés : leur
+ordre n'est pas déduit, il est choisi par leur identifiant.
+
 Une tâche est faite quand sa section `## Fait quand` est cochée ; un
 besoin, quand ses tâches sont closes, l'une au moins faite, et sa section
 `## Satisfait quand` cochée ; un lot, quand ses tâches sont closes ; un

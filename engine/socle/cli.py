@@ -44,6 +44,13 @@ def cmd_state(args) -> int:
     return 0
 
 
+def cmd_roadmap(args) -> int:
+    from socle import roadmap as suite
+
+    print(suite.rendre(_projet(args), format_=args.format, par=args.by, tout=args.all).rstrip("\n"))
+    return 0
+
+
 def cmd_check(args) -> int:
     from socle import context as contexte
 
@@ -780,7 +787,7 @@ def cmd_checks(args) -> int:
 # Les commandes par public : l'humain en a peu, l'agent
 # davantage, le reste sert aux hooks, à la CI et au moteur lui-même.
 GROUPES = {
-    a_traduire("pour l'humain"): ["help", "install", "init", "state", "answer", "decision", "approve", "reviewed",
+    a_traduire("pour l'humain"): ["help", "install", "init", "state", "roadmap", "answer", "decision", "approve", "reviewed",
                                   "private install"],
     a_traduire("pour l'agent"): ["new", "show", "url", "review", "verify", "check", "next-id", "private",
                                  "mutation-verdict", "mutation-run", "renumber", "archive", "checks"],
@@ -842,6 +849,18 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
     s.add_argument("--short", action="store_true", help=trad("l'état dérivé seul, entier : sans le chantier actif, les "
                                                              "faits ni les décisions, sans borne ni plafond"))
     s.set_defaults(f=cmd_state)
+
+    from socle import roadmap as suite
+
+    s = sp.add_parser("roadmap", help=trad("la suite du projet d'un coup d'œil : jalons, lots, tâches et besoins, "
+                                           "calculés depuis le backlog"))
+    s.add_argument("--format", choices=suite.FORMATS, default="text",
+                   help=trad("text : une ligne par jalon et par lot (défaut) ; markdown : le lot en cours et les deux "
+                             "suivants tâche par tâche"))
+    s.add_argument("--by", choices=suite.LECTURES, default="lot",
+                   help=trad("lire par lot (défaut) ou par besoin, chacun avec ses tâches et le lot de chacune"))
+    s.add_argument("--all", action="store_true", help=trad("en markdown, détailler tous les lots, ou tous les besoins"))
+    s.set_defaults(f=cmd_roadmap)
 
     s = sp.add_parser("check", help=trad("contrôles du socle, un code de sortie"))
     s.add_argument("--stage", choices=("agent", "git", "ci"), default="ci")

@@ -34,6 +34,26 @@ five minutes, the state will say so at each session, until it gets shorter
 or the human raises the threshold. Writing the key at 300 in
 `.socle/guardrails.toml` is free and changes nothing.
 
+## 2026-11-17-e — The project's roadmap at a glance: `socle roadmap`
+
+A new command, for the human as for the agent:
+`python3 .socle/socle roadmap` gives the project's roadmap, computed from
+the backlog like the state, nothing written by hand. Compact (the
+default), one line per milestone, with its needs closed out of the total,
+and one line per batch, in their order of execution deduced from their
+`after`, the batch in progress marked with the progress of its tasks;
+then what is outside the batches, counted. `--format markdown` gives the
+detailed format: the batch in progress and the next two task by task
+(each task with its need, its priority and where it stands), the others
+on one line (`--all` details them all), and, named, the tasks in no
+batch, the needs to split and to close, the blocked entries, those
+`for: human` and the pending requests with their link. `--by need` reads
+by need, each with its tasks and the batch of each. Two batches that wait
+on the same batch, neither waiting on the other, are flagged: their order
+is not deduced, it is chosen by an `after` from one to the other.
+
+To do: nothing.
+
 ## 2026-11-17-d — The last engine texts that called a backlog entry a “topic”
 
 The description of `memoire.lectures`, which `socle checks` shows, says “a
