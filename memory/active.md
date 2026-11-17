@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0012 en cours (J-2026-11-17-F) : T-0044 et sa demande en correctif ;
-`docs/fabrication/passation-l0012` dit la reprise. Puis L-0014, L-0015.
+L-0012 en cours (J-2026-11-17-F), la passation intégrée ; restent la
+relecture de D-0130, la revue (passe 1), le push. Puis L-0014, L-0015.
 
 ## Consignes en cours
 

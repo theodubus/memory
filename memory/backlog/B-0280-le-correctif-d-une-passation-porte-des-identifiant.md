@@ -4,8 +4,8 @@
 > statut : ouvert · origine : J-2026-11-17-H · lu : backlog@1df796e8
 
 Mesuré le 17 novembre (J-2026-11-17-G, J-2026-11-17-H) : la passation du
-lot L-0012 range en correctif, sous `docs/fabrication/passation-l0012`,
-deux commits pas encore relus, qui créent une demande et une entrée de
+lot L-0012 range en correctif, sous docs/fabrication/passation-l0012
+(au commit 5e84cd7, retiré à son intégration), deux commits pas encore relus, qui créent une demande et une entrée de
 journal. Sur la branche, ces numéros restent libres : la décision de Théo
 consignée ensuite en séance a pris le numéro de la demande du correctif,
 et l'entrée de journal du même tour le sien. Appliqué, le correctif
