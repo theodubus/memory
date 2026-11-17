@@ -35,6 +35,22 @@ dépasse cinq minutes, l'état le dira à chaque session, jusqu'à ce qu'elle
 raccourcisse ou que l'humain relève le seuil. Écrire la clé à 300 dans
 `.socle/guardrails.toml` est libre et ne change rien.
 
+## 2026-11-17-c — La migration du backlog en quatre formes ne perd ni ne déplace plus de contenu
+
+La migration du backlog, que la mise à jour fait une fois, corrige trois
+cas. Une entrée close qui attendait un lot ou un jalon abandonné se
+mettait à attendre les besoins encore ouverts de ce lot, ce que
+`memoire.ordre` refusait ensuite : elle n'attend plus que ce qui est clos.
+Un critère écrit sur plusieurs lignes passe entier dans la tâche posée, au
+lieu de sa seule première ligne, la suite restant dans le besoin. Le titre,
+les champs et les critères d'une tâche posée citent les identifiants
+actuels, et non plus l'ancien numéro d'un lot ou d'un jalon.
+
+À faire : rien dans un projet dont le backlog n'a pas encore migré. Dans
+un projet déjà migré, relire les tâches posées par la migration : une
+mention d'un ancien numéro se remplace par l'identifiant actuel que
+`socle show` donne, et un critère coupé se complète depuis le besoin.
+
 ## 2026-11-17-b — L'ancien numéro d'une entrée renumérotée : le hook nomme l'identifiant actuel, et `socle url` le résout
 
 Le hook de l'agent refusait l'ancien numéro d'une entrée renumérotée

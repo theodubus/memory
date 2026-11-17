@@ -332,6 +332,75 @@ class TestMigration(Projet):
         self.commiter("la migration")
         self.assertEqual(self.erreurs(base), [])
 
+    def migrer_et_ranger(self) -> memoire.Memoire:
+        migration.migrer_backlog(self.racine)
+        from socle import archive as archivage
+
+        archivage.ranger_backlog(self.racine)
+        return memoire.Memoire.charger(self.racine)
+
+    def test_une_entree_close_n_attend_rien_d_ouvert_apres_la_migration(self):
+        """T-0052 : un besoin fait et un jalon fait qui attendaient un lot
+        abandonné se mettaient à attendre ses besoins encore ouverts, et
+        `memoire.ordre` les refusait. Ouverte, une entrée n'attend toujours
+        que ce qui reste ouvert."""
+        clos = "ref : fichier:calc.py"
+        self.poser("B-0001", clos, "fait", CRITERES.replace("[ ]", "[x]"))
+        self.poser("B-0002", corps=CRITERES)
+        self.poser("B-0003", f"forme : lot · après : B-0001, B-0002 · {clos}", "abandonné")
+        self.poser("B-0004", f"après : B-0003 · {clos}", "fait")
+        self.poser("B-0005", f"forme : jalon · après : B-0003 · {clos}", "fait")
+        self.poser("B-0006", "après : B-0003")
+        base = self.commiter("le backlog d'avant")
+        mem = self.migrer_et_ranger()
+        self.assertEqual([memoire.dependances(mem.entree(i)) for i in ("B-0004", "JA-0001", "B-0006")],
+                         [["B-0001"], ["B-0001"], ["B-0002"]])
+        self.commiter("la migration")
+        self.assertEqual(self.erreurs(base), [])
+
+    def test_un_critere_sur_plusieurs_lignes_passe_entier_dans_la_tache(self):
+        """T-0052 : la tâche ne recevait que la première ligne d'un critère,
+        et la suite restait dans le besoin, sous sa case de renvoi."""
+        criteres = ("## Fait quand\n\n- [ ] la fonction triple existe, rend le triple de son argument\n"
+                    "  pour les entiers et les flottants,\net refuse une chaîne par une erreur de type\n"
+                    "- [x] le guide la décrit\n\nUn mot après la liste.")
+        self.poser("B-0001", corps=criteres)
+        self.poser("B-0002", "forme : lot · après : B-0001")
+        base = self.commiter("le backlog d'avant")
+        mem = self.migrer_et_ranger()
+        tache = mem.entree("T-0001").texte
+        self.assertIn("- [ ] la fonction triple existe, rend le triple de son argument\n  pour les entiers et les "
+                      "flottants,\net refuse une chaîne par une erreur de type\n- [x] le guide la décrit", tache)
+        besoin = mem.entree("B-0001").corps
+        self.assertNotIn("flottants", besoin)
+        self.assertNotIn("erreur de type", besoin)
+        self.assertIn("- [ ] le « Fait quand » de T-0001 est tenu\n\nUn mot après la liste.", besoin)
+        self.assertEqual(migration.criteres_entiers(memoire_de(entree("B-0009", corps=criteres)).entree("B-0009")),
+                         [(False, "la fonction triple existe, rend le triple de son argument\n  pour les entiers "
+                                  "et les flottants,\net refuse une chaîne par une erreur de type"),
+                          (True, "le guide la décrit")])
+        self.commiter("la migration")
+        self.assertEqual(self.erreurs(base), [])
+
+    def test_la_tache_posee_cite_les_identifiants_actuels(self):
+        """T-0052 : la tâche lisait son besoin avant la réécriture des
+        mentions ; son titre et ses critères gardaient l'ancien numéro d'un
+        lot (dans l'atelier, T-0012 disait B-0224 de JA-0005)."""
+        self.poser("B-0001", "forme : lot")
+        self.poser("B-0002", titre="B-0001 a réuni trop de besoins",
+                   corps="## Fait quand\n\n- [ ] l'état signale un lot comme B-0001\n  ou B-0001@abcdef12")
+        self.poser("B-0003", "forme : lot · après : B-0002")
+        base = self.commiter("le backlog d'avant")
+        mem = self.migrer_et_ranger()
+        tache = mem.entree("T-0001")
+        self.assertEqual(tache.titre, "L-0001 a réuni trop de besoins")
+        self.assertEqual(mem.entree("B-0002").titre, tache.titre)
+        self.assertIn("- [ ] l'état signale un lot comme L-0001\n  ou L-0001", tache.texte)
+        self.assertNotRegex(tache.texte, r"B-0001\b")
+        self.assertTrue(tache.fichier.endswith("/T-0001-l-0001-a-reuni-trop-de-besoins.md"), tache.fichier)
+        self.commiter("la migration")
+        self.assertEqual(self.erreurs(base), [])
+
     def test_la_mise_a_jour_migre_le_backlog(self):
         self.avant()
         with contextlib.redirect_stdout(io.StringIO()) as sortie:

@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0052 — La migration du backlog : un lot ou un jalon abandonné développé dans un après, un critère sur plusieurs lignes coupé, les tâches posées qui gardent les anciens numéros
 
-> statut : ouvert · origine : J-2026-11-16-V · besoin : B-0265 · lu : backlog@9aec7323
+> statut : fait · origine : J-2026-11-16-V · besoin : B-0265 · lu : backlog@9aec7323 · ref : J-2026-11-17-O
 
 Relevé par la revue du lot L-0013, passe 1 (J-2026-11-16-V), constats 2,
 3 et 4 pour le backlog, de même nature : la migration du backlog en
@@ -24,6 +24,6 @@ titre de T-0012 dans ce dépôt.
 
 ## Fait quand
 
-- [ ] une entrée close qui attendait un lot ou un jalon clos ne se met à attendre rien d'ouvert après la migration, et un test le montre
-- [ ] un critère sur plusieurs lignes passe entier dans la tâche posée, et un test le montre
-- [ ] le titre et le corps d'une tâche posée citent les identifiants actuels, et un test le montre
+- [x] une entrée close qui attendait un lot ou un jalon clos ne se met à attendre rien d'ouvert après la migration, et un test le montre
+- [x] un critère sur plusieurs lignes passe entier dans la tâche posée, et un test le montre
+- [x] le titre et le corps d'une tâche posée citent les identifiants actuels, et un test le montre

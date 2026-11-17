@@ -1,5 +1,5 @@
 <!-- socle: couche=backlog zone=publique -->
-# T-0012 — Rien ne signale un lot qui ne tient pas en une session ou dont les sujets ne partagent rien : B-0224 a réuni 22 sujets sous la forme d'un lot
+# T-0012 — Rien ne signale un lot qui ne tient pas en une session ou dont les sujets ne partagent rien : JA-0005 a réuni 22 sujets sous la forme d'un lot
 
 > statut : ouvert · origine : J-2026-11-15-J · besoin : B-0233 · lu : backlog@9966bbbd
 

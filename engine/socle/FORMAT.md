@@ -265,9 +265,10 @@ La mise à jour migre un backlog d'avant ADR-0083 : un lot
 compris, sans sa priorité, qui ne changeait aucun ordre (l'installeur
 nomme chacun) ; toute autre entrée reste un besoin, sa section « Fait quand »
 renommée ; chaque besoin qu'attend un lot ouvert reçoit une tâche qui
-reprend ses critères, vers laquelle sa section renvoie, et que le lot
-attend à sa place ; un jalon attend les besoins de ses lots ; les
-mentions se récrivent dans le backlog et le chantier actif.
+reprend ses critères, chacun entier, vers laquelle sa section renvoie, et
+que le lot attend à sa place ; un jalon attend les besoins de ses lots ;
+une entrée close n'en vient à attendre rien d'ouvert ; les mentions se
+récrivent dans le backlog, le chantier actif et les tâches posées.
 
 Un besoin qui pose ou change un garde-fou écrit, avant son code, son
 modèle de menace : ce que le garde-fou arrête, ce qu'il laisse passer, dans

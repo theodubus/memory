@@ -34,6 +34,22 @@ five minutes, the state will say so at each session, until it gets shorter
 or the human raises the threshold. Writing the key at 300 in
 `.socle/guardrails.toml` is free and changes nothing.
 
+## 2026-11-17-c — The migration of the backlog into four forms no longer loses or moves content
+
+The backlog migration, which the update runs once, fixes three cases. A
+closed entry that waited for an abandoned batch or milestone started
+waiting for that batch's needs still open, which `memoire.ordre` then
+refused: it now only waits for what is closed. A criterion written over
+several lines goes whole into the task set, instead of its first line
+alone, the rest staying in the need. The title, fields and criteria of a
+task set cite the current identifiers, no longer the former number of a
+batch or milestone.
+
+To do: nothing in a project whose backlog has not migrated yet. In a
+project already migrated, reread the tasks set by the migration: a
+mention of a former number is replaced by the current identifier that
+`socle show` gives, and a cut criterion is completed from the need.
+
 ## 2026-11-17-b — The former number of a renumbered entry: the hook names the current identifier, and `socle url` resolves it
 
 The agent hook refused the former number of a renumbered entry
