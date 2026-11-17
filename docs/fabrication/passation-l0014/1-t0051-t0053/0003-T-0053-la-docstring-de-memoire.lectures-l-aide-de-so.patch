@@ -1,0 +1,409 @@
+From 6c5eb27a8093707ed24fc0a00b1220eab6206baf Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 17 Nov 2026 11:44:52 +0000
+Subject: [PATCH 3/3] =?UTF-8?q?T-0053=20:=20la=20docstring=20de=20memoire.?=
+ =?UTF-8?q?lectures,=20l'aide=20de=20socle=20review=20et=20les=20libell?=
+ =?UTF-8?q?=C3=A9s=20de=20l'auto-test=20ne=20disent=20plus=20=C2=AB=20suje?=
+ =?UTF-8?q?t=20=C2=BB=20d'une=20entr=C3=A9e=20du=20backlog,=20ni=20=C2=AB?=
+ =?UTF-8?q?=20t=C3=A2che=20=C2=BB=20d'une=20commande=20en=20arri=C3=A8re-p?=
+ =?UTF-8?q?lan=20(J-2026-11-17-N)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Un test lit ces textes ; un second montre que le guide ne dit « tâche »
+qu'à partir de la définition de la tâche `T-`. Note de version
+2026-11-17-d. Restent à T-0050 les textes que des tests lisent mot pour
+mot.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Mr1cCernaY1gHvhEGiHk6f
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=2 PreToolUse=293 Stop=2
+Socle-Hooks-Since-Commit: PreToolUse=63
+---
+ docs/fabrication/architecture.md              |  2 +-
+ engine/socle/CHANGES.en.md                    |  8 ++++
+ engine/socle/CHANGES.md                       |  9 ++++
+ engine/socle/checks_memory.py                 |  4 +-
+ engine/socle/cli.py                           |  2 +-
+ engine/socle/messages_en.py                   | 42 +++++++++----------
+ engine/socle/selftest.py                      | 17 ++++----
+ ...du-produit-hors-de-t-0050-qui-disent-en.md |  4 +-
+ memory/journal/2026-11-6.md                   | 23 ++++++++++
+ tests/test_structure.py                       | 36 ++++++++++++++++
+ 10 files changed, 112 insertions(+), 35 deletions(-)
+ rename memory/backlog/{ => closed}/T-0053-les-textes-du-produit-hors-de-t-0050-qui-disent-en.md (90%)
+
+diff --git a/docs/fabrication/architecture.md b/docs/fabrication/architecture.md
+index cb9d257..ba53716 100644
+--- a/docs/fabrication/architecture.md
++++ b/docs/fabrication/architecture.md
+@@ -171,7 +171,7 @@ vérifiées.
+ - **Lecture prouvée** (`ADR-0008`, `ADR-0023`) : une entrée citée
+   `ID@empreinte` l'a été dans cette version, l'actuelle ou celle du commit
+   où la citation paraît ; un index, dans une version de la plage ; une
+-  décision, une demande ou un sujet de backlog nouveaux doivent le faire.
++  décision, une demande ou une entrée du backlog nouvelles doivent le faire.
+   Le contrôle et le hook appellent la même fonction. La preuve porte sur l'accès au texte, pas sur
+   sa compréhension. Une entrée qui change de fichier, un sujet clos archivé
+   au journal, garde sa preuve sans relire : la citation se juge au commit où
+diff --git a/engine/socle/CHANGES.en.md b/engine/socle/CHANGES.en.md
+index 3d1e8b8..89bd56d 100644
+--- a/engine/socle/CHANGES.en.md
++++ b/engine/socle/CHANGES.en.md
+@@ -7,6 +7,14 @@ letter. On an update, the installer gives the entries that the project's
+ engine copy did not have, and the commit message it proposes names their
+ identifiers.
+ 
++## 2026-11-17-d — The last engine texts that called a backlog entry a “topic”
++
++The description of `memoire.lectures`, which `socle checks` shows, says “a
++backlog entry”; the help of `socle review --since`, “the tasks of the whole
++batch”; the selftest labels (`socle selftest --verbose`), “need”.
++
++To do: nothing.
++
+ ## 2026-11-17-c — The migration of the backlog into four forms no longer loses or moves content
+ 
+ The backlog migration, which the update runs once, fixes three cases. A
+diff --git a/engine/socle/CHANGES.md b/engine/socle/CHANGES.md
+index 2751fc1..60b2023 100644
+--- a/engine/socle/CHANGES.md
++++ b/engine/socle/CHANGES.md
+@@ -7,6 +7,15 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
+ moteur du projet n'avait pas, et le message de commit qu'il propose nomme
+ leurs identifiants.
+ 
++## 2026-11-17-d — Les derniers textes du moteur qui disaient « sujet » d'une entrée du backlog
++
++La description de `memoire.lectures`, que `socle checks` affiche, dit « une
++entrée du backlog » ; l'aide de `socle review --since`, « les tâches du lot
++entier » ; les libellés de l'auto-test (`socle selftest --verbose`), « besoin »,
++et « commande en arrière-plan » au lieu de « tâche de fond ».
++
++À faire : rien.
++
+ ## 2026-11-17-c — La migration du backlog en quatre formes ne perd ni ne déplace plus de contenu
+ 
+ La migration du backlog, que la mise à jour fait une fois, corrige trois
+diff --git a/engine/socle/checks_memory.py b/engine/socle/checks_memory.py
+index 1f8c0eb..c9628d7 100644
+--- a/engine/socle/checks_memory.py
++++ b/engine/socle/checks_memory.py
+@@ -642,8 +642,8 @@ def sans_question_de_seance(texte: str) -> str:
+ def lectures(ctx, r):
+     """Une citation `ID@empreinte` ou `index@empreinte` ajoutée désigne une
+     version que l'agent a pu lire (`socle.readings`) ; une
+-    décision, une demande ou un sujet de backlog nouveaux prouvent ce qu'ils
+-    ont lu avant d'être écrits."""
++    décision, une demande ou une entrée du backlog nouvelles prouvent ce
++    qu'elles ont lu avant d'être écrites."""
+     from socle import readings as lp
+ 
+     mem, base = ctx.memoire, ctx.memoire_base
+diff --git a/engine/socle/cli.py b/engine/socle/cli.py
+index 63c124f..c466f48 100644
+--- a/engine/socle/cli.py
++++ b/engine/socle/cli.py
+@@ -927,7 +927,7 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
+                                        "avec celle-ci quand la branche distante contient déjà le lot)"))
+     s.add_argument("--max-bytes", type=int, default=60_000, help=trad("le plafond du diff montré"))
+     s.add_argument("--since", metavar="REF", help=trad("une seconde revue : le diff depuis ce commit, celui de la "
+-                                                       "première revue, et les sujets du lot entier"))
++                                                       "première revue, et les tâches du lot entier"))
+     s.add_argument("--request", metavar="D-NNNN", help=trad("le dossier de la relecture à froid de cette demande, "
+                                                             "pour un lecteur qui n'a que son texte"))
+     s.add_argument("--batch", metavar="L-NNNN", help=trad("le lot dont c'est la passe de revue, qui s'écrit dans sa "
+diff --git a/engine/socle/messages_en.py b/engine/socle/messages_en.py
+index 1314212..1f47c5c 100644
+--- a/engine/socle/messages_en.py
++++ b/engine/socle/messages_en.py
+@@ -1319,8 +1319,8 @@ MESSAGES: dict[str, str] = {
+         "pull request {numero} cited without its link: give its address, which the human opens in one click",
+     "pull request à fusionner citée sans son lien":
+         "pull request to merge cited without its link",
+-    "sujet du backlog qui s'attend lui-même (`après`)":
+-        "backlog topic that waits on itself (`after`)",
++    "besoin qui s'attend lui-même (`après`)":
++        "need that waits on itself (`after`)",
+     "rien, il se clôt":
+         "nothing, it can close",
+     "attend":
+@@ -1404,10 +1404,10 @@ MESSAGES: dict[str, str] = {
+         "without `AGENTS.md`, `CLAUDE.md` carrying the socle section, when the installer kept it because the project "
+         "names it.",
+     "Une citation `ID@empreinte` ou `index@empreinte` ajoutée désigne une version que l'agent a pu lire "
+-    "(`socle.readings`) ; une décision, une demande ou un sujet de backlog nouveaux prouvent ce qu'ils ont "
+-    "lu avant d'être écrits.":
++    "(`socle.readings`) ; une décision, une demande ou une entrée du backlog nouvelles prouvent ce qu'elles ont "
++    "lu avant d'être écrites.":
+         "A citation `ID@fingerprint` or `index@fingerprint` that is added names a version the agent could read "
+-        " (`socle.readings`); a new decision, request or backlog topic proves what it read before being "
++        " (`socle.readings`); a new decision, request or backlog entry proves what it read before being "
+         "written.",
+     "Une fonction publique ajoutée ou modifiée est nommée par au moins un test — ou une dispense motivée la nomme "
+     "(`Dispense-test: f — <raison>`).":
+@@ -1959,8 +1959,8 @@ MESSAGES: dict[str, str] = {
+         "## Second review",
+     "## Le diff de la correction ({n} fichier(s), depuis {base})":
+         "## The fix's diff ({n} file(s), since {base})",
+-    "une seconde revue : le diff depuis ce commit, celui de la première revue, et les sujets du lot entier":
+-        "a second review: the diff since this commit, the one of the first review, and the topics of the whole batch",
++    "une seconde revue : le diff depuis ce commit, celui de la première revue, et les tâches du lot entier":
++        "a second review: the diff since this commit, the one of the first review, and the tasks of the whole batch",
+     "(aucune base connue : ni branche distante, ni branche par défaut ; rien à relire)":
+         "(no known base: neither a remote branch nor a default branch; nothing to review)",
+     "## Le diff du lot ({n} fichier(s), depuis {base})":
+@@ -2629,8 +2629,8 @@ MESSAGES: dict[str, str] = {
+         "pull request description that cites a private identifier",
+     "terme retiré de la liste privée sans validation humaine":
+         "term removed from the private list without human approval",
+-    "sujet « done » sans référence, écrit en anglais":
+-        "“done” subject without a reference, written in English",
++    "besoin « done » sans référence, écrit en anglais":
++        "“done” need without a reference, written in English",
+     "entrée publique « basculée » sans copie privée qui la reprenne":
+         "public entry “moved” without a private copy that takes it over",
+     "push vers le dépôt public sans relecture humaine":
+@@ -2674,8 +2674,8 @@ MESSAGES: dict[str, str] = {
+     "chemin écrit par le shell à travers une variable ou une substitution que le hook ne sait pas développer, dans "
+     "le projet":
+         "path written by the shell through a variable or a substitution the hook cannot expand, in the project",
+-    "fichier protégé écrit par le shell après un sous-shell, une substitution, un pipeline ou une tâche de fond, dont "
+-    "le dossier et les variables ne passent pas à la suite":
++    "fichier protégé écrit par le shell après un sous-shell, une substitution, un pipeline ou une commande en "
++    "arrière-plan, dont le dossier et les variables ne passent pas à la suite":
+         "protected file written by the shell after a subshell, a substitution, a pipeline or a background job, whose "
+         "directory and variables do not carry over",
+     "fichier protégé écrit par le shell à travers `cd \"$OLDPWD\"`, une option de `cd`, les mots d'une variable, "
+@@ -2855,8 +2855,8 @@ MESSAGES: dict[str, str] = {
+         "entry cited in a version it no longer has",
+     "identifiant que la branche par défaut a pris aussi":
+         "identifier the default branch took too",
+-    "sujet ajouté au backlog sans l'avoir consulté":
+-        "subject added to the backlog without consulting it",
++    "besoin ajouté au backlog sans l'avoir consulté":
++        "need added to the backlog without consulting it",
+     "défaut indexé, corrigé seulement sur disque":
+         "defect in the index, fixed only on disk",
+     "code changé sans mise à jour de la mémoire":
+@@ -2993,8 +2993,8 @@ MESSAGES: dict[str, str] = {
+         "encrypted mode: a private entry leaves encrypted and passes the commit and the CI",
+     "ajouter un terme à la liste privée est libre : le commit et la CI passent":
+         "adding a term to the private list is free: the commit and the CI pass",
+-    "mode compagnon : un sujet public basculé dans la mémoire privée passe la fin de tour, le commit et la CI":
+-        "companion mode: a public subject moved into the private memory passes the end of turn, the commit and the CI",
++    "mode compagnon : un besoin public basculé dans la mémoire privée passe la fin de tour, le commit et la CI":
++        "companion mode: a public need moved into the private memory passes the end of turn, the commit and the CI",
+     "une mémoire en anglais : ses entrées, écrites par `socle new`, passent le commit et la CI":
+         "a memory in English: its entries, written by `socle new`, pass the commit and the CI",
+     "une valeur attendue changée sous une demande en attente, poussée : le tour finit, le commit attend":
+@@ -3005,10 +3005,10 @@ MESSAGES: dict[str, str] = {
+         "a case added to a case file passes the commit and the CI",
+     "`--questions` ne vaut que pour une demande (`request`)":
+         "`--questions` applies only to a request (`request`)",
+-    "sujet du backlog d'une priorité ni haute ni basse":
+-        "backlog topic with a priority neither high nor low",
+-    "sujet fait alors que la demande qu'il attend est sans réponse":
+-        "topic done while the request it waits on is unanswered",
++    "besoin d'une priorité ni haute ni basse":
++        "need with a priority neither high nor low",
++    "besoin fait alors que la demande qu'il attend est sans réponse":
++        "need done while the request it waits on is unanswered",
+     "un fichier protégé changé sous une demande en attente, poussée : le tour finit, le commit attend":
+         "a protected file changed under a pending request, pushed: the turn ends, the commit waits",
+     "un fichier protégé sous une demande en attente, poussée, la CI du socle exigée : il se commite et se pousse":
+@@ -3047,8 +3047,8 @@ MESSAGES: dict[str, str] = {
+         "an ordinary write passes the agent's hook",
+     "le backlog est déjà rangé":
+         "the backlog is already in order",
+-    "sujet clos, avec sa référence, laissé parmi les ouverts":
+-        "closed topic, with its reference, left among the open ones",
++    "besoin clos, avec sa référence, laissé parmi les ouverts":
++        "closed need, with its reference, left among the open ones",
+     "Pousser un commit sur la branche par défaut qui modifie ce fichier (une ligne de commentaire suffit ; c'est "
+     "un fichier protégé, que l'humain approuve) : GitHub n'enregistre un workflow qu'au push qui modifie son "
+     "fichier, pas toujours au premier push qui le pose. Puis vérifier dans l'onglet Actions qu'il y apparaît":
+diff --git a/engine/socle/selftest.py b/engine/socle/selftest.py
+index 08646ff..affb42f 100644
+--- a/engine/socle/selftest.py
++++ b/engine/socle/selftest.py
+@@ -1305,7 +1305,7 @@ def _cas() -> list[Cas]:
+         maj_memoire(c, "Liste privée raccourcie.")
+         return etage_git(a, c)
+ 
+-    @defaut("clos-sans-ref-en-anglais", "sujet « done » sans référence, écrit en anglais", "git", "memoire.backlog")
++    @defaut("clos-sans-ref-en-anglais", "besoin « done » sans référence, écrit en anglais", "git", "memoire.backlog")
+     def _(a, c):
+         remplacer(c, _sujet(c, "B-0001"), "> statut : ouvert", "> status : done")
+         maj_memoire(c)
+@@ -1340,13 +1340,13 @@ def _cas() -> list[Cas]:
+         remplacer(c, _sujet(c, "B-0001"), "> statut : ouvert", "> statut : fait")
+         return etage_git(a, c)
+ 
+-    @defaut("clos-parmi-les-ouverts", "sujet clos, avec sa référence, laissé parmi les ouverts", "git",
++    @defaut("clos-parmi-les-ouverts", "besoin clos, avec sa référence, laissé parmi les ouverts", "git",
+             "memoire.backlog")
+     def _(a, c):
+         _clore(c, "B-0001")
+         return etage_git(a, c)
+ 
+-    @defaut("sujet-qui-s-attend", "sujet du backlog qui s'attend lui-même (`après`)", "git", "memoire.ordre")
++    @defaut("sujet-qui-s-attend", "besoin qui s'attend lui-même (`après`)", "git", "memoire.ordre")
+     def _(a, c):
+         remplacer(c, _sujet(c, "B-0001"), "> statut : ouvert", "> statut : ouvert · après : B-0001")
+         return etage_git(a, c)
+@@ -1364,12 +1364,12 @@ def _cas() -> list[Cas]:
+         remplacer(c, "docs/double.cas.json", '"attendu": 6', '"attendu": 7')
+         return etage_git(a, c)
+ 
+-    @defaut("priorite-inconnue", "sujet du backlog d'une priorité ni haute ni basse", "git", "memoire.ordre")
++    @defaut("priorite-inconnue", "besoin d'une priorité ni haute ni basse", "git", "memoire.ordre")
+     def _(a, c):
+         remplacer(c, _sujet(c, "B-0001"), "> statut : ouvert", "> statut : ouvert · priorité : urgente")
+         return etage_git(a, c)
+ 
+-    @defaut("fait-avant-sa-demande", "sujet fait alors que la demande qu'il attend est sans réponse", "git",
++    @defaut("fait-avant-sa-demande", "besoin fait alors que la demande qu'il attend est sans réponse", "git",
+             "memoire.ordre")
+     def _(a, c):
+         ajouter(c, "memory/requests/D-0001-refactor.md", demande_bonne(a, c))
+@@ -1654,7 +1654,7 @@ def _cas() -> list[Cas]:
+             "cd $SOCLE_ESSAI_DOSSIER && echo 'max_attempts = 99' >> policy.toml")])
+ 
+     @defaut("protege-etat-du-shell", "fichier protégé écrit par le shell après un sous-shell, une substitution, un "
+-            "pipeline ou une tâche de fond, dont le dossier et les variables ne passent pas à la suite", "agent",
++            "pipeline ou une commande en arrière-plan, dont le dossier et les variables ne passent pas à la suite", "agent",
+             "écriture protégée")
+     def _(a, c):
+         # La revue de B-0171, constat 1 : leur état passait à la suite.
+@@ -2230,7 +2230,7 @@ def _cas() -> list[Cas]:
+         r = a.socle(c, "check", "--stage", "ci", "--base", _collision(a, c))
+         return "" if r.returncode == 0 else r.stdout + r.stderr
+ 
+-    @defaut("backlog-sans-lecture", "sujet ajouté au backlog sans l'avoir consulté", "git", "memoire.lectures")
++    @defaut("backlog-sans-lecture", "besoin ajouté au backlog sans l'avoir consulté", "git", "memoire.lectures")
+     def _(a, c):
+         ajouter_sujet(c, "\n## B-0002 — Ajouter une fonction quadruple\n\n"
+                 f"> statut : ouvert · origine : {a.journal}\n\nPour l'essai.\n")
+@@ -2955,7 +2955,8 @@ def _temoins() -> list[tuple[str, Callable]]:
+         maj_memoire(c, "Un terme privé de plus.")
+         return (r.stderr if r.returncode else "") or etage_git(a, c) or etage_ci(a, c)
+ 
+-    @temoin("mode compagnon : un sujet public basculé dans la mémoire privée passe la fin de tour, le commit et la CI")
++    @temoin("mode compagnon : un besoin public basculé dans la mémoire privée passe la fin de tour, le commit et la "
++            "CI")
+     def _(a, c):
+         c = a.clone_prive("compagnon")
+         r = a.socle(c, "private", "move", "B-0001")
+diff --git a/memory/backlog/T-0053-les-textes-du-produit-hors-de-t-0050-qui-disent-en.md b/memory/backlog/closed/T-0053-les-textes-du-produit-hors-de-t-0050-qui-disent-en.md
+similarity index 90%
+rename from memory/backlog/T-0053-les-textes-du-produit-hors-de-t-0050-qui-disent-en.md
+rename to memory/backlog/closed/T-0053-les-textes-du-produit-hors-de-t-0050-qui-disent-en.md
+index ccd93e5..25975cc 100644
+--- a/memory/backlog/T-0053-les-textes-du-produit-hors-de-t-0050-qui-disent-en.md
++++ b/memory/backlog/closed/T-0053-les-textes-du-produit-hors-de-t-0050-qui-disent-en.md
+@@ -1,7 +1,7 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # T-0053 — Les textes du produit hors de T-0050 qui disent encore « sujet » d'une entrée du backlog, ou « tâche » du travail en général
+ 
+-> statut : ouvert · origine : J-2026-11-16-V · besoin : B-0265 · lu : backlog@e7a68d02
++> statut : fait · origine : J-2026-11-16-V · besoin : B-0265 · lu : backlog@e7a68d02 · ref : J-2026-11-17-N
+ 
+ Relevé par la revue du lot L-0013, passe 1 (J-2026-11-16-V), constats 5
+ et 6 pour le backlog : des textes du produit disent encore « sujet »
+@@ -25,4 +25,4 @@ les deux emplois de « tâche » dans le guide. Restent la docstring de
+ 
+ ## Fait quand
+ 
+-- [ ] les textes nommés ici n'appellent plus « sujet » une entrée du backlog, ni « tâche » autre chose qu'une tâche `T-`, et un test le montre pour le guide
++- [x] les textes nommés ici n'appellent plus « sujet » une entrée du backlog, ni « tâche » autre chose qu'une tâche `T-`, et un test le montre pour le guide
+diff --git a/memory/journal/2026-11-6.md b/memory/journal/2026-11-6.md
+index 2fc875c..55c179a 100644
+--- a/memory/journal/2026-11-6.md
++++ b/memory/journal/2026-11-6.md
+@@ -1153,3 +1153,26 @@ titre dit JA-0005 au lieu de B-0224, comme son besoin B-0233. Les trois
+ tests (`tests/test_structure.py`) échouent sur le commit parent ; la note
+ de version 2026-11-17-c dit à un projet déjà migré quoi relire. Aucun
+ contrôle ni refus nouveau : pas de défaut injecté.
++
++## J-2026-11-17-N — T-0053 : la docstring de memoire.lectures, l'aide de socle review et les libellés de l'auto-test ne disent plus « sujet » d'une entrée du backlog ; un test le montre, et pour le guide
++
++> ref : T-0053, B-0265, L-0014, T-0050, J-2026-11-16-AA
++
++Le sous-agent de T-0051 et T-0052 finit T-0053 : la docstring de
++`memoire.lectures` dit « une entrée du backlog », l'aide de `socle review
++--since` « les tâches du lot entier », six libellés de défauts injectés et
++celui du témoin du mode compagnon « besoin », chacun sur l'entrée `B-`
++qu'il injecte ; un septième libellé disait « une tâche de fond » d'une
++commande en arrière-plan, et le dit ainsi. Les identifiants des défauts
++(`sujet-qui-s-attend`) et les noms internes de l'auto-test
++(`ajouter_sujet`, `_sujet`) restent : ni texte affiché, ni texte lu. La
++même phrase de l'architecture suit la docstring. Aucun test ne lisait ces
++textes mot pour mot.
++
++Le test (`tests/test_structure.py`, `TestVocabulaire`) lit ces textes et
++échoue sur le commit parent ; un second montre, pour le guide, que
++« tâche » et « task » n'y paraissent qu'à partir de la définition de la
++tâche `T-` (le guide, corrigé le 16 novembre, le passe déjà). Restent à
++T-0050 les textes que des tests lisent mot pour mot : « Un trou ouvre un
++sujet » dans le guide et le gabarit des questions de cadrage, qui dit
++encore « sujet ». Note de version 2026-11-17-d.
+diff --git a/tests/test_structure.py b/tests/test_structure.py
+index 581a047..8dac915 100644
+--- a/tests/test_structure.py
++++ b/tests/test_structure.py
+@@ -6,6 +6,7 @@ d'avant."""
+ 
+ import contextlib
+ import io
++import re
+ import shutil
+ import tempfile
+ import types
+@@ -527,6 +528,41 @@ class TestCommandes(Projet):
+             cli.main(["--root", str(self.racine), "new", "backlog", "Un sujet"])
+ 
+ 
++class TestVocabulaire(unittest.TestCase):
++    """B-0265 (T-0053) : un mot pour une chose. Une entrée du backlog n'est
++    pas un « sujet », et « tâche » ne dit que la tâche `T-`."""
++
++    def test_le_guide_ne_dit_tache_qu_a_partir_de_sa_definition(self):
++        """Le guide disait « tâche » du travail confié à l'agent, quinze
++        lignes avant de définir la tâche `T-` (J-2026-11-16-AA)."""
++        for nom, mot, definition, avant in (("HELP.md", "tâches?", "une **tâche** (`T-`)", "une **"),
++                                            ("HELP.en.md", "tasks?", "a **task** (`T-`)", "a **")):
++            with self.subTest(nom):
++                plat = " ".join((Path(MOTEUR) / "socle" / nom).read_text(encoding="utf-8").split())
++                premier = re.search(rf"(?i)\b{mot}\b", plat)
++                self.assertEqual(premier.start(), plat.index(definition) + len(avant), plat[premier.start() - 80:
++                                                                                          premier.end() + 80])
++
++    def test_les_textes_du_produit_ne_disent_plus_sujet_d_une_entree_du_backlog(self):
++        """T-0053 : la docstring de `memoire.lectures`, que `socle checks`
++        affiche, l'aide de `socle review` et les libellés de l'auto-test
++        disaient « sujet » d'une entrée du backlog, et l'un d'eux « tâche »
++        d'une commande en arrière-plan."""
++        aide = io.StringIO()
++        with contextlib.redirect_stdout(aide), self.assertRaises(SystemExit):
++            cli.main(["review", "--help"])
++        textes = {"memoire.lectures": controles_memoire.lectures.__doc__, "socle review": aide.getvalue()}
++        textes |= {c.id: c.defaut for c in autotest._cas()}
++        textes |= {nom: nom for nom, _ in autotest._temoins()}
++        for ou, texte in textes.items():
++            with self.subTest(ou):
++                plat = " ".join(texte.split())
++                self.assertNotRegex(plat, r"(?i)\bsujets?\b")
++                self.assertNotIn("tâche de fond", plat)
++        self.assertIn("une entrée du backlog nouvelles prouvent", " ".join(textes["memoire.lectures"].split()))
++        self.assertIn("les tâches du lot entier", " ".join(textes["socle review"].split()))
++
++
+ class TestAtelier(unittest.TestCase):
+     def test_les_entrees_d_essai_de_l_autotest_ont_leur_forme(self):
+         a = types.SimpleNamespace(journal=JOURNAL)
+-- 
+2.43.0
+

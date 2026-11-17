@@ -1,0 +1,452 @@
+From 66ef136822c7ff833a373256837d1cb0a48d79d3 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 17 Nov 2026 11:39:57 +0000
+Subject: [PATCH 2/3] =?UTF-8?q?T-0052=20:=20la=20migration=20du=20backlog?=
+ =?UTF-8?q?=20ne=20fait=20plus=20rien=20attendre=20d'ouvert=20=C3=A0=20une?=
+ =?UTF-8?q?=20entr=C3=A9e=20close,=20passe=20un=20crit=C3=A8re=20entier=20?=
+ =?UTF-8?q?dans=20la=20t=C3=A2che=20pos=C3=A9e=20et=20en=20r=C3=A9crit=20l?=
+ =?UTF-8?q?es=20mentions=20;=20le=20titre=20de=20T-0012=20dit=20JA-0005=20?=
+ =?UTF-8?q?(J-2026-11-17-M)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Trois cas de `engine/socle/migration.py` (ADR-0083) : une entrée close
+qui attendait un lot ou un jalon n'attend que ce qui en est clos ; un
+critère sur plusieurs lignes passe entier dans la tâche et quitte le
+besoin avec sa case ; le titre, les champs et les critères d'une tâche
+posée citent les identifiants actuels. Note de version 2026-11-17-c.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Mr1cCernaY1gHvhEGiHk6f
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=2 PreToolUse=230 Stop=2
+Socle-Hooks-Since-Commit: PreToolUse=58
+---
+ docs/fabrication/architecture.md              |  2 +-
+ engine/socle/CHANGES.en.md                    | 16 ++++
+ engine/socle/CHANGES.md                       | 16 ++++
+ engine/socle/FORMAT.md                        |  7 +-
+ engine/socle/migration.py                     | 96 +++++++++++++++----
+ ...nale-un-lot-qui-ne-tient-pas-en-une-ses.md |  2 +-
+ ...n-du-backlog-un-lot-ou-un-jalon-abandon.md |  8 +-
+ memory/journal/2026-11-6.md                   | 26 +++++
+ tests/test_structure.py                       | 69 +++++++++++++
+ 9 files changed, 216 insertions(+), 26 deletions(-)
+ rename memory/backlog/{ => closed}/T-0052-la-migration-du-backlog-un-lot-ou-un-jalon-abandon.md (83%)
+
+diff --git a/docs/fabrication/architecture.md b/docs/fabrication/architecture.md
+index 46a3947..cb9d257 100644
+--- a/docs/fabrication/architecture.md
++++ b/docs/fabrication/architecture.md
+@@ -35,7 +35,7 @@ vérifiées.
+ | `HELP.md` | le guide de l'humain, source unique : ses gestes, chacun avec sa commande ; `socle help` l'affiche |
+ | `CHANGES.md` | les notes de version, et leur version anglaise : une entrée par changement qui touche un projet installé, sous un identifiant stable (sa date et une lettre), ce qu'il change et ce que l'agent du projet doit faire ; l'installeur donne à la mise à jour celles que la copie du moteur du projet n'avait pas, et `tests/test_notes_de_version.py` exige les mêmes identifiants dans les deux langues (ADR-0078) |
+ | `memory.py` | lecture des cinq couches : en-têtes, entrées, identifiants, métadonnées, références ; le backlog en quatre formes lues sur le préfixe, besoin `B-`, tâche `T-`, lot `L-`, jalon `JA-`, l'ancien numéro d'une entrée renumérotée résolu (ADR-0083) ; l'ordre du backlog (`après`, qui nomme des entrées ou des demandes attendues jusqu'à leur réponse, D-0064 ; une tâche héritant la priorité et l'attente de son besoin ; priorité haute ou basse, D-0062), d'où se calculent le prochain jalon et ses besoins ouverts, le prochain lot et l'avancement de ses tâches, les tâches prêtes rangées par priorité et, à part, celles de priorité basse (D-0052), les besoins à découper et à fermer ; les critères de la section d'une entrée, « Satisfait quand » d'un besoin, « Fait quand » des autres |
+-| `migration.py` | la migration d'un backlog d'avant ADR-0083, à la mise à jour, idempotente : les lots et les jalons renumérotés avec leur ancien numéro, sans leur priorité, que l'installeur nomme, une tâche par besoin qu'attend un lot ouvert, ses critères repris et la section du besoin qui y renvoie, les mentions récrites dans le backlog et le chantier actif |
++| `migration.py` | la migration d'un backlog d'avant ADR-0083, à la mise à jour, idempotente : les lots et les jalons renumérotés avec leur ancien numéro, sans leur priorité, que l'installeur nomme, une tâche par besoin qu'attend un lot ouvert, ses critères repris entiers, même écrits sur plusieurs lignes, et la section du besoin qui y renvoie, une entrée close qui n'en vient à attendre rien d'ouvert, les mentions récrites dans le backlog, le chantier actif et les tâches posées |
+ | `requests.py` | le contrat des demandes, son lint, les réponses humaines gelées ; les réponses de base, les mêmes dans toute demande, et le refus de leurs synonymes (D-0053), les questions de départ comprises (D-0054) ; le contexte d'une demande commence par « Le projet », « Le chantier » et « La question », pour l'humain qui revient après des semaines, ses trois premiers paragraphes ; une demande posée avant le moteur qui apporte la règle, telle quelle avant la mise à jour de son verrou, ou datée d'avant elle, en étant dispensée (ADR-0046) ; une ligne d'empreinte, un fichier protégé et son empreinte nouvelle sans rien d'autre, dans les mises en liste que `ligne_d_empreinte` énumère (puce, numéro, tableau, gras, accents graves, deux-points, flèche), jamais un répertoire, un motif ou un lien, que le lint ne demande pas de décrire et que le budget de la demande ne compte pas, pour que la liste d'une mise à jour ne coûte rien à son contexte, et le contrat, que `socle new request` imprime sous l'identifiant (ADR-0058) |
+ | `context.py` | le registre des contrôles, leurs étages, la base de comparaison, le mode adoption ; les fichiers d'un outil tiers, hors de toutes les listes que les contrôles lisent (ADR-0031), et les commits qui ne touchent qu'eux, hors de la liste des commits que jugent la trace des hooks et les dispenses de test (`commits_du_projet`) ; dans un projet à plusieurs adaptateurs, un contrôle qui lit l'adaptateur tourne une fois par adaptateur, avec ses seuls motifs : un constat que chacun rend à l'identique se dit une fois, les autres nomment le leur (ADR-0051) |
+ | `readings.py` | la lecture prouvée, une seule fonction pour le contrôle et le hook (ADR-0023) ; l'empreinte d'une entrée sans sa ligne de métadonnées, celle du texte entier restant acceptée (ADR-0053) |
+diff --git a/engine/socle/CHANGES.en.md b/engine/socle/CHANGES.en.md
+index ee87380..3d1e8b8 100644
+--- a/engine/socle/CHANGES.en.md
++++ b/engine/socle/CHANGES.en.md
+@@ -7,6 +7,22 @@ letter. On an update, the installer gives the entries that the project's
+ engine copy did not have, and the commit message it proposes names their
+ identifiers.
+ 
++## 2026-11-17-c — The migration of the backlog into four forms no longer loses or moves content
++
++The backlog migration, which the update runs once, fixes three cases. A
++closed entry that waited for an abandoned batch or milestone started
++waiting for that batch's needs still open, which `memoire.ordre` then
++refused: it now only waits for what is closed. A criterion written over
++several lines goes whole into the task set, instead of its first line
++alone, the rest staying in the need. The title, fields and criteria of a
++task set cite the current identifiers, no longer the former number of a
++batch or milestone.
++
++To do: nothing in a project whose backlog has not migrated yet. In a
++project already migrated, reread the tasks set by the migration: a
++mention of a former number is replaced by the current identifier that
++`socle show` gives, and a cut criterion is completed from the need.
++
+ ## 2026-11-17-b — The former number of a renumbered entry: the hook names the current identifier, and `socle url` resolves it
+ 
+ The agent hook refused the former number of a renumbered entry
+diff --git a/engine/socle/CHANGES.md b/engine/socle/CHANGES.md
+index 816aa0f..2751fc1 100644
+--- a/engine/socle/CHANGES.md
++++ b/engine/socle/CHANGES.md
+@@ -7,6 +7,22 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
+ moteur du projet n'avait pas, et le message de commit qu'il propose nomme
+ leurs identifiants.
+ 
++## 2026-11-17-c — La migration du backlog en quatre formes ne perd ni ne déplace plus de contenu
++
++La migration du backlog, que la mise à jour fait une fois, corrige trois
++cas. Une entrée close qui attendait un lot ou un jalon abandonné se
++mettait à attendre les besoins encore ouverts de ce lot, ce que
++`memoire.ordre` refusait ensuite : elle n'attend plus que ce qui est clos.
++Un critère écrit sur plusieurs lignes passe entier dans la tâche posée, au
++lieu de sa seule première ligne, la suite restant dans le besoin. Le titre,
++les champs et les critères d'une tâche posée citent les identifiants
++actuels, et non plus l'ancien numéro d'un lot ou d'un jalon.
++
++À faire : rien dans un projet dont le backlog n'a pas encore migré. Dans
++un projet déjà migré, relire les tâches posées par la migration : une
++mention d'un ancien numéro se remplace par l'identifiant actuel que
++`socle show` donne, et un critère coupé se complète depuis le besoin.
++
+ ## 2026-11-17-b — L'ancien numéro d'une entrée renumérotée : le hook nomme l'identifiant actuel, et `socle url` le résout
+ 
+ Le hook de l'agent refusait l'ancien numéro d'une entrée renumérotée
+diff --git a/engine/socle/FORMAT.md b/engine/socle/FORMAT.md
+index d7eb782..48cc11d 100644
+--- a/engine/socle/FORMAT.md
++++ b/engine/socle/FORMAT.md
+@@ -265,9 +265,10 @@ La mise à jour migre un backlog d'avant ADR-0083 : un lot
+ compris, sans sa priorité, qui ne changeait aucun ordre (l'installeur
+ nomme chacun) ; toute autre entrée reste un besoin, sa section « Fait quand »
+ renommée ; chaque besoin qu'attend un lot ouvert reçoit une tâche qui
+-reprend ses critères, vers laquelle sa section renvoie, et que le lot
+-attend à sa place ; un jalon attend les besoins de ses lots ; les
+-mentions se récrivent dans le backlog et le chantier actif.
++reprend ses critères, chacun entier, vers laquelle sa section renvoie, et
++que le lot attend à sa place ; un jalon attend les besoins de ses lots ;
++une entrée close n'en vient à attendre rien d'ouvert ; les mentions se
++récrivent dans le backlog, le chantier actif et les tâches posées.
+ 
+ Un besoin qui pose ou change un garde-fou écrit, avant son code, son
+ modèle de menace : ce que le garde-fou arrête, ce qu'il laisse passer, dans
+diff --git a/engine/socle/migration.py b/engine/socle/migration.py
+index 4129838..5b94e37 100644
+--- a/engine/socle/migration.py
++++ b/engine/socle/migration.py
+@@ -10,10 +10,11 @@ socle : mécanique, et idempotente sur le contenu.
+   « Satisfait quand », une fois, tant que le backlog n'a ni tâche, ni lot,
+   ni jalon à leur préfixe ;
+ - chaque besoin qu'attend un lot ouvert reçoit une tâche qui reprend ses
+-  critères, vers laquelle sa section renvoie (`docs.copie` refuse une
+-  copie), et le lot l'attend à sa place ; un jalon attend les besoins de
+-  ses lots ; un besoin qui attendait un lot ou un jalon attend ses besoins
+-  et ses demandes encore ouverts ;
++  critères, chacun entier, et ses mentions récrites, vers laquelle sa
++  section renvoie (`docs.copie` refuse une copie), et le lot l'attend à sa
++  place ; un jalon attend les besoins de ses lots ; un besoin qui
++  attendait un lot ou un jalon attend ses besoins et ses demandes encore
++  ouverts ; une entrée close, jamais rien d'ouvert ;
+ - les mentions d'un numéro changé se récrivent dans le backlog et le
+   chantier actif, une citation `B-NNNN@…` en simple mention (l'empreinte
+   d'une version qui n'existe plus sous ce numéro) ; ailleurs, le journal,
+@@ -135,6 +136,13 @@ def migrer_backlog(racine: Path, lg: str | None = None) -> Bilan:
+             return not memoire.demande_close(mem, demandes[i])
+         return i in entrees and entrees[i].statut not in memoire.BACKLOG_CLOS
+ 
++    def attendable(e: memoire.Entree, x: str) -> bool:
++        """Ce qu'un lot développé dans l'`après` d'un jalon `e` lui fait
++        attendre : ouvert, tous ses besoins ; clos, ses besoins clos, jamais
++        un besoin ou une demande encore ouverts, que `memoire.ordre`
++        refuserait (T-0052)."""
++        return e.statut not in memoire.BACKLOG_CLOS or not ouvert(x)
++
+     def besoins_de(i: str, vus: set[str]) -> list[str]:
+         """Ce que rassemble un lot ou un jalon renuméroté : ses besoins, de
+         proche en proche, et ses demandes."""
+@@ -171,7 +179,7 @@ def migrer_backlog(racine: Path, lg: str | None = None) -> Bilan:
+             liste = []
+             for d in memoire.dependances(e):
+                 if forme(d) == "L":
+-                    liste += besoins_de(d, set())
++                    liste += [x for x in besoins_de(d, set()) if attendable(e, x)]
+                 else:
+                     liste.append(nouveaux.get(d, d))
+             apres_nouveau[ancien] = list(dict.fromkeys(liste))
+@@ -202,7 +210,10 @@ def migrer_backlog(racine: Path, lg: str | None = None) -> Bilan:
+         if any(d in nouveaux for d in deps):
+             liste = []
+             for d in deps:
+-                liste += [x for x in besoins_de(d, set()) if ouvert(x)] if d in nouveaux else [d]
++                # Ouverte, l'entrée n'attend que ce qui reste ouvert ; close,
++                # que ce qui est clos (T-0052).
++                liste += [x for x in besoins_de(d, set()) if ouvert(x) != (e.statut in memoire.BACKLOG_CLOS)] \
++                    if d in nouveaux else [d]
+             liste = [x for x in dict.fromkeys(liste) if x != e.id]
+             textes[e.fichier] = _remeta(textes.get(e.fichier, mem.fichiers[e.fichier].texte),
+                                         remplacer={"apres": ", ".join(liste) if liste else None})
+@@ -217,13 +228,19 @@ def migrer_backlog(racine: Path, lg: str | None = None) -> Bilan:
+     # 5. Les mentions des numéros changés, dans le backlog et le chantier
+     # actif.
+     ch = projet.chemins
++    motif = re.compile(r"(?<![\w-])(%s)(?:@[0-9a-f]{8})?(?![\w-])" % "|".join(map(re.escape, nouveaux))) \
++        if nouveaux else None
++
++    def recrire(texte: str) -> str:
++        """Un texte, ses mentions des numéros changés récrites."""
++        return motif.sub(lambda m: nouveaux[m[1]], texte) if motif else texte
++
+     if nouveaux:
+-        motif = re.compile(r"(?<![\w-])(%s)(?:@[0-9a-f]{8})?(?![\w-])" % "|".join(map(re.escape, nouveaux)))
+         cibles = [c for c in mem.fichiers if memoire.couche_attendue(c) == "backlog"]
+         cibles += [c for c in (ch.actif, ch.dans_prive(ch.actif)) if (racine / c).is_file()]
+         for c in cibles:
+             avant = textes.get(c, mem.fichiers[c].texte if c in mem.fichiers else (racine / c).read_text("utf-8"))
+-            apres = motif.sub(lambda m: nouveaux[m[1]], avant)
++            apres = recrire(avant)
+             if apres != avant:
+                 textes[c] = apres
+         for ancien, nouvel in bilan.renumerotees:
+@@ -237,25 +254,27 @@ def migrer_backlog(racine: Path, lg: str | None = None) -> Bilan:
+     siennes: dict[str, list[str]] = {}
+     for t, b, _ in poses:
+         siennes.setdefault(b.id, []).append(t)
++    # Le besoin est lu avant la réécriture de ses mentions : le titre, les
++    # champs et les critères de sa tâche se récrivent à leur tour (T-0052).
+     for i, ts in siennes.items():
+         b = entrees[i]
+-        criteres = memoire.criteres(b, memoire.SECTION_FAIT_QUAND) or memoire.criteres(b)
++        criteres = criteres_entiers(b)
+         if criteres:
+             coche = "x" if all(c for c, _ in criteres) else " "
+             textes[b.fichier] = _renvoyer(textes.get(b.fichier, mem.fichiers[b.fichier].texte),
+                                           f"- [{coche}] {_texte(lg, 'renvoi', taches=', '.join(ts))}")
+     for t, b, lot in poses:
+-        criteres = memoire.criteres(b, memoire.SECTION_FAIT_QUAND) or memoire.criteres(b)
+-        cases = [f"- [{'x' if coche else ' '}] {texte}" for coche, texte in criteres] or \
++        cases = [f"- [{'x' if coche else ' '}] {recrire(texte)}" for coche, texte in criteres_entiers(b)] or \
+             [f"- [ ] {_texte(lg, 'critere', besoin=b.id)}"]
+-        champs = {"statut": b.statut, "origine": b.meta.get("origine") or b.id, "besoin": b.id}
++        champs = {"statut": b.statut, "origine": recrire(b.meta.get("origine") or b.id), "besoin": b.id}
+         if b.statut in memoire.BACKLOG_CLOS and b.meta.get("ref"):
+-            champs["ref"] = b.meta["ref"]
++            champs["ref"] = recrire(b.meta["ref"])
+         champs["lu"] = f"backlog@{PROVISOIRE}"
+         dossier = b.fichier.rsplit("/", 1)[0]
+-        chemin = f"{dossier}/{t}-{memoire.nom_de_fichier(b.titre)}.md"
++        titre = recrire(b.titre)
++        chemin = f"{dossier}/{t}-{memoire.nom_de_fichier(titre)}.md"
+         texte = (f"{langue.entete_fichier('backlog', 'privee' if b.prive else 'publique', lg)}\n"
+-                 f"# {t} — {b.titre}\n\n{langue.meta(lg, 'T', **champs)}\n\n"
++                 f"# {t} — {titre}\n\n{langue.meta(lg, 'T', **champs)}\n\n"
+                  f"{_texte(lg, 'corps', besoin=b.id, lot=lot)}\n\n## {langue.FAIT_QUAND[lg]}\n\n"
+                  + "\n".join(cases) + "\n")
+         textes[chemin] = texte
+@@ -275,10 +294,49 @@ def migrer_backlog(racine: Path, lg: str | None = None) -> Bilan:
+     return bilan
+ 
+ 
++# Une ligne qui ouvre un élément de liste au premier niveau.
++ELEMENT = re.compile(r"^(?:[-*+]|\d+[.)])\s")
++
++
++def _suite(ligne: str) -> bool:
++    """La ligne continue-t-elle la case qui la précède ? Oui si elle n'est ni
++    vide, ni une case, ni un titre, ni un élément de liste au premier
++    niveau : en retrait, ou une continuation paresseuse (T-0052)."""
++    return bool(ligne.strip()) and not memoire.CASE.match(ligne) and not ligne.startswith("#") \
++        and (ligne[0].isspace() or not ELEMENT.match(ligne))
++
++
++def criteres_entiers(e: memoire.Entree) -> list[tuple[bool, str]]:
++    """Les critères d'un besoin que reprend sa tâche, de sa section « Fait
++    quand », ou à défaut de celle de sa forme : (coché, texte), le texte
++    d'un critère écrit sur plusieurs lignes entier, ses lignes de suite
++    telles qu'écrites ; `memoire.criteres` n'en lit que la première
++    (T-0052)."""
++    for section in (memoire.SECTION_FAIT_QUAND, memoire.section_de(e)):
++        m = section.search(e.corps)
++        res: list[tuple[bool, str]] = []
++        suite = False
++        for ligne in e.corps[m.end():].splitlines() if m else ():
++            if ligne.startswith("#"):
++                break
++            c = memoire.CASE.match(ligne)
++            if c:
++                res.append((c[1] != " ", c[2]))
++                suite = True
++            elif suite and _suite(ligne):
++                res[-1] = (res[-1][0], res[-1][1] + "\n" + ligne.rstrip())
++            else:
++                suite = False
++        if res:
++            return res
++    return []
++
++
+ def _renvoyer(texte: str, case: str) -> str:
+     """Le texte d'un besoin, les cases de sa section remplacées par une
+-    seule, qui renvoie à ses tâches."""
+-    lignes, res, dedans, posee = texte.split("\n"), [], False, False
++    seule, qui renvoie à ses tâches ; les lignes de suite d'une case partent
++    avec elle (T-0052)."""
++    lignes, res, dedans, posee, suite = texte.split("\n"), [], False, False, False
+     for l in lignes:
+         if re.match(r"^#{2,4}\s+(?:Fait quand|Done when|Satisfait quand|Satisfied when)\s*$", l, re.I):
+             dedans = True
+@@ -288,7 +346,11 @@ def _renvoyer(texte: str, case: str) -> str:
+             if not posee:
+                 res.append(case)
+                 posee = True
++            suite = True
++            continue
++        if dedans and suite and _suite(l):
+             continue
++        suite = False
+         res.append(l)
+     return "\n".join(res)
+ 
+diff --git a/memory/backlog/T-0012-rien-ne-signale-un-lot-qui-ne-tient-pas-en-une-ses.md b/memory/backlog/T-0012-rien-ne-signale-un-lot-qui-ne-tient-pas-en-une-ses.md
+index 0f011a8..caa9f27 100644
+--- a/memory/backlog/T-0012-rien-ne-signale-un-lot-qui-ne-tient-pas-en-une-ses.md
++++ b/memory/backlog/T-0012-rien-ne-signale-un-lot-qui-ne-tient-pas-en-une-ses.md
+@@ -1,5 +1,5 @@
+ <!-- socle: couche=backlog zone=publique -->
+-# T-0012 — Rien ne signale un lot qui ne tient pas en une session ou dont les sujets ne partagent rien : B-0224 a réuni 22 sujets sous la forme d'un lot
++# T-0012 — Rien ne signale un lot qui ne tient pas en une session ou dont les sujets ne partagent rien : JA-0005 a réuni 22 sujets sous la forme d'un lot
+ 
+ > statut : ouvert · origine : J-2026-11-15-J · besoin : B-0233 · lu : backlog@9966bbbd
+ 
+diff --git a/memory/backlog/T-0052-la-migration-du-backlog-un-lot-ou-un-jalon-abandon.md b/memory/backlog/closed/T-0052-la-migration-du-backlog-un-lot-ou-un-jalon-abandon.md
+similarity index 83%
+rename from memory/backlog/T-0052-la-migration-du-backlog-un-lot-ou-un-jalon-abandon.md
+rename to memory/backlog/closed/T-0052-la-migration-du-backlog-un-lot-ou-un-jalon-abandon.md
+index dbc5c77..4ed26e0 100644
+--- a/memory/backlog/T-0052-la-migration-du-backlog-un-lot-ou-un-jalon-abandon.md
++++ b/memory/backlog/closed/T-0052-la-migration-du-backlog-un-lot-ou-un-jalon-abandon.md
+@@ -1,7 +1,7 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # T-0052 — La migration du backlog : un lot ou un jalon abandonné développé dans un après, un critère sur plusieurs lignes coupé, les tâches posées qui gardent les anciens numéros
+ 
+-> statut : ouvert · origine : J-2026-11-16-V · besoin : B-0265 · lu : backlog@9aec7323
++> statut : fait · origine : J-2026-11-16-V · besoin : B-0265 · lu : backlog@9aec7323 · ref : J-2026-11-17-M
+ 
+ Relevé par la revue du lot L-0013, passe 1 (J-2026-11-16-V), constats 2,
+ 3 et 4 pour le backlog, de même nature : la migration du backlog en
+@@ -24,6 +24,6 @@ titre de T-0012 dans ce dépôt.
+ 
+ ## Fait quand
+ 
+-- [ ] une entrée close qui attendait un lot ou un jalon clos ne se met à attendre rien d'ouvert après la migration, et un test le montre
+-- [ ] un critère sur plusieurs lignes passe entier dans la tâche posée, et un test le montre
+-- [ ] le titre et le corps d'une tâche posée citent les identifiants actuels, et un test le montre
++- [x] une entrée close qui attendait un lot ou un jalon clos ne se met à attendre rien d'ouvert après la migration, et un test le montre
++- [x] un critère sur plusieurs lignes passe entier dans la tâche posée, et un test le montre
++- [x] le titre et le corps d'une tâche posée citent les identifiants actuels, et un test le montre
+diff --git a/memory/journal/2026-11-6.md b/memory/journal/2026-11-6.md
+index c5a69f6..2fc875c 100644
+--- a/memory/journal/2026-11-6.md
++++ b/memory/journal/2026-11-6.md
+@@ -1127,3 +1127,29 @@ Les tests (`tests/test_structure.py`, `tests/test_liens.py`) échouent
+ sur le commit parent ; le défaut injecté `ancien-numero-dans-un-texte-neuf`
+ et le témoin d'une mention par l'identifiant actuel sont dans
+ l'auto-test ; la note de version 2026-11-17-b, en français et en anglais.
++
++## J-2026-11-17-M — T-0052 : la migration du backlog ne fait plus rien attendre d'ouvert à une entrée close, passe un critère entier et récrit les mentions des tâches qu'elle pose ; le titre de T-0012
++
++> ref : T-0052, B-0265, L-0014, ADR-0083, T-0012, B-0233, JA-0005, J-2026-11-16-V
++
++Le sous-agent de T-0051 fait T-0052, dans `engine/socle/migration.py` :
++
++- une entrée close (faite ou abandonnée) qui attendait un lot ou un
++  jalon n'attend plus, après la migration, que ce qui en est clos ; une
++  entrée ouverte, toujours ce qui reste ouvert, et un jalon ouvert tous
++  les besoins de ses lots. Le choix : garder les besoins clos plutôt que
++  rien, pour que l'ordre d'avant se lise encore ;
++- un critère écrit sur plusieurs lignes passe entier dans la tâche
++  posée, ses lignes de suite telles qu'écrites (en retrait, ou une
++  continuation paresseuse), et `_renvoyer` les retire du besoin avec sa
++  case. `memoire.criteres`, que lisent les contrôles, n'est pas changé :
++  la migration lit les critères entiers par sa propre fonction ;
++- le titre, l'origine, la référence et les critères d'une tâche posée
++  passent par la réécriture des mentions, devenue une fonction, et son
++  nom de fichier suit le titre récrit.
++
++Dans ce dépôt, déjà migré, seul T-0012 citait un ancien numéro : son
++titre dit JA-0005 au lieu de B-0224, comme son besoin B-0233. Les trois
++tests (`tests/test_structure.py`) échouent sur le commit parent ; la note
++de version 2026-11-17-c dit à un projet déjà migré quoi relire. Aucun
++contrôle ni refus nouveau : pas de défaut injecté.
+diff --git a/tests/test_structure.py b/tests/test_structure.py
+index a61fa27..581a047 100644
+--- a/tests/test_structure.py
++++ b/tests/test_structure.py
+@@ -332,6 +332,75 @@ class TestMigration(Projet):
+         self.commiter("la migration")
+         self.assertEqual(self.erreurs(base), [])
+ 
++    def migrer_et_ranger(self) -> memoire.Memoire:
++        migration.migrer_backlog(self.racine)
++        from socle import archive as archivage
++
++        archivage.ranger_backlog(self.racine)
++        return memoire.Memoire.charger(self.racine)
++
++    def test_une_entree_close_n_attend_rien_d_ouvert_apres_la_migration(self):
++        """T-0052 : un besoin fait et un jalon fait qui attendaient un lot
++        abandonné se mettaient à attendre ses besoins encore ouverts, et
++        `memoire.ordre` les refusait. Ouverte, une entrée n'attend toujours
++        que ce qui reste ouvert."""
++        clos = "ref : fichier:calc.py"
++        self.poser("B-0001", clos, "fait", CRITERES.replace("[ ]", "[x]"))
++        self.poser("B-0002", corps=CRITERES)
++        self.poser("B-0003", f"forme : lot · après : B-0001, B-0002 · {clos}", "abandonné")
++        self.poser("B-0004", f"après : B-0003 · {clos}", "fait")
++        self.poser("B-0005", f"forme : jalon · après : B-0003 · {clos}", "fait")
++        self.poser("B-0006", "après : B-0003")
++        base = self.commiter("le backlog d'avant")
++        mem = self.migrer_et_ranger()
++        self.assertEqual([memoire.dependances(mem.entree(i)) for i in ("B-0004", "JA-0001", "B-0006")],
++                         [["B-0001"], ["B-0001"], ["B-0002"]])
++        self.commiter("la migration")
++        self.assertEqual(self.erreurs(base), [])
++
++    def test_un_critere_sur_plusieurs_lignes_passe_entier_dans_la_tache(self):
++        """T-0052 : la tâche ne recevait que la première ligne d'un critère,
++        et la suite restait dans le besoin, sous sa case de renvoi."""
++        criteres = ("## Fait quand\n\n- [ ] la fonction triple existe, rend le triple de son argument\n"
++                    "  pour les entiers et les flottants,\net refuse une chaîne par une erreur de type\n"
++                    "- [x] le guide la décrit\n\nUn mot après la liste.")
++        self.poser("B-0001", corps=criteres)
++        self.poser("B-0002", "forme : lot · après : B-0001")
++        base = self.commiter("le backlog d'avant")
++        mem = self.migrer_et_ranger()
++        tache = mem.entree("T-0001").texte
++        self.assertIn("- [ ] la fonction triple existe, rend le triple de son argument\n  pour les entiers et les "
++                      "flottants,\net refuse une chaîne par une erreur de type\n- [x] le guide la décrit", tache)
++        besoin = mem.entree("B-0001").corps
++        self.assertNotIn("flottants", besoin)
++        self.assertNotIn("erreur de type", besoin)
++        self.assertIn("- [ ] le « Fait quand » de T-0001 est tenu\n\nUn mot après la liste.", besoin)
++        self.assertEqual(migration.criteres_entiers(memoire_de(entree("B-0009", corps=criteres)).entree("B-0009")),
++                         [(False, "la fonction triple existe, rend le triple de son argument\n  pour les entiers "
++                                  "et les flottants,\net refuse une chaîne par une erreur de type"),
++                          (True, "le guide la décrit")])
++        self.commiter("la migration")
++        self.assertEqual(self.erreurs(base), [])
++
++    def test_la_tache_posee_cite_les_identifiants_actuels(self):
++        """T-0052 : la tâche lisait son besoin avant la réécriture des
++        mentions ; son titre et ses critères gardaient l'ancien numéro d'un
++        lot (dans l'atelier, T-0012 disait B-0224 de JA-0005)."""
++        self.poser("B-0001", "forme : lot")
++        self.poser("B-0002", titre="B-0001 a réuni trop de besoins",
++                   corps="## Fait quand\n\n- [ ] l'état signale un lot comme B-0001\n  ou B-0001@abcdef12")
++        self.poser("B-0003", "forme : lot · après : B-0002")
++        base = self.commiter("le backlog d'avant")
++        mem = self.migrer_et_ranger()
++        tache = mem.entree("T-0001")
++        self.assertEqual(tache.titre, "L-0001 a réuni trop de besoins")
++        self.assertEqual(mem.entree("B-0002").titre, tache.titre)
++        self.assertIn("- [ ] l'état signale un lot comme L-0001\n  ou L-0001", tache.texte)
++        self.assertNotRegex(tache.texte, r"B-0001\b")
++        self.assertTrue(tache.fichier.endswith("/T-0001-l-0001-a-reuni-trop-de-besoins.md"), tache.fichier)
++        self.commiter("la migration")
++        self.assertEqual(self.erreurs(base), [])
++
+     def test_la_mise_a_jour_migre_le_backlog(self):
+         self.avant()
+         with contextlib.redirect_stdout(io.StringIO()) as sortie:
+-- 
+2.43.0
+
