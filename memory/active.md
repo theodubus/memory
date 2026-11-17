@@ -5,7 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0012 attend D-0130 (J-2026-11-17-J). Ensuite L-0014, L-0015.
+L-0012 attend D-0130 sur claude/socle-l0012-passation-xw9g3i, d'où
+repart la session neuve (J-2026-11-17-J). Puis L-0014, L-0015.
 
 ## Consignes en cours
 
