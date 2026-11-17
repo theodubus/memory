@@ -27,7 +27,7 @@ que dit J-2026-11-17-L.
 - `git am -3` de la série 1, puis de la série 2 : leurs identifiants se
   recouvrent. Le journal : les entrées du 17 novembre de lettre L et M
   dans les deux séries, de lettre N dans la première, et la branche a
-  déjà sa lettre L ; toutes se renumérotent, avec les mentions qui les
+  déjà ses lettres L et M ; toutes se renumérotent, avec les mentions qui les
   citent (tâches closes, notes). Les notes de version : 2026-11-17-b et 2026-11-17-c
   dans les deux, 2026-11-17-d dans la première.
 - Des conflits sont probables dans `engine/socle/messages_en.py`,
@@ -36,9 +36,10 @@ que dit J-2026-11-17-L.
 
 ## Ce que les comptes rendus laissent ouvert
 
-- Les valeurs de `--by` restent `lot|need`, celles de la spécification
-  validée (D-0127) ; ADR-0027 dirait `batch`. À dire à Théo, sans le
-  changer seul.
+- Les valeurs de `--by` passent à `batch|need`, `batch` par défaut et
+  sans synonyme, sur la décision de Théo en séance (D-0131) : à changer
+  à l'intégration de la série 2, avec l'aide, le guide en deux langues
+  et les tests de la commande, avant la revue.
 - Les copies protégées en retard sur leur gabarit, à rafraîchir par
   l'installeur sous la demande du lot. Empreintes nouvelles relevées par
   le sous-agent, à recalculer après T-0050 (qui change aussi le skill

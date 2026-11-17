@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0131-les-valeurs-de-l-option-by-de-socle-roadmap-batch.md, dont l'empreinte suit.
+reponse = "batch"
+texte = ""
+par = "Théo"
+date = "2026-11-17"
+canal = "conversation"
+citation = "Branches supprimées, je valide \"batch\" uniquement"
+empreinte = "sha256:d2afb2ee3e2849b03be925bef13217d7e0a95d2062a70f4e3e5587d788a95833"
