@@ -6,6 +6,7 @@ d'avant."""
 
 import contextlib
 import io
+import re
 import shutil
 import tempfile
 import types
@@ -525,6 +526,41 @@ class TestCommandes(Projet):
         self.assertEqual(self.socle("new", "batch", "Un lot", "--need", "B-0001")[0], 2)
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
             cli.main(["--root", str(self.racine), "new", "backlog", "Un sujet"])
+
+
+class TestVocabulaire(unittest.TestCase):
+    """B-0265 (T-0053) : un mot pour une chose. Une entrée du backlog n'est
+    pas un « sujet », et « tâche » ne dit que la tâche `T-`."""
+
+    def test_le_guide_ne_dit_tache_qu_a_partir_de_sa_definition(self):
+        """Le guide disait « tâche » du travail confié à l'agent, quinze
+        lignes avant de définir la tâche `T-` (J-2026-11-16-AA)."""
+        for nom, mot, definition, avant in (("HELP.md", "tâches?", "une **tâche** (`T-`)", "une **"),
+                                            ("HELP.en.md", "tasks?", "a **task** (`T-`)", "a **")):
+            with self.subTest(nom):
+                plat = " ".join((Path(MOTEUR) / "socle" / nom).read_text(encoding="utf-8").split())
+                premier = re.search(rf"(?i)\b{mot}\b", plat)
+                self.assertEqual(premier.start(), plat.index(definition) + len(avant), plat[premier.start() - 80:
+                                                                                          premier.end() + 80])
+
+    def test_les_textes_du_produit_ne_disent_plus_sujet_d_une_entree_du_backlog(self):
+        """T-0053 : la docstring de `memoire.lectures`, que `socle checks`
+        affiche, l'aide de `socle review` et les libellés de l'auto-test
+        disaient « sujet » d'une entrée du backlog, et l'un d'eux « tâche »
+        d'une commande en arrière-plan."""
+        aide = io.StringIO()
+        with contextlib.redirect_stdout(aide), self.assertRaises(SystemExit):
+            cli.main(["review", "--help"])
+        textes = {"memoire.lectures": controles_memoire.lectures.__doc__, "socle review": aide.getvalue()}
+        textes |= {c.id: c.defaut for c in autotest._cas()}
+        textes |= {nom: nom for nom, _ in autotest._temoins()}
+        for ou, texte in textes.items():
+            with self.subTest(ou):
+                plat = " ".join(texte.split())
+                self.assertNotRegex(plat, r"(?i)\bsujets?\b")
+                self.assertNotIn("tâche de fond", plat)
+        self.assertIn("une entrée du backlog nouvelles prouvent", " ".join(textes["memoire.lectures"].split()))
+        self.assertIn("les tâches du lot entier", " ".join(textes["socle review"].split()))
 
 
 class TestAtelier(unittest.TestCase):

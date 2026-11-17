@@ -34,6 +34,14 @@ five minutes, the state will say so at each session, until it gets shorter
 or the human raises the threshold. Writing the key at 300 in
 `.socle/guardrails.toml` is free and changes nothing.
 
+## 2026-11-17-d — The last engine texts that called a backlog entry a “topic”
+
+The description of `memoire.lectures`, which `socle checks` shows, says “a
+backlog entry”; the help of `socle review --since`, “the tasks of the whole
+batch”; the selftest labels (`socle selftest --verbose`), “need”.
+
+To do: nothing.
+
 ## 2026-11-17-c — The migration of the backlog into four forms no longer loses or moves content
 
 The backlog migration, which the update runs once, fixes three cases. A

@@ -1319,8 +1319,8 @@ MESSAGES: dict[str, str] = {
         "pull request {numero} cited without its link: give its address, which the human opens in one click",
     "pull request à fusionner citée sans son lien":
         "pull request to merge cited without its link",
-    "sujet du backlog qui s'attend lui-même (`après`)":
-        "backlog topic that waits on itself (`after`)",
+    "besoin qui s'attend lui-même (`après`)":
+        "need that waits on itself (`after`)",
     "rien, il se clôt":
         "nothing, it can close",
     "attend":
@@ -1404,10 +1404,10 @@ MESSAGES: dict[str, str] = {
         "without `AGENTS.md`, `CLAUDE.md` carrying the socle section, when the installer kept it because the project "
         "names it.",
     "Une citation `ID@empreinte` ou `index@empreinte` ajoutée désigne une version que l'agent a pu lire "
-    "(`socle.readings`) ; une décision, une demande ou un sujet de backlog nouveaux prouvent ce qu'ils ont "
-    "lu avant d'être écrits.":
+    "(`socle.readings`) ; une décision, une demande ou une entrée du backlog nouvelles prouvent ce qu'elles ont "
+    "lu avant d'être écrites.":
         "A citation `ID@fingerprint` or `index@fingerprint` that is added names a version the agent could read "
-        " (`socle.readings`); a new decision, request or backlog topic proves what it read before being "
+        " (`socle.readings`); a new decision, request or backlog entry proves what it read before being "
         "written.",
     "Une fonction publique ajoutée ou modifiée est nommée par au moins un test — ou une dispense motivée la nomme "
     "(`Dispense-test: f — <raison>`).":
@@ -1959,8 +1959,8 @@ MESSAGES: dict[str, str] = {
         "## Second review",
     "## Le diff de la correction ({n} fichier(s), depuis {base})":
         "## The fix's diff ({n} file(s), since {base})",
-    "une seconde revue : le diff depuis ce commit, celui de la première revue, et les sujets du lot entier":
-        "a second review: the diff since this commit, the one of the first review, and the topics of the whole batch",
+    "une seconde revue : le diff depuis ce commit, celui de la première revue, et les tâches du lot entier":
+        "a second review: the diff since this commit, the one of the first review, and the tasks of the whole batch",
     "(aucune base connue : ni branche distante, ni branche par défaut ; rien à relire)":
         "(no known base: neither a remote branch nor a default branch; nothing to review)",
     "## Le diff du lot ({n} fichier(s), depuis {base})":
@@ -2647,8 +2647,8 @@ MESSAGES: dict[str, str] = {
         "pull request description that cites a private identifier",
     "terme retiré de la liste privée sans validation humaine":
         "term removed from the private list without human approval",
-    "sujet « done » sans référence, écrit en anglais":
-        "“done” subject without a reference, written in English",
+    "besoin « done » sans référence, écrit en anglais":
+        "“done” need without a reference, written in English",
     "entrée publique « basculée » sans copie privée qui la reprenne":
         "public entry “moved” without a private copy that takes it over",
     "push vers le dépôt public sans relecture humaine":
@@ -2692,8 +2692,8 @@ MESSAGES: dict[str, str] = {
     "chemin écrit par le shell à travers une variable ou une substitution que le hook ne sait pas développer, dans "
     "le projet":
         "path written by the shell through a variable or a substitution the hook cannot expand, in the project",
-    "fichier protégé écrit par le shell après un sous-shell, une substitution, un pipeline ou une tâche de fond, dont "
-    "le dossier et les variables ne passent pas à la suite":
+    "fichier protégé écrit par le shell après un sous-shell, une substitution, un pipeline ou une commande en "
+    "arrière-plan, dont le dossier et les variables ne passent pas à la suite":
         "protected file written by the shell after a subshell, a substitution, a pipeline or a background job, whose "
         "directory and variables do not carry over",
     "fichier protégé écrit par le shell à travers `cd \"$OLDPWD\"`, une option de `cd`, les mots d'une variable, "
@@ -2873,8 +2873,8 @@ MESSAGES: dict[str, str] = {
         "entry cited in a version it no longer has",
     "identifiant que la branche par défaut a pris aussi":
         "identifier the default branch took too",
-    "sujet ajouté au backlog sans l'avoir consulté":
-        "subject added to the backlog without consulting it",
+    "besoin ajouté au backlog sans l'avoir consulté":
+        "need added to the backlog without consulting it",
     "défaut indexé, corrigé seulement sur disque":
         "defect in the index, fixed only on disk",
     "code changé sans mise à jour de la mémoire":
@@ -3023,8 +3023,8 @@ MESSAGES: dict[str, str] = {
         "encrypted mode: a private entry leaves encrypted and passes the commit and the CI",
     "ajouter un terme à la liste privée est libre : le commit et la CI passent":
         "adding a term to the private list is free: the commit and the CI pass",
-    "mode compagnon : un sujet public basculé dans la mémoire privée passe la fin de tour, le commit et la CI":
-        "companion mode: a public subject moved into the private memory passes the end of turn, the commit and the CI",
+    "mode compagnon : un besoin public basculé dans la mémoire privée passe la fin de tour, le commit et la CI":
+        "companion mode: a public need moved into the private memory passes the end of turn, the commit and the CI",
     "une mémoire en anglais : ses entrées, écrites par `socle new`, passent le commit et la CI":
         "a memory in English: its entries, written by `socle new`, pass the commit and the CI",
     "une valeur attendue changée sous une demande en attente, poussée : le tour finit, le commit attend":
@@ -3035,10 +3035,10 @@ MESSAGES: dict[str, str] = {
         "a case added to a case file passes the commit and the CI",
     "`--questions` ne vaut que pour une demande (`request`)":
         "`--questions` applies only to a request (`request`)",
-    "sujet du backlog d'une priorité ni haute ni basse":
-        "backlog topic with a priority neither high nor low",
-    "sujet fait alors que la demande qu'il attend est sans réponse":
-        "topic done while the request it waits on is unanswered",
+    "besoin d'une priorité ni haute ni basse":
+        "need with a priority neither high nor low",
+    "besoin fait alors que la demande qu'il attend est sans réponse":
+        "need done while the request it waits on is unanswered",
     "un fichier protégé changé sous une demande en attente, poussée : le tour finit, le commit attend":
         "a protected file changed under a pending request, pushed: the turn ends, the commit waits",
     "un fichier protégé sous une demande en attente, poussée, la CI du socle exigée : il se commite et se pousse":
@@ -3077,8 +3077,8 @@ MESSAGES: dict[str, str] = {
         "an ordinary write passes the agent's hook",
     "le backlog est déjà rangé":
         "the backlog is already in order",
-    "sujet clos, avec sa référence, laissé parmi les ouverts":
-        "closed topic, with its reference, left among the open ones",
+    "besoin clos, avec sa référence, laissé parmi les ouverts":
+        "closed need, with its reference, left among the open ones",
     "Pousser un commit sur la branche par défaut qui modifie ce fichier (une ligne de commentaire suffit ; c'est "
     "un fichier protégé, que l'humain approuve) : GitHub n'enregistre un workflow qu'au push qui modifie son "
     "fichier, pas toujours au premier push qui le pose. Puis vérifier dans l'onglet Actions qu'il y apparaît":

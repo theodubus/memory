@@ -171,7 +171,7 @@ vérifiées.
 - **Lecture prouvée** (`ADR-0008`, `ADR-0023`) : une entrée citée
   `ID@empreinte` l'a été dans cette version, l'actuelle ou celle du commit
   où la citation paraît ; un index, dans une version de la plage ; une
-  décision, une demande ou un sujet de backlog nouveaux doivent le faire.
+  décision, une demande ou une entrée du backlog nouvelles doivent le faire.
   Le contrôle et le hook appellent la même fonction. La preuve porte sur l'accès au texte, pas sur
   sa compréhension. Une entrée qui change de fichier, un sujet clos archivé
   au journal, garde sa preuve sans relire : la citation se juge au commit où

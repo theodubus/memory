@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0053 — Les textes du produit hors de T-0050 qui disent encore « sujet » d'une entrée du backlog, ou « tâche » du travail en général
 
-> statut : ouvert · origine : J-2026-11-16-V · besoin : B-0265 · lu : backlog@e7a68d02
+> statut : fait · origine : J-2026-11-16-V · besoin : B-0265 · lu : backlog@e7a68d02 · ref : J-2026-11-17-P
 
 Relevé par la revue du lot L-0013, passe 1 (J-2026-11-16-V), constats 5
 et 6 pour le backlog : des textes du produit disent encore « sujet »
@@ -25,4 +25,4 @@ les deux emplois de « tâche » dans le guide. Restent la docstring de
 
 ## Fait quand
 
-- [ ] les textes nommés ici n'appellent plus « sujet » une entrée du backlog, ni « tâche » autre chose qu'une tâche `T-`, et un test le montre pour le guide
+- [x] les textes nommés ici n'appellent plus « sujet » une entrée du backlog, ni « tâche » autre chose qu'une tâche `T-`, et un test le montre pour le guide

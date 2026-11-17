@@ -1365,7 +1365,7 @@ def _cas() -> list[Cas]:
         maj_memoire(c, "Liste privée raccourcie.")
         return etage_git(a, c)
 
-    @defaut("clos-sans-ref-en-anglais", "sujet « done » sans référence, écrit en anglais", "git", "memoire.backlog")
+    @defaut("clos-sans-ref-en-anglais", "besoin « done » sans référence, écrit en anglais", "git", "memoire.backlog")
     def _(a, c):
         remplacer(c, _sujet(c, "B-0001"), "> statut : ouvert", "> status : done")
         maj_memoire(c)
@@ -1400,13 +1400,13 @@ def _cas() -> list[Cas]:
         remplacer(c, _sujet(c, "B-0001"), "> statut : ouvert", "> statut : fait")
         return etage_git(a, c)
 
-    @defaut("clos-parmi-les-ouverts", "sujet clos, avec sa référence, laissé parmi les ouverts", "git",
+    @defaut("clos-parmi-les-ouverts", "besoin clos, avec sa référence, laissé parmi les ouverts", "git",
             "memoire.backlog")
     def _(a, c):
         _clore(c, "B-0001")
         return etage_git(a, c)
 
-    @defaut("sujet-qui-s-attend", "sujet du backlog qui s'attend lui-même (`après`)", "git", "memoire.ordre")
+    @defaut("sujet-qui-s-attend", "besoin qui s'attend lui-même (`après`)", "git", "memoire.ordre")
     def _(a, c):
         remplacer(c, _sujet(c, "B-0001"), "> statut : ouvert", "> statut : ouvert · après : B-0001")
         return etage_git(a, c)
@@ -1424,12 +1424,12 @@ def _cas() -> list[Cas]:
         remplacer(c, "docs/double.cas.json", '"attendu": 6', '"attendu": 7')
         return etage_git(a, c)
 
-    @defaut("priorite-inconnue", "sujet du backlog d'une priorité ni haute ni basse", "git", "memoire.ordre")
+    @defaut("priorite-inconnue", "besoin d'une priorité ni haute ni basse", "git", "memoire.ordre")
     def _(a, c):
         remplacer(c, _sujet(c, "B-0001"), "> statut : ouvert", "> statut : ouvert · priorité : urgente")
         return etage_git(a, c)
 
-    @defaut("fait-avant-sa-demande", "sujet fait alors que la demande qu'il attend est sans réponse", "git",
+    @defaut("fait-avant-sa-demande", "besoin fait alors que la demande qu'il attend est sans réponse", "git",
             "memoire.ordre")
     def _(a, c):
         ajouter(c, "memory/requests/D-0001-refactor.md", demande_bonne(a, c))
@@ -1714,7 +1714,7 @@ def _cas() -> list[Cas]:
             "cd $SOCLE_ESSAI_DOSSIER && echo 'max_attempts = 99' >> policy.toml")])
 
     @defaut("protege-etat-du-shell", "fichier protégé écrit par le shell après un sous-shell, une substitution, un "
-            "pipeline ou une tâche de fond, dont le dossier et les variables ne passent pas à la suite", "agent",
+            "pipeline ou une commande en arrière-plan, dont le dossier et les variables ne passent pas à la suite", "agent",
             "écriture protégée")
     def _(a, c):
         # La revue de B-0171, constat 1 : leur état passait à la suite.
@@ -2290,7 +2290,7 @@ def _cas() -> list[Cas]:
         r = a.socle(c, "check", "--stage", "ci", "--base", _collision(a, c))
         return "" if r.returncode == 0 else r.stdout + r.stderr
 
-    @defaut("backlog-sans-lecture", "sujet ajouté au backlog sans l'avoir consulté", "git", "memoire.lectures")
+    @defaut("backlog-sans-lecture", "besoin ajouté au backlog sans l'avoir consulté", "git", "memoire.lectures")
     def _(a, c):
         ajouter_sujet(c, "\n## B-0002 — Ajouter une fonction quadruple\n\n"
                 f"> statut : ouvert · origine : {a.journal}\n\nPour l'essai.\n")
@@ -3042,7 +3042,8 @@ def _temoins() -> list[tuple[str, Callable]]:
         maj_memoire(c, "Un terme privé de plus.")
         return (r.stderr if r.returncode else "") or etage_git(a, c) or etage_ci(a, c)
 
-    @temoin("mode compagnon : un sujet public basculé dans la mémoire privée passe la fin de tour, le commit et la CI")
+    @temoin("mode compagnon : un besoin public basculé dans la mémoire privée passe la fin de tour, le commit et la "
+            "CI")
     def _(a, c):
         c = a.clone_prive("compagnon")
         r = a.socle(c, "private", "move", "B-0001")

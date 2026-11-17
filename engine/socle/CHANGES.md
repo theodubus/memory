@@ -35,6 +35,15 @@ dépasse cinq minutes, l'état le dira à chaque session, jusqu'à ce qu'elle
 raccourcisse ou que l'humain relève le seuil. Écrire la clé à 300 dans
 `.socle/guardrails.toml` est libre et ne change rien.
 
+## 2026-11-17-d — Les derniers textes du moteur qui disaient « sujet » d'une entrée du backlog
+
+La description de `memoire.lectures`, que `socle checks` affiche, dit « une
+entrée du backlog » ; l'aide de `socle review --since`, « les tâches du lot
+entier » ; les libellés de l'auto-test (`socle selftest --verbose`), « besoin »,
+et « commande en arrière-plan » au lieu de « tâche de fond ».
+
+À faire : rien.
+
 ## 2026-11-17-c — La migration du backlog en quatre formes ne perd ni ne déplace plus de contenu
 
 La migration du backlog, que la mise à jour fait une fois, corrige trois

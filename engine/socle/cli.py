@@ -927,7 +927,7 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
                                        "avec celle-ci quand la branche distante contient déjà le lot)"))
     s.add_argument("--max-bytes", type=int, default=60_000, help=trad("le plafond du diff montré"))
     s.add_argument("--since", metavar="REF", help=trad("une seconde revue : le diff depuis ce commit, celui de la "
-                                                       "première revue, et les sujets du lot entier"))
+                                                       "première revue, et les tâches du lot entier"))
     s.add_argument("--request", metavar="D-NNNN", help=trad("le dossier de la relecture à froid de cette demande, "
                                                             "pour un lecteur qui n'a que son texte"))
     s.add_argument("--batch", metavar="L-NNNN", help=trad("le lot dont c'est la passe de revue, qui s'écrit dans sa "
