@@ -25,7 +25,7 @@ absent = "langage interprété : pas de compilation séparée"
 replacement = "capacité `lint` (compileall)"
 
 [capabilities.tests]
-command = "python3 -m unittest discover -s tests -t . -q"
+command = "python3 tests/parallele.py"
 fast = true
 
 [capabilities.mutation]

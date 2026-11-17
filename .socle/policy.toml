@@ -29,6 +29,7 @@ init_questions_max = 7
 paths = [
   ".socle/policy.toml",
   ".socle/adapter.toml",
+  "tests/parallele.py",
   ".socle/engine.lock",
   ".socle/engine/**",
   ".socle/socle",
