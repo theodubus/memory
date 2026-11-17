@@ -14,6 +14,6 @@ constat infondé. Un agent qui suit `socle-batch` remplit le backlog, ce
 que D-0111 et D-0112 voulaient arrêter. La copie protégée de ce dépôt
 suit par une demande, avec celles de B-0218.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] le gabarit de `socle-batch`, en français et en anglais, renvoie au tri de `socle-review` au lieu de tout envoyer au backlog, et un test le montre
+- [ ] le « Fait quand » de T-0014 est tenu

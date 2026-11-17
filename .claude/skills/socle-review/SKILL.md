@@ -15,13 +15,15 @@ Avant le push qui livre un lot qui change du code, une spécification ou un
 test ; jamais pour un lot qui ne touche que la mémoire. Une passe par lot ;
 une seconde seulement si la correction des constats bloquants est lourde
 (elle change la conception d'une partie, pas quelques lignes), et sur elle
-seule.
+seule ; chaque passe au-delà de la première suit le recul de la précédente
+(plus bas).
 
-Le relecteur juge le lot contre ses sujets : leur critère « Fait quand »,
-et, pour un garde-fou, son modèle de menace. Un sujet qui pose ou change un
+Le relecteur juge le lot contre ses tâches : leur critère « Fait quand »,
+et, pour un garde-fou, son modèle de menace. Un besoin qui pose ou change un
 garde-fou l'écrit donc avant son code, dans sa section `## Modèle de
-menace` : ce que le garde-fou arrête, ce qu'il laisse passer ; un sujet
-dont la conception n'est pas tranchée, sa spécification.
+menace` ou dans la décision qu'il cite : ce que le garde-fou arrête, ce
+qu'il laisse passer ; un besoin dont la conception n'est pas tranchée, sa
+spécification.
 
 ## Comment
 
@@ -33,26 +35,44 @@ dont la conception n'est pas tranchée, sa spécification.
 python3 .socle/socle review
 ```
 
-   Il donne la consigne, le diff du lot depuis la branche distante (sinon
-   la branche par défaut), les sujets que le lot touche, en entier, ceux
-   qu'il ouvre par leur titre, et les décisions qu'ils citent.
+   Il donne la consigne, le diff du lot depuis l'ancêtre commun de HEAD
+   et de sa base, la branche distante (sinon la branche par défaut ; si
+   la branche distante contient déjà le lot, poussé avant sa revue, ou
+   est restée en arrière de la branche par défaut après une fusion par
+   écrasement, l'ancêtre commun avec la branche par défaut, et il le dit), les sujets
+   dont le lot change le statut ou le « Fait quand », en entier, ceux
+   qu'il ouvre par leur titre, les décisions et les demandes que le lot
+   écrit, puis celles que ses sujets citent.
    `--base <ref>` change la base du lot ; pour une seconde revue,
    `--since <commit relu>` ne montre que le diff depuis le commit de la
-   première, avec les messages des commits qui le corrigent.
-3. Le confier à un relecteur qui n'a pas la conversation. Sous Claude
-   Code : un sous-agent (outil `Agent`), du modèle de la session, dont le
-   seul message est ce dossier, tel quel : rien ne s'y ajoute, rien ne s'en
-   retire. Il reçoit aussi les instructions du projet et peut lire le
-   dépôt, mais ni la conversation ni le raisonnement de l'agent, et le
-   dossier lui dit de ne rien modifier : pour éprouver une commande, il
-   crée un dossier temporaire hors du dépôt et n'écrit que là, par le
-   chemin que `mktemp -d` a rendu, écrit en toutes lettres dans chaque
-   commande : une variable ne survit pas d'un appel à l'autre. Le hook de
-   l'agent refuse l'installeur visé sur le projet dans un autre mode que
-   celui de son verrou, ou sur une cible écrite par une variable, mais pas
-   toute écriture du relecteur
-   dans le dépôt. Un agent sans sous-agents saute la
-   revue, et son récap le dit.
+   première, avec les messages des commits qui le corrigent. Une
+   référence inconnue, ou un `--since` qui n'est pas un ancêtre de HEAD,
+   est refusée. Un lot déjà poussé en tout ou en partie (une session
+   cloud pousse à chaque fin de tour), ou une branche qui porte des lots
+   déjà relus, que la note du dossier signale : `--base <le commit d'avant
+   le lot>`, la tête d'où le lot est parti. Il écrit la passe dans l'entrée
+   du lot en cours du backlog, ou de celui que `--batch L-NNNN` nomme, et
+   refuse une passe que l'historique du lot refuse (plus bas).
+3. Le confier à un relecteur qui n'a pas la conversation. Sous Claude Code
+   : un sous-agent (outil `Agent`), dont le seul message est ce dossier,
+   tel quel : rien ne s'y ajoute, rien ne s'en retire. Il reçoit
+   explicitement à son lancement (`model`) le modèle le plus capable
+   disponible jusqu'à Opus, jamais un moindre que celui qui a implémenté
+   le lot, quel que soit celui de la session, que la règle du modèle de
+   `socle-batch` peut faire moins coûteux, sur la dernière version de sa
+   famille : si l'alias en désigne une plus ancienne, il hérite de la
+   session, sans `model`, comme cette règle le dit, et son compte rendu
+   nomme le modèle qui l'a servi ; Fable, s'il est disponible,
+   seulement si l'humain le demande. Il reçoit aussi les instructions du
+   projet et peut lire le dépôt, mais ni la conversation ni le
+   raisonnement de l'agent, et le dossier lui dit de ne rien modifier :
+   pour éprouver une commande, il crée un dossier temporaire hors du dépôt
+   et n'écrit que là, par le chemin que `mktemp -d` a rendu, écrit en
+   toutes lettres dans chaque commande : une variable ne survit pas d'un
+   appel à l'autre. Le hook de l'agent refuse l'installeur visé sur le
+   projet dans un autre mode que celui de son verrou, ou sur une cible
+   écrite par une variable, mais pas toute écriture du relecteur dans le
+   dépôt. Un agent sans sous-agents saute la revue, et son récap le dit.
 
 ## Les constats
 
@@ -61,12 +81,59 @@ Le relecteur les classe ; l'agent vérifie chaque classement.
 - **Bloquant** (il contredit un critère coché ou une décision citée, fait
   régresser ce qui marchait, perd des données, ou contourne un garde-fou
   dans son modèle de menace) : corrigé dans le lot, avant le push.
-- **Pour le backlog** (le reste : un contournement hors du modèle de
-  menace, un critère que le lot ne coche pas, un défaut voisin) : pas
-  corrigé dans le lot ; il va au backlog, un sujet par constat ou un pour
-  plusieurs de même nature.
-- **Infondé** : écarté, en une ligne qui dit pourquoi.
+- **Pour le backlog** : un constat qui ne bloque pas va au backlog s'il
+  peut se produire dans l'usage normal du projet, ou si rien ne rattrape
+  ensuite son effet : une tâche par constat si sa correction est claire,
+  un besoin sinon, ou une entrée pour plusieurs de même nature.
+- **Écarté** : un constat exotique (un geste rare, une forme qu'on
+  n'écrit que pour contourner, un cas jamais reproduit) dont l'effet est
+  rattrapé, par un contrôle, la CI ou une erreur que l'agent voit
+  aussitôt ; et un constat infondé. Une ligne du récap dit pourquoi
+  chacun est écarté.
+- **Une forme du shell qu'un agent n'écrit pas** dans son travail (ni
+  vue dans une session d'agent, ni dans un skill, ni dans une
+  documentation courante), et qui échappe au hook de l'agent : elle ne se
+  classe pas bloquante, même refusée avant le lot par accident, ni pour
+  le backlog, quel qu'en soit l'effet. Elle s'écarte, et va d'une ligne à
+  la liste des formes connues que le hook ne juge pas, que tient le guide
+  du socle (`python3 .socle/socle help`).
 
 Ne rien poster sur GitHub : l'humain lit le récap, pas la revue. Le récap
 le dit en une ligne : `Revue : <b> bloquants, corrigés ; <n> au backlog
-(<sujets>) ; écartés : <raison de chacun>`, ou `Revue : aucun constat`.
+(<entrées>) ; écartés : <raison de chacun>`, ou `Revue : aucun constat`.
+
+## L'historique du lot et le recul
+
+Le lot garde ses passes dans la section `## Revues`, la dernière de son
+entrée, lisible d'une session neuve : `socle review` y écrit chaque passe,
+sa date et les commits relus, et redonne la même tant que rien ne change
+hors de la mémoire.
+
+1. Au retour du relecteur, écrire dans la passe une ligne `- Bloquant :
+   <sa cause, en quelques mots>` par bloquant, et `- Ouvre : <les
+   entrées que la passe ouvre>`, ou `rien`. À partir de la deuxième
+   passe, le dossier donne au relecteur les causes des bloquants d'avant,
+   et il dit, pour chaque bloquant nouveau, s'il a la même cause que l'un
+   d'eux : sa ligne finit par `· même cause` ou `· cause nouvelle`, selon
+   le relecteur, jamais selon l'agent.
+2. Avant la passe suivante, et avant de clore le lot, écrire le recul de
+   la passe, sous ses bloquants : un paragraphe qui commence par
+   « Recul : », de soixante mots au moins, qui répond aux trois questions
+   que `socle review` donne en refusant la passe, avec l'historique, les
+   entrées ouvertes et closes depuis le début du lot et les lots clos qui
+   ont touché les mêmes fichiers. Les bloquants de cette passe ont-ils la
+   même cause que ceux de la précédente ? Les entrées que le lot ouvre
+   sont-elles de même nature que celles qu'il ferme ? Les lots clos qui
+   ont touché les mêmes fichiers ont-ils déjà ouvert ce genre d'entrées ?
+   Son dernier mot est sa décision : « continuer », ce qui rendra la
+   passe suivante différente écrit avant, ou « s'arrêter ».
+3. S'arrêter : poser une demande à l'humain (skill `socle-request`) qui
+   cite le lot et dit ce qui tourne, en clair, la règle qui le fait
+   tourner, et une proposition qui la borne ; le recul la nomme
+   (`D-NNNN`), et le lot l'attend par son `après`. `socle review` refuse
+   une passe de plus jusqu'à sa réponse, seule à lever l'arrêt : avancer
+   ailleurs. Après deux passes de suite où le relecteur voit une même
+   cause revenir, il refuse « continuer » : le lot s'arrête.
+
+Le contrôle du backlog refuse un lot relu clos `fait` dont la dernière
+passe refuserait la suivante.

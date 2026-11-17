@@ -51,7 +51,7 @@ backlog ouvert se reclasse, et chaque besoin à plusieurs livrables se
 découpe en tâches.
 
 Les deux choix, tranchés par Théo le 16 novembre (J-2026-11-16-M) :
-D-0121@ec62e9fd, `2a`, la structure s'écrit en premier, au lot B-0264 ;
+D-0121@ec62e9fd, `2a`, la structure s'écrit en premier, au lot L-0011 ;
 D-0122@dbcc64c1, `1b`, chaque forme d'entrée a son préfixe, pour la
 qualité à long terme. La spécification, soumise à Théo avant le code,
 tranche : les préfixes (`B-` gardé pour le besoin, B comme besoin, ce qui
@@ -63,10 +63,16 @@ seul citant les anciens numéros ; la migration de ce dépôt, et celle d'un
 projet équipé par l'installeur, chess compris ; les contrôles qui
 empêchent de remélanger, chacun avec son défaut injecté. Le backlog
 ouvert se reclasse alors, chaque besoin à plusieurs livrables découpé en
-tâches, et les lots du jalon B-0224 refaits avec des tâches.
+tâches, et les lots du jalon JA-0005 refaits avec des tâches.
 
-## Fait quand
+Le 16 novembre (J-2026-11-16-U) : la spécification validée (D-0123), son
+ADR-0083, le moteur, ses contrôles, la migration et les textes du produit
+sont faits (T-0046), et ce dépôt migré. Restent le découpage des besoins
+et les lots du jalon en cours refaits (T-0049), puis les textes que des
+tests lisent mot pour mot (T-0050).
 
-- [ ] le format, les skills du produit, le guide et les messages de l'état n'appellent plus « sujet » un lot ni un jalon, ni « tâche » un sujet, et un test le montre pour les messages de l'état
-- [ ] la spécification de la structure et de ses préfixes (D-0122) est soumise à Théo avant son code
-- [ ] la structure besoin, tâche, lot, jalon, avec un préfixe par forme (D-0122), s'écrit dans le format et les contrôles, chacun avec son défaut injecté, et le backlog ouvert y est reclassé
+## Satisfait quand
+
+- [x] chaque mot du backlog désigne une seule chose, dans le format, les skills du produit, le guide et l'état, et chaque entrée a sa forme, que des contrôles empêchent de remélanger (T-0046)
+- [ ] le backlog ouvert de ce dépôt est dans ces formes : chaque besoin découpé en tâches qui le satisfont, ses critères des résultats, et les lots du jalon en cours faits de tâches (T-0049)
+- [ ] aucun texte du produit n'appelle plus « sujet » une entrée du backlog (T-0050)

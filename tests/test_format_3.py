@@ -43,7 +43,7 @@ class Format3(Projet):
 
 class TestBacklogEnDossier(Format3):
     def test_un_sujet_nouveau_a_son_fichier(self):
-        code, sortie = self.socle("new", "backlog", "Un troisième sujet", "--public")
+        code, sortie = self.socle("new", "need", "Un troisième sujet", "--public")
         self.assertEqual(code, 0, sortie)
         self.assertIn("B-0003\tmemory/backlog/B-0003-un-troisieme-sujet.md", sortie)
         texte = (self.racine / "memory/backlog/B-0003-un-troisieme-sujet.md").read_text()
@@ -55,11 +55,11 @@ class TestBacklogEnDossier(Format3):
         self.assertTrue((self.racine / "memory/backlog/closed/B-0002-un-sujet-detaille.md").is_file())
         sujet = next((self.racine / "memory/backlog").glob("B-0001-*.md"))
         sujet.write_text(sujet.read_text().replace("> statut : ouvert", "> statut : fait · ref : fichier:calc.py", 1))
-        self.assertIn("`B-0001` est clos (« fait ») mais reste parmi les sujets ouverts : `python3 .socle/socle "
+        self.assertIn("`B-0001` est clos (« fait ») mais reste parmi les entrées ouvertes : `python3 .socle/socle "
                       "archive` le range dans `closed/`", self.erreurs())
         with contextlib.redirect_stdout(io.StringIO()) as sortie:
             self.assertEqual(archivage.archiver_backlog(self.projet), 0)
-        self.assertIn("1 sujet(s) rangé(s)", sortie.getvalue())
+        self.assertIn("1 entrée(s) rangée(s)", sortie.getvalue())
         self.assertFalse(sujet.exists())
         self.assertTrue((self.racine / "memory/backlog/closed" / sujet.name).is_file())
         self.assertIn(f"memory/backlog/closed/{sujet.name}", git(self.racine, "diff", "--cached", "--name-only"))
@@ -101,8 +101,8 @@ class TestRangement(Format3):
     def test_un_sujet_rouvert_revient_parmi_les_ouverts(self):
         clos = self.racine / "memory/backlog/closed/B-0002-un-sujet-detaille.md"
         clos.write_text(clos.read_text().replace("> statut : fait", "> statut : ouvert", 1))
-        self.assertIn("`B-0002` est rangé parmi les sujets clos alors qu'il est « ouvert » : `python3 .socle/socle "
-                      "archive` le remet parmi les ouverts", self.erreurs())
+        self.assertIn("`B-0002` est rangé parmi les entrées closes alors qu'il est « ouvert » : `python3 .socle/socle "
+                      "archive` le remet parmi les ouvertes", self.erreurs())
         self.assertEqual(archivage.ranger_backlog(self.racine),
                          [("memory/backlog/closed/B-0002-un-sujet-detaille.md",
                            "memory/backlog/B-0002-un-sujet-detaille.md")])

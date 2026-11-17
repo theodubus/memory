@@ -12,7 +12,7 @@ pourrait se lancer lui-même dans un dossier (une clé `root` de la copie, ses
 commandes, sa CI et ses motifs relatifs à ce dossier), et l'installeur le
 poser là. Hors du périmètre de B-0168.
 
-## Fait quand
+## Satisfait quand
 
 - [ ] une copie d'adaptateur peut déclarer le dossier où ses commandes et ses étapes de CI se lancent
 - [ ] en automatique, l'installeur pose l'adaptateur d'un langage dont le manifeste n'est que dans un sous-dossier, lancé dans ce sous-dossier

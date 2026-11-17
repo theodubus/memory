@@ -12,6 +12,6 @@ plus le lanceur, et ne juge pas la commande. C'est une vraie réponse
 donnée à la place de l'humain, ce que le hook existe pour refuser ; le
 défaut précède le lot.
 
-## Fait quand
+## Satisfait quand
 
 - [x] une commande du socle lancée avec une option de python qui prend une valeur est reconnue et jugée comme sans elle : `answer` sans `--relayed` ni citation est refusé ; un test et un défaut de l'auto-test le montrent

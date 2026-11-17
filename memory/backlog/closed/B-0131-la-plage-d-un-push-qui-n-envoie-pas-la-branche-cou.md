@@ -17,6 +17,6 @@ Abandonné le 14 novembre, sur la décision de Théo (D-0111, J-2026-11-14-L) :
 un cas exotique. Le sujet le dit lui-même, il ne gêne qu'un geste rare,
 l'agent poussant sa branche courante, et le refus se voit.
 
-## Fait quand
+## Satisfait quand
 
 - [ ] un push d'une branche autre que la courante laisse partir le fichier protégé qu'une demande en attente de cette branche couvre, la CI exigée

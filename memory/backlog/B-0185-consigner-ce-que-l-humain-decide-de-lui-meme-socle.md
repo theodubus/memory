@@ -9,6 +9,6 @@ que Théo avait données de lui-même, avec une « question posée » qui dit
 qu'aucune question ne les a précédées ; la session du socle fait de même.
 Une forme qui consigne une décision donnée sans question serait plus juste.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] une décision que l'humain donne de lui-même se consigne sans question inventée, avec son texte exact, et autorise ce qu'elle nomme comme le fait une demande validée
+- [ ] le « Fait quand » de T-0017 est tenu

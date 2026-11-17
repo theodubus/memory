@@ -13,7 +13,7 @@ documentation humaine se relit contre ces changements, dans sa structure
 validée : une question par endroit, le parcours de l'utilisateur, un ton
 formel.
 
-## Fait quand
+## Satisfait quand
 
 - [x] `README.md`, `engine/README.md`, `engine/socle/HELP.md` et `engine/socle/HELP.en.md` relus contre ces changements
 - [x] le plan des corrections soumis à Théo dans la conversation avant de les écrire

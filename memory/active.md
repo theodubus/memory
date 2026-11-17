@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Lot B-0269 : B-0265 attend D-0123, B-0263 D-0124, puis
-B-0270. Puis B-0266. B-0179 attend.
+L-0013 clos (J-2026-11-17-C), sa pull request fusionnée par l'agent à
+la CI verte. Ensuite L-0012, puis L-0014, L-0015.
 
 ## Consignes en cours
 
@@ -15,7 +15,7 @@ Leur texte exact est dans l'entrée du journal citée.
 - Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
 - Le hook borné aux formes qu'un agent écrit ; une forme exotique va
   à la liste, sans sujet ni bloquant (ADR-0082).
-- Un mot pour une chose ; un sujet va sans demander au lot dont la
+- Un mot pour une chose ; une tâche va sans demander au lot dont la
   règle s'applique (J-2026-11-16-I, J-2026-11-16-J).
 - Relecteur : le plus capable jusqu'à Opus (D-0117). Fable, implémenteur
   ou relecteur, seulement si Théo le veut ; un lot implémenté sur Fable :
@@ -35,15 +35,15 @@ Leur texte exact est dans l'entrée du journal citée.
   l'outil ; le guide suit le parcours de l'utilisateur ; ses schémas se
   vérifient rendus ; faite que validée (J-2026-10-20-Y, J-2026-10-21-A,
   J-2026-10-22-A).
-- Une limite d'usage proche décide de l'ordre des sujets, jamais de la
-  profondeur du travail ni du modèle : aucun lot bâclé pour la tenir
-  (J-2026-11-09-C, J-2026-11-15-D).
+- Une limite d'usage proche décide de l'ordre, jamais de la profondeur
+  du travail ni du modèle ; la passation se fait avant elle
+  (J-2026-11-09-C, J-2026-11-15-D, J-2026-11-16-W).
 - Une attente annoncée dans le récap s'accompagne d'un réveil programmé
   (J-2026-10-13-N).
 - « Pour toi » ne contient que les gestes de Théo, chacun compréhensible
   seul (ce que c'est, pourquoi, ce que change sa réponse) ; ce que
   l'agent fera se dit à part (J-2026-10-31-S, J-2026-10-14-F).
-- Les heures données à Théo, à l'heure de Paris (J-2026-10-14-G).
+- Les heures à Théo, à l'heure de Paris (J-2026-10-14-G).
 - Un autre dépôt se clone hors du dossier des dépôts de la session, sans
   être déclaré racine ; à chaque reprise, vérifier que l'état a été
   injecté, sinon le dire et ne rien pousser (J-2026-10-14-S).
@@ -65,10 +65,7 @@ Leur texte exact est dans l'entrée du journal citée.
 Avant toute nouvelle fonction (J-2026-11-13-I, D-0108, D-0109, D-0111),
 par lots :
 
-1. Fait.
-2. Fait.
-3. Le jalon B-0224 (D-0118) : ses sept lots, B-0234 à B-0240, dans
-   l'ordre ; l'état montre le prochain.
-4. La mise à jour de chess, avec le prompt complété.
-5. Ensuite la planification (B-0101), puis la répartition entre agents
+1. Le jalon JA-0005 (D-0118), lot par lot ; l'état montre le prochain.
+2. La mise à jour de chess, avec le prompt complété.
+3. Ensuite la planification (B-0101), puis la répartition entre agents
    (B-0055).

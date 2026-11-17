@@ -20,6 +20,6 @@ lisent pas, et dit ce qui reste sans garantie :
   lui-même : rien ne la borne aujourd'hui, hors du hook. Piste à
   vérifier : le bac à sable de l'outil shell de l'agent, s'il en a un.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] le relevé dit, pour le push forcé, la suppression du projet et celle d'un dossier qui le contient, quelle couche hors du hook les rattrape dans ce dépôt et dans un projet équipé, et ce qui reste sans garantie ; ce qui s'en déduit est au backlog
+- [ ] le « Fait quand » de T-0023 est tenu

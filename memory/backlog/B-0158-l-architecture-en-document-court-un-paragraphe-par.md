@@ -11,6 +11,6 @@ correctifs reste dans les décisions et le journal ; une taille maximale
 pour le fichier. Si la correspondance doit changer de cible, c'est un
 garde-fou : une demande.
 
-## Fait quand
+## Satisfait quand
 
 - [ ] l'architecture tient en un paragraphe par module, sous un budget que les garde-fous déclarent

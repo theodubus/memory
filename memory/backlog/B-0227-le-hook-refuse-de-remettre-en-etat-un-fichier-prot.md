@@ -20,7 +20,7 @@ Piste : ne compter pour citation d'un dossier que les lignes de fichiers
 approuvés des « Éléments cités », ou un chemin qui n'est pas dans un
 texte recopié entre accents graves.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] une demande qui ne cite un dossier protégé que dans un texte recopié ne bloque pas la remise en état des fichiers qu'elle n'approuve pas ; un test qui échoue sur le commit parent le prouve
+- [ ] le « Fait quand » de T-0010 est tenu
 

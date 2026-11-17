@@ -14,6 +14,6 @@ Le 13 novembre, Théo retient la priorité haute proposée (D-0108@96eeead5) :
 le sujet fait partie de ceux à finir avant de revenir aux nouvelles
 fonctions.
 
-## Fait quand
+## Satisfait quand
 
 - [x] en session cloud, sur un clone superficiel, le hook de démarrage complète l'historique, et un test le montre

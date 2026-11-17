@@ -21,6 +21,6 @@ changement avec ce que l'agent du projet doit faire ; l'installeur donne,
 n'avait pas, et le message de commit qu'il propose les nomme
 (J-2026-11-14-T).
 
-## Fait quand
+## Satisfait quand
 
 - [x] une mise à jour donne à l'agent ce que la version change pour un projet installé

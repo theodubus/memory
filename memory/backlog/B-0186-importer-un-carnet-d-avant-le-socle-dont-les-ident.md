@@ -9,6 +9,6 @@ entrées ne peuvent pas être citées avant leur migration, le contrôle des
 références les disant inexistantes, et la migration se heurtera aux jours
 où les deux existent.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] le guide dit comment importer un journal existant : quelles lettres prennent les entrées importées, et comment citer les anciennes en attendant
+- [ ] le « Fait quand » de T-0031 est tenu

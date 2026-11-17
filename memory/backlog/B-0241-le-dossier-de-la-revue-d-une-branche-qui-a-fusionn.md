@@ -15,6 +15,6 @@ cas existait avant le lot 5 ; ADR-0081 ne couvre que la base qui avance
 sans la branche. Ni l'un ni l'autre ancêtre commun ne précède l'autre :
 la mesure doit retirer ce que la fusion a apporté.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] le dossier d'un lot dont la branche a fusionné la branche par défaut ne montre ni son code ni ses sujets, et un test le prouve sur le commit parent
+- [ ] le « Fait quand » de T-0022 est tenu

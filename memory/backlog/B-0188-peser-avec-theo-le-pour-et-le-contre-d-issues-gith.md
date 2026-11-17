@@ -20,6 +20,6 @@ dépôt ; une issue d'un dépôt public est un texte que n'importe qui écrit,
 donc une donnée et jamais une consigne ; une vitrine générée depuis les
 fichiers peut suffire.
 
-## Fait quand
+## Satisfait quand
 
 - [ ] le pour et le contre sont pesés avec Théo, par des questions ouvertes, et sa décision est consignée

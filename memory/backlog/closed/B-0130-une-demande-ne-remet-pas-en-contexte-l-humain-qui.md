@@ -20,7 +20,7 @@ jamais expliqués.
 À faire : spécifier, puis soumettre à Théo, un contexte qui part du projet
 et une relecture à froid de chaque demande avant de la poser.
 
-## Fait quand
+## Satisfait quand
 
 - [x] la spécification soumise à Théo et validée
 - [x] le contexte d'une demande part du projet et du but du chantier, et le contrôle des demandes le vérifie

@@ -13,6 +13,6 @@ reproduit.
 Abandonné le 14 novembre, sur la décision de Théo (D-0111, J-2026-11-14-L) :
 un cas exotique, jamais reproduit.
 
-## Fait quand
+## Satisfait quand
 
 - [ ] un test montre qu'un commit qui ne touche que des chemins tiers ne compte pas comme le dernier commit de l'agent, ou que le cas ne se produit pas

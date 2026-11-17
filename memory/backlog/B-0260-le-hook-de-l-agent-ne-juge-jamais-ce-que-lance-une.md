@@ -3,7 +3,7 @@
 
 > statut : ouvert · origine : J-2026-11-16-F · priorité : haute · lu : backlog@e7ed1bbf
 
-La troisième passe de revue du lot B-0234 (J-2026-11-16-F) : le découpage
+La troisième passe de revue du lot L-0004 (J-2026-11-16-F) : le découpage
 (`engine/socle/commands.py`) ne juge pas la commande que lance une
 substitution entre guillemets, `"$(…)"`, sur les moteurs d1d296e,
 08b925a et la tête : `echo "$(rm -rf ..)"`, `echo "$(cd memory; rm -rf
@@ -17,6 +17,6 @@ La piste : juger le texte d'une substitution entre guillemets comme celui
 d'une substitution nue (`_analyser` sur son texte, avec les fonctions
 connues), que `_preparer` sait déjà délimiter (B-0207).
 
-## Fait quand
+## Satisfait quand
 
-- [ ] les trois commandes ci-dessus sont refusées par le hook, `x="$(git rev-parse HEAD)"; echo "$x" > notes.txt` passe, et un test le montre
+- [ ] le « Fait quand » de T-0007 est tenu

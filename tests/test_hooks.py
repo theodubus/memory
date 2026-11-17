@@ -811,7 +811,7 @@ class TestTraceDesRefusDeFinDeTourEtDeGit(unittest.TestCase):
 
         backlog = self.racine / "memory/backlog"
         backlog.mkdir(parents=True, exist_ok=True)
-        for ident, meta in (("B-0001", ""), ("B-0002", " · forme : jalon · après : B-0001")):
+        for ident, meta in (("B-0001", ""), ("T-0001", " · besoin : B-0001"), ("JA-0002", " · après : B-0001")):
             f = backlog / f"{ident}-essai.md"
             f.write_text(f"<!-- socle: couche=backlog zone=publique -->\n# {ident} — Le sujet {ident}\n\n"
                          f"> statut : ouvert · origine : fichier:calc.py{meta}\n\nPour l'essai.\n")
@@ -819,8 +819,8 @@ class TestTraceDesRefusDeFinDeTourEtDeGit(unittest.TestCase):
         transcript = Path(tempfile.mkdtemp()) / "t.jsonl"
         transcript.write_text(json.dumps({"type": "assistant", "message": {"content": "Fait."}}))
         sortie = self.appeler(hooks.exiger_recap, self.projet, {"session_id": "o", "transcript_path": str(transcript)})
-        self.assertIn("prochain jalon : B-0002 — Le sujet B-0002 ; reste : B-0001", sortie)
-        self.assertIn("prêt : B-0001 — Le sujet B-0001", sortie)
+        self.assertIn("prochain jalon : JA-0002 — Le sujet JA-0002 ; besoins ouverts : B-0001", sortie)
+        self.assertIn("tâche prête : T-0001 — Le sujet T-0001", sortie)
 
     def test_git_pre_commit_trace_les_controles_en_echec(self):
         import subprocess

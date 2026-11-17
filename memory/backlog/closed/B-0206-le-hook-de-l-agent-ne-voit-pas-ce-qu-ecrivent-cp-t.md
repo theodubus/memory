@@ -88,6 +88,6 @@ Ce qu'il refuse de plus : un `python -c` qui lit un fichier protégé qu'il
 cite (`open('.socle/policy.toml')`), que le hook ne distingue pas d'une
 écriture : un fichier protégé se lit par `cat` ou par l'outil de lecture.
 
-## Fait quand
+## Satisfait quand
 
 - [x] chacune de ces écritures d'un fichier protégé est refusée par le hook, et un test le montre

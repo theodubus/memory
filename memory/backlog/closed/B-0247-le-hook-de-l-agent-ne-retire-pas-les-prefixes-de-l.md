@@ -3,7 +3,7 @@
 
 > statut : abandonné · origine : J-2026-11-15-O · priorité : haute · ref : J-2026-11-16-G · lu : backlog@fc46feff
 
-La revue du lot B-0234 (J-2026-11-15-O), premier constat pour le
+La revue du lot L-0004 (J-2026-11-15-O), premier constat pour le
 backlog. Le hook de l'agent lit la commande que lance un `find -exec`
 (`_lire_find`, `engine/socle/hooks.py`) sans en retirer les préfixes
 (`sudo`, `env`, `nice`…) : `find .. -maxdepth 0 -exec sudo rm -rf {} \;`
@@ -17,6 +17,6 @@ commande de `-exec` avant de la juger.
 
 Abandonné le 16 novembre selon D-0120 (J-2026-11-16-G) : `find -exec` derrière `sudo`, qu'aucun agent n'écrit dans son travail, va à la liste des formes connues que le hook ne juge pas (B-0261).
 
-## Fait quand
+## Satisfait quand
 
 - [ ] `find .. -maxdepth 0 -exec sudo rm -rf {} \;` est refusé par le hook, `find . -name '*.pyc' -exec sudo rm -f {} \;` passe, et un test le montre

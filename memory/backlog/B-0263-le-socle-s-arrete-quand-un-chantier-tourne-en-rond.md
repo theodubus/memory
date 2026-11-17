@@ -8,7 +8,7 @@ tourne en rond avec un sujet infini, et sans intervention de ma part on
 se retrouve a avancer dans le vide sans prise de recul. Que peut on faire
 pour que le socle évite ça ». La première fois : le hook, le 13 novembre,
 trente contournements en deux revues (ADR-0072) ; la seconde : le lot
-B-0234, deux sujets, trois passes de revue, huit bloquants, dix sujets
+L-0004, deux sujets, trois passes de revue, huit bloquants, dix sujets
 ouverts (ADR-0082). Les deux fois, chaque pas semblait juste selon les
 règles, et seul Théo a demandé si l'ensemble convergeait.
 
@@ -45,8 +45,6 @@ La piste, à spécifier avant le code et à soumettre à Théo :
    pour le hook. Théo ne voit aucune métrique ; il voit la demande quand
    l'agent conclut.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] la spécification de l'historique, des moments de recul et de l'arrêt est soumise à Théo avant son code
-- [ ] une passe de revue au-delà de la première, et la clôture d'un lot, exigent un paragraphe de recul qui lit l'historique du lot ; sans lui, elles sont refusées, et un test et un défaut injecté le montrent
-- [ ] l'historique des passes d'un lot se lit d'une session neuve, et un test le montre
+- [ ] le « Fait quand » de T-0047 est tenu

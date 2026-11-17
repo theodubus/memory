@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0123-valider-la-specification-de-la-structure-du-backlo.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-16"
+canal = "conversation"
+citation = "Je vaide D0123 et D0124"
+empreinte = "sha256:58d6184290fde30186b942f74eeae92e2dec40a09af49d6c7be47cb25810eca3"

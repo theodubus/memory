@@ -13,6 +13,6 @@ mesurer ce que lit le relecteur (le dépôt entier, AGENTS.md, les entrées
 citées), et borner ce qu'il reçoit, comme B-0173 l'a fait pour la revue
 d'un lot (`docs/fabrication/consommation.md`).
 
-## Fait quand
+## Satisfait quand
 
-- [ ] ce que lit le relecteur à froid d'une demande est mesuré, et le skill `socle-request` le borne
+- [ ] le « Fait quand » de T-0034 est tenu

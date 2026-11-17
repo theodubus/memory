@@ -69,7 +69,7 @@ ces formes, qu'un agent coopératif n'écrit pas dans son travail, restent
 des risques acceptés, que `protege.fichiers` attrape ensuite ; elles
 n'ouvrent plus de sujet.
 
-## Fait quand
+## Satisfait quand
 
 - [ ] chacune de ces écritures d'un fichier protégé est refusée par le hook, et un test le montre
 - [ ] un défaut injecté de l'auto-test n'est attrapé que si chacun de ses appels l'est par sa raison

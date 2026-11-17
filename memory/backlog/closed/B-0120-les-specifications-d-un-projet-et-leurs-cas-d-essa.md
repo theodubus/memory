@@ -33,7 +33,7 @@ sans être soumises à Théo. Ce que le socle peut faire :
 
 D-0066, `socle` (J-2026-11-01-L).
 
-## Fait quand
+## Satisfait quand
 
 - [x] un projet déclare ses fichiers de cas ; changer ou retirer un cas existant exige une demande validée qui cite le fichier, et un défaut injecté l'éprouve
 - [x] l'état signale une spécification déclarée qu'aucune demande ne cite

@@ -23,6 +23,6 @@ bien sur GitHub, recréée après la fusion par le défaut de B-0220 : les
 deux défauts se ressemblent dans ce que Théo voit, et pas dans leur
 cause.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] une branche distante supprimée n'est plus donnée à supprimer, ou le message dit d'où vient la liste ; un test qui échoue sur le commit parent le prouve
+- [ ] le « Fait quand » de T-0024 est tenu

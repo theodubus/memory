@@ -11,6 +11,6 @@ clone neuf : l'entrée de journal de B-0143 l'a montré sur ce lot. Le
 chemin devrait se juger contre les fichiers suivis par git (ceux de
 l'index et du commit jugé), comme la CI les voit.
 
-## Fait quand
+## Satisfait quand
 
 - [x] un chemin cité qui n'existe que hors des fichiers suivis est refusé dès le contrôle local, et un test le montre

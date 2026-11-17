@@ -9,8 +9,8 @@ Le hook de fin de tour de l'environnement cloud voit des fichiers non
 suivis et demande de les commiter (J-2026-11-14-D). La session l'a exclu
 localement, dans `.git/info/exclude`, qui ne survit pas au conteneur.
 
-Le 16 novembre, Théo le passe de priorité basse à normale (J-2026-11-16-I) : le dossier non ignoré a fait refuser la fin de tour deux fois dans la session du lot B-0234.
+Le 16 novembre, Théo le passe de priorité basse à normale (J-2026-11-16-I) : le dossier non ignoré a fait refuser la fin de tour deux fois dans la session du lot L-0004.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] le dossier .claude/worktrees est ignoré par le dépôt, et par un projet que l'installeur équipe si le produit lance des sous-agents en worktree
+- [ ] le « Fait quand » de T-0013 est tenu

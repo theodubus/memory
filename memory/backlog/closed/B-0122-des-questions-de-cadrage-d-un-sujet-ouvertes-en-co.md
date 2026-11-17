@@ -12,7 +12,7 @@ quand l'agent ne peut pas écrire une spécification sans deviner ;
 l'humain répond librement, l'agent consigne ses mots, puis soumet la
 spécification ou la décision qui en découle.
 
-## Fait quand
+## Satisfait quand
 
 - [x] `socle new request --questions` pose une demande de questions de cadrage au contrat
 - [x] les instructions, le format et le guide le disent (le skill des demandes, protégé dans ce dépôt, n'en a pas besoin : les instructions et le gabarit suffisent)

@@ -23,7 +23,7 @@ sur `trad` est écarté ; six constats restent, sur le lot déjà poussé :
    concaténation) : leur clé dépend alors de la langue.
 6. Une clé dont le chemin contient un tiret long n'est pas suivie.
 
-## Fait quand
+## Satisfait quand
 
 - [x] renommer un fichier qui porte un constat toléré se règle dans la pull request qui le renomme : le contrôle demande de renommer la clé dans la liste, ce que le cliquet laisse faire, et le guide le dit
 - [x] la mise à jour d'un projet adopté avant la règle suit les renommages de la branche

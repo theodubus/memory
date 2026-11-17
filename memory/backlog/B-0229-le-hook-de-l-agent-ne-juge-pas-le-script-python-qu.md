@@ -23,6 +23,6 @@ celui d'un `python -c` dans `hooks.suppressions` depuis B-0228
 (`shutil.rmtree('..')`, que rien ne rattrape) : le corps du heredoc passe
 par la même lecture (`_supprimes_par_python`).
 
-## Fait quand
+## Satisfait quand
 
-- [ ] `python3 - <<'EOF'` dont le corps cite un fichier protégé est refusé par le hook, un heredoc qui n'en cite aucun passe, et un test le montre
+- [ ] le « Fait quand » de T-0001 est tenu

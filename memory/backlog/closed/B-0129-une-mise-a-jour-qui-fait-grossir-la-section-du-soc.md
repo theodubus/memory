@@ -18,7 +18,7 @@ propre du projet, ou relever le budget par une demande) ; ou que la
 croissance de la section du socle elle-même compte à part du budget de la
 partie propre.
 
-## Fait quand
+## Satisfait quand
 
 - [x] une mise à jour qui fait dépasser son budget à `AGENTS.md` le dit, avec ce que l'humain peut faire
 - [x] le contrôle des budgets donne le même remède pour un fichier d'instructions

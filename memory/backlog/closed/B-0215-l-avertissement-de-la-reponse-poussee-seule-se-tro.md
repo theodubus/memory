@@ -51,6 +51,6 @@ d'un module neuf) ; les cas que D-0111 écarte. Une demande qui cite une
 clé en passant, sans la relâcher, fait avertir à tort tant que rien de ce
 qu'elle nomme ne change.
 
-## Fait quand
+## Satisfait quand
 
 - [x] une clé des seuils est suivie comme un test, une exception du contrôle n'est qu'un avertissement, et un test le montre

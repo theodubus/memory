@@ -21,7 +21,6 @@ chess. Ce qui manque au socle pour cela se mesure d'abord sur chess.
 
 Le 13 novembre, Théo retient la priorité basse proposée (D-0108@96eeead5).
 
-## Fait quand
+## Satisfait quand
 
-- [ ] le balayage du socle tourne sur chess, un job par fichier, dans la durée de sa CI, avec les plafonds repris de ceux de chess
-- [ ] une mesure sur chess montre les mêmes mutants survivants que son balayage actuel, et celui-ci est retiré
+- [ ] le « Fait quand » de T-0027 est tenu

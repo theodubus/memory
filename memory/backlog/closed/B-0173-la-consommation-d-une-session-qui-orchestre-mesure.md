@@ -58,7 +58,7 @@ hook de démarrage, dont l'agent relit parfois une partie du fichier, est
 notée pour B-0010. Reste la méthode, que le relevé chiffre règle par
 règle.
 
-## Fait quand
+## Satisfait quand
 
 - [x] une mesure dit, sur une journée d'orchestration, ce que pèsent la conversation principale, les sous-agents et les reprises après une pause
 - [x] ce que le socle injecte à chaque démarrage, compactage et reprise est mesuré, et borné si c'est lui qui pèse (B-0010)

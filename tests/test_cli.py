@@ -129,7 +129,7 @@ class TestCommandes(unittest.TestCase):
                 return super().write(s)
 
         with contextlib.redirect_stdout(TubeCoupe()), self.assertRaises(BrokenPipeError):
-            cli.cmd_new(argparse.Namespace(root=str(self.racine), type="backlog", title="Un sujet coupé"))
+            cli.cmd_new(argparse.Namespace(root=str(self.racine), type="need", title="Un sujet coupé"))
         self.assertTrue((self.racine / "memory/backlog/B-0002-un-sujet-coupe.md").is_file())
 
     def test_new_request_questions_pose_des_questions_de_cadrage(self):
@@ -154,7 +154,7 @@ class TestCommandes(unittest.TestCase):
         self.assertFalse([f for f in fautes if "« Options »" in f or "« Conséquences »" in f], fautes)
         # Réservé aux demandes.
         with contextlib.redirect_stderr(io.StringIO()):
-            self.assertEqual(cli.cmd_new(argparse.Namespace(root=str(self.racine), type="backlog", questions=True,
+            self.assertEqual(cli.cmd_new(argparse.Namespace(root=str(self.racine), type="need", questions=True,
                                                             title="Un sujet")), 2)
 
     def test_prochaines_etapes_du_chantier_actif(self):

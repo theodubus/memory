@@ -96,6 +96,6 @@ options abrégées de sed), qui restent des risques acceptés (D-0111) ; un
 le corps d'une substitution, qu'on n'écrit guère. `protege.fichiers`
 attrape ensuite l'écriture d'un fichier protégé.
 
-## Fait quand
+## Satisfait quand
 
 - [x] une écriture d'un fichier protégé après un commentaire en fin de ligne, ou après une substitution aux guillemets imbriqués, est refusée par le hook, et un test le montre

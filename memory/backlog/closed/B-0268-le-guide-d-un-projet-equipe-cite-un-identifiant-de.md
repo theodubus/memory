@@ -18,6 +18,6 @@ La piste : retirer la référence des deux guides, et un test qui refuse
 dans `HELP.md` et `HELP.en.md` un identifiant de la mémoire (`ID_RE`) et
 les mots de l'atelier, comme celui des notes de version.
 
-## Fait quand
+## Satisfait quand
 
 - [x] ni `engine/socle/HELP.md` ni `engine/socle/HELP.en.md` ne citent un identifiant de la mémoire de ce dépôt ni l'atelier, et un test le garde

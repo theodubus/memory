@@ -9,6 +9,6 @@ sien, qui lance les mêmes douze étapes : 123 s pour lui et 122 s pour celui
 du socle, à chaque fin de tour où un fichier de code attend son commit.
 Relancé sur le même arbre, celui du socle ne prend que 3 s.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] l'installeur nomme les hooks de fin de tour que le projet avait déjà, et dit qu'ils peuvent doubler ceux du socle
+- [ ] le « Fait quand » de T-0030 est tenu

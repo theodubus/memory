@@ -14,6 +14,6 @@ reste retirée et sujet basse priorité ».
 À reprendre seulement si un projet en a besoin, avec une vraie lecture de
 la structure du fichier, langage par langage.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] un projet a montré le besoin, et la classe d'un test se lit sûrement dans son langage ; sinon le sujet se clôt sans suite
+- [ ] le « Fait quand » de T-0032 est tenu

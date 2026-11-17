@@ -283,7 +283,7 @@ class TestProjetAnglais(ProjetAnglais):
     def test_new_ecrit_dans_la_langue_du_projet(self):
         self.socle("new", "fact", "Double doubles")
         self.assertIn("> status : assumed · source :", self.lire("memory/canonical.md"))
-        self.socle("new", "backlog", "Add triple")
+        self.socle("new", "need", "Add triple")
         self.assertIn("> status : open · origin :", self.lire(SUJET))
         self.assertIn("read : backlog@", self.lire(SUJET))
         self.socle("new", "adr", "One constant only")
@@ -300,9 +300,11 @@ class TestProjetAnglais(ProjetAnglais):
         self.socle("new", "fact", "Double doubles")
         self.remplacer("memory/canonical.md", "> status : assumed · source : <where this fact comes from>\n\n"
                        "<the fact, and what would prove it>", "> status : measured · proof : file:calc.py\n\nRead in the code.")
-        self.socle("new", "backlog", "Add triple")
-        self.remplacer(SUJET, "<J-… or commit:… where the topic came up>", ident)
-        self.remplacer(SUJET, "<what to do, and why>", "For the invoices.")
+        self.socle("new", "need", "Add triple")
+        self.remplacer(SUJET, "<J-… or commit:… where the need came up>", ident)
+        self.remplacer(SUJET, "<the defect to fix or the feature to add: its findings or its motivation, and its "
+                              "specification if it is not settled>", "For the invoices.")
+        self.remplacer(SUJET, "<a result, never an implementation>", "invoices are tripled")
         (self.racine / "memory/requests/D-0001-choose-the-rounding-mode.md").write_text(DEMANDE)
         self.assertEqual(self.erreurs(), [])
         d = next(x for x in demandes.toutes(self.racine) if x.id == "D-0001")

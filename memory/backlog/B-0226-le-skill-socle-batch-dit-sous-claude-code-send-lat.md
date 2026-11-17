@@ -11,7 +11,7 @@ de Claude Code ne le trouve pas, et le skill ne dit pas quoi faire
 alors. Changer le gabarit met en retard la copie protégée de ce dépôt :
 à grouper avec B-0218.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] le skill situe le réveil en session cloud, et dit quoi faire ailleurs, dans les deux langues
+- [ ] le « Fait quand » de T-0011 est tenu
 

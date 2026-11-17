@@ -39,7 +39,7 @@ Opus, jamais un moindre que celui qui a implémenté ; Fable seulement si
 l'humain le demande ; découplé du modèle de la session, que la règle du
 modèle de `socle-batch` peut faire moins coûteux.
 
-## Fait quand
+## Satisfait quand
 
 - [x] les textes de la revue disent ce que donne le dossier et où s'écrit le modèle de menace, d'une seule manière
 - [x] les deux cas ont leur test, et `sujets_fermes` est retiré ou sert

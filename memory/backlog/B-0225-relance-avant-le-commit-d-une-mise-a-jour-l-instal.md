@@ -19,7 +19,7 @@ Piste : lire les identifiants dans la copie du dernier commit
 (`git show HEAD:<engine_dir>/socle/CHANGES*.md`), comme ADR-0052 lit
 l'historique.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] relancé avant le commit d'une mise à jour, l'installeur nomme les mêmes notes qu'au premier passage, dans le message de commit et dans « Et maintenant » ; un test qui échoue sur le commit parent le prouve
+- [ ] le « Fait quand » de T-0025 est tenu
 

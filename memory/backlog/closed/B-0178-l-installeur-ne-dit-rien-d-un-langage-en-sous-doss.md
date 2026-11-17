@@ -11,6 +11,6 @@ sous `if detectes:`). Ce qui est posé est juste, mais l'humain qui donne un
 adaptateur pour un langage n'apprend pas qu'un autre, dans un sous-dossier,
 reste sans adaptateur ni déclaration de chemin tiers.
 
-## Fait quand
+## Satisfait quand
 
 - [x] avec un adaptateur donné par `--adapter`, l'installeur nomme aussi les langages dont le manifeste n'est que dans un sous-dossier et qui n'ont ni adaptateur ni chemin tiers déclaré, avec leurs deux issues

@@ -50,6 +50,6 @@ que le clone local reçoit avec ses branches : le clone local n'a jamais
 garde le commit comme une étiquette `cite/<sha>` le garderait : rien
 n'est accepté qu'aucun ref de l'origine n'atteint.
 
-## Fait quand
+## Satisfait quand
 
 - [x] `python3 .socle/socle check` passe dans un clone neuf du dépôt

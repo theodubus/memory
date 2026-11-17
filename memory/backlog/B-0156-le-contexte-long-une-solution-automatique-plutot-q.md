@@ -46,6 +46,6 @@ la fin d'un lot et avant une attente longue ; absent (la nuit), il ne
 compacte pas, et à son retour il est trop tard. Rien ne dit alors quoi
 faire ; une session neuve coûterait moins que la reprise à froid.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] Théo a choisi la solution sur un essai, et le socle la met en œuvre
+- [ ] le « Fait quand » de T-0039 est tenu

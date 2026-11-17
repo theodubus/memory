@@ -12,7 +12,6 @@ actif à 20 000 octets ») compare `None` à `None` : il ne voit jamais un
 budget relevé, ni dans HEAD ni dans l'arbre de travail. Le scénario passe
 quoi que fasse l'agent sur ce point.
 
-## Fait quand
+## Satisfait quand
 
-- [ ] le juge du scénario s4 lit la clé du chantier actif par le chemin du format actuel (`config.FORMAT_ACTUEL.actif`), sans nom écrit en dur
-- [ ] un test montre qu'il voit un budget relevé dans HEAD et dans l'arbre de travail, et rien quand le budget est inchangé
+- [ ] le « Fait quand » de T-0035 est tenu
