@@ -44,3 +44,11 @@ Commits : 36be954..1f8e85f
 - Ouvre : T-0054, T-0055, B-0273
 
 Recul : les deux bloquants de cette passe n'ont pas la cause de ceux de la passe 1, venus de la migration : ils viennent de la clôture et de l'arrêt que T-0047 pose, et leur correction applique à la clôture les règles déjà écrites pour la passe, sans conception nouvelle ; les entrées ouvertes, T-0054, T-0055 et B-0273, sont des défauts de l'historique des revues, de la nature de ce que le lot ferme, sauf B-0273, antérieur ; aucun lot clos n'avait touché cette section, neuve. La passe suivante relira une autre tâche, T-0048 : continuer.
+
+### Passe 3 — 2026-11-17
+
+Commits : 9bec13d..1de6b24
+
+- Ouvre : rien
+
+Recul : cette passe n'a aucun bloquant, quand la passe 1 en avait trois, venus de la migration, et la passe 2 deux, venus de la clôture et de l'arrêt que T-0047 pose : aucune cause ne revient. Elle n'ouvre aucune entrée ; le lot ferme T-0048 et B-0270, un geste du skill qu'un projet équipé ne pouvait pas faire. Le lot L-0011, seul lot clos à avoir touché ce gabarit, avait ouvert B-0270 lui-même, une entrée de cette nature, que celui-ci ferme sans en rouvrir. Il ne reste aucune tâche au lot, qui se clôt : continuer.
