@@ -43,6 +43,16 @@ Ce qui a été fait :
 
 L'entrée de journal qui consigne ce message, avec son texte exact, s'écrit après l'intégration des correctifs : écrite avant, elle aurait pris la lettre qu'ils portent déjà.
 
+Puis, sur le coût du lot, mot pour mot : « L0016 était un correctif de format de roadmap, je comprends pas pourquoi il a consommé 75% d'une session / Et la tel que c'est parti j'ai l'impression que L0017 va être pareil alors qu'en soit c'est juste le fait de check les branches github avant de demander de supprimer / Est ce que c'est juste un constat ponctuel ou est ce qu'il y a une lourdeur non nécessaire superflue avec le fonctionnement du socle ? »
+
+La fenêtre de cinq heures, mesurée pendant la session, de 1 % à 75 % :
+- l'implémentation : environ 30 points (328 000 jetons) ;
+- la passe 1 et la correction de ses bloquants : environ 31 points (216 000 et 247 000 jetons) ;
+- l'orchestration : environ 5 points ;
+- la passation et la réponse sur les branches : environ 8 points.
+
+La réponse de l'agent, dans la conversation, distingue ce qui tient à ce lot de ce qui tient au fonctionnement du socle, et propose des allégements. L'entrée de journal qui consigne la question et la réponse de Théo, et le besoin qui en sort, s'écrivent après l'intégration, pour la même raison que plus haut : avant, ils prendraient les numéros que portent déjà les correctifs.
+
 ## La suite
 
 1. **Intégrer en gardant les SHA.** Copier ce dossier hors du dépôt (dans le scratchpad de la session), puis :
