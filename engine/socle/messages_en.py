@@ -310,6 +310,8 @@ MESSAGES: dict[str, str] = {
         "answer",
     "(pas encore poussé : pas de lien)":
         "(not pushed yet: no link)",
+    " (liste du dernier fetch, que l'origine n'a pas confirmée : `git fetch --prune origin` la rafraîchit)":
+        " (list from the last fetch, which the origin did not confirm: `git fetch --prune origin` refreshes it)",
     "supprimer la branche distante `{branche}`, déjà contenue dans la branche par défaut":
         "delete the remote branch `{branche}`, already contained in the default branch",
     "supprimer la branche distante `{branche}`, déjà contenue dans `{travail}`, la branche de travail poussée : son "

@@ -112,6 +112,60 @@ class TestBranchesASupprimer(unittest.TestCase):
         quoi = [e.quoi for e in humain.a_faire(self.projet)]
         self.assertTrue(any("`fusionnee`" in q for q in quoi), quoi)
 
+    def test_une_branche_que_l_origine_n_a_plus_n_est_plus_donnee_a_supprimer(self):
+        """B-0193 : le clone garde la référence d'une branche supprimée sur
+        l'origine tant qu'un fetch ne l'élague pas ; l'état la donnait à
+        supprimer à l'humain, qui l'avait déjà supprimée."""
+        (self.clone / "memory").mkdir()
+        git(self.dossier / "source", "branch", "-D", "fusionnee")
+        # Le dernier fetch la garde : la liste calculée sur lui la contient.
+        self.assertIn("fusionnee", humain.branches_a_supprimer(self.projet))
+        self.assertNotIn("fusionnee", humain.branches_de_l_origine(self.projet))
+        quoi = [e.quoi for e in humain.a_faire(self.projet)]
+        self.assertFalse(any("`fusionnee`" in q for q in quoi), quoi)
+        self.assertTrue(any("`codex/ui`" in q for q in quoi), quoi)
+        self.assertFalse(any("dernier fetch" in q for q in quoi), quoi)
+
+    def test_de_meme_une_branche_contenue_dans_le_travail_ou_inactive(self):
+        import time
+
+        source = self.dossier / "source"
+        git(source, "branch", "morceau", "en-cours")
+        git(source, "switch", "-q", "en-cours")
+        (source / "f").write_text("quatre")
+        git(source, "commit", "-qam", "quatre")
+        git(source, "switch", "-q", "main")
+        git(self.clone, "fetch", "-q", "origin")
+        git(self.clone, "switch", "-q", "en-cours")
+        (self.clone / "memory").mkdir()
+        git(source, "branch", "-D", "morceau")
+        self.assertEqual(humain.branches_contenues_dans_le_travail(self.projet), [("morceau", "origin/en-cours")])
+        # Inactive aussi dans trente jours : ni l'une ni l'autre liste ne la dit.
+        with unittest.mock.patch.object(time, "time", return_value=time.time() + 30 * 86400):
+            quoi = [e.quoi for e in humain.a_faire(self.projet)]
+        self.assertFalse(any("`morceau`" in q for q in quoi), quoi)
+
+    def test_sans_reponse_de_l_origine_la_liste_dit_qu_elle_vient_du_dernier_fetch(self):
+        (self.clone / "memory").mkdir()
+        git(self.clone, "remote", "set-url", "origin", str(self.dossier / "absente"))
+        self.assertIsNone(humain.branches_de_l_origine(self.projet))
+        quoi = [e.quoi for e in humain.a_faire(self.projet)]
+        ligne = next(q for q in quoi if "`fusionnee`" in q)
+        self.assertIn("dernier fetch", ligne)
+        self.assertIn("`git fetch --prune origin`", ligne)
+        # Une origine qui ne répond pas dans le délai : de même.
+        with unittest.mock.patch.object(humain.subprocess, "run",
+                                        side_effect=subprocess.TimeoutExpired("git", humain.DELAI_ORIGINE)):
+            self.assertIsNone(humain.branches_de_l_origine(self.projet))
+
+    def test_rien_a_proposer_rien_a_demander_a_l_origine(self):
+        """L'origine n'est interrogée que s'il y a une branche à dire."""
+        (self.clone / "memory").mkdir()
+        self.projet.politique = {"human": {"keep_branches": ["*", "*/*"]}}
+        with unittest.mock.patch.object(humain, "branches_de_l_origine") as origine:
+            humain.a_faire(self.projet)
+        self.assertEqual(origine.call_count, 0)
+
     def test_une_branche_non_fusionnee_et_inactive_se_signale(self):
         """B-0112 : les branches de session du pilote, jamais livrées,
         restaient sans que personne ne les signale."""
