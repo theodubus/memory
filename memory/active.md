@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0017 en cours, dans la session de L-0016 à la demande de Théo
-(J-2026-11-18-X) : T-0024 faite, sa revue. Puis L-0018, L-0015.
+L-0017 (J-2026-11-18-Y) : revue faite ; un test hors commit, question
+posée à Théo. Puis L-0018, L-0015.
 
 ## Consignes en cours
 
