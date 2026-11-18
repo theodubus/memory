@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0088 — socle roadmap aux formats que Théo a validés (D-0127) : le format détaillé en un tableau par lot, l'état de chaque tâche et la priorité en symboles ; le compact aligné en colonnes
 
-> statut : ouvert · origine : J-2026-11-18-N · besoin : B-0274 · priorité : haute · lu : backlog@65dfc703
+> statut : fait · origine : J-2026-11-18-N · besoin : B-0274 · priorité : haute · lu : backlog@65dfc703 · ref : J-2026-11-18-W, D-0135
 
 Théo, le 18 novembre, devant la sortie de `socle roadmap --format
 markdown` (J-2026-11-18-N) : « C'est illisible, le mode détaillé devait
