@@ -20,7 +20,7 @@ from socle import config, memory as memoire, utils as outils
 from socle.messages import a_traduire, trad
 
 FORMATS = ("text", "markdown")
-LECTURES = ("lot", "need")
+LECTURES = ("batch", "need")
 # Sans `--all`, le format détaillé suit tâche par tâche le lot en cours et
 # les deux suivants.
 DETAILLES = 3
@@ -237,7 +237,7 @@ def _alerte(a: str, b: str, p: str) -> str:
                 "l'autre", a=a, b=b, p=p)
 
 
-def texte(s: Suite, par: str = "lot") -> str:
+def texte(s: Suite, par: str = "batch") -> str:
     """Le format compact : une ligne par jalon, puis par lot (le lot en cours
     marqué), ou par besoin ; ce qui est hors des lots, compté ; les
     alertes."""
@@ -281,7 +281,7 @@ def _liste(titre: str, lignes: list[str]) -> list[str]:
     return [f"- **{titre}**", *(f"  {l}" for l in lignes)] if lignes else []
 
 
-def markdown(s: Suite, par: str = "lot", tout: bool = False, liens: dict[str, str] | None = None) -> str:
+def markdown(s: Suite, par: str = "batch", tout: bool = False, liens: dict[str, str] | None = None) -> str:
     """Le format détaillé, en Markdown : les jalons ; le lot en cours et les
     deux suivants tâche par tâche, les autres en une ligne (`tout` : tous
     détaillés), ou chaque besoin avec ses tâches et le lot de chacune ; ce
@@ -365,7 +365,7 @@ def liens_pour_l_humain(projet: config.Projet, s: Suite) -> dict[str, str]:
     return res
 
 
-def rendre(projet: config.Projet, format_: str = "text", par: str = "lot", tout: bool = False) -> str:
+def rendre(projet: config.Projet, format_: str = "text", par: str = "batch", tout: bool = False) -> str:
     """La suite du projet, dans le format demandé."""
     s = calculer(memoire.Memoire.charger(projet.racine))
     if format_ == "markdown":

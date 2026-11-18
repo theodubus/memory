@@ -256,6 +256,26 @@ class TestCommande(Projet):
         self.assertIn("#### ▶ L-0001 — Le premier lot — en cours\n", sortie)
         self.assertEqual(suite.rendre(self.projet(), "markdown").rstrip("\n"), sortie.rstrip("\n"))
 
+    def test_by_prend_batch_ou_need_et_batch_par_defaut_sans_synonyme(self):
+        """D-0131 : `--by` prend `batch|need`, `batch` par défaut, et `lot`
+        n'en est pas un synonyme."""
+        self.poser("B-0001", titre="Ajouter triple")
+        self.poser("T-0001", "besoin : B-0001", titre="Écrire triple")
+        self.poser("L-0001", "après : T-0001", "en cours", titre="Le premier lot")
+        self.commiter("backlog")
+        self.assertEqual(suite.LECTURES, ("batch", "need"))
+        code, par_defaut = self.socle("roadmap", "--format", "markdown")
+        self.assertEqual(code, 0, par_defaut)
+        code, par_lot = self.socle("roadmap", "--format", "markdown", "--by", "batch")
+        self.assertEqual(code, 0, par_lot)
+        self.assertEqual(par_lot, par_defaut)
+        self.assertIn("#### ▶ L-0001 — Le premier lot — en cours\n", par_lot)
+        erreur = io.StringIO()
+        with contextlib.redirect_stderr(erreur), self.assertRaises(SystemExit) as refus:
+            cli.main(["--root", str(self.racine), "roadmap", "--by", "lot"])
+        self.assertEqual(refus.exception.code, 2)
+        self.assertIn("'lot'", erreur.getvalue())
+
     def projet(self):
         from socle import config
 

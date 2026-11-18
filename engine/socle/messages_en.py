@@ -3728,8 +3728,8 @@ MESSAGES: dict[str, str] = {
     'tâche':
         'text: one line per milestone and per batch (default); markdown: the batch in progress and the next two '
         'task by task',
-    'lire par lot (défaut) ou par besoin, chacun avec ses tâches et le lot de chacune':
-        'read by batch (default) or by need, each with its tasks and the batch of each',
+    'batch : lire par lot (défaut) ; need : par besoin, chacun avec ses tâches et le lot de chacune':
+        'batch: read by batch (default); need: by need, each with its tasks and the batch of each',
     'en markdown, détailler tous les lots, ou tous les besoins':
         'in markdown, detail every batch, or every need',
     "  la suite : `python3 .socle/socle roadmap` (détaillée : `--format markdown`)":

@@ -124,7 +124,7 @@ the progress of its tasks, the ready tasks, and the needs to split into
 tasks or to close. The whole roadmap, at a glance, reads in a terminal with
 `python3 .socle/socle roadmap` (one line per milestone and per batch;
 `--format markdown` details the batch in progress and the next two,
-`--by need` reads by need), on the page of each CI run, and in the
+`--by need` reads by need, `--by batch`, the default, by batch), on the page of each CI run, and in the
 conversation: ask the agent for “the roadmap”.
 
 **Specifications and test cases.** The project declares where its

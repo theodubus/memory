@@ -132,7 +132,7 @@ de ses tâches, les tâches prêtes, et les besoins à découper en tâches ou
 à fermer. La suite entière, d'un coup d'œil, se lit dans un terminal par
 `python3 .socle/socle roadmap` (une ligne par jalon et par lot ;
 `--format markdown` détaille le lot en cours et les deux suivants,
-`--by need` lit par besoin), sur la page de chaque exécution de la CI, et
+`--by need` lit par besoin, `--by batch`, le défaut, par lot), sur la page de chaque exécution de la CI, et
 dans la conversation : demandez « la suite » à l'agent.
 
 **Spécifications et cas d'essai.** Le projet déclare où vivent ses

@@ -66,7 +66,7 @@ priorité et où elle en est), les autres en une ligne (`--all` les
 détaille tous), et, nommés, les tâches dans aucun lot, les besoins à
 découper et à fermer, les entrées bloquées, celles `pour : humain` et les
 demandes en attente avec leur lien. `--by need` lit par besoin, chacun
-avec ses tâches et le lot de chacune. Deux lots qui attendent un même lot
+avec ses tâches et le lot de chacune ; `--by batch`, le défaut, par lot. Deux lots qui attendent un même lot
 sans que l'un attende l'autre sont signalés : leur ordre n'est pas
 déduit, il se choisit par un `après` de l'un vers l'autre.
 

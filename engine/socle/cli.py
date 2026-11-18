@@ -857,8 +857,9 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
     s.add_argument("--format", choices=suite.FORMATS, default="text",
                    help=trad("text : une ligne par jalon et par lot (défaut) ; markdown : le lot en cours et les deux "
                              "suivants tâche par tâche"))
-    s.add_argument("--by", choices=suite.LECTURES, default="lot",
-                   help=trad("lire par lot (défaut) ou par besoin, chacun avec ses tâches et le lot de chacune"))
+    s.add_argument("--by", choices=suite.LECTURES, default="batch",
+                   help=trad("batch : lire par lot (défaut) ; need : par besoin, chacun avec ses tâches et le lot "
+                             "de chacune"))
     s.add_argument("--all", action="store_true", help=trad("en markdown, détailler tous les lots, ou tous les besoins"))
     s.set_defaults(f=cmd_roadmap)
 

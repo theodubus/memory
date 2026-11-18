@@ -65,7 +65,8 @@ detailed format: the batch in progress and the next two task by task
 on one line (`--all` details them all), and, named, the tasks in no
 batch, the needs to split and to close, the blocked entries, those
 `for: human` and the pending requests with their link. `--by need` reads
-by need, each with its tasks and the batch of each. Two batches that wait
+by need, each with its tasks and the batch of each; `--by batch`, the default,
+by batch. Two batches that wait
 on the same batch, neither waiting on the other, are flagged: their order
 is not deduced, it is chosen by an `after` from one to the other.
 

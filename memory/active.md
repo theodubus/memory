@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0012 clos (J-2026-11-18-G), fusionné à la CI verte ; puis L-0014 :
-`docs/fabrication/passation-l0014/` ; puis L-0015.
+L-0014 : cinq tâches intégrées (J-2026-11-18-H) ; restent T-0050,
+T-0049, la revue, une demande à Théo ; puis L-0015.
 
 ## Consignes en cours
 
