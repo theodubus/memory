@@ -7,8 +7,10 @@ La tâche de B-0257, que la migration du backlog en quatre formes a posée dans 
 
 Où elle en est (J-2026-11-17-I) : le lanceur `tests/parallele.py` et son test sont livrés ; la suite rapide y passe en 175 s au mur contre 649 s par `unittest discover`, verte trois fois de suite en local. Reste le changement de la commande de tests de `.socle/adapter.toml`, protégé, par une demande à Théo, puis le relevé de `verify --fast --redo` après lui et les trois passages en CI.
 
+Où elle en est (J-2026-11-18-A) : la commande changée par Théo (D-0130), `verify --fast --redo` relevé à 163,6 s ; deux CI vertes de suite, la troisième attendue au prochain push.
+
 ## Fait quand
 
-- [ ] la durée de `verify --fast --redo` est relevée dans une session de travail, avant et après
+- [x] la durée de `verify --fast --redo` est relevée dans une session de travail, avant et après (650,9 s puis 163,6 s, J-2026-11-18-A)
 - [ ] la suite lancée en parallèle passe trois fois de suite, en local et en CI
-- [ ] après le changement, `verify --fast --redo` prend moins de cinq minutes dans une session de travail
+- [x] après le changement, `verify --fast --redo` prend moins de cinq minutes dans une session de travail (163,6 s, J-2026-11-18-A)
