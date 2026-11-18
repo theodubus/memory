@@ -41,7 +41,9 @@ you:” and “Next:”, nor for the patterns the policy gives in their place
 (`[human] recap_markers`), in a code block fenced by three backticks or
 three tildes; a block never closed runs to the end of the message. An
 output pasted in a block, like this compact one, which ends with its own
-“Next:” line, no longer stands for a recap.
+“Next:” line, no longer stands for a recap; the `socle-batch` skill now
+says to paste the compact one in a code block into the recap of a
+batch's closing.
 
 To do: nothing in the project. The agent writes its two lines as text,
 never in a code block; the hook's refusal reminds it. The CI summary and

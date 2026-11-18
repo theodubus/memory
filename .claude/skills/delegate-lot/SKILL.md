@@ -14,7 +14,8 @@ ADR-0079.
 ## L'annonce et la clôture
 
 À l'annonce d'un lot, puis à sa clôture, lancer
-`python3 .socle/socle roadmap` et en coller la sortie dans la réponse :
+`python3 .socle/socle roadmap` et en coller la sortie dans la réponse,
+dans un bloc de code :
 où le lot se place parmi les jalons et les lots, puis ce qui vient après
 lui (B-0274).
 

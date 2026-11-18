@@ -874,6 +874,22 @@ class TestDeclencheurs(Projet):
         self.assertIn("« Tu implémentes une tâche du socle dans ton worktree du dépôt memory.", skill)
         self.assertNotRegex(skill, r"\bsujets?\b")
 
+    def test_les_skills_font_coller_le_compact_dans_un_bloc_de_code_hors_des_deux_lignes_du_recap(self):
+        # T-0091 (ADR-0089) : collé en texte, le compact et sa ligne « Ensuite : » tiendraient lieu de celle du
+        # récap ; dans un bloc de code, le hook de fin de tour ne les lit pas.
+        from socle import installer as installeur
+
+        attendus = {"fr": "colle la sortie de `python3 .socle/socle roadmap` dans un bloc de code",
+                    "en": "pastes the output of `python3 .socle/socle roadmap` in a code block"}
+        for lg, phrase in attendus.items():
+            installeur.poser_skills(self.racine, lg)
+            texte = (self.racine / installeur.SKILLS / "socle-batch" / "SKILL.md").read_text(encoding="utf-8")
+            self.assertIn(phrase, " ".join(texte.split()), lg)
+        racine = Path(__file__).resolve().parent.parent
+        skill = " ".join((racine / ".claude/skills/delegate-lot/SKILL.md").read_text(encoding="utf-8").split())
+        self.assertIn("lancer `python3 .socle/socle roadmap` et en coller la sortie dans la réponse, dans un bloc de "
+                      "code", skill)
+
 
 if __name__ == "__main__":
     unittest.main()

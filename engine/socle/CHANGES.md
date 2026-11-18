@@ -42,7 +42,8 @@ leur place (`[human] recap_markers`), dans un bloc de code délimité par
 trois accents graves ou trois tildes ; un bloc jamais fermé court
 jusqu'à la fin du message. Une sortie collée dans un bloc, comme ce
 compact, qui finit par sa propre ligne « Ensuite : », ne tient plus lieu
-de récap.
+de récap ; le skill `socle-batch` dit désormais de coller le compact
+dans un bloc de code au récap de la clôture d'un lot.
 
 À faire : rien dans le projet. L'agent écrit ses deux lignes en texte,
 jamais dans un bloc de code ; le refus du hook le lui rappelle. Le résumé

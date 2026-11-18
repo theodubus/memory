@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0006 — Lot des copies protégées et des skills : leur retard, leur remise, et ce que le skill socle-batch dit mal
 
-> statut : ouvert · origine : J-2026-11-15-J · après : L-0005, T-0009, T-0010, T-0011, T-0012, T-0073, T-0013, T-0014, T-0015, T-0074, T-0016, T-0075, T-0017, T-0060, T-0069, T-0061, T-0063, T-0084, T-0072, T-0091 · lu : backlog@19378efe · ancien : B-0236
+> statut : ouvert · origine : J-2026-11-15-J · après : L-0005, T-0009, T-0010, T-0011, T-0012, T-0073, T-0013, T-0014, T-0015, T-0074, T-0016, T-0075, T-0017, T-0060, T-0069, T-0061, T-0063, T-0084, T-0072 · lu : backlog@19378efe · ancien : B-0236
 
 Les skills du produit et leurs copies protégées dans ce dépôt : les
 copies en retard sur leurs gabarits (B-0218, dont celle de

@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0091 — Le skill socle-batch fait coller la sortie compacte de socle roadmap dans un bloc de code : collée en texte, sa ligne « Ensuite : » tient lieu de celle du récap (ADR-0089)
 
-> statut : ouvert · origine : J-2026-11-18-R · besoin : B-0274 · lu : backlog@4fa0e025
+> statut : fait · origine : J-2026-11-18-R · besoin : B-0274 · lu : backlog@4fa0e025 · ref : J-2026-11-18-V
 
 Relevé à la correction des bloquants de la passe 1 de L-0016
 (J-2026-11-18-R). Le hook de fin de tour ne lit plus les deux lignes du
@@ -18,4 +18,4 @@ des copies.
 
 ## Fait quand
 
-- [ ] le gabarit du skill socle-batch, son anglais et le skill delegate-lot disent de coller la sortie compacte de socle roadmap dans un bloc de code, et un test de `tests/test_suite_du_projet.py` lit la phrase
+- [x] le gabarit du skill socle-batch, son anglais et le skill delegate-lot disent de coller la sortie compacte de socle roadmap dans un bloc de code, et un test de `tests/test_suite_du_projet.py` lit la phrase

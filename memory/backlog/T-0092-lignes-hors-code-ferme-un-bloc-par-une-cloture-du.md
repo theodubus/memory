@@ -11,3 +11,4 @@ par une même fonction pour les deux.
 ## Fait quand
 
 - [ ] un test lit, sur un texte où un bloc ~~~ contient une ligne ```, que les lignes du bloc sont dans le code et celles d'après hors du code, et qu'un lien cassé écrit après est signalé
+- [ ] un test lit de même un bloc ```` qui contient une ligne ```, et une ligne « ```a``` » ou une clôture suivie d'un texte, que la revue de L-0016, passe 2, a relevés : la lecture des liens et celle du récap y rendent les mêmes lignes

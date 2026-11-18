@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0016 — Lot de la vue de la suite aux formats validés : le détaillé en tableaux, le compact en colonnes
 
-> statut : en cours · origine : J-2026-11-18-N · après : L-0014, T-0088 · lu : backlog@86148227
+> statut : en cours · origine : J-2026-11-18-N · après : L-0014, T-0088, T-0091 · lu : backlog@86148227
 
 Formé le 18 novembre (J-2026-11-18-N) pour T-0088 : la vue de la suite
 que L-0014 a livrée ne suit pas les formats que Théo a validés
@@ -29,3 +29,30 @@ avait livré `socle roadmap`, avait ouvert B-0285, de la même famille :
 la vue de la suite reste à mesurer contre son usage. La correction
 change un garde-fou, d'où une passe 2 sur elle seule, qui éprouve le
 modèle de menace d'ADR-0089 et l'ordre d'exécution : continuer.
+
+### Passe 2 — 2026-11-18
+
+Commits : 381025a..c034332
+- Bloquant : le compact collé en texte, que le skill socle-batch fait coller sans dire où, remplit encore le contrôle des deux lignes du récap · même cause
+- Ouvre : T-0100
+
+Recul : le bloquant de cette passe a, selon le relecteur, la même cause
+que le premier de la passe 1 : la ligne « Ensuite : » du compact validé,
+croisée avec le contrôle du récap. La correction de la passe 1 a retiré
+les blocs de code de la lecture en supposant que le produit fait coller
+le compact dans un bloc ; elle ne l'a pas vérifié dans le skill qui le
+prescrit, et ADR-0089 l'affirmait à tort. Cette fois, chaque texte qui
+fait coller le compact, les deux gabarits de `socle-batch` et
+`delegate-lot`, dit « dans un bloc de code », un test les lit, et le
+contexte de la décision dit le skill tel qu'il est : il ne reste pas de
+chemin prescrit qui colle le compact en texte. C'est la première passe
+où le relecteur voit une cause revenir ; la règle d'arrêt en veut deux
+de suite. Le lot ferme T-0088, le rendu, et T-0091, le texte du skill ;
+il ouvre T-0100, l'ordre des lots lu par besoin, de même nature que
+T-0089 et T-0090 de la passe 1 : des affinements de la même fonction.
+L-0014, qui a livré `socle roadmap` dans les mêmes fichiers, avait ouvert
+B-0285, de la même famille : la vue de la suite reste à mesurer contre
+son usage. La correction tient en quelques lignes de texte, sans
+conception nouvelle : le skill de la revue ne demande pas de passe de
+plus, et il ne reste au lot que la réponse de Théo sur les dix tests.
+Décision : continuer

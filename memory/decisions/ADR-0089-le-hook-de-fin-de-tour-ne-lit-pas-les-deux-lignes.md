@@ -11,8 +11,10 @@ tour, quand l'agent a agi, deux lignes dans son dernier message :
 (`engine/socle/human.py`) les cherchait dans tout le message, blocs de
 code compris. T-0088@972bacbe rend le format compact de `socle roadmap`
 sur l'exemple que Théo a validé (D-0127@4d91f8cd), qui finit par une
-ligne « Ensuite : » ; le skill `socle-batch` colle ce compact, dans un
-bloc de code, au récap de la clôture d'un lot. La passe 1 de la revue
+ligne « Ensuite : » ; le skill `socle-batch` fait coller ce compact au
+récap de la clôture d'un lot, et dit de le coller dans un bloc de code
+depuis la passe 2 de la revue du lot (T-0091@0708a1ac) : collé en texte, sa ligne
+tiendrait encore lieu de celle du récap. La passe 1 de la revue
 du lot L-0016@76fc494b l'a relevé (J-2026-11-18-P@0c5f6ad8) : un récap
 qui oublie sa propre ligne « Ensuite : » passait, quand il était refusé
 avant le lot. Le contrôle des liens, lui, ne lisait déjà pas les blocs
@@ -50,7 +52,8 @@ de code, qui montrent des exemples (ADR-0010@3990e4a1).
 - **Un message dont le bloc reste ouvert.** Tout ce qui suit sa clôture
   ouvrante est dans le bloc : les deux lignes écrites avant comptent,
   celles écrites après ne comptent pas, et le hook refuse la fin du
-  tour une fois, en le disant ; l'agent ferme son bloc.
+  tour une fois, en lui disant d'écrire ses deux lignes en texte, hors
+  de tout bloc de code ; l'agent ferme son bloc.
 - **Ce qui change pour l'agent.** Il écrit ses deux lignes en texte,
   jamais dans un bloc de code ; une sortie collée dans un bloc ne les
   remplace pas.
@@ -64,8 +67,9 @@ de code, qui montrent des exemples (ADR-0010@3990e4a1).
 Un agent qui écrivait son récap dans un bloc de code est refusé une fois,
 et le réécrit en texte. Le contrôle des liens garde sa propre lecture des
 blocs (`memoire.lignes_hors_code`), qui bascule à chaque clôture, quel
-qu'en soit le caractère : les deux lectures ne diffèrent que pour un bloc
-qui en contient un autre d'un autre caractère.
+qu'en soit le caractère : les deux lectures diffèrent pour un bloc qui
+contient une clôture d'un autre caractère ou plus courte, et pour une
+clôture suivie d'un texte sur sa ligne ; T-0092@7e2a78c6 les rapproche.
 
 Pour défaire : chercher les motifs dans le message entier, dans
 `recap_manquant`, et retirer du refus et du guide la phrase sur les blocs
