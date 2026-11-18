@@ -53,6 +53,13 @@ La fenêtre de cinq heures, mesurée pendant la session, de 1 % à 75 % :
 
 La réponse de l'agent, dans la conversation, distingue ce qui tient à ce lot de ce qui tient au fonctionnement du socle, et propose des allégements. L'entrée de journal qui consigne la question et la réponse de Théo, et le besoin qui en sort, s'écrivent après l'intégration, pour la même raison que plus haut : avant, ils prendraient les numéros que portent déjà les correctifs.
 
+Théo a ensuite validé les cinq propositions, la 2 dans sa variante légère, la 1 sous la condition que les sous-agents d'implémentation restent pertinents, que la réponse de l'agent remplit : D-0134, en séance, qui désigne `docs/fabrication/allegements.md`, où sont les propositions, sa réponse et celle de l'agent. Après l'intégration, ouvrir au backlog :
+- un besoin par proposition, avec ses tâches ;
+- un lot des allégements, après L-0017 et avant L-0015 ;
+- pour la 2, la tâche qui la porte dans le skill `socle-request` du produit. Le skill `delegate-lot` la dit déjà.
+
+La variante légère vaut dès maintenant : les dix tests de `tests-existants.diff` se valident par une question dans la conversation qui les nomme, chacun avec sa valeur avant et après. La réponse se consigne en séance, sans demande écrite ni relecture à froid. Elle se commite avec les tests, dans le même push.
+
 ## La suite
 
 1. **Intégrer en gardant les SHA.** Copier ce dossier hors du dépôt (dans le scratchpad de la session), puis :
@@ -70,8 +77,8 @@ La réponse de l'agent, dans la conversation, distingue ce qui tient à ce lot d
    - le défaut injecté et son témoin : l'auto-test complet n'a pas tourné ;
    - le guide, la note de version, le point 17 du prompt de chess et l'architecture, au regard de la sortie réelle.
 3. **Corriger les bloquants**, puis écrire le recul de la passe 2.
-4. **Pousser le lot**, sa CI en échec sur les dix tests. Puis compléter la demande avec ses liens, la faire relire à froid, la pousser et donner son lien.
-5. **À la réponse de Théo**, dans un même push : les dix tests et la réponse ; T-0088 close. Puis :
+4. **Valider les dix tests par la variante légère (D-0134)** : la question dans la conversation, puis la réponse consignée en séance. `demande-brouillon.txt` en donne la liste, avec l'avant et l'après de chacun.
+5. **À la réponse de Théo**, dans un même push : le lot, les dix tests et la réponse ; T-0088 close. Puis :
    - la CI verte ;
    - le lot clos (son recul, `fait`, `socle archive`), et le compact de `socle roadmap` collé au récap, dans un bloc de code ;
    - la fusion par l'agent (D-0092), puis la distribution vérifiée ;

@@ -6,7 +6,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 ## En cours
 
 L-0016 (J-2026-11-18-N) : `docs/fabrication/passation-l0016/` ; puis
-L-0017, L-0015.
+L-0017, les allégements de D-0134, L-0015.
 
 ## Consignes en cours
 
@@ -66,7 +66,6 @@ Leur texte exact est dans l'entrée du journal citée.
 Avant toute nouvelle fonction (J-2026-11-13-I, D-0108, D-0109, D-0111),
 par lots :
 
-1. Le jalon JA-0005 (D-0118), lot par lot ; l'état montre le prochain.
+1. Le jalon JA-0005 (D-0118), lot par lot.
 2. La mise à jour de chess, avec le prompt complété.
-3. Ensuite la planification (B-0101), puis la répartition entre agents
-   (B-0055).
+3. Ensuite la planification (B-0101), puis la répartition (B-0055).
