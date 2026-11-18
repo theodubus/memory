@@ -5,7 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0012 : sa passe 3, sur b6824ef ; puis L-0014 :
+L-0012 clos (J-2026-11-18-G), fusionné à la CI verte ; puis L-0014 :
 `docs/fabrication/passation-l0014/` ; puis L-0015.
 
 ## Consignes en cours

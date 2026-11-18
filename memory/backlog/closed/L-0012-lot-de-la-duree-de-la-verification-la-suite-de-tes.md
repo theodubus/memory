@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0012 — Lot de la durée de la vérification : la suite de tests sur plusieurs cœurs, la durée des étapes rapides dite et sous un seuil
 
-> statut : en cours · origine : J-2026-11-16-I · après : L-0013, T-0044, T-0045 · lu : backlog@c0a47b1b · ancien : B-0266
+> statut : fait · origine : J-2026-11-16-I · ref : J-2026-11-18-G · après : L-0013, T-0044, T-0045 · lu : backlog@c0a47b1b · ancien : B-0266
 
 Placé par Théo juste après L-0011, avant L-0005 (J-2026-11-16-I) :
 `verify --fast` dure près de douze minutes sur un seul cœur, et chaque
