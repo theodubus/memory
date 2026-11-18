@@ -237,12 +237,12 @@ MESSAGES: dict[str, str] = {
     "(le chantier actif n'a pas de section « Prochaines étapes »)":
         "(the active work has no “Next steps” section)",
     "Tu as agi pendant ce tour, et ton dernier message n'a pas {manque}. Termine par un récap de ce qui a été fait, "
-    "puis :\n- « Pour toi : » ce qui revient à l'humain — décisions, actions qu'il est seul à pouvoir faire — ou « "
+    "puis, en texte, hors de tout bloc de code :\n- « Pour toi : » ce qui revient à l'humain — décisions, actions qu'il est seul à pouvoir faire — ou « "
     "rien » ;\n- « Ensuite : » la suite proposée (prochain jalon, ce qu'il reste à faire avant), et ce que tu "
     "attends, s'il y a lieu (une CI, un match : quoi, et jusqu'à quand).\n\nCe qui revient à l'humain, calculé "
     "maintenant :\n{liste}\n\nProchaines étapes, selon le chantier actif :\n{suite}":
         "You acted during this turn, and your last message lacks {manque}. End with a recap of what was done, "
-        "then:\n- “For you:” what falls to the human — decisions, actions only they can do — or “nothing”;\n- "
+        "then, as text, outside any code block:\n- “For you:” what falls to the human — decisions, actions only they can do — or “nothing”;\n- "
         "“Next:” the proposed next step (next milestone, what remains to do before it), and what you are waiting "
         "for, if anything (a CI run, a match: what, and until when).\n\nWhat falls to the human, computed "
         "now:\n{liste}\n\nNext steps, according to the active work:\n{suite}",
@@ -2851,6 +2851,8 @@ MESSAGES: dict[str, str] = {
         "end of intervention without saying what falls to the human",
     "fin d'intervention qui ne dit pas la suite":
         "end of intervention that does not say what comes next",
+    "fin d'intervention dont la seule ligne « Ensuite : » est celle d'une sortie collée dans un bloc de code":
+        "end of intervention whose only “Next:” line is that of an output pasted in a code block",
     "chemin cité présent sur le disque seulement, qu'une règle locale de git ignore":
         "cited path present on disk only, ignored by a local git rule",
     "un fichier neuf cité par la mémoire, ajouté par le même commit, passe la fin de tour, le commit et la CI":
@@ -3009,6 +3011,10 @@ MESSAGES: dict[str, str] = {
         "an answer given in the conversation, relayed with its quote, passes the hook and the CI",
     "une fin d'intervention avec « Pour toi : » et « Ensuite : » passe le hook de fin de tour":
         "an end of intervention with “For you:” and “Next:” passes the end-of-turn hook",
+    "une fin d'intervention avec ses deux lignes en texte et un compact collé dans un bloc de code passe le hook "
+    "de fin de tour":
+        "an end of intervention with its two lines as text and a compact output pasted in a code block passes the "
+        "end-of-turn hook",
     "des liens que l'humain peut suivre passent le hook de fin de tour":
         "links the human can follow pass the end-of-turn hook",
     "une fonction ajoutée avec le test qui la nomme passe la CI":

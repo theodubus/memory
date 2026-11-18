@@ -7,33 +7,48 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
-## 2026-11-18-c — La suite du projet aux formats validés : le compact en colonnes, le détaillé en tableaux
+## 2026-11-18-c — La suite du projet aux formats validés : le compact en colonnes, le détaillé en tableaux, dans l'ordre d'exécution ; le récap ne se lit plus dans un bloc de code
 
 `socle roadmap` change de rendu, pas de contenu ni d'options. Le format
-compact aligne en colonnes, comptées en caractères, chaque jalon et ses
-besoins clos sur le total, puis les lots qui le servent, chacun avec ses
-tâches closes sur le total, le lot en cours marqué ▶ ; au-delà du lot en
-cours et des deux suivants, les autres lots du jalon tiennent en une
-ligne, que `--all` déplie ; les lots d'aucun jalon viennent après. Il n'a
-plus de ligne d'en-tête, et finit par deux lignes : « Hors lot : », les
-comptes non nuls et les bloqués nommés, et « Ensuite : », les jalons sans
-lot avec leurs premiers besoins ouverts, puis les besoins d'aucun jalon.
-Il ne nomme toujours aucune demande. Le format détaillé
-(`--format markdown`) garde son titre et sa phrase, puis donne une
-légende des symboles ; sous chaque jalon, chaque lot détaillé a sa ligne
-(son rang dans l'ordre d'exécution, son titre, son état s'il est en
-cours ou arrêté, les demandes qu'il attend, ses tâches closes sur le
-total) et un tableau d'une ligne par tâche : son état et sa priorité en
-symboles (✓ faite, ▶ en cours, ○ prête, ⏳ attend, ✗ bloquée,
-⊘ abandonnée ; ↑ haute, ↓ basse), son identifiant, son besoin, son titre
-jusqu'à son premier deux-points, et ce qu'elle attend. Lu par besoin
-(`--by need`), chaque besoin a le tableau de ses tâches, avec le lot de
+compact aligne en colonnes, comptées en caractères, les lots strictement
+dans leur ordre d'exécution, chacun avec ses tâches closes sur le total,
+le lot en cours marqué ▶. L'en-tête d'un jalon et de ses besoins clos
+sur le total revient chaque fois que le jalon change d'un lot au
+suivant ; « Hors des jalons » coiffe de même, à leur place, les lots qui
+n'en servent aucun. Le lot en cours et les deux suivants, de quelque
+jalon qu'ils soient, ont chacun leur ligne ; au-delà, chaque suite de
+lots d'un même jalon tient en une ligne, un lot seul garde la sienne, et
+`--all` déplie tout. Il n'a plus de ligne d'en-tête, et finit par deux
+lignes : « Hors lot : », les comptes non nuls et les bloqués nommés, et
+« Ensuite : », les jalons sans lot avec leurs premiers besoins ouverts,
+puis les besoins d'aucun jalon. Il ne nomme toujours aucune demande. Le
+format détaillé (`--format markdown`) garde son titre et sa phrase, puis
+donne une légende des symboles ; dans le même ordre, sous les mêmes
+en-têtes, chaque lot de la fenêtre a sa ligne (son rang dans l'ordre
+d'exécution, son titre, son état s'il est en cours ou arrêté, les
+demandes qu'il attend, ses tâches closes sur le total) et un tableau
+d'une ligne par tâche : son état et sa priorité en symboles (✓ faite,
+▶ en cours, ○ prête, ⏳ attend, ✗ bloquée, ⊘ abandonnée ; ↑ haute,
+↓ basse), son identifiant, son besoin, son titre jusqu'à son premier
+deux-points, et ce qu'elle attend ; chaque autre lot, une ligne
+numérotée. Lu par besoin (`--by need`), les besoins viennent dans
+l'ordre de leurs lots, chacun avec le tableau de ses tâches et le lot de
 chacune. Ce qui est hors des lots garde ses sections, chacune en tableau.
 Le guide montre les deux formats.
 
-À faire : rien. Le résumé de la CI et le récap de la clôture d'un lot
-prennent le nouveau rendu d'eux-mêmes ; un texte du projet qui citait
-l'ancien mot pour mot est à revoir.
+Le hook de fin de tour ne cherche plus les deux lignes du récap,
+« Pour toi : » et « Ensuite : », ni les motifs que la politique donne à
+leur place (`[human] recap_markers`), dans un bloc de code délimité par
+trois accents graves ou trois tildes ; un bloc jamais fermé court
+jusqu'à la fin du message. Une sortie collée dans un bloc, comme ce
+compact, qui finit par sa propre ligne « Ensuite : », ne tient plus lieu
+de récap.
+
+À faire : rien dans le projet. L'agent écrit ses deux lignes en texte,
+jamais dans un bloc de code ; le refus du hook le lui rappelle. Le résumé
+de la CI et le récap de la clôture d'un lot prennent le nouveau rendu
+d'eux-mêmes ; un texte du projet qui citait l'ancien mot pour mot est à
+revoir.
 
 ## 2026-11-18-b — Le dossier de la revue, son skill et les questions disent tâche, besoin ou entrée, jamais « sujet »
 

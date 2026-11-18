@@ -127,6 +127,29 @@ def sans_numeros(texte: str) -> str:
     return memoire.ID_RE.sub(lambda m: f"{m.group('type')}-NNNN", texte)
 
 
+def backlog_alterne(jalons: dict[int, str | None]) -> memoire.Memoire:
+    """Un lot L-000n par clé de `jalons`, dans cet ordre d'exécution, qui
+    mène la tâche T-000n de son besoin B-000n, que tient le jalon donné, ou
+    aucun ; le premier lot en cours, et sa tâche ; la tâche T-0005 faite."""
+    def tenus(j: str) -> str:
+        return ", ".join(f"B-{n:04d}" for n, x in jalons.items() if x == j)
+
+    return memoire_de(
+        *(entree(f"B-{n:04d}") for n in jalons),
+        *(entree(f"T-{n:04d}", "en cours" if n == 1 else "fait" if n == 5 else "ouvert", meta=f"besoin : B-{n:04d}")
+          for n in jalons),
+        entree("L-0001", "en cours", meta="après : T-0001"),
+        *(entree(f"L-{n:04d}", meta=f"après : L-{n - 1:04d}, T-{n:04d}") for n in list(jalons)[1:]),
+        entree("JA-0001", meta="après : " + tenus("JA-0001")),
+        entree("JA-0002", meta="après : JA-0001, " + tenus("JA-0002")))
+
+
+def entetes_et_lots(md: str) -> list[str]:
+    """Les lignes d'un rendu détaillé qui disent un jalon, un lot ou un
+    besoin, dans leur ordre."""
+    return [l for l in md.splitlines() if l.startswith(("### ", "**", "- "))]
+
+
 class TestCalcul(unittest.TestCase):
     def test_les_lots_et_les_jalons_dans_leur_ordre_avec_leur_avancement(self):
         s = suite.calculer(backlog_d_essai())
@@ -496,22 +519,24 @@ class TestLesFormatsValides(unittest.TestCase):
         essai = suite.texte(suite.calculer(backlog_d_essai()), "need").splitlines()
         self.assertEqual(essai[5:7], ["Hors des jalons", "   B-0005  L'entrée B-0005  0/1  dans aucun lot"])
 
-    def test_les_lots_d_aucun_jalon_viennent_apres_sous_hors_des_jalons(self):
+    def test_les_lots_d_aucun_jalon_sous_hors_des_jalons_a_leur_place_dans_l_ordre(self):
         mem = memoire_de(entree("B-0001"), entree("B-0002"),
                          entree("T-0001", meta="besoin : B-0001"), entree("T-0002", meta="besoin : B-0002"),
                          entree("L-0001", "en cours", meta="après : T-0002"),
                          entree("L-0002", meta="après : L-0001, T-0001"), entree("JA-0001", meta="après : B-0001"))
         s = suite.calculer(mem)
         self.assertEqual(suite.texte(s).splitlines(), [
-            "JA-0001  L'entrée JA-0001   0/1 besoins clos",
-            "   L-0002  L'entrée L-0002  0/1",
             "Hors des jalons",
             " ▶ L-0001  L'entrée L-0001  0/1  en cours",
+            "JA-0001  L'entrée JA-0001   0/1 besoins clos",
+            "   L-0002  L'entrée L-0002  0/1",
             "Hors lot : rien",
             "Ensuite : B-0002"])
-        lignes = suite.markdown(s).splitlines()
-        self.assertLess(lignes.index("**2. L-0002 — L'entrée L-0002** · 0/1"), lignes.index("### Hors des jalons"))
-        self.assertLess(lignes.index("### Hors des jalons"), lignes.index("**1. L-0001 — L'entrée L-0001** · en cours · 0/1"))
+        self.assertEqual(entetes_et_lots(suite.markdown(s))[:4], [
+            "### Hors des jalons",
+            "**1. L-0001 — L'entrée L-0001** · en cours · 0/1",
+            "### JA-0001 — L'entrée JA-0001 · 0/1 besoins clos",
+            "**2. L-0002 — L'entrée L-0002** · 0/1"])
         # Sans aucun jalon, ni groupe ni « Ensuite ».
         sans = suite.calculer(memoire_de(entree("B-0001"), entree("T-0001", meta="besoin : B-0001"),
                                          entree("L-0001", "en cours", meta="après : T-0001")))
@@ -581,6 +606,125 @@ class TestLesFormatsValides(unittest.TestCase):
         prompt = Path(__file__).resolve().parent.parent / "docs/fabrication/chess/prompt-mise-a-jour.md"
         texte = " ".join(prompt.read_text(encoding="utf-8").split())
         self.assertIn("17. La suite du projet se lit désormais en colonnes et en tableaux", texte)
+
+
+class TestLOrdreDExecution(unittest.TestCase):
+    """L-0016, passe 1 de la revue : le compact rangeait chaque lot sous son
+    jalon, les jalons dans l'ordre de leur premier lot ; quand les lots de
+    deux jalons alternaient, il ne suivait plus l'ordre d'exécution, que
+    B-0274 garde. Les lots viennent strictement dans cet ordre, l'en-tête
+    d'un jalon chaque fois que le jalon change ; la fenêtre, le lot en cours
+    et les deux suivants, est commune à tous les jalons."""
+
+    def test_les_lots_de_deux_jalons_qui_alternent_suivent_l_ordre_d_execution(self):
+        s = suite.calculer(backlog_alterne({1: "JA-0001", 2: "JA-0002", 3: "JA-0001"}))
+        self.assertEqual([lot.entree.id for lot in s.lots], ["L-0001", "L-0002", "L-0003"])
+        self.assertEqual([(j.entree.id, [lot.entree.id for lot in lots]) for j, lots in suite.groupes(s)],
+                         [("JA-0001", ["L-0001"]), ("JA-0002", ["L-0002"]), ("JA-0001", ["L-0003"])])
+        self.assertEqual(suite.texte(s).splitlines(), [
+            "JA-0001  L'entrée JA-0001   0/2 besoins clos",
+            " ▶ L-0001  L'entrée L-0001  0/1  en cours",
+            "JA-0002  L'entrée JA-0002   0/1 besoins clos",
+            "   L-0002  L'entrée L-0002  0/1",
+            "JA-0001  L'entrée JA-0001   0/2 besoins clos",
+            "   L-0003  L'entrée L-0003  0/1",
+            "Hors lot : rien"])
+        self.assertEqual(entetes_et_lots(suite.markdown(s)), [
+            "### JA-0001 — L'entrée JA-0001 · 0/2 besoins clos",
+            "**1. L-0001 — L'entrée L-0001** · en cours · 0/1",
+            "### JA-0002 — L'entrée JA-0002 · 0/1 besoins clos",
+            "**2. L-0002 — L'entrée L-0002** · 0/1",
+            "### JA-0001 — L'entrée JA-0001 · 0/2 besoins clos",
+            "**3. L-0003 — L'entrée L-0003** · 0/1"])
+        # Lus par besoin, les besoins dans l'ordre de leurs lots, de même.
+        self.assertEqual(suite.texte(s, "need").splitlines()[:6], [
+            "JA-0001  L'entrée JA-0001   0/2 besoins clos",
+            "   B-0001  L'entrée B-0001  0/1  L-0001",
+            "JA-0002  L'entrée JA-0002   0/1 besoins clos",
+            "   B-0002  L'entrée B-0002  0/1  L-0002",
+            "JA-0001  L'entrée JA-0001   0/2 besoins clos",
+            "   B-0003  L'entrée B-0003  0/1  L-0003"])
+        self.assertEqual(entetes_et_lots(suite.markdown(s, "need")), [
+            "### JA-0001 — L'entrée JA-0001 · 0/2 besoins clos",
+            "**B-0001 — L'entrée B-0001** · 0/1 · L-0001",
+            "### JA-0002 — L'entrée JA-0002 · 0/1 besoins clos",
+            "**B-0002 — L'entrée B-0002** · 0/1 · L-0002",
+            "### JA-0001 — L'entrée JA-0001 · 0/2 besoins clos",
+            "**B-0003 — L'entrée B-0003** · 0/1 · L-0003"])
+
+    JALONS = {1: "JA-0001", 2: "JA-0002", 3: "JA-0001", 4: "JA-0002", 5: "JA-0002", 6: "JA-0002", 7: "JA-0001",
+              8: None, 9: "JA-0002", 10: "JA-0002"}
+
+    def test_la_fenetre_est_commune_a_tous_les_jalons_dans_le_compact(self):
+        """Hors de la fenêtre, un jalon qui n'a pas le lot en cours ne
+        montre ni son premier lot ni les deux suivants : une suite de ses
+        lots tient en une ligne, un lot seul garde la sienne."""
+        s = suite.calculer(backlog_alterne(self.JALONS))
+        self.assertEqual([lot.entree.id for lot in suite.detailles(s, tout=False)], ["L-0001", "L-0002", "L-0003"])
+        self.assertEqual(suite.texte(s).splitlines(), [
+            "JA-0001  L'entrée JA-0001   0/3 besoins clos",
+            " ▶ L-0001  L'entrée L-0001  0/1  en cours",
+            "JA-0002  L'entrée JA-0002   0/6 besoins clos",
+            "   L-0002  L'entrée L-0002  0/1",
+            "JA-0001  L'entrée JA-0001   0/3 besoins clos",
+            "   L-0003  L'entrée L-0003  0/1",
+            "JA-0002  L'entrée JA-0002   0/6 besoins clos",
+            "   …  L-0004 à L-0006       1/3",
+            "JA-0001  L'entrée JA-0001   0/3 besoins clos",
+            "   L-0007  L'entrée L-0007  0/1",
+            "Hors des jalons",
+            "   L-0008  L'entrée L-0008  0/1",
+            "JA-0002  L'entrée JA-0002   0/6 besoins clos",
+            "   …  L-0009 à L-0010       0/2",
+            "Hors lot : 1 besoin à fermer",
+            "Ensuite : B-0008"])
+        # `--all` : chaque lot en sa ligne, dans le même ordre.
+        tout = suite.texte(s, tout=True).splitlines()
+        self.assertEqual([re.search(r"L-\d+", l).group() for l in tout if re.match(r"^ [▶ ] L-", l)],
+                         [f"L-{n:04d}" for n in self.JALONS])
+        self.assertFalse(any("…" in l for l in tout))
+        # Lu par besoin, chaque besoin garde sa ligne, dans l'ordre de ses lots.
+        self.assertEqual([l.split()[0] for l in suite.texte(s, "need").splitlines() if l.startswith("   B-")],
+                         [f"B-{n:04d}" for n in self.JALONS])
+
+    def test_la_fenetre_est_commune_a_tous_les_jalons_dans_le_detaille(self):
+        s = suite.calculer(backlog_alterne(self.JALONS))
+        md = suite.markdown(s)
+        self.assertEqual(entetes_et_lots(md), [
+            "### JA-0001 — L'entrée JA-0001 · 0/3 besoins clos",
+            "**1. L-0001 — L'entrée L-0001** · en cours · 0/1",
+            "### JA-0002 — L'entrée JA-0002 · 0/6 besoins clos",
+            "**2. L-0002 — L'entrée L-0002** · 0/1",
+            "### JA-0001 — L'entrée JA-0001 · 0/3 besoins clos",
+            "**3. L-0003 — L'entrée L-0003** · 0/1",
+            "### JA-0002 — L'entrée JA-0002 · 0/6 besoins clos",
+            "- **4.** L-0004 — L'entrée L-0004 · 0/1",
+            "- **5.** L-0005 — L'entrée L-0005 · 1/1",
+            "- **6.** L-0006 — L'entrée L-0006 · 0/1",
+            "### JA-0001 — L'entrée JA-0001 · 0/3 besoins clos",
+            "- **7.** L-0007 — L'entrée L-0007 · 0/1",
+            "### Hors des jalons",
+            "- **8.** L-0008 — L'entrée L-0008 · 0/1",
+            "### JA-0002 — L'entrée JA-0002 · 0/6 besoins clos",
+            "- **9.** L-0009 — L'entrée L-0009 · 0/1",
+            "- **10.** L-0010 — L'entrée L-0010 · 0/1",
+            "### Hors des lots",
+            "**Besoins à fermer, leurs tâches closes**",
+            "- **Après les jalons**, dans aucun jalon : B-0008"])
+        # Les tableaux de tâches des trois lots de la fenêtre seuls, et celui hors des lots.
+        self.assertEqual([lignes[2] for _, lignes, _ in tableaux(md)],
+                         ["| ▶ | T-0001 | B-0001 | L'entrée T-0001 |", "| ○ | T-0002 | B-0002 | L'entrée T-0002 |",
+                          "| ○ | T-0003 | B-0003 | L'entrée T-0003 |", "| ○ | B-0005 | L'entrée B-0005 |"])
+        self.assertEqual(md.count("(`--all` pour tout le détail)"), 1)
+        # `--all` : chaque lot détaillé, dans le même ordre.
+        tout = suite.markdown(s, tout=True)
+        self.assertEqual(re.findall(r"^\*\*\d+\. (L-\d+)", tout, re.M), [f"L-{n:04d}" for n in self.JALONS])
+        self.assertNotIn("(`--all` pour tout le détail)", tout)
+        # Lu par besoin : les besoins des lots de la fenêtre détaillés, les autres en une ligne, dans l'ordre.
+        besoins = [l for l in entetes_et_lots(suite.markdown(s, "need")) if l.startswith(("**B-", "- B-"))]
+        self.assertEqual([re.search(r"B-\d+", l).group() for l in besoins], [f"B-{n:04d}" for n in self.JALONS])
+        self.assertEqual([l for l in besoins if l.startswith("**")],
+                         [f"**B-{n:04d} — L'entrée B-{n:04d}** · 0/1 · L-{n:04d}" for n in (1, 2, 3)])
 
 
 class TestCommande(Projet):

@@ -4,11 +4,12 @@ les besoins, et ce qui n'est dans aucun lot. Elle se calcule depuis le
 backlog comme l'état, par les mêmes fonctions (`memory.Graphe`,
 `memory.ordre_de`) : rien n'y est écrit à la main.
 
-Deux formats : compact (`text`), une ligne alignée en colonnes par jalon
-et par lot, ou par besoin, pour le terminal et le récap de la clôture d'un
-lot ; détaillé (`markdown`), le lot en cours et les deux suivants avec le
-tableau de leurs tâches, l'état et la priorité en symboles, pour la
-conversation et le résumé d'une exécution de la CI. Le compact ne nomme
+Deux formats, qui suivent tous deux l'ordre d'exécution des lots :
+compact (`text`), une ligne alignée en colonnes par jalon et par lot, ou
+par besoin, pour le terminal et le récap de la clôture d'un lot ; détaillé
+(`markdown`), le lot en cours et les deux suivants avec le tableau de
+leurs tâches, l'état et la priorité en symboles, pour la conversation et
+le résumé d'une exécution de la CI. Le compact ne nomme
 aucune demande : collé dans une réponse, il ne citerait pas une demande en
 attente sans son lien ; le détaillé donne le lien de chacune."""
 
@@ -23,9 +24,10 @@ from socle.messages import a_traduire, trad
 
 FORMATS = ("text", "markdown")
 LECTURES = ("batch", "need")
-# Sans `--all`, le format détaillé suit tâche par tâche le lot en cours et
-# les deux suivants ; le compact montre de même, dans chaque jalon, le lot en
-# cours (ou le premier) et les deux suivants, chacun en sa ligne.
+# Sans `--all`, la fenêtre, commune à tous les jalons : le lot en cours (ou
+# le premier) et les deux suivants dans l'ordre d'exécution. Le format
+# détaillé les suit tâche par tâche, le compact les montre chacun en sa
+# ligne.
 DETAILLES = 3
 # La largeur d'un titre, en caractères : dans la colonne du format compact,
 # dans la ligne « Ensuite », et dans le format détaillé.
@@ -174,8 +176,10 @@ def alertes(g: memoire.Graphe, lots: list[str]) -> list[tuple[str, str, str]]:
 
 
 def detailles(s: Suite, tout: bool) -> list[Lot]:
-    """Les lots que le format détaillé suit tâche par tâche : le lot en
-    cours et les deux suivants, et tout lot en cours ; tous avec `--all`."""
+    """La fenêtre, commune à tous les jalons : le lot en cours et les deux
+    suivants dans l'ordre d'exécution, et tout lot en cours ; tous avec
+    `--all`. Le format détaillé les suit tâche par tâche, le compact les
+    montre chacun en sa ligne."""
     if tout:
         return list(s.lots)
     fenetre = s.lots[s.courant:s.courant + DETAILLES]
@@ -213,22 +217,26 @@ def _ouverts_du_jalon(s: Suite, j: Jalon) -> list[str]:
 
 
 def groupes(s: Suite, par: str = "batch") -> list[tuple[Jalon | None, list]]:
-    """Les lots, ou par besoin les besoins qui ont des tâches, rangés sous le
-    jalon qu'ils servent : le premier, dans l'ordre des jalons, qui tient le
-    besoin d'une de leurs tâches. Les jalons viennent dans l'ordre de leur
-    premier lot, celui du lot en cours d'abord ; ce qui ne sert aucun jalon,
-    après, sous `None`."""
+    """Les lots strictement dans leur ordre d'exécution, ou par besoin les
+    besoins qui ont des tâches dans l'ordre de leurs lots, coupés en suites
+    qui servent un même jalon : le premier, dans l'ordre des jalons, qui
+    tient le besoin d'une de leurs tâches. Une suite commence chaque fois
+    que le jalon change d'un élément au suivant : un jalon dont les lots
+    alternent avec ceux d'un autre revient. Une suite qui ne sert aucun
+    jalon a `None`, à sa place dans l'ordre."""
     if par == "need":
         elements, besoins = besoins_dans_l_ordre(s), (lambda b: {b})
     else:
         elements, besoins = s.lots, (lambda lot: {t.besoin for t in lot.taches})
     tenus = [(j, set(besoins_du_jalon(j))) for j in s.jalons]
-    rangs: dict[str | None, tuple[Jalon | None, list]] = {}
+    rangs: list[tuple[Jalon | None, list]] = []
     for x in elements:
         j = next((j for j, bs in tenus if bs & besoins(x)), None)
-        rangs.setdefault(j.entree.id if j else None, (j, []))[1].append(x)
-    hors = rangs.pop(None, None)
-    return [*rangs.values(), *([hors] if hors else [])]
+        if rangs and rangs[-1][0] is j:
+            rangs[-1][1].append(x)
+        else:
+            rangs.append((j, [x]))
+    return rangs
 
 
 def ensuite(s: Suite, rangs: list[tuple[Jalon | None, list]]) -> list[Jalon]:
@@ -274,16 +282,6 @@ def _lots_du_besoin(s: Suite, b: str) -> str:
     return ", ".join(lots) if lots else trad("dans aucun lot")
 
 
-def _montres(lots: list[Lot], tout: bool) -> list[Lot]:
-    """Les lots d'un jalon que le format compact montre chacun en sa ligne :
-    le lot en cours, ou le premier, et les deux suivants, et tout lot en
-    cours ; tous avec `--all`."""
-    if tout:
-        return list(lots)
-    pivot = next((k for k, lot in enumerate(lots) if lot.en_cours), 0)
-    return [lot for k, lot in enumerate(lots) if k < pivot + DETAILLES or lot.en_cours]
-
-
 def _colonnes(rangees: list[tuple[str, str | None, str]]) -> list[str]:
     """Des lignes (gauche, avancement, suite) alignées en colonnes, comptées
     en caractères : ce qui suit la partie gauche (l'avancement, ou la suite
@@ -327,12 +325,16 @@ def _alerte(a: str, b: str, p: str) -> str:
 
 
 def texte(s: Suite, par: str = "batch", tout: bool = False) -> str:
-    """Le format compact, aligné en colonnes : chaque jalon et ses besoins
-    clos, puis ses lots (le lot en cours marqué ▶ ; au-delà des deux
-    suivants, les autres en une ligne ; tous avec `tout`), ou ses besoins ;
-    les lots d'aucun jalon ; les lignes « Hors lot » et « Ensuite » ; les
-    alertes. Il ne nomme aucune demande."""
+    """Le format compact, aligné en colonnes : les lots dans leur ordre
+    d'exécution, ou les besoins dans l'ordre de leurs lots, l'en-tête d'un
+    jalon (ses besoins clos) chaque fois que le jalon change, « Hors des
+    jalons » de même ; le lot en cours marqué ▶. Les lots de la fenêtre ont
+    chacun leur ligne ; hors d'elle, une suite de lots d'un même jalon tient
+    en une ligne, un lot seul garde la sienne ; tous avec `tout`. Puis les
+    lignes « Hors lot » et « Ensuite », et les alertes. Il ne nomme aucune
+    demande."""
     rangs = groupes(s, par)
+    fenetre = {lot.entree.id for lot in detailles(s, tout)}
     largeur = max((len(x if par == "need" else x.entree.id) for _, xs in rangs for x in xs), default=0)
     largeur_j = max((len(j.entree.id) for j, _ in rangs if j), default=0)
 
@@ -351,13 +353,20 @@ def texte(s: Suite, par: str = "batch", tout: bool = False) -> str:
             rangees += [(f"   {b:<{largeur}}  {court(s.besoins[b].titre, TITRE_COMPACT)}",
                          _avancement(taches_du_besoin(s, b)), _lots_du_besoin(s, b)) for b in elements]
             continue
-        montres = _montres(elements, tout)
-        caches = [lot for lot in elements if lot not in montres]
-        rangees += [lot_seul(lot) for lot in (elements if len(caches) == 1 else montres)]
-        if len(caches) > 1:
-            rangees.append(("   " + trad("…  {premier} à {dernier}", premier=caches[0].entree.id,
-                                         dernier=caches[-1].entree.id),
-                            _avancement([t for lot in caches for t in lot.taches]), ""))
+        caches: list[Lot] = []
+        for lot in [*elements, None]:
+            if lot is not None and lot.entree.id not in fenetre:
+                caches.append(lot)
+                continue
+            if len(caches) == 1:
+                rangees.append(lot_seul(caches[0]))
+            elif caches:
+                rangees.append(("   " + trad("…  {premier} à {dernier}", premier=caches[0].entree.id,
+                                             dernier=caches[-1].entree.id),
+                                _avancement([t for c in caches for t in c.taches]), ""))
+            caches = []
+            if lot is not None:
+                rangees.append(lot_seul(lot))
     res = [] if (s.jalons or s.lots) else [trad("ni jalon ni lot au backlog")]
     res += _colonnes(rangees)
     res.append(_hors_lot(s))
@@ -435,13 +444,15 @@ def _symbole(s: Suite, e: memoire.Entree) -> str:
 
 
 def markdown(s: Suite, par: str = "batch", tout: bool = False, liens: dict[str, str] | None = None) -> str:
-    """Le format détaillé, en Markdown : la légende des symboles ; chaque
-    jalon et ses besoins clos, puis ses lots, le lot en cours et les deux
-    suivants avec le tableau de leurs tâches, les autres en une ligne
-    (`tout` : tous détaillés), ou ses besoins, chacun avec le tableau de ses
-    tâches et le lot de chacune ; les jalons sans lot ; ce qui est hors des
-    lots, en tableaux ; les alertes. `liens` : le lien d'une demande ou d'une
-    entrée pour l'humain, par identifiant."""
+    """Le format détaillé, en Markdown : la légende des symboles ; les lots
+    dans leur ordre d'exécution, l'en-tête d'un jalon (ses besoins clos)
+    chaque fois que le jalon change, « Hors des jalons » de même ; les lots
+    de la fenêtre avec le tableau de leurs tâches, les autres en une ligne
+    numérotée chacun (`tout` : tous détaillés) ; ou les besoins dans l'ordre
+    de leurs lots, chacun avec le tableau de ses tâches et le lot de
+    chacune ; les jalons sans lot ; ce qui est hors des lots, en tableaux ;
+    les alertes. `liens` : le lien d'une demande ou d'une entrée pour
+    l'humain, par identifiant."""
     liens = liens or {}
     blocs: list[list[str]] = [
         ["## " + trad("La suite du projet")],
@@ -450,20 +461,19 @@ def markdown(s: Suite, par: str = "batch", tout: bool = False, liens: dict[str, 
         [trad("Légende : ✓ faite · ▶ en cours · ○ prête · ⏳ attend · ✗ bloquée · ⊘ abandonnée · ↑ priorité haute "
               "· ↓ priorité basse")]]
     rangs = groupes(s, par)
-    suivis = detailles(s, tout)
-    lots_suivis = {lot.entree.id for lot in suivis}
+    lots_suivis = {lot.entree.id for lot in detailles(s, tout)}
     rang = {lot.entree.id: k + 1 for k, lot in enumerate(s.lots)}
+    abrege = False
     for j, elements in rangs:
         blocs.append([_titre_de_groupe(s, j, par)])
         resumes: list[str] = []
-        abrege = False
         for x in elements:
             if par == "need":
                 siennes = taches_du_besoin(s, x)
                 detaille = tout or any(t.lot in lots_suivis for t in siennes)
                 ligne, tableau = _ligne_de_besoin(s, x, detaille), _tableau_de_taches(siennes, avec_lot=True)
             else:
-                detaille = x in suivis
+                detaille = x.entree.id in lots_suivis
                 ligne = _ligne_de_lot(x, rang[x.entree.id], detaille)
                 tableau = _tableau_de_taches(x.taches, avec_lot=False)
             if not detaille:
@@ -475,8 +485,8 @@ def markdown(s: Suite, par: str = "batch", tout: bool = False, liens: dict[str, 
                 resumes = []
             blocs += [[ligne], tableau]
         blocs.append(resumes)
-        if abrege:
-            blocs.append([trad("(`--all` pour tout le détail)")])
+    if abrege:
+        blocs.append([trad("(`--all` pour tout le détail)")])
     if not (s.jalons or s.lots):
         blocs.append([trad("Ni jalon ni lot au backlog.")])
     apres = ensuite(s, rangs)
