@@ -1,10 +1,10 @@
 <!-- socle: couche=backlog zone=publique -->
-# T-0025 — Relancé avant le commit d'une mise à jour, l'installeur ne nomme plus les notes de version : le message de commit et « Et maintenant » les perdent
+# T-0025 — L'installeur lit les notes de version déjà lues dans la copie du moteur du dernier commit
 
 > statut : ouvert · origine : J-2026-11-14-X · besoin : B-0225 · lu : backlog@9966bbbd
 
-La tâche de B-0225, que la migration du backlog en quatre formes a posée dans le lot L-0008 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+Un commit : `engine/socle/installer.py` lit les identifiants des notes dans la copie du dernier commit (`git show HEAD:…`), comme ADR-0052 lit l'historique, plutôt que dans l'arbre ; un correctif, avec son test qui échoue sur le commit parent. `tests/test_notes_de_version.py` fige l'ancien comportement : changer ses valeurs attendues se demande.
 
 ## Fait quand
 
-- [ ] relancé avant le commit d'une mise à jour, l'installeur nomme les mêmes notes qu'au premier passage, dans le message de commit et dans « Et maintenant » ; un test qui échoue sur le commit parent le prouve
+- [ ] relancé avant le commit d'une mise à jour, l'installeur nomme les mêmes notes qu'au premier passage, dans le message de commit et dans « Et maintenant », et un test qui échoue sur le commit parent le prouve

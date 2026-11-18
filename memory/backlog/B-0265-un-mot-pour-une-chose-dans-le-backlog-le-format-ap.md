@@ -74,5 +74,5 @@ tests lisent mot pour mot (T-0050).
 ## Satisfait quand
 
 - [x] chaque mot du backlog désigne une seule chose, dans le format, les skills du produit, le guide et l'état, et chaque entrée a sa forme, que des contrôles empêchent de remélanger (T-0046)
-- [ ] le backlog ouvert de ce dépôt est dans ces formes : chaque besoin découpé en tâches qui le satisfont, ses critères des résultats, et les lots du jalon en cours faits de tâches (T-0049)
+- [x] le backlog ouvert de ce dépôt est dans ces formes : chaque besoin découpé en tâches qui le satisfont, ses critères des résultats, et les lots du jalon en cours faits de tâches (T-0049)
 - [ ] aucun texte du produit n'appelle plus « sujet » une entrée du backlog (T-0050)

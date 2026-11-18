@@ -22,4 +22,4 @@ lisent pas, et dit ce qui reste sans garantie :
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0023 est tenu
+- [ ] on sait, pour le push forcé, la suppression du projet et celle d'un dossier qui le contient, ce qui les rattrape hors du hook, dans ce dépôt et dans un projet équipé, et ce qui reste sans garantie est au backlog

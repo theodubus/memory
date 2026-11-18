@@ -1,9 +1,9 @@
 <!-- socle: couche=backlog zone=publique -->
-# T-0035 — Le banc cherche le budget du chantier actif sous memory/actif.md : le juge du scénario s4 ne voit jamais un budget relevé
+# T-0035 — Le juge du scénario s4 lit le budget du chantier actif par le chemin du format actuel
 
 > statut : ouvert · origine : J-2026-11-13-G · besoin : B-0210 · lu : backlog@9966bbbd
 
-La tâche de B-0210, que la migration du backlog en quatre formes a posée dans le lot L-0009 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+Un commit : `_budget_actif` (`bench/bench.py`) prend la clé du chantier actif par le format actuel, sans nom écrit en dur ; un correctif, avec son test.
 
 ## Fait quand
 

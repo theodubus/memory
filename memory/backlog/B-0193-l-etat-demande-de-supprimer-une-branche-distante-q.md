@@ -25,4 +25,4 @@ cause.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0024 est tenu
+- [ ] l'état ne demande plus à l'humain de supprimer une branche distante que GitHub n'a plus, ou dit d'où vient sa liste et comment la rafraîchir

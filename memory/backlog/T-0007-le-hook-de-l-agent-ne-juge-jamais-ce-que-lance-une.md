@@ -1,10 +1,11 @@
 <!-- socle: couche=backlog zone=publique -->
-# T-0007 — Le hook de l'agent ne juge jamais ce que lance une substitution entre guillemets : x="$(cd .. && rm -rf projet)" supprime le projet sans refus
+# T-0007 — Le hook juge le texte d'une substitution entre guillemets comme celui d'une substitution nue
 
 > statut : ouvert · origine : J-2026-11-16-F · besoin : B-0260 · lu : backlog@9966bbbd
 
-La tâche de B-0260, que la migration du backlog en quatre formes a posée dans le lot L-0005 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+Un commit : le découpage (`engine/socle/commands.py`) juge le texte d'une substitution `"$(…)"`, qu'il sait déjà délimiter, avec les fonctions connues, comme celui d'une substitution nue ; ses cas dans `tests/test_garde.py`.
 
 ## Fait quand
 
-- [ ] les trois commandes ci-dessus sont refusées par le hook, `x="$(git rev-parse HEAD)"; echo "$x" > notes.txt` passe, et un test le montre
+- [ ] `echo "$(rm -rf ..)"`, `echo "$(cd memory; rm -rf ../../<racine>)"` et `x="$(f; rm -rf ../../<racine>)"` sont refusés par le hook, et un test le montre
+- [ ] `x="$(git rev-parse HEAD)"; echo "$x" > notes.txt` passe le hook, et un test le montre

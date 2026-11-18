@@ -1,10 +1,10 @@
 <!-- socle: couche=backlog zone=publique -->
-# T-0019 — socle renumber refuse une collision née d'un rebase : l'identifiant pris par la branche passe pour existant avant elle
+# T-0019 — socle renumber reconnaît, parmi deux entrées d'un même identifiant, celle que la branche ajoute
 
 > statut : ouvert · origine : J-2026-11-11-S · besoin : B-0176 · lu : backlog@9966bbbd
 
-La tâche de B-0176, que la migration du backlog en quatre formes a posée dans le lot L-0007 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+Un commit : après un rebase, `socle renumber <id>` distingue l'entrée que la branche ajoute de celle que la base a prise, et renumérote la première, ses mentions et ses empreintes.
 
 ## Fait quand
 
-- [ ] après un rebase qui fait se heurter deux entrées, `socle renumber <id>` renumérote celle de la branche et ses mentions
+- [ ] après un rebase qui fait se heurter deux décisions du même numéro, `socle renumber` renumérote celle de la branche, ses mentions et ses empreintes, et un test le montre

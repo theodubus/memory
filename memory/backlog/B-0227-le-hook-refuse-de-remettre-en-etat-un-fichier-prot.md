@@ -22,5 +22,4 @@ texte recopié entre accents graves.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0010 est tenu
-
+- [ ] après une mise à jour, l'agent remet en état un fichier protégé qu'aucune demande n'approuve sans attendre la réponse d'une demande qui ne cite son dossier que dans un texte recopié

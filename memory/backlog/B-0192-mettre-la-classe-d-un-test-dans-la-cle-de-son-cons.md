@@ -16,4 +16,4 @@ la structure du fichier, langage par langage.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0032 est tenu
+- [ ] deux tests de même nom, dans deux classes d'un même fichier, se tolèrent séparément sans qu'aucun constat déjà toléré change de clé ; ou, aucun projet n'en ayant eu besoin, le besoin se clôt sans suite

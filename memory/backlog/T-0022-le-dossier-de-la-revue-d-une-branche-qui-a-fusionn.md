@@ -1,10 +1,10 @@
 <!-- socle: couche=backlog zone=publique -->
-# T-0022 — Le dossier de la revue d'une branche qui a fusionné la branche par défaut en cours de lot montre son code et ses sujets
+# T-0022 — Le dossier de la revue retire ce qu'une fusion de la branche par défaut a apporté à la branche du lot
 
 > statut : ouvert · origine : J-2026-11-15-K · besoin : B-0241 · lu : backlog@9966bbbd
 
-La tâche de B-0241, que la migration du backlog en quatre formes a posée dans le lot L-0007 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+Un commit : `base_par_defaut` (`engine/socle/review.py`) mesure le lot sans ce que la fusion de la branche par défaut a apporté ; un correctif, avec son test qui échoue sur le commit parent.
 
 ## Fait quand
 
-- [ ] le dossier d'un lot dont la branche a fusionné la branche par défaut ne montre ni son code ni ses sujets, et un test le prouve sur le commit parent
+- [ ] le dossier d'un lot dont la branche a fusionné la branche par défaut ne montre ni le code ni les entrées closes que la fusion a apportés, et un test qui échoue sur le commit parent le prouve

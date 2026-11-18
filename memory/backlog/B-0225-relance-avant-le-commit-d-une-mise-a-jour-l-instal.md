@@ -21,5 +21,4 @@ l'historique.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0025 est tenu
-
+- [ ] relancer l'installeur avant de commiter une mise à jour ne fait plus perdre ses notes de version : le message de commit proposé et « Et maintenant » les nomment encore

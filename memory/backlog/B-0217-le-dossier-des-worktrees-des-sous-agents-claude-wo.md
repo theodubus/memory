@@ -13,4 +13,4 @@ Le 16 novembre, Théo le passe de priorité basse à normale (J-2026-11-16-I) : 
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0013 est tenu
+- [ ] le hook de fin de tour de l'environnement cloud ne demande plus de commiter les worktrees des sous-agents, dans ce dépôt ni dans un projet équipé qui en lance

@@ -23,4 +23,5 @@ arguments qui suivent le script d'un `python -c`.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0002 est tenu
+- [ ] le remplacement global qu'écrit un agent, par `xargs` derrière un `grep -r` ou un `find`, ne réécrit plus un fichier protégé sans refus du hook, et un `find` dont les filtres l'écartent passe
+- [ ] un fichier protégé passé en argument au script d'un `python -c` arrête l'agent au hook comme s'il était écrit dans le script

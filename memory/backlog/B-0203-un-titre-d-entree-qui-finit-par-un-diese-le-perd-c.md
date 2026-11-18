@@ -12,4 +12,4 @@ précédée d'une espace. Le titre perdu touche tout ce qui le lit : l'état,
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0021 est tenu
+- [ ] un titre qui finit par un dièse collé à un mot, « C# », se lit entier partout où le socle lit les titres

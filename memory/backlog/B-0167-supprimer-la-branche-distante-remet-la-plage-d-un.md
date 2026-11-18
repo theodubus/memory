@@ -21,4 +21,4 @@ issue.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0018 est tenu
+- [ ] supprimer une branche distante sans fusion ne permet plus de réécrire ce qui y avait été poussé sans que le contrôle le voie, ou ce risque est accepté et dit au refus

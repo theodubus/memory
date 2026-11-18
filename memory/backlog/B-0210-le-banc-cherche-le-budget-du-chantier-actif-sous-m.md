@@ -14,4 +14,4 @@ quoi que fasse l'agent sur ce point.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0035 est tenu
+- [ ] le juge du scénario s4 du banc voit si l'agent a relevé le budget du chantier actif, au lieu de passer quoi qu'il fasse

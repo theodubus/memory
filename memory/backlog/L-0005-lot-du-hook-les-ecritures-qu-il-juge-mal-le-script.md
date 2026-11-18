@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0005 — Lot du hook, les écritures qu'il juge mal : le script d'un heredoc, la liste qu'un find ou un grep donne à xargs, la conjonction des filtres d'un find
 
-> statut : ouvert · origine : J-2026-11-15-J · après : L-0015, T-0001, T-0002, T-0003, T-0004, T-0005, T-0006, T-0007, T-0008 · lu : backlog@19378efe · ancien : B-0235
+> statut : ouvert · origine : J-2026-11-15-J · après : L-0015, T-0001, T-0002, T-0070, T-0003, T-0004, T-0005, T-0006, T-0007, T-0008, T-0071 · lu : backlog@19378efe · ancien : B-0235
 
 Trois écritures que le hook de l'agent juge mal, deux qu'il laisse
 passer, une qu'il refuse à tort : les mêmes fichiers que le lot d'avant
@@ -15,3 +15,5 @@ Le 16 novembre, selon la règle qui réunit dans un lot les sujets qui touchent 
 L-0014 et L-0015 passent avant lui le 16 novembre (J-2026-11-16-AB) : T-0049
 refait les lots du jalon, celui-ci compris, et L-0015 corrige la revue
 qui les juge ; L-0012 reste avant eux, comme Théo l'a placé.
+
+Le 18 novembre, T-0049 découpe B-0230 et B-0048 (J-2026-11-18-J) : T-0070 juge le chemin passé en argument au script d'un `python -c`, à côté de T-0002 ; T-0008 soumet à Théo l'action externe validée, que T-0071 fait passer au hook après sa réponse.

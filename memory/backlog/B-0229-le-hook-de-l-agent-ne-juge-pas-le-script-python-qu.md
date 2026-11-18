@@ -25,4 +25,4 @@ par la même lecture (`_supprimes_par_python`).
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0001 est tenu
+- [ ] un fichier protégé qu'écrit le script qu'un heredoc donne à python, ou le projet qu'il supprime, arrête l'agent au hook comme le même script passé à `python -c`, et un script qui ne touche rien de protégé passe

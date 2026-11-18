@@ -1,10 +1,10 @@
 <!-- socle: couche=backlog zone=publique -->
-# T-0011 — Le skill socle-batch dit « sous Claude Code, send_later » : l'outil n'existe qu'en session cloud
+# T-0011 — Le skill socle-batch situe le réveil d'une attente en session cloud, et dit quoi faire ailleurs
 
 > statut : ouvert · origine : J-2026-11-14-X · besoin : B-0226 · lu : backlog@9966bbbd
 
-La tâche de B-0226, que la migration du backlog en quatre formes a posée dans le lot L-0006 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+Un commit : l'étape 3 de « Intégrer, pousser, livrer » du gabarit de `socle-batch`, en français et en anglais, et une note de version ; la copie protégée de ce dépôt suit par T-0072.
 
 ## Fait quand
 
-- [ ] le skill situe le réveil en session cloud, et dit quoi faire ailleurs, dans les deux langues
+- [ ] le gabarit de `socle-batch` et son anglais ne nomment `send_later` que pour une session cloud et disent quoi faire hors d'elle, et un test le montre

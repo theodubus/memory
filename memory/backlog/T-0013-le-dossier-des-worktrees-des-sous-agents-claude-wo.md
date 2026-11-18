@@ -1,10 +1,10 @@
 <!-- socle: couche=backlog zone=publique -->
-# T-0013 — Le dossier des worktrees des sous-agents, .claude/worktrees, n'est pas ignoré : le hook de fin de tour de l'environnement cloud demande de le commiter
+# T-0013 — Le dossier des worktrees des sous-agents ignoré par git, ici et dans un projet que l'installeur équipe
 
 > statut : ouvert · origine : J-2026-11-14-D · besoin : B-0217 · lu : backlog@9966bbbd
 
-La tâche de B-0217, que la migration du backlog en quatre formes a posée dans le lot L-0006 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+Un commit : le `.gitignore` de ce dépôt ignore le dossier .claude/worktrees ; l'installeur fait de même dans un projet qu'il équipe si le produit y lance des sous-agents en worktree, avec une note de version.
 
 ## Fait quand
 
-- [ ] le dossier .claude/worktrees est ignoré par le dépôt, et par un projet que l'installeur équipe si le produit lance des sous-agents en worktree
+- [ ] un fichier sous le dossier .claude/worktrees n'apparaît pas dans `git status` de ce dépôt, et, si le produit lance des sous-agents en worktree, dans celui d'un projet que l'installeur équipe ; un test le montre

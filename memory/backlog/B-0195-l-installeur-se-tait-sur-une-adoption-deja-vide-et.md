@@ -19,4 +19,5 @@ s'il était nouveau.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0026 est tenu
+- [ ] l'agent d'un projet dont l'adoption est vide sait par l'installeur qu'il n'a rien à y inscrire, sans essai à blanc
+- [ ] un écart de politique que l'humain a écrit exprès ne revient plus, à chaque mise à jour, comme s'il était nouveau

@@ -31,4 +31,4 @@ le clone local ordinaire.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0036 est tenu
+- [ ] le délai du démarrage se partage selon une règle décidée, et un échec de l'historique ne se repaie pas à chaque démarrage du même conteneur

@@ -24,4 +24,4 @@ que tous les filtres d'une même conjonction peuvent viser ensemble.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0003 est tenu
+- [ ] un nettoyage ciblé par un `find` qui supprime n'est plus refusé pour un fichier protégé qu'aucun de ses départs ou que la conjonction de ses filtres n'atteint, et celui qui l'atteint l'est encore

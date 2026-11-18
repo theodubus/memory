@@ -21,4 +21,4 @@ dessous. Il rejoint le jalon JA-0005 à son découpage (D-0118).
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0012 est tenu
+- [ ] un lot qui ne se mène pas en une session se voit avant qu'on le mène, et un ensemble à finir avant une étape se forme en jalon, ses lots dessous

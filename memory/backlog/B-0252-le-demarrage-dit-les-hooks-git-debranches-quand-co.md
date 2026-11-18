@@ -21,4 +21,4 @@ worktree reste un choix local, signalé.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0042 est tenu
+- [ ] au redémarrage d'un conteneur cloud, le démarrage ne dit plus débranchés des hooks git qui tirent

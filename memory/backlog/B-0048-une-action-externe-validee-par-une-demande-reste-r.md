@@ -18,3 +18,7 @@ preuve, si le refus devient bloquant : une fois, après sa fusion sur `main`.
 Le 22 oct., il reprend B-0018, abandonné à son profit (J-2026-10-22-G) : le
 refus d'un push vers la branche par défaut d'un dépôt local jetable, même
 sujet (un push refusé que l'humain juge légitime) et même réponse de Théo.
+
+## Satisfait quand
+
+- [ ] une action externe que Théo a validée par une demande qui la nomme exactement (le dépôt, la branche) se fait par l'agent, une fois, au lieu de lui revenir ; sans cette demande, ou une seconde fois, elle reste refusée

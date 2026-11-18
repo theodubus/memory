@@ -1,10 +1,11 @@
 <!-- socle: couche=backlog zone=publique -->
-# T-0020 — La fusion de sa pull request par l'agent, une option de la politique que l'humain active
+# T-0020 — Une option de la politique, que l'humain seul active, laisse l'agent fusionner sa pull request aux conditions de D-0092
 
 > statut : ouvert · origine : J-2026-11-13-F · besoin : B-0200 · lu : backlog@9966bbbd
 
-La tâche de B-0200, que la migration du backlog en quatre formes a posée dans le lot L-0007 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+Un commit : l'option dans la politique et son gabarit, le hook qui refuse la fusion sans elle, le guide en français et en anglais, et une note de version.
 
 ## Fait quand
 
-- [ ] une option de la politique permet à l'agent de fusionner sa pull request aux conditions de D-0092, le hook le refuse sans elle, et un test le montre
+- [ ] avec l'option, le hook laisse l'agent fusionner sa pull request ; sans elle, il le refuse ; un test le montre
+- [ ] le guide dit l'option et les conditions de D-0092, en français et en anglais, et un test le montre

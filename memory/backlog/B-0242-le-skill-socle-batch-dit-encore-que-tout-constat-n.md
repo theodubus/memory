@@ -16,4 +16,4 @@ suit par une demande, avec celles de B-0218.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0014 est tenu
+- [ ] un agent qui suit `socle-batch` trie les constats de la revue comme `socle-review` : un constat exotique et rattrapé, ou infondé, ne va plus au backlog

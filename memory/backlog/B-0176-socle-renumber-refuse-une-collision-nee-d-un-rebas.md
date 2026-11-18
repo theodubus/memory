@@ -15,4 +15,4 @@ renuméroter celle-là.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0019 est tenu
+- [ ] une collision d'identifiants née d'un rebase se répare par `socle renumber`, sans renommage ni mention corrigés à la main

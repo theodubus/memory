@@ -1,11 +1,11 @@
 <!-- socle: couche=backlog zone=publique -->
-# T-0027 — Sur chess, un seul balayage de mutation à terme : celui du socle, quand il sait faire ce que fait celui de chess
+# T-0027 — Le balayage de mutation du socle : un job par fichier, le profil de compilation porté par l'adaptateur, des plafonds par fichier
 
 > statut : ouvert · origine : J-2026-11-11-Q · besoin : B-0172 · lu : backlog@9966bbbd
 
-La tâche de B-0172, que la migration du backlog en quatre formes a posée dans le lot L-0008 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+Un commit : la CI que pose le socle et l'adaptateur du langage de chess balaient fichier par fichier, avec le profil dédié, sous des plafonds repris de `docs/fabrication/chess/mutation-caps.toml` ; ce qui manque se mesure d'abord sur chess. La mesure sur chess et le retrait de son balayage sont T-0077.
 
 ## Fait quand
 
-- [ ] le balayage du socle tourne sur chess, un job par fichier, dans la durée de sa CI, avec les plafonds repris de ceux de chess
-- [ ] une mesure sur chess montre les mêmes mutants survivants que son balayage actuel, et celui-ci est retiré
+- [ ] la CI que pose le socle lance un job de mutation par fichier, avec le profil que porte l'adaptateur, et un test le montre
+- [ ] les plafonds par fichier sont gardés par le cliquet du socle, et un test le montre

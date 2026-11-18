@@ -19,4 +19,4 @@ connues), que `_preparer` sait déjà délimiter (B-0207).
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0007 est tenu
+- [ ] une commande lancée dans une substitution entre guillemets, `x="$(…)"`, ne supprime plus le projet sans refus du hook, et une substitution ordinaire passe

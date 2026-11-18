@@ -1,10 +1,11 @@
 <!-- socle: couche=backlog zone=publique -->
-# T-0004 — Le hook de l'agent laisse supprimer un dossier qui contient le projet par xargs rm ou par une commande que lance python -c (echo .. | xargs rm -rf, os.system)
+# T-0004 — Le hook juge find … | xargs rm comme un find qui supprime depuis ses départs
 
 > statut : ouvert · origine : J-2026-11-15-N · besoin : B-0246 · lu : backlog@9966bbbd
 
-La tâche de B-0246, que la migration du backlog en quatre formes a posée dans le lot L-0005 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+Un commit : `xargs` d'un programme qui supprime ce qu'il lit se juge, derrière un producteur `find`, comme une suppression depuis les départs du `find` ; ses cas dans `tests/test_garde.py`. Les autres formes que nomme B-0246 sont dans la liste des formes connues que le hook ne juge pas (B-0261), hors de cette tâche.
 
 ## Fait quand
 
-- [ ] `find .. -maxdepth 0 | xargs rm -rf` est refusé comme un `find` qui supprime depuis ce dossier, `find . -name '*.pyc' | xargs rm -f` passe, et un test le montre
+- [ ] `find .. -maxdepth 0 | xargs rm -rf` est refusé par le hook comme un `find` qui supprime depuis `..`, et un test le montre
+- [ ] `find . -name '*.pyc' | xargs rm -f` passe le hook, et un test le montre

@@ -47,4 +47,5 @@ La piste, à spécifier avant le code et à soumettre à Théo :
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0047 est tenu
+- [ ] un lot dont les revues tournent en rond s'arrête sur un recul que l'agent écrit lui-même, et Théo reçoit alors une demande avec une proposition, sans lire de métrique
+- [ ] l'historique des revues d'un lot se lit d'une session neuve, et le recul se fonde sur lui
