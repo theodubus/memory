@@ -7,6 +7,21 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-18-b — The review dossier, its skill and the questions say task, need or entry, never “topic”
+
+The product's last texts that called a backlog entry a “topic”, and that
+tests read word for word, follow the backlog's four forms. The dossier of
+`socle review` gives the reviewer “the backlog entries the batch serves”,
+whose criteria (a task's “Done when”, a need's “Satisfied when”) are its
+bar, “the entries the batch opens”, and the decisions “they cite”; the
+`socle-review` skill describes it so. The starting question on delivery
+offers “one pull request per task”. The template of the framing questions
+(`socle new request --questions`) speaks of the need to specify. The guide
+says a hole of the hook opens “a backlog entry”.
+
+To do: nothing; the `socle-review` skill is a protected copy, in the
+installer's request.
+
 ## 2026-11-18-a — The duration of the steps is told, and that of the fast steps has a threshold
 
 `verify`, `verify --fast` and `socle ci` now print the duration of each

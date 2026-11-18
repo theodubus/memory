@@ -7,6 +7,22 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-18-b — Le dossier de la revue, son skill et les questions disent tâche, besoin ou entrée, jamais « sujet »
+
+Les derniers textes du produit qui disaient « sujet » d'une entrée du
+backlog, et que des tests lisent mot pour mot, suivent les quatre formes
+du backlog. Le dossier de `socle review` donne au relecteur « les entrées
+du backlog que sert le lot », dont les critères (« Fait quand » d'une
+tâche, « Satisfait quand » d'un besoin) sont sa barre, « les entrées que le
+lot ouvre », et les décisions « qu'elles citent » ; le skill
+`socle-review` le décrit ainsi. La question de départ sur la livraison
+propose « une pull request par tâche ». Le gabarit des questions de
+cadrage (`socle new request --questions`) parle du besoin à spécifier. Le
+guide dit qu'un trou du hook ouvre « une entrée du backlog ».
+
+À faire : rien ; le skill `socle-review` est une copie protégée, dans la
+demande de l'installeur.
+
 ## 2026-11-18-a — La durée des étapes se dit, et celle des étapes rapides a un seuil
 
 `verify`, `verify --fast` et `socle ci` impriment désormais la durée de

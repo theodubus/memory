@@ -294,10 +294,10 @@ agent writes in its work, for every effect; for what nothing catches
 afterwards (deleting the project or a directory that contains it, an
 irreversible external action, a leak of the private memory, the part of
 the memory that is not published), it also refuses what it cannot read.
-A hole opens a topic if its form is one an agent writes in its work:
+A hole opens a backlog entry if its form is one an agent writes in its work:
 seen in an agent session, a skill or current documentation. Another form
 is entered in one line in the list of known forms the hook does not
-judge, without a topic; in the review of a batch of the hook, it is not
+judge, without a backlog entry; in the review of a batch of the hook, it is not
 a blocking finding, even if refused before the batch by accident. A
 cooperative agent does not try to get around its guardrails. Deleting
 the project still escapes it through `find … | xargs rm`, a form an
@@ -347,7 +347,7 @@ the fly in another language) is outside its model, as are forms that
 escape it (an unknown part that is itself `..`, an option set by the
 shell's profile, a variable Claude Code sets only for its hooks…); the
 guarantee is then the protected-files check, at the end of the turn, at
-commit and in CI, and a hole of that kind opens no backlog subject.
+commit and in CI, and a hole of that kind opens no backlog entry.
 
 **Doing what the agent cannot do.** Pushing to the default branch,
 publishing, setting up a service, deleting a remote branch, setting a tag

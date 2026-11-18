@@ -301,10 +301,10 @@ qu'un agent écrit dans son travail, pour tout effet ; pour ce que rien ne
 rattrape ensuite (supprimer le projet ou un dossier qui le contient, une action externe
 irréversible, une fuite de la mémoire privée, la part de la mémoire qui
 ne se publie pas), il refuse aussi ce qu'il ne sait pas lire. Un trou
-ouvre un sujet si sa forme est de celles qu'un agent écrit dans son
+ouvre une entrée du backlog si sa forme est de celles qu'un agent écrit dans son
 travail : vue dans une session d'agent, un skill ou une documentation
 courante. Une autre forme s'inscrit d'une ligne dans la liste des formes
-connues que le hook ne juge pas, sans sujet ; dans la revue d'un lot du
+connues que le hook ne juge pas, sans entrée au backlog ; dans la revue d'un lot du
 hook, elle n'est pas un bloquant, même refusée avant le lot par accident.
 Un agent coopératif ne cherche pas à contourner ses garde-fous. La
 suppression du projet lui échappe encore par `find … | xargs rm`, une
@@ -355,7 +355,7 @@ comme des formes qui lui échappent (une part inconnue qui vaut elle-même
 `..`, une option posée par le profil du shell, une variable que Claude
 Code ne pose que pour ses hooks…) ; la garantie est alors le contrôle
 des fichiers protégés, à la fin du tour, au commit et dans la CI, et un
-trou de cette sorte n'ouvre pas de sujet au backlog.
+trou de cette sorte n'ouvre pas d'entrée au backlog.
 
 **Faire ce que l'agent ne peut pas faire.** Pousser sur la branche par
 défaut, publier, régler un service, supprimer une branche distante, poser

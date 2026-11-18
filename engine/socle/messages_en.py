@@ -369,16 +369,16 @@ MESSAGES: dict[str, str] = {
     "la politique dit ce que l'agent décide seul et ce qu'il te demande ; toi seul la modifies":
         "the policy says what the agent decides alone and what it asks you; only you change it",
     "Le travail se livre-t-il par une branche de développement, une seule pull request ouverte à la fois, ou "
-    "par une branche et une pull request par sujet ?":
+    "par une branche et une pull request par tâche ?":
         "Is the work delivered through one development branch, with only one pull request open at a time, or "
-        "through one branch and one pull request per topic?",
+        "through one branch and one pull request per task?",
     "une branche de développement : chaque lot fini s'ajoute à la pull request ouverte, que tu fusionnes quand "
     "tu veux":
         "one development branch: each finished batch is added to the open pull request, which you merge "
         "whenever you want",
-    "une pull request par sujet se relit sujet par sujet, mais il y en a une à fusionner par sujet ; le choix "
+    "une pull request par tâche se relit tâche par tâche, mais il y en a une à fusionner par tâche ; le choix "
     "devient un fait de la mémoire, que l'agent suit":
-        "a pull request per topic is reviewed topic by topic, but there is one to merge per topic; the choice "
+        "a pull request per task is reviewed task by task, but there is one to merge per task; the choice "
         "becomes a fact of the memory, which the agent follows",
     "Des contraintes à respecter (licence, dépendances, plateformes, délais) ?":
         "Any constraints to respect (licence, dependencies, platforms, deadlines)?",
@@ -1949,12 +1949,12 @@ MESSAGES: dict[str, str] = {
         "“Context”: the “{nom}” paragraph has fewer than {n} words",
     "Tu relis le lot de travail d'un autre agent, sans sa conversation ni son raisonnement : tu as ce dossier, et tu peux lire le dépôt pour vérifier un constat, mais tu ne modifies rien. Pour éprouver une commande (l'installeur, un script), crée d'abord un dossier temporaire hors du dépôt (`mktemp -d`), et n'écris que là : chaque commande qui écrit y vise par son chemin absolu, jamais par le dossier courant, écrit en toutes lettres tel que `mktemp -d` l'a rendu, jamais par une variable, qui ne survit pas d'un appel à l'autre. Ton rôle est de le prendre en défaut.":
         "You review another agent's batch of work, without its conversation or its reasoning: you have this brief, and you may read the repository to check a finding, but you change nothing. To try a command (the installer, a script), first create a temporary directory outside the repository (`mktemp -d`), and write only there: each command that writes aims at it by its absolute path, never through the current directory, written out in full as `mktemp -d` returned it, never through a variable, which does not survive from one call to the next. Your role is to find fault with it.",
-    "Ta barre est celle des sujets du lot, plus bas : leur critère « Fait quand », les décisions qu'ils citent, et, pour un sujet qui pose ou change un garde-fou, son modèle de menace, ce que le garde-fou arrête et ce qu'il laisse passer. Cherche ce qui casse (un cas limite, une erreur de logique, une régression), ce qu'aucun test ne prouve, et ce qui contredit un critère ou une décision. Ne juge ni le style, ni ce que les contrôles automatiques jugent déjà : la forme de la mémoire, les liens, la présence des tests.":
-        "Your bar is that of the batch's topics, below: their “Done when” criterion, the decisions they cite, and, for a topic that adds or changes a guardrail, its threat model, what the guardrail stops and what it lets through. Look for what breaks (an edge case, a logic error, a regression), what no test proves, and what contradicts a criterion or a decision. Judge neither style nor what the automatic checks already judge: the form of the memory, the links, the presence of tests.",
+    "Ta barre est celle des entrées du backlog que sert le lot, plus bas : leurs critères (« Fait quand » d'une tâche, « Satisfait quand » d'un besoin), les décisions qu'elles citent, et, pour une entrée qui pose ou change un garde-fou, son modèle de menace, ce que le garde-fou arrête et ce qu'il laisse passer. Cherche ce qui casse (un cas limite, une erreur de logique, une régression), ce qu'aucun test ne prouve, et ce qui contredit un critère ou une décision. Ne juge ni le style, ni ce que les contrôles automatiques jugent déjà : la forme de la mémoire, les liens, la présence des tests.":
+        "Your bar is that of the backlog entries the batch serves, below: their criteria (a task's “Done when”, a need's “Satisfied when”), the decisions they cite, and, for an entry that adds or changes a guardrail, its threat model, what the guardrail stops and what it lets through. Look for what breaks (an edge case, a logic error, a regression), what no test proves, and what contradicts a criterion or a decision. Judge neither style nor what the automatic checks already judge: the form of the memory, the links, the presence of tests.",
     "Classe chaque constat. **Bloquant** : il contredit un critère coché ou une décision citée, fait régresser ce qui marchait avant le lot, perd des données, ou contourne un garde-fou dans son modèle de menace ; un garde-fou que le lot pose ou change sans modèle de menace écrit est lui-même un constat bloquant. **Pour le backlog** : un constat qui ne bloque pas, s'il peut se produire dans l'usage normal du projet, ou si rien ne rattrape ensuite son effet ; un contournement hors du modèle de menace, un critère que le lot ne coche pas, un défaut voisin, une amélioration, jugés de même. **Écarté** : un constat exotique (un geste rare, une forme qu'on n'écrit que pour contourner, un cas jamais reproduit) dont l'effet est rattrapé, par un contrôle, la CI ou une erreur que l'agent voit aussitôt ; et un constat infondé. Une forme du shell qu'un agent n'écrit pas dans son travail (ni vue dans une session d'agent, ni dans un skill, ni dans une documentation courante), et qui échappe au hook de l'agent, ne se classe pas bloquante, même refusée avant le lot par accident, ni pour le backlog, quel qu'en soit l'effet : écarte-la, d'une ligne, pour la liste des formes connues que le hook ne juge pas, dans le guide du socle (`python3 .socle/socle help`). Seuls les bloquants se corrigent dans le lot. Rends trois listes numérotées, « Bloquants », « Pour le backlog » puis « Écartés », chaque constat avec son fichier et sa ligne, ce qui casse et comment le vérifier, pour un bloquant ce qu'il contredit, pour un écarté pourquoi ; ou « aucun constat ».":
         "Classify each finding. **Blocking**: it contradicts a ticked criterion or a cited decision, breaks what worked before the batch, loses data, or bypasses a guardrail within its threat model; a guardrail the batch adds or changes without a written threat model is itself a blocking finding. **For the backlog**: a finding that does not block, if it can occur in the project's normal use, or if nothing catches its effect afterwards; a bypass outside the threat model, a criterion the batch does not tick, a neighbouring defect, an improvement, judged the same way. **Dismissed**: an exotic finding (a rare gesture, a form one only writes to get around something, a case never reproduced) whose effect is caught, by a check, the CI or an error the agent sees at once; and an unfounded finding. A shell form an agent does not write in its work (seen neither in an agent session, nor in a skill, nor in current documentation), and that escapes the agent's hook, is not classed as blocking, even if refused before the batch by accident, nor for the backlog, whatever its effect: dismiss it, in one line, for the list of known forms the hook does not judge, in the socle's guide (`python3 .socle/socle help`). Only blocking findings are fixed in the batch. Return three numbered lists, “Blocking”, “For the backlog” then “Dismissed”, each finding with its file and line, what breaks and how to verify it, for a blocking one what it contradicts, for a dismissed one why; or “no finding”.",
-    "Seconde revue : ce diff corrige des constats bloquants d'une première revue, que disent les messages de ses commits ci-dessous ; le reste du lot a déjà été relu. Ne juge que cette correction : un bloquant mal corrigé, ce qu'elle fait régresser, contre les mêmes sujets.":
-        "Second review: this diff fixes blocking findings of a first review, which the messages of its commits below state; the rest of the batch has already been reviewed. Judge only this fix: a blocking finding badly fixed, what it breaks, against the same topics.",
+    "Seconde revue : ce diff corrige des constats bloquants d'une première revue, que disent les messages de ses commits ci-dessous ; le reste du lot a déjà été relu. Ne juge que cette correction : un bloquant mal corrigé, ce qu'elle fait régresser, contre les mêmes entrées.":
+        "Second review: this diff fixes blocking findings of a first review, which the messages of its commits below state; the rest of the batch has already been reviewed. Judge only this fix: a blocking finding badly fixed, what it breaks, against the same entries.",
     "## Seconde revue":
         "## Second review",
     "## Le diff de la correction ({n} fichier(s), depuis {base})":
@@ -2017,13 +2017,13 @@ MESSAGES: dict[str, str] = {
         "deepened by `git fetch --unshallow`; otherwise, `socle review --base <the commit before the batch>`",
     "(diff tronqué : {n} caractère(s) de plus non montrés ; `git diff {base}` les donne)":
         "(diff truncated: {n} more character(s) not shown; `git diff {base}` gives them)",
-    "## Les sujets du lot : leur critère « Fait quand » est ta barre":
-        "## The batch's topics: their “Done when” criterion is your bar",
-    "## Les sujets que le lot ouvre : ce qu'il renvoie au backlog":
-        "## The topics the batch opens: what it sends to the backlog",
+    "## Les entrées du backlog que sert le lot : leurs critères sont ta barre":
+        "## The backlog entries the batch serves: their criteria are your bar",
+    "## Les entrées que le lot ouvre : ce qu'il renvoie au backlog":
+        "## The entries the batch opens: what it sends to the backlog",
     "## Les décisions et les demandes que le lot écrit":
         "## The decisions and requests the batch writes",
-    "## Les décisions et les demandes qu'ils citent":
+    "## Les décisions et les demandes qu'elles citent":
         "## The decisions and requests they cite",
     "répondre à une demande ; l'agent y relaie (--relayed) ta réponse donnée dans la conversation":
         "answer a request; the agent relays (--relayed) your answer given in the conversation",
