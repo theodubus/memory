@@ -262,7 +262,8 @@ class TestDureeDiteParLesHooks(unittest.TestCase):
             code = hooks.git_pre_push(self.projet(seuil))
         return code, flux.getvalue()
 
-    def fin_de_tour(self, seuil, dernier_message: str | None = None, relance: bool = False) -> dict:
+    def fin_de_tour(self, seuil, dernier_message: str | None = None, relance: bool = False,
+                    rapport: Rapport | None = None) -> dict:
         import json
 
         from socle import context as contexte, hooks
@@ -273,7 +274,7 @@ class TestDureeDiteParLesHooks(unittest.TestCase):
             transcript.parent.mkdir(parents=True, exist_ok=True)
             transcript.write_text(json.dumps({"type": "assistant", "message": {"content": dernier_message}}) + "\n")
             entree["transcript_path"] = str(transcript)
-        with unittest.mock.patch.object(contexte, "executer", return_value=Rapport()), \
+        with unittest.mock.patch.object(contexte, "executer", return_value=rapport or Rapport()), \
                 contextlib.redirect_stdout(io.StringIO()) as sortie, contextlib.redirect_stderr(io.StringIO()):
             self.assertEqual(hooks.stop(self.projet(seuil), entree), 0)
         return json.loads(sortie.getvalue()) if sortie.getvalue().strip() else {}
@@ -318,6 +319,40 @@ class TestDureeDiteParLesHooks(unittest.TestCase):
         self.assertNotIn("decision", sortie)
         self.assertRegex(sortie["systemMessage"], r"^fin d'intervention sans .*, malgré un rappel\n\n"
                          + self.AVERTISSEMENT)
+
+    def test_la_fin_de_tour_qui_echoue_pour_un_autre_controle_le_dit_aussi_a_l_humain(self):
+        """Passe 3 de la revue de L-0012 : un autre contrôle en échec (du code
+        changé sans la mémoire, le tour même où la fin de tour lance les
+        étapes) bloquait avec l'avertissement dans la raison seule, que
+        l'agent lit ; la relance sur le même arbre ne relance pas les étapes,
+        et l'humain n'en recevait rien."""
+
+        def echec() -> Rapport:
+            rapport = Rapport()
+            rapport.erreur("memoire.retard", "du code changé sans la mémoire")
+            return rapport
+
+        # Sous le seuil, le blocage d'avant : rien pour l'humain.
+        self.changer_le_code()
+        sortie = self.fin_de_tour(300, "Fait.", rapport=echec())
+        self.assertEqual(list(sortie), ["decision", "reason"])
+        self.assertNotIn("verify.duree", sortie["reason"])
+        # Au-delà : l'agent le lit dans le rapport de sa raison, l'humain dans
+        # le message, qui ne dit que lui.
+        self.changer_le_code()
+        sortie = self.fin_de_tour(0.1, "Fait.", rapport=echec())
+        self.assertEqual(sortie["decision"], "block")
+        self.assertIn("memoire.retard", sortie["reason"])
+        self.assertIn("verify.duree", sortie["reason"])
+        self.assertRegex(sortie["systemMessage"], "^" + self.AVERTISSEMENT)
+        self.assertEqual(len(sortie["systemMessage"].splitlines()), 1, sortie["systemMessage"])
+        # L'escalade, au bout des tentatives, porte déjà le rapport à
+        # l'humain, l'avertissement compris.
+        self.changer_le_code()
+        sortie = self.fin_de_tour(0.1, "Fait.", rapport=echec())
+        self.assertEqual(list(sortie), ["systemMessage"])
+        self.assertIn("ARRÊT ET ESCALADE", sortie["systemMessage"])
+        self.assertIn("verify.duree", sortie["systemMessage"])
 
 
 class TestSeuilDesEtapesRapides(unittest.TestCase):

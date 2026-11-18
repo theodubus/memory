@@ -2286,13 +2286,13 @@ def stop(projet: config.Projet, entree: dict) -> int:
     if outils.filtrer(ctx.changes, projet.chemins_code()) or projet.fichiers_de_tests(ctx.changes):
         verification.etapes_rapides(projet, rapport)
 
+    # Le seuil des étapes rapides avertit et n'échoue jamais : il ne bloque
+    # pas la fin de tour, qui le dit à l'humain, qu'elle passe ou qu'elle
+    # bloque pour un autre contrôle (B-0258).
+    duree = "\n".join(_avertissements(rapport, (verification.CONTROLE_DUREE,))) or None
     if rapport.reussi:
         compteur.unlink(missing_ok=True)
-        # Le seuil des étapes rapides avertit et n'échoue jamais : il ne
-        # bloque pas la fin de tour, qui le dit à l'humain (B-0258). Un
-        # rapport en échec le montre déjà, dans le texte plus bas.
-        duree = _avertissements(rapport, (verification.CONTROLE_DUREE,))
-        return exiger_recap(projet, entree, avertissement="\n".join(duree) or None)
+        return exiger_recap(projet, entree, avertissement=duree)
     # Le compteur appartient à sa session : une session nouvelle ne commence
     # pas à l'escalade sur les échecs d'une autre (relevé de la passe de
     # recul, F).
@@ -2326,12 +2326,19 @@ def stop(projet: config.Projet, entree: dict) -> int:
             "puis s'arrêter.\n\n{rapport}", essais=essais, rapport=texte)}, ensure_ascii=False))
         return 0
     tracer_refus(racine, "Stop", ",".join(rapport.controles_en_echec()), entree.get("session_id", ""))
-    print(json.dumps({"decision": "block", "reason": trad(
+    sortie = {"decision": "block", "reason": trad(
         "Les contrôles échouent (tentative {essais}/{maximum}) : corriger avant de conclure. Si tu ne peux pas "
         "corriger (un fichier que tu n'as pas le droit de remettre), réponds en une ligne qui dit pourquoi, sans "
         "redire ton récap : une relance sur le même échec et le même arbre ne bloque plus, et l'humain reçoit le "
         "rapport.\n\n{rapport}",
-        essais=essais, maximum=projet.maximum_tentatives(), rapport=texte)}, ensure_ascii=False))
+        essais=essais, maximum=projet.maximum_tentatives(), rapport=texte)}
+    # La raison, rapport compris, n'est lue que de l'agent ; les deux
+    # messages plus haut portent le rapport à l'humain. Le seuil dépassé lui
+    # est dit ici, une fois : la relance sur le même arbre ne relance pas les
+    # étapes, qui ne le rediraient pas (B-0258).
+    if duree:
+        sortie["systemMessage"] = duree
+    print(json.dumps(sortie, ensure_ascii=False))
     return 0
 
 

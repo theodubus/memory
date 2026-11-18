@@ -39,3 +39,8 @@ Recul : les deux bloquants de la passe 2 ont des causes nouvelles, selon le rele
 ### Passe 3 — 2026-11-18
 
 Commits : 90e63f6..3c76f83
+
+- Bloquant : la fin de tour qui bloque pour un autre contrôle ne dit le seuil dépassé qu'à l'agent, dans sa raison, jamais à l'humain · même cause
+- Ouvre : B-0284
+
+Recul : le bloquant de cette passe a, selon le relecteur, la même cause que le premier de la passe 2 : une sortie de la fin de tour dont on a supposé ce qu'elle dit, au lieu de la suivre jusqu'à l'humain ; le deuxième bloquant de la passe 1 le voisinait déjà, mais c'est la première passe où le relecteur la voit revenir, et la règle d'arrêt en veut deux de suite. Cette fois, chaque sortie de la fin de tour a été éprouvée jusqu'à l'humain par le relecteur, réussie comme bloquée, et le test de la correction fait échouer la fin de tour par un rapport en échec, non plus par un rapport vide qui réussit toujours : il ne reste pas de sortie non suivie. L'entrée ouverte, B-0284, le délai du hook de fin de tour, est une limite du modèle de menace de B-0258, que le lot ferme, pas une régression ; les lots clos qui ont touché les mêmes fichiers (le hook, le moteur, l'auto-test) ont ouvert des entrées du hook de l'agent et de la revue, aucune sur les sorties de la fin de tour. La correction tient en quelques lignes, sans conception nouvelle : le skill de la revue ne demande pas de passe de plus, il ne reste aucune tâche au lot, qui se clôt. Décision : continuer
