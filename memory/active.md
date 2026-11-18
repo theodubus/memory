@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0014 clos et fusionné (J-2026-11-18-M) ; puis L-0016, la vue de la
-suite aux formats validés (J-2026-11-18-N) ; puis L-0015.
+L-0016 (J-2026-11-18-N) : `docs/fabrication/passation-l0016/` ; puis
+L-0017, L-0018 (les allégements, D-0134), L-0015.
 
 ## Consignes en cours
 
@@ -44,6 +44,7 @@ Leur texte exact est dans l'entrée du journal citée.
   seul (ce que c'est, pourquoi, ce que change sa réponse) ; ce que
   l'agent fera se dit à part (J-2026-10-31-S, J-2026-10-14-F).
 - Les heures à Théo, à l'heure de Paris (J-2026-10-14-G).
+- Une branche à supprimer se vérifie sur GitHub (B-0193).
 - Un autre dépôt se clone hors du dossier des dépôts de la session, sans
   être déclaré racine ; à chaque reprise, vérifier que l'état a été
   injecté, sinon le dire et ne rien pousser (J-2026-10-14-S).
@@ -65,7 +66,6 @@ Leur texte exact est dans l'entrée du journal citée.
 Avant toute nouvelle fonction (J-2026-11-13-I, D-0108, D-0109, D-0111),
 par lots :
 
-1. Le jalon JA-0005 (D-0118), lot par lot ; l'état montre le prochain.
+1. Le jalon JA-0005 (D-0118), lot par lot.
 2. La mise à jour de chess, avec le prompt complété.
-3. Ensuite la planification (B-0101), puis la répartition entre agents
-   (B-0055).
+3. Ensuite la planification (B-0101), puis la répartition (B-0055).

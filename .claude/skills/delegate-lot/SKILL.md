@@ -56,7 +56,11 @@ la règle de D-0111) ; l'orchestrateur vérifie chaque classement.
   la précéder, sous la demande en attente (D-0071).
 - Une valeur attendue à changer, un test à supprimer, un fichier protégé
   à rafraîchir : une demande dans le dépôt, relue à froid, poussée, son
-  lien donné ; jamais une question dans la conversation (J-2026-11-12-F).
+  lien donné (J-2026-11-12-F). Sauf un changement mécanique de valeurs
+  attendues, des tests qui lisent un format que Théo a validé : une
+  question dans la conversation qui nomme chaque test, avec sa valeur
+  avant et après, et sa réponse consignée en séance (proposition 2 de
+  `docs/fabrication/allegements.md`).
 
 ## Les mesures de l'atelier
 
