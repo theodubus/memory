@@ -15,6 +15,12 @@ deux jalons sans ordre. À trancher avec Théo, la règle du prochain jalon
 étant la sienne : le prochain jalon se déduit-il du travail en cours, ou
 d'un ordre qu'il écrit ?
 
+Depuis L-0016 (J-2026-11-18-P), `socle roadmap` ne dit plus « le
+prochain » : il met en tête le jalon que sert le lot en cours, comme
+l'exemple que Théo a validé (D-0127), quand `socle state` dit toujours
+« prochain jalon : JA-0002 ». Les deux ne nomment plus le même jalon : le
+désaccord est visible, la règle reste à trancher.
+
 ## Satisfait quand
 
 - [ ] le prochain jalon que disent l'état et la suite est celui que sert le travail en cours, ou leur ordre ambigu est signalé

@@ -292,6 +292,51 @@ class TestDernierMessage(unittest.TestCase):
         message = "Fait.\n\n**Pour toi** : rien.\n__Ensuite__ : B-0001."
         self.assertEqual(humain.recap_manquant(config.Projet(racine=Path(".")), message), [])
 
+    # Le compact de `socle roadmap`, que le récap de la clôture d'un lot
+    # colle dans un bloc de code, finit par sa propre ligne « Ensuite : ».
+    COMPACT = ("JA-0005  Fini avant les nouvelles fonctions        1/11 besoins clos\n"
+               " ▶ L-0013  Structure du backlog, chantier en rond  2/3   en cours\n"
+               "Hors lot : 4 besoins sans tâche · 1 bloqué (B-0179)\n"
+               "Ensuite : JA-0002 Le pilote équipé (B-0126) · puis B-0055, B-0101")
+
+    def test_une_ligne_du_recap_dans_un_bloc_de_code_ne_compte_pas(self):
+        """ADR-0089 (L-0016, passe 1 de la revue) : la ligne « Ensuite : »
+        d'une sortie collée dans un bloc de code remplissait le contrôle,
+        et un récap sans la sienne passait."""
+        projet = config.Projet(racine=Path("."))
+        for cloture, fin in (("```", "```"), ("```text", "```"), ("~~~", "~~~"), ("````markdown", "`````")):
+            message = f"Lot clos.\n\n{cloture}\n{self.COMPACT}\n{fin}\n\nPour toi : rien."
+            with self.subTest(cloture=cloture):
+                self.assertEqual(humain.recap_manquant(projet, message), ["Ensuite :"])
+        # Les deux lignes, toutes deux dans un bloc : aucune ne compte.
+        self.assertEqual(humain.recap_manquant(projet, "Fait.\n\n```\nPour toi : rien.\nEnsuite : rien.\n```"),
+                         ["Pour toi :", "Ensuite :"])
+
+    def test_un_bloc_jamais_ferme_court_jusqu_a_la_fin_du_message(self):
+        projet = config.Projet(racine=Path("."))
+        ouvert = f"Lot clos.\n\nPour toi : rien.\n\n```text\n{self.COMPACT}\n\nEnsuite : L-0017."
+        self.assertEqual(humain.recap_manquant(projet, ouvert), ["Ensuite :"])
+        # Une clôture d'un autre caractère, ou plus courte, ne le ferme pas.
+        for interieur, cloture in (("```", "~~~"), ("~~~", "```"), ("``", "```"), ("```", "````")):
+            message = f"Fait.\n\n{cloture}\n{interieur}\nPour toi : rien.\nEnsuite : rien.\n"
+            with self.subTest(interieur=interieur, cloture=cloture):
+                self.assertEqual(humain.recap_manquant(projet, message), ["Pour toi :", "Ensuite :"])
+        # Une clôture d'accents graves ne porte pas d'autre accent grave : ```a``` est du code en ligne.
+        self.assertEqual(humain.recap_manquant(projet, "Fait.\n```a```\nPour toi : rien.\nEnsuite : rien."), [])
+
+    def test_les_deux_lignes_en_texte_avec_un_compact_colle_dans_un_bloc(self):
+        projet = config.Projet(racine=Path("."))
+        message = (f"Lot clos.\n\n```text\n{self.COMPACT}\n```\n\n  ~~~~\n  sortie\n  ~~~~~\n\n"
+                   "Pour toi : rien.\n> Ensuite : L-0017.")
+        self.assertEqual(humain.recap_manquant(projet, message), [])
+
+    def test_les_motifs_de_la_politique_ne_se_cherchent_pas_dans_un_bloc_non_plus(self):
+        projet = config.Projet(racine=Path("."), politique={"human": {"recap_markers": {
+            "Bilan :": r"(?im)^\s*bilan\s*:", "Après :": r"(?im)^\s*après\s*:"}}})
+        message = "Fait.\n\nBilan : rien.\n\n~~~\nAprès : la suite.\n~~~"
+        self.assertEqual(humain.recap_manquant(projet, message), ["Après :"])
+        self.assertEqual(humain.recap_manquant(projet, message.replace("~~~\n", "")), [])
+
     def test_transcript_illisible(self):
         self.assertIsNone(humain.dernier_message(Path("/inexistant/t.jsonl")))
 

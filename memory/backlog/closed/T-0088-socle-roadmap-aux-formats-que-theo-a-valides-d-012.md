@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0088 — socle roadmap aux formats que Théo a validés (D-0127) : le format détaillé en un tableau par lot, l'état de chaque tâche et la priorité en symboles ; le compact aligné en colonnes
 
-> statut : ouvert · origine : J-2026-11-18-N · besoin : B-0274 · priorité : haute · lu : backlog@65dfc703
+> statut : fait · origine : J-2026-11-18-N · besoin : B-0274 · priorité : haute · lu : backlog@65dfc703 · ref : J-2026-11-18-W, D-0135
 
 Théo, le 18 novembre, devant la sortie de `socle roadmap --format
 markdown` (J-2026-11-18-N) : « C'est illisible, le mode détaillé devait
@@ -52,7 +52,7 @@ options et les déclencheurs de B-0274 ne changent pas.
 
 ## Fait quand
 
-- [ ] le format détaillé donne, sous la ligne de chaque lot détaillé (« **n. L-NNNN — titre** · état · closes/total »), un tableau Markdown d'une ligne par tâche : son état et sa priorité en symboles, son identifiant, son besoin et son titre, comme l'exemple validé, et un test de `tests/test_suite_du_projet.py` le lit
-- [ ] lu par besoin, chaque besoin a de même le tableau de ses tâches, avec le lot de chacune, et un test le lit
-- [ ] le format compact aligne en colonnes chaque jalon, ses lots et leur avancement, le lot en cours marqué ▶, et finit par les lignes « Hors lot » et « Ensuite », comme l'exemple validé, et un test le lit
-- [ ] le guide et son anglais montrent les deux formats, une note de version le dit, et le prompt de mise à jour de chess le reprend
+- [x] le format détaillé donne, sous la ligne de chaque lot détaillé (« **n. L-NNNN — titre** · état · closes/total »), un tableau Markdown d'une ligne par tâche : son état et sa priorité en symboles, son identifiant, son besoin et son titre, comme l'exemple validé, et un test de `tests/test_suite_du_projet.py` le lit
+- [x] lu par besoin, chaque besoin a de même le tableau de ses tâches, avec le lot de chacune, et un test le lit
+- [x] le format compact aligne en colonnes chaque jalon, ses lots et leur avancement, le lot en cours marqué ▶, et finit par les lignes « Hors lot » et « Ensuite », comme l'exemple validé, et un test le lit
+- [x] le guide et son anglais montrent les deux formats, une note de version le dit, et le prompt de mise à jour de chess le reprend
