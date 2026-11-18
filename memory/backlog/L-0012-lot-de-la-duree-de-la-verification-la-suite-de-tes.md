@@ -29,3 +29,7 @@ Recul : première passe, sans précédente à comparer ; ses trois bloquants ava
 ### Passe 2 — 2026-11-18
 
 Commits : 8a7053c..abed8ed
+
+- Bloquant : un passage complet lancé par la fin de tour ou l'envoi garde sa trace au-delà du seuil sans dire l'avertissement à personne · cause nouvelle
+- Bloquant : `nan` écrit librement au seuil, puis relevé sans demande, le cliquet comparant `vb > va` · cause nouvelle
+- Ouvre : rien ; le même trou du cliquet sur des clés d'avant le lot, constat pour le backlog, se ferme par la correction du second bloquant, la comparaison étant commune
