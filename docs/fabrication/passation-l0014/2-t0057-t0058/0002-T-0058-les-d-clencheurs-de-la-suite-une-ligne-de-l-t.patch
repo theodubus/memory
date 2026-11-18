@@ -1,0 +1,631 @@
+From c2ec0c05deb6d55c6b3cb347098d64673a426aba Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 17 Nov 2026 11:59:34 +0000
+Subject: [PATCH 2/2] =?UTF-8?q?T-0058=20:=20les=20d=C3=A9clencheurs=20de?=
+ =?UTF-8?q?=20la=20suite=20=E2=80=94=20une=20ligne=20de=20l'=C3=A9tat,=20u?=
+ =?UTF-8?q?ne=20phrase=20du=20guide,=20la=20ligne=20des=20instructions=20d?=
+ =?UTF-8?q?u=20socle,=20le=20r=C3=A9cap=20de=20la=20cl=C3=B4ture=20d'un=20?=
+ =?UTF-8?q?lot=20(socle-batch),=20le=20r=C3=A9sum=C3=A9=20de=20chaque=20ex?=
+ =?UTF-8?q?=C3=A9cution=20de=20la=20CI=20pos=C3=A9e,=20le=20skill=20delega?=
+ =?UTF-8?q?te-lot=20(B-0274,=20J-2026-11-17-M)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Les copies protégées de ce dépôt (.github/workflows/socle.yml,
+.claude/skills/socle-batch/SKILL.md) ne changent pas : elles suivront
+leurs gabarits sous une demande validée. La section du socle de
+l'AGENTS.md de ce dépôt attend la place que T-0060 rend : T-0069.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Mr1cCernaY1gHvhEGiHk6f
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=2 PreToolUse=382 Stop=3
+Socle-Hooks-Since-Commit: PreToolUse=124
+---
+ .claude/skills/delegate-lot/SKILL.md          |  13 ++-
+ docs/fabrication/architecture.md              |   2 +-
+ engine/socle/CHANGES.en.md                    |  17 +++
+ engine/socle/CHANGES.md                       |  17 +++
+ engine/socle/HELP.en.md                       |   7 +-
+ engine/socle/HELP.md                          |   7 +-
+ engine/socle/messages_en.py                   |   2 +
+ engine/socle/state.py                         |   8 +-
+ engine/socle/templates/AGENTS.en.md           |   6 +-
+ engine/socle/templates/AGENTS.md              |   6 +-
+ .../templates/skills/socle-batch/SKILL.en.md  |  11 +-
+ .../templates/skills/socle-batch/SKILL.md     |  16 +--
+ engine/socle/templates/socle.en.yml           |   7 ++
+ engine/socle/templates/socle.yml              |   7 ++
+ ...du-socle-de-l-agents-md-de-ce-depot-sui.md |  16 +++
+ ...heurs-de-la-vue-de-la-suite-le-guide-le.md |   8 +-
+ memory/journal/2026-11-6.md                   |  40 +++++++
+ tests/test_suite_du_projet.py                 | 100 ++++++++++++++++++
+ 18 files changed, 260 insertions(+), 30 deletions(-)
+ create mode 100644 memory/backlog/T-0069-la-section-du-socle-de-l-agents-md-de-ce-depot-sui.md
+ rename memory/backlog/{ => closed}/T-0058-les-declencheurs-de-la-vue-de-la-suite-le-guide-le.md (70%)
+
+diff --git a/.claude/skills/delegate-lot/SKILL.md b/.claude/skills/delegate-lot/SKILL.md
+index 004ce76..4a1cf98 100644
+--- a/.claude/skills/delegate-lot/SKILL.md
++++ b/.claude/skills/delegate-lot/SKILL.md
+@@ -11,16 +11,23 @@ sa copie protégée n'est pas posée dans `.claude/skills/`. Ce skill ne dit
+ que ce qui s'y ajoute ici. Ses raisons : D-0096, J-2026-11-11-G,
+ ADR-0079.
+ 
++## L'annonce et la clôture
++
++À l'annonce d'un lot, puis à sa clôture, lancer
++`python3 .socle/socle roadmap` et en coller la sortie dans la réponse :
++où le lot se place parmi les jalons et les lots, puis ce qui vient après
++lui (B-0274).
++
+ ## Les sous-agents
+ 
+ Le modèle est celui que dit le chantier actif ; un sous-agent qui doit
+ tourner sur celui de la session se lance sans `model`, l'alias `opus`
+ ayant désigné un Opus plus ancien que celui de la session (B-0251). La consigne est celle du
+-produit, avec, en tête : « Tu implémentes un sujet du socle dans ton
++produit, avec, en tête : « Tu implémentes une tâche du socle dans ton
+ worktree du dépôt memory. AGENTS.md s'applique. » ; dans « À livrer » :
+ des tests qui échouent sur le commit parent, pour tout code ; pour un
+-contrôle ou un refus nouveau, son défaut injecté et son témoin sain ; le
+-sujet rangé (`socle archive`) ; `verify --fast` une fois, à la fin ;
++contrôle ou un refus nouveau, son défaut injecté et son témoin sain ; la
++tâche rangée (`socle archive`) ; `verify --fast` une fois, à la fin ;
+ dans « Interdits » : ouvrir
+ une pull request, lire ou ajouter un autre dépôt ; puis « Économie : lire
+ ce qui sert, pas les fichiers entiers ; pas de suite complète relancée
+diff --git a/docs/fabrication/architecture.md b/docs/fabrication/architecture.md
+index 3fa6bcf..7dcce30 100644
+--- a/docs/fabrication/architecture.md
++++ b/docs/fabrication/architecture.md
+@@ -47,7 +47,7 @@ vérifiées.
+ | `tests_reader.py` | extraction des fonctions de test selon l'adaptateur (blocs à accolades, indentés ou fermés par `end`) ; un en-tête de fonction écrit dans une chaîne ou un commentaire de plusieurs lignes n'en est pas un (B-0025) ; transitivité des assertions |
+ | `hooks.py` | les points d'entrée des hooks de l'agent et de git ; le hook avant outil juge tout contre la racine de la session et, si l'action a lieu dans un autre worktree du même dépôt équipé du socle (celui du fichier écrit ou du dossier courant), en plus contre ce worktree : refusée dans l'un des deux arbres, elle est refusée, et une référence citée vaut si elle existe dans l'un ou l'autre ; fin de tour et démarrage jugent la racine de la session (ADR-0064) ; le hook avant push ne juge pas comme la CI la plage d'une branche jetable, que la CI ne juge pas aux envois, et ne relâche les références que si chaque branche qui reçoit le push est jetable (D-0087) ; la trace, où chaque commit nomme son worktree : un commit dans un autre worktree, dans la même commande, n'est pas un second commit (B-0136) ; le hook avant push juge le dernier commit, non l'arbre, dont un changement non commité ne part pas (B-0115) ; la plage qu'il envoie, jugée comme la CI la jugera, laisse partir le fichier protégé qu'une demande en attente couvre, comme l'étage git (D-0071) ; le refus du widget de questions de l'agent, où une décision se lit en texte brut (B-0105) ; en session cloud, le démarrage complète un clone superficiel (`git fetch --unshallow`, B-0202), puis installe les outils de l'adaptateur par les commandes que la CI lance pour eux, une fois par conteneur (ADR-0035), sous un seul délai, sans bloquer sur un échec ; dont chaque refus et l'étage qui l'a prononcé ; chaque commande shell de l'agent jugée commande simple par commande simple, par une fonction que `skills.commandes` partage (`refus_bash`) : écriture d'un fichier protégé ou d'un réglage de Claude Code, commande réservée à l'humain, commit ou push qui saute les hooks du projet (`--no-verify`, B-0023), push forcé ou vers la branche par défaut, publication, suppression distante (B-0044, L2) ; un correctif sans test, dit dès le commit, se juge sur un commit amendé contre le parent de celui qu'il remplace, l'amendement lu dans la commande de git (B-0084), et, dans un projet à plusieurs adaptateurs, langage par langage du code corrigé (ADR-0051) ; un hook git retient l'index qu'il juge, puis retire de l'environnement ce qui désigne un dépôt (`GIT_DIR`…), que git lui passe depuis un worktree secondaire et dont les tests du projet hériteraient (B-0057) ; le hook de fin de tour bloque le premier arrêt d'un tour rouge, mais pas une relance qu'il a provoquée sur les mêmes contrôles en échec et le même arbre, sans la sortie des outils, qui change à chaque relance : le rapport va alors à l'humain en message, sans compter de tentative (ADR-0061) ; ce rapport dit en une ligne les fichiers protégés qu'une mise à jour a posés, que `socle check` liste (`Rapport.texte(regrouper=True)`, ADR-0077) ; le hook avant outil refuse l'installeur visé sur un projet équipé (la racine, ou une cible qui porte son verrou) dans un autre mode que celui de son verrou, et laisse passer la mise à jour dans ce mode et une cible sans verrou ; il refuse aussi une cible qu'il ne sait pas résoudre (une variable, une substitution, `~autre`, dans la cible ou dans le `cd` qui la précède), et la ligne de commande refuse les options abrégées (B-0141, ADR-0062) ; il laisse l'agent remettre un fichier protégé à son état du dernier commit, nommé en toutes lettres, ou supprimer un fichier apparu sous un chemin protégé que git ne suit pas, sauf si une demande dont ce qu'elle approuve n'est pas commité le cite, lui ou son dossier ; ses redirections, un préfixe ou une variable devant `git`, `checkout` sans `--` et `--pathspec-from-file` se jugent (`remise_en_etat`, D-0098, ADR-0065) ; un chemin que le shell écrit se juge développé comme le shell le ferait, depuis le dossier courant de l'agent (B-0205) : accolades, `~`, variables de l'environnement du hook (hors des variables spéciales du shell, `$_`, `$OLDPWD`) et de la commande, `${X:-y}`, chaque valeur entière et mot par mot, motifs contre les fichiers présents et contre les motifs des chemins protégés, élargis après un `shopt`, et ce qu'il ne sait pas développer est refusé si la part écrite en toutes lettres avant lui, remontée des `..` qui le suivent, ne le place pas hors du projet ; le script d'un `sed -i` ou d'un `perl -i`, séparé ou collé, n'est pas un chemin écrit, `perl -0` et `-l` ne prenant que des chiffres (`ecritures_jugees`, B-0171, ADR-0072) ; `cp`, `ln`, `install` et `mv` écrivent le dossier de `-t`, `sort` le fichier de `-o` ; `find -delete`, ou `-exec` d'un écrivain de `{}`, se juge par ses départs et les filtres de nom ou de chemin qui gardent son action (`_expression_find` : un filtre ne garde que ce qui le suit dans sa conjonction, hors d'un `!` et de l'autre branche d'un `-o` ou d'une `,`), le `*` d'un `-path` lu comme `**` sur le chemin qu'écrit `find`, contre les motifs des chemins protégés, à toute profondeur, contre les fichiers protégés présents d'un motif de dossier, et contre les réglages de Claude Code présents, ceux de la racine ignorés par git compris, ou contre leurs motifs si le filtre nomme `.claude` ou `settings` (la revue du lot 3, J-2026-11-14-AH) ; `python -c` et `xargs` d'un écrivain de ce qu'il lit, écrivains qu'il ne sait pas lire, se jugent par les chemins protégés qu'ils citent en toutes lettres, le script de l'un, la commande entière de l'autre (`_ecrivains_illisibles`, B-0206) ; une commande qu'il ne sait pas juger, plus de 10 000 caractères hors du corps de ses heredocs, plus de 32 parenthèses ou accolades ouvertes à la fois (`commandes.demesure`), un jugement qui lève ou passe 5 secondes, est refusée si elle peut écrire (`injugeable`) ; la suppression d'un dossier qui contient la racine, par les arguments de `rm`, les sources d'un `mv`, ce que balaie `git clean` ou les départs d'un `find` qui supprime, son chemin développé de même, et celle de la racine par un `find` qu'aucun filtre de nom ou de chemin ne garde, même avec `-type` ou `-empty`, sont refusées (`suppressions`, B-0208) ; de même, la racine comprise, la destination d'un `rsync --delete` et les sources d'un `rsync --remove-source-files`, ses options à valeur lues où qu'elles soient, le chemin d'un `git worktree remove` ou d'un `git worktree move` sous ses `-C`, et, comme git le cherche d'abord parmi ses worktrees, la racine ou un dossier qui la contient dont le chemin finit par lui (`_trouve_par_son_suffixe`, J-2026-11-15-O), les chemins qu'un `python -c` écrit en toutes lettres pour `rmtree`, `shutil.move`, `os.rename`, `os.replace` ou `Path(…).rename`, lus dans l'arbre de son script (`ast`), et un `find -exec` de l'un d'eux (B-0228). C'est une première barrière contre les erreurs d'un agent coopératif, qui juge, quelle qu'en soit la forme, ce que rien ne rattrape ensuite, et laisse hors de son modèle l'écriture d'un fichier protégé sous une forme de contournement (ADR-0080) ; la garantie est `protege.fichiers`. Il ne voit pas une part inconnue qui vaut elle-même `..`, une option du shell posée par le profil, une variable que Claude Code ne pose que pour ses hooks, les formes que la seconde revue de B-0171 a trouvées (B-0211), ni une suppression par `xargs rm`, par une commande que lance un `python -c` ou par un chemin que son script construit au vol (B-0246) |
+ | `commands.py` | le découpage d'une commande shell en commandes simples, par `shlex` : séparateurs, redirections, `cd` (et ses options), `cd -`, `pushd` et `popd` suivis, chaque cible développée au moment du `cd`, variables affectées retenues (`+=`, une déclaration de tableau ou de référence rend la variable inconnue), un sous-shell, une substitution, un élément de pipeline ou une tâche de fond supposés ne rien transmettre à la suite, ce que lance une substitution nue qu'il délimite jugé, chaque variable développée une fois, `$'…'` lu, `bash -c` (quel que soit le groupe d'options qui porte `c`, `--` sauté, B-0206) et `eval` ouverts, préfixes (`env`, `sudo`, `python -m`) retirés ; le corps d'un heredoc n'est que du texte ; un mot développé comme le shell (`developper`, `accolades`, `normaliser`), ce qui ne se développe pas marqué, et un motif du shell, classes POSIX comprises, comparé à un motif de chemin (`se_croisent`) (B-0171, ADR-0072). Les mots réservés qui précèdent une commande (`then`, `do`, `!`, `{`…) se retirent comme un préfixe ; ce qu'une condition ou une boucle change, son dossier et ses variables, devient inconnu après elle et dans la branche `else` qui suit, sauf un dossier connu où elle revient sans qu'un `break` ou un `continue` l'ait quittée ailleurs, et le corps d'un `for` se lit une fois par mot de sa liste, sa variable liée à ce mot, jusqu.à `DEPLIAGE_MAX` caractères pour toute la commande (B-0204, J-2026-11-14-AK, J-2026-11-14-AL) ; le corps d'une fonction (`nom() { …; }`, ou `function nom { …; }` sans parenthèses, sur la même ligne ou la suivante, B-0232) se lit, et rend en se fermant l'état d'avant lui, un autre corps que bash admet se juge comme exécuté là où il s'écrit, et la définition ne vaut que pour la commande qui la suit ; l'appel d'une fonction définie dans la commande dont le corps `{ … }` change le dossier ou une variable rend inconnu ce qu'elle change, avec ce que changent les fonctions qu'elle appelle, résolues à l'appel de proche en proche (une fonction définie après elle comprise), et ce qui suit se juge comme un état inconnu ; l'appel vaut derrière `time`, et dans une substitution ou un `eval`, qui connaissent les fonctions de la commande, non dans un `bash -c` (la seconde revue du lot B-0234, B-0232, J-2026-11-16-B, B-0250) ; des opérateurs échappés ou entre guillemets (`\(`, `';'`), et un mot réservé cité ou échappé dont le texte nu est réservé (`"function"`, `\function`, `"}"`), sont un mot, jamais lu comme une structure (la revue du lot 3, J-2026-11-14-AH ; B-0232). Un `#` n'ouvre un commentaire qu'en tête d'un mot, retiré sans sa fin de ligne, et les guillemets d'une substitution entre guillemets se lisent comme le shell (`"$(cmd "arg")"`, B-0207). Il ne suit pas les motifs d'un `case` (B-0245), `time` devant une commande composée (B-0244), ce que lance une substitution entre guillemets, l'état d'un `eval`, l'appel d'une fonction définie hors de la commande, `CDPATH`, un `cd` qui échoue, `env -C`, un heredoc vu où il n'y en a pas (B-0207), ni `lastpipe`, `((…))`, `let`, `getopts` (B-0211) |
+-| `state.py` | l'état dérivé, dont l'ordre du backlog, que le rappel de fin de tour redonne ; si GitHub exige la CI du socle avant de fusionner sur la branche par défaut (ensemble de règles ou protection classique, lus par `gh`), sinon une action de l'humain avec le lien de la page (B-0044, L2, R1) ; la sortie du démarrage, hook compris, sous `[startup] max_bytes`, chaque partie dans sa part, ce qu'une partie laisse ou libère allant aux autres jusqu'à ce que rien ne change : l'état dérivé, en tête ce qui demande d'agir (ce qui revient à l'humain, les demandes, même quand le reste ne se calcule pas, ce qu'il a écrit, les lignes du hook), puis ce qui informe, puis le backlog, ses lignes bornées et ses listes plafonnées, chacune disant où lire la suite ; puis le chantier actif, public et privé, les faits par leur titre et les dix dernières décisions ; une partie au-delà de ce qui lui revient perd des blocs entiers, l'état d'abord ce qui se relit ailleurs, un en-tête jamais sans ses éléments, les autres depuis leur fin, et la coupe dit laquelle, de combien et où lire le reste ; les lignes du hook gardées, `socle state --short` les redit ; le budget du chantier actif au-dessus de sa part signalé à chaque démarrage (ADR-0071) |
++| `state.py` | l'état dérivé, dont l'ordre du backlog, que le rappel de fin de tour redonne, et une ligne qui renvoie à la suite entière (`socle roadmap`, B-0274) ; si GitHub exige la CI du socle avant de fusionner sur la branche par défaut (ensemble de règles ou protection classique, lus par `gh`), sinon une action de l'humain avec le lien de la page (B-0044, L2, R1) ; la sortie du démarrage, hook compris, sous `[startup] max_bytes`, chaque partie dans sa part, ce qu'une partie laisse ou libère allant aux autres jusqu'à ce que rien ne change : l'état dérivé, en tête ce qui demande d'agir (ce qui revient à l'humain, les demandes, même quand le reste ne se calcule pas, ce qu'il a écrit, les lignes du hook), puis ce qui informe, puis le backlog, ses lignes bornées et ses listes plafonnées, chacune disant où lire la suite ; puis le chantier actif, public et privé, les faits par leur titre et les dix dernières décisions ; une partie au-delà de ce qui lui revient perd des blocs entiers, l'état d'abord ce qui se relit ailleurs, un en-tête jamais sans ses éléments, les autres depuis leur fin, et la coupe dit laquelle, de combien et où lire le reste ; les lignes du hook gardées, `socle state --short` les redit ; le budget du chantier actif au-dessus de sa part signalé à chaque démarrage (ADR-0071) |
+ | `roadmap.py` | la suite du projet d'un coup d'œil (`socle roadmap`, B-0274) : les jalons et leurs besoins clos, les lots dans leur ordre d'exécution avec leurs tâches, les besoins, ce qui n'est dans aucun lot, et deux lots qui attendent un même lot sans ordre entre eux ; calculée par le graphe du backlog que l'état lit (`memory.Graphe`), en compact (une ligne par jalon et par lot, ou par besoin, sans nommer de demande) ou en Markdown (le lot en cours et les deux suivants tâche par tâche, le lien de chaque demande en attente) |
+ | `human.py` | les spécifications déclarées qu'aucune demande n'a soumises à l'humain (D-0066) ; les branches distantes à supprimer (contenues dans la branche par défaut, ou dans la branche de travail poussée, B-0145) et celles à examiner (non fusionnées, sans activité depuis une semaine, B-0112), avec la commande qui étiquette d'abord les commits cités que seule l'une d'elles garde, ni pull request ni étiquette (B-0116) ; ce qui revient à l'humain ; ce qu'il a écrit lui-même depuis le dernier commit de l'agent (approbations, réponses de son terminal), que l'état liste pour que l'agent le cite ; la lecture du dernier message de l'agent pour le récap |
+ | `private.py` | la mémoire privée : modes compagnon et chiffré, verrou, accès, couches privées par défaut, contrôles `prive.*` ; un terme privé cherché sous ses variantes d'écriture, dans le contenu, les noms de fichier et de branche ; rien d'écrit sans accès ; la mémoire privée lue à une révision |
+diff --git a/engine/socle/CHANGES.en.md b/engine/socle/CHANGES.en.md
+index e611691..4f75379 100644
+--- a/engine/socle/CHANGES.en.md
++++ b/engine/socle/CHANGES.en.md
+@@ -7,6 +7,23 @@ letter. On an update, the installer gives the entries that the project's
+ engine copy did not have, and the commit message it proposes names their
+ identifiers.
+ 
++## 2026-11-17-c — The project's roadmap in the state, the instructions, a batch's closure and the CI
++
++The roadmap (`socle roadmap`) shows up where one looks for it. The state
++has a line that points to the command. The socle's instructions, in
++`AGENTS.md`, tell the agent to paste the detailed format
++(`--format markdown`) into its reply when the human asks for the
++roadmap. The `socle-batch` skill has the compact format pasted into the
++recap of a batch's closure. The installed CI writes the detailed format
++into the summary of each run, readable on GitHub without an agent: a
++"Project roadmap" step, before the private memory, none of which goes
++into it, and which does not fail the CI if it fails. The guide says so in
++one sentence.
++
++To do: nothing; the `.github/workflows/socle.yml` workflow and the
++`socle-batch` skill are protected copies, in the installer's request, and
++the socle's section of `AGENTS.md` is regenerated by the update.
++
+ ## 2026-11-17-b — The project's roadmap at a glance: `socle roadmap`
+ 
+ A new command, for the human as for the agent:
+diff --git a/engine/socle/CHANGES.md b/engine/socle/CHANGES.md
+index 8120c06..c04ab08 100644
+--- a/engine/socle/CHANGES.md
++++ b/engine/socle/CHANGES.md
+@@ -7,6 +7,23 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
+ moteur du projet n'avait pas, et le message de commit qu'il propose nomme
+ leurs identifiants.
+ 
++## 2026-11-17-c — La suite du projet dans l'état, les instructions, la clôture d'un lot et la CI
++
++La suite (`socle roadmap`) se montre là où on la cherche. L'état a une
++ligne qui renvoie à la commande. Les instructions du socle, dans
++`AGENTS.md`, disent à l'agent de coller le format détaillé
++(`--format markdown`) dans sa réponse quand l'humain demande la suite. Le
++skill `socle-batch` fait coller le format compact dans le récap de la
++clôture d'un lot. La CI posée écrit le format détaillé dans le résumé de
++chaque exécution, lisible sur GitHub sans agent : une étape « Suite du
++projet », avant la mémoire privée, dont rien n'y entre, et qui ne fait
++pas échouer la CI si elle échoue. Le guide le dit en une phrase.
++
++À faire : rien ; le workflow `.github/workflows/socle.yml` et le skill
++`socle-batch` sont des copies protégées, dans la demande de
++l'installeur, et la section du socle d'`AGENTS.md` est régénérée par la
++mise à jour.
++
+ ## 2026-11-17-b — La suite du projet d'un coup d'œil : `socle roadmap`
+ 
+ Une commande nouvelle, pour l'humain comme pour l'agent :
+diff --git a/engine/socle/HELP.en.md b/engine/socle/HELP.en.md
+index c4c5561..bd428bb 100644
+--- a/engine/socle/HELP.en.md
++++ b/engine/socle/HELP.en.md
+@@ -121,7 +121,11 @@ another entry, or a request until it is answered), and its boxes are all
+ checked before closing it. It submits each document as a request. Just
+ ask it to; the state then gives the next milestone, the next batch and
+ the progress of its tasks, the ready tasks, and the needs to split into
+-tasks or to close.
++tasks or to close. The whole roadmap, at a glance, reads in a terminal with
++`python3 .socle/socle roadmap` (one line per milestone and per batch;
++`--format markdown` details the batch in progress and the next two,
++`--by need` reads by need), on the page of each CI run, and in the
++conversation: ask the agent for “the roadmap”.
+ 
+ **Specifications and test cases.** The project declares where its
+ specifications live (`[specs] paths` in the guardrails): the state tells
+@@ -449,6 +453,7 @@ agent, which fixes them alone. Those that concern the human:
+ | `install` | install or update the socle |
+ | `init` | describe the project |
+ | `state` | the project's state |
++| `roadmap` | the project's roadmap: milestones, batches, tasks and needs |
+ | `answer`, `decision`, `reviewed` | answer a request, record a decision in session, a review |
+ | `approve` | approve one's own protected changes |
+ | `private install` | set up the private memory |
+diff --git a/engine/socle/HELP.md b/engine/socle/HELP.md
+index 61d3f07..83bd92e 100644
+--- a/engine/socle/HELP.md
++++ b/engine/socle/HELP.md
+@@ -129,7 +129,11 @@ jusqu'à sa réponse), et ses cases sont toutes cochées avant de la clore.
+ Il soumet chaque document en demande. Il suffit de le lui demander ;
+ l'état donne ensuite le prochain jalon, le prochain lot et l'avancement
+ de ses tâches, les tâches prêtes, et les besoins à découper en tâches ou
+-à fermer.
++à fermer. La suite entière, d'un coup d'œil, se lit dans un terminal par
++`python3 .socle/socle roadmap` (une ligne par jalon et par lot ;
++`--format markdown` détaille le lot en cours et les deux suivants,
++`--by need` lit par besoin), sur la page de chaque exécution de la CI, et
++dans la conversation : demandez « la suite » à l'agent.
+ 
+ **Spécifications et cas d'essai.** Le projet déclare où vivent ses
+ spécifications (`[specs] paths` des garde-fous) : l'état vous signale
+@@ -457,6 +461,7 @@ Chaque refus dit ce qu'il a vu et comment en sortir. La plupart s'adressent
+ | `install` | installer ou mettre à jour le socle |
+ | `init` | décrire le projet |
+ | `state` | l'état du projet |
++| `roadmap` | la suite du projet : jalons, lots, tâches et besoins |
+ | `answer`, `decision`, `reviewed` | répondre à une demande, consigner une décision en séance, une relecture |
+ | `approve` | approuver ses propres changements protégés |
+ | `private install` | mettre en place la mémoire privée |
+diff --git a/engine/socle/messages_en.py b/engine/socle/messages_en.py
+index a20309d..789bce6 100644
+--- a/engine/socle/messages_en.py
++++ b/engine/socle/messages_en.py
+@@ -3690,4 +3690,6 @@ MESSAGES: dict[str, str] = {
+         'read by batch (default) or by need, each with its tasks and the batch of each',
+     'en markdown, détailler tous les lots, ou tous les besoins':
+         'in markdown, detail every batch, or every need',
++    "  la suite : `python3 .socle/socle roadmap` (détaillée : `--format markdown`)":
++        "  the roadmap: `python3 .socle/socle roadmap` (detailed: `--format markdown`)",
+ }
+diff --git a/engine/socle/state.py b/engine/socle/state.py
+index 4c1f4a9..341c04d 100644
+--- a/engine/socle/state.py
++++ b/engine/socle/state.py
+@@ -680,15 +680,17 @@ def _memoire(mem: memoire.Memoire, projet) -> list[str]:
+ 
+ 
+ def _backlog(mem: memoire.Memoire, borne: bool = False) -> list[tuple[int, list[str]]]:
+-    """Le backlog, en blocs de l'état avec leur rang de coupe : ses comptes,
+-    puis ce qui est en cours ou bloqué, et ce qui vient ensuite, qui se
++    """Le backlog, en blocs de l'état avec leur rang de coupe : ses comptes
++    et la commande de la suite, puis ce qui est en cours ou bloqué, et ce qui vient ensuite, qui se
+     relisent (`socle show --index backlog`) et partent les premiers ; avec
+     `borne`, chaque liste plafonnée et les titres raccourcis."""
+     backlog = [e for e in mem.entrees(memoire.BACKLOG) if not e.archivee]
+     par = Counter(e.statut for e in backlog)
+     res = [(INFO, [trad("backlog  : {ouverts} ouvert(s), {en_cours} en cours, {bloques} bloqué(s), {clos} clos",
+                         ouverts=par.get("ouvert", 0), en_cours=par.get("en-cours", 0),
+-                        bloques=par.get("bloque", 0), clos=par.get("fait", 0) + par.get("abandonne", 0))])]
++                        bloques=par.get("bloque", 0), clos=par.get("fait", 0) + par.get("abandonne", 0)),
++                   # La suite entière, jalons, lots et tâches, se lit à part.
++                   trad("  la suite : `python3 .socle/socle roadmap` (détaillée : `--format markdown`)")])]
+     titre = TITRE_DE_SUJET if borne else None
+     for statut, libelle in (("en-cours", a_traduire("en cours")), ("bloque", a_traduire("bloqué"))):
+         res += [(RELU, b) for b in _elements([], [[f"  {trad(libelle)} : {e.id} — "
+diff --git a/engine/socle/templates/AGENTS.en.md b/engine/socle/templates/AGENTS.en.md
+index 600e58e..46b0629 100644
+--- a/engine/socle/templates/AGENTS.en.md
++++ b/engine/socle/templates/AGENTS.en.md
+@@ -91,7 +91,9 @@ waiting to be asked:
+ - before opening a backlog entry, its index (`socle show --index
+   backlog`) says whether it already exists;
+ - to know why something is the way it is, search the journal
+-  (`grep -rn "<word>" memory/journal/`).
++  (`grep -rn "<word>" memory/journal/`);
++- the roadmap, when the human asks for it: paste into the reply the output
++  of `python3 .socle/socle roadmap --format markdown`.
+ 
+ Reading is proven: a new decision, request or backlog entry cites what it
+ read with its fingerprint (`ADR-NNNN@xxxxxxxx`, `read : decisions@…`,
+@@ -178,7 +180,7 @@ guardrails (`proto/` by default): the CI does not judge it on push.
+ | --- | --- |
+ | `.claude/settings.json` | Claude Code hooks: `SessionStart` (derived state; in a cloud session, the adapter's tools), `PreToolUse` (refusals), `Stop` (end-of-turn checks) |
+ | `.socle/git-hooks/` | git hooks: `pre-commit` (fast checks), `prepare-commit-msg` (`Socle-Hooks`, `Socle-Hooks-Since-Commit` trailers), `commit-msg` (private memory leaks; as warnings, a function with neither test nor waiver, a fix without a test, an agent commit without its hooks), `pre-push` (`verify --fast` on the last commit, the pushed range judged as in CI, review before publication) |
+-| `.github/workflows/socle.yml` | CI: adapter capabilities, all checks against the base, socle self-test |
++| `.github/workflows/socle.yml` | CI: adapter capabilities, all checks against the base, socle self-test, the project's roadmap as summary |
+ @@LIGNE_MUTATION@@
+ | `.git/socle/hooks.log` | local trace of every hook that fires, not versioned, shared by all worktrees of the repository |
+ 
+diff --git a/engine/socle/templates/AGENTS.md b/engine/socle/templates/AGENTS.md
+index 56daaea..4eede54 100644
+--- a/engine/socle/templates/AGENTS.md
++++ b/engine/socle/templates/AGENTS.md
+@@ -92,7 +92,9 @@ qu'on le demande :
+ - avant d'ouvrir une entrée du backlog, son index (`socle show --index
+   backlog`) dit si elle existe déjà ;
+ - pour savoir pourquoi une chose est ainsi, chercher dans le journal
+-  (`grep -rn "<mot>" memory/journal/`).
++  (`grep -rn "<mot>" memory/journal/`) ;
++- la suite, quand l'humain la demande : coller dans la réponse la sortie
++  de `python3 .socle/socle roadmap --format markdown`.
+ 
+ La lecture se prouve : une décision, une demande ou une entrée du backlog
+ nouvelles citent ce qu'elles ont lu avec son empreinte (`ADR-NNNN@xxxxxxxx`,
+@@ -179,7 +181,7 @@ des garde-fous (`proto/` par défaut) : la CI ne la juge pas aux envois.
+ | --- | --- |
+ | `.claude/settings.json` | hooks de Claude Code : `SessionStart` (état dérivé ; en session cloud, les outils de l'adaptateur), `PreToolUse` (refus), `Stop` (contrôles de fin de tour) |
+ | `.socle/git-hooks/` | hooks git : `pre-commit` (contrôles rapides), `prepare-commit-msg` (trailers `Socle-Hooks`, `Socle-Hooks-Since-Commit`), `commit-msg` (fuites de la mémoire privée ; en avertissement, une fonction sans test ni dispense, un correctif sans test, un commit d'agent sans ses hooks), `pre-push` (`verify --fast` sur le dernier commit, la plage qui part jugée comme en CI, relecture avant publication) |
+-| `.github/workflows/socle.yml` | CI : capacités de l'adaptateur, tous les contrôles contre la base, auto-test du socle |
++| `.github/workflows/socle.yml` | CI : capacités de l'adaptateur, tous les contrôles contre la base, auto-test du socle, la suite du projet en résumé |
+ @@LIGNE_MUTATION@@
+ | `.git/socle/hooks.log` | trace locale de chaque hook qui tire, non versionnée, commune à tous les worktrees du dépôt |
+ 
+diff --git a/engine/socle/templates/skills/socle-batch/SKILL.en.md b/engine/socle/templates/skills/socle-batch/SKILL.en.md
+index b46b008..0c132ae 100644
+--- a/engine/socle/templates/skills/socle-batch/SKILL.en.md
++++ b/engine/socle/templates/skills/socle-batch/SKILL.en.md
+@@ -7,7 +7,7 @@ description: Run a batch of backlog tasks, from forming it to delivering it: one
+ 
+ A batch gathers ready tasks that are handled together: those that touch
+ the same files, the same guardrail or the same tests, which one review
+-will judge together. The agent running it orchestrates: it announces,
++judges. The agent running it orchestrates: it announces,
+ delegates, has the work reviewed, integrates and delivers; it implements
+ itself only a change of a few lines.
+ 
+@@ -49,8 +49,8 @@ defect (a need in the backlog).
+ Report: your model, the commit, what the tests prove, the choices, what remains.
+ ```
+ 
+-**Without subagents**, the agent runs the batch alone, in the same order:
+-one task after the other, one commit each, the review on the whole batch.
++**Without subagents**, the agent runs the batch alone: one task after
++the other, one commit each, the review on the whole batch.
+ 
+ ## The review, before any push
+ 
+@@ -81,7 +81,8 @@ rewritten.
+    commit.
+ 5. The active work and the journal are written before the merge, in the
+    last commit of the pull request, with the batch's closure: its tasks
+-   closed and its step back written, it becomes `done`, then `python3 .socle/socle archive`. After
++   closed and its step back written, it becomes `done`, then `python3 .socle/socle archive`; the closing
++   recap pastes the output of `python3 .socle/socle roadmap`. After
+    the merge, the local branch restarts from the default branch and is
+    pushed only with the first commit of the next batch: pushed alone, it would recreate the deleted remote branch.
+ 
+@@ -90,7 +91,7 @@ rewritten.
+ Each step of the orchestration rereads the whole conversation.
+ 
+ - One batch per session: the orchestrating conversation stays short.
+-- Two subagents at a time at most; only one beyond 75% of the week; none
++- Only one subagent beyond 75% of the week; none
+   beyond 85% of the week or 60% of the five-hour window: finish the step
+   in progress, then change sessions. In a Claude Code cloud
+   session, `list_events` gives them (`kinds: ["rate_limit_event"]`,
+diff --git a/engine/socle/templates/skills/socle-batch/SKILL.md b/engine/socle/templates/skills/socle-batch/SKILL.md
+index 15c284b..44afce6 100644
+--- a/engine/socle/templates/skills/socle-batch/SKILL.md
++++ b/engine/socle/templates/skills/socle-batch/SKILL.md
+@@ -7,7 +7,7 @@ description: Mener un lot de tâches du backlog, de sa formation à sa livraison
+ 
+ Un lot réunit les tâches prêtes qui se traitent ensemble : celles qui
+ touchent les mêmes fichiers, le même garde-fou ou les mêmes tests, qu'une
+-seule revue jugera ensemble. L'agent qui le mène orchestre : il annonce,
++seule revue juge. L'agent qui le mène orchestre : il annonce,
+ délègue, fait relire, intègre et livre ; il n'implémente lui-même qu'un
+ changement de quelques lignes.
+ 
+@@ -49,8 +49,8 @@ voisin (un besoin au backlog).
+ Compte rendu : ton modèle, le commit, ce que les tests prouvent, les choix, ce qui reste.
+ ```
+ 
+-**Sans sous-agents**, l'agent mène le lot seul, dans le même ordre : un
+-tâche après l'autre, un commit chacune, la revue sur le lot entier.
++**Sans sous-agents**, l'agent mène le lot seul : une tâche après
++l'autre, un commit chacune, la revue sur le lot entier.
+ 
+ ## La revue, avant tout push
+ 
+@@ -70,8 +70,8 @@ une entrée de journal et une valeur attendue ne se réécrivent plus.
+ 2. Retirer la copie isolée et sa branche ;
+    `python3 .socle/socle verify --fast`.
+ 3. Pousser ; ouvrir la pull request s'il n'y en a pas, une seule ouverte.
+-   Attendre la CI du commit de tête : la ligne « CI » de
+-   `python3 .socle/socle state` dit `success` sur son SHA court. Une attente annoncée a son réveil (sous Claude Code,
++   Attendre `success` sur le SHA court du commit de tête, ligne « CI »
++   de `python3 .socle/socle state`. Une attente annoncée a son réveil (sous Claude Code,
+    `send_later`).
+ 4. La fusion est celle des instructions du projet : par défaut,
+    l'humain fusionne, et le lot suivant s'ajoute à la même pull request.
+@@ -80,7 +80,8 @@ une entrée de journal et une valeur attendue ne se réécrivent plus.
+    donnant le commit de tête attendu.
+ 5. Le chantier actif et le journal s'écrivent avant la fusion, dans le
+    dernier commit de la pull request, avec la clôture du lot : ses tâches
+-   closes et son recul écrit, il passe `fait`, puis `python3 .socle/socle archive`. Après la
++   closes et son recul écrit, il passe `fait`, puis `python3 .socle/socle archive` ; le récap
++   de la clôture colle la sortie de `python3 .socle/socle roadmap`. Après la
+    fusion, la branche locale repart de la branche par défaut et ne se pousse qu'avec le premier commit du lot suivant : poussée seule,
+    elle recréerait la branche distante supprimée.
+ 
+@@ -89,8 +90,7 @@ une entrée de journal et une valeur attendue ne se réécrivent plus.
+ Chaque pas de l'orchestration relit toute la conversation.
+ 
+ - Un lot par session : la conversation qui orchestre reste courte.
+-- Deux sous-agents à la fois au plus ; un seul au-delà de 75 % de la
+-  semaine ; aucun au-delà de 85 % de la semaine ou de 60 % de la fenêtre
++- Un seul sous-agent au-delà de 75 % de la semaine ; aucun au-delà de 85 % de la semaine ou de 60 % de la fenêtre
+   de cinq heures : finir le pas en cours, puis changer de session. En session
+   cloud de Claude Code, `list_events` les donne (`kinds:
+   ["rate_limit_event"]`, `utilization`), avant chaque lancement et à
+diff --git a/engine/socle/templates/socle.en.yml b/engine/socle/templates/socle.en.yml
+index 445e456..10f3568 100644
+--- a/engine/socle/templates/socle.en.yml
++++ b/engine/socle/templates/socle.en.yml
+@@ -30,6 +30,13 @@ jobs:
+       - uses: actions/setup-python@v6
+         with:
+           python-version: "3.12"
++
++      # The project's roadmap (`socle roadmap`) in the run's summary, readable
++      # on GitHub without an agent. Before the private memory: nothing private
++      # goes into it. It informs: its failure does not fail the CI.
++      - name: Project roadmap
++        continue-on-error: true
++        run: python3 .socle/socle roadmap --format markdown >> "$GITHUB_STEP_SUMMARY"
+ @@ETAPES_ADAPTATEUR@@
+       # Companion mode: the private memory, at the commit of the lock, with a
+       # deploy key. Without the secrets (pull request from a fork), it stays
+diff --git a/engine/socle/templates/socle.yml b/engine/socle/templates/socle.yml
+index 909f106..dd7c437 100644
+--- a/engine/socle/templates/socle.yml
++++ b/engine/socle/templates/socle.yml
+@@ -30,6 +30,13 @@ jobs:
+       - uses: actions/setup-python@v6
+         with:
+           python-version: "3.12"
++
++      # La suite du projet (`socle roadmap`) dans le résumé de l'exécution,
++      # lisible sur GitHub sans agent. Avant la mémoire privée : rien de privé
++      # n'y entre. Elle informe : son échec ne fait pas échouer la CI.
++      - name: Suite du projet
++        continue-on-error: true
++        run: python3 .socle/socle roadmap --format markdown >> "$GITHUB_STEP_SUMMARY"
+ @@ETAPES_ADAPTATEUR@@
+       # Mode compagnon : la mémoire privée, au commit du verrou, avec une clé
+       # de déploiement. Sans les secrets (pull request d'un fork), elle reste
+diff --git a/memory/backlog/T-0069-la-section-du-socle-de-l-agents-md-de-ce-depot-sui.md b/memory/backlog/T-0069-la-section-du-socle-de-l-agents-md-de-ce-depot-sui.md
+new file mode 100644
+index 0000000..ac351d9
+--- /dev/null
++++ b/memory/backlog/T-0069-la-section-du-socle-de-l-agents-md-de-ce-depot-sui.md
+@@ -0,0 +1,16 @@
++<!-- socle: couche=backlog zone=publique -->
++# T-0069 — La section du socle de l'AGENTS.md de ce dépôt suit son gabarit, qui dit la suite, une fois la place rendue par T-0060
++
++> statut : ouvert · origine : J-2026-11-17-M · besoin : B-0274 · après : T-0060 · lu : backlog@7ab4221e
++
++T-0058 ajoute au gabarit d'`AGENTS.md` (`engine/socle/templates/AGENTS.md`)
++la ligne qui fait coller la suite détaillée quand l'humain la demande, et
++la suite dans la ligne de la CI : 162 octets. La section du socle de
++l'`AGENTS.md` de ce dépôt, à 15 995 octets pour un budget de 16 000, ne
++les a pas reçus (J-2026-11-17-M). T-0060 retire du gabarit une phrase de
++167 octets ; un commit, ensuite, recopie la section du gabarit dans ce
++dépôt, comme J-2026-11-15-I l'a fait, sans relever le budget.
++
++## Fait quand
++
++- [ ] la section du socle de l'`AGENTS.md` de ce dépôt est celle de son gabarit, au chemin du moteur près, et `memoire.budgets` passe
+diff --git a/memory/backlog/T-0058-les-declencheurs-de-la-vue-de-la-suite-le-guide-le.md b/memory/backlog/closed/T-0058-les-declencheurs-de-la-vue-de-la-suite-le-guide-le.md
+similarity index 70%
+rename from memory/backlog/T-0058-les-declencheurs-de-la-vue-de-la-suite-le-guide-le.md
+rename to memory/backlog/closed/T-0058-les-declencheurs-de-la-vue-de-la-suite-le-guide-le.md
+index 4abb48c..52417ec 100644
+--- a/memory/backlog/T-0058-les-declencheurs-de-la-vue-de-la-suite-le-guide-le.md
++++ b/memory/backlog/closed/T-0058-les-declencheurs-de-la-vue-de-la-suite-le-guide-le.md
+@@ -1,7 +1,7 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # T-0058 — Les déclencheurs de la vue de la suite : le guide, les instructions du socle, la fin d'un lot, le résumé de la CI et une ligne de l'état
+ 
+-> statut : ouvert · origine : J-2026-11-16-AD · besoin : B-0274 · lu : backlog@d0b4fc0a
++> statut : fait · origine : J-2026-11-16-AD · besoin : B-0274 · ref : J-2026-11-17-M · lu : backlog@d0b4fc0a
+ 
+ La seconde tâche de B-0274 (J-2026-11-16-AD) : les déclencheurs que
+ la spécification de B-0274 nomme. Le résumé de la CI change le workflow
+@@ -9,6 +9,6 @@ posé, un fichier protégé : une demande à l'humain le cite.
+ 
+ ## Fait quand
+ 
+-- [ ] le guide le dit en une phrase, les instructions du socle disent de coller le format détaillé quand l'humain demande la suite, et le skill `socle-batch` met le format compact dans le récap de la clôture d'un lot
+-- [ ] le workflow de la CI posé écrit le format détaillé dans le résumé de son exécution, et un test le montre
+-- [ ] l'état a une ligne qui renvoie à la commande, et le skill `delegate-lot` de l'atelier l'appelle à l'annonce et à la clôture d'un lot
++- [x] le guide le dit en une phrase, les instructions du socle disent de coller le format détaillé quand l'humain demande la suite, et le skill `socle-batch` met le format compact dans le récap de la clôture d'un lot
++- [x] le workflow de la CI posé écrit le format détaillé dans le résumé de son exécution, et un test le montre
++- [x] l'état a une ligne qui renvoie à la commande, et le skill `delegate-lot` de l'atelier l'appelle à l'annonce et à la clôture d'un lot
+diff --git a/memory/journal/2026-11-6.md b/memory/journal/2026-11-6.md
+index da268f2..a6f378e 100644
+--- a/memory/journal/2026-11-6.md
++++ b/memory/journal/2026-11-6.md
+@@ -1128,3 +1128,43 @@ attende l'autre ; c'est une ligne de la vue, pas un contrôle.
+ `tests/test_suite_du_projet.py` le montre sur un backlog d'essai à deux
+ jalons, trois lots et des besoins hors lot ; le guide, les instructions,
+ le skill `socle-batch`, la CI et l'état viennent avec T-0058.
++
++## J-2026-11-17-M — T-0058 : les déclencheurs de la suite — l'état, le guide, les instructions du socle, la clôture d'un lot, le résumé de la CI et le skill delegate-lot
++
++> ref : T-0058, B-0274, D-0127, L-0014, B-0265, B-0218, T-0009, T-0060, T-0069, J-2026-11-17-L
++
++La seconde tâche de B-0274 : les déclencheurs que la spécification
++validée nomme (D-0127). L'état a, sous la ligne du backlog et dans son
++bloc, une ligne qui renvoie à `socle roadmap`. Le guide le dit en une
++phrase et met `roadmap` dans la table de l'humain. Les instructions du
++socle (le gabarit d'`AGENTS.md`) disent de coller le format détaillé
++quand l'humain demande la suite, et la ligne de la CI dans « Ce qui
++tourne tout seul » dit le résumé. Le skill `socle-batch` fait coller le
++format compact dans le récap de la clôture d'un lot. Le skill
++`delegate-lot` l'appelle à l'annonce et à la clôture d'un lot, et sa
++consigne dit « une tâche » au lieu d'« un sujet », et « la tâche
++rangée » (B-0265).
++
++Le workflow posé (`socle.yml` et `socle.en.yml`) écrit le format
++détaillé dans `$GITHUB_STEP_SUMMARY`, à une étape placée avant la
++mémoire privée (rien de privé n'y entre : en mode compagnon elle n'est
++pas encore là, en mode chiffré pas encore déchiffrée) et qui ne fait pas
++échouer la CI (`continue-on-error`). Un test la lance dans un projet
++installé, son résumé dans un fichier.
++
++Le skill `socle-batch` était à 15 octets de son plafond de 8 000 : la
++phrase nouvelle se paie par trois resserrements sans changer la règle
++(« qu'une seule revue juge », le seuil d'un sous-agent dit une fois, la
++ligne « CI » de l'état dite en une phrase plus courte, « dans le même
++ordre » retiré de la conduite sans sous-agents, ce qui corrige aussi
++« un tâche ») ; le gabarit français fait 7 990 octets.
++
++Les copies protégées de ce dépôt ne changent pas ici : le workflow
++`.github/workflows/socle.yml` et le skill `.claude/skills/socle-batch/SKILL.md`
++se rafraîchissent en relançant l'installeur sur ce dépôt, sous une
++demande validée qui cite leurs empreintes nouvelles ; aucun contrôle
++n'échoue d'ici là (B-0218, T-0009). La section du socle de l'`AGENTS.md`
++de ce dépôt ne suit pas encore son gabarit : à 15 995 octets pour un
++budget de 16 000, elle n'a pas la place des 162 octets que le gabarit
++gagne ; T-0060, qui en retire une phrase de 167 octets, la lui rendra :
++T-0069, au backlog après T-0060, l'y recopiera.
+diff --git a/tests/test_suite_du_projet.py b/tests/test_suite_du_projet.py
+index 43ac7ff..0b432eb 100644
+--- a/tests/test_suite_du_projet.py
++++ b/tests/test_suite_du_projet.py
+@@ -9,6 +9,7 @@ import contextlib
+ import io
+ import types
+ import unittest
++from pathlib import Path
+ from unittest import mock
+ 
+ from socle import cli, memory as memoire, messages, roadmap as suite
+@@ -261,5 +262,104 @@ class TestCommande(Projet):
+         return config.Projet.charger(self.racine)
+ 
+ 
++ETAPE_DE_LA_CI = 'run: python3 .socle/socle roadmap --format markdown >> "$GITHUB_STEP_SUMMARY"'
++
++
++class TestDeclencheurs(Projet):
++    """T-0058 : le guide, les instructions du socle, la clôture d'un lot, le
++    résumé de la CI, une ligne de l'état, et le skill de l'atelier qui mène
++    un lot."""
++
++    def test_l_etat_a_une_ligne_qui_renvoie_a_la_commande(self):
++        from socle import state as etat
++
++        mem = backlog_d_essai()
++        bloc = etat._backlog(mem)[0][1]
++        self.assertTrue(bloc[0].startswith("backlog  : "))
++        self.assertEqual(bloc[1], "  la suite : `python3 .socle/socle roadmap` (détaillée : `--format markdown`)")
++        with messages.dans("en"):
++            self.assertEqual(etat._backlog(mem)[0][1][1],
++                             "  the roadmap: `python3 .socle/socle roadmap` (detailed: `--format markdown`)")
++        self.commiter("base")
++        from socle import config
++
++        self.assertIn("\n  la suite : `python3 .socle/socle roadmap`",
++                      etat.calculer(config.Projet.charger(self.racine), contenus=False))
++
++    def test_la_ci_posee_ecrit_le_format_detaille_dans_le_resume_de_son_execution(self):
++        import os
++        import subprocess
++        from socle.templates import gabarit
++
++        for lg in ("fr", "en"):
++            ci = gabarit("socle.yml" if lg == "fr" else "socle.en.yml", lg)
++            etape = ci.index(ETAPE_DE_LA_CI)
++            # Une étape qui informe : son échec ne fait pas échouer la CI.
++            self.assertIn("continue-on-error: true\n        " + ETAPE_DE_LA_CI, ci, lg)
++            # Avant la mémoire privée : rien de privé n'entre dans le résumé.
++            self.assertLess(etape, ci.index("private recover"), lg)
++            self.assertLess(etape, ci.index("socle ci --base"), lg)
++        # Posée dans le projet, elle écrit la suite détaillée dans le résumé.
++        posee = (self.racine / ".github/workflows/socle.yml").read_text(encoding="utf-8")
++        self.assertIn(ETAPE_DE_LA_CI, posee)
++        self.poser("B-0001", titre="Ajouter triple")
++        self.poser("T-0001", "besoin : B-0001", titre="Écrire triple")
++        self.poser("L-0001", "après : T-0001", "en cours", titre="Le premier lot")
++        self.commiter("backlog")
++        resume = self.racine.parent / f"{self.racine.name}-resume.md"
++        self.addCleanup(resume.unlink, missing_ok=True)
++        commande = ETAPE_DE_LA_CI.removeprefix("run: ")
++        env = {k: v for k, v in os.environ.items() if not k.startswith(("CLAUDE", "GIT_"))}
++        sortie = subprocess.run(["bash", "-c", commande], cwd=self.racine, capture_output=True, text=True,
++                                env={**env, "GITHUB_STEP_SUMMARY": str(resume)})
++        self.assertEqual(sortie.returncode, 0, sortie.stderr)
++        texte = resume.read_text(encoding="utf-8")
++        self.assertTrue(texte.startswith("## La suite du projet\n"), texte)
++        self.assertIn("#### ▶ L-0001 — Le premier lot — en cours", texte)
++        self.assertIn("- T-0001 — Écrire triple · besoin B-0001 · prête", texte)
++
++    def test_le_skill_socle_batch_colle_le_format_compact_au_recap_de_la_cloture(self):
++        from socle import installer as installeur
++
++        attendus = {"fr": "le récap de la clôture colle la sortie de `python3 .socle/socle roadmap`",
++                    "en": "the closing recap pastes the output of `python3 .socle/socle roadmap`"}
++        for lg, phrase in attendus.items():
++            installeur.poser_skills(self.racine, lg)
++            texte = (self.racine / installeur.SKILLS / "socle-batch" / "SKILL.md").read_text(encoding="utf-8")
++            self.assertIn(phrase, " ".join(texte.split()), lg)
++            self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
++            self.assertNotIn("--format markdown", texte, lg)
++
++    def test_les_instructions_disent_de_coller_le_format_detaille_quand_l_humain_demande_la_suite(self):
++        from socle.templates import gabarit
++
++        attendus = {"fr": "la suite, quand l'humain la demande : coller dans la réponse la sortie de "
++                          "`python3 .socle/socle roadmap --format markdown`",
++                    "en": "the roadmap, when the human asks for it: paste into the reply the output of "
++                          "`python3 .socle/socle roadmap --format markdown`"}
++        for lg, phrase in attendus.items():
++            self.assertIn(phrase, " ".join(gabarit("AGENTS.md", lg).split()), lg)
++        agents = " ".join((self.racine / "AGENTS.md").read_text(encoding="utf-8").split())
++        self.assertIn(attendus["fr"], agents)
++
++    def test_le_guide_le_dit_en_une_phrase(self):
++        from socle import cli as ligne
++
++        for nom, phrase in (("HELP.md", "La suite entière, d'un coup d'œil, se lit dans un terminal par "
++                                        "`python3 .socle/socle roadmap`"),
++                            ("HELP.en.md", "The whole roadmap, at a glance, reads in a terminal with "
++                                           "`python3 .socle/socle roadmap`")):
++            guide = (Path(ligne.__file__).parent / nom).read_text(encoding="utf-8")
++            self.assertIn(phrase, " ".join(guide.split()), nom)
++            self.assertIn("| `roadmap` |", guide, nom)
++
++    def test_le_skill_de_l_atelier_l_appelle_a_l_annonce_et_a_la_cloture_d_un_lot(self):
++        racine = Path(__file__).resolve().parent.parent
++        skill = " ".join((racine / ".claude/skills/delegate-lot/SKILL.md").read_text(encoding="utf-8").split())
++        self.assertIn("À l'annonce d'un lot, puis à sa clôture, lancer `python3 .socle/socle roadmap`", skill)
++        self.assertIn("« Tu implémentes une tâche du socle dans ton worktree du dépôt memory.", skill)
++        self.assertNotRegex(skill, r"\bsujets?\b")
++
++
+ if __name__ == "__main__":
+     unittest.main()
+-- 
+2.43.0
+

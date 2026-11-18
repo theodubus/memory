@@ -1,0 +1,16 @@
+<!-- socle: couche=backlog zone=publique -->
+# T-0044 — La suite de tests de ce dépôt sur plusieurs cœurs : verify --fast passe près de douze minutes sur un seul cœur
+
+> statut : fait · après : D-0130 · origine : J-2026-11-16-E · ref : J-2026-11-18-C · besoin : B-0257 · lu : backlog@9966bbbd
+
+La tâche de B-0257, que la migration du backlog en quatre formes a posée dans le lot L-0012 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+
+Où elle en est (J-2026-11-17-I) : le lanceur `tests/parallele.py` et son test sont livrés ; la suite rapide y passe en 175 s au mur contre 649 s par `unittest discover`, verte trois fois de suite en local. Reste le changement de la commande de tests de `.socle/adapter.toml`, protégé, par une demande à Théo, puis le relevé de `verify --fast --redo` après lui et les trois passages en CI.
+
+Où elle en est (J-2026-11-18-A) : la commande changée par Théo (D-0130), `verify --fast --redo` relevé à 163,6 s ; deux CI vertes de suite, la troisième attendue au prochain push.
+
+## Fait quand
+
+- [x] la durée de `verify --fast --redo` est relevée dans une session de travail, avant et après (650,9 s puis 163,6 s, J-2026-11-18-A)
+- [x] la suite lancée en parallèle passe trois fois de suite, en local et en CI (en local le 17 et le 18 novembre ; en CI, exécutions 650, 651 et 652, J-2026-11-18-C)
+- [x] après le changement, `verify --fast --redo` prend moins de cinq minutes dans une session de travail (163,6 s, J-2026-11-18-A)

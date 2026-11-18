@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0128-les-formes-du-shell-que-le-hook-ne-juge-pas-retire.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-17"
+canal = "conversation"
+citation = "Je valide A"
+empreinte = "sha256:c5bf2fb338c83c65910e51d08c08a65027bd090ecac41cdfed958b22b52c330f"

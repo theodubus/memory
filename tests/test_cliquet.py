@@ -37,6 +37,26 @@ class TestCliquet(unittest.TestCase):
         apres["docmap"].append({"code": ["tests/**"], "docs": ["docs/t.md"]})
         self.assertEqual(assouplissements(BASE, apres), [])
 
+    def test_nan_n_est_ni_plus_strict_ni_egal(self):
+        """Revue du lot L-0012, passe 2 : aucun ordre ne compare `nan`. Écrit
+        à la place d'un seuil, il passait pour un durcissement, et désarmait
+        `docs.copie` ou la péremption du chantier actif ; une valeur écrite à
+        sa place passait de même, le seuil relevé en deux temps."""
+        nan = float("nan")
+        self.assertEqual(assouplissements(BASE, changer(nocopy__min_chars=nan)), [("nocopy.min_chars", "200 → nan")])
+        self.assertEqual(assouplissements(BASE, changer(staleness__active_days=nan)),
+                         [("staleness.active_days", "7 → nan")])
+        ecrit = changer(nocopy__min_chars=nan)
+        self.assertEqual(assouplissements(ecrit, BASE), [("nocopy.min_chars", "nan → 200")])
+        self.assertEqual(assouplissements(ecrit, changer(nocopy__min_chars=100)), [("nocopy.min_chars", "nan → 100")])
+        self.assertEqual(assouplissements({}, {"nocopy": {"min_chars": nan}}), [("nocopy.min_chars", "clé ajoutée : nan")])
+        self.assertEqual([c for c, _ in assouplissements(ecrit, changer(nocopy={"exclude": []}))], ["nocopy.min_chars"])
+        plafond = changer()
+        plafond["mutation"]["caps"]["src/a.rs"]["max"] = nan
+        self.assertEqual([c for c, _ in assouplissements(BASE, plafond)], ['mutation.caps."src/a.rs".max'])
+        # Gardé tel quel, il ne change rien.
+        self.assertEqual(assouplissements(ecrit, changer(nocopy__min_chars=nan)), [])
+
     def test_budget_releve(self):
         apres = changer()
         apres["budgets"]["memoire/actif.md"]["max_bytes"] = 9000

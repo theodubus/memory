@@ -1,0 +1,1239 @@
+From 8eb96e4765496acc8edd59be4519a2b7ff33b71a Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 17 Nov 2026 11:42:02 +0000
+Subject: [PATCH 1/2] =?UTF-8?q?T-0057=20:=20socle=20roadmap,=20la=20suite?=
+ =?UTF-8?q?=20du=20projet=20d'un=20coup=20d'=C5=93il=20=E2=80=94=20jalons,?=
+ =?UTF-8?q?=20lots=20dans=20leur=20ordre,=20t=C3=A2ches,=20besoins,=20hors?=
+ =?UTF-8?q?=20des=20lots=20;=20compact=20et=20Markdown,=20par=20lot=20et?=
+ =?UTF-8?q?=20par=20besoin,=20l'alerte=20d'un=20ordre=20de=20lots=20ambigu?=
+ =?UTF-8?q?=20(B-0274,=20J-2026-11-17-L)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+La suite se calcule par le graphe que l'état lit : memory.Graphe sort de
+memory.ordre sans changer ce qu'il rend, et memory.pour_l_humain sert à
+human.a_faire comme à la suite.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Mr1cCernaY1gHvhEGiHk6f
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=2 PreToolUse=258 Stop=2
+Socle-Hooks-Since-Commit: PreToolUse=258
+---
+ docs/fabrication/architecture.md              |   3 +-
+ engine/socle/CHANGES.en.md                    |  20 +
+ engine/socle/CHANGES.md                       |  20 +
+ engine/socle/FORMAT.md                        |  11 +
+ engine/socle/cli.py                           |  21 +-
+ engine/socle/human.py                         |   2 +-
+ engine/socle/memory.py                        | 135 ++++---
+ engine/socle/messages_en.py                   | 109 +++++
+ engine/socle/roadmap.py                       | 373 ++++++++++++++++++
+ ...-socle-roadmap-ses-formats-compact-et-d.md |   8 +-
+ memory/journal/2026-11-6.md                   |  32 ++
+ tests/test_suite_du_projet.py                 | 265 +++++++++++++
+ 12 files changed, 947 insertions(+), 52 deletions(-)
+ create mode 100644 engine/socle/roadmap.py
+ rename memory/backlog/{ => closed}/T-0057-la-commande-socle-roadmap-ses-formats-compact-et-d.md (68%)
+ create mode 100644 tests/test_suite_du_projet.py
+
+diff --git a/docs/fabrication/architecture.md b/docs/fabrication/architecture.md
+index db5ea2c..3fa6bcf 100644
+--- a/docs/fabrication/architecture.md
++++ b/docs/fabrication/architecture.md
+@@ -31,7 +31,7 @@ vérifiées.
+ 
+ | Module | Rôle |
+ | --- | --- |
+-| `cli.py` | les commandes, rangées par public dans l'aide (l'humain, l'agent, les hooks et la CI), dont `new request --questions`, les questions de cadrage d'un sujet (D-0067) : `help`, `state`, `show`, `review`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `private`, `reviewed`, `answer`, `approve`, `install`, `init`, `selftest`, `fingerprint`, `mutation-verdict`, `mutation-run`, `renumber`, `archive`, `checks` ; sans commande, l'aide de l'humain |
++| `cli.py` | les commandes, rangées par public dans l'aide (l'humain, l'agent, les hooks et la CI), dont `new request --questions`, les questions de cadrage d'un sujet (D-0067) : `help`, `state`, `roadmap`, `show`, `review`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `private`, `reviewed`, `answer`, `approve`, `install`, `init`, `selftest`, `fingerprint`, `mutation-verdict`, `mutation-run`, `renumber`, `archive`, `checks` ; sans commande, l'aide de l'humain |
+ | `HELP.md` | le guide de l'humain, source unique : ses gestes, chacun avec sa commande ; `socle help` l'affiche |
+ | `CHANGES.md` | les notes de version, et leur version anglaise : une entrée par changement qui touche un projet installé, sous un identifiant stable (sa date et une lettre), ce qu'il change et ce que l'agent du projet doit faire ; l'installeur donne à la mise à jour celles que la copie du moteur du projet n'avait pas, et `tests/test_notes_de_version.py` exige les mêmes identifiants dans les deux langues (ADR-0078) |
+ | `memory.py` | lecture des cinq couches : en-têtes, entrées, identifiants, métadonnées, références ; le backlog en quatre formes lues sur le préfixe, besoin `B-`, tâche `T-`, lot `L-`, jalon `JA-`, l'ancien numéro d'une entrée renumérotée résolu (ADR-0083) ; l'ordre du backlog (`après`, qui nomme des entrées ou des demandes attendues jusqu'à leur réponse, D-0064 ; une tâche héritant la priorité et l'attente de son besoin ; priorité haute ou basse, D-0062), d'où se calculent le prochain jalon et ses besoins ouverts, le prochain lot et l'avancement de ses tâches, les tâches prêtes rangées par priorité et, à part, celles de priorité basse (D-0052), les besoins à découper et à fermer ; les critères de la section d'une entrée, « Satisfait quand » d'un besoin, « Fait quand » des autres |
+@@ -48,6 +48,7 @@ vérifiées.
+ | `hooks.py` | les points d'entrée des hooks de l'agent et de git ; le hook avant outil juge tout contre la racine de la session et, si l'action a lieu dans un autre worktree du même dépôt équipé du socle (celui du fichier écrit ou du dossier courant), en plus contre ce worktree : refusée dans l'un des deux arbres, elle est refusée, et une référence citée vaut si elle existe dans l'un ou l'autre ; fin de tour et démarrage jugent la racine de la session (ADR-0064) ; le hook avant push ne juge pas comme la CI la plage d'une branche jetable, que la CI ne juge pas aux envois, et ne relâche les références que si chaque branche qui reçoit le push est jetable (D-0087) ; la trace, où chaque commit nomme son worktree : un commit dans un autre worktree, dans la même commande, n'est pas un second commit (B-0136) ; le hook avant push juge le dernier commit, non l'arbre, dont un changement non commité ne part pas (B-0115) ; la plage qu'il envoie, jugée comme la CI la jugera, laisse partir le fichier protégé qu'une demande en attente couvre, comme l'étage git (D-0071) ; le refus du widget de questions de l'agent, où une décision se lit en texte brut (B-0105) ; en session cloud, le démarrage complète un clone superficiel (`git fetch --unshallow`, B-0202), puis installe les outils de l'adaptateur par les commandes que la CI lance pour eux, une fois par conteneur (ADR-0035), sous un seul délai, sans bloquer sur un échec ; dont chaque refus et l'étage qui l'a prononcé ; chaque commande shell de l'agent jugée commande simple par commande simple, par une fonction que `skills.commandes` partage (`refus_bash`) : écriture d'un fichier protégé ou d'un réglage de Claude Code, commande réservée à l'humain, commit ou push qui saute les hooks du projet (`--no-verify`, B-0023), push forcé ou vers la branche par défaut, publication, suppression distante (B-0044, L2) ; un correctif sans test, dit dès le commit, se juge sur un commit amendé contre le parent de celui qu'il remplace, l'amendement lu dans la commande de git (B-0084), et, dans un projet à plusieurs adaptateurs, langage par langage du code corrigé (ADR-0051) ; un hook git retient l'index qu'il juge, puis retire de l'environnement ce qui désigne un dépôt (`GIT_DIR`…), que git lui passe depuis un worktree secondaire et dont les tests du projet hériteraient (B-0057) ; le hook de fin de tour bloque le premier arrêt d'un tour rouge, mais pas une relance qu'il a provoquée sur les mêmes contrôles en échec et le même arbre, sans la sortie des outils, qui change à chaque relance : le rapport va alors à l'humain en message, sans compter de tentative (ADR-0061) ; ce rapport dit en une ligne les fichiers protégés qu'une mise à jour a posés, que `socle check` liste (`Rapport.texte(regrouper=True)`, ADR-0077) ; le hook avant outil refuse l'installeur visé sur un projet équipé (la racine, ou une cible qui porte son verrou) dans un autre mode que celui de son verrou, et laisse passer la mise à jour dans ce mode et une cible sans verrou ; il refuse aussi une cible qu'il ne sait pas résoudre (une variable, une substitution, `~autre`, dans la cible ou dans le `cd` qui la précède), et la ligne de commande refuse les options abrégées (B-0141, ADR-0062) ; il laisse l'agent remettre un fichier protégé à son état du dernier commit, nommé en toutes lettres, ou supprimer un fichier apparu sous un chemin protégé que git ne suit pas, sauf si une demande dont ce qu'elle approuve n'est pas commité le cite, lui ou son dossier ; ses redirections, un préfixe ou une variable devant `git`, `checkout` sans `--` et `--pathspec-from-file` se jugent (`remise_en_etat`, D-0098, ADR-0065) ; un chemin que le shell écrit se juge développé comme le shell le ferait, depuis le dossier courant de l'agent (B-0205) : accolades, `~`, variables de l'environnement du hook (hors des variables spéciales du shell, `$_`, `$OLDPWD`) et de la commande, `${X:-y}`, chaque valeur entière et mot par mot, motifs contre les fichiers présents et contre les motifs des chemins protégés, élargis après un `shopt`, et ce qu'il ne sait pas développer est refusé si la part écrite en toutes lettres avant lui, remontée des `..` qui le suivent, ne le place pas hors du projet ; le script d'un `sed -i` ou d'un `perl -i`, séparé ou collé, n'est pas un chemin écrit, `perl -0` et `-l` ne prenant que des chiffres (`ecritures_jugees`, B-0171, ADR-0072) ; `cp`, `ln`, `install` et `mv` écrivent le dossier de `-t`, `sort` le fichier de `-o` ; `find -delete`, ou `-exec` d'un écrivain de `{}`, se juge par ses départs et les filtres de nom ou de chemin qui gardent son action (`_expression_find` : un filtre ne garde que ce qui le suit dans sa conjonction, hors d'un `!` et de l'autre branche d'un `-o` ou d'une `,`), le `*` d'un `-path` lu comme `**` sur le chemin qu'écrit `find`, contre les motifs des chemins protégés, à toute profondeur, contre les fichiers protégés présents d'un motif de dossier, et contre les réglages de Claude Code présents, ceux de la racine ignorés par git compris, ou contre leurs motifs si le filtre nomme `.claude` ou `settings` (la revue du lot 3, J-2026-11-14-AH) ; `python -c` et `xargs` d'un écrivain de ce qu'il lit, écrivains qu'il ne sait pas lire, se jugent par les chemins protégés qu'ils citent en toutes lettres, le script de l'un, la commande entière de l'autre (`_ecrivains_illisibles`, B-0206) ; une commande qu'il ne sait pas juger, plus de 10 000 caractères hors du corps de ses heredocs, plus de 32 parenthèses ou accolades ouvertes à la fois (`commandes.demesure`), un jugement qui lève ou passe 5 secondes, est refusée si elle peut écrire (`injugeable`) ; la suppression d'un dossier qui contient la racine, par les arguments de `rm`, les sources d'un `mv`, ce que balaie `git clean` ou les départs d'un `find` qui supprime, son chemin développé de même, et celle de la racine par un `find` qu'aucun filtre de nom ou de chemin ne garde, même avec `-type` ou `-empty`, sont refusées (`suppressions`, B-0208) ; de même, la racine comprise, la destination d'un `rsync --delete` et les sources d'un `rsync --remove-source-files`, ses options à valeur lues où qu'elles soient, le chemin d'un `git worktree remove` ou d'un `git worktree move` sous ses `-C`, et, comme git le cherche d'abord parmi ses worktrees, la racine ou un dossier qui la contient dont le chemin finit par lui (`_trouve_par_son_suffixe`, J-2026-11-15-O), les chemins qu'un `python -c` écrit en toutes lettres pour `rmtree`, `shutil.move`, `os.rename`, `os.replace` ou `Path(…).rename`, lus dans l'arbre de son script (`ast`), et un `find -exec` de l'un d'eux (B-0228). C'est une première barrière contre les erreurs d'un agent coopératif, qui juge, quelle qu'en soit la forme, ce que rien ne rattrape ensuite, et laisse hors de son modèle l'écriture d'un fichier protégé sous une forme de contournement (ADR-0080) ; la garantie est `protege.fichiers`. Il ne voit pas une part inconnue qui vaut elle-même `..`, une option du shell posée par le profil, une variable que Claude Code ne pose que pour ses hooks, les formes que la seconde revue de B-0171 a trouvées (B-0211), ni une suppression par `xargs rm`, par une commande que lance un `python -c` ou par un chemin que son script construit au vol (B-0246) |
+ | `commands.py` | le découpage d'une commande shell en commandes simples, par `shlex` : séparateurs, redirections, `cd` (et ses options), `cd -`, `pushd` et `popd` suivis, chaque cible développée au moment du `cd`, variables affectées retenues (`+=`, une déclaration de tableau ou de référence rend la variable inconnue), un sous-shell, une substitution, un élément de pipeline ou une tâche de fond supposés ne rien transmettre à la suite, ce que lance une substitution nue qu'il délimite jugé, chaque variable développée une fois, `$'…'` lu, `bash -c` (quel que soit le groupe d'options qui porte `c`, `--` sauté, B-0206) et `eval` ouverts, préfixes (`env`, `sudo`, `python -m`) retirés ; le corps d'un heredoc n'est que du texte ; un mot développé comme le shell (`developper`, `accolades`, `normaliser`), ce qui ne se développe pas marqué, et un motif du shell, classes POSIX comprises, comparé à un motif de chemin (`se_croisent`) (B-0171, ADR-0072). Les mots réservés qui précèdent une commande (`then`, `do`, `!`, `{`…) se retirent comme un préfixe ; ce qu'une condition ou une boucle change, son dossier et ses variables, devient inconnu après elle et dans la branche `else` qui suit, sauf un dossier connu où elle revient sans qu'un `break` ou un `continue` l'ait quittée ailleurs, et le corps d'un `for` se lit une fois par mot de sa liste, sa variable liée à ce mot, jusqu.à `DEPLIAGE_MAX` caractères pour toute la commande (B-0204, J-2026-11-14-AK, J-2026-11-14-AL) ; le corps d'une fonction (`nom() { …; }`, ou `function nom { …; }` sans parenthèses, sur la même ligne ou la suivante, B-0232) se lit, et rend en se fermant l'état d'avant lui, un autre corps que bash admet se juge comme exécuté là où il s'écrit, et la définition ne vaut que pour la commande qui la suit ; l'appel d'une fonction définie dans la commande dont le corps `{ … }` change le dossier ou une variable rend inconnu ce qu'elle change, avec ce que changent les fonctions qu'elle appelle, résolues à l'appel de proche en proche (une fonction définie après elle comprise), et ce qui suit se juge comme un état inconnu ; l'appel vaut derrière `time`, et dans une substitution ou un `eval`, qui connaissent les fonctions de la commande, non dans un `bash -c` (la seconde revue du lot B-0234, B-0232, J-2026-11-16-B, B-0250) ; des opérateurs échappés ou entre guillemets (`\(`, `';'`), et un mot réservé cité ou échappé dont le texte nu est réservé (`"function"`, `\function`, `"}"`), sont un mot, jamais lu comme une structure (la revue du lot 3, J-2026-11-14-AH ; B-0232). Un `#` n'ouvre un commentaire qu'en tête d'un mot, retiré sans sa fin de ligne, et les guillemets d'une substitution entre guillemets se lisent comme le shell (`"$(cmd "arg")"`, B-0207). Il ne suit pas les motifs d'un `case` (B-0245), `time` devant une commande composée (B-0244), ce que lance une substitution entre guillemets, l'état d'un `eval`, l'appel d'une fonction définie hors de la commande, `CDPATH`, un `cd` qui échoue, `env -C`, un heredoc vu où il n'y en a pas (B-0207), ni `lastpipe`, `((…))`, `let`, `getopts` (B-0211) |
+ | `state.py` | l'état dérivé, dont l'ordre du backlog, que le rappel de fin de tour redonne ; si GitHub exige la CI du socle avant de fusionner sur la branche par défaut (ensemble de règles ou protection classique, lus par `gh`), sinon une action de l'humain avec le lien de la page (B-0044, L2, R1) ; la sortie du démarrage, hook compris, sous `[startup] max_bytes`, chaque partie dans sa part, ce qu'une partie laisse ou libère allant aux autres jusqu'à ce que rien ne change : l'état dérivé, en tête ce qui demande d'agir (ce qui revient à l'humain, les demandes, même quand le reste ne se calcule pas, ce qu'il a écrit, les lignes du hook), puis ce qui informe, puis le backlog, ses lignes bornées et ses listes plafonnées, chacune disant où lire la suite ; puis le chantier actif, public et privé, les faits par leur titre et les dix dernières décisions ; une partie au-delà de ce qui lui revient perd des blocs entiers, l'état d'abord ce qui se relit ailleurs, un en-tête jamais sans ses éléments, les autres depuis leur fin, et la coupe dit laquelle, de combien et où lire le reste ; les lignes du hook gardées, `socle state --short` les redit ; le budget du chantier actif au-dessus de sa part signalé à chaque démarrage (ADR-0071) |
++| `roadmap.py` | la suite du projet d'un coup d'œil (`socle roadmap`, B-0274) : les jalons et leurs besoins clos, les lots dans leur ordre d'exécution avec leurs tâches, les besoins, ce qui n'est dans aucun lot, et deux lots qui attendent un même lot sans ordre entre eux ; calculée par le graphe du backlog que l'état lit (`memory.Graphe`), en compact (une ligne par jalon et par lot, ou par besoin, sans nommer de demande) ou en Markdown (le lot en cours et les deux suivants tâche par tâche, le lien de chaque demande en attente) |
+ | `human.py` | les spécifications déclarées qu'aucune demande n'a soumises à l'humain (D-0066) ; les branches distantes à supprimer (contenues dans la branche par défaut, ou dans la branche de travail poussée, B-0145) et celles à examiner (non fusionnées, sans activité depuis une semaine, B-0112), avec la commande qui étiquette d'abord les commits cités que seule l'une d'elles garde, ni pull request ni étiquette (B-0116) ; ce qui revient à l'humain ; ce qu'il a écrit lui-même depuis le dernier commit de l'agent (approbations, réponses de son terminal), que l'état liste pour que l'agent le cite ; la lecture du dernier message de l'agent pour le récap |
+ | `private.py` | la mémoire privée : modes compagnon et chiffré, verrou, accès, couches privées par défaut, contrôles `prive.*` ; un terme privé cherché sous ses variantes d'écriture, dans le contenu, les noms de fichier et de branche ; rien d'écrit sans accès ; la mémoire privée lue à une révision |
+ | `move.py` | la bascule d'une entrée publique dans la mémoire privée (`socle private move`) |
+diff --git a/engine/socle/CHANGES.en.md b/engine/socle/CHANGES.en.md
+index 90126bf..e611691 100644
+--- a/engine/socle/CHANGES.en.md
++++ b/engine/socle/CHANGES.en.md
+@@ -7,6 +7,26 @@ letter. On an update, the installer gives the entries that the project's
+ engine copy did not have, and the commit message it proposes names their
+ identifiers.
+ 
++## 2026-11-17-b — The project's roadmap at a glance: `socle roadmap`
++
++A new command, for the human as for the agent:
++`python3 .socle/socle roadmap` gives the project's roadmap, computed from
++the backlog like the state, nothing written by hand. Compact (the
++default), one line per milestone, with its needs closed out of the total,
++and one line per batch, in their order of execution deduced from their
++`after`, the batch in progress marked with the progress of its tasks;
++then what is outside the batches, counted. `--format markdown` gives the
++detailed format: the batch in progress and the next two task by task
++(each task with its need, its priority and where it stands), the others
++on one line (`--all` details them all), and, named, the tasks in no
++batch, the needs to split and to close, the blocked entries, those
++`for: human` and the pending requests with their link. `--by need` reads
++by need, each with its tasks and the batch of each. Two batches that wait
++on the same batch, neither waiting on the other, are flagged: their order
++is not deduced, it is chosen by an `after` from one to the other.
++
++To do: nothing.
++
+ ## 2026-11-17-a — A shell form the hook does not judge is reported to the socle's repository
+ 
+ The `socle-review` skill said to enter a shell form an agent does not
+diff --git a/engine/socle/CHANGES.md b/engine/socle/CHANGES.md
+index bd0348f..8120c06 100644
+--- a/engine/socle/CHANGES.md
++++ b/engine/socle/CHANGES.md
+@@ -7,6 +7,26 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
+ moteur du projet n'avait pas, et le message de commit qu'il propose nomme
+ leurs identifiants.
+ 
++## 2026-11-17-b — La suite du projet d'un coup d'œil : `socle roadmap`
++
++Une commande nouvelle, pour l'humain comme pour l'agent :
++`python3 .socle/socle roadmap` donne la suite du projet, calculée depuis le
++backlog comme l'état, rien d'écrit à la main. En compact (par défaut),
++une ligne par jalon, avec ses besoins clos sur le total, et une ligne par
++lot, dans leur ordre d'exécution déduit de leurs `après`, le lot en cours
++marqué et l'avancement de ses tâches ; puis ce qui est hors des lots,
++compté. `--format markdown` donne le format détaillé : le lot en cours et
++les deux suivants tâche par tâche (chaque tâche avec son besoin, sa
++priorité et où elle en est), les autres en une ligne (`--all` les
++détaille tous), et, nommés, les tâches dans aucun lot, les besoins à
++découper et à fermer, les entrées bloquées, celles `pour : humain` et les
++demandes en attente avec leur lien. `--by need` lit par besoin, chacun
++avec ses tâches et le lot de chacune. Deux lots qui attendent un même lot
++sans que l'un attende l'autre sont signalés : leur ordre n'est pas
++déduit, il se choisit par un `après` de l'un vers l'autre.
++
++À faire : rien.
++
+ ## 2026-11-17-a — Une forme du shell que le hook ne juge pas se signale au dépôt du socle
+ 
+ Le skill `socle-review` disait d'inscrire une forme du shell qu'un agent
+diff --git a/engine/socle/FORMAT.md b/engine/socle/FORMAT.md
+index f8f86d4..6c368d2 100644
+--- a/engine/socle/FORMAT.md
++++ b/engine/socle/FORMAT.md
+@@ -228,6 +228,17 @@ tâche ouverte ni rien d'ouvert qu'ils attendent ; et le nombre d'entrées
+ qui attendent encore, selon ce qu'elles attendent : une entrée du backlog,
+ une demande sans réponse, ou les deux. Le rappel de fin de tour le redonne.
+ 
++`socle roadmap` en tire la suite entière, par les mêmes règles : chaque
++jalon et ses besoins clos sur le total ; les lots ouverts dans leur ordre
++d'exécution, chacun après les lots qu'il attend de proche en proche, l'en
++cours d'abord à choix égal, et où en est chacune de leurs tâches (faite,
++en cours, prête, ce qu'elle attend encore, bloquée) ; hors des lots, les
++tâches ouvertes qu'aucun lot n'attend, les besoins à découper et à
++fermer, les entrées bloquées, celles `pour : humain`, les demandes en
++attente, et les besoins ouverts qu'aucun jalon n'attend. Deux lots qui
++attendent un même lot sans que l'un attende l'autre y sont signalés : leur
++ordre n'est pas déduit, il est choisi par leur identifiant.
++
+ Une tâche est faite quand sa section `## Fait quand` est cochée ; un
+ besoin, quand ses tâches sont closes, l'une au moins faite, et sa section
+ `## Satisfait quand` cochée ; un lot, quand ses tâches sont closes ; un
+diff --git a/engine/socle/cli.py b/engine/socle/cli.py
+index 63c124f..a0d0ac5 100644
+--- a/engine/socle/cli.py
++++ b/engine/socle/cli.py
+@@ -44,6 +44,13 @@ def cmd_state(args) -> int:
+     return 0
+ 
+ 
++def cmd_roadmap(args) -> int:
++    from socle import roadmap as suite
++
++    print(suite.rendre(_projet(args), format_=args.format, par=args.by, tout=args.all).rstrip("\n"))
++    return 0
++
++
+ def cmd_check(args) -> int:
+     from socle import context as contexte
+ 
+@@ -780,7 +787,7 @@ def cmd_checks(args) -> int:
+ # Les commandes par public : l'humain en a peu, l'agent
+ # davantage, le reste sert aux hooks, à la CI et au moteur lui-même.
+ GROUPES = {
+-    a_traduire("pour l'humain"): ["help", "install", "init", "state", "answer", "decision", "approve", "reviewed",
++    a_traduire("pour l'humain"): ["help", "install", "init", "state", "roadmap", "answer", "decision", "approve", "reviewed",
+                                   "private install"],
+     a_traduire("pour l'agent"): ["new", "show", "url", "review", "verify", "check", "next-id", "private",
+                                  "mutation-verdict", "mutation-run", "renumber", "archive", "checks"],
+@@ -843,6 +850,18 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
+                                                              "faits ni les décisions, sans borne ni plafond"))
+     s.set_defaults(f=cmd_state)
+ 
++    from socle import roadmap as suite
++
++    s = sp.add_parser("roadmap", help=trad("la suite du projet d'un coup d'œil : jalons, lots, tâches et besoins, "
++                                           "calculés depuis le backlog"))
++    s.add_argument("--format", choices=suite.FORMATS, default="text",
++                   help=trad("text : une ligne par jalon et par lot (défaut) ; markdown : le lot en cours et les deux "
++                             "suivants tâche par tâche"))
++    s.add_argument("--by", choices=suite.LECTURES, default="lot",
++                   help=trad("lire par lot (défaut) ou par besoin, chacun avec ses tâches et le lot de chacune"))
++    s.add_argument("--all", action="store_true", help=trad("en markdown, détailler tous les lots, ou tous les besoins"))
++    s.set_defaults(f=cmd_roadmap)
++
+     s = sp.add_parser("check", help=trad("contrôles du socle, un code de sortie"))
+     s.add_argument("--stage", choices=("agent", "git", "ci"), default="ci")
+     s.add_argument("--base", help=trad("révision de base (défaut : divergence avec la branche par défaut)"))
+diff --git a/engine/socle/human.py b/engine/socle/human.py
+index 35c9bad..0e6fd52 100644
+--- a/engine/socle/human.py
++++ b/engine/socle/human.py
+@@ -208,7 +208,7 @@ def a_faire(projet: config.Projet) -> list[Element]:
+     for e in mem.entrees(memoire.BACKLOG):
+         if e.archivee or e.statut in memoire.BACKLOG_CLOS:
+             continue
+-        if langue.valeur(memoire.nettoyer(e.meta.get("pour", ""))) == "humain":
++        if memoire.pour_l_humain(e):
+             # Le lien de l'entrée, où vit son mode d'emploi : commandes,
+             # résultats attendus.
+             url, _ = liens.lien(projet, e.id)
+diff --git a/engine/socle/memory.py b/engine/socle/memory.py
+index 4d0a9f0..617149c 100644
+--- a/engine/socle/memory.py
++++ b/engine/socle/memory.py
+@@ -650,6 +650,12 @@ def besoin_de(e: Entree) -> str | None:
+     return ids[0] if ids else None
+ 
+ 
++def pour_l_humain(e: Entree) -> bool:
++    """Une entrée que seul l'humain peut faire (`pour : humain`), quelle que
++    soit la langue où elle est écrite."""
++    return langue.valeur(nettoyer(e.meta.get("pour", ""))) == "humain"
++
++
+ def type_d_id(ident: str) -> str | None:
+     """Le type d'un identifiant (`T`, `JA`…), `None` s'il n'en est pas un."""
+     morceaux = decouper_id(ident)
+@@ -955,57 +961,109 @@ class Ordre:
+     a_fermer: list[Entree] = field(default_factory=list)
+ 
+ 
+-def ordre(mem: "Memoire") -> Ordre | None:
+-    """L'ordre du backlog, s'il en a un : sans `après`, tâche, lot, jalon ni
+-    priorité, rien."""
+-    entrees = {e.id: e for e in mem.entrees(BACKLOG) if not e.archivee and not e.basculee}
+-    demandes = {e.id: e for e in mem.entrees("D") if not e.basculee}
+-    if not any(dependances(e) or not est_besoin(e) or priorite(e) for e in entrees.values()):
+-        return None
++class Graphe:
++    """Ce que les entrées du backlog attendent, lu une fois sur leurs
++    `après` : l'ordre que l'état dit (`ordre`) et la suite du projet
++    (`socle roadmap`) le calculent de même. Une entrée archivée ou basculée
++    en privé n'y est pas ; sa copie privée, si elle se lit, y est."""
++
++    def __init__(self, mem: "Memoire"):
++        self.mem = mem
++        self.entrees = {e.id: e for e in mem.entrees(BACKLOG) if not e.archivee and not e.basculee}
++        self.demandes = {e.id: e for e in mem.entrees("D") if not e.basculee}
++        self.ouverts = sorted(i for i in self.entrees if self.ouvert(i))
+ 
+-    def ouvert(i: str) -> bool:
++    def ouvert(self, i: str) -> bool:
+         """Encore attendu : une entrée non close, ou une demande sans réponse."""
+-        if i in demandes:
+-            return not demande_close(mem, demandes[i])
+-        return i in entrees and entrees[i].statut not in BACKLOG_CLOS
++        if i in self.demandes:
++            return not demande_close(self.mem, self.demandes[i])
++        return i in self.entrees and self.entrees[i].statut not in BACKLOG_CLOS
+ 
+-    def deps(i: str) -> list[str]:
++    def deps(self, i: str) -> list[str]:
+         """Ce qu'une entrée attend ; pour une tâche, aussi ce qu'attend son
+         besoin (ADR-0083)."""
+-        e = entrees[i]
++        e = self.entrees[i]
+         res = dependances(e)
+-        b = entrees.get(besoin_de(e) or "") if est_tache(e) else None
++        b = self.entrees.get(besoin_de(e) or "") if est_tache(e) else None
+         return res + [d for d in dependances(b) if d not in res] if b else res
+ 
+-    def attendus(i: str) -> set[str]:
++    def attend(self, i: str) -> list[str]:
++        """Ce qu'une entrée attend encore : ses attendus pas clos."""
++        return [d for d in self.deps(i) if self.ouvert(d)]
++
++    def attendus(self, i: str) -> set[str]:
+         """Les entrées et les demandes encore attendues qu'une entrée attend,
+         de proche en proche ; un cycle s'arrête (le contrôle de l'ordre le
+         refuse)."""
+-        vus, pile = set(), list(deps(i))
++        vus, pile = set(), list(self.deps(i))
+         while pile:
+             d = pile.pop()
+-            if d in vus or d == i or (d not in entrees and d not in demandes):
++            if d in vus or d == i or (d not in self.entrees and d not in self.demandes):
+                 continue
+             vus.add(d)
+-            if d in entrees:
+-                pile += deps(d)
+-        return {d for d in vus if ouvert(d)}
++            if d in self.entrees:
++                pile += self.deps(d)
++        return {d for d in vus if self.ouvert(d)}
+ 
+-    ouverts = sorted(i for i in entrees if ouvert(i))
++    def _rang(self, i: str):
++        return self.entrees[i].statut != "en-cours", i
+ 
+-    def premier(est) -> list[str]:
++    def premier(self, est) -> list[str]:
+         """Ceux de cette forme, ouverts, qu'aucun autre de la forme ne précède,
+         l'en cours d'abord, puis par identifiant."""
+-        return sorted((i for i in ouverts
+-                       if est(entrees[i]) and not any(d in entrees and est(entrees[d]) for d in attendus(i))),
+-                      key=lambda i: (entrees[i].statut != "en-cours", i))
++        return sorted((i for i in self.ouverts
++                       if est(self.entrees[i])
++                       and not any(d in self.entrees and est(self.entrees[d]) for d in self.attendus(i))),
++                      key=self._rang)
++
++    def dans_l_ordre(self, est) -> list[str]:
++        """Ceux de cette forme, ouverts, dans leur ordre d'exécution : chacun
++        après ceux de la forme qu'il attend, de proche en proche ; à choix
++        égal, l'en cours d'abord, puis par identifiant. Ce qu'un cycle retient
++        (le contrôle de l'ordre le refuse) vient à la fin, par identifiant."""
++        reste = [i for i in self.ouverts if est(self.entrees[i])]
++        avant = {i: {d for d in self.attendus(i) if d in reste} for i in reste}
++        res: list[str] = []
++        while reste:
++            libres = sorted((i for i in reste if avant[i] <= set(res)), key=self._rang)
++            if not libres:
++                return res + sorted(reste)
++            res.append(libres[0])
++            reste.remove(libres[0])
++        return res
++
++    def ou_en_est(self, i: str) -> str:
++        """Où en est une entrée qu'on attend, en mot interne : le statut d'une
++        tâche qui n'est plus ouverte, sinon `pret` ou `attend` ; pour une
++        demande, `repondue` ou `sans-reponse` ; `inconnu` pour le reste."""
++        if i in self.demandes:
++            return "repondue" if demande_close(self.mem, self.demandes[i]) else "sans-reponse"
++        if i not in self.entrees:
++            return "inconnu"
++        if self.entrees[i].statut != "ouvert":
++            return self.entrees[i].statut
++        return "attend" if self.attend(i) else "pret"
++
++
++def ordre(mem: "Memoire") -> Ordre | None:
++    """L'ordre du backlog, s'il en a un : sans `après`, tâche, lot, jalon ni
++    priorité, rien."""
++    g = Graphe(mem)
++    if not any(dependances(e) or not est_besoin(e) or priorite(e) for e in g.entrees.values()):
++        return None
++    return ordre_de(g)
+ 
+-    jalons = premier(est_jalon)
++
++def ordre_de(g: Graphe) -> Ordre:
++    """L'ordre que calcule `ordre`, sur un graphe déjà lu, même sans
++    structure."""
++    entrees, demandes, ouverts = g.entrees, g.demandes, g.ouverts
++    jalons = g.premier(est_jalon)
+     jalon = jalons[0] if jalons else None
+     restants = sorted(d for d in dependances(entrees[jalon])
+-                      if ouvert(d) and (d in demandes or (d in entrees and est_besoin(entrees[d])))) if jalon else []
++                      if g.ouvert(d) and (d in demandes or (d in entrees and est_besoin(entrees[d])))) if jalon else []
+     du_jalon = set(restants)
+-    lots = premier(est_lot)
++    lots = g.premier(est_lot)
+     lot = entrees[lots[0]] if lots else None
+     rang = {"haute": 0, None: 1}
+ 
+@@ -1018,7 +1076,7 @@ def ordre(mem: "Memoire") -> Ordre | None:
+     # Une tâche en cours ou bloquée n'est plus à prendre : l'état le dit à
+     # part. Un besoin, un lot ni un jalon ne se prennent.
+     a_prendre = [i for i in ouverts if est_tache(entrees[i]) and entrees[i].statut == "ouvert"]
+-    prets = sorted((i for i in a_prendre if not any(ouvert(d) for d in deps(i))), key=cle)
++    prets = sorted((i for i in a_prendre if not g.attend(i)), key=cle)
+     basses = [i for i in prets if priorite_effective(entrees[i], entrees) == "basse"]
+     prets = [i for i in prets if i not in basses]
+     # Les besoins : ceux qui n'ont plus de tâche ouverte sont à fermer, si
+@@ -1036,30 +1094,17 @@ def ordre(mem: "Memoire") -> Ordre | None:
+             continue
+         if any(t.statut == "fait" for t in siennes):
+             a_fermer.append(i)
+-        elif any(ouvert(d) for d in deps(i)):
++        elif g.attend(i):
+             attendent.append(i)
+         elif entrees[i].statut == "ouvert":
+             a_decouper.append(i)
+     # Ce qu'attendent celles qui ne sont pas prêtes : une entrée du backlog,
+     # une demande, ou les deux (B-0153).
+-    attendus_ouverts = {i: [d for d in deps(i) if ouvert(d)]
++    attendus_ouverts = {i: g.attend(i)
+                         for i in [*(i for i in a_prendre if i not in prets and i not in basses), *attendent]}
+     attente_entree = sum(1 for ds in attendus_ouverts.values() if any(d in entrees for d in ds))
+     attente_demande = sum(1 for ds in attendus_ouverts.values() if any(d in demandes for d in ds))
+-
+-    def ou_en_est(i: str) -> str:
+-        """Où en est ce qu'un lot attend, en mot interne : le statut d'une
+-        tâche qui n'est plus ouverte, sinon `pret` ou `attend` ; pour une
+-        demande, `repondue` ou `sans-reponse` ; `inconnu` pour le reste."""
+-        if i in demandes:
+-            return "repondue" if demande_close(mem, demandes[i]) else "sans-reponse"
+-        if i not in entrees:
+-            return "inconnu"
+-        if entrees[i].statut != "ouvert":
+-            return entrees[i].statut
+-        return "attend" if any(ouvert(d) for d in deps(i)) else "pret"
+-
+-    avancement = [(d, ou_en_est(d)) for d in dict.fromkeys(dependances(lot))
++    avancement = [(d, g.ou_en_est(d)) for d in dict.fromkeys(dependances(lot))
+                   if not (d in entrees and est_lot(entrees[d]))] if lot else []
+     return Ordre([entrees[i] for i in prets], entrees[jalon] if jalon else None, restants, len(attendus_ouverts),
+                  [entrees[i] for i in basses], lot, avancement, attente_entree, attente_demande,
+diff --git a/engine/socle/messages_en.py b/engine/socle/messages_en.py
+index 9a88183..a20309d 100644
+--- a/engine/socle/messages_en.py
++++ b/engine/socle/messages_en.py
+@@ -3581,4 +3581,113 @@ MESSAGES: dict[str, str] = {
+     'suivante':
+         '"continue" after a single pass where the reviewer sees a cause come back, `socle review` produces the '
+         'next one',
++    # La suite du projet, `socle roadmap`.
++    'faite':
++        'done',
++    'abandonnée':
++        'abandoned',
++    'bloquée':
++        'blocked',
++    '{n} en cours':
++        '{n} in progress',
++    '{n} prête(s)':
++        '{n} ready',
++    '{n} qui attend(ent)':
++        '{n} waiting',
++    '{n} bloquée(s)':
++        '{n} blocked',
++    'priorité haute':
++        'high priority',
++    'priorité basse':
++        'low priority',
++    '{id} — {titre} : {clos} besoin(s) clos sur {total}':
++        '{id} — {titre}: {clos} need(s) closed out of {total}',
++    '{id} — {titre} : {avancement}':
++        '{id} — {titre}: {avancement}',
++    '{id} — {titre} : {clos} tâche(s) close(s) sur {total}':
++        '{id} — {titre}: {clos} task(s) closed out of {total}',
++    "hors des lots : {taches} tâche(s) ouverte(s), {decouper} besoin(s) à découper, {fermer} à fermer, "
++    "{bloques} entrée(s) bloquée(s), {humain} pour l'humain, {demandes} demande(s) en attente":
++        "outside the batches: {taches} open task(s), {decouper} need(s) to split, {fermer} to close, "
++        "{bloques} blocked entry(ies), {humain} for the human, {demandes} pending request(s)",
++    "ordre ambigu : {a} et {b} attendent tous deux {p}, sans ordre entre eux — que l'un attende l'autre":
++        "ambiguous order: {a} and {b} both wait on {p}, with no order between them — make one wait on the other",
++    '{clos} tâche(s) close(s) sur {total}':
++        '{clos} task(s) closed out of {total}',
++    'La suite du projet, calculée depuis le backlog — détaillée : `{commande} --format markdown`':
++        "The project's roadmap, computed from the backlog — detailed: `{commande} --format markdown`",
++    "Calculée depuis le backlog par `{commande} --format markdown` : rien n'y est écrit à la main.":
++        'Computed from the backlog by `{commande} --format markdown`: nothing in it is written by hand.',
++    ' — le prochain':
++        ' — the next one',
++    ' — lot(s) : {lots}':
++        ' — batch(es): {lots}',
++    ' — dans aucun lot':
++        ' — in no batch',
++    'jalons, dans leur ordre :':
++        'milestones, in their order:',
++    'ni jalon ni lot au backlog':
++        'no milestone and no batch in the backlog',
++    'après les jalons : {n} besoin(s) ouvert(s) dans aucun jalon':
++        'after the milestones: {n} open need(s) in no milestone',
++    '{etat} : {ids}':
++        '{etat}: {ids}',
++    'La suite du projet':
++        "The project's roadmap",
++    'Ni jalon ni lot au backlog.':
++        'No milestone and no batch in the backlog.',
++    'Demandes en attente':
++        'Pending requests',
++    ' … et {n} autre(s) : `--all`':
++        ' … and {n} more: `--all`',
++    '- **Après les jalons**, dans aucun jalon : {ids}{suite}':
++        '- **After the milestones**, in no milestone: {ids}{suite}',
++    'attend {ids}':
++        'waits on {ids}',
++    '{n} demande(s) sans réponse':
++        '{n} unanswered request(s)',
++    "besoins, dans l'ordre des lots :":
++        'needs, in the order of the batches:',
++    'lots, dans leur ordre (▶ en cours) :':
++        'batches, in their order (▶ in progress):',
++    'lot {id}':
++        'batch {id}',
++    'dans aucun lot':
++        'in no batch',
++    'besoin {id}':
++        'need {id}',
++    'Jalons, dans leur ordre':
++        'Milestones, in their order',
++    "Pour l'humain":
++        'For the human',
++    'Hors des lots':
++        'Outside the batches',
++    "Besoins, dans l'ordre des lots":
++        'Needs, in the order of the batches',
++    "Lots, dans leur ordre d'exécution":
++        'Batches, in their order of execution',
++    'Bloqués':
++        'Blocked',
++    'Les autres besoins':
++        'The other needs',
++    'Les lots suivants':
++        'The following batches',
++    'Besoins à fermer, leurs tâches closes':
++        'Needs to close, their tasks closed',
++    'Tâches dans aucun lot':
++        'Tasks in no batch',
++    'Besoins à découper en tâches':
++        'Needs to split into tasks',
++    ' — en cours':
++        ' — in progress',
++    "la suite du projet d'un coup d'œil : jalons, lots, tâches et besoins, calculés depuis le backlog":
++        "the project's roadmap at a glance: milestones, batches, tasks and needs, computed from the backlog",
++    'text : une ligne par jalon et par lot (défaut) ; markdown : le lot en cours et les deux suivants tâche par '
++    'tâche':
++        'text: one line per milestone and per batch (default); markdown: the batch in progress and the next two '
++        'task by task',
++    'lire par lot (défaut) ou par besoin, chacun avec ses tâches et le lot de chacune':
++        'read by batch (default) or by need, each with its tasks and the batch of each',
++    'en markdown, détailler tous les lots, ou tous les besoins':
++        'in markdown, detail every batch, or every need',
+ }
+diff --git a/engine/socle/roadmap.py b/engine/socle/roadmap.py
+new file mode 100644
+index 0000000..39040a1
+--- /dev/null
++++ b/engine/socle/roadmap.py
+@@ -0,0 +1,373 @@
++"""La suite du projet d'un coup d'œil (`socle roadmap`) : les jalons et
++leurs besoins clos, les lots dans leur ordre d'exécution avec leurs tâches,
++les besoins, et ce qui n'est dans aucun lot. Elle se calcule depuis le
++backlog comme l'état, par les mêmes fonctions (`memory.Graphe`,
++`memory.ordre_de`) : rien n'y est écrit à la main.
++
++Deux formats : compact (`text`), une ligne par jalon et par lot, ou par
++besoin, pour le terminal et le récap de la clôture d'un lot ; détaillé
++(`markdown`), le lot en cours et les deux suivants tâche par tâche, pour la
++conversation et le résumé d'une exécution de la CI. Le compact ne nomme
++aucune demande : collé dans une réponse, il ne citerait pas une demande en
++attente sans son lien ; le détaillé donne le lien de chacune."""
++
++from __future__ import annotations
++
++from dataclasses import dataclass
++from itertools import combinations
++
++from socle import config, memory as memoire, utils as outils
++from socle.messages import a_traduire, trad
++
++FORMATS = ("text", "markdown")
++LECTURES = ("lot", "need")
++# Sans `--all`, le format détaillé suit tâche par tâche le lot en cours et
++# les deux suivants.
++DETAILLES = 3
++# Un titre du format compact, en octets au plus.
++TITRE = 70
++# Les besoins hors de tout jalon que le format détaillé nomme sans `--all`.
++SANS_JALON_NOMMES = 15
++COMMANDE = "python3 .socle/socle roadmap"
++
++# Où en est une tâche, sous sa clé interne : son statut, ou, ouverte, `pret`
++# ou `attend`.
++AVANCEMENT = {"fait": a_traduire("faite"), "abandonne": a_traduire("abandonnée"),
++              "en-cours": a_traduire("en cours"), "bloque": a_traduire("bloquée"), "pret": a_traduire("prête"),
++              "attend": a_traduire("attend")}
++ORDRE_DES_COMPTES = ("en-cours", "pret", "attend", "bloque")
++COMPTES = {"en-cours": a_traduire("{n} en cours"), "pret": a_traduire("{n} prête(s)"),
++           "attend": a_traduire("{n} qui attend(ent)"), "bloque": a_traduire("{n} bloquée(s)")}
++PRIORITES = {"haute": a_traduire("priorité haute"), "basse": a_traduire("priorité basse")}
++
++
++@dataclass
++class Tache:
++    entree: memoire.Entree
++    # Sa clé dans `AVANCEMENT`, et ce qu'elle attend encore : des entrées du
++    # backlog, des demandes sans réponse.
++    avancement: str
++    attend: list[str]
++    priorite: str | None
++    lot: str | None = None
++
++    @property
++    def besoin(self) -> str | None:
++        return memoire.besoin_de(self.entree)
++
++    @property
++    def close(self) -> bool:
++        return self.avancement in memoire.BACKLOG_CLOS
++
++
++@dataclass
++class Lot:
++    entree: memoire.Entree
++    taches: list[Tache]
++    # Les demandes sans réponse que le lot attend lui-même.
++    demandes: list[str]
++
++    @property
++    def en_cours(self) -> bool:
++        return self.entree.statut == "en-cours"
++
++    @property
++    def closes(self) -> int:
++        return sum(t.close for t in self.taches)
++
++
++@dataclass
++class Jalon:
++    entree: memoire.Entree
++    clos: int
++    total: int
++
++
++@dataclass
++class Suite:
++    jalons: list[Jalon]
++    lots: list[Lot]
++    # Le rang du lot en cours parmi les lots : le premier en cours, sinon le
++    # premier.
++    courant: int
++    hors_lot: list[Tache]
++    # Toutes les tâches, par identifiant, et les besoins qu'elles servent.
++    taches: dict[str, Tache]
++    besoins: dict[str, memoire.Entree]
++    a_decouper: list[memoire.Entree]
++    a_fermer: list[memoire.Entree]
++    bloques: list[memoire.Entree]
++    pour_l_humain: list[memoire.Entree]
++    demandes: list[memoire.Entree]
++    sans_jalon: list[memoire.Entree]
++    # (lot, lot, le lot qu'ils attendent tous deux), sans ordre entre eux.
++    alertes: list[tuple[str, str, str]]
++
++
++def calculer(mem: memoire.Memoire) -> Suite:
++    """La suite, depuis le backlog d'une mémoire."""
++    g = memoire.Graphe(mem)
++    o = memoire.ordre_de(g)
++    entrees = g.entrees
++
++    def tache(i: str) -> Tache:
++        e = entrees[i]
++        reste = g.attend(i) if e.statut == "ouvert" else []
++        avancement = e.statut if e.statut != "ouvert" else ("attend" if reste else "pret")
++        return Tache(e, avancement, reste, memoire.priorite_effective(e, entrees))
++
++    taches = {i: tache(i) for i in sorted(entrees) if memoire.est_tache(entrees[i])}
++    lots = []
++    for i in g.dans_l_ordre(memoire.est_lot):
++        attendus = list(dict.fromkeys(memoire.dependances(entrees[i])))
++        siennes = [taches[d] for d in attendus if d in taches]
++        for t in siennes:
++            t.lot = t.lot or i
++        lots.append(Lot(entrees[i], siennes, [d for d in attendus if d in g.demandes and g.ouvert(d)]))
++    courant = next((k for k, lot in enumerate(lots) if lot.en_cours), 0)
++    jalons = []
++    for i in g.dans_l_ordre(memoire.est_jalon):
++        besoins = [d for d in dict.fromkeys(memoire.dependances(entrees[i])) if memoire.type_d_id(d) == "B"]
++        jalons.append(Jalon(entrees[i], sum(not g.ouvert(b) for b in besoins), len(besoins)))
++    jalonnes = {d for j in jalons for d in memoire.dependances(j.entree)}
++    ouverts = [entrees[i] for i in g.ouverts]
++    return Suite(
++        jalons=jalons, lots=lots, courant=courant,
++        hors_lot=[t for t in taches.values() if t.lot is None and not t.close],
++        taches=taches, besoins={e.id: e for e in entrees.values() if memoire.est_besoin(e)},
++        a_decouper=o.a_decouper, a_fermer=o.a_fermer,
++        bloques=[e for e in ouverts if e.statut == "bloque" and not memoire.est_tache(e)],
++        pour_l_humain=[e for e in ouverts if memoire.pour_l_humain(e)],
++        demandes=[e for i, e in sorted(g.demandes.items()) if g.ouvert(i)],
++        sans_jalon=[e for e in ouverts if memoire.est_besoin(e) and e.id not in jalonnes] if jalons else [],
++        alertes=alertes(g, [lot.entree.id for lot in lots]),
++    )
++
++
++def alertes(g: memoire.Graphe, lots: list[str]) -> list[tuple[str, str, str]]:
++    """Deux lots ouverts qui attendent le même lot sans que l'un attende
++    l'autre, de proche en proche : leur ordre n'est pas déduit, il est
++    choisi par leur identifiant."""
++    attendants: dict[str, list[str]] = {}
++    for i in lots:
++        for d in dict.fromkeys(memoire.dependances(g.entrees[i])):
++            if memoire.type_d_id(d) == "L":
++                attendants.setdefault(d, []).append(i)
++    return [(a, b, p) for p, ws in sorted(attendants.items()) for a, b in combinations(ws, 2)
++            if a not in g.attendus(b) and b not in g.attendus(a)]
++
++
++def detailles(s: Suite, tout: bool) -> list[Lot]:
++    """Les lots que le format détaillé suit tâche par tâche : le lot en
++    cours et les deux suivants, et tout lot en cours ; tous avec `--all`."""
++    if tout:
++        return list(s.lots)
++    fenetre = s.lots[s.courant:s.courant + DETAILLES]
++    return [lot for lot in s.lots if lot in fenetre or lot.en_cours]
++
++
++def besoins_dans_l_ordre(s: Suite) -> list[str]:
++    """Les besoins qui ont des tâches, dans l'ordre des lots qui les mènent ;
++    puis ceux dont les tâches ouvertes ne sont dans aucun lot."""
++    vus = [t.besoin for lot in s.lots for t in lot.taches] + [t.besoin for t in s.hors_lot]
++    return [b for b in dict.fromkeys(vus) if b in s.besoins and s.besoins[b].statut not in memoire.BACKLOG_CLOS]
++
++
++def taches_du_besoin(s: Suite, b: str) -> list[Tache]:
++    return [t for t in s.taches.values() if t.besoin == b]
++
++
++# --- Les deux formats -----------------------------------------------------
++
++
++def _titre(e: memoire.Entree, court: bool) -> str:
++    return outils.raccourcir(e.titre, TITRE) if court else e.titre
++
++
++def _ligne_jalon(j: Jalon, prochain: bool, court: bool, gras: bool = False) -> str:
++    ident = f"**{j.entree.id}**" if gras else j.entree.id
++    ligne = trad("{id} — {titre} : {clos} besoin(s) clos sur {total}", id=ident, titre=_titre(j.entree, court),
++                 clos=j.clos, total=j.total)
++    return ligne + trad(" — le prochain") if prochain else ligne
++
++
++def _comptes(taches: list[Tache]) -> str:
++    """Ce qui reste d'un lot ou d'un besoin, compté par avancement."""
++    ouvertes = [t.avancement for t in taches if not t.close]
++    return ", ".join(trad(COMPTES[a], n=ouvertes.count(a)) for a in ORDRE_DES_COMPTES if a in ouvertes)
++
++
++def _avancement_lot(lot: Lot, demandes: bool) -> str:
++    """Ses tâches closes sur le total, ce qui reste, et les demandes sans
++    réponse qu'il attend : nommées en Markdown, comptées sinon."""
++    morceaux = [trad("{clos} tâche(s) close(s) sur {total}", clos=lot.closes, total=len(lot.taches))]
++    reste = _comptes(lot.taches)
++    if reste:
++        morceaux.append(reste)
++    if lot.demandes:
++        morceaux.append(trad("attend {ids}", ids=", ".join(lot.demandes)) if demandes
++                        else trad("{n} demande(s) sans réponse", n=len(lot.demandes)))
++    return " · ".join(morceaux)
++
++
++def _ligne_lot(lot: Lot, court: bool) -> str:
++    """Un lot en une ligne : en compact, sans nommer les demandes qu'il
++    attend."""
++    return trad("{id} — {titre} : {avancement}", id=lot.entree.id, titre=_titre(lot.entree, court),
++                avancement=_avancement_lot(lot, demandes=not court))
++
++
++def _ligne_besoin(s: Suite, b: str, court: bool) -> str:
++    siennes = taches_du_besoin(s, b)
++    lots = list(dict.fromkeys(t.lot for t in siennes if t.lot))
++    ligne = trad("{id} — {titre} : {clos} tâche(s) close(s) sur {total}", id=b, titre=_titre(s.besoins[b], court),
++                 clos=sum(t.close for t in siennes), total=len(siennes))
++    return ligne + (trad(" — lot(s) : {lots}", lots=", ".join(lots)) if lots else trad(" — dans aucun lot"))
++
++
++def _resume_hors_lot(s: Suite) -> str:
++    return trad("hors des lots : {taches} tâche(s) ouverte(s), {decouper} besoin(s) à découper, {fermer} à fermer, "
++                "{bloques} entrée(s) bloquée(s), {humain} pour l'humain, {demandes} demande(s) en attente",
++                taches=len(s.hors_lot), decouper=len(s.a_decouper), fermer=len(s.a_fermer), bloques=len(s.bloques),
++                humain=len(s.pour_l_humain), demandes=len(s.demandes))
++
++
++def _alerte(a: str, b: str, p: str) -> str:
++    return trad("ordre ambigu : {a} et {b} attendent tous deux {p}, sans ordre entre eux — que l'un attende "
++                "l'autre", a=a, b=b, p=p)
++
++
++def texte(s: Suite, par: str = "lot") -> str:
++    """Le format compact : une ligne par jalon, puis par lot (le lot en cours
++    marqué), ou par besoin ; ce qui est hors des lots, compté ; les
++    alertes."""
++    res = [trad("La suite du projet, calculée depuis le backlog — détaillée : `{commande} --format markdown`",
++                commande=COMMANDE)]
++    if s.jalons:
++        res.append(trad("jalons, dans leur ordre :"))
++        res += [f"  {_ligne_jalon(j, k == 0, court=True)}" for k, j in enumerate(s.jalons)]
++    if par == "need":
++        besoins = besoins_dans_l_ordre(s)
++        if besoins:
++            res.append(trad("besoins, dans l'ordre des lots :"))
++            res += [f"  {_ligne_besoin(s, b, court=True)}" for b in besoins]
++    elif s.lots:
++        res.append(trad("lots, dans leur ordre (▶ en cours) :"))
++        for lot in s.lots:
++            res.append(f"{'▶' if lot.en_cours else ' '} " + _ligne_lot(lot, court=True))
++    if not (s.jalons or s.lots):
++        res.append(trad("ni jalon ni lot au backlog"))
++    res.append(_resume_hors_lot(s))
++    if s.sans_jalon:
++        res.append(trad("après les jalons : {n} besoin(s) ouvert(s) dans aucun jalon", n=len(s.sans_jalon)))
++    res += [f"!! {_alerte(*a)}" for a in s.alertes]
++    return "\n".join(res)
++
++
++def _ligne_tache(t: Tache, avec_lot: bool) -> str:
++    morceaux = [f"{t.entree.id} — {t.entree.titre}"]
++    if avec_lot:
++        morceaux.append(trad("lot {id}", id=t.lot) if t.lot else trad("dans aucun lot"))
++    elif t.besoin:
++        morceaux.append(trad("besoin {id}", id=t.besoin))
++    if t.priorite in PRIORITES:
++        morceaux.append(trad(PRIORITES[t.priorite]))
++    etat = trad(AVANCEMENT.get(t.avancement, t.avancement))
++    morceaux.append(trad("{etat} : {ids}", etat=etat, ids=", ".join(t.attend)) if t.attend else etat)
++    return "- " + " · ".join(morceaux)
++
++
++def _liste(titre: str, lignes: list[str]) -> list[str]:
++    return [f"- **{titre}**", *(f"  {l}" for l in lignes)] if lignes else []
++
++
++def markdown(s: Suite, par: str = "lot", tout: bool = False, liens: dict[str, str] | None = None) -> str:
++    """Le format détaillé, en Markdown : les jalons ; le lot en cours et les
++    deux suivants tâche par tâche, les autres en une ligne (`tout` : tous
++    détaillés), ou chaque besoin avec ses tâches et le lot de chacune ; ce
++    qui est hors des lots, nommé ; les alertes. `liens` : le lien d'une
++    demande ou d'une entrée pour l'humain, par identifiant."""
++    liens = liens or {}
++    res = ["## " + trad("La suite du projet"), "",
++           trad("Calculée depuis le backlog par `{commande} --format markdown` : rien n'y est écrit à la main.",
++                commande=COMMANDE), ""]
++    if s.jalons:
++        res += ["### " + trad("Jalons, dans leur ordre"), ""]
++        res += [f"- {_ligne_jalon(j, k == 0, court=False, gras=True)}" for k, j in enumerate(s.jalons)] + [""]
++    suivis = detailles(s, tout)
++    if par == "need":
++        besoins = besoins_dans_l_ordre(s)
++        if besoins:
++            res += ["### " + trad("Besoins, dans l'ordre des lots"), ""]
++            lots_suivis = {lot.entree.id for lot in suivis}
++            autres = []
++            for b in besoins:
++                siennes = taches_du_besoin(s, b)
++                if tout or any(t.lot in lots_suivis for t in siennes):
++                    res += [f"#### {_ligne_besoin(s, b, court=False)}", ""]
++                    res += [_ligne_tache(t, avec_lot=True) for t in siennes] + [""]
++                else:
++                    autres.append(f"- {_ligne_besoin(s, b, court=False)}")
++            if autres:
++                res += ["#### " + trad("Les autres besoins"), "", *autres, ""]
++    elif s.lots:
++        res += ["### " + trad("Lots, dans leur ordre d'exécution"), ""]
++        autres = []
++        for lot in s.lots:
++            titre = f"{lot.entree.id} — {lot.entree.titre}"
++            if lot in suivis:
++                marque = "▶ " if lot.en_cours else ""
++                res += [f"#### {marque}{titre}" + (trad(" — en cours") if lot.en_cours else ""), "",
++                        _avancement_lot(lot, demandes=True), ""]
++                res += [_ligne_tache(t, avec_lot=False) for t in lot.taches] + [""] if lot.taches else []
++            else:
++                autres.append("- " + _ligne_lot(lot, court=False))
++        if autres:
++            res += ["#### " + trad("Les lots suivants"), "", *autres, ""]
++    if not (s.jalons or s.lots):
++        res += [trad("Ni jalon ni lot au backlog."), ""]
++
++    def nomme(e: memoire.Entree) -> str:
++        lien = liens.get(e.id)
++        return f"- [{e.id} — {e.titre}]({lien})" if lien else f"- {e.id} — {e.titre}"
++
++    hors = (_liste(trad("Tâches dans aucun lot"), [_ligne_tache(t, avec_lot=False) for t in s.hors_lot])
++            + _liste(trad("Besoins à découper en tâches"), [f"- {e.id} — {e.titre}" for e in s.a_decouper])
++            + _liste(trad("Besoins à fermer, leurs tâches closes"), [f"- {e.id} — {e.titre}" for e in s.a_fermer])
++            + _liste(trad("Bloqués"), [f"- {e.id} — {e.titre}" for e in s.bloques])
++            + _liste(trad("Pour l'humain"), [nomme(e) for e in s.pour_l_humain])
++            + _liste(trad("Demandes en attente"), [nomme(e) for e in s.demandes]))
++    if s.sans_jalon:
++        ids = [e.id for e in s.sans_jalon]
++        montres = ids if tout else ids[:SANS_JALON_NOMMES]
++        suite = trad(" … et {n} autre(s) : `--all`", n=len(ids) - len(montres)) if len(montres) < len(ids) else ""
++        hors.append(trad("- **Après les jalons**, dans aucun jalon : {ids}{suite}", ids=", ".join(montres),
++                         suite=suite))
++    if hors:
++        res += ["### " + trad("Hors des lots"), "", *hors, ""]
++    res += [f"> **!!** {_alerte(*a)}" for a in s.alertes]
++    return "\n".join(res).rstrip() + "\n"
++
++
++def liens_pour_l_humain(projet: config.Projet, s: Suite) -> dict[str, str]:
++    """Le permalien de chaque demande en attente et de chaque entrée pour
++    l'humain, qu'il ouvre d'un clic ; aucun quand rien n'est poussé."""
++    from socle import links
++
++    res = {}
++    for e in [*s.pour_l_humain, *s.demandes]:
++        try:
++            lien = links.lien(projet, e.fichier)[0]
++        except Exception:  # la suite se donne même sans ses liens
++            lien = None
++        if lien:
++            res[e.id] = lien
++    return res
++
++
++def rendre(projet: config.Projet, format_: str = "text", par: str = "lot", tout: bool = False) -> str:
++    """La suite du projet, dans le format demandé."""
++    s = calculer(memoire.Memoire.charger(projet.racine))
++    if format_ == "markdown":
++        return markdown(s, par, tout, liens_pour_l_humain(projet, s))
++    return texte(s, par)
+diff --git a/memory/backlog/T-0057-la-commande-socle-roadmap-ses-formats-compact-et-d.md b/memory/backlog/closed/T-0057-la-commande-socle-roadmap-ses-formats-compact-et-d.md
+similarity index 68%
+rename from memory/backlog/T-0057-la-commande-socle-roadmap-ses-formats-compact-et-d.md
+rename to memory/backlog/closed/T-0057-la-commande-socle-roadmap-ses-formats-compact-et-d.md
+index 7cc04bc..5a3a89d 100644
+--- a/memory/backlog/T-0057-la-commande-socle-roadmap-ses-formats-compact-et-d.md
++++ b/memory/backlog/closed/T-0057-la-commande-socle-roadmap-ses-formats-compact-et-d.md
+@@ -1,7 +1,7 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # T-0057 — La commande socle roadmap : ses formats compact et détaillé, par lot et par besoin, et l'alerte d'un ordre de lots ambigu
+ 
+-> statut : ouvert · origine : J-2026-11-16-AD · besoin : B-0274 · lu : backlog@c366bd9b
++> statut : fait · origine : J-2026-11-16-AD · besoin : B-0274 · ref : J-2026-11-17-L · lu : backlog@c366bd9b
+ 
+ La première tâche de B-0274 (J-2026-11-16-AD) : la commande
+ `socle roadmap` et ses deux formats, selon la spécification de B-0274,
+@@ -9,6 +9,6 @@ dans le produit, en français et en anglais, avec la note de version.
+ 
+ ## Fait quand
+ 
+-- [ ] `socle roadmap` donne le format compact, et `--format markdown` le format détaillé, par lot et `--by need` par besoin, sur un backlog d'essai à deux jalons, trois lots et des besoins hors lot, et un test le montre
+-- [ ] deux lots qui attendent le même lot sans ordre entre eux sont signalés, et un test le montre
+-- [ ] la sortie par défaut détaille le lot en cours et les deux suivants, les autres en une ligne, et `--all` les détaille tous
++- [x] `socle roadmap` donne le format compact, et `--format markdown` le format détaillé, par lot et `--by need` par besoin, sur un backlog d'essai à deux jalons, trois lots et des besoins hors lot, et un test le montre
++- [x] deux lots qui attendent le même lot sans ordre entre eux sont signalés, et un test le montre
++- [x] la sortie par défaut détaille le lot en cours et les deux suivants, les autres en une ligne, et `--all` les détaille tous
+diff --git a/memory/journal/2026-11-6.md b/memory/journal/2026-11-6.md
+index b660186..da268f2 100644
+--- a/memory/journal/2026-11-6.md
++++ b/memory/journal/2026-11-6.md
+@@ -1096,3 +1096,35 @@ validés (D-0120) ; T-0050 et T-0058 changent les gabarits de trois copies
+ protégées (les skills `socle-review` et `socle-batch`, le workflow
+ `socle.yml`) : une seule demande à Théo, après la revue, les nomme avec
+ leurs empreintes ; le changement des tests attend sa réponse.
++
++## J-2026-11-17-L — T-0057 : la commande socle roadmap, la suite du projet en compact et en Markdown, par lot et par besoin
++
++> ref : T-0057, B-0274, D-0127, L-0014
++
++La première tâche de B-0274, selon sa spécification validée (D-0127) :
++`socle roadmap` (`engine/socle/roadmap.py`), dans le groupe de l'humain
++de l'aide. Elle se calcule par le graphe que l'état lit : l'intérieur de
++`memory.ordre` en sort, sans changer ce qu'il rend, dans une classe
++`memory.Graphe` (ce qui est ouvert, ce qu'une entrée attend, de proche en
++proche, le premier d'une forme, où en est une entrée) et `ordre_de` ; la
++suite y ajoute l'ordre d'exécution entier d'une forme (`dans_l_ordre`, un
++tri topologique dont le choix égal prend l'en cours, puis l'identifiant).
++`pour : humain` se lit par une fonction, `memory.pour_l_humain`, que
++`human.a_faire` prend aussi. Les demandes en attente sont celles du
++graphe, sans réponse ni retirées, comme pour l'ordre.
++
++Les choix : le compact ne nomme aucune demande (collé dans un récap, il
++ne citerait pas une demande en attente sans son lien, que le hook de fin
++de tour refuse), il les compte ; le détaillé donne le lien de chaque
++demande en attente et de chaque entrée `pour : humain`. Le lot en cours
++est le premier en cours dans l'ordre (le premier lot sinon) ; le détaillé
++suit celui-là, les deux suivants, et tout lot en cours. `--by need` vaut
++aussi en compact : une ligne par besoin qui a des tâches, dans l'ordre des
++lots. `--all` ne change que le détaillé. L'option `--by` prend `lot` ou
++`need`, les mots de la spécification. L'alerte d'ordre ambigu ne juge que
++deux lots ouverts qui attendent un même lot (ouvert ou clos) sans que l'un
++attende l'autre ; c'est une ligne de la vue, pas un contrôle.
++
++`tests/test_suite_du_projet.py` le montre sur un backlog d'essai à deux
++jalons, trois lots et des besoins hors lot ; le guide, les instructions,
++le skill `socle-batch`, la CI et l'état viennent avec T-0058.
+diff --git a/tests/test_suite_du_projet.py b/tests/test_suite_du_projet.py
+new file mode 100644
+index 0000000..43ac7ff
+--- /dev/null
++++ b/tests/test_suite_du_projet.py
+@@ -0,0 +1,265 @@
++"""B-0274 (D-0127) : la suite du projet d'un coup d'œil, `socle roadmap` —
++les jalons et leurs besoins clos, les lots dans leur ordre d'exécution et
++leurs tâches, les besoins, ce qui n'est dans aucun lot ; le format compact
++et le format détaillé, par lot et par besoin ; l'alerte de deux lots qui
++attendent le même lot sans ordre entre eux."""
++
++import argparse
++import contextlib
++import io
++import types
++import unittest
++from unittest import mock
++
++from socle import cli, memory as memoire, messages, roadmap as suite
++from tests.test_structure import Projet, entree, memoire_de
++
++
++def demande(mem: memoire.Memoire, ident: str = "D-0001") -> memoire.Memoire:
++    chemin = f"memory/requests/{ident}-essai.md"
++    mem.fichiers[chemin] = memoire.analyser(chemin, "<!-- socle: couche=demandes zone=publique -->\n"
++                                                    f"# {ident} — Une demande\n\n> date : 2026-11-17\n")
++    return mem
++
++
++def backlog_d_essai() -> memoire.Memoire:
++    """Deux jalons, trois lots, et des besoins hors des lots : un à découper,
++    un dont la tâche n'est dans aucun lot, un bloqué, un à fermer."""
++    return demande(memoire_de(
++        entree("B-0001", meta="priorité : haute"), entree("B-0002"), entree("B-0003"), entree("B-0004"),
++        entree("B-0005"), entree("B-0006", "bloqué"), entree("B-0008"),
++        entree("T-0001", "en cours", meta="besoin : B-0001"),
++        entree("T-0002", "fait", meta="besoin : B-0001"),
++        entree("T-0003", meta="besoin : B-0002 · après : T-0001"),
++        entree("T-0004", meta="besoin : B-0003 · après : D-0001"),
++        entree("T-0005", meta="besoin : B-0003 · pour : humain"),
++        entree("T-0006", meta="besoin : B-0005"),
++        entree("T-0007", "fait", meta="besoin : B-0008"),
++        entree("L-0001", "en cours", meta="après : T-0001, T-0002"),
++        entree("L-0002", meta="après : L-0001, T-0003, D-0001"),
++        entree("L-0003", meta="après : L-0002, T-0004, T-0005"),
++        entree("JA-0001", meta="après : B-0001, B-0002"),
++        entree("JA-0002", meta="après : JA-0001, B-0003"),
++    ))
++
++
++class TestCalcul(unittest.TestCase):
++    def test_les_lots_et_les_jalons_dans_leur_ordre_avec_leur_avancement(self):
++        s = suite.calculer(backlog_d_essai())
++        self.assertEqual([(j.entree.id, j.clos, j.total) for j in s.jalons], [("JA-0001", 0, 2), ("JA-0002", 0, 1)])
++        self.assertEqual([lot.entree.id for lot in s.lots], ["L-0001", "L-0002", "L-0003"])
++        self.assertEqual(s.courant, 0)
++        self.assertEqual([(t.entree.id, t.avancement, t.attend) for lot in s.lots for t in lot.taches], [
++            ("T-0001", "en-cours", []), ("T-0002", "fait", []), ("T-0003", "attend", ["T-0001"]),
++            ("T-0004", "attend", ["D-0001"]), ("T-0005", "pret", [])])
++        self.assertEqual(s.lots[1].demandes, ["D-0001"])
++        self.assertEqual([(lot.en_cours, lot.closes) for lot in s.lots], [(True, 1), (False, 0), (False, 0)])
++        self.assertEqual([(t.besoin, t.close) for t in s.lots[0].taches], [("B-0001", False), ("B-0001", True)])
++        self.assertTrue(memoire.pour_l_humain(s.taches["T-0005"].entree))
++        self.assertFalse(memoire.pour_l_humain(s.taches["T-0006"].entree))
++        self.assertEqual([t.entree.id for t in s.hors_lot], ["T-0006"])
++        self.assertEqual([[e.id for e in x] for x in (s.a_decouper, s.a_fermer, s.bloques, s.pour_l_humain,
++                                                      s.demandes, s.sans_jalon)],
++                         [["B-0004"], ["B-0008"], ["B-0006"], ["T-0005"], ["D-0001"],
++                          ["B-0004", "B-0005", "B-0006", "B-0008"]])
++        self.assertEqual(suite.besoins_dans_l_ordre(s), ["B-0001", "B-0002", "B-0003", "B-0005"])
++        self.assertEqual([t.entree.id for t in suite.taches_du_besoin(s, "B-0003")], ["T-0004", "T-0005"])
++        self.assertEqual(s.alertes, [])
++
++    def test_l_ordre_d_execution_vient_des_apres_et_non_des_numeros(self):
++        """Le graphe que l'état lit donne l'ordre : un lot d'un numéro plus
++        petit, qui attend un autre, vient après lui ; à choix égal, l'en
++        cours d'abord."""
++        mem = memoire_de(entree("L-0001", meta="après : L-0003"), entree("L-0002", meta="après : L-0001"),
++                         entree("L-0003"), entree("L-0004", "en cours"))
++        g = memoire.Graphe(mem)
++        self.assertEqual(g.dans_l_ordre(memoire.est_lot), ["L-0004", "L-0003", "L-0001", "L-0002"])
++        self.assertEqual(g.premier(memoire.est_lot), ["L-0004", "L-0003"])
++        self.assertEqual(g.attendus("L-0002"), {"L-0001", "L-0003"})
++        self.assertEqual((g.deps("L-0002"), g.attend("L-0002"), g.ou_en_est("L-0003")), (["L-0001"], ["L-0001"], "pret"))
++        self.assertTrue(g.ouvert("L-0001"))
++        self.assertIsNotNone(memoire.ordre_de(g))
++        self.assertEqual(memoire.ordre(mem).lot.id, "L-0004")
++
++    def test_deux_lots_qui_attendent_le_meme_lot_sans_ordre_entre_eux_sont_signales(self):
++        ambigu = memoire_de(entree("L-0001", "en cours"), entree("L-0002", meta="après : L-0001"),
++                            entree("L-0003", meta="après : L-0001"))
++        s = suite.calculer(ambigu)
++        self.assertEqual(s.alertes, [("L-0002", "L-0003", "L-0001")])
++        self.assertEqual(suite.alertes(memoire.Graphe(ambigu), ["L-0001", "L-0002", "L-0003"]),
++                         [("L-0002", "L-0003", "L-0001")])
++        attendu = "!! ordre ambigu : L-0002 et L-0003 attendent tous deux L-0001, sans ordre entre eux — que l'un " \
++                  "attende l'autre"
++        self.assertIn(attendu, suite.texte(s).splitlines())
++        self.assertIn("> **!!** " + attendu.removeprefix("!! "), suite.markdown(s).splitlines())
++        self.assertNotIn("\n\n\n", suite.markdown(s))
++        # Le même lot attendu, clos : l'ordre des deux reste à choisir.
++        clos = memoire_de(entree("L-0001", "fait"), entree("L-0002", meta="après : L-0001"),
++                          entree("L-0003", meta="après : L-0001"))
++        self.assertEqual(suite.calculer(clos).alertes, [("L-0002", "L-0003", "L-0001")])
++        # L'un attend l'autre, de proche en proche : aucune alerte.
++        ordonne = memoire_de(entree("L-0001", "en cours"), entree("L-0002", meta="après : L-0001"),
++                             entree("L-0004", meta="après : L-0002"), entree("L-0003", meta="après : L-0001, L-0004"))
++        self.assertEqual(suite.calculer(ordonne).alertes, [])
++        self.assertNotIn("ordre ambigu", suite.texte(suite.calculer(ordonne)))
++
++
++class TestFormats(unittest.TestCase):
++    def test_le_format_compact_une_ligne_par_jalon_et_par_lot_le_lot_en_cours_marque(self):
++        s = suite.calculer(backlog_d_essai())
++        self.assertEqual(suite.texte(s).splitlines(), [
++            "La suite du projet, calculée depuis le backlog — détaillée : `python3 .socle/socle roadmap --format "
++            "markdown`",
++            "jalons, dans leur ordre :",
++            "  JA-0001 — L'entrée JA-0001 : 0 besoin(s) clos sur 2 — le prochain",
++            "  JA-0002 — L'entrée JA-0002 : 0 besoin(s) clos sur 1",
++            "lots, dans leur ordre (▶ en cours) :",
++            "▶ L-0001 — L'entrée L-0001 : 1 tâche(s) close(s) sur 2 · 1 en cours",
++            "  L-0002 — L'entrée L-0002 : 0 tâche(s) close(s) sur 1 · 1 qui attend(ent) · 1 demande(s) sans réponse",
++            "  L-0003 — L'entrée L-0003 : 0 tâche(s) close(s) sur 2 · 1 prête(s), 1 qui attend(ent)",
++            "hors des lots : 1 tâche(s) ouverte(s), 1 besoin(s) à découper, 1 à fermer, 1 entrée(s) bloquée(s), 1 pour "
++            "l'humain, 1 demande(s) en attente",
++            "après les jalons : 4 besoin(s) ouvert(s) dans aucun jalon",
++        ])
++
++    def test_le_format_compact_ne_nomme_aucune_demande(self):
++        """Collé dans le récap de la clôture d'un lot, il ne cite pas une
++        demande en attente sans son lien, que le hook de fin de tour
++        refuserait."""
++        s = suite.calculer(backlog_d_essai())
++        for par in suite.LECTURES:
++            self.assertNotIn("D-0001", suite.texte(s, par))
++        self.assertIn("D-0001", suite.markdown(s))
++
++    def test_le_format_compact_par_besoin(self):
++        lignes = suite.texte(suite.calculer(backlog_d_essai()), "need").splitlines()
++        debut = lignes.index("besoins, dans l'ordre des lots :")
++        self.assertEqual(lignes[debut + 1:debut + 5], [
++            "  B-0001 — L'entrée B-0001 : 1 tâche(s) close(s) sur 2 — lot(s) : L-0001",
++            "  B-0002 — L'entrée B-0002 : 0 tâche(s) close(s) sur 1 — lot(s) : L-0002",
++            "  B-0003 — L'entrée B-0003 : 0 tâche(s) close(s) sur 2 — lot(s) : L-0003",
++            "  B-0005 — L'entrée B-0005 : 0 tâche(s) close(s) sur 1 — dans aucun lot",
++        ])
++        self.assertFalse(any(l.startswith("lots, dans leur ordre") for l in lignes))
++
++    def test_le_format_detaille_par_lot(self):
++        s = suite.calculer(backlog_d_essai())
++        lignes = suite.markdown(s).splitlines()
++        self.assertEqual(lignes[0], "## La suite du projet")
++        for ligne in ("- **JA-0001** — L'entrée JA-0001 : 0 besoin(s) clos sur 2 — le prochain",
++                      "#### ▶ L-0001 — L'entrée L-0001 — en cours",
++                      "1 tâche(s) close(s) sur 2 · 1 en cours",
++                      "- T-0001 — L'entrée T-0001 · besoin B-0001 · priorité haute · en cours",
++                      "- T-0002 — L'entrée T-0002 · besoin B-0001 · priorité haute · faite",
++                      "#### L-0002 — L'entrée L-0002",
++                      "0 tâche(s) close(s) sur 1 · 1 qui attend(ent) · attend D-0001",
++                      "- T-0003 — L'entrée T-0003 · besoin B-0002 · attend : T-0001",
++                      "- T-0004 — L'entrée T-0004 · besoin B-0003 · attend : D-0001",
++                      "### Hors des lots",
++                      "- **Tâches dans aucun lot**",
++                      "  - T-0006 — L'entrée T-0006 · besoin B-0005 · prête",
++                      "  - B-0004 — L'entrée B-0004",
++                      "  - B-0008 — L'entrée B-0008",
++                      "  - B-0006 — L'entrée B-0006",
++                      "  - T-0005 — L'entrée T-0005",
++                      "  - D-0001 — Une demande",
++                      "- **Après les jalons**, dans aucun jalon : B-0004, B-0005, B-0006, B-0008"):
++            self.assertIn(ligne, lignes)
++        self.assertNotIn("#### Les lots suivants", lignes)
++
++    def test_le_format_detaille_suit_le_lot_en_cours_et_les_deux_suivants_all_les_suit_tous(self):
++        mem = memoire_de(*(entree(f"T-000{n}", meta="besoin : B-0001") for n in range(1, 6)), entree("B-0001"),
++                         entree("L-0001", "en cours", meta="après : T-0001"),
++                         *(entree(f"L-000{n}", meta=f"après : L-000{n - 1}, T-000{n}") for n in range(2, 6)))
++        s = suite.calculer(mem)
++        self.assertEqual([lot.entree.id for lot in suite.detailles(s, tout=False)], ["L-0001", "L-0002", "L-0003"])
++        self.assertEqual(len(suite.detailles(s, tout=True)), 5)
++        defaut = suite.markdown(s).splitlines()
++        self.assertEqual([l for l in defaut if l.startswith("#### ")],
++                         ["#### ▶ L-0001 — L'entrée L-0001 — en cours", "#### L-0002 — L'entrée L-0002",
++                          "#### L-0003 — L'entrée L-0003", "#### Les lots suivants"])
++        self.assertIn("- L-0004 — L'entrée L-0004 : 0 tâche(s) close(s) sur 1 · 1 prête(s)", defaut)
++        self.assertNotIn("- T-0004 — L'entrée T-0004 · besoin B-0001 · prête", defaut)
++        tout = suite.markdown(s, tout=True).splitlines()
++        self.assertEqual(len([l for l in tout if l.startswith("#### L-")]), 4)
++        self.assertIn("- T-0005 — L'entrée T-0005 · besoin B-0001 · prête", tout)
++        self.assertNotIn("#### Les lots suivants", tout)
++
++    def test_le_format_detaille_par_besoin_chaque_tache_avec_son_lot(self):
++        lignes = suite.markdown(suite.calculer(backlog_d_essai()), "need").splitlines()
++        for ligne in ("### Besoins, dans l'ordre des lots",
++                      "#### B-0001 — L'entrée B-0001 : 1 tâche(s) close(s) sur 2 — lot(s) : L-0001",
++                      "- T-0001 — L'entrée T-0001 · lot L-0001 · priorité haute · en cours",
++                      "- T-0004 — L'entrée T-0004 · lot L-0003 · attend : D-0001",
++                      "#### Les autres besoins",
++                      "- B-0005 — L'entrée B-0005 : 0 tâche(s) close(s) sur 1 — dans aucun lot"):
++            self.assertIn(ligne, lignes)
++        self.assertFalse(any(l.startswith("### Lots") for l in lignes))
++        tout = suite.markdown(suite.calculer(backlog_d_essai()), "need", tout=True).splitlines()
++        self.assertIn("- T-0006 — L'entrée T-0006 · dans aucun lot · prête", tout)
++        self.assertNotIn("#### Les autres besoins", tout)
++
++    def test_le_format_detaille_donne_le_lien_de_chaque_demande_et_de_ce_qui_revient_a_l_humain(self):
++        s = suite.calculer(backlog_d_essai())
++        url = "https://github.com/o/r/blob/abc/{}"
++        with mock.patch("socle.links.lien", side_effect=lambda projet, chemin: (url.format(chemin), "")):
++            liens = suite.liens_pour_l_humain(types.SimpleNamespace(), s)
++        self.assertEqual(liens, {"T-0005": url.format("memory/backlog/T-0005-essai.md"),
++                                 "D-0001": url.format("memory/requests/D-0001-essai.md")})
++        lignes = suite.markdown(s, liens=liens).splitlines()
++        self.assertIn(f"  - [D-0001 — Une demande]({url.format('memory/requests/D-0001-essai.md')})", lignes)
++        self.assertIn(f"  - [T-0005 — L'entrée T-0005]({url.format('memory/backlog/T-0005-essai.md')})", lignes)
++        with mock.patch("socle.links.lien", side_effect=RuntimeError("hors ligne")):
++            self.assertEqual(suite.liens_pour_l_humain(types.SimpleNamespace(), s), {})
++
++    def test_un_backlog_sans_lot_ni_jalon(self):
++        s = suite.calculer(memoire_de(entree("B-0001")))
++        self.assertIn("ni jalon ni lot au backlog", suite.texte(s))
++        self.assertIn("Ni jalon ni lot au backlog.", suite.markdown(s))
++        self.assertEqual(s.sans_jalon, [])
++
++    def test_en_anglais(self):
++        s = suite.calculer(backlog_d_essai())
++        with messages.dans("en"):
++            lignes = suite.texte(s).splitlines()
++            detail = suite.markdown(s, "need")
++        self.assertEqual(lignes[0], "The project's roadmap, computed from the backlog — detailed: `python3 "
++                                    ".socle/socle roadmap --format markdown`")
++        self.assertIn("▶ L-0001 — L'entrée L-0001: 1 task(s) closed out of 2 · 1 in progress", lignes)
++        self.assertIn("## The project's roadmap", detail)
++        self.assertIn("- T-0004 — L'entrée T-0004 · batch L-0003 · waiting: D-0001", detail)
++        for ligne in lignes + detail.splitlines():
++            self.assertNotRegex(ligne, r"\b(?:tâche|besoin|lot|jalon)s?\b")
++
++
++class TestCommande(Projet):
++    def test_socle_roadmap_et_ses_options(self):
++        self.poser("B-0001", titre="Ajouter triple")
++        self.poser("T-0001", "besoin : B-0001", titre="Écrire triple")
++        self.poser("L-0001", "après : T-0001", "en cours", titre="Le premier lot")
++        self.poser("JA-0001", "après : B-0001", titre="Le premier jalon")
++        self.commiter("backlog")
++        code, sortie = self.socle("roadmap")
++        self.assertEqual(code, 0, sortie)
++        self.assertIn("▶ L-0001 — Le premier lot : 0 tâche(s) close(s) sur 1 · 1 prête(s)\n", sortie)
++        self.assertIn("  JA-0001 — Le premier jalon : 0 besoin(s) clos sur 1 — le prochain\n", sortie)
++        code, sortie = self.socle("roadmap", "--format", "markdown", "--by", "need", "--all")
++        self.assertEqual(code, 0, sortie)
++        self.assertIn("#### B-0001 — Ajouter triple : 0 tâche(s) close(s) sur 1 — lot(s) : L-0001\n", sortie)
++        self.assertIn("- T-0001 — Écrire triple · lot L-0001 · prête\n", sortie)
++        with contextlib.redirect_stdout(io.StringIO()) as flux:
++            self.assertEqual(cli.cmd_roadmap(argparse.Namespace(root=str(self.racine), format="text", by="need",
++                                                                all=False)), 0)
++        self.assertIn("  B-0001 — Ajouter triple : 0 tâche(s) close(s) sur 1 — lot(s) : L-0001\n", flux.getvalue())
++        code, sortie = self.socle("roadmap", "--format", "markdown")
++        self.assertIn("#### ▶ L-0001 — Le premier lot — en cours\n", sortie)
++        self.assertEqual(suite.rendre(self.projet(), "markdown").rstrip("\n"), sortie.rstrip("\n"))
++
++    def projet(self):
++        from socle import config
++
++        return config.Projet.charger(self.racine)
++
++
++if __name__ == "__main__":
++    unittest.main()
+-- 
+2.43.0
+

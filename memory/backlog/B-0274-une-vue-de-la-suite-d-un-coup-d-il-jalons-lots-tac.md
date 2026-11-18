@@ -25,7 +25,8 @@ pour A et B, on oublie C ») :
   lu par lot, ou par besoin (`--by need`), chaque besoin avec ses tâches
   et le lot de chacune. Pas de graphe.
 - **La commande** : `socle roadmap`, `--format text|markdown`,
-  `--by lot|need`, `--all`.
+  `--by batch|need`, `--all` (`batch`, et non `lot`, sur la
+  décision de Théo en séance, D-0131).
 - **Les déclencheurs** : l'humain dans un terminal, dit en une phrase par
   le guide ; l'agent qui colle le format B quand l'humain demande la
   suite, une ligne des instructions du socle ; le format A dans le récap de
