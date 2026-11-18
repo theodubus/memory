@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0016 clos (J-2026-11-18-W) : sa pull request, la CI, la fusion par
-l'agent, la distribution. Puis L-0017, L-0018, L-0015.
+L-0017 clos (J-2026-11-18-Z) : sa pull request, la CI, la fusion par
+l'agent, la distribution. Puis L-0018, L-0015.
 
 ## Consignes en cours
 

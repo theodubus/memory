@@ -112,6 +112,60 @@ class TestBranchesASupprimer(unittest.TestCase):
         quoi = [e.quoi for e in humain.a_faire(self.projet)]
         self.assertTrue(any("`fusionnee`" in q for q in quoi), quoi)
 
+    def test_une_branche_que_l_origine_n_a_plus_n_est_plus_donnee_a_supprimer(self):
+        """B-0193 : le clone garde la référence d'une branche supprimée sur
+        l'origine tant qu'un fetch ne l'élague pas ; l'état la donnait à
+        supprimer à l'humain, qui l'avait déjà supprimée."""
+        (self.clone / "memory").mkdir()
+        git(self.dossier / "source", "branch", "-D", "fusionnee")
+        # Le dernier fetch la garde : la liste calculée sur lui la contient.
+        self.assertIn("fusionnee", humain.branches_a_supprimer(self.projet))
+        self.assertNotIn("fusionnee", humain.branches_de_l_origine(self.projet))
+        quoi = [e.quoi for e in humain.a_faire(self.projet)]
+        self.assertFalse(any("`fusionnee`" in q for q in quoi), quoi)
+        self.assertTrue(any("`codex/ui`" in q for q in quoi), quoi)
+        self.assertFalse(any("dernier fetch" in q for q in quoi), quoi)
+
+    def test_de_meme_une_branche_contenue_dans_le_travail_ou_inactive(self):
+        import time
+
+        source = self.dossier / "source"
+        git(source, "branch", "morceau", "en-cours")
+        git(source, "switch", "-q", "en-cours")
+        (source / "f").write_text("quatre")
+        git(source, "commit", "-qam", "quatre")
+        git(source, "switch", "-q", "main")
+        git(self.clone, "fetch", "-q", "origin")
+        git(self.clone, "switch", "-q", "en-cours")
+        (self.clone / "memory").mkdir()
+        git(source, "branch", "-D", "morceau")
+        self.assertEqual(humain.branches_contenues_dans_le_travail(self.projet), [("morceau", "origin/en-cours")])
+        # Dans trente jours aussi : elle ne se dit pas (le filtre des inactives a son propre test, plus bas).
+        with unittest.mock.patch.object(time, "time", return_value=time.time() + 30 * 86400):
+            quoi = [e.quoi for e in humain.a_faire(self.projet)]
+        self.assertFalse(any("`morceau`" in q for q in quoi), quoi)
+
+    def test_sans_reponse_de_l_origine_la_liste_dit_qu_elle_vient_du_dernier_fetch(self):
+        (self.clone / "memory").mkdir()
+        git(self.clone, "remote", "set-url", "origin", str(self.dossier / "absente"))
+        self.assertIsNone(humain.branches_de_l_origine(self.projet))
+        quoi = [e.quoi for e in humain.a_faire(self.projet)]
+        ligne = next(q for q in quoi if "`fusionnee`" in q)
+        self.assertIn("dernier fetch", ligne)
+        self.assertIn("`git fetch --prune origin`", ligne)
+        # Une origine qui ne répond pas dans le délai : de même.
+        with unittest.mock.patch.object(humain.subprocess, "run",
+                                        side_effect=subprocess.TimeoutExpired("git", humain.DELAI_ORIGINE)):
+            self.assertIsNone(humain.branches_de_l_origine(self.projet))
+
+    def test_rien_a_proposer_rien_a_demander_a_l_origine(self):
+        """L'origine n'est interrogée que s'il y a une branche à dire."""
+        (self.clone / "memory").mkdir()
+        self.projet.politique = {"human": {"keep_branches": ["*", "*/*"]}}
+        with unittest.mock.patch.object(humain, "branches_de_l_origine") as origine:
+            humain.a_faire(self.projet)
+        self.assertEqual(origine.call_count, 0)
+
     def test_une_branche_non_fusionnee_et_inactive_se_signale(self):
         """B-0112 : les branches de session du pilote, jamais livrées,
         restaient sans que personne ne les signale."""
@@ -180,6 +234,43 @@ class TestBranchesASupprimer(unittest.TestCase):
         git(self.clone, "tag", f"cite/{sha}", sha)
         outils._PULL_REQUESTS_RECUPEREES.add(str(self.clone.resolve()))
         self.assertEqual(humain.commits_cites_seuls(self.projet, "ancienne"), [])
+
+    def test_une_branche_inactive_que_l_origine_n_a_plus_ne_se_dit_que_pour_un_commit_cite_qu_elle_seule_garde(self):
+        """La revue de L-0017 : une branche inactive supprimée sur l'origine ne
+        se propose plus à examiner ; mais si sa référence, dans ce clone, garde
+        seule un commit que la mémoire cite, l'état dit encore de l'étiqueter,
+        sans quoi un `git fetch --prune` le perdrait (B-0116)."""
+        from socle import utils as outils
+
+        source = self.dossier / "source"
+        git(source, "switch", "-q", "-c", "abandon", "main")
+        (source / "g").write_text("vieux")
+        git(source, "add", "g")
+        vieux = "2026-01-01T12:00:00"
+        subprocess.run(["git", "commit", "-qm", "vieux"], cwd=source, check=True, capture_output=True,
+                       env={**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t",
+                            "GIT_COMMITTER_EMAIL": "t@t", "GIT_CONFIG_NOSYSTEM": "1", "HOME": str(source),
+                            "GIT_COMMITTER_DATE": vieux, "GIT_AUTHOR_DATE": vieux})
+        sha = git(source, "rev-parse", "--short=7", "HEAD").strip()
+        git(source, "switch", "-q", "main")
+        git(self.clone, "fetch", "-q", "origin")
+        (self.clone / "memory").mkdir()
+        self.assertTrue(any("`abandon`" in e.quoi for e in humain.a_faire(self.projet)))
+        git(source, "branch", "-D", "abandon")
+        # Ni la mémoire ne cite son commit : elle ne se dit plus du tout.
+        self.assertEqual([b for b, _, _ in humain.branches_inactives(self.projet)], ["abandon"])
+        self.assertFalse(any("`abandon`" in e.quoi for e in humain.a_faire(self.projet)))
+        # La mémoire le cite : l'étiqueter d'abord, depuis ce clone.
+        journal = self.clone / "memory/journal/2026-01.md"
+        journal.parent.mkdir(parents=True)
+        journal.write_text("<!-- socle: couche=journal zone=publique -->\n# Journal\n\n"
+                           f"## J-2026-01-01-A — Essai\n\n> ref : commit:{sha}\n\nTexte.\n")
+        outils._PULL_REQUESTS_RECUPEREES.clear()
+        quoi = [e.quoi for e in humain.a_faire(self.projet) if "`abandon`" in e.quoi]
+        self.assertEqual(len(quoi), 1, quoi)
+        self.assertTrue(quoi[0].startswith(f"étiqueter {sha}, que la mémoire cite"), quoi[0])
+        self.assertIn("que l'origine n'a plus", quoi[0])
+        self.assertIn(outils.etiqueter([sha]), quoi[0])
 
     def test_une_action_humaine_vient_avec_le_lien_de_son_sujet(self):
         # ADR-0025 : le mode d'emploi d'une action humaine (commandes,

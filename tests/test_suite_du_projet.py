@@ -579,8 +579,9 @@ class TestLesFormatsValides(unittest.TestCase):
     def test_le_guide_montre_les_deux_formats_et_une_note_de_version_le_dit(self):
         """Le guide, en français et en anglais, montre la sortie des deux
         formats sur le backlog des exemples, ses identifiants écrits
-        `X-NNNN` ; la note de version la plus récente le dit, et le prompt
-        de mise à jour de chess le reprend."""
+        `X-NNNN` ; la note de version du changement, 2026-11-18-c, le dit,
+        et le prompt de mise à jour de chess le reprend. La note se cherche
+        par son identifiant : une note plus récente ne la déloge pas."""
         paquet = Path(suite.__file__).parent
         for lg, nom in (("fr", "HELP.md"), ("en", "HELP.en.md")):
             guide = (paquet / nom).read_text(encoding="utf-8")
@@ -596,7 +597,7 @@ class TestLesFormatsValides(unittest.TestCase):
         for nom, titre in (("CHANGES.md", "La suite du projet aux formats validés"),
                            ("CHANGES.en.md", "The project's roadmap in the approved formats")):
             notes = (paquet / nom).read_text(encoding="utf-8")
-            premiere = notes[notes.index("\n## "):].split("\n## ")[1]
+            premiere = next(n for n in notes.split("\n## ")[1:] if n.startswith("2026-11-18-c "))
             self.assertIn(titre, premiere.splitlines()[0], nom)
             self.assertIn("socle roadmap", " ".join(premiere.split()), nom)
         prompt = Path(__file__).resolve().parent.parent / "docs/fabrication/chess/prompt-mise-a-jour.md"
