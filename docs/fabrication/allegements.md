@@ -87,6 +87,6 @@ Sa condition, « si oui », est remplie : la proposition 1 est validée dans sa 
 
 ## Ce qui s'ensuit
 
-Les besoins et les tâches de ces cinq propositions s'ouvrent au backlog après l'intégration de la passation de L-0016 (`docs/fabrication/passation-l0016/`) : avant, ils prendraient les numéros que portent déjà ses correctifs.
+Les besoins et les tâches de ces cinq propositions s'ouvrent au backlog après l'intégration de la passation de L-0016 (son dossier, retiré à l'intégration : J-2026-11-18-S) : avant, ils prendraient les numéros que portent déjà ses correctifs.
 
 La variante légère de la proposition 2 vaut dès maintenant comme consigne. Elle remplace, pour un changement mécanique de valeurs attendues, la règle du 12 novembre. Les dix tests de L-0016 se valident ainsi : une question dans la conversation qui les nomme, et la réponse consignée en séance.

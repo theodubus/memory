@@ -26,5 +26,5 @@ Ce qu'il portera, une tâche ou plus par proposition :
    étendue au lot.
 
 Les tâches des points 1 à 4 s'ouvrent après l'intégration de la
-passation de L-0016 (`docs/fabrication/passation-l0016/`) : avant, elles
+passation de L-0016 (J-2026-11-18-S) : avant, elles
 prendraient les numéros que portent ses correctifs.
