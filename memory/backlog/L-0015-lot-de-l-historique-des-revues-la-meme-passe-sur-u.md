@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0015 — Lot de l'historique des revues : la même passe sur un arbre sale, une ligne de bloquant mal écrite, la passe commitée et la clôture outillée, le dossier qui donne la spécification validée
 
-> statut : ouvert · origine : J-2026-11-16-AB · après : L-0016, T-0054, T-0055, T-0056, T-0062, T-0087 · lu : backlog@050e512a
+> statut : ouvert · origine : J-2026-11-16-AB · après : L-0017, T-0054, T-0055, T-0056, T-0062, T-0087 · lu : backlog@050e512a
 
 Formé le 16 novembre (J-2026-11-16-AB) pour les constats de la revue de
 T-0047 (J-2026-11-16-Y), qui n'avaient pas de lot : tous touchent

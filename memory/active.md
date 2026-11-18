@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0016, la vue de la suite aux formats validés (J-2026-11-18-N) : sa
-passation, `docs/fabrication/passation-l0016/` ; puis L-0015.
+L-0016 (J-2026-11-18-N) : `docs/fabrication/passation-l0016/` ; puis
+L-0017, L-0015.
 
 ## Consignes en cours
 
@@ -44,6 +44,7 @@ Leur texte exact est dans l'entrée du journal citée.
   seul (ce que c'est, pourquoi, ce que change sa réponse) ; ce que
   l'agent fera se dit à part (J-2026-10-31-S, J-2026-10-14-F).
 - Les heures à Théo, à l'heure de Paris (J-2026-10-14-G).
+- Une branche à supprimer se vérifie sur GitHub (B-0193).
 - Un autre dépôt se clone hors du dossier des dépôts de la session, sans
   être déclaré racine ; à chaque reprise, vérifier que l'état a été
   injecté, sinon le dire et ne rien pousser (J-2026-10-14-S).

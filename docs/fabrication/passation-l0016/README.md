@@ -31,6 +31,18 @@ Ce diff s'applique après la série et reste dans l'arbre, hors de tout commit, 
 
 `demande-brouillon.txt` : la demande à Théo, prête sauf trois points : le résultat des revues, les empreintes à prendre, les liens à prendre après le push.
 
+## Reçu de Théo après la passation
+
+Théo a reçu deux fois de suite, dans « Pour toi », la demande de supprimer `ccr-b742f301-i57kk1` et `ccr-d82b39da-2j0guo`. Ces deux branches n'existaient plus sur GitHub : l'état les lisait dans les références locales du dernier fetch, que rien n'élague (B-0193, T-0024). Son message, mot pour mot : « Pourquoi tu continues de me demander de supprimer des branches que j'ai deja supprimé et que tu ne prends que l'info quand je te le dis alors que tu as accès à la liste des branches existantes sir github ».
+
+Ce qui a été fait :
+- un `git fetch --prune origin` a effacé les deux références ;
+- B-0193 passe en priorité haute, avec cette citation ;
+- T-0024 sort de L-0007 pour un lot à elle, L-0017, après L-0016 et avant L-0015 ;
+- le chantier actif dit de vérifier sur GitHub une branche avant de la donner à supprimer.
+
+L'entrée de journal qui consigne ce message, avec son texte exact, s'écrit après l'intégration des correctifs : écrite avant, elle aurait pris la lettre qu'ils portent déjà.
+
 ## La suite
 
 1. **Intégrer en gardant les SHA.** Copier ce dossier hors du dépôt (dans le scratchpad de la session), puis :
@@ -52,4 +64,5 @@ Ce diff s'applique après la série et reste dans l'arbre, hors de tout commit, 
 5. **À la réponse de Théo**, dans un même push : les dix tests et la réponse ; T-0088 close. Puis :
    - la CI verte ;
    - le lot clos (son recul, `fait`, `socle archive`), et le compact de `socle roadmap` collé au récap, dans un bloc de code ;
-   - la fusion par l'agent (D-0092), puis la distribution vérifiée.
+   - la fusion par l'agent (D-0092), puis la distribution vérifiée ;
+   - puis L-0017 (T-0024), avant L-0015.
