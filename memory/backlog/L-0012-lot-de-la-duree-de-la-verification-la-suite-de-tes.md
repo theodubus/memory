@@ -25,3 +25,7 @@ Commits : cac8a20..8520f6a
 - Ouvre : B-0281, T-0066, T-0067, T-0068
 
 Recul : première passe, sans précédente à comparer ; ses trois bloquants avaient trois causes distinctes (un lien sur un commit que la passation a réécrit, une promesse de la spécification que la marque des étapes déjà passées rendait muette, un garde-fou nouveau sans modèle de menace), toutes corrigées dans D-0130 avant la réponse de Théo. Les entrées qu'elle ouvre, B-0281 et ses tâches sur le lanceur, puis B-0282, un défaut voisin du cliquet, prolongent ou côtoient ce que le lot ferme sans le refaire : elles ne sont pas de même nature que B-0257 et B-0258. Les lots clos qui ont touché les mêmes fichiers (le moteur, l'auto-test, le guide) ont ouvert des tâches du hook et de la revue, jamais une entrée sur la durée de la vérification. La passe 2 sera différente : elle juge le code de la spécification validée, depuis 8a7053c, et non plus la spécification. Décision : continuer
+
+### Passe 2 — 2026-11-18
+
+Commits : 8a7053c..abed8ed
