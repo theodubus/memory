@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0012, en correctifs : `docs/fabrication/passation-l0012/` ; puis
-L-0014 : `docs/fabrication/passation-l0014/` ; puis L-0015.
+L-0012 : sa passe 3, sur b6824ef ; puis L-0014 :
+`docs/fabrication/passation-l0014/` ; puis L-0015.
 
 ## Consignes en cours
 

@@ -28,10 +28,10 @@ Recul : première passe, sans précédente à comparer ; ses trois bloquants ava
 
 ### Passe 2 — 2026-11-18
 
-Commits : 8a7053c..abed8ed
+Commits : 8a7053c..b38e021
 
 - Bloquant : un passage complet lancé par la fin de tour ou l'envoi garde sa trace au-delà du seuil sans dire l'avertissement à personne · cause nouvelle
 - Bloquant : `nan` écrit librement au seuil, puis relevé sans demande, le cliquet comparant `vb > va` · cause nouvelle
 - Ouvre : B-0283, que le sous-agent de la correction a trouvé ; le même trou du cliquet sur des clés d'avant le lot, constat pour le backlog, se ferme par la correction du second bloquant, la comparaison étant commune
 
-Recul : les deux bloquants de la passe 2 ont des causes nouvelles, selon le relecteur, mais le premier voisine avec le deuxième de la passe 1 : deux fois, ce que l'agent lit d'un hook a été supposé au lieu d'être suivi jusqu'à sa sortie. Les entrées ouvertes (B-0282, B-0283) sont des trous du cliquet des garde-fous, de nature différente des besoins clos (la durée, le lanceur) : poser une clé au cliquet révèle ses voisines, sans que le lot les refasse. Les lots clos qui ont touché les mêmes fichiers ont ouvert des entrées du hook, du backlog et de la revue, aucune du cliquet. La passe 3 sera différente : elle ne relit que la correction, 7e4dda1, et éprouve chaque sortie des deux hooks jusqu'à ce que l'agent ou l'humain en reçoit, et chaque valeur non finie du cliquet. Décision : continuer
+Recul : les deux bloquants de la passe 2 ont des causes nouvelles, selon le relecteur, mais le premier voisine avec le deuxième de la passe 1 : deux fois, ce que l'agent lit d'un hook a été supposé au lieu d'être suivi jusqu'à sa sortie. Les entrées ouvertes (B-0282, B-0283) sont des trous du cliquet des garde-fous, de nature différente des besoins clos (la durée, le lanceur) : poser une clé au cliquet révèle ses voisines, sans que le lot les refasse. Les lots clos qui ont touché les mêmes fichiers ont ouvert des entrées du hook, du backlog et de la revue, aucune du cliquet. La passe 3 sera différente : elle ne relit que la correction, b6824ef, et éprouve chaque sortie des deux hooks jusqu'à ce que l'agent ou l'humain en reçoit, et chaque valeur non finie du cliquet. Décision : continuer
