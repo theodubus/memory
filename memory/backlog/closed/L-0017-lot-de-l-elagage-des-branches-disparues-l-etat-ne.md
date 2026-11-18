@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0017 — Lot de l'élagage des branches disparues : l'état ne donne plus à supprimer une branche que GitHub n'a plus
 
-> statut : en cours · origine : J-2026-11-12-O · après : L-0016, T-0024 · lu : backlog@b1dc0a69
+> statut : fait · origine : J-2026-11-12-O · après : L-0016, T-0024 · lu : backlog@b1dc0a69 · ref : J-2026-11-18-Z
 
 Formé le 18 novembre pour T-0024, tirée de L-0007, après que Théo a
 reçu une seconde fois la demande de supprimer deux branches qu'il avait

@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0017 (J-2026-11-18-Y) : revue faite ; un test hors commit, question
-posée à Théo. Puis L-0018, L-0015.
+L-0017 clos (J-2026-11-18-Z) : sa pull request, la CI, la fusion par
+l'agent, la distribution. Puis L-0018, L-0015.
 
 ## Consignes en cours
 

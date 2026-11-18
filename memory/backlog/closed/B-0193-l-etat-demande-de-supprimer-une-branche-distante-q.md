@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0193 — L'état demande de supprimer une branche distante que GitHub n'a plus : il lit les références du dernier fetch, sans élagage
 
-> statut : ouvert · origine : J-2026-11-12-O · priorité : haute · lu : backlog@6a4d0618
+> statut : fait · origine : J-2026-11-12-O · priorité : haute · lu : backlog@6a4d0618 · ref : J-2026-11-18-Z, ADR-0090
 
 Le 12 novembre, l'état demandait à Théo de supprimer la branche distante
 `ccr-7128ec56-nnvoun-v2`, que GitHub n'avait plus ; Théo : « Déjà
@@ -35,4 +35,4 @@ cause.
 
 ## Satisfait quand
 
-- [ ] l'état ne demande plus à l'humain de supprimer une branche distante que GitHub n'a plus, ou dit d'où vient sa liste et comment la rafraîchir
+- [x] l'état ne demande plus à l'humain de supprimer une branche distante que GitHub n'a plus, ou dit d'où vient sa liste et comment la rafraîchir
