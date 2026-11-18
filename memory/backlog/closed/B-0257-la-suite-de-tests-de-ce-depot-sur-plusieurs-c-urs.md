@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0257 — La suite de tests de ce dépôt sur plusieurs cœurs : verify --fast passe près de douze minutes sur un seul cœur
 
-> statut : ouvert · origine : J-2026-11-16-E · priorité : haute · lu : backlog@998104b7
+> statut : fait · origine : J-2026-11-16-E · ref : J-2026-11-18-C · priorité : haute · lu : backlog@998104b7
 
 Un sujet de l'atelier, d'une analyse en lecture seule du 15 novembre sur
 d1d296e, que Théo a fait inscrire (J-2026-11-16-E) ; il n'en fixe ni la
@@ -51,4 +51,4 @@ Théo le passe en priorité haute le 16 novembre, au lot L-0012, juste après L-
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0044 est tenu
+- [x] le « Fait quand » de T-0044 est tenu
