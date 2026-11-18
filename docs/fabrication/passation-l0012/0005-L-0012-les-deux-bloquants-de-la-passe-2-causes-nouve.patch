@@ -1,0 +1,30 @@
+From 9cd15fd19c3a625c78886694ce6336189412bd0d Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 18 Nov 2026 10:24:36 +0000
+Subject: [PATCH 5/7] L-0012 : les deux bloquants de la passe 2, causes
+ nouvelles
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Mr1cChv95wstrvKEV9bNUe
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=1 PreToolUse=277 Stop=4
+Socle-Hooks-Since-Commit: PreToolUse=38
+---
+ ...0012-lot-de-la-duree-de-la-verification-la-suite-de-tes.md | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/memory/backlog/L-0012-lot-de-la-duree-de-la-verification-la-suite-de-tes.md b/memory/backlog/L-0012-lot-de-la-duree-de-la-verification-la-suite-de-tes.md
+index 498fc8f..a029953 100644
+--- a/memory/backlog/L-0012-lot-de-la-duree-de-la-verification-la-suite-de-tes.md
++++ b/memory/backlog/L-0012-lot-de-la-duree-de-la-verification-la-suite-de-tes.md
+@@ -29,3 +29,7 @@ Recul : première passe, sans précédente à comparer ; ses trois bloquants ava
+ ### Passe 2 — 2026-11-18
+ 
+ Commits : 8a7053c..abed8ed
++
++- Bloquant : un passage complet lancé par la fin de tour ou l'envoi garde sa trace au-delà du seuil sans dire l'avertissement à personne · cause nouvelle
++- Bloquant : `nan` écrit librement au seuil, puis relevé sans demande, le cliquet comparant `vb > va` · cause nouvelle
++- Ouvre : rien ; le même trou du cliquet sur des clés d'avant le lot, constat pour le backlog, se ferme par la correction du second bloquant, la comparaison étant commune
+-- 
+2.43.0
+

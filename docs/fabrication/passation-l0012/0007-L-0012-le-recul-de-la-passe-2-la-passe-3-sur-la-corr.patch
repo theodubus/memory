@@ -1,0 +1,62 @@
+From 6056cd54e829b5fc42850905ea725881bd2a2488 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 18 Nov 2026 10:46:43 +0000
+Subject: [PATCH 7/7] =?UTF-8?q?L-0012=20:=20le=20recul=20de=20la=20passe?=
+ =?UTF-8?q?=202=20;=20la=20passe=203,=20sur=20la=20correction=20seule,=20l?=
+ =?UTF-8?q?aiss=C3=A9e=20=C3=A0=20une=20session=20neuve=20(J-2026-11-18-E)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Mr1cChv95wstrvKEV9bNUe
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=1 PreToolUse=379 Stop=6
+Socle-Hooks-Since-Commit: PreToolUse=102
+---
+ ...uree-de-la-verification-la-suite-de-tes.md |  4 +++-
+ memory/journal/2026-11-7.md                   | 19 +++++++++++++++++++
+ 2 files changed, 22 insertions(+), 1 deletion(-)
+
+diff --git a/memory/backlog/L-0012-lot-de-la-duree-de-la-verification-la-suite-de-tes.md b/memory/backlog/L-0012-lot-de-la-duree-de-la-verification-la-suite-de-tes.md
+index a029953..2baebe6 100644
+--- a/memory/backlog/L-0012-lot-de-la-duree-de-la-verification-la-suite-de-tes.md
++++ b/memory/backlog/L-0012-lot-de-la-duree-de-la-verification-la-suite-de-tes.md
+@@ -32,4 +32,6 @@ Commits : 8a7053c..abed8ed
+ 
+ - Bloquant : un passage complet lancé par la fin de tour ou l'envoi garde sa trace au-delà du seuil sans dire l'avertissement à personne · cause nouvelle
+ - Bloquant : `nan` écrit librement au seuil, puis relevé sans demande, le cliquet comparant `vb > va` · cause nouvelle
+-- Ouvre : rien ; le même trou du cliquet sur des clés d'avant le lot, constat pour le backlog, se ferme par la correction du second bloquant, la comparaison étant commune
++- Ouvre : B-0283, que le sous-agent de la correction a trouvé ; le même trou du cliquet sur des clés d'avant le lot, constat pour le backlog, se ferme par la correction du second bloquant, la comparaison étant commune
++
++Recul : les deux bloquants de la passe 2 ont des causes nouvelles, selon le relecteur, mais le premier voisine avec le deuxième de la passe 1 : deux fois, ce que l'agent lit d'un hook a été supposé au lieu d'être suivi jusqu'à sa sortie. Les entrées ouvertes (B-0282, B-0283) sont des trous du cliquet des garde-fous, de nature différente des besoins clos (la durée, le lanceur) : poser une clé au cliquet révèle ses voisines, sans que le lot les refasse. Les lots clos qui ont touché les mêmes fichiers ont ouvert des entrées du hook, du backlog et de la revue, aucune du cliquet. La passe 3 sera différente : elle ne relit que la correction, 7e4dda1, et éprouve chaque sortie des deux hooks jusqu'à ce que l'agent ou l'humain en reçoit, et chaque valeur non finie du cliquet. Décision : continuer
+diff --git a/memory/journal/2026-11-7.md b/memory/journal/2026-11-7.md
+index 1fe87c9..4e703d6 100644
+--- a/memory/journal/2026-11-7.md
++++ b/memory/journal/2026-11-7.md
+@@ -62,3 +62,22 @@ par celui-ci ; les deux témoins passent.
+ Un défaut voisin, vu en écrivant la correction, va au backlog sans être
+ corrigé : B-0283, une clé de seuil que le moteur lit avec une valeur par
+ défaut, absente de la base, s'écrit plus haut sans demande.
++
++## J-2026-11-18-E — L-0012 : la correction des bloquants de la passe 2 intégrée ; sa relecture, la passe 3, laissée à une session neuve, la fenêtre de cinq heures ayant passé 60 %
++
++> ref : L-0012, T-0045, B-0258, B-0283, J-2026-11-18-D, J-2026-11-18-C
++
++Le commit du sous-agent qui corrige les deux bloquants de la passe 2
++(J-2026-11-18-D) entre sur la branche de travail en avance rapide ; sa
++copie isolée et sa branche sont retirées. Le recul de la passe 2 est
++écrit dans l'entrée du lot, décision « continuer » : la passe 3 ne relit
++que cette correction.
++
++Lu par `list_events` à 10 h 45 UTC : la fenêtre de cinq heures est à
++62 %, la semaine à 63 %. Le skill du lot ne lance plus de sous-agent
++au-delà de 60 % de la fenêtre : la passe 3 revient à une session neuve,
++après la remise à zéro de 14 h 30 UTC. Rien de ce qui suit 47e4bba,
++la tête poussée, n'est poussé : la correction n'est pas relue, et elle
++récrit ADR-0086, qu'un push figerait. Toute la série part en correctifs
++dans le dossier de passation de L-0012, qu'un commit poussé sur 47e4bba
++dépose, avec le chantier actif qui y renvoie.
+-- 
+2.43.0
+

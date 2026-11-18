@@ -1,0 +1,965 @@
+From 7e4dda1f08efe71af466325e28bdfa204a86446c Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 18 Nov 2026 10:41:41 +0000
+Subject: [PATCH 6/7] =?UTF-8?q?T-0045,=20passe=202=20de=20L-0012=20:=20le?=
+ =?UTF-8?q?=20seuil=20des=20=C3=A9tapes=20rapides=20se=20dit=20=C3=A0=20l'?=
+ =?UTF-8?q?envoi=20et=20=C3=A0=20la=20fin=20de=20tour,=20qu'il=20ne=20bloq?=
+ =?UTF-8?q?ue=20pas=20;=20nan=20ne=20contourne=20plus=20le=20cliquet=20(J-?=
+ =?UTF-8?q?2026-11-18-D)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Les deux bloquants de la passe 2 de la revue du lot, selon les choix de
+l'orchestrateur :
+
+- Le hook avant envoi, qui laisse partir le push, imprime l'avertissement
+  verify.duree sur sa sortie d'erreur, comme demandes.reponse-seule. La
+  fin de tour qui a lancé les étapes le dit à l'humain en systemMessage,
+  joint au JSON qu'exiger_recap imprime déjà, ou seul ; si elle bloque
+  déjà, il s'ajoute à la raison donnée à l'agent. Le seuil avertit et
+  n'échoue jamais : il ne bloque pas la fin de tour.
+- Au cliquet des garde-fous, nan qui remplace une valeur, ou qu'une
+  valeur remplace, est un assouplissement qui exige une demande, pour
+  toute clé classée ; gardé tel quel, il ne change rien ; inf se juge
+  comme avant.
+
+Tests nouveaux, qui échouent sur le parent ; deux défauts injectés et
+leurs témoins ; le modèle de menace de B-0258, ADR-0086, le commentaire
+de la clé, le guide, la note 2026-11-18-a, le prompt de chess et
+l'architecture récrits. B-0283 ouvert : un défaut voisin.
+
+Corrige: T-0045
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Mr1cChv95wstrvKEV9bNUe
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=1 PreToolUse=371 Stop=6
+Socle-Hooks-Since-Commit: PreToolUse=371
+---
+ .socle/guardrails.toml                        |  12 +-
+ docs/fabrication/architecture.md              |  16 ++-
+ docs/fabrication/chess/prompt-mise-a-jour.md  |   2 +-
+ engine/socle/CHANGES.en.md                    |  17 ++-
+ engine/socle/CHANGES.md                       |  23 ++--
+ engine/socle/HELP.en.md                       |  24 ++--
+ engine/socle/HELP.md                          |  24 ++--
+ engine/socle/checks_ratchet.py                |  19 ++-
+ engine/socle/config.py                        |  14 +-
+ engine/socle/hooks.py                         |  67 ++++++----
+ engine/socle/messages_en.py                   |  10 ++
+ engine/socle/selftest.py                      |  46 +++++++
+ engine/socle/templates/guardrails.en.toml     |  12 +-
+ engine/socle/templates/guardrails.toml        |  12 +-
+ ...e-le-moteur-lit-avec-une-valeur-par-def.md |  21 +++
+ ...s-etapes-rapides-se-dit-et-a-un-seuil-v.md |  29 +++--
+ ...-des-etapes-rapides-ou-une-etape-echoue.md |   7 +-
+ memory/journal/2026-11-7.md                   |  64 +++++++++
+ tests/test_cliquet.py                         |  20 +++
+ tests/test_etapes_rapides.py                  | 123 +++++++++++++++++-
+ 20 files changed, 466 insertions(+), 96 deletions(-)
+ create mode 100644 memory/backlog/B-0283-un-seuil-que-le-moteur-lit-avec-une-valeur-par-def.md
+ create mode 100644 memory/journal/2026-11-7.md
+
+diff --git a/.socle/guardrails.toml b/.socle/guardrails.toml
+index 3aaf0c6..53944a5 100644
+--- a/.socle/guardrails.toml
++++ b/.socle/guardrails.toml
+@@ -42,11 +42,13 @@ max_bytes = 9500
+ 
+ [verify]
+ # Le seuil, en secondes écoulées, du total des étapes rapides de l'adaptateur
+-# (`verify --fast`, la fin de tour, le push) : au-delà, un avertissement, pas
+-# un échec, nomme la plus longue, à la fin du passage puis dans l'état, tant
+-# que le dernier passage complet le dépasse. Au-delà de cinq minutes
+-# d'attente, un sous-agent perd le cache de sa conversation. La durée dépend
+-# de la machine : la CI l'imprime, sans seuil.
++# (`verify --fast`, la fin de tour, le push) : au-delà, un avertissement,
++# jamais un échec, nomme la plus longue au bout du passage qui les lance
++# toutes (le push le dit sur sa sortie et passe ; la fin de tour, sans
++# bloquer, le dit à l'humain), puis dans l'état, tant que le dernier passage
++# complet le dépasse. Au-delà de cinq minutes d'attente, un sous-agent perd
++# le cache de sa conversation. La durée dépend de la machine : la CI
++# l'imprime, sans seuil.
+ fast_max_seconds = 300
+ 
+ [references]
+diff --git a/docs/fabrication/architecture.md b/docs/fabrication/architecture.md
+index 521d5af..a6a599e 100644
+--- a/docs/fabrication/architecture.md
++++ b/docs/fabrication/architecture.md
+@@ -42,7 +42,7 @@ vérifiées.
+ | `checks_memory.py` | format, références (un chemin cité, lié ou référencé vaut s'il est suivi par git, l'index compris, et un chemin ignoré par une règle d'un `.gitignore` de l'index ou du commit jugé, jamais par une règle locale, un dossier ignoré cité avec sa barre finale ; un chemin d'un dépôt git imbriqué refusé en le disant ; un fichier neuf pas encore ajouté est averti sur l'arbre de travail, le commit le refuse, ADR-0063 ; un chemin cité par une couche gelée vaut s'il a existé dans l'historique, ADR-0027 ; un commit absent du clone se cherche dans les pull requests, que GitHub garde quand leur branche est supprimée, B-0117, et dans celles que l'origine a récupérées, quand elle est elle-même un clone, B-0175 ; son refus donne l'étiquette qui le rend depuis un clone qui l'a encore, B-0116 ; un chemin protégé cité par une demande n'a pas à exister, la demande pouvant proposer de l'ajouter, B-0127), hors de la CI, sur une branche jetable, une référence morte d'un fichier qu'elle ajoute, absent de son point de divergence avec la branche par défaut, avertie au lieu de refusée, sauf dans la mémoire privée, qu'aucune CI ne relit, et sans base rien (D-0087) ; fuite d'identifiants privés (blocs de code et archives compris), preuves, backlog, budgets, péremption, retard, ajout seul (la mémoire privée relue à la base, B-0044, L3), demandes, source unique des instructions ; la question d'une décision prise en séance, transcription de la conversation, n'a pas à prouver ses lectures (B-0100), ni son titre ce que la question cite (B-0103) ; l'ordre du backlog, sans cycle, sans sujet fait avant ce qu'il attend, sujet ou demande sans réponse (D-0052, D-0064), sans priorité ni haute ni basse (D-0062) ; un sujet fait a coché son « Fait quand » (D-0064) |
+ | `checks_docs.py` | outillage documenté, valeurs liées, correspondance code ↔ doc, refus des copies |
+ | `checks_tests.py` | capacités de l'adaptateur, tests creux, valeurs attendues (et les cas des fichiers de cas que le projet déclare : en ajouter est libre, en changer ou en retirer exige une validation, D-0066), régression rejouée sur le parent (un correctif qui ne touche aucun fichier qu'un adaptateur juge, refusé en le disant, admis sans test par une demande validée qui nomme son commit, D-0088), couverture de mutation, code nouveau nommé par un test (un fichier renommé se compare à son ancien nom), lu dans la section `[code]` de l'adaptateur, ou à défaut dans ses sources hors fichiers de test (D-0044) ; dans un projet à plusieurs adaptateurs, un correctif se prouve dans le langage du code qu'il corrige, et aucun fichier n'est désigné par deux adaptateurs (ADR-0051) |
+-| `checks_ratchet.py` | le remède des hooks non chargés, qui fait montrer le travail en cours dans la conversation (B-0108) ; cliquet des garde-fous (retirer un fichier de cas ou une spécification déclarés assouplit, D-0066 ; une correspondance ou une valeur liée qui suit ses fichiers renommés n'assouplit rien, ADR-0027), fichiers protégés (un renommage compte ses deux chemins ; tant que la branche par défaut n'a pas le socle, la plage d'un push est l'installation, comme celle de sa pull request, B-0096 ; à la fin du tour, une demande en attente, poussée, qui cite le fichier et son empreinte le laisse dans l'arbre, comme une mise à jour en session cloud qui attend l'humain, B-0115 ; si la branche par défaut exige la CI du socle, il se commite et se pousse aussi, la CI seule le refusant jusqu'à la réponse, D-0071 ; dans l'arbre de travail, une mise à jour du socle se reconnaît à son verrou, changé depuis la base, dont l'empreinte est celle du moteur de l'arbre et celle du moteur qu'un passage de l'installeur a copié (`copied`, qu'une relance depuis le projet ne garde que si le moteur n'a pas changé) : ce qu'elle a posé, le verrou, le moteur et son lanceur, et ce que le verrou consigne sous `[installed]` avec l'empreinte que le fichier a encore, garde une erreur par fichier, sans commande de remise, sous une ligne commune que seule la fin de tour imprime à sa place ; un fichier qu'elle n'a pas posé tel qu'il est garde sa ligne et sa remise, ADR-0077), empreinte du moteur, configuration et trace des hooks |
++| `checks_ratchet.py` | le remède des hooks non chargés, qui fait montrer le travail en cours dans la conversation (B-0108) ; cliquet des garde-fous (retirer un fichier de cas ou une spécification déclarés assouplit, D-0066 ; `nan`, qu'aucun ordre ne compare, écrit à la place d'une valeur ou remplacé par une, assouplit toujours, B-0258 ; une correspondance ou une valeur liée qui suit ses fichiers renommés n'assouplit rien, ADR-0027), fichiers protégés (un renommage compte ses deux chemins ; tant que la branche par défaut n'a pas le socle, la plage d'un push est l'installation, comme celle de sa pull request, B-0096 ; à la fin du tour, une demande en attente, poussée, qui cite le fichier et son empreinte le laisse dans l'arbre, comme une mise à jour en session cloud qui attend l'humain, B-0115 ; si la branche par défaut exige la CI du socle, il se commite et se pousse aussi, la CI seule le refusant jusqu'à la réponse, D-0071 ; dans l'arbre de travail, une mise à jour du socle se reconnaît à son verrou, changé depuis la base, dont l'empreinte est celle du moteur de l'arbre et celle du moteur qu'un passage de l'installeur a copié (`copied`, qu'une relance depuis le projet ne garde que si le moteur n'a pas changé) : ce qu'elle a posé, le verrou, le moteur et son lanceur, et ce que le verrou consigne sous `[installed]` avec l'empreinte que le fichier a encore, garde une erreur par fichier, sans commande de remise, sous une ligne commune que seule la fin de tour imprime à sa place ; un fichier qu'elle n'a pas posé tel qu'il est garde sa ligne et sa remise, ADR-0077), empreinte du moteur, configuration et trace des hooks |
+ | `checks_skills.py` | les skills (ADR-0034) : `skills.contrat`, un en-tête qui nomme le skill comme son dossier et une description qui dit quand s'en servir, le préfixe `socle-` réservé ; `skills.commandes`, chaque bloc de code du shell jugé par la fonction du hook de l'agent |
+ | `tests_reader.py` | extraction des fonctions de test selon l'adaptateur (blocs à accolades, indentés ou fermés par `end`) ; un en-tête de fonction écrit dans une chaîne ou un commentaire de plusieurs lignes n'en est pas un (B-0025) ; transitivité des assertions |
+ | `hooks.py` | les points d'entrée des hooks de l'agent et de git ; le hook avant outil juge tout contre la racine de la session et, si l'action a lieu dans un autre worktree du même dépôt équipé du socle (celui du fichier écrit ou du dossier courant), en plus contre ce worktree : refusée dans l'un des deux arbres, elle est refusée, et une référence citée vaut si elle existe dans l'un ou l'autre ; fin de tour et démarrage jugent la racine de la session (ADR-0064) ; le hook avant push ne juge pas comme la CI la plage d'une branche jetable, que la CI ne juge pas aux envois, et ne relâche les références que si chaque branche qui reçoit le push est jetable (D-0087) ; la trace, où chaque commit nomme son worktree : un commit dans un autre worktree, dans la même commande, n'est pas un second commit (B-0136) ; le hook avant push juge le dernier commit, non l'arbre, dont un changement non commité ne part pas (B-0115) ; la plage qu'il envoie, jugée comme la CI la jugera, laisse partir le fichier protégé qu'une demande en attente couvre, comme l'étage git (D-0071) ; le refus du widget de questions de l'agent, où une décision se lit en texte brut (B-0105) ; en session cloud, le démarrage complète un clone superficiel (`git fetch --unshallow`, B-0202), puis installe les outils de l'adaptateur par les commandes que la CI lance pour eux, une fois par conteneur (ADR-0035), sous un seul délai, sans bloquer sur un échec ; dont chaque refus et l'étage qui l'a prononcé ; chaque commande shell de l'agent jugée commande simple par commande simple, par une fonction que `skills.commandes` partage (`refus_bash`) : écriture d'un fichier protégé ou d'un réglage de Claude Code, commande réservée à l'humain, commit ou push qui saute les hooks du projet (`--no-verify`, B-0023), push forcé ou vers la branche par défaut, publication, suppression distante (B-0044, L2) ; un correctif sans test, dit dès le commit, se juge sur un commit amendé contre le parent de celui qu'il remplace, l'amendement lu dans la commande de git (B-0084), et, dans un projet à plusieurs adaptateurs, langage par langage du code corrigé (ADR-0051) ; un hook git retient l'index qu'il juge, puis retire de l'environnement ce qui désigne un dépôt (`GIT_DIR`…), que git lui passe depuis un worktree secondaire et dont les tests du projet hériteraient (B-0057) ; le hook de fin de tour bloque le premier arrêt d'un tour rouge, mais pas une relance qu'il a provoquée sur les mêmes contrôles en échec et le même arbre, sans la sortie des outils, qui change à chaque relance : le rapport va alors à l'humain en message, sans compter de tentative (ADR-0061) ; ce rapport dit en une ligne les fichiers protégés qu'une mise à jour a posés, que `socle check` liste (`Rapport.texte(regrouper=True)`, ADR-0077) ; le hook avant outil refuse l'installeur visé sur un projet équipé (la racine, ou une cible qui porte son verrou) dans un autre mode que celui de son verrou, et laisse passer la mise à jour dans ce mode et une cible sans verrou ; il refuse aussi une cible qu'il ne sait pas résoudre (une variable, une substitution, `~autre`, dans la cible ou dans le `cd` qui la précède), et la ligne de commande refuse les options abrégées (B-0141, ADR-0062) ; il laisse l'agent remettre un fichier protégé à son état du dernier commit, nommé en toutes lettres, ou supprimer un fichier apparu sous un chemin protégé que git ne suit pas, sauf si une demande dont ce qu'elle approuve n'est pas commité le cite, lui ou son dossier ; ses redirections, un préfixe ou une variable devant `git`, `checkout` sans `--` et `--pathspec-from-file` se jugent (`remise_en_etat`, D-0098, ADR-0065) ; un chemin que le shell écrit se juge développé comme le shell le ferait, depuis le dossier courant de l'agent (B-0205) : accolades, `~`, variables de l'environnement du hook (hors des variables spéciales du shell, `$_`, `$OLDPWD`) et de la commande, `${X:-y}`, chaque valeur entière et mot par mot, motifs contre les fichiers présents et contre les motifs des chemins protégés, élargis après un `shopt`, et ce qu'il ne sait pas développer est refusé si la part écrite en toutes lettres avant lui, remontée des `..` qui le suivent, ne le place pas hors du projet ; le script d'un `sed -i` ou d'un `perl -i`, séparé ou collé, n'est pas un chemin écrit, `perl -0` et `-l` ne prenant que des chiffres (`ecritures_jugees`, B-0171, ADR-0072) ; `cp`, `ln`, `install` et `mv` écrivent le dossier de `-t`, `sort` le fichier de `-o` ; `find -delete`, ou `-exec` d'un écrivain de `{}`, se juge par ses départs et les filtres de nom ou de chemin qui gardent son action (`_expression_find` : un filtre ne garde que ce qui le suit dans sa conjonction, hors d'un `!` et de l'autre branche d'un `-o` ou d'une `,`), le `*` d'un `-path` lu comme `**` sur le chemin qu'écrit `find`, contre les motifs des chemins protégés, à toute profondeur, contre les fichiers protégés présents d'un motif de dossier, et contre les réglages de Claude Code présents, ceux de la racine ignorés par git compris, ou contre leurs motifs si le filtre nomme `.claude` ou `settings` (la revue du lot 3, J-2026-11-14-AH) ; `python -c` et `xargs` d'un écrivain de ce qu'il lit, écrivains qu'il ne sait pas lire, se jugent par les chemins protégés qu'ils citent en toutes lettres, le script de l'un, la commande entière de l'autre (`_ecrivains_illisibles`, B-0206) ; une commande qu'il ne sait pas juger, plus de 10 000 caractères hors du corps de ses heredocs, plus de 32 parenthèses ou accolades ouvertes à la fois (`commandes.demesure`), un jugement qui lève ou passe 5 secondes, est refusée si elle peut écrire (`injugeable`) ; la suppression d'un dossier qui contient la racine, par les arguments de `rm`, les sources d'un `mv`, ce que balaie `git clean` ou les départs d'un `find` qui supprime, son chemin développé de même, et celle de la racine par un `find` qu'aucun filtre de nom ou de chemin ne garde, même avec `-type` ou `-empty`, sont refusées (`suppressions`, B-0208) ; de même, la racine comprise, la destination d'un `rsync --delete` et les sources d'un `rsync --remove-source-files`, ses options à valeur lues où qu'elles soient, le chemin d'un `git worktree remove` ou d'un `git worktree move` sous ses `-C`, et, comme git le cherche d'abord parmi ses worktrees, la racine ou un dossier qui la contient dont le chemin finit par lui (`_trouve_par_son_suffixe`, J-2026-11-15-O), les chemins qu'un `python -c` écrit en toutes lettres pour `rmtree`, `shutil.move`, `os.rename`, `os.replace` ou `Path(…).rename`, lus dans l'arbre de son script (`ast`), et un `find -exec` de l'un d'eux (B-0228). C'est une première barrière contre les erreurs d'un agent coopératif, qui juge, quelle qu'en soit la forme, ce que rien ne rattrape ensuite, et laisse hors de son modèle l'écriture d'un fichier protégé sous une forme de contournement (ADR-0080) ; la garantie est `protege.fichiers`. Il ne voit pas une part inconnue qui vaut elle-même `..`, une option du shell posée par le profil, une variable que Claude Code ne pose que pour ses hooks, les formes que la seconde revue de B-0171 a trouvées (B-0211), ni une suppression par `xargs rm`, par une commande que lance un `python -c` ou par un chemin que son script construit au vol (B-0246) |
+@@ -200,11 +200,15 @@ vérifiées.
+   ailleurs. Le total d'un passage où toutes les étapes rapides ont passé se
+   garde avec la plus longue, à côté de la marque
+   (`verification.DUREES`) ; au-delà de `[verify] fast_max_seconds` (300 s
+-  par défaut), un avertissement, jamais un échec : à la fin du passage, sur
+-  la ligne des étapes déjà passées et dans l'état, tant que ce dernier
+-  passage complet dépasse le seuil. Un passage où une étape échoue ne
+-  remplace pas la trace (ADR-0086). La CI n'a pas de seuil : `socle ci` ne
+-  passe pas par les étapes rapides. Le cliquet connaît la clé, avec sa
++  par défaut), un avertissement, jamais un échec : au bout du passage qui
++  les lance toutes, quel qu'en soit le lanceur (`verify --fast` ; le hook
++  avant envoi, qui laisse passer et le dit sur sa sortie d'erreur ; la fin
++  de tour, qui ne bloque pas pour lui, le dit à l'humain en
++  `systemMessage`, et à l'agent dans sa raison quand elle bloque déjà),
++  puis sur la ligne des étapes déjà passées et dans l'état, tant que ce
++  dernier passage complet dépasse le seuil. Un passage où une étape échoue
++  ne remplace pas la trace (ADR-0086). La CI n'a pas de seuil : `socle ci`
++  ne passe pas par les étapes rapides. Le cliquet connaît la clé, avec sa
+   valeur par défaut : la relever exige une demande validée.
+ - **Les liens donnés à l'humain sont des permaliens** (`ADR-0010`) : au
+   commit poussé, pas à la branche, qui disparaît à la fusion ; vérifiés par
+diff --git a/docs/fabrication/chess/prompt-mise-a-jour.md b/docs/fabrication/chess/prompt-mise-a-jour.md
+index aead551..bd8b460 100644
+--- a/docs/fabrication/chess/prompt-mise-a-jour.md
++++ b/docs/fabrication/chess/prompt-mise-a-jour.md
+@@ -48,7 +48,7 @@ Mets à jour le socle de ce dépôt depuis son dépôt public, sans ajouter ce d
+ 
+ 14. Une forme du shell que le hook ne juge pas, écartée par la revue d'un lot, ne s'inscrit plus par toi dans la liste du guide, que tu ne peux pas écrire (le moteur installé est protégé) : ton récap la nomme, et « Pour toi » me propose de la signaler au dépôt du socle (https://github.com/theodubus/socle), qui tient la liste ; rien ne va au backlog. Le skill socle-review, copie protégée, change : il est dans la demande de l'installeur.
+ 
+-15. verify, verify --fast et socle ci impriment désormais la durée de chaque étape de l'adaptateur au bout de sa ligne, puis leur total. Le total des étapes rapides a un seuil, [verify] fast_max_seconds des garde-fous, 300 secondes quand tes garde-fous ne l'écrivent pas : au-delà, verify --fast avertit sans échouer, en nommant l'étape la plus longue, puis le redit sur la ligne des étapes déjà passées et dans l'état à chaque démarrage, tant que le dernier passage où toutes ont passé le dépasse (un passage en échec ne compte pas). La durée de tes étapes rapides n'est pas mesurée : le verify --fast --redo de la porte la mesure, donne-la-moi ; au-delà de cinq minutes, raccourcis l'étape la plus longue, ou pose-moi une demande pour relever le seuil (le baisser est libre, écrire la clé à 300 ne change rien).
++15. verify, verify --fast et socle ci impriment désormais la durée de chaque étape de l'adaptateur au bout de sa ligne, puis leur total. Le total des étapes rapides a un seuil, [verify] fast_max_seconds des garde-fous, 300 secondes quand tes garde-fous ne l'écrivent pas : au-delà, le passage qui les lance toutes avertit sans échouer, en nommant l'étape la plus longue : verify --fast au bout de sa sortie, le hook avant envoi dans la sortie de ton git push, sans le refuser, et la fin de tour dans son message pour moi, sans te bloquer (tu ne le lis alors que si elle te bloque déjà pour autre chose) ; puis il le redit sur la ligne des étapes déjà passées et dans l'état à chaque démarrage, tant que le dernier passage où toutes ont passé le dépasse (un passage en échec ne compte pas). La durée de tes étapes rapides n'est pas mesurée : le verify --fast --redo de la porte la mesure, donne-la-moi ; au-delà de cinq minutes, raccourcis l'étape la plus longue, ou pose-moi une demande pour relever le seuil (le baisser est libre, écrire la clé à 300 ne change rien ; nan, qu'aucun ordre ne compare, exige une demande, à cette clé comme à tout seuil des garde-fous).
+ 
+ Pas encore faits, inutile de les signaler de nouveau : l'installeur muet sur une adoption déjà vide et le diff de politique réaffiché (tes gênes 1 et 5), le coût de la relecture à froid (7), la reprise sans list_events (8).
+ 
+diff --git a/engine/socle/CHANGES.en.md b/engine/socle/CHANGES.en.md
+index 07347df..0df477f 100644
+--- a/engine/socle/CHANGES.en.md
++++ b/engine/socle/CHANGES.en.md
+@@ -13,15 +13,20 @@ identifiers.
+ adapter step they run, at the end of its line, then their total. A new
+ guardrails key, `[verify] fast_max_seconds`, bounds the total of the fast
+ steps: 300 seconds when the project does not write it, the value the
+-template sets for a new project. Beyond it, `verify --fast` warns without
+-failing, naming the longest step; the warning comes back on the line that
+-says the steps already passed, and in `socle state` at the start of each
+-session, as long as the last run where they all passed exceeds the
+-threshold. Its trace is a local file,
++template sets for a new project. Beyond it, the run that runs them all
++warns without failing, naming the longest step: `verify --fast` at the end
++of its output; the pre-push hook on its error output, without refusing the
++push; the end of turn, without blocking, in its message to the human, and
++in its reason to the agent when it already blocks for another one. The
++warning comes back on the line that says the steps already passed, and in
++`socle state` at the start of each session, as long as the last run where
++they all passed exceeds the threshold. Its trace is a local file,
+ `.socle/trace/duree-des-etapes-rapides`, which git already ignores. The CI
+ prints the durations without a threshold. The ratchet knows the key:
+ raising it requires an approved request that cites it; lowering it is
+-free.
++free. For any guardrails key, it no longer takes `nan`, which no order
++compares, for a tightening: writing it in place of a value, or replacing
++it, requires an approved request.
+ 
+ To do: nothing mandatory. The duration of the project's fast steps is not
+ measured on its machine: `verify --fast --redo` measures it; if it exceeds
+diff --git a/engine/socle/CHANGES.md b/engine/socle/CHANGES.md
+index 2d5572a..89dd8ca 100644
+--- a/engine/socle/CHANGES.md
++++ b/engine/socle/CHANGES.md
+@@ -13,14 +13,21 @@ leurs identifiants.
+ chaque étape de l'adaptateur qu'ils lancent, au bout de sa ligne, puis
+ leur total. Une clé nouvelle des garde-fous, `[verify] fast_max_seconds`,
+ borne le total des étapes rapides : 300 secondes quand le projet ne
+-l'écrit pas, la valeur que pose le gabarit d'un projet neuf. Au-delà,
+-`verify --fast` avertit sans échouer, en nommant l'étape la plus longue ;
+-l'avertissement revient sur la ligne qui dit les étapes déjà passées, et
+-dans `socle state` au démarrage de chaque session, tant que le dernier
+-passage où toutes ont passé dépasse le seuil. Sa trace est un fichier
+-local, `.socle/trace/duree-des-etapes-rapides`, que git ignore déjà. La
+-CI imprime les durées sans seuil. Le cliquet connaît la clé : la relever
+-exige une demande validée qui la cite, la baisser est libre.
++l'écrit pas, la valeur que pose le gabarit d'un projet neuf. Au-delà, le
++passage qui les lance toutes avertit sans échouer, en nommant l'étape la
++plus longue : `verify --fast` au bout de sa sortie ; le hook avant envoi
++sur sa sortie d'erreur, sans refuser le push ; la fin de tour, sans
++bloquer, dans son message à l'humain, et dans sa raison à l'agent quand
++elle bloque déjà pour une autre. L'avertissement revient sur la ligne qui
++dit les étapes déjà passées, et dans `socle state` au démarrage de chaque
++session, tant que le dernier passage où toutes ont passé dépasse le
++seuil. Sa trace est un fichier local,
++`.socle/trace/duree-des-etapes-rapides`, que git ignore déjà. La CI
++imprime les durées sans seuil. Le cliquet connaît la clé : la relever
++exige une demande validée qui la cite, la baisser est libre. Pour toute
++clé des garde-fous, il ne prend plus `nan`, qu'aucun ordre ne compare,
++pour un durcissement : l'écrire à la place d'une valeur, ou l'y
++remplacer, exige une demande validée.
+ 
+ À faire : rien d'obligatoire. La durée des étapes rapides du projet n'est
+ pas mesurée sur sa machine : `verify --fast --redo` la mesure ; si elle
+diff --git a/engine/socle/HELP.en.md b/engine/socle/HELP.en.md
+index a54694c..30758cf 100644
+--- a/engine/socle/HELP.en.md
++++ b/engine/socle/HELP.en.md
+@@ -468,16 +468,22 @@ loosening them requires an approved request.
+ adapter (`verify`, `verify --fast`, the CI) prints its duration at the end
+ of its line, then the total. The total of the fast steps has a threshold,
+ `[verify] fast_max_seconds`, 300 seconds by default: beyond five minutes
+-of waiting, a sub-agent loses the cache of its conversation. When
+-`verify --fast` runs them all and they pass, it keeps their total and the
+-longest one in a local file, under `.socle/trace/`. Beyond the threshold,
+-a warning, never a failure, gives the total, the threshold and the longest
+-step with its duration: at the end of that run, on the line of a
+-verification that does not run the steps again, and in the state, as long
+-as the last complete run exceeds the threshold. A run where a step fails
+-does not replace the previous one. The CI prints the durations, without a
++of waiting, a sub-agent loses the cache of its conversation. When a run
++runs them all and they pass (`verify --fast`, the end of turn, the
++pre-push hook), it keeps their total and the longest one in a local file,
++under `.socle/trace/`. Beyond the threshold, a warning, never a failure,
++gives the total, the threshold and the longest step with its duration: at
++the end of that run, on the line of a verification that does not run the
++steps again, and in the state, as long as the last complete run exceeds
++the threshold. The pre-push hook lets the push go and says it on its error
++output, which the agent reads in that of `git push`. The end of turn does
++not block for it: it tells the human, and tells the agent only when it
++already blocks for another reason; otherwise the agent reads it at its
++next `verify --fast` and in the state. A run where a step fails does not
++replace the previous one. The CI prints the durations, without a
+ threshold: it runs on another machine. Lowering the threshold is free;
+-raising it requires an approved request.
++raising it, or writing `nan` in it, which no order compares, requires an
++approved request.
+ 
+ **An adopted project** (installed with `--adoption`). The checks that
+ failed on the existing code are named in `[adoption] warn_only`, and the
+diff --git a/engine/socle/HELP.md b/engine/socle/HELP.md
+index 1f6a63f..4d16ba1 100644
+--- a/engine/socle/HELP.md
++++ b/engine/socle/HELP.md
+@@ -478,15 +478,21 @@ l'adaptateur (`verify`, `verify --fast`, la CI) imprime sa durée au bout
+ de sa ligne, puis le total. Celui des étapes rapides a un seuil,
+ `[verify] fast_max_seconds`, 300 secondes par défaut : au-delà de cinq
+ minutes d'attente, un sous-agent perd le cache de sa conversation. Quand
+-`verify --fast` les lance toutes et qu'elles passent, il garde leur total
+-et la plus longue dans un fichier local, sous `.socle/trace/`. Au-delà du
+-seuil, un avertissement, jamais un échec, donne le total, le seuil et
+-l'étape la plus longue avec sa durée : à la fin de ce passage, sur la
+-ligne d'une vérification qui ne relance pas les étapes, et dans l'état,
+-tant que le dernier passage complet dépasse le seuil. Un passage où une
+-étape échoue ne remplace pas le précédent. La CI imprime les durées, sans
+-seuil : elle tourne sur une autre machine. Baisser le seuil est libre, le
+-relever exige une demande validée.
++un passage les lance toutes et qu'elles passent (`verify --fast`, la fin
++de tour, le hook avant envoi), il garde leur total et la plus longue dans
++un fichier local, sous `.socle/trace/`. Au-delà du seuil, un
++avertissement, jamais un échec, donne le total, le seuil et l'étape la
++plus longue avec sa durée : au bout de ce passage, sur la ligne d'une
++vérification qui ne relance pas les étapes, et dans l'état, tant que le
++dernier passage complet dépasse le seuil. Le hook avant envoi laisse
++partir le push et le dit sur sa sortie d'erreur, que l'agent lit dans
++celle de `git push`. La fin de tour ne bloque pas pour lui : elle le dit
++à l'humain, et à l'agent seulement quand elle bloque déjà pour une autre
++raison ; l'agent le lit sinon au `verify --fast` suivant et dans l'état.
++Un passage où une étape échoue ne remplace pas le précédent. La CI
++imprime les durées, sans seuil : elle tourne sur une autre machine.
++Baisser le seuil est libre ; le relever, ou y écrire `nan`, qu'aucun
++ordre ne compare, exige une demande validée.
+ 
+ **Un projet adopté** (installé avec `--adoption`). Les contrôles qui
+ échouaient sur l'existant sont nommés dans `[adoption] warn_only`, et les
+diff --git a/engine/socle/checks_ratchet.py b/engine/socle/checks_ratchet.py
+index 4e45644..c2b212f 100644
+--- a/engine/socle/checks_ratchet.py
++++ b/engine/socle/checks_ratchet.py
+@@ -65,6 +65,15 @@ DEFAUTS = {("branches", "disposable"): list(config.BRANCHES_JETABLES),
+            ("verify", "fast_max_seconds"): config.SEUIL_RAPIDE}
+ 
+ 
++def _pas_un_nombre(valeur) -> bool:
++    """`nan` : toute comparaison avec lui est fausse, et le moteur le lit à
++    sa façon ; le cliquet ne peut le dire ni plus strict ni égal à une autre
++    valeur. Qu'il remplace une valeur ou qu'une valeur le remplace, c'est un
++    assouplissement qui exige une demande ; `inf` et `-inf`, eux,
++    s'ordonnent."""
++    return isinstance(valeur, float) and valeur != valeur
++
++
+ def _cle(chemin: tuple[str, ...]) -> str:
+     morceaux = []
+     for c in chemin:
+@@ -129,12 +138,20 @@ def assouplissements(avant: dict, apres: dict, modules_existants: set[str] | Non
+         b.setdefault(chemin, defaut)
+     for chemin in sorted(set(a) | set(b)):
+         va, vb = a.get(chemin, ABSENT), b.get(chemin, ABSENT)
+-        if va == vb:
++        if va == vb or (_pas_un_nombre(va) and _pas_un_nombre(vb)):
+             continue
+         cle = _cle(chemin)
+         sens = _regle(chemin)
+         if sens == "libre":
+             continue
++        if _pas_un_nombre(vb) or (_pas_un_nombre(va) and vb is not ABSENT):
++            # Aucun ordre ne compare `nan` : écrit, ou relevé depuis lui, il
++            # passait pour un durcissement ou pour rien, et désarmait le
++            # seuil en deux temps (B-0258, relevé par la revue). Retiré
++            # d'une clé sans valeur par défaut, il suit la règle d'une clé
++            # retirée, plus bas.
++            res.append((cle, trad("clé ajoutée : {vb}", vb=repr(vb)) if va is ABSENT else f"{va} → {vb}"))
++            continue
+         if sens == "tolere":
+             res += _toleres(cle, chemin[-1], va, vb, apres, renommes_toleres)
+             continue
+diff --git a/engine/socle/config.py b/engine/socle/config.py
+index 6815384..09c3b69 100644
+--- a/engine/socle/config.py
++++ b/engine/socle/config.py
+@@ -303,12 +303,14 @@ class Projet:
+ 
+     def seuil_rapide(self) -> int | float:
+         """Le seuil, en secondes, du total des étapes rapides, `[verify]
+-        fast_max_seconds` des garde-fous : au-delà, `verify --fast` et l'état
+-        avertissent, sans échouer (B-0258). Celui du gabarit à défaut, ou si
+-        la valeur n'est pas un nombre, ce que le cliquet refuse sans demande ;
+-        un nombre se prend tel quel, même nul ou négatif, et `nan` vaut zéro :
+-        plus bas avertit plus tôt, comme le cliquet le juge, et aucune valeur
+-        qu'il laisse écrire librement ne relâche le seuil."""
++        fast_max_seconds` des garde-fous : au-delà, le passage qui les lance
++        toutes avertit, sans échouer, et l'état le redit (B-0258). Celui du
++        gabarit à défaut, ou si la valeur n'est pas un nombre, ce que le
++        cliquet refuse sans demande ; un nombre se prend tel quel, même nul
++        ou négatif : plus bas avertit plus tôt, comme le cliquet le juge.
++        `nan`, que le cliquet refuse aussi sans demande, écrit comme quitté,
++        vaut zéro, le plus strict : aucune valeur qu'il laisse écrire
++        librement ne relâche le seuil."""
+         valeur = self.gf("verify", "fast_max_seconds", defaut=None)
+         if not isinstance(valeur, (int, float)):
+             return SEUIL_RAPIDE
+diff --git a/engine/socle/hooks.py b/engine/socle/hooks.py
+index b2ad214..cc98586 100644
+--- a/engine/socle/hooks.py
++++ b/engine/socle/hooks.py
+@@ -2288,7 +2288,11 @@ def stop(projet: config.Projet, entree: dict) -> int:
+ 
+     if rapport.reussi:
+         compteur.unlink(missing_ok=True)
+-        return exiger_recap(projet, entree)
++        # Le seuil des étapes rapides avertit et n'échoue jamais : il ne
++        # bloque pas la fin de tour, qui le dit à l'humain (B-0258). Un
++        # rapport en échec le montre déjà, dans le texte plus bas.
++        duree = _avertissements(rapport, (verification.CONTROLE_DUREE,))
++        return exiger_recap(projet, entree, avertissement="\n".join(duree) or None)
+     # Le compteur appartient à sa session : une session nouvelle ne commence
+     # pas à l'escalade sur les échecs d'une autre (relevé de la passe de
+     # recul, F).
+@@ -2343,10 +2347,13 @@ def _appels_externes(racine: Path, session: str) -> bool:
+     return any(l[1] == "PreToolUse" and l[3].startswith("mcp__") for l in siennes[debut:])
+ 
+ 
+-def exiger_recap(projet: config.Projet, entree: dict) -> int:
++def exiger_recap(projet: config.Projet, entree: dict, avertissement: str | None = None) -> int:
+     """Un tour où l'agent a agi se termine par un récap et deux lignes,
+     `Pour toi :` et `Ensuite :`. Tout dernier message,
+-    qu'il ait agi ou non, ne donne que des liens que l'humain peut suivre."""
++    qu'il ait agi ou non, ne donne que des liens que l'humain peut suivre.
++    `avertissement`, celui des étapes rapides que la fin de tour vient de
++    lancer, ne change rien à ce jugement : il se joint au message à
++    l'humain, et à la raison donnée à l'agent si le hook bloque (B-0258)."""
+     from socle import human as humain, links as liens
+ 
+     racine = projet.racine
+@@ -2359,29 +2366,37 @@ def exiger_recap(projet: config.Projet, entree: dict) -> int:
+         fichier.parent.mkdir(parents=True, exist_ok=True)
+         fichier.write_text(marque)
+ 
++    def dire(sortie: dict | None) -> int:
++        if avertissement:
++            sortie = dict(sortie or {})
++            sortie["systemMessage"] = "\n\n".join(x for x in (sortie.get("systemMessage"), avertissement) if x)
++            if sortie.get("decision") == "block":
++                sortie["reason"] += "\n\n" + avertissement
++        if sortie:
++            print(json.dumps(sortie, ensure_ascii=False))
++        return 0
++
+     chemin = entree.get("transcript_path")
+     message = humain.dernier_message(Path(chemin)) if chemin else None
+     if message is None:
+         if a_agi:
+             retenir()
+-            print(json.dumps({"systemMessage": trad("récap de fin d'intervention non vérifiable : transcript "
+-                                                    "illisible")}, ensure_ascii=False))
+-        return 0
++            return dire({"systemMessage": trad("récap de fin d'intervention non vérifiable : transcript illisible")})
++        return dire(None)
+     manque = humain.recap_manquant(projet, message) if a_agi else []
+     morts, sans_lien = liens.problemes(projet, message)
+     if not (manque or morts or sans_lien):
+         if a_agi:
+             retenir()
+-        return 0
++        return dire(None)
+     if entree.get("stop_hook_active"):
+         if a_agi:
+             retenir()
+         defauts = ([trad("sans {manque}", manque=trad(" ni ").join(manque))] if manque else []) + (
+             [trad("{n} lien(s) que l'humain ne pourra pas suivre", n=len(morts) + len(sans_lien))]
+             if morts or sans_lien else [])
+-        print(json.dumps({"systemMessage": trad("fin d'intervention {defauts}, malgré un rappel",
+-                                                defauts=", ".join(defauts))}, ensure_ascii=False))
+-        return 0
++        return dire({"systemMessage": trad("fin d'intervention {defauts}, malgré un rappel",
++                                           defauts=", ".join(defauts))})
+     raisons = []
+     if manque:
+         liste = "\n".join(humain.texte(humain.a_faire(projet)))
+@@ -2414,8 +2429,7 @@ def exiger_recap(projet: config.Projet, entree: dict) -> int:
+             demandes=", ".join(sans_lien), ids=" ".join(sans_lien)))
+     tracer_refus(racine, "Stop", ",".join(x for x, oui in (("recap", manque), ("liens", morts), ("lien-de-demande", sans_lien))
+                                          if oui), entree.get("session_id", ""))
+-    print(json.dumps({"decision": "block", "reason": "\n\n".join(raisons)}, ensure_ascii=False))
+-    return 0
++    return dire({"decision": "block", "reason": "\n\n".join(raisons)})
+ 
+ 
+ # --------------------------------------------------------------------------
+@@ -2459,7 +2473,7 @@ def git_pre_commit(projet: config.Projet) -> int:
+                        "réservé à l'humain ; l'agent, lui, ouvre une demande."), file=sys.stderr)
+         print(trad("\nCommit refusé. `git commit --no-verify` contourne ce hook, jamais la CI."), file=sys.stderr)
+         return 1
+-    _dire_reponses_seules(rapport)
++    _dire_avertissements(rapport)
+     return 0
+ 
+ 
+@@ -2842,19 +2856,26 @@ def git_pre_push(projet: config.Projet) -> int:
+         tracer_refus(projet.racine, "git-pre-push", ",".join(rapport.controles_en_echec()))
+         rapport.afficher(trad("socle — vérification avant push"), flux=sys.stderr, court=True)
+         return 1
+-    _dire_reponses_seules(rapport)
++    _dire_avertissements(rapport, (verification.CONTROLE_DUREE,))
+     return 0
+ 
+ 
+-def _dire_reponses_seules(rapport) -> None:
++def _avertissements(rapport, controles) -> list[str]:
++    """Les avertissements de ces contrôles, chacun sur sa ligne, tels qu'un
++    hook qui laisse passer les dit."""
++    from socle.report import AVERTISSEMENT
++
++    return [trad("socle — avertissement ({controle}) : {constat}", controle=c.controle, constat=c.en_ligne())
++            for c in rapport.constats if c.controle in controles and c.gravite == AVERTISSEMENT]
++
++
++def _dire_avertissements(rapport, aussi: tuple[str, ...] = ()) -> None:
+     """Le hook git qui laisse passer se tait, sauf pour ceci, qu'il dit sur
+     sa sortie d'erreur : une réponse `valider` qui part sans le changement
+     qu'elle autorise, et ne le couvrira pas au push suivant
+-    (`demandes.reponse-seule`, B-0142). Le rapport d'un refus le montre
+-    déjà."""
+-    from socle.report import AVERTISSEMENT
+-
+-    for c in rapport.constats:
+-        if c.controle == "demandes.reponse-seule" and c.gravite == AVERTISSEMENT:
+-            print(trad("socle — avertissement ({controle}) : {constat}", controle=c.controle, constat=c.en_ligne()),
+-                  file=sys.stderr)
++    (`demandes.reponse-seule`, B-0142) ; et `aussi`, au hook avant push,
++    le total des étapes rapides qu'il vient de lancer au-delà de leur seuil
++    (`verify.duree`, B-0258), que l'agent lit dans la sortie de son
++    `git push`. Le rapport d'un refus les montre déjà."""
++    for ligne in _avertissements(rapport, ("demandes.reponse-seule",) + aussi):
++        print(ligne, file=sys.stderr)
+diff --git a/engine/socle/messages_en.py b/engine/socle/messages_en.py
+index b1a5b21..11fc3ba 100644
+--- a/engine/socle/messages_en.py
++++ b/engine/socle/messages_en.py
+@@ -2563,8 +2563,12 @@ MESSAGES: dict[str, str] = {
+         "memory budget raised",
+     "seuil de durée des étapes rapides relevé":
+         "duration threshold of the fast steps raised",
++    "seuil de durée des étapes rapides à `nan` en base, puis relevé":
++        "duration threshold of the fast steps at `nan` in the base, then raised",
+     "étapes rapides plus longues que leur seuil d'une seconde":
+         "fast steps longer than their one-second threshold",
++    "étapes rapides plus longues que leur seuil d'une seconde, lancées par le hook avant envoi":
++        "fast steps longer than their one-second threshold, run by the pre-push hook",
+     "correctif sans test de régression":
+         "fix without a regression test",
+     "test de régression qui échoue sur le parent faute de s'y charger":
+@@ -2957,6 +2961,12 @@ MESSAGES: dict[str, str] = {
+         "tightening a guardrail is free",
+     "baisser le seuil de durée des étapes rapides est libre : la CI passe":
+         "lowering the duration threshold of the fast steps is free: the CI passes",
++    "un seuil de durée des étapes rapides à `nan` en base, gardé tel quel, passe la CI":
++        "a duration threshold of the fast steps at `nan` in the base, kept as is, passes the CI",
++    "des étapes rapides d'un peu plus d'une seconde, sous le seuil du gabarit, poussées : le hook avant envoi "
++    "laisse passer sans avertir":
++        "fast steps of a little over one second, under the template's threshold, pushed: the pre-push hook lets "
++        "them through without warning",
+     "des étapes rapides d'un peu plus d'une seconde, sous le seuil du gabarit : `verify --fast` dit leurs durées, "
+     "sans avertir":
+         "fast steps of a little over one second, under the template's threshold: `verify --fast` gives their "
+diff --git a/engine/socle/selftest.py b/engine/socle/selftest.py
+index a5e8e36..b7ae419 100644
+--- a/engine/socle/selftest.py
++++ b/engine/socle/selftest.py
+@@ -553,6 +553,24 @@ def _pousser_la_reponse(a: "Atelier", c: Path, avec_le_test: bool, cle: bool = F
+     return r.returncode, r.stdout + r.stderr
+ 
+ 
++def _pousser_des_etapes_lentes(a: "Atelier", c: Path) -> tuple[int, str]:
++    """Un test d'un peu plus d'une seconde, commité, puis poussé par le hook
++    avant envoi, qui lance les étapes rapides : son code et sa sortie."""
++    ajouter(c, "tests/test_lent.py", TEST_LENT)
++    maj_memoire(c, "Un test plus lent.")
++    a.commit(c, "Un test plus lent")
++    r = a.run(c, "git", "push", "-q", "origin", f"travail:{c.name}")
++    return r.returncode, r.stdout + r.stderr
++
++
++def _seuil_rapide_nan_en_base(a: "Atelier", c: Path) -> None:
++    """Le seuil des étapes rapides à `nan`, à la base de la CI de ce clone
++    seulement : l'origine est partagée."""
++    remplacer(c, ".socle/guardrails.toml", "fast_max_seconds = 300", "fast_max_seconds = nan")
++    a.commit(c, "le seuil à nan")
++    a.git(c, "update-ref", "refs/remotes/origin/main", "HEAD")
++
++
+ def pousser(a: Atelier, c: Path, message: str = "essai"):
+     """Commit et push de la branche de travail vers l'origine d'essai, sous
+     le nom du clone : les cas partagent la même origine."""
+@@ -1037,6 +1055,15 @@ def _cas() -> list[Cas]:
+         remplacer(c, ".socle/guardrails.toml", "fast_max_seconds = 300", "fast_max_seconds = 900")
+         return etage_ci(a, c)
+ 
++    @defaut("seuil-rapide-nan-releve", "seuil de durée des étapes rapides à `nan` en base, puis relevé",
++            "ci", "cliquet.garde-fous")
++    def _(a, c):
++        # Aucun ordre ne compare `nan` : le relever depuis lui passait sans
++        # demande (B-0258).
++        _seuil_rapide_nan_en_base(a, c)
++        remplacer(c, ".socle/guardrails.toml", "fast_max_seconds = nan", "fast_max_seconds = 900")
++        return etage_ci(a, c)
++
+     @defaut("etapes-lentes", "étapes rapides plus longues que leur seuil d'une seconde", "verify", "verify.duree")
+     def _(a, c):
+         remplacer(c, ".socle/guardrails.toml", "fast_max_seconds = 300", "fast_max_seconds = 1")
+@@ -1044,6 +1071,13 @@ def _cas() -> list[Cas]:
+         r = a.socle(c, "verify", "--fast")
+         return r.stdout + r.stderr
+ 
++    @defaut("etapes-lentes-poussees", "étapes rapides plus longues que leur seuil d'une seconde, lancées par le "
++            "hook avant envoi", "git", "verify.duree")
++    def _(a, c):
++        # B-0258 : le hook laisse passer, et le dit sur la sortie du push.
++        remplacer(c, ".socle/guardrails.toml", "fast_max_seconds = 300", "fast_max_seconds = 1")
++        return _pousser_des_etapes_lentes(a, c)[1]
++
+     @defaut("correctif-sans-test", "correctif sans test de régression", "ci", "tests.regression")
+     def _(a, c):
+         remplacer(c, "calc.py", "return FACTEUR * x", "return FACTEUR * int(x)")
+@@ -2667,6 +2701,18 @@ def _temoins() -> list[tuple[str, Callable]]:
+         remplacer(c, ".socle/guardrails.toml", "fast_max_seconds = 300", "fast_max_seconds = 120")
+         return etage_ci(a, c)
+ 
++    @temoin("un seuil de durée des étapes rapides à `nan` en base, gardé tel quel, passe la CI")
++    def _(a, c):
++        _seuil_rapide_nan_en_base(a, c)
++        maj_memoire(c, "Le seuil gardé tel quel.")
++        return etage_ci(a, c)
++
++    @temoin("des étapes rapides d'un peu plus d'une seconde, sous le seuil du gabarit, poussées : le hook avant "
++            "envoi laisse passer sans avertir")
++    def _(a, c):
++        code, sortie = _pousser_des_etapes_lentes(a, c)
++        return (sortie or "push refusé") if code or RAISONS_AGENT["verify.duree"] in sortie else ""
++
+     @temoin("des étapes rapides d'un peu plus d'une seconde, sous le seuil du gabarit : `verify --fast` dit leurs "
+             "durées, sans avertir")
+     def _(a, c):
+diff --git a/engine/socle/templates/guardrails.en.toml b/engine/socle/templates/guardrails.en.toml
+index 8f2a9a4..0f40b5d 100644
+--- a/engine/socle/templates/guardrails.en.toml
++++ b/engine/socle/templates/guardrails.en.toml
+@@ -42,11 +42,13 @@ max_bytes = 9500
+ 
+ [verify]
+ # The threshold, in elapsed seconds, of the total of the adapter's fast steps
+-# (`verify --fast`, the end of turn, the push): beyond it, a warning, not a
+-# failure, names the longest one, at the end of the run and then in the
+-# state, as long as the last complete run exceeds it. Beyond five minutes of
+-# waiting, a sub-agent loses the cache of its conversation. The duration
+-# depends on the machine: the CI prints it, without a threshold.
++# (`verify --fast`, the end of turn, the push): beyond it, a warning, never a
++# failure, names the longest one at the end of the run that runs them all
++# (the push says it on its output and goes through; the end of turn, without
++# blocking, tells the human), then in the state, as long as the last
++# complete run exceeds it. Beyond five minutes of waiting, a sub-agent loses
++# the cache of its conversation. The duration depends on the machine: the CI
++# prints it, without a threshold.
+ fast_max_seconds = 300
+ 
+ [references]
+diff --git a/engine/socle/templates/guardrails.toml b/engine/socle/templates/guardrails.toml
+index 94178dc..5203499 100644
+--- a/engine/socle/templates/guardrails.toml
++++ b/engine/socle/templates/guardrails.toml
+@@ -43,11 +43,13 @@ max_bytes = 9500
+ 
+ [verify]
+ # Le seuil, en secondes écoulées, du total des étapes rapides de l'adaptateur
+-# (`verify --fast`, la fin de tour, le push) : au-delà, un avertissement, pas
+-# un échec, nomme la plus longue, à la fin du passage puis dans l'état, tant
+-# que le dernier passage complet le dépasse. Au-delà de cinq minutes
+-# d'attente, un sous-agent perd le cache de sa conversation. La durée dépend
+-# de la machine : la CI l'imprime, sans seuil.
++# (`verify --fast`, la fin de tour, le push) : au-delà, un avertissement,
++# jamais un échec, nomme la plus longue au bout du passage qui les lance
++# toutes (le push le dit sur sa sortie et passe ; la fin de tour, sans
++# bloquer, le dit à l'humain), puis dans l'état, tant que le dernier passage
++# complet le dépasse. Au-delà de cinq minutes d'attente, un sous-agent perd
++# le cache de sa conversation. La durée dépend de la machine : la CI
++# l'imprime, sans seuil.
+ fast_max_seconds = 300
+ 
+ [references]
+diff --git a/memory/backlog/B-0283-un-seuil-que-le-moteur-lit-avec-une-valeur-par-def.md b/memory/backlog/B-0283-un-seuil-que-le-moteur-lit-avec-une-valeur-par-def.md
+new file mode 100644
+index 0000000..7271ff6
+--- /dev/null
++++ b/memory/backlog/B-0283-un-seuil-que-le-moteur-lit-avec-une-valeur-par-def.md
+@@ -0,0 +1,21 @@
++<!-- socle: couche=backlog zone=publique -->
++# B-0283 — Un seuil que le moteur lit avec une valeur par défaut, absent des garde-fous, s'écrit plus haut sans demande : le cliquet ne connaît pas les défauts de nocopy.min_chars et staleness.active_days
++
++> statut : ouvert · origine : J-2026-11-18-D · lu : backlog@10d2a1cf
++
++Vu en corrigeant `nan` au cliquet des garde-fous (J-2026-11-18-D), pas
++corrigé : un défaut voisin. Le moteur lit `[nocopy] min_chars` à 200 et
++`[staleness] active_days` à 7 quand les garde-fous ne les écrivent pas
++(`checks_docs.py`, `checks_memory.py`, `state.py`) ; le cliquet, lui, ne
++connaît leur défaut que pour les trois clés de `checks_ratchet.DEFAUTS`.
++Absente à la base, une telle clé « apparaît », ce qu'il juge un
++durcissement libre : `assouplissements({}, {"nocopy": {"min_chars":
++100000}})` et `assouplissements({}, {"staleness": {"active_days":
++inf}})` rendent `[]`, mesuré sur le moteur. L'effet : `docs.copie` ou la
++péremption du chantier actif désarmés sans demande, que rien ne rattrape
++ensuite. Le gabarit écrit les deux clés : il faut un projet dont les
++garde-fous ne les ont plus, ou pas encore.
++
++## Satisfait quand
++
++- [ ] écrire plus haut que la valeur par défaut du moteur une clé de seuil absente de la base exige une demande validée, pour chaque clé que le moteur lit avec un défaut, et un test le montre
+diff --git a/memory/backlog/closed/B-0258-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md b/memory/backlog/closed/B-0258-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md
+index a38442c..0cfd2a7 100644
+--- a/memory/backlog/closed/B-0258-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md
++++ b/memory/backlog/closed/B-0258-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md
+@@ -34,21 +34,32 @@ Le seuil `[verify] fast_max_seconds` est un garde-fou qui avertit, sans
+ jamais échouer.
+ 
+ Il arrête : une dérive silencieuse du total des étapes rapides au-delà du
+-seuil, vue au premier `verify --fast` qui les lance toutes sur la machine
+-où il tourne ; elle reste dite, tant que le dernier passage complet
+-dépasse le seuil, à chaque vérification servie par la marque des étapes
+-déjà passées et dans `socle state`, que le démarrage de chaque session
+-injecte. Le relèvement du seuil par l'agent : le cliquet des garde-fous
+-connaît la clé, la relever exige une demande validée, la baisser est
+-libre ; un défaut injecté le prouve.
++seuil, dite au bout du premier passage qui les lance toutes sur la
++machine où il tourne, quel qu'en soit le lanceur : `verify --fast`, dans
++sa sortie ; le hook avant envoi, qui laisse partir le push et le dit sur
++sa sortie d'erreur, que l'agent lit dans celle de son `git push` ; la fin
++de tour, qui le dit à l'humain dans son message, et à l'agent dans sa
++raison quand elle bloque déjà pour une autre. Elle reste dite, tant que
++le dernier passage complet dépasse le seuil, à chaque vérification servie
++par la marque des étapes déjà passées et dans `socle state`, que le
++démarrage de chaque session injecte. Le relèvement du seuil par l'agent :
++le cliquet des garde-fous connaît la clé, la relever exige une demande
++validée, la baisser est libre, et `nan`, qu'aucun ordre ne compare, ne
++s'écrit ni ne se quitte sans demande. Des défauts injectés le prouvent :
++le seuil relevé, relevé depuis `nan`, dépassé sous `verify --fast` et
++sous le hook avant envoi.
+ 
+ Il laisse passer : une dérive sous le seuil ; la durée d'une machine plus
+ rapide, qui masque celle d'une plus lente, et la CI, sans seuil ; une
+ étape retirée des étapes rapides, ce qui change l'adaptateur, protégé, et
+ passe donc par l'humain ; un test mis de côté sous `SOCLE_RAPIDE`, que la
+ CI joue toujours ; une étape bloquée, qui finit en erreur de délai, pas
+-en durée ; la fin de tour et le push, qui ne relancent pas des étapes
+-déjà passées sur le même contenu, et n'ajoutent donc rien.
++en durée ; à la fin de tour qui ne bloque pas pour une autre raison,
++l'agent : le seuil avertit et n'échoue jamais, il ne bloque donc pas la
++fin de tour, et l'agent ne lit l'avertissement que sur la ligne « déjà
++passées » de son `verify --fast` suivant et dans `socle state` ; la fin
++de tour et le push qui ne relancent pas des étapes déjà passées sur le
++même contenu, et n'ajoutent donc rien.
+ 
+ ## Satisfait quand
+ 
+diff --git a/memory/decisions/ADR-0086-un-passage-des-etapes-rapides-ou-une-etape-echoue.md b/memory/decisions/ADR-0086-un-passage-des-etapes-rapides-ou-une-etape-echoue.md
+index 691cc78..956e19e 100644
+--- a/memory/decisions/ADR-0086-un-passage-des-etapes-rapides-ou-une-etape-echoue.md
++++ b/memory/decisions/ADR-0086-un-passage-des-etapes-rapides-ou-une-etape-echoue.md
+@@ -32,7 +32,10 @@ n'avertit pas.
+ - `verification.etapes_rapides` écrit la marque et la trace des durées
+   sous la même condition ; un test le garde (un passage en échec laisse la
+   trace d'avant).
+-- Une dérive que seul un passage en échec montrerait se voit au premier
+-  passage qui réussit : l'agent ne livre pas sur un échec.
++- Une dérive que seul un passage en échec montrerait se dit au bout du
++  premier passage qui réussit, quel qu'en soit le lanceur : `verify
++  --fast` dans sa sortie, le hook avant envoi sur sa sortie d'erreur, la
++  fin de tour à l'humain, sans bloquer, et à l'agent seulement quand elle
++  bloque déjà ; l'agent ne livre pas sur un échec.
+ - Pour défaire : une ADR qui la remplace, par exemple pour garder la durée
+   d'un échec qui a lancé toutes ses étapes jusqu'au bout.
+diff --git a/memory/journal/2026-11-7.md b/memory/journal/2026-11-7.md
+new file mode 100644
+index 0000000..1fe87c9
+--- /dev/null
++++ b/memory/journal/2026-11-7.md
+@@ -0,0 +1,64 @@
++<!-- socle: couche=journal zone=publique -->
++# Journal — 2026-11
++
++## J-2026-11-18-D — L-0012, passe 2 : le seuil des étapes rapides se dit aussi à l'envoi et à la fin de tour, sans la bloquer ; nan ne contourne plus le cliquet
++
++> ref : L-0012, T-0045, B-0258, ADR-0086, D-0130, J-2026-11-18-B, B-0283
++
++La passe 2 de la revue du lot L-0012 a trouvé deux bloquants dans T-0045
++(d2d1b68) ; la correction suit les choix de l'orchestrateur.
++
++1. Le seuil dépassé au bout d'un passage complet lancé par un hook
++   n'était dit à personne : le passage gardait sa trace, mais la fin de
++   tour passait son rapport réussi à `exiger_recap`, qui ne l'imprime
++   pas, et le hook avant envoi ne disait d'un rapport qui passe que
++   `demandes.reponse-seule`. Le hook avant envoi, qui laisse partir le
++   push, imprime désormais l'avertissement `verify.duree` sur sa sortie
++   d'erreur, comme `demandes.reponse-seule` : l'agent le lit dans la
++   sortie de son `git push`. La fin de tour, quand elle a lancé les
++   étapes et que l'avertissement est dans son rapport, le dit à l'humain
++   en `systemMessage`, joint au JSON qu'`exiger_recap` imprime déjà, ou
++   seul s'il n'imprime rien ; si elle bloque déjà (récap, liens), il
++   s'ajoute aussi à la raison donnée à l'agent. Ce qu'`exiger_recap`
++   juge ne change pas. Un rapport en échec le montrait déjà, dans son
++   texte.
++
++   Pourquoi la fin de tour ne bloque pas pour lui : le seuil avertit et
++   n'échoue jamais (D-0130, B-0258). Bloquer la fin de tour en ferait un
++   échec, que l'agent ne lèverait qu'en raccourcissant l'étape ou par une
++   demande. L'agent le lit donc ensuite, sur la ligne « déjà passées » de
++   son `verify --fast` suivant et dans `socle state`. Le modèle de menace
++   de B-0258, la conséquence d'ADR-0086, le commentaire de la clé (ces
++   garde-fous et les deux gabarits), le guide, la note 2026-11-18-a, le
++   point 15 du prompt de chess et l'architecture le disent ainsi, sans
++   promettre plus.
++
++2. `nan` contournait le cliquet en deux temps : aucun ordre ne le
++   compare, `vb > va` est toujours faux. La correction est dans la
++   comparaison commune, `checks_ratchet.assouplissements`, pour toute clé
++   classée sauf « libre » : `nan` qui remplace une valeur, ou qu'une
++   valeur remplace, est un assouplissement qui exige une demande (« clé
++   ajoutée : nan » s'il apparaît) ; gardé tel quel, il ne change rien ;
++   retiré d'une clé sans valeur par défaut, il suit la règle d'une clé
++   retirée. `inf` et `-inf` se jugent comme avant. Le même trou, en un
++   seul temps, se ferme avec : `nocopy.min_chars`,
++   `staleness.active_days`, `mutation.caps.<m>.max`. La docstring de
++   `Projet.seuil_rapide` le dit. Le point 4 de J-2026-11-18-B, qui
++   prenait `nan` pour le plus strict « comme le cliquet le juge », est
++   dépassé sur ce point : le moteur le lit toujours comme zéro, le cliquet
++   le refuse sans demande.
++
++Les cinq tests nouveaux échouent sur le commit parent, mesuré en lançant
++`tests/test_etapes_rapides.py` et `tests/test_cliquet.py` sur une copie
++de 9cd15fd : cinq échecs, trois du hook avant envoi et de la fin de tour,
++deux du cliquet. L'auto-test reçoit `etapes-lentes-poussees` (attrapé par
++la phrase de `verify.duree` dans la sortie du push) et
++`seuil-rapide-nan-releve` (attrapé par `cliquet.garde-fous`), avec leurs
++témoins : le même test lent sous le seuil du gabarit, poussé sans
++avertissement ; une base à `nan` gardée telle quelle, la CI passe. Lancés
++seuls, les deux défauts échappent au moteur du parent et sont attrapés
++par celui-ci ; les deux témoins passent.
++
++Un défaut voisin, vu en écrivant la correction, va au backlog sans être
++corrigé : B-0283, une clé de seuil que le moteur lit avec une valeur par
++défaut, absente de la base, s'écrit plus haut sans demande.
+diff --git a/tests/test_cliquet.py b/tests/test_cliquet.py
+index 8498221..f4f055a 100644
+--- a/tests/test_cliquet.py
++++ b/tests/test_cliquet.py
+@@ -37,6 +37,26 @@ class TestCliquet(unittest.TestCase):
+         apres["docmap"].append({"code": ["tests/**"], "docs": ["docs/t.md"]})
+         self.assertEqual(assouplissements(BASE, apres), [])
+ 
++    def test_nan_n_est_ni_plus_strict_ni_egal(self):
++        """Revue du lot L-0012, passe 2 : aucun ordre ne compare `nan`. Écrit
++        à la place d'un seuil, il passait pour un durcissement, et désarmait
++        `docs.copie` ou la péremption du chantier actif ; une valeur écrite à
++        sa place passait de même, le seuil relevé en deux temps."""
++        nan = float("nan")
++        self.assertEqual(assouplissements(BASE, changer(nocopy__min_chars=nan)), [("nocopy.min_chars", "200 → nan")])
++        self.assertEqual(assouplissements(BASE, changer(staleness__active_days=nan)),
++                         [("staleness.active_days", "7 → nan")])
++        ecrit = changer(nocopy__min_chars=nan)
++        self.assertEqual(assouplissements(ecrit, BASE), [("nocopy.min_chars", "nan → 200")])
++        self.assertEqual(assouplissements(ecrit, changer(nocopy__min_chars=100)), [("nocopy.min_chars", "nan → 100")])
++        self.assertEqual(assouplissements({}, {"nocopy": {"min_chars": nan}}), [("nocopy.min_chars", "clé ajoutée : nan")])
++        self.assertEqual([c for c, _ in assouplissements(ecrit, changer(nocopy={"exclude": []}))], ["nocopy.min_chars"])
++        plafond = changer()
++        plafond["mutation"]["caps"]["src/a.rs"]["max"] = nan
++        self.assertEqual([c for c, _ in assouplissements(BASE, plafond)], ['mutation.caps."src/a.rs".max'])
++        # Gardé tel quel, il ne change rien.
++        self.assertEqual(assouplissements(ecrit, changer(nocopy__min_chars=nan)), [])
++
+     def test_budget_releve(self):
+         apres = changer()
+         apres["budgets"]["memoire/actif.md"]["max_bytes"] = 9000
+diff --git a/tests/test_etapes_rapides.py b/tests/test_etapes_rapides.py
+index 1eabc6f..14111b8 100644
+--- a/tests/test_etapes_rapides.py
++++ b/tests/test_etapes_rapides.py
+@@ -219,6 +219,107 @@ class TestDureeDesEtapes(unittest.TestCase):
+             self.assertEqual(verification.secondes(163.64), "163.6 s")
+ 
+ 
++class TestDureeDiteParLesHooks(unittest.TestCase):
++    """Revue du lot L-0012, passe 2 : le passage complet que lancent la fin
++    de tour et le hook avant envoi gardait sa trace, mais son avertissement
++    se perdait ; seuls l'état et un `verify --fast` relancé à la main le
++    disaient ensuite. Le hook avant envoi le dit sur sa sortie d'erreur ; la
++    fin de tour, qu'il ne bloque pas, le dit à l'humain."""
++
++    AVERTISSEMENT = (r"socle — avertissement \(verify\.duree\) : durée des étapes rapides au dernier passage "
++                     r"complet : 0,[3-9] s, au-delà du seuil de 0,1 s .*la plus longue : `verify\.lint`")
++
++    def setUp(self):
++        self.racine = Path(tempfile.mkdtemp(prefix="socle-durees-hooks-"))
++        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
++        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=self.racine, check=True)
++        (self.racine / "calc.py").write_text("x = 1\n")
++        with contextlib.redirect_stdout(io.StringIO()):
++            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
++        subprocess.run(["git", "add", "-A"], cwd=self.racine, check=True)
++        subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "base", "--no-verify"],
++                       cwd=self.racine, check=True)
++        self.n = 1
++
++    def projet(self, seuil) -> config.Projet:
++        projet = config.Projet.charger(self.racine)
++        projet.adaptateur["capabilities"] = {"lint": {"command": "sleep 0.3", "fast": True}}
++        projet.garde_fous["verify"] = {"fast_max_seconds": seuil}
++        return projet
++
++    def changer_le_code(self):
++        """Un contenu neuf : les étapes rapides ne sont pas déjà passées
++        dessus, et le hook les relance."""
++        self.n += 1
++        (self.racine / "calc.py").write_text(f"x = {self.n}\n")
++
++    def avant_envoi(self, seuil) -> tuple[int, str]:
++        from socle import context as contexte, hooks
++
++        with unittest.mock.patch("sys.stdin", io.StringIO("")), \
++                unittest.mock.patch.object(contexte, "executer", return_value=Rapport()), \
++                contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()) as flux:
++            code = hooks.git_pre_push(self.projet(seuil))
++        return code, flux.getvalue()
++
++    def fin_de_tour(self, seuil, dernier_message: str | None = None, relance: bool = False) -> dict:
++        import json
++
++        from socle import context as contexte, hooks
++
++        entree = {"session_id": "d", "stop_hook_active": relance}
++        if dernier_message is not None:
++            transcript = self.racine / ".socle/trace/essai-transcript.jsonl"
++            transcript.parent.mkdir(parents=True, exist_ok=True)
++            transcript.write_text(json.dumps({"type": "assistant", "message": {"content": dernier_message}}) + "\n")
++            entree["transcript_path"] = str(transcript)
++        with unittest.mock.patch.object(contexte, "executer", return_value=Rapport()), \
++                contextlib.redirect_stdout(io.StringIO()) as sortie, contextlib.redirect_stderr(io.StringIO()):
++            self.assertEqual(hooks.stop(self.projet(seuil), entree), 0)
++        return json.loads(sortie.getvalue()) if sortie.getvalue().strip() else {}
++
++    def test_le_hook_avant_envoi_dit_l_avertissement_et_laisse_passer(self):
++        code, sortie = self.avant_envoi(300)
++        self.assertEqual((code, sortie), (0, ""))
++        self.changer_le_code()
++        code, sortie = self.avant_envoi(0.1)
++        self.assertEqual(code, 0, sortie)
++        self.assertRegex(sortie, self.AVERTISSEMENT)
++        self.assertEqual(len(sortie.splitlines()), 1, sortie)
++
++    def test_la_fin_de_tour_le_joint_a_son_message_sans_bloquer_pour_lui(self):
++        recap = "Fait.\n\nPour toi : rien.\nEnsuite : rien."
++        # Sous le seuil, rien de plus : un récap complet ne fait rien imprimer.
++        self.changer_le_code()
++        self.assertEqual(self.fin_de_tour(300, recap), {})
++        # Au-delà, un récap complet : le message à l'humain, et lui seul.
++        self.changer_le_code()
++        sortie = self.fin_de_tour(0.1, recap)
++        self.assertEqual(list(sortie), ["systemMessage"])
++        self.assertRegex(sortie["systemMessage"], "^" + self.AVERTISSEMENT)
++        # Un transcript illisible : le message qu'imprimait déjà le hook, puis l'avertissement.
++        self.changer_le_code()
++        sortie = self.fin_de_tour(0.1)
++        self.assertEqual(list(sortie), ["systemMessage"])
++        self.assertRegex(sortie["systemMessage"], r"^récap de fin d'intervention non vérifiable : transcript "
++                                                  r"illisible\n\n" + self.AVERTISSEMENT)
++
++    def test_la_fin_de_tour_qui_bloque_deja_le_dit_aussi_a_l_agent(self):
++        self.changer_le_code()
++        sortie = self.fin_de_tour(0.1, "Fait.")
++        self.assertEqual(sortie["decision"], "block")
++        self.assertTrue(sortie["reason"].startswith("Tu as agi pendant ce tour, et ton dernier message n'a pas"))
++        self.assertRegex(sortie["reason"], r"\n\n" + self.AVERTISSEMENT + "[^\n]*$")
++        self.assertRegex(sortie["systemMessage"], "^" + self.AVERTISSEMENT)
++        # La relance que le hook a provoquée ne bloque plus : le message
++        # qu'il imprimait, puis l'avertissement.
++        self.changer_le_code()
++        sortie = self.fin_de_tour(0.1, "Fait.", relance=True)
++        self.assertNotIn("decision", sortie)
++        self.assertRegex(sortie["systemMessage"], r"^fin d'intervention sans .*, malgré un rappel\n\n"
++                         + self.AVERTISSEMENT)
++
++
+ class TestSeuilDesEtapesRapides(unittest.TestCase):
+     """B-0258 : le seuil, `[verify] fast_max_seconds` des garde-fous ; le
+     relever exige une demande validée, le baisser est libre."""
+@@ -232,7 +333,8 @@ class TestSeuilDesEtapesRapides(unittest.TestCase):
+         self.assertEqual(self.seuil({"verify": {"fast_max_seconds": 120}}), 120)
+         self.assertEqual(self.seuil({"verify": {"fast_max_seconds": 2.5}}), 2.5)
+         self.assertEqual(self.seuil({"verify": {"fast_max_seconds": "beaucoup"}}), 300)
+-        # Ce que le cliquet laisse écrire librement ne relâche jamais le seuil.
++        # Ce que le cliquet laisse écrire librement ne relâche jamais le seuil ;
++        # `nan`, qu'il refuse sans demande, se lit le plus strict.
+         self.assertEqual(self.seuil({"verify": {"fast_max_seconds": 0}}), 0)
+         self.assertEqual(self.seuil({"verify": {"fast_max_seconds": float("nan")}}), 0)
+         self.assertEqual(self.seuil({"verify": {"fast_max_seconds": True}}), 1)
+@@ -253,6 +355,25 @@ class TestSeuilDesEtapesRapides(unittest.TestCase):
+         self.assertEqual(assouplissements({"verify": {"fast_max_seconds": 120}}, {}),
+                          [("verify.fast_max_seconds", "120 → 300")])
+ 
++    def test_nan_ne_releve_pas_le_seuil_en_deux_temps(self):
++        """Revue du lot L-0012, passe 2 : `nan` s'écrivait librement (lu
++        comme zéro), puis, depuis une base qui le portait, le seuil se
++        relevait à 900 ou se retirait sans demande : `vb > va` est toujours
++        faux avec `nan`."""
++        from socle.checks_ratchet import assouplissements
++
++        nan, cle = float("nan"), "verify.fast_max_seconds"
++        self.assertEqual(assouplissements({"verify": {"fast_max_seconds": 300}}, {"verify": {"fast_max_seconds": nan}}),
++                         [(cle, "300 → nan")])
++        self.assertEqual(assouplissements({}, {"verify": {"fast_max_seconds": nan}}), [(cle, "300 → nan")])
++        base = {"verify": {"fast_max_seconds": nan}}
++        self.assertEqual(assouplissements(base, {"verify": {"fast_max_seconds": 900}}), [(cle, "nan → 900")])
++        self.assertEqual(assouplissements(base, {}), [(cle, "nan → 300")])
++        self.assertEqual(assouplissements(base, {"verify": {"fast_max_seconds": nan}}), [])
++        # `inf` et `-inf` s'ordonnent, et se jugent comme avant.
++        self.assertEqual(assouplissements({}, {"verify": {"fast_max_seconds": float("inf")}}), [(cle, "300 → inf")])
++        self.assertEqual(assouplissements({}, {"verify": {"fast_max_seconds": float("-inf")}}), [])
++
+ 
+ class TestAutotestUneFois(unittest.TestCase):
+     """L6 : `socle ci` lançait l'auto-test deux fois, dans la suite de tests
+-- 
+2.43.0
+

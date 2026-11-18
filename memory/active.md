@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-D-0130 validée et faite (J-2026-11-17-L) : L-0012 reprend. L-0014 en
-cours (J-2026-11-17-K) : `docs/fabrication/passation-l0014/`. Puis L-0015.
+L-0012, en correctifs : `docs/fabrication/passation-l0012/` ; puis
+L-0014 : `docs/fabrication/passation-l0014/` ; puis L-0015.
 
 ## Consignes en cours
 

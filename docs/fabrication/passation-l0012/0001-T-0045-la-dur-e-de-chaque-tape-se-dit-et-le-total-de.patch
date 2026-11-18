@@ -1,0 +1,1034 @@
+From d2d1b688196bb23d02dc0faa5953fda3963788ee Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 18 Nov 2026 10:05:24 +0000
+Subject: [PATCH 1/7] =?UTF-8?q?T-0045=20:=20la=20dur=C3=A9e=20de=20chaque?=
+ =?UTF-8?q?=20=C3=A9tape=20se=20dit,=20et=20le=20total=20des=20=C3=A9tapes?=
+ =?UTF-8?q?=20rapides=20a=20un=20seuil=20qui=20avertit=20sans=20=C3=A9chou?=
+ =?UTF-8?q?er=20(D-0130,=20ADR-0086,=20J-2026-11-18-B)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Les six points du second point de D-0130, validé par Théo
+(J-2026-11-17-L) : chaque étape lancée imprime sa durée au bout de sa
+ligne, puis leur total, pour verify, verify --fast et socle ci ; la clé
+[verify] fast_max_seconds des garde-fous, 300 s par défaut et dans les
+deux gabarits ; verify --fast garde le total et la plus longue d'un
+passage où toutes les étapes rapides ont passé, et au-delà du seuil
+avertit (verify.duree) à la fin du passage, sur la ligne des étapes déjà
+passées et dans l'état ; le cliquet connaît la clé ; la CI imprime sans
+seuil ; l'auto-test reçoit deux défauts et leurs témoins. Un passage en
+échec ne garde pas sa durée (ADR-0086). T-0045 et B-0258 clos et rangés.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Mr1cChv95wstrvKEV9bNUe
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=1 PreToolUse=182 Stop=2
+Socle-Hooks-Since-Commit: PreToolUse=182
+---
+ .socle/guardrails.toml                        |   9 ++
+ docs/fabrication/architecture.md              |  14 +-
+ docs/fabrication/chess/prompt-mise-a-jour.md  |   2 +
+ engine/socle/CHANGES.en.md                    |  22 +++
+ engine/socle/CHANGES.md                       |  21 +++
+ engine/socle/HELP.en.md                       |  15 ++
+ engine/socle/HELP.md                          |  15 ++
+ engine/socle/checks_ratchet.py                |   6 +-
+ engine/socle/config.py                        |  20 +++
+ engine/socle/messages_en.py                   |  20 +++
+ engine/socle/selftest.py                      |  43 +++++
+ engine/socle/state.py                         |  10 ++
+ engine/socle/templates/guardrails.en.toml     |   9 ++
+ engine/socle/templates/guardrails.toml        |   9 ++
+ engine/socle/verification.py                  | 121 ++++++++++++--
+ ...u-demarrage-nulle-ou-negative-vaut-cell.md |  19 +++
+ ...s-etapes-rapides-se-dit-et-a-un-seuil-v.md |  11 --
+ ...s-etapes-rapides-se-dit-et-a-un-seuil-v.md |   4 +-
+ ...s-etapes-rapides-se-dit-et-a-un-seuil-v.md |  11 ++
+ ...-des-etapes-rapides-ou-une-etape-echoue.md |  38 +++++
+ memory/journal/2026-11-6.md                   |  53 ++++++
+ tests/test_etapes_rapides.py                  | 151 ++++++++++++++++++
+ 22 files changed, 594 insertions(+), 29 deletions(-)
+ create mode 100644 memory/backlog/B-0282-une-borne-du-demarrage-nulle-ou-negative-vaut-cell.md
+ delete mode 100644 memory/backlog/T-0045-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md
+ rename memory/backlog/{ => closed}/B-0258-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md (94%)
+ create mode 100644 memory/backlog/closed/T-0045-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md
+ create mode 100644 memory/decisions/ADR-0086-un-passage-des-etapes-rapides-ou-une-etape-echoue.md
+
+diff --git a/.socle/guardrails.toml b/.socle/guardrails.toml
+index 7ba8de5..3aaf0c6 100644
+--- a/.socle/guardrails.toml
++++ b/.socle/guardrails.toml
+@@ -40,6 +40,15 @@ active_days = 7
+ # qui manque et où le lire.
+ max_bytes = 9500
+ 
++[verify]
++# Le seuil, en secondes écoulées, du total des étapes rapides de l'adaptateur
++# (`verify --fast`, la fin de tour, le push) : au-delà, un avertissement, pas
++# un échec, nomme la plus longue, à la fin du passage puis dans l'état, tant
++# que le dernier passage complet le dépasse. Au-delà de cinq minutes
++# d'attente, un sous-agent perd le cache de sa conversation. La durée dépend
++# de la machine : la CI l'imprime, sans seuil.
++fast_max_seconds = 300
++
+ [references]
+ # Fichiers où chaque identifiant, lien et chemin cité doit exister.
+ scan = ["**/*.md"]
+diff --git a/docs/fabrication/architecture.md b/docs/fabrication/architecture.md
+index db5ea2c..521d5af 100644
+--- a/docs/fabrication/architecture.md
++++ b/docs/fabrication/architecture.md
+@@ -54,7 +54,7 @@ vérifiées.
+ | `identifiers.py` | les identifiants que deux branches prennent ensemble : ceux des branches distantes, la collision avec la branche par défaut, la renumérotation (ADR-0026) |
+ | `private_setup.py` | la mise en place du dépôt compagnon, réservée à l'humain (`socle private install`) |
+ | `links.py` | une pull request citée par son numéro se donne aussi par son lien (B-0110) ; le permalien d'un fichier ou d'une entrée, au plus récent des commits poussés que la branche locale contient, parmi sa branche distante du même nom, celle qu'elle suit et la branche par défaut (B-0134) ; les liens d'un message que l'humain ne pourra pas suivre, dont un chemin du disque que git ignore, un chemin d'un dépôt imbriqué ou un fichier suivi supprimé du disque (ADR-0063) |
+-| `verification.py` | le contrat `verify` : les capacités de l'adaptateur ; un projet sans aucun test, que l'adaptateur reconnaît à la sortie de son outil (`no_tests`), avertit au lieu d'échouer (B-0026) ; un projet neuf, sans aucun fichier source à lui, ne lance pas les capacités, en avertissement (B-0089) ; un outil absent de l'environnement (code 127, « No module named ») se dit, avec les commandes que la CI lance pour lui (B-0090) ; dans un projet à plusieurs adaptateurs, les étapes de chacun, l'un après l'autre et jusqu'au bout, nommées `verify.<adaptateur>.<étape>` (ADR-0051) |
++| `verification.py` | le contrat `verify` : les capacités de l'adaptateur ; un projet sans aucun test, que l'adaptateur reconnaît à la sortie de son outil (`no_tests`), avertit au lieu d'échouer (B-0026) ; un projet neuf, sans aucun fichier source à lui, ne lance pas les capacités, en avertissement (B-0089) ; un outil absent de l'environnement (code 127, « No module named ») se dit, avec les commandes que la CI lance pour lui (B-0090) ; dans un projet à plusieurs adaptateurs, les étapes de chacun, l'un après l'autre et jusqu'au bout, nommées `verify.<adaptateur>.<étape>` (ADR-0051) ; la durée de chaque étape lancée et leur total, et le seuil des étapes rapides, qui avertit sous `verify.duree` (B-0258, ADR-0086) |
+ | `mutation.py` | le balayage de l'adaptateur, module par module quand sa commande en nomme un, puis le verdict contre les plafonds ; un lecteur par outil (cargo-mutants, mutmut, Stryker, gremlins, PIT, mutant, Infection) ; un module « à mesurer » reçoit son plafond mesuré (`--record`) ; la vivacité du workflow planifié, lue par l'API de GitHub ; dans un projet à plusieurs adaptateurs, chacun balaie ses modules avec son outil et tient leurs seuls plafonds (ADR-0051) |
+ | `fingerprint.py` | l'empreinte du moteur ; le mot qu'une demande cite pour un fichier protégé supprimé, `supprimé` ou `deleted`, reconnus l'un et l'autre (B-0163) |
+ | `installer.py` | installation, mise à jour, adoption ; la suppression automatique des branches fusionnées conseillée avec la protection de la branche par défaut (B-0112) ; en session cloud, une mise à jour s'approuve dans une session neuve, par une demande (B-0107), sous laquelle ses fichiers protégés se commitent quand la CI du socle est exigée (D-0071), en deux temps, la demande seule d'abord, puis les fichiers protégés avec ce qui les cite (B-0148), « Et maintenant » disant de la poser par `socle new request`, qui en dit le contrat, et d'y écrire chaque fichier sur une ligne d'empreinte (ADR-0058), et que la CI de la demande poussée seule, jugée par le moteur d'avant, peut la refuser jusqu'au commit des fichiers protégés ; adaptateur déduit du dépôt ; mémoire privée posée à l'installation, ou ajoutée à un projet installé ; diff de politique à la mise à jour ; à la mise à jour, les garde-fous du projet gardés, et les réglages du gabarit qu'ils n'écrivent pas, même en commentaire, nommés avec ce qu'ils font, à déclarer une fois le moteur nouveau commité, l'ancien qui juge la CI comptant une clé inconnue pour un assouplissement (B-0123) ; un fichier d'instructions que la section du socle, posée ou régénérée, fait passer au-delà de son budget, signalé avec ses deux issues, le resserrer ou relever le budget par une demande, le contrôle des budgets disant de même pour lui au lieu d'« archiver dans le journal » (B-0129) ; le code existant entre « à mesurer » au cliquet de mutation, ou reprend les plafonds déjà mesurés d'un fichier que l'humain donne (`--mutation-caps`, B-0009, relevé sur chess) ; un audit court, puis « Et maintenant », les étapes de l'humain avec leur commande, dont les outils que la CI installe pour l'adaptateur, à donner aussi à l'agent (B-0090) ; le code de sortie, 0 quand seule l'approbation de l'humain attend (ADR-0056) ; à la mise à jour, le verrou consigne sous `[installed]`, avec leur empreinte, les fichiers protégés que le passage a changés hors du moteur et qui étaient avant lui tels que la base ou un passage précédent les avait laissés (ADR-0077) ; ne s'installe qu'à la racine du dépôt ; relancé, il ne perd rien : le moteur reste en place s'il est lancé depuis le projet, un CLAUDE.md propre au projet passe dans AGENTS.md, une seconde adoption complète sa liste, et ce que le .gitignore du projet écarterait reçoit une exception (B-0044, L1) ; un état au démarrage propre au projet (son hook `SessionStart`) gardé et signalé, chaque session en recevant deux (B-0054) ; le nom de l'humain qui installe, donné par `--human` ou pris dans git, posé dans la politique d'un projet neuf : il signe les réponses que l'agent relaie, qui ne devine pas un nom (B-0073) ; en session cloud, l'identité git est celle de l'agent et ne se prend pas (B-0094) ; la protection de la branche n'exige que la CI, la revue des propriétaires du code supposant un autre humain qui relit (B-0093) ; la session cloud qui l'installe ne se reprend pas, ajouter le dépôt du socle en faisant une session à deux dépôts (B-0097), et la session suivante attend la fusion de l'installation, une session neuve partant de la branche par défaut (B-0098) ; les skills du socle posés dans `.claude/skills/`, dans la langue de la mémoire, remplacés à chaque mise à jour, et protégés par la politique d'un projet neuf (ADR-0034) ; la CI posée écarte des envois les branches jetables (`[branches] disposable`, `proto/` par défaut, des préfixes sans caractère de motif, que la CI et les contrôles locaux lisent de même ; les étiquettes nommées pour garder leur CI, D-0087) ; plusieurs `--adapter`, et en automatique un par langage reconnu : le premier nommé prend `.socle/adapter.toml`, les autres `.socle/adapters/<nom>.toml`, protégés par le moteur ; à la mise à jour, une copie d'un adaptateur maintenu, la principale comprise, rafraîchie si le projet ne l'a pas adaptée, c'est-à-dire si son texte est une version que le moteur du projet a portée, dans le moteur installé ou dans l'historique git, et gardée sinon, l'installeur disant quand son adaptateur maintenu a changé depuis le moteur installé, et la CI se générant des adaptateurs du projet tels qu'ils sont (ADR-0052) ; la CI et le balayage installent les outils de tous, les modules de chacun entrant au cliquet (ADR-0051) ; en automatique, un langage dont le manifeste n'est que dans un sous-dossier ne reçoit pas d'adaptateur, ce que l'installeur dit avec ses deux issues ; `--adapter` prend le fichier d'un adaptateur propre au projet, jugé par le contrat des adaptateurs avant d'être posé ; l'audit dit qu'il n'a pas lancé les capacités, et le budget d'adoption garde une marge d'un dixième (ADR-0066) ; à la mise à jour qui recopie le moteur, les notes de version (`engine/socle/CHANGES.md`, `engine/socle/CHANGES.en.md`) que la copie du projet n'avait pas, lues par leurs identifiants avant qu'elle ne soit remplacée, toutes si elle n'en avait aucune, rien à une première installation, en mode amont ni lancé depuis le projet, imprimées avant l'audit dans la langue du projet, et leurs identifiants dans le message de commit que propose « Et maintenant » (ADR-0078) |
+@@ -194,6 +194,18 @@ vérifiées.
+   s'y mettre de côté, avec sa raison écrite ; la CI, qui lance toutes les
+   étapes, le joue toujours. Ce dépôt y met le banc et l'auto-test complet :
+   sa suite rapide passe de 290 à 143 secondes (mesuré le 13 octobre).
++- **La durée des étapes se dit, et celle des étapes rapides a un seuil**
++  (B-0258, la spécification validée par D-0130) : chaque étape lancée
++  imprime sa durée au bout de sa ligne, puis leur total, en CI comme
++  ailleurs. Le total d'un passage où toutes les étapes rapides ont passé se
++  garde avec la plus longue, à côté de la marque
++  (`verification.DUREES`) ; au-delà de `[verify] fast_max_seconds` (300 s
++  par défaut), un avertissement, jamais un échec : à la fin du passage, sur
++  la ligne des étapes déjà passées et dans l'état, tant que ce dernier
++  passage complet dépasse le seuil. Un passage où une étape échoue ne
++  remplace pas la trace (ADR-0086). La CI n'a pas de seuil : `socle ci` ne
++  passe pas par les étapes rapides. Le cliquet connaît la clé, avec sa
++  valeur par défaut : la relever exige une demande validée.
+ - **Les liens donnés à l'humain sont des permaliens** (`ADR-0010`) : au
+   commit poussé, pas à la branche, qui disparaît à la fusion ; vérifiés par
+   le hook de fin de tour, que l'agent ait agi ou non.
+diff --git a/docs/fabrication/chess/prompt-mise-a-jour.md b/docs/fabrication/chess/prompt-mise-a-jour.md
+index d3a3061..aead551 100644
+--- a/docs/fabrication/chess/prompt-mise-a-jour.md
++++ b/docs/fabrication/chess/prompt-mise-a-jour.md
+@@ -48,6 +48,8 @@ Mets à jour le socle de ce dépôt depuis son dépôt public, sans ajouter ce d
+ 
+ 14. Une forme du shell que le hook ne juge pas, écartée par la revue d'un lot, ne s'inscrit plus par toi dans la liste du guide, que tu ne peux pas écrire (le moteur installé est protégé) : ton récap la nomme, et « Pour toi » me propose de la signaler au dépôt du socle (https://github.com/theodubus/socle), qui tient la liste ; rien ne va au backlog. Le skill socle-review, copie protégée, change : il est dans la demande de l'installeur.
+ 
++15. verify, verify --fast et socle ci impriment désormais la durée de chaque étape de l'adaptateur au bout de sa ligne, puis leur total. Le total des étapes rapides a un seuil, [verify] fast_max_seconds des garde-fous, 300 secondes quand tes garde-fous ne l'écrivent pas : au-delà, verify --fast avertit sans échouer, en nommant l'étape la plus longue, puis le redit sur la ligne des étapes déjà passées et dans l'état à chaque démarrage, tant que le dernier passage où toutes ont passé le dépasse (un passage en échec ne compte pas). La durée de tes étapes rapides n'est pas mesurée : le verify --fast --redo de la porte la mesure, donne-la-moi ; au-delà de cinq minutes, raccourcis l'étape la plus longue, ou pose-moi une demande pour relever le seuil (le baisser est libre, écrire la clé à 300 ne change rien).
++
+ Pas encore faits, inutile de les signaler de nouveau : l'installeur muet sur une adoption déjà vide et le diff de politique réaffiché (tes gênes 1 et 5), le coût de la relecture à froid (7), la reprise sans list_events (8).
+ 
+ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : poussée seule, ma réponse ne couvre pas le changement qui la suit ; le push de ce changement reste refusé, et ma réponse se consigne alors une seconde fois.
+diff --git a/engine/socle/CHANGES.en.md b/engine/socle/CHANGES.en.md
+index 90126bf..07347df 100644
+--- a/engine/socle/CHANGES.en.md
++++ b/engine/socle/CHANGES.en.md
+@@ -7,6 +7,28 @@ letter. On an update, the installer gives the entries that the project's
+ engine copy did not have, and the commit message it proposes names their
+ identifiers.
+ 
++## 2026-11-18-a — The duration of the steps is told, and that of the fast steps has a threshold
++
++`verify`, `verify --fast` and `socle ci` now print the duration of each
++adapter step they run, at the end of its line, then their total. A new
++guardrails key, `[verify] fast_max_seconds`, bounds the total of the fast
++steps: 300 seconds when the project does not write it, the value the
++template sets for a new project. Beyond it, `verify --fast` warns without
++failing, naming the longest step; the warning comes back on the line that
++says the steps already passed, and in `socle state` at the start of each
++session, as long as the last run where they all passed exceeds the
++threshold. Its trace is a local file,
++`.socle/trace/duree-des-etapes-rapides`, which git already ignores. The CI
++prints the durations without a threshold. The ratchet knows the key:
++raising it requires an approved request that cites it; lowering it is
++free.
++
++To do: nothing mandatory. The duration of the project's fast steps is not
++measured on its machine: `verify --fast --redo` measures it; if it exceeds
++five minutes, the state will say so at each session, until it gets shorter
++or the human raises the threshold. Writing the key at 300 in
++`.socle/guardrails.toml` is free and changes nothing.
++
+ ## 2026-11-17-a — A shell form the hook does not judge is reported to the socle's repository
+ 
+ The `socle-review` skill said to enter a shell form an agent does not
+diff --git a/engine/socle/CHANGES.md b/engine/socle/CHANGES.md
+index bd0348f..2d5572a 100644
+--- a/engine/socle/CHANGES.md
++++ b/engine/socle/CHANGES.md
+@@ -7,6 +7,27 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
+ moteur du projet n'avait pas, et le message de commit qu'il propose nomme
+ leurs identifiants.
+ 
++## 2026-11-18-a — La durée des étapes se dit, et celle des étapes rapides a un seuil
++
++`verify`, `verify --fast` et `socle ci` impriment désormais la durée de
++chaque étape de l'adaptateur qu'ils lancent, au bout de sa ligne, puis
++leur total. Une clé nouvelle des garde-fous, `[verify] fast_max_seconds`,
++borne le total des étapes rapides : 300 secondes quand le projet ne
++l'écrit pas, la valeur que pose le gabarit d'un projet neuf. Au-delà,
++`verify --fast` avertit sans échouer, en nommant l'étape la plus longue ;
++l'avertissement revient sur la ligne qui dit les étapes déjà passées, et
++dans `socle state` au démarrage de chaque session, tant que le dernier
++passage où toutes ont passé dépasse le seuil. Sa trace est un fichier
++local, `.socle/trace/duree-des-etapes-rapides`, que git ignore déjà. La
++CI imprime les durées sans seuil. Le cliquet connaît la clé : la relever
++exige une demande validée qui la cite, la baisser est libre.
++
++À faire : rien d'obligatoire. La durée des étapes rapides du projet n'est
++pas mesurée sur sa machine : `verify --fast --redo` la mesure ; si elle
++dépasse cinq minutes, l'état le dira à chaque session, jusqu'à ce qu'elle
++raccourcisse ou que l'humain relève le seuil. Écrire la clé à 300 dans
++`.socle/guardrails.toml` est libre et ne change rien.
++
+ ## 2026-11-17-a — Une forme du shell que le hook ne juge pas se signale au dépôt du socle
+ 
+ Le skill `socle-review` disait d'inscrire une forme du shell qu'un agent
+diff --git a/engine/socle/HELP.en.md b/engine/socle/HELP.en.md
+index c4c5561..a54694c 100644
+--- a/engine/socle/HELP.en.md
++++ b/engine/socle/HELP.en.md
+@@ -464,6 +464,21 @@ third-party files (those of a tool installed in the project), the
+ project's case files and specifications. Tightening them is free;
+ loosening them requires an approved request.
+ 
++**The duration of the steps.** Each verification that runs a step of the
++adapter (`verify`, `verify --fast`, the CI) prints its duration at the end
++of its line, then the total. The total of the fast steps has a threshold,
++`[verify] fast_max_seconds`, 300 seconds by default: beyond five minutes
++of waiting, a sub-agent loses the cache of its conversation. When
++`verify --fast` runs them all and they pass, it keeps their total and the
++longest one in a local file, under `.socle/trace/`. Beyond the threshold,
++a warning, never a failure, gives the total, the threshold and the longest
++step with its duration: at the end of that run, on the line of a
++verification that does not run the steps again, and in the state, as long
++as the last complete run exceeds the threshold. A run where a step fails
++does not replace the previous one. The CI prints the durations, without a
++threshold: it runs on another machine. Lowering the threshold is free;
++raising it requires an approved request.
++
+ **An adopted project** (installed with `--adoption`). The checks that
+ failed on the existing code are named in `[adoption] warn_only`, and the
+ findings present at installation in `[adoption.tolerated]`, per check,
+diff --git a/engine/socle/HELP.md b/engine/socle/HELP.md
+index 61d3f07..1f6a63f 100644
+--- a/engine/socle/HELP.md
++++ b/engine/socle/HELP.md
+@@ -473,6 +473,21 @@ documentation, fichiers tiers (ceux d'un outil installé dans le projet),
+ fichiers de cas et spécifications du projet. Les durcir est
+ libre ; les relâcher exige une demande validée.
+ 
++**La durée des étapes.** Chaque vérification qui lance une étape de
++l'adaptateur (`verify`, `verify --fast`, la CI) imprime sa durée au bout
++de sa ligne, puis le total. Celui des étapes rapides a un seuil,
++`[verify] fast_max_seconds`, 300 secondes par défaut : au-delà de cinq
++minutes d'attente, un sous-agent perd le cache de sa conversation. Quand
++`verify --fast` les lance toutes et qu'elles passent, il garde leur total
++et la plus longue dans un fichier local, sous `.socle/trace/`. Au-delà du
++seuil, un avertissement, jamais un échec, donne le total, le seuil et
++l'étape la plus longue avec sa durée : à la fin de ce passage, sur la
++ligne d'une vérification qui ne relance pas les étapes, et dans l'état,
++tant que le dernier passage complet dépasse le seuil. Un passage où une
++étape échoue ne remplace pas le précédent. La CI imprime les durées, sans
++seuil : elle tourne sur une autre machine. Baisser le seuil est libre, le
++relever exige une demande validée.
++
+ **Un projet adopté** (installé avec `--adoption`). Les contrôles qui
+ échouaient sur l'existant sont nommés dans `[adoption] warn_only`, et les
+ constats présents à l'installation dans `[adoption.tolerated]`, par
+diff --git a/engine/socle/checks_ratchet.py b/engine/socle/checks_ratchet.py
+index 724ed82..4e45644 100644
+--- a/engine/socle/checks_ratchet.py
++++ b/engine/socle/checks_ratchet.py
+@@ -34,6 +34,9 @@ REGLES = [
+     # Relevée au-delà de ce que Claude Code remet entier, la sortie du
+     # démarrage ne parviendrait plus à l'agent (ADR-0071).
+     (("startup", "max_bytes"), "bas"),
++    # Relevé, le seuil laisserait dériver en silence la durée des étapes
++    # rapides (B-0258) ; baissé, il avertit plus tôt.
++    (("verify", "fast_max_seconds"), "bas"),
+     (("mutation", "caps", "*", "max"), "bas"),
+     (("mutation", "caps", "*", "reason"), "libre"),
+     (("mutation", "caps", "*", "pending"), "faux"),
+@@ -58,7 +61,8 @@ REGLES = [
+ # Une clé qui a une valeur par défaut : absente, elle la vaut, et l'écrire
+ # telle quelle ne change rien (D-0087).
+ DEFAUTS = {("branches", "disposable"): list(config.BRANCHES_JETABLES),
+-           ("startup", "max_bytes"): config.BORNE_DEMARRAGE}
++           ("startup", "max_bytes"): config.BORNE_DEMARRAGE,
++           ("verify", "fast_max_seconds"): config.SEUIL_RAPIDE}
+ 
+ 
+ def _cle(chemin: tuple[str, ...]) -> str:
+diff --git a/engine/socle/config.py b/engine/socle/config.py
+index 1d5e52b..6815384 100644
+--- a/engine/socle/config.py
++++ b/engine/socle/config.py
+@@ -35,6 +35,11 @@ BRANCHES_JETABLES = ("proto/",)
+ # La borne, en octets UTF-8, de la sortie du démarrage quand les garde-fous
+ # n'en disent rien (`[startup] max_bytes`) : la valeur du gabarit (ADR-0071).
+ BORNE_DEMARRAGE = 9500
++# Le seuil, en secondes, du total des étapes rapides quand les garde-fous
++# n'en disent rien (`[verify] fast_max_seconds`) : la valeur du gabarit. Au-
++# delà de cinq minutes d'attente, un sous-agent perd le cache de sa
++# conversation (B-0258).
++SEUIL_RAPIDE = 300
+ PREFIXE_DE_BRANCHE = re.compile(r"[A-Za-z0-9._/-]+")
+ COMPTEUR_STOP = ".socle/trace/stop-echecs"
+ INSTRUCTIONS = "AGENTS.md"
+@@ -296,6 +301,21 @@ class Projet:
+             return BORNE_DEMARRAGE
+         return valeur
+ 
++    def seuil_rapide(self) -> int | float:
++        """Le seuil, en secondes, du total des étapes rapides, `[verify]
++        fast_max_seconds` des garde-fous : au-delà, `verify --fast` et l'état
++        avertissent, sans échouer (B-0258). Celui du gabarit à défaut, ou si
++        la valeur n'est pas un nombre, ce que le cliquet refuse sans demande ;
++        un nombre se prend tel quel, même nul ou négatif, et `nan` vaut zéro :
++        plus bas avertit plus tôt, comme le cliquet le juge, et aucune valeur
++        qu'il laisse écrire librement ne relâche le seuil."""
++        valeur = self.gf("verify", "fast_max_seconds", defaut=None)
++        if not isinstance(valeur, (int, float)):
++            return SEUIL_RAPIDE
++        if isinstance(valeur, bool):
++            return int(valeur)
++        return valeur if valeur == valeur else 0
++
+     def branches_jetables(self) -> list[str]:
+         """Les préfixes des branches jetables, `[branches] disposable` des
+         garde-fous, `proto/` à défaut : des prototypes qu'on ne fusionne pas.
+diff --git a/engine/socle/messages_en.py b/engine/socle/messages_en.py
+index 9a88183..b1a5b21 100644
+--- a/engine/socle/messages_en.py
++++ b/engine/socle/messages_en.py
+@@ -2303,6 +2303,16 @@ MESSAGES: dict[str, str] = {
+         "companion mode: commit the copy in the private repository, then `socle private lock`",
+     "  … étapes rapides déjà passées sur cet arbre exact : non relancées (`--redo` pour les relancer)":
+         "  … fast steps already passed on this exact tree: not run again (`--redo` to run them again)",
++    "  … total des étapes lancées : {total}":
++        "  … total of the steps run: {total}",
++    "durée des étapes rapides au dernier passage complet : {total}, au-delà du seuil de {seuil} "
++    "(`[verify] fast_max_seconds` des garde-fous) ; la plus longue : `{etape}`, {duree} — la raccourcir, ou relever "
++    "le seuil par une demande validée":
++        "duration of the fast steps at the last complete run: {total}, beyond the threshold of {seuil} "
++        "(`[verify] fast_max_seconds` of the guardrails); the longest one: `{etape}`, {duree} — shorten it, or "
++        "raise the threshold through a validated request",
++    "durée des étapes rapides : illisible ({erreur})":
++        "duration of the fast steps: unreadable ({erreur})",
+     "délai dépassé : {commande}":
+         "timed out: {commande}",
+     "aucun test trouvé (`{commande}`) : un projet qui commence n'en a pas encore ; le premier code s'écrit avec son "
+@@ -2551,6 +2561,10 @@ MESSAGES: dict[str, str] = {
+         "other repository declared without approval, so that its paths escape the check",
+     "budget de mémoire relevé":
+         "memory budget raised",
++    "seuil de durée des étapes rapides relevé":
++        "duration threshold of the fast steps raised",
++    "étapes rapides plus longues que leur seuil d'une seconde":
++        "fast steps longer than their one-second threshold",
+     "correctif sans test de régression":
+         "fix without a regression test",
+     "test de régression qui échoue sur le parent faute de s'y charger":
+@@ -2941,6 +2955,12 @@ MESSAGES: dict[str, str] = {
+         "outside GitHub (B-0175)",
+     "durcir un garde-fou est libre":
+         "tightening a guardrail is free",
++    "baisser le seuil de durée des étapes rapides est libre : la CI passe":
++        "lowering the duration threshold of the fast steps is free: the CI passes",
++    "des étapes rapides d'un peu plus d'une seconde, sous le seuil du gabarit : `verify --fast` dit leurs durées, "
++    "sans avertir":
++        "fast steps of a little over one second, under the template's threshold: `verify --fast` gives their "
++        "durations, without warning",
+     "un module nouveau entre au cliquet de mutation « à mesurer » : la CI passe":
+         "a new module enters the mutation ratchet “to measure”: the CI passes",
+     "un plafond de mutation posé par la mesure passe la CI":
+diff --git a/engine/socle/selftest.py b/engine/socle/selftest.py
+index b85bff5..a5e8e36 100644
+--- a/engine/socle/selftest.py
++++ b/engine/socle/selftest.py
+@@ -54,6 +54,20 @@ class TestCalc(unittest.TestCase):
+     def test_double(self):
+         self.assertEqual(double(2), 4)
+ '''
++# Un test d'un peu plus d'une seconde : les étapes rapides du projet d'essai
++# passent alors le seuil d'une seconde, et restent loin de celui du gabarit
++# (B-0258).
++TEST_LENT = '''import time
++import unittest
++
++from calc import double
++
++
++class TestLent(unittest.TestCase):
++    def test_double_lent(self):
++        time.sleep(1.2)
++        self.assertEqual(double(3), 6)
++'''
+ DOC_CALC = """# Calcul
+ 
+ `double` multiplie par <!-- valeur:facteur -->2<!-- /valeur -->, la
+@@ -1018,6 +1032,18 @@ def _cas() -> list[Cas]:
+         remplacer(c, ".socle/guardrails.toml", '"memory/active.md" = { max_bytes = 3700 }', '"memory/active.md" = { max_bytes = 60000 }')
+         return etage_ci(a, c)
+ 
++    @defaut("seuil-rapide-releve", "seuil de durée des étapes rapides relevé", "ci", "cliquet.garde-fous")
++    def _(a, c):
++        remplacer(c, ".socle/guardrails.toml", "fast_max_seconds = 300", "fast_max_seconds = 900")
++        return etage_ci(a, c)
++
++    @defaut("etapes-lentes", "étapes rapides plus longues que leur seuil d'une seconde", "verify", "verify.duree")
++    def _(a, c):
++        remplacer(c, ".socle/guardrails.toml", "fast_max_seconds = 300", "fast_max_seconds = 1")
++        ajouter(c, "tests/test_lent.py", TEST_LENT)
++        r = a.socle(c, "verify", "--fast")
++        return r.stdout + r.stderr
++
+     @defaut("correctif-sans-test", "correctif sans test de régression", "ci", "tests.regression")
+     def _(a, c):
+         remplacer(c, "calc.py", "return FACTEUR * x", "return FACTEUR * int(x)")
+@@ -2636,6 +2662,21 @@ def _temoins() -> list[tuple[str, Callable]]:
+         remplacer(c, ".socle/guardrails.toml", '"memory/active.md" = { max_bytes = 3700 }', '"memory/active.md" = { max_bytes = 3000 }')
+         return etage_ci(a, c)
+ 
++    @temoin("baisser le seuil de durée des étapes rapides est libre : la CI passe")
++    def _(a, c):
++        remplacer(c, ".socle/guardrails.toml", "fast_max_seconds = 300", "fast_max_seconds = 120")
++        return etage_ci(a, c)
++
++    @temoin("des étapes rapides d'un peu plus d'une seconde, sous le seuil du gabarit : `verify --fast` dit leurs "
++            "durées, sans avertir")
++    def _(a, c):
++        ajouter(c, "tests/test_lent.py", TEST_LENT)
++        r = a.socle(c, "verify", "--fast")
++        sortie = r.stdout + r.stderr
++        if RAISONS_AGENT["verify.duree"] in sortie or "… total des étapes lancées : " not in r.stderr:
++            return sortie
++        return ""
++
+     @temoin("un module nouveau entre au cliquet de mutation « à mesurer » : la CI passe")
+     def _(a, c):
+         ajouter(c, "unites.py", "CENTIMES = 100\n")
+@@ -3254,6 +3295,8 @@ RAISONS_AGENT = {
+     "escalade": "ARRÊT ET ESCALADE",
+     "échec inchangé": "sans changement depuis la tentative précédente",
+     "memoire.peremption": "chantier actif inchangé depuis",
++    # L'avertissement des étapes rapides au-delà de leur seuil (B-0258).
++    "verify.duree": "durée des étapes rapides au dernier passage complet",
+     "réglage de l'agent": "les réglages de Claude Code commandent ses hooks",
+     "où regarder": "« Où regarder » doit donner un lien",
+     "contexte du projet": "« Contexte » : il commence par trois paragraphes",
+diff --git a/engine/socle/state.py b/engine/socle/state.py
+index 4c1f4a9..c7f0ed9 100644
+--- a/engine/socle/state.py
++++ b/engine/socle/state.py
+@@ -330,6 +330,16 @@ def calculer(projet: config.Projet, contenus: bool = True, supplement: list[str]
+     except Exception as e:
+         ajouter(ACTION, [[trad("adaptateur : audit impossible ({erreur})", erreur=erreur_(e))]])
+     ajouter(ACTION, _blocs(alerte_budget_actif(projet)))
++    # Tant que le dernier passage complet des étapes rapides, sur cette
++    # machine, dépasse le seuil des garde-fous (B-0258).
++    try:
++        from socle import verification
++
++        alerte = verification.alerte_duree(projet)
++        if alerte:
++            ajouter(ACTION, [[f"!! {alerte}"]])
++    except Exception as e:
++        ajouter(ACTION, [[trad("durée des étapes rapides : illisible ({erreur})", erreur=erreur_(e))]])
+     # Ce qui informe.
+     try:
+         blocs.extend(_git(racine, projet, borne=contenus))
+diff --git a/engine/socle/templates/guardrails.en.toml b/engine/socle/templates/guardrails.en.toml
+index 7f2f852..8f2a9a4 100644
+--- a/engine/socle/templates/guardrails.en.toml
++++ b/engine/socle/templates/guardrails.en.toml
+@@ -40,6 +40,15 @@ active_days = 7
+ # read it.
+ max_bytes = 9500
+ 
++[verify]
++# The threshold, in elapsed seconds, of the total of the adapter's fast steps
++# (`verify --fast`, the end of turn, the push): beyond it, a warning, not a
++# failure, names the longest one, at the end of the run and then in the
++# state, as long as the last complete run exceeds it. Beyond five minutes of
++# waiting, a sub-agent loses the cache of its conversation. The duration
++# depends on the machine: the CI prints it, without a threshold.
++fast_max_seconds = 300
++
+ [references]
+ # Files where each cited identifier, link and path must exist.
+ scan = ["**/*.md"]
+diff --git a/engine/socle/templates/guardrails.toml b/engine/socle/templates/guardrails.toml
+index 6fb4599..94178dc 100644
+--- a/engine/socle/templates/guardrails.toml
++++ b/engine/socle/templates/guardrails.toml
+@@ -41,6 +41,15 @@ active_days = 7
+ # qui manque et où le lire.
+ max_bytes = 9500
+ 
++[verify]
++# Le seuil, en secondes écoulées, du total des étapes rapides de l'adaptateur
++# (`verify --fast`, la fin de tour, le push) : au-delà, un avertissement, pas
++# un échec, nomme la plus longue, à la fin du passage puis dans l'état, tant
++# que le dernier passage complet le dépasse. Au-delà de cinq minutes
++# d'attente, un sous-agent perd le cache de sa conversation. La durée dépend
++# de la machine : la CI l'imprime, sans seuil.
++fast_max_seconds = 300
++
+ [references]
+ # Fichiers où chaque identifiant, lien et chemin cité doit exister.
+ scan = ["**/*.md"]
+diff --git a/engine/socle/verification.py b/engine/socle/verification.py
+index dd2ec3c..c93c8af 100644
+--- a/engine/socle/verification.py
++++ b/engine/socle/verification.py
+@@ -4,13 +4,19 @@ socle, un seul code de sortie.
+ Toutes les étapes s'exécutent même après un échec. Une étape qui échoue
+ rapporte sa sortie — la fin, pas un extrait choisi : c'est le moment où on en
+ a besoin, et la tronquer oblige à relancer.
++
++Chaque étape lancée dit sa durée, puis leur total ; celui des étapes
++rapides a un seuil, `[verify] fast_max_seconds` des garde-fous, au-delà
++duquel un avertissement nomme la plus longue, jamais un échec (B-0258).
+ """
+ 
+ from __future__ import annotations
+ 
++import json
+ import os
+ import re
+ import subprocess
++import time
+ 
+ from socle import config, utils as outils
+ from socle.messages import trad
+@@ -20,6 +26,13 @@ ORDRE = ("format", "lint", "build", "tests")
+ LIGNES_SORTIE = 120
+ # L'empreinte du dernier arbre sur lequel les étapes rapides ont toutes passé.
+ MARQUE = ".socle/trace/derniere-verification"
++# Le dernier passage complet des étapes rapides, à côté de sa marque : leur
++# total et la plus longue, avec sa durée (B-0258). Un fichier local : la
++# durée dépend de la machine qui l'a mesurée.
++DUREES = ".socle/trace/duree-des-etapes-rapides"
++# Le nom sous lequel le rapport donne l'avertissement d'un total au-delà du
++# seuil.
++CONTROLE_DUREE = "verify.duree"
+ # Un outil absent de l'environnement : le shell ne trouve pas la commande
+ # (code 127), ou Python le module que la commande lance.
+ OUTIL_ABSENT = re.compile(r"(?m)^\S*python[\d.]*: No module named \S+")
+@@ -31,24 +44,85 @@ def etapes_rapides(projet: config.Projet, rapport: Rapport, flux=None, refaire:
+     l'agent lance, la fin de tour et le hook avant push ne paient pas trois
+     fois la même compilation. Un commit qui ne change pas le contenu, ou qui
+     ne change que la mémoire, que les étapes ne lisent pas, ne les relance pas
+-    (B-0086). La CI, elle, refait tout. Rend vrai si elles ont tourné."""
++    (B-0086). La CI, elle, refait tout. Rend vrai si elles ont tourné.
++    Un passage où elles ont toutes passé garde leur total et la plus
++    longue ; au-delà du seuil des garde-fous, un avertissement le dit à sa
++    fin, puis sur la ligne qui dit les étapes déjà passées (B-0258)."""
+     racine = projet.racine
+     hors = (projet.chemins.memoire.rstrip("/") + "/",)
+     marque = outils.empreinte_contenu(racine, hors) if outils.a_des_commits(racine) else ""
+     fichier = racine / MARQUE
+     if marque and not refaire and fichier.is_file() and fichier.read_text().strip() == marque:
+         if flux:
++            alerte = alerte_duree(projet)
+             print(trad("  … étapes rapides déjà passées sur cet arbre exact : non relancées (`--redo` pour les "
+-                       "relancer)"), file=flux, flush=True)
++                       "relancer)") + (f" — !! {alerte}" if alerte else ""), file=flux, flush=True)
+         return False
+     avant = len(rapport.erreurs())
+-    executer_etapes(projet, True, rapport, flux)
+-    if marque and not any(c.controle.startswith("verify.") for c in rapport.erreurs()[avant:]):
+-        fichier.parent.mkdir(parents=True, exist_ok=True)
+-        fichier.write_text(marque)
++    durees = executer_etapes(projet, True, rapport, flux)
++    if not any(c.controle.startswith("verify.") for c in rapport.erreurs()[avant:]):
++        # Un passage où une étape échoue ne remplace pas le dernier passage
++        # complet, et n'avertit pas : son total ne mesure pas des étapes qui
++        # passent (ADR-0086).
++        if marque:
++            fichier.parent.mkdir(parents=True, exist_ok=True)
++            fichier.write_text(marque)
++        garder_duree(racine, durees)
++        alerte = alerte_duree(projet)
++        if alerte:
++            rapport.avertir(CONTROLE_DUREE, alerte)
+     return True
+ 
+ 
++def secondes(valeur: float) -> str:
++    """Une durée en secondes : un seuil entier tel quel, une durée mesurée
++    au dixième, avec la virgule en français."""
++    from socle.messages import FRANCAIS, langue
++
++    texte = str(valeur) if isinstance(valeur, int) else f"{valeur:.1f}"
++    return (texte.replace(".", ",") if langue() == FRANCAIS else texte) + " s"
++
++
++def garder_duree(racine, durees: list[tuple[str, float]]) -> None:
++    """La trace d'un passage complet des étapes rapides : leur total et la
++    plus longue avec sa durée ; sans étape, s'il n'en a lancé aucune."""
++    etape, duree = max(durees, key=lambda x: x[1]) if durees else (None, 0.0)
++    fichier = racine / DUREES
++    fichier.parent.mkdir(parents=True, exist_ok=True)
++    fichier.write_text(json.dumps({"total": sum(d for _, d in durees), "etape": etape, "duree": duree}) + "\n")
++
++
++def derniere_duree(racine) -> dict | None:
++    """Le dernier passage complet des étapes rapides gardé sur cette
++    machine ; rien s'il n'y en a pas, ou si sa trace est illisible."""
++    try:
++        donnees = json.loads((racine / DUREES).read_text())
++    except (OSError, ValueError):
++        return None
++    if not isinstance(donnees, dict) or not all(
++            isinstance(donnees.get(k), (int, float)) and not isinstance(donnees.get(k), bool)
++            for k in ("total", "duree")):
++        return None
++    return donnees
++
++
++def alerte_duree(projet: config.Projet) -> str | None:
++    """L'avertissement, tant que le total du dernier passage complet des
++    étapes rapides dépasse le seuil des garde-fous : le total, le seuil et
++    la plus longue avec sa durée. Jamais un échec : la durée dépend de la
++    machine. La CI ne passe pas par ici : elle lance toutes les étapes, sur
++    une autre machine, et n'en imprime que les durées."""
++    passage = derniere_duree(projet.racine)
++    seuil = projet.seuil_rapide()
++    if passage is None or passage["total"] <= seuil:
++        return None
++    return trad("durée des étapes rapides au dernier passage complet : {total}, au-delà du seuil de {seuil} "
++                "(`[verify] fast_max_seconds` des garde-fous) ; la plus longue : `{etape}`, {duree} — la "
++                "raccourcir, ou relever le seuil par une demande validée",
++                total=secondes(passage["total"]), seuil=secondes(seuil), etape=passage.get("etape") or "?",
++                duree=secondes(passage["duree"]))
++
++
+ def etapes(projet: config.Projet, rapide: bool) -> list[tuple[str, dict]]:
+     caps = projet.adaptateur.get("capabilities", {})
+     res = []
+@@ -160,24 +234,32 @@ def _commandes_ci(texte: str) -> list[str]:
+     return res
+ 
+ 
+-def executer_etapes(projet: config.Projet, rapide: bool, rapport: Rapport, flux=None):
++def executer_etapes(projet: config.Projet, rapide: bool, rapport: Rapport, flux=None) -> list[tuple[str, float]]:
+     """Les étapes de chaque adaptateur, l'un après l'autre, jusqu'au bout
+     même après un échec. Dans un projet à plusieurs adaptateurs, chaque
+-    étape porte le nom du sien : `verify.kotlin.tests` (ADR-0051, point 4)."""
++    étape porte le nom du sien : `verify.kotlin.tests` (ADR-0051, point 4).
++    Chaque étape lancée dit sa durée au bout de sa ligne, puis leur total,
++    sans seuil (B-0258) ; rend la durée de chacune, en secondes écoulées."""
+     env = dict(os.environ)
+     env.setdefault("LC_ALL", "C.UTF-8")
+     if rapide:
+         env[RAPIDE] = "1"
+     else:
+         env.pop(RAPIDE, None)
++    durees: list[tuple[str, float]] = []
+     if not projet.plusieurs_adaptateurs:
+-        _executer_etapes_de(projet, "verify", rapide, rapport, flux, env)
+-        return
+-    for a in projet.adaptateurs:
+-        _executer_etapes_de(projet.pour(a), f"verify.{a.nom}", rapide, rapport, flux, env)
++        _executer_etapes_de(projet, "verify", rapide, rapport, flux, env, durees)
++    else:
++        for a in projet.adaptateurs:
++            _executer_etapes_de(projet.pour(a), f"verify.{a.nom}", rapide, rapport, flux, env, durees)
++    if flux and durees:
++        print(trad("  … total des étapes lancées : {total}", total=secondes(sum(d for _, d in durees))),
++              file=flux, flush=True)
++    return durees
+ 
+ 
+-def _executer_etapes_de(projet: config.Projet, prefixe: str, rapide: bool, rapport: Rapport, flux, env):
++def _executer_etapes_de(projet: config.Projet, prefixe: str, rapide: bool, rapport: Rapport, flux, env,
++                        durees: list[tuple[str, float]]):
+     vide = sans_code(projet)
+     for nom, c in etapes(projet, rapide):
+         ident = f"{prefixe}.{nom}"
+@@ -196,14 +278,18 @@ def _executer_etapes_de(projet: config.Projet, prefixe: str, rapide: bool, rappo
+                                         commande=c['command']))
+             continue
+         if flux:
+-            print(f"  … {ident} : {c['command']}", file=flux, flush=True)
++            # Sa durée ira au bout de cette ligne, la commande finie.
++            print(f"  … {ident} : {c['command']}", file=flux, end="", flush=True)
++        debut = time.monotonic()
+         try:
+             p = subprocess.run(c["command"], shell=True, cwd=projet.racine, capture_output=True,
+                                text=True, encoding="utf-8", errors="replace", env=env,
+                                timeout=c.get("timeout", 3600))
+         except subprocess.TimeoutExpired:
++            _duree(ident, debut, durees, flux)
+             rapport.erreur(ident, trad("délai dépassé : {commande}", commande=c['command']))
+             continue
++        _duree(ident, debut, durees, flux)
+         if p.returncode != 0:
+             sortie = (p.stdout + p.stderr).rstrip()
+             queue = "\n        ".join(sortie.splitlines()[-LIGNES_SORTIE:])
+@@ -224,3 +310,10 @@ def _executer_etapes_de(projet: config.Projet, prefixe: str, rapide: bool, rappo
+                                                commandes=" ; ".join(f"`{x}`" for x in ci)) if ci
+                                          else trad("l'outil manque à cet environnement : l'installer"))
+             rapport.erreur(ident, message)
++
++
++def _duree(ident: str, debut: float, durees: list[tuple[str, float]], flux) -> None:
++    duree = time.monotonic() - debut
++    durees.append((ident, duree))
++    if flux:
++        print(f" — {secondes(duree)}", file=flux, flush=True)
+diff --git a/memory/backlog/B-0282-une-borne-du-demarrage-nulle-ou-negative-vaut-cell.md b/memory/backlog/B-0282-une-borne-du-demarrage-nulle-ou-negative-vaut-cell.md
+new file mode 100644
+index 0000000..7ed61cb
+--- /dev/null
++++ b/memory/backlog/B-0282-une-borne-du-demarrage-nulle-ou-negative-vaut-cell.md
+@@ -0,0 +1,19 @@
++<!-- socle: couche=backlog zone=publique -->
++# B-0282 — Une borne du démarrage nulle ou négative vaut celle du gabarit, que le cliquet laisse écrire librement : [startup] max_bytes = 0 relève en silence une borne plus basse
++
++> statut : ouvert · origine : J-2026-11-18-B · lu : backlog@ead98240
++
++Vu en écrivant le seuil des étapes rapides (T-0045, J-2026-11-18-B), pas
++corrigé : un défaut voisin. `Projet.borne_demarrage` rend la borne du
++gabarit (9 500 octets) pour une valeur de `[startup] max_bytes` nulle,
++négative ou qui n'est pas un entier ; le cliquet des garde-fous, sens
++« bas », juge l'écrire plus bas comme un durcissement, libre. Un projet
++dont la borne vaut 8 000 qui écrit 0 la relève donc à 9 500 sans
++demande. Déduit de la lecture du code, non reproduit. L'effet est borné
++par la valeur du gabarit, que Claude Code remet entière ; le seuil
++`[verify] fast_max_seconds` évite le même trou en prenant une valeur nulle
++ou négative pour la plus stricte.
++
++## Satisfait quand
++
++- [ ] aucune valeur de `[startup] max_bytes` que le cliquet laisse écrire sans demande ne relève la borne effective, et un test le montre
+diff --git a/memory/backlog/T-0045-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md b/memory/backlog/T-0045-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md
+deleted file mode 100644
+index ec20a0e..0000000
+--- a/memory/backlog/T-0045-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md
++++ /dev/null
+@@ -1,11 +0,0 @@
+-<!-- socle: couche=backlog zone=publique -->
+-# T-0045 — La durée des étapes rapides se dit, et a un seuil : verify --fast n'imprime aucune durée, et rien ne signale qu'elle a passé de 143 s à près de douze minutes
+-
+-> statut : ouvert · après : D-0130 · origine : J-2026-11-16-E · besoin : B-0258 · lu : backlog@9966bbbd
+-
+-La tâche de B-0258, que la migration du backlog en quatre formes a posée dans le lot L-0012 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+-
+-## Fait quand
+-
+-- [ ] `verify --fast` imprime la durée de chaque étape et le total, et un test le montre
+-- [ ] un seuil dépassé donne un avertissement qui nomme l'étape, et un test le montre
+diff --git a/memory/backlog/B-0258-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md b/memory/backlog/closed/B-0258-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md
+similarity index 94%
+rename from memory/backlog/B-0258-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md
+rename to memory/backlog/closed/B-0258-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md
+index 103da96..a38442c 100644
+--- a/memory/backlog/B-0258-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md
++++ b/memory/backlog/closed/B-0258-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md
+@@ -1,7 +1,7 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # B-0258 — La durée des étapes rapides se dit, et a un seuil : verify --fast n'imprime aucune durée, et rien ne signale qu'elle a passé de 143 s à près de douze minutes
+ 
+-> statut : ouvert · origine : J-2026-11-16-E · priorité : haute · lu : backlog@6e1a17c2
++> statut : fait · origine : J-2026-11-16-E · ref : J-2026-11-18-B · priorité : haute · lu : backlog@6e1a17c2
+ 
+ Un sujet du produit, d'une analyse en lecture seule du 15 novembre sur
+ d1d296e, que Théo a fait inscrire (J-2026-11-16-E) ; il n'en fixe ni la
+@@ -52,4 +52,4 @@ déjà passées sur le même contenu, et n'ajoutent donc rien.
+ 
+ ## Satisfait quand
+ 
+-- [ ] le « Fait quand » de T-0045 est tenu
++- [x] le « Fait quand » de T-0045 est tenu
+diff --git a/memory/backlog/closed/T-0045-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md b/memory/backlog/closed/T-0045-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md
+new file mode 100644
+index 0000000..73b468f
+--- /dev/null
++++ b/memory/backlog/closed/T-0045-la-duree-des-etapes-rapides-se-dit-et-a-un-seuil-v.md
+@@ -0,0 +1,11 @@
++<!-- socle: couche=backlog zone=publique -->
++# T-0045 — La durée des étapes rapides se dit, et a un seuil : verify --fast n'imprime aucune durée, et rien ne signale qu'elle a passé de 143 s à près de douze minutes
++
++> statut : fait · après : D-0130 · origine : J-2026-11-16-E · ref : J-2026-11-18-B · besoin : B-0258 · lu : backlog@9966bbbd
++
++La tâche de B-0258, que la migration du backlog en quatre formes a posée dans le lot L-0012 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
++
++## Fait quand
++
++- [x] `verify --fast` imprime la durée de chaque étape et le total, et un test le montre (`test_chaque_etape_dit_sa_duree_au_bout_de_sa_ligne_puis_le_total`)
++- [x] un seuil dépassé donne un avertissement qui nomme l'étape, et un test le montre (`test_au_dela_du_seuil_un_avertissement_nomme_la_plus_longue`)
+diff --git a/memory/decisions/ADR-0086-un-passage-des-etapes-rapides-ou-une-etape-echoue.md b/memory/decisions/ADR-0086-un-passage-des-etapes-rapides-ou-une-etape-echoue.md
+new file mode 100644
+index 0000000..691cc78
+--- /dev/null
++++ b/memory/decisions/ADR-0086-un-passage-des-etapes-rapides-ou-une-etape-echoue.md
+@@ -0,0 +1,38 @@
++<!-- socle: couche=decisions zone=publique -->
++# ADR-0086 — Un passage des étapes rapides où une étape échoue ne garde pas sa durée : le dernier passage complet est le dernier qui a tout passé
++
++> statut : acceptée · date : 2026-11-18 · source : D-0130@ae44699b, J-2026-11-17-L@f4405447, B-0258@ae67caba · lu : decisions@4678c1d9
++
++## Contexte
++
++La spécification de la durée des étapes, validée par Théo (le second
++point de D-0130@ae44699b, J-2026-11-17-L@f4405447), fait garder à
++`verify --fast`, quand il lance toutes les étapes rapides, leur total et
++la plus longue, « avec la trace de ce passage » ; l'avertissement d'un
++total au-delà du seuil se répète ensuite, dans l'état et sur la ligne des
++étapes déjà passées, « tant que le dernier passage complet dépasse le
++seuil ». Elle ne dit pas ce que devient un passage où une étape échoue.
++
++Un tel passage ne mesure pas les étapes telles qu'elles passent : une
++compilation qui échoue s'arrête avant les tests, une étape bloquée finit
++en erreur de délai (B-0258, son modèle de menace, la laisse passer). Gardé,
++son total court effacerait une dérive mesurée au passage d'avant ; son
++total long, une étape bloquée, avertirait sur un temps qui n'en est pas un.
++
++## Décision
++
++Le dernier passage complet est le dernier où toutes les étapes rapides
++ont passé : le même critère que la marque des étapes déjà passées, écrite
++à côté. Un passage où une étape échoue imprime ses durées et leur total,
++comme tout passage, mais ne remplace pas la trace du précédent et
++n'avertit pas.
++
++## Conséquences
++
++- `verification.etapes_rapides` écrit la marque et la trace des durées
++  sous la même condition ; un test le garde (un passage en échec laisse la
++  trace d'avant).
++- Une dérive que seul un passage en échec montrerait se voit au premier
++  passage qui réussit : l'agent ne livre pas sur un échec.
++- Pour défaire : une ADR qui la remplace, par exemple pour garder la durée
++  d'un échec qui a lancé toutes ses étapes jusqu'au bout.
+diff --git a/memory/journal/2026-11-6.md b/memory/journal/2026-11-6.md
+index 0ec12b2..76d322d 100644
+--- a/memory/journal/2026-11-6.md
++++ b/memory/journal/2026-11-6.md
+@@ -1176,3 +1176,56 @@ Reste, pour clore T-0044 : la troisième CI verte de suite, celle du
+ prochain push de la branche de travail. Le premier et le troisième
+ critère sont cochés ; le deuxième, en local tenu (trois passages le 17,
+ deux aujourd'hui), le sera en CI.
++
++## J-2026-11-18-B — T-0045 : la durée de chaque étape se dit, et le total des étapes rapides a un seuil, [verify] fast_max_seconds, qui avertit sans échouer (D-0130, second point ; ADR-0086)
++
++> ref : T-0045, B-0258, D-0130, J-2026-11-17-L, ADR-0086, L-0012, B-0282
++
++Les six points du second point de D-0130, validé tel quel par Théo
++(J-2026-11-17-L), sans rouvrir la spécification :
++
++1. `verification.executer_etapes` imprime la durée de chaque étape lancée
++   au bout de sa ligne (« … verify.tests : commande — 150,2 s »), puis
++   « … total des étapes lancées », pour `verify`, `verify --fast` et
++   `socle ci` ; elle rend les durées.
++2. `[verify] fast_max_seconds` des garde-fous, 300 dans les deux gabarits
++   et par défaut (`config.SEUIL_RAPIDE`, `Projet.seuil_rapide`) ; posé à
++   300 dans `.socle/guardrails.toml` de ce dépôt, ce qui n'assouplit rien.
++3. `verification.etapes_rapides` garde, quand toutes les étapes rapides
++   ont tourné et passé, leur total et la plus longue dans
++   `.socle/trace/duree-des-etapes-rapides`, à côté de la marque ;
++   au-delà du seuil, l'avertissement `verify.duree` à la fin du passage,
++   sur la ligne des étapes déjà passées, et en tête de `socle state`, tant
++   que ce dernier passage complet le dépasse.
++4. Le cliquet connaît la clé, sens « bas », avec sa valeur par défaut :
++   l'écrire à 300 ou plus bas est libre, la relever ou retirer une valeur
++   plus basse exige une demande validée. Un nombre nul, négatif ou `nan`
++   se prend pour le plus strict, comme le cliquet le juge ; une valeur qui
++   n'est pas un nombre vaut 300, et le cliquet la refuse sans demande.
++5. La CI n'a pas de seuil : `socle ci` lance `executer_etapes`, jamais
++   `etapes_rapides`, par où passe seul le seuil ; aucune variable
++   d'environnement n'est inventée pour la reconnaître.
++6. L'auto-test reçoit `seuil-rapide-releve` (attrapé par
++   `cliquet.garde-fous`) et `etapes-lentes` (un test de 1,2 s sous un
++   seuil d'une seconde, attrapé par la phrase de `verify.duree`), avec
++   leurs témoins (le seuil baissé, la CI passe ; le même test sous le
++   seuil du gabarit, les durées dites sans avertir). Le guide, en deux
++   langues, et la note de version 2026-11-18-a le disent ; le prompt de
++   la mise à jour de chess en a le point 15.
++
++Tranché, ADR-0086 : un passage où une étape échoue imprime ses durées,
++mais ne remplace pas la trace du dernier passage complet et n'avertit
++pas ; son total ne mesure pas des étapes qui passent.
++
++Les tests nouveaux de `tests/test_etapes_rapides.py` (douze) échouent sur
++le commit parent, mesuré en y lançant ce fichier : 4 échecs, 8 erreurs ;
++les quatre cas de l'auto-test passent, lancés seuls. Les durées de
++référence, mesurées le matin dans ce conteneur à 4 cœurs après le
++passage au lanceur parallèle : `verify --fast --redo` 163,6 s, `verify`
++272 s, sous le seuil. Le `verify --fast` de la fin de T-0045, sur le même
++conteneur, s'imprime lui-même : `verify.lint` 0,0 s, `verify.tests`
++156,5 s, total 156,6 s, sans avertissement.
++
++Un défaut voisin, vu en lisant `Projet.borne_demarrage`, va au backlog
++sans être corrigé : B-0282, une borne du démarrage nulle ou négative, que
++le cliquet laisse écrire, vaut celle du gabarit.
+diff --git a/tests/test_etapes_rapides.py b/tests/test_etapes_rapides.py
+index 83e76e8..1eabc6f 100644
+--- a/tests/test_etapes_rapides.py
++++ b/tests/test_etapes_rapides.py
+@@ -103,6 +103,157 @@ class TestEtapesRapides(unittest.TestCase):
+         self.assertEqual(self.fois(), 2)
+ 
+ 
++class TestDureeDesEtapes(unittest.TestCase):
++    """B-0258, T-0045 : `verify --fast` n'imprimait aucune durée, et rien ne
++    signalait qu'elle avait passé de 143 s à près de douze minutes. Chaque
++    étape lancée dit sa durée, puis leur total ; au-delà du seuil des
++    garde-fous, un avertissement nomme la plus longue."""
++
++    def setUp(self):
++        self.racine = Path(tempfile.mkdtemp(prefix="socle-durees-"))
++        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
++        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=self.racine, check=True)
++        (self.racine / "calc.py").write_text("x = 1\n")
++        with contextlib.redirect_stdout(io.StringIO()):
++            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
++        subprocess.run(["git", "add", "-A"], cwd=self.racine, check=True)
++        subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "base", "--no-verify"],
++                       cwd=self.racine, check=True)
++        self.code = 0
++
++    def projet(self, seuil=None) -> config.Projet:
++        projet = config.Projet.charger(self.racine)
++        projet.adaptateur["capabilities"] = {
++            "lint": {"command": "sleep 0.3", "fast": True},
++            "tests": {"command": f"exit {self.code}", "fast": True},
++            "build": {"command": "true"}}
++        if seuil is not None:
++            projet.garde_fous["verify"] = {"fast_max_seconds": seuil}
++        return projet
++
++    def lancer(self, seuil=None, refaire=False) -> tuple[Rapport, str]:
++        rapport, flux = Rapport(), io.StringIO()
++        verification.etapes_rapides(self.projet(seuil), rapport, flux=flux, refaire=refaire)
++        return rapport, flux.getvalue()
++
++    def avertissements(self, rapport: Rapport) -> list[str]:
++        return [c.message for c in rapport.constats if c.controle == verification.CONTROLE_DUREE]
++
++    def test_chaque_etape_dit_sa_duree_au_bout_de_sa_ligne_puis_le_total(self):
++        _, sortie = self.lancer()
++        lignes = sortie.splitlines()
++        self.assertRegex(lignes[0], r"^  … verify\.lint : sleep 0\.3 — 0,[3-9] s$")
++        self.assertRegex(lignes[1], r"^  … verify\.tests : exit 0 — \d+,\d s$")
++        self.assertRegex(lignes[2], r"^  … total des étapes lancées : 0,[3-9] s$")
++        self.assertEqual(len(lignes), 3)  # l'étape qui n'est pas rapide ne tourne pas
++
++    def test_la_verification_complete_et_la_ci_impriment_les_durees_sans_seuil(self):
++        """Point 5 : la CI lance toutes les étapes, sur une autre machine."""
++        rapport, flux = Rapport(), io.StringIO()
++        durees = verification.executer_etapes(self.projet(seuil=0.1), False, rapport, flux)
++        self.assertEqual([n for n, _ in durees], ["verify.lint", "verify.build", "verify.tests"])
++        self.assertRegex(flux.getvalue().splitlines()[-1], r"^  … total des étapes lancées : \d+,\d s$")
++        self.assertEqual(self.avertissements(rapport), [])
++        self.assertFalse((self.racine / verification.DUREES).exists())
++
++    def test_au_dela_du_seuil_un_avertissement_nomme_la_plus_longue(self):
++        rapport, _ = self.lancer(seuil=0.1)
++        self.assertTrue(rapport.reussi)
++        (message,) = self.avertissements(rapport)
++        self.assertRegex(message, r"^durée des étapes rapides au dernier passage complet : 0,[3-9] s, au-delà du seuil "
++                                  r"de 0,1 s \(`\[verify\] fast_max_seconds` des garde-fous\) ; la plus longue : "
++                                  r"`verify\.lint`, 0,[3-9] s")
++
++    def test_sous_le_seuil_rien_n_avertit(self):
++        rapport, _ = self.lancer()
++        self.assertEqual(self.avertissements(rapport), [])
++        self.assertIsNone(verification.alerte_duree(self.projet()))
++
++    def test_les_etapes_deja_passees_redisent_l_avertissement_sur_leur_ligne(self):
++        self.lancer(seuil=0.1)
++        rapport, sortie = self.lancer(seuil=0.1)
++        self.assertRegex(sortie, r"^  … étapes rapides déjà passées sur cet arbre exact : non relancées \(`--redo` "
++                                 r"pour les relancer\) — !! durée des étapes rapides au dernier passage complet : "
++                                 r"0,[3-9] s, au-delà du seuil de 0,1 s .*la plus longue : `verify\.lint`")
++        self.assertEqual(rapport.constats, [])
++        _, sortie = self.lancer(seuil=300)
++        self.assertNotIn("!!", sortie)
++
++    def test_l_etat_le_dit_tant_que_le_dernier_passage_complet_depasse_le_seuil(self):
++        from socle import state as etat
++
++        self.lancer(seuil=0.1)
++        self.assertIn("!! durée des étapes rapides au dernier passage complet", etat.calculer(self.projet(0.1),
++                                                                                              contenus=False))
++        self.assertNotIn("durée des étapes rapides", etat.calculer(self.projet(), contenus=False))
++        self.lancer(seuil=0.1)  # déjà passées : la trace reste
++        self.assertIsNotNone(verification.alerte_duree(self.projet(0.1)))
++        self.lancer(seuil=10, refaire=True)  # un passage complet sous ce seuil-là la remplace
++        self.assertIsNone(verification.alerte_duree(self.projet(10)))
++
++    def test_un_passage_ou_une_etape_echoue_ne_garde_pas_sa_duree(self):
++        """ADR-0086 : son total ne mesure pas des étapes qui passent ; une
++        erreur courte effacerait la dérive."""
++        verification.garder_duree(self.racine, [("verify.tests", 400.0)])
++        self.code = 1
++        rapport, sortie = self.lancer(seuil=0.1)
++        self.assertFalse(rapport.reussi)
++        self.assertRegex(sortie, r"  … total des étapes lancées : \d+,\d s")
++        self.assertEqual(self.avertissements(rapport), [])
++        self.assertEqual(verification.derniere_duree(self.racine)["total"], 400.0)
++
++    def test_une_trace_illisible_ne_dit_rien(self):
++        fichier = self.racine / verification.DUREES
++        fichier.parent.mkdir(parents=True, exist_ok=True)
++        for texte in ("pas du json", "[1, 2]", '{"total": true, "duree": 1}', '{"total": 500}'):
++            fichier.write_text(texte)
++            self.assertIsNone(verification.derniere_duree(self.racine), texte)
++            self.assertIsNone(verification.alerte_duree(self.projet(0.1)), texte)
++
++    def test_secondes_au_dixieme_dans_la_langue_du_projet(self):
++        from socle import messages
++
++        self.assertEqual(verification.secondes(163.64), "163,6 s")
++        self.assertEqual(verification.secondes(300), "300 s")
++        with messages.dans("en"):
++            self.assertEqual(verification.secondes(163.64), "163.6 s")
++
++
++class TestSeuilDesEtapesRapides(unittest.TestCase):
++    """B-0258 : le seuil, `[verify] fast_max_seconds` des garde-fous ; le
++    relever exige une demande validée, le baisser est libre."""
++
++    def seuil(self, garde_fous: dict):
++        return config.Projet(Path("."), garde_fous=garde_fous).seuil_rapide()
++
++    def test_le_seuil_des_garde_fous_et_sa_valeur_par_defaut(self):
++        self.assertEqual(config.SEUIL_RAPIDE, 300)
++        self.assertEqual(self.seuil({}), 300)
++        self.assertEqual(self.seuil({"verify": {"fast_max_seconds": 120}}), 120)
++        self.assertEqual(self.seuil({"verify": {"fast_max_seconds": 2.5}}), 2.5)
++        self.assertEqual(self.seuil({"verify": {"fast_max_seconds": "beaucoup"}}), 300)
++        # Ce que le cliquet laisse écrire librement ne relâche jamais le seuil.
++        self.assertEqual(self.seuil({"verify": {"fast_max_seconds": 0}}), 0)
++        self.assertEqual(self.seuil({"verify": {"fast_max_seconds": float("nan")}}), 0)
++        self.assertEqual(self.seuil({"verify": {"fast_max_seconds": True}}), 1)
++
++    def test_le_gabarit_pose_le_seuil_par_defaut_dans_les_deux_langues(self):
++        for nom in ("guardrails.toml", "guardrails.en.toml"):
++            gabarit = tomllib.loads((MOTEUR / "socle/templates" / nom).read_text())
++            self.assertEqual(gabarit["verify"]["fast_max_seconds"], config.SEUIL_RAPIDE, nom)
++
++    def test_le_cliquet_connait_la_cle(self):
++        from socle.checks_ratchet import assouplissements
++
++        self.assertEqual(assouplissements({}, {"verify": {"fast_max_seconds": 300}}), [])
++        self.assertEqual(assouplissements({}, {"verify": {"fast_max_seconds": 120}}), [])
++        self.assertEqual(assouplissements({"verify": {"fast_max_seconds": 300}}, {}), [])
++        self.assertEqual(assouplissements({}, {"verify": {"fast_max_seconds": 900}}),
++                         [("verify.fast_max_seconds", "300 → 900")])
++        self.assertEqual(assouplissements({"verify": {"fast_max_seconds": 120}}, {}),
++                         [("verify.fast_max_seconds", "120 → 300")])
++
++
+ class TestAutotestUneFois(unittest.TestCase):
+     """L6 : `socle ci` lançait l'auto-test deux fois, dans la suite de tests
+     de ce dépôt puis lui-même."""
+-- 
+2.43.0
+
