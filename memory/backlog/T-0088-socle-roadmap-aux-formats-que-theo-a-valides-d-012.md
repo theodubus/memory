@@ -52,7 +52,7 @@ options et les déclencheurs de B-0274 ne changent pas.
 
 ## Fait quand
 
-- [ ] le format détaillé donne, sous la ligne de chaque lot détaillé (« **n. L-NNNN — titre** · état · closes/total »), un tableau Markdown d'une ligne par tâche : son état et sa priorité en symboles, son identifiant, son besoin et son titre, comme l'exemple validé, et un test de `tests/test_suite_du_projet.py` le lit
-- [ ] lu par besoin, chaque besoin a de même le tableau de ses tâches, avec le lot de chacune, et un test le lit
-- [ ] le format compact aligne en colonnes chaque jalon, ses lots et leur avancement, le lot en cours marqué ▶, et finit par les lignes « Hors lot » et « Ensuite », comme l'exemple validé, et un test le lit
-- [ ] le guide et son anglais montrent les deux formats, une note de version le dit, et le prompt de mise à jour de chess le reprend
+- [x] le format détaillé donne, sous la ligne de chaque lot détaillé (« **n. L-NNNN — titre** · état · closes/total »), un tableau Markdown d'une ligne par tâche : son état et sa priorité en symboles, son identifiant, son besoin et son titre, comme l'exemple validé, et un test de `tests/test_suite_du_projet.py` le lit
+- [x] lu par besoin, chaque besoin a de même le tableau de ses tâches, avec le lot de chacune, et un test le lit
+- [x] le format compact aligne en colonnes chaque jalon, ses lots et leur avancement, le lot en cours marqué ▶, et finit par les lignes « Hors lot » et « Ensuite », comme l'exemple validé, et un test le lit
+- [x] le guide et son anglais montrent les deux formats, une note de version le dit, et le prompt de mise à jour de chess le reprend

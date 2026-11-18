@@ -7,6 +7,7 @@ attendent le même lot sans ordre entre eux."""
 import argparse
 import contextlib
 import io
+import re
 import types
 import unittest
 from pathlib import Path
@@ -42,6 +43,88 @@ def backlog_d_essai() -> memoire.Memoire:
         entree("JA-0001", meta="après : B-0001, B-0002"),
         entree("JA-0002", meta="après : JA-0001, B-0003"),
     ))
+
+
+# Les titres du backlog des exemples validés, dans chaque langue ; une
+# entrée qui n'y est pas garde celui de `entree`.
+TITRES = {
+    "fr": {"JA-0005": "Fini avant les nouvelles fonctions : les lots qui restent",
+           "JA-0002": "Le pilote équipé : son installation",
+           "L-0013": "Structure du backlog, chantier en rond : les deux suites",
+           "L-0012": "Durée de la vérification", "L-0014": "Suite de la structure du backlog",
+           "T-0046": "La structure en quatre formes : besoin, tâche, lot, jalon",
+           "T-0047": "Le format de la mémoire", "T-0048": "La forme exotique dans la liste du guide",
+           "T-0043": "Mesurer la durée de chaque étape",
+           "T-0044": "La suite sur plusieurs cœurs : un lanceur parallèle",
+           "B-0265": "Un mot pour une chose dans le backlog", "B-0257": "La vérification dure trop"},
+    "en": {"JA-0005": "Done before the new features: the remaining batches",
+           "JA-0002": "The pilot equipped: its installation",
+           "L-0013": "Backlog structure, going in circles: the two follow-ups",
+           "L-0012": "Duration of the verification", "L-0014": "Rest of the backlog structure",
+           "T-0046": "The structure in four forms: need, task, batch, milestone",
+           "T-0047": "The memory format", "T-0048": "The exotic form in the guide's list",
+           "T-0043": "Measure the duration of each step",
+           "T-0044": "The suite on several cores: a parallel runner",
+           "B-0265": "One word for one thing in the backlog", "B-0257": "The verification takes too long"},
+}
+CACHES = range(6, 11)
+
+
+def titree(ident: str, titre: str, statut: str = "ouvert", meta: str = "") -> tuple[str, str]:
+    """Une entrée du backlog sous son titre."""
+    chemin, texte = entree(ident, statut, meta)
+    return chemin, texte.replace(f"L'entrée {ident}", titre, 1)
+
+
+def backlog_de_l_exemple(lg: str = "fr") -> memoire.Memoire:
+    """Le backlog des deux exemples que Théo a validés (T-0088, D-0127) : un
+    jalon dont le lot en cours et les deux suivants se lisent tâche par tâche
+    et cinq autres lots se résument ; un jalon sans lot, venu avant lui ;
+    des besoins sans tâche, un bloqué, deux hors des jalons. Chaque état et
+    chaque priorité d'une tâche y sont."""
+    def e(ident: str, statut: str = "ouvert", meta: str = "") -> tuple[str, str]:
+        defaut = f"L'entrée {ident}" if lg == "fr" else f"Entry {ident}"
+        return titree(ident, TITRES[lg].get(ident, defaut), statut, meta)
+
+    return memoire_de(
+        e("B-0257", meta="priorité : haute"), e("B-0264", "fait"), e("B-0265"), e("B-0270"), e("B-0179", "bloqué"),
+        e("B-0271"), e("B-0126"), e("B-0055"), e("B-0101"), *(e(f"B-03{n:02d}") for n in CACHES),
+        e("T-0046", "fait", "besoin : B-0265"), e("T-0047", "fait", "besoin : B-0265"), e("T-0048", meta="besoin : B-0270"),
+        e("T-0043", meta="besoin : B-0257"), e("T-0044", meta="besoin : B-0257 · après : T-0043"),
+        e("T-0049", "abandonné", "besoin : B-0265"), e("T-0050", "bloqué", "besoin : B-0265"),
+        e("T-0051", meta="besoin : B-0265 · priorité : basse"), e("T-0052", meta="besoin : B-0265"),
+        e("T-0053", meta="besoin : B-0265 · après : T-0052"),
+        *(e(f"T-0{c}{n:02d}", meta=f"besoin : B-03{n:02d}") for n in CACHES for c in (1, 2)),
+        e("L-0013", "en cours", "après : T-0046, T-0047, T-0048"),
+        e("L-0012", meta="après : L-0013, T-0043, T-0044"),
+        e("L-0014", meta="après : L-0012, T-0049, T-0050, T-0051, T-0052, T-0053"),
+        *(e(f"L-00{n:02d}", meta=f"après : {'L-0014' if n == 6 else f'L-00{n - 1:02d}'}, T-01{n:02d}, T-02{n:02d}")
+          for n in CACHES),
+        e("JA-0002", meta="après : B-0126"),
+        e("JA-0005", meta="après : B-0257, B-0264, B-0265, B-0270, B-0179, B-0271, "
+                          + ", ".join(f"B-03{n:02d}" for n in CACHES)),
+    )
+
+
+def tableaux(md: str) -> list[tuple[str, list[str], str]]:
+    """Chaque tableau d'un texte Markdown : (la ligne d'avant, ses lignes, la
+    ligne d'après)."""
+    lignes, res, k = md.splitlines(), [], 0
+    while k < len(lignes):
+        if not lignes[k].startswith("|"):
+            k += 1
+            continue
+        debut = k
+        while k < len(lignes) and lignes[k].startswith("|"):
+            k += 1
+        res.append((lignes[debut - 1] if debut else "", lignes[debut:k], lignes[k] if k < len(lignes) else ""))
+    return res
+
+
+def sans_numeros(texte: str) -> str:
+    """Un texte, ses identifiants écrits `X-NNNN`, comme le guide les montre :
+    il ne cite aucun identifiant d'une mémoire."""
+    return memoire.ID_RE.sub(lambda m: f"{m.group('type')}-NNNN", texte)
 
 
 class TestCalcul(unittest.TestCase):
@@ -231,6 +314,273 @@ class TestFormats(unittest.TestCase):
         self.assertIn("- T-0004 — L'entrée T-0004 · batch L-0003 · waiting: D-0001", detail)
         for ligne in lignes + detail.splitlines():
             self.assertNotRegex(ligne, r"\b(?:tâche|besoin|lot|jalon)s?\b")
+
+
+class TestLesFormatsValides(unittest.TestCase):
+    """T-0088 (D-0127) : les deux formats que Théo a validés, recopiés au
+    backlog mot pour mot. Le détaillé, un tableau Markdown par lot, l'état
+    de chaque tâche et sa priorité en symboles ; lu par besoin, le tableau
+    des tâches de chaque besoin, avec le lot de chacune ; le compact aligné
+    en colonnes, le lot en cours marqué ▶, fini par « Hors lot » et
+    « Ensuite »."""
+
+    def test_le_format_detaille_un_tableau_par_lot_comme_l_exemple_valide(self):
+        s = suite.calculer(backlog_de_l_exemple())
+        md = suite.markdown(s)
+        lignes = md.splitlines()
+        self.assertEqual(lignes[:5], [
+            "## La suite du projet", "",
+            "Calculée depuis le backlog par `python3 .socle/socle roadmap --format markdown` : rien n'y est écrit "
+            "à la main.", "",
+            "Légende : ✓ faite · ▶ en cours · ○ prête · ⏳ attend · ✗ bloquée · ⊘ abandonnée · ↑ priorité haute · "
+            "↓ priorité basse"])
+        debut = lignes.index("### JA-0005 — Fini avant les nouvelles fonctions · 1/11 besoins clos")
+        self.assertEqual(lignes[debut:debut + 41], [
+            "### JA-0005 — Fini avant les nouvelles fonctions · 1/11 besoins clos", "",
+            "**1. L-0013 — Structure du backlog, chantier en rond** · en cours · 2/3", "",
+            "| | Tâche | Besoin | |",
+            "| --- | --- | --- | --- |",
+            "| ✓ | T-0046 | B-0265 | La structure en quatre formes |",
+            "| ✓ | T-0047 | B-0265 | Le format de la mémoire |",
+            "| ○ | T-0048 | B-0270 | La forme exotique dans la liste du guide |", "",
+            "**2. L-0012 — Durée de la vérification** · 0/2", "",
+            "| | Tâche | Besoin | |",
+            "| --- | --- | --- | --- |",
+            "| ○ | T-0043 | B-0257 ↑ | Mesurer la durée de chaque étape |",
+            "| ⏳ | T-0044 | B-0257 ↑ | La suite sur plusieurs cœurs · attend T-0043 |", "",
+            "**3. L-0014 — Suite de la structure du backlog** · 1/5", "",
+            "| | Tâche | Besoin | |",
+            "| --- | --- | --- | --- |",
+            "| ⊘ | T-0049 | B-0265 | L'entrée T-0049 |",
+            "| ✗ | T-0050 | B-0265 | L'entrée T-0050 |",
+            "| ○ | T-0051 | B-0265 ↓ | L'entrée T-0051 |",
+            "| ○ | T-0052 | B-0265 | L'entrée T-0052 |",
+            "| ⏳ | T-0053 | B-0265 | L'entrée T-0053 · attend T-0052 |", "",
+            "- **4.** L-0006 — L'entrée L-0006 · 0/2",
+            "- **5.** L-0007 — L'entrée L-0007 · 0/2",
+            "- **6.** L-0008 — L'entrée L-0008 · 0/2",
+            "- **7.** L-0009 — L'entrée L-0009 · 0/2",
+            "- **8.** L-0010 — L'entrée L-0010 · 0/2", "",
+            "(`--all` pour tout le détail)", "",
+            "### Ensuite", "",
+            "- JA-0002 — Le pilote équipé · 0/1 besoins clos : B-0126", "",
+            "### Hors des lots", ""])
+        # Hors des lots, chaque section en tableau de même forme.
+        self.assertIn("**Besoins à découper en tâches**\n\n| | Besoin | |\n| --- | --- | --- |\n"
+                      "| ○ | B-0126 | L'entrée B-0126 |\n", md)
+        self.assertIn("**Bloqués**\n\n| | Entrée | |\n| --- | --- | --- |\n| ✗ | B-0179 | L'entrée B-0179 |\n", md)
+        self.assertIn("- **Après les jalons**, dans aucun jalon : B-0055, B-0101", lignes)
+        # `--all` : chaque lot a son tableau, aucun ne se résume.
+        tout = suite.markdown(s, tout=True)
+        self.assertIn("**8. L-0010 — L'entrée L-0010** · 0/2\n\n| | Tâche | Besoin | |\n| --- | --- | --- | --- |\n"
+                      "| ○ | T-0110 | B-0310 | L'entrée T-0110 |\n| ○ | T-0210 | B-0310 | L'entrée T-0210 |\n", tout)
+        self.assertNotIn("(`--all` pour tout le détail)", tout)
+        self.assertEqual(len(tableaux(tout)), 8 + 2)
+
+    def test_un_lot_arrete_nomme_les_demandes_qu_il_attend_dans_le_detaille(self):
+        lignes = suite.markdown(suite.calculer(backlog_d_essai())).splitlines()
+        self.assertIn("**2. L-0002 — L'entrée L-0002** · attend D-0001 · 0/1", lignes)
+        self.assertIn("| ⏳ | T-0004 | B-0003 | L'entrée T-0004 · attend D-0001 |", lignes)
+        # Bloqué, il le dit à la place de « en cours ».
+        bloque = memoire_de(entree("B-0001"), entree("T-0001", meta="besoin : B-0001"),
+                            entree("L-0001", "bloqué", meta="après : T-0001"))
+        s = suite.calculer(bloque)
+        self.assertIn("**1. L-0001 — L'entrée L-0001** · bloqué · 0/1", suite.markdown(s).splitlines())
+        self.assertIn(" L-0001  L'entrée L-0001  0/1  bloqué", suite.texte(s).splitlines()[0])
+
+    def test_chaque_tableau_markdown_est_bien_forme(self):
+        """Une ligne vide avant et après, sa ligne de séparation, sans
+        laquelle GitHub ne le dessine pas, et autant de cellules à chaque
+        ligne ; la barre d'un titre s'échappe, un titre long se coupe."""
+        long = "Un titre sans deux-points qui dépasse de loin la largeur de la colonne des titres du tableau"
+        mem = memoire_de(entree("B-0001"), titree("T-0001", "Le hook juge find | xargs rm : la suite", meta="besoin : B-0001"),
+                         titree("T-0002", long, meta="besoin : B-0001"),
+                         entree("L-0001", "en cours", meta="après : T-0001, T-0002"))
+        lignes = suite.markdown(suite.calculer(mem)).splitlines()
+        self.assertIn("| ○ | T-0001 | B-0001 | Le hook juge find \\| xargs rm |", lignes)
+        coupe = "Un titre sans deux-points qui dépasse de loin la largeur de la colonne…"
+        self.assertIn(f"| ○ | T-0002 | B-0001 | {coupe} |", lignes)
+        self.assertLessEqual(len(coupe), suite.TITRE_DETAILLE)
+        for nom, s in (("essai", suite.calculer(backlog_d_essai())), ("exemple", suite.calculer(backlog_de_l_exemple())),
+                       ("barre", suite.calculer(mem))):
+            for par in suite.LECTURES:
+                for tout in (False, True):
+                    for lg in ("fr", "en"):
+                        with messages.dans(lg):
+                            md = suite.markdown(s, par, tout)
+                        self.assertTrue(tableaux(md), (nom, par))
+                        for avant, tableau, apres in tableaux(md):
+                            with self.subTest(nom=nom, par=par, tout=tout, lg=lg, tableau=tableau[0]):
+                                self.assertEqual((avant, apres), ("", ""))
+                                self.assertRegex(tableau[1], r"^\|(?: --- \|)+$")
+                                cellules = {len(re.findall(r"(?<!\\)\|", l)) for l in tableau}
+                                self.assertEqual(len(cellules), 1, tableau)
+                                self.assertTrue(all(l.endswith("|") for l in tableau), tableau)
+
+    def test_lu_par_besoin_chaque_besoin_a_le_tableau_de_ses_taches_et_le_lot_de_chacune(self):
+        lignes = suite.markdown(suite.calculer(backlog_de_l_exemple()), "need").splitlines()
+        debut = lignes.index("### JA-0005 — Fini avant les nouvelles fonctions · 1/11 besoins clos")
+        self.assertEqual(lignes[debut:debut + 35], [
+            "### JA-0005 — Fini avant les nouvelles fonctions · 1/11 besoins clos", "",
+            "**B-0265 — Un mot pour une chose dans le backlog** · 3/7 · L-0013, L-0014", "",
+            "| | Tâche | Lot | |",
+            "| --- | --- | --- | --- |",
+            "| ✓ | T-0046 | L-0013 | La structure en quatre formes |",
+            "| ✓ | T-0047 | L-0013 | Le format de la mémoire |",
+            "| ⊘ | T-0049 | L-0014 | L'entrée T-0049 |",
+            "| ✗ | T-0050 | L-0014 | L'entrée T-0050 |",
+            "| ○ | T-0051 | L-0014 ↓ | L'entrée T-0051 |",
+            "| ○ | T-0052 | L-0014 | L'entrée T-0052 |",
+            "| ⏳ | T-0053 | L-0014 | L'entrée T-0053 · attend T-0052 |", "",
+            "**B-0270 — L'entrée B-0270** · 0/1 · L-0013", "",
+            "| | Tâche | Lot | |",
+            "| --- | --- | --- | --- |",
+            "| ○ | T-0048 | L-0013 | La forme exotique dans la liste du guide |", "",
+            "**B-0257 — La vérification dure trop** · 0/2 · L-0012", "",
+            "| | Tâche | Lot | |",
+            "| --- | --- | --- | --- |",
+            "| ○ | T-0043 | L-0012 ↑ | Mesurer la durée de chaque étape |",
+            "| ⏳ | T-0044 | L-0012 ↑ | La suite sur plusieurs cœurs · attend T-0043 |", "",
+            "- B-0306 — L'entrée B-0306 · 0/2 · L-0006",
+            "- B-0307 — L'entrée B-0307 · 0/2 · L-0007",
+            "- B-0308 — L'entrée B-0308 · 0/2 · L-0008",
+            "- B-0309 — L'entrée B-0309 · 0/2 · L-0009",
+            "- B-0310 — L'entrée B-0310 · 0/2 · L-0010", "",
+            "(`--all` pour tout le détail)", ""])
+        self.assertFalse(any(l.startswith("**1. ") for l in lignes))
+        # Une tâche d'aucun lot le dit dans sa cellule ; `--all` détaille chaque besoin.
+        tout = suite.markdown(suite.calculer(backlog_d_essai()), "need", tout=True).splitlines()
+        self.assertIn("**B-0005 — L'entrée B-0005** · 0/1 · dans aucun lot", tout)
+        self.assertIn("| ○ | T-0006 | — | L'entrée T-0006 |", tout)
+        self.assertNotIn("(`--all` pour tout le détail)", tout)
+
+    def test_le_format_compact_aligne_en_colonnes_comme_l_exemple_valide(self):
+        s = suite.calculer(backlog_de_l_exemple())
+        lignes = suite.texte(s).splitlines()
+        self.assertEqual(lignes, [
+            "JA-0005  Fini avant les nouvelles fonctions        1/11 besoins clos",
+            " ▶ L-0013  Structure du backlog, chantier en rond  2/3   en cours",
+            "   L-0012  Durée de la vérification                0/2",
+            "   L-0014  Suite de la structure du backlog        1/5",
+            "   …  L-0006 à L-0010                              0/10",
+            "Hors lot : 4 besoins sans tâche · 1 bloqué (B-0179)",
+            "Ensuite : JA-0002 Le pilote équipé (B-0126) · puis B-0055, B-0101",
+        ])
+        # Aligné en caractères, et non en octets : l'avancement de chaque
+        # jalon et de chaque lot commence à la même colonne.
+        self.assertEqual({re.search(r" (\d+/\d+)", l).start(1) for l in lignes[:5]}, {51})
+        # Le jalon du lot en cours vient d'abord, avant celui qui le précède
+        # dans l'ordre des jalons, qui n'a pas de lot et va à « Ensuite ».
+        self.assertEqual([j.entree.id for j in s.jalons], ["JA-0002", "JA-0005"])
+        rangs = suite.groupes(s)
+        self.assertEqual([(j.entree.id, [lot.entree.id for lot in lots]) for j, lots in rangs],
+                         [("JA-0005", ["L-0013", "L-0012", "L-0014", "L-0006", "L-0007", "L-0008", "L-0009",
+                                       "L-0010"])])
+        self.assertEqual([j.entree.id for j in suite.ensuite(s, rangs)], ["JA-0002"])
+        self.assertEqual(suite.besoins_du_jalon(s.jalons[0]), ["B-0126"])
+        # `--all` : chaque lot en sa ligne, aucun résumé.
+        tout = suite.texte(s, tout=True).splitlines()
+        self.assertIn("   L-0010  L'entrée L-0010                         0/2", tout)
+        self.assertFalse(any("…  " in l for l in tout))
+        self.assertEqual(len(tout), 11)
+
+    def test_le_format_compact_par_besoin_une_ligne_alignee_par_besoin(self):
+        lignes = suite.texte(suite.calculer(backlog_de_l_exemple()), "need").splitlines()
+        self.assertEqual(lignes[:4], [
+            "JA-0005  Fini avant les nouvelles fonctions       1/11 besoins clos",
+            "   B-0265  Un mot pour une chose dans le backlog  3/7  L-0013, L-0014",
+            "   B-0270  L'entrée B-0270                        0/1  L-0013",
+            "   B-0257  La vérification dure trop              0/2  L-0012"])
+        self.assertEqual(lignes[-2:], ["Hors lot : 4 besoins sans tâche · 1 bloqué (B-0179)",
+                                       "Ensuite : JA-0002 Le pilote équipé (B-0126) · puis B-0055, B-0101"])
+        essai = suite.texte(suite.calculer(backlog_d_essai()), "need").splitlines()
+        self.assertEqual(essai[5:7], ["Hors des jalons", "   B-0005  L'entrée B-0005  0/1  dans aucun lot"])
+
+    def test_les_lots_d_aucun_jalon_viennent_apres_sous_hors_des_jalons(self):
+        mem = memoire_de(entree("B-0001"), entree("B-0002"),
+                         entree("T-0001", meta="besoin : B-0001"), entree("T-0002", meta="besoin : B-0002"),
+                         entree("L-0001", "en cours", meta="après : T-0002"),
+                         entree("L-0002", meta="après : L-0001, T-0001"), entree("JA-0001", meta="après : B-0001"))
+        s = suite.calculer(mem)
+        self.assertEqual(suite.texte(s).splitlines(), [
+            "JA-0001  L'entrée JA-0001   0/1 besoins clos",
+            "   L-0002  L'entrée L-0002  0/1",
+            "Hors des jalons",
+            " ▶ L-0001  L'entrée L-0001  0/1  en cours",
+            "Hors lot : rien",
+            "Ensuite : B-0002"])
+        lignes = suite.markdown(s).splitlines()
+        self.assertLess(lignes.index("**2. L-0002 — L'entrée L-0002** · 0/1"), lignes.index("### Hors des jalons"))
+        self.assertLess(lignes.index("### Hors des jalons"), lignes.index("**1. L-0001 — L'entrée L-0001** · en cours · 0/1"))
+        # Sans aucun jalon, ni groupe ni « Ensuite ».
+        sans = suite.calculer(memoire_de(entree("B-0001"), entree("T-0001", meta="besoin : B-0001"),
+                                         entree("L-0001", "en cours", meta="après : T-0001")))
+        self.assertEqual(suite.texte(sans).splitlines(), [" ▶ L-0001  L'entrée L-0001  0/1  en cours", "Hors lot : rien"])
+        self.assertIn("### Lots, dans leur ordre d'exécution", suite.markdown(sans).splitlines())
+
+    def test_un_titre_se_lit_jusqu_a_son_premier_deux_points_et_se_coupe_a_sa_colonne(self):
+        self.assertEqual(suite.court("Fini avant les nouvelles fonctions : les lots qui restent", 46),
+                         "Fini avant les nouvelles fonctions")
+        self.assertEqual(suite.court("Done before the new features: the remaining batches", 46),
+                         "Done before the new features")
+        self.assertEqual(suite.court("Un titre court", 46), "Un titre court")
+        self.assertEqual(suite.court("Lire https://exemple.org/a : la suite", 46), "Lire https://exemple.org/a")
+        self.assertEqual(suite.court("abcdefghij klmnop", 10), "abcdefghi…")
+        self.assertEqual(len(suite.court("é" * 80, 46)), 46)
+        self.assertEqual(suite.court(" : rien avant", 46), ": rien avant")
+
+    def test_en_anglais_la_suite_ne_garde_aucun_mot_francais(self):
+        s = suite.calculer(backlog_de_l_exemple("en"))
+        essai = suite.calculer(backlog_d_essai())
+        with messages.dans("en"):
+            compact = suite.texte(s)
+            sorties = [compact, suite.texte(s, "need"), suite.texte(s, tout=True), suite.markdown(s),
+                       suite.markdown(s, "need"), suite.markdown(s, tout=True),
+                       *(x.replace("L'entrée", "").replace("Une demande", "")
+                         for x in (suite.texte(essai), suite.markdown(essai), suite.markdown(essai, "need", tout=True)))]
+        self.assertEqual(compact.splitlines(), [
+            "JA-0005  Done before the new features           1/11 needs closed",
+            " ▶ L-0013  Backlog structure, going in circles  2/3   in progress",
+            "   L-0012  Duration of the verification         0/2",
+            "   L-0014  Rest of the backlog structure        1/5",
+            "   …  L-0006 to L-0010                          0/10",
+            "Outside the batches: 4 needs with no task · 1 blocked (B-0179)",
+            "Next: JA-0002 The pilot equipped (B-0126) · then B-0055, B-0101"])
+        self.assertIn("| | Task | Need | |", sorties[3])
+        self.assertIn("| | Task | Batch | |", sorties[4])
+        self.assertIn("Key: ✓ done · ▶ in progress · ○ ready · ⏳ waiting · ✗ blocked · ⊘ abandoned · ↑ high priority "
+                      "· ↓ low priority", sorties[3])
+        for sortie in sorties:
+            self.assertNotRegex(sortie, r"[àâçéèêëîïôûùœ«»]")
+            self.assertNotRegex(sortie, r"\b(?:tâches?|besoins?|lots?|jalons?|attend|clos|Hors|Ensuite|puis|rien|"
+                                        r"aucun|Légende|détail|bloqués?|demandes?)\b")
+
+    def test_le_guide_montre_les_deux_formats_et_une_note_de_version_le_dit(self):
+        """Le guide, en français et en anglais, montre la sortie des deux
+        formats sur le backlog des exemples, ses identifiants écrits
+        `X-NNNN` ; la note de version la plus récente le dit, et le prompt
+        de mise à jour de chess le reprend."""
+        paquet = Path(suite.__file__).parent
+        for lg, nom in (("fr", "HELP.md"), ("en", "HELP.en.md")):
+            guide = (paquet / nom).read_text(encoding="utf-8")
+            s = suite.calculer(backlog_de_l_exemple(lg))
+            with messages.dans(lg):
+                compact, md = suite.texte(s), suite.markdown(s)
+            with self.subTest(lg):
+                self.assertIn(f"```text\n{sans_numeros(compact)}\n```", guide)
+                lignes = md.splitlines()
+                # De la légende au tableau du deuxième lot.
+                extrait = lignes[4:next(k for k, l in enumerate(lignes) if l.startswith("**3. ")) - 1]
+                self.assertIn("```markdown\n" + sans_numeros("\n".join(extrait)) + "\n", guide)
+        for nom, titre in (("CHANGES.md", "La suite du projet aux formats validés"),
+                           ("CHANGES.en.md", "The project's roadmap in the approved formats")):
+            notes = (paquet / nom).read_text(encoding="utf-8")
+            premiere = notes[notes.index("\n## "):].split("\n## ")[1]
+            self.assertIn(titre, premiere.splitlines()[0], nom)
+            self.assertIn("socle roadmap", " ".join(premiere.split()), nom)
+        prompt = Path(__file__).resolve().parent.parent / "docs/fabrication/chess/prompt-mise-a-jour.md"
+        texte = " ".join(prompt.read_text(encoding="utf-8").split())
+        self.assertIn("17. La suite du projet se lit désormais en colonnes et en tableaux", texte)
 
 
 class TestCommande(Projet):

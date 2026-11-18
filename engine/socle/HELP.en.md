@@ -127,6 +127,59 @@ tasks or to close. The whole roadmap, at a glance, reads in a terminal with
 `--by need` reads by need, `--by batch`, the default, by batch), on the page of each CI run, and in the
 conversation: ask the agent for “the roadmap”.
 
+The compact format aligns in columns each milestone, with its needs
+closed out of the total, then the batches that serve it in their order of
+execution, with their tasks closed out of the total, the batch in
+progress marked ▶. Beyond the batch in progress and the next two, the
+milestone's other batches fit on one line (`--all` shows them all); the
+batches that serve no milestone come after. It ends with what is outside
+the batches, counted, and with what comes next: the milestones with no
+batch, with their first open needs, then the needs in no milestone. It
+names no request. For example, the identifiers written here `X-NNNN`:
+
+```text
+JA-NNNN  Done before the new features           1/11 needs closed
+ ▶ L-NNNN  Backlog structure, going in circles  2/3   in progress
+   L-NNNN  Duration of the verification         0/2
+   L-NNNN  Rest of the backlog structure        1/5
+   …  L-NNNN to L-NNNN                          0/10
+Outside the batches: 4 needs with no task · 1 blocked (B-NNNN)
+Next: JA-NNNN The pilot equipped (B-NNNN) · then B-NNNN, B-NNNN
+```
+
+The detailed format, in Markdown, gives under each milestone the batch in
+progress and the next two, each with the table of its tasks: their state
+as a symbol, which its key explains, their identifier, their need
+followed by their priority, their title up to its first colon, and what
+a waiting task waits on; the other batches, one line each, numbered in
+the order of execution. Read by need, each need has the table of its
+tasks, with the batch of each. What is outside the batches follows, in
+tables of the same shape, each pending request with its link. The start
+of the same backlog:
+
+```markdown
+Key: ✓ done · ▶ in progress · ○ ready · ⏳ waiting · ✗ blocked · ⊘ abandoned · ↑ high priority · ↓ low priority
+
+### JA-NNNN — Done before the new features · 1/11 needs closed
+
+**1. L-NNNN — Backlog structure, going in circles** · in progress · 2/3
+
+| | Task | Need | |
+| --- | --- | --- | --- |
+| ✓ | T-NNNN | B-NNNN | The structure in four forms |
+| ✓ | T-NNNN | B-NNNN | The memory format |
+| ○ | T-NNNN | B-NNNN | The exotic form in the guide's list |
+
+**2. L-NNNN — Duration of the verification** · 0/2
+
+| | Task | Need | |
+| --- | --- | --- | --- |
+| ○ | T-NNNN | B-NNNN ↑ | Measure the duration of each step |
+| ⏳ | T-NNNN | B-NNNN ↑ | The suite on several cores · waits on T-NNNN |
+
+…
+```
+
 **Specifications and test cases.** The project declares where its
 specifications live (`[specs] paths` in the guardrails): the state tells
 you about any that no request has submitted to you. It also declares its

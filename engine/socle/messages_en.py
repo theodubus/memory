@@ -3624,56 +3624,74 @@ MESSAGES: dict[str, str] = {
         '"continue" after a single pass where the reviewer sees a cause come back, `socle review` produces the '
         'next one',
     # La suite du projet, `socle roadmap`.
-    'faite':
-        'done',
-    'abandonnée':
-        'abandoned',
-    'bloquée':
-        'blocked',
-    '{n} en cours':
-        '{n} in progress',
-    '{n} prête(s)':
-        '{n} ready',
-    '{n} qui attend(ent)':
-        '{n} waiting',
-    '{n} bloquée(s)':
-        '{n} blocked',
-    'priorité haute':
-        'high priority',
-    'priorité basse':
-        'low priority',
-    '{id} — {titre} : {clos} besoin(s) clos sur {total}':
-        '{id} — {titre}: {clos} need(s) closed out of {total}',
-    '{id} — {titre} : {avancement}':
-        '{id} — {titre}: {avancement}',
-    '{id} — {titre} : {clos} tâche(s) close(s) sur {total}':
-        '{id} — {titre}: {clos} task(s) closed out of {total}',
-    "hors des lots : {taches} tâche(s) ouverte(s), {decouper} besoin(s) à découper, {fermer} à fermer, "
-    "{bloques} entrée(s) bloquée(s), {humain} pour l'humain, {demandes} demande(s) en attente":
-        "outside the batches: {taches} open task(s), {decouper} need(s) to split, {fermer} to close, "
-        "{bloques} blocked entry(ies), {humain} for the human, {demandes} pending request(s)",
+    '{n} tâche dans aucun lot':
+        '{n} task in no batch',
+    '{n} tâches dans aucun lot':
+        '{n} tasks in no batch',
+    '{n} besoin sans tâche':
+        '{n} need with no task',
+    '{n} besoins sans tâche':
+        '{n} needs with no task',
+    '{n} besoin à fermer':
+        '{n} need to close',
+    '{n} besoins à fermer':
+        '{n} needs to close',
+    '{n} bloqué ({ids})':
+        '{n} blocked ({ids})',
+    '{n} bloqués ({ids})':
+        '{n} blocked ({ids})',
+    "{n} pour l'humain":
+        '{n} for the human',
+    '{n} demande en attente':
+        '{n} pending request',
+    '{n} demandes en attente':
+        '{n} pending requests',
+    'attend {n} demande':
+        'waits on {n} request',
+    'attend {n} demandes':
+        'waits on {n} requests',
+    '{ids} et {n} autre':
+        '{ids} and {n} more',
+    '{ids} et {n} autres':
+        '{ids} and {n} more',
+    '{clos}/{total} besoins clos':
+        '{clos}/{total} needs closed',
+    'Hors lot : {comptes}':
+        'Outside the batches: {comptes}',
+    'rien':
+        'nothing',
+    'puis {ids}':
+        'then {ids}',
+    'Ensuite : {suite}':
+        'Next: {suite}',
     "ordre ambigu : {a} et {b} attendent tous deux {p}, sans ordre entre eux — que l'un attende l'autre":
         "ambiguous order: {a} and {b} both wait on {p}, with no order between them — make one wait on the other",
-    '{clos} tâche(s) close(s) sur {total}':
-        '{clos} task(s) closed out of {total}',
-    'La suite du projet, calculée depuis le backlog — détaillée : `{commande} --format markdown`':
-        "The project's roadmap, computed from the backlog — detailed: `{commande} --format markdown`",
+    'Hors des jalons':
+        'Outside the milestones',
+    '…  {premier} à {dernier}':
+        '…  {premier} to {dernier}',
+    'Tâche':
+        'Task',
+    'Lot':
+        'Batch',
+    'Besoin':
+        'Need',
+    'Entrée':
+        'Entry',
+    'Demande':
+        'Request',
     "Calculée depuis le backlog par `{commande} --format markdown` : rien n'y est écrit à la main.":
         'Computed from the backlog by `{commande} --format markdown`: nothing in it is written by hand.',
-    ' — le prochain':
-        ' — the next one',
-    ' — lot(s) : {lots}':
-        ' — batch(es): {lots}',
-    ' — dans aucun lot':
-        ' — in no batch',
-    'jalons, dans leur ordre :':
-        'milestones, in their order:',
+    'Légende : ✓ faite · ▶ en cours · ○ prête · ⏳ attend · ✗ bloquée · ⊘ abandonnée · ↑ priorité haute · ↓ '
+    'priorité basse':
+        'Key: ✓ done · ▶ in progress · ○ ready · ⏳ waiting · ✗ blocked · ⊘ abandoned · ↑ high priority · ↓ '
+        'low priority',
+    '(`--all` pour tout le détail)':
+        '(`--all` for the full detail)',
+    'Ensuite':
+        'Next',
     'ni jalon ni lot au backlog':
         'no milestone and no batch in the backlog',
-    'après les jalons : {n} besoin(s) ouvert(s) dans aucun jalon':
-        'after the milestones: {n} open need(s) in no milestone',
-    '{etat} : {ids}':
-        '{etat}: {ids}',
     'La suite du projet':
         "The project's roadmap",
     'Ni jalon ni lot au backlog.':
@@ -3686,20 +3704,8 @@ MESSAGES: dict[str, str] = {
         '- **After the milestones**, in no milestone: {ids}{suite}',
     'attend {ids}':
         'waits on {ids}',
-    '{n} demande(s) sans réponse':
-        '{n} unanswered request(s)',
-    "besoins, dans l'ordre des lots :":
-        'needs, in the order of the batches:',
-    'lots, dans leur ordre (▶ en cours) :':
-        'batches, in their order (▶ in progress):',
-    'lot {id}':
-        'batch {id}',
     'dans aucun lot':
         'in no batch',
-    'besoin {id}':
-        'need {id}',
-    'Jalons, dans leur ordre':
-        'Milestones, in their order',
     "Pour l'humain":
         'For the human',
     'Hors des lots':
@@ -3710,18 +3716,12 @@ MESSAGES: dict[str, str] = {
         'Batches, in their order of execution',
     'Bloqués':
         'Blocked',
-    'Les autres besoins':
-        'The other needs',
-    'Les lots suivants':
-        'The following batches',
     'Besoins à fermer, leurs tâches closes':
         'Needs to close, their tasks closed',
     'Tâches dans aucun lot':
         'Tasks in no batch',
     'Besoins à découper en tâches':
         'Needs to split into tasks',
-    ' — en cours':
-        ' — in progress',
     "la suite du projet d'un coup d'œil : jalons, lots, tâches et besoins, calculés depuis le backlog":
         "the project's roadmap at a glance: milestones, batches, tasks and needs, computed from the backlog",
     'text : une ligne par jalon et par lot (défaut) ; markdown : le lot en cours et les deux suivants tâche par '
@@ -3730,8 +3730,8 @@ MESSAGES: dict[str, str] = {
         'task by task',
     'batch : lire par lot (défaut) ; need : par besoin, chacun avec ses tâches et le lot de chacune':
         'batch: read by batch (default); need: by need, each with its tasks and the batch of each',
-    'en markdown, détailler tous les lots, ou tous les besoins':
-        'in markdown, detail every batch, or every need',
+    'en markdown, détailler tous les lots, ou tous les besoins ; en text, montrer chaque lot en sa ligne':
+        'in markdown, detail every batch, or every need; in text, show every batch on its own line',
     "  la suite : `python3 .socle/socle roadmap` (détaillée : `--format markdown`)":
         "  the roadmap: `python3 .socle/socle roadmap` (detailed: `--format markdown`)",
 }

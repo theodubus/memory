@@ -7,6 +7,34 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-18-c — The project's roadmap in the approved formats: the compact one in columns, the detailed one in tables
+
+`socle roadmap` changes its rendering, not its content nor its options.
+The compact format aligns in columns, counted in characters, each
+milestone and its needs closed out of the total, then the batches that
+serve it, each with its tasks closed out of the total, the batch in
+progress marked ▶; beyond the batch in progress and the next two, the
+milestone's other batches fit on one line, which `--all` unfolds; the
+batches of no milestone come after. It no longer has a header line, and
+ends with two lines: “Outside the batches:”, the non-zero counts and the
+blocked entries named, and “Next:”, the milestones with no batch with
+their first open needs, then the needs in no milestone. It still names
+no request. The detailed format (`--format markdown`) keeps its title and
+its sentence, then gives a key to the symbols; under each milestone, each
+detailed batch has its line (its rank in the order of execution, its
+title, its state if it is in progress or stopped, the requests it waits
+on, its tasks closed out of the total) and a table with one row per task:
+its state and its priority as symbols (✓ done, ▶ in progress, ○ ready,
+⏳ waiting, ✗ blocked, ⊘ abandoned; ↑ high, ↓ low), its identifier, its
+need, its title up to its first colon, and what it waits on. Read by need
+(`--by need`), each need has the table of its tasks, with the batch of
+each. What is outside the batches keeps its sections, each as a table.
+The guide shows both formats.
+
+To do: nothing. The CI summary and the recap of a batch's closing take
+the new rendering by themselves; a project text that quoted the old one
+word for word is to be reviewed.
+
 ## 2026-11-18-b — The review dossier, its skill and the questions say task, need or entry, never “topic”
 
 The product's last texts that called a backlog entry a “topic”, and that
