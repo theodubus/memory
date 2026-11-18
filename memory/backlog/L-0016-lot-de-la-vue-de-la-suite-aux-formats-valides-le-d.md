@@ -9,3 +9,12 @@ que L-0014 a livrée ne suit pas les formats que Théo a validés
 `tests/test_suite_du_projet.py`, le guide et son anglais, les notes de
 version, le prompt de mise à jour de chess. Avant L-0015 : une fonction
 livrée qui contredit ce que l'humain a validé se corrige d'abord.
+
+## Revues
+
+### Passe 1 — 2026-11-18
+
+Commits : 8464fdd..381025a
+- Bloquant : la ligne « Ensuite : » du compact collé dans un récap remplit le contrôle des deux lignes du hook de fin de tour
+- Bloquant : le compact rangé par jalon perd l'ordre d'exécution quand les lots de deux jalons alternent
+- Ouvre : T-0089, T-0090
