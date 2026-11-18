@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0016 (J-2026-11-18-S) : passe 2 depuis 381025a ; dix tests hors
-commit, à valider (D-0134). Puis L-0017, L-0018, L-0015.
+L-0016 (J-2026-11-18-V) : passe 2 faite ; dix tests hors commit,
+question posée à Théo (D-0134). Puis L-0017, L-0018, L-0015.
 
 ## Consignes en cours
 
