@@ -55,7 +55,7 @@ La réponse de l'agent, dans la conversation, distingue ce qui tient à ce lot d
 
 Théo a ensuite validé les cinq propositions, la 2 dans sa variante légère, la 1 sous la condition que les sous-agents d'implémentation restent pertinents, que la réponse de l'agent remplit : D-0134, en séance, qui désigne `docs/fabrication/allegements.md`, où sont les propositions, sa réponse et celle de l'agent. Après l'intégration, ouvrir au backlog :
 - un besoin par proposition, avec ses tâches ;
-- un lot des allégements, après L-0017 et avant L-0015 ;
+- leurs tâches dans le lot des allégements, L-0018, déjà au backlog après L-0017 et avant L-0015, qui dit ce qu'il portera ;
 - pour la 2, la tâche qui la porte dans le skill `socle-request` du produit. Le skill `delegate-lot` la dit déjà.
 
 La variante légère vaut dès maintenant : les dix tests de `tests-existants.diff` se valident par une question dans la conversation qui les nomme, chacun avec sa valeur avant et après. La réponse se consigne en séance, sans demande écrite ni relecture à froid. Elle se commite avec les tests, dans le même push.
