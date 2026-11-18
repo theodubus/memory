@@ -388,12 +388,12 @@ class TestLaRevue(unittest.TestCase):
                    "cas jamais reproduit) dont l'effet est rattrapé, par un contrôle, la CI ou une erreur que "
                    "l'agent voit aussitôt ; et un constat infondé. Une ligne du récap dit pourquoi chacun est écarté.",
                    "dans sa section `## Modèle de menace` ou dans la décision qu'il cite",
-                   "les décisions et les demandes que le lot écrit, puis celles que ses sujets citent"],
+                   "les décisions et les demandes que le lot écrit, puis celles que ses entrées citent"],
             "en": ["**For the backlog**: a finding that does not block goes to the backlog if it can occur in the "
                    "project's normal use, or if nothing catches its effect afterwards",
                    "**Dismissed**: an exotic finding", "One line of the recap says why each is dismissed.",
                    "in its `## Threat model` section or in the decision it cites",
-                   "the decisions and requests the batch writes, then those its topics cite"],
+                   "the decisions and requests the batch writes, then those its entries cite"],
         }
         for lg, phrases in attendus.items():
             texte = " ".join(self.texte(lg).split())

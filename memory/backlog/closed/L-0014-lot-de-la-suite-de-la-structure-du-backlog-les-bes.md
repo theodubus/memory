@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0014 — Lot de la suite de la structure du backlog : les besoins découpés, les textes qui disent encore « sujet », l'ancien numéro dans le hook et les liens, la migration qui perd un contenu
 
-> statut : en cours · origine : J-2026-11-16-V · après : L-0012, T-0049, T-0050, T-0051, T-0052, T-0053, T-0057, T-0058, D-0133 · lu : backlog@186c07f1
+> statut : fait · origine : J-2026-11-16-V · après : L-0012, T-0049, T-0050, T-0051, T-0052, T-0053, T-0057, T-0058, D-0133 · lu : backlog@186c07f1 · ref : J-2026-11-18-M
 
 Formé le 16 novembre (J-2026-11-16-V) : la suite de B-0265, la
 structure du backlog en quatre formes, que le lot L-0013 laisse. T-0049

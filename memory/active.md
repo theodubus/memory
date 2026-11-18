@@ -5,8 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0014 : relu, bloquants corrigés (J-2026-11-18-L) ; attend D-0132
-(tests de T-0050, hors commit) et D-0133 ; puis L-0015.
+L-0014 clos (J-2026-11-18-M), fusionné à la CI verte ; puis L-0015.
 
 ## Consignes en cours
 

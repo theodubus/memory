@@ -94,7 +94,7 @@ class TestDossier(_Lot):
         (self.racine / "calc.py").write_text("def double(x):\n    return x * 2\n")
         git(self.racine, "commit", "-qam", "le code seul")
         self.assertEqual(revue.sujets_du_lot(self.projet, "origin/main"), ([], []))
-        self.assertNotIn("## Les sujets que le lot ferme", revue.dossier(self.projet))
+        self.assertNotIn("## Les entrées du backlog que sert le lot", revue.dossier(self.projet))
 
     def test_un_gros_diff_se_tronque_et_le_dit(self):
         self.lot()
@@ -132,7 +132,8 @@ class TestBarre(_Lot):
     def test_la_consigne_donne_la_barre_et_les_trois_classes(self):
         self.lot()
         texte = revue.dossier(self.projet)
-        self.assertIn("Ta barre est celle des sujets du lot, plus bas : leur critère « Fait quand »", texte)
+        self.assertIn("Ta barre est celle des entrées du backlog que sert le lot, plus bas : leurs critères (« Fait quand » d'une "
+                      "tâche, « Satisfait quand » d'un besoin)", texte)
         self.assertIn("**Bloquant** : il contredit un critère coché ou une décision citée", texte)
         self.assertIn("contourne un garde-fou dans son modèle de menace", texte)
         self.assertIn("un garde-fou que le lot pose ou change sans modèle de menace écrit est lui-même un constat "
@@ -191,7 +192,7 @@ class TestBarre(_Lot):
         servis, ouverts = revue.sujets_du_lot(self.projet, "origin/travail")
         self.assertEqual(([e.id for e in servis], ouverts), (["B-0003"], []))
         texte = revue.dossier(self.projet)
-        self.assertIn("## Les sujets du lot : leur critère « Fait quand » est ta barre", texte)
+        self.assertIn("## Les entrées du backlog que sert le lot : leurs critères sont ta barre", texte)
         self.assertIn("## Modèle de menace\n\nUn agent distrait, pas hostile", texte)
         self.assertIn("- [x] la redirection est refusée\n- [ ] l'interpréteur est refusé", texte)
         # Un sujet ouvert que le lot ne touche pas n'y est pas.
@@ -208,7 +209,7 @@ class TestBarre(_Lot):
         servis, ouverts = revue.sujets_du_lot(self.projet, "origin/main")
         self.assertEqual(([e.id for e in servis], [e.id for e in ouverts]), (["B-0001"], ["B-0002"]))
         texte = revue.dossier(self.projet)
-        self.assertIn("## Les sujets que le lot ouvre : ce qu'il renvoie au backlog\n\n"
+        self.assertIn("## Les entrées que le lot ouvre : ce qu'il renvoie au backlog\n\n"
                       "- B-0002 — Tripler, renvoyé au backlog", texte)
         self.assertNotIn("Un constat de la revue, hors du critère.", texte)
         # Ouvert et clos dans le même lot, il est servi.
@@ -268,10 +269,10 @@ class TestBarre(_Lot):
             self.assertEqual(([e.fichier for e in servis], ouverts),
                              (["memory/backlog/closed/B-0001-doubler.md"], []), etape)
             texte = revue.dossier(self.projet)
-            self.assertIn("## Les sujets du lot : leur critère « Fait quand » est ta barre\n\n# B-0001 — Doubler",
+            self.assertIn("## Les entrées du backlog que sert le lot : leurs critères sont ta barre\n\n# B-0001 — Doubler",
                           texte, etape)
             self.assertIn("- [x] double est écrit", texte, etape)
-            self.assertIn("## Les décisions et les demandes qu'ils citent\n\n# ADR-0001", texte, etape)
+            self.assertIn("## Les décisions et les demandes qu'elles citent\n\n# ADR-0001", texte, etape)
 
     # Le préfixe des identifiants privés, à part : écrit en toutes lettres
     # dans un fichier public, le contrôle de la mémoire privée le refuse.
@@ -365,7 +366,7 @@ class TestBarre(_Lot):
                       "doublement", texte)
         self.assertIn("Une chaîne n'est pas doublée.", texte)
         # Celle que le sujet cite, déjà là à la base, suit à part.
-        self.assertIn("## Les décisions et les demandes qu'ils citent\n\n# ADR-0001", texte)
+        self.assertIn("## Les décisions et les demandes qu'elles citent\n\n# ADR-0001", texte)
         self.assertEqual(revue.decisions_ecrites(self.projet, "HEAD"), [])
 
     def test_la_commande_donne_la_seconde_revue(self):
@@ -413,17 +414,19 @@ class TestLesFormesConnuesDuGuide(unittest.TestCase):
               "formes du shell qu'un agent écrit dans son travail, pour tout effet ; pour ce que rien ne rattrape "
               "ensuite (supprimer le projet ou un dossier qui le contient, une action externe irréversible, une "
               "fuite de la mémoire privée, la part de la mémoire qui ne se publie pas), il refuse aussi ce qu'il "
-              "ne sait pas lire. Un trou ouvre un sujet si sa forme est de celles qu'un agent écrit dans son "
+              "ne sait pas lire. Un trou ouvre une entrée du backlog si sa forme est de celles qu'un agent écrit dans "
+              "son "
               "travail : vue dans une session d'agent, un skill ou une documentation courante. Une autre forme "
-              "s'inscrit d'une ligne dans la liste des formes connues que le hook ne juge pas, sans sujet ; dans "
+              "s'inscrit d'une ligne dans la liste des formes connues que le hook ne juge pas, sans entrée au backlog ; "
+              "dans "
               "la revue d'un lot du hook, elle n'est pas un bloquant, même refusée avant le lot par accident.",
         "en": "The agent's hook stops the mistakes of a cooperative agent before they take effect. It judges the "
               "shell forms an agent writes in its work, for every effect; for what nothing catches afterwards "
               "(deleting the project or a directory that contains it, an irreversible external action, a leak of "
               "the private memory, the part of the memory that is not published), it also refuses what it cannot "
-              "read. A hole opens a topic if its form is one an agent writes in its work: seen in an agent "
+              "read. A hole opens a backlog entry if its form is one an agent writes in its work: seen in an agent "
               "session, a skill or current documentation. Another form is entered in one line in the list of "
-              "known forms the hook does not judge, without a topic; in the review of a batch of the hook, it is "
+              "known forms the hook does not judge, without a backlog entry; in the review of a batch of the hook, it is "
               "not a blocking finding, even if refused before the batch by accident.",
     }
     TETE = {"fr": "Les formes connues que le hook ne juge pas :", "en": "The known forms the hook does not judge:"}

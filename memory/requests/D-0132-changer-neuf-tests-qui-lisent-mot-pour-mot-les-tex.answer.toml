@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0132-changer-neuf-tests-qui-lisent-mot-pour-mot-les-tex.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-18"
+canal = "conversation"
+citation = "Valider D0132 et D0133"
+empreinte = "sha256:ddc2d9671c7345754b012fd98ff67e227e31e27a60c8340e533ca413b078c4af"
