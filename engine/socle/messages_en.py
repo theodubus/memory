@@ -2563,8 +2563,12 @@ MESSAGES: dict[str, str] = {
         "memory budget raised",
     "seuil de durée des étapes rapides relevé":
         "duration threshold of the fast steps raised",
+    "seuil de durée des étapes rapides à `nan` en base, puis relevé":
+        "duration threshold of the fast steps at `nan` in the base, then raised",
     "étapes rapides plus longues que leur seuil d'une seconde":
         "fast steps longer than their one-second threshold",
+    "étapes rapides plus longues que leur seuil d'une seconde, lancées par le hook avant envoi":
+        "fast steps longer than their one-second threshold, run by the pre-push hook",
     "correctif sans test de régression":
         "fix without a regression test",
     "test de régression qui échoue sur le parent faute de s'y charger":
@@ -2957,6 +2961,12 @@ MESSAGES: dict[str, str] = {
         "tightening a guardrail is free",
     "baisser le seuil de durée des étapes rapides est libre : la CI passe":
         "lowering the duration threshold of the fast steps is free: the CI passes",
+    "un seuil de durée des étapes rapides à `nan` en base, gardé tel quel, passe la CI":
+        "a duration threshold of the fast steps at `nan` in the base, kept as is, passes the CI",
+    "des étapes rapides d'un peu plus d'une seconde, sous le seuil du gabarit, poussées : le hook avant envoi "
+    "laisse passer sans avertir":
+        "fast steps of a little over one second, under the template's threshold, pushed: the pre-push hook lets "
+        "them through without warning",
     "des étapes rapides d'un peu plus d'une seconde, sous le seuil du gabarit : `verify --fast` dit leurs durées, "
     "sans avertir":
         "fast steps of a little over one second, under the template's threshold: `verify --fast` gives their "

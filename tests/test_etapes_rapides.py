@@ -219,6 +219,107 @@ class TestDureeDesEtapes(unittest.TestCase):
             self.assertEqual(verification.secondes(163.64), "163.6 s")
 
 
+class TestDureeDiteParLesHooks(unittest.TestCase):
+    """Revue du lot L-0012, passe 2 : le passage complet que lancent la fin
+    de tour et le hook avant envoi gardait sa trace, mais son avertissement
+    se perdait ; seuls l'état et un `verify --fast` relancé à la main le
+    disaient ensuite. Le hook avant envoi le dit sur sa sortie d'erreur ; la
+    fin de tour, qu'il ne bloque pas, le dit à l'humain."""
+
+    AVERTISSEMENT = (r"socle — avertissement \(verify\.duree\) : durée des étapes rapides au dernier passage "
+                     r"complet : 0,[3-9] s, au-delà du seuil de 0,1 s .*la plus longue : `verify\.lint`")
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-durees-hooks-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=self.racine, check=True)
+        (self.racine / "calc.py").write_text("x = 1\n")
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+        subprocess.run(["git", "add", "-A"], cwd=self.racine, check=True)
+        subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "base", "--no-verify"],
+                       cwd=self.racine, check=True)
+        self.n = 1
+
+    def projet(self, seuil) -> config.Projet:
+        projet = config.Projet.charger(self.racine)
+        projet.adaptateur["capabilities"] = {"lint": {"command": "sleep 0.3", "fast": True}}
+        projet.garde_fous["verify"] = {"fast_max_seconds": seuil}
+        return projet
+
+    def changer_le_code(self):
+        """Un contenu neuf : les étapes rapides ne sont pas déjà passées
+        dessus, et le hook les relance."""
+        self.n += 1
+        (self.racine / "calc.py").write_text(f"x = {self.n}\n")
+
+    def avant_envoi(self, seuil) -> tuple[int, str]:
+        from socle import context as contexte, hooks
+
+        with unittest.mock.patch("sys.stdin", io.StringIO("")), \
+                unittest.mock.patch.object(contexte, "executer", return_value=Rapport()), \
+                contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()) as flux:
+            code = hooks.git_pre_push(self.projet(seuil))
+        return code, flux.getvalue()
+
+    def fin_de_tour(self, seuil, dernier_message: str | None = None, relance: bool = False) -> dict:
+        import json
+
+        from socle import context as contexte, hooks
+
+        entree = {"session_id": "d", "stop_hook_active": relance}
+        if dernier_message is not None:
+            transcript = self.racine / ".socle/trace/essai-transcript.jsonl"
+            transcript.parent.mkdir(parents=True, exist_ok=True)
+            transcript.write_text(json.dumps({"type": "assistant", "message": {"content": dernier_message}}) + "\n")
+            entree["transcript_path"] = str(transcript)
+        with unittest.mock.patch.object(contexte, "executer", return_value=Rapport()), \
+                contextlib.redirect_stdout(io.StringIO()) as sortie, contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(hooks.stop(self.projet(seuil), entree), 0)
+        return json.loads(sortie.getvalue()) if sortie.getvalue().strip() else {}
+
+    def test_le_hook_avant_envoi_dit_l_avertissement_et_laisse_passer(self):
+        code, sortie = self.avant_envoi(300)
+        self.assertEqual((code, sortie), (0, ""))
+        self.changer_le_code()
+        code, sortie = self.avant_envoi(0.1)
+        self.assertEqual(code, 0, sortie)
+        self.assertRegex(sortie, self.AVERTISSEMENT)
+        self.assertEqual(len(sortie.splitlines()), 1, sortie)
+
+    def test_la_fin_de_tour_le_joint_a_son_message_sans_bloquer_pour_lui(self):
+        recap = "Fait.\n\nPour toi : rien.\nEnsuite : rien."
+        # Sous le seuil, rien de plus : un récap complet ne fait rien imprimer.
+        self.changer_le_code()
+        self.assertEqual(self.fin_de_tour(300, recap), {})
+        # Au-delà, un récap complet : le message à l'humain, et lui seul.
+        self.changer_le_code()
+        sortie = self.fin_de_tour(0.1, recap)
+        self.assertEqual(list(sortie), ["systemMessage"])
+        self.assertRegex(sortie["systemMessage"], "^" + self.AVERTISSEMENT)
+        # Un transcript illisible : le message qu'imprimait déjà le hook, puis l'avertissement.
+        self.changer_le_code()
+        sortie = self.fin_de_tour(0.1)
+        self.assertEqual(list(sortie), ["systemMessage"])
+        self.assertRegex(sortie["systemMessage"], r"^récap de fin d'intervention non vérifiable : transcript "
+                                                  r"illisible\n\n" + self.AVERTISSEMENT)
+
+    def test_la_fin_de_tour_qui_bloque_deja_le_dit_aussi_a_l_agent(self):
+        self.changer_le_code()
+        sortie = self.fin_de_tour(0.1, "Fait.")
+        self.assertEqual(sortie["decision"], "block")
+        self.assertTrue(sortie["reason"].startswith("Tu as agi pendant ce tour, et ton dernier message n'a pas"))
+        self.assertRegex(sortie["reason"], r"\n\n" + self.AVERTISSEMENT + "[^\n]*$")
+        self.assertRegex(sortie["systemMessage"], "^" + self.AVERTISSEMENT)
+        # La relance que le hook a provoquée ne bloque plus : le message
+        # qu'il imprimait, puis l'avertissement.
+        self.changer_le_code()
+        sortie = self.fin_de_tour(0.1, "Fait.", relance=True)
+        self.assertNotIn("decision", sortie)
+        self.assertRegex(sortie["systemMessage"], r"^fin d'intervention sans .*, malgré un rappel\n\n"
+                         + self.AVERTISSEMENT)
+
+
 class TestSeuilDesEtapesRapides(unittest.TestCase):
     """B-0258 : le seuil, `[verify] fast_max_seconds` des garde-fous ; le
     relever exige une demande validée, le baisser est libre."""
@@ -232,7 +333,8 @@ class TestSeuilDesEtapesRapides(unittest.TestCase):
         self.assertEqual(self.seuil({"verify": {"fast_max_seconds": 120}}), 120)
         self.assertEqual(self.seuil({"verify": {"fast_max_seconds": 2.5}}), 2.5)
         self.assertEqual(self.seuil({"verify": {"fast_max_seconds": "beaucoup"}}), 300)
-        # Ce que le cliquet laisse écrire librement ne relâche jamais le seuil.
+        # Ce que le cliquet laisse écrire librement ne relâche jamais le seuil ;
+        # `nan`, qu'il refuse sans demande, se lit le plus strict.
         self.assertEqual(self.seuil({"verify": {"fast_max_seconds": 0}}), 0)
         self.assertEqual(self.seuil({"verify": {"fast_max_seconds": float("nan")}}), 0)
         self.assertEqual(self.seuil({"verify": {"fast_max_seconds": True}}), 1)
@@ -252,6 +354,25 @@ class TestSeuilDesEtapesRapides(unittest.TestCase):
                          [("verify.fast_max_seconds", "300 → 900")])
         self.assertEqual(assouplissements({"verify": {"fast_max_seconds": 120}}, {}),
                          [("verify.fast_max_seconds", "120 → 300")])
+
+    def test_nan_ne_releve_pas_le_seuil_en_deux_temps(self):
+        """Revue du lot L-0012, passe 2 : `nan` s'écrivait librement (lu
+        comme zéro), puis, depuis une base qui le portait, le seuil se
+        relevait à 900 ou se retirait sans demande : `vb > va` est toujours
+        faux avec `nan`."""
+        from socle.checks_ratchet import assouplissements
+
+        nan, cle = float("nan"), "verify.fast_max_seconds"
+        self.assertEqual(assouplissements({"verify": {"fast_max_seconds": 300}}, {"verify": {"fast_max_seconds": nan}}),
+                         [(cle, "300 → nan")])
+        self.assertEqual(assouplissements({}, {"verify": {"fast_max_seconds": nan}}), [(cle, "300 → nan")])
+        base = {"verify": {"fast_max_seconds": nan}}
+        self.assertEqual(assouplissements(base, {"verify": {"fast_max_seconds": 900}}), [(cle, "nan → 900")])
+        self.assertEqual(assouplissements(base, {}), [(cle, "nan → 300")])
+        self.assertEqual(assouplissements(base, {"verify": {"fast_max_seconds": nan}}), [])
+        # `inf` et `-inf` s'ordonnent, et se jugent comme avant.
+        self.assertEqual(assouplissements({}, {"verify": {"fast_max_seconds": float("inf")}}), [(cle, "300 → inf")])
+        self.assertEqual(assouplissements({}, {"verify": {"fast_max_seconds": float("-inf")}}), [])
 
 
 class TestAutotestUneFois(unittest.TestCase):

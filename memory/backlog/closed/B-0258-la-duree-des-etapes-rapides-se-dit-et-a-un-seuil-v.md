@@ -34,21 +34,32 @@ Le seuil `[verify] fast_max_seconds` est un garde-fou qui avertit, sans
 jamais échouer.
 
 Il arrête : une dérive silencieuse du total des étapes rapides au-delà du
-seuil, vue au premier `verify --fast` qui les lance toutes sur la machine
-où il tourne ; elle reste dite, tant que le dernier passage complet
-dépasse le seuil, à chaque vérification servie par la marque des étapes
-déjà passées et dans `socle state`, que le démarrage de chaque session
-injecte. Le relèvement du seuil par l'agent : le cliquet des garde-fous
-connaît la clé, la relever exige une demande validée, la baisser est
-libre ; un défaut injecté le prouve.
+seuil, dite au bout du premier passage qui les lance toutes sur la
+machine où il tourne, quel qu'en soit le lanceur : `verify --fast`, dans
+sa sortie ; le hook avant envoi, qui laisse partir le push et le dit sur
+sa sortie d'erreur, que l'agent lit dans celle de son `git push` ; la fin
+de tour, qui le dit à l'humain dans son message, et à l'agent dans sa
+raison quand elle bloque déjà pour une autre. Elle reste dite, tant que
+le dernier passage complet dépasse le seuil, à chaque vérification servie
+par la marque des étapes déjà passées et dans `socle state`, que le
+démarrage de chaque session injecte. Le relèvement du seuil par l'agent :
+le cliquet des garde-fous connaît la clé, la relever exige une demande
+validée, la baisser est libre, et `nan`, qu'aucun ordre ne compare, ne
+s'écrit ni ne se quitte sans demande. Des défauts injectés le prouvent :
+le seuil relevé, relevé depuis `nan`, dépassé sous `verify --fast` et
+sous le hook avant envoi.
 
 Il laisse passer : une dérive sous le seuil ; la durée d'une machine plus
 rapide, qui masque celle d'une plus lente, et la CI, sans seuil ; une
 étape retirée des étapes rapides, ce qui change l'adaptateur, protégé, et
 passe donc par l'humain ; un test mis de côté sous `SOCLE_RAPIDE`, que la
 CI joue toujours ; une étape bloquée, qui finit en erreur de délai, pas
-en durée ; la fin de tour et le push, qui ne relancent pas des étapes
-déjà passées sur le même contenu, et n'ajoutent donc rien.
+en durée ; à la fin de tour qui ne bloque pas pour une autre raison,
+l'agent : le seuil avertit et n'échoue jamais, il ne bloque donc pas la
+fin de tour, et l'agent ne lit l'avertissement que sur la ligne « déjà
+passées » de son `verify --fast` suivant et dans `socle state` ; la fin
+de tour et le push qui ne relancent pas des étapes déjà passées sur le
+même contenu, et n'ajoutent donc rien.
 
 ## Satisfait quand
 

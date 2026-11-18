@@ -478,15 +478,21 @@ l'adaptateur (`verify`, `verify --fast`, la CI) imprime sa durée au bout
 de sa ligne, puis le total. Celui des étapes rapides a un seuil,
 `[verify] fast_max_seconds`, 300 secondes par défaut : au-delà de cinq
 minutes d'attente, un sous-agent perd le cache de sa conversation. Quand
-`verify --fast` les lance toutes et qu'elles passent, il garde leur total
-et la plus longue dans un fichier local, sous `.socle/trace/`. Au-delà du
-seuil, un avertissement, jamais un échec, donne le total, le seuil et
-l'étape la plus longue avec sa durée : à la fin de ce passage, sur la
-ligne d'une vérification qui ne relance pas les étapes, et dans l'état,
-tant que le dernier passage complet dépasse le seuil. Un passage où une
-étape échoue ne remplace pas le précédent. La CI imprime les durées, sans
-seuil : elle tourne sur une autre machine. Baisser le seuil est libre, le
-relever exige une demande validée.
+un passage les lance toutes et qu'elles passent (`verify --fast`, la fin
+de tour, le hook avant envoi), il garde leur total et la plus longue dans
+un fichier local, sous `.socle/trace/`. Au-delà du seuil, un
+avertissement, jamais un échec, donne le total, le seuil et l'étape la
+plus longue avec sa durée : au bout de ce passage, sur la ligne d'une
+vérification qui ne relance pas les étapes, et dans l'état, tant que le
+dernier passage complet dépasse le seuil. Le hook avant envoi laisse
+partir le push et le dit sur sa sortie d'erreur, que l'agent lit dans
+celle de `git push`. La fin de tour ne bloque pas pour lui : elle le dit
+à l'humain, et à l'agent seulement quand elle bloque déjà pour une autre
+raison ; l'agent le lit sinon au `verify --fast` suivant et dans l'état.
+Un passage où une étape échoue ne remplace pas le précédent. La CI
+imprime les durées, sans seuil : elle tourne sur une autre machine.
+Baisser le seuil est libre ; le relever, ou y écrire `nan`, qu'aucun
+ordre ne compare, exige une demande validée.
 
 **Un projet adopté** (installé avec `--adoption`). Les contrôles qui
 échouaient sur l'existant sont nommés dans `[adoption] warn_only`, et les

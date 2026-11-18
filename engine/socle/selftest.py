@@ -553,6 +553,24 @@ def _pousser_la_reponse(a: "Atelier", c: Path, avec_le_test: bool, cle: bool = F
     return r.returncode, r.stdout + r.stderr
 
 
+def _pousser_des_etapes_lentes(a: "Atelier", c: Path) -> tuple[int, str]:
+    """Un test d'un peu plus d'une seconde, commité, puis poussé par le hook
+    avant envoi, qui lance les étapes rapides : son code et sa sortie."""
+    ajouter(c, "tests/test_lent.py", TEST_LENT)
+    maj_memoire(c, "Un test plus lent.")
+    a.commit(c, "Un test plus lent")
+    r = a.run(c, "git", "push", "-q", "origin", f"travail:{c.name}")
+    return r.returncode, r.stdout + r.stderr
+
+
+def _seuil_rapide_nan_en_base(a: "Atelier", c: Path) -> None:
+    """Le seuil des étapes rapides à `nan`, à la base de la CI de ce clone
+    seulement : l'origine est partagée."""
+    remplacer(c, ".socle/guardrails.toml", "fast_max_seconds = 300", "fast_max_seconds = nan")
+    a.commit(c, "le seuil à nan")
+    a.git(c, "update-ref", "refs/remotes/origin/main", "HEAD")
+
+
 def pousser(a: Atelier, c: Path, message: str = "essai"):
     """Commit et push de la branche de travail vers l'origine d'essai, sous
     le nom du clone : les cas partagent la même origine."""
@@ -1037,12 +1055,28 @@ def _cas() -> list[Cas]:
         remplacer(c, ".socle/guardrails.toml", "fast_max_seconds = 300", "fast_max_seconds = 900")
         return etage_ci(a, c)
 
+    @defaut("seuil-rapide-nan-releve", "seuil de durée des étapes rapides à `nan` en base, puis relevé",
+            "ci", "cliquet.garde-fous")
+    def _(a, c):
+        # Aucun ordre ne compare `nan` : le relever depuis lui passait sans
+        # demande (B-0258).
+        _seuil_rapide_nan_en_base(a, c)
+        remplacer(c, ".socle/guardrails.toml", "fast_max_seconds = nan", "fast_max_seconds = 900")
+        return etage_ci(a, c)
+
     @defaut("etapes-lentes", "étapes rapides plus longues que leur seuil d'une seconde", "verify", "verify.duree")
     def _(a, c):
         remplacer(c, ".socle/guardrails.toml", "fast_max_seconds = 300", "fast_max_seconds = 1")
         ajouter(c, "tests/test_lent.py", TEST_LENT)
         r = a.socle(c, "verify", "--fast")
         return r.stdout + r.stderr
+
+    @defaut("etapes-lentes-poussees", "étapes rapides plus longues que leur seuil d'une seconde, lancées par le "
+            "hook avant envoi", "git", "verify.duree")
+    def _(a, c):
+        # B-0258 : le hook laisse passer, et le dit sur la sortie du push.
+        remplacer(c, ".socle/guardrails.toml", "fast_max_seconds = 300", "fast_max_seconds = 1")
+        return _pousser_des_etapes_lentes(a, c)[1]
 
     @defaut("correctif-sans-test", "correctif sans test de régression", "ci", "tests.regression")
     def _(a, c):
@@ -2666,6 +2700,18 @@ def _temoins() -> list[tuple[str, Callable]]:
     def _(a, c):
         remplacer(c, ".socle/guardrails.toml", "fast_max_seconds = 300", "fast_max_seconds = 120")
         return etage_ci(a, c)
+
+    @temoin("un seuil de durée des étapes rapides à `nan` en base, gardé tel quel, passe la CI")
+    def _(a, c):
+        _seuil_rapide_nan_en_base(a, c)
+        maj_memoire(c, "Le seuil gardé tel quel.")
+        return etage_ci(a, c)
+
+    @temoin("des étapes rapides d'un peu plus d'une seconde, sous le seuil du gabarit, poussées : le hook avant "
+            "envoi laisse passer sans avertir")
+    def _(a, c):
+        code, sortie = _pousser_des_etapes_lentes(a, c)
+        return (sortie or "push refusé") if code or RAISONS_AGENT["verify.duree"] in sortie else ""
 
     @temoin("des étapes rapides d'un peu plus d'une seconde, sous le seuil du gabarit : `verify --fast` dit leurs "
             "durées, sans avertir")

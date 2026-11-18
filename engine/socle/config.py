@@ -303,12 +303,14 @@ class Projet:
 
     def seuil_rapide(self) -> int | float:
         """Le seuil, en secondes, du total des étapes rapides, `[verify]
-        fast_max_seconds` des garde-fous : au-delà, `verify --fast` et l'état
-        avertissent, sans échouer (B-0258). Celui du gabarit à défaut, ou si
-        la valeur n'est pas un nombre, ce que le cliquet refuse sans demande ;
-        un nombre se prend tel quel, même nul ou négatif, et `nan` vaut zéro :
-        plus bas avertit plus tôt, comme le cliquet le juge, et aucune valeur
-        qu'il laisse écrire librement ne relâche le seuil."""
+        fast_max_seconds` des garde-fous : au-delà, le passage qui les lance
+        toutes avertit, sans échouer, et l'état le redit (B-0258). Celui du
+        gabarit à défaut, ou si la valeur n'est pas un nombre, ce que le
+        cliquet refuse sans demande ; un nombre se prend tel quel, même nul
+        ou négatif : plus bas avertit plus tôt, comme le cliquet le juge.
+        `nan`, que le cliquet refuse aussi sans demande, écrit comme quitté,
+        vaut zéro, le plus strict : aucune valeur qu'il laisse écrire
+        librement ne relâche le seuil."""
         valeur = self.gf("verify", "fast_max_seconds", defaut=None)
         if not isinstance(valeur, (int, float)):
             return SEUIL_RAPIDE

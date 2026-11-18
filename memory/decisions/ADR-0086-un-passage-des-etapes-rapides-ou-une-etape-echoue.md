@@ -32,7 +32,10 @@ n'avertit pas.
 - `verification.etapes_rapides` écrit la marque et la trace des durées
   sous la même condition ; un test le garde (un passage en échec laisse la
   trace d'avant).
-- Une dérive que seul un passage en échec montrerait se voit au premier
-  passage qui réussit : l'agent ne livre pas sur un échec.
+- Une dérive que seul un passage en échec montrerait se dit au bout du
+  premier passage qui réussit, quel qu'en soit le lanceur : `verify
+  --fast` dans sa sortie, le hook avant envoi sur sa sortie d'erreur, la
+  fin de tour à l'humain, sans bloquer, et à l'agent seulement quand elle
+  bloque déjà ; l'agent ne livre pas sur un échec.
 - Pour défaire : une ADR qui la remplace, par exemple pour garder la durée
   d'un échec qui a lancé toutes ses étapes jusqu'au bout.
