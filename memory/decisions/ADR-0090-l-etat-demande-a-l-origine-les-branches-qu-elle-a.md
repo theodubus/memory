@@ -18,8 +18,11 @@ vérifier au moment de dire.
 
 - `a_faire` calcule les trois listes comme avant, puis, s'il y a au
   moins une branche à dire, demande à l'origine celles qu'elle a
-  (`git ls-remote --heads origin`, sans invite d'identifiants, en
+  (`git ls-remote --heads origin`, sans invite d'identifiants HTTPS, en
   `DELAI_ORIGINE`, cinq secondes, au plus) et ne garde que celles-là.
+- Une branche inactive que l'origine n'a plus, dont la référence, dans
+  ce clone, garde seule un commit que la mémoire cite, se dit encore :
+  étiqueter ce commit d'abord, sans quoi un `git fetch --prune` le perd.
 - Sans réponse de l'origine (délai, erreur, hors ligne), il les garde
   toutes, et chaque ligne dit qu'elle vient du dernier fetch et que
   `git fetch --prune origin` la rafraîchit.

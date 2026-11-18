@@ -120,8 +120,9 @@ def branches_de_l_origine(projet: config.Projet) -> set[str] | None:
     sur l'origine tant qu'un fetch ne les élague pas, et l'état la donnait à
     supprimer à l'humain, qui l'avait déjà supprimée (B-0193). `None` quand
     l'origine ne répond pas dans le délai, ou en erreur : les listes restent
-    alors celles du dernier fetch, et le disent. Aucune invite
-    d'identifiants : personne ne la verrait."""
+    alors celles du dernier fetch, et le disent. Aucune invite d'identifiants
+    HTTPS ; une origine SSH qui demande une phrase de passe peut l'afficher
+    sur le terminal, jusqu'au délai."""
     try:
         r = subprocess.run(["git", "ls-remote", "--heads", "origin"], cwd=projet.racine, capture_output=True,
                            text=True, encoding="utf-8", errors="replace", stdin=subprocess.DEVNULL,
@@ -254,12 +255,14 @@ def a_faire(projet: config.Projet) -> list[Element]:
     vivantes = (branches_de_l_origine(projet)
                 if a_supprimer or contenues or inactives else set())
     note = ""
+    disparues: list[tuple[str, int, int]] = []
     if vivantes is None:
         note = trad(" (liste du dernier fetch, que l'origine n'a pas confirmée : `git fetch --prune origin` la "
                     "rafraîchit)")
     else:
         a_supprimer = [b for b in a_supprimer if b in vivantes]
         contenues = [(b, p) for b, p in contenues if b in vivantes]
+        disparues = [i for i in inactives if i[0] not in vivantes]
         inactives = [i for i in inactives if i[0] in vivantes]
     for b in a_supprimer:
         res.append(Element("action", trad("supprimer la branche distante `{branche}`, déjà contenue dans la branche "
@@ -269,7 +272,19 @@ def a_faire(projet: config.Projet) -> list[Element]:
                                           "la branche de travail poussée : son contenu ne se perd pas ; une pull "
                                           "request ouverte qui en part se fermerait avec elle", branche=b,
                                           travail=poussee) + note, page))
-    cites = commits_cites(projet) if inactives else set()
+    cites = commits_cites(projet) if inactives or disparues else set()
+    # Une branche que l'origine n'a plus ne se propose plus ; mais si sa
+    # référence, dans ce clone, garde seule un commit que la mémoire cite, un
+    # `git fetch --prune` le perdrait : l'étiqueter d'abord (B-0116, la revue
+    # de L-0017).
+    for b, _, _ in disparues:
+        seuls = commits_cites_seuls(projet, b, cites)
+        if seuls:
+            res.append(Element("action", trad(
+                "étiqueter {cites}, que la mémoire cite et que seule garde, dans ce clone, la référence de la branche "
+                "distante `{branche}`, que l'origine n'a plus : `{commande}` ; sans quoi un `git fetch --prune` les "
+                "perd, et la CI ne les retrouve plus",
+                cites=", ".join(seuls), branche=b, commande=outils.etiqueter(seuls)), page))
     for b, absents, age in inactives:
         seuls = commits_cites_seuls(projet, b, cites)
         if seuls:

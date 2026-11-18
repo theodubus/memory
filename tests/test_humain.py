@@ -140,7 +140,7 @@ class TestBranchesASupprimer(unittest.TestCase):
         (self.clone / "memory").mkdir()
         git(source, "branch", "-D", "morceau")
         self.assertEqual(humain.branches_contenues_dans_le_travail(self.projet), [("morceau", "origin/en-cours")])
-        # Inactive aussi dans trente jours : ni l'une ni l'autre liste ne la dit.
+        # Dans trente jours aussi : elle ne se dit pas (le filtre des inactives a son propre test, plus bas).
         with unittest.mock.patch.object(time, "time", return_value=time.time() + 30 * 86400):
             quoi = [e.quoi for e in humain.a_faire(self.projet)]
         self.assertFalse(any("`morceau`" in q for q in quoi), quoi)
@@ -234,6 +234,43 @@ class TestBranchesASupprimer(unittest.TestCase):
         git(self.clone, "tag", f"cite/{sha}", sha)
         outils._PULL_REQUESTS_RECUPEREES.add(str(self.clone.resolve()))
         self.assertEqual(humain.commits_cites_seuls(self.projet, "ancienne"), [])
+
+    def test_une_branche_inactive_que_l_origine_n_a_plus_ne_se_dit_que_pour_un_commit_cite_qu_elle_seule_garde(self):
+        """La revue de L-0017 : une branche inactive supprimée sur l'origine ne
+        se propose plus à examiner ; mais si sa référence, dans ce clone, garde
+        seule un commit que la mémoire cite, l'état dit encore de l'étiqueter,
+        sans quoi un `git fetch --prune` le perdrait (B-0116)."""
+        from socle import utils as outils
+
+        source = self.dossier / "source"
+        git(source, "switch", "-q", "-c", "abandon", "main")
+        (source / "g").write_text("vieux")
+        git(source, "add", "g")
+        vieux = "2026-01-01T12:00:00"
+        subprocess.run(["git", "commit", "-qm", "vieux"], cwd=source, check=True, capture_output=True,
+                       env={**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t",
+                            "GIT_COMMITTER_EMAIL": "t@t", "GIT_CONFIG_NOSYSTEM": "1", "HOME": str(source),
+                            "GIT_COMMITTER_DATE": vieux, "GIT_AUTHOR_DATE": vieux})
+        sha = git(source, "rev-parse", "--short=7", "HEAD").strip()
+        git(source, "switch", "-q", "main")
+        git(self.clone, "fetch", "-q", "origin")
+        (self.clone / "memory").mkdir()
+        self.assertTrue(any("`abandon`" in e.quoi for e in humain.a_faire(self.projet)))
+        git(source, "branch", "-D", "abandon")
+        # Ni la mémoire ne cite son commit : elle ne se dit plus du tout.
+        self.assertEqual([b for b, _, _ in humain.branches_inactives(self.projet)], ["abandon"])
+        self.assertFalse(any("`abandon`" in e.quoi for e in humain.a_faire(self.projet)))
+        # La mémoire le cite : l'étiqueter d'abord, depuis ce clone.
+        journal = self.clone / "memory/journal/2026-01.md"
+        journal.parent.mkdir(parents=True)
+        journal.write_text("<!-- socle: couche=journal zone=publique -->\n# Journal\n\n"
+                           f"## J-2026-01-01-A — Essai\n\n> ref : commit:{sha}\n\nTexte.\n")
+        outils._PULL_REQUESTS_RECUPEREES.clear()
+        quoi = [e.quoi for e in humain.a_faire(self.projet) if "`abandon`" in e.quoi]
+        self.assertEqual(len(quoi), 1, quoi)
+        self.assertTrue(quoi[0].startswith(f"étiqueter {sha}, que la mémoire cite"), quoi[0])
+        self.assertIn("que l'origine n'a plus", quoi[0])
+        self.assertIn(outils.etiqueter([sha]), quoi[0])
 
     def test_une_action_humaine_vient_avec_le_lien_de_son_sujet(self):
         # ADR-0025 : le mode d'emploi d'une action humaine (commandes,
