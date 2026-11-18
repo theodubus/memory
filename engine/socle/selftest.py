@@ -54,6 +54,20 @@ class TestCalc(unittest.TestCase):
     def test_double(self):
         self.assertEqual(double(2), 4)
 '''
+# Un test d'un peu plus d'une seconde : les étapes rapides du projet d'essai
+# passent alors le seuil d'une seconde, et restent loin de celui du gabarit
+# (B-0258).
+TEST_LENT = '''import time
+import unittest
+
+from calc import double
+
+
+class TestLent(unittest.TestCase):
+    def test_double_lent(self):
+        time.sleep(1.2)
+        self.assertEqual(double(3), 6)
+'''
 DOC_CALC = """# Calcul
 
 `double` multiplie par <!-- valeur:facteur -->2<!-- /valeur -->, la
@@ -1017,6 +1031,18 @@ def _cas() -> list[Cas]:
     def _(a, c):
         remplacer(c, ".socle/guardrails.toml", '"memory/active.md" = { max_bytes = 3700 }', '"memory/active.md" = { max_bytes = 60000 }')
         return etage_ci(a, c)
+
+    @defaut("seuil-rapide-releve", "seuil de durée des étapes rapides relevé", "ci", "cliquet.garde-fous")
+    def _(a, c):
+        remplacer(c, ".socle/guardrails.toml", "fast_max_seconds = 300", "fast_max_seconds = 900")
+        return etage_ci(a, c)
+
+    @defaut("etapes-lentes", "étapes rapides plus longues que leur seuil d'une seconde", "verify", "verify.duree")
+    def _(a, c):
+        remplacer(c, ".socle/guardrails.toml", "fast_max_seconds = 300", "fast_max_seconds = 1")
+        ajouter(c, "tests/test_lent.py", TEST_LENT)
+        r = a.socle(c, "verify", "--fast")
+        return r.stdout + r.stderr
 
     @defaut("correctif-sans-test", "correctif sans test de régression", "ci", "tests.regression")
     def _(a, c):
@@ -2636,6 +2662,21 @@ def _temoins() -> list[tuple[str, Callable]]:
         remplacer(c, ".socle/guardrails.toml", '"memory/active.md" = { max_bytes = 3700 }', '"memory/active.md" = { max_bytes = 3000 }')
         return etage_ci(a, c)
 
+    @temoin("baisser le seuil de durée des étapes rapides est libre : la CI passe")
+    def _(a, c):
+        remplacer(c, ".socle/guardrails.toml", "fast_max_seconds = 300", "fast_max_seconds = 120")
+        return etage_ci(a, c)
+
+    @temoin("des étapes rapides d'un peu plus d'une seconde, sous le seuil du gabarit : `verify --fast` dit leurs "
+            "durées, sans avertir")
+    def _(a, c):
+        ajouter(c, "tests/test_lent.py", TEST_LENT)
+        r = a.socle(c, "verify", "--fast")
+        sortie = r.stdout + r.stderr
+        if RAISONS_AGENT["verify.duree"] in sortie or "… total des étapes lancées : " not in r.stderr:
+            return sortie
+        return ""
+
     @temoin("un module nouveau entre au cliquet de mutation « à mesurer » : la CI passe")
     def _(a, c):
         ajouter(c, "unites.py", "CENTIMES = 100\n")
@@ -3254,6 +3295,8 @@ RAISONS_AGENT = {
     "escalade": "ARRÊT ET ESCALADE",
     "échec inchangé": "sans changement depuis la tentative précédente",
     "memoire.peremption": "chantier actif inchangé depuis",
+    # L'avertissement des étapes rapides au-delà de leur seuil (B-0258).
+    "verify.duree": "durée des étapes rapides au dernier passage complet",
     "réglage de l'agent": "les réglages de Claude Code commandent ses hooks",
     "où regarder": "« Où regarder » doit donner un lien",
     "contexte du projet": "« Contexte » : il commence par trois paragraphes",

@@ -473,6 +473,21 @@ documentation, fichiers tiers (ceux d'un outil installé dans le projet),
 fichiers de cas et spécifications du projet. Les durcir est
 libre ; les relâcher exige une demande validée.
 
+**La durée des étapes.** Chaque vérification qui lance une étape de
+l'adaptateur (`verify`, `verify --fast`, la CI) imprime sa durée au bout
+de sa ligne, puis le total. Celui des étapes rapides a un seuil,
+`[verify] fast_max_seconds`, 300 secondes par défaut : au-delà de cinq
+minutes d'attente, un sous-agent perd le cache de sa conversation. Quand
+`verify --fast` les lance toutes et qu'elles passent, il garde leur total
+et la plus longue dans un fichier local, sous `.socle/trace/`. Au-delà du
+seuil, un avertissement, jamais un échec, donne le total, le seuil et
+l'étape la plus longue avec sa durée : à la fin de ce passage, sur la
+ligne d'une vérification qui ne relance pas les étapes, et dans l'état,
+tant que le dernier passage complet dépasse le seuil. Un passage où une
+étape échoue ne remplace pas le précédent. La CI imprime les durées, sans
+seuil : elle tourne sur une autre machine. Baisser le seuil est libre, le
+relever exige une demande validée.
+
 **Un projet adopté** (installé avec `--adoption`). Les contrôles qui
 échouaient sur l'existant sont nommés dans `[adoption] warn_only`, et les
 constats présents à l'installation dans `[adoption.tolerated]`, par

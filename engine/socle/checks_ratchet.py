@@ -34,6 +34,9 @@ REGLES = [
     # Relevée au-delà de ce que Claude Code remet entier, la sortie du
     # démarrage ne parviendrait plus à l'agent (ADR-0071).
     (("startup", "max_bytes"), "bas"),
+    # Relevé, le seuil laisserait dériver en silence la durée des étapes
+    # rapides (B-0258) ; baissé, il avertit plus tôt.
+    (("verify", "fast_max_seconds"), "bas"),
     (("mutation", "caps", "*", "max"), "bas"),
     (("mutation", "caps", "*", "reason"), "libre"),
     (("mutation", "caps", "*", "pending"), "faux"),
@@ -58,7 +61,8 @@ REGLES = [
 # Une clé qui a une valeur par défaut : absente, elle la vaut, et l'écrire
 # telle quelle ne change rien (D-0087).
 DEFAUTS = {("branches", "disposable"): list(config.BRANCHES_JETABLES),
-           ("startup", "max_bytes"): config.BORNE_DEMARRAGE}
+           ("startup", "max_bytes"): config.BORNE_DEMARRAGE,
+           ("verify", "fast_max_seconds"): config.SEUIL_RAPIDE}
 
 
 def _cle(chemin: tuple[str, ...]) -> str:

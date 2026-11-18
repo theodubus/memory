@@ -7,6 +7,27 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-18-a — La durée des étapes se dit, et celle des étapes rapides a un seuil
+
+`verify`, `verify --fast` et `socle ci` impriment désormais la durée de
+chaque étape de l'adaptateur qu'ils lancent, au bout de sa ligne, puis
+leur total. Une clé nouvelle des garde-fous, `[verify] fast_max_seconds`,
+borne le total des étapes rapides : 300 secondes quand le projet ne
+l'écrit pas, la valeur que pose le gabarit d'un projet neuf. Au-delà,
+`verify --fast` avertit sans échouer, en nommant l'étape la plus longue ;
+l'avertissement revient sur la ligne qui dit les étapes déjà passées, et
+dans `socle state` au démarrage de chaque session, tant que le dernier
+passage où toutes ont passé dépasse le seuil. Sa trace est un fichier
+local, `.socle/trace/duree-des-etapes-rapides`, que git ignore déjà. La
+CI imprime les durées sans seuil. Le cliquet connaît la clé : la relever
+exige une demande validée qui la cite, la baisser est libre.
+
+À faire : rien d'obligatoire. La durée des étapes rapides du projet n'est
+pas mesurée sur sa machine : `verify --fast --redo` la mesure ; si elle
+dépasse cinq minutes, l'état le dira à chaque session, jusqu'à ce qu'elle
+raccourcisse ou que l'humain relève le seuil. Écrire la clé à 300 dans
+`.socle/guardrails.toml` est libre et ne change rien.
+
 ## 2026-11-17-a — Une forme du shell que le hook ne juge pas se signale au dépôt du socle
 
 Le skill `socle-review` disait d'inscrire une forme du shell qu'un agent

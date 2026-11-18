@@ -2303,6 +2303,16 @@ MESSAGES: dict[str, str] = {
         "companion mode: commit the copy in the private repository, then `socle private lock`",
     "  … étapes rapides déjà passées sur cet arbre exact : non relancées (`--redo` pour les relancer)":
         "  … fast steps already passed on this exact tree: not run again (`--redo` to run them again)",
+    "  … total des étapes lancées : {total}":
+        "  … total of the steps run: {total}",
+    "durée des étapes rapides au dernier passage complet : {total}, au-delà du seuil de {seuil} "
+    "(`[verify] fast_max_seconds` des garde-fous) ; la plus longue : `{etape}`, {duree} — la raccourcir, ou relever "
+    "le seuil par une demande validée":
+        "duration of the fast steps at the last complete run: {total}, beyond the threshold of {seuil} "
+        "(`[verify] fast_max_seconds` of the guardrails); the longest one: `{etape}`, {duree} — shorten it, or "
+        "raise the threshold through a validated request",
+    "durée des étapes rapides : illisible ({erreur})":
+        "duration of the fast steps: unreadable ({erreur})",
     "délai dépassé : {commande}":
         "timed out: {commande}",
     "aucun test trouvé (`{commande}`) : un projet qui commence n'en a pas encore ; le premier code s'écrit avec son "
@@ -2551,6 +2561,10 @@ MESSAGES: dict[str, str] = {
         "other repository declared without approval, so that its paths escape the check",
     "budget de mémoire relevé":
         "memory budget raised",
+    "seuil de durée des étapes rapides relevé":
+        "duration threshold of the fast steps raised",
+    "étapes rapides plus longues que leur seuil d'une seconde":
+        "fast steps longer than their one-second threshold",
     "correctif sans test de régression":
         "fix without a regression test",
     "test de régression qui échoue sur le parent faute de s'y charger":
@@ -2941,6 +2955,12 @@ MESSAGES: dict[str, str] = {
         "outside GitHub (B-0175)",
     "durcir un garde-fou est libre":
         "tightening a guardrail is free",
+    "baisser le seuil de durée des étapes rapides est libre : la CI passe":
+        "lowering the duration threshold of the fast steps is free: the CI passes",
+    "des étapes rapides d'un peu plus d'une seconde, sous le seuil du gabarit : `verify --fast` dit leurs durées, "
+    "sans avertir":
+        "fast steps of a little over one second, under the template's threshold: `verify --fast` gives their "
+        "durations, without warning",
     "un module nouveau entre au cliquet de mutation « à mesurer » : la CI passe":
         "a new module enters the mutation ratchet “to measure”: the CI passes",
     "un plafond de mutation posé par la mesure passe la CI":

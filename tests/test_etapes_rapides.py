@@ -103,6 +103,157 @@ class TestEtapesRapides(unittest.TestCase):
         self.assertEqual(self.fois(), 2)
 
 
+class TestDureeDesEtapes(unittest.TestCase):
+    """B-0258, T-0045 : `verify --fast` n'imprimait aucune durée, et rien ne
+    signalait qu'elle avait passé de 143 s à près de douze minutes. Chaque
+    étape lancée dit sa durée, puis leur total ; au-delà du seuil des
+    garde-fous, un avertissement nomme la plus longue."""
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-durees-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=self.racine, check=True)
+        (self.racine / "calc.py").write_text("x = 1\n")
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+        subprocess.run(["git", "add", "-A"], cwd=self.racine, check=True)
+        subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "base", "--no-verify"],
+                       cwd=self.racine, check=True)
+        self.code = 0
+
+    def projet(self, seuil=None) -> config.Projet:
+        projet = config.Projet.charger(self.racine)
+        projet.adaptateur["capabilities"] = {
+            "lint": {"command": "sleep 0.3", "fast": True},
+            "tests": {"command": f"exit {self.code}", "fast": True},
+            "build": {"command": "true"}}
+        if seuil is not None:
+            projet.garde_fous["verify"] = {"fast_max_seconds": seuil}
+        return projet
+
+    def lancer(self, seuil=None, refaire=False) -> tuple[Rapport, str]:
+        rapport, flux = Rapport(), io.StringIO()
+        verification.etapes_rapides(self.projet(seuil), rapport, flux=flux, refaire=refaire)
+        return rapport, flux.getvalue()
+
+    def avertissements(self, rapport: Rapport) -> list[str]:
+        return [c.message for c in rapport.constats if c.controle == verification.CONTROLE_DUREE]
+
+    def test_chaque_etape_dit_sa_duree_au_bout_de_sa_ligne_puis_le_total(self):
+        _, sortie = self.lancer()
+        lignes = sortie.splitlines()
+        self.assertRegex(lignes[0], r"^  … verify\.lint : sleep 0\.3 — 0,[3-9] s$")
+        self.assertRegex(lignes[1], r"^  … verify\.tests : exit 0 — \d+,\d s$")
+        self.assertRegex(lignes[2], r"^  … total des étapes lancées : 0,[3-9] s$")
+        self.assertEqual(len(lignes), 3)  # l'étape qui n'est pas rapide ne tourne pas
+
+    def test_la_verification_complete_et_la_ci_impriment_les_durees_sans_seuil(self):
+        """Point 5 : la CI lance toutes les étapes, sur une autre machine."""
+        rapport, flux = Rapport(), io.StringIO()
+        durees = verification.executer_etapes(self.projet(seuil=0.1), False, rapport, flux)
+        self.assertEqual([n for n, _ in durees], ["verify.lint", "verify.build", "verify.tests"])
+        self.assertRegex(flux.getvalue().splitlines()[-1], r"^  … total des étapes lancées : \d+,\d s$")
+        self.assertEqual(self.avertissements(rapport), [])
+        self.assertFalse((self.racine / verification.DUREES).exists())
+
+    def test_au_dela_du_seuil_un_avertissement_nomme_la_plus_longue(self):
+        rapport, _ = self.lancer(seuil=0.1)
+        self.assertTrue(rapport.reussi)
+        (message,) = self.avertissements(rapport)
+        self.assertRegex(message, r"^durée des étapes rapides au dernier passage complet : 0,[3-9] s, au-delà du seuil "
+                                  r"de 0,1 s \(`\[verify\] fast_max_seconds` des garde-fous\) ; la plus longue : "
+                                  r"`verify\.lint`, 0,[3-9] s")
+
+    def test_sous_le_seuil_rien_n_avertit(self):
+        rapport, _ = self.lancer()
+        self.assertEqual(self.avertissements(rapport), [])
+        self.assertIsNone(verification.alerte_duree(self.projet()))
+
+    def test_les_etapes_deja_passees_redisent_l_avertissement_sur_leur_ligne(self):
+        self.lancer(seuil=0.1)
+        rapport, sortie = self.lancer(seuil=0.1)
+        self.assertRegex(sortie, r"^  … étapes rapides déjà passées sur cet arbre exact : non relancées \(`--redo` "
+                                 r"pour les relancer\) — !! durée des étapes rapides au dernier passage complet : "
+                                 r"0,[3-9] s, au-delà du seuil de 0,1 s .*la plus longue : `verify\.lint`")
+        self.assertEqual(rapport.constats, [])
+        _, sortie = self.lancer(seuil=300)
+        self.assertNotIn("!!", sortie)
+
+    def test_l_etat_le_dit_tant_que_le_dernier_passage_complet_depasse_le_seuil(self):
+        from socle import state as etat
+
+        self.lancer(seuil=0.1)
+        self.assertIn("!! durée des étapes rapides au dernier passage complet", etat.calculer(self.projet(0.1),
+                                                                                              contenus=False))
+        self.assertNotIn("durée des étapes rapides", etat.calculer(self.projet(), contenus=False))
+        self.lancer(seuil=0.1)  # déjà passées : la trace reste
+        self.assertIsNotNone(verification.alerte_duree(self.projet(0.1)))
+        self.lancer(seuil=10, refaire=True)  # un passage complet sous ce seuil-là la remplace
+        self.assertIsNone(verification.alerte_duree(self.projet(10)))
+
+    def test_un_passage_ou_une_etape_echoue_ne_garde_pas_sa_duree(self):
+        """ADR-0086 : son total ne mesure pas des étapes qui passent ; une
+        erreur courte effacerait la dérive."""
+        verification.garder_duree(self.racine, [("verify.tests", 400.0)])
+        self.code = 1
+        rapport, sortie = self.lancer(seuil=0.1)
+        self.assertFalse(rapport.reussi)
+        self.assertRegex(sortie, r"  … total des étapes lancées : \d+,\d s")
+        self.assertEqual(self.avertissements(rapport), [])
+        self.assertEqual(verification.derniere_duree(self.racine)["total"], 400.0)
+
+    def test_une_trace_illisible_ne_dit_rien(self):
+        fichier = self.racine / verification.DUREES
+        fichier.parent.mkdir(parents=True, exist_ok=True)
+        for texte in ("pas du json", "[1, 2]", '{"total": true, "duree": 1}', '{"total": 500}'):
+            fichier.write_text(texte)
+            self.assertIsNone(verification.derniere_duree(self.racine), texte)
+            self.assertIsNone(verification.alerte_duree(self.projet(0.1)), texte)
+
+    def test_secondes_au_dixieme_dans_la_langue_du_projet(self):
+        from socle import messages
+
+        self.assertEqual(verification.secondes(163.64), "163,6 s")
+        self.assertEqual(verification.secondes(300), "300 s")
+        with messages.dans("en"):
+            self.assertEqual(verification.secondes(163.64), "163.6 s")
+
+
+class TestSeuilDesEtapesRapides(unittest.TestCase):
+    """B-0258 : le seuil, `[verify] fast_max_seconds` des garde-fous ; le
+    relever exige une demande validée, le baisser est libre."""
+
+    def seuil(self, garde_fous: dict):
+        return config.Projet(Path("."), garde_fous=garde_fous).seuil_rapide()
+
+    def test_le_seuil_des_garde_fous_et_sa_valeur_par_defaut(self):
+        self.assertEqual(config.SEUIL_RAPIDE, 300)
+        self.assertEqual(self.seuil({}), 300)
+        self.assertEqual(self.seuil({"verify": {"fast_max_seconds": 120}}), 120)
+        self.assertEqual(self.seuil({"verify": {"fast_max_seconds": 2.5}}), 2.5)
+        self.assertEqual(self.seuil({"verify": {"fast_max_seconds": "beaucoup"}}), 300)
+        # Ce que le cliquet laisse écrire librement ne relâche jamais le seuil.
+        self.assertEqual(self.seuil({"verify": {"fast_max_seconds": 0}}), 0)
+        self.assertEqual(self.seuil({"verify": {"fast_max_seconds": float("nan")}}), 0)
+        self.assertEqual(self.seuil({"verify": {"fast_max_seconds": True}}), 1)
+
+    def test_le_gabarit_pose_le_seuil_par_defaut_dans_les_deux_langues(self):
+        for nom in ("guardrails.toml", "guardrails.en.toml"):
+            gabarit = tomllib.loads((MOTEUR / "socle/templates" / nom).read_text())
+            self.assertEqual(gabarit["verify"]["fast_max_seconds"], config.SEUIL_RAPIDE, nom)
+
+    def test_le_cliquet_connait_la_cle(self):
+        from socle.checks_ratchet import assouplissements
+
+        self.assertEqual(assouplissements({}, {"verify": {"fast_max_seconds": 300}}), [])
+        self.assertEqual(assouplissements({}, {"verify": {"fast_max_seconds": 120}}), [])
+        self.assertEqual(assouplissements({"verify": {"fast_max_seconds": 300}}, {}), [])
+        self.assertEqual(assouplissements({}, {"verify": {"fast_max_seconds": 900}}),
+                         [("verify.fast_max_seconds", "300 → 900")])
+        self.assertEqual(assouplissements({"verify": {"fast_max_seconds": 120}}, {}),
+                         [("verify.fast_max_seconds", "120 → 300")])
+
+
 class TestAutotestUneFois(unittest.TestCase):
     """L6 : `socle ci` lançait l'auto-test deux fois, dans la suite de tests
     de ce dépôt puis lui-même."""
