@@ -1,0 +1,193 @@
+From c03433265245ecfbd0d7f9504d755369d8cd178a Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 18 Nov 2026 18:32:28 +0000
+Subject: [PATCH 4/4] =?UTF-8?q?L-0016=20:=20la=20correction=20des=20bloqua?=
+ =?UTF-8?q?nts=20int=C3=A9gr=C3=A9e=20(5e5837d),=20l'architecture=20dit=20?=
+ =?UTF-8?q?le=20r=C3=A9cap=20lu=20hors=20des=20blocs=20de=20code=20(ADR-00?=
+ =?UTF-8?q?89)=20;=20T-0091=20dans=20L-0006,=20B-0287=20et=20T-0092=20au?=
+ =?UTF-8?q?=20backlog=20;=20le=20recul=20de=20la=20passe=201,=20continuer?=
+ =?UTF-8?q?=20(J-2026-11-18-R)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01CdBoquiMWnoUmcGcAPQQBz
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=1 PreToolUse=354 Stop=6
+Socle-Hooks-Since-Commit: PreToolUse=120
+---
+ docs/fabrication/architecture.md              |  4 +--
+ ...hors-des-blocs-de-code-se-lisent-avec-l.md | 20 +++++++++++++++
+ ...ies-protegees-et-des-skills-leur-retard.md |  2 +-
+ ...ue-de-la-suite-aux-formats-valides-le-d.md | 11 ++++++++
+ ...cle-batch-fait-coller-la-sortie-compact.md | 21 ++++++++++++++++
+ ...s-code-ferme-un-bloc-par-une-cloture-du.md | 13 ++++++++++
+ memory/journal/2026-11-7.md                   | 25 +++++++++++++++++++
+ 7 files changed, 93 insertions(+), 3 deletions(-)
+ create mode 100644 memory/backlog/B-0287-les-lignes-hors-des-blocs-de-code-se-lisent-avec-l.md
+ create mode 100644 memory/backlog/T-0091-le-skill-socle-batch-fait-coller-la-sortie-compact.md
+ create mode 100644 memory/backlog/T-0092-lignes-hors-code-ferme-un-bloc-par-une-cloture-du.md
+
+diff --git a/docs/fabrication/architecture.md b/docs/fabrication/architecture.md
+index 6b065cf..1e2524d 100644
+--- a/docs/fabrication/architecture.md
++++ b/docs/fabrication/architecture.md
+@@ -49,7 +49,7 @@ vérifiées.
+ | `commands.py` | le découpage d'une commande shell en commandes simples, par `shlex` : séparateurs, redirections, `cd` (et ses options), `cd -`, `pushd` et `popd` suivis, chaque cible développée au moment du `cd`, variables affectées retenues (`+=`, une déclaration de tableau ou de référence rend la variable inconnue), un sous-shell, une substitution, un élément de pipeline ou une tâche de fond supposés ne rien transmettre à la suite, ce que lance une substitution nue qu'il délimite jugé, chaque variable développée une fois, `$'…'` lu, `bash -c` (quel que soit le groupe d'options qui porte `c`, `--` sauté, B-0206) et `eval` ouverts, préfixes (`env`, `sudo`, `python -m`) retirés ; le corps d'un heredoc n'est que du texte ; un mot développé comme le shell (`developper`, `accolades`, `normaliser`), ce qui ne se développe pas marqué, et un motif du shell, classes POSIX comprises, comparé à un motif de chemin (`se_croisent`) (B-0171, ADR-0072). Les mots réservés qui précèdent une commande (`then`, `do`, `!`, `{`…) se retirent comme un préfixe ; ce qu'une condition ou une boucle change, son dossier et ses variables, devient inconnu après elle et dans la branche `else` qui suit, sauf un dossier connu où elle revient sans qu'un `break` ou un `continue` l'ait quittée ailleurs, et le corps d'un `for` se lit une fois par mot de sa liste, sa variable liée à ce mot, jusqu.à `DEPLIAGE_MAX` caractères pour toute la commande (B-0204, J-2026-11-14-AK, J-2026-11-14-AL) ; le corps d'une fonction (`nom() { …; }`, ou `function nom { …; }` sans parenthèses, sur la même ligne ou la suivante, B-0232) se lit, et rend en se fermant l'état d'avant lui, un autre corps que bash admet se juge comme exécuté là où il s'écrit, et la définition ne vaut que pour la commande qui la suit ; l'appel d'une fonction définie dans la commande dont le corps `{ … }` change le dossier ou une variable rend inconnu ce qu'elle change, avec ce que changent les fonctions qu'elle appelle, résolues à l'appel de proche en proche (une fonction définie après elle comprise), et ce qui suit se juge comme un état inconnu ; l'appel vaut derrière `time`, et dans une substitution ou un `eval`, qui connaissent les fonctions de la commande, non dans un `bash -c` (la seconde revue du lot B-0234, B-0232, J-2026-11-16-B, B-0250) ; des opérateurs échappés ou entre guillemets (`\(`, `';'`), et un mot réservé cité ou échappé dont le texte nu est réservé (`"function"`, `\function`, `"}"`), sont un mot, jamais lu comme une structure (la revue du lot 3, J-2026-11-14-AH ; B-0232). Un `#` n'ouvre un commentaire qu'en tête d'un mot, retiré sans sa fin de ligne, et les guillemets d'une substitution entre guillemets se lisent comme le shell (`"$(cmd "arg")"`, B-0207). Il ne suit pas les motifs d'un `case` (B-0245), `time` devant une commande composée (B-0244), ce que lance une substitution entre guillemets, l'état d'un `eval`, l'appel d'une fonction définie hors de la commande, `CDPATH`, un `cd` qui échoue, `env -C`, un heredoc vu où il n'y en a pas (B-0207), ni `lastpipe`, `((…))`, `let`, `getopts` (B-0211) |
+ | `state.py` | l'état dérivé, dont l'ordre du backlog, que le rappel de fin de tour redonne, et une ligne qui renvoie à la suite entière (`socle roadmap`, B-0274) ; si GitHub exige la CI du socle avant de fusionner sur la branche par défaut (ensemble de règles ou protection classique, lus par `gh`), sinon une action de l'humain avec le lien de la page (B-0044, L2, R1) ; la sortie du démarrage, hook compris, sous `[startup] max_bytes`, chaque partie dans sa part, ce qu'une partie laisse ou libère allant aux autres jusqu'à ce que rien ne change : l'état dérivé, en tête ce qui demande d'agir (ce qui revient à l'humain, les demandes, même quand le reste ne se calcule pas, ce qu'il a écrit, les lignes du hook), puis ce qui informe, puis le backlog, ses lignes bornées et ses listes plafonnées, chacune disant où lire la suite ; puis le chantier actif, public et privé, les faits par leur titre et les dix dernières décisions ; une partie au-delà de ce qui lui revient perd des blocs entiers, l'état d'abord ce qui se relit ailleurs, un en-tête jamais sans ses éléments, les autres depuis leur fin, et la coupe dit laquelle, de combien et où lire le reste ; les lignes du hook gardées, `socle state --short` les redit ; le budget du chantier actif au-dessus de sa part signalé à chaque démarrage (ADR-0071) |
+ | `roadmap.py` | la suite du projet d'un coup d'œil (`socle roadmap`, B-0274) : les jalons et leurs besoins clos, les lots dans leur ordre d'exécution avec leurs tâches, les besoins, ce qui n'est dans aucun lot, et deux lots qui attendent un même lot sans ordre entre eux ; calculée par le graphe du backlog que l'état lit (`memory.Graphe`), en compact (une ligne par jalon et par lot, ou par besoin, sans nommer de demande) ou en Markdown (le lot en cours et les deux suivants tâche par tâche, le lien de chaque demande en attente) |
+-| `human.py` | les spécifications déclarées qu'aucune demande n'a soumises à l'humain (D-0066) ; les branches distantes à supprimer (contenues dans la branche par défaut, ou dans la branche de travail poussée, B-0145) et celles à examiner (non fusionnées, sans activité depuis une semaine, B-0112), avec la commande qui étiquette d'abord les commits cités que seule l'une d'elles garde, ni pull request ni étiquette (B-0116) ; ce qui revient à l'humain ; ce qu'il a écrit lui-même depuis le dernier commit de l'agent (approbations, réponses de son terminal), que l'état liste pour que l'agent le cite ; la lecture du dernier message de l'agent pour le récap |
++| `human.py` | les spécifications déclarées qu'aucune demande n'a soumises à l'humain (D-0066) ; les branches distantes à supprimer (contenues dans la branche par défaut, ou dans la branche de travail poussée, B-0145) et celles à examiner (non fusionnées, sans activité depuis une semaine, B-0112), avec la commande qui étiquette d'abord les commits cités que seule l'une d'elles garde, ni pull request ni étiquette (B-0116) ; ce qui revient à l'humain ; ce qu'il a écrit lui-même depuis le dernier commit de l'agent (approbations, réponses de son terminal), que l'état liste pour que l'agent le cite ; la lecture du dernier message de l'agent pour le récap, dont les deux lignes se cherchent hors de ses blocs de code délimités (ADR-0089) |
+ | `private.py` | la mémoire privée : modes compagnon et chiffré, verrou, accès, couches privées par défaut, contrôles `prive.*` ; un terme privé cherché sous ses variantes d'écriture, dans le contenu, les noms de fichier et de branche ; rien d'écrit sans accès ; la mémoire privée lue à une révision |
+ | `move.py` | la bascule d'une entrée publique dans la mémoire privée (`socle private move`) |
+ | `identifiers.py` | les identifiants que deux branches prennent ensemble : ceux des branches distantes, la collision avec la branche par défaut, la renumérotation (ADR-0026) |
+@@ -125,7 +125,7 @@ vérifiées.
+ | Anti-fabrication | hook `pre-tool-use` : SHA complété de tête, identifiant ou commit inventé ; l'ancien numéro d'une entrée renumérotée dans un texte neuf, refusé en nommant l'identifiant actuel, sauf sur une ligne qui le nomme aussi (ADR-0083) | agent |
+ | Échec répété : arrêt et escalade | hook `stop`, `max_attempts` de la politique | agent |
+ | État dérivé au démarrage et après compactage, avec le chantier actif, les titres des faits et les dix dernières décisions ; l'index entier à la demande (ADR-0071) | `socle state`, hook `session-start` ; `socle show <ID>` pour lire une entrée à la demande | agent |
+-| Ce qui revient à l'humain et la suite, dits à chaque fin d'intervention qui a agi (lignes « Pour toi : » et « Ensuite : ») | `human.py` (demandes en attente, backlog `pour : humain`, branches distantes supprimables, prochaines étapes du chantier actif), hook `stop` | agent |
++| Ce qui revient à l'humain et la suite, dits à chaque fin d'intervention qui a agi (lignes « Pour toi : » et « Ensuite : », écrites en texte : une ligne dans un bloc de code ne compte pas, ADR-0089 ; défaut injecté `suite-dans-un-bloc-de-code` et son témoin) | `human.py` (demandes en attente, backlog `pour : humain`, branches distantes supprimables, prochaines étapes du chantier actif), hook `stop` | agent |
+ | Des liens que l'humain peut suivre : permaliens au commit poussé, aucun lien relatif ni chemin inexistant, chaque demande en attente avec son lien | `links.py`, `socle url`, hook `stop` | agent |
+ | Lire avant de décider, prouvé par l'empreinte de la version lue | `memoire.lectures` ; hook `pre-tool-use` (empreinte périmée ou inventée, celle d'un ancien numéro jugée contre l'entrée renumérotée, ADR-0083) ; `socle show`, `socle new` | agent, git, CI |
+ | Installation en une commande, adaptateur déduit du dépôt, mémoire privée et langue de la mémoire choisies à l'installation ; les workflows de CI dans cette langue, noms des étapes des adaptateurs compris, et le nom du travail déjà en place gardé à la mise à jour, puisqu'une protection de branche l'exige (B-0059) | `socle install --adapter auto [--private …] [--language en]`, gabarits `*.en.yml` | — |
+diff --git a/memory/backlog/B-0287-les-lignes-hors-des-blocs-de-code-se-lisent-avec-l.md b/memory/backlog/B-0287-les-lignes-hors-des-blocs-de-code-se-lisent-avec-l.md
+new file mode 100644
+index 0000000..426a96a
+--- /dev/null
++++ b/memory/backlog/B-0287-les-lignes-hors-des-blocs-de-code-se-lisent-avec-l.md
+@@ -0,0 +1,20 @@
++<!-- socle: couche=backlog zone=publique -->
++# B-0287 — Les lignes hors des blocs de code se lisent avec les clôtures de CommonMark : un bloc ~~~ qui contient ``` ne fait plus lire le reste du fichier comme du code
++
++> statut : ouvert · origine : J-2026-11-18-R · lu : backlog@7a9bcd93
++
++Relevé à la correction des bloquants de la passe 1 de L-0016
++(J-2026-11-18-R), défaut voisin non corrigé dans le lot (politique,
++point 6). `lignes_hors_code` (`engine/socle/memory.py`) bascule dedans
++ou dehors à chaque ligne de clôture, quel qu'en soit le caractère ou la
++longueur : un bloc ouvert par ~~~ qui contient une ligne ``` se croit
++fermé, et la suite du bloc se lit comme du texte ; le bloc suivant
++inverse alors tout le reste du fichier. Les contrôles qui s'en servent
++(les références et les liens de la mémoire) y voient du code comme du
++texte, et du texte comme du code : un lien cassé écrit après n'est plus
++signalé. Le hook de fin de tour lit déjà les clôtures au sens strict
++(ADR-0089, `engine/socle/human.py`).
++
++## Satisfait quand
++
++- [ ] un texte où un bloc ~~~ contient une ligne ``` est lu par les contrôles de la mémoire comme CommonMark le rend : le bloc entier est du code, la suite du texte n'en est pas
+diff --git a/memory/backlog/L-0006-lot-des-copies-protegees-et-des-skills-leur-retard.md b/memory/backlog/L-0006-lot-des-copies-protegees-et-des-skills-leur-retard.md
+index 2baee97..984b9ad 100644
+--- a/memory/backlog/L-0006-lot-des-copies-protegees-et-des-skills-leur-retard.md
++++ b/memory/backlog/L-0006-lot-des-copies-protegees-et-des-skills-leur-retard.md
+@@ -1,7 +1,7 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # L-0006 — Lot des copies protégées et des skills : leur retard, leur remise, et ce que le skill socle-batch dit mal
+ 
+-> statut : ouvert · origine : J-2026-11-15-J · après : L-0005, T-0009, T-0010, T-0011, T-0012, T-0073, T-0013, T-0014, T-0015, T-0074, T-0016, T-0075, T-0017, T-0060, T-0069, T-0061, T-0063, T-0084, T-0072 · lu : backlog@19378efe · ancien : B-0236
++> statut : ouvert · origine : J-2026-11-15-J · après : L-0005, T-0009, T-0010, T-0011, T-0012, T-0073, T-0013, T-0014, T-0015, T-0074, T-0016, T-0075, T-0017, T-0060, T-0069, T-0061, T-0063, T-0084, T-0072, T-0091 · lu : backlog@19378efe · ancien : B-0236
+ 
+ Les skills du produit et leurs copies protégées dans ce dépôt : les
+ copies en retard sur leurs gabarits (B-0218, dont celle de
+diff --git a/memory/backlog/L-0016-lot-de-la-vue-de-la-suite-aux-formats-valides-le-d.md b/memory/backlog/L-0016-lot-de-la-vue-de-la-suite-aux-formats-valides-le-d.md
+index 776785e..57fb63d 100644
+--- a/memory/backlog/L-0016-lot-de-la-vue-de-la-suite-aux-formats-valides-le-d.md
++++ b/memory/backlog/L-0016-lot-de-la-vue-de-la-suite-aux-formats-valides-le-d.md
+@@ -18,3 +18,14 @@ Commits : 8464fdd..381025a
+ - Bloquant : la ligne « Ensuite : » du compact collé dans un récap remplit le contrôle des deux lignes du hook de fin de tour
+ - Bloquant : le compact rangé par jalon perd l'ordre d'exécution quand les lots de deux jalons alternent
+ - Ouvre : T-0089, T-0090
++
++Recul : c'est la première passe du lot, sans bloquant d'avant à qui
++comparer ; ses deux bloquants n'ont pas la même cause entre eux : l'un
++vient du format validé croisé avec le contrôle du récap, l'autre d'un
++choix de rangement de l'orchestrateur. Les entrées ouvertes (T-0089,
++T-0090, T-0091, B-0287) affinent la même fonction ou relèvent un défaut
++voisin ; le lot n'en ferme qu'une, T-0088, qui attend Théo. L-0014, qui
++avait livré `socle roadmap`, avait ouvert B-0285, de la même famille :
++la vue de la suite reste à mesurer contre son usage. La correction
++change un garde-fou, d'où une passe 2 sur elle seule, qui éprouve le
++modèle de menace d'ADR-0089 et l'ordre d'exécution : continuer.
+diff --git a/memory/backlog/T-0091-le-skill-socle-batch-fait-coller-la-sortie-compact.md b/memory/backlog/T-0091-le-skill-socle-batch-fait-coller-la-sortie-compact.md
+new file mode 100644
+index 0000000..71500bf
+--- /dev/null
++++ b/memory/backlog/T-0091-le-skill-socle-batch-fait-coller-la-sortie-compact.md
+@@ -0,0 +1,21 @@
++<!-- socle: couche=backlog zone=publique -->
++# T-0091 — Le skill socle-batch fait coller la sortie compacte de socle roadmap dans un bloc de code : collée en texte, sa ligne « Ensuite : » tient lieu de celle du récap (ADR-0089)
++
++> statut : ouvert · origine : J-2026-11-18-R · besoin : B-0274 · lu : backlog@4fa0e025
++
++Relevé à la correction des bloquants de la passe 1 de L-0016
++(J-2026-11-18-R). Le hook de fin de tour ne lit plus les deux lignes du
++récap dans un bloc de code (ADR-0089) : un compact de `socle roadmap`
++collé dans un bloc ne tient plus lieu de la ligne « Ensuite : » du récap.
++Collé en texte, il le fait encore. Le skill `socle-batch` (gabarit
++`engine/socle/templates/skills/socle-batch/SKILL.md`, point 5 de
++« Intégrer, pousser, livrer », et son anglais) dit de coller la sortie
++au récap de la clôture d'un lot sans dire où ; le skill `delegate-lot`
++de l'atelier de même, à l'annonce et à la clôture. Le livrable, un
++commit : les deux skills disent de la coller dans un bloc de code ; la
++copie protégée de `socle-batch` suit la règle de L-0006 sur la remise
++des copies.
++
++## Fait quand
++
++- [ ] le gabarit du skill socle-batch, son anglais et le skill delegate-lot disent de coller la sortie compacte de socle roadmap dans un bloc de code, et un test de `tests/test_suite_du_projet.py` lit la phrase
+diff --git a/memory/backlog/T-0092-lignes-hors-code-ferme-un-bloc-par-une-cloture-du.md b/memory/backlog/T-0092-lignes-hors-code-ferme-un-bloc-par-une-cloture-du.md
+new file mode 100644
+index 0000000..929c572
+--- /dev/null
++++ b/memory/backlog/T-0092-lignes-hors-code-ferme-un-bloc-par-une-cloture-du.md
+@@ -0,0 +1,13 @@
++<!-- socle: couche=backlog zone=publique -->
++# T-0092 — lignes_hors_code ferme un bloc par une clôture du même caractère, au moins aussi longue, et un test le lit
++
++> statut : ouvert · origine : J-2026-11-18-R · besoin : B-0287 · lu : backlog@b1dd0b99
++
++Le livrable de B-0287, un commit : `lignes_hors_code` ferme un bloc
++par une clôture du même caractère, au moins aussi longue que celle qui
++l'ouvre, comme `_hors_des_blocs_de_code` d'`engine/socle/human.py`, ou
++par une même fonction pour les deux.
++
++## Fait quand
++
++- [ ] un test lit, sur un texte où un bloc ~~~ contient une ligne ```, que les lignes du bloc sont dans le code et celles d'après hors du code, et qu'un lien cassé écrit après est signalé
+diff --git a/memory/journal/2026-11-7.md b/memory/journal/2026-11-7.md
+index 5d9bd91..e6b22c1 100644
+--- a/memory/journal/2026-11-7.md
++++ b/memory/journal/2026-11-7.md
+@@ -655,3 +655,28 @@ seul jalon, rend la même sortie ; le guide, la note `2026-11-18-c` et le
+ point 17 du prompt de chess disent la règle nouvelle et le changement du
+ récap. Les dix tests existants changés hors du commit gardent la valeur
+ du patch.
++
++## J-2026-11-18-R — L-0016 : la correction des deux bloquants intégrée (5e5837d, ADR-0089) ; T-0091 dans L-0006, B-0287 et T-0092 au backlog ; le recul de la passe 1 écrit, la passe 2 ouverte sur la correction seule
++
++> ref : L-0016, L-0006, ADR-0089, T-0088, T-0091, B-0287, T-0092, J-2026-11-18-P, J-2026-11-18-Q
++
++Un sous-agent neuf sur Opus 5.5, le modèle de la session (le premier
++arrêté depuis plus de cinq minutes), a corrigé les deux bloquants de la
++passe 1 en un commit, 5e5837d (247 000 jetons, 18 minutes), intégré par
++avance rapide ; J-2026-11-18-Q le détaille. Le hook de fin de tour ne lit
++plus les deux lignes du récap dans un bloc de code délimité, au sens
++strict des clôtures (ADR-0089, son modèle de menace, un défaut injecté et
++son témoin) ; la suite suit l'ordre d'exécution, l'en-tête d'un jalon
++répété quand il revient, une fenêtre commune à tous les jalons. Les dix
++tests existants gardent les valeurs du patch, hors commit.
++
++Deux points laissés par le sous-agent, rangés. Le skill `socle-batch`
++fait coller le compact au récap sans dire « dans un bloc de code » :
++T-0091, dans L-0006, le lot des copies protégées et des skills, que sa
++règle couvre. `lignes_hors_code` bascule à toute clôture, quel qu'en
++soit le caractère : un défaut voisin (politique, point 6), B-0287 et sa
++tâche T-0092, dans aucun lot.
++
++Le recul de la passe 1 est écrit dans L-0016 : continuer, par une passe
++2 sur la correction seule, depuis 381025a, puisqu'elle change un
++garde-fou.
+-- 
+2.43.0
+

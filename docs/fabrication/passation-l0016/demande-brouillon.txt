@@ -1,0 +1,56 @@
+Titre : Changer dix tests qui lisent mot pour mot l'ancien rendu de socle roadmap, pour le rendu en colonnes et en tableaux que vous avez validé
+(à poser par `python3 .socle/socle new request "…"`, puis remplir ses huit champs ; @@REVUE@@ : le résultat des deux passes ; les empreintes et les liens après le push)
+
+## Décision demandée
+
+Autoriser l'agent à changer les valeurs attendues des dix tests nommés plus bas, dans `tests/test_suite_du_projet.py` : écrits pour l'ancien rendu de `socle roadmap`, ils le lisent mot pour mot, et liront le nouveau, en colonnes et en tableaux, chacun gardant ce qu'il prouvait.
+
+## Contexte
+
+**Le projet.** Ce dépôt fabrique le socle, un moteur en Python qui s'installe dans le dépôt d'un projet de code entretenu par un agent d'IA : il garde la mémoire du projet, dont le backlog, la liste du travail à faire, vérifie ce que l'agent produit, et vous pose en demandes, comme celle-ci, les décisions qui vous reviennent. Le backlog a quatre formes : un besoin (`B-`), un résultat attendu ; une tâche (`T-`), le livrable d'un commit, qui sert un besoin ; un lot (`L-`), des tâches menées et relues ensemble ; un jalon (`JA-`), des besoins qui servent un même but. Ce dépôt se sert du socle lui-même ; chess, votre jeu d'échecs, est le projet pilote.
+
+**Le chantier.** Le 16 novembre, vous avez validé en séance une vue de la suite du projet, calculée depuis le backlog : la commande `socle roadmap`, en deux formats, un compact aligné en colonnes pour le terminal, et un détaillé en Markdown pour la conversation et GitHub, un tableau par lot, l'état et la priorité de chaque tâche en symboles. Le lot livré le 18 novembre a suivi un texte qui avait perdu les exemples de votre proposition : des listes et des lignes non alignées, que vous avez jugées illisibles le jour même. Le lot en cours, L-0016, refait le rendu sur ces exemples, recopiés mot pour mot dans sa tâche ; ce que la commande calcule, ses options et les moments où elle se donne ne changent pas. Sont faits : le rendu, dix tests nouveaux qui le lisent, le guide en français et en anglais, la note de version et la consigne de mise à jour de chess. Un relecteur sans contexte, un autre agent qui cherche à prendre le lot en défaut, l'a relu : @@REVUE@@.
+
+**La question.** La politique interdit à l'agent de changer la valeur attendue d'un test sans un accord de vous qui le nomme. Dix tests écrits pour l'ancien rendu le lisent mot pour mot : sans ce changement, ils échouent, et le lot ne se livre pas. Aucun n'est supprimé ni affaibli : chacun lit le même fait dans le nouveau rendu.
+
+**Le rendu nouveau**, sur le backlog de ce dépôt : le compact (à recoller depuis la sortie réelle, dans un bloc de code) et un extrait du détaillé (la légende, un en-tête de jalon, la ligne d'un lot et son tableau).
+
+**Les dix tests, tous dans `tests/test_suite_du_projet.py`.** Chacun garde ce qu'il prouvait ; ce qui disparaît le fait par le format validé : la marque « le prochain » d'un jalon, et, dans le compact, les comptes des tâches par état (le détaillé les montre une à une).
+
+- `test_le_format_compact_une_ligne_par_jalon_et_par_lot_le_lot_en_cours_marque` : les lignes exactes du compact. Avant : une ligne d'en-tête, « jalons, dans leur ordre : », puis « ▶ L-0001 — … : 1 tâche(s) close(s) sur 2 · 1 en cours ». Après : sept lignes alignées, de « JA-0001  L'entrée JA-0001   0/2 besoins clos » et «  ▶ L-0001  L'entrée L-0001  1/2  en cours » jusqu'à « Hors lot : … » et « Ensuite : B-0004, B-0005, B-0006 et 1 autre ».
+- `test_le_format_compact_par_besoin` : les lignes du compact lu par besoin, désormais rangées sous leur jalon et alignées (« B-0001  L'entrée B-0001  1/2  L-0001 ») ; l'absence de toute ligne de lot se lit par un motif au lieu d'un début de ligne.
+- `test_le_format_detaille_par_lot` : l'en-tête du jalon, la ligne de chaque lot (« **1. L-0001 — L'entrée L-0001** · en cours · 1/2 ») et les lignes de ses tableaux (« | ▶ | T-0001 | B-0001 ↑ | L'entrée T-0001 | ») au lieu des titres de niveau 4 et des listes ; les sections hors des lots en tableaux.
+- `test_le_format_detaille_suit_le_lot_en_cours_et_les_deux_suivants_all_les_suit_tous` : les trois lots détaillés se lisent par leur ligne numérotée ; le quatrième en une ligne (« - **4.** L-0004 — L'entrée L-0004 · 0/1 ») ; « (`--all` pour tout le détail) » au lieu de « #### Les lots suivants ».
+- `test_le_format_detaille_par_besoin_chaque_tache_avec_son_lot` : la ligne de chaque besoin (« **B-0001 — L'entrée B-0001** · 1/2 · L-0001 ») et son tableau, avec le lot de chaque tâche ; une tâche sans lot a « — ».
+- `test_le_format_detaille_donne_le_lien_de_chaque_demande_et_de_ce_qui_revient_a_l_humain` : le lien d'une demande et d'une entrée pour l'humain, sur leur identifiant, dans une ligne de tableau.
+- `test_en_anglais` : les mêmes lignes en anglais (« 0/2 needs closed », « in progress », « waits on D-0001 »), sans mot français.
+- `test_socle_roadmap_et_ses_options` : chacune de ses cinq lignes, dans la forme nouvelle, par la commande et ses options.
+- `test_by_prend_batch_ou_need_et_batch_par_defaut_sans_synonyme` : la ligne du lot en cours dans le détaillé.
+- `test_la_ci_posee_ecrit_le_format_detaille_dans_le_resume_de_son_execution` : la ligne du lot et celle de sa tâche dans le résumé que la CI écrit.
+
+## Éléments cités
+
+(les empreintes à prendre par `socle show` : D-0127, B-0274, T-0088, L-0016, et la décision du récap hors des blocs de code)
+
+## Où regarder
+
+- La pull request du lot, ses fichiers : `engine/socle/roadmap.py`, le guide (`engine/socle/HELP.md`, la section de `socle roadmap`), et le diff de ces dix tests (lien vers le fichier avant, et vers le diff).
+
+## Options
+
+- Valider : effort faible ; risque faible, chaque test garde ce qu'il prouvait ; réversible par une demande nouvelle.
+- Refuser : les tests gardent l'ancien rendu ; le lot ne se livre pas tant que le rendu ne revient pas à l'ancien ; effort moyen, réversible.
+
+## Conséquences
+
+Si vous validez : l'agent commite ces dix tests et votre réponse dans un même push ; la pull request du lot fusionne à la CI verte. Si vous refusez : rien du lot ne fusionne, l'agent revoit avec vous le rendu. Sans réponse : le lot reste sur sa branche, sa CI en échec sur ces tests.
+
+## Recommandation
+
+Valider. Vérifié : les dix tests passent avec leur valeur nouvelle, et la suite entière avec eux ; le relecteur sans contexte n'en a trouvé aucun affaibli. Supposé : que le rendu nouveau est celui que vous attendiez ; le guide le montre.
+
+## Réponses possibles
+
+- `valider` — les dix tests changent avec le lot.
+- `refuser` — rien ne change ; l'agent revoit avec vous le rendu.
+- `contexte-insuffisant` — la demande revient à l'agent, qui la réécrit en une demande qui la remplace.

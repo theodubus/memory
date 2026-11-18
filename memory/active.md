@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0014 clos et fusionné (J-2026-11-18-M) ; puis L-0016, la vue de la
-suite aux formats validés (J-2026-11-18-N) ; puis L-0015.
+L-0016, la vue de la suite aux formats validés (J-2026-11-18-N) : sa
+passation, `docs/fabrication/passation-l0016/` ; puis L-0015.
 
 ## Consignes en cours
 
