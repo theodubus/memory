@@ -11,4 +11,4 @@ où les deux existent.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0031 est tenu
+- [ ] un projet qui adopte le socle avec un carnet numéroté comme le journal en cite les entrées et les migre sans heurt d'identifiants

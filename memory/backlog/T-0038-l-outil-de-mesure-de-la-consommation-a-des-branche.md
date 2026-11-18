@@ -1,10 +1,10 @@
 <!-- socle: couche=backlog zone=publique -->
-# T-0038 — L'outil de mesure de la consommation a des branches qu'aucun test n'exerce
+# T-0038 — Les tests de l'outil de mesure de la consommation exercent les branches que la revue a nommées
 
 > statut : ouvert · origine : J-2026-11-12-N · besoin : B-0194 · lu : backlog@9966bbbd
 
-La tâche de B-0194, que la migration du backlog en quatre formes a posée dans le lot L-0009 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+Un commit : des cas dans `tests/test_banc_consommation.py`, ou dans les tests de la commande si T-0033 l'a fait entrer dans le produit, pour chaque branche que nomme B-0194.
 
 ## Fait quand
 
-- [ ] chacune de ces mutations fait échouer un test
+- [ ] chacune des mutations que nomme B-0194, injectée une à une, fait échouer un test

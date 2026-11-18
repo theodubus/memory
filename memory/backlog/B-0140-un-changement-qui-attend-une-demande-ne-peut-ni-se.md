@@ -16,5 +16,6 @@ Piste : la même tolérance pour un test sous sa demande en attente, poussée
 telle quelle, la CI refusant jusqu'à la réponse ; c'est assouplir le
 contrôle des valeurs attendues, donc une demande.
 
-Fait quand :
-- [ ] Théo a tranché, et un test sous sa demande en attente se pousse, ou la raison de ne pas le faire est écrite
+## Satisfait quand
+
+- [ ] un changement qui attend la réponse d'une demande ne vit plus seulement dans le conteneur : il se pousse en attendant, la CI le refusant jusqu'à la réponse, ou la raison de ne pas le permettre est écrite

@@ -14,4 +14,4 @@ utile intègre le socle (J-2026-11-13-F).
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0020 est tenu
+- [ ] dans un projet équipé dont l'humain l'a voulu, l'agent fusionne lui-même sa pull request aux conditions de D-0092 ; sans ce choix, la fusion lui reste refusée

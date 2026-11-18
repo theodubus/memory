@@ -1,10 +1,10 @@
 <!-- socle: couche=backlog zone=publique -->
-# T-0040 — Sans list_events, la reprise ne sait ni quand ni pourquoi la session a été coupée
+# T-0040 — La vérification du réveil lit l'heure et la cause d'une coupure ailleurs que dans list_events
 
 > statut : ouvert · origine : J-2026-11-13-D · besoin : B-0198 · lu : backlog@9966bbbd
 
-La tâche de B-0198, que la migration du backlog en quatre formes a posée dans le lot L-0010 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+Un commit : le gabarit de `socle-resume`, en français et en anglais, avec une autre source (la transcription locale, la trace des hooks) ou, à défaut, ce qu'il fait sans elle ; une note de version.
 
 ## Fait quand
 
-- [ ] sans `list_events`, la vérification du réveil sait si le tour d'avant a fini sur une limite, ou le skill le dit inconnaissable et ce qu'il fait alors
+- [ ] le gabarit de `socle-resume` et son anglais disent comment savoir, sans `list_events`, si le tour d'avant a fini sur une limite, ou qu'on ne le peut pas et ce que fait alors le réveil, et un test le montre

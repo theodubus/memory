@@ -23,4 +23,4 @@ Le 13 novembre, Théo retient la priorité basse proposée (D-0108@96eeead5).
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0027 est tenu
+- [ ] chess n'a plus qu'un balayage de mutation, celui du socle, qui fait ce que faisait le sien, ses plafonds gardés par le cliquet du socle

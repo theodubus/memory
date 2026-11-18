@@ -1,11 +1,10 @@
 <!-- socle: couche=backlog zone=publique -->
-# T-0012 — Rien ne signale un lot qui ne tient pas en une session ou dont les sujets ne partagent rien : B-0224 a réuni 22 sujets sous la forme d'un lot
+# T-0012 — L'état signale un lot ouvert qui attend plus de tâches qu'une session n'en mène, sur un seuil mesuré
 
 > statut : ouvert · origine : J-2026-11-15-J · besoin : B-0233 · lu : backlog@9966bbbd
 
-La tâche de B-0233, que la migration du backlog en quatre formes a posée dans le lot L-0006 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+Un commit : l'état et le rappel de fin de tour avertissent d'un lot ouvert au-delà d'un seuil que la tâche mesure sur les lots faits et écrit dans une décision ; son défaut injecté et son témoin sain. Ce que l'état peut savoir des fichiers d'une tâche pas encore faite se tranche en la menant. Le texte du skill `socle-batch` est T-0073.
 
 ## Fait quand
 
-- [ ] l'état signale un lot qui ne se mène pas en une session, sur un critère mesuré, avec son défaut injecté et son témoin sain
-- [ ] le skill `socle-batch`, en français et en anglais, dit qu'un ensemble qui ne se mène pas en une session est un jalon, ses lots formés dessous
+- [ ] l'état et le rappel de fin de tour signalent un lot ouvert qui attend plus de tâches que le seuil mesuré, et se taisent en dessous ; un défaut injecté et un témoin sain le montrent

@@ -44,4 +44,4 @@ Réduit le 16 novembre selon D-0120 (J-2026-11-16-G) : gardé pour `find … | x
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0004 est tenu
+- [ ] un `find` qui donne à `xargs rm` un dossier qui contient le projet arrête l'agent au hook, comme un `find` qui le supprime lui-même, et un nettoyage par `xargs rm` sous le projet passe

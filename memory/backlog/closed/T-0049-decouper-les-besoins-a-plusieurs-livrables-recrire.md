@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0049 — Découper les besoins à plusieurs livrables, récrire leurs critères en résultats, refaire les lots du jalon en cours
 
-> statut : ouvert · origine : J-2026-11-16-U · besoin : B-0265 · lu : backlog@9966bbbd
+> statut : fait · origine : J-2026-11-16-U · besoin : B-0265 · ref : J-2026-11-18-J · lu : backlog@9966bbbd
 
 La seconde moitié du point 8 de D-0123, pour une session neuve. La
 migration (ADR-0083) a posé une tâche par besoin qu'attendait un lot
@@ -22,6 +22,6 @@ l'agent :
 
 ## Fait quand
 
-- [ ] chaque tâche ouverte du jalon en cours est un livrable d'un commit, et `python3 .socle/socle state` n'y dit plus de besoin à découper
-- [ ] les critères des besoins ouverts du jalon en cours disent des résultats, et ceux de leurs tâches des livrables qu'un test vérifie
-- [ ] les lots du jalon en cours n'attendent que ces tâches, et `python3 .socle/socle check` passe
+- [x] chaque tâche ouverte du jalon en cours est un livrable d'un commit, et `python3 .socle/socle state` n'y dit plus de besoin à découper
+- [x] les critères des besoins ouverts du jalon en cours disent des résultats, et ceux de leurs tâches des livrables qu'un test vérifie, ou, pour les dix qui livrent une demande ou un relevé, ce qu'elles produisent : l'exception à D-0123 soumise à Théo par D-0133
+- [x] les lots du jalon en cours n'attendent que ces tâches, et `python3 .socle/socle check` passe

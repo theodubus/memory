@@ -1,10 +1,10 @@
 <!-- socle: couche=backlog zone=publique -->
-# T-0029 — La session qui a dû ajouter le dépôt du socle ne peut pas commiter les fichiers protégés d'une mise à jour, que « Et maintenant » lui dit de commiter sans attendre
+# T-0029 — « Et maintenant » ne dit de commiter des fichiers protégés qu'à une session que le hook avant commit laissera faire
 
 > statut : ouvert · origine : J-2026-11-10-J · besoin : B-0152 · lu : backlog@9966bbbd
 
-La tâche de B-0152, que la migration du backlog en quatre formes a posée dans le lot L-0008 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+Un commit : la sortie de l'installeur pour une session cloud qui a dû ajouter le dépôt du socle, et le guide s'il le dit.
 
 ## Fait quand
 
-- [ ] « Et maintenant » ne dit à aucune session de commiter ce que le hook avant commit refusera, et un test le montre
+- [ ] à une mise à jour qui change des fichiers protégés sans demande qui les couvre, « Et maintenant » ne dit à aucune session de les commiter avant la demande, et un test le montre

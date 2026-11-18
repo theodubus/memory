@@ -17,4 +17,4 @@ la mesure doit retirer ce que la fusion a apporté.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0022 est tenu
+- [ ] le relecteur d'un lot dont la branche a fusionné la branche par défaut ne voit que le lot : ni le code ni les entrées que la fusion a apportés

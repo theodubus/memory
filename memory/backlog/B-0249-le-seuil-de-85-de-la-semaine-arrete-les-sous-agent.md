@@ -18,4 +18,4 @@ limite.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0037 est tenu
+- [ ] un lot se poursuit sur ce qui reste de la semaine tant que ce reste couvre un sous-agent et le rangement, et la session passe quand même le relais avant la limite

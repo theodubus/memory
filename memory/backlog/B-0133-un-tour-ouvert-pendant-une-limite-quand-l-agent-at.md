@@ -32,5 +32,6 @@ de 16h25 a la main ». Un réveil déclenché avant la levée de la limite est
 donc perdu, il n'attend pas en file : sans l'humain, la session ne serait
 pas repartie.
 
-Fait quand :
-- [ ] une demande soumet ces deux cas à Théo, et sa réponse est consignée.
+## Satisfait quand
+
+- [ ] un tour ouvert pendant une limite alors que l'agent attendait, et le réveil d'un tour que Théo a interrompu, se traitent selon une règle que Théo a validée, au lieu de rester sans relance ou de pousser l'agent à finir ce qu'il a interrompu

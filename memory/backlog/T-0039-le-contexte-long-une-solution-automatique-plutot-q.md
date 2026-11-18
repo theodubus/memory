@@ -1,10 +1,10 @@
 <!-- socle: couche=backlog zone=publique -->
-# T-0039 — Le contexte long : une solution automatique, plutôt qu'une session neuve à ouvrir à la main
+# T-0039 — La solution du contexte long, soumise à Théo avec la mesure de ses essais
 
 > statut : ouvert · origine : J-2026-11-10-N · besoin : B-0156 · lu : backlog@9966bbbd
 
-La tâche de B-0156, que la migration du backlog en quatre formes a posée dans le lot L-0010 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+Un commit : une demande, qui cite B-0156, soumet à Théo la solution à retenir sur les essais mesurés (le compactage qu'il lance, un sous-agent par tâche, le relais de session que précise B-0259), cas de l'humain absent à la fin d'un lot compris.
 
 ## Fait quand
 
-- [ ] Théo a choisi la solution sur un essai, et le socle la met en œuvre
+- [ ] une demande soumet la solution à Théo, avec le coût mesuré d'une tâche ainsi menée, et sa réponse est consignée au journal

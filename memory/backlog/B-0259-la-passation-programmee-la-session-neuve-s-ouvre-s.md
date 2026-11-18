@@ -74,4 +74,4 @@ programmée ». Pour qu'aucun travail ne se fasse en double :
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0041 est tenu
+- [ ] près d'une limite, quand Théo a choisi ce mode, la session neuve s'ouvre seule à la remise à zéro de la fenêtre, sans prompt à coller ni travail fait en double ; si aucune variante ne tient à l'essai, le prompt à copier reste, et le besoin le dit

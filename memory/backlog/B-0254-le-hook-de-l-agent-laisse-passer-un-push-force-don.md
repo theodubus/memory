@@ -20,4 +20,4 @@ corps pousse.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0006 est tenu
+- [ ] un push forcé arrête l'agent au hook même quand son option vient d'une variable ou des arguments d'une fonction, et un push ordinaire dont la branche vient d'une variable connue passe

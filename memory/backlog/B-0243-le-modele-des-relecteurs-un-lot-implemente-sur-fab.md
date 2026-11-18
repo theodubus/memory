@@ -23,4 +23,5 @@ de même nature : le modèle qu'un relecteur reçoit.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0015 est tenu
+- [ ] un lot que l'humain fait implémenter sur Fable n'est relu sur Fable que s'il le veut, et aucun sous-agent n'implémente sur Fable sans lui (D-0119)
+- [ ] le relecteur à froid d'une demande reçoit le modèle que le skill nomme, pas celui de la session par défaut

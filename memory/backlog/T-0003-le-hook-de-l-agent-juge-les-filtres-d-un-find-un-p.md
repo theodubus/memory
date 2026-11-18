@@ -1,9 +1,9 @@
 <!-- socle: couche=backlog zone=publique -->
-# T-0003 — Le hook de l'agent juge les filtres d'un find un par un : une conjonction (-name et -path) est refusée pour ce qu'aucun des deux ne vise seul
+# T-0003 — Le hook juge l'expression d'un find par la conjonction de ses filtres, et le motif d'un -path sous ses départs
 
 > statut : ouvert · origine : J-2026-11-14-AJ · besoin : B-0231 · lu : backlog@9966bbbd
 
-La tâche de B-0231, que la migration du backlog en quatre formes a posée dans le lot L-0005 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+Un commit : un fichier protégé n'est visé que s'il satisfait chaque filtre d'une même conjonction, et le motif d'un `-path` ne vise que ce qui est sous les départs du `find` ; ses cas dans `tests/test_garde.py`.
 
 ## Fait quand
 

@@ -13,5 +13,4 @@ alors. Changer le gabarit met en retard la copie protégée de ce dépôt :
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0011 est tenu
-
+- [ ] un agent qui suit `socle-batch` hors d'une session cloud sait comment revenir après une attente annoncée, au lieu de chercher un outil qu'il n'a pas

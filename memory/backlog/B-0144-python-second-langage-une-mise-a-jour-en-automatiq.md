@@ -13,5 +13,6 @@ refuse ensuite. La boucle de l'installeur sur les adaptateurs à poser ne
 compare leur langage qu'à celui du principal, jamais à ceux des copies
 déjà présentes.
 
-Fait quand :
-- [ ] une mise à jour en automatique ne pose pas un adaptateur d'un langage qu'une autre copie couvre déjà, et un test le montre
+## Satisfait quand
+
+- [ ] un projet dont Python est le second langage garde un seul adaptateur Python après une mise à jour en automatique

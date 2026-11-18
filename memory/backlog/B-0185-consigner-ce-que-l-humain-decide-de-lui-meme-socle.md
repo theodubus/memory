@@ -11,4 +11,4 @@ Une forme qui consigne une décision donnée sans question serait plus juste.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0017 est tenu
+- [ ] une décision que l'humain donne de lui-même se consigne sans question inventée, son texte exact gardé, et autorise ce qu'elle nomme comme une demande validée

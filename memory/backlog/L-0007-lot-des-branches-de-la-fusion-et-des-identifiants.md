@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0007 — Lot des branches, de la fusion et des identifiants : la plage d'un push, la renumérotation après un rebase, la fusion par l'agent en option, le titre qui finit par un dièse
 
-> statut : ouvert · origine : J-2026-11-15-J · après : L-0006, T-0018, T-0019, T-0020, T-0021, T-0022, T-0023, T-0024, T-0064, T-0065 · lu : backlog@19378efe · ancien : B-0237
+> statut : ouvert · origine : J-2026-11-15-J · après : L-0006, T-0018, T-0019, T-0020, T-0021, T-0022, T-0023, T-0024, T-0064, T-0065, T-0085 · lu : backlog@19378efe · ancien : B-0237
 
 L'historique des branches et les identifiants de la mémoire : la
 plage qu'un push juge quand la branche distante a disparu (B-0167), la

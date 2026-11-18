@@ -71,8 +71,13 @@ sont faits (T-0046), et ce dépôt migré. Restent le découpage des besoins
 et les lots du jalon en cours refaits (T-0049), puis les textes que des
 tests lisent mot pour mot (T-0050).
 
+## Modèle de menace
+
+Le refus d'un ancien numéro par le hook de l'agent, changé par T-0051 :
+ADR-0087 dit ce qu'il arrête et ce qu'il laisse passer.
+
 ## Satisfait quand
 
 - [x] chaque mot du backlog désigne une seule chose, dans le format, les skills du produit, le guide et l'état, et chaque entrée a sa forme, que des contrôles empêchent de remélanger (T-0046)
-- [ ] le backlog ouvert de ce dépôt est dans ces formes : chaque besoin découpé en tâches qui le satisfont, ses critères des résultats, et les lots du jalon en cours faits de tâches (T-0049)
+- [x] le backlog ouvert de ce dépôt est dans ces formes : chaque besoin découpé en tâches qui le satisfont, ses critères des résultats, et les lots du jalon en cours faits de tâches (T-0049)
 - [ ] aucun texte du produit n'appelle plus « sujet » une entrée du backlog (T-0050)

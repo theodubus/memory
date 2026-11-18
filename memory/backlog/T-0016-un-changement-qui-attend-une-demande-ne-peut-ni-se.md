@@ -1,10 +1,10 @@
 <!-- socle: couche=backlog zone=publique -->
-# T-0016 — Un changement qui attend une demande ne peut ni se commiter ni se pousser : il ne vit que dans le conteneur, perdu s'il est recyclé
+# T-0016 — La tolérance d'un test poussé sous sa demande en attente, soumise à Théo
 
 > statut : ouvert · origine : J-2026-11-09-A · besoin : B-0140 · lu : backlog@9966bbbd
 
-La tâche de B-0140, que la migration du backlog en quatre formes a posée dans le lot L-0006 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+Un commit : une demande, qui cite B-0140, soumet à Théo de pousser un test dont la valeur attendue change sous sa demande en attente, comme un fichier protégé (D-0071), la CI le refusant jusqu'à la réponse. C'est assouplir le contrôle des valeurs attendues : la décision revient à Théo.
 
 ## Fait quand
 
-- [ ] ce que demande B-0140 est livré, et un test le montre
+- [ ] une demande soumet la tolérance à Théo, avec ce qu'elle assouplit, et sa réponse est consignée au journal

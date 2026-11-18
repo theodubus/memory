@@ -16,4 +16,4 @@ hooks) qui dise l'heure et la cause.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0040 est tenu
+- [ ] sans `list_events`, la reprise après une limite sait si le tour d'avant a fini sur une limite, ou le tient pour inconnaissable et agit en conséquence

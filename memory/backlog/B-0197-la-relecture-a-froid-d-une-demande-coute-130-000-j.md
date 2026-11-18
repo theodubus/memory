@@ -15,4 +15,4 @@ d'un lot (`docs/fabrication/consommation.md`).
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0034 est tenu
+- [ ] la relecture à froid d'une demande coûte nettement moins qu'une revue de lot : ce qu'elle lit est borné à ce qui sert

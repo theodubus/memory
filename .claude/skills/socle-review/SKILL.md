@@ -6,8 +6,8 @@ description: Faire relire un lot par un relecteur sans contexte avant de le livr
 # La revue adversariale d'un lot
 
 Les contrôles du socle jugent la forme du travail ; la revue en juge le
-fond, par un relecteur qui ne partage pas les angles morts de l'agent qui
-a écrit le lot, et qui cherche à le prendre en défaut.
+fond, par un relecteur sans les angles morts de l'auteur du lot, qui
+cherche à le prendre en défaut.
 
 ## Quand
 
@@ -39,30 +39,30 @@ python3 .socle/socle review
    et de sa base, la branche distante (sinon la branche par défaut ; si
    la branche distante contient déjà le lot, poussé avant sa revue, ou
    est restée en arrière de la branche par défaut après une fusion par
-   écrasement, l'ancêtre commun avec la branche par défaut, et il le dit), les sujets
-   dont le lot change le statut ou le « Fait quand », en entier, ceux
+   écrasement, l'ancêtre commun avec la branche par défaut, et il le dit), les entrées
+   dont le lot change le statut ou les critères, en entier, celles
    qu'il ouvre par leur titre, les décisions et les demandes que le lot
-   écrit, puis celles que ses sujets citent.
+   écrit, puis celles que ses entrées citent.
    `--base <ref>` change la base du lot ; pour une seconde revue,
    `--since <commit relu>` ne montre que le diff depuis le commit de la
    première, avec les messages des commits qui le corrigent. Une
    référence inconnue, ou un `--since` qui n'est pas un ancêtre de HEAD,
-   est refusée. Un lot déjà poussé en tout ou en partie (une session
-   cloud pousse à chaque fin de tour), ou une branche qui porte des lots
+   est refusée. Un lot déjà poussé, même en partie (en session
+   cloud, à chaque fin de tour), ou une branche qui porte des lots
    déjà relus, que la note du dossier signale : `--base <le commit d'avant
    le lot>`, la tête d'où le lot est parti. Il écrit la passe dans l'entrée
    du lot en cours du backlog, ou de celui que `--batch L-NNNN` nomme, et
    refuse une passe que l'historique du lot refuse (plus bas).
 3. Le confier à un relecteur qui n'a pas la conversation. Sous Claude Code
    : un sous-agent (outil `Agent`), dont le seul message est ce dossier,
-   tel quel : rien ne s'y ajoute, rien ne s'en retire. Il reçoit
-   explicitement à son lancement (`model`) le modèle le plus capable
+   tel quel, sans ajout ni retrait. Il reçoit explicitement à son
+   lancement (`model`) le modèle le plus capable
    disponible jusqu'à Opus, jamais un moindre que celui qui a implémenté
    le lot, quel que soit celui de la session, que la règle du modèle de
    `socle-batch` peut faire moins coûteux, sur la dernière version de sa
    famille : si l'alias en désigne une plus ancienne, il hérite de la
-   session, sans `model`, comme cette règle le dit, et son compte rendu
-   nomme le modèle qui l'a servi ; Fable, s'il est disponible,
+   session, sans `model`, et son compte rendu nomme le modèle qui l'a
+   servi ; Fable, s'il est disponible,
    seulement si l'humain le demande. Il reçoit aussi les instructions du
    projet et peut lire le dépôt, mais ni la conversation ni le
    raisonnement de l'agent, et le dossier lui dit de ne rien modifier :
@@ -96,7 +96,10 @@ Le relecteur les classe ; l'agent vérifie chaque classement.
   classe pas bloquante, même refusée avant le lot par accident, ni pour
   le backlog, quel qu'en soit l'effet. Elle s'écarte, et va d'une ligne à
   la liste des formes connues que le hook ne juge pas, que tient le guide
-  du socle (`python3 .socle/socle help`).
+  du socle (`python3 .socle/socle help`). Dans un projet équipé, ce guide
+  est protégé : le récap nomme la forme, et « Pour toi » propose de la
+  signaler au dépôt du socle (https://github.com/theodubus/socle), qui
+  tient la liste.
 
 Ne rien poster sur GitHub : l'humain lit le récap, pas la revue. Le récap
 le dit en une ligne : `Revue : <b> bloquants, corrigés ; <n> au backlog
@@ -119,10 +122,8 @@ hors de la mémoire.
 2. Avant la passe suivante, et avant de clore le lot, écrire le recul de
    la passe, sous ses bloquants : un paragraphe qui commence par
    « Recul : », de soixante mots au moins, qui répond aux trois questions
-   que `socle review` donne en refusant la passe, avec l'historique, les
-   entrées ouvertes et closes depuis le début du lot et les lots clos qui
-   ont touché les mêmes fichiers. Les bloquants de cette passe ont-ils la
-   même cause que ceux de la précédente ? Les entrées que le lot ouvre
+   que `socle review` donne en refusant la passe, avec ce qu'il y
+   montre. Les bloquants de cette passe ont-ils la même cause que ceux de la précédente ? Les entrées que le lot ouvre
    sont-elles de même nature que celles qu'il ferme ? Les lots clos qui
    ont touché les mêmes fichiers ont-ils déjà ouvert ce genre d'entrées ?
    Son dernier mot est sa décision : « continuer », ce qui rendra la

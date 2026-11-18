@@ -301,7 +301,7 @@ class TestEntrees(Base):
         livraison = [q for q in questions if "pull request" in q.texte]
         self.assertEqual(len(livraison), 1)
         self.assertTrue(livraison[0].defaut.startswith("une branche de développement"))
-        self.assertIn("par sujet", livraison[0].texte)
+        self.assertIn("par tâche", livraison[0].texte)
 
     def test_cadrage_archive_tel_quel(self):
         self.racine = depot({})

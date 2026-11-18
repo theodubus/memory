@@ -6,6 +6,7 @@ d'avant."""
 
 import contextlib
 import io
+import re
 import shutil
 import tempfile
 import types
@@ -332,6 +333,75 @@ class TestMigration(Projet):
         self.commiter("la migration")
         self.assertEqual(self.erreurs(base), [])
 
+    def migrer_et_ranger(self) -> memoire.Memoire:
+        migration.migrer_backlog(self.racine)
+        from socle import archive as archivage
+
+        archivage.ranger_backlog(self.racine)
+        return memoire.Memoire.charger(self.racine)
+
+    def test_une_entree_close_n_attend_rien_d_ouvert_apres_la_migration(self):
+        """T-0052 : un besoin fait et un jalon fait qui attendaient un lot
+        abandonné se mettaient à attendre ses besoins encore ouverts, et
+        `memoire.ordre` les refusait. Ouverte, une entrée n'attend toujours
+        que ce qui reste ouvert."""
+        clos = "ref : fichier:calc.py"
+        self.poser("B-0001", clos, "fait", CRITERES.replace("[ ]", "[x]"))
+        self.poser("B-0002", corps=CRITERES)
+        self.poser("B-0003", f"forme : lot · après : B-0001, B-0002 · {clos}", "abandonné")
+        self.poser("B-0004", f"après : B-0003 · {clos}", "fait")
+        self.poser("B-0005", f"forme : jalon · après : B-0003 · {clos}", "fait")
+        self.poser("B-0006", "après : B-0003")
+        base = self.commiter("le backlog d'avant")
+        mem = self.migrer_et_ranger()
+        self.assertEqual([memoire.dependances(mem.entree(i)) for i in ("B-0004", "JA-0001", "B-0006")],
+                         [["B-0001"], ["B-0001"], ["B-0002"]])
+        self.commiter("la migration")
+        self.assertEqual(self.erreurs(base), [])
+
+    def test_un_critere_sur_plusieurs_lignes_passe_entier_dans_la_tache(self):
+        """T-0052 : la tâche ne recevait que la première ligne d'un critère,
+        et la suite restait dans le besoin, sous sa case de renvoi."""
+        criteres = ("## Fait quand\n\n- [ ] la fonction triple existe, rend le triple de son argument\n"
+                    "  pour les entiers et les flottants,\net refuse une chaîne par une erreur de type\n"
+                    "- [x] le guide la décrit\n\nUn mot après la liste.")
+        self.poser("B-0001", corps=criteres)
+        self.poser("B-0002", "forme : lot · après : B-0001")
+        base = self.commiter("le backlog d'avant")
+        mem = self.migrer_et_ranger()
+        tache = mem.entree("T-0001").texte
+        self.assertIn("- [ ] la fonction triple existe, rend le triple de son argument\n  pour les entiers et les "
+                      "flottants,\net refuse une chaîne par une erreur de type\n- [x] le guide la décrit", tache)
+        besoin = mem.entree("B-0001").corps
+        self.assertNotIn("flottants", besoin)
+        self.assertNotIn("erreur de type", besoin)
+        self.assertIn("- [ ] le « Fait quand » de T-0001 est tenu\n\nUn mot après la liste.", besoin)
+        self.assertEqual(migration.criteres_entiers(memoire_de(entree("B-0009", corps=criteres)).entree("B-0009")),
+                         [(False, "la fonction triple existe, rend le triple de son argument\n  pour les entiers "
+                                  "et les flottants,\net refuse une chaîne par une erreur de type"),
+                          (True, "le guide la décrit")])
+        self.commiter("la migration")
+        self.assertEqual(self.erreurs(base), [])
+
+    def test_la_tache_posee_cite_les_identifiants_actuels(self):
+        """T-0052 : la tâche lisait son besoin avant la réécriture des
+        mentions ; son titre et ses critères gardaient l'ancien numéro d'un
+        lot (dans l'atelier, T-0012 disait B-0224 de JA-0005)."""
+        self.poser("B-0001", "forme : lot")
+        self.poser("B-0002", titre="B-0001 a réuni trop de besoins",
+                   corps="## Fait quand\n\n- [ ] l'état signale un lot comme B-0001\n  ou B-0001@abcdef12")
+        self.poser("B-0003", "forme : lot · après : B-0002")
+        base = self.commiter("le backlog d'avant")
+        mem = self.migrer_et_ranger()
+        tache = mem.entree("T-0001")
+        self.assertEqual(tache.titre, "L-0001 a réuni trop de besoins")
+        self.assertEqual(mem.entree("B-0002").titre, tache.titre)
+        self.assertIn("- [ ] l'état signale un lot comme L-0001\n  ou L-0001", tache.texte)
+        self.assertNotRegex(tache.texte, r"B-0001\b")
+        self.assertTrue(tache.fichier.endswith("/T-0001-l-0001-a-reuni-trop-de-besoins.md"), tache.fichier)
+        self.commiter("la migration")
+        self.assertEqual(self.erreurs(base), [])
+
     def test_la_mise_a_jour_migre_le_backlog(self):
         self.avant()
         with contextlib.redirect_stdout(io.StringIO()) as sortie:
@@ -391,6 +461,37 @@ class TestMigration(Projet):
                 self.assertTrue(not refus or "`B-0005@deadbeef`" in erreurs[0], erreurs)
                 git(self.racine, "reset", "-q", "--hard", base)
 
+    def test_l_ancien_numero_dans_un_texte_neuf_fait_nommer_l_identifiant_actuel(self):
+        """T-0051 : le hook refusait l'ancien numéro d'une entrée renumérotée
+        en le disant inventé, quand les contrôles le résolvent ; il nomme
+        l'identifiant actuel, que le texte neuf cite alors. Le journal qui le
+        cite déjà se complète sans refus."""
+        _, journal = self.migre()
+        projet = config.Projet.charger(self.racine)
+
+        def ecrire(chemin: Path, texte: str) -> str:
+            entree = {"session_id": "s", "tool_name": "Write",
+                      "tool_input": {"file_path": str(chemin), "content": texte}}
+            with contextlib.redirect_stdout(io.StringIO()) as sortie:
+                hooks.pre_tool_use(projet, entree)
+            return sortie.getvalue()
+
+        note = self.racine / "docs/note.md"
+        refus = ecrire(note, "Le lot B-0005 avance.\n")
+        self.assertIn('"deny"', refus)
+        self.assertIn("ancien numéro — `B-0005` (ligne 1) est l'ancien numéro de L-0002 : un texte neuf cite "
+                      "l'entrée par son identifiant actuel, L-0002", refus)
+        self.assertNotIn("ne désigne aucune entrée", refus)
+        self.assertEqual(ecrire(note, "Le lot L-0002 avance.\n"), "")
+        # Sur la ligne qui nomme aussi l'identifiant actuel, l'ancien passe :
+        # le bilan de la mise à jour se recopie au journal.
+        self.assertEqual(ecrire(note, "Renumérotés : B-0005 → L-0002.\n"), "")
+        self.assertIn("`B-0005` (ligne 2)", ecrire(note, "Le lot L-0002 avance.\nB-0005 aussi.\n"))
+        self.assertEqual(ecrire(Path(journal), Path(journal).read_text() + "\nLe lot B-0005 avance.\n"), "")
+        # Une référence inventée reste dite inventée, avant l'ancien numéro.
+        self.assertIn("référence inventée — `B-0099`", ecrire(note, "B-0005 et B-0099.\n"))
+        self.assertEqual(hooks.references_refusees(projet, "docs/note.md", None, "B-0005.\n")[0], [])
+
     def test_poser_lectures_cite_l_index_sans_les_taches(self):
         self.avant()
         bilan = migration.migrer_backlog(self.racine)
@@ -425,6 +526,41 @@ class TestCommandes(Projet):
         self.assertEqual(self.socle("new", "batch", "Un lot", "--need", "B-0001")[0], 2)
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
             cli.main(["--root", str(self.racine), "new", "backlog", "Un sujet"])
+
+
+class TestVocabulaire(unittest.TestCase):
+    """B-0265 (T-0053) : un mot pour une chose. Une entrée du backlog n'est
+    pas un « sujet », et « tâche » ne dit que la tâche `T-`."""
+
+    def test_le_guide_ne_dit_tache_qu_a_partir_de_sa_definition(self):
+        """Le guide disait « tâche » du travail confié à l'agent, quinze
+        lignes avant de définir la tâche `T-` (J-2026-11-16-AA)."""
+        for nom, mot, definition, avant in (("HELP.md", "tâches?", "une **tâche** (`T-`)", "une **"),
+                                            ("HELP.en.md", "tasks?", "a **task** (`T-`)", "a **")):
+            with self.subTest(nom):
+                plat = " ".join((Path(MOTEUR) / "socle" / nom).read_text(encoding="utf-8").split())
+                premier = re.search(rf"(?i)\b{mot}\b", plat)
+                self.assertEqual(premier.start(), plat.index(definition) + len(avant), plat[premier.start() - 80:
+                                                                                          premier.end() + 80])
+
+    def test_les_textes_du_produit_ne_disent_plus_sujet_d_une_entree_du_backlog(self):
+        """T-0053 : la docstring de `memoire.lectures`, que `socle checks`
+        affiche, l'aide de `socle review` et les libellés de l'auto-test
+        disaient « sujet » d'une entrée du backlog, et l'un d'eux « tâche »
+        d'une commande en arrière-plan."""
+        aide = io.StringIO()
+        with contextlib.redirect_stdout(aide), self.assertRaises(SystemExit):
+            cli.main(["review", "--help"])
+        textes = {"memoire.lectures": controles_memoire.lectures.__doc__, "socle review": aide.getvalue()}
+        textes |= {c.id: c.defaut for c in autotest._cas()}
+        textes |= {nom: nom for nom, _ in autotest._temoins()}
+        for ou, texte in textes.items():
+            with self.subTest(ou):
+                plat = " ".join(texte.split())
+                self.assertNotRegex(plat, r"(?i)\bsujets?\b")
+                self.assertNotIn("tâche de fond", plat)
+        self.assertIn("une entrée du backlog nouvelles prouvent", " ".join(textes["memoire.lectures"].split()))
+        self.assertIn("les tâches du lot entier", " ".join(textes["socle review"].split()))
 
 
 class TestAtelier(unittest.TestCase):

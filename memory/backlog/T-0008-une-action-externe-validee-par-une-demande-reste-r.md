@@ -1,10 +1,10 @@
 <!-- socle: couche=backlog zone=publique -->
-# T-0008 — Une action externe validée par une demande reste refusée par le hook
+# T-0008 — La spécification et le modèle de menace d'une action externe validée que le hook laisse passer une fois, soumis à Théo
 
-> statut : ouvert · origine : J-2026-10-12-M · besoin : B-0048 · lu : backlog@9966bbbd
+> statut : ouvert · origine : J-2026-10-12-M · besoin : B-0048 · après : T-0086 · lu : backlog@9966bbbd
 
-La tâche de B-0048, que la migration du backlog en quatre formes a posée dans le lot L-0005 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+Un commit : une demande, qui cite B-0048, soumet à Théo ce que la validation nomme (le dépôt, la branche), quand elle vaut (une fois, après sa fusion sur la branche par défaut, l'option qui garde son geste pour preuve), le modèle de menace du hook ainsi assoupli, et les refus d'une action validée notés depuis D-0026. Assouplir le hook revient à Théo.
 
 ## Fait quand
 
-- [ ] ce que demande B-0048 est livré, et un test le montre
+- [ ] une demande soumet à Théo la spécification et le modèle de menace, et sa réponse est consignée au journal

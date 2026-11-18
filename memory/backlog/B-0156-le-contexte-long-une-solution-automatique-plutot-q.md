@@ -48,4 +48,4 @@ faire ; une session neuve coûterait moins que la reprise à froid.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0039 est tenu
+- [ ] une session longue se poursuit sans que Théo en ouvre une neuve à la main, même quand il n'est pas là pour compacter, et ce que coûte une tâche ainsi menée est mesuré

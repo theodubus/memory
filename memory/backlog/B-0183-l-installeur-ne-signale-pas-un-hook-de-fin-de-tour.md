@@ -11,4 +11,4 @@ Relancé sur le même arbre, celui du socle ne prend que 3 s.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0030 est tenu
+- [ ] l'humain apprend à l'installation qu'un hook de fin de tour du projet double celui du socle, avant d'en payer le temps à chaque fin de tour

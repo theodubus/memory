@@ -15,4 +15,4 @@ le dépôt du socle à la session.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0029 est tenu
+- [ ] la session qui a dû ajouter le dépôt du socle fait ce que « Et maintenant » lui dit sans buter sur le hook avant commit

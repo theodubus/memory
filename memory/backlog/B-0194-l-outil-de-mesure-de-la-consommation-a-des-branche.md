@@ -18,4 +18,4 @@ revues ; ces tests protègent ses mesures à venir.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0038 est tenu
+- [ ] une mutation de l'outil de mesure de la consommation, dans les branches que la revue a nommées, ne passe plus inaperçue

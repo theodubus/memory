@@ -1,10 +1,11 @@
 <!-- socle: couche=backlog zone=publique -->
-# T-0001 — Le hook de l'agent ne juge pas le script python qu'un heredoc lui donne (python3 - <<EOF)
+# T-0001 — Le hook juge le corps d'un heredoc que lit python comme le script d'un python -c
 
 > statut : ouvert · origine : J-2026-11-14-AG · besoin : B-0229 · lu : backlog@9966bbbd
 
-La tâche de B-0229, que la migration du backlog en quatre formes a posée dans le lot L-0005 : elle reprend ses critères, à récrire en livrable qu'un test vérifie.
+Un commit : le corps d'un heredoc donné à `python` ou `python3` sans `-c`, `-m` ni script se juge, dans `engine/socle/hooks.py`, par les chemins protégés qu'il cite et par ce qu'il supprime (`_supprimes_par_python`) ; ses cas dans `tests/test_garde.py`. Un script lu par `<` d'un fichier reste hors de portée.
 
 ## Fait quand
 
-- [ ] `python3 - <<'EOF'` dont le corps cite un fichier protégé est refusé par le hook, un heredoc qui n'en cite aucun passe, et un test le montre
+- [ ] `python3 - <<'EOF'` dont le corps écrit un fichier protégé, ou passe `..` à `shutil.rmtree`, est refusé par le hook, et un test le montre
+- [ ] un heredoc donné à python qui ne cite aucun fichier protégé et ne supprime rien du projet passe le hook, et un test le montre

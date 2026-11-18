@@ -13,4 +13,4 @@ réel dans chaque projet.
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0033 est tenu
+- [ ] un projet équipé sait d'une commande du socle ce qu'une session a coûté, et ce qui l'a fait coûter

@@ -11,16 +11,23 @@ sa copie protégée n'est pas posée dans `.claude/skills/`. Ce skill ne dit
 que ce qui s'y ajoute ici. Ses raisons : D-0096, J-2026-11-11-G,
 ADR-0079.
 
+## L'annonce et la clôture
+
+À l'annonce d'un lot, puis à sa clôture, lancer
+`python3 .socle/socle roadmap` et en coller la sortie dans la réponse :
+où le lot se place parmi les jalons et les lots, puis ce qui vient après
+lui (B-0274).
+
 ## Les sous-agents
 
 Le modèle est celui que dit le chantier actif ; un sous-agent qui doit
 tourner sur celui de la session se lance sans `model`, l'alias `opus`
 ayant désigné un Opus plus ancien que celui de la session (B-0251). La consigne est celle du
-produit, avec, en tête : « Tu implémentes un sujet du socle dans ton
+produit, avec, en tête : « Tu implémentes une tâche du socle dans ton
 worktree du dépôt memory. AGENTS.md s'applique. » ; dans « À livrer » :
 des tests qui échouent sur le commit parent, pour tout code ; pour un
-contrôle ou un refus nouveau, son défaut injecté et son témoin sain ; le
-sujet rangé (`socle archive`) ; `verify --fast` une fois, à la fin ;
+contrôle ou un refus nouveau, son défaut injecté et son témoin sain ; la
+tâche rangée (`socle archive`) ; `verify --fast` une fois, à la fin ;
 dans « Interdits » : ouvrir
 une pull request, lire ou ajouter un autre dépôt ; puis « Économie : lire
 ce qui sert, pas les fichiers entiers ; pas de suite complète relancée

@@ -27,4 +27,4 @@ Réduit le 16 novembre selon D-0120 (J-2026-11-16-G) : gardé pour `uv run` et `
 
 ## Satisfait quand
 
-- [ ] le « Fait quand » de T-0005 est tenu
+- [ ] dans un projet uv ou poetry, un push forcé ou la suppression du projet lancés par `uv run` ou `poetry run` arrêtent l'agent au hook comme sans ce préfixe, et les commandes ordinaires qu'ils lancent passent
