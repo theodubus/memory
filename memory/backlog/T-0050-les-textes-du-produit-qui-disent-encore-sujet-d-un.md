@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0050 — Les textes du produit qui disent encore « sujet » d'une entrée du backlog et que des tests lisent mot pour mot
 
-> statut : ouvert · origine : J-2026-11-16-U · besoin : B-0265 · lu : backlog@9966bbbd
+> statut : ouvert · origine : J-2026-11-16-U · besoin : B-0265 · après : D-0132 · lu : backlog@9966bbbd
 
 T-0046 a changé le format, le guide, les skills, les instructions posées,
 l'état et les messages des contrôles. Il a laissé ce qui dit encore

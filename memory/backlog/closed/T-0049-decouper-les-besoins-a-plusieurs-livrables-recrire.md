@@ -23,5 +23,5 @@ l'agent :
 ## Fait quand
 
 - [x] chaque tâche ouverte du jalon en cours est un livrable d'un commit, et `python3 .socle/socle state` n'y dit plus de besoin à découper
-- [x] les critères des besoins ouverts du jalon en cours disent des résultats, et ceux de leurs tâches des livrables qu'un test vérifie
+- [x] les critères des besoins ouverts du jalon en cours disent des résultats, et ceux de leurs tâches des livrables qu'un test vérifie, ou, pour les dix qui livrent une demande ou un relevé, ce qu'elles produisent : l'exception à D-0123 soumise à Théo par D-0133
 - [x] les lots du jalon en cours n'attendent que ces tâches, et `python3 .socle/socle check` passe

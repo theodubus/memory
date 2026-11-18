@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0005 — Lot du hook, les écritures qu'il juge mal : le script d'un heredoc, la liste qu'un find ou un grep donne à xargs, la conjonction des filtres d'un find
 
-> statut : ouvert · origine : J-2026-11-15-J · après : L-0015, T-0001, T-0002, T-0070, T-0003, T-0004, T-0005, T-0006, T-0007, T-0008, T-0071 · lu : backlog@19378efe · ancien : B-0235
+> statut : ouvert · origine : J-2026-11-15-J · après : L-0015, T-0001, T-0002, T-0070, T-0003, T-0004, T-0005, T-0006, T-0007, T-0086, T-0008, T-0071, T-0083 · lu : backlog@19378efe · ancien : B-0235
 
 Trois écritures que le hook de l'agent juge mal, deux qu'il laisse
 passer, une qu'il refuse à tort : les mêmes fichiers que le lot d'avant

@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0051 — L'ancien numéro d'une entrée renumérotée : le hook refuse sa mention dans un fichier neuf en le disant inventé, et socle url ne le résout pas
 
-> statut : fait · origine : J-2026-11-16-V · besoin : B-0265 · lu : backlog@0c8ca830 · ref : J-2026-11-17-N
+> statut : fait · origine : J-2026-11-16-V · besoin : B-0265 · lu : backlog@0c8ca830 · ref : J-2026-11-17-N, ADR-0087
 
 Relevé par la revue du lot L-0013, passe 1 (J-2026-11-16-V), constat 1
 pour le backlog. Un ancien numéro (`ancien : B-NNNN`, ADR-0083) se résout
