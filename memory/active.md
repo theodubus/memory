@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0018 prochain, en session neuve, avec T-0102 que Théo y veut
-(J-2026-11-19-A). Puis L-0015.
+En session neuve : la demande des copies protégées de trois skills,
+relue à froid (J-2026-11-19-E) ; puis L-0015.
 
 ## Consignes en cours
 

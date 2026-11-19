@@ -871,6 +871,17 @@ class TestDeclencheurs(Projet):
         self.assertIn("« Tu implémentes une tâche du socle dans ton worktree du dépôt memory.", skill)
         self.assertNotRegex(skill, r"\bsujets?\b")
 
+    def test_le_skill_de_l_atelier_fait_fusionner_la_branche_de_passation_et_suit_le_circuit_court(self):
+        # T-0102 (B-0293) : une branche de passation jamais fusionnée restait sur GitHub sans que l'état la
+        # signale ; T-0093 (D-0134) : l'atelier dit son circuit court.
+        racine = Path(__file__).resolve().parent.parent
+        skill = " ".join((racine / ".claude/skills/delegate-lot/SKILL.md").read_text(encoding="utf-8").split())
+        self.assertIn("À l'intégration d'une passation, après l'application de ses correctifs (`git am`), la "
+                      "branche de passation se fusionne dans la branche de travail (`git merge --no-edit`), puis "
+                      "son dossier se retire", skill)
+        self.assertIn("Une petite tâche s'implémente dans la session qui orchestre, selon le seuil de "
+                      "`socle-batch`", skill)
+
     def test_les_skills_font_coller_le_compact_dans_un_bloc_de_code_hors_des_deux_lignes_du_recap(self):
         # T-0091 (ADR-0089) : collé en texte, le compact et sa ligne « Ensuite : » tiendraient lieu de celle du
         # récap ; dans un bloc de code, le hook de fin de tour ne les lit pas.

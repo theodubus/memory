@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0289 — Un changement mécanique de valeurs attendues, des tests qui lisent un format que l'humain vient de valider, se valide par une question dans la conversation, sans demande écrite ni relecture à froid
 
-> statut : ouvert · origine : D-0134 · lu : backlog@670d431f
+> statut : fait · origine : D-0134 · lu : backlog@670d431f · ref : J-2026-11-19-B
 
 La proposition 2 de `docs/fabrication/allegements.md`, que Théo a
 validée dans sa variante légère (D-0134, J-2026-11-18-U). Changer la
@@ -19,5 +19,5 @@ déjà ; le skill `socle-request` du produit ne le dit pas.
 
 ## Satisfait quand
 
-- [ ] un agent qui change mécaniquement les valeurs attendues de tests qui lisent un format que l'humain vient de valider pose la question dans la conversation, chaque test nommé avec sa valeur avant et après, et consigne la réponse en décision de séance, sans demande écrite ni relecture à froid
-- [ ] tout autre changement de valeur attendue, ou suppression de test, garde la demande écrite
+- [x] un agent qui change mécaniquement les valeurs attendues de tests qui lisent un format que l'humain vient de valider pose la question dans la conversation, chaque test nommé avec sa valeur avant et après, et consigne la réponse en décision de séance, sans demande écrite ni relecture à froid
+- [x] tout autre changement de valeur attendue, ou suppression de test, garde la demande écrite

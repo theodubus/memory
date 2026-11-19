@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0288 — Le coût d'un petit lot suit sa taille : sous un seuil mesuré, la session qui orchestre l'implémente elle-même, et son relecteur reçoit un dossier court
 
-> statut : ouvert · origine : D-0134 · lu : backlog@670d431f
+> statut : fait · origine : D-0134 · lu : backlog@670d431f · ref : J-2026-11-19-C
 
 La proposition 1 de `docs/fabrication/allegements.md`, que Théo a
 validée dans sa forme actuelle (D-0134, J-2026-11-18-U). L-0016, un
@@ -19,6 +19,6 @@ se mesure (T-0033, B-0291) plutôt que de rester à 150 lignes.
 
 ## Satisfait quand
 
-- [ ] un lot sous le seuil est implémenté par la session qui l'orchestre, sans sous-agent
-- [ ] le relecteur d'un lot sous le seuil reçoit un dossier court, le diff et les critères de ses tâches, et ne juge que le diff et les fichiers touchés
-- [ ] un lot qui touche un garde-fou, ou un format que d'autres parties du socle lisent, garde la revue complète
+- [x] un lot sous le seuil est implémenté par la session qui l'orchestre, sans sous-agent
+- [x] le relecteur d'un lot sous le seuil reçoit un dossier court, le diff et les critères de ses tâches, et ne juge que le diff et les fichiers touchés
+- [x] un lot qui touche un garde-fou, ou un format que d'autres parties du socle lisent, garde la revue complète

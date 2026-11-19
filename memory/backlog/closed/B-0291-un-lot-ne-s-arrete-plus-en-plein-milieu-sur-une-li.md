@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0291 — Un lot ne s'arrête plus en plein milieu sur une limite d'usage : son coût s'estime à son annonce, et il se découpe s'il ne tient pas dans ce qui reste
 
-> statut : ouvert · origine : D-0134 · lu : backlog@670d431f
+> statut : fait · origine : D-0134 · lu : backlog@670d431f · ref : J-2026-11-19-B
 
 La proposition 5 de `docs/fabrication/allegements.md`, validée par
 Théo (D-0134, J-2026-11-18-U). Les seuils du skill `socle-batch` (60 %
@@ -18,5 +18,5 @@ remise à zéro. T-0037 va déjà dans ce sens au niveau du sous-agent
 
 ## Satisfait quand
 
-- [ ] un lot dont le coût estimé à son annonce ne tient pas dans ce qui reste de la fenêtre se découpe, se réduit ou attend sa remise à zéro, au lieu de s'arrêter en plein milieu
-- [ ] l'estimation s'appuie sur des coûts mesurés, que l'agent lit à l'annonce
+- [x] un lot dont le coût estimé à son annonce ne tient pas dans ce qui reste de la fenêtre se découpe, se réduit ou attend sa remise à zéro, au lieu de s'arrêter en plein milieu
+- [x] l'estimation s'appuie sur des coûts mesurés, que l'agent lit à l'annonce

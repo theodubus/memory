@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0249 — Le seuil de 85 % de la semaine arrête les sous-agents même quand ce qui reste couvre un sujet et le rangement : le seuil se calcule sur le coût mesuré d'un sous-agent
 
-> statut : ouvert · origine : J-2026-11-15-P · lu : backlog@b768e7eb
+> statut : fait · origine : J-2026-11-15-P · lu : backlog@b768e7eb · ref : J-2026-11-19-B
 
 Le skill `socle-batch` ne lance plus aucun sous-agent au-delà de 85 % de
 la semaine ou de 60 % de la fenêtre de cinq heures. Sans remise à zéro en
@@ -18,4 +18,4 @@ limite.
 
 ## Satisfait quand
 
-- [ ] un lot se poursuit sur ce qui reste de la semaine tant que ce reste couvre un sous-agent et le rangement, et la session passe quand même le relais avant la limite
+- [x] un lot se poursuit sur ce qui reste de la semaine tant que ce reste couvre un sous-agent et le rangement, et la session passe quand même le relais avant la limite

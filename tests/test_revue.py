@@ -386,6 +386,138 @@ class TestBarre(_Lot):
         self.assertIn("(aucun changement hors de la mémoire : rien à relire)", flux.getvalue())
 
 
+class TestDossierCourt(_Lot):
+    """B-0288 : le relecteur d'un petit lot reçoit un dossier court, le diff
+    et les critères de ses tâches, et ne juge que le diff et les fichiers
+    touchés ; un lot qui touche un garde-fou garde la revue complète."""
+
+    def test_le_dossier_court_donne_la_consigne_le_diff_et_les_criteres(self):
+        self.lot()
+        texte = revue.dossier(self.projet, court=True)
+        self.assertIn("Juge le diff et les fichiers qu'il touche", texte)
+        self.assertIn("n'explore pas au-delà", texte)
+        self.assertIn("+    return x * 2", texte)
+        self.assertIn("## Les critères des tâches du lot : ta barre", texte)
+        self.assertIn("### B-0001 — Doubler", texte)
+        self.assertIn("- [x] double est écrit", texte)
+        # Les classes des constats restent : le skill lit les trois listes.
+        self.assertIn("**Bloquant**", texte)
+        # Ni le reste des entrées, ni les décisions qu'elles citent, ni la
+        # consigne d'explorer le dépôt.
+        for absent in ("Selon ADR-0001.", "`double(x)` rend `2 * x`", "tu peux lire le dépôt",
+                       "## Les entrées du backlog que sert le lot"):
+            self.assertNotIn(absent, texte)
+        self.assertLess(len(texte), len(revue.dossier(self.projet)))
+
+    def test_la_commande_donne_le_dossier_court(self):
+        self.lot()
+        code, sortie, _ = commande(self.racine, short=True)
+        self.assertEqual(code, 0)
+        self.assertEqual(sortie, revue.dossier(config.Projet.charger(self.racine), court=True))
+
+    def test_un_lot_qui_touche_un_garde_fou_est_renvoye_au_dossier_complet(self):
+        self.lot()
+        # Un fichier que les garde-fous déclarent comme l'outillage, par défaut.
+        (self.racine / ".github/workflows").mkdir(parents=True)
+        (self.racine / ".github/workflows/ci.yml").write_text("on: push\n")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "la CI")
+        self.assertEqual(revue.garde_fous_touches(config.Projet.charger(self.racine), ["calc.py",
+                                                                                        ".github/workflows/ci.yml"]),
+                         [".github/workflows/ci.yml"])
+        with self.assertRaises(revue.CourtRefuse) as refus:
+            revue.dossier(config.Projet.charger(self.racine), court=True)
+        self.assertIn("le lot touche un garde-fou : .github/workflows/ci.yml", str(refus.exception))
+        self.assertIn("`socle review` sans `--short` donne le dossier complet", str(refus.exception))
+        code, sortie, erreurs = commande(self.racine, short=True)
+        self.assertEqual((code, sortie), (2, ""))
+        self.assertIn("le lot touche un garde-fou", erreurs)
+        # Le dossier complet, lui, se donne.
+        self.assertEqual(commande(self.racine)[0], 0)
+
+    def test_les_chemins_que_la_politique_protege_sont_des_garde_fous(self):
+        (self.racine / ".socle").mkdir()
+        (self.racine / ".socle/policy.toml").write_text('[protected]\npaths = ["garde/**"]\n')
+        projet = config.Projet.charger(self.racine)
+        self.assertEqual(revue.garde_fous_touches(projet, ["calc.py", "garde/regle.py", ".socle/policy.toml",
+                                                           ".socle/guardrails.toml"]),
+                         ["garde/regle.py", ".socle/policy.toml", ".socle/guardrails.toml"])
+        (self.racine / "garde").mkdir()
+        (self.racine / "garde/regle.py").write_text("x = 1\n")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "un garde-fou")
+        with self.assertRaises(revue.CourtRefuse) as refus:
+            revue.dossier(projet, court=True)
+        self.assertIn(".socle/policy.toml, garde/regle.py", str(refus.exception))
+
+
+class TestContenusApprouves(_Lot):
+    """B-0286 : une décision prise en séance qui approuve un contenu (un
+    format, un exemple) le désigne par son `sujet` ; le relecteur d'un lot
+    dont une tâche la cite reçoit ce contenu dans son dossier, et non le
+    seul résumé de la tâche."""
+
+    SEANCE = ("<!-- socle: couche=demandes zone=publique -->\n# D-0001 — La vue proposée : la valider ?\n\n"
+              "> date : 2026-11-16 · forme : séance · sujet : docs/vue.md\n\n## Question posée\n\n"
+              "La vue proposée : la valider ?\n")
+    VUE = "# La vue\n\n```text\nL-0001 ▶ 2/3\n```\n\nUne colonne par lot.\n"
+
+    def lot_qui_sert_la_seance(self, vue: str = VUE):
+        (self.racine / "docs").mkdir(exist_ok=True)
+        (self.racine / "docs/vue.md").write_text(vue)
+        (self.racine / "memory/requests").mkdir(exist_ok=True)
+        (self.racine / "memory/requests/D-0001-la-vue-proposee-la-valider.md").write_text(self.SEANCE)
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "la vue validée en séance")
+        git(self.racine, "push", "-q", "-u", "origin", "travail")
+        (self.racine / "calc.py").write_text("def double(x):\n    return x * 2\n")
+        (self.racine / "memory/backlog/B-0001-doubler.md").write_text(
+            SUJET.format(statut="fait").replace("origine : ADR-0001", "origine : D-0001"))
+        git(self.racine, "commit", "-qam", "le lot")
+
+    def test_le_dossier_donne_le_texte_que_designe_la_decision_de_seance(self):
+        self.lot_qui_sert_la_seance()
+        for court in (False, True):
+            texte = revue.dossier(self.projet, court=court)
+            self.assertIn("## Ce qu'approuvent les décisions de séance qu'elles citent", texte, court)
+            self.assertIn("### D-0001 — `docs/vue.md`", texte, court)
+            # Le document entier, ses propres blocs compris, dans une clôture
+            # plus longue que les siennes.
+            self.assertIn("````\n" + self.VUE.rstrip("\n") + "\n````", texte, court)
+
+    def test_le_dossier_donne_la_version_approuvee_que_le_lot_change(self):
+        # Relevé par la revue de L-0018 : lu dans l'arbre de travail, le dossier donnait pour barre la version
+        # que le lot avait modifiée, non celle que l'humain avait approuvée.
+        self.lot_qui_sert_la_seance()
+        (self.racine / "docs/vue.md").write_text(self.VUE.replace("Une colonne par lot.", "Changé par le lot."))
+        git(self.racine, "commit", "-qam", "le lot change la vue")
+        for court in (False, True):
+            texte = revue.dossier(self.projet, court=court)
+            approuve = texte[texte.index("## Ce qu'approuvent les décisions de séance"):]
+            self.assertIn("````\n" + self.VUE.rstrip("\n") + "\n````", approuve, court)
+            self.assertIn("(le lot change `docs/vue.md` : voici sa version d'avant le lot", approuve, court)
+            self.assertNotIn("Changé par le lot.", approuve, court)
+
+    def test_au_dela_de_la_borne_le_chemin_seul(self):
+        self.lot_qui_sert_la_seance("x" * (revue.PLAFOND_SUJET + 1))
+        texte = revue.dossier(self.projet)
+        self.assertIn(f"(`docs/vue.md` : {revue.PLAFOND_SUJET + 1} octets, au-delà de la borne du dossier "
+                      f"({revue.PLAFOND_SUJET}) : le lire dans le dépôt)", texte)
+        self.assertNotIn("x" * 100, texte)
+
+    def test_une_decision_sans_sujet_ou_hors_seance_ne_donne_rien(self):
+        from socle import memory as memoire
+
+        self.lot_qui_sert_la_seance()
+        decision = (self.racine / "memory/requests/D-0001-la-vue-proposee-la-valider.md")
+        decision.write_text(self.SEANCE.replace(" · sujet : docs/vue.md", ""))
+        mem = memoire.Memoire.charger(self.racine)
+        self.assertEqual(revue.contenus_approuves(self.projet, [mem.entree("D-0001")]), [])
+        decision.write_text(self.SEANCE.replace(" · sujet : docs/vue.md", " · sujet : ../hors.md"))
+        self.assertEqual(revue.contenus_approuves(self.projet, [memoire.Memoire.charger(self.racine).entree("D-0001")]),
+                         [])
+
+
 class TestLeGuideNeRenvoiePasALAtelier(unittest.TestCase):
     """B-0268 : le guide citait `D-0098`, une demande de la mémoire de ce
     dépôt, qu'un projet équipé ne connaît pas (ADR-0033). Comme les notes de
