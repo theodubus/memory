@@ -7,6 +7,20 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-19-s — The agent's hook judges the filters of a `find` by their conjunction, and its `-path` under its starting points
+
+The agent's hook judges the expression of a `find` that deletes or
+writes what it finds by the conjunction of its filters: a protected file
+is targeted only if it answers each filter of one conjunction, and the
+pattern of a `-path` targets only what lies under the `find`'s starting
+points. `find . -name '*.json' -path './build/*' -delete` and `find
+build -path '*.toml' -delete` pass; they were refused, each filter
+judged alone, and the leading star of a `-path` read from the project's
+root. What a conjunction reaches stays refused (`find . -name '*.json'
+-path './.claude/*' -delete`, `find . -path '*.toml' -delete`).
+
+To do: nothing.
+
 ## 2026-11-19-r — The agent's hook judges `find … | xargs rm` as a `find` that deletes from its starting points
 
 The agent's hook judges an `xargs` of a program that deletes what it

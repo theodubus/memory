@@ -7,6 +7,20 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-19-s — Le hook de l'agent juge les filtres d'un `find` par leur conjonction, et le `-path` sous ses départs
+
+Le hook de l'agent juge l'expression d'un `find` qui supprime ou écrit
+ce qu'il trouve par la conjonction de ses filtres : un fichier protégé
+n'est visé que s'il répond à chaque filtre d'une même conjonction, et
+le motif d'un `-path` ne vise que ce qui est sous les départs du `find`.
+`find . -name '*.json' -path './build/*' -delete` et `find build -path
+'*.toml' -delete` passent ; ils étaient refusés, chaque filtre jugé seul,
+et l'étoile de tête d'un `-path` lue depuis la racine du projet. Ce
+qu'une conjonction atteint reste refusé (`find . -name '*.json' -path
+'./.claude/*' -delete`, `find . -path '*.toml' -delete`).
+
+À faire : rien.
+
 ## 2026-11-19-r — Le hook de l'agent juge `find … | xargs rm` comme un `find` qui supprime depuis ses départs
 
 Le hook de l'agent juge un `xargs` d'un programme qui supprime ce qu'il

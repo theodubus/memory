@@ -981,6 +981,30 @@ class TestGarde(unittest.TestCase):
                          ("find . -name __pycache__ -prune -o -name '*.pyc' -print", None),
                          ("find build -delete -name '*.o'", None)])
 
+    def test_une_conjonction_de_filtres_d_un_find_ne_vise_que_ce_qui_repond_a_tous(self):
+        """B-0231 : les filtres d'un `find` se jugeaient un par un ; une
+        conjonction (`-name` et `-path`) était refusée pour ce qu'un seul
+        filtre aurait visé, et le `*` de tête d'un `-path` se lisait depuis
+        la racine, même quand le `find` part d'un sous-dossier. Un fichier
+        protégé n'est visé que s'il répond à chaque filtre d'une même
+        conjonction, et un `-path` ne vise que ce qui est sous les départs."""
+        with self.environnement():
+            self.jugees([("find . -name '*.json' -path './build/*' -delete", None),
+                         ("find . -name '*.json' -path './.claude/*' -delete", "reglage"),
+                         ("find build -path '*.toml' -delete", None), ("find . -path '*.toml' -delete", "protege"),
+                         ("find . -name '*.toml' -path './build/*' -delete", None),
+                         ("find . -name '*.toml' -path './.socle/*' -delete", "protege"),
+                         ("find . \\( -name '*.toml' -o -name '*.json' \\) -path './build/*' -delete", None),
+                         ("find . \\( -name '*.toml' -o -name '*.json' \\) -path './.socle/*' -delete", "protege"),
+                         ("find . -name '*.toml' -path './build/*' -o -name policy.toml -delete", "protege"),
+                         ("find tests -path '*/fixtures/*' -name '*.tmp' -delete", None),
+                         ("find build -path '*/.socle/*' -delete", None),
+                         ("find .socle -path '*e/policy.toml' -delete", "protege"),
+                         ("find . -type f -name '*.toml' -path '*/.socle/*' -exec sed -i s/a/b/ {} +", "protege"),
+                         ("find dist -path '*.json' -exec sed -i s/a/b/ {} +", None),
+                         ("find . -name '*.answer.toml' -path './memory/*' -delete", "protege"),
+                         ("find . -name '*.md' -path './memory/requests/*' -delete", None)])
+
     def test_le_corps_d_une_fonction_ne_s_execute_pas_la_ou_il_s_ecrit(self):
         """La revue du lot 3, bloquant 4 (J-2026-11-14-AH) : le corps d'une
         fonction `nom() { …; }` se lisait comme exécuté, et son `cd` valait
@@ -1910,6 +1934,18 @@ class TestDecoupage(unittest.TestCase):
                 (".claude/sett*", "**/.claude/settings.json", False, True)):
             with self.subTest(shell=shell, chemin=chemin):
                 self.assertEqual(commandes.se_croisent(shell, chemin, dessous), attendu)
+
+    def test_plusieurs_motifs_du_shell_croisent_un_motif_de_chemin(self):
+        """B-0231 : un même chemin répond-il à chacun des motifs du shell et
+        au motif de chemin, les filtres d'une même conjonction d'un `find`."""
+        for shells, chemin, attendu in (
+                (["**/*.json", ".claude/**"], ".claude/settings.json", True),
+                (["**/*.json", "build/**"], ".claude/settings.json", False),
+                (["**/settings*.json", "build/**"], "**/.claude/settings.json", True),
+                (["*.toml", "*.json"], "**", False), (["build/**", "**.toml"], "build/a/b.toml", True),
+                (["build/**", "**.toml"], ".socle/policy.toml", False), (["a*"], "abc", True)):
+            with self.subTest(shells=shells, chemin=chemin):
+                self.assertEqual(commandes.se_croisent_tous(shells, chemin, True), attendu)
 
     def test_un_motif_elargi_et_les_classes_posix(self):
         """La revue de B-0171, constat 8 : `dotglob`, `globstar`,

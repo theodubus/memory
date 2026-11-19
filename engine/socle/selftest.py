@@ -1860,7 +1860,16 @@ def _cas() -> list[Cas]:
             "uv --directory . run --frozen rm -rf ..", "poetry -C . run -n rm -rf ..",
             "uv run python -c \"import shutil; shutil.rmtree('..')\"")])
 
-    @defaut("suppression-par-xargs", "dossier qui contient le projet, ou le projet lui-même, supprimé par `xargs rm` "
+    @defaut("find-conjonction-protegee", "fichier protégé supprimé par un `find` dont chaque filtre d'une même "
+            "conjonction le vise, ou par un `-path` à étoile de tête depuis la racine", "agent", "écriture protégée")
+    def _(a, c):
+        # B-0231 : la conjonction de ses filtres se juge entière ; ce qu'elle
+        # atteint reste refusé.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "find . -name '*.toml' -path './.socle/*' -delete", "find . -path '*.toml' -delete",
+            "find .socle -path '*e/policy.toml' -delete")])
+
+    @defaut("suppression-par-xargs","dossier qui contient le projet, ou le projet lui-même, supprimé par `xargs rm` "
             "derrière un `find` qui lui donne sa liste", "agent", "suppression du projet")
     def _(a, c):
         # B-0246 : `xargs rm` ne se jugeait que par les chemins protégés que
@@ -2637,6 +2646,14 @@ def _temoins() -> list[tuple[str, Callable]]:
                 or etage_outil(a, c, "Bash", {"command": "uv run --with requests python -c \"print(open('calc.py')"
                                                          ".read())\""})
                 or etage_outil(a, c, "Bash", {"command": "uv run git push -u origin travail"}))
+
+    @temoin("un nettoyage ciblé par un `find` dont la conjonction des filtres, ou le `-path` sous son départ, "
+            "n'atteint aucun fichier protégé passe le hook de l'agent (B-0231)")
+    def _(a, c):
+        # Le pendant sain de `find-conjonction-protegee` : un filtre seul ne
+        # fait plus refuser ce que la conjonction écarte.
+        return (etage_outil(a, c, "Bash", {"command": "find . -name '*.json' -path './build/*' -delete"})
+                or etage_outil(a, c, "Bash", {"command": "find build -path '*.toml' -delete"}))
 
     @temoin("un nettoyage par `xargs rm` sous le projet, derrière un `find` dont un filtre garde ce qu'il liste ou "
             "qui part d'un dossier du projet, passe le hook de l'agent (B-0246)")

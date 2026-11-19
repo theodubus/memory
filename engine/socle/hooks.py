@@ -26,7 +26,9 @@ import dataclasses
 import difflib
 import fnmatch
 import glob
+import itertools
 import json
+import math
 import os
 import posixpath
 import re
@@ -802,22 +804,47 @@ FIND_EXEC = ("-exec", "-execdir", "-ok", "-okdir")
 # Les actions d'un `find` qui écrivent sur sa sortie les chemins qu'il
 # trouve, ce qu'un `xargs` lit (B-0246).
 FIND_IMPRIME = ("-print", "-print0", "-printf", "-ls")
-# Ce qui garde une action d'un `find` : si un chemin peut l'atteindre sans
-# qu'un filtre de nom ou de chemin lui réponde, et ces filtres
-# (`("nom", motif)`, `("chemin", motif)`).
-LIBRE: tuple[bool, tuple] = (True, ())
+# Les combinaisons d'un motif par filtre qu'une conjonction juge au plus.
+COMBINAISONS_MAX = 32
+# Ce qui garde une action d'un `find` : une disjonction de conjonctions de
+# filtres de nom ou de chemin (`("nom", motif)`, `("chemin", motif)`) ; un
+# chemin l'atteint s'il répond à chaque filtre d'une même conjonction, et
+# une conjonction vide le laisse passer sans filtre (B-0231, ADR-0096).
+Garde = tuple[tuple[tuple[str, str], ...], ...]
+LIBRE: Garde = ((),)
+# Les conjonctions qu'une garde compte au plus : au-delà, elle se lit plus
+# large, ce qui ne fait refuser que davantage.
+CONJONCTIONS_MAX = 64
 
 
-def _et(a: tuple[bool, tuple], b: tuple[bool, tuple]) -> tuple[bool, tuple]:
-    return a[0] and b[0], tuple(dict.fromkeys(a[1] + b[1]))
+def _libre(garde: Garde) -> bool:
+    """Un chemin atteint-il l'action sans qu'un filtre lui réponde."""
+    return any(not conjonction for conjonction in garde)
 
 
-def _ou(a: tuple[bool, tuple], b: tuple[bool, tuple]) -> tuple[bool, tuple]:
-    return a[0] or b[0], tuple(dict.fromkeys(a[1] + b[1]))
+def _et(a: Garde, b: Garde) -> Garde:
+    """Les deux gardes à la fois : chaque conjonction de l'une jointe à
+    chacune de l'autre. Trop nombreuses, l'une des deux seule, plus large :
+    celle qui a le moins de conjonctions, hors d'une garde libre."""
+    if a == LIBRE or b == LIBRE:
+        return b if a == LIBRE else a
+    if len(a) * len(b) > CONJONCTIONS_MAX:
+        return min((g for g in (a, b) if not _libre(g)), key=len, default=a)
+    return tuple(dict.fromkeys(tuple(dict.fromkeys(x + y)) for x in a for y in b))
+
+
+def _ou(a: Garde, b: Garde) -> Garde:
+    """L'une ou l'autre garde. Trop de conjonctions : chaque filtre seul,
+    plus large que toute conjonction qui le porte."""
+    res = tuple(dict.fromkeys(a + b))
+    if len(res) > CONJONCTIONS_MAX:
+        seuls = tuple(dict.fromkeys((f,) for conjonction in res for f in conjonction))
+        res = (((),) if _libre(res) else ()) + seuls
+    return res
 
 
 def _expression_find(argv: list[str], i: int,
-                     sortie: list | None = None) -> list[tuple[list[str] | None, tuple[bool, tuple]]]:
+                     sortie: list | None = None) -> list[tuple[list[str] | None, Garde]]:
     """Les actions de l'expression d'un `find` (`argv` depuis `i`) qui
     touchent ce qu'il trouve : `-delete` (`None`), et la commande de chaque
     `-exec`, `-execdir`, `-ok`, `-okdir` ; chacune avec ce qui la garde. Un
@@ -825,12 +852,13 @@ def _expression_find(argv: list[str], i: int,
     conjonction : placé après l'action, nié (`!`, `-not`), ou de l'autre
     côté d'un `-o` (`-or`) ou d'une `,`, il ne la garde pas ; une parenthèse
     garde ce qui la suit si chacune de ses branches a un filtre (la revue
-    du lot 3, J-2026-11-14-AH). `sortie`, s'il est donné, reçoit ce qui
+    du lot 3, J-2026-11-14-AH). La garde garde la structure de l'expression,
+    chaque conjonction à part (B-0231). `sortie`, s'il est donné, reçoit ce qui
     garde les chemins que le `find` écrit sur sa sortie : chacun de ses
     `-print`, `-print0`, `-printf`, `-ls`, ou à défaut l'expression entière,
     que garde le `-print` implicite (B-0246)."""
-    actions: list[tuple[list[str] | None, tuple[bool, tuple]]] = []
-    imprimes: list[tuple[bool, tuple]] = []
+    actions: list[tuple[list[str] | None, Garde]] = []
+    imprimes: list[Garde] = []
     pos = i
     fins = (None, ")", ",", "-o", "-or")
 
@@ -882,7 +910,7 @@ def _expression_find(argv: list[str], i: int,
             return valeur
         if (m in FIND_NOMS or m in FIND_CHEMINS) and pos < len(argv):
             pos += 1
-            return False, (("nom" if m in FIND_NOMS else "chemin", argv[pos - 1]),)
+            return ((("nom" if m in FIND_NOMS else "chemin", argv[pos - 1]),),)
         if m == "-delete":
             actions.append((None, garde))
         elif m in FIND_IMPRIME:
@@ -919,7 +947,7 @@ def _departs_de_find(c: commandes.Commande) -> list[tuple[str, bool]]:
     departs, actions = _lire_find(c)
     gardes = [garde for sous, garde in actions if sous is None or sous.programme == "rm"
               or any(SONDE in x for x, _ in suppressions(sous))]
-    return [(x, any(libre for libre, _ in gardes)) for x in departs] if gardes else []
+    return [(x, any(map(_libre, gardes))) for x in departs] if gardes else []
 
 
 def _balaye_par_git_clean(argv: list[str]) -> list[str]:
@@ -1066,7 +1094,7 @@ def _dossier_cible(c: commandes.Commande) -> str | None:
 
 
 def _lire_find(c: commandes.Commande, sortie: list | None = None) -> tuple[list[str], list[tuple[
-        commandes.Commande | None, tuple[bool, tuple]]]]:
+        commandes.Commande | None, Garde]]]:
     """Ce que juge le hook d'un `find` : ses points de départ, `.` s'il n'en
     nomme aucun ; et ses actions qui touchent ce qu'il trouve, chacune avec
     ce qui la garde (`_expression_find`) : `None` pour `-delete`, la
@@ -1086,20 +1114,25 @@ def _lire_find(c: commandes.Commande, sortie: list | None = None) -> tuple[list[
     return departs or ["."], actions
 
 
-def _filtres_de_find(c: commandes.Commande) -> tuple[list[str], tuple | None] | None:
+def _filtres_de_find(c: commandes.Commande) -> tuple[list[str], list[tuple[tuple[str, str], ...]] | None] | None:
     """Les points de départ d'un `find` qui supprime ou écrit ce qu'il trouve
-    (`-delete`, un `-exec` d'un écrivain de `{}`), et les filtres de nom et
-    de chemin qui gardent ces actions (`(noms, chemins)`), ou `None` quand
-    l'une d'elles n'en a pas : elle touche tout ce qui est sous ses départs.
-    `None` pour un `find` qui n'écrit rien de ce qu'il trouve (B-0206)."""
+    (`-delete`, un `-exec` d'un écrivain de `{}`), et les conjonctions de
+    filtres de nom et de chemin qui gardent ces actions (B-0231), ou `None`
+    quand l'une d'elles n'en a pas : elle touche tout ce qui est sous ses
+    départs. `None` pour un `find` qui n'écrit rien de ce qu'il trouve
+    (B-0206)."""
     departs, actions = _lire_find(c)
     gardes = [garde for sous, garde in actions if sous is None or any(SONDE in x for x in ecrits_bruts(sous))]
     if not gardes:
         return None
-    if any(libre for libre, _ in gardes):
+    if any(map(_libre, gardes)):
         return departs, None
-    filtres = list(dict.fromkeys(f for _, fs in gardes for f in fs))
-    return departs, ([v for genre, v in filtres if genre == "nom"], [v for genre, v in filtres if genre == "chemin"])
+    return departs, list(dict.fromkeys(conjonction for garde in gardes for conjonction in garde))
+
+
+# Les parts d'un motif de `-path` : une suite d'étoiles, un `?`, une classe
+# `[…]`, un caractère échappé, ou un caractère.
+PART_DE_MOTIF = re.compile(r"\*+|\?|\[[!^]?\]?[^\]]*\]|\\.|.", re.S)
 
 
 def _motifs_de_chemin(tete: str, haut: str, motif: str) -> list[str]:
@@ -1108,25 +1141,50 @@ def _motifs_de_chemin(tete: str, haut: str, motif: str) -> list[str]:
     répond au chemin entier tel que `find` l'écrit, `tete` (son départ, et
     ce qui mène de lui à la racine) devant ce qui correspond, sous la
     racine, à `haut` ; son `*` traverse les `/` et rend les noms en `.`, et
-    se lit comme `**`. Une étoile qui suit une part de `tete` en rend la
-    suite, et ce qui vient après dans le projet ; un motif qui ne peut pas
-    commencer comme `tete` ne vise rien (la revue du lot 3,
-    J-2026-11-14-AH)."""
+    se lit comme `**` (la revue du lot 3, J-2026-11-14-AH). Le motif se lit
+    sur `tete`, part par part, sans égard à la casse : chaque reste qui peut
+    suivre vise ce qui est sous `haut`, et rien d'autre, puisque `find` ne
+    trouve que ce qui est sous ses départs (B-0231). Une classe ou un `?`
+    lus dans `tete` y rendent tout caractère ; un motif qui ne peut pas
+    commencer comme `tete` ne vise rien. Le départ lui-même, s'il répond au
+    motif, se dit `haut` sans sa barre, ou `**` pour un dossier qui
+    contient le projet."""
     def etoiles(m: str) -> str:
         return re.sub(r"\*+", "**", m)
 
-    if motif.startswith(tete):
-        return [haut + etoiles(motif[len(tete):])]
-    litteral = re.match(r"[^*?\[\\]*", motif).group()
-    suite = motif[len(litteral):]
-    if not tete.startswith(litteral):
-        return []
-    if not suite:
-        return [haut.rstrip("/") or "**"]  # le départ lui-même, ou un dossier qui le contient
-    if suite.startswith("*"):
-        reste = suite.lstrip("*")
-        return ["**" + etoiles(reste)] + ([haut + etoiles(reste[1:])] if reste.startswith("/") else [])
-    return ["**"]  # un `?`, un `[…]` ou un `\` dans le départ : le hook ne le suit pas
+    parts = PART_DE_MOTIF.findall(motif)
+
+    def ouverts(etats: set[int]) -> set[int]:
+        """Les états, et ceux qu'une étoile laisse sauter."""
+        res, pile = set(), list(etats)
+        while pile:
+            k = pile.pop()
+            if k not in res:
+                res.add(k)
+                if k < len(parts) and parts[k].startswith("*"):
+                    pile.append(k + 1)
+        return res
+
+    def lire(texte: str) -> set[int]:
+        etats = ouverts({0})
+        for ch in texte.casefold():
+            suivants = set()
+            for k in etats:
+                if k == len(parts):
+                    continue
+                part = parts[k]
+                if part.startswith("*"):
+                    suivants.add(k)
+                elif part == "?" or (part.startswith("[") and len(part) > 1) or \
+                        (part[1:] if part.startswith("\\") and len(part) > 1 else part).casefold() == ch:
+                    suivants.add(k + 1)
+            etats = ouverts(suivants)
+        return etats
+
+    res = [haut + etoiles("".join(parts[k:])) for k in sorted(lire(tete)) if k < len(parts)]
+    if len(parts) in lire(tete.rstrip("/")):
+        res.append(haut.rstrip("/") or "**")  # le départ lui-même, ou un dossier qui le contient
+    return list(dict.fromkeys(res))
 
 
 def _proteges_presents(projet: config.Projet, cache: dict) -> list[str]:
@@ -1189,33 +1247,46 @@ def _supprime_par_find(projet: config.Projet, c: commandes.Commande, environneme
         else:
             continue
         haut = (base + "/") if base else ""
-        if filtres is None:
-            motifs = [base or "**"]
-        else:
-            noms, chemins = filtres
-            motifs = [m for n in noms for m in (haut + n, haut + "**/" + n)]
-            motifs += [m for p in chemins for m in _motifs_de_chemin(tete, haut, p)]
-        # Un filtre nomme ce que `find` trouve ; sans filtre, il trouve tout ce
-        # qui est sous son départ. Un filtre se juge contre les fichiers
-        # protégés présents d'un motif de dossier (`.socle/git-hooks/**`),
-        # que tout nom croiserait (`-name '*.pyc'`), et contre les autres
-        # motifs (un fichier protégé absent le reste) ; un réglage de Claude
-        # Code, à toute profondeur, contre ceux qui sont présents, et contre
-        # leurs motifs si le filtre les nomme (`.claude`, `settings`) : git
-        # ne voit pas un réglage ignoré sous un dossier du projet.
+        # Chaque conjonction, ses filtres lus comme des motifs depuis la
+        # racine : un nom à toute profondeur sous le départ, un chemin par ce
+        # qui peut suivre son départ ; chaque combinaison d'un motif par
+        # filtre vise ce qui répond à tous (B-0231). Sans filtre, `find`
+        # trouve tout ce qui est sous son départ.
+        combinaisons: list[tuple[str, ...]] = []
+        for conjonction in ([()] if filtres is None else filtres):
+            choix = [[haut + v, haut + "**/" + v] if genre == "nom" else _motifs_de_chemin(tete, haut, v)
+                     for genre, v in conjonction]
+            # Trop de combinaisons : les premiers filtres seuls, plus larges.
+            while len(choix) > 1 and math.prod(map(len, choix)) > COMBINAISONS_MAX:
+                choix.pop()
+            combinaisons += [tuple(x) for x in itertools.product(*choix)] if choix else [(base or "**",)]
+        # Un filtre se juge contre les fichiers protégés présents d'un motif
+        # de dossier (`.socle/git-hooks/**`), que tout nom croiserait (`-name
+        # '*.pyc'`), et contre les autres motifs (un fichier protégé absent le
+        # reste) ; un réglage de Claude Code, à toute profondeur, contre ceux
+        # qui sont présents, et contre leurs motifs si un filtre les nomme
+        # (`.claude`, `settings`) : git ne voit pas un réglage ignoré sous un
+        # dossier du projet.
         dessous = filtres is None
-        for motif in dict.fromkeys(motifs):
+        for combinaison in dict.fromkeys(combinaisons):
+            def croise(chemin: str, sous: bool = False) -> bool:
+                if len(combinaison) == 1:
+                    return commandes.se_croisent(combinaison[0], chemin, sous, True)
+                return commandes.se_croisent_tous(list(combinaison), chemin, True)
+
+            def repond(fichier: str) -> bool:
+                return all(commandes.se_croisent(x, fichier, dessous, True) for x in combinaison)
+
             for m in projet.chemins_proteges():
                 if dessous or not m.endswith("/**"):
-                    touches = [m] if commandes.se_croisent(motif, m, dessous, True) else []
+                    touches = [m] if croise(m, dessous) else []
                 else:
-                    touches = [f for f in _proteges_presents(projet, cache) if outils.correspond(f, [m])
-                               and commandes.se_croisent(motif, f, False, True)]
+                    touches = [f for f in _proteges_presents(projet, cache) if outils.correspond(f, [m]) and repond(f)]
                 res += [("protege", trad("{chemin}, par `{mot}`", chemin=t, mot=f"find {depart}")) for t in touches]
-            res += [("reglage", f) for f in _reglages_presents(projet, cache)
-                    if commandes.se_croisent(motif, f, dessous, True)]
-            if not dessous and re.search(r"claude|settings", motif, re.I):
-                res += [("reglage", motif) for m in REGLAGES_MOTIFS if commandes.se_croisent(motif, m, False, True)]
+            res += [("reglage", f) for f in _reglages_presents(projet, cache) if repond(f)]
+            nomme = next((x for x in combinaison if re.search(r"claude|settings", x, re.I)), None)
+            if not dessous and nomme:
+                res += [("reglage", nomme) for m in REGLAGES_MOTIFS if croise(m)]
     return res
 
 
@@ -1290,9 +1361,9 @@ def _supprimes_par_xargs(c: commandes.Commande) -> list[tuple[str, bool]]:
     if c.amont is None or c.amont.programme != "find" or lance is None \
             or not any(SONDE in x for x, _ in suppressions(lance)):
         return []
-    sortie: list[tuple[bool, tuple]] = []
+    sortie: list[Garde] = []
     departs = _lire_find(c.amont, sortie)[0]
-    return [(x, any(libre for libre, _ in sortie)) for x in departs]
+    return [(x, any(map(_libre, sortie))) for x in departs]
 
 
 # Ce qui, dans un script de python, lit les arguments qui le suivent

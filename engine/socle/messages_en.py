@@ -2803,6 +2803,10 @@ MESSAGES: dict[str, str] = {
     "avant `run` comme après":
         "directory that contains the project deleted by a command that `uv run` or `poetry run` launch, their "
         "options before `run` as after it",
+    "fichier protégé supprimé par un `find` dont chaque filtre d'une même conjonction le vise, ou par un `-path` à "
+    "étoile de tête depuis la racine":
+        "protected file deleted by a `find` each filter of one conjunction of which targets it, or by a `-path` with a "
+        "leading star from the root",
     "dossier qui contient le projet, ou le projet lui-même, supprimé par `xargs rm` derrière un `find` qui lui donne "
     "sa liste":
         "directory that contains the project, or the project itself, deleted by `xargs rm` behind a `find` that gives "
@@ -3018,6 +3022,10 @@ MESSAGES: dict[str, str] = {
     "les commandes ordinaires que lancent `uv run` et `poetry run`, et `uv sync`, passent le hook de l'agent "
     "(B-0248)":
         "the ordinary commands that `uv run` and `poetry run` launch, and `uv sync`, pass the agent's hook (B-0248)",
+    "un nettoyage ciblé par un `find` dont la conjonction des filtres, ou le `-path` sous son départ, n'atteint aucun "
+    "fichier protégé passe le hook de l'agent (B-0231)":
+        "a targeted cleanup by a `find` whose conjunction of filters, or whose `-path` under its starting point, "
+        "reaches no protected file passes the agent's hook (B-0231)",
     "un nettoyage par `xargs rm` sous le projet, derrière un `find` dont un filtre garde ce qu'il liste ou qui part "
     "d'un dossier du projet, passe le hook de l'agent (B-0246)":
         "a cleanup by `xargs rm` under the project, behind a `find` with a filter guarding what it lists or that "

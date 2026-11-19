@@ -1608,6 +1608,22 @@ def se_croisent(motif_shell: str, motif_chemin: str, dessous: bool = False, perm
     return any(_se_croisent(a, b) for a in formes for b in chemins)
 
 
+def se_croisent_tous(motifs_shell: list[str], motif_chemin: str, permissif: bool = False) -> bool:
+    """Un même chemin peut-il répondre à chacun des motifs du shell et au
+    motif de chemin, comme `se_croisent` pour un seul : les filtres d'une
+    même conjonction d'un `find` (B-0231)."""
+    shells = [_elements_shell(m, permissif) for m in motifs_shell]
+    chemins = _elements_chemin(motif_chemin.lower() if permissif else motif_chemin)
+    if len(shells) == 1:
+        return any(_se_croisent(shells[0], b) for b in chemins)
+    return any(_se_croisent_tous(*shells, b) for b in chemins)
+
+
+# Les états que parcourt au plus le croisement de plus de deux motifs : au-delà,
+# ils sont dits se croiser, un refus de trop plutôt qu'un hook trop lent.
+ETATS_MAX = 200_000
+
+
 def _se_croisent(a: list, b: list) -> bool:
     """Un même chemin peut-il répondre aux deux suites d'éléments ? Un
     parcours du produit des deux : (position dans `a`, dans `b`, au début
@@ -1637,6 +1653,45 @@ def _se_croisent(a: list, b: list) -> bool:
             pile.append((i2, j2, True))
         if ensemble[0] or ensemble[1] - interdits:
             pile.append((i2, j2, False))
+    return False
+
+
+def _se_croisent_tous(*suites: list) -> bool:
+    """`_se_croisent` pour plus de deux suites : celles de motifs du shell,
+    puis la dernière, d'un motif de chemin. Un parcours de leur produit :
+    (la position dans chacune, au début d'un nom), chaque pas rendant un
+    caractère que toutes admettent ; au-delà de `ETATS_MAX` états, elles
+    sont dites se croiser (B-0231)."""
+    fins = tuple(len(s) for s in suites)
+    shells = range(len(suites) - 1)
+    vus: set = set()
+    pile = [((0,) * len(suites), True)]
+    while pile:
+        etat = pile.pop()
+        if etat in vus:
+            continue
+        if len(vus) > ETATS_MAX:
+            return True
+        vus.add(etat)
+        positions, debut = etat
+        if positions == fins:
+            return True
+        for k, (i, s) in enumerate(zip(positions, suites)):
+            if i < len(s) and s[i][1]:
+                pile.append((positions[:k] + (i + 1,) + positions[k + 1:], debut))
+        if any(i == n for i, n in zip(positions, fins)):
+            continue
+        elements = [s[i] for i, s in zip(positions, suites)]
+        ensemble = elements[0][0]
+        for e in elements[1:]:
+            ensemble = _commun(ensemble, e[0])
+        suivantes = tuple(i if e[1] else i + 1 for i, e in zip(positions, elements))
+        # Le `.` qui ouvre un nom ne répond qu'à un `.` écrit.
+        interdits = {"/", "."} if debut and any(elements[k][2] for k in shells) else {"/"}
+        if _rend(ensemble, "/"):
+            pile.append((suivantes, True))
+        if ensemble[0] or ensemble[1] - interdits:
+            pile.append((suivantes, False))
     return False
 
 
