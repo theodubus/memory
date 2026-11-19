@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0019 (J-2026-11-19-AC), avant sa revue : T-0001, T-0070, T-0004,
-T-0003 faites ; T-0002, T-0106 arrêtées (J-2026-11-19-AH).
+L-0019, avant sa revue : T-0001, T-0070, T-0004, T-0003 faites ;
+T-0002 et T-0106 attendent D-0140 (J-2026-11-19-AI).
 
 ## Consignes en cours
 

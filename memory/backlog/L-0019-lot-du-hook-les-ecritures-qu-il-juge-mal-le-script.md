@@ -16,3 +16,8 @@ T-0004, de priorité haute, va avec T-0002, qui juge le même `xargs`.
 Le 19 novembre, la passe 1 de la revue de L-0005 y fait entrer T-0106
 (J-2026-11-19-Z) : la branche courante d'un `git push` écrite par une
 substitution, dans les mêmes fichiers.
+
+Le 19 novembre au soir, T-0001, T-0070, T-0004 et T-0003 sont faites,
+pas encore relues ; T-0002 et T-0106 attendent la réponse de Théo à
+D-0140, qui change trois valeurs attendues qu'elles contredisent
+(J-2026-11-19-AI). La série part en passation, pour une session neuve.

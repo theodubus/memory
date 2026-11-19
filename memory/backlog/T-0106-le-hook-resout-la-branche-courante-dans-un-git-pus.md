@@ -20,3 +20,4 @@ courante, qui se juge comme écrite en toutes lettres.
 
 - [ ] `git push -u origin "$(git branch --show-current)"`, `$(git rev-parse --abbrev-ref HEAD)` et `$(git symbolic-ref --short HEAD)`, nus, entre guillemets, entre accents graves ou passés par une variable, passent le hook depuis une branche de travail, et un test le montre
 - [ ] les mêmes, depuis la branche par défaut, sont refusés comme un push vers elle, et une autre substitution reste refusée, et un test le montre
+- [ ] les mêmes, quand la même commande change de branche (`git checkout`, `git switch`) ou de dépôt (un `cd` ailleurs) avant le push, restent refusés, comme D-0140 le dit à Théo, et un test le montre
