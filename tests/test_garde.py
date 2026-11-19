@@ -1038,6 +1038,29 @@ class TestGarde(unittest.TestCase):
                          ("f() { cd memory; }; x=$(f); rm -rf build", None),
                          ('f() { cd memory; }; bash -c "f; rm -rf build"', None)])
 
+    def test_ce_que_lance_une_substitution_entre_guillemets_se_juge(self):
+        """B-0260 : ce que lance une substitution entre guillemets (`"$(…)"`,
+        des accents graves) ne se jugeait jamais, et `x="$(…)"` est une forme
+        qu'un agent écrit. Son texte se juge comme celui d'une substitution
+        nue, avec les fonctions connues ; un calcul `$((…))` ne lance rien,
+        et le corps d'un heredoc n'est que du texte."""
+        nom = self.racine.name
+        with self.environnement():
+            self.jugees([('echo "$(rm -rf ..)"', "supprime"), ('echo "a `rm -rf ..` b"', "supprime"),
+                         (f'echo "$(cd memory; rm -rf ../../{nom})"', "protege"),
+                         (f'f() {{ cd memory; }}; x="$(f; rm -rf ../../{nom})"', "illisible"),
+                         (f'function f\n{{ cd memory; }}\nx="$(f; rm -rf ../../{nom})"', "illisible"),
+                         ('x="$(echo x > .socle/policy.toml)"', "protege"),
+                         ('x="$(git rev-parse HEAD)"; echo "$x" > notes.txt', None),
+                         ('echo "$((1 + 2))" > notes.txt', None),
+                         ('cd "$(git rev-parse --show-toplevel)" && ls', None),
+                         ('f() { ls; }; x="$(f; rm -rf build)"', None),
+                         (f"{G} commit -q -m \"$(cat <<'EOF'\nfix: x\n\nrm -rf .. puis {G} {P} --force\nEOF\n)\"",
+                          None)])
+            cmd = f'echo "$({G} {P} --force origin main)"'
+            self.assertIn("politique, point 4", hooks.refus_bash(self.projet, cmd) or "")
+            self.assertEqual(self.decide(*B(cmd)), "refus")
+
     def test_un_mot_reserve_cite_ou_echappe_se_lit_comme_un_mot(self):
         """La seconde revue du lot B-0234, bloquant 3 (J-2026-11-15-O) : un
         mot réservé entre guillemets ou échappé (`"function"`, `\\function`,
@@ -1725,10 +1748,23 @@ class TestDecoupage(unittest.TestCase):
                 ('echo "$(a "$(b "c")")"; ls', ["echo", '$(a "$(b "c")")', ";", "ls"])):
             with self.subTest(texte):
                 self.assertEqual(commandes.jetons(texte), attendu)
-        # Ce que lance une substitution entre guillemets ne se juge pas
-        # (un risque accepté) ; un `cd` cité entre ses guillemets non plus.
+        # Ce que lance une substitution entre guillemets se juge comme une
+        # substitution nue (B-0260) ; un `cd` cité entre ses guillemets ne se
+        # lit pas.
         simples = commandes.analyser('X="$(echo "; cd /tmp; ")"; ls')
-        self.assertEqual([(c.argv, c.dossier) for c in simples], [(["ls"], "")])
+        self.assertEqual([(c.argv, c.dossier) for c in simples], [(["echo", "; cd /tmp; "], ""), (["ls"], "")])
+
+    def test_le_texte_d_une_substitution_entre_guillemets(self):
+        """B-0260 : la commande que lance une substitution entre guillemets,
+        par `$(…)` ou des accents graves, est rendue comme celle d'une
+        substitution nue ; un calcul `$((…))` ne lance rien."""
+        for texte, argvs in (('echo "$(rm -rf ..)"', [["rm", "-rf", ".."], ["echo", "$(rm -rf ..)"]]),
+                             ('x="$(f; rm a)"', [["f"], ["rm", "a"]]),
+                             ('echo "a `rm b` c"', [["rm", "b"], ["echo", "a `rm b` c"]]),
+                             ('echo "$(a "$(rm "c")")"', [["rm", "c"], ["a", '$(rm "c")'], ["echo", '$(a "$(rm "c")")']]),
+                             ('echo "$((1 + 2))"', [["echo", "$((1 + 2))"]])):
+            with self.subTest(texte):
+                self.assertEqual([c.argv for c in commandes.analyser(texte)], argvs)
 
     def test_accolades(self):
         self.assertEqual(commandes.accolades("a{b,c{d,e}}f"), ["abf", "acdf", "acef"])

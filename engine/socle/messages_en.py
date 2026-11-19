@@ -2803,6 +2803,10 @@ MESSAGES: dict[str, str] = {
     "avant `run` comme après":
         "directory that contains the project deleted by a command that `uv run` or `poetry run` launch, their "
         "options before `run` as after it",
+    "dossier qui contient le projet supprimé par la commande que lance une substitution entre guillemets, "
+    "`\"$(…)\"` ou des accents graves, après un `cd` ou l'appel d'une fonction qui change de dossier":
+        "directory that contains the project deleted by the command a quoted substitution launches, `\"$(…)\"` or "
+        "backquotes, after a `cd` or the call of a function that changes directory",
     "push forcé ou vers la branche par défaut lancé par `uv run` ou `poetry run`":
         "force push or push to the default branch launched by `uv run` or `poetry run`",
     "push forcé ou vers la branche par défaut dont l'option ou la branche vient d'une variable, des arguments "
@@ -2996,6 +3000,10 @@ MESSAGES: dict[str, str] = {
     "et un `git` dont une option globale ne se développe pas, passent le hook de l'agent (B-0254)":
         "a push of the working branch, its branch written out in full or in a variable assigned earlier, and a `git` "
         "whose global option does not expand, pass the agent's hook (B-0254)",
+    "une substitution entre guillemets qui lance une commande ordinaire, un calcul entre guillemets et un message "
+    "de commit par `\"$(cat <<'EOF' … EOF)\"` qui cite une suppression passent le hook de l'agent (B-0260)":
+        "a quoted substitution that launches an ordinary command, a quoted computation and a commit message by "
+        "`\"$(cat <<'EOF' … EOF)\"` that cites a deletion pass the agent's hook (B-0260)",
     "les commandes ordinaires que lancent `uv run` et `poetry run`, et `uv sync`, passent le hook de l'agent "
     "(B-0248)":
         "the ordinary commands that `uv run` and `poetry run` launch, and `uv sync`, pass the agent's hook (B-0248)",

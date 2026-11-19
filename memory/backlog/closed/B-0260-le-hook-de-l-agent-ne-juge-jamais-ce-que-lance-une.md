@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0260 — Le hook de l'agent ne juge jamais ce que lance une substitution entre guillemets : x="$(cd .. && rm -rf projet)" supprime le projet sans refus
 
-> statut : ouvert · origine : J-2026-11-16-F · priorité : haute · lu : backlog@e7ed1bbf
+> statut : fait · origine : J-2026-11-16-F · priorité : haute · lu : backlog@e7ed1bbf · ref : J-2026-11-19-W
 
 La troisième passe de revue du lot L-0004 (J-2026-11-16-F) : le découpage
 (`engine/socle/commands.py`) ne juge pas la commande que lance une
@@ -19,4 +19,4 @@ connues), que `_preparer` sait déjà délimiter (B-0207).
 
 ## Satisfait quand
 
-- [ ] une commande lancée dans une substitution entre guillemets, `x="$(…)"`, ne supprime plus le projet sans refus du hook, et une substitution ordinaire passe
+- [x] une commande lancée dans une substitution entre guillemets, `x="$(…)"`, ne supprime plus le projet sans refus du hook, et une substitution ordinaire passe

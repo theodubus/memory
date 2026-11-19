@@ -80,6 +80,8 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 28. Le hook de l'agent juge un git push sur ses arguments développés avec les variables connues, comme un chemin : F=--force; git push $F origin x est un push forcé, B=main; git push origin "$B" un push sur la branche par défaut. Il refuse un git push dont un argument ne se développe pas : une variable qu'il ne connaît pas, une substitution (git push origin "$(git branch --show-current)"), les arguments d'une fonction (f() { git push "$@"; }) ; s'il refuse un push de ta branche de travail, écris la branche en toutes lettres.
 
+29. Le hook de l'agent juge la commande que lance une substitution entre guillemets, "$(…)" ou des accents graves, comme celle d'une substitution nue : x="$(cd memory && rm -rf ../..)" ou echo "$(git push --force origin main)" sont refusés comme sans guillemets ; x="$(git rev-parse HEAD)" et un message de commit écrit par "$(cat <<'EOF' … EOF)" passent toujours.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.

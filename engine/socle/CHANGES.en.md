@@ -7,6 +7,20 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-19-n — The agent's hook judges the command that a quoted substitution launches
+
+The agent's hook judges the command that a substitution in double
+quotes, `"$(…)"` or backquotes, launches as it judges that of a bare
+substitution, with the functions the command defined:
+`x="$(cd memory && rm -rf ../..)"`, `echo "$(rm -rf ..)"` or
+`echo "$(git push --force origin main)"` are refused as without quotes.
+They passed: the text of a quoted substitution was never judged. An
+ordinary substitution (`x="$(git rev-parse HEAD)"`), a `"$((…))"`
+computation and a commit message written by `"$(cat <<'EOF' … EOF)"`,
+whose body is only text, still pass.
+
+To do: nothing.
+
 ## 2026-11-19-m — The agent's hook judges a `git push` on its expanded arguments, and refuses an argument it cannot expand
 
 The agent's hook read the argv of a `git push` as written: a force push

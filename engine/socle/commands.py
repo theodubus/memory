@@ -27,9 +27,10 @@ corps d'un `for` se lit une fois par mot de sa liste, sa variable liée à ce
 mot (B-0204).
 
 Heuristique, comme tout ce qui lit du shell sans l'exécuter : les motifs
-d'un `case`, les alias, les fonctions, `source`, l'état qu'un `eval` laisse
-et ce que lance une substitution entre guillemets (`"$(…)"`) ne sont pas
-suivis. Le hook n'est qu'un étage ; la CI juge ce qui est commité.
+d'un `case`, les alias, les fonctions, `source` et l'état qu'un `eval`
+laisse ne sont pas suivis ; ce que lance une substitution se juge, entre
+guillemets (`"$(…)"`) comme nue (B-0260). Le hook n'est qu'un étage ; la
+CI juge ce qui est commité.
 """
 
 from __future__ import annotations
@@ -297,7 +298,8 @@ def _preparer(texte: str) -> tuple[str, list[tuple[str, str | None]]]:
     lance dans un sous-shell, ou `None`). Une chaîne `$'…'` simple devient
     la chaîne qu'elle nomme, `$"…"` une chaîne entre guillemets. Hors des
     guillemets seulement, sauf une substitution entre guillemets, mise de
-    côté pour que `shlex` n'y lise pas d'autres guillemets. Un `#` en tête
+    côté pour que `shlex` n'y lise pas d'autres guillemets, et dont la
+    commande se rend comme celle d'une substitution nue (B-0260). Un `#` en tête
     d'un mot ouvre un commentaire, retiré jusqu'à la fin de la ligne, qui
     reste ; ailleurs (`x#`, `$#`), il fait partie du mot (B-0207). Des
     opérateurs échappés ou entre guillemets (`\\(`, `';'`, `"&"`, `$'('`)
@@ -353,11 +355,19 @@ def _preparer(texte: str) -> tuple[str, list[tuple[str, str | None]]]:
                     res.append(texte[k:k + 2])
                     k += 2
                 elif texte.startswith("$(", k) or texte[k] == "`":
-                    # Ce qu'elle lance ne se juge pas (un risque accepté,
-                    # D-0111) ; ses guillemets ne se lisent plus comme ceux
-                    # de la chaîne.
-                    bout = _fermante(texte, k + 1) if texte[k] == "$" else _fin_accents(texte, k)
-                    parts.append((texte[k:bout], None))
+                    # Ce qu'elle lance se juge comme ce que lance une
+                    # substitution nue, avec les fonctions connues (B-0260) ;
+                    # ses guillemets ne se lisent plus comme ceux de la
+                    # chaîne. Un calcul `$((…))` ne lance rien.
+                    if texte[k] == "`":
+                        bout = _fin_accents(texte, k)
+                        fin_interne = bout - 1 if texte[bout - 1:bout] == "`" and bout - 1 > k else bout
+                        interne = re.sub(r"\\([$`\\\"])", r"\1", texte[k + 1:fin_interne])
+                    else:
+                        bout = _fermante(texte, k + 1)
+                        fin_interne = bout - 1 if texte[bout - 1:bout] == ")" else bout
+                        interne = None if texte.startswith("$((", k) else texte[k + 2:fin_interne]
+                    parts.append((texte[k:bout], interne))
                     res.append(f"\x01{len(parts) - 1}\x01")
                     k = bout
                 else:

@@ -1860,6 +1860,16 @@ def _cas() -> list[Cas]:
             "uv --directory . run --frozen rm -rf ..", "poetry -C . run -n rm -rf ..",
             "uv run python -c \"import shutil; shutil.rmtree('..')\"")])
 
+    @defaut("substitution-entre-guillemets", "dossier qui contient le projet supprimé par la commande que lance une "
+            "substitution entre guillemets, `\"$(…)\"` ou des accents graves, après un `cd` ou l'appel d'une fonction "
+            "qui change de dossier", "agent", "suppression du projet")
+    def _(a, c):
+        # B-0260 : ce que lance une substitution entre guillemets ne se
+        # jugeait jamais, quand `x="$(…)"` est une forme qu'un agent écrit.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "echo \"$(rm -rf ..)\"", "x=\"`rm -rf ..`\"", "x=\"$(cd memory && rm -rf ../..)\"",
+            f"f() {{ cd memory; }}; x=\"$(f; rm -rf ../../{c.name})\"")])
+
     @defaut("push-par-un-lanceur", "push forcé ou vers la branche par défaut lancé par `uv run` ou `poetry run`",
             "agent", "politique point 4")
     def _(a, c):
@@ -2564,6 +2574,18 @@ def _temoins() -> list[tuple[str, Callable]]:
                 or etage_outil(a, c, "Bash", {"command": "B=travail; git push origin \"$B\""})
                 or etage_outil(a, c, "Bash", {"command": "D=.; git -C \"$D\" push origin travail"})
                 or etage_outil(a, c, "Bash", {"command": "git -C \"$SOCLE_ESSAI_CIBLE\" status"}))
+
+    @temoin("une substitution entre guillemets qui lance une commande ordinaire, un calcul entre guillemets et un "
+            "message de commit par `\"$(cat <<'EOF' … EOF)\"` qui cite une suppression passent le hook de l'agent "
+            "(B-0260)")
+    def _(a, c):
+        # Le pendant sain de `substitution-entre-guillemets` : la commande
+        # lancée se juge comme celle d'une substitution nue.
+        return (etage_outil(a, c, "Bash", {"command": "x=\"$(git rev-parse HEAD)\"; echo \"$x\" > notes.txt"})
+                or etage_outil(a, c, "Bash", {"command": "echo \"$((1 + 2)) `date`\" > notes.txt"})
+                or etage_outil(a, c, "Bash", {"command": "f() { ls; }; x=\"$(f; rm -rf build)\""})
+                or etage_outil(a, c, "Bash", {"command": "git commit -q -m \"$(cat <<'EOF'\nfix: x\n\nrm -rf ..\n"
+                                                         "EOF\n)\""}))
 
     @temoin("les commandes ordinaires que lancent `uv run` et `poetry run`, et `uv sync`, passent le hook de "
             "l'agent (B-0248)")

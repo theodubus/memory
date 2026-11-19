@@ -7,6 +7,21 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-19-n — Le hook de l'agent juge la commande que lance une substitution entre guillemets
+
+Le hook de l'agent juge la commande que lance une substitution entre
+guillemets, `"$(…)"` ou des accents graves, comme celle d'une
+substitution nue, avec les fonctions que la commande a définies :
+`x="$(cd memory && rm -rf ../..)"`, `echo "$(rm -rf ..)"` ou
+`echo "$(git push --force origin main)"` sont refusés comme sans
+guillemets. Ils passaient : le texte d'une substitution entre guillemets
+ne se jugeait jamais. Une substitution ordinaire (`x="$(git rev-parse
+HEAD)"`), un calcul `"$((…))"` et un message de commit écrit par
+`"$(cat <<'EOF' … EOF)"`, dont le corps n'est que du texte, passent
+toujours.
+
+À faire : rien.
+
 ## 2026-11-19-m — Le hook de l'agent juge un `git push` sur ses arguments développés, et refuse un argument qu'il ne sait pas développer
 
 Le hook de l'agent lisait l'argv d'un `git push` tel qu'il est écrit : un
