@@ -421,6 +421,9 @@ dit ce que le hook y lit mal, et la note de version qui l'inscrit.
 - `coproc` : ni mot réservé ni préfixe pour le hook (2026-11-16-a).
 - `uv run --directory` et `poetry -C` : la commande qu'ils lancent se lit
   dans le dossier courant, non dans celui qu'ils nomment (2026-11-19-l).
+- Une option de `uv` ou de `poetry` que le hook ne connaît pas et qui
+  prend une valeur (`uv run --python-preference managed …`) : sa valeur
+  se lit comme la commande qu'ils lancent (2026-11-19-l).
 - L'option qui saute les hooks passée par une variable
   (`N=--no-verify; git push $N`) : elle ne se développe pas pour ce
   refus ; la CI exécute tout (2026-11-19-m).

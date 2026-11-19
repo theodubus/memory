@@ -17,7 +17,10 @@ lines the write adds or changes: a new line that repeats the former
 number without the current identifier is refused, even if the file
 already cites it, and an earlier line kept as is passes, even if the
 write changes what surrounds it. The line that also names the current
-identifier ("former → current") still passes.
+identifier ("former → current") still passes, as does, on a metadata
+line, the former number it already held: the `former` field of a
+renumbered entry being closed, the source of a decision whose status
+changes.
 
 To do: if the hook refuses a former number in a new journal entry, cite
 the current identifier it names.
@@ -48,7 +51,10 @@ refuses a `git push` one of whose arguments does not expand: a variable
 it does not know, a substitution (`git push origin "$(git branch
 --show-current)"`), a function's arguments. A branch written out in
 full, or in a variable assigned earlier in the same command, passes as
-before.
+before. A global git option whose quoted value holds a variable and a
+space (`git -c http.extraheader="AUTHORIZATION: bearer $TOKEN" push …`)
+does not hide the push: it is judged on the argv split into words and
+on the whole argv.
 
 Two neighbouring forms, which no agent writes, join the list of known
 forms the hook does not judge: the option that skips the hooks passed
@@ -67,10 +73,11 @@ as without them: `uv run rm -rf ..`, `poetry run git push --force origin
 main` and a `uv run python -c` that writes a protected file are refused
 as without that prefix. They passed: the hook read the program `uv` or
 `poetry`. The ordinary commands they launch (`uv run pytest`, `uv run -m
-pytest`, `poetry run pytest`) still pass. The guide lists a known form
+pytest`, `poetry run pytest`) still pass. The guide lists two known forms
 the hook does not judge: the command that `uv run --directory` or
 `poetry -C` launches is read in the current directory, not in the one
-they name.
+they name, and the value of an option it does not know (`uv run
+--python-preference managed …`) is read as the launched command.
 
 To do: nothing.
 

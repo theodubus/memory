@@ -35,3 +35,20 @@ travail, la condition de D-0026 ; T-0071 la suit.
 ### Passe 1 — 2026-11-19
 
 Commits : 9fc95bf..8acc14e
+
+- Bloquant : le champ ancien d'une ligne de métadonnées jugé comme une ligne neuve
+- Bloquant : l'argv développé d'un git coupé en mots, la valeur entre guillemets d'une option globale déplaçant la sous-commande
+- Ouvre : T-0106
+
+Recul : passe unique, ses deux bloquants n'ont pas de passe d'avant ; ils
+ont la cause de ceux des lots du hook qui l'ont précédée : un jugement
+nouveau qui lit mal une forme voisine qui marchait, le champ `ancien`
+d'une ligne de métadonnées pour T-0083, la valeur entre guillemets d'une
+option globale pour T-0006. Ce que le lot ouvre, T-0106, est de la
+nature de ce qu'il ferme : une suite de T-0006, un refus à tort d'une
+forme qu'un agent écrit, plus petite que la tâche. Les lots clos sur ces
+fichiers en ont ouvert de telles, L-0004 (B-0254) et L-0014 (T-0083)
+parmi eux, une ou deux par lot, que D-0128 borne aux formes qu'un agent
+écrit ; les deux corrections tiennent en quelques lignes, chacune avec
+son test qui échoue sans elle : pas de passe de plus, la clôture suit.
+Décision : continuer.

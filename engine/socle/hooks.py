@@ -354,6 +354,13 @@ def lignes_ajoutees(avant: str, apres: str) -> set[int]:
     ou change : celles qu'une comparaison ligne à ligne avec `avant` ne
     retrouve pas à leur place. Une ligne gardée telle quelle n'y est pas,
     même si l'écriture change ce qui l'entoure (T-0083)."""
+    return set(lignes_remplacees(avant, apres))
+
+
+def lignes_remplacees(avant: str, apres: str) -> dict[int, str]:
+    """Les lignes que l'écriture ajoute ou change (`lignes_ajoutees`),
+    chacune avec le texte des lignes d'`avant` que remplace son bloc : vide
+    pour un ajout seul (ADR-0093)."""
     a, b = avant.splitlines(), apres.splitlines()
     debut = 0
     while debut < min(len(a), len(b)) and a[debut] == b[debut]:
@@ -362,8 +369,23 @@ def lignes_ajoutees(avant: str, apres: str) -> set[int]:
     while fin < min(len(a), len(b)) - debut and a[-1 - fin] == b[-1 - fin]:
         fin += 1
     comparaison = difflib.SequenceMatcher(None, a[debut:len(a) - fin], b[debut:len(b) - fin], autojunk=False)
-    return {debut + j + 1 for op, _, _, j1, j2 in comparaison.get_opcodes() if op in ("insert", "replace")
+    return {debut + j + 1: "\n".join(a[debut + i1:debut + i2])
+            for op, i1, i2, j1, j2 in comparaison.get_opcodes() if op in ("insert", "replace")
             for j in range(j1, j2)}
+
+
+def _lignes_de_metadonnees(texte: str) -> set[int]:
+    """Les lignes, numérotées à partir de 1, des métadonnées d'une entrée :
+    les lignes `>` qui suivent son titre, comme `memoire.analyser` les lit."""
+    lignes, res = texte.splitlines(), set()
+    for e in memoire.analyser("", texte).entrees:
+        j = e.ligne
+        while j < len(lignes) and not lignes[j].strip():
+            j += 1
+        while j < len(lignes) and lignes[j].lstrip().startswith(">"):
+            res.add(j + 1)
+            j += 1
+    return res
 
 
 def references_inventees(projet: config.Projet, rel: str, avant: str | None, apres: str) -> list[str]:
@@ -410,7 +432,8 @@ def references_refusees(projet: config.Projet, rel: str, avant: str | None,
                                "l'index : le relire, `python3 .socle/socle show --index {index}`",
                                index=index, h=h, ligne=ligne))
     deja = {i for i, _ in memoire.mentions(avant or "")}
-    ajoutees = lignes_ajoutees(avant or "", apres)
+    remplacees = lignes_remplacees(avant or "", apres)
+    metadonnees = _lignes_de_metadonnees(apres) if remplacees else set()
     par_ligne: dict[int, set[str]] = {}
     for ident, ligne in memoire.mentions(apres):
         par_ligne.setdefault(ligne, set()).add(ident)
@@ -423,8 +446,12 @@ def references_refusees(projet: config.Projet, rel: str, avant: str | None,
             # migration les cite presque tous (T-0083). Sur la ligne qui
             # nomme aussi l'identifiant actuel, il se lit pour ce qu'il est
             # (« B-0224 → JA-0005 », le bilan de la mise à jour, ou une
-            # citation de l'humain).
-            if ligne in ajoutees and anciens[ident].id not in par_ligne[ligne]:
+            # citation de l'humain). Sur une ligne de métadonnées, celui que
+            # portait déjà le bloc remplacé reste : le champ `ancien` d'une
+            # entrée renumérotée qu'on clôt, la source d'une décision dont
+            # le statut change (ADR-0093).
+            if ligne in remplacees and anciens[ident].id not in par_ligne[ligne] \
+                    and not (ligne in metadonnees and ident in {i for i, _ in memoire.mentions(remplacees[ligne])}):
                 vieux.append(trad("`{ident}` (ligne {ligne}) est l'ancien numéro de {actuel} : un texte neuf cite "
                                   "l'entrée par son identifiant actuel, {actuel}, seul ou sur la même ligne que "
                                   "l'ancien", ident=ident, ligne=ligne, actuel=anciens[ident].id))
@@ -1698,24 +1725,29 @@ def _branches_protegees(racine: Path) -> set[str]:
     return {"main", "master", defaut.split("/", 1)[-1]} - {""}
 
 
-def _argv_developpe(c: commandes.Commande, environnement: dict | None, racine: Path) -> list[str]:
+def _argvs_developpes(c: commandes.Commande, environnement: dict | None, racine: Path) -> list[list[str]]:
     """L'argv de `c` tel que le shell le développerait avec les variables
     connues (`environnement`, celles du shell de l'agent ; à défaut, celles
-    du hook depuis la racine) : un mot qui porte une variable ou une
-    substitution se développe et se coupe en mots, comme hors des
-    guillemets ; une part qu'il ne sait pas développer y reste marquée
-    (`commandes.INCONNU`) (B-0254)."""
+    du hook depuis la racine), sous ses deux formes : un mot qui porte une
+    variable ou une substitution se développe, puis se coupe en mots, comme
+    hors des guillemets, ou reste entier, comme entre eux. L'argv ne dit
+    plus lesquels l'étaient : le hook juge les deux (passe 1 de la revue de L-0005). Une part
+    qu'il ne sait pas développer y reste marquée (`commandes.INCONNU`)
+    (B-0254)."""
     if environnement is None:
         environnement = commandes.environnement_du_shell(os.environ, str(racine))
-    variables, res = None, []
+    variables, coupe, entier = None, [], []
     for mot in c.argv:
         if not re.search(r"[$`]", mot):
-            res.append(mot)
+            coupe.append(mot)
+            entier.append(mot)
             continue
         if variables is None:
             variables = commandes.variables_de(c, environnement)
-        res += commandes.developper(mot, variables)[0].split()
-    return res
+        developpe = commandes.developper(mot, variables)[0]
+        coupe += developpe.split()
+        entier.append(developpe)
+    return [coupe] if coupe == entier else [coupe, entier]
 
 
 def push_illisible(racine: Path, c: commandes.Commande, environnement: dict | None = None) -> str | None:
@@ -1729,8 +1761,8 @@ def push_illisible(racine: Path, c: commandes.Commande, environnement: dict | No
         return None
     if environnement is None:
         environnement = commandes.environnement_du_shell(os.environ, str(racine))
-    sous, reste = commandes.git_sous_commande(_argv_developpe(c, environnement, racine))
-    if sous != "push" or not any(commandes.INCONNU in x for x in reste):
+    if not any(sous == "push" and any(commandes.INCONNU in x for x in reste)
+               for sous, reste in map(commandes.git_sous_commande, _argvs_developpes(c, environnement, racine))):
         return None
     # Le dernier mot illisible : celui du push plutôt qu'une option globale.
     variables = commandes.variables_de(c, environnement)
@@ -1739,43 +1771,48 @@ def push_illisible(racine: Path, c: commandes.Commande, environnement: dict | No
                 " ".join(c.argv[1:]))
 
 
+def _git_irreversible(racine: Path, argv: list[str]) -> str | None:
+    """L'action irréversible ou externe d'un `git`, sur son argv développé."""
+    sous, reste = commandes.git_sous_commande(argv)
+    options, args = commandes.options_et_arguments(reste)
+    if sous == "push":
+        if commandes.drapeau(options, "f", ("--force", "--force-with-lease", "--force-if-includes")):
+            return trad("push forcé")
+        if commandes.drapeau(options, "d", ("--delete", "--prune")):
+            return trad("suppression d'une branche distante")
+        if commandes.drapeau(options, "", ("--mirror", "--all", "--tags")):
+            return trad("push de toutes les références")
+        refs = args[1:]
+        if any(r.startswith("+") for r in refs):
+            return trad("push forcé (+)")
+        if any(r.startswith(":") for r in refs):
+            return trad("suppression d'une branche distante")
+        cibles = [r.split(":", 1)[-1].removeprefix("refs/heads/") for r in refs] or \
+            [outils.git(racine, "rev-parse", "--abbrev-ref", "HEAD", check=False).strip()]
+        protegee = next((x for x in cibles if x in _branches_protegees(racine)), None)
+        if protegee and protegee not in ("main", "master") and outils.branche_par_defaut_devinee(racine):
+            return trad("push sur {protegee}, prise pour la branche par défaut faute de mieux : ce clone n'a ni "
+                        "`origin/HEAD`, ni `main`, ni `master`. Si la branche par défaut du dépôt distant est "
+                        "une autre, `git fetch origin <elle>` la fait connaître ; relancer ensuite le push",
+                        protegee=protegee)
+        return trad("push sur la branche par défaut ({protegee})", protegee=protegee) if protegee else None
+    if sous == "reset" and "--hard" in options:
+        return "git reset --hard"
+    if sous in ("filter-branch", "filter-repo"):
+        return f"git {sous}"
+    return None
+
+
 def irreversible(racine: Path, c: commandes.Commande, environnement: dict | None = None) -> str | None:
     """L'action irréversible ou externe qu'une commande simple lance
     (politique, point 4), dite en clair ; `None` sinon. Un `git` se juge sur
     son argv développé avec les variables connues (`environnement`, celles
     du shell de l'agent) : `F=--force; git push $F …` est un push forcé
-    (B-0254)."""
+    (B-0254), sous ses deux formes."""
     nom, argv = c.programme, c.argv
     if nom == "git":
-        argv = _argv_developpe(c, environnement, racine)
-        sous, reste = commandes.git_sous_commande(argv)
-        options, args = commandes.options_et_arguments(reste)
-        if sous == "push":
-            if commandes.drapeau(options, "f", ("--force", "--force-with-lease", "--force-if-includes")):
-                return trad("push forcé")
-            if commandes.drapeau(options, "d", ("--delete", "--prune")):
-                return trad("suppression d'une branche distante")
-            if commandes.drapeau(options, "", ("--mirror", "--all", "--tags")):
-                return trad("push de toutes les références")
-            refs = args[1:]
-            if any(r.startswith("+") for r in refs):
-                return trad("push forcé (+)")
-            if any(r.startswith(":") for r in refs):
-                return trad("suppression d'une branche distante")
-            cibles = [r.split(":", 1)[-1].removeprefix("refs/heads/") for r in refs] or \
-                [outils.git(racine, "rev-parse", "--abbrev-ref", "HEAD", check=False).strip()]
-            protegee = next((x for x in cibles if x in _branches_protegees(racine)), None)
-            if protegee and protegee not in ("main", "master") and outils.branche_par_defaut_devinee(racine):
-                return trad("push sur {protegee}, prise pour la branche par défaut faute de mieux : ce clone n'a ni "
-                            "`origin/HEAD`, ni `main`, ni `master`. Si la branche par défaut du dépôt distant est "
-                            "une autre, `git fetch origin <elle>` la fait connaître ; relancer ensuite le push",
-                            protegee=protegee)
-            return trad("push sur la branche par défaut ({protegee})", protegee=protegee) if protegee else None
-        if sous == "reset" and "--hard" in options:
-            return "git reset --hard"
-        if sous in ("filter-branch", "filter-repo"):
-            return f"git {sous}"
-        return None
+        return next(filter(None, (_git_irreversible(racine, a) for a in _argvs_developpes(c, environnement, racine))),
+                    None)
     if nom in ("npm", "cargo", "poetry", "uv", "pnpm", "yarn") and "publish" in argv[1:3]:
         return f"{nom} publish"
     if (nom, argv[1:2]) in (("twine", ["upload"]), ("gem", ["push"])):

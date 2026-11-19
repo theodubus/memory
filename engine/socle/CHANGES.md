@@ -18,7 +18,9 @@ une ligne neuve qui reprend l'ancien numéro sans l'identifiant actuel
 est refusée, même si le fichier le cite déjà, et une ligne d'avant
 gardée telle quelle passe, même si l'écriture change ce qui l'entoure.
 La ligne qui nomme aussi l'identifiant actuel (« ancien → actuel ») passe
-toujours.
+toujours, comme, sur une ligne de métadonnées, l'ancien numéro qu'elle
+portait déjà : le champ `ancien` d'une entrée renumérotée qu'on clôt, la
+source d'une décision dont le statut change.
 
 À faire : si le hook refuse un ancien numéro dans une entrée neuve du
 journal, citer l'identifiant actuel qu'il nomme.
@@ -50,7 +52,11 @@ il juge un chemin, et refuse un `git push` dont un argument ne se
 développe pas : une variable qu'il ne connaît pas, une substitution
 (`git push origin "$(git branch --show-current)"`), les arguments d'une
 fonction. Une branche écrite en toutes lettres, ou dans une variable
-affectée plus tôt dans la même commande, passe comme avant.
+affectée plus tôt dans la même commande, passe comme avant. Une option
+globale de git dont la valeur entre guillemets porte une variable et une
+espace (`git -c http.extraheader="AUTHORIZATION: bearer $TOKEN" push …`)
+ne cache pas le push : il se juge sur l'argv coupé en mots et sur l'argv
+entier.
 
 Deux formes voisines, qu'aucun agent n'écrit, s'inscrivent dans la liste
 des formes connues que le hook ne juge pas : l'option qui saute les hooks
@@ -70,9 +76,11 @@ lancent comme sans eux : `uv run rm -rf ..`, `poetry run git push
 protégé sont refusés comme sans ce préfixe. Ils passaient : le hook lisait
 le programme `uv` ou `poetry`. Les commandes ordinaires qu'ils lancent
 (`uv run pytest`, `uv run -m pytest`, `poetry run pytest`) passent
-toujours. Le guide inscrit une forme connue que le hook ne juge pas : la
-commande que lance `uv run --directory` ou `poetry -C` se lit dans le
-dossier courant, non dans celui qu'ils nomment.
+toujours. Le guide inscrit deux formes connues que le hook ne juge pas :
+la commande que lance `uv run --directory` ou `poetry -C` se lit dans le
+dossier courant, non dans celui qu'ils nomment, et la valeur d'une option
+qu'il ne connaît pas (`uv run --python-preference managed …`) se lit
+comme la commande lancée.
 
 À faire : rien.
 

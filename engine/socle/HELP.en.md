@@ -415,6 +415,9 @@ misreads in it, and the release note that enters it.
   (2026-11-16-a).
 - `uv run --directory` and `poetry -C`: the command they launch is read
   in the current directory, not in the one they name (2026-11-19-l).
+- An option of `uv` or `poetry` the hook does not know and that takes a
+  value (`uv run --python-preference managed …`): its value is read as
+  the command they launch (2026-11-19-l).
 - The option that skips the hooks passed through a variable
   (`N=--no-verify; git push $N`): it is not expanded for this refusal;
   the CI runs everything (2026-11-19-m).

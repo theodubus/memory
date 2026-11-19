@@ -1346,6 +1346,29 @@ class TestGarde(unittest.TestCase):
                          "$Y")
         self.assertIsNone(hooks.push_illisible(self.racine, commandes.analyser(f'{G} -C "$X" {P} o b')[0], {}))
 
+    def test_une_option_globale_entre_guillemets_ne_cache_pas_le_push(self):
+        """Passe 1 de la revue de L-0005 : l'argv développé d'un `git` se
+        coupait en mots, et la valeur entre guillemets d'une option globale
+        (`-c "…: bearer $TOKEN"`, `-C "$D"` qui porte une espace) décalait sa
+        sous-commande ; un push forcé ou vers la branche par défaut,
+        refusé avant B-0254, passait. Le hook juge l'argv coupé et l'argv
+        entier (B-0254)."""
+        with self.environnement():
+            for cmd, raison in ((f'{G} -c http.extraheader="AUTHORIZATION: bearer $TOKEN" {P} origin main',
+                                 "branche par défaut"),
+                                (f'{G} -c core.sshCommand="ssh -i $HOME/.ssh/k" {P} --force origin travail',
+                                 "push forcé"),
+                                (f'D="/tmp/a b"; {G} -C "$D" {P} --force origin travail', "push forcé")):
+                with self.subTest(cmd):
+                    self.assertIn(raison, hooks.refus_bash(self.projet, cmd) or "")
+                    self.assertEqual(self.decide(*B(cmd)), "refus")
+            self.assertIsNone(hooks.refus_bash(
+                self.projet, f'{G} -c http.extraheader="AUTHORIZATION: bearer $TOKEN" {P} -u origin travail'))
+        push = next(c for c in commandes.analyser(f'D="/tmp/a b"; {G} -C "$D" {P} -f o b') if c.programme == G)
+        self.assertEqual(hooks.irreversible(self.racine, push, {}), "push forcé")
+        self.assertEqual(hooks.push_illisible(self.racine, commandes.analyser(f'{G} -c "x=$Q $Z" {P} "$Y" b')[0], {}),
+                         "$Y")
+
     def test_le_refus_d_une_action_externe_la_rend_a_l_humain(self):
         # D-0026 : une demande validée ne débloque pas l'action ; le refus le
         # dit, et demande la commande exacte pour l'humain.

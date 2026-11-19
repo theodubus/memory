@@ -513,6 +513,34 @@ class TestMigration(Projet):
         self.assertEqual(vieux("# Notes revues\n\nLe lot B-0005 avance.\n\nFin, enfin.\n"), [])
         self.assertEqual(vieux(avant + "\nRenumérotés : B-0005 → L-0002.\n"), [])
 
+    def test_l_ancien_numero_que_portait_une_ligne_de_metadonnees_y_reste(self):
+        """Passe 1 de la revue de L-0005 : le hook refusait toute retouche de
+        la ligne de métadonnées d'une entrée renumérotée, qui porte son
+        ancien numéro (`ancien : B-0005`) ; clore le lot l'était, comme
+        changer le statut d'une décision dont la source cite un ancien
+        numéro. Sur une ligne de métadonnées, l'ancien numéro que portait le
+        bloc remplacé reste ; un ancien numéro neuf s'y refuse, et une ligne
+        de texte retouchée se juge comme avant (ADR-0093)."""
+        self.migre()
+        projet = config.Projet.charger(self.racine)
+        rel = next((self.racine / "memory/backlog").glob("L-0002-*.md")).relative_to(self.racine).as_posix()
+        avant = (self.racine / rel).read_text()
+        self.assertIn("ancien : B-0005", avant)
+
+        def vieux(apres: str) -> list[str]:
+            return hooks.references_refusees(projet, rel, avant, apres)[1]
+
+        close = re.sub(r"^> statut : [^·]*·", "> statut : fait · ref : J-2026-01-01-A ·", avant, count=1, flags=re.M)
+        self.assertNotEqual(close, avant)
+        self.assertEqual(vieux(close), [])
+        self.assertIn("`B-0006`", " ".join(vieux(close.replace("ref : J-2026-01-01-A", "ref : B-0006"))))
+        self.assertIn("`B-0005`", " ".join(vieux(avant + "\nLe lot B-0005 avance.\n")))
+
+    def test_lignes_remplacees(self):
+        self.assertEqual(hooks.lignes_remplacees("a\nb\nc\n", "a\nx\nc\nd\n"), {2: "b", 4: ""})
+        self.assertEqual(hooks.lignes_remplacees("a\nb\nc\n", "a\nx\ny\n"), {2: "b\nc", 3: "b\nc"})
+        self.assertEqual(hooks.lignes_remplacees("a\n", "a\n"), {})
+
     def test_lignes_ajoutees(self):
         self.assertEqual(hooks.lignes_ajoutees("a\nb\nc\n", "a\nb\nc\nd\n"), {4})
         self.assertEqual(hooks.lignes_ajoutees("a\nb\nc\n", "x\nb\ny\n"), {1, 3})
