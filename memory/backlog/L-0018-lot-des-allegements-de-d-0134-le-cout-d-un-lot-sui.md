@@ -32,3 +32,9 @@ T-0098 (B-0286) ; pour la 5, T-0037 puis T-0099 (B-0291). Le 19 novembre,
 T-0102 s'y ajoute à la demande de Théo (J-2026-11-19-A). Neuf tâches,
 dont six ne changent que des skills : le circuit court
 qu'il porte s'y applique à mesure qu'il le livre.
+
+## Revues
+
+### Passe 1 — 2026-11-19
+
+Commits : 13524e2..f2dc001
