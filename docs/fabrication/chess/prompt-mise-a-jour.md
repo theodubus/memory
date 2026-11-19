@@ -76,6 +76,8 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 26. Le skill socle-review dit de commiter la passe que python3 .socle/socle review écrit dans la section « Revues » du lot, avec ce que tu y consignes : non commitée, elle se perd là où la commande a tourné. Et quand le contrôle memoire.backlog refuse la clôture « fait » d'un lot relu, son refus montre sous la raison ce que montre le refus d'une passe : l'historique du lot, les entrées ouvertes et closes depuis sa première passe, les lots clos qui ont touché les mêmes fichiers et les trois questions du recul ; la fin de tour n'en garde que la raison, python3 .socle/socle check --stage agent donne le reste. Le skill socle-review, une copie protégée, change : il est dans la demande de l'installeur.
 
+27. Le hook de l'agent juge la commande que lancent uv run et poetry run comme sans eux, leurs options sautées avant run comme après : uv run rm -rf .., poetry run git push --force origin main et un uv run python -c qui écrit un fichier protégé sont refusés, et uv run pytest, uv run -m pytest ou poetry run pytest passent. La commande que lance uv run --directory ou poetry -C se lit dans ton dossier courant, non dans celui qu'ils nomment : une forme connue que le hook ne juge pas, que le guide inscrit.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.

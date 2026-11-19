@@ -7,6 +7,22 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-19-l — Le hook de l'agent juge la commande que lancent `uv run` et `poetry run`
+
+Le hook de l'agent retire `uv run` et `poetry run`, avec leurs options
+avant `run` comme après (`uv run --with x -p 3.12 --`, `poetry -C . run
+-n`), comme il retire `env` ou `sudo`, et juge la commande qu'ils
+lancent comme sans eux : `uv run rm -rf ..`, `poetry run git push
+--force origin main` et un `uv run python -c` qui écrit un fichier
+protégé sont refusés comme sans ce préfixe. Ils passaient : le hook lisait
+le programme `uv` ou `poetry`. Les commandes ordinaires qu'ils lancent
+(`uv run pytest`, `uv run -m pytest`, `poetry run pytest`) passent
+toujours. Le guide inscrit une forme connue que le hook ne juge pas : la
+commande que lance `uv run --directory` ou `poetry -C` se lit dans le
+dossier courant, non dans celui qu'ils nomment.
+
+À faire : rien.
+
 ## 2026-11-19-k — La passe de revue se commite, et le refus de la clôture d'un lot relu montre l'historique, ce que git donne et les trois questions
 
 Le skill `socle-review` dit de commiter la passe que `socle review` écrit

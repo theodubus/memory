@@ -785,6 +785,29 @@ class TestGarde(unittest.TestCase):
                 with self.subTest(cmd):
                     self.assertIsNone(hooks.refus_bash(self.projet, cmd))
 
+    def test_uv_run_et_poetry_run_se_retirent_comme_des_prefixes(self):
+        """B-0248 : `uv run` et `poetry run` n'étaient pas des préfixes ; un
+        push forcé ou la suppression du projet passaient derrière eux, et
+        `uv run python -c` échappait au jugement de `python -c`. Ils se
+        retirent avec leurs options, avant `run` comme après, comme `python
+        -m` laisse son module."""
+        with self.environnement():
+            self.jugees([("uv run rm -rf ..", "supprime"), ("poetry run rm -rf ..", "supprime"),
+                         ("uv run --with requests -p 3.12 -- rm -rf ..", "supprime"),
+                         ("uv --directory . run --frozen rm -rf ..", "supprime"),
+                         ("poetry -C . run -n rm -rf ..", "supprime"),
+                         ("uv run python -c \"open('.socle/policy.toml','w').write('x')\"", "protege"),
+                         ("poetry run python3 -I -c \"import shutil; shutil.rmtree('.socle')\"", "protege"),
+                         ("uv run pytest", None), ("uv run --frozen pytest -q tests/", None),
+                         ("poetry run pytest -x", None), ("uv run -m pytest", None),
+                         ("uv run python -m unittest tests.test_calc", None), ("uv sync --frozen", None),
+                         ("uv run python -c \"print(open('calc.py').read())\"", None)])
+            for cmd in (f"poetry run {G} {P} --force origin main", f"uv run {G} {P} --force origin main",
+                        f"uv run --python=3.12 {G} {P} -f origin travail", f"poetry run -- {G} {P} origin main"):
+                with self.subTest(cmd):
+                    self.assertIn("politique, point 4", hooks.refus_bash(self.projet, cmd) or "")
+                    self.assertEqual(self.decide(*B(cmd)), "refus")
+
     def test_un_find_sous_un_dossier_du_projet_ne_vise_pas_les_reglages(self):
         """La revue du lot 3, bloquant 1 (J-2026-11-14-AH) : un `find` sans
         filtre de nom sous un dossier du projet était refusé au motif des
@@ -1737,6 +1760,19 @@ class TestDecoupage(unittest.TestCase):
     def test_prefixes_et_bash_c(self):
         self.assertEqual([c.argv for c in commandes.analyser("x=1 sudo -u root env A=b rm f")], [["rm", "f"]])
         self.assertIn(["rm", "-rf", "/"], [c.argv for c in commandes.analyser("bash -c 'rm -rf /'")])
+
+    def test_uv_run_et_poetry_run_avec_leurs_options(self):
+        """B-0248 : la commande que lancent `uv run` et `poetry run`, leurs
+        options sautées, et la valeur de celles qui en prennent une."""
+        for texte, argv in (("uv run --with requests -p 3.12 python -c x", ["python", "-c", "x"]),
+                            ("uv --directory sub run --frozen -w x pytest", ["pytest"]),
+                            ("uv run --python=3.12 -- rm f", ["rm", "f"]), ("uv run -m pytest -q", ["pytest", "-q"]),
+                            ("poetry -C sub run -n pytest -x", ["pytest", "-x"]),
+                            ("x=1 /usr/bin/uv run env A=b rm f", ["rm", "f"]),
+                            ("uv pip install x", ["uv", "pip", "install", "x"]), ("uv run", ["uv", "run"]),
+                            ("uv run --", ["uv", "run", "--"]), ("poetry install", ["poetry", "install"])):
+            with self.subTest(texte):
+                self.assertEqual([c.argv for c in commandes.analyser(texte)], [argv])
 
     def test_options_drapeaux_et_sous_commande_git(self):
         options, args = commandes.options_et_arguments(["-fu", "origin", "--", "-x"])

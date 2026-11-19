@@ -2789,6 +2789,12 @@ MESSAGES: dict[str, str] = {
         "`git clean` or `find`: the destination of an `rsync --delete`, the sources of an `rsync "
         "--remove-source-files`, the agent's worktree removed by `git worktree remove`, a `python3 -c` that passes "
         "its path written out in full to `shutil.rmtree`, a `find -exec` of one of them",
+    "dossier qui contient le projet supprimé par une commande que lancent `uv run` ou `poetry run`, leurs options "
+    "avant `run` comme après":
+        "directory that contains the project deleted by a command that `uv run` or `poetry run` launch, their "
+        "options before `run` as after it",
+    "push forcé ou vers la branche par défaut lancé par `uv run` ou `poetry run`":
+        "force push or push to the default branch launched by `uv run` or `poetry run`",
     "dossier qui contient le projet supprimé, ou push forcé, dans le corps d'une fonction `function nom { …; }` "
     "écrite sans parenthèses, son corps sur la même ligne ou la suivante":
         "directory that contains the project deleted, or force push, in the body of a function `function name { …; }` "
@@ -2972,6 +2978,9 @@ MESSAGES: dict[str, str] = {
         "deleting a directory next to the project, a directory of the project, a `find` without a filter under a "
         "directory of the project and a `find` that filters what it deletes under the root pass the agent's hook "
         "(B-0208)",
+    "les commandes ordinaires que lancent `uv run` et `poetry run`, et `uv sync`, passent le hook de l'agent "
+    "(B-0248)":
+        "the ordinary commands that `uv run` and `poetry run` launch, and `uv sync`, pass the agent's hook (B-0248)",
     "l'orchestrateur, à la racine, retire le worktree d'un sous-agent par la fin de son chemin, et un sous-agent "
     "retire ou déplace un worktree voisin du sien, sans refus du hook de l'agent (B-0228)":
         "the orchestrator, at the root, removes a subagent's worktree by the end of its path, and a subagent removes "

@@ -410,6 +410,8 @@ misreads in it, and the release note that enters it.
   out in full is judged (2026-11-16-a).
 - `coproc`: neither a reserved word nor a prefix for the hook
   (2026-11-16-a).
+- `uv run --directory` and `poetry -C`: the command they launch is read
+  in the current directory, not in the one they name (2026-11-19-l).
 
 The hook does not model all of bash: a write to a protected file in a
 form one writes only to get around it (an `eval`, `IFS`, a path built on

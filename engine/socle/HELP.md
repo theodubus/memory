@@ -415,6 +415,8 @@ dit ce que le hook y lit mal, et la note de version qui l'inscrit.
 - Un chemin qu'un script `python3 -c` construit au vol : seul se juge un
   chemin écrit en toutes lettres (2026-11-16-a).
 - `coproc` : ni mot réservé ni préfixe pour le hook (2026-11-16-a).
+- `uv run --directory` et `poetry -C` : la commande qu'ils lancent se lit
+  dans le dossier courant, non dans celui qu'ils nomment (2026-11-19-l).
 
 Le hook ne modélise pas tout bash : une écriture d'un fichier protégé
 sous une forme qu'on n'écrit que pour contourner (un `eval`, `IFS`, un

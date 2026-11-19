@@ -1840,6 +1840,24 @@ def _cas() -> list[Cas]:
             f"python3 -I -c \"import shutil; shutil.rmtree('{c}')\"",
             "find .. -maxdepth 0 -exec git worktree remove {} \\;")])
 
+    @defaut("suppression-par-un-lanceur", "dossier qui contient le projet supprimé par une commande que lancent "
+            "`uv run` ou `poetry run`, leurs options avant `run` comme après", "agent", "suppression du projet")
+    def _(a, c):
+        # B-0248 : ni `uv run` ni `poetry run` n'étaient des préfixes ; la
+        # commande lancée se lisait comme le programme `uv` ou `poetry`.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "uv run rm -rf ..", "poetry run rm -rf ..", "uv run --with requests -p 3.12 -- rm -rf ..",
+            "uv --directory . run --frozen rm -rf ..", "poetry -C . run -n rm -rf ..",
+            "uv run python -c \"import shutil; shutil.rmtree('..')\"")])
+
+    @defaut("push-par-un-lanceur", "push forcé ou vers la branche par défaut lancé par `uv run` ou `poetry run`",
+            "agent", "politique point 4")
+    def _(a, c):
+        # B-0248 : le push se lisait comme le programme `uv` ou `poetry`.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "poetry run git push --force origin main", "uv run git push --force origin travail",
+            "uv run --python=3.12 -- git push origin main")])
+
     @defaut("worktree-par-son-suffixe", "worktree de l'agent retiré ou déplacé depuis lui par `git worktree remove` "
             "ou `move` qui le nomme par la fin de son chemin (`agent-x`, `.claude/worktrees/agent-x`), que git "
             "cherche parmi ses worktrees avant de le lire comme un chemin relatif", "agent", "suppression du projet")
@@ -2526,6 +2544,17 @@ def _temoins() -> list[tuple[str, Callable]]:
                 or etage_outil(a, c, "Bash", {"command": f"rsync -a --delete build/ {ailleurs}/sauve"})
                 or etage_outil(a, c, "Bash", {"command": f"rsync -a --delete ./ {ailleurs}/sauve"})
                 or etage_outil(a, c, "Bash", {"command": "python3 -c \"import shutil; shutil.rmtree('build')\""}))
+
+    @temoin("les commandes ordinaires que lancent `uv run` et `poetry run`, et `uv sync`, passent le hook de "
+            "l'agent (B-0248)")
+    def _(a, c):
+        # Le pendant sain de `suppression-par-un-lanceur` et de
+        # `push-par-un-lanceur` : la commande lancée se juge comme sans eux.
+        return (etage_outil(a, c, "Bash", {"command": "uv run pytest -q && uv run -m pytest && uv sync --frozen"})
+                or etage_outil(a, c, "Bash", {"command": "poetry run pytest -x && poetry -C . run python -m unittest"})
+                or etage_outil(a, c, "Bash", {"command": "uv run --with requests python -c \"print(open('calc.py')"
+                                                         ".read())\""})
+                or etage_outil(a, c, "Bash", {"command": "uv run git push -u origin travail"}))
 
     @temoin("l'orchestrateur, à la racine, retire le worktree d'un sous-agent par la fin de son chemin, et un "
             "sous-agent retire ou déplace un worktree voisin du sien, sans refus du hook de l'agent (B-0228)")

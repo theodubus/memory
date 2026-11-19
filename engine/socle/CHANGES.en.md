@@ -7,6 +7,22 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-19-l — The agent's hook judges the command that `uv run` and `poetry run` launch
+
+The agent's hook removes `uv run` and `poetry run`, with their options
+before `run` as after it (`uv run --with x -p 3.12 --`, `poetry -C . run
+-n`), as it removes `env` or `sudo`, and judges the command they launch
+as without them: `uv run rm -rf ..`, `poetry run git push --force origin
+main` and a `uv run python -c` that writes a protected file are refused
+as without that prefix. They passed: the hook read the program `uv` or
+`poetry`. The ordinary commands they launch (`uv run pytest`, `uv run -m
+pytest`, `poetry run pytest`) still pass. The guide lists a known form
+the hook does not judge: the command that `uv run --directory` or
+`poetry -C` launches is read in the current directory, not in the one
+they name.
+
+To do: nothing.
+
 ## 2026-11-19-k — The review pass is committed, and the refusal of a reviewed batch's closing shows the history, what git gives and the three questions
 
 The `socle-review` skill says to commit the pass that `socle review`
