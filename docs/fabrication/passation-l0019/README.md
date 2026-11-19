@@ -47,7 +47,9 @@ qui l'intègre.
 1. Sur la branche de la session neuve, partie de la branche par défaut :
    `git fetch origin ccr-f176849a-qbyj74`, `git merge --ff-only
    FETCH_HEAD` (à défaut, `git merge --no-edit FETCH_HEAD`), puis
-   `git am -3 docs/fabrication/passation-l0019/*.patch`. Un commit
+   `git am -3 docs/fabrication/passation-l0019/*.patch`. Un conflit sur
+   `memory/active.md`, au correctif 1, se résout par la version de la
+   série (`git checkout --theirs`), puis `git am --continue`. Un commit
    retire ensuite ce dossier et récrit le chantier actif. Rien ne se
    pousse avant la revue : le commit 7 porte la réponse à D-0140.
 2. Théo a validé D-0140 : un sous-agent fait T-0002 puis T-0106, un
