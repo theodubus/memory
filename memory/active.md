@@ -6,7 +6,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 ## En cours
 
 L-0019, en correctifs : `docs/fabrication/passation-l0019/` ;
-T-0002 et T-0106 attendent la réponse de Théo à D-0140.
+D-0140 validée, sa réponse au correctif 7 : avec T-0002 et T-0106.
 
 ## Consignes en cours
 

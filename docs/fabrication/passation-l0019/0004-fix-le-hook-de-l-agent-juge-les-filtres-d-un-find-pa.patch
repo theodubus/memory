@@ -1,7 +1,7 @@
-From 1d762ac3deb5b2f928293d760ad761b98957695f Mon Sep 17 00:00:00 2001
+From d7790d11cde50601c88ecd577fbfce666b5d0a24 Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
 Date: Thu, 19 Nov 2026 20:13:36 +0000
-Subject: [PATCH 4/6] =?UTF-8?q?fix:=20le=20hook=20de=20l'agent=20juge=20le?=
+Subject: [PATCH 4/7] =?UTF-8?q?fix:=20le=20hook=20de=20l'agent=20juge=20le?=
  =?UTF-8?q?s=20filtres=20d'un=20find=20par=20leur=20conjonction,=20et=20le?=
  =?UTF-8?q?=20motif=20d'un=20-path=20sous=20ses=20d=C3=A9parts=20(T-0003,?=
  =?UTF-8?q?=20B-0231,=20J-2026-11-19-AG)?=

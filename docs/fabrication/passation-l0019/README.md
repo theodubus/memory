@@ -1,12 +1,14 @@
 # Passation du lot L-0019
 
-Six commits du 19 novembre, faits dans la session ouverte à 19 h 27 UTC,
-qui suivent 85d31e3, la tête poussée de la branche
+Sept commits du 19 novembre, faits dans la session ouverte à 19 h 27 UTC,
+qui suivent cee8d33, la tête poussée de la branche
 `ccr-f176849a-qbyj74`, où D-0140 est posée. La fenêtre de cinq heures
 est à 68 % : ce qui reste du lot, environ 60 points, ne tient pas avant
-sa remise à zéro (l'entrée de journal du commit 6). La série passe
-`verify --fast`. Rien n'en est poussé : elle n'est pas relue. Ce dossier
-se retire au commit qui l'intègre.
+sa remise à zéro (l'entrée de journal du commit 6). Les six premiers
+passent `verify --fast`. Rien n'en est poussé : la série n'est pas
+relue, et le commit 7 porte la réponse de Théo à D-0140, qui ne part
+qu'avec le changement qu'elle autorise. Ce dossier se retire au commit
+qui l'intègre.
 
 1. T-0001, par le sous-agent du lot : le corps d'un heredoc donné à
    python se juge comme le script d'un `python -c` (le découpage garde
@@ -33,23 +35,30 @@ se retire au commit qui l'intègre.
    troisième case de T-0106 (la substitution d'une commande qui change
    de branche ou de dépôt reste refusée, comme D-0140 le dit à Théo),
    l'état du lot.
+7. La réponse de Théo, mot pour mot : D-0140 `valider`, consignée par
+   `socle answer --relayed` ; les propositions 1 et 2 sur les valeurs
+   attendues des tests retenues en décision de séance ; trois besoins
+   nouveaux (ces deux propositions, et la fausse alerte « hooks git non
+   branchés » d'un `core.hooksPath` absolu) et la tâche du dernier ;
+   l'entrée de journal qui le dit.
 
 ## La suite
 
 1. Sur la branche de la session neuve, partie de la branche par défaut :
    `git fetch origin ccr-f176849a-qbyj74`, `git merge --ff-only
    FETCH_HEAD` (à défaut, `git merge --no-edit FETCH_HEAD`), puis
-   `git am -3 docs/fabrication/passation-l0019/*.patch`. Un conflit sur
-   `memory/active.md` se résout par la version de la série. Un commit
-   retire ensuite ce dossier et récrit le chantier actif.
-2. La réponse de Théo à D-0140, s'il l'a donnée, se consigne mot pour
-   mot (skill `socle-request`), sans se commiter seule.
-3. Sur `valider` : un sous-agent fait T-0002 puis T-0106, un commit
-   chacune, les trois valeurs attendues changées comme D-0140 les dit, la
-   réponse commitée avec elles, et la troisième case de T-0106 tenue ;
-   pour T-0002, `grep -r` (`-R`, `--recursive`) et `git ls-files` comme
-   un `find` sans filtre, `Commande.amont` donnant le producteur. Sur
-   `refuser` : les deux tâches s'abandonnent en citant la réponse.
+   `git am -3 docs/fabrication/passation-l0019/*.patch`. Un commit
+   retire ensuite ce dossier et récrit le chantier actif. Rien ne se
+   pousse avant la revue : le commit 7 porte la réponse à D-0140.
+2. Théo a validé D-0140 : un sous-agent fait T-0002 puis T-0106, un
+   commit chacune, les trois valeurs attendues changées comme D-0140 les
+   dit, et la troisième case de T-0106 tenue ; pour T-0002, `grep -r`
+   (`-R`, `--recursive`) et `git ls-files` comme un `find` sans filtre,
+   `Commande.amont` donnant le producteur.
+3. Ce que Théo a retenu en séance s'applique déjà : une tâche qui
+   contredit la valeur attendue d'un test le nomme, et sa demande précède
+   le lot ; un témoin qui doit passer est sans danger, un trou connu va à
+   une liste de limites qui cite son entrée du backlog.
 4. La revue du lot entier, depuis 852b0ac (skill `socle-review`, dossier
    complet : le lot touche un garde-fou) ; le relecteur éprouve
    notamment l'ADR de la garde d'un `find` et ses bornes, le resserrement
@@ -66,7 +75,7 @@ se retire au commit qui l'intègre.
 
 - `git am` change les SHA de la série ; aucune de ses entrées ne cite un
   SHA de commit, seulement des empreintes de lecture : rien à récrire.
-- La série prend les lettres AD à AI du journal du 19 novembre, les
-  trois décisions qui suivent la dernière de la branche, un besoin
-  nouveau et les notes de version 2026-11-19-p à s ; la session neuve
-  numérote après elles.
+- La série prend les lettres AD à AJ du journal du 19 novembre, les
+  trois décisions qui suivent la dernière de la branche, la demande qui
+  suit D-0140, quatre besoins nouveaux, une tâche nouvelle et les notes
+  de version 2026-11-19-p à s ; la session neuve numérote après elles.

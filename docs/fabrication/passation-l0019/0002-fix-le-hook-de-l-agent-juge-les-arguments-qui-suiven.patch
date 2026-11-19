@@ -1,7 +1,7 @@
-From 63b94f3f2aa1c1075ade022f414f6543f0aa5cbc Mon Sep 17 00:00:00 2001
+From 27f77a944a4e43578f9dab5db88e3de868f8bad1 Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
 Date: Thu, 19 Nov 2026 19:54:39 +0000
-Subject: [PATCH 2/6] fix: le hook de l'agent juge les arguments qui suivent le
+Subject: [PATCH 2/7] fix: le hook de l'agent juge les arguments qui suivent le
  script d'un python -c comme les chemins qu'il cite (T-0070, B-0230,
  J-2026-11-19-AE)
 MIME-Version: 1.0

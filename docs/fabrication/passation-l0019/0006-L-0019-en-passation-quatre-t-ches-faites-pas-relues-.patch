@@ -1,7 +1,7 @@
-From f295ee46e7b4605b34c41f13039e9a0cd5cf761e Mon Sep 17 00:00:00 2001
+From 9c7a65fa78794b30fcc5d973fcade8fd5f8c041c Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
 Date: Thu, 19 Nov 2026 20:45:30 +0000
-Subject: [PATCH 6/6] =?UTF-8?q?L-0019=20en=20passation=20:=20quatre=20t?=
+Subject: [PATCH 6/7] =?UTF-8?q?L-0019=20en=20passation=20:=20quatre=20t?=
  =?UTF-8?q?=C3=A2ches=20faites,=20pas=20relues=20;=20T-0002=20et=20T-0106?=
  =?UTF-8?q?=20attendent=20D-0140,=20et=20T-0106=20garde=20refus=C3=A9e=20l?=
  =?UTF-8?q?a=20substitution=20d'une=20commande=20qui=20change=20de=20branc?=

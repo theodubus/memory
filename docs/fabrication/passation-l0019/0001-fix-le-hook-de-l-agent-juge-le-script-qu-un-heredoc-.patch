@@ -1,7 +1,7 @@
-From 15fb4fe0a90da5424404f38392f23dbd92262809 Mon Sep 17 00:00:00 2001
+From 3f91a5b8a0ed35a98907767b578243705fdae1bd Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
 Date: Thu, 19 Nov 2026 19:51:06 +0000
-Subject: [PATCH 1/6] =?UTF-8?q?fix:=20le=20hook=20de=20l'agent=20juge=20le?=
+Subject: [PATCH 1/7] =?UTF-8?q?fix:=20le=20hook=20de=20l'agent=20juge=20le?=
  =?UTF-8?q?=20script=20qu'un=20heredoc=20donne=20=C3=A0=20python=20comme?=
  =?UTF-8?q?=20celui=20d'un=20python=20-c=20(T-0001,=20B-0229,=20J-2026-11-?=
  =?UTF-8?q?19-AD)?=
@@ -37,13 +37,13 @@ Socle-Hooks-Since-Commit: PreToolUse=135
  engine/socle/hooks.py                         | 46 ++++++++-----
  engine/socle/messages_en.py                   |  8 +++
  engine/socle/selftest.py                      | 21 ++++++
- memory/active.md                              |  2 +-
+ memory/active.md                              |  4 +-
  ...l-agent-ne-juge-pas-le-script-python-qu.md |  4 +-
  ...l-agent-ne-juge-pas-le-script-python-qu.md |  6 +-
  ...e-garde-pour-chaque-commande-le-corps-d.md | 49 ++++++++++++++
  memory/journal/2026-11-8.md                   | 31 +++++++++
  tests/test_garde.py                           | 57 +++++++++++++++++
- 15 files changed, 320 insertions(+), 37 deletions(-)
+ 15 files changed, 321 insertions(+), 38 deletions(-)
  rename memory/backlog/{ => closed}/B-0229-le-hook-de-l-agent-ne-juge-pas-le-script-python-qu.md (90%)
  rename memory/backlog/{ => closed}/T-0001-le-hook-de-l-agent-ne-juge-pas-le-script-python-qu.md (72%)
  create mode 100644 memory/decisions/ADR-0094-le-decoupage-garde-pour-chaque-commande-le-corps-d.md
@@ -510,14 +510,16 @@ index fe96d469..8eaa92cf 100644
              "sous-agent retire ou déplace un worktree voisin du sien, sans refus du hook de l'agent (B-0228)")
      def _(a, c):
 diff --git a/memory/active.md b/memory/active.md
-index 10d4df87..68f4d597 100644
+index e6aca2b9..68f4d597 100644
 --- a/memory/active.md
 +++ b/memory/active.md
-@@ -6,7 +6,7 @@ Réécrit et borné ; ce qui en sort va au journal.
+@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
+ 
  ## En cours
  
- L-0019 en cours (J-2026-11-19-AC) : six tâches du hook à un
--sous-agent, un commit chacune, puis la revue complète.
+-L-0019, en correctifs : `docs/fabrication/passation-l0019/` ;
+-T-0002 et T-0106 attendent la réponse de Théo à D-0140.
++L-0019 en cours (J-2026-11-19-AC) : six tâches du hook à un
 +sous-agent, un commit chacune, puis la revue ; fait : T-0001.
  
  ## Consignes en cours
