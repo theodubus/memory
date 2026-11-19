@@ -12,7 +12,8 @@ identifiers.
 An in-session decision can designate what it approves, a file of the
 repository (`socle decision --about <path>`, its `about` field). When
 the entries a batch serves cite such a decision, `socle review` now
-gives the reviewer the text of that file, after the cited decisions; the
+gives the reviewer the text of that file as it was at the start of the
+batch, and says whether the batch changes it, after the cited decisions; the
 short brief (`--short`) gives it too, after the criteria. Beyond 20,000
 bytes, the brief gives only its path, which the reviewer reads in the
 repository. A private file, or one outside the repository, is not

@@ -34,7 +34,7 @@ tâche.
 
 Sous Claude Code : outil `Agent`, dans une copie isolée du dépôt
 (`isolation: "worktree"`), en arrière-plan ; deux à la fois au plus.
-Il n'a pas la conversation : sa consigne se lit seule.
+Sans la conversation, sa consigne se lit seule.
 
 ```text
 Tu implémentes une tâche de ce dépôt dans ta copie isolée. Les instructions
@@ -51,7 +51,7 @@ Compte rendu : ton modèle, le commit, ce que les tests prouvent, les choix, ce 
 ```
 
 **Une petite tâche**, moins de 150 lignes de code et de tests (seuil
-provisoire, revu sur les coûts mesurés), s'implémente dans la session qui
+provisoire, à mesurer), s'implémente dans la session qui
 orchestre, sauf si elle touche un garde-fou ou un format que d'autres
 parties du projet lisent.
 **Sans sous-agents**, l'agent mène le lot seul : une tâche après
@@ -60,9 +60,9 @@ l'autre, un commit chacune, la revue sur le lot entier.
 ## La revue, avant tout push
 
 Skill `socle-review`, sur le lot commité. Un bloquant retourne à qui a
-implémenté, s'il répond et s'est arrêté depuis moins de cinq minutes,
-sinon à un sous-agent neuf, avec la consigne et le constat ; le reste
-va au backlog. Un lot ne part qu'après la correction de ses bloquants :
+implémenté, s'il répond encore, sinon à un sous-agent neuf, avec la
+consigne et le constat : un sous-agent arrêté depuis plus de cinq
+minutes ne se reprend pas. Le reste va au backlog. Un lot ne part qu'après la correction de ses bloquants :
 une fois poussés, une décision, une entrée de journal et une valeur
 attendue ne se réécrivent plus.
 
@@ -81,9 +81,9 @@ attendue ne se réécrivent plus.
    Claude Code, `send_later`).
 4. Qui fusionne, les instructions du projet le disent : par défaut
    l'humain, et le lot suivant s'ajoute à la même pull request ; l'agent,
-   la sienne, si elles le permettent : CI verte sur le commit de tête,
-   revue faite, aucune demande en attente sur son contenu, en donnant le
-   commit de tête attendu.
+   la sienne, si elles le permettent : CI verte sur le commit de tête
+   attendu, qu'il donne, revue faite, aucune demande en attente sur son
+   contenu.
 5. Le chantier actif et le journal s'écrivent avant la fusion, dans le
    dernier commit de la pull request, avec la clôture du lot : ses tâches
    closes et son recul écrit, il passe `fait`, puis `python3 .socle/socle
@@ -95,11 +95,11 @@ attendue ne se réécrivent plus.
 
 ## La consommation
 
-- Un lot par session : chaque pas de l'orchestration relit toute la
-  conversation, qui doit rester courte.
+- Un lot par session : la conversation qui orchestre, relue à chaque
+  pas, reste courte.
 - Les coûts se mesurent : l'utilisation de chaque fenêtre, avant chaque
   lancement et à chaque compte rendu (en session cloud, `list_events`,
-  `rate_limit_event`, `utilization`). La clôture
+  `rate_limit_event`). La clôture
   note au journal le coût de chaque sous-agent, du relecteur, de chaque
   demande et du rangement : celui d'un lot s'estime sur ces mesures.
 - Un seul sous-agent au-delà de 75 % de la semaine. Un sous-agent se
@@ -109,20 +109,21 @@ attendue ne se réécrivent plus.
   dix points d'une limite : finir le pas en cours, puis changer de session.
 - L'agent ne compacte pas lui-même : il écrit la mémoire (chantier actif,
   journal), puis le demande à l'humain (`/compact`), à la fin d'un lot
-  si l'humain garde la session au-delà, et avant toute attente qui peut
+  si l'humain garde la session, et avant toute attente qui peut
   passer l'heure sans changer de session. Près d'une limite, le seuil
   plus haut prime : changer de session. Après la pause, il est trop
-  tard : tout se relirait au prix fort.
+  tard.
 - Une limite proche change l'ordre des tâches, jamais la profondeur du
-  travail ni le modèle : celui que demande la qualité du travail, jamais
+  travail (une tâche qui demande plus de réflexion se commence quand
+  même) ni le modèle : celui que demande la qualité du travail, jamais
   un moindre pour tenir une limite : une limite retarde un lot, elle ne
   l'allège pas. Entre ceux qui le font aussi bien, celui qui consomme le
   moins de la limite par jeton ; l'humain choisit celui de la session,
   sur le conseil de l'agent. Celui que fixent les instructions du projet
   prime. Un sous-agent reçoit le sien explicitement à son lancement
   (`model`), la dernière version de sa famille (un alias qui en désigne
-  une plus ancienne : sans `model`, il hérite de la session), nommé au
-  récap.
+  une plus ancienne : sans `model`, il hérite de la session ; sinon, le
+  dire à l'humain), nommé au récap.
 
 ## Changer de session
 
@@ -137,8 +138,8 @@ d'abord, pour qu'une session neuve reparte du dépôt seul :
 3. le chantier actif, écrit avant la fusion, dit le lot et ce qui attend ;
 4. en session cloud, les réveils retirés.
 
-Puis dire à l'humain qu'il faut changer de session, et pourquoi, avec le
-prompt de la suivante dans un bloc à copier :
+Puis dire à l'humain pourquoi changer de session, avec le prompt de la
+suivante dans un bloc à copier :
 
 ```text
 Reprends le travail de ce dépôt, en session neuve.

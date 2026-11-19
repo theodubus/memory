@@ -326,9 +326,12 @@ def _executer_etapes_de(projet: config.Projet, prefixe: str, rapide: bool, rappo
 
 def lignes_d_echec(sortie: str) -> list[str]:
     """L'essentiel de la sortie d'une étape en échec (B-0290) : la ligne de
-    chaque test en échec, celles que reconnaît `LIGNE_D_ECHEC`, sans doublon
-    et au plus `MAXIMUM_LIGNES_D_ECHEC`, puis le compte du reste ; à défaut,
-    la dernière ligne utile de la sortie, son bilan le plus souvent."""
+    chaque test en échec, celles que reconnaît `LIGNE_D_ECHEC`, sans doublon,
+    les `MAXIMUM_LIGNES_D_ECHEC` dernières, après le compte de celles d'avant :
+    le bilan d'un outil de test vient en fin de sortie, après le journal
+    capturé de ses tests, dont les lignes `ERROR` prendraient sinon toute la
+    place (pytest) ; à défaut, la dernière ligne utile de la sortie, son
+    bilan le plus souvent."""
     vues: list[str] = []
     for ligne in sortie.splitlines():
         ligne = ligne.strip()
@@ -339,7 +342,7 @@ def lignes_d_echec(sortie: str) -> list[str]:
         return utiles[-1:]
     reste = len(vues) - MAXIMUM_LIGNES_D_ECHEC
     if reste > 0:
-        return vues[:MAXIMUM_LIGNES_D_ECHEC] + [trad("… et {n} autre(s) ligne(s) d'échec", n=reste)]
+        return [trad("… et {n} autre(s) ligne(s) d'échec", n=reste)] + vues[-MAXIMUM_LIGNES_D_ECHEC:]
     return vues
 
 

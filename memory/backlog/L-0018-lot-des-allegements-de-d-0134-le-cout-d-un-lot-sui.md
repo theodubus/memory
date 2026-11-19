@@ -38,3 +38,21 @@ qu'il porte s'y applique à mesure qu'il le livre.
 ### Passe 1 — 2026-11-19
 
 Commits : 13524e2..f2dc001
+
+- Bloquant : avec pytest, le journal capturé des tests prenait le plafond des lignes d'échec avant le bilan
+- Bloquant : le dossier donnait le fichier approuvé tel que le lot l'avait changé, non la version approuvée
+- Bloquant : le gabarit socle-batch resserré avait perdu trois règles
+- Ouvre : B-0294, B-0295, B-0296, B-0297, T-0103
+
+Recul : les trois bloquants n'ont pas de passe précédente à laquelle se
+comparer ; deux viennent du code du sous-agent (une borne prise par le
+début de la sortie, un fichier lu dans l'arbre au lieu du début du lot),
+le troisième du resserrement que l'orchestrateur a fait sous le plafond
+de 8 000 octets, où « sans règle perdue » n'était pas vérifié règle par
+règle. Les entrées ouvertes sont de même nature que celles que le lot
+ferme (la consommation, l'essentiel des échecs, le dossier de la revue) :
+ce sont leurs suites, non des dérives. Les lots clos qui ont touché ces
+fichiers, L-0016 et L-0014 sur `review.py` et les skills, ont ouvert des
+entrées du même genre, des précisions de format. Les corrections tiennent
+en quelques lignes, chacune avec son test : pas de seconde passe ;
+continuer.

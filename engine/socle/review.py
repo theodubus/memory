@@ -259,12 +259,17 @@ def decisions_citees(projet: config.Projet, sujets: list) -> list:
     return res
 
 
-def contenus_approuves(projet: config.Projet, decisions: list, plafond: int = PLAFOND_SUJET) -> list[str]:
+def contenus_approuves(projet: config.Projet, decisions: list, plafond: int = PLAFOND_SUJET,
+                       debut: str | None = None) -> list[str]:
     """Ce qu'approuvent les décisions de séance de `decisions` qui désignent
     un fichier, leur champ `sujet` (B-0286) : sous un titre qui nomme la
-    décision et le chemin, le texte du fichier dans l'arbre de travail, ou
-    son chemin seul au-delà de `plafond` octets, ou s'il n'existe pas. Un
-    fichier privé, ou hors du dépôt, ne se donne pas. Vide sans aucune."""
+    décision et le chemin, le texte du fichier tel qu'il était au début du
+    lot (`debut`), la version que l'humain a approuvée, que le lot peut avoir
+    changée, ce que le dossier dit alors ; dans l'arbre de travail si le lot
+    le crée ou sans `debut`. Son chemin seul au-delà de `plafond` octets, ou
+    s'il n'existe pas. Un fichier privé, ou hors du dépôt, ne se donne pas.
+    Vide sans aucune. Relevé par la revue de L-0018 : lu dans l'arbre, le
+    dossier donnait pour barre la version que le lot avait modifiée."""
     from socle import requests as demandes
 
     voulues = [e.id for e in decisions if e.id.startswith("D-")]
@@ -282,7 +287,12 @@ def contenus_approuves(projet: config.Projet, decisions: list, plafond: int = PL
         if memoire.est_prive(chemin) or not fichier.is_relative_to(racine):
             continue
         lignes += [f"### {ident} — `{chemin}`" + (f" (@{empreinte})" if empreinte else ""), ""]
-        texte = fichier.read_text(encoding="utf-8", errors="replace") if fichier.is_file() else None
+        actuel = fichier.read_text(encoding="utf-8", errors="replace") if fichier.is_file() else None
+        avant = outils.lire_a(projet.racine, debut, chemin) if debut else None
+        texte = avant if avant is not None else actuel
+        if avant is not None and actuel != avant:
+            lignes += [trad("(le lot change `{chemin}` : voici sa version d'avant le lot, celle qu'approuve la "
+                            "décision ; le diff montre le changement)", chemin=chemin), ""]
         if texte is None:
             lignes += [trad("(`{chemin}` : introuvable dans l'arbre de travail)", chemin=chemin), ""]
         elif len(texte.encode("utf-8")) > plafond:
@@ -501,7 +511,7 @@ def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFO
     if court:
         lignes += ["", trad("## Les critères des tâches du lot : ta barre"), ""]
         lignes += _criteres_du_lot(servis) or [trad("(aucune entrée du backlog servie)")]
-        lignes += contenus_approuves(projet, decisions_citees(projet, servis))
+        lignes += contenus_approuves(projet, decisions_citees(projet, servis), debut=debut)
         return "\n".join(lignes).rstrip() + "\n"
     if servis:
         lignes += ["", trad("## Les entrées du backlog que sert le lot : leurs critères sont ta barre"), ""]
@@ -521,7 +531,7 @@ def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFO
         lignes += ["", trad("## Les décisions et les demandes qu'elles citent"), ""]
         for e in decisions:
             lignes += [e.texte.strip(), ""]
-    approuves = contenus_approuves(projet, citees)
+    approuves = contenus_approuves(projet, citees, debut=debut)
     if approuves:
         lignes += [""] + approuves
     return "\n".join(lignes).rstrip() + "\n"

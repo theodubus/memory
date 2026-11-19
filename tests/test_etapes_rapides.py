@@ -606,7 +606,19 @@ class TestEssentielDesEchecs(unittest.TestCase):
         sortie = "".join(f"FAIL: test_{i}\n" for i in range(verification.MAXIMUM_LIGNES_D_ECHEC + 3))
         lignes = verification.lignes_d_echec(sortie)
         self.assertEqual(len(lignes), verification.MAXIMUM_LIGNES_D_ECHEC + 1)
-        self.assertEqual(lignes[-1], "… et 3 autre(s) ligne(s) d'échec")
+        self.assertEqual(lignes[0], "… et 3 autre(s) ligne(s) d'échec")
+        self.assertEqual(lignes[-1], f"FAIL: test_{verification.MAXIMUM_LIGNES_D_ECHEC + 2}")
+
+    def test_le_journal_capture_par_pytest_ne_cache_pas_les_tests_en_echec(self):
+        # Relevé par la revue de L-0018 : pytest imprime le journal capturé de chaque test (`ERROR    app:…`)
+        # avant son bilan ; les premières lignes reconnues ne nommaient alors aucun test en échec.
+        n = verification.MAXIMUM_LIGNES_D_ECHEC + 2
+        journal = "".join(f"------ Captured log call ------\nERROR    app:test_z.py:8 valeur {i} refusée\n"
+                          for i in range(n))
+        bilan = "".join(f"FAILED test_z.py::test_v[{i}] - assert False\n" for i in range(n))
+        lignes = verification.lignes_d_echec(journal + "=== short test summary info ===\n" + bilan
+                                             + f"=== {n} failed in 0.12s ===\n")
+        self.assertEqual(lignes[1:], [f"FAILED test_z.py::test_v[{i}] - assert False" for i in range(2, n)])
 
     def test_premiere_ligne_utile_saute_le_vide_et_le_decor(self):
         from socle.report import ligne_utile, premiere_ligne_utile

@@ -485,6 +485,19 @@ class TestContenusApprouves(_Lot):
             # plus longue que les siennes.
             self.assertIn("````\n" + self.VUE.rstrip("\n") + "\n````", texte, court)
 
+    def test_le_dossier_donne_la_version_approuvee_que_le_lot_change(self):
+        # Relevé par la revue de L-0018 : lu dans l'arbre de travail, le dossier donnait pour barre la version
+        # que le lot avait modifiée, non celle que l'humain avait approuvée.
+        self.lot_qui_sert_la_seance()
+        (self.racine / "docs/vue.md").write_text(self.VUE.replace("Une colonne par lot.", "Changé par le lot."))
+        git(self.racine, "commit", "-qam", "le lot change la vue")
+        for court in (False, True):
+            texte = revue.dossier(self.projet, court=court)
+            approuve = texte[texte.index("## Ce qu'approuvent les décisions de séance"):]
+            self.assertIn("````\n" + self.VUE.rstrip("\n") + "\n````", approuve, court)
+            self.assertIn("(le lot change `docs/vue.md` : voici sa version d'avant le lot", approuve, court)
+            self.assertNotIn("Changé par le lot.", approuve, court)
+
     def test_au_dela_de_la_borne_le_chemin_seul(self):
         self.lot_qui_sert_la_seance("x" * (revue.PLAFOND_SUJET + 1))
         texte = revue.dossier(self.projet)

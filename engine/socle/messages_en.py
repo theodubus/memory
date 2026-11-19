@@ -2397,6 +2397,8 @@ MESSAGES: dict[str, str] = {
         "nothing. Your role is to catch it out: look for what breaks (an edge case, a logic error, a "
         "regression), what no test proves, and what contradicts a criterion. Judge neither the style nor what "
         "the automatic checks already judge: the form of the memory, the links, the presence of tests.",
+    "(le lot change `{chemin}` : voici sa version d'avant le lot, celle qu'approuve la décision ; le diff montre le changement)":
+        "(the batch changes `{chemin}`: here is its version from before the batch, the one the decision approves; the diff shows the change)",
     "(`{chemin}` : introuvable dans l'arbre de travail)":
         "(`{chemin}`: not found in the working tree)",
     "(`{chemin}` : {n} octets, au-delà de la borne du dossier ({borne}) : le lire dans le dépôt)":

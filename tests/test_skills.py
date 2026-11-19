@@ -394,12 +394,12 @@ class TestLaConduiteDUnLot(unittest.TestCase):
         ailleurs garde son sous-agent."""
         self.lire({
             "fr": ["il n'implémente lui-même qu'une petite tâche",
-                   "**Une petite tâche**, moins de 150 lignes de code et de tests (seuil provisoire, revu sur les "
-                   "coûts mesurés), s'implémente dans la session qui orchestre, sauf si elle touche un garde-fou "
+                   "**Une petite tâche**, moins de 150 lignes de code et de tests (seuil provisoire, à mesurer), "
+                   "s'implémente dans la session qui orchestre, sauf si elle touche un garde-fou "
                    "ou un format que d'autres parties du projet lisent."],
             "en": ["it implements itself only a small task",
-                   "**A small task**, under 150 lines of code and tests (a provisional threshold, revised on the "
-                   "measured costs), is implemented in the orchestrating session, unless it touches a guardrail "
+                   "**A small task**, under 150 lines of code and tests (a provisional threshold, to be measured), "
+                   "is implemented in the orchestrating session, unless it touches a guardrail "
                    "or a format that other parts of the project read."],
         })
 
@@ -421,6 +421,18 @@ class TestLaConduiteDUnLot(unittest.TestCase):
                    "A subagent is launched if what remains of each window covers its measured cost and that of "
                    "the tidying up; without a measure, none beyond 85% of the week",
                    "The tidying up starts at the latest ten points from a limit"],
+        })
+
+    def test_resserre_sous_son_plafond_il_garde_ses_regles(self):
+        """Relevé par la revue de L-0018 : le gabarit, resserré sous son
+        plafond, avait perdu trois règles."""
+        self.lire({
+            "fr": ["un sous-agent arrêté depuis plus de cinq minutes ne se reprend pas",
+                   "une tâche qui demande plus de réflexion se commence quand même",
+                   "il hérite de la session ; sinon, le dire à l'humain"],
+            "en": ["a subagent stopped for more than five minutes is not resumed",
+                   "a task that needs more thought is started anyway",
+                   "it inherits the session's; otherwise, tell the human"],
         })
 
     def test_le_cout_d_un_lot_s_estime_a_son_annonce(self):

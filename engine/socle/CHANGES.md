@@ -12,7 +12,8 @@ leurs identifiants.
 Une décision prise en séance peut désigner ce qu'elle approuve, un
 fichier du dépôt (`socle decision --about <chemin>`, son champ `sujet`).
 Quand les entrées que sert un lot citent une telle décision, `socle
-review` donne désormais au relecteur le texte de ce fichier, à la suite
+review` donne désormais au relecteur le texte de ce fichier tel qu'il
+était au début du lot, et dit si le lot le change, à la suite
 des décisions citées ; le dossier court (`--short`) le donne aussi,
 après les critères. Au-delà de 20 000 octets, le dossier ne donne que
 son chemin, que le relecteur lit dans le dépôt. Un fichier privé, ou

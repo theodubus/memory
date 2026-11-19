@@ -33,7 +33,7 @@ small task.
 
 Under Claude Code: the `Agent` tool, in an isolated copy of the repository
 (`isolation: "worktree"`), in the background; two at a time at most.
-It does not have the conversation: its instructions read on their own.
+Without the conversation, its instructions read on their own.
 
 ```text
 You implement a task of this repository in your isolated copy. The
@@ -50,7 +50,7 @@ Report: your model, the commit, what the tests prove, the choices, what remains.
 ```
 
 **A small task**, under 150 lines of code and tests (a provisional
-threshold, revised on the measured costs), is implemented in the
+threshold, to be measured), is implemented in the
 orchestrating session, unless it touches a guardrail or a format that
 other parts of the project read.
 **Without subagents**, the agent runs the batch alone: one task after
@@ -59,9 +59,9 @@ the other, one commit each, the review on the whole batch.
 ## The review, before any push
 
 Skill `socle-review`, on the committed batch. A blocking finding goes back
-to whoever implemented, if it answers and stopped less than five minutes
-ago, otherwise to a new subagent, with the instructions and the finding;
-the rest goes to the backlog. A batch leaves only once its blocking
+to whoever implemented, if it still answers, otherwise to a new subagent,
+with the instructions and the finding: a subagent stopped for more than
+five minutes is not resumed. The rest goes to the backlog. A batch leaves only once its blocking
 findings are fixed: once pushed, a decision, a journal entry and an
 expected value are no longer rewritten.
 
@@ -93,11 +93,10 @@ expected value are no longer rewritten.
 
 ## Consumption
 
-- One batch per session: each step of the orchestration rereads the
-  whole conversation, which must stay short.
+- One batch per session: the orchestrating conversation, reread at each
+  step, stays short.
 - Costs are measured: the use of each window, before each launch and at
-  each report (in a cloud session, `list_events`, `rate_limit_event`,
-  `utilization`). The closure notes in the journal the cost of each
+  each report (in a cloud session, `list_events`, `rate_limit_event`). The closure notes in the journal the cost of each
   subagent, of the reviewer, of each request and of the tidying up: a
   batch's cost is estimated on these measures.
 - Only one subagent beyond 75% of the week. A subagent is launched if
@@ -107,19 +106,20 @@ expected value are no longer rewritten.
   from a limit: finish the step in progress, then change sessions.
 - The agent does not compact by itself: it writes the memory (active
   work, journal), then asks the human to (`/compact`), at the end of a
-  batch if the human keeps the session beyond it, and before any wait
+  batch if the human keeps the session, and before any wait
   that may exceed an hour without changing sessions. Near a limit, the
   threshold above prevails: change sessions. After the pause, it is too
-  late: everything would be reread at full price.
+  late.
 - A nearby limit changes the order of tasks, never the depth of the work
-  nor the model: the one the quality of the work calls for, never a
+  (a task that needs more thought is started anyway) nor the model: the one the quality of the work calls for, never a
   lesser one to stay within a limit: a limit delays a batch, it does not
   lighten it. Among those that do it equally well, the one that uses the
   least of the limit per token; the human chooses the session's, on the
   agent's advice. The one set by the project's instructions prevails. A
   subagent receives its own explicitly at launch (`model`), the latest
   version of its family (an alias that designates an older one: without
-  `model`, it inherits the session's), named in the recap.
+  `model`, it inherits the session's; otherwise, tell the human), named
+  in the recap.
 
 ## Changing sessions
 
@@ -135,8 +135,8 @@ first, so that a new session restarts from the repository alone:
    waiting;
 4. in a cloud session, the wake-ups removed.
 
-Then tell the human that sessions must change, and why, with the prompt
-of the next one in a block to copy:
+Then tell the human why sessions must change, with the prompt of the
+next one in a block to copy:
 
 ```text
 Resume the work of this repository, in a new session.
