@@ -208,8 +208,10 @@ MESSAGES: dict[str, str] = {
     "privée : reformuler sans eux (politique, mémoire privée ; le skill `socle-private-memory`).":
         "private memory leak: {termes}. A public write cites neither a private identifier nor a term of the private "
         "list: rephrase without them (policy, private memory; the skill `socle-private-memory`).",
-    "contrôles de fin de tour (`socle check --stage agent`)":
-        "end-of-turn checks (`socle check --stage agent`)",
+    "contrôles de fin de tour, l'essentiel":
+        "end-of-turn checks, the essentials",
+    "Tout le détail, sortie des outils comprise : {commandes}":
+        "The full detail, tool output included: {commandes}",
     "Les contrôles échouent encore après {essais} tentatives : ARRÊT ET ESCALADE (politique, point 7). Écrire une "
     "demande `D-NNNN` qui résume l'échec, ce qui a été tenté et ce qui est supposé, puis s'arrêter.\n\n{rapport}":
         "The checks still fail after {essais} attempts: STOP AND ESCALATE (policy, rule 7). Write a request `D-NNNN` "
@@ -2365,8 +2367,12 @@ MESSAGES: dict[str, str] = {
         "cloud session, the socle's start-up hook installs it in every new session",
     "l'outil manque à cet environnement : l'installer":
         "the tool is missing from this environment: install it",
-    "`{commande}` a rendu {code}\n        {queue}":
-        "`{commande}` returned {code}\n        {queue}",
+    "`{commande}` a rendu {code}":
+        "`{commande}` returned {code}",
+    "… et {n} autre(s) ligne(s) d'échec":
+        "… and {n} more failure line(s)",
+    "  … et {n} contrôle(s) indisponible(s), que le détail explique : {controles}":
+        "  … and {n} unavailable check(s), which the full detail explains: {controles}",
     "projet d'essai impossible à préparer : {erreur}":
         "test project impossible to prepare: {erreur}",
     "le témoin a planté : {erreur}":

@@ -13,5 +13,5 @@ note de version.
 
 ## Fait quand
 
-- [ ] le refus de la fin de tour sur des tests en échec donne le nom du contrôle, la première ligne utile de chaque test en échec et la commande qui montre tout, sans la sortie entière, et un test le lit
-- [ ] l'escalade et la relance inchangée gardent leur comportement, et les tests existants le montrent
+- [x] le refus de la fin de tour sur des tests en échec donne le nom du contrôle, la première ligne utile de chaque test en échec et la commande qui montre tout, sans la sortie entière, et un test le lit
+- [x] l'escalade et la relance inchangée gardent leur comportement, et les tests existants le montrent

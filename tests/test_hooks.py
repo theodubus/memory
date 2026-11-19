@@ -744,6 +744,39 @@ class TestTraceDesRefusDeFinDeTourEtDeGit(unittest.TestCase):
         self.assertNotIn("decision", relance)
         self.assertIn("sans changement depuis la tentative précédente", relance["systemMessage"])
 
+    def test_le_refus_sur_des_tests_rouges_n_en_donne_que_l_essentiel(self):
+        """B-0290 : le refus recopiait le rapport entier, sortie des tests
+        comprise ; il ne donne plus que le nom du contrôle, la première ligne
+        utile de chaque test en échec et la commande qui montre tout."""
+        import json
+
+        from socle import config
+
+        compteur = self.racine / config.COMPTEUR_STOP
+        self.addCleanup(compteur.unlink, missing_ok=True)
+        compteur.unlink(missing_ok=True)
+        dossier = self.racine / "tests"
+        cree = not dossier.exists()
+        dossier.mkdir(exist_ok=True)
+        if cree:
+            self.addCleanup(shutil.rmtree, dossier, True)
+        init = dossier / "__init__.py"
+        if not init.exists():
+            init.touch()
+            self.addCleanup(init.unlink, missing_ok=True)
+        rouge = dossier / "test_deux_rouges_socle.py"
+        self.addCleanup(rouge.unlink, missing_ok=True)
+        rouge.write_text("import unittest\n\n\nclass T(unittest.TestCase):\n"
+                         "    def test_echoue(self):\n        self.assertEqual(1, 2)\n\n"
+                         "    def test_leve(self):\n        raise ValueError('invalide')\n")
+        raison = json.loads(self.appeler(hooks.stop, self.projet, {"session_id": "e"}))["reason"]
+        self.assertIn("verify.tests", raison)
+        self.assertIn("FAIL: test_echoue (tests.test_deux_rouges_socle.T.test_echoue)", raison)
+        self.assertIn("ERROR: test_leve (tests.test_deux_rouges_socle.T.test_leve)", raison)
+        self.assertIn("`python3 .socle/socle verify --fast`", raison)
+        for absent in ("Traceback", "=====", "AssertionError", "self.assertEqual", "memoire.format"):
+            self.assertNotIn(absent, raison)
+
     def test_une_relance_apres_un_changement_bloque_encore(self):
         from socle import config
 

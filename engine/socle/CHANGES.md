@@ -7,6 +7,26 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-19-c — La fin de tour en échec ne recopie plus la sortie des tests : le nom de chaque contrôle, la ligne de chaque test en échec et la commande qui montre tout
+
+Quand des contrôles échouent en fin de tour, le hook recopiait le
+rapport entier, contrôles qui passent et sortie des outils compris :
+des milliers de jetons, relus à chaque étape suivante de la
+conversation. Il ne donne plus que l'essentiel : chaque contrôle en
+échec ou qui avertit, avec la première ligne utile de chacun de ses
+constats (ni vide ni de décor) ; pour une étape de l'adaptateur, sa
+commande, son code et la ligne de chaque test en échec, celles où un mot
+d'échec (`FAIL`, `FAILED`, `ERROR`, `échec`…) ouvre ou ferme la ligne,
+dix au plus, ou à défaut la dernière ligne utile de la sortie ; les
+contrôles indisponibles, nommés sur une ligne. Il finit par la commande
+qui montre tout : `python3 .socle/socle check --stage agent` pour les
+contrôles du socle, `python3 .socle/socle verify --fast` pour les étapes
+de l'adaptateur. Le blocage, le compteur, l'escalade et la relance sur un
+échec inchangé ne changent pas.
+
+À faire : rien dans le projet ; pour le détail d'un échec, lancer la
+commande que le message donne.
+
 ## 2026-11-19-b — Le skill socle-request : un contenu validé en séance s'écrit d'abord dans le dépôt ; la variante légère des valeurs attendues mécaniques
 
 Un contenu montré dans la conversation que l'humain valide (un format, un

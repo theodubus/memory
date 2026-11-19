@@ -7,6 +7,25 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-19-c — A failing end of turn no longer copies the test output: the name of each check, the line of each failing test and the command that shows everything
+
+When checks failed at the end of a turn, the hook copied the whole
+report, passing checks and tool output included: thousands of tokens,
+reread at every later step of the conversation. It now gives only the
+essentials: each check that fails or warns, with the first useful line
+of each of its findings (neither empty nor decoration); for an adapter
+step, its command, its code and the line of each failing test, those
+where a failure word (`FAIL`, `FAILED`, `ERROR`, `échec`…) opens or
+closes the line, ten at most, or failing that the last useful line of
+the output; the unavailable checks, named on one line. It ends with the
+command that shows everything: `python3 .socle/socle check --stage
+agent` for the socle's checks, `python3 .socle/socle verify --fast` for
+the adapter's steps. The block, the counter, the escalation and the
+rerun on an unchanged failure do not change.
+
+To do: nothing in the project; for the detail of a failure, run the
+command the message gives.
+
 ## 2026-11-19-b — The socle-request skill: content approved in session is first written in the repository; the light variant for mechanical expected values
 
 Content shown in the conversation that the human approves (a format, an

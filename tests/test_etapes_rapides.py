@@ -560,3 +560,88 @@ class TestSansCode(unittest.TestCase):
             self.projet.adaptateur["ci_setup"] = tomllib.loads(texte).get("ci_setup", "")
             self.assertEqual(verification.commandes_ci(self.projet), commandes, nom)
 
+
+
+class TestEssentielDesEchecs(unittest.TestCase):
+    """B-0290 : la fin de tour en échec recopiait le rapport entier, sortie
+    des tests comprise, environ 10 000 jetons que chaque étape suivante de
+    la conversation relisait. Elle ne donne plus que le nom de chaque
+    contrôle en échec, la première ligne utile de chaque test en échec et la
+    commande qui montre tout."""
+
+    UNITTEST = ("======================================================================\n"
+                "FAIL: test_a (tests.test_x.T.test_a)\n"
+                "----------------------------------------------------------------------\n"
+                "Traceback (most recent call last):\n"
+                '  File "tests/test_x.py", line 7, in test_a\n'
+                "    self.fail('raté')\n"
+                "AssertionError: raté\n\n"
+                "======================================================================\n"
+                "ERROR: test_b (tests.test_x.T.test_b)\n"
+                "----------------------------------------------------------------------\n"
+                "Traceback (most recent call last):\n"
+                "ValueError: invalide\n\n"
+                "----------------------------------------------------------------------\n"
+                "Ran 2 tests in 0.001s\n\n"
+                "FAILED (failures=1, errors=1)\n")
+
+    def test_lignes_d_echec_d_une_sortie_unittest(self):
+        self.assertEqual(verification.lignes_d_echec(self.UNITTEST),
+                         ["FAIL: test_a (tests.test_x.T.test_a)", "ERROR: test_b (tests.test_x.T.test_b)",
+                          "FAILED (failures=1, errors=1)"])
+
+    def test_lignes_d_echec_d_autres_outils(self):
+        self.assertEqual(verification.lignes_d_echec(
+            "___ test_c ___\n    assert 1 == 2\nE   assert 1 == 2\nFAILED tests/test_y.py::test_c - assert 1 == 2\n"
+            "==== 1 failed in 0.02s ====\n"), ["FAILED tests/test_y.py::test_c - assert 1 == 2"])
+        self.assertEqual(verification.lignes_d_echec("=== RUN TestD\n--- FAIL: TestD (0.00s)\n    d_test.go:9: x\nFAIL\n"),
+                         ["--- FAIL: TestD (0.00s)", "FAIL"])
+        self.assertEqual(verification.lignes_d_echec("running 1 test\ntest tests::e ... FAILED\n"),
+                         ["test tests::e ... FAILED"])
+        # Aucune ligne d'échec reconnue : la dernière ligne utile, le bilan.
+        self.assertEqual(verification.lignes_d_echec("x ✗\n\n2 passing, 1 pending\n=====\n\n"),
+                         ["2 passing, 1 pending"])
+
+    def test_lignes_d_echec_bornees(self):
+        sortie = "".join(f"FAIL: test_{i}\n" for i in range(verification.MAXIMUM_LIGNES_D_ECHEC + 3))
+        lignes = verification.lignes_d_echec(sortie)
+        self.assertEqual(len(lignes), verification.MAXIMUM_LIGNES_D_ECHEC + 1)
+        self.assertEqual(lignes[-1], "… et 3 autre(s) ligne(s) d'échec")
+
+    def test_premiere_ligne_utile_saute_le_vide_et_le_decor(self):
+        from socle.report import ligne_utile, premiere_ligne_utile
+
+        self.assertFalse(ligne_utile("  ====----**  "))
+        self.assertFalse(ligne_utile(""))
+        self.assertTrue(ligne_utile("Ran 2 tests"))
+        self.assertEqual(premiere_ligne_utile("\n=====\n  le message  \nla suite\n"), "le message")
+
+    def test_le_rapport_essentiel_ne_garde_que_l_essentiel(self):
+        from socle import hooks
+        from socle.report import Constat
+
+        rapport = Rapport()
+        rapport.execute("memoire.format")
+        rapport.erreur("memoire.preuves", "fait sans preuve\nle détail qui suit", "memory/canonical.md", 3)
+        rapport.erreur("verify.tests", "`python3 -m unittest` a rendu 1\n        " + self.UNITTEST,
+                       essentiel=["`python3 -m unittest` a rendu 1", *verification.lignes_d_echec(self.UNITTEST)])
+        rapport.avertir("verify.duree", "trop long")
+        rapport.indisponible("verify.format", "capacité absente : une longue explication")
+        self.assertEqual(Constat("x", "m\nsuite", "a.md", 2).lignes_essentielles(), ["a.md:2 — m"])
+        texte = hooks.essentiel_des_echecs(rapport)
+        for attendu in ("memoire.preuves", "| memory/canonical.md:3 — fait sans preuve", "verify.tests",
+                        "| `python3 -m unittest` a rendu 1", "| FAIL: test_a (tests.test_x.T.test_a)",
+                        "| ERROR: test_b (tests.test_x.T.test_b)", "! trop long",
+                        "ECHEC — 2 contrôle(s) : memoire.preuves, verify.tests",
+                        "… et 1 contrôle(s) indisponible(s), que le détail explique : verify.format",
+                        "`python3 .socle/socle check --stage agent`, `python3 .socle/socle verify --fast`"):
+            self.assertIn(attendu, texte)
+        for absent in ("le détail qui suit", "Traceback", "=====", "AssertionError", "Ran 2 tests", "memoire.format",
+                       "une longue explication"):
+            self.assertNotIn(absent, texte)
+        # Un seul genre d'échec, une seule commande.
+        seul = Rapport()
+        seul.erreur("memoire.preuves", "fait sans preuve")
+        self.assertTrue(hooks.essentiel_des_echecs(seul).endswith(": `python3 .socle/socle check --stage agent`"))
+        # Le rapport entier, lui, garde tout.
+        self.assertIn("Traceback", rapport.texte())
