@@ -364,7 +364,15 @@ project, stay free (the orchestrator, at the root, removes a subagent's
 worktree). A `git push` is judged likewise on its expanded arguments:
 `F=--force; git push $F origin x` is a force push, and an argument it
 cannot expand (a variable it does not know, a substitution, a function's
-arguments) is refused: write the branch out in full.
+arguments) is refused: write the branch out in full. Three substitutions
+are the exception, `$(git branch --show-current)`, `$(git rev-parse
+--abbrev-ref HEAD)` and `$(git symbolic-ref --short HEAD)`, bare, quoted,
+in backticks or through a variable: they stand for the current branch,
+which the push then targets (`git push -u origin "$(git branch
+--show-current)"` passes from a working branch, and is refused from the
+default branch), unless the same command changes directory, repository
+or branch before the push (`cd`, `git -C`, `git checkout`, `git
+switch`).
 
 **What the agent's hook judges.** The agent's hook stops the mistakes of
 a cooperative agent before they take effect. It judges the shell forms an
@@ -432,6 +440,10 @@ misreads in it, and the release note that enters it.
 - The arguments of a `python3 -c` whose script names neither `argv` nor
   `argparse`, `fileinput`, `optparse` or `getopt` (a `runpy`, the `exec`
   of another script): they are not judged (2026-11-19-q).
+- A script, or a program other than git, that changes branch before the
+  push (`./publish.sh && git push origin "$(git branch
+  --show-current)"`): the substitution stands for the branch from before
+  it (2026-11-19-t).
 
 The hook does not model all of bash: a write to a protected file in a
 form one writes only to get around it (an `eval`, `IFS`, a path built on

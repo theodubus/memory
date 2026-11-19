@@ -21,3 +21,7 @@ Le 19 novembre au soir, T-0001, T-0070, T-0004 et T-0003 sont faites,
 pas encore relues ; T-0002 et T-0106 attendent la réponse de Théo à
 D-0140, qui change trois valeurs attendues qu'elles contredisent
 (J-2026-11-19-AI). La série part en passation, pour une session neuve.
+
+D-0140 validée, T-0106 est faite (J-2026-11-19-AM) ; T-0002 est arrêtée
+avant son code : la raison que D-0140 lui autorise ne tient pas dans le
+projet d'essai, une demande nouvelle à poser (J-2026-11-19-AL).

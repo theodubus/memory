@@ -61,12 +61,14 @@ MESSAGES: dict[str, str] = {
     "substitution, les arguments d'une fonction) : il pourrait forcer le push ou viser la branche par défaut, et "
     "rien ne le rattraperait ensuite (politique, point 4). Écrire ses arguments en toutes lettres (la branche "
     "courante : `git branch --show-current`), ou affecter la variable plus tôt dans la même commande "
-    "(`B=travail; git push origin \"$B\"`) (B-0254).":
+    "(`B=travail; git push origin \"$B\"`). `\"$(git branch --show-current)\"` vaut la branche courante si la "
+    "commande ne change ni de dossier ni de branche avant le push (B-0254).":
         "`git push` whose argument `{mot}` the hook cannot expand (a variable it does not know, a substitution, a "
         "function's arguments): it could force the push or target the default branch, and nothing would catch "
         "it afterwards (policy, rule 4). Write its arguments out in full (the current branch: `git branch "
-        "--show-current`), or assign the variable earlier in the same command (`B=work; git push origin \"$B\"`) "
-        "(B-0254).",
+        "--show-current`), or assign the variable earlier in the same command (`B=work; git push origin \"$B\"`). "
+        "`\"$(git branch --show-current)\"` stands for the current branch if the command changes neither "
+        "directory nor branch before the push (B-0254).",
     "push sur la branche par défaut ({protegee})":
         "push to the default branch ({protegee})",
     "action externe ou irréversible ({outil}) : validation humaine requise (politique, point 4), et une demande "
@@ -2828,6 +2830,10 @@ MESSAGES: dict[str, str] = {
     "d'une fonction ou d'une substitution":
         "force push or push to the default branch whose option or branch comes from a variable, a function's "
         "arguments or a substitution",
+    "push vers la branche par défaut par une substitution qui rend la branche courante, lancé depuis elle, ou après "
+    "un changement de branche ou de dossier dans la même commande":
+        "push to the default branch by a substitution that gives the current branch, run from it, or after a change "
+        "of branch or directory in the same command",
     "dossier qui contient le projet supprimé, ou push forcé, dans le corps d'une fonction `function nom { …; }` "
     "écrite sans parenthèses, son corps sur la même ligne ou la suivante":
         "directory that contains the project deleted, or force push, in the body of a function `function name { …; }` "
@@ -3015,6 +3021,10 @@ MESSAGES: dict[str, str] = {
     "et un `git` dont une option globale ne se développe pas, passent le hook de l'agent (B-0254)":
         "a push of the working branch, its branch written out in full or in a variable assigned earlier, and a `git` "
         "whose global option does not expand, pass the agent's hook (B-0254)",
+    "un push de la branche de travail par une substitution qui rend la branche courante, nue, entre guillemets, "
+    "entre accents graves ou par une variable, passe le hook de l'agent (B-0254)":
+        "a push of the working branch by a substitution that gives the current branch, bare, quoted, in backticks "
+        "or through a variable, passes the agent's hook (B-0254)",
     "une substitution entre guillemets qui lance une commande ordinaire, un calcul entre guillemets et un message "
     "de commit par `\"$(cat <<'EOF' … EOF)\"` qui cite une suppression passent le hook de l'agent (B-0260)":
         "a quoted substitution that launches an ordinary command, a quoted computation and a commit message by "

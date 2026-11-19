@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0254 — Le hook de l'agent laisse passer un push forcé dont l'option vient des arguments d'une fonction ou d'une variable
 
-> statut : ouvert · origine : J-2026-11-16-B · priorité : haute · lu : backlog@1e6f341a
+> statut : fait · origine : J-2026-11-16-B · priorité : haute · lu : backlog@1e6f341a · ref : J-2026-11-19-U, J-2026-11-19-AM
 
 La seconde revue du lot L-0004 (J-2026-11-16-B) : `irreversible`
 (`engine/socle/hooks.py`) lit l'argv d'un `git push` tel qu'il est écrit,
@@ -20,4 +20,4 @@ corps pousse.
 
 ## Satisfait quand
 
-- [ ] un push forcé arrête l'agent au hook même quand son option vient d'une variable ou des arguments d'une fonction, et un push ordinaire dont la branche vient d'une variable connue passe
+- [x] un push forcé arrête l'agent au hook même quand son option vient d'une variable ou des arguments d'une fonction, et un push ordinaire dont la branche vient d'une variable connue passe

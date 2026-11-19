@@ -372,7 +372,15 @@ racine, retire le worktree d'un sous-agent). Un `git push` se juge de même
 sur ses arguments développés : `F=--force; git push $F origin x` est un
 push forcé, et un argument qu'il ne sait pas développer (une variable
 qu'il ne connaît pas, une substitution, les arguments d'une fonction) est
-refusé : écrire la branche en toutes lettres.
+refusé : écrire la branche en toutes lettres. Trois substitutions font
+exception, `$(git branch --show-current)`, `$(git rev-parse --abbrev-ref
+HEAD)` et `$(git symbolic-ref --short HEAD)`, nues, entre guillemets,
+entre accents graves ou passées par une variable : elles valent la
+branche courante, que le push vise alors (`git push -u origin "$(git
+branch --show-current)"` passe depuis une branche de travail, et est
+refusé depuis la branche par défaut), sauf si la même commande change de
+dossier, de dépôt ou de branche avant le push (`cd`, `git -C`, `git
+checkout`, `git switch`).
 
 **Ce que juge le hook de l'agent.** Le hook de l'agent arrête les erreurs
 d'un agent coopératif avant qu'elles agissent. Il juge les formes du shell
@@ -440,6 +448,10 @@ dit ce que le hook y lit mal, et la note de version qui l'inscrit.
 - Les arguments d'un `python3 -c` dont le script ne nomme ni `argv`, ni
   `argparse`, `fileinput`, `optparse` ou `getopt` (un `runpy`, l'`exec`
   d'un autre script) : ils ne se jugent pas (2026-11-19-q).
+- Un script, ou un programme autre que git, qui change de branche avant
+  le push (`./publier.sh && git push origin "$(git branch
+  --show-current)"`) : la substitution vaut la branche d'avant lui
+  (2026-11-19-t).
 
 Le hook ne modélise pas tout bash : une écriture d'un fichier protégé
 sous une forme qu'on n'écrit que pour contourner (un `eval`, `IFS`, un

@@ -1443,7 +1443,6 @@ class TestGarde(unittest.TestCase):
                                 (f"for b in main; do {G} {P} origin $b; done", "branche par défaut"),
                                 (f'{G} {P} "$X" origin travail', illisible),
                                 (f'f() {{ {G} {P} "$@"; }}; f --force origin travail', illisible),
-                                (f'{G} {P} origin "$(git branch --show-current)"', illisible),
                                 (f"{G} -C . {P} origin `echo main`", illisible)):
                 with self.subTest(cmd):
                     raison_lue = hooks.refus_bash(self.projet, cmd) or ""
@@ -1452,12 +1451,77 @@ class TestGarde(unittest.TestCase):
                     self.assertEqual(self.decide(*B(cmd)), "refus")
             for cmd in (f"{G} {P} origin travail", f'B=travail; {G} {P} origin "$B"', f"{G} {P} -u origin travail",
                         f'{G} -C "$X" status', f'D=/tmp; {G} -C "$D" {P} origin travail',
-                        f'{G} commit -q -m "$X"', f"R=origin; {G} {P} $R travail"):
+                        f'{G} commit -q -m "$X"', f"R=origin; {G} {P} $R travail",
+                        f'{G} {P} origin "$(git branch --show-current)"'):
                 with self.subTest(cmd):
                     self.assertIsNone(hooks.refus_bash(self.projet, cmd))
         self.assertEqual(hooks.push_illisible(self.racine, commandes.analyser(f'{G} -C "$X" {P} "$Y" b')[0], {}),
                          "$Y")
         self.assertIsNone(hooks.push_illisible(self.racine, commandes.analyser(f'{G} -C "$X" {P} o b')[0], {}))
+
+    def test_la_branche_courante_d_un_push_se_lit_dans_sa_substitution(self):
+        """B-0254, T-0106 : un argument de push qui ne se développe pas était
+        refusé, `"$(git branch --show-current)"` compris, qu'un agent écrit
+        pour pousser sa branche de travail. Les trois substitutions qui
+        rendent la branche courante, nues, entre guillemets, entre accents
+        graves ou par une variable, se développent en elle : le push se juge
+        comme si elle était écrite en toutes lettres. Une autre substitution
+        reste illisible, et celles-ci aussi quand la même commande change de
+        branche, de dossier ou de dépôt avant le push (D-0140, ADR-0097)."""
+        illisible, defaut = "dont le hook ne sait pas développer l'argument", "branche par défaut (main)"
+        lisent = ("git branch --show-current", "git rev-parse --abbrev-ref HEAD", "git symbolic-ref --short HEAD")
+
+        def formes(lit):
+            return (f"{G} {P} -u origin $({lit})", f'{G} {P} -u origin "$({lit})"', f"{G} {P} -u origin `{lit}`",
+                    f'B=$({lit}); {G} {P} -u origin "$B"', f'B="$({lit})" && {G} {P} origin ${{B}}')
+
+        with self.environnement():
+            # Depuis la branche de travail : le push passe.
+            for lit in lisent:
+                for cmd in formes(lit):
+                    with self.subTest(cmd):
+                        self.assertIsNone(hooks.refus_bash(self.projet, cmd))
+                        self.assertEqual(self.decide(*B(cmd)), "passe")
+            for cmd in (f'{G} add -A && {G} commit -qm x && {G} {P} -u origin "$(git branch --show-current)"',
+                        f'cd {self.racine} && {G} -C . {P} origin "$(git branch --show-current)"'):
+                with self.subTest(cmd):
+                    self.assertIsNone(hooks.refus_bash(self.projet, cmd))
+            # Une autre substitution, et ces trois-là quand la commande change
+            # de branche, de dossier ou de dépôt avant le push : illisibles.
+            for cmd in (f'{G} {P} origin "$(echo main)"', f'{G} {P} origin "$(git branch --show-current | head -1)"',
+                        f'{G} checkout main && {G} {P} origin "$(git branch --show-current)"',
+                        f'{G} switch main; {G} {P} -u origin `git rev-parse --abbrev-ref HEAD`',
+                        f'B=$(git branch --show-current); {G} checkout -q main; {G} {P} origin "$B"',
+                        f'{G} branch -m main && {G} {P} origin "$(git symbolic-ref --short HEAD)"',
+                        f'cd /tmp && {G} {P} origin "$(git branch --show-current)"',
+                        f'cd memory && {G} {P} origin "$(git branch --show-current)"',
+                        f'cd /tmp && B=$(git branch --show-current); cd -; {G} {P} origin "$B"',
+                        f'{G} -C /tmp {P} origin "$(git branch --show-current)"',
+                        f'GIT_DIR=/tmp/x {G} {P} origin "$(git branch --show-current)"'):
+                with self.subTest(cmd):
+                    self.assertIn(illisible, hooks.refus_bash(self.projet, cmd) or "")
+                    self.assertEqual(self.decide(*B(cmd)), "refus")
+            # Le push forcé reste forcé.
+            self.assertIn("push forcé", hooks.refus_bash(
+                self.projet, f'{G} {P} --force origin "$(git branch --show-current)"') or "")
+        simples = commandes.analyser(f'{G} commit -qm x && {G} {P} origin "$(git branch --show-current)"')
+        self.assertEqual(hooks.branche_substituee(str(self.racine), simples[:-1], simples[-1], {}), "travail")
+        self.assertIsNone(hooks.branche_substituee(str(self.racine), [], commandes.analyser(f"{G} {P} o b")[0], {}))
+        # Depuis la branche par défaut : refusé comme un push vers elle.
+        subprocess.run(["git", "checkout", "-q", "main"], cwd=self.racine, check=True)
+        try:
+            with self.environnement():
+                for lit in lisent:
+                    for cmd in formes(lit):
+                        with self.subTest(cmd, branche="main"):
+                            self.assertIn(defaut, hooks.refus_bash(self.projet, cmd) or "")
+                            self.assertEqual(self.decide(*B(cmd)), "refus")
+            self.assertEqual(hooks.branche_substituee(str(self.racine), simples[:-1], simples[-1], {}), "main")
+            # HEAD détaché : la substitution ne se lit pas.
+            subprocess.run(["git", "checkout", "-q", "--detach"], cwd=self.racine, check=True)
+            self.assertIsNone(hooks.branche_substituee(str(self.racine), simples[:-1], simples[-1], {}))
+        finally:
+            subprocess.run(["git", "checkout", "-q", "travail"], cwd=self.racine, check=True)
 
     def test_une_option_globale_entre_guillemets_ne_cache_pas_le_push(self):
         """Passe 1 de la revue de L-0005 : l'argv développé d'un `git` se

@@ -7,6 +7,21 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-19-t — The agent's hook reads the current branch in `git push origin "$(git branch --show-current)"`
+
+The agent's hook expands three substitutions of a `git push` into the
+current branch, `$(git branch --show-current)`, `$(git rev-parse
+--abbrev-ref HEAD)` and `$(git symbolic-ref --short HEAD)`, bare, quoted,
+in backticks or through a variable (`B=$(git branch --show-current); git
+push -u origin "$B"`), and judges the push as if the branch were written
+out in full: it passes from a working branch, and it is refused from the
+default branch. They were refused, like any argument it cannot expand.
+When the same command changes directory, repository or branch before the
+push (`cd` elsewhere, `git -C`, `git checkout`, `git switch`), or for any
+other substitution (`$(echo main)`), the push stays refused.
+
+To do: nothing.
+
 ## 2026-11-19-s — The agent's hook judges the filters of a `find` by their conjunction, and its `-path` under its starting points
 
 The agent's hook judges the expression of a `find` that deletes or

@@ -1869,6 +1869,77 @@ def _branches_protegees(racine: Path) -> set[str]:
     return {"main", "master", defaut.split("/", 1)[-1]} - {""}
 
 
+# Les trois commandes qui écrivent la branche courante, et leurs
+# substitutions, `$(…)` ou entre accents graves, que le hook développe en
+# elle dans un `git push` (B-0254, ADR-0097).
+LIT_LA_BRANCHE = (r"git\s+(?:branch\s+--show-current|rev-parse\s+--abbrev-ref\s+HEAD"
+                  r"|symbolic-ref\s+--short\s+HEAD)")
+BRANCHE_COURANTE = re.compile(rf"\$\(\s*{LIT_LA_BRANCHE}\s*\)|`\s*{LIT_LA_BRANCHE}\s*`")
+# Un nom de branche que le shell écrit tel quel, sans rien y développer.
+NOM_DE_BRANCHE = re.compile(r"[\w./+@-]+")
+# Les variables qui désignent à git un autre dépôt que celui du dossier.
+GIT_AUTRE_DEPOT = re.compile(r"GIT_(?:DIR|WORK_TREE|COMMON_DIR)(?:=|$)")
+
+
+def _change_de_branche(c: commandes.Commande) -> bool:
+    """La commande peut-elle changer la branche courante : `git checkout`,
+    `git switch`, `git rebase` (qui part de la branche qu'il nomme), `git
+    bisect`, `git branch -m`, `git symbolic-ref` qui écrit, une
+    sous-commande de git illisible, `gh pr checkout` (ADR-0097)."""
+    if c.programme == "gh":
+        return c.argv[1:3] == ["pr", "checkout"]
+    if c.programme != "git":
+        return False
+    sous, reste = commandes.git_sous_commande(c.argv)
+    options, args = commandes.options_et_arguments(reste)
+    if sous in ("checkout", "switch", "rebase", "bisect") or not re.fullmatch(r"[\w-]+", sous):
+        return True
+    if sous == "branch":
+        return commandes.drapeau(options, "m", ("--move",)) or commandes.drapeau(options, "M")
+    return sous == "symbolic-ref" and (len(args) > 1 or commandes.drapeau(options, "d", ("--delete",)))
+
+
+def branche_substituee(depart: str, avant: list[commandes.Commande], c: commandes.Commande,
+                       environnement: dict) -> str | None:
+    """La branche courante, en quoi se développent les substitutions qui la
+    rendent (`BRANCHE_COURANTE`) dans le `git push` `c`, ou dans les
+    variables qu'il lit : lue dans `depart`, le dossier où part la commande,
+    comme le shell la lirait. `None` sans telle substitution, ou quand elle
+    ne se lit pas sûrement : le push, ou une commande d'`avant` lui (celles
+    qui le précèdent dans le même texte), part d'un autre dossier ou en
+    change ; le push vise un autre dépôt (`-C` ailleurs, `--git-dir`,
+    `--work-tree`, `GIT_DIR`) ; une commande d'avant lui change de branche
+    (`_change_de_branche`) ; HEAD est détaché ; ou le nom de la branche
+    porte un caractère que le shell lirait (B-0254, ADR-0097)."""
+    if c.programme != "git" or commandes.git_sous_commande(c.argv)[0] != "push" or not any(
+            BRANCHE_COURANTE.search(x or "") for x in c.argv + [v for _, v in c.affectations]):
+        return None
+    base, i = _git_global(c.argv)
+    if any(x.startswith(("--git-dir", "--work-tree")) for x in c.argv[1:i]) \
+            or any(GIT_AUTRE_DEPOT.match(x) for x in c.prefixe + [n for n, _ in c.affectations] + list(environnement)):
+        return None
+    ici = posixpath.normpath(depart)
+
+    def dossier(x: commandes.Commande, *sous: str) -> str:
+        return posixpath.normpath(posixpath.join(depart, x.dossier, *sous))
+
+    if dossier(c, base) != ici or any(dossier(x) != ici or _change_de_branche(x) for x in avant):
+        return None
+    branche = outils.git(Path(depart), "rev-parse", "--abbrev-ref", "HEAD", check=False).strip()
+    return branche if branche != "HEAD" and NOM_DE_BRANCHE.fullmatch(branche) else None
+
+
+def _avec_la_branche(c: commandes.Commande, branche: str | None) -> commandes.Commande:
+    """La commande, ses substitutions de la branche courante remplacées par
+    `branche`, dans ses arguments et dans les variables qu'elle lit ; elle-
+    même sans `branche` (B-0254)."""
+    if branche is None:
+        return c
+    return dataclasses.replace(c, argv=[BRANCHE_COURANTE.sub(branche, x) for x in c.argv], connues=None,
+                               affectations=[(n, v if v is None else BRANCHE_COURANTE.sub(branche, v))
+                                             for n, v in c.affectations])
+
+
 def _argvs_developpes(c: commandes.Commande, environnement: dict | None, racine: Path) -> list[list[str]]:
     """L'argv de `c` tel que le shell le développerait avec les variables
     connues (`environnement`, celles du shell de l'agent ; à défaut, celles
@@ -1894,15 +1965,18 @@ def _argvs_developpes(c: commandes.Commande, environnement: dict | None, racine:
     return [coupe] if coupe == entier else [coupe, entier]
 
 
-def push_illisible(racine: Path, c: commandes.Commande, environnement: dict | None = None) -> str | None:
+def push_illisible(racine: Path, c: commandes.Commande, environnement: dict | None = None,
+                   branche: str | None = None) -> str | None:
     """L'argument d'un `git push`, tel qu'écrit, que le hook ne sait pas
     développer (une variable inconnue, une substitution, `"$@"` dans le
     corps d'une fonction) : forcé ou vers la branche par défaut, rien ne le
     rattraperait ; refusé comme ADR-0072 refuse un chemin inconnu (B-0254).
     `None` sinon. Une option globale de git (`-C "$D"`) ne change pas ce que
-    le push envoie."""
+    le push envoie. Avec `branche` (`branche_substituee`), les substitutions
+    qui rendent la branche courante se développent en elle (ADR-0097)."""
     if c.programme != "git":
         return None
+    c = _avec_la_branche(c, branche)
     if environnement is None:
         environnement = commandes.environnement_du_shell(os.environ, str(racine))
     if not any(sous == "push" and any(commandes.INCONNU in x for x in reste)
@@ -1947,16 +2021,18 @@ def _git_irreversible(racine: Path, argv: list[str]) -> str | None:
     return None
 
 
-def irreversible(racine: Path, c: commandes.Commande, environnement: dict | None = None) -> str | None:
+def irreversible(racine: Path, c: commandes.Commande, environnement: dict | None = None,
+                 branche: str | None = None) -> str | None:
     """L'action irréversible ou externe qu'une commande simple lance
     (politique, point 4), dite en clair ; `None` sinon. Un `git` se juge sur
     son argv développé avec les variables connues (`environnement`, celles
     du shell de l'agent) : `F=--force; git push $F …` est un push forcé
-    (B-0254), sous ses deux formes."""
+    (B-0254), sous ses deux formes ; avec `branche` (`branche_substituee`),
+    `$(git branch --show-current)` y vaut la branche courante (ADR-0097)."""
     nom, argv = c.programme, c.argv
     if nom == "git":
-        return next(filter(None, (_git_irreversible(racine, a) for a in _argvs_developpes(c, environnement, racine))),
-                    None)
+        argvs = _argvs_developpes(_avec_la_branche(c, branche), environnement, racine)
+        return next(filter(None, (_git_irreversible(racine, a) for a in argvs)), None)
     if nom in ("npm", "cargo", "poetry", "uv", "pnpm", "yarn") and "publish" in argv[1:3]:
         return f"{nom} publish"
     if (nom, argv[1:2]) in (("twine", ["upload"]), ("gem", ["push"])):
@@ -2206,17 +2282,21 @@ def refus_bash(projet: config.Projet, cmd: str, cwd: str | None = None) -> str |
         raise
     en_plus = projet.pol("irreversible", "bash", defaut=IRREVERSIBLES_BASH) or []
     environnement = commandes.environnement_du_shell(os.environ, depart_de(racine, cwd))
-    for c in simples:
-        action = irreversible(racine, c, environnement) or next(
+    for k, c in enumerate(simples):
+        # `$(git branch --show-current)` d'un push : la branche courante,
+        # quand rien ne la change avant lui (B-0254, ADR-0097).
+        branche = branche_substituee(depart_de(racine, cwd), simples[:k], c, environnement)
+        action = irreversible(racine, c, environnement, branche) or next(
             (" ".join(c.argv)[:120] for m in en_plus if re.search(m, " ".join(c.argv))), None)
-        illisible = None if action else push_illisible(racine, c, environnement)
+        illisible = None if action else push_illisible(racine, c, environnement, branche)
         if illisible:
             return trad("`git push` dont le hook ne sait pas développer l'argument `{mot}` (une variable qu'il ne "
                         "connaît pas, une substitution, les arguments d'une fonction) : il pourrait forcer le push ou "
                         "viser la branche par défaut, et rien ne le rattraperait ensuite (politique, point 4). Écrire "
                         "ses arguments en toutes lettres (la branche courante : `git branch --show-current`), ou "
-                        "affecter la variable plus tôt dans la même commande (`B=travail; git push origin \"$B\"`) "
-                        "(B-0254).", mot=illisible)
+                        "affecter la variable plus tôt dans la même commande (`B=travail; git push origin \"$B\"`). "
+                        "`\"$(git branch --show-current)\"` vaut la branche courante si la commande ne change ni de "
+                        "dossier ni de branche avant le push (B-0254).", mot=illisible)
         if action:
             return trad("commande irréversible ou externe ({action}) : « {commande} » — validation humaine "
                         "requise (politique, point 4), et une demande validée ne la débloque pas : "

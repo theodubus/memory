@@ -7,6 +7,22 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-19-t — Le hook de l'agent lit la branche courante dans `git push origin "$(git branch --show-current)"`
+
+Le hook de l'agent développe en la branche courante trois substitutions
+d'un `git push`, `$(git branch --show-current)`, `$(git rev-parse
+--abbrev-ref HEAD)` et `$(git symbolic-ref --short HEAD)`, nues, entre
+guillemets, entre accents graves ou passées par une variable (`B=$(git
+branch --show-current); git push -u origin "$B"`), et juge le push
+comme si la branche était écrite en toutes lettres : il passe depuis une
+branche de travail, et il est refusé depuis la branche par défaut. Elles
+étaient refusées, comme tout argument qu'il ne sait pas développer.
+Quand la même commande change de dossier, de dépôt ou de branche avant
+le push (`cd` ailleurs, `git -C`, `git checkout`, `git switch`), ou pour
+toute autre substitution (`$(echo main)`), le push reste refusé.
+
+À faire : rien.
+
 ## 2026-11-19-s — Le hook de l'agent juge les filtres d'un `find` par leur conjonction, et le `-path` sous ses départs
 
 Le hook de l'agent juge l'expression d'un `find` qui supprime ou écrit

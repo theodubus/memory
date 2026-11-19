@@ -1728,7 +1728,24 @@ def _cas() -> list[Cas]:
         return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
             "F=--force; git push $F origin travail", "B=main; git push origin \"$B\"",
             "f() { git push \"$@\"; }; f --force origin travail", "git push \"$SOCLE_ESSAI_CIBLE\" origin travail",
-            "git push origin \"$(git branch --show-current)\"")])
+            "git push origin \"$(echo main)\"")])
+
+    @defaut("push-de-la-branche-substituee", "push vers la branche par défaut par une substitution qui rend la "
+            "branche courante, lancé depuis elle, ou après un changement de branche ou de dossier dans la même "
+            "commande", "agent", "politique point 4")
+    def _(a, c):
+        # B-0254, T-0106 : `$(git branch --show-current)` se développe en la
+        # branche courante, que le push vise alors ; elle ne se lit plus quand
+        # la commande change de branche ou de dossier avant lui.
+        refus = tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "git checkout main && git push origin \"$(git branch --show-current)\"",
+            "cd .. && git push -u origin `git rev-parse --abbrev-ref HEAD`",
+            "B=$(git symbolic-ref --short HEAD); git switch -q main; git push origin \"$B\"")])
+        if refus.startswith("passé sans refus"):
+            return refus
+        a.git(c, "switch", "-q", "main")
+        depuis_main = tous_refuses(a, c, [("Bash", {"command": "git push -u origin \"$(git branch --show-current)\""})])
+        return depuis_main if depuis_main.startswith("passé sans refus") else refus + "\n" + depuis_main
 
     @defaut("push-refspec-defaut", "push vers la branche par défaut par une référence complète", "agent",
             "politique point 4")
@@ -2623,6 +2640,18 @@ def _temoins() -> list[tuple[str, Callable]]:
                 or etage_outil(a, c, "Bash", {"command": "B=travail; git push origin \"$B\""})
                 or etage_outil(a, c, "Bash", {"command": "D=.; git -C \"$D\" push origin travail"})
                 or etage_outil(a, c, "Bash", {"command": "git -C \"$SOCLE_ESSAI_CIBLE\" status"}))
+
+    @temoin("un push de la branche de travail par une substitution qui rend la branche courante, nue, entre "
+            "guillemets, entre accents graves ou par une variable, passe le hook de l'agent (B-0254)")
+    def _(a, c):
+        # Le pendant sain de `push-de-la-branche-substituee` : depuis une
+        # branche de travail, la substitution vaut elle.
+        return (etage_outil(a, c, "Bash", {"command": "git push -u origin \"$(git branch --show-current)\""})
+                or etage_outil(a, c, "Bash", {"command": "git push -u origin `git rev-parse --abbrev-ref HEAD`"})
+                or etage_outil(a, c, "Bash", {"command": "B=$(git symbolic-ref --short HEAD); git push -u origin "
+                                                         "\"$B\""})
+                or etage_outil(a, c, "Bash", {"command": "git add -A && git commit -qm x && git push origin "
+                                                         "$(git branch --show-current)"}))
 
     @temoin("une substitution entre guillemets qui lance une commande ordinaire, un calcul entre guillemets et un "
             "message de commit par `\"$(cat <<'EOF' … EOF)\"` qui cite une suppression passent le hook de l'agent "
