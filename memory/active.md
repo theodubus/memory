@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-D-0137 validée, ses copies posées (J-2026-11-19-I). L-0015 en cours ; à sa fin, une
-demande remet la copie de `socle-review`.
+En session neuve : la demande de la copie de `socle-review`, relue à
+froid (J-2026-11-19-O) ; puis le lot suivant.
 
 ## Consignes en cours
 
