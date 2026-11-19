@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0055 — La passe commitée et la clôture outillée : la passe écrite sans commit là où socle review tourne se perd, et la clôture ne montre ni l'historique ni les trois questions
 
-> statut : ouvert · origine : J-2026-11-16-Y · besoin : B-0263 · lu : backlog@074664f1
+> statut : fait · origine : J-2026-11-16-Y · besoin : B-0263 · lu : backlog@074664f1 · ref : J-2026-11-19-M
 
 Relevé par la revue de T-0047, passe 2 du lot L-0013 (J-2026-11-16-Y),
 constats 2 et 5 pour le backlog. `socle review` écrit la passe dans
@@ -17,5 +17,5 @@ clôture montre ce que montre celui d'une passe.
 
 ## Fait quand
 
-- [ ] le gabarit du skill `socle-review` dit de commiter la passe écrite, et le skill `delegate-lot` de produire le dossier sur la branche d'intégration
-- [ ] le refus de la clôture d'un lot sans recul montre l'historique, ce que git donne et les trois questions, et un test le montre
+- [x] le gabarit du skill `socle-review` dit de commiter la passe écrite, et le skill `delegate-lot` de produire le dossier sur la branche d'intégration
+- [x] le refus de la clôture d'un lot sans recul montre l'historique, ce que git donne et les trois questions, et un test le montre

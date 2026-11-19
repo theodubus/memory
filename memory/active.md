@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-En session neuve : la demande des copies protégées de trois skills,
-relue à froid (J-2026-11-19-E) ; puis L-0015.
+En session neuve : la demande de la copie de `socle-review`, relue à
+froid (J-2026-11-19-O) ; puis le lot suivant.
 
 ## Consignes en cours
 

@@ -179,6 +179,40 @@ class TestBarre(_Lot):
             # La règle tient dans la consigne, avant le diff.
             self.assertLess(texte.index(phrases[0]), texte.index(phrases[2]), lg)
 
+    def test_une_case_qui_livre_une_demande_un_releve_ou_une_entree_se_juge_par_ce_qu_elle_produit(self):
+        """ADR-0088, T-0087 : la consigne, du dossier complet comme du
+        dossier court, dit comment juger une telle case, dans les deux
+        langues ; le format de la mémoire dit l'exception."""
+        self.lot()
+        attendus = {
+            "fr": "Une case d'une tâche se vérifie par un test, sauf celle dont le livrable est une demande posée, "
+                  "un relevé écrit (le compte rendu d'une mesure ou d'un essai) ou une entrée de la mémoire "
+                  "récrite : elle se vérifie par ce qu'elle produit, que la case nomme (la demande, et la réponse "
+                  "de l'humain consignée au journal une fois donnée ; le fichier du relevé ; ce qu'en montre "
+                  "`socle show` ou `socle roadmap`). Juge alors que ce produit existe et dit ce que la case "
+                  "promet ; l'absence d'un test n'y est pas un constat.",
+            "en": "A box of a task is checked by a test, except one whose deliverable is a request posed, a report "
+                  "written (the account of a measurement or a trial) or a memory entry rewritten: it is checked by "
+                  "what it produces, which the box names (the request, and the human's answer recorded in the "
+                  "journal once given; the report's file; what `socle show` or `socle roadmap` shows of it). Then "
+                  "judge that this product exists and says what the box promises; the lack of a test is not a "
+                  "finding there.",
+        }
+        for lg, phrase in attendus.items():
+            for court in (False, True):
+                with messages.dans(lg):
+                    texte = revue.dossier(self.projet, court=court)
+                self.assertIn(phrase, texte, (lg, court))
+                # Dans la consigne, avant le diff.
+                self.assertLess(texte.index(phrase), texte.index("+    return x * 2"), (lg, court))
+        from socle.templates import DOSSIER
+        format_ = " ".join((DOSSIER / "../FORMAT.md").read_text(encoding="utf-8").split())
+        self.assertIn("une case dont le livrable est une demande posée, un relevé écrit (le compte rendu d'une "
+                      "mesure ou d'un essai) ou une entrée de la mémoire récrite se vérifie aussi par ce qu'elle "
+                      "produit, que la case nomme : la demande, et la réponse de l'humain consignée au journal ; le "
+                      "fichier du relevé ; ce qu'en montre `socle show` ou `socle roadmap` ; tout autre livrable "
+                      "garde son test", format_)
+
     def test_un_sujet_encore_ouvert_que_le_lot_touche_donne_son_critere_et_son_modele_de_menace(self):
         base = self.racine / "memory/backlog/B-0003-refuser.md"
         base.write_text(self.GARDE.replace("- [x] la redirection", "- [ ] la redirection"), encoding="utf-8")
@@ -369,6 +403,33 @@ class TestBarre(_Lot):
         self.assertIn("## Les décisions et les demandes qu'elles citent\n\n# ADR-0001", texte)
         self.assertEqual(revue.decisions_ecrites(self.projet, "HEAD"), [])
 
+    def test_le_dossier_donne_la_demande_que_cite_une_decision_que_le_lot_ecrit(self):
+        # B-0273 : la spécification validée que citait ADR-0084, écrite par le lot, manquait au relecteur.
+        (self.racine / "memory/requests").mkdir()
+        (self.racine / "memory/requests/D-0002-valider-la-specification.md").write_text(
+            "<!-- socle: couche=demandes zone=publique -->\n# D-0002 — Valider la spécification du doublement\n\n"
+            "> date : 2026-11-12\n\n## Question posée\n\nUne chaîne se double-t-elle ?\n\n"
+            "## Proposition\n\nNon : une chaîne n'est jamais doublée, un nombre l'est.\n", encoding="utf-8")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "la spécification posée")
+        git(self.racine, "push", "-q", "-u", "origin", "travail")
+        self.lot()
+        (self.racine / "memory/decisions/ADR-0002-le-modele-de-menace.md").write_text(
+            "<!-- socle: couche=decisions zone=publique -->\n# ADR-0002 — Appliquer D-0002\n\n"
+            "> statut : acceptée · date : 2026-11-13\n\n## Décision\n\nCe que D-0002 valide, selon ADR-0001.\n",
+            encoding="utf-8")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "la décision du lot")
+        texte = revue.dossier(self.projet)
+        cite = texte[texte.index("## Les décisions et les demandes qu'elles citent"):]
+        # La demande en entier, une fois ; ADR-0001, que citent le sujet et la décision, une fois aussi.
+        self.assertIn("# D-0002 — Valider la spécification du doublement", cite)
+        self.assertIn("Non : une chaîne n'est jamais doublée, un nombre l'est.", cite)
+        self.assertEqual(texte.count("# D-0002 — Valider la spécification du doublement"), 1)
+        self.assertEqual(texte.count("# ADR-0001 — Doubler les entrées"), 1)
+        # La décision que le lot écrit n'est pas redonnée parmi celles qu'elles citent.
+        self.assertNotIn("# ADR-0002", cite)
+
     def test_la_commande_donne_la_seconde_revue(self):
         import argparse
         import contextlib
@@ -516,6 +577,20 @@ class TestContenusApprouves(_Lot):
         decision.write_text(self.SEANCE.replace(" · sujet : docs/vue.md", " · sujet : ../hors.md"))
         self.assertEqual(revue.contenus_approuves(self.projet, [memoire.Memoire.charger(self.racine).entree("D-0001")]),
                          [])
+
+    def test_un_fichier_prive_ne_se_donne_pas_quelle_que_soit_l_ecriture_de_son_chemin(self):
+        # B-0297 : jugé sur le chemin brut du `sujet`, `./memory/private/…` passait pour public.
+        from socle import memory as memoire
+
+        self.lot_qui_sert_la_seance()
+        (self.racine / "memory/private").mkdir(parents=True, exist_ok=True)
+        (self.racine / "memory/private/secret.md").write_text("Le texte privé, approuvé en séance.\n")
+        decision = (self.racine / "memory/requests/D-0001-la-vue-proposee-la-valider.md")
+        for chemin in ("memory/private/secret.md", "./memory/private/secret.md", "docs/../memory/private/secret.md"):
+            decision.write_text(self.SEANCE.replace("sujet : docs/vue.md", f"sujet : {chemin}"))
+            mem = memoire.Memoire.charger(self.racine)
+            self.assertEqual(revue.contenus_approuves(self.projet, [mem.entree("D-0001")]), [], chemin)
+            self.assertNotIn("Le texte privé", revue.dossier(self.projet), chemin)
 
 
 class TestLeGuideNeRenvoiePasALAtelier(unittest.TestCase):

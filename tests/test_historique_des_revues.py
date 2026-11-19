@@ -147,6 +147,39 @@ class TestLaSection(unittest.TestCase):
         self.assertEqual(memoire.decision_du_recul(p.recul), "s-arreter")
         self.assertIsNone(memoire.refus_du_recul(p))
 
+    def test_une_passe_garde_l_empreinte_de_l_arbre_de_travail_qu_elle_a_relu(self):
+        texte = self.LOT.format(recul1=recul("continuer")).replace(
+            "Commits : 5d6e7f8..9a8b7c6", "Commits : 5d6e7f8..5d6e7f8 + arbre de travail 0a1b2c3d4e5f")
+        self.assertEqual([(p.tete, p.arbre) for p in memoire.passes(self.entree(texte))],
+                         [("5d6e7f8", None), ("5d6e7f8", "0a1b2c3d4e5f")])
+        self.assertEqual(memoire.LIGNE_COMMITS.match("Commits: 1a2b3c4..1a2b3c4 + working tree 0a1b2c3d4e5f")["arbre"],
+                         "0a1b2c3d4e5f")
+
+    def test_une_ligne_de_bloquant_ecrite_autrement_se_releve_avec_sa_ligne(self):
+        # T-0054 : `LIGNE_BLOQUANT` ne lit que `- Bloquant : …` ; les autres formes étaient ignorées en silence.
+        mal = ["- **Bloquant** : une cause", "- Bloquant 1 : une cause", "1. Bloquant : une cause",
+               "- Bloquants : deux causes", "- Bloquant :"]
+        bien = ["- Bloquant : une cause", "* bloquant: une cause · même cause", "- Ouvre : rien",
+                "- Bloquante, la passe ? non", "bloquants de la passe, un recul replié"]
+        texte = self.LOT.format(recul1=recul("continuer")) + "\n".join(mal + bien) + "\n"
+        lignes = texte.split("\n")
+        self.assertEqual(memoire.bloquants_mal_ecrits(self.entree(texte)),
+                         [(lignes.index(ligne) + 1, ligne) for ligne in mal])
+        # Hors de la section « Revues », rien ne se relève.
+        self.assertEqual(memoire.bloquants_mal_ecrits(self.entree(texte.replace("## Revues", "## Notes"))), [])
+
+    def test_une_ligne_de_bloquant_sans_puce_se_releve_aussi(self):
+        # Revue de L-0015, bloquant 1 : sans puce, une ligne de bloquant n'était ni lue ni relevée.
+        mal = ["Bloquant : une cause", "**Bloquant** : une cause", "Bloquant 2 — une cause", "-Bloquant : une cause",
+               "• Bloquant : une cause", "- [ ] Bloquant : une cause", "> - Bloquant 1 : une cause",
+               "Blocker: a cause", "Bloquants – deux causes"]
+        bien = ["- Bloquant : une cause", "bloquants de la passe, un recul replié", "Bloquants, corrigés plus haut",
+                "Bloquante, la passe ? non", "- Ouvre : rien"]
+        texte = self.LOT.format(recul1=recul("continuer")) + "\n".join(mal + bien) + "\n"
+        lignes = texte.split("\n")
+        self.assertEqual(memoire.bloquants_mal_ecrits(self.entree(texte)),
+                         [(lignes.index(ligne) + 1, ligne) for ligne in mal])
+
     def test_une_section_qui_n_est_pas_la_derniere_finit_au_titre_suivant(self):
         texte = self.LOT.format(recul1=recul("continuer")) + "\n## Notes\n\n### Passe 9 — hors section\n"
         self.assertEqual([p.numero for p in memoire.passes(self.entree(texte))], [1, 2])
@@ -222,6 +255,33 @@ class TestLaPremierePasse(_Depot):
         self.assertEqual(second, premier)
         self.assertIn("la passe 1 du lot L-0001 : rien n'a changé hors de la mémoire", note)
         self.assertEqual(len(memoire.passes(self.lot())), 1)
+
+    def test_la_meme_passe_se_reconnait_sur_un_arbre_sale(self):
+        # T-0054 : comparée au seul commit de tête, une relance sur un arbre sale inchangé faisait une passe
+        # nouvelle, refusée sans recul, et la ligne `Commits` disait `X..X`.
+        (self.racine / "calc.py").write_text("def double(x):\n    return x * 2\n")
+        tete = git(self.racine, "rev-parse", "--short", "HEAD").strip()
+        premier, note = self.relire()
+        self.assertIn("passe 1 du lot L-0001 écrite", note)
+        self.assertIn("+    return x * 2", premier)
+        self.assertRegex(memoire.section_des_revues(self.lot()),
+                         rf"\nCommits : {tete}\.\.{tete} \+ arbre de travail [0-9a-f]{{12}}$")
+        p, = memoire.passes(self.lot())
+        self.assertEqual((p.debut, p.tete, p.arbre), (tete, tete, revue.empreinte_de_l_arbre(self.projet, tete)))
+        # Relancée sur le même arbre, toujours sale : la même passe, rien d'écrit.
+        second, note = self.relire()
+        self.assertEqual(second, premier)
+        self.assertIn("la passe 1 du lot L-0001 : rien n'a changé hors de la mémoire", note)
+        # Le même état, commité : encore la même passe.
+        git(self.racine, "commit", "-qam", "le lot et sa passe")
+        _, note = self.relire()
+        self.assertIn("la passe 1 du lot L-0001 : rien n'a changé hors de la mémoire", note)
+        self.assertEqual(len(memoire.passes(self.lot())), 1)
+        # Un arbre qui change encore : une autre passe, que l'historique juge.
+        (self.racine / "calc.py").write_text("def double(x):\n    return 2 * x\n")
+        self.assertFalse(revue.meme_passe(self.projet, memoire.passes(self.lot())[-1]))
+        with self.assertRaises(revue.PasseRefusee):
+            self.relire()
 
     def test_un_lot_qui_ne_change_rien_hors_de_la_memoire_n_a_pas_de_passe(self):
         texte, note = self.relire()
@@ -468,6 +528,48 @@ class TestCeQueGitDonne(_Depot):
                       revue.refus_de_la_passe(self.projet, self.lot(), memoire.passes(self.lot()), debut))
 
 
+    def test_le_refus_de_la_cloture_montre_ce_que_montre_celui_d_une_passe(self):
+        # T-0055 : à la clôture, ni le contrôle ni `socle review` ne montraient l'historique, ce que git donne et
+        # les trois questions.
+        self.code("x * 2")
+        self.relire()
+        debut = git(self.racine, "rev-parse", "--short", "origin/main").strip()
+        (self.racine / "memory/backlog/T-0002-une-tache-ouverte.md").write_text(
+            TACHE.replace("T-0001 — Écrire double", "T-0002 — Une tâche ouverte").format(statut="ouvert", ref=""))
+        self.consigner(bloquants("la correction change la lecture des commandes"))
+        p = self.fichier_du_lot
+        p.write_text(p.read_text().replace("> statut : en cours", "> statut : fait").replace(
+            "après : T-0001", "après : T-0001 · ref : J-2026-11-16-A"))
+        r = Rapport()
+        ctx = types.SimpleNamespace(memoire=memoire.Memoire.charger(self.racine), projet=self.projet)
+        controles_memoire.backlog(ctx, r)
+        refus = [c for c in r.erreurs("memoire.backlog") if "sans le recul de sa dernière passe" in c.message]
+        self.assertEqual(len(refus), 1)
+        detail = refus[0].detail
+        # L'historique, ce que git donne depuis le début de la première passe, les trois questions et la consigne.
+        self.assertIn("## L'historique du lot (memory/backlog/L-0001-le-lot-du-doublement.md)\n\n## Revues\n\n"
+                      f"### Passe 1 — {JOUR}\n\nCommits : {debut}..", detail)
+        self.assertIn("- Bloquant : la correction change la lecture des commandes", detail)
+        self.assertIn(f"## Ce que git donne depuis le début du lot ({debut})", detail)
+        self.assertIn("Les entrées que le lot a ouvertes :\n- T-0002 — Une tâche ouverte et son test", detail)
+        self.assertIn("Les entrées qu'il a closes :\n", detail)
+        self.assertIn("Les lots clos qui ont touché les mêmes fichiers :\n", detail)
+        self.assertIn("## Trois questions, de nature et non de nombre\n\n1. " + revue.QUESTIONS_DU_RECUL[0], detail)
+        for question in revue.QUESTIONS_DU_RECUL:
+            self.assertIn(question, detail)
+        self.assertIn("Y répondre dans la passe 1, d'un paragraphe qui commence par « Recul : »", detail)
+        # Le rapport l'imprime sous le refus, en retrait ; son essentiel n'en garde que la raison.
+        self.assertIn("\n        ## Trois questions, de nature et non de nombre\n", r.texte())
+        self.assertNotIn("Trois questions", r.texte(essentiel=True))
+        # Sans le début du lot dans le dépôt, l'historique et les questions, et ce que git ne donne pas.
+        texte = revue.recul_de_la_cloture(self.projet, self.lot(), [memoire.Passe(1, JOUR, "0000000", "1111111")],
+                                          "recul")
+        self.assertIn("(le début du lot, que garde la ligne « Commits » de sa première passe, n'est pas dans ce "
+                      "dépôt", texte)
+        self.assertIn("## L'historique du lot", texte)
+        self.assertIn(revue.QUESTIONS_DU_RECUL[2], texte)
+
+
 class TestLaCloture(unittest.TestCase):
     """D-0124, point 3 : un lot relu ne se clôt « fait » que si sa dernière
     passe a son recul ; un lot sans passe n'en a pas."""
@@ -498,6 +600,21 @@ class TestLaCloture(unittest.TestCase):
         self.assertEqual(self.erreurs(""), [])
         # Ouvert, il n'a pas encore à l'avoir.
         self.assertEqual(self.erreurs(self.PASSES.format(recul1="", recul2=""), statut="en cours"), [])
+
+
+    def test_une_ligne_de_bloquant_mal_ecrite_est_refusee_a_tout_statut(self):
+        # T-0054 : ignorée, elle n'exigeait ni le regard du relecteur ni la règle de la même cause.
+        revues = ("\n## Revues\n\n### Passe 1 — 2026-11-15\n\nCommits : 1a2b3c4..5d6e7f8\n\n{ligne}\n"
+                  "- Bloquant : une cause lue\n\n" + recul("continuer") + "\n")
+        for ligne in ("- **Bloquant** : une cause", "- Bloquant 1 : une cause", "1. Bloquant : une cause"):
+            for statut in ("en cours", "fait"):
+                with self.subTest(ligne=ligne, statut=statut):
+                    self.assertEqual(self.erreurs(revues.format(ligne=ligne), statut), [
+                        f"`L-0001` : « {ligne} », dans sa section « Revues », se donne pour un bloquant sans la "
+                        "forme que lit `socle review`, une ligne `- Bloquant : <sa cause>` par bloquant, ni gras, ni "
+                        "numéro, ni pluriel ; ignorée, elle n'exigerait ni le regard du relecteur ni la règle de la "
+                        "même cause"])
+        self.assertEqual(self.erreurs(revues.format(ligne="- Bloquant : une autre cause")), [])
 
 
 class TestLaClotureSuitLesReglesDeLaPasse(unittest.TestCase):
