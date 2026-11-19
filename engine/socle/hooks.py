@@ -1196,13 +1196,14 @@ def _supprime_par_find(projet: config.Projet, c: commandes.Commande, environneme
     return res
 
 
-def _script_python(c: commandes.Commande) -> tuple[str, str] | None:
+def _script_python(c: commandes.Commande) -> tuple[str, str, list[str]] | None:
     """Le script que python exécute et que le hook lit, avec la forme qui le
-    lui donne : celui d'un `python -c`, derrière les options de python
-    (B-0206), ou le corps du heredoc que lit sur son entrée un python lancé
-    sans `-c`, `-m` ni script, ou avec `-` pour script, tel qu'écrit
-    (B-0229). `None` pour un autre programme ou une autre forme : un script
-    lu d'un fichier, par son chemin ou par `<`, reste hors de portée."""
+    lui donne et les arguments qui le suivent (`sys.argv[1:]`, B-0230) :
+    celui d'un `python -c`, derrière les options de python (B-0206), ou le
+    corps du heredoc que lit sur son entrée un python lancé sans `-c`, `-m`
+    ni script, ou avec `-` pour script, tel qu'écrit (B-0229). `None` pour
+    un autre programme ou une autre forme : un script lu d'un fichier, par
+    son chemin ou par `<`, reste hors de portée."""
     if not re.fullmatch(r"python[\d.]*", c.programme):
         return None
     reste = c.argv[1:]
@@ -1215,7 +1216,7 @@ def _script_python(c: commandes.Commande) -> tuple[str, str] | None:
             colle = opt[k + 1:]
             if lettre == "c":
                 script = colle or (reste[0] if reste else None)
-                return None if script is None else (script, f"{c.programme} -c")
+                return None if script is None else (script, f"{c.programme} -c", reste if colle else reste[1:])
             if lettre == "m":
                 return None
             if lettre in OPTIONS_PYTHON_A_VALEUR:
@@ -1223,7 +1224,7 @@ def _script_python(c: commandes.Commande) -> tuple[str, str] | None:
                 break
     reste = reste[1:] if reste[:1] == ["--"] else reste
     if c.entree is not None and reste[:1] in ([], ["-"]):
-        return c.entree, f"{c.programme} <<"
+        return c.entree, f"{c.programme} <<", reste[1:]
     return None
 
 
@@ -1250,6 +1251,9 @@ def _xargs_ecrit_ce_qu_il_lit(c: commandes.Commande) -> bool:
     return any(SONDE in x for x in ecrits_bruts(dataclasses.replace(c, argv=argv, redirige=[], prefixe=[])))
 
 
+# Ce qui, dans un script de python, lit les arguments qui le suivent
+# (B-0230).
+LIT_SES_ARGUMENTS = re.compile(r"argv|argparse|fileinput|optparse|getopt")
 # Un chemin cité dans un texte que le hook ne sait pas lire : une suite de
 # lettres, de chiffres, de `.`, `/`, `~` et `-`.
 CHEMIN_CITE = re.compile(r"[\w./~-]+")
@@ -1292,13 +1296,22 @@ def _ecrivains_illisibles(projet: config.Projet, c: commandes.Commande, cmd: str
                           cache: dict) -> list[tuple[str, str]]:
     """Les constats des écrivains que le hook ne lit pas comme les autres :
     `python -c` et `xargs` d'un écrivain, par les chemins protégés qu'ils
-    citent (le script ; la commande entière, dont `xargs` lit l'entrée), et
-    `find` qui supprime ou écrit ce qu'il trouve (B-0206) ; le script qu'un
-    heredoc donne à python, comme celui d'un `python -c` (B-0229)."""
+    citent (le script et ses arguments, B-0230 ; la commande entière, dont
+    `xargs` lit l'entrée), et `find` qui supprime ou écrit ce qu'il trouve
+    (B-0206) ; le script qu'un heredoc donne à python, comme celui d'un
+    `python -c` (B-0229)."""
     res: list[tuple[str, str]] = []
     script = _script_python(c)
     if script is not None:
-        res += _cites(projet, c, *script, cache)
+        texte, qui, arguments = script
+        res += _cites(projet, c, texte, qui, cache)
+        # Ses arguments, quand le script les lit (`sys.argv`, `argparse`,
+        # `fileinput`…) : des mots du shell, développés avec les variables
+        # connues (B-0230). Un script qui ne les lit pas ne les touche pas.
+        if arguments and LIT_SES_ARGUMENTS.search(texte):
+            variables = commandes.variables_de(c, environnement) if any(re.search(r"[$`]", a) for a in arguments) \
+                else {}
+            res += _cites(projet, c, "\n".join(commandes.developper(a, variables)[0] for a in arguments), qui, cache)
     if _xargs_ecrit_ce_qu_il_lit(c):
         res += _cites(projet, c, cmd, f"xargs {c.programme}", cache)
     if c.programme == "find":

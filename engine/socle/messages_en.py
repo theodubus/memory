@@ -2807,6 +2807,9 @@ MESSAGES: dict[str, str] = {
     "(`python3 - <<'EOF'`)":
         "protected file written, or directory that contains the project deleted, by the script a heredoc gives to "
         "python (`python3 - <<'EOF'`)",
+    "fichier protégé passé en argument au script d'un `python -c`, ou d'un script qu'un heredoc donne à python":
+        "protected file passed as an argument to the script of a `python -c`, or of a script a heredoc gives to "
+        "python",
     "dossier qui contient le projet supprimé par la commande que lance une substitution entre guillemets, "
     "`\"$(…)\"` ou des accents graves, après un `cd` ou l'appel d'une fonction qui change de dossier":
         "directory that contains the project deleted by the command a quoted substitution launches, `\"$(…)\"` or "
@@ -3015,6 +3018,8 @@ MESSAGES: dict[str, str] = {
     "donné à un autre programme qui cite un fichier protégé, passent le hook de l'agent (B-0229)":
         "the script a heredoc gives to python without citing a protected file or deleting the project, and a heredoc "
         "given to another program that cites a protected file, pass the agent's hook (B-0229)",
+    "un `python -c` dont les arguments ne nomment aucun fichier protégé passe le hook de l'agent (B-0230)":
+        "a `python -c` whose arguments name no protected file passes the agent's hook (B-0230)",
     "l'orchestrateur, à la racine, retire le worktree d'un sous-agent par la fin de son chemin, et un sous-agent "
     "retire ou déplace un worktree voisin du sien, sans refus du hook de l'agent (B-0228)":
         "the orchestrator, at the root, removes a subagent's worktree by the end of its path, and a subagent removes "

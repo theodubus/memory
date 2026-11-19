@@ -824,6 +824,30 @@ class TestGarde(unittest.TestCase):
                 (heredoc("python3 - <<'EOF' < /tmp/x.py", ecrit), None), ("python3 - < /tmp/x.py", None)])
         self.assertIn("cité par `python3 <<`", hooks.refus_bash(self.projet, heredoc("python3 - <<'EOF'", ecrit)) or "")
 
+    def test_les_arguments_du_script_d_un_python_c(self):
+        """B-0230 : un `python -c` ne se jugeait que par les chemins que son
+        script cite ; un fichier protégé passé en argument au script
+        (`sys.argv[1]`) s'écrivait sans refus. Les arguments qui suivent le
+        script, ou le `-` d'un script lu sur l'entrée, se jugent comme les
+        chemins qu'il cite, développés avec les variables connues, quand le
+        script les lit ; un script qui ne les lit pas ne les touche pas."""
+        ouvre = "python3 -c \"import sys; open(sys.argv[1], 'w').write('x')\""
+        with self.environnement():
+            self.jugees([(f"{ouvre} .socle/policy.toml", "protege"), (f"{ouvre} /tmp/x .socle/git-hooks", "protege"),
+                         (f"{ouvre} -- .socle/policy.toml", "protege"),
+                         ("python3 -c \"import argparse; p = argparse.ArgumentParser()\" .socle/policy.toml", "protege"),
+                         ("python3 -c \"import fileinput; [print(x) for x in fileinput.input(inplace=True)]\" "
+                          ".socle/policy.toml", "protege"),
+                         ("python3 -c 'print(1)' .socle/policy.toml", None),
+                         ("python3 -Ic\"import sys; open(sys.argv[1], 'w')\" .socle/policy.toml", "protege"),
+                         (f"cd .socle && {ouvre} policy.toml", "protege"),
+                         (f"F=.socle/policy.toml; {ouvre} \"$F\"", "protege"),
+                         (f"{ouvre} .claude/settings.local.json", "reglage"),
+                         ("python3 - .socle/policy.toml <<'EOF'\nimport sys\nopen(sys.argv[1], 'w')\nEOF", "protege"),
+                         (f"{ouvre} calc.py", None), (f"{ouvre} /tmp/x build/y", None), (f"{ouvre} \"$X\"", None),
+                         ("python3 -c \"import sys; print(sys.argv)\" policy.toml", None),
+                         ("python3 - /tmp/x <<'EOF'\nimport sys\nopen(sys.argv[1], 'w')\nEOF", None)])
+
     def test_uv_run_et_poetry_run_se_retirent_comme_des_prefixes(self):
         """B-0248 : `uv run` et `poetry run` n'étaient pas des préfixes ; un
         push forcé ou la suppression du projet passaient derrière eux, et

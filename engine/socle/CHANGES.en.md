@@ -7,6 +7,24 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-19-q — The agent's hook judges the arguments that follow the script of a `python -c`
+
+The agent's hook judges the arguments that follow the script of a
+`python -c`, and those that follow the `-` of a script python reads on
+its input, as the paths the script cites written out in full: `python3
+-c "import sys; open(sys.argv[1], 'w')" .socle/policy.toml` is refused.
+It passed: only the script was judged, and the path it reads in
+`sys.argv` escaped the hook, down to Claude Code's local settings file,
+which git does not track. An argument is expanded with the command's
+known variables (`F=…; python3 -c "…" "$F"`). A `python -c` whose
+arguments name no protected file passes, as does a script that does not
+read its arguments (neither `argv` nor `argparse`, `fileinput`, `optparse`
+or `getopt`), which does not touch them; the list of known forms the hook
+does not judge enters one that would read them otherwise (`runpy`, the
+`exec` of another script).
+
+To do: nothing.
+
 ## 2026-11-19-p — The agent's hook judges the script a heredoc gives to python
 
 The agent's hook judges the body of a heredoc read on its input by a

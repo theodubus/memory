@@ -349,8 +349,9 @@ hors du projet (`/tmp/…`). Une commande qu'il ne sait pas juger (plus de
 ou accolades ouvertes à la fois, un jugement qui plante ou passe
 5 secondes) est refusée si elle peut écrire : la découper. Le script d'un
 `python3 -c`, et celui qu'un heredoc donne à python (`python3 - <<'EOF'`),
-se jugent par les fichiers protégés qu'ils citent en toutes lettres ; un
-script que python lit d'un fichier ne se juge pas. Il refuse
+se jugent par les fichiers protégés qu'ils citent en toutes lettres ou
+que nomment les arguments qui les suivent, s'ils les lisent (`sys.argv`) ;
+un script que python lit d'un fichier ne se juge pas. Il refuse
 aussi la suppression d'un dossier qui contient le projet (`rm -rf ..`, un
 `mv`, un `git clean` ou un `find` qui supprime depuis un tel dossier, la
 destination d'un `rsync --delete`, les sources d'un `rsync
@@ -437,6 +438,9 @@ dit ce que le hook y lit mal, et la note de version qui l'inscrit.
   corps ne se juge pas (2026-11-19-p).
 - Le corps d'un heredoc donné à un autre interpréteur que python (`bash
   <<'EOF'`, `sh -s <<'EOF'`) : n'est que du texte (2026-11-19-p).
+- Les arguments d'un `python3 -c` dont le script ne nomme ni `argv`, ni
+  `argparse`, `fileinput`, `optparse` ou `getopt` (un `runpy`, l'`exec`
+  d'un autre script) : ils ne se jugent pas (2026-11-19-q).
 
 Le hook ne modélise pas tout bash : une écriture d'un fichier protégé
 sous une forme qu'on n'écrit que pour contourner (un `eval`, `IFS`, un

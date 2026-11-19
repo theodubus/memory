@@ -1870,7 +1870,17 @@ def _cas() -> list[Cas]:
             "python3 - <<'EOF'\nopen('.socle/policy.toml', 'a').write('max_attempts = 99')\nEOF",
             "python3 <<EOF\nimport shutil\nshutil.rmtree('..')\nEOF")])
 
-    @defaut("substitution-entre-guillemets", "dossier qui contient le projet supprimé par la commande que lance une "
+    @defaut("arguments-de-python-c", "fichier protégé passé en argument au script d'un `python -c`, ou d'un script "
+            "qu'un heredoc donne à python", "agent", "écriture protégée")
+    def _(a, c):
+        # B-0230 : seul le script se jugeait ; le chemin que le script lit
+        # dans `sys.argv` s'écrivait sans refus.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "python3 -c \"import sys; open(sys.argv[1], 'a').write('max_attempts = 99')\" .socle/policy.toml",
+            "F=.socle/policy.toml; python3 -c \"import sys; open(sys.argv[1], 'a')\" \"$F\"",
+            "python3 - .socle/policy.toml <<'EOF'\nimport sys\nopen(sys.argv[1], 'a')\nEOF")])
+
+    @defaut("substitution-entre-guillemets","dossier qui contient le projet supprimé par la commande que lance une "
             "substitution entre guillemets, `\"$(…)\"` ou des accents graves, après un `cd` ou l'appel d'une fonction "
             "qui change de dossier", "agent", "suppression du projet")
     def _(a, c):
@@ -2628,6 +2638,15 @@ def _temoins() -> list[tuple[str, Callable]]:
                                                          "shutil.rmtree('build', ignore_errors=True)\nEOF"})
                 or etage_outil(a, c, "Bash", {"command": "cat > notes.txt <<'EOF'\n"
                                                          "open('.socle/policy.toml', 'w')\nEOF"}))
+
+    @temoin("un `python -c` dont les arguments ne nomment aucun fichier protégé passe le hook de l'agent (B-0230)")
+    def _(a, c):
+        # Le pendant sain de `arguments-de-python-c` : seul l'argument qui
+        # nomme un fichier protégé est refusé.
+        return (etage_outil(a, c, "Bash", {"command": "python3 -c \"import sys; print(open(sys.argv[1]).read())\" "
+                                                     "calc.py"})
+                or etage_outil(a, c, "Bash", {"command": "python3 -c \"import sys; open(sys.argv[1], 'w')\" "
+                                                         "notes.txt /tmp/x"}))
 
     @temoin("l'orchestrateur, à la racine, retire le worktree d'un sous-agent par la fin de son chemin, et un "
             "sous-agent retire ou déplace un worktree voisin du sien, sans refus du hook de l'agent (B-0228)")

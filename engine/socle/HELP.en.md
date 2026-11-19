@@ -344,7 +344,8 @@ outside the bodies of its heredocs, more than 32 parentheses or braces
 open at once, a judgment that crashes or takes over 5 seconds) is refused
 if it can write: split it. The script of a `python3 -c`, and the one a
 heredoc gives to python (`python3 - <<'EOF'`), are judged by the protected
-files they cite written out in full; a script python reads from a file is
+files they cite written out in full or that the arguments following them
+name, if they read them (`sys.argv`); a script python reads from a file is
 not judged. It also refuses deleting a directory that
 contains the project (`rm -rf ..`, an `mv`, a `git clean` or a `find` that
 deletes from such a directory, the destination of an `rsync --delete`,
@@ -430,6 +431,9 @@ misreads in it, and the release note that enters it.
   body is not judged (2026-11-19-p).
 - The body of a heredoc given to an interpreter other than python (`bash
   <<'EOF'`, `sh -s <<'EOF'`): it is only text (2026-11-19-p).
+- The arguments of a `python3 -c` whose script names neither `argv` nor
+  `argparse`, `fileinput`, `optparse` or `getopt` (a `runpy`, the `exec`
+  of another script): they are not judged (2026-11-19-q).
 
 The hook does not model all of bash: a write to a protected file in a
 form one writes only to get around it (an `eval`, `IFS`, a path built on

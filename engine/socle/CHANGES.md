@@ -7,6 +7,24 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-19-q — Le hook de l'agent juge les arguments qui suivent le script d'un `python -c`
+
+Le hook de l'agent juge les arguments qui suivent le script d'un `python
+-c`, et ceux qui suivent le `-` d'un script que python lit sur son
+entrée, comme les chemins que le script cite en toutes lettres :
+`python3 -c "import sys; open(sys.argv[1], 'w')" .socle/policy.toml` est
+refusé. Il passait : seul le script se jugeait, et le chemin qu'il lit
+dans `sys.argv` échappait au hook, jusqu'au fichier de réglages local de
+Claude Code, que git ne suit pas. Un argument se développe avec les
+variables connues de la commande (`F=…; python3 -c "…" "$F"`). Un
+`python -c` dont les arguments ne nomment aucun fichier protégé passe,
+comme un script qui ne lit pas ses arguments (ni `argv`, ni `argparse`,
+`fileinput`, `optparse` ou `getopt`), qui ne les touche pas ; la liste
+des formes connues que le hook ne juge pas inscrit celui qui les lirait
+autrement (`runpy`, l'`exec` d'un autre script).
+
+À faire : rien.
+
 ## 2026-11-19-p — Le hook de l'agent juge le script qu'un heredoc donne à python
 
 Le hook de l'agent juge le corps d'un heredoc que lit sur son entrée un
