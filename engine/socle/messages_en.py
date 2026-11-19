@@ -3527,6 +3527,12 @@ MESSAGES: dict[str, str] = {
         'renumbered entry cited by its former number, under an invented fingerprint',
     "entrée renumérotée mentionnée par son ancien numéro dans un texte neuf":
         "renumbered entry mentioned by its former number in a new text",
+    "entrée renumérotée mentionnée par son ancien numéro dans une ligne neuve d'un fichier qui le cite déjà":
+        "renumbered entry mentioned by its former number in a new line of a file that already cites it",
+    "une écriture qui garde telle quelle la ligne d'avant qui cite une entrée renumérotée par son ancien numéro, et "
+    "change ce qui l'entoure, passe le hook de l'agent (T-0083)":
+        "a write that keeps as is the earlier line citing a renumbered entry by its former number, and changes what "
+        "surrounds it, passes the agent hook (T-0083)",
     "une entrée renumérotée mentionnée dans un texte neuf par son identifiant actuel, seul ou sur la ligne de "
     "l'ancien, passe le hook de l'agent":
         "a renumbered entry mentioned in a new text by its current identifier, alone or on the former number's "

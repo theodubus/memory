@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import ast
 import dataclasses
+import difflib
 import fnmatch
 import glob
 import json
@@ -348,6 +349,23 @@ def sha_fabrique(racine: Path, texte: str) -> str | None:
     return None
 
 
+def lignes_ajoutees(avant: str, apres: str) -> set[int]:
+    """Les lignes d'`apres`, numérotées à partir de 1, que l'écriture ajoute
+    ou change : celles qu'une comparaison ligne à ligne avec `avant` ne
+    retrouve pas à leur place. Une ligne gardée telle quelle n'y est pas,
+    même si l'écriture change ce qui l'entoure (T-0083)."""
+    a, b = avant.splitlines(), apres.splitlines()
+    debut = 0
+    while debut < min(len(a), len(b)) and a[debut] == b[debut]:
+        debut += 1
+    fin = 0
+    while fin < min(len(a), len(b)) - debut and a[-1 - fin] == b[-1 - fin]:
+        fin += 1
+    comparaison = difflib.SequenceMatcher(None, a[debut:len(a) - fin], b[debut:len(b) - fin], autojunk=False)
+    return {debut + j + 1 for op, _, _, j1, j2 in comparaison.get_opcodes() if op in ("insert", "replace")
+            for j in range(j1, j2)}
+
+
 def references_inventees(projet: config.Projet, rel: str, avant: str | None, apres: str) -> list[str]:
     """Les références que cette écriture AJOUTE et qui ne mènent nulle part."""
     return references_refusees(projet, rel, avant, apres)[0]
@@ -392,20 +410,26 @@ def references_refusees(projet: config.Projet, rel: str, avant: str | None,
                                "l'index : le relire, `python3 .socle/socle show --index {index}`",
                                index=index, h=h, ligne=ligne))
     deja = {i for i, _ in memoire.mentions(avant or "")}
+    ajoutees = lignes_ajoutees(avant or "", apres)
     par_ligne: dict[int, set[str]] = {}
     for ident, ligne in memoire.mentions(apres):
         par_ligne.setdefault(ligne, set()).add(ident)
     for ident, ligne in memoire.mentions(apres):
-        if ident in deja or ident in defs or ident.startswith("P"):
+        if ident in defs or ident.startswith("P"):
             continue
         if ident in anciens:
-            # Sur la ligne qui nomme aussi l'identifiant actuel, l'ancien
-            # numéro se lit pour ce qu'il est (« B-0224 → JA-0005 », le
-            # bilan de la mise à jour, ou une citation de l'humain).
-            if anciens[ident].id not in par_ligne[ligne]:
+            # Un ancien numéro se juge sur les lignes que l'écriture ajoute,
+            # et non sur tout le fichier : le journal du mois d'une
+            # migration les cite presque tous (T-0083). Sur la ligne qui
+            # nomme aussi l'identifiant actuel, il se lit pour ce qu'il est
+            # (« B-0224 → JA-0005 », le bilan de la mise à jour, ou une
+            # citation de l'humain).
+            if ligne in ajoutees and anciens[ident].id not in par_ligne[ligne]:
                 vieux.append(trad("`{ident}` (ligne {ligne}) est l'ancien numéro de {actuel} : un texte neuf cite "
                                   "l'entrée par son identifiant actuel, {actuel}, seul ou sur la même ligne que "
                                   "l'ancien", ident=ident, ligne=ligne, actuel=anciens[ident].id))
+            continue
+        if ident in deja:
             continue
         fautes.append(trad("`{ident}` (ligne {ligne}) ne désigne aucune entrée de la mémoire — créer l'entrée "
                            "d'abord, ou corriger l'identifiant ; ne jamais en inventer un", ident=ident, ligne=ligne))

@@ -7,6 +7,21 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-19-o — The agent's hook refuses a former number repeated in a new line, even in a file that already cites it
+
+The agent's hook refuses the former number of a renumbered entry in a
+new text; it skipped every mention the file already held before the
+write. In the journal of the migration's month, which cites almost all
+former numbers, a new entry that repeated one passed. It now judges the
+lines the write adds or changes: a new line that repeats the former
+number without the current identifier is refused, even if the file
+already cites it, and an earlier line kept as is passes, even if the
+write changes what surrounds it. The line that also names the current
+identifier ("former → current") still passes.
+
+To do: if the hook refuses a former number in a new journal entry, cite
+the current identifier it names.
+
 ## 2026-11-19-n — The agent's hook judges the command that a quoted substitution launches
 
 The agent's hook judges the command that a substitution in double

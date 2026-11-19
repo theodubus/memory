@@ -2072,6 +2072,16 @@ def _cas() -> list[Cas]:
         p = c / "docs/calc.md"
         return etage_outil(a, c, "Write", {"file_path": str(p), "content": p.read_text() + "\nVoir B-0001.\n"})
 
+    @defaut("ancien-numero-repris", "entrée renumérotée mentionnée par son ancien numéro dans une ligne neuve d'un "
+            "fichier qui le cite déjà", "agent", "ancien numéro")
+    def _(a, c):
+        # T-0083 : le hook sautait toute mention que le fichier portait déjà ;
+        # le journal du mois d'une migration les cite presque tous.
+        _renumeroter_en_lot(c, "B-0001")
+        p = c / "docs/calc.md"
+        p.write_text(p.read_text() + "\nLe lot B-0001 avance.\n")
+        return etage_outil(a, c, "Write", {"file_path": str(p), "content": p.read_text() + "\nVoir B-0001.\n"})
+
     @defaut("echecs-repetes", "contrôles rouges trois tours de suite, sans escalade", "agent", "escalade")
     def _(a, c):
         remplacer(c, "calc.py", "return FACTEUR * x", "return x * FACTEUR")
@@ -2736,6 +2746,17 @@ def _temoins() -> list[tuple[str, Callable]]:
         p = c / "docs/calc.md"
         return etage_outil(a, c, "Write", {"file_path": str(p), "content": p.read_text() + f"\nVoir {nouvel}.\n"
                                                                                        f"B-0001 → {nouvel}.\n"})
+
+    @temoin("une écriture qui garde telle quelle la ligne d'avant qui cite une entrée renumérotée par son ancien "
+            "numéro, et change ce qui l'entoure, passe le hook de l'agent (T-0083)")
+    def _(a, c):
+        # Le pendant sain d'`ancien-numero-repris` : seules les lignes que
+        # l'écriture ajoute ou change se jugent.
+        _renumeroter_en_lot(c, "B-0001")
+        p = c / "docs/calc.md"
+        p.write_text("# Calcul\n\nLe lot B-0001 avance.\n\n" + p.read_text())
+        return etage_outil(a, c, "Write", {"file_path": str(p), "content": "# Le calcul, revu\n" + p.read_text()
+                                           .removeprefix("# Calcul\n") + "\nUne note.\n"})
 
     @temoin("un besoin et sa tâche posés par `socle new need --task`, un lot qui attend la tâche et un jalon qui "
             "attend le besoin, chacun dans sa forme, passent le commit et la CI")

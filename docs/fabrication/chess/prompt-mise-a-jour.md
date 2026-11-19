@@ -82,6 +82,8 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 29. Le hook de l'agent juge la commande que lance une substitution entre guillemets, "$(…)" ou des accents graves, comme celle d'une substitution nue : x="$(cd memory && rm -rf ../..)" ou echo "$(git push --force origin main)" sont refusés comme sans guillemets ; x="$(git rev-parse HEAD)" et un message de commit écrit par "$(cat <<'EOF' … EOF)" passent toujours.
 
+30. Le hook de l'agent juge l'ancien numéro d'une entrée renumérotée sur les lignes que ton écriture ajoute ou change, et non plus sur tout le fichier : dans le journal du mois de la migration, qui cite presque tous les anciens numéros, une entrée neuve qui en reprend un est désormais refusée ; cite l'identifiant actuel qu'il nomme, ou mets-le sur la même ligne que l'ancien. Une ligne d'avant gardée telle quelle passe.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.

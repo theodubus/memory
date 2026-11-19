@@ -7,6 +7,22 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-19-o — Le hook de l'agent refuse un ancien numéro repris dans une ligne neuve, même d'un fichier qui le cite déjà
+
+Le hook de l'agent refuse l'ancien numéro d'une entrée renumérotée dans
+un texte neuf ; il sautait toute mention que le fichier portait déjà
+avant l'écriture. Dans le journal du mois de la migration, qui cite
+presque tous les anciens numéros, une entrée neuve qui en reprenait un
+passait. Il juge désormais les lignes que l'écriture ajoute ou change :
+une ligne neuve qui reprend l'ancien numéro sans l'identifiant actuel
+est refusée, même si le fichier le cite déjà, et une ligne d'avant
+gardée telle quelle passe, même si l'écriture change ce qui l'entoure.
+La ligne qui nomme aussi l'identifiant actuel (« ancien → actuel ») passe
+toujours.
+
+À faire : si le hook refuse un ancien numéro dans une entrée neuve du
+journal, citer l'identifiant actuel qu'il nomme.
+
 ## 2026-11-19-n — Le hook de l'agent juge la commande que lance une substitution entre guillemets
 
 Le hook de l'agent juge la commande que lance une substitution entre

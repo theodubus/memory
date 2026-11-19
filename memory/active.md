@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0005 (J-2026-11-19-Q) : T-0007 et T-0083 attendent D-0139,
-leurs correctifs hors du dépôt (J-2026-11-19-V).
+L-0005 (J-2026-11-19-Q) : ses cinq tâches faites (J-2026-11-19-X) ;
+restent la revue et la livraison.
 
 ## Consignes en cours
 
