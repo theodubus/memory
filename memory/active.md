@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0005 : ses cinq tâches faites ; restent la revue, `--base 9fc95bf`,
-la clôture et la livraison (J-2026-11-19-Y).
+L-0005 clos et livré (J-2026-11-19-AA). En session neuve : le lot
+suivant, que donne `python3 .socle/socle roadmap`.
 
 ## Consignes en cours
 

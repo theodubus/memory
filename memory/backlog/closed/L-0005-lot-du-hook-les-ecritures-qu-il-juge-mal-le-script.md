@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0005 — Lot du hook, ce qu'il laisse passer : uv run et poetry run, la substitution entre guillemets, le push forcé par une variable, l'ancien numéro repris
 
-> statut : en cours · origine : J-2026-11-15-J · après : L-0015, T-0005, T-0007, T-0006, T-0083, T-0086 · lu : backlog@19378efe · ancien : B-0235
+> statut : fait · origine : J-2026-11-15-J · ref : J-2026-11-19-AA · après : L-0015, T-0005, T-0007, T-0006, T-0083, T-0086 · lu : backlog@19378efe · ancien : B-0235
 
 Trois écritures que le hook de l'agent juge mal, deux qu'il laisse
 passer, une qu'il refuse à tort : les mêmes fichiers que le lot d'avant
