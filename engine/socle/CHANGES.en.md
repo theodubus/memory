@@ -7,6 +7,25 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-19-j — The same review pass is recognized on a dirty tree, and a badly written blocker line is refused
+
+`socle review` judges the working tree, modified tracked files included,
+but the pass it writes in the batch's “Reviews” section kept only its
+commits: run again on an unchanged dirty tree, it took the same pass for
+a new one, refused without a step back, and its line said `Commits:
+X..X` when nothing was committed. The pass now keeps, at the end of that
+line, the fingerprint of the tree's changes it reviewed (`Commits:
+<start>..<head> + working tree <fingerprint>`), and the same pass is
+given again as long as neither the head nor those changes move,
+committed afterwards or not. And a line of the “Reviews” section that
+presents itself as a blocker in another form than `- Blocker: <its
+cause>` (`- **Blocker**: …`, `- Blocker 1: …`, `1. Blocker: …`,
+`- Blockers: …`), which nothing read, is refused by the backlog check,
+whatever the batch's status.
+
+To do: if the `memoire.backlog` check refuses such a line in a batch,
+rewrite it `- Blocker: <its cause>`, one line per blocker.
+
 ## 2026-11-19-i — The review brief also gives the decisions and requests cited by those the batch writes
 
 The brief of `socle review` gave the decisions and requests the batch

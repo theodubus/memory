@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0054 — La section Revues mal lue : un arbre sale fausse « la même passe », une ligne de bloquant écrite autrement est ignorée en silence
 
-> statut : ouvert · origine : J-2026-11-16-Y · besoin : B-0263 · lu : backlog@db14eeec
+> statut : fait · origine : J-2026-11-16-Y · besoin : B-0263 · lu : backlog@db14eeec · ref : J-2026-11-19-L, ADR-0091
 
 Relevé par la revue de T-0047, passe 2 du lot L-0013 (J-2026-11-16-Y),
 constats 1 et 4 pour le backlog. `meme_passe` (`engine/socle/review.py`)
@@ -17,5 +17,5 @@ refusée ou lue.
 
 ## Fait quand
 
-- [ ] une relance de `socle review` sur un arbre inchangé, sale, redonne la même passe sans en écrire une autre, et un test le montre
-- [ ] une ligne de bloquant écrite autrement que `- Bloquant :` dans une passe est refusée par un contrôle, avec son défaut injecté
+- [x] une relance de `socle review` sur un arbre inchangé, sale, redonne la même passe sans en écrire une autre, et un test le montre
+- [x] une ligne de bloquant écrite autrement que `- Bloquant :` dans une passe est refusée par un contrôle, avec son défaut injecté

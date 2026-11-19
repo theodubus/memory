@@ -19,6 +19,7 @@ que la demande d'un arrêt attend sa réponse.
 
 from __future__ import annotations
 
+import hashlib
 import re
 from datetime import date
 
@@ -606,11 +607,23 @@ def lot_de_la_revue(projet: config.Projet, nom: str | None = None) -> memoire.En
     return lots[0] if lots else None
 
 
+def empreinte_de_l_arbre(projet: config.Projet, tete: str) -> str | None:
+    """L'empreinte de ce que l'arbre de travail change hors de la mémoire
+    depuis `tete`, fichiers suivis modifiés compris, ce que le dossier juge
+    en plus des commits ; `None` s'il n'y change rien."""
+    diff = outils.git(projet.racine, "diff", "--no-ext-diff", "--no-color", "--no-renames", "--full-index",
+                      "--binary", tete, *_hors_memoire(projet), check=False)
+    return hashlib.sha256(diff.encode("utf-8")).hexdigest()[:12] if diff else None
+
+
 def meme_passe(projet: config.Projet, p: memoire.Passe) -> bool:
-    """Rien n'a changé hors de la mémoire depuis le commit de tête que la
-    passe a relu : c'est la même passe, dont le dossier se redonne."""
-    return bool(p.tete) and outils.rev_existe(projet.racine, p.tete) and outils.git_reussit(
-        projet.racine, "diff", "--quiet", p.tete, *_hors_memoire(projet))
+    """Rien n'a changé hors de la mémoire depuis ce que la passe a relu :
+    son commit de tête, et les changements de l'arbre de travail qu'elle a
+    relus en plus, par leur empreinte (`Passe.arbre`) ; c'est la même passe,
+    dont le dossier se redonne. Relevé par la revue de T-0047 : comparé au
+    seul commit de tête, un arbre sale inchangé faisait une passe nouvelle."""
+    return bool(p.tete) and outils.rev_existe(projet.racine, p.tete) and \
+        empreinte_de_l_arbre(projet, p.tete) == p.arbre
 
 
 def entrees_depuis(projet: config.Projet, debut: str) -> tuple[list, list]:
@@ -711,16 +724,19 @@ def refus_de_la_passe(projet: config.Projet, lot: memoire.Entree, deja: list, de
     return _texte_du_refus(projet, lot, n + 1, raison, debut, trad(consigne, n=n, lot=lot.id) if consigne else None)
 
 
-def ecrire_passe(projet: config.Projet, lot: memoire.Entree, numero: int, debut: str, tete: str, jour: str) -> str:
+def ecrire_passe(projet: config.Projet, lot: memoire.Entree, numero: int, debut: str, tete: str, jour: str,
+                 arbre: str | None = None) -> str:
     """Ajoute la passe `numero` à la section « Revues » du lot, posée à la
     fin de son entrée si elle n'y est pas : son titre, sa date et ses
-    commits. Rend le fichier du lot."""
+    commits, suivis de l'empreinte `arbre` des changements de l'arbre de
+    travail qu'elle relit en plus, s'il y en a. Rend le fichier du lot."""
     lg = langue.du_projet(projet)
     mots = {cle: m[lg] for cle, m in langue.REVUES.items()}
     chemin = projet.racine / lot.fichier
     lignes = chemin.read_text(encoding="utf-8").split("\n")
     passe = [f"### {mots['passe']} {numero} — {jour}", "",
-             f"{mots['commits']}{' :' if lg == 'fr' else ':'} {debut}..{tete}"]
+             f"{mots['commits']}{' :' if lg == 'fr' else ':'} {debut}..{tete}"
+             + (f" + {mots['arbre']} {arbre}" if arbre else "")]
     premiere = lot.ligne - 1
     fin = premiere + len(lot.texte.split("\n"))
     section = next((i for i in range(premiere + 1, fin) if memoire.SECTION_REVUES.match(lignes[i])), None)
@@ -747,7 +763,9 @@ def relire(projet: config.Projet, base: str | None = None, plafond: int = PLAFON
     (`PasseRefusee`), et s'écrit dans le lot, avec le second regard à
     partir de la deuxième. Un lot qui ne change rien hors de la mémoire n'a
     pas de passe. `court` : le dossier court (B-0288), qu'un lot qui touche
-    un garde-fou refuse (`CourtRefuse`) avant que rien ne s'écrive."""
+    un garde-fou refuse (`CourtRefuse`) avant que rien ne s'écrive. L'état
+    relu est celui de l'arbre de travail : ses fichiers suivis modifiés
+    hors de la mémoire comptent, et la passe en garde l'empreinte."""
     lot = lot_de_la_revue(projet, nom_du_lot)
     if lot is None:
         return dossier(projet, base, plafond, depuis, court=court), trad(
@@ -759,8 +777,8 @@ def relire(projet: config.Projet, base: str | None = None, plafond: int = PLAFON
     deja = memoire.passes(lot)
     if deja and meme_passe(projet, deja[-1]):
         return dossier(projet, base, plafond, depuis, deja[:-1], court), trad(
-            "(la passe {n} du lot {lot} : rien n'a changé hors de la mémoire depuis le commit qu'elle a relu ; son "
-            "dossier se redonne, rien ne s'écrit)", n=deja[-1].numero, lot=lot.id)
+            "(la passe {n} du lot {lot} : rien n'a changé hors de la mémoire depuis ce qu'elle a relu, son commit et "
+            "l'arbre de travail ; son dossier se redonne, rien ne s'écrit)", n=deja[-1].numero, lot=lot.id)
     if deja:
         refus = refus_de_la_passe(projet, lot, deja, debut)
         if refus:
@@ -771,7 +789,7 @@ def relire(projet: config.Projet, base: str | None = None, plafond: int = PLAFON
         return texte, None
     numero = deja[-1].numero + 1 if deja else 1
     chemin = ecrire_passe(projet, lot, numero, _court(projet, depart), _court(projet, "HEAD"),
-                          jour or date.today().isoformat())
+                          jour or date.today().isoformat(), empreinte_de_l_arbre(projet, "HEAD"))
     return texte, trad(
         "passe {n} du lot {lot} écrite dans {chemin} : au retour du relecteur, y écrire une ligne « - Bloquant : <sa "
         "cause, en quelques mots> » par bloquant, suivie à partir de la deuxième passe du regard du relecteur, « · "

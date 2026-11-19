@@ -7,6 +7,25 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-19-j — La même passe de revue se reconnaît sur un arbre sale, et une ligne de bloquant mal écrite est refusée
+
+`socle review` juge l'arbre de travail, fichiers suivis modifiés
+compris, mais la passe qu'il écrit dans la section « Revues » du lot ne
+gardait que ses commits : relancé sur un arbre sale inchangé, il prenait
+la même passe pour une nouvelle, refusée sans recul, et sa ligne disait
+`Commits : X..X` quand rien n'était commité. La passe garde désormais, au
+bout de cette ligne, l'empreinte des changements de l'arbre qu'elle a
+relus (`Commits : <début>..<tête> + arbre de travail <empreinte>`), et la
+même passe se redonne tant que ni la tête ni ces changements ne bougent,
+commités ensuite ou non. Et une ligne de la section « Revues » qui se
+donne pour un bloquant sous une autre forme que `- Bloquant : <sa cause>`
+(`- **Bloquant** : …`, `- Bloquant 1 : …`, `1. Bloquant : …`,
+`- Bloquants : …`), que rien ne lisait, est refusée par le contrôle du
+backlog, à tout statut du lot.
+
+À faire : si le contrôle `memoire.backlog` refuse une telle ligne dans un
+lot, la récrire `- Bloquant : <sa cause>`, une ligne par bloquant.
+
 ## 2026-11-19-i — Le dossier de la revue donne aussi les décisions et les demandes que citent celles que le lot écrit
 
 Le dossier de `socle review` donnait les décisions et les demandes que le

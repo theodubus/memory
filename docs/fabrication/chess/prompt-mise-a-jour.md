@@ -72,6 +72,8 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 24. Le dossier de la revue donne aussi au relecteur, une fois chacune, les décisions et les demandes que citent les décisions que le lot écrit : la spécification que j'ai validée et qu'une décision du lot applique lui arrive. Le skill socle-review, une copie protégée, le dit : il est dans la demande de l'installeur.
 
+25. La passe que python3 .socle/socle review écrit dans la section « Revues » du lot garde, quand l'arbre de travail a des fichiers suivis modifiés hors de la mémoire, l'empreinte de ces changements au bout de sa ligne Commits (+ arbre de travail <empreinte>) : relancé sur un arbre sale inchangé, il redonne la même passe au lieu de la refuser comme une nouvelle sans recul. Et une ligne de bloquant écrite autrement que « - Bloquant : <sa cause> » (en gras, numérotée, au pluriel) est refusée par le contrôle memoire.backlog : si elle l'est dans un de tes lots, récris-la ainsi, une ligne par bloquant.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.

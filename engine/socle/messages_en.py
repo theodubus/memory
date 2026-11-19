@@ -3629,10 +3629,16 @@ MESSAGES: dict[str, str] = {
     "le sien)":
         '(no batch in progress in the backlog: this pass is written in no batch; `socle review --batch L-NNNN` '
         'names its own)',
-    "(la passe {n} du lot {lot} : rien n'a changé hors de la mémoire depuis le commit qu'elle a relu ; son dossier "
-    "se redonne, rien ne s'écrit)":
-        '(pass {n} of batch {lot}: nothing has changed outside the memory since the commit it reviewed; its '
-        'brief is given again, nothing is written)',
+    "`{id}` : « {ligne} », dans sa section « Revues », se donne pour un bloquant sans la forme que lit `socle "
+    "review`, une ligne `- Bloquant : <sa cause>` par bloquant, ni gras, ni numéro, ni pluriel ; ignorée, elle "
+    "n'exigerait ni le regard du relecteur ni la règle de la même cause":
+        "`{id}`: “{ligne}”, in its “Reviews” section, presents itself as a blocker without the form `socle review` "
+        "reads, one line `- Blocker: <its cause>` per blocker, no bold, no number, no plural; ignored, it would "
+        "require neither the reviewer's view nor the same-cause rule",
+    "(la passe {n} du lot {lot} : rien n'a changé hors de la mémoire depuis ce qu'elle a relu, son commit et "
+    "l'arbre de travail ; son dossier se redonne, rien ne s'écrit)":
+        '(pass {n} of batch {lot}: nothing has changed outside the memory since what it reviewed, its commit and '
+        'the working tree; its brief is given again, nothing is written)',
     '- passe {n} : {cause}':
         '- pass {n}: {cause}',
     "--batch {nom} : aucun lot de ce nom au backlog public ; rien n'est relu":
@@ -3658,6 +3664,8 @@ MESSAGES: dict[str, str] = {
     "lot relu clos « fait » sur « continuer » après deux passes de suite où le relecteur voit une même cause revenir":
         'reviewed batch closed "done" on "continue" after two passes in a row where the reviewer sees a same cause '
         'come back',
+    "ligne de bloquant d'une passe de revue écrite autrement que « - Bloquant : … », que rien ne lit":
+        'blocker line of a review pass written otherwise than "- Blocker: …", which nothing reads',
     'lot relu clos « fait » sur un arrêt dont la demande attend sa réponse':
         'reviewed batch closed "done" on a stop whose request waits for its answer',
     'un lot arrêté dont la demande, qui cite le lot, a sa réponse, `socle review` produit sa passe suivante':
@@ -3667,6 +3675,10 @@ MESSAGES: dict[str, str] = {
     "le commit et la CI":
         'a reviewed batch closed "done" with the step back of its last pass, and the reviewer\'s view on its '
         'blocker, passes the commit and the CI',
+    "un lot en cours dont la passe consigne son bloquant « - Bloquant : … », et un recul replié sur une ligne qui "
+    "commence par « bloquants », passe le commit et la CI":
+        'a batch in progress whose pass records its blocker "- Blocker: …", and a step back wrapped on a line that '
+        'starts with "blockers", passes the commit and the CI',
     "un lot relu clos « fait » sur « continuer » après une seule passe où le relecteur voit une cause revenir passe "
     "le commit et la CI":
         'a reviewed batch closed "done" on "continue" after a single pass where the reviewer sees a cause come back '

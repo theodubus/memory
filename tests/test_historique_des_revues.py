@@ -147,6 +147,27 @@ class TestLaSection(unittest.TestCase):
         self.assertEqual(memoire.decision_du_recul(p.recul), "s-arreter")
         self.assertIsNone(memoire.refus_du_recul(p))
 
+    def test_une_passe_garde_l_empreinte_de_l_arbre_de_travail_qu_elle_a_relu(self):
+        texte = self.LOT.format(recul1=recul("continuer")).replace(
+            "Commits : 5d6e7f8..9a8b7c6", "Commits : 5d6e7f8..5d6e7f8 + arbre de travail 0a1b2c3d4e5f")
+        self.assertEqual([(p.tete, p.arbre) for p in memoire.passes(self.entree(texte))],
+                         [("5d6e7f8", None), ("5d6e7f8", "0a1b2c3d4e5f")])
+        self.assertEqual(memoire.LIGNE_COMMITS.match("Commits: 1a2b3c4..1a2b3c4 + working tree 0a1b2c3d4e5f")["arbre"],
+                         "0a1b2c3d4e5f")
+
+    def test_une_ligne_de_bloquant_ecrite_autrement_se_releve_avec_sa_ligne(self):
+        # T-0054 : `LIGNE_BLOQUANT` ne lit que `- Bloquant : …` ; les autres formes étaient ignorées en silence.
+        mal = ["- **Bloquant** : une cause", "- Bloquant 1 : une cause", "1. Bloquant : une cause",
+               "- Bloquants : deux causes", "- Bloquant :"]
+        bien = ["- Bloquant : une cause", "* bloquant: une cause · même cause", "- Ouvre : rien",
+                "- Bloquante, la passe ? non", "bloquants de la passe, un recul replié"]
+        texte = self.LOT.format(recul1=recul("continuer")) + "\n".join(mal + bien) + "\n"
+        lignes = texte.split("\n")
+        self.assertEqual(memoire.bloquants_mal_ecrits(self.entree(texte)),
+                         [(lignes.index(ligne) + 1, ligne) for ligne in mal])
+        # Hors de la section « Revues », rien ne se relève.
+        self.assertEqual(memoire.bloquants_mal_ecrits(self.entree(texte.replace("## Revues", "## Notes"))), [])
+
     def test_une_section_qui_n_est_pas_la_derniere_finit_au_titre_suivant(self):
         texte = self.LOT.format(recul1=recul("continuer")) + "\n## Notes\n\n### Passe 9 — hors section\n"
         self.assertEqual([p.numero for p in memoire.passes(self.entree(texte))], [1, 2])
@@ -222,6 +243,33 @@ class TestLaPremierePasse(_Depot):
         self.assertEqual(second, premier)
         self.assertIn("la passe 1 du lot L-0001 : rien n'a changé hors de la mémoire", note)
         self.assertEqual(len(memoire.passes(self.lot())), 1)
+
+    def test_la_meme_passe_se_reconnait_sur_un_arbre_sale(self):
+        # T-0054 : comparée au seul commit de tête, une relance sur un arbre sale inchangé faisait une passe
+        # nouvelle, refusée sans recul, et la ligne `Commits` disait `X..X`.
+        (self.racine / "calc.py").write_text("def double(x):\n    return x * 2\n")
+        tete = git(self.racine, "rev-parse", "--short", "HEAD").strip()
+        premier, note = self.relire()
+        self.assertIn("passe 1 du lot L-0001 écrite", note)
+        self.assertIn("+    return x * 2", premier)
+        self.assertRegex(memoire.section_des_revues(self.lot()),
+                         rf"\nCommits : {tete}\.\.{tete} \+ arbre de travail [0-9a-f]{{12}}$")
+        p, = memoire.passes(self.lot())
+        self.assertEqual((p.debut, p.tete, p.arbre), (tete, tete, revue.empreinte_de_l_arbre(self.projet, tete)))
+        # Relancée sur le même arbre, toujours sale : la même passe, rien d'écrit.
+        second, note = self.relire()
+        self.assertEqual(second, premier)
+        self.assertIn("la passe 1 du lot L-0001 : rien n'a changé hors de la mémoire", note)
+        # Le même état, commité : encore la même passe.
+        git(self.racine, "commit", "-qam", "le lot et sa passe")
+        _, note = self.relire()
+        self.assertIn("la passe 1 du lot L-0001 : rien n'a changé hors de la mémoire", note)
+        self.assertEqual(len(memoire.passes(self.lot())), 1)
+        # Un arbre qui change encore : une autre passe, que l'historique juge.
+        (self.racine / "calc.py").write_text("def double(x):\n    return 2 * x\n")
+        self.assertFalse(revue.meme_passe(self.projet, memoire.passes(self.lot())[-1]))
+        with self.assertRaises(revue.PasseRefusee):
+            self.relire()
 
     def test_un_lot_qui_ne_change_rien_hors_de_la_memoire_n_a_pas_de_passe(self):
         texte, note = self.relire()
@@ -498,6 +546,21 @@ class TestLaCloture(unittest.TestCase):
         self.assertEqual(self.erreurs(""), [])
         # Ouvert, il n'a pas encore à l'avoir.
         self.assertEqual(self.erreurs(self.PASSES.format(recul1="", recul2=""), statut="en cours"), [])
+
+
+    def test_une_ligne_de_bloquant_mal_ecrite_est_refusee_a_tout_statut(self):
+        # T-0054 : ignorée, elle n'exigeait ni le regard du relecteur ni la règle de la même cause.
+        revues = ("\n## Revues\n\n### Passe 1 — 2026-11-15\n\nCommits : 1a2b3c4..5d6e7f8\n\n{ligne}\n"
+                  "- Bloquant : une cause lue\n\n" + recul("continuer") + "\n")
+        for ligne in ("- **Bloquant** : une cause", "- Bloquant 1 : une cause", "1. Bloquant : une cause"):
+            for statut in ("en cours", "fait"):
+                with self.subTest(ligne=ligne, statut=statut):
+                    self.assertEqual(self.erreurs(revues.format(ligne=ligne), statut), [
+                        f"`L-0001` : « {ligne} », dans sa section « Revues », se donne pour un bloquant sans la "
+                        "forme que lit `socle review`, une ligne `- Bloquant : <sa cause>` par bloquant, ni gras, ni "
+                        "numéro, ni pluriel ; ignorée, elle n'exigerait ni le regard du relecteur ni la règle de la "
+                        "même cause"])
+        self.assertEqual(self.erreurs(revues.format(ligne="- Bloquant : une autre cause")), [])
 
 
 class TestLaClotureSuitLesReglesDeLaPasse(unittest.TestCase):

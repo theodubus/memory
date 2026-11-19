@@ -764,7 +764,8 @@ def backlog(ctx, r):
     qui refuseraient une passe de plus (D-0124, ADR-0084) : son recul, le regard du relecteur sur chacun de ses
     bloquants à partir de la deuxième, pas de « continuer » après deux passes de suite où une même cause revient, et
     un arrêt levé par la réponse de l'humain à une demande qui cite le lot ; un lot sans passe, qui ne changeait ni
-    code, ni spécification, ni test, n'en a pas."""
+    code, ni spécification, ni test, n'en a pas. Et, à tout statut, une ligne de sa section « Revues » qui se donne
+    pour un bloquant sans la forme `- Bloquant : <sa cause>` est refusée : ignorée, elle n'exigerait rien."""
     for e in ctx.memoire.entrees(memoire.BACKLOG):
         if e.basculee:
             continue
@@ -779,6 +780,14 @@ def backlog(ctx, r):
                                              "{criteres}", id=e.id, criteres=" ; ".join(ouverts[:3]),
                                              section=SECTIONS[memoire.est_besoin(e)]),
                      e.fichier, e.ligne)
+        # Une ligne de bloquant que `passes` ne lit pas, à tout statut : ignorée,
+        # elle n'exigerait ni le regard du relecteur ni la règle de la même cause.
+        for ligne, texte in memoire.bloquants_mal_ecrits(e) if memoire.est_lot(e) else []:
+            r.erreur("memoire.backlog", trad("`{id}` : « {ligne} », dans sa section « Revues », se donne pour un "
+                                             "bloquant sans la forme que lit `socle review`, une ligne `- Bloquant : "
+                                             "<sa cause>` par bloquant, ni gras, ni numéro, ni pluriel ; ignorée, "
+                                             "elle n'exigerait ni le regard du relecteur ni la règle de la même "
+                                             "cause", id=e.id, ligne=texte), e.fichier, ligne)
         # Les règles qui refuseraient une passe de plus, sans ce que git donne.
         passes = memoire.passes(e) if memoire.est_lot(e) and e.statut == "fait" else []
         refus = memoire.refus_de_la_suite(ctx.memoire, e, passes) if passes else None

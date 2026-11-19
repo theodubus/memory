@@ -296,10 +296,16 @@ Un lot relu garde l'historique de ses passes de revue dans sa section
 `## Revues` (`## Reviews` en anglais), la dernière de son entrée
 (ADR-0084). `socle review` y écrit chaque passe du lot en cours, ou de
 celui que `--batch` nomme : son titre (`### Passe 2 — 2026-11-17`) et les
-commits relus. L'agent y consigne, au retour du relecteur, une ligne
+commits relus (`Commits : <début>..<tête>`), suivis, quand l'arbre de
+travail changeait des fichiers suivis hors de la mémoire, que la passe a
+relus aussi, de l'empreinte de ces changements (`+ arbre de travail
+<empreinte>`). L'agent y consigne, au retour du relecteur, une ligne
 `- Bloquant : <sa cause, en quelques mots>` par bloquant, suivie, à partir
 de la deuxième passe, du regard du relecteur, `· même cause` ou `· cause
-nouvelle` ; une ligne `- Ouvre : <les entrées que la passe ouvre>` ; puis,
+nouvelle` : une ligne qui se donne pour un bloquant sous une autre forme
+(`- **Bloquant** : …`, `- Bloquant 1 : …`, `1. Bloquant : …`,
+`- Bloquants : …`) n'est pas lue, et le contrôle du backlog la refuse,
+à tout statut du lot ; une ligne `- Ouvre : <les entrées que la passe ouvre>` ; puis,
 avant la passe suivante ou la clôture, le recul. C'est un paragraphe qui
 commence par « Recul : », répond en soixante mots au moins à trois
 questions de nature (les bloquants ont-ils la même cause que ceux de la
@@ -322,7 +328,9 @@ une demande retirée ne le lève pas, ni une demande ancienne, même
 répondue, qui ne cite pas le lot. Son refus montre l'historique, les
 entrées ouvertes et closes depuis le début du lot, les lots clos qui ont
 touché les mêmes fichiers, et les trois questions. Tant que rien ne change
-hors de la mémoire, il redonne la même passe sans l'écrire de nouveau. Le
+hors de la mémoire, ni le commit de tête que la passe a relu ni les
+changements de l'arbre de travail dont elle garde l'empreinte, il redonne
+la même passe sans l'écrire de nouveau. Le
 contrôle du backlog applique les mêmes règles à la dernière passe d'un lot
 relu clos `fait` : il le refuse sans son recul, sans le regard du
 relecteur sur un bloquant, sur un « continuer » après deux passes où une
@@ -630,6 +638,7 @@ interne, que `socle show` dit dans la langue du projet.
 | section de lot `revues` | Revues | Reviews |
 | titre de passe `passe` | Passe | Pass |
 | ligne de passe `commits` | Commits | Commits |
+| ligne de passe `arbre` | arbre de travail | working tree |
 | ligne de passe `bloquant` | Bloquant | Blocker |
 | ligne de passe `ouvre` | Ouvre | Opens |
 | regard du relecteur `meme-cause` | même cause | same cause |
