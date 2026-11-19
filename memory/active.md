@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-En session neuve : la demande de la copie de `socle-review`, relue à
-froid (J-2026-11-19-O) ; puis le lot suivant.
+D-0138 (la copie de `socle-review`) attend Théo (J-2026-11-19-P) ;
+L-0005, découpé sur son coût.
 
 ## Consignes en cours
 
