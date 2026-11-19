@@ -36,7 +36,7 @@ given again as long as neither the head nor those changes move,
 committed afterwards or not. And a line of the “Reviews” section that
 presents itself as a blocker in another form than `- Blocker: <its
 cause>` (`- **Blocker**: …`, `- Blocker 1: …`, `1. Blocker: …`,
-`- Blockers: …`), which nothing read, is refused by the backlog check,
+`- Blockers: …`, or without a bullet, `Blocker: …`, `Blocker 2 — …`), which nothing read, is refused by the backlog check,
 whatever the batch's status.
 
 To do: if the `memoire.backlog` check refuses such a line in a batch,

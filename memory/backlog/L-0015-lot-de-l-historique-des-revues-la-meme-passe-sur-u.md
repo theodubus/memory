@@ -17,3 +17,18 @@ Le 17 novembre, D-0129 y ajoute B-0277 et sa tâche T-0062 (J-2026-11-17-H) : le
 ### Passe 1 — 2026-11-19
 
 Commits : d4d66ac..1772e68
+
+- Bloquant : la ligne de bloquant sans puce, ni lue ni refusée
+- Bloquant : le détail d'un constat privé non masqué en CI
+- Ouvre : B-0298, B-0299, T-0104, T-0105
+
+Recul : le premier bloquant a la cause de ce que T-0054 corrigeait, une
+lecture des lignes de la section « Revues » par un motif plus étroit que
+ce qu'un agent écrit ; le second est neuf, le détail que T-0055 ajoute aux
+constats sans passer par le masquage de la zone privée. Ce que le lot
+ouvre est de la nature de ce qu'il ferme : des suites de ses propres
+tâches, plus petites (l'étape 2 du skill, le lot compté parmi ses
+entrées closes, le guide). Les lots clos sur ces fichiers, L-0013 et
+L-0018, ont déjà ouvert de telles suites, dont ce lot ; elles décroissent,
+et les deux corrections tiennent en quelques lignes, chacune avec son
+test : pas de passe de plus, la clôture suit. Décision : continuer.

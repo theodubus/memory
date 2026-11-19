@@ -37,7 +37,7 @@ même passe se redonne tant que ni la tête ni ces changements ne bougent,
 commités ensuite ou non. Et une ligne de la section « Revues » qui se
 donne pour un bloquant sous une autre forme que `- Bloquant : <sa cause>`
 (`- **Bloquant** : …`, `- Bloquant 1 : …`, `1. Bloquant : …`,
-`- Bloquants : …`), que rien ne lisait, est refusée par le contrôle du
+`- Bloquants : …`, ou sans puce, `Bloquant : …`, `Bloquant 2 — …`), que rien ne lisait, est refusée par le contrôle du
 backlog, à tout statut du lot.
 
 À faire : si le contrôle `memoire.backlog` refuse une telle ligne dans un

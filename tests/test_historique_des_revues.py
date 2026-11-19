@@ -168,6 +168,18 @@ class TestLaSection(unittest.TestCase):
         # Hors de la section « Revues », rien ne se relève.
         self.assertEqual(memoire.bloquants_mal_ecrits(self.entree(texte.replace("## Revues", "## Notes"))), [])
 
+    def test_une_ligne_de_bloquant_sans_puce_se_releve_aussi(self):
+        # Revue de L-0015, bloquant 1 : sans puce, une ligne de bloquant n'était ni lue ni relevée.
+        mal = ["Bloquant : une cause", "**Bloquant** : une cause", "Bloquant 2 — une cause", "-Bloquant : une cause",
+               "• Bloquant : une cause", "- [ ] Bloquant : une cause", "> - Bloquant 1 : une cause",
+               "Blocker: a cause", "Bloquants – deux causes"]
+        bien = ["- Bloquant : une cause", "bloquants de la passe, un recul replié", "Bloquants, corrigés plus haut",
+                "Bloquante, la passe ? non", "- Ouvre : rien"]
+        texte = self.LOT.format(recul1=recul("continuer")) + "\n".join(mal + bien) + "\n"
+        lignes = texte.split("\n")
+        self.assertEqual(memoire.bloquants_mal_ecrits(self.entree(texte)),
+                         [(lignes.index(ligne) + 1, ligne) for ligne in mal])
+
     def test_une_section_qui_n_est_pas_la_derniere_finit_au_titre_suivant(self):
         texte = self.LOT.format(recul1=recul("continuer")) + "\n## Notes\n\n### Passe 9 — hors section\n"
         self.assertEqual([p.numero for p in memoire.passes(self.entree(texte))], [1, 2])

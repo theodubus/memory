@@ -304,7 +304,7 @@ relus aussi, de l'empreinte de ces changements (`+ arbre de travail
 de la deuxième passe, du regard du relecteur, `· même cause` ou `· cause
 nouvelle` : une ligne qui se donne pour un bloquant sous une autre forme
 (`- **Bloquant** : …`, `- Bloquant 1 : …`, `1. Bloquant : …`,
-`- Bloquants : …`) n'est pas lue, et le contrôle du backlog la refuse,
+`- Bloquants : …`, ou sans puce, `Bloquant : …`, `Bloquant 2 — …`) n'est pas lue, et le contrôle du backlog la refuse,
 à tout statut du lot ; une ligne `- Ouvre : <les entrées que la passe ouvre>` ; puis,
 avant la passe suivante ou la clôture, le recul. C'est un paragraphe qui
 commence par « Recul : », répond en soixante mots au moins à trois

@@ -3668,6 +3668,8 @@ MESSAGES: dict[str, str] = {
     "lot relu clos « fait » sur « continuer » après deux passes de suite où le relecteur voit une même cause revenir":
         'reviewed batch closed "done" on "continue" after two passes in a row where the reviewer sees a same cause '
         'come back',
+    "ligne de bloquant d'une passe de revue écrite sans puce, que rien ne lit":
+        "blocker line of a review pass written without a bullet, which nothing reads",
     "ligne de bloquant d'une passe de revue écrite autrement que « - Bloquant : … », que rien ne lit":
         'blocker line of a review pass written otherwise than "- Blocker: …", which nothing reads',
     'lot relu clos « fait » sur un arrêt dont la demande attend sa réponse':

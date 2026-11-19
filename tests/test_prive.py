@@ -205,6 +205,26 @@ class TestCompagnon(Compagnon):
         self.assertNotIn("canonical.md", texte)
         self.assertIn("constat masqué : zone privée", texte)
 
+    def test_en_ci_le_detail_d_un_constat_prive_est_masque_aussi(self):
+        # Revue de L-0015, bloquant 2 : le détail d'un constat (l'historique d'un lot privé, T-0055) passait.
+        from unittest import mock
+
+        def controle(ctx, rapport):
+            rapport.erreur("essai.detail", "lot clos sans recul", "memory/private/backlog/PL-0001-un-lot.md", 4,
+                           detail="- Bloquant : la cause secrète du client")
+
+        contexte.charger_controles()
+        essai = contexte.Controle("essai.detail", controle, tuple(contexte.ETAGES), False, False, "", False)
+        with mock.patch.dict(contexte.REGISTRE, {"essai.detail": essai}):
+            texte = contexte.executer(contexte.Contexte(config.Projet.charger(self.racine), etage="ci"),
+                                      ["essai.detail"]).texte()
+            self.assertNotIn("cause secrète", texte)
+            self.assertIn("constat masqué : zone privée", texte)
+            # Hors de la CI, le détail se montre.
+            texte = contexte.executer(contexte.Contexte(config.Projet.charger(self.racine), etage="agent"),
+                                      ["essai.detail"]).texte()
+            self.assertIn("cause secrète", texte)
+
 
 class Chiffre(Base):
     mode = "chiffre"

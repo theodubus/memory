@@ -748,7 +748,13 @@ LIGNE_BLOQUANT = re.compile(r"^\s*[-*]\s+(?:%s)\s*:\s*(?P<texte>.+?)\s*$" % _mot
 # `passes` (`- **Bloquant** : …`, `- Bloquant 1 : …`, `1. Bloquant : …`,
 # `- Bloquants : …`) : ignorée, elle n'exigerait ni le regard du relecteur
 # ni la règle de la même cause ; le contrôle du backlog la refuse.
-BLOQUANT_PRESUME = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+[*_]*(?:%s)s?(?![\w-])" % _mots("bloquant"), re.I)
+BLOQUANT_PRESUME = re.compile(
+    # Une puce suivie du mot, comme avant ; ou, puce, citation et case
+    # facultatives, le mot suivi d'un séparateur, après un numéro au besoin
+    # (`Bloquant : …`, `**Bloquant** : …`, `Bloquant 2 — …`, `-Bloquant : …`).
+    r"^\s*(?:>\s*)*(?:(?:[-*+•]|\d+[.)])\s+(?:\[[ xX]\]\s*)?[*_]*(?:{m})s?(?![\w-])"
+    r"|(?:(?:[-*+•]|\d+[.)])\s*)?(?:\[[ xX]\]\s*)?[*_]*(?:{m})s?[*_]*(?:\s*\d+)?[*_]*\s*[:—–])"
+    .format(m=_mots("bloquant")), re.I)
 # Le regard du relecteur sur un bloquant, à partir de la deuxième passe :
 # `· même cause` (suivi, au besoin, de laquelle) ou `· cause nouvelle`.
 REGARD = re.compile(r"\s*·\s*(?:(?P<meme>%s)|(?P<nouvelle>%s))(?![\w-]).*$" % (_mots("meme-cause"),

@@ -1637,6 +1637,12 @@ def _cas() -> list[Cas]:
         _lot_en_cours_relu(a, c, "- **Bloquant** : la correction change la lecture du facteur")
         return etage_git(a, c)
 
+    @defaut("bloquant-sans-puce", "ligne de bloquant d'une passe de revue écrite sans puce, que rien ne lit",
+            "git", "memoire.backlog")
+    def _(a, c):
+        _lot_en_cours_relu(a, c, "Bloquant 2 — la correction change la lecture du facteur")
+        return etage_git(a, c)
+
     # Au-delà du tableau du cadrage.
 
     @defaut("titre-d-entree-illisible", "entrée de journal au titre mal formé, que rien ne lit", "git", "memoire.format")
