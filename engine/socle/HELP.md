@@ -361,7 +361,11 @@ part de sa racine sans qu'un filtre de nom ou de chemin garde ce qu'il
 supprime (`find . -delete`, `find . -type f -delete`, `find . -delete
 -name '*.pyc'`, dont le filtre vient après l'action) ; un dossier voisin
 du projet, et un dossier du projet, restent libres (l'orchestrateur, à la
-racine, retire le worktree d'un sous-agent).
+racine, retire le worktree d'un sous-agent). Un `git push` se juge de même
+sur ses arguments développés : `F=--force; git push $F origin x` est un
+push forcé, et un argument qu'il ne sait pas développer (une variable
+qu'il ne connaît pas, une substitution, les arguments d'une fonction) est
+refusé : écrire la branche en toutes lettres.
 
 **Ce que juge le hook de l'agent.** Le hook de l'agent arrête les erreurs
 d'un agent coopératif avant qu'elles agissent. Il juge les formes du shell

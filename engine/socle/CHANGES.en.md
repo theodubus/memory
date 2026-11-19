@@ -7,6 +7,23 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-19-m — The agent's hook judges a `git push` on its expanded arguments, and refuses an argument it cannot expand
+
+The agent's hook read the argv of a `git push` as written: a force push
+or a push to the default branch passed when its option or branch came
+from a variable (`F=--force; git push $F origin x`, `B=main; git push
+origin "$B"`), from a function's arguments (`f() { git push "$@"; }; f
+--force origin x`) or from a substitution. It now judges the argv of a
+`git` expanded with the known variables, as it judges a path, and
+refuses a `git push` one of whose arguments does not expand: a variable
+it does not know, a substitution (`git push origin "$(git branch
+--show-current)"`), a function's arguments. A branch written out in
+full, or in a variable assigned earlier in the same command, passes as
+before.
+
+To do: if the hook refuses a push of the working branch, write its
+branch out in full.
+
 ## 2026-11-19-l — The agent's hook judges the command that `uv run` and `poetry run` launch
 
 The agent's hook removes `uv run` and `poetry run`, with their options

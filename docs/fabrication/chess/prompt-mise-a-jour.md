@@ -78,6 +78,8 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 27. Le hook de l'agent juge la commande que lancent uv run et poetry run comme sans eux, leurs options sautées avant run comme après : uv run rm -rf .., poetry run git push --force origin main et un uv run python -c qui écrit un fichier protégé sont refusés, et uv run pytest, uv run -m pytest ou poetry run pytest passent. La commande que lance uv run --directory ou poetry -C se lit dans ton dossier courant, non dans celui qu'ils nomment : une forme connue que le hook ne juge pas, que le guide inscrit.
 
+28. Le hook de l'agent juge un git push sur ses arguments développés avec les variables connues, comme un chemin : F=--force; git push $F origin x est un push forcé, B=main; git push origin "$B" un push sur la branche par défaut. Il refuse un git push dont un argument ne se développe pas : une variable qu'il ne connaît pas, une substitution (git push origin "$(git branch --show-current)"), les arguments d'une fonction (f() { git push "$@"; }) ; s'il refuse un push de ta branche de travail, écris la branche en toutes lettres.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.

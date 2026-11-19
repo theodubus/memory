@@ -1674,11 +1674,56 @@ def _branches_protegees(racine: Path) -> set[str]:
     return {"main", "master", defaut.split("/", 1)[-1]} - {""}
 
 
-def irreversible(racine: Path, c: commandes.Commande) -> str | None:
+def _argv_developpe(c: commandes.Commande, environnement: dict | None, racine: Path) -> list[str]:
+    """L'argv de `c` tel que le shell le développerait avec les variables
+    connues (`environnement`, celles du shell de l'agent ; à défaut, celles
+    du hook depuis la racine) : un mot qui porte une variable ou une
+    substitution se développe et se coupe en mots, comme hors des
+    guillemets ; une part qu'il ne sait pas développer y reste marquée
+    (`commandes.INCONNU`) (B-0254)."""
+    if environnement is None:
+        environnement = commandes.environnement_du_shell(os.environ, str(racine))
+    variables, res = None, []
+    for mot in c.argv:
+        if not re.search(r"[$`]", mot):
+            res.append(mot)
+            continue
+        if variables is None:
+            variables = commandes.variables_de(c, environnement)
+        res += commandes.developper(mot, variables)[0].split()
+    return res
+
+
+def push_illisible(racine: Path, c: commandes.Commande, environnement: dict | None = None) -> str | None:
+    """L'argument d'un `git push`, tel qu'écrit, que le hook ne sait pas
+    développer (une variable inconnue, une substitution, `"$@"` dans le
+    corps d'une fonction) : forcé ou vers la branche par défaut, rien ne le
+    rattraperait ; refusé comme ADR-0072 refuse un chemin inconnu (B-0254).
+    `None` sinon. Une option globale de git (`-C "$D"`) ne change pas ce que
+    le push envoie."""
+    if c.programme != "git":
+        return None
+    if environnement is None:
+        environnement = commandes.environnement_du_shell(os.environ, str(racine))
+    sous, reste = commandes.git_sous_commande(_argv_developpe(c, environnement, racine))
+    if sous != "push" or not any(commandes.INCONNU in x for x in reste):
+        return None
+    # Le dernier mot illisible : celui du push plutôt qu'une option globale.
+    variables = commandes.variables_de(c, environnement)
+    return next((x for x in reversed(c.argv)
+                 if re.search(r"[$`]", x) and commandes.INCONNU in commandes.developper(x, variables)[0]),
+                " ".join(c.argv[1:]))
+
+
+def irreversible(racine: Path, c: commandes.Commande, environnement: dict | None = None) -> str | None:
     """L'action irréversible ou externe qu'une commande simple lance
-    (politique, point 4), dite en clair ; `None` sinon."""
+    (politique, point 4), dite en clair ; `None` sinon. Un `git` se juge sur
+    son argv développé avec les variables connues (`environnement`, celles
+    du shell de l'agent) : `F=--force; git push $F …` est un push forcé
+    (B-0254)."""
     nom, argv = c.programme, c.argv
     if nom == "git":
+        argv = _argv_developpe(c, environnement, racine)
         sous, reste = commandes.git_sous_commande(argv)
         options, args = commandes.options_et_arguments(reste)
         if sous == "push":
@@ -1955,9 +2000,18 @@ def refus_bash(projet: config.Projet, cmd: str, cwd: str | None = None) -> str |
             return raison
         raise
     en_plus = projet.pol("irreversible", "bash", defaut=IRREVERSIBLES_BASH) or []
+    environnement = commandes.environnement_du_shell(os.environ, depart_de(racine, cwd))
     for c in simples:
-        action = irreversible(racine, c) or next(
+        action = irreversible(racine, c, environnement) or next(
             (" ".join(c.argv)[:120] for m in en_plus if re.search(m, " ".join(c.argv))), None)
+        illisible = None if action else push_illisible(racine, c, environnement)
+        if illisible:
+            return trad("`git push` dont le hook ne sait pas développer l'argument `{mot}` (une variable qu'il ne "
+                        "connaît pas, une substitution, les arguments d'une fonction) : il pourrait forcer le push ou "
+                        "viser la branche par défaut, et rien ne le rattraperait ensuite (politique, point 4). Écrire "
+                        "ses arguments en toutes lettres (la branche courante : `git branch --show-current`), ou "
+                        "affecter la variable plus tôt dans la même commande (`B=travail; git push origin \"$B\"`) "
+                        "(B-0254).", mot=illisible)
         if action:
             return trad("commande irréversible ou externe ({action}) : « {commande} » — validation humaine "
                         "requise (politique, point 4), et une demande validée ne la débloque pas : "

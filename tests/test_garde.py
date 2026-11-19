@@ -1293,6 +1293,36 @@ class TestGarde(unittest.TestCase):
             subprocess.run(["git", "checkout", "-q", "travail"], cwd=self.racine, check=True)
         self.assertEqual(self.decide(*B(f"{G} {P}")), "passe")
 
+    def test_un_push_se_juge_par_ses_arguments_developpes(self):
+        """B-0254 : `irreversible` lisait l'argv d'un `git push` tel qu'écrit ;
+        un push forcé dont l'option venait d'une variable ou des arguments
+        d'une fonction passait. L'argv se développe avec les variables
+        connues, et un argument qu'il ne sait pas développer est refusé,
+        comme ADR-0072 refuse un chemin inconnu."""
+        illisible = "dont le hook ne sait pas développer l'argument"
+        with self.environnement():
+            for cmd, raison in ((f"F=--force; {G} {P} $F origin travail", "push forcé"),
+                                (f'F="-f origin"; {G} {P} $F travail', "push forcé"),
+                                (f"B=main; {G} {P} origin \"$B\"", "branche par défaut"),
+                                (f"for b in main; do {G} {P} origin $b; done", "branche par défaut"),
+                                (f'{G} {P} "$X" origin travail', illisible),
+                                (f'f() {{ {G} {P} "$@"; }}; f --force origin travail', illisible),
+                                (f'{G} {P} origin "$(git branch --show-current)"', illisible),
+                                (f"{G} -C . {P} origin `echo main`", illisible)):
+                with self.subTest(cmd):
+                    raison_lue = hooks.refus_bash(self.projet, cmd) or ""
+                    self.assertIn(raison, raison_lue)
+                    self.assertIn("politique, point 4", raison_lue)
+                    self.assertEqual(self.decide(*B(cmd)), "refus")
+            for cmd in (f"{G} {P} origin travail", f'B=travail; {G} {P} origin "$B"', f"{G} {P} -u origin travail",
+                        f'{G} -C "$X" status', f'D=/tmp; {G} -C "$D" {P} origin travail',
+                        f'{G} commit -q -m "$X"', f"R=origin; {G} {P} $R travail"):
+                with self.subTest(cmd):
+                    self.assertIsNone(hooks.refus_bash(self.projet, cmd))
+        self.assertEqual(hooks.push_illisible(self.racine, commandes.analyser(f'{G} -C "$X" {P} "$Y" b')[0], {}),
+                         "$Y")
+        self.assertIsNone(hooks.push_illisible(self.racine, commandes.analyser(f'{G} -C "$X" {P} o b')[0], {}))
+
     def test_le_refus_d_une_action_externe_la_rend_a_l_humain(self):
         # D-0026 : une demande validée ne débloque pas l'action ; le refus le
         # dit, et demande la commande exacte pour l'humain.

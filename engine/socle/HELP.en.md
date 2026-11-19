@@ -356,7 +356,10 @@ or path filter guarding what it deletes (`find . -delete`, `find . -type
 f -delete`, `find . -delete -name '*.pyc'`, whose filter comes after the
 action); a directory next to the project, and a directory of the
 project, stay free (the orchestrator, at the root, removes a subagent's
-worktree).
+worktree). A `git push` is judged likewise on its expanded arguments:
+`F=--force; git push $F origin x` is a force push, and an argument it
+cannot expand (a variable it does not know, a substitution, a function's
+arguments) is refused: write the branch out in full.
 
 **What the agent's hook judges.** The agent's hook stops the mistakes of
 a cooperative agent before they take effect. It judges the shell forms an

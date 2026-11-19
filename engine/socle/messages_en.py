@@ -57,6 +57,16 @@ MESSAGES: dict[str, str] = {
         "push of all references",
     "push forcé (+)":
         "force push (+)",
+    "`git push` dont le hook ne sait pas développer l'argument `{mot}` (une variable qu'il ne connaît pas, une "
+    "substitution, les arguments d'une fonction) : il pourrait forcer le push ou viser la branche par défaut, et "
+    "rien ne le rattraperait ensuite (politique, point 4). Écrire ses arguments en toutes lettres (la branche "
+    "courante : `git branch --show-current`), ou affecter la variable plus tôt dans la même commande "
+    "(`B=travail; git push origin \"$B\"`) (B-0254).":
+        "`git push` whose argument `{mot}` the hook cannot expand (a variable it does not know, a substitution, a "
+        "function's arguments): it could force the push or target the default branch, and nothing would catch "
+        "it afterwards (policy, rule 4). Write its arguments out in full (the current branch: `git branch "
+        "--show-current`), or assign the variable earlier in the same command (`B=work; git push origin \"$B\"`) "
+        "(B-0254).",
     "push sur la branche par défaut ({protegee})":
         "push to the default branch ({protegee})",
     "action externe ou irréversible ({outil}) : validation humaine requise (politique, point 4), et une demande "
@@ -2795,6 +2805,10 @@ MESSAGES: dict[str, str] = {
         "options before `run` as after it",
     "push forcé ou vers la branche par défaut lancé par `uv run` ou `poetry run`":
         "force push or push to the default branch launched by `uv run` or `poetry run`",
+    "push forcé ou vers la branche par défaut dont l'option ou la branche vient d'une variable, des arguments "
+    "d'une fonction ou d'une substitution":
+        "force push or push to the default branch whose option or branch comes from a variable, a function's "
+        "arguments or a substitution",
     "dossier qui contient le projet supprimé, ou push forcé, dans le corps d'une fonction `function nom { …; }` "
     "écrite sans parenthèses, son corps sur la même ligne ou la suivante":
         "directory that contains the project deleted, or force push, in the body of a function `function name { …; }` "
@@ -2978,6 +2992,10 @@ MESSAGES: dict[str, str] = {
         "deleting a directory next to the project, a directory of the project, a `find` without a filter under a "
         "directory of the project and a `find` that filters what it deletes under the root pass the agent's hook "
         "(B-0208)",
+    "un push de la branche de travail, sa branche écrite en toutes lettres ou dans une variable affectée plus tôt, "
+    "et un `git` dont une option globale ne se développe pas, passent le hook de l'agent (B-0254)":
+        "a push of the working branch, its branch written out in full or in a variable assigned earlier, and a `git` "
+        "whose global option does not expand, pass the agent's hook (B-0254)",
     "les commandes ordinaires que lancent `uv run` et `poetry run`, et `uv sync`, passent le hook de l'agent "
     "(B-0248)":
         "the ordinary commands that `uv run` and `poetry run` launch, and `uv sync`, pass the agent's hook (B-0248)",

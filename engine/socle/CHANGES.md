@@ -7,6 +7,23 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-19-m — Le hook de l'agent juge un `git push` sur ses arguments développés, et refuse un argument qu'il ne sait pas développer
+
+Le hook de l'agent lisait l'argv d'un `git push` tel qu'il est écrit : un
+push forcé ou vers la branche par défaut passait quand son option ou sa
+branche venait d'une variable (`F=--force; git push $F origin x`,
+`B=main; git push origin "$B"`), des arguments d'une fonction (`f() { git
+push "$@"; }; f --force origin x`) ou d'une substitution. Il juge
+désormais l'argv d'un `git` développé avec les variables connues, comme
+il juge un chemin, et refuse un `git push` dont un argument ne se
+développe pas : une variable qu'il ne connaît pas, une substitution
+(`git push origin "$(git branch --show-current)"`), les arguments d'une
+fonction. Une branche écrite en toutes lettres, ou dans une variable
+affectée plus tôt dans la même commande, passe comme avant.
+
+À faire : si le hook refuse un push de la branche de travail, écrire sa
+branche en toutes lettres.
+
 ## 2026-11-19-l — Le hook de l'agent juge la commande que lancent `uv run` et `poetry run`
 
 Le hook de l'agent retire `uv run` et `poetry run`, avec leurs options

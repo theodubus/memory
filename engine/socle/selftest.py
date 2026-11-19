@@ -1720,6 +1720,16 @@ def _cas() -> list[Cas]:
     def _(a, c):
         return etage_outil(a, c, "Bash", {"command": "git -C . push -fu origin travail"})
 
+    @defaut("push-par-une-variable", "push forcé ou vers la branche par défaut dont l'option ou la branche vient "
+            "d'une variable, des arguments d'une fonction ou d'une substitution", "agent", "politique point 4")
+    def _(a, c):
+        # B-0254 : `irreversible` lisait l'argv d'un push tel qu'écrit. Il se
+        # développe ; un argument qui ne se développe pas est refusé.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "F=--force; git push $F origin travail", "B=main; git push origin \"$B\"",
+            "f() { git push \"$@\"; }; f --force origin travail", "git push \"$SOCLE_ESSAI_CIBLE\" origin travail",
+            "git push origin \"$(git branch --show-current)\"")])
+
     @defaut("push-refspec-defaut", "push vers la branche par défaut par une référence complète", "agent",
             "politique point 4")
     def _(a, c):
@@ -2544,6 +2554,16 @@ def _temoins() -> list[tuple[str, Callable]]:
                 or etage_outil(a, c, "Bash", {"command": f"rsync -a --delete build/ {ailleurs}/sauve"})
                 or etage_outil(a, c, "Bash", {"command": f"rsync -a --delete ./ {ailleurs}/sauve"})
                 or etage_outil(a, c, "Bash", {"command": "python3 -c \"import shutil; shutil.rmtree('build')\""}))
+
+    @temoin("un push de la branche de travail, sa branche écrite en toutes lettres ou dans une variable affectée "
+            "plus tôt, et un `git` dont une option globale ne se développe pas, passent le hook de l'agent (B-0254)")
+    def _(a, c):
+        # Le pendant sain de `push-par-une-variable` : seul l'argument du
+        # push qui ne se développe pas est refusé.
+        return (etage_outil(a, c, "Bash", {"command": "git push -u origin travail"})
+                or etage_outil(a, c, "Bash", {"command": "B=travail; git push origin \"$B\""})
+                or etage_outil(a, c, "Bash", {"command": "D=.; git -C \"$D\" push origin travail"})
+                or etage_outil(a, c, "Bash", {"command": "git -C \"$SOCLE_ESSAI_CIBLE\" status"}))
 
     @temoin("les commandes ordinaires que lancent `uv run` et `poetry run`, et `uv sync`, passent le hook de "
             "l'agent (B-0248)")
