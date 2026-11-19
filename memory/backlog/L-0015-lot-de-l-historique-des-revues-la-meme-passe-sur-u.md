@@ -11,3 +11,9 @@ l'historique des revues d'un lot et le dossier de `socle review`
 suivant se relit avec cet outil.
 
 Le 17 novembre, D-0129 y ajoute B-0277 et sa tâche T-0062 (J-2026-11-17-H) : le relecteur reçoit le chemin du dossier de `socle review`, que ce lot touche aussi.
+
+## Revues
+
+### Passe 1 — 2026-11-19
+
+Commits : d4d66ac..1772e68
