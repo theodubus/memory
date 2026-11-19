@@ -169,6 +169,11 @@ class Commande:
     # d'`analyser`, que `variables_de` reprend sans les redévelopper.
     connues: dict[str, str] | None = field(default=None, repr=False, compare=False)
     environnement: dict[str, str] | None = field(default=None, repr=False, compare=False)
+    # Le corps du heredoc que reçoit son entrée (`<<`, `<<-` sans ses
+    # tabulations de tête), tel qu'écrit, sans rien développer ; `None` sans
+    # heredoc, ou quand une redirection qui le suit lui donne une autre
+    # entrée (B-0229).
+    entree: str | None = None
 
     @property
     def programme(self) -> str:
@@ -183,16 +188,28 @@ class Commande:
 
 def sans_heredocs(texte: str) -> str:
     """Le texte sans le corps de ses heredocs : un document, pas une commande."""
-    res, attendus = [], []
+    return _heredocs(texte)[0]
+
+
+def _heredocs(texte: str) -> tuple[str, list[tuple[str, str]]]:
+    """Le texte sans le corps de ses heredocs, et ces corps dans l'ordre :
+    (le mot qui le ferme, le corps), les tabulations de tête de ses lignes
+    retirées pour `<<-`, comme le shell (B-0229)."""
+    res, attendus, corps = [], [], []
     for ligne in texte.split("\n"):
         if attendus:
-            fin, tabs = attendus[0]
+            fin, tabs, lignes = attendus[0]
             if (ligne.lstrip("\t") if tabs else ligne) == fin:
+                corps.append((fin, "\n".join(lignes)))
                 attendus.pop(0)
+            else:
+                lignes.append(ligne.lstrip("\t") if tabs else ligne)
             continue
         res.append(ligne)
-        attendus += [(m.group(3), m.group(1) == "-") for m in HEREDOC.finditer(ligne)]
-    return "\n".join(res)
+        attendus += [(m.group(3), m.group(1) == "-", []) for m in HEREDOC.finditer(ligne)]
+    # Un heredoc sans sa ligne de fin court jusqu'au bout du texte.
+    corps += [(fin, "\n".join(lignes)) for fin, _, lignes in attendus]
+    return "\n".join(res), corps
 
 
 def _fin_guillemets(texte: str, i: int) -> int:
@@ -413,7 +430,14 @@ def _preparer(texte: str) -> tuple[str, list[tuple[str, str | None]]]:
 def _jetons(texte: str) -> list[tuple[str, list[str]]]:
     """Les mots et les opérateurs de la commande, guillemets retirés, chacun
     avec les commandes que ses substitutions lancent."""
-    prepare, parts = _preparer(sans_heredocs(texte.replace("\\\n", " ")))
+    sans_corps, corps = _heredocs(texte.replace("\\\n", " "))
+    prepare, parts = _preparer(sans_corps)
+
+    def prendre(fin: str) -> str | None:
+        """Le premier corps qui reste du heredoc que ferme `fin`, retiré."""
+        k = next((k for k, (nom, _) in enumerate(corps) if nom == fin), None)
+        return None if k is None else corps.pop(k)[1]
+
     lex = shlex.shlex(prepare, posix=True, punctuation_chars=";&|()<>\n")
     lex.whitespace = " \t\r"
     lex.whitespace_split = True
@@ -437,6 +461,16 @@ def _jetons(texte: str) -> list[tuple[str, list[str]]]:
             # mot (`"function"`, `"}"`, B-0232) ; un autre mot la perd.
             nu = mot.replace(CITE, "")
             mot = CITE + nu if _operateur(nu) or nu in MOTS_STRUCTURE else nu
+        if res and res[-1][0] == "<<":
+            # Le mot qui ferme un heredoc (`-EOF` pour `<<-EOF`) : il prend le
+            # premier corps de ce nom qui reste, dans l'ordre du texte.
+            mot, nom = _Heredoc(mot), mot.lstrip(CITE)
+            mot.corps = prendre(nom) if any(fin == nom for fin, _ in corps) or nom[:1] != "-" else prendre(nom[1:])
+        else:
+            # Les heredocs d'une substitution ou d'une chaîne, que le découpage
+            # a vus aussi : leurs corps ne sont pas ceux des suivants.
+            for m in HEREDOC.finditer(mot.replace(CITE, "")):
+                prendre(m.group(3))
         res.append((mot, internes))
     return res
 
@@ -536,6 +570,12 @@ def _mots_de_la_liste(liste: list[str], variables) -> list[str] | None:
             separateurs = " \t\n" if separateurs is None or INCONNU in separateurs else separateurs
             res += [x for x in re.split("[" + re.escape(separateurs) + "]+", d) if x] if separateurs else [d] * bool(d)
     return res
+
+
+class _Heredoc(str):
+    """Le mot qui suit un `<<` : il porte le corps du heredoc qu'il ferme
+    (`corps`, `None` si le découpage ne l'a pas trouvé, B-0229)."""
+    corps: str | None
 
 
 class _Tour(str):
@@ -752,6 +792,8 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int],
     res: list[Commande] = []
     mots: list[str] = []
     redir: list[str] = []
+    # Le corps du heredoc que reçoit l'entrée de la commande en cours (B-0229).
+    entree: str | None = None
     jets = _jetons(texte)
     # Ce que retrouve la suite d'un pipeline (chaque élément tourne dans un
     # sous-shell), d'une tâche de fond (toute la liste `a && b &`) et d'un
@@ -988,7 +1030,7 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int],
         return None
 
     def clore():
-        nonlocal mots, redir
+        nonlocal mots, redir, entree
         avant = reserves()
         if avant is not None:
             # Le mot qui ferme une commande composée : ses redirections
@@ -996,7 +1038,7 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int],
             if redir:
                 res.append(Commande(mots, redir, avant.dossier, [], list(avant.vues), avant.lieu,
                                     avant.variables(env), env))
-            mots, redir = [], []
+            mots, redir, entree = [], [], None
             return
         # Les mots réservés cités ont servi : leur marque tombe pour l'`argv`
         # (`"function" f` lance la commande `function`, B-0232).
@@ -1008,7 +1050,7 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int],
             etat.vues.extend(_affectation(m) for m in mots)
         if argv or redir:
             c = Commande(argv, redir, etat.dossier, mots[:len(mots) - len(argv)], list(etat.vues), etat.lieu,
-                         etat.variables(env), env)
+                         etat.variables(env), env, entree)
             nom = c.programme
             if nom == "cd":
                 cible = (options_et_arguments(argv[1:])[1] or ["~"])[0]
@@ -1077,7 +1119,7 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int],
             etat.vues.extend(_affectations(argv))
             etat.vues.extend((m.group(1), None) for x in mots + redir for m in DEFAUT_AFFECTE.finditer(x))
             res.append(c)
-        mots, redir = [], []
+        mots, redir, entree = [], [], None
 
     i = 0
     while i < len(jets):
@@ -1115,6 +1157,10 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int],
             continue
         if "<" in j:
             sous_shells(internes)
+            if j in ("<", "<<", "<<<"):
+                # La dernière redirection de l'entrée l'emporte : un heredoc
+                # y donne son corps, un fichier ou une chaîne autre chose.
+                entree = getattr(suivant, "corps", None) if j == "<<" else None
             i += 2
             continue
         if j == "(" and suivant == ")" and not redir and (k := _definition(mots)) is not None:

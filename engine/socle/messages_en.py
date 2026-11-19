@@ -2803,6 +2803,10 @@ MESSAGES: dict[str, str] = {
     "avant `run` comme après":
         "directory that contains the project deleted by a command that `uv run` or `poetry run` launch, their "
         "options before `run` as after it",
+    "fichier protégé écrit, ou dossier qui contient le projet supprimé, par le script qu'un heredoc donne à python "
+    "(`python3 - <<'EOF'`)":
+        "protected file written, or directory that contains the project deleted, by the script a heredoc gives to "
+        "python (`python3 - <<'EOF'`)",
     "dossier qui contient le projet supprimé par la commande que lance une substitution entre guillemets, "
     "`\"$(…)\"` ou des accents graves, après un `cd` ou l'appel d'une fonction qui change de dossier":
         "directory that contains the project deleted by the command a quoted substitution launches, `\"$(…)\"` or "
@@ -3007,6 +3011,10 @@ MESSAGES: dict[str, str] = {
     "les commandes ordinaires que lancent `uv run` et `poetry run`, et `uv sync`, passent le hook de l'agent "
     "(B-0248)":
         "the ordinary commands that `uv run` and `poetry run` launch, and `uv sync`, pass the agent's hook (B-0248)",
+    "le script qu'un heredoc donne à python sans citer de fichier protégé ni supprimer le projet, et un heredoc "
+    "donné à un autre programme qui cite un fichier protégé, passent le hook de l'agent (B-0229)":
+        "the script a heredoc gives to python without citing a protected file or deleting the project, and a heredoc "
+        "given to another program that cites a protected file, pass the agent's hook (B-0229)",
     "l'orchestrateur, à la racine, retire le worktree d'un sous-agent par la fin de son chemin, et un sous-agent "
     "retire ou déplace un worktree voisin du sien, sans refus du hook de l'agent (B-0228)":
         "the orchestrator, at the root, removes a subagent's worktree by the end of its path, and a subagent removes "

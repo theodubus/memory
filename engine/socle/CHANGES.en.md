@@ -7,6 +7,26 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-19-p — The agent's hook judges the script a heredoc gives to python
+
+The agent's hook judges the body of a heredoc read on its input by a
+`python` or `python3` launched without `-c`, without `-m` and without a
+script, or with `-` as its script, as the script of a `python -c`:
+`python3 - <<'EOF'` whose body writes `.socle/policy.toml`, or passes
+`..` to `shutil.rmtree`, is refused. It passed: the body of a heredoc
+was only text to the splitting. The body is read as written, without
+expanding its variables, its leading tabs removed for `<<-`, and the
+last redirection of the input wins. A script that cites no protected
+file and deletes nothing of the project passes; a heredoc given to
+another program (`cat > notes.txt <<'EOF'`) and a script python reads
+from a file (`python3 script.py`, `python3 - < script.py`) are judged as
+before. Two neighbouring forms, which no agent writes in its work, are
+entered in the list of known forms the hook does not judge: the heredoc
+of a substitution, and the body of a heredoc given to an interpreter
+other than python.
+
+To do: nothing.
+
 ## 2026-11-19-o — The agent's hook refuses a former number repeated in a new line, even in a file that already cites it
 
 The agent's hook refuses the former number of a renumbered entry in a

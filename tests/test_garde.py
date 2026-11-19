@@ -785,6 +785,45 @@ class TestGarde(unittest.TestCase):
                 with self.subTest(cmd):
                     self.assertIsNone(hooks.refus_bash(self.projet, cmd))
 
+    def test_le_script_qu_un_heredoc_donne_a_python(self):
+        """B-0229 : le corps d'un heredoc n'était que du texte pour le
+        découpage ; le script que python lit sur son entrée, lancé sans
+        `-c`, `-m` ni script ou avec `-`, écrivait un fichier protégé ou
+        supprimait le projet sans que le hook le voie. Il se juge comme le
+        script d'un `python -c`, tel qu'écrit ; un script lu d'un fichier et un
+        heredoc donné à un autre programme ne changent pas de jugement."""
+        def heredoc(tete, corps, fin="EOF"):
+            return f"{tete}\n{corps}\n{fin}"
+
+        ecrit = "open('.socle/policy.toml', 'w').write('x')"
+        with self.environnement():
+            self.jugees([
+                (heredoc("python3 - <<'EOF'", ecrit), "protege"), (heredoc("python3 <<EOF", ecrit), "protege"),
+                (heredoc("python <<\"FIN\"", ecrit, "FIN"), "protege"),
+                (heredoc("python3 -I - arg <<'EOF'", ecrit), "protege"),
+                (heredoc("python3 -- - <<'EOF'", ecrit), "protege"),
+                (heredoc("uv run python3 - <<'EOF'", ecrit), "protege"),
+                (heredoc("python3 - <<'EOF'", "print(open('.socle/policy.toml').read())"), "protege"),
+                (heredoc("python3 - <<'EOF'", "open('.claude/settings.local.json', 'w').write('{}')"), "reglage"),
+                (heredoc("python3 - <<'EOF'", "import shutil\nshutil.rmtree('..')"), "supprime"),
+                (heredoc("python3 - <<-'EOF'", "\timport shutil\n\tshutil.rmtree('..')", "\tEOF"), "supprime"),
+                (heredoc("cd memory && python3 - <<'EOF'", "import shutil\nshutil.rmtree('../..')"), "supprime"),
+                (heredoc("cat <<'A'\nrien\nA\npython3 - <<'B'", "import shutil\nshutil.rmtree('..')", "B"),
+                 "supprime"),
+                (f"{G} commit -q -m \"$(cat <<'EOF'\nfix: x\nEOF\n)\" && python3 - <<'EOF'\n"
+                 "import shutil\nshutil.rmtree('..')\nEOF", "supprime"),
+                ("python3 - <<'EOF'\nimport shutil\nshutil.rmtree('..')", "supprime"),
+                (heredoc("python3 - <<'EOF'", "print(open('calc.py').read())"), None),
+                (heredoc("python3 - <<'EOF'", "import shutil\nshutil.rmtree('build')"), None),
+                (heredoc("python3 - <<'EOF'", "x = '$F'\nprint(x)"), None),
+                (heredoc("cat > /tmp/x.py <<'EOF'", ecrit), None), (heredoc("tee /tmp/x.py <<'EOF'", ecrit), None),
+                (heredoc("python3 /tmp/x.py <<'EOF'", ecrit), None),
+                (heredoc("python3 -c 'print(1)' <<'EOF'", ecrit), None),
+                (heredoc("python3 -m json.tool <<'EOF'", '{".socle/policy.toml": 1}'), None),
+                (heredoc("python3 - < /tmp/x.py <<'EOF'", ecrit), "protege"),
+                (heredoc("python3 - <<'EOF' < /tmp/x.py", ecrit), None), ("python3 - < /tmp/x.py", None)])
+        self.assertIn("cité par `python3 <<`", hooks.refus_bash(self.projet, heredoc("python3 - <<'EOF'", ecrit)) or "")
+
     def test_uv_run_et_poetry_run_se_retirent_comme_des_prefixes(self):
         """B-0248 : `uv run` et `poetry run` n'étaient pas des préfixes ; un
         push forcé ou la suppression du projet passaient derrière eux, et
@@ -1845,6 +1884,24 @@ class TestDecoupage(unittest.TestCase):
     def test_jetons_et_heredocs(self):
         self.assertEqual(commandes.jetons('echo "a b" > f'), ["echo", "a b", ">", "f"])
         self.assertEqual(commandes.sans_heredocs("cat <<'EOF'\ncorps\nEOF\nls"), "cat <<'EOF'\nls")
+
+    def test_le_corps_d_un_heredoc_va_a_l_entree_de_sa_commande(self):
+        """B-0229 : chaque commande porte le corps du heredoc que reçoit son
+        entrée, tel qu'écrit, ses tabulations de tête retirées pour `<<-` ;
+        une redirection de l'entrée qui le suit l'emporte, et le heredoc
+        d'une substitution n'est pas celui de la commande qui suit."""
+        def entrees(texte):
+            return [(c.argv[0], c.entree) for c in commandes.analyser(texte)]
+
+        self.assertEqual(entrees("python3 - <<'EOF'\na = '$X'\n  b\nEOF\necho y"),
+                         [("python3", "a = '$X'\n  b"), ("echo", None)])
+        self.assertEqual(entrees("cat <<A\na\nA\npython3 <<-B\n\tb\n\t\tc\n\tB"), [("cat", "a"), ("python3", "b\nc")])
+        self.assertEqual(entrees("cat <<A <<B\na\nA\nb\nB"), [("cat", "b")])
+        self.assertEqual(entrees("python3 <<-EOF\nx\nEOF"), [("python3", "x")])
+        self.assertEqual(entrees("python3 - <<EOF < f\nx\nEOF"), [("python3", None)])
+        self.assertEqual(entrees("python3 - <<EOF\nx"), [("python3", "x")])
+        self.assertEqual(entrees("x=\"$(cat <<'EOF'\nm\nEOF\n)\"; python3 - <<'EOF'\nc\nEOF")[-1], ("python3", "c"))
+        self.assertEqual(entrees("for i in 1 2; do python3 - <<E\nz\nE\ndone")[-2:], [("python3", "z")] * 2)
 
     def test_prefixes_et_bash_c(self):
         self.assertEqual([c.argv for c in commandes.analyser("x=1 sudo -u root env A=b rm f")], [["rm", "f"]])

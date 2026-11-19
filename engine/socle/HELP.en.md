@@ -342,12 +342,15 @@ contains it: write it out in full, or under a directory outside the
 project (`/tmp/…`). A command it cannot judge (more than 10,000 characters
 outside the bodies of its heredocs, more than 32 parentheses or braces
 open at once, a judgment that crashes or takes over 5 seconds) is refused
-if it can write: split it. It also refuses deleting a directory that
+if it can write: split it. The script of a `python3 -c`, and the one a
+heredoc gives to python (`python3 - <<'EOF'`), are judged by the protected
+files they cite written out in full; a script python reads from a file is
+not judged. It also refuses deleting a directory that
 contains the project (`rm -rf ..`, an `mv`, a `git clean` or a `find` that
 deletes from such a directory, the destination of an `rsync --delete`,
 the sources of an `rsync --remove-source-files`, the path of a `git
-worktree remove`, a `python3 -c` that passes it written out in full to
-`shutil.rmtree`), deleting the project itself by these other programs (a
+worktree remove`, a `python3 -c` or a heredoc's script that passes it
+written out in full to `shutil.rmtree`), deleting the project itself by these other programs (a
 subagent removing its own worktree, `git worktree remove .`, or by the
 end of its path, which git looks up first among its worktrees: `git
 worktree remove agent-x`), and
@@ -423,6 +426,10 @@ misreads in it, and the release note that enters it.
   the CI runs everything (2026-11-19-m).
 - A git subcommand that comes from a variable (`git $SUB --force …`):
   it is not judged (2026-11-19-m).
+- The heredoc of a substitution (`X=$(python3 - <<'EOF' … EOF)`): its
+  body is not judged (2026-11-19-p).
+- The body of a heredoc given to an interpreter other than python (`bash
+  <<'EOF'`, `sh -s <<'EOF'`): it is only text (2026-11-19-p).
 
 The hook does not model all of bash: a write to a protected file in a
 form one writes only to get around it (an `eval`, `IFS`, a path built on

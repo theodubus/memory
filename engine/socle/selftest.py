@@ -1860,6 +1860,16 @@ def _cas() -> list[Cas]:
             "uv --directory . run --frozen rm -rf ..", "poetry -C . run -n rm -rf ..",
             "uv run python -c \"import shutil; shutil.rmtree('..')\"")])
 
+    @defaut("heredoc-donne-a-python", "fichier protégé écrit, ou dossier qui contient le projet supprimé, par le "
+            "script qu'un heredoc donne à python (`python3 - <<'EOF'`)", "agent", "écriture protégée")
+    def _(a, c):
+        # B-0229 : le corps d'un heredoc n'était que du texte pour le
+        # découpage ; le script que python lit sur son entrée se juge comme
+        # celui d'un `python -c`.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "python3 - <<'EOF'\nopen('.socle/policy.toml', 'a').write('max_attempts = 99')\nEOF",
+            "python3 <<EOF\nimport shutil\nshutil.rmtree('..')\nEOF")])
+
     @defaut("substitution-entre-guillemets", "dossier qui contient le projet supprimé par la commande que lance une "
             "substitution entre guillemets, `\"$(…)\"` ou des accents graves, après un `cd` ou l'appel d'une fonction "
             "qui change de dossier", "agent", "suppression du projet")
@@ -2607,6 +2617,17 @@ def _temoins() -> list[tuple[str, Callable]]:
                 or etage_outil(a, c, "Bash", {"command": "uv run --with requests python -c \"print(open('calc.py')"
                                                          ".read())\""})
                 or etage_outil(a, c, "Bash", {"command": "uv run git push -u origin travail"}))
+
+    @temoin("le script qu'un heredoc donne à python sans citer de fichier protégé ni supprimer le projet, et un "
+            "heredoc donné à un autre programme qui cite un fichier protégé, passent le hook de l'agent (B-0229)")
+    def _(a, c):
+        # Le pendant sain de `heredoc-donne-a-python` : seul le script que
+        # python lit se juge, comme celui d'un `python -c`.
+        return (etage_outil(a, c, "Bash", {"command": "python3 - <<'EOF'\nprint(open('calc.py').read())\nEOF"})
+                or etage_outil(a, c, "Bash", {"command": "python3 - <<'EOF'\nimport shutil\n"
+                                                         "shutil.rmtree('build', ignore_errors=True)\nEOF"})
+                or etage_outil(a, c, "Bash", {"command": "cat > notes.txt <<'EOF'\n"
+                                                         "open('.socle/policy.toml', 'w')\nEOF"}))
 
     @temoin("l'orchestrateur, à la racine, retire le worktree d'un sous-agent par la fin de son chemin, et un "
             "sous-agent retire ou déplace un worktree voisin du sien, sans refus du hook de l'agent (B-0228)")

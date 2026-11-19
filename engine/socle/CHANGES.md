@@ -7,6 +7,26 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-19-p — Le hook de l'agent juge le script qu'un heredoc donne à python
+
+Le hook de l'agent juge le corps d'un heredoc que lit sur son entrée un
+`python` ou un `python3` lancé sans `-c`, sans `-m` et sans script, ou
+avec `-` pour script, comme le script d'un `python -c` : `python3 -
+<<'EOF'` dont le corps écrit `.socle/policy.toml`, ou passe `..` à
+`shutil.rmtree`, est refusé. Il passait : le corps d'un heredoc n'était
+que du texte pour le découpage. Le corps se lit tel qu'écrit, sans
+développer ses variables, ses tabulations de tête retirées pour `<<-`,
+et la dernière redirection de l'entrée l'emporte. Un script qui ne cite
+aucun fichier protégé et ne supprime rien du projet passe ; un heredoc
+donné à un autre programme (`cat > notes.txt <<'EOF'`) et un script que
+python lit d'un fichier (`python3 script.py`, `python3 - < script.py`)
+ne changent pas de jugement. Deux formes voisines, qu'aucun agent
+n'écrit dans son travail, s'inscrivent dans la liste des formes connues
+que le hook ne juge pas : le heredoc d'une substitution, et le corps
+d'un heredoc donné à un autre interpréteur que python.
+
+À faire : rien.
+
 ## 2026-11-19-o — Le hook de l'agent refuse un ancien numéro repris dans une ligne neuve, même d'un fichier qui le cite déjà
 
 Le hook de l'agent refuse l'ancien numéro d'une entrée renumérotée dans

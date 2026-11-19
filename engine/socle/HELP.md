@@ -347,12 +347,16 @@ projet ou le contient : l'écrire en toutes lettres, ou sous un dossier
 hors du projet (`/tmp/…`). Une commande qu'il ne sait pas juger (plus de
 10 000 caractères hors du corps de ses heredocs, plus de 32 parenthèses
 ou accolades ouvertes à la fois, un jugement qui plante ou passe
-5 secondes) est refusée si elle peut écrire : la découper. Il refuse
+5 secondes) est refusée si elle peut écrire : la découper. Le script d'un
+`python3 -c`, et celui qu'un heredoc donne à python (`python3 - <<'EOF'`),
+se jugent par les fichiers protégés qu'ils citent en toutes lettres ; un
+script que python lit d'un fichier ne se juge pas. Il refuse
 aussi la suppression d'un dossier qui contient le projet (`rm -rf ..`, un
 `mv`, un `git clean` ou un `find` qui supprime depuis un tel dossier, la
 destination d'un `rsync --delete`, les sources d'un `rsync
 --remove-source-files`, le chemin d'un `git worktree remove`, un `python3
--c` qui le passe en toutes lettres à `shutil.rmtree`), celle du projet
+-c` ou le script d'un heredoc qui le passent en toutes lettres à
+`shutil.rmtree`), celle du projet
 lui-même par ces autres programmes (un sous-agent qui retire son propre
 worktree, `git worktree remove .`, ou par la fin de son chemin, que git
 cherche d'abord parmi ses worktrees : `git worktree remove agent-x`), et
@@ -429,6 +433,10 @@ dit ce que le hook y lit mal, et la note de version qui l'inscrit.
   refus ; la CI exécute tout (2026-11-19-m).
 - Une sous-commande de git venue d'une variable (`git $SUB --force …`) :
   elle ne se juge pas (2026-11-19-m).
+- Le heredoc d'une substitution (`X=$(python3 - <<'EOF' … EOF)`) : son
+  corps ne se juge pas (2026-11-19-p).
+- Le corps d'un heredoc donné à un autre interpréteur que python (`bash
+  <<'EOF'`, `sh -s <<'EOF'`) : n'est que du texte (2026-11-19-p).
 
 Le hook ne modélise pas tout bash : une écriture d'un fichier protégé
 sous une forme qu'on n'écrit que pour contourner (un `eval`, `IFS`, un

@@ -545,12 +545,13 @@ def suppressions(c: commandes.Commande) -> list[tuple[str, bool]]:
     `find` qui supprime (`-delete`, ou un `-exec` qui supprime ce qu'il
     trouve) ; et, d'un autre programme (B-0228), ce que supprime un `rsync`
     (`_supprime_par_rsync`), le worktree que retire ou déplace `git
-    worktree` et ce qu'un `python -c` supprime en toutes lettres
-    (`_supprimes_par_python`). Chacun avec `True` quand supprimer la racine
-    du projet elle-même compte : un `find` qu'aucun filtre de nom ou de
-    chemin ne garde la viderait, et un autre programme ne l'écrit pas
-    (`ecrits`). Pour `rm`, `mv` et `git clean`, la racine est déjà un
-    dossier qui contient un fichier protégé."""
+    worktree` et ce qu'un `python -c`, ou le script qu'un heredoc donne à
+    python (B-0229), supprime en toutes lettres (`_supprimes_par_python`).
+    Chacun avec `True` quand supprimer la racine du projet elle-même
+    compte : un `find` qu'aucun filtre de nom ou de chemin ne garde la
+    viderait, et un autre programme ne l'écrit pas (`ecrits`). Pour `rm`,
+    `mv` et `git clean`, la racine est déjà un dossier qui contient un
+    fichier protégé."""
     nom, argv = c.programme, c.argv[1:]
     if nom == "rm":
         return [(x, False) for x in commandes.options_et_arguments(argv)[1] if x]
@@ -566,7 +567,7 @@ def suppressions(c: commandes.Commande) -> list[tuple[str, bool]]:
         return [(x, True) for x in _retire_par_git_worktree(c.argv)]
     script = _script_python(c)
     if script is not None:
-        return [(x, True) for x in _supprimes_par_python(script)]
+        return [(x, True) for x in _supprimes_par_python(script[0])]
     return []
 
 
@@ -1195,9 +1196,13 @@ def _supprime_par_find(projet: config.Projet, c: commandes.Commande, environneme
     return res
 
 
-def _script_python(c: commandes.Commande) -> str | None:
-    """Le script d'un `python -c`, derrière les options de python ; `None`
-    pour un autre programme ou une autre forme (B-0206)."""
+def _script_python(c: commandes.Commande) -> tuple[str, str] | None:
+    """Le script que python exécute et que le hook lit, avec la forme qui le
+    lui donne : celui d'un `python -c`, derrière les options de python
+    (B-0206), ou le corps du heredoc que lit sur son entrée un python lancé
+    sans `-c`, `-m` ni script, ou avec `-` pour script, tel qu'écrit
+    (B-0229). `None` pour un autre programme ou une autre forme : un script
+    lu d'un fichier, par son chemin ou par `<`, reste hors de portée."""
     if not re.fullmatch(r"python[\d.]*", c.programme):
         return None
     reste = c.argv[1:]
@@ -1209,12 +1214,16 @@ def _script_python(c: commandes.Commande) -> str | None:
         for k, lettre in enumerate(opt[1:], 1):
             colle = opt[k + 1:]
             if lettre == "c":
-                return colle or (reste[0] if reste else None)
+                script = colle or (reste[0] if reste else None)
+                return None if script is None else (script, f"{c.programme} -c")
             if lettre == "m":
                 return None
             if lettre in OPTIONS_PYTHON_A_VALEUR:
                 reste = reste if colle else reste[1:]
                 break
+    reste = reste[1:] if reste[:1] == ["--"] else reste
+    if c.entree is not None and reste[:1] in ([], ["-"]):
+        return c.entree, f"{c.programme} <<"
     return None
 
 
@@ -1263,8 +1272,14 @@ def _cites(projet: config.Projet, c: commandes.Commande, texte: str, qui: str, c
         rel = _relatif(racine, plein)
         if rel in (None, "", "."):
             continue
-        cible = _protege(projet, rel, cache)
-        if cible and (cible == rel or "/" in mot or mot.startswith(".")):
+        if "/" in mot or mot.startswith("."):
+            cible = _protege(projet, rel, cache)
+        else:
+            # Sans barre oblique ni point de tête, seul un fichier protégé
+            # nommé entier compte : les fichiers suivis ne se parcourent pas,
+            # pour chacun des mots d'un long heredoc (B-0229).
+            cible = rel if outils.correspond(rel, projet.chemins_proteges()) else None
+        if cible:
             res.append(("protege", trad("{chemin}, cité par `{qui}`, un écrivain que le hook ne sait pas lire : il "
                                         "peut l'écrire ; un fichier protégé se lit par `cat` ou par l'outil de "
                                         "lecture", chemin=cible, qui=qui)))
@@ -1278,11 +1293,12 @@ def _ecrivains_illisibles(projet: config.Projet, c: commandes.Commande, cmd: str
     """Les constats des écrivains que le hook ne lit pas comme les autres :
     `python -c` et `xargs` d'un écrivain, par les chemins protégés qu'ils
     citent (le script ; la commande entière, dont `xargs` lit l'entrée), et
-    `find` qui supprime ou écrit ce qu'il trouve (B-0206)."""
+    `find` qui supprime ou écrit ce qu'il trouve (B-0206) ; le script qu'un
+    heredoc donne à python, comme celui d'un `python -c` (B-0229)."""
     res: list[tuple[str, str]] = []
     script = _script_python(c)
     if script is not None:
-        res += _cites(projet, c, script, f"{c.programme} -c", cache)
+        res += _cites(projet, c, *script, cache)
     if _xargs_ecrit_ce_qu_il_lit(c):
         res += _cites(projet, c, cmd, f"xargs {c.programme}", cache)
     if c.programme == "find":
