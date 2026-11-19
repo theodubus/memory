@@ -7,6 +7,17 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-19-i — The review brief also gives the decisions and requests cited by those the batch writes
+
+The brief of `socle review` gave the decisions and requests the batch
+writes, then those its backlog entries cite. It now also gives, once
+each, those cited by the decisions the batch writes: the validated
+specification that a decision of the batch applies reaches the
+reviewer, who judged without it. The `socle-review` skill says so.
+
+To do: nothing; the `socle-review` skill is a protected copy, in the
+installer's request.
+
 ## 2026-11-19-h — A private file approved by an in-session decision is never given in the review brief, however its path is written
 
 The review brief judged the file approved by an in-session decision

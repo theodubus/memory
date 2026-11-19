@@ -403,6 +403,33 @@ class TestBarre(_Lot):
         self.assertIn("## Les décisions et les demandes qu'elles citent\n\n# ADR-0001", texte)
         self.assertEqual(revue.decisions_ecrites(self.projet, "HEAD"), [])
 
+    def test_le_dossier_donne_la_demande_que_cite_une_decision_que_le_lot_ecrit(self):
+        # B-0273 : la spécification validée que citait ADR-0084, écrite par le lot, manquait au relecteur.
+        (self.racine / "memory/requests").mkdir()
+        (self.racine / "memory/requests/D-0002-valider-la-specification.md").write_text(
+            "<!-- socle: couche=demandes zone=publique -->\n# D-0002 — Valider la spécification du doublement\n\n"
+            "> date : 2026-11-12\n\n## Question posée\n\nUne chaîne se double-t-elle ?\n\n"
+            "## Proposition\n\nNon : une chaîne n'est jamais doublée, un nombre l'est.\n", encoding="utf-8")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "la spécification posée")
+        git(self.racine, "push", "-q", "-u", "origin", "travail")
+        self.lot()
+        (self.racine / "memory/decisions/ADR-0002-le-modele-de-menace.md").write_text(
+            "<!-- socle: couche=decisions zone=publique -->\n# ADR-0002 — Appliquer D-0002\n\n"
+            "> statut : acceptée · date : 2026-11-13\n\n## Décision\n\nCe que D-0002 valide, selon ADR-0001.\n",
+            encoding="utf-8")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "la décision du lot")
+        texte = revue.dossier(self.projet)
+        cite = texte[texte.index("## Les décisions et les demandes qu'elles citent"):]
+        # La demande en entier, une fois ; ADR-0001, que citent le sujet et la décision, une fois aussi.
+        self.assertIn("# D-0002 — Valider la spécification du doublement", cite)
+        self.assertIn("Non : une chaîne n'est jamais doublée, un nombre l'est.", cite)
+        self.assertEqual(texte.count("# D-0002 — Valider la spécification du doublement"), 1)
+        self.assertEqual(texte.count("# ADR-0001 — Doubler les entrées"), 1)
+        # La décision que le lot écrit n'est pas redonnée parmi celles qu'elles citent.
+        self.assertNotIn("# ADR-0002", cite)
+
     def test_la_commande_donne_la_seconde_revue(self):
         import argparse
         import contextlib

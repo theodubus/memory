@@ -7,6 +7,18 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-19-i — Le dossier de la revue donne aussi les décisions et les demandes que citent celles que le lot écrit
+
+Le dossier de `socle review` donnait les décisions et les demandes que le
+lot écrit, puis celles que citent ses entrées du backlog. Il donne
+désormais aussi, une fois chacune, celles que citent les décisions que
+le lot écrit : la spécification validée qu'une décision du lot applique
+arrive au relecteur, qui jugeait sans elle. Le skill `socle-review` le
+dit.
+
+À faire : rien ; le skill `socle-review` est une copie protégée, dans la
+demande de l'installeur.
+
 ## 2026-11-19-h — Un fichier privé qu'approuve une décision de séance ne se donne jamais au dossier de la revue, quelle que soit l'écriture de son chemin
 
 Le dossier de la revue jugeait privé le fichier qu'approuve une décision

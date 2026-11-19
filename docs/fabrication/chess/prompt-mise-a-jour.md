@@ -70,6 +70,8 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 23. Le dossier de la revue ne donne jamais au relecteur un fichier de la mémoire privée qu'approuve une décision de séance, quelle que soit l'écriture de son chemin (./memory/private/… ou un détour en ..) : il le juge sur son chemin normalisé.
 
+24. Le dossier de la revue donne aussi au relecteur, une fois chacune, les décisions et les demandes que citent les décisions que le lot écrit : la spécification que j'ai validée et qu'une décision du lot applique lui arrive. Le skill socle-review, une copie protégée, le dit : il est dans la demande de l'installeur.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.

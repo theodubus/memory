@@ -455,7 +455,8 @@ def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFO
             depuis: str | None = None, avant: list | None = None, court: bool = False) -> str:
     """Ce que reçoit le relecteur, en plus du dépôt qu'il peut lire : la
     consigne, le diff du lot, les sujets du lot, les décisions qu'il écrit
-    et celles qu'ils citent (ADR-0073). Avec `depuis`, le dossier d'une seconde revue : le
+    et celles que citent ses sujets et ses décisions, une fois chacune
+    (ADR-0073). Avec `depuis`, le dossier d'une seconde revue : le
     diff depuis ce commit, les messages de ses commits, et toujours les
     sujets du lot entier, depuis `base`. Sans `base`, celle de
     `base_par_defaut` (ADR-0075). Le lot se mesure depuis l'ancêtre commun
@@ -539,7 +540,10 @@ def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFO
         lignes += ["", trad("## Les décisions et les demandes que le lot écrit"), ""]
         for e in ecrites:
             lignes += [e.texte.strip(), ""]
-    citees = decisions_citees(projet, servis)
+    # Celles que citent les entrées du lot, puis celles que citent les
+    # décisions qu'il écrit, chacune une fois : la spécification validée
+    # qu'une décision du lot applique est la barre du relecteur (B-0273).
+    citees = decisions_citees(projet, servis + ecrites)
     decisions = [e for e in citees if e.id not in {d.id for d in ecrites}]
     if decisions:
         lignes += ["", trad("## Les décisions et les demandes qu'elles citent"), ""]
