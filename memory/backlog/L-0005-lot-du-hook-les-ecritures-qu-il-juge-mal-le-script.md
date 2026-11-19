@@ -29,3 +29,9 @@ le titre, vont à L-0019.
 T-0086 faite, T-0008 et T-0071 en sortent (J-2026-11-19-R) : T-0008 est
 bloquée jusqu'à un refus nouveau d'une action validée qui bloque le
 travail, la condition de D-0026 ; T-0071 la suit.
+
+## Revues
+
+### Passe 1 — 2026-11-19
+
+Commits : 9fc95bf..8acc14e
