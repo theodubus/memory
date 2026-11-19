@@ -31,3 +31,24 @@ projet d'essai, une demande nouvelle à poser (J-2026-11-19-AL).
 ### Passe 1 — 2026-11-19
 
 Commits : 852b0ac4..a7e93a03
+
+- Bloquant : un argument inconnu d'un python -c qui lit ses arguments passe, et son test le range parmi les témoins sains
+- Bloquant : le prompt de mise à jour de chess dit encore refusé le push de la branche courante que T-0106 fait passer
+- Ouvre : B-0306, T-0108, B-0307, T-0109, B-0308
+
+Recul : passe unique, ses deux bloquants n'ont pas de passe d'avant. Le
+premier a la cause de ceux des lots du hook qui l'ont précédée : un
+jugement nouveau, celui des arguments d'un `python -c`, qui laisse de
+côté une forme voisine, la variable inconnue que tous les autres
+écrivains refusent ; s'y ajoute ce que D-0141 vise, un trou connu écrit
+parmi les témoins sains. Le second est un oubli de rédaction : un point
+écrit avant T-0106 dans un document cumulatif. Ce que le lot ouvre est
+de la nature de ce qu'il ferme : un filtre entre `find` et `xargs`
+(B-0306) prolonge T-0004, le script qu'un heredoc écrit dans un fichier
+(B-0308) prolonge T-0001, et le message d'un refus de trop (B-0307) suit
+T-0001. Les lots clos sur ces fichiers en ont ouvert de telles, L-0005
+(T-0106), L-0004 (B-0254) et L-0014 (T-0083), une ou deux par lot, que
+D-0128 borne aux formes qu'un agent écrit ; celui-ci en ouvre trois, sur
+cinq tâches. Les deux corrections tiennent en quelques lignes, la
+première avec son test qui échoue sans elle : pas de passe de plus, la
+clôture suit. Décision : continuer.
