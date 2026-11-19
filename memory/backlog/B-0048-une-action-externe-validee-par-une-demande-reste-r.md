@@ -21,4 +21,4 @@ sujet (un push refusé que l'humain juge légitime) et même réponse de Théo.
 
 ## Satisfait quand
 
-- [ ] une action externe que Théo a validée par une demande qui la nomme exactement (le dépôt, la branche) se fait par l'agent, une fois, au lieu de lui revenir ; sans cette demande, ou une seconde fois, elle reste refusée
+- [ ] si un refus nouveau d'une action validée bloque le travail, noté ici avec sa date (la condition de D-0026, J-2026-11-18-L), une action externe que Théo a validée par une demande qui la nomme exactement (le dépôt, la branche) se fait par l'agent, une fois, au lieu de lui revenir ; sans cette demande, ou une seconde fois, elle reste refusée ; sans refus nouveau, rien ne se redemande

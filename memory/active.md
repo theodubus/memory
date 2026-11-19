@@ -6,7 +6,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 ## En cours
 
 D-0138 (la copie de `socle-review`) attend Théo (J-2026-11-19-P) ;
-L-0005, découpé sur son coût.
+L-0005 en cours, coupé en deux (J-2026-11-19-Q).
 
 ## Consignes en cours
 
