@@ -28,6 +28,12 @@ from socle.messages import a_traduire, trad
 # Au-delà, le diff se tronque, et le dossier le dit : un relecteur qui reçoit
 # un diff énorme le survole.
 PLAFOND_DIFF = 60_000
+# Au-delà, le dossier ne donne que le chemin du fichier qu'approuve une
+# décision de séance, que le relecteur lit dans le dépôt (B-0286) : 20 000
+# octets, un tiers du plafond du diff, tiennent un document de proposition
+# entier (une page de spécification en fait souvent la moitié) sans noyer le
+# diff.
+PLAFOND_SUJET = 20_000
 
 
 def _amont(racine) -> str:
@@ -253,6 +259,46 @@ def decisions_citees(projet: config.Projet, sujets: list) -> list:
     return res
 
 
+def contenus_approuves(projet: config.Projet, decisions: list, plafond: int = PLAFOND_SUJET) -> list[str]:
+    """Ce qu'approuvent les décisions de séance de `decisions` qui désignent
+    un fichier, leur champ `sujet` (B-0286) : sous un titre qui nomme la
+    décision et le chemin, le texte du fichier dans l'arbre de travail, ou
+    son chemin seul au-delà de `plafond` octets, ou s'il n'existe pas. Un
+    fichier privé, ou hors du dépôt, ne se donne pas. Vide sans aucune."""
+    from socle import requests as demandes
+
+    voulues = [e.id for e in decisions if e.id.startswith("D-")]
+    if not voulues:
+        return []
+    par_id = {d.entree.id: d for d in demandes.toutes(projet.racine) if d.entree is not None}
+    racine = projet.racine.resolve()
+    lignes = []
+    for ident in voulues:
+        d = par_id.get(ident)
+        if d is None or not d.seance or not d.sujet or not d.sujet[0]:
+            continue
+        chemin, empreinte = d.sujet
+        fichier = (projet.racine / chemin).resolve()
+        if memoire.est_prive(chemin) or not fichier.is_relative_to(racine):
+            continue
+        lignes += [f"### {ident} — `{chemin}`" + (f" (@{empreinte})" if empreinte else ""), ""]
+        texte = fichier.read_text(encoding="utf-8", errors="replace") if fichier.is_file() else None
+        if texte is None:
+            lignes += [trad("(`{chemin}` : introuvable dans l'arbre de travail)", chemin=chemin), ""]
+        elif len(texte.encode("utf-8")) > plafond:
+            lignes += [trad("(`{chemin}` : {n} octets, au-delà de la borne du dossier ({borne}) : le lire dans le "
+                            "dépôt)", chemin=chemin, n=len(texte.encode("utf-8")), borne=plafond), ""]
+        else:
+            # Une clôture plus longue que toute suite d'accents graves du
+            # texte : un document Markdown garde ses propres blocs.
+            cloture = "`" * max(3, 1 + max((len(m) for m in re.findall(r"`+", texte)), default=0))
+            lignes += [cloture, texte.rstrip("\n"), cloture, ""]
+    if lignes:
+        lignes = [trad("## Ce qu'approuvent les décisions de séance qu'elles citent : ta barre, comme leurs "
+                       "critères"), ""] + lignes
+    return lignes
+
+
 def dossier_demande(projet: config.Projet, ident: str) -> str | None:
     """Ce que reçoit le lecteur de la relecture à froid d'une demande
     (ADR-0046) : la consigne, puis le texte de la demande, rien d'autre.
@@ -455,6 +501,7 @@ def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFO
     if court:
         lignes += ["", trad("## Les critères des tâches du lot : ta barre"), ""]
         lignes += _criteres_du_lot(servis) or [trad("(aucune entrée du backlog servie)")]
+        lignes += contenus_approuves(projet, decisions_citees(projet, servis))
         return "\n".join(lignes).rstrip() + "\n"
     if servis:
         lignes += ["", trad("## Les entrées du backlog que sert le lot : leurs critères sont ta barre"), ""]
@@ -468,11 +515,15 @@ def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFO
         lignes += ["", trad("## Les décisions et les demandes que le lot écrit"), ""]
         for e in ecrites:
             lignes += [e.texte.strip(), ""]
-    decisions = [e for e in decisions_citees(projet, servis) if e.id not in {d.id for d in ecrites}]
+    citees = decisions_citees(projet, servis)
+    decisions = [e for e in citees if e.id not in {d.id for d in ecrites}]
     if decisions:
         lignes += ["", trad("## Les décisions et les demandes qu'elles citent"), ""]
         for e in decisions:
             lignes += [e.texte.strip(), ""]
+    approuves = contenus_approuves(projet, citees)
+    if approuves:
+        lignes += [""] + approuves
     return "\n".join(lignes).rstrip() + "\n"
 
 

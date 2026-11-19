@@ -41,7 +41,8 @@ python3 .socle/socle review
    écrasement), les entrées dont le lot change le statut ou les
    critères, en entier, celles qu'il ouvre par leur titre, les
    décisions et les demandes que le lot écrit, puis celles que ses
-   entrées citent.
+   entrées citent, et le fichier qu'approuve une décision de séance
+   (son `sujet`).
    `--base <ref>` change la base ; pour une seconde revue, `--since
    <commit relu>` ne montre que le diff depuis la première, avec les
    messages des commits qui la corrigent. Une référence inconnue, ou un

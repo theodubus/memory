@@ -40,7 +40,8 @@ python3 .socle/socle review
    branch already contains the batch or stayed behind after a squash
    merge), the entries whose status or criteria the batch changes, in
    full, those it opens by their title, the decisions and requests the
-   batch writes, then those its entries cite.
+   batch writes, then those its entries cite, and the file an
+   in-session decision approves (its `about`).
    `--base <ref>` changes the base; for a second review, `--since
    <reviewed commit>` shows only the diff since the first, with the
    messages of the commits that fix it. An unknown reference, or a

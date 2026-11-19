@@ -7,6 +7,20 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-19-e — The review brief gives the file an in-session decision cited by the batch's tasks approves
+
+An in-session decision can designate what it approves, a file of the
+repository (`socle decision --about <path>`, its `about` field). When
+the entries a batch serves cite such a decision, `socle review` now
+gives the reviewer the text of that file, after the cited decisions; the
+short brief (`--short`) gives it too, after the criteria. Beyond 20,000
+bytes, the brief gives only its path, which the reviewer reads in the
+repository. A private file, or one outside the repository, is not
+given.
+
+To do: nothing; the `socle-review` skill is a protected copy, in the
+installer's request.
+
 ## 2026-11-19-d — `socle review --short`, the short brief of a small batch; the review skill says when to give it
 
 `socle review --short` gives the reviewer of a small batch a short

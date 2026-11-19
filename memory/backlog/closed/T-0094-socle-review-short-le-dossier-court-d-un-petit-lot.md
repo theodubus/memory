@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0094 — socle review --short : le dossier court d'un petit lot, le diff et les critères de ses tâches ; le skill socle-review dit quand le donner et quand garder le dossier complet
 
-> statut : ouvert · origine : D-0134 · besoin : B-0288 · lu : backlog@81ec91ab
+> statut : fait · origine : D-0134 · besoin : B-0288 · lu : backlog@81ec91ab · ref : J-2026-11-19-C
 
 Un commit : `socle review --short` rend un dossier court, la consigne
 de juger le diff et les fichiers touchés sans explorer au-delà, le diff

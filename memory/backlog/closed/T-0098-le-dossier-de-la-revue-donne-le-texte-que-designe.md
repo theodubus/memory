@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0098 — Le dossier de la revue donne le texte que désigne une décision de séance citée par les tâches du lot
 
-> statut : ouvert · origine : D-0134 · besoin : B-0286 · lu : backlog@8f3622bb
+> statut : fait · origine : D-0134 · besoin : B-0286 · lu : backlog@8f3622bb · ref : J-2026-11-19-C
 
 Un commit : `socle review` (`engine/socle/review.py`) ajoute au
 dossier, pour chaque décision de séance que citent les tâches du lot et
@@ -11,4 +11,4 @@ disent, une note de version.
 
 ## Fait quand
 
-- [ ] le dossier de la revue d'un lot dont une tâche cite une décision de séance qui désigne un fichier contient ce fichier, et un test le lit
+- [x] le dossier de la revue d'un lot dont une tâche cite une décision de séance qui désigne un fichier contient ce fichier, et un test le lit

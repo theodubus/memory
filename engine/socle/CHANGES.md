@@ -7,6 +7,20 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-19-e — Le dossier de la revue donne le fichier qu'approuve une décision de séance que citent les tâches du lot
+
+Une décision prise en séance peut désigner ce qu'elle approuve, un
+fichier du dépôt (`socle decision --about <chemin>`, son champ `sujet`).
+Quand les entrées que sert un lot citent une telle décision, `socle
+review` donne désormais au relecteur le texte de ce fichier, à la suite
+des décisions citées ; le dossier court (`--short`) le donne aussi,
+après les critères. Au-delà de 20 000 octets, le dossier ne donne que
+son chemin, que le relecteur lit dans le dépôt. Un fichier privé, ou
+hors du dépôt, ne se donne pas.
+
+À faire : rien ; le skill `socle-review` est une copie protégée, dans la
+demande de l'installeur.
+
 ## 2026-11-19-d — `socle review --short`, le dossier court d'un petit lot ; le skill de la revue dit quand le donner
 
 `socle review --short` donne au relecteur d'un petit lot un dossier

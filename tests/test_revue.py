@@ -451,6 +451,60 @@ class TestDossierCourt(_Lot):
         self.assertIn(".socle/policy.toml, garde/regle.py", str(refus.exception))
 
 
+class TestContenusApprouves(_Lot):
+    """B-0286 : une décision prise en séance qui approuve un contenu (un
+    format, un exemple) le désigne par son `sujet` ; le relecteur d'un lot
+    dont une tâche la cite reçoit ce contenu dans son dossier, et non le
+    seul résumé de la tâche."""
+
+    SEANCE = ("<!-- socle: couche=demandes zone=publique -->\n# D-0001 — La vue proposée : la valider ?\n\n"
+              "> date : 2026-11-16 · forme : séance · sujet : docs/vue.md\n\n## Question posée\n\n"
+              "La vue proposée : la valider ?\n")
+    VUE = "# La vue\n\n```text\nL-0001 ▶ 2/3\n```\n\nUne colonne par lot.\n"
+
+    def lot_qui_sert_la_seance(self, vue: str = VUE):
+        (self.racine / "docs").mkdir(exist_ok=True)
+        (self.racine / "docs/vue.md").write_text(vue)
+        (self.racine / "memory/requests").mkdir(exist_ok=True)
+        (self.racine / "memory/requests/D-0001-la-vue-proposee-la-valider.md").write_text(self.SEANCE)
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "la vue validée en séance")
+        git(self.racine, "push", "-q", "-u", "origin", "travail")
+        (self.racine / "calc.py").write_text("def double(x):\n    return x * 2\n")
+        (self.racine / "memory/backlog/B-0001-doubler.md").write_text(
+            SUJET.format(statut="fait").replace("origine : ADR-0001", "origine : D-0001"))
+        git(self.racine, "commit", "-qam", "le lot")
+
+    def test_le_dossier_donne_le_texte_que_designe_la_decision_de_seance(self):
+        self.lot_qui_sert_la_seance()
+        for court in (False, True):
+            texte = revue.dossier(self.projet, court=court)
+            self.assertIn("## Ce qu'approuvent les décisions de séance qu'elles citent", texte, court)
+            self.assertIn("### D-0001 — `docs/vue.md`", texte, court)
+            # Le document entier, ses propres blocs compris, dans une clôture
+            # plus longue que les siennes.
+            self.assertIn("````\n" + self.VUE.rstrip("\n") + "\n````", texte, court)
+
+    def test_au_dela_de_la_borne_le_chemin_seul(self):
+        self.lot_qui_sert_la_seance("x" * (revue.PLAFOND_SUJET + 1))
+        texte = revue.dossier(self.projet)
+        self.assertIn(f"(`docs/vue.md` : {revue.PLAFOND_SUJET + 1} octets, au-delà de la borne du dossier "
+                      f"({revue.PLAFOND_SUJET}) : le lire dans le dépôt)", texte)
+        self.assertNotIn("x" * 100, texte)
+
+    def test_une_decision_sans_sujet_ou_hors_seance_ne_donne_rien(self):
+        from socle import memory as memoire
+
+        self.lot_qui_sert_la_seance()
+        decision = (self.racine / "memory/requests/D-0001-la-vue-proposee-la-valider.md")
+        decision.write_text(self.SEANCE.replace(" · sujet : docs/vue.md", ""))
+        mem = memoire.Memoire.charger(self.racine)
+        self.assertEqual(revue.contenus_approuves(self.projet, [mem.entree("D-0001")]), [])
+        decision.write_text(self.SEANCE.replace(" · sujet : docs/vue.md", " · sujet : ../hors.md"))
+        self.assertEqual(revue.contenus_approuves(self.projet, [memoire.Memoire.charger(self.racine).entree("D-0001")]),
+                         [])
+
+
 class TestLeGuideNeRenvoiePasALAtelier(unittest.TestCase):
     """B-0268 : le guide citait `D-0098`, une demande de la mémoire de ce
     dépôt, qu'un projet équipé ne connaît pas (ADR-0033). Comme les notes de

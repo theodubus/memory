@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0096 — Le hook de fin de tour, sur des contrôles en échec, donne leur nom, la première ligne utile de chaque test en échec et la commande qui montre tout, au lieu du rapport entier
 
-> statut : ouvert · origine : D-0134 · besoin : B-0290 · lu : backlog@a1dcf63d
+> statut : fait · origine : D-0134 · besoin : B-0290 · lu : backlog@a1dcf63d · ref : J-2026-11-19-C
 
 Un commit : `stop` (`engine/socle/hooks.py`), quand des contrôles
 échouent, ne recopie plus le rapport entier : pour chaque contrôle en
