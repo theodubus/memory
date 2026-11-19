@@ -514,6 +514,25 @@ class TestLaRevue(unittest.TestCase):
             for phrase in phrases:
                 self.assertIn(phrase, texte, lg)
 
+    def test_le_relecteur_recoit_le_chemin_du_dossier_pas_son_texte(self):
+        """B-0277, T-0062 : le dossier n'entre pas dans la conversation qui
+        orchestre ; le relecteur reçoit son chemin, avec la consigne de le
+        lire en entier et de le suivre tel quel."""
+        attendus = {
+            "fr": ("dont le seul message est ce dossier",
+                   "la sortie de `socle review` s'écrit dans un fichier hors du dépôt, et le seul message du "
+                   "relecteur (sous Claude Code, un sous-agent, outil `Agent`) donne son chemin, avec la consigne "
+                   "de le lire en entier et de le suivre tel quel."),
+            "en": ("whose only message is this brief",
+                   "the output of `socle review` is written to a file outside the repository, and the reviewer's "
+                   "only message (under Claude Code, a subagent, the `Agent` tool) gives its path, with the "
+                   "instruction to read it in full and follow it as is."),
+        }
+        for lg, (ancien, phrase) in attendus.items():
+            texte = " ".join(self.texte(lg).split())
+            self.assertIn(phrase, texte, lg)
+            self.assertNotIn(ancien, texte, lg)
+
     def test_les_constats_le_dossier_et_le_modele_de_menace_d_une_seule_maniere(self):
         """D-0112, règle 1 : ce qui va au backlog, ce qui s'écarte ; ADR-0073 :
         le modèle de menace dans la section du sujet ou dans la décision

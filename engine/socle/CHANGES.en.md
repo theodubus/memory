@@ -7,6 +7,18 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-19-f — The reviewer of a review receives the brief's path, not its text
+
+The `socle-review` skill has the output of `socle review` written to a
+file outside the repository, and gives the reviewer only its path, with
+the instruction to read it in full and follow it as is. Copied as the
+reviewer's message, the brief stayed in the orchestrating conversation,
+reread at each step: tens of thousands of bytes per pass. What the
+reviewer reads does not change.
+
+To do: nothing; the `socle-review` skill is a protected copy, in the
+installer's request.
+
 ## 2026-11-19-e — The review brief gives the file an in-session decision cited by the batch's tasks approves
 
 An in-session decision can designate what it approves, a file of the

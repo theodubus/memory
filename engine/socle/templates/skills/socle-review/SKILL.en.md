@@ -36,20 +36,16 @@ python3 .socle/socle review
 
    It gives the instruction, the batch's diff since the common ancestor
    of HEAD and its base, the remote branch (otherwise the default
-   branch, or the common ancestor with it, and it says so, if the remote
-   branch already contains the batch or stayed behind after a squash
-   merge), the entries whose status or criteria the batch changes, in
-   full, those it opens by their title, the decisions and requests the
-   batch writes, then those its entries cite, and the file an
-   in-session decision approves (its `about`).
+   branch, and it says why), the entries whose status or criteria the
+   batch changes, in full, those it opens by their title, the decisions
+   and requests the batch writes, then those its entries cite, and the
+   file an in-session decision approves (its `about`).
    `--base <ref>` changes the base; for a second review, `--since
    <reviewed commit>` shows only the diff since the first, with the
-   messages of the commits that fix it. An unknown reference, or a
-   `--since` that is not an ancestor of HEAD, is refused. A batch
-   already pushed, even in part (in a cloud session, at the end of each
-   turn), or a branch that carries batches already reviewed, which the
-   brief's note points out: `--base <the commit the batch started
-   from>`. It writes the pass in the backlog's batch in progress, or the
+   messages of the commits that fix it. A batch already pushed, even in
+   part (in a cloud session, at the end of each turn), or a branch that
+   carries batches already reviewed, which the brief's note points out:
+   `--base <the commit the batch started from>`. It writes the pass in the backlog's batch in progress, or the
    one `--batch L-NNNN` names, and refuses a pass its history refuses
    (below).
    A small batch (under 150 lines of code and tests) that touches
@@ -58,10 +54,12 @@ python3 .socle/socle review
    judge without exploring beyond the files touched; any other batch,
    the full brief. `--short` refuses a batch that touches a path the
    policy protects or the guardrails declare.
-3. Hand it to a reviewer who does not have the conversation. Under Claude
-   Code: a subagent (the `Agent` tool), whose only message is this brief,
-   as is, with nothing added or removed. It receives explicitly
-   at launch (`model`) the most capable model available up to Opus, never
+3. Hand it to a reviewer who does not have the conversation. The brief
+   does not enter it, which would reread it at each step: the output of
+   `socle review` is written to a file outside the repository, and the
+   reviewer's only message (under Claude Code, a subagent, the `Agent`
+   tool) gives its path, with the instruction to read it in full and
+   follow it as is. It receives explicitly at launch (`model`) the most capable model available up to Opus, never
    a lesser one than the one that implemented the batch, whatever the
    session's, which the model rule of `socle-batch` may make cheaper, on
    the latest version of its family: if the alias designates an older
@@ -70,10 +68,8 @@ python3 .socle/socle review
    Fable, if available, only if the human asks for it. It also receives
    the project's instructions and can read the repository; the brief
    tells it to change nothing outside a temporary directory (`mktemp
-   -d`). The agent's hook does not stop every write of the reviewer in
-   the repository (it refuses the installer aimed at the project outside
-   its lock's mode, or through a variable). An agent without subagents
-   skips the review, and its recap says so.
+   -d`), which the agent's hook does not enforce. An agent without
+   subagents skips the review, and its recap says so.
 
 ## The findings
 

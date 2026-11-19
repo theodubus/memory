@@ -7,6 +7,18 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-19-f — Le relecteur d'une revue reçoit le chemin du dossier, pas son texte
+
+Le skill `socle-review` fait écrire la sortie de `socle review` dans un
+fichier hors du dépôt, et ne donner au relecteur que son chemin, avec la
+consigne de le lire en entier et de le suivre tel quel. Recopié comme
+message du relecteur, le dossier restait dans la conversation qui
+orchestre, relue à chaque pas : plusieurs dizaines de milliers d'octets
+par passe. Ce que le relecteur lit ne change pas.
+
+À faire : rien ; le skill `socle-review` est une copie protégée, dans la
+demande de l'installeur.
+
 ## 2026-11-19-e — Le dossier de la revue donne le fichier qu'approuve une décision de séance que citent les tâches du lot
 
 Une décision prise en séance peut désigner ce qu'elle approuve, un
