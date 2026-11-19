@@ -870,9 +870,33 @@ class TestGarde(unittest.TestCase):
                          (f"F=.socle/policy.toml; {ouvre} \"$F\"", "protege"),
                          (f"{ouvre} .claude/settings.local.json", "reglage"),
                          ("python3 - .socle/policy.toml <<'EOF'\nimport sys\nopen(sys.argv[1], 'w')\nEOF", "protege"),
-                         (f"{ouvre} calc.py", None), (f"{ouvre} /tmp/x build/y", None), (f"{ouvre} \"$X\"", None),
+                         (f"{ouvre} \"$X\"", "illisible"),
+                         (f"{ouvre} calc.py", None), (f"{ouvre} /tmp/x build/y", None),
                          ("python3 -c \"import sys; print(sys.argv)\" policy.toml", None),
                          ("python3 - /tmp/x <<'EOF'\nimport sys\nopen(sys.argv[1], 'w')\nEOF", None)])
+
+    def test_un_argument_que_le_hook_ne_developpe_pas_du_script_d_un_python_c(self):
+        """La revue de L-0019, passe 1 : un argument du script d'un `python
+        -c`, ou d'un heredoc donné à python, que le hook ne sait pas
+        développer passait, quand le script lit ses arguments
+        (`open(sys.argv[1], 'w')` sur `"$X"`). Il se juge comme le chemin
+        inconnu qu'écrirait le shell : refusé s'il peut tomber dans le
+        projet ; sous un dossier hors du projet, ou d'un script qui ne lit
+        pas ses arguments, il passe, comme une boucle sur des fichiers
+        connus."""
+        ouvre = "python3 -c \"import sys; open(sys.argv[1], 'w').write('x')\""
+        ailleurs = f"{self.racine}-ailleurs"
+        with self.environnement():
+            self.jugees([(f"{ouvre} $X", "illisible"), (f"{ouvre} calc.py \"$X\"", "illisible"),
+                         (f"{ouvre} build/$X", "illisible"), (f"{ouvre} \"$(ls .socle | head -1)\"", "illisible"),
+                         (f"{ouvre} {ailleurs}/$X/../../x", "illisible"),
+                         (f"cd .socle && {ouvre} \"$1\"", "illisible"),
+                         ("python3 - \"$X\" <<'EOF'\nimport sys\nopen(sys.argv[1], 'w')\nEOF", "illisible"),
+                         ("python3 -c \"import fileinput; [print(x) for x in fileinput.input(inplace=True)]\" "
+                          "\"$X\"", "illisible"),
+                         (f"{ouvre} {ailleurs}/$X", None), (f"{ouvre} \"{ailleurs}/x-$(date +%s).txt\"", None),
+                         ("python3 -c 'print(1)' \"$X\"", None), (f"X=notes.txt; {ouvre} \"$X\"", None),
+                         (f"for f in docs/*.md; do {ouvre} \"$f\"; done", None)])
 
     def test_uv_run_et_poetry_run_se_retirent_comme_des_prefixes(self):
         """B-0248 : `uv run` et `poetry run` n'étaient pas des préfixes ; un

@@ -63,12 +63,15 @@ its input, as the paths the script cites written out in full: `python3
 It passed: only the script was judged, and the path it reads in
 `sys.argv` escaped the hook, down to Claude Code's local settings file,
 which git does not track. An argument is expanded with the command's
-known variables (`F=…; python3 -c "…" "$F"`). A `python -c` whose
-arguments name no protected file passes, as does a script that does not
-read its arguments (neither `argv` nor `argparse`, `fileinput`, `optparse`
-or `getopt`), which does not touch them; the list of known forms the hook
-does not judge enters one that would read them otherwise (`runpy`, the
-`exec` of another script).
+known variables (`F=…; python3 -c "…" "$F"`); one it cannot expand
+(`"$X"`, `$(…)`) is judged as the unknown path the shell would write,
+refused if it can fall inside the project, free under a directory
+outside it (`/tmp/$X`). A `python -c` whose arguments name no protected
+file passes, as does a script that does not read its arguments (neither
+`argv` nor `argparse`, `fileinput`, `optparse` or `getopt`), which does
+not touch them; the list of known forms the hook does not judge enters
+one that would read them otherwise (`runpy`, the `exec` of another
+script).
 
 To do: nothing.
 

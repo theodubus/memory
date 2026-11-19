@@ -345,7 +345,8 @@ open at once, a judgment that crashes or takes over 5 seconds) is refused
 if it can write: split it. The script of a `python3 -c`, and the one a
 heredoc gives to python (`python3 - <<'EOF'`), are judged by the protected
 files they cite written out in full or that the arguments following them
-name, if they read them (`sys.argv`); a script python reads from a file is
+name, if they read them (`sys.argv`), and such an argument it cannot
+expand (`"$X"`), as a written path; a script python reads from a file is
 not judged. It also refuses deleting a directory that
 contains the project (`rm -rf ..`, an `mv`, a `git clean` or a `find` that
 deletes from such a directory, or gives its list to `xargs rm` (`find ..

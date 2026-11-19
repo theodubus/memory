@@ -350,8 +350,9 @@ ou accolades ouvertes à la fois, un jugement qui plante ou passe
 5 secondes) est refusée si elle peut écrire : la découper. Le script d'un
 `python3 -c`, et celui qu'un heredoc donne à python (`python3 - <<'EOF'`),
 se jugent par les fichiers protégés qu'ils citent en toutes lettres ou
-que nomment les arguments qui les suivent, s'ils les lisent (`sys.argv`) ;
-un script que python lit d'un fichier ne se juge pas. Il refuse
+que nomment les arguments qui les suivent, s'ils les lisent (`sys.argv`),
+et un tel argument qu'il ne sait pas développer (`"$X"`), comme un chemin
+écrit ; un script que python lit d'un fichier ne se juge pas. Il refuse
 aussi la suppression d'un dossier qui contient le projet (`rm -rf ..`, un
 `mv`, un `git clean` ou un `find` qui supprime depuis un tel dossier, ou
 qui en donne la liste à `xargs rm` (`find .. -maxdepth 0 | xargs rm

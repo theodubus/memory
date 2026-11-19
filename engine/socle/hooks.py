@@ -1408,13 +1408,13 @@ def _cites(projet: config.Projet, c: commandes.Commande, texte: str, qui: str, c
 
 
 def _ecrivains_illisibles(projet: config.Projet, c: commandes.Commande, cmd: str, environnement: dict,
-                          cache: dict) -> list[tuple[str, str]]:
+                          cache: dict, depart: str, elargi: bool) -> list[tuple[str, str]]:
     """Les constats des écrivains que le hook ne lit pas comme les autres :
     `python -c` et `xargs` d'un écrivain, par les chemins protégés qu'ils
     citent (le script et ses arguments, B-0230 ; la commande entière, dont
     `xargs` lit l'entrée), et `find` qui supprime ou écrit ce qu'il trouve
     (B-0206) ; le script qu'un heredoc donne à python, comme celui d'un
-    `python -c` (B-0229)."""
+    `python -c` (B-0229). `depart` et `elargi`, comme `_juger_chemin`."""
     res: list[tuple[str, str]] = []
     script = _script_python(c)
     if script is not None:
@@ -1426,7 +1426,15 @@ def _ecrivains_illisibles(projet: config.Projet, c: commandes.Commande, cmd: str
         if arguments and LIT_SES_ARGUMENTS.search(texte):
             variables = commandes.variables_de(c, environnement) if any(re.search(r"[$`]", a) for a in arguments) \
                 else {}
-            res += _cites(projet, c, "\n".join(commandes.developper(a, variables)[0] for a in arguments), qui, cache)
+            developpes = [(a, *commandes.developper(a, variables)) for a in arguments]
+            res += _cites(projet, c, "\n".join(d for _, d, _ in developpes), qui, cache)
+            # Un argument que le hook ne sait pas développer peut nommer tout
+            # chemin : il se juge comme le chemin inconnu qu'écrirait le
+            # shell, refusé s'il peut tomber dans le projet (la revue de
+            # L-0019, passe 1).
+            for a, d, inconnus in developpes:
+                if commandes.INCONNU in d:
+                    res += _juger_chemin(projet, c, a, d, inconnus, cache, depart, elargi)
     if _xargs_ecrit_ce_qu_il_lit(c):
         res += _cites(projet, c, cmd, f"xargs {c.programme}", cache)
     if c.programme == "find":
@@ -1571,7 +1579,7 @@ def ecritures_jugees(projet: config.Projet, cmd: str, cwd: str | None = None,
     res: list[tuple[str, str]] = []
     for c in simples:
         _dans_le_delai(limite)
-        res += _ecrivains_illisibles(projet, c, cmd, environnement, cache)
+        res += _ecrivains_illisibles(projet, c, cmd, environnement, cache, depart, elargi)
         mots = _ecrits_hors_remise(projet, c, remise_en_etat(projet, c, cmd, depart), depart)
         supprimes = dict(suppressions(c))
         suffixes = _nommes_par_leur_suffixe(c)

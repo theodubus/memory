@@ -1916,6 +1916,17 @@ def _cas() -> list[Cas]:
             "F=.socle/policy.toml; python3 -c \"import sys; open(sys.argv[1], 'a')\" \"$F\"",
             "python3 - .socle/policy.toml <<'EOF'\nimport sys\nopen(sys.argv[1], 'a')\nEOF")])
 
+    @defaut("argument-illisible-de-python-c", "argument que le hook ne sait pas développer, passé au script d'un "
+            "`python -c` ou d'un heredoc donné à python qui lit ses arguments, dans le projet", "agent",
+            "écriture illisible")
+    def _(a, c):
+        # La revue de L-0019, passe 1 : l'argument inconnu ne se jugeait pas,
+        # et le script l'écrivait.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "python3 -c \"import sys; open(sys.argv[1], 'a').write('max_attempts = 99')\" \"$SOCLE_ESSAI_CIBLE\"",
+            "cd .socle && python3 -c \"import sys; open(sys.argv[1], 'a')\" \"$(ls | head -1)\"",
+            "python3 - \"$SOCLE_ESSAI_CIBLE\" <<'EOF'\nimport sys\nopen(sys.argv[1], 'a')\nEOF")])
+
     @defaut("substitution-entre-guillemets","dossier qui contient le projet supprimé par la commande que lance une "
             "substitution entre guillemets, `\"$(…)\"` ou des accents graves, après un `cd` ou l'appel d'une fonction "
             "qui change de dossier", "agent", "suppression du projet")
@@ -2711,6 +2722,17 @@ def _temoins() -> list[tuple[str, Callable]]:
                                                      "calc.py"})
                 or etage_outil(a, c, "Bash", {"command": "python3 -c \"import sys; open(sys.argv[1], 'w')\" "
                                                          "notes.txt /tmp/x"}))
+
+    @temoin("un `python -c` dont l'argument que le hook ne sait pas développer tombe hors du projet, ou dont le "
+            "script ne lit pas ses arguments, et une boucle sur des fichiers connus passent le hook de l'agent")
+    def _(a, c):
+        # Le pendant sain de `argument-illisible-de-python-c` : seul l'argument
+        # inconnu qui peut tomber dans le projet est refusé.
+        ailleurs = a.dossier.parent / (a.dossier.name + "-ailleurs")
+        ouvre = "python3 -c \"import sys; open(sys.argv[1], 'w').write('x')\""
+        return (etage_outil(a, c, "Bash", {"command": f"{ouvre} {ailleurs}/$SOCLE_ESSAI_CIBLE"})
+                or etage_outil(a, c, "Bash", {"command": "python3 -c 'print(1)' \"$SOCLE_ESSAI_CIBLE\""})
+                or etage_outil(a, c, "Bash", {"command": f"for f in docs/*.md; do {ouvre} \"$f\"; done"}))
 
     @temoin("l'orchestrateur, à la racine, retire le worktree d'un sous-agent par la fin de son chemin, et un "
             "sous-agent retire ou déplace un worktree voisin du sien, sans refus du hook de l'agent (B-0228)")

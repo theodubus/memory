@@ -2820,6 +2820,10 @@ MESSAGES: dict[str, str] = {
     "fichier protégé passé en argument au script d'un `python -c`, ou d'un script qu'un heredoc donne à python":
         "protected file passed as an argument to the script of a `python -c`, or of a script a heredoc gives to "
         "python",
+    "argument que le hook ne sait pas développer, passé au script d'un `python -c` ou d'un heredoc donné à python "
+    "qui lit ses arguments, dans le projet":
+        "argument the hook cannot expand, passed to the script of a `python -c` or of a heredoc given to python "
+        "that reads its arguments, in the project",
     "dossier qui contient le projet supprimé par la commande que lance une substitution entre guillemets, "
     "`\"$(…)\"` ou des accents graves, après un `cd` ou l'appel d'une fonction qui change de dossier":
         "directory that contains the project deleted by the command a quoted substitution launches, `\"$(…)\"` or "
@@ -3046,6 +3050,10 @@ MESSAGES: dict[str, str] = {
         "given to another program that cites a protected file, pass the agent's hook (B-0229)",
     "un `python -c` dont les arguments ne nomment aucun fichier protégé passe le hook de l'agent (B-0230)":
         "a `python -c` whose arguments name no protected file passes the agent's hook (B-0230)",
+    "un `python -c` dont l'argument que le hook ne sait pas développer tombe hors du projet, ou dont le script ne "
+    "lit pas ses arguments, et une boucle sur des fichiers connus passent le hook de l'agent":
+        "a `python -c` whose argument the hook cannot expand falls outside the project, or whose script does not "
+        "read its arguments, and a loop over known files pass the agent's hook",
     "l'orchestrateur, à la racine, retire le worktree d'un sous-agent par la fin de son chemin, et un sous-agent "
     "retire ou déplace un worktree voisin du sien, sans refus du hook de l'agent (B-0228)":
         "the orchestrator, at the root, removes a subagent's worktree by the end of its path, and a subagent removes "

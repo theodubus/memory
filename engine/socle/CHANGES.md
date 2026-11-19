@@ -64,12 +64,15 @@ entrée, comme les chemins que le script cite en toutes lettres :
 refusé. Il passait : seul le script se jugeait, et le chemin qu'il lit
 dans `sys.argv` échappait au hook, jusqu'au fichier de réglages local de
 Claude Code, que git ne suit pas. Un argument se développe avec les
-variables connues de la commande (`F=…; python3 -c "…" "$F"`). Un
-`python -c` dont les arguments ne nomment aucun fichier protégé passe,
-comme un script qui ne lit pas ses arguments (ni `argv`, ni `argparse`,
-`fileinput`, `optparse` ou `getopt`), qui ne les touche pas ; la liste
-des formes connues que le hook ne juge pas inscrit celui qui les lirait
-autrement (`runpy`, l'`exec` d'un autre script).
+variables connues de la commande (`F=…; python3 -c "…" "$F"`) ; celui
+qu'il ne sait pas développer (`"$X"`, `$(…)`) se juge comme le chemin
+inconnu qu'écrirait le shell, refusé s'il peut tomber dans le projet,
+libre sous un dossier qui en est hors (`/tmp/$X`). Un `python -c` dont
+les arguments ne nomment aucun fichier protégé passe, comme un script
+qui ne lit pas ses arguments (ni `argv`, ni `argparse`, `fileinput`,
+`optparse` ou `getopt`), qui ne les touche pas ; la liste des formes
+connues que le hook ne juge pas inscrit celui qui les lirait autrement
+(`runpy`, l'`exec` d'un autre script).
 
 À faire : rien.
 
