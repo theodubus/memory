@@ -415,6 +415,11 @@ misreads in it, and the release note that enters it.
   (2026-11-16-a).
 - `uv run --directory` and `poetry -C`: the command they launch is read
   in the current directory, not in the one they name (2026-11-19-l).
+- The option that skips the hooks passed through a variable
+  (`N=--no-verify; git push $N`): it is not expanded for this refusal;
+  the CI runs everything (2026-11-19-m).
+- A git subcommand that comes from a variable (`git $SUB --force …`):
+  it is not judged (2026-11-19-m).
 
 The hook does not model all of bash: a write to a protected file in a
 form one writes only to get around it (an `eval`, `IFS`, a path built on

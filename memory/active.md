@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-D-0138 validée, sa copie posée (J-2026-11-19-S) ; L-0005 en cours,
-coupé en deux (J-2026-11-19-Q).
+L-0005 (J-2026-11-19-Q) : T-0007 et T-0083 attendent D-0139,
+leurs correctifs hors du dépôt (J-2026-11-19-V).
 
 ## Consignes en cours
 

@@ -21,6 +21,11 @@ it does not know, a substitution (`git push origin "$(git branch
 full, or in a variable assigned earlier in the same command, passes as
 before.
 
+Two neighbouring forms, which no agent writes, join the list of known
+forms the hook does not judge: the option that skips the hooks passed
+through a variable, which the CI catches, and a git subcommand that
+comes from a variable.
+
 To do: if the hook refuses a push of the working branch, write its
 branch out in full.
 

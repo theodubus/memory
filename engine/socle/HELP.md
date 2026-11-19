@@ -421,6 +421,11 @@ dit ce que le hook y lit mal, et la note de version qui l'inscrit.
 - `coproc` : ni mot réservé ni préfixe pour le hook (2026-11-16-a).
 - `uv run --directory` et `poetry -C` : la commande qu'ils lancent se lit
   dans le dossier courant, non dans celui qu'ils nomment (2026-11-19-l).
+- L'option qui saute les hooks passée par une variable
+  (`N=--no-verify; git push $N`) : elle ne se développe pas pour ce
+  refus ; la CI exécute tout (2026-11-19-m).
+- Une sous-commande de git venue d'une variable (`git $SUB --force …`) :
+  elle ne se juge pas (2026-11-19-m).
 
 Le hook ne modélise pas tout bash : une écriture d'un fichier protégé
 sous une forme qu'on n'écrit que pour contourner (un `eval`, `IFS`, un

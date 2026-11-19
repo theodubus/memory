@@ -21,6 +21,11 @@ développe pas : une variable qu'il ne connaît pas, une substitution
 fonction. Une branche écrite en toutes lettres, ou dans une variable
 affectée plus tôt dans la même commande, passe comme avant.
 
+Deux formes voisines, qu'aucun agent n'écrit, s'inscrivent dans la liste
+des formes connues que le hook ne juge pas : l'option qui saute les hooks
+passée par une variable, que la CI rattrape, et une sous-commande de git
+venue d'une variable.
+
 À faire : si le hook refuse un push de la branche de travail, écrire sa
 branche en toutes lettres.
 
