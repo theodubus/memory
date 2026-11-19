@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0005 (J-2026-11-19-Q) : ses cinq tâches faites (J-2026-11-19-X) ;
-restent la revue et la livraison.
+L-0005 : ses cinq tâches faites ; restent la revue, `--base 9fc95bf`,
+la clôture et la livraison (J-2026-11-19-Y).
 
 ## Consignes en cours
 
