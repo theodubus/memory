@@ -378,6 +378,17 @@ CONSIGNE_REGARD = a_traduire(
     "suivi de celle-ci, ou une cause nouvelle, « cause nouvelle ».")
 
 
+# Une case d'une tâche qui livre une demande, un relevé ou une entrée de
+# la mémoire se juge par ce qu'elle produit (ADR-0088, T-0087), dans le
+# dossier complet comme dans le dossier court.
+CONSIGNE_CASES = a_traduire(
+    "Une case d'une tâche se vérifie par un test, sauf celle dont le livrable est une demande posée, un relevé "
+    "écrit (le compte rendu d'une mesure ou d'un essai) ou une entrée de la mémoire récrite : elle se vérifie par "
+    "ce qu'elle produit, que la case nomme (la demande, et la réponse de l'humain consignée au journal une fois "
+    "donnée ; le fichier du relevé ; ce qu'en montre `socle show` ou `socle roadmap`). Juge alors que ce produit "
+    "existe et dit ce que la case promet ; l'absence d'un test n'y est pas un constat.")
+
+
 # Le dossier court d'un petit lot (B-0288) : son relecteur juge le diff et
 # les fichiers qu'il touche, contre les critères des tâches du lot, sans
 # explorer au-delà. Le skill `socle-review` dit quand le donner.
@@ -463,10 +474,10 @@ def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFO
                 "dossier court, `socle review` sans `--short` donne le dossier complet",
                 chemins=", ".join(touches[:PLAFOND_LISTE]) + (" …" if len(touches) > PLAFOND_LISTE else "")))
     if court:
-        lignes = [trad("# Revue adversariale d'un petit lot, le dossier court"), "", trad(CONSIGNE_COURTE), "",
+        lignes = [trad("# Revue adversariale d'un petit lot, le dossier court"), "", trad(CONSIGNE_COURTE), "", trad(CONSIGNE_CASES), "",
                   trad(CONSIGNE_CLASSES), ""]
     else:
-        lignes = [trad("# Revue adversariale d'un lot"), "", trad(CONSIGNE_ROLE), "", trad(CONSIGNE_BARRE), "",
+        lignes = [trad("# Revue adversariale d'un lot"), "", trad(CONSIGNE_ROLE), "", trad(CONSIGNE_BARRE), "", trad(CONSIGNE_CASES), "",
                   trad(CONSIGNE_CLASSES), ""]
     if not base:
         lignes.append(trad("(aucune base connue : ni branche distante, ni branche par défaut ; rien à relire)"))

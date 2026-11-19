@@ -7,6 +7,23 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-19-g — Une case d'une tâche qui livre une demande, un relevé ou une entrée de la mémoire se vérifie par ce qu'elle produit
+
+Le format de la mémoire disait que le « Fait quand » d'une tâche se
+vérifie par des tests, sauf une action que seul l'humain peut faire. Il
+dit désormais, case par case, une autre exception : une case dont le
+livrable est une demande posée, un relevé écrit (le compte rendu d'une
+mesure ou d'un essai) ou une entrée de la mémoire récrite se vérifie par
+ce qu'elle produit, que la case nomme : la demande et la réponse de
+l'humain consignée au journal, le fichier du relevé, ce qu'en montre
+`socle show` ou `socle roadmap`. Tout autre livrable garde son test. La
+consigne du relecteur, dans le dossier complet comme dans le dossier
+court, dit de juger une telle case par ce produit, et non par l'absence
+d'un test.
+
+À faire : rien ; une tâche de cette forme peut nommer ce produit dans sa
+case.
+
 ## 2026-11-19-f — Le relecteur d'une revue reçoit le chemin du dossier, pas son texte
 
 Le skill `socle-review` fait écrire la sortie de `socle review` dans un

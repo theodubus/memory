@@ -158,7 +158,12 @@ Une entrée du backlog a l'une de quatre formes, que son préfixe dit
 - une **tâche**, `T-` : un livrable, en principe un commit, qui nomme le
   besoin qu'elle sert (`besoin : B-0012`) ; sa section `## Fait quand` se
   vérifie par des tests, ou, pour une action que seul l'humain peut faire,
-  par ce qu'elle produit ;
+  par ce qu'elle produit ; une case dont le livrable est une demande
+  posée, un relevé écrit (le compte rendu d'une mesure ou d'un essai) ou
+  une entrée de la mémoire récrite se vérifie aussi par ce qu'elle
+  produit, que la case nomme : la demande, et la réponse de l'humain
+  consignée au journal ; le fichier du relevé ; ce qu'en montre `socle
+  show` ou `socle roadmap` ; tout autre livrable garde son test ;
 - un **lot**, `L-` : des tâches qui touchent les mêmes fichiers, le même
   garde-fou ou les mêmes tests, menées et relues ensemble ; son corps dit
   ce qui les réunit ; une tâche est dans un lot au plus ;

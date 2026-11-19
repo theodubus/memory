@@ -7,6 +7,21 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-19-g — A box of a task that delivers a request, a report or a memory entry is checked by what it produces
+
+The memory format said that a task's “Done when” is checked by tests,
+except an action only the human can do. It now states, box by box,
+another exception: a box whose deliverable is a request posed, a report
+written (the account of a measurement or a trial) or a memory entry
+rewritten is checked by what it produces, which the box names: the
+request and the human's answer recorded in the journal, the report's
+file, what `socle show` or `socle roadmap` shows of it. Any other
+deliverable keeps its test. The reviewer's instruction, in the full
+brief as in the short one, says to judge such a box by that product,
+not by the lack of a test.
+
+To do: nothing; a task of this form may name that product in its box.
+
 ## 2026-11-19-f — The reviewer of a review receives the brief's path, not its text
 
 The `socle-review` skill has the output of `socle review` written to a

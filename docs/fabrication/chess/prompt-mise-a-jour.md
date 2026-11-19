@@ -66,6 +66,8 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 21. Le relecteur d'une revue reçoit le chemin du dossier, plus son texte : le skill socle-review fait écrire la sortie de python3 .socle/socle review dans un fichier hors du dépôt, et ne donner au relecteur que ce chemin, avec la consigne de le lire en entier et de le suivre tel quel ; le dossier ne reste plus dans ta conversation, relue à chaque pas. Le skill socle-review, une copie protégée, change : il est dans la demande de l'installeur.
 
+22. Le format de la mémoire admet, case par case, une autre exception à la règle qui veut qu'une case du « Fait quand » d'une tâche se vérifie par un test : une case dont le livrable est une demande posée, un relevé écrit (le compte rendu d'une mesure ou d'un essai) ou une entrée de la mémoire récrite se vérifie par ce qu'elle produit, que la case nomme (la demande et ma réponse consignée au journal, le fichier du relevé, ce qu'en montre socle show ou socle roadmap) ; tout autre livrable garde son test. La consigne du relecteur le lui dit.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.

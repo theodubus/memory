@@ -179,6 +179,40 @@ class TestBarre(_Lot):
             # La règle tient dans la consigne, avant le diff.
             self.assertLess(texte.index(phrases[0]), texte.index(phrases[2]), lg)
 
+    def test_une_case_qui_livre_une_demande_un_releve_ou_une_entree_se_juge_par_ce_qu_elle_produit(self):
+        """ADR-0088, T-0087 : la consigne, du dossier complet comme du
+        dossier court, dit comment juger une telle case, dans les deux
+        langues ; le format de la mémoire dit l'exception."""
+        self.lot()
+        attendus = {
+            "fr": "Une case d'une tâche se vérifie par un test, sauf celle dont le livrable est une demande posée, "
+                  "un relevé écrit (le compte rendu d'une mesure ou d'un essai) ou une entrée de la mémoire "
+                  "récrite : elle se vérifie par ce qu'elle produit, que la case nomme (la demande, et la réponse "
+                  "de l'humain consignée au journal une fois donnée ; le fichier du relevé ; ce qu'en montre "
+                  "`socle show` ou `socle roadmap`). Juge alors que ce produit existe et dit ce que la case "
+                  "promet ; l'absence d'un test n'y est pas un constat.",
+            "en": "A box of a task is checked by a test, except one whose deliverable is a request posed, a report "
+                  "written (the account of a measurement or a trial) or a memory entry rewritten: it is checked by "
+                  "what it produces, which the box names (the request, and the human's answer recorded in the "
+                  "journal once given; the report's file; what `socle show` or `socle roadmap` shows of it). Then "
+                  "judge that this product exists and says what the box promises; the lack of a test is not a "
+                  "finding there.",
+        }
+        for lg, phrase in attendus.items():
+            for court in (False, True):
+                with messages.dans(lg):
+                    texte = revue.dossier(self.projet, court=court)
+                self.assertIn(phrase, texte, (lg, court))
+                # Dans la consigne, avant le diff.
+                self.assertLess(texte.index(phrase), texte.index("+    return x * 2"), (lg, court))
+        from socle.templates import DOSSIER
+        format_ = " ".join((DOSSIER / "../FORMAT.md").read_text(encoding="utf-8").split())
+        self.assertIn("une case dont le livrable est une demande posée, un relevé écrit (le compte rendu d'une "
+                      "mesure ou d'un essai) ou une entrée de la mémoire récrite se vérifie aussi par ce qu'elle "
+                      "produit, que la case nomme : la demande, et la réponse de l'humain consignée au journal ; le "
+                      "fichier du relevé ; ce qu'en montre `socle show` ou `socle roadmap` ; tout autre livrable "
+                      "garde son test", format_)
+
     def test_un_sujet_encore_ouvert_que_le_lot_touche_donne_son_critere_et_son_modele_de_menace(self):
         base = self.racine / "memory/backlog/B-0003-refuser.md"
         base.write_text(self.GARDE.replace("- [x] la redirection", "- [ ] la redirection"), encoding="utf-8")
