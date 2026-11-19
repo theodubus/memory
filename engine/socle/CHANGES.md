@@ -7,6 +7,23 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-19-k — La passe de revue se commite, et le refus de la clôture d'un lot relu montre l'historique, ce que git donne et les trois questions
+
+Le skill `socle-review` dit de commiter la passe que `socle review` écrit
+dans la section « Revues » du lot, avec ce que l'agent y consigne :
+écrite sans commit là où la commande a tourné, elle se perdait, et la
+passe suivante récrivait « Passe 1 » sans recul exigé. Et quand le
+contrôle du backlog refuse la clôture « fait » d'un lot relu, son refus
+montre désormais, sous la raison, ce que montre le refus d'une passe :
+l'historique du lot, les entrées ouvertes et closes depuis le début de
+sa première passe et les lots clos qui ont touché les mêmes fichiers,
+puis les trois questions du recul et ce qu'il faut écrire. Le rapport
+d'un contrôle imprime ce détail en retrait ; la fin de tour n'en garde
+que la raison.
+
+À faire : rien ; le skill `socle-review` est une copie protégée, dans la
+demande de l'installeur.
+
 ## 2026-11-19-j — La même passe de revue se reconnaît sur un arbre sale, et une ligne de bloquant mal écrite est refusée
 
 `socle review` juge l'arbre de travail, fichiers suivis modifiés

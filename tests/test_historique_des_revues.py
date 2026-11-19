@@ -516,6 +516,48 @@ class TestCeQueGitDonne(_Depot):
                       revue.refus_de_la_passe(self.projet, self.lot(), memoire.passes(self.lot()), debut))
 
 
+    def test_le_refus_de_la_cloture_montre_ce_que_montre_celui_d_une_passe(self):
+        # T-0055 : à la clôture, ni le contrôle ni `socle review` ne montraient l'historique, ce que git donne et
+        # les trois questions.
+        self.code("x * 2")
+        self.relire()
+        debut = git(self.racine, "rev-parse", "--short", "origin/main").strip()
+        (self.racine / "memory/backlog/T-0002-une-tache-ouverte.md").write_text(
+            TACHE.replace("T-0001 — Écrire double", "T-0002 — Une tâche ouverte").format(statut="ouvert", ref=""))
+        self.consigner(bloquants("la correction change la lecture des commandes"))
+        p = self.fichier_du_lot
+        p.write_text(p.read_text().replace("> statut : en cours", "> statut : fait").replace(
+            "après : T-0001", "après : T-0001 · ref : J-2026-11-16-A"))
+        r = Rapport()
+        ctx = types.SimpleNamespace(memoire=memoire.Memoire.charger(self.racine), projet=self.projet)
+        controles_memoire.backlog(ctx, r)
+        refus = [c for c in r.erreurs("memoire.backlog") if "sans le recul de sa dernière passe" in c.message]
+        self.assertEqual(len(refus), 1)
+        detail = refus[0].detail
+        # L'historique, ce que git donne depuis le début de la première passe, les trois questions et la consigne.
+        self.assertIn("## L'historique du lot (memory/backlog/L-0001-le-lot-du-doublement.md)\n\n## Revues\n\n"
+                      f"### Passe 1 — {JOUR}\n\nCommits : {debut}..", detail)
+        self.assertIn("- Bloquant : la correction change la lecture des commandes", detail)
+        self.assertIn(f"## Ce que git donne depuis le début du lot ({debut})", detail)
+        self.assertIn("Les entrées que le lot a ouvertes :\n- T-0002 — Une tâche ouverte et son test", detail)
+        self.assertIn("Les entrées qu'il a closes :\n", detail)
+        self.assertIn("Les lots clos qui ont touché les mêmes fichiers :\n", detail)
+        self.assertIn("## Trois questions, de nature et non de nombre\n\n1. " + revue.QUESTIONS_DU_RECUL[0], detail)
+        for question in revue.QUESTIONS_DU_RECUL:
+            self.assertIn(question, detail)
+        self.assertIn("Y répondre dans la passe 1, d'un paragraphe qui commence par « Recul : »", detail)
+        # Le rapport l'imprime sous le refus, en retrait ; son essentiel n'en garde que la raison.
+        self.assertIn("\n        ## Trois questions, de nature et non de nombre\n", r.texte())
+        self.assertNotIn("Trois questions", r.texte(essentiel=True))
+        # Sans le début du lot dans le dépôt, l'historique et les questions, et ce que git ne donne pas.
+        texte = revue.recul_de_la_cloture(self.projet, self.lot(), [memoire.Passe(1, JOUR, "0000000", "1111111")],
+                                          "recul")
+        self.assertIn("(le début du lot, que garde la ligne « Commits » de sa première passe, n'est pas dans ce "
+                      "dépôt", texte)
+        self.assertIn("## L'historique du lot", texte)
+        self.assertIn(revue.QUESTIONS_DU_RECUL[2], texte)
+
+
 class TestLaCloture(unittest.TestCase):
     """D-0124, point 3 : un lot relu ne se clôt « fait » que si sa dernière
     passe a son recul ; un lot sans passe n'en a pas."""

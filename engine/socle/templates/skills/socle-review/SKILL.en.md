@@ -109,7 +109,9 @@ finding`.
 The batch keeps its passes in the `## Reviews` section, the last of its
 entry, readable from a new session: `socle review` writes each pass
 there, its date and the reviewed commits, and gives the same one again
-as long as nothing changes outside the memory.
+as long as nothing changes outside the memory. Commit the written pass,
+and what is recorded in it: otherwise, it is lost where `socle review`
+ran.
 
 1. When the reviewer returns, write in the pass one line `- Blocker:
    <its cause, in a few words>` per blocker, and `- Opens: <the entries
@@ -137,4 +139,4 @@ as long as nothing changes outside the memory.
    the batch stops.
 
 The backlog check refuses a reviewed batch closed `done` whose last pass
-would refuse the next one.
+would refuse the next one, and shows what that refusal shows.

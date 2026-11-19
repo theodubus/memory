@@ -109,7 +109,8 @@ le dit en une ligne : `Revue : <b> bloquants, corrigés ; <n> au backlog
 Le lot garde ses passes dans la section `## Revues`, la dernière de son
 entrée, lisible d'une session neuve : `socle review` y écrit chaque passe,
 sa date et les commits relus, et redonne la même tant que rien ne change
-hors de la mémoire.
+hors de la mémoire. Commiter la passe écrite, et ce qu'on y consigne :
+sinon, elle se perd là où `socle review` a tourné.
 
 1. Au retour du relecteur, écrire dans la passe une ligne `- Bloquant :
    <sa cause, en quelques mots>` par bloquant, et `- Ouvre : <les
@@ -135,4 +136,4 @@ hors de la mémoire.
    cause revenir, il refuse « continuer » : le lot s'arrête.
 
 Le contrôle du backlog refuse un lot relu clos `fait` dont la dernière
-passe refuserait la suivante.
+passe refuserait la suivante, et montre ce que montre ce refus.

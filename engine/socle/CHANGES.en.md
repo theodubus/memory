@@ -7,6 +7,22 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-19-k — The review pass is committed, and the refusal of a reviewed batch's closing shows the history, what git gives and the three questions
+
+The `socle-review` skill says to commit the pass that `socle review`
+writes in the batch's “Reviews” section, with what the agent records in
+it: written without a commit where the command ran, it was lost, and the
+next pass rewrote “Pass 1” without a step back required. And when the
+backlog check refuses the “done” closing of a reviewed batch, its
+refusal now shows, under the reason, what the refusal of a pass shows:
+the batch's history, the entries opened and closed since the start of
+its first pass and the closed batches that touched the same files, then
+the three questions of the step back and what to write. A check's report
+prints that detail indented; the end of turn keeps only the reason.
+
+To do: nothing; the `socle-review` skill is a protected copy, in the
+installer's request.
+
 ## 2026-11-19-j — The same review pass is recognized on a dirty tree, and a badly written blocker line is refused
 
 `socle review` judges the working tree, modified tracked files included,

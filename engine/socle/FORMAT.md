@@ -334,7 +334,8 @@ la même passe sans l'écrire de nouveau. Le
 contrôle du backlog applique les mêmes règles à la dernière passe d'un lot
 relu clos `fait` : il le refuse sans son recul, sans le regard du
 relecteur sur un bloquant, sur un « continuer » après deux passes où une
-même cause revient, ou sur un arrêt que rien n'a levé ; un lot qui ne
+même cause revient, ou sur un arrêt que rien n'a levé, et son refus
+montre ce que montre celui d'une passe, depuis le début de la première ; un lot qui ne
 change ni code, ni spécification, ni test n'a ni passe ni recul.
 
 ```markdown

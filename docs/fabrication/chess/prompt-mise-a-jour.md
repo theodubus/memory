@@ -74,6 +74,8 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 25. La passe que python3 .socle/socle review écrit dans la section « Revues » du lot garde, quand l'arbre de travail a des fichiers suivis modifiés hors de la mémoire, l'empreinte de ces changements au bout de sa ligne Commits (+ arbre de travail <empreinte>) : relancé sur un arbre sale inchangé, il redonne la même passe au lieu de la refuser comme une nouvelle sans recul. Et une ligne de bloquant écrite autrement que « - Bloquant : <sa cause> » (en gras, numérotée, au pluriel) est refusée par le contrôle memoire.backlog : si elle l'est dans un de tes lots, récris-la ainsi, une ligne par bloquant.
 
+26. Le skill socle-review dit de commiter la passe que python3 .socle/socle review écrit dans la section « Revues » du lot, avec ce que tu y consignes : non commitée, elle se perd là où la commande a tourné. Et quand le contrôle memoire.backlog refuse la clôture « fait » d'un lot relu, son refus montre sous la raison ce que montre le refus d'une passe : l'historique du lot, les entrées ouvertes et closes depuis sa première passe, les lots clos qui ont touché les mêmes fichiers et les trois questions du recul ; la fin de tour n'en garde que la raison, python3 .socle/socle check --stage agent donne le reste. Le skill socle-review, une copie protégée, change : il est dans la demande de l'installeur.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.

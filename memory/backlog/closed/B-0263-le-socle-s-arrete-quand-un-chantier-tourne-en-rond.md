@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0263 — L'agent voit lui-même qu'un chantier tourne en rond, et en parle à l'humain avec une proposition : un lot garde l'historique de ses revues et s'arrête sur un recul écrit
 
-> statut : en cours · origine : J-2026-11-16-G · priorité : haute · après : D-0124 · lu : backlog@d9da377d
+> statut : fait · origine : J-2026-11-16-G · priorité : haute · après : D-0124 · ref : T-0047, T-0054, T-0055, J-2026-11-19-M · lu : backlog@d9da377d
 
 Théo, le 16 novembre (J-2026-11-16-G) : « c'est la deuxième fois qu'on
 tourne en rond avec un sujet infini, et sans intervention de ma part on
@@ -47,5 +47,5 @@ La piste, à spécifier avant le code et à soumettre à Théo :
 
 ## Satisfait quand
 
-- [ ] un lot dont les revues tournent en rond s'arrête sur un recul que l'agent écrit lui-même, et Théo reçoit alors une demande avec une proposition, sans lire de métrique
-- [ ] l'historique des revues d'un lot se lit d'une session neuve, et le recul se fonde sur lui
+- [x] un lot dont les revues tournent en rond s'arrête sur un recul que l'agent écrit lui-même, et Théo reçoit alors une demande avec une proposition, sans lire de métrique
+- [x] l'historique des revues d'un lot se lit d'une session neuve, et le recul se fonde sur lui

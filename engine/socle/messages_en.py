@@ -3629,6 +3629,10 @@ MESSAGES: dict[str, str] = {
     "le sien)":
         '(no batch in progress in the backlog: this pass is written in no batch; `socle review --batch L-NNNN` '
         'names its own)',
+    "(le début du lot, que garde la ligne « Commits » de sa première passe, n'est pas dans ce dépôt : git ne donne "
+    "ni les entrées ouvertes et closes depuis, ni les lots voisins)":
+        "(the batch's start, which the “Commits” line of its first pass keeps, is not in this repository: git gives "
+        "neither the entries opened and closed since, nor the neighbouring batches)",
     "`{id}` : « {ligne} », dans sa section « Revues », se donne pour un bloquant sans la forme que lit `socle "
     "review`, une ligne `- Bloquant : <sa cause>` par bloquant, ni gras, ni numéro, ni pluriel ; ignorée, elle "
     "n'exigerait ni le regard du relecteur ni la règle de la même cause":

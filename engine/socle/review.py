@@ -689,25 +689,45 @@ def _liste(titre: str, entrees: list) -> list[str]:
     return lignes + [""]
 
 
+def _historique_et_recul(projet: config.Projet | None, lot: memoire.Entree, debut: str | None,
+                        consigne: str | None) -> list[str]:
+    """Ce que montrent le refus d'une passe et celui de la clôture : l'historique
+    du lot, et, pour écrire un recul, ce que git donne depuis `debut` et les
+    trois questions. Sans `debut` ou sans projet, git ne donne rien, et le
+    texte le dit."""
+    lignes = [trad("## L'historique du lot ({chemin})", chemin=lot.fichier), "",
+              memoire.section_des_revues(lot) or "", ""]
+    if consigne:
+        if projet is None or debut is None:
+            lignes += [trad("(le début du lot, que garde la ligne « Commits » de sa première passe, n'est pas dans ce "
+                            "dépôt : git ne donne ni les entrées ouvertes et closes depuis, ni les lots voisins)"), ""]
+        else:
+            ouvertes, closes = entrees_depuis(projet, debut)
+            lignes += [trad("## Ce que git donne depuis le début du lot ({debut})", debut=_court(projet, debut)), ""]
+            lignes += _liste(trad("Les entrées que le lot a ouvertes :"), ouvertes)
+            lignes += _liste(trad("Les entrées qu'il a closes :"), closes)
+            lignes += _liste(trad("Les lots clos qui ont touché les mêmes fichiers :"),
+                             lots_voisins(projet, debut, lot))
+        lignes += [trad("## Trois questions, de nature et non de nombre"), ""]
+        lignes += [f"{i}. {trad(q)}" for i, q in enumerate(QUESTIONS_DU_RECUL, start=1)]
+        lignes += ["", consigne]
+    return lignes
+
+
 def _texte_du_refus(projet: config.Projet, lot: memoire.Entree, suivante: int, raison: str, debut: str,
                     consigne: str | None) -> str:
     """Ce que l'agent lit d'une passe refusée : la raison, l'historique du
     lot, et, pour écrire un recul, ce que git donne et les trois
     questions."""
     lignes = [trad("socle review : la passe {n} du lot {lot} est refusée — {raison}.", n=suivante, lot=lot.id,
-                   raison=raison), "",
-              trad("## L'historique du lot ({chemin})", chemin=lot.fichier), "",
-              memoire.section_des_revues(lot) or "", ""]
-    if consigne:
-        ouvertes, closes = entrees_depuis(projet, debut)
-        lignes += [trad("## Ce que git donne depuis le début du lot ({debut})", debut=_court(projet, debut)), ""]
-        lignes += _liste(trad("Les entrées que le lot a ouvertes :"), ouvertes)
-        lignes += _liste(trad("Les entrées qu'il a closes :"), closes)
-        lignes += _liste(trad("Les lots clos qui ont touché les mêmes fichiers :"), lots_voisins(projet, debut, lot))
-        lignes += [trad("## Trois questions, de nature et non de nombre"), ""]
-        lignes += [f"{i}. {trad(q)}" for i, q in enumerate(QUESTIONS_DU_RECUL, start=1)]
-        lignes += ["", consigne]
+                   raison=raison), ""]
+    lignes += _historique_et_recul(projet, lot, debut, consigne)
     return "\n".join(lignes).rstrip() + "\n"
+
+
+# La consigne de ce que l'agent écrit ensuite, selon la nature du refus ;
+# aucune pour une demande qui attend sa réponse.
+CONSIGNES_DU_REFUS = {"regard": CONSIGNE_RECUL, "recul": CONSIGNE_RECUL, "arret": CONSIGNE_ARRET}
 
 
 def refus_de_la_passe(projet: config.Projet, lot: memoire.Entree, deja: list, debut: str) -> str | None:
@@ -720,8 +740,25 @@ def refus_de_la_passe(projet: config.Projet, lot: memoire.Entree, deja: list, de
         return None
     nature, raison = refus
     n = deja[-1].numero
-    consigne = {"regard": CONSIGNE_RECUL, "recul": CONSIGNE_RECUL, "arret": CONSIGNE_ARRET}.get(nature)
+    consigne = CONSIGNES_DU_REFUS.get(nature)
     return _texte_du_refus(projet, lot, n + 1, raison, debut, trad(consigne, n=n, lot=lot.id) if consigne else None)
+
+
+def recul_de_la_cloture(projet: config.Projet | None, lot: memoire.Entree, deja: list, nature: str) -> str:
+    """Ce que montre le refus de la clôture « fait » d'un lot relu, que le
+    contrôle du backlog refuse pour la raison de nature `nature`
+    (`memoire.refus_de_la_suite`), comme celui d'une passe : l'historique
+    du lot, et, pour écrire le recul ou l'arrêt, ce que git donne depuis
+    le début du lot, celui que garde sa première passe, et les trois
+    questions (T-0055). Relevé par la revue de T-0047 : la clôture ne
+    montrait que la raison."""
+    n = deja[-1].numero
+    consigne = CONSIGNES_DU_REFUS.get(nature)
+    debut = deja[0].debut
+    if projet is None or not debut or not outils.rev_existe(projet.racine, debut):
+        debut = None
+    lignes = _historique_et_recul(projet, lot, debut, trad(consigne, n=n, lot=lot.id) if consigne else None)
+    return "\n".join(lignes).rstrip()
 
 
 def ecrire_passe(projet: config.Projet, lot: memoire.Entree, numero: int, debut: str, tete: str, jour: str,

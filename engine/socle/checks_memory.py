@@ -792,11 +792,16 @@ def backlog(ctx, r):
         passes = memoire.passes(e) if memoire.est_lot(e) and e.statut == "fait" else []
         refus = memoire.refus_de_la_suite(ctx.memoire, e, passes) if passes else None
         if refus:
+            from socle import review as revue
+
             nature, raison = refus
+            # Ce que montre le refus d'une passe : l'historique, ce que git
+            # donne, les trois questions (T-0055).
             r.erreur("memoire.backlog", trad("`{id}` est clos « fait » sans le recul de sa dernière passe de revue : "
                                              "{raison}", id=e.id, raison=raison) if nature == "recul" else
                      trad("`{id}` est clos « fait » avant ce que sa dernière passe de revue exige : {raison}",
-                          id=e.id, raison=raison), e.fichier, e.ligne)
+                          id=e.id, raison=raison), e.fichier, e.ligne,
+                     detail=revue.recul_de_la_cloture(getattr(ctx, "projet", None), e, passes, nature))
         if clos and not e.refs("ref"):
             r.erreur("memoire.backlog", trad("`{id}` est clos (« {statut} ») sans `ref` vers ce qui l'a clos",
                                              id=e.id, statut=e.statut), e.fichier, e.ligne)

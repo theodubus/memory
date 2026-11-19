@@ -43,8 +43,10 @@ des réveils.
 
 ## La revue
 
-Le dossier du lot se produit dans le worktree du sous-agent et se range
-dans le dossier temporaire de la session ; le relecteur est un autre
+Le dossier du lot se produit sur la branche d'intégration, jamais dans le
+worktree d'un sous-agent, où la passe que `socle review` écrit dans le lot
+se perdrait : la passe s'y commite, et le dossier se range dans le dossier
+temporaire de la session (T-0055) ; le relecteur est un autre
 sous-agent, sans worktree, qui ne reçoit que le chemin du dossier, la
 logistique et les points à éprouver. Il classe ses constats (ADR-0073,
 la règle de D-0111) ; l'orchestrateur vérifie chaque classement.

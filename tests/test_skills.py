@@ -533,6 +533,24 @@ class TestLaRevue(unittest.TestCase):
             self.assertIn(phrase, texte, lg)
             self.assertNotIn(ancien, texte, lg)
 
+    def test_la_passe_ecrite_se_commite_et_le_dossier_se_produit_sur_la_branche_d_integration(self):
+        """T-0055 : écrite sans commit là où `socle review` tourne, la passe se
+        perdait, et la suivante récrivait « Passe 1 » sans recul exigé."""
+        attendus = {
+            "fr": ("Commiter la passe écrite, et ce qu'on y consigne : sinon, elle se perd là où `socle review` a "
+                   "tourné.", "dont la dernière passe refuserait la suivante, et montre ce que montre ce refus."),
+            "en": ("Commit the written pass, and what is recorded in it: otherwise, it is lost where `socle review` "
+                   "ran.", "whose last pass would refuse the next one, and shows what that refusal shows."),
+        }
+        for lg, phrases in attendus.items():
+            texte = " ".join(self.texte(lg).split())
+            for phrase in phrases:
+                self.assertIn(phrase, texte, lg)
+        atelier = Path(__file__).resolve().parent.parent / ".claude/skills/delegate-lot/SKILL.md"
+        self.assertIn("Le dossier du lot se produit sur la branche d'intégration, jamais dans le worktree d'un "
+                      "sous-agent, où la passe que `socle review` écrit dans le lot se perdrait : la passe s'y "
+                      "commite", " ".join(atelier.read_text(encoding="utf-8").split()))
+
     def test_les_constats_le_dossier_et_le_modele_de_menace_d_une_seule_maniere(self):
         """D-0112, règle 1 : ce qui va au backlog, ce qui s'écarte ; ADR-0073 :
         le modèle de menace dans la section du sujet ou dans la décision
