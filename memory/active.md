@@ -5,7 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-D-0137 attend Théo (J-2026-11-19-F). L-0015 en cours ; à sa fin, une
+D-0137 validée, ses copies posées (J-2026-11-19-I). L-0015 en cours ; à sa fin, une
 demande remet la copie de `socle-review`.
 
 ## Consignes en cours
