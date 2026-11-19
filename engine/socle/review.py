@@ -267,8 +267,9 @@ def contenus_approuves(projet: config.Projet, decisions: list, plafond: int = PL
     lot (`debut`), la version que l'humain a approuvée, que le lot peut avoir
     changée, ce que le dossier dit alors ; dans l'arbre de travail si le lot
     le crée ou sans `debut`. Son chemin seul au-delà de `plafond` octets, ou
-    s'il n'existe pas. Un fichier privé, ou hors du dépôt, ne se donne pas.
-    Vide sans aucune. Relevé par la revue de L-0018 : lu dans l'arbre, le
+    s'il n'existe pas. Un fichier privé, jugé sur son chemin normalisé
+    quelle qu'en soit l'écriture, ou hors du dépôt, ne se donne pas. Vide
+    sans aucune. Relevé par la revue de L-0018 : lu dans l'arbre, le
     dossier donnait pour barre la version que le lot avait modifiée."""
     from socle import requests as demandes
 
@@ -284,7 +285,9 @@ def contenus_approuves(projet: config.Projet, decisions: list, plafond: int = PL
             continue
         chemin, empreinte = d.sujet
         fichier = (projet.racine / chemin).resolve()
-        if memoire.est_prive(chemin) or not fichier.is_relative_to(racine):
+        # Le chemin normalisé, non le brut : `./memory/private/…` est privé
+        # comme `memory/private/…` (B-0297).
+        if not fichier.is_relative_to(racine) or memoire.est_prive(fichier.relative_to(racine).as_posix()):
             continue
         lignes += [f"### {ident} — `{chemin}`" + (f" (@{empreinte})" if empreinte else ""), ""]
         actuel = fichier.read_text(encoding="utf-8", errors="replace") if fichier.is_file() else None

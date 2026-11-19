@@ -7,6 +7,16 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-19-h — A private file approved by an in-session decision is never given in the review brief, however its path is written
+
+The review brief judged the file approved by an in-session decision
+private by the path written in its `sujet` field: written
+`./memory/private/…`, or through a `..` detour, a file of the private
+memory passed for public and was given to the reviewer. It is now judged
+by its normalized path in the repository.
+
+To do: nothing.
+
 ## 2026-11-19-g — A box of a task that delivers a request, a report or a memory entry is checked by what it produces
 
 The memory format said that a task's “Done when” is checked by tests,

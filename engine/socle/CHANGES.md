@@ -7,6 +7,16 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-19-h — Un fichier privé qu'approuve une décision de séance ne se donne jamais au dossier de la revue, quelle que soit l'écriture de son chemin
+
+Le dossier de la revue jugeait privé le fichier qu'approuve une décision
+de séance sur le chemin écrit dans son champ `sujet` : écrit
+`./memory/private/…`, ou par un détour en `..`, un fichier de la mémoire
+privée passait pour public et se donnait au relecteur. Il se juge
+désormais sur son chemin normalisé dans le dépôt.
+
+À faire : rien.
+
 ## 2026-11-19-g — Une case d'une tâche qui livre une demande, un relevé ou une entrée de la mémoire se vérifie par ce qu'elle produit
 
 Le format de la mémoire disait que le « Fait quand » d'une tâche se

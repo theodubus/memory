@@ -68,6 +68,8 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 22. Le format de la mémoire admet, case par case, une autre exception à la règle qui veut qu'une case du « Fait quand » d'une tâche se vérifie par un test : une case dont le livrable est une demande posée, un relevé écrit (le compte rendu d'une mesure ou d'un essai) ou une entrée de la mémoire récrite se vérifie par ce qu'elle produit, que la case nomme (la demande et ma réponse consignée au journal, le fichier du relevé, ce qu'en montre socle show ou socle roadmap) ; tout autre livrable garde son test. La consigne du relecteur le lui dit.
 
+23. Le dossier de la revue ne donne jamais au relecteur un fichier de la mémoire privée qu'approuve une décision de séance, quelle que soit l'écriture de son chemin (./memory/private/… ou un détour en ..) : il le juge sur son chemin normalisé.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.

@@ -551,6 +551,20 @@ class TestContenusApprouves(_Lot):
         self.assertEqual(revue.contenus_approuves(self.projet, [memoire.Memoire.charger(self.racine).entree("D-0001")]),
                          [])
 
+    def test_un_fichier_prive_ne_se_donne_pas_quelle_que_soit_l_ecriture_de_son_chemin(self):
+        # B-0297 : jugé sur le chemin brut du `sujet`, `./memory/private/…` passait pour public.
+        from socle import memory as memoire
+
+        self.lot_qui_sert_la_seance()
+        (self.racine / "memory/private").mkdir(parents=True, exist_ok=True)
+        (self.racine / "memory/private/secret.md").write_text("Le texte privé, approuvé en séance.\n")
+        decision = (self.racine / "memory/requests/D-0001-la-vue-proposee-la-valider.md")
+        for chemin in ("memory/private/secret.md", "./memory/private/secret.md", "docs/../memory/private/secret.md"):
+            decision.write_text(self.SEANCE.replace("sujet : docs/vue.md", f"sujet : {chemin}"))
+            mem = memoire.Memoire.charger(self.racine)
+            self.assertEqual(revue.contenus_approuves(self.projet, [mem.entree("D-0001")]), [], chemin)
+            self.assertNotIn("Le texte privé", revue.dossier(self.projet), chemin)
+
 
 class TestLeGuideNeRenvoiePasALAtelier(unittest.TestCase):
     """B-0268 : le guide citait `D-0098`, une demande de la mémoire de ce
