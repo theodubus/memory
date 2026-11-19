@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0019 (J-2026-11-19-AK) : T-0002 et T-0106 à un sous-agent, puis
-la revue depuis 852b0ac ; rien ne part avant elle.
+L-0019 : T-0106 (sous-agent), puis la revue depuis 852b0ac ; rien ne
+part avant elle. T-0002 : demande à poser (J-2026-11-19-AL).
 
 ## Consignes en cours
 
