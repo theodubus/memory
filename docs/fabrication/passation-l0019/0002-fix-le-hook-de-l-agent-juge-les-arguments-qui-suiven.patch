@@ -1,0 +1,432 @@
+From 63b94f3f2aa1c1075ade022f414f6543f0aa5cbc Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 19 Nov 2026 19:54:39 +0000
+Subject: [PATCH 2/6] fix: le hook de l'agent juge les arguments qui suivent le
+ script d'un python -c comme les chemins qu'il cite (T-0070, B-0230,
+ J-2026-11-19-AE)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Un fichier protégé passé en argument au script d'un `python -c`, que le
+script lit dans `sys.argv`, s'écrivait sans refus : seul le script se
+jugeait. `_script_python` rend aussi les arguments qui suivent le script,
+ou le `-` d'un script lu sur l'entrée, et `_ecrivains_illisibles` les juge
+comme les chemins que le script cite, développés avec les variables
+connues, quand le script les lit (`argv`, `argparse`, `fileinput`…) : un
+script qui ne les lit pas ne les touche pas. L'auto-test gagne un défaut
+injecté et un témoin sain ; le guide, l'architecture et la note de
+version 2026-11-19-q le disent, et la liste des formes connues gagne le
+script qui lirait ses arguments autrement (ADR-0082).
+
+Corrige: T-0070
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01GU9tvUkHEzZndmxnEooAkZ
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=1 PreToolUse=305 Stop=3
+Socle-Hooks-Since-Commit: PreToolUse=6
+---
+ docs/fabrication/architecture.md              |  2 +-
+ engine/socle/CHANGES.en.md                    | 18 +++++++++
+ engine/socle/CHANGES.md                       | 18 +++++++++
+ engine/socle/HELP.en.md                       |  6 ++-
+ engine/socle/HELP.md                          |  8 +++-
+ engine/socle/hooks.py                         | 37 +++++++++++++------
+ engine/socle/messages_en.py                   |  5 +++
+ engine/socle/selftest.py                      | 21 ++++++++++-
+ memory/active.md                              |  4 +-
+ ...l-agent-ne-juge-xargs-et-python-c-que-p.md |  2 +-
+ ...e-les-arguments-qui-suivent-le-script-d.md |  6 +--
+ memory/journal/2026-11-8.md                   | 31 ++++++++++++++++
+ tests/test_garde.py                           | 24 ++++++++++++
+ 13 files changed, 159 insertions(+), 23 deletions(-)
+ rename memory/backlog/{ => closed}/T-0070-le-hook-juge-les-arguments-qui-suivent-le-script-d.md (65%)
+
+diff --git a/docs/fabrication/architecture.md b/docs/fabrication/architecture.md
+index 6690d54a..3cbc0389 100644
+--- a/docs/fabrication/architecture.md
++++ b/docs/fabrication/architecture.md
+@@ -45,7 +45,7 @@ vérifiées.
+ | `checks_ratchet.py` | le remède des hooks non chargés, qui fait montrer le travail en cours dans la conversation (B-0108) ; cliquet des garde-fous (retirer un fichier de cas ou une spécification déclarés assouplit, D-0066 ; `nan`, qu'aucun ordre ne compare, écrit à la place d'une valeur ou remplacé par une, assouplit toujours, B-0258 ; une correspondance ou une valeur liée qui suit ses fichiers renommés n'assouplit rien, ADR-0027), fichiers protégés (un renommage compte ses deux chemins ; tant que la branche par défaut n'a pas le socle, la plage d'un push est l'installation, comme celle de sa pull request, B-0096 ; à la fin du tour, une demande en attente, poussée, qui cite le fichier et son empreinte le laisse dans l'arbre, comme une mise à jour en session cloud qui attend l'humain, B-0115 ; si la branche par défaut exige la CI du socle, il se commite et se pousse aussi, la CI seule le refusant jusqu'à la réponse, D-0071 ; dans l'arbre de travail, une mise à jour du socle se reconnaît à son verrou, changé depuis la base, dont l'empreinte est celle du moteur de l'arbre et celle du moteur qu'un passage de l'installeur a copié (`copied`, qu'une relance depuis le projet ne garde que si le moteur n'a pas changé) : ce qu'elle a posé, le verrou, le moteur et son lanceur, et ce que le verrou consigne sous `[installed]` avec l'empreinte que le fichier a encore, garde une erreur par fichier, sans commande de remise, sous une ligne commune que seule la fin de tour imprime à sa place ; un fichier qu'elle n'a pas posé tel qu'il est garde sa ligne et sa remise, ADR-0077), empreinte du moteur, configuration et trace des hooks |
+ | `checks_skills.py` | les skills (ADR-0034) : `skills.contrat`, un en-tête qui nomme le skill comme son dossier et une description qui dit quand s'en servir, le préfixe `socle-` réservé ; `skills.commandes`, chaque bloc de code du shell jugé par la fonction du hook de l'agent |
+ | `tests_reader.py` | extraction des fonctions de test selon l'adaptateur (blocs à accolades, indentés ou fermés par `end`) ; un en-tête de fonction écrit dans une chaîne ou un commentaire de plusieurs lignes n'en est pas un (B-0025) ; transitivité des assertions |
+-| `hooks.py` | les points d'entrée des hooks de l'agent et de git ; le hook avant outil juge tout contre la racine de la session et, si l'action a lieu dans un autre worktree du même dépôt équipé du socle (celui du fichier écrit ou du dossier courant), en plus contre ce worktree : refusée dans l'un des deux arbres, elle est refusée, et une référence citée vaut si elle existe dans l'un ou l'autre ; fin de tour et démarrage jugent la racine de la session (ADR-0064) ; le hook avant push ne juge pas comme la CI la plage d'une branche jetable, que la CI ne juge pas aux envois, et ne relâche les références que si chaque branche qui reçoit le push est jetable (D-0087) ; la trace, où chaque commit nomme son worktree : un commit dans un autre worktree, dans la même commande, n'est pas un second commit (B-0136) ; le hook avant push juge le dernier commit, non l'arbre, dont un changement non commité ne part pas (B-0115) ; la plage qu'il envoie, jugée comme la CI la jugera, laisse partir le fichier protégé qu'une demande en attente couvre, comme l'étage git (D-0071) ; le refus du widget de questions de l'agent, où une décision se lit en texte brut (B-0105) ; en session cloud, le démarrage complète un clone superficiel (`git fetch --unshallow`, B-0202), puis installe les outils de l'adaptateur par les commandes que la CI lance pour eux, une fois par conteneur (ADR-0035), sous un seul délai, sans bloquer sur un échec ; dont chaque refus et l'étage qui l'a prononcé ; chaque commande shell de l'agent jugée commande simple par commande simple, par une fonction que `skills.commandes` partage (`refus_bash`) : écriture d'un fichier protégé ou d'un réglage de Claude Code, commande réservée à l'humain, commit ou push qui saute les hooks du projet (`--no-verify`, B-0023), push forcé ou vers la branche par défaut, publication, suppression distante (B-0044, L2), l'argv d'un `git` développé avec les variables connues, jugé coupé en mots et entier, et un argument d'un `git push` qu'il ne sait pas développer refusé, une variable inconnue, une substitution ou les arguments d'une fonction (`push_illisible`, B-0254) ; un correctif sans test, dit dès le commit, se juge sur un commit amendé contre le parent de celui qu'il remplace, l'amendement lu dans la commande de git (B-0084), et, dans un projet à plusieurs adaptateurs, langage par langage du code corrigé (ADR-0051) ; un hook git retient l'index qu'il juge, puis retire de l'environnement ce qui désigne un dépôt (`GIT_DIR`…), que git lui passe depuis un worktree secondaire et dont les tests du projet hériteraient (B-0057) ; le hook de fin de tour bloque le premier arrêt d'un tour rouge, mais pas une relance qu'il a provoquée sur les mêmes contrôles en échec et le même arbre, sans la sortie des outils, qui change à chaque relance : le rapport va alors à l'humain en message, sans compter de tentative (ADR-0061) ; sur des contrôles en échec, la fin de tour ne donne que l'essentiel, le nom de chaque contrôle, la première ligne utile de chaque constat et de chaque test en échec, les indisponibles sur une ligne, et la commande qui montre tout, `socle check --stage agent` ou `socle verify --fast` (B-0290) ; ce rapport dit en une ligne les fichiers protégés qu'une mise à jour a posés, que `socle check` liste (`Rapport.texte(regrouper=True)`, ADR-0077) ; le hook avant outil refuse l'installeur visé sur un projet équipé (la racine, ou une cible qui porte son verrou) dans un autre mode que celui de son verrou, et laisse passer la mise à jour dans ce mode et une cible sans verrou ; il refuse aussi une cible qu'il ne sait pas résoudre (une variable, une substitution, `~autre`, dans la cible ou dans le `cd` qui la précède), et la ligne de commande refuse les options abrégées (B-0141, ADR-0062) ; il laisse l'agent remettre un fichier protégé à son état du dernier commit, nommé en toutes lettres, ou supprimer un fichier apparu sous un chemin protégé que git ne suit pas, sauf si une demande dont ce qu'elle approuve n'est pas commité le cite, lui ou son dossier ; ses redirections, un préfixe ou une variable devant `git`, `checkout` sans `--` et `--pathspec-from-file` se jugent (`remise_en_etat`, D-0098, ADR-0065) ; un chemin que le shell écrit se juge développé comme le shell le ferait, depuis le dossier courant de l'agent (B-0205) : accolades, `~`, variables de l'environnement du hook (hors des variables spéciales du shell, `$_`, `$OLDPWD`) et de la commande, `${X:-y}`, chaque valeur entière et mot par mot, motifs contre les fichiers présents et contre les motifs des chemins protégés, élargis après un `shopt`, et ce qu'il ne sait pas développer est refusé si la part écrite en toutes lettres avant lui, remontée des `..` qui le suivent, ne le place pas hors du projet ; le script d'un `sed -i` ou d'un `perl -i`, séparé ou collé, n'est pas un chemin écrit, `perl -0` et `-l` ne prenant que des chiffres (`ecritures_jugees`, B-0171, ADR-0072) ; `cp`, `ln`, `install` et `mv` écrivent le dossier de `-t`, `sort` le fichier de `-o` ; `find -delete`, ou `-exec` d'un écrivain de `{}`, se juge par ses départs et les filtres de nom ou de chemin qui gardent son action (`_expression_find` : un filtre ne garde que ce qui le suit dans sa conjonction, hors d'un `!` et de l'autre branche d'un `-o` ou d'une `,`), le `*` d'un `-path` lu comme `**` sur le chemin qu'écrit `find`, contre les motifs des chemins protégés, à toute profondeur, contre les fichiers protégés présents d'un motif de dossier, et contre les réglages de Claude Code présents, ceux de la racine ignorés par git compris, ou contre leurs motifs si le filtre nomme `.claude` ou `settings` (la revue du lot 3, J-2026-11-14-AH) ; `python -c` et `xargs` d'un écrivain de ce qu'il lit, écrivains qu'il ne sait pas lire, se jugent par les chemins protégés qu'ils citent en toutes lettres, le script de l'un, la commande entière de l'autre (`_ecrivains_illisibles`, B-0206), et le corps d'un heredoc que lit un `python` lancé sans `-c`, `-m` ni script, ou avec `-`, comme le script d'un `python -c`, par ses chemins cités et ce qu'il supprime (`_script_python`, B-0229) ; une commande qu'il ne sait pas juger, plus de 10 000 caractères hors du corps de ses heredocs, plus de 32 parenthèses ou accolades ouvertes à la fois (`commandes.demesure`), un jugement qui lève ou passe 5 secondes, est refusée si elle peut écrire (`injugeable`) ; la suppression d'un dossier qui contient la racine, par les arguments de `rm`, les sources d'un `mv`, ce que balaie `git clean` ou les départs d'un `find` qui supprime, son chemin développé de même, et celle de la racine par un `find` qu'aucun filtre de nom ou de chemin ne garde, même avec `-type` ou `-empty`, sont refusées (`suppressions`, B-0208) ; de même, la racine comprise, la destination d'un `rsync --delete` et les sources d'un `rsync --remove-source-files`, ses options à valeur lues où qu'elles soient, le chemin d'un `git worktree remove` ou d'un `git worktree move` sous ses `-C`, et, comme git le cherche d'abord parmi ses worktrees, la racine ou un dossier qui la contient dont le chemin finit par lui (`_trouve_par_son_suffixe`, J-2026-11-15-O), les chemins qu'un `python -c` écrit en toutes lettres pour `rmtree`, `shutil.move`, `os.rename`, `os.replace` ou `Path(…).rename`, lus dans l'arbre de son script (`ast`), et un `find -exec` de l'un d'eux (B-0228). C'est une première barrière contre les erreurs d'un agent coopératif, qui juge, quelle qu'en soit la forme, ce que rien ne rattrape ensuite, et laisse hors de son modèle l'écriture d'un fichier protégé sous une forme de contournement (ADR-0080) ; la garantie est `protege.fichiers`. Il ne voit pas une part inconnue qui vaut elle-même `..`, une option du shell posée par le profil, une variable que Claude Code ne pose que pour ses hooks, les formes que la seconde revue de B-0171 a trouvées (B-0211), ni une suppression par `xargs rm`, par une commande que lance un `python -c` ou par un chemin que son script construit au vol (B-0246) |
++| `hooks.py` | les points d'entrée des hooks de l'agent et de git ; le hook avant outil juge tout contre la racine de la session et, si l'action a lieu dans un autre worktree du même dépôt équipé du socle (celui du fichier écrit ou du dossier courant), en plus contre ce worktree : refusée dans l'un des deux arbres, elle est refusée, et une référence citée vaut si elle existe dans l'un ou l'autre ; fin de tour et démarrage jugent la racine de la session (ADR-0064) ; le hook avant push ne juge pas comme la CI la plage d'une branche jetable, que la CI ne juge pas aux envois, et ne relâche les références que si chaque branche qui reçoit le push est jetable (D-0087) ; la trace, où chaque commit nomme son worktree : un commit dans un autre worktree, dans la même commande, n'est pas un second commit (B-0136) ; le hook avant push juge le dernier commit, non l'arbre, dont un changement non commité ne part pas (B-0115) ; la plage qu'il envoie, jugée comme la CI la jugera, laisse partir le fichier protégé qu'une demande en attente couvre, comme l'étage git (D-0071) ; le refus du widget de questions de l'agent, où une décision se lit en texte brut (B-0105) ; en session cloud, le démarrage complète un clone superficiel (`git fetch --unshallow`, B-0202), puis installe les outils de l'adaptateur par les commandes que la CI lance pour eux, une fois par conteneur (ADR-0035), sous un seul délai, sans bloquer sur un échec ; dont chaque refus et l'étage qui l'a prononcé ; chaque commande shell de l'agent jugée commande simple par commande simple, par une fonction que `skills.commandes` partage (`refus_bash`) : écriture d'un fichier protégé ou d'un réglage de Claude Code, commande réservée à l'humain, commit ou push qui saute les hooks du projet (`--no-verify`, B-0023), push forcé ou vers la branche par défaut, publication, suppression distante (B-0044, L2), l'argv d'un `git` développé avec les variables connues, jugé coupé en mots et entier, et un argument d'un `git push` qu'il ne sait pas développer refusé, une variable inconnue, une substitution ou les arguments d'une fonction (`push_illisible`, B-0254) ; un correctif sans test, dit dès le commit, se juge sur un commit amendé contre le parent de celui qu'il remplace, l'amendement lu dans la commande de git (B-0084), et, dans un projet à plusieurs adaptateurs, langage par langage du code corrigé (ADR-0051) ; un hook git retient l'index qu'il juge, puis retire de l'environnement ce qui désigne un dépôt (`GIT_DIR`…), que git lui passe depuis un worktree secondaire et dont les tests du projet hériteraient (B-0057) ; le hook de fin de tour bloque le premier arrêt d'un tour rouge, mais pas une relance qu'il a provoquée sur les mêmes contrôles en échec et le même arbre, sans la sortie des outils, qui change à chaque relance : le rapport va alors à l'humain en message, sans compter de tentative (ADR-0061) ; sur des contrôles en échec, la fin de tour ne donne que l'essentiel, le nom de chaque contrôle, la première ligne utile de chaque constat et de chaque test en échec, les indisponibles sur une ligne, et la commande qui montre tout, `socle check --stage agent` ou `socle verify --fast` (B-0290) ; ce rapport dit en une ligne les fichiers protégés qu'une mise à jour a posés, que `socle check` liste (`Rapport.texte(regrouper=True)`, ADR-0077) ; le hook avant outil refuse l'installeur visé sur un projet équipé (la racine, ou une cible qui porte son verrou) dans un autre mode que celui de son verrou, et laisse passer la mise à jour dans ce mode et une cible sans verrou ; il refuse aussi une cible qu'il ne sait pas résoudre (une variable, une substitution, `~autre`, dans la cible ou dans le `cd` qui la précède), et la ligne de commande refuse les options abrégées (B-0141, ADR-0062) ; il laisse l'agent remettre un fichier protégé à son état du dernier commit, nommé en toutes lettres, ou supprimer un fichier apparu sous un chemin protégé que git ne suit pas, sauf si une demande dont ce qu'elle approuve n'est pas commité le cite, lui ou son dossier ; ses redirections, un préfixe ou une variable devant `git`, `checkout` sans `--` et `--pathspec-from-file` se jugent (`remise_en_etat`, D-0098, ADR-0065) ; un chemin que le shell écrit se juge développé comme le shell le ferait, depuis le dossier courant de l'agent (B-0205) : accolades, `~`, variables de l'environnement du hook (hors des variables spéciales du shell, `$_`, `$OLDPWD`) et de la commande, `${X:-y}`, chaque valeur entière et mot par mot, motifs contre les fichiers présents et contre les motifs des chemins protégés, élargis après un `shopt`, et ce qu'il ne sait pas développer est refusé si la part écrite en toutes lettres avant lui, remontée des `..` qui le suivent, ne le place pas hors du projet ; le script d'un `sed -i` ou d'un `perl -i`, séparé ou collé, n'est pas un chemin écrit, `perl -0` et `-l` ne prenant que des chiffres (`ecritures_jugees`, B-0171, ADR-0072) ; `cp`, `ln`, `install` et `mv` écrivent le dossier de `-t`, `sort` le fichier de `-o` ; `find -delete`, ou `-exec` d'un écrivain de `{}`, se juge par ses départs et les filtres de nom ou de chemin qui gardent son action (`_expression_find` : un filtre ne garde que ce qui le suit dans sa conjonction, hors d'un `!` et de l'autre branche d'un `-o` ou d'une `,`), le `*` d'un `-path` lu comme `**` sur le chemin qu'écrit `find`, contre les motifs des chemins protégés, à toute profondeur, contre les fichiers protégés présents d'un motif de dossier, et contre les réglages de Claude Code présents, ceux de la racine ignorés par git compris, ou contre leurs motifs si le filtre nomme `.claude` ou `settings` (la revue du lot 3, J-2026-11-14-AH) ; `python -c` et `xargs` d'un écrivain de ce qu'il lit, écrivains qu'il ne sait pas lire, se jugent par les chemins protégés qu'ils citent en toutes lettres, le script de l'un et les arguments qui le suivent, développés avec les variables connues (B-0230), la commande entière de l'autre (`_ecrivains_illisibles`, B-0206), et le corps d'un heredoc que lit un `python` lancé sans `-c`, `-m` ni script, ou avec `-`, comme le script d'un `python -c`, par ses chemins cités et ce qu'il supprime (`_script_python`, B-0229) ; une commande qu'il ne sait pas juger, plus de 10 000 caractères hors du corps de ses heredocs, plus de 32 parenthèses ou accolades ouvertes à la fois (`commandes.demesure`), un jugement qui lève ou passe 5 secondes, est refusée si elle peut écrire (`injugeable`) ; la suppression d'un dossier qui contient la racine, par les arguments de `rm`, les sources d'un `mv`, ce que balaie `git clean` ou les départs d'un `find` qui supprime, son chemin développé de même, et celle de la racine par un `find` qu'aucun filtre de nom ou de chemin ne garde, même avec `-type` ou `-empty`, sont refusées (`suppressions`, B-0208) ; de même, la racine comprise, la destination d'un `rsync --delete` et les sources d'un `rsync --remove-source-files`, ses options à valeur lues où qu'elles soient, le chemin d'un `git worktree remove` ou d'un `git worktree move` sous ses `-C`, et, comme git le cherche d'abord parmi ses worktrees, la racine ou un dossier qui la contient dont le chemin finit par lui (`_trouve_par_son_suffixe`, J-2026-11-15-O), les chemins qu'un `python -c` écrit en toutes lettres pour `rmtree`, `shutil.move`, `os.rename`, `os.replace` ou `Path(…).rename`, lus dans l'arbre de son script (`ast`), et un `find -exec` de l'un d'eux (B-0228). C'est une première barrière contre les erreurs d'un agent coopératif, qui juge, quelle qu'en soit la forme, ce que rien ne rattrape ensuite, et laisse hors de son modèle l'écriture d'un fichier protégé sous une forme de contournement (ADR-0080) ; la garantie est `protege.fichiers`. Il ne voit pas une part inconnue qui vaut elle-même `..`, une option du shell posée par le profil, une variable que Claude Code ne pose que pour ses hooks, les formes que la seconde revue de B-0171 a trouvées (B-0211), ni une suppression par `xargs rm`, par une commande que lance un `python -c` ou par un chemin que son script construit au vol (B-0246) |
+ | `commands.py` | le découpage d'une commande shell en commandes simples, par `shlex` : séparateurs, redirections, `cd` (et ses options), `cd -`, `pushd` et `popd` suivis, chaque cible développée au moment du `cd`, variables affectées retenues (`+=`, une déclaration de tableau ou de référence rend la variable inconnue), un sous-shell, une substitution, un élément de pipeline ou une tâche de fond supposés ne rien transmettre à la suite, ce que lance une substitution qu'il délimite jugé, nue ou entre guillemets (`"$(…)"`, B-0260), chaque variable développée une fois, `$'…'` lu, `bash -c` (quel que soit le groupe d'options qui porte `c`, `--` sauté, B-0206) et `eval` ouverts, préfixes (`env`, `sudo`, `python -m`, `uv run` et `poetry run` avec leurs options, B-0248) retirés ; le corps d'un heredoc n'est que du texte, que la commande qui le reçoit garde pour son entrée, tel qu'écrit, ses tabulations de tête retirées pour `<<-`, la dernière redirection de l'entrée l'emportant (`Commande.entree`, B-0229) ; un mot développé comme le shell (`developper`, `accolades`, `normaliser`), ce qui ne se développe pas marqué, et un motif du shell, classes POSIX comprises, comparé à un motif de chemin (`se_croisent`) (B-0171, ADR-0072). Les mots réservés qui précèdent une commande (`then`, `do`, `!`, `{`…) se retirent comme un préfixe ; ce qu'une condition ou une boucle change, son dossier et ses variables, devient inconnu après elle et dans la branche `else` qui suit, sauf un dossier connu où elle revient sans qu'un `break` ou un `continue` l'ait quittée ailleurs, et le corps d'un `for` se lit une fois par mot de sa liste, sa variable liée à ce mot, jusqu.à `DEPLIAGE_MAX` caractères pour toute la commande (B-0204, J-2026-11-14-AK, J-2026-11-14-AL) ; le corps d'une fonction (`nom() { …; }`, ou `function nom { …; }` sans parenthèses, sur la même ligne ou la suivante, B-0232) se lit, et rend en se fermant l'état d'avant lui, un autre corps que bash admet se juge comme exécuté là où il s'écrit, et la définition ne vaut que pour la commande qui la suit ; l'appel d'une fonction définie dans la commande dont le corps `{ … }` change le dossier ou une variable rend inconnu ce qu'elle change, avec ce que changent les fonctions qu'elle appelle, résolues à l'appel de proche en proche (une fonction définie après elle comprise), et ce qui suit se juge comme un état inconnu ; l'appel vaut derrière `time`, et dans une substitution ou un `eval`, qui connaissent les fonctions de la commande, non dans un `bash -c` (la seconde revue du lot B-0234, B-0232, J-2026-11-16-B, B-0250) ; des opérateurs échappés ou entre guillemets (`\(`, `';'`), et un mot réservé cité ou échappé dont le texte nu est réservé (`"function"`, `\function`, `"}"`), sont un mot, jamais lu comme une structure (la revue du lot 3, J-2026-11-14-AH ; B-0232). Un `#` n'ouvre un commentaire qu'en tête d'un mot, retiré sans sa fin de ligne, et les guillemets d'une substitution entre guillemets se lisent comme le shell (`"$(cmd "arg")"`, B-0207). Il ne suit pas les motifs d'un `case` (B-0245), `time` devant une commande composée (B-0244), l'état d'un `eval`, l'appel d'une fonction définie hors de la commande, `CDPATH`, un `cd` qui échoue, `env -C`, `uv run --directory`, `poetry -C`, un heredoc vu où il n'y en a pas (B-0207), ni `lastpipe`, `((…))`, `let`, `getopts` (B-0211) |
+ | `state.py` | l'état dérivé, dont l'ordre du backlog, que le rappel de fin de tour redonne, et une ligne qui renvoie à la suite entière (`socle roadmap`, B-0274) ; si GitHub exige la CI du socle avant de fusionner sur la branche par défaut (ensemble de règles ou protection classique, lus par `gh`), sinon une action de l'humain avec le lien de la page (B-0044, L2, R1) ; la sortie du démarrage, hook compris, sous `[startup] max_bytes`, chaque partie dans sa part, ce qu'une partie laisse ou libère allant aux autres jusqu'à ce que rien ne change : l'état dérivé, en tête ce qui demande d'agir (ce qui revient à l'humain, les demandes, même quand le reste ne se calcule pas, ce qu'il a écrit, les lignes du hook), puis ce qui informe, puis le backlog, ses lignes bornées et ses listes plafonnées, chacune disant où lire la suite ; puis le chantier actif, public et privé, les faits par leur titre et les dix dernières décisions ; une partie au-delà de ce qui lui revient perd des blocs entiers, l'état d'abord ce qui se relit ailleurs, un en-tête jamais sans ses éléments, les autres depuis leur fin, et la coupe dit laquelle, de combien et où lire le reste ; les lignes du hook gardées, `socle state --short` les redit ; le budget du chantier actif au-dessus de sa part signalé à chaque démarrage (ADR-0071) |
+ | `roadmap.py` | la suite du projet d'un coup d'œil (`socle roadmap`, B-0274) : les jalons et leurs besoins clos, les lots dans leur ordre d'exécution avec leurs tâches, les besoins, ce qui n'est dans aucun lot, et deux lots qui attendent un même lot sans ordre entre eux ; calculée par le graphe du backlog que l'état lit (`memory.Graphe`), en compact (une ligne par jalon et par lot, ou par besoin, sans nommer de demande) ou en Markdown (le lot en cours et les deux suivants tâche par tâche, le lien de chaque demande en attente) |
+diff --git a/engine/socle/CHANGES.en.md b/engine/socle/CHANGES.en.md
+index 68336499..d8d2397c 100644
+--- a/engine/socle/CHANGES.en.md
++++ b/engine/socle/CHANGES.en.md
+@@ -7,6 +7,24 @@ letter. On an update, the installer gives the entries that the project's
+ engine copy did not have, and the commit message it proposes names their
+ identifiers.
+ 
++## 2026-11-19-q — The agent's hook judges the arguments that follow the script of a `python -c`
++
++The agent's hook judges the arguments that follow the script of a
++`python -c`, and those that follow the `-` of a script python reads on
++its input, as the paths the script cites written out in full: `python3
++-c "import sys; open(sys.argv[1], 'w')" .socle/policy.toml` is refused.
++It passed: only the script was judged, and the path it reads in
++`sys.argv` escaped the hook, down to Claude Code's local settings file,
++which git does not track. An argument is expanded with the command's
++known variables (`F=…; python3 -c "…" "$F"`). A `python -c` whose
++arguments name no protected file passes, as does a script that does not
++read its arguments (neither `argv` nor `argparse`, `fileinput`, `optparse`
++or `getopt`), which does not touch them; the list of known forms the hook
++does not judge enters one that would read them otherwise (`runpy`, the
++`exec` of another script).
++
++To do: nothing.
++
+ ## 2026-11-19-p — The agent's hook judges the script a heredoc gives to python
+ 
+ The agent's hook judges the body of a heredoc read on its input by a
+diff --git a/engine/socle/CHANGES.md b/engine/socle/CHANGES.md
+index 353ab77b..a4bd4b46 100644
+--- a/engine/socle/CHANGES.md
++++ b/engine/socle/CHANGES.md
+@@ -7,6 +7,24 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
+ moteur du projet n'avait pas, et le message de commit qu'il propose nomme
+ leurs identifiants.
+ 
++## 2026-11-19-q — Le hook de l'agent juge les arguments qui suivent le script d'un `python -c`
++
++Le hook de l'agent juge les arguments qui suivent le script d'un `python
++-c`, et ceux qui suivent le `-` d'un script que python lit sur son
++entrée, comme les chemins que le script cite en toutes lettres :
++`python3 -c "import sys; open(sys.argv[1], 'w')" .socle/policy.toml` est
++refusé. Il passait : seul le script se jugeait, et le chemin qu'il lit
++dans `sys.argv` échappait au hook, jusqu'au fichier de réglages local de
++Claude Code, que git ne suit pas. Un argument se développe avec les
++variables connues de la commande (`F=…; python3 -c "…" "$F"`). Un
++`python -c` dont les arguments ne nomment aucun fichier protégé passe,
++comme un script qui ne lit pas ses arguments (ni `argv`, ni `argparse`,
++`fileinput`, `optparse` ou `getopt`), qui ne les touche pas ; la liste
++des formes connues que le hook ne juge pas inscrit celui qui les lirait
++autrement (`runpy`, l'`exec` d'un autre script).
++
++À faire : rien.
++
+ ## 2026-11-19-p — Le hook de l'agent juge le script qu'un heredoc donne à python
+ 
+ Le hook de l'agent juge le corps d'un heredoc que lit sur son entrée un
+diff --git a/engine/socle/HELP.en.md b/engine/socle/HELP.en.md
+index 895f1c5c..7e8f1403 100644
+--- a/engine/socle/HELP.en.md
++++ b/engine/socle/HELP.en.md
+@@ -344,7 +344,8 @@ outside the bodies of its heredocs, more than 32 parentheses or braces
+ open at once, a judgment that crashes or takes over 5 seconds) is refused
+ if it can write: split it. The script of a `python3 -c`, and the one a
+ heredoc gives to python (`python3 - <<'EOF'`), are judged by the protected
+-files they cite written out in full; a script python reads from a file is
++files they cite written out in full or that the arguments following them
++name, if they read them (`sys.argv`); a script python reads from a file is
+ not judged. It also refuses deleting a directory that
+ contains the project (`rm -rf ..`, an `mv`, a `git clean` or a `find` that
+ deletes from such a directory, the destination of an `rsync --delete`,
+@@ -430,6 +431,9 @@ misreads in it, and the release note that enters it.
+   body is not judged (2026-11-19-p).
+ - The body of a heredoc given to an interpreter other than python (`bash
+   <<'EOF'`, `sh -s <<'EOF'`): it is only text (2026-11-19-p).
++- The arguments of a `python3 -c` whose script names neither `argv` nor
++  `argparse`, `fileinput`, `optparse` or `getopt` (a `runpy`, the `exec`
++  of another script): they are not judged (2026-11-19-q).
+ 
+ The hook does not model all of bash: a write to a protected file in a
+ form one writes only to get around it (an `eval`, `IFS`, a path built on
+diff --git a/engine/socle/HELP.md b/engine/socle/HELP.md
+index 7b585a3a..7c250afc 100644
+--- a/engine/socle/HELP.md
++++ b/engine/socle/HELP.md
+@@ -349,8 +349,9 @@ hors du projet (`/tmp/…`). Une commande qu'il ne sait pas juger (plus de
+ ou accolades ouvertes à la fois, un jugement qui plante ou passe
+ 5 secondes) est refusée si elle peut écrire : la découper. Le script d'un
+ `python3 -c`, et celui qu'un heredoc donne à python (`python3 - <<'EOF'`),
+-se jugent par les fichiers protégés qu'ils citent en toutes lettres ; un
+-script que python lit d'un fichier ne se juge pas. Il refuse
++se jugent par les fichiers protégés qu'ils citent en toutes lettres ou
++que nomment les arguments qui les suivent, s'ils les lisent (`sys.argv`) ;
++un script que python lit d'un fichier ne se juge pas. Il refuse
+ aussi la suppression d'un dossier qui contient le projet (`rm -rf ..`, un
+ `mv`, un `git clean` ou un `find` qui supprime depuis un tel dossier, la
+ destination d'un `rsync --delete`, les sources d'un `rsync
+@@ -437,6 +438,9 @@ dit ce que le hook y lit mal, et la note de version qui l'inscrit.
+   corps ne se juge pas (2026-11-19-p).
+ - Le corps d'un heredoc donné à un autre interpréteur que python (`bash
+   <<'EOF'`, `sh -s <<'EOF'`) : n'est que du texte (2026-11-19-p).
++- Les arguments d'un `python3 -c` dont le script ne nomme ni `argv`, ni
++  `argparse`, `fileinput`, `optparse` ou `getopt` (un `runpy`, l'`exec`
++  d'un autre script) : ils ne se jugent pas (2026-11-19-q).
+ 
+ Le hook ne modélise pas tout bash : une écriture d'un fichier protégé
+ sous une forme qu'on n'écrit que pour contourner (un `eval`, `IFS`, un
+diff --git a/engine/socle/hooks.py b/engine/socle/hooks.py
+index 7b2b825b..1e59ec6e 100644
+--- a/engine/socle/hooks.py
++++ b/engine/socle/hooks.py
+@@ -1196,13 +1196,14 @@ def _supprime_par_find(projet: config.Projet, c: commandes.Commande, environneme
+     return res
+ 
+ 
+-def _script_python(c: commandes.Commande) -> tuple[str, str] | None:
++def _script_python(c: commandes.Commande) -> tuple[str, str, list[str]] | None:
+     """Le script que python exécute et que le hook lit, avec la forme qui le
+-    lui donne : celui d'un `python -c`, derrière les options de python
+-    (B-0206), ou le corps du heredoc que lit sur son entrée un python lancé
+-    sans `-c`, `-m` ni script, ou avec `-` pour script, tel qu'écrit
+-    (B-0229). `None` pour un autre programme ou une autre forme : un script
+-    lu d'un fichier, par son chemin ou par `<`, reste hors de portée."""
++    lui donne et les arguments qui le suivent (`sys.argv[1:]`, B-0230) :
++    celui d'un `python -c`, derrière les options de python (B-0206), ou le
++    corps du heredoc que lit sur son entrée un python lancé sans `-c`, `-m`
++    ni script, ou avec `-` pour script, tel qu'écrit (B-0229). `None` pour
++    un autre programme ou une autre forme : un script lu d'un fichier, par
++    son chemin ou par `<`, reste hors de portée."""
+     if not re.fullmatch(r"python[\d.]*", c.programme):
+         return None
+     reste = c.argv[1:]
+@@ -1215,7 +1216,7 @@ def _script_python(c: commandes.Commande) -> tuple[str, str] | None:
+             colle = opt[k + 1:]
+             if lettre == "c":
+                 script = colle or (reste[0] if reste else None)
+-                return None if script is None else (script, f"{c.programme} -c")
++                return None if script is None else (script, f"{c.programme} -c", reste if colle else reste[1:])
+             if lettre == "m":
+                 return None
+             if lettre in OPTIONS_PYTHON_A_VALEUR:
+@@ -1223,7 +1224,7 @@ def _script_python(c: commandes.Commande) -> tuple[str, str] | None:
+                 break
+     reste = reste[1:] if reste[:1] == ["--"] else reste
+     if c.entree is not None and reste[:1] in ([], ["-"]):
+-        return c.entree, f"{c.programme} <<"
++        return c.entree, f"{c.programme} <<", reste[1:]
+     return None
+ 
+ 
+@@ -1250,6 +1251,9 @@ def _xargs_ecrit_ce_qu_il_lit(c: commandes.Commande) -> bool:
+     return any(SONDE in x for x in ecrits_bruts(dataclasses.replace(c, argv=argv, redirige=[], prefixe=[])))
+ 
+ 
++# Ce qui, dans un script de python, lit les arguments qui le suivent
++# (B-0230).
++LIT_SES_ARGUMENTS = re.compile(r"argv|argparse|fileinput|optparse|getopt")
+ # Un chemin cité dans un texte que le hook ne sait pas lire : une suite de
+ # lettres, de chiffres, de `.`, `/`, `~` et `-`.
+ CHEMIN_CITE = re.compile(r"[\w./~-]+")
+@@ -1292,13 +1296,22 @@ def _ecrivains_illisibles(projet: config.Projet, c: commandes.Commande, cmd: str
+                           cache: dict) -> list[tuple[str, str]]:
+     """Les constats des écrivains que le hook ne lit pas comme les autres :
+     `python -c` et `xargs` d'un écrivain, par les chemins protégés qu'ils
+-    citent (le script ; la commande entière, dont `xargs` lit l'entrée), et
+-    `find` qui supprime ou écrit ce qu'il trouve (B-0206) ; le script qu'un
+-    heredoc donne à python, comme celui d'un `python -c` (B-0229)."""
++    citent (le script et ses arguments, B-0230 ; la commande entière, dont
++    `xargs` lit l'entrée), et `find` qui supprime ou écrit ce qu'il trouve
++    (B-0206) ; le script qu'un heredoc donne à python, comme celui d'un
++    `python -c` (B-0229)."""
+     res: list[tuple[str, str]] = []
+     script = _script_python(c)
+     if script is not None:
+-        res += _cites(projet, c, *script, cache)
++        texte, qui, arguments = script
++        res += _cites(projet, c, texte, qui, cache)
++        # Ses arguments, quand le script les lit (`sys.argv`, `argparse`,
++        # `fileinput`…) : des mots du shell, développés avec les variables
++        # connues (B-0230). Un script qui ne les lit pas ne les touche pas.
++        if arguments and LIT_SES_ARGUMENTS.search(texte):
++            variables = commandes.variables_de(c, environnement) if any(re.search(r"[$`]", a) for a in arguments) \
++                else {}
++            res += _cites(projet, c, "\n".join(commandes.developper(a, variables)[0] for a in arguments), qui, cache)
+     if _xargs_ecrit_ce_qu_il_lit(c):
+         res += _cites(projet, c, cmd, f"xargs {c.programme}", cache)
+     if c.programme == "find":
+diff --git a/engine/socle/messages_en.py b/engine/socle/messages_en.py
+index 6531c89b..9ebf058d 100644
+--- a/engine/socle/messages_en.py
++++ b/engine/socle/messages_en.py
+@@ -2807,6 +2807,9 @@ MESSAGES: dict[str, str] = {
+     "(`python3 - <<'EOF'`)":
+         "protected file written, or directory that contains the project deleted, by the script a heredoc gives to "
+         "python (`python3 - <<'EOF'`)",
++    "fichier protégé passé en argument au script d'un `python -c`, ou d'un script qu'un heredoc donne à python":
++        "protected file passed as an argument to the script of a `python -c`, or of a script a heredoc gives to "
++        "python",
+     "dossier qui contient le projet supprimé par la commande que lance une substitution entre guillemets, "
+     "`\"$(…)\"` ou des accents graves, après un `cd` ou l'appel d'une fonction qui change de dossier":
+         "directory that contains the project deleted by the command a quoted substitution launches, `\"$(…)\"` or "
+@@ -3015,6 +3018,8 @@ MESSAGES: dict[str, str] = {
+     "donné à un autre programme qui cite un fichier protégé, passent le hook de l'agent (B-0229)":
+         "the script a heredoc gives to python without citing a protected file or deleting the project, and a heredoc "
+         "given to another program that cites a protected file, pass the agent's hook (B-0229)",
++    "un `python -c` dont les arguments ne nomment aucun fichier protégé passe le hook de l'agent (B-0230)":
++        "a `python -c` whose arguments name no protected file passes the agent's hook (B-0230)",
+     "l'orchestrateur, à la racine, retire le worktree d'un sous-agent par la fin de son chemin, et un sous-agent "
+     "retire ou déplace un worktree voisin du sien, sans refus du hook de l'agent (B-0228)":
+         "the orchestrator, at the root, removes a subagent's worktree by the end of its path, and a subagent removes "
+diff --git a/engine/socle/selftest.py b/engine/socle/selftest.py
+index 8eaa92cf..7a4f2fa4 100644
+--- a/engine/socle/selftest.py
++++ b/engine/socle/selftest.py
+@@ -1870,7 +1870,17 @@ def _cas() -> list[Cas]:
+             "python3 - <<'EOF'\nopen('.socle/policy.toml', 'a').write('max_attempts = 99')\nEOF",
+             "python3 <<EOF\nimport shutil\nshutil.rmtree('..')\nEOF")])
+ 
+-    @defaut("substitution-entre-guillemets", "dossier qui contient le projet supprimé par la commande que lance une "
++    @defaut("arguments-de-python-c", "fichier protégé passé en argument au script d'un `python -c`, ou d'un script "
++            "qu'un heredoc donne à python", "agent", "écriture protégée")
++    def _(a, c):
++        # B-0230 : seul le script se jugeait ; le chemin que le script lit
++        # dans `sys.argv` s'écrivait sans refus.
++        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
++            "python3 -c \"import sys; open(sys.argv[1], 'a').write('max_attempts = 99')\" .socle/policy.toml",
++            "F=.socle/policy.toml; python3 -c \"import sys; open(sys.argv[1], 'a')\" \"$F\"",
++            "python3 - .socle/policy.toml <<'EOF'\nimport sys\nopen(sys.argv[1], 'a')\nEOF")])
++
++    @defaut("substitution-entre-guillemets","dossier qui contient le projet supprimé par la commande que lance une "
+             "substitution entre guillemets, `\"$(…)\"` ou des accents graves, après un `cd` ou l'appel d'une fonction "
+             "qui change de dossier", "agent", "suppression du projet")
+     def _(a, c):
+@@ -2629,6 +2639,15 @@ def _temoins() -> list[tuple[str, Callable]]:
+                 or etage_outil(a, c, "Bash", {"command": "cat > notes.txt <<'EOF'\n"
+                                                          "open('.socle/policy.toml', 'w')\nEOF"}))
+ 
++    @temoin("un `python -c` dont les arguments ne nomment aucun fichier protégé passe le hook de l'agent (B-0230)")
++    def _(a, c):
++        # Le pendant sain de `arguments-de-python-c` : seul l'argument qui
++        # nomme un fichier protégé est refusé.
++        return (etage_outil(a, c, "Bash", {"command": "python3 -c \"import sys; print(open(sys.argv[1]).read())\" "
++                                                     "calc.py"})
++                or etage_outil(a, c, "Bash", {"command": "python3 -c \"import sys; open(sys.argv[1], 'w')\" "
++                                                         "notes.txt /tmp/x"}))
++
+     @temoin("l'orchestrateur, à la racine, retire le worktree d'un sous-agent par la fin de son chemin, et un "
+             "sous-agent retire ou déplace un worktree voisin du sien, sans refus du hook de l'agent (B-0228)")
+     def _(a, c):
+diff --git a/memory/active.md b/memory/active.md
+index 68f4d597..bae66162 100644
+--- a/memory/active.md
++++ b/memory/active.md
+@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
+ 
+ ## En cours
+ 
+-L-0019 en cours (J-2026-11-19-AC) : six tâches du hook à un
+-sous-agent, un commit chacune, puis la revue ; fait : T-0001.
++L-0019 en cours (J-2026-11-19-AC) : six tâches du hook, un
++commit chacune, puis la revue ; faites : T-0001, T-0070.
+ 
+ ## Consignes en cours
+ 
+diff --git a/memory/backlog/B-0230-le-hook-de-l-agent-ne-juge-xargs-et-python-c-que-p.md b/memory/backlog/B-0230-le-hook-de-l-agent-ne-juge-xargs-et-python-c-que-p.md
+index 9a059a53..4b1214e3 100644
+--- a/memory/backlog/B-0230-le-hook-de-l-agent-ne-juge-xargs-et-python-c-que-p.md
++++ b/memory/backlog/B-0230-le-hook-de-l-agent-ne-juge-xargs-et-python-c-que-p.md
+@@ -24,4 +24,4 @@ arguments qui suivent le script d'un `python -c`.
+ ## Satisfait quand
+ 
+ - [ ] le remplacement global qu'écrit un agent, par `xargs` derrière un `grep -r` ou un `find`, ne réécrit plus un fichier protégé sans refus du hook, et un `find` dont les filtres l'écartent passe
+-- [ ] un fichier protégé passé en argument au script d'un `python -c` arrête l'agent au hook comme s'il était écrit dans le script
++- [x] un fichier protégé passé en argument au script d'un `python -c` arrête l'agent au hook comme s'il était écrit dans le script
+diff --git a/memory/backlog/T-0070-le-hook-juge-les-arguments-qui-suivent-le-script-d.md b/memory/backlog/closed/T-0070-le-hook-juge-les-arguments-qui-suivent-le-script-d.md
+similarity index 65%
+rename from memory/backlog/T-0070-le-hook-juge-les-arguments-qui-suivent-le-script-d.md
+rename to memory/backlog/closed/T-0070-le-hook-juge-les-arguments-qui-suivent-le-script-d.md
+index 83e50647..082fc15c 100644
+--- a/memory/backlog/T-0070-le-hook-juge-les-arguments-qui-suivent-le-script-d.md
++++ b/memory/backlog/closed/T-0070-le-hook-juge-les-arguments-qui-suivent-le-script-d.md
+@@ -1,11 +1,11 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # T-0070 — Le hook juge les arguments qui suivent le script d'un python -c comme des chemins que le script cite
+ 
+-> statut : ouvert · origine : J-2026-11-18-J · besoin : B-0230 · lu : backlog@71e91816
++> statut : fait · origine : J-2026-11-18-J · besoin : B-0230 · lu : backlog@71e91816 · ref : J-2026-11-19-AE
+ 
+ Un commit : les arguments d'un `python -c` qui suivent son script se jugent comme les chemins que le script cite en toutes lettres ; ses cas dans `tests/test_garde.py`.
+ 
+ ## Fait quand
+ 
+-- [ ] `python3 -c "import sys; open(sys.argv[1], 'w')" .socle/policy.toml` est refusé par le hook, et un test le montre
+-- [ ] un `python -c` dont les arguments ne nomment aucun fichier protégé passe le hook, et un test le montre
++- [x] `python3 -c "import sys; open(sys.argv[1], 'w')" .socle/policy.toml` est refusé par le hook, et un test le montre
++- [x] un `python -c` dont les arguments ne nomment aucun fichier protégé passe le hook, et un test le montre
+diff --git a/memory/journal/2026-11-8.md b/memory/journal/2026-11-8.md
+index 9f687e01..2945ddcd 100644
+--- a/memory/journal/2026-11-8.md
++++ b/memory/journal/2026-11-8.md
+@@ -567,3 +567,34 @@ barre ni point de tête, qui ne compte que s'il nomme un fichier protégé
+ entier (3 000 lignes : 0,6 s). Deux formes voisines vont à la liste des
+ formes connues du guide : le heredoc d'une substitution, et un heredoc
+ donné à un autre interpréteur (`bash <<'EOF'`).
++
++## J-2026-11-19-AE — T-0070 : les arguments qui suivent le script d'un python -c se jugent comme les chemins qu'il cite
++
++> ref : T-0070, B-0230, ADR-0082, L-0019
++
++Deuxième tâche de L-0019. `_script_python` (`engine/socle/hooks.py`)
++rend aussi les arguments qui suivent le script d'un `python -c`, ou le
++`-` d'un script lu sur l'entrée (T-0001) : `_ecrivains_illisibles` les
++juge comme les chemins que le script cite (`_cites`). `python3 -c
++"import sys; open(sys.argv[1], 'w')" .socle/policy.toml` est refusé, de
++même après un `cd .socle` avec `policy.toml`, ou par une variable
++affectée avant ; un `python -c` dont les arguments ne nomment aucun
++fichier protégé passe. Le test (`tests/test_garde.py`, les arguments du
++script d'un `python -c`) échoue sur le commit parent ; l'auto-test gagne
++le défaut `arguments-de-python-c` et son témoin sain ; note de version
++2026-11-19-q.
++
++Les arguments ne se jugent que si le script les lit : il nomme `argv`,
++`argparse`, `fileinput`, `optparse` ou `getopt` (`LIT_SES_ARGUMENTS`).
++`test_une_option_de_python_a_valeur_ne_cache_pas_la_commande`
++(`tests/test_hooks.py`, B-0187) veut libre `python3 -c 'print(1)'
++.socle/socle answer D-0001 oui` : le script ne lit pas ses arguments, qui
++ne le touchent pas. Un script qui les lirait autrement (`runpy`, l'`exec`
++d'un autre script) entre dans la liste des formes connues.
++
++Choix : un argument est un mot du shell, que le shell développe avant
++python ; il se développe avec les variables connues de la commande
++(`variables_de`), quand le script se lit tel qu'écrit. Une suppression
++par `sys.argv` (`shutil.rmtree(sys.argv[1]) ..`) reste dans la liste des
++formes connues, sous « un chemin qu'un script `python3 -c` construit au
++vol ». B-0230 reste ouvert : sa première case attend T-0002.
+diff --git a/tests/test_garde.py b/tests/test_garde.py
+index 7bf12025..9a904de2 100644
+--- a/tests/test_garde.py
++++ b/tests/test_garde.py
+@@ -824,6 +824,30 @@ class TestGarde(unittest.TestCase):
+                 (heredoc("python3 - <<'EOF' < /tmp/x.py", ecrit), None), ("python3 - < /tmp/x.py", None)])
+         self.assertIn("cité par `python3 <<`", hooks.refus_bash(self.projet, heredoc("python3 - <<'EOF'", ecrit)) or "")
+ 
++    def test_les_arguments_du_script_d_un_python_c(self):
++        """B-0230 : un `python -c` ne se jugeait que par les chemins que son
++        script cite ; un fichier protégé passé en argument au script
++        (`sys.argv[1]`) s'écrivait sans refus. Les arguments qui suivent le
++        script, ou le `-` d'un script lu sur l'entrée, se jugent comme les
++        chemins qu'il cite, développés avec les variables connues, quand le
++        script les lit ; un script qui ne les lit pas ne les touche pas."""
++        ouvre = "python3 -c \"import sys; open(sys.argv[1], 'w').write('x')\""
++        with self.environnement():
++            self.jugees([(f"{ouvre} .socle/policy.toml", "protege"), (f"{ouvre} /tmp/x .socle/git-hooks", "protege"),
++                         (f"{ouvre} -- .socle/policy.toml", "protege"),
++                         ("python3 -c \"import argparse; p = argparse.ArgumentParser()\" .socle/policy.toml", "protege"),
++                         ("python3 -c \"import fileinput; [print(x) for x in fileinput.input(inplace=True)]\" "
++                          ".socle/policy.toml", "protege"),
++                         ("python3 -c 'print(1)' .socle/policy.toml", None),
++                         ("python3 -Ic\"import sys; open(sys.argv[1], 'w')\" .socle/policy.toml", "protege"),
++                         (f"cd .socle && {ouvre} policy.toml", "protege"),
++                         (f"F=.socle/policy.toml; {ouvre} \"$F\"", "protege"),
++                         (f"{ouvre} .claude/settings.local.json", "reglage"),
++                         ("python3 - .socle/policy.toml <<'EOF'\nimport sys\nopen(sys.argv[1], 'w')\nEOF", "protege"),
++                         (f"{ouvre} calc.py", None), (f"{ouvre} /tmp/x build/y", None), (f"{ouvre} \"$X\"", None),
++                         ("python3 -c \"import sys; print(sys.argv)\" policy.toml", None),
++                         ("python3 - /tmp/x <<'EOF'\nimport sys\nopen(sys.argv[1], 'w')\nEOF", None)])
++
+     def test_uv_run_et_poetry_run_se_retirent_comme_des_prefixes(self):
+         """B-0248 : `uv run` et `poetry run` n'étaient pas des préfixes ; un
+         push forcé ou la suppression du projet passaient derrière eux, et
+-- 
+2.43.0
+

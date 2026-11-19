@@ -1,0 +1,76 @@
+From c342b4b41d41cb04c79fcf69c600727b02a39a45 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 19 Nov 2026 20:14:31 +0000
+Subject: [PATCH 5/6] =?UTF-8?q?L-0019=20:=20T-0106=20arr=C3=AAt=C3=A9e=20a?=
+ =?UTF-8?q?vant=20son=20code,=20un=20test=20et=20un=20d=C3=A9faut=20inject?=
+ =?UTF-8?q?=C3=A9=20attendent=20refus=C3=A9=20le=20push=20qu'elle=20ferait?=
+ =?UTF-8?q?=20passer=20(J-2026-11-19-AH)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+`test_un_push_se_juge_par_ses_arguments_developpes` et le défaut
+`push-par-une-variable` de l'auto-test veulent `git push origin "$(git
+branch --show-current)"` refusé depuis la branche de travail ; T-0106 le
+ferait passer. Changer ces valeurs attendues revient à l'humain
+(politique, point 2). Le chantier actif dit les quatre tâches faites et
+les deux arrêtées.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01GU9tvUkHEzZndmxnEooAkZ
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=1 PreToolUse=287 Stop=3
+Socle-Hooks-Since-Commit: PreToolUse=6
+---
+ memory/active.md            |  4 ++--
+ memory/journal/2026-11-8.md | 22 ++++++++++++++++++++++
+ 2 files changed, 24 insertions(+), 2 deletions(-)
+
+diff --git a/memory/active.md b/memory/active.md
+index ff0d2181..eddd85ee 100644
+--- a/memory/active.md
++++ b/memory/active.md
+@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
+ 
+ ## En cours
+ 
+-L-0019 en cours (J-2026-11-19-AC), puis sa revue : T-0001, T-0070,
+-T-0004, T-0003 faites ; T-0002 arrêtée (J-2026-11-19-AF).
++L-0019 (J-2026-11-19-AC), avant sa revue : T-0001, T-0070, T-0004,
++T-0003 faites ; T-0002, T-0106 arrêtées (J-2026-11-19-AH).
+ 
+ ## Consignes en cours
+ 
+diff --git a/memory/journal/2026-11-8.md b/memory/journal/2026-11-8.md
+index 63ec7454..ab294b2e 100644
+--- a/memory/journal/2026-11-8.md
++++ b/memory/journal/2026-11-8.md
+@@ -665,3 +665,25 @@ session, lancé depuis la copie principale, a refusé l'écriture
+ d'ADR-0096 par l'outil d'écriture pour des empreintes que seul ce
+ worktree connaît ; le hook de ce worktree, rejoué sur le même contenu,
+ l'admet, et le fichier s'est copié par le shell.
++
++## J-2026-11-19-AH — T-0106 arrêtée avant son code : un test et un défaut injecté de l'auto-test attendent refusé le push que la tâche veut faire passer
++
++> ref : T-0106, B-0254, T-0006, L-0019, J-2026-11-19-AF
++
++T-0106, sixième tâche de L-0019, est arrêtée avant son code, comme T-0002
++(J-2026-11-19-AF) : son « Fait quand » veut que `git push -u origin
++"$(git branch --show-current)"` passe le hook depuis une branche de
++travail, et deux cas existants le veulent refusé.
++`test_un_push_se_juge_par_ses_arguments_developpes`
++(`tests/test_garde.py`) attend, sur la branche de travail du projet
++d'essai, `git push origin "$(git branch --show-current)"` refusé, comme
++un argument que le hook ne sait pas développer (« dont le hook ne sait
++pas développer l'argument », « politique, point 4 », et la décision
++« refus ») ; T-0106 le ferait passer. Le défaut injecté
++`push-par-une-variable` (`engine/socle/selftest.py`, B-0254) compte la
++même commande parmi celles qui doivent être refusées : il ne serait plus
++attrapé. Changer ces valeurs attendues revient à l'humain (politique,
++point 2). Rien de T-0106 n'est commencé.
++
++L-0019 : quatre tâches faites (T-0001, T-0070, T-0004, T-0003), deux
++arrêtées (T-0002, T-0106) ; sa revue n'est pas faite.
+-- 
+2.43.0
+

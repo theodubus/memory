@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0019 en cours (J-2026-11-19-AC) : six tâches du hook à un
-sous-agent, un commit chacune, puis la revue complète.
+L-0019, en correctifs : `docs/fabrication/passation-l0019/` ;
+T-0002 et T-0106 attendent la réponse de Théo à D-0140.
 
 ## Consignes en cours
 

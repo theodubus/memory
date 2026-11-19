@@ -1,0 +1,164 @@
+From f295ee46e7b4605b34c41f13039e9a0cd5cf761e Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 19 Nov 2026 20:45:30 +0000
+Subject: [PATCH 6/6] =?UTF-8?q?L-0019=20en=20passation=20:=20quatre=20t?=
+ =?UTF-8?q?=C3=A2ches=20faites,=20pas=20relues=20;=20T-0002=20et=20T-0106?=
+ =?UTF-8?q?=20attendent=20D-0140,=20et=20T-0106=20garde=20refus=C3=A9e=20l?=
+ =?UTF-8?q?a=20substitution=20d'une=20commande=20qui=20change=20de=20branc?=
+ =?UTF-8?q?he=20ou=20de=20d=C3=A9p=C3=B4t=20;=20B-0301=20ouvert=20(J-2026-?=
+ =?UTF-8?q?11-19-AI)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01GU9tvUkHEzZndmxnEooAkZ
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=1 PreToolUse=388 Stop=4
+Socle-Hooks-Since-Commit: PreToolUse=28
+---
+ memory/active.md                              |  4 +-
+ ...cle-resume-ne-dit-pas-quoi-faire-des-re.md | 25 ++++++++
+ ...-les-ecritures-qu-il-juge-mal-le-script.md |  5 ++
+ ...out-la-branche-courante-dans-un-git-pus.md |  1 +
+ memory/journal/2026-11-8.md                   | 58 +++++++++++++++++++
+ 5 files changed, 91 insertions(+), 2 deletions(-)
+ create mode 100644 memory/backlog/B-0301-le-skill-socle-resume-ne-dit-pas-quoi-faire-des-re.md
+
+diff --git a/memory/active.md b/memory/active.md
+index eddd85ee..b22cdf05 100644
+--- a/memory/active.md
++++ b/memory/active.md
+@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
+ 
+ ## En cours
+ 
+-L-0019 (J-2026-11-19-AC), avant sa revue : T-0001, T-0070, T-0004,
+-T-0003 faites ; T-0002, T-0106 arrêtées (J-2026-11-19-AH).
++L-0019, avant sa revue : T-0001, T-0070, T-0004, T-0003 faites ;
++T-0002 et T-0106 attendent D-0140 (J-2026-11-19-AI).
+ 
+ ## Consignes en cours
+ 
+diff --git a/memory/backlog/B-0301-le-skill-socle-resume-ne-dit-pas-quoi-faire-des-re.md b/memory/backlog/B-0301-le-skill-socle-resume-ne-dit-pas-quoi-faire-des-re.md
+new file mode 100644
+index 00000000..6b2aa9b4
+--- /dev/null
++++ b/memory/backlog/B-0301-le-skill-socle-resume-ne-dit-pas-quoi-faire-des-re.md
+@@ -0,0 +1,25 @@
++<!-- socle: couche=backlog zone=publique -->
++# B-0301 — Le skill socle-resume ne dit pas quoi faire des réveils qu'une session archivée du même dépôt a laissés sur le même lot
++
++> statut : ouvert · origine : J-2026-11-19-AI · lu : backlog@c8897434
++
++Vu en ouvrant L-0019 le 19 novembre (J-2026-11-19-AI). Théo avait lancé
++une session sur le lot, puis une seconde, avant que la précédente ait
++fini de fusionner ; la première, archivée, avait déjà armé ses deux
++réveils de reprise, sur sa propre branche et pour le même lot. Le skill
++`socle-resume` interdit de toucher au réveil d'une autre session, et ne
++dit rien de plus : la session neuve les a vus dans `list_triggers` sans
++pouvoir les retirer, et Théo ne savait pas où les annuler. À sa
++demande, la session neuve les a désactivés (`update_trigger`,
++`enabled: false`). Laissés, ils auraient tiré dans une session archivée,
++dont la vérification du réveil aurait conclu de ne pas reprendre, au
++prix d'un peu d'usage.
++
++La piste : au début du tour, un réveil de ces deux noms et de ce dépôt
++dont la session est archivée (`get_session`, `SESSION_STATUS_ARCHIVED`)
++se dit à l'humain, avec ses heures, et ne se désactive qu'à sa demande ;
++le skill le dit, et dit où l'humain les retrouve lui-même.
++
++## Satisfait quand
++
++- [ ] une session qui trouve les réveils de reprise d'une session archivée du même dépôt le dit à l'humain et ne les désactive qu'à sa demande, comme le skill `socle-resume` le décrit
+diff --git a/memory/backlog/L-0019-lot-du-hook-les-ecritures-qu-il-juge-mal-le-script.md b/memory/backlog/L-0019-lot-du-hook-les-ecritures-qu-il-juge-mal-le-script.md
+index c19f5b92..c5a7734b 100644
+--- a/memory/backlog/L-0019-lot-du-hook-les-ecritures-qu-il-juge-mal-le-script.md
++++ b/memory/backlog/L-0019-lot-du-hook-les-ecritures-qu-il-juge-mal-le-script.md
+@@ -16,3 +16,8 @@ T-0004, de priorité haute, va avec T-0002, qui juge le même `xargs`.
+ Le 19 novembre, la passe 1 de la revue de L-0005 y fait entrer T-0106
+ (J-2026-11-19-Z) : la branche courante d'un `git push` écrite par une
+ substitution, dans les mêmes fichiers.
++
++Le 19 novembre au soir, T-0001, T-0070, T-0004 et T-0003 sont faites,
++pas encore relues ; T-0002 et T-0106 attendent la réponse de Théo à
++D-0140, qui change trois valeurs attendues qu'elles contredisent
++(J-2026-11-19-AI). La série part en passation, pour une session neuve.
+diff --git a/memory/backlog/T-0106-le-hook-resout-la-branche-courante-dans-un-git-pus.md b/memory/backlog/T-0106-le-hook-resout-la-branche-courante-dans-un-git-pus.md
+index 6d4cd69e..ec56f51d 100644
+--- a/memory/backlog/T-0106-le-hook-resout-la-branche-courante-dans-un-git-pus.md
++++ b/memory/backlog/T-0106-le-hook-resout-la-branche-courante-dans-un-git-pus.md
+@@ -20,3 +20,4 @@ courante, qui se juge comme écrite en toutes lettres.
+ 
+ - [ ] `git push -u origin "$(git branch --show-current)"`, `$(git rev-parse --abbrev-ref HEAD)` et `$(git symbolic-ref --short HEAD)`, nus, entre guillemets, entre accents graves ou passés par une variable, passent le hook depuis une branche de travail, et un test le montre
+ - [ ] les mêmes, depuis la branche par défaut, sont refusés comme un push vers elle, et une autre substitution reste refusée, et un test le montre
++- [ ] les mêmes, quand la même commande change de branche (`git checkout`, `git switch`) ou de dépôt (un `cd` ailleurs) avant le push, restent refusés, comme D-0140 le dit à Théo, et un test le montre
+diff --git a/memory/journal/2026-11-8.md b/memory/journal/2026-11-8.md
+index ab294b2e..7a442b1b 100644
+--- a/memory/journal/2026-11-8.md
++++ b/memory/journal/2026-11-8.md
+@@ -687,3 +687,61 @@ point 2). Rien de T-0106 n'est commencé.
+ 
+ L-0019 : quatre tâches faites (T-0001, T-0070, T-0004, T-0003), deux
+ arrêtées (T-0002, T-0106) ; sa revue n'est pas faite.
++
++## J-2026-11-19-AI — L-0019 en passation : quatre tâches faites par le sous-agent, intégrées sans être relues ; D-0140 posée pour T-0002 et T-0106 ; la fenêtre de cinq heures à 68 %
++
++> ref : L-0019, D-0140, T-0002, T-0106, B-0301, B-0217, ADR-0096, J-2026-11-19-AC, J-2026-11-19-AF, J-2026-11-19-AH
++
++Le sous-agent du lot (Opus 5.5, 471 220 jetons, 267 appels d'outils,
++56 minutes) a fait T-0001, T-0070, T-0004 et T-0003, un commit chacune,
++et arrêté T-0002 et T-0106 avant leur code sur des valeurs attendues qui
++les contredisent (J-2026-11-19-AF, J-2026-11-19-AH). Ses cinq commits
++entrent sur la branche de travail par `git cherry-pick`, après D-0140,
++sans conflit ; sa copie isolée et sa branche sont retirées. Rien n'en
++est poussé : la série n'est pas relue.
++
++D-0140 demande à Théo de changer trois valeurs attendues : le cas `find
++. -type f | xargs sed -i s/a/b/` d'un test, que T-0002 fait refuser ; le
++cas `git push origin "$(git branch --show-current)"` d'un autre, que
++T-0106 fait passer depuis une branche de travail, et la même commande
++du défaut injecté `push-par-une-variable`, remplacée par `git push
++origin "$(echo main)"`. Relue à froid par un sous-agent (79 285 jetons) :
++21 points, 19 corrigés ; écartés : le nom du test, qui ne gêne pas
++pour un seul cas, et l'option `-u` d'un push, sans effet sur la
++décision. Deux de ses points changent ce que T-0106 doit
++tenir, et la demande le dit : la substitution ne se résout pas quand la
++même commande change de branche ou de dépôt avant le push (`git checkout
++main && …`, un `cd` ailleurs) ; et `find . -name '*.py' | xargs sed -i …`
++reste refusé dans ce dépôt, où `tests/parallele.py` est protégé, comme
++sa forme en `-exec` aujourd'hui.
++
++Le sous-agent a écrit ADR-0096 par `cp` depuis son dossier temporaire,
++après que le hook de la session eut refusé l'écriture : des empreintes
++de lecture qu'il jugeait inventées n'existaient que dans sa copie
++isolée. Rejoué depuis la racine de la session sur la série commitée,
++avec une empreinte d'une entrée modifiée et non commitée, le hook ne
++refuse plus : le refus ne se reproduit pas, et rien ne va au backlog ;
++le relecteur du lot éprouve ADR-0096. Le hook de fin de tour du
++conteneur demandait de commiter le dossier des copies isolées des
++sous-agents (B-0217) : exclu dans ce clone seul, par le fichier
++d'exclusion local de git.
++
++Théo avait lancé une session sur ce lot avant que la précédente ait fini
++de fusionner ; la première, archivée, avait laissé ses deux réveils de
++reprise. Il a écrit : « Je ne sais pas ou aller pour annuler ces
++reveils En fait j'avais lancé une nouvelle session sur ce lot alors que
++la precedente avait pas encore terminé de merge, donc j'ai relancé ici
++sans voir que la session lancé trop tôt avait armé des reveils Tu peux
++les lui desactiver d'ici ? » Ils sont désactivés (`update_trigger`,
++`enabled: false`), non supprimés ; le skill `socle-resume` n'en dit
++rien : B-0301.
++
++Coûts, lus par `list_events` : le sous-agent, environ 50 points de la
++fenêtre de cinq heures (de 3 à 53 %) et 7 de la semaine, pour 40
++estimés ; la demande, sa relecture à froid, l'intégration et
++l'orchestration, environ 15 points : la fenêtre est à 68 % à 20 h 41
++UTC, la semaine à 9 %. Ce qui reste, T-0002 et T-0106 par un sous-agent,
++la revue complète, ses constats et la clôture, environ 60 points, ne
++tient pas avant la remise à zéro de 00 h 10 UTC : la série part en
++correctifs dans le dossier de passation de L-0019, sous
++docs/fabrication, pour une session neuve.
+-- 
+2.43.0
+
