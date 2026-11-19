@@ -13,6 +13,12 @@ mention, reposer les empreintes. La commande devrait reconnaître, parmi
 deux entrées du même identifiant, celle que la branche ajoute, et
 renuméroter celle-là.
 
+Le 19 novembre (J-2026-11-19-V), le même défaut sur le journal : après
+le cherry-pick d'un commit de sous-agent, deux entrées J-2026-11-19-S
+dans le même fichier, l'une déjà poussée ; `socle renumber
+J-2026-11-19-S` les renomme toutes deux, avec les mentions de la
+première dans le chantier actif. Réparé à la main.
+
 ## Satisfait quand
 
 - [ ] une collision d'identifiants née d'un rebase se répare par `socle renumber`, sans renommage ni mention corrigés à la main

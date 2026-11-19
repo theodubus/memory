@@ -785,6 +785,29 @@ class TestGarde(unittest.TestCase):
                 with self.subTest(cmd):
                     self.assertIsNone(hooks.refus_bash(self.projet, cmd))
 
+    def test_uv_run_et_poetry_run_se_retirent_comme_des_prefixes(self):
+        """B-0248 : `uv run` et `poetry run` n'étaient pas des préfixes ; un
+        push forcé ou la suppression du projet passaient derrière eux, et
+        `uv run python -c` échappait au jugement de `python -c`. Ils se
+        retirent avec leurs options, avant `run` comme après, comme `python
+        -m` laisse son module."""
+        with self.environnement():
+            self.jugees([("uv run rm -rf ..", "supprime"), ("poetry run rm -rf ..", "supprime"),
+                         ("uv run --with requests -p 3.12 -- rm -rf ..", "supprime"),
+                         ("uv --directory . run --frozen rm -rf ..", "supprime"),
+                         ("poetry -C . run -n rm -rf ..", "supprime"),
+                         ("uv run python -c \"open('.socle/policy.toml','w').write('x')\"", "protege"),
+                         ("poetry run python3 -I -c \"import shutil; shutil.rmtree('.socle')\"", "protege"),
+                         ("uv run pytest", None), ("uv run --frozen pytest -q tests/", None),
+                         ("poetry run pytest -x", None), ("uv run -m pytest", None),
+                         ("uv run python -m unittest tests.test_calc", None), ("uv sync --frozen", None),
+                         ("uv run python -c \"print(open('calc.py').read())\"", None)])
+            for cmd in (f"poetry run {G} {P} --force origin main", f"uv run {G} {P} --force origin main",
+                        f"uv run --python=3.12 {G} {P} -f origin travail", f"poetry run -- {G} {P} origin main"):
+                with self.subTest(cmd):
+                    self.assertIn("politique, point 4", hooks.refus_bash(self.projet, cmd) or "")
+                    self.assertEqual(self.decide(*B(cmd)), "refus")
+
     def test_un_find_sous_un_dossier_du_projet_ne_vise_pas_les_reglages(self):
         """La revue du lot 3, bloquant 1 (J-2026-11-14-AH) : un `find` sans
         filtre de nom sous un dossier du projet était refusé au motif des
@@ -1014,6 +1037,29 @@ class TestGarde(unittest.TestCase):
                          ("f() { ls; }; eval f; rm -rf build", None),
                          ("f() { cd memory; }; x=$(f); rm -rf build", None),
                          ('f() { cd memory; }; bash -c "f; rm -rf build"', None)])
+
+    def test_ce_que_lance_une_substitution_entre_guillemets_se_juge(self):
+        """B-0260 : ce que lance une substitution entre guillemets (`"$(…)"`,
+        des accents graves) ne se jugeait jamais, et `x="$(…)"` est une forme
+        qu'un agent écrit. Son texte se juge comme celui d'une substitution
+        nue, avec les fonctions connues ; un calcul `$((…))` ne lance rien,
+        et le corps d'un heredoc n'est que du texte."""
+        nom = self.racine.name
+        with self.environnement():
+            self.jugees([('echo "$(rm -rf ..)"', "supprime"), ('echo "a `rm -rf ..` b"', "supprime"),
+                         (f'echo "$(cd memory; rm -rf ../../{nom})"', "protege"),
+                         (f'f() {{ cd memory; }}; x="$(f; rm -rf ../../{nom})"', "illisible"),
+                         (f'function f\n{{ cd memory; }}\nx="$(f; rm -rf ../../{nom})"', "illisible"),
+                         ('x="$(echo x > .socle/policy.toml)"', "protege"),
+                         ('x="$(git rev-parse HEAD)"; echo "$x" > notes.txt', None),
+                         ('echo "$((1 + 2))" > notes.txt', None),
+                         ('cd "$(git rev-parse --show-toplevel)" && ls', None),
+                         ('f() { ls; }; x="$(f; rm -rf build)"', None),
+                         (f"{G} commit -q -m \"$(cat <<'EOF'\nfix: x\n\nrm -rf .. puis {G} {P} --force\nEOF\n)\"",
+                          None)])
+            cmd = f'echo "$({G} {P} --force origin main)"'
+            self.assertIn("politique, point 4", hooks.refus_bash(self.projet, cmd) or "")
+            self.assertEqual(self.decide(*B(cmd)), "refus")
 
     def test_un_mot_reserve_cite_ou_echappe_se_lit_comme_un_mot(self):
         """La seconde revue du lot B-0234, bloquant 3 (J-2026-11-15-O) : un
@@ -1269,6 +1315,59 @@ class TestGarde(unittest.TestCase):
         finally:
             subprocess.run(["git", "checkout", "-q", "travail"], cwd=self.racine, check=True)
         self.assertEqual(self.decide(*B(f"{G} {P}")), "passe")
+
+    def test_un_push_se_juge_par_ses_arguments_developpes(self):
+        """B-0254 : `irreversible` lisait l'argv d'un `git push` tel qu'écrit ;
+        un push forcé dont l'option venait d'une variable ou des arguments
+        d'une fonction passait. L'argv se développe avec les variables
+        connues, et un argument qu'il ne sait pas développer est refusé,
+        comme ADR-0072 refuse un chemin inconnu."""
+        illisible = "dont le hook ne sait pas développer l'argument"
+        with self.environnement():
+            for cmd, raison in ((f"F=--force; {G} {P} $F origin travail", "push forcé"),
+                                (f'F="-f origin"; {G} {P} $F travail', "push forcé"),
+                                (f"B=main; {G} {P} origin \"$B\"", "branche par défaut"),
+                                (f"for b in main; do {G} {P} origin $b; done", "branche par défaut"),
+                                (f'{G} {P} "$X" origin travail', illisible),
+                                (f'f() {{ {G} {P} "$@"; }}; f --force origin travail', illisible),
+                                (f'{G} {P} origin "$(git branch --show-current)"', illisible),
+                                (f"{G} -C . {P} origin `echo main`", illisible)):
+                with self.subTest(cmd):
+                    raison_lue = hooks.refus_bash(self.projet, cmd) or ""
+                    self.assertIn(raison, raison_lue)
+                    self.assertIn("politique, point 4", raison_lue)
+                    self.assertEqual(self.decide(*B(cmd)), "refus")
+            for cmd in (f"{G} {P} origin travail", f'B=travail; {G} {P} origin "$B"', f"{G} {P} -u origin travail",
+                        f'{G} -C "$X" status', f'D=/tmp; {G} -C "$D" {P} origin travail',
+                        f'{G} commit -q -m "$X"', f"R=origin; {G} {P} $R travail"):
+                with self.subTest(cmd):
+                    self.assertIsNone(hooks.refus_bash(self.projet, cmd))
+        self.assertEqual(hooks.push_illisible(self.racine, commandes.analyser(f'{G} -C "$X" {P} "$Y" b')[0], {}),
+                         "$Y")
+        self.assertIsNone(hooks.push_illisible(self.racine, commandes.analyser(f'{G} -C "$X" {P} o b')[0], {}))
+
+    def test_une_option_globale_entre_guillemets_ne_cache_pas_le_push(self):
+        """Passe 1 de la revue de L-0005 : l'argv développé d'un `git` se
+        coupait en mots, et la valeur entre guillemets d'une option globale
+        (`-c "…: bearer $TOKEN"`, `-C "$D"` qui porte une espace) décalait sa
+        sous-commande ; un push forcé ou vers la branche par défaut,
+        refusé avant B-0254, passait. Le hook juge l'argv coupé et l'argv
+        entier (B-0254)."""
+        with self.environnement():
+            for cmd, raison in ((f'{G} -c http.extraheader="AUTHORIZATION: bearer $TOKEN" {P} origin main',
+                                 "branche par défaut"),
+                                (f'{G} -c core.sshCommand="ssh -i $HOME/.ssh/k" {P} --force origin travail',
+                                 "push forcé"),
+                                (f'D="/tmp/a b"; {G} -C "$D" {P} --force origin travail', "push forcé")):
+                with self.subTest(cmd):
+                    self.assertIn(raison, hooks.refus_bash(self.projet, cmd) or "")
+                    self.assertEqual(self.decide(*B(cmd)), "refus")
+            self.assertIsNone(hooks.refus_bash(
+                self.projet, f'{G} -c http.extraheader="AUTHORIZATION: bearer $TOKEN" {P} -u origin travail'))
+        push = next(c for c in commandes.analyser(f'D="/tmp/a b"; {G} -C "$D" {P} -f o b') if c.programme == G)
+        self.assertEqual(hooks.irreversible(self.racine, push, {}), "push forcé")
+        self.assertEqual(hooks.push_illisible(self.racine, commandes.analyser(f'{G} -c "x=$Q $Z" {P} "$Y" b')[0], {}),
+                         "$Y")
 
     def test_le_refus_d_une_action_externe_la_rend_a_l_humain(self):
         # D-0026 : une demande validée ne débloque pas l'action ; le refus le
@@ -1672,10 +1771,23 @@ class TestDecoupage(unittest.TestCase):
                 ('echo "$(a "$(b "c")")"; ls', ["echo", '$(a "$(b "c")")', ";", "ls"])):
             with self.subTest(texte):
                 self.assertEqual(commandes.jetons(texte), attendu)
-        # Ce que lance une substitution entre guillemets ne se juge pas
-        # (un risque accepté) ; un `cd` cité entre ses guillemets non plus.
+        # Ce que lance une substitution entre guillemets se juge comme une
+        # substitution nue (B-0260) ; un `cd` cité entre ses guillemets ne se
+        # lit pas.
         simples = commandes.analyser('X="$(echo "; cd /tmp; ")"; ls')
-        self.assertEqual([(c.argv, c.dossier) for c in simples], [(["ls"], "")])
+        self.assertEqual([(c.argv, c.dossier) for c in simples], [(["echo", "; cd /tmp; "], ""), (["ls"], "")])
+
+    def test_le_texte_d_une_substitution_entre_guillemets(self):
+        """B-0260 : la commande que lance une substitution entre guillemets,
+        par `$(…)` ou des accents graves, est rendue comme celle d'une
+        substitution nue ; un calcul `$((…))` ne lance rien."""
+        for texte, argvs in (('echo "$(rm -rf ..)"', [["rm", "-rf", ".."], ["echo", "$(rm -rf ..)"]]),
+                             ('x="$(f; rm a)"', [["f"], ["rm", "a"]]),
+                             ('echo "a `rm b` c"', [["rm", "b"], ["echo", "a `rm b` c"]]),
+                             ('echo "$(a "$(rm "c")")"', [["rm", "c"], ["a", '$(rm "c")'], ["echo", '$(a "$(rm "c")")']]),
+                             ('echo "$((1 + 2))"', [["echo", "$((1 + 2))"]])):
+            with self.subTest(texte):
+                self.assertEqual([c.argv for c in commandes.analyser(texte)], argvs)
 
     def test_accolades(self):
         self.assertEqual(commandes.accolades("a{b,c{d,e}}f"), ["abf", "acdf", "acef"])
@@ -1737,6 +1849,19 @@ class TestDecoupage(unittest.TestCase):
     def test_prefixes_et_bash_c(self):
         self.assertEqual([c.argv for c in commandes.analyser("x=1 sudo -u root env A=b rm f")], [["rm", "f"]])
         self.assertIn(["rm", "-rf", "/"], [c.argv for c in commandes.analyser("bash -c 'rm -rf /'")])
+
+    def test_uv_run_et_poetry_run_avec_leurs_options(self):
+        """B-0248 : la commande que lancent `uv run` et `poetry run`, leurs
+        options sautées, et la valeur de celles qui en prennent une."""
+        for texte, argv in (("uv run --with requests -p 3.12 python -c x", ["python", "-c", "x"]),
+                            ("uv --directory sub run --frozen -w x pytest", ["pytest"]),
+                            ("uv run --python=3.12 -- rm f", ["rm", "f"]), ("uv run -m pytest -q", ["pytest", "-q"]),
+                            ("poetry -C sub run -n pytest -x", ["pytest", "-x"]),
+                            ("x=1 /usr/bin/uv run env A=b rm f", ["rm", "f"]),
+                            ("uv pip install x", ["uv", "pip", "install", "x"]), ("uv run", ["uv", "run"]),
+                            ("uv run --", ["uv", "run", "--"]), ("poetry install", ["poetry", "install"])):
+            with self.subTest(texte):
+                self.assertEqual([c.argv for c in commandes.analyser(texte)], [argv])
 
     def test_options_drapeaux_et_sous_commande_git(self):
         options, args = commandes.options_et_arguments(["-fu", "origin", "--", "-x"])

@@ -464,8 +464,7 @@ class TestMigration(Projet):
     def test_l_ancien_numero_dans_un_texte_neuf_fait_nommer_l_identifiant_actuel(self):
         """T-0051 : le hook refusait l'ancien numéro d'une entrée renumérotée
         en le disant inventé, quand les contrôles le résolvent ; il nomme
-        l'identifiant actuel, que le texte neuf cite alors. Le journal qui le
-        cite déjà se complète sans refus."""
+        l'identifiant actuel, que le texte neuf cite alors."""
         _, journal = self.migre()
         projet = config.Projet.charger(self.racine)
 
@@ -487,10 +486,67 @@ class TestMigration(Projet):
         # le bilan de la mise à jour se recopie au journal.
         self.assertEqual(ecrire(note, "Renumérotés : B-0005 → L-0002.\n"), "")
         self.assertIn("`B-0005` (ligne 2)", ecrire(note, "Le lot L-0002 avance.\nB-0005 aussi.\n"))
-        self.assertEqual(ecrire(Path(journal), Path(journal).read_text() + "\nLe lot B-0005 avance.\n"), "")
+        # T-0083 : l'ancien numéro se juge sur les lignes que l'écriture
+        # ajoute, même dans un fichier qui le cite déjà.
+        self.assertIn("ancien numéro — `B-0005`",
+                      ecrire(Path(journal), Path(journal).read_text() + "\nLe lot B-0005 avance.\n"))
         # Une référence inventée reste dite inventée, avant l'ancien numéro.
         self.assertIn("référence inventée — `B-0099`", ecrire(note, "B-0005 et B-0099.\n"))
         self.assertEqual(hooks.references_refusees(projet, "docs/note.md", None, "B-0005.\n")[0], [])
+
+    def test_l_ancien_numero_se_juge_sur_les_lignes_ajoutees(self):
+        """T-0083 : le hook sautait toute mention que le fichier portait déjà ;
+        dans un fichier qui cite B-0005, une ligne neuve qui le reprenait
+        passait. Il juge les lignes que l'écriture ajoute ou change ; une
+        ligne gardée telle quelle passe, même si l'écriture change ce qui
+        l'entoure, et la ligne qui nomme aussi L-0002 passe."""
+        self.migre()
+        projet = config.Projet.charger(self.racine)
+        avant = "# Notes\n\nLe lot B-0005 avance.\n\nFin.\n"
+
+        def vieux(apres: str) -> list[str]:
+            return hooks.references_refusees(projet, "docs/note.md", avant, apres)[1]
+
+        self.assertIn("`B-0005` (ligne 7)", " ".join(vieux(avant + "\nVoir B-0005.\n")))
+        self.assertIn("`B-0005` (ligne 3)", " ".join(vieux(avant.replace("avance.", "avance vite."))))
+        self.assertEqual(vieux(avant + "\nVoir L-0002.\n"), [])
+        self.assertEqual(vieux("# Notes revues\n\nLe lot B-0005 avance.\n\nFin, enfin.\n"), [])
+        self.assertEqual(vieux(avant + "\nRenumérotés : B-0005 → L-0002.\n"), [])
+
+    def test_l_ancien_numero_que_portait_une_ligne_de_metadonnees_y_reste(self):
+        """Passe 1 de la revue de L-0005 : le hook refusait toute retouche de
+        la ligne de métadonnées d'une entrée renumérotée, qui porte son
+        ancien numéro (`ancien : B-0005`) ; clore le lot l'était, comme
+        changer le statut d'une décision dont la source cite un ancien
+        numéro. Sur une ligne de métadonnées, l'ancien numéro que portait le
+        bloc remplacé reste ; un ancien numéro neuf s'y refuse, et une ligne
+        de texte retouchée se juge comme avant (ADR-0093)."""
+        self.migre()
+        projet = config.Projet.charger(self.racine)
+        rel = next((self.racine / "memory/backlog").glob("L-0002-*.md")).relative_to(self.racine).as_posix()
+        avant = (self.racine / rel).read_text()
+        self.assertIn("ancien : B-0005", avant)
+
+        def vieux(apres: str) -> list[str]:
+            return hooks.references_refusees(projet, rel, avant, apres)[1]
+
+        close = re.sub(r"^> statut : [^·]*·", "> statut : fait · ref : J-2026-01-01-A ·", avant, count=1, flags=re.M)
+        self.assertNotEqual(close, avant)
+        self.assertEqual(vieux(close), [])
+        self.assertIn("`B-0006`", " ".join(vieux(close.replace("ref : J-2026-01-01-A", "ref : B-0006"))))
+        self.assertIn("`B-0005`", " ".join(vieux(avant + "\nLe lot B-0005 avance.\n")))
+
+    def test_lignes_remplacees(self):
+        self.assertEqual(hooks.lignes_remplacees("a\nb\nc\n", "a\nx\nc\nd\n"), {2: "b", 4: ""})
+        self.assertEqual(hooks.lignes_remplacees("a\nb\nc\n", "a\nx\ny\n"), {2: "b\nc", 3: "b\nc"})
+        self.assertEqual(hooks.lignes_remplacees("a\n", "a\n"), {})
+
+    def test_lignes_ajoutees(self):
+        self.assertEqual(hooks.lignes_ajoutees("a\nb\nc\n", "a\nb\nc\nd\n"), {4})
+        self.assertEqual(hooks.lignes_ajoutees("a\nb\nc\n", "x\nb\ny\n"), {1, 3})
+        self.assertEqual(hooks.lignes_ajoutees("a\nb\n", "a\nb\nb\n"), {3})
+        self.assertEqual(hooks.lignes_ajoutees("", "a\n"), {1})
+        self.assertEqual(hooks.lignes_ajoutees("a\nb\n", "b\n"), set())
 
     def test_poser_lectures_cite_l_index_sans_les_taches(self):
         self.avant()

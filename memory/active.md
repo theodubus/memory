@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-En session neuve : la demande de la copie de `socle-review`, relue à
-froid (J-2026-11-19-O) ; puis le lot suivant.
+L-0005 clos et livré (J-2026-11-19-AA). En session neuve : le lot
+suivant, que donne `python3 .socle/socle roadmap`.
 
 ## Consignes en cours
 

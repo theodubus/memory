@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0248 — Le hook de l'agent ne lit ni coproc ni uv run ni poetry run : un push forcé ou la suppression du projet y passent
 
-> statut : ouvert · origine : J-2026-11-15-O · priorité : haute · ref : J-2026-11-16-G · lu : backlog@b85fce13
+> statut : fait · origine : J-2026-11-15-O · priorité : haute · ref : J-2026-11-16-G, T-0005, J-2026-11-19-AA · lu : backlog@b85fce13
 
 La revue du lot L-0004 (J-2026-11-15-O), cinquième constat pour le
 backlog : deux voisins hors du lot, par où passent un push forcé ou la
@@ -27,4 +27,4 @@ Réduit le 16 novembre selon D-0120 (J-2026-11-16-G) : gardé pour `uv run` et `
 
 ## Satisfait quand
 
-- [ ] dans un projet uv ou poetry, un push forcé ou la suppression du projet lancés par `uv run` ou `poetry run` arrêtent l'agent au hook comme sans ce préfixe, et les commandes ordinaires qu'ils lancent passent
+- [x] dans un projet uv ou poetry, un push forcé ou la suppression du projet lancés par `uv run` ou `poetry run` arrêtent l'agent au hook comme sans ce préfixe, et les commandes ordinaires qu'ils lancent passent
