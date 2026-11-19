@@ -150,6 +150,59 @@ class TestSkillsDuSocle(unittest.TestCase):
         self.assertEqual(juger(self.racine), {"skills.contrat": [], "skills.commandes": []})
 
 
+class TestLesDemandes(unittest.TestCase):
+    """Le skill des demandes : ce qu'une décision prise en séance garde, et
+    la variante légère des valeurs attendues mécaniques (D-0134)."""
+
+    def setUp(self):
+        self.racine = depot({"app.py": "print('ok')\n"})
+
+    def tearDown(self):
+        shutil.rmtree(self.racine, ignore_errors=True)
+
+    def texte(self, lg: str) -> str:
+        installeur.poser_skills(self.racine, lg)
+        texte = (self.racine / installeur.SKILLS / "socle-request" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
+        return " ".join(texte.split())
+
+    def test_un_contenu_valide_en_seance_s_ecrit_d_abord_dans_le_depot(self):
+        """T-0097 (B-0286) : la décision désigne le contenu écrit, et les
+        tâches le citent ; sans lui, il se perd."""
+        attendus = {
+            "fr": "Un contenu montré dans la conversation que l'humain valide (un format, un exemple, un texte) "
+                  "s'écrit d'abord tel quel dans le dépôt, puis la décision le désigne (`--about <chemin>`), et "
+                  "les tâches qui en découlent citent ce chemin",
+            "en": "Content shown in the conversation that the human approves (a format, an example, a text) is "
+                  "first written as is in the repository, then the decision designates it (`--about <path>`), "
+                  "and the tasks that follow from it cite that path",
+        }
+        for lg, phrase in attendus.items():
+            self.assertIn(phrase, self.texte(lg), lg)
+
+    def test_la_variante_legere_des_valeurs_attendues_mecaniques(self):
+        """T-0095 (B-0289) : ce qui la permet, ce qu'elle demande, et ce qui
+        garde la demande écrite."""
+        attendus = {
+            "fr": ["**La variante légère**, pour des valeurs attendues changées mécaniquement, des tests qui "
+                   "lisent un format que l'humain vient de valider : une question dans la conversation qui nomme "
+                   "chaque test, avec sa valeur avant et après",
+                   "sa réponse se consigne mot pour mot en décision de séance, dont le texte (`--question-file`) "
+                   "nomme les tests, et se commite avec eux",
+                   "Tout autre changement de valeur attendue, ou suppression d'un test, garde la demande écrite."],
+            "en": ["**The light variant**, for expected values changed mechanically, tests that read a format the "
+                   "human has just approved: a question in the conversation that names each test, with its value "
+                   "before and after",
+                   "its answer is recorded word for word as a decision taken in session, whose text "
+                   "(`--question-file`) names the tests, and is committed with them",
+                   "Any other change of an expected value, or deletion of a test, keeps the written request."],
+        }
+        for lg, phrases in attendus.items():
+            texte = self.texte(lg)
+            for phrase in phrases:
+                self.assertIn(phrase, texte, lg)
+
+
 class TestLaReprise(unittest.TestCase):
     """Le skill de la reprise après une limite d'usage (ADR-0050) : posé dans
     les deux langues, il ne relance que l'agent dont le tour a fini sur une
@@ -328,6 +381,59 @@ class TestLaConduiteDUnLot(unittest.TestCase):
             for phrase in phrases:
                 self.assertIn(phrase, texte, lg)
 
+
+    def lire(self, attendus: dict[str, list[str]]) -> None:
+        for lg, phrases in attendus.items():
+            texte = " ".join(self.texte(lg).split())
+            for phrase in phrases:
+                self.assertIn(phrase, texte, lg)
+
+    def test_une_petite_tache_s_implemente_dans_la_session_qui_orchestre(self):
+        """T-0093 (D-0134, proposition 1) : sous un seuil provisoire, la
+        session qui orchestre implémente ; un garde-fou ou un format lu
+        ailleurs garde son sous-agent."""
+        self.lire({
+            "fr": ["il n'implémente lui-même qu'une petite tâche",
+                   "**Une petite tâche**, moins de 150 lignes de code et de tests (seuil provisoire, revu sur les "
+                   "coûts mesurés), s'implémente dans la session qui orchestre, sauf si elle touche un garde-fou "
+                   "ou un format que d'autres parties du projet lisent."],
+            "en": ["it implements itself only a small task",
+                   "**A small task**, under 150 lines of code and tests (a provisional threshold, revised on the "
+                   "measured costs), is implemented in the orchestrating session, unless it touches a guardrail "
+                   "or a format that other parts of the project read."],
+        })
+
+    def test_un_sous_agent_se_lance_si_ce_qui_reste_couvre_son_cout_et_le_rangement(self):
+        """T-0037 (B-0249) : le seuil fixe devient le coût mesuré d'un
+        sous-agent et du rangement ; le rangement a sa marge fixe ; les
+        anciens seuils ne valent que sans mesure."""
+        self.lire({
+            "fr": ["Les coûts se mesurent : l'utilisation de chaque fenêtre, avant chaque lancement et à chaque "
+                   "compte rendu",
+                   "La clôture note au journal le coût de chaque sous-agent, du relecteur, de chaque demande et du "
+                   "rangement",
+                   "Un sous-agent se lance si ce qui reste de chaque fenêtre couvre son coût mesuré et celui du "
+                   "rangement ; sans mesure, aucun au-delà de 85 % de la semaine",
+                   "Le rangement commence au plus tard à dix points d'une limite"],
+            "en": ["Costs are measured: the use of each window, before each launch and at each report",
+                   "The closure notes in the journal the cost of each subagent, of the reviewer, of each request "
+                   "and of the tidying up",
+                   "A subagent is launched if what remains of each window covers its measured cost and that of "
+                   "the tidying up; without a measure, none beyond 85% of the week",
+                   "The tidying up starts at the latest ten points from a limit"],
+        })
+
+    def test_le_cout_d_un_lot_s_estime_a_son_annonce(self):
+        """T-0099 (B-0291) : à l'annonce, le coût du lot s'estime sur les
+        coûts mesurés ; s'il ne tient pas, découper, réduire ou attendre."""
+        self.lire({
+            "fr": ["estimer le coût du lot : s'il ne tient pas dans ce qui reste de la fenêtre, le découper, "
+                   "commencer par un lot plus petit ou attendre la remise à zéro",
+                   "le jalon servi, le coût estimé", "celui d'un lot s'estime sur ces mesures"],
+            "en": ["estimate the batch's cost: if it does not fit in what remains of the window, split it, start "
+                   "with a smaller batch or wait for the reset",
+                   "the milestone served, the estimated cost", "a batch's cost is estimated on these measures"],
+        })
 
 class TestLaRevue(unittest.TestCase):
     """B-0214 : le skill de la revue, posé dans les deux langues, donne au

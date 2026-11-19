@@ -7,6 +7,47 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-19-b — The socle-request skill: content approved in session is first written in the repository; the light variant for mechanical expected values
+
+Content shown in the conversation that the human approves (a format, an
+example, a text) is now written as is in the repository before the
+decision taken in session is recorded: it designates it (`socle decision
+--about <path>`), and the tasks that follow from it cite that path.
+Without it, the decision kept only the question and the answer, and a
+batch could build on a memory of the content.
+
+Expected values changed mechanically, tests that read a format the human
+has just approved, are validated by a question in the conversation that
+names each test, with its value before and after; the answer is recorded
+word for word as a decision taken in session, whose text names the
+tests, and is committed with them. Any other change of an expected
+value, or deletion of a test, keeps the written request.
+
+To do: nothing; the `socle-request` skill is a protected copy, in the
+installer's request.
+
+## 2026-11-19-a — The socle-batch skill: a small task is done without a subagent, and a batch's cost is estimated on measures
+
+A small task, under 150 lines of code and tests (a provisional
+threshold, revised on the measured costs), is implemented in the
+orchestrating session, unless it touches a guardrail or a format that
+other parts of the project read: the fixed cost of a subagent, which
+rereads instructions and code before writing, exceeded what it saves.
+
+The fixed consumption thresholds become a rule on measured costs. A
+batch's closure notes in the journal the cost of each subagent, of the
+reviewer, of each request and of the tidying up. A subagent is launched
+if what remains of each window covers its measured cost and that of the
+tidying up; without a measure, the former thresholds hold (none beyond
+85% of the week or 60% of the five-hour window). The tidying up starts
+at the latest ten points from a limit. At the announcement, the batch's
+cost is estimated on these measures: if it does not fit in what remains
+of the window, the batch is split, starts smaller or waits for the
+reset.
+
+To do: nothing; the `socle-batch` skill is a protected copy, in the
+installer's request.
+
 ## 2026-11-18-d — The state no longer gives to delete a branch the origin no longer has
 
 The clone keeps the reference of a branch deleted on the origin until a

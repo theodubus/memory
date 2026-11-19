@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0018 — Lot des allégements de D-0134 : le coût d'un lot suit sa taille
 
-> statut : ouvert · origine : D-0134 · après : L-0017, T-0037, T-0093, T-0094, T-0095, T-0096, T-0097, T-0098, T-0099, T-0102 · lu : backlog@7b27e264
+> statut : en cours · origine : D-0134 · après : L-0017, T-0037, T-0093, T-0094, T-0095, T-0096, T-0097, T-0098, T-0099, T-0102 · lu : backlog@7b27e264
 
 Formé le 18 novembre pour les cinq allégements que Théo a validés
 (D-0134), écrits dans `docs/fabrication/allegements.md` : que le coût

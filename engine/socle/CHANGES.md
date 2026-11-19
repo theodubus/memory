@@ -7,6 +7,47 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-19-b — Le skill socle-request : un contenu validé en séance s'écrit d'abord dans le dépôt ; la variante légère des valeurs attendues mécaniques
+
+Un contenu montré dans la conversation que l'humain valide (un format, un
+exemple, un texte) s'écrit désormais tel quel dans le dépôt avant que la
+décision de séance se consigne : elle le désigne (`socle decision
+--about <chemin>`), et les tâches qui en découlent citent ce chemin. Sans
+lui, la décision ne gardait que la question et la réponse, et un lot
+pouvait construire sur un souvenir du contenu.
+
+Des valeurs attendues changées mécaniquement, des tests qui lisent un
+format que l'humain vient de valider, se valident par une question dans
+la conversation qui nomme chaque test, avec sa valeur avant et après ; la
+réponse se consigne mot pour mot en décision de séance, dont le texte
+nomme les tests, et se commite avec eux. Tout autre changement de valeur
+attendue, ou suppression d'un test, garde la demande écrite.
+
+À faire : rien ; le skill `socle-request` est une copie protégée, dans la
+demande de l'installeur.
+
+## 2026-11-19-a — Le skill socle-batch : une petite tâche se fait sans sous-agent, et le coût d'un lot s'estime sur des mesures
+
+Une petite tâche, moins de 150 lignes de code et de tests (un seuil
+provisoire, revu sur les coûts mesurés), s'implémente dans la session
+qui orchestre, sauf si elle touche un garde-fou ou un format que
+d'autres parties du projet lisent : le coût fixe d'un sous-agent, qui
+relit instructions et code avant d'écrire, dépassait ce qu'il épargne.
+
+Les seuils fixes de la consommation deviennent une règle sur des coûts
+mesurés. La clôture d'un lot note au journal ce qu'ont coûté chaque
+sous-agent, le relecteur, chaque demande et le rangement. Un sous-agent
+se lance si ce qui reste de chaque fenêtre couvre son coût mesuré et
+celui du rangement ; sans mesure, les anciens seuils valent (aucun
+au-delà de 85 % de la semaine ou de 60 % de la fenêtre de cinq heures).
+Le rangement commence au plus tard à dix points d'une limite. À
+l'annonce, le coût du lot s'estime sur ces mesures : s'il ne tient pas
+dans ce qui reste de la fenêtre, le lot se découpe, commence plus petit
+ou attend la remise à zéro.
+
+À faire : rien ; le skill `socle-batch` est une copie protégée, dans la
+demande de l'installeur.
+
 ## 2026-11-18-d — L'état ne donne plus à supprimer une branche que l'origine n'a plus
 
 Le clone garde la référence d'une branche supprimée sur l'origine tant

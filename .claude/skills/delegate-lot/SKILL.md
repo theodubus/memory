@@ -21,6 +21,12 @@ lui (B-0274).
 
 ## Les sous-agents
 
+Une petite tâche s'implémente dans la session qui orchestre, selon le
+seuil de `socle-batch` (D-0134) : une tâche qui ne change que le texte
+d'un skill en est le cas courant. Plusieurs tâches de code qui touchent
+les mêmes fichiers peuvent aller à un seul sous-agent, un commit
+chacune : son coût fixe ne se paie qu'une fois.
+
 Le modèle est celui que dit le chantier actif ; un sous-agent qui doit
 tourner sur celui de la session se lance sans `model`, l'alias `opus`
 ayant désigné un Opus plus ancien que celui de la session (B-0251). La consigne est celle du
@@ -73,6 +79,10 @@ semaine chacun : d'où les seuils du skill du produit.
 ## Changer de session
 
 Le correctif d'un commit pas encore relu va dans un dossier de passation
-sous `docs/fabrication/`. Le prompt de la session neuve est celui du
+sous `docs/fabrication/`. À l'intégration d'une passation, après
+l'application de ses correctifs (`git am`), la branche de passation se
+fusionne dans la branche de travail (`git merge --no-edit`), puis son
+dossier se retire : l'état la donne alors à supprimer après la fusion de
+la pull request (B-0293). Le prompt de la session neuve est celui du
 produit, avec « Reprends le travail du socle dans ce dépôt » et le lot
 « selon le skill delegate-lot ».

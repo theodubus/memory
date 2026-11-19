@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0095 — Le skill socle-request dit la variante légère de D-0134 : des valeurs attendues mécaniques se valident par une question dans la conversation qui nomme chaque test, avant et après, la réponse consignée en séance
 
-> statut : ouvert · origine : D-0134 · besoin : B-0289 · lu : backlog@10e91576
+> statut : fait · origine : D-0134 · besoin : B-0289 · lu : backlog@10e91576 · ref : J-2026-11-19-B
 
 Un commit : le gabarit du skill `socle-request`, en français et en
 anglais, dit la variante légère de D-0134 : des valeurs attendues
@@ -15,4 +15,4 @@ demande.
 
 ## Fait quand
 
-- [ ] le gabarit de `socle-request` et son anglais disent la variante légère, ce qui la permet et ce qui garde la demande écrite, et un test le lit
+- [x] le gabarit de `socle-request` et son anglais disent la variante légère, ce qui la permet et ce qui garde la demande écrite, et un test le lit
