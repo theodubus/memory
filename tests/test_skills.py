@@ -481,6 +481,27 @@ class TestLaRevue(unittest.TestCase):
                 self.assertIn(phrase, texte, lg)
             self.assertNotIn(ancien, texte, lg)
 
+    def test_il_dit_quand_donner_le_dossier_court(self):
+        """B-0288 : un petit lot qui ne touche ni un garde-fou ni un format
+        que d'autres parties du projet lisent reçoit le dossier court ; tout
+        autre, le dossier complet."""
+        attendus = {
+            "fr": ["Un petit lot (moins de 150 lignes de code et de tests) qui ne touche ni un garde-fou ni un "
+                   "format que d'autres parties du projet lisent reçoit le dossier court, `--short` : le diff et "
+                   "les critères de ses tâches, à juger sans explorer au-delà des fichiers touchés ; tout autre "
+                   "lot, le dossier complet.",
+                   "`--short` refuse un lot qui touche un chemin que la politique protège ou que les garde-fous "
+                   "déclarent."],
+            "en": ["A small batch (under 150 lines of code and tests) that touches neither a guardrail nor a format "
+                   "other parts of the project read gets the short brief, `--short`: the diff and its tasks' "
+                   "criteria, to judge without exploring beyond the files touched; any other batch, the full brief.",
+                   "`--short` refuses a batch that touches a path the policy protects or the guardrails declare."],
+        }
+        for lg, phrases in attendus.items():
+            texte = " ".join(self.texte(lg).split())
+            for phrase in phrases:
+                self.assertIn(phrase, texte, lg)
+
     def test_les_constats_le_dossier_et_le_modele_de_menace_d_une_seule_maniere(self):
         """D-0112, règle 1 : ce qui va au backlog, ce qui s'écarte ; ADR-0073 :
         le modèle de menace dans la section du sujet ou dans la décision

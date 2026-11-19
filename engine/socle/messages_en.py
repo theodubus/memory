@@ -2369,6 +2369,34 @@ MESSAGES: dict[str, str] = {
         "the tool is missing from this environment: install it",
     "`{commande}` a rendu {code}":
         "`{commande}` returned {code}",
+    "le dossier court d'un petit lot : le diff et les critères de ses tâches, à juger sans explorer au-delà des "
+    "fichiers touchés ; refusé pour un lot qui touche un garde-fou":
+        "the short dossier of a small batch: the diff and its tasks' criteria, to judge without exploring beyond "
+        "the files touched; refused for a batch that touches a guardrail",
+    "le lot touche un garde-fou : {chemins}. Son relecteur doit pouvoir lire au-delà du diff : pas de dossier "
+    "court, `socle review` sans `--short` donne le dossier complet":
+        "the batch touches a guardrail: {chemins}. Its reviewer must be able to read beyond the diff: no short "
+        "dossier, `socle review` without `--short` gives the full dossier",
+    "# Revue adversariale d'un petit lot, le dossier court":
+        "# Adversarial review of a small batch, the short dossier",
+    "## Les critères des tâches du lot : ta barre":
+        "## The criteria of the batch's tasks: your bar",
+    "(aucun critère)":
+        "(no criteria)",
+    "(aucune entrée du backlog servie)":
+        "(no backlog entry served)",
+    "Tu relis un petit lot de travail d'un autre agent, sans sa conversation ni son raisonnement : tu as ce "
+    "dossier, son diff et les critères des tâches qu'il sert. Juge le diff et les fichiers qu'il touche, que tu "
+    "peux lire en entier pour vérifier un constat ; n'explore pas au-delà, ne lance rien, ne modifie rien. Ton "
+    "rôle est de le prendre en défaut : cherche ce qui casse (un cas limite, une erreur de logique, une "
+    "régression), ce qu'aucun test ne prouve, et ce qui contredit un critère. Ne juge ni le style, ni ce que "
+    "les contrôles automatiques jugent déjà : la forme de la mémoire, les liens, la présence des tests.":
+        "You are reviewing a small batch of work by another agent, without its conversation or its reasoning: you "
+        "have this dossier, its diff and the criteria of the tasks it serves. Judge the diff and the files it "
+        "touches, which you may read in full to check a finding; do not explore beyond, run nothing, modify "
+        "nothing. Your role is to catch it out: look for what breaks (an edge case, a logic error, a "
+        "regression), what no test proves, and what contradicts a criterion. Judge neither the style nor what "
+        "the automatic checks already judge: the form of the memory, the links, the presence of tests.",
     "… et {n} autre(s) ligne(s) d'échec":
         "… and {n} more failure line(s)",
     "  … et {n} contrôle(s) indisponible(s), que le détail explique : {controles}":
@@ -3607,6 +3635,8 @@ MESSAGES: dict[str, str] = {
         '- pass {n}: no blocker recorded',
     "deuxième passe de revue d'un lot sans le recul de la première":
         "second review pass of a batch without the first one's step back",
+    "dossier court de revue pour un lot qui touche un garde-fou":
+        "short review dossier for a batch that touches a guardrail",
     'lot relu clos « fait » sans le recul de sa dernière passe':
         'reviewed batch closed "done" without the step back of its last pass',
     "passe de plus d'un lot arrêté dont la demande attend sa réponse":
@@ -3634,6 +3664,8 @@ MESSAGES: dict[str, str] = {
     "un lot relu clos « fait » sur un arrêt dont la demande, qui cite le lot, a sa réponse passe le commit et la CI":
         'a reviewed batch closed "done" on a stop whose request, which cites the batch, has its answer passes the '
         'commit and the CI',
+    "un petit lot qui ne touche aucun garde-fou, `socle review --short` en donne le dossier court":
+        "a small batch that touches no guardrail, `socle review --short` gives its short dossier",
     "une deuxième passe de revue après le recul de la première, `socle review` la produit et l'écrit dans le lot":
         "a second review pass after the first one's step back, `socle review` produces it and writes it in the "
         "batch",

@@ -14,6 +14,6 @@ une demande.
 
 ## Fait quand
 
-- [ ] `socle review --short` rend le diff, les critères des tâches et la consigne de ne juger que les fichiers touchés, et un test le lit
-- [ ] `socle review --short` sur un lot qui touche un garde-fou renvoie au dossier complet, et un test le montre
-- [ ] le gabarit de `socle-review` et son anglais disent quand donner le dossier court, et un test le lit
+- [x] `socle review --short` rend le diff, les critères des tâches et la consigne de ne juger que les fichiers touchés, et un test le lit
+- [x] `socle review --short` sur un lot qui touche un garde-fou renvoie au dossier complet, et un test le montre
+- [x] le gabarit de `socle-review` et son anglais disent quand donner le dossier court, et un test le lit

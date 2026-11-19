@@ -7,6 +7,25 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-19-d — `socle review --short`, the short brief of a small batch; the review skill says when to give it
+
+`socle review --short` gives the reviewer of a small batch a short
+brief: the instruction to judge the diff and the files it touches,
+without exploring beyond, the batch's diff and the criteria of the tasks
+it serves, without the rest of their entries or the decisions they
+cite. It refuses, saying so, a batch that touches a guardrail: the
+policy or the guardrails themselves, a path the policy protects, or a
+path the guardrails declare as tooling (`[tooling] paths`); `socle
+review` without the option then gives the full brief. The
+`socle-review` skill says when to give the short brief: a batch of under
+150 lines of code and tests that touches neither a guardrail nor a
+format other parts of the project read; any other batch gets the full
+brief. The skill is tightened elsewhere, with no rule less, to fit its
+budget.
+
+To do: nothing; the `socle-review` skill is a protected copy, in the
+installer's request.
+
 ## 2026-11-19-c — A failing end of turn no longer copies the test output: the name of each check, the line of each failing test and the command that shows everything
 
 When checks failed at the end of a turn, the hook copied the whole

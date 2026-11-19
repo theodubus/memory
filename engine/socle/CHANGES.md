@@ -7,6 +7,25 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-19-d — `socle review --short`, le dossier court d'un petit lot ; le skill de la revue dit quand le donner
+
+`socle review --short` donne au relecteur d'un petit lot un dossier
+court : la consigne de juger le diff et les fichiers qu'il touche, sans
+explorer au-delà, le diff du lot et les critères des tâches qu'il sert,
+sans le reste de leurs entrées ni les décisions qu'elles citent. Il
+refuse, en le disant, un lot qui touche un garde-fou : la politique ou
+les garde-fous eux-mêmes, un chemin que la politique protège, ou un
+chemin que les garde-fous déclarent comme l'outillage (`[tooling]
+paths`) ; `socle review` sans l'option donne alors le dossier complet.
+Le skill `socle-review` dit quand donner le dossier court : un lot de
+moins de 150 lignes de code et de tests qui ne touche ni un garde-fou ni
+un format que d'autres parties du projet lisent ; tout autre lot reçoit
+le dossier complet. Le skill est resserré ailleurs, sans règle en moins,
+pour tenir dans son budget.
+
+À faire : rien ; le skill `socle-review` est une copie protégée, dans la
+demande de l'installeur.
+
 ## 2026-11-19-c — La fin de tour en échec ne recopie plus la sortie des tests : le nom de chaque contrôle, la ligne de chaque test en échec et la commande qui montre tout
 
 Quand des contrôles échouent en fin de tour, le hook recopiait le

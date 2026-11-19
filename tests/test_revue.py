@@ -386,6 +386,71 @@ class TestBarre(_Lot):
         self.assertIn("(aucun changement hors de la mémoire : rien à relire)", flux.getvalue())
 
 
+class TestDossierCourt(_Lot):
+    """B-0288 : le relecteur d'un petit lot reçoit un dossier court, le diff
+    et les critères de ses tâches, et ne juge que le diff et les fichiers
+    touchés ; un lot qui touche un garde-fou garde la revue complète."""
+
+    def test_le_dossier_court_donne_la_consigne_le_diff_et_les_criteres(self):
+        self.lot()
+        texte = revue.dossier(self.projet, court=True)
+        self.assertIn("Juge le diff et les fichiers qu'il touche", texte)
+        self.assertIn("n'explore pas au-delà", texte)
+        self.assertIn("+    return x * 2", texte)
+        self.assertIn("## Les critères des tâches du lot : ta barre", texte)
+        self.assertIn("### B-0001 — Doubler", texte)
+        self.assertIn("- [x] double est écrit", texte)
+        # Les classes des constats restent : le skill lit les trois listes.
+        self.assertIn("**Bloquant**", texte)
+        # Ni le reste des entrées, ni les décisions qu'elles citent, ni la
+        # consigne d'explorer le dépôt.
+        for absent in ("Selon ADR-0001.", "`double(x)` rend `2 * x`", "tu peux lire le dépôt",
+                       "## Les entrées du backlog que sert le lot"):
+            self.assertNotIn(absent, texte)
+        self.assertLess(len(texte), len(revue.dossier(self.projet)))
+
+    def test_la_commande_donne_le_dossier_court(self):
+        self.lot()
+        code, sortie, _ = commande(self.racine, short=True)
+        self.assertEqual(code, 0)
+        self.assertEqual(sortie, revue.dossier(config.Projet.charger(self.racine), court=True))
+
+    def test_un_lot_qui_touche_un_garde_fou_est_renvoye_au_dossier_complet(self):
+        self.lot()
+        # Un fichier que les garde-fous déclarent comme l'outillage, par défaut.
+        (self.racine / ".github/workflows").mkdir(parents=True)
+        (self.racine / ".github/workflows/ci.yml").write_text("on: push\n")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "la CI")
+        self.assertEqual(revue.garde_fous_touches(config.Projet.charger(self.racine), ["calc.py",
+                                                                                        ".github/workflows/ci.yml"]),
+                         [".github/workflows/ci.yml"])
+        with self.assertRaises(revue.CourtRefuse) as refus:
+            revue.dossier(config.Projet.charger(self.racine), court=True)
+        self.assertIn("le lot touche un garde-fou : .github/workflows/ci.yml", str(refus.exception))
+        self.assertIn("`socle review` sans `--short` donne le dossier complet", str(refus.exception))
+        code, sortie, erreurs = commande(self.racine, short=True)
+        self.assertEqual((code, sortie), (2, ""))
+        self.assertIn("le lot touche un garde-fou", erreurs)
+        # Le dossier complet, lui, se donne.
+        self.assertEqual(commande(self.racine)[0], 0)
+
+    def test_les_chemins_que_la_politique_protege_sont_des_garde_fous(self):
+        (self.racine / ".socle").mkdir()
+        (self.racine / ".socle/policy.toml").write_text('[protected]\npaths = ["garde/**"]\n')
+        projet = config.Projet.charger(self.racine)
+        self.assertEqual(revue.garde_fous_touches(projet, ["calc.py", "garde/regle.py", ".socle/policy.toml",
+                                                           ".socle/guardrails.toml"]),
+                         ["garde/regle.py", ".socle/policy.toml", ".socle/guardrails.toml"])
+        (self.racine / "garde").mkdir()
+        (self.racine / "garde/regle.py").write_text("x = 1\n")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "un garde-fou")
+        with self.assertRaises(revue.CourtRefuse) as refus:
+            revue.dossier(projet, court=True)
+        self.assertIn(".socle/policy.toml, garde/regle.py", str(refus.exception))
+
+
 class TestLeGuideNeRenvoiePasALAtelier(unittest.TestCase):
     """B-0268 : le guide citait `D-0098`, une demande de la mémoire de ce
     dépôt, qu'un projet équipé ne connaît pas (ADR-0033). Comme les notes de

@@ -48,6 +48,12 @@ class ReferenceRefusee(ValueError):
     dossier ne se fait pas, au lieu d'un dossier vide ou étranger."""
 
 
+class CourtRefuse(ValueError):
+    """Un dossier court demandé pour un lot qui touche un garde-fou
+    (B-0288) : son relecteur doit pouvoir lire au-delà du diff, et le
+    dossier complet le lui dit. Rien ne s'écrit ni ne se relit."""
+
+
 class PasseRefusee(ValueError):
     """Une passe de revue que l'historique du lot refuse (ADR-0084) : la
     précédente sans son recul, un « continuer » après deux passes où une
@@ -316,6 +322,44 @@ CONSIGNE_REGARD = a_traduire(
     "suivi de celle-ci, ou une cause nouvelle, « cause nouvelle ».")
 
 
+# Le dossier court d'un petit lot (B-0288) : son relecteur juge le diff et
+# les fichiers qu'il touche, contre les critères des tâches du lot, sans
+# explorer au-delà. Le skill `socle-review` dit quand le donner.
+CONSIGNE_COURTE = a_traduire(
+    "Tu relis un petit lot de travail d'un autre agent, sans sa conversation ni son raisonnement : tu as ce "
+    "dossier, son diff et les critères des tâches qu'il sert. Juge le diff et les fichiers qu'il touche, que tu "
+    "peux lire en entier pour vérifier un constat ; n'explore pas au-delà, ne lance rien, ne modifie rien. Ton "
+    "rôle est de le prendre en défaut : cherche ce qui casse (un cas limite, une erreur de logique, une "
+    "régression), ce qu'aucun test ne prouve, et ce qui contredit un critère. Ne juge ni le style, ni ce que "
+    "les contrôles automatiques jugent déjà : la forme de la mémoire, les liens, la présence des tests.")
+
+
+def garde_fous_touches(projet: config.Projet, fichiers: list[str]) -> list[str]:
+    """Les fichiers de `fichiers` qui sont un garde-fou (B-0288) : la
+    politique et les garde-fous eux-mêmes, les chemins que la politique
+    protège (`chemins_proteges`, ceux que le hook de l'agent refuse
+    d'écrire) et ceux que les garde-fous déclarent comme l'outillage (les
+    hooks, la CI : `[tooling] paths`, que le contrôle de la documentation
+    lit). Un lot qui en touche un garde la revue complète."""
+    from socle.checks_docs import MOTIFS_OUTILLAGE_DEFAUT
+
+    motifs = [projet.chemins.politique, projet.chemins.garde_fous, *projet.chemins_proteges(),
+              *projet.gf("tooling", "paths", defaut=MOTIFS_OUTILLAGE_DEFAUT)]
+    return [f for f in fichiers if outils.correspond(f, motifs)]
+
+
+def _criteres_du_lot(servis: list) -> list[str]:
+    """Les critères des entrées que sert le lot, sous leur titre : la barre
+    du dossier court, sans le reste des entrées."""
+    lignes = []
+    for s in servis:
+        lignes += [f"### {s.id} — {s.titre}", ""]
+        lignes += [f"- [{'x' if coche else ' '}] {texte}" for coche, texte in _cases(s)] or [
+            trad("(aucun critère)")]
+        lignes.append("")
+    return lignes
+
+
 def _mesurer(projet: config.Projet, base: str | None, depuis: str | None) -> tuple[str | None, str | None,
                                                                                     str | None]:
     """La base du lot, la note qui en parle, et le commit d'où il se
@@ -338,7 +382,7 @@ def _mesurer(projet: config.Projet, base: str | None, depuis: str | None) -> tup
 
 
 def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFOND_DIFF,
-            depuis: str | None = None, avant: list | None = None) -> str:
+            depuis: str | None = None, avant: list | None = None, court: bool = False) -> str:
     """Ce que reçoit le relecteur, en plus du dépôt qu'il peut lire : la
     consigne, le diff du lot, les sujets du lot, les décisions qu'il écrit
     et celles qu'ils citent (ADR-0073). Avec `depuis`, le dossier d'une seconde revue : le
@@ -348,10 +392,26 @@ def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFO
     de la base et de HEAD ; une référence qui ne le mesure pas lève
     `ReferenceRefusee` (ADR-0081). `avant` : les passes d'avant de ce lot,
     dont le second regard donne les causes (ADR-0084) ; sans elles, le
-    dossier d'une première passe."""
+    dossier d'une première passe. `court` : le dossier court d'un petit lot
+    (B-0288), la consigne de ne juger que le diff et les fichiers touchés,
+    le diff et les critères des tâches du lot, sans le reste de leurs
+    entrées ni les décisions qu'elles citent ; un lot qui touche un
+    garde-fou (`garde_fous_touches`, mesuré sur tout le lot) lève
+    `CourtRefuse`."""
     base, note, debut = _mesurer(projet, base, depuis)
-    lignes = [trad("# Revue adversariale d'un lot"), "", trad(CONSIGNE_ROLE), "", trad(CONSIGNE_BARRE), "",
-              trad(CONSIGNE_CLASSES), ""]
+    if court and base:
+        touches = garde_fous_touches(projet, _diff(projet, debut)[1])
+        if touches:
+            raise CourtRefuse(trad(
+                "le lot touche un garde-fou : {chemins}. Son relecteur doit pouvoir lire au-delà du diff : pas de "
+                "dossier court, `socle review` sans `--short` donne le dossier complet",
+                chemins=", ".join(touches[:PLAFOND_LISTE]) + (" …" if len(touches) > PLAFOND_LISTE else "")))
+    if court:
+        lignes = [trad("# Revue adversariale d'un petit lot, le dossier court"), "", trad(CONSIGNE_COURTE), "",
+                  trad(CONSIGNE_CLASSES), ""]
+    else:
+        lignes = [trad("# Revue adversariale d'un lot"), "", trad(CONSIGNE_ROLE), "", trad(CONSIGNE_BARRE), "",
+                  trad(CONSIGNE_CLASSES), ""]
     if not base:
         lignes.append(trad("(aucune base connue : ni branche distante, ni branche par défaut ; rien à relire)"))
         return "\n".join(lignes) + "\n"
@@ -392,6 +452,10 @@ def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFO
             lignes.append(trad("(diff tronqué : {n} caractère(s) de plus non montrés ; `git diff {base}` les "
                                "donne)", n=len(diff) - len(montre), base=depuis or origine))
     servis, ouverts = sujets_du_lot(projet, debut)
+    if court:
+        lignes += ["", trad("## Les critères des tâches du lot : ta barre"), ""]
+        lignes += _criteres_du_lot(servis) or [trad("(aucune entrée du backlog servie)")]
+        return "\n".join(lignes).rstrip() + "\n"
     if servis:
         lignes += ["", trad("## Les entrées du backlog que sert le lot : leurs critères sont ta barre"), ""]
         for s in servis:
@@ -595,7 +659,7 @@ def ecrire_passe(projet: config.Projet, lot: memoire.Entree, numero: int, debut:
 
 
 def relire(projet: config.Projet, base: str | None = None, plafond: int = PLAFOND_DIFF, depuis: str | None = None,
-           nom_du_lot: str | None = None, jour: str | None = None) -> tuple[str, str | None]:
+           nom_du_lot: str | None = None, jour: str | None = None, court: bool = False) -> tuple[str, str | None]:
     """Ce que fait `socle review` (ADR-0084) : le dossier d'une passe, et
     la ligne que la sortie d'erreur en dit. Sans lot en cours, le dossier
     d'avant, sans rien écrire. Avec lui : la même passe se redonne tant que
@@ -603,25 +667,26 @@ def relire(projet: config.Projet, base: str | None = None, plafond: int = PLAFON
     la suivante n'est produite que si l'historique ne la refuse pas
     (`PasseRefusee`), et s'écrit dans le lot, avec le second regard à
     partir de la deuxième. Un lot qui ne change rien hors de la mémoire n'a
-    pas de passe."""
+    pas de passe. `court` : le dossier court (B-0288), qu'un lot qui touche
+    un garde-fou refuse (`CourtRefuse`) avant que rien ne s'écrive."""
     lot = lot_de_la_revue(projet, nom_du_lot)
     if lot is None:
-        return dossier(projet, base, plafond, depuis), trad(
+        return dossier(projet, base, plafond, depuis, court=court), trad(
             "(aucun lot en cours au backlog : cette passe ne s'écrit dans aucun lot ; `socle review --batch L-NNNN` "
             "nomme le sien)")
     _, _, debut = _mesurer(projet, base, depuis)
     if debut is None:
-        return dossier(projet, base, plafond, depuis), None
+        return dossier(projet, base, plafond, depuis, court=court), None
     deja = memoire.passes(lot)
     if deja and meme_passe(projet, deja[-1]):
-        return dossier(projet, base, plafond, depuis, deja[:-1]), trad(
+        return dossier(projet, base, plafond, depuis, deja[:-1], court), trad(
             "(la passe {n} du lot {lot} : rien n'a changé hors de la mémoire depuis le commit qu'elle a relu ; son "
             "dossier se redonne, rien ne s'écrit)", n=deja[-1].numero, lot=lot.id)
     if deja:
         refus = refus_de_la_passe(projet, lot, deja, debut)
         if refus:
             raise PasseRefusee(refus)
-    texte = dossier(projet, base, plafond, depuis, deja)
+    texte = dossier(projet, base, plafond, depuis, deja, court)
     depart = depuis or debut
     if outils.git_reussit(projet.racine, "diff", "--quiet", depart, *_hors_memoire(projet)):
         return texte, None
