@@ -25,3 +25,9 @@ D-0140, qui change trois valeurs attendues qu'elles contredisent
 D-0140 validée, T-0106 est faite (J-2026-11-19-AM) ; T-0002 est arrêtée
 avant son code : la raison que D-0140 lui autorise ne tient pas dans le
 projet d'essai, une demande nouvelle à poser (J-2026-11-19-AL).
+
+## Revues
+
+### Passe 1 — 2026-11-19
+
+Commits : 852b0ac4..a7e93a03
