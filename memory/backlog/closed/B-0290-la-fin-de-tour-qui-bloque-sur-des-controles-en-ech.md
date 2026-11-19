@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0290 — La fin de tour qui bloque sur des contrôles en échec ne recopie pas toute leur sortie dans la conversation
 
-> statut : ouvert · origine : D-0134 · lu : backlog@670d431f
+> statut : fait · origine : D-0134 · lu : backlog@670d431f · ref : J-2026-11-19-C
 
 La proposition 3 de `docs/fabrication/allegements.md`, validée par
 Théo (D-0134, J-2026-11-18-U). Quand les tests échouent en fin de tour,
@@ -14,5 +14,5 @@ tout.
 
 ## Satisfait quand
 
-- [ ] le refus du hook de fin de tour sur des contrôles en échec tient en quelques lignes par contrôle : son nom, la première ligne utile de chaque test en échec, et la commande qui montre tout
-- [ ] la fin de tour bloque, escalade et laisse passer une relance inchangée comme avant
+- [x] le refus du hook de fin de tour sur des contrôles en échec tient en quelques lignes par contrôle : son nom, la première ligne utile de chaque test en échec, et la commande qui montre tout
+- [x] la fin de tour bloque, escalade et laisse passer une relance inchangée comme avant
