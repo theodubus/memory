@@ -84,6 +84,16 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 30. Le hook de l'agent juge l'ancien numéro d'une entrée renumérotée sur les lignes que ton écriture ajoute ou change, et non plus sur tout le fichier : dans le journal du mois de la migration, qui cite presque tous les anciens numéros, une entrée neuve qui en reprend un est désormais refusée ; cite l'identifiant actuel qu'il nomme, ou mets-le sur la même ligne que l'ancien. Une ligne d'avant gardée telle quelle passe, comme, sur une ligne de métadonnées, l'ancien numéro qu'elle portait déjà : le champ ancien d'un lot renuméroté que tu clos, la source d'une décision dont tu changes le statut.
 
+31. Le hook de l'agent juge le corps d'un heredoc que lit python (python3 - <<'EOF', ou python3 <<'EOF' sans script) comme le script d'un python -c : un corps qui écrit un fichier protégé, ou supprime le projet, est refusé. Comme pour python -c, un script qui cite un fichier protégé en toutes lettres, même dans un texte, est refusé : pour écrire un fichier qui en parle, prends ton outil d'écriture plutôt qu'un script.
+
+32. Le hook de l'agent juge les arguments qui suivent le script d'un python -c comme les chemins que le script cite, quand le script lit ses arguments (sys.argv, argparse…) : python3 -c "import sys; open(sys.argv[1], 'w')" .socle/policy.toml est refusé.
+
+33. Le hook de l'agent juge find … | xargs rm comme un find qui supprime depuis ses départs : find . -type f | xargs rm -f est refusé comme la suppression du projet ; un nettoyage sous le projet (find build -type f | xargs rm -f) passe toujours.
+
+34. Le hook de l'agent juge les filtres d'un find par leur conjonction, et le motif d'un -path sous ses départs : find . -name '*.json' -path './build/*' -delete passe désormais ; ce qu'une conjonction atteint reste refusé.
+
+35. Le hook de l'agent lit la branche courante dans git push -u origin "$(git branch --show-current)", et dans les mêmes formes avec $(git rev-parse --abbrev-ref HEAD) ou $(git symbolic-ref --short HEAD), entre accents graves ou par une variable : le push passe depuis ta branche de travail, et reste refusé depuis la branche par défaut, ou quand la même commande change de dossier, de dépôt ou de branche avant lui. Toute autre substitution dans un push reste refusée.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.
