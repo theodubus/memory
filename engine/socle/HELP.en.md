@@ -348,7 +348,8 @@ files they cite written out in full or that the arguments following them
 name, if they read them (`sys.argv`); a script python reads from a file is
 not judged. It also refuses deleting a directory that
 contains the project (`rm -rf ..`, an `mv`, a `git clean` or a `find` that
-deletes from such a directory, the destination of an `rsync --delete`,
+deletes from such a directory, or gives its list to `xargs rm` (`find ..
+-maxdepth 0 | xargs rm -rf`), the destination of an `rsync --delete`,
 the sources of an `rsync --remove-source-files`, the path of a `git
 worktree remove`, a `python3 -c` or a heredoc's script that passes it
 written out in full to `shutil.rmtree`), deleting the project itself by these other programs (a
@@ -376,10 +377,7 @@ seen in an agent session, a skill or current documentation. Another form
 is entered in one line in the list of known forms the hook does not
 judge, without a backlog entry; in the review of a batch of the hook, it is not
 a blocking finding, even if refused before the batch by accident. A
-cooperative agent does not try to get around its guardrails. Deleting
-the project still escapes it through `find … | xargs rm`, a form an
-agent writes: do not run it against the project or a directory that
-contains it.
+cooperative agent does not try to get around its guardrails.
 
 The known forms the hook does not judge: no agent writes them in its
 work; they pass, or are refused by accident. Each says what the hook
@@ -410,7 +408,7 @@ misreads in it, and the release note that enters it.
 - `echo .. | xargs rm`: `xargs` is judged only by the protected paths it
   cites (2026-11-16-a).
 - `xargs git worktree remove`: the path read from the input is not
-  judged (2026-11-16-a).
+  judged, except behind a `find` (2026-11-19-r).
 - The shell command a `python3 -c` launches (`os.system`,
   `subprocess`): the script is judged only by its paths (2026-11-16-a).
 - A path a `python3 -c` script builds on the fly: only a path written

@@ -174,6 +174,10 @@ class Commande:
     # heredoc, ou quand une redirection qui le suit lui donne une autre
     # entrée (B-0229).
     entree: str | None = None
+    # La commande qui la précède dans son pipeline (`a | b` : `a` pour `b`),
+    # celle qui écrit ce que lit son entrée ; `None` en tête d'un pipeline
+    # (B-0246).
+    amont: Commande | None = field(default=None, repr=False, compare=False)
 
     @property
     def programme(self) -> str:
@@ -792,8 +796,10 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int],
     res: list[Commande] = []
     mots: list[str] = []
     redir: list[str] = []
-    # Le corps du heredoc que reçoit l'entrée de la commande en cours (B-0229).
+    # Le corps du heredoc que reçoit l'entrée de la commande en cours (B-0229),
+    # et la commande qui la précède dans son pipeline (B-0246).
     entree: str | None = None
+    amont: Commande | None = None
     jets = _jetons(texte)
     # Ce que retrouve la suite d'un pipeline (chaque élément tourne dans un
     # sous-shell), d'une tâche de fond (toute la liste `a && b &`) et d'un
@@ -1030,7 +1036,7 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int],
         return None
 
     def clore():
-        nonlocal mots, redir, entree
+        nonlocal mots, redir, entree, amont
         avant = reserves()
         if avant is not None:
             # Le mot qui ferme une commande composée : ses redirections
@@ -1050,7 +1056,8 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int],
             etat.vues.extend(_affectation(m) for m in mots)
         if argv or redir:
             c = Commande(argv, redir, etat.dossier, mots[:len(mots) - len(argv)], list(etat.vues), etat.lieu,
-                         etat.variables(env), env, entree)
+                         etat.variables(env), env, entree, amont)
+            amont = None
             nom = c.programme
             if nom == "cd":
                 cible = (options_et_arguments(argv[1:])[1] or ["~"])[0]
@@ -1190,6 +1197,9 @@ def _analyser(texte: str, etat: _Etat, env: dict, budget: list[int],
                 etat, debut_liste, debut_tube, en_tube = englobants.pop()
         elif j in ("|", "|&"):
             etat, en_tube = debut_tube.copie(), True
+            # Ce qui écrit dans le tube : la dernière commande lue, celle
+            # d'un groupe ou d'une boucle qui se ferme compris.
+            amont = res[-1] if res else None
         elif j == "&":
             etat = debut_liste.copie()
             debut_liste, debut_tube, en_tube = etat.copie(), etat.copie(), False

@@ -2803,6 +2803,10 @@ MESSAGES: dict[str, str] = {
     "avant `run` comme après":
         "directory that contains the project deleted by a command that `uv run` or `poetry run` launch, their "
         "options before `run` as after it",
+    "dossier qui contient le projet, ou le projet lui-même, supprimé par `xargs rm` derrière un `find` qui lui donne "
+    "sa liste":
+        "directory that contains the project, or the project itself, deleted by `xargs rm` behind a `find` that gives "
+        "it its list",
     "fichier protégé écrit, ou dossier qui contient le projet supprimé, par le script qu'un heredoc donne à python "
     "(`python3 - <<'EOF'`)":
         "protected file written, or directory that contains the project deleted, by the script a heredoc gives to "
@@ -3014,6 +3018,10 @@ MESSAGES: dict[str, str] = {
     "les commandes ordinaires que lancent `uv run` et `poetry run`, et `uv sync`, passent le hook de l'agent "
     "(B-0248)":
         "the ordinary commands that `uv run` and `poetry run` launch, and `uv sync`, pass the agent's hook (B-0248)",
+    "un nettoyage par `xargs rm` sous le projet, derrière un `find` dont un filtre garde ce qu'il liste ou qui part "
+    "d'un dossier du projet, passe le hook de l'agent (B-0246)":
+        "a cleanup by `xargs rm` under the project, behind a `find` with a filter guarding what it lists or that "
+        "starts from a directory of the project, passes the agent's hook (B-0246)",
     "le script qu'un heredoc donne à python sans citer de fichier protégé ni supprimer le projet, et un heredoc "
     "donné à un autre programme qui cite un fichier protégé, passent le hook de l'agent (B-0229)":
         "the script a heredoc gives to python without citing a protected file or deleting the project, and a heredoc "

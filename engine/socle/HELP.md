@@ -353,7 +353,9 @@ se jugent par les fichiers protégés qu'ils citent en toutes lettres ou
 que nomment les arguments qui les suivent, s'ils les lisent (`sys.argv`) ;
 un script que python lit d'un fichier ne se juge pas. Il refuse
 aussi la suppression d'un dossier qui contient le projet (`rm -rf ..`, un
-`mv`, un `git clean` ou un `find` qui supprime depuis un tel dossier, la
+`mv`, un `git clean` ou un `find` qui supprime depuis un tel dossier, ou
+qui en donne la liste à `xargs rm` (`find .. -maxdepth 0 | xargs rm
+-rf`), la
 destination d'un `rsync --delete`, les sources d'un `rsync
 --remove-source-files`, le chemin d'un `git worktree remove`, un `python3
 -c` ou le script d'un heredoc qui le passent en toutes lettres à
@@ -383,10 +385,7 @@ travail : vue dans une session d'agent, un skill ou une documentation
 courante. Une autre forme s'inscrit d'une ligne dans la liste des formes
 connues que le hook ne juge pas, sans entrée au backlog ; dans la revue d'un lot du
 hook, elle n'est pas un bloquant, même refusée avant le lot par accident.
-Un agent coopératif ne cherche pas à contourner ses garde-fous. La
-suppression du projet lui échappe encore par `find … | xargs rm`, une
-forme qu'un agent écrit : ne pas la lancer vers le projet ni vers un
-dossier qui le contient.
+Un agent coopératif ne cherche pas à contourner ses garde-fous.
 
 Les formes connues que le hook ne juge pas : aucun agent ne les écrit
 dans son travail ; elles passent, ou se refusent par accident. Chacune
@@ -417,8 +416,8 @@ dit ce que le hook y lit mal, et la note de version qui l'inscrit.
   (2026-11-16-a).
 - `echo .. | xargs rm` : `xargs` ne se juge que par les chemins protégés
   qu'il cite (2026-11-16-a).
-- `xargs git worktree remove` : le chemin lu sur l'entrée ne se juge pas
-  (2026-11-16-a).
+- `xargs git worktree remove` : le chemin lu sur l'entrée ne se juge pas,
+  sauf derrière un `find` (2026-11-19-r).
 - La commande du shell que lance un `python3 -c` (`os.system`,
   `subprocess`) : le script ne se juge que par ses chemins (2026-11-16-a).
 - Un chemin qu'un script `python3 -c` construit au vol : seul se juge un

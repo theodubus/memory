@@ -1860,7 +1860,17 @@ def _cas() -> list[Cas]:
             "uv --directory . run --frozen rm -rf ..", "poetry -C . run -n rm -rf ..",
             "uv run python -c \"import shutil; shutil.rmtree('..')\"")])
 
-    @defaut("heredoc-donne-a-python", "fichier protégé écrit, ou dossier qui contient le projet supprimé, par le "
+    @defaut("suppression-par-xargs", "dossier qui contient le projet, ou le projet lui-même, supprimé par `xargs rm` "
+            "derrière un `find` qui lui donne sa liste", "agent", "suppression du projet")
+    def _(a, c):
+        # B-0246 : `xargs rm` ne se jugeait que par les chemins protégés que
+        # la commande cite ; derrière un `find`, il se juge comme un `find`
+        # qui supprime depuis ses départs.
+        return tous_refuses(a, c, [("Bash", {"command": x}) for x in (
+            "find .. -maxdepth 0 | xargs rm -rf", "find . -type f | xargs rm -f",
+            "find .. -maxdepth 0 -print0 | xargs -0 -I{} rm -rf {}")])
+
+    @defaut("heredoc-donne-a-python","fichier protégé écrit, ou dossier qui contient le projet supprimé, par le "
             "script qu'un heredoc donne à python (`python3 - <<'EOF'`)", "agent", "écriture protégée")
     def _(a, c):
         # B-0229 : le corps d'un heredoc n'était que du texte pour le
@@ -2627,6 +2637,14 @@ def _temoins() -> list[tuple[str, Callable]]:
                 or etage_outil(a, c, "Bash", {"command": "uv run --with requests python -c \"print(open('calc.py')"
                                                          ".read())\""})
                 or etage_outil(a, c, "Bash", {"command": "uv run git push -u origin travail"}))
+
+    @temoin("un nettoyage par `xargs rm` sous le projet, derrière un `find` dont un filtre garde ce qu'il liste ou "
+            "qui part d'un dossier du projet, passe le hook de l'agent (B-0246)")
+    def _(a, c):
+        # Le pendant sain de `suppression-par-xargs` : seul ce qui contient
+        # le projet, ou le projet lui-même, est refusé.
+        return (etage_outil(a, c, "Bash", {"command": "find . -name '*.pyc' | xargs rm -f"})
+                or etage_outil(a, c, "Bash", {"command": "find build -type f -print0 | xargs -0 rm -f"}))
 
     @temoin("le script qu'un heredoc donne à python sans citer de fichier protégé ni supprimer le projet, et un "
             "heredoc donné à un autre programme qui cite un fichier protégé, passent le hook de l'agent (B-0229)")

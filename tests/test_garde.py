@@ -508,6 +508,26 @@ class TestGarde(unittest.TestCase):
                          (py("import shutil; shutil.rmtree('..')"), "supprime"),
                          ("git worktree remove ../build", None)], str(self.racine / "memory"))
 
+    def test_un_find_qui_donne_sa_liste_a_xargs_rm(self):
+        """B-0246 : `xargs rm` ne se jugeait que par les chemins protégés que
+        la commande cite ; un `find` qui lui donnait un dossier qui contient
+        le projet, ou tout le projet, le supprimait sans refus. Derrière un
+        `find`, un `xargs` d'un programme qui supprime ce qu'il lit se juge
+        comme un `find` qui supprime depuis ses départs, gardé par ce qui
+        garde ce que le `find` écrit sur sa sortie."""
+        with self.environnement():
+            self.jugees([("find .. -maxdepth 0 | xargs rm -rf", "supprime"),
+                         ("find .. -maxdepth 0 -print0 | xargs -0 rm -rf", "supprime"),
+                         ("cd memory && find ../.. -maxdepth 0 | xargs -I{} rm -rf {}", "supprime"),
+                         ("find . -type f | xargs rm -f", "supprime"), ("find . | xargs -n 1 rm -rf", "supprime"),
+                         ("find . -print0 -name x | xargs -0 rm -f", "supprime"),
+                         ("find . -path ./.git -prune -o -type f -print | xargs rm", "supprime"),
+                         ("find .. -name '*.pyc' | xargs rm -f", "supprime"),
+                         ("find . -maxdepth 0 | xargs -I{} git worktree remove {}", "supprime"),
+                         ("find . -name '*.pyc' | xargs rm -f", None), ("find . -name '*.pyc' -print0 | xargs -0 rm -f", None),
+                         ("find build -type f | xargs rm -f", None), ("find .. -maxdepth 0 | xargs ls", None),
+                         ("find . -name '*.orig' | xargs -I{} mv {} /tmp/corbeille", None)])
+
     def test_ce_qu_un_autre_programme_supprime(self):
         """B-0228 : les chemins que `suppressions` lit d'un `rsync`, d'un `git
         worktree` et d'un `python -c`, tels qu'ils sont écrits, la racine
@@ -532,6 +552,12 @@ class TestGarde(unittest.TestCase):
         self.assertEqual(lus("python3 -c 'shutil.rmtree((('"), [])
         self.assertEqual(lus("find a -exec rsync --delete v/ {} \\;"), [("a", True)])
         self.assertEqual(lus("find a -name x -exec mv {} /tmp \\;"), [("a", False)])
+        # B-0246 : derrière un `find`, ce qu'il liste, et ce que la commande
+        # lancée supprime d'elle-même ; rien pour un programme qui ne
+        # supprime pas ce qu'il lit.
+        self.assertEqual(lus("find a b -type f | xargs rm -f c"), [("a", True), ("b", True), ("c", False)])
+        self.assertEqual(lus("find a -name x -print0 | xargs -0 rm"), [("a", False)])
+        self.assertEqual(lus("find a | xargs sed -i s/x/y/ && find a | xargs echo"), [])
 
     def test_un_sous_agent_ne_retire_pas_son_worktree(self):
         """B-0228 : un sous-agent qui travaille dans un worktree ne le retire
@@ -1908,6 +1934,19 @@ class TestDecoupage(unittest.TestCase):
     def test_jetons_et_heredocs(self):
         self.assertEqual(commandes.jetons('echo "a b" > f'), ["echo", "a b", ">", "f"])
         self.assertEqual(commandes.sans_heredocs("cat <<'EOF'\ncorps\nEOF\nls"), "cat <<'EOF'\nls")
+
+    def test_chaque_commande_d_un_pipeline_connait_celle_qui_la_precede(self):
+        """B-0246 : chaque commande d'un pipeline porte celle qui écrit ce
+        que lit son entrée ; une autre liste, ou la tête d'un pipeline, n'en
+        a pas."""
+        def amonts(texte):
+            return [(c.argv[0], c.amont.argv[0] if c.amont else None) for c in commandes.analyser(texte)]
+
+        self.assertEqual(amonts("a | b |& c; d && e | f"),
+                         [("a", None), ("b", "a"), ("c", "b"), ("d", None), ("e", None), ("f", "e")])
+        self.assertEqual(amonts("a |\n b"), [("a", None), ("b", "a")])
+        self.assertEqual(amonts("{ a; b; } | c"), [("a", None), ("b", None), ("c", "b")])
+        self.assertEqual(amonts("a $(x) | b $(y)"), [("x", None), ("a", None), ("y", None), ("b", "a")])
 
     def test_le_corps_d_un_heredoc_va_a_l_entree_de_sa_commande(self):
         """B-0229 : chaque commande porte le corps du heredoc que reçoit son

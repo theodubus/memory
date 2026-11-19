@@ -546,12 +546,19 @@ def suppressions(c: commandes.Commande) -> list[tuple[str, bool]]:
     trouve) ; et, d'un autre programme (B-0228), ce que supprime un `rsync`
     (`_supprime_par_rsync`), le worktree que retire ou déplace `git
     worktree` et ce qu'un `python -c`, ou le script qu'un heredoc donne à
-    python (B-0229), supprime en toutes lettres (`_supprimes_par_python`).
+    python (B-0229), supprime en toutes lettres (`_supprimes_par_python`) ;
+    les départs d'un `find` qui donne sa liste à un `xargs` d'un programme
+    qui supprime ce qu'il lit (`_supprimes_par_xargs`, B-0246).
     Chacun avec `True` quand supprimer la racine du projet elle-même
     compte : un `find` qu'aucun filtre de nom ou de chemin ne garde la
     viderait, et un autre programme ne l'écrit pas (`ecrits`). Pour `rm`,
     `mv` et `git clean`, la racine est déjà un dossier qui contient un
     fichier protégé."""
+    lus = _supprimes_par_xargs(c)
+    if lus:
+        # Derrière un `find`, ce qu'il liste, et ce que la commande lancée
+        # supprime d'elle-même (B-0246).
+        return lus + suppressions(dataclasses.replace(c, amont=None))
     nom, argv = c.programme, c.argv[1:]
     if nom == "rm":
         return [(x, False) for x in commandes.options_et_arguments(argv)[1] if x]
@@ -792,6 +799,9 @@ FIND_VALEURS = {
 FIND_NOMS = ("-name", "-iname")
 FIND_CHEMINS = ("-path", "-ipath", "-wholename", "-iwholename")
 FIND_EXEC = ("-exec", "-execdir", "-ok", "-okdir")
+# Les actions d'un `find` qui écrivent sur sa sortie les chemins qu'il
+# trouve, ce qu'un `xargs` lit (B-0246).
+FIND_IMPRIME = ("-print", "-print0", "-printf", "-ls")
 # Ce qui garde une action d'un `find` : si un chemin peut l'atteindre sans
 # qu'un filtre de nom ou de chemin lui réponde, et ces filtres
 # (`("nom", motif)`, `("chemin", motif)`).
@@ -806,7 +816,8 @@ def _ou(a: tuple[bool, tuple], b: tuple[bool, tuple]) -> tuple[bool, tuple]:
     return a[0] or b[0], tuple(dict.fromkeys(a[1] + b[1]))
 
 
-def _expression_find(argv: list[str], i: int) -> list[tuple[list[str] | None, tuple[bool, tuple]]]:
+def _expression_find(argv: list[str], i: int,
+                     sortie: list | None = None) -> list[tuple[list[str] | None, tuple[bool, tuple]]]:
     """Les actions de l'expression d'un `find` (`argv` depuis `i`) qui
     touchent ce qu'il trouve : `-delete` (`None`), et la commande de chaque
     `-exec`, `-execdir`, `-ok`, `-okdir` ; chacune avec ce qui la garde. Un
@@ -814,8 +825,12 @@ def _expression_find(argv: list[str], i: int) -> list[tuple[list[str] | None, tu
     conjonction : placé après l'action, nié (`!`, `-not`), ou de l'autre
     côté d'un `-o` (`-or`) ou d'une `,`, il ne la garde pas ; une parenthèse
     garde ce qui la suit si chacune de ses branches a un filtre (la revue
-    du lot 3, J-2026-11-14-AH)."""
+    du lot 3, J-2026-11-14-AH). `sortie`, s'il est donné, reçoit ce qui
+    garde les chemins que le `find` écrit sur sa sortie : chacun de ses
+    `-print`, `-print0`, `-printf`, `-ls`, ou à défaut l'expression entière,
+    que garde le `-print` implicite (B-0246)."""
     actions: list[tuple[list[str] | None, tuple[bool, tuple]]] = []
+    imprimes: list[tuple[bool, tuple]] = []
     pos = i
     fins = (None, ")", ",", "-o", "-or")
 
@@ -870,6 +885,9 @@ def _expression_find(argv: list[str], i: int) -> list[tuple[list[str] | None, tu
             return False, (("nom" if m in FIND_NOMS else "chemin", argv[pos - 1]),)
         if m == "-delete":
             actions.append((None, garde))
+        elif m in FIND_IMPRIME:
+            imprimes.append(garde)
+            pos += FIND_VALEURS.get(m, 0)
         elif m in FIND_EXEC:
             # Jusqu'à `;` (`\;`) ou `+` ; sans eux, au bout de la commande.
             j = next((k for k in range(pos, len(argv)) if argv[k] in (";", "+")), len(argv))
@@ -879,9 +897,13 @@ def _expression_find(argv: list[str], i: int) -> list[tuple[list[str] | None, tu
             pos += FIND_VALEURS.get(m, 1 if re.fullmatch(r"-newer[aBcmt]{2}", m) else 0)
         return LIBRE
 
+    entiere = None
     while pos < len(argv):
-        liste(LIBRE)
+        valeur = liste(LIBRE)
+        entiere = valeur if entiere is None else _ou(entiere, valeur)
         pos += 1  # une `)` sans `(`
+    if sortie is not None:
+        sortie += imprimes or [entiere or LIBRE]
     return actions
 
 
@@ -1043,13 +1065,14 @@ def _dossier_cible(c: commandes.Commande) -> str | None:
     return _valeur_d_option(c.argv[1:], "t", "--target-directory", OPTIONS_A_VALEUR_COPIE[c.programme])
 
 
-def _lire_find(c: commandes.Commande) -> tuple[list[str], list[tuple[commandes.Commande | None,
-                                                                     tuple[bool, tuple]]]]:
+def _lire_find(c: commandes.Commande, sortie: list | None = None) -> tuple[list[str], list[tuple[
+        commandes.Commande | None, tuple[bool, tuple]]]]:
     """Ce que juge le hook d'un `find` : ses points de départ, `.` s'il n'en
     nomme aucun ; et ses actions qui touchent ce qu'il trouve, chacune avec
     ce qui la garde (`_expression_find`) : `None` pour `-delete`, la
     commande d'un `-exec`, `-execdir`, `-ok` ou `-okdir`, `{}` remplacé par
-    `SONDE` (B-0206)."""
+    `SONDE` (B-0206). `sortie` reçoit ce qui garde ce qu'il écrit sur sa
+    sortie (B-0246)."""
     argv, i = c.argv, 1
     while i < len(argv) and (argv[i] in ("-H", "-L", "-P", "-D") or re.fullmatch(r"-O\d*", argv[i])):
         i += 2 if argv[i] == "-D" else 1
@@ -1059,7 +1082,7 @@ def _lire_find(c: commandes.Commande) -> tuple[list[str], list[tuple[commandes.C
         i += 1
     actions = [(None if sous is None else dataclasses.replace(c, argv=[x.replace("{}", SONDE) for x in sous],
                                                                redirige=[], prefixe=[]), garde)
-               for sous, garde in _expression_find(argv, i) if sous is None or sous]
+               for sous, garde in _expression_find(argv, i, sortie) if sous is None or sous]
     return departs or ["."], actions
 
 
@@ -1228,13 +1251,13 @@ def _script_python(c: commandes.Commande) -> tuple[str, str, list[str]] | None:
     return None
 
 
-def _xargs_ecrit_ce_qu_il_lit(c: commandes.Commande) -> bool:
-    """La commande qu'un `xargs` lance écrit-elle ce qu'il lit : ce qu'il
-    ajoute au bout de ses arguments, ou ce qui remplace la chaîne de `-I`
-    (`-i`, `--replace`, `{}` par défaut) (B-0206)."""
+def _lance_par_xargs(c: commandes.Commande) -> commandes.Commande | None:
+    """La commande qu'un `xargs` lance, `SONDE` là où il met ce qu'il lit :
+    au bout de ses arguments, ou à la place de la chaîne de `-I` (`-i`,
+    `--replace`, `{}` par défaut) (B-0206) ; `None` sans `xargs`."""
     noms = [p.rsplit("/", 1)[-1] for p in c.prefixe]
     if "xargs" not in noms or not c.argv:
-        return False
+        return None
     options, remplace = c.prefixe[noms.index("xargs") + 1:], None
     for k, o in enumerate(options):
         if o == "-I" and k + 1 < len(options):
@@ -1248,7 +1271,28 @@ def _xargs_ecrit_ce_qu_il_lit(c: commandes.Commande) -> bool:
         elif o.startswith("-i"):
             remplace = o[2:]
     argv = [x.replace(remplace, SONDE) for x in c.argv] if remplace else c.argv + [SONDE]
-    return any(SONDE in x for x in ecrits_bruts(dataclasses.replace(c, argv=argv, redirige=[], prefixe=[])))
+    return dataclasses.replace(c, argv=argv, redirige=[], prefixe=[], amont=None)
+
+
+def _xargs_ecrit_ce_qu_il_lit(c: commandes.Commande) -> bool:
+    """La commande qu'un `xargs` lance écrit-elle ce qu'il lit (B-0206)."""
+    lance = _lance_par_xargs(c)
+    return lance is not None and any(SONDE in x for x in ecrits_bruts(lance))
+
+
+def _supprimes_par_xargs(c: commandes.Commande) -> list[tuple[str, bool]]:
+    """Ce que supprime un `xargs` d'un programme qui supprime ce qu'il lit
+    (`SONDE` dans ses `suppressions`), derrière un `find` qui lui donne sa
+    liste : les départs du `find`, comme s'il les supprimait lui-même, la
+    racine comprise si aucun filtre de nom ou de chemin ne garde ce qu'il
+    écrit sur sa sortie (B-0246). Rien derrière un autre producteur."""
+    lance = _lance_par_xargs(c)
+    if c.amont is None or c.amont.programme != "find" or lance is None \
+            or not any(SONDE in x for x, _ in suppressions(lance)):
+        return []
+    sortie: list[tuple[bool, tuple]] = []
+    departs = _lire_find(c.amont, sortie)[0]
+    return [(x, any(libre for libre, _ in sortie)) for x in departs]
 
 
 # Ce qui, dans un script de python, lit les arguments qui le suivent

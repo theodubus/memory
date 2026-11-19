@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0019 en cours (J-2026-11-19-AC) : six tâches du hook, un
-commit chacune, puis la revue ; faites : T-0001, T-0070.
+L-0019 en cours (J-2026-11-19-AC), puis sa revue : T-0001, T-0070,
+T-0004 faites ; T-0002 arrêtée (J-2026-11-19-AF).
 
 ## Consignes en cours
 

@@ -7,6 +7,24 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-19-r — The agent's hook judges `find … | xargs rm` as a `find` that deletes from its starting points
+
+The agent's hook judges an `xargs` of a program that deletes what it
+reads (`rm`, `mv`, `git worktree remove`…), behind a `find` that gives
+it its list, as a `find` that deletes from its starting points: `find
+.. -maxdepth 0 | xargs rm -rf` is refused as deleting a directory that
+contains the project, and `find . -type f | xargs rm -f` as deleting the
+project. They passed: `xargs` was judged only by the protected paths the
+command cites. What the `find` writes on its output is guarded by its
+`-print` or `-print0`, or failing those by its whole expression. A
+cleanup under the project (`find . -name '*.pyc' | xargs rm -f`, `find
+build -type f | xargs rm -f`) still passes. The guide no longer says
+this deletion escapes the hook, and the line of `xargs git worktree
+remove` in the list of known forms states its exception, behind a
+`find`.
+
+To do: nothing.
+
 ## 2026-11-19-q — The agent's hook judges the arguments that follow the script of a `python -c`
 
 The agent's hook judges the arguments that follow the script of a

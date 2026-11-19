@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0246 — Le hook de l'agent laisse supprimer un dossier qui contient le projet par xargs rm ou par une commande que lance python -c (echo .. | xargs rm -rf, os.system)
 
-> statut : ouvert · origine : J-2026-11-15-N · priorité : haute · ref : J-2026-11-16-G · lu : backlog@cec3243f
+> statut : fait · origine : J-2026-11-15-N · priorité : haute · ref : J-2026-11-16-G, J-2026-11-19-AF · lu : backlog@cec3243f
 
 B-0228 fait refuser par le hook de l'agent la suppression du projet, ou
 d'un dossier qui le contient, par `rsync --delete`, `git worktree remove`
@@ -44,4 +44,4 @@ Réduit le 16 novembre selon D-0120 (J-2026-11-16-G) : gardé pour `find … | x
 
 ## Satisfait quand
 
-- [ ] un `find` qui donne à `xargs rm` un dossier qui contient le projet arrête l'agent au hook, comme un `find` qui le supprime lui-même, et un nettoyage par `xargs rm` sous le projet passe
+- [x] un `find` qui donne à `xargs rm` un dossier qui contient le projet arrête l'agent au hook, comme un `find` qui le supprime lui-même, et un nettoyage par `xargs rm` sous le projet passe

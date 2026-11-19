@@ -7,6 +7,24 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-19-r — Le hook de l'agent juge `find … | xargs rm` comme un `find` qui supprime depuis ses départs
+
+Le hook de l'agent juge un `xargs` d'un programme qui supprime ce qu'il
+lit (`rm`, `mv`, `git worktree remove`…), derrière un `find` qui lui
+donne sa liste, comme un `find` qui supprime depuis ses départs : `find
+.. -maxdepth 0 | xargs rm -rf` est refusé comme la suppression d'un
+dossier qui contient le projet, et `find . -type f | xargs rm -f` comme
+celle du projet. Ils passaient : `xargs` ne se jugeait que par les
+chemins protégés que la commande cite. Ce que le `find` écrit sur sa
+sortie se garde par ses `-print` ou `-print0`, ou à défaut par son
+expression entière. Un nettoyage sous le projet (`find . -name '*.pyc'
+| xargs rm -f`, `find build -type f | xargs rm -f`) passe toujours. Le
+guide ne dit plus que cette suppression échappe au hook, et la ligne de
+`xargs git worktree remove` de la liste des formes connues dit son
+exception, derrière un `find`.
+
+À faire : rien.
+
 ## 2026-11-19-q — Le hook de l'agent juge les arguments qui suivent le script d'un `python -c`
 
 Le hook de l'agent juge les arguments qui suivent le script d'un `python
