@@ -329,8 +329,9 @@ git does not track. Anything else is refused to it: another commit, with
 or without `--`, a whole folder, a shell pattern or variable, paths read
 from a file, a variable or a prefix before `git`, a redirection to another
 protected file, and a file that is cited, itself or its folder, by a
-request pending or approved whose approved change is not committed yet.
-The accepted risk: erasing a change of the human in the working tree that
+request pending or approved whose approved change is not committed yet; a
+folder that is only one word of a text copied between backticks, an
+expected value or an output, is not cited there. The accepted risk: erasing a change of the human in the working tree that
 they neither committed nor submitted in a request. A path the shell
 writes, the hook expands, as best it can, as the shell would (variables,
 patterns, braces, `~`, `cd`, `pushd`), from the agent's current directory,

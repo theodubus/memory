@@ -334,7 +334,9 @@ commit, avec ou sans `--`, un dossier entier, un motif ou une variable du
 shell, des chemins lus dans un fichier, une variable ou un préfixe devant
 `git`, une redirection vers un autre fichier protégé, et un fichier que
 cite, lui ou son dossier, une demande en attente ou validée dont ce
-qu'elle approuve n'est pas commité. Le risque accepté : effacer une
+qu'elle approuve n'est pas commité ; un dossier qui n'est qu'un mot d'un
+texte recopié entre accents graves, une valeur attendue ou une sortie,
+n'y est pas cité. Le risque accepté : effacer une
 modification de l'humain dans l'arbre de travail qu'il n'a ni commitée ni
 soumise par une demande. Un chemin que le shell écrit, le hook le
 développe, au mieux, comme le shell (variables, motifs, accolades, `~`,

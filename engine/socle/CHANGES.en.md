@@ -7,6 +7,20 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-20-a — The agent's hook lets a protected file be restored when a request cites its folder only in a copied text
+
+The agent's hook refused to put back as it was at the last commit a
+protected file that no request approves, when a pending request, or an
+approved one whose answer is not committed, cited its folder in a text
+copied between backticks: an expected value of a test, an output line
+(`skills du socle posés dans .claude/skills : …`). A folder that is only
+one word of such a text, between backticks or in a code block, is no
+longer a citation there. The file named in full, and its folder cited in
+the prose or alone between its backticks (`.claude/skills/`), still
+spare it.
+
+To do: nothing.
+
 ## 2026-11-19-t — The agent's hook reads the current branch in `git push origin "$(git branch --show-current)"`
 
 The agent's hook expands three substitutions of a `git push` into the

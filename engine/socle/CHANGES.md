@@ -7,6 +7,20 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-20-a — Le hook de l'agent laisse remettre un fichier protégé dont une demande ne cite le dossier que dans un texte recopié
+
+Le hook de l'agent refusait de remettre à son état du dernier commit un
+fichier protégé qu'aucune demande n'approuve, quand une demande en
+attente, ou validée sans sa réponse commitée, citait son dossier dans un
+texte recopié entre accents graves : une valeur attendue d'un test, une
+ligne de sortie (`skills du socle posés dans .claude/skills : …`). Un
+dossier qui n'est qu'un mot d'un tel texte, entre accents graves ou dans
+un bloc de code, n'y est plus une citation. Le fichier nommé en toutes
+lettres, et son dossier cité dans la prose ou seul entre ses accents
+graves (`.claude/skills/`), l'épargnent toujours.
+
+À faire : rien.
+
 ## 2026-11-19-t — Le hook de l'agent lit la branche courante dans `git push origin "$(git branch --show-current)"`
 
 Le hook de l'agent développe en la branche courante trois substitutions
