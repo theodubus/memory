@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0243 — Le modèle des relecteurs : un lot implémenté sur Fable, et le relecteur à froid d'une demande, encore du modèle de la session
 
-> statut : ouvert · origine : J-2026-11-15-K · lu : backlog@90ff4f28
+> statut : fait · origine : J-2026-11-15-K · ref : J-2026-11-20-AD · lu : backlog@90ff4f28
 
 La revue du lot 5 (J-2026-11-15-K), constats pour le backlog 3 et 4,
 de même nature : le modèle qu'un relecteur reçoit.
@@ -23,5 +23,5 @@ de même nature : le modèle qu'un relecteur reçoit.
 
 ## Satisfait quand
 
-- [ ] un lot que l'humain fait implémenter sur Fable n'est relu sur Fable que s'il le veut, et aucun sous-agent n'implémente sur Fable sans lui (D-0119)
-- [ ] le relecteur à froid d'une demande reçoit le modèle que le skill nomme, pas celui de la session par défaut
+- [x] un lot que l'humain fait implémenter sur Fable n'est relu sur Fable que s'il le veut, et aucun sous-agent n'implémente sur Fable sans lui (D-0119)
+- [x] le relecteur à froid d'une demande reçoit le modèle que le skill nomme, pas celui de la session par défaut

@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0226 — Le skill socle-batch dit « sous Claude Code, send_later » : l'outil n'existe qu'en session cloud
 
-> statut : ouvert · origine : J-2026-11-14-X · lu : backlog@484c6367
+> statut : fait · origine : J-2026-11-14-X · ref : J-2026-11-20-AD · lu : backlog@484c6367
 
 La revue du lot 2 (J-2026-11-14-X), constat 7. Le gabarit du skill
 `socle-batch` (français et anglais), à l'étape 3 de « Intégrer, pousser,
@@ -13,4 +13,4 @@ alors. Changer le gabarit met en retard la copie protégée de ce dépôt :
 
 ## Satisfait quand
 
-- [ ] un agent qui suit `socle-batch` hors d'une session cloud sait comment revenir après une attente annoncée, au lieu de chercher un outil qu'il n'a pas
+- [x] un agent qui suit `socle-batch` hors d'une session cloud sait comment revenir après une attente annoncée, au lieu de chercher un outil qu'il n'a pas

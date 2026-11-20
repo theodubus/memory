@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0242 — Le skill socle-batch dit encore que tout constat non bloquant va au backlog, contre la règle 1 de D-0112
 
-> statut : ouvert · origine : J-2026-11-15-K · lu : backlog@90ff4f28
+> statut : fait · origine : J-2026-11-15-K · ref : J-2026-11-20-AD · lu : backlog@90ff4f28
 
 La revue du lot 5 (J-2026-11-15-K), constat pour le backlog 2. Le
 gabarit du skill `socle-batch`, en français et en anglais
@@ -16,4 +16,4 @@ suit par une demande, avec celles de B-0218.
 
 ## Satisfait quand
 
-- [ ] un agent qui suit `socle-batch` trie les constats de la revue comme `socle-review` : un constat exotique et rattrapé, ou infondé, ne va plus au backlog
+- [x] un agent qui suit `socle-batch` trie les constats de la revue comme `socle-review` : un constat exotique et rattrapé, ou infondé, ne va plus au backlog

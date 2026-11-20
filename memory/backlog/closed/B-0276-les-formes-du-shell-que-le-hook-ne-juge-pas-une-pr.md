@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0276 — Les formes du shell que le hook ne juge pas : une procédure d'atelier, que le produit ne donne plus aux projets (D-0128)
 
-> statut : ouvert · origine : J-2026-11-17-G · ref : D-0128 · lu : backlog@6141fdaf
+> statut : fait · origine : J-2026-11-17-G · ref : D-0128, ADR-0099, J-2026-11-20-AD · lu : backlog@6141fdaf
 
 Théo, le 17 novembre (J-2026-11-17-G), mot pour mot : « En fait je me
 demande, est ce que c'est au rôle du socle de juger le hook ? Ou juste
@@ -45,4 +45,4 @@ La spécification, l'option A de D-0128 :
 
 ## Satisfait quand
 
-- [ ] un projet équipé ne reçoit plus de procédure sur les formes du shell que le hook ne juge pas, et l'atelier la garde pour la revue d'un lot du hook
+- [x] un projet équipé ne reçoit plus de procédure sur les formes du shell que le hook ne juge pas, et l'atelier la garde pour la revue d'un lot du hook

@@ -88,6 +88,11 @@ semaine chacun : d'où les seuils du skill du produit.
 
 ## Changer de session
 
+Un lot par session (J-2026-11-12-P) : à la clôture d'un lot, la session
+ne s'enchaîne pas sur le suivant, même si la fenêtre le permettrait ;
+elle range, et son récap donne le prompt de la session neuve
+(J-2026-11-20-AD).
+
 Le correctif d'un commit pas encore relu va dans un dossier de passation
 sous `docs/fabrication/`. À l'intégration d'une passation, après
 l'application de ses correctifs (`git am`), la branche de passation se

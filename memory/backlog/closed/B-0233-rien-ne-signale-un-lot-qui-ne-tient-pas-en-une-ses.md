@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0233 — Rien ne signale un lot qui ne tient pas en une session ou dont les sujets ne partagent rien : JA-0005 a réuni 22 sujets sous la forme d'un lot
 
-> statut : ouvert · origine : J-2026-11-15-J · lu : backlog@e9d08c28
+> statut : fait · origine : J-2026-11-15-J · ref : J-2026-11-20-AD · lu : backlog@e9d08c28
 
 Le 14 novembre, JA-0005 est né sous la forme d'un lot (ADR-0079) pour
 réunir « les sujets ouverts qui ne rejoignent aucun autre lot » ; les
@@ -21,4 +21,4 @@ dessous. Il rejoint le jalon JA-0005 à son découpage (D-0118).
 
 ## Satisfait quand
 
-- [ ] un lot qui ne se mène pas en une session se voit avant qu'on le mène, et un ensemble à finir avant une étape se forme en jalon, ses lots dessous
+- [x] un lot qui ne se mène pas en une session se voit avant qu'on le mène, et un ensemble à finir avant une étape se forme en jalon, ses lots dessous

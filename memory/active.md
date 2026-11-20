@@ -5,7 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0006 (`delegate-lot`), repris : J-2026-11-20-AB.
+L-0006 clos (J-2026-11-20-AD) ; L-0007 à une session neuve.
 
 ## Consignes en cours
 

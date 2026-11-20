@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0140 — Un changement qui attend une demande ne peut ni se commiter ni se pousser : il ne vit que dans le conteneur, perdu s'il est recyclé
 
-> statut : ouvert · origine : J-2026-11-09-A · lu : backlog@86b86f08
+> statut : fait · origine : J-2026-11-09-A · ref : J-2026-11-20-AD · lu : backlog@86b86f08
 
 Un test dont la valeur attendue change, en attendant la demande qui le
 nomme, peut rester dans l'arbre à la fin du tour, mais ne se commite qu'après
@@ -18,4 +18,4 @@ contrôle des valeurs attendues, donc une demande.
 
 ## Satisfait quand
 
-- [ ] un changement qui attend la réponse d'une demande ne vit plus seulement dans le conteneur : il se pousse en attendant, la CI le refusant jusqu'à la réponse, ou la raison de ne pas le permettre est écrite
+- [x] un changement qui attend la réponse d'une demande ne vit plus seulement dans le conteneur : il se pousse en attendant, la CI le refusant jusqu'à la réponse, ou la raison de ne pas le permettre est écrite

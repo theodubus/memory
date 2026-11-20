@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0227 — Le hook refuse de remettre en état un fichier protégé dont une demande ne cite que le dossier, dans une valeur recopiée
 
-> statut : ouvert · origine : J-2026-11-14-Z · lu : backlog@90b4b5a0
+> statut : fait · origine : J-2026-11-14-Z · ref : J-2026-11-20-AD · lu : backlog@90b4b5a0
 
 Relevé le 14 novembre (J-2026-11-14-Z). Après une mise à jour par
 l'installeur, la remise en état d'un fichier protégé qu'il a changé sans
@@ -22,4 +22,4 @@ texte recopié entre accents graves.
 
 ## Satisfait quand
 
-- [ ] après une mise à jour, l'agent remet en état un fichier protégé qu'aucune demande n'approuve sans attendre la réponse d'une demande qui ne cite son dossier que dans un texte recopié
+- [x] après une mise à jour, l'agent remet en état un fichier protégé qu'aucune demande n'approuve sans attendre la réponse d'une demande qui ne cite son dossier que dans un texte recopié
