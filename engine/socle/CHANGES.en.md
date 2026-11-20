@@ -7,6 +7,17 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-20-k — A title that ends with a hash attached to a word keeps it
+
+The memory reader stripped every trailing hash from a title: an entry
+titled "… in a C# project" ended "… in a C" once read. Only a closing
+sequence preceded by a space (`## Title ##`) is now stripped, as in
+Markdown. Entry fingerprints do not change: they are computed on the raw
+text; an index fingerprint changes if one of its titles ends that way.
+
+To do: nothing; an index citation this change makes stale is refused
+with the command that rereads it.
+
 ## 2026-11-20-j — A shell form the hook does not judge is no longer listed or reported: the guide keeps the hook's threat model
 
 The `socle-review` skill, the reviewer's instructions of `socle review`

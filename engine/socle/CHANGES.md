@@ -7,6 +7,18 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-20-k — Un titre qui finit par un dièse collé à un mot le garde
+
+Le lecteur de la mémoire retirait tout dièse en fin de titre : une
+entrée intitulée « … dans un projet C# » se lisait « … dans un projet
+C ». Seule une fermeture précédée d'une espace (`## Titre ##`) se
+retire désormais, comme en Markdown. Les empreintes des entrées ne
+changent pas : elles se calculent sur le texte brut ; celle d'un index
+change si l'un de ses titres finit ainsi.
+
+À faire : rien ; une citation d'index que ce changement périme se
+refuse avec la commande qui la relit.
+
 ## 2026-11-20-j — Une forme du shell que le hook ne juge pas ne se liste ni ne se signale plus : le guide garde le modèle de menace du hook
 
 Le skill `socle-review`, la consigne du relecteur de `socle review` et

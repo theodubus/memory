@@ -43,6 +43,17 @@ class TestAnalyse(unittest.TestCase):
         self.assertEqual(e.statut, "refute")
         self.assertEqual(e.refs("refutation"), [("id", "F-0001")])
 
+    def test_un_diese_final_colle_a_un_mot_reste_dans_le_titre(self):
+        # T-0021 : seule une fermeture précédée d'une espace se retire.
+        texte = ("<!-- socle: couche=canonique zone=publique -->\n# Mémoire canonique\n\n"
+                 "## F-0001 — La CI passe dans un projet C#\n\n> statut : supposé\n\n"
+                 "## F-0002 — La CI passe dans un projet F# ##\n\n> statut : supposé\n\n"
+                 "## F-0003 — Une fermeture se retire encore ###   \n\n> statut : supposé\n")
+        f = memoire.analyser("memory/canonical.md", texte)
+        self.assertEqual([e.titre for e in f.entrees],
+                         ["La CI passe dans un projet C#", "La CI passe dans un projet F#",
+                          "Une fermeture se retire encore"])
+
     def test_rien_n_est_lu_dans_un_bloc_de_code(self):
         self.assertNotIn("F-0099", [i for i, _ in memoire.mentions(CANONIQUE)])
 

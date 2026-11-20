@@ -44,6 +44,8 @@ L'emplacement impose la couche ; la zone est celle de l'emplacement
 Une entrée est un titre qui commence par son identifiant, suivi d'une ligne
 de métadonnées (une ou plusieurs lignes `>` consécutives), puis d'un corps
 libre qui court jusqu'au titre suivant de même niveau ou de niveau supérieur.
+Comme en Markdown, les dièses qui ferment un titre, précédés d'une espace,
+n'en font pas partie ; un dièse collé à un mot (« C# ») en fait partie.
 
 ```markdown
 ## F-0007 — La suite de tests complète tourne en moins de 40 secondes

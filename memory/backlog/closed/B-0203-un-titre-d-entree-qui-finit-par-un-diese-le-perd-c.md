@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0203 — Un titre d'entrée qui finit par un dièse le perd : « C# » se lit « C »
 
-> statut : ouvert · origine : J-2026-11-13-G · priorité : basse · lu : backlog@49bca538
+> statut : fait · origine : J-2026-11-13-G · ref : T-0021, J-2026-11-20-AF · priorité : basse · lu : backlog@49bca538
 
 Vu en mesurant la sortie du démarrage de B-0010 : le titre de F-0026 finit
 par « C# », et l'état l'imprime « … dans un projet C ». Le lecteur de la
@@ -12,4 +12,4 @@ précédée d'une espace. Le titre perdu touche tout ce qui le lit : l'état,
 
 ## Satisfait quand
 
-- [ ] un titre qui finit par un dièse collé à un mot, « C# », se lit entier partout où le socle lit les titres
+- [x] un titre qui finit par un dièse collé à un mot, « C# », se lit entier partout où le socle lit les titres
