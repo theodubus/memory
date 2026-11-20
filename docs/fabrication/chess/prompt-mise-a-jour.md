@@ -128,6 +128,12 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 47. Le dossier de socle review d'une branche qui a fusionné main en cours de lot ne montre plus le code ni les entrées closes que la fusion a apportés : le lot se mesure depuis cette fusion refaite sur son début (git merge-tree, git 2.38), et une note du dossier le dit ; une seconde revue (--since) de même.
 
+48. Le hook avant push garde, quand il laisse passer un push, le commit poussé vers chaque branche distante, dans .git/socle/pushed.json (non versionné) : une branche distante supprimée sans fusion ne remet plus à neuf la plage de ton push suivant, qui se juge depuis ce commit, et le refus dit que supprimer la branche n'est pas une issue. Une branche fusionnée qui repart de main sous le même nom se juge contre main ; un refus qui vise une fusion que ton clone ignore encore se lève par git fetch.
+
+49. La politique que pose l'installeur porte en commentaire, dans [irreversible], la ligne tools de la fusion par l'agent, la liste du moteur moins la fusion ; le guide (« La fusion par l'agent ») dit à quelles conditions tu fusionnes alors ta propre pull request. Ta politique a déjà cette ligne, que j'ai écrite à l'installation, et la mise à jour ne la réécrit pas : rien à faire. Le gabarit d'AGENTS.md le dit en une phrase.
+
+50. Le skill socle-batch : qui fusionne se lit dans la politique ; après une fusion par toi, attends les workflows qu'elle lance sur main, comme la CI, et ton récap dit s'ils ont réussi. C'est une copie protégée : elle est dans la demande de l'installeur.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.
