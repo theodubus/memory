@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0006 — Lot des copies protégées et des skills : leur retard, leur remise, et ce que le skill socle-batch dit mal
 
-> statut : ouvert · origine : J-2026-11-15-J · après : L-0019, T-0009, T-0010, T-0011, T-0012, T-0073, T-0013, T-0014, T-0015, T-0074, T-0016, T-0075, T-0017, T-0060, T-0069, T-0061, T-0063, T-0084, T-0072 · lu : backlog@19378efe · ancien : B-0236
+> statut : ouvert · origine : J-2026-11-15-J · après : L-0019, T-0009, T-0010, T-0011, T-0012, T-0073, T-0013, T-0014, T-0015, T-0074, T-0016, T-0075, T-0017, T-0060, T-0069, T-0061, T-0063, T-0084, T-0110, T-0072 · lu : backlog@19378efe · ancien : B-0236
 
 Les skills du produit et leurs copies protégées dans ce dépôt : les
 copies en retard sur leurs gabarits (B-0218, dont celle de
@@ -21,3 +21,5 @@ Le 17 novembre, D-0128 y ajoute B-0276 et ses tâches T-0060 et T-0061 (J-2026-1
 Le 17 novembre, D-0129 y ajoute B-0278 et sa tâche T-0063 (J-2026-11-17-H) : la ligne « Économie » de la consigne des sous-agents de `socle-batch`.
 
 Le 18 novembre, T-0049 découpe B-0218, B-0233, B-0243 et B-0140 (J-2026-11-18-J) : T-0072 rafraîchit les copies protégées de ce dépôt en dernier, après les tâches qui changent un gabarit ; T-0073 dit le jalon dans le skill `socle-batch`, à côté du signal de l'état (T-0012) ; T-0074 nomme le modèle du relecteur à froid d'une demande ; T-0016 soumet à Théo le test poussé sous sa demande, que T-0075 fait après sa réponse.
+
+Le 20 novembre, D-0144 y ajoute T-0110 (J-2026-11-20-D) : le recul se retire des skills `socle-review` et `socle-batch`, avant la remise des copies protégées. ADR-0098, le hook terminé, change T-0060 et T-0061 : la liste des formes que le hook ne juge pas n'a plus à vivre dans l'atelier.

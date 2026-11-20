@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0144-retirer-l-obligation-du-recul-au-lot-l-0006-garder.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-20"
+canal = "conversation"
+citation = "Ok valider"
+empreinte = "sha256:0c98c5f485bed0416409d03ef59779f6e3a0e157383424365bf33fddc39a5181"
