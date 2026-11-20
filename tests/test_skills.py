@@ -577,6 +577,18 @@ class TestLaRevue(unittest.TestCase):
                 self.assertIn(phrase, texte, lg)
             self.assertNotIn(ancien, texte, lg)
 
+    def test_un_lot_implemente_sur_fable_fait_demander_fable_pour_le_relecteur(self):
+        """T-0015 (B-0243, D-0119) : le lot, pas la session qui orchestre ;
+        l'humain répond avant la revue."""
+        attendus = {
+            "fr": "Un lot implémenté sur Fable (le lot, pas la session qui orchestre) fait demander à l'humain, "
+                  "avant la revue, s'il veut aussi Fable pour le relecteur.",
+            "en": "A batch implemented on Fable (the batch, not the orchestrating session) has the human asked, "
+                  "before the review, whether they also want Fable for the reviewer.",
+        }
+        for lg, phrase in attendus.items():
+            self.assertIn(phrase, " ".join(self.texte(lg).split()), lg)
+
     def test_il_dit_quand_donner_le_dossier_court(self):
         """B-0288 : un petit lot qui ne touche ni un garde-fou ni un format
         que d'autres parties du projet lisent reçoit le dossier court ; tout

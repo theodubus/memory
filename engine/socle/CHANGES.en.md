@@ -7,6 +7,17 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-20-i — The `socle-review` skill has the human asked whether they want Fable for the reviewer of a batch implemented on Fable
+
+A batch the human had implemented on Fable (the batch, not the
+orchestrating session): the agent asks them, before the review, whether
+they also want Fable for the reviewer. Outside this case, the rule does
+not change: the most capable model up to Opus, never a lesser one than
+the one that implemented, and Fable only if the human asks for it.
+
+To do: nothing; the `socle-review` skill is a protected copy, in the
+installer's request.
+
 ## 2026-11-20-h — The `socle-batch` skill places the wake-up in a cloud session, forms as a milestone what one session does not carry through, refers to the sorting of `socle-review` and gives subagents the “Economy” line
 
 The `socle-batch` skill changes in five points:

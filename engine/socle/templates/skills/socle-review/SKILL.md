@@ -67,11 +67,13 @@ python3 .socle/socle review
    famille : si l'alias en désigne une plus ancienne, il hérite de la
    session, sans `model`, et son compte rendu nomme le modèle qui l'a
    servi ; Fable, s'il est disponible,
-   seulement si l'humain le demande. Il reçoit aussi les instructions du
-   projet et peut lire le dépôt ; le dossier lui dit de ne rien modifier
-   hors d'un dossier temporaire (`mktemp -d`), ce que le hook de l'agent
-   n'impose pas. Un agent sans sous-agents saute la revue, et son récap
-   le dit.
+   seulement si l'humain le demande. Un lot implémenté sur Fable (le
+   lot, pas la session qui orchestre) fait demander à l'humain, avant la
+   revue, s'il veut aussi Fable pour le relecteur. Le relecteur reçoit
+   aussi les instructions du projet et peut lire le dépôt ; le dossier
+   lui dit de ne rien modifier hors d'un dossier temporaire
+   (`mktemp -d`), ce que le hook de l'agent n'impose pas. Un agent sans
+   sous-agents saute la revue, et son récap le dit.
 
 ## Les constats
 

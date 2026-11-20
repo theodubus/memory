@@ -7,6 +7,17 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-20-i — Le skill `socle-review` fait demander à l'humain s'il veut Fable pour le relecteur d'un lot implémenté sur Fable
+
+Un lot que l'humain a fait implémenter sur Fable (le lot, pas la session
+qui orchestre) : l'agent lui demande, avant la revue, s'il veut aussi
+Fable pour le relecteur. Hors de ce cas, la règle ne change pas : le
+modèle le plus capable jusqu'à Opus, jamais un moindre que celui qui a
+implémenté, et Fable seulement si l'humain le demande.
+
+À faire : rien ; le skill `socle-review` est une copie protégée, dans la
+demande de l'installeur.
+
 ## 2026-11-20-h — Le skill `socle-batch` situe le réveil en session cloud, forme en jalon ce qu'une session ne mène pas, renvoie au tri de `socle-review` et donne aux sous-agents la ligne « Économie »
 
 Le skill `socle-batch` change en cinq points :

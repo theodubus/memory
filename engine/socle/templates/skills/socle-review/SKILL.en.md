@@ -65,7 +65,10 @@ python3 .socle/socle review
    the latest version of its family: if the alias designates an older
    one, it inherits the session's, without `model`, and its report names
    the model that served it;
-   Fable, if available, only if the human asks for it. It also receives
+   Fable, if available, only if the human asks for it. A batch
+   implemented on Fable (the batch, not the orchestrating session) has
+   the human asked, before the review, whether they also want Fable for
+   the reviewer. The reviewer also receives
    the project's instructions and can read the repository; the brief
    tells it to change nothing outside a temporary directory (`mktemp
    -d`), which the agent's hook does not enforce. An agent without
