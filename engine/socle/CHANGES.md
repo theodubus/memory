@@ -7,6 +7,18 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-20-o — Le dossier de la revue d'une branche qui a fusionné la branche par défaut ne montre que le lot
+
+Une branche déjà poussée qui fusionnait la branche par défaut en cours
+de lot donnait au relecteur, avec le lot, le code et les entrées closes
+que la fusion apportait. `socle review` mesure désormais le diff et les
+sujets du lot depuis la fusion refaite sur son début (`git merge-tree
+--write-tree`, git 2.38), et une note le dit. Une fusion qui ne se
+refait pas sans conflit, ou un git plus ancien, laisse le dossier
+d'avant, et la note dit qu'il montre aussi ce que la fusion a apporté.
+
+À faire : rien.
+
 ## 2026-11-20-n — Le résumé de la CI d'une pull request donne le lien d'une demande posée sur sa branche
 
 Sur une pull request, la CI tourne sur une HEAD détachée, le commit de

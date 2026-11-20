@@ -898,6 +898,35 @@ class TestMesure(_Lot):
         self.assertEqual([e.id for e in revue.sujets_du_lot(self.projet, "origin/main")[0]], ["B-0001"])
         self.assertEqual(revue.debut_du_lot(self.racine, "origin/main"), commun)
 
+    def test_une_branche_qui_a_fusionne_la_branche_par_defaut_ne_montre_que_son_lot(self):
+        """B-0241 : la branche, poussée, fusionne la branche par défaut en
+        cours de lot ; le dossier ne montre ni le code ni le sujet clos
+        que la fusion a apportés. La branche poussée porte déjà un lot
+        d'avant, que la branche par défaut n'a pas reçu."""
+        (self.racine / "avant.py").write_text("LOT_D_AVANT = 1\n")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "le lot d'avant")
+        git(self.racine, "push", "-q", "-u", "origin", "travail")
+        pousse = git(self.racine, "rev-parse", "HEAD").strip()
+        self.avancer_main()
+        self.lot()
+        git(self.racine, "merge", "-q", "--no-edit", "origin/main")
+        (self.racine / "calc.py").write_text("def double(x):\n    return x * 2  # après la fusion\n")
+        git(self.racine, "commit", "-qam", "la suite du lot")
+        texte = revue.dossier(self.projet)
+        self.assertNotIn("ECRIT_SUR_MAIN", texte)
+        self.assertNotIn("# B-0005 — Un sujet de main", texte)
+        self.assertIn("+    return x * 2  # après la fusion", texte)
+        self.assertIn("- [x] double est écrit", texte)
+        self.assertIn(f"(la branche a fusionné origin/main depuis {pousse[:7]} : le lot se mesure sans ce que "
+                      "cette fusion a apporté", texte)
+        self.assertIn("## Le diff du lot (1 fichier(s), depuis origin/travail)", texte)
+        origine, note = revue.sans_la_fusion(self.projet, pousse)
+        self.assertNotEqual(origine, pousse)
+        self.assertEqual([e.id for e in revue.sujets_du_lot(self.projet, origine)[0]], ["B-0001"])
+        # Sans fusion depuis le début du lot, rien ne change.
+        self.assertEqual(revue.sans_la_fusion(self.projet, git(self.racine, "rev-parse", "HEAD").strip())[1], None)
+
     def test_un_commit_pousse_d_ailleurs_n_entre_pas_dans_le_lot(self):
         """La revue de B-0212 : une branche distante en avance sur HEAD par
         du code donnait pour diff du lot l'inverse du commit poussé

@@ -7,6 +7,18 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-20-o — The review folder of a branch that merged the default branch shows only the batch
+
+An already pushed branch that merged the default branch during a batch
+gave the reviewer, along with the batch, the code and the closed entries
+the merge brought. `socle review` now measures the batch's diff and
+subjects from the merge redone on its start (`git merge-tree
+--write-tree`, git 2.38), and a note says so. A merge that cannot be
+redone without conflict, or an older git, leaves the folder as before,
+and the note says it also shows what the merge brought.
+
+To do: nothing.
+
 ## 2026-11-20-n — The CI summary of a pull request links a request posed on its branch
 
 On a pull request, the CI runs on a detached HEAD, the merge commit
