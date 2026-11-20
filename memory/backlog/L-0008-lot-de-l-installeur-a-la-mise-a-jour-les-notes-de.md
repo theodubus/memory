@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0008 — Lot de l'installeur à la mise à jour : les notes de version d'une installation relancée, l'adoption vide, le balayage de mutation de chess
 
-> statut : ouvert · origine : J-2026-11-15-J · après : L-0007, T-0025, T-0026, T-0076, T-0027, T-0077, T-0028, T-0029, T-0030, T-0031, T-0032 · lu : backlog@19378efe · ancien : B-0238
+> statut : ouvert · origine : J-2026-11-15-J · après : L-0020, T-0025, T-0026, T-0076, T-0027, T-0077, T-0028, T-0029, T-0030, T-0031, T-0032 · lu : backlog@19378efe · ancien : B-0238
 
 Ce que dit et pose l'installeur à une mise à jour
 (`engine/socle/installer.py`) : les notes de version perdues quand il
