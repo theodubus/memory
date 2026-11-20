@@ -13,6 +13,7 @@ Leur texte exact est dans l'entrée du journal citée.
 
 - Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
 - Le hook terminé : rien sans preuve vue dans une session (ADR-0098).
+- Revue de cap tous les trois lots ; au produit si utile (D-0145).
 - Un mot pour une chose ; une tâche va sans demander au lot dont la
   règle s'applique (J-2026-11-16-I, J-2026-11-16-J).
 - Relecteur : le plus capable jusqu'à Opus (D-0117). Fable, implémenteur
@@ -64,6 +65,7 @@ Leur texte exact est dans l'entrée du journal citée.
 Avant toute nouvelle fonction (J-2026-11-13-I, D-0108, D-0109, D-0111),
 par lots :
 
+0. La revue de cap (T-0111, D-0145), avant L-0006.
 1. Le jalon JA-0005 (D-0118), lot par lot.
 2. La mise à jour de chess, avec le prompt complété.
 3. Ensuite la planification (B-0101), puis la répartition (B-0055).
