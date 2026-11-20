@@ -20,6 +20,29 @@ reads in the policy, no longer in the project's instructions.
 To do: nothing; the `socle-batch` skill is a protected copy, in the
 installer's request.
 
+## 2026-11-20-q — Merging its own pull request by the agent, a policy option the human enables
+
+The hook refuses the agent the merge of a pull request, like the other
+external actions. The policy the installer lays down now carries as a
+comment, in its `[irreversible]` section, the `tools` line that allows
+it: the engine's list of external tools, minus the merge. Only the human
+enables it, by uncommenting it; the guide (“Merging by the agent”) gives
+the conditions under which the agent then merges its own pull request,
+and what it checks afterwards. The hook does not change: without the
+line, the merge stays refused. An installed project's policy is not
+rewritten; on this update, the diff of the policy shows the line.
+
+To do: nothing, unless the human wants the agent to merge its own pull
+request. They then write this line themselves in the `[irreversible]`
+section of `.socle/policy.toml`, and approve it like any protected
+change; the agent does not write it, it can give it to them:
+
+```toml
+tools = ['mcp__github__(delete_file|create_repository|fork_repository|create_release|push_files|create_or_update_file|enable_pr_auto_merge)']
+```
+
+A project that has already written this line has nothing to do.
+
 ## 2026-11-20-o — The review folder of a branch that merged the default branch shows only the batch
 
 An already pushed branch that merged the default branch during a batch

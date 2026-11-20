@@ -21,6 +21,30 @@ instructions du projet.
 À faire : rien ; le skill `socle-batch` est une copie protégée, dans la
 demande de l'installeur.
 
+## 2026-11-20-q — La fusion de sa pull request par l'agent, une option de la politique que l'humain active
+
+Le hook refuse à l'agent la fusion d'une pull request, comme les autres
+actions externes. La politique que pose l'installeur porte désormais en
+commentaire, dans sa section `[irreversible]`, la ligne `tools` qui la
+lui laisse : la liste des outils externes du moteur, moins la fusion.
+L'humain seul l'active, en la décommentant ; le guide (« La fusion par
+l'agent ») dit à quelles conditions l'agent fusionne alors sa propre
+pull request, et ce qu'il vérifie ensuite. Le hook ne change pas : sans
+la ligne, la fusion reste refusée. La politique d'un projet installé ne
+se réécrit pas ; à cette mise à jour, le diff de la politique montre la
+ligne.
+
+À faire : rien, sauf si l'humain veut que l'agent fusionne lui-même sa
+pull request. Il écrit alors lui-même cette ligne dans la section
+`[irreversible]` de `.socle/policy.toml`, et l'approuve comme tout
+changement protégé ; l'agent ne l'écrit pas, il peut la lui donner :
+
+```toml
+tools = ['mcp__github__(delete_file|create_repository|fork_repository|create_release|push_files|create_or_update_file|enable_pr_auto_merge)']
+```
+
+Un projet qui a déjà écrit cette ligne n'a rien à faire.
+
 ## 2026-11-20-o — Le dossier de la revue d'une branche qui a fusionné la branche par défaut ne montre que le lot
 
 Une branche déjà poussée qui fusionnait la branche par défaut en cours

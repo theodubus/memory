@@ -7,25 +7,56 @@ import contextlib
 import io
 import os
 import posixpath
+import re
 import shutil
 import subprocess
 import tempfile
 import time
+import tomllib
 import unittest
 import unittest.mock
 from pathlib import Path
 
 from socle import commands as commandes, config, hooks, installer as installeur
+from socle.templates import DOSSIER as GABARITS
 
 MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 # En morceaux : ce fichier ne lance rien, il ne fait que citer.
 L = ".socle/" + "socle"
 G = "gi" + "t"
 P = "pu" + "sh"
+FUSION = "mcp__github__merge_pull_request"
 
 
 def B(commande: str):
     return ("Bash", {"command": commande})
+
+
+def ligne_de_la_fusion(texte: str) -> str:
+    """La ligne `tools` qu'une politique porte en commentaire, l'option de la
+    fusion par l'agent (T-0020) : une seule, que l'humain décommente."""
+    lignes = [ligne for ligne in texte.splitlines() if ligne.startswith("# tools = ")]
+    assert len(lignes) == 1, lignes
+    return lignes[0]
+
+
+def fusion_permise(texte: str) -> str:
+    """La politique `texte`, la ligne de la fusion par l'agent décommentée."""
+    ligne = ligne_de_la_fusion(texte)
+    return texte.replace(ligne, ligne.removeprefix("# "), 1)
+
+
+def outils_nommes(motifs: list[str]) -> set[str]:
+    """Les outils que nomme une liste `[irreversible] tools` dont chaque motif
+    est un nom, ou un préfixe suivi d'une alternative de noms
+    (`mcp__github__(a|b)`) ; une autre forme fait échouer le test qui
+    l'emploie, plutôt que d'y être mal lue."""
+    noms = set()
+    for motif in motifs:
+        forme = re.fullmatch(r"(\w+)\(([\w|]+)\)", motif)
+        assert forme or re.fullmatch(r"\w+", motif), motif
+        noms |= {forme.group(1) + n for n in forme.group(2).split("|")} if forme else {motif}
+    return noms
 
 
 REFUS = [
@@ -116,12 +147,12 @@ class TestGarde(unittest.TestCase):
     def tearDownClass(cls):
         shutil.rmtree(cls.racine, ignore_errors=True)
 
-    def decide(self, outil, args) -> str:
+    def decide(self, outil, args, projet=None) -> str:
         if "file_path" in args and not args["file_path"].startswith("/"):
             args = {**args, "file_path": str(self.racine / args["file_path"])}
         flux = io.StringIO()
         with contextlib.redirect_stdout(flux):
-            hooks.pre_tool_use(self.projet, {"session_id": "garde", "tool_name": outil, "tool_input": args})
+            hooks.pre_tool_use(projet or self.projet, {"session_id": "garde", "tool_name": outil, "tool_input": args})
         return "refus" if '"deny"' in flux.getvalue() else "passe"
 
     def test_les_contournements_sont_refuses(self):
@@ -1619,6 +1650,100 @@ class TestGarde(unittest.TestCase):
             hooks.pre_tool_use(self.projet, {"session_id": "garde", "tool_name": "Bash",
                                              "tool_input": {"command": f"{G} {P} origin main"}})
         self.assertIn("sa commande exacte", flux.getvalue())
+
+    def test_la_fusion_par_l_agent_s_active_en_decommentant_la_ligne_de_la_politique(self):
+        """T-0020 (B-0200, ADR-0103) : la politique que pose l'installeur
+        refuse la fusion à l'agent ; la ligne `tools` qu'elle porte en
+        commentaire, décommentée par l'humain, la lui laisse, et rien d'autre :
+        les autres outils externes, `gh pr merge` et le push sur la branche
+        par défaut restent refusés."""
+        fusion = (FUSION, {"owner": "o", "repo": "r", "pullNumber": 1})
+        self.assertEqual(self.decide(*fusion), "refus")
+        politique = self.racine / config.FORMAT_ACTUEL.politique
+        texte = politique.read_text(encoding="utf-8")
+        try:
+            politique.write_text(fusion_permise(texte), encoding="utf-8")
+            permise = config.Projet.charger(self.racine)
+        finally:
+            politique.write_text(texte, encoding="utf-8")
+        self.assertEqual(permise.erreurs_config, [])
+        for (outil, args), attendu in ((fusion, "passe"),
+                                       (("mcp__github__delete_file", {"owner": "o", "repo": "r"}), "refus"),
+                                       (("mcp__github__enable_pr_auto_merge", {"pullNumber": 1}), "refus"),
+                                       (B("gh pr merge 1 --squash"), "refus"),
+                                       (B(f"{G} {P} origin main"), "refus")):
+            with self.subTest(outil, args=args):
+                self.assertEqual(self.decide(outil, args, permise), attendu)
+
+
+class TestLaFusionParLAgent(unittest.TestCase):
+    """T-0020 (B-0200, ADR-0103) : l'option de la fusion par l'agent est la
+    ligne `[irreversible] tools` que les gabarits de la politique portent en
+    commentaire ; le guide la dit, avec ses conditions."""
+
+    def test_la_ligne_des_gabarits_est_la_liste_du_moteur_moins_la_fusion(self):
+        """Exactement : un outil que le moteur ajoute à sa liste sans
+        l'ajouter à la ligne fait échouer ce test (ADR-0103, point 2)."""
+        moteur = outils_nommes(hooks.IRREVERSIBLES_OUTILS)
+        self.assertIn(FUSION, moteur)
+        voisins = {"mcp__github__create_pull_request", "mcp__github__update_pull_request",
+                   "mcp__github__pull_request_read", FUSION + "s", "Bash", "Write"}
+        for nom, renvoi, humain in (("policy.toml", "(le guide, « La fusion par l'agent »)", "L'humain seul l'active"),
+                                    ("policy.en.toml", "(the guide, “Merging by the agent”)",
+                                     "Only the human enables it")):
+            with self.subTest(nom):
+                texte = (GABARITS / nom).read_text(encoding="utf-8")
+                self.assertNotIn("tools", tomllib.loads(texte)["irreversible"])
+                ligne = ligne_de_la_fusion(texte)
+                avant = " ".join(texte[:texte.index(ligne)].rsplit("\n#\n", 1)[-1].replace("#", " ").split())
+                for phrase in (renvoi, humain):
+                    self.assertIn(phrase, avant)
+                motifs = tomllib.loads(fusion_permise(texte))["irreversible"]["tools"]
+                self.assertEqual(outils_nommes(motifs), moteur - {FUSION})
+                for outil in sorted(moteur | voisins):
+                    with self.subTest(nom, outil=outil):
+                        refuse = any(re.fullmatch(m, outil) for m in motifs)
+                        self.assertEqual(refuse, outil in moteur - {FUSION})
+
+    GUIDE = {
+        "fr": ("HELP.md", "AGENTS.md", "**Livrer.**", "**La fusion par l'agent.**", (
+            "Par défaut, c'est vous qui fusionnez la pull request de l'agent",
+            "décommentez la ligne `tools` que la section `[irreversible]` de la politique (`.socle/policy.toml`) "
+            "porte en commentaire : la liste des outils externes que le moteur refuse, moins la fusion",
+            "Seul l'humain écrit la politique",
+            "Il ne fusionne alors qu'à quatre conditions : sa propre pull request seulement, jamais celle d'une "
+            "autre session ; la CI verte sur son commit de tête, qu'il donne ; la revue du dernier lot faite et "
+            "ses constats traités ; aucune demande en attente sur son contenu.",
+            "Après la fusion, il vérifie les workflows qu'elle lance sur la branche par défaut",
+            "son récap dit s'ils ont réussi",
+            "La ligne fige la liste"),
+            "Si la politique le permet (le guide, « La fusion par l'agent »), l'agent fusionne lui-même la "
+            "sienne, aux conditions du skill `socle-batch`."),
+        "en": ("HELP.en.md", "AGENTS.en.md", "**Delivering.**", "**Merging by the agent.**", (
+            "By default, you merge the agent's pull request yourself",
+            "uncomment the `tools` line that the `[irreversible]` section of the policy (`.socle/policy.toml`) "
+            "carries as a comment: the list of external tools the engine refuses, minus the merge",
+            "Only the human writes the policy",
+            "It then merges only under four conditions: its own pull request only, never another session's; the "
+            "CI green on its head commit, which it gives; the review of the last batch done and its findings "
+            "handled; no request pending on its content.",
+            "After the merge, it checks the workflows the merge starts on the default branch",
+            "its recap says whether they succeeded",
+            "The line freezes the list"),
+            "If the policy allows it (the guide, “Merging by the agent”), the agent merges its own itself, under "
+            "the conditions of the `socle-batch` skill."),
+    }
+
+    def test_le_guide_dit_l_option_et_ses_conditions_et_agents_md_y_renvoie(self):
+        paquet = GABARITS.parent
+        for lg, (guide, agents, livrer, titre, phrases, renvoi) in self.GUIDE.items():
+            with self.subTest(lg):
+                paragraphes = [" ".join(p.split()) for p in (paquet / guide).read_text(encoding="utf-8").split("\n\n")]
+                i = next(i for i, p in enumerate(paragraphes) if p.startswith(titre))
+                self.assertTrue(paragraphes[i - 1].startswith(livrer), paragraphes[i - 1])
+                for phrase in phrases:
+                    self.assertIn(phrase, paragraphes[i])
+                self.assertIn(renvoi, " ".join((GABARITS / agents).read_text(encoding="utf-8").split()))
 
 
 class TestDecoupage(unittest.TestCase):
