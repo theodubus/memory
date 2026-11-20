@@ -90,16 +90,6 @@ The reviewer classifies them; the agent checks each classification.
   is caught, by a check, the CI or an error the agent sees at once; and
   an unfounded finding. One line of the recap says why each is
   dismissed.
-- **A shell form an agent does not write** in its work (seen neither in
-  an agent session, nor in a skill, nor in current documentation), and
-  that escapes the agent's hook: it is not classed as blocking, even if
-  refused before the batch by accident, nor for the backlog, whatever its
-  effect. It is dismissed, and goes in one line to the list of known
-  forms the hook does not judge, which the socle's guide keeps
-  (`python3 .socle/socle help`). In an equipped project, this guide
-  is protected: the recap names the form, and “For you” suggests
-  reporting it to the socle's repository
-  (https://github.com/theodubus/socle), which keeps the list.
 
 Post nothing on GitHub: the human reads the recap, not the review. The
 recap says it in one line: `Review: <b> blocking, fixed; <n> to the

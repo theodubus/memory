@@ -662,6 +662,93 @@ class TestLesFormesConnuesDuGuide(unittest.TestCase):
         self.assertGreaterEqual(comptes["fr"], 15)
 
 
+class TestLesFormesDuShellHorsDuProduit(unittest.TestCase):
+    """T-0060 (B-0276, D-0128, ADR-0099) : un projet équipé ne reçoit plus
+    de procédure sur les formes du shell que le hook ne juge pas, ni leur
+    liste ; le guide garde le modèle de menace du hook, comme description
+    de l'outil."""
+
+    PROCEDURE = {
+        "fr": ("forme du shell qu'un agent n'écrit pas", "formes connues", "Un trou ouvre",
+               "n'ouvre pas d'entrée au backlog", "signaler au dépôt du socle"),
+        "en": ("shell form an agent does not write", "known forms", "A hole opens", "opens no backlog entry",
+               "reporting it to the socle's repository"),
+    }
+    MODELE = {
+        "fr": ("**Ce que juge le hook de l'agent.** Le hook de l'agent arrête les erreurs d'un agent coopératif "
+               "avant qu'elles agissent. Il juge les formes du shell qu'un agent écrit dans son travail, pour tout "
+               "effet ; pour ce que rien ne rattrape ensuite (supprimer le projet ou un dossier qui le contient, "
+               "une action externe irréversible, une fuite de la mémoire privée, la part de la mémoire qui ne se "
+               "publie pas), il refuse aussi ce qu'il ne sait pas lire. Un agent coopératif ne cherche pas à "
+               "contourner ses garde-fous. Le hook ne modélise pas tout bash : une écriture d'un fichier protégé "
+               "sous une forme qu'on n'écrit que pour contourner (un `eval`, `IFS`, un chemin construit au vol "
+               "dans un autre langage) est hors de son modèle, comme des formes qui lui échappent",
+               "la garantie est alors le contrôle des fichiers protégés, à la fin du tour, au commit et dans la "
+               "CI. **Faire ce que l'agent ne peut pas faire.**"),
+        "en": ("**What the agent's hook judges.** The agent's hook stops the mistakes of a cooperative agent "
+               "before they take effect. It judges the shell forms an agent writes in its work, for every effect; "
+               "for what nothing catches afterwards (deleting the project or a directory that contains it, an "
+               "irreversible external action, a leak of the private memory, the part of the memory that is not "
+               "published), it also refuses what it cannot read. A cooperative agent does not try to get around "
+               "its guardrails. The hook does not model all of bash: a write to a protected file in a form one "
+               "writes only to get around it (an `eval`, `IFS`, a path built on the fly in another language) is "
+               "outside its model, as are forms that escape it",
+               "the guarantee is then the protected-files check, at the end of the turn, at commit and in CI. "
+               "**Doing what the agent cannot do.**"),
+    }
+    # Le tri des autres constats reste dans la consigne du relecteur.
+    CLASSES = {
+        "fr": ("**Écarté** : un constat exotique (un geste rare, une forme qu'on n'écrit que pour contourner, un "
+               "cas jamais reproduit) dont l'effet est rattrapé",
+               "Rends trois listes numérotées, « Bloquants », « Pour le backlog » puis « Écartés »"),
+        "en": ("**Dismissed**: an exotic finding (a rare gesture, a form one only writes to get around something, "
+               "a case never reproduced) whose effect is caught",
+               "Return three numbered lists, “Blocking”, “For the backlog” then “Dismissed”"),
+    }
+
+    def poses(self, lg: str) -> dict[str, str]:
+        """Le skill, les instructions et le guide posés dans un projet neuf
+        de cette langue, et la consigne du relecteur dans cette langue."""
+        import contextlib
+        import io
+
+        from socle import installer as installeur
+
+        racine = Path(tempfile.mkdtemp(prefix="socle-formes-"))
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        git(racine, "init", "-q", "-b", "main")
+        (racine / "app.py").write_text("print('ok')\n", encoding="utf-8")
+        moteur = Path(revue.__file__).resolve().parent.parent
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(racine, "python", "@essai", source=moteur, langue_memoire=lg)
+        guide = "HELP.md" if lg == "fr" else "HELP.en.md"
+        textes = {"skill": racine / installeur.SKILLS / "socle-review" / "SKILL.md",
+                  "instructions": racine / "AGENTS.md",
+                  "guide": racine / config.Projet.charger(racine).chemins.moteur / "socle" / guide}
+        res = {nom: " ".join(p.read_text(encoding="utf-8").split()) for nom, p in textes.items()}
+        with messages.dans(lg):
+            res["consigne"] = " ".join(messages.trad(revue.CONSIGNE_CLASSES).split())
+        return res
+
+    def test_poses_dans_un_projet_ils_ne_disent_ni_la_procedure_ni_la_liste(self):
+        for lg in ("fr", "en"):
+            textes = self.poses(lg)
+            for nom, texte in textes.items():
+                for mot in self.PROCEDURE[lg]:
+                    self.assertNotIn(mot, texte, (lg, nom))
+            # La liste citait, pour chaque forme, la note de version qui l'inscrivait.
+            self.assertNotRegex(textes["guide"], r"\(\d{4}-\d{2}-\d{2}-[a-z]\)\.", lg)
+            for phrase in self.CLASSES[lg]:
+                self.assertIn(phrase, textes["consigne"], lg)
+
+    def test_le_guide_garde_le_modele_de_menace_du_hook(self):
+        paquet = Path(revue.__file__).resolve().parent
+        for lg, nom in (("fr", "HELP.md"), ("en", "HELP.en.md")):
+            texte = " ".join((paquet / nom).read_text(encoding="utf-8").split())
+            for phrase in self.MODELE[lg]:
+                self.assertIn(phrase, texte, lg)
+
+
 class TestLotDejaPousse(_Lot):
     """B-0212, ADR-0075 : un lot poussé avant sa revue, le cas ordinaire en
     session cloud, laissait un dossier vide, sans diff ni sujets, que le

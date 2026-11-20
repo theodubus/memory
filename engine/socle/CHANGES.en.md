@@ -7,6 +7,22 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-20-j — A shell form the hook does not judge is no longer listed or reported: the guide keeps the hook's threat model
+
+The `socle-review` skill, the reviewer's instructions of `socle review`
+and the socle section of `AGENTS.md` no longer mention the shell form an
+agent does not write: the review does not look for one, and a form found
+is dismissed like any exotic finding, with no recap line naming it and
+no report to the socle's repository. The guide (`python3 .socle/socle
+help`) loses the list of known forms the hook does not judge and the
+sentences that said when a hole in the hook opens a backlog entry; it
+keeps what the hook judges, what it refuses for not being able to read
+it, and what it does not model, which the protected-files check catches.
+
+To do: nothing; the `socle-review` skill is a protected copy, in the
+installer's request, and the socle section of `AGENTS.md` is regenerated
+with the update. A form already named in a recap is not reported.
+
 ## 2026-11-20-i — The `socle-review` skill has the human asked whether they want Fable for the reviewer of a batch implemented on Fable
 
 A batch the human had implemented on Fable (the batch, not the

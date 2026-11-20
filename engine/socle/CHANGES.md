@@ -7,6 +7,23 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-20-j — Une forme du shell que le hook ne juge pas ne se liste ni ne se signale plus : le guide garde le modèle de menace du hook
+
+Le skill `socle-review`, la consigne du relecteur de `socle review` et
+la section du socle d'`AGENTS.md` ne disent plus la forme du shell qu'un
+agent n'écrit pas : la revue ne la cherche pas, et une forme trouvée
+s'écarte comme tout constat exotique, sans ligne qui la nomme au récap ni
+signalement au dépôt du socle. Le guide (`python3 .socle/socle help`)
+perd la liste des formes connues que le hook ne juge pas et les phrases
+qui disaient quand un trou du hook ouvre une entrée du backlog ; il garde
+ce que juge le hook, ce qu'il refuse de ne pas savoir lire, et ce qu'il
+ne modélise pas, que rattrape le contrôle des fichiers protégés.
+
+À faire : rien ; le skill `socle-review` est une copie protégée, dans la
+demande de l'installeur, et la section du socle d'`AGENTS.md` se
+régénère avec la mise à jour. Une forme déjà nommée dans un récap ne se
+signale pas.
+
 ## 2026-11-20-i — Le skill `socle-review` fait demander à l'humain s'il veut Fable pour le relecteur d'un lot implémenté sur Fable
 
 Un lot que l'humain a fait implémenter sur Fable (le lot, pas la session
