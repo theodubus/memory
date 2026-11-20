@@ -17,3 +17,9 @@ B-0262).
 T-0020 fait refuser la fusion par le hook de l'agent sans l'option :
 relire ADR-0098 avant de l'ouvrir ; la liste `[irreversible] tools` de
 la politique règle déjà ce refus.
+
+## Revues
+
+### Passe 1 — 2026-11-20
+
+Commits : 792a2d86..eb5a8e6c
