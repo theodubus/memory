@@ -375,6 +375,96 @@ class TestAuditAdaptateur(unittest.TestCase):
         self.assertEqual(etat.audit_adaptateur(config.Projet.charger(racine)), [])
 
 
+class TestCopiesEnRetard(unittest.TestCase):
+    """B-0218 : en mode amont, le moteur change sans que l'installeur ne
+    repasse ; une copie protégée qu'il pose, et qui diffère de ce qu'il
+    poserait, se nomme dans l'état, sans rien rendre rouge."""
+
+    SKILL = ".claude/skills/socle-resume/SKILL.md"
+
+    def projet(self, mode: str = config.MODE_AMONT, langue: str | None = None) -> Path:
+        racine = depot({"calc.py": "X = 1\n"})
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+            installeur.installer(racine, "python", "@essai", mode=mode, source=MOTEUR, langue_memoire=langue)
+        return racine
+
+    def retard(self, racine: Path) -> list[str]:
+        return installeur.copies_en_retard(config.Projet.charger(racine))
+
+    def changer(self, racine: Path, chemin: str, avant: str, apres: str):
+        p = racine / chemin
+        texte = p.read_text(encoding="utf-8")
+        self.assertIn(avant, texte)
+        p.write_text(texte.replace(avant, apres, 1), encoding="utf-8")
+
+    def test_une_copie_egale_a_ce_que_l_installeur_pose_n_est_pas_nommee(self):
+        from socle import state as etat
+
+        racine = self.projet()
+        self.assertEqual(self.retard(racine), [])
+        self.assertEqual(etat.copies_en_retard(config.Projet.charger(racine)), [])
+        self.assertNotIn("copies   :", etat.calculer(config.Projet.charger(racine), contenus=False))
+        # Le gabarit brut n'est pas ce que l'installeur pose : la CI y a ses
+        # marques, que le rendu remplace.
+        self.assertNotEqual((MOTEUR / "socle/templates/socle.yml").read_text(encoding="utf-8"),
+                            (racine / installeur.CI_DU_SOCLE).read_text(encoding="utf-8"))
+
+    def test_une_copie_qui_differe_ou_manque_est_nommee_par_l_etat(self):
+        from socle import state as etat
+
+        racine = self.projet()
+        self.changer(racine, self.SKILL, "\n", "\nUne ligne que le gabarit n'a plus.\n")
+        self.changer(racine, installeur.CI_DU_SOCLE, "branches-ignore", "branches-ignored")
+        (racine / config.GIT_HOOKS / "pre-push").unlink()
+        attendus = [self.SKILL, f"{config.GIT_HOOKS}/pre-push", installeur.CI_DU_SOCLE]
+        self.assertEqual(sorted(self.retard(racine)), sorted(attendus))
+        lignes = etat.copies_en_retard(config.Projet.charger(racine))
+        self.assertEqual(len(lignes), 1)
+        self.assertIn("3 copie(s) protégée(s)", lignes[0])
+        for c in attendus:
+            self.assertIn(c, lignes[0])
+        self.assertNotIn("socle-review", lignes[0])
+        self.assertIn(lignes[0], etat.calculer(config.Projet.charger(racine), contenus=False))
+
+    def test_rendue_dans_la_langue_de_la_memoire_et_avec_le_nom_du_travail_garde(self):
+        """Ce que l'installeur poserait, pas le gabarit : la langue de la
+        mémoire, et le nom du travail de CI qu'une mise à jour garde."""
+        racine = self.projet(langue="en")
+        self.assertNotEqual((racine / self.SKILL).read_text(encoding="utf-8"),
+                            installeur.gabarit("skills/socle-resume/SKILL.md", "fr"))
+        self.assertEqual(self.retard(racine), [])
+        ci = (racine / installeur.CI_DU_SOCLE).read_text(encoding="utf-8")
+        nom = installeur.outils.nom_du_travail(ci)
+        self.changer(racine, installeur.CI_DU_SOCLE, f"    name: {nom}\n", "    name: exigée par la branche\n")
+        self.assertEqual(self.retard(racine), [])
+        self.assertEqual(installeur.ci_du_socle(racine, [], "en")[1], "exigée par la branche")
+        self.assertEqual(installeur.copies_du_socle(racine)[self.SKILL],
+                         installeur.skills_du_socle("en")[self.SKILL])
+
+    def test_les_etapes_des_adaptateurs_dans_la_ci_rendue(self):
+        rust = installeur.charger_adaptateur("rust")[0]
+        etapes = installeur.etapes_traduites([rust, rust])
+        self.assertTrue(etapes.endswith("\n") and etapes.strip())
+        self.assertEqual(etapes, installeur.etapes_traduites([rust]))
+        self.assertEqual(installeur.etapes_traduites(['language = "python"\n']), "")
+        racine = self.projet()
+        workflow, garde = installeur.ci_du_socle(racine, [rust], "fr")
+        self.assertIn(etapes, workflow)
+        self.assertNotIn("@@", workflow)
+        self.assertIsNone(garde)
+
+    def test_rien_en_mode_projet(self):
+        """Une mise à jour y pose chaque copie, et `protege.fichiers` juge
+        leur changement."""
+        from socle import state as etat
+
+        racine = self.projet(mode=config.MODE_PROJET)
+        self.changer(racine, self.SKILL, "\n", "\nUne ligne que le gabarit n'a plus.\n")
+        self.assertEqual(self.retard(racine), [])
+        self.assertEqual(etat.copies_en_retard(config.Projet.charger(racine)), [])
+
+
 class TestSousDossiers(unittest.TestCase):
     """B-0168 : l'essai à blanc sur chess, un dépôt Rust dont l'interface
     JavaScript vit dans `ui/`, avec son propre manifeste."""

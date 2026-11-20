@@ -3291,6 +3291,15 @@ MESSAGES: dict[str, str] = {
         "adapter  : !! language(s) the adapter ({couvert}) does not cover: {liste} — their tests, build and mutation "
         "go through no capability; tell the human through a request (another adapter, or these files declared "
         "third-party)",
+    # Les copies protégées en retard sur leurs gabarits, en mode amont (B-0218).
+    "copies   : comparaison à leurs gabarits impossible ({erreur})":
+        "copies   : comparison with their templates impossible ({erreur})",
+    "copies   : !! mode amont : {n} copie(s) protégée(s) diffèrent de ce que l'installeur poserait : {liste} — le "
+    "projet ne tourne pas sur ce que le moteur installe ; les remettre, l'installeur relancé en mode amont, passe par "
+    "une demande":
+        "copies   : !! upstream mode: {n} protected copy(ies) differ from what the installer would lay down: {liste} "
+        "— the project does not run on what the engine installs; restoring them, with the installer run again in "
+        "upstream mode, goes through a request",
     # Les skills (ADR-0034).
     "Un skill se nomme comme son dossier et dit, dans sa description, ce qu'il fait et quand s'en servir ; "
     "`socle-` reste aux skills du socle.":
