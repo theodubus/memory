@@ -871,6 +871,17 @@ class TestDeclencheurs(Projet):
         self.assertIn("« Tu implémentes une tâche du socle dans ton worktree du dépôt memory.", skill)
         self.assertNotRegex(skill, r"\bsujets?\b")
 
+    def test_le_skill_de_l_atelier_borne_la_revue_d_un_lot_du_hook_sans_liste_des_formes(self):
+        # T-0061 (ADR-0099) : la règle d'ADR-0098, qui remplace ADR-0082, pour la revue d'un lot du hook ; la
+        # liste des formes que le hook ne juge pas ne vit plus dans l'atelier.
+        racine = Path(__file__).resolve().parent.parent
+        skill = " ".join((racine / ".claude/skills/delegate-lot/SKILL.md").read_text(encoding="utf-8").split())
+        self.assertIn("ne s'ouvre que sur une preuve (ADR-0098). Son relecteur ne cherche pas de contournements : "
+                      "il vérifie que le lot ne casse rien de ce qui marchait", skill)
+        self.assertIn("un contournement qu'il trouve s'écarte d'office, sans entrée au backlog", skill)
+        self.assertNotIn("ADR-0082", skill)
+        self.assertNotIn("formes connues", skill)
+
     def test_le_skill_de_l_atelier_fait_fusionner_la_branche_de_passation_et_suit_le_circuit_court(self):
         # T-0102 (B-0293) : une branche de passation jamais fusionnée restait sur GitHub sans que l'état la
         # signale ; T-0093 (D-0134) : l'atelier dit son circuit court.

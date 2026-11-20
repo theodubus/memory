@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0084 — La remise des copies protégées attend aussi T-0017, et chaque lot qui change un gabarit après L-0006 finit par la remise de ses copies
 
-> statut : ouvert · origine : J-2026-11-18-L · besoin : B-0218 · lu : backlog@0595d48a
+> statut : fait · origine : J-2026-11-18-L · ref : J-2026-11-20-J · besoin : B-0218 · lu : backlog@0595d48a
 
 Relevé par la revue de L-0014, passe 1 (J-2026-11-18-L), constat 1 pour
 le backlog. T-0072, la remise des copies protégées de ce dépôt, se dit la
@@ -16,5 +16,5 @@ d'une copie protégée finit par une tâche qui la remet.
 
 ## Fait quand
 
-- [ ] T-0072 attend T-0017, et `python3 .socle/socle roadmap --format markdown --all` le montre
-- [ ] chaque lot ouvert qui change le gabarit d'une copie protégée finit par une tâche qui la remet, et `python3 .socle/socle roadmap --format markdown --all` le montre
+- [x] T-0072 attend T-0017, et `python3 .socle/socle roadmap --format markdown --all` le montre
+- [x] chaque lot ouvert qui change le gabarit d'une copie protégée finit par une tâche qui la remet, et `python3 .socle/socle roadmap --format markdown --all` le montre
