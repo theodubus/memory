@@ -2,8 +2,7 @@
 
 Ce dépôt fabrique le **socle**, un moteur Python qui les rend fiables
 dans un projet que tient un agent ; l'humain n'arbitre que ce
-qu'aucun contrôle ne tranche. Cadrage :
-`memory/archives/cadrage-2026-10-10.md`, situé dans
+qu'aucun contrôle ne tranche. Cadrage et architecture :
 `docs/fabrication/architecture.md`. **Mode amont** : `engine/socle/` a
 une empreinte non figée ; les fichiers du projet sont dans `.socle/`.
 
@@ -13,9 +12,8 @@ une empreinte non figée ; les fichiers du projet sont dans `.socle/`.
 ses adaptateurs et gabarits, `FORMAT.md` (le format de la mémoire, qui
 fait foi) et `HELP.md` (le guide). Rien n'y renvoie à **l'atelier**
 (ADR-0033) : `tests/`, `bench/`, `docs/fabrication/` et la mémoire.
-`.github/workflows/distribution.yml` publie le moteur seul, page publique
-`engine/README.md` comprise, dans `theodubus/socle` à chaque fusion sur
-`main` (D-0056).
+`.github/workflows/distribution.yml` publie le moteur seul, avec
+`engine/README.md`, dans `theodubus/socle` à chaque fusion sur `main`.
 
 ## Commandes
 
@@ -31,15 +29,17 @@ python3 bench/bench.py --agent simule    # le banc, agent simulé
   sain, dans `engine/socle/selftest.py`.
 - **Le moteur ne connaît ni langage ni agent** : le langage va dans un
   adaptateur, l'agent dans les hooks.
-- **Bibliothèque standard de Python 3.11+ seule** (`ADR-0001`).
+- **Bibliothèque standard de Python 3.11+ seule** (ADR-0001).
 - **Code, messages et documentation en français ; commandes, options et
-  noms de fichiers en anglais** (`ADR-0027`) : un module s'importe sous
+  noms de fichiers en anglais** (ADR-0027) : un module s'importe sous
   son nom français.
 - **Un changement que reçoit un projet installé** a sa note de version,
   française et anglaise (ADR-0078).
 - **L'agent fusionne lui-même sa pull request** (D-0092), jamais celle
-  d'un autre : CI verte, revue adversariale faite, aucune demande
-  en attente ; le récap donne son lien.
+  d'un autre : CI verte, revue faite, aucune demande en attente ;
+  le récap donne son lien.
+- **Le hook de l'agent est terminé**, sauf preuve vue en session
+  (ADR-0098).
 
 <!-- socle:debut — section posée par l'installeur, régénérée à chaque mise à jour -->
 

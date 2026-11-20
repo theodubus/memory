@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0230 — Le hook de l'agent ne juge xargs et python -c que par les chemins qu'ils citent : la liste qu'un find ou un grep -r donne à xargs, le chemin passé en argument au script
 
-> statut : ouvert · origine : J-2026-11-14-AH · lu : backlog@b4ef8718
+> statut : abandonné · origine : J-2026-11-14-AH · ref : D-0143 · lu : backlog@b4ef8718
 
 B-0206 fait juger `xargs` d'un écrivain et `python -c` par les chemins
 protégés qu'ils citent en toutes lettres. Deux usages normaux y
@@ -20,6 +20,8 @@ agent écrit dans son travail. La piste : juger `producteur | xargs
 écrivain` par les départs et les filtres d'un `find` producteur, `grep
 -r` et `git ls-files` comme un `find` sans filtre ; citer aussi les
 arguments qui suivent le script d'un `python -c`.
+
+Abandonné le 20 novembre par D-0143 (ADR-0098) : le hook de l'agent est terminé, et cette entrée ne cite aucune preuve vue dans une session.
 
 ## Satisfait quand
 

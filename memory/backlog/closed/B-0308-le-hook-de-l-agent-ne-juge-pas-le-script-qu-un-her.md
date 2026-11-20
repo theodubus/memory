@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0308 — Le hook de l'agent ne juge pas le script qu'un heredoc écrit dans un fichier puis que python lance dans la même commande
 
-> statut : ouvert · origine : commit:3e83907e · lu : backlog@bbae2a79
+> statut : abandonné · origine : commit:3e83907e · ref : D-0143 · lu : backlog@bbae2a79
 
 Relevé par la passe 1 de la revue de L-0019, sur le commit relu, mesuré
 avant et après le lot : une commande qui écrit un script par un heredoc
@@ -14,6 +14,8 @@ exclu de son périmètre. Un agent écrit cette forme, et rien ne rattrape
 son effet. La conception n'est pas tranchée : suivre le fichier écrit
 jusqu'au `python` qui le lance dans la même commande, ou juger tout
 corps de heredoc écrit dans un fichier `.py`.
+
+Abandonné le 20 novembre par D-0143 (ADR-0098) : le hook de l'agent est terminé, et cette entrée ne cite aucune preuve vue dans une session.
 
 ## Satisfait quand
 

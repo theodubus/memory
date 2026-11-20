@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0305 — Le hook de l'agent laisse passer un push vers la branche par défaut écrit HEAD (git push -u origin HEAD depuis elle), et un push sans destination après un changement de branche dans la même commande
 
-> statut : ouvert · origine : J-2026-11-19-AM · priorité : haute · lu : backlog@3711f154
+> statut : abandonné · origine : J-2026-11-19-AM · ref : D-0143 · priorité : haute · lu : backlog@3711f154
 
 Relevé en écrivant T-0106 (J-2026-11-19-AM), mesuré sur le hook de ce
 commit, dans un projet d'essai. `_git_irreversible`
@@ -16,6 +16,8 @@ depuis une branche de travail. T-0106 (ADR-0097) ne résout une
 substitution de la branche courante que si rien ne change de branche
 avant le push ; la même garde manque à `HEAD` et au push sans
 destination.
+
+Abandonné le 20 novembre par D-0143 (ADR-0098) : le hook de l'agent est terminé, et cette entrée ne cite aucune preuve vue dans une session.
 
 ## Satisfait quand
 

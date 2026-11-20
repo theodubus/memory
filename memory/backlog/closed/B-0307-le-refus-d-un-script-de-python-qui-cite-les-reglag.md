@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0307 — Le refus d'un script de python qui cite les réglages de Claude Code ne dit ni qu'il les cite ni comment faire autrement, et le guide ne dit pas qu'une simple mention les fait refuser
 
-> statut : ouvert · origine : commit:3e83907e · lu : backlog@aa725b6b
+> statut : abandonné · origine : commit:3e83907e · ref : D-0143 · lu : backlog@aa725b6b
 
 Relevé par la passe 1 de la revue de L-0019, sur le commit relu, et
 rencontré par l'orchestrateur du lot : depuis T-0001 (ADR-0094), un
@@ -18,6 +18,8 @@ refus d'un autre fichier protégé dit « cité par … » et « se lit par
 dépôt cite ces réglages partout. Refuser moins, ne juger que les
 littéraux qui atteignent une écriture, s'écarterait du modèle « cité en
 toutes lettres » : hors de ce besoin.
+
+Abandonné le 20 novembre par D-0143 (ADR-0098) : le hook de l'agent est terminé, et cette entrée ne cite aucune preuve vue dans une session.
 
 ## Satisfait quand
 

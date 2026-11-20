@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0302 — Un test du hook ne range jamais un trou connu parmi les témoins qui doivent passer : une liste de limites connues, chacune avec l'entrée du backlog qui la bouchera, et le relecteur vérifie chaque témoin nouveau (D-0141)
 
-> statut : ouvert · origine : J-2026-11-19-AJ · ref : D-0141, D-0140, B-0230 · lu : backlog@cb1c44d7
+> statut : abandonné · origine : J-2026-11-19-AJ · ref : D-0143, D-0141, D-0140, B-0230 · lu : backlog@cb1c44d7
 
 Théo a retenu le 19 novembre la proposition 1 (D-0141, J-2026-11-19-AJ).
 Un test du hook a deux listes : les commandes qui doivent être refusées,
@@ -20,6 +20,8 @@ backlog qui la bouchera ; le relecteur de chaque lot vérifie que chaque
 témoin sain nouveau l'est. La politique ne change pas : déplacer une
 limite vers les refus reste un changement de valeur attendue, soumis à
 une demande.
+
+Abandonné le 20 novembre par D-0143 (ADR-0098) : le hook de l'agent est terminé, et cette entrée ne cite aucune preuve vue dans une session.
 
 ## Satisfait quand
 

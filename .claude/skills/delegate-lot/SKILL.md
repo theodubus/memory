@@ -51,6 +51,12 @@ sous-agent, sans worktree, qui ne reçoit que le chemin du dossier, la
 logistique et les points à éprouver. Il classe ses constats (ADR-0073,
 la règle de D-0111) ; l'orchestrateur vérifie chaque classement.
 
+Un lot qui touche le hook de l'agent (`engine/socle/hooks.py`,
+`engine/socle/commands.py`) ne s'ouvre que sur une preuve (ADR-0098). Son
+relecteur ne cherche pas de contournements : il vérifie que le lot ne
+casse rien de ce qui marchait, et sa consigne le lui dit ; un
+contournement qu'il trouve s'écarte d'office, sans entrée au backlog.
+
 ## La livraison
 
 - L'agent fusionne lui-même sa pull request (D-0092). L'attente de la CI :

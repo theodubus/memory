@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0143-retenir-la-proposition-du-20-novembre-pour-arreter.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-20"
+canal = "conversation"
+citation = "Je valide, et refuser pour D-0142"
+empreinte = "sha256:7a1836cc4ea9ee67571e6552ae248082b58026e3ee751be052a0c193ed1f3f91"

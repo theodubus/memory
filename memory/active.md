@@ -5,16 +5,14 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0019 clos, sa fusion suspendue : Théo veut une garantie contre le
-hook qui tourne en rond (J-2026-11-20-B).
+L-0019 clos ; le hook terminé (D-0143) ; sa pull request à fusionner.
 
 ## Consignes en cours
 
 Leur texte exact est dans l'entrée du journal citée.
 
 - Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
-- Le hook borné aux formes qu'un agent écrit ; une forme exotique va
-  à la liste, sans sujet ni bloquant : atelier seul (D-0128).
+- Le hook terminé : rien sans preuve vue dans une session (ADR-0098).
 - Un mot pour une chose ; une tâche va sans demander au lot dont la
   règle s'applique (J-2026-11-16-I, J-2026-11-16-J).
 - Relecteur : le plus capable jusqu'à Opus (D-0117). Fable, implémenteur

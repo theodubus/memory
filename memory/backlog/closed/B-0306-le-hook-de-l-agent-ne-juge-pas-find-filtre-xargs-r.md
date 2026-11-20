@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0306 — Le hook de l'agent ne juge pas find … | filtre | xargs rm : un grep -v, un sort ou un head entre le find et xargs fait passer la suppression du projet
 
-> statut : ouvert · origine : commit:3e83907e · priorité : haute · lu : backlog@bfb48097
+> statut : abandonné · origine : commit:3e83907e · ref : D-0143 · priorité : haute · lu : backlog@bfb48097
 
 Relevé par la passe 1 de la revue de L-0019, sur le commit relu, mesuré
 avant et après le lot : `find .. -maxdepth 0 | grep . | xargs rm -rf`,
@@ -13,6 +13,8 @@ ses départs, mais `Commande.amont` n'est que la commande qui précède
 (`engine/socle/hooks.py`) exige qu'elle soit un `find`. L'effet, la
 suppression du projet, `.git` compris, rien ne le rattrape ; et l'idiome
 `find | grep -v | xargs rm` est de la documentation courante.
+
+Abandonné le 20 novembre par D-0143 (ADR-0098) : le hook de l'agent est terminé, et cette entrée ne cite aucune preuve vue dans une session.
 
 ## Satisfait quand
 

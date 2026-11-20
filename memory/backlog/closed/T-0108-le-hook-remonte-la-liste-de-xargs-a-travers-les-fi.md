@@ -1,13 +1,15 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0108 — Le hook remonte la liste de xargs à travers les filtres de lignes (grep sans -r ni -o, sort, uniq, head, tail, cat, tee) jusqu'au find qui la produit
 
-> statut : ouvert · origine : commit:3e83907e · besoin : B-0306 · priorité : haute · lu : backlog@aa725b6b
+> statut : abandonné · origine : commit:3e83907e · ref : D-0143 · besoin : B-0306 · priorité : haute · lu : backlog@aa725b6b
 
 Un commit : le producteur de la liste d'un `xargs` se cherche en
 remontant le pipeline à travers les filtres qui ne font que retirer ou
 réordonner des lignes (`grep` sans `-r` ni `-o`, `sort`, `uniq`,
 `head`, `tail`, `cat` sans fichier, `tee`), jusqu'au `find` qui la
 produit ; ses cas dans `tests/test_garde.py`.
+
+Abandonné le 20 novembre par D-0143 (ADR-0098) : le hook de l'agent est terminé, et cette entrée ne cite aucune preuve vue dans une session.
 
 ## Fait quand
 
