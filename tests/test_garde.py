@@ -508,6 +508,26 @@ class TestGarde(unittest.TestCase):
                          (py("import shutil; shutil.rmtree('..')"), "supprime"),
                          ("git worktree remove ../build", None)], str(self.racine / "memory"))
 
+    def test_un_find_qui_donne_sa_liste_a_xargs_rm(self):
+        """B-0246 : `xargs rm` ne se jugeait que par les chemins protégés que
+        la commande cite ; un `find` qui lui donnait un dossier qui contient
+        le projet, ou tout le projet, le supprimait sans refus. Derrière un
+        `find`, un `xargs` d'un programme qui supprime ce qu'il lit se juge
+        comme un `find` qui supprime depuis ses départs, gardé par ce qui
+        garde ce que le `find` écrit sur sa sortie."""
+        with self.environnement():
+            self.jugees([("find .. -maxdepth 0 | xargs rm -rf", "supprime"),
+                         ("find .. -maxdepth 0 -print0 | xargs -0 rm -rf", "supprime"),
+                         ("cd memory && find ../.. -maxdepth 0 | xargs -I{} rm -rf {}", "supprime"),
+                         ("find . -type f | xargs rm -f", "supprime"), ("find . | xargs -n 1 rm -rf", "supprime"),
+                         ("find . -print0 -name x | xargs -0 rm -f", "supprime"),
+                         ("find . -path ./.git -prune -o -type f -print | xargs rm", "supprime"),
+                         ("find .. -name '*.pyc' | xargs rm -f", "supprime"),
+                         ("find . -maxdepth 0 | xargs -I{} git worktree remove {}", "supprime"),
+                         ("find . -name '*.pyc' | xargs rm -f", None), ("find . -name '*.pyc' -print0 | xargs -0 rm -f", None),
+                         ("find build -type f | xargs rm -f", None), ("find .. -maxdepth 0 | xargs ls", None),
+                         ("find . -name '*.orig' | xargs -I{} mv {} /tmp/corbeille", None)])
+
     def test_ce_qu_un_autre_programme_supprime(self):
         """B-0228 : les chemins que `suppressions` lit d'un `rsync`, d'un `git
         worktree` et d'un `python -c`, tels qu'ils sont écrits, la racine
@@ -532,6 +552,12 @@ class TestGarde(unittest.TestCase):
         self.assertEqual(lus("python3 -c 'shutil.rmtree((('"), [])
         self.assertEqual(lus("find a -exec rsync --delete v/ {} \\;"), [("a", True)])
         self.assertEqual(lus("find a -name x -exec mv {} /tmp \\;"), [("a", False)])
+        # B-0246 : derrière un `find`, ce qu'il liste, et ce que la commande
+        # lancée supprime d'elle-même ; rien pour un programme qui ne
+        # supprime pas ce qu'il lit.
+        self.assertEqual(lus("find a b -type f | xargs rm -f c"), [("a", True), ("b", True), ("c", False)])
+        self.assertEqual(lus("find a -name x -print0 | xargs -0 rm"), [("a", False)])
+        self.assertEqual(lus("find a | xargs sed -i s/x/y/ && find a | xargs echo"), [])
 
     def test_un_sous_agent_ne_retire_pas_son_worktree(self):
         """B-0228 : un sous-agent qui travaille dans un worktree ne le retire
@@ -785,6 +811,93 @@ class TestGarde(unittest.TestCase):
                 with self.subTest(cmd):
                     self.assertIsNone(hooks.refus_bash(self.projet, cmd))
 
+    def test_le_script_qu_un_heredoc_donne_a_python(self):
+        """B-0229 : le corps d'un heredoc n'était que du texte pour le
+        découpage ; le script que python lit sur son entrée, lancé sans
+        `-c`, `-m` ni script ou avec `-`, écrivait un fichier protégé ou
+        supprimait le projet sans que le hook le voie. Il se juge comme le
+        script d'un `python -c`, tel qu'écrit ; un script lu d'un fichier et un
+        heredoc donné à un autre programme ne changent pas de jugement."""
+        def heredoc(tete, corps, fin="EOF"):
+            return f"{tete}\n{corps}\n{fin}"
+
+        ecrit = "open('.socle/policy.toml', 'w').write('x')"
+        with self.environnement():
+            self.jugees([
+                (heredoc("python3 - <<'EOF'", ecrit), "protege"), (heredoc("python3 <<EOF", ecrit), "protege"),
+                (heredoc("python <<\"FIN\"", ecrit, "FIN"), "protege"),
+                (heredoc("python3 -I - arg <<'EOF'", ecrit), "protege"),
+                (heredoc("python3 -- - <<'EOF'", ecrit), "protege"),
+                (heredoc("uv run python3 - <<'EOF'", ecrit), "protege"),
+                (heredoc("python3 - <<'EOF'", "print(open('.socle/policy.toml').read())"), "protege"),
+                (heredoc("python3 - <<'EOF'", "open('.claude/settings.local.json', 'w').write('{}')"), "reglage"),
+                (heredoc("python3 - <<'EOF'", "import shutil\nshutil.rmtree('..')"), "supprime"),
+                (heredoc("python3 - <<-'EOF'", "\timport shutil\n\tshutil.rmtree('..')", "\tEOF"), "supprime"),
+                (heredoc("cd memory && python3 - <<'EOF'", "import shutil\nshutil.rmtree('../..')"), "supprime"),
+                (heredoc("cat <<'A'\nrien\nA\npython3 - <<'B'", "import shutil\nshutil.rmtree('..')", "B"),
+                 "supprime"),
+                (f"{G} commit -q -m \"$(cat <<'EOF'\nfix: x\nEOF\n)\" && python3 - <<'EOF'\n"
+                 "import shutil\nshutil.rmtree('..')\nEOF", "supprime"),
+                ("python3 - <<'EOF'\nimport shutil\nshutil.rmtree('..')", "supprime"),
+                (heredoc("python3 - <<'EOF'", "print(open('calc.py').read())"), None),
+                (heredoc("python3 - <<'EOF'", "import shutil\nshutil.rmtree('build')"), None),
+                (heredoc("python3 - <<'EOF'", "x = '$F'\nprint(x)"), None),
+                (heredoc("cat > /tmp/x.py <<'EOF'", ecrit), None), (heredoc("tee /tmp/x.py <<'EOF'", ecrit), None),
+                (heredoc("python3 /tmp/x.py <<'EOF'", ecrit), None),
+                (heredoc("python3 -c 'print(1)' <<'EOF'", ecrit), None),
+                (heredoc("python3 -m json.tool <<'EOF'", '{".socle/policy.toml": 1}'), None),
+                (heredoc("python3 - < /tmp/x.py <<'EOF'", ecrit), "protege"),
+                (heredoc("python3 - <<'EOF' < /tmp/x.py", ecrit), None), ("python3 - < /tmp/x.py", None)])
+        self.assertIn("cité par `python3 <<`", hooks.refus_bash(self.projet, heredoc("python3 - <<'EOF'", ecrit)) or "")
+
+    def test_les_arguments_du_script_d_un_python_c(self):
+        """B-0230 : un `python -c` ne se jugeait que par les chemins que son
+        script cite ; un fichier protégé passé en argument au script
+        (`sys.argv[1]`) s'écrivait sans refus. Les arguments qui suivent le
+        script, ou le `-` d'un script lu sur l'entrée, se jugent comme les
+        chemins qu'il cite, développés avec les variables connues, quand le
+        script les lit ; un script qui ne les lit pas ne les touche pas."""
+        ouvre = "python3 -c \"import sys; open(sys.argv[1], 'w').write('x')\""
+        with self.environnement():
+            self.jugees([(f"{ouvre} .socle/policy.toml", "protege"), (f"{ouvre} /tmp/x .socle/git-hooks", "protege"),
+                         (f"{ouvre} -- .socle/policy.toml", "protege"),
+                         ("python3 -c \"import argparse; p = argparse.ArgumentParser()\" .socle/policy.toml", "protege"),
+                         ("python3 -c \"import fileinput; [print(x) for x in fileinput.input(inplace=True)]\" "
+                          ".socle/policy.toml", "protege"),
+                         ("python3 -c 'print(1)' .socle/policy.toml", None),
+                         ("python3 -Ic\"import sys; open(sys.argv[1], 'w')\" .socle/policy.toml", "protege"),
+                         (f"cd .socle && {ouvre} policy.toml", "protege"),
+                         (f"F=.socle/policy.toml; {ouvre} \"$F\"", "protege"),
+                         (f"{ouvre} .claude/settings.local.json", "reglage"),
+                         ("python3 - .socle/policy.toml <<'EOF'\nimport sys\nopen(sys.argv[1], 'w')\nEOF", "protege"),
+                         (f"{ouvre} \"$X\"", "illisible"),
+                         (f"{ouvre} calc.py", None), (f"{ouvre} /tmp/x build/y", None),
+                         ("python3 -c \"import sys; print(sys.argv)\" policy.toml", None),
+                         ("python3 - /tmp/x <<'EOF'\nimport sys\nopen(sys.argv[1], 'w')\nEOF", None)])
+
+    def test_un_argument_que_le_hook_ne_developpe_pas_du_script_d_un_python_c(self):
+        """La revue de L-0019, passe 1 : un argument du script d'un `python
+        -c`, ou d'un heredoc donné à python, que le hook ne sait pas
+        développer passait, quand le script lit ses arguments
+        (`open(sys.argv[1], 'w')` sur `"$X"`). Il se juge comme le chemin
+        inconnu qu'écrirait le shell : refusé s'il peut tomber dans le
+        projet ; sous un dossier hors du projet, ou d'un script qui ne lit
+        pas ses arguments, il passe, comme une boucle sur des fichiers
+        connus."""
+        ouvre = "python3 -c \"import sys; open(sys.argv[1], 'w').write('x')\""
+        ailleurs = f"{self.racine}-ailleurs"
+        with self.environnement():
+            self.jugees([(f"{ouvre} $X", "illisible"), (f"{ouvre} calc.py \"$X\"", "illisible"),
+                         (f"{ouvre} build/$X", "illisible"), (f"{ouvre} \"$(ls .socle | head -1)\"", "illisible"),
+                         (f"{ouvre} {ailleurs}/$X/../../x", "illisible"),
+                         (f"cd .socle && {ouvre} \"$1\"", "illisible"),
+                         ("python3 - \"$X\" <<'EOF'\nimport sys\nopen(sys.argv[1], 'w')\nEOF", "illisible"),
+                         ("python3 -c \"import fileinput; [print(x) for x in fileinput.input(inplace=True)]\" "
+                          "\"$X\"", "illisible"),
+                         (f"{ouvre} {ailleurs}/$X", None), (f"{ouvre} \"{ailleurs}/x-$(date +%s).txt\"", None),
+                         ("python3 -c 'print(1)' \"$X\"", None), (f"X=notes.txt; {ouvre} \"$X\"", None),
+                         (f"for f in docs/*.md; do {ouvre} \"$f\"; done", None)])
+
     def test_uv_run_et_poetry_run_se_retirent_comme_des_prefixes(self):
         """B-0248 : `uv run` et `poetry run` n'étaient pas des préfixes ; un
         push forcé ou la suppression du projet passaient derrière eux, et
@@ -891,6 +1004,30 @@ class TestGarde(unittest.TestCase):
                          ("find . -name '*.pyc' -exec rm {} \\;", None),
                          ("find . -name __pycache__ -prune -o -name '*.pyc' -print", None),
                          ("find build -delete -name '*.o'", None)])
+
+    def test_une_conjonction_de_filtres_d_un_find_ne_vise_que_ce_qui_repond_a_tous(self):
+        """B-0231 : les filtres d'un `find` se jugeaient un par un ; une
+        conjonction (`-name` et `-path`) était refusée pour ce qu'un seul
+        filtre aurait visé, et le `*` de tête d'un `-path` se lisait depuis
+        la racine, même quand le `find` part d'un sous-dossier. Un fichier
+        protégé n'est visé que s'il répond à chaque filtre d'une même
+        conjonction, et un `-path` ne vise que ce qui est sous les départs."""
+        with self.environnement():
+            self.jugees([("find . -name '*.json' -path './build/*' -delete", None),
+                         ("find . -name '*.json' -path './.claude/*' -delete", "reglage"),
+                         ("find build -path '*.toml' -delete", None), ("find . -path '*.toml' -delete", "protege"),
+                         ("find . -name '*.toml' -path './build/*' -delete", None),
+                         ("find . -name '*.toml' -path './.socle/*' -delete", "protege"),
+                         ("find . \\( -name '*.toml' -o -name '*.json' \\) -path './build/*' -delete", None),
+                         ("find . \\( -name '*.toml' -o -name '*.json' \\) -path './.socle/*' -delete", "protege"),
+                         ("find . -name '*.toml' -path './build/*' -o -name policy.toml -delete", "protege"),
+                         ("find tests -path '*/fixtures/*' -name '*.tmp' -delete", None),
+                         ("find build -path '*/.socle/*' -delete", None),
+                         ("find .socle -path '*e/policy.toml' -delete", "protege"),
+                         ("find . -type f -name '*.toml' -path '*/.socle/*' -exec sed -i s/a/b/ {} +", "protege"),
+                         ("find dist -path '*.json' -exec sed -i s/a/b/ {} +", None),
+                         ("find . -name '*.answer.toml' -path './memory/*' -delete", "protege"),
+                         ("find . -name '*.md' -path './memory/requests/*' -delete", None)])
 
     def test_le_corps_d_une_fonction_ne_s_execute_pas_la_ou_il_s_ecrit(self):
         """La revue du lot 3, bloquant 4 (J-2026-11-14-AH) : le corps d'une
@@ -1330,7 +1467,6 @@ class TestGarde(unittest.TestCase):
                                 (f"for b in main; do {G} {P} origin $b; done", "branche par défaut"),
                                 (f'{G} {P} "$X" origin travail', illisible),
                                 (f'f() {{ {G} {P} "$@"; }}; f --force origin travail', illisible),
-                                (f'{G} {P} origin "$(git branch --show-current)"', illisible),
                                 (f"{G} -C . {P} origin `echo main`", illisible)):
                 with self.subTest(cmd):
                     raison_lue = hooks.refus_bash(self.projet, cmd) or ""
@@ -1339,12 +1475,77 @@ class TestGarde(unittest.TestCase):
                     self.assertEqual(self.decide(*B(cmd)), "refus")
             for cmd in (f"{G} {P} origin travail", f'B=travail; {G} {P} origin "$B"', f"{G} {P} -u origin travail",
                         f'{G} -C "$X" status', f'D=/tmp; {G} -C "$D" {P} origin travail',
-                        f'{G} commit -q -m "$X"', f"R=origin; {G} {P} $R travail"):
+                        f'{G} commit -q -m "$X"', f"R=origin; {G} {P} $R travail",
+                        f'{G} {P} origin "$(git branch --show-current)"'):
                 with self.subTest(cmd):
                     self.assertIsNone(hooks.refus_bash(self.projet, cmd))
         self.assertEqual(hooks.push_illisible(self.racine, commandes.analyser(f'{G} -C "$X" {P} "$Y" b')[0], {}),
                          "$Y")
         self.assertIsNone(hooks.push_illisible(self.racine, commandes.analyser(f'{G} -C "$X" {P} o b')[0], {}))
+
+    def test_la_branche_courante_d_un_push_se_lit_dans_sa_substitution(self):
+        """B-0254, T-0106 : un argument de push qui ne se développe pas était
+        refusé, `"$(git branch --show-current)"` compris, qu'un agent écrit
+        pour pousser sa branche de travail. Les trois substitutions qui
+        rendent la branche courante, nues, entre guillemets, entre accents
+        graves ou par une variable, se développent en elle : le push se juge
+        comme si elle était écrite en toutes lettres. Une autre substitution
+        reste illisible, et celles-ci aussi quand la même commande change de
+        branche, de dossier ou de dépôt avant le push (D-0140, ADR-0097)."""
+        illisible, defaut = "dont le hook ne sait pas développer l'argument", "branche par défaut (main)"
+        lisent = ("git branch --show-current", "git rev-parse --abbrev-ref HEAD", "git symbolic-ref --short HEAD")
+
+        def formes(lit):
+            return (f"{G} {P} -u origin $({lit})", f'{G} {P} -u origin "$({lit})"', f"{G} {P} -u origin `{lit}`",
+                    f'B=$({lit}); {G} {P} -u origin "$B"', f'B="$({lit})" && {G} {P} origin ${{B}}')
+
+        with self.environnement():
+            # Depuis la branche de travail : le push passe.
+            for lit in lisent:
+                for cmd in formes(lit):
+                    with self.subTest(cmd):
+                        self.assertIsNone(hooks.refus_bash(self.projet, cmd))
+                        self.assertEqual(self.decide(*B(cmd)), "passe")
+            for cmd in (f'{G} add -A && {G} commit -qm x && {G} {P} -u origin "$(git branch --show-current)"',
+                        f'cd {self.racine} && {G} -C . {P} origin "$(git branch --show-current)"'):
+                with self.subTest(cmd):
+                    self.assertIsNone(hooks.refus_bash(self.projet, cmd))
+            # Une autre substitution, et ces trois-là quand la commande change
+            # de branche, de dossier ou de dépôt avant le push : illisibles.
+            for cmd in (f'{G} {P} origin "$(echo main)"', f'{G} {P} origin "$(git branch --show-current | head -1)"',
+                        f'{G} checkout main && {G} {P} origin "$(git branch --show-current)"',
+                        f'{G} switch main; {G} {P} -u origin `git rev-parse --abbrev-ref HEAD`',
+                        f'B=$(git branch --show-current); {G} checkout -q main; {G} {P} origin "$B"',
+                        f'{G} branch -m main && {G} {P} origin "$(git symbolic-ref --short HEAD)"',
+                        f'cd /tmp && {G} {P} origin "$(git branch --show-current)"',
+                        f'cd memory && {G} {P} origin "$(git branch --show-current)"',
+                        f'cd /tmp && B=$(git branch --show-current); cd -; {G} {P} origin "$B"',
+                        f'{G} -C /tmp {P} origin "$(git branch --show-current)"',
+                        f'GIT_DIR=/tmp/x {G} {P} origin "$(git branch --show-current)"'):
+                with self.subTest(cmd):
+                    self.assertIn(illisible, hooks.refus_bash(self.projet, cmd) or "")
+                    self.assertEqual(self.decide(*B(cmd)), "refus")
+            # Le push forcé reste forcé.
+            self.assertIn("push forcé", hooks.refus_bash(
+                self.projet, f'{G} {P} --force origin "$(git branch --show-current)"') or "")
+        simples = commandes.analyser(f'{G} commit -qm x && {G} {P} origin "$(git branch --show-current)"')
+        self.assertEqual(hooks.branche_substituee(str(self.racine), simples[:-1], simples[-1], {}), "travail")
+        self.assertIsNone(hooks.branche_substituee(str(self.racine), [], commandes.analyser(f"{G} {P} o b")[0], {}))
+        # Depuis la branche par défaut : refusé comme un push vers elle.
+        subprocess.run(["git", "checkout", "-q", "main"], cwd=self.racine, check=True)
+        try:
+            with self.environnement():
+                for lit in lisent:
+                    for cmd in formes(lit):
+                        with self.subTest(cmd, branche="main"):
+                            self.assertIn(defaut, hooks.refus_bash(self.projet, cmd) or "")
+                            self.assertEqual(self.decide(*B(cmd)), "refus")
+            self.assertEqual(hooks.branche_substituee(str(self.racine), simples[:-1], simples[-1], {}), "main")
+            # HEAD détaché : la substitution ne se lit pas.
+            subprocess.run(["git", "checkout", "-q", "--detach"], cwd=self.racine, check=True)
+            self.assertIsNone(hooks.branche_substituee(str(self.racine), simples[:-1], simples[-1], {}))
+        finally:
+            subprocess.run(["git", "checkout", "-q", "travail"], cwd=self.racine, check=True)
 
     def test_une_option_globale_entre_guillemets_ne_cache_pas_le_push(self):
         """Passe 1 de la revue de L-0005 : l'argv développé d'un `git` se
@@ -1822,6 +2023,18 @@ class TestDecoupage(unittest.TestCase):
             with self.subTest(shell=shell, chemin=chemin):
                 self.assertEqual(commandes.se_croisent(shell, chemin, dessous), attendu)
 
+    def test_plusieurs_motifs_du_shell_croisent_un_motif_de_chemin(self):
+        """B-0231 : un même chemin répond-il à chacun des motifs du shell et
+        au motif de chemin, les filtres d'une même conjonction d'un `find`."""
+        for shells, chemin, attendu in (
+                (["**/*.json", ".claude/**"], ".claude/settings.json", True),
+                (["**/*.json", "build/**"], ".claude/settings.json", False),
+                (["**/settings*.json", "build/**"], "**/.claude/settings.json", True),
+                (["*.toml", "*.json"], "**", False), (["build/**", "**.toml"], "build/a/b.toml", True),
+                (["build/**", "**.toml"], ".socle/policy.toml", False), (["a*"], "abc", True)):
+            with self.subTest(shells=shells, chemin=chemin):
+                self.assertEqual(commandes.se_croisent_tous(shells, chemin, True), attendu)
+
     def test_un_motif_elargi_et_les_classes_posix(self):
         """La revue de B-0171, constat 8 : `dotglob`, `globstar`,
         `nocaseglob`, et les classes POSIX d'un `[…]`."""
@@ -1845,6 +2058,37 @@ class TestDecoupage(unittest.TestCase):
     def test_jetons_et_heredocs(self):
         self.assertEqual(commandes.jetons('echo "a b" > f'), ["echo", "a b", ">", "f"])
         self.assertEqual(commandes.sans_heredocs("cat <<'EOF'\ncorps\nEOF\nls"), "cat <<'EOF'\nls")
+
+    def test_chaque_commande_d_un_pipeline_connait_celle_qui_la_precede(self):
+        """B-0246 : chaque commande d'un pipeline porte celle qui écrit ce
+        que lit son entrée ; une autre liste, ou la tête d'un pipeline, n'en
+        a pas."""
+        def amonts(texte):
+            return [(c.argv[0], c.amont.argv[0] if c.amont else None) for c in commandes.analyser(texte)]
+
+        self.assertEqual(amonts("a | b |& c; d && e | f"),
+                         [("a", None), ("b", "a"), ("c", "b"), ("d", None), ("e", None), ("f", "e")])
+        self.assertEqual(amonts("a |\n b"), [("a", None), ("b", "a")])
+        self.assertEqual(amonts("{ a; b; } | c"), [("a", None), ("b", None), ("c", "b")])
+        self.assertEqual(amonts("a $(x) | b $(y)"), [("x", None), ("a", None), ("y", None), ("b", "a")])
+
+    def test_le_corps_d_un_heredoc_va_a_l_entree_de_sa_commande(self):
+        """B-0229 : chaque commande porte le corps du heredoc que reçoit son
+        entrée, tel qu'écrit, ses tabulations de tête retirées pour `<<-` ;
+        une redirection de l'entrée qui le suit l'emporte, et le heredoc
+        d'une substitution n'est pas celui de la commande qui suit."""
+        def entrees(texte):
+            return [(c.argv[0], c.entree) for c in commandes.analyser(texte)]
+
+        self.assertEqual(entrees("python3 - <<'EOF'\na = '$X'\n  b\nEOF\necho y"),
+                         [("python3", "a = '$X'\n  b"), ("echo", None)])
+        self.assertEqual(entrees("cat <<A\na\nA\npython3 <<-B\n\tb\n\t\tc\n\tB"), [("cat", "a"), ("python3", "b\nc")])
+        self.assertEqual(entrees("cat <<A <<B\na\nA\nb\nB"), [("cat", "b")])
+        self.assertEqual(entrees("python3 <<-EOF\nx\nEOF"), [("python3", "x")])
+        self.assertEqual(entrees("python3 - <<EOF < f\nx\nEOF"), [("python3", None)])
+        self.assertEqual(entrees("python3 - <<EOF\nx"), [("python3", "x")])
+        self.assertEqual(entrees("x=\"$(cat <<'EOF'\nm\nEOF\n)\"; python3 - <<'EOF'\nc\nEOF")[-1], ("python3", "c"))
+        self.assertEqual(entrees("for i in 1 2; do python3 - <<E\nz\nE\ndone")[-2:], [("python3", "z")] * 2)
 
     def test_prefixes_et_bash_c(self):
         self.assertEqual([c.argv for c in commandes.analyser("x=1 sudo -u root env A=b rm f")], [["rm", "f"]])

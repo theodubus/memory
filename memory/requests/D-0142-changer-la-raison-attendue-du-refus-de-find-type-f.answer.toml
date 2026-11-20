@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0142-changer-la-raison-attendue-du-refus-de-find-type-f.md, dont l'empreinte suit.
+reponse = "refuser"
+texte = ""
+par = "Théo"
+date = "2026-11-20"
+canal = "conversation"
+citation = "Je valide, et refuser pour D-0142"
+empreinte = "sha256:ad655d4b433df339c977c484901505dd560502882adf2857b012b60baed1228c"

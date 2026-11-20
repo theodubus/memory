@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0140-changer-la-valeur-attendue-de-deux-tests-du-hook-e.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-19"
+canal = "conversation"
+citation = "Ok D0140 \nOk proposition 1 et 2\nOui ouvre le sujet de fausse alerte au backlog"
+empreinte = "sha256:698f3b936da2b906620b782ac955bb3c14e71d954f2145f79001ae99f6831353"

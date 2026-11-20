@@ -1,7 +1,7 @@
 <!-- socle: couche=decisions zone=publique -->
 # ADR-0082 — Le hook de l'agent borné aux formes qu'un agent écrit, pour tout effet : une forme exotique va à une liste, sans sujet ni bloquant
 
-> statut : acceptée · date : 2026-11-16 · source : ADR-0072@1a8b5c2d, ADR-0080@bfb13155, B-0234@97238e0d, B-0261@a03979df, B-0262@2acccd9a, D-0112@c8501606, D-0120@f10e0e80, J-2026-11-16-E@5c27e17f, J-2026-11-16-G@18a77f23 · lu : decisions@1b9b7e67
+> statut : remplacée · date : 2026-11-16 · source : ADR-0072@1a8b5c2d, ADR-0080@bfb13155, B-0234@97238e0d, B-0261@a03979df, B-0262@2acccd9a, D-0112@c8501606, D-0120@f10e0e80, J-2026-11-16-E@5c27e17f, J-2026-11-16-G@18a77f23 · lu : decisions@1b9b7e67 · remplacée-par : ADR-0098
 
 ## Contexte
 

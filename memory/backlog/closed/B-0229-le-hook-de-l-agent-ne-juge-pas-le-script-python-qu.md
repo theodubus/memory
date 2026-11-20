@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0229 — Le hook de l'agent ne juge pas le script python qu'un heredoc lui donne (python3 - <<EOF)
 
-> statut : ouvert · origine : J-2026-11-14-AG · lu : backlog@b4ef8718
+> statut : fait · origine : J-2026-11-14-AG · lu : backlog@b4ef8718 · ref : J-2026-11-19-AD
 
 B-0206 fait juger `python -c` par les chemins protégés que cite son
 script, mais pas un script que python lit sur son entrée : `python3 -
@@ -25,4 +25,4 @@ par la même lecture (`_supprimes_par_python`).
 
 ## Satisfait quand
 
-- [ ] un fichier protégé qu'écrit le script qu'un heredoc donne à python, ou le projet qu'il supprime, arrête l'agent au hook comme le même script passé à `python -c`, et un script qui ne touche rien de protégé passe
+- [x] un fichier protégé qu'écrit le script qu'un heredoc donne à python, ou le projet qu'il supprime, arrête l'agent au hook comme le même script passé à `python -c`, et un script qui ne touche rien de protégé passe

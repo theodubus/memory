@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0231 — Le hook de l'agent juge les filtres d'un find un par un : une conjonction (-name et -path) est refusée pour ce qu'aucun des deux ne vise seul
 
-> statut : ouvert · origine : J-2026-11-14-AJ · lu : backlog@618d1053
+> statut : fait · origine : J-2026-11-14-AJ · lu : backlog@618d1053 · ref : J-2026-11-19-AG
 
 Depuis la correction des bloquants du lot 3 (J-2026-11-14-AI), le hook
 de l'agent juge l'expression d'un `find` qui supprime ou écrit, mais une
@@ -24,4 +24,4 @@ que tous les filtres d'une même conjonction peuvent viser ensemble.
 
 ## Satisfait quand
 
-- [ ] un nettoyage ciblé par un `find` qui supprime n'est plus refusé pour un fichier protégé qu'aucun de ses départs ou que la conjonction de ses filtres n'atteint, et celui qui l'atteint l'est encore
+- [x] un nettoyage ciblé par un `find` qui supprime n'est plus refusé pour un fichier protégé qu'aucun de ses départs ou que la conjonction de ses filtres n'atteint, et celui qui l'atteint l'est encore
