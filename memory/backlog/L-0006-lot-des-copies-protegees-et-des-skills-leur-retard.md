@@ -29,3 +29,5 @@ Le 20 novembre, D-0144 y ajoute T-0110 (J-2026-11-20-D) : le recul se retire des
 ### Passe 1 — 2026-11-20
 
 Commits : d34e0418..400eebc6
+
+- Ouvre : B-0313, T-0117
