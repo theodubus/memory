@@ -7,6 +7,21 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-20-d — L'état et le rappel de fin de tour avertissent d'un lot ouvert qui attend plus de tâches qu'une session n'en mène
+
+Un lot ouvert qui attend encore plus de tâches ouvertes, en cours ou
+bloquées que `[batches] max_tasks` des garde-fous, 9 par défaut, se dit
+dans l'état, avec ce qui demande d'agir, et dans le rappel de fin de
+tour, sous l'ordre du backlog : une ligne nomme chaque lot et son
+compte, et dit de le couper en lots, ou d'en faire un jalon et de
+former ses lots dessous. Un avertissement, jamais un échec. Le seuil se
+règle comme `[verify] fast_max_seconds` : le baisser est libre, le
+relever exige une demande validée.
+
+À faire : rien ; la clé, que l'installeur nomme à la mise à jour, se
+déclare au besoin dans `.socle/guardrails.toml`. Un lot que l'état
+signale se coupe à sa prochaine annonce.
+
 ## 2026-11-20-c — Le recul n'est plus exigé : `socle review` écrit les passes d'un lot et le contrôle du backlog le laisse se clore sans lui
 
 `socle review` écrit chaque passe d'un lot dans sa section « Revues »

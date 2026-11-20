@@ -334,6 +334,18 @@ def calculer(projet: config.Projet, contenus: bool = True, supplement: list[str]
     except Exception as e:
         ajouter(ACTION, [[trad("copies   : comparaison à leurs gabarits impossible ({erreur})", erreur=erreur_(e))]])
     ajouter(ACTION, _blocs(alerte_budget_actif(projet)))
+    # La mémoire, lue une fois : un lot ouvert qui ne se mène pas en une
+    # session se dit avec ce qui demande d'agir (B-0233), le reste plus bas.
+    mem, illisible = None, None
+    try:
+        mem = memoire.Memoire.charger(racine)
+    except Exception as e:
+        illisible = e
+    if mem is not None:
+        try:
+            ajouter(ACTION, _blocs(memoire.lots_trop_longs(mem, projet.taches_par_session())))
+        except Exception as e:
+            ajouter(ACTION, [[trad("lots trop longs : incalculables ({erreur})", erreur=erreur_(e))]])
     # Tant que le dernier passage complet des étapes rapides, sur cette
     # machine, dépasse le seuil des garde-fous (B-0258).
     try:
@@ -350,9 +362,10 @@ def calculer(projet: config.Projet, contenus: bool = True, supplement: list[str]
     except outils.ErreurGit as e:
         ajouter(INFO, [[trad("git : indisponible ({erreur})", erreur=e)]])
     ajouter(INFO, _blocs(branche + mutation))
-    mem, backlog = None, []
+    backlog = []
     try:
-        mem = memoire.Memoire.charger(racine)
+        if illisible is not None:
+            raise illisible
         ajouter(INFO, _blocs(_memoire(mem, projet)))
         backlog = _backlog(mem, borne=contenus)
     except Exception as e:

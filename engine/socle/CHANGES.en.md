@@ -7,6 +7,21 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-20-d — The state and the end-of-turn reminder warn about an open batch that waits for more tasks than one session carries
+
+An open batch that still waits for more open, in-progress or blocked
+tasks than `[batches] max_tasks` of the guardrails, 9 by default, is
+reported in the state, with what calls for action, and in the
+end-of-turn reminder, under the backlog order: one line names each
+batch and its count, and says to cut it into batches, or to make it a
+milestone with its batches under it. A warning, never a failure. The
+threshold is set like `[verify] fast_max_seconds`: lowering it is free,
+raising it requires a validated request.
+
+To do: nothing; the key, which the installer names on update, can be
+declared in `.socle/guardrails.toml` if needed. A batch the state
+reports is cut at its next announcement.
+
 ## 2026-11-20-c — The step back is no longer required: `socle review` writes a batch's passes and the backlog check lets it close without one
 
 `socle review` writes each pass of a batch in its “Reviews” section

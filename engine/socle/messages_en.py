@@ -2343,6 +2343,15 @@ MESSAGES: dict[str, str] = {
         "duration of the fast steps at the last complete run: {total}, beyond the threshold of {seuil} "
         "(`[verify] fast_max_seconds` of the guardrails); the longest one: `{etape}`, {duree} — shorten it, or "
         "raise the threshold through a validated request",
+    "{id} ({n} tâches)": "{id} ({n} tasks)",
+    "!! {n} lot(s) attendent encore plus de tâches qu'une session n'en mène (seuil : {seuil}, "
+    "`[batches] max_tasks` des garde-fous) : {lots} ; les couper en lots, ou en faire un jalon et former leurs lots "
+    "dessous":
+        "!! {n} batch(es) still wait for more tasks than one session carries (threshold: {seuil}, "
+        "`[batches] max_tasks` of the guardrails): {lots}; cut them into batches, or make each a milestone with its "
+        "batches under it",
+    "lots trop longs : incalculables ({erreur})":
+        "batches too long: not computable ({erreur})",
     "durée des étapes rapides : illisible ({erreur})":
         "duration of the fast steps: unreadable ({erreur})",
     "délai dépassé : {commande}":
@@ -2952,6 +2961,8 @@ MESSAGES: dict[str, str] = {
         "device no doc names",
     "fin d'intervention sans dire ce qui revient à l'humain":
         "end of intervention without saying what falls to the human",
+    "lot ouvert qui attend plus de tâches qu'une session n'en mène, au-delà de `[batches] max_tasks`":
+        "open batch that waits for more tasks than one session carries, beyond `[batches] max_tasks`",
     "fin d'intervention qui ne dit pas la suite":
         "end of intervention that does not say what comes next",
     "fin d'intervention dont la seule ligne « Ensuite : » est celle d'une sortie collée dans un bloc de code":
@@ -3103,6 +3114,12 @@ MESSAGES: dict[str, str] = {
         "outside GitHub (B-0175)",
     "durcir un garde-fou est libre":
         "tightening a guardrail is free",
+    "un lot ouvert qui attend autant de tâches que `[batches] max_tasks` : ni l'état ni le rappel de fin de tour "
+    "n'avertissent":
+        "an open batch that waits for as many tasks as `[batches] max_tasks`: neither the state nor the end-of-turn "
+        "reminder warns",
+    "l'état ou le rappel de fin de tour ne disent pas le lot :\n{etat}\n{rappel}":
+        "the state or the end-of-turn reminder does not name the batch:\n{etat}\n{rappel}",
     "baisser le seuil de durée des étapes rapides est libre : la CI passe":
         "lowering the duration threshold of the fast steps is free: the CI passes",
     "un seuil de durée des étapes rapides à `nan` en base, gardé tel quel, passe la CI":

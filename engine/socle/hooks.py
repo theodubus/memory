@@ -2807,7 +2807,8 @@ def exiger_recap(projet: config.Projet, entree: dict, avertissement: str | None 
         liste = "\n".join(humain.texte(humain.a_faire(projet)))
         suite = humain.prochaines_etapes(projet) or trad("(le chantier actif n'a pas de section « Prochaines "
                                                          "étapes »)")
-        ordre = memoire.lignes_ordre(memoire.Memoire.charger(projet.racine))
+        mem = memoire.Memoire.charger(projet.racine)
+        ordre = memoire.lignes_ordre(mem) + memoire.lots_trop_longs(mem, projet.taches_par_session())
         if ordre:
             suite += "\n\n" + trad("Selon l'ordre du backlog :") + "\n" + "\n".join(f"- {l}" for l in ordre)
         raisons.append(trad(

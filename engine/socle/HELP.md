@@ -215,6 +215,11 @@ lot.
 tâches prêtes sans attendre de message. Avant de s'y lancer, il annonce le
 lot qu'il va traiter : l'arrêter ou le réorienter se fait d'un message.
 Il s'arrête à la fin du lot, ou dès qu'une décision revient à l'humain.
+Un lot ouvert qui attend encore plus de tâches qu'une session n'en mène,
+`[batches] max_tasks` des garde-fous (9 par défaut), l'état et le rappel
+de fin de tour le disent, sans rien refuser : le couper en lots, ou en
+faire un jalon, ses lots dessous. Baisser le seuil est libre ; le relever
+exige une demande validée.
 
 **Faire relire.** Avant de livrer un lot qui change du code, une
 spécification ou un test, l'agent le fait relire par un relecteur sans

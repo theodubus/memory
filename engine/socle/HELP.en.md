@@ -208,7 +208,11 @@ when convenient, and says so when announcing the batch.
 ready tasks without waiting for a message. Before starting, it announces
 the batch it will work on: stopping or redirecting it takes one message.
 It stops at the end of the batch, or as soon as a decision is up to the
-human.
+human. An open batch that still waits for more tasks than one session
+carries, `[batches] max_tasks` of the guardrails (9 by default), the state
+and the end-of-turn reminder say so, without refusing anything: cut it
+into batches, or make it a milestone with its batches under it. Lowering
+the threshold is free; raising it requires a validated request.
 
 **Having it reviewed.** Before delivering a batch that changes code, a
 specification or a test, the agent has it reviewed by a reviewer without

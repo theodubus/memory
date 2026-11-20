@@ -1068,6 +1068,28 @@ def lignes_ordre(mem: "Memoire", plafond: int | None = 8, titre: int | None = No
     return res
 
 
+def lots_trop_longs(mem: "Memoire", seuil: int | float) -> list[str]:
+    """Pour l'état et le rappel de fin de tour, un avertissement, sur une
+    ligne, qui nomme chaque lot ouvert attendant encore plus de `seuil`
+    tâches ouvertes, en cours ou bloquées : il ne se mène pas en une
+    session (B-0233). Seul le nombre se juge : l'état ne sait pas quels
+    fichiers touchera une tâche pas encore faite. Rien n'en échoue."""
+    g = Graphe(mem)
+    longs = []
+    for i in g.ouverts:
+        if not est_lot(g.entrees[i]):
+            continue
+        n = sum(1 for d in dict.fromkeys(dependances(g.entrees[i]))
+                if d in g.entrees and est_tache(g.entrees[d]) and g.ouvert(d))
+        if n > seuil:
+            longs.append(trad("{id} ({n} tâches)", id=i, n=n))
+    if not longs:
+        return []
+    return [trad("!! {n} lot(s) attendent encore plus de tâches qu'une session n'en mène (seuil : {seuil}, "
+                 "`[batches] max_tasks` des garde-fous) : {lots} ; les couper en lots, ou en faire un jalon et former "
+                 "leurs lots dessous", n=len(longs), seuil=seuil, lots=", ".join(longs))]
+
+
 def empreinte_index(mem: "Memoire", index: str, sauf: set[str] = frozenset()) -> str:
     return outils.sha256("\n".join(lignes_index(mem, index, sauf)))[:8]
 

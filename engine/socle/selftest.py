@@ -578,6 +578,17 @@ def _seuil_rapide_nan_en_base(a: "Atelier", c: Path) -> None:
     a.git(c, "update-ref", "refs/remotes/origin/main", "HEAD")
 
 
+def _lot_de_deux_taches(a: "Atelier", c: Path, seuil: int) -> tuple[str, str]:
+    """Un lot ouvert qui attend deux tâches, sous `[batches] max_tasks =
+    seuil` : ce qu'en disent l'état du démarrage, puis le rappel de fin de
+    tour d'un dernier message sans récap (B-0233)."""
+    remplacer(c, ".socle/guardrails.toml", "max_tasks = 9", f"max_tasks = {seuil}")
+    ajouter_sujet(c, tache_essai(a, c))
+    ajouter_sujet(c, tache_essai(a, c).replace("T-0001 — Écrire triple", "T-0002 — Écrire quadruple"))
+    ajouter_sujet(c, lot_essai(a, c, "L-0001", "T-0001, T-0002"))
+    return etage_demarrage(a, c), etage_stop(a, c, "J'ai formé le lot.")
+
+
 def pousser(a: Atelier, c: Path, message: str = "essai"):
     """Commit et push de la branche de travail vers l'origine d'essai, sous
     le nom du clone : les cas partagent la même origine."""
@@ -2293,6 +2304,15 @@ def _cas() -> list[Cas]:
         maj_memoire(c, "Travail du tour.")
         return etage_stop(a, c, "J'ai mis à jour le chantier actif. Tout passe.")
 
+    @defaut("lot-trop-long", "lot ouvert qui attend plus de tâches qu'une session n'en mène, au-delà de "
+            "`[batches] max_tasks`", "agent", "lot trop long")
+    def _(a, c):
+        # Un avertissement, dit par l'état et par le rappel de fin de tour :
+        # attrapé s'il est dans les deux (B-0233).
+        etat, rappel = _lot_de_deux_taches(a, c, 1)
+        phrase = RAISONS_AGENT["lot trop long"]
+        return etat + rappel if phrase in etat and phrase in rappel else ""
+
     @defaut("fin-sans-suite", "fin d'intervention qui ne dit pas la suite", "agent", "suite")
     def _(a, c):
         maj_memoire(c, "Travail du tour.")
@@ -2882,6 +2902,16 @@ def _temoins() -> list[tuple[str, Callable]]:
     def _(a, c):
         remplacer(c, ".socle/guardrails.toml", '"memory/active.md" = { max_bytes = 3700 }', '"memory/active.md" = { max_bytes = 3000 }')
         return etage_ci(a, c)
+
+    @temoin("un lot ouvert qui attend autant de tâches que `[batches] max_tasks` : ni l'état ni le rappel de fin "
+            "de tour n'avertissent")
+    def _(a, c):
+        etat, rappel = _lot_de_deux_taches(a, c, 2)
+        if "prochain lot : L-0001" not in etat or "prochain lot : L-0001" not in rappel:
+            return trad("l'état ou le rappel de fin de tour ne disent pas le lot :\n{etat}\n{rappel}",
+                        etat=etat[-1500:], rappel=rappel[-1500:])
+        phrase = RAISONS_AGENT["lot trop long"]
+        return etat + rappel if phrase in etat or phrase in rappel else ""
 
     @temoin("baisser le seuil de durée des étapes rapides est libre : la CI passe")
     def _(a, c):
@@ -3539,6 +3569,9 @@ RAISONS_AGENT = {
     "memoire.peremption": "chantier actif inchangé depuis",
     # L'avertissement des étapes rapides au-delà de leur seuil (B-0258).
     "verify.duree": "durée des étapes rapides au dernier passage complet",
+    # L'avertissement d'un lot ouvert qui ne se mène pas en une session
+    # (B-0233), dans l'état et le rappel de fin de tour.
+    "lot trop long": "plus de tâches qu'une session n'en mène",
     "réglage de l'agent": "les réglages de Claude Code commandent ses hooks",
     "où regarder": "« Où regarder » doit donner un lien",
     "contexte du projet": "« Contexte » : il commence par trois paragraphes",

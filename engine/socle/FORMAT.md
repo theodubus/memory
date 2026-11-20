@@ -232,6 +232,10 @@ tâches sont closes, l'une au moins faite ; les besoins à découper, sans
 tâche ouverte ni rien d'ouvert qu'ils attendent ; et le nombre d'entrées
 qui attendent encore, selon ce qu'elles attendent : une entrée du backlog,
 une demande sans réponse, ou les deux. Le rappel de fin de tour le redonne.
+Un lot ouvert qui attend encore plus de tâches ouvertes, en cours ou
+bloquées que `[batches] max_tasks` des garde-fous (9 par défaut), l'état
+et le rappel le signalent, sans rien refuser : il ne se mène pas en une
+session.
 
 `socle roadmap` en tire la suite entière, par les mêmes règles : chaque
 jalon et ses besoins clos sur le total ; les lots ouverts dans leur ordre
