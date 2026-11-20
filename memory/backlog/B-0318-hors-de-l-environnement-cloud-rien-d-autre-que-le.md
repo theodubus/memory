@@ -1,14 +1,14 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0318 — Hors de l'environnement cloud, rien d'autre que le hook ne borne la suppression d'un dossier qui contient le projet, ni ne fait pousser le travail à la fin de chaque réponse
 
-> statut : ouvert · origine : J-2026-11-20-AO · ref : B-0262, T-0023, D-0120 · lu : backlog@689e597f
+> statut : ouvert · origine : J-2026-11-20-AO · ref : B-0262, T-0023, D-0120, B-0321 · lu : backlog@689e597f
 
 Le relevé de T-0023 (`docs/fabrication/garanties-hors-du-hook.md`) :
 en session cloud, deux couches qui ne lisent pas le shell rattrapent la
 suppression du projet et celle d'un dossier qui le contient. Le hook de
 fin de tour de l'environnement refuse de conclure tant qu'un changement
 n'est pas commité et poussé : la suppression ne perd que le travail du
-tour. Le conteneur est jetable et ne contient que le clone : supprimer
+tour, à deux trous près (B-0321). Le conteneur est jetable et ne contient que le clone : supprimer
 un dossier au-dessus du projet n'y perd rien de plus. Ni l'une ni
 l'autre n'existe dans une session locale de Claude Code (supposé : la
 première vient des réglages du lanceur cloud, la seconde de son

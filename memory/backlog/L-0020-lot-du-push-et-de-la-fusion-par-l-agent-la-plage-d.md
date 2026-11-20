@@ -23,3 +23,8 @@ la politique règle déjà ce refus.
 ### Passe 1 — 2026-11-20
 
 Commits : 792a2d86..eb5a8e6c
+
+- Bloquant : la note 2026-11-20-p contredisait ADR-0104 après une fusion par écrasement
+- Bloquant : le relevé de T-0023 tenait pour entière la garantie du hook de fin de tour du cloud
+- Bloquant : le gabarit français de socle-batch avait perdu « du dépôt »
+- Ouvre : B-0321, B-0322

@@ -33,7 +33,7 @@ tâche.
 
 Sous Claude Code : outil `Agent`, dans une copie isolée
 (`isolation: "worktree"`), en arrière-plan ; deux à la fois au plus.
-Sans la conversation, sa consigne se lit seule.
+Sa consigne se lit sans la conversation.
 
 ```text
 Tu implémentes une tâche de ce dépôt dans ta copie isolée. Les instructions
@@ -130,7 +130,7 @@ de plus d'une heure. Ranger d'abord, qu'une session neuve reparte du dépôt
 seul :
 
 1. tout est poussé ; un commit non relu part en correctif
-   (`git format-patch`) dans un dossier de passation, retiré à son
+   (`git format-patch`) dans un dossier de passation du dépôt, retiré à son
    intégration ;
 2. les copies isolées, leurs branches et, en session cloud, les réveils
    retirés ;

@@ -35,11 +35,11 @@ Après :
 
 > Quand le lot est livré sans fenêtre pour un autre, ou avant une attente de plus d'une heure. Ranger d'abord, qu'une session neuve reparte du dépôt seul :
 
-Dans la même section, deux mots retirés : « un dossier de passation du dépôt » devient « un dossier de passation », et « dire à l'humain pourquoi changer de session » devient « dire à l'humain pourquoi ». Ces resserrements tiennent le skill sous le plafond de 8 000 octets qu'un contrôle du socle impose à chaque skill : il fait 7 994 octets.
+Dans la même section, « dire à l'humain pourquoi changer de session » devient « dire à l'humain pourquoi ». Et dans « Un sous-agent par tâche », la phrase « Sans la conversation, sa consigne se lit seule. » devient « Sa consigne se lit sans la conversation. ». Ces resserrements tiennent le skill sous le plafond de 8 000 octets qu'un contrôle du socle impose à chaque skill : il fait 7 998 octets.
 
 ## Éléments cités
 
-- .claude/skills/socle-batch/SKILL.md sha256:c7cd2ef8d5fd84df
+- .claude/skills/socle-batch/SKILL.md sha256:d79c42c1a513fe4a
 
 Cette ligne nomme la copie, que vous autorisez à changer, et l'empreinte du texte qu'elle prendra, celui du gabarit `engine/socle/templates/skills/socle-batch/SKILL.md`, octet pour octet : votre accord porte sur ce texte exact. L'empreinte est le début de sa somme SHA-256 (`sha256sum` sur le gabarit, ses seize premiers caractères). Plus bas : `D-`, une de vos décisions ; `J-`, une entrée du journal ; `L-`, un lot ; `T-`, une tâche ; `B-`, un besoin ; `ADR-`, une décision de l'agent ; après @, l'empreinte de la version lue.
 
@@ -55,7 +55,7 @@ Cette ligne nomme la copie, que vous autorisez à changer, et l'empreinte du tex
 
 ## Où regarder
 
-- [La copie actuelle](https://github.com/theodubus/memory/blob/792a2d860e2540698a99cd9fd3fe0d4e9dd2af7e/.claude/skills/socle-batch/SKILL.md), à remplacer : le point 4 de « Intégrer, pousser, livrer » et la section « Changer de session », où lire le texte d'avant cité plus haut.
+- [La copie actuelle](https://github.com/theodubus/memory/blob/792a2d860e2540698a99cd9fd3fe0d4e9dd2af7e/.claude/skills/socle-batch/SKILL.md), à remplacer : le point 4 de « Intégrer, pousser, livrer » et les sections « Changer de session » et « Un sous-agent par tâche », où lire le texte d'avant cité plus haut.
 - Le texte nouveau : le gabarit `engine/socle/templates/skills/socle-batch/SKILL.md`, dans la pull request du lot ; y vérifier les passages cités plus haut, seuls changés.
 
 ## Options

@@ -53,9 +53,12 @@ lets a push through, the hook now keeps the commit pushed to each remote
 reference, in `.git/socle/pushed.json` (the git common directory of the
 worktrees, not versioned); a vanished remote branch whose commit is not
 in the default branch is judged from it, and the refusal says that
-deleting the branch is not a way out. A merged branch, restarted from the
-default branch under the same name, is judged as a new branch; a clone
-that has pushed nothing since the update, as before.
+deleting the branch is not a way out. A branch merged by a merge commit,
+restarted from the default branch under the same name, is judged as a new
+branch; after a squash or rebase merge, the kept commit stays outside the
+default branch, and the branch restarted under the same name is judged
+from it: stricter, never looser; the way out is another branch name. A
+clone that has pushed nothing since the update is judged as before.
 
 To do: nothing.
 

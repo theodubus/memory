@@ -56,9 +56,13 @@ vers chaque référence distante, dans `.git/socle/pushed.json` (le
 répertoire git commun des worktrees, non versionné) ; une branche
 distante disparue dont ce commit n'est pas dans la branche par défaut se
 juge depuis lui, et le refus dit que supprimer la branche n'est pas une
-issue. Une branche fusionnée, repartie de la branche par défaut sous le
-même nom, se juge comme une branche neuve ; un clone qui n'a rien poussé
-depuis la mise à jour, comme avant.
+issue. Une branche fusionnée par un commit de fusion, repartie de la
+branche par défaut sous le même nom, se juge comme une branche neuve ;
+après une fusion par écrasement (squash) ou par rebase, le commit gardé
+reste hors de la branche par défaut, et la branche repartie sous le même
+nom se juge depuis lui : plus strict, jamais moins ; la sortie est un
+autre nom de branche. Un clone qui n'a rien poussé depuis la mise à jour
+se juge comme avant.
 
 À faire : rien.
 
