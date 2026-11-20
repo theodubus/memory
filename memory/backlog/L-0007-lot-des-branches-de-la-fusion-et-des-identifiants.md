@@ -23,3 +23,9 @@ vérifie après elle, la remise des copies et les garanties hors du hook
 (T-0018, T-0020, T-0064, T-0112, T-0023) forment L-0020, juste après
 lui ; il garde les identifiants de la mémoire et ce qu'une branche
 ajoute à la branche par défaut (J-2026-11-20-AE).
+
+## Revues
+
+### Passe 1 — 2026-11-20
+
+Commits : 3e462041..db6b1b40
