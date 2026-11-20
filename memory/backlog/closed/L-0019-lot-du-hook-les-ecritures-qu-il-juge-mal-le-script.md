@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0019 — Lot du hook, les écritures qu'il juge mal : le script d'un heredoc, la liste qu'un find ou un grep donne à xargs, la conjonction des filtres d'un find
 
-> statut : en cours · origine : J-2026-11-19-Q · après : L-0005, T-0001, T-0070, T-0002, T-0004, T-0003, T-0106 · lu : backlog@5be800e9
+> statut : fait · origine : J-2026-11-19-Q · ref : J-2026-11-20-A · après : L-0005, T-0001, T-0070, T-0004, T-0003, T-0106 · lu : backlog@5be800e9
 
 Coupé de L-0005 le 19 novembre sur son coût estimé (J-2026-11-19-Q) :
 la moitié de L-0005 qui en portait le titre. Ce que le hook de l'agent
@@ -25,6 +25,11 @@ D-0140, qui change trois valeurs attendues qu'elles contredisent
 D-0140 validée, T-0106 est faite (J-2026-11-19-AM) ; T-0002 est arrêtée
 avant son code : la raison que D-0140 lui autorise ne tient pas dans le
 projet d'essai, une demande nouvelle à poser (J-2026-11-19-AL).
+
+D-0142 posée pour elle, sans réponse avant la livraison : T-0002 sort du
+lot et attend sa réponse, hors lot, comme D-0142 le dit. Les cinq
+autres tâches faites et relues, la passe 1 et ses deux bloquants
+corrigés, le lot est fait (J-2026-11-20-A).
 
 ## Revues
 

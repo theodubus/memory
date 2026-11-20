@@ -86,7 +86,7 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 31. Le hook de l'agent juge le corps d'un heredoc que lit python (python3 - <<'EOF', ou python3 <<'EOF' sans script) comme le script d'un python -c : un corps qui écrit un fichier protégé, ou supprime le projet, est refusé. Comme pour python -c, un script qui cite un fichier protégé en toutes lettres, même dans un texte, est refusé : pour écrire un fichier qui en parle, prends ton outil d'écriture plutôt qu'un script.
 
-32. Le hook de l'agent juge les arguments qui suivent le script d'un python -c comme les chemins que le script cite, quand le script lit ses arguments (sys.argv, argparse…) : python3 -c "import sys; open(sys.argv[1], 'w')" .socle/policy.toml est refusé.
+32. Le hook de l'agent juge les arguments qui suivent le script d'un python -c comme les chemins que le script cite, quand le script lit ses arguments (sys.argv, argparse…) : python3 -c "import sys; open(sys.argv[1], 'w')" .socle/policy.toml est refusé ; un argument qu'il ne sait pas développer et qui peut tomber dans le projet ("$X", d'une variable qu'il ne connaît pas) l'est aussi, comme le chemin inconnu d'un autre écrivain.
 
 33. Le hook de l'agent juge find … | xargs rm comme un find qui supprime depuis ses départs : find . -type f | xargs rm -f est refusé comme la suppression du projet ; un nettoyage sous le projet (find build -type f | xargs rm -f) passe toujours.
 
