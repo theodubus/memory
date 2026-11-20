@@ -145,6 +145,34 @@ class TestBranchesDistantes(Depot):
         self.assertIn("B-0002\t", sortie)
 
 
+class TestCorrectifsSuivis(Depot):
+    """B-0280 : une passation range en correctifs suivis des commits pas
+    encore relus ; une entrée écrite avant leur application ne prend pas
+    les numéros qu'ils créent."""
+
+    def correctif(self, chemin, cible, titre):
+        p = self.racine / chemin
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(f"From 0 Mon Sep 17 00:00:00 2001\nSubject: [PATCH] passation\n\n---\n"
+                     f"diff --git a/{cible} b/{cible}\nnew file mode 100644\n--- /dev/null\n+++ b/{cible}\n"
+                     f"@@ -0,0 +1,3 @@\n+<!-- socle: couche=backlog zone=publique -->\n+{titre}\n+\n")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "passation", "--no-verify")
+
+    def test_socle_new_saute_l_identifiant_qu_un_correctif_suivi_cree(self):
+        backlog = config.FORMAT_ACTUEL.backlog
+        self.correctif("docs/passation/0001-un-sujet.patch", f"{backlog}/B-0002-un-sujet.md",
+                       "# B-0002 — Un sujet de la passation")
+        # Hors de la mémoire, un titre d'entrée ne prend rien.
+        self.correctif("docs/passation/0002-ailleurs.diff", "docs/notes.md", "# B-0003 — Une note")
+        self.assertEqual(identifiants.pris_par_les_correctifs(self.racine, "B"), {"B-0002"})
+        # B-0001 : celui de `main`, poussée.
+        self.assertEqual(identifiants.pris_ailleurs(self.racine, "B"), {"B-0001", "B-0002"})
+        code, sortie = self.socle("new", "need", "Un sujet écrit avant l'application", "--public")
+        self.assertEqual(code, 0, sortie)
+        self.assertIn("B-0003\t", sortie)
+
+
 class TestFichierDuSujet(Depot):
     def test_le_fichier_du_sujet_change_de_nom(self):
         lignes = identifiants.renumeroter(config.Projet.charger(self.racine), "B-0001")

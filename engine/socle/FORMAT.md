@@ -75,7 +75,9 @@ Les métadonnées sont des paires `clé : valeur` séparées par un point média
 Dans la zone privée, l'identifiant prend un `P` devant (`PF-0001`,
 `PJ-2026-10-10-A`) : un fichier public qui en cite un est une fuite, et le
 contrôle la voit même sans accès à la zone privée. Un identifiant se calcule
-(`socle next-id`, `socle new`), il ne se devine pas. Il est défini une seule
+(`socle next-id`, `socle new`), il ne se devine pas ; `socle new` saute
+ceux que prennent les branches distantes et les correctifs suivis du dépôt
+(`*.patch`, `*.diff`), ceux d'une passation. Il est défini une seule
 fois ; toute mention ailleurs doit mener à une définition.
 
 ### Références

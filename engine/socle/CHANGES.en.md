@@ -7,6 +7,17 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-20-l — `socle new` does not reuse an identifier that a tracked patch of the repository creates
+
+A handover stores the commits not yet reviewed as patches (`git
+format-patch`); an entry written before they were applied took the
+number of an entry they create, and the applied patch defined it twice.
+Computing an identifier (`socle new`, a request, `socle
+renumber`) now skips the entry titles that a tracked patch of the
+repository (`*.patch`, `*.diff`) adds to a memory file.
+
+To do: nothing.
+
 ## 2026-11-20-k — A title that ends with a hash attached to a word keeps it
 
 The memory reader stripped every trailing hash from a title: an entry

@@ -7,6 +7,18 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-20-l — `socle new` ne reprend pas un identifiant qu'un correctif suivi du dépôt crée
+
+Une passation range en correctifs (`git format-patch`) les commits pas
+encore relus ; une entrée écrite avant leur application prenait le
+numéro d'une entrée qu'ils créent, et le correctif appliqué en
+définissait deux. Le calcul d'un identifiant (`socle new`, une
+demande, `socle renumber`) saute désormais les titres
+d'entrée qu'un correctif suivi du dépôt (`*.patch`, `*.diff`) ajoute à
+un fichier de la mémoire.
+
+À faire : rien.
+
 ## 2026-11-20-k — Un titre qui finit par un dièse collé à un mot le garde
 
 Le lecteur de la mémoire retirait tout dièse en fin de titre : une

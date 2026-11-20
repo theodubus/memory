@@ -20,7 +20,7 @@ from socle.messages import trad
 def pris_ailleurs(racine: Path, type_: str) -> set[str]:
     """Les identifiants de ce type que définissent les branches distantes
     que le dépôt connaît, lus par `git grep` sur leurs titres, sans charger
-    leur mémoire."""
+    leur mémoire, et ceux que créent les correctifs suivis du dépôt."""
     refs = [r for r in outils.git(racine, "for-each-ref", "--format=%(refname)", "refs/remotes", check=False).split()
             if not r.endswith("/HEAD")]
     motif = rf"^#{{1,6}} P?{re.escape(type_)}-[0-9A-Z-]+ "
@@ -28,6 +28,32 @@ def pris_ailleurs(racine: Path, type_: str) -> set[str]:
     for ref in refs:
         sortie = outils.git(racine, "grep", "-h", "-o", "-E", motif, ref, "--", memoire.DOSSIER, check=False)
         res |= {l.split()[1] for l in sortie.splitlines() if len(l.split()) > 1}
+    return res | pris_par_les_correctifs(racine, type_)
+
+
+CIBLE_DU_CORRECTIF = re.compile(r"^\+\+\+ b/(\S+)")
+
+
+def pris_par_les_correctifs(racine: Path, type_: str) -> set[str]:
+    """Les identifiants de ce type que créent les correctifs suivis du dépôt
+    (`*.patch`, `*.diff`) : les titres d'entrée qu'ils ajoutent à un fichier
+    de la mémoire. Une passation range en correctifs les commits pas encore
+    relus ; une entrée écrite avant leur application prendrait leurs
+    numéros (B-0280)."""
+    titre = re.compile(rf"^\+#{{1,6}}\s+(P?{re.escape(type_)}-[0-9A-Z-]+)\s")
+    res = set()
+    for chemin in outils.filtrer(outils.fichiers_suivis(racine) or [], ["**/*.patch", "**/*.diff"]):
+        try:
+            texte = (racine / chemin).read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        cible = ""
+        for ligne in texte.splitlines():
+            m = CIBLE_DU_CORRECTIF.match(ligne)
+            if m:
+                cible = m.group(1)
+            elif cible.startswith(memoire.DOSSIER + "/") and (t := titre.match(ligne)):
+                res.add(t.group(1))
     return res
 
 
