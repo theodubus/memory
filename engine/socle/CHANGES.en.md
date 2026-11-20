@@ -7,6 +7,25 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-20-c — The step back is no longer required: `socle review` writes a batch's passes and the backlog check lets it close without one
+
+`socle review` writes each pass of a batch in its “Reviews” section
+without requiring the previous one's step back: no “Step back:”
+paragraph, no reviewer's view on the blockers (`· same cause`, `· new
+cause`), no stop on a request that cites the batch. The
+`memoire.backlog` check lets a reviewed batch close `done` without a
+step back. The brief of a pass beyond the first is that of any pass: it
+no longer gives the reviewer the causes of the earlier passes. The
+“Reviews” section keeps its passes, their commits and their `- Blocker:`
+and `- Opens:` lines; a blocker line written in another form is still
+refused. A step back and cause marks already written stay in the batch,
+read as text. The `socle-review` and `socle-batch` skills and the guide
+no longer mention the step back.
+
+To do: nothing; the `socle-review` and `socle-batch` skills are
+protected copies, in the installer's request. A batch stopped on a
+request only waits for it if its `after` names it.
+
 ## 2026-11-20-b — The installer has git ignore the subagents' worktrees
 
 The `socle-batch` skill launches its subagents in worktrees, which Claude

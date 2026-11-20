@@ -7,6 +7,25 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-20-c — Le recul n'est plus exigé : `socle review` écrit les passes d'un lot et le contrôle du backlog le laisse se clore sans lui
+
+`socle review` écrit chaque passe d'un lot dans sa section « Revues »
+sans exiger le recul de la précédente : ni paragraphe « Recul : », ni
+regard du relecteur sur les bloquants (`· même cause`, `· cause
+nouvelle`), ni arrêt sur une demande qui cite le lot. Le contrôle
+`memoire.backlog` laisse se clore `fait` un lot relu sans recul. Le
+dossier d'une passe au-delà de la première est celui de toute passe : il
+ne donne plus au relecteur les causes des passes d'avant. La section
+« Revues » garde ses passes, leurs commits et leurs lignes `- Bloquant :`
+et `- Ouvre :` ; une ligne de bloquant écrite sous une autre forme reste
+refusée. Un recul et des marques de cause déjà écrits restent dans le
+lot, lus comme du texte. Les skills `socle-review` et `socle-batch` et le
+guide ne disent plus le recul.
+
+À faire : rien ; les skills `socle-review` et `socle-batch` sont des
+copies protégées, dans la demande de l'installeur. Un lot arrêté sur une
+demande ne l'attend plus que si son `après` la nomme.
+
 ## 2026-11-20-b — L'installeur fait ignorer par git les worktrees des sous-agents
 
 Le skill `socle-batch` lance ses sous-agents dans des worktrees, que

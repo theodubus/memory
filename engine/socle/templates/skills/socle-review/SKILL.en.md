@@ -14,8 +14,7 @@ who tries to find fault with it.
 Before the push that delivers a batch that changes code, a specification
 or a test; never for a batch that only touches the memory. One pass per
 batch; a second one only if the fix of the blockers is heavy (it changes
-the design of a part, not a few lines), and on that fix alone; each pass
-beyond the first follows the step back of the previous one.
+the design of a part, not a few lines), and on that fix alone.
 
 The reviewer judges the batch against its tasks: their “Done when”
 criterion and, for a guardrail, its threat model. A need that adds or
@@ -104,39 +103,16 @@ recap says it in one line: `Review: <b> blocking, fixed; <n> to the
 backlog (<entries>); dismissed: <reason for each>`, or `Review: no
 finding`.
 
-## The batch's history and the step back
+## The batch's history
 
 The batch keeps its passes in the `## Reviews` section, the last of its
-entry, readable from a new session: `socle review` writes each pass
-there, its date and the reviewed commits, and gives the same one again
-as long as nothing changes outside the memory. Commit the written pass,
-and what is recorded in it: otherwise, it is lost where `socle review`
-ran.
+entry, readable from a new session that resumes the batch: `socle review`
+writes each pass there, its date and the reviewed commits, and gives the
+same one again as long as nothing changes outside the memory. Commit the
+written pass, and what is recorded in it: otherwise, it is lost where
+`socle review` ran.
 
-1. When the reviewer returns, write in the pass one line `- Blocker:
-   <its cause, in a few words>` per blocker, and `- Opens: <the entries
-   the pass opens>`, or `none`. From the second pass on, the brief gives
-   the reviewer the causes of the earlier blockers, and it says, for each
-   new blocker, whether it has the same cause as one of them: its line
-   ends with `· same cause` or `· new cause`, as the reviewer says, never
-   as the agent does.
-2. Before the next pass, and before closing the batch, write the pass's
-   step back, under its blockers: a paragraph that starts with “Step
-   back:”, of at least sixty words, which answers the three questions
-   `socle review` gives when it refuses the pass, with what it shows
-   there: do its blockers have the cause of the earlier ones? Is what
-   the batch opens of the nature of what it closes? Have the closed
-   batches on the same files opened such entries? Its last
-   word is its decision: “continue”, with what will make the next pass
-   different written before it, or “stop”.
-3. Stopping: put a request to the human (skill `socle-request`) that
-   cites the batch and says what goes round, in plain words, the rule
-   that makes it go round, and a proposal that bounds it; the step back
-   names it (`D-NNNN`), and the batch waits for it through its `after`.
-   `socle review` refuses one more pass until its answer, the only thing
-   that lifts the stop: move on elsewhere. After two passes in a row
-   where the reviewer sees a same cause come back, it refuses “continue”:
-   the batch stops.
-
-The backlog check refuses a reviewed batch closed `done` whose last pass
-would refuse the next one, and shows what that refusal shows.
+When the reviewer returns, write in the pass one line `- Blocker: <its
+cause, in a few words>` per blocker, and `- Opens: <the entries the pass
+opens>`, or `none`. Nothing else is required, neither before the next
+pass, nor when the batch is closed.

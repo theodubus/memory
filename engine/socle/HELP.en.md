@@ -227,11 +227,9 @@ project's normal use or whose effect nothing catches afterwards, as a
 task if its fix is clear, as a need otherwise, and dismisses the others, exotic and caught, or unfounded. Its recap says how
 many, and why each is dismissed.
 
-**When a batch goes round in circles.** The agent keeps the history of
-each batch's reviews, and notices it by itself. It then stops and puts a
-request to you: what goes round, the rule that makes it go round, and a
-proposal to get out of it. The batch waits for your answer while the
-agent moves on elsewhere.
+**The review history.** The agent keeps, in each batch's entry, its
+review passes and their blockers: a new session that resumes the batch
+reads there where its review stands.
 
 **Delivering.** By default, the agent does everything on one development
 branch and keeps only one pull request open, to which each finished batch

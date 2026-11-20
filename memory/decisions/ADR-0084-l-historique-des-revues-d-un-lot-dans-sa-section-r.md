@@ -1,7 +1,7 @@
 <!-- socle: couche=decisions zone=publique -->
 # ADR-0084 — L'historique des revues d'un lot dans sa section Revues, un recul écrit avant chaque passe au-delà de la première et à la clôture, et l'arrêt sur une demande
 
-> statut : acceptée · date : 2026-11-16 · validation : D-0124@536de605 · source : B-0263@5f67c1f8, T-0047@2bb498d6, J-2026-11-16-T@45c1634d, ADR-0083@512e719c, ADR-0042@c8fe8e02, ADR-0073@1e48220c, ADR-0081@54c62454, D-0120@f10e0e80 · lu : decisions@4cf6bba7
+> statut : remplacée · date : 2026-11-16 · validation : D-0124@536de605 · source : B-0263@5f67c1f8, T-0047@2bb498d6, J-2026-11-16-T@45c1634d, ADR-0083@512e719c, ADR-0042@c8fe8e02, ADR-0073@1e48220c, ADR-0081@54c62454, D-0120@f10e0e80 · lu : decisions@4cf6bba7 · remplacée-par : ADR-0100
 
 ## Contexte
 

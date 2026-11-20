@@ -749,24 +749,21 @@ def _citer_par_l_ancien_numero(a: Atelier, c: Path, ancien: str, h: str):
     maj_memoire(c, "Le backlog migré en quatre formes.")
 
 
-# L'historique des revues d'un lot (ADR-0084) : les corrections successives
-# du code, une par passe, et ce que l'agent consigne au retour du relecteur.
+# L'historique des revues d'un lot (ADR-0084, ADR-0100) : les corrections
+# successives du code, une par passe, et ce que l'agent consigne au retour du
+# relecteur.
 CORRECTIONS = ("return x * FACTEUR", "return (x * FACTEUR)", "return (FACTEUR * x)", "return ((x * FACTEUR))",
                "return FACTEUR * (x)")
 
 
-def _recul_essai(decision: str, demande: str = "") -> str:
-    """Un recul d'au moins soixante mots, qui finit par `decision`."""
-    return ("\nRecul : les bloquants de cette passe n'ont pas la cause de ceux de la précédente ; les entrées que "
-            "le lot ouvre sont de la nature de celles qu'il ferme, des corrections du module de calcul ; aucun lot "
-            "clos qui a touché ces fichiers n'en a ouvert de semblables" + (f", et la demande {demande} le dit"
-                                                                             if demande else "") +
-            ". La passe suivante ne relira que la correction de la multiplication, avec le test qui la prouve, ce "
-            f"qui la rend différente de celle-ci, et de toutes celles qui la précèdent dans ce lot : {decision}.\n")
+def _bloquant_essai() -> str:
+    return "\n- Bloquant : la correction change la lecture du facteur\n- Ouvre : rien\n"
 
 
-def _bloquant_essai(regard: str = "") -> str:
-    return f"\n- Bloquant : la correction change la lecture du facteur{regard}\n- Ouvre : rien\n"
+# Un paragraphe de l'agent sous les bloquants d'une passe, replié sur une
+# ligne qui commence par « bloquants » : ce n'est pas une ligne de bloquant.
+NOTE_REPLIEE = ("\nLa passe relit la correction de la multiplication ; ses\nbloquants sont consignés au-dessus, "
+                "un par ligne.\n")
 
 
 def _passes(a: Atelier, c: Path, consignes: list[str]) -> str:
@@ -792,10 +789,9 @@ def _passes(a: Atelier, c: Path, consignes: list[str]) -> str:
 
 def _lot_relu_clos(a: Atelier, c: Path, *suivantes: str):
     """La tâche T-0001 faite, et le lot L-0001 qui l'attendait clos « fait »,
-    sa passe 1 suivie de son recul, puis une passe par consigne de
-    `suivantes`, à partir de la deuxième."""
-    revues = ("\n## Revues\n\n### Passe 1 — 2026-11-16\n\nCommits : 1a2b3c4..5d6e7f8\n" + _bloquant_essai() +
-              _recul_essai("continuer"))
+    sa passe 1 et son bloquant, puis une passe par consigne de `suivantes`,
+    à partir de la deuxième."""
+    revues = "\n## Revues\n\n### Passe 1 — 2026-11-16\n\nCommits : 1a2b3c4..5d6e7f8\n" + _bloquant_essai()
     for i, consigne in enumerate(suivantes, start=2):
         revues += f"\n### Passe {i} — 2026-11-{15 + i}\n\nCommits : 5d6e7f8..9a8b7c6\n" + consigne
     ajouter_sujet(c, tache_essai(a, c, statut="fait · ref : fichier:calc.py"))
@@ -806,29 +802,13 @@ def _lot_relu_clos(a: Atelier, c: Path, *suivantes: str):
 
 def _lot_en_cours_relu(a: Atelier, c: Path, bloquant: str):
     """Le lot L-0001 en cours, qui attend la tâche T-0001, et sa passe 1, où
-    l'agent consigne la ligne `bloquant`, puis un recul dont une ligne
+    l'agent consigne la ligne `bloquant`, puis un paragraphe dont une ligne
     repliée commence par « bloquants »."""
     revues = ("\n## Revues\n\n### Passe 1 — 2026-11-16\n\nCommits : 1a2b3c4..5d6e7f8\n\n" + bloquant +
-              "\n- Ouvre : rien\n" + _recul_essai("continuer").replace("Recul : les bloquants", "Recul : les\nbloquants"))
+              "\n- Ouvre : rien\n" + NOTE_REPLIEE)
     ajouter_sujet(c, tache_essai(a, c))
     ajouter_sujet(c, lot_essai(a, c, "L-0001", "T-0001").replace("> statut : ouvert", "> statut : en cours") + revues)
     maj_memoire(c, "Le lot de la multiplication en revue.")
-
-
-def _demande_du_lot(a: Atelier, c: Path, empreinte_du_lot: str = "") -> str:
-    """La demande D-0001 d'un arrêt du lot L-0001 : elle cite le lot, que
-    seule sa réponse débloque (ADR-0084, point 6), avec son empreinte quand
-    un contrôle juge la demande."""
-    h = f"@{empreinte_du_lot}" if empreinte_du_lot else ""
-    return demande_bonne(a, c).replace(
-        "## Où regarder", f"- L-0001{h} — le lot qui s'est arrêté sur cette question.\n\n## Où regarder", 1)
-
-
-def _lot_clos_sur_un_arret(a: Atelier, c: Path):
-    """Le lot L-0001 clos « fait » sur un arrêt à sa passe 2, et la demande
-    D-0001 de cet arrêt, qui le cite, encore sans réponse."""
-    _lot_relu_clos(a, c, _bloquant_essai(" · même cause") + _recul_essai("s'arrêter", "D-0001"))
-    (c / "memory/requests/D-0001-refactor.md").write_text(_demande_du_lot(a, c, empreinte(a, c, "L-0001")))
 
 
 def _declarer_ui_tierce(a: Atelier, c: Path):
@@ -1564,34 +1544,6 @@ def _cas() -> list[Cas]:
                          "\n\nPour l'essai.\n")
         return etage_git(a, c)
 
-    # L'historique des revues d'un lot (ADR-0084, D-0124 point 8) : deux refus
-    # de `socle review`, et celui du contrôle à la clôture ; puis l'arrêt.
-
-    @defaut("passe-sans-recul", "deuxième passe de revue d'un lot sans le recul de la première", "revue",
-            "revue sans recul")
-    def _(a, c):
-        return _passes(a, c, [_bloquant_essai()])
-
-    @defaut("continuer-apres-deux-causes-revenues", "« continuer » après deux passes de suite où le relecteur voit "
-            "une même cause revenir", "revue", "continuer refusé")
-    def _(a, c):
-        return _passes(a, c, [_bloquant_essai() + _recul_essai("continuer"),
-                              _bloquant_essai(" · même cause") + _recul_essai("continuer"),
-                              _bloquant_essai(" · même cause : passe 2") + _recul_essai("continuer")])
-
-    @defaut("lot-arrete-sans-reponse", "passe de plus d'un lot arrêté dont la demande attend sa réponse", "revue",
-            "lot arrêté")
-    def _(a, c):
-        (c / "memory/requests/D-0001-refactor.md").write_text(_demande_du_lot(a, c))
-        return _passes(a, c, [_bloquant_essai() + _recul_essai("s'arrêter", "D-0001")])
-
-    @defaut("lot-arrete-sur-une-autre-demande", "passe de plus d'un lot arrêté sur une demande ancienne, répondue, "
-            "qui ne cite pas le lot", "revue", "arrêt non levé")
-    def _(a, c):
-        (c / "memory/requests/D-0001-refactor.md").write_text(demande_bonne(a, c))
-        (c / "memory/requests/D-0001-refactor.answer.toml").write_text('reponse = "valider"\n')
-        return _passes(a, c, [_bloquant_essai() + _recul_essai("s'arrêter", "D-0001")])
-
     # Le dossier court d'un petit lot (B-0288) : refusé pour un lot qui touche
     # un garde-fou, que son relecteur doit pouvoir lire au-delà du diff.
     @defaut("revue-courte-sur-un-garde-fou", "dossier court de revue pour un lot qui touche un garde-fou", "revue",
@@ -1603,33 +1555,8 @@ def _cas() -> list[Cas]:
         r = a.socle(c, "review", "--short")
         return r.stdout + r.stderr
 
-    @defaut("lot-clos-sans-recul", "lot relu clos « fait » sans le recul de sa dernière passe", "git",
-            "memoire.backlog")
-    def _(a, c):
-        _lot_relu_clos(a, c, _bloquant_essai(" · cause nouvelle"))
-        return etage_git(a, c)
-
-    # La clôture applique à la dernière passe les règles qui refuseraient une
-    # passe de plus (ADR-0084).
-
-    @defaut("lot-clos-sans-regard", "lot relu clos « fait » dont la dernière passe, la deuxième, a un bloquant sans le "
-            "regard du relecteur", "git", "memoire.backlog")
-    def _(a, c):
-        _lot_relu_clos(a, c, _bloquant_essai() + _recul_essai("continuer"))
-        return etage_git(a, c)
-
-    @defaut("lot-clos-apres-deux-causes-revenues", "lot relu clos « fait » sur « continuer » après deux passes de suite "
-            "où le relecteur voit une même cause revenir", "git", "memoire.backlog")
-    def _(a, c):
-        revenue = _bloquant_essai(" · même cause") + _recul_essai("continuer")
-        _lot_relu_clos(a, c, revenue, revenue)
-        return etage_git(a, c)
-
-    @defaut("lot-clos-arrete-sans-reponse", "lot relu clos « fait » sur un arrêt dont la demande attend sa réponse",
-            "git", "memoire.backlog")
-    def _(a, c):
-        _lot_clos_sur_un_arret(a, c)
-        return etage_git(a, c)
+    # L'historique des revues d'un lot (ADR-0084, ADR-0100) : une ligne de
+    # bloquant qu'il ne lit pas.
 
     @defaut("bloquant-mal-ecrit", "ligne de bloquant d'une passe de revue écrite autrement que « - Bloquant : … », "
             "que rien ne lit", "git", "memoire.backlog")
@@ -2901,29 +2828,16 @@ def _temoins() -> list[tuple[str, Callable]]:
         maj_memoire(c, "Le lot de la quadruple formé.")
         return etage_git(a, c) or etage_ci(a, c)
 
-    # L'historique des revues d'un lot (ADR-0084) : le témoin sain de chaque
-    # refus de `socle review`, et celui du contrôle à la clôture.
+    # L'historique des revues d'un lot (ADR-0084, ADR-0100) : des passes au-delà
+    # de la première, et la clôture, sans recul.
 
-    @temoin("une deuxième passe de revue après le recul de la première, `socle review` la produit et l'écrit dans "
+    @temoin("une deuxième et une troisième passe de revue, sans recul, `socle review` les produit et les écrit dans "
             "le lot")
     def _(a, c):
-        sortie = _passes(a, c, [_bloquant_essai() + _recul_essai("continuer")])
+        sortie = _passes(a, c, [_bloquant_essai(), _bloquant_essai()])
         if sortie:
             return sortie
-        return "" if "### Passe 2 — " in (c / _sujet(c, "L-0001")).read_text() else "### Passe 2 ?"
-
-    @temoin("« continuer » après une seule passe où le relecteur voit une cause revenir, `socle review` produit la "
-            "suivante")
-    def _(a, c):
-        return _passes(a, c, [_bloquant_essai() + _recul_essai("continuer"),
-                              _bloquant_essai(" · même cause") + _recul_essai("continuer"),
-                              _bloquant_essai(" · cause nouvelle") + _recul_essai("continuer")])
-
-    @temoin("un lot arrêté dont la demande, qui cite le lot, a sa réponse, `socle review` produit sa passe suivante")
-    def _(a, c):
-        (c / "memory/requests/D-0001-refactor.md").write_text(_demande_du_lot(a, c))
-        (c / "memory/requests/D-0001-refactor.answer.toml").write_text('reponse = "valider"\n')
-        return _passes(a, c, [_bloquant_essai() + _recul_essai("s'arrêter", "D-0001")])
+        return "" if "### Passe 3 — " in (c / _sujet(c, "L-0001")).read_text() else "### Passe 3 ?"
 
     @temoin("un petit lot qui ne touche aucun garde-fou, `socle review --short` en donne le dossier court")
     def _(a, c):
@@ -2932,35 +2846,15 @@ def _temoins() -> list[tuple[str, Callable]]:
         r = a.socle(c, "review", "--short")
         return "" if r.returncode == 0 and "n'explore pas au-delà" in r.stdout else r.stdout + r.stderr
 
-    @temoin("un lot relu clos « fait » avec le recul de sa dernière passe, et le regard du relecteur sur son "
-            "bloquant, passe le commit et la CI")
+    @temoin("un lot relu clos « fait », ses deux passes sans recul, passe le commit et la CI")
     def _(a, c):
-        _lot_relu_clos(a, c, _bloquant_essai(" · cause nouvelle") + _recul_essai("continuer"))
+        _lot_relu_clos(a, c, _bloquant_essai())
         return etage_git(a, c) or etage_ci(a, c)
 
-    @temoin("un lot en cours dont la passe consigne son bloquant « - Bloquant : … », et un recul replié sur une ligne "
-            "qui commence par « bloquants », passe le commit et la CI")
+    @temoin("un lot en cours dont la passe consigne son bloquant « - Bloquant : … », et un paragraphe replié sur une "
+            "ligne qui commence par « bloquants », passe le commit et la CI")
     def _(a, c):
         _lot_en_cours_relu(a, c, "- Bloquant : la correction change la lecture du facteur")
-        return etage_git(a, c) or etage_ci(a, c)
-
-    @temoin("un lot relu clos « fait » sur « continuer » après une seule passe où le relecteur voit une cause revenir "
-            "passe le commit et la CI")
-    def _(a, c):
-        _lot_relu_clos(a, c, _bloquant_essai(" · même cause") + _recul_essai("continuer"),
-                       _bloquant_essai(" · cause nouvelle") + _recul_essai("continuer"))
-        return etage_git(a, c) or etage_ci(a, c)
-
-    @temoin("un lot relu clos « fait » sur un arrêt dont la demande, qui cite le lot, a sa réponse passe le commit et "
-            "la CI")
-    def _(a, c):
-        _lot_clos_sur_un_arret(a, c)
-        pousser(a, c)
-        (c / "citation.txt").write_text("oui")
-        r = a.socle(c, "answer", "D-0001", "valider", "--relayed", "--by", "Théo", "--quote-file", "citation.txt")
-        if r.returncode != 0:
-            return r.stdout + r.stderr
-        (c / "citation.txt").unlink()
         return etage_git(a, c) or etage_ci(a, c)
 
     @temoin("une tâche de priorité haute faite après la réponse qu'elle attendait, ses critères cochés, passe le "
@@ -3661,13 +3555,8 @@ RAISONS_AGENT = {
     "geste sans valider": "que seule une réponse `valider` autorise à changer",
     "question en widget": "widget de questions de l'agent",
     "demandes.reponse-seule": "Poussée seule, elle ne couvrira pas ce changement",
-    # `socle review` ne nomme pas de contrôle non plus : il refuse une passe
-    # de revue que l'historique du lot refuse (ADR-0084).
-    "revue sans recul": "n'a pas son recul",
-    "continuer refusé": "« continuer » est refusé, le lot s'arrête",
-    "lot arrêté": "et attend la réponse à",
-    "arrêt non levé": "n'est levé par aucune des demandes que nomme son recul",
-    # Ni le dossier court d'un lot qui touche un garde-fou (B-0288).
+    # `socle review` ne nomme pas de contrôle non plus : il refuse le dossier
+    # court d'un lot qui touche un garde-fou (B-0288).
     "revue courte refusée": "le lot touche un garde-fou",
 }
 

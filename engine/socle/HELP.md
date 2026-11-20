@@ -234,11 +234,9 @@ l'effet, en tâche si leur correction est claire, en besoin sinon, et
 écarte les autres, exotiques et rattrapés, ou infondés. Son
 récap dit combien, et pourquoi chacun est écarté.
 
-**Quand un lot tourne en rond.** L'agent garde l'historique des revues
-de chaque lot, et s'en aperçoit lui-même. Il s'arrête alors et vous pose
-une demande : ce qui tourne, la règle qui le fait tourner, et une
-proposition pour en sortir. Le lot attend votre réponse pendant que
-l'agent avance ailleurs.
+**L'historique des revues.** L'agent garde, dans l'entrée de chaque lot,
+ses passes de revue et leurs bloquants : une session neuve qui reprend le
+lot y lit où en est sa revue.
 
 **Livrer.** Par défaut, l'agent fait tout sur une branche de
 développement et garde une seule pull request ouverte, à laquelle chaque
