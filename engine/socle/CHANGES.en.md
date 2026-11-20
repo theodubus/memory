@@ -7,6 +7,19 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-20-r — The `socle-batch` skill has the agent wait, after a merge by the agent, for the workflows it starts
+
+A merge into the default branch may start a deployment or a release; if
+it failed, nothing said so, and the agent moved on to the next batch.
+The merge step of the `socle-batch` skill now says it: the agent that
+merges its own pull request, when the policy allows it, then waits for
+the workflows the merge starts on the default branch, as it waits for
+the CI, and its recap says whether they succeeded. Who merges, the step
+reads in the policy, no longer in the project's instructions.
+
+To do: nothing; the `socle-batch` skill is a protected copy, in the
+installer's request.
+
 ## 2026-11-20-o — The review folder of a branch that merged the default branch shows only the batch
 
 An already pushed branch that merged the default branch during a batch

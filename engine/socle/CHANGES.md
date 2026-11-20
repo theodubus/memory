@@ -7,6 +7,20 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-20-r — Le skill `socle-batch` fait attendre, après une fusion par l'agent, les workflows qu'elle lance
+
+Une fusion sur la branche par défaut peut lancer un déploiement ou une
+publication ; s'il échouait, rien ne le disait, et l'agent passait au lot
+suivant. L'étape de la fusion du skill `socle-batch` le dit désormais :
+l'agent qui fusionne lui-même sa pull request, quand la politique le
+permet, attend ensuite les workflows que la fusion lance sur la branche
+par défaut, comme il attend la CI, et son récap dit s'ils ont réussi.
+Qui fusionne, l'étape le lit dans la politique, et non plus dans les
+instructions du projet.
+
+À faire : rien ; le skill `socle-batch` est une copie protégée, dans la
+demande de l'installeur.
+
 ## 2026-11-20-o — Le dossier de la revue d'une branche qui a fusionné la branche par défaut ne montre que le lot
 
 Une branche déjà poussée qui fusionnait la branche par défaut en cours
