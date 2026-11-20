@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0200 — La fusion de sa pull request par l'agent, une option de la politique que l'humain active
 
-> statut : ouvert · origine : J-2026-11-13-F · lu : backlog@e0c4802b
+> statut : fait · origine : J-2026-11-13-F · ref : T-0020, T-0064, J-2026-11-20-AS · lu : backlog@e0c4802b
 
 Ici, l'agent fusionne lui-même sa pull request : CI verte, revue faite,
 aucune demande en attente sur son contenu (D-0092, « Règles propres à ce
@@ -14,4 +14,4 @@ utile intègre le socle (J-2026-11-13-F).
 
 ## Satisfait quand
 
-- [ ] dans un projet équipé dont l'humain l'a voulu, l'agent fusionne lui-même sa pull request aux conditions de D-0092 ; sans ce choix, la fusion lui reste refusée
+- [x] dans un projet équipé dont l'humain l'a voulu, l'agent fusionne lui-même sa pull request aux conditions de D-0092 ; sans ce choix, la fusion lui reste refusée

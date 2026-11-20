@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0020 — Lot du push et de la fusion par l'agent : la plage d'un push dont la branche distante a disparu, la fusion en option de la politique, ce qu'on vérifie après elle, les garanties hors du hook
 
-> statut : en cours · origine : J-2026-11-20-AE · après : L-0007, T-0018, T-0020, T-0064, T-0112, T-0023 · lu : backlog@3ed0ebd8
+> statut : fait · origine : J-2026-11-20-AE · ref : J-2026-11-20-AS · après : L-0007, T-0018, T-0020, T-0064, T-0112, T-0023 · lu : backlog@3ed0ebd8
 
 La moitié de L-0007 qui touche au push et à la fusion, coupée à son
 annonce au-delà du seuil de neuf tâches (ADR-0101, J-2026-11-20-AE) : la
