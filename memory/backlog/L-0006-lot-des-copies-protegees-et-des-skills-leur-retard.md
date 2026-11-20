@@ -23,3 +23,9 @@ Le 17 novembre, D-0129 y ajoute B-0278 et sa tâche T-0063 (J-2026-11-17-H) : la
 Le 18 novembre, T-0049 découpe B-0218, B-0233, B-0243 et B-0140 (J-2026-11-18-J) : T-0072 rafraîchit les copies protégées de ce dépôt en dernier, après les tâches qui changent un gabarit ; T-0073 dit le jalon dans le skill `socle-batch`, à côté du signal de l'état (T-0012) ; T-0074 nomme le modèle du relecteur à froid d'une demande ; T-0016 soumet à Théo le test poussé sous sa demande, que T-0075 fait après sa réponse.
 
 Le 20 novembre, D-0144 y ajoute T-0110 (J-2026-11-20-D) : le recul se retire des skills `socle-review` et `socle-batch`, avant la remise des copies protégées. ADR-0098, le hook terminé, change T-0060 et T-0061 : la liste des formes que le hook ne juge pas n'a plus à vivre dans l'atelier.
+
+## Revues
+
+### Passe 1 — 2026-11-20
+
+Commits : d34e0418..400eebc6
