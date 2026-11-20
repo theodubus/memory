@@ -7,6 +7,26 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-20-h — Le skill `socle-batch` situe le réveil en session cloud, forme en jalon ce qu'une session ne mène pas, renvoie au tri de `socle-review` et donne aux sous-agents la ligne « Économie »
+
+Le skill `socle-batch` change en cinq points :
+
+- une attente annoncée a son réveil en session cloud (`send_later`), le
+  seul lieu où l'outil existe ; ailleurs, la ligne `Ensuite :` du récap
+  la dit, et l'humain relance l'agent ;
+- un ensemble qu'une session ne mène pas se forme en jalon, ses lots
+  dessous ;
+- les constats de la revue qui ne bloquent pas suivent le tri de
+  `socle-review`, au backlog ou écartés, au lieu d'aller tous au
+  backlog ;
+- la consigne des sous-agents porte la ligne « Économie : lire ce qui
+  sert, pas les fichiers entiers ; pas de suite complète relancée sans
+  raison » ;
+- un sous-agent ne reçoit jamais Fable, sauf si l'humain le veut.
+
+À faire : rien ; le skill `socle-batch` est une copie protégée, dans la
+demande de l'installeur.
+
 ## 2026-11-20-g — Un test changé sous sa demande en attente se commite et se pousse, la CI du socle exigée
 
 Un test supprimé, ou dont la valeur attendue change, ou un cas d'un
@@ -64,7 +84,6 @@ relever exige une demande validée.
 À faire : rien ; la clé, que l'installeur nomme à la mise à jour, se
 déclare au besoin dans `.socle/guardrails.toml`. Un lot que l'état
 signale se coupe à sa prochaine annonce.
-
 ## 2026-11-20-c — Le recul n'est plus exigé : `socle review` écrit les passes d'un lot et le contrôle du backlog le laisse se clore sans lui
 
 `socle review` écrit chaque passe d'un lot dans sa section « Revues »

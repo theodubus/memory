@@ -476,6 +476,61 @@ class TestLaConduiteDUnLot(unittest.TestCase):
                    "the milestone served, the estimated cost", "a batch's cost is estimated on these measures"],
         })
 
+    def test_le_reveil_d_une_attente_n_existe_qu_en_session_cloud(self):
+        """T-0011 (B-0226) : `send_later` n'existe qu'en session cloud ;
+        ailleurs, rien ne réveille l'agent, et l'humain le relance."""
+        self.lire({
+            "fr": ["Une attente annoncée a son réveil en session cloud (`send_later`) ; ailleurs, `Ensuite :` le "
+                   "dit, et l'humain relance l'agent."],
+            "en": ["An announced wait has its wake-up in a cloud session (`send_later`); elsewhere, `Next:` says "
+                   "so, and the human restarts the agent."],
+        })
+        for lg, avant in (("fr", "sous Claude Code, `send_later`"), ("en", "under Claude Code, `send_later`")):
+            self.assertNotIn(avant, " ".join(self.texte(lg).split()), lg)
+
+    def test_un_ensemble_qu_une_session_ne_mene_pas_se_forme_en_jalon(self):
+        """T-0073 (B-0233) : à la formation d'un lot, un ensemble trop
+        grand pour une session devient un jalon, ses lots dessous."""
+        self.lire({
+            "fr": ["dit ce qui les réunit. Un ensemble qu'une session ne mène pas se forme en jalon, ses lots "
+                   "dessous."],
+            "en": ["says what brings them together. A whole that one session does not carry through is formed as "
+                   "a milestone, its batches under it."],
+        })
+
+    def test_les_constats_de_la_revue_suivent_le_tri_de_socle_review(self):
+        """T-0014 (B-0242) : un constat qui ne bloque pas suit le tri de
+        `socle-review` (backlog ou écarté), il ne va plus d'office au
+        backlog."""
+        self.lire({
+            "fr": ["Skill `socle-review`, sur le lot commité, et son tri des constats. Un bloquant retourne"],
+            "en": ["Skill `socle-review`, on the committed batch, and its sorting of the findings. A blocking "
+                   "finding goes back"],
+        })
+        for lg, avant in (("fr", "Le reste va au backlog"), ("en", "The rest goes to the backlog")):
+            self.assertNotIn(avant, self.texte(lg), lg)
+
+    def test_la_consigne_des_sous_agents_porte_la_ligne_economie(self):
+        """T-0063 (B-0278) : la consigne d'un sous-agent lui dit d'économiser
+        sa lecture et ses vérifications."""
+        lignes = {"fr": "Économie : lire ce qui sert, pas les fichiers entiers ; pas de suite complète relancée "
+                        "sans raison.",
+                  "en": "Economy: read what serves, not whole files; no full suite rerun without reason."}
+        for lg, ligne in lignes.items():
+            consigne = self.texte(lg).split("```text\n", 1)[1].split("```", 1)[0]
+            self.assertIn(ligne, consigne.splitlines(), lg)
+
+    def test_aucun_sous_agent_n_implemente_sur_fable_sans_l_humain(self):
+        """T-0015 (B-0243, D-0119) : comme pour la revue, aucun sous-agent
+        sur Fable sauf si l'humain le veut."""
+        self.lire({
+            "fr": ["Un sous-agent reçoit le sien explicitement à son lancement (`model`), jamais Fable sauf si "
+                   "l'humain le veut"],
+            "en": ["A subagent receives its own explicitly at launch (`model`), never Fable unless the human "
+                   "wants it"],
+        })
+
+
 class TestLaRevue(unittest.TestCase):
     """B-0214 : le skill de la revue, posé dans les deux langues, donne au
     relecteur son modèle (D-0117), trie les constats selon la règle 1 de

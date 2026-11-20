@@ -8,4 +8,4 @@ Un commit : les gabarits de `socle-review` et de `socle-batch`, en français et 
 ## Fait quand
 
 - [ ] le gabarit de `socle-review` et son anglais disent qu'un lot implémenté sur Fable fait demander à l'humain, avant la revue, s'il veut aussi Fable pour le relecteur, et un test le montre
-- [ ] le gabarit de `socle-batch` et son anglais disent qu'aucun sous-agent n'implémente sur Fable sauf si l'humain le veut, et un test le montre
+- [x] le gabarit de `socle-batch` et son anglais disent qu'aucun sous-agent n'implémente sur Fable sauf si l'humain le veut, et un test le montre

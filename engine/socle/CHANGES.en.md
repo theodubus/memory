@@ -7,6 +7,25 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-20-h — The `socle-batch` skill places the wake-up in a cloud session, forms as a milestone what one session does not carry through, refers to the sorting of `socle-review` and gives subagents the “Economy” line
+
+The `socle-batch` skill changes in five points:
+
+- an announced wait has its wake-up in a cloud session (`send_later`),
+  the only place where the tool exists; elsewhere, the recap's `Next:`
+  line says it, and the human restarts the agent;
+- a whole that one session does not carry through is formed as a
+  milestone, its batches under it;
+- the review's findings that do not block follow the sorting of
+  `socle-review`, to the backlog or set aside, instead of all going to
+  the backlog;
+- the subagents' instructions carry the line “Economy: read what serves,
+  not whole files; no full suite rerun without reason”;
+- a subagent never receives Fable, unless the human wants it.
+
+To do: nothing; the `socle-batch` skill is a protected copy, in the
+installer's request.
+
 ## 2026-11-20-g — A test changed under its pending request is committed and pushed, the socle's CI required
 
 A deleted test, or one whose expected value changes, or a case of a
@@ -64,7 +83,6 @@ raising it requires a validated request.
 To do: nothing; the key, which the installer names on update, can be
 declared in `.socle/guardrails.toml` if needed. A batch the state
 reports is cut at its next announcement.
-
 ## 2026-11-20-c — The step back is no longer required: `socle review` writes a batch's passes and the backlog check lets it close without one
 
 `socle review` writes each pass of a batch in its “Reviews” section
