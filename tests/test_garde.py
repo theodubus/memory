@@ -1418,6 +1418,41 @@ class TestGarde(unittest.TestCase):
         self.assertTrue(hooks._cite_chemin("le dossier `.github/**`", ".github/CODEOWNERS"))
         self.assertFalse(hooks._cite_chemin("`.github/workflows/socle.yml`", ".github/CODEOWNERS"))
 
+    SKILL = ".claude/skills/socle-resume/SKILL.md"
+    # La valeur attendue que D-0114 recopiait : le dossier des skills n'y est
+    # qu'un mot (J-2026-11-14-Z).
+    RECOPIEE = ("la ligne attendue `skills du socle posés dans .claude/skills : socle-request, socle-resume` "
+                "devient `skills du socle posés dans .claude/skills : socle-batch, socle-request, socle-resume`")
+
+    def test_remise_d_un_skill_dont_une_demande_ne_cite_le_dossier_que_dans_une_valeur_recopiee(self):
+        """B-0227 : une demande en attente qui ne cite le dossier des skills
+        que dans un texte recopié entre accents graves n'épargne pas les
+        skills du socle qu'elle n'approuve pas : leur remise passe."""
+        self.demande("D-0002-skills", self.RECOPIEE)
+        bloc = f"La sortie :\n\n```\nskills du socle posés dans .claude/skills : socle-batch\n```\n"
+        self.demande("D-0003-sortie", bloc)
+        self.assertEqual(self.decide(*B(f"{G} restore --source=HEAD --staged --worktree -- {self.SKILL}")), "passe")
+        self.assertEqual(self.decide(*B(f"{G} checkout HEAD -- {self.SKILL}")), "passe")
+        self.assertFalse(hooks._cite_chemin(self.RECOPIEE, self.SKILL))
+        self.assertFalse(hooks._cite_chemin(bloc, self.SKILL))
+
+    def test_une_demande_qui_approuve_le_fichier_ou_cite_son_dossier_hors_d_une_valeur_recopiee_l_epargne(self):
+        """B-0227 : le fichier approuvé dans les « Éléments cités », son
+        dossier cité dans la prose ou seul entre ses accents graves, se
+        couvrent encore ; la valeur recopiée n'y change rien."""
+        remise = f"{G} restore --source=HEAD --staged --worktree -- {self.SKILL}"
+        for nom, cite in (("D-0004-approuve", f"{self.RECOPIEE}.\n\n## Éléments cités\n\n- {self.SKILL} "
+                                              "sha256:0123456789abcdef\n\nLa ligne"),
+                          ("D-0005-approuve", f"## Éléments cités\n\n- `{self.SKILL}` sha256:0123456789abcdef\n\n"
+                                              "La ligne"),
+                          ("D-0006-prose", f"{self.RECOPIEE} ; tout le dossier .claude/skills"),
+                          ("D-0007-seul", f"{self.RECOPIEE} ; tout `.claude/skills/`"),
+                          ("D-0008-motif", "le dossier `.claude/skills/**`")):
+            with self.subTest(nom):
+                d = self.demande(nom, cite)
+                self.assertIn(nom[:6], self.raison(remise))
+                d.unlink()
+
     def test_remise_en_etat_sous_une_demande_validee_pas_encore_commitee(self):
         """La revue de B-0165 : une demande validée dont la réponse attend
         son commit, ou dont l'empreinte citée est celle du fichier présent,

@@ -226,6 +226,62 @@ class TestEnAttenteDeLHumain(TestValeurAttendue):
         erreurs, _ = self.erreurs("ci")
         self.assertEqual(len(erreurs), 1, erreurs)
 
+    def juger(self, etage: str, gardee: bool, avant_push: bool = False) -> tuple[list[str], list[str]]:
+        """Le contrôle à `etage`, la branche par défaut exigeant la CI du
+        socle (`gardee`) ou non ; `avant_push` : le hook avant push, qui juge
+        la plage comme la CI."""
+        from unittest import mock
+
+        from socle import checks_ratchet
+
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage=etage, base=self.base,
+                                tete=None if etage in ("agent", "git") else "HEAD", avant_push=avant_push)
+        r = Rapport()
+        with mock.patch.object(checks_ratchet, "fusion_gardee", return_value=gardee):
+            controles_tests.attendus(ctx, r)
+        return ([c.message for c in r.erreurs("tests.attendus")],
+                [c.message for c in r.constats if c.gravite == "avertissement"])
+
+    def test_sous_la_ci_exigee_il_se_commite_et_se_pousse(self):
+        """D-0147 (T-0075) : comme un fichier protégé sous D-0071, la demande
+        poussée telle quelle ; l'humain lit le test dans la pull request."""
+        self.pousser()
+        self.ecrire("tests/test_calc.py", TEST.format(attendu=6))
+        for etage, avant_push in (("agent", False), ("git", False)):
+            erreurs, avertissements = self.juger(etage, True, avant_push)
+            self.assertEqual(erreurs, [], etage)
+            self.assertTrue(any("en attente de D-0001 : il se commite et se pousse, la CI le refuse jusqu'à la "
+                                "réponse de l'humain" in a for a in avertissements), avertissements)
+        self.commit("Le test suit")
+        erreurs, _ = self.juger("ci", True, avant_push=True)
+        self.assertEqual(erreurs, [])
+
+    def test_sous_la_ci_exigee_la_ci_le_refuse_jusqu_a_la_reponse(self):
+        self.pousser()
+        self.ecrire("tests/test_calc.py", TEST.format(attendu=6))
+        self.commit("Le test suit")
+        erreurs, _ = self.juger("ci", True)
+        self.assertEqual(len(erreurs), 1, erreurs)
+
+    def test_sans_la_ci_exigee_le_commit_et_le_push_attendent(self):
+        self.pousser()
+        self.ecrire("tests/test_calc.py", TEST.format(attendu=6))
+        erreurs, avertissements = self.juger("agent", False)
+        self.assertEqual(erreurs, [])
+        self.assertTrue(any("le tour peut finir, le commit et la CI attendent" in a for a in avertissements))
+        self.assertEqual(len(self.juger("git", False)[0]), 1)
+        self.commit("Le test suit")
+        self.assertEqual(len(self.juger("ci", False, avant_push=True)[0]), 1)
+
+    def test_sous_la_ci_exigee_sans_demande_poussee_le_commit_reste_refuse(self):
+        # La demande est commitée, pas poussée : l'humain n'a pas pu la lire.
+        self.ecrire("tests/test_calc.py", TEST.format(attendu=6))
+        self.assertEqual(len(self.juger("git", True)[0]), 1)
+        # Poussée, puis changée : ce n'est plus celle qu'il a lue.
+        self.pousser()
+        self.ecrire("memory/requests/D-0001-facteur.md", self.DEMANDE + "\nUne précision après coup.\n")
+        self.assertEqual(len(self.juger("git", True)[0]), 1)
+
 if __name__ == "__main__":
     unittest.main()
 

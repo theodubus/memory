@@ -2,3 +2,6 @@
 /.socle/trace/
 __pycache__/
 /bench/results/
+
+# Les worktrees des sous-agents de Claude Code
+/.claude/worktrees/

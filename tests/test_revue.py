@@ -146,39 +146,6 @@ class TestBarre(_Lot):
         # Les trois parties de la consigne précèdent le diff.
         self.assertLess(texte.index("Rends trois listes"), texte.index("## Le diff du lot"))
 
-    def test_une_forme_qu_aucun_agent_n_ecrit_ne_bloque_pas_et_va_a_la_liste(self):
-        """D-0120, ADR-0082 : une forme du shell qu'un agent n'écrit pas dans
-        son travail, et qui échappe au hook, n'est pas un bloquant, même
-        refusée avant le lot par accident, ni un sujet : elle s'écarte d'une
-        ligne, pour la liste des formes connues du guide. La règle 1 de
-        D-0112, le tri des autres constats, reste."""
-        self.lot()
-        attendus = {
-            "fr": ["Une forme du shell qu'un agent n'écrit pas dans son travail (ni vue dans une session d'agent, "
-                   "ni dans un skill, ni dans une documentation courante), et qui échappe au hook de l'agent, ne se "
-                   "classe pas bloquante, même refusée avant le lot par accident, ni pour le backlog, quel qu'en "
-                   "soit l'effet : écarte-la, d'une ligne, pour la liste des formes connues que le hook ne juge "
-                   "pas, dans le guide du socle (`python3 .socle/socle help`).",
-                   "**Écarté** : un constat exotique (un geste rare, une forme qu'on n'écrit que pour contourner, "
-                   "un cas jamais reproduit) dont l'effet est rattrapé",
-                   "Rends trois listes numérotées, « Bloquants », « Pour le backlog » puis « Écartés »"],
-            "en": ["A shell form an agent does not write in its work (seen neither in an agent session, nor in a "
-                   "skill, nor in current documentation), and that escapes the agent's hook, is not classed as "
-                   "blocking, even if refused before the batch by accident, nor for the backlog, whatever its "
-                   "effect: dismiss it, in one line, for the list of known forms the hook does not judge, in the "
-                   "socle's guide (`python3 .socle/socle help`).",
-                   "**Dismissed**: an exotic finding (a rare gesture, a form one only writes to get around "
-                   "something, a case never reproduced) whose effect is caught",
-                   "Return three numbered lists, “Blocking”, “For the backlog” then “Dismissed”"],
-        }
-        for lg, phrases in attendus.items():
-            with messages.dans(lg):
-                texte = revue.dossier(self.projet)
-            for phrase in phrases:
-                self.assertIn(phrase, texte, lg)
-            # La règle tient dans la consigne, avant le diff.
-            self.assertLess(texte.index(phrases[0]), texte.index(phrases[2]), lg)
-
     def test_une_case_qui_livre_une_demande_un_releve_ou_une_entree_se_juge_par_ce_qu_elle_produit(self):
         """ADR-0088, T-0087 : la consigne, du dossier complet comme du
         dossier court, dit comment juger une telle case, dans les deux
@@ -610,56 +577,91 @@ class TestLeGuideNeRenvoiePasALAtelier(unittest.TestCase):
                     self.assertNotIn(mot, texte)
 
 
-class TestLesFormesConnuesDuGuide(unittest.TestCase):
-    """ADR-0082 : le guide d'un projet équipé dit la règle de D-0120 telle
-    quelle, et donne la liste des formes connues que le hook ne juge pas,
-    chacune avec la note de version qui l'inscrit."""
+class TestLesFormesDuShellHorsDuProduit(unittest.TestCase):
+    """T-0060 (B-0276, D-0128, ADR-0099) : un projet équipé ne reçoit plus
+    de procédure sur les formes du shell que le hook ne juge pas, ni leur
+    liste ; le guide garde le modèle de menace du hook, comme description
+    de l'outil."""
 
-    PAQUET = Path(revue.__file__).resolve().parent
-    REGLE = {
-        "fr": "Le hook de l'agent arrête les erreurs d'un agent coopératif avant qu'elles agissent. Il juge les "
-              "formes du shell qu'un agent écrit dans son travail, pour tout effet ; pour ce que rien ne rattrape "
-              "ensuite (supprimer le projet ou un dossier qui le contient, une action externe irréversible, une "
-              "fuite de la mémoire privée, la part de la mémoire qui ne se publie pas), il refuse aussi ce qu'il "
-              "ne sait pas lire. Un trou ouvre une entrée du backlog si sa forme est de celles qu'un agent écrit dans "
-              "son "
-              "travail : vue dans une session d'agent, un skill ou une documentation courante. Une autre forme "
-              "s'inscrit d'une ligne dans la liste des formes connues que le hook ne juge pas, sans entrée au backlog ; "
-              "dans "
-              "la revue d'un lot du hook, elle n'est pas un bloquant, même refusée avant le lot par accident.",
-        "en": "The agent's hook stops the mistakes of a cooperative agent before they take effect. It judges the "
-              "shell forms an agent writes in its work, for every effect; for what nothing catches afterwards "
-              "(deleting the project or a directory that contains it, an irreversible external action, a leak of "
-              "the private memory, the part of the memory that is not published), it also refuses what it cannot "
-              "read. A hole opens a backlog entry if its form is one an agent writes in its work: seen in an agent "
-              "session, a skill or current documentation. Another form is entered in one line in the list of "
-              "known forms the hook does not judge, without a backlog entry; in the review of a batch of the hook, it is "
-              "not a blocking finding, even if refused before the batch by accident.",
+    PROCEDURE = {
+        "fr": ("forme du shell qu'un agent n'écrit pas", "formes connues", "Un trou ouvre",
+               "n'ouvre pas d'entrée au backlog", "signaler au dépôt du socle"),
+        "en": ("shell form an agent does not write", "known forms", "A hole opens", "opens no backlog entry",
+               "reporting it to the socle's repository"),
     }
-    TETE = {"fr": "Les formes connues que le hook ne juge pas :", "en": "The known forms the hook does not judge:"}
+    MODELE = {
+        "fr": ("**Ce que juge le hook de l'agent.** Le hook de l'agent arrête les erreurs d'un agent coopératif "
+               "avant qu'elles agissent. Il juge les formes du shell qu'un agent écrit dans son travail, pour tout "
+               "effet ; pour ce que rien ne rattrape ensuite (supprimer le projet ou un dossier qui le contient, "
+               "une action externe irréversible, une fuite de la mémoire privée, la part de la mémoire qui ne se "
+               "publie pas), il refuse aussi ce qu'il ne sait pas lire. Un agent coopératif ne cherche pas à "
+               "contourner ses garde-fous. Le hook ne modélise pas tout bash : une écriture d'un fichier protégé "
+               "sous une forme qu'on n'écrit que pour contourner (un `eval`, `IFS`, un chemin construit au vol "
+               "dans un autre langage) est hors de son modèle, comme des formes qui lui échappent",
+               "la garantie est alors le contrôle des fichiers protégés, à la fin du tour, au commit et dans la "
+               "CI. **Faire ce que l'agent ne peut pas faire.**"),
+        "en": ("**What the agent's hook judges.** The agent's hook stops the mistakes of a cooperative agent "
+               "before they take effect. It judges the shell forms an agent writes in its work, for every effect; "
+               "for what nothing catches afterwards (deleting the project or a directory that contains it, an "
+               "irreversible external action, a leak of the private memory, the part of the memory that is not "
+               "published), it also refuses what it cannot read. A cooperative agent does not try to get around "
+               "its guardrails. The hook does not model all of bash: a write to a protected file in a form one "
+               "writes only to get around it (an `eval`, `IFS`, a path built on the fly in another language) is "
+               "outside its model, as are forms that escape it",
+               "the guarantee is then the protected-files check, at the end of the turn, at commit and in CI. "
+               "**Doing what the agent cannot do.**"),
+    }
+    # Le tri des autres constats reste dans la consigne du relecteur.
+    CLASSES = {
+        "fr": ("**Écarté** : un constat exotique (un geste rare, une forme qu'on n'écrit que pour contourner, un "
+               "cas jamais reproduit) dont l'effet est rattrapé",
+               "Rends trois listes numérotées, « Bloquants », « Pour le backlog » puis « Écartés »"),
+        "en": ("**Dismissed**: an exotic finding (a rare gesture, a form one only writes to get around something, "
+               "a case never reproduced) whose effect is caught",
+               "Return three numbered lists, “Blocking”, “For the backlog” then “Dismissed”"),
+    }
 
-    def formes(self, lg: str) -> tuple[str, list[str]]:
-        """Le guide, ses blancs réduits, et les lignes de la liste."""
-        nom = "HELP.md" if lg == "fr" else "HELP.en.md"
-        brut = (self.PAQUET / nom).read_text(encoding="utf-8")
-        self.assertIn(self.TETE[lg], brut, lg)
-        liste = brut[brut.index(self.TETE[lg]):].split("\n\n")[1]
-        return " ".join(brut.split()), [" ".join(e.split()) for e in liste.split("\n- ")]
+    def poses(self, lg: str) -> dict[str, str]:
+        """Le skill, les instructions et le guide posés dans un projet neuf
+        de cette langue, et la consigne du relecteur dans cette langue."""
+        import contextlib
+        import io
 
-    def test_le_guide_dit_la_regle_et_chaque_forme_cite_sa_note(self):
-        notes = (self.PAQUET / "CHANGES.md").read_text(encoding="utf-8")
-        comptes = {}
+        from socle import installer as installeur
+
+        racine = Path(tempfile.mkdtemp(prefix="socle-formes-"))
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        git(racine, "init", "-q", "-b", "main")
+        (racine / "app.py").write_text("print('ok')\n", encoding="utf-8")
+        moteur = Path(revue.__file__).resolve().parent.parent
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(racine, "python", "@essai", source=moteur, langue_memoire=lg)
+        guide = "HELP.md" if lg == "fr" else "HELP.en.md"
+        textes = {"skill": racine / installeur.SKILLS / "socle-review" / "SKILL.md",
+                  "instructions": racine / "AGENTS.md",
+                  "guide": racine / config.Projet.charger(racine).chemins.moteur / "socle" / guide}
+        res = {nom: " ".join(p.read_text(encoding="utf-8").split()) for nom, p in textes.items()}
+        with messages.dans(lg):
+            res["consigne"] = " ".join(messages.trad(revue.CONSIGNE_CLASSES).split())
+        return res
+
+    def test_poses_dans_un_projet_ils_ne_disent_ni_la_procedure_ni_la_liste(self):
         for lg in ("fr", "en"):
-            texte, formes = self.formes(lg)
-            self.assertIn(self.REGLE[lg], texte, lg)
-            self.assertNotIn("quelle qu'en soit la forme" if lg == "fr" else "whatever its form", texte, lg)
-            comptes[lg] = len(formes)
-            for forme in formes:
-                note = re.search(r"\((\d{4}-\d{2}-\d{2}-[a-z])\)\.$", forme)
-                self.assertIsNotNone(note, forme)
-                self.assertIn(f"\n## {note.group(1)} — ", notes, forme)
-        self.assertEqual(comptes["fr"], comptes["en"])
-        self.assertGreaterEqual(comptes["fr"], 15)
+            textes = self.poses(lg)
+            for nom, texte in textes.items():
+                for mot in self.PROCEDURE[lg]:
+                    self.assertNotIn(mot, texte, (lg, nom))
+            # La liste citait, pour chaque forme, la note de version qui l'inscrivait.
+            self.assertNotRegex(textes["guide"], r"\(\d{4}-\d{2}-\d{2}-[a-z]\)\.", lg)
+            for phrase in self.CLASSES[lg]:
+                self.assertIn(phrase, textes["consigne"], lg)
+
+    def test_le_guide_garde_le_modele_de_menace_du_hook(self):
+        paquet = Path(revue.__file__).resolve().parent
+        for lg, nom in (("fr", "HELP.md"), ("en", "HELP.en.md")):
+            texte = " ".join((paquet / nom).read_text(encoding="utf-8").split())
+            for phrase in self.MODELE[lg]:
+                self.assertIn(phrase, texte, lg)
 
 
 class TestLotDejaPousse(_Lot):

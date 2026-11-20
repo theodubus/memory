@@ -17,7 +17,9 @@ ADR-0079.
 `python3 .socle/socle roadmap` et en coller la sortie dans la réponse,
 dans un bloc de code :
 où le lot se place parmi les jalons et les lots, puis ce qui vient après
-lui (B-0274).
+lui (B-0274). Après la clôture du troisième lot depuis la dernière revue
+de cap, ou d'un jalon, la revue de cap passe avant le lot suivant : le
+skill `direction-review` (D-0145).
 
 ## Les sous-agents
 
@@ -85,6 +87,11 @@ environ 320 000 jetons, un relecteur 240 000, soit 3 à 4 points de la
 semaine chacun : d'où les seuils du skill du produit.
 
 ## Changer de session
+
+Un lot par session (J-2026-11-12-P) : à la clôture d'un lot, la session
+ne s'enchaîne pas sur le suivant, même si la fenêtre le permettrait ;
+elle range, et son récap donne le prompt de la session neuve
+(J-2026-11-20-AD).
 
 Le correctif d'un commit pas encore relu va dans un dossier de passation
 sous `docs/fabrication/`. À l'intégration d'une passation, après

@@ -607,3 +607,108 @@ class TestSeance(unittest.TestCase):
         h = hooks.COMMANDES_HUMAINES.search("python3 .socle/socle decision 'Approuver la spec x' valider")
         self.assertIsNotNone(h)
         self.assertEqual(h.group(0), "decision")
+
+
+class TestDecisionDonnee(unittest.TestCase):
+    """B-0185 : une décision que l'humain donne de lui-même, sans qu'on la
+    lui ait demandée, se consigne sans question inventée ni réponse de base
+    à choisir, son texte exact gardé ; elle autorise ce qu'elle nomme comme
+    une demande validée."""
+
+    TEXTE = "Supprime test_tolerance, il ne sert plus, et passe le plafond de mutation à 2."
+
+    setUp = TestSeance.setUp
+
+    def donner(self, titre="Supprimer test_tolerance et resserrer le plafond de mutation", texte=TEXTE,
+               canal="conversation"):
+        return demandes.ecrire_decision_donnee(self.projet, titre, texte, "Théo", "2026-11-20", canal)
+
+    def decision(self, chemin):
+        return next(x for x in demandes.toutes(self.racine) if x.chemin == chemin)
+
+    def test_elle_garde_le_texte_exact_sans_question_ni_reponse_a_choisir(self):
+        chemin, reponse = self.donner()
+        d = self.decision(chemin)
+        self.assertTrue(d.seance)
+        self.assertTrue(d.donnee)
+        self.assertTrue(d.validee)
+        self.assertIn("## Décision donnée\n\n" + self.TEXTE + "\n", d.texte)
+        self.assertNotIn("Question posée", d.texte)
+        self.assertEqual(d.reponse["reponse"], "valider")
+        self.assertEqual(d.reponse["citation"], self.TEXTE)
+        self.assertEqual(d.reponse["canal"], "conversation")
+        self.assertEqual(demandes.verifier_reponse(d), [])
+        self.assertIsNone(demandes.illisible(self.projet, d))
+        # Une décision en séance, posée sur une question, ne l'est pas.
+        chemin, _ = demandes.ecrire_seance(self.projet, "Approuver la spec de triple", "Tu approuves la spec ?",
+                                           "valider", "Théo", "2026-11-20", "conversation", "Oui.")
+        self.assertFalse(self.decision(chemin).donnee)
+
+    def test_l_humain_la_consigne_lui_meme_sans_citation_dans_la_reponse(self):
+        chemin, _ = self.donner(canal="terminal")
+        d = self.decision(chemin)
+        self.assertTrue(d.validee)
+        self.assertNotIn("citation", d.reponse)
+        self.assertIn(self.TEXTE, d.texte)
+
+    def test_sans_texte_ou_titre_trop_court_ou_qui_cite_seul_un_identifiant_refusee(self):
+        for titre, texte in (("Supprimer test_tolerance", " "), ("Supprimer", self.TEXTE),
+                             ("Supprimer test_tolerance, comme B-0001 le veut", self.TEXTE)):
+            with self.assertRaises(ValueError):
+                self.donner(titre, texte)
+        self.assertEqual(list((self.racine / "memory/requests").glob("D-*.md")), [])
+        chemin, _ = self.donner("Fermer B-0001 sans test", "Ferme B-0001, il ne sert plus.")
+        self.assertTrue(self.decision(chemin).validee)
+        # Ce que l'humain cite, recopié, n'a pas à prouver sa lecture.
+        from socle import checks_memory
+
+        self.assertNotIn("B-0001", checks_memory.sans_question_de_seance(self.decision(chemin).entree.texte))
+
+    def test_elle_autorise_ce_qu_elle_nomme_comme_une_demande_validee(self):
+        import types
+
+        from socle import checks_ratchet, checks_tests
+
+        self.donner()
+        ctx = types.SimpleNamespace(validations=demandes.validations_ajoutees(self.racine, None, None))
+        self.assertEqual(len(ctx.validations), 1)
+        ident = ctx.validations[0].id
+        self.assertEqual(checks_tests._justifie(ctx, "test_tolerance"), f"validé par {ident}")
+        self.assertEqual(checks_ratchet._valide_par(ctx, "plafond de mutation").id, ident)
+        self.assertIsNone(checks_ratchet._valide_par(ctx, "test_double"))
+
+    def test_cmd_decision_unprompted_consigne_et_refuse_une_reponse_ou_une_question(self):
+        import argparse
+
+        from socle import cli
+
+        citation = self.racine.parent / f"{self.racine.name}-donnee.txt"
+        citation.write_text(self.TEXTE, encoding="utf-8")
+        self.addCleanup(citation.unlink)
+
+        def decision(answer=None, question_file=None, unprompted=True):
+            args = argparse.Namespace(root=str(self.racine), question="Supprimer test_tolerance, il ne sert plus",
+                                      answer=answer, question_file=question_file, about=None, by="Théo",
+                                      relayed=True, quote=None, quote_file=str(citation), unprompted=unprompted)
+            erreur = io.StringIO()
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(erreur):
+                return cli.cmd_decision(args), erreur.getvalue()
+
+        self.assertEqual(decision("valider")[0], 2)
+        self.assertEqual(decision(question_file=str(citation))[0], 2)
+        code, erreur = decision(unprompted=False)
+        self.assertEqual(code, 2)
+        self.assertIn("--unprompted", erreur)
+        self.assertEqual(list((self.racine / "memory/requests").glob("D-*.md")), [])
+        self.assertEqual(decision()[0], 0)
+        d = next(x for x in demandes.toutes(self.racine) if x.seance)
+        self.assertTrue(d.donnee and d.validee)
+        self.assertIn(self.TEXTE, d.texte)
+
+    def test_la_ligne_de_commande_prend_unprompted_sans_reponse(self):
+        from socle import cli
+
+        args = cli.analyseur()[0].parse_args(["decision", "Supprimer test_tolerance, il ne sert plus", "--unprompted",
+                                           "--relayed", "--by", "Théo", "--quote", "Supprime-le."])
+        self.assertTrue(args.unprompted)
+        self.assertIsNone(args.answer)

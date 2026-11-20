@@ -180,6 +180,35 @@ class TestLesDemandes(unittest.TestCase):
         for lg, phrase in attendus.items():
             self.assertIn(phrase, self.texte(lg), lg)
 
+    def test_le_relecteur_a_froid_recoit_le_modele_le_plus_capable_a_son_lancement(self):
+        """T-0074 (B-0243) : comme le relecteur d'un lot, explicitement, le
+        plus capable jusqu'à Opus, quel que soit celui de la session ; Fable
+        sur la demande de l'humain seule ; le récap nomme le modèle."""
+        attendus = {
+            "fr": ("du modèle de la session", [
+                "Il reçoit explicitement à son lancement (`model`) le modèle le plus capable disponible jusqu'à "
+                "Opus, quel que soit celui de la session, sur la dernière version de sa famille",
+                "Fable, s'il est disponible, seulement si l'humain le demande",
+                "`Relecture à froid (<modèle>) : <n> points, <k> corrigés"]),
+            "en": ("of the session's model", [
+                "It receives explicitly at launch (`model`) the most capable model available up to Opus, whatever "
+                "the session's, on the latest version of its family",
+                "Fable, if available, only if the human asks for it",
+                "`Cold reading (<model>): <n> points, <k> fixed"]),
+        }
+        for lg, (ancien, phrases) in attendus.items():
+            texte = self.texte(lg)
+            for phrase in phrases:
+                self.assertIn(phrase, texte, lg)
+            self.assertNotIn(ancien, texte, lg)
+
+    def test_une_decision_donnee_sans_question_se_consigne_par_unprompted(self):
+        """T-0017 (B-0185) : sans question inventée ni réponse à choisir."""
+        attendus = {"fr": "--unprompted --relayed --by <nom> --quote-file <fichier>",
+                    "en": "--unprompted --relayed --by <name> --quote-file <file>"}
+        for lg, phrase in attendus.items():
+            self.assertIn(phrase, self.texte(lg), lg)
+
     def test_la_variante_legere_des_valeurs_attendues_mecaniques(self):
         """T-0095 (B-0289) : ce qui la permet, ce qu'elle demande, et ce qui
         garde la demande écrite."""
@@ -324,7 +353,7 @@ class TestLaConduiteDUnLot(unittest.TestCase):
             self.assertEqual(juger(self.racine), {"skills.contrat": [], "skills.commandes": []}, lg)
 
     def test_il_ne_renvoie_pas_a_l_atelier(self):
-        atelier = re.compile(r"\b(?:ADR|[BDFJ])-\d|fabrication|chess|Théo|delegate-lot|Opus|Sonnet|Haiku|Fable")
+        atelier = re.compile(r"\b(?:ADR|[BDFJ])-\d|fabrication|chess|Théo|delegate-lot|Opus|Sonnet|Haiku")
         for lg in ("fr", "en"):
             self.assertIsNone(atelier.search(self.texte(lg)), lg)
 
@@ -447,6 +476,61 @@ class TestLaConduiteDUnLot(unittest.TestCase):
                    "the milestone served, the estimated cost", "a batch's cost is estimated on these measures"],
         })
 
+    def test_le_reveil_d_une_attente_n_existe_qu_en_session_cloud(self):
+        """T-0011 (B-0226) : `send_later` n'existe qu'en session cloud ;
+        ailleurs, rien ne réveille l'agent, et l'humain le relance."""
+        self.lire({
+            "fr": ["Une attente annoncée a son réveil en session cloud (`send_later`) ; ailleurs, `Ensuite :` le "
+                   "dit, et l'humain relance l'agent."],
+            "en": ["An announced wait has its wake-up in a cloud session (`send_later`); elsewhere, `Next:` says "
+                   "so, and the human restarts the agent."],
+        })
+        for lg, avant in (("fr", "sous Claude Code, `send_later`"), ("en", "under Claude Code, `send_later`")):
+            self.assertNotIn(avant, " ".join(self.texte(lg).split()), lg)
+
+    def test_un_ensemble_qu_une_session_ne_mene_pas_se_forme_en_jalon(self):
+        """T-0073 (B-0233) : à la formation d'un lot, un ensemble trop
+        grand pour une session devient un jalon, ses lots dessous."""
+        self.lire({
+            "fr": ["dit ce qui les réunit. Un ensemble qu'une session ne mène pas se forme en jalon, ses lots "
+                   "dessous."],
+            "en": ["says what brings them together. A whole that one session does not carry through is formed as "
+                   "a milestone, its batches under it."],
+        })
+
+    def test_les_constats_de_la_revue_suivent_le_tri_de_socle_review(self):
+        """T-0014 (B-0242) : un constat qui ne bloque pas suit le tri de
+        `socle-review` (backlog ou écarté), il ne va plus d'office au
+        backlog."""
+        self.lire({
+            "fr": ["Skill `socle-review`, sur le lot commité, et son tri des constats. Un bloquant retourne"],
+            "en": ["Skill `socle-review`, on the committed batch, and its sorting of the findings. A blocking "
+                   "finding goes back"],
+        })
+        for lg, avant in (("fr", "Le reste va au backlog"), ("en", "The rest goes to the backlog")):
+            self.assertNotIn(avant, self.texte(lg), lg)
+
+    def test_la_consigne_des_sous_agents_porte_la_ligne_economie(self):
+        """T-0063 (B-0278) : la consigne d'un sous-agent lui dit d'économiser
+        sa lecture et ses vérifications."""
+        lignes = {"fr": "Économie : lire ce qui sert, pas les fichiers entiers ; pas de suite complète relancée "
+                        "sans raison.",
+                  "en": "Economy: read what serves, not whole files; no full suite rerun without reason."}
+        for lg, ligne in lignes.items():
+            consigne = self.texte(lg).split("```text\n", 1)[1].split("```", 1)[0]
+            self.assertIn(ligne, consigne.splitlines(), lg)
+
+    def test_aucun_sous_agent_n_implemente_sur_fable_sans_l_humain(self):
+        """T-0015 (B-0243, D-0119) : comme pour la revue, aucun sous-agent
+        sur Fable sauf si l'humain le veut."""
+        self.lire({
+            "fr": ["Un sous-agent reçoit le sien explicitement à son lancement (`model`), jamais Fable sauf si "
+                   "l'humain le veut"],
+            "en": ["A subagent receives its own explicitly at launch (`model`), never Fable unless the human "
+                   "wants it"],
+        })
+
+
 class TestLaRevue(unittest.TestCase):
     """B-0214 : le skill de la revue, posé dans les deux langues, donne au
     relecteur son modèle (D-0117), trie les constats selon la règle 1 de
@@ -493,6 +577,18 @@ class TestLaRevue(unittest.TestCase):
                 self.assertIn(phrase, texte, lg)
             self.assertNotIn(ancien, texte, lg)
 
+    def test_un_lot_implemente_sur_fable_fait_demander_fable_pour_le_relecteur(self):
+        """T-0015 (B-0243, D-0119) : le lot, pas la session qui orchestre ;
+        l'humain répond avant la revue."""
+        attendus = {
+            "fr": "Un lot implémenté sur Fable (le lot, pas la session qui orchestre) fait demander à l'humain, "
+                  "avant la revue, s'il veut aussi Fable pour le relecteur.",
+            "en": "A batch implemented on Fable (the batch, not the orchestrating session) has the human asked, "
+                  "before the review, whether they also want Fable for the reviewer.",
+        }
+        for lg, phrase in attendus.items():
+            self.assertIn(phrase, " ".join(self.texte(lg).split()), lg)
+
     def test_il_dit_quand_donner_le_dossier_court(self):
         """B-0288 : un petit lot qui ne touche ni un garde-fou ni un format
         que d'autres parties du projet lisent reçoit le dossier court ; tout
@@ -535,12 +631,12 @@ class TestLaRevue(unittest.TestCase):
 
     def test_la_passe_ecrite_se_commite_et_le_dossier_se_produit_sur_la_branche_d_integration(self):
         """T-0055 : écrite sans commit là où `socle review` tourne, la passe se
-        perdait, et la suivante récrivait « Passe 1 » sans recul exigé."""
+        perdait, et la suivante récrivait « Passe 1 »."""
         attendus = {
             "fr": ("Commiter la passe écrite, et ce qu'on y consigne : sinon, elle se perd là où `socle review` a "
-                   "tourné.", "dont la dernière passe refuserait la suivante, et montre ce que montre ce refus."),
+                   "tourné.",),
             "en": ("Commit the written pass, and what is recorded in it: otherwise, it is lost where `socle review` "
-                   "ran.", "whose last pass would refuse the next one, and shows what that refusal shows."),
+                   "ran.",),
         }
         for lg, phrases in attendus.items():
             texte = " ".join(self.texte(lg).split())
@@ -590,48 +686,6 @@ class TestLaRevue(unittest.TestCase):
             texte = " ".join((DOSSIER / nom).read_text(encoding="utf-8").split())
             for phrase in phrases:
                 self.assertIn(phrase, texte, nom)
-
-    def test_une_forme_du_shell_qu_un_agent_n_ecrit_pas_s_ecarte_pour_la_liste(self):
-        """D-0120, ADR-0082 : ni bloquante, même refusée avant le lot par
-        accident, ni pour le backlog ; écartée, d'une ligne, pour la liste
-        des formes connues que le hook ne juge pas."""
-        attendus = {
-            "fr": "**Une forme du shell qu'un agent n'écrit pas** dans son travail (ni vue dans une session "
-                  "d'agent, ni dans un skill, ni dans une documentation courante), et qui échappe au hook de "
-                  "l'agent : elle ne se classe pas bloquante, même refusée avant le lot par accident, ni pour le "
-                  "backlog, quel qu'en soit l'effet. Elle s'écarte, et va d'une ligne à la liste des formes connues "
-                  "que le hook ne juge pas, que tient le guide du socle (`python3 .socle/socle help`).",
-            "en": "**A shell form an agent does not write** in its work (seen neither in an agent session, nor in "
-                  "a skill, nor in current documentation), and that escapes the agent's hook: it is not classed as "
-                  "blocking, even if refused before the batch by accident, nor for the backlog, whatever its "
-                  "effect. It is dismissed, and goes in one line to the list of known forms the hook does not "
-                  "judge, which the socle's guide keeps (`python3 .socle/socle help`).",
-        }
-        for lg, phrase in attendus.items():
-            self.assertIn(phrase, " ".join(self.texte(lg).split()), lg)
-
-    def test_dans_un_projet_equipe_la_forme_se_signale_au_depot_du_socle(self):
-        """B-0270, T-0048 : dans un projet équipé, le guide est sous le moteur
-        installé, protégé ; l'agent ne peut pas y inscrire la forme. Le skill
-        la lui fait nommer au récap et proposer à l'humain de la signaler au
-        dépôt du socle, qui tient la liste."""
-        from socle import utils as outils
-
-        with redirect_stdout(io.StringIO()):
-            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
-        projet = config.Projet.charger(self.racine)
-        self.assertTrue(outils.correspond(f"{projet.chemins.moteur}/socle/HELP.md", projet.chemins_proteges()))
-        attendus = {
-            "fr": "Dans un projet équipé, ce guide est protégé : le récap nomme la forme, et « Pour toi » propose "
-                  "de la signaler au dépôt du socle (https://github.com/theodubus/socle), qui tient la liste.",
-            "en": "In an equipped project, this guide is protected: the recap names the form, and “For you” "
-                  "suggests reporting it to the socle's repository (https://github.com/theodubus/socle), which "
-                  "keeps the list.",
-        }
-        for lg, phrase in attendus.items():
-            texte = " ".join(self.texte(lg).split())
-            self.assertIn(phrase, texte, lg)
-            self.assertLessEqual(len(self.texte(lg).encode("utf-8")), 8000, lg)
 
 
 class TestRefusBash(unittest.TestCase):
