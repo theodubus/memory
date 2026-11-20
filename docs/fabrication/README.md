@@ -33,6 +33,7 @@ qu'un projet reçoit n'en parle.
 | [Le parcours de l'utilisateur](parcours.md) | ce que l'humain tape, lit et décide, relevé de l'installation à l'usage courant, et ce qui l'a simplifié |
 | [La consommation d'une session qui orchestre](consommation.md) | ce que pèsent, sur les limites d'usage, la conversation principale, les sous-agents, les reprises après une pause et ce que le socle injecte (B-0173) |
 | [La passe de recul](recul.md) | un relevé de tout le code et du fonctionnement : constats et propositions |
+| [Ce qui rattrape, hors du hook, un push forcé et une suppression](garanties-hors-du-hook.md) | le relevé des couches qui ne lisent pas le shell : la protection de la branche par défaut, le hook de fin de tour de l'environnement cloud, son conteneur, et ce qui reste sans garantie (B-0262) |
 | [Les allégements du 18 novembre](allegements.md) | cinq propositions pour que le coût d'un lot suive sa taille, mesurées sur L-0016 et validées par Théo |
 | [L'inventaire de chess](inventaire-chess.md) | ce que le projet d'échecs contenait de générique, et ce que chaque pièce est devenue |
 | [L'essai sur une copie de chess](essai-chess.md) | la première mesure hors de ce dépôt : le socle installé en adoption, cinq tâches d'un agent |

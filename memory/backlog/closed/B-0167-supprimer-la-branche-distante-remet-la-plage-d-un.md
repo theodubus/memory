@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0167 — Supprimer la branche distante remet la plage d'un push à la branche par défaut : ce qui a été poussé peut se réécrire sans que le contrôle le voie
 
-> statut : ouvert · origine : J-2026-11-11-G · lu : backlog@6c37c58c
+> statut : fait · origine : J-2026-11-11-G · lu : backlog@6c37c58c · ref : J-2026-11-20-AQ
 
 Le hook avant push juge la plage qui part contre la branche distante ;
 une branche absente se juge contre la branche par défaut. Supprimer la
@@ -21,4 +21,4 @@ issue.
 
 ## Satisfait quand
 
-- [ ] supprimer une branche distante sans fusion ne permet plus de réécrire ce qui y avait été poussé sans que le contrôle le voie, ou ce risque est accepté et dit au refus
+- [x] supprimer une branche distante sans fusion ne permet plus de réécrire ce qui y avait été poussé sans que le contrôle le voie, ou ce risque est accepté et dit au refus

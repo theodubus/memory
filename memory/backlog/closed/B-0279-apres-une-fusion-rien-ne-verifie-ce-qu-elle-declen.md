@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0279 — Après une fusion, rien ne vérifie ce qu'elle déclenche : un déploiement ou une publication en échec passe inaperçu
 
-> statut : ouvert · origine : J-2026-11-17-H · ref : D-0129, B-0200 · lu : backlog@1df796e8
+> statut : fait · origine : J-2026-11-17-H · ref : D-0129, B-0200, T-0064, J-2026-11-20-AN · lu : backlog@1df796e8
 
 Théo veut dans le produit (D-0129), sous une forme générale, ce que le
 skill `delegate-lot` fait dans l'atelier : après la fusion, vérifier que
@@ -15,4 +15,4 @@ lot. Le récap dit si les workflows lancés par la fusion ont réussi.
 
 ## Satisfait quand
 
-- [ ] après une fusion par l'agent, l'humain apprend dans le récap si ce qu'elle a déclenché a réussi
+- [x] après une fusion par l'agent, l'humain apprend dans le récap si ce qu'elle a déclenché a réussi

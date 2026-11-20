@@ -488,6 +488,19 @@ class TestLaConduiteDUnLot(unittest.TestCase):
         for lg, avant in (("fr", "sous Claude Code, `send_later`"), ("en", "under Claude Code, `send_later`")):
             self.assertNotIn(avant, " ".join(self.texte(lg).split()), lg)
 
+    def test_apres_sa_fusion_l_agent_attend_les_workflows_qu_elle_lance(self):
+        """T-0064 (B-0279) : l'agent qui fusionne sa pull request, quand la
+        politique le permet, attend les workflows que la fusion lance sur la
+        branche par défaut, et le récap dit s'ils ont réussi."""
+        self.lire({
+            "fr": ["l'agent, la sienne, si la politique le permet",
+                   "Il attend de même les workflows que la fusion lance sur la branche par défaut ; le récap dit "
+                   "s'ils ont réussi."],
+            "en": ["the agent, its own, if the policy allows it",
+                   "It then waits likewise for the workflows the merge starts on the default branch; the recap "
+                   "says whether they succeeded."],
+        })
+
     def test_un_ensemble_qu_une_session_ne_mene_pas_se_forme_en_jalon(self):
         """T-0073 (B-0233) : à la formation d'un lot, un ensemble trop
         grand pour une session devient un jalon, ses lots dessous."""
