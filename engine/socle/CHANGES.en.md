@@ -43,6 +43,22 @@ tools = ['mcp__github__(delete_file|create_repository|fork_repository|create_rel
 
 A project that has already written this line has nothing to do.
 
+## 2026-11-20-p — Deleting the remote branch no longer resets the range of a push
+
+The pre-push hook judges the outgoing range from the remote commit; a
+branch absent on the remote was judged against the default branch, where
+a test that only the branch added has no earlier value. Deleting the
+remote branch thus let what had been pushed to it be rewritten. When it
+lets a push through, the hook now keeps the commit pushed to each remote
+reference, in `.git/socle/pushed.json` (the git common directory of the
+worktrees, not versioned); a vanished remote branch whose commit is not
+in the default branch is judged from it, and the refusal says that
+deleting the branch is not a way out. A merged branch, restarted from the
+default branch under the same name, is judged as a new branch; a clone
+that has pushed nothing since the update, as before.
+
+To do: nothing.
+
 ## 2026-11-20-o — The review folder of a branch that merged the default branch shows only the batch
 
 An already pushed branch that merged the default branch during a batch

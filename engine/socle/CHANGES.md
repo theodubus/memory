@@ -45,6 +45,23 @@ tools = ['mcp__github__(delete_file|create_repository|fork_repository|create_rel
 
 Un projet qui a déjà écrit cette ligne n'a rien à faire.
 
+## 2026-11-20-p — Supprimer la branche distante ne remet plus à neuf la plage d'un push
+
+Le hook avant push juge la plage qui part depuis le commit distant ; une
+branche absente en face se jugeait contre la branche par défaut, où un
+test que seule la branche a ajouté n'a pas de valeur antérieure. Supprimer
+la branche distante laissait donc réécrire ce qui y avait été poussé. Le
+hook garde désormais, quand il laisse passer un push, le commit poussé
+vers chaque référence distante, dans `.git/socle/pushed.json` (le
+répertoire git commun des worktrees, non versionné) ; une branche
+distante disparue dont ce commit n'est pas dans la branche par défaut se
+juge depuis lui, et le refus dit que supprimer la branche n'est pas une
+issue. Une branche fusionnée, repartie de la branche par défaut sous le
+même nom, se juge comme une branche neuve ; un clone qui n'a rien poussé
+depuis la mise à jour, comme avant.
+
+À faire : rien.
+
 ## 2026-11-20-o — Le dossier de la revue d'une branche qui a fusionné la branche par défaut ne montre que le lot
 
 Une branche déjà poussée qui fusionnait la branche par défaut en cours

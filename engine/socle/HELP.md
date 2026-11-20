@@ -440,6 +440,9 @@ des fichiers protégés, à la fin du tour, au commit et dans la CI.
 défaut, publier, régler un service, supprimer une branche distante, poser
 une étiquette (en session cloud, l'agent ne pousse que sa propre branche) : l'agent l'inscrit au backlog avec son
 mode d'emploi, et l'état le liste dans « ce qui revient à l'humain ».
+Supprimer la branche distante d'un travail non fusionné ne remet pas sa
+plage à neuf : le hook avant envoi du clone qui l'a poussée juge la suite
+depuis le dernier commit qu'il y a poussé.
 
 **Commiter soi-même.** Les mêmes contrôles s'appliquent : une fonction
 publique ajoutée est nommée par un test, ou dispensée dans le message du

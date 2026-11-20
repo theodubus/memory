@@ -427,6 +427,9 @@ commit and in CI.
 publishing, setting up a service, deleting a remote branch, setting a tag
 (in a cloud session, the agent only pushes its own branch): the agent records it in the backlog with
 how to do it, and the state lists it under what is up to the human.
+Deleting the remote branch of unmerged work does not reset its range:
+the pre-push hook of the clone that pushed it judges what follows from
+the last commit it pushed there.
 
 **Committing oneself.** The same checks apply: a public function added is
 named by a test, or waived in the commit message
