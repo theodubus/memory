@@ -17,7 +17,11 @@ worktrees des sous-agents (B-0217), signale un lot trop long (B-0233),
 consigne une décision donnée sans question (B-0185), donne au relecteur
 d'une demande le modèle le plus capable (B-0243), laisse pousser un test
 changé sous sa demande en attente (B-0140), corrige le skill socle-batch
-(B-0226, B-0242, B-0278), et dit à l'agent de chess ce qui change pour lui, comme Théo
+(B-0226, B-0242, B-0278), garde le dièse final d'un titre (B-0203), fait sauter
+à `socle new` les identifiants d'un correctif suivi (B-0280), répare par `socle renumber` une
+collision née d'un rebase (B-0176), lie la demande d'une pull request dans le résumé de sa CI
+(B-0274), ôte du dossier de la revue ce qu'une fusion de la branche par défaut a apporté
+(B-0241), et dit à l'agent de chess ce qui change pour lui, comme Théo
 l'a demandé. Il est cumulatif : chess n'est mis à jour qu'une fois l'ensemble à finir avant les nouvelles fonctions fait, et
 chaque lot qui change ce que chess reçoit le complète d'ici là
 (J-2026-11-13-L).
@@ -113,6 +117,16 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 41. Un test supprimé, ou dont la valeur attendue change, ou un cas d'un fichier de cas déclaré, qu'une demande en attente nomme se commite et se pousse dès que cette demande est poussée telle quelle, si main exige la CI du socle avant toute fusion : la CI le refuse jusqu'à ma réponse, et je le lis dans la pull request. Sans cette exigence, le commit et la CI attendent ma réponse, comme avant. Un commit sans demande poussée reste refusé.
 
 42. Le skill socle-batch : une attente annoncée a son réveil (send_later) en session cloud, le seul lieu où l'outil existe ; ailleurs, ta ligne « Ensuite : » la dit, et je te relance ; un ensemble qu'une session ne mène pas se forme en jalon, ses lots dessous ; les constats de la revue qui ne bloquent pas suivent le tri de socle-review, au backlog ou écartés, au lieu d'aller tous au backlog ; la consigne de tes sous-agents porte la ligne « Économie : lire ce qui sert, pas les fichiers entiers ; pas de suite complète relancée sans raison » ; un sous-agent ne reçoit jamais Fable, sauf si je le veux. Le skill socle-review : un lot que j'ai fait implémenter sur Fable te fait me demander, avant la revue, si je veux aussi Fable pour son relecteur. Ce sont des copies protégées : elles sont dans la demande de l'installeur.
+
+43. Un titre d'entrée qui finit par un dièse collé à un mot le garde (« … dans un projet C# ») ; seule une fermeture précédée d'une espace (## Titre ##) se retire, comme en Markdown. Les empreintes d'entrée ne changent pas.
+
+44. socle new ne reprend plus un identifiant qu'un correctif suivi du dépôt (*.patch, *.diff) crée dans la mémoire : les commits d'une passation rangés en correctifs gardent leurs numéros, et une entrée écrite avant leur application en prend un autre. socle next-id ne le fait pas encore.
+
+45. socle renumber <ID> répare une collision née d'un rebase ou d'un cherry-pick : des deux entrées du même identifiant, il renumérote celle qui manque à la base ou à ton dernier commit poussé, et ne change que les lignes que ta branche a ajoutées ; l'autre entrée et ses mentions restent. Plus de renommage à la main.
+
+46. Le résumé de la CI d'une pull request (la suite du projet, dans l'onglet de l'exécution) donne le lien d'une demande posée sur sa branche : il vise la tête de la pull request, et non plus main.
+
+47. Le dossier de socle review d'une branche qui a fusionné main en cours de lot ne montre plus le code ni les entrées closes que la fusion a apportés : le lot se mesure depuis cette fusion refaite sur son début (git merge-tree, git 2.38), et une note du dossier le dit ; une seconde revue (--since) de même.
 
 ## La mise à jour
 

@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0007 — Lot des identifiants et de ce qu'une branche ajoute : la renumérotation après un rebase, le titre qui finit par un dièse, les identifiants d'un correctif, le dossier de la revue et le lien d'une demande sur une pull request
 
-> statut : en cours · origine : J-2026-11-15-J · après : L-0006, T-0021, T-0065, T-0019, T-0085, T-0022 · lu : backlog@19378efe · ancien : B-0237
+> statut : fait · origine : J-2026-11-15-J · ref : J-2026-11-20-AL · après : L-0006, T-0021, T-0065, T-0019, T-0085, T-0022 · lu : backlog@19378efe · ancien : B-0237
 
 L'historique des branches et les identifiants de la mémoire : la
 plage qu'un push juge quand la branche distante a disparu (B-0167), la
