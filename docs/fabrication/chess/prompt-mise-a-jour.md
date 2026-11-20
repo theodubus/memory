@@ -11,7 +11,13 @@ constats (B-0223), et fait juger au hook le corps d'une fonction sans
 parenthèses et la suppression du projet par d'autres programmes que
 `rm`, `mv`, `git clean` et `find` (B-0234), borne le hook aux formes
 qu'un agent écrit (B-0261), ne fait plus ni lister ni signaler une forme
-qu'il ne juge pas (B-0276), et dit à l'agent de chess ce qui change pour lui, comme Théo
+qu'il ne juge pas (B-0276), laisse remettre un fichier protégé qu'une
+demande ne cite que dans un texte recopié (B-0227), fait ignorer les
+worktrees des sous-agents (B-0217), signale un lot trop long (B-0233),
+consigne une décision donnée sans question (B-0185), donne au relecteur
+d'une demande le modèle le plus capable (B-0243), laisse pousser un test
+changé sous sa demande en attente (B-0140), corrige le skill socle-batch
+(B-0226, B-0242, B-0278), et dit à l'agent de chess ce qui change pour lui, comme Théo
 l'a demandé. Il est cumulatif : chess n'est mis à jour qu'une fois l'ensemble à finir avant les nouvelles fonctions fait, et
 chaque lot qui change ce que chess reçoit le complète d'ici là
 (J-2026-11-13-L).
@@ -93,6 +99,20 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 34. Le hook de l'agent juge les filtres d'un find par leur conjonction, et le motif d'un -path sous ses départs : find . -name '*.json' -path './build/*' -delete passe désormais ; ce qu'une conjonction atteint reste refusé.
 
 35. Le hook de l'agent lit la branche courante dans git push -u origin "$(git branch --show-current)", et dans les mêmes formes avec $(git rev-parse --abbrev-ref HEAD) ou $(git symbolic-ref --short HEAD), entre accents graves ou par une variable : le push passe depuis ta branche de travail, et reste refusé depuis la branche par défaut, ou quand la même commande change de dossier, de dépôt ou de branche avant lui. Toute autre substitution dans un push reste refusée.
+
+36. Le hook de l'agent te laisse remettre à son état du dernier commit un fichier protégé qu'aucune demande n'approuve quand une demande en attente ne cite son dossier que dans un texte recopié entre accents graves ou dans un bloc de code (une valeur attendue, une ligne de sortie) : un dossier qui n'y est qu'un mot n'est plus une citation. Le fichier nommé en toutes lettres, et son dossier cité dans la prose ou seul entre ses accents graves, l'épargnent toujours.
+
+37. L'installeur ajoute /.claude/worktrees/ au .gitignore, sauf si une ligne l'y ignore déjà, lui ou .claude/ : les copies isolées où travaillent tes sous-agents ne paraissent plus dans git status. La ligne arrive avec la mise à jour : commite-la avec elle.
+
+38. L'état, avec ce qui demande d'agir, et le rappel de fin de tour, sous l'ordre du backlog, avertissent d'un lot ouvert qui attend encore plus de tâches (ouvertes, en cours ou bloquées) que [batches] max_tasks des garde-fous, 9 quand tes garde-fous ne l'écrivent pas : une ligne nomme chaque lot et son compte. Coupe un tel lot à sa prochaine annonce, ou fais-en un jalon et forme ses lots dessous, comme le dit désormais le skill socle-batch. C'est un avertissement, jamais un échec ; baisser le seuil est libre, le relever exige une demande.
+
+39. Une décision que je te donne de moi-même, sans que tu me l'aies demandée (une règle, une interdiction, « supprime ce test »), se consigne sans question inventée : python3 .socle/socle decision "<la décision en une phrase>" --unprompted --relayed --by <mon nom> --quote-file <le fichier de mon texte exact>. Elle est validée, et autorise ce qu'elle nomme comme une demande validée ; son titre ne cite pas seul un identifiant que mon texte ne cite pas. Le skill socle-request, copie protégée, le dit : il est dans la demande de l'installeur.
+
+40. Le relecteur à froid d'une demande reçoit à son lancement (model) le modèle le plus capable jusqu'à Opus, quel que soit celui de ta session, sur la dernière version de sa famille ; Fable seulement si je le demande ; ton récap nomme ce modèle (Relecture à froid (<modèle>) : …). Le skill socle-request, copie protégée, change : il est dans la demande de l'installeur.
+
+41. Un test supprimé, ou dont la valeur attendue change, ou un cas d'un fichier de cas déclaré, qu'une demande en attente nomme se commite et se pousse dès que cette demande est poussée telle quelle, si main exige la CI du socle avant toute fusion : la CI le refuse jusqu'à ma réponse, et je le lis dans la pull request. Sans cette exigence, le commit et la CI attendent ma réponse, comme avant. Un commit sans demande poussée reste refusé.
+
+42. Le skill socle-batch : une attente annoncée a son réveil (send_later) en session cloud, le seul lieu où l'outil existe ; ailleurs, ta ligne « Ensuite : » la dit, et je te relance ; un ensemble qu'une session ne mène pas se forme en jalon, ses lots dessous ; les constats de la revue qui ne bloquent pas suivent le tri de socle-review, au backlog ou écartés, au lieu d'aller tous au backlog ; la consigne de tes sous-agents porte la ligne « Économie : lire ce qui sert, pas les fichiers entiers ; pas de suite complète relancée sans raison » ; un sous-agent ne reçoit jamais Fable, sauf si je le veux. Le skill socle-review : un lot que j'ai fait implémenter sur Fable te fait me demander, avant la revue, si je veux aussi Fable pour son relecteur. Ce sont des copies protégées : elles sont dans la demande de l'installeur.
 
 ## La mise à jour
 
