@@ -535,12 +535,12 @@ class TestLaRevue(unittest.TestCase):
 
     def test_la_passe_ecrite_se_commite_et_le_dossier_se_produit_sur_la_branche_d_integration(self):
         """T-0055 : écrite sans commit là où `socle review` tourne, la passe se
-        perdait, et la suivante récrivait « Passe 1 » sans recul exigé."""
+        perdait, et la suivante récrivait « Passe 1 »."""
         attendus = {
             "fr": ("Commiter la passe écrite, et ce qu'on y consigne : sinon, elle se perd là où `socle review` a "
-                   "tourné.", "dont la dernière passe refuserait la suivante, et montre ce que montre ce refus."),
+                   "tourné.",),
             "en": ("Commit the written pass, and what is recorded in it: otherwise, it is lost where `socle review` "
-                   "ran.", "whose last pass would refuse the next one, and shows what that refusal shows."),
+                   "ran.",),
         }
         for lg, phrases in attendus.items():
             texte = " ".join(self.texte(lg).split())

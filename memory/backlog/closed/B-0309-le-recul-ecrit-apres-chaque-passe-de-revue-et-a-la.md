@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0309 — Le recul écrit après chaque passe de revue et à la clôture d'un lot n'a jamais arrêté un lot : quatorze reculs, tous « continuer » ; son obligation pèse sur chaque lot et chaque projet installé
 
-> statut : ouvert · origine : J-2026-11-20-D · ref : D-0144 · lu : backlog@c64d1644
+> statut : fait · origine : J-2026-11-20-D · ref : D-0144, D-0148, ADR-0100, J-2026-11-20-Q · lu : backlog@c64d1644
 
 Mesuré le 20 novembre (J-2026-11-20-D) : depuis ADR-0084, quatorze
 passes de revue sur neuf lots, quatorze reculs, tous « continuer » ;
@@ -17,4 +17,4 @@ sans la catégorie des formes du shell (ADR-0098, D-0128).
 
 ## Satisfait quand
 
-- [ ] une passe de revue et la clôture d'un lot relu ne demandent plus de recul, et l'historique de ses passes reste lisible dans le lot
+- [x] une passe de revue et la clôture d'un lot relu ne demandent plus de recul, et l'historique de ses passes reste lisible dans le lot
