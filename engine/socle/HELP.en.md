@@ -300,7 +300,11 @@ word for word.
 text of its answer, is answered in the conversation; the agent records it
 at once, word for word, like a request. What needs context, approving a
 document included, comes as a request, with its link; never in the
-agent's question widget, which the hook refuses.
+agent's question widget, which the hook refuses. What you decide of your
+own accord, without being asked (a rule, a prohibition, "delete this
+test"), it records the same way, your exact text, with no question and no
+answer to choose (`socle decision --unprompted`): the decision counts as
+approved for what it names.
 
 **Framing questions.** When a need's specification depends on an
 intention the memory does not state, the agent asks open questions, each

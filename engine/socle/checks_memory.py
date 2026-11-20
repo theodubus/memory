@@ -617,9 +617,11 @@ def prive(ctx, r):
 
 
 # Une décision prise en séance, et sa question : la conversation que
-# l'humain a lue, recopiée telle quelle.
+# l'humain a lue, recopiée telle quelle ; ou la décision qu'il a donnée de
+# lui-même, son texte exact (B-0185).
 SEANCE = re.compile(r"(?m)^> .*\b(?:forme : séance|form: session)\b")
-QUESTION_SEANCE = re.compile(r"(?ms)^## (?:Question posée|Question asked)\n.*?(?=^## |\Z)")
+QUESTION_SEANCE = re.compile(r"(?ms)^## (?:Question posée|Question asked|Décision donnée|Decision given)\n.*?"
+                             r"(?=^## |\Z)")
 
 
 def sans_question_de_seance(texte: str) -> str:

@@ -7,6 +7,22 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-20-e — `socle decision --unprompted` records a decision the human gives without being asked
+
+`socle decision` required a base answer or an option named by the
+question: a decision the human gave of their own accord was recorded
+under `approve`, with an invented "question asked". `socle decision "<the
+decision in one sentence>" --unprompted --relayed --by <name> --quote-file
+<file>` writes it with no question and no answer to choose: their exact
+text under the `Decision given` section, and the `approve` answer that the
+engine sets, their text quoted. It authorizes what it names as an approved
+request does. The title does not cite on its own an identifier the
+human's text does not cite. The `socle-request` skill and the guide say
+so.
+
+To do: nothing; the `socle-request` skill is a protected copy, in the
+installer's request.
+
 ## 2026-11-20-d — The state and the end-of-turn reminder warn about an open batch that waits for more tasks than one session carries
 
 An open batch that still waits for more open, in-progress or blocked

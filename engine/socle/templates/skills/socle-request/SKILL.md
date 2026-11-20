@@ -101,6 +101,16 @@ réponse mot pour mot ; `--about <chemin>` désigne ce qu'elle approuve :
 python3 .socle/socle decision "<question>" <réponse> --relayed --by <nom> --quote-file <fichier>
 ```
 
+Une décision que l'humain donne de lui-même, sans qu'on la lui ait
+demandée (une règle, une interdiction, « supprime ce test »), se consigne
+sans question inventée ni réponse à choisir : son texte exact, sous un
+titre qui la dit en une phrase sans rien nommer qu'il ne nomme. Elle est
+validée, et autorise ce qu'elle nomme comme une demande validée :
+
+```sh
+python3 .socle/socle decision "<la décision en une phrase>" --unprompted --relayed --by <nom> --quote-file <fichier>
+```
+
 Un contenu montré dans la conversation que l'humain valide (un format, un
 exemple, un texte) s'écrit d'abord tel quel dans le dépôt, puis la
 décision le désigne (`--about <chemin>`), et les tâches qui en découlent

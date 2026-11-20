@@ -3274,6 +3274,36 @@ MESSAGES: dict[str, str] = {
     "mot pour mot":
         "record a decision taken in session, with the human's answer; the agent relays (--relayed) your answer word "
         "for word",
+    "le titre doit énoncer la décision en une phrase":
+        "the title must state the decision in one sentence",
+    "une décision donnée se consigne avec le texte exact de l'humain (--quote ou --quote-file)":
+        "a given decision is recorded with the human's exact text (--quote or --quote-file)",
+    "le titre cite {ids}, que le texte de l'humain ne cite pas : le citer avec son empreinte (`ID@…`, que donne "
+    "`socle show`), ou s'en tenir à ce qu'il nomme":
+        "the title cites {ids}, which the human's text does not cite: cite it with its fingerprint (`ID@…`, given by "
+        "`socle show`), or keep to what the text names",
+    "refus : une décision donnée sans question n'a ni réponse à choisir ni question posée ; son texte exact va dans "
+    "--quote ou --quote-file":
+        "refused: a decision given without a question has neither an answer to choose nor a question asked; its "
+        "exact text goes in --quote or --quote-file",
+    "décision donnée par l'humain consignée : {chemin}, validée, sa réponse dans {reponse} — à commiter avec la "
+    "suite.":
+        "decision given by the human recorded: {chemin}, approved, its answer in {reponse} — to commit with the "
+        "rest.",
+    "refus : la réponse de l'humain manque ; une décision qu'il a donnée sans question se consigne avec "
+    "--unprompted":
+        "refused: the human's answer is missing; a decision they gave without a question is recorded with "
+        "--unprompted",
+    "une décision que l'humain a donnée de lui-même, sans question : son texte exact (--quote ou --quote-file), "
+    "sans réponse à choisir":
+        "a decision the human gave on their own, without a question: their exact text (--quote or --quote-file), "
+        "with no answer to choose",
+    "valeur attendue changée sous une décision que l'humain a donnée de lui-même sans nommer le test":
+        "expected value changed under a decision the human gave on their own without naming the test",
+    "une valeur attendue changée sous une décision que l'humain a donnée de lui-même et qui nomme le test, "
+    "consignée par `socle decision --unprompted`, passe la CI":
+        "an expected value changed under a decision the human gave on their own and that names the test, recorded "
+        "by `socle decision --unprompted`, passes the CI",
     "consigner une décision sans --relayed":
         "recording a decision without --relayed",
     "décision en séance consignée : {chemin}, et sa réponse « {answer} » — à commiter avec la suite.":

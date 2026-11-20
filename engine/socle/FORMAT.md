@@ -462,6 +462,16 @@ par des empreintes, ni son titre ce que la question cite ; un identifiant
 que seul le titre cite se prouve, et `socle decision` refuse de l'écrire
 sans empreinte, la réponse écrite ne laissant plus corriger la décision.
 
+Une décision que l'humain donne de lui-même, sans qu'on la lui ait
+demandée, est une décision de séance sans question : `socle decision
+"<la décision en une phrase>" --unprompted --relayed --by <nom>
+--quote-file <fichier>` l'écrit avec la section `Décision donnée` à la
+place de `Question posée`, qui garde son texte exact, et sa réponse, la
+réponse de base `valider`, que le moteur pose sans qu'on la choisisse, son
+texte cité. Elle autorise ce qu'elle nomme comme une demande validée. Ce
+texte, comme une question posée, n'a pas à prouver ses lectures ; un
+identifiant que seul le titre cite se prouve.
+
 ## La zone privée
 
 Une mémoire privée est une option, choisie par l'humain dans la politique

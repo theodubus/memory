@@ -560,6 +560,21 @@ def _pousser_la_reponse(a: "Atelier", c: Path, avec_le_test: bool, cle: bool = F
     return r.returncode, r.stdout + r.stderr
 
 
+def _test_change_sous_une_decision_donnee(a: "Atelier", c: Path, texte: str) -> str:
+    """Une décision que l'humain donne de lui-même, `texte`, consignée par
+    `socle decision --unprompted` (B-0185), puis la valeur attendue de
+    `test_double` changée : ce qu'en dit la CI."""
+    (c / "citation.txt").write_text(texte)
+    r = a.socle(c, "decision", "Comparer le test du module à un flottant", "--unprompted", "--relayed", "--by",
+                "Théo", "--quote-file", "citation.txt")
+    (c / "citation.txt").unlink()
+    if r.returncode != 0:
+        return r.stdout + r.stderr
+    remplacer(c, "tests/test_calc.py", "self.assertEqual(double(2), 4)", "self.assertEqual(double(2), 4.0)")
+    maj_memoire(c)
+    return etage_ci(a, c)
+
+
 def _pousser_des_etapes_lentes(a: "Atelier", c: Path) -> tuple[int, str]:
     """Un test d'un peu plus d'une seconde, commité, puis poussé par le hook
     avant envoi, qui lance les étapes rapides : son code et sa sortie."""
@@ -1631,6 +1646,11 @@ def _cas() -> list[Cas]:
     def _(a, c):
         # B-0215 : le cliquet ne compte lui aussi que les validations de sa plage.
         return _pousser_la_reponse(a, c, avec_le_test=False, cle=True)[1]
+
+    @defaut("valeur-attendue-decision-donnee-sans-le-test", "valeur attendue changée sous une décision que "
+            "l'humain a donnée de lui-même sans nommer le test", "ci", "tests.attendus")
+    def _(a, c):
+        return _test_change_sous_une_decision_donnee(a, c, "Compare le test du module à un flottant.")
 
     @defaut("test-supprime", "test supprimé sans validation", "ci", "tests.attendus")
     def _(a, c):
@@ -3079,6 +3099,11 @@ def _temoins() -> list[tuple[str, Callable]]:
         remplacer(c, "tests/test_calc.py", "self.assertEqual(double(2), 4)", "self.assertEqual(double(2), 4.0)")
         maj_memoire(c)
         return etage_ci(a, c)
+
+    @temoin("une valeur attendue changée sous une décision que l'humain a donnée de lui-même et qui nomme le test, "
+            "consignée par `socle decision --unprompted`, passe la CI")
+    def _(a, c):
+        return _test_change_sous_une_decision_donnee(a, c, "Change test_double : il compare à un flottant.")
 
     @temoin("une réponse « valider » poussée avec le test qu'elle autorise à changer part sans avertissement")
     def _(a, c):

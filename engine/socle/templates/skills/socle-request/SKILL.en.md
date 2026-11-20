@@ -101,6 +101,16 @@ of the answer, is recorded at once, with their answer word for word;
 python3 .socle/socle decision "<question>" <answer> --relayed --by <name> --quote-file <file>
 ```
 
+A decision the human gives of their own accord, without being asked (a
+rule, a prohibition, "delete this test"), is recorded with no invented
+question and no answer to choose: their exact text, under a title that
+states it in one sentence and names nothing they do not name. It is
+approved, and authorizes what it names as an approved request does:
+
+```sh
+python3 .socle/socle decision "<the decision in one sentence>" --unprompted --relayed --by <name> --quote-file <file>
+```
+
 Content shown in the conversation that the human approves (a format, an
 example, a text) is first written as is in the repository, then the
 decision designates it (`--about <path>`), and the tasks that follow from

@@ -307,6 +307,10 @@ le texte de sa réponse, se répond dans la conversation ; l'agent la
 consigne aussitôt, mot pour mot, comme une demande. Ce qui demande du
 contexte, approuver un document compris, arrive en demande, avec son
 lien ; jamais dans le widget de questions de l'agent, que le hook refuse.
+Ce que vous décidez de vous-même, sans qu'il l'ait demandé (une règle, une
+interdiction, « supprime ce test »), il le consigne de même, votre texte
+exact, sans question ni réponse à choisir (`socle decision --unprompted`) :
+la décision vaut validée pour ce qu'elle nomme.
 
 **Des questions de cadrage.** Quand la spécification d'un besoin dépend
 d'une intention que la mémoire ne dit pas, l'agent pose des questions

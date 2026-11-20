@@ -117,8 +117,10 @@ PARAGRAPHES_CONTEXTE = {
     "question": {"fr": "La question", "en": "The question"},
 }
 # La section d'une décision prise en séance : la question telle
-# que l'humain l'a lue dans la conversation.
-SECTIONS_SEANCE = {"question-posee": {"fr": "Question posée", "en": "Question asked"}}
+# que l'humain l'a lue dans la conversation ; ou, quand il l'a donnée de
+# lui-même, sans question, son texte exact (B-0185).
+SECTIONS_SEANCE = {"question-posee": {"fr": "Question posée", "en": "Question asked"},
+                   "decision-donnee": {"fr": "Décision donnée", "en": "Decision given"}}
 REPONSES = {
     "valider": {"fr": "valider", "en": "approve"},
     "refuser": {"fr": "refuser", "en": "reject"},

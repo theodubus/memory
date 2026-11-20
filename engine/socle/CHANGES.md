@@ -7,6 +7,21 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-20-e — `socle decision --unprompted` consigne une décision que l'humain donne sans qu'on la lui ait demandée
+
+`socle decision` exigeait une réponse de base ou une option nommée par la
+question : une décision que l'humain donnait de lui-même se consignait
+sous `valider`, avec une « question posée » inventée. `socle decision "<la
+décision en une phrase>" --unprompted --relayed --by <nom> --quote-file
+<fichier>` l'écrit sans question ni réponse à choisir : son texte exact
+sous la section `Décision donnée`, et la réponse `valider` que le moteur
+pose, son texte cité. Elle autorise ce qu'elle nomme comme une demande
+validée. Le titre ne cite pas seul un identifiant que le texte de
+l'humain ne cite pas. Le skill `socle-request` et le guide le disent.
+
+À faire : rien ; le skill `socle-request` est une copie protégée, dans la
+demande de l'installeur.
+
 ## 2026-11-20-d — L'état et le rappel de fin de tour avertissent d'un lot ouvert qui attend plus de tâches qu'une session n'en mène
 
 Un lot ouvert qui attend encore plus de tâches ouvertes, en cours ou
