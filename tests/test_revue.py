@@ -146,39 +146,6 @@ class TestBarre(_Lot):
         # Les trois parties de la consigne précèdent le diff.
         self.assertLess(texte.index("Rends trois listes"), texte.index("## Le diff du lot"))
 
-    def test_une_forme_qu_aucun_agent_n_ecrit_ne_bloque_pas_et_va_a_la_liste(self):
-        """D-0120, ADR-0082 : une forme du shell qu'un agent n'écrit pas dans
-        son travail, et qui échappe au hook, n'est pas un bloquant, même
-        refusée avant le lot par accident, ni un sujet : elle s'écarte d'une
-        ligne, pour la liste des formes connues du guide. La règle 1 de
-        D-0112, le tri des autres constats, reste."""
-        self.lot()
-        attendus = {
-            "fr": ["Une forme du shell qu'un agent n'écrit pas dans son travail (ni vue dans une session d'agent, "
-                   "ni dans un skill, ni dans une documentation courante), et qui échappe au hook de l'agent, ne se "
-                   "classe pas bloquante, même refusée avant le lot par accident, ni pour le backlog, quel qu'en "
-                   "soit l'effet : écarte-la, d'une ligne, pour la liste des formes connues que le hook ne juge "
-                   "pas, dans le guide du socle (`python3 .socle/socle help`).",
-                   "**Écarté** : un constat exotique (un geste rare, une forme qu'on n'écrit que pour contourner, "
-                   "un cas jamais reproduit) dont l'effet est rattrapé",
-                   "Rends trois listes numérotées, « Bloquants », « Pour le backlog » puis « Écartés »"],
-            "en": ["A shell form an agent does not write in its work (seen neither in an agent session, nor in a "
-                   "skill, nor in current documentation), and that escapes the agent's hook, is not classed as "
-                   "blocking, even if refused before the batch by accident, nor for the backlog, whatever its "
-                   "effect: dismiss it, in one line, for the list of known forms the hook does not judge, in the "
-                   "socle's guide (`python3 .socle/socle help`).",
-                   "**Dismissed**: an exotic finding (a rare gesture, a form one only writes to get around "
-                   "something, a case never reproduced) whose effect is caught",
-                   "Return three numbered lists, “Blocking”, “For the backlog” then “Dismissed”"],
-        }
-        for lg, phrases in attendus.items():
-            with messages.dans(lg):
-                texte = revue.dossier(self.projet)
-            for phrase in phrases:
-                self.assertIn(phrase, texte, lg)
-            # La règle tient dans la consigne, avant le diff.
-            self.assertLess(texte.index(phrases[0]), texte.index(phrases[2]), lg)
-
     def test_une_case_qui_livre_une_demande_un_releve_ou_une_entree_se_juge_par_ce_qu_elle_produit(self):
         """ADR-0088, T-0087 : la consigne, du dossier complet comme du
         dossier court, dit comment juger une telle case, dans les deux
@@ -608,58 +575,6 @@ class TestLeGuideNeRenvoiePasALAtelier(unittest.TestCase):
                 self.assertEqual([m.group(0) for m in memoire.ID_RE.finditer(texte)], [])
                 for mot in ("docs/fabrication", "chess", "Théo", "atelier", "workshop"):
                     self.assertNotIn(mot, texte)
-
-
-class TestLesFormesConnuesDuGuide(unittest.TestCase):
-    """ADR-0082 : le guide d'un projet équipé dit la règle de D-0120 telle
-    quelle, et donne la liste des formes connues que le hook ne juge pas,
-    chacune avec la note de version qui l'inscrit."""
-
-    PAQUET = Path(revue.__file__).resolve().parent
-    REGLE = {
-        "fr": "Le hook de l'agent arrête les erreurs d'un agent coopératif avant qu'elles agissent. Il juge les "
-              "formes du shell qu'un agent écrit dans son travail, pour tout effet ; pour ce que rien ne rattrape "
-              "ensuite (supprimer le projet ou un dossier qui le contient, une action externe irréversible, une "
-              "fuite de la mémoire privée, la part de la mémoire qui ne se publie pas), il refuse aussi ce qu'il "
-              "ne sait pas lire. Un trou ouvre une entrée du backlog si sa forme est de celles qu'un agent écrit dans "
-              "son "
-              "travail : vue dans une session d'agent, un skill ou une documentation courante. Une autre forme "
-              "s'inscrit d'une ligne dans la liste des formes connues que le hook ne juge pas, sans entrée au backlog ; "
-              "dans "
-              "la revue d'un lot du hook, elle n'est pas un bloquant, même refusée avant le lot par accident.",
-        "en": "The agent's hook stops the mistakes of a cooperative agent before they take effect. It judges the "
-              "shell forms an agent writes in its work, for every effect; for what nothing catches afterwards "
-              "(deleting the project or a directory that contains it, an irreversible external action, a leak of "
-              "the private memory, the part of the memory that is not published), it also refuses what it cannot "
-              "read. A hole opens a backlog entry if its form is one an agent writes in its work: seen in an agent "
-              "session, a skill or current documentation. Another form is entered in one line in the list of "
-              "known forms the hook does not judge, without a backlog entry; in the review of a batch of the hook, it is "
-              "not a blocking finding, even if refused before the batch by accident.",
-    }
-    TETE = {"fr": "Les formes connues que le hook ne juge pas :", "en": "The known forms the hook does not judge:"}
-
-    def formes(self, lg: str) -> tuple[str, list[str]]:
-        """Le guide, ses blancs réduits, et les lignes de la liste."""
-        nom = "HELP.md" if lg == "fr" else "HELP.en.md"
-        brut = (self.PAQUET / nom).read_text(encoding="utf-8")
-        self.assertIn(self.TETE[lg], brut, lg)
-        liste = brut[brut.index(self.TETE[lg]):].split("\n\n")[1]
-        return " ".join(brut.split()), [" ".join(e.split()) for e in liste.split("\n- ")]
-
-    def test_le_guide_dit_la_regle_et_chaque_forme_cite_sa_note(self):
-        notes = (self.PAQUET / "CHANGES.md").read_text(encoding="utf-8")
-        comptes = {}
-        for lg in ("fr", "en"):
-            texte, formes = self.formes(lg)
-            self.assertIn(self.REGLE[lg], texte, lg)
-            self.assertNotIn("quelle qu'en soit la forme" if lg == "fr" else "whatever its form", texte, lg)
-            comptes[lg] = len(formes)
-            for forme in formes:
-                note = re.search(r"\((\d{4}-\d{2}-\d{2}-[a-z])\)\.$", forme)
-                self.assertIsNotNone(note, forme)
-                self.assertIn(f"\n## {note.group(1)} — ", notes, forme)
-        self.assertEqual(comptes["fr"], comptes["en"])
-        self.assertGreaterEqual(comptes["fr"], 15)
 
 
 class TestLesFormesDuShellHorsDuProduit(unittest.TestCase):

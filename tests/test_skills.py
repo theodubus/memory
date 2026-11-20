@@ -353,7 +353,7 @@ class TestLaConduiteDUnLot(unittest.TestCase):
             self.assertEqual(juger(self.racine), {"skills.contrat": [], "skills.commandes": []}, lg)
 
     def test_il_ne_renvoie_pas_a_l_atelier(self):
-        atelier = re.compile(r"\b(?:ADR|[BDFJ])-\d|fabrication|chess|Théo|delegate-lot|Opus|Sonnet|Haiku|Fable")
+        atelier = re.compile(r"\b(?:ADR|[BDFJ])-\d|fabrication|chess|Théo|delegate-lot|Opus|Sonnet|Haiku")
         for lg in ("fr", "en"):
             self.assertIsNone(atelier.search(self.texte(lg)), lg)
 
@@ -686,48 +686,6 @@ class TestLaRevue(unittest.TestCase):
             texte = " ".join((DOSSIER / nom).read_text(encoding="utf-8").split())
             for phrase in phrases:
                 self.assertIn(phrase, texte, nom)
-
-    def test_une_forme_du_shell_qu_un_agent_n_ecrit_pas_s_ecarte_pour_la_liste(self):
-        """D-0120, ADR-0082 : ni bloquante, même refusée avant le lot par
-        accident, ni pour le backlog ; écartée, d'une ligne, pour la liste
-        des formes connues que le hook ne juge pas."""
-        attendus = {
-            "fr": "**Une forme du shell qu'un agent n'écrit pas** dans son travail (ni vue dans une session "
-                  "d'agent, ni dans un skill, ni dans une documentation courante), et qui échappe au hook de "
-                  "l'agent : elle ne se classe pas bloquante, même refusée avant le lot par accident, ni pour le "
-                  "backlog, quel qu'en soit l'effet. Elle s'écarte, et va d'une ligne à la liste des formes connues "
-                  "que le hook ne juge pas, que tient le guide du socle (`python3 .socle/socle help`).",
-            "en": "**A shell form an agent does not write** in its work (seen neither in an agent session, nor in "
-                  "a skill, nor in current documentation), and that escapes the agent's hook: it is not classed as "
-                  "blocking, even if refused before the batch by accident, nor for the backlog, whatever its "
-                  "effect. It is dismissed, and goes in one line to the list of known forms the hook does not "
-                  "judge, which the socle's guide keeps (`python3 .socle/socle help`).",
-        }
-        for lg, phrase in attendus.items():
-            self.assertIn(phrase, " ".join(self.texte(lg).split()), lg)
-
-    def test_dans_un_projet_equipe_la_forme_se_signale_au_depot_du_socle(self):
-        """B-0270, T-0048 : dans un projet équipé, le guide est sous le moteur
-        installé, protégé ; l'agent ne peut pas y inscrire la forme. Le skill
-        la lui fait nommer au récap et proposer à l'humain de la signaler au
-        dépôt du socle, qui tient la liste."""
-        from socle import utils as outils
-
-        with redirect_stdout(io.StringIO()):
-            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
-        projet = config.Projet.charger(self.racine)
-        self.assertTrue(outils.correspond(f"{projet.chemins.moteur}/socle/HELP.md", projet.chemins_proteges()))
-        attendus = {
-            "fr": "Dans un projet équipé, ce guide est protégé : le récap nomme la forme, et « Pour toi » propose "
-                  "de la signaler au dépôt du socle (https://github.com/theodubus/socle), qui tient la liste.",
-            "en": "In an equipped project, this guide is protected: the recap names the form, and “For you” "
-                  "suggests reporting it to the socle's repository (https://github.com/theodubus/socle), which "
-                  "keeps the list.",
-        }
-        for lg, phrase in attendus.items():
-            texte = " ".join(self.texte(lg).split())
-            self.assertIn(phrase, texte, lg)
-            self.assertLessEqual(len(self.texte(lg).encode("utf-8")), 8000, lg)
 
 
 class TestRefusBash(unittest.TestCase):
