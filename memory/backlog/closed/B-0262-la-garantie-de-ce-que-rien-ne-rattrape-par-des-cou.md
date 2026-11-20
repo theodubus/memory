@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0262 — La garantie de ce que rien ne rattrape par des couches qui ne lisent pas le shell : la protection de la branche par défaut contre le push forcé, le push de chaque fin de réponse, la perte d'un dossier qui contient le projet
 
-> statut : ouvert · origine : J-2026-11-16-G · ref : D-0120 · lu : backlog@d9da377d
+> statut : fait · origine : J-2026-11-16-G · ref : D-0120, T-0023, J-2026-11-20-AO · lu : backlog@d9da377d
 
 D-0120@f10e0e80, validée le 16 novembre (J-2026-11-16-G), borne le hook
 de l'agent aux formes qu'un agent écrit : une forme exotique qu'il lit de
@@ -22,4 +22,4 @@ lisent pas, et dit ce qui reste sans garantie :
 
 ## Satisfait quand
 
-- [ ] on sait, pour le push forcé, la suppression du projet et celle d'un dossier qui le contient, ce qui les rattrape hors du hook, dans ce dépôt et dans un projet équipé, et ce qui reste sans garantie est au backlog
+- [x] on sait, pour le push forcé, la suppression du projet et celle d'un dossier qui le contient, ce qui les rattrape hors du hook, dans ce dépôt et dans un projet équipé, et ce qui reste sans garantie est au backlog
