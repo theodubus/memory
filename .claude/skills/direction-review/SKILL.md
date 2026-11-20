@@ -51,7 +51,10 @@ socle. AGENTS.md s'applique ; tu n'écris rien dans le dépôt. » Puis :
     decisions`, `memory/requests/` (ce que Théo a demandé, refusé) ;
   - les coûts : les paragraphes « Coût » des entrées du journal qui
     closent ou relisent un lot, et `docs/fabrication/consommation.md`.
-- **La question** : l'effort va-t-il là où est le but ?
+- **La question** : l'effort va-t-il là où est le but ? Et chaque
+  suggestion qu'une revue d'avant a vu garder de côté (son entrée du
+  journal, et la réponse de Théo) : tient-elle toujours, preuves
+  relancées ?
 - **Ce qu'il regarde** : où va l'effort par sujet (commits, lignes, lots,
   coûts) ; les boucles d'un lot à l'autre (un sujet qui revient, la
   correction d'une correction) ; l'origine des entrées, usage réel ou
@@ -82,8 +85,9 @@ socle. AGENTS.md s'applique ; tu n'écris rien dans le dépôt. » Puis :
    modèle, les jetons et le coût en points de la fenêtre (lus par
    `list_events`). Poussée avant d'attendre la réponse, son lien donné.
 4. La réponse de Théo se consigne en séance (skill `socle-request`) ; ce
-   qu'il retient entre au backlog, au lot dont la règle s'applique. Le
-   journal tient le compte des revues dont il a retenu quelque chose.
+   qu'il retient entre au backlog, au lot dont la règle s'applique ; ce
+   qu'il garde de côté reste au journal et se rejuge à la revue suivante.
+   Le journal tient le compte des revues dont il a retenu quelque chose.
 
 ## Jugée sur ses résultats
 

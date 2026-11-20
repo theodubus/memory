@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0111 — Le skill de la revue de cap, écrit dans ce dépôt, et la première revue lancée avant L-0006 : au plus trois suggestions, preuves à l'appui
 
-> statut : ouvert · origine : J-2026-11-20-E · besoin : B-0310 · priorité : haute · lu : backlog@03167aa3
+> statut : fait · origine : J-2026-11-20-E · ref : J-2026-11-20-H · besoin : B-0310 · priorité : haute · lu : backlog@03167aa3
 
 Au début de la session qui suit le 20 novembre, avant L-0006 (D-0145) :
 un skill de ce dépôt, nommé revue-de-cap, dit la
@@ -15,5 +15,5 @@ trace et le coût.
 
 ## Fait quand
 
-- [ ] le skill de la revue de cap est écrit dans ce dépôt et dit ce que D-0145 décide
-- [ ] la première revue de cap a rendu ses suggestions à Théo, et le journal les garde avec leur coût
+- [x] le skill de la revue de cap est écrit dans ce dépôt et dit ce que D-0145 décide
+- [x] la première revue de cap a rendu ses suggestions à Théo, et le journal les garde avec leur coût
