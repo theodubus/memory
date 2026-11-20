@@ -7,6 +7,16 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-20-b — The installer has git ignore the subagents' worktrees
+
+The `socle-batch` skill launches its subagents in worktrees, which Claude
+Code lays down under `.claude/worktrees/`; not ignored, they show in `git
+status` as files to commit. The installer adds `/.claude/worktrees/` to
+the project's `.gitignore`, under a comment that says so, unless a line
+already ignores it, or `.claude/`.
+
+To do: nothing; the line comes with the update, to commit with it.
+
 ## 2026-11-20-a — The agent's hook lets a protected file be restored when a request cites its folder only in a copied text
 
 The agent's hook refused to put back as it was at the last commit a

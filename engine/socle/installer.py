@@ -1583,7 +1583,28 @@ def _gitignore(cible: Path) -> list[str]:
     # Le commentaire d'une installation dans une autre langue compte aussi.
     deja = any(l.startswith(("# Trace locale des hooks du socle", commentaire)) for l in existant.splitlines())
     outils.ajouter_lignes(p, ["/.socle/trace/", "__pycache__/"], "" if deja else trad("{commentaire} (voir {source})", commentaire=commentaire, source=source))
+    # Le skill socle-batch lance ses sous-agents dans des worktrees, sous ce
+    # dossier : non ignorés, ils paraissent à commiter (B-0217).
+    if not ignore_deja(p.read_text(encoding="utf-8"), WORKTREES):
+        outils.ajouter_lignes(p, [f"/{WORKTREES}/"], trad("# Les worktrees des sous-agents de Claude Code"))
     return []
+
+
+# Le dossier où Claude Code pose les worktrees de ses sous-agents.
+WORKTREES = ".claude/worktrees"
+
+
+def ignore_deja(texte: str, dossier: str) -> bool:
+    """Le `.gitignore` `texte` a déjà une ligne qui ignore `dossier`, ou un
+    dossier qui le contient : écrite avec ou sans `/` de tête ou de fin, ou
+    `/*`, `/**` au bout. Une telle ligne ne se double pas."""
+    parties = dossier.strip("/").split("/")
+    parents = {"/".join(parties[:i]) for i in range(1, len(parties) + 1)}
+    for ligne in texte.splitlines():
+        l = ligne.strip()
+        if l and not l.startswith(("#", "!")) and re.sub(r"/\*{1,2}$", "", l).strip("/") in parents:
+            return True
+    return False
 
 
 def _non_ignores(cible: Path, chemins: list[str]) -> list[str]:

@@ -578,6 +578,8 @@ MESSAGES: dict[str, str] = {
         "# Local trace of the socle's hooks",
     "{commentaire} (voir {source})":
         "{commentaire} (see {source})",
+    "# Les worktrees des sous-agents de Claude Code":
+        "# Claude Code's subagent worktrees",
     "# Le socle : ses fichiers se commitent":
         "# The socle: its files are committed",
     ".gitignore : {n} fichier(s) du socle n'y sont plus ignorés":

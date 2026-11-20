@@ -7,6 +7,17 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-20-b — L'installeur fait ignorer par git les worktrees des sous-agents
+
+Le skill `socle-batch` lance ses sous-agents dans des worktrees, que
+Claude Code pose sous `.claude/worktrees/` ; non ignorés, ils paraissent
+dans `git status` comme des fichiers à commiter. L'installeur ajoute
+`/.claude/worktrees/` au `.gitignore` du projet, sous un commentaire qui
+le dit, sauf si une ligne l'y ignore déjà, lui ou `.claude/`.
+
+À faire : rien ; la ligne arrive avec la mise à jour, à commiter avec
+elle.
+
 ## 2026-11-20-a — Le hook de l'agent laisse remettre un fichier protégé dont une demande ne cite le dossier que dans un texte recopié
 
 Le hook de l'agent refusait de remettre à son état du dernier commit un

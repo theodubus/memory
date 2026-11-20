@@ -465,6 +465,51 @@ class TestCopiesEnRetard(unittest.TestCase):
         self.assertEqual(etat.copies_en_retard(config.Projet.charger(racine)), [])
 
 
+class TestWorktreesIgnores(unittest.TestCase):
+    """B-0217 : le skill socle-batch lance ses sous-agents dans des worktrees,
+    sous `.claude/worktrees/` ; non ignorés, le hook de fin de tour de
+    l'environnement cloud demande de les commiter."""
+
+    def non_suivis(self, racine: Path) -> list[str]:
+        sortie = subprocess.run(["git", "status", "--porcelain", "--untracked-files=all"], cwd=racine,
+                                capture_output=True, text=True, check=True).stdout
+        return [l[3:] for l in sortie.splitlines() if l.startswith("??")]
+
+    def worktree(self, racine: Path):
+        p = racine / installeur.WORKTREES / "agent-essai/calc.py"
+        p.parent.mkdir(parents=True)
+        p.write_text("X = 2\n", encoding="utf-8")
+
+    def test_le_gitignore_de_ce_depot_les_ignore(self):
+        racine = depot({".gitignore": (MOTEUR.parent / ".gitignore").read_text(encoding="utf-8")})
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        self.worktree(racine)
+        self.assertEqual(self.non_suivis(racine), [".gitignore"])
+
+    def test_l_installeur_les_ignore_dans_un_projet_qu_il_equipe_sans_doubler_la_ligne(self):
+        racine = depot({"calc.py": "X = 1\n"})
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        installer(racine, adoption=False)
+        self.worktree(racine)
+        self.assertFalse([c for c in self.non_suivis(racine) if c.startswith(installeur.WORKTREES)])
+        installer(racine, adoption=False)
+        texte = (racine / ".gitignore").read_text(encoding="utf-8")
+        self.assertEqual(texte.count(f"/{installeur.WORKTREES}/"), 1, texte)
+        self.assertEqual(texte.count("# Les worktrees des sous-agents de Claude Code"), 1, texte)
+
+    def test_une_ligne_qui_les_ignore_deja_ne_se_double_pas(self):
+        for ligne in (".claude/worktrees", "/.claude/worktrees", ".claude/worktrees/*", ".claude/", "/.claude/**"):
+            with self.subTest(ligne):
+                racine = depot({"calc.py": "X = 1\n", ".gitignore": ligne + "\n"})
+                self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+                installer(racine, adoption=False)
+                self.assertNotIn("worktrees des sous-agents", (racine / ".gitignore").read_text(encoding="utf-8"))
+        for texte in ("!.claude/worktrees/\n", "# .claude/worktrees\n", ".claude/worktrees-anciens\n",
+                      "worktrees\n"):
+            with self.subTest(texte):
+                self.assertFalse(installeur.ignore_deja(texte, installeur.WORKTREES))
+
+
 class TestSousDossiers(unittest.TestCase):
     """B-0168 : l'essai à blanc sur chess, un dépôt Rust dont l'interface
     JavaScript vit dans `ui/`, avec son propre manifeste."""
