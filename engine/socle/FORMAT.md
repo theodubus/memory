@@ -78,7 +78,12 @@ contrôle la voit même sans accès à la zone privée. Un identifiant se calcul
 (`socle next-id`, `socle new`), il ne se devine pas ; `socle new` saute
 ceux que prennent les branches distantes et les correctifs suivis du dépôt
 (`*.patch`, `*.diff`), ceux d'une passation. Il est défini une seule
-fois ; toute mention ailleurs doit mener à une définition.
+fois ; toute mention ailleurs doit mener à une définition. Un identifiant
+que deux branches ont pris se répare par `socle renumber <ID>` : l'entrée
+qu'ajoute la branche prend le suivant libre, avec ses mentions et ses
+empreintes ; après un rebase ou un cherry-pick qui les réunit, c'est celle
+qui manque à la base ou au dernier commit poussé, et seules les lignes que
+la branche a ajoutées changent.
 
 ### Références
 

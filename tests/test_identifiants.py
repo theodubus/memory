@@ -187,5 +187,89 @@ class TestFichierDuSujet(Depot):
                       (self.racine / "memory/backlog/B-0002-le-sujet-de-la-branche-x.md").read_text())
 
 
+
+ENTETE_JOURNAL = "<!-- socle: couche=journal zone=publique -->\n# Journal\n"
+ENTREE_JOURNAL = "\n## {id} — {titre}\n\n> ref : B-0001\n\n{texte}\n"
+
+
+class TestRenumeroterApresUnRebase(Depot):
+    """B-0176 : après un rebase ou un cherry-pick, deux entrées portent le
+    même identifiant ; `socle renumber` renumérote celle que la branche
+    ajoute, et laisse l'autre et ses mentions telles quelles."""
+
+    def ecrire(self, chemin, texte, message):
+        p = self.racine / chemin
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(texte)
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", message, "--no-verify")
+
+    def decision(self, ident, titre, corps=""):
+        chemin = f"{config.FORMAT_ACTUEL.decisions}/{ident}-{memoire.nom_de_fichier(titre)}.md"
+        self.ecrire(chemin, "<!-- socle: couche=decisions zone=publique -->\n"
+                    f"# {ident} — {titre}\n\n> statut : acceptée · date : 2026-11-20\n\n{corps}\n", titre)
+        return chemin
+
+    def test_deux_decisions_du_meme_numero_apres_un_rebase(self):
+        git(self.racine, "switch", "-q", "main")
+        de_main = self.decision("ADR-0001", "La décision de main", "Prise sur main.")
+        git(self.racine, "push", "-q", "--no-verify", "origin", "main")
+        git(self.racine, "switch", "-q", "x")
+        de_x = self.decision("ADR-0001", "La décision de x", "Prise sur x.")
+        empreinte = memoire.empreinte_entree(memoire.Memoire.charger(self.racine).definitions()["ADR-0001"][0])
+        note = f"{config.FORMAT_ACTUEL.backlog}/B-0001-le-sujet-de-la-branche-x.md"
+        self.ecrire(note, (self.racine / note).read_text() + f"\nVoir ADR-0001@{empreinte}.\n", "la note")
+        git(self.racine, "rebase", "-q", "main")
+        self.assertEqual(len(memoire.Memoire.charger(self.racine).definitions()["ADR-0001"]), 2)
+
+        lignes = identifiants.renumeroter(config.Projet.charger(self.racine), "ADR-0001")
+        self.assertEqual(lignes[0], "ADR-0001 → ADR-0002")
+        mem = memoire.Memoire.charger(self.racine)
+        self.assertEqual(mem.entree("ADR-0001").titre, "La décision de main")
+        self.assertEqual(mem.entree("ADR-0002").titre, "La décision de x")
+        self.assertTrue((self.racine / de_main).is_file())
+        self.assertFalse((self.racine / de_x).exists())
+        self.assertIn(f"Voir ADR-0002@{memoire.empreinte_entree(mem.entree('ADR-0002'))}.",
+                      (self.racine / note).read_text())
+
+    def test_deux_entrees_du_journal_du_meme_numero_dans_un_meme_fichier(self):
+        journal = f"{config.FORMAT_ACTUEL.journal}/2026-01.md"
+        git(self.racine, "switch", "-q", "main")
+        de_main = (ENTETE_JOURNAL
+                   + ENTREE_JOURNAL.format(id="J-2026-01-15-A", titre="L'entrée de main", texte="Sur main.")
+                   + ENTREE_JOURNAL.format(id="J-2026-01-15-B", titre="Une autre entrée de main",
+                                           texte="Elle cite J-2026-01-15-A."))
+        self.ecrire(journal, de_main, "le journal de main")
+        git(self.racine, "push", "-q", "--no-verify", "origin", "main")
+        git(self.racine, "switch", "-q", "-c", "z")
+        actif = config.FORMAT_ACTUEL.actif
+        self.ecrire(journal, de_main + ENTREE_JOURNAL.format(id="J-2026-01-15-A", titre="L'entrée de la branche",
+                                                             texte="Sur la branche."), "l'entrée de z")
+        self.ecrire(actif, "<!-- socle: couche=actif zone=publique -->\n# Chantier actif\n\n"
+                    "Voir J-2026-01-15-A.\n", "le chantier")
+
+        lignes = identifiants.renumeroter(config.Projet.charger(self.racine), "J-2026-01-15-A")
+        self.assertEqual(lignes[0], "J-2026-01-15-A → J-2026-01-15-C")
+        texte = (self.racine / journal).read_text()
+        self.assertTrue(texte.startswith(de_main), texte)
+        self.assertIn("## J-2026-01-15-C — L'entrée de la branche", texte)
+        self.assertIn("Voir J-2026-01-15-C.", (self.racine / actif).read_text())
+
+    def test_l_entree_deja_poussee_sur_la_branche_reste(self):
+        # Le cas du cherry-pick : la première, poussée sur la branche et
+        # pas sur la branche par défaut ; la seconde, locale.
+        journal = f"{config.FORMAT_ACTUEL.journal}/2026-01.md"
+        poussee = ENTETE_JOURNAL + ENTREE_JOURNAL.format(id="J-2026-01-15-A", titre="La poussée", texte="Poussée.")
+        self.ecrire(journal, poussee, "la poussée")
+        git(self.racine, "push", "-q", "--no-verify", "-u", "origin", "x")
+        self.ecrire(journal, poussee + ENTREE_JOURNAL.format(id="J-2026-01-15-A", titre="La locale",
+                                                             texte="Locale."), "la locale")
+
+        lignes = identifiants.renumeroter(config.Projet.charger(self.racine), "J-2026-01-15-A")
+        self.assertEqual(lignes[0], "J-2026-01-15-A → J-2026-01-15-B")
+        texte = (self.racine / journal).read_text()
+        self.assertTrue(texte.startswith(poussee), texte)
+        self.assertIn("## J-2026-01-15-B — La locale", texte)
+
 if __name__ == "__main__":
     unittest.main()

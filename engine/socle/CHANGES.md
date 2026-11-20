@@ -7,6 +7,18 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-20-m — `socle renumber` répare une collision née d'un rebase
+
+Après un rebase ou un cherry-pick, deux entrées portaient le même
+identifiant : `socle renumber` refusait (« existait avant la branche »),
+ou renumérotait les deux, avec les mentions de celle qui était déjà là.
+Il renumérote désormais celle qu'ajoute la branche, celle qui manque à
+la base ou au dernier commit poussé, et ne change que les lignes que la
+branche a ajoutées : l'autre entrée et ses mentions restent telles
+quelles.
+
+À faire : rien.
+
 ## 2026-11-20-l — `socle new` ne reprend pas un identifiant qu'un correctif suivi du dépôt crée
 
 Une passation range en correctifs (`git format-patch`) les commits pas

@@ -7,6 +7,17 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-20-m — `socle renumber` repairs a collision born of a rebase
+
+After a rebase or a cherry-pick, two entries carried the same
+identifier: `socle renumber` refused ("existed before the branch"), or
+renumbered both, along with the mentions of the one already there. It
+now renumbers the one the branch adds, the one missing from the base or
+from the last pushed commit, and changes only the lines the branch
+added: the other entry and its mentions stay as they are.
+
+To do: nothing.
+
 ## 2026-11-20-l — `socle new` does not reuse an identifier that a tracked patch of the repository creates
 
 A handover stores the commits not yet reviewed as patches (`git

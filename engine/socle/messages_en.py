@@ -2300,6 +2300,9 @@ MESSAGES: dict[str, str] = {
         "finding hidden: private zone (run the checks again where it can be read)",
     "`{ident}` existait avant la branche : ce n'est pas à elle de le renuméroter":
         "`{ident}` existed before the branch: it is not for the branch to renumber it",
+    "`{ident}` est défini {n} fois, et aucune version poussée ne dit laquelle la branche ajoute : "
+    "renuméroter à la main":
+        "`{ident}` is defined {n} times, and no pushed version tells which one the branch adds: renumber it by hand",
     "`{ident}` a reçu sa réponse : une demande répondue est gelée":
         "`{ident}` has received its answer: an answered request is frozen",
     "reporté dans {n} fichier(s) : {liste}":
