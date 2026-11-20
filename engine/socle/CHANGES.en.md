@@ -27,8 +27,8 @@ On a pull request, the CI runs on a detached HEAD, the merge commit
 GitHub prepares; a request's link pointed there to the default branch,
 which does not have a request posed on the branch yet: the run summary
 (`socle roadmap --format markdown`) gave it without a link. When
-`GITHUB_HEAD_REF` is set, the link now points to the head of the pull
-request, the second parent of the merge commit.
+`GITHUB_HEAD_REF` is set, the link now points, for the repository the
+CI checked out (`GITHUB_WORKSPACE`), to the head of the pull request, the second parent of the merge commit.
 
 To do: nothing.
 

@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
 from socle import config, links as liens
@@ -166,17 +167,23 @@ class TestLiensDuDepot(unittest.TestCase):
         git(self.clone, "fetch", "-q", "origin")
         git(self.clone, "checkout", "-q", "--detach", "origin/main")
         git(self.clone, "merge", "-q", "--no-ff", "-m", "Merge claude/essai into main", tete)
-        avant = os.environ.get("GITHUB_HEAD_REF")
-        os.environ["GITHUB_HEAD_REF"] = "claude/essai"
-        try:
+        ci = {"GITHUB_HEAD_REF": "claude/essai", "GITHUB_WORKSPACE": str(self.clone)}
+        with unittest.mock.patch.dict(os.environ, ci):
             url, avertissement = liens.lien(config.Projet.charger(self.clone), demande)
-        finally:
-            if avant is None:
-                del os.environ["GITHUB_HEAD_REF"]
-            else:
-                os.environ["GITHUB_HEAD_REF"] = avant
         self.assertEqual(url, f"{DEPOT}/blob/{tete}/{demande}")
         self.assertEqual(avertissement, "")
+        # Un autre dépôt que celui que la CI a extrait (un dépôt de test, le
+        # dépôt compagnon) garde la règle de sa branche : la revue de la CI
+        # de la PR 73, où un dépôt sans commit faisait planter le lien.
+        ailleurs = {"GITHUB_HEAD_REF": "claude/essai", "GITHUB_WORKSPACE": str(self.dossier / "source")}
+        with unittest.mock.patch.dict(os.environ, ailleurs):
+            self.assertEqual(liens.commit_pousse(self.clone), git(self.clone, "rev-parse", "origin/main").strip())
+            vide = self.dossier / "vide"
+            vide.mkdir()
+            git(vide, "init", "-q")
+            self.assertIsNone(liens.commit_pousse(vide))
+        with unittest.mock.patch.dict(os.environ, {**ci, "GITHUB_WORKSPACE": str(vide)}):
+            self.assertIsNone(liens.commit_pousse(vide))
 
     def test_pas_de_lien_vers_ce_qui_n_est_pas_pousse(self):
         url, avertissement = liens.lien(self.projet, "docs/b.md")

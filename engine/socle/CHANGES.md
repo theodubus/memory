@@ -27,8 +27,8 @@ Sur une pull request, la CI tourne sur une HEAD détachée, le commit de
 fusion que GitHub prépare ; le lien d'une demande y visait la branche
 par défaut, où une demande posée sur la branche n'est pas encore : le
 résumé de l'exécution (`socle roadmap --format markdown`) la donnait sans
-lien. Quand `GITHUB_HEAD_REF` est là, le lien vise désormais la tête de
-la pull request, le second parent du commit de fusion.
+lien. Quand `GITHUB_HEAD_REF` est là, le lien vise désormais, pour le dépôt
+que la CI a extrait (`GITHUB_WORKSPACE`), la tête de la pull request, le second parent du commit de fusion.
 
 À faire : rien.
 
