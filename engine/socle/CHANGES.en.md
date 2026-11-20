@@ -7,6 +7,18 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-20-f — A request's cold reader receives the most capable model up to Opus, at launch
+
+The `socle-request` skill had a request read cold by a subagent of the
+session's model, which the model rule of `socle-batch` may make cheaper.
+Like a batch's reviewer, it now receives explicitly at launch (`model`)
+the most capable model available up to Opus, whatever the session's, on
+the latest version of its family; Fable only if the human asks for it.
+The recap names the model: `Cold reading (<model>): …`.
+
+To do: nothing; the `socle-request` skill is a protected copy, in the
+installer's request.
+
 ## 2026-11-20-e — `socle decision --unprompted` records a decision the human gives without being asked
 
 `socle decision` required a base answer or an option named by the

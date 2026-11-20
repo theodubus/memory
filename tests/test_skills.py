@@ -180,6 +180,35 @@ class TestLesDemandes(unittest.TestCase):
         for lg, phrase in attendus.items():
             self.assertIn(phrase, self.texte(lg), lg)
 
+    def test_le_relecteur_a_froid_recoit_le_modele_le_plus_capable_a_son_lancement(self):
+        """T-0074 (B-0243) : comme le relecteur d'un lot, explicitement, le
+        plus capable jusqu'à Opus, quel que soit celui de la session ; Fable
+        sur la demande de l'humain seule ; le récap nomme le modèle."""
+        attendus = {
+            "fr": ("du modèle de la session", [
+                "Il reçoit explicitement à son lancement (`model`) le modèle le plus capable disponible jusqu'à "
+                "Opus, quel que soit celui de la session, sur la dernière version de sa famille",
+                "Fable, s'il est disponible, seulement si l'humain le demande",
+                "`Relecture à froid (<modèle>) : <n> points, <k> corrigés"]),
+            "en": ("of the session's model", [
+                "It receives explicitly at launch (`model`) the most capable model available up to Opus, whatever "
+                "the session's, on the latest version of its family",
+                "Fable, if available, only if the human asks for it",
+                "`Cold reading (<model>): <n> points, <k> fixed"]),
+        }
+        for lg, (ancien, phrases) in attendus.items():
+            texte = self.texte(lg)
+            for phrase in phrases:
+                self.assertIn(phrase, texte, lg)
+            self.assertNotIn(ancien, texte, lg)
+
+    def test_une_decision_donnee_sans_question_se_consigne_par_unprompted(self):
+        """T-0017 (B-0185) : sans question inventée ni réponse à choisir."""
+        attendus = {"fr": "--unprompted --relayed --by <nom> --quote-file <fichier>",
+                    "en": "--unprompted --relayed --by <name> --quote-file <file>"}
+        for lg, phrase in attendus.items():
+            self.assertIn(phrase, self.texte(lg), lg)
+
     def test_la_variante_legere_des_valeurs_attendues_mecaniques(self):
         """T-0095 (B-0289) : ce qui la permet, ce qu'elle demande, et ce qui
         garde la demande écrite."""

@@ -7,6 +7,19 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-20-f — Le relecteur à froid d'une demande reçoit le modèle le plus capable jusqu'à Opus, à son lancement
+
+Le skill `socle-request` faisait relire une demande à froid par un
+sous-agent du modèle de la session, que la règle du modèle de
+`socle-batch` peut faire moins coûteux. Comme le relecteur d'un lot, il
+reçoit désormais explicitement à son lancement (`model`) le modèle le
+plus capable disponible jusqu'à Opus, quel que soit celui de la session,
+sur la dernière version de sa famille ; Fable seulement si l'humain le
+demande. Le récap nomme le modèle : `Relecture à froid (<modèle>) : …`.
+
+À faire : rien ; le skill `socle-request` est une copie protégée, dans la
+demande de l'installeur.
+
 ## 2026-11-20-e — `socle decision --unprompted` consigne une décision que l'humain donne sans qu'on la lui ait demandée
 
 `socle decision` exigeait une réponse de base ou une option nommée par la

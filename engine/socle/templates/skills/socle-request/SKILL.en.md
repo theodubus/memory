@@ -44,15 +44,19 @@ never choosing it.
      authorises changing a test or a threshold key the request names.
 3. The lint refuses an incomplete request; the agent's hook refuses it as
    soon as it is written.
-4. Have it read cold before pushing it: a subagent (the `Agent` tool), of
-   the session's model, whose only message is the brief of
-   `python3 .socle/socle review --request D-NNNN`, as is. It reads the
+4. Have it read cold before pushing it: a subagent (the `Agent` tool),
+   whose only message is the brief of `python3 .socle/socle review
+   --request D-NNNN`, as is. It receives explicitly at launch (`model`)
+   the most capable model available up to Opus, whatever the session's,
+   on the latest version of its family (an alias that designates an older
+   one: without `model`, it inherits the session's); Fable, if available,
+   only if the human asks for it. It reads the
    request as the human who has not opened the project for three weeks,
    with no link and no file, and returns what it understood and what it
    lacks to decide. Rewrite what the human would not understand either;
    set aside, with a reason, what does not help to decide or what a linked
-   document already gives. The recap says so: `Cold reading: <n> points,
-   <k> fixed; set aside: …`. An agent without subagents skips this step,
+   document already gives. The recap says so: `Cold reading (<model>): <n>
+   points, <k> fixed; set aside: …`. An agent without subagents skips this step,
    and its recap says so.
 5. Commit and push the request as is, then give its link
    (`python3 .socle/socle url D-NNNN`) in the conversation. Work on
