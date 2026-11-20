@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0019 clos (J-2026-11-20-A). Attendent Théo : D-0142, et le gel du
-hook, qui trie son backlog.
+L-0019 clos, sa fusion suspendue : Théo veut une garantie contre le
+hook qui tourne en rond (J-2026-11-20-B).
 
 ## Consignes en cours
 
