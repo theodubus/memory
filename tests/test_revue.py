@@ -927,6 +927,24 @@ class TestMesure(_Lot):
         # Sans fusion depuis le début du lot, rien ne change.
         self.assertEqual(revue.sans_la_fusion(self.projet, git(self.racine, "rev-parse", "HEAD").strip())[1], None)
 
+    def test_une_seconde_revue_apres_une_fusion_de_la_branche_par_defaut_ne_montre_que_la_correction(self):
+        """La revue de L-0007 : entre deux passes, la branche fusionne la
+        branche par défaut ; le dossier de la seconde ne montre ni son
+        code ni les messages de ses commits."""
+        self.lot()
+        relu = git(self.racine, "rev-parse", "HEAD").strip()
+        self.avancer_main()
+        git(self.racine, "merge", "-q", "--no-edit", "origin/main")
+        (self.racine / "calc.py").write_text("def double(x):\n    return 2 * x\n")
+        git(self.racine, "commit", "-qam", "la correction")
+        texte = revue.dossier(self.projet, depuis=relu)
+        self.assertNotIn("ECRIT_SUR_MAIN", texte)
+        self.assertNotIn("main avance", texte)
+        self.assertIn("la correction", texte)
+        self.assertIn("+    return 2 * x", texte)
+        self.assertIn(f"## Le diff de la correction (1 fichier(s), depuis {relu})", texte)
+        self.assertEqual(revue.messages_depuis(self.racine, relu)[-1], "la correction")
+
     def test_un_commit_pousse_d_ailleurs_n_entre_pas_dans_le_lot(self):
         """La revue de B-0212 : une branche distante en avance sur HEAD par
         du code donnait pour diff du lot l'inverse du commit poussé

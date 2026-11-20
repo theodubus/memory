@@ -13,7 +13,9 @@ An already pushed branch that merged the default branch during a batch
 gave the reviewer, along with the batch, the code and the closed entries
 the merge brought. `socle review` now measures the batch's diff and
 subjects from the merge redone on its start (`git merge-tree
---write-tree`, git 2.38), and a note says so. A merge that cannot be
+--write-tree`, git 2.38), and a note says so; so does the diff of a
+second review (`--since`), whose messages keep only the branch's
+commits. A merge that cannot be
 redone without conflict, or an older git, leaves the folder as before,
 and the note says it also shows what the merge brought.
 

@@ -100,15 +100,18 @@ def _a_renumeroter(racine: Path, ident: str, definitions: list[memoire.Entree],
     """L'entrée que la branche ajoute, et la version où l'autre existait
     déjà sans elle. Seule, l'entrée est à la branche si la base ne la
     définit pas. Deux entrées du même identifiant, nées d'un rebase ou d'un
-    cherry-pick (B-0176) : celle qu'ajoute la branche depuis son dernier
-    commit poussé, ou depuis la base, l'autre y étant déjà."""
+    cherry-pick (B-0176) : celle qu'ajoute la branche depuis la base, ou
+    depuis son dernier commit poussé, l'autre y étant déjà. La base
+    d'abord : une branche poussée qui a fusionné la branche par défaut a
+    deux commits poussés parmi ses ancêtres, et le sien porte l'entrée de
+    la branche, pas celle que la fusion a apportée."""
     if len(definitions) == 1:
         if base and ident in memoire.Memoire.charger(racine, base).definitions():
             raise ValueError(trad("`{ident}` existait avant la branche : ce n'est pas à elle de le renuméroter",
                                   ident=ident))
         return definitions[0], base
     pousse = liens.commit_pousse(racine)
-    versions = [v for v in dict.fromkeys((pousse, base)) if v]
+    versions = [v for v in dict.fromkeys((base, pousse)) if v]
     for version in versions:
         deja = {d.texte for d in memoire.Memoire.charger(racine, version).definitions().get(ident, [])}
         nouvelles = [d for d in definitions if d.texte not in deja]

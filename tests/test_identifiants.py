@@ -232,6 +232,27 @@ class TestRenumeroterApresUnRebase(Depot):
         self.assertIn(f"Voir ADR-0002@{memoire.empreinte_entree(mem.entree('ADR-0002'))}.",
                       (self.racine / note).read_text())
 
+    def test_une_branche_poussee_qui_fusionne_la_branche_par_defaut(self):
+        # La revue de L-0007 : `x`, poussée avec son ADR-0001, fusionne
+        # `origin/main`, qui a pris un autre ADR-0001 ; c'est celle de `x`
+        # qui se renumérote, pas celle que la fusion a apportée.
+        git(self.racine, "switch", "-q", "main")
+        de_main = self.decision("ADR-0001", "La décision de main", "Prise sur main.")
+        git(self.racine, "push", "-q", "--no-verify", "origin", "main")
+        git(self.racine, "switch", "-q", "x")
+        de_x = self.decision("ADR-0001", "La décision de x", "Prise sur x.")
+        git(self.racine, "push", "-q", "--no-verify", "-u", "origin", "x")
+        git(self.racine, "merge", "-q", "--no-edit", "origin/main")
+        self.assertEqual(len(memoire.Memoire.charger(self.racine).definitions()["ADR-0001"]), 2)
+
+        lignes = identifiants.renumeroter(config.Projet.charger(self.racine), "ADR-0001")
+        self.assertEqual(lignes[0], "ADR-0001 → ADR-0002")
+        mem = memoire.Memoire.charger(self.racine)
+        self.assertEqual(mem.entree("ADR-0001").titre, "La décision de main")
+        self.assertEqual(mem.entree("ADR-0002").titre, "La décision de x")
+        self.assertTrue((self.racine / de_main).is_file())
+        self.assertFalse((self.racine / de_x).exists())
+
     def test_deux_entrees_du_journal_du_meme_numero_dans_un_meme_fichier(self):
         journal = f"{config.FORMAT_ACTUEL.journal}/2026-01.md"
         git(self.racine, "switch", "-q", "main")

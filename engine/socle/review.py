@@ -255,8 +255,11 @@ def messages_depuis(racine, depuis: str) -> list[str]:
     récent, sans leurs lignes de fin (`Co-Authored-By:`, `Socle-Hooks:`…) :
     ce que la correction dit corriger. Seul le dernier paragraphe se retire,
     s'il n'est fait que de lignes de fin, et jamais le titre : un titre
-    `fix: …` ou `Corrige: B-NNNN` reste."""
-    brut = outils.git(racine, "log", "--reverse", "--format=%x00%B", f"{depuis}..HEAD", check=False)
+    `fix: …` ou `Corrige: B-NNNN` reste. Sur la lignée des premiers parents
+    de la branche : ceux qu'une fusion de la branche par défaut a apportés
+    n'y sont pas, son commit de fusion y est (B-0241)."""
+    brut = outils.git(racine, "log", "--reverse", "--first-parent", "--format=%x00%B", f"{depuis}..HEAD",
+                      check=False)
     res = []
     for message in brut.split("\0"):
         paragraphes = [p.strip("\n") for p in re.split(r"\n[ \t]*\n", message.strip()) if p.strip()]
@@ -524,10 +527,16 @@ def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFO
     if note_fusion:
         lignes += [note_fusion, ""]
     if depuis:
+        # La correction, sans ce qu'une fusion de la branche par défaut a
+        # apporté depuis le commit relu (B-0241).
+        origine_correction, note_correction = sans_la_fusion(projet, depuis)
+        if note_correction and note_correction != note_fusion:
+            lignes += [note_correction, ""]
         lignes += [trad("## Seconde revue"), "", trad(CONSIGNE_SECONDE), ""]
         for message in messages_depuis(projet.racine, depuis):
             lignes += ["```text", message, "```", ""]
-        diff, fichiers = _diff(projet, depuis)
+        diff, fichiers = _diff(projet, origine_correction)
+        origine = origine_correction
         lignes += [trad("## Le diff de la correction ({n} fichier(s), depuis {base})", n=len(fichiers),
                         base=depuis), ""]
     else:
@@ -546,7 +555,7 @@ def dossier(projet: config.Projet, base: str | None = None, plafond: int = PLAFO
         lignes += ["```diff", montre.rstrip("\n"), "```"]
         if len(montre) < len(diff):
             lignes.append(trad("(diff tronqué : {n} caractère(s) de plus non montrés ; `git diff {base}` les "
-                               "donne)", n=len(diff) - len(montre), base=depuis or origine))
+                               "donne)", n=len(diff) - len(montre), base=origine))
     servis, ouverts = sujets_du_lot(projet, origine_du_lot)
     if court:
         lignes += ["", trad("## Les critères des tâches du lot : ta barre"), ""]

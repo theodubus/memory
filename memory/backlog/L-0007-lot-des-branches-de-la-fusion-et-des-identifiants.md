@@ -29,3 +29,7 @@ ajoute à la branche par défaut (J-2026-11-20-AE).
 ### Passe 1 — 2026-11-20
 
 Commits : 3e462041..db6b1b40
+
+- Bloquant : socle renumber renomme l'entrée de la branche par défaut après sa fusion dans une branche poussée
+- Bloquant : la seconde revue montre ce qu'une fusion de la branche par défaut a apporté
+- Ouvre : B-0315, B-0316

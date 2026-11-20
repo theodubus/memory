@@ -13,7 +13,9 @@ Une branche déjà poussée qui fusionnait la branche par défaut en cours
 de lot donnait au relecteur, avec le lot, le code et les entrées closes
 que la fusion apportait. `socle review` mesure désormais le diff et les
 sujets du lot depuis la fusion refaite sur son début (`git merge-tree
---write-tree`, git 2.38), et une note le dit. Une fusion qui ne se
+--write-tree`, git 2.38), et une note le dit ; le diff d'une seconde
+revue (`--since`) aussi, et ses messages ne gardent que les commits de
+la branche. Une fusion qui ne se
 refait pas sans conflit, ou un git plus ancien, laisse le dossier
 d'avant, et la note dit qu'il montre aussi ce que la fusion a apporté.
 
