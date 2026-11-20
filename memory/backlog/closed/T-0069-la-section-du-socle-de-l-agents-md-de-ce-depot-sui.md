@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0069 — La section du socle de l'AGENTS.md de ce dépôt suit son gabarit, qui dit la suite, une fois la place rendue par T-0060
 
-> statut : ouvert · origine : J-2026-11-17-R · besoin : B-0274 · après : T-0060 · lu : backlog@71e91816
+> statut : fait · origine : J-2026-11-17-R · besoin : B-0274 · après : T-0060 · lu : backlog@71e91816 · ref : J-2026-11-20-Z
 
 T-0058 ajoute au gabarit d'`AGENTS.md` (`engine/socle/templates/AGENTS.md`)
 la ligne qui fait coller la suite détaillée quand l'humain la demande, et
@@ -13,4 +13,4 @@ dépôt, comme J-2026-11-15-I l'a fait, sans relever le budget.
 
 ## Fait quand
 
-- [ ] la section du socle de l'`AGENTS.md` de ce dépôt est celle de son gabarit, au chemin du moteur près, et `memoire.budgets` passe
+- [x] la section du socle de l'`AGENTS.md` de ce dépôt est celle de son gabarit, au chemin du moteur près, et `memoire.budgets` passe

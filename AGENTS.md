@@ -135,7 +135,9 @@ qu'on le demande :
 - avant d'ouvrir une entrée du backlog, son index (`socle show --index
   backlog`) dit si elle existe déjà ;
 - pour savoir pourquoi une chose est ainsi, chercher dans le journal
-  (`grep -rn "<mot>" memory/journal/`).
+  (`grep -rn "<mot>" memory/journal/`) ;
+- la suite, quand l'humain la demande : coller dans la réponse la sortie
+  de `python3 .socle/socle roadmap --format markdown`.
 
 La lecture se prouve : une décision, une demande ou une entrée du backlog
 nouvelles citent ce qu'elles ont lu avec son empreinte (`ADR-NNNN@xxxxxxxx`,
@@ -182,10 +184,8 @@ qu'il cite). Seuls les constats bloquants se corrigent dans le lot ; un
 autre va au backlog s'il peut se produire dans l'usage normal du projet,
 ou si rien ne rattrape ensuite son effet ; sinon, exotique et rattrapé,
 ou infondé, il s'écarte. Au backlog, il devient une tâche si sa
-correction est claire, un besoin sinon. Une forme du shell qu'un agent n'écrit pas dans
-son travail, et qui échappe au hook, s'écarte quel qu'en soit l'effet :
-le guide donne la liste des formes connues. Le récap dit les constats, et pourquoi chaque
-écarté l'est.
+correction est claire, un besoin sinon. Le récap dit les constats, et
+pourquoi chaque écarté l'est.
 
 Par défaut, tout se fait sur une branche de développement, avec une seule
 pull request ouverte à la fois : chaque lot fini s'y ajoute, l'humain la
@@ -222,7 +222,7 @@ des garde-fous (`proto/` par défaut) : la CI ne la juge pas aux envois.
 | --- | --- |
 | `.claude/settings.json` | hooks de Claude Code : `SessionStart` (état dérivé ; en session cloud, les outils de l'adaptateur), `PreToolUse` (refus), `Stop` (contrôles de fin de tour) |
 | `.socle/git-hooks/` | hooks git : `pre-commit` (contrôles rapides), `prepare-commit-msg` (trailers `Socle-Hooks`, `Socle-Hooks-Since-Commit`), `commit-msg` (fuites de la mémoire privée ; en avertissement, une fonction sans test ni dispense, un correctif sans test, un commit d'agent sans ses hooks), `pre-push` (`verify --fast` sur le dernier commit, la plage qui part jugée comme en CI, relecture avant publication) |
-| `.github/workflows/socle.yml` | CI : capacités de l'adaptateur, tous les contrôles contre la base, auto-test du socle |
+| `.github/workflows/socle.yml` | CI : capacités de l'adaptateur, tous les contrôles contre la base, auto-test du socle, la suite du projet en résumé |
 | `.git/socle/hooks.log` | trace locale de chaque hook qui tire, non versionnée, commune à tous les worktrees du dépôt |
 
 Liste des contrôles : `python3 .socle/socle checks`.
