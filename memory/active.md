@@ -5,7 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0006, selon le skill `delegate-lot`.
+L-0006 (`delegate-lot`) : où il en est, J-2026-11-20-O.
 
 ## Consignes en cours
 
@@ -14,7 +14,7 @@ Leur texte exact est dans l'entrée du journal citée.
 - Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
 - Le hook terminé : rien sans preuve vue dans une session (ADR-0098).
 - Revue de cap tous les trois lots (`direction-review`, D-0145) ; la
-  prochaine rejuge les trois suggestions gardées de côté (D-0146).
+  prochaine rejuge les suggestions gardées (D-0146).
 - Un mot pour une chose ; une tâche va sans demander au lot dont la
   règle s'applique (J-2026-11-16-I, J-2026-11-16-J).
 - Relecteur : le plus capable jusqu'à Opus (D-0117). Fable, implémenteur
