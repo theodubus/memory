@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0085 — Le résumé de la CI d'une pull request donne le lien des demandes posées sur sa branche, pas seulement celles de la branche par défaut
 
-> statut : ouvert · origine : J-2026-11-18-L · besoin : B-0274 · lu : backlog@d0ff4815
+> statut : fait · origine : J-2026-11-18-L · ref : J-2026-11-20-AI · besoin : B-0274 · lu : backlog@d0ff4815
 
 Relevé par la revue de L-0014, passe 1 (J-2026-11-18-L), constat 3 pour
 le backlog. Le résumé que la CI posée écrit à chaque exécution (`socle
@@ -15,4 +15,4 @@ request, le lien vise le commit de tête de la pull request.
 
 ## Fait quand
 
-- [ ] sur la HEAD détachée d'une pull request, le résumé donne le lien d'une demande posée sur sa branche, et un test le montre
+- [x] sur la HEAD détachée d'une pull request, le résumé donne le lien d'une demande posée sur sa branche, et un test le montre

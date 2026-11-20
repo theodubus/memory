@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0280 — Le correctif d'une passation porte des identifiants que la branche reprend ensuite : une décision ou une entrée de journal écrite avant son application prend le même numéro
 
-> statut : ouvert · origine : J-2026-11-17-H · lu : backlog@1df796e8
+> statut : fait · origine : J-2026-11-17-H · ref : T-0065, J-2026-11-20-AG · lu : backlog@1df796e8
 
 Mesuré le 17 novembre (J-2026-11-17-G, J-2026-11-17-H) : la passation du
 lot L-0012 range en correctif, sous docs/fabrication/passation-l0012
@@ -20,4 +20,4 @@ identifiants ne lit pas ceux qu'il crée.
 
 ## Satisfait quand
 
-- [ ] un identifiant qu'un correctif de passation crée n'est pas repris par une entrée écrite avant son application
+- [x] un identifiant qu'un correctif de passation crée n'est pas repris par une entrée écrite avant son application

@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0176 — socle renumber refuse une collision née d'un rebase : l'identifiant pris par la branche passe pour existant avant elle
 
-> statut : ouvert · origine : J-2026-11-11-S · lu : backlog@582bc1c8
+> statut : fait · origine : J-2026-11-11-S · ref : T-0019, J-2026-11-20-AH · lu : backlog@582bc1c8
 
 Relevé pendant B-0168. Reproduction : sur une branche B, créer une ADR
 (`socle new adr`, qui rend ADR-0065) et la commiter ; pendant ce temps, la
@@ -21,4 +21,4 @@ première dans le chantier actif. Réparé à la main.
 
 ## Satisfait quand
 
-- [ ] une collision d'identifiants née d'un rebase se répare par `socle renumber`, sans renommage ni mention corrigés à la main
+- [x] une collision d'identifiants née d'un rebase se répare par `socle renumber`, sans renommage ni mention corrigés à la main

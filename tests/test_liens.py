@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
 from socle import config, links as liens
@@ -144,6 +145,45 @@ class TestLiensDuDepot(unittest.TestCase):
         git(self.clone, "commit", "-q", "--allow-empty", "-m", "cinq")
         git(self.clone, "checkout", "-q", "locale")
         self.assertEqual(liens.commit_pousse(self.clone), git(self.clone, "rev-parse", "origin/locale").strip())
+
+    def test_la_ci_d_une_pull_request_lie_une_demande_posee_sur_sa_branche(self):
+        """T-0085 : la CI d'une pull request tourne sur une HEAD détachée,
+        le commit de fusion que GitHub prépare ; une demande posée sur la
+        branche se lie à la tête de la pull request, pas à `origin/main`."""
+        dossier = config.FORMAT_ACTUEL.demandes
+        demande = f"{dossier}/D-0001-une-question.md"
+        (self.clone / dossier).mkdir(parents=True)
+        (self.clone / demande).write_text("# D-0001 — Une question\n")
+        git(self.clone, "add", "-A")
+        git(self.clone, "commit", "-qm", "la demande")
+        git(self.clone, "push", "-q", "origin", "claude/essai")
+        tete = git(self.clone, "rev-parse", "HEAD").strip()
+        # La branche par défaut a avancé : la tête de la pull request n'en
+        # descend plus.
+        source = self.dossier / "source"
+        (source / "docs/d.md").write_text("# D\n")
+        git(source, "add", "-A")
+        git(source, "commit", "-qm", "sur main")
+        git(self.clone, "fetch", "-q", "origin")
+        git(self.clone, "checkout", "-q", "--detach", "origin/main")
+        git(self.clone, "merge", "-q", "--no-ff", "-m", "Merge claude/essai into main", tete)
+        ci = {"GITHUB_HEAD_REF": "claude/essai", "GITHUB_WORKSPACE": str(self.clone)}
+        with unittest.mock.patch.dict(os.environ, ci):
+            url, avertissement = liens.lien(config.Projet.charger(self.clone), demande)
+        self.assertEqual(url, f"{DEPOT}/blob/{tete}/{demande}")
+        self.assertEqual(avertissement, "")
+        # Un autre dépôt que celui que la CI a extrait (un dépôt de test, le
+        # dépôt compagnon) garde la règle de sa branche : la revue de la CI
+        # de la PR 73, où un dépôt sans commit faisait planter le lien.
+        ailleurs = {"GITHUB_HEAD_REF": "claude/essai", "GITHUB_WORKSPACE": str(self.dossier / "source")}
+        with unittest.mock.patch.dict(os.environ, ailleurs):
+            self.assertEqual(liens.commit_pousse(self.clone), git(self.clone, "rev-parse", "origin/main").strip())
+            vide = self.dossier / "vide"
+            vide.mkdir()
+            git(vide, "init", "-q")
+            self.assertIsNone(liens.commit_pousse(vide))
+        with unittest.mock.patch.dict(os.environ, {**ci, "GITHUB_WORKSPACE": str(vide)}):
+            self.assertIsNone(liens.commit_pousse(vide))
 
     def test_pas_de_lien_vers_ce_qui_n_est_pas_pousse(self):
         url, avertissement = liens.lien(self.projet, "docs/b.md")
