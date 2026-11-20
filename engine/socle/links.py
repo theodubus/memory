@@ -12,6 +12,7 @@ Les URL ont la forme de GitHub : `<dépôt>/blob/<commit>/<chemin>`.
 
 from __future__ import annotations
 
+import os
 import re
 import unicodedata
 from urllib.parse import quote, unquote, urlsplit
@@ -85,9 +86,15 @@ def commit_pousse(racine) -> str | None:
     `origin/main` suit celle-ci tant qu'on ne l'a pas changé, alors qu'elle
     se pousse sous son propre nom (B-0134) ; et repartie après une fusion,
     sa branche distante du même nom garde l'ancien travail jusqu'au push
-    suivant."""
+    suivant. La CI d'une pull request (`GITHUB_HEAD_REF`) tourne sur une
+    HEAD détachée, le commit de fusion que GitHub prépare : son second
+    parent est la tête de la pull request, poussée, où vit ce que la
+    branche a posé (T-0085)."""
     defaut = outils.branche_par_defaut(racine)
     branche = outils.git(racine, "rev-parse", "--abbrev-ref", "HEAD", check=False).strip()
+    if branche == "HEAD" and os.environ.get("GITHUB_HEAD_REF"):
+        tete = "HEAD^2" if outils.rev_existe(racine, "HEAD^2") else "HEAD"
+        return outils.resoudre(racine, tete)
     distant = outils.git(racine, "config", "--get", f"branch.{branche}.remote", check=False).strip()
     meme_nom = f"{distant if distant not in ('', '.') else 'origin'}/{branche}" \
         if branche and branche != "HEAD" else None

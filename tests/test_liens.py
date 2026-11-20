@@ -145,6 +145,39 @@ class TestLiensDuDepot(unittest.TestCase):
         git(self.clone, "checkout", "-q", "locale")
         self.assertEqual(liens.commit_pousse(self.clone), git(self.clone, "rev-parse", "origin/locale").strip())
 
+    def test_la_ci_d_une_pull_request_lie_une_demande_posee_sur_sa_branche(self):
+        """T-0085 : la CI d'une pull request tourne sur une HEAD détachée,
+        le commit de fusion que GitHub prépare ; une demande posée sur la
+        branche se lie à la tête de la pull request, pas à `origin/main`."""
+        dossier = config.FORMAT_ACTUEL.demandes
+        demande = f"{dossier}/D-0001-une-question.md"
+        (self.clone / dossier).mkdir(parents=True)
+        (self.clone / demande).write_text("# D-0001 — Une question\n")
+        git(self.clone, "add", "-A")
+        git(self.clone, "commit", "-qm", "la demande")
+        git(self.clone, "push", "-q", "origin", "claude/essai")
+        tete = git(self.clone, "rev-parse", "HEAD").strip()
+        # La branche par défaut a avancé : la tête de la pull request n'en
+        # descend plus.
+        source = self.dossier / "source"
+        (source / "docs/d.md").write_text("# D\n")
+        git(source, "add", "-A")
+        git(source, "commit", "-qm", "sur main")
+        git(self.clone, "fetch", "-q", "origin")
+        git(self.clone, "checkout", "-q", "--detach", "origin/main")
+        git(self.clone, "merge", "-q", "--no-ff", "-m", "Merge claude/essai into main", tete)
+        avant = os.environ.get("GITHUB_HEAD_REF")
+        os.environ["GITHUB_HEAD_REF"] = "claude/essai"
+        try:
+            url, avertissement = liens.lien(config.Projet.charger(self.clone), demande)
+        finally:
+            if avant is None:
+                del os.environ["GITHUB_HEAD_REF"]
+            else:
+                os.environ["GITHUB_HEAD_REF"] = avant
+        self.assertEqual(url, f"{DEPOT}/blob/{tete}/{demande}")
+        self.assertEqual(avertissement, "")
+
     def test_pas_de_lien_vers_ce_qui_n_est_pas_pousse(self):
         url, avertissement = liens.lien(self.projet, "docs/b.md")
         self.assertIsNone(url)

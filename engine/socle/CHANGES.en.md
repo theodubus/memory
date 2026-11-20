@@ -7,6 +7,17 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-20-n — The CI summary of a pull request links a request posed on its branch
+
+On a pull request, the CI runs on a detached HEAD, the merge commit
+GitHub prepares; a request's link pointed there to the default branch,
+which does not have a request posed on the branch yet: the run summary
+(`socle roadmap --format markdown`) gave it without a link. When
+`GITHUB_HEAD_REF` is set, the link now points to the head of the pull
+request, the second parent of the merge commit.
+
+To do: nothing.
+
 ## 2026-11-20-m — `socle renumber` repairs a collision born of a rebase
 
 After a rebase or a cherry-pick, two entries carried the same
