@@ -5,7 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0020 en cours ; T-0112 attend D-0150 (Théo) ; revue, passe 1.
+L-0020 relu ; T-0112 attend D-0150 (Théo), puis la clôture.
 
 ## Consignes en cours
 
