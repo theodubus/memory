@@ -17,7 +17,9 @@ ADR-0079.
 `python3 .socle/socle roadmap` et en coller la sortie dans la réponse,
 dans un bloc de code :
 où le lot se place parmi les jalons et les lots, puis ce qui vient après
-lui (B-0274).
+lui (B-0274). Après la clôture du troisième lot depuis la dernière revue
+de cap, ou d'un jalon, la revue de cap passe avant le lot suivant : le
+skill `direction-review` (D-0145).
 
 ## Les sous-agents
 
