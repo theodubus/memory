@@ -291,6 +291,11 @@ word for word.
   its options.
 - `approve` is the only answer that authorises an action reserved to the
   human.
+- A test it names, deleted or whose expected value changes, or a protected
+  file it cites, may come before your answer: if the default branch
+  requires the socle's CI, it is committed and pushed under the request
+  pushed as is, the CI refusing it until your answer, and you read it in
+  the pull request; otherwise, it waits in the agent's working tree.
 - `insufficient-context` sends the request back to the agent, which
   rewrites it.
 - From a terminal:

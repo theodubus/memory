@@ -372,6 +372,15 @@ def protege_en_attente(a: Atelier, c: Path) -> None:
     (c / ".github/CODEOWNERS").write_text(nouveau)
 
 
+def _valeur_en_attente(a: Atelier, c: Path) -> None:
+    """La valeur attendue de `test_double` changée dans l'arbre, sous la
+    demande poussée qui nomme le test (D-0147)."""
+    ajouter(c, "memory/requests/D-0001-refactor.md", _demande_nommant_le_test(a, c))
+    pousser(a, c, "La demande")
+    remplacer(c, "tests/test_calc.py", "self.assertEqual(double(2), 4)", "self.assertEqual(double(2), 4.0)")
+    maj_memoire(c, "Le test suit la demande, en attendant la réponse.")
+
+
 def _demande_d_une_mise_a_jour(a: Atelier, c: Path, fichiers: int, prose: str = "") -> None:
     """La demande qui approuve une mise à jour : chaque fichier protégé sur
     sa ligne d'empreinte (ADR-0058), ou la même ligne suivie de prose."""
@@ -1202,6 +1211,24 @@ def _cas() -> list[Cas]:
         a.commit(c, "La mise à jour")
         r = a.socle(c, "check", "--stage", "ci", "--base", "origin/main", env=ci_exigee(a, c))
         return "" if r.returncode == 0 else r.stdout + r.stderr
+
+    @defaut("valeur-attendue-en-attente-a-la-ci", "valeur attendue commitée sous une demande en attente, la CI "
+            "du socle exigée", "ci", "tests.attendus")
+    def _(a, c):
+        # D-0147 : elle se commite et se pousse, mais la CI la refuse jusqu'à
+        # la réponse de l'humain.
+        _valeur_en_attente(a, c)
+        a.commit(c, "Le test suit")
+        r = a.socle(c, "check", "--stage", "ci", "--base", "origin/main", env=ci_exigee(a, c))
+        return "" if r.returncode == 0 else r.stdout + r.stderr
+
+    @defaut("valeur-attendue-sans-demande-ci-exigee", "valeur attendue commitée sans demande, la CI du socle "
+            "exigée", "git", "tests.attendus")
+    def _(a, c):
+        # La tolérance de D-0147 ne vaut que sous une demande poussée.
+        remplacer(c, "tests/test_calc.py", "self.assertEqual(double(2), 4)", "self.assertEqual(double(2), 4.0)")
+        maj_memoire(c)
+        return etage_git(a, c, env=ci_exigee(a, c))
 
     @defaut("demande-identifiant-nu", "demande humaine avec identifiant nu", "agent", "demandes.contrat")
     def _(a, c):
@@ -3346,6 +3373,14 @@ def _temoins() -> list[tuple[str, Callable]]:
         env = ci_exigee(a, c)
         # La branche existe déjà en face : le hook avant push juge aussi la
         # plage qui part, comme la CI la jugera.
+        return (etage_push(a, c, hooks=False, env=env) or etage_git(a, c, env=env)
+                or etage_push(a, c, env=env))
+
+    @temoin("une valeur attendue changée sous une demande en attente, poussée, la CI du socle exigée : elle se "
+            "commite et se pousse")
+    def _(a, c):
+        _valeur_en_attente(a, c)
+        env = ci_exigee(a, c)
         return (etage_push(a, c, hooks=False, env=env) or etage_git(a, c, env=env)
                 or etage_push(a, c, env=env))
 

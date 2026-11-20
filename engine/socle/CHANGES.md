@@ -7,6 +7,21 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-20-g — Un test changé sous sa demande en attente se commite et se pousse, la CI du socle exigée
+
+Un test supprimé, ou dont la valeur attendue change, ou un cas d'un
+fichier de cas déclaré, qu'une demande en attente nomme ne quittait pas
+l'arbre de l'agent : `tests.attendus` ne le tolérait qu'à la fin du tour.
+Il se tolère désormais comme un fichier protégé sous sa demande en
+attente : si la branche par défaut exige la CI du socle avant toute
+fusion, il se commite et se pousse dès que la demande qui le nomme est
+poussée telle quelle, et la CI le refuse jusqu'à la réponse de l'humain,
+qui le lit dans la pull request. Sans cette protection, rien ne change :
+le commit et la CI attendent la réponse. Un commit sans demande poussée
+reste refusé.
+
+À faire : rien.
+
 ## 2026-11-20-f — Le relecteur à froid d'une demande reçoit le modèle le plus capable jusqu'à Opus, à son lancement
 
 Le skill `socle-request` faisait relire une demande à froid par un

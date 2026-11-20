@@ -7,6 +7,21 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-20-g — A test changed under its pending request is committed and pushed, the socle's CI required
+
+A deleted test, or one whose expected value changes, or a case of a
+declared case file, that a pending request names did not leave the
+agent's working tree: `tests.attendus` tolerated it only at the end of
+the turn. It is now tolerated like a protected file under its pending
+request: if the default branch requires the socle's CI before any merge,
+it is committed and pushed as soon as the request that names it is
+pushed as is, and the CI refuses it until the human's answer, who reads
+it in the pull request. Without that protection, nothing changes: the
+commit and the CI wait for the answer. A commit without a pushed request
+is still refused.
+
+To do: nothing.
+
 ## 2026-11-20-f — A request's cold reader receives the most capable model up to Opus, at launch
 
 The `socle-request` skill had a request read cold by a subagent of the

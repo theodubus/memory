@@ -3304,6 +3304,18 @@ MESSAGES: dict[str, str] = {
     "consignée par `socle decision --unprompted`, passe la CI":
         "an expected value changed under a decision the human gave on their own and that names the test, recorded "
         "by `socle decision --unprompted`, passes the CI",
+    "{quoi}, en attente de {attente} : il se commite et se pousse, la CI le refuse jusqu'à la réponse de "
+    "l'humain, qui le lit dans la pull request":
+        "{quoi}, awaiting {attente}: it is committed and pushed, the CI refuses it until the human's answer, who "
+        "reads it in the pull request",
+    "valeur attendue commitée sous une demande en attente, la CI du socle exigée":
+        "expected value committed under a pending request, the socle's CI required",
+    "valeur attendue commitée sans demande, la CI du socle exigée":
+        "expected value committed without a request, the socle's CI required",
+    "une valeur attendue changée sous une demande en attente, poussée, la CI du socle exigée : elle se commite et "
+    "se pousse":
+        "an expected value changed under a pending request, pushed, the socle's CI required: it is committed and "
+        "pushed",
     "consigner une décision sans --relayed":
         "recording a decision without --relayed",
     "décision en séance consignée : {chemin}, et sa réponse « {answer} » — à commiter avec la suite.":

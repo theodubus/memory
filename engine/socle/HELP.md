@@ -298,6 +298,12 @@ conversation ; l'agent consigne la réponse mot pour mot.
   recommandation), `refuser`, `contexte-insuffisant` ; une demande de choix
   y ajoute ses options.
 - `valider` est la seule réponse qui autorise un geste réservé à l'humain.
+- Un test qu'elle nomme, supprimé ou dont la valeur attendue change, ou un
+  fichier protégé qu'elle cite, peut précéder votre réponse : si la
+  branche par défaut exige la CI du socle, il se commite et se pousse sous
+  la demande poussée telle quelle, la CI le refusant jusqu'à votre
+  réponse, et vous le lisez dans la pull request ; sinon, il l'attend dans
+  l'arbre de l'agent.
 - `contexte-insuffisant` renvoie la demande à l'agent, qui la réécrit.
 - Depuis un terminal :
   `python3 .socle/socle answer D-NNNN <réponse> --text "<texte>"`.
