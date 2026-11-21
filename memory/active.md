@@ -5,7 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0008 fait (J-2026-11-21-L) ; sa fusion, puis T-0120.
+T-0120 : trois cas à Théo (J-2026-11-21-M) ; puis L-0021.
 
 ## Consignes en cours
 
