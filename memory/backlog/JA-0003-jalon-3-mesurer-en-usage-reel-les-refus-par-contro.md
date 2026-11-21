@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # JA-0003 — Jalon 3 — Mesurer en usage réel : les refus par contrôle, les demandes par semaine
 
-> statut : ouvert · origine : J-2026-11-10-N · lu : backlog@f4d5e8a1 · ancien : B-0159
+> statut : ouvert · origine : J-2026-11-10-N · après : JA-0006 · lu : backlog@f4d5e8a1 · ancien : B-0159
 
 Le troisième jalon (D-0093@333ad9d0, proposition 6), en parallèle du deuxième :
 mesurer ce que le socle coûte et rapporte en usage réel, comme le cadrage

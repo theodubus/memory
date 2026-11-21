@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # JA-0004 — Jalon 4 — Le noyau et la méthode
 
-> statut : ouvert · origine : J-2026-11-10-N · lu : backlog@321ff0d7 · après : JA-0002, B-0161, B-0162, B-0101 · ancien : B-0160
+> statut : ouvert · origine : J-2026-11-10-N · lu : backlog@321ff0d7 · après : JA-0002, JA-0006, B-0161, B-0162, B-0101 · ancien : B-0160
 
 Le quatrième jalon, après chess (D-0093@333ad9d0) : ce qui ajoute des règles au
 socle. La couche des consignes (B-0161), la planification par l'agent

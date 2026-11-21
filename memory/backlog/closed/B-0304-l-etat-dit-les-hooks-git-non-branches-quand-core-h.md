@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0304 — L'état dit les hooks git non branchés quand core.hooksPath pointe vers le dossier des hooks du projet par un chemin absolu
 
-> statut : ouvert · origine : J-2026-11-19-AJ · lu : backlog@2e909c10
+> statut : abandonné · origine : J-2026-11-19-AJ · ref : B-0252, J-2026-11-21-B · lu : backlog@2e909c10
 
 Vu le 19 novembre (J-2026-11-19-AJ) : à la reprise de la session de
 L-0019, le démarrage a ajouté à l'état « hooks git non branchés », alors
@@ -17,3 +17,6 @@ démarrage, sans alerte, et la reprise.
 ## Satisfait quand
 
 - [ ] un `core.hooksPath` qui désigne, en absolu ou en relatif, le dossier des hooks git du projet ne fait plus dire à l'état que les hooks ne sont pas branchés, et un autre dossier le fait toujours
+
+Abandonné le 21 novembre, doublon de B-0252 (sa tâche T-0042, dans
+L-0010) ; relevé par la revue de cap 2 (J-2026-11-21-A).
