@@ -5,7 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0008, coupé en trois (J-2026-11-21-B).
+L-0008 (J-2026-11-21-B), puis le tri T-0120.
 
 ## Consignes en cours
 
