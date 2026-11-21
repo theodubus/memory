@@ -7,6 +7,21 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-21-c — “What now” no longer has an update's protected files committed before its request
+
+In a cloud session, an update that changes protected files told the
+session that had to add the socle's repository to commit there, push
+the branch and open the pull request, the request being put afterwards
+in a new session. Yet the pre-commit hook refuses a changed protected
+file that no pending request covers: that session could not do what it
+was told. It now commits the protected files there only after putting
+the request there, in two steps like any session, when the default
+branch requires the socle CI; otherwise, it commits nothing there, and
+the update is redone in a new session on the project's repository
+alone, the socle's repository cloned without being added to it.
+
+To do: nothing.
+
 ## 2026-11-21-b — An update no longer lays down a second adapter for the language of a copy already there
 
 A project in which Python is a language besides the main one has its

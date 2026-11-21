@@ -1861,7 +1861,9 @@ def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str], notes: list
     etapes = []
     if "protege.fichiers" in echecs and os.environ.get(hooks.SESSION_CLOUD) == "true":
         # En session cloud, l'humain n'a pas de terminal, et la session qui a
-        # ajouté le dépôt du socle ne se reprend pas (B-0107).
+        # ajouté le dépôt du socle ne se reprend pas (B-0107). Aucune session
+        # ne commite les fichiers protégés avant la demande : le hook avant
+        # commit les refuse (B-0152).
         etapes.append(trad("approuver les fichiers protégés que la mise à jour a changés : en session cloud, "
                            "l'humain n'a pas de terminal pour `socle approve` ; poser une demande qui cite chaque "
                            "fichier protégé changé et son empreinte (`python3 .socle/socle check` les donne), que "
@@ -1874,10 +1876,14 @@ def et_maintenant(cible: Path, mise_a_jour: bool, echecs: list[str], notes: list
                            "Poussée, elle laisse commiter et pousser ces "
                            "fichiers si la branche par défaut exige la CI du socle, qui les refuse jusqu'à la réponse "
                            "et où l'humain les lit dans la pull request (D-0071) ; sinon, ils restent dans l'arbre "
-                           "jusqu'à sa réponse, puis se commitent avec elle. Une session qui a dû ajouter le dépôt du socle "
-                           "ne se reprend pas : y commiter, pousser la branche et ouvrir la pull request, d'une "
-                           "traite et sans rien attendre, et poser la demande dans une session neuve sur le seul "
-                           "dépôt du projet, sur cette branche"))
+                           "jusqu'à sa réponse, puis se commitent avec elle. Une session qui a dû ajouter le dépôt du "
+                           "socle ne se reprend pas, et n'y commite les fichiers protégés qu'après la demande, que le "
+                           "hook avant commit exige : si la branche par défaut exige la CI du socle, y poser la "
+                           "demande, puis commiter en deux temps comme à l'étape du commit, pousser la branche et "
+                           "ouvrir la pull request, d'une traite et sans rien attendre, l'humain répondant dans une "
+                           "session neuve sur le seul dépôt du projet, sur cette branche ; sinon, n'y rien commiter, "
+                           "et refaire la mise à jour dans une session neuve sur le seul dépôt du projet, le dépôt du "
+                           "socle cloné sans y être ajouté"))
     elif "protege.fichiers" in echecs:
         etapes.append(trad("approuver les fichiers protégés que la mise à jour a changés (la liste s'affiche, "
                            'à confirmer) : `python3 .socle/socle approve --text "Mise à jour du socle '

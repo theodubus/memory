@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0152 — La session qui a dû ajouter le dépôt du socle ne peut pas commiter les fichiers protégés d'une mise à jour, que « Et maintenant » lui dit de commiter sans attendre
 
-> statut : ouvert · origine : J-2026-11-10-J · lu : backlog@f7e6772f
+> statut : fait · origine : J-2026-11-10-J · ref : T-0029, J-2026-11-21-J · lu : backlog@f7e6772f
 
 En session cloud, une mise à jour qui change des fichiers protégés dit,
 à la session qui a dû ajouter le dépôt du socle, d'y « commiter, pousser
@@ -15,4 +15,4 @@ le dépôt du socle à la session.
 
 ## Satisfait quand
 
-- [ ] la session qui a dû ajouter le dépôt du socle fait ce que « Et maintenant » lui dit sans buter sur le hook avant commit
+- [x] la session qui a dû ajouter le dépôt du socle fait ce que « Et maintenant » lui dit sans buter sur le hook avant commit

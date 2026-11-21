@@ -7,6 +7,22 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-21-c — « Et maintenant » ne fait plus commiter les fichiers protégés d'une mise à jour avant sa demande
+
+En session cloud, une mise à jour qui change des fichiers protégés
+disait à la session qui a dû ajouter le dépôt du socle d'y commiter,
+pousser la branche et ouvrir la pull request, la demande se posant
+ensuite dans une session neuve. Le hook avant commit refuse pourtant un
+fichier protégé changé qu'aucune demande en attente ne couvre : cette
+session ne pouvait pas faire ce qu'on lui disait. Elle n'y commite
+désormais les fichiers protégés qu'après y avoir posé la demande, en
+deux temps comme toute session, quand la branche par défaut exige la CI
+du socle ; sinon, elle n'y commite rien, et la mise à jour se refait
+dans une session neuve sur le seul dépôt du projet, le dépôt du socle
+cloné sans y être ajouté.
+
+À faire : rien.
+
 ## 2026-11-21-b — Une mise à jour ne pose plus un second adaptateur du langage d'une copie déjà là
 
 Un projet dont Python est un langage de plus que le principal a sa copie
