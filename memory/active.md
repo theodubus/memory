@@ -5,7 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0020 clos (J-2026-11-20-AS) ; revue de cap 2, puis L-0008.
+Revue de cap 2 à Théo (J-2026-11-21-A), puis L-0008 coupé.
 
 ## Consignes en cours
 
