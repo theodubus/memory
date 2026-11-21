@@ -5,7 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-T-0120 : trois cas à Théo (J-2026-11-21-M) ; puis L-0021.
+T-0120 clos (D-0153, J-2026-11-21-O) ; puis L-0021.
 
 ## Consignes en cours
 
