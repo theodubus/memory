@@ -24,5 +24,5 @@ est de nouveau en retard. Tout changement d'un gabarit crée ce retard.
 
 ## Satisfait quand
 
-- [ ] une copie protégée de ce dépôt en retard sur son gabarit se voit sans relancer l'installeur
+- [x] une copie protégée de ce dépôt en retard sur son gabarit se voit sans relancer l'installeur (T-0009)
 - [ ] ce dépôt tourne sur ce que le produit installe : ses copies protégées suivent leurs gabarits
