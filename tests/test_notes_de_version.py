@@ -5,8 +5,10 @@ Le pilote, passé au moteur nouveau, a vu changer toutes ses empreintes de
 lecture sans qu'aucune note ne l'ait prévenu (B-0151)."""
 
 import io
+import os
 import re
 import shutil
+import subprocess
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
@@ -161,6 +163,54 @@ class TestALaMiseAJour(unittest.TestCase):
         relance = installer(self.racine, MOTEUR)
         self.assertNotIn("Notes de version", relance)
         self.assertNotIn("-m \"Notes de version", relance)
+
+    def commit(self):
+        env = {**os.environ, "GIT_CONFIG_NOSYSTEM": "1", "SOCLE_HOOKS_OFF": "1"}
+        subprocess.run(["git", "add", "-A"], cwd=self.racine, check=True, env=env)
+        subprocess.run(["git", "-c", "user.name=essai", "-c", "user.email=essai@exemple.org", "-c",
+                        "core.hooksPath=/dev/null", "commit", "-q", "-m", "essai"], cwd=self.racine, check=True,
+                       env=env)
+
+    def test_relancee_avant_son_commit_elle_nomme_les_memes_notes(self):
+        """B-0225 : relancé avant le commit de la mise à jour, l'installeur
+        trouvait déjà la copie nouvelle dans l'arbre, et ne nommait plus
+        rien ; il lit les notes de la copie du dernier commit."""
+        installer(self.racine, self.source(garder=3), adoption=False)
+        self.commit()
+        premiere = installer(self.racine, MOTEUR)
+        relance = installer(self.racine, MOTEUR)
+        nouvelles = self.tous[:-3]
+        commande = (f'git commit -m "Mettre à jour le socle {installeur.VERSION}" -m "Notes de version du socle : '
+                    f'{", ".join(nouvelles)}, dans .socle/engine/socle/CHANGES.md" && git push')
+        for sortie in (premiere, relance):
+            self.assertIn(f"{len(nouvelles)} entrée(s) que la copie du moteur remplacée n'avait pas", sortie)
+            apres = sortie.split("Et maintenant :", 1)[1]
+            self.assertIn(commande, apres)
+            self.assertIn(f"lui dire de lire ses notes de version ({', '.join(nouvelles)}, dans "
+                          "`.socle/engine/socle/CHANGES.md`)", apres)
+        # Commitée, la mise à jour n'a plus de notes à donner.
+        self.commit()
+        self.assertNotIn("Notes de version", installer(self.racine, MOTEUR))
+
+    def test_une_copie_commitee_sans_notes_les_recoit_toutes_meme_relancee(self):
+        """Le dernier commit a une copie du moteur sans notes, d'avant
+        ADR-0078 : relancée, la mise à jour les donne encore toutes, et ne
+        se replie pas sur l'arbre, qui a déjà la copie nouvelle."""
+        installer(self.racine, self.source(), adoption=False)
+        self.commit()
+        installer(self.racine, MOTEUR)
+        relance = installer(self.racine, MOTEUR)
+        self.assertIn(f"voici toutes leurs entrées ({len(self.tous)})", relance)
+
+    def test_notes_deja_lues_dans_le_dernier_commit_sinon_dans_l_arbre(self):
+        installer(self.racine, self.source(garder=3), adoption=False)
+        # Sans commit, l'arbre.
+        self.assertEqual(installeur.notes_deja_lues(self.racine, ".socle/engine"), set(self.tous[-3:]))
+        self.commit()
+        installer(self.racine, MOTEUR)
+        self.assertEqual(installeur.notes_deja_lues(self.racine, ".socle/engine"), set(self.tous[-3:]))
+        # Un dernier commit sans copie du moteur à cet endroit : l'arbre.
+        self.assertEqual(installeur.notes_deja_lues(self.racine, "ailleurs"), set())
 
     def test_rien_quand_le_moteur_n_est_pas_recopie(self):
         """Lancé depuis le projet, l'installeur garde le moteur (ADR-0077) :

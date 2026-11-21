@@ -7,6 +7,19 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-21-a — Relancé avant le commit d'une mise à jour, l'installeur nomme encore ses notes de version
+
+L'installeur lisait les notes de version déjà vues dans la copie du
+moteur de l'arbre. Relancé avant le commit de la mise à jour (après
+`git fetch --unshallow`, ou pour corriger `--adapter`), il y trouvait
+déjà la copie nouvelle et ne voyait plus de notes nouvelles : le message
+de commit qu'il propose, comme l'étape qui ouvre l'agent, ne les
+nommait plus. Il les lit désormais dans la copie du moteur du dernier
+commit ; dans l'arbre seulement quand le dépôt n'a pas de commit, ou que
+le dernier n'a pas de copie du moteur.
+
+À faire : rien.
+
 ## 2026-11-20-r — Le skill `socle-batch` fait attendre, après une fusion par l'agent, les workflows qu'elle lance
 
 Une fusion sur la branche par défaut peut lancer un déploiement ou une

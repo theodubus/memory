@@ -663,6 +663,24 @@ def identifiants_des_notes(paquet: Path) -> set[str]:
             for ident, _ in entrees_des_notes(f.read_text(encoding="utf-8", errors="replace"))}
 
 
+def notes_deja_lues(cible: Path, dossier_moteur: str) -> set[str]:
+    """Les identifiants des notes de version de la copie du moteur que le
+    projet a, lus dans le dernier commit, comme l'historique des adaptateurs
+    (ADR-0052) : relancé avant le commit d'une mise à jour, l'installeur
+    trouve déjà dans l'arbre la copie nouvelle, et ses notes s'y perdaient
+    (B-0225). Dans l'arbre quand le dépôt n'a pas de commit, ou que le
+    dernier n'a pas de copie du moteur."""
+    paquet = f"{dossier_moteur}/socle"
+    commit = outils.git(cible, "rev-parse", "--verify", "-q", "HEAD", check=False).strip()
+    chemins = [c for c in outils.git(cible, "ls-tree", "-z", "--name-only", commit, "--", f"{paquet}/",
+                                     check=False).split("\0") if c] if commit else []
+    if not chemins:
+        return identifiants_des_notes(cible / paquet)
+    # Une copie commitée sans notes, d'avant ADR-0078, n'en a lu aucune.
+    return {ident for c in chemins if fnmatch.fnmatch(Path(c).name, "CHANGES*.md")
+            for ident, _ in entrees_des_notes(outils.git(cible, "show", f"{commit}:{c}", check=False))}
+
+
 def notes_nouvelles(deja: set[str], paquet: Path, lg: str = "fr") -> list[tuple[str, str]]:
     """Les entrées des notes de version du moteur `paquet`, dans la langue
     `lg`, que `deja` ne nomme pas : ce que la copie nouvelle du moteur a en
@@ -1299,10 +1317,11 @@ def _installer(cible: Path, adaptateur: str | list[str], proprietaire: str, adop
     # consignera que ceux qu'il change (ADR-0077).
     avant = _etat_des_proteges(cible) if ancien and mode != config.MODE_AMONT else None
 
-    # Les notes de version de la copie du moteur que le projet a, lues avant
-    # qu'elle ne soit remplacée : la mise à jour donne celles que la copie
-    # nouvelle a en plus (ADR-0078).
-    lues = (identifiants_des_notes(cible / str(ancien.get("engine_dir") or ch.moteur) / "socle")
+    # Les notes de version de la copie du moteur que le projet a, lues dans
+    # le dernier commit avant qu'elle ne soit remplacée : la mise à jour
+    # donne celles que la copie nouvelle a en plus (ADR-0078), relancée
+    # avant son commit comme au premier passage (B-0225).
+    lues = (notes_deja_lues(cible, str(ancien.get("engine_dir") or ch.moteur))
             if ancien and mode != config.MODE_AMONT else None)
 
     # 1. Le moteur, remplacé en bloc, et son verrou.

@@ -7,6 +7,19 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-21-a — Run again before an update is committed, the installer still names its release notes
+
+The installer read the release notes already seen in the engine copy of
+the working tree. Run again before the update was committed (after
+`git fetch --unshallow`, or to correct `--adapter`), it found the new
+copy there already and saw no new notes: the commit message it
+proposes, like the step that opens the agent, no longer named them. It
+now reads them in the engine copy of the last commit; in the working
+tree only when the repository has no commit, or the last one has no
+engine copy.
+
+To do: nothing.
+
 ## 2026-11-20-r — The `socle-batch` skill has the agent wait, after a merge by the agent, for the workflows it starts
 
 A merge into the default branch may start a deployment or a release; if
