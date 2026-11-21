@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0021 — Lot de l'adoption et du guide : l'adoption vide, l'écart de politique déjà montré, l'import d'un journal, la clé d'un constat toléré
 
-> statut : ouvert · origine : J-2026-11-21-B · après : L-0008, T-0026, T-0076, T-0031, T-0032 · lu : backlog@18f4b4cb
+> statut : ouvert · origine : J-2026-11-21-B · après : L-0008, T-0026, T-0076, T-0031, T-0032, T-0121 · lu : backlog@18f4b4cb
 
 Coupé de L-0008 à son annonce, le 21 novembre (J-2026-11-21-B) : dix
 tâches pour un seuil de neuf (ADR-0101), et un lot de dix tâches de
@@ -12,3 +12,8 @@ politique déjà montré (T-0076), du même besoin B-0195 ; le guide
 (`engine/socle/HELP.md` et sa version anglaise) pour l'import d'un
 journal (T-0031) ; la clé d'un constat toléré (T-0032), qui
 s'abandonne si aucun projet n'en a montré le besoin.
+
+Le 21 novembre, Théo place B-0324 avant la mise à jour de chess (D-0152,
+J-2026-11-21-D) : sa tâche T-0121, les notes de version qu'une mise à
+jour imprime en entier, rejoint ce lot, celui de l'installeur qui suit
+L-0008, en cours, qui ne reçoit rien.

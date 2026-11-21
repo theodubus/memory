@@ -13,9 +13,10 @@ l'installeur n'imprimait en entier que celles dont « À faire » demande
 quelque chose, et des autres le titre et le fichier. Une décision
 réversible et mesurable (politique, point 3).
 
-Sa place dans les jalons attend la réponse de Théo sur le sens de « sur
-apres une mise à jour » : avant la mise à jour de chess, dans le lot de
-l'installeur qui suit, ou après elle, dans JA-0006.
+Sa place dans les jalons attendait la réponse de Théo sur le sens de
+« sur apres une mise à jour ». Le 21 novembre, Théo : « avant la mise à
+jour de chess » (D-0152, J-2026-11-21-D). Il rejoint JA-0005, et sa tâche
+T-0121 L-0021, le lot de l'installeur qui suit L-0008.
 
 ## Satisfait quand
 
