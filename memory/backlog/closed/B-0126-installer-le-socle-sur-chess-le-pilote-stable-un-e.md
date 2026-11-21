@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0126 — Installer le socle sur chess : le pilote stable, un essai à blanc, puis l'installation
 
-> statut : ouvert · origine : J-2026-11-02-K · après : D-0073, B-0168, B-0169, B-0170 · lu : backlog@f649164c
+> statut : fait · origine : J-2026-11-02-K · ref : T-0122, D-0152, J-2026-11-21-D · après : D-0073, B-0168, B-0169, B-0170 · lu : backlog@f649164c
 
 Théo a demandé si le socle était assez mûr pour chess, son projet en
 cours (J-2026-11-02-H), et validé le plan proposé (D-0073). Ce que la
@@ -60,4 +60,4 @@ pose donc dans la session de chess ; ce sujet se clôt à son compte rendu.
 - [x] les lots à livrer avant chess, ceux du jalon 1 (JA-0001), sont fusionnés et publiés (ADR-0059)
 - [x] un essai à blanc sur chess, avec la version publiée, sans constat bloquant
 - [x] le socle installé sur chess pour de bon, en mode adoption, l'installation fusionnée
-- [ ] la feuille de route de chess posée à la main avec Théo, depuis son carnet de bord : sujets ordonnés, jalons, priorités (D-0094)
+- [x] la feuille de route de chess posée à la main avec Théo, depuis son carnet de bord : sujets ordonnés, jalons, priorités (D-0094)

@@ -411,6 +411,50 @@ class MiseAJour(unittest.TestCase):
                          ["app/src/main/kotlin/app/App.kt"])
 
 
+class PythonSecond(unittest.TestCase):
+    """Un projet Kotlin dont Python est le second langage, sa copie
+    `python.toml` posée : un `conftest.py` neuf fait détecter `python-pytest`
+    (B-0144)."""
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-python-second-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        git(self.racine, "init", "-q", "-b", "main")
+        for chemin, texte in (("build.gradle.kts", "plugins { kotlin(\"jvm\") }\n"),
+                              ("src/main/kotlin/A.kt", "fun a() = 1\n"),
+                              ("outils/pyproject.toml", "[project]\nname = \"outils\"\n"),
+                              ("outils/calc.py", "def f():\n    return 1\n"),
+                              ("tests/test_calc.py", "import unittest\n")):
+            p = self.racine / chemin
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text(texte)
+        installer(self.racine, "auto")
+        self.assertEqual(sorted(p.name for p in (self.racine / ".socle/adapters").glob("*.toml")), ["python.toml"])
+        git(self.racine, "add", "-A")
+        git(self.racine, "-c", "core.hooksPath=/dev/null", "commit", "-qm", "installation")
+        (self.racine / "conftest.py").write_text("")
+
+    def test_une_mise_a_jour_automatique_garde_la_seule_copie_python(self):
+        self.assertEqual(installeur.detecter_adaptateurs(self.racine), ["kotlin", "python-pytest"])
+        sortie = installer_et_lire(self.racine, "auto")
+        self.assertEqual(sorted(p.name for p in (self.racine / ".socle/adapters").glob("*.toml")), ["python.toml"])
+        self.assertIn("adaptateur : kotlin, python (détecté)", sortie)
+        self.assertNotIn("adaptateur.recouvrement            ECHEC", sortie)
+
+    def test_nomme_l_adaptateur_d_un_langage_que_couvre_une_copie_est_la_copie(self):
+        sortie = installer_et_lire(self.racine, ["kotlin", "python-pytest"])
+        self.assertFalse((self.racine / ".socle/adapters/python-pytest.toml").exists())
+        self.assertIn("adaptateur : kotlin, python\n", sortie)
+        # Seul nommé, il ne prend pas la place du principal : la CI en part.
+        installer(self.racine, ["python-pytest"])
+        self.assertFalse((self.racine / ".socle/adapters/python-pytest.toml").exists())
+        self.assertIn('language = "kotlin"', (self.racine / ".socle/adapter.toml").read_text())
+        self.assertIn("actions/setup-java", (self.racine / ".github/workflows/socle.yml").read_text())
+
+    def test_langages_en_place_lit_chaque_copie(self):
+        self.assertEqual(installeur.langages_en_place(self.racine, config.FORMAT_ACTUEL), {"kotlin", "python"})
+
+
 def installer_et_lire(racine: Path, adaptateurs) -> str:
     """L'installeur, et ce qu'il imprime."""
     import contextlib

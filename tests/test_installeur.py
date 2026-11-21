@@ -329,6 +329,39 @@ class TestDeuxEtats(unittest.TestCase):
         self.assertEqual(installeur.etats_du_projet({"hooks": {"SessionStart": [
             {"hooks": [{"type": "command", "command": "python3 .socle/socle hook session-start"}]}]}}), [])
 
+    def test_l_installeur_nomme_le_hook_de_fin_de_tour_du_projet(self):
+        """B-0183 : chess avait son hook de fin de tour, qui lançait les
+        mêmes étapes que celui du socle ; l'installeur ne le disait pas."""
+        import contextlib
+        import io
+        import json
+        import subprocess
+        import tempfile
+
+        racine = Path(tempfile.mkdtemp(prefix="socle-fins-"))
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=racine, check=True)
+        (racine / "calc.py").write_text("X = 1\n", encoding="utf-8")
+        (racine / ".claude").mkdir()
+        (racine / ".claude/settings.json").write_text(json.dumps({"hooks": {"Stop": [
+            {"hooks": [{"type": "command", "command": "bash tools/verifier.sh"}]}]}}), encoding="utf-8")
+        for passage in ("installation", "mise à jour"):
+            sortie = io.StringIO()
+            with contextlib.redirect_stdout(sortie):
+                installeur.installer(racine, "python", "@essai", source=MOTEUR)
+            self.assertIn("!! le projet a déjà son propre hook de fin de tour (bash tools/verifier.sh) : il tire à "
+                          "chaque fin de tour à côté de celui du socle, et peut le doubler", sortie.getvalue(), passage)
+        conf = json.loads((racine / ".claude/settings.json").read_text(encoding="utf-8"))
+        self.assertEqual(installeur.fins_de_tour_du_projet(conf), ["bash tools/verifier.sh"])
+        self.assertTrue(any(".socle/socle hook stop" in h["command"] for b in conf["hooks"]["Stop"] for h in b["hooks"]))
+
+    def test_sans_hook_de_fin_de_tour_propre_rien_n_est_dit(self):
+        import json
+
+        conf = json.loads(installeur.gabarit("settings.json"))
+        self.assertEqual(installeur.fins_de_tour_du_projet(conf), [])
+        self.assertEqual(installeur.fins_de_tour_du_projet({}), [])
+
 
 class TestAuditAdaptateur(unittest.TestCase):
     """B-0011 : à chaque état, un langage que l'adaptateur ne couvre pas est

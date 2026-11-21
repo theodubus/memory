@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0144 — Python second langage : une mise à jour en automatique pose python-pytest à côté de la copie python déjà là
 
-> statut : ouvert · origine : J-2026-11-09-P · lu : backlog@d1591831
+> statut : fait · origine : J-2026-11-09-P · ref : T-0028, J-2026-11-21-I · lu : backlog@d1591831
 
 Relevé par la revue du lot d'ADR-0052, et reproduit sur le moteur
 d'avant ce lot. Un projet dont Python est le second langage a sa copie
@@ -15,4 +15,4 @@ déjà présentes.
 
 ## Satisfait quand
 
-- [ ] un projet dont Python est le second langage garde un seul adaptateur Python après une mise à jour en automatique
+- [x] un projet dont Python est le second langage garde un seul adaptateur Python après une mise à jour en automatique

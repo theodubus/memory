@@ -5,7 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0020 clos (J-2026-11-20-AS) ; revue de cap 2, puis L-0008.
+L-0008 fait (J-2026-11-21-L) ; sa fusion, puis T-0120.
 
 ## Consignes en cours
 
@@ -55,17 +55,17 @@ Leur texte exact est dans l'entrée du journal citée.
 - Sessions d'un agent réel sur l'abonnement, chacune plafonnée à
   l'équivalent de 2 dollars, sa consommation rapportée (J-2026-10-19-H).
 - En autonomie sur le backlog, sauf arbitrage (J-2026-10-20-C).
-- Les prochaines étapes, à finir avant les nouvelles fonctions ; la
-  liste se réduit ou grossit selon les trouvailles (J-2026-11-13-I).
+- Toute la correction et la stabilisation du produit avant chess, puis
+  chess mis à jour d'un coup, ses corrections, ensuite les fonctions
+  nouvelles (J-2026-11-13-I, J-2026-11-21-B).
 - Chess n'est mis à jour qu'une fois l'ensemble fini ; d'ici là, tout
   lot qui change ce que chess reçoit complète
   `docs/fabrication/chess/prompt-mise-a-jour.md` (J-2026-11-13-L).
 
 ## Prochaines étapes
 
-Avant toute nouvelle fonction (J-2026-11-13-I, D-0108, D-0109, D-0111),
-par lots :
+Par lots (D-0118, D-0151) :
 
-1. Le jalon JA-0005 (D-0118), lot par lot.
-2. La mise à jour de chess, avec le prompt complété.
+1. JA-0005 : ce qui corrige et stabilise le produit.
+2. JA-0006 : chess mis à jour d'un coup, puis ses corrections.
 3. Ensuite la planification (B-0101), puis la répartition (B-0055).

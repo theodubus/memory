@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # JA-0002 — Jalon 2 — chess équipé
 
-> statut : ouvert · origine : J-2026-11-10-N · lu : backlog@b2bffa4b · après : JA-0001, B-0126 · ancien : B-0157
+> statut : fait · origine : J-2026-11-10-N · ref : B-0126, J-2026-11-21-D · lu : backlog@b2bffa4b · après : JA-0001, B-0126 · ancien : B-0157
 
 Le deuxième jalon (D-0093@333ad9d0) : le socle installé sur chess par B-0126, sous
 la porte d'ADR-0057, deux journées du pilote sans retour bloquant, puis
@@ -12,4 +12,4 @@ comptent à sa reprise.
 
 ## Fait quand
 
-- [ ] chess est équipé du socle, sa pull request fusionnée
+- [x] chess est équipé du socle, sa pull request fusionnée

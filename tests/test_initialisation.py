@@ -12,7 +12,7 @@ import unittest.mock
 from contextlib import redirect_stdout
 from pathlib import Path
 
-from socle import config, initialization as initialisation, installer as installeur, memory as memoire
+from socle import config, initialization as initialisation, installer as installeur, memory as memoire, messages
 from socle.templates import gabarit
 
 MOTEUR = Path(__file__).resolve().parent.parent / "engine"
@@ -252,6 +252,25 @@ class TestMiseAJour(Base):
         with unittest.mock.patch.dict(os.environ, {"CLAUDE_CODE_REMOTE": ""}):
             hors_cloud = installeur.et_maintenant(self.racine, True, ["protege.fichiers"])
         self.assertTrue(next(e for e in hors_cloud if "git commit" in e).startswith("commiter puis pousser"))
+
+    def test_la_session_qui_a_ajoute_le_depot_du_socle_ne_commite_rien_de_protege_avant_la_demande(self):
+        """B-0152 : « Et maintenant » disait à la session qui a dû ajouter le
+        dépôt du socle d'y commiter, la demande posée ensuite dans une
+        session neuve ; le hook avant commit refuse un fichier protégé
+        changé qu'aucune demande en attente ne couvre."""
+        with unittest.mock.patch.dict(os.environ, {"CLAUDE_CODE_REMOTE": "true"}):
+            etapes = installeur.et_maintenant(self.racine, True, ["protege.fichiers"])
+        session = etapes[0].split("Une session qui a dû ajouter le dépôt du socle", 1)[1]
+        self.assertNotIn("y commiter", session)
+        self.assertIn("n'y commite les fichiers protégés qu'après la demande", session)
+        self.assertLess(session.index("y poser la demande"), session.index("commiter en deux temps"))
+        # Sans la CI du socle exigée, la demande ne laisse rien commiter
+        # avant la réponse, que cette session ne peut attendre.
+        self.assertIn("sinon, n'y rien commiter, et refaire la mise à jour dans une session neuve sur le seul "
+                      "dépôt du projet", session)
+        with unittest.mock.patch.dict(os.environ, {"CLAUDE_CODE_REMOTE": "true"}), messages.dans("en"):
+            anglais = installeur.et_maintenant(self.racine, True, ["protege.fichiers"])[0]
+        self.assertIn("commits the protected files there only after the request", anglais)
 
     def test_le_code_de_sortie_distingue_l_attente_de_l_humain_d_un_echec(self):
         """B-0150 : sur le pilote, l'installeur rendait 1 pour une mise à

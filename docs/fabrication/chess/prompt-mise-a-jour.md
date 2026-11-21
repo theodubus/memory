@@ -21,7 +21,11 @@ changé sous sa demande en attente (B-0140), corrige le skill socle-batch
 à `socle new` les identifiants d'un correctif suivi (B-0280), répare par `socle renumber` une
 collision née d'un rebase (B-0176), lie la demande d'une pull request dans le résumé de sa CI
 (B-0274), ôte du dossier de la revue ce qu'une fusion de la branche par défaut a apporté
-(B-0241), et dit à l'agent de chess ce qui change pour lui, comme Théo
+(B-0241), fait nommer par l'installeur, relancé avant le commit, les notes
+de version (B-0225), ne pose plus un second adaptateur du langage d'une
+copie déjà là (B-0144), ne fait plus commiter les fichiers protégés avant
+leur demande (B-0152), nomme le hook de fin de tour du projet (B-0183),
+et dit à l'agent de chess ce qui change pour lui, comme Théo
 l'a demandé. Il est cumulatif : chess n'est mis à jour qu'une fois l'ensemble à finir avant les nouvelles fonctions fait, et
 chaque lot qui change ce que chess reçoit le complète d'ici là
 (J-2026-11-13-L).
@@ -134,6 +138,14 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 50. Le skill socle-batch : qui fusionne se lit dans la politique ; après une fusion par toi, attends les workflows qu'elle lance sur main, comme la CI, et ton récap dit s'ils ont réussi. C'est une copie protégée : elle est dans la demande de l'installeur.
 
+51. Relancé avant le commit de la mise à jour (après git fetch --unshallow, ou pour corriger une option), l'installeur nomme encore les notes de version qu'elle apporte, dans ce qu'il imprime et dans le message de commit qu'il propose : il lit celles que ta copie avait déjà dans ton dernier commit, plus dans l'arbre. Relance-le sans crainte : le message de commit garde leurs identifiants.
+
+52. Une mise à jour avec --adapter auto ne pose plus un second adaptateur du langage d'une copie déjà là (python-pytest à côté de ta copie python, quand un conftest.py apparaît) : un adaptateur détecté ou nommé de ce langage est ta copie, rafraîchie ou gardée comme avant. Si une mise à jour précédente en a posé un (adaptateur.recouvrement en échec), la note de version 2026-11-21-b dit quoi faire : me proposer, par une demande, de retirer celui que tu n'as pas choisi.
+
+53. « Et maintenant » ne dit plus à une session de commiter les fichiers protégés d'une mise à jour avant d'avoir posé leur demande. Pour toi, rien ne change : tu ne travailles pas dans une session qui a ajouté le dépôt du socle, et tu poses déjà la demande d'abord (étape 5).
+
+54. L'installeur nomme, à l'installation comme à la mise à jour, chaque hook Stop (fin de tour) que les réglages de Claude Code du projet déclarent hors du socle, d'une ligne « !! » qui dit qu'il tire à côté de celui du socle et peut le doubler. Le tien relançait les mêmes étapes que celui du socle, deux minutes à chaque fin de tour : rapporte-moi la ligne mot pour mot, et ce que ton hook fait que celui du socle ne fait pas ; je déciderai s'il se retire des réglages, ou n'y garde que ce qui est propre à chess.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.
@@ -150,5 +162,5 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 6. La porte, avant de me demander de fusionner : python3 .socle/socle verify --fast --redo, python3 .socle/socle ci et tools/verify.sh --rapide passent. Donne-moi les durées.
 7. Ouvre la pull request, et dis-moi ce qui me revient.
 
-Rends-moi compte, court : les identifiants des notes de version qu'il t'a données, et ce que tu en as fait ; ce que l'installeur a dit, mot pour mot, du budget et de la borne ; la taille de l'état avant et après, et s'il est coupé ; les fichiers protégés changés ; chaque refus du hook pendant la mise à jour, avec sa commande ; tout ce qui t'a gêné.
+Rends-moi compte, court : les identifiants des notes de version qu'il t'a données, et ce que tu en as fait ; ce que l'installeur a dit, mot pour mot, du budget et de la borne ; la taille de l'état avant et après, et s'il est coupé ; les fichiers protégés changés ; chaque refus du hook pendant la mise à jour, avec sa commande ; la ligne de l'installeur sur ton hook de fin de tour ; tout ce qui t'a gêné.
 ````
