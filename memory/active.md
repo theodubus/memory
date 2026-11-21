@@ -5,7 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0008 à refaire (J-2026-11-21-D), puis T-0120.
+L-0008 à refaire, plan de J-2026-11-21-F ; puis T-0120.
 
 ## Consignes en cours
 
