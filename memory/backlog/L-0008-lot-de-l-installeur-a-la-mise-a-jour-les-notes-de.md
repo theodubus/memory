@@ -22,3 +22,9 @@ chess. Restent ici les quatre tâches de l'installeur à la mise à jour
 L'adoption vide, l'écart de politique, l'import d'un journal et la clé
 d'un constat toléré passent à L-0021 ; le balayage de mutation de chess
 (T-0027, T-0077), à L-0022, dans JA-0006.
+
+## Revues
+
+### Passe 1 — 2026-11-21
+
+Commits : da9b7f8d..02e868fb
