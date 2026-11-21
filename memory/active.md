@@ -5,7 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0008 au réveil de 13 h 16 (J-2026-11-21-G) ; puis T-0120.
+L-0008 fait (J-2026-11-21-L) ; sa fusion, puis T-0120.
 
 ## Consignes en cours
 

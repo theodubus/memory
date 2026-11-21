@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0021 — Lot de l'adoption et du guide : l'adoption vide, l'écart de politique déjà montré, l'import d'un journal, la clé d'un constat toléré
 
-> statut : ouvert · origine : J-2026-11-21-B · après : L-0008, T-0026, T-0076, T-0031, T-0032, T-0121 · lu : backlog@18f4b4cb
+> statut : ouvert · origine : J-2026-11-21-B · après : L-0008, T-0026, T-0076, T-0031, T-0032, T-0121, T-0123, T-0124 · lu : backlog@18f4b4cb
 
 Coupé de L-0008 à son annonce, le 21 novembre (J-2026-11-21-B) : dix
 tâches pour un seuil de neuf (ADR-0101), et un lot de dix tâches de
@@ -17,3 +17,9 @@ Le 21 novembre, Théo place B-0324 avant la mise à jour de chess (D-0152,
 J-2026-11-21-D) : sa tâche T-0121, les notes de version qu'une mise à
 jour imprime en entier, rejoint ce lot, celui de l'installeur qui suit
 L-0008, en cours, qui ne reçoit rien.
+
+Le 21 novembre, la revue à froid de L-0008 ouvre deux constats de
+l'installeur (J-2026-11-21-L) : T-0123, l'adaptateur nommé que remplace
+une copie de son langage, à dire ; T-0124, la commande du projet qu'efface
+la fusion des réglages. Ils touchent `engine/socle/installer.py` : ils
+rejoignent ce lot, le suivant de l'installeur.

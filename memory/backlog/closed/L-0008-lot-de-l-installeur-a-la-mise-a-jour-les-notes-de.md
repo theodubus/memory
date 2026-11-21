@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0008 — Lot de l'installeur à la mise à jour : les notes de version d'une installation relancée, le second langage, les fichiers protégés de « Et maintenant », les hooks de fin de tour
 
-> statut : en cours · origine : J-2026-11-15-J · après : L-0020, T-0025, T-0028, T-0029, T-0030 · lu : backlog@19378efe · ancien : B-0238
+> statut : fait · origine : J-2026-11-15-J · ref : J-2026-11-21-L · après : L-0020, T-0025, T-0028, T-0029, T-0030 · lu : backlog@19378efe · ancien : B-0238
 
 Ce que dit et pose l'installeur à une mise à jour
 (`engine/socle/installer.py`) : les notes de version perdues quand il
@@ -28,3 +28,6 @@ d'un constat toléré passent à L-0021 ; le balayage de mutation de chess
 ### Passe 1 — 2026-11-21
 
 Commits : da9b7f8d..02e868fb
+
+- Bloquant : aucun
+- Ouvre : B-0327, T-0123, B-0328, T-0124
