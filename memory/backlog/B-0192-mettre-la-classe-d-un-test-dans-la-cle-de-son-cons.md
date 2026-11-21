@@ -14,6 +14,9 @@ reste retirée et sujet basse priorité ».
 À reprendre seulement si un projet en a besoin, avec une vraie lecture de
 la structure du fichier, langage par langage.
 
+Le 21 novembre, Théo le fait passer à JA-0006 (D-0153,
+J-2026-11-21-O) : il se juge à la mise à jour de chess.
+
 ## Satisfait quand
 
 - [ ] deux tests de même nom, dans deux classes d'un même fichier, se tolèrent séparément sans qu'aucun constat déjà toléré change de clé ; ou, aucun projet n'en ayant eu besoin, le besoin se clôt sans suite

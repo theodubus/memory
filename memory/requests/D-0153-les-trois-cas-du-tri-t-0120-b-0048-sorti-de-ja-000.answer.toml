@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0153-les-trois-cas-du-tri-t-0120-b-0048-sorti-de-ja-000.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-21"
+canal = "conversation"
+citation = "1 a\n2 c\n3 a"
+empreinte = "sha256:1f8aee0a142392beba654ba7930db7565ce36acfc6453674d18461dbf87eb01d"

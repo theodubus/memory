@@ -19,6 +19,10 @@ Le 22 oct., il reprend B-0018, abandonné à son profit (J-2026-10-22-G) : le
 refus d'un push vers la branche par défaut d'un dépôt local jetable, même
 sujet (un push refusé que l'humain juge légitime) et même réponse de Théo.
 
+Le 21 novembre, sur le tri T-0120, Théo le sort de JA-0005 (D-0153,
+J-2026-11-21-O) : le jalon se ferme sans lui, et le sujet reste ici,
+gardé en tête, jusqu'à un refus nouveau.
+
 ## Satisfait quand
 
 - [ ] si un refus nouveau d'une action validée bloque le travail, noté ici avec sa date (la condition de D-0026, J-2026-11-18-L), une action externe que Théo a validée par une demande qui la nomme exactement (le dépôt, la branche) se fait par l'agent, une fois, au lieu de lui revenir ; sans cette demande, ou une seconde fois, elle reste refusée ; sans refus nouveau, rien ne se redemande
