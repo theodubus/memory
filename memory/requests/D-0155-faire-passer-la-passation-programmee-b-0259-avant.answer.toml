@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0155-faire-passer-la-passation-programmee-b-0259-avant.md, dont l'empreinte suit.
+reponse = "refuser"
+texte = ""
+par = "Théo"
+date = "2026-11-21"
+canal = "conversation"
+citation = "Pas besoin de mettre le relai plus tôt, on garde ordre prévu"
+empreinte = "sha256:0386ab439044c72f80b835dbc5a99e5b376365fa1d9e405ce90c825824178204"
