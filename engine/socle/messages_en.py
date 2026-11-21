@@ -3377,6 +3377,12 @@ MESSAGES: dict[str, str] = {
         "!! the project already has its own state at startup ({commandes}): every session also receives the "
         "socle's, and the two overlap (branch, commits, what is the human's). To keep only one, the human removes "
         "theirs from .claude/settings.json, or leaves in it only what is the project's own",
+    "!! le projet a déjà son propre hook de fin de tour ({commandes}) : il tire à chaque fin de tour à côté de celui "
+    "du socle, et peut le doubler, les mêmes vérifications lancées deux fois. Pour n'en garder qu'un, l'humain "
+    "retire le sien de .claude/settings.json, ou n'y laisse que ce qui est propre au projet":
+        "!! the project already has its own end-of-turn hook ({commandes}): it fires at every end of turn next to "
+        "the socle's, and may duplicate it, the same checks run twice. To keep only one, the human removes theirs "
+        "from .claude/settings.json, or leaves in it only what is the project's own",
     "un chemin qui n'existe que dans une rustine suivie du dépôt passe la CI":
         "a path that only exists in a patch tracked by the repository passes the CI",
     "adaptateur : audit impossible ({erreur})":

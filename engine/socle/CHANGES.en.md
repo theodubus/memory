@@ -7,6 +7,21 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-21-d — The installer names the end-of-turn hook the project already has
+
+The installer keeps the hooks the project declares itself in
+`.claude/settings.json`, next to the socle's, and already pointed out a
+start-up state of the project's own. It said nothing of a `Stop` hook of
+the project's own: that hook fires at every end of turn next to the
+socle's, and, if it runs the same checks, every end of turn pays for
+them twice. On install as on update, the installer now names it, with a
+line that says it may duplicate the socle's.
+
+To do: if the installer names an end-of-turn hook of the project, tell
+the human: only they remove it from `.claude/settings.json`, or leave in
+it only what is the project's own, if the socle's hook already does the
+rest.
+
 ## 2026-11-21-c — “What now” no longer has an update's protected files committed before its request
 
 In a cloud session, an update that changes protected files told the

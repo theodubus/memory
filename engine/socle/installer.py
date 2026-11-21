@@ -1584,14 +1584,36 @@ def _settings(cible: Path) -> list[str]:
                         "aussi celui du socle, et les deux se recoupent (branche, commits, ce qui revient à "
                         "l'humain). Pour n'en garder qu'un, l'humain retire le sien de .claude/settings.json, ou "
                         "n'y laisse que ce qui est propre au projet", commandes=", ".join(propres)))
+    fins = fins_de_tour_du_projet(conf)
+    if fins:
+        # Chacun tire à chaque fin de tour à côté de celui du socle : s'il
+        # lance les mêmes vérifications, chaque fin de tour les paie deux
+        # fois (B-0183).
+        res.append(trad("!! le projet a déjà son propre hook de fin de tour ({commandes}) : il tire à chaque fin "
+                        "de tour à côté de celui du socle, et peut le doubler, les mêmes vérifications lancées "
+                        "deux fois. Pour n'en garder qu'un, l'humain retire le sien de .claude/settings.json, ou "
+                        "n'y laisse que ce qui est propre au projet", commandes=", ".join(fins)))
     return res
+
+
+def _commandes_du_projet(conf: dict, evenement: str) -> list[str]:
+    """Les commandes de l'événement `evenement` que le projet déclare
+    lui-même dans ses réglages de Claude Code, à côté de celle du socle."""
+    return [h.get("command", "") for b in (conf.get("hooks") or {}).get(evenement, [])
+            for h in b.get("hooks", []) if h.get("command") and ".socle/socle hook" not in h["command"]]
 
 
 def etats_du_projet(conf: dict) -> list[str]:
     """Les commandes `SessionStart` que le projet déclare lui-même, à côté de
     celle du socle."""
-    return [h.get("command", "") for b in (conf.get("hooks") or {}).get("SessionStart", [])
-            for h in b.get("hooks", []) if h.get("command") and ".socle/socle hook" not in h["command"]]
+    return _commandes_du_projet(conf, "SessionStart")
+
+
+def fins_de_tour_du_projet(conf: dict) -> list[str]:
+    """Les commandes `Stop` que le projet déclare lui-même, à côté de celle
+    du socle : chacune tire à chaque fin de tour, et peut doubler celle du
+    socle (B-0183)."""
+    return _commandes_du_projet(conf, "Stop")
 
 
 def _codeowners(cible: Path, proprietaire: str) -> list[str]:

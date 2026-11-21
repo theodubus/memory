@@ -7,6 +7,21 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-21-d — L'installeur nomme le hook de fin de tour que le projet a déjà
+
+L'installeur garde les hooks que le projet déclare lui-même dans
+`.claude/settings.json`, à côté de ceux du socle, et signalait déjà un
+état au démarrage propre au projet. Il ne disait rien d'un hook `Stop`
+propre au projet : celui-ci tire à chaque fin de tour à côté de celui du
+socle, et, s'il lance les mêmes vérifications, chaque fin de tour les
+paie deux fois. À l'installation comme à la mise à jour, l'installeur le
+nomme désormais, d'une ligne qui dit qu'il peut doubler celui du socle.
+
+À faire : si l'installeur nomme un hook de fin de tour du projet, le
+dire à l'humain : lui seul le retire de `.claude/settings.json`, ou n'y
+laisse que ce qui est propre au projet, si le hook du socle fait déjà
+le reste.
+
 ## 2026-11-21-c — « Et maintenant » ne fait plus commiter les fichiers protégés d'une mise à jour avant sa demande
 
 En session cloud, une mise à jour qui change des fichiers protégés
