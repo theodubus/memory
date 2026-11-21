@@ -225,15 +225,23 @@ def langages_en_sous_dossier(cible: Path) -> dict[str, list[str]]:
 def langages_en_place(cible: Path, ch: config.Chemins) -> set[str]:
     """Les langages des adaptateurs que le projet a déjà, le principal
     compris : sa clé `language`, le nom du fichier à défaut."""
-    res = set()
-    for c in [ch.adaptateur, *config.fichiers_adaptateurs(cible, ch.adaptateurs)]:
+    return set(_langages_des(cible, [ch.adaptateur, *config.fichiers_adaptateurs(cible, ch.adaptateurs)]))
+
+
+def _langages_des(cible: Path, chemins: list[str]) -> dict[str, str]:
+    """Le langage de chacun de ces adaptateurs que le projet a, et le chemin
+    du premier qui le couvre : sa clé `language`, le nom du fichier à
+    défaut."""
+    res: dict[str, str] = {}
+    for c in chemins:
         p = cible / c
         if not p.is_file():
             continue
         try:
-            res.add(str(config.lire_toml(p.read_text(encoding="utf-8")).get("language") or Path(c).stem))
+            langage = str(config.lire_toml(p.read_text(encoding="utf-8")).get("language") or Path(c).stem)
         except (tomllib.TOMLDecodeError, OSError):
-            res.add(Path(c).stem)
+            langage = Path(c).stem
+        res.setdefault(langage, c)
     return res
 
 
@@ -1237,6 +1245,11 @@ def _installer(cible: Path, adaptateur: str | list[str], proprietaire: str, adop
                          else charges[0][2])
     texte_adaptateur, nom_adaptateur = charges[0][1], charges[0][0]
     langages, autres, sans_langage = {langage_principal}, [], []
+    # Les copies déjà posées pour les autres langages : un adaptateur de leur
+    # langage, détecté ou nommé, est la copie, que la mise à jour rafraîchit
+    # ou garde ; posé à côté, il en ferait deux du même langage, dont les
+    # motifs se recouvrent (B-0144).
+    copies = _langages_des(cible, config.fichiers_adaptateurs(cible, ch.adaptateurs))
     for nom, texte, langage, nomme in charges[1:] if not principal.is_file() else charges:
         if langage in langages:
             continue
@@ -1246,6 +1259,8 @@ def _installer(cible: Path, adaptateur: str | list[str], proprietaire: str, adop
             sans_langage.append(nom)
             continue
         langages.add(langage)
+        if langage in copies and Path(copies[langage]).stem != nom:
+            nom, texte = Path(copies[langage]).stem, (cible / copies[langage]).read_text(encoding="utf-8")
         autres.append((nom, texte))
     if principal.is_file() and autres and charges[0][2] != langage_principal:
         # Le premier nommé n'est pas le principal du projet : la CI part du

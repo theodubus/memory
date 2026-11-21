@@ -7,6 +7,23 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-21-b — Une mise à jour ne pose plus un second adaptateur du langage d'une copie déjà là
+
+Un projet dont Python est un langage de plus que le principal a sa copie
+`.socle/adapters/python.toml`. Quand un `conftest.py` y apparaissait,
+une mise à jour avec `--adapter auto` détectait `python-pytest` et en
+posait la copie à côté : deux adaptateurs du même langage, dont les
+motifs se recouvrent, que le contrôle `adaptateur.recouvrement` refusait
+ensuite. L'installeur ne comparait le langage d'un adaptateur détecté ou
+nommé qu'à celui de l'adaptateur principal ; il le compare désormais
+aussi à celui de chaque copie déjà posée, et un adaptateur de ce langage
+est cette copie, qu'il rafraîchit ou garde comme avant.
+
+À faire : rien, sauf si une mise à jour précédente a posé dans
+`.socle/adapters/` un second adaptateur du langage d'une copie déjà là
+(`adaptateur.recouvrement` en échec) : proposer alors à l'humain, par une
+demande, de retirer celle des deux que le projet n'a pas choisie.
+
 ## 2026-11-21-a — Relancé avant le commit d'une mise à jour, l'installeur nomme encore ses notes de version
 
 L'installeur lisait les notes de version déjà vues dans la copie du

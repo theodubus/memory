@@ -7,6 +7,24 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-21-b — An update no longer lays down a second adapter for the language of a copy already there
+
+A project in which Python is a language besides the main one has its
+copy `.socle/adapters/python.toml`. When a `conftest.py` appeared in
+it, an update with `--adapter auto` detected `python-pytest` and laid
+down its copy next to it: two adapters for the same language, whose
+patterns overlap, which the `adaptateur.recouvrement` check then
+refused. The installer compared the language of a detected or named
+adapter with that of the main adapter only; it now also compares it
+with that of each copy already laid down, and an adapter for that
+language is that copy, which it refreshes or keeps as before.
+
+To do: nothing, unless an earlier update laid down in
+`.socle/adapters/` a second adapter for the language of a copy already
+there (`adaptateur.recouvrement` failing): then propose to the human,
+through a request, to remove whichever of the two the project did not
+choose.
+
 ## 2026-11-21-a — Run again before an update is committed, the installer still names its release notes
 
 The installer read the release notes already seen in the engine copy of
