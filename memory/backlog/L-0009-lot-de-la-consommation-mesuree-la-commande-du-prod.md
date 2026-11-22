@@ -20,3 +20,6 @@ Le 18 novembre, T-0049 découpe B-0219 (J-2026-11-18-J) : T-0078 marque l'échec
 ### Passe 1 — 2026-11-22
 
 Commits : 47c553c8..00d88369
+
+- Bloquant : J-2026-11-22-O citait J-2026-11-22-L au lieu de J-2026-11-22-N après la renumérotation
+- Ouvre : B-0331, T-0158, B-0332, T-0159, B-0333, T-0160
