@@ -1900,6 +1900,11 @@ def consigner_tolerances(cible: Path, mise_a_jour: bool = False) -> list[str]:
                                 "constat(s) présent(s) sont consignés comme tolérés (`[adoption.tolerated]`), et "
                                 "tout constat nouveau échouera désormais (B-0180)", controle=c, n=len(presents[c])))
         projet = config.Projet.charger(cible)
+    if not contexte.tolerances(projet) and (not mise_a_jour or projet.gf("adoption") is not None):
+        # Une adoption vide le dit : sans cette ligne, l'agent ne savait
+        # qu'à l'essai à blanc qu'il n'y avait rien à inscrire (B-0195).
+        res.append(trad("adoption : aucun contrôle en `[adoption] warn_only`, aucun constat à tolérer : rien à "
+                        "inscrire"))
     return res + contexte.bilan_adoption(projet)
 
 

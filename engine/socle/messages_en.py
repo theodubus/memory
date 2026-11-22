@@ -691,6 +691,8 @@ MESSAGES: dict[str, str] = {
         "adoption: !! {controle} entirely disarmed: no list of tolerated findings (`[adoption.tolerated]`), all its "
         "errors, even new ones, become warnings. Remedy: run the installer again (`python3 .socle/socle install "
         "--target .`), which records the present findings as tolerated",
+    "adoption : aucun contrôle en `[adoption] warn_only`, aucun constat à tolérer : rien à inscrire":
+        "adoption: no check in `[adoption] warn_only`, no finding to tolerate: nothing to enter",
     "adoption : {controle} — plus aucun constat toléré : il peut sortir de "
     "`[adoption] warn_only` (durcir est libre)":
         "adoption: {controle} — no tolerated finding left: it can leave `[adoption] warn_only` (tightening is free)",

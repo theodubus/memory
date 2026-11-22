@@ -70,6 +70,17 @@ To do: read the notes the installer prints in full, and do what each
 one asks; a note it names only by its title asks nothing, and is read
 in the file it names when it matters.
 
+## 2026-11-22-d — The installer says in one line that an empty adoption has nothing to enter
+
+An adoption that found no failing check, or an update of an adopted
+project whose `[adoption] warn_only` list was empty, said nothing of the
+adoption: knowing there was nothing to enter took a dry run. The
+installer now says so in one line: “adoption: no check in `[adoption]
+warn_only`, no finding to tolerate: nothing to enter”. A project never
+adopted gets none.
+
+To do: nothing.
+
 ## 2026-11-22-c — The settings merge keeps the project's command placed in a block of the socle
 
 On install as on every update, the installer replaces the socle's hooks

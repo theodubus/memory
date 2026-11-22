@@ -72,6 +72,17 @@ message de commit qu'il propose nomme toujours toutes les entrées.
 que chacune demande ; une note qu'il ne nomme que par son titre ne
 demande rien, et se lit dans le fichier qu'il nomme quand elle sert.
 
+## 2026-11-22-d — L'installeur dit en une ligne qu'une adoption vide n'a rien à inscrire
+
+Une adoption qui ne trouvait aucun contrôle en échec, ou une mise à jour
+d'un projet adopté dont la liste `[adoption] warn_only` était vide, ne
+disait rien de l'adoption : pour savoir qu'il n'y avait rien à inscrire,
+il fallait un essai à blanc. L'installeur le dit désormais d'une ligne :
+« adoption : aucun contrôle en `[adoption] warn_only`, aucun constat à
+tolérer : rien à inscrire ». Un projet jamais adopté n'en reçoit pas.
+
+À faire : rien.
+
 ## 2026-11-22-c — La fusion des réglages garde la commande du projet placée dans un bloc du socle
 
 À l'installation comme à chaque mise à jour, l'installeur remplace dans

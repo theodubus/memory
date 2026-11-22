@@ -598,6 +598,8 @@ list when the engine is updated, made of the default branch's findings
 (those born on the branch are not tolerated, the installer names them);
 while it is missing, the state says the
 check is entirely disarmed.
+When the adoption finds no failing check, or the `warn_only` list is
+empty on update, the installer says so in one line: nothing to enter.
 
 **A journal from before the socle.** A project that already kept a
 journal whose entries have the form of the socle's (`J-`, a date and a

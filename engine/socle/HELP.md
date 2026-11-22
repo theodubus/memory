@@ -611,6 +611,9 @@ l'adoption tolère encore ; à zéro, le contrôle peut sortir de `warn_only`.
 Un projet adopté avant cette règle reçoit sa liste à la mise à jour du
 moteur, faite des constats de la branche par défaut (ceux nés sur la
 branche ne sont pas tolérés, l'installeur les nomme) ; tant qu'elle manque, l'état dit le contrôle désarmé en entier.
+Quand l'adoption ne trouve aucun contrôle en échec, ou que la liste
+`warn_only` est vide à la mise à jour, l'installeur le dit d'une ligne :
+rien à inscrire.
 
 **Un journal d'avant le socle.** Un projet qui tenait déjà un journal
 dont les entrées ont la forme de celles du socle (`J-`, une date et une
