@@ -43,6 +43,11 @@ lots se forment tous d'un coup, et non plus à leur annonce
 garde (D-0155), viennent L-0023, la seconde moitié de L-0010, puis les
 lots nouveaux, de L-0024 à L-0033.
 
+Le 22 novembre, Théo clôt les trois besoins que la formation des lots
+laissait sans tâche (D-0156, J-2026-11-22-A) : le risque de B-0320 est
+accepté, B-0321 et B-0322 sont abandonnés sous ADR-0098. Chaque besoin
+ouvert de JA-0005 a désormais ses tâches dans un lot.
+
 ## Fait quand
 
 - [ ] ses besoins sont clos, et aucun besoin ouvert de correction ou de stabilisation du produit n'est hors de lui
