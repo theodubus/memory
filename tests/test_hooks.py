@@ -1306,6 +1306,76 @@ class TestHistoriqueEnSessionCloud(unittest.TestCase):
         self.assertIn("historique du clone complété", self.completer()[0])
         self.assertFalse(self.superficiel())
 
+    def ralentir(self) -> str:
+        """Un clone superficiel neuf d'une origine lourde, dont le vrai fetch
+        passe par un relais lent devant `git upload-pack` (plus d'une minute
+        pour l'historique entier). Rend le réglage qui pose le relais."""
+        for n in range(8):
+            (self.origine / "lourd.bin").write_bytes(os.urandom(100_000))
+            git(self.origine, "add", "-A")
+            git(self.origine, "commit", "-qm", f"lourd {n}", "--no-verify")
+        shutil.rmtree(self.clone)
+        git(self.dossier, "clone", "-q", "--depth", "1", f"file://{self.origine}", str(self.clone))
+        relais = self.dossier / "relais.py"
+        relais.write_text(
+            "import subprocess, sys, time\n"
+            "p = subprocess.Popen(['git', 'upload-pack'] + sys.argv[1:], stdout=subprocess.PIPE)\n"
+            "while True:\n"
+            "    b = p.stdout.read1(2048)\n"
+            "    if not b:\n"
+            "        break\n"
+            "    sys.stdout.buffer.write(b)\n"
+            "    sys.stdout.buffer.flush()\n"
+            "    time.sleep(0.2)\n"
+            "sys.exit(p.wait())\n", encoding="utf-8")
+        reglage = f"{sys.executable} {relais}"
+        git(self.clone, "config", "remote.origin.uploadpack", reglage)
+        return reglage
+
+    def reprendre(self) -> tuple[list[str], float]:
+        """Le démarrage suivant, dans le même conteneur, avec le délai entier
+        du démarrage ; le délai court d'une reprise réduit à une seconde."""
+        debut = time.monotonic()
+        with unittest.mock.patch.object(hooks, "DELAI_HISTORIQUE_REPRISE", 1):
+            lignes = self.completer()
+        return lignes, time.monotonic() - debut
+
+    def test_un_delai_depasse_ne_se_repaie_pas_au_demarrage_suivant(self):
+        """T-0078 (B-0219, ADR-0105) : un fetch qui pend coûtait son délai
+        entier à chaque démarrage du même conteneur, une reprise ou un
+        compactage ; marqué, il ne se retente que sous un délai court."""
+        self.assertEqual(hooks.DELAI_HISTORIQUE_REPRISE, 15)
+        self.ralentir()
+        with unittest.mock.patch.dict("os.environ", {hooks.SESSION_CLOUD: "true"}):
+            premier = hooks.completer_historique(self.clone, time.monotonic() + 2)
+        self.assertIn("`git fetch --unshallow` dépasse le délai du démarrage", premier[0])
+        lignes, duree = self.reprendre()
+        # Le délai entier aurait laissé finir ce fetch, en plus d'une minute.
+        self.assertLess(duree, 1 + hooks.ARRET_HISTORIQUE + 5)
+        self.assertEqual(len(lignes), 1)
+        self.assertTrue(lignes[0].startswith("!! clone superficiel : `git fetch --unshallow` dépasse le délai du "
+                                             "démarrage ; le relancer avant de commiter"), lignes)
+        self.assertFalse((self.clone / ".git" / "shallow.lock").exists())
+        self.assertTrue(self.superficiel())
+        # La commande que la ligne dit de relancer à la main complète l'historique.
+        git(self.clone, "config", "--unset", "remote.origin.uploadpack")
+        git(self.clone, "fetch", "--quiet", "--unshallow")
+        self.assertFalse(self.superficiel())
+
+    def test_un_code_non_nul_ne_se_repaie_pas_non_plus(self):
+        """T-0078 : un fetch qui a rendu un code non nul se marque de même ; le
+        démarrage suivant, où l'origine répond mais pend, ne lui redonne pas
+        son délai entier."""
+        relais = self.ralentir()
+        git(self.clone, "config", "remote.origin.uploadpack", "false")
+        premier = self.completer()
+        self.assertTrue(premier[0].startswith("!! clone superficiel : `git fetch --unshallow` a rendu 128"), premier)
+        git(self.clone, "config", "remote.origin.uploadpack", relais)
+        lignes, duree = self.reprendre()
+        self.assertLess(duree, 1 + hooks.ARRET_HISTORIQUE + 5)
+        self.assertIn("`git fetch --unshallow` dépasse le délai du démarrage ; le relancer avant de commiter", lignes[0])
+        self.assertTrue(self.superficiel())
+
 
 DECISION_ARBRE = """<!-- socle: couche=decisions zone=publique -->
 # ADR-0002 — Écrire dans le worktree

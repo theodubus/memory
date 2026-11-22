@@ -14,6 +14,20 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-22-h — In a cloud session, a failed fetch of the clone's history is no longer paid again on each resume
+
+In a cloud session, the startup hook completes a shallow clone
+(`git fetch --unshallow`) in 120 seconds at most. A fetch that hung took
+them again at each start of the same container, a resume or a
+compaction. A failure, timed out or a non-zero code, is now marked next
+to the hooks' trace: the next start of the same container retries the
+history for 15 seconds only, and the `!!` line gives, as before, the
+command to run again by hand before committing. The adapter's tools get
+the rest of the startup delay, 270 seconds in all: at least 140 on the
+first start, 245 on a resume.
+
+To do: nothing.
+
 ## 2026-11-22-g — The guide says how to import a journal numbered like the socle's
 
 A project that already kept a journal whose entries have the form of

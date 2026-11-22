@@ -15,6 +15,20 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-22-h — En session cloud, un échec de l'historique du clone ne se repaie plus à chaque reprise
+
+En session cloud, le hook de démarrage complète un clone superficiel
+(`git fetch --unshallow`) en 120 secondes au plus. Un fetch qui pendait
+les reprenait à chaque démarrage du même conteneur, une reprise ou un
+compactage. Un échec, délai dépassé ou code non nul, se marque désormais
+à côté de la trace des hooks : le démarrage suivant du même conteneur ne
+retente l'historique que 15 secondes, et la ligne `!!` dit, comme avant,
+la commande à relancer à la main avant de commiter. Les outils de
+l'adaptateur ont le reste du délai du démarrage, 270 secondes en tout :
+au moins 140 au premier démarrage, 245 à une reprise.
+
+À faire : rien.
+
 ## 2026-11-22-g — Le guide dit comment importer un journal numéroté comme celui du socle
 
 Un projet qui tenait déjà un journal dont les entrées ont la forme de
