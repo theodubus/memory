@@ -473,6 +473,23 @@ class PythonSecond(unittest.TestCase):
         self.assertFalse((self.racine / ".socle/adapters/mon-python.toml").exists())
         self.assertIn(self.ECARTE.format(nom="mon-python"), sortie)
 
+    def test_nomme_un_fichier_du_nom_de_la_copie_qui_en_differe_l_installeur_le_dit(self):
+        """Revue de L-0021 : un fichier `python.toml` adapté, nommé par
+        `--adapter`, que la copie du même nom garde, était perdu sans rien
+        dire ; du même texte que la copie, il ne fait rien dire."""
+        dossier = Path(tempfile.mkdtemp(prefix="socle-adaptateur-"))
+        self.addCleanup(shutil.rmtree, dossier, ignore_errors=True)
+        copie = self.racine / ".socle/adapters/python.toml"
+        avant = copie.read_text()
+        fichier = dossier / "python.toml"
+        fichier.write_text(avant.replace("[capabilities", "# adapté par le projet\n[capabilities", 1))
+        self.assertNotEqual(fichier.read_text(), avant)
+        sortie = installer_et_lire(self.racine, ["kotlin", str(fichier)])
+        self.assertIn(self.ECARTE.format(nom="python"), sortie)
+        self.assertEqual(copie.read_text(), avant)
+        fichier.write_text(avant)
+        self.assertNotIn("non posé", installer_et_lire(self.racine, ["kotlin", str(fichier)]))
+
     def test_detecte_en_automatique_la_copie_ne_fait_rien_dire_de_plus(self):
         """Détecté, `python-pytest` est la copie `python` sans que l'installeur
         en dise plus : personne ne l'a demandé."""

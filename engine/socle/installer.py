@@ -1337,7 +1337,10 @@ def _installer(cible: Path, adaptateur: str | list[str], proprietaire: str, adop
     copies = _langages_des(cible, config.fichiers_adaptateurs(cible, ch.adaptateurs))
     # Un adaptateur nommé par `--adapter` que la copie de son langage
     # remplace : l'installeur le dit, comme pour la copie principale ;
-    # détecté, personne ne l'a demandé (B-0327).
+    # détecté, personne ne l'a demandé (B-0327). Un fichier donné du même nom
+    # que la copie l'est aussi, s'il en diffère : la mise à jour garde la
+    # copie, et le perdrait sans le dire (revue de L-0021) ; un adaptateur
+    # maintenu de ce nom, lui, est la copie, qui s'en rafraîchit.
     remplaces = []
     for nom, texte, langage, nomme in charges[1:] if not principal.is_file() else charges:
         if langage in langages:
@@ -1348,7 +1351,7 @@ def _installer(cible: Path, adaptateur: str | list[str], proprietaire: str, adop
             sans_langage.append(nom)
             continue
         langages.add(langage)
-        if langage in copies and Path(copies[langage]).stem != nom:
+        if langage in copies and (Path(copies[langage]).stem != nom or nom in de_fichier):
             copie = (cible / copies[langage]).read_text(encoding="utf-8")
             if nomme and texte != copie:
                 remplaces.append((nom, copies[langage], langage))
