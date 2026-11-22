@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0194 — L'outil de mesure de la consommation a des branches qu'aucun test n'exerce
 
-> statut : ouvert · origine : J-2026-11-12-N · priorité : basse · lu : backlog@d4ceca3b
+> statut : fait · origine : J-2026-11-12-N · priorité : basse · lu : backlog@d4ceca3b · ref : J-2026-11-22-O
 
 La seconde revue de la mesure de B-0173 a trouvé, dans l'outil de
 l'atelier (devenu `engine/socle/consumption.py`), des branches que des
@@ -19,4 +19,4 @@ revues ; ces tests protègent ses mesures à venir.
 
 ## Satisfait quand
 
-- [ ] une mutation de l'outil de mesure de la consommation, dans les branches que la revue a nommées, ne passe plus inaperçue
+- [x] une mutation de l'outil de mesure de la consommation, dans les branches que la revue a nommées, ne passe plus inaperçue

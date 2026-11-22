@@ -479,6 +479,102 @@ class TestRapport(Transcription):
         self.assertNotIn("explique le mieux", sortie.getvalue())
 
 
+class TestLesBranchesQueLaRevueANommees(Transcription):
+    """B-0194 : les branches que la seconde revue de la mesure a trouvées sans
+    test ; une mutation de chacune fait échouer un de ces cas."""
+
+    def test_une_fenetre_qui_repart_a_zero_coupe_la_suite_des_releves(self):
+        points = [(T0 + timedelta(seconds=s), p) for s, p in ((0, 0.0), (10, 0.25), (20, 0.0625), (30, 0.5))]
+        groupes = [[(T0, _a(5, entree=100))], [(T0, _a(15, entree=200))], [(T0, _a(25, entree=300))]]
+        self.assertEqual(conso._segments(points, groupes, conso.Poids()),
+                         [[(0.0, 0.0), (25.0, 100.0)], [(6.25, 0.0), (50.0, 300.0)]])
+
+    def test_fourchette_ecarte_le_poids_qu_un_saut_sans_cout_rend_impossible(self):
+        # un appel entre les deux premiers relevés, aucun entre les deux derniers, qui s'écartent pourtant de
+        # 1,5 point : plus que l'arrondi, aucun poids ne l'explique
+        conv = conso.Conversation("c", False, [_a(10, e1h=500)])
+        points = [(T0 + timedelta(seconds=s), p) for s, p in ((5, 0.0), (15, 0.10), (25, 0.115))]
+        self.assertIsNone(conso.fourchette([conv], points, decalage=False))
+        # d'un demi-point, l'arrondi l'explique
+        points[2] = (points[2][0], 0.105)
+        self.assertIsNotNone(conso.fourchette([conv], points, decalage=False))
+
+    def test_fourchette_n_admet_pas_un_point_que_rien_ne_borne(self):
+        # aucun coût entre deux relevés à un demi-point l'un de l'autre : la borne haute serait infinie
+        conv = conso.Conversation("c", False, [_a(10, e1h=500)])
+        points = [(T0 + timedelta(seconds=s), p) for s, p in ((20, 0.0), (30, 0.005))]
+        self.assertIsNone(conso.fourchette([conv], points, decalage=False))
+
+    def test_fourchette_apparie_les_bornes_du_point(self):
+        # un intervalle de 10 points : au poids w, un point vaut de C(w) / 11 à C(w) / 9, C(w) = 2 000 + 30 000 w
+        conv = conso.Conversation("c", False, [_a(10, e1h=1000, lecture=30_000)])
+        points = [(T0 + timedelta(seconds=s), p) for s, p in ((5, 0.0), (15, 0.10))]
+        marge = conso.fourchette([conv], points, decalage=False)
+        self.assertEqual(marge["lecture"], (0.001, 0.3))
+        bas, haut = marge["par_point"]
+        self.assertAlmostEqual(bas, (2000 + 30_000 * 0.001) / 11)
+        self.assertAlmostEqual(haut, (2000 + 30_000 * 0.3) / 9)
+
+    def test_un_compactage_empeche_le_controle_hors_echantillon(self):
+        points = [(T0, 0.0), (T0 + timedelta(seconds=65), 0.1)]
+        controle = (T0 + timedelta(seconds=7400), 0.3)
+        self.assertIsNone(conso.predire(self.convs, points[-1], controle, conso.Poids(), {}, 1.0)["predits"])
+        texte = conso.rapport(self.convs, points=points, controles=[controle])
+        self.assertIn("Contrôle jusqu'à 12:03:20.000 : un compactage s'y trouve, pas de prédiction.", texte)
+        self.assertNotIn("Contrôle hors échantillon", texte)
+
+    def test_la_valeur_du_point_des_autres_modeles(self):
+        # A s'étalonne sur un intervalle : 2 000 jetons pondérés pour 10 points, 200 le point ; B ne s'étalonne pas
+        appels = [_a(10, "A", e1h=1000), _a(20, "A", entree=1), _a(30, "B", e1h=500), _a(50, "A", entree=1)]
+        points = [(T0, 0.0), (T0 + timedelta(seconds=25), 0.10)]
+        controle = (T0 + timedelta(seconds=55), 0.2)
+        # sans fenêtre close par un refus, un point de B vaut celui de A
+        texte = conso.rapport([conso.Conversation("c", False, appels)], points=points, controles=[controle])
+        self.assertIn("5,0 points prédits (A 0,0, B 5,0 ; les autres modèles à 200 par point), 10 relevés.", texte)
+        # une fenêtre close à 60 s : B y a pris 1 000 jetons, sur les 100 − 2 002 / 200 points que A a laissés
+        refus = [{"horodatage": T0 + timedelta(seconds=60), "type": "five_hour", "fin": T0 + timedelta(hours=5)}]
+        texte = conso.rapport([conso.Conversation("c", False, appels, limites=refus)], points=points,
+                              controles=[controle])
+        autres = 1000 / (100 - 2002 / 200)
+        self.assertIn(f"(A 0,0, B {conso._v(1000 / autres)} ; les autres modèles à {conso._k(autres)} par point)",
+                      texte)
+
+    def test_presence_socle_plafonnee_au_contexte_et_gardee_du_contexte_nul(self):
+        # deux injections de 1 000 jetons dans un contexte de 1 000 : chacune la moitié, pas le tout ; le second
+        # appel, qui n'écrit que sa sortie, ne relit rien
+        conv = conso.Conversation("c", False, [_a(10, lecture=1000), _a(20, sortie=10)])
+        conv.injections = [{"horodatage": T0, "nature": n, "octets": 3500} for n in ("a", "b")]
+        presence = conso.presence_socle([conv])
+        for n in ("a", "b"):
+            self.assertAlmostEqual(presence["natures"][n]["part_contexte"], 0.5 / 2)
+            self.assertAlmostEqual(presence["natures"][n]["cout"], 0.5 * 1000 * 0.1)
+        self.assertEqual(presence["appels"], 2)
+        self.assertAlmostEqual(presence["total"], 1000 * 0.1 + 10 * 5)
+
+    def test_points_de_semaine_sans_valeur_quand_la_fenetre_repart_a_zero_entre_deux(self):
+        # le dernier relevé de la fenêtre dépasse le premier, mais elle est repartie à zéro entre eux
+        releves = [(T0, 0.5, 0.50), (T0 + timedelta(seconds=60), 0.1, 0.55), (T0 + timedelta(seconds=120), 0.6, 0.60)]
+        self.assertIsNone(conso.points_de_semaine(releves))
+        self.assertIsNotNone(conso.points_de_semaine([releves[0], releves[2]]))
+
+    def test_concurrence_saute_un_sous_agent_sans_appel(self):
+        vide = conso.Conversation("v", True, [])
+        self.assertEqual(conso.concurrence([vide, conso.Conversation("a", True, [_a(0), _a(60)])]),
+                         {"2026-11-12": 1})
+
+    def test_la_section_anglaise_du_socle_est_celle_du_gabarit(self):
+        gabarit = (RACINE / "engine" / "socle" / "templates" / "AGENTS.en.md").read_text(encoding="utf-8")
+        self.assertIn(conso.SECTIONS_SOCLE[1], gabarit.splitlines())
+        agents = "# Project\n\nrules\n\n" + gabarit.rstrip("\n") + "\n\n## After\n\nother"
+        conv = self.lire([
+            {"type": "attachment", "timestamp": _h(0), "attachment": {"type": "instructions", "files": [
+                {"path": "/p/AGENTS.md", "content": agents}]}},
+            _appel(10, "r1", e1h=100)])
+        section = gabarit[gabarit.index(conso.SECTIONS_SOCLE[1]):].rstrip("\n") + "\n"
+        self.assertEqual([(i["nature"], i["octets"]) for i in conv.injections],
+                         [(conso.AGENTS_SOCLE, len(section.encode()))])
+
+
 class TestLaCommande(Transcription):
     """`socle consumption` de bout en bout (B-0201) : le lanceur du projet, la
     ligne de commande, la lecture du dossier et le rapport."""
