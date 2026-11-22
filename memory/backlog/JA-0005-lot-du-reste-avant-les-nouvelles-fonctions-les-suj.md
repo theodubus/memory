@@ -37,6 +37,12 @@ attend un événement, gardé en tête au backlog (D-0026) ; B-0192 passe à
 JA-0006, où la mise à jour de chess peut en montrer le besoin ; B-0095,
 que nommait la liste de ce qui attend le pilote, est abandonné.
 
+Le 21 novembre, sur la décision de Théo (D-0154, J-2026-11-21-P), ses
+lots se forment tous d'un coup, et non plus à leur annonce
+(J-2026-11-21-Q) : après L-0021, L-0009 et L-0010, dans l'ordre qu'il
+garde (D-0155), viennent L-0023, la seconde moitié de L-0010, puis les
+lots nouveaux, de L-0024 à L-0033.
+
 ## Fait quand
 
 - [ ] ses besoins sont clos, et aucun besoin ouvert de correction ou de stabilisation du produit n'est hors de lui

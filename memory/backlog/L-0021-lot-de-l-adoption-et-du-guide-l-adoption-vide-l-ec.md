@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0021 — Lot de l'adoption et du guide : l'adoption vide, l'écart de politique déjà montré, l'import d'un journal, la clé d'un constat toléré
 
-> statut : ouvert · origine : J-2026-11-21-B · après : L-0008, T-0026, T-0076, T-0031, T-0121, T-0123, T-0124 · lu : backlog@18f4b4cb
+> statut : ouvert · origine : J-2026-11-21-B · après : L-0008, T-0026, T-0076, T-0031, T-0105, T-0121, T-0123, T-0124 · lu : backlog@18f4b4cb
 
 Coupé de L-0008 à son annonce, le 21 novembre (J-2026-11-21-B) : dix
 tâches pour un seuil de neuf (ADR-0101), et un lot de dix tâches de
@@ -26,3 +26,7 @@ rejoignent ce lot, le suivant de l'installeur.
 
 Le 21 novembre, T-0032 en sort (D-0153, J-2026-11-21-O) : son besoin
 B-0192 passe à JA-0006, jugé à la mise à jour de chess.
+
+Le 21 novembre, à la formation des lots qui manquent à JA-0005 (D-0154,
+J-2026-11-21-Q) : T-0105, l'exception d'ADR-0088 dans le guide, de
+priorité haute, rejoint ce lot, qui change déjà le guide (T-0031).
