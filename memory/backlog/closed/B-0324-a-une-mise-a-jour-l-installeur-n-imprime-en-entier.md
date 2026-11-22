@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0324 — À une mise à jour, l'installeur n'imprime en entier que les notes de version qui demandent une action ; des autres, le titre et le fichier
 
-> statut : ouvert · origine : J-2026-11-21-A · lu : backlog@18f4b4cb
+> statut : fait · ref : T-0121, J-2026-11-22-D · origine : J-2026-11-21-A · lu : backlog@18f4b4cb
 
 La suggestion 3 de la revue de cap 2 (J-2026-11-21-A), que Théo
 retient : « Valider 3 sur apres une mise à jour » (D-0151). À une mise à
@@ -20,4 +20,4 @@ T-0121 L-0021, le lot de l'installeur qui suit L-0008.
 
 ## Satisfait quand
 
-- [ ] à une mise à jour, l'installeur imprime en entier les notes de version dont « À faire » n'est pas « rien », et des autres leur titre et le fichier où les lire, en français et en anglais, et un test le montre
+- [x] à une mise à jour, l'installeur imprime en entier les notes de version dont « À faire » n'est pas « rien », et des autres leur titre et le fichier où les lire, en français et en anglais, et un test le montre

@@ -41,35 +41,6 @@ exception.
 
 To do: nothing.
 
-## 2026-11-22-b — The installer names the named adapter that the copy of its language replaces
-
-An adapter named by `--adapter`, a file or a maintained adapter, of the
-language of a copy already in `.socle/adapters/` becomes that copy,
-which the update refreshes or keeps: it is not set. The installer did
-not say so, and its log named only the copy. It now says so with a `!!`
-line, of the form of the main copy's: the adapter set aside, the copy
-kept, and how to replace it. An adapter detected automatically becomes
-the copy without the installer saying more.
-
-To do: if the installer says that a named adapter is not set, tell the
-human: the copy kept remains the project's, and replacing it is done as
-the line says, through a request on an equipped project.
-
-## 2026-11-22-a — On an update, the installer prints in full only the release notes that ask something
-
-On every update, the installer printed in full each release note that
-the project's engine copy did not have, even those that ask nothing:
-often more than half of what it printed. It now prints in full, first,
-only those whose “To do” asks something; of the others, whose “To do”
-is “nothing.”, or “nothing;” followed by a detail, one line each, their
-title, under a line that says how many they are and the file to read
-them in. Any other form, “nothing, unless …” included, is printed in
-full. The commit message it proposes still names all the entries.
-
-To do: read the notes the installer prints in full, and do what each
-one asks; a note it names only by its title asks nothing, and is read
-in the file it names when it matters.
-
 ## 2026-11-22-e — The installer no longer shows again in full a policy difference already shown
 
 On every update, the installer showed in full what separates the
@@ -110,6 +81,35 @@ own block. Run again, it duplicates nothing.
 To do: if a command of the project has vanished from
 `.claude/settings.json` at a previous update, tell the human: only they
 put it back, the file being protected.
+
+## 2026-11-22-b — The installer names the named adapter that the copy of its language replaces
+
+An adapter named by `--adapter`, a file or a maintained adapter, of the
+language of a copy already in `.socle/adapters/` becomes that copy,
+which the update refreshes or keeps: it is not set. The installer did
+not say so, and its log named only the copy. It now says so with a `!!`
+line, of the form of the main copy's: the adapter set aside, the copy
+kept, and how to replace it. An adapter detected automatically becomes
+the copy without the installer saying more.
+
+To do: if the installer says that a named adapter is not set, tell the
+human: the copy kept remains the project's, and replacing it is done as
+the line says, through a request on an equipped project.
+
+## 2026-11-22-a — On an update, the installer prints in full only the release notes that ask something
+
+On every update, the installer printed in full each release note that
+the project's engine copy did not have, even those that ask nothing:
+often more than half of what it printed. It now prints in full, first,
+only those whose “To do” asks something; of the others, whose “To do”
+is “nothing.”, or “nothing;” followed by a detail, one line each, their
+title, under a line that says how many they are and the file to read
+them in. Any other form, “nothing, unless …” included, is printed in
+full. The commit message it proposes still names all the entries.
+
+To do: read the notes the installer prints in full, and do what each
+one asks; a note it names only by its title asks nothing, and is read
+in the file it names when it matters.
 
 ## 2026-11-21-d — The installer names the end-of-turn hook the project already has
 

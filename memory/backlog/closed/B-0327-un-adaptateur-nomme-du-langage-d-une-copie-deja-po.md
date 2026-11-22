@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0327 — Un adaptateur nommé du langage d'une copie déjà posée hors de la principale est remplacé par elle sans que l'installeur le dise
 
-> statut : ouvert · origine : J-2026-11-21-L · lu : backlog@b3bf0b5f
+> statut : fait · ref : T-0123, J-2026-11-22-E · origine : J-2026-11-21-L · lu : backlog@b3bf0b5f
 
 Relevé par la revue à froid de L-0008 (J-2026-11-21-L) : depuis T-0028,
 un adaptateur détecté ou nommé du langage d'une copie déjà posée dans
@@ -17,4 +17,4 @@ silence.
 
 ## Satisfait quand
 
-- [ ] un adaptateur nommé que l'installeur remplace par la copie déjà posée de son langage est nommé dans sa sortie, avec ce qui le remplace et comment le poser à sa place
+- [x] un adaptateur nommé que l'installeur remplace par la copie déjà posée de son langage est nommé dans sa sortie, avec ce qui le remplace et comment le poser à sa place

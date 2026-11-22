@@ -41,37 +41,6 @@ il dit désormais l'exception.
 
 À faire : rien.
 
-## 2026-11-22-b — L'installeur dit l'adaptateur nommé que la copie de son langage remplace
-
-Un adaptateur nommé par `--adapter`, un fichier ou un adaptateur
-maintenu, du langage d'une copie déjà posée dans `.socle/adapters/`
-devient cette copie, que la mise à jour rafraîchit ou garde : il n'est
-pas posé. L'installeur ne le disait pas, et son journal ne nommait que
-la copie. Il le dit désormais d'une ligne `!!`, de la forme de celle de
-la copie principale : l'adaptateur écarté, la copie gardée, et comment
-la remplacer. Un adaptateur détecté en automatique devient la copie sans
-que l'installeur en dise plus.
-
-À faire : si l'installeur dit qu'un adaptateur nommé n'est pas posé, le
-dire à l'humain : la copie gardée reste celle du projet, et la remplacer
-se fait comme la ligne le dit, par une demande sur un projet équipé.
-
-## 2026-11-22-a — À une mise à jour, l'installeur n'imprime en entier que les notes de version qui demandent quelque chose
-
-À chaque mise à jour, l'installeur imprimait en entier chaque note de
-version que la copie du moteur du projet n'avait pas, même celles qui ne
-demandent rien : souvent plus de la moitié de ce qu'il imprimait. Il
-n'imprime désormais en entier, d'abord, que celles dont « À faire »
-demande quelque chose ; des autres, dont « À faire » est « rien. », ou
-« rien ; » suivi d'une précision, une ligne chacune, leur titre, sous
-une ligne qui dit combien elles sont et le fichier où les lire. Toute
-autre forme, « rien, sauf si … » comprise, s'imprime en entier. Le
-message de commit qu'il propose nomme toujours toutes les entrées.
-
-À faire : lire les notes que l'installeur imprime en entier, et faire ce
-que chacune demande ; une note qu'il ne nomme que par son titre ne
-demande rien, et se lit dans le fichier qu'il nomme quand elle sert.
-
 ## 2026-11-22-e — L'installeur ne réaffiche plus en entier un écart de politique déjà montré
 
 À chaque mise à jour, l'installeur montrait en entier ce qui sépare la
@@ -112,6 +81,37 @@ projet dans son propre bloc. Relancé, il ne duplique rien.
 À faire : si une commande du projet a disparu de `.claude/settings.json`
 à une mise à jour précédente, le dire à l'humain : lui seul la remet, le
 fichier étant protégé.
+
+## 2026-11-22-b — L'installeur dit l'adaptateur nommé que la copie de son langage remplace
+
+Un adaptateur nommé par `--adapter`, un fichier ou un adaptateur
+maintenu, du langage d'une copie déjà posée dans `.socle/adapters/`
+devient cette copie, que la mise à jour rafraîchit ou garde : il n'est
+pas posé. L'installeur ne le disait pas, et son journal ne nommait que
+la copie. Il le dit désormais d'une ligne `!!`, de la forme de celle de
+la copie principale : l'adaptateur écarté, la copie gardée, et comment
+la remplacer. Un adaptateur détecté en automatique devient la copie sans
+que l'installeur en dise plus.
+
+À faire : si l'installeur dit qu'un adaptateur nommé n'est pas posé, le
+dire à l'humain : la copie gardée reste celle du projet, et la remplacer
+se fait comme la ligne le dit, par une demande sur un projet équipé.
+
+## 2026-11-22-a — À une mise à jour, l'installeur n'imprime en entier que les notes de version qui demandent quelque chose
+
+À chaque mise à jour, l'installeur imprimait en entier chaque note de
+version que la copie du moteur du projet n'avait pas, même celles qui ne
+demandent rien : souvent plus de la moitié de ce qu'il imprimait. Il
+n'imprime désormais en entier, d'abord, que celles dont « À faire »
+demande quelque chose ; des autres, dont « À faire » est « rien. », ou
+« rien ; » suivi d'une précision, une ligne chacune, leur titre, sous
+une ligne qui dit combien elles sont et le fichier où les lire. Toute
+autre forme, « rien, sauf si … » comprise, s'imprime en entier. Le
+message de commit qu'il propose nomme toujours toutes les entrées.
+
+À faire : lire les notes que l'installeur imprime en entier, et faire ce
+que chacune demande ; une note qu'il ne nomme que par son titre ne
+demande rien, et se lit dans le fichier qu'il nomme quand elle sert.
 
 ## 2026-11-21-d — L'installeur nomme le hook de fin de tour que le projet a déjà
 
