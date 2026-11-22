@@ -30,3 +30,9 @@ B-0192 passe à JA-0006, jugé à la mise à jour de chess.
 Le 21 novembre, à la formation des lots qui manquent à JA-0005 (D-0154,
 J-2026-11-21-Q) : T-0105, l'exception d'ADR-0088 dans le guide, de
 priorité haute, rejoint ce lot, qui change déjà le guide (T-0031).
+
+## Revues
+
+### Passe 1 — 2026-11-22
+
+Commits : d3cfd6d9..f1ebcda0
