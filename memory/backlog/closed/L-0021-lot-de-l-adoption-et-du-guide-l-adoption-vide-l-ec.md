@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0021 — Lot de l'adoption et du guide : l'adoption vide, l'écart de politique déjà montré, l'import d'un journal, la clé d'un constat toléré
 
-> statut : en cours · origine : J-2026-11-21-B · après : L-0008, T-0026, T-0076, T-0031, T-0105, T-0121, T-0123, T-0124 · lu : backlog@18f4b4cb
+> statut : fait · ref : J-2026-11-22-I, J-2026-11-22-J · origine : J-2026-11-21-B · après : L-0008, T-0026, T-0076, T-0031, T-0105, T-0121, T-0123, T-0124 · lu : backlog@18f4b4cb
 
 Coupé de L-0008 à son annonce, le 21 novembre (J-2026-11-21-B) : dix
 tâches pour un seuil de neuf (ADR-0101), et un lot de dix tâches de
@@ -36,3 +36,8 @@ priorité haute, rejoint ce lot, qui change déjà le guide (T-0031).
 ### Passe 1 — 2026-11-22
 
 Commits : d3cfd6d9..f1ebcda0
+
+- Bloquant : « rien. » suivi d'une consigne, et une note conditionnelle, imprimés en titre seul (T-0121)
+- Bloquant : un fichier nommé du nom de la copie, qui en diffère, perdu sans rien dire (T-0123)
+- Bloquant : le guide faux pour le jour qui se heurte, et des citations à récrire dans des couches en ajout seul (T-0031)
+- Ouvre : B-0329, T-0156, T-0157

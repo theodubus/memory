@@ -5,7 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-JA-0005 en 14 lots (D-0154, J-2026-11-21-Q) : L-0021.
+JA-0005 en 14 lots (D-0154, J-2026-11-21-Q) : L-0009.
 
 ## Consignes en cours
 
