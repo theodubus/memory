@@ -254,7 +254,7 @@ For it to merge its own itself, uncomment the `tools` line that the
 `[irreversible]` section of the policy (`.socle/policy.toml`) carries as a
 comment: the list of external tools the engine refuses, minus the merge. A
 policy laid down before this option does not have it; the diff of the
-policy, shown on an update, gives it. Only the human writes the policy, and
+policy, shown on the update that brings it, gives it. Only the human writes the policy, and
 approves this change like any protected change: the agent does not grant
 itself the right. It then merges only under four conditions: its own pull
 request only, never another session's; the CI green on its head commit,
@@ -446,7 +446,9 @@ previous commit.
 **Updating the socle.** Run the installation command again from an
 up-to-date clone of the engine (`git clone --depth 1
 https://github.com/theodubus/socle /tmp/socle`). The project's files are never overwritten;
-the diff of the policy is shown. Between what it put in place and the
+the diff of the policy is shown, in one line when each of its lines was
+already in its diff to the template of the replaced copy, shown at the
+previous update (the lines the human wrote on purpose). Between what it put in place and the
 audit, the installer prints the [release notes](CHANGES.en.md) that the
 project's engine copy did not have, all of them if it had none: what each
 change does to the project, and what the agent must do. It prints in full

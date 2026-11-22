@@ -530,10 +530,12 @@ def politique_langue(texte: str, lg: str) -> str:
     return texte.replace('# [memory]\n# language = "fr"\n', f'[memory]\nlanguage = "{lg}"\n', 1)
 
 
-def diff_politique(cible: Path) -> list[str]:
+def diff_politique(cible: Path, modele: str | None = None) -> list[str]:
     """Ce qui sépare la politique du projet de celle du gabarit de cette
     version : affiché à la mise à jour, jamais appliqué. La politique est à
-    l'humain."""
+    l'humain. `modele` : le texte d'un autre gabarit de la politique, dans la
+    langue du projet, au lieu de celui de cette version (celui de la copie du
+    moteur remplacée, `politique_d_avant`)."""
     import difflib
 
     p = cible / config.FORMAT_ACTUEL.politique
@@ -541,14 +543,56 @@ def diff_politique(cible: Path) -> list[str]:
         return []
     # Le gabarit tel que l'installeur le poserait pour ce projet : dans sa
     # langue, qu'il écrit dans la politique.
-    lg = langue.du_projet(config.Projet.charger(cible))
-    gab = gabarit("policy.toml", lg)
+    projet = config.Projet.charger(cible)
+    lg = langue.du_projet(projet)
+    gab = gabarit("policy.toml", lg) if modele is None else modele
     gab = politique_langue(gab, lg) if lg != "fr" else gab
     # Le nom de l'humain, que l'installeur y a écrit, n'est pas un écart.
-    gab = politique_nom(gab, str(config.Projet.charger(cible).pol("human", "name", defaut="") or ""))
-    projet, gab = p.read_text(encoding="utf-8").splitlines(), gab.splitlines()
-    return list(difflib.unified_diff(projet, gab, trad("politique du projet"), trad("gabarit de cette version"),
+    gab = politique_nom(gab, str(projet.pol("human", "name", defaut="") or ""))
+    lignes, gab = p.read_text(encoding="utf-8").splitlines(), gab.splitlines()
+    return list(difflib.unified_diff(lignes, gab, trad("politique du projet"), trad("gabarit de cette version"),
                                      lineterm=""))
+
+
+def _gabarit_de_politique(cible: Path, dossier_moteur: str, lg: str) -> str:
+    """Le chemin, sous le dossier du moteur, du gabarit de la politique dans
+    la langue `lg`, comme `gabarit` le choisit : sa version traduite si le
+    moteur en a une, sinon le français."""
+    traduit = f"{dossier_moteur}/socle/templates/policy.{lg}.toml"
+    return traduit if lg != "fr" and (cible / traduit).is_file() else f"{dossier_moteur}/socle/templates/policy.toml"
+
+
+def politique_d_avant(cible: Path, dossier_moteur: str) -> str | None:
+    """Le gabarit de la politique de la copie du moteur du dernier commit,
+    dans la langue du projet s'il en a une version, lu par git comme ses
+    notes de version (`notes_deja_lues`) : quand l'installeur compare la
+    politique, la copie nouvelle est déjà dans l'arbre. None sans commit, ou
+    sans gabarit commité sous `dossier_moteur`."""
+    commit = outils.git(cible, "rev-parse", "--verify", "-q", "HEAD", check=False).strip()
+    if not commit:
+        return None
+    lg = langue.du_projet(config.Projet.charger(cible))
+    noms = dict.fromkeys([f"policy.{lg}.toml"] * (lg != "fr") + ["policy.toml"])
+    for nom in noms:
+        chemin = f"{dossier_moteur}/socle/templates/{nom}"
+        if outils.git(cible, "ls-tree", "--name-only", commit, "--", chemin, check=False).strip():
+            return outils.git(cible, "show", f"{commit}:{chemin}", check=False)
+    return None
+
+
+def lignes_changees(ecart: list[str]) -> list[str]:
+    """Les lignes changées d'un diff unifié, avec leur signe : sans ses deux
+    lignes d'en-tête, ses repères de bloc ni son contexte."""
+    return [l for l in ecart[2:] if l.startswith(("+", "-"))]
+
+
+def ecart_deja_montre(ecart: list[str], avant: list[str] | None) -> bool:
+    """Chaque ligne changée de l'écart `ecart` de la politique au gabarit de
+    cette version figurait déjà dans son écart `avant` au gabarit de la
+    copie du moteur remplacée : la mise à jour précédente l'a montré, ce
+    sont les lignes que l'humain a écrites exprès. Faux sans écart d'avant
+    lisible (`None`)."""
+    return bool(ecart) and avant is not None and set(lignes_changees(ecart)) <= set(lignes_changees(avant))
 
 
 _ENTETE = re.compile(r"^#?\s*\[\[?([\w.]+)\]\]?\s*$")
@@ -897,7 +941,18 @@ def _poser_configuration(cible: Path, texte_adaptateur: str, ancien: dict, prive
                                 "approuver", prive=prive))
     if ancien and (cible / ch.politique).is_file():
         ecart = diff_politique(cible)
-        if ecart:
+        # Un écart que la mise à jour précédente a déjà montré, les lignes
+        # que l'humain a écrites exprès, ne se redit qu'en une ligne (B-0195).
+        dossier = str(ancien.get("engine_dir") or ch.moteur)
+        modele = politique_d_avant(cible, dossier) if ecart else None
+        if ecart_deja_montre(ecart, None if modele is None else diff_politique(cible, modele)):
+            journal.append(trad("la politique du projet diffère du gabarit de cette version de {n} ligne(s), toutes "
+                                "déjà dans son écart au gabarit de la copie du moteur remplacée, montré à la mise à "
+                                "jour précédente : rien de nouveau, rien n'est écrit. Pour le revoir en entier : `git "
+                                "diff --no-index {politique} {gabarit}` (le nom de l'humain et la langue, que "
+                                "l'installeur y a écrits, s'y ajoutent)", n=len(lignes_changees(ecart)),
+                                politique=ch.politique, gabarit=_gabarit_de_politique(cible, dossier, lg)))
+        elif ecart:
             journal.append(trad("la politique du projet diffère du gabarit de cette version ; rien n'est écrit, "
                                 "elle est à l'humain — à relire :\n      {ecart}", ecart="\n      ".join(ecart)))
     for nom, contenu in (

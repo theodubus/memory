@@ -263,8 +263,8 @@ actions externes. Pour qu'il fusionne lui-même la sienne, décommentez la
 ligne `tools` que la section `[irreversible]` de la politique
 (`.socle/policy.toml`) porte en commentaire : la liste des outils externes
 que le moteur refuse, moins la fusion. Une politique posée avant cette
-option ne l'a pas ; le diff de la politique, montré à la mise à jour, la
-donne. Seul l'humain écrit la politique, et approuve ce changement comme
+option ne l'a pas ; le diff de la politique, montré à la mise à jour qui
+l'apporte, la donne. Seul l'humain écrit la politique, et approuve ce changement comme
 tout changement protégé : l'agent ne s'en donne pas le droit. Il ne
 fusionne alors qu'à quatre conditions : sa propre pull request
 seulement, jamais celle d'une autre session ; la CI verte sur son commit
@@ -459,7 +459,9 @@ commit (`Dispense-test: f — <raison>`) ; un correctif apporte un test qui
 **Mettre à jour le socle.** Relancer la commande d'installation depuis un
 clone à jour du moteur (`git clone --depth 1
 https://github.com/theodubus/socle /tmp/socle`). Les fichiers du projet ne sont jamais écrasés ; le
-diff de la politique est montré. Entre ce qu'il a posé et l'audit,
+diff de la politique est montré, en une ligne quand chacune de ses lignes
+était déjà dans son diff au gabarit de la copie remplacée, montré à la
+mise à jour précédente (les lignes que l'humain a écrites exprès). Entre ce qu'il a posé et l'audit,
 l'installeur imprime les [notes de version](CHANGES.md) que la copie du
 moteur du projet n'avait pas, toutes si elle n'en avait aucune : ce que
 chaque changement fait au projet, et ce que l'agent doit faire. Il

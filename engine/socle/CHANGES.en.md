@@ -70,6 +70,21 @@ To do: read the notes the installer prints in full, and do what each
 one asks; a note it names only by its title asks nothing, and is read
 in the file it names when it matters.
 
+## 2026-11-22-e — The installer no longer shows again in full a policy difference already shown
+
+On every update, the installer showed in full what separates the
+project's policy from the template of this version, even when the
+difference was made only of lines the human wrote there on purpose,
+already shown at the previous update. It now also compares the policy
+with the template of the engine copy of the last commit: if each
+changed line of the difference was already there, a single line says
+so, with their number and the command that shows it in full; otherwise,
+or without a committed copy, the difference is shown in full, as before.
+
+To do: a difference shown in full holds at least one line that the
+template of this version changes: show it to the human, who alone writes
+the policy.
+
 ## 2026-11-22-d — The installer says in one line that an empty adoption has nothing to enter
 
 An adoption that found no failing check, or an update of an adopted

@@ -72,6 +72,21 @@ message de commit qu'il propose nomme toujours toutes les entrées.
 que chacune demande ; une note qu'il ne nomme que par son titre ne
 demande rien, et se lit dans le fichier qu'il nomme quand elle sert.
 
+## 2026-11-22-e — L'installeur ne réaffiche plus en entier un écart de politique déjà montré
+
+À chaque mise à jour, l'installeur montrait en entier ce qui sépare la
+politique du projet du gabarit de cette version, même quand l'écart
+n'était fait que des lignes que l'humain y a écrites exprès, déjà
+montrées à la mise à jour précédente. Il compare désormais aussi la
+politique au gabarit de la copie du moteur du dernier commit : si chaque
+ligne changée de l'écart y figurait déjà, une ligne seule le dit, avec
+leur nombre et la commande qui le montre en entier ; sinon, ou sans
+copie commitée, l'écart s'affiche en entier, comme avant.
+
+À faire : un écart montré en entier contient au moins une ligne que le
+gabarit de cette version change : la montrer à l'humain, qui seul écrit
+la politique.
+
 ## 2026-11-22-d — L'installeur dit en une ligne qu'une adoption vide n'a rien à inscrire
 
 Une adoption qui ne trouvait aucun contrôle en échec, ou une mise à jour

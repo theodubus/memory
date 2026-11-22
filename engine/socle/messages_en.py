@@ -510,6 +510,14 @@ MESSAGES: dict[str, str] = {
     ":\n      {ecart}":
         "the project's policy differs from the template of this version; nothing is written, it belongs to the human "
         "— to review:\n      {ecart}",
+    "la politique du projet diffère du gabarit de cette version de {n} ligne(s), toutes déjà dans son écart au "
+    "gabarit de la copie du moteur remplacée, montré à la mise à jour précédente : rien de nouveau, rien n'est écrit. "
+    "Pour le revoir en entier : `git diff --no-index {politique} {gabarit}` (le nom de l'humain et la langue, que "
+    "l'installeur y a écrits, s'y ajoutent)":
+        "the project's policy differs from the template of this version by {n} line(s), all already in its "
+        "difference from the template of the replaced engine copy, shown at the previous update: nothing new, "
+        "nothing is written. To see it again in full: `git diff --no-index {politique} {gabarit}` (the human's name "
+        "and the language, which the installer wrote there, are added to it)",
     "{nom} existe : conservé (comparer au gabarit à la main si besoin)":
         "{nom} exists: kept (compare it with the template by hand if needed)",
     "!! réglages du gabarit absents de {nom} ({n}) : à déclarer s'ils servent au projet, une fois ce moteur commité "
