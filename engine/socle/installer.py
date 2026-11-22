@@ -1609,9 +1609,10 @@ def _settings(cible: Path) -> list[str]:
     hooks = conf.setdefault("hooks", {})
     for evt, blocs in modele["hooks"].items():
         existants = hooks.setdefault(evt, [])
-        # Les blocs du socle sont remplacés, ceux du projet gardés.
-        existants[:] = [b for b in existants
-                        if not any(".socle/socle hook" in h.get("command", "") for h in b.get("hooks", []))]
+        # Les commandes du socle sont remplacées, celles du projet gardées,
+        # même dans un bloc qu'elles partagent avec une du socle : le bloc
+        # ne tombe que s'il ne lui reste rien (B-0328).
+        existants[:] = [b for b in map(_sans_le_socle, existants) if b is not None]
         existants.extend(blocs)
     outils.ecrire(p, json.dumps(conf, ensure_ascii=False, indent=2) + "\n")
     res = [trad("hooks de Claude Code déclarés dans .claude/settings.json")]
@@ -1632,6 +1633,16 @@ def _settings(cible: Path) -> list[str]:
                         "deux fois. Pour n'en garder qu'un, l'humain retire le sien de .claude/settings.json, ou "
                         "n'y laisse que ce qui est propre au projet", commandes=", ".join(fins)))
     return res
+
+
+def _sans_le_socle(bloc: dict) -> dict | None:
+    """Le bloc de hooks `bloc` sans les commandes du socle : tel quel s'il
+    n'en a pas, None s'il n'avait qu'elles."""
+    commandes = bloc.get("hooks", [])
+    gardees = [h for h in commandes if ".socle/socle hook" not in h.get("command", "")]
+    if len(gardees) == len(commandes):
+        return bloc
+    return {**bloc, "hooks": gardees} if gardees else None
 
 
 def _commandes_du_projet(conf: dict, evenement: str) -> list[str]:

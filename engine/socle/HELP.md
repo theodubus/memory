@@ -101,7 +101,9 @@ Juste après l'installation :
 Si le projet avait déjà son propre hook `SessionStart`, l'installeur le
 signale : le retirer de `.claude/settings.json`, sans quoi chaque session
 reçoit deux états. Il nomme de même un hook `Stop` du projet, qui tire à
-chaque fin de tour à côté de celui du socle et peut le doubler.
+chaque fin de tour à côté de celui du socle et peut le doubler. Une
+commande du projet placée dans le même bloc qu'un hook du socle est gardée
+et nommée de même : l'installeur ne retire du bloc que celle du socle.
 
 ## 2. Travailler avec l'agent
 

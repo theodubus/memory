@@ -97,7 +97,9 @@ If the project already had its own `SessionStart` hook, the installer
 points it out: remove it from `.claude/settings.json`, otherwise each
 session receives two states. It names likewise a `Stop` hook of the
 project, which fires at every end of turn next to the socle's and may
-duplicate it.
+duplicate it. A command of the project placed in the same block as a hook
+of the socle is kept and named likewise: the installer removes from the
+block only the socle's.
 
 ## 2. Working with the agent
 

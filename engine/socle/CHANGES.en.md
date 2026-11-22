@@ -70,6 +70,21 @@ To do: read the notes the installer prints in full, and do what each
 one asks; a note it names only by its title asks nothing, and is read
 in the file it names when it matters.
 
+## 2026-11-22-c — The settings merge keeps the project's command placed in a block of the socle
+
+On install as on every update, the installer replaces the socle's hooks
+in `.claude/settings.json` and keeps the project's. Yet it removed any
+hooks block that carried a command of the socle, and with it a command
+of the project placed in the same block (a `bash tools/lint.sh` next to
+the socle's `Stop` hook, for instance), without saying so. It now
+removes from a block only the socle's commands, keeps the block if any
+are left, and names the kept command like a hook of the project in its
+own block. Run again, it duplicates nothing.
+
+To do: if a command of the project has vanished from
+`.claude/settings.json` at a previous update, tell the human: only they
+put it back, the file being protected.
+
 ## 2026-11-21-d — The installer names the end-of-turn hook the project already has
 
 The installer keeps the hooks the project declares itself in

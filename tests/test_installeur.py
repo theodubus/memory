@@ -355,6 +355,44 @@ class TestDeuxEtats(unittest.TestCase):
         self.assertEqual(installeur.fins_de_tour_du_projet(conf), ["bash tools/verifier.sh"])
         self.assertTrue(any(".socle/socle hook stop" in h["command"] for b in conf["hooks"]["Stop"] for h in b["hooks"]))
 
+    def test_la_commande_du_projet_d_un_bloc_du_socle_survit_et_se_nomme(self):
+        """B-0328 : la fusion retirait tout bloc qui portait une commande du
+        socle, et avec lui la commande du projet qui le partageait, sans le
+        dire ; elle ne retire plus que celle du socle, et l'installeur nomme
+        celle qu'il garde. Relancé, il ne duplique rien."""
+        import json
+
+        for evenement, commande, signal in (
+                ("Stop", "bash tools/lint.sh", "!! le projet a déjà son propre hook de fin de tour (bash tools/lint.sh)"),
+                ("SessionStart", "bash tools/etat.sh", "!! le projet a déjà son propre état au démarrage (bash "
+                                                       "tools/etat.sh)")):
+            with self.subTest(evenement=evenement):
+                racine = depot({"calc.py": "X = 1\n"})
+                self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+                socle = json.loads(installeur.gabarit("settings.json"))["hooks"][evenement][0]["hooks"][0]
+                (racine / ".claude").mkdir()
+                (racine / ".claude/settings.json").write_text(json.dumps({"hooks": {evenement: [
+                    {"hooks": [socle, {"type": "command", "command": commande}]}]}}), encoding="utf-8")
+                for passage in ("installation", "mise à jour", "relance"):
+                    sortie = io.StringIO()
+                    with redirect_stdout(sortie):
+                        installeur.installer(racine, "python", "@essai", source=MOTEUR)
+                    self.assertIn(signal, sortie.getvalue(), passage)
+                    conf = json.loads((racine / ".claude/settings.json").read_text(encoding="utf-8"))
+                    commandes = [h["command"] for b in conf["hooks"][evenement] for h in b["hooks"]]
+                    self.assertEqual(commandes.count(commande), 1, passage)
+                    self.assertEqual(commandes.count(socle["command"]), 1, passage)
+                    self.assertEqual(len(commandes), 2, passage)
+
+    def test_un_bloc_sans_le_socle_se_garde_tel_quel(self):
+        socle = {"type": "command", "command": "python3 .socle/socle hook stop"}
+        projet = {"type": "command", "command": "bash tools/lint.sh"}
+        bloc = {"matcher": "Bash", "hooks": [projet]}
+        self.assertIs(installeur._sans_le_socle(bloc), bloc)
+        self.assertEqual(installeur._sans_le_socle({"matcher": "Bash", "hooks": [socle, projet]}),
+                         {"matcher": "Bash", "hooks": [projet]})
+        self.assertIsNone(installeur._sans_le_socle({"hooks": [socle]}))
+
     def test_sans_hook_de_fin_de_tour_propre_rien_n_est_dit(self):
         import json
 

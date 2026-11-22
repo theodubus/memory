@@ -72,6 +72,21 @@ message de commit qu'il propose nomme toujours toutes les entrées.
 que chacune demande ; une note qu'il ne nomme que par son titre ne
 demande rien, et se lit dans le fichier qu'il nomme quand elle sert.
 
+## 2026-11-22-c — La fusion des réglages garde la commande du projet placée dans un bloc du socle
+
+À l'installation comme à chaque mise à jour, l'installeur remplace dans
+`.claude/settings.json` les hooks du socle et garde ceux du projet. Il
+retirait pourtant tout bloc de hooks qui portait une commande du socle,
+et avec lui une commande du projet placée dans le même bloc (un `bash
+tools/lint.sh` à côté du hook `Stop` du socle, par exemple), sans le
+dire. Il ne retire plus d'un bloc que les commandes du socle, garde le
+bloc s'il lui en reste, et nomme la commande gardée comme un hook du
+projet dans son propre bloc. Relancé, il ne duplique rien.
+
+À faire : si une commande du projet a disparu de `.claude/settings.json`
+à une mise à jour précédente, le dire à l'humain : lui seul la remet, le
+fichier étant protégé.
+
 ## 2026-11-21-d — L'installeur nomme le hook de fin de tour que le projet a déjà
 
 L'installeur garde les hooks que le projet déclare lui-même dans
