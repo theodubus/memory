@@ -607,6 +607,26 @@ Un projet adopté avant cette règle reçoit sa liste à la mise à jour du
 moteur, faite des constats de la branche par défaut (ceux nés sur la
 branche ne sont pas tolérés, l'installeur les nomme) ; tant qu'elle manque, l'état dit le contrôle désarmé en entier.
 
+**Un journal d'avant le socle.** Un projet qui tenait déjà un journal
+dont les entrées ont la forme de celles du socle (`J-`, une date et une
+lettre) le migre dans `memory/journal/`, chaque entrée dans le fichier
+de son mois, au format du socle ; dès l'installation, une entrée
+nouvelle ne s'écrit qu'au journal du socle. Une entrée importée garde
+son identifiant, sauf un jour où le journal du socle a déjà les siennes
+(celui de l'installation, qui l'ouvre) : les entrées importées de ce
+jour y prennent, dans leur ordre, les lettres qui suivent la dernière
+du journal du socle, et chacune de leurs citations dans le projet se
+récrit dans le même commit. L'ancien journal se retire dans ce commit,
+ou n'y garde qu'un renvoi vers `memory/journal/` : ses titres d'un jour
+renuméroté désigneraient sinon d'autres entrées. En attendant la
+migration, une entrée ancienne n'existe pas pour le socle, et le
+contrôle des références refuse son identifiant : les citations que le
+projet a déjà sont tolérées à l'adoption (paragraphe précédent), et
+celles que la migration résout se retirent ensuite de la liste ; une
+citation nouvelle la nomme sans la forme d'un identifiant, par son
+fichier, sa date et sa lettre (« l'entrée B du 3 mars 2026 de l'ancien
+journal »).
+
 **Un sous-dossier travaillé par d'autres agents.** Quand d'autres sessions
 d'agents, qui n'ont ni les hooks ni les règles du socle, travaillent un
 sous-dossier sur leurs propres branches (une interface, par exemple),

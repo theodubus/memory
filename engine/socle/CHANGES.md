@@ -7,6 +7,21 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-22-g — Le guide dit comment importer un journal numéroté comme celui du socle
+
+Un projet qui tenait déjà un journal dont les entrées ont la forme de
+celles du socle (`J-`, une date et une lettre) ne savait ni quelles
+lettres prennent ses entrées importées, ni comment citer les anciennes
+avant leur migration, que le contrôle des références dit inexistantes.
+Le guide le dit désormais, dans sa référence, après le projet adopté :
+une entrée importée garde son identifiant, sauf un jour que le journal
+du socle a déjà, où elle prend les lettres qui suivent les siennes, ses
+citations récrites dans le même commit ; avant la migration, une
+citation nouvelle nomme l'entrée par son fichier, sa date et sa lettre.
+
+À faire : rien, sauf si le projet tenait un tel journal : proposer à
+l'humain sa migration, selon le guide (« Un journal d'avant le socle »).
+
 ## 2026-11-22-f — Le guide dit qu'une case qui livre une demande, un relevé ou une entrée de la mémoire se vérifie par ce qu'elle produit
 
 Le format de la mémoire et la consigne du relecteur le disaient déjà :

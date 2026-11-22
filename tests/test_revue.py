@@ -600,6 +600,45 @@ class TestLeGuideDitLExceptionDesCases(unittest.TestCase):
                 self.assertIn(phrase, plat)
 
 
+class TestLeGuideDitLImportDUnJournal(unittest.TestCase):
+    """T-0031 (B-0186) : un projet qui tenait un journal numéroté comme
+    celui du socle ne savait ni quelles lettres prennent ses entrées
+    importées, ni comment citer les anciennes avant leur migration, que le
+    contrôle des références dit inexistantes."""
+
+    ATTENDUS = {
+        "HELP.md": (
+            "**Un journal d'avant le socle.**",
+            "Une entrée importée garde son identifiant, sauf un jour où le journal du socle a déjà les siennes "
+            "(celui de l'installation, qui l'ouvre) : les entrées importées de ce jour y prennent, dans leur ordre, "
+            "les lettres qui suivent la dernière du journal du socle, et chacune de leurs citations dans le projet "
+            "se récrit dans le même commit.",
+            "une citation nouvelle la nomme sans la forme d'un identifiant, par son fichier, sa date et sa lettre",
+        ),
+        "HELP.en.md": (
+            "**A journal from before the socle.**",
+            "An imported entry keeps its identifier, except on a day for which the socle's journal already has its "
+            "own (the day of the installation, which opens it): the imported entries of that day take, in their "
+            "order, the letters that follow the last one of the socle's journal, and each of their citations in the "
+            "project is rewritten in the same commit.",
+            "a new citation names it without the form of an identifier, by its file, its date and its letter",
+        ),
+    }
+
+    def test_le_guide_dit_les_lettres_des_entrees_importees_et_comment_citer_les_anciennes(self):
+        paquet = Path(revue.__file__).resolve().parent
+        for nom, phrases in self.ATTENDUS.items():
+            plat = " ".join((paquet / nom).read_text(encoding="utf-8").split())
+            for phrase in phrases:
+                with self.subTest(guide=nom, phrase=phrase[:40]):
+                    self.assertIn(phrase, plat)
+        # Au plus près de l'adoption, dont il renvoie à la tolérance.
+        for nom, avant, titre in (("HELP.md", "**Un projet adopté**", "**Un journal d'avant le socle.**"),
+                                  ("HELP.en.md", "**An adopted project**", "**A journal from before the socle.**")):
+            texte = (paquet / nom).read_text(encoding="utf-8")
+            self.assertLess(texte.index(avant), texte.index(titre), nom)
+
+
 class TestLesFormesDuShellHorsDuProduit(unittest.TestCase):
     """T-0060 (B-0276, D-0128, ADR-0099) : un projet équipé ne reçoit plus
     de procédure sur les formes du shell que le hook ne juge pas, ni leur

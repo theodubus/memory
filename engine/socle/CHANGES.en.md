@@ -7,6 +7,22 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-22-g — The guide says how to import a journal numbered like the socle's
+
+A project that already kept a journal whose entries have the form of
+the socle's (`J-`, a date and a letter) knew neither which letters its
+imported entries take, nor how to cite the old ones before their
+migration, which the references check says do not exist. The guide now
+says so, in its reference, after the adopted project: an imported entry
+keeps its identifier, except on a day the socle's journal already has,
+where it takes the letters that follow the socle's own, its citations
+rewritten in the same commit; before the migration, a new citation names
+the entry by its file, its date and its letter.
+
+To do: nothing, unless the project kept such a journal: propose its
+migration to the human, following the guide (“A journal from before the
+socle”).
+
 ## 2026-11-22-f — The guide says that a box delivering a request, a report or a memory entry is checked by what it produces
 
 The memory format and the reviewer's instructions already said so: a
