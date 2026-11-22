@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0321 — En session cloud, le hook de fin de tour de l'environnement laisse conclure sans vérifier le push un tour qu'un hook de fin de tour a relancé, et une branche que l'origine n'a jamais reçue
 
-> statut : ouvert · origine : J-2026-11-20-AR · ref : B-0262, T-0023, B-0318 · lu : backlog@689e597f
+> statut : abandonné · ref : ADR-0098, D-0156, J-2026-11-22-A · origine : J-2026-11-20-AR · ref : B-0262, T-0023, B-0318 · lu : backlog@689e597f
 
 La revue de L-0020 (J-2026-11-20-AR) a lu le hook de fin de tour de
 l'environnement cloud, `~/.claude/stop-hook-git-check.sh`, que le relevé
@@ -21,6 +21,11 @@ Le hook de l'environnement n'est pas au socle ; le sien peut combler le
 manque. Piste : en session cloud, le hook de fin de tour du socle
 avertit d'un commit non poussé, ou d'une branche sans branche distante,
 sur un arrêt où `stop_hook_active` vaut vrai, sans refuser deux fois.
+
+Abandonné le 22 novembre sur la décision de Théo D-0156
+(J-2026-11-22-A) : sa correction toucherait le hook de l'agent, et le
+défaut n'a été que lu ou reproduit par un relecteur, pas vu dans une
+session (ADR-0098). Un besoin neuf s'ouvre si une session le montre.
 
 ## Satisfait quand
 
