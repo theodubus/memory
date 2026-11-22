@@ -15,6 +15,20 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-22-j — Le relecteur à froid d'une demande répond en un seul message, sans outil
+
+Le skill `socle-request` borne ce que fait le relecteur à froid d'une
+demande : son seul message reste le dossier de `socle review --request`,
+et il rend sa lecture en un seul message, sans lancer d'outil. Mesurée
+ainsi, une relecture ne lit rien du projet hors de son dossier et ne
+coûte que le prix fixe d'un sous-agent, son dossier et sa réponse,
+environ le tiers d'un relecteur de lot. Un compte rendu de sous-agent
+qui compte un outil lancé dit une lecture qui n'était pas à froid, et le
+récap le dit.
+
+À faire : rien ; le skill `socle-request` est une copie protégée, dans la
+demande de l'installeur.
+
 ## 2026-11-22-i — Une commande dit ce qu'une session de Claude Code a coûté, et ce qui l'a fait coûter
 
 `python3 .socle/socle consumption` lit les transcriptions que Claude Code

@@ -14,6 +14,19 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-22-j — The cold reader of a request answers in a single message, with no tool
+
+The `socle-request` skill bounds what the cold reader of a request does:
+its only message is still the brief of `socle review --request`, and it
+returns its reading in a single message, launching no tool. Measured
+this way, a reading reads nothing of the project outside its brief and
+costs only the fixed price of a subagent, its brief and its answer,
+about a third of a batch reviewer. A subagent report that counts a tool
+launched means a reading that was not cold, and the recap says so.
+
+To do: nothing; the `socle-request` skill is a protected copy, in the
+installer's request.
+
 ## 2026-11-22-i — A command says what a Claude Code session cost, and what made it cost
 
 `python3 .socle/socle consumption` reads the transcripts Claude Code

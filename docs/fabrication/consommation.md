@@ -346,6 +346,49 @@ chantier actif et le journal portent. Compacter avant la pause donne
 presque le même gain, mais suppose de voir la pause venir ; la session
 neuve sert quand la limite a coupé sans prévenir.
 
+## Ce que lit le relecteur à froid d'une demande (B-0197)
+
+Le 13 novembre, sur chess, la relecture à froid d'une demande a coûté
+131 786 jetons ; du 19 au 21 novembre, ici, de 76 265 à 83 817 sur Opus
+(ADR-0102). Le 22 novembre (T-0034), deux relectures de la même demande,
+D-0149 (12 973 octets de dossier, environ 3 700 jetons), lancées comme
+le dit le skill `socle-request` : le dossier de `socle review --request`
+pour seul message, sur Opus 5.5. Leurs transcriptions de sous-agent,
+lues appel par appel :
+
+| type de sous-agent | appels | outils | entrée | dont cache lu | dont cache écrit | sortie | total rendu | pondéré |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| général | 1 | 0 | 71 714 | 50 701 | 21 011 | 9 054 | 80 768 | 76 600 |
+| `Explore` (lecture seule) | 1 | 0 | 52 193 | 0 | 52 191 | 11 555 | 63 748 | 123 000 |
+
+Pondéré au tarif public (écriture de cinq minutes 1,25, lecture 0,1,
+sortie 5).
+
+- **Le relecteur ne lit rien du projet hors de son dossier.** Un seul
+  appel, aucun outil : la consigne du dossier (« n'ouvre aucun lien, ne
+  lis aucun fichier ») tient. D'où venaient les 131 786 jetons de chess
+  ne se vérifie pas ici, sa transcription n'étant pas dans ce dépôt ; un
+  relecteur qui aurait lu des fichiers les expliquerait.
+- **Son coût est le prix fixe d'un sous-agent.** Sur 71 714 jetons
+  d'entrée, le dossier en fait 5 % ; le prompt et les outils de l'agent,
+  communs à tout sous-agent du même type (le préfixe que le cache
+  partage), 71 % ; le contexte que l'agent injecte (AGENTS.md, la liste
+  des skills), environ 24 %. La sortie, réflexion comprise, pèse plus
+  que toute l'entrée une fois pondérée (45 000 contre 31 000).
+- **Le type `Explore` lit 27 % de moins**, sans AGENTS.md ni la liste
+  des skills : une lecture plus froide, servie par le même modèle quand
+  la session ne lui en donne pas d'autre. Il ne coûte pas moins pour
+  autant : son préfixe ne se partage pas avec les sous-agents qui
+  implémentent, et il l'écrit en entier, quand celui du type général se
+  lit le plus souvent du cache. Le skill ne le prescrit donc pas ;
+  d'autres installations de l'agent lui donnent un autre modèle par
+  défaut.
+- **Ce que borne le skill** : le dossier seul pour message (la taille
+  d'une demande a son plafond, `memory/requests/*.md` des garde-fous), et
+  une réponse en un seul message, sans outil ; un relecteur qui en lance
+  un n'a pas lu à froid, et le récap le dit. Une relecture coûte ainsi
+  au plus le tiers d'un relecteur de lot (de 245 000 à 375 000 jetons).
+
 ## Ce qui reste incertain
 
 - Les relevés de la fenêtre sont arrondis au centième et lus par
