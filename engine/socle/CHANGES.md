@@ -41,6 +41,21 @@ il dit désormais l'exception.
 
 À faire : rien.
 
+## 2026-11-22-b — L'installeur dit l'adaptateur nommé que la copie de son langage remplace
+
+Un adaptateur nommé par `--adapter`, un fichier ou un adaptateur
+maintenu, du langage d'une copie déjà posée dans `.socle/adapters/`
+devient cette copie, que la mise à jour rafraîchit ou garde : il n'est
+pas posé. L'installeur ne le disait pas, et son journal ne nommait que
+la copie. Il le dit désormais d'une ligne `!!`, de la forme de celle de
+la copie principale : l'adaptateur écarté, la copie gardée, et comment
+la remplacer. Un adaptateur détecté en automatique devient la copie sans
+que l'installeur en dise plus.
+
+À faire : si l'installeur dit qu'un adaptateur nommé n'est pas posé, le
+dire à l'humain : la copie gardée reste celle du projet, et la remplacer
+se fait comme la ligne le dit, par une demande sur un projet équipé.
+
 ## 2026-11-22-a — À une mise à jour, l'installeur n'imprime en entier que les notes de version qui demandent quelque chose
 
 À chaque mise à jour, l'installeur imprimait en entier chaque note de

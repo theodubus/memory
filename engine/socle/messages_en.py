@@ -644,6 +644,14 @@ MESSAGES: dict[str, str] = {
         "it on its branch, go back to the starting branch with `git switch` and run the installer again on a new "
         "branch; on an equipped project, propose the change to the human through a request, the adapter being "
         "protected",
+    "!! {nom} non posé : {copie} existe déjà pour {langage}, et se garde. Pour le remplacer : sur un essai, le "
+    "commiter sur sa branche, revenir à la branche de départ par `git switch` et relancer l'installeur sur une "
+    "branche neuve ; sur un projet équipé, proposer à l'humain, par une demande, de retirer {copie}, protégé, puis "
+    "relancer l'installeur avec le même `--adapter`":
+        "!! {nom} not set: {copie} already exists for {langage}, and is kept. To replace it: on a trial, commit it on "
+        "its branch, go back to the starting branch with `git switch` and run the installer again on a new branch; "
+        "on an equipped project, propose to the human, through a request, to remove {copie}, protected, then run "
+        "the installer again with the same `--adapter`",
     "fichier d'adaptateur introuvable : {nom}":
         "adapter file not found: {nom}",
     "refus : l'adaptateur {chemin} ne tient pas le contrat des adaptateurs :\n  - {ecarts}":

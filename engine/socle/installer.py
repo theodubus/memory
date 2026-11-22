@@ -1275,6 +1275,10 @@ def _installer(cible: Path, adaptateur: str | list[str], proprietaire: str, adop
     # ou garde ; posé à côté, il en ferait deux du même langage, dont les
     # motifs se recouvrent (B-0144).
     copies = _langages_des(cible, config.fichiers_adaptateurs(cible, ch.adaptateurs))
+    # Un adaptateur nommé par `--adapter` que la copie de son langage
+    # remplace : l'installeur le dit, comme pour la copie principale ;
+    # détecté, personne ne l'a demandé (B-0327).
+    remplaces = []
     for nom, texte, langage, nomme in charges[1:] if not principal.is_file() else charges:
         if langage in langages:
             continue
@@ -1285,7 +1289,10 @@ def _installer(cible: Path, adaptateur: str | list[str], proprietaire: str, adop
             continue
         langages.add(langage)
         if langage in copies and Path(copies[langage]).stem != nom:
-            nom, texte = Path(copies[langage]).stem, (cible / copies[langage]).read_text(encoding="utf-8")
+            copie = (cible / copies[langage]).read_text(encoding="utf-8")
+            if nomme and texte != copie:
+                remplaces.append((nom, copies[langage], langage))
+            nom, texte = Path(copies[langage]).stem, copie
         autres.append((nom, texte))
     if principal.is_file() and autres and charges[0][2] != langage_principal:
         # Le premier nommé n'est pas le principal du projet : la CI part du
@@ -1311,6 +1318,12 @@ def _installer(cible: Path, adaptateur: str | list[str], proprietaire: str, adop
                             "par `git switch` et relancer l'installeur sur une branche neuve ; sur un projet "
                             "équipé, proposer le changement à l'humain par une demande, l'adaptateur étant protégé",
                             nom=nom, adaptateur=ch.adaptateur, langage=langage_principal))
+    for nom, copie, langage in remplaces:
+        journal.append(trad("!! {nom} non posé : {copie} existe déjà pour {langage}, et se garde. Pour le "
+                            "remplacer : sur un essai, le commiter sur sa branche, revenir à la branche de départ "
+                            "par `git switch` et relancer l'installeur sur une branche neuve ; sur un projet "
+                            "équipé, proposer à l'humain, par une demande, de retirer {copie}, protégé, puis "
+                            "relancer l'installeur avec le même `--adapter`", nom=nom, copie=copie, langage=langage))
     # Les langages couverts : ceux de cet appel, et ceux des copies déjà
     # posées (revue de B-0168), détectés ou nommés par `--adapter` (B-0178).
     poses_sans_cle = [sans_cle[n] for n in [nom_adaptateur, *(n for n, _ in autres)] if n in sans_cle]
