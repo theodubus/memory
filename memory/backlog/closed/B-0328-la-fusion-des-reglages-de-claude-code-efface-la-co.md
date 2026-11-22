@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0328 — La fusion des réglages de Claude Code efface la commande que le projet a mise dans le même bloc qu'un hook du socle
 
-> statut : ouvert · origine : J-2026-11-21-L · lu : backlog@cc3cfb46
+> statut : fait · ref : T-0124, J-2026-11-22-F · origine : J-2026-11-21-L · lu : backlog@cc3cfb46
 
 Relevé par la revue à froid de L-0008 (J-2026-11-21-L), défaut d'avant
 le lot : la fusion des réglages de Claude Code
@@ -15,4 +15,4 @@ gardé et nommé. Même défaut pour `SessionStart`.
 
 ## Satisfait quand
 
-- [ ] une commande du projet placée dans le même bloc qu'un hook du socle, sous `Stop` comme sous `SessionStart`, survit à l'installation et à la mise à jour, et l'installeur la nomme comme un hook du projet dans son propre bloc
+- [x] une commande du projet placée dans le même bloc qu'un hook du socle, sous `Stop` comme sous `SessionStart`, survit à l'installation et à la mise à jour, et l'installeur la nomme comme un hook du projet dans son propre bloc

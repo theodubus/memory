@@ -577,6 +577,76 @@ class TestLeGuideNeRenvoiePasALAtelier(unittest.TestCase):
                     self.assertNotIn(mot, texte)
 
 
+class TestLeGuideDitLExceptionDesCases(unittest.TestCase):
+    """T-0105 (ADR-0088) : le format et la consigne du relecteur disent
+    qu'une case qui livre une demande, un relevé ou une entrée de la mémoire
+    se vérifie par ce qu'elle produit ; le guide de l'humain disait encore
+    que tout « Fait quand » se vérifie par un test."""
+
+    ATTENDUS = {
+        "HELP.md": "(« Fait quand », qu'un test vérifie ; une case qui livre une demande posée, un relevé écrit ou "
+                   "une entrée de la mémoire récrite se vérifie par ce qu'elle produit, que la case nomme : la "
+                   "demande et votre réponse, le fichier du relevé, ce qu'en montre `socle show`)",
+        "HELP.en.md": "(“Done when”, which a test checks; a box that delivers a request posed, a report written or "
+                      "a memory entry rewritten is checked by what it produces, which the box names: the request "
+                      "and your answer, the report's file, what `socle show` shows of it)",
+    }
+
+    def test_le_guide_dit_qu_une_telle_case_se_verifie_par_ce_qu_elle_produit(self):
+        paquet = Path(revue.__file__).resolve().parent
+        for nom, phrase in self.ATTENDUS.items():
+            with self.subTest(guide=nom):
+                plat = " ".join((paquet / nom).read_text(encoding="utf-8").split())
+                self.assertIn(phrase, plat)
+
+
+class TestLeGuideDitLImportDUnJournal(unittest.TestCase):
+    """T-0031 (B-0186) : un projet qui tenait un journal numéroté comme
+    celui du socle ne savait ni quelles lettres prennent ses entrées
+    importées, ni comment citer les anciennes avant leur migration, que le
+    contrôle des références dit inexistantes."""
+
+    ATTENDUS = {
+        "HELP.md": (
+            "**Un journal d'avant le socle.**",
+            "Une entrée importée garde son identifiant, sauf un jour où le journal du socle a déjà les siennes "
+            "(celui de l'installation, qui l'ouvre) : les entrées importées de ce jour y prennent, dans leur ordre, "
+            "les lettres qui suivent la dernière du journal du socle, et leurs citations se récrivent dans le même "
+            "commit, sauf dans le journal, les décisions et les demandes, qui ne se récrivent pas : l'entrée du "
+            "journal qui consigne la migration y donne la correspondance des lettres de ce jour.",
+            "le contrôle des références refuse l'identifiant d'une entrée ancienne, sauf un jour qui se heurte, où "
+            "il désigne en silence l'entrée du socle de même lettre",
+            "une citation nouvelle, quel que soit son jour, la nomme sans la forme d'un identifiant, par son "
+            "fichier, sa date et sa lettre",
+        ),
+        "HELP.en.md": (
+            "**A journal from before the socle.**",
+            "An imported entry keeps its identifier, except on a day for which the socle's journal already has its "
+            "own (the day of the installation, which opens it): the imported entries of that day take, in their "
+            "order, the letters that follow the last one of the socle's journal, and their citations are rewritten in "
+            "the same commit, except in the journal, the decisions and the requests, which are not rewritten: the "
+            "journal entry that records the migration gives there the mapping of that day's letters.",
+            "the references check refuses the identifier of an old entry, except on a day that clashes, where it "
+            "silently designates the socle's entry with the same letter",
+            "a new citation, whatever its day, names it without the form of an identifier, by its file, its date "
+            "and its letter",
+        ),
+    }
+
+    def test_le_guide_dit_les_lettres_des_entrees_importees_et_comment_citer_les_anciennes(self):
+        paquet = Path(revue.__file__).resolve().parent
+        for nom, phrases in self.ATTENDUS.items():
+            plat = " ".join((paquet / nom).read_text(encoding="utf-8").split())
+            for phrase in phrases:
+                with self.subTest(guide=nom, phrase=phrase[:40]):
+                    self.assertIn(phrase, plat)
+        # Au plus près de l'adoption, dont il renvoie à la tolérance.
+        for nom, avant, titre in (("HELP.md", "**Un projet adopté**", "**Un journal d'avant le socle.**"),
+                                  ("HELP.en.md", "**An adopted project**", "**A journal from before the socle.**")):
+            texte = (paquet / nom).read_text(encoding="utf-8")
+            self.assertLess(texte.index(avant), texte.index(titre), nom)
+
+
 class TestLesFormesDuShellHorsDuProduit(unittest.TestCase):
     """T-0060 (B-0276, D-0128, ADR-0099) : un projet équipé ne reçoit plus
     de procédure sur les formes du shell que le hook ne juge pas, ni leur

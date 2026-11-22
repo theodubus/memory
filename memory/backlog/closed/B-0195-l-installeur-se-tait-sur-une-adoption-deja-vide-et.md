@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0195 — L'installeur se tait sur une adoption déjà vide, et réaffiche à chaque passage le diff des lignes de politique que l'humain a écrites
 
-> statut : ouvert · origine : J-2026-11-13-D · priorité : basse · lu : backlog@4ed4e911
+> statut : fait · ref : T-0026, T-0076, J-2026-11-22-G, J-2026-11-22-H · origine : J-2026-11-13-D · priorité : basse · lu : backlog@4ed4e911
 
 Relevé à la mise à jour du socle sur chess, le 13 novembre
 (`docs/fabrication/chess/mise-a-jour-2026-11-13.md`, gênes 1 et 5).
@@ -19,5 +19,5 @@ s'il était nouveau.
 
 ## Satisfait quand
 
-- [ ] l'agent d'un projet dont l'adoption est vide sait par l'installeur qu'il n'a rien à y inscrire, sans essai à blanc
-- [ ] un écart de politique que l'humain a écrit exprès ne revient plus, à chaque mise à jour, comme s'il était nouveau
+- [x] l'agent d'un projet dont l'adoption est vide sait par l'installeur qu'il n'a rien à y inscrire, sans essai à blanc
+- [x] un écart de politique que l'humain a écrit exprès ne revient plus, à chaque mise à jour, comme s'il était nouveau

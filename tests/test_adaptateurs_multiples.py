@@ -451,6 +451,57 @@ class PythonSecond(unittest.TestCase):
         self.assertIn('language = "kotlin"', (self.racine / ".socle/adapter.toml").read_text())
         self.assertIn("actions/setup-java", (self.racine / ".github/workflows/socle.yml").read_text())
 
+    ECARTE = ("!! {nom} non posé : .socle/adapters/python.toml existe déjà pour python, et se garde. Pour le "
+              "remplacer : ")
+
+    def test_nomme_un_adaptateur_maintenu_que_remplace_la_copie_l_installeur_le_dit(self):
+        """B-0327 : `--adapter python-pytest` sur une copie `python` n'est pas
+        posé ; l'installeur le dit, comme pour la copie principale."""
+        sortie = installer_et_lire(self.racine, ["kotlin", "python-pytest"])
+        self.assertFalse((self.racine / ".socle/adapters/python-pytest.toml").exists())
+        self.assertIn(self.ECARTE.format(nom="python-pytest"), sortie)
+        ligne = next(l for l in sortie.splitlines() if "python-pytest non posé" in l)
+        self.assertIn("par une demande, de retirer .socle/adapters/python.toml", ligne)
+        self.assertIn("le même `--adapter`", ligne)
+
+    def test_nomme_un_fichier_que_remplace_la_copie_l_installeur_le_dit(self):
+        dossier = Path(tempfile.mkdtemp(prefix="socle-adaptateur-"))
+        self.addCleanup(shutil.rmtree, dossier, ignore_errors=True)
+        fichier = dossier / "mon-python.toml"
+        fichier.write_text((ADAPTATEURS / "python-pytest.toml").read_text())
+        sortie = installer_et_lire(self.racine, ["kotlin", str(fichier)])
+        self.assertFalse((self.racine / ".socle/adapters/mon-python.toml").exists())
+        self.assertIn(self.ECARTE.format(nom="mon-python"), sortie)
+
+    def test_nomme_un_fichier_du_nom_de_la_copie_qui_en_differe_l_installeur_le_dit(self):
+        """Revue de L-0021 : un fichier `python.toml` adapté, nommé par
+        `--adapter`, que la copie du même nom garde, était perdu sans rien
+        dire ; du même texte que la copie, il ne fait rien dire."""
+        dossier = Path(tempfile.mkdtemp(prefix="socle-adaptateur-"))
+        self.addCleanup(shutil.rmtree, dossier, ignore_errors=True)
+        copie = self.racine / ".socle/adapters/python.toml"
+        avant = copie.read_text()
+        fichier = dossier / "python.toml"
+        fichier.write_text(avant.replace("[capabilities", "# adapté par le projet\n[capabilities", 1))
+        self.assertNotEqual(fichier.read_text(), avant)
+        sortie = installer_et_lire(self.racine, ["kotlin", str(fichier)])
+        self.assertIn(self.ECARTE.format(nom="python"), sortie)
+        self.assertEqual(copie.read_text(), avant)
+        fichier.write_text(avant)
+        self.assertNotIn("non posé", installer_et_lire(self.racine, ["kotlin", str(fichier)]))
+
+    def test_detecte_en_automatique_la_copie_ne_fait_rien_dire_de_plus(self):
+        """Détecté, `python-pytest` est la copie `python` sans que l'installeur
+        en dise plus : personne ne l'a demandé."""
+        self.assertIn("python-pytest", installeur.detecter_adaptateurs(self.racine))
+        sortie = installer_et_lire(self.racine, "auto")
+        self.assertNotIn("non posé", sortie)
+        self.assertFalse((self.racine / ".socle/adapters/python-pytest.toml").exists())
+
+    def test_nomme_la_copie_elle_meme_ne_fait_rien_dire_de_plus(self):
+        sortie = installer_et_lire(self.racine, ["kotlin", "python"])
+        self.assertNotIn("non posé", sortie)
+
     def test_langages_en_place_lit_chaque_copie(self):
         self.assertEqual(installeur.langages_en_place(self.racine, config.FORMAT_ACTUEL), {"kotlin", "python"})
 

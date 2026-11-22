@@ -186,6 +186,46 @@ class TestAdoption(unittest.TestCase):
         self.assertEqual(len(lignes), 1)
 
 
+VIDE = "adoption : aucun contrôle en `[adoption] warn_only`, aucun constat à tolérer : rien à inscrire"
+
+
+class TestAdoptionVide(unittest.TestCase):
+    """B-0195 : sur une adoption vide, l'installeur se taisait ; l'agent de
+    chess a dû lancer un essai à blanc pour savoir qu'il n'y avait rien à
+    inscrire. Il le dit en une ligne."""
+
+    def setUp(self):
+        self.racine = depot({"app.py": "print('ok')\n"})
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        self.gf = self.racine / ".socle/guardrails.toml"
+
+    def test_une_adoption_sans_controle_en_echec_le_dit_en_une_ligne(self):
+        sortie = installer(self.racine, adoption=True)
+        self.assertNotIn("[adoption]", self.gf.read_text())
+        self.assertEqual([l for l in sortie.splitlines() if "adoption :" in l], [f"  - {VIDE}"])
+
+    def test_une_mise_a_jour_d_une_adoption_videe_le_dit(self):
+        installer(self.racine, adoption=False)
+        self.gf.write_text(self.gf.read_text() + "\n[adoption]\nwarn_only = []\n")
+        sortie = installer(self.racine, adoption=False)
+        self.assertEqual([l for l in sortie.splitlines() if "adoption :" in l], [f"  - {VIDE}"])
+
+    def test_un_projet_jamais_adopte_n_en_dit_rien(self):
+        installer(self.racine, adoption=False)
+        self.assertNotIn(VIDE, installer(self.racine, adoption=False))
+
+    def test_une_adoption_qui_inscrit_ne_le_dit_pas(self):
+        (self.racine / "LISEZMOI.md").write_text(LISEZMOI)
+        sortie = installer(self.racine, adoption=True)
+        self.assertIn("adoption : 1 contrôle(s) en avertissement : memoire.references", sortie)
+        self.assertNotIn(VIDE, sortie)
+
+    def test_la_ligne_se_traduit(self):
+        with messages.dans("en"):
+            self.assertEqual(messages.trad(VIDE), "adoption: no check in `[adoption] warn_only`, no finding to "
+                                                  "tolerate: nothing to enter")
+
+
 class TestClesDistinctes(unittest.TestCase):
     """B-0190 : deux paragraphes recopiés entre les deux mêmes fichiers ont
     deux clés ; l'un toléré, l'autre neuf, le neuf fait échouer le contrôle."""

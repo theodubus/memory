@@ -355,12 +355,142 @@ class TestDeuxEtats(unittest.TestCase):
         self.assertEqual(installeur.fins_de_tour_du_projet(conf), ["bash tools/verifier.sh"])
         self.assertTrue(any(".socle/socle hook stop" in h["command"] for b in conf["hooks"]["Stop"] for h in b["hooks"]))
 
+    def test_la_commande_du_projet_d_un_bloc_du_socle_survit_et_se_nomme(self):
+        """B-0328 : la fusion retirait tout bloc qui portait une commande du
+        socle, et avec lui la commande du projet qui le partageait, sans le
+        dire ; elle ne retire plus que celle du socle, et l'installeur nomme
+        celle qu'il garde. Relancé, il ne duplique rien."""
+        import json
+
+        for evenement, commande, signal in (
+                ("Stop", "bash tools/lint.sh", "!! le projet a déjà son propre hook de fin de tour (bash tools/lint.sh)"),
+                ("SessionStart", "bash tools/etat.sh", "!! le projet a déjà son propre état au démarrage (bash "
+                                                       "tools/etat.sh)")):
+            with self.subTest(evenement=evenement):
+                racine = depot({"calc.py": "X = 1\n"})
+                self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+                socle = json.loads(installeur.gabarit("settings.json"))["hooks"][evenement][0]["hooks"][0]
+                (racine / ".claude").mkdir()
+                (racine / ".claude/settings.json").write_text(json.dumps({"hooks": {evenement: [
+                    {"hooks": [socle, {"type": "command", "command": commande}]}]}}), encoding="utf-8")
+                for passage in ("installation", "mise à jour", "relance"):
+                    sortie = io.StringIO()
+                    with redirect_stdout(sortie):
+                        installeur.installer(racine, "python", "@essai", source=MOTEUR)
+                    self.assertIn(signal, sortie.getvalue(), passage)
+                    conf = json.loads((racine / ".claude/settings.json").read_text(encoding="utf-8"))
+                    commandes = [h["command"] for b in conf["hooks"][evenement] for h in b["hooks"]]
+                    self.assertEqual(commandes.count(commande), 1, passage)
+                    self.assertEqual(commandes.count(socle["command"]), 1, passage)
+                    self.assertEqual(len(commandes), 2, passage)
+
+    def test_un_bloc_sans_le_socle_se_garde_tel_quel(self):
+        socle = {"type": "command", "command": "python3 .socle/socle hook stop"}
+        projet = {"type": "command", "command": "bash tools/lint.sh"}
+        bloc = {"matcher": "Bash", "hooks": [projet]}
+        self.assertIs(installeur._sans_le_socle(bloc), bloc)
+        self.assertEqual(installeur._sans_le_socle({"matcher": "Bash", "hooks": [socle, projet]}),
+                         {"matcher": "Bash", "hooks": [projet]})
+        self.assertIsNone(installeur._sans_le_socle({"hooks": [socle]}))
+
     def test_sans_hook_de_fin_de_tour_propre_rien_n_est_dit(self):
         import json
 
         conf = json.loads(installeur.gabarit("settings.json"))
         self.assertEqual(installeur.fins_de_tour_du_projet(conf), [])
         self.assertEqual(installeur.fins_de_tour_du_projet({}), [])
+
+
+class TestEcartDePolitique(unittest.TestCase):
+    """B-0195 : chaque mise à jour réaffichait en entier l'écart de la
+    politique au gabarit, même fait des lignes que l'humain a écrites
+    exprès, déjà montrées à la mise à jour précédente ; sur chess, deux
+    lignes voulues revenaient comme nouvelles. Un écart que l'écart au
+    gabarit de la copie remplacée contenait déjà tient en une ligne."""
+
+    DEJA = "toutes déjà dans son écart au gabarit de la copie du moteur remplacée"
+    ENTIER = "la politique du projet diffère du gabarit de cette version ; rien n'est écrit"
+    VOULUE = 'keep_branches = ["gh-pages"]'
+
+    def setUp(self):
+        self.racine = depot({"calc.py": "X = 1\n"})
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        self.politique = self.racine / ".socle/policy.toml"
+
+    def installer(self, source: Path = MOTEUR, **options) -> str:
+        with redirect_stdout(io.StringIO()) as flux, redirect_stderr(io.StringIO()):
+            installeur.installer(self.racine, "python", "@essai", source=source, humain="Théo", **options)
+        return flux.getvalue()
+
+    def commit(self):
+        env = {**os.environ, "GIT_CONFIG_NOSYSTEM": "1", "SOCLE_HOOKS_OFF": "1"}
+        subprocess.run(["git", "add", "-A"], cwd=self.racine, check=True, env=env)
+        subprocess.run(["git", "-c", "user.name=essai", "-c", "user.email=essai@exemple.org", "-c",
+                        "core.hooksPath=/dev/null", "commit", "-q", "-m", "essai"], cwd=self.racine, check=True,
+                       env=env)
+
+    def remplacer(self, chemin: Path, avant: str, apres: str):
+        texte = chemin.read_text(encoding="utf-8")
+        self.assertIn(avant, texte)
+        chemin.write_text(texte.replace(avant, apres, 1), encoding="utf-8")
+
+    def test_un_ecart_deja_montre_tient_en_une_ligne(self):
+        self.installer()
+        self.remplacer(self.politique, "keep_branches = []", self.VOULUE)
+        self.commit()
+        for passage in ("mise à jour", "relance avant son commit"):
+            sortie = self.installer()
+            self.assertIn("la politique du projet diffère du gabarit de cette version de 2 ligne(s), " + self.DEJA,
+                          sortie, passage)
+            self.assertIn("Pour le revoir en entier : `git diff --no-index .socle/policy.toml "
+                          ".socle/engine/socle/templates/policy.toml`", sortie, passage)
+            self.assertNotIn(self.ENTIER, sortie, passage)
+            self.assertNotIn(self.VOULUE, sortie, passage)
+
+    def test_un_ecart_nouveau_s_affiche_en_entier(self):
+        # La copie d'avant avait un autre `max_attempts`, que la politique
+        # tient d'elle : le gabarit de cette version le change.
+        source = Path(tempfile.mkdtemp(prefix="socle-source-"))
+        self.addCleanup(shutil.rmtree, source, ignore_errors=True)
+        shutil.copytree(MOTEUR / "socle", source / "socle", ignore=shutil.ignore_patterns("__pycache__"))
+        self.remplacer(source / "socle/templates/policy.toml", "max_attempts = 3", "max_attempts = 5")
+        self.installer(source)
+        self.remplacer(self.politique, "max_attempts = 3", "max_attempts = 5")
+        self.remplacer(self.politique, "keep_branches = []", self.VOULUE)
+        self.commit()
+        sortie = self.installer()
+        self.assertIn(self.ENTIER, sortie)
+        self.assertIn("+max_attempts = 3", sortie)
+        self.assertIn("-" + self.VOULUE, sortie)
+        self.assertNotIn(self.DEJA, sortie)
+
+    def test_sans_commit_l_ecart_s_affiche_en_entier(self):
+        self.installer()
+        self.remplacer(self.politique, "keep_branches = []", self.VOULUE)
+        self.assertIsNone(installeur.politique_d_avant(self.racine, ".socle/engine"))
+        sortie = self.installer()
+        self.assertIn(self.ENTIER, sortie)
+        self.assertIn("-" + self.VOULUE, sortie)
+
+    def test_le_gabarit_d_avant_se_lit_dans_le_dernier_commit_et_la_langue_du_projet(self):
+        self.installer(langue_memoire="en")
+        self.commit()
+        self.assertEqual(installeur.politique_d_avant(self.racine, ".socle/engine"),
+                         (MOTEUR / "socle/templates/policy.en.toml").read_text(encoding="utf-8"))
+        self.assertIsNone(installeur.politique_d_avant(self.racine, "ailleurs"))
+        # Le nom de l'humain et la langue, que l'installeur a écrits, ne sont
+        # pas un écart, au gabarit d'avant comme à celui de cette version.
+        modele = installeur.politique_d_avant(self.racine, ".socle/engine")
+        self.assertEqual(installeur.diff_politique(self.racine, modele), [])
+        self.assertEqual(installeur.diff_politique(self.racine), [])
+
+    def test_ecart_deja_montre(self):
+        ecart = ["--- a", "+++ b", "@@ -1 +1 @@", " contexte", "-x = 1", "+x = 2"]
+        self.assertEqual(installeur.lignes_changees(ecart), ["-x = 1", "+x = 2"])
+        self.assertTrue(installeur.ecart_deja_montre(ecart, ecart + ["-y = 1", "+y = 2"]))
+        self.assertFalse(installeur.ecart_deja_montre(ecart, ["--- a", "+++ b", "-x = 1", "+x = 3"]))
+        self.assertFalse(installeur.ecart_deja_montre(ecart, None))
+        self.assertFalse(installeur.ecart_deja_montre([], []))
 
 
 class TestAuditAdaptateur(unittest.TestCase):
