@@ -14,6 +14,23 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-22-i — A command says what a Claude Code session cost, and what made it cost
+
+`python3 .socle/socle consumption` reads the transcripts Claude Code
+keeps for the project, or those of a folder given as an argument, and
+prints in Markdown what the session cost, by day and by model, the main
+conversation and the subagents apart, and what made it cost: the size of
+the context read again at each call, the resumptions after a pause, the
+compactions, and what the socle injects into the conversation. The cost
+is weighted at the public price, an assumption that options change;
+readings of the five-hour window (`--point`) say what a point of the
+usage limit is worth. The report carries only aggregates, never a text
+of the conversation. The guide says when to use it.
+
+To do: nothing, except when the human asks what a session cost, or why a
+usage limit fell so early: run `python3 .socle/socle consumption` and
+give them its output.
+
 ## 2026-11-22-h — In a cloud session, a failed fetch of the clone's history is no longer paid again on each resume
 
 In a cloud session, the startup hook completes a shallow clone

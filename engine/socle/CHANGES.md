@@ -15,6 +15,24 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-22-i — Une commande dit ce qu'une session de Claude Code a coûté, et ce qui l'a fait coûter
+
+`python3 .socle/socle consumption` lit les transcriptions que Claude Code
+tient pour le projet, ou celles d'un dossier donné en argument, et
+imprime en Markdown ce que la session a coûté, par jour et par modèle,
+la conversation principale et les sous-agents à part, et ce qui l'a fait
+coûter : la taille du contexte relu à chaque appel, les reprises après
+une pause, les compactages, et ce que le socle injecte dans la
+conversation. Le coût est pondéré au tarif public, une hypothèse que des
+options changent ; des relevés de la fenêtre de cinq heures (`--point`)
+disent ce que vaut un point de la limite d'usage. Le rapport ne porte que
+des agrégats, jamais un texte de la conversation. Le guide dit quand
+s'en servir.
+
+À faire : rien, sauf quand l'humain demande ce qu'une session a coûté,
+ou pourquoi une limite d'usage est tombée si tôt : lancer
+`python3 .socle/socle consumption` et lui en donner la sortie.
+
 ## 2026-11-22-h — En session cloud, un échec de l'historique du clone ne se repaie plus à chaque reprise
 
 En session cloud, le hook de démarrage complète un clone superficiel

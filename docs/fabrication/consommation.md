@@ -14,7 +14,9 @@ reprises après une pause, les compactages, ou ce que le socle injecte ?
 
 ## La méthode
 
-L'outil [`bench/consumption.py`](../../bench/consumption.py) lit les
+La commande `python3 .socle/socle consumption` (le module
+[`consumption.py`](../../engine/socle/consumption.py) du moteur, d'abord
+un outil de l'atelier, entré dans le produit par B-0201) lit les
 transcriptions de Claude Code (la conversation principale et ses
 sous-agents), compte chaque appel au modèle une fois, et n'en garde que
 l'usage : entrée non cachée, écriture de cache (cinq minutes ou une heure),
@@ -38,9 +40,9 @@ dossiers de revue, refus des hooks), se mesure en octets, et s'estime en
 jetons à 3,5 octets par jeton (hypothèse).
 
 ```sh
-python3 bench/consumption.py <dossier des transcriptions> --until 2026-11-12T18:26:00Z \
+python3 .socle/socle consumption <dossier des transcriptions> --until 2026-11-12T18:26:00Z \
     --weight-read 0.042 --point 2026-11-12T18:07:03.8Z,0.00/0.53 ...   # les seize relevés ci-dessous
-python3 bench/consumption.py <dossier des transcriptions> --until 2026-11-12T18:47:00Z \
+python3 .socle/socle consumption <dossier des transcriptions> --until 2026-11-12T18:47:00Z \
     --weight-read 0.042 --point ... --control 2026-11-12T18:46:55.6Z,0.92/0.65
 ```
 

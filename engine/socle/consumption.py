@@ -1,22 +1,32 @@
-"""La consommation d'une session qui orchestre (B-0173), lue dans ses transcriptions.
+"""La consommation d'une session de Claude Code, lue dans ses transcriptions :
+`python3 .socle/socle consumption`, ce qu'elle a coûté et ce qui l'a fait
+coûter.
 
-Les transcriptions de Claude Code sont des fichiers JSONL : une conversation
-principale `<id>.jsonl`, et ses sous-agents sous `<id>/subagents/*.jsonl`.
+Claude Code range les transcriptions d'un projet sous son dossier de
+configuration, dans `projects/` puis un dossier nommé d'après le chemin du
+projet : une conversation principale `<id>.jsonl` par session, et ses
+sous-agents sous `<id>/subagents/*.jsonl`. Ce format est celui de Claude
+Code, et de lui seul, comme le transcript que lit le hook de fin de tour :
+il ne se lit qu'ici, dans `dossier_de_claude_code`, `lire_dossier` et
+`lire_conversation` ; le reste du module ne connaît que des appels, des
+compactages, des refus d'usage et ce que le socle a injecté. Sous un autre
+agent, la commande ne trouve aucune transcription, et le dit.
+
 Chaque réponse du modèle porte `message.usage` ; une réponse découpée en
 plusieurs blocs répète le même `requestId` et le même usage : un appel se
-compte une fois. L'outil n'imprime que des agrégats, jamais un texte de la
-conversation.
+compte une fois. Le rapport ne porte que des agrégats, jamais un texte de
+la conversation.
 
 Le coût pondéré ramène les catégories de jetons à de l'entrée non cachée.
 Les poids sont une hypothèse, celle du tarif public : lecture de cache 0,1 ;
 écriture de cache 1,25 sur cinq minutes, 2 sur une heure ; sortie 5 ;
 entrée 1. Ce qu'en fait la limite d'usage n'est pas publié : `--point`
 donne des relevés de la fenêtre de cinq heures (et, après une barre, de la
-semaine) ; l'outil en déduit ce que vaut un point, le poids de la lecture
+semaine) ; le module en déduit ce que vaut un point, le poids de la lecture
 qui les explique le mieux, et la fourchette que leur arrondi laisse.
 
-    python3 bench/consumption.py ~/.claude/projects/<projet> --day 2026-11-12 \\
-        --point 2026-11-12T18:07:03.8Z,0.00/0.53 --point 2026-11-12T18:07:25.6Z,0.39/0.59
+    python3 .socle/socle consumption --session <id> --day <AAAA-MM-JJ> \\
+        --point <instant>,0.12/0.40 --point <instant>,0.31/0.42
 """
 
 from __future__ import annotations
@@ -24,6 +34,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 import re
 import statistics
 import sys
@@ -31,6 +42,9 @@ from collections import defaultdict
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+from socle import messages
+from socle.messages import a_traduire, trad
 
 CINQ_MINUTES = 300
 UNE_HEURE = 3600
@@ -44,7 +58,18 @@ TETES_REVUE = ("# Revue adversariale d'un lot", "# Adversarial review of a batch
 SECTIONS_SOCLE = ("## Socle : mémoire, documentation et tests", "## Socle: memory, documentation and tests")
 SORTIE_DE_HOOK = "tool-results/hook-"
 LECTURE_DE_HOOK = re.compile(r"\b(?:cat|sed|head|tail|less|awk)\b[^|;&]*" + re.escape(SORTIE_DE_HOOK))
-AGENTS_SOCLE = "AGENTS.md, section du socle"
+
+# La nature de ce que le socle injecte, et la portée d'une conversation : des
+# clés du calcul, en français, traduites à l'affichage seulement.
+AGENTS_SOCLE = a_traduire("AGENTS.md, section du socle")
+RELUE = a_traduire("sortie de hook relue")
+REFUS_AVANT_OUTIL = a_traduire("refus PreToolUse")
+REFUS_FIN_DE_TOUR = a_traduire("refus Stop")
+DOSSIER_DE_REVUE = a_traduire("dossier de revue")
+COMMANDE_SOCLE = "commande socle "
+NATURES = (AGENTS_SOCLE, RELUE, REFUS_AVANT_OUTIL, REFUS_FIN_DE_TOUR, DOSSIER_DE_REVUE)
+PRINCIPALE = a_traduire("principale")
+SOUS_AGENTS = a_traduire("sous-agents")
 
 
 @dataclass(frozen=True)
@@ -109,15 +134,15 @@ def _commande_socle(outil: str | None, entree: dict) -> str | None:
     `socle <sous-commande>`. Écrire ce fichier, ou citer son chemin
     ailleurs, n'est pas le relire."""
     if outil == "Read" and SORTIE_DE_HOOK in str(entree.get("file_path") or ""):
-        return "sortie de hook relue"
+        return RELUE
     if outil == "Bash":
         commande = str(entree.get("command") or "")
         if LECTURE_DE_HOOK.search(commande):
-            return "sortie de hook relue"
+            return RELUE
         if ".socle/socle " in commande:
             mots = commande.split(".socle/socle ", 1)[1].split()
             sous = mots[0] if mots and re.fullmatch(r"[a-z][a-z-]*", mots[0]) else "?"
-            return f"commande socle {sous}"
+            return COMMANDE_SOCLE + sous
     return None
 
 
@@ -201,7 +226,7 @@ def lire_conversation(chemin: Path, sous_agent: bool = False) -> Conversation:
                     sortie = {"sortie_octets": len(str(a["stdout"] or "").encode())} if "stdout" in a else {}
                     injecter(horo, a.get("hookName"), len(str(a.get("content") or "").encode()), **sortie)
                 elif a.get("type") in ("hook_blocking_error", "hook_system_message"):
-                    injecter(horo, "refus Stop", len(json.dumps(a, ensure_ascii=False).encode()))
+                    injecter(horo, REFUS_FIN_DE_TOUR, len(json.dumps(a, ensure_ascii=False).encode()))
                 elif a.get("type") == "instructions":
                     for fichier in a.get("files") or []:
                         section = _section_socle(str((fichier or {}).get("content") or ""))
@@ -214,19 +239,28 @@ def lire_conversation(chemin: Path, sous_agent: bool = False) -> Conversation:
                     if not isinstance(b, dict):
                         continue
                     if b.get("type") == "text" and _est_dossier_de_revue(str(b.get("text") or "")):
-                        injecter(horo, "dossier de revue", len(str(b["text"]).encode()))
+                        injecter(horo, DOSSIER_DE_REVUE, len(str(b["text"]).encode()))
                     if b.get("type") != "tool_result":
                         continue
                     texte = _texte(b.get("content"))
                     nature_outil = outils.pop(b.get("tool_use_id"), None)
                     if b.get("is_error") and texte.startswith("PreToolUse:") and " hook " in texte[:40]:
-                        injecter(horo, "refus PreToolUse", len(texte.encode()))
+                        injecter(horo, REFUS_AVANT_OUTIL, len(texte.encode()))
                     elif _est_dossier_de_revue(texte):
-                        injecter(horo, "dossier de revue", len(texte.encode()))
+                        injecter(horo, DOSSIER_DE_REVUE, len(texte.encode()))
                     elif nature_outil:
                         injecter(horo, nature_outil, len(texte.encode()))
     conv.appels.sort(key=lambda a: a.horodatage)
     return conv
+
+
+def dossier_de_claude_code(racine: Path, configuration: Path | None = None) -> Path:
+    """Le dossier où Claude Code range les transcriptions d'un projet : sous
+    son dossier de configuration (`CLAUDE_CONFIG_DIR`, sinon `~/.claude`),
+    `projects/`, puis le chemin absolu du projet, chaque signe qui n'est ni
+    une lettre ni un chiffre changé en tiret."""
+    base = configuration or Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
+    return Path(base) / "projects" / re.sub(r"[^A-Za-z0-9]", "-", str(Path(racine).resolve()))
 
 
 def lire_dossier(dossier: Path, session: str | None = None) -> list[Conversation]:
@@ -279,7 +313,7 @@ def resume_par_jour(conversations: list[Conversation], poids: Poids = Poids()) -
     pour les sous-agents, la médiane et le maximum du coût d'un sous-agent."""
     table: dict = {}
     for conv in conversations:
-        portee = "sous-agents" if conv.sous_agent else "principale"
+        portee = SOUS_AGENTS if conv.sous_agent else PRINCIPALE
         for a in conv.appels:
             cle = (_jour(a.horodatage), a.modele, portee)
             ligne = table.setdefault(cle, {"appels": 0, "cout": 0.0, "par_conversation": defaultdict(float),
@@ -320,8 +354,8 @@ def resume_pauses(conversations: list[Conversation], poids: Poids = Poids(), jou
     (le premier appel après la pause), leur part du coût total, et le rapport
     médian de ce premier appel à l'appel médian."""
     lignes = []
-    for portee in ("principale", "sous-agents"):
-        convs = [c for c in conversations if c.sous_agent == (portee == "sous-agents")]
+    for portee in (PRINCIPALE, SOUS_AGENTS):
+        convs = [c for c in conversations if c.sous_agent == (portee == SOUS_AGENTS)]
         total = sum(cout(a, poids) for c in convs for a in c.appels if not jours or _jour(a.horodatage) in jours)
         for seuil in seuils:
             reprises = [p for c in convs for p in pauses(c, poids, seuil)
@@ -339,8 +373,8 @@ def compactages(conversation: Conversation, poids: Poids = Poids(), octets_par_j
     """Chaque compactage, et une borne basse de son coût : l'appel qui résume
     n'est pas dans la transcription ; il relit au moins la conversation (au
     prix de la lecture, le cache étant chaud) et écrit le résumé (au prix de
-    la sortie). Le seul compactage encadré par des relevés en a coûté plus du
-    double (voir `etalonner`). S'y ajoute le premier appel d'après, qui
+    la sortie) ; deux relevés qui l'encadrent en disent le coût réel (voir
+    `_rapport_etalonnage`). S'y ajoute le premier appel d'après, qui
     réécrit le contexte neuf."""
     resultat = []
     for c in conversation.compactages:
@@ -718,25 +752,40 @@ def valeur_du_point_des_autres(fenetres: list[dict], modele: str, par_point: flo
 
 # --- Le rapport ---------------------------------------------------------
 
+def _decimale(texte: str) -> str:
+    """Un nombre écrit dans la langue des messages : sa virgule décimale en
+    français, son point ailleurs."""
+    return texte.replace(".", ",") if messages.langue() == messages.FRANCAIS else texte
+
+
 def _k(n: float) -> str:
     """Un nombre de jetons en milliers ou millions, lisible dans un tableau."""
     if n >= 1_000_000:
-        return f"{n / 1_000_000:.2f} M".replace(".", ",")
+        return _decimale(f"{n / 1_000_000:.2f} M")
     if n >= 1_000:
         return f"{n / 1_000:.0f} k"
     return f"{n:.0f}"
 
 
 def _pc(x: float) -> str:
-    return f"{100 * x:.1f} %".replace(".", ",")
+    return _decimale(f"{100 * x:.1f} %")
 
 
 def _v(x: float, chiffres: int = 1) -> str:
-    return f"{x:.{chiffres}f}".replace(".", ",")
+    return _decimale(f"{x:.{chiffres}f}")
 
 
 def _instant(h: datetime) -> str:
     return f"{h:%H:%M:%S}.{h.microsecond // 1000:03d}"
+
+
+def _nature(nature: str) -> str:
+    """Le nom d'une nature de ce que le socle injecte, dans la langue des
+    messages ; celui d'un hook de Claude Code (`SessionStart:resume`), tel
+    quel."""
+    if nature.startswith(COMMANDE_SOCLE):
+        return trad("commande socle {sous}", sous=nature[len(COMMANDE_SOCLE):])
+    return trad(nature) if nature in NATURES else nature
 
 
 def lire_point(texte: str) -> tuple[datetime, float, float | None]:
@@ -744,24 +793,46 @@ def lire_point(texte: str) -> tuple[datetime, float, float | None]:
     (UTC s'il n'a pas de fuseau), la part de la fenêtre de cinq heures, et,
     après une barre, celle de la semaine. Les parts s'écrivent avec un point
     décimal : une virgule se confondrait avec le séparateur, elle est refusée."""
+    illisible = ValueError(trad("relevé illisible : {texte} ; attendu INSTANT,PART[/SEMAINE], avec un point décimal "
+                                "(0.39, pas 0,39)", texte=repr(texte)))
     morceaux = texte.split(",")
     if len(morceaux) != 2:
-        raise ValueError(f"relevé illisible : {texte!r} ; attendu INSTANT,PART[/SEMAINE], "
-                         "avec un point décimal (0.39, pas 0,39)")
-    instant, parts = morceaux
+        raise illisible
+    instant_, parts = morceaux
     fenetre, _, semaine = parts.replace(" ", "").partition("/")
-    return _date(instant), float(fenetre), (float(semaine) if semaine else None)
+    try:
+        return _date(instant_), float(fenetre), (float(semaine) if semaine else None)
+    except ValueError:
+        raise illisible from None
+
+
+def releve(texte: str) -> tuple[datetime, float, float | None]:
+    """Un relevé donné à `--point` ou à `--control` : illisible, c'est une
+    erreur de la ligne de commande, qui dit pourquoi."""
+    try:
+        return lire_point(texte)
+    except ValueError as erreur:
+        raise argparse.ArgumentTypeError(str(erreur)) from None
+
+
+def instant(texte: str) -> datetime:
+    """Un instant donné à `--until` ; UTC s'il n'a pas de fuseau."""
+    try:
+        return _date(texte)
+    except ValueError:
+        raise argparse.ArgumentTypeError(trad("instant illisible : {texte} ; attendu AAAA-MM-JJTHH:MM:SSZ (UTC sans "
+                                              "fuseau)", texte=repr(texte))) from None
 
 
 def _rapport_etalonnage(conversations, poids, points) -> tuple[list[str], dict]:
     """La section de l'étalonnage, et ce qu'elle établit (poids, valeur du point, modèle)."""
-    lignes = ["## Étalonnage sur les relevés de la fenêtre", "",
-              "| de | à | appels | lecture | écriture | coût pondéré | points | jetons par point |",
+    lignes = [trad("## Étalonnage sur les relevés de la fenêtre"), "",
+              trad("| de | à | appels | lecture | écriture | coût pondéré | points | jetons par point |"),
               "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |"]
     tranches = etalonner(conversations, points, poids)
     for t in tranches:
-        pp = _k(t["par_point"]) if t["par_point"] else ("compactage" if t["compactages"] else "—")
-        appels = f"{t['appels']} + compactage" if t["compactages"] else str(t["appels"])
+        pp = _k(t["par_point"]) if t["par_point"] else (trad("compactage") if t["compactages"] else "—")
+        appels = trad("{n} + compactage", n=t["appels"]) if t["compactages"] else str(t["appels"])
         lignes.append(f"| {_instant(t['debut'])} | {_instant(t['fin'])} | {appels} | {_k(t['lecture'])} "
                       f"| {_k(t['ecriture'])} | {_k(t['cout'])} | {t['points']:.0f} | {pp} |")
     ajuste = ajuster_lecture(conversations, points, poids)
@@ -771,43 +842,48 @@ def _rapport_etalonnage(conversations, poids, points) -> tuple[list[str], dict]:
         # que ce poids explique les relevés.
         valeurs = [t["par_point"] for t in _utilisables(etalonner(conversations, points, poids)) if t["par_point"]]
         if not valeurs:
-            lignes += ["", "Étalonnage impossible : entre deux relevés que rien ne coupe, aucun point pris, ou aucun "
-                       "appel chiffré.", ""]
+            lignes += ["", trad("Étalonnage impossible : entre deux relevés que rien ne coupe, aucun point pris, ou "
+                                "aucun appel chiffré."), ""]
             return lignes, {}
         lecture, par_point = poids.lecture, statistics.median(valeurs)
         retenu = poids
-        lignes += ["", f"Les relevés ne départagent aucun poids de lecture (trop peu de relevés par suite) : le "
-                   f"poids donné, {lecture:.3f}, est gardé ; un point vaut alors {_v(par_point / 1000)} k jetons "
-                   f"pondérés (médiane des intervalles), de {_k(min(valeurs))} à {_k(max(valeurs))}."]
+        lignes += ["", trad("Les relevés ne départagent aucun poids de lecture (trop peu de relevés par suite) : le "
+                            "poids donné, {lecture}, est gardé ; un point vaut alors {valeur} k jetons pondérés "
+                            "(médiane des intervalles), de {bas} à {haut}.", lecture=f"{lecture:.3f}",
+                            valeur=_v(par_point / 1000), bas=_k(min(valeurs)), haut=_k(max(valeurs)))]
     else:
         lecture, par_point = ajuste
         retenu = replace(poids, lecture=lecture)
         valeurs = [t["par_point"] for t in _utilisables(etalonner(conversations, points, retenu)) if t["par_point"]]
-        lignes += ["", f"Poids de lecture qui explique le mieux les relevés (hors compactage) : {lecture:.3f} ; "
-                   f"un point vaut alors {_v(par_point / 1000)} k jetons pondérés, soit "
-                   f"{_k(par_point / poids.ecriture_1h)} jetons écrits pour une heure ou {_k(par_point / lecture)} "
-                   f"jetons lus"
-                   + (f" ; de {_k(min(valeurs))} à {_k(max(valeurs))} selon l'intervalle (un relevé est arrondi "
-                      "au point près)." if valeurs else ".")]
+        lignes += ["", trad("Poids de lecture qui explique le mieux les relevés (hors compactage) : {lecture} ; un "
+                            "point vaut alors {valeur} k jetons pondérés, soit {ecrits} jetons écrits pour une heure "
+                            "ou {lus} jetons lus", lecture=f"{lecture:.3f}", valeur=_v(par_point / 1000),
+                            ecrits=_k(par_point / poids.ecriture_1h), lus=_k(par_point / lecture))
+                       + (trad(" ; de {bas} à {haut} selon l'intervalle (un relevé est arrondi au point près).",
+                               bas=_k(min(valeurs)), haut=_k(max(valeurs))) if valeurs else ".")]
     marge = fourchette(conversations, points, poids)
     if marge:
         (l0, l1), (p0, p1) = marge["lecture"], marge["par_point"]
-        lignes.append(f"À l'arrondi des relevés près : lecture de {l0:.3f} à {l1:.3f}, un point de {_v(p0 / 1000)} k "
-                      f"à {_v(p1 / 1000)} k jetons pondérés.")
+        lignes.append(trad("À l'arrondi des relevés près : lecture de {lecture_bas} à {lecture_haut}, un point de "
+                           "{point_bas} k à {point_haut} k jetons pondérés.", lecture_bas=f"{l0:.3f}",
+                           lecture_haut=f"{l1:.3f}", point_bas=_v(p0 / 1000), point_haut=_v(p1 / 1000)))
     else:
-        lignes.append("À l'arrondi des relevés près, aucun poids de lecture n'explique tous les relevés.")
+        lignes.append(trad("À l'arrondi des relevés près, aucun poids de lecture n'explique tous les relevés."))
     for t in etalonner(conversations, points, retenu):
         if t["compactages"]:
             reste = t["points"] - t["cout"] / par_point
-            lignes.append(f"Compactage entre {_instant(t['debut'])} et {_instant(t['fin'])} : {t['points']:.0f} points "
-                          f"relevés, dont {_v(reste)} que les appels chiffrés n'expliquent pas (à un point près).")
+            lignes.append(trad("Compactage entre {debut} et {fin} : {points} points relevés, dont {reste} que les "
+                               "appels chiffrés n'expliquent pas (à un point près).", debut=_instant(t["debut"]),
+                               fin=_instant(t["fin"]), points=f"{t['points']:.0f}", reste=_v(reste)))
     semaine = points_de_semaine(points)
     if semaine:
-        lignes.append(f"Un point de la semaine vaut {_v(semaine['rapport'])} points de la fenêtre "
-                      f"({semaine['fenetre']:.0f} contre {semaine['semaine']:.0f} ; de {_v(semaine['bas'])} "
-                      f"à {_v(semaine['haut'])} à l'arrondi près).")
+        lignes.append(trad("Un point de la semaine vaut {rapport} points de la fenêtre ({fenetre} contre {semaine} ; "
+                           "de {bas} à {haut} à l'arrondi près).", rapport=_v(semaine["rapport"]),
+                           fenetre=f"{semaine['fenetre']:.0f}", semaine=f"{semaine['semaine']:.0f}",
+                           bas=_v(semaine["bas"]), haut=_v(semaine["haut"])))
     if abs(poids.lecture - lecture) > 0.0005:
-        lignes.append(f"Les colonnes en points de ce rapport supposent `--weight-read {lecture:.3f}`.")
+        lignes.append(trad("Les colonnes en points de ce rapport supposent `--weight-read {lecture}`.",
+                           lecture=f"{lecture:.3f}"))
     lignes.append("")
     return lignes, {"lecture": lecture, "par_point": par_point, "modele": modele_etalonne(tranches)}
 
@@ -827,53 +903,59 @@ def rapport(conversations: list[Conversation], poids: Poids = Poids(), jours: se
             points: list[tuple] | None = None, octets_par_jeton: float = 3.5,
             controles: list[tuple] | None = None) -> str:
     """Le rapport en Markdown : des tableaux d'agrégats, rien de la conversation."""
-    lignes = [f"Poids (hypothèse) : entrée {poids.entree}, écriture 5 min {poids.ecriture_5m}, "
-              f"écriture 1 h {poids.ecriture_1h}, lecture {poids.lecture}, sortie {poids.sortie}.", ""]
+    lignes = [trad("Poids (hypothèse) : entrée {entree}, écriture 5 min {e5m}, écriture 1 h {e1h}, lecture {lecture}, "
+                   "sortie {sortie}.", entree=poids.entree, e5m=poids.ecriture_5m, e1h=poids.ecriture_1h,
+                   lecture=poids.lecture, sortie=poids.sortie), ""]
     garder = (lambda j: True) if not jours else (lambda j: j in jours)
     etalonnage, etalon = ([], {})
     if points and len(points) > 1:
         etalonnage, etalon = _rapport_etalonnage(conversations, poids, points)
     par_point = etalon.get("par_point")
     table = resume_par_jour(conversations, poids)
-    lignes += ["## Par jour, par modèle", "",
-               "| jour | modèle | portée | conv. | appels | entrée | écr. 5 min | écr. 1 h | lecture | sortie "
-               "| coût pondéré | médiane / conv. | max / conv. |",
+    lignes += [trad("## Par jour, par modèle"), "",
+               trad("| jour | modèle | portée | conv. | appels | entrée | écr. 5 min | écr. 1 h | lecture | sortie "
+                    "| coût pondéré | médiane / conv. | max / conv. |"),
                "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"]
     totaux: dict = defaultdict(float)
     for (jour, modele, portee), l in sorted(table.items()):
         if not garder(jour):
             continue
         totaux[portee] += l["cout"]
-        lignes.append(f"| {jour} | {modele} | {portee} | {l['conversations']} | {l['appels']} | {_k(l['entree'])} "
-                      f"| {_k(l['ecriture_5m'])} | {_k(l['ecriture_1h'])} | {_k(l['lecture'])} | {_k(l['sortie'])} "
-                      f"| {_k(l['cout'])} | {_k(l['mediane'])} | {_k(l['maximum'])} |")
-    ensemble = totaux["principale"] + totaux["sous-agents"]
-    lignes += ["", f"Total pondéré : {_k(ensemble)} ; principale {_pc(totaux['principale'] / ensemble if ensemble else 0)}, "
-               f"sous-agents {_pc(totaux['sous-agents'] / ensemble if ensemble else 0)}.", ""]
-    lignes += ["## Sous-agents à la fois (maximum du jour, coupé à cinq minutes d'inactivité)", ""]
+        lignes.append(f"| {jour} | {modele} | {trad(portee)} | {l['conversations']} | {l['appels']} "
+                      f"| {_k(l['entree'])} | {_k(l['ecriture_5m'])} | {_k(l['ecriture_1h'])} | {_k(l['lecture'])} "
+                      f"| {_k(l['sortie'])} | {_k(l['cout'])} | {_k(l['mediane'])} | {_k(l['maximum'])} |")
+    ensemble = totaux[PRINCIPALE] + totaux[SOUS_AGENTS]
+    lignes += ["", trad("Total pondéré : {total} ; principale {principale}, sous-agents {sous_agents}.",
+                        total=_k(ensemble), principale=_pc(totaux[PRINCIPALE] / ensemble if ensemble else 0),
+                        sous_agents=_pc(totaux[SOUS_AGENTS] / ensemble if ensemble else 0)), ""]
+    lignes += [trad("## Sous-agents à la fois (maximum du jour, coupé à cinq minutes d'inactivité)"), ""]
     lignes += [f"- {j} : {n}" for j, n in sorted(concurrence(conversations).items()) if garder(j)]
     neuf = premiers_appels(conversations, poids)
-    lignes += ["", f"Premier appel d'un sous-agent, sur toute la période lue ({neuf['nombre']}) : contexte médian "
-               f"{_k(neuf['contexte_median'])}, maximum {_k(neuf['contexte_max'])}, coût médian "
-               f"{_k(neuf['cout_median'])} ; {_k(neuf['cout_median_1h'])} si le cache s'écrivait pour une heure."]
-    lignes += ["", "## Coût d'un appel tiède selon le contexte (période lue)", "",
-               "| modèle | contexte | appels | coût médian | dont lecture | en points |",
+    lignes += ["", trad("Premier appel d'un sous-agent, sur toute la période lue ({nombre}) : contexte médian "
+                        "{contexte}, maximum {maximum}, coût médian {cout} ; {cout_1h} si le cache s'écrivait pour "
+                        "une heure.", nombre=neuf["nombre"], contexte=_k(neuf["contexte_median"]),
+                        maximum=_k(neuf["contexte_max"]), cout=_k(neuf["cout_median"]),
+                        cout_1h=_k(neuf["cout_median_1h"]))]
+    lignes += ["", trad("## Coût d'un appel tiède selon le contexte (période lue)"), "",
+               trad("| modèle | contexte | appels | coût médian | dont lecture | en points |"),
                "| --- | ---: | ---: | ---: | ---: | ---: |"]
     for modele in sorted({a.modele for c in conversations for a in c.appels}):
         for t in cout_selon_contexte(conversations, poids, modele=modele):
             if t["appels"]:
-                en_points = (f"{_v(t['cout'] / par_point, 2)} (lecture {_v(t['lecture'] / par_point, 2)})"
+                en_points = (trad("{points} (lecture {lecture})", points=_v(t["cout"] / par_point, 2),
+                                  lecture=_v(t["lecture"] / par_point, 2))
                              if par_point and modele == etalon.get("modele") else "—")
-                lignes.append(f"| {modele} | {_k(t['centre'] - 40_000)} à {_k(t['centre'] + 40_000)} | {t['appels']} "
-                              f"| {_k(t['cout'])} | {_k(t['lecture'])} | {en_points} |")
-    lignes += ["", "## Reprises après une pause", "",
-               "| portée | pause de plus de | reprises | conv. | coût des premiers appels | part du total "
-               "| premier appel / appel médian |", "| --- | --- | ---: | ---: | ---: | ---: | ---: |"]
+                tranche = trad("{bas} à {haut}", bas=_k(t["centre"] - 40_000), haut=_k(t["centre"] + 40_000))
+                lignes.append(f"| {modele} | {tranche} | {t['appels']} | {_k(t['cout'])} | {_k(t['lecture'])} "
+                              f"| {en_points} |")
+    lignes += ["", trad("## Reprises après une pause"), "",
+               trad("| portée | pause de plus de | reprises | conv. | coût des premiers appels | part du total "
+                    "| premier appel / appel médian |"), "| --- | --- | ---: | ---: | ---: | ---: | ---: |"]
     for r in resume_pauses(conversations, poids, jours):
-        lignes.append(f"| {r['portee']} | {r['seuil_s'] // 60} min | {r['reprises']} | {r['conversations']} "
+        lignes.append(f"| {trad(r['portee'])} | {r['seuil_s'] // 60} min | {r['reprises']} | {r['conversations']} "
                       f"| {_k(r['cout'])} | {_pc(r['part'])} | × {r['rapport_median']:.0f} |")
-    lignes += ["", "## Compactages", "",
-               "| instant | déclencheur | avant | après | résumé | borne basse (modèle) | appel suivant |",
+    lignes += ["", trad("## Compactages"), "",
+               trad("| instant | déclencheur | avant | après | résumé | borne basse (modèle) | appel suivant |"),
                "| --- | --- | ---: | ---: | ---: | ---: | ---: |"]
     for c in conversations:
         for x in compactages(c, poids, octets_par_jeton):
@@ -881,8 +963,8 @@ def rapport(conversations: list[Conversation], poids: Poids = Poids(), jours: se
                 lignes.append(f"| {x['horodatage']:%Y-%m-%d %H:%M} | {x['declencheur']} | {_k(x['avant'])} "
                               f"| {_k(x['apres'] or 0)} | {_k(x['resume_jetons'])} | {_k(x['borne_basse'])} "
                               f"| {_k(x['cout_appel_suivant'])} |")
-    lignes += ["", "## Taille de la conversation principale (jetons relus par appel)", "",
-               "| jour | appels | médiane | 90e centile | maximum | appels > 400 k |",
+    lignes += ["", trad("## Taille de la conversation principale (jetons relus par appel)"), "",
+               trad("| jour | appels | médiane | 90e centile | maximum | appels > 400 k |"),
                "| --- | ---: | ---: | ---: | ---: | ---: |"]
     for c in conversations:
         if not c.sous_agent:
@@ -890,39 +972,44 @@ def rapport(conversations: list[Conversation], poids: Poids = Poids(), jours: se
                 lignes.append(f"| {j} | {t['appels']} | {_k(t['mediane'])} | {_k(t['p90'])} | {_k(t['maximum'])} "
                               f"| {t['au_dela_400k']} |")
     inj = injections_socle(conversations)
-    lignes += ["", "## Ce que le socle injecte", "", "| jour | nature | nombre | octets | plus grande |",
+    lignes += ["", trad("## Ce que le socle injecte"), "", trad("| jour | nature | nombre | octets | plus grande |"),
                "| --- | --- | ---: | ---: | ---: |"]
     for j, natures in sorted(inj["par_jour"].items()):
         if garder(j):
             for n, v in sorted(natures.items()):
-                lignes.append(f"| {j} | {n} | {v['nombre']} | {v['octets']} | {v['max']} |")
+                lignes.append(f"| {j} | {_nature(n)} | {v['nombre']} | {v['octets']} | {v['max']} |")
     if inj["sorties_de_hook"]:
-        lignes += ["", f"Sortie entière du hook de démarrage, sur toute la période lue : de {inj['sorties_de_hook'][0]} "
-                   f"à {inj['sorties_de_hook'][1]} octets ; l'agent n'en reçoit que la colonne « octets »."]
-    revues = tailles(conversations, "dossier de revue", sous_agents=True, par_conversation=True)
+        lignes += ["", trad("Sortie entière du hook de démarrage, sur toute la période lue : de {bas} à {haut} "
+                            "octets ; l'agent n'en reçoit que la colonne « octets ».", bas=inj["sorties_de_hook"][0],
+                            haut=inj["sorties_de_hook"][1])]
+    revues = tailles(conversations, DOSSIER_DE_REVUE, sous_agents=True, par_conversation=True)
     if revues:
-        lignes += ["", f"Dossier de revue reçu par un sous-agent (somme de ses lectures) : {len(revues)} sous-agents, "
-                   f"de {revues[0]} à {revues[-1]} octets, médiane {statistics.median(revues):.0f}."]
-    lignes += ["", "### Ce qu'ils pèsent une fois dans le contexte (toute la période lue)", "",
-               f"À {octets_par_jeton} octets par jeton ; chaque appel relit ce qui a été injecté depuis le dernier "
-               "compactage.", "", "| portée | nature | conv. | part du contexte | coût pondéré |",
+        lignes += ["", trad("Dossier de revue reçu par un sous-agent (somme de ses lectures) : {n} sous-agents, de "
+                            "{bas} à {haut} octets, médiane {mediane}.", n=len(revues), bas=revues[0],
+                            haut=revues[-1], mediane=f"{statistics.median(revues):.0f}")]
+    lignes += ["", trad("### Ce qu'ils pèsent une fois dans le contexte (toute la période lue)"), "",
+               trad("À {octets} octets par jeton ; chaque appel relit ce qui a été injecté depuis le dernier "
+                    "compactage.", octets=_decimale(str(octets_par_jeton))), "",
+               trad("| portée | nature | conv. | part du contexte | coût pondéré |"),
                "| --- | --- | ---: | ---: | ---: |"]
-    for portee, sous in (("principale", False), ("sous-agents", True)):
+    for portee, sous in ((PRINCIPALE, False), (SOUS_AGENTS, True)):
         presence = presence_socle(conversations, poids, octets_par_jeton, sous_agents=sous)
         for n, v in sorted(presence["natures"].items(), key=lambda x: -x[1]["cout"]):
-            lignes.append(f"| {portee} | {n} | {v['conversations']} | {_pc(v['part_contexte'])} | {_k(v['cout'])} |")
+            lignes.append(f"| {trad(portee)} | {_nature(n)} | {v['conversations']} | {_pc(v['part_contexte'])} "
+                          f"| {_k(v['cout'])} |")
         sans, avec = part_du_socle(presence, exclure=(AGENTS_SOCLE,)), part_du_socle(presence)
-        lignes.append(f"| {portee} | **total** sans AGENTS.md / avec | | {_pc(sans[0])} / {_pc(avec[0])} "
-                      f"| {_pc(sans[1])} / {_pc(avec[1])} du coût |")
+        total = trad("**total** sans AGENTS.md / avec")
+        du_cout = trad("{sans} / {avec} du coût", sans=_pc(sans[1]), avec=_pc(avec[1]))
+        lignes.append(f"| {trad(portee)} | {total} | | {_pc(sans[0])} / {_pc(avec[0])} | {du_cout} |")
     lignes.append("")
     limitees = [f for f in fenetres_limitees(conversations, poids) if garder(_jour(f["refus"]))]
     if limitees:
         modele = etalon.get("modele")
         if par_point and modele:
             limitees = valeur_du_point_des_autres(limitees, modele, par_point)
-        lignes += ["## Fenêtres de cinq heures closes par un refus", "",
-                   "| ouverture | refus | appels | coût pondéré | dont sous-agents | par modèle "
-                   f"| points de {modele or 'l’étalonné'} | un point des autres |",
+        lignes += [trad("## Fenêtres de cinq heures closes par un refus"), "",
+                   trad("| ouverture | refus | appels | coût pondéré | dont sous-agents | par modèle | points de "
+                        "{modele} | un point des autres |", modele=modele or trad("l’étalonné")),
                    "| --- | --- | ---: | ---: | ---: | --- | ---: | ---: |"]
         for f in limitees:
             modeles = ", ".join(f"{m} {_k(v)}" for m, v in sorted(f["par_modele"].items()))
@@ -932,8 +1019,9 @@ def rapport(conversations: list[Conversation], poids: Poids = Poids(), jours: se
                           f"| {_k(f['cout_sous_agents'])} | {modeles} | {connus} | {autres} |")
         valeurs = sorted(f["autres_par_point"] for f in limitees if f.get("autres_par_point"))
         if valeurs:
-            lignes += ["", f"Un point des autres modèles : médiane {_k(statistics.median(valeurs))}, de {_k(valeurs[0])} "
-                       f"à {_k(valeurs[-1])} ({len(valeurs)} fenêtres sur {len(limitees)})."]
+            lignes += ["", trad("Un point des autres modèles : médiane {mediane}, de {bas} à {haut} ({n} fenêtres "
+                                "sur {total}).", mediane=_k(statistics.median(valeurs)), bas=_k(valeurs[0]),
+                                haut=_k(valeurs[-1]), n=len(valeurs), total=len(limitees))]
         lignes.append("")
     if controles and par_point:
         # la valeur du point des autres modèles se prend sur toutes les fenêtres closes, pas sur les jours gardés
@@ -944,51 +1032,35 @@ def rapport(conversations: list[Conversation], poids: Poids = Poids(), jours: se
         for c in controles:
             p = predire(conversations, points[-1], c, poids, {etalon["modele"]: par_point}, defaut)
             if p["predits"] is None:
-                etalonnage.append(f"Contrôle jusqu'à {_instant(c[0])} : un compactage s'y trouve, pas de prédiction.")
+                etalonnage.append(trad("Contrôle jusqu'à {instant} : un compactage s'y trouve, pas de prédiction.",
+                                       instant=_instant(c[0])))
                 continue
             detail = ", ".join(f"{m} {_v(v)}" for m, v in sorted(p["par_modele"].items()))
-            etalonnage.append(f"Contrôle hors échantillon, de {_instant(points[-1][0])} à {_instant(c[0])} : "
-                              f"{_v(p['predits'])} points prédits ({detail} ; les autres modèles à {_k(defaut)} "
-                              f"par point), {p['releves']:.0f} relevés.")
+            etalonnage.append(trad("Contrôle hors échantillon, de {debut} à {fin} : {predits} points prédits ({detail} ; "
+                                   "les autres modèles à {defaut} par point), {releves} relevés.",
+                                   debut=_instant(points[-1][0]), fin=_instant(c[0]), predits=_v(p["predits"]),
+                                   detail=detail, defaut=_k(defaut), releves=f"{p['releves']:.0f}"))
         etalonnage.append("")
     return "\n".join(lignes + etalonnage)
 
 
-def main(argv: list[str] | None = None) -> int:
-    """La ligne de commande : le dossier des transcriptions en argument."""
-    p = argparse.ArgumentParser(description="La consommation d'une session, lue dans ses transcriptions (B-0173).")
-    p.add_argument("folder", type=Path, help="le dossier des transcriptions (les <id>.jsonl et leurs sous-agents)")
-    p.add_argument("--session", help="le début de l'identifiant d'une conversation principale")
-    p.add_argument("--day", action="append", help="un jour UTC à garder (AAAA-MM-JJ), répétable")
-    p.add_argument("--until", help="ignorer ce qui suit cet instant (AAAA-MM-JJTHH:MM:SSZ ; UTC sans fuseau)")
-    p.add_argument("--point", action="append", default=[],
-                   help="un relevé de la fenêtre de cinq heures : INSTANT,PART[/SEMAINE], point décimal (répétable)")
-    p.add_argument("--control", action="append", default=[],
-                   help="un relevé hors échantillon, prédit depuis le dernier --point (même forme, répétable)")
-    p.add_argument("--weight-input", type=float, default=Poids.entree)
-    p.add_argument("--weight-write-5m", type=float, default=Poids.ecriture_5m)
-    p.add_argument("--weight-write-1h", type=float, default=Poids.ecriture_1h)
-    p.add_argument("--weight-read", type=float, default=Poids.lecture)
-    p.add_argument("--weight-output", type=float, default=Poids.sortie)
-    p.add_argument("--bytes-per-token", type=float, default=3.5,
-                   help="pour estimer en jetons ce que le socle injecte (hypothèse : 3,5 pour un texte français)")
-    args = p.parse_args(argv)
-    try:
-        jusqu_a = _date(args.until) if args.until else None
-        points = sorted(lire_point(x) for x in args.point)
-        controles = sorted(lire_point(x) for x in args.control)
-    except ValueError as erreur:
-        p.error(str(erreur))
-    poids = Poids(args.weight_input, args.weight_write_5m, args.weight_write_1h, args.weight_read, args.weight_output)
-    conversations = lire_dossier(args.folder, args.session)
+def mesurer(dossier: Path, session: str | None = None, jours: set[str] | None = None,
+            jusqu_a: datetime | None = None, points: list[tuple] = (), controles: list[tuple] = (),
+            poids: Poids = Poids(), octets_par_jeton: float = 3.5) -> str | None:
+    """Le rapport sur les transcriptions d'un dossier, figé à `jusqu_a`, ou
+    None quand le dossier n'en a aucune : ce qu'a coûté la session, et ce qui
+    l'a fait coûter."""
+    conversations = lire_dossier(dossier, session)
     if jusqu_a:
         conversations = tronquer(conversations, jusqu_a)
     if not conversations:
-        print(f"aucune transcription dans {args.folder}", file=sys.stderr)
-        return 1
-    print(rapport(conversations, poids, set(args.day) if args.day else None, points, args.bytes_per_token, controles))
-    return 0
+        return None
+    return rapport(conversations, poids, jours, sorted(points), octets_par_jeton, sorted(controles))
 
 
-if __name__ == "__main__":
-    sys.exit(main())
+def main(argv: list[str] | None = None) -> int:
+    """La commande `socle consumption`, ses arguments donnés comme sur la
+    ligne de commande."""
+    from socle import cli
+
+    return cli.main(["consumption", *(sys.argv[1:] if argv is None else argv)])

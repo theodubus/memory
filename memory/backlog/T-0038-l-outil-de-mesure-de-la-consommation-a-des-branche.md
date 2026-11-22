@@ -3,7 +3,7 @@
 
 > statut : ouvert · origine : J-2026-11-12-N · besoin : B-0194 · lu : backlog@9966bbbd
 
-Un commit : des cas dans `tests/test_banc_consommation.py`, ou dans les tests de la commande si T-0033 l'a fait entrer dans le produit, pour chaque branche que nomme B-0194.
+Un commit : des cas dans les tests de l'outil de l'atelier (devenus `tests/test_consommation.py`), ou dans les tests de la commande si T-0033 l'a fait entrer dans le produit, pour chaque branche que nomme B-0194.
 
 ## Fait quand
 

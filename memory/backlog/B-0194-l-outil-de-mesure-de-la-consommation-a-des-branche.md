@@ -3,9 +3,10 @@
 
 > statut : ouvert · origine : J-2026-11-12-N · priorité : basse · lu : backlog@d4ceca3b
 
-La seconde revue de la mesure de B-0173 a trouvé, dans
-`bench/consumption.py`, des branches que des mutations changent sans
-qu'aucun des tests de `tests/test_banc_consommation.py` n'échoue : la
+La seconde revue de la mesure de B-0173 a trouvé, dans l'outil de
+l'atelier (devenu `engine/socle/consumption.py`), des branches que des
+mutations changent sans qu'aucun de ses tests (devenus
+`tests/test_consommation.py`) n'échoue : la
 coupure des suites de relevés quand la fenêtre repart à zéro
 (`_segments`) ; dans `fourchette`, un poids impossible, une borne haute
 infinie et l'appariement des bornes du point ; le contrôle hors

@@ -4,7 +4,7 @@
 > statut : en cours · origine : J-2026-11-15-J · après : L-0021, T-0033, T-0034, T-0035, T-0036, T-0078, T-0038, T-0113 · lu : backlog@19378efe · ancien : B-0239
 
 Mesurer ce que coûte le travail : la commande du produit tirée de
-l'outil de l'atelier (`bench/consumption.py`, B-0201), le coût de la
+l'outil de l'atelier (devenu `engine/socle/consumption.py`, B-0201), le coût de la
 relecture à froid (B-0197), le banc qui cherche un budget sous un ancien
 nom (`bench/bench.py`, B-0210), et les délais et le coût de ce que le
 démarrage lance vers l'origine (B-0219).
