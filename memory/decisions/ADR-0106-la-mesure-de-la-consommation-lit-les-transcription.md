@@ -1,7 +1,7 @@
 <!-- socle: couche=decisions zone=publique -->
 # ADR-0106 — La mesure de la consommation lit les transcriptions de Claude Code dans le moteur, comme le hook de fin de tour : une commande du produit, son format lu en un seul endroit
 
-> statut : acceptée · date : 2026-11-22 · source : B-0201@07c63c6b, T-0033@5a1d0dac, ADR-0007@d1b9c2e7, ADR-0033@44523582, ADR-0001@692e0dfc · lu : decisions@7acfa1c2
+> statut : acceptée · date : 2026-11-22 · source : B-0201@07c63c6b, T-0033@5a1d0dac, ADR-0007@d1b9c2e7, ADR-0033@44523582, ADR-0001@692e0dfc · lu : decisions@2f9746c5
 
 ## Contexte
 

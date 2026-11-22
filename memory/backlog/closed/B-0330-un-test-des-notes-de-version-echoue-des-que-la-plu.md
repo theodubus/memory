@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0330 — Un test des notes de version échoue dès que la plus récente ne demande rien
 
-> statut : abandonné · origine : J-2026-11-22-N · ref : J-2026-11-22-M, J-2026-11-22-P · priorité : basse · lu : backlog@b3b601d1
+> statut : abandonné · origine : J-2026-11-22-N · ref : J-2026-11-22-M, J-2026-11-22-P · priorité : basse · lu : backlog@3a8162c0
 
 `test_le_texte_dit_quoi_en_faire` (`tests/test_notes_de_version.py`)
 prend la plus récente des notes de version et attend que le texte de la
