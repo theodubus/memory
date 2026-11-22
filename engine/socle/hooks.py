@@ -166,8 +166,9 @@ def session_start(projet: config.Projet, entree: dict) -> int:
     # Ses lignes entrent dans l'état, en tête avec les autres lignes d'action :
     # toute la sortie du hook tient sous la borne du démarrage (ADR-0071).
     # Gardées, `socle state --short` les redit, où la ligne de coupe renvoie.
-    # L'historique, puis les outils, sous un seul délai : celui du hook.
-    fin = time.monotonic() + DELAI_OUTILS
+    # L'historique, puis les outils, sous un seul délai : les outils ont ce
+    # que l'historique leur laisse (ADR-0105).
+    fin = time.monotonic() + DELAI_DEMARRAGE
     supplement = completer_historique(projet.racine, fin) + installer_outils(projet, fin)
     if not git_ok and (projet.racine / config.GIT_HOOKS).is_dir():
         supplement.append(trad("\n!! hooks git non branchés : `git config core.hooksPath .socle/git-hooks`"))
@@ -180,9 +181,11 @@ def session_start(projet: config.Projet, entree: dict) -> int:
 # zéro à chaque session.
 SESSION_CLOUD = "CLAUDE_CODE_REMOTE"
 # Le travail du démarrage en session cloud, l'historique puis les outils,
-# sous le délai de son hook (`.claude/settings.json`).
-DELAI_OUTILS = 270
-# L'historique en prend au plus cette part ; les outils ont le reste.
+# sous un seul délai, que borne celui de son hook (`.claude/settings.json`,
+# 300 secondes) en laissant à l'état ses trente secondes (ADR-0105).
+DELAI_DEMARRAGE = 270
+# L'historique en prend au plus cette part, son arrêt en plus ; les outils
+# ont le reste, au moins 140 secondes.
 DELAI_HISTORIQUE = 120
 # Arrêté au délai, git a ce temps pour retirer ses verrous avant d'être tué.
 ARRET_HISTORIQUE = 10
@@ -203,7 +206,7 @@ def completer_historique(racine: Path, fin: float | None = None) -> list[str]:
     r = subprocess.run(["git", "rev-parse", "--is-shallow-repository"], cwd=racine, capture_output=True, text=True)
     if r.returncode != 0 or r.stdout.strip() != "true":
         return []
-    reste = (fin if fin is not None else time.monotonic() + DELAI_OUTILS) - time.monotonic()
+    reste = (fin if fin is not None else time.monotonic() + DELAI_DEMARRAGE) - time.monotonic()
     # Aucune invite d'identifiants : personne ne la verrait.
     p = subprocess.Popen(["git", "fetch", "--quiet", "--unshallow"], cwd=racine, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="replace",
@@ -255,7 +258,7 @@ def installer_outils(projet: config.Projet, fin: float | None = None) -> list[st
             return dit
     except OSError:
         pass
-    fin = fin if fin is not None else time.monotonic() + DELAI_OUTILS
+    fin = fin if fin is not None else time.monotonic() + DELAI_DEMARRAGE
     lignes, reussi = list(dit), True
     for c in commandes_ci:
         try:

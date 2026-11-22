@@ -1169,6 +1169,50 @@ class TestOutilsEnSessionCloud(unittest.TestCase):
             hooks.installer_outils(projet)
         self.assertEqual(lancer.call_args[0][0], "python3 -m pip install pytest mutmut")
 
+    def test_les_outils_recoivent_le_reste_du_delai_du_demarrage(self):
+        """ADR-0105 (revue de B-0202, B-0219) : l'historique d'abord, au plus
+        120 secondes et 10 pour s'arrêter ; les outils ont le reste des 270
+        du démarrage, au moins 140, et les 270 quand l'historique n'a rien à
+        faire. Le tout laisse à l'état 30 secondes sous la borne du hook que
+        pose l'installeur."""
+        import json
+        import types
+
+        horloge = types.SimpleNamespace(t=1000.0)
+        horloge.monotonic = lambda: horloge.t
+        lancer, recu = subprocess.run, {}
+
+        def historique(racine, fin):
+            recu["historique"] = fin - horloge.t
+            horloge.t += recu["duree"]
+            return []
+
+        def commande(c, *args, **kwargs):
+            if not kwargs.get("shell"):
+                return lancer(c, *args, **kwargs)  # git, pour la marque
+            recu["outils"] = kwargs["timeout"]
+            return subprocess.CompletedProcess(c, 0, "", "")
+
+        def demarrer(duree_historique: float):
+            recu.clear()
+            recu["duree"] = duree_historique
+            (config.chemin_trace(self.racine).parent / "outils-installes").unlink(missing_ok=True)
+            with unittest.mock.patch.object(hooks, "time", horloge), \
+                    unittest.mock.patch.object(hooks, "completer_historique", historique), \
+                    unittest.mock.patch.object(hooks.subprocess, "run", commande), \
+                    unittest.mock.patch.dict("os.environ", {hooks.SESSION_CLOUD: "true"}), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                hooks.session_start(self.projet, {})
+            return recu["historique"], recu["outils"]
+
+        # L'historique prend son pire : son délai, puis son arrêt.
+        self.assertEqual(demarrer(hooks.DELAI_HISTORIQUE + hooks.ARRET_HISTORIQUE), (270, 140))
+        # Un clone complet : l'historique ne prend rien, les outils ont tout.
+        self.assertEqual(demarrer(0), (270, 270))
+        reglages = json.loads((MOTEUR / "socle/templates/settings.json").read_text(encoding="utf-8"))
+        borne = reglages["hooks"]["SessionStart"][0]["hooks"][0]["timeout"]
+        self.assertLessEqual(hooks.DELAI_DEMARRAGE + 30, borne)
+
 
 class TestHistoriqueEnSessionCloud(unittest.TestCase):
     """B-0202 : le clone d'une session cloud était superficiel, et
