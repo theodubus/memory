@@ -447,7 +447,9 @@ https://github.com/theodubus/socle /tmp/socle`). The project's files are never o
 the diff of the policy is shown. Between what it put in place and the
 audit, the installer prints the [release notes](CHANGES.en.md) that the
 project's engine copy did not have, all of them if it had none: what each
-change does to the project, and what the agent must do. The commit message
+change does to the project, and what the agent must do. It prints in full
+only those that ask something; of those whose “To do” is “nothing”, the
+title alone, their text staying in the file it names. The commit message
 it proposes names their identifiers, for the agent that did not see the
 update go by. The agent's hook refuses the installer aimed
 at an equipped project in another mode than its lock's, or at a target

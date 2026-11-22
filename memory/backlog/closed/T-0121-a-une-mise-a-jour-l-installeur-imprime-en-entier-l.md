@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0121 — À une mise à jour, l'installeur imprime en entier les notes de version qui demandent une action, et des autres le titre et le fichier
 
-> statut : ouvert · origine : J-2026-11-21-D · besoin : B-0324 · lu : backlog@d8734f07
+> statut : fait · ref : J-2026-11-22-D · origine : J-2026-11-21-D · besoin : B-0324 · lu : backlog@d8734f07
 
 Un commit : `texte_des_notes` (`engine/socle/installer.py`) n'imprime en
 entier, à une mise à jour, que les notes de version dont « À faire »
@@ -13,5 +13,5 @@ L-0021.
 
 ## Fait quand
 
-- [ ] à une mise à jour, une note dont « À faire » demande une action s'imprime en entier, et un test le montre
-- [ ] une note dont « À faire » est « rien » ne s'imprime que par son titre et le fichier où la lire, en français comme en anglais, et un test le montre
+- [x] à une mise à jour, une note dont « À faire » demande une action s'imprime en entier, et un test le montre
+- [x] une note dont « À faire » est « rien » ne s'imprime que par son titre et le fichier où la lire, en français comme en anglais, et un test le montre

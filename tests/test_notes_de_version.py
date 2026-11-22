@@ -70,6 +70,15 @@ class TestLesFichiers(unittest.TestCase):
             for ident, entree in installeur.entrees_des_notes(texte):
                 self.assertIn(a_faire, entree, ident)
 
+    def test_une_note_qui_ne_demande_rien_le_dit_dans_les_deux_langues(self):
+        """B-0324 : l'installeur n'imprime d'une note qui ne demande rien que
+        son titre ; un projet en anglais n'en perd pas plus qu'un autre."""
+        fr, en = dict(installeur.entrees_des_notes(self.fr)), dict(installeur.entrees_des_notes(self.en))
+        self.assertTrue(any(installeur.ne_demande_rien(t) for t in fr.values()))
+        self.assertTrue(any(not installeur.ne_demande_rien(t) for t in fr.values()))
+        for ident, texte in fr.items():
+            self.assertEqual(installeur.ne_demande_rien(texte), installeur.ne_demande_rien(en[ident]), ident)
+
     def test_les_notes_ne_renvoient_pas_a_l_atelier(self):
         """Le produit parle sa propre voix (ADR-0033) : aucun identifiant de la
         mémoire de ce dépôt, ni sa documentation de fabrication."""
@@ -117,6 +126,90 @@ class TestNotesNouvelles(unittest.TestCase):
         toutes = installeur.texte_des_notes(notes, ".socle/engine/socle/CHANGES.md", toutes=True)
         self.assertIn("la copie du moteur remplacée n'en avait pas", toutes)
         self.assertIn("leur date le dit", toutes)
+
+
+def note(ident: str, a_faire: str | None, titre: str = "titre") -> tuple[str, str]:
+    """Une entrée des notes de version, son paragraphe « À faire » (ou « To
+    do ») tel quel, ou sans paragraphe (`None`)."""
+    corps = f"## {ident} — {titre}\n\nCe que le changement fait au projet."
+    return ident, corps + (f"\n\n{a_faire}" if a_faire is not None else "")
+
+
+class TestCeQuiNeDemandeRien(unittest.TestCase):
+    """B-0324 : seule une note dont « À faire » commence par « rien. » ou
+    « rien ; » ne demande rien ; dans le doute, elle demande quelque chose."""
+
+    def test_la_forme_de_ce_qui_ne_demande_rien(self):
+        for a_faire in ("À faire : rien.", "À faire : rien ; le skill est une copie protégée.",
+                        "À faire : rien; sans espace.", "To do: nothing.", "To do: nothing; a detail.",
+                        "To do: nothing ; a detail."):
+            self.assertTrue(installeur.ne_demande_rien(note("2026-11-22-z", a_faire)[1]), a_faire)
+        for a_faire in ("À faire : rien, sauf si le hook refuse.", "À faire : rien dans le projet.",
+                        "À faire : rien d'obligatoire.", "À faire : rien de plus que de suivre le skill.",
+                        "À faire : rien", "À faire : relire le backlog.", "À faire : Rien.",
+                        "To do: nothing, unless the hook refuses.", "To do: nothing in the project.",
+                        "To do: review the backlog.", None):
+            self.assertFalse(installeur.ne_demande_rien(note("2026-11-22-z", a_faire)[1]), a_faire)
+
+    def test_seul_le_premier_paragraphe_a_faire_compte(self):
+        _, texte = note("2026-11-22-z", "À faire : relire le backlog.")
+        self.assertFalse(installeur.ne_demande_rien(texte + "\n\nÀ faire : rien."))
+        # « À faire » au fil d'une phrase n'est pas le paragraphe.
+        self.assertFalse(installeur.ne_demande_rien("## 2026-11-22-z — t\n\nSon « À faire : rien. » change."))
+
+
+class TestCeQueLeTexteImprime(unittest.TestCase):
+    """Ce que `texte_des_notes` imprime de chaque note : entière si elle
+    demande quelque chose, d'abord ; son titre seul sinon (B-0324)."""
+
+    FICHIER = ".socle/engine/socle/CHANGES.md"
+
+    def setUp(self):
+        self.notes = [note("2026-11-22-d", "À faire : rien.", "rien"),
+                      note("2026-11-22-c", "À faire : relire le backlog.", "action"),
+                      note("2026-11-22-b", "À faire : rien ; une précision.", "précision"),
+                      note("2026-11-22-a", "À faire : rien, sauf si le hook refuse.", "sauf si"),
+                      note("2026-11-21-a", None, "sans paragraphe")]
+
+    def test_une_note_qui_demande_une_action_s_imprime_en_entier_d_abord(self):
+        for toutes in (False, True):
+            texte = installeur.texte_des_notes(self.notes, self.FICHIER, toutes)
+            entieres = [t for i, t in self.notes if i in ("2026-11-22-c", "2026-11-22-a", "2026-11-21-a")]
+            for t in entieres:
+                self.assertIn(t, texte)
+            # Dans leur ordre, avant les titres de celles qui ne demandent rien.
+            positions = [texte.index(t) for t in entieres]
+            self.assertEqual(positions, sorted(positions))
+            self.assertLess(positions[-1], texte.index("2 entrée(s) ne demandent rien"))
+
+    def test_une_note_qui_ne_demande_rien_n_imprime_que_son_titre(self):
+        for toutes in (False, True):
+            texte = installeur.texte_des_notes(self.notes, self.FICHIER, toutes)
+            self.assertTrue(texte.endswith(
+                "\n\n2 entrée(s) ne demandent rien (« À faire : rien ») : leur titre seul, et leur texte dans "
+                "`.socle/engine/socle/CHANGES.md`, à lire au besoin :\n"
+                "## 2026-11-22-d — rien\n## 2026-11-22-b — précision"), texte)
+            self.assertNotIn("À faire : rien.", texte)
+            self.assertNotIn("une précision", texte)
+            self.assertEqual(texte.count("Ce que le changement fait au projet."), 3)
+
+    def test_sans_note_qui_ne_demande_rien_pas_de_ligne_de_plus(self):
+        texte = installeur.texte_des_notes(self.notes[1:2], self.FICHIER, False)
+        self.assertNotIn("ne demandent rien", texte)
+        self.assertTrue(texte.endswith(self.notes[1][1]))
+
+    def test_en_anglais(self):
+        from socle import messages
+
+        notes = [note("2026-11-22-b", "To do: nothing; a detail.", "nothing"),
+                 note("2026-11-22-a", "To do: review the backlog.", "action")]
+        with messages.dans("en"):
+            texte = installeur.texte_des_notes(notes, ".socle/engine/socle/CHANGES.en.md", False)
+        self.assertIn(notes[1][1], texte)
+        self.assertTrue(texte.endswith(
+            "\n\n1 entry(ies) ask nothing (“To do: nothing”): their title only, and their text in "
+            "`.socle/engine/socle/CHANGES.en.md`, to read when needed:\n## 2026-11-22-b — nothing"), texte)
+        self.assertNotIn("a detail", texte)
 
 
 class TestALaMiseAJour(unittest.TestCase):
@@ -237,6 +330,38 @@ class TestALaMiseAJour(unittest.TestCase):
         self.assertNotIn("À faire : ", sortie)
         self.assertIn(f'-m "Socle release notes: {", ".join(self.tous)}, in .socle/engine/socle/CHANGES.en.md"',
                       sortie)
+
+    def verifier_ce_qui_s_imprime(self, sortie: str, notes: list[tuple[str, str]], fichier: str, tete: str):
+        """Dans `sortie`, chacune des `notes` : entière si elle demande
+        quelque chose, avant la ligne `tete` qui compte les autres ; de
+        celles-ci, le titre seul (B-0324)."""
+        rien = [t for _, t in notes if installeur.ne_demande_rien(t)]
+        self.assertTrue(rien)
+        self.assertIn(tete.format(n=len(rien), fichier=fichier), sortie)
+        fin_des_entieres = sortie.index(tete.format(n=len(rien), fichier=fichier))
+        for ident, texte in notes:
+            titre, corps = texte.split("\n", 1)
+            if installeur.ne_demande_rien(texte):
+                self.assertIn(f"\n{titre}\n", sortie, ident)
+                self.assertNotIn(corps.strip(), sortie, ident)
+            else:
+                self.assertLess(sortie.index(texte), fin_des_entieres, ident)
+
+    def test_a_la_mise_a_jour_une_note_qui_ne_demande_rien_n_a_que_son_titre(self):
+        installer(self.racine, self.source(garder=3), adoption=False)
+        sortie = installer(self.racine, MOTEUR)
+        self.verifier_ce_qui_s_imprime(
+            sortie, installeur.notes_nouvelles(set(), PAQUET)[:-3], ".socle/engine/socle/CHANGES.md",
+            "{n} entrée(s) ne demandent rien (« À faire : rien ») : leur titre seul, et leur texte dans "
+            "`{fichier}`, à lire au besoin :")
+
+    def test_en_anglais_une_note_qui_ne_demande_rien_n_a_que_son_titre(self):
+        installer(self.racine, self.source(), adoption=False, langue_memoire="en")
+        sortie = installer(self.racine, MOTEUR)
+        self.verifier_ce_qui_s_imprime(
+            sortie, installeur.notes_nouvelles(set(), PAQUET, "en"), ".socle/engine/socle/CHANGES.en.md",
+            "{n} entry(ies) ask nothing (“To do: nothing”): their title only, and their text in `{fichier}`, "
+            "to read when needed:")
 
     def test_sans_notes_le_message_de_commit_ne_change_pas(self):
         installer(self.racine, MOTEUR, adoption=False)

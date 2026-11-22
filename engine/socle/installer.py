@@ -637,6 +637,13 @@ def _refus_cible(cible: Path) -> str | None:
 # porte son identifiant, la date du changement et une lettre (ADR-0078).
 NOTES = "CHANGES.md"
 TITRE_DE_NOTE = re.compile(r"^## (?P<id>\d{4}-\d{2}-\d{2}-[a-z]) — (?P<titre>\S.*?)\s*$")
+# Le paragraphe d'une entrée qui dit ce que l'agent du projet doit faire, et
+# la seule forme qui ne demande rien : « rien » suivi directement de « . »
+# ou de « ; » (« nothing » en anglais). « rien, sauf si … », « rien dans
+# un projet dont … » ou une action demandent quelque chose : dans le doute,
+# l'entrée s'imprime en entier (B-0324).
+A_FAIRE = re.compile(r"^(?:À faire[   ]?:|To do:)[   ]*(?P<suite>.*)$", re.MULTILINE)
+RIEN_A_FAIRE = re.compile(r"(?:rien|nothing)(?:\.|[   ]?;)")
 
 
 def fichier_des_notes(paquet: Path, lg: str = "fr") -> Path:
@@ -700,10 +707,22 @@ def notes_nouvelles(deja: set[str], paquet: Path, lg: str = "fr") -> list[tuple[
             if ident not in deja]
 
 
+def ne_demande_rien(entree: str) -> bool:
+    """L'entrée des notes de version `entree` ne demande rien à l'agent du
+    projet : son paragraphe « À faire » (« To do ») commence par « rien. »
+    ou « rien ; » (« nothing. », « nothing; »). Sans ce paragraphe, ou sous
+    toute autre forme, elle demande quelque chose."""
+    m = A_FAIRE.search(entree)
+    return bool(m and RIEN_A_FAIRE.match(m.group("suite")))
+
+
 def texte_des_notes(notes: list[tuple[str, str]], fichier: str, toutes: bool) -> str:
     """Les notes de version qu'une mise à jour apporte, telles que
-    l'installeur les imprime : une ligne qui dit quoi en faire, puis chaque
-    entrée entière. `toutes` : la copie remplacée n'avait pas de notes."""
+    l'installeur les imprime : une ligne qui dit quoi en faire, puis entière
+    chaque entrée qui demande quelque chose ; de celles qui ne demandent rien
+    (`ne_demande_rien`), le titre seul, sous une ligne qui dit combien elles
+    sont et le fichier où les lire. `toutes` : la copie remplacée n'avait pas
+    de notes."""
     if toutes:
         tete = trad("Notes de version : la copie du moteur remplacée n'en avait pas ; voici toutes leurs entrées "
                     "({n}), dans `{fichier}`, dont certaines décrivent ce que le projet a déjà : leur date le dit, à "
@@ -713,7 +732,13 @@ def texte_des_notes(notes: list[tuple[str, str]], fichier: str, toutes: bool) ->
         tete = trad("Notes de version : ce que cette mise à jour change pour le projet, {n} entrée(s) que la copie "
                     "du moteur remplacée n'avait pas, dans `{fichier}`. Les lire, et faire ce que chacune demande :",
                     n=len(notes), fichier=fichier)
-    return "\n\n".join([tete, *(texte for _, texte in notes)])
+    blocs = [tete, *(texte for _, texte in notes if not ne_demande_rien(texte))]
+    titres = [texte.splitlines()[0] for _, texte in notes if ne_demande_rien(texte)]
+    if titres:
+        blocs.append("\n".join([trad("{n} entrée(s) ne demandent rien (« À faire : rien ») : leur titre seul, et "
+                                     "leur texte dans `{fichier}`, à lire au besoin :", n=len(titres),
+                                     fichier=fichier), *titres]))
+    return "\n\n".join(blocs)
 
 
 def _poser_moteur(cible: Path, mode: str, source: Path, ch: config.Chemins,

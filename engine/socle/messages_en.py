@@ -799,6 +799,10 @@ MESSAGES: dict[str, str] = {
     "remplacée n'avait pas, dans `{fichier}`. Les lire, et faire ce que chacune demande :":
         "Release notes: what this update changes for the project, {n} entry(ies) that the replaced engine copy did "
         "not have, in `{fichier}`. Read them, and do what each one asks:",
+    "{n} entrée(s) ne demandent rien (« À faire : rien ») : leur titre seul, et leur texte dans `{fichier}`, à lire "
+    "au besoin :":
+        "{n} entry(ies) ask nothing (“To do: nothing”): their title only, and their text in `{fichier}`, to read "
+        "when needed:",
     "ouvrir l'agent dans le projet : il lit l'état au démarrage, et te donne le lien des questions de départ, une "
     "demande à laquelle tu réponds dans la conversation":
         "open the agent in the project: it reads the state at startup, and gives you the link of the starting "

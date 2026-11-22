@@ -460,7 +460,10 @@ https://github.com/theodubus/socle /tmp/socle`). Les fichiers du projet ne sont 
 diff de la politique est montré. Entre ce qu'il a posé et l'audit,
 l'installeur imprime les [notes de version](CHANGES.md) que la copie du
 moteur du projet n'avait pas, toutes si elle n'en avait aucune : ce que
-chaque changement fait au projet, et ce que l'agent doit faire. Le message
+chaque changement fait au projet, et ce que l'agent doit faire. Il
+n'imprime en entier que celles qui demandent quelque chose ; de celles
+dont « À faire » est « rien », le titre seul, leur texte restant dans le
+fichier qu'il nomme. Le message
 de commit qu'il propose nomme leurs identifiants, pour l'agent qui n'a pas
 vu passer la mise à jour. Le hook de l'agent refuse l'installeur visé
 sur un projet équipé dans un autre mode que celui de son verrou, ou sur

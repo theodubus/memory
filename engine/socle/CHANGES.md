@@ -7,6 +7,14 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+Chaque entrée dit, en un paragraphe qui commence par « À faire : », ce que
+l'agent du projet doit faire. Quand il n'a rien à faire, ce paragraphe
+s'écrit « À faire : rien. », ou « À faire : rien ; » suivi d'une précision
+qui ne demande rien : de cette entrée, l'installeur n'imprime que le
+titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
+sauf si … », « rien dans le projet … », une action) s'imprime en entier,
+avant elles.
+
 ## 2026-11-22-g — Le guide dit comment importer un journal numéroté comme celui du socle
 
 Un projet qui tenait déjà un journal dont les entrées ont la forme de
@@ -32,6 +40,22 @@ l'humain disait encore que tout « Fait quand » se vérifie par un test ;
 il dit désormais l'exception.
 
 À faire : rien.
+
+## 2026-11-22-a — À une mise à jour, l'installeur n'imprime en entier que les notes de version qui demandent quelque chose
+
+À chaque mise à jour, l'installeur imprimait en entier chaque note de
+version que la copie du moteur du projet n'avait pas, même celles qui ne
+demandent rien : souvent plus de la moitié de ce qu'il imprimait. Il
+n'imprime désormais en entier, d'abord, que celles dont « À faire »
+demande quelque chose ; des autres, dont « À faire » est « rien. », ou
+« rien ; » suivi d'une précision, une ligne chacune, leur titre, sous
+une ligne qui dit combien elles sont et le fichier où les lire. Toute
+autre forme, « rien, sauf si … » comprise, s'imprime en entier. Le
+message de commit qu'il propose nomme toujours toutes les entrées.
+
+À faire : lire les notes que l'installeur imprime en entier, et faire ce
+que chacune demande ; une note qu'il ne nomme que par son titre ne
+demande rien, et se lit dans le fichier qu'il nomme quand elle sert.
 
 ## 2026-11-21-d — L'installeur nomme le hook de fin de tour que le projet a déjà
 

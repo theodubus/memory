@@ -7,6 +7,13 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+Each entry says, in a paragraph that starts with “To do:”, what the
+project's agent must do. When it has nothing to do, that paragraph is
+written “To do: nothing.”, or “To do: nothing;” followed by a detail that
+asks nothing: of such an entry, the installer prints only the title,
+under a line that names this file. Any other form (“nothing, unless …”,
+“nothing in the project …”, an action) is printed in full, before them.
+
 ## 2026-11-22-g — The guide says how to import a journal numbered like the socle's
 
 A project that already kept a journal whose entries have the form of
@@ -33,6 +40,21 @@ said that every “Done when” is checked by a test; it now states the
 exception.
 
 To do: nothing.
+
+## 2026-11-22-a — On an update, the installer prints in full only the release notes that ask something
+
+On every update, the installer printed in full each release note that
+the project's engine copy did not have, even those that ask nothing:
+often more than half of what it printed. It now prints in full, first,
+only those whose “To do” asks something; of the others, whose “To do”
+is “nothing.”, or “nothing;” followed by a detail, one line each, their
+title, under a line that says how many they are and the file to read
+them in. Any other form, “nothing, unless …” included, is printed in
+full. The commit message it proposes still names all the entries.
+
+To do: read the notes the installer prints in full, and do what each
+one asks; a note it names only by its title asks nothing, and is read
+in the file it names when it matters.
 
 ## 2026-11-21-d — The installer names the end-of-turn hook the project already has
 
