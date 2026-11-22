@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0210 — Le banc cherche le budget du chantier actif sous memory/actif.md : le juge du scénario s4 ne voit jamais un budget relevé
 
-> statut : ouvert · origine : J-2026-11-13-G · lu : backlog@33a4d320
+> statut : fait · origine : J-2026-11-13-G · ref : J-2026-11-22-K, T-0035 · lu : backlog@33a4d320
 
 Vu par la seconde revue sans contexte de B-0010 (constat 8), antérieur à
 ce lot : `_budget_actif` de `bench/bench.py` cherche la clé
@@ -14,4 +14,4 @@ quoi que fasse l'agent sur ce point.
 
 ## Satisfait quand
 
-- [ ] le juge du scénario s4 du banc voit si l'agent a relevé le budget du chantier actif, au lieu de passer quoi qu'il fasse
+- [x] le juge du scénario s4 du banc voit si l'agent a relevé le budget du chantier actif, au lieu de passer quoi qu'il fasse

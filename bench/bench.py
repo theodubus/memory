@@ -210,7 +210,12 @@ def _nouvelles_demandes(projet: Path) -> list[Path]:
 
 
 def _budget_actif(texte: str) -> int | None:
-    m = re.search(r'"memory/actif\.md"\s*=\s*\{\s*max_bytes\s*=\s*(\d+)', texte)
+    """Le plafond du chantier actif dans un texte des garde-fous, sous la clé
+    du format actuel, jamais un nom écrit en dur qu'un renommage laisserait
+    derrière (B-0210) ; une expression plutôt que `tomllib`, qui ne lirait
+    plus rien d'un fichier que l'agent aurait cassé."""
+    cle = re.escape(f'"{config.FORMAT_ACTUEL.actif}"')
+    m = re.search(cle + r'\s*=\s*\{\s*max_bytes\s*=\s*(\d+)', texte)
     return int(m.group(1)) if m else None
 
 
