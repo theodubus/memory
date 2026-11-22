@@ -7,6 +7,17 @@ letter. On an update, the installer gives the entries that the project's
 engine copy did not have, and the commit message it proposes names their
 identifiers.
 
+## 2026-11-22-f — The guide says that a box delivering a request, a report or a memory entry is checked by what it produces
+
+The memory format and the reviewer's instructions already said so: a
+box of a task's “Done when” whose deliverable is a request posed, a
+report written or a memory entry rewritten is checked by what it
+produces, which the box names, not by a test. The human's guide still
+said that every “Done when” is checked by a test; it now states the
+exception.
+
+To do: nothing.
+
 ## 2026-11-21-d — The installer names the end-of-turn hook the project already has
 
 The installer keeps the hooks the project declares itself in

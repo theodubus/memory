@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0105 — Le guide de l'humain dit l'exception d'ADR-0088 : une case qui livre une demande, un relevé ou une entrée de la mémoire se vérifie par ce qu'elle produit
 
-> statut : ouvert · origine : J-2026-11-19-N · besoin : B-0265 · lu : backlog@f0787508
+> statut : fait · ref : J-2026-11-22-B · origine : J-2026-11-19-N · besoin : B-0265 · lu : backlog@f0787508
 
 Relevé par la revue de L-0015, passe 1 (J-2026-11-19-N), constat 3 pour
 le backlog. T-0087 a porté l'exception d'ADR-0088 dans le format de la
@@ -12,4 +12,4 @@ le guide, dans les deux langues, dit l'exception.
 
 ## Fait quand
 
-- [ ] le guide, en français et en anglais, dit qu'une case qui livre une demande, un relevé ou une entrée de la mémoire se vérifie par ce qu'elle produit, et un test le lit
+- [x] le guide, en français et en anglais, dit qu'une case qui livre une demande, un relevé ou une entrée de la mémoire se vérifie par ce qu'elle produit, et un test le lit

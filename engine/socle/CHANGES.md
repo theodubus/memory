@@ -7,6 +7,17 @@ une lettre. À la mise à jour, l'installeur donne les entrées que la copie du
 moteur du projet n'avait pas, et le message de commit qu'il propose nomme
 leurs identifiants.
 
+## 2026-11-22-f — Le guide dit qu'une case qui livre une demande, un relevé ou une entrée de la mémoire se vérifie par ce qu'elle produit
+
+Le format de la mémoire et la consigne du relecteur le disaient déjà :
+une case du « Fait quand » d'une tâche dont le livrable est une demande
+posée, un relevé écrit ou une entrée de la mémoire récrite se vérifie par
+ce qu'elle produit, que la case nomme, et non par un test. Le guide de
+l'humain disait encore que tout « Fait quand » se vérifie par un test ;
+il dit désormais l'exception.
+
+À faire : rien.
+
 ## 2026-11-21-d — L'installeur nomme le hook de fin de tour que le projet a déjà
 
 L'installeur garde les hooks que le projet déclare lui-même dans

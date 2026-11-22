@@ -119,7 +119,10 @@ intention is missing, section 3). The backlog has four forms of entry,
 each with its prefix: a **need** (`B-`), a defect to fix or a feature to
 add, with what satisfies it (“Satisfied when”, a result); a **task**
 (`T-`), a deliverable that serves a need, with what makes it done (“Done
-when”, which a test checks); a **batch** (`L-`), the tasks that touch the
+when”, which a test checks; a box that delivers a request posed, a report
+written or a memory entry rewritten is checked by what it produces, which
+the box names: the request and your answer, the report's file, what
+`socle show` shows of it); a **batch** (`L-`), the tasks that touch the
 same files, carried out and reviewed together; a **milestone** (`JA-`),
 the needs that serve one goal. Each says what it waits on (`after`:
 another entry, or a request until it is answered), and its boxes are all

@@ -577,6 +577,29 @@ class TestLeGuideNeRenvoiePasALAtelier(unittest.TestCase):
                     self.assertNotIn(mot, texte)
 
 
+class TestLeGuideDitLExceptionDesCases(unittest.TestCase):
+    """T-0105 (ADR-0088) : le format et la consigne du relecteur disent
+    qu'une case qui livre une demande, un relevé ou une entrée de la mémoire
+    se vérifie par ce qu'elle produit ; le guide de l'humain disait encore
+    que tout « Fait quand » se vérifie par un test."""
+
+    ATTENDUS = {
+        "HELP.md": "(« Fait quand », qu'un test vérifie ; une case qui livre une demande posée, un relevé écrit ou "
+                   "une entrée de la mémoire récrite se vérifie par ce qu'elle produit, que la case nomme : la "
+                   "demande et votre réponse, le fichier du relevé, ce qu'en montre `socle show`)",
+        "HELP.en.md": "(“Done when”, which a test checks; a box that delivers a request posed, a report written or "
+                      "a memory entry rewritten is checked by what it produces, which the box names: the request "
+                      "and your answer, the report's file, what `socle show` shows of it)",
+    }
+
+    def test_le_guide_dit_qu_une_telle_case_se_verifie_par_ce_qu_elle_produit(self):
+        paquet = Path(revue.__file__).resolve().parent
+        for nom, phrase in self.ATTENDUS.items():
+            with self.subTest(guide=nom):
+                plat = " ".join((paquet / nom).read_text(encoding="utf-8").split())
+                self.assertIn(phrase, plat)
+
+
 class TestLesFormesDuShellHorsDuProduit(unittest.TestCase):
     """T-0060 (B-0276, D-0128, ADR-0099) : un projet équipé ne reçoit plus
     de procédure sur les formes du shell que le hook ne juge pas, ni leur

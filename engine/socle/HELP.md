@@ -124,7 +124,11 @@ votre intention manque, section 3). Le backlog a quatre formes d'entrée,
 chacune son préfixe : un **besoin** (`B-`), un défaut à corriger ou une
 fonction à ajouter, avec ce qui le satisfait (« Satisfait quand », un
 résultat) ; une **tâche** (`T-`), un livrable qui sert un besoin, avec ce
-qui la rend faite (« Fait quand », qu'un test vérifie) ; un **lot**
+qui la rend faite (« Fait quand », qu'un test vérifie ; une case qui
+livre une demande posée, un relevé écrit ou une entrée de la mémoire
+récrite se vérifie par ce qu'elle produit, que la case nomme : la
+demande et votre réponse, le fichier du relevé, ce qu'en montre
+`socle show`) ; un **lot**
 (`L-`), les tâches qui touchent les mêmes fichiers, menées et relues
 ensemble ; un **jalon** (`JA-`), les besoins qui servent un même but.
 Chacune dit ce qu'elle attend (`après` : une autre entrée, ou une demande
