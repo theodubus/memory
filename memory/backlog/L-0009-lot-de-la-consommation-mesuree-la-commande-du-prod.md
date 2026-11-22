@@ -14,3 +14,9 @@ Le 16 novembre, Théo y fait entrer B-0249, le seuil de la semaine calculé sur 
 Le 16 novembre, selon la règle qui réunit dans un lot les sujets qui touchent les mêmes fichiers ou le même garde-fou, appliquée à tout le backlog ouvert (J-2026-11-16-J) : les branches sans test de l'outil de mesure de la consommation (B-0194), que B-0201 fait entrer dans le produit.
 
 Le 18 novembre, T-0049 découpe B-0219 (J-2026-11-18-J) : T-0078 marque l'échec de l'historique, à côté du partage du délai (T-0036).
+
+## Revues
+
+### Passe 1 — 2026-11-22
+
+Commits : 47c553c8..00d88369
