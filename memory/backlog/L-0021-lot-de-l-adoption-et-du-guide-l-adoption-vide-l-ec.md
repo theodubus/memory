@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0021 — Lot de l'adoption et du guide : l'adoption vide, l'écart de politique déjà montré, l'import d'un journal, la clé d'un constat toléré
 
-> statut : ouvert · origine : J-2026-11-21-B · après : L-0008, T-0026, T-0076, T-0031, T-0105, T-0121, T-0123, T-0124 · lu : backlog@18f4b4cb
+> statut : en cours · origine : J-2026-11-21-B · après : L-0008, T-0026, T-0076, T-0031, T-0105, T-0121, T-0123, T-0124 · lu : backlog@18f4b4cb
 
 Coupé de L-0008 à son annonce, le 21 novembre (J-2026-11-21-B) : dix
 tâches pour un seuil de neuf (ADR-0101), et un lot de dix tâches de
