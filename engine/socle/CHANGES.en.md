@@ -385,9 +385,9 @@ milestone with its batches under it. A warning, never a failure. The
 threshold is set like `[verify] fast_max_seconds`: lowering it is free,
 raising it requires a validated request.
 
-To do: nothing; the key, which the installer names on update, can be
-declared in `.socle/guardrails.toml` if needed. A batch the state
-reports is cut at its next announcement.
+To do: nothing, unless the state reports a batch: cut it at its next
+announcement. The key, which the installer names on update, can be
+declared in `.socle/guardrails.toml` if needed.
 ## 2026-11-20-c — The step back is no longer required: `socle review` writes a batch's passes and the backlog check lets it close without one
 
 `socle review` writes each pass of a batch in its “Reviews” section

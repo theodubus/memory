@@ -682,12 +682,13 @@ def _refus_cible(cible: Path) -> str | None:
 NOTES = "CHANGES.md"
 TITRE_DE_NOTE = re.compile(r"^## (?P<id>\d{4}-\d{2}-\d{2}-[a-z]) — (?P<titre>\S.*?)\s*$")
 # Le paragraphe d'une entrée qui dit ce que l'agent du projet doit faire, et
-# la seule forme qui ne demande rien : « rien » suivi directement de « . »
-# ou de « ; » (« nothing » en anglais). « rien, sauf si … », « rien dans
-# un projet dont … » ou une action demandent quelque chose : dans le doute,
+# les deux seules formes qui ne demandent rien : « rien. », le paragraphe
+# entier, ou « rien ; » suivi d'une précision (« nothing » en anglais).
+# « rien. » suivi d'une consigne, « rien, sauf si … », « rien dans un
+# projet dont … » ou une action demandent quelque chose : dans le doute,
 # l'entrée s'imprime en entier (B-0324).
 A_FAIRE = re.compile(r"^(?:À faire[   ]?:|To do:)[   ]*(?P<suite>.*)$", re.MULTILINE)
-RIEN_A_FAIRE = re.compile(r"(?:rien|nothing)(?:\.|[   ]?;)")
+RIEN_A_FAIRE = re.compile(r"(?:rien|nothing)(?:\.$|[   ]?;)")
 
 
 def fichier_des_notes(paquet: Path, lg: str = "fr") -> Path:
@@ -753,11 +754,15 @@ def notes_nouvelles(deja: set[str], paquet: Path, lg: str = "fr") -> list[tuple[
 
 def ne_demande_rien(entree: str) -> bool:
     """L'entrée des notes de version `entree` ne demande rien à l'agent du
-    projet : son paragraphe « À faire » (« To do ») commence par « rien. »
-    ou « rien ; » (« nothing. », « nothing; »). Sans ce paragraphe, ou sous
-    toute autre forme, elle demande quelque chose."""
+    projet : son paragraphe « À faire » (« To do ») est « rien. » en entier,
+    ou commence par « rien ; » (« nothing. », « nothing; »). Sans ce
+    paragraphe, ou sous toute autre forme, « rien. » suivi d'une consigne
+    compris, elle demande quelque chose."""
     m = A_FAIRE.search(entree)
-    return bool(m and RIEN_A_FAIRE.match(m.group("suite")))
+    if not m:
+        return False
+    paragraphe = " ".join(entree[m.start("suite"):].split("\n\n", 1)[0].split())
+    return bool(RIEN_A_FAIRE.match(paragraphe))
 
 
 def texte_des_notes(notes: list[tuple[str, str]], fichier: str, toutes: bool) -> str:

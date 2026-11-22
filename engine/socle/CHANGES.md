@@ -396,9 +396,9 @@ former ses lots dessous. Un avertissement, jamais un échec. Le seuil se
 règle comme `[verify] fast_max_seconds` : le baisser est libre, le
 relever exige une demande validée.
 
-À faire : rien ; la clé, que l'installeur nomme à la mise à jour, se
-déclare au besoin dans `.socle/guardrails.toml`. Un lot que l'état
-signale se coupe à sa prochaine annonce.
+À faire : rien, sauf si l'état signale un lot : le couper à sa
+prochaine annonce. La clé, que l'installeur nomme à la mise à jour, se
+déclare au besoin dans `.socle/guardrails.toml`.
 ## 2026-11-20-c — Le recul n'est plus exigé : `socle review` écrit les passes d'un lot et le contrôle du backlog le laisse se clore sans lui
 
 `socle review` écrit chaque passe d'un lot dans sa section « Revues »

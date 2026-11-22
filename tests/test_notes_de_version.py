@@ -136,7 +136,7 @@ def note(ident: str, a_faire: str | None, titre: str = "titre") -> tuple[str, st
 
 
 class TestCeQuiNeDemandeRien(unittest.TestCase):
-    """B-0324 : seule une note dont « À faire » commence par « rien. » ou
+    """B-0324 : seule une note dont « À faire » est « rien. » en entier, ou commence par
     « rien ; » ne demande rien ; dans le doute, elle demande quelque chose."""
 
     def test_la_forme_de_ce_qui_ne_demande_rien(self):
@@ -150,6 +150,27 @@ class TestCeQuiNeDemandeRien(unittest.TestCase):
                         "To do: nothing, unless the hook refuses.", "To do: nothing in the project.",
                         "To do: review the backlog.", None):
             self.assertFalse(installeur.ne_demande_rien(note("2026-11-22-z", a_faire)[1]), a_faire)
+
+    def test_rien_suivi_d_une_consigne_demande_quelque_chose(self):
+        """Revue de L-0021 : « rien. » n'est la forme qui ne demande rien que
+        s'il est le paragraphe entier ; suivi d'une consigne (« ne pas la
+        lancer vers le projet »), la note s'imprime en entier."""
+        for a_faire in ("À faire : rien. Ne pas lancer `find … | xargs rm` vers le projet.",
+                        "À faire : rien.\nPour la lancer, écrire son chemin absolu.",
+                        "To do: nothing. Do not run it against the project."):
+            self.assertFalse(installeur.ne_demande_rien(note("2026-11-22-z", a_faire)[1]), a_faire)
+        self.assertTrue(installeur.ne_demande_rien(note("2026-11-22-z", "À faire : rien.\n")[1]))
+
+    def test_les_notes_reelles_qui_demandent_quelque_chose_s_impriment_en_entier(self):
+        """Revue de L-0021 : des notes du moteur dont « À faire » commence par
+        « rien. » ou « rien ; » donnent une consigne ; la règle les imprime en
+        entier, dans les deux langues."""
+        for nom in ("CHANGES.md", "CHANGES.en.md"):
+            entrees = dict(installeur.entrees_des_notes((PAQUET / nom).read_text(encoding="utf-8")))
+            for ident in ("2026-11-20-d", "2026-11-16-a", "2026-11-15-e", "2026-11-15-d", "2026-11-14-g",
+                          "2026-11-10-a"):
+                with self.subTest(nom=nom, note=ident):
+                    self.assertFalse(installeur.ne_demande_rien(entrees[ident]))
 
     def test_seul_le_premier_paragraphe_a_faire_compte(self):
         _, texte = note("2026-11-22-z", "À faire : relire le backlog.")
