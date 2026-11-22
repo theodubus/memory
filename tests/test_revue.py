@@ -611,17 +611,25 @@ class TestLeGuideDitLImportDUnJournal(unittest.TestCase):
             "**Un journal d'avant le socle.**",
             "Une entrée importée garde son identifiant, sauf un jour où le journal du socle a déjà les siennes "
             "(celui de l'installation, qui l'ouvre) : les entrées importées de ce jour y prennent, dans leur ordre, "
-            "les lettres qui suivent la dernière du journal du socle, et chacune de leurs citations dans le projet "
-            "se récrit dans le même commit.",
-            "une citation nouvelle la nomme sans la forme d'un identifiant, par son fichier, sa date et sa lettre",
+            "les lettres qui suivent la dernière du journal du socle, et leurs citations se récrivent dans le même "
+            "commit, sauf dans le journal, les décisions et les demandes, qui ne se récrivent pas : l'entrée du "
+            "journal qui consigne la migration y donne la correspondance des lettres de ce jour.",
+            "le contrôle des références refuse l'identifiant d'une entrée ancienne, sauf un jour qui se heurte, où "
+            "il désigne en silence l'entrée du socle de même lettre",
+            "une citation nouvelle, quel que soit son jour, la nomme sans la forme d'un identifiant, par son "
+            "fichier, sa date et sa lettre",
         ),
         "HELP.en.md": (
             "**A journal from before the socle.**",
             "An imported entry keeps its identifier, except on a day for which the socle's journal already has its "
             "own (the day of the installation, which opens it): the imported entries of that day take, in their "
-            "order, the letters that follow the last one of the socle's journal, and each of their citations in the "
-            "project is rewritten in the same commit.",
-            "a new citation names it without the form of an identifier, by its file, its date and its letter",
+            "order, the letters that follow the last one of the socle's journal, and their citations are rewritten in "
+            "the same commit, except in the journal, the decisions and the requests, which are not rewritten: the "
+            "journal entry that records the migration gives there the mapping of that day's letters.",
+            "the references check refuses the identifier of an old entry, except on a day that clashes, where it "
+            "silently designates the socle's entry with the same letter",
+            "a new citation, whatever its day, names it without the form of an identifier, by its file, its date "
+            "and its letter",
         ),
     }
 

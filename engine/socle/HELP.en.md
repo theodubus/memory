@@ -611,16 +611,20 @@ is written in the socle's journal only. An imported entry keeps its
 identifier, except on a day for which the socle's journal already has
 its own (the day of the installation, which opens it): the imported
 entries of that day take, in their order, the letters that follow the
-last one of the socle's journal, and each of their citations in the
-project is rewritten in the same commit. The old journal is removed in
-that commit, or keeps only a pointer to `memory/journal/`: otherwise its
-headings for a renumbered day would designate other entries. Until the
-migration, an old entry does not exist for the socle, and the references
-check refuses its identifier: the citations the project already has are
-tolerated at adoption (previous paragraph), and those the migration
-resolves are then removed from the list; a new citation names it
-without the form of an identifier, by its file, its date and its letter
-(“entry B of 3 March 2026 in the old journal”).
+last one of the socle's journal, and their citations are rewritten in
+the same commit, except in the journal, the decisions and the requests,
+which are not rewritten: the journal entry that records the migration
+gives there the mapping of that day's letters. The old journal is
+removed in that commit, or keeps only a pointer to `memory/journal/`:
+otherwise its headings for a renumbered day would designate other
+entries. Until the migration, the references check refuses the
+identifier of an old entry, except on a day that clashes, where it
+silently designates the socle's entry with the same letter: the
+citations the project already has are tolerated at adoption (previous
+paragraph), and those the migration resolves are then removed from the
+list; a new citation, whatever its day, names it without the form of an
+identifier, by its file, its date and its letter (“entry B of 3 March
+2026 in the old journal”).
 
 **A subfolder worked on by other agents.** When other agent sessions,
 which have neither the socle's hooks nor its rules, work on a subfolder on

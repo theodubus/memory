@@ -24,8 +24,11 @@ avant leur migration, que le contrôle des références dit inexistantes.
 Le guide le dit désormais, dans sa référence, après le projet adopté :
 une entrée importée garde son identifiant, sauf un jour que le journal
 du socle a déjà, où elle prend les lettres qui suivent les siennes, ses
-citations récrites dans le même commit ; avant la migration, une
-citation nouvelle nomme l'entrée par son fichier, sa date et sa lettre.
+citations récrites dans le même commit, sauf dans le journal, les
+décisions et les demandes, où l'entrée de la migration donne la
+correspondance ; avant la migration, une citation nouvelle nomme
+l'entrée par son fichier, sa date et sa lettre : un jour qui se heurte,
+son identifiant désignerait en silence l'entrée du socle.
 
 À faire : rien, sauf si le projet tenait un tel journal : proposer à
 l'humain sa migration, selon le guide (« Un journal d'avant le socle »).

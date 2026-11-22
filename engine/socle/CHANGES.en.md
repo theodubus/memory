@@ -23,8 +23,11 @@ migration, which the references check says do not exist. The guide now
 says so, in its reference, after the adopted project: an imported entry
 keeps its identifier, except on a day the socle's journal already has,
 where it takes the letters that follow the socle's own, its citations
-rewritten in the same commit; before the migration, a new citation names
-the entry by its file, its date and its letter.
+rewritten in the same commit, except in the journal, the decisions and
+the requests, where the migration's entry gives the mapping; before the
+migration, a new citation names the entry by its file, its date and its
+letter: on a day that clashes, its identifier would silently designate
+the socle's entry.
 
 To do: nothing, unless the project kept such a journal: propose its
 migration to the human, following the guide (“A journal from before the
