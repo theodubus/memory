@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0009 — Lot de la consommation mesurée : la commande du produit, la relecture à froid, le banc, les délais du démarrage
 
-> statut : ouvert · origine : J-2026-11-15-J · après : L-0021, T-0033, T-0034, T-0035, T-0036, T-0078, T-0038, T-0113 · lu : backlog@19378efe · ancien : B-0239
+> statut : en cours · origine : J-2026-11-15-J · après : L-0021, T-0033, T-0034, T-0035, T-0036, T-0078, T-0038, T-0113 · lu : backlog@19378efe · ancien : B-0239
 
 Mesurer ce que coûte le travail : la commande du produit tirée de
 l'outil de l'atelier (`bench/consumption.py`, B-0201), le coût de la
