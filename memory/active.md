@@ -5,7 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-JA-0005 : L-0010 ensuite, en session neuve.
+JA-0005 : L-0010 ; attend E2 le 24 (J-2026-11-23-H), et D-0160.
 
 ## Consignes en cours
 
@@ -25,7 +25,7 @@ Leur texte exact est dans l'entrée du journal citée.
 - Un lot par session ; sinon tout se range pour une session neuve, qui
   peut être sur un autre compte, avec son prompt (J-2026-11-12-P).
 - Chaque session travaille sur la branche de son environnement, partie
-  de la branche par défaut (J-2026-11-13-A).
+  de celle par défaut (J-2026-11-13-A).
 - Aucun autre dépôt dans la session, ni lecture de JustCook ou de
   `theodubus/socle` ; donner leurs liens reste permis (J-2026-11-09-M).
 - Le pilote est un essai de choc : seules les imperfections du socle se

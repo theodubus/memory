@@ -28,3 +28,6 @@ copies protégées (T-0114) passent à L-0023, qui le suit.
 ### Passe 1 — 2026-11-23
 
 Commits : a68f5bc0..03830147
+
+- Bloquant : une phrase du skill resserrée pour le budget contredisait la suivante (quel réveil laissé se déplace)
+- Ouvre : B-0336, T-0164
