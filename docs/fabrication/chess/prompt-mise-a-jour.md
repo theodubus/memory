@@ -30,8 +30,11 @@ n'imprime en entier que les notes de version qui demandent quelque chose
 l'écart de politique déjà montré en une ligne (B-0195), dont le guide
 dit comment importer un carnet numéroté comme le journal (B-0186),
 qui mesure la consommation d'une session (B-0201), partage le délai du
-démarrage et n'y repaie pas un échec de l'historique (B-0219), et borne
-le relecteur à froid d'une demande (B-0197),
+démarrage et n'y repaie pas un échec de l'historique (B-0219), borne
+le relecteur à froid d'une demande (B-0197), tient pour branchés les
+hooks git désignés par leur chemin absolu (B-0252), précise la coupure
+lue dans la transcription au réveil (B-0336) et fait dire les réveils
+d'une session archivée (B-0301),
 et dit à l'agent de chess ce qui change pour lui, comme Théo
 l'a demandé. Il est cumulatif : chess n'est mis à jour qu'une fois l'ensemble à finir avant les nouvelles fonctions fait, et
 chaque lot qui change ce que chess reçoit le complète d'ici là
@@ -172,6 +175,12 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 63. Le skill socle-request, copie protégée dans la demande de l'installeur, borne le relecteur à froid d'une demande : une réponse en un seul message, sans outil (note 2026-11-22-j). Pour la demande de l'étape 5, si tu la fais relire à froid, dis-moi combien d'outils son relecteur a lancés, et combien de jetons il a lus.
 
 64. Le skill socle-resume, copie protégée dans la demande de l'installeur : dans une session sans list_events, comme la tienne, la vérification au réveil lit ta transcription locale, le .jsonl le plus récent du projet sous ~/.claude/projects/ ; un enregistrement quotaLimits y dit que le tour d'avant a fini sur une limite, et à quelle heure (note 2026-11-23-a). C'est ta gêne 8 : si un réveil te fait reprendre après la mise à jour, dis-moi si ton récap a pu donner l'heure de la coupure.
+
+65. Le démarrage tient désormais pour branchés les hooks git que core.hooksPath désigne par le chemin absolu de .socle/git-hooks à la racine, comme après le redémarrage d'un conteneur cloud (note 2026-11-23-b). Rien à faire ; si le démarrage dit encore « !! hooks git non branchés », rapporte-moi la valeur de git config --get core.hooksPath.
+
+66. Le skill socle-resume précise cette lecture de la transcription : la coupure est le premier enregistrement quotaLimits qui suit le dernier appel du modèle, un message tapé par moi s'y reconnaît à origin.kind, qui vaut human, et une transcription sans le tour d'avant laisse décider la conversation (note 2026-11-23-c). Si un réveil te fait reprendre, dis-moi lequel de ces cas tu as rencontré.
+
+67. Le skill socle-resume te fait lire les tâches programmées au premier tour d'une session : les réveils de reprise qu'une session archivée de chess a laissés, tu me les dis avec leurs heures, sans les désactiver avant que je le demande (note 2026-11-23-d). Dis-moi si tu en as trouvé.
 
 ## La mise à jour
 
