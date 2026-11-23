@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0163-les-deux-cas-que-la-regle-de-la-reprise-laisse-le.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-23"
+canal = "conversation"
+citation = "Je ne vois aucune routine sur le lien\n\nEt je valide 1A et 2A"
+empreinte = "sha256:cc43c53471644771028c28ccabfdb315b4b3a9c99dc25933168b4f3ff99d135c"

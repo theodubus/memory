@@ -8,9 +8,9 @@ description: Have the agent that a usage limit cuts off resume on its own, throu
 A usage limit of the account, over five hours or seven days, cuts the
 session off; the agent then resumes only at the human's next message.
 Two wake-ups, messages the agent schedules for its own session, make it
-resume when the limit lifts. They live only during a turn that works: a
-turn that ends for another reason than a limit never restarts the agent.
-Every call costs usage: four or five per turn.
+resume when the limit lifts. They live only during a turn that works or
+a wait with a bounded time: a turn that ends for another reason than a
+limit never restarts the agent.
 
 ## When
 
@@ -47,8 +47,7 @@ and the five-hour one is pushed back to it at the start of every turn
 where the agent acts and when launching a subagent (`run_once_at`, in the
 planned call). `list_triggers` finds the wake-ups again.
 
-Their text carries the batch and the subagents under way; the step is
-found in the conversation, git, the active work and the worktrees.
+Their text carries the batch and the subagents under way:
 
 ```text
 Resume after limit (<window>) — <repository>, branch <branch>.
@@ -69,8 +68,7 @@ Once, before or with its first action:
    `SESSION_STATUS_ARCHIVED`) are told to the human with their times, and
    are disabled (`update_trigger`, `enabled: false`) only at their
    request. The turn that opens, on a message from the human as on a
-   wake-up, makes the wake-ups left its own: the cut they guarded is
-   over. The one to move gets, in a single call, this turn's time and the
+   wake-up, makes the wake-ups left its own. The one to move gets, in a single call, this turn's time and the
    text of its batch (`update_trigger`, with `run_once_at` and `prompt`);
    the one whose time is right gets the text, from the same call, only if
    the batch changed.
@@ -81,14 +79,15 @@ Once, before or with its first action:
 ## When launching a subagent
 
 Rewrite the text of both wake-ups (`update_trigger`, with `prompt`), once
-for the subagents launched together, when their ids are known. A subagent
-that returns asks for nothing: the conversation says so.
+for the subagents launched together, when their ids are known.
 
 ## At the end of every turn
 
-Before the final answer, if no subagent is running, remove both wake-ups
-(`delete_trigger`); otherwise leave them until the turn that receives its
-result. A turn cut off or refused removes nothing: that is what makes it
+Before the final answer, remove both wake-ups (`delete_trigger`), except
+during a subagent, until the turn that receives its result, or a wait
+with a bounded time (a reminder, a background command, a CI), until the
+event's turn, each pushed back after that time if it fell before:
+refused, that turn resumes when the limit lifts. A turn cut off or refused removes nothing: that is what makes it
 resume. If the turn goes on after (an end-of-turn hook refuses to
 conclude), re-arm them.
 
@@ -125,12 +124,14 @@ A message that starts with "Resume after limit":
 
    Then answer briefly why, with the project's closing lines,
    and remove the remaining wake-up, or leave it if a subagent is running.
+   If the end-of-turn check refuses on failing checks, answer in one line
+   that the human interrupted this work, without touching it; relaunched
+   on the same tree, it lets the turn conclude.
 3. Otherwise, resume the noted batch, at the step the conversation, git,
    the active work and the worktrees tell. Every noted subagent whose
    result did not arrive: continue it with a message (`SendMessage`, to
    its id) if it still answers, otherwise relaunch it with its message as
-   is. The wake-up that fired will not fire again: the start of the turn
-   re-arms it, as on "resume". The recap says so ("Resume after limit: cut
+   is. The recap says so ("Resume after limit: cut
    off at <time>, resumed at <time>"; without `list_events`, the time from
    the transcript, else "cut off at an unknown time"), and so does the
    journal.

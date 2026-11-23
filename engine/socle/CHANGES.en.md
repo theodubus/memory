@@ -14,6 +14,20 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-23-f — The resumption covers the wait with a bounded time and the wake-up of interrupted work
+
+The `socle-resume` skill covers two cases its rule left. A turn that
+ends waiting for an event whose latest time the agent knows (a
+reminder, a background command, a CI) keeps its two wake-ups, pushed
+back after that time: if a limit refuses the event's turn, the wake-up
+makes it resume when the limit lifts, instead of leaving the session
+stopped until the human comes back. And on the wake-up of work the
+human interrupted, if the end-of-turn check refuses on failing checks,
+the agent answers in one line, without finishing that work.
+
+To do: nothing; the `socle-resume` skill is a protected copy, in the
+installer's request.
+
 ## 2026-11-23-e — socle consumption counts the messages the human typed during a limit
 
 In its section on the five-hour windows closed by a refusal, `socle

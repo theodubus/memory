@@ -15,6 +15,21 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-23-f — La reprise couvre l'attente à heure bornée et le réveil d'un travail interrompu
+
+Le skill `socle-resume` couvre deux cas que sa règle laissait. Un tour
+qui finit en attendant un événement dont l'agent connaît l'heure au plus
+tard (un rappel, une commande en arrière-plan, une CI) garde ses deux
+réveils, repoussés après cette heure : si une limite refuse le tour de
+l'événement, le réveil le fait reprendre à la levée, au lieu de laisser
+la session arrêtée jusqu'au retour de l'humain. Et au réveil d'un
+travail que l'humain a interrompu, si le contrôle de fin de tour refuse
+sur des contrôles en échec, l'agent répond en une ligne, sans finir ce
+travail.
+
+À faire : rien ; le skill `socle-resume` est une copie protégée, dans la
+demande de l'installeur.
+
 ## 2026-11-23-e — socle consumption compte les messages que l'humain a tapés pendant une limite
 
 Dans sa section des fenêtres de cinq heures closes par un refus, `socle

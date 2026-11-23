@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0133 — Un tour ouvert pendant une limite quand l'agent attendait sans travailler n'est jamais relancé, et le réveil d'un tour interrompu bute sur un arbre rouge
 
-> statut : ouvert · origine : J-2026-11-08-M · lu : backlog@567e93bb
+> statut : fait · ref : J-2026-11-23-T · origine : J-2026-11-08-M · lu : backlog@567e93bb
 
 La règle de la reprise après une limite (ADR-0050) fait reprendre un agent
 coupé en travaillant. Elle laisse deux cas, relevés par la revue du lot de
@@ -34,4 +34,4 @@ pas repartie.
 
 ## Satisfait quand
 
-- [ ] un tour ouvert pendant une limite alors que l'agent attendait, et le réveil d'un tour que Théo a interrompu, se traitent selon une règle que Théo a validée, au lieu de rester sans relance ou de pousser l'agent à finir ce qu'il a interrompu
+- [x] un tour ouvert pendant une limite alors que l'agent attendait, et le réveil d'un tour que Théo a interrompu, se traitent selon une règle que Théo a validée, au lieu de rester sans relance ou de pousser l'agent à finir ce qu'il a interrompu

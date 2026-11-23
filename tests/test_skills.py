@@ -424,6 +424,34 @@ class TestLaReprise(unittest.TestCase):
                                                    [self.TAPE, self.SKILL_CHARGE, _resultat(0, "t", "x")]))
         self.assertEqual([h.isoformat() for h in conv.tapes], ["2026-11-23T19:13:35.823000+00:00"])
 
+    def test_l_attente_a_heure_bornee_et_le_reveil_d_un_travail_interrompu(self):
+        """T-0082 (B-0133, D-0163, ADR-0107) : une attente à heure bornée
+        garde ses réveils, repoussés après son heure, et un tour refusé
+        pendant elle se reprend ; au réveil qui ne reprend pas, un contrôle
+        de fin de tour en échec ne fait pas finir le travail interrompu."""
+        for lg, fin, non, apres, attente, reveil in (
+                ("fr", "## À la fin de chaque tour", "Ne pas reprendre", "\n3. ",
+                 ("sauf pendant un sous-agent, jusqu'au tour qui reçoit son résultat, ou une attente à heure bornée "
+                  "(un rappel, une commande en arrière-plan, une CI), jusqu'au tour de l'événement, chacun repoussé "
+                  "après cette heure s'il tombait avant : refusé, ce tour se reprend à la levée.",
+                  "Un tour coupé ou refusé ne retire rien"),
+                 "Si le contrôle de fin de tour refuse sur des contrôles en échec, répondre en une ligne que l'humain "
+                 "a interrompu ce travail, sans y toucher ; relancé sur le même arbre, il laisse conclure."),
+                ("en", "## At the end of every turn", "Do not resume", "\n3. ",
+                 ("except during a subagent, until the turn that receives its result, or a wait with a bounded time "
+                  "(a reminder, a background command, a CI), until the event's turn, each pushed back after that "
+                  "time if it fell before: refused, that turn resumes when the limit lifts.",
+                  "A turn cut off or refused removes nothing"),
+                 "If the end-of-turn check refuses on failing checks, answer in one line that the human interrupted "
+                 "this work, without touching it; relaunched on the same tree, it lets the turn conclude.")):
+            texte = self.lire(lg)
+            section = " ".join(texte.split(fin, 1)[1].split("\n## ", 1)[0].split())
+            for attendu in attente:
+                self.assertIn(attendu, section, lg)
+            # La règle de la réponse d'une ligne est un cas où l'agent ne reprend pas.
+            cas = " ".join(texte.split(non, 1)[1].split(apres, 1)[0].split())
+            self.assertIn(reveil, cas, lg)
+
     def test_les_reveils_d_une_session_archivee_se_disent_a_l_humain(self):
         """T-0127 (B-0301) : ils ne se désactivent qu'à sa demande, et il
         sait où les retrouver lui-même."""

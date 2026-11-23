@@ -8,9 +8,9 @@ description: Faire reprendre seul l'agent qu'une limite d'usage coupe, par deux 
 Une limite d'usage du compte, sur cinq heures ou sept jours, coupe la
 session ; l'agent ne reprend alors qu'au message suivant de l'humain. Deux
 réveils, messages que l'agent programme pour sa propre session, le font
-reprendre à la levée. Ils ne vivent que pendant un tour qui travaille :
-un tour qui finit autrement que sur une limite ne relance jamais l'agent.
-Chaque appel coûte de l'usage : quatre ou cinq par tour.
+reprendre à la levée. Ils ne vivent que pendant un tour qui travaille ou
+une attente à heure bornée : un tour qui finit autrement que sur une
+limite ne relance jamais l'agent.
 
 ## Quand
 
@@ -49,8 +49,7 @@ réveil et le réarmer à la borne.
 celui de cinq heures s'y repousse au début de chaque tour qui agit et au
 lancement d'un sous-agent (`run_once_at`, dans l'appel prévu). `list_triggers` retrouve les réveils.
 
-Leur texte porte le lot et les sous-agents en cours ; l'étape se retrouve
-dans la conversation, git, le chantier actif et les worktrees.
+Leur texte porte le lot et les sous-agents en cours :
 
 ```text
 Reprise après limite (<fenêtre>) — <dépôt>, branche <branche>.
@@ -71,8 +70,7 @@ Une fois, avant ou avec sa première action :
    `SESSION_STATUS_ARCHIVED`) se disent à l'humain avec leurs heures, et
    ne se désactivent (`update_trigger`, `enabled: false`) qu'à sa
    demande. Le tour qui s'ouvre, sur un message de l'humain comme sur un
-   réveil, fait siens les réveils laissés : la coupure qu'ils gardaient
-   est finie. Celui qu'il faut déplacer reçoit, dans un seul appel,
+   réveil, fait siens les réveils laissés. Celui qu'il faut déplacer reçoit, dans un seul appel,
    l'heure de ce tour et le texte de son lot (`update_trigger`, avec
    `run_once_at` et `prompt`) ; celui dont l'heure est bonne ne reçoit le
    texte, du même appel, que si le lot a changé.
@@ -84,15 +82,18 @@ Une fois, avant ou avec sa première action :
 
 Récrire le texte des deux réveils (`update_trigger`, avec `prompt`), une
 fois pour les sous-agents lancés ensemble, quand leurs identifiants sont
-connus. Un sous-agent qui rend ne demande rien : sa conversation le dit.
+connus.
 
 ## À la fin de chaque tour
 
-Avant la réponse finale, si aucun sous-agent ne tourne, retirer les deux
-réveils (`delete_trigger`) ; sinon les laisser jusqu'au tour qui reçoit
-son résultat. Un tour coupé ou refusé ne retire rien : c'est ce qui le
-fait reprendre. Si le tour continue après (un hook de fin de tour refuse
-de conclure), les réarmer.
+Avant la réponse finale, retirer les deux réveils (`delete_trigger`),
+sauf pendant un sous-agent, jusqu'au tour qui reçoit son résultat, ou une
+attente à heure bornée (un rappel, une commande en arrière-plan, une
+CI), jusqu'au tour de l'événement, chacun repoussé après cette heure
+s'il tombait avant : refusé, ce tour se reprend à la levée. Un tour
+coupé ou refusé ne retire rien : c'est ce qui le fait reprendre. Si le
+tour continue après (un hook de fin de tour refuse de conclure), les
+réarmer.
 
 ## Au réveil : vérifier d'abord
 
@@ -126,12 +127,14 @@ Un message qui commence par « Reprise après limite » :
 
    Répondre alors brièvement pourquoi, avec les lignes de fin du projet,
    et retirer le réveil restant, ou le laisser si un sous-agent tourne.
+   Si le contrôle de fin de tour refuse sur des contrôles en échec, répondre
+   en une ligne que l'humain a interrompu ce travail, sans y toucher ;
+   relancé sur le même arbre, il laisse conclure.
 3. Sinon, reprendre le lot noté, à l'étape que disent la conversation,
    git, le chantier actif et les worktrees. Chaque sous-agent noté dont le
    résultat n'est pas arrivé : le poursuivre par un message
    (`SendMessage`, à son identifiant) s'il répond encore, sinon le relancer
-   avec son message tel quel. Le réveil qui a tiré ne tirera plus : le
-   début du tour le réarme, comme sur « reprends ». Le récap le dit
+   avec son message tel quel. Le récap le dit
    (« Reprise après limite : coupé à <heure>, repris à <heure> » ; sans
    `list_events`, l'heure de la transcription, sinon « coupé à une heure
    inconnue »), et le journal aussi.

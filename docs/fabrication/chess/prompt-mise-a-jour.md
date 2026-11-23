@@ -184,6 +184,8 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 68. python3 .socle/socle consumption dit, dans sa section des fenêtres de cinq heures closes par un refus, combien de messages j'ai tapés entre le refus et la levée de la limite (note 2026-11-23-e). Rien à faire ; dans le rapport de l'étape 61, s'il a cette ligne, recopie-la.
 
+69. Le skill socle-resume couvre deux cas de plus (note 2026-11-23-f) : un tour qui finit en attendant un événement dont tu connais l'heure au plus tard (ton rappel, une commande en arrière-plan, une CI) garde ses deux réveils, repoussés après cette heure, et un réveil d'un travail que j'ai interrompu ne te fait pas le finir, même si le hook de fin de tour refuse sur des contrôles en échec. Rien à faire ; si un réveil tire pendant une telle attente, dis-le-moi.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.
