@@ -77,7 +77,7 @@ Mets à jour le socle de ce dépôt depuis son dépôt public, sans ajouter ce d
 
 18. L'état ne te demande plus de supprimer une branche distante que GitHub n'a plus : il vérifie sur l'origine celles qu'il propose ; si l'origine ne répond pas, il dit que sa liste vient du dernier fetch, et git fetch --prune origin la rafraîchit.
 
-Pas encore faits, inutile de les signaler de nouveau : l'installeur muet sur une adoption déjà vide et le diff de politique réaffiché (tes gênes 1 et 5), le coût de la relecture à froid (7), la reprise sans list_events (8).
+Tes gênes 1, 5, 7 et 8 du 13 novembre sont traitées : points 57, 56, 63 et 64.
 
 Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : poussée seule, ma réponse ne couvre pas le changement qui la suit ; le push de ce changement reste refusé, et ma réponse se consigne alors une seconde fois.
 
@@ -170,6 +170,8 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 62. En session cloud, le démarrage partage désormais son délai par une règle écrite : le complément de l'historique d'abord, 120 secondes au plus, les outils de l'adaptateur ensuite ; un échec de l'historique se note pour le conteneur, et le démarrage suivant ne le retente que 15 secondes (note 2026-11-22-h). Rien à faire ; si le démarrage dit encore « !! clone superficiel », lance la commande qu'il donne avant de commiter, comme à l'étape 1.
 
 63. Le skill socle-request, copie protégée dans la demande de l'installeur, borne le relecteur à froid d'une demande : une réponse en un seul message, sans outil (note 2026-11-22-j). Pour la demande de l'étape 5, si tu la fais relire à froid, dis-moi combien d'outils son relecteur a lancés, et combien de jetons il a lus.
+
+64. Le skill socle-resume, copie protégée dans la demande de l'installeur : dans une session sans list_events, comme la tienne, la vérification au réveil lit ta transcription locale, le .jsonl le plus récent du projet sous ~/.claude/projects/ ; un enregistrement quotaLimits y dit que le tour d'avant a fini sur une limite, et à quelle heure (note 2026-11-23-a). C'est ta gêne 8 : si un réveil te fait reprendre après la mise à jour, dis-moi si ton récap a pu donner l'heure de la coupure.
 
 ## La mise à jour
 
