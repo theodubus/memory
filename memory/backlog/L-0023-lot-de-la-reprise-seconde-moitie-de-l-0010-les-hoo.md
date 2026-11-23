@@ -18,3 +18,7 @@ Commits : 74c372d1..5e121895
 - Bloquant : le découpage de T-0114 oubliait la copie de `socle-resume` que change T-0081
 - Bloquant : le test de T-0164 admettait `origin.kind`, que `socle consumption` ne lisait pas
 - Ouvre : B-0337, T-0166, T-0168, B-0338, T-0167
+
+### Passe 2 — 2026-11-23
+
+Commits : 5e121895..d8d859fd
