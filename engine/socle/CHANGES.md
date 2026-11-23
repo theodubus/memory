@@ -15,6 +15,32 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-23-d — La reprise dit à l'humain les réveils qu'une session archivée a laissés
+
+Le skill `socle-resume` lit les tâches programmées au premier tour d'une
+session, comme après un compactage. Les réveils de reprise d'une
+session archivée du même dépôt, qui tireraient pour rien, se disent à
+l'humain avec leurs heures ; l'agent ne les désactive qu'à sa demande.
+Le skill dit où l'humain retrouve lui-même ces tâches : la liste des
+tâches programmées de son compte, claude.ai/code/routines.
+
+À faire : rien ; le skill `socle-resume` est une copie protégée, dans la
+demande de l'installeur.
+
+## 2026-11-23-c — Sans list_events, la coupure lue dans la transcription est le premier refus après le dernier appel du modèle
+
+Le skill `socle-resume` précise la lecture de la transcription locale
+quand la session n'a pas l'outil `list_events`. Plusieurs refus peuvent
+se suivre : la coupure est le premier enregistrement `quotaLimits` qui
+suit le dernier appel du modèle, et tout message tapé par l'humain
+ensuite compte, même suivi d'un autre refus. Un message tapé se
+reconnaît à `origin.kind`, qui vaut `human`. Une transcription qui n'a
+pas le tour d'avant, celle d'un conteneur remplacé, vaut absence de
+transcription : la conversation décide.
+
+À faire : rien ; le skill `socle-resume` est une copie protégée, dans la
+demande de l'installeur.
+
 ## 2026-11-23-b — Le démarrage ne dit plus débranchés des hooks git désignés par leur chemin absolu
 
 Le démarrage disait « hooks git non branchés » quand `core.hooksPath`

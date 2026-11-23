@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0301 — Le skill socle-resume ne dit pas quoi faire des réveils qu'une session archivée du même dépôt a laissés sur le même lot
 
-> statut : ouvert · origine : J-2026-11-19-AI · lu : backlog@c8897434
+> statut : fait · ref : J-2026-11-23-P · origine : J-2026-11-19-AI · lu : backlog@c8897434
 
 Vu en ouvrant L-0019 le 19 novembre (J-2026-11-19-AI). Théo avait lancé
 une session sur le lot, puis une seconde, avant que la précédente ait
@@ -22,4 +22,4 @@ le skill le dit, et dit où l'humain les retrouve lui-même.
 
 ## Satisfait quand
 
-- [ ] une session qui trouve les réveils de reprise d'une session archivée du même dépôt le dit à l'humain et ne les désactive qu'à sa demande, comme le skill `socle-resume` le décrit
+- [x] une session qui trouve les réveils de reprise d'une session archivée du même dépôt le dit à l'humain et ne les désactive qu'à sa demande, comme le skill `socle-resume` le décrit

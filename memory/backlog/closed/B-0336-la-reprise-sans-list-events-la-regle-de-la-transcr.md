@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0336 — La reprise sans list_events : la règle de la transcription laisse trois cas ouverts, et son test ne la prouve pas
 
-> statut : ouvert · origine : J-2026-11-23-G · lu : backlog@4c7b474a
+> statut : fait · ref : J-2026-11-23-O · origine : J-2026-11-23-G · lu : backlog@4c7b474a
 
 Relevé par la passe 1 de la revue de L-0010, le 23 novembre, sur la
 règle que T-0040 a donnée au skill `socle-resume` : sans `list_events`,
@@ -34,4 +34,4 @@ dedans.
 
 ## Satisfait quand
 
-- [ ] sans `list_events`, la reprise ne reprend jamais par-dessus un message tapé pendant la limite que la transcription montre, ni ne renonce sur une transcription qui n'a pas le tour d'avant, et un test le prouve
+- [x] sans `list_events`, la reprise ne reprend jamais par-dessus un message tapé pendant la limite que la transcription montre, ni ne renonce sur une transcription qui n'a pas le tour d'avant, et un test le prouve

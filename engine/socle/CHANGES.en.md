@@ -14,6 +14,32 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-23-d — The resumption tells the human the wake-ups an archived session left
+
+The `socle-resume` skill reads the scheduled tasks at a session's first
+turn, as after a compaction. The resume wake-ups of an archived session
+of the same repository, which would fire for nothing, are told to the
+human with their times; the agent disables them only at their request.
+The skill says where the human finds these tasks themselves: the list
+of scheduled tasks of their account, claude.ai/code/routines.
+
+To do: nothing; the `socle-resume` skill is a protected copy, in the
+installer's request.
+
+## 2026-11-23-c — Without list_events, the cut read in the transcript is the first refusal after the model's last call
+
+The `socle-resume` skill makes the reading of the local transcript more
+precise when the session lacks the `list_events` tool. Several refusals
+can follow one another: the cut is the first `quotaLimits` record that
+follows the model's last call, and every message the human typed after
+it counts, even if another refusal follows. A typed message is
+recognised by `origin.kind`, set to `human`. A transcript without the
+previous turn, that of a replaced container, counts as no transcript:
+the conversation decides.
+
+To do: nothing; the `socle-resume` skill is a protected copy, in the
+installer's request.
+
 ## 2026-11-23-b — The startup no longer calls git hooks unwired when their absolute path designates them
 
 The startup said “git hooks not wired” when `core.hooksPath`

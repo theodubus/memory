@@ -1,6 +1,6 @@
 ---
 name: socle-resume
-description: Faire reprendre seul l'agent qu'une limite d'usage coupe, par deux réveils programmés sur sa propre session, armés une fois par tour, sans jamais relancer un agent que rien n'a coupé. À utiliser dans une session cloud de Claude Code, au début et à la fin de chaque tour où l'agent agit, au lancement d'un sous-agent, et quand un message commence par « Reprise après limite ».
+description: Faire reprendre seul l'agent qu'une limite d'usage coupe, par deux réveils sur sa propre session, sans jamais relancer un agent que rien n'a coupé. À utiliser en session cloud de Claude Code, au début et à la fin de chaque tour où l'agent agit, au lancement d'un sous-agent, et quand un message commence par « Reprise après limite ».
 ---
 
 # La reprise après une limite d'usage
@@ -16,9 +16,10 @@ Chaque appel coûte de l'usage : quatre ou cinq par tour.
 
 Dans une session cloud de Claude Code seulement, où existent les outils
 `send_later`, `update_trigger`, `delete_trigger`, `list_triggers` et
-`get_session` (serveur `claude-code-remote`). Ailleurs, ce skill ne
-s'applique pas. Une réponse en texte seul n'arme rien ; un tour où l'agent
-lance une commande, écrit un fichier ou lance un sous-agent arme.
+`get_session`. Ailleurs, ce skill ne s'applique pas. Une réponse en texte
+seul n'arme rien, et retire les réveils laissés par un tour d'avant ; un
+tour où l'agent lance une commande, écrit un fichier ou lance un
+sous-agent arme.
 Un sous-agent ne touche à aucun réveil : ni armer, ni déplacer, ni retirer.
 
 ## Les deux réveils
@@ -37,24 +38,19 @@ récent, `rate_limit_info.unifiedWindows.five_hour.resetsAt` et
 tôt, encore à venir, vaut : on ne la relit pas.
 
 **Jamais dans le passé.** Un réveil armé à une heure passée se déclenche
-aussitôt. L'heure courante se lit par `date -u` (dans la première commande
-du tour) ; `send_later` la rend aussi (`now`). Une remise à zéro lue qui
-n'est pas à plus d'une minute dans l'avenir date d'une fenêtre close : le
+aussitôt. L'heure courante : `date -u`, dans la première commande du
+tour, ou le `now` que rend `send_later`. Une remise à zéro lue qui n'est
+pas à plus d'une minute dans l'avenir date d'une fenêtre close : le
 réveil s'arme alors à la borne, maintenant plus cinq heures et cinq
-minutes pour la fenêtre de cinq heures, plus sept jours et cinq minutes
-pour la semaine, tard mais jamais à tort. Un résultat de `send_later` dont
-l'heure armée précède `now` : retirer ce réveil et le réarmer à la borne.
+minutes, ou sept jours et cinq minutes pour la semaine. Un `send_later` dont l'heure armée précède son `now` : retirer ce
+réveil et le réarmer à la borne.
 
 **Sans l'outil `list_events`**, chaque réveil s'arme à la borne, et
-celui de cinq heures, dont la fenêtre a commencé on ne sait quand, s'y
-repousse au début de chaque tour qui agit et au lancement d'un sous-agent
-(`run_once_at`, dans l'appel prévu). Si une fenêtre a recommencé
-entre ce report et la coupure, il tire trop tôt et se perd.
-`list_triggers` retrouve les réveils.
+celui de cinq heures s'y repousse au début de chaque tour qui agit et au
+lancement d'un sous-agent (`run_once_at`, dans l'appel prévu). `list_triggers` retrouve les réveils.
 
-Leur texte porte ce que l'agent ne retrouve pas ailleurs : le lot et les
-sous-agents en cours. L'étape se retrouve dans sa conversation, git,
-le chantier actif et les worktrees.
+Leur texte porte le lot et les sous-agents en cours ; l'étape se retrouve
+dans la conversation, git, le chantier actif et les worktrees.
 
 ```text
 Reprise après limite (<fenêtre>) — <dépôt>, branche <branche>.
@@ -68,16 +64,18 @@ Sous-agents en cours : <chacun : son identifiant, sa tâche, ce qu'il doit rendr
 Une fois, avant ou avec sa première action :
 
 1. Les réveils laissés par un tour d'avant, sa conversation les montre,
-   avec leur `trigger_id` (perdus par un compactage : `list_triggers`
-   avec `enabled: true` et `limit: 100`, ceux de ces deux noms dont
-   `persistent_session_id` est cette session). Le tour qui s'ouvre,
-   sur un message de l'humain comme sur un réveil, les fait siens : la
-   coupure qu'ils gardaient est finie ; un réveil d'une fenêtre écoulée,
-   ou au texte d'un autre lot, relancerait l'agent à tort. Celui qu'il
-   faut déplacer reçoit, dans un seul appel, l'heure de ce tour et le
-   texte de son lot (`update_trigger`, avec `run_once_at` et `prompt`) ;
-   celui dont l'heure est bonne ne reçoit le texte, du même appel, que si
-   le lot a changé.
+   avec leur `trigger_id`. Au premier tour de la session, ou perdus par
+   un compactage : `list_triggers` avec `enabled: true` et `limit: 100` ;
+   ceux de ces deux noms dont `persistent_session_id` est cette session
+   sont les siens. Ceux d'une session archivée (`get_session` :
+   `SESSION_STATUS_ARCHIVED`) se disent à l'humain avec leurs heures, et
+   ne se désactivent (`update_trigger`, `enabled: false`) qu'à sa
+   demande. Le tour qui s'ouvre, sur un message de l'humain comme sur un
+   réveil, fait siens les réveils laissés : la coupure qu'ils gardaient
+   est finie. Celui qu'il faut déplacer reçoit, dans un seul appel,
+   l'heure de ce tour et le texte de son lot (`update_trigger`, avec
+   `run_once_at` et `prompt`) ; celui dont l'heure est bonne ne reçoit le
+   texte, du même appel, que si le lot a changé.
 2. Le réveil qui manque s'arme : `send_later`, avec `at` (la remise à
    zéro plus cinq minutes, jamais dans le passé), `name` et `message`.
    Jamais deux réveils de la même fenêtre.
@@ -94,8 +92,7 @@ Avant la réponse finale, si aucun sous-agent ne tourne, retirer les deux
 réveils (`delete_trigger`) ; sinon les laisser jusqu'au tour qui reçoit
 son résultat. Un tour coupé ou refusé ne retire rien : c'est ce qui le
 fait reprendre. Si le tour continue après (un hook de fin de tour refuse
-de conclure), les réarmer. Un tour en texte seul retire de même les
-réveils laissés par un tour d'avant.
+de conclure), les réarmer.
 
 ## Au réveil : vérifier d'abord
 
@@ -109,13 +106,15 @@ Un message qui commence par « Reprise après limite » :
    tapé, ni un résultat d'outil, ni un réveil, ni une notification ; un
    message de reprise de l'application (`text_not_typed`) vaut « reprends ».
    **Sans `list_events`**, la transcription locale le dit : le `.jsonl`
-   le plus récent du projet sous `~/.claude/projects/`, où un
-   enregistrement `quotaLimits` clôt un tour coupé, à son `timestamp`, et
-   où les `user` de texte tapé qui suivent sont de l'humain. Sans
-   transcription, la conversation : le tour d'avant coupé net, sans récap
-   ni interruption ni message de l'humain depuis, l'agent reprend ;
-   sinon, non. Un message refusé pendant la limite peut y manquer : la
-   première réponse le dit en tête, que l'humain le répète.
+   le plus récent du projet sous `~/.claude/projects/`, lu par sa fin
+   (`tail`). La coupure est le premier enregistrement `quotaLimits` qui
+   suit le dernier appel du modèle, à son `timestamp` ; tout `user` tapé
+   (`origin.kind` à `human`) qui la suit est de l'humain, même suivi d'un
+   autre refus. Sans transcription, ou sans le tour d'avant (un conteneur
+   remplacé), la conversation : le tour d'avant coupé net, sans récap ni
+   interruption ni message de l'humain depuis, l'agent reprend ; sinon,
+   non. Un message refusé pendant la limite peut y manquer : la première
+   réponse le dit en tête, que l'humain le répète.
 2. Ne pas reprendre :
    - si le tour d'avant n'a pas fini sur une limite (l'humain l'a
      interrompu, ou il a fini normalement) ;
@@ -139,9 +138,7 @@ Un message qui commence par « Reprise après limite » :
 
 ## Ce que l'agent ne fait jamais
 
-Armer un réveil récurrent, dans le passé, ou hors d'un tour où il agit ;
-le récrire à chaque étape ; reprendre sans la vérification ; garder un
-réveil à la fin d'un tour sans sous-agent en cours ; toucher au réveil
-d'une autre session. L'humain arrête tout en écrivant « arrête » dans la
-session, ou supprime les réveils de la liste des tâches programmées de
-son compte.
+Armer un réveil récurrent ; récrire un réveil à chaque étape ; toucher au
+réveil d'une autre session sans que l'humain le demande. L'humain arrête
+tout en écrivant « arrête » dans la session, ou supprime les réveils de
+la liste des tâches programmées de son compte (claude.ai/code/routines).
