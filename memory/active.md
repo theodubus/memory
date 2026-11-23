@@ -5,7 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-JA-0005 : la suggestion 2 de la revue de cap 3 attend Théo.
+JA-0005 : L-0010 ensuite, en session neuve.
 
 ## Consignes en cours
 
