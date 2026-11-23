@@ -339,6 +339,25 @@ class TestLaReprise(unittest.TestCase):
             self.assertIn(au_reveil, section, lg)
             self.assertIn(inconnue, section, lg)
 
+    def test_sans_list_events_la_transcription_locale_dit_la_coupure(self):
+        # B-0198, T-0040 : sans list_events, la transcription que Claude
+        # Code tient pour le projet dit si le tour d'avant a fini sur une
+        # limite (l'enregistrement qui porte quotaLimits), à quelle heure,
+        # et quels messages l'humain a tapés depuis ; sans elle, la
+        # conversation seule le dit, et l'heure reste inconnue.
+        for lg, au_reveil, reveil, sinon, heure in (
+                ("fr", "**Sans `list_events`**", "## Au réveil", "Sans transcription",
+                 "l'heure de la transcription"),
+                ("en", "**Without `list_events`**", "## On waking", "Without a transcript",
+                 "the time from the transcript")):
+            section = " ".join(self.lire(lg).split(reveil, 1)[1].split("\n## ", 1)[0].split())
+            regle = section.split(au_reveil, 1)[1].split(" 2. ", 1)[0]
+            for attendu in ("~/.claude/projects/", "`quotaLimits`", "`timestamp`", "`user`"):
+                self.assertIn(attendu, regle, (lg, attendu))
+            # la transcription d'abord, la conversation à défaut
+            self.assertLess(regle.index("`quotaLimits`"), regle.index(sinon), lg)
+            self.assertIn(heure, section, lg)
+
     def test_un_sous_agent_ne_touche_a_aucun_reveil(self):
         for lg, regle in (("fr", "Un sous-agent ne touche à aucun réveil"), ("en", "A subagent\ntouches no wake-up")):
             self.assertIn(regle, self.lire(lg), lg)
