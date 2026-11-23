@@ -5,7 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-JA-0005 : L-0009 clos, #81 à fusionner ; la revue de cap 3.
+JA-0005 : L-0010 ensuite, en session neuve.
 
 ## Consignes en cours
 

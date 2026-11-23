@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0159-la-suggestion-2-de-la-revue-de-cap-3-les-besoins-d.md, dont l'empreinte suit.
+reponse = "ecarter"
+texte = ""
+par = "Théo"
+date = "2026-11-23"
+canal = "conversation"
+citation = "Ok ecarter"
+empreinte = "sha256:73b5b9960e2a9605011e36419db0f269d0b7cfc0c2c39bd7b1f18f58fb79b3c3"
