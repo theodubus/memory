@@ -1362,6 +1362,44 @@ class TestHistoriqueEnSessionCloud(unittest.TestCase):
         git(self.clone, "fetch", "--quiet", "--unshallow")
         self.assertFalse(self.superficiel())
 
+    def delai_du_fetch(self, fin: float, marque: bool = False) -> float:
+        """Le délai que `completer_historique` passe au fetch, lu sur un fetch
+        factice qui réussit aussitôt ; le reste de git est le vrai."""
+        if marque:
+            chemin = config.chemin_trace(self.clone).parent / "historique-echoue"
+            chemin.parent.mkdir(parents=True, exist_ok=True)
+            chemin.write_text("!! clone superficiel\n", encoding="utf-8")
+        delais, vrai = [], subprocess.Popen
+
+        class Fetch:
+            returncode = 0
+
+            def communicate(self, timeout=None):
+                delais.append(timeout)
+                return "", ""
+
+        def popen(args, *a, **k):
+            return Fetch() if list(args[:2]) == ["git", "fetch"] else vrai(args, *a, **k)
+
+        with unittest.mock.patch.dict("os.environ", {hooks.SESSION_CLOUD: "true"}), \
+                unittest.mock.patch.object(hooks.subprocess, "Popen", popen):
+            lignes = hooks.completer_historique(self.clone, fin)
+        self.assertIn("historique du clone complété", lignes[0])
+        (delai,) = delais
+        return delai
+
+    def test_au_premier_demarrage_le_fetch_recoit_ses_120_secondes(self):
+        """T-0158 (B-0331, ADR-0105) : sans marque d'échec, le fetch reçoit
+        120 secondes, ou le reste du délai du démarrage s'il est moindre ; le
+        délai court de la reprise y laisserait superficiel tout clone dont
+        l'historique prend plus de 15 secondes."""
+        self.assertEqual((hooks.DELAI_HISTORIQUE, hooks.DELAI_HISTORIQUE_REPRISE), (120, 15))
+        self.assertEqual(self.delai_du_fetch(time.monotonic() + hooks.DELAI_DEMARRAGE), 120)
+        reste = self.delai_du_fetch(time.monotonic() + 50)
+        self.assertTrue(45 < reste <= 50, reste)
+        # Le délai court n'est que celui d'un démarrage marqué.
+        self.assertEqual(self.delai_du_fetch(time.monotonic() + hooks.DELAI_DEMARRAGE, marque=True), 15)
+
     def test_un_code_non_nul_ne_se_repaie_pas_non_plus(self):
         """T-0078 : un fetch qui a rendu un code non nul se marque de même ; le
         démarrage suivant, où l'origine répond mais pend, ne lui redonne pas
