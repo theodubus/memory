@@ -5,7 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-JA-0005 : L-0010 ensuite, en session neuve.
+JA-0005 : L-0010 en pause jusqu'à E2 ; L-0023 avant ; prompt à copier
+(J-2026-11-23-L).
 
 ## Consignes en cours
 
@@ -24,8 +25,8 @@ Leur texte exact est dans l'entrée du journal citée.
   (J-2026-11-13-F) ; un sujet important se garde (J-2026-11-14-K).
 - Un lot par session ; sinon tout se range pour une session neuve, qui
   peut être sur un autre compte, avec son prompt (J-2026-11-12-P).
-- Chaque session travaille sur la branche de son environnement, partie
-  de la branche par défaut (J-2026-11-13-A).
+- Chaque session sur la branche de son environnement, partie de celle
+  par défaut (J-2026-11-13-A).
 - Aucun autre dépôt dans la session, ni lecture de JustCook ou de
   `theodubus/socle` ; donner leurs liens reste permis (J-2026-11-09-M).
 - Le pilote est un essai de choc : seules les imperfections du socle se
@@ -43,11 +44,11 @@ Leur texte exact est dans l'entrée du journal citée.
 - « Pour toi » ne contient que les gestes de Théo, chacun compréhensible
   seul (ce que c'est, pourquoi, ce que change sa réponse) ; ce que
   l'agent fera se dit à part (J-2026-10-31-S, J-2026-10-14-F).
-- Les heures à Théo, à l'heure de Paris (J-2026-10-14-G).
+- Les heures à Théo, heure de Paris (J-2026-10-14-G).
 - Une branche à supprimer se vérifie sur GitHub (B-0193).
-- Un autre dépôt se clone hors du dossier des dépôts de la session, sans
-  être déclaré racine ; à chaque reprise, vérifier que l'état a été
-  injecté, sinon le dire et ne rien pousser (J-2026-10-14-S).
+- Un autre dépôt se clone hors du dossier de la session, sans être
+  déclaré racine ; à chaque reprise, vérifier que l'état est injecté,
+  sinon le dire et ne rien pousser (J-2026-10-14-S).
 - Pas de rétro-compatibilité avec une version antérieure du socle
   (J-2026-10-19-A).
 - Le but : un produit pratique qui réunit les avantages du socle et ceux

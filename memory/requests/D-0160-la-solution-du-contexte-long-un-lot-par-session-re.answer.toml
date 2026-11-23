@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0160-la-solution-du-contexte-long-un-lot-par-session-re.md, dont l'empreinte suit.
+reponse = "contexte-insuffisant"
+texte = ""
+par = "Théo"
+date = "2026-11-23"
+canal = "conversation"
+citation = "Contexte insuffisant D160"
+empreinte = "sha256:b998eb8ed9d250b417884720745a109f505dbf8fb165e8f35573c5ddc7a57862"

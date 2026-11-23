@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0161-un-commutateur-entre-la-session-creee-par-l-agent.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-23"
+canal = "conversation"
+citation = "Je comprends pas non plus la d0160, il me semble qu'on avait parlé d'un commutateur pour switch entre session crée par l'agent et prompt a copier (pour enchaîner par defaut et pouvoir copier coller dans le cas de quelqu'un ayant plusieurs comptes ou souhaitant controler l'enchaînement de sessions)"
+empreinte = "sha256:4cff9bd997aae6da2fb01b54b806a8dc341dbf232c7d19f08e030403cffee1ff"
