@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0252 — Le démarrage dit les hooks git débranchés quand core.hooksPath désigne .socle/git-hooks par un chemin absolu, comme après le redémarrage d'un conteneur cloud
 
-> statut : ouvert · origine : J-2026-11-16-A · priorité : basse · lu : backlog@6e47a32f
+> statut : fait · ref : J-2026-11-23-N · origine : J-2026-11-16-A · priorité : basse · lu : backlog@6e47a32f
 
 Le 16 novembre, à la reprise d'une session cloud dont le conteneur avait
 redémarré (J-2026-11-16-A), le démarrage a dit « hooks git non
@@ -21,4 +21,4 @@ worktree reste un choix local, signalé.
 
 ## Satisfait quand
 
-- [ ] au redémarrage d'un conteneur cloud, le démarrage ne dit plus débranchés des hooks git qui tirent
+- [x] au redémarrage d'un conteneur cloud, le démarrage ne dit plus débranchés des hooks git qui tirent

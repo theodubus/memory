@@ -15,6 +15,17 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-23-b — Le démarrage ne dit plus débranchés des hooks git désignés par leur chemin absolu
+
+Le démarrage disait « hooks git non branchés » quand `core.hooksPath`
+désignait les hooks du socle par le chemin absolu de `.socle/git-hooks`
+à la racine du projet, comme on l'a vu après le redémarrage d'un
+conteneur cloud, alors qu'ils tiraient. Il les tient désormais pour
+branchés. Un autre chemin, ceux d'un autre worktree compris, reste un
+choix local : le démarrage le signale toujours, sans le récrire.
+
+À faire : rien.
+
 ## 2026-11-23-a — Sans list_events, la reprise lit dans la transcription locale si la session a été coupée par une limite
 
 Le skill `socle-resume` donne au réveil une source de plus quand la

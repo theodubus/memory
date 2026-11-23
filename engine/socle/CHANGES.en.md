@@ -14,6 +14,17 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-23-b — The startup no longer calls git hooks unwired when their absolute path designates them
+
+The startup said “git hooks not wired” when `core.hooksPath`
+designated the socle's hooks by the absolute path of `.socle/git-hooks`
+at the project root, as seen after a cloud container restarted, even
+though they fired. It now holds them wired. Any other path,
+another worktree's included, remains a local choice: the startup still
+reports it, without rewriting it.
+
+To do: nothing.
+
 ## 2026-11-23-a — Without list_events, the resumption reads in the local transcript whether a limit cut the session off
 
 The `socle-resume` skill gives the wake-up one more source when the

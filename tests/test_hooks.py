@@ -525,6 +525,52 @@ class TestHooksAbsents(unittest.TestCase):
         self.assertIsNone(hooks.hooks_absents(projet, self.message(session)))
 
 
+class TestHooksGitAuDemarrage(unittest.TestCase):
+    """B-0252 : après le redémarrage d'un conteneur cloud, `core.hooksPath`
+    valait le chemin absolu de `<racine>/.socle/git-hooks`, et le démarrage
+    disait débranchés des hooks qui tiraient ; un chemin vers les hooks d'un
+    autre worktree reste un choix local, signalé."""
+
+    def setUp(self):
+        self.dossier = Path(tempfile.mkdtemp(prefix="socle-hookspath-"))
+        self.addCleanup(shutil.rmtree, self.dossier, ignore_errors=True)
+        self.racine, self.autre = self.dossier / "projet", self.dossier / "autre"
+        self.racine.mkdir()
+        git(self.racine, "init", "-q", "-b", "main")
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(self.racine, "python-pytest", "@essai", source=MOTEUR)
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "socle", "--no-verify")
+        # Un worktree partage la configuration de son dépôt.
+        git(self.racine, "worktree", "add", "-q", str(self.autre))
+
+    def chemin(self) -> str:
+        return git(self.racine, "config", "--get", "core.hooksPath").strip()
+
+    def demarrer(self) -> str:
+        with unittest.mock.patch.dict("os.environ", {hooks.SESSION_CLOUD: ""}), \
+                contextlib.redirect_stdout(io.StringIO()) as sortie:
+            hooks.session_start(config.Projet.charger(self.racine), {})
+        return sortie.getvalue()
+
+    def test_le_chemin_absolu_des_hooks_de_la_racine_les_dit_branches(self):
+        self.assertEqual(self.chemin(), ".socle/git-hooks")
+        absolu = str((self.racine / ".socle/git-hooks").resolve())
+        git(self.racine, "config", "core.hooksPath", absolu)
+        self.assertTrue(hooks.installer_hooks_git(self.racine))
+        self.assertEqual(self.chemin(), absolu)  # rien n'est récrit
+        self.assertNotIn("hooks git non branchés", self.demarrer())
+
+    def test_le_chemin_absolu_des_hooks_d_un_autre_worktree_reste_signale(self):
+        ailleurs = str((self.autre / ".socle/git-hooks").resolve())
+        git(self.racine, "config", "core.hooksPath", ailleurs)
+        self.assertFalse(hooks.installer_hooks_git(self.racine))
+        self.assertEqual(self.chemin(), ailleurs)  # le choix local reste
+        self.assertIn("!! hooks git non branchés : `git config core.hooksPath .socle/git-hooks`", self.demarrer())
+        # Depuis l'autre worktree, ce sont les siens.
+        self.assertTrue(hooks.installer_hooks_git(self.autre))
+
+
 class TestCorrectifSansTest(Projet):
     """B-0024 : un correctif sans test de régression n'était vu qu'en CI ; le
     hook commit-msg le dit dès le commit, quand l'amender suffit encore."""
