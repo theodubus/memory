@@ -8,3 +8,9 @@ Coupé de L-0010 à la formation des lots qui manquent à JA-0005, le 21 novembr
 Le 23 novembre, sur D-0158 (J-2026-11-23-E) : T-0158, le test du délai du premier démarrage (B-0331, `tests/test_hooks.py`), née de la revue de L-0009 ; la règle du lot, le démarrage du conteneur, s'applique à elle.
 
 Le 23 novembre, la passe 1 de la revue de L-0010 y fait entrer T-0164, la règle de la transcription au réveil précisée (B-0336) : la règle du lot, la reprise, s'applique à elle.
+
+## Revues
+
+### Passe 1 — 2026-11-23
+
+Commits : 74c372d1..5e121895
