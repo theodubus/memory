@@ -5,7 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-JA-0005 en 14 lots (D-0154) : L-0009, à clore.
+JA-0005 : L-0009 clos, #81 à fusionner ; la revue de cap 3.
 
 ## Consignes en cours
 
