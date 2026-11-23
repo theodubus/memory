@@ -202,6 +202,27 @@ class TestLesDemandes(unittest.TestCase):
                 self.assertIn(phrase, texte, lg)
             self.assertNotIn(ancien, texte, lg)
 
+    def test_le_relecteur_a_froid_repond_en_un_message_sans_outil(self):
+        """T-0034 (B-0197) : mesuré, il ne lit rien hors de son dossier et ne
+        coûte que le prix fixe d'un sous-agent ; le skill borne ce qu'il
+        reçoit et ce qu'il fait, et un outil lancé se dit."""
+        attendus = {
+            "fr": ("sans lien ni fichier, et rend", [
+                "dont le seul message est le dossier",
+                "et rend en un seul message, sans lancer d'outil, ce qu'il en a compris",
+                "Un compte rendu qui compte un outil lancé dit une lecture qui n'était pas à froid : le récap le "
+                "dit."]),
+            "en": ("with no link and no file, and returns", [
+                "whose only message is the brief",
+                "and returns in a single message, launching no tool, what it understood",
+                "A report that counts a tool launched means a reading that was not cold: the recap says so."]),
+        }
+        for lg, (ancien, phrases) in attendus.items():
+            texte = self.texte(lg)
+            for phrase in phrases:
+                self.assertIn(phrase, texte, lg)
+            self.assertNotIn(ancien, texte, lg)
+
     def test_une_decision_donnee_sans_question_se_consigne_par_unprompted(self):
         """T-0017 (B-0185) : sans question inventée ni réponse à choisir."""
         attendus = {"fr": "--unprompted --relayed --by <nom> --quote-file <fichier>",

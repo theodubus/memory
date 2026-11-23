@@ -118,7 +118,10 @@ class TestNotesNouvelles(unittest.TestCase):
         self.assertEqual(installeur.fichier_des_notes(PAQUET, "de").name, "CHANGES.md")
 
     def test_le_texte_dit_quoi_en_faire(self):
-        notes = installeur.notes_nouvelles(set(), PAQUET)
+        # Les notes qui demandent quelque chose : une note qui ne demande rien
+        # ne s'imprime que par son titre (T-0121), et la plus récente peut
+        # être de celles-là.
+        notes = [n for n in installeur.notes_nouvelles(set(), PAQUET) if not installeur.ne_demande_rien(n[1])]
         texte = installeur.texte_des_notes(notes[:1], ".socle/engine/socle/CHANGES.md", toutes=False)
         self.assertIn("1 entrée(s) que la copie du moteur remplacée n'avait pas", texte)
         self.assertIn("faire ce que chacune demande", texte)

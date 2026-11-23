@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0197 — La relecture à froid d'une demande coûte 130 000 jetons
 
-> statut : ouvert · origine : J-2026-11-13-D · lu : backlog@43666d5c
+> statut : fait · origine : J-2026-11-13-D · ref : J-2026-11-22-P, T-0034 · lu : backlog@43666d5c
 
 Relevé à la mise à jour du socle sur chess, le 13 novembre
 (`docs/fabrication/chess/mise-a-jour-2026-11-13.md`, gêne 7).
@@ -15,4 +15,4 @@ d'un lot (`docs/fabrication/consommation.md`).
 
 ## Satisfait quand
 
-- [ ] la relecture à froid d'une demande coûte nettement moins qu'une revue de lot : ce qu'elle lit est borné à ce qui sert
+- [x] la relecture à froid d'une demande coûte nettement moins qu'une revue de lot : ce qu'elle lit est borné à ce qui sert

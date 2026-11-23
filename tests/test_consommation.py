@@ -1,19 +1,28 @@
-"""La mesure de la consommation d'une session (B-0173), sur une transcription
-fabriquée ici : aucun contenu réel de transcription n'entre dans le dépôt."""
+"""La mesure de la consommation d'une session (B-0173), entrée dans le
+moteur sous `socle consumption` (B-0201), sur une transcription fabriquée
+ici : aucun contenu réel de transcription n'entre dans le dépôt.
 
+Le module s'importe sous `conso` : les tests venus de l'outil de l'atelier
+gardent leur texte, et `tests.attendus` les reconnaît déplacés tels quels."""
+
+import argparse
 import contextlib
 import io
 import json
+import os
+import re
+import subprocess
 import sys
 import tempfile
 import unittest
+import unittest.mock
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-RACINE = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(RACINE / "bench"))
+from socle import cli, messages
+from socle import consumption as conso
 
-import consumption as conso  # noqa: E402
+RACINE = Path(__file__).resolve().parent.parent
 
 T0 = datetime(2026, 11, 12, 10, 0, tzinfo=timezone.utc)
 
@@ -468,6 +477,236 @@ class TestRapport(Transcription):
         # un seul intervalle ne départage aucun poids : le poids donné est gardé, et dit tel
         self.assertIn("ne départagent aucun poids de lecture", sortie.getvalue())
         self.assertNotIn("explique le mieux", sortie.getvalue())
+
+
+class TestLesBranchesQueLaRevueANommees(Transcription):
+    """B-0194 : les branches que la seconde revue de la mesure a trouvées sans
+    test ; une mutation de chacune fait échouer un de ces cas."""
+
+    def test_une_fenetre_qui_repart_a_zero_coupe_la_suite_des_releves(self):
+        points = [(T0 + timedelta(seconds=s), p) for s, p in ((0, 0.0), (10, 0.25), (20, 0.0625), (30, 0.5))]
+        groupes = [[(T0, _a(5, entree=100))], [(T0, _a(15, entree=200))], [(T0, _a(25, entree=300))]]
+        self.assertEqual(conso._segments(points, groupes, conso.Poids()),
+                         [[(0.0, 0.0), (25.0, 100.0)], [(6.25, 0.0), (50.0, 300.0)]])
+
+    def test_fourchette_ecarte_le_poids_qu_un_saut_sans_cout_rend_impossible(self):
+        # un appel entre les deux premiers relevés, aucun entre les deux derniers, qui s'écartent pourtant de
+        # 1,5 point : plus que l'arrondi, aucun poids ne l'explique
+        conv = conso.Conversation("c", False, [_a(10, e1h=500)])
+        points = [(T0 + timedelta(seconds=s), p) for s, p in ((5, 0.0), (15, 0.10), (25, 0.115))]
+        self.assertIsNone(conso.fourchette([conv], points, decalage=False))
+        # d'un demi-point, l'arrondi l'explique
+        points[2] = (points[2][0], 0.105)
+        self.assertIsNotNone(conso.fourchette([conv], points, decalage=False))
+
+    def test_fourchette_n_admet_pas_un_point_que_rien_ne_borne(self):
+        # aucun coût entre deux relevés à un demi-point l'un de l'autre : la borne haute serait infinie
+        conv = conso.Conversation("c", False, [_a(10, e1h=500)])
+        points = [(T0 + timedelta(seconds=s), p) for s, p in ((20, 0.0), (30, 0.005))]
+        self.assertIsNone(conso.fourchette([conv], points, decalage=False))
+
+    def test_fourchette_apparie_les_bornes_du_point(self):
+        # un intervalle de 10 points : au poids w, un point vaut de C(w) / 11 à C(w) / 9, C(w) = 2 000 + 30 000 w
+        conv = conso.Conversation("c", False, [_a(10, e1h=1000, lecture=30_000)])
+        points = [(T0 + timedelta(seconds=s), p) for s, p in ((5, 0.0), (15, 0.10))]
+        marge = conso.fourchette([conv], points, decalage=False)
+        self.assertEqual(marge["lecture"], (0.001, 0.3))
+        bas, haut = marge["par_point"]
+        self.assertAlmostEqual(bas, (2000 + 30_000 * 0.001) / 11)
+        self.assertAlmostEqual(haut, (2000 + 30_000 * 0.3) / 9)
+
+    def test_un_compactage_empeche_le_controle_hors_echantillon(self):
+        points = [(T0, 0.0), (T0 + timedelta(seconds=65), 0.1)]
+        controle = (T0 + timedelta(seconds=7400), 0.3)
+        self.assertIsNone(conso.predire(self.convs, points[-1], controle, conso.Poids(), {}, 1.0)["predits"])
+        texte = conso.rapport(self.convs, points=points, controles=[controle])
+        self.assertIn("Contrôle jusqu'à 12:03:20.000 : un compactage s'y trouve, pas de prédiction.", texte)
+        self.assertNotIn("Contrôle hors échantillon", texte)
+
+    def test_la_valeur_du_point_des_autres_modeles(self):
+        # A s'étalonne sur un intervalle : 2 000 jetons pondérés pour 10 points, 200 le point ; B ne s'étalonne pas
+        appels = [_a(10, "A", e1h=1000), _a(20, "A", entree=1), _a(30, "B", e1h=500), _a(50, "A", entree=1)]
+        points = [(T0, 0.0), (T0 + timedelta(seconds=25), 0.10)]
+        controle = (T0 + timedelta(seconds=55), 0.2)
+        # sans fenêtre close par un refus, un point de B vaut celui de A
+        texte = conso.rapport([conso.Conversation("c", False, appels)], points=points, controles=[controle])
+        self.assertIn("5,0 points prédits (A 0,0, B 5,0 ; les autres modèles à 200 par point), 10 relevés.", texte)
+        # une fenêtre close à 60 s : B y a pris 1 000 jetons, sur les 100 − 2 002 / 200 points que A a laissés
+        refus = [{"horodatage": T0 + timedelta(seconds=60), "type": "five_hour", "fin": T0 + timedelta(hours=5)}]
+        texte = conso.rapport([conso.Conversation("c", False, appels, limites=refus)], points=points,
+                              controles=[controle])
+        autres = 1000 / (100 - 2002 / 200)
+        self.assertIn(f"(A 0,0, B {conso._v(1000 / autres)} ; les autres modèles à {conso._k(autres)} par point)",
+                      texte)
+
+    def test_presence_socle_plafonnee_au_contexte_et_gardee_du_contexte_nul(self):
+        # deux injections de 1 000 jetons dans un contexte de 1 000 : chacune la moitié, pas le tout ; le second
+        # appel, qui n'écrit que sa sortie, ne relit rien
+        conv = conso.Conversation("c", False, [_a(10, lecture=1000), _a(20, sortie=10)])
+        conv.injections = [{"horodatage": T0, "nature": n, "octets": 3500} for n in ("a", "b")]
+        presence = conso.presence_socle([conv])
+        for n in ("a", "b"):
+            self.assertAlmostEqual(presence["natures"][n]["part_contexte"], 0.5 / 2)
+            self.assertAlmostEqual(presence["natures"][n]["cout"], 0.5 * 1000 * 0.1)
+        self.assertEqual(presence["appels"], 2)
+        self.assertAlmostEqual(presence["total"], 1000 * 0.1 + 10 * 5)
+
+    def test_points_de_semaine_sans_valeur_quand_la_fenetre_repart_a_zero_entre_deux(self):
+        # le dernier relevé de la fenêtre dépasse le premier, mais elle est repartie à zéro entre eux
+        releves = [(T0, 0.5, 0.50), (T0 + timedelta(seconds=60), 0.1, 0.55), (T0 + timedelta(seconds=120), 0.6, 0.60)]
+        self.assertIsNone(conso.points_de_semaine(releves))
+        self.assertIsNotNone(conso.points_de_semaine([releves[0], releves[2]]))
+
+    def test_concurrence_saute_un_sous_agent_sans_appel(self):
+        vide = conso.Conversation("v", True, [])
+        self.assertEqual(conso.concurrence([vide, conso.Conversation("a", True, [_a(0), _a(60)])]),
+                         {"2026-11-12": 1})
+
+    def test_la_section_anglaise_du_socle_est_celle_du_gabarit(self):
+        gabarit = (RACINE / "engine" / "socle" / "templates" / "AGENTS.en.md").read_text(encoding="utf-8")
+        self.assertIn(conso.SECTIONS_SOCLE[1], gabarit.splitlines())
+        agents = "# Project\n\nrules\n\n" + gabarit.rstrip("\n") + "\n\n## After\n\nother"
+        conv = self.lire([
+            {"type": "attachment", "timestamp": _h(0), "attachment": {"type": "instructions", "files": [
+                {"path": "/p/AGENTS.md", "content": agents}]}},
+            _appel(10, "r1", e1h=100)])
+        section = gabarit[gabarit.index(conso.SECTIONS_SOCLE[1]):].rstrip("\n") + "\n"
+        self.assertEqual([(i["nature"], i["octets"]) for i in conv.injections],
+                         [(conso.AGENTS_SOCLE, len(section.encode()))])
+
+
+class TestLaCommande(Transcription):
+    """`socle consumption` de bout en bout (B-0201) : le lanceur du projet, la
+    ligne de commande, la lecture du dossier et le rapport."""
+
+    def socle(self, *args, env=None):
+        return subprocess.run([sys.executable, str(RACINE / ".socle/socle"), "consumption", *args],
+                              capture_output=True, text=True, env={**os.environ, **(env or {})})
+
+    def test_la_commande_lit_le_dossier_et_ne_rend_que_des_agregats(self):
+        r = self.socle(str(self.dossier), "--point", f"{_h(0)},0.0", "--point", f"{_h(65)},0.1",
+                       "--control", f"{_h(65 + 7000)},0.2")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        for titre in ("## Par jour, par modèle", "## Ce que le socle injecte", "## Étalonnage",
+                      "Contrôle hors échantillon", "## Fenêtres de cinq heures"):
+            self.assertIn(titre, r.stdout)
+        self.assertIn("| 2026-11-12 | claude-test-1 | principale | 1 | 4 |", r.stdout)
+        self.assertIn("| 2026-11-12 | commande socle state | 1 | 350 | 350 |", r.stdout)
+        for contenu in ("xxx", "zzz", "refusé", "éé"):
+            self.assertNotIn(contenu, r.stdout)
+
+    def test_sans_dossier_elle_lit_celui_que_claude_code_tient_pour_le_projet(self):
+        with tempfile.TemporaryDirectory() as configuration:
+            _ecrire(conso.dossier_de_claude_code(RACINE, Path(configuration)) / "sess.jsonl", PRINCIPALE)
+            r = self.socle(env={"CLAUDE_CONFIG_DIR": configuration})
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("| 2026-11-12 | claude-test-1 | principale | 1 | 4 |", r.stdout)
+
+    def test_le_dossier_de_claude_code_tire_son_nom_du_chemin_du_projet(self):
+        self.assertEqual(conso.dossier_de_claude_code(Path("/home/u/mon.projet_2"), Path("/c")),
+                         Path("/c/projects/-home-u-mon-projet-2"))
+        with unittest.mock.patch.dict(os.environ, {"CLAUDE_CONFIG_DIR": "/conf"}):
+            self.assertEqual(conso.dossier_de_claude_code(Path("/p")), Path("/conf/projects/-p"))
+        sans = {k: v for k, v in os.environ.items() if k != "CLAUDE_CONFIG_DIR"}
+        with unittest.mock.patch.dict(os.environ, {**sans, "HOME": "/maison"}, clear=True):
+            self.assertEqual(conso.dossier_de_claude_code(Path("/p")), Path("/maison/.claude/projects/-p"))
+
+    def test_un_dossier_sans_transcription_le_dit(self):
+        with tempfile.TemporaryDirectory() as vide:
+            r = self.socle(vide)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("aucune transcription de Claude Code dans", r.stderr)
+        self.assertEqual(r.stdout, "")
+
+    def test_un_releve_ou_un_instant_illisible_est_une_erreur_d_argument(self):
+        r = self.socle(str(self.dossier), "--until", "hier")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("instant illisible : 'hier'", r.stderr)
+        self.assertEqual(conso.releve(f"{_h(0)},0.5")[1:], (0.5, None))
+        self.assertEqual(conso.instant("2026-11-12T10:00:00"), T0)
+        for mauvais, fonction in (("x,0.1", conso.releve), ("hier", conso.instant)):
+            with self.subTest(mauvais), self.assertRaises(argparse.ArgumentTypeError):
+                fonction(mauvais)
+        with self.assertRaisesRegex(ValueError, "point décimal"):
+            conso.lire_point(f"{_h(0)},abc")
+
+    def test_cmd_consumption_et_mesurer(self):
+        args = cli.analyseur()[0].parse_args(["consumption", str(self.dossier), "--day", "2026-11-12"])
+        with contextlib.redirect_stdout(io.StringIO()) as sortie:
+            self.assertEqual(cli.cmd_consumption(args), 0)
+        self.assertIn("claude-test-1", sortie.getvalue())
+        self.assertEqual(conso.mesurer(self.dossier, session="sess"), conso.rapport(self.convs))
+        self.assertIsNone(conso.mesurer(self.dossier, session="autre"))
+        # figée à 90 s : le sous-agent, qui commence à 300 s, n'y est pas
+        self.assertNotIn("claude-test-2", conso.mesurer(self.dossier, jusqu_a=T0 + timedelta(seconds=90)))
+        self.assertIn("claude-test-2", conso.mesurer(self.dossier))
+
+
+class TestEnAnglais(Transcription):
+    """Un projet anglais lit le rapport en anglais : ses messages passent par
+    le catalogue, ses nombres prennent le point décimal."""
+
+    def tearDown(self):
+        messages.choisir(messages.FRANCAIS)
+        super().tearDown()
+
+    def test_le_rapport_parle_la_langue_du_projet(self):
+        points = [(T0, 0.0), (T0 + timedelta(seconds=65), 0.1)]
+        controles = [(T0 + timedelta(seconds=7065), 0.2)]
+        with messages.dans("en"):
+            texte = conso.rapport(self.convs, points=points, controles=controles)
+        for attendu in ("## By day, by model", "| 2026-11-12 | claude-test-1 | main | 1 | 4 |",
+                        "| 2026-11-12 | socle command state | 1 | 350 | 350 |", "PreToolUse refusal",
+                        "## Calibration on the window readings", "Out-of-sample check",
+                        "## Five-hour windows closed by a refusal"):
+            self.assertIn(attendu, texte)
+        self.assertEqual([l for l in texte.splitlines() if re.search(r"[éèàùçêâîôûœÉÈÀ«»]", l)], [])
+        self.assertIn("| 2026-11-12 | commande socle state | 1 | 350 | 350 |",
+                      conso.rapport(self.convs, points=points, controles=controles))
+
+    def test_les_nombres_s_ecrivent_dans_la_langue_du_projet(self):
+        self.assertEqual((conso._k(1_234_567), conso._pc(0.1234), conso._v(2.25, 2)), ("1,23 M", "12,3 %", "2,25"))
+        with messages.dans("en"):
+            self.assertEqual((conso._k(1_234_567), conso._pc(0.1234), conso._v(2.25, 2)),
+                             ("1.23 M", "12.3 %", "2.25"))
+
+
+class TestLeGuide(unittest.TestCase):
+    """Le guide dit la commande, à quoi elle sert et quand s'en servir, en
+    français et en anglais ; la note de version de son entrée le dit ; le
+    module ne renvoie pas à l'atelier (ADR-0033)."""
+
+    PAQUET = Path(conso.__file__).resolve().parent
+
+    def test_le_guide_dit_la_commande_et_quand_s_en_servir(self):
+        for nom, debut in (("HELP.md", "**Mesurer ce qu'une session a coûté.** Quand une session de Claude Code a "
+                                       "vidé ses limites d'usage plus vite que prévu, ou avant de changer la façon "
+                                       "de mener un lot : `python3 .socle/socle consumption` lit les transcriptions"),
+                           ("HELP.en.md", "**Measuring what a session cost.** When a Claude Code session used up its "
+                                          "usage limits faster than expected, or before changing the way a batch is "
+                                          "run: `python3 .socle/socle consumption` reads the transcripts")):
+            guide = (self.PAQUET / nom).read_text(encoding="utf-8")
+            with self.subTest(nom):
+                self.assertIn(debut, " ".join(guide.split()))
+                self.assertIn("| `consumption` |", guide)
+        self.assertIn("consumption", cli.GROUPES["pour l'humain"])
+
+    def test_la_note_de_version_le_dit_dans_les_deux_langues(self):
+        for nom, titre in (("CHANGES.md", "Une commande dit ce qu'une session de Claude Code a coûté"),
+                           ("CHANGES.en.md", "A command says what a Claude Code session cost")):
+            notes = (self.PAQUET / nom).read_text(encoding="utf-8")
+            note = next(n for n in notes.split("\n## ")[1:] if n.startswith("2026-11-22-i "))
+            with self.subTest(nom):
+                self.assertIn(titre, note.splitlines()[0])
+                self.assertIn("socle consumption", note)
+
+    def test_le_module_ne_renvoie_pas_a_l_atelier(self):
+        from socle import memory as memoire
+
+        texte = (self.PAQUET / "consumption.py").read_text(encoding="utf-8")
+        self.assertEqual([m.group(0) for m in memoire.ID_RE.finditer(texte)], [])
+        for mot in ("bench/", "docs/fabrication", "atelier", "chess"):
+            self.assertNotIn(mot, texte)
 
 
 if __name__ == "__main__":

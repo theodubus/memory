@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0219 — Les suites de la revue de B-0202 et B-0175 : le délai partagé du démarrage sans test ni décision, la tentative repayée à chaque démarrage, deux fetch sans délai, le modèle de menace de B-0175 trop large
 
-> statut : ouvert · origine : J-2026-11-14-J · priorité : basse · lu : backlog@669c8d5c
+> statut : fait · origine : J-2026-11-14-J · priorité : basse · lu : backlog@669c8d5c · ref : J-2026-11-22-M, ADR-0105
 
 La revue de B-0202 et B-0175 (J-2026-11-14-J), quatre constats non
 bloquants, de même nature : les délais et le coût de ce que le moteur
@@ -31,4 +31,4 @@ le clone local ordinaire.
 
 ## Satisfait quand
 
-- [ ] le délai du démarrage se partage selon une règle décidée, et un échec de l'historique ne se repaie pas à chaque démarrage du même conteneur
+- [x] le délai du démarrage se partage selon une règle décidée, et un échec de l'historique ne se repaie pas à chaque démarrage du même conteneur

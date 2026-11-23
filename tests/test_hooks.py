@@ -1169,6 +1169,50 @@ class TestOutilsEnSessionCloud(unittest.TestCase):
             hooks.installer_outils(projet)
         self.assertEqual(lancer.call_args[0][0], "python3 -m pip install pytest mutmut")
 
+    def test_les_outils_recoivent_le_reste_du_delai_du_demarrage(self):
+        """ADR-0105 (revue de B-0202, B-0219) : l'historique d'abord, au plus
+        120 secondes et 10 pour s'arrêter ; les outils ont le reste des 270
+        du démarrage, au moins 140, et les 270 quand l'historique n'a rien à
+        faire. Le tout laisse à l'état 30 secondes sous la borne du hook que
+        pose l'installeur."""
+        import json
+        import types
+
+        horloge = types.SimpleNamespace(t=1000.0)
+        horloge.monotonic = lambda: horloge.t
+        lancer, recu = subprocess.run, {}
+
+        def historique(racine, fin):
+            recu["historique"] = fin - horloge.t
+            horloge.t += recu["duree"]
+            return []
+
+        def commande(c, *args, **kwargs):
+            if not kwargs.get("shell"):
+                return lancer(c, *args, **kwargs)  # git, pour la marque
+            recu["outils"] = kwargs["timeout"]
+            return subprocess.CompletedProcess(c, 0, "", "")
+
+        def demarrer(duree_historique: float):
+            recu.clear()
+            recu["duree"] = duree_historique
+            (config.chemin_trace(self.racine).parent / "outils-installes").unlink(missing_ok=True)
+            with unittest.mock.patch.object(hooks, "time", horloge), \
+                    unittest.mock.patch.object(hooks, "completer_historique", historique), \
+                    unittest.mock.patch.object(hooks.subprocess, "run", commande), \
+                    unittest.mock.patch.dict("os.environ", {hooks.SESSION_CLOUD: "true"}), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                hooks.session_start(self.projet, {})
+            return recu["historique"], recu["outils"]
+
+        # L'historique prend son pire : son délai, puis son arrêt.
+        self.assertEqual(demarrer(hooks.DELAI_HISTORIQUE + hooks.ARRET_HISTORIQUE), (270, 140))
+        # Un clone complet : l'historique ne prend rien, les outils ont tout.
+        self.assertEqual(demarrer(0), (270, 270))
+        reglages = json.loads((MOTEUR / "socle/templates/settings.json").read_text(encoding="utf-8"))
+        borne = reglages["hooks"]["SessionStart"][0]["hooks"][0]["timeout"]
+        self.assertLessEqual(hooks.DELAI_DEMARRAGE + 30, borne)
+
 
 class TestHistoriqueEnSessionCloud(unittest.TestCase):
     """B-0202 : le clone d'une session cloud était superficiel, et
@@ -1261,6 +1305,76 @@ class TestHistoriqueEnSessionCloud(unittest.TestCase):
         git(self.clone, "config", "--unset", "remote.origin.uploadpack")
         self.assertIn("historique du clone complété", self.completer()[0])
         self.assertFalse(self.superficiel())
+
+    def ralentir(self) -> str:
+        """Un clone superficiel neuf d'une origine lourde, dont le vrai fetch
+        passe par un relais lent devant `git upload-pack` (plus d'une minute
+        pour l'historique entier). Rend le réglage qui pose le relais."""
+        for n in range(8):
+            (self.origine / "lourd.bin").write_bytes(os.urandom(100_000))
+            git(self.origine, "add", "-A")
+            git(self.origine, "commit", "-qm", f"lourd {n}", "--no-verify")
+        shutil.rmtree(self.clone)
+        git(self.dossier, "clone", "-q", "--depth", "1", f"file://{self.origine}", str(self.clone))
+        relais = self.dossier / "relais.py"
+        relais.write_text(
+            "import subprocess, sys, time\n"
+            "p = subprocess.Popen(['git', 'upload-pack'] + sys.argv[1:], stdout=subprocess.PIPE)\n"
+            "while True:\n"
+            "    b = p.stdout.read1(2048)\n"
+            "    if not b:\n"
+            "        break\n"
+            "    sys.stdout.buffer.write(b)\n"
+            "    sys.stdout.buffer.flush()\n"
+            "    time.sleep(0.2)\n"
+            "sys.exit(p.wait())\n", encoding="utf-8")
+        reglage = f"{sys.executable} {relais}"
+        git(self.clone, "config", "remote.origin.uploadpack", reglage)
+        return reglage
+
+    def reprendre(self) -> tuple[list[str], float]:
+        """Le démarrage suivant, dans le même conteneur, avec le délai entier
+        du démarrage ; le délai court d'une reprise réduit à une seconde."""
+        debut = time.monotonic()
+        with unittest.mock.patch.object(hooks, "DELAI_HISTORIQUE_REPRISE", 1):
+            lignes = self.completer()
+        return lignes, time.monotonic() - debut
+
+    def test_un_delai_depasse_ne_se_repaie_pas_au_demarrage_suivant(self):
+        """T-0078 (B-0219, ADR-0105) : un fetch qui pend coûtait son délai
+        entier à chaque démarrage du même conteneur, une reprise ou un
+        compactage ; marqué, il ne se retente que sous un délai court."""
+        self.assertEqual(hooks.DELAI_HISTORIQUE_REPRISE, 15)
+        self.ralentir()
+        with unittest.mock.patch.dict("os.environ", {hooks.SESSION_CLOUD: "true"}):
+            premier = hooks.completer_historique(self.clone, time.monotonic() + 2)
+        self.assertIn("`git fetch --unshallow` dépasse le délai du démarrage", premier[0])
+        lignes, duree = self.reprendre()
+        # Le délai entier aurait laissé finir ce fetch, en plus d'une minute.
+        self.assertLess(duree, 1 + hooks.ARRET_HISTORIQUE + 5)
+        self.assertEqual(len(lignes), 1)
+        self.assertTrue(lignes[0].startswith("!! clone superficiel : `git fetch --unshallow` dépasse le délai du "
+                                             "démarrage ; le relancer avant de commiter"), lignes)
+        self.assertFalse((self.clone / ".git" / "shallow.lock").exists())
+        self.assertTrue(self.superficiel())
+        # La commande que la ligne dit de relancer à la main complète l'historique.
+        git(self.clone, "config", "--unset", "remote.origin.uploadpack")
+        git(self.clone, "fetch", "--quiet", "--unshallow")
+        self.assertFalse(self.superficiel())
+
+    def test_un_code_non_nul_ne_se_repaie_pas_non_plus(self):
+        """T-0078 : un fetch qui a rendu un code non nul se marque de même ; le
+        démarrage suivant, où l'origine répond mais pend, ne lui redonne pas
+        son délai entier."""
+        relais = self.ralentir()
+        git(self.clone, "config", "remote.origin.uploadpack", "false")
+        premier = self.completer()
+        self.assertTrue(premier[0].startswith("!! clone superficiel : `git fetch --unshallow` a rendu 128"), premier)
+        git(self.clone, "config", "remote.origin.uploadpack", relais)
+        lignes, duree = self.reprendre()
+        self.assertLess(duree, 1 + hooks.ARRET_HISTORIQUE + 5)
+        self.assertIn("`git fetch --unshallow` dépasse le délai du démarrage ; le relancer avant de commiter", lignes[0])
+        self.assertTrue(self.superficiel())
 
 
 DECISION_ARBRE = """<!-- socle: couche=decisions zone=publique -->

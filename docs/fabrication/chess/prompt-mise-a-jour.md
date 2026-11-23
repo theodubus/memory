@@ -27,8 +27,11 @@ copie déjà là (B-0144), ne fait plus commiter les fichiers protégés avant
 leur demande (B-0152), nomme le hook de fin de tour du projet (B-0183),
 n'imprime en entier que les notes de version qui demandent quelque chose
 (B-0324), garde la commande du projet d'un bloc du socle (B-0328), dit
-l'écart de politique déjà montré en une ligne (B-0195), et dont le guide
+l'écart de politique déjà montré en une ligne (B-0195), dont le guide
 dit comment importer un carnet numéroté comme le journal (B-0186),
+qui mesure la consommation d'une session (B-0201), partage le délai du
+démarrage et n'y repaie pas un échec de l'historique (B-0219), et borne
+le relecteur à froid d'une demande (B-0197),
 et dit à l'agent de chess ce qui change pour lui, comme Théo
 l'a demandé. Il est cumulatif : chess n'est mis à jour qu'une fois l'ensemble à finir avant les nouvelles fonctions fait, et
 chaque lot qui change ce que chess reçoit le complète d'ici là
@@ -161,6 +164,12 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 59. Le guide (python3 .socle/socle help) dit maintenant comment importer un journal numéroté comme celui du socle (« Un journal d'avant le socle ») : une entrée importée garde son identifiant, sauf un jour que le journal du socle a déjà, où elle prend les lettres qui suivent ; avant la migration, une citation nouvelle nomme l'entrée par son fichier, sa date et sa lettre, jamais par la forme d'un identifiant : le jour de ton installation, cet identifiant désigne en silence l'entrée du socle de même lettre. Ton carnet d'avant le socle est dans ce cas : la note 2026-11-22-g te demande de me proposer sa migration. Fais-le par une demande, avec la taille du carnet et ce que coûterait la migration, sans la commencer.
 
 60. Le guide dit aussi qu'une case du « Fait quand » d'une tâche qui livre une demande, un relevé ou une entrée de la mémoire se vérifie par ce qu'elle produit, pas par un test, comme le format le disait déjà : rien à faire.
+
+61. Une commande nouvelle, python3 .socle/socle consumption, dit ce qu'une session de Claude Code a coûté et ce qui l'a fait coûter, lue dans les transcriptions que Claude Code tient pour le projet (note 2026-11-22-i). À la fin de la mise à jour, lance-la une fois sans argument, et rapporte-moi sa première section, le total de la session ; si elle ne trouve pas le dossier des transcriptions, rapporte sa ligne mot pour mot.
+
+62. En session cloud, le démarrage partage désormais son délai par une règle écrite : le complément de l'historique d'abord, 120 secondes au plus, les outils de l'adaptateur ensuite ; un échec de l'historique se note pour le conteneur, et le démarrage suivant ne le retente que 15 secondes (note 2026-11-22-h). Rien à faire ; si le démarrage dit encore « !! clone superficiel », lance la commande qu'il donne avant de commiter, comme à l'étape 1.
+
+63. Le skill socle-request, copie protégée dans la demande de l'installeur, borne le relecteur à froid d'une demande : une réponse en un seul message, sans outil (note 2026-11-22-j). Pour la demande de l'étape 5, si tu la fais relire à froid, dis-moi combien d'outils son relecteur a lancés, et combien de jetons il a lus.
 
 ## La mise à jour
 
