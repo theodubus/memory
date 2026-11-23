@@ -410,8 +410,14 @@ class TestLaReprise(unittest.TestCase):
             conv = conso.lire_conversation(_ecrire(Path(dossier) / "t.jsonl", [refus]))
         self.assertEqual([l["horodatage"].isoformat().replace("+00:00", "Z") for l in conv.limites],
                          [refus["timestamp"]])
-        # Le message : `socle consumption` lit `user` et `origin.kind` dans les
-        # enregistrements relevés ; le message tapé compte, le skill chargé et
+        # Le message : `user`, le type que lit `socle consumption` ; tapé, il
+        # porte `origin.kind` à `human`, que le chargement d'un skill n'a pas.
+        self.assertEqual(_resultat(0, "t", "x")["type"], "user")
+        self.assertEqual((self.TAPE["type"], self.TAPE["origin"]["kind"]), ("user", "human"))
+        self.assertEqual(self.SKILL_CHARGE["type"], "user")
+        self.assertNotIn("origin", self.SKILL_CHARGE)
+        # Et `socle consumption` lit `user` et `origin.kind` dans les
+        # enregistrements relevés : le message tapé compte, le skill chargé et
         # un résultat d'outil, des `user` eux aussi, non.
         with tempfile.TemporaryDirectory() as dossier:
             conv = conso.lire_conversation(_ecrire(Path(dossier) / "t.jsonl",
