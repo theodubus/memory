@@ -171,6 +171,13 @@ Observé pendant l'essai, sans être une inconnue de B-0259 :
   titre, « prête à relire » tant qu'elle attend son prompt ; archivée,
   elle y reste, marquée archivée. Le titre doit dire ce qu'elle est et
   quand elle partira.
+- **Le prompt ne se récrit plus.** `update_trigger` refuse de changer le
+  prompt d'une tâche qui tire dans une autre session que celle qui
+  appelle (vu le 23 novembre, à la passation réelle de J-2026-11-23-K).
+  Tout ce que le prompt nomme, la tête attendue de la branche comprise,
+  doit donc être poussé avant de programmer ; ou la garde ne nomme pas de
+  SHA, et reconnaît les commits de l'ancienne session à leur trailer
+  `Claude-Session`.
 
 Déduit, non essayé :
 
