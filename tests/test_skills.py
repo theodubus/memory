@@ -362,9 +362,11 @@ class TestLaReprise(unittest.TestCase):
     # a mené L-0023 (J-2026-11-23-O), les champs que la règle lit gardés : le
     # message que l'humain a tapé, et le chargement d'un skill, un `user` en
     # texte lui aussi.
-    TAPE = {"type": "user", "isSidechain": False, "origin": {"kind": "human"}, "userType": "external",
+    TAPE = {"type": "user", "timestamp": "2026-11-23T19:13:35.823Z", "isSidechain": False, "origin": {"kind": "human"},
+            "userType": "external",
             "message": {"role": "user", "content": "Reprends le travail du socle dans ce dépôt"}}
-    SKILL_CHARGE = {"type": "user", "isSidechain": False, "isMeta": True, "userType": "external",
+    SKILL_CHARGE = {"type": "user", "timestamp": "2026-11-23T19:13:40.909Z", "isSidechain": False, "isMeta": True,
+                    "userType": "external",
                     "message": {"role": "user", "content": [{"type": "text", "text": "Base directory for this skill"}]}}
 
     def test_la_coupure_lue_dans_la_transcription_est_le_premier_refus_apres_le_dernier_appel(self):
@@ -372,8 +374,8 @@ class TestLaReprise(unittest.TestCase):
         est le premier après le dernier appel du modèle, et tout message tapé
         qui la suit compte, même suivi d'un autre refus. Une transcription
         sans le tour d'avant vaut absence de transcription. Les champs cités
-        sont ceux que lit `socle consumption`, ou, pour le message tapé, celui
-        d'une transcription réelle."""
+        sont ceux que lit `socle consumption`, éprouvés sur sa fixture du refus
+        et sur deux enregistrements relevés d'une transcription réelle."""
         from socle import consumption as conso
         from tests.test_consommation import _ecrire, _limite, _resultat
 
@@ -408,12 +410,13 @@ class TestLaReprise(unittest.TestCase):
             conv = conso.lire_conversation(_ecrire(Path(dossier) / "t.jsonl", [refus]))
         self.assertEqual([l["horodatage"].isoformat().replace("+00:00", "Z") for l in conv.limites],
                          [refus["timestamp"]])
-        # Le message : `user`, le type que lit `socle consumption` ; tapé, il
-        # porte `origin.kind` à `human`, que le chargement d'un skill n'a pas.
-        self.assertEqual(_resultat(0, "t", "x")["type"], "user")
-        self.assertEqual((self.TAPE["type"], self.TAPE["origin"]["kind"]), ("user", "human"))
-        self.assertEqual(self.SKILL_CHARGE["type"], "user")
-        self.assertNotIn("origin", self.SKILL_CHARGE)
+        # Le message : `socle consumption` lit `user` et `origin.kind` dans les
+        # enregistrements relevés ; le message tapé compte, le skill chargé et
+        # un résultat d'outil, des `user` eux aussi, non.
+        with tempfile.TemporaryDirectory() as dossier:
+            conv = conso.lire_conversation(_ecrire(Path(dossier) / "t.jsonl",
+                                                   [self.TAPE, self.SKILL_CHARGE, _resultat(0, "t", "x")]))
+        self.assertEqual([h.isoformat() for h in conv.tapes], ["2026-11-23T19:13:35.823000+00:00"])
 
     def test_les_reveils_d_une_session_archivee_se_disent_a_l_humain(self):
         """T-0127 (B-0301) : ils ne se désactivent qu'à sa demande, et il

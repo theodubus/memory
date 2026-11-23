@@ -346,6 +346,25 @@ class TestCouts(Transcription):
         (g,) = conso.fenetres_limitees(self.convs + [tard])
         self.assertEqual(g["refus"], T0 + timedelta(seconds=7260))
 
+    def test_les_messages_tapes_pendant_une_limite(self):
+        """T-0164 (B-0336) : un message que l'humain a tapé porte `origin.kind`
+        à `human` ; ceux qui suivent le premier refus, jusqu'à la levée, se
+        comptent dans sa fenêtre, comme le skill `socle-resume` les lit."""
+        def tape(secondes, texte="arrête"):
+            return {"type": "user", "timestamp": _h(secondes), "origin": {"kind": "human"},
+                    "message": {"role": "user", "content": texte}}
+        lignes = [tape(0, "reprends"), _appel(10, "r1", e1h=1000, sortie=10), _limite(7260, 3 * 3600),
+                  _resultat(7270, "t", "x"), {"type": "user", "timestamp": _h(7280), "isMeta": True,
+                                                "message": {"content": [{"type": "text", "text": "skill"}]}},
+                  tape(7300), _limite(7310, 3 * 3600), tape(3 * 3600 + 60, "après la levée")]
+        conv = self.lire(lignes)
+        self.assertEqual(conv.tapes, [T0, T0 + timedelta(seconds=7300), T0 + timedelta(seconds=3 * 3600 + 60)])
+        (f,) = conso.fenetres_limitees([conv])
+        self.assertEqual((f["refus"], f["tapes"]), (T0 + timedelta(seconds=7260), 1))
+        texte = conso.rapport([conv])
+        self.assertIn("Pendant ces limites, l'humain a tapé 1 message(s), refusé(s)", texte)
+        self.assertNotIn("l'humain a tapé", conso.rapport([self.lire(lignes[:3])]))
+
     def test_valeur_du_point_des_autres_modeles(self):
         fenetres = [{"cout": 300.0, "par_modele": {"A": 100.0, "B": 200.0}},
                     {"cout": 300.0, "par_modele": {"A": 300.0}},

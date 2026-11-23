@@ -15,6 +15,16 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-23-e — socle consumption compte les messages que l'humain a tapés pendant une limite
+
+Dans sa section des fenêtres de cinq heures closes par un refus, `socle
+consumption` dit combien de messages l'humain a tapés entre le refus et
+la levée de la limite : refusés, ils ne se lisent ensuite que dans la
+transcription. Un message tapé se reconnaît, comme dans le skill
+`socle-resume`, à `origin.kind`, qui vaut `human`.
+
+À faire : rien.
+
 ## 2026-11-23-d — La reprise dit à l'humain les réveils qu'une session archivée a laissés
 
 Le skill `socle-resume` lit les tâches programmées au premier tour d'une

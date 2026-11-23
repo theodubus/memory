@@ -14,6 +14,16 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-23-e — socle consumption counts the messages the human typed during a limit
+
+In its section on the five-hour windows closed by a refusal, `socle
+consumption` says how many messages the human typed between the
+refusal and the lifting of the limit: refused, they can then be read
+only in the transcript. A typed message is recognised, as in the
+`socle-resume` skill, by `origin.kind`, set to `human`.
+
+To do: nothing.
+
 ## 2026-11-23-d — The resumption tells the human the wake-ups an archived session left
 
 The `socle-resume` skill reads the scheduled tasks at a session's first

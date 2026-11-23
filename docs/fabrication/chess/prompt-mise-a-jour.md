@@ -182,6 +182,8 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 67. Le skill socle-resume te fait lire les tâches programmées au premier tour d'une session : les réveils de reprise qu'une session archivée de chess a laissés, tu me les dis avec leurs heures, sans les désactiver avant que je le demande (note 2026-11-23-d). Dis-moi si tu en as trouvé.
 
+68. python3 .socle/socle consumption dit, dans sa section des fenêtres de cinq heures closes par un refus, combien de messages j'ai tapés entre le refus et la levée de la limite (note 2026-11-23-e). Rien à faire ; dans le rapport de l'étape 61, s'il a cette ligne, recopie-la.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.

@@ -23,7 +23,7 @@ T-0081), que Théo garde à sa place (D-0155). Les hooks git au démarrage
 (T-0042), les deux cas de la reprise (T-0043, T-0082) et la remise des
 copies protégées (T-0114) passent à L-0023, qui le suit.
 
-Le 23 novembre, L-0023 passant avant sa fin, la remise de la copie protégée de `socle-batch` que changent T-0079 et T-0081 revient ici, la dernière : T-0165 (J-2026-11-23-Q).
+Le 23 novembre, L-0023 passant avant sa fin, la remise des copies protégées de `socle-batch` et de `socle-resume` que changent T-0079 et T-0081 revient ici, la dernière : T-0165 (J-2026-11-23-Q, J-2026-11-23-R).
 
 ## Revues
 

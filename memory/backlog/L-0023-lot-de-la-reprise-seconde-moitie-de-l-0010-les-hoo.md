@@ -14,3 +14,7 @@ Le 23 novembre, la passe 1 de la revue de L-0010 y fait entrer T-0164, la règle
 ### Passe 1 — 2026-11-23
 
 Commits : 74c372d1..5e121895
+
+- Bloquant : le découpage de T-0114 oubliait la copie de `socle-resume` que change T-0081
+- Bloquant : le test de T-0164 admettait `origin.kind`, que `socle consumption` ne lisait pas
+- Ouvre : B-0337, T-0166, T-0168, B-0338, T-0167
