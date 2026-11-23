@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0022 — Lot du balayage de mutation de chess : celui du socle par fichier, puis mesuré sur chess contre le sien
 
-> statut : ouvert · origine : J-2026-11-21-B · après : L-0033, T-0027, T-0077 · lu : backlog@18f4b4cb
+> statut : ouvert · origine : J-2026-11-21-B · après : L-0034, T-0027, T-0077 · lu : backlog@18f4b4cb
 
 Coupé de L-0008 à son annonce, le 21 novembre (J-2026-11-21-B), sur la
 suggestion 1 de la revue de cap 2 que Théo retient (D-0151) : JA-0005
