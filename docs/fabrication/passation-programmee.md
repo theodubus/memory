@@ -45,13 +45,16 @@ Ce qu'E1 a rendu, lu dans ses événements (`list_events`) et son état
 (`get_session`) :
 
 - **1. Le prompt programmé arrive, et la session travaille sans
-  approbation.** Levée. Prévu à 12:43, le prompt est arrivé à 12:44:25,
-  marqué comme venu d'une tâche programmée (`inbound_origin` :
-  `trigger_fire`) : le planificateur ne tire pas à la seconde,
-  d'où une minute et demie de retard. La session a tourné en mode `auto`, hérité ;
-  ses deux appels d'outil (`get_session`, une commande `Bash`) sont passés
-  sans approbation, aucun hook n'a rien refusé ; son tour a fini à
-  12:44:45, en 16 secondes.
+  approbation.** Levée pour la lecture. Prévu à 12:43, le prompt est
+  arrivé à 12:44:25, marqué comme venu d'une tâche programmée
+  (`inbound_origin` : `trigger_fire`) : le planificateur ne tire pas à la
+  seconde, d'où une minute et demie de retard. La session a tourné en
+  mode `auto`, hérité ; ses deux appels d'outil, en lecture
+  (`get_session`, une commande `Bash`), sont passés sans approbation, et
+  aucun hook n'a rien refusé ; son tour a fini à 12:44:45, en
+  16 secondes. L'écriture (un fichier, un commit, un push) n'est pas
+  essayée : la sonde l'interdisait. Le mode `auto` hérité est celui où la
+  session qui orchestre écrit, commite et pousse sans approbation.
 - **2. Le dépôt, les hooks, la branche.** Levée en partie. Le dépôt est
   cloné dans `/home/user/memory` ; l'état du socle a été injecté au
   démarrage par le hook `SessionStart` ; les hooks git sont branchés
@@ -68,19 +71,23 @@ Ce qu'E1 a rendu, lu dans ses événements (`list_events`) et son état
   `xhigh` ; `create_session` ne le pose que si une consigne le demande.
 - **4. L'ancienne session réveillée par la nouvelle.** Levée pour une fin
   propre : rien n'est arrivé dans la session qui orchestre après la fin
-  du tour d'E1 (ses événements, lus jusqu'à 12:47). Un échec n'a pas été
-  provoqué : aucun moyen sans risque n'en était sous la main ; la
-  documentation de l'outil dit qu'un tour en échec, ou un conteneur
-  redémarré, réveille la session qui a créé, ce qui est voulu.
+  des tours d'E1 (12:44:45) et d'E4 (12:51:08), ni après leurs
+  archivages ; ses événements, relus de 12:44 à 12:47 puis de 12:54 à
+  13:07, n'en montrent aucun. Un échec n'a pas été provoqué : aucun moyen
+  sans risque n'en était sous la main. La documentation de l'outil dit
+  qu'un tour en échec, ou un conteneur redémarré, réveille la session qui
+  a créé : la spécification dira si cela convient à une ancienne session
+  près de sa limite, que B-0259 voulait ne jamais réveiller.
 - **7. Le coût.** Levée pour le démarrage. Le tour d'E1 a écrit 29 972
   jetons au cache d'une heure, en a lu 150 352 et en a produit 810, pour
   un contexte final de 90 750 jetons (prompt système, outils, `AGENTS.md`
-  et état du socle) ; 0,29 dollar au tarif public. Pondéré comme dans
-  `docs/fabrication/consommation.md` (écriture d'une heure 2, lecture 0,1,
-  sortie 5), environ 79 000 jetons : ce que coûte la relecture à froid
-  d'une conversation de 40 000 jetons, soit environ 1,2 point de la
-  fenêtre de cinq heures à la valeur médiane du point d'Opus (de 0,6 à 7
-  selon cette valeur, mal connue), un sixième de point de la semaine. Son
+  et état du socle) ; 0,29 dollar au tarif public. Pondéré comme les
+  valeurs du point de `docs/fabrication/consommation.md` (écriture d'une
+  heure 2, lecture 0,042, sortie 5), environ 70 000 jetons : ce que coûte
+  la relecture à froid d'une conversation de 35 000 jetons, soit environ
+  1,1 point de la fenêtre de cinq heures à la valeur médiane du point
+  d'Opus (de 0,5 à 5,4 selon cette valeur, mal connue), un sixième de
+  point de la semaine. Son
   premier appel a trouvé 60 776 jetons déjà en cache, le début du
   prompt système commun aux sessions du compte. Une vraie passation
   coûte en plus ce que la session neuve lit pour reprendre le lot.
@@ -120,9 +127,10 @@ puis, une minute après, `delete_trigger` l'a supprimée et
 - archivée sans avoir jamais reçu de prompt, elle avait déjà un conteneur
   démarré (version de Claude Code, mode de permission hérité `auto`).
 
-Levée : annuler marche, en deux appels ; il reste dans la liste de Théo
-une session archivée par annulation. Que le prompt de 16:00 ne soit pas
-arrivé se vérifie après 16:00 (plus bas, « Après coup »).
+Levée en partie : la tâche et la session s'annulent, en deux appels, et
+il reste dans la liste de Théo une session archivée. La preuve décisive,
+aucun prompt reçu par E3 à 16:00, se lit après (plus bas, « Après
+coup »).
 
 Une session créée et pas encore servie (E1 et E2 avant leur prompt) est
 à l'état « au repos » (`SESSION_STATUS_IDLE`), rangée parmi les sessions
@@ -144,8 +152,9 @@ montre qu'une session laissée vide une nuit ne reçoit pas son prompt.
 ## La règle de choix
 
 B si ses inconnues 1 à 5 se lèvent ; sinon A, si les siennes se lèvent ;
-sinon le prompt à copier reste. Au 23 novembre, 1 à 4 sont levées, 2 sous
-la condition de nommer la branche ; 5 attend E2. Le choix se fait sur son
+sinon le prompt à copier reste. Au 23 novembre, 1 à 4 sont levées : 1
+pour la lecture, 2 sous la condition de nommer la branche, 4 pour une fin
+propre ; 5 attend E2. Le choix se fait sur son
 résultat ; il est soumis à Théo, qui le confirme, avec ce relevé complet.
 
 ## Ce que la spécification devra dire
@@ -162,11 +171,15 @@ Observé pendant l'essai, sans être une inconnue de B-0259 :
   titre, « prête à relire » tant qu'elle attend son prompt ; archivée,
   elle y reste, marquée archivée. Le titre doit dire ce qu'elle est et
   quand elle partira.
+
+Déduit, non essayé :
+
 - **La garde de la reprise.** Avec `outcome_branch` sur la branche du
-  travail, la session neuve pousse là où l'ancienne poussait : la garde
-  du skill `socle-resume` (« une autre session a poussé sur la branche
-  depuis le dernier commit de l'agent ») la voit, ce que B-0259 demandait
-  de vérifier.
+  travail, la session neuve pousserait là où l'ancienne poussait : la
+  garde du skill `socle-resume` (« une autre session a poussé sur la
+  branche depuis le dernier commit de l'agent ») la verrait, ce que
+  B-0259 demandait de vérifier. Aucune sonde n'a poussé : l'essai de la
+  spécification le vérifie, avec une branche qui existe déjà.
 
 ## Après coup
 
