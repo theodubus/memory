@@ -23,7 +23,10 @@ back after that time: if a limit refuses the event's turn, the wake-up
 makes it resume when the limit lifts, instead of leaving the session
 stopped until the human comes back. And on the wake-up of work the
 human interrupted, if the end-of-turn check refuses on failing checks,
-the agent answers in one line, without finishing that work.
+the agent says so in one line, without finishing that work or
+re-arming its wake-ups. On waking, the human's messages are read since
+the agent's last work, the one that provoked the refusal included, and
+the wake-up that fired, spent, is re-armed.
 
 To do: nothing; the `socle-resume` skill is a protected copy, in the
 installer's request.

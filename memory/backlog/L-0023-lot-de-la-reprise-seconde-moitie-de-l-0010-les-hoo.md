@@ -22,3 +22,7 @@ Commits : 74c372d1..5e121895
 ### Passe 2 — 2026-11-23
 
 Commits : 5e121895..d8d859fd
+
+- Bloquant : le message de l'humain qui provoque le refus ne comptait pas au réveil
+- Bloquant : le réveil qui a tiré se déplaçait au lieu de se réarmer
+- Ouvre : B-0339, T-0169, B-0340, T-0170

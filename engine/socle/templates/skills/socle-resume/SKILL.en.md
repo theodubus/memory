@@ -34,8 +34,7 @@ argument), going back with `before_id` while nothing is found; in the most recen
 `….seven_day.resetsAt`, in seconds since 1970, UTC. A time read earlier,
 still to come, holds: it is not read again.
 
-**Never in the past.** A wake-up armed at a past time fires at once. The
-current time: `date -u`, in the turn's first command, or the `now` that
+**Never in the past.** It would fire at once. The current time: `date -u`, in the turn's first command, or the `now` that
 `send_later` returns. A reset read that is not more than a minute ahead
 belongs to a closed window: the wake-up is then armed at the bound, now
 plus five hours and five minutes, or seven days and five minutes for the
@@ -68,10 +67,11 @@ Once, before or with its first action:
    `SESSION_STATUS_ARCHIVED`) are told to the human with their times, and
    are disabled (`update_trigger`, `enabled: false`) only at their
    request. The turn that opens, on a message from the human as on a
-   wake-up, makes the wake-ups left its own. The one to move gets, in a single call, this turn's time and the
-   text of its batch (`update_trigger`, with `run_once_at` and `prompt`);
-   the one whose time is right gets the text, from the same call, only if
-   the batch changed.
+   wake-up, makes the wake-ups left its own; the one that fired, spent,
+   is missing. The one to move gets, in a single call, this turn's time
+   and the text of its batch (`update_trigger`, with
+   `run_once_at` and `prompt`); the one whose time is right gets the
+   text, from the same call, only if the batch changed.
 2. The missing wake-up is armed: `send_later`, with `at` (the reset plus
    five minutes, never in the past), `name` and `message`. Never two
    wake-ups for the same window.
@@ -98,8 +98,8 @@ A message that starts with "Resume after limit":
 1. Read `list_events` with `kinds: ["result"]` and `limit: 100`: the
    last result before this wake-up closes the previous turn, whatever
    opened it; it ended on a limit if it is an error `usage_limit_reached`.
-   Then, with `kinds: ["user"]`, the messages that arrived since the cut,
-   even refused: the human's are typed text, neither a tool result, nor a
+   Then, with `kinds: ["user", "assistant"]`, the messages that arrived
+   since its last work, even refused: the human's are typed text, neither a tool result, nor a
    wake-up, nor a notification; a resume message from the application
    (`text_not_typed`) counts as "resume".
    **Without `list_events`**, the local transcript tells: the most recent
@@ -107,8 +107,9 @@ A message that starts with "Resume after limit":
    (`tail`). The cut is the first `quotaLimits` record that follows the
    model's last call, at its `timestamp`; every typed `user` record
    (`origin.kind` set to `human`) that follows it is the human's, even if
-   another refusal follows. Without a transcript, or without the previous
-   turn in it (a replaced container), the conversation: the previous turn
+   another refusal follows, like the one that provoked it. Without a
+   transcript, or without the previous turn in it (a replaced container),
+   the conversation: the previous turn
    cut off short, with no recap nor interruption nor message from the
    human since, the agent resumes; otherwise, not. A message refused
    during the limit may be missing there: the first answer says so at its
@@ -116,7 +117,7 @@ A message that starts with "Resume after limit":
 2. Do not resume:
    - if the previous turn did not end on a limit (the human interrupted
      it, or it ended normally);
-   - if the human wrote since the cut: answer their message, which comes
+   - if the human wrote during the limit: answer their message, which comes
      first; if it says to stop, stop;
    - if another session pushed to the branch since the agent's last
      commit (`git fetch`, then compare);
@@ -124,9 +125,9 @@ A message that starts with "Resume after limit":
 
    Then answer briefly why, with the project's closing lines,
    and remove the remaining wake-up, or leave it if a subagent is running.
-   If the end-of-turn check refuses on failing checks, answer in one line
-   that the human interrupted this work, without touching it; relaunched
-   on the same tree, it lets the turn conclude.
+   If the human had interrupted the work and the end-of-turn check
+   refuses on failing checks, say so in one line, without touching it or
+   re-arming: relaunched on the same tree, it lets the turn conclude.
 3. Otherwise, resume the noted batch, at the step the conversation, git,
    the active work and the worktrees tell. Every noted subagent whose
    result did not arrive: continue it with a message (`SendMessage`, to

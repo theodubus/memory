@@ -24,8 +24,10 @@ réveils, repoussés après cette heure : si une limite refuse le tour de
 l'événement, le réveil le fait reprendre à la levée, au lieu de laisser
 la session arrêtée jusqu'au retour de l'humain. Et au réveil d'un
 travail que l'humain a interrompu, si le contrôle de fin de tour refuse
-sur des contrôles en échec, l'agent répond en une ligne, sans finir ce
-travail.
+sur des contrôles en échec, l'agent le dit en une ligne, sans finir ce
+travail ni réarmer ses réveils. Au réveil, les messages de l'humain se
+lisent depuis le dernier travail de l'agent, celui qui a provoqué le
+refus compris, et le réveil qui a tiré, éteint, se réarme.
 
 À faire : rien ; le skill `socle-resume` est une copie protégée, dans la
 demande de l'installeur.

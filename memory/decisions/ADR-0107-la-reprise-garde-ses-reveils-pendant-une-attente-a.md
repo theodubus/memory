@@ -27,11 +27,11 @@ avec leur coût ; il a retenu 1A et 2A (J-2026-11-23-S).
    siens et les retire à sa fin ; refusé par une limite, le réveil le
    relance à la levée, et l'agent traite l'événement refusé. Une attente
    sans heure bornée (la revue d'un humain, son message) ne garde rien.
-2. *Réveil d'un travail interrompu (2A).* Au réveil qui ne reprend pas,
-   si le contrôle de fin de tour refuse de conclure sur des contrôles en
-   échec, l'agent répond en une ligne que l'humain a interrompu ce
-   travail, sans y toucher ; relancé sur le même échec et le même arbre,
-   le contrôle le laisse conclure.
+2. *Réveil d'un travail interrompu (2A).* Au réveil d'un travail que
+   l'humain a interrompu, si le contrôle de fin de tour refuse de conclure
+   sur des contrôles en échec, l'agent le dit en une ligne, sans y toucher
+   ni réarmer les réveils ; relancé sur le même échec et le même arbre, le
+   contrôle le laisse conclure.
 
 La règle s'écrit dans le skill `socle-resume`, en français et en
 anglais. Le reste d'ADR-0050 tient.
@@ -41,7 +41,12 @@ anglais. Le reste d'ADR-0050 tient.
 Une limite qui refuse l'événement attendu ne laisse plus la session en
 panne jusqu'au retour de l'humain, sans réveil qui tire pour rien quand
 rien n'est refusé. L'événement sans heure bornée reste non couvert,
-choisi. Supposé : qu'un rappel refusé finisse sur l'erreur de la limite
+choisi. Gardés après un tour fini, les réveils peuvent tirer après un
+tour refusé que l'humain a ouvert : ses messages se lisent donc depuis le
+dernier travail de l'agent, celui qui a provoqué le refus compris ; et
+le réveil qui a tiré, éteint, ne se déplace pas : il manque, et le début
+du tour en arme un, comme la relecture du lot l'a relevé.
+Supposé : qu'un rappel refusé finisse sur l'erreur de la limite
 que le réveil lit comme une coupure, comme les avis refusés du 9
 novembre ; sinon, le réveil tire une fois pour rien, et l'agent le dit
 au premier rappel refusé. Se défait par une décision nouvelle de Théo :

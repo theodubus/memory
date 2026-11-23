@@ -435,15 +435,17 @@ class TestLaReprise(unittest.TestCase):
                   "(un rappel, une commande en arrière-plan, une CI), jusqu'au tour de l'événement, chacun repoussé "
                   "après cette heure s'il tombait avant : refusé, ce tour se reprend à la levée.",
                   "Un tour coupé ou refusé ne retire rien"),
-                 "Si le contrôle de fin de tour refuse sur des contrôles en échec, répondre en une ligne que l'humain "
-                 "a interrompu ce travail, sans y toucher ; relancé sur le même arbre, il laisse conclure."),
+                 "Si l'humain avait interrompu le travail et que le contrôle de fin de tour refuse sur des contrôles "
+                 "en échec, le dire en une ligne, sans y toucher ni réarmer : relancé sur le même arbre, il laisse "
+                 "conclure."),
                 ("en", "## At the end of every turn", "Do not resume", "\n3. ",
                  ("except during a subagent, until the turn that receives its result, or a wait with a bounded time "
                   "(a reminder, a background command, a CI), until the event's turn, each pushed back after that "
                   "time if it fell before: refused, that turn resumes when the limit lifts.",
                   "A turn cut off or refused removes nothing"),
-                 "If the end-of-turn check refuses on failing checks, answer in one line that the human interrupted "
-                 "this work, without touching it; relaunched on the same tree, it lets the turn conclude.")):
+                 "If the human had interrupted the work and the end-of-turn check refuses on failing checks, say so "
+                 "in one line, without touching it or re-arming: relaunched on the same tree, it lets the turn "
+                 "conclude.")):
             texte = self.lire(lg)
             section = " ".join(texte.split(fin, 1)[1].split("\n## ", 1)[0].split())
             for attendu in attente:
@@ -451,6 +453,37 @@ class TestLaReprise(unittest.TestCase):
             # La règle de la réponse d'une ligne est un cas où l'agent ne reprend pas.
             cas = " ".join(texte.split(non, 1)[1].split(apres, 1)[0].split())
             self.assertIn(reveil, cas, lg)
+
+    def test_le_message_qui_provoque_la_coupure_compte_et_le_reveil_qui_a_tire_manque(self):
+        """Passe 2 de la revue de L-0023 (J-2026-11-23-U) : avec les réveils
+        gardés pendant une attente, le message de l'humain peut ouvrir le
+        premier tour refusé, avant le refus qu'il provoque ; il compte, et
+        l'agent ne reprend pas par-dessus. Un réveil qui a tiré est éteint :
+        il ne se déplace pas, il manque, et le début du tour en arme un."""
+        for lg, debut, reveil, attendus_debut, attendus_reveil in (
+                ("fr", "## Au début de chaque tour", "## Au réveil",
+                 ("fait siens les réveils laissés ; celui qui a tiré, éteint, manque.",
+                  "Le réveil qui manque s'arme : `send_later`"),
+                 ("Puis, avec `kinds: [\"user\", \"assistant\"]`, les messages arrivés depuis son dernier travail, "
+                  "même refusés",
+                  "même suivi d'un autre refus, comme celui qui l'a provoquée.",
+                  "si l'humain a écrit pendant la limite : répondre à son message")),
+                ("en", "## At the start of every turn", "## On waking",
+                 ("makes the wake-ups left its own; the one that fired, spent, is missing.",
+                  "The missing wake-up is armed: `send_later`"),
+                 ("Then, with `kinds: [\"user\", \"assistant\"]`, the messages that arrived since its last work, "
+                  "even refused",
+                  "even if another refusal follows, like the one that provoked it.",
+                  "if the human wrote during the limit: answer their message"))):
+            texte = self.lire(lg)
+            section = " ".join(texte.split(debut, 1)[1].split("\n## ", 1)[0].split())
+            for attendu in attendus_debut:
+                self.assertIn(attendu, section, lg)
+            section = " ".join(texte.split(reveil, 1)[1].split("\n## ", 1)[0].split())
+            for attendu in attendus_reveil:
+                self.assertIn(attendu, section, lg)
+            self.assertNotIn("depuis la coupure", section, lg)
+            self.assertNotIn("since the cut", section, lg)
 
     def test_les_reveils_d_une_session_archivee_se_disent_a_l_humain(self):
         """T-0127 (B-0301) : ils ne se désactivent qu'à sa demande, et il
