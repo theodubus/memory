@@ -22,3 +22,9 @@ sans list_events (T-0040) et la passation programmée (T-0041, T-0080,
 T-0081), que Théo garde à sa place (D-0155). Les hooks git au démarrage
 (T-0042), les deux cas de la reprise (T-0043, T-0082) et la remise des
 copies protégées (T-0114) passent à L-0023, qui le suit.
+
+## Revues
+
+### Passe 1 — 2026-11-23
+
+Commits : a68f5bc0..03830147
