@@ -183,5 +183,6 @@ Déduit, non essayé :
 
 ## Après coup
 
-- E3, après 16:00 : <!-- à vérifier : aucun prompt reçu -->
+- E3, vérifiée à 17:25 : aucun message reçu après 16:00 (`list_events`,
+  ni `user` ni `result`). L'inconnue 6 est levée : annuler marche.
 - E2, le 24 après 05:40 : <!-- à lire : son prompt reçu ou non, et ce qu'elle a rendu -->
