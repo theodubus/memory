@@ -5,8 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-JA-0005 : L-0010 ; attend E2 le 24 (J-2026-11-23-H) et D-0160 ;
-enchaîner par défaut (D-0161).
+JA-0005 : L-0010 ; suite le 24, session programmée (J-2026-11-23-K).
 
 ## Consignes en cours
 
