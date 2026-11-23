@@ -30,11 +30,11 @@ remplissage.
 
 L'heure de la remise à zéro : `list_events` avec
 `kinds: ["rate_limit_event"]` et `limit: 100` (l'identifiant de la
-session : son lien, `…/code/session_…`, ou `get_session` sans argument),
+session : `get_session` sans argument),
 en remontant par `before_id` tant que rien n'est trouvé ; dans le plus
 récent, `rate_limit_info.unifiedWindows.five_hour.resetsAt` et
 `….seven_day.resetsAt`, en secondes depuis 1970, UTC. Une heure lue plus
-tôt, encore à venir, vaut toujours : on ne la relit pas.
+tôt, encore à venir, vaut : on ne la relit pas.
 
 **Jamais dans le passé.** Un réveil armé à une heure passée se déclenche
 aussitôt. L'heure courante se lit par `date -u` (dans la première commande
@@ -52,8 +52,8 @@ repousse au début de chaque tour qui agit et au lancement d'un sous-agent
 entre ce report et la coupure, il tire trop tôt et se perd.
 `list_triggers` retrouve les réveils.
 
-Leur texte porte ce que l'agent ne retrouve pas ailleurs : le lot, et les
-sous-agents en cours. L'étape, il la retrouve dans sa conversation, git,
+Leur texte porte ce que l'agent ne retrouve pas ailleurs : le lot et les
+sous-agents en cours. L'étape se retrouve dans sa conversation, git,
 le chantier actif et les worktrees.
 
 ```text
@@ -72,11 +72,12 @@ Une fois, avant ou avec sa première action :
    avec `enabled: true` et `limit: 100`, ceux de ces deux noms dont
    `persistent_session_id` est cette session). Le tour qui s'ouvre,
    sur un message de l'humain comme sur un réveil, les fait siens : la
-   coupure qu'ils gardaient est finie, leur heure et leur texte sont
-   périmés. Celui qu'il faut déplacer reçoit, dans un seul
-   appel, l'heure de ce tour et le texte de son lot (`update_trigger`,
-   avec `run_once_at` et `prompt`) ; celui dont l'heure est bonne ne
-   reçoit le texte, du même appel, que si le lot a changé.
+   coupure qu'ils gardaient est finie ; un réveil d'une fenêtre écoulée,
+   ou au texte d'un autre lot, relancerait l'agent à tort. Celui qu'il
+   faut déplacer reçoit, dans un seul appel, l'heure de ce tour et le
+   texte de son lot (`update_trigger`, avec `run_once_at` et `prompt`) ;
+   celui dont l'heure est bonne ne reçoit le texte, du même appel, que si
+   le lot a changé.
 2. Le réveil qui manque s'arme : `send_later`, avec `at` (la remise à
    zéro plus cinq minutes, jamais dans le passé), `name` et `message`.
    Jamais deux réveils de la même fenêtre.

@@ -28,12 +28,11 @@ One per window, named "Resume after limit (five hours) — <repository>" and
 reset of its window, day or night, however full it is.
 
 The time of the reset: `list_events` with `kinds: ["rate_limit_event"]`
-and `limit: 100` (the session's id: its link, `…/code/session_…`, or
-`get_session` without argument), going back with
-`before_id` while nothing is found; in the most recent,
+and `limit: 100` (the session's id: `get_session` without
+argument), going back with `before_id` while nothing is found; in the most recent,
 `rate_limit_info.unifiedWindows.five_hour.resetsAt` and
 `….seven_day.resetsAt`, in seconds since 1970, UTC. A time read earlier,
-still to come, still holds: it is not read again.
+still to come, holds: it is not read again.
 
 **Never in the past.** A wake-up armed at a past time fires at once. The
 current time is read by `date -u` (in the turn's first command);
@@ -51,8 +50,8 @@ launching a subagent (`run_once_at`, in the planned call). If a window
 restarted between that push and the cut, it fires too early and is
 lost. `list_triggers` finds the wake-ups again.
 
-Their text carries what the agent finds nowhere else: the batch, and the
-subagents under way. The step it finds in its conversation, git, the
+Their text carries what the agent finds nowhere else: the batch and the
+subagents under way. The step is found in its conversation, git, the
 active work and the worktrees.
 
 ```text
@@ -71,11 +70,12 @@ Once, before or with its first action:
    `enabled: true` and `limit: 100`, those with these two names whose
    `persistent_session_id` is this session). The turn that opens,
    on a message from the human as on a wake-up, makes them its own: the
-   cut they guarded is over, their time and their text are stale. The
-   one to move gets, in a single call, this turn's time and the text of
-   its batch (`update_trigger`, with
-   `run_once_at` and `prompt`); the one whose time is right gets the
-   text, from the same call, only if the batch changed.
+   cut they guarded is over; a wake-up of an elapsed window, or with
+   another batch's text, would restart the agent wrongly. The one to
+   move gets, in a single call, this turn's time and the text of its
+   batch (`update_trigger`, with `run_once_at` and `prompt`); the one
+   whose time is right gets the text, from the same call, only if the
+   batch changed.
 2. The missing wake-up is armed: `send_later`, with `at` (the reset plus
    five minutes, never in the past), `name` and `message`. Never two
    wake-ups for the same window.
