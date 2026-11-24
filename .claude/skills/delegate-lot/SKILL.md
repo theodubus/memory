@@ -79,6 +79,10 @@ contournement qu'il trouve s'écarte d'office, sans entrée au backlog.
 - La réponse de l'humain se commite dans le même push que le changement
   qu'elle autorise, jamais avant (B-0142) ; seul un fichier protégé peut
   la précéder, sous la demande en attente (D-0071).
+- Un lot qui change le gabarit d'un skill du produit
+  (`engine/socle/templates/skills/`) remet sa copie protégée de
+  `.claude/skills/` avant sa clôture : l'installeur relancé en mode amont,
+  sur la demande validée qui cite son empreinte (D-0168, B-0218).
 - Une valeur attendue à changer, un test à supprimer, un fichier protégé
   à rafraîchir : une demande dans le dépôt, relue à froid, poussée, son
   lien donné (J-2026-11-12-F). Sauf un changement mécanique de valeurs
