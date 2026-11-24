@@ -5,9 +5,9 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0010 relu (J-2026-11-24-AA) ; attend D-0175, les copies protégées
-des trois skills (J-2026-11-24-AB), puis sa clôture et sa fusion.
-Branche ccr-a2cf2bb0-4fse3w.
+L-0010 clos (J-2026-11-24-AE), D-0175 appliquée. Suivant, en session
+neuve sur le prompt de `socle handoff prompt` : le prochain lot de
+l'état ; B-0344 au backlog (J-2026-11-24-AC).
 
 ## Consignes en cours
 

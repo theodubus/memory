@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0010 — Lot de la session longue et de la reprise : le contexte long sans session neuve à la main, la reprise sans list_events
 
-> statut : en cours · origine : J-2026-11-15-J · après : L-0009, T-0039, T-0079, T-0040, T-0041, T-0080, T-0081, T-0134, T-0162 · lu : backlog@19378efe · ancien : B-0240
+> statut : fait · ref : J-2026-11-24-AE · origine : J-2026-11-15-J · après : L-0009, T-0039, T-0079, T-0040, T-0041, T-0080, T-0081, T-0134, T-0162 · lu : backlog@19378efe · ancien : B-0240
 
 Le dernier lot du jalon : une session qui dure sans que l'humain en
 ouvre une neuve à la main (B-0156, une conception à trancher d'abord) et
