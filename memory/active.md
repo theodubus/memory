@@ -5,8 +5,9 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0010 : T-0081 et T-0079 faites (J-2026-11-24-X) ; restent T-0134,
-T-0162. Branche ccr-1ce8bc05-qb7vdl, sans pull request.
+L-0010 : ses tâches faites, sa passation intégrée (J-2026-11-24-Z) ;
+restent la revue, la demande des copies protégées des trois skills,
+la clôture. Branche ccr-a2cf2bb0-4fse3w.
 
 ## Consignes en cours
 
@@ -65,7 +66,6 @@ Leur texte exact est dans l'entrée du journal citée.
 
 Par lots (D-0118, D-0151) :
 
-0. L-0010 : `docs/fabrication/passation-l-0010/README.md`.
 1. JA-0005 : ce qui corrige et stabilise le produit.
 2. JA-0006 : chess mis à jour d'un coup, puis ses corrections.
 3. Puis la couche des consignes (B-0161), la planification (B-0101).
