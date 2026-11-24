@@ -15,6 +15,22 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-24-i — La fin de tour refuse un récap qui donne à supprimer une branche que l'origine n'a plus
+
+L'agent donnait parfois à l'humain, dans « Pour toi », une branche à
+supprimer que l'origine n'avait déjà plus : reprise d'une entrée du
+journal, d'un récap d'avant ou d'une référence que le clone garde faute
+d'élagage, sans la vérifier ; l'état, lui, les vérifie déjà. Le hook de
+fin de tour lit désormais, dans la partie « Pour toi » du dernier
+message, hors de ses blocs de code, chaque ligne qui parle de supprimer
+une branche (sauf une branche locale), et cherche sur l'origine chaque
+nom de branche écrit entre accents graves (`git ls-remote --heads
+origin`, seulement s'il y en a un). Une branche absente fait refuser la
+fin de tour, une fois : la retirer de « Pour toi ». Une origine qui ne
+répond pas ne refuse rien ; un avertissement le dit.
+
+À faire : rien.
+
 ## 2026-11-24-h — Une dispense écrite hors du dernier paragraphe du message : le refus nomme le commit et dit où l'écrire
 
 Les trailers ne se lisent que dans le dernier paragraphe du message de

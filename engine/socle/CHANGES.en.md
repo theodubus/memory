@@ -14,6 +14,22 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-24-i — The end of turn refuses a recap that gives a branch to delete that the origin no longer has
+
+The agent sometimes gave the human, under "For you", a branch to delete
+that the origin no longer had: taken from a journal entry, an earlier
+recap or a reference the clone keeps for want of pruning, without
+checking it; the state already checks them. The end-of-turn hook now
+reads, in the "For you" part of the last message, outside its code
+blocks, each line that speaks of deleting a branch (except a local
+branch), and looks up on the origin each branch name written between
+backticks (`git ls-remote --heads origin`, only if there is one). A
+missing branch makes the end of turn refused, once: remove it from "For
+you". An origin that does not answer refuses nothing; a warning says
+so.
+
+To do: nothing.
+
 ## 2026-11-24-h — A waiver written outside the last paragraph of the message: the refusal names the commit and says where to write it
 
 Trailers are only read in the last paragraph of the commit message, as

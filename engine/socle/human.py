@@ -407,6 +407,20 @@ def _hors_des_blocs_de_code(message: str) -> str:
     return "\n".join(gardees)
 
 
+def pour_toi(projet: config.Projet, message: str) -> str:
+    """La partie « Pour toi » du message, hors de ses blocs de code : de sa
+    ligne à celle de « Ensuite », ou à la fin du message ; vide sans elle."""
+    defaut = MARQUEURS_RECAP_EN if langue.du_projet(projet) == "en" else MARQUEURS_RECAP
+    motifs = list(projet.pol("human", "recap_markers", defaut=defaut).values())
+    texte = _hors_des_blocs_de_code(message)
+    debut = re.search(motifs[0], texte) if motifs else None
+    if not debut:
+        return ""
+    reste = texte[debut.start():]
+    fin = re.search(motifs[1], reste) if len(motifs) > 1 else None
+    return reste[:fin.start()] if fin and fin.start() > 0 else reste
+
+
 def recap_manquant(projet: config.Projet, message: str) -> list[str]:
     """Les lignes du récap absentes du message ; vide, le récap est complet.
     Elles se cherchent hors des blocs de code délimités : une sortie collée

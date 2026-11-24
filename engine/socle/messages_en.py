@@ -246,6 +246,16 @@ MESSAGES: dict[str, str] = {
         "without {manque}",
     "{n} lien(s) que l'humain ne pourra pas suivre":
         "{n} link(s) the human will not be able to follow",
+    "branche(s) à supprimer non vérifiée(s), l'origine ne répondant pas : {branches}":
+        "branch(es) to delete not checked, the origin not answering: {branches}",
+    "{n} branche(s) à supprimer que l'origine n'a plus":
+        "{n} branch(es) to delete that the origin no longer has",
+    "Ton dernier message donne à l'humain, dans « Pour toi », à supprimer {branches}, que l'origine n'a plus "
+    "(`git ls-remote --heads origin`) : il n'a rien à supprimer. Retire-les de « Pour toi » ; les branches à "
+    "supprimer, vérifiées sur l'origine, sont celles que donne l'état (`python3 .socle/socle state`).":
+        "Your last message gives the human, under “For you”, {branches} to delete, which the origin no longer has "
+        "(`git ls-remote --heads origin`): there is nothing to delete. Remove them from “For you”; the branches to "
+        "delete, checked against the origin, are those the state gives (`python3 .socle/socle state`).",
     "fin d'intervention {defauts}, malgré un rappel":
         "end of intervention {defauts}, despite a reminder",
     "(le chantier actif n'a pas de section « Prochaines étapes »)":

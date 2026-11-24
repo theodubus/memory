@@ -202,6 +202,8 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 77. Une dispense (Dispense-doc, Dispense-test) écrite hors du dernier paragraphe du message de commit ne vaut toujours pas, comme git lit les trailers, mais le refus de docs.correspondance ou de tests.code-teste nomme désormais le commit qui l'écrit ailleurs, et dit de la mettre avec les autres trailers (note 2026-11-24-h). Rien à faire.
 
+78. La fin de tour refuse, une fois, un récap dont « Pour toi » me donne à supprimer une branche que l'origine n'a plus : elle cherche sur l'origine chaque nom de branche écrit entre accents graves sur une ligne qui dit supprimer et branche (note 2026-11-24-i). Rien à faire ; si ce refus tire pendant la mise à jour, ou à tort ensuite, dis-le-moi avec la ligne qu'il visait.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.
