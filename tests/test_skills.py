@@ -858,16 +858,20 @@ class TestLaRevue(unittest.TestCase):
         from socle.templates import DOSSIER
 
         attendus = {
-            "fr": ["**Pour le backlog** : un constat qui ne bloque pas va au backlog s'il peut se produire dans "
-                   "l'usage normal du projet, ou si rien ne rattrape ensuite son effet",
-                   "**Écarté** : un constat exotique (un geste rare, une forme qu'on n'écrit que pour contourner, un "
-                   "cas jamais reproduit) dont l'effet est rattrapé, par un contrôle, la CI ou une erreur que "
-                   "l'agent voit aussitôt ; et un constat infondé. Une ligne du récap dit pourquoi chacun est écarté.",
+            "fr": ["**Pour le backlog** : un constat qui ne bloque pas va au backlog seulement s'il est important et "
+                   "a été vu en usage réel (une session, une CI, un message de l'humain le montre), ou si son effet "
+                   "serait irréversible",
+                   "**Écarté** : tout autre constat, dont un cas imaginé et jamais vu, une légère gêne que l'agent "
+                   "règle lui-même (ce que rattrape un contrôle, la CI ou une erreur qu'il voit aussitôt), un "
+                   "contournement hors du modèle de menace, et un constat infondé. En cas de doute, il s'écarte. Une ligne du récap dit pourquoi chacun est écarté ; il revient s'il est vu "
+                   "en usage réel.",
                    "dans sa section `## Modèle de menace` ou dans la décision qu'il cite",
                    "les décisions et les demandes que le lot écrit, puis celles que ses entrées citent"],
-            "en": ["**For the backlog**: a finding that does not block goes to the backlog if it can occur in the "
-                   "project's normal use, or if nothing catches its effect afterwards",
-                   "**Dismissed**: an exotic finding", "One line of the recap says why each is dismissed.",
+            "en": ["**For the backlog**: a finding that does not block goes to the backlog only if it matters and has "
+                   "been seen in real use (a session, a CI run, a message from the human shows it), or if its effect "
+                   "would be irreversible",
+                   "**Dismissed**: any other finding, including a case imagined and never seen",
+                   "One line of the recap says why each is dismissed; it comes back if seen in real use.",
                    "in its `## Threat model` section or in the decision it cites",
                    "the decisions and requests the batch writes, then those its entries cite"],
         }
@@ -877,12 +881,11 @@ class TestLaRevue(unittest.TestCase):
                 self.assertIn(phrase, texte, lg)
         instructions = {
             "AGENTS.md": ["(sa section `## Modèle de menace`, ou la décision qu'il cite)",
-                          "un autre va au backlog s'il peut se produire dans l'usage normal du projet, ou si rien ne "
-                          "rattrape ensuite son effet ; sinon, exotique et rattrapé, ou infondé, il s'écarte"],
+                          "un autre va au backlog s'il est important et vu en usage réel, ou d'effet irréversible ; "
+                          "sinon il s'écarte, et revient s'il est vu"],
             "AGENTS.en.md": ["(its `## Threat model` section, or the decision it cites)",
-                             "another goes to the backlog if it can occur in the project's normal use, or if nothing "
-                             "catches its effect afterwards; otherwise, exotic and caught, or unfounded, it is "
-                             "dismissed"],
+                             "another goes to the backlog if it matters and was seen in real use, or if its effect "
+                             "would be irreversible; otherwise it is dismissed, and comes back if seen"],
             "../FORMAT.md": ["dans une section `## Modèle de menace` (`## Threat model` en anglais) ou dans la "
                              "décision qu'il cite"],
         }

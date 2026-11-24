@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0169-valider-le-tri-des-constats-de-revue-de-d-0165-dan.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-24"
+canal = "conversation"
+citation = "Valider D0168 et D0169"
+empreinte = "sha256:8ef48346502c1bc4dc048a3ddec96854f8fedec15065c026aafa7ac8dfb5594a"

@@ -138,9 +138,11 @@ class TestBarre(_Lot):
         self.assertIn("contourne un garde-fou dans son modèle de menace", texte)
         self.assertIn("un garde-fou que le lot pose ou change sans modèle de menace écrit est lui-même un constat "
                       "bloquant", texte)
-        self.assertIn("**Pour le backlog** : un constat qui ne bloque pas, s'il peut se produire dans l'usage normal "
-                      "du projet, ou si rien ne rattrape ensuite son effet", texte)
-        self.assertIn("**Écarté** : un constat exotique", texte)
+        self.assertIn("**Pour le backlog** : un constat qui ne bloque pas, seulement s'il est important et a été vu "
+                      "en usage réel", texte)
+        self.assertIn("ou si son effet serait irréversible", texte)
+        self.assertIn("**Écarté** : tout autre constat, dont un cas imaginé et jamais vu", texte)
+        self.assertIn("en cas de doute, il s'écarte, et revient s'il est vu en usage réel", texte)
         self.assertIn("Seuls les bloquants se corrigent dans le lot.", texte)
         self.assertIn("Rends trois listes numérotées, « Bloquants », « Pour le backlog » puis « Écartés »", texte)
         # Les trois parties de la consigne précèdent le diff.
@@ -683,11 +685,11 @@ class TestLesFormesDuShellHorsDuProduit(unittest.TestCase):
     }
     # Le tri des autres constats reste dans la consigne du relecteur.
     CLASSES = {
-        "fr": ("**Écarté** : un constat exotique (un geste rare, une forme qu'on n'écrit que pour contourner, un "
-               "cas jamais reproduit) dont l'effet est rattrapé",
+        "fr": ("**Écarté** : tout autre constat, dont un cas imaginé et jamais vu, une légère gêne que l'agent "
+               "règle lui-même",
                "Rends trois listes numérotées, « Bloquants », « Pour le backlog » puis « Écartés »"),
-        "en": ("**Dismissed**: an exotic finding (a rare gesture, a form one only writes to get around something, "
-               "a case never reproduced) whose effect is caught",
+        "en": ("**Dismissed**: any other finding, including a case imagined and never seen, a slight nuisance the "
+               "agent handles itself",
                "Return three numbered lists, “Blocking”, “For the backlog” then “Dismissed”"),
     }
 

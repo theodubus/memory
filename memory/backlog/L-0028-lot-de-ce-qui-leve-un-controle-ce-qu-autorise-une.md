@@ -1,6 +1,0 @@
-<!-- socle: couche=backlog zone=publique -->
-# L-0028 — Lot de ce qui lève un contrôle : ce qu'autorise une demande, les seuils que juge le cliquet, la dispense écrite hors des trailers
-
-> statut : ouvert · origine : J-2026-11-21-P · après : L-0027, T-0116, T-0117, T-0142, T-0143, T-0059 · lu : backlog@6c894b15
-
-Ce qui lève un contrôle ou un garde-fou, à raison ou à tort : la réponse et la décision donnée qui autorisent un test, une clé ou un fichier protégé (T-0116, B-0312 ; T-0117, B-0313 : `demandes.reponse-seule`, `_justifie`, `_valide_par`) ; le cliquet des garde-fous, qui juge la borne du démarrage par ce qu'en lit le moteur (T-0142, B-0282) et connaît le défaut de chaque seuil (T-0143, B-0283), dans `engine/socle/checks_ratchet.py` ; la dispense qu'un contrôle redemande quand elle est hors du bloc final de trailers (T-0059, B-0275, `engine/socle/checks_docs.py`, `engine/socle/checks_tests.py`). Chacun a son défaut injecté et son témoin sain dans l'auto-test ; les besoins du cliquet écrivent leur modèle de menace avant le code. Le hook de l'agent n'y change pas (ADR-0098) : le trailer `Corrige` qu'il lit au message de commit, et la demande qu'il lit pour épargner un fichier protégé, restent tels quels ; les contrôles jugent au commit et en CI. Formé le 21 novembre, sur la décision de Théo (D-0154, J-2026-11-21-Q).

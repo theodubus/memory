@@ -62,6 +62,51 @@ class TestAtelierPartage(unittest.TestCase):
                                           capture_output=True, text=True).stdout.strip()
         self.assertEqual([lire("gc.auto"), lire("maintenance.auto"), lire("receive.autogc")], ["0", "false", "false"])
 
+    def test_un_clone_de_l_origine_passe_par_le_protocole(self):
+        """B-0341 : la CI de chess, « hardlink different from source » ; un
+        clone local lit le dossier des objets de l'origine, où la quarantaine
+        d'un push d'un autre cas change sous lui. La course elle-même ne se
+        rend pas déterministe : l'essai ciblé de T-0171 la mesure."""
+        from pathlib import Path
+
+        import socle
+
+        a = autotest.Atelier(Path(socle.__file__).resolve().parent.parent, False)
+        self.addCleanup(a.nettoyer)
+        a.origine = a.dossier / "origine"
+        appels = []
+        a.git = lambda cwd, *args, env=None: appels.append(args) or ""
+        a.clone()
+        clones = [x for x in appels if x[0] == "clone"]
+        self.assertEqual(len(clones), 1)
+        self.assertIn("--no-local", clones[0])
+        # Le clone_prive du mode compagnon clone aussi le dépôt privé, où
+        # d'autres cas poussent : par le protocole de même.
+        appels.clear()
+        a.origine_privee = lambda mode: a.dossier / f"origine-{mode}"
+        a.clone_prive("compagnon")
+        clones = [x for x in appels if "clone" in x]
+        self.assertEqual(len(clones), 2)
+        self.assertTrue(all("--no-local" in x for x in clones), clones)
+
+    def test_un_clone_qui_echoue_n_echoue_que_son_cas(self):
+        """B-0341 : le clone était hors du `try` de `jouer`, et son échec
+        faisait tomber l'auto-test entier au lieu d'un cas."""
+        class Atelier:
+            def __init__(self, panne):
+                self.panne = panne
+
+            def clone(self):
+                if self.panne:
+                    raise RuntimeError("git clone -q : fatal: hardlink different from source")
+                return "cas-01"
+
+        temoin = ("témoin", lambda a, c: f"sortie de {c}", None)
+        sortie, panne = autotest.jouer(Atelier(True), temoin)
+        self.assertIsNone(sortie)
+        self.assertIsInstance(panne, RuntimeError)
+        self.assertEqual(autotest.jouer(Atelier(False), temoin), ("sortie de cas-01", None))
+
     def test_une_origine_privee_se_prepare_une_fois_sur_plusieurs_fils(self):
         from concurrent.futures import ThreadPoolExecutor
         from pathlib import Path

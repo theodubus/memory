@@ -140,9 +140,8 @@ Théo dès sa création, avec son titre.
 ## Inconnue 5 : une nuit
 
 E2, créée vide à 12:37:39, attend son prompt pour le 24 novembre à 05:40
-(`trig_0135y1zbnewUggBu4Yb9eAUZ`), dix-sept heures plus tard. Non levée à
-ce jour : son résultat s'ajoute ici le 24 au matin (plus bas, « Après
-coup »).
+(`trig_0135y1zbnewUggBu4Yb9eAUZ`), dix-sept heures plus tard. Levée le
+24 : elle a reçu son prompt à l'heure (plus bas, « Après coup »).
 
 ## A, le repli
 
@@ -154,8 +153,8 @@ montre qu'une session laissée vide une nuit ne reçoit pas son prompt.
 B si ses inconnues 1 à 5 se lèvent ; sinon A, si les siennes se lèvent ;
 sinon le prompt à copier reste. Au 23 novembre, 1 à 4 sont levées : 1
 pour la lecture, 2 sous la condition de nommer la branche, 4 pour une fin
-propre ; 5 attend E2. Le choix se fait sur son
-résultat ; il est soumis à Théo, qui le confirme, avec ce relevé complet.
+propre ; 5 l'est le 24, par E2. B est donc la variante proposée ; elle
+est soumise à Théo, qui la confirme, avec ce relevé complet.
 
 ## Ce que la spécification devra dire
 
@@ -163,6 +162,9 @@ Observé pendant l'essai, sans être une inconnue de B-0259 :
 
 - **La branche.** `create_session` reçoit `outcome_branch`, la branche du
   travail ; sinon la session neuve n'a pas où pousser (E1, E4).
+- **Le clone.** Il date de la création de la session, pas de son prompt
+  (E2) : la session neuve commence par `git fetch` et se place sur la
+  tête distante de sa branche.
 - **Le niveau de réflexion.** Il ne s'hérite pas ; la session neuve
   tourne au niveau par défaut, sauf consigne qui en nomme un.
 - **Le retard.** Le prompt arrive une à trois minutes après l'heure
@@ -192,4 +194,19 @@ Déduit, non essayé :
 
 - E3, vérifiée à 17:25 : aucun message reçu après 16:00 (`list_events`,
   ni `user` ni `result`). L'inconnue 6 est levée : annuler marche.
-- E2, le 24 après 05:40 : <!-- à lire : son prompt reçu ou non, et ce qu'elle a rendu -->
+- E2, lue le 24 dans le message qu'elle a rendu, que Théo a collé (elle
+  est sur un autre compte : ses événements ne se lisent pas depuis la
+  session qui écrit ce relevé ; J-2026-11-24-L). Son premier tour s'ouvre
+  vers 05:40 : le hook `SessionStart` tire à 05:40:24, moins d'une minute
+  après l'heure demandée. Le modèle (`claude-opus-5-5`, les trois champs)
+  et le mode `auto` hérité sont ceux d'E1 ; l'état du socle est injecté,
+  les hooks git branchés, les outils de `claude-code-remote` présents ;
+  aucune approbation, aucun refus. **L'inconnue 5 est levée** : une
+  session laissée vide une nuit reçoit son prompt.
+- Constat nouveau d'E2 : son clone est la branche par défaut au moment de
+  sa création (`a68f5bc0`), pas à celui de son prompt ; deux fusions
+  arrivées entre-temps sur `main` lui manquent (`74c372d1`, `12556bb4`).
+  La spécification le dira : la session neuve commence par `git fetch`
+  et se place sur la tête distante de sa branche.
+- La règle de choix : les inconnues 1 à 5 de B sont levées ; B est la
+  variante proposée à Théo, avec ce relevé (T-0041).
