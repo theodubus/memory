@@ -463,6 +463,10 @@ empreinte = "sha256:…"   # le texte exact de la demande au moment de la répon
 L'état de la demande se dérive de la réponse : en attente, répondue, renvoyée
 (`contexte-insuffisant` : l'agent la réécrit en une nouvelle demande),
 retirée (métadonnée `retirée : <raison>`). Une demande répondue est gelée.
+La demande qui en remplace une renvoyée la cite dans ses « Éléments cités »
+(`- D-NNNN@<empreinte> — la demande renvoyée que celle-ci remplace`) ;
+`socle state` liste « à réécrire » une demande renvoyée tant qu'aucune
+autre ne la cite là.
 
 Une décision prise en séance est la forme courte d'une demande :
 l'humain, présent, a tranché dans la conversation, de lui-même ou sur une

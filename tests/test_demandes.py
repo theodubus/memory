@@ -712,3 +712,59 @@ class TestDecisionDonnee(unittest.TestCase):
                                            "--relayed", "--by", "Théo", "--quote", "Supprime-le."])
         self.assertTrue(args.unprompted)
         self.assertIsNone(args.answer)
+
+
+class TestRenvoyeeRemplacee(unittest.TestCase):
+    """B-0344 : D-0160, renvoyée faute de contexte, restait listée « à
+    réécrire » par l'état quand D-0174, qui la cite dans ses éléments cités,
+    la remplaçait déjà, répondue et gelée : une session neuve pouvait la
+    réécrire une seconde fois."""
+
+    A_REECRIRE = "RENVOYÉE (contexte insuffisant) : D-0001"
+
+    def setUp(self):
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-renvoyee-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=self.racine, check=True)
+        (self.racine / "calc.py").write_text("X = 1\n")
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+        self.projet = config.Projet.charger(self.racine)
+
+    def poser(self, num: int, cites: str = "", renvoyee: bool = False):
+        texte = CONFORME.replace("D-0004", f"D-{num:04d}").replace("## Éléments cités\n\n",
+                                                                   f"## Éléments cités\n\n{cites}")
+        chemin = self.racine / f"memory/requests/D-{num:04d}-plafond.md"
+        chemin.write_text(texte, encoding="utf-8")
+        if renvoyee:
+            chemin.with_name(chemin.name[: -len(".md")] + ".answer.toml").write_text(
+                'reponse = "contexte-insuffisant"\n', encoding="utf-8")
+
+    def etat(self) -> str:
+        from socle import state as etat
+
+        return etat.calculer(config.Projet.charger(self.racine), contenus=False)
+
+    def test_une_renvoyee_qu_une_autre_cite_n_est_plus_a_reecrire(self):
+        self.poser(1, renvoyee=True)
+        self.assertIn(self.A_REECRIRE, self.etat())
+        self.poser(2, "- D-0001@0123abcd — la demande précédente, renvoyée faute de contexte, que celle-ci "
+                      "remplace.\n")
+        self.assertNotIn(self.A_REECRIRE, self.etat())
+
+    def test_une_renvoyee_que_rien_ne_cite_reste_a_reecrire(self):
+        self.poser(1, renvoyee=True)
+        self.poser(2)
+        self.assertIn(self.A_REECRIRE, self.etat())
+
+    def test_une_renvoyee_qui_se_cite_elle_meme_reste_a_reecrire(self):
+        self.poser(1, "- D-0001 — cette demande même, que la réponse a renvoyée faute de contexte.\n",
+                   renvoyee=True)
+        self.assertIn(self.A_REECRIRE, self.etat())
+
+    def test_les_elements_cites_d_une_demande_anglaise_comptent(self):
+        """Un projet anglais écrit la section « Cited elements »."""
+        texte = CONFORME.replace("## Éléments cités\n\n", "## Cited elements\n\n- D-0001 — the earlier request, "
+                                                          "returned for lack of context, that this one replaces.\n")
+        self.assertIn("D-0001", demandes.citees_par_une_autre([_demande(texte)]))
+        self.assertNotIn("D-0001", demandes.citees_par_une_autre([_demande(CONFORME)]))

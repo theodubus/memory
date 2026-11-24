@@ -15,6 +15,16 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-24-n — L'état ne liste plus « à réécrire » une demande renvoyée qu'une autre demande cite
+
+`socle state` listait sous « RENVOYÉE (contexte insuffisant) … à
+réécrire » toute demande renvoyée, même quand une demande nouvelle
+l'avait déjà remplacée et reçu sa réponse ; une session neuve, qui ne
+sait que ce que l'état lui montre, pouvait la réécrire une seconde fois.
+La demande qui en remplace une renvoyée la cite dans ses « Éléments
+cités » (« Cited elements » en anglais), comme le format le dit
+désormais ; l'état ne liste plus une demande renvoyée qu'une autre
+demande décrit là. Une demande qui se cite elle-même ne compte pas.
 ## 2026-11-24-o — Une ligne `Corrige:` ou `Fixes:` écrite hors du dernier paragraphe du message fait du commit un correctif, dont le test de régression se vérifie
 
 Un commit est un correctif par son sujet (`fix:` par défaut) ou par un

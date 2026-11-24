@@ -14,6 +14,16 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-24-n — The state no longer lists "to rewrite" a request sent back that another request cites
+
+`socle state` listed under "SENT BACK (insufficient context) … to
+rewrite" every request sent back, even when a new request had already
+replaced it and received its answer; a new session, which knows only
+what the state shows it, could rewrite it a second time. The request
+that replaces one sent back cites it in its "Cited elements" ("Éléments
+cités" in French), as the format now says; the state no longer lists a
+request sent back that another request describes there. A request that
+cites itself does not count.
 ## 2026-11-24-o — A `Corrige:` or `Fixes:` line written outside the last paragraph of the message makes the commit a fix, whose regression test is checked
 
 A commit is a fix by its subject (`fix:` by default) or by a `Corrige:`
