@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0165-le-temps-de-developpement-va-aux-ajouts-importants.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-24"
+canal = "conversation"
+citation = "Arrête de faire un prompt hyper long, on mettra ça en memoire une fois validé ça sera plus simple \n\nCorriger la définition de jalon ne change rien \n\nAllonger le temps de dev car on veut ajouter des choses importantes, corriger un bug important : pas de soucis \n\nMais passer 10h sur un cas limite qui arrive rarement, et qu'en pratique n'est qu'une légère gêne pour l'agent qu'il peut gérer lui même c'est non"
+empreinte = "sha256:a980e26c857055fa6ac213574337027133494e40544aaaea5bc55f159c47c321"
