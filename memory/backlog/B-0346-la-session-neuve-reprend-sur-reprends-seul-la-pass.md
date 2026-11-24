@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0346 — La session neuve reprend sur « reprends » seul : la passation écrite dans le dépôt, sans prompt à copier
 
-> statut : ouvert · origine : J-2026-11-24-AF · ref : D-0174, B-0345 · lu : backlog@71f347c7
+> statut : ouvert · origine : J-2026-11-24-AF · ref : D-0174, B-0345, D-0177 · lu : backlog@71f347c7
 
 Le 24 novembre, Théo : « en vrai je me demande si le prompt est utile
 tout court a donner à l'utilisateur, c'est typiquement un truc qui
@@ -23,8 +23,8 @@ l'état. Elle change la spécification validée par D-0174 : spécification
 et demande avant le code, après des questions de cadrage à Théo si son
 intention ne suffit pas.
 
-Propositions de l'agent, non tranchées (J-2026-11-24-AG), pour la
-spécification :
+Propositions de l'agent (J-2026-11-24-AG), retenues par Théo le 24
+novembre (D-0177), pour la spécification :
 
 - **La tête.** La passation est un fichier du dépôt, sans identifiant
   de commit : la garde prend pour tête le dernier commit qui l'a écrit,
