@@ -1643,8 +1643,10 @@ MESSAGES: dict[str, str] = {
         "not available locally (gh missing) — see the pull request",
     "non disponible (gh ne répond pas)":
         "not available (gh does not answer)",
-    "non disponible (gh non authentifié ou aucune exécution)":
-        "not available (gh not authenticated or no run)",
+    "non disponible (gh non authentifié, ou en erreur)":
+        "not available (gh not authenticated, or in error)",
+    "aucune exécution sur {sha}, le commit de tête":
+        "no run on {sha}, the head commit",
     "non disponible (réponse illisible)":
         "not available (unreadable answer)",
     "{ci} : {etat} sur {sha}":

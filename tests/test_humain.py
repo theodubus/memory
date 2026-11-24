@@ -384,6 +384,83 @@ class TestCiExigee(unittest.TestCase):
         self.assertEqual(self.etat.nom_de_la_ci(self.projet), CI)
 
 
+
+FAUX_GH_EXECUTIONS = """#!/usr/bin/env python3
+import json, os, sys
+executions = json.loads(os.environ["FAUX_EXECUTIONS"])
+args = sys.argv[1:]
+if args[:2] != ["run", "list"]:
+    sys.exit(1)
+if "--commit" in args:
+    print(json.dumps(executions.get(args[args.index("--commit") + 1], [])))
+else:
+    # Par la branche : sa dernière exécution, celle d'un commit d'avant.
+    print(json.dumps([r for rs in executions.values() for r in rs][:1]))
+"""
+
+
+def execution(nom, sha, conclusion, status="completed"):
+    return {"workflowName": nom, "status": status, "conclusion": conclusion, "headSha": sha}
+
+
+class TestLigneCi(unittest.TestCase):
+    """B-0334 : après la fusion, la branche repartie de la branche par défaut
+    a pour tête le commit de fusion ; la ligne « CI » disait encore la
+    dernière exécution de la branche, celle de l'ancienne tête, et une
+    boucle qui attendait `success sur <tête>` n'aboutissait jamais."""
+
+    def setUp(self):
+        from socle import state as etat
+
+        self.etat = etat
+        self.dossier = Path(tempfile.mkdtemp(prefix="socle-ligne-ci-"))
+        self.addCleanup(shutil.rmtree, self.dossier, ignore_errors=True)
+        self.racine = self.dossier / "projet"
+        (self.racine / "memory").mkdir(parents=True)
+        git(self.racine, "init", "-q", "-b", "travail")
+        git(self.racine, "commit", "-q", "--allow-empty", "-m", "ancienne tête")
+        self.ancienne = git(self.racine, "rev-parse", "HEAD").strip()
+        git(self.racine, "commit", "-q", "--allow-empty", "-m", "fusion")
+        self.tete = git(self.racine, "rev-parse", "HEAD").strip()
+        self.projet = config.Projet(racine=self.racine)
+        outils_gh = self.dossier / "bin"
+        outils_gh.mkdir()
+        (outils_gh / "gh").write_text(FAUX_GH_EXECUTIONS)
+        (outils_gh / "gh").chmod(0o755)
+        self.enterContext(unittest.mock.patch.dict(os.environ, {"PATH": f"{outils_gh}{os.pathsep}{os.environ['PATH']}"}))
+        self.executions({self.ancienne: [execution("Socle", self.ancienne, "success")]})
+
+    def executions(self, par_commit):
+        os.environ["FAUX_EXECUTIONS"] = json.dumps(par_commit)
+
+    def test_un_commit_de_tete_sans_execution_ne_dit_pas_celle_d_un_autre(self):
+        texte = self.etat.calculer(self.projet, contenus=False)
+        self.assertIn(f"CI       : aucune exécution sur {self.tete[:7]}, le commit de tête", texte)
+        self.assertNotIn(f"sur {self.ancienne[:7]}", texte)
+
+    def test_un_commit_de_tete_qui_a_son_execution(self):
+        self.executions({self.ancienne: [execution("Socle", self.ancienne, "failure")],
+                         self.tete: [execution("Socle", self.tete, "success")]})
+        texte = self.etat.calculer(self.projet, contenus=False)
+        self.assertIn(f"CI       : Socle : success sur {self.tete[:7]}", texte)
+
+    def test_plusieurs_executions_disent_la_pire(self):
+        """La fusion lance la CI et la distribution sur le même commit :
+        `success` ne se dit qu'une fois toutes réussies."""
+        socle = execution("Socle", self.tete, "success")
+        cas = [([socle, execution("distribution", self.tete, "", "in_progress")], "distribution : in_progress"),
+               ([socle, execution("distribution", self.tete, "failure")], "distribution : failure"),
+               ([execution("distribution", self.tete, "skipped"), socle], "Socle : success"),
+               ([socle, execution("distribution", self.tete, "success")], ": success")]
+        for executions, attendu in cas:
+            self.executions({self.tete: executions})
+            self.assertEqual(self.etat._ligne_ci(self.racine, self.tete).split(" sur ")[0][-len(attendu):], attendu,
+                             executions)
+
+    def test_gh_en_erreur(self):
+        os.environ["FAUX_EXECUTIONS"] = "illisible"
+        self.assertEqual(self.etat._ligne_ci(self.racine, self.tete), "non disponible (gh non authentifié, ou en erreur)")
+
 class TestDernierMessage(unittest.TestCase):
     def ecrire(self, objets):
         p = Path(tempfile.mkdtemp()) / "t.jsonl"

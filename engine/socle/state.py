@@ -23,29 +23,49 @@ from socle import config, requests as demandes, memory as memoire, utils as outi
 from socle.messages import a_traduire, trad
 
 
-def _ligne_ci(racine, branche) -> str:
-    """L'état de la CI, si `gh` est là et authentifié. Sinon on le dit : le
-    moteur n'exige aucun service externe."""
+# L'ordre où se dit l'exécution d'un commit qui en a plusieurs (la CI, la
+# distribution) : un échec d'abord, puis ce qui tourne encore, puis le
+# succès, puis ce qui n'a pas tourné (B-0334).
+ECHECS_CI = ("failure", "cancelled", "timed_out", "startup_failure", "action_required")
+
+
+def _rang_ci(r: dict) -> int:
+    if r.get("conclusion") in ECHECS_CI:
+        return 0
+    if r.get("status") != "completed":
+        return 1
+    return 2 if r.get("conclusion") == "success" else 3
+
+
+def _ligne_ci(racine, sha: str) -> str:
+    """L'état de la CI du commit de tête, si `gh` est là et authentifié.
+    Ses exécutions se cherchent par le commit (`--commit`), et non par la
+    branche, dont la dernière peut être celle d'un commit d'avant : après la
+    fusion, la branche repartie de la branche par défaut disait encore
+    l'ancienne tête (B-0334). Un commit qui en a plusieurs dit la pire :
+    `success sur <sha>` n'est dit qu'une fois toutes réussies. Sinon on le
+    dit : le moteur n'exige aucun service externe."""
     if not shutil.which("gh"):
         return trad("non disponible localement (gh absent) — voir la pull request")
     try:
         p = subprocess.run(
-            ["gh", "run", "list", "--branch", branche, "--limit", "1",
+            ["gh", "run", "list", "--commit", sha, "--limit", "20",
              "--json", "status,conclusion,workflowName,headSha"],
             cwd=racine, capture_output=True, text=True, timeout=8,
         )
     except (subprocess.TimeoutExpired, OSError):
         return trad("non disponible (gh ne répond pas)")
-    if p.returncode != 0 or not p.stdout.strip() or p.stdout.strip() == "[]":
-        return trad("non disponible (gh non authentifié ou aucune exécution)")
-    import json
-
+    if p.returncode != 0 or not p.stdout.strip():
+        return trad("non disponible (gh non authentifié, ou en erreur)")
     try:
-        r = json.loads(p.stdout)[0]
-    except (ValueError, IndexError):
+        executions = [r for r in json.loads(p.stdout) if isinstance(r, dict)]
+    except (ValueError, TypeError):
         return trad("non disponible (réponse illisible)")
+    if not executions:
+        return trad("aucune exécution sur {sha}, le commit de tête", sha=sha[:7])
+    r = min(executions, key=_rang_ci)
     return trad("{ci} : {etat} sur {sha}", ci=r.get("workflowName"), etat=r.get("conclusion") or r.get("status"),
-                sha=r.get("headSha", "")[:7])
+                sha=(r.get("headSha") or sha)[:7])
 
 
 def _gh_json(racine, chemin: str):
@@ -692,7 +712,9 @@ def _git(racine, projet, borne: bool = False) -> list[tuple[int, list[str]]]:
                 res.append((INFO, [trad("  ^ du code a changé et la mémoire non : la fin de tour le refusera")]))
     else:
         res.append((INFO, [trad("base     : aucune branche par défaut connue")]))
-    res.append((INFO, [trad("CI       : {ci}", ci=_ligne_ci(racine, branche))]))
+    # La CI du commit de tête, pas la dernière de la branche (B-0334).
+    tete = outils.git(racine, "rev-parse", "HEAD").strip()
+    res.append((INFO, [trad("CI       : {ci}", ci=_ligne_ci(racine, tete))]))
     return res
 
 

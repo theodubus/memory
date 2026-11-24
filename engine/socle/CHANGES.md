@@ -15,6 +15,21 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-24-f — La ligne « CI » de l'état dit l'exécution du commit de tête, pas la dernière de la branche
+
+La ligne « CI » de `socle state` disait la dernière exécution de la
+branche, par son nom : après la fusion de la pull request, la branche
+repartie de la branche par défaut y lisait encore l'ancienne tête, et une
+boucle qui attendait `success sur <sha court>` du commit de tête
+n'aboutissait jamais. Elle cherche désormais les exécutions du commit de
+tête lui-même (`gh run list --commit`), et dit qu'il n'en a aucune
+plutôt que celle d'un autre. Quand il en a plusieurs, la CI et la
+distribution après une fusion par exemple, elle dit la pire : un échec,
+puis ce qui tourne encore, puis le succès ; `success` ne se lit qu'une
+fois toutes réussies.
+
+À faire : rien.
+
 ## 2026-11-24-e — L'état ne dit plus une branche gardée par une branche de travail que l'origine n'a plus
 
 L'état disait d'une branche distante qu'elle était « déjà contenue dans

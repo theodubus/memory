@@ -14,6 +14,20 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-24-f — The state's "CI" line gives the run of the head commit, not the branch's last one
+
+The "CI" line of `socle state` gave the branch's last run, by its name:
+after the pull request was merged, the branch restarted from the default
+branch still read the old head there, and a loop waiting for `success on
+<short sha>` of the head commit never ended. It now looks for the runs
+of the head commit itself (`gh run list --commit`), and says it has none
+rather than giving another commit's. When it has several, the CI and the
+distribution after a merge for instance, it gives the worst: a failure,
+then what is still running, then success; `success` only reads once all
+have succeeded.
+
+To do: nothing.
+
 ## 2026-11-24-e — The state no longer reports a branch as kept by a working branch the origin no longer has
 
 The state said of a remote branch that it was "already contained in
