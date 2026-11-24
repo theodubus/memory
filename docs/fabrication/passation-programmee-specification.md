@@ -48,11 +48,13 @@ autre agent, ou quand la création est refusée.
 
 ## Quand
 
-| Le moment | L'heure de la session suivante |
-| --- | --- |
-| Lot livré | tout de suite : la minute qui suit |
-| Rangement à dix points d'une limite (`socle-batch`) | la remise à zéro de cette fenêtre, plus cinq minutes |
-| Avant une attente de plus d'une heure (une CI longue, une heure donnée) | la fin de l'attente |
+Le tableau des moments et de l'heure de la session suivante, tel que
+validé (D-0174), est dans le skill `socle-handoff`, section « Le
+moment » (`engine/socle/templates/skills/socle-handoff/SKILL.md`), sa
+seule source depuis son implémentation : le lot livré, tout de suite ;
+le rangement à dix points d'une limite, la remise à zéro de cette
+fenêtre plus cinq minutes ; avant une attente de plus d'une heure, sa
+fin.
 
 Une session ne part jamais sur une fenêtre au-delà de son seuil, 15 % de
 la fenêtre de cinq heures et 75 % de la semaine : l'heure du tableau
