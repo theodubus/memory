@@ -76,10 +76,10 @@ entrée de journal et une valeur attendue ne se réécrivent plus.
 2. Retirer la copie isolée et sa branche ;
    `python3 .socle/socle verify --fast`.
 3. Pousser ; ouvrir la pull request s'il n'y en a pas, une seule ouverte.
-   Attendre `success` sur le SHA court du commit de tête, ligne « CI » de
-   `python3 .socle/socle state`. Une attente annoncée a son réveil en
-   session cloud (`send_later`) ; ailleurs, `Ensuite :` le dit, et
-   l'humain relance l'agent.
+   Attendre la CI du commit poussé (`gh run list --commit <sha>`) : la
+   ligne « CI » de l'état suit la tête. Une attente annoncée a son
+   réveil en session cloud (`send_later`) ; ailleurs, `Ensuite :` le dit,
+   et l'humain relance l'agent.
 4. Qui fusionne : par défaut l'humain, et le lot suivant s'ajoute à la
    même pull request ; l'agent, la sienne, si la politique le permet : CI
    verte sur le commit de tête, qu'il donne, revue faite, aucune demande
@@ -136,7 +136,7 @@ heure (le moment : skill `socle-handoff`). Ranger d'abord :
 2. les copies isolées, leurs branches et, en session cloud, les réveils
    retirés ;
 3. tout est poussé ; un commit non relu part en correctif
-   (`git format-patch`) dans un dossier de passation du dépôt, retiré à son
+   (`git format-patch`) dans un dossier de passation, retiré à son
    intégration. Plus rien ne se pousse ensuite.
 
 Puis le skill `socle-handoff` : selon le mode, il programme la session

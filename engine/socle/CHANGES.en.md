@@ -14,6 +14,19 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-24-k — The batch skill waits for the CI of the pushed commit, by its SHA
+
+Step 3 of the `socle-batch` skill made the agent wait for `success` on
+the short SHA of the head commit in the "CI" line of `socle state`. That
+line follows the local head: a commit made during the wait moved it, it
+said "no run" on a commit the CI had not received, and the agent was
+still waiting for a CI that had long finished. The skill now has the
+agent wait for the CI of the pushed commit, by its SHA (`gh run list
+--commit <sha>`).
+
+To do: nothing; the `socle-batch` skill is a protected copy, in the
+installer's request.
+
 ## 2026-11-24-j — A journal entry notes no future step for the human
 
 A journal entry that noted a step to come for the human (“the branch to

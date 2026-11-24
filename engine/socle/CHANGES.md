@@ -15,6 +15,19 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-24-k — Le skill des lots attend la CI du commit poussé, par son SHA
+
+L'étape 3 du skill `socle-batch` faisait attendre `success` sur le SHA
+court du commit de tête dans la ligne « CI » de `socle state`. Cette
+ligne suit la tête locale : un commit fait pendant l'attente la
+déplaçait, elle disait « aucune exécution » sur un commit que la CI
+n'avait pas reçu, et l'agent attendait encore une CI finie depuis
+longtemps. Le skill fait désormais attendre la CI du commit poussé, par
+son SHA (`gh run list --commit <sha>`).
+
+À faire : rien ; le skill `socle-batch` est une copie protégée, dans la
+demande de l'installeur.
+
 ## 2026-11-24-j — Une entrée du journal ne note aucun geste futur pour l'humain
 
 Une entrée du journal qui notait un geste à venir pour l'humain (« la
