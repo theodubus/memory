@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # JA-0005 — Jalon — le produit corrigé et stabilisé avant la mise à jour de chess
 
-> statut : ouvert · origine : J-2026-11-14-M · après : B-0213, B-0214, B-0232, B-0228, B-0261, B-0251, B-0153, B-0267, B-0268, B-0265, B-0263, B-0270, B-0257, B-0258, B-0229, B-0230, B-0231, B-0246, B-0248, B-0254, B-0260, B-0227, B-0226, B-0233, B-0217, B-0242, B-0243, B-0140, B-0185, B-0167, B-0176, B-0200, B-0203, B-0241, B-0262, B-0193, B-0225, B-0195, B-0144, B-0152, B-0183, B-0186, B-0201, B-0197, B-0210, B-0219, B-0249, B-0194, B-0156, B-0198, B-0259, B-0252, B-0133, B-0273, B-0274, B-0276, B-0277, B-0278, B-0279, B-0280, B-0147, B-0275, B-0292, B-0301, B-0303, B-0311, B-0317, B-0320, B-0321, B-0322, B-0324, B-0327, B-0328, B-0331, B-0334, B-0335, B-0341, B-0342, B-0343, B-0348, B-0349, B-0344, B-0345, B-0347, B-0350 · lu : backlog@f69fc579 · ancien : B-0224
+> statut : ouvert · origine : J-2026-11-14-M · après : B-0213, B-0214, B-0232, B-0228, B-0261, B-0251, B-0153, B-0267, B-0268, B-0265, B-0263, B-0270, B-0257, B-0258, B-0229, B-0230, B-0231, B-0246, B-0248, B-0254, B-0260, B-0227, B-0226, B-0233, B-0217, B-0242, B-0243, B-0140, B-0185, B-0167, B-0176, B-0200, B-0203, B-0241, B-0262, B-0193, B-0225, B-0195, B-0144, B-0152, B-0183, B-0186, B-0201, B-0197, B-0210, B-0219, B-0249, B-0194, B-0156, B-0198, B-0259, B-0252, B-0133, B-0273, B-0274, B-0276, B-0277, B-0278, B-0279, B-0280, B-0147, B-0275, B-0292, B-0301, B-0303, B-0311, B-0317, B-0320, B-0321, B-0322, B-0324, B-0327, B-0328, B-0331, B-0334, B-0335, B-0341, B-0342, B-0343, B-0348, B-0349, B-0344, B-0345, B-0347, B-0350, B-0346 · lu : backlog@f69fc579 · ancien : B-0224
 
 Ce qui reste de la liste que Théo a fixée le 13 novembre, à finir avant
 les nouvelles fonctions (J-2026-11-13-I). Né le 14 novembre sous la
@@ -57,3 +57,5 @@ Le 23 novembre, la revue de cap 3 relève cinq tâches du jalon hors de tout lot
 Le 24 novembre, sur D-0168, le tri du backlog ouvert par le but (`docs/fabrication/tri-du-backlog-2026-11-24.md`) : 25 de ses besoins s'abandonnent et le quittent ; B-0274 est satisfait ; il garde treize besoins ouverts, en quatre lots, L-0035, L-0010, L-0024 et L-0032.
 
 Le 24 novembre, sur la revue de cap 5 (J-2026-11-24-AU), Théo y range les corrections du produit restées hors de tout jalon, B-0344, B-0345 et B-0347 (D-0180), et B-0350, l'attente de la CI du gabarit de `socle-batch` (D-0181) ; le lot de corrections devient le prochain lot, avant L-0032 (J-2026-11-24-AV).
+
+Le 24 novembre, Théo y fait entrer B-0346, la reprise sur « reprends » seul, avant la mise à jour de chess (D-0185, J-2026-11-24-BC) : L-0038.

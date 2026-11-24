@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0186-abandonner-les-deux-suggestions-gardees-de-cote-un.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-24"
+canal = "conversation"
+citation = "3 oui avandonner"
+empreinte = "sha256:d570750684063b81f1871f1919aec7bc2853a4f6618e9a78ba7a55f5869bfa82"

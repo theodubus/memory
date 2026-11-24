@@ -19,8 +19,8 @@ Leur texte exact est dans l'entrée du journal citée.
 - Le hook terminé : rien sans preuve vue dans une session (ADR-0098).
 - Du temps pour un ajout ou un bug important ; aucun pour un cas limite
   rare, légère gêne que l'agent gère lui-même (D-0165).
-- Revue de cap tous les trois lots (`direction-review`, D-0145) ; la
-  prochaine rejuge les suggestions gardées (D-0146).
+- Revue de cap tous les trois lots (`direction-review`, D-0145) ; pas
+  dans le produit pour l'instant (D-0183).
 - Un mot pour une chose ; une tâche va sans demander au lot dont la
   règle s'applique (J-2026-11-16-I, J-2026-11-16-J).
 - Relecteur : le plus capable jusqu'à Opus (D-0117) ; Fable seulement si

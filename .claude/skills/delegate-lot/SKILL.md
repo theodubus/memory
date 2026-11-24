@@ -40,8 +40,12 @@ tâche rangée (`socle archive`) ; `verify --fast` une fois, à la fin ;
 dans « Interdits » : ouvrir
 une pull request, lire ou ajouter un autre dépôt ; puis « Économie : lire
 ce qui sert, pas les fichiers entiers ; pas de suite complète relancée
-sans raison. » Les identifiants des sous-agents lancés vont dans le texte
-des réveils.
+sans raison. Un fichier temporaire, dans le dossier temporaire de la
+session, commun à tous les sous-agents, porte l'identifiant de ta tâche
+dans son nom. » (J-2026-11-24-BC) Les identifiants des sous-agents lancés
+vont dans le texte des réveils. Un sous-agent qui s'arrête sur une
+vérification en arrière-plan peut ne pas reprendre : son travail se lit
+dans sa copie isolée, et l'orchestrateur le reprend (J-2026-11-24-BA).
 
 ## La revue
 

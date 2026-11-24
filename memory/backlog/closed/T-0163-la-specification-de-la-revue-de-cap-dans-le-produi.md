@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0163 — La spécification de la revue de cap dans le produit, soumise à Théo : ce qu'elle mesure, sa cadence, ce qu'un projet installé en reçoit
 
-> statut : ouvert · origine : J-2026-11-23-F · besoin : B-0310 · lu : backlog@f6b84d83
+> statut : abandonné · origine : J-2026-11-23-F · besoin : B-0310 · lu : backlog@f6b84d83 · ref : D-0183, J-2026-11-24-BC
 
 Le verdict de B-0310 (J-2026-11-23-F) : après trois revues de cap, Théo a
 retenu des suggestions de la deuxième et de la troisième ; la revue de

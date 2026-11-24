@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0183-pas-de-revue-de-cap-dans-le-produit-pour-l-instant.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-24"
+canal = "conversation"
+citation = "Ok pour l'instant pas de revue de cap dans le produit, on se garde juste en tete que c'est une possibilité si le besoin vient plus tard (que je constate que les produits dans lesquels j'utilise le socle convergent mal ou dévident)"
+empreinte = "sha256:1c601c6db6c4bb5325e2edf805a43843ec80f4854164c29167aae018211bd5ef"

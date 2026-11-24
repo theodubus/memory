@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0185-b-0346-la-session-neuve-qui-reprend-sur-reprends-s.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-24"
+canal = "conversation"
+citation = "2 avant"
+empreinte = "sha256:09ffc611bb0dfdd633bda1e3fc143960846e43681888d4ff3d06a229fa5bc00e"
