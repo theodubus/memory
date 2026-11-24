@@ -14,6 +14,20 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-24-e — The state no longer reports a branch as kept by a working branch the origin no longer has
+
+The state said of a remote branch that it was "already contained in
+`origin/<work>`, the pushed working branch: its content is not lost",
+even when the origin no longer had that working branch, squash-merged
+then deleted, or deleted without a merge: the reference from the last
+fetch kept it. Deleting the other branch would have lost its commits.
+The state already asks the origin which branches it still has; it now
+reports a branch as kept only if the origin still has the working branch
+that keeps it. Inactive, the branch that nothing keeps any more is
+reported like the others, to be examined.
+
+To do: nothing.
+
 ## 2026-11-24-d — The batch skill: the opposing test named before the batch, and the task a review opens placed in a batch
 
 Two rules of `socle-batch`, "Forming and announcing" and the closing of a

@@ -145,6 +145,33 @@ class TestBranchesASupprimer(unittest.TestCase):
             quoi = [e.quoi for e in humain.a_faire(self.projet)]
         self.assertFalse(any("`morceau`" in q for q in quoi), quoi)
 
+    def test_une_branche_de_travail_que_l_origine_n_a_plus_ne_garde_rien(self):
+        """B-0292 : supprimée sur l'origine, la branche de travail poussée ne
+        garde plus le contenu d'une autre ; l'état le disait encore, et
+        supprimer l'autre en aurait perdu les commits."""
+        import time
+
+        source = self.dossier / "source"
+        git(source, "branch", "morceau", "en-cours")
+        git(source, "switch", "-q", "en-cours")
+        (source / "f").write_text("quatre")
+        git(source, "commit", "-qam", "quatre")
+        git(source, "switch", "-q", "main")
+        git(self.clone, "fetch", "-q", "origin")
+        git(self.clone, "switch", "-q", "en-cours")
+        (self.clone / "memory").mkdir()
+        quoi = [e.quoi for e in humain.a_faire(self.projet)]
+        self.assertTrue(any("`morceau`" in q and "`origin/en-cours`" in q for q in quoi), quoi)
+        git(source, "branch", "-D", "en-cours")
+        # Le dernier fetch garde sa référence : le calcul sur lui la dit encore.
+        self.assertEqual(humain.branches_contenues_dans_le_travail(self.projet), [("morceau", "origin/en-cours")])
+        quoi = [e.quoi for e in humain.a_faire(self.projet)]
+        self.assertFalse(any("`origin/en-cours`" in q for q in quoi), quoi)
+        # Inactive, elle se signale comme une branche que rien ne garde.
+        with unittest.mock.patch.object(time, "time", return_value=time.time() + 30 * 86400):
+            quoi = [e.quoi for e in humain.a_faire(self.projet)]
+        self.assertTrue(any(q.startswith("examiner la branche distante `morceau`") for q in quoi), quoi)
+
     def test_sans_reponse_de_l_origine_la_liste_dit_qu_elle_vient_du_dernier_fetch(self):
         (self.clone / "memory").mkdir()
         git(self.clone, "remote", "set-url", "origin", str(self.dossier / "absente"))

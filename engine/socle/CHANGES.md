@@ -15,6 +15,20 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-24-e — L'état ne dit plus une branche gardée par une branche de travail que l'origine n'a plus
+
+L'état disait d'une branche distante qu'elle était « déjà contenue dans
+`origin/<travail>`, la branche de travail poussée : son contenu ne se
+perd pas », même quand l'origine n'avait plus cette branche de travail,
+fusionnée par écrasement puis supprimée, ou supprimée sans fusion : la
+référence du dernier fetch la gardait. Supprimer l'autre branche en
+aurait perdu les commits. L'état demande déjà à l'origine les branches
+qu'elle a encore ; il ne dit plus une branche gardée que si l'origine a
+encore la branche de travail qui la garde. Inactive, la branche que plus
+rien ne garde se signale comme les autres, à examiner.
+
+À faire : rien.
+
 ## 2026-11-24-d — Le skill des lots : le test contraire nommé avant le lot, et la tâche qu'une revue ouvre placée dans un lot
 
 Deux règles de `socle-batch`, « Former et annoncer » et la clôture d'un

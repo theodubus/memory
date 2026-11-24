@@ -248,8 +248,7 @@ def a_faire(projet: config.Projet) -> list[Element]:
     page = f"{depot}/branches" if depot else ""
     a_supprimer = branches_a_supprimer(projet)
     contenues = branches_contenues_dans_le_travail(projet)
-    dites = {b for b, _ in contenues}
-    inactives = [i for i in branches_inactives(projet) if i[0] not in dites]
+    inactives = branches_inactives(projet)
     # Calculées sur le dernier fetch : l'origine dit celles qu'elle a encore,
     # interrogée seulement s'il y en a une à dire (B-0193).
     vivantes = (branches_de_l_origine(projet)
@@ -261,7 +260,15 @@ def a_faire(projet: config.Projet) -> list[Element]:
                     "rafraîchit)")
     else:
         a_supprimer = [b for b in a_supprimer if b in vivantes]
-        contenues = [(b, p) for b, p in contenues if b in vivantes]
+        # Une branche de travail que l'origine n'a plus ne garde rien :
+        # supprimée sans fusion, la branche qu'elle contenait perdrait ses
+        # commits (B-0292).
+        contenues = [(b, p) for b, p in contenues if b in vivantes and p.removeprefix("origin/") in vivantes]
+    # Une branche dite gardée ne se dit pas inactive en plus ; une que la
+    # branche de travail disparue ne garde plus peut l'être.
+    dites = {b for b, _ in contenues}
+    inactives = [i for i in inactives if i[0] not in dites]
+    if vivantes is not None:
         disparues = [i for i in inactives if i[0] not in vivantes]
         inactives = [i for i in inactives if i[0] in vivantes]
     for b in a_supprimer:

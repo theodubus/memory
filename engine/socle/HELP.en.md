@@ -85,7 +85,9 @@ Right after the installation:
    moved for a week without being merged, to deliver or to delete. If such a
    branch alone keeps a commit the memory cites, the state first gives the
    command that tags it: without it, CI would no longer find it. It only
-   proposes a branch the origin still has; when the origin does not answer,
+   proposes a branch the origin still has, and reports a branch as kept by
+   the working branch only if the origin still has the latter; when the
+   origin does not answer,
    it says its list comes from the last fetch, and that `git fetch --prune
    origin` refreshes it.
 5. Open the agent in the project. It reads the state at start-up, then
