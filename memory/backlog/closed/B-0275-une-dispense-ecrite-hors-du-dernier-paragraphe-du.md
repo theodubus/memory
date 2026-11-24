@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0275 — Une dispense écrite hors du dernier paragraphe du message de commit est ignorée sans le dire : le refus de docs.correspondance redemande le trailer qu'il a sous les yeux
 
-> statut : ouvert · origine : J-2026-11-17-D · lu : backlog@3ea7d22a
+> statut : fait · origine : J-2026-11-17-D · lu : backlog@3ea7d22a · ref : J-2026-11-24-AM, T-0059
 
 Mesuré le 17 novembre (J-2026-11-17-D) : un commit dont le message porte
 `Dispense-doc: <raison>` dans un paragraphe à part, suivi d'un paragraphe
@@ -17,4 +17,4 @@ réécrire le commit.
 
 ## Satisfait quand
 
-- [ ] une dispense écrite hors du bloc final de trailers ne laisse plus l'agent sans savoir pourquoi elle ne vaut pas
+- [x] une dispense écrite hors du bloc final de trailers ne laisse plus l'agent sans savoir pourquoi elle ne vaut pas

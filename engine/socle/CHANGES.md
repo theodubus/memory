@@ -15,6 +15,17 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-24-h — Une dispense écrite hors du dernier paragraphe du message : le refus nomme le commit et dit où l'écrire
+
+Les trailers ne se lisent que dans le dernier paragraphe du message de
+commit, comme git les lit. Une ligne `Dispense-doc:` ou `Dispense-test:`
+écrite dans un paragraphe à part, avant celui des lignes d'attribution
+(`Co-Authored-By: …`), ne dispense donc rien ; le refus de
+`docs.correspondance` ou de `tests.code-teste` redemandait jusqu'ici le
+trailer, sans dire qu'il l'avait vu. Il nomme maintenant le commit qui
+porte la ligne (son SHA court ; au hook `commit-msg`, le commit en cours)
+et dit de la mettre dans le dernier paragraphe, avec les autres
+trailers, les lignes d'attribution comprises.
 ## 2026-11-24-g — L'état dit si la branche par défaut refuse le push forcé et sa suppression, et le guide les fait refuser
 
 Hors du hook de l'agent, seul l'ensemble de règles de GitHub refuse un

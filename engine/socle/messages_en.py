@@ -899,6 +899,11 @@ MESSAGES: dict[str, str] = {
     "commit `Dispense-doc: <raison>`, dans le commit qui change ce code":
         "code changed without its associated doc: {code} → update {docs}, or give a reason for a waiver with a "
         "commit trailer `Waive-doc: <reason>`, in the commit that changes this code",
+    " ; le commit {sha} porte une ligne `Dispense-doc:` hors du dernier paragraphe de son message, où les trailers "
+    "ne se lisent pas : la mettre dans ce dernier paragraphe, avec les autres trailers (les lignes d'attribution "
+    "comprises)":
+        "; commit {sha} has a `Waive-doc:` line outside the last paragraph of its message, where trailers are not "
+        "read: put it in that last paragraph, with the other trailers (attribution lines included)",
     " ou ":
         " or ",
     "paragraphe identique aussi présent en {autres} : garder une source, renvoyer vers elle":
@@ -1281,6 +1286,11 @@ MESSAGES: dict[str, str] = {
     "de commit `Dispense-test: {nom} — <raison>`":
         "function `{nom}` added, which no test names: write the test that calls it, or waive it with a commit "
         "trailer `Waive-test: {nom} — <reason>`",
+    " ; le commit {sha} porte une ligne `Dispense-test:` qui la nomme, hors du dernier paragraphe de son message, "
+    "où les trailers ne se lisent pas : la mettre dans ce dernier paragraphe, avec les autres trailers (les lignes "
+    "d'attribution comprises)":
+        "; commit {sha} has a `Waive-test:` line naming it, outside the last paragraph of its message, where "
+        "trailers are not read: put it in that last paragraph, with the other trailers (attribution lines included)",
     "capacité absente : {absent} — remplacement : {remplacement}":
         "capability absent: {absent} — replacement: {remplacement}",
     "non déclarée":

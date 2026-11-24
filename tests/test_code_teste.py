@@ -97,6 +97,26 @@ class TestCodeTeste(unittest.TestCase):
         git(self.racine, "commit", "-qam", "triple\n\nDispense-test: triple — appelée seulement par l'interface")
         self.assertEqual(self.verifier(tete="HEAD"), [])
 
+    def test_une_dispense_hors_du_bloc_final_est_nommee_dans_le_refus(self):
+        # B-0275 : la dispense dans un paragraphe à part, avant celui des
+        # lignes d'attribution. Git ne la lit pas ; le refus le dit.
+        self.ajouter_triple()
+        git(self.racine, "commit", "-qam", "triple\n\nDispense-test: triple — appelée seulement par l'interface"
+            "\n\nCo-Authored-By: Un Agent <agent@exemple.org>")
+        sha = git(self.racine, "rev-parse", "--short=7", "HEAD").strip()
+        erreurs = self.verifier(tete="HEAD")
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertIn("fonction `triple` ajoutée, qu'aucun test ne nomme", erreurs[0])
+        self.assertIn(f"le commit {sha} porte une ligne `Dispense-test:` qui la nomme, hors du dernier paragraphe",
+                      erreurs[0])
+        self.assertIn("la mettre dans ce dernier paragraphe, avec les autres trailers", erreurs[0])
+
+    def test_une_dispense_dans_le_bloc_final_avec_les_signatures_vaut_toujours(self):
+        self.ajouter_triple()
+        git(self.racine, "commit", "-qam", "triple\n\nDispense-test: triple — appelée seulement par l'interface"
+            "\nCo-Authored-By: Un Agent <agent@exemple.org>")
+        self.assertEqual(self.verifier(tete="HEAD"), [])
+
     def test_une_dispense_sans_raison_est_refusee(self):
         self.ajouter_triple()
         git(self.racine, "commit", "-qam", "triple\n\nDispense-test: triple")
@@ -178,6 +198,10 @@ class TestCodeTeste(unittest.TestCase):
         self.assertIn("triple", hooks.code_sans_test(projet, "Ajout de triple\n"))
         self.assertIsNone(hooks.code_sans_test(
             projet, "Ajout de triple\n\nDispense-test: triple — appelée par l'interface seulement\n"))
+        # B-0275 : hors du bloc final, l'avertissement nomme le commit en cours.
+        self.assertIn("le commit en cours porte une ligne `Dispense-test:` qui la nomme", hooks.code_sans_test(
+            projet, "Ajout de triple\n\nDispense-test: triple — appelée par l'interface seulement\n\n"
+                    "Co-Authored-By: Un Agent <agent@exemple.org>\n"))
 
 
 class TestPlagePoussee(unittest.TestCase):

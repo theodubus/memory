@@ -14,6 +14,17 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-24-h — A waiver written outside the last paragraph of the message: the refusal names the commit and says where to write it
+
+Trailers are only read in the last paragraph of the commit message, as
+git reads them. A `Waive-doc:` or `Waive-test:` line written in a
+paragraph of its own, before the one with the attribution lines
+(`Co-Authored-By: …`), therefore waives nothing; the refusal of
+`docs.correspondance` or `tests.code-teste` used to ask for the trailer
+again, without saying it had seen it. It now names the commit that
+carries the line (its short SHA; at the `commit-msg` hook, the commit in
+progress) and says to put it in the last paragraph, with the other
+trailers, attribution lines included.
 ## 2026-11-24-g — The state says whether the default branch refuses force pushes and its deletion, and the guide has them refused
 
 Outside the agent's hook, only GitHub's ruleset refuses a force push to
