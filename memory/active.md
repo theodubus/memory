@@ -67,6 +67,6 @@ Leur texte exact est dans l'entrée du journal citée.
 
 Par lots (D-0118, D-0151) :
 
-1. JA-0005 : ce qui corrige et stabilise le produit.
+1. JA-0005, L-0036 repris de `docs/fabrication/passation-l-0036/`.
 2. JA-0006 : chess mis à jour d'un coup, puis ses corrections.
 3. Puis la couche des consignes (B-0161), la planification (B-0101).

@@ -1,0 +1,319 @@
+From d08659d41b7d16536afb1ea7c13911d3f901ca82 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 24 Nov 2026 23:48:00 +0000
+Subject: [PATCH 8/9] =?UTF-8?q?Th=C3=A9o=20:=20pas=20de=20revue=20de=20cap?=
+ =?UTF-8?q?=20dans=20le=20produit=20pour=20l'instant=20(D-0183)=20;=20B-03?=
+ =?UTF-8?q?46=20avant=20chess,=20T-0180=20et=20L-0038=20(D-0185)=20;=20les?=
+ =?UTF-8?q?=20deux=20suggestions=20gard=C3=A9es=20abandonn=C3=A9es=20(D-01?=
+ =?UTF-8?q?86)=20(J-2026-11-24-BC)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Mr1cCfBaBYKzQQPhyAVGEh
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=2 PreToolUse=462 Stop=4
+Socle-Hooks-Since-Commit: PreToolUse=15
+---
+ .claude/skills/delegate-lot/SKILL.md          |  8 +++-
+ memory/active.md                              |  4 +-
+ ...e-avant-les-nouvelles-fonctions-les-suj.md |  4 +-
+ ...038-lot-de-la-reprise-sur-reprends-seul.md |  9 ++++
+ ...ation-de-la-reprise-sur-reprends-seul-s.md | 20 +++++++++
+ ...ur-le-cap-du-projet-quelque-chose-qui-v.md |  4 +-
+ ...ation-de-la-revue-de-cap-dans-le-produi.md |  2 +-
+ memory/journal/2026-11-12.md                  | 42 +++++++++++++++++++
+ ...dans-le-produit-pour-l-instant.answer.toml | 10 +++++
+ ...e-de-cap-dans-le-produit-pour-l-instant.md |  8 ++++
+ ...uve-qui-reprend-sur-reprends-s.answer.toml | 10 +++++
+ ...ession-neuve-qui-reprend-sur-reprends-s.md |  8 ++++
+ ...suggestions-gardees-de-cote-un.answer.toml | 10 +++++
+ ...les-deux-suggestions-gardees-de-cote-un.md |  8 ++++
+ 14 files changed, 140 insertions(+), 7 deletions(-)
+ create mode 100644 memory/backlog/L-0038-lot-de-la-reprise-sur-reprends-seul.md
+ create mode 100644 memory/backlog/T-0180-la-specification-de-la-reprise-sur-reprends-seul-s.md
+ rename memory/backlog/{ => closed}/B-0310-un-regard-sur-le-cap-du-projet-quelque-chose-qui-v.md (80%)
+ rename memory/backlog/{ => closed}/T-0163-la-specification-de-la-revue-de-cap-dans-le-produi.md (89%)
+ create mode 100644 memory/requests/D-0183-pas-de-revue-de-cap-dans-le-produit-pour-l-instant.answer.toml
+ create mode 100644 memory/requests/D-0183-pas-de-revue-de-cap-dans-le-produit-pour-l-instant.md
+ create mode 100644 memory/requests/D-0185-b-0346-la-session-neuve-qui-reprend-sur-reprends-s.answer.toml
+ create mode 100644 memory/requests/D-0185-b-0346-la-session-neuve-qui-reprend-sur-reprends-s.md
+ create mode 100644 memory/requests/D-0186-abandonner-les-deux-suggestions-gardees-de-cote-un.answer.toml
+ create mode 100644 memory/requests/D-0186-abandonner-les-deux-suggestions-gardees-de-cote-un.md
+
+diff --git a/.claude/skills/delegate-lot/SKILL.md b/.claude/skills/delegate-lot/SKILL.md
+index d32c8b17..f43abc98 100644
+--- a/.claude/skills/delegate-lot/SKILL.md
++++ b/.claude/skills/delegate-lot/SKILL.md
+@@ -40,8 +40,12 @@ tâche rangée (`socle archive`) ; `verify --fast` une fois, à la fin ;
+ dans « Interdits » : ouvrir
+ une pull request, lire ou ajouter un autre dépôt ; puis « Économie : lire
+ ce qui sert, pas les fichiers entiers ; pas de suite complète relancée
+-sans raison. » Les identifiants des sous-agents lancés vont dans le texte
+-des réveils.
++sans raison. Un fichier temporaire, dans le dossier temporaire de la
++session, commun à tous les sous-agents, porte l'identifiant de ta tâche
++dans son nom. » (J-2026-11-24-BC) Les identifiants des sous-agents lancés
++vont dans le texte des réveils. Un sous-agent qui s'arrête sur une
++vérification en arrière-plan peut ne pas reprendre : son travail se lit
++dans sa copie isolée, et l'orchestrateur le reprend (J-2026-11-24-BA).
+ 
+ ## La revue
+ 
+diff --git a/memory/active.md b/memory/active.md
+index 405682c7..7d68ed3e 100644
+--- a/memory/active.md
++++ b/memory/active.md
+@@ -19,8 +19,8 @@ Leur texte exact est dans l'entrée du journal citée.
+ - Le hook terminé : rien sans preuve vue dans une session (ADR-0098).
+ - Du temps pour un ajout ou un bug important ; aucun pour un cas limite
+   rare, légère gêne que l'agent gère lui-même (D-0165).
+-- Revue de cap tous les trois lots (`direction-review`, D-0145) ; la
+-  prochaine rejuge les suggestions gardées (D-0146).
++- Revue de cap tous les trois lots (`direction-review`, D-0145) ; pas
++  dans le produit pour l'instant (D-0183).
+ - Un mot pour une chose ; une tâche va sans demander au lot dont la
+   règle s'applique (J-2026-11-16-I, J-2026-11-16-J).
+ - Relecteur : le plus capable jusqu'à Opus (D-0117) ; Fable seulement si
+diff --git a/memory/backlog/JA-0005-lot-du-reste-avant-les-nouvelles-fonctions-les-suj.md b/memory/backlog/JA-0005-lot-du-reste-avant-les-nouvelles-fonctions-les-suj.md
+index 3e894d5f..9d618182 100644
+--- a/memory/backlog/JA-0005-lot-du-reste-avant-les-nouvelles-fonctions-les-suj.md
++++ b/memory/backlog/JA-0005-lot-du-reste-avant-les-nouvelles-fonctions-les-suj.md
+@@ -1,7 +1,7 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # JA-0005 — Jalon — le produit corrigé et stabilisé avant la mise à jour de chess
+ 
+-> statut : ouvert · origine : J-2026-11-14-M · après : B-0213, B-0214, B-0232, B-0228, B-0261, B-0251, B-0153, B-0267, B-0268, B-0265, B-0263, B-0270, B-0257, B-0258, B-0229, B-0230, B-0231, B-0246, B-0248, B-0254, B-0260, B-0227, B-0226, B-0233, B-0217, B-0242, B-0243, B-0140, B-0185, B-0167, B-0176, B-0200, B-0203, B-0241, B-0262, B-0193, B-0225, B-0195, B-0144, B-0152, B-0183, B-0186, B-0201, B-0197, B-0210, B-0219, B-0249, B-0194, B-0156, B-0198, B-0259, B-0252, B-0133, B-0273, B-0274, B-0276, B-0277, B-0278, B-0279, B-0280, B-0147, B-0275, B-0292, B-0301, B-0303, B-0311, B-0317, B-0320, B-0321, B-0322, B-0324, B-0327, B-0328, B-0331, B-0334, B-0335, B-0341, B-0342, B-0343, B-0348, B-0349, B-0344, B-0345, B-0347, B-0350 · lu : backlog@f69fc579 · ancien : B-0224
++> statut : ouvert · origine : J-2026-11-14-M · après : B-0213, B-0214, B-0232, B-0228, B-0261, B-0251, B-0153, B-0267, B-0268, B-0265, B-0263, B-0270, B-0257, B-0258, B-0229, B-0230, B-0231, B-0246, B-0248, B-0254, B-0260, B-0227, B-0226, B-0233, B-0217, B-0242, B-0243, B-0140, B-0185, B-0167, B-0176, B-0200, B-0203, B-0241, B-0262, B-0193, B-0225, B-0195, B-0144, B-0152, B-0183, B-0186, B-0201, B-0197, B-0210, B-0219, B-0249, B-0194, B-0156, B-0198, B-0259, B-0252, B-0133, B-0273, B-0274, B-0276, B-0277, B-0278, B-0279, B-0280, B-0147, B-0275, B-0292, B-0301, B-0303, B-0311, B-0317, B-0320, B-0321, B-0322, B-0324, B-0327, B-0328, B-0331, B-0334, B-0335, B-0341, B-0342, B-0343, B-0348, B-0349, B-0344, B-0345, B-0347, B-0350, B-0346 · lu : backlog@f69fc579 · ancien : B-0224
+ 
+ Ce qui reste de la liste que Théo a fixée le 13 novembre, à finir avant
+ les nouvelles fonctions (J-2026-11-13-I). Né le 14 novembre sous la
+@@ -57,3 +57,5 @@ Le 23 novembre, la revue de cap 3 relève cinq tâches du jalon hors de tout lot
+ Le 24 novembre, sur D-0168, le tri du backlog ouvert par le but (`docs/fabrication/tri-du-backlog-2026-11-24.md`) : 25 de ses besoins s'abandonnent et le quittent ; B-0274 est satisfait ; il garde treize besoins ouverts, en quatre lots, L-0035, L-0010, L-0024 et L-0032.
+ 
+ Le 24 novembre, sur la revue de cap 5 (J-2026-11-24-AU), Théo y range les corrections du produit restées hors de tout jalon, B-0344, B-0345 et B-0347 (D-0180), et B-0350, l'attente de la CI du gabarit de `socle-batch` (D-0181) ; le lot de corrections devient le prochain lot, avant L-0032 (J-2026-11-24-AV).
++
++Le 24 novembre, Théo y fait entrer B-0346, la reprise sur « reprends » seul, avant la mise à jour de chess (D-0185, J-2026-11-24-BC) : L-0038.
+diff --git a/memory/backlog/L-0038-lot-de-la-reprise-sur-reprends-seul.md b/memory/backlog/L-0038-lot-de-la-reprise-sur-reprends-seul.md
+new file mode 100644
+index 00000000..d8902f36
+--- /dev/null
++++ b/memory/backlog/L-0038-lot-de-la-reprise-sur-reprends-seul.md
+@@ -0,0 +1,9 @@
++<!-- socle: couche=backlog zone=publique -->
++# L-0038 — Lot de la reprise sur « reprends » seul
++
++> statut : ouvert · origine : J-2026-11-24-BC · après : L-0036, T-0180 · lu : backlog@5d842cca
++
++B-0346, au jalon JA-0005 sur la décision de Théo (D-0185) : la session
++neuve reprend sur « reprends » seul, la passation écrite dans le dépôt.
++Sa spécification change celle de D-0174 : elle se soumet à Théo d'abord
++(T-0180), puis les tâches qui l'appliquent s'ouvrent sur sa réponse.
+diff --git a/memory/backlog/T-0180-la-specification-de-la-reprise-sur-reprends-seul-s.md b/memory/backlog/T-0180-la-specification-de-la-reprise-sur-reprends-seul-s.md
+new file mode 100644
+index 00000000..64cf6e49
+--- /dev/null
++++ b/memory/backlog/T-0180-la-specification-de-la-reprise-sur-reprends-seul-s.md
+@@ -0,0 +1,20 @@
++<!-- socle: couche=backlog zone=publique -->
++# T-0180 — La spécification de la reprise sur « reprends » seul, sur les propositions retenues par D-0177, soumise à Théo
++
++> statut : ouvert · origine : J-2026-11-24-BC · besoin : B-0346 · ref : D-0185, D-0177, D-0174 · lu : backlog@2156ec15
++
++Un commit : une demande soumet à Théo la spécification de B-0346, qui
++change celle de la passation programmée validée par D-0174 : la session
++qui part écrit sa passation dans le dépôt (sa garde, le lot, ce qui
++attend), et la session neuve la lit au démarrage et lance la garde sur
++« reprends » seul, d'un compte comme d'un autre. Elle part des trois
++propositions retenues par D-0177 (la tête de la garde, le dernier commit
++qui écrit la passation ; la passation retirée par le premier commit de
++la session neuve ; sans passation, « reprends » fait ce que fait une
++session neuve), et dit ce que devient `socle handoff prompt`, ce que dit
++l'état, et la tâche programmée de la session programmée. Puis les tâches
++qui l'appliquent, sur sa réponse.
++
++## Fait quand
++
++- [ ] une demande soumet la spécification à Théo, et sa réponse est consignée au journal
+diff --git a/memory/backlog/B-0310-un-regard-sur-le-cap-du-projet-quelque-chose-qui-v.md b/memory/backlog/closed/B-0310-un-regard-sur-le-cap-du-projet-quelque-chose-qui-v.md
+similarity index 80%
+rename from memory/backlog/B-0310-un-regard-sur-le-cap-du-projet-quelque-chose-qui-v.md
+rename to memory/backlog/closed/B-0310-un-regard-sur-le-cap-du-projet-quelque-chose-qui-v.md
+index 4a90e006..ddc860ec 100644
+--- a/memory/backlog/B-0310-un-regard-sur-le-cap-du-projet-quelque-chose-qui-v.md
++++ b/memory/backlog/closed/B-0310-un-regard-sur-le-cap-du-projet-quelque-chose-qui-v.md
+@@ -1,7 +1,7 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # B-0310 — Un regard sur le cap du projet : quelque chose qui voit, sans que l'humain le demande, un chantier qui tourne en boucle sur un sujet qui n'en vaut pas la peine, et les améliorations évidentes que personne ne propose
+ 
+-> statut : ouvert · origine : J-2026-11-20-D · lu : backlog@e62f2f27
++> statut : abandonné · origine : J-2026-11-20-D · lu : backlog@e62f2f27 · ref : D-0183, J-2026-11-24-BC
+ 
+ Théo, le 20 novembre (J-2026-11-20-D) : le socle fait suivre le backlog,
+ mais si le projet part dans une mauvaise direction (tourner en boucle
+@@ -23,3 +23,5 @@ s'avère utile, arrêtée si Théo n'en retient rien après trois revues.
+ 
+ - [ ] un chantier qui tourne en boucle, ou une amélioration évidente qui manque, est porté devant l'humain sans qu'il l'ait demandé, avec ce qui le montre
+ - [ ] après trois revues de cap, elle entre dans le produit si Théo en a retenu des suggestions, sinon elle s'arrête
++
++Le 24 novembre, Théo : pas de revue de cap dans le produit pour l'instant, une possibilité gardée en tête s'il constate que les projets où il utilise le socle convergent mal ou dévient (D-0183) ; la revue de cap de ce dépôt reste (D-0145). Elle revient si ce besoin est vu.
+diff --git a/memory/backlog/T-0163-la-specification-de-la-revue-de-cap-dans-le-produi.md b/memory/backlog/closed/T-0163-la-specification-de-la-revue-de-cap-dans-le-produi.md
+similarity index 89%
+rename from memory/backlog/T-0163-la-specification-de-la-revue-de-cap-dans-le-produi.md
+rename to memory/backlog/closed/T-0163-la-specification-de-la-revue-de-cap-dans-le-produi.md
+index 82e3e7f6..4dcdd5c1 100644
+--- a/memory/backlog/T-0163-la-specification-de-la-revue-de-cap-dans-le-produi.md
++++ b/memory/backlog/closed/T-0163-la-specification-de-la-revue-de-cap-dans-le-produi.md
+@@ -1,7 +1,7 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # T-0163 — La spécification de la revue de cap dans le produit, soumise à Théo : ce qu'elle mesure, sa cadence, ce qu'un projet installé en reçoit
+ 
+-> statut : ouvert · origine : J-2026-11-23-F · besoin : B-0310 · lu : backlog@f6b84d83
++> statut : abandonné · origine : J-2026-11-23-F · besoin : B-0310 · lu : backlog@f6b84d83 · ref : D-0183, J-2026-11-24-BC
+ 
+ Le verdict de B-0310 (J-2026-11-23-F) : après trois revues de cap, Théo a
+ retenu des suggestions de la deuxième et de la troisième ; la revue de
+diff --git a/memory/journal/2026-11-12.md b/memory/journal/2026-11-12.md
+index 197e6c96..2a4e6edb 100644
+--- a/memory/journal/2026-11-12.md
++++ b/memory/journal/2026-11-12.md
+@@ -800,3 +800,45 @@ Les notes de version : les fusions des copies de T-0177 et T-0178 avaient
+ laissé les entrées n et o sans leur « À faire » et dans le désordre
+ (`tests/test_notes_de_version.py` le relevait, au contrôle de fin de
+ tour) ; elles reprennent leur paragraphe et l'ordre o, n, m.
++
++## J-2026-11-24-BC — Théo : pas de revue de cap dans le produit pour l'instant (D-0183), le message qu'il croyait envoyé n'était jamais arrivé ; B-0346 avant chess (D-0185), T-0180 et L-0038 ; les deux suggestions gardées abandonnées (D-0186) ; il demande si l'agent ne devrait pas supprimer ses propres branches
++
++> ref : D-0183, D-0184, D-0185, D-0186, B-0310, T-0163, B-0346, T-0180, L-0038, JA-0005, D-0145, D-0146, D-0170, J-2026-11-24-AV
++
++Théo demande, vers 0 h 45, heure de Paris, si l'agent a bien reçu son
++message, qu'il cite mot pour mot : « Ok pour l'instant pas de revue de
++cap dans le produit, on se garde juste en tete que c'est une possibilité
++si le besoin vient plus tard (que je constate que les produits dans
++lesquels j'utilise le socle convergent mal ou dévident) ». Ce message
++n'était jamais arrivé dans la session ; l'agent le lui dit, et le
++consigne sur sa citation (D-0183, donnée de lui-même) : T-0163 et B-0310
++sont abandonnés, la possibilité gardée en tête dans B-0310 et D-0183 ; la
++revue de cap de ce dépôt reste (D-0145).
++
++Puis, sur les quatre points du récap, mot pour mot :
++
++> 1 oui
++> 2 avant
++> 3 oui avandonner
++> 4 ça ne devrait pas être fait par l'agent en vrai ? Pouvoir supprimer ses propres branches de travail ?
++
++Consignés en séance : D-0184 (le changement du test de T-0174, commité
++avec lui, J-2026-11-24-BB) ; D-0185 (B-0346 entre au jalon JA-0005, avant
++chess : sa spécification, T-0180, dans L-0038, après L-0036) ; D-0186 (les
++deux suggestions gardées abandonnées, celle de la revue de cap 1 et celle
++de la revue de cap 4). Le point 4 est une question : la suppression
++d'une branche distante est une action irréversible ou externe, que la
++politique réserve à l'humain (point 4) et que le hook refuse ; l'agent
++lui répond dans la conversation, avec une proposition, sans rien ouvrir
++avant sa réponse.
++
++Plus tôt dans le tour, Théo demandait pourquoi trois tâches de fond
++attendaient le commit de T-0177, et s'il était normal de ne pas voir
++l'agent : l'agent avait lancé la même attente deux fois, plus une au
++premier plan ; et l'agent de T-0177 ne tournait plus, arrêté avant son
++commit sur une vérification en arrière-plan. L'orchestrateur a repris son
++travail (J-2026-11-24-BA). Le sous-agent a rendu plus tard son compte
++rendu : il avait fini par commiter dans sa copie, et signale que le
++dossier temporaire de la session est commun aux sous-agents, son message
++de commit écrasé par celui de T-0178 ; la consigne des sous-agents leur
++fera nommer leurs fichiers temporaires d'un nom unique.
+diff --git a/memory/requests/D-0183-pas-de-revue-de-cap-dans-le-produit-pour-l-instant.answer.toml b/memory/requests/D-0183-pas-de-revue-de-cap-dans-le-produit-pour-l-instant.answer.toml
+new file mode 100644
+index 00000000..5194dd97
+--- /dev/null
++++ b/memory/requests/D-0183-pas-de-revue-de-cap-dans-le-produit-pour-l-instant.answer.toml
+@@ -0,0 +1,10 @@
++# Réponse humaine donnée dans la conversation, consignée par l'agent avec
++# le texte exact de l'humain (`citation`). Relue avec le diff.
++# Elle porte sur le texte exact de D-0183-pas-de-revue-de-cap-dans-le-produit-pour-l-instant.md, dont l'empreinte suit.
++reponse = "valider"
++texte = ""
++par = "Théo"
++date = "2026-11-24"
++canal = "conversation"
++citation = "Ok pour l'instant pas de revue de cap dans le produit, on se garde juste en tete que c'est une possibilité si le besoin vient plus tard (que je constate que les produits dans lesquels j'utilise le socle convergent mal ou dévident)"
++empreinte = "sha256:1c601c6db6c4bb5325e2edf805a43843ec80f4854164c29167aae018211bd5ef"
+diff --git a/memory/requests/D-0183-pas-de-revue-de-cap-dans-le-produit-pour-l-instant.md b/memory/requests/D-0183-pas-de-revue-de-cap-dans-le-produit-pour-l-instant.md
+new file mode 100644
+index 00000000..aed70322
+--- /dev/null
++++ b/memory/requests/D-0183-pas-de-revue-de-cap-dans-le-produit-pour-l-instant.md
+@@ -0,0 +1,8 @@
++<!-- socle: couche=demandes zone=publique -->
++# D-0183 — Pas de revue de cap dans le produit pour l'instant, une possibilité gardée en tête si Théo constate que les projets où il utilise le socle convergent mal ou dévient
++
++> date : 2026-11-24 · forme : séance
++
++## Décision donnée
++
++Ok pour l'instant pas de revue de cap dans le produit, on se garde juste en tete que c'est une possibilité si le besoin vient plus tard (que je constate que les produits dans lesquels j'utilise le socle convergent mal ou dévident)
+diff --git a/memory/requests/D-0185-b-0346-la-session-neuve-qui-reprend-sur-reprends-s.answer.toml b/memory/requests/D-0185-b-0346-la-session-neuve-qui-reprend-sur-reprends-s.answer.toml
+new file mode 100644
+index 00000000..4e9af7e2
+--- /dev/null
++++ b/memory/requests/D-0185-b-0346-la-session-neuve-qui-reprend-sur-reprends-s.answer.toml
+@@ -0,0 +1,10 @@
++# Réponse humaine donnée dans la conversation, consignée par l'agent avec
++# le texte exact de l'humain (`citation`). Relue avec le diff.
++# Elle porte sur le texte exact de D-0185-b-0346-la-session-neuve-qui-reprend-sur-reprends-s.md, dont l'empreinte suit.
++reponse = "valider"
++texte = ""
++par = "Théo"
++date = "2026-11-24"
++canal = "conversation"
++citation = "2 avant"
++empreinte = "sha256:09ffc611bb0dfdd633bda1e3fc143960846e43681888d4ff3d06a229fa5bc00e"
+diff --git a/memory/requests/D-0185-b-0346-la-session-neuve-qui-reprend-sur-reprends-s.md b/memory/requests/D-0185-b-0346-la-session-neuve-qui-reprend-sur-reprends-s.md
+new file mode 100644
+index 00000000..6d3f4029
+--- /dev/null
++++ b/memory/requests/D-0185-b-0346-la-session-neuve-qui-reprend-sur-reprends-s.md
+@@ -0,0 +1,8 @@
++<!-- socle: couche=demandes zone=publique -->
++# D-0185 — B-0346, la session neuve qui reprend sur « reprends » seul, passe avant la mise à jour de chess, au jalon JA-0005
++
++> date : 2026-11-24 · forme : séance
++
++## Question posée
++
++B-0346, la session neuve qui reprend sur « reprends » seul, passe avant la mise à jour de chess, au jalon JA-0005
+diff --git a/memory/requests/D-0186-abandonner-les-deux-suggestions-gardees-de-cote-un.answer.toml b/memory/requests/D-0186-abandonner-les-deux-suggestions-gardees-de-cote-un.answer.toml
+new file mode 100644
+index 00000000..92ab1e97
+--- /dev/null
++++ b/memory/requests/D-0186-abandonner-les-deux-suggestions-gardees-de-cote-un.answer.toml
+@@ -0,0 +1,10 @@
++# Réponse humaine donnée dans la conversation, consignée par l'agent avec
++# le texte exact de l'humain (`citation`). Relue avec le diff.
++# Elle porte sur le texte exact de D-0186-abandonner-les-deux-suggestions-gardees-de-cote-un.md, dont l'empreinte suit.
++reponse = "valider"
++texte = ""
++par = "Théo"
++date = "2026-11-24"
++canal = "conversation"
++citation = "3 oui avandonner"
++empreinte = "sha256:d570750684063b81f1871f1919aec7bc2853a4f6618e9a78ba7a55f5869bfa82"
+diff --git a/memory/requests/D-0186-abandonner-les-deux-suggestions-gardees-de-cote-un.md b/memory/requests/D-0186-abandonner-les-deux-suggestions-gardees-de-cote-un.md
+new file mode 100644
+index 00000000..0af4fa89
+--- /dev/null
++++ b/memory/requests/D-0186-abandonner-les-deux-suggestions-gardees-de-cote-un.md
+@@ -0,0 +1,8 @@
++<!-- socle: couche=demandes zone=publique -->
++# D-0186 — Abandonner les deux suggestions gardées de côté : une règle pour les copies protégées des skills (revue de cap 1, D-0146) et la convergence mécanique à chaque clôture de lot (revue de cap 4, D-0170)
++
++> date : 2026-11-24 · forme : séance
++
++## Question posée
++
++Abandonner les deux suggestions gardées de côté : une règle pour les copies protégées des skills (revue de cap 1, D-0146) et la convergence mécanique à chaque clôture de lot (revue de cap 4, D-0170)
+-- 
+2.43.0
+
