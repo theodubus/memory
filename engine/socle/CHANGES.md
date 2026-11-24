@@ -15,6 +15,21 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-24-b — L'auto-test ne fait plus échouer la CI au hasard sur un clone de son projet d'essai
+
+L'auto-test du socle joue ses cas sur plusieurs fils, chacun dans un
+clone du même projet d'essai, où d'autres cas poussent en même temps.
+Le clone était local : il lisait le dossier des objets de l'origine, où
+la quarantaine d'un push en cours change sous lui, et échouait quelques
+fois sur cent (« hardlink different from source », « failed to copy
+file »). Et il était hors de la garde du cas : son échec faisait tomber
+l'auto-test entier, et le job de la CI avec lui, sans que rien soit
+faux dans le projet. Les clones passent maintenant par le protocole de
+git (`--no-local`), qui ne lit pas ce dossier, et un clone qui échoue
+n'échoue que son cas.
+
+À faire : rien.
+
 ## 2026-11-24-a — La revue n'envoie au backlog que ce qui est important et vu, ou irréversible
 
 Le tri des constats d'une revue change. Les bloquants se corrigent

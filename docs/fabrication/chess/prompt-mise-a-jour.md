@@ -188,6 +188,8 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 70. La revue d'un lot n'envoie plus au backlog tout constat qui peut se produire dans l'usage normal (note 2026-11-24-a) : seulement ce qui est important et a été vu en usage réel (une session, une CI, un message de moi), ou dont l'effet serait irréversible ; tout autre s'écarte, et revient s'il est vu. Le skill socle-review et la section du socle d'AGENTS.md, copies protégées, le disent. Applique-le à tes prochaines revues ; ton backlog ouvert n'est pas retrié par la mise à jour.
 
+71. L'auto-test du socle ne fait plus échouer la CI au hasard sur un clone de son projet d'essai (note 2026-11-24-b), l'échec que ta CI a montré le 23 novembre : ses clones passent par le protocole de git, et un clone qui échoue n'échoue que son cas. Rien à faire ; si le job de l'auto-test échoue encore sur un clone (hardlink different from source, failed to copy file), dis-le-moi avec l'erreur.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.

@@ -14,6 +14,20 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-24-b — The self-test no longer fails the CI at random on a clone of its test project
+
+The socle's self-test plays its cases on several threads, each in a
+clone of the same test project, where other cases push at the same
+time. The clone was local: it read the origin's object directory, where
+the quarantine of a push in progress changes under it, and failed a few
+times in a hundred (“hardlink different from source”, “failed to copy
+file”). And it was outside the case's guard: its failure brought down
+the whole self-test, and the CI job with it, with nothing wrong in the
+project. Clones now go through git's protocol (`--no-local`), which does
+not read that directory, and a clone that fails only fails its case.
+
+To do: nothing.
+
 ## 2026-11-24-a — The review sends to the backlog only what matters and was seen, or is irreversible
 
 The sorting of a review's findings changes. Blocking findings are still
