@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0035 repris d'une passation (J-2026-11-24-K) : répondre à Théo,
-D-0168, T-0172, T-0171. L-0010 après E2. Prompt à copier.
+L-0035 : D-0168 appliquée, T-0172 faite ; T-0171 corrigée, ses
+boucles et la revue en cours (J-2026-11-24-O). Puis L-0010.
 
 ## Consignes en cours
 
