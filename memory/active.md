@@ -5,9 +5,9 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0010 clos (J-2026-11-24-AE), D-0175 appliquée. Suivant, en session
-neuve sur le prompt de `socle handoff prompt` : le prochain lot de
-l'état ; B-0344 au backlog (J-2026-11-24-AC).
+L-0024 clos (J-2026-11-24-AP). Suivant, en session neuve : la revue de
+cap 5, puis le prochain lot. Attend Théo : la règle du journal en amont
+du contrôle de fin de tour (J-2026-11-24-AO).
 
 ## Consignes en cours
 
