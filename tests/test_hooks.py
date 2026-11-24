@@ -525,6 +525,52 @@ class TestHooksAbsents(unittest.TestCase):
         self.assertIsNone(hooks.hooks_absents(projet, self.message(session)))
 
 
+class TestHooksGitAuDemarrage(unittest.TestCase):
+    """B-0252 : après le redémarrage d'un conteneur cloud, `core.hooksPath`
+    valait le chemin absolu de `<racine>/.socle/git-hooks`, et le démarrage
+    disait débranchés des hooks qui tiraient ; un chemin vers les hooks d'un
+    autre worktree reste un choix local, signalé."""
+
+    def setUp(self):
+        self.dossier = Path(tempfile.mkdtemp(prefix="socle-hookspath-"))
+        self.addCleanup(shutil.rmtree, self.dossier, ignore_errors=True)
+        self.racine, self.autre = self.dossier / "projet", self.dossier / "autre"
+        self.racine.mkdir()
+        git(self.racine, "init", "-q", "-b", "main")
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(self.racine, "python-pytest", "@essai", source=MOTEUR)
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "socle", "--no-verify")
+        # Un worktree partage la configuration de son dépôt.
+        git(self.racine, "worktree", "add", "-q", str(self.autre))
+
+    def chemin(self) -> str:
+        return git(self.racine, "config", "--get", "core.hooksPath").strip()
+
+    def demarrer(self) -> str:
+        with unittest.mock.patch.dict("os.environ", {hooks.SESSION_CLOUD: ""}), \
+                contextlib.redirect_stdout(io.StringIO()) as sortie:
+            hooks.session_start(config.Projet.charger(self.racine), {})
+        return sortie.getvalue()
+
+    def test_le_chemin_absolu_des_hooks_de_la_racine_les_dit_branches(self):
+        self.assertEqual(self.chemin(), ".socle/git-hooks")
+        absolu = str((self.racine / ".socle/git-hooks").resolve())
+        git(self.racine, "config", "core.hooksPath", absolu)
+        self.assertTrue(hooks.installer_hooks_git(self.racine))
+        self.assertEqual(self.chemin(), absolu)  # rien n'est récrit
+        self.assertNotIn("hooks git non branchés", self.demarrer())
+
+    def test_le_chemin_absolu_des_hooks_d_un_autre_worktree_reste_signale(self):
+        ailleurs = str((self.autre / ".socle/git-hooks").resolve())
+        git(self.racine, "config", "core.hooksPath", ailleurs)
+        self.assertFalse(hooks.installer_hooks_git(self.racine))
+        self.assertEqual(self.chemin(), ailleurs)  # le choix local reste
+        self.assertIn("!! hooks git non branchés : `git config core.hooksPath .socle/git-hooks`", self.demarrer())
+        # Depuis l'autre worktree, ce sont les siens.
+        self.assertTrue(hooks.installer_hooks_git(self.autre))
+
+
 class TestCorrectifSansTest(Projet):
     """B-0024 : un correctif sans test de régression n'était vu qu'en CI ; le
     hook commit-msg le dit dès le commit, quand l'amender suffit encore."""
@@ -1361,6 +1407,44 @@ class TestHistoriqueEnSessionCloud(unittest.TestCase):
         git(self.clone, "config", "--unset", "remote.origin.uploadpack")
         git(self.clone, "fetch", "--quiet", "--unshallow")
         self.assertFalse(self.superficiel())
+
+    def delai_du_fetch(self, fin: float, marque: bool = False) -> float:
+        """Le délai que `completer_historique` passe au fetch, lu sur un fetch
+        factice qui réussit aussitôt ; le reste de git est le vrai."""
+        if marque:
+            chemin = config.chemin_trace(self.clone).parent / "historique-echoue"
+            chemin.parent.mkdir(parents=True, exist_ok=True)
+            chemin.write_text("!! clone superficiel\n", encoding="utf-8")
+        delais, vrai = [], subprocess.Popen
+
+        class Fetch:
+            returncode = 0
+
+            def communicate(self, timeout=None):
+                delais.append(timeout)
+                return "", ""
+
+        def popen(args, *a, **k):
+            return Fetch() if list(args[:2]) == ["git", "fetch"] else vrai(args, *a, **k)
+
+        with unittest.mock.patch.dict("os.environ", {hooks.SESSION_CLOUD: "true"}), \
+                unittest.mock.patch.object(hooks.subprocess, "Popen", popen):
+            lignes = hooks.completer_historique(self.clone, fin)
+        self.assertIn("historique du clone complété", lignes[0])
+        (delai,) = delais
+        return delai
+
+    def test_au_premier_demarrage_le_fetch_recoit_ses_120_secondes(self):
+        """T-0158 (B-0331, ADR-0105) : sans marque d'échec, le fetch reçoit
+        120 secondes, ou le reste du délai du démarrage s'il est moindre ; le
+        délai court de la reprise y laisserait superficiel tout clone dont
+        l'historique prend plus de 15 secondes."""
+        self.assertEqual((hooks.DELAI_HISTORIQUE, hooks.DELAI_HISTORIQUE_REPRISE), (120, 15))
+        self.assertEqual(self.delai_du_fetch(time.monotonic() + hooks.DELAI_DEMARRAGE), 120)
+        reste = self.delai_du_fetch(time.monotonic() + 50)
+        self.assertTrue(45 < reste <= 50, reste)
+        # Le délai court n'est que celui d'un démarrage marqué.
+        self.assertEqual(self.delai_du_fetch(time.monotonic() + hooks.DELAI_DEMARRAGE, marque=True), 15)
 
     def test_un_code_non_nul_ne_se_repaie_pas_non_plus(self):
         """T-0078 : un fetch qui a rendu un code non nul se marque de même ; le

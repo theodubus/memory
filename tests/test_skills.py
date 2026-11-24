@@ -358,6 +358,157 @@ class TestLaReprise(unittest.TestCase):
             self.assertLess(regle.index("`quotaLimits`"), regle.index(sinon), lg)
             self.assertIn(heure, section, lg)
 
+    # Relevés le 23 novembre dans la transcription réelle de la session qui
+    # a mené L-0023 (J-2026-11-23-O), les champs que la règle lit gardés : le
+    # message que l'humain a tapé, et le chargement d'un skill, un `user` en
+    # texte lui aussi.
+    TAPE = {"type": "user", "timestamp": "2026-11-23T19:13:35.823Z", "isSidechain": False, "origin": {"kind": "human"},
+            "userType": "external",
+            "message": {"role": "user", "content": "Reprends le travail du socle dans ce dépôt"}}
+    SKILL_CHARGE = {"type": "user", "timestamp": "2026-11-23T19:13:40.909Z", "isSidechain": False, "isMeta": True,
+                    "userType": "external",
+                    "message": {"role": "user", "content": [{"type": "text", "text": "Base directory for this skill"}]}}
+
+    def test_la_coupure_lue_dans_la_transcription_est_le_premier_refus_apres_le_dernier_appel(self):
+        """T-0164 (B-0336) : plusieurs refus peuvent se suivre ; la coupure
+        est le premier après le dernier appel du modèle, et tout message tapé
+        qui la suit compte, même suivi d'un autre refus. Une transcription
+        sans le tour d'avant vaut absence de transcription. Les champs cités
+        sont ceux que lit `socle consumption`, éprouvés sur sa fixture du refus
+        et sur deux enregistrements relevés d'une transcription réelle."""
+        from socle import consumption as conso
+        from tests.test_consommation import _ecrire, _limite, _resultat
+
+        for lg, au_reveil, relations, interdits, sans in (
+                ("fr", "**Sans `list_events`**",
+                 ("le premier enregistrement `quotaLimits` qui suit le dernier appel du modèle, à son `timestamp`",
+                  "tout `user` tapé (`origin.kind` à `human`) qui la suit est de l'humain, même suivi d'un autre "
+                  "refus"),
+                 ("qui précèdent", "le plus ancien", "le dernier enregistrement `quotaLimits`"),
+                 ("Sans transcription, ou sans le tour d'avant", "la conversation")),
+                ("en", "**Without `list_events`**",
+                 ("The cut is the first `quotaLimits` record that follows the model's last call, at its `timestamp`",
+                  "every typed `user` record (`origin.kind` set to `human`) that follows it is the human's, even if "
+                  "another refusal follows"),
+                 ("that precede", "the oldest", "the last `quotaLimits` record"),
+                 ("Without a transcript, or without the previous turn", "the conversation"))):
+            regle = " ".join(self.lire(lg).split(au_reveil, 1)[1].split("\n2. ", 1)[0].split())
+            for relation in relations:
+                self.assertIn(relation, regle, lg)
+            for interdit in interdits:
+                self.assertNotIn(interdit, regle, lg)
+            self.assertLess(regle.index(sans[0]), regle.index(sans[1]), lg)
+            # Les champs cités, hors des chemins, des commandes et des valeurs.
+            cites = set(re.findall(r"`([^`]+)`", regle)) - {"list_events", ".jsonl", "~/.claude/projects/", "tail",
+                                                              "human"}
+            self.assertEqual(cites, {"quotaLimits", "timestamp", "user", "origin.kind"}, lg)
+        # La coupure : les champs de la fixture que `socle consumption` lit
+        # comme un refus, à son horodatage.
+        refus = _limite(60, 3600)
+        self.assertLessEqual({"quotaLimits", "timestamp"}, set(refus))
+        with tempfile.TemporaryDirectory() as dossier:
+            conv = conso.lire_conversation(_ecrire(Path(dossier) / "t.jsonl", [refus]))
+        self.assertEqual([l["horodatage"].isoformat().replace("+00:00", "Z") for l in conv.limites],
+                         [refus["timestamp"]])
+        # Le message : `user`, le type que lit `socle consumption` ; tapé, il
+        # porte `origin.kind` à `human`, que le chargement d'un skill n'a pas.
+        self.assertEqual(_resultat(0, "t", "x")["type"], "user")
+        self.assertEqual((self.TAPE["type"], self.TAPE["origin"]["kind"]), ("user", "human"))
+        self.assertEqual(self.SKILL_CHARGE["type"], "user")
+        self.assertNotIn("origin", self.SKILL_CHARGE)
+        # Et `socle consumption` lit `user` et `origin.kind` dans les
+        # enregistrements relevés : le message tapé compte, le skill chargé et
+        # un résultat d'outil, des `user` eux aussi, non.
+        with tempfile.TemporaryDirectory() as dossier:
+            conv = conso.lire_conversation(_ecrire(Path(dossier) / "t.jsonl",
+                                                   [self.TAPE, self.SKILL_CHARGE, _resultat(0, "t", "x")]))
+        self.assertEqual([h.isoformat() for h in conv.tapes], ["2026-11-23T19:13:35.823000+00:00"])
+
+    def test_l_attente_a_heure_bornee_et_le_reveil_d_un_travail_interrompu(self):
+        """T-0082 (B-0133, D-0163, ADR-0107) : une attente à heure bornée
+        garde ses réveils, repoussés après son heure, et un tour refusé
+        pendant elle se reprend ; au réveil qui ne reprend pas, un contrôle
+        de fin de tour en échec ne fait pas finir le travail interrompu."""
+        for lg, fin, non, apres, attente, reveil in (
+                ("fr", "## À la fin de chaque tour", "Ne pas reprendre", "\n3. ",
+                 ("sauf pendant un sous-agent, jusqu'au tour qui reçoit son résultat, ou une attente à heure bornée "
+                  "(un rappel, une commande en arrière-plan, une CI), jusqu'au tour de l'événement, chacun repoussé "
+                  "après cette heure s'il tombait avant : refusé, ce tour se reprend à la levée.",
+                  "Un tour coupé ou refusé ne retire rien"),
+                 "Si l'humain avait interrompu le travail et que le contrôle de fin de tour refuse sur des contrôles "
+                 "en échec, le dire en une ligne, sans y toucher ni réarmer : relancé sur le même arbre, il laisse "
+                 "conclure."),
+                ("en", "## At the end of every turn", "Do not resume", "\n3. ",
+                 ("except during a subagent, until the turn that receives its result, or a wait with a bounded time "
+                  "(a reminder, a background command, a CI), until the event's turn, each pushed back after that "
+                  "time if it fell before: refused, that turn resumes when the limit lifts.",
+                  "A turn cut off or refused removes nothing"),
+                 "If the human had interrupted the work and the end-of-turn check refuses on failing checks, say so "
+                 "in one line, without touching it or re-arming: relaunched on the same tree, it lets the turn "
+                 "conclude.")):
+            texte = self.lire(lg)
+            section = " ".join(texte.split(fin, 1)[1].split("\n## ", 1)[0].split())
+            for attendu in attente:
+                self.assertIn(attendu, section, lg)
+            # La règle de la réponse d'une ligne est un cas où l'agent ne reprend pas.
+            cas = " ".join(texte.split(non, 1)[1].split(apres, 1)[0].split())
+            self.assertIn(reveil, cas, lg)
+
+    def test_le_message_qui_provoque_la_coupure_compte_et_le_reveil_qui_a_tire_manque(self):
+        """Passe 2 de la revue de L-0023 (J-2026-11-23-U) : avec les réveils
+        gardés pendant une attente, le message de l'humain peut ouvrir le
+        premier tour refusé, avant le refus qu'il provoque ; il compte, et
+        l'agent ne reprend pas par-dessus. Un réveil qui a tiré est éteint :
+        il ne se déplace pas, il manque, et le début du tour en arme un."""
+        for lg, debut, reveil, attendus_debut, attendus_reveil in (
+                ("fr", "## Au début de chaque tour", "## Au réveil",
+                 ("fait siens les réveils laissés ; celui qui a tiré, éteint, manque.",
+                  "Le réveil qui manque s'arme : `send_later`"),
+                 ("Puis, avec `kinds: [\"user\", \"assistant\"]`, les messages arrivés depuis son dernier travail, "
+                  "même refusés",
+                  "même suivi d'un autre refus, comme celui qui l'a provoquée.",
+                  "si l'humain a écrit pendant la limite : répondre à son message")),
+                ("en", "## At the start of every turn", "## On waking",
+                 ("makes the wake-ups left its own; the one that fired, spent, is missing.",
+                  "The missing wake-up is armed: `send_later`"),
+                 ("Then, with `kinds: [\"user\", \"assistant\"]`, the messages that arrived since its last work, "
+                  "even refused",
+                  "even if another refusal follows, like the one that provoked it.",
+                  "if the human wrote during the limit: answer their message"))):
+            texte = self.lire(lg)
+            section = " ".join(texte.split(debut, 1)[1].split("\n## ", 1)[0].split())
+            for attendu in attendus_debut:
+                self.assertIn(attendu, section, lg)
+            section = " ".join(texte.split(reveil, 1)[1].split("\n## ", 1)[0].split())
+            for attendu in attendus_reveil:
+                self.assertIn(attendu, section, lg)
+            self.assertNotIn("depuis la coupure", section, lg)
+            self.assertNotIn("since the cut", section, lg)
+
+    def test_les_reveils_d_une_session_archivee_se_disent_a_l_humain(self):
+        """T-0127 (B-0301) : ils ne se désactivent qu'à sa demande, et il
+        sait où les retrouver lui-même."""
+        for lg, debut, jamais, attendus, retrouver in (
+                ("fr", "## Au début de chaque tour", "## Ce que l'agent ne fait jamais",
+                 ("Au premier tour de la session, ou perdus par un compactage : `list_triggers`",
+                  "Ceux d'une session archivée (`get_session` : `SESSION_STATUS_ARCHIVED`) se disent à l'humain "
+                  "avec leurs heures, et ne se désactivent (`update_trigger`, `enabled: false`) qu'à sa demande."),
+                 ("toucher au réveil d'une autre session sans que l'humain le demande",
+                  "la liste des tâches programmées de son compte (claude.ai/code/routines)")),
+                ("en", "## At the start of every turn", "## What the agent never does",
+                 ("At the session's first turn, or lost to a compaction: `list_triggers`",
+                  "Those of an archived session (`get_session`: `SESSION_STATUS_ARCHIVED`) are told to the human "
+                  "with their times, and are disabled (`update_trigger`, `enabled: false`) only at their request."),
+                 ("touch another session's wake-up without the human asking",
+                  "the list of scheduled tasks of their account (claude.ai/code/routines)"))):
+            texte = self.lire(lg)
+            section = " ".join(texte.split(debut, 1)[1].split("\n## ", 1)[0].split())
+            for attendu in attendus:
+                self.assertIn(attendu, section, lg)
+            section = " ".join(texte.split(jamais, 1)[1].split())
+            for attendu in retrouver:
+                self.assertIn(attendu, section, lg)
+
     def test_un_sous_agent_ne_touche_a_aucun_reveil(self):
         for lg, regle in (("fr", "Un sous-agent ne touche à aucun réveil"), ("en", "A subagent\ntouches no wake-up")):
             self.assertIn(regle, self.lire(lg), lg)

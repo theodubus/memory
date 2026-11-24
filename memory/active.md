@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-JA-0005 : L-0010 en pause jusqu'à E2 ; L-0023 avant ; prompt à copier
-(J-2026-11-23-L).
+JA-0005 : #84, revue de cap 3, T-0171, L-0010 après E2 ; prompt
+à copier (J-2026-11-23-L).
 
 ## Consignes en cours
 

@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0331 — Aucun test ne montre qu'au premier démarrage en session cloud, sans marque d'échec, l'historique du clone reçoit ses 120 secondes
 
-> statut : ouvert · origine : J-2026-11-22-Q · lu : backlog@3a8162c0
+> statut : fait · ref : J-2026-11-23-M · origine : J-2026-11-22-Q · lu : backlog@3a8162c0
 
 La revue de L-0009 (J-2026-11-22-Q), constat 1 pour le backlog. Selon
 ADR-0105, au premier démarrage d'un conteneur, sans marque d'échec,
@@ -15,4 +15,4 @@ commit de l'agent serait refusé jusqu'au fetch à la main.
 
 ## Satisfait quand
 
-- [ ] au premier démarrage d'un conteneur, sans marque d'échec, l'historique du clone reçoit le délai qu'ADR-0105 lui donne, et une régression vers le délai court se voit
+- [x] au premier démarrage d'un conteneur, sans marque d'échec, l'historique du clone reçoit le délai qu'ADR-0105 lui donne, et une régression vers le délai court se voit
