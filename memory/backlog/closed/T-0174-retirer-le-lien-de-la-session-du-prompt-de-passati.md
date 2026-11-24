@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0174 — Retirer le lien de la session du prompt de passation : l'option --session, les skills socle-handoff et delegate-lot, la spécification
 
-> statut : ouvert · origine : J-2026-11-24-AF · ref : D-0176 · besoin : B-0345 · lu : backlog@e1d104b0
+> statut : fait · origine : J-2026-11-24-AF · ref : J-2026-11-24-BB, D-0176 · besoin : B-0345 · lu : backlog@e1d104b0
 
 Un commit : l'option `--session` retirée de `socle handoff prompt`
 (`engine/socle/handoff.py`, `engine/socle/cli.py`), ses deux commandes
@@ -21,5 +21,5 @@ changement du test, dans le même push.
 
 ## Fait quand
 
-- [ ] `socle handoff prompt` n'a plus d'option `--session`, et son prompt commence par « Passation — <dépôt>, à <heure> », ce qu'un test montre
-- [ ] les skills `socle-handoff` et `delegate-lot` et la spécification ne nomment plus le lien, et un test le montre pour le gabarit
+- [x] `socle handoff prompt` n'a plus d'option `--session`, et son prompt commence par « Passation — <dépôt>, à <heure> », ce qu'un test montre
+- [x] les skills `socle-handoff` et `delegate-lot` et la spécification ne nomment plus le lien, et un test le montre pour le gabarit

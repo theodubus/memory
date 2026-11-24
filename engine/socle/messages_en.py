@@ -4154,8 +4154,6 @@ MESSAGES: dict[str, str] = {
         "none in the state, to be formed",
     "rien":
         "nothing",
-    "Passation de {session} — {depot}, à {heure}.":
-        "Handoff from {session} — {depot}, at {heure}.",
     "Passation — {depot}, à {heure}.":
         "Handoff — {depot}, at {heure}.",
     "Avant tout : git fetch {distant}, puis":
@@ -4209,8 +4207,6 @@ MESSAGES: dict[str, str] = {
     "avec `prompt` : les lots menés sans message de l'humain, le lot en cours compris (0 par défaut)":
         "with `prompt`: the batches run without a message from the human, the current batch included (0 by "
         "default)",
-    "avec `prompt` : le lien de la session qui part, que le moteur ne devine pas":
-        "with `prompt`: the link of the leaving session, which the engine does not guess",
     "avec `prompt` : ce qui attend (un compte rendu, une CI, une demande) ; « rien » par défaut":
         "with `prompt`: what is waiting (a report, a CI, a request); “nothing” by default",
     "avec `prompt` : pour une session programmée, refusé à la borne de la chaîne ou sans tâche prête au prochain lot":

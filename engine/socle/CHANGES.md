@@ -15,16 +15,6 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
-## 2026-11-24-n — L'état ne liste plus « à réécrire » une demande renvoyée qu'une autre demande cite
-
-`socle state` listait sous « RENVOYÉE (contexte insuffisant) … à
-réécrire » toute demande renvoyée, même quand une demande nouvelle
-l'avait déjà remplacée et reçu sa réponse ; une session neuve, qui ne
-sait que ce que l'état lui montre, pouvait la réécrire une seconde fois.
-La demande qui en remplace une renvoyée la cite dans ses « Éléments
-cités » (« Cited elements » en anglais), comme le format le dit
-désormais ; l'état ne liste plus une demande renvoyée qu'une autre
-demande décrit là. Une demande qui se cite elle-même ne compte pas.
 ## 2026-11-24-o — Une ligne `Corrige:` ou `Fixes:` écrite hors du dernier paragraphe du message fait du commit un correctif, dont le test de régression se vérifie
 
 Un commit est un correctif par son sujet (`fix:` par défaut) ou par un
@@ -38,6 +28,34 @@ où qu'elle soit après le sujet, fait désormais du commit un correctif :
 la CI exige son test qui échoue sur le commit parent, et le hook
 `commit-msg` avertit dès le commit s'il n'en apporte aucun. Les commits
 déjà fusionnés ne sont pas rejugés.
+
+À faire : rien.
+
+## 2026-11-24-n — L'état ne liste plus « à réécrire » une demande renvoyée qu'une autre demande cite
+
+`socle state` listait sous « RENVOYÉE (contexte insuffisant) … à
+réécrire » toute demande renvoyée, même quand une demande nouvelle
+l'avait déjà remplacée et reçu sa réponse ; une session neuve, qui ne
+sait que ce que l'état lui montre, pouvait la réécrire une seconde fois.
+La demande qui en remplace une renvoyée la cite dans ses « Éléments
+cités » (« Cited elements » en anglais), comme le format le dit
+désormais ; l'état ne liste plus une demande renvoyée qu'une autre
+demande décrit là. Une demande qui se cite elle-même ne compte pas.
+
+À faire : rien.
+
+## 2026-11-24-m — Le prompt de passation ne porte plus le lien de la session qui part
+
+`socle handoff prompt` n'a plus d'option `--session`, et son prompt
+commence par « Passation — <dépôt>, à <heure> » : la session neuve ne se
+servait pas du lien de la session qui part (sa garde ne lit que la
+branche, la tête et l'heure, et les commits portent déjà le lien de leur
+session), et d'un autre compte il ne s'ouvrait même pas. Le skill
+`socle-handoff` ne le fait plus passer.
+
+À faire : rien ; le skill `socle-handoff` est une copie protégée, dans la
+demande de l'installeur.
+
 ## 2026-11-24-k — Le skill des lots attend la CI du commit poussé, par son SHA
 
 L'étape 3 du skill `socle-batch` faisait attendre `success` sur le SHA
@@ -738,6 +756,7 @@ relever exige une demande validée.
 À faire : rien, sauf si l'état signale un lot : le couper à sa
 prochaine annonce. La clé, que l'installeur nomme à la mise à jour, se
 déclare au besoin dans `.socle/guardrails.toml`.
+
 ## 2026-11-20-c — Le recul n'est plus exigé : `socle review` écrit les passes d'un lot et le contrôle du backlog le laisse se clore sans lui
 
 `socle review` écrit chaque passe d'un lot dans sa section « Revues »

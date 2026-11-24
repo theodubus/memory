@@ -116,6 +116,6 @@ fusionne dans la branche de travail (`git merge --no-edit`), puis son
 dossier se retire : l'état la donne alors à supprimer après la fusion de
 la pull request (B-0293). Ici, le mode est le prompt à copier (D-0173) :
 le prompt de la session neuve est celui que donne `python3 .socle/socle
-handoff prompt --session <lien> --waiting "<ce qui attend>"` (skill
+handoff prompt --waiting "<ce qui attend>"` (skill
 `socle-handoff`), tout poussé, avec le lot « selon le skill
 delegate-lot » au lieu de `socle-batch`.

@@ -125,10 +125,9 @@ class TestLePrompt(Depots):
         self.assertIn("ne sont pas commités", str(refus.exception))
 
     def test_il_nomme_la_tete_distante_et_l_heure_puis_le_prompt_d_une_session_neuve(self):
-        texte = passation.prompt(self.projet(self.partante), session="https://claude.ai/code/session_x",
-                                 attente="la CI du commit de tête.", maintenant=HEURE)
+        texte = passation.prompt(self.projet(self.partante), attente="la CI du commit de tête.", maintenant=HEURE)
         lignes = texte.splitlines()
-        self.assertEqual(lignes[0], "Passation de https://claude.ai/code/session_x — partante, à 2026-11-24T10:05:00Z.")
+        self.assertEqual(lignes[0], "Passation — partante, à 2026-11-24T10:05:00Z.")
         self.assertEqual(lignes[1:3], [
             "Avant tout : git fetch origin, puis",
             f"python3 .socle/socle handoff check --ref origin/travail --head {self.tete} --since 2026-11-24T10:05:00Z"])
@@ -291,6 +290,19 @@ class TestLaCommande(Depots):
         code, _, erreur = self.lancer(self.partante, "prompt", "--scheduled", "--chain", "2")
         self.assertEqual(code, 1)
         self.assertTrue(erreur.startswith("pas de passation : chaîne : 2 lots menés"), erreur)
+
+    def test_le_prompt_ne_prend_plus_le_lien_de_la_session_qui_part(self):
+        """B-0345 (D-0176) : la session neuve ne se sert pas du lien de la
+        session qui part ; ni la commande, ni le skill ne le nomment."""
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            cli.analyseur()[0].parse_args(["handoff", "prompt", "--session", "https://claude.ai/code/session_x"])
+        moteur = Path(__file__).resolve().parent.parent / "engine" / "socle"
+        for rel in ("templates/skills/socle-handoff/SKILL.md", "templates/skills/socle-handoff/SKILL.en.md"):
+            texte = (moteur / rel).read_text(encoding="utf-8")
+            with self.subTest(gabarit=rel):
+                self.assertNotIn("--session", texte)
+                self.assertIn("handoff prompt --waiting", texte)
+                self.assertIn("handoff prompt --scheduled --chain <n> --waiting", texte)
 
     def test_l_heure_en_utc(self):
         self.assertEqual(passation.heure("2026-11-24T10:05:00Z"), HEURE)

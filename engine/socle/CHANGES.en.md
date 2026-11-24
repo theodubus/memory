@@ -14,16 +14,6 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
-## 2026-11-24-n — The state no longer lists "to rewrite" a request sent back that another request cites
-
-`socle state` listed under "SENT BACK (insufficient context) … to
-rewrite" every request sent back, even when a new request had already
-replaced it and received its answer; a new session, which knows only
-what the state shows it, could rewrite it a second time. The request
-that replaces one sent back cites it in its "Cited elements" ("Éléments
-cités" in French), as the format now says; the state no longer lists a
-request sent back that another request describes there. A request that
-cites itself does not count.
 ## 2026-11-24-o — A `Corrige:` or `Fixes:` line written outside the last paragraph of the message makes the commit a fix, whose regression test is checked
 
 A commit is a fix by its subject (`fix:` by default) or by a `Corrige:`
@@ -36,6 +26,34 @@ paragraph of its own, before the one with the attribution lines
 subject, now makes the commit a fix: the CI requires its test that fails
 on the parent commit, and the `commit-msg` hook warns at commit time if it
 brings none. Commits already merged are not judged again.
+
+To do: nothing.
+
+## 2026-11-24-n — The state no longer lists "to rewrite" a request sent back that another request cites
+
+`socle state` listed under "SENT BACK (insufficient context) … to
+rewrite" every request sent back, even when a new request had already
+replaced it and received its answer; a new session, which knows only
+what the state shows it, could rewrite it a second time. The request
+that replaces one sent back cites it in its "Cited elements" ("Éléments
+cités" in French), as the format now says; the state no longer lists a
+request sent back that another request describes there. A request that
+cites itself does not count.
+
+To do: nothing.
+
+## 2026-11-24-m — The handoff prompt no longer carries the link of the leaving session
+
+`socle handoff prompt` no longer has a `--session` option, and its prompt
+starts with “Handoff — <repository>, at <time>”: the new session did not
+use the link of the leaving session (its guard only reads the branch,
+the head and the time, and the commits already carry the link of their
+session), and from another account it did not even open. The
+`socle-handoff` skill no longer has it passed.
+
+To do: nothing; the `socle-handoff` skill is a protected copy, in the
+installer's request.
+
 ## 2026-11-24-k — The batch skill waits for the CI of the pushed commit, by its SHA
 
 Step 3 of the `socle-batch` skill made the agent wait for `success` on
@@ -720,6 +738,7 @@ raising it requires a validated request.
 To do: nothing, unless the state reports a batch: cut it at its next
 announcement. The key, which the installer names on update, can be
 declared in `.socle/guardrails.toml` if needed.
+
 ## 2026-11-20-c — The step back is no longer required: `socle review` writes a batch's passes and the backlog check lets it close without one
 
 `socle review` writes each pass of a batch in its “Reviews” section
