@@ -14,3 +14,6 @@ Le 24 novembre, sur D-0168, le tri du backlog ouvert par le but (`docs/fabricati
 ### Passe 1 — 2026-11-24
 
 Commits : 0bbf84c..fe59939
+
+- Bloquant : la note 2026-11-24-h sans son « À faire », perdu à la résolution d'un conflit
+- Ouvre : B-0348

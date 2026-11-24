@@ -25,6 +25,9 @@ again, without saying it had seen it. It now names the commit that
 carries the line (its short SHA; at the `commit-msg` hook, the commit in
 progress) and says to put it in the last paragraph, with the other
 trailers, attribution lines included.
+
+To do: nothing.
+
 ## 2026-11-24-g — The state says whether the default branch refuses force pushes and its deletion, and the guide has them refused
 
 Outside the agent's hook, only GitHub's ruleset refuses a force push to

@@ -26,6 +26,9 @@ trailer, sans dire qu'il l'avait vu. Il nomme maintenant le commit qui
 porte la ligne (son SHA court ; au hook `commit-msg`, le commit en cours)
 et dit de la mettre dans le dernier paragraphe, avec les autres
 trailers, les lignes d'attribution comprises.
+
+À faire : rien.
+
 ## 2026-11-24-g — L'état dit si la branche par défaut refuse le push forcé et sa suppression, et le guide les fait refuser
 
 Hors du hook de l'agent, seul l'ensemble de règles de GitHub refuse un

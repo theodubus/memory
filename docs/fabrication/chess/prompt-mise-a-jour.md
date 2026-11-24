@@ -194,6 +194,14 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 73. Le skill socle-batch, copie protégée dans la demande de l'installeur, dit deux règles de plus (note 2026-11-24-d) : une tâche qui change un comportement nomme le test qui affirme le contraire, et sa demande se pose avant le lot ; à la clôture d'un lot, une tâche que sa revue ouvre rejoint le prochain lot dont la règle s'applique, sinon un lot neuf dans le jalon de son besoin. Rien à faire ; applique-les à tes prochains lots.
 
+74. L'état ne dit plus d'une branche distante qu'elle est gardée par la branche de travail poussée quand l'origine n'a plus cette branche de travail (note 2026-11-24-e) : la supprimer en aurait perdu les commits. Rien à faire.
+
+75. La ligne « CI » de python3 .socle/socle state lit les exécutions du commit de tête (gh run list --commit), et non plus la dernière de la branche ; sans exécution, elle le dit, et quand il en a plusieurs, elle dit la pire (note 2026-11-24-f). Dans ton rapport, recopie la ligne « CI » de l'état après le push de la mise à jour.
+
+76. La ligne « branche » de l'état dit si GitHub refuse le push forcé sur main et sa suppression ; permis, l'un ou l'autre devient une action pour moi, qui coche « Block force pushes » et « Restrict deletions » dans l'ensemble de règles (note 2026-11-24-g). Ne les coche pas toi-même : dans ton rapport, recopie la ligne « branche » et dis-moi si l'état me donne cette action.
+
+77. Une dispense (Dispense-doc, Dispense-test) écrite hors du dernier paragraphe du message de commit ne vaut toujours pas, comme git lit les trailers, mais le refus de docs.correspondance ou de tests.code-teste nomme désormais le commit qui l'écrit ailleurs, et dit de la mettre avec les autres trailers (note 2026-11-24-h). Rien à faire.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.
