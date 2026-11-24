@@ -57,7 +57,8 @@ remote branch carries a commit dated after it that touches the memory
 without being in the handed-off head: another session is working on the
 project. A pull request merged by a merge commit during the wait makes
 the session restart from the default branch; squash-merged, the guard
-refuses. A session started from a handoff prompt that its guard accepts
+refuses. The self-test (`socle selftest`) injects a fault for each of
+these refusals. A session started from a handoff prompt that its guard accepts
 continues the open pull request of its branch, which becomes its own. On
 waking after a limit, `socle-resume` calls the same guard, and at the
 first turn it tells the human about a handoff that is waiting.

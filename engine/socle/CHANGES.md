@@ -59,7 +59,8 @@ passation, ou si une autre branche distante porte un commit daté
 d'après elle qui touche la mémoire sans être dans la tête passée : une
 autre session travaille sur le projet. Une pull request fusionnée par
 un commit de fusion pendant l'attente fait repartir la session de la
-branche par défaut ; fusionnée par squash, la garde refuse. Une session
+branche par défaut ; fusionnée par squash, la garde refuse. L'auto-test
+(`socle selftest`) injecte un défaut pour chacun de ces refus. Une session
 partie d'un prompt de passation que sa garde accepte continue la pull
 request ouverte de sa branche, qui devient la sienne. Au réveil après
 une limite, `socle-resume` appelle la même garde, et au premier tour il

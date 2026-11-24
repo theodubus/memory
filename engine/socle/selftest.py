@@ -899,12 +899,10 @@ def _clone_d_un_clone(a: Atelier, c: Path, ref: str | None) -> Path:
     return d
 
 
-def _passation(a: Atelier, c: Path) -> tuple[Path, list[str]]:
-    """Une passation dans une origine nue à soi : l'origine partagée reçoit
-    les branches des autres cas, que la garde lirait. La session qui part,
-    `c`, y pousse sa branche rangée, puis écrit le prompt (`socle handoff
-    prompt`). Rend le clone de la session neuve, et les arguments de la
-    garde que le prompt lui donne."""
+def _ranger(a: Atelier, c: Path, pousser: bool = True) -> Path:
+    """Le rangement de la session qui part, `c`, dans une origine nue à soi :
+    l'origine partagée reçoit les branches des autres cas, que la garde
+    lirait. Commité, et poussé si `pousser`. Rend le chemin de l'origine."""
     nu = c.parent / f"{c.name}-nu"
     a.git(a.dossier, "clone", "-q", "--bare", "--no-local", "--single-branch", "--branch", "main", str(a.origine),
           str(nu))
@@ -912,7 +910,17 @@ def _passation(a: Atelier, c: Path) -> tuple[Path, list[str]]:
     a.git(c, "fetch", "-q", "origin")
     maj_memoire(c, "La passation de l'essai.")
     a.commit(c, "le rangement")
-    a.git(c, "push", "-q", "--no-verify", "-u", "origin", "travail")
+    if pousser:
+        a.git(c, "push", "-q", "--no-verify", "-u", "origin", "travail")
+    return nu
+
+
+def _passation(a: Atelier, c: Path) -> tuple[Path, list[str]]:
+    """Une passation : la session qui part, `c`, range et pousse sa branche
+    (`_ranger`), puis écrit le prompt (`socle handoff prompt`). Rend le
+    clone de la session neuve, et les arguments de la garde que le prompt
+    lui donne."""
+    nu = _ranger(a, c)
     r = a.socle(c, "handoff", "prompt")
     lignes = [l for l in r.stdout.splitlines() if l.startswith("python3 .socle/socle handoff check ")]
     if r.returncode != 0 or not lignes:
@@ -920,6 +928,16 @@ def _passation(a: Atelier, c: Path) -> tuple[Path, list[str]]:
     neuve = c.parent / f"{c.name}-neuve"
     a.git(a.dossier, "clone", "-q", "--no-local", str(nu), str(neuve))
     return neuve, lignes[0].split()[2:]
+
+
+def _fusion_par_squash(a: Atelier, c: Path):
+    """La pull request de la branche passée, fusionnée par squash dans la
+    branche par défaut de l'origine de `_ranger`, sa branche supprimée."""
+    github = c.parent / f"{c.name}-github"
+    a.git(a.dossier, "clone", "-q", "--no-local", str(c.parent / f"{c.name}-nu"), str(github))
+    a.git(github, "merge", "-q", "--squash", "origin/travail")
+    a.commit(github, "Le lot (#1)")
+    a.git(github, "push", "-q", "--no-verify", "origin", "main", ":travail")
 
 
 def _apres_la_passation(garde: list[str]) -> dict:
@@ -1685,6 +1703,62 @@ def _cas() -> list[Cas]:
             raise RuntimeError(r.stderr)
         a.git(autre, "push", "-q", "--no-verify", "origin", "autre")
         r = _session_neuve(a, neuve, garde)
+        return r.stdout + r.stderr
+
+    # Fusionnée par squash pendant l'attente, sa branche supprimée, la pull
+    # request du lot fait refuser la garde (D-0174) : collé tard, le prompt
+    # nomme une tête que le clone n'a plus ; programmée, la session neuve
+    # dont le `git fetch` élague voit la branche disparue.
+    @defaut("passation-squash-collee-tard", "prompt de passation collé après la fusion par squash de la pull request "
+            "et la suppression de sa branche", "passation", "passation réécrite")
+    def _(a, c):
+        neuve, garde = _passation(a, c)
+        _fusion_par_squash(a, c)
+        tard = c.parent / f"{c.name}-tard"
+        a.git(a.dossier, "clone", "-q", "--no-local", str(c.parent / f"{c.name}-nu"), str(tard))
+        r = _session_neuve(a, tard, garde)
+        return r.stdout + r.stderr
+
+    @defaut("passation-squash-programmee", "session neuve d'une passation dont la pull request a été fusionnée par "
+            "squash et sa branche supprimée, son `git fetch` élaguant", "passation", "passation fusionnée par squash")
+    def _(a, c):
+        neuve, garde = _passation(a, c)
+        _fusion_par_squash(a, c)
+        a.git(neuve, "config", "fetch.prune", "true")
+        r = _session_neuve(a, neuve, garde)
+        return r.stdout + r.stderr
+
+    # Le prompt de passation (`socle handoff prompt`) : refusé tant que la
+    # session neuve ne repartirait pas du dépôt seul ; programmé, aux bornes
+    # d'une chaîne sans l'humain (D-0174).
+    @defaut("passation-non-poussee", "prompt de passation alors que la tête locale n'est pas poussée", "passation",
+            "passation non poussée")
+    def _(a, c):
+        _ranger(a, c, pousser=False)
+        r = a.socle(c, "handoff", "prompt")
+        return r.stdout + r.stderr
+
+    @defaut("passation-non-commitee", "prompt de passation alors qu'un fichier suivi a un changement non commité",
+            "passation", "passation non commitée")
+    def _(a, c):
+        _ranger(a, c)
+        remplacer(c, "calc.py", "return FACTEUR * x", "return x * FACTEUR")
+        r = a.socle(c, "handoff", "prompt")
+        return r.stdout + r.stderr
+
+    @defaut("passation-borne-de-la-chaine", "session programmée après deux lots menés sans message de l'humain",
+            "passation", "borne de la chaîne")
+    def _(a, c):
+        ajouter_sujet(c, tache_essai(a, c))
+        _ranger(a, c)
+        r = a.socle(c, "handoff", "prompt", "--scheduled", "--chain", "2")
+        return r.stdout + r.stderr
+
+    @defaut("passation-sans-tache-prete", "session programmée alors qu'aucune tâche n'est prête", "passation",
+            "passation sans tâche prête")
+    def _(a, c):
+        _ranger(a, c)
+        r = a.socle(c, "handoff", "prompt", "--scheduled")
         return r.stdout + r.stderr
 
     # L'historique des revues d'un lot (ADR-0084, ADR-0100) : une ligne de
@@ -3027,6 +3101,13 @@ def _temoins() -> list[tuple[str, Callable]]:
         r = _session_neuve(a, neuve, garde)
         return "" if r.returncode == 0 and "se placer sur origin/main" in r.stdout else r.stdout + r.stderr
 
+    @temoin("une session programmée, une tâche prête et un lot mené sans message de l'humain, reçoit son prompt")
+    def _(a, c):
+        ajouter_sujet(c, tache_essai(a, c))
+        _ranger(a, c)
+        r = a.socle(c, "handoff", "prompt", "--scheduled", "--chain", "1")
+        return "" if r.returncode == 0 and "1 lot(s) mené(s)" in r.stdout else r.stdout + r.stderr
+
     @temoin("un lot relu clos « fait », ses deux passes sans recul, passe le commit et la CI")
     def _(a, c):
         _lot_relu_clos(a, c, _bloquant_essai())
@@ -3791,6 +3872,14 @@ RAISONS_AGENT = {
     # pourquoi.
     "passation poussée depuis": "quelqu'un a poussé sur origin/travail depuis la passation",
     "passation d'une autre session": "une autre session travaille sur le projet",
+    "passation réécrite": "est introuvable dans ce clone",
+    "passation fusionnée par squash": "la pull request a été fusionnée par squash",
+    # `socle handoff prompt` non plus : il refuse le prompt, en disant
+    # pourquoi.
+    "passation non poussée": "n'est pas poussée : pousser d'abord",
+    "passation non commitée": "des changements de fichiers suivis ne sont pas commités",
+    "borne de la chaîne": "lots menés sans message de l'humain, sa borne est",
+    "passation sans tâche prête": "le prochain lot n'a aucune tâche prête",
 }
 
 

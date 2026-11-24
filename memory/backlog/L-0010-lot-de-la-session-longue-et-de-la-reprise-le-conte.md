@@ -51,3 +51,6 @@ Commits : 7204705..b0c15d6
 ### Passe 4 — 2026-11-24
 
 Commits : 72047052..b2ab9181
+
+- Bloquant : les refus de la passation sans défaut injecté dans l'auto-test, contre la règle d'AGENTS.md
+- Ouvre : rien

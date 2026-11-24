@@ -4180,4 +4180,20 @@ MESSAGES: dict[str, str] = {
     "poussé sans toucher la mémoire, passe sa garde, qui place la session neuve sur la branche par défaut":
         "a handoff whose pull request is merged by a merge commit during the wait, a robot having pushed without "
         "touching the memory, passes its guard, which places the new session on the default branch",
+    "prompt de passation collé après la fusion par squash de la pull request et la suppression de sa branche":
+        "handoff prompt pasted after the pull request was squash-merged and its branch deleted",
+    "session neuve d'une passation dont la pull request a été fusionnée par squash et sa branche supprimée, son "
+    "`git fetch` élaguant":
+        "new session of a handoff whose pull request was squash-merged and its branch deleted, its `git fetch` "
+        "pruning",
+    "prompt de passation alors que la tête locale n'est pas poussée":
+        "handoff prompt while the local head is not pushed",
+    "prompt de passation alors qu'un fichier suivi a un changement non commité":
+        "handoff prompt while a tracked file has an uncommitted change",
+    "session programmée après deux lots menés sans message de l'humain":
+        "scheduled session after two batches run without a message from the human",
+    "session programmée alors qu'aucune tâche n'est prête":
+        "scheduled session while no task is ready",
+    "une session programmée, une tâche prête et un lot mené sans message de l'humain, reçoit son prompt":
+        "a scheduled session, with a ready task and one batch run without a message from the human, gets its prompt",
 }
