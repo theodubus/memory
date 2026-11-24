@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0010 fait, non relu : reprendre par
-`docs/fabrication/passation-l-0010/README.md`.
+L-0010 attend D-0174 (J-2026-11-24-U) ; validée : T-0079, T-0081,
+puis T-0134 et T-0162. Branche ccr-1ce8bc05-qb7vdl, sans pull request.
 
 ## Consignes en cours
 
@@ -42,8 +42,7 @@ Leur texte exact est dans l'entrée du journal citée.
 - Une limite d'usage proche décide de l'ordre, jamais de la profondeur
   du travail ni du modèle ; la passation se fait avant elle
   (J-2026-11-09-C, J-2026-11-15-D, J-2026-11-16-W).
-- Une attente annoncée dans le récap s'accompagne d'un réveil programmé
-  (J-2026-10-13-N).
+- Une attente annoncée a son réveil programmé (J-2026-10-13-N).
 - « Pour toi » ne contient que les gestes de Théo, chacun compréhensible
   seul (ce que c'est, pourquoi, ce que change sa réponse) ; ce que
   l'agent fera se dit à part (J-2026-10-31-S, J-2026-10-14-F).
@@ -66,6 +65,7 @@ Leur texte exact est dans l'entrée du journal citée.
 
 Par lots (D-0118, D-0151) :
 
+0. L-0010 : `docs/fabrication/passation-l-0010/README.md`.
 1. JA-0005 : ce qui corrige et stabilise le produit.
 2. JA-0006 : chess mis à jour d'un coup, puis ses corrections.
 3. Puis la couche des consignes (B-0161), la planification (B-0101).

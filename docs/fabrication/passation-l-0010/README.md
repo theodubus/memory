@@ -31,7 +31,8 @@ pas encore vus, en correctifs (`git format-patch`), la branche de travail
 1. Sur la branche de la session neuve, partie de `main` :
    `git merge --no-edit origin/ccr-1ce8bc05-qb7vdl`, puis
    `git am docs/fabrication/passation-l-0010/*.patch`, puis retirer ce
-   dossier dans un commit.
+   dossier et la ligne 0 des « Prochaines étapes » du chantier actif,
+   qui y renvoie, dans un commit.
 2. La revue du lot sur la plage appliquée (`python3 .socle/socle review
    --batch L-0010 --base <le commit d'avant le premier correctif>`), avec
    les points à éprouver de la passe 3 : la garde contre la
