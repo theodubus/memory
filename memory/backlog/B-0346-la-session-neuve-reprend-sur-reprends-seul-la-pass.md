@@ -23,6 +23,22 @@ l'état. Elle change la spécification validée par D-0174 : spécification
 et demande avant le code, après des questions de cadrage à Théo si son
 intention ne suffit pas.
 
+Propositions de l'agent, non tranchées (J-2026-11-24-AG), pour la
+spécification :
+
+- **La tête.** La passation est un fichier du dépôt, sans identifiant
+  de commit : la garde prend pour tête le dernier commit qui l'a écrit,
+  et pour heure la date de ce commit. Si la session qui part pousse
+  encore, elle réécrit sa passation dans le même commit, et rien ne se
+  périme.
+- **Reprise.** La session neuve, sa garde acceptée, retire la
+  passation dans son premier commit, poussé aussitôt : une autre
+  session ouverte ensuite n'en trouve plus, ou voit la branche bouger
+  et s'arrête.
+- **Sans passation.** « reprends » fait ce que fait aujourd'hui une
+  session neuve : l'état, le chantier actif, le prochain lot ; le
+  premier message dit qu'aucune passation n'attendait.
+
 ## Satisfait quand
 
 - [ ] une session neuve sur « reprends » seul reprend le travail que la passation dit, sa garde jugée, sans prompt à copier

@@ -14,7 +14,10 @@ remise par une demande. Le test qui affirme le lien :
 « Passation de https://claude.ai/code/session_x — partante, à
 2026-11-24T10:05:00Z. » à « Passation — partante, à
 2026-11-24T10:05:00Z. », l'appel sans `session` ; sa question est posée
-à Théo le 24 novembre (J-2026-11-24-AF).
+à Théo le 24 novembre, et il la valide, mais l'outil de permissions a
+refusé de consigner sa réponse (J-2026-11-24-AG) : le lot de T-0174 la
+lui redemande, en citant ce texte, et la consigne en séance avec le
+changement du test, dans le même push.
 
 ## Fait quand
 
