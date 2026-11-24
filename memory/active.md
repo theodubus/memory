@@ -5,7 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-JA-0005 : #84, revue de cap 3, T-0171, L-0010 après E2 ; prompt
+JA-0005 : T-0172, revue de cap 3, T-0171, L-0010 après E2 ; prompt
 à copier (J-2026-11-23-L).
 
 ## Consignes en cours
@@ -14,13 +14,14 @@ Leur texte exact est dans l'entrée du journal citée.
 
 - Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
 - Le hook terminé : rien sans preuve vue dans une session (ADR-0098).
+- Du temps pour un ajout ou un bug important ; aucun pour un cas limite
+  rare, légère gêne que l'agent gère lui-même (D-0165).
 - Revue de cap tous les trois lots (`direction-review`, D-0145) ; la
   prochaine rejuge les suggestions gardées (D-0146).
 - Un mot pour une chose ; une tâche va sans demander au lot dont la
   règle s'applique (J-2026-11-16-I, J-2026-11-16-J).
-- Relecteur : le plus capable jusqu'à Opus (D-0117). Fable, implémenteur
-  ou relecteur, seulement si Théo le veut ; un lot implémenté sur Fable :
-  lui demander avant la revue s'il veut Fable pour elle (D-0119).
+- Relecteur : le plus capable jusqu'à Opus (D-0117) ; Fable seulement si
+  Théo le veut, et pour relire un lot fait sur Fable, lui demander (D-0119).
 - Tout ce qui est utile intègre le socle, une règle du backlog comprise
   (J-2026-11-13-F) ; un sujet important se garde (J-2026-11-14-K).
 - Un lot par session ; sinon tout se range pour une session neuve, qui
@@ -47,8 +48,7 @@ Leur texte exact est dans l'entrée du journal citée.
 - Les heures à Théo, heure de Paris (J-2026-10-14-G).
 - Une branche à supprimer se vérifie sur GitHub (B-0193).
 - Un autre dépôt se clone hors du dossier de la session, sans être
-  déclaré racine ; à chaque reprise, vérifier que l'état est injecté,
-  sinon le dire et ne rien pousser (J-2026-10-14-S).
+  déclaré racine (J-2026-10-14-S).
 - Pas de rétro-compatibilité avec une version antérieure du socle
   (J-2026-10-19-A).
 - Le but : un produit pratique qui réunit les avantages du socle et ceux
