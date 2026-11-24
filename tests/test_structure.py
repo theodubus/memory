@@ -584,6 +584,22 @@ class TestCommandes(Projet):
             cli.main(["--root", str(self.racine), "new", "backlog", "Un sujet"])
 
 
+class TestGuideProtection(unittest.TestCase):
+    """B-0317 (T-0119) : hors du hook de l'agent, seul l'ensemble de règles
+    de GitHub refuse un push forcé sur la branche par défaut, ou sa
+    suppression ; l'étape 4 du guide ne faisait exiger que la CI."""
+
+    def test_l_etape_4_fait_refuser_le_push_force_et_la_suppression(self):
+        for nom, debut in (("HELP.md", "4. Protéger la branche par défaut"),
+                           ("HELP.en.md", "4. Protect the default branch")):
+            with self.subTest(nom):
+                texte = (Path(MOTEUR) / "socle" / nom).read_text(encoding="utf-8")
+                etape = texte[texte.index(debut):]
+                etape = " ".join(etape[:etape.index("\n5. ")].split())
+                for case in ("Block force pushes", "Restrict deletions"):
+                    self.assertIn(case, etape)
+
+
 class TestVocabulaire(unittest.TestCase):
     """B-0265 (T-0053) : un mot pour une chose. Une entrée du backlog n'est
     pas un « sujet », et « tâche » ne dit que la tâche `T-`."""

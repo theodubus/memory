@@ -5,9 +5,9 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0010 clos (J-2026-11-24-AE), D-0175 appliquée. Suivant, en session
-neuve sur le prompt de `socle handoff prompt` : le prochain lot de
-l'état ; B-0344 au backlog (J-2026-11-24-AC).
+L-0024 clos (J-2026-11-24-AP). Suivant, en session neuve : la revue de
+cap 5, puis le prochain lot. Attend Théo : la règle du journal en amont
+(J-2026-11-24-AO).
 
 ## Consignes en cours
 
@@ -44,9 +44,10 @@ Leur texte exact est dans l'entrée du journal citée.
   du travail ni du modèle ; la passation se fait avant elle
   (J-2026-11-09-C, J-2026-11-15-D, J-2026-11-16-W).
 - Une attente annoncée a son réveil programmé (J-2026-10-13-N).
-- « Pour toi » ne contient que les gestes de Théo, chacun compréhensible
-  seul (ce que c'est, pourquoi, ce que change sa réponse) ; ce que
-  l'agent fera se dit à part (J-2026-10-31-S, J-2026-10-14-F).
+- « Pour toi » : les seuls gestes de Théo, chacun redit en entier dans
+  le récap, sans renvoi plus haut (ce que c'est, pourquoi, ce que change
+  sa réponse) ; ce que fera l'agent, à part (J-2026-10-31-S,
+  J-2026-10-14-F, J-2026-11-24-AQ).
 - Les heures à Théo, heure de Paris (J-2026-10-14-G).
 - Une branche à supprimer se vérifie sur GitHub (B-0193).
 - Un autre dépôt se clone hors du dossier de la session, sans être

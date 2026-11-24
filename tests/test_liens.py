@@ -354,5 +354,83 @@ class TestDemandeLue(unittest.TestCase):
         self.demande.write_text(self.demande.read_text() + "\nUn ajout après coup.\n")
         self.assertIn("diffère", self.illisible())
 
+
+class TestBranchesASupprimerCitees(unittest.TestCase):
+    """B-0311 (D-0178) : le récap donnait à Théo une branche à supprimer que
+    GitHub n'avait plus, reprise d'une entrée du journal sans la vérifier ;
+    la fin de tour la vérifie sur l'origine."""
+
+    def setUp(self):
+        self.dossier = Path(tempfile.mkdtemp(prefix="socle-branches-citees-"))
+        self.addCleanup(shutil.rmtree, self.dossier, ignore_errors=True)
+        source = self.dossier / "source"
+        source.mkdir()
+        git(source, "init", "-q", "-b", "main")
+        (source / "f").write_text("un")
+        git(source, "add", "f")
+        git(source, "commit", "-qm", "un")
+        git(source, "branch", "morceau")
+        self.clone = self.dossier / "clone"
+        git(self.dossier, "clone", "-q", str(source), str(self.clone))
+        self.projet = config.Projet(racine=self.clone)
+
+    @staticmethod
+    def message(pour_toi):
+        return f"Lot clos.\n\nPour toi : {pour_toi}\nEnsuite : rien."
+
+    def test_les_branches_que_pour_toi_donne_a_supprimer(self):
+        m = ("Lot clos ; la branche `ancienne` est fusionnée, à supprimer.\n\n"
+             "Pour toi :\n- supprimer la branche distante `origin/fantome`, déjà contenue dans `main` ;\n"
+             "- supprimer la branche locale `locale-x` ;\n"
+             "- supprimer le fichier `notes.txt` ;\n"
+             "- delete the branch `effacee` and `a b` ;\n"
+             "```text\nsupprimer la branche `dans-un-bloc`\n```\n"
+             "Ensuite : supprimer la branche `apres`.")
+        self.assertEqual(liens.branches_a_supprimer_citees(self.projet, m), ["fantome", "main", "effacee"])
+        self.assertEqual(liens.branches_a_supprimer_citees(self.projet, "Supprimer la branche `x`.\n\nEnsuite : rien."),
+                         [])
+
+    def test_celles_que_l_origine_n_a_plus(self):
+        m = self.message("supprimer les branches distantes `morceau` et `fantome`.")
+        self.assertEqual(liens.branches_absentes(self.projet, m), (["fantome"], []))
+        # Sans réponse de l'origine, aucune n'est dite absente : elles sont
+        # dites non vérifiées.
+        git(self.clone, "remote", "set-url", "origin", str(self.dossier / "absente"))
+        self.assertEqual(liens.branches_absentes(self.projet, m), ([], ["morceau", "fantome"]))
+
+    def test_sans_branche_a_supprimer_l_origine_n_est_pas_interrogee(self):
+        with unittest.mock.patch("socle.human.branches_de_l_origine") as origine:
+            self.assertEqual(liens.branches_absentes(self.projet, self.message("rien.")), ([], []))
+        self.assertEqual(origine.call_count, 0)
+
+    def test_la_fin_de_tour_le_refuse_une_fois(self):
+        import contextlib
+        import io
+        import json
+
+        from socle import hooks
+
+        transcript = self.dossier / "t.jsonl"
+
+        def fin(texte, rappel=False):
+            transcript.write_text(json.dumps({"type": "assistant", "message": {"content": texte}}))
+            sortie = io.StringIO()
+            with contextlib.redirect_stdout(sortie):
+                hooks.exiger_recap(self.projet, {"session_id": "b", "transcript_path": str(transcript),
+                                                 "stop_hook_active": rappel})
+            return sortie.getvalue()
+
+        absente = self.message("supprimer la branche distante `fantome`.")
+        refus = json.loads(fin(absente))
+        self.assertEqual(refus["decision"], "block")
+        self.assertIn("à supprimer `fantome`, que l'origine n'a plus", refus["reason"])
+        # Au second essai, la fin de tour conclut, et l'humain le lit.
+        self.assertIn("1 branche(s) à supprimer que l'origine n'a plus", json.loads(fin(absente, True))["systemMessage"])
+        self.assertEqual(fin(self.message("supprimer la branche distante `morceau`.")), "")
+        git(self.clone, "remote", "set-url", "origin", str(self.dossier / "absente"))
+        self.assertIn("non vérifiée(s), l'origine ne répondant pas : `fantome`",
+                      json.loads(fin(absente))["systemMessage"])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0292 — L'état ne dit pas d'une branche que son contenu est gardé par la branche de travail poussée quand l'origine n'a plus celle-ci
 
-> statut : ouvert · origine : L-0017 · lu : backlog@c3bfedf2
+> statut : fait · origine : L-0017 · lu : backlog@c3bfedf2 · ref : J-2026-11-24-AJ, T-0101
 
 Relevé par la revue de L-0017, passe 1. `branches_contenues_dans_le_travail`
 (`engine/socle/human.py`) lit la branche de travail poussée dans les
@@ -15,4 +15,4 @@ une référence que l'origine n'a plus.
 
 ## Satisfait quand
 
-- [ ] l'état ne dit pas qu'une branche est gardée par une branche de travail que l'origine n'a plus
+- [x] l'état ne dit pas qu'une branche est gardée par une branche de travail que l'origine n'a plus

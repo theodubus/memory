@@ -145,6 +145,33 @@ class TestBranchesASupprimer(unittest.TestCase):
             quoi = [e.quoi for e in humain.a_faire(self.projet)]
         self.assertFalse(any("`morceau`" in q for q in quoi), quoi)
 
+    def test_une_branche_de_travail_que_l_origine_n_a_plus_ne_garde_rien(self):
+        """B-0292 : supprimée sur l'origine, la branche de travail poussée ne
+        garde plus le contenu d'une autre ; l'état le disait encore, et
+        supprimer l'autre en aurait perdu les commits."""
+        import time
+
+        source = self.dossier / "source"
+        git(source, "branch", "morceau", "en-cours")
+        git(source, "switch", "-q", "en-cours")
+        (source / "f").write_text("quatre")
+        git(source, "commit", "-qam", "quatre")
+        git(source, "switch", "-q", "main")
+        git(self.clone, "fetch", "-q", "origin")
+        git(self.clone, "switch", "-q", "en-cours")
+        (self.clone / "memory").mkdir()
+        quoi = [e.quoi for e in humain.a_faire(self.projet)]
+        self.assertTrue(any("`morceau`" in q and "`origin/en-cours`" in q for q in quoi), quoi)
+        git(source, "branch", "-D", "en-cours")
+        # Le dernier fetch garde sa référence : le calcul sur lui la dit encore.
+        self.assertEqual(humain.branches_contenues_dans_le_travail(self.projet), [("morceau", "origin/en-cours")])
+        quoi = [e.quoi for e in humain.a_faire(self.projet)]
+        self.assertFalse(any("`origin/en-cours`" in q for q in quoi), quoi)
+        # Inactive, elle se signale comme une branche que rien ne garde.
+        with unittest.mock.patch.object(time, "time", return_value=time.time() + 30 * 86400):
+            quoi = [e.quoi for e in humain.a_faire(self.projet)]
+        self.assertTrue(any(q.startswith("examiner la branche distante `morceau`") for q in quoi), quoi)
+
     def test_sans_reponse_de_l_origine_la_liste_dit_qu_elle_vient_du_dernier_fetch(self):
         (self.clone / "memory").mkdir()
         git(self.clone, "remote", "set-url", "origin", str(self.dossier / "absente"))
@@ -294,7 +321,9 @@ import os, sys
 if sys.argv[1] != "api":
     print("[]")  # `gh run list` : aucune exécution
 else:
-    print(os.environ["FAUX_REGLES" if "/rules/branches/" in sys.argv[2] else "FAUX_BRANCHE"])
+    chemin = sys.argv[2]
+    print(os.environ["FAUX_REGLES" if "/rules/branches/" in chemin else
+                     "FAUX_PROTECTION" if chemin.endswith("/protection") else "FAUX_BRANCHE"])
 """
 CI = "Socle — verify, contrôles, auto-test"
 
@@ -345,6 +374,40 @@ class TestCiExigee(unittest.TestCase):
         self.assertIn("action : protéger la branche `main`", texte)
         self.assertIn("https://github.com/o/r/settings/rules", texte)
 
+    def test_le_push_force_et_la_suppression_de_la_branche(self):
+        """B-0317 : hors du hook de l'agent, seul l'ensemble de règles de
+        GitHub refuse un push forcé sur la branche par défaut, ou sa
+        suppression ; l'état ne le lisait pas."""
+        ci = {"type": "required_status_checks", "parameters": {"required_status_checks": [{"context": CI}]}}
+        self.repondre([ci])
+        texte = self.etat.calculer(self.projet, contenus=False)
+        self.assertIn("branche  : main — CI du socle exigée avant fusion ; revue des propriétaires du code non "
+                      "exigée ; push forcé PERMIS ; suppression PERMISE", texte)
+        self.assertIn("action : faire refuser par GitHub le push forcé et la suppression de la branche `main` : "
+                      "cocher « Block force pushes » et « Restrict deletions »", texte)
+        self.repondre([ci, {"type": "deletion"}])
+        texte = self.etat.calculer(self.projet, contenus=False)
+        self.assertIn("push forcé PERMIS ; suppression refusée", texte)
+        self.assertIn("action : faire refuser par GitHub le push forcé de la branche `main` : cocher « Block force "
+                      "pushes » dans", texte)
+        self.repondre([ci, {"type": "deletion"}, {"type": "non_fast_forward"}])
+        texte = self.etat.calculer(self.projet, contenus=False)
+        self.assertIn("push forcé refusé ; suppression refusée", texte)
+        self.assertNotIn("faire refuser par GitHub", texte)
+
+    def test_une_protection_classique_se_lit_dans_son_detail(self):
+        """Une protection classique refuse le push forcé et la suppression
+        sauf si on les y permet, ce que seul son détail dit."""
+        self.repondre([], {"enabled": True, "required_status_checks": {
+            "enforcement_level": "non_admins", "contexts": [CI], "checks": []}})
+        p = self.etat.protection(self.projet)[0]
+        self.assertEqual((p["push_force"], p["suppression"]), (None, None))
+        self.assertNotIn("faire refuser par GitHub", self.etat.calculer(self.projet, contenus=False))
+        os.environ["FAUX_PROTECTION"] = json.dumps({"allow_force_pushes": {"enabled": True},
+                                                    "allow_deletions": {"enabled": False}})
+        p = self.etat.protection(self.projet)[0]
+        self.assertEqual((p["push_force"], p["suppression"]), (False, True))
+
     def test_une_protection_classique_qui_exige_la_ci(self):
         self.repondre([], {"enabled": True, "required_status_checks": {
             "enforcement_level": "non_admins", "contexts": [CI], "checks": []}})
@@ -356,6 +419,83 @@ class TestCiExigee(unittest.TestCase):
         self.assertIsNone(self.etat.page_protection(self.projet))
         self.assertEqual(self.etat.nom_de_la_ci(self.projet), CI)
 
+
+
+FAUX_GH_EXECUTIONS = """#!/usr/bin/env python3
+import json, os, sys
+executions = json.loads(os.environ["FAUX_EXECUTIONS"])
+args = sys.argv[1:]
+if args[:2] != ["run", "list"]:
+    sys.exit(1)
+if "--commit" in args:
+    print(json.dumps(executions.get(args[args.index("--commit") + 1], [])))
+else:
+    # Par la branche : sa dernière exécution, celle d'un commit d'avant.
+    print(json.dumps([r for rs in executions.values() for r in rs][:1]))
+"""
+
+
+def execution(nom, sha, conclusion, status="completed"):
+    return {"workflowName": nom, "status": status, "conclusion": conclusion, "headSha": sha}
+
+
+class TestLigneCi(unittest.TestCase):
+    """B-0334 : après la fusion, la branche repartie de la branche par défaut
+    a pour tête le commit de fusion ; la ligne « CI » disait encore la
+    dernière exécution de la branche, celle de l'ancienne tête, et une
+    boucle qui attendait `success sur <tête>` n'aboutissait jamais."""
+
+    def setUp(self):
+        from socle import state as etat
+
+        self.etat = etat
+        self.dossier = Path(tempfile.mkdtemp(prefix="socle-ligne-ci-"))
+        self.addCleanup(shutil.rmtree, self.dossier, ignore_errors=True)
+        self.racine = self.dossier / "projet"
+        (self.racine / "memory").mkdir(parents=True)
+        git(self.racine, "init", "-q", "-b", "travail")
+        git(self.racine, "commit", "-q", "--allow-empty", "-m", "ancienne tête")
+        self.ancienne = git(self.racine, "rev-parse", "HEAD").strip()
+        git(self.racine, "commit", "-q", "--allow-empty", "-m", "fusion")
+        self.tete = git(self.racine, "rev-parse", "HEAD").strip()
+        self.projet = config.Projet(racine=self.racine)
+        outils_gh = self.dossier / "bin"
+        outils_gh.mkdir()
+        (outils_gh / "gh").write_text(FAUX_GH_EXECUTIONS)
+        (outils_gh / "gh").chmod(0o755)
+        self.enterContext(unittest.mock.patch.dict(os.environ, {"PATH": f"{outils_gh}{os.pathsep}{os.environ['PATH']}"}))
+        self.executions({self.ancienne: [execution("Socle", self.ancienne, "success")]})
+
+    def executions(self, par_commit):
+        os.environ["FAUX_EXECUTIONS"] = json.dumps(par_commit)
+
+    def test_un_commit_de_tete_sans_execution_ne_dit_pas_celle_d_un_autre(self):
+        texte = self.etat.calculer(self.projet, contenus=False)
+        self.assertIn(f"CI       : aucune exécution sur {self.tete[:7]}, le commit de tête", texte)
+        self.assertNotIn(f"sur {self.ancienne[:7]}", texte)
+
+    def test_un_commit_de_tete_qui_a_son_execution(self):
+        self.executions({self.ancienne: [execution("Socle", self.ancienne, "failure")],
+                         self.tete: [execution("Socle", self.tete, "success")]})
+        texte = self.etat.calculer(self.projet, contenus=False)
+        self.assertIn(f"CI       : Socle : success sur {self.tete[:7]}", texte)
+
+    def test_plusieurs_executions_disent_la_pire(self):
+        """La fusion lance la CI et la distribution sur le même commit :
+        `success` ne se dit qu'une fois toutes réussies."""
+        socle = execution("Socle", self.tete, "success")
+        cas = [([socle, execution("distribution", self.tete, "", "in_progress")], "distribution : in_progress"),
+               ([socle, execution("distribution", self.tete, "failure")], "distribution : failure"),
+               ([execution("distribution", self.tete, "skipped"), socle], "Socle : success"),
+               ([socle, execution("distribution", self.tete, "success")], ": success")]
+        for executions, attendu in cas:
+            self.executions({self.tete: executions})
+            self.assertEqual(self.etat._ligne_ci(self.racine, self.tete).split(" sur ")[0][-len(attendu):], attendu,
+                             executions)
+
+    def test_gh_en_erreur(self):
+        os.environ["FAUX_EXECUTIONS"] = "illisible"
+        self.assertEqual(self.etat._ligne_ci(self.racine, self.tete), "non disponible (gh non authentifié, ou en erreur)")
 
 class TestDernierMessage(unittest.TestCase):
     def ecrire(self, objets):
