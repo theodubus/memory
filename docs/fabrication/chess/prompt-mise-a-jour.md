@@ -190,6 +190,10 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 71. L'auto-test du socle ne fait plus échouer la CI au hasard sur un clone de son projet d'essai (note 2026-11-24-b), l'échec que ta CI a montré le 23 novembre : ses clones passent par le protocole de git, et un clone qui échoue n'échoue que son cas. Rien à faire ; si le job de l'auto-test échoue encore sur un clone (hardlink different from source, failed to copy file), dis-le-moi avec l'erreur.
 
+72. La passation programmée (note 2026-11-24-c) : à la fin d'un lot, près d'une limite ou avant une longue attente, l'agent range, puis passe la main selon l'un de deux modes, que je change en le disant. Par défaut, en session cloud, il crée lui-même la session suivante et programme son prompt (skill socle-handoff, nouveau, copie protégée dans la demande de l'installeur) ; sinon, ou dans l'autre mode, il me donne le prompt à copier, que python3 .socle/socle handoff prompt écrit avec sa garde contre le travail en double (python3 .socle/socle handoff check). Dans ton récap de la mise à jour, dis-moi que la session programmée devient le défaut, et si ta session a les outils create_session et create_trigger ; sans eux, dis-moi que tu restes au prompt à copier. Ne programme aucune session pendant la mise à jour.
+
+73. Le skill socle-batch, copie protégée dans la demande de l'installeur, dit deux règles de plus (note 2026-11-24-d) : une tâche qui change un comportement nomme le test qui affirme le contraire, et sa demande se pose avant le lot ; à la clôture d'un lot, une tâche que sa revue ouvre rejoint le prochain lot dont la règle s'applique, sinon un lot neuf dans le jalon de son besoin. Rien à faire ; applique-les à tes prochains lots.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.
