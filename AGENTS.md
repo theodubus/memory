@@ -1,8 +1,8 @@
 # memory — le socle de mémoire, documentation et tests pour agents de code
 
-Ce dépôt fabrique le **socle**, un moteur Python qui les rend fiables
-dans un projet que tient un agent ; l'humain n'arbitre que ce
-qu'aucun contrôle ne tranche. Cadrage et architecture :
+Ce dépôt fabrique le **socle**, qui permet de confier un projet de code
+à un agent d'IA sur la durée ; ce qui sert ce but et ce qui n'y sert
+pas : `docs/fabrication/but-et-tri.md`. Architecture :
 `docs/fabrication/architecture.md`. **Mode amont** : `engine/socle/` a
 une empreinte non figée ; les fichiers du projet sont dans `.socle/`.
 

@@ -53,6 +53,14 @@ sous-agent, sans worktree, qui ne reçoit que le chemin du dossier, la
 logistique et les points à éprouver. Il classe ses constats (ADR-0073,
 la règle de D-0111) ; l'orchestrateur vérifie chaque classement.
 
+Ce qui entre au backlog, ici, se juge par `docs/fabrication/but-et-tri.md`
+(D-0167) : la consigne du relecteur lui donne ce chemin, et un constat
+qui ne bloque pas n'y entre que s'il passe ses trois tests ; sinon il
+s'écarte, d'une ligne au journal, et revient s'il est vu. L'orchestrateur
+l'applique de même à toute entrée qu'il ouvre et à la formation des lots.
+Avant d'abandonner des entrées, il en donne le récap à Théo, chacune avec
+sa raison.
+
 Un lot qui touche le hook de l'agent (`engine/socle/hooks.py`,
 `engine/socle/commands.py`) ne s'ouvre que sur une preuve (ADR-0098). Son
 relecteur ne cherche pas de contournements : il vérifie que le lot ne
