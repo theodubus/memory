@@ -3070,6 +3070,8 @@ MESSAGES: dict[str, str] = {
         "permalink to a file absent from the pushed version",
     "demande en attente citée sans son lien":
         "pending request cited without its link",
+    "branche donnée à supprimer à l'humain que l'origine n'a plus":
+        "branch given to the human to delete that the origin no longer has",
     "fonction publique ajoutée sans test qui la nomme":
         "public function added without a test that names it",
     "fonction modifiée sans test, couverte seulement par une dispense déjà poussée":
@@ -3265,6 +3267,8 @@ MESSAGES: dict[str, str] = {
         "end-of-turn hook",
     "des liens que l'humain peut suivre passent le hook de fin de tour":
         "links the human can follow pass the end-of-turn hook",
+    "une branche donnée à supprimer que l'origine a encore passe le hook de fin de tour":
+        "a branch given to delete that the origin still has passes the end-of-turn hook",
     "une fonction ajoutée avec le test qui la nomme passe la CI":
         "a function added with the test that names it passes the CI",
     "deux pushes sains de suite passent le hook avant push, qui juge la plage de chacun":
