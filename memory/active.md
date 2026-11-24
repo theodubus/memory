@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-JA-0005 : T-0172, revue de cap 3, T-0171, L-0010 après E2 ; prompt
-à copier (J-2026-11-23-L).
+JA-0005 : T-0173, T-0172, revue de cap 3, T-0171, L-0010 après E2 ;
+prompt à copier (J-2026-11-23-L).
 
 ## Consignes en cours
 
@@ -51,8 +51,8 @@ Leur texte exact est dans l'entrée du journal citée.
   déclaré racine (J-2026-10-14-S).
 - Pas de rétro-compatibilité avec une version antérieure du socle
   (J-2026-10-19-A).
-- Le but : un produit pratique qui réunit les avantages du socle et ceux
-  de BMAD, construits à sa manière (J-2026-10-19-E, D-0051).
+- Le but : la mémoire, le bon contexte au bon moment, des tests qui
+  guident l'agent ; rien contre un agent malveillant (D-0166, D-0051).
 - Sessions d'un agent réel sur l'abonnement, chacune plafonnée à
   l'équivalent de 2 dollars, sa consommation rapportée (J-2026-10-19-H).
 - En autonomie sur le backlog, sauf arbitrage (J-2026-10-20-C).
