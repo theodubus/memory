@@ -74,9 +74,10 @@ prompt à copier :
   décision revient à l'humain ou que rien n'est prêt ; une demande en
   attente qui ne le bloque pas ne l'arrête pas, comme aujourd'hui
   (politique d'autonomie, point 8) ;
-- après deux lots menés sans message de l'humain : le prompt programmé
-  porte le compte (« chaîne : n ») ; le prompt à copier porte 0, et une
-  session dans laquelle l'humain a écrit repart de zéro ;
+- après deux lots menés sans message de l'humain, le lot en cours
+  compris, soit au plus de 16 à 32 points de la semaine : le prompt
+  programmé porte le compte (« chaîne : n ») ; le prompt à copier porte
+  0, et une session dans laquelle l'humain a écrit repart de zéro ;
 - quand la plateforme refuse de créer une session (supposé : une
   profondeur de huit sessions créées l'une par l'autre ; `get_session`
   donne `lineage`, profondeur 0, limite 8, pour une session que l'humain
@@ -157,18 +158,22 @@ injecté et son témoin sain vont à l'auto-test. La reprise de
 ## La pull request ouverte
 
 Le lot suivant s'ajoute à la pull request ouverte, comme aujourd'hui
-quand l'humain garde la même session. Une passation que la garde accepte
-vaut l'autorisation de l'humain d'y continuer, que demande aujourd'hui
-une session neuve qui trouve ouverte la pull request d'une autre : c'est
-l'enchaînement qu'il a choisi (D-0161). Cette pull request devient celle
-de la session neuve : elle peut la fusionner, si la politique le permet
-à l'agent, aux mêmes conditions. Le gabarit d'`AGENTS.md` et le guide le
-disent.
+quand l'humain garde la même session. Une session partie d'un prompt de
+passation que la garde accepte, programmé ou collé par l'humain, a
+l'autorisation d'y continuer, que demande aujourd'hui une session neuve
+qui trouve ouverte la pull request d'une autre : c'est l'enchaînement
+qu'il a choisi (D-0161), ou le prompt qu'il a collé lui-même. Cette pull
+request devient celle de la session neuve : elle peut la fusionner, si
+la politique le permet à l'agent, aux mêmes conditions ; sinon l'humain
+la fusionne. Le gabarit d'`AGENTS.md` et le guide le disent.
 
 ## Voir et arrêter
 
 - La session créée se voit aussitôt dans la liste de l'humain, avec son
-  titre, « prête à relire » tant qu'elle attend son prompt (E1 à E3).
+  titre, « prête à relire » tant qu'elle attend son prompt (E1 à E3). Son
+  dernier message dit ce qu'elle a fait, pourquoi la chaîne s'arrête ou
+  ce que la garde a refusé, et ce qui revient à l'humain ; l'essai n'a
+  montré aucune notification sur son téléphone.
 - Pour l'arrêter : écrire « arrête » dans la session qui l'a programmée,
   tant qu'elle tourne ; ensuite, changer de mode dans n'importe quelle
   session du projet, ou supprimer sa tâche dans la liste des tâches
