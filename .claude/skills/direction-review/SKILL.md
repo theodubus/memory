@@ -32,10 +32,15 @@ chantier actif) ; sur celui de la session, il se lance sans `model`
 En tête : « Tu fais la revue de cap du dépôt memory, qui fabrique le
 socle. AGENTS.md s'applique ; tu n'écris rien dans le dépôt. » Puis :
 
-- **Le but** : le cadrage, `memory/archives/cadrage-2026-10-10.md` ; ce
-  que Théo a dit du but, recopié mot pour mot de son entrée du journal
-  (la plus récente : J-2026-11-20-B) ; le chantier actif, ses consignes et
-  ses prochaines étapes.
+- **Le but** : D-0166, mot pour mot, la mesure de tout le reste : la
+  mémoire, le bon contexte au bon moment et les tests automatisés qui
+  guident l'agent ; rien contre un agent malveillant, ni autre chose.
+  Puis D-0165, le cadrage, `memory/archives/cadrage-2026-10-10.md`, et le
+  chantier actif, ses consignes et ses prochaines étapes.
+- **La convergence, en tête du compte rendu** : depuis la dernière revue
+  de cap, les entrées du backlog ouvertes et closes, celles ouvertes par
+  une revue, et les besoins ouverts du jalon en cours. Si les ouvertures
+  rattrapent les fermetures, c'est la première suggestion (J-2026-11-24-C).
 - **La fenêtre** : depuis la dernière revue de cap, l'historique d'avant
   servant à voir les boucles ; pour la première, tout l'historique.
 - **Les données**, par leurs commandes :

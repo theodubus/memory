@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0166-le-socle-apporte-a-l-agent-des-outils-et-une-struc.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-24"
+canal = "conversation"
+citation = "Est ce que ma règle suffit pour converger ?\nC'est la quatrième fois que je râle car on ne converge pas et la revue de cap ne l'avais pas relevé \n\nLe socle est censé apporter des outils, une structure à l'agent pour tout retenir et avoir le bon contexte au bon moment + des tests automatisés dans la mesure du possible pour le guider \n\nLe but n'est pas d'essayer de prévoir tout ce qu'un agent malveillant pourrait faire et de contrer son comportement, ni autre chose"
+empreinte = "sha256:43bf5a766e3ea09aa0766f457b27c8abba3e6c2c44d4f51734a61b2b80cf4ac8"
