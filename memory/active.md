@@ -51,8 +51,8 @@ Leur texte exact est dans l'entrée du journal citée.
   déclaré racine (J-2026-10-14-S).
 - Pas de rétro-compatibilité avec une version antérieure du socle
   (J-2026-10-19-A).
-- Le but : la mémoire, le bon contexte au bon moment, des tests qui
-  guident l'agent ; rien contre un agent malveillant (D-0166, D-0051).
+- Le but, et ce qui y sert : `docs/fabrication/but-et-tri.md` (D-0167) ;
+  récap à Théo avant tout abandon.
 - Sessions d'un agent réel sur l'abonnement, chacune plafonnée à
   l'équivalent de 2 dollars, sa consommation rapportée (J-2026-10-19-H).
 - En autonomie sur le backlog, sauf arbitrage (J-2026-10-20-C).

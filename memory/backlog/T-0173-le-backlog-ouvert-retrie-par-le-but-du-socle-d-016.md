@@ -3,7 +3,7 @@
 
 > statut : ouvert · origine : J-2026-11-24-C · besoin : B-0343 · lu : backlog@bde181bb
 
-Chaque besoin et chaque tâche ouverts, lots compris, relus contre D-0166 et D-0165 : gardé s'il sert la mémoire, le bon contexte ou les tests, ou corrige un bug important ; sinon à fermer. La liste, par groupes, avec la raison de chacun, soumise à Théo en une demande courte ; sur sa réponse, les entrées fermées en citant la décision, les lots et le jalon recomposés, et `socle roadmap` qui le montre. T-0172 en devient la part qui touche la revue.
+Chaque besoin et chaque tâche ouverts, lots compris, relus contre `docs/fabrication/but-et-tri.md` (D-0167) : gardé s'il passe ses trois tests, à fermer sinon, avec l'exclusion qui s'applique. Le récap de ce qu'on abandonne, chacun avec sa raison, et de ce qu'on garde, soumis à Théo en une demande courte avant tout abandon ; sur sa réponse, les entrées fermées en citant la décision, les lots et le jalon recomposés, et `socle roadmap` qui le montre. T-0172 en devient la part qui touche la revue.
 
 ## Fait quand
 
