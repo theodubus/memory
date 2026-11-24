@@ -8,3 +8,9 @@ Ce que la fin de tour et l'état donnent à l'humain, juste : la branche que le 
 Le 23 novembre, selon la règle qui place une tâche ouverte ensuite au prochain lot dont la règle s'applique (J-2026-11-16-J) : la ligne « CI » de `socle state` qui lit la dernière exécution de la branche, pas celle du commit de tête (T-0161, B-0334, `engine/socle/state.py`), ce que l'état donne à l'humain après la fusion (J-2026-11-23-C).
 
 Le 24 novembre, sur D-0168, le tri du backlog ouvert par le but (`docs/fabrication/tri-du-backlog-2026-11-24.md`) : T-0092 s'abandonne avec B-0287 (X2) ; T-0119 (de L-0031) et T-0059 (de L-0028), lots fermés, le rejoignent : ce que l'état et un refus disent à l'agent et à l'humain.
+
+## Revues
+
+### Passe 1 — 2026-11-24
+
+Commits : 0bbf84c..fe59939
