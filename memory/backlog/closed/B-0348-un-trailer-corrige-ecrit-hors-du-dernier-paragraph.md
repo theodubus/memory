@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0348 — Un trailer Corrige écrit hors du dernier paragraphe du message ne fait pas du commit un correctif : tests.regression le saute sans le dire
 
-> statut : ouvert · origine : J-2026-11-24-AN · lu : backlog@bfe38d20
+> statut : fait · origine : J-2026-11-24-AN · lu : backlog@bfe38d20 · ref : J-2026-11-24-AY, T-0178
 
 Relevé par la revue de L-0024 (J-2026-11-24-AN). `est_correctif`
 (`engine/socle/checks_tests.py`) ne lit `Corrige` et `Fixes` que dans le
@@ -21,4 +21,4 @@ correctif (`trailers_hors_bloc`, de T-0059), ou avertir au hook
 
 ## Satisfait quand
 
-- [ ] un commit qui écrit `Corrige:` hors du dernier paragraphe de son message n'échappe plus en silence à la vérification de son test de régression
+- [x] un commit qui écrit `Corrige:` hors du dernier paragraphe de son message n'échappe plus en silence à la vérification de son test de régression

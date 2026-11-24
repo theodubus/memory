@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0178 — Un trailer Corrige ou Fixes écrit hors du dernier paragraphe fait du commit un correctif : tests.regression vérifie son test
 
-> statut : ouvert · origine : J-2026-11-24-AV · besoin : B-0348 · lu : backlog@56bc355f
+> statut : fait · origine : J-2026-11-24-AV · besoin : B-0348 · lu : backlog@56bc355f · ref : J-2026-11-24-AY
 
 Un commit : `est_correctif` (`engine/socle/checks_tests.py`) lit aussi
 une ligne `Corrige:` ou `Fixes:` écrite hors du dernier paragraphe du
@@ -15,5 +15,5 @@ test qui échoue sur son parent) et son témoin sain dans
 
 ## Fait quand
 
-- [ ] un commit qui écrit `Corrige: T-NNNN` hors du dernier paragraphe, sans test qui échoue sur son parent, est refusé par `tests.regression`, et un test le montre
-- [ ] le même commit, avec un tel test, passe, et un test le montre
+- [x] un commit qui écrit `Corrige: T-NNNN` hors du dernier paragraphe, sans test qui échoue sur son parent, est refusé par `tests.regression`, et un test le montre
+- [x] le même commit, avec un tel test, passe, et un test le montre

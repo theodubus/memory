@@ -15,6 +15,19 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-24-o — Une ligne `Corrige:` ou `Fixes:` écrite hors du dernier paragraphe du message fait du commit un correctif, dont le test de régression se vérifie
+
+Un commit est un correctif par son sujet (`fix:` par défaut) ou par un
+trailer `Corrige:` ou `Fixes:`. Ce trailer ne se lisait que dans le
+dernier paragraphe du message, comme git lit les trailers : une ligne
+`Corrige: T-NNNN` écrite dans un paragraphe à part, avant celui des
+lignes d'attribution (`Co-Authored-By: …`), ne faisait pas du commit un
+correctif, et `tests.regression` sautait en silence la vérification de
+son test, comme l'avertissement du hook `commit-msg`. Une telle ligne,
+où qu'elle soit après le sujet, fait désormais du commit un correctif :
+la CI exige son test qui échoue sur le commit parent, et le hook
+`commit-msg` avertit dès le commit s'il n'en apporte aucun. Les commits
+déjà fusionnés ne sont pas rejugés.
 ## 2026-11-24-k — Le skill des lots attend la CI du commit poussé, par son SHA
 
 L'étape 3 du skill `socle-batch` faisait attendre `success` sur le SHA

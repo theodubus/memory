@@ -46,6 +46,11 @@ MODULE = {
 }
 COMMANDE = "python3 -c \"import calc; t = calc.Tests(); [getattr(t, n)() for n in '{names}'.split()]\""
 
+# Un `Corrige:` dans un paragraphe à part, avant les lignes d'attribution :
+# git ne le lit pas comme un trailer (B-0348).
+MESSAGE_CORRIGE_EGARE = ("Double accepte une chaîne\n\nLe calcul convertit son entrée.\n\nCorrige: T-0001\n\n"
+                         "Co-Authored-By: t <t@t>\nClaude-Session: https://example.org/s")
+
 
 def git(cwd, *args):
     env = {k: v for k, v in os.environ.items() if not k.startswith(("CLAUDE", "GIT_"))}
@@ -66,9 +71,9 @@ class TestTestDuModule(unittest.TestCase):
         git(self.racine, "commit", "-qm", "base", "--no-verify")
         self.base = git(self.racine, "rev-parse", "HEAD").strip()
 
-    def corriger(self, texte):
+    def corriger(self, texte, message="fix: double accepte une chaîne"):
         (self.racine / "calc.py").write_text(texte)
-        git(self.racine, "commit", "-qam", "fix: double accepte une chaîne", "--no-verify")
+        git(self.racine, "commit", "-qam", message, "--no-verify")
 
     def contexte(self, module_command=True):
         projet = config.Projet.charger(self.racine)
@@ -139,6 +144,42 @@ class TestTestDuModule(unittest.TestCase):
         erreurs = self.erreurs(self.contexte())
         self.assertEqual(len(erreurs), 1, erreurs)
         self.assertIn("ni test changé dans un module de code", erreurs[0])
+
+    def test_un_corrige_hors_du_dernier_paragraphe_fait_un_correctif(self):
+        """B-0348 : une ligne `Corrige:` écrite dans un paragraphe à part,
+        avant les lignes d'attribution, que git ne lit pas comme un trailer,
+        faisait sauter en silence la vérification du test de régression ; le
+        commit est un correctif, refusé sans test qui échoue sur son parent
+        (ADR-0109)."""
+        self.corriger(CALC.replace("2 * x", "2 * int(x)"), MESSAGE_CORRIGE_EGARE)
+        erreurs = self.erreurs(self.contexte())
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertIn("correctif sans test de régression", erreurs[0])
+        self.assertIn("Double accepte une chaîne", erreurs[0])
+
+    def test_un_corrige_hors_du_dernier_paragraphe_avec_son_test_passe(self):
+        self.corriger(CORRIGE, MESSAGE_CORRIGE_EGARE)
+        self.assertEqual(self.erreurs(self.contexte()), [])
+        # Le test est bien rejoué : un test qui passe déjà sur le parent ne
+        # prouve rien, et le commit reste refusé.
+        git(self.racine, "reset", "-q", "--hard", self.base)
+        self.corriger(CORRIGE.replace("double(self.entree()) == 6", "double(3) == 6"), MESSAGE_CORRIGE_EGARE)
+        erreurs = self.erreurs(self.contexte())
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertIn("passe déjà sur le parent", erreurs[0])
+
+    def test_est_correctif_lit_corrige_et_fixes_ou_qu_ils_soient(self):
+        projet = config.Projet.charger(self.racine)
+        attribution = "\n\nCo-Authored-By: t <t@t>"
+        for message in ("fix: double accepte une chaîne", "Double\n\nCorrige: T-0001",
+                        "Double\n\nFixes: T-0001", MESSAGE_CORRIGE_EGARE,
+                        "Double\n\nUn corps.\n\nFixes: T-0001" + attribution,
+                        "Double\nCorrige: T-0001"):
+            self.assertTrue(controles_tests.est_correctif(projet, message), message)
+        for message in ("Double accepte une chaîne", "Double\n\nRefs: T-0001\n\nCorrige T-0001 sans deux-points.",
+                        "Double\n\nUn corps qui dit corrige: sans commencer la ligne." + attribution,
+                        "Double\n\nRefs: T-0001" + attribution):
+            self.assertFalse(controles_tests.est_correctif(projet, message), message)
 
 
 class TestCorrectifHorsDeToutAdaptateur(unittest.TestCase):

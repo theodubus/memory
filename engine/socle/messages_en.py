@@ -2743,6 +2743,8 @@ MESSAGES: dict[str, str] = {
         "fast steps longer than their one-second threshold, run by the pre-push hook",
     "correctif sans test de régression":
         "fix without a regression test",
+    "correctif dont le `Corrige:` est hors du dernier paragraphe du message, sans test de régression":
+        "fix whose `Corrige:` is outside the last paragraph of the message, without a regression test",
     "test de régression qui échoue sur le parent faute de s'y charger":
         "regression test that fails on the parent because it does not load there",
     "code sans sa doc, couvert par la dispense d'un autre commit":
@@ -3096,6 +3098,8 @@ MESSAGES: dict[str, str] = {
         "a complete change passes the end of turn, the commit and the CI",
     "un correctif avec son test de régression passe la CI":
         "a fix with its regression test passes the CI",
+    "un correctif dont le `Corrige:` est hors du dernier paragraphe du message, avec son test de régression, passe la CI":
+        "a fix whose `Corrige:` is outside the last paragraph of the message, with its regression test, passes the CI",
     "un commit sans hooks dans un dépôt jetable, hors du projet, passe le hook de l'agent":
         "a commit without hooks in a throwaway repository, outside the project, passes the agent's hook",
     "l'installeur relancé dans le mode du verrou, ou sur un dossier temporaire, passe le hook de l'agent":

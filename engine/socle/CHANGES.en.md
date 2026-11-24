@@ -14,6 +14,18 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-24-o — A `Corrige:` or `Fixes:` line written outside the last paragraph of the message makes the commit a fix, whose regression test is checked
+
+A commit is a fix by its subject (`fix:` by default) or by a `Corrige:`
+or `Fixes:` trailer. That trailer was only read in the last paragraph of
+the message, as git reads trailers: a `Corrige: T-NNNN` line written in a
+paragraph of its own, before the one with the attribution lines
+(`Co-Authored-By: …`), did not make the commit a fix, and
+`tests.regression` silently skipped checking its test, as did the
+`commit-msg` hook's warning. Such a line, wherever it is after the
+subject, now makes the commit a fix: the CI requires its test that fails
+on the parent commit, and the `commit-msg` hook warns at commit time if it
+brings none. Commits already merged are not judged again.
 ## 2026-11-24-k — The batch skill waits for the CI of the pushed commit, by its SHA
 
 Step 3 of the `socle-batch` skill made the agent wait for `success` on
