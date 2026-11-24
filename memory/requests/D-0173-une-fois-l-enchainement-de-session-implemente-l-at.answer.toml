@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0173-une-fois-l-enchainement-de-session-implemente-l-at.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-24"
+canal = "conversation"
+citation = "Une fois que l'enchaînement de session sera complément implementé, pour l'atelier du socle nous resterons en mode manuel pour l'instant pour que je puisse jongler entre les comptes, bien que pour le socle enchainer et créer automatiquement reste le comportement par defaut du commutateur"
+empreinte = "sha256:f980a893250fd30a073c86cc715df8828b8fdf35234e799e050370e932c37cb4"

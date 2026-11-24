@@ -5,14 +5,16 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0035 livré (J-2026-11-24-R). Suivant, en session neuve : L-0010 ;
-T-0041 soumet la variante B (J-2026-11-24-L), D-0160 à réécrire.
+L-0010, repris le 24 novembre : D-0160 se réécrit en une demande qui
+la remplace (T-0039), avec la variante B (T-0041, J-2026-11-24-L).
 
 ## Consignes en cours
 
 Leur texte exact est dans l'entrée du journal citée.
 
 - Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
+- La passation programmée faite, l'atelier reste au prompt à copier ;
+  le produit enchaîne par défaut (D-0173, J-2026-11-24-S).
 - Le hook terminé : rien sans preuve vue dans une session (ADR-0098).
 - Du temps pour un ajout ou un bug important ; aucun pour un cas limite
   rare, légère gêne que l'agent gère lui-même (D-0165).
@@ -58,10 +60,7 @@ Leur texte exact est dans l'entrée du journal citée.
 - En autonomie sur le backlog, sauf arbitrage (J-2026-10-20-C).
 - Toute la correction et la stabilisation du produit avant chess, puis
   chess mis à jour d'un coup, ses corrections, ensuite les fonctions
-  nouvelles (J-2026-11-13-I, J-2026-11-21-B).
-- Chess n'est mis à jour qu'une fois l'ensemble fini ; d'ici là, tout
-  lot qui change ce que chess reçoit complète
-  `docs/fabrication/chess/prompt-mise-a-jour.md` (J-2026-11-13-L).
+  nouvelles (J-2026-11-13-I, J-2026-11-21-B, J-2026-11-13-L).
 
 ## Prochaines étapes
 
