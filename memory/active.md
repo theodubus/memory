@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0035 : D-0168, D-0169, cap 4 attendent Théo ; T-0172 en stash ;
-T-0171 (J-2026-11-24-I). L-0010 après E2. Prompt à copier.
+L-0035 : appliquer D-0168 ; T-0172 et D-0169 en stash ; T-0171
+(J-2026-11-24-I). L-0010 après E2. Prompt à copier.
 
 ## Consignes en cours
 
