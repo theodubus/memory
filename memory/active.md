@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0035 : D-0168 appliquée, T-0172 faite ; T-0171 corrigée, ses
-boucles et la revue en cours (J-2026-11-24-O). Puis L-0010.
+L-0035 livré (J-2026-11-24-R). Suivant, en session neuve : L-0010 ;
+T-0041 soumet la variante B (J-2026-11-24-L), D-0160 à réécrire.
 
 ## Consignes en cours
 
@@ -69,4 +69,4 @@ Par lots (D-0118, D-0151) :
 
 1. JA-0005 : ce qui corrige et stabilise le produit.
 2. JA-0006 : chess mis à jour d'un coup, puis ses corrections.
-3. Ensuite la planification (B-0101), puis la répartition (B-0055).
+3. Puis la couche des consignes (B-0161), la planification (B-0101).

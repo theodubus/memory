@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0341 — L'auto-test échoue par intermittence en CI : un cas clone l'origine partagée, liée en dur, pendant qu'un autre y pousse
 
-> statut : ouvert · origine : J-2026-11-24-A · priorité : haute · lu : backlog@4a658caa
+> statut : fait · origine : J-2026-11-24-A · priorité : haute · lu : backlog@4a658caa · ref : J-2026-11-24-R
 
 Vu dans la CI de chess le 23 novembre, sur le socle publié le 12 (le
 texte exact de la session chess est dans J-2026-11-24-A) : le job de
@@ -18,4 +18,4 @@ changé : à établir.
 
 ## Satisfait quand
 
-- [ ] l'auto-test n'échoue plus par intermittence sur un clone de l'origine partagée, et un clone qui échoue n'échoue que son cas
+- [x] l'auto-test n'échoue plus par intermittence sur un clone de l'origine partagée, et un clone qui échoue n'échoue que son cas

@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0035 — Lot du tri par le but : le backlog ouvert retrié par D-0167, le tri des constats de revue selon D-0165, l'auto-test intermittent de la CI de chess
 
-> statut : en cours · origine : J-2026-11-24-E · après : T-0173, T-0172, T-0171 · lu : backlog@bde181bb
+> statut : fait · origine : J-2026-11-24-E · après : T-0173, T-0172, T-0171 · lu : backlog@bde181bb · ref : J-2026-11-24-R
 
 Formé le 24 novembre dans l'ordre que donne Théo : T-0173, le backlog
 ouvert retrié par `docs/fabrication/but-et-tri.md` (D-0167) et D-0165, sa
