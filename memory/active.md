@@ -5,9 +5,9 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0024 clos (J-2026-11-24-AP). Suivant, en session neuve : la revue de
-cap 5, puis le prochain lot. Attend Théo : la règle du journal en amont
-(J-2026-11-24-AO).
+Revue de cap 5 faite (J-2026-11-24-AU) : ses trois suggestions
+attendent la réponse de Théo, avant l'annonce du lot (L-0032, ou celui
+qu'elle décide).
 
 ## Consignes en cours
 
