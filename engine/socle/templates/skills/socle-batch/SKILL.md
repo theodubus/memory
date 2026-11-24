@@ -109,7 +109,8 @@ entrée de journal et une valeur attendue ne se réécrivent plus.
   journal), puis le demande à l'humain (`/compact`), à la fin d'un lot
   si l'humain garde la session, et avant toute attente qui peut passer
   l'heure sans changer de session. Près d'une limite, le seuil plus haut
-  prime : changer de session. Après la pause, il est trop tard.
+  prime : changer de session. Après la pause, il est trop tard. Sans
+  l'humain pour compacter, l'agent ne l'attend pas : il change de session.
 - Une limite proche change l'ordre des tâches, jamais la profondeur du
   travail (une tâche qui demande plus de réflexion se commence quand
   même) ni le modèle : celui que demande la qualité du travail, jamais
@@ -125,24 +126,17 @@ entrée de journal et une valeur attendue ne se réécrivent plus.
 
 ## Changer de session
 
-Quand le lot est livré sans fenêtre pour un autre, ou avant une attente
-de plus d'une heure. Ranger d'abord, qu'une session neuve reparte du dépôt
-seul :
+À la fin du lot, près d'une limite ou avant une attente de plus d'une
+heure (le moment : skill `socle-handoff`). Ranger d'abord, qu'une
+session neuve reparte du dépôt seul :
 
-1. tout est poussé ; un commit non relu part en correctif
-   (`git format-patch`) dans un dossier de passation du dépôt, retiré à son
-   intégration ;
+1. le chantier actif dit le lot et ce qui attend, le journal la
+   passation ;
 2. les copies isolées, leurs branches et, en session cloud, les réveils
    retirés ;
-3. le chantier actif dit le lot et ce qui attend.
+3. tout est poussé ; un commit non relu part en correctif
+   (`git format-patch`) dans un dossier de passation du dépôt, retiré à son
+   intégration. Plus rien ne se pousse ensuite.
 
-Puis dire à l'humain pourquoi, avec le prompt de la suivante dans un bloc
-à copier :
-
-```text
-Reprends le travail de ce dépôt, en session neuve.
-Avant tout : lis l'état que le démarrage injecte, et ce qu'une ligne
-« !! coupé » y dit manquer ; puis le chantier actif, et applique-les.
-Le lot : <le lot de l'état, ses tâches dans l'ordre>, selon le skill socle-batch.
-Ce qui attend : <un compte rendu, une CI, une demande> | rien.
-```
+Puis le skill `socle-handoff` : selon le mode, il programme la session
+suivante, ou donne le prompt de la suivante à copier.

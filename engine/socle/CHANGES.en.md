@@ -14,25 +14,46 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
-## 2026-11-24-c — The handoff to a new session: `socle handoff`, its prompt and its guard
+## 2026-11-24-c — The next session schedules itself: the scheduled handoff, `socle handoff` and its guard
 
-A new command, for the agent, writes the prompt of a new session and
-judges its guard. `python3 .socle/socle handoff prompt` refuses as long
-as the local head is not pushed; it names the remote branch, its head
-and the time of the handoff, in UTC, then gives the new-session prompt
-of `socle-batch`, with the batch and its tasks read from the state. In
-the new session, `python3 .socle/socle handoff check`, after `git
-fetch`, refuses, saying why, if someone pushed to the branch since the
-handoff, or if another remote branch carries a commit dated after it
-that touches the memory without being in the handed-off head: another
-session is working on the project. A pull request merged by a merge
-commit during the wait makes the session restart from the default
-branch; squash-merged, the guard refuses. On waking after a limit, the
-`socle-resume` skill calls the same guard, and at the first turn it
-tells the human about a scheduled handoff that is waiting.
+At the end of a batch, near a usage limit or before a wait of more than
+an hour, the agent tidies up, then hands over to a new session in one of
+two modes, which the human changes by saying so. By default, in a Claude
+Code cloud session, the scheduled session: the agent creates the next
+session itself and schedules its prompt, right away or at the reset of a
+window already at 15% (five hours) or at 75% (week). The chain stops,
+and the recap gives the prompt to copy, when the next batch has no ready
+task, after two batches run without a message from the human, or if the
+platform refuses to create the session. The other mode, the prompt to
+copy, is the one from before: the human pastes the prompt into a session
+they open; switching to it cancels what is scheduled. The new
+`socle-handoff` skill gives the modes, the moment, the bounds and the
+two calls; "Changing sessions" of `socle-batch` is reduced to the tidying
+up, and an agent without the human to compact changes sessions without
+waiting for them.
 
-To do: nothing; the `socle-resume` skill is a protected copy, in the
-installer's request.
+The prompt comes from a new command: `python3 .socle/socle handoff
+prompt` refuses as long as the local head is not pushed, names the
+remote branch, its head and the time, in UTC, then gives the new-session
+prompt, with the batch and its tasks read from the state; with
+`--scheduled`, it refuses at the first two bounds. In the new session,
+`python3 .socle/socle handoff check`, after `git fetch`, refuses, saying
+why, if someone pushed to the branch since the handoff, or if another
+remote branch carries a commit dated after it that touches the memory
+without being in the handed-off head: another session is working on the
+project. A pull request merged by a merge commit during the wait makes
+the session restart from the default branch; squash-merged, the guard
+refuses. A session started from a handoff prompt that its guard accepts
+continues the open pull request of its branch, which becomes its own. On
+waking after a limit, `socle-resume` calls the same guard, and at the
+first turn it tells the human about a handoff that is waiting.
+
+To do: tell the human, in the recap of the update, that at the end of a
+batch the agent now schedules the next session itself, and that they
+keep the prompt to copy by saying so; if they say so, write the
+instruction in the active work, and its exact text in the journal. The
+`socle-batch`, `socle-handoff` and `socle-resume` skills and the
+instructions are protected copies, in the installer's request.
 
 ## 2026-11-24-b — The self-test no longer fails the CI at random on a clone of its test project
 

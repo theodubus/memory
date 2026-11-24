@@ -109,7 +109,8 @@ decision, a journal entry and an expected value are no longer rewritten.
   batch if the human keeps the session, and before any wait
   that may exceed an hour without changing sessions. Near a limit, the
   threshold above prevails: change sessions. After the pause, it is too
-  late.
+  late. Without the human to compact, the agent does not wait for them: it
+  changes sessions.
 - A nearby limit changes the order of tasks, never the depth of the work
   (a task that needs more thought is started anyway) nor the model: the one the quality of the work calls for, never a
   lesser one to stay within a limit: a limit delays a batch, it does not
@@ -123,24 +124,17 @@ decision, a journal entry and an expected value are no longer rewritten.
 
 ## Changing sessions
 
-When the batch is delivered and the window does not allow running
-another one whole, or a wait of more than an hour is coming. Tidy up
-first, so that a new session restarts from the repository alone:
+At the end of the batch, near a limit or before a wait of more than an
+hour (the moment: the `socle-handoff` skill). Tidy up first, so that a
+new session restarts from the repository alone:
 
-1. everything is pushed; a commit not reviewed leaves as a patch
-   (`git format-patch`) in a handover folder of the repository, removed
-   at its integration;
+1. the active work gives the batch and what is waiting, the journal the
+   handoff;
 2. the isolated copies, their branches and, in a cloud session, the
    wake-ups removed;
-3. the active work gives the batch and what is waiting.
+3. everything is pushed; a commit not reviewed leaves as a patch
+   (`git format-patch`) in a handover folder of the repository, removed
+   at its integration. Nothing is pushed afterwards.
 
-Then tell the human why sessions must change, with the prompt of the
-next one in a block to copy:
-
-```text
-Resume the work of this repository, in a new session.
-First: read the state the startup injects; a "!! cut" line says what is
-missing from it and where to read it. Then the active work, and apply them.
-The batch: <the state's batch, its tasks in order>, following the socle-batch skill.
-What is waiting: <a report, a CI, a request> | nothing.
-```
+Then the `socle-handoff` skill: depending on the mode, it schedules the
+next session, or gives the prompt of the next one to copy.
