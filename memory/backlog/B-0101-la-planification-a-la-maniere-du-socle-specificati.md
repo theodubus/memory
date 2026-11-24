@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0101 — La planification à la manière du socle : spécification, architecture, décisions, demandes et sujets depuis le cadrage
 
-> statut : ouvert · origine : D-0051 · ref : J-2026-10-30-Q, D-0090 · lu : backlog@aa365018 · après : B-0126
+> statut : ouvert · origine : D-0051 · ref : J-2026-10-30-Q, D-0090 · lu : backlog@aa365018 · après : B-0126, B-0161
 
 BMAD retiré (D-0051, J-2026-10-30-Q), la planification revient au socle :
 ADR-0032 la lui avait confiée. Ce que D-0051 en fixe : depuis le cadrage,
@@ -36,3 +36,5 @@ l'humain. Le skill fixe où elles vivent.
 Le 10 novembre, Théo valide que le socle ne reçoive que des correctifs
 jusqu'à chess (D-0093@333ad9d0, proposition 5) : la planification, une règle
 nouvelle, attend JA-0002, dans le jalon JA-0004.
+
+Le 24 novembre, sur D-0172, la couche des consignes (B-0161) passe avant elle.

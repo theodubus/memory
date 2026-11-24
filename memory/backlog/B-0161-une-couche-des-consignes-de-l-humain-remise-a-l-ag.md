@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0161 — Une couche des consignes de l'humain, remise à l'agent au démarrage
 
-> statut : ouvert · origine : J-2026-11-10-N · lu : backlog@4f7c8bab · après : B-0126
+> statut : ouvert · origine : J-2026-11-10-N · lu : backlog@4f7c8bab · après : B-0126, B-0323
 
 Les consignes durables de l'humain vivent dans le chantier actif, plein à
 98 % de son budget, que chaque mise à jour oblige à resserrer ; le
@@ -10,6 +10,8 @@ Une couche de la mémoire, remise à l'agent au démarrage, où chaque
 consigne est en vigueur ou levée, avec son texte exact ; le chantier
 actif ne garde que le travail en cours. Sa spécification se soumet à Théo
 avant son code.
+
+Le 24 novembre, Théo retient la suggestion 3 de la revue de cap 4 (D-0172) : elle passe en premier après la mise à jour de chess (B-0323), avant la planification (B-0101).
 
 ## Satisfait quand
 
