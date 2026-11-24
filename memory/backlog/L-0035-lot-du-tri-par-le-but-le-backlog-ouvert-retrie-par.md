@@ -11,3 +11,9 @@ T-0171, l'auto-test que la CI de chess a vu échouer par intermittence
 (`engine/socle/selftest.py`). Ce qui les réunit : la convergence du
 jalon, que les deux premières tâches rétablissent, et un défaut vu dans
 la CI d'un projet réel. Il ne suit aucun lot : L-0010 attend la sonde E2.
+
+## Revues
+
+### Passe 1 — 2026-11-24
+
+Commits : dcb70366..cfac5078
