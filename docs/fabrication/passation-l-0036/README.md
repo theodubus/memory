@@ -1,7 +1,7 @@
 # Passation de L-0036
 
 Le 24 novembre 2026, la fenêtre de cinq heures à 76 %, la session qui
-menait L-0036 a rangé ici ses neuf commits que la revue du lot n'a pas
+menait L-0036 a rangé ici ses dix commits que la revue du lot n'a pas
 encore vus, en correctifs (`git format-patch`), la branche de travail
 `ccr-4b9c6962-fq3m9y` revenant à `cd6c6827`, poussé. Les identifiants
 nouveaux qu'ils créent ne se citent qu'une fois appliqués.
@@ -28,6 +28,8 @@ nouveaux qu'ils créent ne se citent qu'une fois appliqués.
    l'instant, B-0346 avant chess, l'abandon des deux suggestions gardées),
    la tâche et le lot de B-0346.
 9. L'entrée du journal de cette passation.
+10. La réponse de Théo sur la passation : le prompt à copier, le
+    commutateur de l'atelier restant manuel pour l'instant.
 
 Les tests ciblés de chaque tâche passaient ; la dernière vérification
 rapide entière, au commit 2, passait.

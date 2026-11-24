@@ -1,0 +1,64 @@
+From ef2255e0b7d62c68331f87e7a29b171218e2f5b0 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 24 Nov 2026 23:56:33 +0000
+Subject: [PATCH] =?UTF-8?q?Th=C3=A9o=20:=20le=20prompt=20=C3=A0=20copier,?=
+ =?UTF-8?q?=20le=20commutateur=20de=20l'atelier=20reste=20manuel=20pour=20?=
+ =?UTF-8?q?l'instant=20(J-2026-11-24-BE)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Mr1cCfBaBYKzQQPhyAVGEh
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=2 PreToolUse=481 Stop=5
+Socle-Hooks-Since-Commit: PreToolUse=7
+---
+ memory/active.md             |  6 +++---
+ memory/journal/2026-11-12.md | 16 ++++++++++++++++
+ 2 files changed, 19 insertions(+), 3 deletions(-)
+
+diff --git a/memory/active.md b/memory/active.md
+index e15a08fd..9bf48104 100644
+--- a/memory/active.md
++++ b/memory/active.md
+@@ -13,9 +13,9 @@ JA-0005, puis L-0032. À redemander : B-0346 avant chess ?
+ Leur texte exact est dans l'entrée du journal citée.
+ 
+ - Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
+-- L'atelier au prompt à copier (D-0173), sauf une fin de lot en
+-  passation programmée quand Théo ne jongle plus entre ses comptes
+-  (D-0182, J-2026-11-24-AV).
++- L'atelier au prompt à copier, commutateur manuel pour l'instant
++  (D-0173, J-2026-11-24-BE) ; l'essai programmé de D-0182 quand Théo
++  le demande.
+ - Le hook terminé : rien sans preuve vue dans une session (ADR-0098).
+ - Du temps pour un ajout ou un bug important ; aucun pour un cas limite
+   rare, légère gêne que l'agent gère lui-même (D-0165).
+diff --git a/memory/journal/2026-11-12.md b/memory/journal/2026-11-12.md
+index 923a9b1c..105cfdbb 100644
+--- a/memory/journal/2026-11-12.md
++++ b/memory/journal/2026-11-12.md
+@@ -866,3 +866,19 @@ revue) ; la clôture du lot, le push, la pull request et sa fusion, la
+ distribution. Le mode de la passation : D-0182 veut une fin de lot en
+ passation programmée quand Théo ne jongle plus entre ses comptes ; la
+ question lui est posée, et le récap dit le mode retenu.
++
++## J-2026-11-24-BE — Théo : le prompt à copier, le commutateur de l'atelier reste manuel pour l'instant (D-0173) ; il redonne son message sur la revue de cap, déjà consigné (D-0183)
++
++> ref : D-0173, D-0182, D-0183, J-2026-11-24-BC, J-2026-11-24-BD
++
++Après le récap de la passation, Théo écrit, vers 1 h, heure de Paris,
++mot pour mot :
++
++> Ok pour l'instant pas de revue de cap dans le produit, on se garde juste en tete que c'est une possibilité si le besoin vient plus tard (que je constate que les produits dans lesquels j'utilise le socle convergent mal ou dévident)
++> Prompt a copier, j'avais dit dans une session précédente que pour l'instant le commutateur est en mode manuel
++
++Le premier paragraphe est le message déjà consigné par D-0183
++(J-2026-11-24-BC), arrivé cette fois. Le second tranche la question de la
++passation : le prompt à copier, le commutateur de l'atelier restant
++manuel pour l'instant (D-0173) ; l'essai de D-0182 attend que Théo le
++demande. La consigne du chantier actif le dit.
+-- 
+2.43.0
+
