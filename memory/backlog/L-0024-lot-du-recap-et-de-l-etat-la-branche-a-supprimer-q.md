@@ -17,3 +17,7 @@ Commits : 0bbf84c..fe59939
 
 - Bloquant : la note 2026-11-24-h sans son « À faire », perdu à la résolution d'un conflit
 - Ouvre : B-0348
+
+### Passe 2 — 2026-11-24
+
+Commits : fe59939..b2ef40c
