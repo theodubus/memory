@@ -1,0 +1,52 @@
+From 98cd4a96b9c6810cb9e040a7364713763ff6fd07 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 24 Nov 2026 17:24:37 +0000
+Subject: [PATCH 7/7] =?UTF-8?q?Passation=20de=20L-0010=20:=20la=20fen?=
+ =?UTF-8?q?=C3=AAtre=20de=20cinq=20heures=20=C3=A0=2091=20%,=20la=20revue?=
+ =?UTF-8?q?=20=C3=A0=20refaire=20en=20session=20neuve=20(J-2026-11-24-Z)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Mr1cCgcjYP4Zgv5LeaZjRr
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=2 PreToolUse=437 Stop=4
+Socle-Hooks-Since-Commit: PreToolUse=40
+---
+ memory/journal/2026-11-12.md | 23 +++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+ create mode 100644 memory/journal/2026-11-12.md
+
+diff --git a/memory/journal/2026-11-12.md b/memory/journal/2026-11-12.md
+new file mode 100644
+index 0000000..338592a
+--- /dev/null
++++ b/memory/journal/2026-11-12.md
+@@ -0,0 +1,23 @@
++<!-- socle: couche=journal zone=publique -->
++# Journal — 2026-11
++
++## J-2026-11-24-Z — Passation de L-0010 à une session neuve, la fenêtre de cinq heures à 91 % : le lot fait, en correctifs non relus, la revue à refaire
++
++> ref : L-0010, D-0174, D-0173, T-0081, T-0079, T-0134, T-0162, J-2026-11-24-Y
++
++À 17:22 UTC, la fenêtre de cinq heures est à 91 %, la semaine à 15 % :
++le sous-agent de T-0081 et T-0079 (Opus 5.5, 410 404 jetons, 197 outils,
++39 minutes) en a pris la plus grande part. Le relecteur de la passe 3,
++lancé à 17:16, est arrêté avant d'avoir rendu : il n'aurait pas fini sous
++la limite. Rangement, selon `socle-batch` : les commits non relus,
++`b453125` à celui-ci, partent en correctifs dans le dossier
++passation-l-0010 de docs/fabrication, la branche de travail revenant à
++`7204705`, poussé. Ils portent la réponse de D-0174, qui doit partir dans
++le même push que les deux valeurs attendues qu'elle autorise.
++
++Reste dans L-0010 : la revue (la passe 3, écrite dans le lot, à rejouer
++sur la plage appliquée), ses bloquants ; la demande qui remet les copies
++protégées de `socle-batch`, `socle-resume` et `socle-handoff` (empreintes
++des gabarits français, après la revue) ; la clôture du lot, le push, la
++pull request et sa fusion, la distribution. Ce dépôt reste au prompt à
++copier (D-0173) : la session neuve, Théo l'ouvre.
+-- 
+2.43.0
+

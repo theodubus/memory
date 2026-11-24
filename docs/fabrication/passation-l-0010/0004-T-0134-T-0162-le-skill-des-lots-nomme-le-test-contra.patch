@@ -1,0 +1,431 @@
+From d0b9c2980a077f41e8e0042be4554d722709845b Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 24 Nov 2026 17:15:34 +0000
+Subject: [PATCH 4/7] =?UTF-8?q?T-0134,=20T-0162=20:=20le=20skill=20des=20l?=
+ =?UTF-8?q?ots=20nomme=20le=20test=20contraire=20avant=20le=20lot=20et=20p?=
+ =?UTF-8?q?lace=20dans=20un=20lot=20la=20t=C3=A2che=20qu'une=20revue=20ouv?=
+ =?UTF-8?q?re=20;=20B-0303,=20B-0335,=20B-0259,=20B-0156=20satisfaits=20(J?=
+ =?UTF-8?q?-2026-11-24-Y)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Mr1cCgcjYP4Zgv5LeaZjRr
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=2 PreToolUse=392 Stop=4
+Socle-Hooks-Since-Commit: PreToolUse=236
+---
+ .claude/skills/delegate-lot/SKILL.md          |  8 +++--
+ engine/socle/CHANGES.en.md                    | 14 +++++++++
+ engine/socle/CHANGES.md                       | 15 ++++++++++
+ engine/socle/FORMAT.md                        |  5 +++-
+ .../templates/skills/socle-batch/SKILL.en.md  | 16 +++++-----
+ .../templates/skills/socle-batch/SKILL.md     | 17 ++++++-----
+ ...-long-une-solution-automatique-plutot-q.md |  4 +--
+ ...n-programmee-la-session-neuve-s-ouvre-s.md |  4 +--
+ ...ui-change-ce-qu-un-test-affirme-nomme-c.md |  4 +--
+ ...u-une-revue-ouvre-reste-hors-de-tout-lo.md |  4 +--
+ ...de-socle-batch-et-le-format-disent-la-r.md |  4 +--
+ ...de-socle-batch-dit-qu-a-la-cloture-d-un.md |  4 +--
+ memory/journal/2026-11-11.md                  | 30 +++++++++++++++++++
+ tests/test_skills.py                          | 27 +++++++++++++++++
+ 14 files changed, 125 insertions(+), 31 deletions(-)
+ rename memory/backlog/{ => closed}/B-0156-le-contexte-long-une-solution-automatique-plutot-q.md (94%)
+ rename memory/backlog/{ => closed}/B-0259-la-passation-programmee-la-session-neuve-s-ouvre-s.md (96%)
+ rename memory/backlog/{ => closed}/B-0303-une-tache-qui-change-ce-qu-un-test-affirme-nomme-c.md (85%)
+ rename memory/backlog/{ => closed}/B-0335-une-tache-qu-une-revue-ouvre-reste-hors-de-tout-lo.md (83%)
+ rename memory/backlog/{ => closed}/T-0134-le-gabarit-de-socle-batch-et-le-format-disent-la-r.md (79%)
+ rename memory/backlog/{ => closed}/T-0162-le-gabarit-de-socle-batch-dit-qu-a-la-cloture-d-un.md (80%)
+
+diff --git a/.claude/skills/delegate-lot/SKILL.md b/.claude/skills/delegate-lot/SKILL.md
+index 35259b1..50b1340 100644
+--- a/.claude/skills/delegate-lot/SKILL.md
++++ b/.claude/skills/delegate-lot/SKILL.md
+@@ -110,6 +110,8 @@ sous `docs/fabrication/`. À l'intégration d'une passation, après
+ l'application de ses correctifs (`git am`), la branche de passation se
+ fusionne dans la branche de travail (`git merge --no-edit`), puis son
+ dossier se retire : l'état la donne alors à supprimer après la fusion de
+-la pull request (B-0293). Le prompt de la session neuve est celui du
+-produit, avec « Reprends le travail du socle dans ce dépôt » et le lot
+-« selon le skill delegate-lot ».
++la pull request (B-0293). Ici, le mode est le prompt à copier (D-0173) :
++le prompt de la session neuve est celui que donne `python3 .socle/socle
++handoff prompt --session <lien> --waiting "<ce qui attend>"` (skill
++`socle-handoff`), tout poussé, avec le lot « selon le skill
++delegate-lot » au lieu de `socle-batch`.
+diff --git a/engine/socle/CHANGES.en.md b/engine/socle/CHANGES.en.md
+index 2939dee..76c9867 100644
+--- a/engine/socle/CHANGES.en.md
++++ b/engine/socle/CHANGES.en.md
+@@ -14,6 +14,20 @@ asks nothing: of such an entry, the installer prints only the title,
+ under a line that names this file. Any other form (“nothing, unless …”,
+ “nothing in the project …”, an action) is printed in full, before them.
+ 
++## 2026-11-24-d — The batch skill: the opposing test named before the batch, and the task a review opens placed in a batch
++
++Two rules of `socle-batch`, "Forming and announcing" and the closing of a
++batch. A task that changes a behaviour names, as soon as it is written,
++the test that asserts the opposite, and the request that allows changing
++it is made at once, before the batch: the batch no longer stops halfway
++on that conflict. The memory format (`FORMAT.md`) says so too, where it
++says what a task is. At the closing of a batch, a task its review opened
++joins the next batch whose rule applies, otherwise a new batch in its
++need's milestone: it no longer stays outside every batch.
++
++To do: nothing; the `socle-batch` skill is a protected copy, in the
++installer's request.
++
+ ## 2026-11-24-c — The next session schedules itself: the scheduled handoff, `socle handoff` and its guard
+ 
+ At the end of a batch, near a usage limit or before a wait of more than
+diff --git a/engine/socle/CHANGES.md b/engine/socle/CHANGES.md
+index 8e8ec5b..fb252d9 100644
+--- a/engine/socle/CHANGES.md
++++ b/engine/socle/CHANGES.md
+@@ -15,6 +15,21 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
+ sauf si … », « rien dans le projet … », une action) s'imprime en entier,
+ avant elles.
+ 
++## 2026-11-24-d — Le skill des lots : le test contraire nommé avant le lot, et la tâche qu'une revue ouvre placée dans un lot
++
++Deux règles de `socle-batch`, « Former et annoncer » et la clôture d'un
++lot. Une tâche qui change un comportement nomme, dès son écriture, le
++test qui affirme le contraire, et la demande qui autorise à le changer
++se pose aussitôt, avant le lot : le lot ne s'arrête plus en son milieu
++sur ce conflit. Le format de la mémoire (`FORMAT.md`) le dit aussi, là
++où il dit ce qu'est une tâche. À la clôture d'un lot, une tâche que sa
++revue a ouverte rejoint le prochain lot dont la règle s'applique, sinon
++un lot neuf dans le jalon de son besoin : elle ne reste plus hors de
++tout lot.
++
++À faire : rien ; le skill `socle-batch` est une copie protégée, dans la
++demande de l'installeur.
++
+ ## 2026-11-24-c — La session suivante se programme seule : la passation programmée, `socle handoff` et sa garde
+ 
+ À la fin d'un lot, près d'une limite d'usage ou avant une attente de
+diff --git a/engine/socle/FORMAT.md b/engine/socle/FORMAT.md
+index 615ab4c..c2baa7c 100644
+--- a/engine/socle/FORMAT.md
++++ b/engine/socle/FORMAT.md
+@@ -172,7 +172,10 @@ Une entrée du backlog a l'une de quatre formes, que son préfixe dit
+   une entrée de la mémoire récrite se vérifie aussi par ce qu'elle
+   produit, que la case nomme : la demande, et la réponse de l'humain
+   consignée au journal ; le fichier du relevé ; ce qu'en montre `socle
+-  show` ou `socle roadmap` ; tout autre livrable garde son test ;
++  show` ou `socle roadmap` ; tout autre livrable garde son test ; une
++  tâche qui dit ce qu'un comportement doit devenir nomme, dès son
++  écriture, le test qui affirme le contraire, et la demande qui
++  autorise à le changer se pose aussitôt, avant le lancement du lot ;
+ - un **lot**, `L-` : des tâches qui touchent les mêmes fichiers, le même
+   garde-fou ou les mêmes tests, menées et relues ensemble ; son corps dit
+   ce qui les réunit ; une tâche est dans un lot au plus ;
+diff --git a/engine/socle/templates/skills/socle-batch/SKILL.en.md b/engine/socle/templates/skills/socle-batch/SKILL.en.md
+index ac5cdaf..eff8540 100644
+--- a/engine/socle/templates/skills/socle-batch/SKILL.en.md
++++ b/engine/socle/templates/skills/socle-batch/SKILL.en.md
+@@ -14,7 +14,9 @@ it orchestrates; it implements itself only a small task.
+ 1. The next batch is in the state (`next batch`). Otherwise, form it
+    over the whole open backlog, without asking: the ready tasks its rule
+    applies to, those of the next milestone and of high priority first; a
+-   need to split gets its tasks first; the rest goes to the next batch
++   need to split gets its tasks first; a task that changes a behaviour
++   names the test that asserts the opposite, its request made at once,
++   before the batch; the rest goes to the next batch
+    not in progress whose rule applies, and the recap states each
+    placement. It is kept in the backlog: `python3 .socle/socle new batch
+    "Batch …"`, then `after:` the previous batch and its tasks; its body
+@@ -85,7 +87,9 @@ decision, a journal entry and an expected value are no longer rewritten.
+    starts on the default branch; the recap says whether they succeeded.
+ 5. The active work and the journal are written before the merge, in the
+    last commit of the pull request, with the batch's closure: its tasks
+-   closed, it becomes `done`, then `python3 .socle/socle archive`; the closing recap pastes the output of `python3
++   closed, it becomes `done`, then `python3 .socle/socle archive`; a task
++   its review opens joins the next batch whose rule applies, otherwise a
++   new batch in its need's milestone; the closing recap pastes the output of `python3
+    .socle/socle roadmap` in a code block. After the merge, the local
+    branch restarts from the default branch and is pushed only with the
+    first commit of the next batch: pushed alone, it would recreate the
+@@ -93,10 +97,9 @@ decision, a journal entry and an expected value are no longer rewritten.
+ 
+ ## Consumption
+ 
+-- One batch per session: the orchestrating conversation, reread at each
+-  step, stays short.
++- One batch per session: the orchestrating conversation stays short.
+ - Costs are measured: the use of each window, before each launch and at
+-  each report (in a cloud session, `list_events`, `rate_limit_event`). The closure notes in the journal the cost of each
++  each report (skill `socle-resume`). The closure notes in the journal the cost of each
+   subagent, of the reviewer, of each request and of the tidying up: a
+   batch's cost is estimated on these measures.
+ - Only one subagent beyond 75% of the week. A subagent is launched if
+@@ -125,8 +128,7 @@ decision, a journal entry and an expected value are no longer rewritten.
+ ## Changing sessions
+ 
+ At the end of the batch, near a limit or before a wait of more than an
+-hour (the moment: the `socle-handoff` skill). Tidy up first, so that a
+-new session restarts from the repository alone:
++hour (the moment: the `socle-handoff` skill). Tidy up first:
+ 
+ 1. the active work gives the batch and what is waiting, the journal the
+    handoff;
+diff --git a/engine/socle/templates/skills/socle-batch/SKILL.md b/engine/socle/templates/skills/socle-batch/SKILL.md
+index 49335b5..2077ea1 100644
+--- a/engine/socle/templates/skills/socle-batch/SKILL.md
++++ b/engine/socle/templates/skills/socle-batch/SKILL.md
+@@ -15,7 +15,9 @@ tâche.
+ 1. Le prochain lot est dans l'état (`prochain lot`). Sinon, le former
+    sur tout le backlog ouvert, sans le demander : les tâches prêtes
+    auxquelles sa règle s'applique, du prochain jalon et de priorité haute
+-   d'abord ; un besoin à découper reçoit d'abord ses tâches ; le reste va
++   d'abord ; un besoin à découper reçoit d'abord ses tâches ; une tâche
++   qui change un comportement nomme le test qui affirme le contraire, sa
++   demande posée aussitôt, avant le lot ; le reste va
+    au prochain lot pas en cours dont la règle s'applique, et le récap dit
+    chaque placement. Il se garde au backlog : `python3 .socle/socle new
+    batch "Lot …"`, puis `après :` le lot d'avant et ses tâches ; son corps
+@@ -85,7 +87,9 @@ entrée de journal et une valeur attendue ne se réécrivent plus.
+    fusion lance sur la branche par défaut ; le récap dit s'ils ont réussi.
+ 5. Le chantier actif et le journal s'écrivent avant la fusion, dans le
+    dernier commit de la pull request, avec la clôture du lot : ses tâches
+-   closes, il passe `fait`, puis `python3 .socle/socle archive` ; le récap
++   closes, il passe `fait`, puis `python3 .socle/socle archive` ; une tâche
++   que sa revue ouvre rejoint le prochain lot dont la règle s'applique,
++   sinon un lot neuf dans le jalon de son besoin ; le récap
+    de la clôture colle la sortie de `python3 .socle/socle roadmap` dans un
+    bloc de code. Après la fusion, la branche locale repart de la branche
+    par défaut et ne se pousse qu'avec le premier commit du lot suivant :
+@@ -93,11 +97,9 @@ entrée de journal et une valeur attendue ne se réécrivent plus.
+ 
+ ## La consommation
+ 
+-- Un lot par session : la conversation qui orchestre, relue à chaque
+-  pas, reste courte.
++- Un lot par session : la conversation qui orchestre reste courte.
+ - Les coûts se mesurent : l'utilisation de chaque fenêtre, avant chaque
+-  lancement et à chaque compte rendu (en session cloud, `list_events`,
+-  `rate_limit_event`). La clôture note au journal le coût de chaque
++  lancement et à chaque compte rendu (skill `socle-resume`). La clôture note au journal le coût de chaque
+   sous-agent, du relecteur, de chaque demande et du rangement : celui
+   d'un lot s'estime sur ces mesures.
+ - Un seul sous-agent au-delà de 75 % de la semaine. Un sous-agent se
+@@ -127,8 +129,7 @@ entrée de journal et une valeur attendue ne se réécrivent plus.
+ ## Changer de session
+ 
+ À la fin du lot, près d'une limite ou avant une attente de plus d'une
+-heure (le moment : skill `socle-handoff`). Ranger d'abord, qu'une
+-session neuve reparte du dépôt seul :
++heure (le moment : skill `socle-handoff`). Ranger d'abord :
+ 
+ 1. le chantier actif dit le lot et ce qui attend, le journal la
+    passation ;
+diff --git a/memory/backlog/B-0156-le-contexte-long-une-solution-automatique-plutot-q.md b/memory/backlog/closed/B-0156-le-contexte-long-une-solution-automatique-plutot-q.md
+similarity index 94%
+rename from memory/backlog/B-0156-le-contexte-long-une-solution-automatique-plutot-q.md
+rename to memory/backlog/closed/B-0156-le-contexte-long-une-solution-automatique-plutot-q.md
+index d0a0e02..9b60812 100644
+--- a/memory/backlog/B-0156-le-contexte-long-une-solution-automatique-plutot-q.md
++++ b/memory/backlog/closed/B-0156-le-contexte-long-une-solution-automatique-plutot-q.md
+@@ -1,7 +1,7 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # B-0156 — Le contexte long : une solution automatique, plutôt qu'une session neuve à ouvrir à la main
+ 
+-> statut : ouvert · origine : J-2026-11-10-N · lu : backlog@877a7268
++> statut : fait · ref : J-2026-11-24-Y · origine : J-2026-11-10-N · lu : backlog@877a7268
+ 
+ Théo, le 10 novembre (J-2026-11-10-N) : ouvrir une session neuve à chaque
+ sujet est une friction majeure en session cloud ; il veut une solution
+@@ -48,4 +48,4 @@ faire ; une session neuve coûterait moins que la reprise à froid.
+ 
+ ## Satisfait quand
+ 
+-- [ ] une session longue se poursuit sans que Théo en ouvre une neuve à la main, même quand il n'est pas là pour compacter, et ce que coûte une tâche ainsi menée est mesuré
++- [x] une session longue se poursuit sans que Théo en ouvre une neuve à la main, même quand il n'est pas là pour compacter, et ce que coûte une tâche ainsi menée est mesuré
+diff --git a/memory/backlog/B-0259-la-passation-programmee-la-session-neuve-s-ouvre-s.md b/memory/backlog/closed/B-0259-la-passation-programmee-la-session-neuve-s-ouvre-s.md
+similarity index 96%
+rename from memory/backlog/B-0259-la-passation-programmee-la-session-neuve-s-ouvre-s.md
+rename to memory/backlog/closed/B-0259-la-passation-programmee-la-session-neuve-s-ouvre-s.md
+index 3a3ce8b..5d2be4a 100644
+--- a/memory/backlog/B-0259-la-passation-programmee-la-session-neuve-s-ouvre-s.md
++++ b/memory/backlog/closed/B-0259-la-passation-programmee-la-session-neuve-s-ouvre-s.md
+@@ -1,7 +1,7 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # B-0259 — La passation programmée : la session neuve s'ouvre seule à la remise à zéro de la fenêtre, au lieu d'un prompt à copier
+ 
+-> statut : ouvert · origine : J-2026-11-16-E · ref : B-0156 · lu : backlog@dbfb9832
++> statut : fait · ref : J-2026-11-24-Y · origine : J-2026-11-16-E · ref : B-0156 · lu : backlog@dbfb9832
+ 
+ D'une analyse en lecture seule du 15 novembre sur d1d296e, que Théo a
+ fait inscrire (J-2026-11-16-E) ; il n'en fixe ni la priorité ni le lot.
+@@ -74,4 +74,4 @@ programmée ». Pour qu'aucun travail ne se fasse en double :
+ 
+ ## Satisfait quand
+ 
+-- [ ] près d'une limite, quand Théo a choisi ce mode, la session neuve s'ouvre seule à la remise à zéro de la fenêtre, sans prompt à coller ni travail fait en double ; si aucune variante ne tient à l'essai, le prompt à copier reste, et le besoin le dit
++- [x] près d'une limite, quand Théo a choisi ce mode, la session neuve s'ouvre seule à la remise à zéro de la fenêtre, sans prompt à coller ni travail fait en double ; si aucune variante ne tient à l'essai, le prompt à copier reste, et le besoin le dit
+diff --git a/memory/backlog/B-0303-une-tache-qui-change-ce-qu-un-test-affirme-nomme-c.md b/memory/backlog/closed/B-0303-une-tache-qui-change-ce-qu-un-test-affirme-nomme-c.md
+similarity index 85%
+rename from memory/backlog/B-0303-une-tache-qui-change-ce-qu-un-test-affirme-nomme-c.md
+rename to memory/backlog/closed/B-0303-une-tache-qui-change-ce-qu-un-test-affirme-nomme-c.md
+index 77ca5e0..5e86517 100644
+--- a/memory/backlog/B-0303-une-tache-qui-change-ce-qu-un-test-affirme-nomme-c.md
++++ b/memory/backlog/closed/B-0303-une-tache-qui-change-ce-qu-un-test-affirme-nomme-c.md
+@@ -1,7 +1,7 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # B-0303 — Une tâche qui change ce qu'un test affirme nomme ce test dès sa création, et la demande se pose avant le lot, non en son milieu (D-0141)
+ 
+-> statut : ouvert · origine : J-2026-11-19-AJ · ref : D-0141, D-0140, D-0139, L-0019, L-0005 · lu : backlog@bc88ec02
++> statut : fait · ref : J-2026-11-24-Y · origine : J-2026-11-19-AJ · ref : D-0141, D-0140, D-0139, L-0019, L-0005 · lu : backlog@bc88ec02
+ 
+ Théo a retenu le 19 novembre la proposition 2 (D-0141, J-2026-11-19-AJ).
+ T-0002 et T-0106 ont été écrites sans chercher si un test affirmait le
+@@ -20,4 +20,4 @@ une tâche s'écrit.
+ 
+ ## Satisfait quand
+ 
+-- [ ] une tâche dont le critère contredit la valeur attendue d'un test existant nomme ce test dès sa création, et sa demande est posée avant le lancement du lot, comme le skill `socle-batch` le dit
++- [x] une tâche dont le critère contredit la valeur attendue d'un test existant nomme ce test dès sa création, et sa demande est posée avant le lancement du lot, comme le skill `socle-batch` le dit
+diff --git a/memory/backlog/B-0335-une-tache-qu-une-revue-ouvre-reste-hors-de-tout-lo.md b/memory/backlog/closed/B-0335-une-tache-qu-une-revue-ouvre-reste-hors-de-tout-lo.md
+similarity index 83%
+rename from memory/backlog/B-0335-une-tache-qu-une-revue-ouvre-reste-hors-de-tout-lo.md
+rename to memory/backlog/closed/B-0335-une-tache-qu-une-revue-ouvre-reste-hors-de-tout-lo.md
+index 304d280..d01f10a 100644
+--- a/memory/backlog/B-0335-une-tache-qu-une-revue-ouvre-reste-hors-de-tout-lo.md
++++ b/memory/backlog/closed/B-0335-une-tache-qu-une-revue-ouvre-reste-hors-de-tout-lo.md
+@@ -1,7 +1,7 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # B-0335 — Une tâche qu'une revue ouvre reste hors de tout lot quand aucun lot formé ne lui applique sa règle : le jalon ne se clôt plus à la fin de ses lots
+ 
+-> statut : ouvert · origine : J-2026-11-23-D · lu : backlog@f95c1458
++> statut : fait · ref : J-2026-11-24-Y · origine : J-2026-11-23-D · lu : backlog@f95c1458
+ 
+ La revue de cap 3 (J-2026-11-23-D) : cinq tâches de JA-0005, nées des
+ revues de L-0021 et de L-0009, n'étaient dans aucun lot, et la fiche du
+@@ -13,4 +13,4 @@ dans un lot, ou en forme un.
+ 
+ ## Satisfait quand
+ 
+-- [ ] le gabarit du skill `socle-batch` dit où va une tâche ouverte qu'aucun lot formé ne prend : un lot nouveau dans le jalon de son besoin, formé à la clôture du lot qui l'a ouverte
++- [x] le gabarit du skill `socle-batch` dit où va une tâche ouverte qu'aucun lot formé ne prend : un lot nouveau dans le jalon de son besoin, formé à la clôture du lot qui l'a ouverte
+diff --git a/memory/backlog/T-0134-le-gabarit-de-socle-batch-et-le-format-disent-la-r.md b/memory/backlog/closed/T-0134-le-gabarit-de-socle-batch-et-le-format-disent-la-r.md
+similarity index 79%
+rename from memory/backlog/T-0134-le-gabarit-de-socle-batch-et-le-format-disent-la-r.md
+rename to memory/backlog/closed/T-0134-le-gabarit-de-socle-batch-et-le-format-disent-la-r.md
+index 80edb9e..907472f 100644
+--- a/memory/backlog/T-0134-le-gabarit-de-socle-batch-et-le-format-disent-la-r.md
++++ b/memory/backlog/closed/T-0134-le-gabarit-de-socle-batch-et-le-format-disent-la-r.md
+@@ -1,10 +1,10 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # T-0134 — Le gabarit de socle-batch et le format disent la règle de D-0141 : la tâche qui contredit un test le nomme dès sa création, et sa demande se pose avant le lot
+ 
+-> statut : ouvert · origine : J-2026-11-21-Q · besoin : B-0303 · après : T-0079 · lu : backlog@6c894b15
++> statut : fait · ref : J-2026-11-24-Y · origine : J-2026-11-21-Q · besoin : B-0303 · après : T-0079 · lu : backlog@6c894b15
+ 
+ Un commit : le gabarit de `socle-batch` (« Former et annoncer »), en français et en anglais, sous son plafond, et le format de la mémoire là où il dit ce qu'est une tâche (`engine/socle/FORMAT.md`), disent la règle que Théo a retenue (D-0141) : écrivant une tâche qui dit ce qu'un comportement doit devenir, l'agent cherche dans les tests ce qui affirme le contraire, nomme ce test dans la tâche et pose la demande aussitôt, avant le lancement du lot ; une note de version.
+ 
+ ## Fait quand
+ 
+-- [ ] le gabarit de `socle-batch`, son anglais et le format disent la règle de D-0141, et un test le lit
++- [x] le gabarit de `socle-batch`, son anglais et le format disent la règle de D-0141, et un test le lit
+diff --git a/memory/backlog/T-0162-le-gabarit-de-socle-batch-dit-qu-a-la-cloture-d-un.md b/memory/backlog/closed/T-0162-le-gabarit-de-socle-batch-dit-qu-a-la-cloture-d-un.md
+similarity index 80%
+rename from memory/backlog/T-0162-le-gabarit-de-socle-batch-dit-qu-a-la-cloture-d-un.md
+rename to memory/backlog/closed/T-0162-le-gabarit-de-socle-batch-dit-qu-a-la-cloture-d-un.md
+index 6208ed3..66ed26a 100644
+--- a/memory/backlog/T-0162-le-gabarit-de-socle-batch-dit-qu-a-la-cloture-d-un.md
++++ b/memory/backlog/closed/T-0162-le-gabarit-de-socle-batch-dit-qu-a-la-cloture-d-un.md
+@@ -1,7 +1,7 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # T-0162 — Le gabarit de socle-batch dit qu'à la clôture d'un lot, une tâche ouverte qu'aucun lot formé ne prend forme un lot nouveau dans le jalon de son besoin
+ 
+-> statut : ouvert · origine : J-2026-11-23-E · besoin : B-0335 · après : T-0079 · lu : backlog@f95c1458
++> statut : fait · ref : J-2026-11-24-Y · origine : J-2026-11-23-E · besoin : B-0335 · après : T-0079 · lu : backlog@f95c1458
+ 
+ Un commit : le gabarit français et anglais de `socle-batch`
+ (`engine/socle/templates/skills/socle-batch/`), étape 5 de « Intégrer,
+@@ -14,4 +14,4 @@ avec celles de L-0026 (T-0136).
+ 
+ ## Fait quand
+ 
+-- [ ] les deux gabarits de `socle-batch` le disent, sous leur plafond, et les tests des skills passent
++- [x] les deux gabarits de `socle-batch` le disent, sous leur plafond, et les tests des skills passent
+diff --git a/memory/journal/2026-11-11.md b/memory/journal/2026-11-11.md
+index 8bba8fe..ad45c11 100644
+--- a/memory/journal/2026-11-11.md
++++ b/memory/journal/2026-11-11.md
+@@ -1307,3 +1307,33 @@ comme elle le dit : la liste des skills gagne `socle-handoff` après
+ Dans ce dépôt, le mode reste le prompt à copier (D-0173) ; ses copies
+ protégées des skills et le skill de l'atelier, qui donne encore le prompt
+ de la session neuve à la main, se remettent hors de ce lot.
++
++## J-2026-11-24-Y — T-0134 et T-0162 : le skill des lots nomme le test contraire avant le lot et place dans un lot la tâche qu'une revue ouvre ; B-0303, B-0335, B-0259 et B-0156 satisfaits
++
++> ref : T-0134, T-0162, B-0303, B-0335, B-0259, B-0156, D-0141, D-0174, L-0010
++
++Menées dans la session qui orchestre, après T-0079, qui a sorti de
++`socle-batch` le prompt de « Changer de session » : le gabarit français
++passait de 7 998 à 7 840 octets. T-0134 (D-0141) : « Former et
++annoncer » dit qu'une tâche qui change un comportement nomme le test qui
++affirme le contraire, sa demande posée aussitôt, avant le lot ; le
++format de la mémoire le dit là où il dit ce qu'est une tâche. T-0162 :
++la clôture dit qu'une tâche que sa revue ouvre rejoint le prochain lot
++dont la règle s'applique, sinon un lot neuf dans le jalon de son besoin.
++Pour tenir sous le plafond, trois passages non tenus par les tests se
++resserrent : « relue à chaque pas », la source de l'utilisation (renvoyée
++au skill `socle-resume`), le but du rangement. Le gabarit français fait
++8 000 octets, l'anglais 7 814. Deux tests nouveaux dans
++`tests/test_skills.py`, qui échouent sur `faa4bdc` ; la note 2026-11-24-d.
++
++Les besoins : B-0303 et B-0335 sont satisfaits par ces deux règles.
++B-0259 et B-0156 le sont par la passation programmée (T-0081, T-0079) :
++dans le mode que D-0174 fait par défaut, la session suivante s'ouvre
++seule, à la remise à zéro d'une fenêtre entamée, sans prompt à coller,
++et la garde arrête le travail en double ; sans l'humain pour compacter,
++l'agent change de session. Le coût d'une tâche ainsi menée est celui que
++D-0174 cite : 1,1 point de la fenêtre au démarrage, puis de 3 à 4 points
++de la semaine par tâche. Vérifié par les tests sans la plateforme et par
++l'essai de B-0259 ; à voir au premier usage réel, dans chess : l'écriture
++et le push sans approbation d'une session programmée, une session créée
++sur une branche qui existe déjà, `effort` à la création.
+diff --git a/tests/test_skills.py b/tests/test_skills.py
+index 99086d7..6eee10a 100644
+--- a/tests/test_skills.py
++++ b/tests/test_skills.py
+@@ -727,6 +727,33 @@ class TestLaConduiteDUnLot(unittest.TestCase):
+                    "a milestone, its batches under it."],
+         })
+ 
++    def test_la_tache_qui_change_un_comportement_nomme_le_test_contraire_avant_le_lot(self):
++        """T-0134 (B-0303, D-0141) : la tâche qui change un comportement
++        nomme le test qui affirme le contraire, et sa demande se pose avant
++        le lot, non en son milieu ; le format de la mémoire le dit aussi."""
++        self.lire({
++            "fr": ["une tâche qui change un comportement nomme le test qui affirme le contraire, sa demande posée "
++                   "aussitôt, avant le lot"],
++            "en": ["a task that changes a behaviour names the test that asserts the opposite, its request made at "
++                   "once, before the batch"],
++        })
++        format_ = " ".join((MOTEUR / "socle/FORMAT.md").read_text(encoding="utf-8").split())
++        self.assertIn("une tâche qui dit ce qu'un comportement doit devenir nomme, dès son écriture, le test qui "
++                      "affirme le contraire, et la demande qui autorise à le changer se pose aussitôt, avant le "
++                      "lancement du lot", format_)
++
++    def test_a_la_cloture_une_tache_que_la_revue_ouvre_rejoint_un_lot_ou_en_forme_un(self):
++        """T-0162 (B-0335) : à la clôture d'un lot, une tâche que sa revue a
++        ouverte rejoint le prochain lot dont la règle s'applique, sinon un
++        lot neuf dans le jalon de son besoin : elle ne reste hors de tout
++        lot."""
++        self.lire({
++            "fr": ["une tâche que sa revue ouvre rejoint le prochain lot dont la règle s'applique, sinon un lot neuf "
++                   "dans le jalon de son besoin"],
++            "en": ["a task its review opens joins the next batch whose rule applies, otherwise a new batch in its "
++                   "need's milestone"],
++        })
++
+     def test_les_constats_de_la_revue_suivent_le_tri_de_socle_review(self):
+         """T-0014 (B-0242) : un constat qui ne bloque pas suit le tri de
+         `socle-review` (backlog ou écarté), il ne va plus d'office au
+-- 
+2.43.0
+

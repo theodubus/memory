@@ -1,0 +1,1179 @@
+From 54c307560a730126cc348964629410c5cf050472 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 24 Nov 2026 16:56:06 +0000
+Subject: [PATCH 2/7] =?UTF-8?q?T-0081=20:=20socle=20handoff=20=C3=A9crit?=
+ =?UTF-8?q?=20le=20prompt=20de=20passation=20et=20juge=20sa=20garde=20;=20?=
+ =?UTF-8?q?la=20reprise=20l'appelle=20(J-2026-11-24-W)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+`socle handoff prompt` refuse tant que la tête locale n'est pas poussée,
+nomme la branche distante, sa tête et l'heure, puis donne le prompt de
+session neuve, le lot lu dans l'état ; avec `--scheduled`, les bornes de
+la chaîne. `socle handoff check` refuse si la branche a bougé depuis la
+passation, ou si une autre branche distante porte un commit de la mémoire
+daté d'après elle ; une fusion par un commit de fusion est acceptée, par
+squash refusée. Deux défauts injectés et un témoin sain dans l'auto-test,
+des tests sur de vrais dépôts à l'origine nue. Le skill socle-resume
+appelle la garde au réveil et dit une passation qui attend. T-0081 reste
+ouverte jusqu'au skill socle-handoff (T-0079).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Mr1cCgcjYP4Zgv5LeaZjRr
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=2 PreToolUse=301 Stop=4
+Socle-Hooks-Since-Commit: PreToolUse=301
+---
+ docs/fabrication/architecture.md              |   6 +-
+ engine/socle/CHANGES.en.md                    |  20 ++
+ engine/socle/CHANGES.md                       |  20 ++
+ engine/socle/cli.py                           |  53 ++-
+ engine/socle/handoff.py                       | 213 ++++++++++++
+ engine/socle/messages_en.py                   | 104 ++++++
+ engine/socle/selftest.py                      |  86 +++++
+ .../templates/skills/socle-resume/SKILL.en.md |   8 +-
+ .../templates/skills/socle-resume/SKILL.md    |  26 +-
+ memory/active.md                              |   4 +-
+ ...ssion-programmee-le-rangement-programme.md |   2 +-
+ memory/journal/2026-11-11.md                  |  37 +++
+ tests/test_passation.py                       | 312 ++++++++++++++++++
+ tests/test_skills.py                          |  25 ++
+ 14 files changed, 894 insertions(+), 22 deletions(-)
+ create mode 100644 engine/socle/handoff.py
+ create mode 100644 tests/test_passation.py
+
+diff --git a/docs/fabrication/architecture.md b/docs/fabrication/architecture.md
+index 662dac7..37be550 100644
+--- a/docs/fabrication/architecture.md
++++ b/docs/fabrication/architecture.md
+@@ -31,7 +31,7 @@ vérifiées.
+ 
+ | Module | Rôle |
+ | --- | --- |
+-| `cli.py` | les commandes, rangées par public dans l'aide (l'humain, l'agent, les hooks et la CI), dont `new request --questions`, les questions de cadrage d'un sujet (D-0067) : `help`, `state`, `roadmap`, `consumption`, `show`, `review`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `private`, `reviewed`, `answer`, `approve`, `install`, `init`, `selftest`, `fingerprint`, `mutation-verdict`, `mutation-run`, `renumber`, `archive`, `checks` ; sans commande, l'aide de l'humain |
++| `cli.py` | les commandes, rangées par public dans l'aide (l'humain, l'agent, les hooks et la CI), dont `new request --questions`, les questions de cadrage d'un sujet (D-0067) : `help`, `state`, `roadmap`, `consumption`, `show`, `review`, `check`, `verify`, `ci`, `hook`, `new`, `next-id`, `url`, `private`, `reviewed`, `answer`, `approve`, `install`, `init`, `selftest`, `fingerprint`, `mutation-verdict`, `mutation-run`, `renumber`, `archive`, `handoff`, `checks` ; sans commande, l'aide de l'humain |
+ | `HELP.md` | le guide de l'humain, source unique : ses gestes, chacun avec sa commande ; `socle help` l'affiche |
+ | `CHANGES.md` | les notes de version, et leur version anglaise : une entrée par changement qui touche un projet installé, sous un identifiant stable (sa date et une lettre), ce qu'il change et ce que l'agent du projet doit faire ; l'installeur donne à la mise à jour celles que la copie du moteur du projet n'avait pas, en entier celles qui demandent quelque chose, et des autres, dont « À faire » est « rien. », le paragraphe entier, ou « rien ; » suivi d'une précision, le titre seul (B-0324), et `tests/test_notes_de_version.py` exige les mêmes identifiants dans les deux langues (ADR-0078) |
+ | `memory.py` | lecture des cinq couches : en-têtes, entrées, identifiants, métadonnées, références ; le backlog en quatre formes lues sur le préfixe, besoin `B-`, tâche `T-`, lot `L-`, jalon `JA-`, l'ancien numéro d'une entrée renumérotée résolu (ADR-0083) ; l'ordre du backlog (`après`, qui nomme des entrées ou des demandes attendues jusqu'à leur réponse, D-0064 ; une tâche héritant la priorité et l'attente de son besoin ; priorité haute ou basse, D-0062), d'où se calculent le prochain jalon et ses besoins ouverts, le prochain lot et l'avancement de ses tâches, les tâches prêtes rangées par priorité et, à part, celles de priorité basse (D-0052), les besoins à découper et à fermer ; les critères de la section d'une entrée, « Satisfait quand » d'un besoin, « Fait quand » des autres ; la section « Revues » d'un lot, ses passes (ADR-0084), leurs commits et l'empreinte de l'arbre de travail qu'elles ont relu, leurs bloquants, sans recul ni marque de cause (ADR-0100), et les lignes qui se donnent pour un bloquant sans la forme qu'elle lit (`bloquants_mal_ecrits`, T-0054) |
+@@ -62,6 +62,7 @@ vérifiées.
+ | `installer.py` | installation, mise à jour, adoption ; la suppression automatique des branches fusionnées conseillée avec la protection de la branche par défaut (B-0112) ; en session cloud, une mise à jour s'approuve dans une session neuve, par une demande (B-0107), sous laquelle ses fichiers protégés se commitent quand la CI du socle est exigée (D-0071), en deux temps, la demande seule d'abord, puis les fichiers protégés avec ce qui les cite (B-0148), la session qui a dû ajouter le dépôt du socle, qui ne se reprend pas, n'y commitant les fichiers protégés qu'après y avoir posé la demande, et rien quand la CI du socle n'est pas exigée, la mise à jour se refaisant alors dans une session neuve (B-0152), « Et maintenant » disant de la poser par `socle new request`, qui en dit le contrat, et d'y écrire chaque fichier sur une ligne d'empreinte (ADR-0058), et que la CI de la demande poussée seule, jugée par le moteur d'avant, peut la refuser jusqu'au commit des fichiers protégés ; adaptateur déduit du dépôt ; mémoire privée posée à l'installation, ou ajoutée à un projet installé ; diff de politique à la mise à jour, en une ligne quand chacune de ses lignes changées était déjà dans l'écart au gabarit de la copie du moteur du dernier commit, lu par git comme ses notes de version, donc montré à la mise à jour précédente (B-0195) ; à la mise à jour, les garde-fous du projet gardés, et les réglages du gabarit qu'ils n'écrivent pas, même en commentaire, nommés avec ce qu'ils font, à déclarer une fois le moteur nouveau commité, l'ancien qui juge la CI comptant une clé inconnue pour un assouplissement (B-0123) ; un fichier d'instructions que la section du socle, posée ou régénérée, fait passer au-delà de son budget, signalé avec ses deux issues, le resserrer ou relever le budget par une demande, le contrôle des budgets disant de même pour lui au lieu d'« archiver dans le journal » (B-0129) ; le code existant entre « à mesurer » au cliquet de mutation, ou reprend les plafonds déjà mesurés d'un fichier que l'humain donne (`--mutation-caps`, B-0009, relevé sur chess) ; un audit court, puis « Et maintenant », les étapes de l'humain avec leur commande, dont les outils que la CI installe pour l'adaptateur, à donner aussi à l'agent (B-0090) ; le code de sortie, 0 quand seule l'approbation de l'humain attend (ADR-0056) ; à la mise à jour, le verrou consigne sous `[installed]`, avec leur empreinte, les fichiers protégés que le passage a changés hors du moteur et qui étaient avant lui tels que la base ou un passage précédent les avait laissés (ADR-0077) ; ne s'installe qu'à la racine du dépôt ; relancé, il ne perd rien : le moteur reste en place s'il est lancé depuis le projet, un CLAUDE.md propre au projet passe dans AGENTS.md, une seconde adoption complète sa liste, une adoption sans contrôle en échec, ou vidée à la mise à jour, le dit d'une ligne (B-0195), et ce que le .gitignore du projet écarterait reçoit une exception (B-0044, L1) ; le dossier où Claude Code pose les worktrees des sous-agents, que le skill `socle-batch` lance, ajouté au .gitignore du projet, sauf si une ligne l'y ignore déjà, lui ou un dossier qui le contient (B-0217) ; un état au démarrage propre au projet (son hook `SessionStart`) gardé et signalé, chaque session en recevant deux (B-0054) ; un hook de fin de tour propre au projet (son hook `Stop`) gardé et nommé, à l'installation comme à la mise à jour, qui tire à côté de celui du socle et peut le doubler (B-0183) ; une commande du projet dans le même bloc qu'un hook du socle, gardée et nommée de même, la fusion ne retirant d'un bloc que les commandes du socle (B-0328) ; le nom de l'humain qui installe, donné par `--human` ou pris dans git, posé dans la politique d'un projet neuf : il signe les réponses que l'agent relaie, qui ne devine pas un nom (B-0073) ; en session cloud, l'identité git est celle de l'agent et ne se prend pas (B-0094) ; la protection de la branche n'exige que la CI, la revue des propriétaires du code supposant un autre humain qui relit (B-0093) ; la session cloud qui l'installe ne se reprend pas, ajouter le dépôt du socle en faisant une session à deux dépôts (B-0097), et la session suivante attend la fusion de l'installation, une session neuve partant de la branche par défaut (B-0098) ; les skills du socle posés dans `.claude/skills/`, dans la langue de la mémoire, remplacés à chaque mise à jour, et protégés par la politique d'un projet neuf (ADR-0034) ; la CI posée écarte des envois les branches jetables (`[branches] disposable`, `proto/` par défaut, des préfixes sans caractère de motif, que la CI et les contrôles locaux lisent de même ; les étiquettes nommées pour garder leur CI, D-0087) ; plusieurs `--adapter`, et en automatique un par langage reconnu : le premier nommé prend `.socle/adapter.toml`, les autres `.socle/adapters/<nom>.toml`, protégés par le moteur, un adaptateur détecté ou nommé du langage d'une copie déjà posée étant cette copie, jamais posé à côté d'elle (B-0144), l'installeur disant d'une ligne `!!` l'adaptateur nommé qu'elle remplace, un fichier du nom de la copie compris s'il en diffère, avec la marche à suivre pour le poser à sa place (B-0327) ; à la mise à jour, une copie d'un adaptateur maintenu, la principale comprise, rafraîchie si le projet ne l'a pas adaptée, c'est-à-dire si son texte est une version que le moteur du projet a portée, dans le moteur installé ou dans l'historique git, et gardée sinon, l'installeur disant quand son adaptateur maintenu a changé depuis le moteur installé, et la CI se générant des adaptateurs du projet tels qu'ils sont (ADR-0052) ; la CI et le balayage installent les outils de tous, les modules de chacun entrant au cliquet (ADR-0051) ; en automatique, un langage dont le manifeste n'est que dans un sous-dossier ne reçoit pas d'adaptateur, ce que l'installeur dit avec ses deux issues ; `--adapter` prend le fichier d'un adaptateur propre au projet, jugé par le contrat des adaptateurs avant d'être posé ; l'audit dit qu'il n'a pas lancé les capacités, et le budget d'adoption garde une marge d'un dixième (ADR-0066) ; à la mise à jour qui recopie le moteur, les notes de version (`engine/socle/CHANGES.md`, `engine/socle/CHANGES.en.md`) que la copie du projet n'avait pas, lues par leurs identifiants avant qu'elle ne soit remplacée, dans sa copie du dernier commit, l'arbre à défaut, pour que l'installeur relancé avant le commit de la mise à jour les nomme encore (B-0225), toutes si elle n'en avait aucune, rien à une première installation, en mode amont ni lancé depuis le projet, imprimées avant l'audit dans la langue du projet, et leurs identifiants dans le message de commit que propose « Et maintenant » (ADR-0078) |
+ | `language.py` | la langue de la mémoire : le vocabulaire du format par langue, ramené à des clés internes à la lecture, et celui du projet à l'écriture |
+ | `review.py` | le dossier de la revue adversariale d'un lot (ADR-0042) : la consigne, qui dit au relecteur de n'écrire que dans un dossier temporaire créé hors du dépôt (B-0141), le diff du lot depuis l'ancêtre commun de HEAD et de sa base, la branche distante, sinon la branche par défaut, ou, si la branche distante contient déjà le lot ou est restée en arrière de la branche par défaut après une fusion par écrasement, l'ancêtre commun avec la branche par défaut, en le disant, comme ce que la branche distante porte déjà du lot ou de ceux d'avant (ADR-0075, ADR-0081), la mémoire mise à part et tronqué au-delà d'un plafond ; une référence inconnue, un `--since` qui n'est pas un ancêtre de HEAD ou une base sans ancêtre commun avec lui refusés ; les sujets dont le lot change le statut ou le « Fait quand », avec leur critère, ceux qu'il ouvre par leur titre, les décisions et les demandes qu'il écrit, puis celles que citent ses sujets et ces décisions, une fois chacune (B-0273) ; trois classes de constats, bloquant, pour le backlog ou écarté (D-0112, D-0116) ; une case qui livre une demande, un relevé ou une entrée de la mémoire, jugée par ce qu'elle produit (ADR-0088), dans le dossier complet comme dans le court ; le moteur ne lance pas le relecteur, et le skill `socle-review` fait écrire le dossier dans un fichier hors du dépôt, dont le relecteur ne reçoit que le chemin (B-0277) ; avec `--request`, le dossier de la relecture à froid d'une demande : une consigne, puis son seul texte, pour un lecteur dans le rôle de l'humain qui revient sur le projet (ADR-0046), que le skill `socle-request` lance sur le modèle le plus capable jusqu'à Opus, donné à son lancement, comme le relecteur d'un lot (ADR-0102) ; l'historique des passes d'un lot dans sa section « Revues » : `socle review` y écrit la passe du lot en cours ou de celui que `--batch` nomme, redonne la même tant que rien ne change hors de la mémoire, ni le commit relu ni les changements de l'arbre de travail dont la passe garde l'empreinte (`+ arbre de travail`, T-0054), et écrit sinon la suivante, sans exiger de recul de la précédente, chaque passe recevant le même dossier (ADR-0100) ; le fichier qu'approuve une décision de séance que citent les entrées du lot (son `sujet`), ou son chemin seul au-delà de 20 000 octets, un fichier privé, jugé sur son chemin normalisé (`./` ou `..` compris), ou hors du dépôt jamais donné (B-0286, B-0297) ; avec `--short`, le dossier court d'un petit lot, la consigne de ne juger que le diff et les fichiers touchés, le diff et les critères de ses tâches, refusé, en le disant, pour un lot qui touche la politique, les garde-fous, un chemin protégé ou l'outillage (B-0288) |
++| `handoff.py` | la passation à une session neuve (`socle handoff`, B-0259, D-0174) : `prompt` écrit le prompt de la session neuve, refusé tant que la tête locale n'est pas poussée, sur la branche de travail ou, sa pull request fusionnée, la branche par défaut ; sa garde y nomme la branche distante, sa tête et l'heure, en UTC, puis viennent la chaîne (les lots menés sans message de l'humain) et le prompt d'une session neuve, le lot et ses tâches lus dans l'état ; avec `--scheduled`, les bornes d'une chaîne sans l'humain (deux lots, ou un prochain lot sans tâche prête) refusent de l'écrire, et le prompt se donne à copier ; `check`, la garde, dans la session neuve après `git fetch` : refusée si la tête de la branche a changé, ou si une autre branche distante porte un commit, hors des fusions, daté d'après l'heure, qui touche la mémoire sans être un ancêtre de la tête passée ; une pull request fusionnée par un commit de fusion place la session sur la branche par défaut, par squash la garde refuse ; le moteur ne connaît que git et la mémoire, et ne programme rien |
+ | `messages.py`, `messages_en.py` | les messages du moteur dans la langue de la mémoire du projet : un message s'écrit en français dans le code, enveloppé par `trad`, et ce texte est la clé du catalogue anglais ; la ligne de commande pose la langue avant même d'analyser la commande, l'installeur et `socle init` la leur ; `socle checks` traduit la première phrase de chaque contrôle, `socle help` lit `HELP.en.md` ; `tests/test_messages.py` exige qu'aucun message enveloppé ne manque au catalogue, et refuse un message en prose écrit en dur là où le moteur en émet (ADR-0028) ; le catalogue traduit aussi, à l'affichage, les textes des adaptateurs maintenus, les noms de leurs étapes de CI, les descriptions de l'auto-test et le statut d'une demande, et l'installeur, le message du lanceur ; le marqueur d'une valeur liée et la raison d'un plafond mesuré se lisent dans les deux langues (B-0059) |
+ | `config.py` | la configuration du projet et la table de ses chemins ; ses adaptateurs, le principal d'abord, et la vue du projet par l'un d'eux (ADR-0051) |
+ | `initialization.py` | les trois entrées d'initialisation : document archivé tel quel, audit du dépôt en lecture seule, questions de départ |
+@@ -118,7 +119,8 @@ vérifiées.
+ | Une seule façon de consulter l'humain, deux formats : une demande en file, ou une décision prise en séance, consignée aussitôt avec sa réponse mot pour mot (`socle decision`, que l'agent ne lance qu'en relais) | `demandes.contrat`, `demandes.reponses`, le hook de l'agent | agent, git, CI |
+ | Les fichiers d'un outil tiers installé dans le projet (ses skills, ses scripts) ne sont jugés par aucun contrôle, ni à leurs mises à jour ; les déclarer assouplit, et un motif qui couvrirait le socle, la mémoire ou la politique est écarté (B-0068) | `cliquet.garde-fous`, `config` | agent, git, CI |
+ | Les procédures rares hors des instructions relues à chaque session, en skills que l'agent charge à la demande ; un skill du projet nommé comme son dossier, qui dit quand s'en servir, et qui ne fait lancer aucune commande que le hook refuse (D-0042) | `skills.contrat`, `skills.commandes`, l'installeur, les budgets des garde-fous | agent, git, CI |
+-| Un agent coupé par une limite d'usage reprend seul dès qu'elle se lève, sans qu'un tour fini pour une autre raison, en attendant l'humain par exemple, le relance jamais : deux réveils armés une fois par tour de travail, jamais dans le passé, récrits au seul lancement d'un sous-agent, retirés à sa fin, sauf pendant un sous-agent ou une attente à heure bornée, repoussés après cette heure (ADR-0107), et vérifiés au réveil, où un travail que l'humain a interrompu ne se finit pas, même sur des contrôles en échec (ADR-0107), par `list_events` ou, sans lui, la transcription locale de Claude Code, où la coupure est le premier refus qui suit le dernier appel du modèle (ADR-0050, ADR-0060, B-0198, B-0336) ; les réveils qu'une session archivée a laissés se disent à l'humain, et ne se désactivent qu'à sa demande (B-0301) | le skill `socle-resume`, posé par l'installeur ; aucun contrôle, le moteur n'en sait rien | agent, en session cloud |
++| Un agent coupé par une limite d'usage reprend seul dès qu'elle se lève, sans qu'un tour fini pour une autre raison, en attendant l'humain par exemple, le relance jamais : deux réveils armés une fois par tour de travail, jamais dans le passé, récrits au seul lancement d'un sous-agent, retirés à sa fin, sauf pendant un sous-agent ou une attente à heure bornée, repoussés après cette heure (ADR-0107), et vérifiés au réveil, où un travail que l'humain a interrompu ne se finit pas, même sur des contrôles en échec (ADR-0107), par `list_events` ou, sans lui, la transcription locale de Claude Code, où la coupure est le premier refus qui suit le dernier appel du modèle (ADR-0050, ADR-0060, B-0198, B-0336) ; les réveils qu'une session archivée a laissés se disent à l'humain, et ne se désactivent qu'à sa demande (B-0301), comme une passation programmée qui attend (D-0174) ; au réveil, la garde de la passation (plus bas) arrête l'agent qu'une autre session a doublé | le skill `socle-resume`, posé par l'installeur ; aucun contrôle, le moteur n'en sait rien, hors de la garde | agent, en session cloud |
++| Une session neuve, programmée ou ouverte sur un prompt collé, ne travaille pas par-dessus une autre : refusée si quelqu'un a poussé sur sa branche depuis la passation, ou si une autre branche distante porte un commit daté d'après elle qui touche la mémoire sans être un ancêtre de la tête passée ; une pull request fusionnée par un commit de fusion la fait repartir de la branche par défaut, un commit d'un robot qui ne touche pas la mémoire ne compte pas (B-0259, D-0174) | `socle handoff check`, que le prompt de passation (`socle handoff prompt`) et la reprise de `socle-resume` font lancer ; le prompt refusé tant que la tête locale n'est pas poussée | commande, en session neuve |
+ | Moteur et politique non altérés | `moteur.empreinte`, `protege.fichiers` | agent, git, CI |
+ | Seule la CI est incontournable : GitHub l'exige avant toute fusion | une étape de « Et maintenant » à l'installation ; la ligne `branche` de l'état, et une action de l'humain quand elle n'est pas exigée | GitHub |
+ | Hooks chargés et déclenchés | `hooks.configuration`, `hooks.trace` (trailers `Socle-Hooks`, sur la session, et `Socle-Hooks-Since-Commit`, depuis le commit précédent, B-0058) ; au commit, un avertissement du hook `commit-msg` pour un commit d'agent sans hook de l'agent (B-0050) ; plus tôt, pour une session de Claude Code démarrée hors de la racine du projet (B-0060) : l'état l'annonce en tête quand la trace n'a aucun `SessionStart` pour la session, ou que son dernier passage (démarrage ou filtre) a plus de dix minutes, cas d'une session reprise hors de la racine qui garde ses traces d'avant (B-0079) ; une session qui installe le socle, sans SessionStart, a ses hooks dès l'appel d'outil suivant (F-0003, B-0088), et le hook `pre-commit` refuse un commit d'agent sans passage du filtre depuis le commit précédent ; chaque remède dit de relancer la session à la racine, ou sur le dépôt seul, et jamais de poser soi-même un réglage de Claude Code | démarrage, git, CI |
+diff --git a/engine/socle/CHANGES.en.md b/engine/socle/CHANGES.en.md
+index 541d200..515b467 100644
+--- a/engine/socle/CHANGES.en.md
++++ b/engine/socle/CHANGES.en.md
+@@ -14,6 +14,26 @@ asks nothing: of such an entry, the installer prints only the title,
+ under a line that names this file. Any other form (“nothing, unless …”,
+ “nothing in the project …”, an action) is printed in full, before them.
+ 
++## 2026-11-24-c — The handoff to a new session: `socle handoff`, its prompt and its guard
++
++A new command, for the agent, writes the prompt of a new session and
++judges its guard. `python3 .socle/socle handoff prompt` refuses as long
++as the local head is not pushed; it names the remote branch, its head
++and the time of the handoff, in UTC, then gives the new-session prompt
++of `socle-batch`, with the batch and its tasks read from the state. In
++the new session, `python3 .socle/socle handoff check`, after `git
++fetch`, refuses, saying why, if someone pushed to the branch since the
++handoff, or if another remote branch carries a commit dated after it
++that touches the memory without being in the handed-off head: another
++session is working on the project. A pull request merged by a merge
++commit during the wait makes the session restart from the default
++branch; squash-merged, the guard refuses. On waking after a limit, the
++`socle-resume` skill calls the same guard, and at the first turn it
++tells the human about a scheduled handoff that is waiting.
++
++To do: nothing; the `socle-resume` skill is a protected copy, in the
++installer's request.
++
+ ## 2026-11-24-b — The self-test no longer fails the CI at random on a clone of its test project
+ 
+ The socle's self-test plays its cases on several threads, each in a
+diff --git a/engine/socle/CHANGES.md b/engine/socle/CHANGES.md
+index 136d9bf..627209c 100644
+--- a/engine/socle/CHANGES.md
++++ b/engine/socle/CHANGES.md
+@@ -15,6 +15,26 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
+ sauf si … », « rien dans le projet … », une action) s'imprime en entier,
+ avant elles.
+ 
++## 2026-11-24-c — La passation à une session neuve : `socle handoff`, son prompt et sa garde
++
++Une commande nouvelle, pour l'agent, écrit le prompt d'une session
++neuve et juge sa garde. `python3 .socle/socle handoff prompt` refuse tant
++que la tête locale n'est pas poussée ; il nomme la branche distante, sa
++tête et l'heure de la passation, en UTC, puis donne le prompt de session
++neuve de `socle-batch`, avec le lot et ses tâches lus dans l'état. Dans
++la session neuve, `python3 .socle/socle handoff check`, après `git
++fetch`, refuse, en disant pourquoi, si quelqu'un a poussé sur la branche
++depuis la passation, ou si une autre branche distante porte un commit
++daté d'après elle qui touche la mémoire sans être dans la tête passée :
++une autre session travaille sur le projet. Une pull request fusionnée
++par un commit de fusion pendant l'attente fait repartir la session de
++la branche par défaut ; fusionnée par squash, la garde refuse. Au réveil
++après une limite, le skill `socle-resume` appelle la même garde, et au
++premier tour il dit à l'humain une passation programmée qui attend.
++
++À faire : rien ; le skill `socle-resume` est une copie protégée, dans
++la demande de l'installeur.
++
+ ## 2026-11-24-b — L'auto-test ne fait plus échouer la CI au hasard sur un clone de son projet d'essai
+ 
+ L'auto-test du socle joue ses cas sur plusieurs fils, chacun dans un
+diff --git a/engine/socle/cli.py b/engine/socle/cli.py
+index 5ced8bb..0f410f9 100644
+--- a/engine/socle/cli.py
++++ b/engine/socle/cli.py
+@@ -815,6 +815,39 @@ def cmd_archive(args) -> int:
+     return archivage.archiver_backlog(_projet(args))
+ 
+ 
++def cmd_handoff(args) -> int:
++    """La passation à une session neuve (skill `socle-handoff`) : `prompt`
++    écrit son prompt, avec sa garde ; `check`, dans la session neuve, juge
++    cette garde. Le moteur ne programme rien : la plateforme de l'agent le
++    fait, ou l'humain colle le prompt."""
++    from socle import handoff as passation
++
++    projet = _projet(args)
++    if args.action == "prompt":
++        try:
++            print(passation.prompt(projet, args.chain, args.session, args.waiting, args.scheduled))
++        except passation.PassationRefusee as refus:
++            print(trad("pas de passation : {raison}", raison=refus), file=sys.stderr)
++            return 1
++        return 0
++    if not args.ref or not args.head:
++        print(trad("`socle handoff check` : --ref et --head, que donne le prompt de passation"), file=sys.stderr)
++        return 2
++    try:
++        depuis = passation.heure(args.since) if args.since else None
++    except ValueError:
++        print(trad("--since {valeur} : une heure ISO 8601, en UTC (2026-11-24T10:05:00Z)", valeur=args.since),
++              file=sys.stderr)
++        return 2
++    verdict = passation.juger(projet, args.ref, args.head, depuis)
++    for raison in verdict.refus:
++        print(trad("passation refusée — {raison}", raison=raison), file=sys.stderr)
++    if verdict.refus:
++        return 1
++    print(trad("passation acceptée : se placer sur {ref} ({sha})", ref=verdict.place, sha=verdict.sha[:10]))
++    return 0
++
++
+ def cmd_checks(args) -> int:
+     from socle import context as contexte
+ 
+@@ -830,7 +863,7 @@ GROUPES = {
+     a_traduire("pour l'humain"): ["help", "install", "init", "state", "roadmap", "consumption", "answer", "decision",
+                                   "approve", "reviewed", "private install"],
+     a_traduire("pour l'agent"): ["new", "show", "url", "review", "verify", "check", "next-id", "private",
+-                                 "mutation-verdict", "mutation-run", "renumber", "archive", "checks"],
++                                 "mutation-verdict", "mutation-run", "renumber", "archive", "handoff", "checks"],
+     a_traduire("internes (hooks, CI, moteur)"): ["hook", "ci", "selftest", "fingerprint"],
+ }
+ 
+@@ -1129,6 +1162,24 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
+     s = sp.add_parser("archive", help=trad("range les entrées closes du backlog à l'écart des ouvertes"))
+     s.set_defaults(f=cmd_archive)
+ 
++    s = sp.add_parser("handoff", help=trad("la passation à une session neuve : `prompt` écrit son prompt, avec sa "
++                                           "garde ; `check`, dans la session neuve, juge cette garde"))
++    s.add_argument("action", choices=("prompt", "check"))
++    s.add_argument("--chain", type=int, default=0, help=trad("avec `prompt` : les lots menés sans message de "
++                                                             "l'humain, le lot en cours compris (0 par défaut)"))
++    s.add_argument("--session", metavar="URL", help=trad("avec `prompt` : le lien de la session qui part, que le "
++                                                         "moteur ne devine pas"))
++    s.add_argument("--waiting", metavar="TEXTE", help=trad("avec `prompt` : ce qui attend (un compte rendu, une "
++                                                           "CI, une demande) ; « rien » par défaut"))
++    s.add_argument("--scheduled", action="store_true", help=trad("avec `prompt` : pour une session programmée, "
++                                                                 "refusé à la borne de la chaîne ou sans tâche "
++                                                                 "prête au prochain lot"))
++    s.add_argument("--ref", help=trad("avec `check` : la branche distante de la passation"))
++    s.add_argument("--head", metavar="SHA", help=trad("avec `check` : sa tête à la passation"))
++    s.add_argument("--since", metavar="HEURE", help=trad("avec `check` : l'heure de la passation, en UTC (par "
++                                                         "défaut : la date de --head)"))
++    s.set_defaults(f=cmd_handoff)
++
+ 
+     s = sp.add_parser("checks", help=trad("liste des contrôles"))
+     s.set_defaults(f=cmd_checks)
+diff --git a/engine/socle/handoff.py b/engine/socle/handoff.py
+new file mode 100644
+index 0000000..c096050
+--- /dev/null
++++ b/engine/socle/handoff.py
+@@ -0,0 +1,213 @@
++"""La passation d'une session à la suivante (`socle handoff`) : le prompt de
++la session neuve, précédé de sa garde, et le jugement de cette garde.
++
++Le moteur ne connaît que git et la mémoire. Programmer la session suivante
++revient à la plateforme de l'agent, selon le skill `socle-handoff`, qui
++donne ce prompt à programmer, ou à copier : le même sert aux deux modes.
++
++- `prompt` : refusé tant que la tête locale n'est pas poussée ; la garde y
++  nomme la branche distante (`--ref`), sa tête (`--head`) et l'heure de la
++  passation (`--since`), puis vient le prompt d'une session neuve, avec le
++  lot que l'état donne. Pour une session programmée (`--scheduled`), les
++  bornes d'une chaîne sans l'humain : deux lots menés sans message de lui,
++  ou un prochain lot sans tâche prête, et rien ne se programme.
++- `check` : la session neuve ne travaille pas si quelqu'un a poussé sur sa
++  branche depuis la passation, ou si une autre branche distante porte un
++  commit daté d'après elle qui touche la mémoire sans être un ancêtre de la
++  tête passée : une autre session travaille sur le projet, puisqu'un agent
++  sous le socle écrit toujours sa mémoire.
++"""
++
++from __future__ import annotations
++
++from dataclasses import dataclass, field
++from datetime import datetime, timezone
++from pathlib import Path
++
++from socle import config, links as liens, memory as memoire, utils as outils
++from socle.messages import trad
++
++DISTANT = "origin"
++# Deux lots menés sans message de l'humain, le lot en cours compris : la
++# chaîne s'arrête là, et le prompt se donne à copier.
++BORNE_DE_LA_CHAINE = 2
++FORMAT_HEURE = "%Y-%m-%dT%H:%M:%SZ"
++# Ce qui, dans un lot, se reprend : une tâche prête, ou en cours quand la
++# passation coupe le lot près d'une limite.
++A_REPRENDRE = ("pret", "en-cours")
++
++
++class PassationRefusee(Exception):
++    """Le prompt ne s'écrit pas : la raison dit quoi faire d'abord."""
++
++
++@dataclass
++class Verdict:
++    """Le jugement de la garde : ses raisons de refuser, ou la référence où
++    la session neuve se place, et sa tête."""
++
++    refus: list[str] = field(default_factory=list)
++    place: str | None = None
++    sha: str | None = None
++
++
++def heure(texte: str) -> datetime:
++    """Une heure ISO 8601 (`2026-11-24T10:05:00Z`), en UTC ; sans fuseau,
++    elle est en UTC. `ValueError` sinon."""
++    h = datetime.fromisoformat(texte.strip().replace("Z", "+00:00"))
++    return h.replace(tzinfo=timezone.utc) if h.tzinfo is None else h.astimezone(timezone.utc)
++
++
++def nom_du_depot(projet: config.Projet) -> str:
++    """Le nom du dépôt, celui que portent les tâches programmées : le
++    dernier segment de son adresse web, sinon le nom de sa racine."""
++    url = liens.url_depot(projet)
++    return url.rsplit("/", 1)[-1] if url else projet.racine.name
++
++
++def tete_poussee(racine: Path) -> tuple[str, str]:
++    """La branche distante qui porte la tête locale, et cette tête : la
++    branche de travail poussée (son homonyme distante, ou celle qu'elle
++    suit), ou la branche par défaut quand la pull request du lot vient
++    d'être fusionnée et que la branche locale en est repartie. Refusé si la
++    tête n'est sur aucune, ou qu'un fichier suivi a un changement non
++    commité : la session neuve ne repart que du dépôt."""
++    if not outils.a_des_commits(racine):
++        raise PassationRefusee(trad("aucun commit : rien à passer"))
++    if outils.git(racine, "status", "--porcelain", "--untracked-files=no", check=False).strip():
++        raise PassationRefusee(trad("des changements de fichiers suivis ne sont pas commités : les commiter et les "
++                                    "pousser d'abord, la session neuve ne repart que du dépôt"))
++    tete = outils.resoudre(racine, "HEAD")
++    branche = outils.branche_courante(racine)
++    suivie = outils.git(racine, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}",
++                        check=False).strip()
++    candidates = [f"{DISTANT}/{branche}" if branche else None, suivie, outils.branche_par_defaut(racine)]
++    for ref in dict.fromkeys(c for c in candidates if c and c.startswith(f"{DISTANT}/")):
++        if outils.rev_existe(racine, ref) and outils.resoudre(racine, ref) == tete:
++            return ref, tete
++    raise PassationRefusee(trad("la tête locale {sha} n'est pas poussée : pousser d'abord ; la garde nomme la tête "
++                                "distante, et rien ne se pousse plus après la passation", sha=tete[:10]))
++
++
++def lot_de_l_etat(racine: Path) -> tuple[str | None, list[str], bool]:
++    """Le prochain lot que l'état donne, ce qui lui reste dans l'ordre de son
++    `après`, et s'il a une tâche à reprendre (prête, ou en cours) ; sans
++    lot, aucun identifiant, et s'il reste une tâche prête au backlog."""
++    o = memoire.ordre(memoire.Memoire.charger(racine))
++    if o is None:
++        return None, [], False
++    if o.lot is None:
++        return None, [], bool(o.prets or o.basses)
++    reste = [(i, a) for i, a in o.avancement if a not in memoire.CLOS_DANS_UN_LOT]
++    return o.lot.id, [i for i, _ in reste], any(a in A_REPRENDRE for _, a in reste)
++
++
++def prompt(projet: config.Projet, chaine: int = 0, session: str | None = None, attente: str | None = None,
++           programmee: bool = False, maintenant: datetime | None = None) -> str:
++    """Le prompt de la session neuve, précédé de la passation et de sa garde.
++    `chaine` : les lots menés sans message de l'humain, le lot en cours
++    compris ; le prompt à copier porte 0. `programmee` : pour une session
++    programmée, refusé à la borne de la chaîne ou sans tâche prête au
++    prochain lot, où le prompt se donne à copier."""
++    racine = projet.racine
++    if chaine < 0:
++        raise PassationRefusee(trad("`--chain` compte des lots : 0 ou plus"))
++    if chaine and not programmee:
++        raise PassationRefusee(trad("le prompt à copier porte la chaîne 0, que l'humain remet à zéro en le collant : "
++                                    "`--chain` va avec `--scheduled`"))
++    if programmee and chaine >= BORNE_DE_LA_CHAINE:
++        raise PassationRefusee(trad("chaîne : {n} lots menés sans message de l'humain, sa borne est {borne} : ne rien "
++                                    "programmer, donner le prompt à copier (sans `--scheduled`)",
++                                    n=chaine, borne=BORNE_DE_LA_CHAINE))
++    ref, tete = tete_poussee(racine)
++    lot, taches, a_reprendre = lot_de_l_etat(racine)
++    if programmee and not a_reprendre:
++        raise PassationRefusee(trad("le prochain lot n'a aucune tâche prête dans l'état (une décision revient à "
++                                    "l'humain, ou rien n'est prêt) : ne rien programmer, donner le prompt à copier "
++                                    "(sans `--scheduled`)"))
++    quand = (maintenant or datetime.now(timezone.utc)).astimezone(timezone.utc).strftime(FORMAT_HEURE)
++    depot = nom_du_depot(projet)
++    if lot:
++        texte_lot = f"{lot} ({', '.join(taches)})" if taches else lot
++    else:
++        texte_lot = trad("aucun dans l'état, à former")
++    attente = (attente or "").strip().rstrip(".") or trad("rien")
++    return "\n".join([
++        trad("Passation de {session} — {depot}, à {heure}.", session=session, depot=depot, heure=quand) if session
++        else trad("Passation — {depot}, à {heure}.", depot=depot, heure=quand),
++        trad("Avant tout : git fetch {distant}, puis", distant=DISTANT),
++        f"python3 .socle/socle handoff check --ref {ref} --head {tete} --since {quand}",
++        trad("S'il refuse, ne fais rien d'autre que le dire ; s'il accepte, place-toi où il le dit, et la pull "
++             "request ouverte de cette branche devient la tienne."),
++        trad("Chaîne : {n} lot(s) mené(s) sans message de l'humain.", n=chaine),
++        trad("Reprends le travail de ce dépôt, en session neuve."),
++        trad("Puis : lis l'état que le démarrage injecte, et ce qu'une ligne « !! coupé » y dit manquer ; puis le "
++             "chantier actif, et applique-les."),
++        trad("Le lot : {lot}, selon le skill socle-batch.", lot=texte_lot),
++        trad("Ce qui attend : {attente}.", attente=attente),
++    ])
++
++
++def _branches_distantes(racine: Path) -> list[str]:
++    """Les branches distantes de l'origine, par leur nom court
++    (`origin/main`), sans la référence symbolique `origin/HEAD`."""
++    sortie = outils.git(racine, "for-each-ref", "--format=%(refname)%00%(symref)", f"refs/remotes/{DISTANT}/",
++                        check=False)
++    res = []
++    for ligne in sortie.splitlines():
++        nom, _, symbolique = ligne.partition("\0")
++        if nom and not symbolique:
++            res.append(nom.removeprefix("refs/remotes/"))
++    return res
++
++
++def _ancetre(racine: Path, a: str, b: str) -> bool:
++    return outils.git_reussit(racine, "merge-base", "--is-ancestor", a, b)
++
++
++def juger(projet: config.Projet, ref: str, tete: str, depuis: datetime | None = None) -> Verdict:
++    """La garde d'une passation, dans la session neuve après `git fetch` :
++    refusée si la tête de `ref` n'est plus `tete` (quelqu'un a poussé
++    depuis), ou si une autre branche distante porte un commit, hors des
++    fusions, daté d'après `depuis` (par défaut, la date de `tete`), qui
++    touche la mémoire sans être un ancêtre de `tete` (une autre session
++    travaille). Une pull request fusionnée par un commit de fusion pendant
++    l'attente fait de `tete` un ancêtre de la branche par défaut : la
++    session repart de celle-ci ; fusionnée par squash, son commit refuse."""
++    racine = projet.racine
++    ref = ref.removeprefix("refs/remotes/")
++    if not outils.rev_existe(racine, tete):
++        return Verdict([trad("--head {tete} est introuvable dans ce clone : `git fetch {distant}` d'abord ; sinon, "
++                             "la branche a été réécrite depuis la passation", tete=tete, distant=DISTANT)])
++    tete = outils.resoudre(racine, tete)
++    defaut = outils.branche_par_defaut(racine)
++    fusionnee = bool(defaut) and defaut != ref and _ancetre(racine, tete, defaut)
++    refus = []
++    if outils.rev_existe(racine, ref):
++        actuelle = outils.resoudre(racine, ref)
++        if actuelle != tete:
++            refus.append(trad("la tête de {ref} est {actuelle}, plus {tete} : quelqu'un a poussé sur {ref} depuis la "
++                              "passation", ref=ref, actuelle=actuelle[:10], tete=tete[:10]))
++    elif not fusionnee:
++        refus.append(trad("{ref} n'existe plus, et {tete} n'est pas dans {defaut} : la pull request a été fusionnée "
++                          "par squash, ou la branche supprimée", ref=ref, tete=tete[:10],
++                          defaut=defaut or trad("la branche par défaut")))
++    seuil = int(depuis.timestamp()) if depuis else int(outils.git(racine, "log", "-1", "--format=%ct", tete).strip())
++    quand = datetime.fromtimestamp(seuil, timezone.utc).strftime(FORMAT_HEURE)
++    for branche in _branches_distantes(racine):
++        if branche == ref:
++            continue
++        sortie = outils.git(racine, "log", "--no-merges", "--full-history", f"--since={quand}",
++                            "--format=%H%x00%ct%x00%s", branche, f"^{tete}", "--", f"{projet.chemins.memoire}/",
++                            check=False)
++        commits = [c.split("\0") for c in sortie.splitlines() if c.count("\0") == 2]
++        commits = [(sha, sujet) for sha, date, sujet in commits if int(date) > seuil]
++        if commits:
++            refus.append(trad("{branche} porte {n} commit(s) daté(s) d'après {heure} qui touche(nt) {memoire}/ sans "
++                              "être dans {tete} (le dernier : {sha} {sujet}) : une autre session travaille sur le "
++                              "projet", branche=branche, n=len(commits), heure=quand, memoire=projet.chemins.memoire,
++                              tete=tete[:10], sha=commits[0][0][:10], sujet=commits[0][1]))
++    if refus:
++        return Verdict(refus)
++    place = defaut if fusionnee else ref
++    return Verdict([], place, outils.resoudre(racine, place))
+diff --git a/engine/socle/messages_en.py b/engine/socle/messages_en.py
+index 82b035c..077bbbb 100644
+--- a/engine/socle/messages_en.py
++++ b/engine/socle/messages_en.py
+@@ -4076,4 +4076,108 @@ MESSAGES: dict[str, str] = {
+     "{defaut} par point), {releves} relevés.":
+         "Out-of-sample check, from {debut} to {fin}: {predits} points predicted ({detail}; the other models at "
+         "{defaut} per point), {releves} read.",
++    # La passation à une session neuve (`socle handoff`).
++    "aucun commit : rien à passer":
++        "no commit: nothing to hand off",
++    "des changements de fichiers suivis ne sont pas commités : les commiter et les pousser d'abord, la session neuve "
++    "ne repart que du dépôt":
++        "changes to tracked files are not committed: commit and push them first, the new session restarts from the "
++        "repository alone",
++    "la tête locale {sha} n'est pas poussée : pousser d'abord ; la garde nomme la tête distante, et rien ne se pousse "
++    "plus après la passation":
++        "the local head {sha} is not pushed: push first; the guard names the remote head, and nothing is pushed any "
++        "more after the handoff",
++    "`--chain` compte des lots : 0 ou plus":
++        "`--chain` counts batches: 0 or more",
++    "le prompt à copier porte la chaîne 0, que l'humain remet à zéro en le collant : `--chain` va avec `--scheduled`":
++        "the prompt to copy carries chain 0, which the human resets by pasting it: `--chain` goes with "
++        "`--scheduled`",
++    "chaîne : {n} lots menés sans message de l'humain, sa borne est {borne} : ne rien programmer, donner le prompt à "
++    "copier (sans `--scheduled`)":
++        "chain: {n} batches run without a message from the human, its bound is {borne}: schedule nothing, give the "
++        "prompt to copy (without `--scheduled`)",
++    "le prochain lot n'a aucune tâche prête dans l'état (une décision revient à l'humain, ou rien n'est prêt) : ne "
++    "rien programmer, donner le prompt à copier (sans `--scheduled`)":
++        "the next batch has no ready task in the state (a decision is up to the human, or nothing is ready): "
++        "schedule nothing, give the prompt to copy (without `--scheduled`)",
++    "aucun dans l'état, à former":
++        "none in the state, to be formed",
++    "rien":
++        "nothing",
++    "Passation de {session} — {depot}, à {heure}.":
++        "Handoff from {session} — {depot}, at {heure}.",
++    "Passation — {depot}, à {heure}.":
++        "Handoff — {depot}, at {heure}.",
++    "Avant tout : git fetch {distant}, puis":
++        "First: git fetch {distant}, then",
++    "S'il refuse, ne fais rien d'autre que le dire ; s'il accepte, place-toi où il le dit, et la pull request ouverte "
++    "de cette branche devient la tienne.":
++        "If it refuses, do nothing else but say so; if it accepts, move to where it says, and the open pull request "
++        "of this branch becomes yours.",
++    "Chaîne : {n} lot(s) mené(s) sans message de l'humain.":
++        "Chain: {n} batch(es) run without a message from the human.",
++    "Reprends le travail de ce dépôt, en session neuve.":
++        "Resume the work of this repository, in a new session.",
++    "Puis : lis l'état que le démarrage injecte, et ce qu'une ligne « !! coupé » y dit manquer ; puis le chantier "
++    "actif, et applique-les.":
++        "Then: read the state the startup injects, and what a \"!! cut\" line says is missing from it; then the "
++        "active work, and apply them.",
++    "Le lot : {lot}, selon le skill socle-batch.":
++        "The batch: {lot}, following the socle-batch skill.",
++    "Ce qui attend : {attente}.":
++        "What is waiting: {attente}.",
++    "--head {tete} est introuvable dans ce clone : `git fetch {distant}` d'abord ; sinon, la branche a été réécrite "
++    "depuis la passation":
++        "--head {tete} is not found in this clone: `git fetch {distant}` first; otherwise, the branch was rewritten "
++        "since the handoff",
++    "la tête de {ref} est {actuelle}, plus {tete} : quelqu'un a poussé sur {ref} depuis la passation":
++        "the head of {ref} is {actuelle}, no longer {tete}: someone pushed to {ref} since the handoff",
++    "{ref} n'existe plus, et {tete} n'est pas dans {defaut} : la pull request a été fusionnée par squash, ou la "
++    "branche supprimée":
++        "{ref} no longer exists, and {tete} is not in {defaut}: the pull request was squash-merged, or the branch "
++        "deleted",
++    "la branche par défaut":
++        "the default branch",
++    "{branche} porte {n} commit(s) daté(s) d'après {heure} qui touche(nt) {memoire}/ sans être dans {tete} (le "
++    "dernier : {sha} {sujet}) : une autre session travaille sur le projet":
++        "{branche} carries {n} commit(s) dated after {heure} that touch {memoire}/ without being in {tete} (the "
++        "latest: {sha} {sujet}): another session is working on the project",
++    "pas de passation : {raison}":
++        "no handoff: {raison}",
++    "`socle handoff check` : --ref et --head, que donne le prompt de passation":
++        "`socle handoff check`: --ref and --head, which the handoff prompt gives",
++    "--since {valeur} : une heure ISO 8601, en UTC (2026-11-24T10:05:00Z)":
++        "--since {valeur}: an ISO 8601 time, in UTC (2026-11-24T10:05:00Z)",
++    "passation refusée — {raison}":
++        "handoff refused — {raison}",
++    "passation acceptée : se placer sur {ref} ({sha})":
++        "handoff accepted: move to {ref} ({sha})",
++    "la passation à une session neuve : `prompt` écrit son prompt, avec sa garde ; `check`, dans la session neuve, "
++    "juge cette garde":
++        "the handoff to a new session: `prompt` writes its prompt, with its guard; `check`, in the new session, "
++        "judges that guard",
++    "avec `prompt` : les lots menés sans message de l'humain, le lot en cours compris (0 par défaut)":
++        "with `prompt`: the batches run without a message from the human, the current batch included (0 by "
++        "default)",
++    "avec `prompt` : le lien de la session qui part, que le moteur ne devine pas":
++        "with `prompt`: the link of the leaving session, which the engine does not guess",
++    "avec `prompt` : ce qui attend (un compte rendu, une CI, une demande) ; « rien » par défaut":
++        "with `prompt`: what is waiting (a report, a CI, a request); “nothing” by default",
++    "avec `prompt` : pour une session programmée, refusé à la borne de la chaîne ou sans tâche prête au prochain lot":
++        "with `prompt`: for a scheduled session, refused at the chain's bound or without a ready task in the next "
++        "batch",
++    "avec `check` : la branche distante de la passation":
++        "with `check`: the remote branch of the handoff",
++    "avec `check` : sa tête à la passation":
++        "with `check`: its head at the handoff",
++    "avec `check` : l'heure de la passation, en UTC (par défaut : la date de --head)":
++        "with `check`: the time of the handoff, in UTC (by default: the date of --head)",
++    "session neuve d'une passation alors que la session qui part a poussé après elle":
++        "new session of a handoff while the leaving session pushed after it",
++    "session neuve d'une passation alors qu'une autre session a écrit la mémoire sur une autre branche depuis":
++        "new session of a handoff while another session has written the memory on another branch since",
++    "une passation dont la pull request est fusionnée par un commit de fusion pendant l'attente, un robot ayant "
++    "poussé sans toucher la mémoire, passe sa garde, qui place la session neuve sur la branche par défaut":
++        "a handoff whose pull request is merged by a merge commit during the wait, a robot having pushed without "
++        "touching the memory, passes its guard, which places the new session on the default branch",
+ }
+diff --git a/engine/socle/selftest.py b/engine/socle/selftest.py
+index 8a70525..754d0d1 100644
+--- a/engine/socle/selftest.py
++++ b/engine/socle/selftest.py
+@@ -899,6 +899,42 @@ def _clone_d_un_clone(a: Atelier, c: Path, ref: str | None) -> Path:
+     return d
+ 
+ 
++def _passation(a: Atelier, c: Path) -> tuple[Path, list[str]]:
++    """Une passation dans une origine nue à soi : l'origine partagée reçoit
++    les branches des autres cas, que la garde lirait. La session qui part,
++    `c`, y pousse sa branche rangée, puis écrit le prompt (`socle handoff
++    prompt`). Rend le clone de la session neuve, et les arguments de la
++    garde que le prompt lui donne."""
++    nu = c.parent / f"{c.name}-nu"
++    a.git(a.dossier, "clone", "-q", "--bare", "--no-local", "--single-branch", "--branch", "main", str(a.origine),
++          str(nu))
++    a.git(c, "remote", "set-url", "origin", str(nu))
++    a.git(c, "fetch", "-q", "origin")
++    maj_memoire(c, "La passation de l'essai.")
++    a.commit(c, "le rangement")
++    a.git(c, "push", "-q", "--no-verify", "-u", "origin", "travail")
++    r = a.socle(c, "handoff", "prompt")
++    lignes = [l for l in r.stdout.splitlines() if l.startswith("python3 .socle/socle handoff check ")]
++    if r.returncode != 0 or not lignes:
++        raise RuntimeError(r.stdout + r.stderr)
++    neuve = c.parent / f"{c.name}-neuve"
++    a.git(a.dossier, "clone", "-q", "--no-local", str(nu), str(neuve))
++    return neuve, lignes[0].split()[2:]
++
++
++def _apres_la_passation(garde: list[str]) -> dict:
++    """L'environnement d'un commit daté d'une minute après la passation."""
++    depuis = datetime.strptime(garde[garde.index("--since") + 1], "%Y-%m-%dT%H:%M:%SZ")
++    return {"GIT_COMMITTER_DATE": (depuis + timedelta(minutes=1)).strftime("%Y-%m-%dT%H:%M:%S+0000")}
++
++
++def _session_neuve(a: Atelier, neuve: Path, garde: list[str]) -> subprocess.CompletedProcess:
++    """La session neuve fait ce que dit son prompt : `git fetch`, puis la
++    garde."""
++    a.git(neuve, "fetch", "-q", "origin")
++    return a.socle(neuve, *garde)
++
++
+ # --------------------------------------------------------------------------
+ # Les défauts du cadrage, puis quelques autres
+ # --------------------------------------------------------------------------
+@@ -1624,6 +1660,33 @@ def _cas() -> list[Cas]:
+         r = a.socle(c, "review", "--short")
+         return r.stdout + r.stderr
+ 
++    # La garde de la passation (`socle handoff check`) : la session neuve ne
++    # travaille pas par-dessus une autre.
++    @defaut("passation-poussee-depuis", "session neuve d'une passation alors que la session qui part a poussé après "
++            "elle", "passation", "passation poussée depuis")
++    def _(a, c):
++        neuve, garde = _passation(a, c)
++        remplacer(c, "memory/active.md", "La passation de l'essai.", "Un commit poussé après la passation.")
++        a.commit(c, "après la passation")
++        a.git(c, "push", "-q", "--no-verify", "origin", "travail")
++        r = _session_neuve(a, neuve, garde)
++        return r.stdout + r.stderr
++
++    @defaut("passation-autre-session", "session neuve d'une passation alors qu'une autre session a écrit la mémoire "
++            "sur une autre branche depuis", "passation", "passation d'une autre session")
++    def _(a, c):
++        neuve, garde = _passation(a, c)
++        autre = c.parent / f"{c.name}-autre"
++        a.git(a.dossier, "clone", "-q", "--no-local", str(c.parent / f"{c.name}-nu"), str(autre))
++        a.git(autre, "checkout", "-q", "-b", "autre", "origin/main")
++        maj_memoire(autre, "Le travail d'une autre session.")
++        r = a.commit(autre, "une autre session", env=_apres_la_passation(garde))
++        if r.returncode != 0:
++            raise RuntimeError(r.stderr)
++        a.git(autre, "push", "-q", "--no-verify", "origin", "autre")
++        r = _session_neuve(a, neuve, garde)
++        return r.stdout + r.stderr
++
+     # L'historique des revues d'un lot (ADR-0084, ADR-0100) : une ligne de
+     # bloquant qu'il ne lit pas.
+ 
+@@ -2945,6 +3008,25 @@ def _temoins() -> list[tuple[str, Callable]]:
+         r = a.socle(c, "review", "--short")
+         return "" if r.returncode == 0 and "n'explore pas au-delà" in r.stdout else r.stdout + r.stderr
+ 
++    @temoin("une passation dont la pull request est fusionnée par un commit de fusion pendant l'attente, un robot "
++            "ayant poussé sans toucher la mémoire, passe sa garde, qui place la session neuve sur la branche par "
++            "défaut")
++    def _(a, c):
++        neuve, garde = _passation(a, c)
++        github = c.parent / f"{c.name}-github"
++        a.git(a.dossier, "clone", "-q", "--no-local", str(c.parent / f"{c.name}-nu"), str(github))
++        a.git(github, "checkout", "-q", "-b", "dependances", "origin/main")
++        remplacer(github, "calc.py", '"""Calculs du projet d\'essai."""', '"""Calculs du projet d\'essai, à jour."""')
++        r = a.commit(github, "une dépendance à jour", env=_apres_la_passation(garde))
++        if r.returncode != 0:
++            return r.stdout + r.stderr
++        a.git(github, "push", "-q", "--no-verify", "origin", "dependances")
++        a.git(github, "checkout", "-q", "main")
++        a.git(github, "merge", "-q", "--no-ff", "-m", "Fusion de la pull request du lot", "origin/travail")
++        a.git(github, "push", "-q", "--no-verify", "origin", "main")
++        r = _session_neuve(a, neuve, garde)
++        return "" if r.returncode == 0 and "se placer sur origin/main" in r.stdout else r.stdout + r.stderr
++
+     @temoin("un lot relu clos « fait », ses deux passes sans recul, passe le commit et la CI")
+     def _(a, c):
+         _lot_relu_clos(a, c, _bloquant_essai())
+@@ -3705,6 +3787,10 @@ RAISONS_AGENT = {
+     # `socle review` ne nomme pas de contrôle non plus : il refuse le dossier
+     # court d'un lot qui touche un garde-fou (B-0288).
+     "revue courte refusée": "le lot touche un garde-fou",
++    # `socle handoff check` non plus : il refuse la passation, en disant
++    # pourquoi.
++    "passation poussée depuis": "quelqu'un a poussé sur origin/travail depuis la passation",
++    "passation d'une autre session": "une autre session travaille sur le projet",
+ }
+ 
+ 
+diff --git a/engine/socle/templates/skills/socle-resume/SKILL.en.md b/engine/socle/templates/skills/socle-resume/SKILL.en.md
+index af0bcf0..ea8bc33 100644
+--- a/engine/socle/templates/skills/socle-resume/SKILL.en.md
++++ b/engine/socle/templates/skills/socle-resume/SKILL.en.md
+@@ -66,7 +66,8 @@ Once, before or with its first action:
+    session are its own. Those of an archived session (`get_session`:
+    `SESSION_STATUS_ARCHIVED`) are told to the human with their times, and
+    are disabled (`update_trigger`, `enabled: false`) only at their
+-   request. The turn that opens, on a message from the human as on a
++   request. A handoff that is waiting ("Handoff — <repository>") likewise.
++   The turn that opens, on a message from the human as on a
+    wake-up, makes the wake-ups left its own; the one that fired, spent,
+    is missing. The one to move gets, in a single call, this turn's time
+    and the text of its batch (`update_trigger`, with
+@@ -119,8 +120,9 @@ A message that starts with "Resume after limit":
+      it, or it ended normally);
+    - if the human wrote during the limit: answer their message, which comes
+      first; if it says to stop, stop;
+-   - if another session pushed to the branch since the agent's last
+-     commit (`git fetch`, then compare);
++   - if the guard refuses: `git fetch`, then `python3 .socle/socle handoff
++     check --ref origin/<branch> --head <its head before the fetch> --since
++     <the cut, if known>`;
+    - if the branch's pull request was merged or closed since.
+ 
+    Then answer briefly why, with the project's closing lines,
+diff --git a/engine/socle/templates/skills/socle-resume/SKILL.md b/engine/socle/templates/skills/socle-resume/SKILL.md
+index 8e29341..a944421 100644
+--- a/engine/socle/templates/skills/socle-resume/SKILL.md
++++ b/engine/socle/templates/skills/socle-resume/SKILL.md
+@@ -5,21 +5,19 @@ description: Faire reprendre seul l'agent qu'une limite d'usage coupe, par deux
+ 
+ # La reprise après une limite d'usage
+ 
+-Une limite d'usage du compte, sur cinq heures ou sept jours, coupe la
+-session ; l'agent ne reprend alors qu'au message suivant de l'humain. Deux
+-réveils, messages que l'agent programme pour sa propre session, le font
+-reprendre à la levée. Ils ne vivent que pendant un tour qui travaille ou
+-une attente à heure bornée : un tour qui finit autrement que sur une
+-limite ne relance jamais l'agent.
++Une limite d'usage, sur cinq heures ou sept jours, coupe la session
++jusqu'au message suivant de l'humain. Deux réveils, que l'agent programme
++pour sa propre session, le font reprendre à la levée, pendant un tour qui
++travaille ou une attente à heure bornée : un tour qui finit autrement que
++sur une limite ne relance jamais l'agent.
+ 
+ ## Quand
+ 
+ Dans une session cloud de Claude Code seulement, où existent `send_later`,
+ `update_trigger`, `delete_trigger`, `list_triggers` et `get_session` ;
+ ailleurs, ce skill ne s'applique pas. Une réponse en texte seul n'arme
+-rien, et retire les réveils laissés par un tour d'avant ; un
+-tour où l'agent lance une commande, écrit un fichier ou lance un
+-sous-agent arme.
++rien, et retire les réveils laissés ; un tour qui lance une commande,
++écrit un fichier ou lance un sous-agent arme.
+ Un sous-agent ne touche à aucun réveil : ni armer, ni déplacer, ni retirer.
+ 
+ ## Les deux réveils
+@@ -69,8 +67,9 @@ Une fois, avant ou avec sa première action :
+    sont les siens. Ceux d'une session archivée (`get_session` :
+    `SESSION_STATUS_ARCHIVED`) se disent à l'humain avec leurs heures, et
+    ne se désactivent (`update_trigger`, `enabled: false`) qu'à sa
+-   demande. Le tour qui s'ouvre, sur un message de l'humain comme sur un
+-   réveil, fait siens les réveils laissés ; celui qui a tiré, éteint,
++   demande. Une passation qui attend (« Passation — <dépôt> ») de même.
++   Le tour qui s'ouvre, sur un message de l'humain comme sur un réveil,
++   fait siens les réveils laissés ; celui qui a tiré, éteint,
+    manque. Celui qu'il faut déplacer reçoit, dans un seul appel,
+    l'heure de ce tour et le texte de son lot (`update_trigger`, avec
+    `run_once_at` et `prompt`) ; celui dont l'heure est bonne ne reçoit le
+@@ -124,8 +123,9 @@ Un message qui commence par « Reprise après limite » :
+      interrompu, ou il a fini normalement) ;
+    - si l'humain a écrit pendant la limite : répondre à son message, qui
+      prime ; s'il dit d'arrêter, s'arrêter ;
+-   - si une autre session a poussé sur la branche depuis le dernier commit
+-     de l'agent (`git fetch`, puis comparer) ;
++   - si la garde refuse : `git fetch`, puis `python3 .socle/socle handoff
++     check --ref origin/<branche> --head <sa tête avant le fetch> --since
++     <la coupure, si connue>` ;
+    - si la pull request de la branche a été fusionnée ou fermée depuis.
+ 
+    Répondre alors brièvement pourquoi, avec les lignes de fin du projet,
+diff --git a/memory/active.md b/memory/active.md
+index 830ec5e..7cf2405 100644
+--- a/memory/active.md
++++ b/memory/active.md
+@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
+ 
+ ## En cours
+ 
+-L-0010 attend D-0174 (J-2026-11-24-U) ; validée : T-0079, T-0081,
+-puis T-0134 et T-0162. Branche ccr-1ce8bc05-qb7vdl, sans pull request.
++L-0010, D-0174 validée : T-0081 en cours (J-2026-11-24-W), puis
++T-0079, T-0134, T-0162. Branche ccr-1ce8bc05-qb7vdl, sans pull request.
+ 
+ ## Consignes en cours
+ 
+diff --git a/memory/backlog/T-0081-le-mode-session-programmee-le-rangement-programme.md b/memory/backlog/T-0081-le-mode-session-programmee-le-rangement-programme.md
+index d8692b9..d447335 100644
+--- a/memory/backlog/T-0081-le-mode-session-programmee-le-rangement-programme.md
++++ b/memory/backlog/T-0081-le-mode-session-programmee-le-rangement-programme.md
+@@ -1,7 +1,7 @@
+ <!-- socle: couche=backlog zone=publique -->
+ # T-0081 — Le mode session programmée : le rangement programme la session neuve, et changer de mode annule ce qui est programmé
+ 
+-> statut : ouvert · origine : J-2026-11-18-J · besoin : B-0259 · après : T-0080 · lu : backlog@84ad299e
++> statut : en cours · origine : J-2026-11-18-J · besoin : B-0259 · après : T-0080 · lu : backlog@84ad299e
+ 
+ Un commit, sur la spécification validée par la demande de T-0080 : les gabarits de `socle-batch` et de `socle-resume`, en français et en anglais, le prompt de passation et sa garde, et une note de version.
+ 
+diff --git a/memory/journal/2026-11-11.md b/memory/journal/2026-11-11.md
+index dbdc174..e971dc6 100644
+--- a/memory/journal/2026-11-11.md
++++ b/memory/journal/2026-11-11.md
+@@ -1236,3 +1236,40 @@ relevé, tenu depuis J-2026-11-24-L, et la demande qui soumet la façon B)
+ et T-0080 (la spécification soumise) sont faites. T-0081 (la commande, la
+ garde, les modes) et T-0079 (le skill `socle-handoff`, `socle-batch`
+ allégé) deviennent prêtes, puis T-0134 et T-0162.
++
++## J-2026-11-24-W — T-0081, premier commit : socle handoff prompt et check, la garde de la passation, son défaut injecté et son témoin, la reprise qui l'appelle
++
++> ref : T-0081, B-0259, D-0174, L-0010
++
++Sur la spécification validée par D-0174 (« Le prompt et sa garde »), le
++moteur reçoit `socle handoff` (`engine/socle/handoff.py`), qui ne connaît
++que git et la mémoire. `prompt` refuse tant que la tête locale n'est pas
++poussée, ou qu'un fichier suivi a un changement non commité ; la garde
++nomme `origin/<branche>`, ou la branche par défaut si la branche locale
++en est repartie après une fusion, la tête et l'heure, en UTC ; puis la
++chaîne, et le prompt de session neuve de `socle-batch`, le lot et ses
++tâches lus dans l'état. `check` refuse si la tête de `--ref` a changé, ou
++si une autre branche distante porte un commit, hors des fusions, daté
++d'après `--since` (par défaut, la date de `--head`), qui touche la
++mémoire sans être un ancêtre de `--head` ; une pull request fusionnée par
++un commit de fusion place la session sur la branche par défaut, par
++squash le commit de squash la fait refuser.
++
++Choix où la spécification ne tranche pas : `--scheduled`, pour une
++session programmée, refuse d'écrire le prompt à la borne de la chaîne
++(deux lots) ou sans tâche prête (ni prête ni en cours) au prochain lot,
++et le prompt à copier n'accepte que la chaîne 0 : les bornes se tiennent
++dans le moteur, pas seulement dans le texte du skill. Le prompt dit aussi
++à la session neuve que la pull request ouverte de sa branche devient la
++sienne (« La pull request ouverte »).
++
++L'auto-test gagne deux défauts (la session qui part pousse après la
++passation, une autre session écrit la mémoire sur une autre branche) et
++un témoin (fusion par un commit de fusion et robot qui ne touche pas la
++mémoire), chacun dans une origine nue à soi, l'origine partagée recevant
++les branches des autres cas. `tests/test_passation.py` les juge sur de
++vrais dépôts, une origine nue comme sur GitHub. `socle-resume` (7 993
++octets en français) appelle la même garde au réveil et dit au premier
++tour une passation qui attend ; resserré pour tenir sous 8 000, sans
++toucher aux phrases que ses tests tiennent. T-0081 reste ouverte : ses
++deux critères demandent aussi le skill `socle-handoff` (T-0079).
+diff --git a/tests/test_passation.py b/tests/test_passation.py
+new file mode 100644
+index 0000000..fb3e471
+--- /dev/null
++++ b/tests/test_passation.py
+@@ -0,0 +1,312 @@
++"""T-0081 (B-0259, D-0174) : la passation programmée, côté moteur. `socle
++handoff prompt` écrit le prompt de la session neuve, précédé de sa garde :
++refusé tant que la tête locale n'est pas poussée et, pour une session
++programmée, aux bornes d'une chaîne sans l'humain. `socle handoff check` juge
++la garde dans la session neuve, sur de vrais dépôts git dont l'origine est
++nue, comme sur GitHub."""
++
++import contextlib
++import io
++import os
++import shutil
++import subprocess
++import tempfile
++import unittest
++from datetime import datetime, timedelta, timezone
++from pathlib import Path
++
++from socle import cli, config, handoff as passation, messages
++from tests.test_structure import entree
++
++# L'heure de la passation, et celle d'un commit qui la suit ou la précède.
++HEURE = datetime(2026, 11, 24, 10, 5, tzinfo=timezone.utc)
++APRES = HEURE + timedelta(minutes=10)
++AVANT = HEURE - timedelta(minutes=10)
++
++
++def git(cwd: Path, *args: str, date: datetime | None = None) -> str:
++    env = {k: v for k, v in os.environ.items() if not k.startswith(("CLAUDE", "GIT_"))}
++    env.update({"GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t",
++                "GIT_COMMITTER_EMAIL": "t@t", "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull})
++    if date:
++        env["GIT_COMMITTER_DATE"] = env["GIT_AUTHOR_DATE"] = date.strftime("%Y-%m-%dT%H:%M:%S+0000")
++    return subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True, env=env).stdout
++
++
++def ecrire(racine: Path, chemin: str, texte: str):
++    p = racine / chemin
++    p.parent.mkdir(parents=True, exist_ok=True)
++    p.write_text(texte, encoding="utf-8")
++
++
++def commiter(racine: Path, message: str, fichiers: dict[str, str], date: datetime | None = None) -> str:
++    for chemin, texte in fichiers.items():
++        ecrire(racine, chemin, texte)
++    git(racine, "add", "-A")
++    git(racine, "commit", "-q", "-m", message, date=date)
++    return git(racine, "rev-parse", "HEAD").strip()
++
++
++# Un lot en cours, une tâche faite et une prête ; et un lot dont la seule
++# tâche attend une demande sans réponse.
++BACKLOG = dict([
++    entree("B-0001"),
++    entree("T-0001", "fait", meta="besoin : B-0001"),
++    entree("T-0002", meta="besoin : B-0001"),
++    entree("L-0001", "en cours", meta="après : T-0001, T-0002"),
++])
++SANS_TACHE_PRETE = dict([
++    entree("B-0001"),
++    entree("T-0003", meta="besoin : B-0001 · après : D-0001"),
++    entree("L-0002", meta="après : T-0003"),
++    ("memory/requests/D-0001-essai.md", "<!-- socle: couche=demandes zone=publique -->\n# D-0001 — Une demande\n\n"
++                                        "> date : 2026-11-24\n"),
++])
++
++
++class Depots(unittest.TestCase):
++    """Une origine nue, la session qui part (`partante`), qui pousse sa
++    branche `travail`, puis la session neuve (`neuve`), clonée après."""
++
++    def setUp(self):
++        self.dossier = Path(tempfile.mkdtemp(prefix="socle-passation-"))
++        self.addCleanup(shutil.rmtree, self.dossier, ignore_errors=True)
++        self.origine = self.dossier / "memory.git"
++        git(self.dossier, "init", "-q", "--bare", "-b", "main", str(self.origine))
++        self.partante = self.clone("partante")
++        commiter(self.partante, "le projet", {"app.py": "print('ok')\n", **BACKLOG}, date=AVANT)
++        git(self.partante, "push", "-q", "origin", "main")
++        git(self.partante, "checkout", "-q", "-b", "travail")
++        self.tete = commiter(self.partante, "le lot", {"memory/active.md": "# Chantier actif\n\nLe lot.\n"},
++                             date=AVANT)
++        git(self.partante, "push", "-q", "-u", "origin", "travail")
++
++    def clone(self, nom: str) -> Path:
++        git(self.dossier, "clone", "-q", str(self.origine), nom)
++        return self.dossier / nom
++
++    def projet(self, racine: Path) -> config.Projet:
++        return config.Projet.charger(racine)
++
++    def neuve(self, ref: str = "origin/travail", tete: str | None = None, depuis: datetime | None = HEURE):
++        """La session neuve : clonée maintenant, `git fetch`, puis la garde."""
++        neuve = self.dossier / "neuve"
++        if not neuve.is_dir():
++            neuve = self.clone("neuve")
++        git(neuve, "fetch", "-q", "--prune", "origin")
++        return passation.juger(self.projet(neuve), ref, tete or self.tete, depuis)
++
++    def fusionner(self, squash: bool = False, supprimer: bool = False):
++        """La pull request du lot fusionnée sur GitHub : par un commit de
++        fusion, ou par squash ; sa branche supprimée ensuite, ou non."""
++        github = self.clone("github")
++        if squash:
++            git(github, "merge", "-q", "--squash", "origin/travail")
++            git(github, "commit", "-q", "-m", "Le lot (#1)", date=APRES)
++        else:
++            git(github, "merge", "-q", "--no-ff", "-m", "Merge pull request #1", "origin/travail", date=APRES)
++        git(github, "push", "-q", "origin", "main")
++        if supprimer:
++            git(github, "push", "-q", "origin", "--delete", "travail")
++
++
++class TestLePrompt(Depots):
++    def test_il_refuse_tant_que_la_tete_locale_n_est_pas_poussee(self):
++        commiter(self.partante, "pas poussé", {"memory/active.md": "# Chantier actif\n\nPlus loin.\n"}, date=AVANT)
++        with self.assertRaises(passation.PassationRefusee) as refus:
++            passation.tete_poussee(self.partante)
++        self.assertIn("n'est pas poussée : pousser d'abord", str(refus.exception))
++        git(self.partante, "push", "-q", "origin", "travail")
++        self.assertEqual(passation.tete_poussee(self.partante)[0], "origin/travail")
++        # Un fichier suivi changé sans commit ne passe pas non plus.
++        ecrire(self.partante, "app.py", "print('changé')\n")
++        with self.assertRaises(passation.PassationRefusee) as refus:
++            passation.prompt(self.projet(self.partante))
++        self.assertIn("ne sont pas commités", str(refus.exception))
++
++    def test_il_nomme_la_tete_distante_et_l_heure_puis_le_prompt_d_une_session_neuve(self):
++        texte = passation.prompt(self.projet(self.partante), session="https://claude.ai/code/session_x",
++                                 attente="la CI du commit de tête.", maintenant=HEURE)
++        lignes = texte.splitlines()
++        self.assertEqual(lignes[0], "Passation de https://claude.ai/code/session_x — partante, à 2026-11-24T10:05:00Z.")
++        self.assertEqual(lignes[1:3], [
++            "Avant tout : git fetch origin, puis",
++            f"python3 .socle/socle handoff check --ref origin/travail --head {self.tete} --since 2026-11-24T10:05:00Z"])
++        self.assertIn("S'il refuse, ne fais rien d'autre que le dire", lignes[3])
++        self.assertIn("la pull request ouverte de cette branche devient la tienne", lignes[3])
++        self.assertEqual(lignes[4:], [
++            "Chaîne : 0 lot(s) mené(s) sans message de l'humain.",
++            "Reprends le travail de ce dépôt, en session neuve.",
++            "Puis : lis l'état que le démarrage injecte, et ce qu'une ligne « !! coupé » y dit manquer ; puis le "
++            "chantier actif, et applique-les.",
++            "Le lot : L-0001 (T-0002), selon le skill socle-batch.",
++            "Ce qui attend : la CI du commit de tête."])
++        # Sans le lien de la session, ni ce qui attend.
++        lignes = passation.prompt(self.projet(self.partante), maintenant=HEURE).splitlines()
++        self.assertEqual(lignes[0], "Passation — partante, à 2026-11-24T10:05:00Z.")
++        self.assertEqual(lignes[-1], "Ce qui attend : rien.")
++
++    def test_apres_une_fusion_la_garde_nomme_la_branche_par_defaut(self):
++        """La pull request fusionnée avant la passation, la branche locale
++        repartie de la branche par défaut et pas encore poussée."""
++        self.fusionner()
++        git(self.partante, "fetch", "-q", "origin")
++        git(self.partante, "reset", "-q", "--hard", "origin/main")
++        ref, tete = passation.tete_poussee(self.partante)
++        self.assertEqual((ref, tete), ("origin/main", git(self.partante, "rev-parse", "origin/main").strip()))
++
++    def test_les_bornes_d_une_session_programmee(self):
++        projet = self.projet(self.partante)
++        texte = passation.prompt(projet, chaine=1, programmee=True, maintenant=HEURE)
++        self.assertIn("Chaîne : 1 lot(s) mené(s) sans message de l'humain.", texte)
++        # Deux lots menés sans message de l'humain : rien ne se programme.
++        with self.assertRaises(passation.PassationRefusee) as refus:
++            passation.prompt(projet, chaine=2, programmee=True)
++        self.assertIn("sa borne est 2 : ne rien programmer, donner le prompt à copier", str(refus.exception))
++        # Le prompt à copier porte la chaîne 0.
++        with self.assertRaises(passation.PassationRefusee) as refus:
++            passation.prompt(projet, chaine=1)
++        self.assertIn("le prompt à copier porte la chaîne 0", str(refus.exception))
++        # Un prochain lot sans tâche prête : le prompt se donne à copier.
++        for chemin in BACKLOG:
++            (self.partante / chemin).unlink()
++        commiter(self.partante, "un lot qui attend une demande", SANS_TACHE_PRETE, date=AVANT)
++        git(self.partante, "push", "-q", "origin", "travail")
++        self.assertEqual(passation.lot_de_l_etat(self.partante), ("L-0002", ["T-0003"], False))
++        with self.assertRaises(passation.PassationRefusee) as refus:
++            passation.prompt(projet, programmee=True)
++        self.assertIn("le prochain lot n'a aucune tâche prête", str(refus.exception))
++        self.assertIn("Le lot : L-0002 (T-0003), selon le skill socle-batch.", passation.prompt(projet))
++
++    def test_le_lot_de_l_etat(self):
++        self.assertEqual(passation.lot_de_l_etat(self.partante), ("L-0001", ["T-0002"], True))
++        self.assertEqual(passation.nom_du_depot(self.projet(self.partante)), "partante")
++
++
++class TestLaGarde(Depots):
++    def test_une_passation_que_rien_n_a_suivie_est_acceptee(self):
++        verdict = self.neuve()
++        self.assertEqual((verdict.refus, verdict.place, verdict.sha), ([], "origin/travail", self.tete))
++
++    def test_un_push_sur_la_branche_depuis_la_passation_est_refuse(self):
++        """Le 23 novembre : la session qui part avait poussé après avoir
++        programmé."""
++        commiter(self.partante, "après la passation", {"memory/active.md": "# Chantier actif\n\nAprès.\n"},
++                 date=APRES)
++        git(self.partante, "push", "-q", "origin", "travail")
++        verdict = self.neuve()
++        self.assertEqual(len(verdict.refus), 1, verdict.refus)
++        self.assertIn("quelqu'un a poussé sur origin/travail depuis la passation", verdict.refus[0])
++        self.assertIsNone(verdict.place)
++
++    def test_la_memoire_ecrite_sur_une_autre_branche_depuis_la_passation_est_refusee(self):
++        autre = self.clone("autre")
++        git(autre, "checkout", "-q", "-b", "autre-session", "origin/main")
++        commiter(autre, "une autre session", {"memory/journal/2026-11-24.md": "# Journal\n"}, date=APRES)
++        git(autre, "push", "-q", "origin", "autre-session")
++        verdict = self.neuve()
++        self.assertEqual(len(verdict.refus), 1, verdict.refus)
++        self.assertIn("origin/autre-session porte 1 commit(s) daté(s) d'après 2026-11-24T10:05:00Z", verdict.refus[0])
++        self.assertIn("une autre session travaille sur le projet", verdict.refus[0])
++
++    def test_un_robot_qui_ne_touche_pas_la_memoire_et_un_commit_d_avant_sont_ignores(self):
++        robot = self.clone("robot")
++        git(robot, "checkout", "-q", "-b", "dependabot/pip", "origin/main")
++        commiter(robot, "Bump", {"requirements.txt": "x==2\n"}, date=APRES)
++        git(robot, "push", "-q", "origin", "dependabot/pip")
++        vieille = self.clone("vieille")
++        git(vieille, "checkout", "-q", "-b", "vieille", "origin/main")
++        commiter(vieille, "une session d'avant", {"memory/journal/2026-11-23.md": "# Journal\n"}, date=AVANT)
++        git(vieille, "push", "-q", "origin", "vieille")
++        self.assertEqual(self.neuve().refus, [])
++        # Sans `--since`, l'heure est la date de la tête passée : le commit
++        # d'avant, daté comme elle, ne compte pas davantage.
++        self.assertEqual(self.neuve(depuis=None).refus, [])
++
++    def test_la_pull_request_fusionnee_par_un_commit_de_fusion_est_acceptee(self):
++        """La session repart de la branche par défaut, où la tête passée est
++        entrée."""
++        self.fusionner()
++        verdict = self.neuve()
++        self.assertEqual((verdict.refus, verdict.place), ([], "origin/main"))
++        self.assertEqual(verdict.sha, git(self.dossier / "github", "rev-parse", "HEAD").strip())
++
++    def test_fusionnee_par_un_commit_de_fusion_puis_sa_branche_supprimee_aussi(self):
++        self.fusionner(supprimer=True)
++        verdict = self.neuve()
++        self.assertEqual((verdict.refus, verdict.place), ([], "origin/main"))
++
++    def test_la_pull_request_fusionnee_par_squash_est_refusee(self):
++        self.fusionner(squash=True)
++        verdict = self.neuve()
++        self.assertEqual(len(verdict.refus), 1, verdict.refus)
++        self.assertIn("origin/main porte 1 commit(s)", verdict.refus[0])
++        # Sa branche supprimée, la garde le dit aussi.
++        shutil.rmtree(self.dossier / "neuve")
++        git(self.dossier / "github", "push", "-q", "origin", "--delete", "travail")
++        verdict = self.neuve()
++        self.assertEqual(len(verdict.refus), 2, verdict.refus)
++        self.assertIn("origin/travail n'existe plus, et", verdict.refus[0])
++        self.assertIn("fusionnée par squash, ou la branche supprimée", verdict.refus[0])
++
++    def test_une_tete_introuvable_est_refusee(self):
++        verdict = self.neuve(tete="0123456789abcdef0123456789abcdef01234567")
++        self.assertIn("est introuvable dans ce clone", verdict.refus[0])
++
++
++class TestLaCommande(Depots):
++    def lancer(self, racine: Path, *args: str) -> tuple[int, str, str]:
++        sortie, erreur = io.StringIO(), io.StringIO()
++        with contextlib.redirect_stdout(sortie), contextlib.redirect_stderr(erreur):
++            code = cli.main(["--root", str(racine), "handoff", *args])
++        return code, sortie.getvalue(), erreur.getvalue()
++
++    def test_la_commande_ecrit_le_prompt_puis_juge_sa_garde(self):
++        """`cli.cmd_handoff`, rangée parmi les commandes de l'agent."""
++        self.assertIs(cli.analyseur()[0].parse_args(["handoff", "prompt"]).f, cli.cmd_handoff)
++        self.assertIn("handoff", cli.GROUPES["pour l'agent"])
++        code, sortie, _ = self.lancer(self.partante, "prompt", "--waiting", "rien de plus")
++        self.assertEqual(code, 0)
++        garde = next(l for l in sortie.splitlines() if l.startswith("python3 .socle/socle handoff check "))
++        neuve = self.clone("neuve")
++        code, sortie, erreur = self.lancer(neuve, *garde.split()[3:])
++        self.assertEqual((code, erreur), (0, ""))
++        self.assertEqual(sortie.strip(), f"passation acceptée : se placer sur origin/travail ({self.tete[:10]})")
++        # Poussé depuis : refusée, en disant pourquoi.
++        commiter(self.partante, "après", {"memory/active.md": "# Chantier actif\n\nAprès.\n"})
++        git(self.partante, "push", "-q", "origin", "travail")
++        git(neuve, "fetch", "-q", "origin")
++        code, sortie, erreur = self.lancer(neuve, *garde.split()[3:])
++        self.assertEqual((code, sortie), (1, ""))
++        self.assertTrue(erreur.startswith("passation refusée — la tête de origin/travail est "), erreur)
++
++    def test_ses_refus_d_usage(self):
++        code, _, erreur = self.lancer(self.partante, "check", "--ref", "origin/travail")
++        self.assertEqual(code, 2)
++        self.assertIn("--ref et --head", erreur)
++        code, _, erreur = self.lancer(self.partante, "check", "--ref", "origin/travail", "--head", self.tete,
++                                      "--since", "hier")
++        self.assertEqual(code, 2)
++        self.assertIn("une heure ISO 8601", erreur)
++        code, _, erreur = self.lancer(self.partante, "prompt", "--scheduled", "--chain", "2")
++        self.assertEqual(code, 1)
++        self.assertTrue(erreur.startswith("pas de passation : chaîne : 2 lots menés"), erreur)
++
++    def test_l_heure_en_utc(self):
++        self.assertEqual(passation.heure("2026-11-24T10:05:00Z"), HEURE)
++        self.assertEqual(passation.heure("2026-11-24T11:05:00+01:00"), HEURE)
++        self.assertEqual(passation.heure("2026-11-24T10:05:00"), HEURE)
++        with self.assertRaises(ValueError):
++            passation.heure("hier")
++
++    def test_le_prompt_dans_la_langue_de_la_memoire(self):
++        with messages.dans("en"):
++            texte = passation.prompt(self.projet(self.partante), maintenant=HEURE)
++        self.assertIn("Handoff — partante, at 2026-11-24T10:05:00Z.", texte)
++        self.assertIn("If it refuses, do nothing else but say so", texte)
++        self.assertIn("The batch: L-0001 (T-0002), following the socle-batch skill.", texte)
++        self.assertIn("What is waiting: nothing.", texte)
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/tests/test_skills.py b/tests/test_skills.py
+index 8d3a1b8..e9c772b 100644
+--- a/tests/test_skills.py
++++ b/tests/test_skills.py
+@@ -513,6 +513,31 @@ class TestLaReprise(unittest.TestCase):
+         for lg, regle in (("fr", "Un sous-agent ne touche à aucun réveil"), ("en", "A subagent\ntouches no wake-up")):
+             self.assertIn(regle, self.lire(lg), lg)
+ 
++    def test_au_reveil_la_garde_de_la_passation_et_au_premier_tour_la_passation_qui_attend(self):
++        """T-0081 (D-0174) : la vérification du réveil appelle la garde de la
++        passation, la tête distante lue avant son `git fetch` et l'heure de la
++        coupure ; au premier tour, une passation programmée qui attend se dit
++        à l'humain, comme les réveils d'une session archivée, et ne s'annule
++        qu'à sa demande."""
++        for lg, reveil, non, garde, avant, debut, attente in (
++                ("fr", "## Au réveil", "Ne pas reprendre",
++                 "si la garde refuse : `git fetch`, puis `python3 .socle/socle handoff check --ref origin/<branche> "
++                 "--head <sa tête avant le fetch> --since <la coupure, si connue>` ;", "puis comparer",
++                 "## Au début de chaque tour",
++                 "qu'à sa demande. Une passation qui attend (« Passation — <dépôt> ») de même."),
++                ("en", "## On waking", "Do not resume",
++                 "if the guard refuses: `git fetch`, then `python3 .socle/socle handoff check --ref origin/<branch> "
++                 "--head <its head before the fetch> --since <the cut, if known>`;", "then compare",
++                 "## At the start of every turn",
++                 "only at their request. A handoff that is waiting (\"Handoff — <repository>\") likewise.")):
++            texte = self.lire(lg)
++            cas = " ".join(texte.split(reveil, 1)[1].split(non, 1)[1].split("\n\n", 1)[0].split())
++            self.assertIn(garde, cas, lg)
++            self.assertNotIn(avant, texte, lg)
++            section = " ".join(texte.split(debut, 1)[1].split("\n## ", 1)[0].split())
++            self.assertIn(attente, section, lg)
++            self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
++
+ 
+ class TestLaConduiteDUnLot(unittest.TestCase):
+     """B-0199, ADR-0079 : le skill qui conduit un lot, posé et protégé
+-- 
+2.43.0
+
