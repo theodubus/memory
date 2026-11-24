@@ -204,6 +204,12 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 78. La fin de tour refuse, une fois, un récap dont « Pour toi » me donne à supprimer une branche que l'origine n'a plus : elle cherche sur l'origine chaque nom de branche écrit entre accents graves sur une ligne qui dit supprimer et branche (note 2026-11-24-i). Rien à faire ; si ce refus tire pendant la mise à jour, ou à tort ensuite, dis-le-moi avec la ligne qu'il visait.
 
+79. Une entrée du journal ne note aucun geste futur pour moi (« la branche à supprimer après la fusion ») : ce qui me revient, l'état seul le calcule, vérifié au moment où il le dit. Le format de la mémoire et la section du socle d'AGENTS.md le disent (note 2026-11-24-j). Rien à faire.
+
+80. Le skill socle-batch, copie protégée dans la demande de l'installeur, fait attendre la CI du commit poussé, par son SHA (gh run list --commit <sha>), et non plus la ligne « CI » de l'état, qui suit la tête locale qu'un commit fait pendant l'attente déplace (note 2026-11-24-k). Rien à faire.
+
+81. Une ligne Corrige: ou Fixes: écrite hors du dernier paragraphe du message de commit fait désormais du commit un correctif : tests.regression vérifie qu'il livre un test qui échoue sur son parent, au lieu de le sauter sans le dire (note 2026-11-24-o). Rien à faire ; un commit de la mise à jour qui écrit une telle ligne ailleurs qu'en trailer serait jugé comme un correctif.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.
