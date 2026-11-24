@@ -75,7 +75,11 @@ Right after the installation:
 3. Commit and push.
 4. Protect the default branch on GitHub (repository settings, "Rules"):
    require the CI "Socle — verify, checks, self-test" before any merge.
-   Without it, a red CI does not prevent merging. The code owners' review
+   Without it, a red CI does not prevent merging. In the same ruleset, tick
+   "Block force pushes" and "Restrict deletions": outside the agent's hook,
+   only GitHub refuses a force push to the default branch, or its
+   deletion; the state says whether they are refused, and otherwise asks
+   you to have them refused. The code owners' review
    is added only if another human reviews: the author of a pull request
    cannot approve it, and the agent opens its own under the human's name.
    In the general settings, tick "Automatically delete head branches": a

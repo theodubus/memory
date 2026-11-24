@@ -15,6 +15,21 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-24-g — L'état dit si la branche par défaut refuse le push forcé et sa suppression, et le guide les fait refuser
+
+Hors du hook de l'agent, seul l'ensemble de règles de GitHub refuse un
+push forcé sur la branche par défaut, ou sa suppression ; l'état n'y
+lisait que la CI exigée et la revue des propriétaires du code. La ligne
+« branche » de `socle state` dit désormais le push forcé et la
+suppression refusés, permis ou inconnus (une protection classique dont
+le détail ne se lit pas) ; permis, l'un ou l'autre devient une action de
+l'humain, avec les cases à cocher dans l'ensemble de règles, « Block
+force pushes » et « Restrict deletions », et le lien de la page. L'étape
+4 du guide les fait cocher avec la CI exigée.
+
+À faire : rien ; l'état demande à l'humain, s'il y a lieu, de faire
+refuser le push forcé et la suppression de la branche par défaut.
+
 ## 2026-11-24-f — La ligne « CI » de l'état dit l'exécution du commit de tête, pas la dernière de la branche
 
 La ligne « CI » de `socle state` disait la dernière exécution de la

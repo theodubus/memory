@@ -321,7 +321,9 @@ import os, sys
 if sys.argv[1] != "api":
     print("[]")  # `gh run list` : aucune exécution
 else:
-    print(os.environ["FAUX_REGLES" if "/rules/branches/" in sys.argv[2] else "FAUX_BRANCHE"])
+    chemin = sys.argv[2]
+    print(os.environ["FAUX_REGLES" if "/rules/branches/" in chemin else
+                     "FAUX_PROTECTION" if chemin.endswith("/protection") else "FAUX_BRANCHE"])
 """
 CI = "Socle — verify, contrôles, auto-test"
 
@@ -371,6 +373,40 @@ class TestCiExigee(unittest.TestCase):
         self.assertIn("branche  : main — CI du socle NON exigée", texte)
         self.assertIn("action : protéger la branche `main`", texte)
         self.assertIn("https://github.com/o/r/settings/rules", texte)
+
+    def test_le_push_force_et_la_suppression_de_la_branche(self):
+        """B-0317 : hors du hook de l'agent, seul l'ensemble de règles de
+        GitHub refuse un push forcé sur la branche par défaut, ou sa
+        suppression ; l'état ne le lisait pas."""
+        ci = {"type": "required_status_checks", "parameters": {"required_status_checks": [{"context": CI}]}}
+        self.repondre([ci])
+        texte = self.etat.calculer(self.projet, contenus=False)
+        self.assertIn("branche  : main — CI du socle exigée avant fusion ; revue des propriétaires du code non "
+                      "exigée ; push forcé PERMIS ; suppression PERMISE", texte)
+        self.assertIn("action : faire refuser par GitHub le push forcé et la suppression de la branche `main` : "
+                      "cocher « Block force pushes » et « Restrict deletions »", texte)
+        self.repondre([ci, {"type": "deletion"}])
+        texte = self.etat.calculer(self.projet, contenus=False)
+        self.assertIn("push forcé PERMIS ; suppression refusée", texte)
+        self.assertIn("action : faire refuser par GitHub le push forcé de la branche `main` : cocher « Block force "
+                      "pushes » dans", texte)
+        self.repondre([ci, {"type": "deletion"}, {"type": "non_fast_forward"}])
+        texte = self.etat.calculer(self.projet, contenus=False)
+        self.assertIn("push forcé refusé ; suppression refusée", texte)
+        self.assertNotIn("faire refuser par GitHub", texte)
+
+    def test_une_protection_classique_se_lit_dans_son_detail(self):
+        """Une protection classique refuse le push forcé et la suppression
+        sauf si on les y permet, ce que seul son détail dit."""
+        self.repondre([], {"enabled": True, "required_status_checks": {
+            "enforcement_level": "non_admins", "contexts": [CI], "checks": []}})
+        p = self.etat.protection(self.projet)[0]
+        self.assertEqual((p["push_force"], p["suppression"]), (None, None))
+        self.assertNotIn("faire refuser par GitHub", self.etat.calculer(self.projet, contenus=False))
+        os.environ["FAUX_PROTECTION"] = json.dumps({"allow_force_pushes": {"enabled": True},
+                                                    "allow_deletions": {"enabled": False}})
+        p = self.etat.protection(self.projet)[0]
+        self.assertEqual((p["push_force"], p["suppression"]), (False, True))
 
     def test_une_protection_classique_qui_exige_la_ci(self):
         self.repondre([], {"enabled": True, "required_status_checks": {

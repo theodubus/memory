@@ -79,7 +79,11 @@ Juste après l'installation :
 3. Commiter et pousser.
 4. Protéger la branche par défaut sur GitHub (réglages du dépôt,
    « Rules ») : exiger la CI « Socle — verify, contrôles, auto-test » avant
-   toute fusion. Sans cela, une CI rouge n'empêche pas de fusionner. La
+   toute fusion. Sans cela, une CI rouge n'empêche pas de fusionner. Dans
+   le même ensemble de règles, cocher « Block force pushes » et « Restrict
+   deletions » : hors du hook de l'agent, seul GitHub refuse un push forcé
+   sur la branche par défaut, ou sa suppression ; l'état dit s'ils sont
+   refusés, et sinon vous demande de les faire refuser. La
    revue des propriétaires du code ne s'y ajoute que si un autre humain
    relit : l'auteur d'une pull request ne peut pas l'approuver, et l'agent
    ouvre les siennes au nom de l'humain. Dans les réglages généraux, cocher

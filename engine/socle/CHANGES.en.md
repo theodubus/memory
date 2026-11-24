@@ -14,6 +14,21 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-24-g — The state says whether the default branch refuses force pushes and its deletion, and the guide has them refused
+
+Outside the agent's hook, only GitHub's ruleset refuses a force push to
+the default branch, or its deletion; the state only read the required CI
+and the code owners' review there. The "branch" line of `socle state`
+now says whether force pushes and deletion are refused, allowed or
+unknown (a classic protection whose details cannot be read); allowed,
+either one becomes an action for the human, with the boxes to tick in
+the ruleset, "Block force pushes" and "Restrict deletions", and the link
+to the page. Step 4 of the guide has them ticked along with the
+required CI.
+
+To do: nothing; the state asks the human, where needed, to have force
+pushes and the deletion of the default branch refused.
+
 ## 2026-11-24-f — The state's "CI" line gives the run of the head commit, not the branch's last one
 
 The "CI" line of `socle state` gave the branch's last run, by its name:

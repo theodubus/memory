@@ -1677,10 +1677,30 @@ MESSAGES: dict[str, str] = {
         "requests : unreadable ({erreur})",
     "protéger la branche `{nom}` : y exiger la CI « {ci} » avant toute fusion":
         "protect the branch `{nom}`: require the CI “{ci}” there before any merge",
-    "branche  : {nom} — CI du socle exigée avant fusion{revue}":
-        "branch   : {nom} — socle CI required before merging{revue}",
-    "branche  : {nom} — CI du socle NON exigée : une CI rouge n'empêche pas de fusionner":
-        "branch   : {nom} — socle CI NOT required: a red CI does not prevent merging",
+    "branche  : {nom} — CI du socle exigée avant fusion{revue}{gardes}":
+        "branch   : {nom} — socle CI required before merging{revue}{gardes}",
+    "branche  : {nom} — CI du socle NON exigée : une CI rouge n'empêche pas de fusionner{gardes}":
+        "branch   : {nom} — socle CI NOT required: a red CI does not prevent merging{gardes}",
+    " ; push forcé refusé":
+        "; force push refused",
+    " ; push forcé PERMIS":
+        "; force push ALLOWED",
+    " ; push forcé : inconnu":
+        "; force push: unknown",
+    " ; suppression refusée":
+        "; deletion refused",
+    " ; suppression PERMISE":
+        "; deletion ALLOWED",
+    " ; suppression : inconnue":
+        "; deletion: unknown",
+    "« {case} »":
+        "“{case}”",
+    "le push forcé":
+        "force pushes",
+    "la suppression":
+        "deletion",
+    "faire refuser par GitHub {quoi} de la branche `{nom}` : cocher {cases} dans son ensemble de règles ; hors du hook de l'agent, rien d'autre ne les refuse":
+        "have GitHub refuse {quoi} of the branch `{nom}`: tick {cases} in its ruleset; outside the agent's hook, nothing else refuses them",
     "branche  : protection inconnue ({detail})":
         "branch   : protection unknown ({detail})",
     "ce qui revient à l'humain : incalculable ({erreur})":

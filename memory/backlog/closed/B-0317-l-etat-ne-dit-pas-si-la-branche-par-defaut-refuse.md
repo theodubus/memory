@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0317 — L'état ne dit pas si la branche par défaut refuse le push forcé et sa suppression, comme il dit la CI exigée, et le guide ne les fait pas régler
 
-> statut : ouvert · origine : J-2026-11-20-AO · ref : B-0262, T-0023 · lu : backlog@6b66623e
+> statut : fait · origine : J-2026-11-20-AO · ref : J-2026-11-24-AL, T-0119, B-0262, T-0023 · lu : backlog@6b66623e
 
 Le relevé de T-0023 (`docs/fabrication/garanties-hors-du-hook.md`) :
 hors du hook de l'agent, seul l'ensemble de règles de GitHub peut refuser
@@ -16,4 +16,4 @@ pu le lire, l'état ne le dit pas.
 
 ## Satisfait quand
 
-- [ ] l'humain apprend par l'état si la branche par défaut de son projet refuse le push forcé et la suppression, et le guide lui dit de les refuser
+- [x] l'humain apprend par l'état si la branche par défaut de son projet refuse le push forcé et la suppression, et le guide lui dit de les refuser

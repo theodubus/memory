@@ -84,13 +84,30 @@ def nom_de_la_ci(projet: config.Projet) -> str:
     return outils.nom_du_travail(outils.lire_a(projet.racine, None, ".github/workflows/socle.yml") or "") or "Socle"
 
 
-def ci_exigee(projet: config.Projet) -> tuple[bool | None, str]:
-    """La CI du socle est-elle exigée avant de fusionner sur la branche par
-    défaut, par un ensemble de règles ou une protection de branche de
-    GitHub ? Sans elle, une CI rouge n'empêche pas de fusionner : la
-    garantie « seule la CI est incontournable » tombe. `None` quand on ne peut pas le savoir, avec la raison ; sinon
-    le nom de la branche, et si la revue des propriétaires du code est
-    exigée aussi."""
+# Ce que la ligne « branche » de l'état dit du push forcé et de la
+# suppression de la branche par défaut : refusés par GitHub, permis, ou
+# inconnus (B-0317).
+GARDES = {
+    "push_force": {True: a_traduire(" ; push forcé refusé"), False: a_traduire(" ; push forcé PERMIS"),
+                   None: a_traduire(" ; push forcé : inconnu")},
+    "suppression": {True: a_traduire(" ; suppression refusée"), False: a_traduire(" ; suppression PERMISE"),
+                    None: a_traduire(" ; suppression : inconnue")},
+}
+# Ce que l'humain fait refuser, et la case de l'ensemble de règles de GitHub.
+REFUS = {"push_force": (a_traduire("le push forcé"), "Block force pushes"),
+         "suppression": (a_traduire("la suppression"), "Restrict deletions")}
+
+
+def protection(projet: config.Projet) -> tuple[dict | None, str]:
+    """Ce que GitHub garde de la branche par défaut, par un ensemble de
+    règles ou une protection de branche : `ci`, la CI du socle exigée avant
+    de fusionner, sans quoi une CI rouge n'empêche pas de fusionner et la
+    garantie « seule la CI est incontournable » tombe ; `revue`, celle des
+    propriétaires du code ; `push_force` et `suppression`, le push forcé et
+    la suppression de la branche refusés côté serveur, seule garantie hors
+    du hook de l'agent (B-0317), `None` quand une protection classique ne se
+    lit pas ; `nom`, la branche. `None` quand on ne peut pas le savoir, avec
+    la raison."""
     from socle import links as liens
 
     url = liens.url_depot(projet) or ""
@@ -109,13 +126,43 @@ def ci_exigee(projet: config.Projet) -> tuple[bool | None, str]:
     ci = nom_de_la_ci(projet)
     exigees = [c.get("context") for r in regles if r.get("type") == "required_status_checks"
                for c in (r.get("parameters") or {}).get("required_status_checks", [])]
-    classique = ((branche.get("protection") or {}).get("required_status_checks") or {})
+    protegee = branche.get("protection") or {}
+    classique = protegee.get("required_status_checks") or {}
     if classique.get("enforcement_level", "off") != "off":
         exigees += classique.get("contexts", []) + [c.get("context") for c in classique.get("checks", [])]
-    revue = any((r.get("parameters") or {}).get("require_code_owner_review") for r in regles
-                if r.get("type") == "pull_request")
-    return ci in exigees, nom + (trad(" ; revue des propriétaires du code exigée") if revue else
-                                 trad(" ; revue des propriétaires du code non exigée"))
+    types = {r.get("type") for r in regles}
+    # Une protection classique refuse le push forcé et la suppression, sauf
+    # si on les y permet : ce que seul son détail dit, lisible par un
+    # administrateur du dépôt.
+    detail = (_gh_json(projet.racine, f"repos/{depot}/branches/{nom}/protection")
+              if protegee.get("enabled") and not {"non_fast_forward", "deletion"} <= types else None)
+
+    def refuse(type_: str, permis: str) -> bool | None:
+        if type_ in types:
+            return True
+        if not protegee.get("enabled"):
+            return False
+        if not isinstance(detail, dict):
+            return None
+        return not (detail.get(permis) or {}).get("enabled", False)
+
+    return {"nom": nom, "ci": ci in exigees,
+            "revue": any((r.get("parameters") or {}).get("require_code_owner_review") for r in regles
+                         if r.get("type") == "pull_request"),
+            "push_force": refuse("non_fast_forward", "allow_force_pushes"),
+            "suppression": refuse("deletion", "allow_deletions")}, ""
+
+
+def ci_exigee(projet: config.Projet) -> tuple[bool | None, str]:
+    """La CI du socle est-elle exigée avant de fusionner sur la branche par
+    défaut (`protection`) ? `None` quand on ne peut pas le savoir, avec la
+    raison ; sinon le nom de la branche, et si la revue des propriétaires
+    du code est exigée aussi."""
+    p, raison = protection(projet)
+    if p is None:
+        return None, raison
+    return p["ci"], p["nom"] + (trad(" ; revue des propriétaires du code exigée") if p["revue"] else
+                                trad(" ; revue des propriétaires du code non exigée"))
 
 
 def _balayage(projet: config.Projet, elements: list) -> list[str]:
@@ -293,25 +340,36 @@ def calculer(projet: config.Projet, contenus: bool = True, supplement: list[str]
         erreur = erreur_(e)
     autres, branche, mutation = [], [], []
     try:
-        exigee, detail = ci_exigee(projet)
-        # Le détail commence par le nom de la branche, suivi de ce que dit la
-        # revue des propriétaires du code.
-        nom = (outils.branche_par_defaut(racine) or "").removeprefix("origin/")
-        revue = detail[len(nom):] if nom and detail.startswith(nom) else ""
-        if exigee is False:
-            autres.append(humain.Element(
-                "action", trad("protéger la branche `{nom}` : y exiger la CI « {ci} » avant toute fusion", nom=nom,
-                               ci=nom_de_la_ci(projet)),
-                page_protection(projet) or ""))
-        if exigee:
-            branche = [trad("branche  : {nom} — CI du socle exigée avant fusion{revue}", nom=nom, revue=revue)]
-        elif exigee is False:
-            branche = [trad("branche  : {nom} — CI du socle NON exigée : une CI rouge n'empêche pas de fusionner",
-                            nom=nom)]
+        p, raison = protection(projet)
+        if p is None:
+            branche = [trad("branche  : protection inconnue ({detail})", detail=raison)]
         else:
-            branche = [trad("branche  : protection inconnue ({detail})", detail=detail)]
+            nom = p["nom"]
+            revue = (trad(" ; revue des propriétaires du code exigée") if p["revue"] else
+                     trad(" ; revue des propriétaires du code non exigée"))
+            gardes = "".join(trad(GARDES[cle][p[cle]]) for cle in ("push_force", "suppression"))
+            if not p["ci"]:
+                autres.append(humain.Element(
+                    "action", trad("protéger la branche `{nom}` : y exiger la CI « {ci} » avant toute fusion", nom=nom,
+                                   ci=nom_de_la_ci(projet)),
+                    page_protection(projet) or ""))
+            permis = [cle for cle in ("push_force", "suppression") if p[cle] is False]
+            if permis:
+                autres.append(humain.Element("action", trad(
+                    "faire refuser par GitHub {quoi} de la branche `{nom}` : cocher {cases} dans son ensemble de "
+                    "règles ; hors du hook de l'agent, rien d'autre ne les refuse",
+                    quoi=trad(" et ").join(trad(REFUS[cle][0]) for cle in permis), nom=nom,
+                    cases=trad(" et ").join(trad("« {case} »", case=REFUS[cle][1]) for cle in permis)),
+                    page_protection(projet) or ""))
+            if p["ci"]:
+                branche = [trad("branche  : {nom} — CI du socle exigée avant fusion{revue}{gardes}", nom=nom,
+                                revue=revue, gardes=gardes)]
+            else:
+                branche = [trad("branche  : {nom} — CI du socle NON exigée : une CI rouge n'empêche pas de "
+                                "fusionner{gardes}", nom=nom, gardes=gardes)]
     except Exception as e:
         branche = [trad("branche  : protection inconnue ({detail})", detail=erreur_(e))]
+
     try:
         mutation = _balayage(projet, autres)
     except Exception as e:
