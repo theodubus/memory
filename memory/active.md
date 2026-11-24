@@ -13,9 +13,9 @@ JA-0005, puis L-0032. À redemander : B-0346 avant chess ?
 Leur texte exact est dans l'entrée du journal citée.
 
 - Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
-- L'atelier au prompt à copier (D-0173), sauf une fin de lot en
-  passation programmée quand Théo ne jongle plus entre ses comptes
-  (D-0182, J-2026-11-24-AV).
+- L'atelier au prompt à copier, commutateur manuel pour l'instant
+  (D-0173, J-2026-11-24-BE) ; l'essai programmé de D-0182 quand Théo
+  le demande.
 - Le hook terminé : rien sans preuve vue dans une session (ADR-0098).
 - Du temps pour un ajout ou un bug important ; aucun pour un cas limite
   rare, légère gêne que l'agent gère lui-même (D-0165).
