@@ -35,3 +35,7 @@ Commits : a68f5bc0..03830147
 
 - Bloquant : une phrase du skill resserrée pour le budget contredisait la suivante (quel réveil laissé se déplace)
 - Ouvre : B-0336, T-0164
+
+### Passe 2 — 2026-11-24
+
+Commits : e5b37d6..4c6edf7
