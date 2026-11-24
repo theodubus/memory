@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0162 — Le gabarit de socle-batch dit qu'à la clôture d'un lot, une tâche ouverte qu'aucun lot formé ne prend forme un lot nouveau dans le jalon de son besoin
 
-> statut : ouvert · origine : J-2026-11-23-E · besoin : B-0335 · lu : backlog@f95c1458
+> statut : fait · ref : J-2026-11-24-Y · origine : J-2026-11-23-E · besoin : B-0335 · après : T-0079 · lu : backlog@f95c1458
 
 Un commit : le gabarit français et anglais de `socle-batch`
 (`engine/socle/templates/skills/socle-batch/`), étape 5 de « Intégrer,
@@ -14,4 +14,4 @@ avec celles de L-0026 (T-0136).
 
 ## Fait quand
 
-- [ ] les deux gabarits de `socle-batch` le disent, sous leur plafond, et les tests des skills passent
+- [x] les deux gabarits de `socle-batch` le disent, sous leur plafond, et les tests des skills passent

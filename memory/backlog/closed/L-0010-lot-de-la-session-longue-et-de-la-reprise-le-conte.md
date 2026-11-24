@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0010 — Lot de la session longue et de la reprise : le contexte long sans session neuve à la main, la reprise sans list_events
 
-> statut : en cours · origine : J-2026-11-15-J · après : L-0009, T-0039, T-0079, T-0040, T-0041, T-0080, T-0081, T-0134, T-0162 · lu : backlog@19378efe · ancien : B-0240
+> statut : fait · ref : J-2026-11-24-AE · origine : J-2026-11-15-J · après : L-0009, T-0039, T-0079, T-0040, T-0041, T-0080, T-0081, T-0134, T-0162 · lu : backlog@19378efe · ancien : B-0240
 
 Le dernier lot du jalon : une session qui dure sans que l'humain en
 ouvre une neuve à la main (B-0156, une conception à trancher d'abord) et
@@ -35,3 +35,22 @@ Commits : a68f5bc0..03830147
 
 - Bloquant : une phrase du skill resserrée pour le budget contredisait la suivante (quel réveil laissé se déplace)
 - Ouvre : B-0336, T-0164
+
+### Passe 2 — 2026-11-24
+
+Commits : e5b37d6..4c6edf7
+
+- Bloquant : la garde refusait la passation dès que la session qui part poussait après avoir programmé, comme le 23 novembre
+- Bloquant : la pull request ouverte, que la session programmée ne pouvait ni continuer sans l'humain ni fusionner
+- Ouvre : rien
+
+### Passe 3 — 2026-11-24
+
+Commits : 7204705..b0c15d6
+
+### Passe 4 — 2026-11-24
+
+Commits : 72047052..b2ab9181
+
+- Bloquant : les refus de la passation sans défaut injecté dans l'auto-test, contre la règle d'AGENTS.md
+- Ouvre : rien

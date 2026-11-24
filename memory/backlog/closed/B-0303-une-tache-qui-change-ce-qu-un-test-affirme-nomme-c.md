@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0303 — Une tâche qui change ce qu'un test affirme nomme ce test dès sa création, et la demande se pose avant le lot, non en son milieu (D-0141)
 
-> statut : ouvert · origine : J-2026-11-19-AJ · ref : D-0141, D-0140, D-0139, L-0019, L-0005 · lu : backlog@bc88ec02
+> statut : fait · ref : J-2026-11-24-Y · origine : J-2026-11-19-AJ · ref : D-0141, D-0140, D-0139, L-0019, L-0005 · lu : backlog@bc88ec02
 
 Théo a retenu le 19 novembre la proposition 2 (D-0141, J-2026-11-19-AJ).
 T-0002 et T-0106 ont été écrites sans chercher si un test affirmait le
@@ -20,4 +20,4 @@ une tâche s'écrit.
 
 ## Satisfait quand
 
-- [ ] une tâche dont le critère contredit la valeur attendue d'un test existant nomme ce test dès sa création, et sa demande est posée avant le lancement du lot, comme le skill `socle-batch` le dit
+- [x] une tâche dont le critère contredit la valeur attendue d'un test existant nomme ce test dès sa création, et sa demande est posée avant le lancement du lot, comme le skill `socle-batch` le dit

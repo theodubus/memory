@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0259 — La passation programmée : la session neuve s'ouvre seule à la remise à zéro de la fenêtre, au lieu d'un prompt à copier
 
-> statut : ouvert · origine : J-2026-11-16-E · ref : B-0156 · lu : backlog@dbfb9832
+> statut : fait · ref : J-2026-11-24-Y · origine : J-2026-11-16-E · ref : B-0156 · lu : backlog@dbfb9832
 
 D'une analyse en lecture seule du 15 novembre sur d1d296e, que Théo a
 fait inscrire (J-2026-11-16-E) ; il n'en fixe ni la priorité ni le lot.
@@ -74,4 +74,4 @@ programmée ». Pour qu'aucun travail ne se fasse en double :
 
 ## Satisfait quand
 
-- [ ] près d'une limite, quand Théo a choisi ce mode, la session neuve s'ouvre seule à la remise à zéro de la fenêtre, sans prompt à coller ni travail fait en double ; si aucune variante ne tient à l'essai, le prompt à copier reste, et le besoin le dit
+- [x] près d'une limite, quand Théo a choisi ce mode, la session neuve s'ouvre seule à la remise à zéro de la fenêtre, sans prompt à coller ni travail fait en double ; si aucune variante ne tient à l'essai, le prompt à copier reste, et le besoin le dit

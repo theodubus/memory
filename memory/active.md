@@ -5,14 +5,17 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0035 livré (J-2026-11-24-R). Suivant, en session neuve : L-0010 ;
-T-0041 soumet la variante B (J-2026-11-24-L), D-0160 à réécrire.
+L-0010 clos (J-2026-11-24-AE), D-0175 appliquée. Suivant, en session
+neuve sur le prompt de `socle handoff prompt` : le prochain lot de
+l'état ; B-0344 au backlog (J-2026-11-24-AC).
 
 ## Consignes en cours
 
 Leur texte exact est dans l'entrée du journal citée.
 
 - Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
+- La passation programmée faite, l'atelier reste au prompt à copier ;
+  le produit enchaîne par défaut (D-0173, J-2026-11-24-S).
 - Le hook terminé : rien sans preuve vue dans une session (ADR-0098).
 - Du temps pour un ajout ou un bug important ; aucun pour un cas limite
   rare, légère gêne que l'agent gère lui-même (D-0165).
@@ -40,8 +43,7 @@ Leur texte exact est dans l'entrée du journal citée.
 - Une limite d'usage proche décide de l'ordre, jamais de la profondeur
   du travail ni du modèle ; la passation se fait avant elle
   (J-2026-11-09-C, J-2026-11-15-D, J-2026-11-16-W).
-- Une attente annoncée dans le récap s'accompagne d'un réveil programmé
-  (J-2026-10-13-N).
+- Une attente annoncée a son réveil programmé (J-2026-10-13-N).
 - « Pour toi » ne contient que les gestes de Théo, chacun compréhensible
   seul (ce que c'est, pourquoi, ce que change sa réponse) ; ce que
   l'agent fera se dit à part (J-2026-10-31-S, J-2026-10-14-F).
@@ -58,10 +60,7 @@ Leur texte exact est dans l'entrée du journal citée.
 - En autonomie sur le backlog, sauf arbitrage (J-2026-10-20-C).
 - Toute la correction et la stabilisation du produit avant chess, puis
   chess mis à jour d'un coup, ses corrections, ensuite les fonctions
-  nouvelles (J-2026-11-13-I, J-2026-11-21-B).
-- Chess n'est mis à jour qu'une fois l'ensemble fini ; d'ici là, tout
-  lot qui change ce que chess reçoit complète
-  `docs/fabrication/chess/prompt-mise-a-jour.md` (J-2026-11-13-L).
+  nouvelles (J-2026-11-13-I, J-2026-11-21-B, J-2026-11-13-L).
 
 ## Prochaines étapes
 

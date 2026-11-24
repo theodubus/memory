@@ -124,8 +124,8 @@ class TestSkillsDuSocle(unittest.TestCase):
         for nom in controles.DU_SOCLE:
             texte = (self.racine / installeur.SKILLS / nom / "SKILL.md").read_text()
             self.assertTrue(texte.startswith(f"---\nname: {nom}\n"))
-        self.assertEqual(sorted(controles.DU_SOCLE), ["socle-batch", "socle-private-memory", "socle-request",
-                                                      "socle-resume", "socle-review"])
+        self.assertEqual(sorted(controles.DU_SOCLE), ["socle-batch", "socle-handoff", "socle-private-memory",
+                                                      "socle-request", "socle-resume", "socle-review"])
         self.assertIn(".claude/skills/socle-*/**", config.Projet.charger(self.racine).chemins_proteges())
         self.assertEqual(juger(self.racine), {"skills.contrat": [], "skills.commandes": []})
 
@@ -143,8 +143,8 @@ class TestSkillsDuSocle(unittest.TestCase):
 
     def test_dans_les_deux_langues_ils_passent_leurs_controles(self):
         self.assertEqual(installeur.poser_skills(self.racine, "en"),
-                         ["skills du socle posés dans .claude/skills : socle-batch, socle-private-memory, "
-                          "socle-request, socle-resume, socle-review"])
+                         ["skills du socle posés dans .claude/skills : socle-batch, socle-handoff, "
+                          "socle-private-memory, socle-request, socle-resume, socle-review"])
         texte = (self.racine / ".claude/skills/socle-request/SKILL.md").read_text()
         self.assertIn("description: Write a request for a human decision", texte)
         self.assertEqual(juger(self.racine), {"skills.contrat": [], "skills.commandes": []})
@@ -513,6 +513,31 @@ class TestLaReprise(unittest.TestCase):
         for lg, regle in (("fr", "Un sous-agent ne touche à aucun réveil"), ("en", "A subagent\ntouches no wake-up")):
             self.assertIn(regle, self.lire(lg), lg)
 
+    def test_au_reveil_la_garde_de_la_passation_et_au_premier_tour_la_passation_qui_attend(self):
+        """T-0081 (D-0174) : la vérification du réveil appelle la garde de la
+        passation, la tête distante lue avant son `git fetch` et l'heure de la
+        coupure ; au premier tour, une passation programmée qui attend se dit
+        à l'humain, comme les réveils d'une session archivée, et ne s'annule
+        qu'à sa demande."""
+        for lg, reveil, non, garde, avant, debut, attente in (
+                ("fr", "## Au réveil", "Ne pas reprendre",
+                 "si la garde refuse : `git fetch`, puis `python3 .socle/socle handoff check --ref origin/<branche> "
+                 "--head <sa tête avant le fetch> --since <la coupure, si connue>` ;", "puis comparer",
+                 "## Au début de chaque tour",
+                 "qu'à sa demande. Une passation qui attend (« Passation — <dépôt> ») de même."),
+                ("en", "## On waking", "Do not resume",
+                 "if the guard refuses: `git fetch`, then `python3 .socle/socle handoff check --ref origin/<branch> "
+                 "--head <its head before the fetch> --since <the cut, if known>`;", "then compare",
+                 "## At the start of every turn",
+                 "only at their request. A handoff that is waiting (\"Handoff — <repository>\") likewise.")):
+            texte = self.lire(lg)
+            cas = " ".join(texte.split(reveil, 1)[1].split(non, 1)[1].split("\n\n", 1)[0].split())
+            self.assertIn(garde, cas, lg)
+            self.assertNotIn(avant, texte, lg)
+            section = " ".join(texte.split(debut, 1)[1].split("\n## ", 1)[0].split())
+            self.assertIn(attente, section, lg)
+            self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
+
 
 class TestLaConduiteDUnLot(unittest.TestCase):
     """B-0199, ADR-0079 : le skill qui conduit un lot, posé et protégé
@@ -702,6 +727,33 @@ class TestLaConduiteDUnLot(unittest.TestCase):
                    "a milestone, its batches under it."],
         })
 
+    def test_la_tache_qui_change_un_comportement_nomme_le_test_contraire_avant_le_lot(self):
+        """T-0134 (B-0303, D-0141) : la tâche qui change un comportement
+        nomme le test qui affirme le contraire, et sa demande se pose avant
+        le lot, non en son milieu ; le format de la mémoire le dit aussi."""
+        self.lire({
+            "fr": ["une tâche qui change un comportement nomme le test qui affirme le contraire, sa demande posée "
+                   "aussitôt, avant le lot"],
+            "en": ["a task that changes a behaviour names the test that asserts the opposite, its request made at "
+                   "once, before the batch"],
+        })
+        format_ = " ".join((MOTEUR / "socle/FORMAT.md").read_text(encoding="utf-8").split())
+        self.assertIn("une tâche qui dit ce qu'un comportement doit devenir nomme, dès son écriture, le test qui "
+                      "affirme le contraire, et la demande qui autorise à le changer se pose aussitôt, avant le "
+                      "lancement du lot", format_)
+
+    def test_a_la_cloture_une_tache_que_la_revue_ouvre_rejoint_un_lot_ou_en_forme_un(self):
+        """T-0162 (B-0335) : à la clôture d'un lot, une tâche que sa revue a
+        ouverte rejoint le prochain lot dont la règle s'applique, sinon un
+        lot neuf dans le jalon de son besoin : elle ne reste hors de tout
+        lot."""
+        self.lire({
+            "fr": ["une tâche que sa revue ouvre rejoint le prochain lot dont la règle s'applique, sinon un lot neuf "
+                   "dans le jalon de son besoin"],
+            "en": ["a task its review opens joins the next batch whose rule applies, otherwise a new batch in its "
+                   "need's milestone"],
+        })
+
     def test_les_constats_de_la_revue_suivent_le_tri_de_socle_review(self):
         """T-0014 (B-0242) : un constat qui ne bloque pas suit le tri de
         `socle-review` (backlog ou écarté), il ne va plus d'office au
@@ -733,6 +785,202 @@ class TestLaConduiteDUnLot(unittest.TestCase):
             "en": ["A subagent receives its own explicitly at launch (`model`), never Fable unless the human "
                    "wants it"],
         })
+
+    def test_changer_de_session_range_puis_renvoie_a_socle_handoff(self):
+        """T-0079 (B-0156, D-0174) : « Changer de session » se réduit au
+        rangement, puis au skill `socle-handoff`, qui programme la session
+        suivante ou donne le prompt à copier ; le prompt lui-même vient de
+        `socle handoff prompt`. Et l'agent sans l'humain pour compacter ne
+        l'attend pas : il change de session."""
+        for lg, titre, rangement, renvoi, absent in (
+                ("fr", "## Changer de session",
+                 ("1. le chantier actif dit le lot et ce qui attend, le journal la passation ;",
+                  "3. tout est poussé ;", "Plus rien ne se pousse ensuite."),
+                 "Puis le skill `socle-handoff` : selon le mode, il programme la session suivante, ou donne le "
+                 "prompt de la suivante à copier.",
+                 "Sans l'humain pour compacter, l'agent ne l'attend pas : il change de session."),
+                ("en", "## Changing sessions",
+                 ("1. the active work gives the batch and what is waiting, the journal the handoff;",
+                  "3. everything is pushed;", "Nothing is pushed afterwards."),
+                 "Then the `socle-handoff` skill: depending on the mode, it schedules the next session, or gives "
+                 "the prompt of the next one to copy.",
+                 "Without the human to compact, the agent does not wait for them: it changes sessions.")):
+            texte = self.texte(lg)
+            section = texte.split(titre, 1)[1].split("\n## ", 1)[0]
+            self.assertNotIn("```", section, lg)
+            section = " ".join(section.split())
+            for phrase in (*rangement, renvoi):
+                self.assertIn(phrase, section, lg)
+            self.assertIn(absent, " ".join(texte.split()), lg)
+
+
+class TestLaPassation(unittest.TestCase):
+    """T-0079 et T-0081 (B-0156, B-0259, D-0174) : le skill qui passe la main
+    à une session neuve, posé et protégé comme les autres skills du socle,
+    sans rien de l'atelier ; les deux modes et leur commutateur, le moment,
+    les bornes, les deux appels de la session programmée, la garde, la pull
+    request d'une passation, voir et arrêter ; les instructions et le guide
+    le disent."""
+
+    def setUp(self):
+        self.racine = depot({"app.py": "print('ok')\n"})
+
+    def tearDown(self):
+        shutil.rmtree(self.racine, ignore_errors=True)
+
+    def texte(self, lg: str) -> str:
+        installeur.poser_skills(self.racine, lg)
+        return (self.racine / installeur.SKILLS / "socle-handoff" / "SKILL.md").read_text(encoding="utf-8")
+
+    def lire(self, attendus: dict[str, list[str]]) -> None:
+        for lg, phrases in attendus.items():
+            texte = " ".join(self.texte(lg).split())
+            for phrase in phrases:
+                self.assertIn(phrase, texte, lg)
+
+    def test_il_est_pose_protege_sous_son_budget_et_passe_ses_controles(self):
+        from socle import utils as outils
+
+        with redirect_stdout(io.StringIO()):
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+        proteges = config.Projet.charger(self.racine).chemins_proteges()
+        self.assertTrue(outils.correspond(".claude/skills/socle-handoff/SKILL.md", proteges))
+        for lg in ("fr", "en"):
+            texte = self.texte(lg)
+            self.assertTrue(texte.startswith("---\nname: socle-handoff\n"), lg)
+            self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
+            # Ses commandes, dans des blocs de code, jugées comme le hook.
+            self.assertEqual(len(controles.commandes(texte)), 2, lg)
+            self.assertEqual(juger(self.racine), {"skills.contrat": [], "skills.commandes": []}, lg)
+        self.assertEqual(len(re.findall(r"^## ", self.texte("fr"), re.M)),
+                         len(re.findall(r"^## ", self.texte("en"), re.M)))
+
+    def test_il_ne_renvoie_pas_a_l_atelier(self):
+        atelier = re.compile(r"\b(?:ADR|JA|[BDFJLT])-\d|fabrication|chess|Théo|delegate-lot|Opus|Sonnet|Haiku|Fable")
+        for lg in ("fr", "en"):
+            self.assertIsNone(atelier.search(self.texte(lg)), lg)
+
+    def test_ses_commandes_sont_celles_du_moteur(self):
+        """Le prompt d'une session programmée et celui à copier : chaque
+        commande du skill, ses arguments remplis, est une commande que le
+        moteur accepte."""
+        from socle import cli
+
+        for lg in ("fr", "en"):
+            for _, commande in controles.commandes(self.texte(lg)):
+                argv = commande.replace("ARG", "1").replace('"', "").split()
+                self.assertEqual(argv[:4], ["python3", ".socle/socle", "handoff", "prompt"], lg)
+                args = cli.analyseur()[0].parse_args(argv[2:])
+                self.assertIs(args.f, cli.cmd_handoff, lg)
+            self.assertIn("--scheduled", self.texte(lg))
+
+    def test_les_deux_modes_et_leur_commutateur(self):
+        self.lire({
+            "fr": ["**Session programmée**, par défaut", "**Prompt à copier**",
+                   "Le mode est celui que dit une consigne du chantier actif ; sans elle, la session programmée.",
+                   "L'humain en change en le disant : l'agent écrit la consigne au chantier actif, et son texte "
+                   "exact au journal.",
+                   "Passer au prompt à copier annule ce qui est programmé, la tâche supprimée (`delete_trigger`) "
+                   "et la session créée archivée (`archive_session`), et le dit, avec le lien de chaque session "
+                   "annulée."],
+            "en": ["**Scheduled session**, by default", "**Prompt to copy**",
+                   "The mode is the one an instruction in the active work states; without one, the scheduled "
+                   "session.",
+                   "The human changes it by saying so: the agent writes the instruction in the active work, and "
+                   "its exact text in the journal.",
+                   "Switching to the prompt to copy cancels what is scheduled, the task deleted (`delete_trigger`) "
+                   "and the created session archived (`archive_session`), and says so, with the link of each "
+                   "cancelled session."],
+        })
+
+    def test_le_moment_ses_seuils_et_les_bornes(self):
+        self.lire({
+            "fr": ["| Lot livré | tout de suite : la minute qui suit |",
+                   "la remise à zéro de cette fenêtre, plus cinq minutes", "| la fin de l'attente |",
+                   "15 % de la fenêtre de cinq heures et 75 % de la semaine",
+                   "quand le prochain lot n'a aucune tâche prête dans l'état",
+                   "après deux lots menés sans message de l'humain, le lot en cours compris",
+                   "quand la plateforme refuse de créer la session",
+                   "0 si l'humain a écrit dans la session ; sinon, celle de son prompt de passation, plus un."],
+            "en": ["| Batch delivered | right away: the next minute |",
+                   "the reset of that window, plus five minutes", "| the end of the wait |",
+                   "15% of the five-hour window and 75% of the week",
+                   "when the next batch has no ready task in the state",
+                   "after two batches run without a message from the human, the current batch included",
+                   "when the platform refuses to create the session",
+                   "0 if the human wrote in the session; otherwise, that of its handoff prompt, plus one."],
+        })
+
+    def test_en_session_programmee_le_rangement_programme_la_session_neuve(self):
+        """T-0081 : le rangement, puis le prompt, `create_session` et
+        `create_trigger`, dans cet ordre et avec leurs paramètres ; rien ne
+        se pousse après ; un appel en échec rend le prompt à copier."""
+        for lg, titre, apres, repli in (
+                ("fr", "## Programmer", "Plus rien ne se pousse ensuite",
+                 "Si un appel échoue, la session créée s'archive, et le prompt à copier remplace la passation"),
+                ("en", "## Scheduling", "Nothing is pushed afterwards",
+                 "If a call fails, the created session is archived, and the prompt to copy replaces the handoff")):
+            section = " ".join(self.texte(lg).split(titre, 1)[1].split("\n## ", 1)[0].split())
+            self.assertIn("`socle-batch`", section, lg)
+            self.assertIn(apres, section, lg)
+            self.assertIn(repli, section, lg)
+            ordre = [section.index(x) for x in ("handoff prompt --scheduled", "`create_session`",
+                                                "`create_trigger`")]
+            self.assertEqual(ordre, sorted(ordre), lg)
+            session = section.split("`create_session`", 1)[1].split("`create_trigger`", 1)[0]
+            for parametre in ("`source_url`", "`source_revision`", "`outcome_branch`", "`model`", "`effort`",
+                              "`title`", "`tags`"):
+                self.assertIn(parametre, session, (lg, parametre))
+            tache = section.split("`create_trigger`", 1)[1]
+            for parametre in ("`name`", "`persistent_session_id`", "`run_once_at`", "`prompt`"):
+                self.assertIn(parametre, tache, (lg, parametre))
+
+    def test_la_garde_la_pull_request_voir_et_arreter_et_l_ancienne_session(self):
+        self.lire({
+            "fr": ["Son prompt commence par `git fetch` et la garde (`socle handoff check`).",
+                   "Refusée, elle ne fait rien d'autre que le dire",
+                   "continue la pull request ouverte de sa branche sans la demander : elle devient la sienne.",
+                   "Elle la fusionne si la politique le permet à l'agent",
+                   "en écrivant « arrête » dans la session qui l'a programmée",
+                   "ne l'annule qu'à sa demande",
+                   "Elle le dit en une ligne et ne fait rien d'autre.",
+                   "Les réveils de `socle-resume` restent, dans les deux modes"],
+            "en": ["Its prompt starts with `git fetch` and the guard (`socle handoff check`).",
+                   "Refused, it does nothing else but say so",
+                   "continues the open pull request of its branch without asking: it becomes its own.",
+                   "It merges it if the policy allows the agent to",
+                   "by writing \"stop\" in the session that scheduled it",
+                   "cancels it only at their request",
+                   "It says so in one line and does nothing else.",
+                   "The wake-ups of `socle-resume` remain, in both modes"],
+        })
+
+    def test_les_instructions_et_le_guide_le_disent(self):
+        """Le gabarit d'`AGENTS.md` nomme le skill et donne à la session d'une
+        passation acceptée la pull request ouverte ; le guide dit les deux
+        modes, comment en changer, et la commande."""
+        from socle import cli
+        from socle.templates import gabarit
+
+        for lg, skill, exception, guide, phrases in (
+                ("fr", "`socle-handoff` (passer la main à une session neuve",
+                 "partie d'un prompt de passation que sa garde accepte, elle y continue, et cette pull request "
+                 "devient la sienne.", "HELP.md",
+                 ("**L'enchaînement des sessions.**", "la **session programmée**", "Le **prompt à copier**",
+                  "Pour changer de mode, dites-le à l'agent", "`python3 .socle/socle handoff prompt`",
+                  "`python3 .socle/socle handoff check`")),
+                ("en", "`socle-handoff` (handing over to a new session",
+                 "started from a handoff prompt that its guard accepts, it continues on it, and that pull request "
+                 "becomes its own.", "HELP.en.md",
+                 ("**Chaining sessions.**", "the **scheduled session**", "The **prompt to copy**",
+                  "To change the mode, tell the agent", "`python3 .socle/socle handoff prompt`",
+                  "`python3 .socle/socle handoff check`"))):
+            agents = " ".join(gabarit("AGENTS.md", lg).split())
+            self.assertIn(skill, agents, lg)
+            self.assertIn(exception, agents, lg)
+            texte = " ".join((Path(cli.__file__).parent / guide).read_text(encoding="utf-8").split())
+            for phrase in phrases:
+                self.assertIn(phrase, texte, (lg, phrase))
 
 
 class TestLaRevue(unittest.TestCase):
