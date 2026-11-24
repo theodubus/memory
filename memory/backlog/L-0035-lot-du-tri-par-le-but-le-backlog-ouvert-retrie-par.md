@@ -17,3 +17,4 @@ la CI d'un projet réel. Il ne suit aucun lot : L-0010 attend la sonde E2.
 ### Passe 1 — 2026-11-24
 
 Commits : dcb70366..cfac5078
+- Ouvre : rien
