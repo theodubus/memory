@@ -155,6 +155,12 @@ nulle part. Ajout seul : une entrée publiée ne change plus, sauf pour
 recevoir à sa suite, sur une ligne nouvelle, une archive. Un mois dont le fichier atteindrait son
 budget continue dans `AAAA-MM-2.md`, puis `AAAA-MM-3.md`.
 
+Une entrée dit ce qui s'est passé ; elle ne note aucun geste futur pour
+l'humain (« la branche à supprimer après la fusion », « à approuver
+demain ») : ce qui lui revient, l'état seul le calcule, vérifié au moment
+où il le dit, alors qu'une entrée recopiée plus tard le redonnerait sans
+le vérifier.
+
 ### Backlog — `B-`, `T-`, `L-`, `JA-`
 
 Une entrée du backlog a l'une de quatre formes, que son préfixe dit

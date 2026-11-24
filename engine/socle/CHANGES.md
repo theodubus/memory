@@ -15,6 +15,18 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-24-j — Une entrée du journal ne note aucun geste futur pour l'humain
+
+Une entrée du journal qui notait un geste à venir pour l'humain (« la
+branche à supprimer après la fusion ») se recopiait plus tard, dans un
+récap, sans être vérifiée : une branche déjà supprimée lui était encore
+donnée à supprimer. Le format de la mémoire (`FORMAT.md`, section
+« Journal ») et la section du socle d'`AGENTS.md` le disent désormais :
+une entrée dit ce qui s'est passé, et ce qui revient à l'humain, l'état
+seul le calcule, vérifié au moment où il le dit.
+
+À faire : rien.
+
 ## 2026-11-24-i — La fin de tour refuse un récap qui donne à supprimer une branche que l'origine n'a plus
 
 L'agent donnait parfois à l'humain, dans « Pour toi », une branche à

@@ -14,6 +14,18 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-24-j — A journal entry notes no future step for the human
+
+A journal entry that noted a step to come for the human (“the branch to
+delete after the merge”) was later copied into a recap without being
+checked: a branch already deleted was still given to the human to
+delete. The memory format (`FORMAT.md`, “Journal” section) and the socle
+section of `AGENTS.md` now say so: an entry says what happened, and what
+falls to the human, the state alone computes, checked at the moment it
+says it.
+
+To do: nothing.
+
 ## 2026-11-24-i — The end of turn refuses a recap that gives a branch to delete that the origin no longer has
 
 The agent sometimes gave the human, under "For you", a branch to delete
