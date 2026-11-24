@@ -43,3 +43,7 @@ Commits : e5b37d6..4c6edf7
 - Bloquant : la garde refusait la passation dès que la session qui part poussait après avoir programmé, comme le 23 novembre
 - Bloquant : la pull request ouverte, que la session programmée ne pouvait ni continuer sans l'humain ni fusionner
 - Ouvre : rien
+
+### Passe 3 — 2026-11-24
+
+Commits : 7204705..b0c15d6
