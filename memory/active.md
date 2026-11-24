@@ -5,17 +5,17 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Revue de cap 5 faite (J-2026-11-24-AU) : ses trois suggestions
-attendent la réponse de Théo, avant l'annonce du lot (L-0032, ou celui
-qu'elle décide).
+Revue de cap 5 retenue (J-2026-11-24-AV) : le lot de corrections de
+JA-0005, puis L-0032. À redemander : B-0346 avant chess ?
 
 ## Consignes en cours
 
 Leur texte exact est dans l'entrée du journal citée.
 
 - Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
-- La passation programmée faite, l'atelier reste au prompt à copier ;
-  le produit enchaîne par défaut (D-0173, J-2026-11-24-S).
+- L'atelier au prompt à copier (D-0173), sauf une fin de lot en
+  passation programmée quand Théo ne jongle plus entre ses comptes
+  (D-0182, J-2026-11-24-AV).
 - Le hook terminé : rien sans preuve vue dans une session (ADR-0098).
 - Du temps pour un ajout ou un bug important ; aucun pour un cas limite
   rare, légère gêne que l'agent gère lui-même (D-0165).
