@@ -14,6 +14,23 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-24-a — The review sends to the backlog only what matters and was seen, or is irreversible
+
+The sorting of a review's findings changes. Blocking findings are still
+fixed in the batch. Another finding no longer goes to the backlog
+because it can occur in the project's normal use: it goes there only if
+it matters and has been seen in real use (a session, a CI run, a message
+from the human shows it), or if its effect would be irreversible (lost
+data, a push to the default branch, a deletion). Any other is dismissed,
+including a case the reviewer imagines without having seen it and a
+slight nuisance the agent handles itself; when in
+doubt, it is dismissed, and it comes back if it is seen. The reviewer's
+instructions, the `socle-review` skill, the instructions and the guide
+say so: a review stops filling the backlog with edge cases.
+
+To do: nothing; the `socle-review` skill and the instructions are
+protected copies, in the installer's request.
+
 ## 2026-11-23-f — The resumption covers the wait with a bounded time and the wake-up of interrupted work
 
 The `socle-resume` skill covers two cases its rule left. A turn that

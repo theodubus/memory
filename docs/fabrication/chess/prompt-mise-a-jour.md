@@ -186,6 +186,8 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 69. Le skill socle-resume couvre deux cas de plus (note 2026-11-23-f) : un tour qui finit en attendant un événement dont tu connais l'heure au plus tard (ton rappel, une commande en arrière-plan, une CI) garde ses deux réveils, repoussés après cette heure, et un réveil d'un travail que j'ai interrompu ne te fait pas le finir, même si le hook de fin de tour refuse sur des contrôles en échec. Rien à faire ; si un réveil tire pendant une telle attente, dis-le-moi.
 
+70. La revue d'un lot n'envoie plus au backlog tout constat qui peut se produire dans l'usage normal (note 2026-11-24-a) : seulement ce qui est important et a été vu en usage réel (une session, une CI, un message de moi), ou dont l'effet serait irréversible ; tout autre s'écarte, et revient s'il est vu. Le skill socle-review et la section du socle d'AGENTS.md, copies protégées, le disent. Applique-le à tes prochaines revues ; ton backlog ouvert n'est pas retrié par la mise à jour.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.

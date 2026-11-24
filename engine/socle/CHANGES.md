@@ -15,6 +15,22 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-24-a — La revue n'envoie au backlog que ce qui est important et vu, ou irréversible
+
+Le tri des constats d'une revue change. Les bloquants se corrigent
+toujours dans le lot. Un autre constat ne va plus au backlog parce qu'il
+peut se produire dans l'usage normal du projet : il y va seulement s'il
+est important et a été vu en usage réel (une session, une CI, un message
+de l'humain le montre), ou si son effet serait irréversible (une perte
+de données, un push sur la branche par défaut, une suppression). Tout
+autre s'écarte, dont un cas que le relecteur imagine sans l'avoir vu
+et une légère gêne que l'agent règle lui-même ; en cas de doute, il s'écarte, et il revient s'il est vu. La
+consigne du relecteur, le skill `socle-review`, les instructions et le
+guide le disent : une revue cesse de remplir le backlog de cas limites.
+
+À faire : rien ; le skill `socle-review` et les instructions sont des
+copies protégées, dans la demande de l'installeur.
+
 ## 2026-11-23-f — La reprise couvre l'attente à heure bornée et le réveil d'un travail interrompu
 
 Le skill `socle-resume` couvre deux cas que sa règle laissait. Un tour
