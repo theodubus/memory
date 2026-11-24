@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0010, repris le 24 novembre : D-0160 se réécrit en une demande qui
-la remplace (T-0039), avec la variante B (T-0041, J-2026-11-24-L).
+L-0010 attend D-0174 (J-2026-11-24-U) ; validée : T-0079, T-0081,
+puis T-0134 et T-0162. Branche ccr-1ce8bc05-qb7vdl, sans pull request.
 
 ## Consignes en cours
 
