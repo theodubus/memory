@@ -15,6 +15,21 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-24-d — Le skill des lots : le test contraire nommé avant le lot, et la tâche qu'une revue ouvre placée dans un lot
+
+Deux règles de `socle-batch`, « Former et annoncer » et la clôture d'un
+lot. Une tâche qui change un comportement nomme, dès son écriture, le
+test qui affirme le contraire, et la demande qui autorise à le changer
+se pose aussitôt, avant le lot : le lot ne s'arrête plus en son milieu
+sur ce conflit. Le format de la mémoire (`FORMAT.md`) le dit aussi, là
+où il dit ce qu'est une tâche. À la clôture d'un lot, une tâche que sa
+revue a ouverte rejoint le prochain lot dont la règle s'applique, sinon
+un lot neuf dans le jalon de son besoin : elle ne reste plus hors de
+tout lot.
+
+À faire : rien ; le skill `socle-batch` est une copie protégée, dans la
+demande de l'installeur.
+
 ## 2026-11-24-c — La session suivante se programme seule : la passation programmée, `socle handoff` et sa garde
 
 À la fin d'un lot, près d'une limite d'usage ou avant une attente de

@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0156 — Le contexte long : une solution automatique, plutôt qu'une session neuve à ouvrir à la main
 
-> statut : ouvert · origine : J-2026-11-10-N · lu : backlog@877a7268
+> statut : fait · ref : J-2026-11-24-Y · origine : J-2026-11-10-N · lu : backlog@877a7268
 
 Théo, le 10 novembre (J-2026-11-10-N) : ouvrir une session neuve à chaque
 sujet est une friction majeure en session cloud ; il veut une solution
@@ -48,4 +48,4 @@ faire ; une session neuve coûterait moins que la reprise à froid.
 
 ## Satisfait quand
 
-- [ ] une session longue se poursuit sans que Théo en ouvre une neuve à la main, même quand il n'est pas là pour compacter, et ce que coûte une tâche ainsi menée est mesuré
+- [x] une session longue se poursuit sans que Théo en ouvre une neuve à la main, même quand il n'est pas là pour compacter, et ce que coûte une tâche ainsi menée est mesuré

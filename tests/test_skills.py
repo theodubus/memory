@@ -727,6 +727,33 @@ class TestLaConduiteDUnLot(unittest.TestCase):
                    "a milestone, its batches under it."],
         })
 
+    def test_la_tache_qui_change_un_comportement_nomme_le_test_contraire_avant_le_lot(self):
+        """T-0134 (B-0303, D-0141) : la tâche qui change un comportement
+        nomme le test qui affirme le contraire, et sa demande se pose avant
+        le lot, non en son milieu ; le format de la mémoire le dit aussi."""
+        self.lire({
+            "fr": ["une tâche qui change un comportement nomme le test qui affirme le contraire, sa demande posée "
+                   "aussitôt, avant le lot"],
+            "en": ["a task that changes a behaviour names the test that asserts the opposite, its request made at "
+                   "once, before the batch"],
+        })
+        format_ = " ".join((MOTEUR / "socle/FORMAT.md").read_text(encoding="utf-8").split())
+        self.assertIn("une tâche qui dit ce qu'un comportement doit devenir nomme, dès son écriture, le test qui "
+                      "affirme le contraire, et la demande qui autorise à le changer se pose aussitôt, avant le "
+                      "lancement du lot", format_)
+
+    def test_a_la_cloture_une_tache_que_la_revue_ouvre_rejoint_un_lot_ou_en_forme_un(self):
+        """T-0162 (B-0335) : à la clôture d'un lot, une tâche que sa revue a
+        ouverte rejoint le prochain lot dont la règle s'applique, sinon un
+        lot neuf dans le jalon de son besoin : elle ne reste hors de tout
+        lot."""
+        self.lire({
+            "fr": ["une tâche que sa revue ouvre rejoint le prochain lot dont la règle s'applique, sinon un lot neuf "
+                   "dans le jalon de son besoin"],
+            "en": ["a task its review opens joins the next batch whose rule applies, otherwise a new batch in its "
+                   "need's milestone"],
+        })
+
     def test_les_constats_de_la_revue_suivent_le_tri_de_socle_review(self):
         """T-0014 (B-0242) : un constat qui ne bloque pas suit le tri de
         `socle-review` (backlog ou écarté), il ne va plus d'office au

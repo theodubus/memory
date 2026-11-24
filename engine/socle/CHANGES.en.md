@@ -14,6 +14,20 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-24-d — The batch skill: the opposing test named before the batch, and the task a review opens placed in a batch
+
+Two rules of `socle-batch`, "Forming and announcing" and the closing of a
+batch. A task that changes a behaviour names, as soon as it is written,
+the test that asserts the opposite, and the request that allows changing
+it is made at once, before the batch: the batch no longer stops halfway
+on that conflict. The memory format (`FORMAT.md`) says so too, where it
+says what a task is. At the closing of a batch, a task its review opened
+joins the next batch whose rule applies, otherwise a new batch in its
+need's milestone: it no longer stays outside every batch.
+
+To do: nothing; the `socle-batch` skill is a protected copy, in the
+installer's request.
+
 ## 2026-11-24-c — The next session schedules itself: the scheduled handoff, `socle handoff` and its guard
 
 At the end of a batch, near a usage limit or before a wait of more than

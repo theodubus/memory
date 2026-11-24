@@ -15,7 +15,9 @@ tâche.
 1. Le prochain lot est dans l'état (`prochain lot`). Sinon, le former
    sur tout le backlog ouvert, sans le demander : les tâches prêtes
    auxquelles sa règle s'applique, du prochain jalon et de priorité haute
-   d'abord ; un besoin à découper reçoit d'abord ses tâches ; le reste va
+   d'abord ; un besoin à découper reçoit d'abord ses tâches ; une tâche
+   qui change un comportement nomme le test qui affirme le contraire, sa
+   demande posée aussitôt, avant le lot ; le reste va
    au prochain lot pas en cours dont la règle s'applique, et le récap dit
    chaque placement. Il se garde au backlog : `python3 .socle/socle new
    batch "Lot …"`, puis `après :` le lot d'avant et ses tâches ; son corps
@@ -85,7 +87,9 @@ entrée de journal et une valeur attendue ne se réécrivent plus.
    fusion lance sur la branche par défaut ; le récap dit s'ils ont réussi.
 5. Le chantier actif et le journal s'écrivent avant la fusion, dans le
    dernier commit de la pull request, avec la clôture du lot : ses tâches
-   closes, il passe `fait`, puis `python3 .socle/socle archive` ; le récap
+   closes, il passe `fait`, puis `python3 .socle/socle archive` ; une tâche
+   que sa revue ouvre rejoint le prochain lot dont la règle s'applique,
+   sinon un lot neuf dans le jalon de son besoin ; le récap
    de la clôture colle la sortie de `python3 .socle/socle roadmap` dans un
    bloc de code. Après la fusion, la branche locale repart de la branche
    par défaut et ne se pousse qu'avec le premier commit du lot suivant :
@@ -93,11 +97,9 @@ entrée de journal et une valeur attendue ne se réécrivent plus.
 
 ## La consommation
 
-- Un lot par session : la conversation qui orchestre, relue à chaque
-  pas, reste courte.
+- Un lot par session : la conversation qui orchestre reste courte.
 - Les coûts se mesurent : l'utilisation de chaque fenêtre, avant chaque
-  lancement et à chaque compte rendu (en session cloud, `list_events`,
-  `rate_limit_event`). La clôture note au journal le coût de chaque
+  lancement et à chaque compte rendu (skill `socle-resume`). La clôture note au journal le coût de chaque
   sous-agent, du relecteur, de chaque demande et du rangement : celui
   d'un lot s'estime sur ces mesures.
 - Un seul sous-agent au-delà de 75 % de la semaine. Un sous-agent se
@@ -127,8 +129,7 @@ entrée de journal et une valeur attendue ne se réécrivent plus.
 ## Changer de session
 
 À la fin du lot, près d'une limite ou avant une attente de plus d'une
-heure (le moment : skill `socle-handoff`). Ranger d'abord, qu'une
-session neuve reparte du dépôt seul :
+heure (le moment : skill `socle-handoff`). Ranger d'abord :
 
 1. le chantier actif dit le lot et ce qui attend, le journal la
    passation ;
