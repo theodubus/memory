@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0179-ajouter-en-plus-du-controle-de-fin-de-tour-qui-ver.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-24"
+canal = "conversation"
+citation = "Pour la regle amont :\nSi c'est leger/facile/rapide a implementer : oui \nSi non : \nSi c'est lourd pour l'agent le controle seul alors : oui\nSi non également alors non"
+empreinte = "sha256:f312360b8e41bdd2cce8e78ae07267c2b761785ecc92c4e011fb651e95373933"
