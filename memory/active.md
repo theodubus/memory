@@ -5,9 +5,9 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0010 : ses tâches faites, sa passation intégrée (J-2026-11-24-Z) ;
-restent la revue, la demande des copies protégées des trois skills,
-la clôture. Branche ccr-a2cf2bb0-4fse3w.
+L-0010 relu (J-2026-11-24-AA) ; attend D-0175, les copies protégées
+des trois skills (J-2026-11-24-AB), puis sa clôture et sa fusion.
+Branche ccr-a2cf2bb0-4fse3w.
 
 ## Consignes en cours
 
