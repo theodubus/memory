@@ -15,6 +15,26 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-24-c — La passation à une session neuve : `socle handoff`, son prompt et sa garde
+
+Une commande nouvelle, pour l'agent, écrit le prompt d'une session
+neuve et juge sa garde. `python3 .socle/socle handoff prompt` refuse tant
+que la tête locale n'est pas poussée ; il nomme la branche distante, sa
+tête et l'heure de la passation, en UTC, puis donne le prompt de session
+neuve de `socle-batch`, avec le lot et ses tâches lus dans l'état. Dans
+la session neuve, `python3 .socle/socle handoff check`, après `git
+fetch`, refuse, en disant pourquoi, si quelqu'un a poussé sur la branche
+depuis la passation, ou si une autre branche distante porte un commit
+daté d'après elle qui touche la mémoire sans être dans la tête passée :
+une autre session travaille sur le projet. Une pull request fusionnée
+par un commit de fusion pendant l'attente fait repartir la session de
+la branche par défaut ; fusionnée par squash, la garde refuse. Au réveil
+après une limite, le skill `socle-resume` appelle la même garde, et au
+premier tour il dit à l'humain une passation programmée qui attend.
+
+À faire : rien ; le skill `socle-resume` est une copie protégée, dans
+la demande de l'installeur.
+
 ## 2026-11-24-b — L'auto-test ne fait plus échouer la CI au hasard sur un clone de son projet d'essai
 
 L'auto-test du socle joue ses cas sur plusieurs fils, chacun dans un

@@ -899,6 +899,42 @@ def _clone_d_un_clone(a: Atelier, c: Path, ref: str | None) -> Path:
     return d
 
 
+def _passation(a: Atelier, c: Path) -> tuple[Path, list[str]]:
+    """Une passation dans une origine nue à soi : l'origine partagée reçoit
+    les branches des autres cas, que la garde lirait. La session qui part,
+    `c`, y pousse sa branche rangée, puis écrit le prompt (`socle handoff
+    prompt`). Rend le clone de la session neuve, et les arguments de la
+    garde que le prompt lui donne."""
+    nu = c.parent / f"{c.name}-nu"
+    a.git(a.dossier, "clone", "-q", "--bare", "--no-local", "--single-branch", "--branch", "main", str(a.origine),
+          str(nu))
+    a.git(c, "remote", "set-url", "origin", str(nu))
+    a.git(c, "fetch", "-q", "origin")
+    maj_memoire(c, "La passation de l'essai.")
+    a.commit(c, "le rangement")
+    a.git(c, "push", "-q", "--no-verify", "-u", "origin", "travail")
+    r = a.socle(c, "handoff", "prompt")
+    lignes = [l for l in r.stdout.splitlines() if l.startswith("python3 .socle/socle handoff check ")]
+    if r.returncode != 0 or not lignes:
+        raise RuntimeError(r.stdout + r.stderr)
+    neuve = c.parent / f"{c.name}-neuve"
+    a.git(a.dossier, "clone", "-q", "--no-local", str(nu), str(neuve))
+    return neuve, lignes[0].split()[2:]
+
+
+def _apres_la_passation(garde: list[str]) -> dict:
+    """L'environnement d'un commit daté d'une minute après la passation."""
+    depuis = datetime.strptime(garde[garde.index("--since") + 1], "%Y-%m-%dT%H:%M:%SZ")
+    return {"GIT_COMMITTER_DATE": (depuis + timedelta(minutes=1)).strftime("%Y-%m-%dT%H:%M:%S+0000")}
+
+
+def _session_neuve(a: Atelier, neuve: Path, garde: list[str]) -> subprocess.CompletedProcess:
+    """La session neuve fait ce que dit son prompt : `git fetch`, puis la
+    garde."""
+    a.git(neuve, "fetch", "-q", "origin")
+    return a.socle(neuve, *garde)
+
+
 # --------------------------------------------------------------------------
 # Les défauts du cadrage, puis quelques autres
 # --------------------------------------------------------------------------
@@ -1622,6 +1658,33 @@ def _cas() -> list[Cas]:
         ajouter(c, ".socle/guardrails.toml", "\n# Un garde-fou que le lot touche.\n")
         a.commit(c, "un lot qui touche un garde-fou")
         r = a.socle(c, "review", "--short")
+        return r.stdout + r.stderr
+
+    # La garde de la passation (`socle handoff check`) : la session neuve ne
+    # travaille pas par-dessus une autre.
+    @defaut("passation-poussee-depuis", "session neuve d'une passation alors que la session qui part a poussé après "
+            "elle", "passation", "passation poussée depuis")
+    def _(a, c):
+        neuve, garde = _passation(a, c)
+        remplacer(c, "memory/active.md", "La passation de l'essai.", "Un commit poussé après la passation.")
+        a.commit(c, "après la passation")
+        a.git(c, "push", "-q", "--no-verify", "origin", "travail")
+        r = _session_neuve(a, neuve, garde)
+        return r.stdout + r.stderr
+
+    @defaut("passation-autre-session", "session neuve d'une passation alors qu'une autre session a écrit la mémoire "
+            "sur une autre branche depuis", "passation", "passation d'une autre session")
+    def _(a, c):
+        neuve, garde = _passation(a, c)
+        autre = c.parent / f"{c.name}-autre"
+        a.git(a.dossier, "clone", "-q", "--no-local", str(c.parent / f"{c.name}-nu"), str(autre))
+        a.git(autre, "checkout", "-q", "-b", "autre", "origin/main")
+        maj_memoire(autre, "Le travail d'une autre session.")
+        r = a.commit(autre, "une autre session", env=_apres_la_passation(garde))
+        if r.returncode != 0:
+            raise RuntimeError(r.stderr)
+        a.git(autre, "push", "-q", "--no-verify", "origin", "autre")
+        r = _session_neuve(a, neuve, garde)
         return r.stdout + r.stderr
 
     # L'historique des revues d'un lot (ADR-0084, ADR-0100) : une ligne de
@@ -2945,6 +3008,25 @@ def _temoins() -> list[tuple[str, Callable]]:
         r = a.socle(c, "review", "--short")
         return "" if r.returncode == 0 and "n'explore pas au-delà" in r.stdout else r.stdout + r.stderr
 
+    @temoin("une passation dont la pull request est fusionnée par un commit de fusion pendant l'attente, un robot "
+            "ayant poussé sans toucher la mémoire, passe sa garde, qui place la session neuve sur la branche par "
+            "défaut")
+    def _(a, c):
+        neuve, garde = _passation(a, c)
+        github = c.parent / f"{c.name}-github"
+        a.git(a.dossier, "clone", "-q", "--no-local", str(c.parent / f"{c.name}-nu"), str(github))
+        a.git(github, "checkout", "-q", "-b", "dependances", "origin/main")
+        remplacer(github, "calc.py", '"""Calculs du projet d\'essai."""', '"""Calculs du projet d\'essai, à jour."""')
+        r = a.commit(github, "une dépendance à jour", env=_apres_la_passation(garde))
+        if r.returncode != 0:
+            return r.stdout + r.stderr
+        a.git(github, "push", "-q", "--no-verify", "origin", "dependances")
+        a.git(github, "checkout", "-q", "main")
+        a.git(github, "merge", "-q", "--no-ff", "-m", "Fusion de la pull request du lot", "origin/travail")
+        a.git(github, "push", "-q", "--no-verify", "origin", "main")
+        r = _session_neuve(a, neuve, garde)
+        return "" if r.returncode == 0 and "se placer sur origin/main" in r.stdout else r.stdout + r.stderr
+
     @temoin("un lot relu clos « fait », ses deux passes sans recul, passe le commit et la CI")
     def _(a, c):
         _lot_relu_clos(a, c, _bloquant_essai())
@@ -3705,6 +3787,10 @@ RAISONS_AGENT = {
     # `socle review` ne nomme pas de contrôle non plus : il refuse le dossier
     # court d'un lot qui touche un garde-fou (B-0288).
     "revue courte refusée": "le lot touche un garde-fou",
+    # `socle handoff check` non plus : il refuse la passation, en disant
+    # pourquoi.
+    "passation poussée depuis": "quelqu'un a poussé sur origin/travail depuis la passation",
+    "passation d'une autre session": "une autre session travaille sur le projet",
 }
 
 

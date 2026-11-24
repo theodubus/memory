@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0010 attend D-0174 (J-2026-11-24-U) ; validée : T-0079, T-0081,
-puis T-0134 et T-0162. Branche ccr-1ce8bc05-qb7vdl, sans pull request.
+L-0010, D-0174 validée : T-0081 en cours (J-2026-11-24-W), puis
+T-0079, T-0134, T-0162. Branche ccr-1ce8bc05-qb7vdl, sans pull request.
 
 ## Consignes en cours
 

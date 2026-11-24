@@ -14,6 +14,26 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-24-c — The handoff to a new session: `socle handoff`, its prompt and its guard
+
+A new command, for the agent, writes the prompt of a new session and
+judges its guard. `python3 .socle/socle handoff prompt` refuses as long
+as the local head is not pushed; it names the remote branch, its head
+and the time of the handoff, in UTC, then gives the new-session prompt
+of `socle-batch`, with the batch and its tasks read from the state. In
+the new session, `python3 .socle/socle handoff check`, after `git
+fetch`, refuses, saying why, if someone pushed to the branch since the
+handoff, or if another remote branch carries a commit dated after it
+that touches the memory without being in the handed-off head: another
+session is working on the project. A pull request merged by a merge
+commit during the wait makes the session restart from the default
+branch; squash-merged, the guard refuses. On waking after a limit, the
+`socle-resume` skill calls the same guard, and at the first turn it
+tells the human about a scheduled handoff that is waiting.
+
+To do: nothing; the `socle-resume` skill is a protected copy, in the
+installer's request.
+
 ## 2026-11-24-b — The self-test no longer fails the CI at random on a clone of its test project
 
 The socle's self-test plays its cases on several threads, each in a

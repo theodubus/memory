@@ -513,6 +513,31 @@ class TestLaReprise(unittest.TestCase):
         for lg, regle in (("fr", "Un sous-agent ne touche à aucun réveil"), ("en", "A subagent\ntouches no wake-up")):
             self.assertIn(regle, self.lire(lg), lg)
 
+    def test_au_reveil_la_garde_de_la_passation_et_au_premier_tour_la_passation_qui_attend(self):
+        """T-0081 (D-0174) : la vérification du réveil appelle la garde de la
+        passation, la tête distante lue avant son `git fetch` et l'heure de la
+        coupure ; au premier tour, une passation programmée qui attend se dit
+        à l'humain, comme les réveils d'une session archivée, et ne s'annule
+        qu'à sa demande."""
+        for lg, reveil, non, garde, avant, debut, attente in (
+                ("fr", "## Au réveil", "Ne pas reprendre",
+                 "si la garde refuse : `git fetch`, puis `python3 .socle/socle handoff check --ref origin/<branche> "
+                 "--head <sa tête avant le fetch> --since <la coupure, si connue>` ;", "puis comparer",
+                 "## Au début de chaque tour",
+                 "qu'à sa demande. Une passation qui attend (« Passation — <dépôt> ») de même."),
+                ("en", "## On waking", "Do not resume",
+                 "if the guard refuses: `git fetch`, then `python3 .socle/socle handoff check --ref origin/<branch> "
+                 "--head <its head before the fetch> --since <the cut, if known>`;", "then compare",
+                 "## At the start of every turn",
+                 "only at their request. A handoff that is waiting (\"Handoff — <repository>\") likewise.")):
+            texte = self.lire(lg)
+            cas = " ".join(texte.split(reveil, 1)[1].split(non, 1)[1].split("\n\n", 1)[0].split())
+            self.assertIn(garde, cas, lg)
+            self.assertNotIn(avant, texte, lg)
+            section = " ".join(texte.split(debut, 1)[1].split("\n## ", 1)[0].split())
+            self.assertIn(attente, section, lg)
+            self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
+
 
 class TestLaConduiteDUnLot(unittest.TestCase):
     """B-0199, ADR-0079 : le skill qui conduit un lot, posé et protégé
