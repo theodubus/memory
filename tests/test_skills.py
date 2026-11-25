@@ -577,14 +577,14 @@ class TestLaConduiteDUnLot(unittest.TestCase):
         """B-0220 : après la fusion, rien ne se pousse sans travail neuf ;
         le chantier actif et le journal s'écrivent avant."""
         attendus = {
-            "fr": ["deux à la fois au plus", "75 %", "85 %", "60 % de la fenêtre de cinq heures",
-                   "Un lot par session", "git format-patch", "prompt de la suivante",
+            "fr": ["deux à la fois au plus", "85 %", "60 % de la fenêtre de cinq heures",
+                   "**La session est l'unité de budget.**", "git format-patch", "dit de demander la reprise",
                    "Le chantier actif et le journal s'écrivent avant la fusion",
-                   "ne se pousse qu'avec le premier commit du lot suivant", "**Sans sous-agents**"],
-            "en": ["two at a time at most", "75%", "85%", "60% of the five-hour window",
-                   "One batch per session", "git format-patch", "prompt of the next one",
+                   "ne se pousse qu'avec le premier commit du lot suivant"],
+            "en": ["two at a time at most", "85%", "60% of the five-hour window",
+                   "**The session is the budget unit.**", "git format-patch", "says to ask for the resumption",
                    "The active work and the journal are written before the merge",
-                   "is pushed only with the first commit of the next batch", "**Without subagents**"],
+                   "is pushed only with the first commit of the next batch"],
         }
         for lg, phrases in attendus.items():
             texte = " ".join(self.texte(lg).split())
@@ -599,10 +599,7 @@ class TestLaConduiteDUnLot(unittest.TestCase):
         pèse le moins ; un sous-agent reçoit le sien à son lancement."""
         attendus = {
             "fr": ["L'agent ne compacte pas lui-même", "il écrit la mémoire (chantier actif, journal)",
-                   "le demande à l'humain", "`/compact`", "à la fin d'un lot si l'humain garde la session",
-                   "avant toute attente qui peut passer l'heure sans changer de session",
-                   "Près d'une limite, le seuil plus haut prime : changer de session",
-                   "Après la pause, il est trop tard",
+                   "si l'humain garde la session au-delà de ce seuil", "lui demande `/compact`",
                    "celui que demande la qualité du travail, jamais un moindre pour tenir une limite",
                    "une limite retarde un lot, elle ne l'allège pas",
                    "Entre ceux qui le font aussi bien, celui qui consomme le moins de la limite par jeton",
@@ -610,10 +607,7 @@ class TestLaConduiteDUnLot(unittest.TestCase):
                    "Celui que fixent les instructions du projet prime",
                    "Un sous-agent reçoit le sien explicitement à son lancement"],
             "en": ["The agent does not compact by itself", "it writes the memory (active work, journal)",
-                   "asks the human to", "`/compact`", "at the end of a batch if the human keeps the session",
-                   "before any wait that may exceed an hour without changing sessions",
-                   "Near a limit, the threshold above prevails: change sessions",
-                   "After the pause, it is too late",
+                   "if the human keeps the session beyond that threshold", "asks them for `/compact`",
                    "the one the quality of the work calls for, never a lesser one to stay within a limit",
                    "a limit delays a batch, it does not lighten it",
                    "Among those that do it equally well, the one that uses the least of the limit per token",
@@ -633,20 +627,23 @@ class TestLaConduiteDUnLot(unittest.TestCase):
             for phrase in phrases:
                 self.assertIn(phrase, texte, lg)
 
-    def test_une_petite_tache_s_implemente_dans_la_session_qui_orchestre(self):
-        """T-0093 (D-0134, proposition 1) : sous un seuil provisoire, la
-        session qui orchestre implémente ; un garde-fou ou un format lu
-        ailleurs garde son sous-agent."""
+    def test_un_sous_agent_implemente_quand_il_paie(self):
+        """T-0183 (D-0194, section 4 de la page validée) : l'agent qui
+        orchestre implémente ; un sous-agent, seulement pour des tâches
+        indépendantes en parallèle ou une lecture qui saturerait la
+        conversation. Remplace le seuil de la petite tâche (D-0134)."""
         self.lire({
-            "fr": ["il n'implémente lui-même qu'une petite tâche",
-                   "**Une petite tâche**, moins de 150 lignes de code et de tests (seuil provisoire, à mesurer), "
-                   "s'implémente dans la session qui orchestre, sauf si elle touche un garde-fou "
-                   "ou un format que d'autres parties du projet lisent."],
-            "en": ["it implements itself only a small task",
-                   "**A small task**, under 150 lines of code and tests (a provisional threshold, to be measured), "
-                   "is implemented in the orchestrating session, unless it touches a guardrail "
-                   "or a format that other parts of the project read."],
+            "fr": ["L'agent qui orchestre implémente, une tâche après l'autre, un commit chacune.",
+                   "**Un sous-agent implémente quand il paie** : des tâches indépendantes qui avancent en "
+                   "parallèle, ou une tâche dont la lecture saturerait la conversation qui orchestre (plus de 400 "
+                   "lignes changées, ou des fichiers longs à lire)."],
+            "en": ["The orchestrating agent implements, one task after the other, one commit each.",
+                   "**A subagent implements when it pays**: independent tasks that move forward in parallel, or a "
+                   "task whose reading would saturate the orchestrating conversation (more than 400 lines changed, "
+                   "or long files to read)."],
         })
+        for lg, avant in (("fr", "petite tâche"), ("en", "small task")):
+            self.assertNotIn(avant, self.texte(lg), lg)
 
     def test_un_sous_agent_se_lance_si_ce_qui_reste_couvre_son_cout_et_le_rangement(self):
         """T-0037 (B-0249) : le seuil fixe devient le coût mesuré d'un
@@ -672,10 +669,12 @@ class TestLaConduiteDUnLot(unittest.TestCase):
         """Relevé par la revue de L-0018 : le gabarit, resserré sous son
         plafond, avait perdu trois règles."""
         self.lire({
-            "fr": ["un sous-agent arrêté depuis plus de cinq minutes ne se reprend pas",
+            "fr": ["Un sous-agent arrêté (une vérification en arrière-plan dont il n'a pas repris le fil) se "
+                   "reprend depuis sa copie isolée, par l'agent qui orchestre",
                    "une tâche qui demande plus de réflexion se commence quand même",
                    "il hérite de la session ; sinon, le dire à l'humain"],
-            "en": ["a subagent stopped for more than five minutes is not resumed",
+            "en": ["A stopped subagent (a background check whose thread it did not pick up) is resumed from its "
+                   "isolated copy, by the orchestrating agent",
                    "a task that needs more thought is started anyway",
                    "it inherits the session's; otherwise, tell the human"],
         })
@@ -795,16 +794,17 @@ class TestLaConduiteDUnLot(unittest.TestCase):
         for lg, titre, rangement, renvoi, absent in (
                 ("fr", "## Changer de session",
                  ("1. le chantier actif dit le lot et ce qui attend, le journal la passation ;",
-                  "3. tout est poussé ;", "Plus rien ne se pousse ensuite."),
-                 "Puis le skill `socle-handoff` : selon le mode, il programme la session suivante, ou donne le "
-                 "prompt de la suivante à copier.",
-                 "Sans l'humain pour compacter, l'agent ne l'attend pas : il change de session."),
+                  "3. tout est commité ;", "Plus rien ne se pousse ensuite."),
+                 "Puis le skill `socle-handoff` : la passation écrite, commitée et poussée. Plus rien ne se pousse "
+                 "ensuite. Selon le mode, il programme la session suivante, ou dit de demander la reprise.",
+                 "sinon, elle change de session."),
                 ("en", "## Changing sessions",
                  ("1. the active work gives the batch and what is waiting, the journal the handoff;",
-                  "3. everything is pushed;", "Nothing is pushed afterwards."),
-                 "Then the `socle-handoff` skill: depending on the mode, it schedules the next session, or gives "
-                 "the prompt of the next one to copy.",
-                 "Without the human to compact, the agent does not wait for them: it changes sessions.")):
+                  "3. everything is committed;", "Nothing is pushed afterwards."),
+                 "Then the `socle-handoff` skill: the handoff written, committed and pushed. Nothing is pushed "
+                 "afterwards. Depending on the mode, it schedules the next session, or says to ask for the "
+                 "resumption.",
+                 "otherwise, it changes sessions.")):
             texte = self.texte(lg)
             section = texte.split(titre, 1)[1].split("\n## ", 1)[0]
             self.assertNotIn("```", section, lg)
@@ -869,7 +869,8 @@ class TestLaPassation(unittest.TestCase):
         for lg in ("fr", "en"):
             for _, commande in controles.commandes(self.texte(lg)):
                 argv = commande.replace("ARG", "1").replace('"', "").split()
-                self.assertEqual(argv[:4], ["python3", ".socle/socle", "handoff", "prompt"], lg)
+                self.assertEqual(argv[:3], ["python3", ".socle/socle", "handoff"], lg)
+                self.assertIn(argv[3], ("write", "check"), lg)
                 args = cli.analyseur()[0].parse_args(argv[2:])
                 self.assertIs(args.f, cli.cmd_handoff, lg)
             self.assertIn("--scheduled", self.texte(lg))
@@ -897,36 +898,46 @@ class TestLaPassation(unittest.TestCase):
         self.lire({
             "fr": ["| Lot livré | tout de suite : la minute qui suit |",
                    "la remise à zéro de cette fenêtre, plus cinq minutes", "| la fin de l'attente |",
-                   "15 % de la fenêtre de cinq heures et 75 % de la semaine",
+                   "Une session ne part que si le coût estimé de son lot tient dans ce qui reste de la fenêtre de "
+                   "cinq heures, la marge du rangement comprise, et jamais sur une semaine au-delà de 75 %",
                    "quand le prochain lot n'a aucune tâche prête dans l'état",
                    "après deux lots menés sans message de l'humain, le lot en cours compris",
                    "quand la plateforme refuse de créer la session",
-                   "0 si l'humain a écrit dans la session ; sinon, celle de son prompt de passation, plus un."],
+                   "0 si l'humain a écrit dans la session ; sinon, celle de sa passation, plus un."],
             "en": ["| Batch delivered | right away: the next minute |",
                    "the reset of that window, plus five minutes", "| the end of the wait |",
-                   "15% of the five-hour window and 75% of the week",
+                   "A session starts only if its batch's estimated cost fits in what remains of the five-hour "
+                   "window, the tidying-up margin included, and never on a week beyond 75%",
                    "when the next batch has no ready task in the state",
                    "after two batches run without a message from the human, the current batch included",
                    "when the platform refuses to create the session",
-                   "0 if the human wrote in the session; otherwise, that of its handoff prompt, plus one."],
+                   "0 if the human wrote in the session; otherwise, that of its handoff, plus one."],
         })
 
     def test_en_session_programmee_le_rangement_programme_la_session_neuve(self):
-        """T-0081 : le rangement, puis le prompt, `create_session` et
-        `create_trigger`, dans cet ordre et avec leurs paramètres ; rien ne
+        """T-0081, T-0182 (D-0190) : le rangement, la passation écrite avec
+        `--scheduled`, commitée, poussée et retrouvée par la garde, puis
+        `create_session` et `create_trigger`, dans cet ordre et avec leurs
+        paramètres, la tâche programmée envoyant son texte à elle ; rien ne
         se pousse après ; un appel en échec rend le prompt à copier."""
-        for lg, titre, apres, repli in (
-                ("fr", "## Programmer", "Plus rien ne se pousse ensuite",
-                 "Si un appel échoue, la session créée s'archive, et le prompt à copier remplace la passation"),
-                ("en", "## Scheduling", "Nothing is pushed afterwards",
-                 "If a call fails, the created session is archived, and the prompt to copy replaces the handoff")):
-            section = " ".join(self.texte(lg).split(titre, 1)[1].split("\n## ", 1)[0].split())
+        for lg, ecrire, programmer, apres, repli, reveil in (
+                ("fr", "## Écrire la passation", "## Programmer", "Plus rien ne se pousse ensuite",
+                 "Si un appel échoue, la session créée s'archive, et le prompt à copier remplace la passation "
+                 "programmée", "`prompt` « reprends — session programmée »"),
+                ("en", "## Writing the handoff", "## Scheduling", "Nothing is pushed afterwards",
+                 "If a call fails, the created session is archived, and the prompt to copy replaces the scheduled "
+                 "handoff", "`prompt` \"resume — scheduled session\"")):
+            texte = self.texte(lg)
+            section = " ".join(texte.split(ecrire, 1)[1].split("\n## ", 1)[0].split())
             self.assertIn("`socle-batch`", section, lg)
             self.assertIn(apres, section, lg)
-            self.assertIn(repli, section, lg)
-            ordre = [section.index(x) for x in ("handoff prompt --scheduled", "`create_session`",
-                                                "`create_trigger`")]
+            ordre = [section.index(x) for x in ("`--scheduled`", "handoff write", "handoff check")]
             self.assertEqual(ordre, sorted(ordre), lg)
+            self.assertLess(texte.index(ecrire), texte.index(programmer), lg)
+            section = " ".join(texte.split(programmer, 1)[1].split("\n## ", 1)[0].split())
+            self.assertIn(repli, section, lg)
+            self.assertIn(reveil, section, lg)
+            self.assertLess(section.index("`create_session`"), section.index("`create_trigger`"), lg)
             session = section.split("`create_session`", 1)[1].split("`create_trigger`", 1)[0]
             for parametre in ("`source_url`", "`source_revision`", "`outcome_branch`", "`model`", "`effort`",
                               "`title`", "`tags`"):
@@ -937,16 +948,24 @@ class TestLaPassation(unittest.TestCase):
 
     def test_la_garde_la_pull_request_voir_et_arreter_et_l_ancienne_session(self):
         self.lire({
-            "fr": ["Son prompt commence par `git fetch` et la garde (`socle handoff check`).",
-                   "Refusée, elle ne fait rien d'autre que le dire",
+            "fr": ["Sur un premier message qui demande de reprendre ou de continuer le travail, quelle qu'en soit "
+                   "la forme (« reprends », « continue », « reprends les travaux »), ou sur celui de la tâche "
+                   "programmée, l'agent lance `git fetch --prune origin`, puis la garde sans argument.",
+                   "ne fait rien d'autre que le dire",
+                   "son premier commit retire la passation, poussé aussitôt",
+                   "Sans passation, elle fait ce que fait une session neuve, et le dit dans son premier message.",
                    "continue la pull request ouverte de sa branche sans la demander : elle devient la sienne.",
                    "Elle la fusionne si la politique le permet à l'agent",
                    "en écrivant « arrête » dans la session qui l'a programmée",
                    "ne l'annule qu'à sa demande",
                    "Elle le dit en une ligne et ne fait rien d'autre.",
                    "Les réveils de `socle-resume` restent, dans les deux modes"],
-            "en": ["Its prompt starts with `git fetch` and the guard (`socle handoff check`).",
-                   "Refused, it does nothing else but say so",
+            "en": ["On a first message that asks to resume or continue the work, whatever its form (\"resume\", "
+                   "\"continue\", \"pick the work back up\"), or on the scheduled task's, the agent runs `git fetch "
+                   "--prune origin`, then the guard without arguments.",
+                   "does nothing else but say so",
+                   "its first commit removes the handoff, pushed at once",
+                   "Without a handoff, it does what a new session does, and says so in its first message.",
                    "continues the open pull request of its branch without asking: it becomes its own.",
                    "It merges it if the policy allows the agent to",
                    "by writing \"stop\" in the session that scheduled it",
@@ -962,22 +981,27 @@ class TestLaPassation(unittest.TestCase):
         from socle import cli
         from socle.templates import gabarit
 
-        for lg, skill, exception, guide, phrases in (
+        for lg, skill, exception, reprise, guide, phrases in (
                 ("fr", "`socle-handoff` (passer la main à une session neuve",
-                 "partie d'un prompt de passation que sa garde accepte, elle y continue, et cette pull request "
-                 "devient la sienne.", "HELP.md",
+                 "partie d'une passation que sa garde accepte, elle y continue, et cette pull request "
+                 "devient la sienne.",
+                 "Un premier message qui demande de reprendre ou de continuer, quelle qu'en soit la forme "
+                 "(« reprends »), cherche d'abord la passation : le skill `socle-handoff`.", "HELP.md",
                  ("**L'enchaînement des sessions.**", "la **session programmée**", "Le **prompt à copier**",
-                  "Pour changer de mode, dites-le à l'agent", "`python3 .socle/socle handoff prompt`",
+                  "Pour changer de mode, dites-le à l'agent", "`python3 .socle/socle handoff write`",
                   "`python3 .socle/socle handoff check`")),
                 ("en", "`socle-handoff` (handing over to a new session",
-                 "started from a handoff prompt that its guard accepts, it continues on it, and that pull request "
-                 "becomes its own.", "HELP.en.md",
+                 "started from a handoff that its guard accepts, it continues on it, and that pull request "
+                 "becomes its own.",
+                 "A first message that asks to resume or continue, whatever its form (\"resume\"), first looks "
+                 "for the handoff: the `socle-handoff` skill.", "HELP.en.md",
                  ("**Chaining sessions.**", "the **scheduled session**", "The **prompt to copy**",
-                  "To change the mode, tell the agent", "`python3 .socle/socle handoff prompt`",
+                  "To change the mode, tell the agent", "`python3 .socle/socle handoff write`",
                   "`python3 .socle/socle handoff check`"))):
             agents = " ".join(gabarit("AGENTS.md", lg).split())
             self.assertIn(skill, agents, lg)
             self.assertIn(exception, agents, lg)
+            self.assertIn(reprise, agents, lg)
             texte = " ".join((Path(cli.__file__).parent / guide).read_text(encoding="utf-8").split())
             for phrase in phrases:
                 self.assertIn(phrase, texte, (lg, phrase))
@@ -1141,6 +1165,134 @@ class TestLaRevue(unittest.TestCase):
             texte = " ".join((DOSSIER / nom).read_text(encoding="utf-8").split())
             for phrase in phrases:
                 self.assertIn(phrase, texte, nom)
+
+
+class TestLOrganisationProportionnee(unittest.TestCase):
+    """T-0183 (B-0352, D-0194, D-0195) : les skills, le gabarit d'`AGENTS.md`
+    et le guide disent les sections 1 à 4 de la page validée : la session
+    unité de budget, la question d'intention avant la spécification, la
+    revue selon le risque, le sous-agent quand il paie et la relecture à
+    froid d'une demande longue seule."""
+
+    ATTENDUS = {
+        "fr": {
+            "socle-batch": ["Un lot réunit ce qui se relit ensemble", "le former une fois, par thème",
+                            "**La session est l'unité de budget.** À la fin d'un lot, elle enchaîne le suivant si "
+                            "son coût estimé tient dans ce qui reste de la fenêtre de cinq heures et de la semaine, "
+                            "la marge du rangement comprise, et si sa conversation reste sous 300 000 jetons de "
+                            "contexte, deux lots au plus sans message de l'humain ; sinon, elle change de session.",
+                            "Fichiers temporaires : dans le dossier temporaire commun, nommés de l'identifiant de "
+                            "ta tâche."],
+            "socle-request": ["## Une conception à trancher",
+                              "pose d'abord sa question d'intention, dans la conversation, en quelques lignes : le "
+                              "besoin tel que l'agent le comprend, le choix qui reste, sa recommandation ; la "
+                              "réponse se consigne en séance",
+                              "Puis sa spécification et son code se font dans le même lot, la spécification "
+                              "d'abord. Ce qui reste coûteux à défaire va ensuite en demande, courte",
+                              "Une demande qui passe la moitié de son budget (`new request` le donne) se fait "
+                              "relire à froid avant d'être poussée ; une demande plus courte, ou qui ne fait "
+                              "qu'approuver des fichiers protégés par leurs empreintes, part sans elle."],
+            "socle-review": ["Une revue adversariale, avant le push, pour un lot qui la justifie : il pose ou change "
+                             "un garde-fou (un contrôle, un refus, un hook), un format que d'autres parties du projet "
+                             "lisent (la mémoire, le contrat d'un adaptateur, la CI), ou plus de 150 lignes de code "
+                             "et de tests.",
+                             "l'agent le relit lui-même, sur le dossier court (plus bas), contre les critères de ses "
+                             "tâches, et le récap le dit.",
+                             "Une spécification, de la documentation ou de la mémoire seules n'ont pas de revue "
+                             "adversariale : l'humain en juge l'intention."],
+            "socle-handoff": ["Une session enchaîne les lots que son budget permet"],
+        },
+        "en": {
+            "socle-batch": ["A batch gathers what is reviewed together", "form it once, by theme",
+                            "**The session is the budget unit.** At the end of a batch, it chains the next one if "
+                            "its estimated cost fits in what remains of the five-hour window and of the week, the "
+                            "tidying-up margin included, and if its conversation stays under 300,000 tokens of "
+                            "context, two batches at most without a message from the human; otherwise, it changes "
+                            "sessions.",
+                            "Temporary files: in the shared temporary directory, named with your task's identifier."],
+            "socle-request": ["## A design to settle",
+                              "first asks its question of intent, in the conversation, in a few lines: the need as "
+                              "the agent understands it, the choice that remains, its recommendation; the answer "
+                              "is recorded in session",
+                              "Then its specification and its code are done in the same batch, the specification "
+                              "first. What remains costly to undo then goes into a request, a short one",
+                              "A request beyond half its budget (`new request` gives it) is read cold before being "
+                              "pushed; a shorter request, or one that only approves protected files by their "
+                              "fingerprints, leaves without it."],
+            "socle-review": ["An adversarial review, before the push, for a batch that warrants it: it adds or "
+                             "changes a guardrail (a check, a refusal, a hook), a format that other parts of the "
+                             "project read (the memory, an adapter's contract, the CI), or more than 150 lines of "
+                             "code and tests.",
+                             "the agent rereads itself, on the short brief (below), against its tasks' criteria, "
+                             "and the recap says so.",
+                             "A specification, documentation or memory alone get no adversarial review: the human "
+                             "judges their intent."],
+            "socle-handoff": ["A session chains the batches its budget allows"],
+        },
+    }
+    INSTRUCTIONS = {
+        "fr": ["pose d'abord sa question d'intention, en quelques lignes, dans la conversation ; sa spécification "
+               "et son code se font ensuite dans le même lot.",
+               "à la fin du lot, il enchaîne le suivant si la session le permet",
+               "Avant le push d'un lot qui pose ou change un garde-fou, un format que d'autres parties lisent, ou "
+               "plus de 150 lignes de code et de tests, il le fait relire par un relecteur sans contexte",
+               "un autre lot, il le relit lui-même (le skill `socle-review`)."],
+        "en": ["first asks its question of intent, in a few lines, in the conversation; its specification and its "
+               "code are then done in the same batch.",
+               "at the end of the batch, it chains the next one if the session allows it",
+               "Before the push of a batch that adds or changes a guardrail, a format other parts read, or more "
+               "than 150 lines of code and tests, it has it reviewed by a reviewer without context",
+               "another batch, it rereads itself (the `socle-review` skill)."],
+    }
+    GUIDE = {
+        "HELP.md": ["**L'enchaînement des sessions.** La session est l'unité de budget",
+                    "300 000 jetons de contexte", "deux lots au plus sans message de votre part",
+                    "**La question d'intention.**",
+                    "Une spécification, de la documentation ou de la mémoire seules n'ont pas de revue",
+                    "Une demande longue, au-delà de la moitié de son budget"],
+        "HELP.en.md": ["**Chaining sessions.** The session is the budget unit",
+                       "300,000 tokens of context", "two batches at most without a message from you",
+                       "**The question of intent.**",
+                       "A specification, documentation or memory alone get no review",
+                       "A long request, beyond half its budget"],
+    }
+    RETIRES = {"fr": ["Un lot par session", "15 %", "qu'une petite tâche", "ne se reprend pas",
+                      "une spécification se soumet avant son code"],
+               "en": ["One batch per session", "15%", "only a small task", "is not resumed",
+                      "a specification is submitted before its code"]}
+
+    def setUp(self):
+        self.racine = depot({"app.py": "print('ok')\n"})
+
+    def tearDown(self):
+        shutil.rmtree(self.racine, ignore_errors=True)
+
+    def test_les_skills_disent_les_regles_de_la_page_validee(self):
+        for lg, skills in self.ATTENDUS.items():
+            installeur.poser_skills(self.racine, lg)
+            for nom, phrases in skills.items():
+                texte = " ".join((self.racine / installeur.SKILLS / nom / "SKILL.md").read_text(
+                    encoding="utf-8").split())
+                for phrase in phrases:
+                    self.assertIn(phrase, texte, (lg, nom))
+                for avant in self.RETIRES[lg]:
+                    self.assertNotIn(avant, texte, (lg, nom, avant))
+
+    def test_les_instructions_et_le_guide_les_disent(self):
+        from socle import cli
+        from socle.templates import gabarit
+
+        for lg, phrases in self.INSTRUCTIONS.items():
+            agents = " ".join(gabarit("AGENTS.md", lg).split())
+            for phrase in phrases:
+                self.assertIn(phrase, agents, lg)
+            for avant in self.RETIRES[lg]:
+                self.assertNotIn(avant, agents, (lg, avant))
+        for nom, phrases in self.GUIDE.items():
+            texte = " ".join((Path(cli.__file__).parent / nom).read_text(encoding="utf-8").split())
+            for phrase in phrases:
+                self.assertIn(phrase, texte, nom)
+            self.assertNotIn("un lot par session" if nom == "HELP.md" else "one batch per session", texte.lower())
 
 
 class TestRefusBash(unittest.TestCase):
