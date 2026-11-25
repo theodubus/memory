@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0187-ouvrir-un-besoin-pour-que-l-agent-supprime-lui-mem.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-25"
+canal = "conversation"
+citation = "oui après chess"
+empreinte = "sha256:c9961308985bcb0d88943e68c0a120a06a51b81307e053099942ff1b5eb15989"
