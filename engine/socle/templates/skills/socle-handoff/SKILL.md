@@ -5,7 +5,7 @@ description: Passer la main à une session neuve, à la fin d'un lot, près d'un
 
 # Passer la main à une session neuve
 
-Une session ne mène qu'un lot. Quand elle s'arrête, la suivante repart du
+Une session enchaîne les lots que son budget permet (skill `socle-batch`). Quand elle s'arrête, la suivante repart du
 dépôt seul, sur un prompt de passation que `python3 .socle/socle handoff
 prompt` écrit avec sa garde. Les heures du prompt sont en UTC ; celles que
 lit l'humain, à son heure.
@@ -37,11 +37,10 @@ et à une borne.
 | Rangement à dix points d'une limite (`socle-batch`) | la remise à zéro de cette fenêtre, plus cinq minutes |
 | Avant une attente de plus d'une heure (une CI longue, une heure donnée) | la fin de l'attente |
 
-Une session ne part jamais sur une fenêtre au-delà de son seuil, 15 % de
-la fenêtre de cinq heures et 75 % de la semaine : son heure recule alors
-à la remise à zéro de cette fenêtre, plus cinq minutes. Un lot coûte une
-bonne part de la fenêtre : lancé sur une fenêtre entamée, il serait coupé
-en route. L'utilisation et les remises à zéro se lisent comme pour les
+Une session ne part que si le coût estimé de son lot tient dans ce qui
+reste de la fenêtre de cinq heures, la marge du rangement comprise, et
+jamais sur une semaine au-delà de 75 % : sinon, son heure recule à la
+remise à zéro de cette fenêtre, plus cinq minutes. L'utilisation et les remises à zéro se lisent comme pour les
 réveils (skill `socle-resume`).
 
 ## Les bornes

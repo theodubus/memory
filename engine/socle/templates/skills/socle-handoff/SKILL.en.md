@@ -5,7 +5,7 @@ description: Hand over to a new session, at the end of a batch, near a usage lim
 
 # Handing over to a new session
 
-A session runs only one batch. When it stops, the next one restarts from
+A session chains the batches its budget allows (the `socle-batch` skill). When it stops, the next one restarts from
 the repository alone, on a handoff prompt that `python3 .socle/socle
 handoff prompt` writes with its guard. The prompt's times are in UTC;
 those the human reads, in their own time.
@@ -38,11 +38,10 @@ at a bound.
 | Tidying up ten points from a limit (`socle-batch`) | the reset of that window, plus five minutes |
 | Before a wait of more than an hour (a long CI, a given time) | the end of the wait |
 
-A session never starts on a window beyond its threshold, 15% of the
-five-hour window and 75% of the week: its time then moves back to the
-reset of that window, plus five minutes. A batch costs a good share of
-the window: started on a window already used, it would be cut off along
-the way. The use and the resets are read as for the wake-ups (the
+A session starts only if its batch's estimated cost fits in what
+remains of the five-hour window, the tidying-up margin included, and
+never on a week beyond 75%: otherwise, its time moves back to the reset
+of that window, plus five minutes. The use and the resets are read as for the wake-ups (the
 `socle-resume` skill).
 
 ## The bounds
