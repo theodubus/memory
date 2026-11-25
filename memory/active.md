@@ -5,8 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0037 (T-0179, D-0189) et L-0038 (T-0180) en cours : leurs
-spécifications soumises à Théo, même session (J-2026-11-25-G).
+L-0037 et L-0038 attendent Théo : D-0189, D-0190 (J-2026-11-25-H).
 
 ## Consignes en cours
 

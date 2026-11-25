@@ -23,3 +23,6 @@ Commits : c50b2012..f2e68840
 ### Passe 2 — 2026-11-25
 
 Commits : c2d2d34b..a8fdd86c
+
+- Bloquant : après un squash ou un rebase, la mémoire d'une autre session déjà fusionnée dans la branche par défaut échappait à la garde ; elle juge aussi les ancêtres de la tête écrits après l'heure de la passation
+- Ouvre : rien
