@@ -68,8 +68,10 @@ le cliquet ne comptent toujours que les validations de leur plage.
 **Ce qui reste.** La réponse attend au journal, que l'état ne lit pas :
 un lot qui ne l'y trouve pas la redemande, comme le 24 novembre. Une
 demande écrite posée avant son lot, par une session qui ne suit pas la
-règle, retombe dans le problème. La demande tardive peut de nouveau
-arrêter un lot en son milieu, ce que D-0141 évitait. Dans un projet
+règle, retombe dans le problème. Sans réponse dans la session du lot,
+le test se pousse sous la demande en attente (D-0147) : le lot ne
+s'arrête pas, mais sa pull request finit rouge, l'agent ne peut la
+fusionner (D-0092), et la session suivante la reprend. Dans un projet
 installé où l'humain fusionne quand il veut, une réponse fusionnée avant
 le changement ne le couvre pas davantage. Le critère de B-0347 (« un
 test le montre ») n'est tenu que par un test qui lit le texte du skill.
@@ -78,22 +80,32 @@ test le montre ») n'est tenu que par un test qui lit le texte du skill.
 et en anglais, un test qui le lit, une note de version, et leurs copies
 protégées remises par une demande : de 1 à 2 points de la semaine.
 
-## Piste B — une validation compte hors de sa plage tant que ce qu'elle nomme n'a pas changé
+## Piste B — une validation compte hors de sa plage tant que sa tâche est ouverte et que ce qu'elle nomme n'a pas bougé
 
 ### La règle
 
 Une validation (la réponse `valider` d'une demande, ou une décision de
-séance) couvre le changement de ce qu'elle nomme, même poussée plus tôt,
-dans une autre pull request, depuis une autre session, tant que la
-branche par défaut ne l'a pas encore reçu. Deux points de la branche
-par défaut se comparent : celui d'où partait la branche où la réponse a
-été ajoutée (l'ancêtre commun de la branche par défaut et du commit de
-la réponse), ce que l'humain avait sous les yeux ; et celui d'où part
-le travail jugé (l'ancêtre commun de la branche par défaut et de la
-tête). Si ce qu'elle nomme y est identique, la validation couvre son
-changement. Ce changement fusionné dans la branche par défaut, les deux
-points diffèrent : la validation est épuisée, et un changement suivant
-de la même chose en demande une nouvelle.
+séance) couvre le changement de ce qu'elle nomme même poussée plus tôt,
+dans une autre pull request, depuis une autre session, à deux
+conditions. Elles se jugent au **point de départ** du travail jugé :
+l'ancêtre commun de la branche par défaut et de la tête, d'où part sa
+branche.
+
+1. **Une tâche ouverte la cite.** Au point de départ, une tâche du
+   backlog encore ouverte nomme la demande : celle qui fera le
+   changement, que D-0141 fait écrire avec le test et sa demande, et qui
+   cite la demande ou la décision de séance par son identifiant. Le lot
+   qui fait le changement clôt cette tâche ; fusionnée dans la branche
+   par défaut, la clôture épuise la validation.
+2. **Ce qu'elle nomme n'a pas bougé.** Au point de départ, ce qu'elle
+   nomme est tel qu'il était au parent du commit qui a ajouté la
+   demande : ce que l'humain avait sous les yeux en répondant. Changé
+   dans la branche par défaut par un autre chemin, il n'est plus
+   couvert. Le parent du commit de la demande, et non celui de la
+   réponse : la réponse vient avant le changement, avec lui ou après lui
+   (D-0147), mais la demande le précède ou l'accompagne toujours, et ce
+   parent garde la version d'avant, que la fusion se fasse par un commit
+   de fusion, par squash ou par rebase.
 
 Ce qu'elle nomme, comme aujourd'hui :
 
@@ -105,6 +117,9 @@ Ce qu'elle nomme, comme aujourd'hui :
 - un fichier protégé cité avec son empreinte (`protege.fichiers`),
   comparé en entier.
 
+`tests.regression`, qui admet un correctif nommé par son SHA dans une
+validation de la plage, n'est pas concerné.
+
 La règle d'aujourd'hui demeure : une validation ajoutée dans la plage
 couvre ce qu'elle nomme. La règle nouvelle s'y ajoute ; un même
 contrôle les lit toutes deux.
@@ -114,9 +129,11 @@ Ce qu'elle résout, par cas :
 | Cas | Aujourd'hui | Piste B |
 | --- | --- | --- |
 | Réponse poussée seule, le test changé au push suivant de la même pull request | push refusé | couvert |
-| Réponse fusionnée avec une pull request, le test changé dans une suivante | refusé | couvert |
-| Le test changé, poussé, puis corrigé après la revue, au push suivant | push refusé, la pull request acceptée | couvert, comme par la pull request |
-| Le même test changé de nouveau après la fusion du premier changement | refusé | refusé : la validation est épuisée |
+| Réponse fusionnée avec une pull request, le test changé dans une suivante, sa tâche ouverte | refusé | couvert |
+| Le test changé, poussé, puis corrigé après la revue, au push suivant | push refusé, la pull request acceptée | couvert |
+| Réponse et test dans le même commit, fusionnés avec la tâche close ; le test changé de nouveau ensuite | refusé | refusé : la tâche est close, et le test a bougé |
+| Test poussé sous sa demande en attente (D-0147), puis la réponse, fusionnés par squash ; le test changé de nouveau | refusé | refusé, de même |
+| Une demande ancienne nomme un test, aucune tâche ouverte ne la cite | refusé | refusé |
 
 ### Ce qui disparaît
 
@@ -128,42 +145,49 @@ Ce qu'elle résout, par cas :
   `reponse-poussee-sans-sa-cle`, et ses tests, dans
   `tests/test_reponse_seule.py`, sauf celui de la gêne 6 de chess
   (`test_une_reponse_consignee_mais_pas_commitee_n_est_plus_en_attente`),
-  qui reste. La demande nomme chacun des tests retirés.
+  qui reste. La demande nomme chacun des tests retirés. Deux témoins
+  sains de l'auto-test et sa table des raisons le nomment encore : leur
+  affirmation reste vraie, seule la référence se retire.
 - **La règle du même push**, dans `socle-request` (« jamais avant ») et
   dans le skill `delegate-lot` de ce dépôt : la réponse se consigne dès
-  qu'elle est donnée, se commite et se pousse aussitôt. Elle n'est plus
-  jamais « en attente » une fois donnée, et la règle de D-0141, la
-  demande tôt, reste telle quelle.
+  qu'elle est donnée, se commite et se pousse aussitôt, et la tâche qui
+  fera le changement la cite. Elle n'est plus jamais « en attente » une
+  fois donnée, et la règle de D-0141, la demande tôt, reste telle
+  quelle.
 
 ### Modèle de menace
 
 **Ce qu'il arrête, comme aujourd'hui.** Un test changé ou retiré, une
 clé relâchée, un fichier de cas ou un fichier protégé changé, sans
-aucune validation qui les nomme. Et, nouveau : un deuxième changement
-de la même chose sous une validation déjà épuisée par un premier,
-fusionné.
+aucune validation qui les nomme. Et, nouveau : un second changement de
+la même chose une fois le premier fusionné avec la clôture de sa tâche ;
+le stock des validations passées, qu'aucune tâche ouverte ne cite.
 
 **Ce qu'il laisse passer, qu'il refusait.** Le changement couvert par
-une validation poussée plus tôt, hors de la plage, quand rien de ce
-qu'elle nomme n'a changé depuis sur la branche par défaut : c'est le
-but. Une validation ancienne, de plusieurs semaines, couvre de même un
-changement tardif, même si le projet a bougé autour du test : son âge
-n'est pas borné. Dans une pull request qui réunit plusieurs lots,
-fusionnée par l'humain quand il veut, une validation couvre aussi un
-second changement du même test avant la fusion : la CI de la pull
-request le laisse déjà passer aujourd'hui, la CI des pushes s'y aligne.
+une validation poussée plus tôt, hors de la plage, tant que sa tâche
+est ouverte et que ce qu'elle nomme n'a pas bougé : c'est le but. Son
+âge n'est pas borné, mais sa tâche le borne. Mesuré sur ce dépôt le 25
+novembre : sur 149 demandes validées, 4 sont citées par une tâche
+ouverte ; elles nomment 2 tests, tous deux changés depuis : aucun test
+n'est couvert hors de sa plage. Sans la condition de la tâche, la règle
+aurait rouvert 110 tests, nommés par des validations anciennes et
+jamais changés depuis : la revue de cette spécification l'a relevé.
+Une tâche ouverte qui cite une demande pour mémoire, sans la mettre en
+œuvre, couvre de même les tests qu'elle nomme ; aucun cas aujourd'hui.
+Dans une pull request qui réunit plusieurs lots, fusionnée par l'humain
+quand il veut, la clôture de la tâche ne compte qu'à la fusion : une
+validation couvre jusque-là plusieurs changements du même test, comme
+la CI de la pull request le laisse déjà passer aujourd'hui.
 
 **Ce qu'il ne voit pas, comme aujourd'hui.** Que le changement soit
 celui que l'humain a validé : le contrôle lit le nom, pas les valeurs
 avant et après ; le relecteur du lot le juge. Un test rétabli à
-l'identique sur la branche par défaut, après un changement validé, se
-lit comme jamais changé, et sa validation d'origine le couvre de
-nouveau ; il faut pour cela un premier changement validé, puis un retour
-exact. Un test déplacé dans un autre fichier ne se suit pas : sa
-validation ne le couvre plus, ce qui est plus strict. Sans la branche
-par défaut ni l'historique du commit de la réponse (un clone partiel),
-la règle nouvelle ne s'applique pas, et le contrôle le dit : la règle
-d'aujourd'hui seule juge. La CI tire tout l'historique.
+l'identique sur la branche par défaut, sa tâche encore ouverte, se lit
+comme jamais changé. Un test déplacé dans un autre fichier ne se suit
+pas : sa validation ne le couvre plus, ce qui est plus strict. Sans la
+branche par défaut ni l'historique du commit de la demande (un clone
+partiel), la règle nouvelle ne s'applique pas, et le contrôle le dit :
+la règle d'aujourd'hui seule juge. La CI tire tout l'historique.
 
 C'est un assouplissement d'un garde-fou : seule une demande validée le
 permet (politique, point 1), celle qui soumet cette spécification.
@@ -172,12 +196,14 @@ permet (politique, point 1), celle qui soumet cette spécification.
 
 Une tâche, menée par un sous-agent : la règle dans `tests.attendus`,
 le cliquet et `protege.fichiers`, ses défauts injectés (une validation
-épuisée ne couvre pas ; une validation poussée plus tôt couvre, témoin
-sain), ses tests, le retrait de `demandes.reponse-seule`, le texte de
-`socle-request` en français et en anglais, le guide là où il en parle,
-une note de version. De 3 à 4 points de la semaine, puis la copie
-protégée de `socle-request` remise par une demande, et le prompt de
-mise à jour de chess.
+épuisée, sa réponse commitée avec son test, ne couvre pas un second
+changement ; une validation qu'aucune tâche ouverte ne cite ne couvre
+pas ; une validation poussée plus tôt, sa tâche ouverte, couvre : le
+témoin sain), ses tests, le retrait de `demandes.reponse-seule`, le
+texte de `socle-request` et de `socle-batch` (la tâche cite sa demande)
+en français et en anglais, le guide là où il en parle, une note de
+version. De 3 à 4 points de la semaine, puis la copie protégée des
+skills remise par une demande, et le prompt de mise à jour de chess.
 
 ## Recommandation
 
@@ -187,8 +213,8 @@ seulement en session cloud, partout où la réponse et son changement
 partent dans deux pull requests ; elle garde D-0141 ; elle retire un
 contrôle et une règle que l'agent doit retenir ; et un test montre le
 critère de B-0347 directement. Son assouplissement est borné : une
-validation par changement, tant que ce qu'elle nomme n'a pas bougé sur
-la branche par défaut.
+validation ne compte hors de sa plage que pour le travail d'une tâche
+encore ouverte qui la cite, et tant que ce qu'elle nomme n'a pas bougé.
 
 La piste A ne coûte que du texte, mais elle laisse la réponse attendre
 au journal, que rien ne vérifie, change D-0141, et ne vaut que si
@@ -196,8 +222,10 @@ chaque session suit la règle.
 
 ## Ce qui suit la réponse
 
-- **B** : une tâche qui l'implémente, au jalon JA-0005, dans un lot
-  neuf après L-0038 ; T-0179 se ferme, et L-0037 avec elle.
-- **A** : une tâche qui écrit les deux règles, au même endroit.
+- **B** : une tâche qui l'implémente, dans le prochain lot du jalon
+  JA-0005, avant le code de L-0038, dont les tests changeront sous une
+  réponse donnée avant son lot ; T-0179 se ferme, et L-0037 avec elle.
+- **A** : une tâche qui écrit les deux règles, dans `socle-request` et
+  `socle-batch`.
 - **Refusée** : la spécification se réécrit sur ce que Théo dit, et
   revient en demande ; d'ici là, rien ne change, et B-0347 reste ouvert.
