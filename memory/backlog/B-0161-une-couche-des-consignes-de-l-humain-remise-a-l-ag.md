@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0161 — Une couche des consignes de l'humain, remise à l'agent au démarrage
 
-> statut : ouvert · origine : J-2026-11-10-N · ref : D-0198, D-0200 · lu : backlog@4f7c8bab · après : B-0126
+> statut : ouvert · origine : J-2026-11-10-N · ref : D-0198, D-0200, D-0201 · lu : backlog@4f7c8bab · après : B-0126
 
 Les consignes durables de l'humain vivent dans le chantier actif, plein à
 98 % de son budget, que chaque mise à jour oblige à resserrer ; le
@@ -27,6 +27,6 @@ un changement du produit : chess le reçoit à sa mise à jour.
 
 ## Satisfait quand
 
-- [ ] Théo a validé la spécification de la couche
+- [x] Théo a validé la spécification de la couche (D-0201)
 - [ ] les consignes du chantier actif y sont, et l'état les injecte
 - [ ] l'agent lit le texte exact d'une consigne avant de s'appuyer dessus, et un test montre ce qui le lui fait lire

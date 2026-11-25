@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0202-b-0351-l-agent-supprime-seul-ses-branches-de-trava.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-25"
+canal = "conversation"
+citation = "1A 2A"
+empreinte = "sha256:aa98714421d6034bce14f44b189821216c702a4e4c1762261c9443d19ad8d57b"
