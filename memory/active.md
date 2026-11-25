@@ -5,7 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0032 : T-0151, puis T-0152. Réponses de D-0189 et D-0190
+L-0032 : T-0151 (D-0191), puis T-0152. Réponses de D-0189 et D-0190
 au journal, consignées avec leurs tests (J-2026-11-25-J, -K).
 
 ## Consignes en cours
@@ -28,19 +28,17 @@ Leur texte exact est dans l'entrée du journal citée.
 - Tout ce qui est utile intègre le socle, une règle du backlog comprise
   (J-2026-11-13-F) ; un sujet important se garde (J-2026-11-14-K).
 - Un lot par session ; sinon tout se range pour une session neuve, qui
-  peut être sur un autre compte, avec son prompt (J-2026-11-12-P) ; deux
-  le 25 novembre (J-2026-11-25-G).
+  peut être sur un autre compte, avec son prompt (J-2026-11-12-P).
 - Chaque session sur la branche de son environnement, partie de celle
   par défaut (J-2026-11-13-A).
 - Aucun autre dépôt dans la session, ni lecture de JustCook ou de
   `theodubus/socle` ; donner leurs liens reste permis (J-2026-11-09-M).
 - Le pilote est un essai de choc : seules les imperfections du socle se
   corrigent ici (J-2026-10-31-E).
-- La documentation se conçoit avant de s'écrire, son plan soumis à Théo ;
-  ton formel ; chaque question à un seul endroit ; elle dit à quoi sert
-  l'outil ; le guide suit le parcours de l'utilisateur ; ses schémas se
-  vérifient rendus ; faite que validée (J-2026-10-20-Y, J-2026-10-21-A,
-  J-2026-10-22-A).
+- La documentation : son plan soumis à Théo d'abord ; ton formel ; une
+  question à un seul endroit ; à quoi sert l'outil ; le guide suit le
+  parcours de l'utilisateur ; schémas vérifiés rendus ; faite que validée
+  (J-2026-10-20-Y, J-2026-10-21-A, J-2026-10-22-A).
 - Une limite d'usage proche décide de l'ordre, jamais de la profondeur
   du travail ni du modèle ; la passation se fait avant elle
   (J-2026-11-09-C, J-2026-11-15-D, J-2026-11-16-W).
@@ -60,6 +58,8 @@ Leur texte exact est dans l'entrée du journal citée.
 - Sessions d'un agent réel sur l'abonnement, chacune plafonnée à
   l'équivalent de 2 dollars, sa consommation rapportée (J-2026-10-19-H).
 - En autonomie sur le backlog, sauf arbitrage (J-2026-10-20-C).
+- Une demande de Théo se lit pour son besoin, pas à la lettre
+  (J-2026-11-25-K).
 - Toute la correction et la stabilisation du produit avant chess, puis
   chess mis à jour d'un coup, ses corrections, ensuite les fonctions
   nouvelles (J-2026-11-13-I, J-2026-11-21-B, J-2026-11-13-L).
