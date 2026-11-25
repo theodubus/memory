@@ -216,6 +216,12 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 84. L'installeur dit, à l'installation comme à chaque mise à jour, qu'un module Kotlin multiplateforme ou Android n'est pas servi par les commandes JVM de la copie kotlin, et la spécification des adaptateurs donne les siennes (note 2026-11-25-a). Chess n'emploie pas Kotlin : rien à faire ; si l'installeur imprime une ligne « !! kotlin », dis-le-moi, mot pour mot.
 
+85. Une réponse « valider » que je donne se consigne, se commite et se pousse aussitôt, sans attendre le changement qu'elle autorise : elle le couvre dans sa pull request, ou plus tard, fusionnée, tant qu'une tâche ouverte la cite et que ce qu'elle nomme n'a pas bougé (note 2026-11-25-b). L'avertissement demandes.reponse-seule se retire. Le skill socle-request, copie protégée dans la demande de l'installeur, le dit. Rien à faire ; une réponse que tu gardais au journal pour la consigner avec son changement peut se consigner tout de suite.
+
+86. La passation s'écrit dans la mémoire, memory/handoff.md, par python3 .socle/socle handoff write, qui remplace handoff prompt ; une session neuve la reprend sur un premier message qui demande de reprendre ou de continuer, quelle qu'en soit la forme, et python3 .socle/socle handoff check, sans argument, la trouve et juge sa garde (note 2026-11-25-c). Les skills socle-handoff et socle-batch, copies protégées, le disent. Rien à faire ; si une passation de l'ancienne forme t'attend, dis-le-moi.
+
+87. L'organisation se proportionne à ce qu'elle protège (note 2026-11-25-d) : la session enchaîne les lots tant que leur coût tient dans les fenêtres et que la conversation reste sous 300 000 jetons de contexte ; une conception à trancher pose d'abord sa question d'intention dans la conversation, puis sa spécification et son code dans le même lot ; la revue adversariale, pour un lot qui touche un garde-fou, un format lu ailleurs ou plus de 150 lignes ; un sous-agent seulement quand il paie ; la relecture à froid d'une demande longue seule. Les skills, copies protégées, et la section du socle d'AGENTS.md le disent. Rien à faire ; une consigne de ton chantier actif qui dirait encore « un lot par session » se relit avec moi.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.

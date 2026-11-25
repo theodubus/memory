@@ -890,8 +890,7 @@ class TestDeclencheurs(Projet):
         self.assertIn("À l'intégration d'une passation, après l'application de ses correctifs (`git am`), la "
                       "branche de passation se fusionne dans la branche de travail (`git merge --no-edit`), puis "
                       "son dossier se retire", skill)
-        self.assertIn("Une petite tâche s'implémente dans la session qui orchestre, selon le seuil de "
-                      "`socle-batch`", skill)
+        self.assertIn("L'orchestrateur implémente, sauf quand un sous-agent paie, selon `socle-batch`", skill)
 
     def test_les_skills_font_coller_le_compact_dans_un_bloc_de_code_hors_des_deux_lignes_du_recap(self):
         # T-0091 (ADR-0089) : collé en texte, le compact et sa ligne « Ensuite : » tiendraient lieu de celle du

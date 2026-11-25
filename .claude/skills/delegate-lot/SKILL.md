@@ -23,11 +23,12 @@ skill `direction-review` (D-0145).
 
 ## Les sous-agents
 
-Une petite tâche s'implémente dans la session qui orchestre, selon le
-seuil de `socle-batch` (D-0134) : une tâche qui ne change que le texte
-d'un skill en est le cas courant. Plusieurs tâches de code qui touchent
-les mêmes fichiers peuvent aller à un seul sous-agent, un commit
-chacune : son coût fixe ne se paie qu'une fois.
+L'orchestrateur implémente, sauf quand un sous-agent paie, selon
+`socle-batch` (D-0194, la page validée
+`docs/fabrication/organisation-proportionnee.md`) : une tâche qui ne
+change que le texte d'un skill reste à l'orchestrateur. Plusieurs tâches
+de code qui touchent les mêmes fichiers peuvent aller à un seul sous-agent, un
+commit chacune : son coût fixe ne se paie qu'une fois.
 
 Le modèle est celui que dit le chantier actif ; un sous-agent qui doit
 tourner sur celui de la session se lance sans `model`, l'alias `opus`
@@ -38,18 +39,15 @@ des tests qui échouent sur le commit parent, pour tout code ; pour un
 contrôle ou un refus nouveau, son défaut injecté et son témoin sain ; la
 tâche rangée (`socle archive`) ; `verify --fast` une fois, à la fin ;
 dans « Interdits » : ouvrir
-une pull request, lire ou ajouter un autre dépôt ; puis « Économie : lire
-ce qui sert, pas les fichiers entiers ; pas de suite complète relancée
-sans raison. Un fichier temporaire, dans le dossier temporaire de la
-session, commun à tous les sous-agents, porte l'identifiant de ta tâche
-dans son nom. » (J-2026-11-24-BC) Les identifiants des sous-agents lancés
-vont dans le texte des réveils. Un sous-agent qui s'arrête sur une
-vérification en arrière-plan peut ne pas reprendre : son travail se lit
-dans sa copie isolée, et l'orchestrateur le reprend (J-2026-11-24-BA).
+une pull request, lire ou ajouter un autre dépôt ; le dossier temporaire
+commun, nommé par son chemin. Les identifiants des sous-agents lancés
+vont dans le texte des réveils.
 
 ## La revue
 
-Le dossier du lot se produit sur la branche d'intégration, jamais dans le
+Une revue adversariale quand le lot la justifie (`socle-review`,
+« Quand ») ; sinon, l'orchestrateur relit lui-même son diff, et le récap
+le dit. Le dossier du lot se produit sur la branche d'intégration, jamais dans le
 worktree d'un sous-agent, où la passe que `socle review` écrit dans le lot
 se perdrait : la passe s'y commite, et le dossier se range dans le dossier
 temporaire de la session (T-0055) ; le relecteur est un autre
@@ -84,16 +82,16 @@ contournement qu'il trouve s'écarte d'office, sans entrée au backlog.
   (`.github/workflows/distribution.yml`).
 - Un lot qui change ce qu'un projet reçoit à la mise à jour complète
   `docs/fabrication/chess/prompt-mise-a-jour.md` (J-2026-11-13-L).
-- La réponse de l'humain se commite dans le même push que le changement
-  qu'elle autorise, jamais avant (B-0142) ; seul un fichier protégé peut
-  la précéder, sous la demande en attente (D-0071).
+- La réponse de l'humain se consigne, se commite et se pousse dès qu'elle
+  est donnée ; la tâche qui fera le changement la cite, et la couvre tant
+  qu'elle est ouverte et que ce qu'elle nomme n'a pas bougé (D-0189).
 - Un lot qui change le gabarit d'un skill du produit
   (`engine/socle/templates/skills/`) remet sa copie protégée de
   `.claude/skills/` avant sa clôture : l'installeur relancé en mode amont,
   sur la demande validée qui cite son empreinte (D-0168, B-0218).
 - Une valeur attendue à changer, un test à supprimer, un fichier protégé
-  à rafraîchir : une demande dans le dépôt, relue à froid, poussée, son
-  lien donné (J-2026-11-12-F). Sauf un changement mécanique de valeurs
+  à rafraîchir : une demande dans le dépôt, relue à froid si elle passe
+  la moitié de son budget, poussée, son lien donné (J-2026-11-12-F). Sauf un changement mécanique de valeurs
   attendues, des tests qui lisent un format que Théo a validé : une
   question dans la conversation qui nomme chaque test, avec sa valeur
   avant et après, et sa réponse consignée en séance (proposition 2 de
@@ -108,10 +106,9 @@ semaine chacun : d'où les seuils du skill du produit.
 
 ## Changer de session
 
-Un lot par session (J-2026-11-12-P) : à la clôture d'un lot, la session
-ne s'enchaîne pas sur le suivant, même si la fenêtre le permettrait ;
-elle range, et son récap donne le prompt de la session neuve
-(J-2026-11-20-AD).
+La session est l'unité de budget (D-0194) : à la clôture d'un lot, elle
+enchaîne le suivant selon `socle-batch` ; sinon elle range, et son récap
+dit comment reprendre (J-2026-11-20-AD).
 
 Le correctif d'un commit pas encore relu va dans un dossier de passation
 sous `docs/fabrication/`. À l'intégration d'une passation, après
@@ -119,7 +116,6 @@ l'application de ses correctifs (`git am`), la branche de passation se
 fusionne dans la branche de travail (`git merge --no-edit`), puis son
 dossier se retire : l'état la donne alors à supprimer après la fusion de
 la pull request (B-0293). Ici, le mode est le prompt à copier (D-0173) :
-le prompt de la session neuve est celui que donne `python3 .socle/socle
-handoff prompt --waiting "<ce qui attend>"` (skill
-`socle-handoff`), tout poussé, avec le lot « selon le skill
-delegate-lot » au lieu de `socle-batch`.
+la passation écrite, commitée et poussée (skill `socle-handoff`), le
+récap dit à Théo d'écrire « reprends » dans une session neuve, où le lot
+se mène selon ce skill (D-0190).
