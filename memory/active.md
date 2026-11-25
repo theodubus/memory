@@ -5,8 +5,9 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0032 fait (J-2026-11-25-N). Réponses de D-0189 et D-0190 au
-journal, consignées avec leurs tests (J-2026-11-25-J, -K).
+Revue de cap 6 : suggestions à Théo (J-2026-11-25-O). Réponses de
+D-0189 et D-0190 au journal, consignées avec leurs tests
+(J-2026-11-25-J, -K).
 
 ## Consignes en cours
 
@@ -68,6 +69,6 @@ Leur texte exact est dans l'entrée du journal citée.
 
 Par lots (D-0118, D-0151) :
 
-1. JA-0005 : la revue de cap 6, puis L-0039, puis L-0040.
+1. JA-0005 : L-0039, L-0040.
 2. JA-0006 : chess mis à jour d'un coup, puis ses corrections.
 3. Puis la couche des consignes (B-0161), la planification (B-0101).
