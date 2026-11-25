@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0352 — L'organisation du travail se proportionne à ce qu'elle protège : la session unité de budget, la question d'intention avant la spécification, une revue selon le risque, un sous-agent quand il paie, les skills d'organisation allégés
 
-> statut : ouvert · origine : J-2026-11-25-Q · ref : D-0194, D-0193, J-2026-11-25-O, J-2026-11-25-P · lu : backlog@4bea38b8
+> statut : fait · origine : J-2026-11-25-Q · ref : J-2026-11-25-T, D-0194, D-0193, J-2026-11-25-O, J-2026-11-25-P · lu : backlog@4bea38b8
 
 Les étapes coûteuses de l'organisation (sous-agent, revue, relecture à
 froid, demande, passation) se déclenchent sur la forme du travail, pas
@@ -14,4 +14,4 @@ Théo retient la réforme (D-0194, J-2026-11-25-P) ; ses règles :
 
 ## Satisfait quand
 
-- [ ] le produit et `delegate-lot` disent les règles de `docs/fabrication/organisation-proportionnee.md` validée, et un lot se mène selon elles
+- [x] le produit et `delegate-lot` disent les règles de `docs/fabrication/organisation-proportionnee.md` validée, et un lot se mène selon elles

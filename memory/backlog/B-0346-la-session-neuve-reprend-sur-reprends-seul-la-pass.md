@@ -42,4 +42,4 @@ novembre (D-0177), pour la spécification :
 ## Satisfait quand
 
 - [ ] une session neuve sur « reprends » seul reprend le travail que la passation dit, sa garde jugée, sans prompt à copier
-- [ ] la spécification, soumise à Théo, est validée avant le code
+- [x] la spécification, soumise à Théo, est validée avant le code

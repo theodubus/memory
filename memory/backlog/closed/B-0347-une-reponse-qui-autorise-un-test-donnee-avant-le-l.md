@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0347 — Une réponse qui autorise un test, donnée avant le lot qui le change, n'a pas où attendre quand ce lot se fait dans une autre session cloud
 
-> statut : ouvert · origine : J-2026-11-24-AG · ref : T-0134, B-0142 · lu : backlog@e1d104b0
+> statut : fait · origine : J-2026-11-24-AG · ref : J-2026-11-25-T, T-0134, B-0142 · lu : backlog@e1d104b0
 
 Deux règles du produit se contredisent en session cloud, un lot par
 session. T-0134 veut que la demande d'un test contraire se pose dès la
@@ -16,4 +16,4 @@ partir en correctif dans un dossier de passation (J-2026-11-24-Z).
 
 ## Satisfait quand
 
-- [ ] une réponse donnée avant le lot de son changement couvre ce changement quand il est poussé plus tard, dans une autre session, et un test le montre
+- [x] une réponse donnée avant le lot de son changement couvre ce changement quand il est poussé plus tard, dans une autre session, et un test le montre

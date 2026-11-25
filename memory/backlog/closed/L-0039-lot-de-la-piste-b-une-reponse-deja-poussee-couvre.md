@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0039 — Lot de la piste B : une réponse déjà poussée couvre le changement de sa tâche ouverte
 
-> statut : en cours · origine : J-2026-11-25-J · après : L-0037, T-0181, T-0182, T-0183 · lu : backlog@5eb2c337
+> statut : fait · origine : J-2026-11-25-J · après : L-0037, T-0181, T-0182, T-0183 · lu : backlog@5eb2c337 · ref : J-2026-11-25-T
 
 La seule T-0181, la piste B que Théo a validée (D-0189) : le contrôle
 des validations, `tests/test_reponse_seule.py`, l'auto-test, les gabarits

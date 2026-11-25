@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0183 — L'organisation proportionnée dans le produit et dans delegate-lot, selon docs/fabrication/organisation-proportionnee.md validée
 
-> statut : ouvert · origine : J-2026-11-25-Q · besoin : B-0352 · ref : D-0194, D-0193 · lu : backlog@1bd3d405
+> statut : fait · origine : J-2026-11-25-Q · besoin : B-0352 · ref : J-2026-11-25-T, D-0194, D-0193 · lu : backlog@1bd3d405
 
 Un commit, dans L-0039 : les règles de
 `docs/fabrication/organisation-proportionnee.md`, une fois que Théo l'a
@@ -17,6 +17,6 @@ demande qui remet les copies protégées de L-0039.
 
 ## Fait quand
 
-- [ ] les gabarits des skills, d'`AGENTS.md` et le guide disent les cinq sections de la page validée, et les tests qui les lisent le vérifient
-- [ ] chaque règle retirée au ménage est dite au récap, avec sa raison
-- [ ] la note de version le dit, en français et en anglais
+- [x] les gabarits des skills, d'`AGENTS.md` et le guide disent les cinq sections de la page validée, et les tests qui les lisent le vérifient
+- [x] chaque règle retirée au ménage est dite au récap, avec sa raison
+- [x] la note de version le dit, en français et en anglais

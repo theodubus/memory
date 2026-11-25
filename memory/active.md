@@ -5,15 +5,15 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0039 fait, relu sans bloquant, poussé (J-2026-11-25-S). Attend
-D-0196 : validée, l'installeur en mode amont remet les copies, puis
-clore et fusionner.
+L-0039 clos (J-2026-11-25-T). B-0346 : la reprise réelle à voir ;
+B-0353 : la réponse de Théo.
 
 ## Consignes en cours
 
 Leur texte exact est dans l'entrée du journal citée.
 
 - Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
+- Roadmap demandée : format court (J-2026-11-25-T).
 - L'atelier au prompt à copier, commutateur manuel pour l'instant
   (D-0173, J-2026-11-24-BE) ; l'essai programmé de D-0182 quand Théo
   le demande.
@@ -70,6 +70,6 @@ Leur texte exact est dans l'entrée du journal citée.
 
 Par lots (D-0118, D-0151) :
 
-1. JA-0005 : L-0039.
+1. JA-0005 : B-0346 ; B-0353 selon Théo.
 2. JA-0006 : chess mis à jour d'un coup, puis ses corrections.
 3. Puis la couche des consignes (B-0161), la planification (B-0101).
