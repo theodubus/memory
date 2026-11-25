@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0036 — Lot des corrections restantes de JA-0005 : la passation, l'état, le journal, les correctifs, les réponses données avant leur lot, l'attente de la CI
 
-> statut : en-cours · origine : J-2026-11-24-AV · après : L-0024, T-0174, T-0175, T-0176, T-0177, T-0178 · lu : backlog@f31e5ceb
+> statut : fait · origine : J-2026-11-24-AV · après : L-0024, T-0174, T-0175, T-0176, T-0177, T-0178 · lu : backlog@f31e5ceb · ref : J-2026-11-25-E
 
 Les corrections du produit qui restent à JA-0005 hors de L-0032, sur la
 revue de cap 5 que Théo retient (D-0180, D-0181) : cinq tâches petites,

@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0036 relu (J-2026-11-25-B) ; attend D-0188, les copies des skills,
-puis la clôture et la livraison.
+L-0036 clos (J-2026-11-25-E). Suivant, en session neuve : L-0038,
+la spécification de T-0180 soumise à Théo d'abord.
 
 ## Consignes en cours
 
@@ -67,6 +67,6 @@ Leur texte exact est dans l'entrée du journal citée.
 
 Par lots (D-0118, D-0151) :
 
-1. JA-0005 : L-0036 à livrer, puis L-0038 et L-0032.
+1. JA-0005 : L-0038, puis L-0032.
 2. JA-0006 : chess mis à jour d'un coup, puis ses corrections.
 3. Puis la couche des consignes (B-0161), la planification (B-0101).
