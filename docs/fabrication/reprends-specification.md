@@ -51,7 +51,10 @@ borne de la chaîne et le lot sans tâche prête, en session programmée.
 Il écrit le fichier ; l'agent le commite en dernier, avec le reste du
 rangement s'il veut, et pousse. Plus rien ne se pousse ensuite ; un
 commit nécessaire après réécrit la passation dans ce même commit
-(D-0177).
+(D-0177). Une passation écrite mais pas encore poussée, que la session
+neuve ne trouverait pas, l'état de la session qui part la dit, comme
+`prompt` refusait aujourd'hui une tête non poussée ; ses défauts
+injectés s'y reportent.
 
 Le récap du mode « prompt à copier » ne donne plus de prompt : « Dans une
 session neuve, écrivez « reprends » ». La tâche programmée de la
@@ -91,9 +94,12 @@ aujourd'hui, ses trois arguments tirés du dépôt (D-0177) :
 
 Les refus sont ceux d'aujourd'hui : la branche a bougé depuis la
 passation ; une autre branche porte, depuis, un commit qui touche
-`memory/` sans venir de la passation ; la pull request a été fusionnée
-par squash. Acceptée, la commande dit où se placer, la chaîne, ce qui
-attend, et que le premier commit retire la passation.
+`memory/` sans venir de la passation. Un cas change : la pull request
+fusionnée par squash, sa branche supprimée, que la garde refuse
+aujourd'hui faute de retrouver la tête nommée. Le commit de squash
+porte la passation dans la branche par défaut : il devient la tête, et
+la session y repart. Acceptée, la commande dit où se placer, la chaîne,
+ce qui attend, et que le premier commit retire la passation.
 
 Avec ses trois arguments, elle juge comme aujourd'hui : la reprise après
 une limite d'usage (skill `socle-resume`) les lui donne toujours.
@@ -136,16 +142,15 @@ travail.
 
 **Ce qu'elle arrête, comme aujourd'hui.** Une session neuve dont la
 branche a bougé depuis la passation ; une autre session qui a écrit la
-mémoire du projet depuis ; une pull request fusionnée par squash. Et,
-nouveau : une seconde session qui écrit « reprends » après que la
-première a poussé son retrait.
+mémoire du projet depuis. Et, nouveau : une seconde session qui écrit
+« reprends » après que la première a poussé son retrait.
 
 **Ce qu'elle laisse passer.** Deux sessions qui écrivent « reprends »
 dans la même minute, avant qu'aucune ait poussé son retrait : toutes
 deux reprennent. Aujourd'hui, le même prompt collé deux fois fait de
-même. Un retrait poussé sur une branche que le clone n'a pas rapatriée
-(un `git fetch` partiel) : la passation y semble attendre encore, mais
-la garde voit le commit qui touche la mémoire et refuse.
+même. Une pull request fusionnée par squash, sa branche supprimée, que
+la garde refusait : la session repart de la branche par défaut, qui
+porte tout le travail de la passation.
 
 **Ce qu'elle ne voit pas.** Une passation que personne n'a poussée : la
 session neuve ne la trouve pas, et fait ce que fait une session neuve.

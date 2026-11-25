@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0180 — La spécification de la reprise sur « reprends » seul, sur les propositions retenues par D-0177, soumise à Théo
 
-> statut : ouvert · origine : J-2026-11-24-BC · besoin : B-0346 · ref : D-0185, D-0177, D-0174 · lu : backlog@2156ec15
+> statut : en cours · origine : J-2026-11-24-BC · besoin : B-0346 · ref : D-0185, D-0177, D-0174 · lu : backlog@2156ec15
 
 Un commit : une demande soumet à Théo la spécification de B-0346, qui
 change celle de la passation programmée validée par D-0174 : la session
