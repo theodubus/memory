@@ -112,9 +112,15 @@ qui touche `memory/` sans venir de la passation. S'y ajoute la
 passation déjà reprise (plus haut). Un cas change : la pull request
 fusionnée par squash ou par rebase, sa branche supprimée, que la garde
 refuse aujourd'hui faute de retrouver la tête nommée ; le commit qui
-porte la passation dans la branche par défaut devient la tête, la
-session y repart, et la mémoire écrite ailleurs depuis l'heure `écrite`
-la fait toujours refuser. Acceptée, la commande dit où se placer, la
+porte la passation dans la branche par défaut devient la tête, et la
+session y repart. La mémoire écrite ailleurs depuis l'heure `écrite` la
+fait toujours refuser : encore sur une autre branche, comme aujourd'hui ;
+déjà fusionnée dans la branche par défaut avant ce squash ou ce rebase,
+donc ancêtre de la tête, parce que la garde juge alors aussi les
+ancêtres de la tête qui touchent `memory/`, écrits (date d'auteur, que
+le rebase garde) après l'heure `écrite`, hors du commit qui porte la
+passation. Les commits du lot, rejoués par le rebase, ont été écrits
+avant cette heure ; ceux d'une autre session, après. Acceptée, la commande dit où se placer, la
 chaîne, ce qui attend, et que le premier commit retire la passation.
 
 Avec ses trois arguments, elle juge comme aujourd'hui : la reprise après
