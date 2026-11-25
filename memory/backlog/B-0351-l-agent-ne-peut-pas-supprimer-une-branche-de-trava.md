@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0351 — L'agent ne peut pas supprimer une branche de travail distante déjà contenue dans une branche poussée : l'état la donne à l'humain à chaque fin de lot
 
-> statut : ouvert · origine : J-2026-11-25-A · ref : D-0187, B-0193, ADR-0098, D-0198 · lu : backlog@5d842cca
+> statut : ouvert · origine : J-2026-11-25-A · ref : D-0187, B-0193, ADR-0098, D-0198, D-0202 · lu : backlog@5d842cca
 
 Théo, le 24 novembre, devant la branche d'une session précédente que
 l'état lui donnait à supprimer : « ça ne devrait pas être fait par
@@ -25,6 +25,10 @@ J-2026-11-24-BC).
 Le 25 novembre, Théo le passe avant la mise à jour de chess (D-0198),
 au lieu d'après (D-0187) : la gêne revient à chaque passation, et chess
 la reçoit corrigée dans sa seule mise à jour. B-0323 l'attend.
+
+Le 25 novembre, Théo retient 1A 2A (D-0202) : seules les branches de
+l'agent, dont le dernier commit porte sa marque, et par défaut dans le
+produit, une ligne de la politique la coupant.
 
 ## Satisfait quand
 

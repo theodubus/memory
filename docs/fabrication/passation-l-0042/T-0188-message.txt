@@ -1,0 +1,13 @@
+T-0188 : la couche des consignes dans le moteur (B-0161, D-0201)
+
+Le préfixe `C-` et la couche `consignes` (directives.md sous la mémoire,
+son miroir privé) ; les contrôles de format, de levée, d'ajout seul et de
+lecture prouvée, chacun avec son défaut injecté, et leurs témoins ; le
+groupe du démarrage et ses parts ; `socle new directive`, `socle archive`
+qui range les consignes levées dans le journal, l'installeur qui pose la
+couche, les gabarits des garde-fous (consignes 16 000 octets, chantier
+actif 1 600). Les valeurs attendues que D-0201 autorise suivent le
+gabarit.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_0118ZdFWAZFyYQ3n99VxwSCm
