@@ -13,3 +13,9 @@ prompt de mise à jour de chess. Une seule revue les juge. Il passe avant
 L-0032, dont la tâche T-0151 attend une réponse de Théo.
 
 T-0179 en sort pour L-0037, sa conception pas tranchée (J-2026-11-24-AZ).
+
+## Revues
+
+### Passe 1 — 2026-11-25
+
+Commits : cd6c6827..6d291af0
