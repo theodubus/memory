@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0036 clos (J-2026-11-25-E). Suivant, en session neuve : L-0037,
-la spécification de T-0179 soumise à Théo d'abord (J-2026-11-25-F).
+L-0032 : T-0151 (D-0191), puis T-0152. Réponses de D-0189 et D-0190
+au journal, consignées avec leurs tests (J-2026-11-25-J, -K).
 
 ## Consignes en cours
 
@@ -35,11 +35,10 @@ Leur texte exact est dans l'entrée du journal citée.
   `theodubus/socle` ; donner leurs liens reste permis (J-2026-11-09-M).
 - Le pilote est un essai de choc : seules les imperfections du socle se
   corrigent ici (J-2026-10-31-E).
-- La documentation se conçoit avant de s'écrire, son plan soumis à Théo ;
-  ton formel ; chaque question à un seul endroit ; elle dit à quoi sert
-  l'outil ; le guide suit le parcours de l'utilisateur ; ses schémas se
-  vérifient rendus ; faite que validée (J-2026-10-20-Y, J-2026-10-21-A,
-  J-2026-10-22-A).
+- La documentation : son plan soumis à Théo d'abord ; ton formel ; une
+  question à un seul endroit ; à quoi sert l'outil ; le guide suit le
+  parcours de l'utilisateur ; schémas vérifiés rendus ; faite que validée
+  (J-2026-10-20-Y, J-2026-10-21-A, J-2026-10-22-A).
 - Une limite d'usage proche décide de l'ordre, jamais de la profondeur
   du travail ni du modèle ; la passation se fait avant elle
   (J-2026-11-09-C, J-2026-11-15-D, J-2026-11-16-W).
@@ -59,6 +58,8 @@ Leur texte exact est dans l'entrée du journal citée.
 - Sessions d'un agent réel sur l'abonnement, chacune plafonnée à
   l'équivalent de 2 dollars, sa consommation rapportée (J-2026-10-19-H).
 - En autonomie sur le backlog, sauf arbitrage (J-2026-10-20-C).
+- Une demande de Théo se lit pour son besoin, pas à la lettre
+  (J-2026-11-25-K).
 - Toute la correction et la stabilisation du produit avant chess, puis
   chess mis à jour d'un coup, ses corrections, ensuite les fonctions
   nouvelles (J-2026-11-13-I, J-2026-11-21-B, J-2026-11-13-L).
@@ -67,6 +68,6 @@ Leur texte exact est dans l'entrée du journal citée.
 
 Par lots (D-0118, D-0151) :
 
-1. JA-0005 : L-0037, L-0038, puis L-0032.
+1. JA-0005 : L-0039, L-0040, puis L-0032.
 2. JA-0006 : chess mis à jour d'un coup, puis ses corrections.
 3. Puis la couche des consignes (B-0161), la planification (B-0101).
