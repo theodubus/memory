@@ -6,6 +6,13 @@ B-0259 ; l'essai qui la fonde est relevé dans
 `docs/fabrication/passation-programmee.md`. Les heures du prompt sont en
 UTC ; celles que lit l'humain, à l'heure de Paris.
 
+Depuis D-0190, la passation s'écrit dans le dépôt : `socle handoff prompt`
+est remplacé par `socle handoff write`, « Le prompt et sa garde » par
+`docs/fabrication/reprends-specification.md`, et le prompt de « La façon »
+par le texte de la tâche programmée, « reprends — session programmée » ;
+la session neuve part sur une demande de reprendre, quelle qu'en soit la
+forme. Le reste de ce texte dit la passation telle que D-0174 l'a validée.
+
 ## Ce qu'elle fait
 
 Une session qui orchestre ne mène qu'un lot. Quand elle doit s'arrêter

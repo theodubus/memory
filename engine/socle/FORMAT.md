@@ -1,7 +1,7 @@
 # Format de la mémoire
 
 La mémoire est un ensemble de fichiers markdown en cinq couches, plus la file
-des demandes humaines. Un script sait la lire : sans cela, aucun contrôle
+des demandes humaines et la passation à une session neuve. Un script sait la lire : sans cela, aucun contrôle
 automatique ne serait possible. Ce document fait foi pour le format ; le code
 qui le lit est `socle/memory.py`, les contrôles sont listés par
 `python3 .socle/socle checks`.
@@ -17,6 +17,7 @@ memory/
   journal/2026-10.md      un fichier par mois, une entrée par événement
   requests/D-0001-*.md    une demande de décision humaine par fichier
   requests/D-0001-*.answer.toml   la réponse de l'humain, et elle seule
+  handoff.md              la passation à une session neuve, tant qu'elle attend
   archives/               documents archivés tels quels (cadrage…), non lus par les contrôles
   private/                zone privée, même arborescence (voir « La zone privée »)
 ```
@@ -137,6 +138,31 @@ Réécrit librement, borné par son budget. Il ne définit aucun identifiant :
 un identifiant est stable, l'actif ne l'est pas. Il renvoie aux entrées du
 backlog et du journal. L'ordre du travail ne s'y recopie pas : il se tient
 au backlog, d'où l'état le calcule.
+
+### Passation
+
+Un seul fichier, `handoff.md`, public : jamais dans la zone privée, où il
+serait hors des couches connues. La session qui passe la main l'écrit
+(`socle handoff write`), le commite en dernier et le pousse ; la session
+neuve le trouve sur les branches distantes (`socle handoff check`), et son
+premier commit le retire. Il ne définit aucun identifiant ; son estampille,
+sur une ligne `>`, se lit par script :
+
+```markdown
+<!-- socle: couche=passation zone=publique -->
+# Passation
+
+> écrite : 2026-11-25T03:10:00Z · branche : travail · chaîne : 0
+
+Ce qui attend : la CI du commit de tête.
+```
+
+L'heure `écrite`, en UTC, et la `branche` (un nom sans espace) identifient
+la passation, quel que soit le commit qui la porte ; la `chaîne` (un
+entier, 0 ou plus) compte les lots menés sans message de l'humain. Une
+estampille illisible est refusée. Ce qui suit l'estampille est libre, et
+se juge comme tout fichier public. Aucun budget des garde-fous ne lui est
+exigé : il ne s'injecte pas au démarrage, où l'état n'en dit qu'une ligne.
 
 ### Décisions — `ADR-`
 
@@ -649,6 +675,9 @@ interne, que `socle show` dit dans la langue du projet.
 | champ `priorite` | priorité | priority |
 | champ `besoin` | besoin | need |
 | champ `ancien` | ancien | former |
+| champ `ecrite` | écrite | written |
+| champ `branche` | branche | branch |
+| champ `chaine` | chaîne | chain |
 | valeur `seance` | séance | session |
 | valeur `jalon` | jalon | milestone |
 | valeur `lot` | lot | batch |
@@ -685,6 +714,7 @@ interne, que `socle show` dit dans la langue du projet.
 | couche `journal` | journal | journal |
 | couche `backlog` | backlog | backlog |
 | couche `demandes` | demandes | requests |
+| couche `passation` | passation | handoff |
 | zone `publique` | publique | public |
 | zone `privee` | privee | private |
 | référence `commit` | commit | commit |

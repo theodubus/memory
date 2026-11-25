@@ -15,6 +15,36 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-25-c — La passation s'écrit dans la mémoire, `memory/handoff.md`, et la session neuve la reprend sur une simple demande de reprendre, sans prompt à copier
+
+`socle handoff write` remplace `socle handoff prompt`, avec les mêmes
+options (`--waiting`, `--scheduled`, `--chain`) et les mêmes bornes d'une
+session programmée. Il écrit la passation dans `memory/handoff.md`, une
+couche nouvelle du format (`couche=passation`), publique, sans
+identifiant, dont l'estampille, l'heure `écrite` et la branche,
+l'identifie quel que soit le commit qui la porte, avec la chaîne et ce
+qui attend. L'agent la commite en dernier, pousse, puis lance
+`socle handoff check` sans argument, qui doit la trouver en attente : une
+passation non commitée, non poussée, ou suivie d'un commit absent de
+l'origine, y est refusée.
+
+Dans une session neuve, sur un premier message qui demande de reprendre
+ou de continuer, quelle qu'en soit la forme, l'agent lance
+`git fetch --prune origin` puis `socle handoff check` sans argument : la
+commande trouve la passation la plus récente sur les branches distantes
+et juge sa garde, ses arguments tirés du dépôt. En plus des refus
+d'avant, elle refuse une passation déjà reprise par une autre session
+dont le retrait n'est pas encore dans la branche par défaut. Une pull
+request fusionnée par squash ou par rebase, sa branche supprimée, ne la
+fait plus refuser : la session repart de la branche par défaut, sauf si
+la mémoire d'une autre session y est entrée depuis la passation. Sans
+passation, elle le dit ; acceptée, le premier commit de la session
+retire `memory/handoff.md`. Avec `--ref` et `--head`, `check` juge la
+garde seule, comme avant. L'état dit la passation qui attend ; aucun
+budget des garde-fous n'est exigé du fichier.
+
+À faire : passer la main selon les skills `socle-handoff`, `socle-batch` et `socle-resume` mis à jour, avec `socle handoff write` au lieu de `socle handoff prompt` ; le récap du mode « prompt à copier » dit à l'humain de demander la reprise dans une session neuve, au lieu de donner un prompt.
+
 ## 2026-11-25-b — Une réponse `valider` poussée avant le changement qu'elle autorise le couvre, sur la branche, ou fusionnée tant que la tâche qui la cite est ouverte ; l'avertissement de la réponse seule se retire
 
 Changer la valeur qu'un test attend ou le supprimer, changer un fichier de

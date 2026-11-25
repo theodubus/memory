@@ -84,7 +84,9 @@ programmée est créée comme aujourd'hui (`source_revision`,
 
 ## La trouver
 
-Après `git fetch origin` :
+Après `git fetch --prune origin` (sans `--prune`, une branche supprimée
+sur l'origine reste dans le clone, et la pull request fusionnée par
+squash ou par rebase se refuse comme aujourd'hui) :
 
 - **Les passations connues** : le fichier `handoff.md` à la tête de
   chaque branche distante, la branche par défaut comprise, et celui
@@ -145,7 +147,7 @@ une limite d'usage (skill `socle-resume`) les lui donne toujours.
 Sur tout premier message d'une session neuve qui demande de reprendre
 ou de continuer le travail, quelle qu'en soit la forme (« reprends »,
 « continue », « reprends les travaux »), l'agent lance `git fetch
-origin` puis `python3 .socle/socle handoff check`. Aucun contrôle ne
+--prune origin` puis `python3 .socle/socle handoff check`. Aucun contrôle ne
 lit le message de l'humain : c'est l'agent qui reconnaît la demande ;
 le mot « reprends » n'en est qu'un exemple, dans le récap, l'état et
 le gabarit d'`AGENTS.md`.

@@ -93,6 +93,17 @@ def _format_entrees(r, chemin, f, couche, prive):
             r.erreur("memoire.format", trad("`{id}` défini dans le chantier actif, qui est réécrit : un "
                                             "identifiant stable vit dans une couche durable", id=e.id), chemin, e.ligne)
         return
+    if couche == "passation":
+        # Un seul fichier, `memory/handoff.md`, que l'emplacement impose ; ni
+        # entrée ni identifiant ; son estampille lisible, que la session
+        # neuve compare sur toutes les branches distantes.
+        for e in f.entrees:
+            r.erreur("memoire.format", trad("`{id}` défini dans la passation, que la session neuve retire : un "
+                                            "identifiant stable vit dans une couche durable", id=e.id), chemin, e.ligne)
+        _, fautes, ligne = memoire.lire_passation(f.texte)
+        for faute in fautes:
+            r.erreur("memoire.format", faute, chemin, ligne)
+        return
     attendus = TYPES_DE_COUCHE[couche]
     # `AAAA-MM.md`, puis `AAAA-MM-2.md`… quand le mois dépasse son budget.
     if couche == "journal" and not re.match(r"^\d{4}-\d{2}(?:-[2-9]|-[1-9]\d+)?\.md$", nom):
@@ -1036,8 +1047,11 @@ def budgets(ctx, r):
     instructions = [config.INSTRUCTIONS]
     if (ctx.lire("CLAUDE.md") or "").strip() not in ("", "@AGENTS.md"):
         instructions.append("CLAUDE.md")
+    # La passation, que le moteur écrit d'une forme fixe et que la session
+    # neuve retire, ne s'injecte pas au démarrage : l'état n'en dit qu'une
+    # ligne. Aucun budget ne lui est exigé.
     for chemin in list(ctx.memoire.fichiers) + instructions:
-        if chemin in ctx.fichiers and chemin not in couverts:
+        if chemin in ctx.fichiers and chemin not in couverts and chemin != ch.passation:
             r.erreur("memoire.budgets", trad("aucun budget ne couvre ce fichier (`[budgets]` des garde-fous)"), chemin)
 
 

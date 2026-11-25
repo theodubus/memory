@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0190-valider-la-reprise-sur-reprends-seul-la-passation.md, dont l'empreinte suit.
+reponse = "valider"
+texte = "Sous la réserve de Théo : la reprise part sur toute demande de reprendre ou de continuer, quelle qu'en soit la forme, pas sur le seul mot « reprends »."
+par = "Théo"
+date = "2026-11-25"
+canal = "conversation"
+citation = "Valider D0189\nValider D0190* -> on peut dire n'importe quoi hein ? Genre \"continue\" ou \"reprends les travaux\" ? T'as pas tout figé autour de la formulation littérale \"reprends\" ? Moi mon besoin c'est de pouvoir faire reprendre sans rappeler les infos du prompt de passation\n\nPourquoi tu avais repris ma demande littéralement sur \"reprends\" alors qu'en soit la question de fond etait assez évidente pour le fait de juste avoir besoin de faire reprendre sans avoir les infos\n\nQuel intérêt y aurait t il eu a figer sur uniquement \"reprends\" ?"
+empreinte = "sha256:e11de6f81058e4d3da6881e283ff67dce3abc8272122b45c0e5209556ff60b14"

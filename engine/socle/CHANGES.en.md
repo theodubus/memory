@@ -14,6 +14,34 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-25-c — The handoff is written in the memory, `memory/handoff.md`, and the new session resumes it on a plain request to resume, with no prompt to copy
+
+`socle handoff write` replaces `socle handoff prompt`, with the same
+options (`--waiting`, `--scheduled`, `--chain`) and the same bounds for
+a scheduled session. It writes the handoff in `memory/handoff.md`, a new
+layer of the format (`layer=handoff`), public, without an identifier,
+whose stamp, the `written` time and the branch, identifies it whatever
+commit carries it, with the chain and what is waiting. The agent commits
+it last, pushes, then runs `socle handoff check` without arguments,
+which must find it waiting: a handoff not committed, not pushed, or
+followed by a commit the remote does not have, is refused there.
+
+In a new session, on a first message that asks to resume or to
+continue, whatever its wording, the agent runs `git fetch --prune
+origin` then `socle handoff check` without arguments: the command finds
+the most recent handoff on the remote branches and judges its guard,
+its arguments taken from the repository. On top of the former refusals,
+it refuses a handoff already resumed by another session whose removal is
+not yet in the default branch. A pull request merged by squash or by
+rebase, its branch deleted, no longer makes it refuse: the session
+restarts from the default branch, unless another session's memory
+entered it since the handoff. Without a handoff, it says so; accepted,
+the session's first commit removes `memory/handoff.md`. With `--ref` and
+`--head`, `check` judges the guard alone, as before. The state shows the
+waiting handoff; no budget from the guardrails is required of the file.
+
+To do: hand off following the updated `socle-handoff`, `socle-batch` and `socle-resume` skills, with `socle handoff write` instead of `socle handoff prompt`; the recap of the “prompt to copy” mode tells the human to ask for the resumption in a new session, instead of giving a prompt.
+
 ## 2026-11-25-b — An `approve` answer pushed before the change it authorizes covers it, on the branch, or merged while the task that cites it is open; the warning about the answer alone is removed
 
 Changing the value a test expects or deleting it, changing a case file,
