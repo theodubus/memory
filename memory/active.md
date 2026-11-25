@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0041 clos (J-2026-11-25-AB). B-0161 : intention validée,
-lignes de résumé (D-0200).
+PR #96 fusionnée (J-2026-11-25-AC). Prochain : B-0351.
+B-0161 : lignes de résumé (D-0200).
 
 ## Consignes en cours
 
