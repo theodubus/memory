@@ -24,14 +24,14 @@ PHRASE = "Un lot réunit ce qui se relit ensemble"
 NOUVELLE = "Un lot rassemble ce qui se relit ensemble"
 DU_MOTEUR = "Une phrase que le moteur imprime aussi."
 
-TESTS = '''import unittest
+TESTS = '''import re
+import unittest
 from pathlib import Path
-
-GABARIT = Path(__file__).resolve().parent.parent / "engine/socle/templates/skills/socle-batch/SKILL.md"
 
 
 def texte():
-    return " ".join(GABARIT.read_text(encoding="utf-8").split())
+    gabarit = Path(__file__).resolve().parent.parent / "engine/socle/templates/skills/socle-batch/SKILL.md"
+    return " ".join(gabarit.read_text(encoding="utf-8").split())
 
 
 class TestTextes(unittest.TestCase):
@@ -44,6 +44,15 @@ class TestTextes(unittest.TestCase):
 
     def test_le_skill_compte_ses_sections(self):
         self.assertEqual(texte().count("## "), 6)
+
+    def test_le_skill_et_un_comportement(self):
+        self.assertIn("Un lot réunit ce qui se relit ensemble", texte())
+        self.assertEqual(len("abc"), 3)
+
+
+class TestComportement(unittest.TestCase):
+    def test_le_motif_ne_prend_pas_la_phrase(self):
+        self.assertIsNone(re.search(r"^x$", "Un lot réunit ce qui se relit ensemble"))
 '''
 
 
@@ -84,7 +93,8 @@ class _Depot(unittest.TestCase):
                 # Une phrase du skill que le moteur imprime aussi.
                 changer(racine, BATCH, "\n## ", f"\n{DU_MOTEUR}\n\n## ")
                 with open(racine / "engine/socle/utils.py", "a", encoding="utf-8") as f:
-                    f.write(f'\n_ESSAI = "{DU_MOTEUR}"\n')
+                    # En deux littéraux concaténés, comme le moteur écrit ses messages.
+                    f.write('\n_ESSAI = ("Une phrase que le moteur " "imprime aussi.")\n')
                 installeur.installer(racine, "python", "@essai", mode=config.MODE_AMONT, source=racine / "engine")
             else:
                 installeur.installer(racine, "python", "@essai", source=MOTEUR)
@@ -210,6 +220,35 @@ class TestLesTestsDuTexteEnModeAmont(_Depot):
         self.assertEqual(len(fautes), 1, fautes)
         self.assertIn("test_le_skill_compte_ses_sections", fautes[0])
 
+    def test_une_assertion_sans_phrase_ne_passe_pas_avec_la_phrase_du_meme_test(self):
+        """ADR-0111 : chaque assertion perdue a ses phrases ; une valeur de
+        comportement ne passe pas avec la phrase d'un skill."""
+        changer(self.racine, BATCH, PHRASE, NOUVELLE)
+        avant = f'self.assertIn("{PHRASE}", texte())\n        self.assertEqual(len("abc"), 3)'
+        changer(self.racine, "tests/test_textes.py", avant,
+                f'self.assertIn("{NOUVELLE}", texte())\n        self.assertEqual(len("abc"), 4)')
+        fautes = self.erreurs()
+        self.assertEqual(len(fautes), 1, fautes)
+        self.assertIn("test_le_skill_et_un_comportement", fautes[0])
+        # Supprimé en entier, le test garde son assertion sans phrase.
+        changer(self.racine, "tests/test_textes.py", "len(\"abc\"), 4)", "len(\"abc\"), 3)")
+        texte = (self.racine / "tests/test_textes.py").read_text(encoding="utf-8")
+        debut = texte.index("    def test_le_skill_et_un_comportement")
+        fin = texte.index("class TestComportement")
+        (self.racine / "tests/test_textes.py").write_text(texte[:debut] + "\n" + texte[fin:], encoding="utf-8")
+        fautes = self.erreurs()
+        self.assertEqual(len(fautes), 1, fautes)
+        self.assertIn("test_le_skill_et_un_comportement", fautes[0])
+
+    def test_un_test_qui_ne_lit_aucun_skill_reste_refuse(self):
+        """ADR-0111 : la phrase d'un gabarit, entrée d'un test de comportement
+        (le motif d'un hook), ne le fait pas juger sur le texte des skills."""
+        changer(self.racine, BATCH, PHRASE, NOUVELLE)
+        changer(self.racine, "tests/test_textes.py", f'r"^x$", "{PHRASE}"', 'r"^x$", "autre chose encore"')
+        fautes = self.erreurs()
+        self.assertEqual(len(fautes), 1, fautes)
+        self.assertIn("test_le_motif_ne_prend_pas_la_phrase", fautes[0])
+
     def test_sans_gabarit_de_skill_change_le_juge_ne_dit_rien(self):
         juge = controles_tests.juge_des_skills(self.contexte())
         self.assertIsNone(juge([PHRASE]))
@@ -218,7 +257,19 @@ class TestLesTestsDuTexteEnModeAmont(_Depot):
 
 
 class TestLesPhrases(unittest.TestCase):
-    """Ce que le juge lit d'un test : ses phrases, sans sa documentation."""
+    """Ce que le juge lit d'un test : ses phrases, sans sa documentation ; et
+    du moteur : ses chaînes assemblées, coupées à leurs paramètres."""
+
+    def test_les_chaines_du_moteur_assemblees_et_coupees_a_leurs_parametres(self):
+        module = 'X = trad("fichier protégé {f} modifié " "sans validation humaine", f=f)\nY = f"court {a} b"\n'
+        self.assertEqual(controles_tests.chaines_du_moteur(module),
+                         ["fichier protégé", "modifié sans validation humaine"])
+        self.assertEqual(controles_tests.chaines_du_moteur("def ("), ["def ("])
+
+    def test_une_valeur_de_phrase(self):
+        self.assertTrue(controles_tests.valeurs_de_phrase(['"une phrase assez longue"', '""']))
+        self.assertFalse(controles_tests.valeurs_de_phrase(['"une phrase assez longue"', "3"]))
+        self.assertFalse(controles_tests.valeurs_de_phrase(['"fr"']))
 
     CFG = {"strings": r'"(?:\\.|[^"\\])*"'}
 
