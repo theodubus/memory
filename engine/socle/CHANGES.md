@@ -21,8 +21,10 @@ Les commandes de l'adaptateur `kotlin` supposent des modules JVM. Dans un
 projet qui a aussi un module multiplateforme, `./gradlew -q test`
 réussissait sans lancer les tests de ce module, que le socle disait verts ;
 un module Android n'a pas `testClasses`. À l'installation comme à chaque
-mise à jour, tant que la copie garde `./gradlew -q test`, l'installeur
-nomme les fichiers de Gradle qui déclarent un tel module, en clair ou dans
+mise à jour, tant que la copie garde des commandes qui ne servent pas ces
+modules (des tests sans `allTests` ni `jvmTest`, une compilation par
+`testClasses` sous Android), l'installeur nomme les fichiers de Gradle qui
+déclarent un tel module, en clair ou dans
 le catalogue des versions, et renvoie à la section « Kotlin » de la
 spécification des adaptateurs, qui donne les commandes selon les modules
 du projet. Il avertit sans bloquer ; une copie déjà adaptée ne déclenche

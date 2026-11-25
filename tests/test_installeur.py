@@ -897,7 +897,9 @@ class TestKotlinHorsJvm(unittest.TestCase):
         self.assertIn("shared/build.gradle.kts déclare un module multiplateforme ou Android", ligne)
         self.assertIn(".socle/adapter.toml", ligne)
         self.assertIn("`allTests`", ligne)
-        self.assertIn(".socle/engine/adapters/README.md", ligne)
+        # Revue de L-0032 : le moteur d'un projet est sous `.socle/engine/socle/`.
+        self.assertIn(".socle/engine/socle/adapters/README.md", ligne)
+        self.assertTrue((racine / ".socle/engine/socle/adapters/README.md").is_file())
         self.assertNotIn("lib/build.gradle.kts", ligne)
         # À la mise à jour, la copie gardée telle quelle : il le redit.
         self.assertIn("!! kotlin : shared/build.gradle.kts", self.installer(racine))
@@ -935,6 +937,29 @@ class TestKotlinHorsJvm(unittest.TestCase):
         copie.write_text(texte.replace('command = "./gradlew -q test"\n', 'command = "./gradlew -q test allTests"\n',
                                        1), encoding="utf-8")
         self.assertEqual(installeur.modules_hors_jvm(racine, config.FORMAT_ACTUEL), [])
+
+    def adapter(self, racine: Path, avant: str, apres: str) -> None:
+        copie = racine / config.FORMAT_ACTUEL.adaptateur
+        texte = copie.read_text(encoding="utf-8")
+        self.assertIn(avant, texte)
+        copie.write_text(texte.replace(avant, apres, 1), encoding="utf-8")
+
+    def test_une_copie_android_adaptee_selon_la_specification_ne_dit_plus_rien(self):
+        # Revue de L-0032 : sous Android, `test` se garde, seule la
+        # compilation change ; et la compilation changée ne fait pas taire
+        # un module multiplateforme dont les tests restent sautés.
+        racine = self.depot({"app/build.gradle.kts": 'plugins { id("com.android.application") }\n'})
+        self.installer(racine)
+        self.assertEqual(len(installeur.modules_hors_jvm(racine, config.FORMAT_ACTUEL)), 1)
+        self.adapter(racine, 'command = "./gradlew -q testClasses"\n',
+                     'command = "./gradlew -q compileDebugUnitTestKotlin"\n')
+        self.assertEqual(installeur.modules_hors_jvm(racine, config.FORMAT_ACTUEL), [])
+        (racine / "shared/build.gradle.kts").parent.mkdir(parents=True)
+        (racine / "shared/build.gradle.kts").write_text('plugins { kotlin("multiplatform") }\n', encoding="utf-8")
+        dit = installeur.modules_hors_jvm(racine, config.FORMAT_ACTUEL)
+        self.assertEqual(len(dit), 1)
+        self.assertIn("!! kotlin : shared/build.gradle.kts déclare", dit[0])
+        self.assertNotIn("app/build.gradle.kts", dit[0])
 
 
 class TestBudgetDAdoption(unittest.TestCase):

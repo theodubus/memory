@@ -346,8 +346,10 @@ borne aux modules JVM, les seuls où le greffon de PIT s'applique ; le rejeu
 d'un correctif lance `jvmTest` dans un module multiplateforme, qui n'a pas
 `test`.
 
-À l'installation comme à chaque mise à jour, tant que la copie garde
-`./gradlew -q test`, l'installeur nomme les fichiers de Gradle qui
+À l'installation comme à chaque mise à jour, tant que la copie garde des
+commandes qui ne servent pas ces modules (des tests qui ne nomment ni
+`allTests` ni `jvmTest` pour un module multiplateforme, la compilation par
+`testClasses` sous Android), l'installeur nomme les fichiers de Gradle qui
 déclarent un tel module, par son greffon écrit en clair dans un build ou
 par son identifiant dans le catalogue des versions
 (`gradle/libs.versions.toml`), et renvoie ici. Il avertit sans bloquer. La

@@ -293,32 +293,42 @@ def sous_dossiers_sans_adaptateur(cible: Path, couverts: set[str], sans_langage:
 
 # Un module que les commandes JVM de l'adaptateur `kotlin` ne servent pas
 # (B-0147, D-0191) : multiplateforme, sans tâche `test`, dont les tests
-# seraient sautés sans erreur à côté d'un module JVM ; ou Android, sans
-# `testClasses`. Son greffon s'écrit en clair dans un build, ou par son
-# identifiant dans le catalogue des versions.
-GREFFONS_HORS_JVM = re.compile(r'kotlin\(\s*"multiplatform"\s*\)|org\.jetbrains\.kotlin\.multiplatform\b'
-                               r'|com\.android\.(?:application|library|test|dynamic-feature'
-                               r'|kotlin\.multiplatform\.library)\b')
+# seraient sautés sans erreur à côté d'un module JVM tant que la commande
+# des tests ne nomme ni `allTests` ni `jvmTest` ; ou Android, où la
+# compilation par `testClasses` échoue. Son greffon s'écrit en clair dans
+# un build, ou par son identifiant dans le catalogue des versions.
+GREFFON_MULTIPLATEFORME = re.compile(r'kotlin\(\s*"multiplatform"\s*\)|org\.jetbrains\.kotlin\.multiplatform\b'
+                                     r'|com\.android\.kotlin\.multiplatform\.library\b')
+GREFFON_ANDROID = re.compile(r'com\.android\.(?:application|library|test|dynamic-feature'
+                             r'|kotlin\.multiplatform\.library)\b')
 FICHIERS_GRADLE = re.compile(r'(?:^|/)(?:build\.gradle(?:\.kts)?|libs\.versions\.toml)$')
-TESTS_JVM_KOTLIN = "./gradlew -q test"
+TACHES_DES_TESTS_MULTIPLATEFORMES = {"allTests", "jvmTest"}
 
 
 def modules_hors_jvm(cible: Path, ch: config.Chemins) -> list[str]:
     """Ce que l'installeur dit, à l'installation comme à chaque mise à
-    jour, tant qu'une copie de l'adaptateur `kotlin` garde ses commandes
-    JVM et que le build déclare un module multiplateforme ou Android : les
-    fichiers qui le déclarent, et les commandes à mettre dans la copie,
-    que la spécification des adaptateurs donne (D-0191). Il avertit sans
-    bloquer."""
-    copies = []
+    jour, quand le build déclare un module multiplateforme ou Android que
+    les commandes d'une copie de l'adaptateur `kotlin` ne servent pas : des
+    tests qui ne nomment ni `allTests` ni `jvmTest` pour un module
+    multiplateforme, une compilation par `testClasses` sous Android. Il dit
+    les fichiers qui déclarent ces modules, et renvoie aux commandes que la
+    spécification des adaptateurs donne (D-0191). Il avertit sans
+    bloquer ; une copie adaptée selon elle ne déclenche rien."""
+    copies, multiplateforme, android = [], False, False
     for c in [ch.adaptateur, *config.fichiers_adaptateurs(cible, ch.adaptateurs)]:
         try:
             d = config.lire_toml((cible / c).read_text(encoding="utf-8"))
         except (tomllib.TOMLDecodeError, OSError):
             continue
-        tests = d.get("capabilities", {}).get("tests", {}).get("command", "")
-        if d.get("language") == "kotlin" and tests.strip() == TESTS_JVM_KOTLIN:
+        if d.get("language") != "kotlin":
+            continue
+        capacites = d.get("capabilities", {})
+        tests = str(capacites.get("tests", {}).get("command", "")).split()
+        build = str(capacites.get("build", {}).get("command", "")).split()
+        m, a = not TACHES_DES_TESTS_MULTIPLATEFORMES & set(tests), "testClasses" in build
+        if m or a:
             copies.append(c)
+            multiplateforme, android = multiplateforme or m, android or a
     if not copies:
         return []
     declarants = []
@@ -329,7 +339,7 @@ def modules_hors_jvm(cible: Path, ch: config.Chemins) -> list[str]:
             texte = (cible / f).read_text(encoding="utf-8", errors="replace")
         except OSError:
             continue
-        if GREFFONS_HORS_JVM.search(texte):
+        if (multiplateforme and GREFFON_MULTIPLATEFORME.search(texte)) or (android and GREFFON_ANDROID.search(texte)):
             declarants.append(f)
     if not declarants:
         return []
@@ -341,7 +351,7 @@ def modules_hors_jvm(cible: Path, ch: config.Chemins) -> list[str]:
                  "qu'un module JVM ou Android reste ; la compilation par `jvmTestClasses`, ou par celle d'une "
                  "variante sous Android ; la mutation déclarée absente hors JVM",
                  fichiers=", ".join(declarants), copies=", ".join(copies),
-                 specification=f"{ch.moteur}/adapters/README.md")]
+                 specification=f"{ch.moteur}/socle/adapters/README.md")]
 
 
 def _langage_de(nom: str) -> str:

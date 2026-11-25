@@ -5,7 +5,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0032 fait (J-2026-11-25-M). Réponses de D-0189 et D-0190 au
+L-0032 fait (J-2026-11-25-N). Réponses de D-0189 et D-0190 au
 journal, consignées avec leurs tests (J-2026-11-25-J, -K).
 
 ## Consignes en cours

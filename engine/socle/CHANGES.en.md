@@ -20,8 +20,9 @@ The commands of the `kotlin` adapter assume JVM modules. In a project that
 also has a multiplatform module, `./gradlew -q test` succeeded without
 running that module's tests, which the socle reported green; an Android
 module has no `testClasses`. At installation as at every update, while
-the copy keeps `./gradlew -q test`, the installer names the Gradle files
-that declare such a module, in plain text or in the version catalog, and
+the copy keeps commands that do not serve these modules (tests without
+`allTests` or `jvmTest`, compilation through `testClasses` under
+Android), the installer names the Gradle files that declare such a module, in plain text or in the version catalog, and
 points to the "Kotlin" section of the adapter specification, which gives
 the commands according to the project's modules. It warns without
 blocking; a copy already adapted triggers nothing.

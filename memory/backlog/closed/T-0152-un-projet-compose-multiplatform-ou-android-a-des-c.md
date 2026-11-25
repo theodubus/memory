@@ -10,6 +10,6 @@ Un commit, sur la réponse de Théo à la demande de T-0151 : l'adaptateur (`eng
 Sur D-0191 (J-2026-11-25-M), l'option retenue : l'installeur le dit, et la
 spécification donne les commandes.
 
-- [x] à l'installation comme à la mise à jour, l'installeur nomme les fichiers de Gradle qui déclarent un module multiplateforme ou Android, en clair ou dans le catalogue des versions, tant que la copie `kotlin` garde `./gradlew -q test`, et se tait sinon ; des tests le montrent
+- [x] à l'installation comme à la mise à jour, l'installeur nomme les fichiers de Gradle qui déclarent un module multiplateforme ou Android, en clair ou dans le catalogue des versions, tant que la copie `kotlin` garde des commandes qui ne les servent pas (des tests sans `allTests` ni `jvmTest`, une compilation par `testClasses` sous Android), et se tait pour une copie adaptée selon la spécification ; des tests le montrent
 - [x] la spécification des adaptateurs dit ce que la copie `kotlin` suppose et donne les commandes selon les modules, et un test le lit
 - [x] la note de version le dit, en français et en anglais
