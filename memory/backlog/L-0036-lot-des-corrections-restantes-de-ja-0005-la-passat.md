@@ -19,3 +19,5 @@ T-0179 en sort pour L-0037, sa conception pas tranchée (J-2026-11-24-AZ).
 ### Passe 1 — 2026-11-25
 
 Commits : cd6c6827..6d291af0
+- Bloquant : « du dépôt » retiré du dossier de passation dans le gabarit français de socle-batch
+- Ouvre : rien
