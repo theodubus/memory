@@ -10,3 +10,9 @@ Le 24 novembre, L-0031 fermé par D-0168, il suit L-0024.
 Le 24 novembre, sur D-0180, il suit L-0036, le lot des corrections restantes de JA-0005 (J-2026-11-24-AV).
 
 Le 25 novembre, L-0037 et L-0038 attendant les réponses de Théo (D-0189, D-0190), il passe devant eux (J-2026-11-25-I).
+
+## Revues
+
+### Passe 1 — 2026-11-25
+
+Commits : e173afb8..ef593887
