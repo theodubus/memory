@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0179 — La réponse donnée avant le lot de son changement : la spécification soumise à Théo, qui choisit entre la consigner depuis le journal au lot et une validation que la CI compte hors de sa plage
 
-> statut : ouvert · origine : J-2026-11-24-AV · besoin : B-0347 · ref : D-0180, T-0134, B-0142, J-2026-11-24-AZ · lu : backlog@23ed6516
+> statut : en cours · origine : J-2026-11-24-AV · besoin : B-0347 · ref : D-0180, T-0134, B-0142, J-2026-11-24-AZ · lu : backlog@23ed6516
 
 Un commit : une demande soumet à Théo la spécification qui lève la
 contradiction de B-0347. Formée d'abord comme une règle des skills (le

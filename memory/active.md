@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0036 clos (J-2026-11-25-E). Suivant, en session neuve : L-0037,
-la spécification de T-0179 soumise à Théo d'abord (J-2026-11-25-F).
+L-0037 en cours (T-0179, sa spécification soumise à Théo) ; puis
+L-0038 (T-0180), même session (J-2026-11-25-G).
 
 ## Consignes en cours
 
@@ -28,7 +28,8 @@ Leur texte exact est dans l'entrée du journal citée.
 - Tout ce qui est utile intègre le socle, une règle du backlog comprise
   (J-2026-11-13-F) ; un sujet important se garde (J-2026-11-14-K).
 - Un lot par session ; sinon tout se range pour une session neuve, qui
-  peut être sur un autre compte, avec son prompt (J-2026-11-12-P).
+  peut être sur un autre compte, avec son prompt (J-2026-11-12-P) ; deux
+  le 25 novembre (J-2026-11-25-G).
 - Chaque session sur la branche de son environnement, partie de celle
   par défaut (J-2026-11-13-A).
 - Aucun autre dépôt dans la session, ni lecture de JustCook ou de
