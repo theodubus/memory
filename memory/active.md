@@ -5,9 +5,9 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0039 : T-0183 (D-0194), T-0181, T-0182 (D-0192). Réponses de
-D-0189, D-0190 au journal (J-2026-11-25-J, -K). La réforme validée
-(D-0195, J-2026-11-25-R).
+L-0039 fait, relu sans bloquant, poussé (J-2026-11-25-S). Attend
+D-0196 : validée, l'installeur en mode amont remet les copies, puis
+clore et fusionner.
 
 ## Consignes en cours
 
@@ -29,8 +29,8 @@ Leur texte exact est dans l'entrée du journal citée.
   Théo le veut, et pour relire un lot fait sur Fable, lui demander (D-0119).
 - Tout ce qui est utile intègre le socle, une règle du backlog comprise
   (J-2026-11-13-F) ; un sujet important se garde (J-2026-11-14-K).
-- Un lot par session ; sinon tout se range pour une session neuve, qui
-  peut être sur un autre compte, avec son prompt (J-2026-11-12-P).
+- Session unité de budget : sous 300 000 jetons, elle enchaîne les
+  lots ; sinon elle range, pour une session neuve (D-0194).
 - Chaque session sur la branche de son environnement, partie de celle
   par défaut (J-2026-11-13-A).
 - Aucun autre dépôt dans la session, ni lecture de JustCook ou de
