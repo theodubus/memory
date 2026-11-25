@@ -19,3 +19,7 @@ Commits : c50b2012..f2e68840
 - Bloquant : la session programmée ne distinguait pas « reprends » de l'humain, et la borne de la chaîne cédait ; un texte distinct, et dans le doute la chaîne plus un
 - Bloquant : la liste des tests de D-0190 incomplète ; deux tests, deux défauts et un témoin ajoutés
 - Ouvre : rien
+
+### Passe 2 — 2026-11-25
+
+Commits : c2d2d34b..a8fdd86c
