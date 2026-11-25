@@ -5,22 +5,22 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0024 clos (J-2026-11-24-AP). Suivant, en session neuve : la revue de
-cap 5, puis le prochain lot. Attend Théo : la règle du journal en amont
-(J-2026-11-24-AO).
+L-0036 clos (J-2026-11-25-E). Suivant, en session neuve : L-0037,
+la spécification de T-0179 soumise à Théo d'abord (J-2026-11-25-F).
 
 ## Consignes en cours
 
 Leur texte exact est dans l'entrée du journal citée.
 
 - Opus partout depuis le 12 novembre (D-0095, J-2026-11-12-L).
-- La passation programmée faite, l'atelier reste au prompt à copier ;
-  le produit enchaîne par défaut (D-0173, J-2026-11-24-S).
+- L'atelier au prompt à copier, commutateur manuel pour l'instant
+  (D-0173, J-2026-11-24-BE) ; l'essai programmé de D-0182 quand Théo
+  le demande.
 - Le hook terminé : rien sans preuve vue dans une session (ADR-0098).
 - Du temps pour un ajout ou un bug important ; aucun pour un cas limite
   rare, légère gêne que l'agent gère lui-même (D-0165).
-- Revue de cap tous les trois lots (`direction-review`, D-0145) ; la
-  prochaine rejuge les suggestions gardées (D-0146).
+- Revue de cap tous les trois lots (`direction-review`, D-0145) ; pas
+  dans le produit pour l'instant (D-0183).
 - Un mot pour une chose ; une tâche va sans demander au lot dont la
   règle s'applique (J-2026-11-16-I, J-2026-11-16-J).
 - Relecteur : le plus capable jusqu'à Opus (D-0117) ; Fable seulement si
@@ -67,6 +67,6 @@ Leur texte exact est dans l'entrée du journal citée.
 
 Par lots (D-0118, D-0151) :
 
-1. JA-0005 : ce qui corrige et stabilise le produit.
+1. JA-0005 : L-0037, L-0038, puis L-0032.
 2. JA-0006 : chess mis à jour d'un coup, puis ses corrections.
 3. Puis la couche des consignes (B-0161), la planification (B-0101).

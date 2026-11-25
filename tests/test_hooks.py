@@ -591,6 +591,22 @@ class TestCorrectifSansTest(Projet):
         git(racine, "add", "tests/test_double.py")
         self.assertIsNone(hooks.correctif_sans_test(projet, "fix: double accepte une chaîne"))
 
+    def test_un_corrige_hors_du_dernier_paragraphe_est_un_correctif(self):
+        """B-0348 : une ligne `Corrige:` écrite dans un paragraphe à part,
+        avant les lignes d'attribution, fait du commit un correctif ; le hook
+        le dit comme la CI le jugera (ADR-0109)."""
+        from socle import config
+        from tests.test_bascule import git
+
+        racine = self.racine
+        (racine / "calc.py").write_text("def double(x):\n    return 2 * int(x)\n")
+        git(racine, "add", "calc.py")
+        projet = config.Projet.charger(racine)
+        message = "Double accepte une chaîne\n\nCorrige: T-0001\n\nCo-Authored-By: t <t@t>"
+        avert = hooks.correctif_sans_test(projet, message, amendement=False)
+        self.assertIsNotNone(avert, "le hook se tait sur un correctif sans test")
+        self.assertIn("la CI le refusera (`tests.regression`)", avert)
+
     def test_un_correctif_amende_se_juge_contre_le_parent_du_commit_amende(self):
         """B-0084 : amendé pour y ajouter une doc, un correctif qui portait
         déjà son test se voyait dire qu'il n'en avait pas."""

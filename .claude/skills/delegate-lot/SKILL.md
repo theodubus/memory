@@ -40,8 +40,12 @@ tâche rangée (`socle archive`) ; `verify --fast` une fois, à la fin ;
 dans « Interdits » : ouvrir
 une pull request, lire ou ajouter un autre dépôt ; puis « Économie : lire
 ce qui sert, pas les fichiers entiers ; pas de suite complète relancée
-sans raison. » Les identifiants des sous-agents lancés vont dans le texte
-des réveils.
+sans raison. Un fichier temporaire, dans le dossier temporaire de la
+session, commun à tous les sous-agents, porte l'identifiant de ta tâche
+dans son nom. » (J-2026-11-24-BC) Les identifiants des sous-agents lancés
+vont dans le texte des réveils. Un sous-agent qui s'arrête sur une
+vérification en arrière-plan peut ne pas reprendre : son travail se lit
+dans sa copie isolée, et l'orchestrateur le reprend (J-2026-11-24-BA).
 
 ## La revue
 
@@ -70,8 +74,12 @@ contournement qu'il trouve s'écarte d'office, sans entrée au backlog.
 ## La livraison
 
 - L'agent fusionne lui-même sa pull request (D-0092). L'attente de la CI :
-  une boucle en arrière-plan qui cherche `success sur <sha court>` (ou
-  `failure sur <sha court>`) dans la ligne « CI » de l'état.
+  une boucle en arrière-plan qui attend que toutes les exécutions du
+  commit attendu soient conclues (`gh run list --commit <sha>`), puis dit
+  leurs conclusions ; la ligne « CI » de l'état suit la tête locale,
+  qu'un commit fait pendant l'attente déplace (J-2026-11-24-AS). Sans
+  `gh` authentifié, l'état le dit : un réveil à l'heure probable de la
+  fin, revérifié à chaque tour.
 - Après la fusion, vérifier que la distribution a tourné
   (`.github/workflows/distribution.yml`).
 - Un lot qui change ce qu'un projet reçoit à la mise à jour complète
@@ -112,6 +120,6 @@ fusionne dans la branche de travail (`git merge --no-edit`), puis son
 dossier se retire : l'état la donne alors à supprimer après la fusion de
 la pull request (B-0293). Ici, le mode est le prompt à copier (D-0173) :
 le prompt de la session neuve est celui que donne `python3 .socle/socle
-handoff prompt --session <lien> --waiting "<ce qui attend>"` (skill
+handoff prompt --waiting "<ce qui attend>"` (skill
 `socle-handoff`), tout poussé, avec le lot « selon le skill
 delegate-lot » au lieu de `socle-batch`.

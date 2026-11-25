@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0310 — Un regard sur le cap du projet : quelque chose qui voit, sans que l'humain le demande, un chantier qui tourne en boucle sur un sujet qui n'en vaut pas la peine, et les améliorations évidentes que personne ne propose
 
-> statut : ouvert · origine : J-2026-11-20-D · lu : backlog@e62f2f27
+> statut : abandonné · origine : J-2026-11-20-D · lu : backlog@e62f2f27 · ref : D-0183, J-2026-11-24-BC
 
 Théo, le 20 novembre (J-2026-11-20-D) : le socle fait suivre le backlog,
 mais si le projet part dans une mauvaise direction (tourner en boucle
@@ -23,3 +23,5 @@ s'avère utile, arrêtée si Théo n'en retient rien après trois revues.
 
 - [ ] un chantier qui tourne en boucle, ou une amélioration évidente qui manque, est porté devant l'humain sans qu'il l'ait demandé, avec ce qui le montre
 - [ ] après trois revues de cap, elle entre dans le produit si Théo en a retenu des suggestions, sinon elle s'arrête
+
+Le 24 novembre, Théo : pas de revue de cap dans le produit pour l'instant, une possibilité gardée en tête s'il constate que les projets où il utilise le socle convergent mal ou dévient (D-0183) ; la revue de cap de ce dépôt reste (D-0145). Elle revient si ce besoin est vu.

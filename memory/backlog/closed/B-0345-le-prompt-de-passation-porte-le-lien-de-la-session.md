@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0345 — Le prompt de passation porte le lien de la session qui part, dont la session neuve ne se sert pas
 
-> statut : ouvert · origine : J-2026-11-24-AF · ref : D-0176 · lu : backlog@87515a69
+> statut : fait · origine : J-2026-11-24-AF · ref : J-2026-11-24-BB, T-0174, D-0176 · lu : backlog@87515a69
 
 `socle handoff prompt --session <lien>` ouvre le prompt de passation
 par « Passation de <lien de la session qui part> », et les skills
@@ -13,4 +13,4 @@ retire du produit (D-0176, J-2026-11-24-AF).
 
 ## Satisfait quand
 
-- [ ] le prompt de passation ne porte plus le lien d'une session, dans le produit comme dans ce dépôt
+- [x] le prompt de passation ne porte plus le lien d'une session, dans le produit comme dans ce dépôt

@@ -123,7 +123,7 @@ remplace la passation, le récap disant pourquoi.
 précédé de la passation et de sa garde :
 
 ```text
-Passation de <lien de la session qui part> — <dépôt>, à <heure UTC>.
+Passation — <dépôt>, à <heure UTC>.
 Avant tout : git fetch origin, puis
 python3 .socle/socle handoff check --ref origin/<branche> --head <sha> --since <heure UTC>
 S'il refuse, ne rien faire d'autre que le dire.
