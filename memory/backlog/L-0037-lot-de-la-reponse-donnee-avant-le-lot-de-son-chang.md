@@ -22,3 +22,6 @@ Commits : d6b20247..7924359c
 ### Passe 2 — 2026-11-25
 
 Commits : 7924359c..3d88bcf0
+
+- Bloquant : les deux conditions jugées au seul point de départ ne couvraient plus une réponse poussée plus tôt dans la même pull request (le cas de B-0142) ; une validation ajoutée sur la branche depuis ce point couvre comme une validation de la plage
+- Ouvre : rien
