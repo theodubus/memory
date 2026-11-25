@@ -214,6 +214,8 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 83. python3 .socle/socle handoff prompt n'a plus d'option --session : le prompt de passation commence par « Passation — <dépôt>, à <heure> », sans le lien de la session qui part, dont la session neuve ne se servait pas (note 2026-11-24-m). Le skill socle-handoff, copie protégée, ne le fait plus passer. Rien à faire.
 
+84. L'installeur dit, à l'installation comme à chaque mise à jour, qu'un module Kotlin multiplateforme ou Android n'est pas servi par les commandes JVM de la copie kotlin, et la spécification des adaptateurs donne les siennes (note 2026-11-25-a). Chess n'emploie pas Kotlin : rien à faire ; si l'installeur imprime une ligne « !! kotlin », dis-le-moi, mot pour mot.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.

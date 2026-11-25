@@ -870,6 +870,98 @@ class TestSousDossiers(unittest.TestCase):
         self.assertTrue(any("`[tests]`" in e for e in ecarts))
 
 
+class TestKotlinHorsJvm(unittest.TestCase):
+    """B-0147, D-0191 : un module multiplateforme ou Android, que les
+    commandes JVM de la copie `kotlin` ne servent pas, se dit à
+    l'installation et à la mise à jour, tant que la copie les garde."""
+
+    JVM = 'plugins { kotlin("jvm") }\n'
+
+    def depot(self, fichiers: dict[str, str]) -> Path:
+        racine = depot({"settings.gradle.kts": 'include("lib", "shared")\n', "lib/build.gradle.kts": self.JVM,
+                        "lib/src/main/kotlin/a/A.kt": "package a\nfun f() = 1\n", **fichiers})
+        self.addCleanup(shutil.rmtree, racine, ignore_errors=True)
+        return racine
+
+    def installer(self, racine: Path) -> str:
+        sortie = io.StringIO()
+        with redirect_stdout(sortie), redirect_stderr(io.StringIO()):
+            installeur.installer(racine, "kotlin", "@essai", source=MOTEUR)
+        return sortie.getvalue()
+
+    def test_un_module_multiplateforme_se_dit_a_l_installation(self):
+        racine = self.depot({"shared/build.gradle.kts": 'plugins {\n    kotlin("multiplatform")\n}\n',
+                             "shared/src/commonMain/kotlin/a/B.kt": "package a\nfun g() = 2\n"})
+        sortie = self.installer(racine)
+        ligne = next(l for l in sortie.splitlines() if "!! kotlin" in l)
+        self.assertIn("shared/build.gradle.kts déclare un module multiplateforme ou Android", ligne)
+        self.assertIn(".socle/adapter.toml", ligne)
+        self.assertIn("`allTests`", ligne)
+        # Revue de L-0032 : le moteur d'un projet est sous `.socle/engine/socle/`.
+        self.assertIn(".socle/engine/socle/adapters/README.md", ligne)
+        self.assertTrue((racine / ".socle/engine/socle/adapters/README.md").is_file())
+        self.assertNotIn("lib/build.gradle.kts", ligne)
+        # À la mise à jour, la copie gardée telle quelle : il le redit.
+        self.assertIn("!! kotlin : shared/build.gradle.kts", self.installer(racine))
+
+    def test_la_specification_donne_les_commandes_que_l_installeur_nomme(self):
+        texte = (installeur.ADAPTATEURS / "README.md").read_text(encoding="utf-8")
+        section = texte.split("### Un projet multiplateforme ou Android", 1)[1]
+        self.assertIn('suppose des modules JVM, ceux du greffon\n`kotlin("jvm")`', section)
+        for commande in ("./gradlew -q testClasses jvmTestClasses", "./gradlew -q test allTests",
+                         "./gradlew -q jvmTestClasses", "./gradlew -q allTests"):
+            self.assertIn(f"`{commande}`", section)
+
+    def test_un_greffon_du_catalogue_des_versions_compte(self):
+        racine = self.depot({"gradle/libs.versions.toml": '[plugins]\nandroidApplication = { id = '
+                                                          '"com.android.application", version = "8.13.0" }\n',
+                             "app/build.gradle.kts": "plugins { alias(libs.plugins.androidApplication) }\n"})
+        self.installer(racine)
+        dit = installeur.modules_hors_jvm(racine, config.FORMAT_ACTUEL)
+        self.assertEqual(len(dit), 1)
+        self.assertIn("gradle/libs.versions.toml", dit[0])
+        self.assertNotIn("app/build.gradle.kts", dit[0])
+
+    def test_des_modules_jvm_seuls_ne_disent_rien(self):
+        racine = self.depot({})
+        self.assertNotIn("!! kotlin", self.installer(racine))
+        self.assertEqual(installeur.modules_hors_jvm(racine, config.FORMAT_ACTUEL), [])
+
+    def test_une_copie_adaptee_ne_dit_plus_rien(self):
+        racine = self.depot({"shared/build.gradle.kts": 'plugins { id("org.jetbrains.kotlin.multiplatform") }\n'})
+        self.installer(racine)
+        self.assertEqual(len(installeur.modules_hors_jvm(racine, config.FORMAT_ACTUEL)), 1)
+        copie = racine / config.FORMAT_ACTUEL.adaptateur
+        texte = copie.read_text(encoding="utf-8")
+        self.assertIn('command = "./gradlew -q test"\n', texte)
+        copie.write_text(texte.replace('command = "./gradlew -q test"\n', 'command = "./gradlew -q test allTests"\n',
+                                       1), encoding="utf-8")
+        self.assertEqual(installeur.modules_hors_jvm(racine, config.FORMAT_ACTUEL), [])
+
+    def adapter(self, racine: Path, avant: str, apres: str) -> None:
+        copie = racine / config.FORMAT_ACTUEL.adaptateur
+        texte = copie.read_text(encoding="utf-8")
+        self.assertIn(avant, texte)
+        copie.write_text(texte.replace(avant, apres, 1), encoding="utf-8")
+
+    def test_une_copie_android_adaptee_selon_la_specification_ne_dit_plus_rien(self):
+        # Revue de L-0032 : sous Android, `test` se garde, seule la
+        # compilation change ; et la compilation changée ne fait pas taire
+        # un module multiplateforme dont les tests restent sautés.
+        racine = self.depot({"app/build.gradle.kts": 'plugins { id("com.android.application") }\n'})
+        self.installer(racine)
+        self.assertEqual(len(installeur.modules_hors_jvm(racine, config.FORMAT_ACTUEL)), 1)
+        self.adapter(racine, 'command = "./gradlew -q testClasses"\n',
+                     'command = "./gradlew -q compileDebugUnitTestKotlin"\n')
+        self.assertEqual(installeur.modules_hors_jvm(racine, config.FORMAT_ACTUEL), [])
+        (racine / "shared/build.gradle.kts").parent.mkdir(parents=True)
+        (racine / "shared/build.gradle.kts").write_text('plugins { kotlin("multiplatform") }\n', encoding="utf-8")
+        dit = installeur.modules_hors_jvm(racine, config.FORMAT_ACTUEL)
+        self.assertEqual(len(dit), 1)
+        self.assertIn("!! kotlin : shared/build.gradle.kts déclare", dit[0])
+        self.assertNotIn("app/build.gradle.kts", dit[0])
+
+
 class TestBudgetDAdoption(unittest.TestCase):
     def test_la_taille_plus_un_dixieme_au_millier_superieur(self):
         self.assertEqual(installeur.budget_d_adoption(138934), 153000)

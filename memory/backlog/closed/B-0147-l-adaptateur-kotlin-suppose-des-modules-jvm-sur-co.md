@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0147 — L'adaptateur kotlin suppose des modules JVM : sur Compose Multiplatform ou Android, sa compilation casse, ses tests sont sautés sans erreur et sa mutation manque
 
-> statut : ouvert · origine : J-2026-11-10-H · lu : backlog@0f220088
+> statut : fait · origine : J-2026-11-10-H · lu : backlog@0f220088 · ref : T-0152, D-0191
 
 La copie `kotlin` suppose des modules JVM (J-2026-11-10-H, sur un
 prototype Compose Multiplatform du pilote : module Android seul, AGP 8.13,
@@ -22,4 +22,6 @@ Le pilote adapte sa copie par une demande en attendant.
 
 ## Satisfait quand
 
-- [ ] un projet Compose Multiplatform ou Android a des commandes de compilation et de tests qui lancent ses tests, ou échouent en le disant, et la spécification des adaptateurs dit ce que la copie `kotlin` suppose
+Le critère d'avant, changé par D-0191 : « un projet Compose Multiplatform ou Android a des commandes de compilation et de tests qui lancent ses tests, ou échouent en le disant, et la spécification des adaptateurs dit ce que la copie `kotlin` suppose ».
+
+- [x] un projet Compose Multiplatform ou Android que les commandes JVM de la copie `kotlin` ne servent pas se dit à l'installation et à la mise à jour, et la spécification des adaptateurs dit ce que la copie suppose et donne ses commandes (D-0191)
