@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0203-valider-le-format-4-du-verrou-du-moteur-et-quatre.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-25"
+canal = "conversation"
+citation = "Valider D0203"
+empreinte = "sha256:2c22a0da8c4e9d566263dbe667478ac2112c231cc960910eadc02762c4585f63"

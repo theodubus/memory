@@ -128,6 +128,14 @@ class Demarrage(unittest.TestCase):
         (self.racine / "memory/active.md").write_text(ACTIF.format(lignes="\n".join(
             f"- Étape {k} du chantier en cours, dite sur une ligne entière." for k in range(1, n + 1))))
 
+    def consignes(self, n: int):
+        """`n` consignes de l'humain en vigueur, qui remplissent leur part."""
+        (self.racine / "memory/directives.md").write_text(
+            "<!-- socle: couche=consignes zone=publique -->\n# Consignes\n" + "".join(
+                f"\n## C-{k:04d} — La consigne numéro {k} de l'humain, dite sur sa ligne de résumé\n\n"
+                f"> statut : en vigueur · source : D-0001 · date : 2026-11-12\n\n> « La consigne {k}. »\n"
+                for k in range(1, n + 1)))
+
     def demande(self, n: int):
         requetes = self.racine / "memory/requests"
         requetes.mkdir(exist_ok=True)
@@ -265,7 +273,7 @@ class Demarrage(unittest.TestCase):
         self.assertEqual(len([l for l in lignes if l.startswith("F-")]), 20)
         self.assertEqual(len([l for l in lignes if l.startswith("ADR-")]), 10)
         self.assertRegex(lignes[-1], r"^!! coupé à la borne du démarrage \(9500 octets, `\[startup\] max_bytes` des "
-                                     r"garde-fous\) : le chantier actif, \d+ octets pour une part de 3800 — la fin du "
+                                     r"garde-fous\) : le chantier actif, \d+ octets pour une part de 1710 — la fin du "
                                      r"chantier actif, \d+ ligne\(s\) sur 125 : lire memory/active\.md$")
 
     def test_les_faits_au_dela_de_leur_part_se_coupent_sans_toucher_aux_decisions(self):
@@ -281,13 +289,14 @@ class Demarrage(unittest.TestCase):
         self.assertEqual(faits[-1].split(" — ")[0], f"F-{len(faits):04d}")
         self.assertIn(f"--- memory/canonical.md : {len(faits)} fait(s) sur 80 par leur titre ; un en entier : "
                       "`python3 .socle/socle show F-NNNN` ---", lignes)
-        self.assertRegex(lignes[-1], r" : les faits, \d+ octets pour une part de 2090 — "
+        self.assertRegex(lignes[-1], r" : les faits, \d+ octets pour une part de 1900 — "
                                      rf"{80 - len(faits)} fait\(s\) sur 80 : lire memory/canonical\.md$")
 
     def test_quand_tout_depasse_chaque_partie_garde_sa_part(self):
         """Aucune partie ne mange celle d'une autre : sans rien à partager,
         chacune tient dans sa part, et la ligne de coupe les dit toutes."""
         self.actif(120)
+        self.consignes(40)
         self.faits(80)
         for n in range(2, 8):
             self.demande(n)
@@ -296,7 +305,8 @@ class Demarrage(unittest.TestCase):
         lignes = sortie.splitlines()
         self.assertLessEqual(octets(sortie), borne)
         groupes = {"etat": lignes[:lignes.index("--- memory/active.md ---") - 1],
-                   "actif": entre(lignes, "--- memory/active.md ---", "--- memory/canonical.md"),
+                   "actif": entre(lignes, "--- memory/active.md ---", "--- memory/directives.md"),
+                   "consignes": entre(lignes, "--- memory/directives.md", "--- memory/canonical.md"),
                    "faits": entre(lignes, "--- memory/canonical.md", "--- les "),
                    "decisions": entre(lignes, "--- les ", "!! coupé")}
         for groupe, contenu in groupes.items():
@@ -305,7 +315,7 @@ class Demarrage(unittest.TestCase):
         montrees = len([l for l in lignes if l.startswith("ADR-")])
         self.assertIn(f"--- les {montrees} dernières décisions sur 40, ", sortie)
         note = lignes[-1]
-        for debut in ("l'état dérivé, ", "le chantier actif, ", "les faits, ", "les décisions, "):
+        for debut in ("l'état dérivé, ", "le chantier actif, ", "les consignes, ", "les faits, ", "les décisions, "):
             self.assertIn(debut, note)
         self.assertIn("`python3 .socle/socle state --short`", note)
         self.assertIn(f"{10 - montrees} des 10 dernières décisions : `python3 .socle/socle show --index decisions`",
@@ -340,6 +350,7 @@ class Demarrage(unittest.TestCase):
         chacun entier ; ce qui revient à l'humain reste. La ligne de coupe
         renvoie à `socle state --short`, qui redit toutes les lignes du
         hook."""
+        self.actif(24)  # dans son budget
         projet = self.projet()
         crue = [f"!! outils de l'adaptateur : `commande {n}` a rendu 1\n    " + "x" * 3000 for n in range(40)]
         with mock.patch.object(hooks, "installer_outils", return_value=list(crue)), \
@@ -361,7 +372,7 @@ class Demarrage(unittest.TestCase):
         for debut in ("commit   :", "base     :", "CI       :", "mémoire  :", "backlog  :", "  prêt :", "vérifier :"):
             self.assertFalse(any(l.startswith(debut) for l in lignes), debut)
         # Le chantier actif garde sa part.
-        self.assertIn("- Étape 40 du chantier en cours, dite sur une ligne entière.", lignes)
+        self.assertIn("- Étape 24 du chantier en cours, dite sur une ligne entière.", lignes)
         self.assertRegex(lignes[-1], r" : l'état dérivé, \d+ octets pour une part de 2375 — \d+ ligne\(s\) sur \d+ ; "
                                      r"l'état entier : `python3 \.socle/socle state --short`$")
         # Ce que la ligne de coupe désigne contient ce qui est coupé.
@@ -389,7 +400,8 @@ class Demarrage(unittest.TestCase):
         for n in range(2, 7):
             self.demande(n)
         self.faits(40)
-        (self.racine / "memory/active.md").write_text(chantier_actif("publique", 3700))
+        self.consignes(20)
+        (self.racine / "memory/active.md").write_text(chantier_actif("publique", 1600))
         sortie = self.sortie(4000)
         lignes = sortie.splitlines()
         self.assertLessEqual(octets(sortie), 4000)
@@ -402,9 +414,9 @@ class Demarrage(unittest.TestCase):
         self.assertFalse(any(l.startswith(("backlog  :", "  prêt :")) for l in lignes))
         self.assertIn(" : l'état dérivé, ", lignes[-1])
         court = etat.calculer(self.projet(), contenus=False)
-        alerte = ("!! le budget de memory/active.md (3700 octets, public et privé ensemble) dépasse la part du "
-                  "chantier actif dans la sortie du démarrage (1540 octets, en-têtes déduits) : à son budget, il y "
-                  "serait coupé à chaque session ; le baisser à 1540 au plus")
+        alerte = ("!! le budget de memory/active.md (1600 octets, public et privé ensemble) dépasse la part du "
+                  "chantier actif dans la sortie du démarrage (660 octets, en-têtes déduits) : à son budget, il y "
+                  "serait coupé à chaque session ; le baisser à 660 au plus")
         self.assertTrue(etat.alerte_budget_actif(self.projet())[0].startswith(alerte))
         self.assertIn(alerte, court)
         self.assertEqual(etat.alerte_budget_actif(self.projet(9500)), [])
@@ -462,7 +474,7 @@ class Demarrage(unittest.TestCase):
 
         projet = self.projet()
         permis = etat.budget_actif_permis(projet)
-        self.assertEqual(permis, 3800 - len("\n--- memory/active.md ---\n") - len("\n--- memory/private/active.md ---\n"))
+        self.assertEqual(permis, 1710 - len("\n--- memory/active.md ---\n") - len("\n--- memory/private/active.md ---\n"))
         for nom in ("guardrails.toml", "guardrails.en.toml"):
             gf = tomllib.loads((MOTEUR / "socle/templates" / nom).read_text(encoding="utf-8"))
             self.assertLessEqual(gf["budgets"]["memory/active.md"]["max_bytes"], permis, nom)
@@ -475,7 +487,7 @@ class Demarrage(unittest.TestCase):
         etat.retenir_demarrage(projet, [f"!! outils de l'adaptateur : `commande {n}` a rendu 1\n    " + "x" * 900
                                         for n in range(4)])
         budget = projet.budget_octets("memory/active.md")
-        self.assertEqual(budget, 3700)
+        self.assertEqual(budget, 1600)
         for public, prive in ((budget, 0), (budget // 3, budget - budget // 3), (budget, budget)):
             with self.subTest(public=public, prive=prive):
                 (self.racine / "memory/active.md").write_text(chantier_actif("publique", public))
@@ -507,15 +519,15 @@ class Demarrage(unittest.TestCase):
         """Un projet installé avant gardait 6 000 octets pour son chantier
         actif : la mise à jour garde ses garde-fous, et le dit."""
         gf = self.racine / ".socle/guardrails.toml"
-        gf.write_text(gf.read_text().replace('"memory/active.md" = { max_bytes = 3700 }',
+        gf.write_text(gf.read_text().replace('"memory/active.md" = { max_bytes = 1600 }',
                                              '"memory/active.md" = { max_bytes = 6000 }'))
         with contextlib.redirect_stdout(io.StringIO()) as flux:
             installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
         self.assertIn("!! le budget de memory/active.md (6000 octets, public et privé ensemble) dépasse la part du "
-                      "chantier actif dans la sortie du démarrage (3740 octets, en-têtes déduits) : à son budget, il y "
-                      "serait coupé à chaque session ; le baisser à 3740 au plus", flux.getvalue())
+                      "chantier actif dans la sortie du démarrage (1650 octets, en-têtes déduits) : à son budget, il y "
+                      "serait coupé à chaque session ; le baisser à 1650 au plus", flux.getvalue())
         self.assertIn("max_bytes = 6000", gf.read_text())
-        gf.write_text(gf.read_text().replace("max_bytes = 6000", "max_bytes = 3740"))
+        gf.write_text(gf.read_text().replace("max_bytes = 6000", "max_bytes = 1650"))
         self.assertEqual(installeur.alerte_chantier_actif(self.racine), [])
 class TestBorner(unittest.TestCase):
     """Le partage de la borne, sur des parties de lignes de 100 octets."""

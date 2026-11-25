@@ -5,9 +5,9 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0042 intégré (J-2026-11-25-AJ) ; le verrou au format 4 et
-les valeurs attendues attendent D-0203, dans l'arbre. Puis sa
-revue, sa fusion ; L-0043 (B-0351) ensuite.
+L-0042 intégré (J-2026-11-25-AJ), D-0203 validée
+(J-2026-11-25-AK) ; sa revue, sa fusion ; L-0043 (B-0351)
+ensuite.
 
 ## Prochaines étapes
 
