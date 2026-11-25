@@ -6,8 +6,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 ## En cours
 
 L-0039 : T-0183 (D-0194), T-0181, T-0182 (D-0192). Réponses de
-D-0189, D-0190 au journal (J-2026-11-25-J, -K). La page de la réforme
-attend Théo (J-2026-11-25-Q).
+D-0189, D-0190 au journal (J-2026-11-25-J, -K). La réforme validée
+(D-0195, J-2026-11-25-R).
 
 ## Consignes en cours
 
