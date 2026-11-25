@@ -189,6 +189,16 @@ class TestCopie(Depot):
         (self.racine / "docs/notes.md").write_text(f"# Notes\n\n> {self.PAROLE}\n")
         self.assertTrue(any("paragraphe identique aussi présent" in m for m in self.copies()))
 
+    def test_le_contexte_d_une_consigne_se_juge_comme_tout_fichier(self):
+        """Hors de ses lignes citées, une consigne qui recopie une doc
+        vivante est une copie qui divergera : refusée."""
+        (self.racine / "docs").mkdir()
+        (self.racine / "docs/notes.md").write_text(f"# Notes\n\n{self.PAROLE}\n")
+        self.directives.write_text(ENTETE + consigne(3) + f"\n{self.PAROLE}\n")
+        erreurs = self.copies()
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertIn("paragraphe identique aussi présent", erreurs[0])
+
     def test_la_consigne_privee_aussi(self):
         prive = self.racine / "memory/private"
         prive.mkdir()
