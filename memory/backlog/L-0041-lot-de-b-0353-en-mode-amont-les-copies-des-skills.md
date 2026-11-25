@@ -10,3 +10,9 @@ contrôles du cliquet (`engine/socle/checks_ratchet.py`,
 `delegate-lot`. Elles touchent le même garde-fou, la validation des
 changements que l'agent ne fait pas seul : une revue adversariale les
 relit ensemble. Aucune note de version : rien ne change en mode projet.
+
+## Revues
+
+### Passe 1 — 2026-11-25
+
+Commits : 63e10abd..5cc6cf1f
