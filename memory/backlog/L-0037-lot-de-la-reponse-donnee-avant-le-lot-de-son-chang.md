@@ -7,3 +7,9 @@ B-0347, au jalon JA-0005 (D-0180) : sa conception n'est pas tranchée,
 sa spécification se soumet à Théo avant son code (T-0179), puis la
 tâche qui l'applique s'ouvre sur sa réponse. Sorti de L-0036 à
 l'écriture (J-2026-11-24-AZ).
+
+## Revues
+
+### Passe 1 — 2026-11-25
+
+Commits : d6b20247..7924359c
