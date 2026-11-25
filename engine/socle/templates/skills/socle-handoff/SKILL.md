@@ -72,8 +72,9 @@ python3 .socle/socle handoff write --chain <n> --waiting "<ce qui attend>"
 ```
 
 La passation se commite en dernier et se pousse. Puis la garde, sans
-argument, doit la trouver en attente ; sinon, rien ne se programme, et le
-récap dit pourquoi :
+argument, doit la trouver en attente (sa ligne « Premier commit » vaut
+pour la session neuve) ; sinon, rien ne se programme, et le récap dit
+pourquoi :
 
 ```sh
 python3 .socle/socle handoff check

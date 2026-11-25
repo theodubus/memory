@@ -73,8 +73,8 @@ python3 .socle/socle handoff write --chain <n> --waiting "<what is waiting>"
 ```
 
 The handoff is committed last and pushed. Then the guard, without
-arguments, must find it waiting; otherwise, nothing is scheduled, and
-the recap says why:
+arguments, must find it waiting (its "First commit" line is for the new
+session); otherwise, nothing is scheduled, and the recap says why:
 
 ```sh
 python3 .socle/socle handoff check

@@ -27,7 +27,7 @@ L'orchestrateur implémente, sauf quand un sous-agent paie, selon
 `socle-batch` (D-0194, la page validée
 `docs/fabrication/organisation-proportionnee.md`) : une tâche qui ne
 change que le texte d'un skill reste à l'orchestrateur. Plusieurs tâches
-de code qui touchent les mêmes fichiers vont à un seul sous-agent, un
+de code qui touchent les mêmes fichiers peuvent aller à un seul sous-agent, un
 commit chacune : son coût fixe ne se paie qu'une fois.
 
 Le modèle est celui que dit le chantier actif ; un sous-agent qui doit
@@ -84,7 +84,7 @@ contournement qu'il trouve s'écarte d'office, sans entrée au backlog.
   `docs/fabrication/chess/prompt-mise-a-jour.md` (J-2026-11-13-L).
 - La réponse de l'humain se consigne, se commite et se pousse dès qu'elle
   est donnée ; la tâche qui fera le changement la cite, et la couvre tant
-  qu'elle est ouverte (D-0189).
+  qu'elle est ouverte et que ce qu'elle nomme n'a pas bougé (D-0189).
 - Un lot qui change le gabarit d'un skill du produit
   (`engine/socle/templates/skills/`) remet sa copie protégée de
   `.claude/skills/` avant sa clôture : l'installeur relancé en mode amont,

@@ -18,3 +18,5 @@ Le 25 novembre, T-0183 le rejoint (D-0194, J-2026-11-25-Q) : la réforme de l'or
 ### Passe 1 — 2026-11-25
 
 Commits : 5bc63073..8821ce97 + arbre de travail 4b975de6c6de
+
+- Ouvre : rien
