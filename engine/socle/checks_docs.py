@@ -247,11 +247,13 @@ def copie(ctx, r):
     Sauf dans les demandes : le contrat veut qu'une demande se lise seule,
     son contexte résumé sur place plutôt que renvoyé ailleurs, et elle est
     gelée une fois répondue. Deux approbations écrites par le même gabarit
-    se ressemblent forcément."""
+    se ressemblent forcément. Sauf dans les consignes aussi : leur texte
+    exact recopie mot pour mot la parole de l'humain consignée à leur
+    source, au journal ou dans une demande, et ne change plus (D-0201)."""
     minimum = ctx.projet.gf("nocopy", "min_chars", defaut=200)
     ch = ctx.projet.chemins
     exclus = ctx.projet.exclusions_docs() + list(ctx.projet.gf("nocopy", "exclude", defaut=[])) + [
-        f"{ch.demandes}/**", f"{ch.dans_prive(ch.demandes)}/**"]
+        f"{ch.demandes}/**", f"{ch.dans_prive(ch.demandes)}/**", ch.consignes, ch.dans_prive(ch.consignes)]
     vus: dict[str, list[tuple[str, int]]] = defaultdict(list)
     for chemin, texte in ctx.textes(["**/*.md"], exclus).items():
         for debut, p in paragraphes(texte):

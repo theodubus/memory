@@ -878,17 +878,18 @@ class TestLaPassation(unittest.TestCase):
     def test_les_deux_modes_et_leur_commutateur(self):
         self.lire({
             "fr": ["**Session programmée**, par défaut", "**Prompt à copier**",
-                   "Le mode est celui que dit une consigne du chantier actif ; sans elle, la session programmée.",
-                   "L'humain en change en le disant : l'agent écrit la consigne au chantier actif, et son texte "
-                   "exact au journal.",
+                   "Le mode est celui que dit une consigne en vigueur ; sans elle, la session programmée.",
+                   "L'humain en change en le disant : l'agent consigne sa parole en séance, lève la consigne "
+                   "d'avant et écrit la nouvelle (`socle new directive`), avec son texte exact (skill "
+                   "`socle-request`).",
                    "Passer au prompt à copier annule ce qui est programmé, la tâche supprimée (`delete_trigger`) "
                    "et la session créée archivée (`archive_session`), et le dit, avec le lien de chaque session "
                    "annulée."],
             "en": ["**Scheduled session**, by default", "**Prompt to copy**",
-                   "The mode is the one an instruction in the active work states; without one, the scheduled "
-                   "session.",
-                   "The human changes it by saying so: the agent writes the instruction in the active work, and "
-                   "its exact text in the journal.",
+                   "The mode is the one a directive in force states; without one, the scheduled session.",
+                   "The human changes it by saying so: the agent records their words in session, lifts the "
+                   "previous directive and writes the new one (`socle new directive`), with its exact text (skill "
+                   "`socle-request`).",
                    "Switching to the prompt to copy cancels what is scheduled, the task deleted (`delete_trigger`) "
                    "and the created session archived (`archive_session`), and says so, with the link of each "
                    "cancelled session."],
