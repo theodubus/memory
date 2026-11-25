@@ -14,6 +14,20 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-25-a — The installer says that a Kotlin multiplatform or Android module is not served by the JVM commands of the `kotlin` copy, and the adapter specification gives its own
+
+The commands of the `kotlin` adapter assume JVM modules. In a project that
+also has a multiplatform module, `./gradlew -q test` succeeded without
+running that module's tests, which the socle reported green; an Android
+module has no `testClasses`. At installation as at every update, while
+the copy keeps `./gradlew -q test`, the installer names the Gradle files
+that declare such a module, in plain text or in the version catalog, and
+points to the "Kotlin" section of the adapter specification, which gives
+the commands according to the project's modules. It warns without
+blocking; a copy already adapted triggers nothing.
+
+To do: nothing; the installer's warning, if it appears, says itself what to do.
+
 ## 2026-11-24-o — A `Corrige:` or `Fixes:` line written outside the last paragraph of the message makes the commit a fix, whose regression test is checked
 
 A commit is a fix by its subject (`fix:` by default) or by a `Corrige:`

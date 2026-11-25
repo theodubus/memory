@@ -291,6 +291,59 @@ def sous_dossiers_sans_adaptateur(cible: Path, couverts: set[str], sans_langage:
     return res
 
 
+# Un module que les commandes JVM de l'adaptateur `kotlin` ne servent pas
+# (B-0147, D-0191) : multiplateforme, sans tâche `test`, dont les tests
+# seraient sautés sans erreur à côté d'un module JVM ; ou Android, sans
+# `testClasses`. Son greffon s'écrit en clair dans un build, ou par son
+# identifiant dans le catalogue des versions.
+GREFFONS_HORS_JVM = re.compile(r'kotlin\(\s*"multiplatform"\s*\)|org\.jetbrains\.kotlin\.multiplatform\b'
+                               r'|com\.android\.(?:application|library|test|dynamic-feature'
+                               r'|kotlin\.multiplatform\.library)\b')
+FICHIERS_GRADLE = re.compile(r'(?:^|/)(?:build\.gradle(?:\.kts)?|libs\.versions\.toml)$')
+TESTS_JVM_KOTLIN = "./gradlew -q test"
+
+
+def modules_hors_jvm(cible: Path, ch: config.Chemins) -> list[str]:
+    """Ce que l'installeur dit, à l'installation comme à chaque mise à
+    jour, tant qu'une copie de l'adaptateur `kotlin` garde ses commandes
+    JVM et que le build déclare un module multiplateforme ou Android : les
+    fichiers qui le déclarent, et les commandes à mettre dans la copie,
+    que la spécification des adaptateurs donne (D-0191). Il avertit sans
+    bloquer."""
+    copies = []
+    for c in [ch.adaptateur, *config.fichiers_adaptateurs(cible, ch.adaptateurs)]:
+        try:
+            d = config.lire_toml((cible / c).read_text(encoding="utf-8"))
+        except (tomllib.TOMLDecodeError, OSError):
+            continue
+        tests = d.get("capabilities", {}).get("tests", {}).get("command", "")
+        if d.get("language") == "kotlin" and tests.strip() == TESTS_JVM_KOTLIN:
+            copies.append(c)
+    if not copies:
+        return []
+    declarants = []
+    for f in _fichiers_du_projet(cible):
+        if not FICHIERS_GRADLE.search(f):
+            continue
+        try:
+            texte = (cible / f).read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if GREFFONS_HORS_JVM.search(texte):
+            declarants.append(f)
+    if not declarants:
+        return []
+    return [trad("!! kotlin : {fichiers} déclare un module multiplateforme ou Android, que les commandes JVM de "
+                 "{copies} ne servent pas : `./gradlew -q test` ne lance pas les tests d'un module multiplateforme, "
+                 "sautés sans erreur à côté d'un module JVM, et `testClasses` n'existe pas sous Android. Mettre dans "
+                 "la copie, par une demande à l'humain, les commandes que la section « Kotlin » de {specification} "
+                 "donne pour ces modules : les tests d'un module multiplateforme par `allTests`, `test` gardé tant "
+                 "qu'un module JVM ou Android reste ; la compilation par `jvmTestClasses`, ou par celle d'une "
+                 "variante sous Android ; la mutation déclarée absente hors JVM",
+                 fichiers=", ".join(declarants), copies=", ".join(copies),
+                 specification=f"{ch.moteur}/adapters/README.md")]
+
+
 def _langage_de(nom: str) -> str:
     """Le langage qu'un adaptateur couvre : sa clé `language`, son nom à
     défaut."""
@@ -1494,6 +1547,8 @@ def _installer(cible: Path, adaptateur: str | list[str], proprietaire: str, adop
     if adoption or ancien:
         journal += consigner_tolerances(cible, mise_a_jour=not adoption)
     journal += _alerte_budget(cible, section_avant)
+    # Les copies posées : un module que la copie `kotlin` ne sert pas (D-0191).
+    journal += modules_hors_jvm(cible, ch)
 
     print(trad("socle {version} installé dans {cible}", version=VERSION, cible=cible))
     for l in journal:

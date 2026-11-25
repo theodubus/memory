@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0191-choisir-ce-que-le-socle-fait-d-un-projet-kotlin-mu.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-25"
+canal = "conversation"
+citation = "Valider D0191\nT'es a 26%, t'as pas un petit lot faisable ici ?"
+empreinte = "sha256:9e6d859979c86bca03be1a5abff604ec09f67b2e8fab9a4b196e1eef786be395"
