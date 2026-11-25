@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Premier message : tout ce qui reste, en détail, après chess compris
-(J-2026-11-25-V). B-0346 à voir ; B-0353 : A (D-0197).
+JA-0005 clos, B-0346 vu en usage réel (J-2026-11-25-W). La revue de
+cap 7, puis B-0353, option A (D-0197).
 
 ## Consignes en cours
 
@@ -70,6 +70,6 @@ Leur texte exact est dans l'entrée du journal citée.
 
 Par lots (D-0118, D-0151) :
 
-1. JA-0005 : B-0346, B-0353.
+1. Revue de cap 7, puis B-0353 (D-0197).
 2. JA-0006 : chess mis à jour d'un coup, puis ses corrections.
 3. Puis la couche des consignes (B-0161), la planification (B-0101).

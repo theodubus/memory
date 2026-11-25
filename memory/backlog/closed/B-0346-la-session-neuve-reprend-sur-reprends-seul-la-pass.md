@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0346 — La session neuve reprend sur « reprends » seul : la passation écrite dans le dépôt, sans prompt à copier
 
-> statut : ouvert · origine : J-2026-11-24-AF · ref : D-0174, B-0345, D-0177 · lu : backlog@71f347c7
+> statut : fait · origine : J-2026-11-24-AF · ref : D-0174, B-0345, D-0177, J-2026-11-25-W · lu : backlog@71f347c7
 
 Le 24 novembre, Théo : « en vrai je me demande si le prompt est utile
 tout court a donner à l'utilisateur, c'est typiquement un truc qui
@@ -41,5 +41,5 @@ novembre (D-0177), pour la spécification :
 
 ## Satisfait quand
 
-- [ ] une session neuve sur « reprends » seul reprend le travail que la passation dit, sa garde jugée, sans prompt à copier
+- [x] une session neuve sur « reprends » seul reprend le travail que la passation dit, sa garde jugée, sans prompt à copier
 - [x] la spécification, soumise à Théo, est validée avant le code
