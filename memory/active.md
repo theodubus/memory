@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0042 : D-0201 soumise, le moteur l'attend. B-0351 :
-intention demandée (J-2026-11-25-AD).
+L-0042 : correctifs à intégrer (J-2026-11-25-AI).
+Puis L-0043 (B-0351).
 
 ## Consignes en cours
 
