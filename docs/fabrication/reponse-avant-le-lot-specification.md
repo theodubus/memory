@@ -86,10 +86,20 @@ protégées remises par une demande : de 1 à 2 points de la semaine.
 
 Une validation (la réponse `valider` d'une demande, ou une décision de
 séance) couvre le changement de ce qu'elle nomme même poussée plus tôt,
-dans une autre pull request, depuis une autre session, à deux
-conditions. Elles se jugent au **point de départ** du travail jugé :
+dans un push précédent ou une autre pull request, depuis une autre
+session. Tout se juge depuis le **point de départ** du travail jugé :
 l'ancêtre commun de la branche par défaut et de la tête, d'où part sa
 branche.
+
+- **Ajoutée sur la branche depuis le point de départ**, dans la pull
+  request en cours mais hors de la plage d'un push, elle couvre comme
+  une validation de la plage. La CI de la pull request, jugée depuis ce
+  point, la compte déjà ; la CI d'un push et le hook avant push s'y
+  alignent. C'est le cas de B-0142, vu pour D-0083, D-0103 et D-0105 :
+  la réponse poussée, puis le test au push suivant.
+- **Déjà dans la branche par défaut au point de départ**, fusionnée avec
+  une pull request précédente, elle couvre à deux conditions, jugées à
+  ce point :
 
 1. **Une tâche ouverte la cite.** Au point de départ, une tâche du
    backlog encore ouverte nomme la demande : celle qui fera le
@@ -121,16 +131,16 @@ Ce qu'elle nomme, comme aujourd'hui :
 validation de la plage, n'est pas concerné.
 
 La règle d'aujourd'hui demeure : une validation ajoutée dans la plage
-couvre ce qu'elle nomme. La règle nouvelle s'y ajoute ; un même
-contrôle les lit toutes deux.
+couvre ce qu'elle nomme. Les deux cas nouveaux s'y ajoutent ; un même
+contrôle les lit tous.
 
 Ce qu'elle résout, par cas :
 
 | Cas | Aujourd'hui | Piste B |
 | --- | --- | --- |
-| Réponse poussée seule, le test changé au push suivant de la même pull request | push refusé | couvert |
-| Réponse fusionnée avec une pull request, le test changé dans une suivante, sa tâche ouverte | refusé | couvert |
-| Le test changé, poussé, puis corrigé après la revue, au push suivant | push refusé, la pull request acceptée | couvert |
+| Réponse poussée seule, le test changé au push suivant de la même pull request | push refusé | couvert : ajoutée depuis le point de départ |
+| Réponse fusionnée avec une pull request, le test changé dans une suivante, sa tâche ouverte | refusé | couvert : ses deux conditions tenues |
+| Le test changé, poussé, puis corrigé après la revue, au push suivant | push refusé, la pull request acceptée | couvert : ajoutée depuis le point de départ |
 | Réponse et test dans le même commit, fusionnés avec la tâche close ; le test changé de nouveau ensuite | refusé | refusé : la tâche est close, et le test a bougé |
 | Test poussé sous sa demande en attente (D-0147), puis la réponse, fusionnés par squash ; le test changé de nouveau | refusé | refusé, de même |
 | Une demande ancienne nomme un test, aucune tâche ouverte ne la cite | refusé | refusé |
@@ -164,20 +174,23 @@ la même chose une fois le premier fusionné avec la clôture de sa tâche ;
 le stock des validations passées, qu'aucune tâche ouverte ne cite.
 
 **Ce qu'il laisse passer, qu'il refusait.** Le changement couvert par
-une validation poussée plus tôt, hors de la plage, tant que sa tâche
-est ouverte et que ce qu'elle nomme n'a pas bougé : c'est le but. Son
-âge n'est pas borné, mais sa tâche le borne. Mesuré sur ce dépôt le 25
-novembre : sur 149 demandes validées, 4 sont citées par une tâche
-ouverte ; elles nomment 2 tests, tous deux changés depuis : aucun test
-n'est couvert hors de sa plage. Sans la condition de la tâche, la règle
-aurait rouvert 110 tests, nommés par des validations anciennes et
-jamais changés depuis : la revue de cette spécification l'a relevé.
-Une tâche ouverte qui cite une demande pour mémoire, sans la mettre en
-œuvre, couvre de même les tests qu'elle nomme ; aucun cas aujourd'hui.
-Dans une pull request qui réunit plusieurs lots, fusionnée par l'humain
-quand il veut, la clôture de la tâche ne compte qu'à la fusion : une
-validation couvre jusque-là plusieurs changements du même test, comme
-la CI de la pull request le laisse déjà passer aujourd'hui.
+une validation poussée plus tôt, hors de la plage : ajoutée sur la
+branche depuis son point de départ ; ou déjà dans la branche par
+défaut, tant que sa tâche est ouverte et que ce qu'elle nomme n'a pas
+bougé. C'est le but. L'âge d'une validation fusionnée n'est pas borné,
+mais sa tâche le borne. Mesuré sur ce dépôt le 25 novembre : sur 149
+validations (86 demandes écrites, 63 décisions de séance), 4 sont
+citées par une tâche ouverte ; elles nomment 2 tests, tous deux changés
+depuis : aucun test n'est couvert hors de sa pull request. Sans la
+condition de la tâche, 31 tests nommés par des validations anciennes,
+jamais changés depuis, le redeviendraient : la revue de cette
+spécification l'a relevé. Une tâche ouverte qui cite une demande pour
+mémoire, sans la mettre en œuvre, couvre de même les tests qu'elle
+nomme, s'ils n'ont pas bougé ; aucun cas aujourd'hui. Dans une pull
+request qui réunit plusieurs lots, fusionnée par l'humain quand il
+veut, une validation ajoutée sur la branche couvre jusqu'à la fusion
+plusieurs changements du même test, comme la CI de la pull request le
+laisse déjà passer aujourd'hui.
 
 **Ce qu'il ne voit pas, comme aujourd'hui.** Que le changement soit
 celui que l'humain a validé : le contrôle lit le nom, pas les valeurs
@@ -198,8 +211,10 @@ Une tâche, menée par un sous-agent : la règle dans `tests.attendus`,
 le cliquet et `protege.fichiers`, ses défauts injectés (une validation
 épuisée, sa réponse commitée avec son test, ne couvre pas un second
 changement ; une validation qu'aucune tâche ouverte ne cite ne couvre
-pas ; une validation poussée plus tôt, sa tâche ouverte, couvre : le
-témoin sain), ses tests, le retrait de `demandes.reponse-seule`, le
+pas ; une validation fusionnée dont le test a bougé dans la branche par
+défaut ne couvre pas ; témoins sains, une validation poussée au push
+d'avant couvre, et une validation fusionnée, sa tâche ouverte, couvre),
+ses tests, le retrait de `demandes.reponse-seule`, le
 texte de `socle-request` et de `socle-batch` (la tâche cite sa demande)
 en français et en anglais, le guide là où il en parle, une note de
 version. De 3 à 4 points de la semaine, puis la copie protégée des
@@ -212,9 +227,10 @@ réponse donnée affichée comme attendue ; elle vaut dans tout projet, pas
 seulement en session cloud, partout où la réponse et son changement
 partent dans deux pull requests ; elle garde D-0141 ; elle retire un
 contrôle et une règle que l'agent doit retenir ; et un test montre le
-critère de B-0347 directement. Son assouplissement est borné : une
-validation ne compte hors de sa plage que pour le travail d'une tâche
-encore ouverte qui la cite, et tant que ce qu'elle nomme n'a pas bougé.
+critère de B-0347 directement. Son assouplissement est borné : la CI
+d'un push s'aligne sur celle de la pull request ; au-delà, une
+validation fusionnée ne compte que pour le travail d'une tâche encore
+ouverte qui la cite, et tant que ce qu'elle nomme n'a pas bougé.
 
 La piste A ne coûte que du texte, mais elle laisse la réponse attendre
 au journal, que rien ne vérifie, change D-0141, et ne vaut que si
