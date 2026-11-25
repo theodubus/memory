@@ -1,0 +1,112 @@
+From c58648667203ae379ae3193b70dce25929b120c9 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 25 Nov 2026 00:03:28 +0000
+Subject: [PATCH] =?UTF-8?q?Th=C3=A9o=20:=20un=20besoin=20pour=20que=20l'ag?=
+ =?UTF-8?q?ent=20supprime=20lui-m=C3=AAme=20ses=20branches=20de=20travail?=
+ =?UTF-8?q?=20d=C3=A9j=C3=A0=20contenues=20ailleurs,=20apr=C3=A8s=20chess?=
+ =?UTF-8?q?=20(D-0187)=20;=20B-0351=20ouvert=20(J-2026-11-25-A)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Mr1cCfBaBYKzQQPhyAVGEh
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=2 PreToolUse=491 Stop=6
+Socle-Hooks-Since-Commit: PreToolUse=9
+---
+ ...peut-pas-supprimer-une-branche-de-trava.md | 27 +++++++++++++++++++
+ memory/journal/2026-11-12.md                  | 12 +++++++++
+ ...r-que-l-agent-supprime-lui-mem.answer.toml | 10 +++++++
+ ...esoin-pour-que-l-agent-supprime-lui-mem.md |  8 ++++++
+ 4 files changed, 57 insertions(+)
+ create mode 100644 memory/backlog/B-0351-l-agent-ne-peut-pas-supprimer-une-branche-de-trava.md
+ create mode 100644 memory/requests/D-0187-ouvrir-un-besoin-pour-que-l-agent-supprime-lui-mem.answer.toml
+ create mode 100644 memory/requests/D-0187-ouvrir-un-besoin-pour-que-l-agent-supprime-lui-mem.md
+
+diff --git a/memory/backlog/B-0351-l-agent-ne-peut-pas-supprimer-une-branche-de-trava.md b/memory/backlog/B-0351-l-agent-ne-peut-pas-supprimer-une-branche-de-trava.md
+new file mode 100644
+index 00000000..70e0aff9
+--- /dev/null
++++ b/memory/backlog/B-0351-l-agent-ne-peut-pas-supprimer-une-branche-de-trava.md
+@@ -0,0 +1,27 @@
++<!-- socle: couche=backlog zone=publique -->
++# B-0351 — L'agent ne peut pas supprimer une branche de travail distante déjà contenue dans une branche poussée : l'état la donne à l'humain à chaque fin de lot
++
++> statut : ouvert · origine : J-2026-11-25-A · ref : D-0187, B-0193, ADR-0098 · lu : backlog@5d842cca
++
++Théo, le 24 novembre, devant la branche d'une session précédente que
++l'état lui donnait à supprimer : « ça ne devrait pas être fait par
++l'agent en vrai ? Pouvoir supprimer ses propres branches de travail ? »
++(J-2026-11-24-BC). La politique range la suppression d'une branche
++distante parmi les actions irréversibles ou externes, réservées à
++l'humain (point 4), et le hook de l'agent la refuse. Une branche de
++travail dont la tête est contenue dans une branche poussée, ou dans la
++branche par défaut, ne perd pourtant rien à disparaître : l'état le
++calcule déjà, et la donne à l'humain après chaque passation et chaque
++fusion. Après la mise à jour de chess, sur la décision de Théo (D-0187).
++
++Une spécification d'abord, avec son modèle de menace : ce qu'est une
++branche « de l'agent », ce qui prouve qu'elle est contenue ailleurs au
++moment de la supprimer, ce que le hook laisse passer et ce qu'il refuse
++encore ; puis le changement de la politique, que Théo seul fait. Le hook
++de l'agent ne change que sur une preuve vue en session (ADR-0098) : la
++voici, la branche donnée à Théo à chaque fin de lot (B-0193,
++J-2026-11-24-BC).
++
++## Satisfait quand
++
++- [ ] une branche de travail de l'agent, contenue dans une branche poussée, se supprime sans geste de l'humain, et une branche qui ne l'est pas reste refusée
+diff --git a/memory/journal/2026-11-12.md b/memory/journal/2026-11-12.md
+index 105cfdbb..2cd36d55 100644
+--- a/memory/journal/2026-11-12.md
++++ b/memory/journal/2026-11-12.md
+@@ -882,3 +882,15 @@ Le premier paragraphe est le message déjà consigné par D-0183
+ passation : le prompt à copier, le commutateur de l'atelier restant
+ manuel pour l'instant (D-0173) ; l'essai de D-0182 attend que Théo le
+ demande. La consigne du chantier actif le dit.
++
++## J-2026-11-25-A — Théo : un besoin pour que l'agent supprime lui-même ses branches de travail déjà contenues ailleurs, après chess (D-0187) ; B-0351 ouvert
++
++> ref : D-0187, B-0351, J-2026-11-24-BC, J-2026-11-24-BE
++
++À la question du récap (ouvrir un besoin pour que l'agent supprime
++lui-même ses branches de travail déjà contenues dans une branche
++poussée), Théo répond, vers 1 h, heure de Paris, mot pour mot : « oui
++après chess ». Consigné en séance, D-0187 ; B-0351 ouvert, hors de tout
++jalon, après la mise à jour de chess, avec les fonctions nouvelles : une
++spécification et son modèle de menace d'abord, puis le changement de la
++politique, que Théo seul fait.
+diff --git a/memory/requests/D-0187-ouvrir-un-besoin-pour-que-l-agent-supprime-lui-mem.answer.toml b/memory/requests/D-0187-ouvrir-un-besoin-pour-que-l-agent-supprime-lui-mem.answer.toml
+new file mode 100644
+index 00000000..6cb88a3c
+--- /dev/null
++++ b/memory/requests/D-0187-ouvrir-un-besoin-pour-que-l-agent-supprime-lui-mem.answer.toml
+@@ -0,0 +1,10 @@
++# Réponse humaine donnée dans la conversation, consignée par l'agent avec
++# le texte exact de l'humain (`citation`). Relue avec le diff.
++# Elle porte sur le texte exact de D-0187-ouvrir-un-besoin-pour-que-l-agent-supprime-lui-mem.md, dont l'empreinte suit.
++reponse = "valider"
++texte = ""
++par = "Théo"
++date = "2026-11-25"
++canal = "conversation"
++citation = "oui après chess"
++empreinte = "sha256:c9961308985bcb0d88943e68c0a120a06a51b81307e053099942ff1b5eb15989"
+diff --git a/memory/requests/D-0187-ouvrir-un-besoin-pour-que-l-agent-supprime-lui-mem.md b/memory/requests/D-0187-ouvrir-un-besoin-pour-que-l-agent-supprime-lui-mem.md
+new file mode 100644
+index 00000000..61f68fcc
+--- /dev/null
++++ b/memory/requests/D-0187-ouvrir-un-besoin-pour-que-l-agent-supprime-lui-mem.md
+@@ -0,0 +1,8 @@
++<!-- socle: couche=demandes zone=publique -->
++# D-0187 — Ouvrir un besoin pour que l'agent supprime lui-même ses branches de travail distantes déjà contenues dans une branche poussée, après la mise à jour de chess
++
++> date : 2026-11-25 · forme : séance
++
++## Question posée
++
++Ouvrir un besoin pour que l'agent supprime lui-même ses branches de travail déjà contenues dans une branche poussée ? Aujourd'hui, la politique réserve la suppression d'une branche distante à l'humain (point 4), et le hook la refuse. « oui avant chess » ou « oui après chess » : le besoin s'ouvre ; il demandera une spécification avec son modèle de menace, puis un changement de la politique, que Théo seul fait. « non » : ce geste reste le sien.
+-- 
+2.43.0
+
