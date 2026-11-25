@@ -18,3 +18,7 @@ Commits : d6b20247..7924359c
 - Bloquant : le modèle de menace taisait le stock des validations passées ; mesuré et dit
 - Bloquant : la piste A disait à tort qu'un lot s'arrêterait en route
 - Ouvre : rien
+
+### Passe 2 — 2026-11-25
+
+Commits : 7924359c..3d88bcf0
