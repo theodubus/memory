@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0104 — Le pilote neuf : un dépôt installé sans BMAD, sa planification faite à la main
 
-> statut : en cours · origine : D-0051 · lu : backlog@7d1ef046
+> statut : en cours · origine : D-0051 · ref : D-0198 · lu : backlog@7d1ef046 · après : B-0323
 
 Le pilote repart d'un dépôt neuf, installé depuis `main` sans BMAD, avec
 le cadrage de Théo (D-0051) ; sa planification se fait d'abord à la main,
@@ -18,3 +18,6 @@ session de travail en reçoit le lien (J-2026-10-31-B).
 
 À vérifier à sa prochaine mise à jour (J-2026-10-31-M) : qu'une session
 cloud clone le dépôt public `theodubus/socle` sans l'ajouter.
+
+Le 25 novembre, Théo le garde pour plus tard, après la mise à jour de
+chess (D-0198) : il ne se clôt pas avec elle.
