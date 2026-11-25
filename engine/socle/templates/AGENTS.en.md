@@ -15,7 +15,8 @@ another agent, run it first. Nothing that is not in it is established.
 What the human wrote themselves since the agent's last commit (an approval,
 an answer in their terminal), the state lists: cite it to them in the next
 reply, by its identifier and its link, which the conversation did not give
-them.
+them. A first message that asks to resume or continue, whatever its form
+("resume"), first looks for the handoff: the `socle-handoff` skill.
 
 If the state was not injected when a Claude Code session started, its
 hooks are not loaded (the session started outside the project root;
@@ -152,7 +153,7 @@ agent”), the agent merges its own itself, under the conditions of the
 `socle-batch` skill. One pull request per task, only if the human chose
 it (a fact of the memory says so). A new session that finds another
 session's pull request open asks the human to merge it first, or to let
-it continue on it; started from a handoff prompt that its guard accepts,
+it continue on it; started from a handoff that its guard accepts,
 it continues on it, and that pull request becomes its own. A prototype not meant to be merged is done on a
 disposable branch, named with a prefix of `[branches] disposable` in the
 guardrails (`proto/` by default): the CI does not judge it on push.

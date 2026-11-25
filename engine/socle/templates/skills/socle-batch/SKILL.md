@@ -34,8 +34,7 @@ L'agent qui orchestre implémente, une tâche après l'autre, un commit
 chacune. **Un sous-agent implémente quand il paie** : des tâches
 indépendantes qui avancent en parallèle, ou une tâche dont la lecture
 saturerait la conversation qui orchestre (plus de 400 lignes changées,
-ou des fichiers longs à lire). **Sans sous-agents**, l'agent mène le lot
-seul.
+ou des fichiers longs à lire).
 
 Sous Claude Code : outil `Agent`, dans une copie isolée
 (`isolation: "worktree"`), en arrière-plan ; deux à la fois au plus.
@@ -132,9 +131,10 @@ attente de plus d'une heure (skill `socle-handoff`). Ranger d'abord :
 1. le chantier actif dit le lot et ce qui attend, le journal la passation ;
 2. les copies isolées, leurs branches et, en session cloud, les réveils
    retirés ;
-3. tout est poussé ; un commit non relu part en correctif
+3. tout est commité ; un commit non relu part en correctif
    (`git format-patch`) dans un dossier de passation du dépôt, retiré à son
-   intégration. Plus rien ne se pousse ensuite.
+   intégration.
 
-Puis le skill `socle-handoff` : selon le mode, il programme la session
-suivante, ou donne le prompt de la suivante à copier.
+Puis le skill `socle-handoff` : la passation écrite, commitée et poussée.
+Plus rien ne se pousse ensuite. Selon le mode, il programme la session
+suivante, ou dit de demander la reprise.

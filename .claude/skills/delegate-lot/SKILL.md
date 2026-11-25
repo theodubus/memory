@@ -116,7 +116,6 @@ l'application de ses correctifs (`git am`), la branche de passation se
 fusionne dans la branche de travail (`git merge --no-edit`), puis son
 dossier se retire : l'état la donne alors à supprimer après la fusion de
 la pull request (B-0293). Ici, le mode est le prompt à copier (D-0173) :
-le prompt de la session neuve est celui que donne `python3 .socle/socle
-handoff prompt --waiting "<ce qui attend>"` (skill
-`socle-handoff`), tout poussé, avec le lot « selon le skill
-delegate-lot » au lieu de `socle-batch`.
+la passation écrite, commitée et poussée (skill `socle-handoff`), le
+récap dit à Théo d'écrire « reprends » dans une session neuve, où le lot
+se mène selon ce skill (D-0190).

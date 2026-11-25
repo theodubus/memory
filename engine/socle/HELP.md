@@ -304,24 +304,25 @@ de sessions avec son titre et son heure de départ, et programme son
 prompt ; jamais si le coût de son lot ne tient pas dans ce qui reste de
 la fenêtre de cinq heures, ni sur une semaine à 75 % : elle attend alors
 la remise à zéro. La chaîne s'arrête sans
-vous, et le récap vous donne le prompt à copier, quand le lot suivant
+vous, et le récap vous dit de demander la reprise, quand le lot suivant
 n'a aucune tâche prête (une décision vous revient, par exemple), après
 deux lots menés sans message de votre part, ou si Claude Code refuse de
-créer la session. Le **prompt à copier** : le récap donne le prompt de la
-session suivante, que vous collez dans une session que vous ouvrez quand
-vous voulez ; c'est le mode de qui a plusieurs comptes ou veut garder la
-main. Pour changer de mode, dites-le à l'agent (« passe au prompt à
+créer la session. Le **prompt à copier** : vous ouvrez une session neuve
+quand vous voulez, d'un compte comme d'un autre, et y demandez la
+reprise : « reprends », « continue », ou tout autre message qui le dise ;
+c'est le mode de qui a plusieurs comptes ou veut garder la main. Pour changer de mode, dites-le à l'agent (« passe au prompt à
 copier », « reprends la session programmée ») : il l'écrit au chantier
 actif, et passer au prompt à copier annule ce qui est programmé, en vous
 donnant le lien de chaque session annulée. Pour arrêter une session
 programmée sans changer de mode : écrire « arrête » dans la session qui
 l'a programmée, ou supprimer sa tâche de la liste des tâches programmées
-de votre compte et archiver la session. Dans les deux modes, le prompt
-que l'agent écrit (`python3 .socle/socle handoff prompt`) commence par
-une garde (`python3 .socle/socle handoff check`) : la session neuve ne
-travaille pas si quelqu'un a poussé sur sa branche depuis, ou si une
-autre session a écrit la mémoire du projet sur une autre branche, et le
-dit. Acceptée, elle continue la pull request ouverte de sa branche, qui
+de votre compte et archiver la session. Dans les deux modes, l'agent
+écrit sa passation dans la mémoire (`python3 .socle/socle handoff write`),
+la commite et la pousse ; la session neuve la trouve et juge sa garde
+(`python3 .socle/socle handoff check`) : elle ne travaille pas si
+quelqu'un a poussé sur sa branche depuis, si une autre session a écrit la
+mémoire du projet depuis, ou si une autre l'a déjà reprise, et le dit ;
+sans passation, elle le dit aussi. Acceptée, elle continue la pull request ouverte de sa branche, qui
 devient la sienne : elle la fusionne si la politique le permet à
 l'agent ; sinon, vous la fusionnez.
 

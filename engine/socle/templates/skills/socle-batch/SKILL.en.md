@@ -35,7 +35,7 @@ The orchestrating agent implements, one task after the other, one commit
 each. **A subagent implements when it pays**: independent tasks that
 move forward in parallel, or a task whose reading would saturate the
 orchestrating conversation (more than 400 lines changed, or long files
-to read). **Without subagents**, the agent runs the batch alone.
+to read).
 
 Under Claude Code: the `Agent` tool, in an isolated copy of the repository
 (`isolation: "worktree"`), in the background; two at a time at most.
@@ -134,9 +134,10 @@ than an hour (the `socle-handoff` skill). Tidy up first:
    handoff;
 2. the isolated copies, their branches and, in a cloud session, the
    wake-ups removed;
-3. everything is pushed; a commit not reviewed leaves as a patch
+3. everything is committed; a commit not reviewed leaves as a patch
    (`git format-patch`) in a handover folder of the repository, removed
-   at its integration. Nothing is pushed afterwards.
+   at its integration.
 
-Then the `socle-handoff` skill: depending on the mode, it schedules the
-next session, or gives the prompt of the next one to copy.
+Then the `socle-handoff` skill: the handoff written, committed and
+pushed. Nothing is pushed afterwards. Depending on the mode, it
+schedules the next session, or says to ask for the resumption.

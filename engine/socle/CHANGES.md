@@ -15,6 +15,52 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-25-d — L'organisation du travail se proportionne à ce qu'elle protège : la session unité de budget, la question d'intention avant la spécification, la revue adversariale selon le risque, un sous-agent quand il paie
+
+Les skills `socle-batch`, `socle-review`, `socle-request` et
+`socle-handoff`, la section du socle d'`AGENTS.md` et le guide changent
+ensemble : chaque étape qui coûte (un sous-agent, une revue, une
+relecture à froid, une demande, une passation) se déclenche sur ce
+qu'elle protège, jamais sur la forme du travail.
+
+- **La session est l'unité de budget.** À la fin d'un lot, l'agent
+  enchaîne le suivant si son coût estimé tient dans ce qui reste de la
+  fenêtre de cinq heures et de la semaine, la marge du rangement
+  comprise, et si la conversation reste sous 300 000 jetons de contexte,
+  deux lots au plus sans message de l'humain ; sinon, il change de
+  session. « Un lot par session » disparaît, comme le seuil fixe de 15 %
+  de la fenêtre au départ d'une session programmée, que remplace le coût
+  estimé de son lot.
+- **Une conception à trancher** pose d'abord sa question d'intention,
+  dans la conversation, en quelques lignes, consignée en séance ; sa
+  spécification et son code se font ensuite dans le même lot, la
+  spécification d'abord. Ce qui reste coûteux à défaire va en demande,
+  courte.
+- **La revue adversariale**, par un relecteur sans contexte, pour un lot
+  qui pose ou change un garde-fou, un format que d'autres parties du
+  projet lisent, ou plus de 150 lignes de code et de tests ; un autre
+  lot, l'agent le relit lui-même sur le dossier court (`socle review
+  --short`). Une spécification, de la documentation ou de la mémoire
+  seules n'en ont pas : l'humain en juge l'intention.
+- **Un sous-agent implémente quand il paie** : des tâches indépendantes
+  en parallèle, ou plus de 400 lignes changées, ou des fichiers longs à
+  lire ; sinon, l'agent qui orchestre implémente. Sa consigne nomme ses
+  fichiers temporaires de l'identifiant de sa tâche ; un sous-agent
+  arrêté se reprend depuis sa copie isolée.
+- **La relecture à froid d'une demande**, seulement au-delà de la moitié
+  de son budget ; une demande courte, ou qui n'approuve que des fichiers
+  protégés par leurs empreintes, part sans elle.
+
+Se retirent aussi, faute d'avoir protégé quoi que ce soit en usage : le
+plafond d'un seul sous-agent au-delà de 75 % de la semaine, que le coût
+mesuré de chaque sous-agent couvre ; le compactage demandé à la fin de
+chaque lot et avant une longue attente, que le changement de session
+remplace ; deux rappels de `socle-request` que la section du socle
+d'`AGENTS.md` et les contrôles disent déjà.
+
+À faire : rien ; l'installeur pose les skills et la section changés, et
+le lot suivant se mène selon eux.
+
 ## 2026-11-25-c — La passation s'écrit dans la mémoire, `memory/handoff.md`, et la session neuve la reprend sur une simple demande de reprendre, sans prompt à copier
 
 `socle handoff write` remplace `socle handoff prompt`, avec les mêmes
@@ -43,7 +89,7 @@ retire `memory/handoff.md`. Avec `--ref` et `--head`, `check` juge la
 garde seule, comme avant. L'état dit la passation qui attend ; aucun
 budget des garde-fous n'est exigé du fichier.
 
-À faire : passer la main selon les skills `socle-handoff`, `socle-batch` et `socle-resume` mis à jour, avec `socle handoff write` au lieu de `socle handoff prompt` ; le récap du mode « prompt à copier » dit à l'humain de demander la reprise dans une session neuve, au lieu de donner un prompt.
+À faire : passer la main selon les skills `socle-handoff` et `socle-batch` mis à jour, avec `socle handoff write` au lieu de `socle handoff prompt` ; le récap du mode « prompt à copier » dit à l'humain de demander la reprise dans une session neuve, au lieu de donner un prompt.
 
 ## 2026-11-25-b — Une réponse `valider` poussée avant le changement qu'elle autorise le couvre, sur la branche, ou fusionnée tant que la tâche qui la cite est ouverte ; l'avertissement de la réponse seule se retire
 
@@ -82,8 +128,8 @@ que la plage.
 À faire : une réponse que l'humain donne se consigne, se commite et se
 pousse dès qu'elle est donnée, sans attendre le changement qu'elle
 autorise, et la tâche qui fera ce changement cite sa demande par son
-identifiant. Les skills `socle-request` et `socle-batch` le disent ;
-leurs copies sont protégées, elles sont dans la demande de l'installeur.
+identifiant. Le skill `socle-request` le dit ; sa copie est protégée,
+elle est dans la demande de l'installeur.
 
 ## 2026-11-25-a — L'installeur dit qu'un module Kotlin multiplateforme ou Android n'est pas servi par les commandes JVM de la copie `kotlin`, et la spécification des adaptateurs donne les siennes
 

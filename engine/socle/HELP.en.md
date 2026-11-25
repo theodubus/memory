@@ -291,23 +291,26 @@ itself, which appears at once in your list of sessions with its title and
 start time, and schedules its prompt; never if its batch's cost does not
 fit in what remains of the five-hour window, nor on a week at 75%: it
 then waits for the reset. The chain
-stops without you, and the recap gives you the prompt to copy, when the
+stops without you, and the recap tells you to ask for the resumption, when the
 next batch has no ready task (a decision is up to you, for example),
 after two batches run without a message from you, or if Claude Code
-refuses to create the session. The **prompt to copy**: the recap gives
-the prompt of the next session, which you paste into a session you open
-whenever you want; it is the mode of whoever has several accounts or
-wants to keep control. To change the mode, tell the agent (“switch to the
+refuses to create the session. The **prompt to copy**: you open a new
+session whenever you want, from one account or another, and ask there
+for the resumption: "resume", "continue", or any other message that says
+so; it is the mode of whoever has several accounts or wants to keep
+control. To change the mode, tell the agent (“switch to the
 prompt to copy”, “go back to the scheduled session”): it writes it in the
 active work, and switching to the prompt to copy cancels what is
 scheduled, giving you the link of each cancelled session. To stop a
 scheduled session without changing the mode: write "stop" in the session
 that scheduled it, or delete its task from the list of scheduled tasks
-of your account and archive the session. In both modes, the prompt the
-agent writes (`python3 .socle/socle handoff prompt`) starts with a guard
-(`python3 .socle/socle handoff check`): the new session does not work if
-someone pushed to its branch since, or if another session wrote the
-project's memory on another branch, and says so. Accepted, it continues
+of your account and archive the session. In both modes, the agent
+writes its handoff in the memory (`python3 .socle/socle handoff write`),
+commits and pushes it; the new session finds it and judges its guard
+(`python3 .socle/socle handoff check`): it does not work if someone pushed
+to its branch since, if another session wrote the project's memory
+since, or if another one already resumed it, and says so; without a
+handoff, it says so too. Accepted, it continues
 the open pull request of its branch, which becomes its own: it merges it
 if the policy allows the agent to; otherwise, you merge it.
 

@@ -14,6 +14,51 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-25-d — The organisation of the work is proportioned to what it protects: the session as the budget unit, the question of intent before the specification, the adversarial review by risk, a subagent when it pays
+
+The `socle-batch`, `socle-review`, `socle-request` and `socle-handoff`
+skills, the socle section of `AGENTS.md` and the guide change together:
+each costly step (a subagent, a review, a cold reading, a request, a
+handoff) is triggered by what it protects, never by the form of the
+work.
+
+- **The session is the budget unit.** At the end of a batch, the agent
+  chains the next one if its estimated cost fits in what remains of the
+  five-hour window and of the week, the tidying-up margin included, and
+  if the conversation stays under 300,000 tokens of context, two batches
+  at most without a message from the human; otherwise, it changes
+  sessions. "One batch per session" goes, as does the fixed 15% threshold
+  of the window when a scheduled session starts, replaced by its batch's
+  estimated cost.
+- **A design to settle** first asks its question of intent, in the
+  conversation, in a few lines, recorded in session; its specification
+  and its code are then done in the same batch, the specification first.
+  What remains costly to undo goes into a request, a short one.
+- **The adversarial review**, by a reviewer without context, for a batch
+  that adds or changes a guardrail, a format other parts of the project
+  read, or more than 150 lines of code and tests; another batch, the
+  agent rereads itself on the short brief (`socle review --short`). A
+  specification, documentation or memory alone get none: the human
+  judges their intent.
+- **A subagent implements when it pays**: independent tasks in parallel,
+  or more than 400 lines changed, or long files to read; otherwise, the
+  orchestrating agent implements. Its instructions name its temporary
+  files with its task's identifier; a stopped subagent is resumed from
+  its isolated copy.
+- **The cold reading of a request**, only beyond half its budget; a
+  short request, or one that only approves protected files by their
+  fingerprints, leaves without it.
+
+Also removed, for having protected nothing in use: the cap of a single
+subagent beyond 75% of the week, which each subagent's measured cost
+covers; the compaction asked at the end of each batch and before a long
+wait, which the change of session replaces; two reminders of
+`socle-request` that the socle section of `AGENTS.md` and the checks
+already state.
+
+To do: nothing; the installer lays down the changed skills and section,
+and the next batch is run following them.
+
 ## 2026-11-25-c — The handoff is written in the memory, `memory/handoff.md`, and the new session resumes it on a plain request to resume, with no prompt to copy
 
 `socle handoff write` replaces `socle handoff prompt`, with the same
@@ -40,7 +85,7 @@ the session's first commit removes `memory/handoff.md`. With `--ref` and
 `--head`, `check` judges the guard alone, as before. The state shows the
 waiting handoff; no budget from the guardrails is required of the file.
 
-To do: hand off following the updated `socle-handoff`, `socle-batch` and `socle-resume` skills, with `socle handoff write` instead of `socle handoff prompt`; the recap of the “prompt to copy” mode tells the human to ask for the resumption in a new session, instead of giving a prompt.
+To do: hand off following the updated `socle-handoff` and `socle-batch` skills, with `socle handoff write` instead of `socle handoff prompt`; the recap of the “prompt to copy” mode tells the human to ask for the resumption in a new session, instead of giving a prompt.
 
 ## 2026-11-25-b — An `approve` answer pushed before the change it authorizes covers it, on the branch, or merged while the task that cites it is open; the warning about the answer alone is removed
 
@@ -77,8 +122,8 @@ list of private terms, still only count the range.
 To do: an answer the human gives is recorded, committed and pushed as
 soon as it is given, without waiting for the change it authorizes, and the
 task that will make that change cites its request by its identifier. The
-`socle-request` and `socle-batch` skills say so; their copies are
-protected, they are in the installer's request.
+`socle-request` skill says so; its copy is protected, it is in the
+installer's request.
 
 ## 2026-11-25-a — The installer says that a Kotlin multiplatform or Android module is not served by the JVM commands of the `kotlin` copy, and the adapter specification gives its own
 
