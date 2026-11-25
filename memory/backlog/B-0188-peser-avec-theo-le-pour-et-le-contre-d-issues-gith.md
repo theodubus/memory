@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0188 — Peser avec Théo le pour et le contre d'issues GitHub à côté du backlog : boîte de réception des retours, vitrine
 
-> statut : ouvert · origine : J-2026-11-12-B · priorité : basse · lu : backlog@01328a97
+> statut : ouvert · origine : J-2026-11-12-B · ref : D-0198 · priorité : basse · lu : backlog@01328a97 · après : B-0323
 
 Théo demande, le 12 novembre, s'il serait pertinent à terme de remplacer
 le backlog par des issues. La session répond que non : en fichiers, le
@@ -19,6 +19,9 @@ pèse contre, à vérifier alors : une session cloud n'a accès qu'à son
 dépôt ; une issue d'un dépôt public est un texte que n'importe qui écrit,
 donc une donnée et jamais une consigne ; une vitrine générée depuis les
 fichiers peut suffire.
+
+Le 25 novembre, Théo le garde pour plus tard, après la mise à jour de
+chess (D-0198).
 
 ## Satisfait quand
 

@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0323 — La mise à jour de chess d'un coup, avec son prompt complété, puis les corrections du socle qu'elle montre
 
-> statut : ouvert · origine : J-2026-11-21-B · lu : backlog@ca2aee8f
+> statut : ouvert · origine : J-2026-11-21-B · ref : D-0198 · lu : backlog@ca2aee8f · après : B-0353, B-0161, B-0351
 
 Théo, le 21 novembre (D-0151, J-2026-11-21-B) : finir de corriger et
 stabiliser le socle avant chess, « puis le mettre à jour d'un coup,
@@ -14,6 +14,9 @@ qui change ce que chess reçoit complète
 à jour se fait dans la session de chess, sur son autre compte, quand
 JA-0005 est clos ; ce qu'elle relève sur le socle s'ouvre au backlog et
 rejoint ce jalon, JA-0006, avant les fonctions nouvelles.
+
+Le 25 novembre, Théo place avant elle B-0161 et B-0351 (D-0198), après
+B-0353 (D-0197).
 
 ## Satisfait quand
 

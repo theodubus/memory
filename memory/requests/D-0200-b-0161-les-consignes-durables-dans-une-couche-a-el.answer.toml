@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0200-b-0161-les-consignes-durables-dans-une-couche-a-el.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-25"
+canal = "conversation"
+citation = "3. Oui ok, et ok pour un résumer (s'assurer que l'agent lise la version complete quand c'est necessaire), et cette modification concerne aussi le socle ? Pas que l'atelier ?"
+empreinte = "sha256:fdbc76869f08c8cdca45c46d7da400cc5915488a7ed5fd494ce4a91f43298e43"

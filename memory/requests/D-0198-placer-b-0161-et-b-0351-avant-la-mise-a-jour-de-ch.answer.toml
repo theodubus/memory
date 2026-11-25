@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0198-placer-b-0161-et-b-0351-avant-la-mise-a-jour-de-ch.md, dont l'empreinte suit.
+reponse = "choix-par-besoin"
+texte = ""
+par = "Théo"
+date = "2026-11-25"
+canal = "conversation"
+citation = "B161 avant chess ok\nB0101 ok, et ok apres chess \nJ0003 ok \nB0351 avant chess ok\nB0104 non plus tard apres chess\nB0158 et B188 oui et plus tard apres chess"
+empreinte = "sha256:c2d121fcbf4e5fef8bd898bf7ca839fbfe5f19baa029421c86ae8ffcc5832ac1"

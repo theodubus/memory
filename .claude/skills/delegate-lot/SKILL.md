@@ -88,9 +88,12 @@ contournement qu'il trouve s'écarte d'office, sans entrée au backlog.
 - Un lot qui change le gabarit d'un skill du produit
   (`engine/socle/templates/skills/`) remet sa copie protégée de
   `.claude/skills/` avant sa clôture : l'installeur relancé en mode amont,
-  sur la demande validée qui cite son empreinte (D-0168, B-0218).
+  sans demande. La copie identique à son gabarit passe, comme les tests
+  qui ne perdent que des phrases que le gabarit a quittées (D-0197,
+  ADR-0110) ; ce que l'installeur réécrit d'autre suit ses règles, la
+  section du socle d'`AGENTS.md` remise à son état commité.
 - Une valeur attendue à changer, un test à supprimer, un fichier protégé
-  à rafraîchir : une demande dans le dépôt, relue à froid si elle passe
+  à rafraîchir, hors de ce qui précède : une demande dans le dépôt, relue à froid si elle passe
   la moitié de son budget, poussée, son lien donné (J-2026-11-12-F). Sauf un changement mécanique de valeurs
   attendues, des tests qui lisent un format que Théo a validé : une
   question dans la conversation qui nomme chaque test, avec sa valeur

@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0197-b-0353-question-d-intention-dans-ce-depot-seulemen.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-25"
+canal = "conversation"
+citation = "Recommandation A \n\nJe veux aussi que la session suivante me décrive en détail ce qui reste (meme apres jalon mise a jour)"
+empreinte = "sha256:22430d0731bd6d5e30cf5c64c40da78c58378f81b3cfaa914b2f199241c46d46"

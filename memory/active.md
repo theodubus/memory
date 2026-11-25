@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0039 clos (J-2026-11-25-T). B-0346 : la reprise réelle à voir ;
-B-0353 : la réponse de Théo.
+L-0041 clos (J-2026-11-25-AB). B-0161 : intention validée,
+lignes de résumé (D-0200).
 
 ## Consignes en cours
 
@@ -46,7 +46,7 @@ Leur texte exact est dans l'entrée du journal citée.
 - Une limite d'usage proche décide de l'ordre, jamais de la profondeur
   du travail ni du modèle ; la passation se fait avant elle
   (J-2026-11-09-C, J-2026-11-15-D, J-2026-11-16-W).
-- Une attente annoncée a son réveil programmé (J-2026-10-13-N).
+- Une attente annoncée a son réveil (J-2026-10-13-N).
 - « Pour toi » : les seuls gestes de Théo, chacun redit en entier dans
   le récap, sans renvoi plus haut (ce que c'est, pourquoi, ce que change
   sa réponse) ; ce que fera l'agent, à part (J-2026-10-31-S,
@@ -70,6 +70,6 @@ Leur texte exact est dans l'entrée du journal citée.
 
 Par lots (D-0118, D-0151) :
 
-1. JA-0005 : B-0346 ; B-0353 selon Théo.
+1. B-0351, B-0161 (D-0198) ; T-0186 (D-0199) ; puis chess.
 2. JA-0006 : chess mis à jour d'un coup, puis ses corrections.
-3. Puis la couche des consignes (B-0161), la planification (B-0101).
+3. Après : B-0101 (un lot), JA-0003, B-0104, B-0158, B-0188.
