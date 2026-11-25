@@ -13,3 +13,8 @@ l'écriture (J-2026-11-24-AZ).
 ### Passe 1 — 2026-11-25
 
 Commits : d6b20247..7924359c
+
+- Bloquant : la référence de la piste B, l'ancêtre commun avec le commit de la réponse, n'épuisait aucune validation fusionnée (110 tests rouverts) ; bornée par la tâche ouverte qui la cite, et le parent du commit de la demande
+- Bloquant : le modèle de menace taisait le stock des validations passées ; mesuré et dit
+- Bloquant : la piste A disait à tort qu'un lot s'arrêterait en route
+- Ouvre : rien
