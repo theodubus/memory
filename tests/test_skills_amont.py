@@ -266,6 +266,17 @@ class TestLesPhrases(unittest.TestCase):
                          ["fichier protégé", "modifié sans validation humaine"])
         self.assertEqual(controles_tests.chaines_du_moteur("def ("), ["def ("])
 
+    def test_un_test_lit_un_skill_par_son_corps_ou_par_une_aide_qu_il_nomme(self):
+        cfg = {**self.CFG, "function": r"^\s*def\s+(\w+)\s*\(", "marker_name": "^test", "block": "indent"}
+        texte = ("def lire():\n    return open('engine/socle/templates/skills/x/SKILL.md').read()\n\n\n"
+                 "def test_par_l_aide():\n    assert 'une phrase' in lire()\n\n\n"
+                 "def test_par_son_corps():\n    assert 'une phrase' in open('SKILL.md').read()\n\n\n"
+                 "def test_du_hook():\n    assert motif('une phrase') is None\n")
+        tests = {f.nom: f for f in controles_tests.tests_lecture.extraire(texte, "tests/test_x.py", cfg)}
+        self.assertTrue(controles_tests.lit_un_skill(texte, "tests/test_x.py", tests["test_par_l_aide"], cfg))
+        self.assertTrue(controles_tests.lit_un_skill(texte, "tests/test_x.py", tests["test_par_son_corps"], cfg))
+        self.assertFalse(controles_tests.lit_un_skill(texte, "tests/test_x.py", tests["test_du_hook"], cfg))
+
     def test_une_valeur_de_phrase(self):
         self.assertTrue(controles_tests.valeurs_de_phrase(['"une phrase assez longue"', '""']))
         self.assertFalse(controles_tests.valeurs_de_phrase(['"une phrase assez longue"', "3"]))
