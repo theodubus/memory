@@ -5,9 +5,9 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-Revue de cap 6 : suggestions à Théo (J-2026-11-25-O). Réponses de
-D-0189 et D-0190 au journal, consignées avec leurs tests
-(J-2026-11-25-J, -K).
+L-0039 : T-0181 et T-0182 (D-0192). Réponses de D-0189, D-0190 au
+journal (J-2026-11-25-J, -K). La question de Théo sur l'organisation
+attend (J-2026-11-25-P).
 
 ## Consignes en cours
 
@@ -18,8 +18,9 @@ Leur texte exact est dans l'entrée du journal citée.
   (D-0173, J-2026-11-24-BE) ; l'essai programmé de D-0182 quand Théo
   le demande.
 - Le hook terminé : rien sans preuve vue dans une session (ADR-0098).
-- Du temps pour un ajout ou un bug important ; aucun pour un cas limite
-  rare, légère gêne que l'agent gère lui-même (D-0165).
+- Proportionner : du temps aux ajouts et bugs importants, aucun aux
+  cas limites rares (D-0165) ; revue, sous-agent, regroupement quand
+  ils servent (J-2026-11-25-P).
 - Revue de cap tous les trois lots (`direction-review`, D-0145) ; pas
   dans le produit pour l'instant (D-0183).
 - Un mot pour une chose ; une tâche va sans demander au lot dont la
@@ -33,12 +34,14 @@ Leur texte exact est dans l'entrée du journal citée.
 - Chaque session sur la branche de son environnement, partie de celle
   par défaut (J-2026-11-13-A).
 - Aucun autre dépôt dans la session, ni lecture de JustCook ou de
-  `theodubus/socle` ; donner leurs liens reste permis (J-2026-11-09-M).
+  `theodubus/socle` ; donner leurs liens reste permis (J-2026-11-09-M) ;
+  s'il en faut un, cloné hors de la session, non déclaré racine
+  (J-2026-10-14-S).
 - Le pilote est un essai de choc : seules les imperfections du socle se
   corrigent ici (J-2026-10-31-E).
-- La documentation : son plan soumis à Théo d'abord ; ton formel ; une
-  question à un seul endroit ; à quoi sert l'outil ; le guide suit le
-  parcours de l'utilisateur ; schémas vérifiés rendus ; faite que validée
+- La documentation : plan soumis à Théo d'abord, ton formel, une
+  question en un seul endroit, à quoi sert l'outil, le parcours de
+  l'utilisateur, schémas vérifiés rendus, faite que validée
   (J-2026-10-20-Y, J-2026-10-21-A, J-2026-10-22-A).
 - Une limite d'usage proche décide de l'ordre, jamais de la profondeur
   du travail ni du modèle ; la passation se fait avant elle
@@ -50,8 +53,6 @@ Leur texte exact est dans l'entrée du journal citée.
   J-2026-10-14-F, J-2026-11-24-AQ).
 - Les heures à Théo, heure de Paris (J-2026-10-14-G).
 - Une branche à supprimer se vérifie sur GitHub (B-0193).
-- Un autre dépôt se clone hors du dossier de la session, sans être
-  déclaré racine (J-2026-10-14-S).
 - Pas de rétro-compatibilité avec une version antérieure du socle
   (J-2026-10-19-A).
 - Le but, et ce qui y sert : `docs/fabrication/but-et-tri.md` (D-0167) ;
@@ -69,6 +70,6 @@ Leur texte exact est dans l'entrée du journal citée.
 
 Par lots (D-0118, D-0151) :
 
-1. JA-0005 : L-0039, L-0040.
+1. JA-0005 : L-0039.
 2. JA-0006 : chess mis à jour d'un coup, puis ses corrections.
 3. Puis la couche des consignes (B-0161), la planification (B-0101).
