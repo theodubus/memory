@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-PR #96 fusionnée (J-2026-11-25-AC). Prochain : B-0351.
-B-0161 : lignes de résumé (D-0200).
+L-0042 : D-0201 soumise, le moteur l'attend. B-0351 :
+intention demandée (J-2026-11-25-AD).
 
 ## Consignes en cours
 
