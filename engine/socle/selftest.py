@@ -585,6 +585,43 @@ def _pousser_la_reponse(a: "Atelier", c: Path, avec_le_test: bool, cle: bool = F
     return r.returncode, r.stdout + r.stderr
 
 
+def _changer_sous_une_validation_fusionnee(a: "Atelier", c: Path, tache: str | None, avec_le_test: bool = False,
+                                           bouge: bool = False) -> str:
+    """La demande qui nomme `test_double`, poussée, sa réponse `valider`,
+    et, si `tache` est un statut, la tâche T-0001 qui la cite ; avec
+    `avec_le_test`, la valeur attendue changée dans le même commit. Le
+    tout fusionné dans la branche par défaut de ce clone seul (l'origine
+    est partagée). Avec `bouge`, le test change ensuite dans la branche par
+    défaut, d'un commentaire. Puis une nouvelle valeur attendue sur la
+    branche : ce qu'en dit la CI (D-0189, piste B)."""
+    (c / "memory/requests/D-0001-refactor.md").write_text(_demande_nommant_le_test(a, c))
+    pousser(a, c, "La demande")
+    (c / "citation.txt").write_text("oui, compare à un flottant")
+    r = a.socle(c, "answer", "D-0001", "valider", "--relayed", "--by", "Théo", "--quote-file", "citation.txt")
+    (c / "citation.txt").unlink()
+    if r.returncode != 0:
+        return r.stdout + r.stderr
+    if tache:
+        statut = "fait · ref : D-0001" if tache == "fait" else tache
+        ajouter_sujet(c, tache_essai(a, c, statut=statut).replace("Pour l'essai.", "Change `test_double` sous "
+                                                                                     "D-0001."))
+    attendu = "4"
+    if avec_le_test:
+        attendu = "4.0"
+        remplacer(c, "tests/test_calc.py", "self.assertEqual(double(2), 4)", "self.assertEqual(double(2), 4.0)")
+    a.commit(c, "La réponse de Théo")
+    a.git(c, "update-ref", "refs/remotes/origin/main", "HEAD")
+    if bouge:
+        remplacer(c, "tests/test_calc.py", f"self.assertEqual(double(2), {attendu})",
+                  f"self.assertEqual(double(2), {attendu})  # deux fois deux")
+        a.commit(c, "Le test commenté")
+        a.git(c, "update-ref", "refs/remotes/origin/main", "HEAD")
+    remplacer(c, "tests/test_calc.py", f"self.assertEqual(double(2), {attendu})",
+              "self.assertEqual(double(2), 4.00)")
+    maj_memoire(c, "La valeur attendue suit la réponse.")
+    return etage_ci(a, c)
+
+
 def _test_change_sous_une_decision_donnee(a: "Atelier", c: Path, texte: str) -> str:
     """Une décision que l'humain donne de lui-même, `texte`, consignée par
     `socle decision --unprompted` (B-0185), puis la valeur attendue de
@@ -1826,17 +1863,22 @@ def _cas() -> list[Cas]:
         maj_memoire(c)
         return etage_stop(a, c, "J'ai changé le test en attendant la réponse." + RECAP)
 
-    @defaut("reponse-poussee-seule", "réponse « valider » poussée sans le test qu'elle autorise à changer", "git",
-            "demandes.reponse-seule")
+    # D-0189, piste B : une validation d'avant la plage ne couvre que tant
+    # qu'une tâche ouverte la cite et que ce qu'elle nomme n'a pas bougé.
+    @defaut("validation-epuisee", "valeur attendue changée une seconde fois sous une validation fusionnée avec "
+            "son test, sa tâche close", "ci", "tests.attendus")
     def _(a, c):
-        # B-0142 : un avertissement, que le hook avant push dit sans refuser.
-        return _pousser_la_reponse(a, c, avec_le_test=False)[1]
+        return _changer_sous_une_validation_fusionnee(a, c, tache="fait", avec_le_test=True)
 
-    @defaut("reponse-poussee-sans-sa-cle", "réponse « valider » poussée sans la clé des garde-fous qu'elle autorise "
-            "à relâcher", "git", "demandes.reponse-seule")
+    @defaut("validation-sans-tache", "valeur attendue changée sous une validation fusionnée qu'aucune tâche "
+            "ouverte ne cite", "ci", "tests.attendus")
     def _(a, c):
-        # B-0215 : le cliquet ne compte lui aussi que les validations de sa plage.
-        return _pousser_la_reponse(a, c, avec_le_test=False, cle=True)[1]
+        return _changer_sous_une_validation_fusionnee(a, c, tache=None)
+
+    @defaut("validation-test-bouge", "valeur attendue changée sous une validation fusionnée dont le test a bougé "
+            "depuis dans la branche par défaut", "ci", "tests.attendus")
+    def _(a, c):
+        return _changer_sous_une_validation_fusionnee(a, c, tache="ouvert", bouge=True)
 
     @defaut("valeur-attendue-decision-donnee-sans-le-test", "valeur attendue changée sous une décision que "
             "l'humain a donnée de lui-même sans nommer le test", "ci", "tests.attendus")
@@ -3363,13 +3405,30 @@ def _temoins() -> list[tuple[str, Callable]]:
     @temoin("une réponse « valider » poussée avec le test qu'elle autorise à changer part sans avertissement")
     def _(a, c):
         code, sortie = _pousser_la_reponse(a, c, avec_le_test=True)
-        return (sortie or "push refusé") if code or RAISONS_AGENT["demandes.reponse-seule"] in sortie else ""
+        return (sortie or "push refusé") if code else ""
 
     @temoin("une réponse « valider » poussée avec la clé des garde-fous qu'elle autorise à relâcher part sans "
             "avertissement")
     def _(a, c):
         code, sortie = _pousser_la_reponse(a, c, avec_le_test=True, cle=True)
-        return (sortie or "push refusé") if code or RAISONS_AGENT["demandes.reponse-seule"] in sortie else ""
+        return (sortie or "push refusé") if code else ""
+
+    @temoin("une réponse « valider » poussée seule couvre le test qu'elle autorise à changer, poussé au push "
+            "suivant")
+    def _(a, c):
+        code, sortie = _pousser_la_reponse(a, c, avec_le_test=False)
+        if code:
+            return sortie or "push refusé"
+        remplacer(c, "tests/test_calc.py", "self.assertEqual(double(2), 4)", "self.assertEqual(double(2), 4.0)")
+        maj_memoire(c)
+        a.commit(c, "Le test que la réponse autorise")
+        r = a.run(c, "git", "push", "-q", "origin", f"travail:{c.name}")
+        return (r.stdout + r.stderr or "push refusé") if r.returncode else ""
+
+    @temoin("une valeur attendue changée sous une validation fusionnée qu'une tâche ouverte cite, son test "
+            "inchangé depuis, passe la CI")
+    def _(a, c):
+        return _changer_sous_une_validation_fusionnee(a, c, tache="ouvert")
 
     @temoin("un correctif dont le test passe sur le parent, admis par une demande validée qui nomme son commit, "
             "passe la CI")
@@ -3905,7 +3964,6 @@ RAISONS_AGENT = {
     "commit sans filtre": "commit d'agent sans aucun passage du filtre",
     "geste sans valider": "que seule une réponse `valider` autorise à changer",
     "question en widget": "widget de questions de l'agent",
-    "demandes.reponse-seule": "Poussée seule, elle ne couvrira pas ce changement",
     # `socle review` ne nomme pas de contrôle non plus : il refuse le dossier
     # court d'un lot qui touche un garde-fou (B-0288).
     "revue courte refusée": "le lot touche un garde-fou",

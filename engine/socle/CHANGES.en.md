@@ -14,6 +14,44 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-25-b — An `approve` answer pushed before the change it authorizes covers it, on the branch, or merged while the task that cites it is open; the warning about the answer alone is removed
+
+Changing the value a test expects or deleting it, changing a case file,
+relaxing a guardrail key or changing a protected file requires an approval
+from the human that names it. The CI of a push and the pre-push hook only
+counted it when added in their range: the answer had to leave with its
+change, in the same push, and `demandes.reponse-seule` warned when it left
+alone. An answer given before the batch of its change, in another session,
+had nowhere to wait: pushed, it went into the default branch with its
+session's pull request, and no longer covered anything.
+
+Everything is now judged from the starting point of the work: the common
+ancestor of the head and the default branch, or, for the CI that follows a
+merge, the base of its range. An approval added on the branch since that
+point covers like one of the range: the answer pushed alone, then its
+change in the next push, pass, as the CI of the pull request already
+counted them. An approval already in the default branch covers on two
+conditions, read at that point: an open backlog task cites it by its
+identifier, and what it names is there as it was at the parent of the
+commit that added its request (a test by its body, in the same file; a
+case file or a protected file in full; a key by its value). The batch that
+makes the change closes the task: once merged, the approval is used up,
+and a second change requires a new one. A task written on the branch does
+not bring it back: it is read at the starting point. The refusal names the
+approvals that name the change without covering it, and why. Without a
+readable default branch, or in a partial clone that lacks the request's
+history, only the range counts, and the refusal says so; the CI fetches
+the whole history. The fix admitted by the SHA an approval names, and the
+list of private terms, still only count the range.
+
+`demandes.reponse-seule` is removed: its warning would be wrong.
+
+To do: an answer the human gives is recorded, committed and pushed as
+soon as it is given, without waiting for the change it authorizes, and the
+task that will make that change cites its request by its identifier. The
+`socle-request` and `socle-batch` skills say so; their copies are
+protected, they are in the installer's request.
+
 ## 2026-11-25-a — The installer says that a Kotlin multiplatform or Android module is not served by the JVM commands of the `kotlin` copy, and the adapter specification gives its own
 
 The commands of the `kotlin` adapter assume JVM modules. In a project that

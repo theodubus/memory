@@ -182,6 +182,12 @@ Une entrée du backlog a l'une de quatre formes, que son préfixe dit
   tâche qui dit ce qu'un comportement doit devenir nomme, dès son
   écriture, le test qui affirme le contraire, et la demande qui
   autorise à le changer se pose aussitôt, avant le lancement du lot ;
+  la tâche cite cette demande par son identifiant : la réponse `valider`,
+  consignée et poussée dès qu'elle est donnée, couvre ensuite le
+  changement, dans une autre pull request comprise, tant que la tâche est
+  ouverte et que ce que la demande nomme n'a pas bougé depuis qu'elle
+  a été posée ; le lot qui fait le changement clôt la tâche, et la
+  validation avec elle ;
 - un **lot**, `L-` : des tâches qui touchent les mêmes fichiers, le même
   garde-fou ou les mêmes tests, menées et relues ensemble ; son corps dit
   ce qui les réunit ; une tâche est dans un lot au plus ;

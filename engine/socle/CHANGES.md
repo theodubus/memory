@@ -15,6 +15,46 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-25-b — Une réponse `valider` poussée avant le changement qu'elle autorise le couvre, sur la branche, ou fusionnée tant que la tâche qui la cite est ouverte ; l'avertissement de la réponse seule se retire
+
+Changer la valeur qu'un test attend ou le supprimer, changer un fichier de
+cas, relâcher une clé des garde-fous ou changer un fichier protégé exige
+une validation de l'humain qui le nomme. La CI d'un push et le hook avant
+push ne la comptaient qu'ajoutée dans leur plage : la réponse devait
+partir avec son changement, dans le même push, et
+`demandes.reponse-seule` avertissait quand elle partait seule. Une
+réponse donnée avant le lot de son changement, dans une autre session,
+n'avait nulle part où attendre : poussée, elle partait dans la branche par
+défaut avec la pull request de sa session, et ne couvrait plus rien.
+
+Tout se juge désormais depuis le point de départ du travail : l'ancêtre
+commun de la tête et de la branche par défaut, ou, pour la CI qui suit une
+fusion, la base de sa plage. Une validation ajoutée sur la branche depuis
+ce point couvre comme une de la plage : la réponse poussée seule, puis son
+changement au push suivant, passent, comme la CI de la pull request les
+comptait déjà. Une validation déjà dans la branche par défaut couvre à
+deux conditions, lues à ce point : une tâche ouverte du backlog la cite
+par son identifiant, et ce qu'elle nomme y est tel qu'au parent du commit
+qui a ajouté sa demande (un test par son corps, dans le même fichier ; un
+fichier de cas ou un fichier protégé en entier ; une clé par sa valeur).
+Le lot qui fait le changement clôt la tâche : fusionnée, la validation est
+épuisée, et un second changement en demande une nouvelle. Une tâche écrite
+sur la branche ne la rend pas : elle se lit au point de départ. Le refus
+nomme les validations qui nomment le changement sans le couvrir, et
+pourquoi. Sans branche par défaut lisible, ou dans un clone partiel qui
+n'a pas l'historique de la demande, seule la plage compte, et le refus le
+dit ; la CI tire tout l'historique. Le correctif admis par le SHA que
+nomme une validation, et la liste des termes privés, ne comptent toujours
+que la plage.
+
+`demandes.reponse-seule` se retire : son avertissement dirait faux.
+
+À faire : une réponse que l'humain donne se consigne, se commite et se
+pousse dès qu'elle est donnée, sans attendre le changement qu'elle
+autorise, et la tâche qui fera ce changement cite sa demande par son
+identifiant. Les skills `socle-request` et `socle-batch` le disent ;
+leurs copies sont protégées, elles sont dans la demande de l'installeur.
+
 ## 2026-11-25-a — L'installeur dit qu'un module Kotlin multiplateforme ou Android n'est pas servi par les commandes JVM de la copie `kotlin`, et la spécification des adaptateurs donne les siennes
 
 Les commandes de l'adaptateur `kotlin` supposent des modules JVM. Dans un

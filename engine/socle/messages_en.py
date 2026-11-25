@@ -3608,28 +3608,36 @@ MESSAGES: dict[str, str] = {
         "with `--adapter`, or declare its language in it",
     "plafonds de mutation : {n} module(s) des adaptateurs ajoutés posé(s) à mesurer":
         "mutation caps: {n} module(s) of the added adapters set to measure",
-    "Une réponse `valider` pas encore poussée part avec le changement qu'elle autorise : poussée seule, elle ne le "
-    "couvrira pas — un avertissement, pas un refus.":
-        "An `approve` answer not yet pushed leaves with the change it authorizes: pushed alone, it will not cover "
-        "it — a warning, not a refusal.",
-    "réponse `valider` de {id}, pas encore poussée, sans le changement qu'elle autorise : la branche ne change "
-    "encore rien de ce qu'elle nomme ({liste}). Poussée seule, elle ne couvrira pas ce changement : la CI d'un "
-    "push, et le hook avant push, ne comptent que les validations de leur plage. La commiter et la pousser avec "
-    "lui, dans le même push":
-        "`approve` answer of {id}, not yet pushed, without the change it authorizes: the branch does not change "
-        "anything it names yet ({liste}). Pushed alone, it will not cover that change: the CI of a push, and the "
-        "pre-push hook, only count the approvals of their range. Commit it and push it with that change, in the "
-        "same push",
     "socle — avertissement ({controle}) : {constat}":
         "socle — warning ({controle}): {constat}",
-    "réponse « valider » poussée sans le test qu'elle autorise à changer":
-        "`approve` answer pushed without the test it authorizes to change",
     "une réponse « valider » poussée avec le test qu'elle autorise à changer part sans avertissement":
         "an `approve` answer pushed with the test it authorizes to change leaves without a warning",
-    "réponse « valider » poussée sans la clé des garde-fous qu'elle autorise à relâcher":
-        "`approve` answer pushed without the guardrail key it authorizes to relax",
     "une réponse « valider » poussée avec la clé des garde-fous qu'elle autorise à relâcher part sans avertissement":
         "an `approve` answer pushed with the guardrail key it authorizes to relax leaves without a warning",
+    " ; hors de la plage, une validation qui le nomme ne compte pas ici, faute de branche par défaut lisible : "
+    "{liste}":
+        "; outside the range, an approval that names it does not count here, for want of a readable default branch: "
+        "{liste}",
+    "{id}, qu'aucune tâche ouverte ne cite":
+        "{id}, which no open task cites",
+    "{id}, dont la demande n'a pas son historique dans ce clone":
+        "{id}, whose request does not have its history in this clone",
+    "{id}, dont ce qu'elle nomme a changé depuis sa demande":
+        "{id}, what it names having changed since its request",
+    " ; déjà dans la branche par défaut, une validation qui le nomme ne le couvre pas : {liste}":
+        "; already in the default branch, an approval that names it does not cover it: {liste}",
+    "valeur attendue changée une seconde fois sous une validation fusionnée avec son test, sa tâche close":
+        "expected value changed a second time under an approval merged with its test, its task closed",
+    "valeur attendue changée sous une validation fusionnée qu'aucune tâche ouverte ne cite":
+        "expected value changed under a merged approval that no open task cites",
+    "valeur attendue changée sous une validation fusionnée dont le test a bougé depuis dans la branche par défaut":
+        "expected value changed under a merged approval whose test has moved since in the default branch",
+    "une réponse « valider » poussée seule couvre le test qu'elle autorise à changer, poussé au push suivant":
+        "an `approve` answer pushed alone covers the test it authorizes to change, pushed in the next push",
+    "une valeur attendue changée sous une validation fusionnée qu'une tâche ouverte cite, son test inchangé depuis, "
+    "passe la CI":
+        "an expected value changed under a merged approval that an open task cites, its test unchanged since, passes "
+        "the CI",
     'Chaque entrée du backlog a une origine ; une entrée close a une référence, et elle est rangée avec les closes ; une entrée faite a coché tout ce que dit sa section, « Satisfait quand » pour un besoin, « Fait quand » pour les autres formes (ADR-0083).':
         'Each backlog entry has an origin; a closed entry has a reference, and it is filed with the closed ones; a done entry has checked everything its section says, “Satisfied when” for a need, “Done when” for the other forms (ADR-0083).',
     'Le backlog en quatre formes, chacune son préfixe (ADR-0083).':

@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0189-choisir-comment-une-reponse-donnee-avant-le-lot-de.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-25"
+canal = "conversation"
+citation = "Valider D0189\nValider D0190* -> on peut dire n'importe quoi hein ? Genre \"continue\" ou \"reprends les travaux\" ? T'as pas tout figé autour de la formulation littérale \"reprends\" ? Moi mon besoin c'est de pouvoir faire reprendre sans rappeler les infos du prompt de passation"
+empreinte = "sha256:214e0753a6641f20ef0d72c6591bc4c72a4aeed33496c4dc6b4a8d163436ffc8"
