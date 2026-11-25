@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0036 repris de sa passation (J-2026-11-24-BD) : restent la revue,
-les copies des skills, la livraison.
+L-0036 relu (J-2026-11-25-B) ; attend D-0188, les copies des skills,
+puis la clôture et la livraison.
 
 ## Consignes en cours
 
