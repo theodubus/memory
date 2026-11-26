@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0043 — Lot — B-0351 : l'agent supprime ses branches déjà contenues
 
-> statut : ouvert · origine : J-2026-11-25-AF · lu : backlog@a9d8cc56 · après : L-0042, T-0191, T-0192
+> statut : en cours · origine : J-2026-11-25-AF · lu : backlog@a9d8cc56 · après : L-0042, T-0191, T-0192
 
 Les deux tâches de B-0351, sur l'intention que Théo a retenue (D-0202) et
 la spécification `docs/fabrication/branches-de-l-agent-specification.md` :
