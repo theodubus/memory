@@ -1795,8 +1795,23 @@ def fins_de_tour_du_projet(conf: dict) -> list[str]:
     return _commandes_du_projet(conf, "Stop")
 
 
+def proprietaire_en_place(p: Path) -> str:
+    """Le propriétaire que nomme la ligne du CODEOWNERS en place qui protège
+    la politique, celle que pose le gabarit ; vide sans fichier ou sans
+    cette ligne (B-0358)."""
+    if not p.is_file():
+        return ""
+    for ligne in p.read_text(encoding="utf-8").splitlines():
+        champs = ligne.split("#", 1)[0].split()
+        if len(champs) > 1 and champs[0] == "/.socle/":
+            return " ".join(champs[1:])
+    return ""
+
+
 def _codeowners(cible: Path, proprietaire: str) -> list[str]:
     p = cible / ".github/CODEOWNERS"
+    # Une mise à jour sans --owner garde le propriétaire déjà posé (B-0358).
+    proprietaire = proprietaire or proprietaire_en_place(p)
     if not proprietaire:
         return [trad("!! aucun propriétaire (--owner) : CODEOWNERS non posé — la politique n'est protégée que "
                      "par la CI")]
