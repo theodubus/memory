@@ -44,6 +44,8 @@ Ta version date du 26 novembre. L'installeur t'imprimera les notes de version qu
 
 6. L'empreinte d'index à citer. socle new et socle show --index font désormais citer l'empreinte de l'index du dernier commit, que le contrôle accepte toujours, sous les lignes de l'arbre ; l'en-tête le dit quand les deux diffèrent. Les entrées que tu crées dans un même tour, un lot et ses tâches par exemple, passent memoire.lectures même si un statut change avant le commit : ne recopie plus l'empreinte courante dans chacune (le point 1 de ton retour d'usage du 26 novembre). Si une empreinte que socle new a écrite est encore refusée, rapporte le refus mot pour mot. (2026-11-26-i)
 
+7. Un besoin pour l'humain. Un besoin « pour : humain » sans tâche n'est plus listé parmi les besoins à découper en tâches, ni par socle state ni par socle roadmap : il ne paraît que sous ce qui revient à l'humain (le point 2 de ton retour d'usage du 26 novembre). Ne lui crée pas de tâche ; ferme-le sur ma parole, et fais d'une part que tu peux mener un autre besoin. (2026-11-26-j)
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.

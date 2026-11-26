@@ -14,6 +14,18 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-26-j — A need for the human is no longer listed among the needs to split into tasks
+
+`socle state` ("needs to split into tasks") and `socle roadmap` ("Needs
+to split into tasks") listed a `for : human` need without a task, which
+also shows under "For the human": they invited the agent to create a
+task for a step it cannot take. Such a need is no longer split: it shows
+only among what falls to the human, who carries it out; the agent closes
+it on their word, and a part it can carry out is another need.
+`FORMAT.md` says so at the need's form.
+
+To do: nothing.
+
 ## 2026-11-26-i — socle new and socle show --index have the index fingerprint of the last commit cited
 
 `socle new` wrote into a backlog entry or a decision the fingerprint of

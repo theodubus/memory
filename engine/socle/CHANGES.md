@@ -15,6 +15,18 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-26-j — Un besoin pour l'humain n'est plus listé parmi les besoins à découper en tâches
+
+`socle state` (« besoins à découper en tâches ») et `socle roadmap`
+(« Besoins à découper en tâches ») listaient un besoin `pour : humain`
+sans tâche, qui paraît aussi sous « Pour l'humain » : ils invitaient
+l'agent à créer une tâche pour un geste qu'il ne peut pas faire. Un tel
+besoin ne se découpe plus : il ne paraît que parmi ce qui revient à
+l'humain, qui le mène ; l'agent le ferme sur sa parole, et une part qu'il
+peut mener est un autre besoin. `FORMAT.md` le dit à la forme du besoin.
+
+À faire : rien.
+
 ## 2026-11-26-i — socle new et socle show --index font citer l'empreinte de l'index du dernier commit
 
 `socle new` écrivait dans une entrée du backlog ou une décision
