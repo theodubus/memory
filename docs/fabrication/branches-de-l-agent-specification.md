@@ -44,7 +44,10 @@ Elle **se supprime** quand, en plus :
 
 `python3 .socle/socle prune-branches` :
 
-1. `git fetch --prune origin`, puis `git ls-remote --heads origin` ;
+1. `git fetch origin`, sans `--prune`, qui perdrait le commit que seule
+   garde la référence d'une branche disparue (la revue de L-0043,
+   ADR-0114), puis `git ls-remote --heads origin` ; une branche que
+   l'origine n'a plus se passe sous silence ;
 2. pour chaque branche qui se supprime, un push de suppression gardé par
    la tête vérifiée :
    `git push --force-with-lease=refs/heads/<b>:<sha> origin :refs/heads/<b>`,

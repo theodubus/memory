@@ -21,8 +21,9 @@ in the pushed working branch, is no longer the human's when its last
 commit carries an agent's mark (`[agents] markers` of the policy): the
 agent deletes it.
 
-- **The command**: `python3 .socle/socle prune-branches` runs
-  `git fetch --prune origin`, checks with `git ls-remote` that each branch
+- **The command**: `python3 .socle/socle prune-branches` runs `git fetch
+  origin`, without `--prune`, which would lose the commit only the
+  reference of a vanished branch keeps; it checks with `git ls-remote` that each branch
   is still on the origin at the head the fetch knows, and that the branch
   keeping it contains it there, then deletes it under a lease
   (`--force-with-lease`): a branch that moved in between stays. It prints

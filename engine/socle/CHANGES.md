@@ -22,8 +22,9 @@ défaut, ou dans la branche de travail poussée, ne revient plus à l'humain
 quand son dernier commit porte la marque d'un agent (`[agents] markers` de
 la politique) : l'agent la supprime.
 
-- **La commande** : `python3 .socle/socle prune-branches` fait
-  `git fetch --prune origin`, vérifie par `git ls-remote` que chaque
+- **La commande** : `python3 .socle/socle prune-branches` fait `git fetch
+  origin`, sans `--prune`, qui perdrait le commit que seule garde la
+  référence d'une branche disparue ; elle vérifie par `git ls-remote` que chaque
   branche est encore sur l'origine à la tête que le fetch connaît, et que
   la branche qui la garde l'y contient, puis la supprime sous bail
   (`--force-with-lease`) : une branche qui a bougé entre-temps reste. Elle

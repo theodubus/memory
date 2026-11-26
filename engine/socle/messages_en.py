@@ -55,10 +55,10 @@ MESSAGES: dict[str, str] = {
     ".socle/socle prune-branches`":
         "deletion of a remote branch; an agent branch already contained elsewhere is deleted by `python3 "
         ".socle/socle prune-branches`",
-    "`git fetch --prune origin` n'a pas abouti ({erreur}) : rien n'est supprimé":
-        "`git fetch --prune origin` did not complete ({erreur}): nothing is deleted",
-    "`git fetch --prune origin` a échoué ({erreur}) : rien n'est supprimé":
-        "`git fetch --prune origin` failed ({erreur}): nothing is deleted",
+    "`git fetch origin` n'a pas abouti ({erreur}) : rien n'est supprimé":
+        "`git fetch origin` did not complete ({erreur}): nothing is deleted",
+    "`git fetch origin` a échoué ({erreur}) : rien n'est supprimé":
+        "`git fetch origin` failed ({erreur}): nothing is deleted",
     "la politique coupe la suppression des branches par l'agent (`prune_branches = false`, section "
     "`[irreversible]`) : les branches à supprimer reviennent à l'humain, que l'état les lui donne":
         "the policy turns off the deletion of branches by the agent (`prune_branches = false`, section "

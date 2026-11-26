@@ -15,3 +15,6 @@ ne casse. Note de version : oui.
 ### Passe 1 — 2026-11-26
 
 Commits : 3a10ca7d..521a8bc3
+
+- Bloquant : le `git fetch --prune` de la commande, même en `--dry-run`, perdait le commit que seule garde la référence d'une branche disparue
+- Ouvre : rien

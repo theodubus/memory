@@ -1900,7 +1900,7 @@ def _cas() -> list[Cas]:
         return r.stdout + r.stderr
 
     # La suppression des branches de l'agent (`socle prune-branches`,
-    # ADR-0113) : une branche de l'humain, une branche qui n'est contenue
+    # ADR-0114) : une branche de l'humain, une branche qui n'est contenue
     # nulle part, ou la suppression que la politique coupe, restent ; la
     # commande le dit.
     @defaut("elagage-branche-de-l-humain", "branche de l'humain contenue dans la branche par défaut, que la commande "

@@ -1,5 +1,5 @@
 """Les branches de l'agent que l'agent supprime lui-même (`socle
-prune-branches`, ADR-0113).
+prune-branches`, ADR-0114).
 
 L'état calcule les branches distantes que la branche par défaut, ou la
 branche de travail poussée, contient en entier (`human`). Parmi elles, celles
@@ -165,15 +165,20 @@ def candidates(projet: config.Projet) -> list[tuple[str, str]]:
 
 
 def _fetch(projet: config.Projet) -> None:
+    """Un fetch sans `--prune` : élaguer la référence d'une branche que
+    l'origine n'a plus perdrait un commit qu'elle seule garde, que la
+    mémoire cite peut-être, et que l'état dit alors d'étiqueter d'abord
+    (ADR-0114). La question à l'origine (`ls-remote`) écarte déjà ces
+    branches."""
     try:
-        r = subprocess.run(["git", "fetch", "--prune", "--quiet", DISTANT], cwd=projet.racine, capture_output=True,
+        r = subprocess.run(["git", "fetch", "--quiet", DISTANT], cwd=projet.racine, capture_output=True,
                            text=True, encoding="utf-8", errors="replace", stdin=subprocess.DEVNULL,
                            timeout=DELAI * 5, env=dict(os.environ, GIT_TERMINAL_PROMPT="0"))
     except (subprocess.TimeoutExpired, OSError) as e:
-        raise SuppressionRefusee(trad("`git fetch --prune origin` n'a pas abouti ({erreur}) : rien n'est supprimé",
+        raise SuppressionRefusee(trad("`git fetch origin` n'a pas abouti ({erreur}) : rien n'est supprimé",
                                       erreur=type(e).__name__))
     if r.returncode != 0:
-        raise SuppressionRefusee(trad("`git fetch --prune origin` a échoué ({erreur}) : rien n'est supprimé",
+        raise SuppressionRefusee(trad("`git fetch origin` a échoué ({erreur}) : rien n'est supprimé",
                                       erreur=(r.stderr or r.stdout).strip()[-300:]))
 
 
@@ -217,7 +222,12 @@ def elaguer(projet: config.Projet, essai: bool = False) -> Bilan:
     change = False
     for nom, garde in candidates(projet):
         tete = tete_connue(projet, nom)
-        if not tete or tetes.get(nom) != tete:
+        if nom not in tetes:
+            # L'origine ne l'a plus : rien à supprimer, et sa référence
+            # locale reste, que l'état juge (un commit cité qu'elle seule
+            # garde se dit à étiqueter).
+            continue
+        if not tete or tetes[nom] != tete:
             bilan.laissees.append((nom, trad("l'origine ne l'a plus à la tête que le fetch connaît")))
             continue
         if not de_l_agent(projet, tete):

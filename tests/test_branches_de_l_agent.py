@@ -1,4 +1,4 @@
-"""B-0351, ADR-0113 : l'agent supprime lui-même ses branches de travail
+"""B-0351, ADR-0114 : l'agent supprime lui-même ses branches de travail
 distantes déjà contenues dans la branche par défaut, ou dans sa branche de
 travail poussée (`socle prune-branches`) ; une branche de l'humain, une
 branche qui n'est contenue nulle part, ou qui a bougé depuis la
@@ -155,6 +155,25 @@ class TestBranchesDeLAgent(unittest.TestCase):
         bilan = branches.elaguer(self.projet({"human": {"keep_branches": ["agent/gardee"]}}))
         self.assertEqual(bilan.supprimees, [])
         self.assertTrue({"agent/gardee", "agent/courante"} <= self.sur_l_origine())
+
+    def test_la_commande_ne_perd_pas_la_reference_d_une_branche_que_l_origine_n_a_plus(self):
+        """La revue de L-0043 : un `git fetch --prune`, même en `--dry-run`,
+        élaguait la référence d'une branche supprimée sur l'origine sans
+        fusion, qui seule gardait un commit ; l'état disait de l'étiqueter
+        d'abord, et la ligne disparaissait avec le commit."""
+        self.branche("agent/fait", agent=True)
+        self.branche("abandonnee", agent=False, fusionner=False)
+        seule = git(self.clone, "rev-parse", "origin/abandonnee").strip()
+        autre = self.dossier / "autre"
+        git(self.dossier, "clone", "-q", str(self.origine), str(autre))
+        git(autre, "push", "-q", "origin", "--delete", "abandonnee")
+        git(self.clone, "branch", "-q", "-D", "abandonnee")
+        for essai in (True, False):
+            bilan = branches.elaguer(self.projet(), essai=essai)
+            self.assertEqual(git(self.clone, "rev-parse", "refs/remotes/origin/abandonnee").strip(), seule, essai)
+            self.assertNotIn("abandonnee", [n for n, _ in bilan.laissees], essai)
+        self.assertEqual([n for n, _ in bilan.supprimees], ["agent/fait"])
+        self.assertIn("origin/abandonnee", git(self.clone, "branch", "-a", "--contains", seule))
 
     def test_les_pieces_de_la_commande(self):
         """La marque d'un agent, la tête connue, les candidates, le refus

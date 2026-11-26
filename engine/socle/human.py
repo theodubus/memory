@@ -241,7 +241,7 @@ def specifications_non_soumises(projet: config.Projet, toutes: list | None = Non
 def a_faire(projet: config.Projet, pour_l_agent: list[str] | None = None) -> list[Element]:
     """Ce qui revient à l'humain. Les branches de l'agent déjà contenues
     ailleurs ne lui reviennent pas : l'agent les supprime (`socle
-    prune-branches`, ADR-0113) ; `pour_l_agent`, s'il est donné, les reçoit."""
+    prune-branches`, ADR-0114) ; `pour_l_agent`, s'il est donné, les reçoit."""
     from socle import branches
 
     res = []

@@ -1,7 +1,7 @@
 <!-- socle: couche=decisions zone=publique -->
 # ADR-0113 — L'agent supprime lui-même ses branches distantes déjà contenues ailleurs : la commande prune-branches, vérifiée sur l'origine et sous bail, le hook de l'agent inchangé hors de son message
 
-> statut : acceptée · date : 2026-11-26 · source : B-0351@bf78a534, D-0202@0eec86fd, D-0198@74687954, ADR-0098@3081a5ed, J-2026-11-24-BC@ef97ab6d · lu : decisions@a51cbbe1
+> statut : remplacée · date : 2026-11-26 · source : B-0351@bf78a534, D-0202@0eec86fd, D-0198@74687954, ADR-0098@3081a5ed, J-2026-11-24-BC@ef97ab6d · lu : decisions@a51cbbe1 · remplacée-par : ADR-0114@679f6e04
 
 ## Contexte
 

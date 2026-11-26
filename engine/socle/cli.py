@@ -883,7 +883,7 @@ def cmd_handoff(args) -> int:
 def cmd_prune_branches(args) -> int:
     """Supprime sur l'origine les branches de l'agent déjà contenues dans la
     branche par défaut ou dans la branche de travail poussée, vérifiées sur
-    l'origine au moment même (ADR-0113) ; `--dry-run` dit ce qu'elle
+    l'origine au moment même (ADR-0114) ; `--dry-run` dit ce qu'elle
     supprimerait."""
     from socle import branches
 

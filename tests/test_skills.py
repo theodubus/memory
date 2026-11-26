@@ -717,7 +717,7 @@ class TestLaConduiteDUnLot(unittest.TestCase):
         })
 
     def test_apres_la_fusion_l_agent_supprime_ses_branches_contenues(self):
-        """T-0192 (B-0351, ADR-0113) : après la fusion, l'agent supprime
+        """T-0192 (B-0351, ADR-0114) : après la fusion, l'agent supprime
         ses branches que la branche par défaut contient désormais."""
         for lg, (fusion, commande) in {
                 "fr": ("Le chantier actif et le journal s'écrivent avant la fusion",
@@ -962,7 +962,7 @@ class TestLaPassation(unittest.TestCase):
                 self.assertIn(parametre, tache, (lg, parametre))
 
     def test_apres_le_retrait_de_la_passation_l_agent_supprime_la_branche_d_avant(self):
-        """T-0192 (B-0351, ADR-0113) : le retrait de la passation poussé, la
+        """T-0192 (B-0351, ADR-0114) : le retrait de la passation poussé, la
         branche de la session d'avant est contenue dans la sienne ; l'agent
         la supprime."""
         for lg, (retrait, commande) in {

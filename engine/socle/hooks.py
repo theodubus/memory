@@ -2027,7 +2027,7 @@ def push_illisible(racine: Path, c: commandes.Commande, environnement: dict | No
 
 # La suppression d'une branche distante reste refusée ; celles de l'agent
 # déjà contenues ailleurs, la commande du socle les supprime, vérifiées sur
-# l'origine au moment même (ADR-0113).
+# l'origine au moment même (ADR-0114).
 SUPPRESSION_DISTANTE = a_traduire("suppression d'une branche distante ; une branche de l'agent déjà contenue "
                                   "ailleurs se supprime par `python3 .socle/socle prune-branches`")
 
@@ -3356,7 +3356,7 @@ def git_pre_push(projet: config.Projet) -> int:
     if suppressions_seules(lignes):
         # Rien ne part : rien à juger, et les étapes rapides prendraient
         # des minutes par branche que `socle prune-branches` supprime
-        # (ADR-0113).
+        # (ADR-0114).
         return 0
     if prive.mode(projet):
         # Le nom de la branche distante est publié lui aussi.
