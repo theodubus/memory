@@ -222,6 +222,8 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 87. L'organisation se proportionne à ce qu'elle protège (note 2026-11-25-d) : la session enchaîne les lots tant que leur coût tient dans les fenêtres et que la conversation reste sous 300 000 jetons de contexte ; une conception à trancher pose d'abord sa question d'intention dans la conversation, puis sa spécification et son code dans le même lot ; la revue adversariale, pour un lot qui touche un garde-fou, un format lu ailleurs ou plus de 150 lignes ; un sous-agent seulement quand il paie ; la relecture à froid d'une demande longue seule. Les skills, copies protégées, et la section du socle d'AGENTS.md le disent. Rien à faire ; une consigne de ton chantier actif qui dirait encore « un lot par session » se relit avec moi.
 
+88. L'agent supprime lui-même ses branches distantes déjà contenues dans main ou dans sa branche de travail poussée, quand leur dernier commit porte sa marque : python3 .socle/socle prune-branches les vérifie sur l'origine au moment même, et les supprime sous bail ; l'état ne me donne plus que les miennes, et celles que l'origine a refusées (note 2026-11-26-a). Le point 4 d'AGENTS.md et les skills socle-batch et socle-handoff, copies protégées, le disent ; prune_branches = false, dans [irreversible] de ta politique, la couperait. Rien à faire ; après la mise à jour, lance python3 .socle/socle prune-branches --dry-run, et donne-moi sa sortie.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.

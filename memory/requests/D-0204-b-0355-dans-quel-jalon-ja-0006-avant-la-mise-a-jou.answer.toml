@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0204-b-0355-dans-quel-jalon-ja-0006-avant-la-mise-a-jou.md, dont l'empreinte suit.
+reponse = "JA-0006"
+texte = ""
+par = "Théo"
+date = "2026-11-26"
+canal = "conversation"
+citation = "Ok jalon 6"
+empreinte = "sha256:d416752ad75fe0f6052c28f0ee6af7f9dad9f175d2634f7a41857e4d89cb1ff3"
