@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import time
 from dataclasses import dataclass, field
@@ -196,6 +197,18 @@ def _supprimer(projet: config.Projet, nom: str, tete: str) -> tuple[bool, str]:
     return r.returncode == 0, sortie
 
 
+# Les lignes de la sortie de git qui disent pourquoi un push a échoué.
+LIGNE_D_ERREUR = re.compile(r"^(?:error|fatal|remote):|\[(?:remote )?rejected\]")
+
+
+def raison_du_refus(sortie: str) -> str:
+    """La raison d'un refus, lisible : les lignes d'erreur de git, sans le
+    bruit qui les entoure (une négociation, `Done`) ; toute la sortie, sur
+    une ligne, si aucune ne l'est. 300 caractères au plus."""
+    lignes = [" ".join(l.split()) for l in sortie.splitlines() if LIGNE_D_ERREUR.search(l.strip())]
+    return (" ; ".join(lignes) or " ".join(sortie.split()))[-300:]
+
+
 def _contenue(projet: config.Projet, tete: str, garde: str | None) -> bool:
     return bool(garde) and outils.rev_existe(projet.racine, garde) and outils.git_reussit(
         projet.racine, "merge-base", "--is-ancestor", tete, garde)
@@ -254,7 +267,7 @@ def elaguer(projet: config.Projet, essai: bool = False) -> Bilan:
         elif "stale info" in sortie or "(stale" in sortie:
             bilan.laissees.append((nom, trad("elle a bougé sur l'origine depuis la vérification : laissée")))
         else:
-            raison = " ".join(sortie.split())[-300:] or trad("sans raison dite")
+            raison = raison_du_refus(sortie) or trad("sans raison dite")
             bilan.refusees.append((nom, raison))
             refuses[nom] = {"sha": tete, "raison": raison, "heure": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
             change = True

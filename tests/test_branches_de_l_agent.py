@@ -260,6 +260,23 @@ class TestBranchesDeLAgent(unittest.TestCase):
         self.assertEqual([n for n, _ in bilan.supprimees], ["agent/fait"])
         self.assertEqual(branches.refus(self.clone), {})
 
+    def test_la_raison_d_un_refus_ne_garde_que_les_lignes_d_erreur_de_git(self):
+        """L'usage réel : en session cloud, le proxy refuse la suppression
+        (HTTP 403), et l'état redonnait à l'humain toute la sortie de git,
+        négociation comprise."""
+        proxy = ("-negotiate-only needs one or more --negotiation-tip=*\nwarning: push negotiation failed; proceeding "
+                 "anyway with push\nerror: RPC failed; HTTP 403 curl 22 The requested URL returned error: 403\n"
+                 "send-pack: unexpected disconnect while reading sideband packet\nfatal: the remote end hung up "
+                 "unexpectedly\nDone")
+        self.assertEqual(branches.raison_du_refus(proxy), "error: RPC failed; HTTP 403 curl 22 The requested URL "
+                         "returned error: 403 ; fatal: the remote end hung up unexpectedly")
+        self.assertEqual(branches.raison_du_refus("rien de lisible\nDone"), "rien de lisible Done")
+        self.branche("agent/fait", agent=True)
+        git(self.origine, "config", "receive.denyDeletes", "true")
+        raison = branches.elaguer(self.projet()).refusees[0][1]
+        self.assertIn("[remote rejected]", raison)
+        self.assertNotIn("Done", raison)
+
     def test_l_etat_donne_a_l_agent_ses_branches_et_la_commande(self):
         self.branche("agent/fait", agent=True)
         self.branche("humain/fait", agent=False)
