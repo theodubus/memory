@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # JA-0006 — Jalon — la mise à jour de chess d'un coup, puis les corrections du socle qu'elle montre
 
-> statut : ouvert · origine : J-2026-11-21-B · ref : D-0198 · après : JA-0005, B-0353, B-0351, B-0161, B-0323 · lu : backlog@18f4b4cb
+> statut : ouvert · origine : J-2026-11-21-B · ref : D-0198, D-0204 · après : JA-0005, B-0353, B-0351, B-0161, B-0355, B-0323 · lu : backlog@18f4b4cb
 
 Le jalon d'après JA-0005, sur la décision de Théo du 21 novembre
 (D-0151, J-2026-11-21-B) : chess mis à jour d'un coup, une fois le
