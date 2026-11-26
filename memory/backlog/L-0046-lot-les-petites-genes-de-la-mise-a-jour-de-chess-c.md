@@ -12,3 +12,9 @@ projet : sa note de version, française et anglaise, et son point au
 prompt de la prochaine mise à jour de chess. Aucune ne pose ni ne change
 de garde-fou ; la revue est adversariale si le lot passe 150 lignes de
 code et de tests.
+
+## Revues
+
+### Passe 1 — 2026-11-26
+
+Commits : 49d3e3d2..1929f510
