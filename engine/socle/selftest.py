@@ -1027,8 +1027,11 @@ def _branche_a_elaguer(a: Atelier, c: Path, agent: bool, fusionner: bool = True)
     toucher aux branches que les autres cas poussent sur l'origine commune.
     La branche `travail-fini` y est poussée, d'un commit de l'agent ou de
     l'humain, et fusionnée dans `main` si `fusionner`."""
+    # `main` seule : les branches que les autres cas poussent en même temps
+    # sur l'origine commune n'y entrent pas.
     origine = a.dossier / f"origine-elagage-{c.name}"
-    a.git(a.dossier, "clone", "-q", "--bare", "--no-local", str(a.origine), str(origine))
+    a.git(a.dossier, "clone", "-q", "--bare", "--no-local", "--single-branch", "--branch", "main", str(a.origine),
+          str(origine))
     clone = a.clone(origine)
     a.git(clone, "switch", "-q", "-c", BRANCHE_ELAGUEE, "origin/main")
     ajouter(clone, "calc.py", "\n# fini\n")
