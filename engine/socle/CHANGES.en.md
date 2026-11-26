@@ -14,6 +14,23 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-26-i — socle new and socle show --index have the index fingerprint of the last commit cited
+
+`socle new` wrote into a backlog entry or a decision the fingerprint of
+the working tree's index, the turn's entries included; as soon as a line
+of the index changed before the commit, a status moved to "in progress",
+a "proposed" decision become "accepted", `memoire.lectures` refused the
+entries written before that change. Forming a batch triggered it every
+time. The cited fingerprint, the one `socle new` writes and the one
+`socle show --index` prints at the head of the index, is now that of the
+last commit, which the check always accepts; the printed lines remain
+those of the working tree, where a duplicate from the turn shows, and the
+header says so when the two differ. The need and the task of
+`socle new need … --task …` cite the same one. The check does not
+change.
+
+To do: nothing.
+
 ## 2026-11-26-h — During an update not yet committed, the git hooks refuse only what the commit or the push brings, and the migration no longer touches the index
 
 After an update that migrates the backlog, the commit of the request

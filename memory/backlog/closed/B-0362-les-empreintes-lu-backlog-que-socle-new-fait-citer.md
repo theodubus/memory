@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0362 — Les empreintes « lu : backlog@… » que socle new fait citer sont refusées dès qu'une entrée du backlog change avant le commit
 
-> statut : ouvert · origine : J-2026-11-26-AB · lu : backlog@dd11ac18 · ref : ADR-0083
+> statut : fait · origine : J-2026-11-26-AB · lu : backlog@dd11ac18 · ref : ADR-0083, J-2026-11-26-AO
 
 Le point 1 du retour d'usage de chess du 26 novembre
 (`docs/fabrication/chess/usage-2026-11-26.md`) : `socle new` fait citer
@@ -22,4 +22,4 @@ courante dans chaque entrée, vide la preuve de lecture de son sens.
 
 ## Satisfait quand
 
-- [ ] des entrées créées par `socle new` dans un même tour, suivies d'un changement de statut avant le commit, passent `memoire.lectures` sans retouche de leur empreinte
+- [x] des entrées créées par `socle new` dans un même tour, suivies d'un changement de statut avant le commit, passent `memoire.lectures` sans retouche de leur empreinte

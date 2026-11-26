@@ -794,6 +794,9 @@ qu'elle correspond. Chaque index a aussi une empreinte (`decisions@…`
 pour toutes les décisions, `backlog@…` pour le backlog ouvert).
 `socle show <ID>` et
 `socle show --index decisions|backlog` les impriment avec le texte.
+L'empreinte d'index que `socle new` et `socle show --index` font citer
+est celle du dernier commit, sous les lignes de l'arbre : un changement
+pas encore commité, un statut passé à « en cours », ne la périme pas.
 
 Citer `ADR-NNNN@xxxxxxxx`, c'est montrer qu'on a lu cette version-là. Une
 citation ajoutée doit désigner la version actuelle de l'entrée, ou celle du
