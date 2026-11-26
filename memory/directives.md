@@ -129,18 +129,6 @@ Les consignes durables de Théo, chacune avec son texte exact relu à sa source 
 
 — J-2026-11-14-K.
 
-## C-0010 — Session unité de budget : sous 300 000 jetons, elle enchaîne les lots, sinon elle range
-
-> statut : en vigueur · source : D-0194, D-0195 · date : 2026-11-25
-
-> […] Oui je retiens cette réforme
-
-— D-0194 : la réforme de l'organisation, dont la session unité de budget.
-
-> Je valide
-
-— D-0195 : la page `docs/fabrication/organisation-proportionnee.md` et ses seuils, dont 300 000 jetons de contexte.
-
 ## C-0011 — Aucun autre dépôt dans la session, ni lecture de JustCook ou de theodubus/socle
 
 > statut : en vigueur · source : J-2026-10-14-S, J-2026-11-09-M · date : 2026-10-14
@@ -304,3 +292,19 @@ Les consignes durables de Théo, chacune avec son texte exact relu à sa source 
 > Proxy refusé pour supprimer la branche : inutile de le préciser si on est en session web
 
 — J-2026-11-26-L, sur le récap qui lui donnait `ccr-0451fbf2-5mg4au` à supprimer en disant le refus du proxy cloud.
+
+## C-0026 — Session unité de budget : sous 150 000 jetons, elle enchaîne les lots, sinon elle range
+
+> statut : en vigueur · source : D-0194, D-0195, D-0210 · date : 2026-11-26
+
+> […] Oui je retiens cette réforme
+
+— D-0194 : la réforme de l'organisation, dont la session unité de budget.
+
+> Je valide
+
+— D-0195 : la page `docs/fabrication/organisation-proportionnee.md` et ses seuils.
+
+> Valider D120
+
+— D-0210, la seule demande alors en attente : le seuil de contexte baissé de 300 000 à 150 000 jetons, sur les mesures de l'usage.

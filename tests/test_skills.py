@@ -809,15 +809,16 @@ class TestLaConduiteDUnLot(unittest.TestCase):
                 ("fr", "## Changer de session",
                  ("1. le chantier actif dit le lot et ce qui attend, le journal la passation ;",
                   "3. tout est commité ;", "Plus rien ne se pousse ensuite."),
-                 "Puis le skill `socle-handoff` : la passation écrite, commitée et poussée. Plus rien ne se pousse "
-                 "ensuite. Selon le mode, il programme la session suivante, ou dit de demander la reprise.",
+                 "Puis le skill `socle-handoff` : la passation écrite, commitée et poussée, avant toute fusion. Plus "
+                 "rien ne se pousse ensuite. Selon le mode, il programme la session suivante, ou dit de "
+                 "demander la reprise.",
                  "sinon, elle change de session."),
                 ("en", "## Changing sessions",
                  ("1. the active work gives the batch and what is waiting, the journal the handoff;",
                   "3. everything is committed;", "Nothing is pushed afterwards."),
-                 "Then the `socle-handoff` skill: the handoff written, committed and pushed. Nothing is pushed "
-                 "afterwards. Depending on the mode, it schedules the next session, or says to ask for the "
-                 "resumption.",
+                 "Then the `socle-handoff` skill: the handoff written, committed and pushed, before any merge. "
+                 "Nothing is pushed afterwards. Depending on the mode, it schedules the next session, or "
+                 "says to ask for the resumption.",
                  "otherwise, it changes sessions.")):
             texte = self.texte(lg)
             section = texte.split(titre, 1)[1].split("\n## ", 1)[0]
@@ -960,6 +961,42 @@ class TestLaPassation(unittest.TestCase):
             tache = section.split("`create_trigger`", 1)[1]
             for parametre in ("`name`", "`persistent_session_id`", "`run_once_at`", "`prompt`"):
                 self.assertIn(parametre, tache, (lg, parametre))
+
+    def test_la_passation_s_ecrit_avant_toute_fusion_et_le_guide_le_dit(self):
+        """T-0194 (B-0356, D-0211) : la passation se pousse avant toute fusion
+        de la pull request ; quand l'agent la fusionne, elle en est le dernier
+        commit, et la branche que l'hébergeur supprime ne se repousse plus ;
+        la session programmée part alors de la branche par défaut ; le guide
+        le dit, avec ce que l'humain y gagne."""
+        from socle import cli
+
+        for lg, ecrire, phrases, guide, gain in (
+                ("fr", "## Écrire la passation",
+                 ("La passation se commite en dernier et se pousse, avant toute fusion de la pull request",
+                  "quand l'agent la fusionne lui-même, elle en est le dernier commit, `--waiting` disant la "
+                  "fusion à venir",
+                  "la branche, que l'hébergeur supprime, ne se repousse plus",
+                  "un commit nécessaire après, avant la fusion, réécrit la passation"),
+                 "HELP.md", "aucune branche de session ne vous reste à supprimer"),
+                ("en", "## Writing the handoff",
+                 ("The handoff is committed last and pushed, before any merge of the pull request",
+                  "when the agent merges it itself, the handoff is its last commit, `--waiting` stating the "
+                  "merge to come",
+                  "the branch, which the host deletes, is not pushed again",
+                  "a commit needed later, before the merge, rewrites the handoff"),
+                 "HELP.en.md", "no session branch is left for you to delete")):
+            texte = self.texte(lg)
+            section = " ".join(texte.split(ecrire, 1)[1].split("\n## ", 1)[0].split())
+            for phrase in phrases:
+                self.assertIn(phrase, section, (lg, phrase))
+            self.assertLess(section.index(phrases[0]), section.index("handoff check"), lg)
+            aide = " ".join((Path(cli.__file__).parent / guide).read_text(encoding="utf-8").split())
+            self.assertIn(gain, aide, guide)
+            depart = {"fr": "`source_revision` la branche de travail, ou la branche par défaut quand la fusion "
+                            "l'a supprimée ; `outcome_branch` la branche de travail",
+                      "en": "`source_revision` the work branch, or the default branch when the merge deleted "
+                            "it; `outcome_branch` the work branch"}[lg]
+            self.assertIn(depart, " ".join(texte.split()), lg)
 
     def test_apres_le_retrait_de_la_passation_l_agent_supprime_la_branche_d_avant(self):
         """T-0192 (B-0351, ADR-0114) : le retrait de la passation poussé, la
@@ -1209,7 +1246,7 @@ class TestLOrganisationProportionnee(unittest.TestCase):
             "socle-batch": ["Un lot réunit ce qui se relit ensemble", "le former une fois, par thème",
                             "**La session est l'unité de budget.** À la fin d'un lot, elle enchaîne le suivant si "
                             "son coût estimé tient dans ce qui reste de la fenêtre de cinq heures et de la semaine, "
-                            "la marge du rangement comprise, et si sa conversation reste sous 300 000 jetons de "
+                            "la marge du rangement comprise, et si sa conversation reste sous 150 000 jetons de "
                             "contexte, deux lots au plus sans message de l'humain ; sinon, elle change de session.",
                             "Fichiers temporaires : dans le dossier temporaire commun, nommés de l'identifiant de "
                             "ta tâche."],
@@ -1236,7 +1273,7 @@ class TestLOrganisationProportionnee(unittest.TestCase):
             "socle-batch": ["A batch gathers what is reviewed together", "form it once, by theme",
                             "**The session is the budget unit.** At the end of a batch, it chains the next one if "
                             "its estimated cost fits in what remains of the five-hour window and of the week, the "
-                            "tidying-up margin included, and if its conversation stays under 300,000 tokens of "
+                            "tidying-up margin included, and if its conversation stays under 150,000 tokens of "
                             "context, two batches at most without a message from the human; otherwise, it changes "
                             "sessions.",
                             "Temporary files: in the shared temporary directory, named with your task's identifier."],
@@ -1276,12 +1313,12 @@ class TestLOrganisationProportionnee(unittest.TestCase):
     }
     GUIDE = {
         "HELP.md": ["**L'enchaînement des sessions.** La session est l'unité de budget",
-                    "300 000 jetons de contexte", "deux lots au plus sans message de votre part",
+                    "150 000 jetons de contexte", "deux lots au plus sans message de votre part",
                     "**La question d'intention.**",
                     "Une spécification, de la documentation ou de la mémoire seules n'ont pas de revue",
                     "Une demande longue, au-delà de la moitié de son budget"],
         "HELP.en.md": ["**Chaining sessions.** The session is the budget unit",
-                       "300,000 tokens of context", "two batches at most without a message from you",
+                       "150,000 tokens of context", "two batches at most without a message from you",
                        "**The question of intent.**",
                        "A specification, documentation or memory alone get no review",
                        "A long request, beyond half its budget"],

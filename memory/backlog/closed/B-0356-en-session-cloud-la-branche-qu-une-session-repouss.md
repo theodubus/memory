@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0356 — En session cloud, la branche qu'une session repousse après la fusion de sa pull request reste sur l'origine, et le proxy refuse à la session suivante de la supprimer : elle revient à l'humain
 
-> statut : ouvert · origine : J-2026-11-26-J · ref : D-0205, J-2026-11-26-H, B-0351, ADR-0114, D-0206 · lu : backlog@99a18fbc
+> statut : fait · origine : J-2026-11-26-J · ref : D-0205, J-2026-11-26-H, B-0351, ADR-0114, D-0206, J-2026-11-26-S, D-0211, T-0194, J-2026-11-26-W · lu : backlog@99a18fbc
 
 La commande `socle prune-branches` (ADR-0114) supprime les branches de
 l'agent déjà contenues ailleurs ; dans une session cloud de Claude Code,
@@ -34,4 +34,4 @@ le 26 novembre (J-2026-11-26-J).
 
 ## Satisfait quand
 
-- [ ] après la fusion d'une pull request et la passation d'une session cloud, aucune branche de session ne revient à l'humain à supprimer
+- [x] après la fusion d'une pull request et la passation d'une session cloud, aucune branche de session ne revient à l'humain à supprimer — vu le 26 novembre, la passation écrite avant la fusion de la PR #100 (J-2026-11-26-S), et écrit au produit (T-0194)

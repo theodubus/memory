@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0210-le-seuil-de-contexte-qui-fait-changer-de-session-a.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-26"
+canal = "conversation"
+citation = "Valider D120"
+empreinte = "sha256:06caf4577fe2ade97c5c40f0770502a549d7625b4863eb64623e73a1b49a16ee"
