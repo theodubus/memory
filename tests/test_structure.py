@@ -411,6 +411,38 @@ class TestMigration(Projet):
         self.assertIn("backlog : 2 tâche(s) posée(s)", sortie.getvalue())
         self.assertTrue(list((self.racine / "memory/backlog/closed").glob("L-0001-*.md")))
 
+    def test_la_migration_et_le_rangement_sans_index_laissent_l_index_inchange(self):
+        """T-0200 (B-0357) : la migration mettait ses renommages dans
+        l'index (`git add`). Elle n'écrit plus que l'arbre de travail, comme
+        le rangement appelé sans `indexer` ; `socle archive` indexe encore
+        les siens (`test_format_3`)."""
+        self.avant()
+        from socle import archive as archivage
+
+        self.assertTrue(migration.migrer_backlog(self.racine).renumerotees)
+        archivage.ranger_backlog(self.racine, indexer=False)
+        self.assertEqual(git(self.racine, "diff", "--cached", "--name-only"), "")
+        self.assertFalse((self.racine / "memory/backlog/B-0005-essai.md").exists())
+        self.assertTrue(list((self.racine / "memory/backlog").glob("L-0002-*.md")))
+
+    def test_la_mise_a_jour_laisse_l_index_inchange_et_git_add_prend_ses_renommages(self):
+        """T-0200 (B-0357) : chez chess, le 26 novembre, le commit de la
+        demande seule qui suit la mise à jour emportait les renommages de
+        la migration et du rangement, que l'installeur avait indexés.
+        L'index reste celui du dernier commit ; `git add -A`, au commit des
+        fichiers de la mise à jour, prend chaque renommage, l'ancien
+        fichier et le neuf."""
+        self.avant()
+        with contextlib.redirect_stdout(io.StringIO()):
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+        self.assertEqual(git(self.racine, "diff", "--cached", "--name-only"), "")
+        git(self.racine, "add", "-A")
+        etats = git(self.racine, "diff", "--cached", "--name-status", "--no-renames", "--",
+                    "memory/backlog").splitlines()
+        for attendu in ("D\tmemory/backlog/B-0005-essai.md", "A\tmemory/backlog/L-0002-essai.md",
+                        "D\tmemory/backlog/closed/B-0003-essai.md", "A\tmemory/backlog/closed/L-0001-essai.md"):
+            self.assertIn(attendu, etats)
+
     def test_la_priorite_d_un_lot_et_d_un_jalon_se_retire_et_le_bilan_les_nomme(self):
         """Revue du lot L-0013 : l'ancien format permettait une priorité sur
         un jalon, que `memoire.formes` refusait après la migration."""
