@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0364 — La feuille de route ne permet pas de piloter un projet : illisible au format détaillé, elle ne dit pas ses étapes en clair, et la section installée en fige le format
 
-> statut : ouvert · origine : J-2026-11-26-AB · lu : backlog@993edac6 · ref : D-0212
+> statut : ouvert · origine : J-2026-11-26-AB · lu : backlog@993edac6 · ref : D-0212, D-0214
 
 Théo, le 26 novembre (J-2026-11-26-AB), sur la feuille de route que la
 session de chess lui a donnée au format détaillé : « La roadmap format
@@ -37,6 +37,13 @@ Théo retient le plan, la maquette A : « J'aime beaucoup A, il faut
 repousser quelque chose qui s'en inspire » ; le tableau de bord en tête
 « peut faire un peu lourd ». Deux variantes du plan lui sont soumises,
 dans le même document (J-2026-11-26-AD).
+
+Le même jour, après trois variantes du plan court, Théo valide la
+variante A2-d (D-0214, J-2026-11-26-AG) : « Maintenant », puis les
+étapes en « X. [K/N] titre », alignées, seule l'étape suivante dépliée en
+ses besoins, puis « Pour toi » et la réserve comptée. Ce format remplace
+les deux formats actuels, partout (D-0212) : la section installée n'a
+plus de format à choisir.
 
 ## Satisfait quand
 
