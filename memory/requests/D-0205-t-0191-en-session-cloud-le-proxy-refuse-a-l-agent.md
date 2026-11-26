@@ -17,7 +17,7 @@ Clore T-0191 alors que son dernier critère, la suppression réelle de `ccr-c196
 
 La commande a suivi le chemin prévu pour un refus. Rien n'est supprimé. Le refus est gardé dans le clone avec la tête refusée, et l'état te redonne les deux branches, avec la raison : « l'origine a refusé à l'agent de la supprimer (error: RPC failed; HTTP 403 …) ». Hors du cloud, sur ta machine, rien ne bride le push : la suppression se fait, comme les tests le montrent sur des dépôts d'essai.
 
-Par conséquent, dans tes sessions cloud au prompt à copier, où chaque session neuve a sa branche, la branche de la session d'avant te reviendra encore. En session programmée, la session suivante reprend la même branche, et rien n'est à supprimer. Le réglage GitHub « Automatically delete head branches » ferait supprimer par GitHub la branche d'une pull request fusionnée, comme `ccr-5ee489f7-ukpvc6`, celle de la pull request du lot précédent, fusionnée le 26 novembre.
+Par conséquent, dans tes sessions cloud au prompt à copier, où chaque session neuve a sa branche, la branche de la session d'avant te reviendra encore. En session programmée, la session suivante reprend la même branche, et rien n'est à supprimer. GitHub supprime déjà la branche d'une pull request à sa fusion : celle de cette session a disparu à la fusion de sa pull request, le 26 novembre, puis le push suivant l'a recréée. La branche qui reste est donc celle qu'une session repousse après la fusion, pour sa passation, comme `ccr-5ee489f7-ukpvc6` : le besoin du cas cloud peut partir de là.
 
 ## Éléments cités
 
@@ -33,7 +33,7 @@ Par conséquent, dans tes sessions cloud au prompt à copier, où chaque session
 
 ## Options
 
-- **A, clore et ouvrir un besoin.** T-0191 se clôt : son quatrième critère est noté « refusé par le proxy cloud, le chemin du refus éprouvé en usage réel ». B-0351 se clôt aussi, satisfait hors du cloud. Un besoin neuf porte le cas cloud, hors du jalon de chess : chercher une voie qui ne passe pas par le push, ou s'en tenir au réglage de GitHub et à la session programmée. Le prompt de mise à jour de chess, qui attend B-0351, devient prêt. Effort : quelques lignes de mémoire. Risque : nul, le code ne change pas. Réversible.
+- **A, clore et ouvrir un besoin.** T-0191 se clôt : son quatrième critère est noté « refusé par le proxy cloud, le chemin du refus éprouvé en usage réel ». B-0351 se clôt aussi, satisfait hors du cloud. Un besoin neuf porte le cas cloud, hors du jalon de chess : par exemple une passation qui ne repousse pas la branche après la fusion, ou la session programmée, qui garde la même branche. Le prompt de mise à jour de chess, qui attend B-0351, devient prêt. Effort : quelques lignes de mémoire. Risque : nul, le code ne change pas. Réversible.
 - **B, attendre une session sur ta machine.** T-0191 reste ouverte jusqu'à ce qu'une session locale lance la commande ici et voie la branche supprimée. B-0351 reste ouvert avec elle, et le prompt de chess, qui l'attend, aussi : la mise à jour de chess attend cette session. La pull request se fusionne quand même. Effort : une session de ta part. Réversible.
 
 ## Conséquences

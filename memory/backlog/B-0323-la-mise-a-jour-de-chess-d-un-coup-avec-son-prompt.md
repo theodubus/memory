@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0323 — La mise à jour de chess d'un coup, avec son prompt complété, puis les corrections du socle qu'elle montre
 
-> statut : ouvert · origine : J-2026-11-21-B · ref : D-0198, D-0204 · lu : backlog@ca2aee8f · après : B-0353, B-0161, B-0351, B-0355
+> statut : ouvert · origine : J-2026-11-21-B · ref : D-0198, D-0204, D-0206 · lu : backlog@ca2aee8f · après : B-0353, B-0161, B-0351, B-0355, B-0356
 
 Théo, le 21 novembre (D-0151, J-2026-11-21-B) : finir de corriger et
 stabiliser le socle avant chess, « puis le mettre à jour d'un coup,
