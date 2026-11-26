@@ -502,11 +502,12 @@ def cmd_review(args) -> int:
 def memoire_citable(mem):
     """La mémoire dont l'index se cite (ADR-0116) : celle du dernier commit,
     la base du travail ou un commit de sa plage, que `memoire.lectures`
-    accepte quoi que l'arbre change avant le commit suivant ; sans commit,
-    l'arbre."""
+    accepte quoi que l'arbre change avant le commit suivant ; sans base de
+    travail (sans commit, ou sans branche par défaut), l'arbre, la seule
+    version que le hook de l'agent juge alors."""
     from socle import memory as memoire
 
-    if mem.rev is not None or not outils.a_des_commits(mem.racine):
+    if mem.rev is not None or outils.base_de_travail(mem.racine) is None:
         return mem
     return memoire.Memoire.charger(mem.racine, "HEAD")
 

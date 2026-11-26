@@ -27,8 +27,9 @@ dans chaque entrée, vide la preuve de lecture de son sens.
    `socle new` et `socle show --index` impriment en tête de l'index, est
    celle de l'index du dernier commit (`HEAD`). Ce commit est la base du
    travail ou un commit de la plage : le contrôle l'accepte toujours, quoi
-   que l'arbre change avant le commit suivant. Sans commit, c'est celle de
-   l'arbre, comme avant.
+   que l'arbre change avant le commit suivant. Sans base de travail, sans
+   commit ou sans branche par défaut, c'est celle de l'arbre, comme avant :
+   le hook de l'agent ne juge alors que l'arbre.
 2. Les lignes imprimées restent celles de l'arbre : un doublon écrit dans
    le tour s'y voit. L'en-tête le dit quand les deux diffèrent.
 3. Le besoin et sa tâche que crée `socle new need … --task …` citent tous

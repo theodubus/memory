@@ -166,7 +166,14 @@ class TestCommandes(unittest.TestCase):
     def test_sans_commit_l_index_cite_est_celui_de_l_arbre(self):
         neuf = self.dossier / "neuf"
         neuf.mkdir()
-        git(neuf, "init", "-q", "-b", "main")
+        git(neuf, "init", "-q", "-b", "travail")
+        mem = memoire.Memoire.charger(neuf)
+        self.assertIs(cli.memoire_citable(mem), mem)
+        # Des commits, mais aucune base : le hook de l'agent ne juge alors que
+        # l'arbre.
+        (neuf / "f.txt").write_text("x\n")
+        git(neuf, "add", "-A")
+        git(neuf, "commit", "-qm", "un")
         mem = memoire.Memoire.charger(neuf)
         self.assertIs(cli.memoire_citable(mem), mem)
 
