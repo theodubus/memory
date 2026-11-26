@@ -7,7 +7,7 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 L-0043 clos (J-2026-11-26-K). Revue de cap 8 posée à Théo
 (J-2026-11-26-N) : ses trois suggestions attendent sa réponse. B-0356
-passe avant chess (D-0206) ; C-0025@76701895 se lève à sa clôture (D-0207).
+passe avant chess (D-0206) ; C-0025@76701895 reste en vigueur après lui (D-0208).
 T-0186 attend B-0355 et B-0356.
 
 ## Prochaines étapes

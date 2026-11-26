@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0208-la-consigne-c-0025-76701895-reste-en-vigueur-une-f.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-26"
+canal = "conversation"
+citation = "Le truc obsolète c'est moi qui me demandait si la consigne ne servait plus a rien vu qu'on va régler le probleme des branches dans les sessions cloud \n\nSauf que pas totalement : si pour une raison x ou y une branche d'une ancienne session n'est pas supprimée, elle est encore la et donc la regle est utile"
+empreinte = "sha256:cedf8a08acb83d5e7a56a73a3e7cf7964cbe6d010ad70d9bd86b6dab180b77ba"
