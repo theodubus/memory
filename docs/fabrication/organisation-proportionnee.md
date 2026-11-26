@@ -22,8 +22,9 @@ contrôles, les hooks, la CI, la politique d'autonomie.
 - **La session est l'unité de budget.** À la fin d'un lot, elle enchaîne
   le suivant si son coût estimé tient dans ce qui reste de la fenêtre de
   cinq heures et de la semaine, la marge de dix points du rangement
-  comprise, et si sa conversation reste sous 300 000 jetons de contexte
-  (au-delà, chaque appel coûte de plus en plus) ; sinon elle range et
+  comprise, et si sa conversation reste sous 150 000 jetons de contexte
+  (au-delà, mener un lot coûte plus que changer de session : D-0210, le
+  26 novembre, sur les mesures, au lieu de 300 000) ; sinon elle range et
   passe la main. La règle remplace « un lot par session » et le seuil
   fixe de 15 % de la fenêtre au départ d'une session programmée. La
   borne des deux lots sans message de l'humain reste.

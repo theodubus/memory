@@ -15,6 +15,19 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-26-b — Le seuil de contexte qui fait changer de session à la fin d'un lot passe de 300 000 à 150 000 jetons, sur une mesure de l'usage
+
+À la fin d'un lot, la session n'enchaîne le suivant que si sa conversation
+reste sous 150 000 jetons de contexte, au lieu de 300 000 ; les autres
+conditions (le coût du lot dans la fenêtre de cinq heures et la semaine,
+deux lots au plus sans message de l'humain) ne changent pas. La mesure :
+mener un lot d'environ 150 appels dans une conversation de 300 000 jetons
+plutôt que dans une session neuve, partie d'environ 70 000, relit environ
+35 millions de jetons de plus, quelque 3 points de la semaine ; changer de
+session en coûte environ 1. Le skill `socle-batch` et le guide le disent.
+
+À faire : rien ; l'installeur pose le skill changé.
+
 ## 2026-11-26-a — L'agent supprime lui-même ses branches distantes déjà contenues ailleurs (`socle prune-branches`) ; l'état ne donne plus à l'humain que les siennes
 
 Une branche distante dont tout le contenu est déjà dans la branche par

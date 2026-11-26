@@ -99,7 +99,7 @@ entrée de journal ne se réécrivent plus.
 - **La session est l'unité de budget.** À la fin d'un lot, elle enchaîne
   le suivant si son coût estimé tient dans ce qui reste de la fenêtre de
   cinq heures et de la semaine, la marge du rangement comprise, et si sa
-  conversation reste sous 300 000 jetons de contexte, deux lots au plus
+  conversation reste sous 150 000 jetons de contexte, deux lots au plus
   sans message de l'humain ; sinon, elle change de session.
 - Les coûts se mesurent : l'utilisation de chaque fenêtre, avant chaque
   lancement et à chaque compte rendu (skill `socle-resume`). La clôture note au journal le coût de chaque

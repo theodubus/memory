@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0355 — Le seuil de contexte qui fait passer la main à une session neuve se fonde sur une mesure de l'usage
 
-> statut : ouvert · origine : J-2026-11-26-A · ref : D-0194, D-0204, D-0209 · lu : backlog@62db4107
+> statut : fait · origine : J-2026-11-26-A · ref : D-0194, D-0204, D-0209, T-0193, D-0210, J-2026-11-26-U · lu : backlog@62db4107
 
 La règle de D-0194 fait ranger une session dont la conversation passe
 300 000 jetons de contexte, « au-delà, chaque appel coûte de plus en
@@ -29,4 +29,4 @@ L-0042, sous le seuil, ce qui n'était pas la règle.
 
 ## Satisfait quand
 
-- [ ] le seuil, ou ce qui le remplace, s'appuie sur des points de la semaine mesurés par lot, selon la taille du contexte et le coût d'une passation, et Théo l'a retenu
+- [x] le seuil, ou ce qui le remplace, s'appuie sur des points de la semaine mesurés par lot, selon la taille du contexte et le coût d'une passation, et Théo l'a retenu

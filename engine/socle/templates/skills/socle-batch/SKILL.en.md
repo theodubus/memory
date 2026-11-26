@@ -99,7 +99,7 @@ decision and a journal entry are no longer rewritten.
 - **The session is the budget unit.** At the end of a batch, it chains
   the next one if its estimated cost fits in what remains of the
   five-hour window and of the week, the tidying-up margin included, and
-  if its conversation stays under 300,000 tokens of context, two batches
+  if its conversation stays under 150,000 tokens of context, two batches
   at most without a message from the human; otherwise, it changes
   sessions.
 - Costs are measured: the use of each window, before each launch and at

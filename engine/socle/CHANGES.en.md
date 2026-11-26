@@ -14,6 +14,20 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-26-b — The context threshold that makes a session hand over at the end of a batch goes from 300,000 to 150,000 tokens, on a measurement of usage
+
+At the end of a batch, the session only chains the next one if its
+conversation stays under 150,000 tokens of context, instead of 300,000;
+the other conditions (the batch's cost within the five-hour window and the
+week, two batches at most without a message from the human) do not change.
+The measurement: running a batch of about 150 calls in a conversation of
+300,000 tokens rather than in a new session, which starts from about
+70,000, rereads about 35 million more tokens, some 3 points of the week;
+changing sessions costs about 1. The `socle-batch` skill and the guide say
+so.
+
+To do: nothing; the installer lays the changed skill.
+
 ## 2026-11-26-a — The agent deletes its own remote branches already contained elsewhere (`socle prune-branches`); the state only gives the human their own
 
 A remote branch whose whole content is already in the default branch, or

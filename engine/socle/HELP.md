@@ -298,8 +298,8 @@ l'humain.
 **L'enchaînement des sessions.** La session est l'unité de budget : à la
 fin d'un lot, l'agent enchaîne le suivant si son coût estimé tient dans
 ce qui reste de la fenêtre de cinq heures et de la semaine, et si la
-conversation reste sous 300 000 jetons de contexte, au-delà desquels
-chaque échange coûte de plus en plus ; deux lots au plus sans message de
+conversation reste sous 150 000 jetons de contexte, au-delà desquels
+mener un lot coûte plus que changer de session ; deux lots au plus sans message de
 votre part. Sinon, comme près d'une limite d'usage ou avant une longue
 attente, il range, puis passe la main à une session neuve, selon l'un de
 deux modes. Par

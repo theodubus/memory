@@ -1209,7 +1209,7 @@ class TestLOrganisationProportionnee(unittest.TestCase):
             "socle-batch": ["Un lot réunit ce qui se relit ensemble", "le former une fois, par thème",
                             "**La session est l'unité de budget.** À la fin d'un lot, elle enchaîne le suivant si "
                             "son coût estimé tient dans ce qui reste de la fenêtre de cinq heures et de la semaine, "
-                            "la marge du rangement comprise, et si sa conversation reste sous 300 000 jetons de "
+                            "la marge du rangement comprise, et si sa conversation reste sous 150 000 jetons de "
                             "contexte, deux lots au plus sans message de l'humain ; sinon, elle change de session.",
                             "Fichiers temporaires : dans le dossier temporaire commun, nommés de l'identifiant de "
                             "ta tâche."],
@@ -1236,7 +1236,7 @@ class TestLOrganisationProportionnee(unittest.TestCase):
             "socle-batch": ["A batch gathers what is reviewed together", "form it once, by theme",
                             "**The session is the budget unit.** At the end of a batch, it chains the next one if "
                             "its estimated cost fits in what remains of the five-hour window and of the week, the "
-                            "tidying-up margin included, and if its conversation stays under 300,000 tokens of "
+                            "tidying-up margin included, and if its conversation stays under 150,000 tokens of "
                             "context, two batches at most without a message from the human; otherwise, it changes "
                             "sessions.",
                             "Temporary files: in the shared temporary directory, named with your task's identifier."],
@@ -1276,12 +1276,12 @@ class TestLOrganisationProportionnee(unittest.TestCase):
     }
     GUIDE = {
         "HELP.md": ["**L'enchaînement des sessions.** La session est l'unité de budget",
-                    "300 000 jetons de contexte", "deux lots au plus sans message de votre part",
+                    "150 000 jetons de contexte", "deux lots au plus sans message de votre part",
                     "**La question d'intention.**",
                     "Une spécification, de la documentation ou de la mémoire seules n'ont pas de revue",
                     "Une demande longue, au-delà de la moitié de son budget"],
         "HELP.en.md": ["**Chaining sessions.** The session is the budget unit",
-                       "300,000 tokens of context", "two batches at most without a message from you",
+                       "150,000 tokens of context", "two batches at most without a message from you",
                        "**The question of intent.**",
                        "A specification, documentation or memory alone get no review",
                        "A long request, beyond half its budget"],

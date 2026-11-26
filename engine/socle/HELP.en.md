@@ -287,8 +287,8 @@ Removing the line gives the merge back to the human.
 **Chaining sessions.** The session is the budget unit: at the end of a
 batch, the agent chains the next one if its estimated cost fits in what
 remains of the five-hour window and of the week, and if the conversation
-stays under 300,000 tokens of context, beyond which each exchange costs
-more and more; two batches at most without a message from you.
+stays under 150,000 tokens of context, beyond which running a batch
+costs more than changing sessions; two batches at most without a message from you.
 Otherwise, as near a usage limit or before a long wait, it tidies up,
 then hands over to a new session, in one of two modes. By default, in a Claude Code
 cloud session, the **scheduled session**: it creates the next session
