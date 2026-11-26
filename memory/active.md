@@ -5,8 +5,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0042 clos, relu (J-2026-11-25-AL) : sa pull request à
-fusionner. L-0043 (B-0351) ensuite.
+L-0042 fusionné (#98, J-2026-11-26-A). Ensuite L-0043
+(B-0351), puis T-0186, puis chess.
 
 ## Prochaines étapes
 
