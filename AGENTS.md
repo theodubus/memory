@@ -45,16 +45,14 @@ reprendre ou de continuer, quelle qu'en soit la forme (« reprends »),
 cherche d'abord la passation : le skill `socle-handoff`.
 
 Si l'état n'a pas été injecté au démarrage d'une session de Claude Code, ses
-hooks ne sont pas chargés (la session a démarré hors de la racine du
-projet ; `socle state` le dit en tête, et le hook avant commit refuse alors
-le commit) : le dire à l'humain avant tout travail, ne rien pousser, et ne
-jamais écrire soi-même un réglage de Claude Code pour les rétablir.
+hooks ne sont pas chargés : le dire à l'humain avant tout travail, ne rien
+pousser, et ne jamais écrire soi-même un réglage de Claude Code pour les
+rétablir.
 
 Une consigne de l'humain donnée dans la conversation, qui vaut au-delà du tour
 (une règle, une préférence, une interdiction), s'écrit dans la mémoire avant de
 continuer, dans les consignes (`socle new directive`), avec son texte exact, et
-au journal : un compactage peut la perdre. Avant de s'appuyer sur une
-consigne, son texte exact se lit.
+au journal. Avant de s'appuyer sur une consigne, son texte exact se lit.
 
 ### La mémoire, dans `memory/`
 
@@ -83,7 +81,7 @@ tests, puis la mémoire canonique, puis le journal.
 1. **Assouplir un garde-fou** (`.socle/guardrails.toml`) exige une demande validée ; durcir est libre. Déclarer des fichiers tiers, qu'aucun contrôle ne juge (`[thirdparty] paths`), assouplit.
 2. **Supprimer un test ou changer une valeur attendue**, dans un test ou un fichier de cas déclaré, exige une demande validée, ou une spécification que l'humain a lui-même changée et qui nomme le test ; une ADR écrite par l'agent ne suffit pas.
 3. **Décision de conception** : réversible et mesurable, l'agent décide et écrit une ADR ; coûteuse à défaire, demande.
-4. **Action irréversible ou externe** (force-push, push sur la branche par défaut, publication, suppression distante, dépense) : toujours une demande. Le hook la refuse.
+4. **Action irréversible ou externe** (force-push, push sur la branche par défaut, publication, suppression distante hors `socle prune-branches`, dépense) : toujours une demande. Le hook la refuse.
 5. **Mémoire** : ajout seul ; « réfuté » exige une référence de mesure ; « validé » ne s'écrit qu'après la réponse de l'humain.
 6. **Débordement de périmètre** : un bug voisin va au backlog, il ne se corrige pas, sauf s'il bloque.
 7. **Échec répété** : contrôles rouges après trois tentatives, arrêt et escalade par une demande qui résume.
@@ -96,8 +94,7 @@ quand le contexte est perdu, et dont le lien se donne dans la conversation.
 L'humain répond dans la conversation ; l'agent consigne sa réponse mot pour
 mot, sans jamais la choisir, et la recopie au journal. Une décision qui
 demande du contexte, approuver un document compris, s'écrit toujours en
-demande ; jamais dans le widget de questions de l'agent, où l'humain lit un
-texte brut sans liens à suivre (le hook le refuse). Ce que l'humain tranche
+demande ; jamais dans le widget de questions de l'agent. Ce que l'humain tranche
 dans la conversation, de lui-même ou sur une question courte posée dans le
 texte de la réponse, se consigne aussitôt de même, en séance. Comment : le
 skill `socle-request`. Un besoin dont la conception n'est pas tranchée pose
@@ -184,26 +181,26 @@ request d'une autre demande à l'humain de la fusionner d'abord, ou de
 l'autoriser à y continuer ; partie d'une passation que sa garde
 accepte, elle y continue, et cette pull request devient la sienne. Un prototype qu'on ne compte pas fusionner se
 fait sur une branche jetable, nommée d'un préfixe de `[branches] disposable`
-des garde-fous (`proto/` par défaut) : la CI ne la juge pas aux envois.
+des garde-fous (`proto/` par défaut).
 
 ### Avant de conclure
 
-- `python3 .socle/socle verify --fast` passe (le hook `Stop` le vérifie) ; `verify` exécute tout.
+- `python3 .socle/socle verify --fast` passe ; `verify` exécute tout.
 - Si du code a changé, la mémoire aussi : chantier actif, journal, backlog.
 - Si du code associé à une doc a changé (`[[docmap]]` des garde-fous), la doc change dans le même travail, ou le commit qui change ce code porte le trailer `Dispense-doc: <raison>`, qui ne vaut que pour lui.
 - Un correctif (titre `fix:` ou trailer `Corrige: T-NNNN`) livre un test qui échoue sur le commit parent.
 - Une fonction publique ajoutée ou modifiée est nommée par au moins un test, ou un commit la dispense nommément avec sa raison (`Dispense-test: f, g — <raison>`). Du code existant découvert sans test : le test s'écrit tout de suite s'il est dans le périmètre du travail, sinon un besoin va au backlog.
 - Une action que seul l'humain peut faire (refusée par le hook, réglage d'un service, fichier qu'il détient) va au backlog avec `pour : humain`.
-- **Toute intervention qui a agi se termine par un récap, puis deux lignes** : `Pour toi :` — ce qui revient à l'humain, décisions en attente et actions à faire, ou « rien » —, chaque point compréhensible sans le raisonnement de l'agent (ce que c'est, pourquoi, ce que change sa réponse), et `Ensuite :` — la suite proposée (prochain jalon, ce qu'il reste à faire avant), et ce que l'agent attend s'il attend quelque chose (une CI, un match : quoi, et jusqu'à quand). L'état calcule ce qui revient à l'humain ; le hook `Stop` refuse de conclure sans les deux lignes.
-- **Un fichier à lire, ou une pull request, se donne par son lien** : l'humain lit dans la conversation ou sur GitHub, pas dans le conteneur de l'agent. `python3 .socle/socle url <chemin|ID>` donne le permalien, une fois le fichier poussé ; une demande en attente citée sans son lien, un lien relatif, ou un chemin entre accents graves qui n'existe pas dans le dépôt font refuser la fin du tour. Un chemin d'un autre dépôt s'écrit `depot:chemin`, le dépôt lié dans le projet par son adresse, ou déclaré dans `[references] repos` des garde-fous.
+- **Toute intervention qui a agi se termine par un récap, puis deux lignes** : `Pour toi :` — ce qui revient à l'humain, décisions en attente et actions à faire, ou « rien » —, chaque point compréhensible sans le raisonnement de l'agent (ce que c'est, pourquoi, ce que change sa réponse), et `Ensuite :` — la suite proposée (prochain jalon, ce qu'il reste à faire avant), et ce que l'agent attend s'il attend quelque chose (une CI, un match : quoi, et jusqu'à quand). L'état calcule ce qui revient à l'humain.
+- **Un fichier à lire, ou une pull request, se donne par son lien** : `python3 .socle/socle url <chemin|ID>` donne le permalien, une fois le fichier poussé ; une demande en attente citée sans son lien, un lien relatif, ou un chemin entre accents graves qui n'existe pas dans le dépôt font refuser la fin du tour. Un chemin d'un autre dépôt s'écrit `depot:chemin`, le dépôt lié dans le projet par son adresse, ou déclaré dans `[references] repos` des garde-fous.
 
 ### Ne jamais
 
-- compléter un SHA de tête, inventer un identifiant ou une référence : le hook les refuse ;
+- compléter un SHA de tête, inventer un identifiant ou une référence ;
 - écrire dans un fichier protégé (politique, adaptateur, verrou du moteur, hooks, CI, réponses humaines) ;
 - répondre à la place de l'humain (`socle answer` sans `--relayed` ni citation), ou lancer `socle approve` ou `socle private install`, réservés à l'humain ;
-- contourner un hook (`--no-verify`) : le hook de l'agent le refuse sur le dépôt du projet, et la CI exécute tout ;
-- poser une question à l'humain dans le widget de questions de l'agent : le hook le refuse.
+- contourner un hook (`--no-verify`) ;
+- poser une question à l'humain dans le widget de questions de l'agent.
 
 ### Ce qui tourne tout seul
 
@@ -212,7 +209,7 @@ des garde-fous (`proto/` par défaut) : la CI ne la juge pas aux envois.
 | `.claude/settings.json` | hooks de Claude Code : `SessionStart` (état dérivé ; en session cloud, les outils de l'adaptateur), `PreToolUse` (refus), `Stop` (contrôles de fin de tour) |
 | `.socle/git-hooks/` | hooks git : `pre-commit` (contrôles rapides), `prepare-commit-msg` (trailers `Socle-Hooks`, `Socle-Hooks-Since-Commit`), `commit-msg` (fuites de la mémoire privée ; en avertissement, une fonction sans test ni dispense, un correctif sans test, un commit d'agent sans ses hooks), `pre-push` (`verify --fast` sur le dernier commit, la plage qui part jugée comme en CI, relecture avant publication) |
 | `.github/workflows/socle.yml` | CI : capacités de l'adaptateur, tous les contrôles contre la base, auto-test du socle, la suite du projet en résumé |
-| `.git/socle/hooks.log` | trace locale de chaque hook qui tire, non versionnée, commune à tous les worktrees du dépôt |
+| `.git/socle/hooks.log` | trace locale de chaque hook qui tire, non versionnée, commune aux worktrees |
 
 Liste des contrôles : `python3 .socle/socle checks`.
 

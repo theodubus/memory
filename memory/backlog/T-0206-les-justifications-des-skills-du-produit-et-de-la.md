@@ -16,6 +16,6 @@ revue adversariale, note de version française et anglaise.
 ## Fait quand
 
 - [ ] chaque skill du produit, en français et en anglais, laisse au moins 600 octets sous son plafond de 8 000, et un test le mesure
-- [ ] la section du socle d'`AGENTS.md` laisse au moins 600 octets sous le plafond de 16 000 de ce dépôt, en français et en anglais
+- [x] la section du socle d'`AGENTS.md` laisse au moins 600 octets sous le plafond de 16 000 de ce dépôt, en français et en anglais
 - [ ] chaque passage sorti se retrouve dans le guide, français et anglais, et aucune règle n'est perdue : la revue compare les règles avant et après
-- [ ] la note de version, française et anglaise, le dit
+- [x] la note de version, française et anglaise, le dit

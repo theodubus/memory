@@ -15,6 +15,24 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-26-l — Ce qui justifiait une règle des skills et de la section du socle d'AGENTS.md sans la dire passe au guide, « Pourquoi ces règles »
+
+Les skills du socle et la section du socle d'`AGENTS.md` se chargent en
+entier à chaque usage, sous leur plafond (8 000 octets pour un skill), et
+plusieurs y touchaient. Ce qui y justifiait une règle sans la dire (le
+pourquoi, une précision qui n'ordonne rien, comme ce qu'un hook refuse)
+en sort, mot pour mot, vers une sous-section nouvelle du guide,
+« Pourquoi ces règles » (« Why these rules »), à la fin de sa
+« Référence » ; chaque règle reste dans son texte, intacte. Sont touchés
+la section du socle d'`AGENTS.md` et les skills `socle-batch`,
+`socle-resume`, `socle-request` et `socle-handoff`, dans les deux
+langues. Le guide dit désormais aussi à l'humain comment arrêter les
+réveils de la reprise après une limite d'usage. La section du socle
+d'`AGENTS.md` maigrit d'environ 550 octets ; `socle-handoff` passe sous
+7 400 octets, `socle-resume` et `socle-request` en anglais aussi.
+
+À faire : rien ; l'installeur pose les skills et la section changés.
+
 ## 2026-11-26-k — Le plafond des consignes passe de 16 000 à 24 000 octets dans le gabarit des garde-fous
 
 Une consigne ne se lève que sur la parole de l'humain : `memory/directives.md`
