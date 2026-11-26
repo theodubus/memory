@@ -9,3 +9,9 @@ la commande et ce qui l'entoure (T-0191), puis le texte que reçoit un
 projet (T-0192). Elles changent un garde-fou, la suppression distante :
 une revue adversariale les relit, qui vérifie que rien de ce qui marchait
 ne casse. Note de version : oui.
+
+## Revues
+
+### Passe 1 — 2026-11-26
+
+Commits : 3a10ca7d..521a8bc3
