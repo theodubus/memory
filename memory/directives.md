@@ -296,3 +296,11 @@ Les consignes durables de Théo, chacune avec son texte exact relu à sa source 
 > […]
 
 — J-2026-11-21-B.
+
+## C-0025 — En session web, la branche donnée à supprimer ne dit pas que le proxy a refusé sa suppression
+
+> statut : en vigueur · source : J-2026-11-26-L · date : 2026-11-26
+
+> Proxy refusé pour supprimer la branche : inutile de le préciser si on est en session web
+
+— J-2026-11-26-L, sur le récap qui lui donnait `ccr-0451fbf2-5mg4au` à supprimer en disant le refus du proxy cloud.

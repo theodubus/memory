@@ -22,6 +22,13 @@ ne repousse pas la branche après la fusion, ou la session programmée
 seule en cloud ; sa question d'intention se pose à Théo à l'ouverture de
 son lot.
 
+La première se tient vraisemblablement (J-2026-11-26-L) : écrite dans le
+dernier commit de la pull request, avant sa fusion, la passation arrive
+sur `main`, où `handoff check` la trouve, et la branche que GitHub
+supprime à la fusion ne se repousse plus. À éprouver : le hook de fin de
+tour de la session cloud, qui a fait repousser la branche après la fusion
+le 26 novembre (J-2026-11-26-J).
+
 ## Satisfait quand
 
 - [ ] après la fusion d'une pull request et la passation d'une session cloud, aucune branche de session ne revient à l'humain à supprimer
