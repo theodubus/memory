@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0351 — L'agent ne peut pas supprimer une branche de travail distante déjà contenue dans une branche poussée : l'état la donne à l'humain à chaque fin de lot
 
-> statut : ouvert · origine : J-2026-11-25-A · ref : D-0187, B-0193, ADR-0098, D-0198, D-0202 · lu : backlog@5d842cca
+> statut : fait · origine : J-2026-11-25-A · ref : D-0187, B-0193, ADR-0098, D-0198, D-0202, T-0191, T-0192, ADR-0114, D-0205, J-2026-11-26-K · lu : backlog@5d842cca
 
 Théo, le 24 novembre, devant la branche d'une session précédente que
 l'état lui donnait à supprimer : « ça ne devrait pas être fait par
@@ -32,4 +32,4 @@ produit, une ligne de la politique la coupant.
 
 ## Satisfait quand
 
-- [ ] une branche de travail de l'agent, contenue dans une branche poussée, se supprime sans geste de l'humain, et une branche qui ne l'est pas reste refusée
+- [x] une branche de travail de l'agent, contenue dans une branche poussée, se supprime sans geste de l'humain, et une branche qui ne l'est pas reste refusée — hors d'une session cloud, dont le proxy refuse la suppression ; clos ainsi sur D-0205, le cas cloud porté par B-0356
