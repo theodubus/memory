@@ -32,11 +32,13 @@ Ta version date du 26 novembre. L'installeur t'imprimera les notes de version qu
 
 2. Les notes d'une copie qui n'en avait pas. Quand la copie remplacée n'avait pas de notes de version, l'installeur n'imprime plus en entier que celles d'après le jour de son dernier commit, les autres par leur seul titre, sous une ligne qui les compte (ta gêne 7). Ta copie a désormais ses notes : ce cas ne te concerne plus, et tu ne reçois que les notes nouvelles. (2026-11-26-g)
 
+3. La demande seule de la mise à jour. Tant que la mise à jour n'est pas commitée, les hooks git avant commit et avant push ne refusent plus que ce que le commit ou le push apporte : la demande seule se commite par git add sur son fichier, git commit et git push, sans le stash ni le --only de ta gêne 1 ; une ligne dit combien de constats déjà commités ils laissent à la CI. La migration du backlog ne met plus ses renommages dans l'index. Si un hook refuse encore la demande seule, ne le contourne pas : rapporte son refus mot pour mot. (2026-11-26-h)
+
 ### Les contrôles et la fin de tour
 
-3. Un correctif de la mémoire. Un commit dont le sujet suit le motif d'un correctif (« Correction : … ») et qui ne change que des fichiers de la mémoire n'est plus refusé par tests.regression : il s'avertit, « correctif qui ne touche que la mémoire : non jugé » (ta gêne 4). Un correctif qui touche aussi du code reste jugé comme avant. (2026-11-26-e)
+4. Un correctif de la mémoire. Un commit dont le sujet suit le motif d'un correctif (« Correction : … ») et qui ne change que des fichiers de la mémoire n'est plus refusé par tests.regression : il s'avertit, « correctif qui ne touche que la mémoire : non jugé » (ta gêne 4). Un correctif qui touche aussi du code reste jugé comme avant. (2026-11-26-e)
 
-4. Une commande citée dans « Pour toi ». La fin de tour ne prend plus le nom d'une commande du socle, prune-branches par exemple, cité entre accents graves sur une ligne qui dit supprimer une branche, pour une branche à chercher à l'origine (ta gêne 5). (2026-11-26-f)
+5. Une commande citée dans « Pour toi ». La fin de tour ne prend plus le nom d'une commande du socle, prune-branches par exemple, cité entre accents graves sur une ligne qui dit supprimer une branche, pour une branche à chercher à l'origine (ta gêne 5). (2026-11-26-f)
 
 ## La mise à jour
 
