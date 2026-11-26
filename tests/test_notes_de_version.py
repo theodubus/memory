@@ -347,6 +347,33 @@ class TestALaMiseAJour(unittest.TestCase):
         # Le message de commit les nomme encore toutes.
         self.assertIn(f'-m "Notes de version du socle : {", ".join(self.tous)}, dans', sortie)
 
+    def test_dans_un_clone_superficiel_la_limite_ne_date_pas_la_copie(self):
+        """Revue de L-0046 : la limite d'un clone superficiel, que git voit
+        ajouter tous ses fichiers, datait la copie de son propre jour, et des
+        notes que le projet n'a pas ne paraissaient que par leur titre."""
+        origine = self.racine / "origine"
+        (origine / "x/socle").mkdir(parents=True)
+        (origine / "x/socle/a.py").write_text("a = 1\n")
+
+        def commit(jour: str, message: str):
+            env = {**os.environ, "GIT_CONFIG_NOSYSTEM": "1", "SOCLE_HOOKS_OFF": "1",
+                   "GIT_COMMITTER_DATE": f"{jour}T12:00:00+0000", "GIT_AUTHOR_DATE": f"{jour}T12:00:00+0000"}
+            subprocess.run(["git", "add", "-A"], cwd=origine, check=True, env=env)
+            subprocess.run(["git", "-c", "user.name=essai", "-c", "user.email=essai@exemple.org", "-c",
+                            "core.hooksPath=/dev/null", "commit", "-q", "-m", message], cwd=origine, check=True,
+                           env=env)
+
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=origine, check=True)
+        commit("2026-11-10", "la copie")
+        for jour in ("2026-11-15", "2026-11-18"):
+            (origine / "app.py").write_text(f"print('{jour}')\n")
+            commit(jour, jour)
+        clone = self.racine / "clone"
+        subprocess.run(["git", "clone", "-q", "--depth", "2", origine.resolve().as_uri(), str(clone)], check=True,
+                       env={**os.environ, "GIT_CONFIG_NOSYSTEM": "1"})
+        self.assertEqual(installeur.date_de_la_copie(origine, "x"), "2026-11-10")
+        self.assertIsNone(installeur.date_de_la_copie(clone, "x"))
+
     def test_notes_deja_lues_dans_le_dernier_commit_sinon_dans_l_arbre(self):
         installer(self.racine, self.source(garder=3), adoption=False)
         # Sans commit, l'arbre.

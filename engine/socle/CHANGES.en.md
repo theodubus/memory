@@ -22,8 +22,8 @@ existed, the installer printed them all in full: 122 entries, about
 of the last commit that changed that copy: a note dated before that day
 describes what the project already has, and appears by its title only,
 under a line that counts them and names the file to read them in; the
-others print as before. Without that day (a copy never committed), all
-print as before. The proposed commit message still names them all.
+others print as before. Without that day (a copy never committed, or a shallow clone that does
+not hold its commit), all print as before. The proposed commit message still names them all.
 
 To do: nothing.
 

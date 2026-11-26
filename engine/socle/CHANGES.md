@@ -24,7 +24,8 @@ environ 100 Ko, chez un projet mis à jour pour la dernière fois le
 copie : une note datée d'avant ce jour décrit ce que le projet a déjà, et
 ne paraît que par son titre, sous une ligne qui les compte et nomme le
 fichier où les lire ; les autres s'impriment comme avant. Sans ce jour
-(une copie jamais commitée), toutes s'impriment comme avant. Le message de
+(une copie jamais commitée, ou un clone superficiel qui ne porte pas son
+commit), toutes s'impriment comme avant. Le message de
 commit proposé les nomme encore toutes.
 
 À faire : rien.

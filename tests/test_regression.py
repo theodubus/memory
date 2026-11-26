@@ -281,6 +281,14 @@ class TestCorrectifHorsDeToutAdaptateur(unittest.TestCase):
         self.assertTrue(any("correctif qui ne touche que la mémoire : non jugé" in c.message
                             for c in r.constats), [c.message for c in r.constats])
 
+    def test_un_correctif_vide_n_est_pas_un_correctif_de_la_memoire(self):
+        """Revue de L-0046 : sans fichier, « tous dans la mémoire » était vrai."""
+        self.base = git(self.racine, "rev-parse", "HEAD").strip()
+        git(self.racine, "commit", "-q", "--allow-empty", "-m", "fix: rien", "--no-verify")
+        r = self.juger()
+        self.assertFalse(any("ne touche que la mémoire" in c.message for c in r.constats))
+        self.assertTrue(r.erreurs("tests.regression"))
+
     def test_un_permalien_vers_le_commit_ne_l_admet_pas(self):
         """Un permalien porte le SHA complet du dernier commit poussé : une
         demande sans rapport qui en donne un ne nomme pas ce correctif."""

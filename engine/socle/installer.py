@@ -830,10 +830,18 @@ def ne_demande_rien(entree: str) -> bool:
 
 def date_de_la_copie(cible: Path, dossier_moteur: str) -> str | None:
     """Le jour (`AAAA-MM-JJ`) du dernier commit qui a changé la copie du
-    moteur que le projet a ; None sans commit qui la porte (B-0361)."""
-    jour = outils.git(cible, "log", "-1", "--format=%cs", "HEAD", "--", f"{dossier_moteur}/socle",
-                      check=False).strip()
-    return jour if re.fullmatch(r"\d{4}-\d{2}-\d{2}", jour) else None
+    moteur que le projet a ; None sans commit qui la porte, ou quand ce
+    commit est la limite d'un clone superficiel, que git voit ajouter tous
+    ses fichiers : sa date suivrait celle de la copie (B-0361)."""
+    ligne = outils.git(cible, "log", "-1", "--format=%H %cs", "HEAD", "--", f"{dossier_moteur}/socle",
+                       check=False).strip()
+    m = re.fullmatch(r"(?P<sha>[0-9a-f]{40,64}) (?P<jour>\d{4}-\d{2}-\d{2})", ligne)
+    if not m:
+        return None
+    limites = cible / outils.git(cible, "rev-parse", "--git-path", "shallow", check=False).strip()
+    if limites.is_file() and m["sha"] in limites.read_text(encoding="utf-8").split():
+        return None
+    return m["jour"]
 
 
 def texte_des_notes(notes: list[tuple[str, str]], fichier: str, toutes: bool, depuis: str | None = None) -> str:

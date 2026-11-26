@@ -12,6 +12,25 @@ pour du code qu'aucun adaptateur ne juge : refusé sans une demande
 validée, ou une réécriture de l'historique, une fois poussé. Corriger une
 entrée de la mémoire est un geste ordinaire, qu'aucun test ne prouve.
 
+## Modèle de menace
+
+Écrit à la revue de L-0046, après le code : le lot l'avait omis.
+
+Le garde-fou qui change : `tests.regression`. Ce qu'il arrête : un
+correctif de code qui ne livre pas de test qui échoue sur son parent ;
+hors de tout adaptateur, D-0088 le refuse, sauf une demande validée qui
+l'admet. Ce qui reste arrêté : tout correctif qui touche un fichier hors
+de la mémoire, le dossier du socle et `AGENTS.md` compris, et un
+correctif vide. Ce qui passe désormais, signalé d'un avertissement : un
+correctif dont tous les fichiers, hors tiers, sont dans le dossier de la
+mémoire, sa zone privée comprise. D-0088 visait du code qu'aucun
+adaptateur ne juge, le Dart de JustCook ; une entrée de la mémoire n'est
+pas du code, aucun test ne peut prouver sa correction, et une entrée
+publiée ne se récrit que par ajout ou par son statut, que les contrôles
+de la mémoire jugent. Un agent qui glisserait un correctif de code dans
+un commit de la seule mémoire n'en aurait pas : un fichier hors de la
+mémoire fait juger le commit comme avant.
+
 ## Satisfait quand
 
 - [x] un commit qui ne touche que la mémoire n'est jamais refusé par `tests.regression`, quel que soit son titre ; un correctif qui touche du code hors de tout adaptateur reste refusé comme D-0088 le veut

@@ -782,7 +782,7 @@ def regression(ctx, r):
                                                "tiers : non jugé", sha=sha[:10], sujet=sujet))
             continue
         memoire = ctx.projet.chemins.memoire.rstrip("/") + "/"
-        if all(f.startswith(memoire) for f in touches):
+        if touches and all(f.startswith(memoire) for f in touches):
             # Une entrée de la mémoire corrigée : aucun code, rien qu'un test
             # puisse prouver (B-0359).
             r.avertir("tests.regression", trad("{sha} « {sujet} » : correctif qui ne touche que la mémoire : "
