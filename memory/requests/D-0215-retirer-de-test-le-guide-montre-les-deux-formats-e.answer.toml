@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0215-retirer-de-test-le-guide-montre-les-deux-formats-e.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-26"
+canal = "conversation"
+citation = "Valider D0215"
+empreinte = "sha256:fc6cc6253504b048f59752cebc2334b0fcfb6ed0f07f5c22e4ec98e24a9629d9"
