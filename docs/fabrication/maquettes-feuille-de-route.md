@@ -102,3 +102,78 @@ B en tête, pour la vue d'ensemble, puis A pour l'étape en cours et la
 suivante, les autres en une ligne chacune ; « Pour toi » et la réserve à
 la fin. C sert le récap de la clôture d'un lot, où seul compte ce qui
 vient ensuite.
+
+## Le choix de Théo, et deux variantes du plan
+
+Théo retient A, le plan, et juge B puis A un peu lourd ; il demande des
+variantes de A (J-2026-11-26-AD). Les deux qui suivent gardent la même
+section « Maintenant » et le même backlog inventé.
+
+### A1. Le plan complet
+
+Trois ajouts à A : le travail en cours jusqu'à la tâche ; sous chaque
+étape, son but en une ligne, que le jalon devrait alors donner ; la
+réserve nommée par ses besoins prioritaires et datée.
+
+```text
+La suite de Fou — 26 novembre
+
+Maintenant, hors étapes
+ ▶ Finir l'adoption du socle 0.2.0 — 3 sur 4
+     ✓ retoucher deux workflows
+     ▶ passer CLAUDE.md dans AGENTS.md
+
+Les étapes, dans l'ordre
+1. Embarquer le réseau N10 — 1 sur 4
+   pour jouer avec N10 et connaître sa force
+   ✓ Entraîner N10 sur les parties de novembre
+   · Mesurer N10 contre N8, 2 000 parties
+   · Embarquer N10 dans le binaire
+   · Situer le moteur sur la liste CCRL
+2. Régler la recherche par SPSA — 0 sur 3
+   pour gagner 20 Elo à réseau égal
+   · Les marges d'élagage
+   · La gestion du temps
+   · Valider en match de 10 000 parties
+3. Accélérer la recherche — 0 sur 2
+   pour 30 % de nœuds par seconde en plus
+4. Nouvelle architecture de réseau — 0 sur 3
+   pour préparer le réseau d'après N10
+
+Pour toi
+ · Copier les données d'entraînement sur un
+   disque dur
+
+En réserve : 12 besoins, à trier à la fin
+de l'étape 1
+ ↑ Comparer les nœuds au test de
+   déterminisme — en attente depuis 3 sem.
+ ↑ Dépenser le temps que rembourse le
+   ponder — en attente depuis 2 sem.
+ · 10 autres, le plus ancien depuis 6 sem.
+```
+
+### A2. Le plan court
+
+Seule l'étape suivante est dépliée ; les autres tiennent en une ligne.
+
+```text
+La suite de Fou — 26 novembre
+
+Maintenant : finir l'adoption du socle
+0.2.0 — reste CLAUDE.md dans AGENTS.md
+
+Ensuite
+1. Embarquer le réseau N10 — 1 sur 4
+   ✓ Entraîner N10 sur les parties de novembre
+   · Mesurer N10 contre N8, 2 000 parties
+   · Embarquer N10 dans le binaire
+   · Situer le moteur sur la liste CCRL
+2. Régler la recherche par SPSA — 0 sur 3
+3. Accélérer la recherche — 0 sur 2
+4. Nouvelle architecture de réseau — 0 sur 3
+
+Pour toi : copier les données
+d'entraînement sur un disque dur
+En réserve : 12 besoins, dont 2 prioritaires
+```

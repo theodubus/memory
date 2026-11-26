@@ -33,6 +33,10 @@ Le même jour, Théo valide que la forme retenue remplace les deux
 formats actuels, partout (D-0212) ; la forme reste à choisir parmi trois
 maquettes fictives, `docs/fabrication/maquettes-feuille-de-route.md`
 (J-2026-11-26-AC).
+Théo retient le plan, la maquette A : « J'aime beaucoup A, il faut
+repousser quelque chose qui s'en inspire » ; le tableau de bord en tête
+« peut faire un peu lourd ». Deux variantes du plan lui sont soumises,
+dans le même document (J-2026-11-26-AD).
 
 ## Satisfait quand
 
