@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0364 — La feuille de route ne permet pas de piloter un projet : illisible au format détaillé, elle ne dit pas ses étapes en clair, et la section installée en fige le format
 
-> statut : ouvert · origine : J-2026-11-26-AB · lu : backlog@993edac6
+> statut : ouvert · origine : J-2026-11-26-AB · lu : backlog@993edac6 · ref : D-0212
 
 Théo, le 26 novembre (J-2026-11-26-AB), sur la feuille de route que la
 session de chess lui a donnée au format détaillé : « La roadmap format
@@ -28,6 +28,11 @@ cas pour exemple de consigne.
 La conception n'est pas tranchée : sa question d'intention est posée à
 Théo le 26 novembre, une maquette sur les données de chess à l'appui ;
 la spécification et le code suivent sa réponse, dans un même lot.
+
+Le même jour, Théo valide que la forme retenue remplace les deux
+formats actuels, partout (D-0212) ; la forme reste à choisir parmi trois
+maquettes fictives, `docs/fabrication/maquettes-feuille-de-route.md`
+(J-2026-11-26-AC).
 
 ## Satisfait quand
 
