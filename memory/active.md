@@ -5,8 +5,9 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0042 fusionné (#98, J-2026-11-26-A). Ensuite L-0043
-(B-0351), puis T-0186, puis chess.
+L-0042 fusionné (#98, J-2026-11-26-A). Passation : L-0043
+(B-0351) en session neuve (J-2026-11-26-B), puis T-0186,
+puis chess.
 
 ## Prochaines étapes
 

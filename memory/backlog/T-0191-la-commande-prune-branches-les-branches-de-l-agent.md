@@ -16,3 +16,4 @@ politique ; une décision (ADR) pour le mécanisme.
 - [ ] dans un dépôt d'essai, une branche de l'agent contenue dans la branche par défaut se supprime, et une branche de l'humain, une branche non contenue ou une branche qui a bougé depuis la vérification restent, chacune avec son test
 - [ ] `prune_branches = false` rend toutes les branches à l'humain, et la commande refuse
 - [ ] un refus de l'origine redonne la branche à l'humain dans l'état
+- [ ] dans ce dépôt, la commande supprime `ccr-c196a77f-s8vzo6`, la branche de la session du 25 novembre, contenue dans `main`, que Théo lui laisse (J-2026-11-26-B)
