@@ -17,6 +17,10 @@ qu'il arrive ; il se trie par `docs/fabrication/but-et-tri.md`, comme les
 deux premiers, une fois clos les besoins de ces deux retours, la
 feuille de route (B-0364) et le tri de la réserve (B-0365).
 
+Versé le 26 novembre dans
+`docs/fabrication/chess/cout-et-frictions-2026-11-26.md`
+(J-2026-11-26-AV) : sa relecture critique reste à faire.
+
 Pas de critère fixe (D-0217, le 26 novembre) : une gêne sérieuse peut
 ne pas empêcher le travail de chess. Le retour se relit de façon
 critique, gêne par gêne, ce qu'elle coûte à chess et ce que la

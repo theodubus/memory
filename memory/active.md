@@ -17,10 +17,10 @@ tranché (D-0218), B-0368 ouvert (D-0219), tous deux dans JA-0006.
 
 Par lots (D-0118, D-0151), dans JA-0006 :
 
-1. Le troisième retour de chess, que Théo donne à la reprise : versé
-   tel quel dès qu'il arrive (B-0367).
-2. B-0354 (D-0218) : la demande du plafond des consignes, et les
-   justifications sorties des skills et d'AGENTS.md vers le guide.
-3. B-0364 (format A2-d, D-0214) et B-0365 (D-0213), la spécification de
-   B-0364 d'abord ; puis B-0368, et B-0367 relu et arbitré (D-0217).
-4. Après JA-0006 : B-0101, JA-0003, B-0104, B-0158, B-0188.
+1. B-0354 (D-0218) : T-0205 attend la réponse de Théo à D-0220
+   (24 000 octets) ; T-0206, les justifications vers le guide, en lot,
+   dans une session neuve. La pull request #110 attend les deux.
+2. B-0364 (format A2-d, D-0214) et B-0365 (D-0213), la spécification de
+   B-0364 d'abord ; puis B-0368, et B-0367 relu et arbitré (D-0217) :
+   le troisième retour est versé (J-2026-11-26-AV).
+3. Après JA-0006 : B-0101, JA-0003, B-0104, B-0158, B-0188.

@@ -1,6 +1,6 @@
 <!-- socle: couche=passation zone=publique -->
 # Passation
 
-> écrite : 2026-11-26T21:08:48Z · branche : ccr-5949573b-b0w6ac · chaîne : 0
+> écrite : 2026-11-26T21:28:27Z · branche : ccr-91293197-83n2bc · chaîne : 0
 
-Ce qui attend : Théo donne au premier message, après « reprends », le troisième retour de chess : le verser tel quel sous docs/fabrication/chess/ aussitôt (D-0216, B-0367) ; sa relecture critique et l'arbitrage de Théo (D-0217) viennent après B-0364 et B-0365. La pull request #109 est ouverte, mémoire seule : la continuer, et la fusionner sa CI verte. Puis B-0354 (D-0218), à découper : la demande qui relève le plafond des consignes, et les justifications des skills et d'AGENTS.md sorties vers le guide ; puis B-0364 (format A2-d, D-0214) et B-0365 (D-0213), la spécification de B-0364 d'abord ; puis B-0368 (D-0219), le test qui rejoue la mise à jour depuis le moteur qu'a chess.
+Ce qui attend : La réponse de Théo à la demande D-0220 (le plafond de memory/directives.md à 24 000 octets, T-0205) : la consigner mot pour mot dès qu'il la donne ; validée, T-0205 rejoint le lot. Le lot de T-0206 (B-0354, D-0218) : sortir vers le guide les justifications des skills du produit et de la section du socle d'AGENTS.md, jusqu'à 600 octets de marge sous chaque plafond, selon le skill delegate-lot, avec sa revue adversariale et sa note de version. La pull request #110 est ouverte : la continuer, et la fusionner sa CI verte une fois D-0220 répondue. Puis B-0364 (format A2-d, D-0214) et B-0365 (D-0213), la spécification de B-0364 d'abord ; puis B-0368 (D-0219) ; puis la relecture critique de B-0367, versé (J-2026-11-26-AV).
