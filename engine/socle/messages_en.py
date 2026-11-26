@@ -3643,6 +3643,8 @@ MESSAGES: dict[str, str] = {
         "{faute} — disposable branch, a file it adds: warned, its pull request will judge it",
     "{sha} « {sujet} » : correctif qui ne touche que des fichiers tiers : non jugé":
         "{sha} “{sujet}”: fix that touches only third-party files: not judged",
+    "{sha} « {sujet} » : correctif qui ne touche que la mémoire : non jugé":
+        "{sha} “{sujet}”: fix that touches only the memory: not judged",
     "{sha} « {sujet} » : correctif hors de tout adaptateur, admis sans test par {id}, une demande validée qui nomme "
     "ce commit":
         "{sha} “{sujet}”: fix outside every adapter, admitted without a test by {id}, an approved request that "

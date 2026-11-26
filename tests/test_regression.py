@@ -265,6 +265,22 @@ class TestCorrectifHorsDeToutAdaptateur(unittest.TestCase):
         self.assertTrue(any("correctif qui ne touche que des fichiers tiers : non jugé" in c.message
                             for c in r.constats))
 
+    def test_un_correctif_qui_ne_touche_que_la_memoire_n_est_pas_juge(self):
+        """B-0359 : dans chess, « Correction : … » d'une entrée de la mémoire
+        était refusé comme un correctif hors de tout adaptateur."""
+        entree = self.racine / "memory/journal/2026-11-26.md"
+        entree.parent.mkdir(parents=True, exist_ok=True)
+        entree.write_text("## J-2026-11-26-A — Une entrée\n\nUn mot faux.\n")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "Une entrée du journal", "--no-verify")
+        self.base = git(self.racine, "rev-parse", "HEAD").strip()
+        entree.write_text("## J-2026-11-26-A — Une entrée\n\nLe mot juste.\n")
+        git(self.racine, "commit", "-qam", "Correction : le mot de J-2026-11-26-A", "--no-verify")
+        r = self.juger()
+        self.assertEqual(r.erreurs("tests.regression"), [])
+        self.assertTrue(any("correctif qui ne touche que la mémoire : non jugé" in c.message
+                            for c in r.constats), [c.message for c in r.constats])
+
     def test_un_permalien_vers_le_commit_ne_l_admet_pas(self):
         """Un permalien porte le SHA complet du dernier commit poussé : une
         demande sans rapport qui en donne un ne nomme pas ce correctif."""
