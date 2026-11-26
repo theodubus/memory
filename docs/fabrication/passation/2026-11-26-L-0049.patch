@@ -1,0 +1,1451 @@
+From b1de1cb609e40043f2d6e5cf685c89ec9c112ddc Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 26 Nov 2026 22:58:38 +0000
+Subject: [PATCH] =?UTF-8?q?T-0206=20:=20ce=20qui=20justifiait=20une=20r?=
+ =?UTF-8?q?=C3=A8gle=20des=20skills=20et=20de=20la=20section=20du=20socle?=
+ =?UTF-8?q?=20d'AGENTS.md=20passe=20au=20guide,=20=C2=AB=20Pourquoi=20ces?=
+ =?UTF-8?q?=20r=C3=A8gles=20=C2=BB=20;=20AGENTS.md=20tient=20sa=20marge,?=
+ =?UTF-8?q?=20socle-batch,=20socle-request=20et=20socle-resume=20non=20(J-?=
+ =?UTF-8?q?2026-11-26-BE)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Sur D-0218, le pourquoi et les précisions qui n'ordonnent rien sortent,
+mot pour mot, de la section du socle d'AGENTS.md et des skills
+socle-batch, socle-resume, socle-request et socle-handoff, dans les deux
+langues, vers une sous-section nouvelle de la référence du guide ; chaque
+règle reste dans son texte. L'installeur relancé en mode amont remet les
+copies protégées des skills et la section du socle de ce dépôt, qui
+devient celle du gabarit : 15 926 → 15 374 octets.
+
+Marges sous 8 000 après : socle-handoff 620, socle-resume 436 (anglais
+746), socle-request 331 (anglais 809), socle-batch 142 (anglais 342).
+Les quatre textes sous 600 n'ont plus de justification à sortir : T-0206
+reste ouverte sur ce critère.
+
+TestLaPlaceDesReglesSuivantes mesure les marges et que chaque passage
+sorti se lit au guide ; il échoue sur le commit parent. Trois tests lisent
+au guide le passage sorti qu'ils lisaient au skill (ADR-0110, ADR-0111).
+Note de version 2026-11-26-l.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_0118ZdFWKwKExge1Z5zVYBFn
+Socle-Agent: claude-code
+Socle-Hooks: SessionStart=1 PreToolUse=256 Stop=3
+Socle-Hooks-Since-Commit: PreToolUse=256
+---
+ .claude/skills/socle-batch/SKILL.md           |  10 +-
+ .claude/skills/socle-handoff/SKILL.md         |  18 +-
+ .claude/skills/socle-request/SKILL.md         |  20 +-
+ .claude/skills/socle-resume/SKILL.md          |  24 +--
+ AGENTS.md                                     |  31 ++--
+ engine/socle/CHANGES.en.md                    |  17 ++
+ engine/socle/CHANGES.md                       |  18 ++
+ engine/socle/HELP.en.md                       |  69 +++++++
+ engine/socle/HELP.md                          |  69 +++++++
+ engine/socle/templates/AGENTS.en.md           |  27 ++-
+ engine/socle/templates/AGENTS.md              |  27 ++-
+ .../templates/skills/socle-batch/SKILL.en.md  |  10 +-
+ .../templates/skills/socle-batch/SKILL.md     |  10 +-
+ .../skills/socle-handoff/SKILL.en.md          |  16 +-
+ .../templates/skills/socle-handoff/SKILL.md   |  18 +-
+ .../skills/socle-request/SKILL.en.md          |  19 +-
+ .../templates/skills/socle-request/SKILL.md   |  20 +-
+ .../templates/skills/socle-resume/SKILL.en.md |  21 +--
+ .../templates/skills/socle-resume/SKILL.md    |  24 +--
+ ...ications-des-skills-du-produit-et-de-la.md |   4 +-
+ memory/journal/2026-11-14.md                  |  66 +++++++
+ tests/test_attente_de_la_ci.py                |  19 +-
+ tests/test_skills.py                          | 174 ++++++++++++++++--
+ 23 files changed, 535 insertions(+), 196 deletions(-)
+
+diff --git a/.claude/skills/socle-batch/SKILL.md b/.claude/skills/socle-batch/SKILL.md
+index ab66d96b..ee84f0c8 100644
+--- a/.claude/skills/socle-batch/SKILL.md
++++ b/.claude/skills/socle-batch/SKILL.md
+@@ -62,8 +62,7 @@ Skill `socle-review`, sur le lot commité, et son tri des constats. Un
+ bloquant retourne à qui a implémenté, s'il répond encore. Un sous-agent
+ arrêté (une vérification en arrière-plan dont il n'a pas repris le fil)
+ se reprend depuis sa copie isolée, par l'agent qui orchestre. Un lot ne
+-part qu'après la correction de ses bloquants : une fois poussées, une décision et une
+-entrée de journal ne se réécrivent plus.
++part qu'après la correction de ses bloquants.
+ 
+ ## Intégrer, pousser, livrer
+ 
+@@ -74,10 +73,9 @@ entrée de journal ne se réécrivent plus.
+ 2. Retirer la copie isolée et sa branche ;
+    `python3 .socle/socle verify --fast`.
+ 3. Pousser ; ouvrir la pull request s'il n'y en a pas, une seule ouverte.
+-   Attendre la CI du commit poussé (`gh run list --commit <sha>`) : la
+-   ligne « CI » de l'état suit la tête. Une attente annoncée a son
+-   réveil en session cloud (`send_later`) ; ailleurs, `Ensuite :` le dit,
+-   et l'humain relance l'agent.
++   Attendre la CI du commit poussé (`gh run list --commit <sha>`). Une
++   attente annoncée a son réveil en session cloud (`send_later`) ;
++   ailleurs, `Ensuite :` le dit, et l'humain relance l'agent.
+ 4. Qui fusionne : par défaut l'humain, et le lot suivant s'ajoute à la
+    même pull request ; l'agent, la sienne, si la politique le permet : CI
+    verte sur le commit de tête, qu'il donne, revue faite, aucune demande
+diff --git a/.claude/skills/socle-handoff/SKILL.md b/.claude/skills/socle-handoff/SKILL.md
+index 0c028f4f..e5feb04f 100644
+--- a/.claude/skills/socle-handoff/SKILL.md
++++ b/.claude/skills/socle-handoff/SKILL.md
+@@ -7,8 +7,8 @@ description: Passer la main à une session neuve, à la fin d'un lot, près d'un
+ 
+ Une session enchaîne les lots que son budget permet (skill
+ `socle-batch`). Quand elle s'arrête, elle écrit sa passation dans la
+-mémoire, la commite et la pousse ; la session suivante, d'un compte
+-comme d'un autre, la trouve et juge sa garde. Les heures de la passation
++mémoire, la commite et la pousse ; la session suivante la trouve et
++juge sa garde. Les heures de la passation
+ sont en UTC ; celles que lit l'humain, à son heure.
+ 
+ ## Les deux modes
+@@ -16,8 +16,7 @@ sont en UTC ; celles que lit l'humain, à son heure.
+ - **Session programmée**, par défaut : l'agent crée la session suivante
+   et programme son réveil.
+ - **Prompt à copier** : le récap dit à l'humain d'ouvrir une session
+-  neuve et d'y demander la reprise ; le mode de qui a plusieurs comptes
+-  ou veut garder la main.
++  neuve et d'y demander la reprise.
+ 
+ Le mode est celui que dit une consigne en vigueur ; sans elle, la
+ session programmée. L'humain en change en le disant : l'agent consigne sa
+@@ -94,8 +93,8 @@ La passation écrite avec `--scheduled` (plus haut, `socle-batch` rangé) :
+ 
+ 1. `create_session`, sans `prompt` : `source_url` l'adresse du dépôt ;
+    `source_revision` la branche de travail, ou la branche par défaut
+-   quand la fusion l'a supprimée ; `outcome_branch` la branche de travail,
+-   sans quoi la session neuve n'a pas où pousser ; `model` celui de
++   quand la fusion l'a supprimée ; `outcome_branch` la branche de travail ;
++   `model` celui de
+    cette session ; `effort` le sien, qui ne s'hérite pas (refusé, l'appel
+    se refait sans lui) ; `title` « Passation — <lot> — part le <jour> à
+    <heure de l'humain> » ; `tags` `["passation"]`.
+@@ -140,9 +139,7 @@ fusionne.
+ 
+ ## Voir et arrêter
+ 
+-La session créée paraît aussitôt dans la liste des sessions de
+-l'humain, sous son titre, prête à relire tant qu'elle attend son réveil.
+-Son dernier message dit ce qu'elle a fait, pourquoi la chaîne s'arrête
++Le dernier message de la session créée dit ce qu'elle a fait, pourquoi la chaîne s'arrête
+ ou ce que la garde a refusé, et ce qui revient à l'humain.
+ 
+ L'humain l'arrête en écrivant « arrête » dans la session qui l'a
+@@ -158,5 +155,4 @@ Un tour en échec ou un conteneur redémarré dans la session créée peut
+ rendre un tour à celle qui l'a programmée. Elle le dit en une ligne et
+ ne fait rien d'autre.
+ 
+-Les réveils de `socle-resume` restent, dans les deux modes : une session
+-coupée avant d'avoir rangé reprend à la levée.
++Les réveils de `socle-resume` restent, dans les deux modes.
+diff --git a/.claude/skills/socle-request/SKILL.md b/.claude/skills/socle-request/SKILL.md
+index 3c969fe5..493ff915 100644
+--- a/.claude/skills/socle-request/SKILL.md
++++ b/.claude/skills/socle-request/SKILL.md
+@@ -5,8 +5,7 @@ description: Poser une demande de décision humaine, relayer la réponse de l'hu
+ 
+ # Les demandes de décision humaine
+ 
+-Une demande est lue quand le contexte est perdu : elle se suffit à
+-elle-même. L'humain répond dans la conversation ; l'agent consigne sa
++Une demande se suffit à elle-même. L'humain répond dans la conversation ; l'agent consigne sa
+ réponse mot pour mot, sans jamais la choisir.
+ 
+ ## Poser une demande
+@@ -29,8 +28,7 @@ réponse mot pour mot, sans jamais la choisir.
+      une phrase`) ; jamais un identifiant seul. Un fichier protégé à
+      faire approuver, ceux d'une mise à jour, s'y écrit sur sa ligne, son
+      chemin et son empreinte nouvelle, rien d'autre (`python3 .socle/socle
+-     check` les donne) : ces lignes n'ont pas à être décrites et ne
+-     comptent pas dans le budget de la demande.
++     check` les donne) : ces lignes n'ont pas à être décrites.
+    - **Où regarder** : un lien vers chaque document à lire
+      (`python3 .socle/socle url <chemin>`), et ce qu'il faut y vérifier.
+    - **Options** : pour chacune, l'effort, le risque, la réversibilité.
+@@ -77,17 +75,16 @@ python3 .socle/socle answer D-NNNN <réponse> --relayed --by <nom> --quote-file
+ 3. Recopier la réponse au journal, avec son texte exact.
+ 
+ La réponse se consigne dès qu'elle est donnée, se commite et se pousse
+-aussitôt : l'humain ne la voit plus en attente. Elle couvre le changement
++aussitôt. Elle couvre le changement
+ qu'elle autorise (une valeur attendue, une clé des garde-fous, un fichier
+ protégé) dans sa pull request, ou plus tard, fusionnée, tant qu'une tâche
+ ouverte la cite et que ce qu'elle nomme n'a pas bougé depuis la demande :
+ la tâche qui fait le changement la cite, et se clôt avec lui.
+ 
+-Une réponse ne se relaie qu'à une demande poussée telle quelle : l'humain
+-doit avoir pu la lire. Une demande répondue est gelée. La réponse
+-`contexte-insuffisant` renvoie la demande : la réécrire en une demande
+-nouvelle, qui la remplace et la cite dans ses éléments cités ; l'état ne
+-la dit plus alors à réécrire.
++Une réponse ne se relaie qu'à une demande poussée telle quelle. Une
++demande répondue est gelée. La réponse `contexte-insuffisant` renvoie la
++demande : la réécrire en une demande nouvelle, qui la remplace et la cite
++dans ses éléments cités.
+ 
+ Un test dont la valeur attendue change en attendant une demande qui le
+ nomme peut rester changé dans l'arbre à la fin du tour ; il ne se commite
+@@ -130,8 +127,7 @@ ainsi, en séance, puis la consigne passe `levée`, avec
+ Un contenu montré dans la conversation que l'humain valide (un format, un
+ exemple, un texte) s'écrit d'abord tel quel dans le dépôt, puis la
+ décision le désigne (`--about <chemin>`), et les tâches qui en découlent
+-citent ce chemin : sans lui, la décision ne garde que la question et la
+-réponse, et le contenu se perd.
++citent ce chemin.
+ 
+ **La variante légère**, pour des valeurs attendues changées
+ mécaniquement, des tests qui lisent un format que l'humain vient de
+diff --git a/.claude/skills/socle-resume/SKILL.md b/.claude/skills/socle-resume/SKILL.md
+index a9444217..c2aa41b7 100644
+--- a/.claude/skills/socle-resume/SKILL.md
++++ b/.claude/skills/socle-resume/SKILL.md
+@@ -5,11 +5,10 @@ description: Faire reprendre seul l'agent qu'une limite d'usage coupe, par deux
+ 
+ # La reprise après une limite d'usage
+ 
+-Une limite d'usage, sur cinq heures ou sept jours, coupe la session
+-jusqu'au message suivant de l'humain. Deux réveils, que l'agent programme
+-pour sa propre session, le font reprendre à la levée, pendant un tour qui
+-travaille ou une attente à heure bornée : un tour qui finit autrement que
+-sur une limite ne relance jamais l'agent.
++Deux réveils, que l'agent programme pour sa propre session, le font
++reprendre à la levée d'une limite d'usage, pendant un tour qui travaille ou
++une attente à heure bornée : un tour qui finit autrement que sur une limite
++ne relance jamais l'agent.
+ 
+ ## Quand
+ 
+@@ -34,10 +33,10 @@ trouvé ; dans le plus récent, `rate_limit_info.unifiedWindows.five_hour.resets
+ `….seven_day.resetsAt`, en secondes depuis 1970, UTC. Une heure lue plus
+ tôt, encore à venir, vaut : on ne la relit pas.
+ 
+-**Jamais dans le passé.** Il tirerait aussitôt. L'heure courante :
++**Jamais dans le passé.** L'heure courante :
+ `date -u`, dans la première commande du tour, ou le `now` que rend
+-`send_later`. Une remise à zéro lue à moins d'une minute dans l'avenir
+-date d'une fenêtre close : le réveil s'arme à la borne, maintenant plus
++`send_later`. Une remise à zéro lue à moins d'une minute dans l'avenir :
++le réveil s'arme à la borne, maintenant plus
+ cinq heures et cinq minutes, ou sept jours et cinq minutes pour la
+ semaine. Un `send_later` armé avant son `now` : le retirer et le réarmer
+ à la borne.
+@@ -90,8 +89,7 @@ Avant la réponse finale, retirer les deux réveils (`delete_trigger`),
+ sauf pendant un sous-agent, jusqu'au tour qui reçoit son résultat, ou une
+ attente à heure bornée (un rappel, une commande en arrière-plan, une
+ CI), jusqu'au tour de l'événement, chacun repoussé après cette heure
+-s'il tombait avant : refusé, ce tour se reprend à la levée. Un tour
+-coupé ou refusé ne retire rien : c'est ce qui le fait reprendre. Si le
++s'il tombait avant. Un tour coupé ou refusé ne retire rien. Si le
+ tour continue après (un hook de fin de tour refuse de conclure), les
+ réarmer.
+ 
+@@ -132,7 +130,7 @@ Un message qui commence par « Reprise après limite » :
+    et retirer le réveil restant, ou le laisser si un sous-agent tourne.
+    Si l'humain avait interrompu le travail et que le contrôle de fin de
+    tour refuse sur des contrôles en échec, le dire en une ligne, sans y
+-   toucher ni réarmer : relancé sur le même arbre, il laisse conclure.
++   toucher ni réarmer.
+ 3. Sinon, reprendre le lot noté, à l'étape que disent la conversation,
+    git, le chantier actif et les worktrees. Chaque sous-agent noté dont le
+    résultat n'est pas arrivé : le poursuivre par un message
+@@ -145,6 +143,4 @@ Un message qui commence par « Reprise après limite » :
+ ## Ce que l'agent ne fait jamais
+ 
+ Armer un réveil récurrent ; récrire un réveil à chaque étape ; toucher au
+-réveil d'une autre session sans que l'humain le demande. L'humain arrête
+-tout en écrivant « arrête » dans la session, ou supprime les réveils de
+-la liste des tâches programmées de son compte (claude.ai/code/routines).
++réveil d'une autre session sans que l'humain le demande.
+diff --git a/AGENTS.md b/AGENTS.md
+index 9ee18cb5..364b40be 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -45,16 +45,14 @@ reprendre ou de continuer, quelle qu'en soit la forme (« reprends »),
+ cherche d'abord la passation : le skill `socle-handoff`.
+ 
+ Si l'état n'a pas été injecté au démarrage d'une session de Claude Code, ses
+-hooks ne sont pas chargés (la session a démarré hors de la racine du
+-projet ; `socle state` le dit en tête, et le hook avant commit refuse alors
+-le commit) : le dire à l'humain avant tout travail, ne rien pousser, et ne
+-jamais écrire soi-même un réglage de Claude Code pour les rétablir.
++hooks ne sont pas chargés : le dire à l'humain avant tout travail, ne rien
++pousser, et ne jamais écrire soi-même un réglage de Claude Code pour les
++rétablir.
+ 
+ Une consigne de l'humain donnée dans la conversation, qui vaut au-delà du tour
+ (une règle, une préférence, une interdiction), s'écrit dans la mémoire avant de
+ continuer, dans les consignes (`socle new directive`), avec son texte exact, et
+-au journal : un compactage peut la perdre. Avant de s'appuyer sur une
+-consigne, son texte exact se lit.
++au journal. Avant de s'appuyer sur une consigne, son texte exact se lit.
+ 
+ ### La mémoire, dans `memory/`
+ 
+@@ -83,7 +81,7 @@ tests, puis la mémoire canonique, puis le journal.
+ 1. **Assouplir un garde-fou** (`.socle/guardrails.toml`) exige une demande validée ; durcir est libre. Déclarer des fichiers tiers, qu'aucun contrôle ne juge (`[thirdparty] paths`), assouplit.
+ 2. **Supprimer un test ou changer une valeur attendue**, dans un test ou un fichier de cas déclaré, exige une demande validée, ou une spécification que l'humain a lui-même changée et qui nomme le test ; une ADR écrite par l'agent ne suffit pas.
+ 3. **Décision de conception** : réversible et mesurable, l'agent décide et écrit une ADR ; coûteuse à défaire, demande.
+-4. **Action irréversible ou externe** (force-push, push sur la branche par défaut, publication, suppression distante, dépense) : toujours une demande. Le hook la refuse.
++4. **Action irréversible ou externe** (force-push, push sur la branche par défaut, publication, suppression distante hors `socle prune-branches`, dépense) : toujours une demande. Le hook la refuse.
+ 5. **Mémoire** : ajout seul ; « réfuté » exige une référence de mesure ; « validé » ne s'écrit qu'après la réponse de l'humain.
+ 6. **Débordement de périmètre** : un bug voisin va au backlog, il ne se corrige pas, sauf s'il bloque.
+ 7. **Échec répété** : contrôles rouges après trois tentatives, arrêt et escalade par une demande qui résume.
+@@ -96,8 +94,7 @@ quand le contexte est perdu, et dont le lien se donne dans la conversation.
+ L'humain répond dans la conversation ; l'agent consigne sa réponse mot pour
+ mot, sans jamais la choisir, et la recopie au journal. Une décision qui
+ demande du contexte, approuver un document compris, s'écrit toujours en
+-demande ; jamais dans le widget de questions de l'agent, où l'humain lit un
+-texte brut sans liens à suivre (le hook le refuse). Ce que l'humain tranche
++demande ; jamais dans le widget de questions de l'agent. Ce que l'humain tranche
+ dans la conversation, de lui-même ou sur une question courte posée dans le
+ texte de la réponse, se consigne aussitôt de même, en séance. Comment : le
+ skill `socle-request`. Un besoin dont la conception n'est pas tranchée pose
+@@ -184,26 +181,26 @@ request d'une autre demande à l'humain de la fusionner d'abord, ou de
+ l'autoriser à y continuer ; partie d'une passation que sa garde
+ accepte, elle y continue, et cette pull request devient la sienne. Un prototype qu'on ne compte pas fusionner se
+ fait sur une branche jetable, nommée d'un préfixe de `[branches] disposable`
+-des garde-fous (`proto/` par défaut) : la CI ne la juge pas aux envois.
++des garde-fous (`proto/` par défaut).
+ 
+ ### Avant de conclure
+ 
+-- `python3 .socle/socle verify --fast` passe (le hook `Stop` le vérifie) ; `verify` exécute tout.
++- `python3 .socle/socle verify --fast` passe ; `verify` exécute tout.
+ - Si du code a changé, la mémoire aussi : chantier actif, journal, backlog.
+ - Si du code associé à une doc a changé (`[[docmap]]` des garde-fous), la doc change dans le même travail, ou le commit qui change ce code porte le trailer `Dispense-doc: <raison>`, qui ne vaut que pour lui.
+ - Un correctif (titre `fix:` ou trailer `Corrige: T-NNNN`) livre un test qui échoue sur le commit parent.
+ - Une fonction publique ajoutée ou modifiée est nommée par au moins un test, ou un commit la dispense nommément avec sa raison (`Dispense-test: f, g — <raison>`). Du code existant découvert sans test : le test s'écrit tout de suite s'il est dans le périmètre du travail, sinon un besoin va au backlog.
+ - Une action que seul l'humain peut faire (refusée par le hook, réglage d'un service, fichier qu'il détient) va au backlog avec `pour : humain`.
+-- **Toute intervention qui a agi se termine par un récap, puis deux lignes** : `Pour toi :` — ce qui revient à l'humain, décisions en attente et actions à faire, ou « rien » —, chaque point compréhensible sans le raisonnement de l'agent (ce que c'est, pourquoi, ce que change sa réponse), et `Ensuite :` — la suite proposée (prochain jalon, ce qu'il reste à faire avant), et ce que l'agent attend s'il attend quelque chose (une CI, un match : quoi, et jusqu'à quand). L'état calcule ce qui revient à l'humain ; le hook `Stop` refuse de conclure sans les deux lignes.
+-- **Un fichier à lire, ou une pull request, se donne par son lien** : l'humain lit dans la conversation ou sur GitHub, pas dans le conteneur de l'agent. `python3 .socle/socle url <chemin|ID>` donne le permalien, une fois le fichier poussé ; une demande en attente citée sans son lien, un lien relatif, ou un chemin entre accents graves qui n'existe pas dans le dépôt font refuser la fin du tour. Un chemin d'un autre dépôt s'écrit `depot:chemin`, le dépôt lié dans le projet par son adresse, ou déclaré dans `[references] repos` des garde-fous.
++- **Toute intervention qui a agi se termine par un récap, puis deux lignes** : `Pour toi :` — ce qui revient à l'humain, décisions en attente et actions à faire, ou « rien » —, chaque point compréhensible sans le raisonnement de l'agent (ce que c'est, pourquoi, ce que change sa réponse), et `Ensuite :` — la suite proposée (prochain jalon, ce qu'il reste à faire avant), et ce que l'agent attend s'il attend quelque chose (une CI, un match : quoi, et jusqu'à quand). L'état calcule ce qui revient à l'humain.
++- **Un fichier à lire, ou une pull request, se donne par son lien** : `python3 .socle/socle url <chemin|ID>` donne le permalien, une fois le fichier poussé ; une demande en attente citée sans son lien, un lien relatif, ou un chemin entre accents graves qui n'existe pas dans le dépôt font refuser la fin du tour. Un chemin d'un autre dépôt s'écrit `depot:chemin`, le dépôt lié dans le projet par son adresse, ou déclaré dans `[references] repos` des garde-fous.
+ 
+ ### Ne jamais
+ 
+-- compléter un SHA de tête, inventer un identifiant ou une référence : le hook les refuse ;
++- compléter un SHA de tête, inventer un identifiant ou une référence ;
+ - écrire dans un fichier protégé (politique, adaptateur, verrou du moteur, hooks, CI, réponses humaines) ;
+ - répondre à la place de l'humain (`socle answer` sans `--relayed` ni citation), ou lancer `socle approve` ou `socle private install`, réservés à l'humain ;
+-- contourner un hook (`--no-verify`) : le hook de l'agent le refuse sur le dépôt du projet, et la CI exécute tout ;
+-- poser une question à l'humain dans le widget de questions de l'agent : le hook le refuse.
++- contourner un hook (`--no-verify`) ;
++- poser une question à l'humain dans le widget de questions de l'agent.
+ 
+ ### Ce qui tourne tout seul
+ 
+@@ -212,7 +209,7 @@ des garde-fous (`proto/` par défaut) : la CI ne la juge pas aux envois.
+ | `.claude/settings.json` | hooks de Claude Code : `SessionStart` (état dérivé ; en session cloud, les outils de l'adaptateur), `PreToolUse` (refus), `Stop` (contrôles de fin de tour) |
+ | `.socle/git-hooks/` | hooks git : `pre-commit` (contrôles rapides), `prepare-commit-msg` (trailers `Socle-Hooks`, `Socle-Hooks-Since-Commit`), `commit-msg` (fuites de la mémoire privée ; en avertissement, une fonction sans test ni dispense, un correctif sans test, un commit d'agent sans ses hooks), `pre-push` (`verify --fast` sur le dernier commit, la plage qui part jugée comme en CI, relecture avant publication) |
+ | `.github/workflows/socle.yml` | CI : capacités de l'adaptateur, tous les contrôles contre la base, auto-test du socle, la suite du projet en résumé |
+-| `.git/socle/hooks.log` | trace locale de chaque hook qui tire, non versionnée, commune à tous les worktrees du dépôt |
++| `.git/socle/hooks.log` | trace locale de chaque hook qui tire, non versionnée, commune aux worktrees |
+ 
+ Liste des contrôles : `python3 .socle/socle checks`.
+ 
+diff --git a/engine/socle/CHANGES.en.md b/engine/socle/CHANGES.en.md
+index c1d78241..f046f89e 100644
+--- a/engine/socle/CHANGES.en.md
++++ b/engine/socle/CHANGES.en.md
+@@ -14,6 +14,23 @@ asks nothing: of such an entry, the installer prints only the title,
+ under a line that names this file. Any other form (“nothing, unless …”,
+ “nothing in the project …”, an action) is printed in full, before them.
+ 
++## 2026-11-26-l — What justified a rule of the skills and of the socle section of AGENTS.md without stating it moves to the guide, "Why these rules"
++
++The socle's skills and the socle section of `AGENTS.md` are loaded whole
++at every use, under their cap (8,000 bytes for a skill), and several were
++touching it. What justified a rule there without stating it (the why, a
++detail that orders nothing, such as what a hook refuses) leaves them, word
++for word, for a new subsection of the guide, "Why these rules"
++(« Pourquoi ces règles »), at the end of its "Reference"; each rule stays
++in its text, intact. Touched are the socle section of `AGENTS.md` and the
++`socle-batch`, `socle-resume`, `socle-request` and `socle-handoff` skills,
++in both languages. The guide now also tells the human how to stop the
++wake-ups of the resumption after a usage limit. The socle section of
++`AGENTS.md` loses about 550 bytes; `socle-handoff` goes under 7,400 bytes,
++and so do `socle-resume` and `socle-request` in English.
++
++To do: nothing; the installer lays the changed skills and section.
++
+ ## 2026-11-26-k — The directives cap goes from 16,000 to 24,000 bytes in the guardrails template
+ 
+ A directive is lifted only on the human's word: `memory/directives.md`
+diff --git a/engine/socle/CHANGES.md b/engine/socle/CHANGES.md
+index 530b6409..341c49b2 100644
+--- a/engine/socle/CHANGES.md
++++ b/engine/socle/CHANGES.md
+@@ -15,6 +15,24 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
+ sauf si … », « rien dans le projet … », une action) s'imprime en entier,
+ avant elles.
+ 
++## 2026-11-26-l — Ce qui justifiait une règle des skills et de la section du socle d'AGENTS.md sans la dire passe au guide, « Pourquoi ces règles »
++
++Les skills du socle et la section du socle d'`AGENTS.md` se chargent en
++entier à chaque usage, sous leur plafond (8 000 octets pour un skill), et
++plusieurs y touchaient. Ce qui y justifiait une règle sans la dire (le
++pourquoi, une précision qui n'ordonne rien, comme ce qu'un hook refuse)
++en sort, mot pour mot, vers une sous-section nouvelle du guide,
++« Pourquoi ces règles » (« Why these rules »), à la fin de sa
++« Référence » ; chaque règle reste dans son texte, intacte. Sont touchés
++la section du socle d'`AGENTS.md` et les skills `socle-batch`,
++`socle-resume`, `socle-request` et `socle-handoff`, dans les deux
++langues. Le guide dit désormais aussi à l'humain comment arrêter les
++réveils de la reprise après une limite d'usage. La section du socle
++d'`AGENTS.md` maigrit d'environ 550 octets ; `socle-handoff` passe sous
++7 400 octets, `socle-resume` et `socle-request` en anglais aussi.
++
++À faire : rien ; l'installeur pose les skills et la section changés.
++
+ ## 2026-11-26-k — Le plafond des consignes passe de 16 000 à 24 000 octets dans le gabarit des garde-fous
+ 
+ Une consigne ne se lève que sur la parole de l'humain : `memory/directives.md`
+diff --git a/engine/socle/HELP.en.md b/engine/socle/HELP.en.md
+index 51dc260a..894d625d 100644
+--- a/engine/socle/HELP.en.md
++++ b/engine/socle/HELP.en.md
+@@ -738,3 +738,72 @@ judges them this way. Two limits, each with its setting:
+ - the adapter's capabilities (build, tests) run as it declares them: if
+   they cover the subfolder, it must build and its tests pass, or the human
+   excludes it from the adapter's sources, a protected file.
++
++### Why these rules
++
++The socle section of `AGENTS.md` and the socle's skills are loaded whole
++at every use: they state the rule, and what justifies it is read here.
++
++**The socle section of `AGENTS.md`.** If the state was not injected when a
++Claude Code session started, its hooks are not loaded (the session started
++outside the project root; `socle state` says so at the top, and the
++pre-commit hook then refuses the commit). An instruction from the human is
++also written in the journal: a compaction may lose it. A decision that
++needs context is never put in the agent's question widget, where the human
++reads raw text with no links to follow (the hook refuses it). A prototype
++not meant to be merged is done on a disposable branch: the CI does not
++judge it on push. Before concluding, `python3 .socle/socle verify --fast`
++passes (the `Stop` hook checks it). The state computes what is up to the
++human; the `Stop` hook refuses to conclude without the two lines. A file
++to read, or a pull request, is given by its link: the human reads in the
++conversation or on GitHub, not in the agent's container. What the agent
++never does, hooks refuse: complete a head SHA, invent an identifier or a
++reference: the hook refuses them; bypass a hook (`--no-verify`): the
++agent's hook refuses it on the project's repository, and the CI runs
++everything; ask the human a question in the agent's question widget: the
++hook refuses it.
++
++**The `socle-batch` skill.** A batch leaves only once its blocking
++findings are fixed: once pushed, a decision and a journal entry are no
++longer rewritten. The agent waits for the CI of the pushed commit
++(`gh run list --commit <sha>`): the "CI" line of the state follows the
++head.
++
++**The `socle-resume` skill.** A usage limit of the account, over five
++hours or seven days, cuts the session off; the agent then resumes only at
++the human's next message: two wake-ups make it resume when the limit
++lifts. A wake-up is never armed in the past: it would fire at once. A
++reset read that is not more than a minute ahead belongs to a closed
++window: the wake-up is then armed at the bound. During a wait with a
++bounded time, the wake-ups remain, each pushed back after that time if it
++fell before: refused, that turn resumes when the limit lifts. A turn cut
++off or refused removes nothing: that is what makes it resume. On waking
++from work the human had interrupted, the agent says in one line that the
++end-of-turn check refuses on failing checks, without touching it or
++re-arming: relaunched on the same tree, it lets the turn conclude. The
++human stops everything by writing "stop" in the session, or deletes the
++wake-ups from the list of scheduled tasks of their account
++(claude.ai/code/routines).
++
++**The `socle-request` skill.** A request is read once the context is
++lost: it stands on its own. The lines of its cited elements that carry
++only a protected file to have approved, its path and its new fingerprint,
++need no description and do not count in the request's budget. The human's
++answer is recorded, committed and pushed at once: the human no longer sees
++it pending. An answer is only relayed to a request pushed as is: the human
++must have been able to read it. A request that the answer
++`insufficient-context` sends back is rewritten as a new request that cites
++it; the state then no longer says to rewrite it. Content the human
++approves in session is first written in the repository, and the decision
++designates it: without it, the decision keeps only the question and the
++answer, and the content is lost.
++
++**The `socle-handoff` skill.** The handoff is committed and pushed; the
++next session, from one account or another, finds it and judges its guard.
++The prompt to copy is the mode of whoever has several accounts or wants to
++keep control. The scheduled session gets the work branch for
++`outcome_branch`, without which the new session has nowhere to push. The
++created session appears at once in the human's list of sessions, under its
++title, ready for review while it waits for its wake-up. The wake-ups of
++`socle-resume` remain, in both modes: a session cut off before tidying up
++resumes when the limit lifts.
+diff --git a/engine/socle/HELP.md b/engine/socle/HELP.md
+index 5e9d4078..760e8940 100644
+--- a/engine/socle/HELP.md
++++ b/engine/socle/HELP.md
+@@ -754,3 +754,72 @@ ainsi. Deux limites, chacune avec son réglage :
+   déclare : si elles couvrent le sous-dossier, il doit compiler et ses
+   tests passer, ou l'humain l'exclut des sources de l'adaptateur, fichier
+   protégé.
++
++### Pourquoi ces règles
++
++La section du socle d'`AGENTS.md` et les skills du socle se chargent en
++entier à chaque usage : ils disent la règle, et ce qui la justifie se lit
++ici.
++
++**La section du socle d'`AGENTS.md`.** Si l'état n'a pas été injecté au
++démarrage d'une session de Claude Code, ses hooks ne sont pas chargés (la
++session a démarré hors de la racine du projet ; `socle state` le dit en
++tête, et le hook avant commit refuse alors le commit). Une consigne de
++l'humain s'écrit aussi au journal : un compactage peut la perdre. Une
++décision qui demande du contexte ne se pose jamais dans le widget de
++questions de l'agent, où l'humain lit un texte brut sans liens à suivre
++(le hook le refuse). Un prototype qu'on ne compte pas fusionner se fait
++sur une branche jetable : la CI ne la juge pas aux envois. Avant de
++conclure, `python3 .socle/socle verify --fast` passe (le hook `Stop` le
++vérifie). L'état calcule ce qui revient à l'humain ; le hook `Stop` refuse
++de conclure sans les deux lignes. Un fichier à lire, ou une pull request,
++se donne par son lien : l'humain lit dans la conversation ou sur GitHub,
++pas dans le conteneur de l'agent. Ce que l'agent ne fait jamais, des hooks
++le refusent : compléter un SHA de tête, inventer un identifiant ou une
++référence : le hook les refuse ; contourner un hook (`--no-verify`) : le
++hook de l'agent le refuse sur le dépôt du projet, et la CI exécute tout ;
++poser une question à l'humain dans le widget de questions de l'agent : le
++hook le refuse.
++
++**Le skill `socle-batch`.** Un lot ne part qu'après la correction de ses
++bloquants : une fois poussées, une décision et une entrée de journal ne se
++réécrivent plus. L'agent attend la CI du commit poussé
++(`gh run list --commit <sha>`) : la ligne « CI » de l'état suit la tête.
++
++**Le skill `socle-resume`.** Une limite d'usage, sur cinq heures ou sept
++jours, coupe la session jusqu'au message suivant de l'humain : deux
++réveils font reprendre l'agent à la levée. Un réveil ne s'arme jamais dans
++le passé : il tirerait aussitôt. Une remise à zéro lue à moins d'une
++minute dans l'avenir date d'une fenêtre close : le réveil s'arme à la
++borne. Pendant une attente à heure bornée, les réveils restent, chacun
++repoussé après cette heure s'il tombait avant : refusé, ce tour se reprend
++à la levée. Un tour coupé ou refusé ne retire rien : c'est ce qui le fait
++reprendre. Au réveil d'un travail que l'humain avait interrompu, l'agent
++dit en une ligne que le contrôle de fin de tour refuse sur des contrôles
++en échec, sans y toucher ni réarmer : relancé sur le même arbre, il laisse
++conclure. L'humain arrête tout en écrivant « arrête » dans la session, ou
++supprime les réveils de la liste des tâches programmées de son compte
++(claude.ai/code/routines).
++
++**Le skill `socle-request`.** Une demande est lue quand le contexte est
++perdu : elle se suffit à elle-même. Les lignes de ses éléments cités qui
++ne portent qu'un fichier protégé à faire approuver, son chemin et son
++empreinte nouvelle, n'ont pas à être décrites et ne comptent pas dans le
++budget de la demande. La réponse de l'humain se consigne, se commite et se
++pousse aussitôt : l'humain ne la voit plus en attente. Une réponse ne se
++relaie qu'à une demande poussée telle quelle : l'humain doit avoir pu la
++lire. Une demande que renvoie la réponse `contexte-insuffisant` se
++réécrit en une demande nouvelle, qui la cite ; l'état ne la dit plus alors
++à réécrire. Un contenu que l'humain valide en séance s'écrit d'abord dans
++le dépôt, et la décision le désigne : sans lui, la décision ne garde que
++la question et la réponse, et le contenu se perd.
++
++**Le skill `socle-handoff`.** La passation se commite et se pousse ; la
++session suivante, d'un compte comme d'un autre, la trouve et juge sa
++garde. Le prompt à copier est le mode de qui a plusieurs comptes ou veut
++garder la main. La session programmée reçoit la branche de travail pour
++`outcome_branch`, sans quoi la session neuve n'a pas où pousser. La
++session créée paraît aussitôt dans la liste des sessions de l'humain, sous
++son titre, prête à relire tant qu'elle attend son réveil. Les réveils de
++`socle-resume` restent, dans les deux modes : une session coupée avant
++d'avoir rangé reprend à la levée.
+diff --git a/engine/socle/templates/AGENTS.en.md b/engine/socle/templates/AGENTS.en.md
+index ff26406b..96ea01c1 100644
+--- a/engine/socle/templates/AGENTS.en.md
++++ b/engine/socle/templates/AGENTS.en.md
+@@ -17,16 +17,14 @@ lists: cite it to them in the next reply, by its identifier and its link. A firs
+ ("resume"), first looks for the handoff: the `socle-handoff` skill.
+ 
+ If the state was not injected when a Claude Code session started, its
+-hooks are not loaded (the session started outside the project root;
+-`socle state` says so at the top, and the pre-commit hook then refuses the
+-commit): tell the human before any work, push nothing, and never write a
+-Claude Code setting yourself to restore them.
++hooks are not loaded: tell the human before any work, push nothing, and
++never write a Claude Code setting yourself to restore them.
+ 
+ An instruction from the human given in the conversation, that holds beyond
+ the turn (a rule, a preference, a prohibition), is written into the memory
+ before going on, in the directives (`socle new directive`), with its exact
+-text, and in the journal: a compaction may lose it. Before relying on a
+-directive, its exact text is read.
++text, and in the journal. Before relying on a directive, its exact text is
++read.
+ 
+ ### The memory, in `memory/`
+ 
+@@ -68,8 +66,7 @@ own once the context is lost, and whose link is given in the conversation.
+ The human answers in the conversation; the agent records their answer word
+ for word, never choosing it, and copies it into the journal. A decision that
+ needs context, approving a document included, is always written as a
+-request; never in the agent's question widget, where the human reads raw
+-text with no links to follow (the hook refuses it). What the human settles
++request; never in the agent's question widget. What the human settles
+ in the conversation, of their own accord or on a short question asked in
+ the text of the answer, is recorded at once in the same way, in session.
+ How: the skill `socle-request`. A need whose design is not settled first
+@@ -155,26 +152,26 @@ session's pull request open asks the human to merge it first, or to let
+ it continue on it; started from a handoff that its guard accepts,
+ it continues on it, and that pull request becomes its own. A prototype not meant to be merged is done on a
+ disposable branch, named with a prefix of `[branches] disposable` in the
+-guardrails (`proto/` by default): the CI does not judge it on push.
++guardrails (`proto/` by default).
+ 
+ ### Before concluding
+ 
+-- `python3 .socle/socle verify --fast` passes (the `Stop` hook checks it); `verify` runs everything.
++- `python3 .socle/socle verify --fast` passes; `verify` runs everything.
+ - If code changed, the memory did too: active work, journal, backlog.
+ - If code tied to a doc changed (`[[docmap]]` in the guardrails), the doc changes in the same work, or the commit that changes this code carries the trailer `Waive-doc: <reason>`, which covers that commit only.
+ - A fix (title `fix:` or trailer `Fixes: T-NNNN`) delivers a test that fails on the parent commit.
+ - A public function added or changed is named by at least one test, or a commit waives it by name with its reason (`Waive-test: f, g — <reason>`). Existing code found without tests: the test is written right away if it is within the scope of the work, otherwise a need goes to the backlog.
+ - An action only the human can take (refused by the hook, a service setting, a file they hold) goes to the backlog with `for : human`.
+-- **Every intervention that acted ends with a recap, then two lines**: `For you:` — what is up to the human, pending decisions and actions to take, or "nothing" —, each item understandable without the agent's reasoning (what it is, why, what their answer changes), and `Next:` — the proposed next step (next milestone, what remains before it), and what the agent is waiting for if it is waiting for something (a CI run, a match: what, and until when). The state computes what is up to the human; the `Stop` hook refuses to conclude without the two lines.
+-- **A file to read, or a pull request, is given by its link**: the human reads in the conversation or on GitHub, not in the agent's container. `python3 .socle/socle url <path|ID>` gives the permalink, once the file is pushed; a pending request cited without its link, a relative link, or a path between backticks that does not exist in the repository make the end of turn refused. A path in another repository is written `repo:path`, the repository linked in the project by its address, or declared in `[references] repos` of the guardrails.
++- **Every intervention that acted ends with a recap, then two lines**: `For you:` — what is up to the human, pending decisions and actions to take, or "nothing" —, each item understandable without the agent's reasoning (what it is, why, what their answer changes), and `Next:` — the proposed next step (next milestone, what remains before it), and what the agent is waiting for if it is waiting for something (a CI run, a match: what, and until when). The state computes what is up to the human.
++- **A file to read, or a pull request, is given by its link**: `python3 .socle/socle url <path|ID>` gives the permalink, once the file is pushed; a pending request cited without its link, a relative link, or a path between backticks that does not exist in the repository make the end of turn refused. A path in another repository is written `repo:path`, the repository linked in the project by its address, or declared in `[references] repos` of the guardrails.
+ 
+ ### Never
+ 
+-- complete a head SHA, invent an identifier or a reference: the hook refuses them;
++- complete a head SHA, invent an identifier or a reference;
+ - write to a protected file (policy, adapter, engine lock, hooks, CI, human answers);
+ - answer on the human's behalf (`socle answer` without `--relayed` and a quote), or run `socle approve` or `socle private install`, which are for the human only;
+-- bypass a hook (`--no-verify`): the agent's hook refuses it on the project's repository, and the CI runs everything;
+-- ask the human a question in the agent's question widget: the hook refuses it.
++- bypass a hook (`--no-verify`);
++- ask the human a question in the agent's question widget.
+ 
+ ### What runs on its own
+ 
+diff --git a/engine/socle/templates/AGENTS.md b/engine/socle/templates/AGENTS.md
+index 3565e039..8843dd54 100644
+--- a/engine/socle/templates/AGENTS.md
++++ b/engine/socle/templates/AGENTS.md
+@@ -19,16 +19,14 @@ reprendre ou de continuer, quelle qu'en soit la forme (« reprends »),
+ cherche d'abord la passation : le skill `socle-handoff`.
+ 
+ Si l'état n'a pas été injecté au démarrage d'une session de Claude Code, ses
+-hooks ne sont pas chargés (la session a démarré hors de la racine du
+-projet ; `socle state` le dit en tête, et le hook avant commit refuse alors
+-le commit) : le dire à l'humain avant tout travail, ne rien pousser, et ne
+-jamais écrire soi-même un réglage de Claude Code pour les rétablir.
++hooks ne sont pas chargés : le dire à l'humain avant tout travail, ne rien
++pousser, et ne jamais écrire soi-même un réglage de Claude Code pour les
++rétablir.
+ 
+ Une consigne de l'humain donnée dans la conversation, qui vaut au-delà du tour
+ (une règle, une préférence, une interdiction), s'écrit dans la mémoire avant de
+ continuer, dans les consignes (`socle new directive`), avec son texte exact, et
+-au journal : un compactage peut la perdre. Avant de s'appuyer sur une
+-consigne, son texte exact se lit.
++au journal. Avant de s'appuyer sur une consigne, son texte exact se lit.
+ 
+ ### La mémoire, dans `memory/`
+ 
+@@ -70,8 +68,7 @@ quand le contexte est perdu, et dont le lien se donne dans la conversation.
+ L'humain répond dans la conversation ; l'agent consigne sa réponse mot pour
+ mot, sans jamais la choisir, et la recopie au journal. Une décision qui
+ demande du contexte, approuver un document compris, s'écrit toujours en
+-demande ; jamais dans le widget de questions de l'agent, où l'humain lit un
+-texte brut sans liens à suivre (le hook le refuse). Ce que l'humain tranche
++demande ; jamais dans le widget de questions de l'agent. Ce que l'humain tranche
+ dans la conversation, de lui-même ou sur une question courte posée dans le
+ texte de la réponse, se consigne aussitôt de même, en séance. Comment : le
+ skill `socle-request`. Un besoin dont la conception n'est pas tranchée pose
+@@ -158,26 +155,26 @@ request d'une autre demande à l'humain de la fusionner d'abord, ou de
+ l'autoriser à y continuer ; partie d'une passation que sa garde
+ accepte, elle y continue, et cette pull request devient la sienne. Un prototype qu'on ne compte pas fusionner se
+ fait sur une branche jetable, nommée d'un préfixe de `[branches] disposable`
+-des garde-fous (`proto/` par défaut) : la CI ne la juge pas aux envois.
++des garde-fous (`proto/` par défaut).
+ 
+ ### Avant de conclure
+ 
+-- `python3 .socle/socle verify --fast` passe (le hook `Stop` le vérifie) ; `verify` exécute tout.
++- `python3 .socle/socle verify --fast` passe ; `verify` exécute tout.
+ - Si du code a changé, la mémoire aussi : chantier actif, journal, backlog.
+ - Si du code associé à une doc a changé (`[[docmap]]` des garde-fous), la doc change dans le même travail, ou le commit qui change ce code porte le trailer `Dispense-doc: <raison>`, qui ne vaut que pour lui.
+ - Un correctif (titre `fix:` ou trailer `Corrige: T-NNNN`) livre un test qui échoue sur le commit parent.
+ - Une fonction publique ajoutée ou modifiée est nommée par au moins un test, ou un commit la dispense nommément avec sa raison (`Dispense-test: f, g — <raison>`). Du code existant découvert sans test : le test s'écrit tout de suite s'il est dans le périmètre du travail, sinon un besoin va au backlog.
+ - Une action que seul l'humain peut faire (refusée par le hook, réglage d'un service, fichier qu'il détient) va au backlog avec `pour : humain`.
+-- **Toute intervention qui a agi se termine par un récap, puis deux lignes** : `Pour toi :` — ce qui revient à l'humain, décisions en attente et actions à faire, ou « rien » —, chaque point compréhensible sans le raisonnement de l'agent (ce que c'est, pourquoi, ce que change sa réponse), et `Ensuite :` — la suite proposée (prochain jalon, ce qu'il reste à faire avant), et ce que l'agent attend s'il attend quelque chose (une CI, un match : quoi, et jusqu'à quand). L'état calcule ce qui revient à l'humain ; le hook `Stop` refuse de conclure sans les deux lignes.
+-- **Un fichier à lire, ou une pull request, se donne par son lien** : l'humain lit dans la conversation ou sur GitHub, pas dans le conteneur de l'agent. `python3 .socle/socle url <chemin|ID>` donne le permalien, une fois le fichier poussé ; une demande en attente citée sans son lien, un lien relatif, ou un chemin entre accents graves qui n'existe pas dans le dépôt font refuser la fin du tour. Un chemin d'un autre dépôt s'écrit `depot:chemin`, le dépôt lié dans le projet par son adresse, ou déclaré dans `[references] repos` des garde-fous.
++- **Toute intervention qui a agi se termine par un récap, puis deux lignes** : `Pour toi :` — ce qui revient à l'humain, décisions en attente et actions à faire, ou « rien » —, chaque point compréhensible sans le raisonnement de l'agent (ce que c'est, pourquoi, ce que change sa réponse), et `Ensuite :` — la suite proposée (prochain jalon, ce qu'il reste à faire avant), et ce que l'agent attend s'il attend quelque chose (une CI, un match : quoi, et jusqu'à quand). L'état calcule ce qui revient à l'humain.
++- **Un fichier à lire, ou une pull request, se donne par son lien** : `python3 .socle/socle url <chemin|ID>` donne le permalien, une fois le fichier poussé ; une demande en attente citée sans son lien, un lien relatif, ou un chemin entre accents graves qui n'existe pas dans le dépôt font refuser la fin du tour. Un chemin d'un autre dépôt s'écrit `depot:chemin`, le dépôt lié dans le projet par son adresse, ou déclaré dans `[references] repos` des garde-fous.
+ 
+ ### Ne jamais
+ 
+-- compléter un SHA de tête, inventer un identifiant ou une référence : le hook les refuse ;
++- compléter un SHA de tête, inventer un identifiant ou une référence ;
+ - écrire dans un fichier protégé (politique, adaptateur, verrou du moteur, hooks, CI, réponses humaines) ;
+ - répondre à la place de l'humain (`socle answer` sans `--relayed` ni citation), ou lancer `socle approve` ou `socle private install`, réservés à l'humain ;
+-- contourner un hook (`--no-verify`) : le hook de l'agent le refuse sur le dépôt du projet, et la CI exécute tout ;
+-- poser une question à l'humain dans le widget de questions de l'agent : le hook le refuse.
++- contourner un hook (`--no-verify`) ;
++- poser une question à l'humain dans le widget de questions de l'agent.
+ 
+ ### Ce qui tourne tout seul
+ 
+diff --git a/engine/socle/templates/skills/socle-batch/SKILL.en.md b/engine/socle/templates/skills/socle-batch/SKILL.en.md
+index 187c1177..a9ed2996 100644
+--- a/engine/socle/templates/skills/socle-batch/SKILL.en.md
++++ b/engine/socle/templates/skills/socle-batch/SKILL.en.md
+@@ -63,8 +63,7 @@ Skill `socle-review`, on the committed batch, and its sorting of the
+ findings. A blocking finding goes back to whoever implemented, if it
+ still answers. A stopped subagent (a background check whose thread it
+ did not pick up) is resumed from its isolated copy, by the orchestrating
+-agent. A batch leaves only once its blocking findings are fixed: once pushed, a
+-decision and a journal entry are no longer rewritten.
++agent. A batch leaves only once its blocking findings are fixed.
+ 
+ ## Integrating, pushing, delivering
+ 
+@@ -75,10 +74,9 @@ decision and a journal entry are no longer rewritten.
+ 2. Remove the isolated copy and its branch;
+    `python3 .socle/socle verify --fast`.
+ 3. Push; open the pull request if there is none, only one open. Wait for
+-   the CI of the pushed commit (`gh run list --commit <sha>`): the "CI"
+-   line of the state follows the head. An announced wait has its wake-up
+-   in a cloud session (`send_later`); elsewhere, `Next:` says so, and the
+-   human restarts the agent.
++   the CI of the pushed commit (`gh run list --commit <sha>`). An
++   announced wait has its wake-up in a cloud session (`send_later`);
++   elsewhere, `Next:` says so, and the human restarts the agent.
+ 4. Who merges: by default the human, and the next batch is added to the
+    same pull request; the agent, its own, if the policy allows it: green
+    CI on the head commit, which it gives, review done, no pending request
+diff --git a/engine/socle/templates/skills/socle-batch/SKILL.md b/engine/socle/templates/skills/socle-batch/SKILL.md
+index ab66d96b..ee84f0c8 100644
+--- a/engine/socle/templates/skills/socle-batch/SKILL.md
++++ b/engine/socle/templates/skills/socle-batch/SKILL.md
+@@ -62,8 +62,7 @@ Skill `socle-review`, sur le lot commité, et son tri des constats. Un
+ bloquant retourne à qui a implémenté, s'il répond encore. Un sous-agent
+ arrêté (une vérification en arrière-plan dont il n'a pas repris le fil)
+ se reprend depuis sa copie isolée, par l'agent qui orchestre. Un lot ne
+-part qu'après la correction de ses bloquants : une fois poussées, une décision et une
+-entrée de journal ne se réécrivent plus.
++part qu'après la correction de ses bloquants.
+ 
+ ## Intégrer, pousser, livrer
+ 
+@@ -74,10 +73,9 @@ entrée de journal ne se réécrivent plus.
+ 2. Retirer la copie isolée et sa branche ;
+    `python3 .socle/socle verify --fast`.
+ 3. Pousser ; ouvrir la pull request s'il n'y en a pas, une seule ouverte.
+-   Attendre la CI du commit poussé (`gh run list --commit <sha>`) : la
+-   ligne « CI » de l'état suit la tête. Une attente annoncée a son
+-   réveil en session cloud (`send_later`) ; ailleurs, `Ensuite :` le dit,
+-   et l'humain relance l'agent.
++   Attendre la CI du commit poussé (`gh run list --commit <sha>`). Une
++   attente annoncée a son réveil en session cloud (`send_later`) ;
++   ailleurs, `Ensuite :` le dit, et l'humain relance l'agent.
+ 4. Qui fusionne : par défaut l'humain, et le lot suivant s'ajoute à la
+    même pull request ; l'agent, la sienne, si la politique le permet : CI
+    verte sur le commit de tête, qu'il donne, revue faite, aucune demande
+diff --git a/engine/socle/templates/skills/socle-handoff/SKILL.en.md b/engine/socle/templates/skills/socle-handoff/SKILL.en.md
+index 9abb7070..f24c2f06 100644
+--- a/engine/socle/templates/skills/socle-handoff/SKILL.en.md
++++ b/engine/socle/templates/skills/socle-handoff/SKILL.en.md
+@@ -7,8 +7,7 @@ description: Hand over to a new session, at the end of a batch, near a usage lim
+ 
+ A session chains the batches its budget allows (the `socle-batch`
+ skill). When it stops, it writes its handoff in the memory, commits and
+-pushes it; the next session, from one account or another, finds it and
+-judges its guard. The handoff's times are in UTC; those the human reads,
++pushes it; the next session finds it and judges its guard. The handoff's times are in UTC; those the human reads,
+ in their own time.
+ 
+ ## The two modes
+@@ -16,8 +15,7 @@ in their own time.
+ - **Scheduled session**, by default: the agent creates the next session
+   and schedules its wake-up.
+ - **Prompt to copy**: the recap tells the human to open a new session
+-  and ask there for the resumption; the mode of whoever has several
+-  accounts or wants to keep control.
++  and ask there for the resumption.
+ 
+ The mode is the one a directive in force states; without one, the
+ scheduled session. The human changes it by saying so: the agent records
+@@ -95,8 +93,7 @@ The handoff written with `--scheduled` (above, `socle-batch` tidied up):
+ 
+ 1. `create_session`, without `prompt`: `source_url` the repository's
+    address; `source_revision` the work branch, or the default branch
+-   when the merge deleted it; `outcome_branch` the work branch, without
+-   which the new session has nowhere to push; `model` this
++   when the merge deleted it; `outcome_branch` the work branch; `model` this
+    session's; `effort` its own, which is not inherited (refused, the call
+    is made again without it); `title` "Handoff — <batch> — leaves on
+    <day> at <human's time>"; `tags` `["passation"]`.
+@@ -139,9 +136,7 @@ the conditions of `socle-batch`; otherwise the human merges it.
+ 
+ ## Seeing and stopping
+ 
+-The created session appears at once in the human's list of sessions,
+-under its title, ready for review while it waits for its wake-up. Its
+-last message says what it did, why the chain stops or what the guard
++The last message of the created session says what it did, why the chain stops or what the guard
+ refused, and what is up to the human.
+ 
+ The human stops it by writing "stop" in the session that scheduled it,
+@@ -157,5 +152,4 @@ A failed turn or a restarted container in the created session may give a
+ turn back to the one that scheduled it. It says so in one line and does
+ nothing else.
+ 
+-The wake-ups of `socle-resume` remain, in both modes: a session cut off
+-before tidying up resumes when the limit lifts.
++The wake-ups of `socle-resume` remain, in both modes.
+diff --git a/engine/socle/templates/skills/socle-handoff/SKILL.md b/engine/socle/templates/skills/socle-handoff/SKILL.md
+index 0c028f4f..e5feb04f 100644
+--- a/engine/socle/templates/skills/socle-handoff/SKILL.md
++++ b/engine/socle/templates/skills/socle-handoff/SKILL.md
+@@ -7,8 +7,8 @@ description: Passer la main à une session neuve, à la fin d'un lot, près d'un
+ 
+ Une session enchaîne les lots que son budget permet (skill
+ `socle-batch`). Quand elle s'arrête, elle écrit sa passation dans la
+-mémoire, la commite et la pousse ; la session suivante, d'un compte
+-comme d'un autre, la trouve et juge sa garde. Les heures de la passation
++mémoire, la commite et la pousse ; la session suivante la trouve et
++juge sa garde. Les heures de la passation
+ sont en UTC ; celles que lit l'humain, à son heure.
+ 
+ ## Les deux modes
+@@ -16,8 +16,7 @@ sont en UTC ; celles que lit l'humain, à son heure.
+ - **Session programmée**, par défaut : l'agent crée la session suivante
+   et programme son réveil.
+ - **Prompt à copier** : le récap dit à l'humain d'ouvrir une session
+-  neuve et d'y demander la reprise ; le mode de qui a plusieurs comptes
+-  ou veut garder la main.
++  neuve et d'y demander la reprise.
+ 
+ Le mode est celui que dit une consigne en vigueur ; sans elle, la
+ session programmée. L'humain en change en le disant : l'agent consigne sa
+@@ -94,8 +93,8 @@ La passation écrite avec `--scheduled` (plus haut, `socle-batch` rangé) :
+ 
+ 1. `create_session`, sans `prompt` : `source_url` l'adresse du dépôt ;
+    `source_revision` la branche de travail, ou la branche par défaut
+-   quand la fusion l'a supprimée ; `outcome_branch` la branche de travail,
+-   sans quoi la session neuve n'a pas où pousser ; `model` celui de
++   quand la fusion l'a supprimée ; `outcome_branch` la branche de travail ;
++   `model` celui de
+    cette session ; `effort` le sien, qui ne s'hérite pas (refusé, l'appel
+    se refait sans lui) ; `title` « Passation — <lot> — part le <jour> à
+    <heure de l'humain> » ; `tags` `["passation"]`.
+@@ -140,9 +139,7 @@ fusionne.
+ 
+ ## Voir et arrêter
+ 
+-La session créée paraît aussitôt dans la liste des sessions de
+-l'humain, sous son titre, prête à relire tant qu'elle attend son réveil.
+-Son dernier message dit ce qu'elle a fait, pourquoi la chaîne s'arrête
++Le dernier message de la session créée dit ce qu'elle a fait, pourquoi la chaîne s'arrête
+ ou ce que la garde a refusé, et ce qui revient à l'humain.
+ 
+ L'humain l'arrête en écrivant « arrête » dans la session qui l'a
+@@ -158,5 +155,4 @@ Un tour en échec ou un conteneur redémarré dans la session créée peut
+ rendre un tour à celle qui l'a programmée. Elle le dit en une ligne et
+ ne fait rien d'autre.
+ 
+-Les réveils de `socle-resume` restent, dans les deux modes : une session
+-coupée avant d'avoir rangé reprend à la levée.
++Les réveils de `socle-resume` restent, dans les deux modes.
+diff --git a/engine/socle/templates/skills/socle-request/SKILL.en.md b/engine/socle/templates/skills/socle-request/SKILL.en.md
+index 654e6ac3..6d043607 100644
+--- a/engine/socle/templates/skills/socle-request/SKILL.en.md
++++ b/engine/socle/templates/skills/socle-request/SKILL.en.md
+@@ -5,7 +5,7 @@ description: Write a request for a human decision, relay the human's answer, or
+ 
+ # Requests for a human decision
+ 
+-A request is read once the context is lost: it stands on its own. The human
++A request stands on its own. The human
+ answers in the conversation; the agent records their answer word for word,
+ never choosing it.
+ 
+@@ -29,8 +29,7 @@ never choosing it.
+      in one sentence`); never an identifier alone. A protected file to
+      have approved, those of an update, is written there on its own line,
+      its path and its new fingerprint, nothing else (`python3 .socle/socle
+-     check` gives them): these lines need no description and do not count
+-     in the request's budget.
++     check` gives them): these lines need no description.
+    - **Where to look**: a link to each document to read
+      (`python3 .socle/socle url <path>`), and what to check there.
+    - **Options**: for each, the effort, the risk, the reversibility.
+@@ -75,17 +74,16 @@ python3 .socle/socle answer D-NNNN <answer> --relayed --by <name> --quote-file <
+ 3. Copy the answer into the journal, with its exact text.
+ 
+ The answer is recorded as soon as it is given, committed and pushed at
+-once: the human no longer sees it pending. It covers the change it
++once. It covers the change it
+ authorizes (an expected value, a guardrail key, a protected file) in its
+ pull request, or later, merged, as long as an open task cites it and
+ what it names has not moved since the request: the task that makes the
+ change cites it, and is closed with it.
+ 
+-An answer is only relayed to a request pushed as is: the human must have
+-been able to read it. An answered request is frozen. The answer
+-`insufficient-context` sends the request back: rewrite it as a new request
+-that replaces it and cites it in its cited elements; the state then no
+-longer says to rewrite it.
++An answer is only relayed to a request pushed as is. An answered request
++is frozen. The answer `insufficient-context` sends the request back:
++rewrite it as a new request that replaces it and cites it in its cited
++elements.
+ 
+ A test whose expected value changes while waiting for a request that names
+ it may stay changed in the tree at the end of the turn; it is only
+@@ -129,8 +127,7 @@ this way, in session, then the directive becomes `lifted`, with
+ Content shown in the conversation that the human approves (a format, an
+ example, a text) is first written as is in the repository, then the
+ decision designates it (`--about <path>`), and the tasks that follow from
+-it cite that path: without it, the decision keeps only the question and
+-the answer, and the content is lost.
++it cite that path.
+ 
+ **The light variant**, for expected values changed mechanically, tests
+ that read a format the human has just approved: a question in the
+diff --git a/engine/socle/templates/skills/socle-request/SKILL.md b/engine/socle/templates/skills/socle-request/SKILL.md
+index 3c969fe5..493ff915 100644
+--- a/engine/socle/templates/skills/socle-request/SKILL.md
++++ b/engine/socle/templates/skills/socle-request/SKILL.md
+@@ -5,8 +5,7 @@ description: Poser une demande de décision humaine, relayer la réponse de l'hu
+ 
+ # Les demandes de décision humaine
+ 
+-Une demande est lue quand le contexte est perdu : elle se suffit à
+-elle-même. L'humain répond dans la conversation ; l'agent consigne sa
++Une demande se suffit à elle-même. L'humain répond dans la conversation ; l'agent consigne sa
+ réponse mot pour mot, sans jamais la choisir.
+ 
+ ## Poser une demande
+@@ -29,8 +28,7 @@ réponse mot pour mot, sans jamais la choisir.
+      une phrase`) ; jamais un identifiant seul. Un fichier protégé à
+      faire approuver, ceux d'une mise à jour, s'y écrit sur sa ligne, son
+      chemin et son empreinte nouvelle, rien d'autre (`python3 .socle/socle
+-     check` les donne) : ces lignes n'ont pas à être décrites et ne
+-     comptent pas dans le budget de la demande.
++     check` les donne) : ces lignes n'ont pas à être décrites.
+    - **Où regarder** : un lien vers chaque document à lire
+      (`python3 .socle/socle url <chemin>`), et ce qu'il faut y vérifier.
+    - **Options** : pour chacune, l'effort, le risque, la réversibilité.
+@@ -77,17 +75,16 @@ python3 .socle/socle answer D-NNNN <réponse> --relayed --by <nom> --quote-file
+ 3. Recopier la réponse au journal, avec son texte exact.
+ 
+ La réponse se consigne dès qu'elle est donnée, se commite et se pousse
+-aussitôt : l'humain ne la voit plus en attente. Elle couvre le changement
++aussitôt. Elle couvre le changement
+ qu'elle autorise (une valeur attendue, une clé des garde-fous, un fichier
+ protégé) dans sa pull request, ou plus tard, fusionnée, tant qu'une tâche
+ ouverte la cite et que ce qu'elle nomme n'a pas bougé depuis la demande :
+ la tâche qui fait le changement la cite, et se clôt avec lui.
+ 
+-Une réponse ne se relaie qu'à une demande poussée telle quelle : l'humain
+-doit avoir pu la lire. Une demande répondue est gelée. La réponse
+-`contexte-insuffisant` renvoie la demande : la réécrire en une demande
+-nouvelle, qui la remplace et la cite dans ses éléments cités ; l'état ne
+-la dit plus alors à réécrire.
++Une réponse ne se relaie qu'à une demande poussée telle quelle. Une
++demande répondue est gelée. La réponse `contexte-insuffisant` renvoie la
++demande : la réécrire en une demande nouvelle, qui la remplace et la cite
++dans ses éléments cités.
+ 
+ Un test dont la valeur attendue change en attendant une demande qui le
+ nomme peut rester changé dans l'arbre à la fin du tour ; il ne se commite
+@@ -130,8 +127,7 @@ ainsi, en séance, puis la consigne passe `levée`, avec
+ Un contenu montré dans la conversation que l'humain valide (un format, un
+ exemple, un texte) s'écrit d'abord tel quel dans le dépôt, puis la
+ décision le désigne (`--about <chemin>`), et les tâches qui en découlent
+-citent ce chemin : sans lui, la décision ne garde que la question et la
+-réponse, et le contenu se perd.
++citent ce chemin.
+ 
+ **La variante légère**, pour des valeurs attendues changées
+ mécaniquement, des tests qui lisent un format que l'humain vient de
+diff --git a/engine/socle/templates/skills/socle-resume/SKILL.en.md b/engine/socle/templates/skills/socle-resume/SKILL.en.md
+index ea8bc33d..2980fb3d 100644
+--- a/engine/socle/templates/skills/socle-resume/SKILL.en.md
++++ b/engine/socle/templates/skills/socle-resume/SKILL.en.md
+@@ -5,10 +5,8 @@ description: Have the agent that a usage limit cuts off resume on its own, throu
+ 
+ # Resuming after a usage limit
+ 
+-A usage limit of the account, over five hours or seven days, cuts the
+-session off; the agent then resumes only at the human's next message.
+ Two wake-ups, messages the agent schedules for its own session, make it
+-resume when the limit lifts. They live only during a turn that works or
++resume when a usage limit lifts. They live only during a turn that works or
+ a wait with a bounded time: a turn that ends for another reason than a
+ limit never restarts the agent.
+ 
+@@ -34,9 +32,9 @@ argument), going back with `before_id` while nothing is found; in the most recen
+ `….seven_day.resetsAt`, in seconds since 1970, UTC. A time read earlier,
+ still to come, holds: it is not read again.
+ 
+-**Never in the past.** It would fire at once. The current time: `date -u`, in the turn's first command, or the `now` that
+-`send_later` returns. A reset read that is not more than a minute ahead
+-belongs to a closed window: the wake-up is then armed at the bound, now
++**Never in the past.** The current time: `date -u`, in the turn's first command, or the `now` that
++`send_later` returns. A reset read that is not more than a minute ahead:
++the wake-up is then armed at the bound, now
+ plus five hours and five minutes, or seven days and five minutes for the
+ week. A `send_later` whose armed time precedes its `now`: remove that
+ wake-up and re-arm it at the bound.
+@@ -87,9 +85,8 @@ for the subagents launched together, when their ids are known.
+ Before the final answer, remove both wake-ups (`delete_trigger`), except
+ during a subagent, until the turn that receives its result, or a wait
+ with a bounded time (a reminder, a background command, a CI), until the
+-event's turn, each pushed back after that time if it fell before:
+-refused, that turn resumes when the limit lifts. A turn cut off or refused removes nothing: that is what makes it
+-resume. If the turn goes on after (an end-of-turn hook refuses to
++event's turn, each pushed back after that time if it fell before. A
++turn cut off or refused removes nothing. If the turn goes on after (an end-of-turn hook refuses to
+ conclude), re-arm them.
+ 
+ ## On waking: check first
+@@ -129,7 +126,7 @@ A message that starts with "Resume after limit":
+    and remove the remaining wake-up, or leave it if a subagent is running.
+    If the human had interrupted the work and the end-of-turn check
+    refuses on failing checks, say so in one line, without touching it or
+-   re-arming: relaunched on the same tree, it lets the turn conclude.
++   re-arming.
+ 3. Otherwise, resume the noted batch, at the step the conversation, git,
+    the active work and the worktrees tell. Every noted subagent whose
+    result did not arrive: continue it with a message (`SendMessage`, to
+@@ -142,6 +139,4 @@ A message that starts with "Resume after limit":
+ ## What the agent never does
+ 
+ Arm a recurring wake-up; rewrite a wake-up at every step; touch another
+-session's wake-up without the human asking. The human stops everything by
+-writing "stop" in the session, or deletes the wake-ups from the list of
+-scheduled tasks of their account (claude.ai/code/routines).
++session's wake-up without the human asking.
+diff --git a/engine/socle/templates/skills/socle-resume/SKILL.md b/engine/socle/templates/skills/socle-resume/SKILL.md
+index a9444217..c2aa41b7 100644
+--- a/engine/socle/templates/skills/socle-resume/SKILL.md
++++ b/engine/socle/templates/skills/socle-resume/SKILL.md
+@@ -5,11 +5,10 @@ description: Faire reprendre seul l'agent qu'une limite d'usage coupe, par deux
+ 
+ # La reprise après une limite d'usage
+ 
+-Une limite d'usage, sur cinq heures ou sept jours, coupe la session
+-jusqu'au message suivant de l'humain. Deux réveils, que l'agent programme
+-pour sa propre session, le font reprendre à la levée, pendant un tour qui
+-travaille ou une attente à heure bornée : un tour qui finit autrement que
+-sur une limite ne relance jamais l'agent.
++Deux réveils, que l'agent programme pour sa propre session, le font
++reprendre à la levée d'une limite d'usage, pendant un tour qui travaille ou
++une attente à heure bornée : un tour qui finit autrement que sur une limite
++ne relance jamais l'agent.
+ 
+ ## Quand
+ 
+@@ -34,10 +33,10 @@ trouvé ; dans le plus récent, `rate_limit_info.unifiedWindows.five_hour.resets
+ `….seven_day.resetsAt`, en secondes depuis 1970, UTC. Une heure lue plus
+ tôt, encore à venir, vaut : on ne la relit pas.
+ 
+-**Jamais dans le passé.** Il tirerait aussitôt. L'heure courante :
++**Jamais dans le passé.** L'heure courante :
+ `date -u`, dans la première commande du tour, ou le `now` que rend
+-`send_later`. Une remise à zéro lue à moins d'une minute dans l'avenir
+-date d'une fenêtre close : le réveil s'arme à la borne, maintenant plus
++`send_later`. Une remise à zéro lue à moins d'une minute dans l'avenir :
++le réveil s'arme à la borne, maintenant plus
+ cinq heures et cinq minutes, ou sept jours et cinq minutes pour la
+ semaine. Un `send_later` armé avant son `now` : le retirer et le réarmer
+ à la borne.
+@@ -90,8 +89,7 @@ Avant la réponse finale, retirer les deux réveils (`delete_trigger`),
+ sauf pendant un sous-agent, jusqu'au tour qui reçoit son résultat, ou une
+ attente à heure bornée (un rappel, une commande en arrière-plan, une
+ CI), jusqu'au tour de l'événement, chacun repoussé après cette heure
+-s'il tombait avant : refusé, ce tour se reprend à la levée. Un tour
+-coupé ou refusé ne retire rien : c'est ce qui le fait reprendre. Si le
++s'il tombait avant. Un tour coupé ou refusé ne retire rien. Si le
+ tour continue après (un hook de fin de tour refuse de conclure), les
+ réarmer.
+ 
+@@ -132,7 +130,7 @@ Un message qui commence par « Reprise après limite » :
+    et retirer le réveil restant, ou le laisser si un sous-agent tourne.
+    Si l'humain avait interrompu le travail et que le contrôle de fin de
+    tour refuse sur des contrôles en échec, le dire en une ligne, sans y
+-   toucher ni réarmer : relancé sur le même arbre, il laisse conclure.
++   toucher ni réarmer.
+ 3. Sinon, reprendre le lot noté, à l'étape que disent la conversation,
+    git, le chantier actif et les worktrees. Chaque sous-agent noté dont le
+    résultat n'est pas arrivé : le poursuivre par un message
+@@ -145,6 +143,4 @@ Un message qui commence par « Reprise après limite » :
+ ## Ce que l'agent ne fait jamais
+ 
+ Armer un réveil récurrent ; récrire un réveil à chaque étape ; toucher au
+-réveil d'une autre session sans que l'humain le demande. L'humain arrête
+-tout en écrivant « arrête » dans la session, ou supprime les réveils de
+-la liste des tâches programmées de son compte (claude.ai/code/routines).
++réveil d'une autre session sans que l'humain le demande.
+diff --git a/memory/backlog/T-0206-les-justifications-des-skills-du-produit-et-de-la.md b/memory/backlog/T-0206-les-justifications-des-skills-du-produit-et-de-la.md
+index 393717da..40377c8c 100644
+--- a/memory/backlog/T-0206-les-justifications-des-skills-du-produit-et-de-la.md
++++ b/memory/backlog/T-0206-les-justifications-des-skills-du-produit-et-de-la.md
+@@ -16,6 +16,6 @@ revue adversariale, note de version française et anglaise.
+ ## Fait quand
+ 
+ - [ ] chaque skill du produit, en français et en anglais, laisse au moins 600 octets sous son plafond de 8 000, et un test le mesure
+-- [ ] la section du socle d'`AGENTS.md` laisse au moins 600 octets sous le plafond de 16 000 de ce dépôt, en français et en anglais
++- [x] la section du socle d'`AGENTS.md` laisse au moins 600 octets sous le plafond de 16 000 de ce dépôt, en français et en anglais
+ - [ ] chaque passage sorti se retrouve dans le guide, français et anglais, et aucune règle n'est perdue : la revue compare les règles avant et après
+-- [ ] la note de version, française et anglaise, le dit
++- [x] la note de version, française et anglaise, le dit
+diff --git a/memory/journal/2026-11-14.md b/memory/journal/2026-11-14.md
+index 84e45e8e..3ad6c8fd 100644
+--- a/memory/journal/2026-11-14.md
++++ b/memory/journal/2026-11-14.md
+@@ -932,3 +932,69 @@ Le contexte de la session dépasse 150 000 jetons (210 000) : elle range
+ le dossier de passation de la documentation de fabrication. Mode : le
+ prompt à copier (C-0003@b3e65851),
+ chaîne 0.
++
++## J-2026-11-26-BE — T-0206 : les justifications des skills et de la section du socle d'AGENTS.md passent au guide ; AGENTS.md tient sa marge, socle-batch, socle-request et socle-resume non
++
++> ref : T-0206, B-0354, D-0218, L-0049, ADR-0110, ADR-0111
++
++Sur D-0218, ce qui justifiait une règle sans la dire sort, mot pour mot,
++vers une sous-section nouvelle du guide, « Pourquoi ces règles » (« Why
++these rules »), à la fin de sa « Référence », un paragraphe par texte ;
++la règle reste, intacte. Sorti, dans les deux langues :
++
++- section du socle d'`AGENTS.md` : pourquoi les hooks manquent (la
++  session hors de la racine, ce qu'en disent `socle state` et le hook
++  avant commit) ; « un compactage peut la perdre » ; le texte brut sans
++  liens du widget ; « la CI ne la juge pas aux envois » ; ce que vérifie
++  ou refuse le hook `Stop` ; où lit l'humain ; les trois « le hook le
++  refuse » de « Ne jamais » ;
++- `socle-batch` : pourquoi une décision et une entrée poussées ne se
++  réécrivent plus ; « la ligne « CI » de l'état suit la tête » ;
++- `socle-resume` : la limite qui coupe la session (l'introduction) ;
++  « il tirerait aussitôt » ; la fenêtre close ; les raisons de garder les
++  réveils (« refusé, ce tour se reprend à la levée », « c'est ce qui le
++  fait reprendre ») ; « relancé sur le même arbre, il laisse conclure » ;
++  comment l'humain arrête les réveils, que le guide ne disait pas ;
++- `socle-request` : pourquoi une demande se suffit, pourquoi une réponse
++  se pousse aussitôt et ne se relaie qu'à une demande poussée, ce que
++  l'état ne dit plus d'une demande remplacée, ce que les lignes
++  d'empreinte ne comptent pas, pourquoi un contenu validé s'écrit d'abord ;
++- `socle-handoff` : « d'un compte comme d'un autre », le mode de qui a
++  plusieurs comptes, pourquoi `outcome_branch`, la session créée dans la
++  liste de l'humain, pourquoi les réveils restent.
++
++Mesures, en octets, avant et après : `socle-batch` 7 992 → 7 858 (anglais
++7 775 → 7 658), `socle-resume` 7 993 → 7 564 (7 737 → 7 254),
++`socle-request` 7 969 → 7 669 (7 488 → 7 191), `socle-handoff` 7 707 →
++7 380 (7 224 → 6 893) ; `socle-review` et `socle-private-memory` ne
++changent pas. L'`AGENTS.md` de ce dépôt, remis par l'installeur (sa
++section devient celle du gabarit, les trois lignes qui en divergeaient
++comprises) : 15 926 → 15 374, et 14 607 avec la section anglaise (15 171
++avant).
++
++Le critère de la marge de 600 octets n'est pas tenu pour quatre textes :
++`socle-batch` (142 ; anglais 342), `socle-request` (331) et
++`socle-resume` (436). Ils n'ont pas assez de justifications : ce qui y
++reste ordonne quelque chose. Les passages pesés et gardés, parce qu'ils
++bornent une règle ou que les tests les tiennent pour une règle :
++« Selon le mode, il programme la session suivante, ou dit de demander la
++reprise », la parenthèse du sous-agent arrêté, « et l'humain relance
++l'agent », « une limite retarde un lot, elle ne l'allège pas », « celui
++d'un lot s'estime sur ces mesures », « que l'humain le répète ». Même
++sortis, `socle-batch` resterait à environ 410 octets de marge. T-0206
++reste ouverte sur ce critère.
++
++Le test nouveau, `TestLaPlaceDesReglesSuivantes` (`tests/test_skills.py`),
++mesure la marge de chaque skill posé, dans les deux langues, et celle de
++l'`AGENTS.md` de ce dépôt avec la section que pose l'installeur, en
++français et en anglais, sur les plafonds de ses garde-fous ; les quatre
++textes sans marge sont nommés à part, et le test refuse d'en garder un
++qui l'atteint. Il vérifie aussi que chaque passage sorti se lit au guide
++et plus dans son texte. Il échoue sur le commit parent (marge de la
++section 65 octets, `socle-handoff` 293, `socle-request` et
++`socle-resume` anglais 512 et 263, chaque passage). Trois tests qui
++lisaient un passage sorti le lisent désormais au guide, la règle restant
++lue au skill (ADR-0110, ADR-0111) :
++`test_le_skill_des_lots_attend_la_ci_du_commit_pousse_par_son_sha`,
++`test_l_attente_a_heure_bornee_et_le_reveil_d_un_travail_interrompu` et
++`test_les_reveils_d_une_session_archivee_se_disent_a_l_humain`.
+diff --git a/tests/test_attente_de_la_ci.py b/tests/test_attente_de_la_ci.py
+index e1c67bed..62758daf 100644
+--- a/tests/test_attente_de_la_ci.py
++++ b/tests/test_attente_de_la_ci.py
+@@ -19,21 +19,26 @@ def etape_3(rel: str, section: str) -> str:
+ 
+ class TestLAttenteDeLaCi(unittest.TestCase):
+     def test_le_skill_des_lots_attend_la_ci_du_commit_pousse_par_son_sha(self):
+-        for rel, section, mots, anciens in (
++        # T-0206 (D-0218) : la règle reste dans le skill, sa raison passe au
++        # guide, « Pourquoi ces règles ».
++        for rel, section, mots, anciens, guide, raison in (
+                 ("templates/skills/socle-batch/SKILL.md", "## Intégrer, pousser, livrer",
+-                 ("Attendre la CI du commit poussé (`gh run list --commit <sha>`) : la ligne « CI » de l'état suit "
+-                  "la tête.",),
+-                 ("Attendre `success` sur le SHA court du commit de tête",)),
++                 ("Attendre la CI du commit poussé (`gh run list --commit <sha>`).",),
++                 ("Attendre `success` sur le SHA court du commit de tête",), "HELP.md",
++                 "L'agent attend la CI du commit poussé (`gh run list --commit <sha>`) : la ligne « CI » de l'état "
++                 "suit la tête."),
+                 ("templates/skills/socle-batch/SKILL.en.md", "## Integrating, pushing, delivering",
+-                 ("Wait for the CI of the pushed commit (`gh run list --commit <sha>`): the \"CI\" line of the state "
+-                  "follows the head.",),
+-                 ("Wait for the CI of the head commit",))):
++                 ("Wait for the CI of the pushed commit (`gh run list --commit <sha>`).",),
++                 ("Wait for the CI of the head commit",), "HELP.en.md",
++                 "The agent waits for the CI of the pushed commit (`gh run list --commit <sha>`): the \"CI\" line of "
++                 "the state follows the head.")):
+             texte = etape_3(rel, section)
+             with self.subTest(gabarit=rel):
+                 for mot in mots:
+                     self.assertIn(mot, texte)
+                 for mot in anciens:
+                     self.assertNotIn(mot, texte)
++                self.assertIn(raison, " ".join((MOTEUR / guide).read_text(encoding="utf-8").split()))
+ 
+ 
+ if __name__ == "__main__":
+diff --git a/tests/test_skills.py b/tests/test_skills.py
+index 4ea6f0d2..2872af2f 100644
+--- a/tests/test_skills.py
++++ b/tests/test_skills.py
+@@ -429,23 +429,30 @@ class TestLaReprise(unittest.TestCase):
+         garde ses réveils, repoussés après son heure, et un tour refusé
+         pendant elle se reprend ; au réveil qui ne reprend pas, un contrôle
+         de fin de tour en échec ne fait pas finir le travail interrompu."""
+-        for lg, fin, non, apres, attente, reveil in (
++        from socle import cli
++
++        # T-0206 (D-0218) : les règles restent dans le skill, leurs raisons
++        # passent au guide, « Pourquoi ces règles ».
++        for lg, fin, non, apres, attente, reveil, guide, raisons in (
+                 ("fr", "## À la fin de chaque tour", "Ne pas reprendre", "\n3. ",
+                  ("sauf pendant un sous-agent, jusqu'au tour qui reçoit son résultat, ou une attente à heure bornée "
+                   "(un rappel, une commande en arrière-plan, une CI), jusqu'au tour de l'événement, chacun repoussé "
+-                  "après cette heure s'il tombait avant : refusé, ce tour se reprend à la levée.",
++                  "après cette heure s'il tombait avant.",
+                   "Un tour coupé ou refusé ne retire rien"),
+                  "Si l'humain avait interrompu le travail et que le contrôle de fin de tour refuse sur des contrôles "
+-                 "en échec, le dire en une ligne, sans y toucher ni réarmer : relancé sur le même arbre, il laisse "
+-                 "conclure."),
++                 "en échec, le dire en une ligne, sans y toucher ni réarmer.", "HELP.md",
++                 ("chacun repoussé après cette heure s'il tombait avant : refusé, ce tour se reprend à la levée.",
++                  "sans y toucher ni réarmer : relancé sur le même arbre, il laisse conclure.")),
+                 ("en", "## At the end of every turn", "Do not resume", "\n3. ",
+                  ("except during a subagent, until the turn that receives its result, or a wait with a bounded time "
+                   "(a reminder, a background command, a CI), until the event's turn, each pushed back after that "
+-                  "time if it fell before: refused, that turn resumes when the limit lifts.",
++                  "time if it fell before.",
+                   "A turn cut off or refused removes nothing"),
+                  "If the human had interrupted the work and the end-of-turn check refuses on failing checks, say so "
+-                 "in one line, without touching it or re-arming: relaunched on the same tree, it lets the turn "
+-                 "conclude.")):
++                 "in one line, without touching it or re-arming.", "HELP.en.md",
++                 ("each pushed back after that time if it fell before: refused, that turn resumes when the limit "
++                  "lifts.",
++                  "without touching it or re-arming: relaunched on the same tree, it lets the turn conclude."))):
+             texte = self.lire(lg)
+             section = " ".join(texte.split(fin, 1)[1].split("\n## ", 1)[0].split())
+             for attendu in attente:
+@@ -453,6 +460,9 @@ class TestLaReprise(unittest.TestCase):
+             # La règle de la réponse d'une ligne est un cas où l'agent ne reprend pas.
+             cas = " ".join(texte.split(non, 1)[1].split(apres, 1)[0].split())
+             self.assertIn(reveil, cas, lg)
++            texte_guide = " ".join((Path(cli.__file__).parent / guide).read_text(encoding="utf-8").split())
++            for raison in raisons:
++                self.assertIn(raison, texte_guide, lg)
+ 
+     def test_le_message_qui_provoque_la_coupure_compte_et_le_reveil_qui_a_tire_manque(self):
+         """Passe 2 de la revue de L-0023 (J-2026-11-23-U) : avec les réveils
+@@ -487,20 +497,22 @@ class TestLaReprise(unittest.TestCase):
+ 
+     def test_les_reveils_d_une_session_archivee_se_disent_a_l_humain(self):
+         """T-0127 (B-0301) : ils ne se désactivent qu'à sa demande, et il
+-        sait où les retrouver lui-même."""
+-        for lg, debut, jamais, attendus, retrouver in (
++        sait où les retrouver lui-même : le guide le lui dit (T-0206)."""
++        from socle import cli
++
++        for lg, debut, jamais, attendus, retrouver, guide, ou in (
+                 ("fr", "## Au début de chaque tour", "## Ce que l'agent ne fait jamais",
+                  ("Au premier tour de la session, ou perdus par un compactage : `list_triggers`",
+                   "Ceux d'une session archivée (`get_session` : `SESSION_STATUS_ARCHIVED`) se disent à l'humain "
+                   "avec leurs heures, et ne se désactivent (`update_trigger`, `enabled: false`) qu'à sa demande."),
+-                 ("toucher au réveil d'une autre session sans que l'humain le demande",
+-                  "la liste des tâches programmées de son compte (claude.ai/code/routines)")),
++                 ("toucher au réveil d'une autre session sans que l'humain le demande",), "HELP.md",
++                 "la liste des tâches programmées de son compte (claude.ai/code/routines)"),
+                 ("en", "## At the start of every turn", "## What the agent never does",
+                  ("At the session's first turn, or lost to a compaction: `list_triggers`",
+                   "Those of an archived session (`get_session`: `SESSION_STATUS_ARCHIVED`) are told to the human "
+                   "with their times, and are disabled (`update_trigger`, `enabled: false`) only at their request."),
+-                 ("touch another session's wake-up without the human asking",
+-                  "the list of scheduled tasks of their account (claude.ai/code/routines)"))):
++                 ("touch another session's wake-up without the human asking",), "HELP.en.md",
++                 "the list of scheduled tasks of their account (claude.ai/code/routines)")):
+             texte = self.lire(lg)
+             section = " ".join(texte.split(debut, 1)[1].split("\n## ", 1)[0].split())
+             for attendu in attendus:
+@@ -508,6 +520,7 @@ class TestLaReprise(unittest.TestCase):
+             section = " ".join(texte.split(jamais, 1)[1].split())
+             for attendu in retrouver:
+                 self.assertIn(attendu, section, lg)
++            self.assertIn(ou, " ".join((Path(cli.__file__).parent / guide).read_text(encoding="utf-8").split()), lg)
+ 
+     def test_un_sous_agent_ne_touche_a_aucun_reveil(self):
+         for lg, regle in (("fr", "Un sous-agent ne touche à aucun réveil"), ("en", "A subagent\ntouches no wake-up")):
+@@ -1362,6 +1375,141 @@ class TestLOrganisationProportionnee(unittest.TestCase):
+             self.assertNotIn("un lot par session" if nom == "HELP.md" else "one batch per session", texte.lower())
+ 
+ 
++class TestLaPlaceDesReglesSuivantes(unittest.TestCase):
++    """T-0206 (B-0354, D-0218) : les skills du produit et la section du socle
++    d'`AGENTS.md`, chargés en entier à chaque usage, gardent leur plafond et
++    une marge pour une règle de plus ; ce qui justifiait une règle sans la
++    dire est passé au guide, « Pourquoi ces règles », et n'est plus dans le
++    texte qu'il justifiait."""
++
++    MARGE = 600
++    # Les skills qui n'ont pas encore leur marge une fois leurs
++    # justifications sorties : T-0206 reste ouverte pour eux. L'ensemble ne
++    # fait que rétrécir : un skill qui atteint sa marge en sort, le test le
++    # dit.
++    PAS_ENCORE = {("fr", "socle-batch"), ("en", "socle-batch"), ("fr", "socle-request"), ("fr", "socle-resume")}
++    # Mot pour mot, d'où chacun est sorti ; la règle qu'il justifiait reste.
++    SORTIS = {
++        "fr": {
++            "AGENTS.md": ["(la session a démarré hors de la racine du projet ; `socle state` le dit en tête, et le "
++                          "hook avant commit refuse alors le commit)", "un compactage peut la perdre",
++                          "où l'humain lit un texte brut sans liens à suivre (le hook le refuse)",
++                          "la CI ne la juge pas aux envois", "(le hook `Stop` le vérifie)",
++                          "le hook `Stop` refuse de conclure sans les deux lignes",
++                          "l'humain lit dans la conversation ou sur GitHub, pas dans le conteneur de l'agent",
++                          "le hook les refuse", "le hook de l'agent le refuse sur le dépôt du projet, et la CI "
++                          "exécute tout", "de l'agent : le hook le refuse"],
++            "socle-batch": ["une fois poussées, une décision et une entrée de journal ne se réécrivent plus",
++                            "la ligne « CI » de l'état suit la tête"],
++            "socle-resume": ["Une limite d'usage, sur cinq heures ou sept jours, coupe la session jusqu'au message "
++                             "suivant de l'humain", "il tirerait aussitôt", "date d'une fenêtre close",
++                             "refusé, ce tour se reprend à la levée", "c'est ce qui le fait reprendre",
++                             "relancé sur le même arbre, il laisse conclure",
++                             "L'humain arrête tout en écrivant « arrête » dans la session, ou supprime les réveils "
++                             "de la liste des tâches programmées de son compte (claude.ai/code/routines)."],
++            "socle-request": ["Une demande est lue quand le contexte est perdu : elle se suffit à elle-même.",
++                              "ne comptent pas dans le budget de la demande", "l'humain ne la voit plus en attente",
++                              "l'humain doit avoir pu la lire", "l'état ne la dit plus alors à réécrire",
++                              "sans lui, la décision ne garde que la question et la réponse, et le contenu se perd"],
++            "socle-handoff": ["d'un compte comme d'un autre",
++                              "le mode de qui a plusieurs comptes ou veut garder la main",
++                              "sans quoi la session neuve n'a pas où pousser",
++                              "La session créée paraît aussitôt dans la liste des sessions de l'humain, sous son "
++                              "titre, prête à relire tant qu'elle attend son réveil.",
++                              "une session coupée avant d'avoir rangé reprend à la levée"],
++        },
++        "en": {
++            "AGENTS.md": ["(the session started outside the project root; `socle state` says so at the top, and "
++                          "the pre-commit hook then refuses the commit)", "a compaction may lose it",
++                          "where the human reads raw text with no links to follow (the hook refuses it)",
++                          "the CI does not judge it on push", "(the `Stop` hook checks it)",
++                          "the `Stop` hook refuses to conclude without the two lines",
++                          "the human reads in the conversation or on GitHub, not in the agent's container",
++                          "the hook refuses them", "the agent's hook refuses it on the project's repository, and "
++                          "the CI runs everything", "question widget: the hook refuses it"],
++            "socle-batch": ["once pushed, a decision and a journal entry are no longer rewritten",
++                            "the \"CI\" line of the state follows the head"],
++            "socle-resume": ["A usage limit of the account, over five hours or seven days, cuts the session off; "
++                             "the agent then resumes only at the human's next message", "it would fire at once",
++                             "belongs to a closed window", "refused, that turn resumes when the limit lifts",
++                             "that is what makes it resume", "relaunched on the same tree, it lets the turn conclude",
++                             "The human stops everything by writing \"stop\" in the session, or deletes the "
++                             "wake-ups from the list of scheduled tasks of their account (claude.ai/code/routines)."],
++            "socle-request": ["A request is read once the context is lost: it stands on its own.",
++                              "do not count in the request's budget", "the human no longer sees it pending",
++                              "the human must have been able to read it", "the state then no longer says to rewrite it",
++                              "without it, the decision keeps only the question and the answer, and the content is "
++                              "lost"],
++            "socle-handoff": ["from one account or another",
++                              "the mode of whoever has several accounts or wants to keep control",
++                              "without which the new session has nowhere to push",
++                              "The created session appears at once in the human's list of sessions, under its "
++                              "title, ready for review while it waits for its wake-up.",
++                              "a session cut off before tidying up resumes when the limit lifts"],
++        },
++    }
++
++    def setUp(self):
++        self.racine = depot({"app.py": "print('ok')\n"})
++        self.atelier = Path(__file__).resolve().parent.parent
++        self.budgets = config.Projet.charger(self.atelier).gf("budgets", defaut={})
++
++    def tearDown(self):
++        shutil.rmtree(self.racine, ignore_errors=True)
++
++    def section(self, lg: str) -> str:
++        """L'`AGENTS.md` de ce dépôt, sa partie propre gardée, la section du
++        socle telle que la pose l'installeur dans cette langue."""
++        (self.racine / "AGENTS.md").write_text((self.atelier / "AGENTS.md").read_text(encoding="utf-8"),
++                                               encoding="utf-8")
++        (self.racine / "CLAUDE.md").write_text("@AGENTS.md\n", encoding="utf-8")
++        with redirect_stdout(io.StringIO()):
++            installeur._instructions(self.racine, "engine", lg)
++        return (self.racine / "AGENTS.md").read_text(encoding="utf-8")
++
++    def test_chaque_skill_du_produit_laisse_sa_marge_sous_son_plafond(self):
++        plafond = self.budgets[".claude/skills/*/SKILL.md"]["max_bytes"]
++        for lg in ("fr", "en"):
++            installeur.poser_skills(self.racine, lg)
++            skills = sorted((self.racine / installeur.SKILLS).glob("socle-*/SKILL.md"))
++            self.assertEqual(len(skills), 6, lg)
++            for f in skills:
++                marge = plafond - len(f.read_bytes())
++                with self.subTest(langue=lg, skill=f.parent.name, marge=marge):
++                    if (lg, f.parent.name) in self.PAS_ENCORE:
++                        self.assertLess(marge, self.MARGE, "il a sa marge : le retirer de PAS_ENCORE")
++                        self.assertGreaterEqual(marge, 0)
++                    else:
++                        self.assertGreaterEqual(marge, self.MARGE)
++
++    def test_la_section_du_socle_laisse_sa_marge_sous_le_plafond_de_ce_depot(self):
++        plafond = self.budgets["AGENTS.md"]["max_bytes"]
++        for lg in ("fr", "en"):
++            texte = self.section(lg)
++            self.assertIn(config.DEBUT_SOCLE, texte, lg)
++            self.assertTrue(texte.startswith("# memory"), lg)
++            marge = plafond - len(texte.encode("utf-8"))
++            self.assertGreaterEqual(marge, self.MARGE, (lg, marge))
++
++    def test_chaque_passage_sorti_se_lit_au_guide_et_plus_dans_son_texte(self):
++        from socle import cli
++        from socle.templates import gabarit
++
++        for lg, textes in self.SORTIS.items():
++            guide = " ".join((Path(cli.__file__).parent / ("HELP.md" if lg == "fr" else "HELP.en.md")).read_text(
++                encoding="utf-8").split())
++            installeur.poser_skills(self.racine, lg)
++            for nom, passages in textes.items():
++                source = (gabarit(nom, lg) if nom == "AGENTS.md" else
++                          (self.racine / installeur.SKILLS / nom / "SKILL.md").read_text(encoding="utf-8"))
++                source = " ".join(source.split()).lower()
++                for passage in passages:
++                    p = " ".join(passage.split()).lower()
++                    with self.subTest(langue=lg, texte=nom, passage=passage):
++                        self.assertTrue(p in guide.lower(), "absent du guide")
++                        self.assertFalse(p in source, "encore dans le texte qu'il justifiait")
++
++
+ class TestRefusBash(unittest.TestCase):
+     def test_le_meme_jugement_que_le_hook(self):
+         projet = config.Projet.charger(Path(__file__).resolve().parent.parent)
+-- 
+2.43.0
+
