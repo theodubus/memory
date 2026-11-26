@@ -6,6 +6,12 @@ pas ce dépôt. Il met à jour le socle installé le 13 novembre
 publiée, et dit à l'agent de chess ce qui change pour lui, comme Théo l'a
 demandé.
 
+Utilisé le 26 novembre (T-0195), son retour dans
+`docs/fabrication/chess/mise-a-jour-2026-11-26.md` : la mise à jour
+suivante part de cette version-là, et ses points se récrivent pour les
+notes de version d'après elle ; son point 5 disait à tort la liste
+`[adoption] warn_only` de chess non vide.
+
 Récrit par thème le 26 novembre (T-0186, D-0199) : chaque point dit la
 règle d'aujourd'hui, vérifiée contre le guide, les skills et la ligne de
 commande, et finit par les identifiants des notes de version de

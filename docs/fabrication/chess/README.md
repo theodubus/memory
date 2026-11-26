@@ -18,6 +18,8 @@ un clone jetable.
   faite, et les neuf constats qu'elle a rendus côté socle.
 - `docs/fabrication/chess/mise-a-jour-2026-11-13.md` — le compte rendu de la mise à
   jour faite, et les huit gênes qu'elle a rendues côté socle.
+- `docs/fabrication/chess/mise-a-jour-2026-11-26.md` — le retour de la deuxième mise
+  à jour, ses sept gênes et leur tri.
 - `docs/fabrication/chess/prompt-mise-a-jour.md` — le prompt de la mise à jour du socle sur
   chess, qui dit aussi ce qui a été ajouté et corrigé depuis l'installation.
 - `docs/fabrication/chess/prompt-installation.md` — les deux prompts de l'installation, à
