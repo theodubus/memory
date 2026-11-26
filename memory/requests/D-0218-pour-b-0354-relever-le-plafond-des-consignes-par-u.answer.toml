@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0218-pour-b-0354-relever-le-plafond-des-consignes-par-u.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-26"
+canal = "conversation"
+citation = "2 ok je valide"
+empreinte = "sha256:d0b9564d39c516061cd1c5c3e8d8480963d6d7f5a48e25e84c23ff4d69cfe9a4"

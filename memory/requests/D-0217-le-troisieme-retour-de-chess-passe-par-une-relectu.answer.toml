@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0217-le-troisieme-retour-de-chess-passe-par-une-relectu.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-26"
+canal = "conversation"
+citation = "1. A moitié accepté : il y a des choses qui n'empêchent pas le travail de chess mais sont des gènes sérieuses. Je propose à la place un critère moins fixe, et plutôt une relecture critique du troisième retour suivi d'un arbitrage"
+empreinte = "sha256:a8dbac2564ade67698b648f8dc57ac5a56ba116aa13cdab831bf2007d9ba916d"

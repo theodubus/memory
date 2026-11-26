@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0354 — Les textes à leur plafond ont la place des règles suivantes : les consignes de ce dépôt, les skills du produit et la section du socle d'AGENTS.md
 
-> statut : ouvert · origine : J-2026-11-25-AL · lu : backlog@20ebd4a0 · ref : B-0161, D-0209
+> statut : ouvert · origine : J-2026-11-25-AL · lu : backlog@20ebd4a0 · ref : B-0161, D-0209, D-0218
 
 Après la migration de L-0042, `memory/directives.md` fait 15 030 octets
 pour un budget de 16 000, et le groupe des consignes au démarrage
@@ -23,6 +23,16 @@ perdues ainsi, rattrapées par une revue (J-2026-11-19-D, J-2026-11-23-U).
 Après la mise à jour de chess, une seule question d'intention à Théo :
 relever les plafonds, ou sortir des skills leurs justifications vers le
 guide.
+
+Théo tranche le 26 novembre (D-0218), sur la suggestion 2 de la revue
+de cap 9, avant B-0364 et B-0365, qui écriront dans ces textes :
+relever le plafond de `memory/directives.md`, ici et dans le gabarit
+des garde-fous du produit, par une demande qui en donne la valeur, une
+consigne étant un texte exact que l'état ne charge que par sa ligne de
+résumé (la part du démarrage, coupée, dit déjà où lire le reste) ; et
+garder ceux des skills du produit et d'`AGENTS.md`, chargés en entier
+à chaque usage, en sortant leurs justifications vers le guide
+(`engine/socle/HELP.md`), déplacées et non coupées.
 
 ## Satisfait quand
 
