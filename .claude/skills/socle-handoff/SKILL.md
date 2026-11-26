@@ -72,17 +72,21 @@ pour une session programmée :
 python3 .socle/socle handoff write --chain <n> --waiting "<ce qui attend>"
 ```
 
-La passation se commite en dernier et se pousse. Puis la garde, sans
-argument, doit la trouver en attente (sa ligne « Premier commit » vaut
-pour la session neuve) ; sinon, rien ne se programme, et le récap dit
-pourquoi :
+La passation se commite en dernier et se pousse, avant toute fusion de
+la pull request : quand l'agent la fusionne lui-même, elle en est le
+dernier commit, `--waiting` disant la fusion à venir. La fusion la porte
+sur la branche par défaut, et la branche, que l'hébergeur supprime, ne se
+repousse plus. Puis la garde, sans argument, doit la trouver en attente
+(sa ligne « Premier commit » vaut pour la session neuve) ; sinon, rien ne
+se programme, et le récap dit pourquoi :
 
 ```sh
 python3 .socle/socle handoff check
 ```
 
-Plus rien ne se pousse ensuite ; un commit nécessaire après réécrit la
-passation (`write`) dans ce même commit, et la garde se relance.
+Plus rien ne se pousse ensuite ; un commit nécessaire après, avant la
+fusion, réécrit la passation (`write`) dans ce même commit, et la garde se
+relance.
 
 ## Programmer
 

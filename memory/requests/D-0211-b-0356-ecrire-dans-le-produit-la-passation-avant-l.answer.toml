@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0211-b-0356-ecrire-dans-le-produit-la-passation-avant-l.md, dont l'empreinte suit.
+reponse = "texte-seul"
+texte = ""
+par = "Théo"
+date = "2026-11-26"
+canal = "conversation"
+citation = "Texte seul"
+empreinte = "sha256:8c28e420229e6608158c18104eb0bf5e718cfec1b8d0533432ed0bf64f5ff4b0"

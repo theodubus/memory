@@ -224,6 +224,8 @@ Une règle à connaître, que le socle rappelle sans l'imposer (le point 5) : po
 
 88. L'agent supprime lui-même ses branches distantes déjà contenues dans main ou dans sa branche de travail poussée, quand leur dernier commit porte sa marque : python3 .socle/socle prune-branches les vérifie sur l'origine au moment même, et les supprime sous bail ; l'état ne me donne plus que les miennes, et celles que l'origine a refusées (note 2026-11-26-a). Le point 4 d'AGENTS.md et les skills socle-batch et socle-handoff, copies protégées, le disent ; prune_branches = false, dans [irreversible] de ta politique, la couperait. Rien à faire ; après la mise à jour, lance python3 .socle/socle prune-branches --dry-run, et donne-moi sa sortie.
 
+89. La passation s'écrit avant toute fusion de la pull request : quand tu la fusionnes toi-même, elle en est le dernier commit, et rien ne se pousse après, si bien qu'aucune branche de session ne me reste à supprimer (note 2026-11-26-c). Les skills socle-handoff et socle-batch, copies protégées, et le guide le disent. Rien à faire.
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.

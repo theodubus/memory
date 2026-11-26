@@ -73,16 +73,21 @@ a scheduled session:
 python3 .socle/socle handoff write --chain <n> --waiting "<what is waiting>"
 ```
 
-The handoff is committed last and pushed. Then the guard, without
-arguments, must find it waiting (its "First commit" line is for the new
-session); otherwise, nothing is scheduled, and the recap says why:
+The handoff is committed last and pushed, before any merge of the pull
+request: when the agent merges it itself, the handoff is its last commit,
+`--waiting` stating the merge to come. The merge carries it to the
+default branch, and the branch, which the host deletes, is not pushed
+again. Then the guard, without arguments, must find it waiting (its
+"First commit" line is for the new session); otherwise, nothing is
+scheduled, and the recap says why:
 
 ```sh
 python3 .socle/socle handoff check
 ```
 
-Nothing is pushed afterwards; a commit needed later rewrites the handoff
-(`write`) in that same commit, and the guard runs again.
+Nothing is pushed afterwards; a commit needed later, before the merge,
+rewrites the handoff (`write`) in that same commit, and the guard runs
+again.
 
 ## Scheduling
 

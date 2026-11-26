@@ -127,7 +127,7 @@ entrée de journal ne se réécrivent plus.
 ## Changer de session
 
 Quand le lot suivant ne tient pas, près d'une limite ou avant une
-attente de plus d'une heure (skill `socle-handoff`). Ranger d'abord :
+attente de plus d'une heure. Ranger d'abord :
 
 1. le chantier actif dit le lot et ce qui attend, le journal la passation ;
 2. les copies isolées, leurs branches et, en session cloud, les réveils
@@ -136,6 +136,6 @@ attente de plus d'une heure (skill `socle-handoff`). Ranger d'abord :
    (`git format-patch`) dans un dossier de passation, retiré à son
    intégration.
 
-Puis le skill `socle-handoff` : la passation écrite, commitée et poussée.
-Plus rien ne se pousse ensuite. Selon le mode, il programme la session
-suivante, ou dit de demander la reprise.
+Puis le skill `socle-handoff` : la passation écrite, commitée et poussée,
+avant toute fusion. Plus rien ne se pousse ensuite. Selon le mode, il
+programme la session suivante, ou dit de demander la reprise.

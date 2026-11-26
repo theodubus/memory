@@ -323,7 +323,10 @@ programmée sans changer de mode : écrire « arrête » dans la session qui
 l'a programmée, ou supprimer sa tâche de la liste des tâches programmées
 de votre compte et archiver la session. Dans les deux modes, l'agent
 écrit sa passation dans la mémoire (`python3 .socle/socle handoff write`),
-la commite et la pousse ; la session neuve la trouve et juge sa garde
+la commite et la pousse, avant toute fusion : quand il fusionne
+lui-même sa pull request, la passation en est le dernier commit, et rien
+ne se pousse après, si bien qu'aucune branche de session ne vous reste à
+supprimer ; la session neuve la trouve et juge sa garde
 (`python3 .socle/socle handoff check`) : elle ne travaille pas si
 quelqu'un a poussé sur sa branche depuis, si une autre session a écrit la
 mémoire du projet depuis, ou si une autre l'a déjà reprise, et le dit ;

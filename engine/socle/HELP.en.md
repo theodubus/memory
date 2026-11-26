@@ -311,7 +311,10 @@ scheduled session without changing the mode: write "stop" in the session
 that scheduled it, or delete its task from the list of scheduled tasks
 of your account and archive the session. In both modes, the agent
 writes its handoff in the memory (`python3 .socle/socle handoff write`),
-commits and pushes it; the new session finds it and judges its guard
+commits and pushes it, before any merge: when it merges its pull request
+itself, the handoff is its last commit, and nothing is pushed afterwards,
+so that no session branch is left for you to delete; the new session
+finds it and judges its guard
 (`python3 .socle/socle handoff check`): it does not work if someone pushed
 to its branch since, if another session wrote the project's memory
 since, or if another one already resumed it, and says so; without a

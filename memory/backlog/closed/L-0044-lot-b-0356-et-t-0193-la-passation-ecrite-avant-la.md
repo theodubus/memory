@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0044 — Lot — B-0356 et T-0193 : la passation écrite avant la fusion, le seuil de contexte mesuré
 
-> statut : en cours · origine : J-2026-11-26-S · lu : backlog@5df1a37f · après : L-0043, T-0193 · ref : B-0356, D-0209
+> statut : fait · origine : J-2026-11-26-S · lu : backlog@5df1a37f · après : L-0043, T-0193, T-0194 · ref : B-0356, D-0209, D-0210, D-0211, J-2026-11-26-U, J-2026-11-26-W
 
 Les deux sujets de JA-0006 qui changent le skill `socle-batch` et le
 guide que chess reçoit (D-0204, D-0206) : la passation écrite dans le

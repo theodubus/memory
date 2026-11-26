@@ -15,6 +15,20 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-26-c — La passation s'écrit avant toute fusion : quand l'agent fusionne lui-même sa pull request, elle en est le dernier commit, et aucune branche de session ne reste à supprimer
+
+Une session qui passe la main écrit sa passation avant toute fusion de sa
+pull request. Quand l'agent la fusionne lui-même, la passation en est le
+dernier commit, `--waiting` disant la fusion à venir : la fusion la porte
+sur la branche par défaut, où `python3 .socle/socle handoff check` la
+trouve, et la branche, que l'hébergeur supprime à la fusion, ne se
+repousse plus. Avant, la passation écrite après la fusion repoussait la
+branche, qu'une session cloud ne peut pas supprimer : elle revenait à
+l'humain. Quand l'humain fusionne, rien ne change. Les skills
+`socle-handoff` et `socle-batch` et le guide le disent.
+
+À faire : rien ; l'installeur pose les skills changés.
+
 ## 2026-11-26-b — Le seuil de contexte qui fait changer de session à la fin d'un lot passe de 300 000 à 150 000 jetons, sur une mesure de l'usage
 
 À la fin d'un lot, la session n'enchaîne le suivant que si sa conversation
