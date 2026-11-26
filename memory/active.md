@@ -5,9 +5,9 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0043 (B-0351) : la commande `prune-branches` faite et relue
-(ADR-0114) ; le proxy cloud refuse la suppression (J-2026-11-26-H).
-Attend D-0205 pour clore T-0191, T-0192 et le lot.
+L-0043 (B-0351) : `prune-branches` fusionnée (#99, ADR-0114) ;
+le proxy cloud refuse la suppression (J-2026-11-26-H). Attend
+D-0205 pour clore T-0191, T-0192 et le lot. Passation : J-2026-11-26-J.
 
 ## Prochaines étapes
 
