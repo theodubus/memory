@@ -319,6 +319,34 @@ class TestALaMiseAJour(unittest.TestCase):
         relance = installer(self.racine, MOTEUR)
         self.assertIn(f"voici toutes leurs entrées ({len(self.tous)})", relance)
 
+    def test_une_copie_commitee_sans_notes_n_en_imprime_en_entier_que_d_apres_son_commit(self):
+        """B-0361 : chez chess, une copie du 13 novembre recevait les 122
+        notes en entier, 100 Ko que l'agent relisait."""
+        notes = installeur.notes_nouvelles(set(), PAQUET)
+        demandent = [(i, t) for i, t in notes if not installeur.ne_demande_rien(t)]
+        # Le jour d'une note qui demande quelque chose, et une plus ancienne qui demande aussi.
+        jour, du_jour = next((i[:10], t) for i, t in demandent if any(j[:10] < i[:10] for j, _ in demandent))
+        ancienne = next(t for i, t in demandent if i[:10] < jour)
+        installer(self.racine, self.source(), adoption=False)
+        env = {**os.environ, "GIT_CONFIG_NOSYSTEM": "1", "SOCLE_HOOKS_OFF": "1",
+               "GIT_COMMITTER_DATE": f"{jour}T12:00:00+0000"}
+        subprocess.run(["git", "add", "-A"], cwd=self.racine, check=True, env=env)
+        subprocess.run(["git", "-c", "user.name=essai", "-c", "user.email=essai@exemple.org", "-c",
+                        "core.hooksPath=/dev/null", "commit", "-q", "-m", "essai"], cwd=self.racine, check=True,
+                       env=env)
+        self.assertEqual(installeur.date_de_la_copie(self.racine, ".socle/engine"), jour)
+        self.assertIsNone(installeur.date_de_la_copie(self.racine, "ailleurs"))
+        sortie = installer(self.racine, MOTEUR)
+        self.assertIn(f"voici toutes leurs entrées ({len(self.tous)})", sortie)
+        self.assertIn(du_jour, sortie)
+        tete = f"entrée(s) datées d'avant le {jour}, jour du dernier commit de la copie remplacée"
+        self.assertIn(tete, sortie)
+        titre, corps = ancienne.split("\n", 1)
+        self.assertIn(f"\n{titre}\n", sortie.split(tete, 1)[1])
+        self.assertNotIn(corps.strip(), sortie)
+        # Le message de commit les nomme encore toutes.
+        self.assertIn(f'-m "Notes de version du socle : {", ".join(self.tous)}, dans', sortie)
+
     def test_notes_deja_lues_dans_le_dernier_commit_sinon_dans_l_arbre(self):
         installer(self.racine, self.source(garder=3), adoption=False)
         # Sans commit, l'arbre.

@@ -895,6 +895,10 @@ MESSAGES: dict[str, str] = {
     "au besoin :":
         "{n} entry(ies) ask nothing (“To do: nothing”): their title only, and their text in `{fichier}`, to read "
         "when needed:",
+    "{n} entrée(s) datées d'avant le {jour}, jour du dernier commit de la copie remplacée, décrivent ce que le projet "
+    "a déjà : leur titre seul, et leur texte dans `{fichier}`, à lire au besoin :":
+        "{n} entry(ies) dated before {jour}, the day of the last commit of the replaced copy, describe what the "
+        "project already has: their title only, and their text in `{fichier}`, to read when needed:",
     "ouvrir l'agent dans le projet : il lit l'état au démarrage, et te donne le lien des questions de départ, une "
     "demande à laquelle tu réponds dans la conversation":
         "open the agent in the project: it reads the state at startup, and gives you the link of the starting "
