@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0207-la-consigne-c-0025-76701895-devient-obsolete-quand.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-26"
+canal = "conversation"
+citation = "Et si on resoud ça ma consigne demandant de ne pas dire le proxy pour les sessions cloud devient obsolète"
+empreinte = "sha256:eaccb90aedba742b8e77767a9e884ad0af7805250939f4ceb09a9960c0c7820a"
