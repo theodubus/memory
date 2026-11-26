@@ -390,6 +390,13 @@ class TestBranchesASupprimerCitees(unittest.TestCase):
         self.assertEqual(liens.branches_a_supprimer_citees(self.projet, "Supprimer la branche `x`.\n\nEnsuite : rien."),
                          [])
 
+    def test_une_commande_du_socle_citee_n_est_pas_une_branche(self):
+        """B-0360 : la fin de tour de chess cherchait la branche
+        `prune-branches` à l'origine."""
+        m = self.message("supprimer la branche `x` (`prune-branches` le fait).")
+        self.assertEqual(liens.branches_a_supprimer_citees(self.projet, m), ["x"])
+        self.assertIn("prune-branches", liens.commandes_du_socle())
+
     def test_celles_que_l_origine_n_a_plus(self):
         m = self.message("supprimer les branches distantes `morceau` et `fantome`.")
         self.assertEqual(liens.branches_absentes(self.projet, m), (["fantome"], []))
