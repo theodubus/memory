@@ -24,8 +24,10 @@ sur la branche par défaut, où `python3 .socle/socle handoff check` la
 trouve, et la branche, que l'hébergeur supprime à la fusion, ne se
 repousse plus. Avant, la passation écrite après la fusion repoussait la
 branche, qu'une session cloud ne peut pas supprimer : elle revenait à
-l'humain. Quand l'humain fusionne, rien ne change. Les skills
-`socle-handoff` et `socle-batch` et le guide le disent.
+l'humain. En session programmée, la session neuve part alors de la
+branche par défaut (`source_revision`), et pousse sur la branche de
+travail (`outcome_branch`). Quand l'humain fusionne, rien ne change. Les
+skills `socle-handoff` et `socle-batch` et le guide le disent.
 
 À faire : rien ; l'installeur pose les skills changés.
 

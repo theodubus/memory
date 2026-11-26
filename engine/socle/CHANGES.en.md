@@ -22,9 +22,11 @@ request. When the agent merges it itself, the handoff is its last commit,
 default branch, where `python3 .socle/socle handoff check` finds it, and
 the branch, which the host deletes at the merge, is not pushed again.
 Before, the handoff written after the merge pushed the branch again,
-which a cloud session cannot delete: it went back to the human. When the
-human merges, nothing changes. The `socle-handoff` and `socle-batch`
-skills and the guide say so.
+which a cloud session cannot delete: it went back to the human. In a
+scheduled session, the new session then starts from the default branch
+(`source_revision`), and pushes to the work branch (`outcome_branch`).
+When the human merges, nothing changes. The `socle-handoff` and
+`socle-batch` skills and the guide say so.
 
 To do: nothing; the installer lays the changed skills.
 

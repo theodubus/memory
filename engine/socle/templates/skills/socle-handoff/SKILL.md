@@ -93,7 +93,8 @@ relance.
 La passation écrite avec `--scheduled` (plus haut, `socle-batch` rangé) :
 
 1. `create_session`, sans `prompt` : `source_url` l'adresse du dépôt ;
-   `source_revision` la branche de travail ; `outcome_branch` la même,
+   `source_revision` la branche de travail, ou la branche par défaut
+   quand la fusion l'a supprimée ; `outcome_branch` la branche de travail,
    sans quoi la session neuve n'a pas où pousser ; `model` celui de
    cette session ; `effort` le sien, qui ne s'hérite pas (refusé, l'appel
    se refait sans lui) ; `title` « Passation — <lot> — part le <jour> à

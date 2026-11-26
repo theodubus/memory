@@ -966,7 +966,8 @@ class TestLaPassation(unittest.TestCase):
         """T-0194 (B-0356, D-0211) : la passation se pousse avant toute fusion
         de la pull request ; quand l'agent la fusionne, elle en est le dernier
         commit, et la branche que l'hébergeur supprime ne se repousse plus ;
-        le guide le dit, avec ce que l'humain y gagne."""
+        la session programmée part alors de la branche par défaut ; le guide
+        le dit, avec ce que l'humain y gagne."""
         from socle import cli
 
         for lg, ecrire, phrases, guide, gain in (
@@ -991,6 +992,11 @@ class TestLaPassation(unittest.TestCase):
             self.assertLess(section.index(phrases[0]), section.index("handoff check"), lg)
             aide = " ".join((Path(cli.__file__).parent / guide).read_text(encoding="utf-8").split())
             self.assertIn(gain, aide, guide)
+            depart = {"fr": "`source_revision` la branche de travail, ou la branche par défaut quand la fusion "
+                            "l'a supprimée ; `outcome_branch` la branche de travail",
+                      "en": "`source_revision` the work branch, or the default branch when the merge deleted "
+                            "it; `outcome_branch` the work branch"}[lg]
+            self.assertIn(depart, " ".join(texte.split()), lg)
 
     def test_apres_le_retrait_de_la_passation_l_agent_supprime_la_branche_d_avant(self):
         """T-0192 (B-0351, ADR-0114) : le retrait de la passation poussé, la

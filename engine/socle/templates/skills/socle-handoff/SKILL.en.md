@@ -94,8 +94,9 @@ again.
 The handoff written with `--scheduled` (above, `socle-batch` tidied up):
 
 1. `create_session`, without `prompt`: `source_url` the repository's
-   address; `source_revision` the work branch; `outcome_branch` the
-   same, without which the new session has nowhere to push; `model` this
+   address; `source_revision` the work branch, or the default branch
+   when the merge deleted it; `outcome_branch` the work branch, without
+   which the new session has nowhere to push; `model` this
    session's; `effort` its own, which is not inherited (refused, the call
    is made again without it); `title` "Handoff — <batch> — leaves on
    <day> at <human's time>"; `tags` `["passation"]`.
