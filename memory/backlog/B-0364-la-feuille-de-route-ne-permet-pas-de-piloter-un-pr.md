@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0364 — La feuille de route ne permet pas de piloter un projet : illisible au format détaillé, elle ne dit pas ses étapes en clair, et la section installée en fige le format
 
-> statut : ouvert · origine : J-2026-11-26-AB · lu : backlog@993edac6 · ref : D-0212, D-0214
+> statut : ouvert · origine : J-2026-11-26-AB · lu : backlog@993edac6 · ref : D-0212, D-0214, D-0218 · après : B-0354
 
 Théo, le 26 novembre (J-2026-11-26-AB), sur la feuille de route que la
 session de chess lui a donnée au format détaillé : « La roadmap format

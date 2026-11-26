@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0365 — Les besoins hors des jalons attendent sans échéance : rien ne les place dans une étape ni ne les trie, et la réserve grossit
 
-> statut : ouvert · origine : J-2026-11-26-AD · lu : backlog@0e2e535a · ref : B-0364, D-0213
+> statut : ouvert · origine : J-2026-11-26-AD · lu : backlog@0e2e535a · ref : B-0364, D-0213, D-0218 · après : B-0354
 
 Théo, le 26 novembre (J-2026-11-26-AD) : « Les besoins hors
 jalons/lots/etapes s'insèrent tout seul dans les étapes du travail

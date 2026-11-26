@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0219-ajouter-un-test-de-ci-qui-rejoue-une-vraie-mise-a.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-26"
+canal = "conversation"
+citation = "3 validé"
+empreinte = "sha256:f960b355d66a4f9e2d2e789c302cbb8e0a8a03b4940d38c44334eaf39c0f6bc5"
