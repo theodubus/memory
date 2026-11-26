@@ -82,7 +82,12 @@ de 25, 40, 0, 22 et 13). Ce qu'un groupe laisse de sa part va, comme
 aujourd'hui, à ceux qui dépassent la leur ; un groupe coupé le dit sur
 la ligne `!! coupé`, avec où lire le reste. Le budget du chantier actif
 du gabarit des garde-fous suit sa part (1 600 octets) ; celui des
-consignes est celui de la mémoire canonique (16 000). Un projet dont le
+consignes, d'abord celui de la mémoire canonique (16 000), est de
+24 000 octets depuis le 26 novembre (D-0220) : une consigne ne se lève
+que sur la parole de l'humain, et le fichier ne fait que croître, alors
+que le démarrage n'en charge que les lignes de résumé, sous sa part. Un
+projet installé garde sa valeur à la mise à jour ; la reprendre assouplit
+son garde-fou, et se demande donc à son humain. Un projet dont le
 budget du chantier actif dépasse sa part en est averti, par l'état et à
 la mise à jour, comme aujourd'hui (`alerte_budget_actif`).
 

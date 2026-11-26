@@ -14,6 +14,19 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-26-k — The directives cap goes from 16,000 to 24,000 bytes in the guardrails template
+
+A directive is lifted only on the human's word: `memory/directives.md`
+only grows, and the cap of the canonical memory, which it had taken up,
+had it refused around the twenty-fifth directive. The guardrails template now
+sets `"memory/directives.md" = { max_bytes = 24000 }`. Startup is not
+affected: it loads the directives only by their summary line, within its
+own share. An update keeps the project's guardrails, hence its value.
+
+To do: nothing while `memory/directives.md` stays under the project's
+cap; if it gets close, ask the human, in a request, to take up 24,000
+bytes in `.socle/guardrails.toml`, which loosens a guardrail.
+
 ## 2026-11-26-j — A need for the human is no longer listed among the needs to split into tasks
 
 `socle state` ("needs to split into tasks") and `socle roadmap` ("Needs

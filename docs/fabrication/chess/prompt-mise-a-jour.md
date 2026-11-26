@@ -46,6 +46,8 @@ Ta version date du 26 novembre. L'installeur t'imprimera les notes de version qu
 
 7. Un besoin pour l'humain. Un besoin « pour : humain » sans tâche n'est plus listé parmi les besoins à découper en tâches, ni par socle state ni par socle roadmap : il ne paraît que sous ce qui revient à l'humain (le point 2 de ton retour d'usage du 26 novembre). Ne lui crée pas de tâche ; ferme-le sur ma parole, et fais d'une part que tu peux mener un autre besoin. (2026-11-26-j)
 
+8. Le plafond des consignes. Le gabarit des garde-fous pose désormais 24 000 octets pour memory/directives.md, au lieu de 16 000 : une consigne ne se lève que sur ma parole, et le fichier ne fait que croître. La mise à jour garde tes garde-fous, donc ta valeur. Mesure memory/directives.md : s'il approche de ton plafond, pose-moi la demande de reprendre 24 000 octets dans .socle/guardrails.toml, qui assouplit un garde-fou ; sinon, n'y touche pas. (2026-11-26-k)
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.

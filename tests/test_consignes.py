@@ -432,7 +432,7 @@ class TestInstallation(Installe):
         self.assertEqual(memoire.analyser("memory/directives.md", (
             MOTEUR / "socle/templates/memory/directives.en.md").read_text()).couche, "consignes")
         gf = (self.racine / ".socle/guardrails.toml").read_text()
-        self.assertIn('"memory/directives.md" = { max_bytes = 16000 }', gf)
+        self.assertIn('"memory/directives.md" = { max_bytes = 24000 }', gf)
         self.assertIn('"memory/active.md" = { max_bytes = 1600 }', gf)
         directives.unlink()
         self.installer()

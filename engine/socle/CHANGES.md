@@ -15,6 +15,20 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-26-k — Le plafond des consignes passe de 16 000 à 24 000 octets dans le gabarit des garde-fous
+
+Une consigne ne se lève que sur la parole de l'humain : `memory/directives.md`
+ne fait que croître, et le plafond de la mémoire canonique, qu'il avait
+repris, le faisait refuser vers la vingt-cinquième consigne. Le gabarit des
+garde-fous pose désormais `"memory/directives.md" = { max_bytes = 24000 }`.
+Le démarrage n'est pas touché : il ne charge les consignes que par leur
+ligne de résumé, sous sa propre part. Une mise à jour garde les garde-fous
+du projet, donc sa valeur.
+
+À faire : rien tant que `memory/directives.md` tient sous le plafond du
+projet ; s'il l'approche, poser à l'humain la demande de reprendre 24 000
+octets dans `.socle/guardrails.toml`, qui assouplit un garde-fou.
+
 ## 2026-11-26-j — Un besoin pour l'humain n'est plus listé parmi les besoins à découper en tâches
 
 `socle state` (« besoins à découper en tâches ») et `socle roadmap`

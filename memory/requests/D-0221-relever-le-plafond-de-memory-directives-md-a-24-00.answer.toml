@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0221-relever-le-plafond-de-memory-directives-md-a-24-00.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-26"
+canal = "conversation"
+citation = "Oui je valide"
+empreinte = "sha256:e3642d9fe1d65fc114e9547478278da1ab38f7e8101f14384589aa33450c73cb"
