@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0357 — Après une mise à jour qui migre le backlog, la demande seule ne se commite ni ne se pousse sans contournement : les hooks git la jugent avec le moteur neuf de l'arbre de travail
 
-> statut : ouvert · origine : J-2026-11-26-AA · ref : B-0323, ADR-0098 · lu : backlog@35e9325c
+> statut : fait · origine : J-2026-11-26-AA · ref : B-0323, ADR-0098, ADR-0115, J-2026-11-26-AM · lu : backlog@35e9325c
 
 La gêne 1 de la mise à jour de chess du 26 novembre
 (`docs/fabrication/chess/mise-a-jour-2026-11-26.md`) : en session cloud,
@@ -43,4 +43,4 @@ contournerait le socle (X1) : la copie du moteur est protégée, et
 
 ## Satisfait quand
 
-- [ ] après une mise à jour qui migre le backlog, la demande seule se commite et se pousse par `git add` sur son fichier, `git commit` et `git push`, sans stash ni `--only`, et les fichiers de la mise à jour se commitent ensuite
+- [x] après une mise à jour qui migre le backlog, la demande seule se commite et se pousse par `git add` sur son fichier, `git commit` et `git push`, sans stash ni `--only`, et les fichiers de la mise à jour se commitent ensuite

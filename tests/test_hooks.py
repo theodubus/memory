@@ -1174,6 +1174,145 @@ class TestFinDeTourApresUneMiseAJour(unittest.TestCase):
         self.assertIn("git restore --source=HEAD --staged --worktree -- .socle/engine/socle/report.py", raison)
 
 
+class TestHooksGitPendantUneMiseAJour(unittest.TestCase):
+    """B-0357, ADR-0115 : chez chess, le 26 novembre, la mise à jour a migré
+    le backlog dans l'arbre ; le hook avant commit, qui juge l'index avec le
+    moteur neuf de l'arbre, a refusé le commit de la demande seule pour le
+    backlog d'avant, déjà commité, et le hook avant push de même. Pendant
+    une mise à jour pas encore commitée, ils ne refusent que les constats
+    que le commit ou le push apporte."""
+
+    def setUp(self):
+        self.enterContext(unittest.mock.patch.dict(os.environ))
+        os.environ.pop("CLAUDECODE", None)
+        self.racine = Path(tempfile.mkdtemp(prefix="socle-maj-git-"))
+        self.addCleanup(shutil.rmtree, self.racine, ignore_errors=True)
+        ancien = Path(tempfile.mkdtemp(prefix="socle-ancien-"))
+        self.addCleanup(shutil.rmtree, ancien, ignore_errors=True)
+        shutil.copytree(MOTEUR / "socle", ancien / "socle", ignore=shutil.ignore_patterns("__pycache__"))
+        utils = ancien / "socle/utils.py"
+        utils.write_text(utils.read_text() + "# la version d'avant\n")
+        self.git("init", "-q", "-b", "main")
+        (self.racine / "calc.py").write_text("x = 1\n")
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            installeur.installer(self.racine, "python", "@essai", source=ancien)
+        self.journal = next((self.racine / "memory/journal").glob("*.md")).read_text().split("## ", 2)[1].split()[0]
+        # Un lot au format d'avant ADR-0083, commité sous le moteur d'avant :
+        # le moteur neuf le refuse (`memoire.formes`).
+        self.lot("B-0001")
+        self.git("add", "-A")
+        self.git("commit", "-qm", "base", "--no-verify")
+        self.git("checkout", "-q", "-b", "maj")
+
+    def git(self, *args) -> str:
+        return subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", *args], cwd=self.racine,
+                              check=True, capture_output=True, text=True).stdout
+
+    def lot(self, ident: str) -> str:
+        chemin = f"memory/backlog/{ident}-essai.md"
+        (self.racine / chemin).write_text(f"<!-- socle: couche=backlog zone=publique -->\n# {ident} — Un lot d'avant"
+                                          f"\n\n> statut : ouvert · origine : {self.journal} · forme : lot\n\n"
+                                          "Pour l'essai.\n")
+        return chemin
+
+    def mettre_a_jour(self):
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            installeur.installer(self.racine, "python", "@essai", source=MOTEUR)
+
+    def poser_la_demande(self) -> str:
+        """La demande de la mise à jour, qui cite le fichier protégé changé
+        avec son empreinte, seule dans l'index."""
+        from socle import fingerprint as empreinte
+        from socle.selftest import DEMANDE_BONNE
+
+        cite = empreinte.fichier(self.racine / ".socle/engine/socle/utils.py")
+        chemin = "memory/requests/D-0001-mise-a-jour.md"
+        (self.racine / chemin).parent.mkdir(parents=True, exist_ok=True)
+        (self.racine / chemin).write_text(DEMANDE_BONNE.replace(
+            "- B-0001 — le sujet du backlog qui demande d'ajouter une fonction triple au module.",
+            f"- `.socle/engine/socle/utils.py` — `{cite}`"))
+        self.git("add", chemin)
+        return chemin
+
+    def avant_commit(self) -> tuple[int, str]:
+        sortie = io.StringIO()
+        with contextlib.redirect_stdout(sortie), contextlib.redirect_stderr(sortie):
+            code = hooks.git_pre_commit(config.Projet.charger(self.racine))
+        return code, sortie.getvalue()
+
+    def avant_push(self) -> tuple[int, str]:
+        from socle import verification
+
+        tete = self.git("rev-parse", "HEAD").strip()
+        sortie = io.StringIO()
+        with unittest.mock.patch("sys.stdin", io.StringIO(f"refs/heads/maj {tete} refs/heads/maj {'0' * 40}\n")), \
+                unittest.mock.patch.object(verification, "etapes_rapides", lambda *a, **k: None), \
+                contextlib.redirect_stdout(sortie), contextlib.redirect_stderr(sortie):
+            code = hooks.git_pre_push(config.Projet.charger(self.racine))
+        return code, sortie.getvalue()
+
+    def test_le_hook_avant_commit_accepte_la_demande_seule_et_refuse_un_constat_qu_il_apporte(self):
+        self.mettre_a_jour()
+        self.assertTrue(hooks.mise_a_jour_en_cours(config.Projet.charger(self.racine)))
+        self.poser_la_demande()
+        code, sortie = self.avant_commit()
+        self.assertEqual(code, 0, sortie)
+        self.assertIn("mise à jour du moteur en cours, pas encore commitée : 1 constat(s) déjà présent(s)", sortie)
+        self.git("add", self.lot("B-0002"))
+        code, sortie = self.avant_commit()
+        self.assertEqual(code, 1)
+        self.assertIn("memory/backlog/B-0002-essai.md", sortie)
+        self.assertNotIn("memory/backlog/B-0001-essai.md", sortie)
+        self.assertIn("Commit refusé", sortie)
+
+    def test_le_hook_avant_push_accepte_le_commit_de_la_demande_seule(self):
+        self.mettre_a_jour()
+        self.poser_la_demande()
+        self.git("commit", "-qm", "La demande de la mise à jour", "--no-verify")
+        code, sortie = self.avant_push()
+        self.assertEqual(code, 0, sortie)
+        self.assertIn("laissé(s) à la CI", sortie)
+        # Un constat que le push apporte reste refusé.
+        self.git("add", self.lot("B-0002"))
+        self.git("commit", "-qm", "Un lot d'avant de plus", "--no-verify")
+        code, sortie = self.avant_push()
+        self.assertEqual(code, 1)
+        self.assertIn("memory/backlog/B-0002-essai.md", sortie)
+
+    def test_hors_d_une_mise_a_jour_et_en_mode_amont_un_constat_deja_commite_est_refuse(self):
+        """Le témoin sain : sans copie du moteur changée, rien ne s'écarte ;
+        en mode amont, où le moteur est la source, non plus."""
+        self.poser_la_demande()
+        self.assertFalse(hooks.mise_a_jour_en_cours(config.Projet.charger(self.racine)))
+        code, sortie = self.avant_commit()
+        self.assertEqual(code, 1)
+        self.assertIn("memory/backlog/B-0001-essai.md", sortie)
+        self.assertNotIn("mise à jour du moteur en cours", sortie)
+        self.mettre_a_jour()
+        self.git("reset", "-q")
+        self.poser_la_demande()
+        with unittest.mock.patch.object(config.Projet, "mode", new_callable=unittest.mock.PropertyMock,
+                                        return_value=config.MODE_AMONT):
+            self.assertFalse(hooks.mise_a_jour_en_cours(config.Projet.charger(self.racine)))
+            code, sortie = self.avant_commit()
+        self.assertEqual(code, 1)
+        self.assertIn("memory/backlog/B-0001-essai.md", sortie)
+
+    def test_l_ecart_compte_les_constats_un_a_un(self):
+        """Une erreur de plus, sous le même contrôle, le même chemin et le
+        même message qu'une erreur déjà commitée, reste refusée."""
+        from socle.report import Rapport
+
+        rapport, reference = Rapport(), Rapport()
+        for _ in range(2):
+            rapport.erreur("memoire.formes", "écrit `forme : lot`", "memory/backlog/B-0001-essai.md", 3)
+        reference.erreur("memoire.formes", "écrit `forme : lot`", "memory/backlog/B-0001-essai.md", 2)
+        rapport.avertir("memoire.formes", "écrit `forme : lot`", "memory/backlog/B-0001-essai.md", 3)
+        self.assertEqual(hooks.ecarter_deja_commites(rapport, reference), 1)
+        self.assertEqual(len(rapport.erreurs()), 1)
+        self.assertEqual(len(rapport.constats), 2)
+
+
 class TestOutilsEnSessionCloud(unittest.TestCase):
     """D-0048 : en session cloud, le conteneur repart de zéro, et le pilote
     n'avait pas pytest ; le hook de démarrage installe les outils de
