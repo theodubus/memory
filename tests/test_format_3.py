@@ -140,7 +140,7 @@ class TestInstallation(unittest.TestCase):
             installeur.installer(racine, "python", "@essai", source=MOTEUR)
         self.assertTrue((racine / "memory/backlog/.gitkeep").is_file())
         self.assertFalse((racine / "memory/backlog.md").exists())
-        self.assertIn("format = 3", (racine / ".socle/engine.lock").read_text())
+        self.assertIn("format = 4", (racine / ".socle/engine.lock").read_text())
         gf = (racine / ".socle/guardrails.toml").read_text()
         self.assertIn('"memory/backlog/*.md" = { max_bytes = 8000 }', gf)
         self.assertNotIn('"memory/backlog.md"', gf)

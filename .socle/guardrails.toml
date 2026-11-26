@@ -16,7 +16,8 @@ code = []
 [budgets]
 "AGENTS.md" = { max_bytes = 16000 }
 "memory/canonical.md" = { max_bytes = 16000 }
-"memory/active.md" = { max_bytes = 3700 }
+"memory/active.md" = { max_bytes = 1600 }
+"memory/directives.md" = { max_bytes = 16000 }
 "memory/backlog/*.md" = { max_bytes = 8000 }
 "memory/journal/*.md" = { max_bytes = 80000 }
 "memory/decisions/*.md" = { max_bytes = 10000 }

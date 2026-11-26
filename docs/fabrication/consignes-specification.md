@@ -28,7 +28,7 @@ lu.
 Un fichier, comme la mémoire canonique : directives.md, sous `memory/`, en-tête
 `<!-- socle: couche=consignes zone=publique -->` ; dans la zone privée,
 directives.md de la zone privée, ses identifiants préfixés de `P`
-(`PC-0001`). Le nom du fichier est anglais, comme les autres ; la couche
+(`PC-` et quatre chiffres). Le nom du fichier est anglais, comme les autres ; la couche
 garde son nom interne.
 
 ```markdown
@@ -91,8 +91,8 @@ la mise à jour, comme aujourd'hui (`alerte_budget_actif`).
 1. **L'en-tête du groupe**, plus haut, le dit à chaque démarrage.
 2. **La lecture prouvée**, étendue : une citation d'une consigne ajoutée
    dans n'importe quel fichier de la mémoire, le journal et le chantier
-   actif compris, porte son empreinte (`C-0003@xxxxxxxx`), celle de la
-   version actuelle, que seul `socle show C-0003` imprime. Sans elle, ou
+   actif compris, porte son empreinte (`C-NNNN@xxxxxxxx`), celle de la
+   version actuelle, que seul `socle show C-NNNN` imprime. Sans elle, ou
    périmée, ou inventée, le contrôle de la lecture prouvée la refuse.
    Ailleurs, la règle ne change pas.
 3. **Les instructions du projet** (la section du socle d'`AGENTS.md`) :

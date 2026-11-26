@@ -181,9 +181,9 @@ class TestJugeDuPlafond(unittest.TestCase):
 
     def relever(self):
         texte = self.garde_fous.read_text(encoding="utf-8")
-        cle = f'"{banc.config.FORMAT_ACTUEL.actif}" = {{ max_bytes = 3700 }}'
+        cle = f'"{banc.config.FORMAT_ACTUEL.actif}" = {{ max_bytes = 1600 }}'
         self.assertIn(cle, texte)
-        self.garde_fous.write_text(texte.replace(cle, cle.replace("3700", "20000")), encoding="utf-8")
+        self.garde_fous.write_text(texte.replace(cle, cle.replace("1600", "20000")), encoding="utf-8")
 
     def releves(self):
         return [r for r in banc._s4_juger(self.projet, "", 1) if "plafond" in r]
