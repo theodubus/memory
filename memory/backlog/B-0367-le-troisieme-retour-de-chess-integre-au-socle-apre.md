@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0367 — Le troisième retour de chess, intégré au socle après les retours précédents, le format de la feuille de route et le tri du backlog
 
-> statut : ouvert · origine : J-2026-11-26-AJ · ref : D-0216 · après : B-0357, B-0358, B-0359, B-0360, B-0361, B-0362, B-0363, B-0364, B-0365, B-0366 · lu : backlog@0f548814
+> statut : ouvert · origine : J-2026-11-26-AJ · ref : D-0216, D-0217 · après : B-0357, B-0358, B-0359, B-0360, B-0361, B-0362, B-0363, B-0364, B-0365, B-0366 · lu : backlog@0f548814
 
 Sur la décision de Théo du 26 novembre (D-0216), mot pour mot :
 
@@ -15,9 +15,15 @@ B-0364 avec le retour de Théo sur la feuille de route). Le troisième,
 que Théo apporte, se verse tel quel sous `docs/fabrication/chess/` dès
 qu'il arrive ; il se trie par `docs/fabrication/but-et-tri.md`, comme les
 deux premiers, une fois clos les besoins de ces deux retours, la
-feuille de route (B-0364) et le tri de la réserve (B-0365) : chaque gêne
-devient un besoin de JA-0006, ou s'écarte d'une raison au journal.
+feuille de route (B-0364) et le tri de la réserve (B-0365).
+
+Pas de critère fixe (D-0217, le 26 novembre) : une gêne sérieuse peut
+ne pas empêcher le travail de chess. Le retour se relit de façon
+critique, gêne par gêne, ce qu'elle coûte à chess et ce que la
+corriger coûterait, par `docs/fabrication/but-et-tri.md` ; puis Théo
+arbitre ce qui entre dans JA-0006, ce qui va à la réserve avec sa
+raison, et ce qui s'écarte.
 
 ## Satisfait quand
 
-- [ ] le troisième retour de chess est versé tel quel sous `docs/fabrication/chess/`, et chacune de ses gênes est un besoin de JA-0006 ou écartée d'une raison au journal
+- [ ] le troisième retour de chess est versé tel quel sous `docs/fabrication/chess/`, relu de façon critique, et chacune de ses gênes a l'arbitrage de Théo : un besoin de JA-0006, un besoin en réserve avec sa raison, ou écartée d'une raison au journal
