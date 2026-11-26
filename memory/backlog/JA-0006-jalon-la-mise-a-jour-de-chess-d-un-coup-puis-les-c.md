@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # JA-0006 — Jalon — la mise à jour de chess d'un coup, puis les corrections du socle qu'elle montre
 
-> statut : ouvert · origine : J-2026-11-21-B · ref : D-0198, D-0204, D-0206 · après : JA-0005, B-0353, B-0351, B-0161, B-0355, B-0356, B-0323, B-0357, B-0358, B-0359, B-0360, B-0361 · lu : backlog@18f4b4cb
+> statut : ouvert · origine : J-2026-11-21-B · ref : D-0198, D-0204, D-0206 · après : JA-0005, B-0353, B-0351, B-0161, B-0355, B-0356, B-0323, B-0357, B-0358, B-0359, B-0360, B-0361, B-0362, B-0363, B-0364 · lu : backlog@18f4b4cb
 
 Le jalon d'après JA-0005, sur la décision de Théo du 21 novembre
 (D-0151, J-2026-11-21-B) : chess mis à jour d'un coup, une fois le
@@ -27,6 +27,9 @@ chess : la branche qu'une session cloud repousse après la fusion.
 
 Le 26 novembre, chess est mis à jour (B-0323) ; ses gênes le rejoignent
 en cinq besoins, B-0357 à B-0361 (J-2026-11-26-AA).
+
+Le même jour, le retour d'usage de chess et celui de Théo sur la
+feuille de route le rejoignent : B-0362 à B-0364 (J-2026-11-26-AB).
 
 ## Fait quand
 
