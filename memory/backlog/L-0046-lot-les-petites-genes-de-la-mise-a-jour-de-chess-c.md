@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0046 — Lot — les petites gênes de la mise à jour de chess : CODEOWNERS, correctif de mémoire, commande prise pour une branche, notes datées (T-0196 à T-0199)
 
-> statut : ouvert · origine : J-2026-11-26-AA · lu : backlog@358e3475 · après : L-0045, T-0196, T-0197, T-0198, T-0199
+> statut : en cours · origine : J-2026-11-26-AA · lu : backlog@358e3475 · après : L-0045, T-0196, T-0197, T-0198, T-0199 · ref : J-2026-11-26-AH
 
 Les quatre corrections courtes que la mise à jour de chess du
 26 novembre a montrées (JA-0006), chacune sa correction claire et son
