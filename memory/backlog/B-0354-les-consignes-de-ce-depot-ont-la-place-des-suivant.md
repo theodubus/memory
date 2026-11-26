@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
-# B-0354 — Les consignes de ce dépôt ont la place des suivantes, dans leur budget et dans leur part du démarrage
+# B-0354 — Les textes à leur plafond ont la place des règles suivantes : les consignes de ce dépôt, les skills du produit et la section du socle d'AGENTS.md
 
-> statut : ouvert · origine : J-2026-11-25-AL · lu : backlog@20ebd4a0 · ref : B-0161
+> statut : ouvert · origine : J-2026-11-25-AL · lu : backlog@20ebd4a0 · ref : B-0161, D-0209
 
 Après la migration de L-0042, `memory/directives.md` fait 15 030 octets
 pour un budget de 16 000, et le groupe des consignes au démarrage
@@ -13,6 +13,18 @@ demande. Les pistes : resserrer le contexte des consignes (leurs lignes
 d'attribution), relever le budget de ce dépôt par une demande, ou les
 deux ; la part du démarrage, coupée, dit déjà où lire le reste.
 
+Le 26 novembre, Théo retient la suggestion 3 de la revue de cap 8
+(D-0209, J-2026-11-26-N) : le besoin s'élargit aux textes du produit qui
+touchent leur plafond, sans entrée nouvelle. Marges ce jour-là : le skill
+`socle-batch` 4 octets sur 8 000, `socle-resume` 7, `socle-request` 31,
+`AGENTS.md` 74 sur 16 000 ; 25 entrées du journal depuis le 13 novembre
+paient un changement en resserrant un texte, et deux règles se sont
+perdues ainsi, rattrapées par une revue (J-2026-11-19-D, J-2026-11-23-U).
+Après la mise à jour de chess, une seule question d'intention à Théo :
+relever les plafonds, ou sortir des skills leurs justifications vers le
+guide.
+
 ## Satisfait quand
 
 - [ ] trois consignes de plus, de la taille moyenne d'aujourd'hui, tiennent dans le budget de `memory/directives.md` de ce dépôt
+- [ ] une règle de plus, de la taille d'un paragraphe, tient dans chaque skill du produit et dans la section du socle d'`AGENTS.md`, sans en raccourcir une autre

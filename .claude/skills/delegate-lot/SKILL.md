@@ -21,6 +21,12 @@ lui (B-0274). Après la clôture du troisième lot depuis la dernière revue
 de cap, ou d'un jalon, la revue de cap passe avant le lot suivant : le
 skill `direction-review` (D-0145).
 
+La question d'intention d'un besoin qui agit sur l'origine (pousser,
+supprimer, étiqueter) dit ce que la session cloud permet : elle ne pousse
+que sur sa branche et n'en supprime aucune autre (J-2026-11-01-E). Plus
+de code qui supprime des branches distantes : une branche qui reste se
+prévient (D-0209).
+
 ## Les sous-agents
 
 L'orchestrateur implémente, sauf quand un sous-agent paie, selon
