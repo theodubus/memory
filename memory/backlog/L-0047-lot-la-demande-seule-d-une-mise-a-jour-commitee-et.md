@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0047 — Lot — la demande seule d'une mise à jour, commitée et poussée sans contournement (T-0200, T-0201)
 
-> statut : ouvert · origine : J-2026-11-26-AA · lu : backlog@f81a2e08 · après : L-0046, T-0204, T-0200, T-0201
+> statut : en-cours · origine : J-2026-11-26-AA · lu : backlog@f81a2e08 · après : L-0046, T-0204, T-0200, T-0201
 
 La gêne 1 de la mise à jour de chess du 26 novembre (B-0357, JA-0006) :
 la migration du backlog qui ne touche plus l'index (`migration.py`,

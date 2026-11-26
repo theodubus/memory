@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0366 — Le prompt de la prochaine mise à jour de chess redit les 37 points que chess a déjà reçus le 26 novembre
 
-> statut : ouvert · origine : J-2026-11-26-AH · ref : D-0215, L-0047 · lu : backlog@edb88ba9
+> statut : fait · origine : J-2026-11-26-AH · ref : D-0215, L-0047, J-2026-11-26-AK · lu : backlog@edb88ba9
 
 Chess a suivi le 26 novembre la version de
 `docs/fabrication/chess/prompt-mise-a-jour.md` récrite par thème (T-0186),
@@ -14,4 +14,4 @@ exige encore son point 17 : la réécriture attend D-0215.
 
 ## Satisfait quand
 
-- [ ] le prompt de la prochaine mise à jour de chess ne dit que ce qui change depuis la version du 26 novembre, chaque note d'après elle dans un point
+- [x] le prompt de la prochaine mise à jour de chess ne dit que ce qui change depuis la version du 26 novembre, chaque note d'après elle dans un point

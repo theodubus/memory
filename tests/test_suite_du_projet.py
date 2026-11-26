@@ -579,9 +579,11 @@ class TestLesFormatsValides(unittest.TestCase):
     def test_le_guide_montre_les_deux_formats_et_une_note_de_version_le_dit(self):
         """Le guide, en français et en anglais, montre la sortie des deux
         formats sur le backlog des exemples, ses identifiants écrits
-        `X-NNNN` ; la note de version du changement, 2026-11-18-c, le dit,
-        et le prompt de mise à jour de chess le reprend. La note se cherche
-        par son identifiant : une note plus récente ne la déloge pas."""
+        `X-NNNN` ; la note de version du changement, 2026-11-18-c, le dit.
+        La note se cherche par son identifiant : une note plus récente ne
+        la déloge pas. Le prompt de mise à jour de chess, qui la reprenait
+        en son point 17, ne se vérifie plus ici depuis que chess l'a reçu
+        le 26 novembre (D-0215)."""
         paquet = Path(suite.__file__).parent
         for lg, nom in (("fr", "HELP.md"), ("en", "HELP.en.md")):
             guide = (paquet / nom).read_text(encoding="utf-8")
@@ -600,9 +602,6 @@ class TestLesFormatsValides(unittest.TestCase):
             premiere = next(n for n in notes.split("\n## ")[1:] if n.startswith("2026-11-18-c "))
             self.assertIn(titre, premiere.splitlines()[0], nom)
             self.assertIn("socle roadmap", " ".join(premiere.split()), nom)
-        prompt = Path(__file__).resolve().parent.parent / "docs/fabrication/chess/prompt-mise-a-jour.md"
-        texte = " ".join(prompt.read_text(encoding="utf-8").split())
-        self.assertIn("17. La suite du projet se lit désormais en colonnes et en tableaux", texte)
 
 
 class TestLOrdreDExecution(unittest.TestCase):
