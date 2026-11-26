@@ -119,6 +119,64 @@ class TestCommandes(unittest.TestCase):
         adr = (self.racine / "memory/decisions/ADR-0002-garder-la-constante.md").read_text()
         self.assertIn(f"lu : decisions@{memoire.empreinte_index(mem, 'decisions')}", adr)
 
+    def lectures(self) -> list[str]:
+        from socle import checks_memory, context as contexte
+
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="agent", base=self.pousse, tete=None)
+        r = rapport.Rapport()
+        checks_memory.lectures(ctx, r)
+        return [c.message for c in r.erreurs("memoire.lectures")]
+
+    def test_new_cite_un_index_qu_un_changement_avant_le_commit_ne_perime_pas(self):
+        """B-0362 : deux tâches et un lot créés par `socle new`, puis une tâche
+        existante passée en cours avant le commit. Chacune citait l'index de
+        l'arbre, que ce changement faisait disparaître : seule la première
+        passait. L'index cité est désormais celui du dernier commit
+        (ADR-0116), que le contrôle accepte toujours."""
+        lu = memoire.empreinte_index(memoire.Memoire.charger(self.racine), "backlog")
+        tache = self.racine / "memory/backlog/T-0001-ecrire-triple.md"
+        tache.write_text("<!-- socle: couche=backlog zone=publique -->\n# T-0001 — Écrire triple\n\n"
+                         f"> statut : ouvert · origine : fichier:calc.py · besoin : B-0001 · lu : backlog@{lu}\n\n"
+                         "## Fait quand\n\n- [ ] triple écrit\n")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "T-0001")
+        for type_, titre, besoin in (("task", "Tester triple", "B-0001"), ("task", "Documenter triple", "B-0001"),
+                                     ("batch", "Lot de triple", None)):
+            code, _ = sortie(cli.cmd_new, root=str(self.racine), type=type_, title=titre, need=besoin)
+            self.assertEqual(code, 0)
+        tache.write_text(tache.read_text().replace("statut : ouvert", "statut : en cours"))
+        self.assertEqual(self.lectures(), [])
+
+    def test_show_index_donne_l_empreinte_du_dernier_commit(self):
+        """B-0362 : quand l'arbre a changé l'index, `socle show --index` donne
+        l'empreinte du dernier commit, et les lignes de l'arbre (ADR-0116)."""
+        tete = memoire.Memoire.charger(self.racine, "HEAD")
+        self.assertIs(cli.memoire_citable(tete), tete)
+        attendue = memoire.empreinte_index(tete, "backlog")
+        p = self.racine / SUJET
+        p.write_text(p.read_text().replace("statut : ouvert", "statut : en cours"))
+        arbre = memoire.Memoire.charger(self.racine)
+        self.assertNotEqual(memoire.empreinte_index(arbre, "backlog"), attendue)
+        self.assertEqual(memoire.empreinte_index(cli.memoire_citable(arbre), "backlog"), attendue)
+        code, texte = sortie(cli.cmd_show, root=str(self.racine), ids=[], index="backlog")
+        self.assertEqual(code, 0)
+        self.assertIn(f"--- index backlog@{attendue}, celui du dernier commit", texte)
+        self.assertIn("B-0001 — Ajouter une fonction triple (en-cours)", texte)
+
+    def test_sans_commit_l_index_cite_est_celui_de_l_arbre(self):
+        neuf = self.dossier / "neuf"
+        neuf.mkdir()
+        git(neuf, "init", "-q", "-b", "travail")
+        mem = memoire.Memoire.charger(neuf)
+        self.assertIs(cli.memoire_citable(mem), mem)
+        # Des commits, mais aucune base : le hook de l'agent ne juge alors que
+        # l'arbre.
+        (neuf / "f.txt").write_text("x\n")
+        git(neuf, "add", "-A")
+        git(neuf, "commit", "-qm", "un")
+        mem = memoire.Memoire.charger(neuf)
+        self.assertIs(cli.memoire_citable(mem), mem)
+
     def test_new_ecrit_le_sujet_meme_si_sa_sortie_est_coupee(self):
         """B-0092 : `socle new backlog … | head -1` ne créait rien, la sortie
         coupée l'arrêtant avant l'écriture."""

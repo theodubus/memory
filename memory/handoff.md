@@ -1,6 +1,6 @@
 <!-- socle: couche=passation zone=publique -->
 # Passation
 
-> écrite : 2026-11-26T18:47:09Z · branche : ccr-0e8ebb5f-8j5ngy · chaîne : 0
+> écrite : 2026-11-26T19:53:16Z · branche : ccr-5949573b-b0w6ac · chaîne : 0
 
-Ce qui attend : La fusion de la pull request de L-0047 par l'agent, sa CI verte. Puis la revue de cap 9 (D-0145), due depuis L-0046 : quatre lots clos depuis la 8 (L-0044 à L-0047) ; puis L-0048 (T-0202, son ADR d'abord, et T-0203), B-0364 (format A2-d, D-0214) et B-0365 (D-0213) à découper, et B-0367, le troisième retour de chess, que Théo apporte.
+Ce qui attend : La fusion de la pull request #108 par l'agent, sa CI verte. Puis la réponse de Théo aux trois suggestions de la revue de cap 9 (J-2026-11-26-AQ) : borner JA-0006 avant de trier B-0367, poser maintenant la question de B-0354, rejouer en CI une vraie mise à jour ; à consigner en séance, ce qu'il retient au backlog. Puis B-0364 (format A2-d, D-0214) et B-0365 (D-0213) à découper, la question de B-0354 d'abord si Théo la retient, et B-0367, le troisième retour de chess, que Théo apporte.

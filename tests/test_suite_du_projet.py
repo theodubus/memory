@@ -151,6 +151,23 @@ def entetes_et_lots(md: str) -> list[str]:
 
 
 class TestCalcul(unittest.TestCase):
+    def test_un_besoin_pour_l_humain_ne_se_decoupe_pas(self):
+        """B-0363 : un besoin « pour : humain » sans tâche n'est plus parmi les
+        besoins à découper, ni dans l'état ni dans la feuille de route : il
+        n'y paraît que sous « Pour l'humain »."""
+        mem = memoire_de(entree("B-0001", meta="pour : humain"), entree("B-0002"), entree("B-0003"),
+                         entree("T-0001", meta="besoin : B-0003"))
+        self.assertEqual([e.id for e in memoire.ordre(mem).a_decouper], ["B-0002"])
+        etat = [l for l in memoire.lignes_ordre(mem) if l.startswith("besoins à découper")]
+        self.assertEqual(etat, ["besoins à découper en tâches : B-0002"])
+        s = suite.calculer(mem)
+        self.assertEqual([e.id for e in s.a_decouper], ["B-0002"])
+        self.assertEqual([e.id for e in s.pour_l_humain], ["B-0001"])
+        md = suite.markdown(s)
+        decouper, humain = md.index("**Besoins à découper en tâches**"), md.index("**Pour l'humain**")
+        self.assertNotIn("B-0001", md[decouper:humain])
+        self.assertIn("B-0001", md[humain:])
+
     def test_les_lots_et_les_jalons_dans_leur_ordre_avec_leur_avancement(self):
         s = suite.calculer(backlog_d_essai())
         self.assertEqual([(j.entree.id, j.clos, j.total) for j in s.jalons], [("JA-0001", 0, 2), ("JA-0002", 0, 1)])

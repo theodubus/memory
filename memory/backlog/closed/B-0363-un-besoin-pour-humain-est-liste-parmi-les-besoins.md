@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0363 — Un besoin « pour : humain » est listé parmi les besoins à découper en tâches, que l'agent ne peut pas mener
 
-> statut : ouvert · origine : J-2026-11-26-AB · lu : backlog@0e2e535a
+> statut : fait · ref : J-2026-11-26-AP · origine : J-2026-11-26-AB · lu : backlog@0e2e535a
 
 Le point 2 du retour d'usage de chess du 26 novembre
 (`docs/fabrication/chess/usage-2026-11-26.md`) : `socle state` (« besoins
@@ -16,4 +16,4 @@ part que l'agent peut mener est un autre besoin.
 
 ## Satisfait quand
 
-- [ ] un besoin « pour : humain » sans tâche ne paraît, dans l'état et la feuille de route, que parmi ce qui revient à l'humain
+- [x] un besoin « pour : humain » sans tâche ne paraît, dans l'état et la feuille de route, que parmi ce qui revient à l'humain
