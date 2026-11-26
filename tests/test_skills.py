@@ -716,6 +716,20 @@ class TestLaConduiteDUnLot(unittest.TestCase):
                    "says whether they succeeded."],
         })
 
+    def test_apres_la_fusion_l_agent_supprime_ses_branches_contenues(self):
+        """T-0192 (B-0351, ADR-0113) : après la fusion, l'agent supprime
+        ses branches que la branche par défaut contient désormais."""
+        for lg, (fusion, commande) in {
+                "fr": ("Le chantier actif et le journal s'écrivent avant la fusion",
+                       "Après la fusion, `python3 .socle/socle prune-branches` supprime les branches de l'agent "
+                       "contenues"),
+                "en": ("The active work and the journal are written before the merge",
+                       "After the merge, `python3 .socle/socle prune-branches` deletes the agent's contained "
+                       "branches")}.items():
+            texte = " ".join(self.texte(lg).split())
+            self.assertIn(commande, texte, lg)
+            self.assertLess(texte.index(fusion), texte.index(commande), lg)
+
     def test_un_ensemble_qu_une_session_ne_mene_pas_se_forme_en_jalon(self):
         """T-0073 (B-0233) : à la formation d'un lot, un ensemble trop
         grand pour une session devient un jalon, ses lots dessous."""
@@ -946,6 +960,21 @@ class TestLaPassation(unittest.TestCase):
             tache = section.split("`create_trigger`", 1)[1]
             for parametre in ("`name`", "`persistent_session_id`", "`run_once_at`", "`prompt`"):
                 self.assertIn(parametre, tache, (lg, parametre))
+
+    def test_apres_le_retrait_de_la_passation_l_agent_supprime_la_branche_d_avant(self):
+        """T-0192 (B-0351, ADR-0113) : le retrait de la passation poussé, la
+        branche de la session d'avant est contenue dans la sienne ; l'agent
+        la supprime."""
+        for lg, (retrait, commande) in {
+                "fr": ("son premier commit retire la passation, poussé aussitôt",
+                       "puis `python3 .socle/socle prune-branches` supprime la branche de la session d'avant, que "
+                       "la sienne contient désormais"),
+                "en": ("its first commit removes the handoff, pushed at once",
+                       "then `python3 .socle/socle prune-branches` deletes the previous session's branch, which its "
+                       "own now contains")}.items():
+            texte = " ".join(self.texte(lg).split())
+            self.assertIn(commande, texte, lg)
+            self.assertLess(texte.index(retrait), texte.index(commande), lg)
 
     def test_la_garde_la_pull_request_voir_et_arreter_et_l_ancienne_session(self):
         self.lire({
