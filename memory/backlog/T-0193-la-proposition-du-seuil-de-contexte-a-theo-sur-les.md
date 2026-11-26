@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0193 — La proposition du seuil de contexte à Théo, sur les mesures déjà prises, sans attendre T-0186
 
-> statut : ouvert · origine : J-2026-11-26-Q · besoin : B-0355 · lu : backlog@a3166255 · ref : D-0209
+> statut : en cours · origine : J-2026-11-26-Q · besoin : B-0355 · lu : backlog@a3166255 · ref : D-0209
 
 Une demande à Théo, sur la suggestion 1 de la revue de cap 8 qu'il
 retient (D-0209) : garder, changer ou retirer le seuil de 300 000 jetons
