@@ -15,12 +15,21 @@ dans une étape, ni ne décide quand le faire ; tant qu'un jalon a du
 travail, il attend. Chez chess, le 26 novembre, 33 besoins attendaient
 après les jalons, dans aucun.
 
-La piste soumise à Théo : à la clôture de chaque jalon, l'agent trie la
-réserve, chaque besoin rejoignant une étape à venir, restant en réserve
-d'une raison, ou proposé à Théo pour abandon ; la feuille de route dit
-depuis quand la réserve attend.
+La première piste, trier à la clôture de chaque jalon, ne suffit pas,
+Théo le relève (J-2026-11-26-AE) : il ne faut ni que la réserve pourrisse,
+ni retrier sans cesse. Un jalon dure des semaines ; un lot, une heure.
+La règle soumise, à trois moments :
+
+- à sa naissance, un besoin se range : dans un jalon, ou en réserve avec
+  sa raison, sans autre geste que de l'écrire ;
+- à la clôture d'un jalon, la réserve se retrie : chaque besoin rejoint
+  un jalon à venir, y reste d'une raison, ou est proposé à l'humain pour
+  abandon ;
+- un besoin en réserve depuis dix lots clos, sans tri depuis, remonte
+  « à placer » dans l'état, et se trie à la clôture du lot suivant.
 
 ## Satisfait quand
 
-- [ ] à la clôture d'un jalon, chaque besoin hors jalon est placé dans une étape à venir, gardé en réserve avec sa raison, ou proposé à l'humain pour abandon
-- [ ] la feuille de route dit depuis quand attend le plus ancien besoin de la réserve
+- [ ] aucun besoin n'entre en réserve sans sa raison
+- [ ] à la clôture d'un jalon, chaque besoin de la réserve est placé dans un jalon à venir, gardé avec sa raison, ou proposé à l'humain pour abandon
+- [ ] un besoin en réserve depuis dix lots clos sans tri est signalé par l'état

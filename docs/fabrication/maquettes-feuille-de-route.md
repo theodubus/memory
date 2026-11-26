@@ -177,3 +177,74 @@ Pour toi : copier les données
 d'entraînement sur un disque dur
 En réserve : 12 besoins, dont 2 prioritaires
 ```
+
+## Trois variantes du plan court
+
+Théo demande des variantes de A2 : le compte « k sur n », en fin de
+ligne et non aligné, se lit mal (J-2026-11-26-AE). Les trois gardent la
+même section « Maintenant » ; seule change la façon de dire
+l'avancement.
+
+### A2-a. Une barre devant le titre, alignée
+
+Un carré par besoin : plein s'il est fait, vide sinon.
+
+```text
+La suite de Fou — 26 novembre
+
+Maintenant
+ ▶ Finir l'adoption du socle 0.2.0
+   reste : passer CLAUDE.md dans AGENTS.md
+
+Ensuite
+ 1  ■□□□  Embarquer le réseau N10
+          ✓ Entraîner N10 sur les parties
+            de novembre
+          · Mesurer N10 contre N8
+          · Embarquer N10 dans le binaire
+          · Situer le moteur sur la liste CCRL
+ 2  □□□   Régler la recherche par SPSA
+ 3  □□    Accélérer la recherche
+ 4  □□□   Nouvelle architecture de réseau
+
+Pour toi : copier les données
+d'entraînement sur un disque dur
+En réserve : 12 besoins, dont 2 prioritaires
+```
+
+### A2-b. Le compte en mots, sous le titre
+
+L'étape dépliée n'a pas de compte : sa liste le dit.
+
+```text
+Ensuite
+1. Embarquer le réseau N10
+   ✓ Entraîner N10 sur les parties de novembre
+   · Mesurer N10 contre N8
+   · Embarquer N10 dans le binaire
+   · Situer le moteur sur la liste CCRL
+2. Régler la recherche par SPSA
+   3 besoins, aucun commencé
+3. Accélérer la recherche
+   2 besoins, aucun commencé
+4. Nouvelle architecture de réseau
+   3 besoins, aucun commencé
+```
+
+### A2-c. Aucun compte
+
+L'étape dépliée dit le sien par sa liste ; les suivantes ne disent que
+leur ordre.
+
+```text
+Ensuite
+1. Embarquer le réseau N10
+   ✓ Entraîner N10 sur les parties de novembre
+   · Mesurer N10 contre N8
+   · Embarquer N10 dans le binaire
+   · Situer le moteur sur la liste CCRL
+Puis
+2. Régler la recherche par SPSA
+3. Accélérer la recherche
+4. Nouvelle architecture de réseau
+```
