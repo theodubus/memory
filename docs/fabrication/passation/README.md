@@ -16,6 +16,7 @@ La reprise :
    l'ensemble `PAS_ENCORE` du test des marges ne peut que rétrécir ; les
    trois tests changés sous ADR-0110 et ADR-0111 ne perdent que des phrases
    que le gabarit a quittées ;
-3. consigner la réponse de Théo sur le plafond des skills (A, B ou C,
-   J-2026-11-26-BD), puis faire ce qu'elle décide ;
+3. sur D-0223 (Théo choisit A, J-2026-11-26-BF), poser la demande qui
+   relève le plafond des skills de 8 000 à 10 000 octets en nommant sa
+   clé et les tests touchés, puis, validée, la faire ;
 4. corriger les constats bloquants, retirer ce dossier, puis livrer.

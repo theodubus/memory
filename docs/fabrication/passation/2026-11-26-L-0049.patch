@@ -1,4 +1,4 @@
-From b1de1cb609e40043f2d6e5cf685c89ec9c112ddc Mon Sep 17 00:00:00 2001
+From f5d2b721b059ce0ba490d940bb4fb17bf6f1eaef Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
 Date: Thu, 26 Nov 2026 22:58:38 +0000
 Subject: [PATCH] =?UTF-8?q?T-0206=20:=20ce=20qui=20justifiait=20une=20r?=
@@ -6,7 +6,7 @@ Subject: [PATCH] =?UTF-8?q?T-0206=20:=20ce=20qui=20justifiait=20une=20r?=
  =?UTF-8?q?=20d'AGENTS.md=20passe=20au=20guide,=20=C2=AB=20Pourquoi=20ces?=
  =?UTF-8?q?=20r=C3=A8gles=20=C2=BB=20;=20AGENTS.md=20tient=20sa=20marge,?=
  =?UTF-8?q?=20socle-batch,=20socle-request=20et=20socle-resume=20non=20(J-?=
- =?UTF-8?q?2026-11-26-BE)?=
+ =?UTF-8?q?2026-11-26-BG)?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -1104,15 +1104,15 @@ index 393717da..40377c8c 100644
 -- [ ] la note de version, française et anglaise, le dit
 +- [x] la note de version, française et anglaise, le dit
 diff --git a/memory/journal/2026-11-14.md b/memory/journal/2026-11-14.md
-index 84e45e8e..3ad6c8fd 100644
+index 7ea1bc76..a2b17531 100644
 --- a/memory/journal/2026-11-14.md
 +++ b/memory/journal/2026-11-14.md
-@@ -932,3 +932,69 @@ Le contexte de la session dépasse 150 000 jetons (210 000) : elle range
- le dossier de passation de la documentation de fabrication. Mode : le
- prompt à copier (C-0003@b3e65851),
- chaîne 0.
+@@ -954,3 +954,69 @@ basse. La session suivante pose la demande de la clé, avec les tests
+ qu'elle touche (l'ensemble `PAS_ENCORE` du test des marges se vide sous
+ 10 000), puis l'applique une fois validée, avec sa note de version et
+ son point au prompt de chess. Théo change de session.
 +
-+## J-2026-11-26-BE — T-0206 : les justifications des skills et de la section du socle d'AGENTS.md passent au guide ; AGENTS.md tient sa marge, socle-batch, socle-request et socle-resume non
++## J-2026-11-26-BG — T-0206 : les justifications des skills et de la section du socle d'AGENTS.md passent au guide ; AGENTS.md tient sa marge, socle-batch, socle-request et socle-resume non
 +
 +> ref : T-0206, B-0354, D-0218, L-0049, ADR-0110, ADR-0111
 +
