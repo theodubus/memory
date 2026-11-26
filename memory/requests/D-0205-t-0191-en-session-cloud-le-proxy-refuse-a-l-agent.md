@@ -33,12 +33,12 @@ Par conséquent, dans tes sessions cloud au prompt à copier, où chaque session
 
 ## Options
 
-- **A, clore et ouvrir un besoin.** T-0191 se clôt : son quatrième critère est noté « refusé par le proxy cloud, le chemin du refus éprouvé en usage réel ». B-0351 reste ouvert, et un besoin neuf porte le cas cloud : chercher une voie qui ne passe pas par le push, ou s'en tenir au réglage de GitHub et à la session programmée. Effort : quelques lignes de mémoire. Risque : nul, le code ne change pas. Réversible.
-- **B, attendre une session sur ta machine.** T-0191 reste ouverte jusqu'à ce qu'une session locale lance la commande ici et voie la branche supprimée. Le lot reste ouvert, la pull request se fusionne quand même. Effort : une session de ta part. Réversible.
+- **A, clore et ouvrir un besoin.** T-0191 se clôt : son quatrième critère est noté « refusé par le proxy cloud, le chemin du refus éprouvé en usage réel ». B-0351 se clôt aussi, satisfait hors du cloud. Un besoin neuf porte le cas cloud, hors du jalon de chess : chercher une voie qui ne passe pas par le push, ou s'en tenir au réglage de GitHub et à la session programmée. Le prompt de mise à jour de chess, qui attend B-0351, devient prêt. Effort : quelques lignes de mémoire. Risque : nul, le code ne change pas. Réversible.
+- **B, attendre une session sur ta machine.** T-0191 reste ouverte jusqu'à ce qu'une session locale lance la commande ici et voie la branche supprimée. B-0351 reste ouvert avec elle, et le prompt de chess, qui l'attend, aussi : la mise à jour de chess attend cette session. La pull request se fusionne quand même. Effort : une session de ta part. Réversible.
 
 ## Conséquences
 
-Si tu valides (A), je clos T-0191, j'ouvre le besoin du cas cloud hors du jalon de chess, et le lot se clôt. Les deux branches restent à toi : tu les supprimes sur GitHub. Si tu refuses, T-0191 reste ouverte comme en B, et je te demande ce qui la clora. Sans réponse, T-0191 reste ouverte. La pull request du lot se fusionne de toute façon : son code ne dépend pas de ta réponse.
+Si tu valides (A), je clos T-0191 et B-0351, j'ouvre le besoin du cas cloud hors du jalon de chess, le lot se clôt, et le prompt de chess devient la suite. Les deux branches restent à toi : tu les supprimes sur GitHub. Si tu refuses, T-0191 reste ouverte comme en B, et je te demande ce qui la clora. Sans réponse, T-0191 reste ouverte, et la suite attend. La pull request du lot se fusionne de toute façon : son code ne dépend pas de ta réponse.
 
 ## Recommandation
 
@@ -46,7 +46,7 @@ A. Vérifié : le refus du proxy (403, deux fois), la branche rendue dans l'éta
 
 ## Réponses possibles
 
-- `valider` — option A : T-0191 se clôt sur le refus éprouvé, un besoin neuf porte le cas cloud, le lot se clôt.
+- `valider` — option A : T-0191 et B-0351 se closent sur le refus éprouvé, un besoin neuf porte le cas cloud, le lot se clôt, le prompt de chess suit.
 - `attendre-une-session-locale` — option B : T-0191 reste ouverte jusqu'à une session sur ta machine.
 - `refuser` — T-0191 reste ouverte, et je te demande ce qui la clora.
 - `contexte-insuffisant` — la demande revient à l'agent, qui la réécrit en une demande qui la remplace.
