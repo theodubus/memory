@@ -17,3 +17,9 @@ de chess.
 T-0204 le rejoint, d'abord (J-2026-11-26-AH) : le prompt de chess
 récrit pour la mise à jour suivante, sur la réponse à D-0215, avant que
 T-0200 et T-0201 y ajoutent leur note.
+
+## Revues
+
+### Passe 1 — 2026-11-26
+
+Commits : d2de2ee1..09fecd96
