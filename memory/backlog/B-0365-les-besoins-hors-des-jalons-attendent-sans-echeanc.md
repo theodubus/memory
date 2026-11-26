@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0365 — Les besoins hors des jalons attendent sans échéance : rien ne les place dans une étape ni ne les trie, et la réserve grossit
 
-> statut : ouvert · origine : J-2026-11-26-AD · lu : backlog@0e2e535a · ref : B-0364
+> statut : ouvert · origine : J-2026-11-26-AD · lu : backlog@0e2e535a · ref : B-0364, D-0213
 
 Théo, le 26 novembre (J-2026-11-26-AD) : « Les besoins hors
 jalons/lots/etapes s'insèrent tout seul dans les étapes du travail
@@ -25,11 +25,15 @@ La règle soumise, à trois moments :
 - à la clôture d'un jalon, la réserve se retrie : chaque besoin rejoint
   un jalon à venir, y reste d'une raison, ou est proposé à l'humain pour
   abandon ;
-- un besoin en réserve depuis dix lots clos, sans tri depuis, remonte
+- un besoin en réserve depuis quinze lots clos, sans tri depuis, remonte
   « à placer » dans l'état, et se trie à la clôture du lot suivant.
+
+Théo la valide le 26 novembre, à quinze lots (D-0213, J-2026-11-26-AF) :
+le compte repart à chaque tri d'un besoin, et la clôture d'un jalon
+retrie la réserve entière, même avant les quinze lots.
 
 ## Satisfait quand
 
 - [ ] aucun besoin n'entre en réserve sans sa raison
 - [ ] à la clôture d'un jalon, chaque besoin de la réserve est placé dans un jalon à venir, gardé avec sa raison, ou proposé à l'humain pour abandon
-- [ ] un besoin en réserve depuis dix lots clos sans tri est signalé par l'état
+- [ ] un besoin en réserve depuis quinze lots clos sans tri est signalé par l'état, et le compte repart à chaque tri

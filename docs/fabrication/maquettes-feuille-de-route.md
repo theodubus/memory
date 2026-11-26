@@ -248,3 +248,42 @@ Puis
 3. Accélérer la recherche
 4. Nouvelle architecture de réseau
 ```
+
+## A2-d. Le compte entre crochets, devant le titre
+
+Le format que propose Théo, « X. [K/N] titre » (J-2026-11-26-AF) : le
+numéro de l'étape, puis ses besoins clos sur son total, puis son titre ;
+les crochets ont tous la même largeur, et les titres s'alignent.
+
+```text
+La suite de Fou — 26 novembre
+
+Maintenant
+ ▶ Finir l'adoption du socle 0.2.0
+   reste : passer CLAUDE.md dans AGENTS.md
+
+Ensuite
+1. [1/4] Embarquer le réseau N10
+         ✓ Entraîner N10 sur les parties
+           de novembre
+         · Mesurer N10 contre N8
+         · Embarquer N10 dans le binaire
+         · Situer le moteur sur la liste CCRL
+2. [0/3] Régler la recherche par SPSA
+3. [0/2] Accélérer la recherche
+4. [0/3] Nouvelle architecture de réseau
+
+Pour toi : copier les données
+d'entraînement sur un disque dur
+En réserve : 12 besoins, dont 2 prioritaires
+```
+
+Quand un total atteint deux chiffres, tous les crochets s'élargissent
+d'autant, et l'alignement tient :
+
+```text
+Ensuite
+1. [ 1/4 ] Embarquer le réseau N10
+2. [ 0/3 ] Régler la recherche par SPSA
+3. [ 2/12] Ouvrir le livre d'ouvertures
+```
