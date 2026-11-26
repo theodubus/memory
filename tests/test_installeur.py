@@ -116,6 +116,33 @@ class TestRelance(unittest.TestCase):
         self.assertTrue((self.racine / ".socle/engine/socle/cli.py").is_file())
         self.assertIn("moteur déjà en place", flux.getvalue())
 
+    def test_sans_owner_la_mise_a_jour_garde_le_proprietaire_en_place(self):
+        """B-0358 : la mise à jour de chess sans --owner disait « !! aucun
+        propriétaire » sur un CODEOWNERS déjà posé."""
+        self.racine = depot({"app.py": "print('ok')\n"})
+        installer(self.racine, adoption=False)
+        p = self.racine / ".github/CODEOWNERS"
+        # Une ligne que le gabarit pose, retirée : comme une ligne nouvelle du gabarit.
+        p.write_text("".join(l for l in p.read_text().splitlines(keepends=True) if not l.startswith("/.github/")))
+        with redirect_stdout(io.StringIO()) as flux:
+            installeur.installer(self.racine, "python", source=MOTEUR)
+        self.assertNotIn("!! aucun propriétaire", flux.getvalue())
+        self.assertIn("CODEOWNERS : @essai", flux.getvalue())
+        self.assertIn("/.github/ @essai", p.read_text().splitlines())
+        self.assertEqual(installeur.proprietaire_en_place(p), "@essai")
+
+    def test_sans_owner_ni_codeowners_la_ligne_d_alerte_reste(self):
+        self.racine = depot({"app.py": "print('ok')\n"})
+        with redirect_stdout(io.StringIO()) as flux:
+            installeur.installer(self.racine, "python", source=MOTEUR)
+        self.assertIn("!! aucun propriétaire", flux.getvalue())
+        self.assertFalse((self.racine / ".github/CODEOWNERS").exists())
+        self.assertEqual(installeur.proprietaire_en_place(self.racine / ".github/CODEOWNERS"), "")
+
+    def test_un_codeowners_sans_la_ligne_de_la_politique_ne_donne_pas_de_proprietaire(self):
+        self.racine = depot({".github/CODEOWNERS": "# /.socle/ @commente\n/src/ @autre\n"})
+        self.assertEqual(installeur.proprietaire_en_place(self.racine / ".github/CODEOWNERS"), "")
+
     def test_un_claude_md_propre_au_projet_passe_dans_agents_md(self):
         """Il était remplacé par la seule ligne d'import dès qu'AGENTS.md existait."""
         self.racine = depot({"AGENTS.md": "# Projet\n", "CLAUDE.md": "Règle propre à Claude : répondre bref.\n"})

@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0212-la-forme-de-la-feuille-de-route-qui-sera-validee-p.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-26"
+canal = "conversation"
+citation = "Ok pour le fait que la nouvelle forme qu'on valide remplace les deux anciens formats"
+empreinte = "sha256:fadfed3c24247d297aafd1290183d976f3f523d23b765de4f842c5a43be991ac"

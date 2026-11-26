@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0213-la-regle-du-tri-de-la-reserve-b-0365-te-va-t-elle.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-26"
+canal = "conversation"
+citation = "Ok pour la regle de tri, mais mettons plutôt 15 lots\nEt on est d'accord que si apres le tri il reste hors étape/jalon, il faut re attendre 15 lots pour le retrier ?"
+empreinte = "sha256:3cce635867d93499a16514e6b8f2dd04dff03690aab575fdcf6474503a9fbbcc"

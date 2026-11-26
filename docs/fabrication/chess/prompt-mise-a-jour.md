@@ -10,7 +10,10 @@ Utilisé le 26 novembre (T-0195), son retour dans
 `docs/fabrication/chess/mise-a-jour-2026-11-26.md` : la mise à jour
 suivante part de cette version-là, et ses points se récrivent pour les
 notes de version d'après elle ; son point 5 disait à tort la liste
-`[adoption] warn_only` de chess non vide.
+`[adoption] warn_only` de chess non vide. Sa réécriture pour la version du
+26 novembre, faite dans L-0046 (commit `a8b8411f`), attend la réponse
+à D-0215 (T-0204) : un test y exige encore le point 17. D'ici là, les
+notes `2026-11-26-d` à `2026-11-26-g` n'y sont pas.
 
 Récrit par thème le 26 novembre (T-0186, D-0199) : chaque point dit la
 règle d'aujourd'hui, vérifiée contre le guide, les skills et la ligne de

@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0358 — À une mise à jour sans --owner, l'installeur dit CODEOWNERS non posé alors que le projet en a un, protégé
 
-> statut : ouvert · origine : J-2026-11-26-AA · ref : B-0323 · lu : backlog@dd11ac18
+> statut : fait · origine : J-2026-11-26-AA · ref : B-0323, J-2026-11-26-AH · lu : backlog@dd11ac18
 
 La gêne 2 de la mise à jour de chess du 26 novembre
 (`docs/fabrication/chess/mise-a-jour-2026-11-26.md`) : relancé sans
@@ -15,4 +15,4 @@ ligne que le gabarit ajouterait ne serait jamais posée sans `--owner`
 
 ## Satisfait quand
 
-- [ ] une mise à jour sans `--owner` d'un projet qui a déjà son CODEOWNERS n'y signale aucun défaut, et y ajoute les lignes que le gabarit a en plus
+- [x] une mise à jour sans `--owner` d'un projet qui a déjà son CODEOWNERS n'y signale aucun défaut, et y ajoute les lignes que le gabarit a en plus
