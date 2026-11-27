@@ -331,6 +331,8 @@ MESSAGES: dict[str, str] = {
         "GitHub, not in your container.\n{liens}\nGive a file by its permalink (`socle url <path|ID>`, after the "
         "push); only put between backticks paths that exist in this repository, and those of another repository as "
         "`repo:path`.",
+    "Ton récap, l'humain l'a lu : le message qui ne corrige que ces liens n'a pas à le redire.":
+        "The human has read your recap: the message that only fixes these links need not repeat it.",
     "Ton dernier message cite {demandes}, en attente de l'humain, sans son lien : il doit pouvoir l'ouvrir d'un "
     "clic. Ajoute la sortie de `socle url {ids}`.":
         "Your last message cites {demandes}, waiting for the human, without its link: they must be able to open it "
@@ -2284,8 +2286,14 @@ MESSAGES: dict[str, str] = {
         "version “{version}” unknown or not pushed",
     "lien relatif « {cible} » : hors du conteneur, il ne mène nulle part":
         "relative link “{cible}”: outside the container, it leads nowhere",
-    "`{code}` : aucun chemin de ce nom dans le dépôt, le lien qu'en fait le client mène à un 404":
-        "`{code}`: no path of that name in the repository, the link the client makes of it leads to a 404",
+    "`{code}` : aucun chemin de ce nom dans le dépôt, le lien qu'en fait le client mène à un 404 ; le seul fichier "
+    "suivi de ce nom est `{complet}` : écrire ce chemin complet":
+        "`{code}`: no path of that name in the repository, the link the client makes of it leads to a 404; the only "
+        "tracked file of that name is `{complet}`: write this full path",
+    "`{code}` : aucun chemin de ce nom dans le dépôt, le lien qu'en fait le client mène à un 404 ; il ne désigne pas "
+    "un seul fichier suivi : l'écrire sans accents graves":
+        "`{code}`: no path of that name in the repository, the link the client makes of it leads to a 404; it does "
+        "not name a single tracked file: write it without backticks",
     "`{code}` : présent sur le disque du conteneur mais ignoré par git, le lien qu'en fait le client mène à un 404 : ne pas le citer":
         "`{code}`: present on the container's disk but ignored by git, the link the client makes of it leads to a 404: do not cite it",
     "capacité absente : {absent}":
@@ -3147,6 +3155,10 @@ MESSAGES: dict[str, str] = {
         "a new file cited by the memory, added by the same commit, passes the end of turn, the commit and the CI",
     "chemin donné à l'humain qui n'existe pas dans le dépôt":
         "path given to the human that does not exist in the repository",
+    "nom nu d'un fichier suivi donné à l'humain entre accents graves, sans son chemin":
+        "bare name of a tracked file given to the human between backticks, without its path",
+    "message sans récap qui suit, dans le même tour, un message refusé pour son récap et ses liens":
+        "message without a recap that follows, in the same turn, a message refused for its recap and its links",
     "lien relatif, que l'humain ne peut pas suivre hors du conteneur":
         "relative link, which the human cannot follow outside the container",
     "permalien vers un fichier absent de la version poussée":
@@ -3354,6 +3366,10 @@ MESSAGES: dict[str, str] = {
         "the end-of-turn hook",
     "des liens que l'humain peut suivre passent le hook de fin de tour":
         "links the human can follow pass the end-of-turn hook",
+    "un message qui ne corrige que les liens d'un message refusé pour eux seuls, qui portait le récap, passe le hook "
+    "de fin de tour sans redire le récap (B-0371)":
+        "a message that only fixes the links of a message refused for them alone, which carried the recap, passes "
+        "the end-of-turn hook without repeating the recap (B-0371)",
     "une branche donnée à supprimer que l'origine a encore passe le hook de fin de tour":
         "a branch given to delete that the origin still has passes the end-of-turn hook",
     "une fonction ajoutée avec le test qui la nomme passe la CI":

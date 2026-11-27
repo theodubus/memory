@@ -432,6 +432,37 @@ def etage_stop(a: Atelier, c: Path, dernier_message: str | None = None) -> str:
     return sortie.get("reason", "") if sortie.get("decision") == "block" else ""
 
 
+def _etage_stop_apres_refus(a: Atelier, c: Path, refuse: str, corrige: str) -> str:
+    """Deux fins de tour du même tour, au format de Claude Code : `refuse`,
+    que le hook doit refuser, puis, après la pièce jointe de ce refus,
+    `corrige`, jugé à la relance du hook (`stop_hook_active`). Rend ce que la
+    relance dit à l'humain, ou pourquoi le premier message n'est pas
+    refusé (B-0371)."""
+    transcript = c.parent / f"{c.name}-transcript.jsonl"
+
+    def agent(texte: str) -> dict:
+        return {"type": "assistant", "message": {"role": "assistant", "content": [{"type": "text", "text": texte}]}}
+
+    def fin(relance: bool) -> dict:
+        r = a.socle(c, "hook", "stop", entree=json.dumps({"session_id": "autotest", "stop_hook_active": relance,
+                                                          "transcript_path": str(transcript)}))
+        return json.loads(r.stdout) if r.stdout.strip() else {}
+
+    transcript.write_text("\n".join(json.dumps(x, ensure_ascii=False) for x in (
+        {"type": "user", "message": {"role": "user", "content": "fais le travail"}}, agent(refuse))) + "\n")
+    premier = fin(False)
+    if premier.get("decision") != "block":
+        return f"le premier message n'est pas refusé : {premier}"
+    with transcript.open("a", encoding="utf-8") as f:
+        for x in ({"type": "attachment", "attachment": {"type": "hook_blocking_error", "hookName": "Stop",
+                                                         "hookEvent": "Stop",
+                                                         "blockingError": {"blockingError": premier["reason"]}}},
+                  agent(corrige)):
+            f.write(json.dumps(x, ensure_ascii=False) + "\n")
+    second = fin(True)
+    return second.get("reason", "") if second.get("decision") == "block" else second.get("systemMessage", "")
+
+
 def etage_demarrage(a: Atelier, c: Path) -> str:
     """Le hook de démarrage de session : il imprime l'état dérivé."""
     return a.socle(c, "hook", "session-start", entree=json.dumps({"session_id": "autotest", "source": "startup"})).stdout
@@ -2741,6 +2772,21 @@ def _cas() -> list[Cas]:
         maj_memoire(c, "Travail du tour.")
         return etage_stop(a, c, "La doc est dans `docs/calcul.md`." + RECAP)
 
+    @defaut("chemin-nom-nu", "nom nu d'un fichier suivi donné à l'humain entre accents graves, sans son chemin",
+            "agent", "chemin complet")
+    def _(a, c):
+        # B-0371 : le refus donne le chemin complet du seul fichier suivi.
+        maj_memoire(c, "Travail du tour.")
+        return etage_stop(a, c, "La doc est dans `calc.md`." + RECAP)
+
+    @defaut("recap-absent-apres-refus-du-recap", "message sans récap qui suit, dans le même tour, un message refusé "
+            "pour son récap et ses liens", "agent", "récap malgré un rappel")
+    def _(a, c):
+        # B-0371 : seul un message refusé pour ses seuls liens, qui portait
+        # le récap, dispense le message qui les corrige de le redire.
+        maj_memoire(c, "Travail du tour.")
+        return _etage_stop_apres_refus(a, c, "La doc est dans `docs/calcul.md`.", "La doc est dans `docs/calc.md`.")
+
     @defaut("lien-relatif", "lien relatif, que l'humain ne peut pas suivre hors du conteneur", "agent", "liens")
     def _(a, c):
         return etage_stop(a, c, "Voir [la doc](docs/calc.md)." + RECAP)
@@ -3789,6 +3835,12 @@ def _temoins() -> list[tuple[str, Callable]]:
         return etage_stop(a, c, "J'ai posé la demande D-0001, sur le module `calc.py` et sa doc `docs/calc.md`.\n\n"
                           + r.stdout + "\nPour toi : répondre à D-0001.\nEnsuite : rien.")
 
+    @temoin("un message qui ne corrige que les liens d'un message refusé pour eux seuls, qui portait le récap, passe "
+            "le hook de fin de tour sans redire le récap (B-0371)")
+    def _(a, c):
+        maj_memoire(c, "Travail du tour.")
+        return _etage_stop_apres_refus(a, c, "La doc est dans `calc.md`." + RECAP, "La doc est dans `docs/calc.md`.")
+
     @temoin("une branche donnée à supprimer que l'origine a encore passe le hook de fin de tour")
     def _(a, c):
         a.git(c, "push", "-q", "--no-verify", "origin", f"HEAD:refs/heads/morceau-{c.name}")
@@ -4271,6 +4323,10 @@ RAISONS_AGENT = {
     "récap": "pas Pour toi :",
     "suite": "pas Ensuite :",
     "liens": "liens que l'humain ne pourra pas suivre",
+    # B-0371 : le nom nu d'un seul fichier suivi, refusé avec son chemin
+    # complet ; le récap qui manque encore à la relance, dit à l'humain.
+    "chemin complet": "le seul fichier suivi de ce nom est `docs/calc.md` : écrire ce chemin complet",
+    "récap malgré un rappel": "fin d'intervention sans Pour toi :",
     "lien de demande": "sans son lien",
     "branche absente": "que l'origine n'a plus",
     "signal indisponible": "mémoire privée : INDISPONIBLE",

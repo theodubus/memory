@@ -38,6 +38,20 @@ admitted it. No test can prove the correction of a text:
 `tests.regression` now warns, "fix that touches only the documentation
 and the memory: not judged", as for a fix that touches only the memory.
 A fix that also touches another file is judged as before.
+## 2026-11-27-c — The links refusal gives the full path of a bare name, and the message that only fixes the links of a refused recap no longer has to repeat it
+
+A name between backticks that is not a path of the repository made the
+end of turn refused on “no path of that name in the repository”. The
+refusal now looks for the tracked files that this name designates by the
+end of their path (a bare name, or its last folders): if there is only one,
+it gives its full path to write; otherwise, it says to write the name
+without backticks. The message that fixes them also had to repeat the
+whole recap, judged on the last message alone: when the message refused
+in the same turn was refused for its links alone, and carried the recap,
+the message that follows it no longer has to repeat it, and the refusal
+says so. The end of turn knows it from what it already read, its trace
+and Claude Code's transcript, where the refusal is recorded. The socle
+section of `AGENTS.md` states the links rule in one positive sentence.
 
 To do: nothing.
 

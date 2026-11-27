@@ -2782,6 +2782,44 @@ def _appels_externes(racine: Path, session: str) -> bool:
     return any(l[1] == "PreToolUse" and l[3].startswith("mcp__") for l in siennes[debut:])
 
 
+# Ce que trace un refus de la fin de tour pour les seuls liens du message
+# (`exiger_recap`) : un lien mort, une demande citée sans son lien.
+REFUS_DES_LIENS = frozenset({"liens", "lien-de-demande"})
+
+
+def _refus_des_seuls_liens(racine: Path, session: str) -> bool:
+    """La fin de tour précédente de cette session a-t-elle refusé le message
+    pour ses seuls liens ? Ce qu'elle a tracé entre elle et celle-ci
+    (`tracer_refus`) : ni un récap qui manque, ni une branche absente, ni un
+    contrôle en échec."""
+    if not session:
+        return False
+    siennes = [l for l in (x.split("\t") for x in config.lire_trace(racine)) if len(l) >= 4 and l[2] == session]
+    stops = [i for i, l in enumerate(siennes) if l[1] == "Stop"]
+    if len(stops) < 2:
+        return False
+    refus = [l[3] for l in siennes[stops[-2] + 1:stops[-1]] if l[1] == "Refus" and l[3].startswith("Stop:")]
+    quoi = set(refus[-1][len("Stop:"):].split(",")) if refus else set()
+    return bool(quoi) and quoi <= REFUS_DES_LIENS
+
+
+def recap_deja_lu(projet: config.Projet, entree: dict) -> bool:
+    """B-0371 : dans ce tour, la fin de tour a refusé un message pour ses
+    seuls liens, et ce message portait le récap. L'humain l'a lu une fois :
+    le message qui corrige ces liens n'a pas à le redire. Ce que la fin de
+    tour lit déjà, sans rien écrire de neuf : la relance du hook
+    (`stop_hook_active`), sa trace, qui dit pourquoi il a refusé, et le
+    transcript, qui garde le message refusé avant le refus."""
+    from socle import human as humain
+
+    chemin = entree.get("transcript_path")
+    if not (entree.get("stop_hook_active") and chemin
+            and _refus_des_seuls_liens(projet.racine, entree.get("session_id", ""))):
+        return False
+    refuse = humain.message_refuse(Path(chemin))
+    return refuse is not None and not humain.recap_manquant(projet, refuse)
+
+
 def exiger_recap(projet: config.Projet, entree: dict, avertissement: str | None = None) -> int:
     """Un tour où l'agent a agi se termine par un récap et deux lignes,
     `Pour toi :` et `Ensuite :`. Tout dernier message,
@@ -2819,6 +2857,8 @@ def exiger_recap(projet: config.Projet, entree: dict, avertissement: str | None 
             return dire({"systemMessage": trad("récap de fin d'intervention non vérifiable : transcript illisible")})
         return dire(None)
     manque = humain.recap_manquant(projet, message) if a_agi else []
+    if manque and recap_deja_lu(projet, entree):
+        manque = []
     morts, sans_lien = liens.problemes(projet, message)
     # Une branche que « Pour toi » donne à supprimer et que l'origine n'a
     # plus : l'humain n'a rien à supprimer (B-0311, D-0178).
@@ -2871,6 +2911,9 @@ def exiger_recap(projet: config.Projet, entree: dict, avertissement: str | None 
             "Ton dernier message cite {demandes}, en attente de l'humain, sans son lien : il doit pouvoir l'ouvrir "
             "d'un clic. Ajoute la sortie de `socle url {ids}`.",
             demandes=", ".join(sans_lien), ids=" ".join(sans_lien)))
+    if (morts or sans_lien) and a_agi and not (manque or absentes):
+        raisons.append(trad("Ton récap, l'humain l'a lu : le message qui ne corrige que ces liens n'a pas à le "
+                            "redire."))
     if absentes:
         raisons.append(trad(
             "Ton dernier message donne à l'humain, dans « Pour toi », à supprimer {branches}, que l'origine n'a plus "

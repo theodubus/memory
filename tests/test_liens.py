@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import subprocess
@@ -237,6 +238,30 @@ class TestLiensDuDepot(unittest.TestCase):
         self.assertIn("docs/b.md n'existe pas", morts[2])
         self.assertEqual(sans_lien, [])
 
+    def test_le_nom_nu_d_un_seul_fichier_suivi_se_corrige_par_son_chemin_complet(self):
+        """B-0371 : chez chess, le premier poste des refus ; le refus disait
+        « aucun chemin de ce nom » sans chercher le fichier que le nom désigne."""
+        (self.clone / "docs/sous").mkdir()
+        (self.clone / "docs/sous/b.md").write_text("# B bis\n")
+        git(self.clone, "add", "-A")
+        for cite, complet in (("a.md", "docs/a.md"), ("policy.toml", ".socle/policy.toml"),
+                              ("sous/b.md", "docs/sous/b.md"), ("a.md:3", "docs/a.md:3")):
+            with self.subTest(cite=cite):
+                morts, _ = liens.problemes(self.projet, f"Voir `{cite}`.")
+                self.assertEqual(len(morts), 1, morts)
+                self.assertIn(f"`{cite}` : aucun chemin de ce nom dans le dépôt", morts[0])
+                self.assertIn(f"le seul fichier suivi de ce nom est `{complet}` : écrire ce chemin complet", morts[0])
+        # Plusieurs fichiers suivis, ou aucun : sans accents graves.
+        for cite in ("b.md", "absent.md", "docs/absent.md", "manque/"):
+            with self.subTest(cite=cite):
+                morts, _ = liens.problemes(self.projet, f"Voir `{cite}`.")
+                self.assertEqual(len(morts), 1, morts)
+                self.assertIn("il ne désigne pas un seul fichier suivi : l'écrire sans accents graves", morts[0])
+        # Un fichier suivi supprimé du disque ne se propose pas.
+        (self.clone / "docs/sous/b.md").unlink()
+        self.assertIn("le seul fichier suivi de ce nom est `docs/b.md`",
+                      liens.problemes(self.projet, "Voir `b.md`.")[0][0])
+
     def test_un_chemin_present_sur_le_disque_seulement_d_un_message(self):
         """B-0166 : un chemin donné à l'humain vaut s'il est suivi par git, ou
         livré par le prochain `git add` ; un dossier qu'une règle locale de
@@ -437,6 +462,114 @@ class TestBranchesASupprimerCitees(unittest.TestCase):
         git(self.clone, "remote", "set-url", "origin", str(self.dossier / "absente"))
         self.assertIn("non vérifiée(s), l'origine ne répondant pas : `fantome`",
                       json.loads(fin(absente))["systemMessage"])
+
+
+class TestRecapLuAvantLaCorrectionDesLiens(unittest.TestCase):
+    """B-0371 : chez chess, l'humain demandait « Pourquoi tu répètes 2 fois le
+    récap de fin ? ». La fin de tour jugeait le récap sur le seul dernier
+    message, que le message qui corrige les liens devait redonner entier."""
+
+    RECAP = "\n\nPour toi : rien.\nEnsuite : rien."
+
+    def setUp(self):
+        self.dossier = Path(tempfile.mkdtemp(prefix="socle-recap-lu-"))
+        self.addCleanup(shutil.rmtree, self.dossier, ignore_errors=True)
+        self.racine = self.dossier / "depot"
+        (self.racine / "docs").mkdir(parents=True)
+        git(self.racine, "init", "-q", "-b", "main")
+        (self.racine / "docs/a.md").write_text("# A\n")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "un")
+        self.projet = config.Projet(racine=self.racine)
+        self.transcript = self.dossier / "t.jsonl"
+        self.transcript.write_text("")
+
+    def ecrire(self, *objets):
+        with self.transcript.open("a") as f:
+            for o in objets:
+                f.write(json.dumps(o, ensure_ascii=False) + "\n")
+
+    @staticmethod
+    def agent(texte):
+        return {"type": "assistant", "message": {"role": "assistant", "content": [{"type": "text", "text": texte}]}}
+
+    @staticmethod
+    def refus(raison):
+        return {"type": "attachment", "attachment": {"type": "hook_blocking_error", "hookName": "Stop",
+                                                     "hookEvent": "Stop", "blockingError": {"blockingError": raison}}}
+
+    def fin(self, relance, session="s"):
+        """Une fin de tour comme `stop` la mène : sa trace d'abord, puis le
+        jugement du dernier message."""
+        import contextlib
+        import io
+
+        from socle import hooks
+
+        hooks.tracer(self.racine, "Stop", session)
+        sortie = io.StringIO()
+        with contextlib.redirect_stdout(sortie):
+            hooks.exiger_recap(self.projet, {"session_id": session, "transcript_path": str(self.transcript),
+                                             "stop_hook_active": relance})
+        return json.loads(sortie.getvalue()) if sortie.getvalue().strip() else {}
+
+    def refuse_puis_corrige(self, refuse, corrige, refus_dans_le_transcript=True):
+        self.ecrire({"type": "user", "message": {"role": "user", "content": "fais le travail"}}, self.agent(refuse))
+        premier = self.fin(False)
+        self.assertEqual(premier.get("decision"), "block", premier)
+        self.ecrire(*([self.refus(premier["reason"])] if refus_dans_le_transcript else []),
+                    {"type": "assistant", "message": {"content": [{"type": "tool_use", "name": "Bash"}]}},
+                    {"type": "user", "message": {"content": [{"type": "tool_result", "content": "ok"}]}},
+                    self.agent(corrige))
+        return premier, self.fin(True)
+
+    def test_le_message_qui_ne_corrige_que_les_liens_n_a_pas_a_redire_le_recap(self):
+        premier, second = self.refuse_puis_corrige("La doc est dans `a.md`." + self.RECAP,
+                                                   "La doc est dans `docs/a.md`.")
+        self.assertIn("le seul fichier suivi de ce nom est `docs/a.md`", premier["reason"])
+        self.assertIn("Ton récap, l'humain l'a lu : le message qui ne corrige que ces liens n'a pas à le redire",
+                      premier["reason"])
+        self.assertEqual(second, {})
+        from socle import human as humain
+
+        self.assertEqual(humain.message_refuse(self.transcript), "La doc est dans `a.md`." + self.RECAP)
+        self.assertEqual(humain.dernier_message(self.transcript), "La doc est dans `docs/a.md`.")
+
+    def test_il_reste_refuse_quand_le_message_refuse_n_avait_pas_le_recap(self):
+        premier, second = self.refuse_puis_corrige("La doc est dans `a.md`.", "La doc est dans `docs/a.md`.")
+        self.assertNotIn("Ton récap, l'humain l'a lu", premier["reason"])
+        self.assertIn("fin d'intervention sans Pour toi : ni Ensuite :, malgré un rappel", second["systemMessage"])
+
+    def test_il_reste_refuse_sans_le_refus_dans_le_transcript(self):
+        _, second = self.refuse_puis_corrige("La doc est dans `a.md`." + self.RECAP, "La doc est dans `docs/a.md`.",
+                                             refus_dans_le_transcript=False)
+        self.assertIn("sans Pour toi : ni Ensuite :", second["systemMessage"])
+
+    def test_il_reste_refuse_hors_de_la_relance_ou_d_une_autre_session(self):
+        from socle import hooks
+
+        self.refuse_puis_corrige("La doc est dans `a.md`." + self.RECAP, "La doc est dans `docs/a.md`.")
+        entree = {"session_id": "s", "transcript_path": str(self.transcript), "stop_hook_active": True}
+        self.assertTrue(hooks.recap_deja_lu(self.projet, entree))
+        # Hors de la relance du hook, le message n'est pas celui qui corrige.
+        self.assertFalse(hooks.recap_deja_lu(self.projet, {**entree, "stop_hook_active": False}))
+        self.assertFalse(hooks.recap_deja_lu(self.projet, {**entree, "session_id": "autre"}))
+        # Une fin de tour de plus : la précédente n'a rien refusé.
+        hooks.tracer(self.racine, "Stop", "s")
+        self.assertFalse(hooks.recap_deja_lu(self.projet, entree))
+
+    def test_un_refus_qui_n_est_pas_celui_des_seuls_liens(self):
+        from socle import hooks
+
+        self.ecrire(self.agent("Fait." + self.RECAP), self.refus("Les contrôles échouent"), self.agent("Corrigé."))
+        entree = {"session_id": "c", "transcript_path": str(self.transcript), "stop_hook_active": True}
+        for quoi, lu in (("liens", True), ("lien-de-demande", True), ("liens,lien-de-demande", True),
+                         ("liens,branches", False), ("recap,liens", False), ("docs.correspondance", False)):
+            with self.subTest(quoi=quoi):
+                hooks.tracer(self.racine, "Stop", "c")
+                hooks.tracer_refus(self.racine, "Stop", quoi, "c")
+                hooks.tracer(self.racine, "Stop", "c")
+                self.assertEqual(hooks.recap_deja_lu(self.projet, entree), lu)
 
 
 if __name__ == "__main__":

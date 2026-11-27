@@ -41,6 +41,20 @@ correction d'un texte : `tests.regression` l'avertit désormais,
 « correctif qui ne touche que la documentation et la mémoire : non
 jugé », comme un correctif qui ne touche que la mémoire. Un correctif qui
 touche aussi un autre fichier reste jugé comme avant.
+## 2026-11-27-c — Le refus des liens donne le chemin complet d'un nom nu, et le message qui ne corrige que les liens d'un récap refusé n'a plus à le redire
+
+Un nom entre accents graves qui n'est pas un chemin du dépôt faisait
+refuser la fin du tour sur « aucun chemin de ce nom dans le dépôt ». Le
+refus cherche désormais les fichiers suivis que ce nom désigne par la fin
+de leur chemin (un nom seul, ou ses derniers dossiers) : s'il n'y en a qu'un, il
+donne son chemin complet à écrire ; sinon, il dit d'écrire le nom sans
+accents graves. Le message qui corrige devait aussi redire tout le récap,
+jugé sur le seul dernier message : quand le message refusé dans le même
+tour l'était pour ses seuls liens, et portait le récap, le message qui
+le suit n'a plus à le redire, et le refus le dit. La fin de tour le sait
+par ce qu'elle lisait déjà, sa trace et le transcript de Claude Code, où
+le refus se lit. La section du socle d'`AGENTS.md` dit la règle des liens
+en une phrase positive.
 
 À faire : rien.
 
