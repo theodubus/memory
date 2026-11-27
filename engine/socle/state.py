@@ -906,8 +906,11 @@ def _backlog(mem: memoire.Memoire, borne: bool = False) -> list[tuple[int, list[
     # exige la réserve retriée (ADR-0118). Le dire avant évite son refus.
     g = memoire.Graphe(mem)
     en_reserve = [e for e in memoire.reserve(g) if not memoire.pour_l_humain(e)]
-    a_clore = [j for j in memoire.jalons_ouverts(g)
-               if all(not g.ouvert(d) for d in memoire.dependances(g.entrees[j]) if memoire.type_d_id(d) == "B")]
+    # Un jalon qui ne nomme encore aucun besoin attend les siens : il n'est
+    # pas à clore.
+    besoins = {j: [d for d in memoire.dependances(g.entrees[j]) if memoire.type_d_id(d) == "B"]
+               for j in memoire.jalons_ouverts(g)}
+    a_clore = [j for j, siens in besoins.items() if siens and not any(g.ouvert(d) for d in siens)]
     if a_clore and en_reserve:
         res.append((INFO, ["  " + trad("jalons à clore, leurs besoins clos : {jalons} ; avant, la réserve se retrie "
                                        "({n} besoin(s)) : chacun dans un jalon à venir, ou {champs}, ou son "

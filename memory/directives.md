@@ -337,3 +337,12 @@ Les consignes durables de Théo, chacune avec son texte exact relu à sa source 
 > Si on se rend compte a terme que c'est infini on prendra des mesures a ce moment là 
 
 — D-0238 : sa réponse au point 1 de la revue de cap 11, qui proposait de clore JA-0006 au retour de la mise à jour de chess.
+
+## C-0030 — Sans rétro-compatibilité tant que le socle est en chantier ; stable, ses mises à jour devront rester faciles
+
+> statut : en vigueur · source : J-2026-11-27-AU · date : 2026-11-27
+
+> « Je ne veux pas de rétro compatibilité »
+> Ceci est vrai car aujourd'hui je considère encore le socle comme en développement actif et que très peu de projets en sont équipés (justcook et chess), et que ces derniers servent aussi en partie de tests
+>
+> Cette affirmation deviendra fausse une fois le socle plus prêt et stable et que j'équiperai des projets, à ce moment là faire des mises à jour facilement devra pouvoir être possible

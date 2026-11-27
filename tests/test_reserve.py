@@ -305,6 +305,8 @@ class TestLeSignal(unittest.TestCase):
                           "proposé à l'humain par une demande"])
         self.assertEqual(lignes(memoire_de(entree("B-0001"), reserve, entree("JA-0001", meta="après : B-0001"))), [])
         self.assertEqual(lignes(memoire_de(clos, entree("JA-0001", meta="après : B-0001"))), [])
+        # Un jalon qui ne nomme encore aucun besoin attend les siens.
+        self.assertEqual(lignes(memoire_de(reserve, entree("L-0001"), entree("JA-0001"))), [])
 
 
 class TestLaClotureDUnJalon(Projet):
