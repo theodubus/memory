@@ -20,6 +20,9 @@ from socle import cli, memory as memoire, messages, roadmap as suite
 from tests.test_structure import Projet, entree, memoire_de
 
 JOUR = datetime.date(2026, 11, 27)
+# La raison d'un besoin de la réserve (ADR-0118) : la forme se juge sur une
+# réserve triée, rien à placer.
+RAISON = "réserve : après les jalons"
 
 
 def demande(mem: memoire.Memoire, ident: str = "D-0001") -> memoire.Memoire:
@@ -31,10 +34,12 @@ def demande(mem: memoire.Memoire, ident: str = "D-0001") -> memoire.Memoire:
 
 def backlog_d_essai() -> memoire.Memoire:
     """Deux jalons, trois lots, et des besoins hors des lots : un à découper,
-    un dont la tâche n'est dans aucun lot, un bloqué, un à fermer."""
+    un dont la tâche n'est dans aucun lot, un bloqué, un à fermer ; ceux de la
+    réserve avec leur raison, rien à placer (ADR-0118)."""
     return demande(memoire_de(
-        entree("B-0001", meta="priorité : haute"), entree("B-0002"), entree("B-0003"), entree("B-0004"),
-        entree("B-0005"), entree("B-0006", "bloqué"), entree("B-0008"),
+        entree("B-0001", meta="priorité : haute"), entree("B-0002"), entree("B-0003"),
+        entree("B-0004", meta=RAISON), entree("B-0005", meta=RAISON), entree("B-0006", "bloqué", meta=RAISON),
+        entree("B-0008", meta=RAISON),
         entree("T-0001", "en cours", meta="besoin : B-0001"),
         entree("T-0002", "fait", meta="besoin : B-0001"),
         entree("T-0003", meta="besoin : B-0002 · après : T-0001"),
@@ -80,7 +85,7 @@ def backlog_de_la_maquette(lg: str = "fr") -> memoire.Memoire:
     """Le backlog de la maquette A2-d (D-0214) : un lot en cours hors des
     jalons ; quatre jalons qui se suivent, le premier avec un besoin clos sur
     quatre ; un besoin pour l'humain ; douze besoins d'aucun jalon, dont
-    deux de priorité haute."""
+    deux de priorité haute, chacun avec sa raison de réserve."""
     def e(ident: str, statut: str = "ouvert", meta: str = "") -> tuple[str, str]:
         defaut = f"L'entrée {ident}" if lg == "fr" else f"Entry {ident}"
         return titree(ident, TITRES[lg].get(ident, defaut), statut, meta)
@@ -93,7 +98,7 @@ def backlog_de_la_maquette(lg: str = "fr") -> memoire.Memoire:
         e("JA-0002", meta="après : JA-0001, B-0021, B-0022, B-0023"),
         e("JA-0003", meta="après : JA-0002, B-0031, B-0032"),
         e("JA-0004", meta="après : JA-0003, B-0041, B-0042, B-0043"),
-        *(e(f"B-01{n:02d}", meta="priorité : haute" if n in (1, 2) else "") for n in range(1, 13)),
+        *(e(f"B-01{n:02d}", meta="priorité : haute · " + RAISON if n in (1, 2) else RAISON) for n in range(1, 13)),
     )
 
 
@@ -316,7 +321,7 @@ class TestLaForme(unittest.TestCase):
             "         · L'entrée B-0004 (B-0004)"])
 
     def test_le_travail_hors_jalon_est_sous_maintenant_et_nulle_part_ailleurs(self):
-        mem = memoire_de(entree("B-0001"), entree("B-0002"), entree("B-0003"),
+        mem = memoire_de(entree("B-0001"), entree("B-0002"), entree("B-0003", meta=RAISON),
                          entree("T-0001", "en cours", meta="besoin : B-0002"), entree("T-0002", meta="besoin : B-0001"),
                          entree("L-0001", "en cours", meta="après : T-0001"), entree("JA-0001", meta="après : B-0001"))
         s = suite.calculer(mem)
@@ -430,7 +435,7 @@ class TestLaForme(unittest.TestCase):
             self.assertNotIn("Attention", sortie)
             self.assertNotIn("\n\n\n", sortie)
         self.assertEqual(suite.texte(s).splitlines()[-1], "         · L'entrée B-0001 (B-0001)")
-        un = suite.calculer(memoire_de(entree("B-0001"), entree("B-0002", meta="priorité : haute"),
+        un = suite.calculer(memoire_de(entree("B-0001"), entree("B-0002", meta="priorité : haute · " + RAISON),
                                        entree("JA-0001", meta="après : B-0001")))
         self.assertEqual(suite.texte(un).splitlines()[-1], "En réserve : 1 besoin, dont 1 prioritaire")
 

@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0365 — Les besoins hors des jalons attendent sans échéance : rien ne les place dans une étape ni ne les trie, et la réserve grossit
 
-> statut : ouvert · origine : J-2026-11-26-AD · lu : backlog@0e2e535a · ref : B-0364, D-0213, D-0218, D-0232, D-0235 · après : B-0354, B-0367, B-0376, B-0377, B-0370
+> statut : fait · origine : J-2026-11-26-AD · lu : backlog@0e2e535a · ref : B-0364, D-0213, D-0218, D-0232, D-0235, ce commit · après : B-0354, B-0367, B-0376, B-0377, B-0370
 
 Théo, le 26 novembre (J-2026-11-26-AD) : « Les besoins hors
 jalons/lots/etapes s'insèrent tout seul dans les étapes du travail
@@ -40,7 +40,7 @@ le demande à Théo.
 
 ## Satisfait quand
 
-- [ ] aucun besoin n'entre en réserve sans sa raison
-- [ ] à la clôture d'un jalon, chaque besoin de la réserve est placé dans un jalon à venir, gardé avec sa raison, ou proposé à l'humain pour abandon
-- [ ] un besoin en réserve depuis quinze lots clos sans tri est signalé par l'état, et le compte repart à chaque tri
-- [ ] ranger, trier ou signaler un besoin de la réserve ne coûte à l'agent ni appel ni refus de plus
+- [x] aucun besoin n'entre en réserve sans sa raison
+- [x] à la clôture d'un jalon, chaque besoin de la réserve est placé dans un jalon à venir, gardé avec sa raison, ou proposé à l'humain pour abandon
+- [x] un besoin en réserve depuis quinze lots clos sans tri est signalé par l'état, et le compte repart à chaque tri
+- [x] ranger, trier ou signaler un besoin de la réserve ne coûte à l'agent ni appel ni refus de plus

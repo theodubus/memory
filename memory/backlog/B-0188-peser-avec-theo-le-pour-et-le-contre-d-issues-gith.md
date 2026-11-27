@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0188 — Peser avec Théo le pour et le contre d'issues GitHub à côté du backlog : boîte de réception des retours, vitrine
 
-> statut : ouvert · origine : J-2026-11-12-B · ref : D-0198 · priorité : basse · lu : backlog@01328a97 · après : B-0323
+> statut : ouvert · origine : J-2026-11-12-B · ref : D-0198 · priorité : basse · lu : backlog@01328a97 · après : B-0323 · réserve : après JA-0006, de priorité basse (D-0198) · trié : L-0056
 
 Théo demande, le 12 novembre, s'il serait pertinent à terme de remplacer
 le backlog par des issues. La session répond que non : en fichiers, le

@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0379 — Le push sur `main` d'un dépôt jetable, hors du projet, est refusé comme une publication
 
-> statut : ouvert · origine : J-2026-11-27-U · ref : D-0235 · lu : backlog@4d53be09
+> statut : ouvert · origine : J-2026-11-27-U · ref : D-0235 · lu : backlog@4d53be09 · réserve : D-0235, point 10 : une autre branche que main suffit · trié : L-0056
 
 Chez chess (`docs/fabrication/chess/cout-et-frictions-2026-11-26.md`, §3.3), deux refus en deux semaines : un push
 sur `main` d'un dépôt jetable, dans un dossier temporaire. Confirmé
