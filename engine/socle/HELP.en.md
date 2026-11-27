@@ -762,7 +762,11 @@ reset read that is not more than a minute ahead belongs to a closed
 window: the wake-up is then armed at the bound. During a wait with a
 bounded time, the wake-ups remain, each pushed back after that time if it
 fell before: refused, that turn resumes when the limit lifts. A turn cut
-off or refused removes nothing: that is what makes it resume. On waking
+off or refused removes nothing: that is what makes it resume. The
+wake-ups remain from one turn to the next: arming them at the start of
+every turn and removing them at its end cost about one tool call in ten
+of a sitting; a wake-up that fires with nothing to resume costs less, one
+check and one line, and the check on waking makes it harmless. On waking
 from work the human had interrupted, the agent says in one line that the
 end-of-turn check refuses on failing checks, without touching it or
 re-arming: relaunched on the same tree, it lets the turn conclude. The

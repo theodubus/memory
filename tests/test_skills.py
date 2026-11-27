@@ -435,17 +435,17 @@ class TestLaReprise(unittest.TestCase):
         # passent au guide, « Pourquoi ces règles ».
         for lg, fin, non, apres, attente, reveil, guide, raisons in (
                 ("fr", "## À la fin de chaque tour", "Ne pas reprendre", "\n3. ",
-                 ("sauf pendant un sous-agent, jusqu'au tour qui reçoit son résultat, ou une attente à heure bornée "
-                  "(un rappel, une commande en arrière-plan, une CI), jusqu'au tour de l'événement, chacun repoussé "
-                  "après cette heure s'il tombait avant.",
+                 ("Les réveils restent : la fin d'un tour n'en retire aucun. Pendant une attente à heure bornée "
+                  "(un rappel, une commande en arrière-plan, une CI), jusqu'au tour de l'événement, chacun est "
+                  "repoussé après cette heure s'il tombait avant.",
                   "Un tour coupé ou refusé ne retire rien"),
                  "Si l'humain avait interrompu le travail et que le contrôle de fin de tour refuse sur des contrôles "
                  "en échec, le dire en une ligne, sans y toucher ni réarmer.", "HELP.md",
                  ("chacun repoussé après cette heure s'il tombait avant : refusé, ce tour se reprend à la levée.",
                   "sans y toucher ni réarmer : relancé sur le même arbre, il laisse conclure.")),
                 ("en", "## At the end of every turn", "Do not resume", "\n3. ",
-                 ("except during a subagent, until the turn that receives its result, or a wait with a bounded time "
-                  "(a reminder, a background command, a CI), until the event's turn, each pushed back after that "
+                 ("The wake-ups remain: the end of a turn removes none. During a wait with a bounded time "
+                  "(a reminder, a background command, a CI), until the event's turn, each is pushed back after that "
                   "time if it fell before.",
                   "A turn cut off or refused removes nothing"),
                  "If the human had interrupted the work and the end-of-turn check refuses on failing checks, say so "
@@ -524,6 +524,64 @@ class TestLaReprise(unittest.TestCase):
             for attendu in retrouver:
                 self.assertIn(attendu, section, lg)
             self.assertIn(ou, " ".join((Path(cli.__file__).parent / guide).read_text(encoding="utf-8").split()), lg)
+
+    def test_les_reveils_restent_d_un_tour_a_l_autre(self):
+        """T-0215 (B-0376, D-0235, point 6) : un tour qui trouve ses réveils
+        à la bonne heure n'appelle aucun outil de réveil ; la fin d'un tour
+        n'en retire aucun ; un réveil sans objet se vérifie et se dit en une
+        ligne, sans reprendre ni réarmer ; sans `list_events`, l'heure de la
+        fenêtre nommée se lit dans `get_session`, et la borne ne se repousse
+        pas. Le guide dit pourquoi."""
+        from socle import cli
+
+        for lg, quand, texte_seul, debut, intact, fin, retrait, reveil, sans_objet, borne, guide, raison in (
+                ("fr", "## Quand", "Une réponse en texte seul ne touche à aucun réveil",
+                 "## Au début de chaque tour",
+                 "Un réveil laissé à la bonne heure, pour le même lot, ne se touche pas : le tour n'appelle aucun "
+                 "outil de réveil.",
+                 "## À la fin de chaque tour",
+                 ("la fin d'un tour n'en retire aucun", "Ils ne se retirent (`delete_trigger`) qu'au rangement "
+                  "d'une session qui passe la main, ou quand l'humain dit d'arrêter."),
+                 "## Au réveil",
+                 "Répondre alors pourquoi en une ligne, puis les lignes de fin du projet, sans reprendre le "
+                 "travail : le réveil restant reste, et cette réponse n'arme rien.",
+                 ("`get_session` sans argument donne, quand il porte `rate_limit_info`, l'heure de la seule "
+                  "fenêtre que nomme `rateLimitType`", "Un réveil à la borne ne s'y repousse ni au début d'un "
+                  "tour ni au lancement d'un sous-agent"),
+                 "HELP.md", "Les réveils restent d'un tour à l'autre : les armer au début de chaque tour et les "
+                            "retirer à sa fin coûtait environ un appel d'outil sur dix d'une séance"),
+                ("en", "## When", "A text-only answer touches no wake-up",
+                 "## At the start of every turn",
+                 "A wake-up left at the right time, for the same batch, is not touched: the turn calls no wake-up "
+                 "tool.",
+                 "## At the end of every turn",
+                 ("the end of a turn removes none", "They are removed (`delete_trigger`) only when a session that "
+                  "hands over tidies up, or when the human says to stop."),
+                 "## On waking",
+                 "Then answer why in one line, then the project's closing lines, without resuming the work: the "
+                 "remaining wake-up stays, and this answer arms nothing.",
+                 ("`get_session` without argument gives, when it carries `rate_limit_info`, the time of the only "
+                  "window that `rateLimitType` names", "A wake-up at the bound is not pushed back to it, neither "
+                  "at the start of a turn nor when launching a subagent"),
+                 "HELP.en.md", "The wake-ups remain from one turn to the next: arming them at the start of every "
+                               "turn and removing them at its end cost about one tool call in ten of a sitting")):
+            texte = self.lire(lg)
+
+            def section(titre):
+                return " ".join(texte.split(titre, 1)[1].split("\n## ", 1)[0].split())
+
+            self.assertIn(texte_seul, section(quand), lg)
+            self.assertIn(intact, section(debut), lg)
+            for attendu in retrait:
+                self.assertIn(attendu, section(fin), lg)
+            self.assertIn(sans_objet, section(reveil), lg)
+            for attendu in borne:
+                self.assertIn(attendu, " ".join(texte.split()), lg)
+            # Plus rien ne retire les réveils avant la réponse finale.
+            self.assertNotIn("Avant la réponse finale", texte, lg)
+            self.assertNotIn("Before the final answer", texte, lg)
+            texte_guide = " ".join((Path(cli.__file__).parent / guide).read_text(encoding="utf-8").split())
+            self.assertIn(raison, texte_guide, lg)
 
     def test_un_sous_agent_ne_touche_a_aucun_reveil(self):
         for lg, regle in (("fr", "Un sous-agent ne touche à aucun réveil"), ("en", "A subagent\ntouches no wake-up")):

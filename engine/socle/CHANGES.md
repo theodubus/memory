@@ -15,6 +15,23 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-27-h — Les réveils de reprise restent d'un tour à l'autre
+
+Le skill `socle-resume` faisait armer les deux réveils de reprise au début
+de chaque tour qui agit et les retirer à sa fin : environ un appel d'outil
+sur dix d'une séance, pour un filet qui ne sert qu'à une limite d'usage.
+Les réveils restent désormais d'un tour à l'autre : un tour qui les trouve
+à la bonne heure n'appelle aucun outil de réveil, et ils ne se retirent
+qu'au rangement d'une session qui passe la main, ou quand l'humain dit
+d'arrêter. Un réveil qui tire sans objet, après un tour fini autrement
+que sur une limite, se vérifie et se dit en une ligne, sans reprendre le
+travail ni réarmer. Sans l'outil `list_events`, l'heure de la fenêtre que
+nomme `rateLimitType` se lit dans `get_session`, quand il la donne ; un
+réveil à la borne ne s'y repousse plus à chaque tour. Le guide dit
+pourquoi.
+
+À faire : rien ; l'installeur pose le skill changé.
+
 ## 2026-11-27-g — Une commande clôt une entrée du backlog en un geste : `socle close`, et sa référence `ce commit`
 
 Clore une tâche demandait environ huit gestes de mémoire : une entrée de

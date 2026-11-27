@@ -782,7 +782,11 @@ minute dans l'avenir date d'une fenêtre close : le réveil s'arme à la
 borne. Pendant une attente à heure bornée, les réveils restent, chacun
 repoussé après cette heure s'il tombait avant : refusé, ce tour se reprend
 à la levée. Un tour coupé ou refusé ne retire rien : c'est ce qui le fait
-reprendre. Au réveil d'un travail que l'humain avait interrompu, l'agent
+reprendre. Les réveils restent d'un tour à l'autre : les armer au début de
+chaque tour et les retirer à sa fin coûtait environ un appel d'outil sur
+dix d'une séance ; un réveil qui tire sans objet coûte moins, une
+vérification et une ligne, et la vérification au réveil le rend sans
+danger. Au réveil d'un travail que l'humain avait interrompu, l'agent
 dit en une ligne que le contrôle de fin de tour refuse sur des contrôles
 en échec, sans y toucher ni réarmer : relancé sur le même arbre, il laisse
 conclure. L'humain arrête tout en écrivant « arrête » dans la session, ou

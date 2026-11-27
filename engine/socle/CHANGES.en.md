@@ -14,6 +14,23 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-27-h — The resume wake-ups remain from one turn to the next
+
+The `socle-resume` skill had the two resume wake-ups armed at the start
+of every turn that acts and removed at its end: about one tool call in
+ten of a sitting, for a safety net that only serves a usage limit. The
+wake-ups now remain from one turn to the next: a turn that finds them at
+the right time calls no wake-up tool, and they are removed only when a
+session that hands over tidies up, or when the human says to stop. A
+wake-up that fires with nothing to resume, after a turn that ended for
+another reason than a limit, is checked and told in one line, without
+resuming the work or re-arming. Without the `list_events` tool, the time
+of the window that `rateLimitType` names is read in `get_session`, when
+it gives it; a wake-up at the bound is no longer pushed back to it at
+every turn. The guide says why.
+
+To do: nothing; the installer lays down the changed skill.
+
 ## 2026-11-27-g — A command closes a backlog entry in one step: `socle close`, and its reference `this commit`
 
 Closing a task took about eight memory steps: a journal entry written to
