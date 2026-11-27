@@ -29,7 +29,8 @@ La suite de <projet> — <date>
 
 Maintenant
  ▶ <titre du lot en cours>
-   reste : <titres de ses tâches ouvertes>
+   besoin : <titre d'un besoin qu'il mène>
+     reste : <titres de ses tâches ouvertes dans ce lot>
 
 Ensuite
 1. [K/N] <titre du premier jalon ouvert>
@@ -46,8 +47,10 @@ En réserve : <n> besoins, dont <p> prioritaires
 date du jour.
 
 **Maintenant.** Chaque lot `en-cours`, une ligne `▶` chacun, dans
-l'ordre d'exécution ; sous lui, `reste :` et les titres de ses tâches
-ouvertes, trois au plus, puis « et <n> autres ». Sans lot en cours, la
+l'ordre d'exécution ; sous lui, chaque besoin qu'il mène, `besoin :`,
+dans l'ordre de ses tâches, puis sous chacun `reste :` et les titres de
+ses tâches ouvertes dans ce lot, trois au plus, puis « et <n> autres »
+(D-0230 : l'humain voit le lot, puis les besoins qu'il sert). Sans lot en cours, la
 première tâche prête : `prête : <titre>`. Sans l'une ni l'autre :
 `Maintenant : rien en cours`. Le travail hors de tout jalon n'a pas
 d'autre place : il est ici, en tête, et nulle part ailleurs.

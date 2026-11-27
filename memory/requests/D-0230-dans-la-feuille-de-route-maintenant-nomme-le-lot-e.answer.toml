@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0230-dans-la-feuille-de-route-maintenant-nomme-le-lot-e.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-27"
+canal = "conversation"
+citation = "Ta nouvelle forme est bien mais fait totalement abstraction des lots, c'est inutile d'exposer l'humain au lot ? \n\nOu ça serait bien un trucs qui dans le travail en cours mentionne le lot puis les besoins concernés (puis les taches)\n\nGenre lot lxxx (besoin bxxx) ou s'il y en a plusieurs (besoin bxxx · byyy) un truc comme ça"
+empreinte = "sha256:d7af3fe40f40539f5663dac034e3c27055c36b2cf7491003faf2e4edc270dc15"

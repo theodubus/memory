@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0364 — La feuille de route ne permet pas de piloter un projet : illisible au format détaillé, elle ne dit pas ses étapes en clair, et la section installée en fige le format
 
-> statut : ouvert · origine : J-2026-11-26-AB · lu : backlog@993edac6 · ref : D-0212, D-0214, D-0218 · après : B-0354
+> statut : fait · origine : J-2026-11-26-AB · lu : backlog@993edac6 · ref : T-0207, T-0208, D-0228, J-2026-11-27-J, D-0212, D-0214, D-0218 · après : B-0354
 
 Théo, le 26 novembre (J-2026-11-26-AB), sur la feuille de route que la
 session de chess lui a donnée au format détaillé : « La roadmap format
@@ -47,5 +47,5 @@ plus de format à choisir.
 
 ## Satisfait quand
 
-- [ ] lue sur un téléphone, la feuille de route d'un projet dit en clair ses étapes dans l'ordre, où en est chacune et ce qui vient ensuite, sans tableau ni légende
-- [ ] la section du socle installée ne fixe plus un format de la feuille de route que les consignes d'un projet contredisent
+- [x] lue sur un téléphone, la feuille de route d'un projet dit en clair ses étapes dans l'ordre, où en est chacune et ce qui vient ensuite, sans tableau ni légende
+- [x] la section du socle installée ne fixe plus un format de la feuille de route que les consignes d'un projet contredisent
