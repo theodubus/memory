@@ -281,6 +281,47 @@ class TestCorrectifHorsDeToutAdaptateur(unittest.TestCase):
         self.assertTrue(any("correctif qui ne touche que la mémoire : non jugé" in c.message
                             for c in r.constats), [c.message for c in r.constats])
 
+    def _corriger_la_doc(self, chemins: list[str], message: str = "Correction : le mot juste") -> Rapport:
+        """Un correctif des seuls `chemins`, posés d'abord dans une base."""
+        for c in chemins:
+            (self.racine / c).parent.mkdir(parents=True, exist_ok=True)
+            (self.racine / c).write_text("Un mot faux.\n")
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "Une base", "--no-verify")
+        self.base = git(self.racine, "rev-parse", "HEAD").strip()
+        for c in chemins:
+            (self.racine / c).write_text("Le mot juste.\n")
+        git(self.racine, "commit", "-qam", message, "--no-verify")
+        return self.juger()
+
+    def test_un_correctif_qui_ne_touche_que_la_documentation_n_est_pas_juge(self):
+        """B-0373 : dans chess, « Correction : … » d'un fichier de
+        documentation était refusé comme un correctif hors de tout
+        adaptateur ; avec la mémoire qui l'accompagne, de même."""
+        for chemins in (["docs/guide.md"], ["README.md", "memory/journal/2026-11-27.md"]):
+            with self.subTest(chemins=chemins):
+                r = self._corriger_la_doc(chemins)
+                self.assertEqual(r.erreurs("tests.regression"), [])
+                self.assertTrue(any("correctif qui ne touche que la documentation et la mémoire : non jugé"
+                                    in c.message for c in r.constats), [c.message for c in r.constats])
+
+    def test_un_correctif_de_la_documentation_et_d_un_autre_fichier_reste_refuse(self):
+        """B-0373 : la documentation n'excuse pas un fichier qu'aucun
+        adaptateur ne juge, ni un fichier du dossier du socle."""
+        for chemins in (["docs/guide.md", "app/main.dart"], [".socle/notes.md"]):
+            with self.subTest(chemins=chemins):
+                r = self._corriger_la_doc(chemins)
+                erreurs = [c.message for c in r.erreurs("tests.regression")]
+                self.assertEqual(len(erreurs), 1, erreurs)
+                self.assertIn("correctif qui ne touche aucun fichier qu'un adaptateur juge", erreurs[0])
+                self.assertFalse(any("ne touche que la documentation" in c.message for c in r.constats))
+
+    def test_est_documentation(self):
+        self.assertTrue(controles_tests.est_documentation("README.md"))
+        self.assertTrue(controles_tests.est_documentation("docs/guide.md"))
+        self.assertFalse(controles_tests.est_documentation(".socle/notes.md"))
+        self.assertFalse(controles_tests.est_documentation("app/main.dart"))
+
     def test_un_correctif_vide_n_est_pas_un_correctif_de_la_memoire(self):
         """Revue de L-0046 : sans fichier, « tous dans la mémoire » était vrai."""
         self.base = git(self.racine, "rev-parse", "HEAD").strip()
@@ -325,6 +366,33 @@ class TestCorrectifHorsDeToutAdaptateur(unittest.TestCase):
         message = hooks.correctif_sans_test(config.Projet.charger(self.racine), "fix: doubler encore",
                                             amendement=False)
         self.assertIn("ce correctif ne touche aucun fichier qu'un adaptateur juge (app/main.dart)", message)
+
+    def test_le_hook_se_tait_sur_la_documentation_et_la_memoire_que_la_ci_ne_juge_pas(self):
+        """Revue de L-0052 : le hook annonçait « la CI le refusera » pour un
+        correctif de la seule documentation (B-0373) ou de la seule mémoire
+        (B-0359), que la CI ne fait plus qu'avertir ; avec un autre fichier,
+        il le dit encore."""
+        from socle import hooks
+
+        for chemins in (["docs/guide.md"], ["memory/journal/2026-11-27.md"], ["README.md", "memory/active.md"]):
+            with self.subTest(chemins=chemins):
+                try:
+                    for c in chemins:
+                        (self.racine / c).parent.mkdir(parents=True, exist_ok=True)
+                        (self.racine / c).write_text(f"Le mot juste, {c}.\n")
+                        git(self.racine, "add", c)
+                    self.assertIsNone(hooks.correctif_sans_test(config.Projet.charger(self.racine),
+                                                                "Correction : le mot juste", amendement=False))
+                finally:
+                    git(self.racine, "reset", "-q", "--hard")
+        (self.racine / "docs").mkdir(exist_ok=True)
+        (self.racine / "docs/guide.md").write_text("Le mot juste.\n")
+        (self.racine / "app/main.dart").write_text("int doubler(int x) => x + x;\n")
+        git(self.racine, "add", "docs/guide.md", "app/main.dart")
+        message = hooks.correctif_sans_test(config.Projet.charger(self.racine), "Correction : le mot juste",
+                                            amendement=False)
+        self.assertIn("ce correctif ne touche aucun fichier qu'un adaptateur juge (app/main.dart, docs/guide.md)",
+                      message)
 
 
 class TestChargement(unittest.TestCase):

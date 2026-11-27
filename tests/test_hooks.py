@@ -619,6 +619,9 @@ class TestCorrectifSansTest(Projet):
         git(racine, "add", "-A")
         git(racine, "commit", "-qm", "fix: double accepte une chaîne", "--no-verify")
         (racine / "docs/notes.md").write_text("Une ligne de doc de plus.\n")
+        # Et du code : un correctif de la seule documentation n'est plus jugé
+        # (B-0373), le commit nouveau doit encore corriger du code sans test.
+        (racine / "calc.py").write_text("def double(x):\n    return 2 * int(x, 10)\n")
         git(racine, "add", "-A")
         projet = config.Projet.charger(racine)
         message = "fix: double accepte une chaîne"

@@ -1,6 +1,6 @@
 <!-- socle: couche=passation zone=publique -->
 # Passation
 
-> écrite : 2026-11-27T10:24:31Z · branche : ccr-9f2030d9-0phcdz · chaîne : 0
+> écrite : 2026-11-27T12:27:47Z · branche : ccr-7c94f3fa-bga8ii · chaîne : 0
 
-Ce qui attend : ouvrir au backlog ce que D-0235 retient et clore B-0367, puis le premier lot de JA-0006, les refus et l'état (D-0235, point 12) ; la fusion de #113 par la session d'avant, après sa CI.
+Ce qui attend : le lot de la clôture d'une tâche en un geste, T-0214 (B-0375), sa spécification d'abord ; la fusion de la pull request de L-0052 par la session d'avant, après sa CI.
