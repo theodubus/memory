@@ -157,8 +157,8 @@ cours, marqué ▶, puis chaque besoin qu'il mène, avec ses premières tâches
 ouvertes ; sans lot en cours, la première tâche prête. **Ensuite** : les jalons ouverts, dans leur
 ordre d'exécution, numérotés, chacun avec ses besoins clos sur leur
 total, entre des crochets de même largeur qui alignent les titres ; seul
-le premier, l'étape suivante, est déplié en ses besoins : ✓ clos, ▶ servi
-par un lot en cours, · autre (`--all` les déplie tous). **Pour toi** : ce
+le premier, l'étape suivante, est déplié en ses besoins : les clos
+comptés sur une ligne ✓, puis ▶ servi par un lot en cours, · autre (`--all` les déplie tous). **Pour toi** : ce
 qui vous revient, les gestes à faire et les demandes en attente. **En
 réserve** : les besoins d'aucun jalon, comptés. Une ligne « Attention : »
 dit une entrée bloquée, ou deux lots dont l'ordre n'est pas déduit. Un titre se lit jusqu'à son premier deux-points. Dans le
@@ -178,8 +178,7 @@ Maintenant
 
 Ensuite
 1. [1/4] Embarquer le réseau N10 (JA-NNNN)
-         ✓ Entraîner N10 sur les parties de
-           novembre (B-NNNN)
+         ✓ 1 besoin clos
          · Mesurer N10 contre N8 (B-NNNN)
          · Embarquer N10 dans le
            binaire (B-NNNN)

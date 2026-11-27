@@ -48,6 +48,7 @@ MOIS = (a_traduire("janvier"), a_traduire("février"), a_traduire("mars"), a_tra
 BESOINS = (a_traduire("{n} besoin"), a_traduire("{n} besoins"))
 PRIORITAIRES = (a_traduire("dont {n} prioritaire"), a_traduire("dont {n} prioritaires"))
 AUTRES = (a_traduire("et {n} autre"), a_traduire("et {n} autres"))
+CLOS_N = (a_traduire("{n} besoin clos"), a_traduire("{n} besoins clos"))
 VOYELLES = "aeiouyàâäéèêëîïôöûüù"
 
 
@@ -227,11 +228,13 @@ class EnCours:
 
 @dataclass
 class Etape:
-    """Un jalon ouvert, à son rang : ses besoins avec leur marque s'il est
-    déplié, sinon aucun."""
+    """Un jalon ouvert, à son rang : s'il est déplié, ses besoins clos
+    comptés sur une ligne (D-0231), puis les autres avec leur marque ;
+    sinon, aucun."""
     rang: int
     jalon: Jalon
     besoins: list[tuple[str, memoire.Entree]] = field(default_factory=list)
+    clos: int = 0
 
 
 @dataclass
@@ -275,12 +278,17 @@ def forme(s: Suite, tout: bool = False) -> Forme:
         if tout or k == 0:
             for b in besoins_du_jalon(j):
                 e = s.besoins.get(b)
-                if e is not None:
-                    marque = CLOS if e.statut in memoire.BACKLOG_CLOS else SERVI if b in servis else AUTRE
-                    etape.besoins.append((marque, e))
+                if e is not None and e.statut in memoire.BACKLOG_CLOS:
+                    etape.clos += 1
+                elif e is not None:
+                    etape.besoins.append((SERVI if b in servis else AUTRE, e))
         etapes.append(etape)
     humain = {e.id for e in s.pour_l_humain}
-    reserve = [e for e in s.sans_jalon if e.id not in servis and e.id not in humain]
+    # Les besoins ouverts qu'aucun jalon ouvert n'attend, qu'il y ait des
+    # jalons ou non : sans jalon, la réserve dit encore ce qui attend.
+    jalonnes = {b for j in s.jalons for b in besoins_du_jalon(j)}
+    reserve = [e for i, e in sorted(s.besoins.items()) if e.statut not in memoire.BACKLOG_CLOS
+               and i not in jalonnes and i not in servis and i not in humain]
     return Forme(en_cours=en_cours, prete=None if en_cours else s.prete, etapes=etapes,
                  pour_toi=list(s.pour_l_humain), demandes=list(s.demandes), reserve=len(reserve),
                  prioritaires=sum(memoire.priorite(e) == "haute" for e in reserve), bloques=list(s.bloques),
@@ -383,6 +391,8 @@ def texte(s: Suite, tout: bool = False, nom: str = "", jour: datetime.date | Non
         for e in f.etapes:
             tete = f"{e.rang:>{numero}}. {_compte(e, largeur)} "
             ensuite += _plier(_nomme(e.jalon.entree), tete)
+            if e.clos:
+                ensuite.append(" " * len(tete) + CLOS + " " + _nombre(e.clos, CLOS_N))
             for marque, b in e.besoins:
                 ensuite += _plier(_nomme(b), " " * len(tete) + marque + " ")
         blocs.append(ensuite)

@@ -195,8 +195,7 @@ class TestLaForme(unittest.TestCase):
                    "             AGENTS.md (T-0001)", "",
                    "Ensuite",
                    "1. [1/4] Embarquer le réseau N10 (JA-0001)",
-                   "         ✓ Entraîner N10 sur les parties de",
-                   "           novembre (B-0011)",
+                   "         ✓ 1 besoin clos",
                    "         · Mesurer N10 contre N8 (B-0012)",
                    "         · Embarquer N10 dans le",
                    "           binaire (B-0013)",
@@ -217,8 +216,7 @@ class TestLaForme(unittest.TestCase):
                    "           AGENTS.md (T-0001)", "",
                    "Next",
                    "1. [1/4] Ship the N10 network (JA-0001)",
-                   "         ✓ Train N10 on the November",
-                   "           games (B-0011)",
+                   "         ✓ 1 need closed",
                    "         · Measure N10 against N8 (B-0012)",
                    "         · Ship N10 in the binary (B-0013)",
                    "         · Place the engine on the CCRL",
@@ -312,8 +310,8 @@ class TestLaForme(unittest.TestCase):
         self.assertEqual(suite.besoins_du_jalon(s.jalons[0]), ["B-0003", "B-0001", "B-0002", "B-0004"])
         self.assertEqual(suite.texte(s).splitlines()[8:13], [
             "1. [1/4] L'entrée JA-0001 (JA-0001)",
+            "         ✓ 1 besoin clos",
             "         · L'entrée B-0003 (B-0003)",
-            "         ✓ L'entrée B-0001 (B-0001)",
             "         ▶ L'entrée B-0002 (B-0002)",
             "         · L'entrée B-0004 (B-0004)"])
 
@@ -347,9 +345,11 @@ class TestLaForme(unittest.TestCase):
         self.assertIn("\nMaintenant\n   prête : L'entrée T-0002 (T-0002)\n", suite.markdown(prete))
         rien = suite.calculer(memoire_de(entree("B-0001")))
         self.assertEqual(suite.texte(rien, nom="calc", jour=JOUR).splitlines(),
-                         ["La suite de calc — 27 novembre", "", "Maintenant : rien en cours"])
+                         ["La suite de calc — 27 novembre", "", "Maintenant : rien en cours", "",
+                          "En réserve : 1 besoin"])
         self.assertEqual(suite.markdown(rien, nom="calc", jour=JOUR),
-                         "```text\nLa suite de calc — 27 novembre\n\nMaintenant : rien en cours\n```\n")
+                         "```text\nLa suite de calc — 27 novembre\n\nMaintenant : rien en cours\n\n"
+                         "En réserve : 1 besoin\n```\n")
 
     def test_un_lot_en_cours_nomme_ses_besoins_puis_leurs_taches(self):
         """D-0230 : « Maintenant » nomme le lot, puis chaque besoin qu'il
@@ -401,6 +401,27 @@ class TestLaForme(unittest.TestCase):
                 self.assertNotIn("D-0001", sortie)
                 self.assertIn("           Une demande\n", sortie + "\n")
 
+    def test_la_reserve_compte_les_besoins_d_aucun_jalon_ouvert_meme_sans_jalon(self):
+        """Revue de L-0050 : sans jalon ouvert, la réserve disparaissait, et
+        l'humain croyait le backlog vide."""
+        sans = suite.calculer(memoire_de(entree("B-0001"), entree("B-0002", meta="priorité : haute"),
+                                         entree("B-0003"), entree("T-0001", meta="besoin : B-0003"),
+                                         entree("L-0001", meta="après : T-0001")))
+        self.assertEqual(suite.texte(sans).splitlines()[-1], "En réserve : 3 besoins, dont 1 prioritaire")
+        clos = suite.calculer(memoire_de(entree("B-0001"), entree("B-0002"), entree("B-0003", "fait"),
+                                         entree("JA-0001", "fait", meta="après : B-0003")))
+        self.assertEqual(suite.texte(clos).splitlines()[2:], ["Maintenant : rien en cours", "",
+                                                             "En réserve : 2 besoins"])
+
+    def test_les_besoins_clos_de_l_etape_depliee_tiennent_sur_une_ligne(self):
+        """D-0231 : « ✓ <n> besoins clos », avant les besoins qui restent."""
+        mem = memoire_de(entree("B-0001", "fait"), entree("B-0002", "fait"), entree("B-0003"),
+                         entree("JA-0001", meta="après : B-0001, B-0003, B-0002"))
+        self.assertEqual(suite.texte(suite.calculer(mem)).splitlines()[-3:], [
+            "1. [2/3] L'entrée JA-0001 (JA-0001)", "         ✓ 2 besoins clos", "         · L'entrée B-0003 (B-0003)"])
+        with messages.dans("en"):
+            self.assertIn("         ✓ 2 needs closed", suite.texte(suite.calculer(mem)).splitlines())
+
     def test_aucune_ligne_vide_de_pour_toi_ni_de_la_reserve(self):
         s = suite.calculer(memoire_de(entree("B-0001"), entree("JA-0001", meta="après : B-0001")))
         for sortie in (suite.texte(s), suite.markdown(s)):
@@ -423,8 +444,7 @@ class TestLaForme(unittest.TestCase):
                         sorties += [suite.texte(s, tout), suite.markdown(s, tout)]
         for sortie in sorties:
             self.assertFalse([l for l in sortie.splitlines() if l.lstrip().startswith("|")], sortie)
-            for ancien in ("Légende", "Key:", "Hors lot", "Outside the batches", "besoins clos", "needs closed",
-                           "⏳", "○", "###"):
+            for ancien in ("Légende", "Key:", "Hors lot", "Outside the batches", "⏳", "○", "###"):
                 self.assertNotIn(ancien, sortie)
         self.assertEqual(suite.FORMATS, ("text", "markdown"))
         self.assertFalse(hasattr(suite, "LECTURES"))

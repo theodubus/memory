@@ -151,8 +151,8 @@ marked ▶, then each need it carries, with its first open tasks; with no
 batch in progress, the first ready task. **Next**: the open milestones, in their order of execution,
 numbered, each with its needs closed out of their total, between
 brackets of equal width that align the titles; only the first, the next
-step, is unfolded into its needs: ✓ closed, ▶ served by a batch in
-progress, · other (`--all` unfolds them all). **For you**: what is up to
+step, is unfolded into its needs: the closed ones counted on one ✓
+line, then ▶ served by a batch in progress, · other (`--all` unfolds them all). **For you**: what is up to
 you, the actions to take and the pending requests. **In
 reserve**: the needs in no milestone, counted. A “Warning:” line tells of
 a blocked entry, or of two batches whose order is not deduced. A title
@@ -172,8 +172,7 @@ Now
 
 Next
 1. [1/4] Ship the N10 network (JA-NNNN)
-         ✓ Train N10 on the November
-           games (B-NNNN)
+         ✓ 1 need closed
          · Measure N10 against N8 (B-NNNN)
          · Ship N10 in the binary (B-NNNN)
          · Place the engine on the CCRL

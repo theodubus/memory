@@ -1013,8 +1013,8 @@ def analyseur() -> tuple[argparse.ArgumentParser, dict[str, str]]:
                                            "étapes qui suivent, ce qui revient à l'humain, calculés depuis le "
                                            "backlog"))
     s.add_argument("--format", choices=suite.FORMATS, default="text",
-                   help=trad("text : pour le terminal, chaque titre suivi de son identifiant (défaut) ; markdown : "
-                             "pour la conversation et la CI, chaque titre un lien"))
+                   help=trad("text : pour le terminal (défaut) ; markdown : le même texte dans un bloc de code, pour "
+                             "la conversation et la CI"))
     s.add_argument("--all", action="store_true", help=trad("déplier chaque étape en ses besoins, pas seulement la "
                                                            "prochaine"))
     s.set_defaults(f=cmd_roadmap)

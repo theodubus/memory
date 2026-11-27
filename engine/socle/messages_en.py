@@ -3980,6 +3980,10 @@ MESSAGES: dict[str, str] = {
         'and {n} more',
     'et {n} autres':
         'and {n} more',
+    '{n} besoin clos':
+        '{n} need closed',
+    '{n} besoins clos':
+        '{n} needs closed',
     'Ensuite':
         'Next',
     'Pour toi :':
@@ -4006,10 +4010,9 @@ MESSAGES: dict[str, str] = {
     "l'humain, calculés depuis le backlog":
         "the project's roadmap, to steer it: what is being done now, the steps that follow, what falls to the "
         "human, computed from the backlog",
-    'text : pour le terminal, chaque titre suivi de son identifiant (défaut) ; markdown : pour la conversation et '
-    'la CI, chaque titre un lien':
-        'text: for the terminal, each title followed by its identifier (default); markdown: for the conversation '
-        'and the CI, each title a link',
+    'text : pour le terminal (défaut) ; markdown : le même texte dans un bloc de code, pour la conversation et la '
+    'CI':
+        'text: for the terminal (default); markdown: the same text in a code block, for the conversation and the CI',
     'déplier chaque étape en ses besoins, pas seulement la prochaine':
         'unfold every step into its needs, not only the next one',
     "  la suite : `python3 .socle/socle roadmap`":

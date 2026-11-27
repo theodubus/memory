@@ -34,7 +34,7 @@ Maintenant
 
 Ensuite
 1. [K/N] <titre du premier jalon ouvert>
-         ✓ <besoin clos>
+         ✓ <n> besoins clos
          ▶ <besoin en cours>
          · <besoin ouvert>
 2. [K/N] <titre du jalon suivant>
