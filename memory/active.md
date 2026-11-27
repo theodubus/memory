@@ -5,20 +5,18 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0053, la clôture d'une tâche en un geste, est fait et relu
-(J-2026-11-27-AD) : T-0214 et B-0375 clos, par `socle close` lui-même ;
-sa pull request se fusionne, puis la session range : son contexte
-dépasse les 150 000 jetons de C-0026@f0e909fe. Le mode est le prompt à
-copier (D-0173).
+La revue de cap 11 est faite (J-2026-11-27-AH) : deux suggestions
+posées à Théo, dire où s'arrête JA-0006 avant le prompt de chess, et
+demander à chess dans ce prompt la mesure d'après que D-0233 a retenue.
+Sa réponse se consigne en séance ; T-0218 se mène en attendant, ni l'une
+ni l'autre ne la touchant. Le mode est le prompt à copier (D-0173).
 
 ## Prochaines étapes
 
 Par lots (D-0118, D-0151), dans JA-0006, dans l'ordre de D-0235,
 point 12, que les `après` tiennent :
 
-1. La revue de cap 11, due avant tout autre lot : L-0053 est le
-   troisième lot clos depuis la revue 10 (skill `direction-review`).
-   Puis T-0218 (B-0382, D-0237 validée) : les modules de tests les plus
+1. T-0218 (B-0382, D-0237 validée) : les modules de tests les plus
    longs se mettent de côté eux-mêmes pendant les étapes rapides, le
    lanceur protégé (D-0130) inchangé ; un petit lot à elle seule.
 2. Les textes : T-0215 (les réveils gardés), T-0216 (la parole rangée
