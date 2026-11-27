@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0209 — Relire de façon critique le troisième retour de chess, gêne par gêne, B-0365 et B-0370 compris, et en poser l'arbitrage à Théo
 
-> statut : en-cours · origine : J-2026-11-27-R · besoin : B-0367 · ref : D-0217, D-0232, D-0233, D-0234 · lu : backlog@4d53be09
+> statut : fait · origine : J-2026-11-27-R · besoin : B-0367 · ref : D-0235, J-2026-11-27-S, D-0217, D-0232, D-0233, D-0234 · lu : backlog@4d53be09
 
 Le livrable : `docs/fabrication/chess/relecture-cout-et-frictions-2026-11-27.md`,
 la relecture critique du retour
@@ -17,6 +17,6 @@ lien donné.
 
 ## Fait quand
 
-- [ ] chaque gêne du retour a sa ligne dans la relecture, avec ce que le code en confirme et une recommandation
-- [ ] B-0365 et B-0370 y ont la leur
-- [ ] la demande d'arbitrage est poussée, et son lien donné à Théo
+- [x] chaque gêne du retour a sa ligne dans la relecture, avec ce que le code en confirme et une recommandation
+- [x] B-0365 et B-0370 y ont la leur
+- [x] la demande d'arbitrage est poussée, et son lien donné à Théo
