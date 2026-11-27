@@ -10,3 +10,9 @@ le prochain prompt de chess. T-0220 et T-0221 touchent `engine/socle/`
 (`cli.py`, `checks_memory.py`, `state.py`, `roadmap.py`, `memory.py`,
 `selftest.py`, les textes) ; T-0222 la mémoire de ce dépôt ; T-0223 un
 test neuf dans `tests/`. Le lot pose un garde-fou : revue adversariale.
+
+## Revues
+
+### Passe 1 — 2026-11-27
+
+Commits : c198fba7..7b52c2d3
