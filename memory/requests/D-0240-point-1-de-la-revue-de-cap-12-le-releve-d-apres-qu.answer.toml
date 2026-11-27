@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0240-point-1-de-la-revue-de-cap-12-le-releve-d-apres-qu.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-27"
+canal = "conversation"
+citation = "Suggestion 1 : on a pas vraiment de mesure sur lot ordinaire pour l'ancienne version non ? On a juste fait la mise a jour, j'ai du mal a voir ce que la mesure apporte car on a rien pour comparer \nSi c'est utile quand meme au jalon 3 ok"
+empreinte = "sha256:e67a97212b61216937eec7456937096a7e6dea50916d64fb59487e0d60c720b2"
