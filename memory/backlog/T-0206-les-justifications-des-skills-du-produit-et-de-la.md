@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0206 — Les justifications des skills du produit et de la section du socle d'AGENTS.md sorties vers le guide, déplacées et non coupées
 
-> statut : ouvert · origine : J-2026-11-26-AU · besoin : B-0354 · ref : D-0223 · lu : backlog@6ba8e676
+> statut : ouvert · origine : J-2026-11-26-AU · besoin : B-0354 · ref : D-0223, D-0224 · lu : backlog@6ba8e676
 
 Sur D-0218, les skills du produit et la section du socle d'`AGENTS.md`,
 chargés en entier à chaque usage, gardent leur plafond : ce qui y
