@@ -18,6 +18,8 @@ point 12, que les `après` tiennent :
 
 1. La revue de cap 11, due avant tout autre lot : L-0053 est le
    troisième lot clos depuis la revue 10 (skill `direction-review`).
+   D-0237 attend Théo : validée, l'étape rapide de l'atelier s'allège
+   par une tâche, dans le prochain lot.
 2. Les textes : T-0215 (les réveils gardés), T-0216 (la parole rangée
    selon sa nature), T-0217 (la ligne du contrat des demandes) ;
    T-0216 touchera la section française du gabarit d'AGENTS.md, à
