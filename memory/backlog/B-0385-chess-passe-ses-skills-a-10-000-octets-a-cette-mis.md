@@ -17,5 +17,5 @@ cette mise à jour ; chess à 10 000, Théo dit ce que devient
 
 ## Satisfait quand
 
-- [ ] le prompt de mise à jour de chess lui fait poser à Théo la demande de reprendre 10 000 octets pour ses skills, en nommant la clé
+- [x] le prompt de mise à jour de chess lui fait poser à Théo la demande de reprendre 10 000 octets pour ses skills, en nommant la clé
 - [ ] chess à 10 000, Théo a dit ce que devient le test qui garde les skills du produit sous 8 000 octets

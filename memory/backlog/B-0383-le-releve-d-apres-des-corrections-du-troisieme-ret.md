@@ -15,5 +15,5 @@ méthode, avec ce que dit l'alerte de retard de l'état (T-0213).
 
 ## Satisfait quand
 
-- [ ] le prompt de mise à jour de chess demande le relevé d'après, par la même méthode que celui d'avant
+- [x] le prompt de mise à jour de chess demande le relevé d'après, par la même méthode que celui d'avant
 - [ ] le relevé reçu est versé à JA-0003, à côté de celui d'avant

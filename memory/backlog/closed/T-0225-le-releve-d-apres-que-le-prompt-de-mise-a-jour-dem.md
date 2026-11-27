@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0225 — Le relevé d'après que le prompt de mise à jour demande à chess compte à part les gestes uniques de la mise à jour, et donne la part de chaque nature d'appel et les refus rapportés aux déclenchements
 
-> statut : ouvert · origine : J-2026-11-27-AY · besoin : B-0383 · ref : D-0240 · lu : backlog@08d230c4
+> statut : fait · origine : J-2026-11-27-AY · besoin : B-0383 · ref : D-0240, ce commit · lu : backlog@08d230c4
 
 Dans la section du relevé d'après que T-0219 ajoute à
 `docs/fabrication/chess/prompt-mise-a-jour.md`, sur D-0240 : la mesure
@@ -15,5 +15,5 @@ nature d'appel, et les refus rapportés aux déclenchements des hooks.
 
 ## Fait quand
 
-- [ ] le prompt fait compter à part les gestes uniques de la mise à jour, en les nommant
-- [ ] le prompt demande la part de chaque nature d'appel, et les refus rapportés aux déclenchements
+- [x] le prompt fait compter à part les gestes uniques de la mise à jour, en les nommant
+- [x] le prompt demande la part de chaque nature d'appel, et les refus rapportés aux déclenchements
