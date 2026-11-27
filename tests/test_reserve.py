@@ -307,6 +307,11 @@ class TestLeSignal(unittest.TestCase):
         self.assertEqual(lignes(memoire_de(clos, entree("JA-0001", meta="après : B-0001"))), [])
         # Un jalon qui ne nomme encore aucun besoin attend les siens.
         self.assertEqual(lignes(memoire_de(reserve, entree("L-0001"), entree("JA-0001"))), [])
+        # La même ligne, que `socle close` donne aussi, sans l'indentation de l'état.
+        self.assertTrue(etat.jalons_a_clore(memoire_de(clos, reserve, entree("L-0001"),
+                                                       entree("JA-0001", meta="après : B-0001")))
+                        .startswith("jalons à clore, leurs besoins clos : JA-0001 ;"))
+        self.assertIsNone(etat.jalons_a_clore(memoire_de(reserve, entree("L-0001"), entree("JA-0001"))))
 
 
 class TestLaClotureDUnJalon(Projet):
