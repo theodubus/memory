@@ -2,6 +2,7 @@
 ceux qui viennent après (ADR de B-0180)."""
 
 import io
+import os
 import re
 import shutil
 import subprocess
@@ -10,12 +11,17 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 
-from socle import config, context as contexte, installer as installeur, messages, state as etat
+from socle import config, context as contexte, installer as installeur, messages, state as etat, verification
 from socle.checks_docs import debut_de
 from socle.checks_ratchet import assouplissements
 from socle.report import AVERTISSEMENT, ERREUR, Constat
 
 from tests.test_installeur import MOTEUR, depot
+
+# L'un des plus longs modules de la suite (56 s de calcul mesurées le
+# 27 novembre) : il se met de côté pendant les étapes rapides (T-0218,
+# D-0237), et la CI, qui le lance sans `SOCLE_RAPIDE`, le joue à chaque push.
+ETAPES_RAPIDES = bool(os.environ.get(verification.RAPIDE))
 
 LISEZMOI = "Voir [la suite](absent.md).\nEt F-0099.\n"
 
@@ -39,6 +45,7 @@ def git(racine: Path, *args):
                         "GIT_COMMITTER_EMAIL": "e@e"})
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestCleDeConstat(unittest.TestCase):
     def test_la_cle_ne_depend_pas_de_la_ligne(self):
         a = Constat("memoire.references", "lien mort : absent.md", "LISEZMOI.md", 1)
@@ -68,6 +75,7 @@ class TestCleDeConstat(unittest.TestCase):
         self.assertEqual(contexte.cle_renommee("c.md — F-0001", {"a.md": "b.md"}), "c.md — F-0001")
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestAdoption(unittest.TestCase):
     def setUp(self):
         self.racine = depot({"app.py": "print('ok')\n", "LISEZMOI.md": LISEZMOI})
@@ -189,6 +197,7 @@ class TestAdoption(unittest.TestCase):
 VIDE = "adoption : aucun contrôle en `[adoption] warn_only`, aucun constat à tolérer : rien à inscrire"
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestAdoptionVide(unittest.TestCase):
     """B-0195 : sur une adoption vide, l'installeur se taisait ; l'agent de
     chess a dû lancer un essai à blanc pour savoir qu'il n'y avait rien à
@@ -226,6 +235,7 @@ class TestAdoptionVide(unittest.TestCase):
                                                   "tolerate: nothing to enter")
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestClesDistinctes(unittest.TestCase):
     """B-0190 : deux paragraphes recopiés entre les deux mêmes fichiers ont
     deux clés ; l'un toléré, l'autre neuf, le neuf fait échouer le contrôle."""
@@ -260,6 +270,7 @@ class TestClesDistinctes(unittest.TestCase):
                          ["copie en b.md : Un second paragraphe, tout autre, lui aussi recopié"])
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestCliquetDesToleres(unittest.TestCase):
     AVANT = {"adoption": {"warn_only": ["memoire.references"],
                           "tolerated": {"memoire.references": ["a — x", "a — x", "b — y"]}}}
@@ -299,6 +310,7 @@ class TestCliquetDesToleres(unittest.TestCase):
         self.assertEqual(assouplissements(avant, self.apres(["a — x"])), [])
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestSecondeRevue(unittest.TestCase):
     """B-0189 : la seconde revue de B-0180."""
 

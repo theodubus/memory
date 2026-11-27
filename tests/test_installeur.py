@@ -8,8 +8,13 @@ import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
-from socle import config, context as contexte, checks_memory as controles_memoire, installer as installeur
+from socle import config, context as contexte, checks_memory as controles_memoire, installer as installeur, verification
 from socle.report import Rapport
+
+# L'un des plus longs modules de la suite (76 s de calcul mesurées le
+# 27 novembre) : il se met de côté pendant les étapes rapides (T-0218,
+# D-0237), et la CI, qui le lance sans `SOCLE_RAPIDE`, le joue à chaque push.
+ETAPES_RAPIDES = bool(os.environ.get(verification.RAPIDE))
 
 MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 CLAUDE = "# Projet\n\nLes instructions du projet, écrites avant le socle.\n"
@@ -38,6 +43,7 @@ def erreurs_instructions(racine: Path) -> list[str]:
     return [c.message for c in r.erreurs("instructions.source-unique")]
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestAdaptateur(unittest.TestCase):
     def test_un_adaptateur_maintenu_ou_un_fichier(self):
         texte, nom = installeur.charger_adaptateur("rust")
@@ -51,6 +57,7 @@ class TestAdaptateur(unittest.TestCase):
             installeur.charger_adaptateur("cobol")
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestAdoption(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.racine, ignore_errors=True)
@@ -101,6 +108,7 @@ if __name__ == "__main__":
     unittest.main()
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestRelance(unittest.TestCase):
     """B-0044, L1 : relancer l'installeur ne perd rien."""
 
@@ -308,6 +316,7 @@ class TestRelance(unittest.TestCase):
         self.assertFalse(any(p.name == ".DS_Store" for p in empreinte.fichiers_moteur(self.racine, ".socle/engine")))
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestReglagesNouveaux(unittest.TestCase):
     """B-0123 : les réglages du gabarit qu'un fichier de garde-fous n'écrit
     pas, même en commentaire."""
@@ -326,6 +335,7 @@ class TestReglagesNouveaux(unittest.TestCase):
         self.assertEqual(installeur.reglages_nouveaux(modele, modele), [])
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestDeuxEtats(unittest.TestCase):
     """B-0054 : un projet qui a déjà son état au démarrage le garde, et
     l'installeur dit que chaque session en recevra deux."""
@@ -428,6 +438,7 @@ class TestDeuxEtats(unittest.TestCase):
         self.assertEqual(installeur.fins_de_tour_du_projet({}), [])
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestEcartDePolitique(unittest.TestCase):
     """B-0195 : chaque mise à jour réaffichait en entier l'écart de la
     politique au gabarit, même fait des lignes que l'humain a écrites
@@ -520,6 +531,7 @@ class TestEcartDePolitique(unittest.TestCase):
         self.assertFalse(installeur.ecart_deja_montre([], []))
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestAuditAdaptateur(unittest.TestCase):
     """B-0011 : à chaque état, un langage que l'adaptateur ne couvre pas est
     dit, pour que l'humain en décide."""
@@ -565,6 +577,7 @@ class TestAuditAdaptateur(unittest.TestCase):
         self.assertEqual(etat.audit_adaptateur(config.Projet.charger(racine)), [])
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestCopiesEnRetard(unittest.TestCase):
     """B-0218 : en mode amont, le moteur change sans que l'installeur ne
     repasse ; une copie protégée qu'il pose, et qui diffère de ce qu'il
@@ -655,6 +668,7 @@ class TestCopiesEnRetard(unittest.TestCase):
         self.assertEqual(etat.copies_en_retard(config.Projet.charger(racine)), [])
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestWorktreesIgnores(unittest.TestCase):
     """B-0217 : le skill socle-batch lance ses sous-agents dans des worktrees,
     sous `.claude/worktrees/` ; non ignorés, le hook de fin de tour de
@@ -700,6 +714,7 @@ class TestWorktreesIgnores(unittest.TestCase):
                 self.assertFalse(installeur.ignore_deja(texte, installeur.WORKTREES))
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestSousDossiers(unittest.TestCase):
     """B-0168 : l'essai à blanc sur chess, un dépôt Rust dont l'interface
     JavaScript vit dans `ui/`, avec son propre manifeste."""
@@ -897,6 +912,7 @@ class TestSousDossiers(unittest.TestCase):
         self.assertTrue(any("`[tests]`" in e for e in ecarts))
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestKotlinHorsJvm(unittest.TestCase):
     """B-0147, D-0191 : un module multiplateforme ou Android, que les
     commandes JVM de la copie `kotlin` ne servent pas, se dit à
@@ -989,6 +1005,7 @@ class TestKotlinHorsJvm(unittest.TestCase):
         self.assertNotIn("app/build.gradle.kts", dit[0])
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestBudgetDAdoption(unittest.TestCase):
     def test_la_taille_plus_un_dixieme_au_millier_superieur(self):
         self.assertEqual(installeur.budget_d_adoption(138934), 153000)

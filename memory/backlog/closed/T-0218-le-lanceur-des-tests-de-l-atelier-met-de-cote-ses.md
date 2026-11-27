@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0218 — Le lanceur des tests de l'atelier met de côté ses modules les plus longs pendant les étapes rapides, la CI les jouant toujours
 
-> statut : ouvert · origine : J-2026-11-27-AG · besoin : B-0382 · ref : D-0237 · lu : backlog@e5be70ef
+> statut : fait · origine : J-2026-11-27-AG · besoin : B-0382 · ref : D-0237, ce commit · lu : backlog@e5be70ef
 
 Les modules les plus longs de la suite se mettent de côté eux-mêmes
 quand `SOCLE_RAPIDE` est posée, chacun avec sa raison écrite et sa durée
@@ -14,6 +14,6 @@ tâche est ouverte ; le titre dit le résultat, le lanceur le constate.
 
 ## Fait quand
 
-- [ ] un test montre un module de la liste mis de côté quand `SOCLE_RAPIDE` est posée, et lancé sans elle
-- [ ] le contrôle des tests creux accepte la mise de côté, sa raison écrite
-- [ ] la vérification rapide mesurée seule, après le changement, est notée au journal
+- [x] un test montre un module de la liste mis de côté quand `SOCLE_RAPIDE` est posée, et lancé sans elle
+- [x] le contrôle des tests creux accepte la mise de côté, sa raison écrite
+- [x] la vérification rapide mesurée seule, après le changement, est notée au journal

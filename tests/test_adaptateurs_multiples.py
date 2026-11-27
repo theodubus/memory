@@ -15,6 +15,11 @@ from socle import (config, context as contexte, checks_tests as controles_tests,
                    mutation, requests as demandes, state as etat, verification)
 from socle.report import Rapport
 
+# L'un des plus longs modules de la suite (71 s de calcul mesurées le
+# 27 novembre) : il se met de côté pendant les étapes rapides (T-0218,
+# D-0237), et la CI, qui le lance sans `SOCLE_RAPIDE`, le joue à chaque push.
+ETAPES_RAPIDES = bool(os.environ.get(verification.RAPIDE))
+
 ADAPTATEURS = Path(__file__).resolve().parent.parent / "engine/socle/adapters"
 
 CALC = "FACTEUR = 2\n\n\ndef double(x):\n    return FACTEUR * x\n"
@@ -31,6 +36,7 @@ def git(cwd, *args):
     return subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True, env=env).stdout
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class DeuxLangages(unittest.TestCase):
     """La base : Python en principal, Kotlin dans `.socle/adapters/`, chacun
     avec son code et son test."""
@@ -68,6 +74,7 @@ class DeuxLangages(unittest.TestCase):
         return [c.message for c in r.erreurs(ident)]
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class LeProjet(DeuxLangages):
     def test_le_projet_lit_ses_adaptateurs_le_principal_d_abord(self):
         p = self.projet()
@@ -118,6 +125,7 @@ def outils_fichiers(racine: Path) -> list[str]:
     return outils.fichiers_courants(racine)
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class Recouvrement(DeuxLangages):
     def test_des_motifs_disjoints_ne_recouvrent_rien(self):
         self.assertEqual(self.controle("adaptateur.recouvrement"), [])
@@ -132,6 +140,7 @@ class Recouvrement(DeuxLangages):
         self.assertIn("(python, doublon)", r.erreurs("adaptateur.recouvrement")[0].message)
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class ParAdaptateur(DeuxLangages):
     def test_chaque_test_se_juge_avec_son_adaptateur(self):
         self.ecrire("src/test/kotlin/essai/VideTest.kt",
@@ -224,6 +233,7 @@ class ParAdaptateur(DeuxLangages):
         self.assertIn("kotlin", "\n".join(etat.audit_adaptateur(self.projet())))
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class Verification(DeuxLangages):
     def test_verify_lance_les_etapes_de_chaque_adaptateur_et_nomme_celle_qui_echoue(self):
         for chemin, code in ((".socle/adapter.toml", 0), (".socle/adapters/kotlin.toml", 3)):
@@ -250,6 +260,7 @@ class Verification(DeuxLangages):
         self.assertEqual(etapes.count("actions/setup-java"), 1)
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class Mutation(DeuxLangages):
     principal = "python-pytest"
 
@@ -308,6 +319,7 @@ class Mutation(DeuxLangages):
         self.assertIn("socle-mutation.yml", message)
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class Installation(unittest.TestCase):
     def setUp(self):
         self.racine = Path(tempfile.mkdtemp(prefix="socle-install-deux-"))
@@ -355,6 +367,7 @@ def installer(racine: Path, adaptateurs, proprietaire="@essai") -> int:
         return installeur.installer(racine, adaptateurs, proprietaire)
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class MiseAJour(unittest.TestCase):
     """Un projet Python déjà équipé, auquel du Kotlin s'ajoute : le chemin de
     JustCook (revue du lot de B-0095)."""
@@ -411,6 +424,7 @@ class MiseAJour(unittest.TestCase):
                          ["app/src/main/kotlin/app/App.kt"])
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class PythonSecond(unittest.TestCase):
     """Un projet Kotlin dont Python est le second langage, sa copie
     `python.toml` posée : un `conftest.py` neuf fait détecter `python-pytest`
@@ -517,6 +531,7 @@ def installer_et_lire(racine: Path, adaptateurs) -> str:
     return sortie.getvalue()
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class Rafraichissement(unittest.TestCase):
     """La mise à jour ne rafraîchit une copie d'adaptateur, la principale
     comprise, que si le projet ne l'a pas adaptée (ADR-0052)."""
@@ -718,6 +733,7 @@ class Rafraichissement(unittest.TestCase):
         self.assertEqual(self.lire(".socle/adapters/maison.toml"), 'language = "maison"\n')
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class Detection(unittest.TestCase):
     def setUp(self):
         self.racine = Path(tempfile.mkdtemp(prefix="socle-detection-"))
@@ -749,6 +765,7 @@ class Detection(unittest.TestCase):
         self.assertEqual(installeur.detecter_adaptateurs(self.racine), ["kotlin", "python-pytest"])
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class Balayage(unittest.TestCase):
     def test_un_workflow_qui_ne_lance_qu_un_outil_ne_suffit_pas(self):
         racine = Path(tempfile.mkdtemp(prefix="socle-balayage-deux-"))
@@ -830,6 +847,7 @@ def fautes_d_etape(bloc: str) -> list[str]:
     return fautes
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class AvantLePremierFichier(unittest.TestCase):
     """B-0179 : un adaptateur posé avant le premier fichier de son langage ne
     fait pas échouer la CI. Le pilote, en `python-pytest` et `kotlin` sans
