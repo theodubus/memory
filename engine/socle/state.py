@@ -890,16 +890,30 @@ def _backlog(mem: memoire.Memoire, borne: bool = False) -> list[tuple[int, list[
     res += [(RELU, [f"  {l}"]) for l in memoire.lignes_ordre(mem, plafond=PRETS_MONTRES if borne else None,
                                                              titre=titre, basses=BASSES_MONTREES if borne else None)]
     # Les besoins de la réserve à trier (ADR-0118), zone par zone : chacune
-    # son `trié` à écrire.
+    # son `trié` à écrire. Au rang de ce qui informe : nulle part ailleurs
+    # le signal ne se lit, et la borne du démarrage coupe d'abord ce qui se
+    # relit.
     places = memoire.a_placer(memoire.Graphe(mem))
     for prive in (False, True):
         siens = [e for e in places if e.prive == prive]
         if siens:
-            res.append((RELU, ["  " + trad("besoins à placer (en réserve, sans raison ou sans tri depuis {n} lots "
+            res.append((INFO, ["  " + trad("besoins à placer (en réserve, sans raison ou sans tri depuis {n} lots "
                                            "clos) : {ids} ; à la clôture du lot, chacun dans un jalon, ou {champs}",
                                            n=memoire.LOTS_SANS_TRI,
                                            ids=memoire._ids(siens, BASSES_MONTREES if borne else None),
                                            champs=memoire.champs_de_reserve(mem, prive))]))
+    # Un jalon ouvert dont tous les besoins sont clos va se clore : sa clôture
+    # exige la réserve retriée (ADR-0118). Le dire avant évite son refus.
+    g = memoire.Graphe(mem)
+    en_reserve = [e for e in memoire.reserve(g) if not memoire.pour_l_humain(e)]
+    a_clore = [j for j in memoire.jalons_ouverts(g)
+               if all(not g.ouvert(d) for d in memoire.dependances(g.entrees[j]) if memoire.type_d_id(d) == "B")]
+    if a_clore and en_reserve:
+        res.append((INFO, ["  " + trad("jalons à clore, leurs besoins clos : {jalons} ; avant, la réserve se retrie "
+                                       "({n} besoin(s)) : chacun dans un jalon à venir, ou {champs}, ou son "
+                                       "abandon proposé à l'humain par une demande",
+                                       jalons=", ".join(a_clore), n=len(en_reserve),
+                                       champs=memoire.champs_de_reserve(mem, False))]))
     return res
 
 

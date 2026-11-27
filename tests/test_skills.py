@@ -1580,5 +1580,23 @@ class TestRefusBash(unittest.TestCase):
                       hooks.refus_bash(projet, "python3 .socle/socle answer D-0001 valider"))
 
 
+class TestLePlafondDesProjetsInstalles(unittest.TestCase):
+    """B-0384 : un projet installé avant le 27 novembre garde le plafond de
+    8 000 octets de son gabarit des garde-fous, qu'une mise à jour ne
+    touche pas (note `2026-11-27-a`) ; chaque skill que pose l'installeur
+    doit y tenir, sinon le commit des fichiers de sa mise à jour est
+    refusé. Le test qui rejoue la mise à jour de chess le voit aussi, mais
+    seulement dans la suite longue."""
+
+    PLAFOND = 8000
+
+    def test_chaque_skill_pose_tient_sous_8000_octets(self):
+        gabarits = sorted((MOTEUR / "socle" / "templates" / "skills").glob("*/SKILL*.md"))
+        self.assertTrue(gabarits)
+        for chemin in gabarits:
+            with self.subTest(skill=f"{chemin.parent.name}/{chemin.name}"):
+                self.assertLessEqual(len(chemin.read_bytes()), self.PLAFOND)
+
+
 if __name__ == "__main__":
     unittest.main()

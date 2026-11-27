@@ -15,6 +15,17 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-27-l — Les skills que pose l'installeur repassent sous 8 000 octets, le plafond que garde un projet installé avant le 27 novembre
+
+Une mise à jour garde les garde-fous du projet, donc le plafond de ses
+skills, de 8 000 octets avant la note `2026-11-27-a`. `socle-batch` et
+`socle-request` l'avaient dépassé (8 035 et 8 340 octets) : le commit des
+fichiers d'une mise à jour était refusé par `memoire.budgets`. Leurs
+phrases se resserrent, sans règle perdue, et chaque skill que pose
+l'installeur tient de nouveau sous 8 000 octets.
+
+À faire : rien.
+
 ## 2026-11-27-k — La réserve se trie à trois moments : un besoin naît rangé, l'état signale le besoin à placer, et un jalon ne se clôt que sur une réserve triée
 
 Les besoins d'aucun jalon attendaient sans échéance : rien ne les plaçait
@@ -39,12 +50,13 @@ nomme dans son `après`. Un besoin `pour : humain` ne se trie pas.
 - La clôture d'un jalon : `socle close JA-NNNN`, et le contrôle, refusent
   un jalon ouvert à la base et clos à la tête tant qu'un besoin de la
   réserve n'a pas sa raison et un `trié` au moins égal au plus haut lot
-  de la base. Avant de clore un jalon, chaque besoin de la réserve
-  rejoint un jalon à venir, reste en réserve, sa raison et son tri
-  récrits, ou se propose à l'humain pour abandon, par une demande que sa
-  raison nomme.
+  de la base. Dès que tous les besoins d'un jalon ouvert sont clos,
+  `socle state` l'annonce : avant de le clore, chaque besoin de la
+  réserve rejoint un jalon à venir, reste en réserve, sa raison et son
+  tri récrits, ou se propose à l'humain pour abandon, par une demande.
 
-Le skill `socle-batch` dit les deux tris ; `FORMAT.md`, les champs.
+Le skill `socle-batch` renvoie à l'état pour les deux tris ; `FORMAT.md`
+dit les champs.
 
 À faire : si le projet a un jalon ouvert, `socle state` dit à placer les
 besoins de la réserve qui n'ont pas de raison ; à la clôture du prochain

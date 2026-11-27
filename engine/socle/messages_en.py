@@ -3795,6 +3795,10 @@ MESSAGES: dict[str, str] = {
     "chacun dans un jalon, ou {champs}":
         'needs to place (in reserve, without a reason or unsorted for {n} closed batches): {ids}; at the closing of '
         'the batch, each in a milestone, or {champs}',
+    "jalons à clore, leurs besoins clos : {jalons} ; avant, la réserve se retrie ({n} besoin(s)) : chacun dans un "
+    "jalon à venir, ou {champs}, ou son abandon proposé à l'humain par une demande":
+        'milestones to close, their needs closed: {jalons}; before that, the reserve is sorted again ({n} need(s)): '
+        'each in a milestone to come, or {champs}, or its abandonment proposed to the human by a request',
     '{n} à placer':
         '{n} to place',
     'un besoin nouveau':

@@ -14,6 +14,17 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-27-l — The skills the installer lays down are back under 8,000 bytes, the cap that a project installed before 27 November keeps
+
+An update keeps the project's guardrails, hence the cap of its skills,
+8,000 bytes before the note `2026-11-27-a`. `socle-batch` and
+`socle-request` had exceeded it (8,035 and 8,340 bytes): the commit of
+an update's files was refused by `memoire.budgets`. Their sentences are
+tightened, no rule lost, and each skill the installer lays down fits
+under 8,000 bytes again.
+
+To do: nothing.
+
 ## 2026-11-27-k — The reserve is sorted at three moments: a need is born placed, the state flags the need to place, and a milestone closes only over a sorted reserve
 
 The needs in no milestone waited without a deadline: nothing placed them
@@ -38,12 +49,14 @@ A `for : human` need is not sorted.
 - The closing of a milestone: `socle close JA-NNNN`, and the check,
   refuse a milestone open at the base and closed at the head as long as
   a need of the reserve lacks its reason and a `sorted` at least equal to
-  the highest batch of the base. Before closing a milestone, each need of
-  the reserve joins a milestone to come, stays in reserve, its reason and
-  its sorting rewritten, or is proposed to the human for abandonment, by
-  a request that its reason names.
+  the highest batch of the base. As soon as all the needs of an open
+  milestone are closed, `socle state` announces it: before closing it,
+  each need of the reserve joins a milestone to come, stays in reserve,
+  its reason and its sorting rewritten, or is proposed to the human for
+  abandonment, by a request.
 
-The `socle-batch` skill says the two sortings; `FORMAT.md`, the fields.
+The `socle-batch` skill refers to the state for the two sortings;
+`FORMAT.md` gives the fields.
 
 To do: if the project has an open milestone, `socle state` calls to place
 the needs of the reserve that have no reason; at the closing of the next

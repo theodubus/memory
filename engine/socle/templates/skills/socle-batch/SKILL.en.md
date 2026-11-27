@@ -85,17 +85,12 @@ agent. A batch leaves only once its blocking findings are fixed.
    starts on the default branch; the recap says whether they succeeded.
 5. The active work and the journal are written before the merge, in the
    last commit of the pull request, with the batch's closure: its tasks
-   closed, it closes, each in one step, `python3 .socle/socle close
-   <ID>`, which sets its status, its reference and its filing, then
-   `python3 .socle/socle archive` files the lifted directives; the needs
-   the state calls to place are sorted, each into a milestone to come, or
-   kept in reserve, its reason and its `sorted` rewritten; before closing
-   a milestone, the whole reserve is sorted so, or a need is proposed to
-   the human for abandonment, by a request its reason names; a task its
-   review opens joins the next batch whose rule applies, otherwise a new
-   batch in its need's milestone; a need is born placed
-   (`socle new need --milestone` or `--reserve`); the closing recap
-   pastes the output of `python3 .socle/socle roadmap` in a code block. After the merge,
+   closed, then it, each by `python3 .socle/socle close <ID>`, then
+   `python3 .socle/socle archive` files the lifted directives; the reserve
+   is sorted when the state says so; a task its review opens joins the
+   next batch whose rule applies, otherwise a new batch in its need's
+   milestone; the closing recap pastes the output of
+   `python3 .socle/socle roadmap` in a code block. After the merge,
    `python3 .socle/socle prune-branches` deletes the agent's contained
    branches; the local branch restarts from the default branch and is
    pushed only with the first commit of the next batch.

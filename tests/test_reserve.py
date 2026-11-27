@@ -283,6 +283,29 @@ class TestLeSignal(unittest.TestCase):
         self.assertIn("needs to place (in reserve, without a reason or unsorted for 15 closed batches): B-0002, ",
                       lignes[0])
 
+    def test_la_ligne_passe_avant_ce_qui_se_relit_a_la_borne_du_demarrage(self):
+        """Le signal ne se lit nulle part ailleurs : la borne du démarrage, qui
+        coupe d'abord ce qui se relit (les listes du backlog), le garde."""
+        mem = memoire_de(entree("B-0002"), entree("JA-0001"))
+        rangs = [rang for rang, b in etat._backlog(mem, borne=True) for l in b if "besoins à placer" in l]
+        self.assertEqual(rangs, [etat.INFO])
+
+    def test_un_jalon_dont_les_besoins_sont_clos_annonce_le_tri_de_la_reserve(self):
+        """Sa clôture exige la réserve retriée : l'état le dit avant, sans
+        attendre le refus ; rien tant qu'un besoin du jalon reste ouvert, ni
+        sans réserve."""
+        def lignes(mem):
+            return [l for _, b in etat._backlog(mem) for l in b if "jalons à clore" in l]
+
+        clos = entree("B-0001", statut="fait", meta="ref : fichier:calc.py")
+        reserve = entree("B-0002", meta="réserve : plus tard · trié : L-0001")
+        self.assertEqual(lignes(memoire_de(clos, reserve, entree("L-0001"), entree("JA-0001", meta="après : B-0001"))),
+                         ["  jalons à clore, leurs besoins clos : JA-0001 ; avant, la réserve se retrie (1 besoin(s)) : "
+                          "chacun dans un jalon à venir, ou `réserve : <raison> · trié : L-0001`, ou son abandon "
+                          "proposé à l'humain par une demande"])
+        self.assertEqual(lignes(memoire_de(entree("B-0001"), reserve, entree("JA-0001", meta="après : B-0001"))), [])
+        self.assertEqual(lignes(memoire_de(clos, entree("JA-0001", meta="après : B-0001"))), [])
+
 
 class TestLaClotureDUnJalon(Projet):
     """T-0221 : un jalon ouvert à la base et clos à la tête exige la réserve

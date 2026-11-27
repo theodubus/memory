@@ -88,6 +88,10 @@ contournement qu'il trouve s'écarte d'office, sans entrée au backlog.
   (`.github/workflows/distribution.yml`).
 - Un lot qui change ce qu'un projet reçoit à la mise à jour complète
   `docs/fabrication/chess/prompt-mise-a-jour.md` (J-2026-11-13-L).
+- Le prompt de mise à jour de chess ne se donne que sur une CI où
+  `tests/test_mise_a_jour_rejouee.py` passe ; après la mise à jour de
+  chess, sa constante `MOTEUR_DE_CHESS` avance au commit dont chess a reçu
+  le moteur (B-0368).
 - La réponse de l'humain se consigne, se commite et se pousse dès qu'elle
   est donnée ; la tâche qui fera le changement la cite, et la couvre tant
   qu'elle est ouverte et que ce qu'elle nomme n'a pas bougé (D-0189).
