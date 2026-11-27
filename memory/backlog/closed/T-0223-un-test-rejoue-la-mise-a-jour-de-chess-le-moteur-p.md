@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0223 — Un test rejoue la mise à jour de chess : le moteur publié qu'il a installe, le moteur de la tête met à jour, la demande seule puis les fichiers passent les vrais hooks git
 
-> statut : ouvert · origine : J-2026-11-27-AO · besoin : B-0368 · lu : backlog@c0e72dd2
+> statut : fait · origine : J-2026-11-27-AO · besoin : B-0368 · lu : backlog@c0e72dd2 · ref : ce commit
 
 Le test que décrit B-0368 (D-0219), d'environ 150 lignes, dans
 `tests/` : le moteur de ce dépôt au commit publié qu'a chess, pris par
@@ -13,5 +13,5 @@ mise à jour suivante de chess avance.
 
 ## Fait quand
 
-- [ ] le test échoue si le commit ou le push de la demande seule, ou ceux des fichiers de la mise à jour, sont refusés
-- [ ] le test se saute en le disant quand l'historique ne contient pas le commit rejoué
+- [x] le test échoue si le commit ou le push de la demande seule, ou ceux des fichiers de la mise à jour, sont refusés
+- [x] le test se saute en le disant quand l'historique ne contient pas le commit rejoué
