@@ -54,20 +54,23 @@ d'autre place : il est ici, en tête, et nulle part ailleurs.
 
 **Ensuite.** Les jalons ouverts, dans l'ordre d'exécution, numérotés à
 partir de 1. Chacun : `[K/N]`, ses besoins clos sur leur total, puis son
-titre. Les crochets ont tous la même largeur : `K` est aligné à droite
-sur le plus large des `K`, `N` à gauche sur le plus large des `N`, et
-les titres commencent tous à la même colonne. Seul le premier jalon
+titre. Les crochets ont tous la même largeur, comme la maquette : `K` et
+`N` prennent la largeur du plus grand total, `K` aligné à droite et `N` à
+gauche (`[ 1/4 ]`, `[ 2/12]`) ; les numéros des étapes s'alignent à
+droite, et les titres commencent tous à la même colonne. Seul le premier jalon
 ouvert, l'étape suivante, est déplié en ses besoins, dans l'ordre de son
 `après`, alignés sous son titre : `✓` clos, `▶` servi par une tâche d'un
 lot en cours, `·` autre. `--all` déplie tous les jalons. Un projet sans
 jalon n'a pas cette partie.
 
-**Pour toi.** Une ligne par geste de l'humain : chaque besoin `pour :
-humain` ouvert et chaque demande en attente, par son titre. Rien à
+**Pour toi.** Une ligne par geste de l'humain : chaque entrée `pour :
+humain` ouverte et chaque demande en attente, par son titre. Rien à
 faire : la ligne ne paraît pas.
 
 **En réserve.** Les besoins ouverts hors de tout jalon, comptés, et
-parmi eux ceux de priorité haute. Aucun : la ligne ne paraît pas.
+parmi eux ceux de priorité haute ; ni ceux qu'un lot en cours sert,
+déjà sous « Maintenant », ni ceux pour l'humain, déjà sous « Pour toi ».
+Aucun : la ligne ne paraît pas.
 
 **Une alerte**, seulement s'il y en a : une ligne `Attention :` qui dit
 un lot ou un besoin bloqué, ou deux lots dont l'ordre n'est pas déduit.
@@ -75,8 +78,11 @@ Les besoins à découper et ceux à fermer restent à l'état
 (`socle state`), qui sert l'agent ; la feuille de route sert l'humain.
 
 **Un titre** se lit jusqu'à son premier « : » suivi d'une espace, comme
-aujourd'hui, puis se coupe à la largeur de la ligne ; une ligne passe à
-la suivante sous sa propre colonne.
+aujourd'hui, hors d'une citation entre guillemets ou d'un code en ligne ;
+cette tête se coupe au-delà de 72 caractères, d'un « … ». Dans le
+terminal, une ligne passe à la suivante à 48 caractères, la largeur d'un
+bloc de code sur un téléphone, sous sa propre colonne ; l'identifiant
+reste collé au dernier mot du titre.
 
 ## Deux rendus d'une même forme
 
