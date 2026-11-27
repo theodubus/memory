@@ -14,6 +14,20 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-27-i — The human's word is filed by its nature: a rule as a directive, a decision as a decision, an expectation as a blocked need
+
+The installed section of `AGENTS.md` sent every word of the human that
+holds beyond the turn to the directives, which every start injects and
+only their word lifts: a project decision and an expectation ended up
+there too. It now says that a decision is written as a decision and an
+expectation as a `blocked` need, and the `socle-request` skill details it
+in a new section, "Filing the human's word by its nature"; the decision
+the human gives of their own accord no longer has a rule as its example.
+The guide says why.
+
+To do: nothing; a directive already written that is a decision or an
+expectation stays in force until the human lifts it.
+
 ## 2026-11-27-h — The resume wake-ups remain from one turn to the next
 
 The `socle-resume` skill had the two resume wake-ups armed at the start

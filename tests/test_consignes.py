@@ -645,6 +645,51 @@ class TestCeQueRecoitUnProjet(unittest.TestCase):
             self.assertIn(phrase, " ".join(texte.split()), lg)
             self.assertLessEqual(len(texte.encode("utf-8")), 10000, lg)
 
+    def test_la_parole_de_l_humain_se_range_selon_sa_nature(self):
+        """T-0216 (B-0377, D-0235, point 7) : une règle de travail en consigne,
+        une décision en décision, une attente en besoin bloqué ; la section
+        installée le dit, le skill `socle-request` le détaille, le guide dit
+        pourquoi, dans les deux langues."""
+        from socle.templates import gabarit
+
+        attendus = {
+            "fr": ("au journal ; une décision s'écrit en décision, une attente en besoin `bloqué`.",
+                   "## Ranger la parole de l'humain selon sa nature",
+                   ("- une règle de travail de l'agent (une préférence, une interdiction, une façon de faire) : une "
+                    "consigne (`socle new directive`)",
+                    "- une décision sur le projet (un choix, une priorité, une autorisation) : une décision, "
+                    "consignée en séance",
+                    "- une attente (« pas avant que X soit fait ») : un besoin au statut `bloqué`, qui dit ce qu'il "
+                    "attend ; il se lève en se fermant."),
+                   "ou quand une de ses paroles vaut au-delà du tour.",
+                   "HELP.md", "rangée en consigne, elle pèserait sur chaque démarrage, et ne se lèverait que par "
+                              "une parole de plus."),
+            "en": ("in the journal; a decision is written as a decision, an expectation as a `blocked` need.",
+                   "## Filing the human's word by its nature",
+                   ("- a working rule for the agent (a preference, a prohibition, a way of doing): a directive "
+                    "(`socle new directive`)",
+                    "- a decision about the project (a choice, a priority, an authorization): a decision, recorded "
+                    "in session",
+                    "- an expectation (\"not before X is done\"): a need with the status `blocked`, which says what "
+                    "it waits for; it is lifted by closing it."),
+                   "or when a word of theirs holds beyond the turn.",
+                   "HELP.en.md", "filed as a directive, it would weigh on every start, and would only be lifted by "
+                                 "one more word."),
+        }
+        for lg, (section, titre, natures, description, guide, raison) in attendus.items():
+            self.assertIn(section, " ".join(gabarit("AGENTS.md", lg).split()), lg)
+            skill = gabarit("skills/socle-request/SKILL.md", lg)
+            self.assertIn(description, skill.split("\n---\n", 1)[0], lg)
+            rangement = " ".join(skill.split(titre, 1)[1].split("\n## ", 1)[0].split())
+            for nature in natures:
+                self.assertIn(nature, rangement, (lg, nature))
+            # La décision donnée de soi-même n'est plus une règle : celle-ci
+            # est une consigne.
+            consigner = " ".join(skill.split("\n## ", 3)[3].split())
+            self.assertNotIn("(une règle, une interdiction", consigner, lg)
+            self.assertNotIn("(a rule, a prohibition", consigner, lg)
+            self.assertIn(raison, " ".join((MOTEUR / "socle" / guide).read_text(encoding="utf-8").split()), lg)
+
     def test_la_note_de_version_dit_le_changement_et_la_migration_dans_les_deux_langues(self):
         for nom, titre, migration in (
                 ("CHANGES.md", "Les consignes durables de l'humain ont leur couche",

@@ -388,7 +388,10 @@ the memory proves it by its fingerprint. To lift one, say so: the agent
 records your word in session, then marks the directive "lifted", with the
 decision that lifts it (`lifted-by`); only your word lifts it, and
 `socle archive` then moves it to the journal. A directive you change
-becomes a new one, and your word lifts the old one.
+becomes a new one, and your word lifts the old one. A decision about the
+project is written as a decision, an expectation as a `blocked` need
+(`socle-request` skill): filed as a directive, it would weigh on every
+start, and would only be lifted by one more word.
 
 **The question of intent.** When a need's design is not settled, the
 agent first asks you, in the conversation, in a few lines, the need as it

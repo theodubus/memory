@@ -15,6 +15,20 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-27-i — La parole de l'humain se range selon sa nature : une règle en consigne, une décision en décision, une attente en besoin bloqué
+
+La section installée d'`AGENTS.md` envoyait toute parole de l'humain qui
+vaut au-delà du tour dans les consignes, que chaque démarrage injecte et
+que seule sa parole lève : une décision de projet et une attente y
+finissaient aussi. Elle dit désormais qu'une décision s'écrit en décision
+et une attente en besoin `bloqué`, et le skill `socle-request` le
+détaille dans une section nouvelle, « Ranger la parole de l'humain selon
+sa nature » ; la décision que l'humain donne de lui-même n'y a plus pour
+exemple une règle. Le guide dit pourquoi.
+
+À faire : rien ; une consigne déjà écrite qui est une décision ou une
+attente reste en vigueur jusqu'à ce que l'humain la lève.
+
 ## 2026-11-27-h — Les réveils de reprise restent d'un tour à l'autre
 
 Le skill `socle-resume` faisait armer les deux réveils de reprise au début

@@ -402,6 +402,9 @@ dites-le : l'agent consigne votre parole en séance, puis note la consigne
 « levée », avec la décision qui la lève (`levée-par`) ; seule votre parole
 la lève, et `socle archive` la range ensuite dans le journal. Une consigne
 que vous changez en devient une nouvelle, et votre parole lève l'ancienne.
+Une décision sur le projet s'écrit en décision, une attente en besoin
+`bloqué` (skill `socle-request`) : rangée en consigne, elle pèserait sur
+chaque démarrage, et ne se lèverait que par une parole de plus.
 
 **La question d'intention.** Quand la conception d'un besoin n'est pas
 tranchée, l'agent vous pose d'abord, dans la conversation, en quelques
