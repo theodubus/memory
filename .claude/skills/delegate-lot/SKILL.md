@@ -43,7 +43,7 @@ produit, avec, en tête : « Tu implémentes une tâche du socle dans ton
 worktree du dépôt memory. AGENTS.md s'applique. » ; dans « À livrer » :
 des tests qui échouent sur le commit parent, pour tout code ; pour un
 contrôle ou un refus nouveau, son défaut injecté et son témoin sain ; la
-tâche rangée (`socle archive`) ; `verify --fast` une fois, à la fin ;
+tâche close (`socle close`) ; `verify --fast` une fois, à la fin ;
 dans « Interdits » : ouvrir
 une pull request, lire ou ajouter un autre dépôt ; le dossier temporaire
 commun, nommé par son chemin. Les identifiants des sous-agents lancés
