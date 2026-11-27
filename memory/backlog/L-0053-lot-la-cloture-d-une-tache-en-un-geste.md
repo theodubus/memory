@@ -1,0 +1,11 @@
+<!-- socle: couche=backlog zone=publique -->
+# L-0053 — Lot — la clôture d'une tâche en un geste
+
+> statut : en-cours · origine : J-2026-11-27-AB · après : L-0052, T-0214 · lu : backlog@f10e1061
+
+Le deuxième lot de ce que D-0235 retient (point 12) : la clôture d'une
+tâche en un geste, T-0214 seule. Elle touche le contrôle du backlog
+(`engine/socle/checks_memory.py`), le rangement
+(`engine/socle/archive.py`), la commande (`engine/socle/cli.py`), le
+format, le guide, le skill `socle-batch` et le gabarit d'`AGENTS.md`.
+Environ 150 lignes de code et de tests : une revue adversariale.

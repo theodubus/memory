@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0214 — Une commande clôt une tâche cochée : son statut, sa référence et son rangement
 
-> statut : ouvert · origine : J-2026-11-27-U · besoin : B-0375 · ref : D-0235 · lu : backlog@4d53be09
+> statut : en-cours · origine : J-2026-11-27-U · besoin : B-0375 · ref : D-0235 · lu : backlog@4d53be09
 
 La commande, sa spécification d'abord : la forme de la
 référence.
