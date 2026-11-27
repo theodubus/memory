@@ -5,10 +5,13 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-L-0050 fait (J-2026-11-27-J) : sa revue adversariale, puis la pull
-request, fusionnée CI verte, et la distribution vérifiée. En mode manuel,
-enchaîner dans la même session quand Théo le demande, c'est avancer sans
-lui si possible (C-0028@850e9c4c).
+L-0050, rouvert pour sa revue : le code poussé (`b2b2ec67`), T-0207 et
+T-0208 faites, B-0364 satisfait ; la passe 1 de sa revue adversariale
+attend son compte rendu (J-2026-11-27-L). Reste : D-0231, les besoins
+clos de l'étape dépliée sur une ligne ; les bloquants ; le lot clos ; la
+pull request, fusionnée CI verte. En mode manuel, enchaîner dans la même
+session quand Théo le demande, c'est avancer sans lui si possible
+(C-0028@850e9c4c).
 
 ## Prochaines étapes
 
