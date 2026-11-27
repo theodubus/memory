@@ -29,9 +29,11 @@ deux formats, puis validé la maquette A2-d : « Maintenant », les lots en
 cours ; les jalons, ou étapes, en `X. [K/N] titre` (`K` besoins clos sur
 `N`), alignés, seul le suivant déplié en ses besoins ; « Pour toi » ; la
 réserve, les besoins d'aucun jalon, comptés. Ce matin, tu as demandé de
-la faire maintenant. Le rendu est écrit, en deux rendus (le terminal,
-chaque titre suivi de son identifiant ; Markdown, chaque titre un lien),
-avec le guide, la ligne de l'état, `FORMAT.md` et la note de version.
+la faire maintenant, puis jugé le Markdown rendu illisible : la forme
+est un texte aligné, chaque titre suivi de son identifiant, que
+`--format markdown` met dans un bloc de code pour la conversation et la
+CI. Le code est écrit, avec le guide, la ligne de l'état, `FORMAT.md` et
+la note de version.
 
 **La question.** La politique interdit à l'agent de supprimer un test ou
 d'en changer une valeur attendue sans ta validation écrite qui le nomme.
@@ -54,10 +56,11 @@ Chaque test supprimé, et ce qui le remplace :
   `test_les_crochets_ont_la_meme_largeur_et_les_titres_s_alignent_un_total_a_deux_chiffres_compris`.
 - `test_le_format_detaille_par_lot`,
   `test_le_format_detaille_un_tableau_par_lot_comme_l_exemple_valide` :
-  `test_la_forme_comme_la_maquette_validee_en_markdown`.
+  `test_le_bloc_de_code_porte_le_texte_du_terminal`.
 - `test_le_format_compact_ne_nomme_aucune_demande`,
   `test_le_format_detaille_donne_le_lien_de_chaque_demande_et_de_ce_qui_revient_a_l_humain` :
-  `test_le_terminal_ne_nomme_aucune_demande_le_markdown_donne_le_lien_de_chacune`.
+  `test_aucun_rendu_ne_nomme_une_demande_par_son_identifiant` ; les liens
+  partent avec le Markdown rendu.
 - `test_le_format_detaille_suit_le_lot_en_cours_et_les_deux_suivants_all_les_suit_tous` :
   `test_seul_le_premier_jalon_est_deplie_all_les_deplie_tous` et
   `test_un_lot_en_cours_nomme_trois_taches_ouvertes_au_plus_puis_compte_les_autres`.
@@ -91,7 +94,7 @@ Chaque test supprimé, et ce qui le remplace :
 - `test_la_ci_posee_ecrit_le_format_detaille_dans_le_resume_de_son_execution` :
   `test_la_ci_posee_ecrit_le_rendu_markdown_dans_le_resume_de_son_execution`.
 - `test_le_guide_montre_les_deux_formats_et_une_note_de_version_le_dit` :
-  `test_le_guide_montre_la_forme_en_ses_deux_rendus_et_une_note_de_version_le_dit`.
+  `test_le_guide_montre_la_forme_et_une_note_de_version_le_dit`.
 
 Les 6 autres tests nouveaux ne remplacent aucun test :
 `test_les_trois_marques_d_un_besoin_dans_l_ordre_de_l_apres_du_jalon`,
@@ -124,6 +127,7 @@ Chaque test changé ou déplacé, et sa valeur avant et après :
 - D-0212@6fc584aa — ta décision du 26 novembre : la forme retenue remplace les deux formats, partout.
 - D-0214@982e025e — ta validation du 26 novembre de la maquette A2-d.
 - D-0226@4430eeac — ta demande de ce matin de faire la feuille de route maintenant.
+- D-0228@f958083b — ta remarque de ce matin : la feuille de route dans un bloc de texte, pas en Markdown rendu.
 - L-0050@9340ee21 — le lot qui réunit les deux tâches de ce besoin.
 - T-0207@7a227d44 — la tâche du rendu et de ses tests, que cette demande couvre.
 - T-0208@f0f1baa6 — la tâche du guide, de l'état, de `FORMAT.md` et de la note de version.
@@ -137,11 +141,9 @@ Chaque test changé ou déplacé, et sa valeur avant et après :
 - [Les tests d'aujourd'hui](https://github.com/theodubus/memory/blob/bce60489b991849bacf55919e086d40f61568b22/tests/test_suite_du_projet.py) :
   ceux que la liste supprime ou change.
 
-Le rendu du terminal sur le backlog de la maquette, un projet inventé,
-« Fou », tel que le premier test nouveau le fixe. Le rendu Markdown, que
-la CI et la conversation reçoivent, dit les mêmes lignes, chaque titre un
-lien vers son entrée sur GitHub, sans identifiant, `[1/4]` en police
-fixe :
+Le texte sur le backlog de la maquette, un projet inventé, « Fou », tel
+que le premier test nouveau le fixe ; la conversation et la CI le
+reçoivent dans un bloc de code, comme ici :
 
 ```text
 La suite de Fou — 27 novembre

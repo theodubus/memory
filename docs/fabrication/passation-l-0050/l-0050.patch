@@ -1,5 +1,5 @@
 diff --git a/docs/fabrication/architecture.md b/docs/fabrication/architecture.md
-index 92d820bd..4e0c51e2 100644
+index 92d820bd..062002b7 100644
 --- a/docs/fabrication/architecture.md
 +++ b/docs/fabrication/architecture.md
 @@ -48,7 +48,7 @@ vérifiées.
@@ -7,12 +7,12 @@ index 92d820bd..4e0c51e2 100644
  | `commands.py` | le découpage d'une commande shell en commandes simples, par `shlex` : séparateurs, redirections, `cd` (et ses options), `cd -`, `pushd` et `popd` suivis, chaque cible développée au moment du `cd`, variables affectées retenues (`+=`, une déclaration de tableau ou de référence rend la variable inconnue), un sous-shell, une substitution, un élément de pipeline ou une tâche de fond supposés ne rien transmettre à la suite, ce que lance une substitution qu'il délimite jugé, nue ou entre guillemets (`"$(…)"`, B-0260), chaque commande d'un pipeline liée à celle qui la précède (`Commande.amont`, B-0246), chaque variable développée une fois, `$'…'` lu, `bash -c` (quel que soit le groupe d'options qui porte `c`, `--` sauté, B-0206) et `eval` ouverts, préfixes (`env`, `sudo`, `python -m`, `uv run` et `poetry run` avec leurs options, B-0248) retirés ; le corps d'un heredoc n'est que du texte, que la commande qui le reçoit garde pour son entrée, tel qu'écrit, ses tabulations de tête retirées pour `<<-`, la dernière redirection de l'entrée l'emportant (`Commande.entree`, B-0229) ; un mot développé comme le shell (`developper`, `accolades`, `normaliser`), ce qui ne se développe pas marqué, et un motif du shell, classes POSIX comprises, comparé à un motif de chemin (`se_croisent`) (B-0171, ADR-0072), ou plusieurs motifs du shell à la fois (`se_croisent_tous`, B-0231). Les mots réservés qui précèdent une commande (`then`, `do`, `!`, `{`…) se retirent comme un préfixe ; ce qu'une condition ou une boucle change, son dossier et ses variables, devient inconnu après elle et dans la branche `else` qui suit, sauf un dossier connu où elle revient sans qu'un `break` ou un `continue` l'ait quittée ailleurs, et le corps d'un `for` se lit une fois par mot de sa liste, sa variable liée à ce mot, jusqu.à `DEPLIAGE_MAX` caractères pour toute la commande (B-0204, J-2026-11-14-AK, J-2026-11-14-AL) ; le corps d'une fonction (`nom() { …; }`, ou `function nom { …; }` sans parenthèses, sur la même ligne ou la suivante, B-0232) se lit, et rend en se fermant l'état d'avant lui, un autre corps que bash admet se juge comme exécuté là où il s'écrit, et la définition ne vaut que pour la commande qui la suit ; l'appel d'une fonction définie dans la commande dont le corps `{ … }` change le dossier ou une variable rend inconnu ce qu'elle change, avec ce que changent les fonctions qu'elle appelle, résolues à l'appel de proche en proche (une fonction définie après elle comprise), et ce qui suit se juge comme un état inconnu ; l'appel vaut derrière `time`, et dans une substitution ou un `eval`, qui connaissent les fonctions de la commande, non dans un `bash -c` (la seconde revue du lot L-0004, ancien B-0234, B-0232, J-2026-11-16-B, B-0250) ; des opérateurs échappés ou entre guillemets (`\(`, `';'`), et un mot réservé cité ou échappé dont le texte nu est réservé (`"function"`, `\function`, `"}"`), sont un mot, jamais lu comme une structure (la revue du lot 3, J-2026-11-14-AH ; B-0232). Un `#` n'ouvre un commentaire qu'en tête d'un mot, retiré sans sa fin de ligne, et les guillemets d'une substitution entre guillemets se lisent comme le shell (`"$(cmd "arg")"`, B-0207). Il ne suit pas les motifs d'un `case` (B-0245), `time` devant une commande composée (B-0244), l'état d'un `eval`, l'appel d'une fonction définie hors de la commande, `CDPATH`, un `cd` qui échoue, `env -C`, `uv run --directory`, `poetry -C`, un heredoc vu où il n'y en a pas (B-0207), ni `lastpipe`, `((…))`, `let`, `getopts` (B-0211) |
  | `state.py` | l'état dérivé, dont l'ordre du backlog, que le rappel de fin de tour redonne, et une ligne qui renvoie à la suite entière (`socle roadmap`, B-0274), et, avec ce qui demande d'agir comme dans ce rappel, sur une ligne, chaque lot ouvert qui attend encore plus de tâches que `[batches] max_tasks` des garde-fous, 9 par défaut, mesuré sur les lots faits, un avertissement sans échec (`memoire.lots_trop_longs`, ADR-0101), et la passation qui attend une session neuve, d'après le clone tel qu'il est, sans `git fetch` (T-0182, D-0190) ; hors de ce qui revient à l'humain, une ligne pour l'agent nomme ses branches à supprimer et `socle prune-branches` (ADR-0114) ; si GitHub exige la CI du socle avant de fusionner sur la branche par défaut (ensemble de règles ou protection classique, lus par `gh`), sinon une action de l'humain avec le lien de la page (B-0044, L2, R1) ; s'il y refuse le push forcé et la suppression de la branche (règles `non_fast_forward` et `deletion`, ou le détail d'une protection classique, inconnu s'il ne se lit pas), sinon une action de l'humain qui nomme les cases à cocher (`protection`, B-0317) ; la ligne « CI », les exécutions du commit de tête, cherchées par lui (`gh run list --commit`) et non par la branche, dont la dernière peut être celle d'un commit d'avant, la pire dite quand il en a plusieurs, ou qu'il n'en a aucune (B-0334) ; la sortie du démarrage, hook compris, sous `[startup] max_bytes`, chaque partie dans sa part, ce qu'une partie laisse ou libère allant aux autres jusqu'à ce que rien ne change : l'état dérivé, en tête ce qui demande d'agir (ce qui revient à l'humain, les demandes, même quand le reste ne se calcule pas, ce qu'il a écrit, les lignes du hook), puis ce qui informe, puis le backlog, ses lignes bornées et ses listes plafonnées, chacune disant où lire la suite ; puis le chantier actif, public et privé, les consignes de l'humain en vigueur par leur ligne de résumé, publiques puis privées, les levées absentes, sous un en-tête qui dit de lire le texte exact avant de s'appuyer sur l'une (B-0161), les faits par leur titre et les dix dernières décisions, dans des parts de 25, 18, 25, 20 et 12 % ; une partie au-delà de ce qui lui revient perd des blocs entiers, l'état d'abord ce qui se relit ailleurs, un en-tête jamais sans ses éléments, les autres depuis leur fin, et la coupe dit laquelle, de combien et où lire le reste ; les lignes du hook gardées, `socle state --short` les redit ; le budget du chantier actif au-dessus de sa part signalé à chaque démarrage (ADR-0071) ; en mode amont, les copies protégées que l'installeur pose (les skills du socle, ses hooks git, sa CI) qui diffèrent de ce qu'il poserait, rendues comme une mise à jour les rendrait (`installer.copies_du_socle`), nommées sur une ligne de l'état et non par un contrôle : leur remise passe par une demande, et rien ne doit rougir en l'attendant (B-0218) |
 -| `roadmap.py` | la suite du projet d'un coup d'œil (`socle roadmap`, B-0274) : les jalons et leurs besoins clos, les lots dans leur ordre d'exécution avec leurs tâches, les besoins, ce qui n'est dans aucun lot, et deux lots qui attendent un même lot sans ordre entre eux ; calculée par le graphe du backlog que l'état lit (`memory.Graphe`), en compact (une ligne par jalon et par lot, ou par besoin, sans nommer de demande) ou en Markdown (le lot en cours et les deux suivants tâche par tâche, le lien de chaque demande en attente) |
-+| `roadmap.py` | la suite du projet (`socle roadmap`, B-0274, B-0364), en une seule forme pour l'humain (D-0212, D-0214) : les lots en cours et leurs premières tâches ouvertes, ou la première tâche prête ; les jalons ouverts, chacun avec ses besoins clos sur leur total, le premier seul déplié en ses besoins ; ce qui revient à l'humain ; les besoins d'aucun jalon, comptés ; une entrée bloquée, et deux lots qui attendent un même lot sans ordre entre eux ; calculée par le graphe du backlog que l'état lit (`memory.Graphe`), en deux rendus : le terminal, chaque titre suivi de son identifiant, à la largeur d'un téléphone, sans nommer de demande par le sien, et Markdown, chaque titre un lien vers son entrée |
++| `roadmap.py` | la suite du projet (`socle roadmap`, B-0274, B-0364), en une seule forme pour l'humain (D-0212, D-0214) : les lots en cours et leurs premières tâches ouvertes, ou la première tâche prête ; les jalons ouverts, chacun avec ses besoins clos sur leur total, le premier seul déplié en ses besoins ; ce qui revient à l'humain ; les besoins d'aucun jalon, comptés ; une entrée bloquée, et deux lots qui attendent un même lot sans ordre entre eux ; calculée par le graphe du backlog que l'état lit (`memory.Graphe`), en un texte aligné, chaque titre suivi de son identifiant, à la largeur d'un téléphone, sans nommer de demande par le sien, que `--format markdown` met dans un bloc de code (D-0228) |
  | `consumption.py` | ce qu'une session de Claude Code a coûté, et ce qui l'a fait coûter (`socle consumption`, B-0201, ADR-0106) : les transcriptions lues dans le dossier que Claude Code tient pour le projet, ou celui qu'on donne, un appel compté une fois par requête ; le coût pondéré par jour, par modèle et par portée, les reprises après une pause, les compactages, la taille du contexte, ce que le socle injecte et ce qu'il pèse une fois dans le contexte, et l'étalonnage sur les relevés de la fenêtre de cinq heures ; des agrégats seuls, jamais un texte de la conversation ; le format des transcriptions de Claude Code ne se lit que dans ses trois fonctions de lecture, comme le hook de fin de tour lit le sien (ADR-0007) |
  | `human.py` | les spécifications déclarées qu'aucune demande n'a soumises à l'humain (D-0066) ; les branches distantes à supprimer (contenues dans la branche par défaut, ou dans la branche de travail poussée, B-0145) et celles à examiner (non fusionnées, sans activité depuis une semaine, B-0112), seulement celles que l'origine a encore (`git ls-remote`, sinon la liste dite du dernier fetch, B-0193), hors de celles de l'agent, qu'il supprime lui-même, sauf celles que l'origine lui a refusées, dites avec la raison (ADR-0114), avec la commande qui étiquette d'abord les commits cités que seule l'une d'elles garde, ni pull request ni étiquette (B-0116) ; ce qui revient à l'humain ; ce qu'il a écrit lui-même depuis le dernier commit de l'agent (approbations, réponses de son terminal), que l'état liste pour que l'agent le cite ; la lecture du dernier message de l'agent pour le récap, dont les deux lignes se cherchent hors de ses blocs de code délimités (ADR-0089) |
  | `private.py` | la mémoire privée : modes compagnon et chiffré, verrou, accès, couches privées par défaut, contrôles `prive.*` ; un terme privé cherché sous ses variantes d'écriture, dans le contenu, les noms de fichier et de branche ; rien d'écrit sans accès ; la mémoire privée lue à une révision |
 diff --git a/docs/fabrication/chess/prompt-mise-a-jour.md b/docs/fabrication/chess/prompt-mise-a-jour.md
-index df5f74d0..b5eed7bb 100644
+index df5f74d0..31d7ad66 100644
 --- a/docs/fabrication/chess/prompt-mise-a-jour.md
 +++ b/docs/fabrication/chess/prompt-mise-a-jour.md
 @@ -54,6 +54,10 @@ Ta version date du 26 novembre. L'installeur t'imprimera les notes de version qu
@@ -21,13 +21,13 @@ index df5f74d0..b5eed7bb 100644
  
 +### La feuille de route
 +
-+11. Une seule forme. socle roadmap n'a plus qu'une forme, faite pour que je pilote le projet sur mon téléphone : « Maintenant », les lots en cours ; « Ensuite », tes jalons ouverts numérotés en [K/N], seul le premier déplié en ses besoins ; « Pour toi » ; « En réserve », les besoins d'aucun jalon, comptés. Le terminal donne chaque titre avec son identifiant, --format markdown chaque titre en lien : c'est celui que tu colles quand je demande la suite. Les formats compact et détaillé et l'option --by n'existent plus : retire --by de tout appel que le projet écrit. Ta consigne qui choisit le format court de la feuille de route n'a plus d'objet : dis-le-moi, je la garde ou je la lève (le point 3 de ton retour d'usage du 26 novembre). (2026-11-27-b)
++11. Une seule forme. socle roadmap n'a plus qu'une forme, faite pour que je pilote le projet sur mon téléphone : « Maintenant », les lots en cours ; « Ensuite », tes jalons ouverts numérotés en [K/N], seul le premier déplié en ses besoins ; « Pour toi » ; « En réserve », les besoins d'aucun jalon, comptés. C'est un texte aligné, chaque titre suivi de son identifiant ; --format markdown le met dans un bloc de code : c'est celui que tu colles quand je demande la suite. Les formats compact et détaillé et l'option --by n'existent plus : retire --by de tout appel que le projet écrit. Ta consigne qui choisit le format court de la feuille de route n'a plus d'objet : dis-le-moi, je la garde ou je la lève (le point 3 de ton retour d'usage du 26 novembre). (2026-11-27-b)
 +
  ## La mise à jour
  
  1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.
 diff --git a/engine/socle/CHANGES.en.md b/engine/socle/CHANGES.en.md
-index b789de6d..b33db736 100644
+index b789de6d..8bebb062 100644
 --- a/engine/socle/CHANGES.en.md
 +++ b/engine/socle/CHANGES.en.md
 @@ -14,6 +14,29 @@ asks nothing: of such an entry, the installer prints only the title,
@@ -41,10 +41,10 @@ index b789de6d..b33db736 100644
 +open tasks, or the first ready task; “Next”, the open milestones,
 +numbered, each as `[K/N]`, its needs closed out of their total, only the
 +first unfolded into its needs; “For you”, what is up to the human; “In
-+reserve”, the needs in no milestone, counted. It has two renderings: the
-+terminal, by default, each title followed by its identifier, and
-+`--format markdown`, each title a link to its entry, for the conversation
-+and the CI summary. The compact and detailed formats, their tables and
++reserve”, the needs in no milestone, counted. It is an aligned text, each
++title followed by its identifier, a request named by its title alone;
++`--format markdown` puts it in a code block, for the conversation and the
++CI summary, where it keeps its alignment. The compact and detailed formats, their tables and
 +their key are gone; the `--by` option no longer exists, and is refused
 +as an unknown option; `--all` unfolds every step. The needs to split and
 +to close stay in `socle state`, whose roadmap line no longer says
@@ -61,10 +61,10 @@ index b789de6d..b33db736 100644
  
  A skill is loaded whole at every use. With what justified their rules
 diff --git a/engine/socle/CHANGES.md b/engine/socle/CHANGES.md
-index 2cf39345..b3dcbfa7 100644
+index 2cf39345..d8bb104b 100644
 --- a/engine/socle/CHANGES.md
 +++ b/engine/socle/CHANGES.md
-@@ -15,6 +15,30 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
+@@ -15,6 +15,31 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
  sauf si … », « rien dans le projet … », une action) s'imprime en entier,
  avant elles.
  
@@ -76,9 +76,10 @@ index 2cf39345..b3dcbfa7 100644
 +jalons ouverts numérotés, chacun en `[K/N]`, ses besoins clos sur leur
 +total, seul le premier déplié en ses besoins ; « Pour toi », ce qui
 +revient à l'humain ; « En réserve », les besoins d'aucun jalon, comptés.
-+Elle a deux rendus : le terminal, par défaut, chaque titre suivi de son
-+identifiant, et `--format markdown`, chaque titre un lien vers son
-+entrée, pour la conversation et le résumé de la CI. Les formats compact
++C'est un texte aligné, chaque titre suivi de son identifiant, une
++demande dite par son titre seul ; `--format markdown` le met dans un bloc
++de code, pour la conversation et le résumé de la CI, où il garde son
++alignement. Les formats compact
 +et détaillé, leurs tableaux et leur légende disparaissent ; l'option
 +`--by` n'existe plus, et se refuse comme une option inconnue ; `--all`
 +déplie chaque étape. Les besoins à découper et à fermer restent à
@@ -137,10 +138,10 @@ index 8498ba57..98f1e06c 100644
  Une tâche est faite quand sa section `## Fait quand` est cochée ; un
  besoin, quand ses tâches sont closes, l'une au moins faite, et sa section
 diff --git a/engine/socle/HELP.en.md b/engine/socle/HELP.en.md
-index 894d625d..2f9543d8 100644
+index 894d625d..d80d25c3 100644
 --- a/engine/socle/HELP.en.md
 +++ b/engine/socle/HELP.en.md
-@@ -143,68 +143,75 @@ checked before closing it. It submits each document as a request. Just
+@@ -143,69 +143,51 @@ checked before closing it. It submits each document as a request. Just
  ask it to; the state then gives the next milestone, the next batch and
  the progress of its tasks, the ready tasks, and the needs to split into
  tasks or to close. The whole roadmap, at a glance, reads in a terminal with
@@ -220,51 +221,36 @@ index 894d625d..2f9543d8 100644
 -batch of each. What is outside the batches follows, in
 -tables of the same shape, each pending request with its link. The start
 -of the same backlog:
-+In Markdown (`--format markdown`), for the conversation and the CI, these
-+are the same lines, each title a link to its entry, with no identifier:
- 
- ```markdown
+-
+-```markdown
 -Key: ✓ done · ▶ in progress · ○ ready · ⏳ waiting · ✗ blocked · ⊘ abandoned · ↑ high priority · ↓ low priority
-+**The roadmap of Fou — 27 November**
- 
+-
 -### JA-NNNN — Done before the new features · 1/11 needs closed
-+**Now**
- 
+-
 -**1. L-NNNN — Backlog structure, going in circles** · in progress · 2/3
-+- ▶ [Finish adopting the socle](https://…)
-+  - left: [Move CLAUDE.md into AGENTS.md](https://…)
- 
+-
 -| | Task | Need | |
 -| --- | --- | --- | --- |
 -| ✓ | T-NNNN | B-NNNN | The structure in four forms |
 -| ✓ | T-NNNN | B-NNNN | The memory format |
 -| ○ | T-NNNN | B-NNNN | The exotic form in the guide's list |
-+**Next**
- 
+-
 -**2. L-NNNN — Duration of the verification** · 0/2
-+1. `[1/4]` [Ship the N10 network](https://…)
-+   - ✓ [Train N10 on the November games](https://…)
-+   - · [Measure N10 against N8](https://…)
-+   - · [Ship N10 in the binary](https://…)
-+   - · [Place the engine on the CCRL list](https://…)
-+2. `[0/3]` [Tune the search with SPSA](https://…)
-+3. `[0/2]` [Speed up the search](https://…)
-+4. `[0/3]` [New network architecture](https://…)
- 
+-
 -| | Task | Need | |
 -| --- | --- | --- | --- |
 -| ○ | T-NNNN | B-NNNN ↑ | Measure the duration of each step |
 -| ⏳ | T-NNNN | B-NNNN ↑ | The suite on several cores · waits on T-NNNN |
-+**For you**
- 
+-
 -…
-+- [Copy the training data to a hard drive](https://…)
-+
-+In reserve: 12 needs, 2 of them high priority
- ```
+-```
++With `--format markdown`, the same text comes in a code block: this is
++how the conversation and the summary of each CI run give it, aligned, on
++a phone as elsewhere.
  
  **Specifications and test cases.** The project declares where its
-@@ -342,8 +349,8 @@ Each intervention of the agent that acted ends with two lines:
+ specifications live (`[specs] paths` in the guardrails): the state tells
+@@ -342,8 +324,8 @@ Each intervention of the agent that acted ends with two lines:
  Each item of "For you" can be understood on its own: what it is, why,
  and what your answer changes. The agent writes its two lines as text: a
  line in a code block does not count, and an output it pastes there, like
@@ -275,7 +261,7 @@ index 894d625d..2f9543d8 100644
  
  At any time, `python3 .socle/socle state` gives the project's state: the
  commit, the CI, the backlog and what comes next (the next milestone, the
-@@ -633,7 +640,7 @@ agent, which fixes them alone. Those that concern the human:
+@@ -633,7 +615,7 @@ agent, which fixes them alone. Those that concern the human:
  | `install` | install or update the socle |
  | `init` | describe the project |
  | `state` | the project's state |
@@ -285,10 +271,10 @@ index 894d625d..2f9543d8 100644
  | `answer`, `decision`, `reviewed` | answer a request, record a decision in session, a review |
  | `approve` | approve one's own protected changes |
 diff --git a/engine/socle/HELP.md b/engine/socle/HELP.md
-index 760e8940..5fafd3c0 100644
+index 760e8940..2a0dd64f 100644
 --- a/engine/socle/HELP.md
 +++ b/engine/socle/HELP.md
-@@ -149,67 +149,78 @@ Il soumet chaque document en demande. Il suffit de le lui demander ;
+@@ -149,68 +149,54 @@ Il soumet chaque document en demande. Il suffit de le lui demander ;
  l'état donne ensuite le prochain jalon, le prochain lot et l'avancement
  de ses tâches, les tâches prêtes, et les besoins à découper en tâches ou
  à fermer. La suite entière, d'un coup d'œil, se lit dans un terminal par
@@ -370,51 +356,36 @@ index 760e8940..5fafd3c0 100644
 -tâches, avec le lot de chacune. Ce qui est hors des lots
 -suit, en tableaux de même forme, chaque demande en attente avec son lien.
 -Le début du même backlog :
-+En Markdown (`--format markdown`), pour la conversation et la CI, ce sont
-+les mêmes lignes, chaque titre un lien vers son entrée, sans identifiant :
- 
- ```markdown
+-
+-```markdown
 -Légende : ✓ faite · ▶ en cours · ○ prête · ⏳ attend · ✗ bloquée · ⊘ abandonnée · ↑ priorité haute · ↓ priorité basse
-+**La suite de Fou — 27 novembre**
- 
+-
 -### JA-NNNN — Fini avant les nouvelles fonctions · 1/11 besoins clos
-+**Maintenant**
- 
+-
 -**1. L-NNNN — Structure du backlog, chantier en rond** · en cours · 2/3
-+- ▶ [Finir l'adoption du socle](https://…)
-+  - reste : [Passer CLAUDE.md dans AGENTS.md](https://…)
- 
+-
 -| | Tâche | Besoin | |
 -| --- | --- | --- | --- |
 -| ✓ | T-NNNN | B-NNNN | La structure en quatre formes |
 -| ✓ | T-NNNN | B-NNNN | Le format de la mémoire |
 -| ○ | T-NNNN | B-NNNN | La forme exotique dans la liste du guide |
-+**Ensuite**
- 
+-
 -**2. L-NNNN — Durée de la vérification** · 0/2
-+1. `[1/4]` [Embarquer le réseau N10](https://…)
-+   - ✓ [Entraîner N10 sur les parties de novembre](https://…)
-+   - · [Mesurer N10 contre N8](https://…)
-+   - · [Embarquer N10 dans le binaire](https://…)
-+   - · [Situer le moteur sur la liste CCRL](https://…)
-+2. `[0/3]` [Régler la recherche par SPSA](https://…)
-+3. `[0/2]` [Accélérer la recherche](https://…)
-+4. `[0/3]` [Nouvelle architecture de réseau](https://…)
- 
+-
 -| | Tâche | Besoin | |
 -| --- | --- | --- | --- |
 -| ○ | T-NNNN | B-NNNN ↑ | Mesurer la durée de chaque étape |
 -| ⏳ | T-NNNN | B-NNNN ↑ | La suite sur plusieurs cœurs · attend T-NNNN |
-+**Pour toi**
- 
+-
 -…
-+- [Copier les données d'entraînement sur un disque dur](https://…)
-+
-+En réserve : 12 besoins, dont 2 prioritaires
- ```
+-```
++Avec `--format markdown`, le même texte vient dans un bloc de code :
++c'est ainsi que la conversation et le résumé de chaque exécution de la CI
++le donnent, alignés, sur un téléphone comme ailleurs.
  
  **Spécifications et cas d'essai.** Le projet déclare où vivent ses
-@@ -354,7 +365,7 @@ Chaque intervention de l'agent qui a agi se termine par deux lignes :
+ spécifications (`[specs] paths` des garde-fous) : l'état vous signale
+@@ -354,7 +340,7 @@ Chaque intervention de l'agent qui a agi se termine par deux lignes :
  Chaque point de « Pour toi » se comprend seul : ce que c'est, pourquoi,
  et ce que change votre réponse. L'agent écrit ses deux lignes en texte :
  une ligne dans un bloc de code ne compte pas, et une sortie qu'il y
@@ -423,7 +394,7 @@ index 760e8940..5fafd3c0 100644
  tient pas lieu de récap.
  
  À tout moment, `python3 .socle/socle state` donne l'état du projet : le
-@@ -648,7 +659,7 @@ Chaque refus dit ce qu'il a vu et comment en sortir. La plupart s'adressent
+@@ -648,7 +634,7 @@ Chaque refus dit ce qu'il a vu et comment en sortir. La plupart s'adressent
  | `install` | installer ou mettre à jour le socle |
  | `init` | décrire le projet |
  | `state` | l'état du projet |
@@ -470,7 +441,7 @@ index 60fa60cb..c811112c 100644
  
      from socle import consumption as consommation
 diff --git a/engine/socle/messages_en.py b/engine/socle/messages_en.py
-index 8cb69c4d..34978fc6 100644
+index 8cb69c4d..c402fb54 100644
 --- a/engine/socle/messages_en.py
 +++ b/engine/socle/messages_en.py
 @@ -3136,6 +3136,9 @@ MESSAGES: dict[str, str] = {
@@ -498,7 +469,7 @@ index 8cb69c4d..34978fc6 100644
      "des liens que l'humain peut suivre passent le hook de fin de tour":
          "links the human can follow pass the end-of-turn hook",
      "une branche donnée à supprimer que l'origine a encore passe le hook de fin de tour":
-@@ -3933,116 +3936,84 @@ MESSAGES: dict[str, str] = {
+@@ -3933,116 +3936,82 @@ MESSAGES: dict[str, str] = {
      "un petit lot qui ne touche aucun garde-fou, `socle review --short` en donne le dossier court":
          "a small batch that touches no guardrail, `socle review --short` gives its short dossier",
      # La suite du projet, `socle roadmap`.
@@ -656,8 +627,6 @@ index 8cb69c4d..34978fc6 100644
 -        "  the roadmap: `python3 .socle/socle roadmap` (detailed: `--format markdown`)",
 +    'Pour toi :':
 +        'For you:',
-+    'Pour toi':
-+        'For you',
 +    'En réserve : {compte}':
 +        'In reserve: {compte}',
 +    '{n} besoin':
@@ -691,7 +660,7 @@ index 8cb69c4d..34978fc6 100644
      # La consommation d'une session de Claude Code (`socle consumption`).
      "ce qu'une session de Claude Code a coûté, et ce qui l'a fait coûter, lu dans ses transcriptions":
          "what a Claude Code session cost, and what made it cost, read in its transcripts",
-@@ -4217,8 +4188,6 @@ MESSAGES: dict[str, str] = {
+@@ -4217,8 +4186,6 @@ MESSAGES: dict[str, str] = {
          "no commit: nothing to hand off",
      "`--chain` compte des lots : 0 ou plus":
          "`--chain` counts batches: 0 or more",
@@ -701,10 +670,10 @@ index 8cb69c4d..34978fc6 100644
          "the head is detached, on no branch: first move to the working branch, which the handoff names",
      "la passation que l'humain fait reprendre porte la chaîne 0, que sa demande remet à zéro : `--chain` va avec "
 diff --git a/engine/socle/roadmap.py b/engine/socle/roadmap.py
-index d4617129..eca35ddf 100644
+index d4617129..fa823818 100644
 --- a/engine/socle/roadmap.py
 +++ b/engine/socle/roadmap.py
-@@ -1,69 +1,61 @@
+@@ -1,69 +1,62 @@
 -"""La suite du projet d'un coup d'œil (`socle roadmap`) : les jalons et
 -leurs besoins clos, les lots dans leur ordre d'exécution avec leurs tâches,
 -les besoins, et ce qui n'est dans aucun lot. Elle se calcule depuis le
@@ -726,14 +695,15 @@ index d4617129..eca35ddf 100644
 +calcule depuis le backlog comme l'état, par les mêmes fonctions
 +(`memory.Graphe`, `memory.ordre_de`) : rien n'y est écrit à la main.
 +
-+Une seule forme (D-0212, D-0214), en deux rendus qui disent la même chose
-+dans le même ordre : le terminal (`text`), aligné, chaque titre suivi de
-+son identifiant, aucune demande nommée par le sien (collé dans une
-+réponse, il ne citerait pas une demande en attente sans son lien) ;
-+Markdown (`markdown`), pour la conversation et le résumé d'une exécution
-+de la CI, chaque titre un lien vers son entrée, aucun identifiant affiché.
-+Sa spécification : `docs/fabrication/feuille-de-route-specification.md`
-+dans l'atelier du socle."""
++Une seule forme (D-0212, D-0214), un seul texte : aligné, chaque titre
++suivi de son identifiant, aucune demande nommée par le sien (collé dans
++une réponse, il ne citerait pas une demande en attente sans son lien).
++Le terminal le reçoit tel quel (`text`) ; la conversation et le résumé
++d'une exécution de la CI, dans un bloc de code (`markdown`), où il garde
++son alignement : rendu en Markdown, il n'était pas lisible sur un
++téléphone (D-0228). Sa spécification :
++`docs/fabrication/feuille-de-route-specification.md` dans l'atelier du
++socle."""
  
  from __future__ import annotations
  
@@ -817,7 +787,7 @@ index d4617129..eca35ddf 100644
      avancement: str
      attend: list[str]
      priorite: str | None
-@@ -120,6 +112,9 @@ class Suite:
+@@ -120,6 +113,9 @@ class Suite:
      sans_jalon: list[memoire.Entree]
      # (lot, lot, le lot qu'ils attendent tous deux), sans ordre entre eux.
      alertes: list[tuple[str, str, str]]
@@ -827,7 +797,7 @@ index d4617129..eca35ddf 100644
  
  
  def calculer(mem: memoire.Memoire) -> Suite:
-@@ -159,6 +154,7 @@ def calculer(mem: memoire.Memoire) -> Suite:
+@@ -159,6 +155,7 @@ def calculer(mem: memoire.Memoire) -> Suite:
          demandes=[e for i, e in sorted(g.demandes.items()) if g.ouvert(i)],
          sans_jalon=[e for e in ouverts if memoire.est_besoin(e) and e.id not in jalonnes] if jalons else [],
          alertes=alertes(g, [lot.entree.id for lot in lots]),
@@ -835,7 +805,7 @@ index d4617129..eca35ddf 100644
      )
  
  
-@@ -175,17 +171,6 @@ def alertes(g: memoire.Graphe, lots: list[str]) -> list[tuple[str, str, str]]:
+@@ -175,17 +172,6 @@ def alertes(g: memoire.Graphe, lots: list[str]) -> list[tuple[str, str, str]]:
              if a not in g.attendus(b) and b not in g.attendus(a)]
  
  
@@ -853,7 +823,7 @@ index d4617129..eca35ddf 100644
  def besoins_dans_l_ordre(s: Suite) -> list[str]:
      """Les besoins qui ont des tâches, dans l'ordre des lots qui les mènent ;
      puis ceux dont les tâches ouvertes ne sont dans aucun lot."""
-@@ -197,338 +182,275 @@ def taches_du_besoin(s: Suite, b: str) -> list[Tache]:
+@@ -197,350 +183,220 @@ def taches_du_besoin(s: Suite, b: str) -> list[Tache]:
      return [t for t in s.taches.values() if t.besoin == b]
  
  
@@ -984,15 +954,6 @@ index d4617129..eca35ddf 100644
 +                 pour_toi=list(s.pour_l_humain), demandes=list(s.demandes), reserve=len(reserve),
 +                 prioritaires=sum(memoire.priorite(e) == "haute" for e in reserve), bloques=list(s.bloques),
 +                 alertes=list(s.alertes))
-+
-+
-+def montrees(f: Forme) -> list[memoire.Entree]:
-+    """Les entrées que la forme nomme, chacune une fois : celles dont le
-+    rendu Markdown donne le lien."""
-+    res = [*(x for c in f.en_cours for x in (c.lot, *c.reste)), *([f.prete] if f.prete else []),
-+           *(x for e in f.etapes for x in (e.jalon.entree, *(b for _, b in e.besoins))),
-+           *f.pour_toi, *f.demandes, *f.bloques]
-+    return list({e.id: e for e in res}.values())
 +
 +
 +def _nombre(n: int, formes: tuple[str, str]) -> str:
@@ -1246,66 +1207,7 @@ index d4617129..eca35ddf 100644
 -    chacune ; les jalons sans lot ; ce qui est hors des lots, en tableaux ;
 -    les alertes. `liens` : le lien d'une demande ou d'une entrée pour
 -    l'humain, par identifiant."""
-+def texte(s: Suite, tout: bool = False, nom: str = "", jour: datetime.date | None = None) -> str:
-+    """Le rendu du terminal, en texte brut aligné : chaque titre suivi de son
-+    identifiant, une demande en attente dite par son titre seul."""
-+    f = forme(s, tout)
-+    blocs = [[entete(nom, jour)]]
-+    if f.en_cours or f.prete:
-+        maintenant = [trad("Maintenant")]
-+        for c in f.en_cours:
-+            maintenant += _plier(_nomme(c.lot), " ▶ ")
-+            tete = "   " + trad("reste :") + " "
-+            for k, t in enumerate(c.reste):
-+                maintenant += _plier(_nomme(t), tete if k == 0 else " " * len(tete), len(tete))
-+            if c.autres:
-+                maintenant += _plier(_nombre(c.autres, AUTRES), " " * len(tete))
-+        if f.prete:
-+            maintenant += _plier(_nomme(f.prete), "   " + trad("prête :") + " ")
-+        blocs.append(maintenant)
-+    else:
-+        blocs.append([trad("{maintenant} : rien en cours", maintenant=trad("Maintenant"))])
-+    if f.etapes:
-+        numero, largeur = _crochets(f.etapes)
-+        ensuite = [trad("Ensuite")]
-+        for e in f.etapes:
-+            tete = f"{e.rang:>{numero}}. {_compte(e, largeur)} "
-+            ensuite += _plier(_nomme(e.jalon.entree), tete)
-+            for marque, b in e.besoins:
-+                ensuite += _plier(_nomme(b), " " * len(tete) + marque + " ")
-+        blocs.append(ensuite)
-+    fin = []
-+    gestes = [_nomme(e) for e in f.pour_toi] + [court(e.titre) for e in f.demandes]
-+    tete = trad("Pour toi :") + " "
-+    for k, g in enumerate(gestes):
-+        fin += _plier(g, tete if k == 0 else " " * len(tete), len(tete))
-+    reserve = _reserve(f)
-+    if reserve:
-+        fin += _plier(reserve, "")
-+    attention = _attention(trad("Attention"), "")
-+    fin += [l for e in f.bloques for l in _plier(trad("bloqué : {entree}", entree=_nomme(e)), attention)]
-+    fin += [l for a in f.alertes for l in _plier(_alerte(*a), attention)]
-+    if fin:
-+        blocs.append(fin)
-+    return "\n\n".join("\n".join(b) for b in blocs)
-+
-+
-+# --- Le rendu Markdown ------------------------------------------------------
-+
-+
-+def _echapper(texte_: str) -> str:
-+    """Un titre dans le texte d'un lien : ses crochets, ses chevrons et ses
-+    barres obliques inverses échappés."""
-+    return re.sub(r"([\\\[\]<])", r"\\\1", texte_)
-+
-+
-+def markdown(s: Suite, tout: bool = False, liens: dict[str, str] | None = None, nom: str = "",
-+             jour: datetime.date | None = None) -> str:
-+    """Le rendu Markdown : les mêmes lignes, chaque titre un lien vers son
-+    entrée (`liens`, par identifiant ; un titre sans lien reste en texte),
-+    aucun identifiant affiché ; le compte `[K/N]` en code en ligne, les
-+    besoins dépliés en liste imbriquée, aucun tableau."""
-     liens = liens or {}
+-    liens = liens or {}
 -    blocs: list[list[str]] = [
 -        ["## " + trad("La suite du projet")],
 -        [trad("Calculée depuis le backlog par `{commande} --format markdown` : rien n'y est écrit à la main.",
@@ -1371,76 +1273,93 @@ index d4617129..eca35ddf 100644
 -    if hors:
 -        blocs += [["### " + trad("Hors des lots")], *hors]
 -    blocs.append([f"> **!!** {_alerte(*a)}" for a in s.alertes])
-+    f = forme(s, tout)
-+
-+    def lien(e: memoire.Entree) -> str:
-+        titre = _echapper(court(e.titre))
-+        return f"[{titre}]({liens[e.id]})" if e.id in liens else titre
-+
-+    blocs = [[f"**{entete(nom, jour)}**"]]
-+    if f.en_cours or f.prete:
-+        maintenant = []
-+        for c in f.en_cours:
-+            maintenant.append(f"- ▶ {lien(c.lot)}")
-+            if c.reste:
-+                nommes = [lien(t) for t in c.reste] + ([_nombre(c.autres, AUTRES)] if c.autres else [])
-+                maintenant.append(f"  - {trad('reste :')} {', '.join(nommes)}")
-+        if f.prete:
-+            maintenant.append(f"- {trad('prête :')} {lien(f.prete)}")
-+        blocs += [[f"**{trad('Maintenant')}**"], maintenant]
-+    else:
-+        blocs.append([trad("{maintenant} : rien en cours", maintenant=f"**{trad('Maintenant')}**")])
-+    if f.etapes:
-+        largeur = _crochets(f.etapes)[1]
-+        ensuite = []
-+        for e in f.etapes:
-+            tete = f"{e.rang}. "
-+            ensuite.append(f"{tete}`{_compte(e, largeur)}` {lien(e.jalon.entree)}")
-+            ensuite += [f"{' ' * len(tete)}- {marque} {lien(b)}" for marque, b in e.besoins]
-+        blocs += [[f"**{trad('Ensuite')}**"], ensuite]
-+    gestes = [f"- {lien(e)}" for e in [*f.pour_toi, *f.demandes]]
-+    if gestes:
-+        blocs += [[f"**{trad('Pour toi')}**"], gestes]
-+    reserve = _reserve(f)
-+    if reserve:
-+        blocs.append([reserve])
-+    attention = [_attention(f"**{trad('Attention')}**", trad("bloqué : {entree}", entree=lien(e))) for e in f.bloques]
-+    attention += [_attention(f"**{trad('Attention')}**", _alerte(*a)) for a in f.alertes]
-+    blocs.append(attention)
-     return "\n\n".join("\n".join(b) for b in blocs if b) + "\n"
- 
- 
+-    return "\n\n".join("\n".join(b) for b in blocs if b) + "\n"
+-
+-
 -def liens_pour_l_humain(projet: config.Projet, s: Suite) -> dict[str, str]:
 -    """Le permalien de chaque demande en attente et de chaque entrée pour
 -    l'humain, qu'il ouvre d'un clic ; aucun quand rien n'est poussé."""
-+def liens_de(projet: config.Projet, entrees: list[memoire.Entree]) -> dict[str, str]:
-+    """Le permalien de chaque entrée, qu'un clic ouvre ; aucun quand rien
-+    n'est poussé, ou pour une entrée que la version poussée n'a pas."""
-     from socle import links
- 
-     res = {}
+-    from socle import links
+-
+-    res = {}
 -    for e in [*s.pour_l_humain, *s.demandes]:
-+    for e in entrees:
-         try:
-             lien = links.lien(projet, e.fichier)[0]
-         except Exception:  # la suite se donne même sans ses liens
-@@ -538,9 +460,12 @@ def liens_pour_l_humain(projet: config.Projet, s: Suite) -> dict[str, str]:
-     return res
- 
- 
+-        try:
+-            lien = links.lien(projet, e.fichier)[0]
+-        except Exception:  # la suite se donne même sans ses liens
+-            lien = None
+-        if lien:
+-            res[e.id] = lien
+-    return res
+-
+-
 -def rendre(projet: config.Projet, format_: str = "text", par: str = "batch", tout: bool = False) -> str:
 -    """La suite du projet, dans le format demandé."""
++def texte(s: Suite, tout: bool = False, nom: str = "", jour: datetime.date | None = None) -> str:
++    """Le rendu du terminal, en texte brut aligné : chaque titre suivi de son
++    identifiant, une demande en attente dite par son titre seul."""
++    f = forme(s, tout)
++    blocs = [[entete(nom, jour)]]
++    if f.en_cours or f.prete:
++        maintenant = [trad("Maintenant")]
++        for c in f.en_cours:
++            maintenant += _plier(_nomme(c.lot), " ▶ ")
++            tete = "   " + trad("reste :") + " "
++            for k, t in enumerate(c.reste):
++                maintenant += _plier(_nomme(t), tete if k == 0 else " " * len(tete), len(tete))
++            if c.autres:
++                maintenant += _plier(_nombre(c.autres, AUTRES), " " * len(tete))
++        if f.prete:
++            maintenant += _plier(_nomme(f.prete), "   " + trad("prête :") + " ")
++        blocs.append(maintenant)
++    else:
++        blocs.append([trad("{maintenant} : rien en cours", maintenant=trad("Maintenant"))])
++    if f.etapes:
++        numero, largeur = _crochets(f.etapes)
++        ensuite = [trad("Ensuite")]
++        for e in f.etapes:
++            tete = f"{e.rang:>{numero}}. {_compte(e, largeur)} "
++            ensuite += _plier(_nomme(e.jalon.entree), tete)
++            for marque, b in e.besoins:
++                ensuite += _plier(_nomme(b), " " * len(tete) + marque + " ")
++        blocs.append(ensuite)
++    fin = []
++    gestes = [_nomme(e) for e in f.pour_toi] + [court(e.titre) for e in f.demandes]
++    tete = trad("Pour toi :") + " "
++    for k, g in enumerate(gestes):
++        fin += _plier(g, tete if k == 0 else " " * len(tete), len(tete))
++    reserve = _reserve(f)
++    if reserve:
++        fin += _plier(reserve, "")
++    attention = _attention(trad("Attention"), "")
++    fin += [l for e in f.bloques for l in _plier(trad("bloqué : {entree}", entree=_nomme(e)), attention)]
++    fin += [l for a in f.alertes for l in _plier(_alerte(*a), attention)]
++    if fin:
++        blocs.append(fin)
++    return "\n\n".join("\n".join(b) for b in blocs)
++
++
++# --- Le bloc de code -------------------------------------------------------
++
++
++def markdown(s: Suite, tout: bool = False, nom: str = "", jour: datetime.date | None = None) -> str:
++    """Le texte du terminal dans un bloc de code, pour la conversation et le
++    résumé de la CI : sa clôture, plus longue que toute suite d'accents
++    graves d'un titre, ne se ferme pas en route."""
++    corps = texte(s, tout, nom, jour)
++    cloture = "`" * max([3, *(len(m) + 1 for m in re.findall(r"`+", corps))])
++    return f"{cloture}text\n{corps}\n{cloture}\n"
++
++
 +def rendre(projet: config.Projet, format_: str = "text", tout: bool = False,
 +           jour: datetime.date | None = None) -> str:
 +    """La suite du projet, dans le rendu demandé, sous le nom du dossier de
 +    sa racine."""
      s = calculer(memoire.Memoire.charger(projet.racine))
-+    nom = projet.racine.name
-     if format_ == "markdown":
+-    if format_ == "markdown":
 -        return markdown(s, par, tout, liens_pour_l_humain(projet, s))
 -    return texte(s, par, tout)
-+        return markdown(s, tout, liens_de(projet, montrees(forme(s, tout))), nom, jour)
-+    return texte(s, tout, nom, jour)
++    rendu = markdown if format_ == "markdown" else texte
++    return rendu(s, tout, projet.racine.name, jour)
 diff --git a/engine/socle/selftest.py b/engine/socle/selftest.py
 index 9091e42f..15b6bf23 100644
 --- a/engine/socle/selftest.py
@@ -1513,10 +1432,10 @@ index 8498bd1b..38c131c7 100644
      for statut, libelle in (("en-cours", a_traduire("en cours")), ("bloque", a_traduire("bloqué"))):
          res += [(RELU, b) for b in _elements([], [[f"  {trad(libelle)} : {e.id} — "
 diff --git a/tests/test_suite_du_projet.py b/tests/test_suite_du_projet.py
-index 407e5b89..7a862328 100644
+index 407e5b89..2e885baf 100644
 --- a/tests/test_suite_du_projet.py
 +++ b/tests/test_suite_du_projet.py
-@@ -1,11 +1,15 @@
+@@ -1,21 +1,26 @@
 -"""B-0274 (D-0127) : la suite du projet d'un coup d'œil, `socle roadmap` —
 -les jalons et leurs besoins clos, les lots dans leur ordre d'exécution et
 -leurs tâches, les besoins, ce qui n'est dans aucun lot ; le format compact
@@ -1526,7 +1445,8 @@ index 407e5b89..7a862328 100644
 +seule forme, A2-d, pour que l'humain pilote son projet, lue sur un
 +téléphone : « Maintenant », « Ensuite » en `X. [K/N] titre` alignés, seul
 +le premier jalon ouvert déplié en ses besoins, « Pour toi », « En
-+réserve », en deux rendus, le terminal et Markdown. Le calcul de la suite
++réserve » ; un seul texte, que `--format markdown` met dans un bloc de
++code (D-0228). Le calcul de la suite
 +(B-0274), dont l'alerte de deux lots qui attendent le même lot sans ordre
 +entre eux, ne change pas. Sa spécification :
 +`docs/fabrication/feuille-de-route-specification.md`."""
@@ -1536,8 +1456,11 @@ index 407e5b89..7a862328 100644
 +import datetime
  import io
  import re
- import types
-@@ -16,6 +20,8 @@ from unittest import mock
+-import types
+ import unittest
+ from pathlib import Path
+-from unittest import mock
+ 
  from socle import cli, memory as memoire, messages, roadmap as suite
  from tests.test_structure import Projet, entree, memoire_de
  
@@ -1546,7 +1469,7 @@ index 407e5b89..7a862328 100644
  
  def demande(mem: memoire.Memoire, ident: str = "D-0001") -> memoire.Memoire:
      chemin = f"memory/requests/{ident}-essai.md"
-@@ -45,29 +51,24 @@ def backlog_d_essai() -> memoire.Memoire:
+@@ -45,29 +50,24 @@ def backlog_d_essai() -> memoire.Memoire:
      ))
  
  
@@ -1592,7 +1515,7 @@ index 407e5b89..7a862328 100644
  
  
  def titree(ident: str, titre: str, statut: str = "ouvert", meta: str = "") -> tuple[str, str]:
-@@ -76,85 +77,43 @@ def titree(ident: str, titre: str, statut: str = "ouvert", meta: str = "") -> tu
+@@ -76,85 +76,38 @@ def titree(ident: str, titre: str, statut: str = "ouvert", meta: str = "") -> tu
      return chemin, texte.replace(f"L'entrée {ident}", titre, 1)
  
  
@@ -1681,11 +1604,8 @@ index 407e5b89..7a862328 100644
 -    """Les lignes d'un rendu détaillé qui disent un jalon, un lot ou un
 -    besoin, dans leur ordre."""
 -    return [l for l in md.splitlines() if l.startswith(("### ", "**", "- "))]
-+def liens_factices(s: suite.Suite, tout: bool = False) -> dict[str, str]:
-+    """Un lien par entrée que la forme nomme, comme `liens_de` les donne."""
-+    return {e.id: f"https://l/{e.id}" for e in suite.montrees(suite.forme(s, tout))}
- 
- 
+-
+-
  class TestCalcul(unittest.TestCase):
      def test_un_besoin_pour_l_humain_ne_se_decoupe_pas(self):
          """B-0363 : un besoin « pour : humain » sans tâche n'est plus parmi les
@@ -1695,23 +1615,22 @@ index 407e5b89..7a862328 100644
          mem = memoire_de(entree("B-0001", meta="pour : humain"), entree("B-0002"), entree("B-0003"),
                           entree("T-0001", meta="besoin : B-0003"))
          self.assertEqual([e.id for e in memoire.ordre(mem).a_decouper], ["B-0002"])
-@@ -163,10 +122,12 @@ class TestCalcul(unittest.TestCase):
+@@ -163,10 +116,10 @@ class TestCalcul(unittest.TestCase):
          s = suite.calculer(mem)
          self.assertEqual([e.id for e in s.a_decouper], ["B-0002"])
          self.assertEqual([e.id for e in s.pour_l_humain], ["B-0001"])
-+        texte = suite.texte(s)
-+        self.assertIn("Pour toi : L'entrée B-0001 (B-0001)", texte.splitlines())
-+        self.assertNotIn("B-0002", texte)
-         md = suite.markdown(s)
+-        md = suite.markdown(s)
 -        decouper, humain = md.index("**Besoins à découper en tâches**"), md.index("**Pour l'humain**")
 -        self.assertNotIn("B-0001", md[decouper:humain])
 -        self.assertIn("B-0001", md[humain:])
-+        self.assertIn("**Pour toi**\n\n- L'entrée B-0001\n", md)
-+        self.assertNotIn("L'entrée B-0002", md)
++        texte = suite.texte(s)
++        self.assertIn("Pour toi : L'entrée B-0001 (B-0001)", texte.splitlines())
++        self.assertNotIn("B-0002", texte)
++        self.assertEqual(suite.markdown(s), f"```text\n{texte}\n```\n")
  
      def test_les_lots_et_les_jalons_dans_leur_ordre_avec_leur_avancement(self):
          s = suite.calculer(backlog_d_essai())
-@@ -212,10 +173,10 @@ class TestCalcul(unittest.TestCase):
+@@ -212,10 +165,10 @@ class TestCalcul(unittest.TestCase):
          self.assertEqual(s.alertes, [("L-0002", "L-0003", "L-0001")])
          self.assertEqual(suite.alertes(memoire.Graphe(ambigu), ["L-0001", "L-0002", "L-0003"]),
                           [("L-0002", "L-0003", "L-0001")])
@@ -1721,16 +1640,124 @@ index 407e5b89..7a862328 100644
 -        self.assertIn(attendu, suite.texte(s).splitlines())
 -        self.assertIn("> **!!** " + attendu.removeprefix("!! "), suite.markdown(s).splitlines())
 +        self.assertIn("Attention : " + attendu, " ".join(suite.texte(s).split()))
-+        self.assertIn("**Attention** : " + attendu, suite.markdown(s).splitlines())
++        self.assertIn("Attention : " + attendu, " ".join(suite.markdown(s).split()))
          self.assertNotIn("\n\n\n", suite.markdown(s))
          # Le même lot attendu, clos : l'ordre des deux reste à choisir.
          clos = memoire_de(entree("L-0001", "fait"), entree("L-0002", meta="après : L-0001"),
-@@ -228,333 +189,296 @@ class TestCalcul(unittest.TestCase):
+@@ -228,333 +181,256 @@ class TestCalcul(unittest.TestCase):
          self.assertNotIn("ordre ambigu", suite.texte(suite.calculer(ordonne)))
  
  
 -class TestFormats(unittest.TestCase):
 -    def test_le_format_compact_une_ligne_par_jalon_et_par_lot_le_lot_en_cours_marque(self):
+-        s = suite.calculer(backlog_d_essai())
+-        self.assertEqual(suite.texte(s).splitlines(), [
+-            "JA-0001  L'entrée JA-0001   0/2 besoins clos",
+-            " ▶ L-0001  L'entrée L-0001  1/2  en cours",
+-            "   L-0002  L'entrée L-0002  0/1  attend 1 demande",
+-            "JA-0002  L'entrée JA-0002   0/1 besoins clos",
+-            "   L-0003  L'entrée L-0003  0/2",
+-            "Hors lot : 1 tâche dans aucun lot · 1 besoin sans tâche · 1 besoin à fermer · 1 bloqué (B-0006) · 1 pour "
+-            "l'humain · 1 demande en attente",
+-            "Ensuite : B-0004, B-0005, B-0006 et 1 autre",
+-        ])
+-
+-    def test_le_format_compact_ne_nomme_aucune_demande(self):
+-        """Collé dans le récap de la clôture d'un lot, il ne cite pas une
+-        demande en attente sans son lien, que le hook de fin de tour
+-        refuserait."""
+-        s = suite.calculer(backlog_d_essai())
+-        for par in suite.LECTURES:
+-            self.assertNotIn("D-0001", suite.texte(s, par))
+-        self.assertIn("D-0001", suite.markdown(s))
+-
+-    def test_le_format_compact_par_besoin(self):
+-        lignes = suite.texte(suite.calculer(backlog_d_essai()), "need").splitlines()
+-        self.assertEqual(lignes[:7], [
+-            "JA-0001  L'entrée JA-0001   0/2 besoins clos",
+-            "   B-0001  L'entrée B-0001  1/2  L-0001",
+-            "   B-0002  L'entrée B-0002  0/1  L-0002",
+-            "JA-0002  L'entrée JA-0002   0/1 besoins clos",
+-            "   B-0003  L'entrée B-0003  0/2  L-0003",
+-            "Hors des jalons",
+-            "   B-0005  L'entrée B-0005  0/1  dans aucun lot",
+-        ])
+-        self.assertFalse(any(re.match(r"^ [▶ ] L-", l) for l in lignes))
+-
+-    def test_le_format_detaille_par_lot(self):
+-        s = suite.calculer(backlog_d_essai())
+-        lignes = suite.markdown(s).splitlines()
+-        self.assertEqual(lignes[0], "## La suite du projet")
+-        for ligne in ("### JA-0001 — L'entrée JA-0001 · 0/2 besoins clos",
+-                      "**1. L-0001 — L'entrée L-0001** · en cours · 1/2",
+-                      "| ▶ | T-0001 | B-0001 ↑ | L'entrée T-0001 |",
+-                      "| ✓ | T-0002 | B-0001 ↑ | L'entrée T-0002 |",
+-                      "**2. L-0002 — L'entrée L-0002** · attend D-0001 · 0/1",
+-                      "| ⏳ | T-0003 | B-0002 | L'entrée T-0003 · attend T-0001 |",
+-                      "| ⏳ | T-0004 | B-0003 | L'entrée T-0004 · attend D-0001 |",
+-                      "### Hors des lots",
+-                      "**Tâches dans aucun lot**",
+-                      "| ○ | T-0006 | B-0005 | L'entrée T-0006 |",
+-                      "| ○ | B-0004 | L'entrée B-0004 |",
+-                      "| ○ | B-0008 | L'entrée B-0008 |",
+-                      "| ✗ | B-0006 | L'entrée B-0006 |",
+-                      "| ○ | T-0005 | L'entrée T-0005 |",
+-                      "| ⏳ | D-0001 | Une demande |",
+-                      "- **Après les jalons**, dans aucun jalon : B-0004, B-0005, B-0006, B-0008"):
+-            self.assertIn(ligne, lignes)
+-        self.assertNotIn("(`--all` pour tout le détail)", lignes)
+-
+-    def test_le_format_detaille_suit_le_lot_en_cours_et_les_deux_suivants_all_les_suit_tous(self):
+-        mem = memoire_de(*(entree(f"T-000{n}", meta="besoin : B-0001") for n in range(1, 6)), entree("B-0001"),
+-                         entree("L-0001", "en cours", meta="après : T-0001"),
+-                         *(entree(f"L-000{n}", meta=f"après : L-000{n - 1}, T-000{n}") for n in range(2, 6)))
+-        s = suite.calculer(mem)
+-        self.assertEqual([lot.entree.id for lot in suite.detailles(s, tout=False)], ["L-0001", "L-0002", "L-0003"])
+-        self.assertEqual(len(suite.detailles(s, tout=True)), 5)
+-        defaut = suite.markdown(s).splitlines()
+-        self.assertEqual([l for l in defaut if l.startswith("**")],
+-                         ["**1. L-0001 — L'entrée L-0001** · en cours · 0/1", "**2. L-0002 — L'entrée L-0002** · 0/1",
+-                          "**3. L-0003 — L'entrée L-0003** · 0/1"])
+-        self.assertIn("(`--all` pour tout le détail)", defaut)
+-        self.assertIn("- **4.** L-0004 — L'entrée L-0004 · 0/1", defaut)
+-        self.assertNotIn("| ○ | T-0004 | B-0001 | L'entrée T-0004 |", defaut)
+-        tout = suite.markdown(s, tout=True).splitlines()
+-        self.assertEqual(len([l for l in tout if re.match(r"^\*\*\d\. L-", l) and "en cours" not in l]), 4)
+-        self.assertIn("| ○ | T-0005 | B-0001 | L'entrée T-0005 |", tout)
+-        self.assertNotIn("(`--all` pour tout le détail)", tout)
+-
+-    def test_le_format_detaille_par_besoin_chaque_tache_avec_son_lot(self):
+-        lignes = suite.markdown(suite.calculer(backlog_d_essai()), "need").splitlines()
+-        for ligne in ("### JA-0001 — L'entrée JA-0001 · 0/2 besoins clos",
+-                      "**B-0001 — L'entrée B-0001** · 1/2 · L-0001",
+-                      "| ▶ | T-0001 | L-0001 ↑ | L'entrée T-0001 |",
+-                      "| ⏳ | T-0004 | L-0003 | L'entrée T-0004 · attend D-0001 |",
+-                      "(`--all` pour tout le détail)",
+-                      "- B-0005 — L'entrée B-0005 · 0/1 · dans aucun lot"):
+-            self.assertIn(ligne, lignes)
+-        self.assertFalse(any(l.startswith("### Lots") for l in lignes))
+-        tout = suite.markdown(suite.calculer(backlog_d_essai()), "need", tout=True).splitlines()
+-        self.assertIn("| ○ | T-0006 | — | L'entrée T-0006 |", tout)
+-        self.assertNotIn("(`--all` pour tout le détail)", tout)
+-
+-    def test_le_format_detaille_donne_le_lien_de_chaque_demande_et_de_ce_qui_revient_a_l_humain(self):
+-        s = suite.calculer(backlog_d_essai())
+-        url = "https://github.com/o/r/blob/abc/{}"
+-        with mock.patch("socle.links.lien", side_effect=lambda projet, chemin: (url.format(chemin), "")):
+-            liens = suite.liens_pour_l_humain(types.SimpleNamespace(), s)
+-        self.assertEqual(liens, {"T-0005": url.format("memory/backlog/T-0005-essai.md"),
+-                                 "D-0001": url.format("memory/requests/D-0001-essai.md")})
+-        lignes = suite.markdown(s, liens=liens).splitlines()
+-        self.assertIn(f"| ⏳ | [D-0001]({url.format('memory/requests/D-0001-essai.md')}) | Une demande |", lignes)
+-        self.assertIn(f"| ○ | [T-0005]({url.format('memory/backlog/T-0005-essai.md')}) | L'entrée T-0005 |", lignes)
+-        with mock.patch("socle.links.lien", side_effect=RuntimeError("hors ligne")):
+-            self.assertEqual(suite.liens_pour_l_humain(types.SimpleNamespace(), s), {})
+-
+-    def test_un_backlog_sans_lot_ni_jalon(self):
+-        s = suite.calculer(memoire_de(entree("B-0001")))
+-        self.assertIn("ni jalon ni lot au backlog", suite.texte(s))
+-        self.assertIn("Ni jalon ni lot au backlog.", suite.markdown(s))
+-        self.assertEqual(s.sans_jalon, [])
 +class TestLaForme(unittest.TestCase):
 +    """T-0207 : la forme, point par point, comme la spécification les
 +    énumère, en ses deux rendus."""
@@ -1781,344 +1808,28 @@ index 407e5b89..7a862328 100644
 +                self.assertEqual(suite.texte(suite.calculer(backlog_de_la_maquette(lg)), nom="Fou", jour=JOUR)
 +                                 .splitlines(), lignes)
 +
-+    def test_la_forme_comme_la_maquette_validee_en_markdown(self):
-+        s = suite.calculer(backlog_de_la_maquette())
-+        self.assertEqual(suite.markdown(s, liens=liens_factices(s), nom="Fou", jour=JOUR).splitlines(), [
-+            "**La suite de Fou — 27 novembre**", "",
-+            "**Maintenant**", "",
-+            "- ▶ [Finir l'adoption du socle](https://l/L-0001)",
-+            "  - reste : [Passer CLAUDE.md dans AGENTS.md](https://l/T-0001)", "",
-+            "**Ensuite**", "",
-+            "1. `[1/4]` [Embarquer le réseau N10](https://l/JA-0001)",
-+            "   - ✓ [Entraîner N10 sur les parties de novembre](https://l/B-0011)",
-+            "   - · [Mesurer N10 contre N8](https://l/B-0012)",
-+            "   - · [Embarquer N10 dans le binaire](https://l/B-0013)",
-+            "   - · [Situer le moteur sur la liste CCRL](https://l/B-0014)",
-+            "2. `[0/3]` [Régler la recherche par SPSA](https://l/JA-0002)",
-+            "3. `[0/2]` [Accélérer la recherche](https://l/JA-0003)",
-+            "4. `[0/3]` [Nouvelle architecture de réseau](https://l/JA-0004)", "",
-+            "**Pour toi**", "",
-+            "- [Copier les données d'entraînement sur un disque dur](https://l/B-0002)", "",
-+            "En réserve : 12 besoins, dont 2 prioritaires"])
-+
++    def test_le_bloc_de_code_porte_le_texte_du_terminal(self):
++        """D-0228 : rendue en Markdown, la forme n'était pas lisible sur un
++        téléphone ; dans un bloc de code, elle garde son alignement."""
++        for lg in ("fr", "en"):
++            with self.subTest(lg), messages.dans(lg):
++                s = suite.calculer(backlog_de_la_maquette(lg))
++                self.assertEqual(suite.markdown(s, nom="Fou", jour=JOUR),
++                                 f"```text\n{suite.texte(s, nom='Fou', jour=JOUR)}\n```\n")
++                self.assertEqual(suite.markdown(s, True, "Fou", JOUR),
++                                 f"```text\n{suite.texte(s, True, 'Fou', JOUR)}\n```\n")
++        # Un titre qui porte trois accents graves allonge la clôture : le
++        # bloc ne se ferme pas en route.
++        code = suite.calculer(memoire_de(entree("B-0001"), titree("T-0001", "Coller ```text ici", "en cours",
++                                                                  meta="besoin : B-0001"),
++                                         entree("L-0001", "en cours", meta="après : T-0001")))
++        md = suite.markdown(code)
++        self.assertTrue(md.startswith("````text\n") and md.endswith("\n````\n"), md)
+ 
+-    def test_en_anglais(self):
 +    def test_les_parties_dans_leur_ordre_et_l_alerte_d_une_entree_bloquee(self):
          s = suite.calculer(backlog_d_essai())
--        self.assertEqual(suite.texte(s).splitlines(), [
--            "JA-0001  L'entrée JA-0001   0/2 besoins clos",
--            " ▶ L-0001  L'entrée L-0001  1/2  en cours",
--            "   L-0002  L'entrée L-0002  0/1  attend 1 demande",
--            "JA-0002  L'entrée JA-0002   0/1 besoins clos",
--            "   L-0003  L'entrée L-0003  0/2",
--            "Hors lot : 1 tâche dans aucun lot · 1 besoin sans tâche · 1 besoin à fermer · 1 bloqué (B-0006) · 1 pour "
--            "l'humain · 1 demande en attente",
--            "Ensuite : B-0004, B-0005, B-0006 et 1 autre",
--        ])
--
--    def test_le_format_compact_ne_nomme_aucune_demande(self):
--        """Collé dans le récap de la clôture d'un lot, il ne cite pas une
--        demande en attente sans son lien, que le hook de fin de tour
--        refuserait."""
--        s = suite.calculer(backlog_d_essai())
--        for par in suite.LECTURES:
--            self.assertNotIn("D-0001", suite.texte(s, par))
--        self.assertIn("D-0001", suite.markdown(s))
--
--    def test_le_format_compact_par_besoin(self):
--        lignes = suite.texte(suite.calculer(backlog_d_essai()), "need").splitlines()
--        self.assertEqual(lignes[:7], [
--            "JA-0001  L'entrée JA-0001   0/2 besoins clos",
--            "   B-0001  L'entrée B-0001  1/2  L-0001",
--            "   B-0002  L'entrée B-0002  0/1  L-0002",
--            "JA-0002  L'entrée JA-0002   0/1 besoins clos",
--            "   B-0003  L'entrée B-0003  0/2  L-0003",
--            "Hors des jalons",
--            "   B-0005  L'entrée B-0005  0/1  dans aucun lot",
--        ])
--        self.assertFalse(any(re.match(r"^ [▶ ] L-", l) for l in lignes))
--
--    def test_le_format_detaille_par_lot(self):
-+        self.assertEqual(suite.texte(s, nom="calc", jour=JOUR).splitlines(), [
-+            "La suite de calc — 27 novembre", "",
-+            "Maintenant",
-+            " ▶ L'entrée L-0001 (L-0001)",
-+            "   reste : L'entrée T-0001 (T-0001)", "",
-+            "Ensuite",
-+            "1. [0/2] L'entrée JA-0001 (JA-0001)",
-+            "         ▶ L'entrée B-0001 (B-0001)",
-+            "         · L'entrée B-0002 (B-0002)",
-+            "2. [0/1] L'entrée JA-0002 (JA-0002)", "",
-+            "Pour toi : L'entrée T-0005 (T-0005)",
-+            "           Une demande",
-+            "En réserve : 4 besoins",
-+            "Attention : bloqué : L'entrée B-0006 (B-0006)"])
-+        self.assertEqual(suite.markdown(s, liens=liens_factices(s), nom="calc", jour=JOUR).splitlines(), [
-+            "**La suite de calc — 27 novembre**", "",
-+            "**Maintenant**", "",
-+            "- ▶ [L'entrée L-0001](https://l/L-0001)",
-+            "  - reste : [L'entrée T-0001](https://l/T-0001)", "",
-+            "**Ensuite**", "",
-+            "1. `[0/2]` [L'entrée JA-0001](https://l/JA-0001)",
-+            "   - ▶ [L'entrée B-0001](https://l/B-0001)",
-+            "   - · [L'entrée B-0002](https://l/B-0002)",
-+            "2. `[0/1]` [L'entrée JA-0002](https://l/JA-0002)", "",
-+            "**Pour toi**", "",
-+            "- [L'entrée T-0005](https://l/T-0005)",
-+            "- [Une demande](https://l/D-0001)", "",
-+            "En réserve : 4 besoins", "",
-+            "**Attention** : bloqué : [L'entrée B-0006](https://l/B-0006)"])
-+
-+    def test_les_crochets_ont_la_meme_largeur_et_les_titres_s_alignent_un_total_a_deux_chiffres_compris(self):
-+        mem = memoire_de(*(entree(f"B-{n:04d}", "fait" if n == 3 else "ouvert") for n in range(1, 13)),
-+                         entree("JA-0001", meta="après : B-0012"),
-+                         entree("JA-0002", meta="après : JA-0001, " + ", ".join(f"B-{n:04d}" for n in range(1, 12))))
-+        s = suite.calculer(mem)
-+        lignes = suite.texte(s).splitlines()
-+        self.assertIn("1. [ 0/1 ] L'entrée JA-0001 (JA-0001)", lignes)
-+        self.assertIn("2. [ 1/11] L'entrée JA-0002 (JA-0002)", lignes)
-+        self.assertIn("           · L'entrée B-0012 (B-0012)", lignes)
-+        md = suite.markdown(s)
-+        self.assertIn("1. `[ 0/1 ]` L'entrée JA-0001\n", md)
-+        self.assertIn("2. `[ 1/11]` L'entrée JA-0002\n", md)
-+        # Dix étapes et plus : les numéros s'alignent à droite, les titres
-+        # commencent tous à la même colonne.
-+        dix = memoire_de(*(entree(f"B-{n:04d}") for n in range(1, 11)),
-+                         *(entree(f"JA-{n:04d}", meta="après : " + (f"JA-{n - 1:04d}, " if n > 1 else "")
-+                                  + f"B-{n:04d}") for n in range(1, 11)))
-+        etapes = [l for l in suite.texte(suite.calculer(dix)).splitlines() if re.match(r"^ ?\d+\. ", l)]
-+        self.assertEqual(len(etapes), 10)
-+        self.assertEqual((etapes[0], etapes[-1]), (" 1. [0/1] L'entrée JA-0001 (JA-0001)",
-+                                                   "10. [0/1] L'entrée JA-0010 (JA-0010)"))
-+        self.assertEqual({l.index("L'entrée") for l in etapes}, {10})
-+
-+    def test_seul_le_premier_jalon_est_deplie_all_les_deplie_tous(self):
-         s = suite.calculer(backlog_d_essai())
--        lignes = suite.markdown(s).splitlines()
--        self.assertEqual(lignes[0], "## La suite du projet")
--        for ligne in ("### JA-0001 — L'entrée JA-0001 · 0/2 besoins clos",
--                      "**1. L-0001 — L'entrée L-0001** · en cours · 1/2",
--                      "| ▶ | T-0001 | B-0001 ↑ | L'entrée T-0001 |",
--                      "| ✓ | T-0002 | B-0001 ↑ | L'entrée T-0002 |",
--                      "**2. L-0002 — L'entrée L-0002** · attend D-0001 · 0/1",
--                      "| ⏳ | T-0003 | B-0002 | L'entrée T-0003 · attend T-0001 |",
--                      "| ⏳ | T-0004 | B-0003 | L'entrée T-0004 · attend D-0001 |",
--                      "### Hors des lots",
--                      "**Tâches dans aucun lot**",
--                      "| ○ | T-0006 | B-0005 | L'entrée T-0006 |",
--                      "| ○ | B-0004 | L'entrée B-0004 |",
--                      "| ○ | B-0008 | L'entrée B-0008 |",
--                      "| ✗ | B-0006 | L'entrée B-0006 |",
--                      "| ○ | T-0005 | L'entrée T-0005 |",
--                      "| ⏳ | D-0001 | Une demande |",
--                      "- **Après les jalons**, dans aucun jalon : B-0004, B-0005, B-0006, B-0008"):
--            self.assertIn(ligne, lignes)
--        self.assertNotIn("(`--all` pour tout le détail)", lignes)
--
--    def test_le_format_detaille_suit_le_lot_en_cours_et_les_deux_suivants_all_les_suit_tous(self):
--        mem = memoire_de(*(entree(f"T-000{n}", meta="besoin : B-0001") for n in range(1, 6)), entree("B-0001"),
-+        self.assertNotIn("B-0003", suite.texte(s))
-+        self.assertNotIn("L'entrée B-0003", suite.markdown(s))
-+        tout = suite.texte(s, tout=True).splitlines()
-+        jalon = tout.index("2. [0/1] L'entrée JA-0002 (JA-0002)")
-+        self.assertEqual(tout[jalon + 1], "         · L'entrée B-0003 (B-0003)")
-+        self.assertIn("2. `[0/1]` L'entrée JA-0002\n   - · L'entrée B-0003\n", suite.markdown(s, tout=True))
-+
-+    def test_les_trois_marques_d_un_besoin_dans_l_ordre_de_l_apres_du_jalon(self):
-+        """✓ clos, ▶ servi par une tâche d'un lot en cours, · autre ; une tâche
-+        en cours hors d'un lot en cours ne fait pas ▶."""
-+        mem = memoire_de(entree("B-0001", "fait"), entree("B-0002"), entree("B-0003"), entree("B-0004"),
-+                         entree("T-0001", "en cours", meta="besoin : B-0002"),
-+                         entree("T-0002", "en cours", meta="besoin : B-0004"),
-                          entree("L-0001", "en cours", meta="après : T-0001"),
--                         *(entree(f"L-000{n}", meta=f"après : L-000{n - 1}, T-000{n}") for n in range(2, 6)))
-+                         entree("JA-0001", meta="après : B-0003, B-0001, B-0002, B-0004"))
-         s = suite.calculer(mem)
--        self.assertEqual([lot.entree.id for lot in suite.detailles(s, tout=False)], ["L-0001", "L-0002", "L-0003"])
--        self.assertEqual(len(suite.detailles(s, tout=True)), 5)
--        defaut = suite.markdown(s).splitlines()
--        self.assertEqual([l for l in defaut if l.startswith("**")],
--                         ["**1. L-0001 — L'entrée L-0001** · en cours · 0/1", "**2. L-0002 — L'entrée L-0002** · 0/1",
--                          "**3. L-0003 — L'entrée L-0003** · 0/1"])
--        self.assertIn("(`--all` pour tout le détail)", defaut)
--        self.assertIn("- **4.** L-0004 — L'entrée L-0004 · 0/1", defaut)
--        self.assertNotIn("| ○ | T-0004 | B-0001 | L'entrée T-0004 |", defaut)
--        tout = suite.markdown(s, tout=True).splitlines()
--        self.assertEqual(len([l for l in tout if re.match(r"^\*\*\d\. L-", l) and "en cours" not in l]), 4)
--        self.assertIn("| ○ | T-0005 | B-0001 | L'entrée T-0005 |", tout)
--        self.assertNotIn("(`--all` pour tout le détail)", tout)
--
--    def test_le_format_detaille_par_besoin_chaque_tache_avec_son_lot(self):
--        lignes = suite.markdown(suite.calculer(backlog_d_essai()), "need").splitlines()
--        for ligne in ("### JA-0001 — L'entrée JA-0001 · 0/2 besoins clos",
--                      "**B-0001 — L'entrée B-0001** · 1/2 · L-0001",
--                      "| ▶ | T-0001 | L-0001 ↑ | L'entrée T-0001 |",
--                      "| ⏳ | T-0004 | L-0003 | L'entrée T-0004 · attend D-0001 |",
--                      "(`--all` pour tout le détail)",
--                      "- B-0005 — L'entrée B-0005 · 0/1 · dans aucun lot"):
--            self.assertIn(ligne, lignes)
--        self.assertFalse(any(l.startswith("### Lots") for l in lignes))
--        tout = suite.markdown(suite.calculer(backlog_d_essai()), "need", tout=True).splitlines()
--        self.assertIn("| ○ | T-0006 | — | L'entrée T-0006 |", tout)
--        self.assertNotIn("(`--all` pour tout le détail)", tout)
--
--    def test_le_format_detaille_donne_le_lien_de_chaque_demande_et_de_ce_qui_revient_a_l_humain(self):
-+        self.assertEqual(suite.besoins_du_jalon(s.jalons[0]), ["B-0003", "B-0001", "B-0002", "B-0004"])
-+        self.assertEqual(suite.texte(s).splitlines()[7:12], [
-+            "1. [1/4] L'entrée JA-0001 (JA-0001)",
-+            "         · L'entrée B-0003 (B-0003)",
-+            "         ✓ L'entrée B-0001 (B-0001)",
-+            "         ▶ L'entrée B-0002 (B-0002)",
-+            "         · L'entrée B-0004 (B-0004)"])
-+        self.assertIn("   - · L'entrée B-0003\n   - ✓ L'entrée B-0001\n   - ▶ L'entrée B-0002\n"
-+                      "   - · L'entrée B-0004\n", suite.markdown(s))
-+
-+    def test_le_travail_hors_jalon_est_sous_maintenant_et_nulle_part_ailleurs(self):
-+        mem = memoire_de(entree("B-0001"), entree("B-0002"), entree("B-0003"),
-+                         entree("T-0001", "en cours", meta="besoin : B-0002"), entree("T-0002", meta="besoin : B-0001"),
-+                         entree("L-0001", "en cours", meta="après : T-0001"), entree("JA-0001", meta="après : B-0001"))
-+        s = suite.calculer(mem)
-+        texte, md = suite.texte(s), suite.markdown(s)
-+        self.assertEqual(texte.splitlines()[2:5], ["Maintenant", " ▶ L'entrée L-0001 (L-0001)",
-+                                                    "   reste : L'entrée T-0001 (T-0001)"])
-+        self.assertEqual(texte.count("(L-0001)"), 1)
-+        self.assertNotIn("B-0002", texte)
-+        self.assertNotIn("L'entrée B-0002", md)
-+        # B-0003, d'aucun jalon et que rien ne mène, reste seul en réserve.
-+        self.assertEqual(texte.splitlines()[-1], "En réserve : 1 besoin")
-+        # Sans aucun jalon, il n'y a pas d'« Ensuite ».
-+        sans = suite.calculer(memoire_de(entree("B-0001"), entree("T-0001", meta="besoin : B-0001"),
-+                                         entree("L-0001", "en cours", meta="après : T-0001")))
-+        self.assertEqual(suite.texte(sans, nom="calc", jour=JOUR).splitlines(), [
-+            "La suite de calc — 27 novembre", "", "Maintenant", " ▶ L'entrée L-0001 (L-0001)",
-+            "   reste : L'entrée T-0001 (T-0001)"])
-+        self.assertNotIn("**Ensuite**", suite.markdown(sans))
-+
-+    def test_sans_lot_en_cours_la_premiere_tache_prete_sinon_rien_en_cours(self):
-+        prete = suite.calculer(memoire_de(entree("B-0001"), entree("T-0002", meta="besoin : B-0001"),
-+                                          entree("T-0001", meta="besoin : B-0001 · après : T-0002"),
-+                                          entree("L-0001", meta="après : T-0001")))
-+        self.assertEqual(suite.texte(prete).splitlines()[2:4], ["Maintenant", "   prête : L'entrée T-0002 (T-0002)"])
-+        self.assertIn("**Maintenant**\n\n- prête : L'entrée T-0002\n", suite.markdown(prete))
-+        rien = suite.calculer(memoire_de(entree("B-0001")))
-+        self.assertEqual(suite.texte(rien, nom="calc", jour=JOUR).splitlines(),
-+                         ["La suite de calc — 27 novembre", "", "Maintenant : rien en cours"])
-+        self.assertEqual(suite.markdown(rien, nom="calc", jour=JOUR),
-+                         "**La suite de calc — 27 novembre**\n\n**Maintenant** : rien en cours\n")
-+
-+    def test_un_lot_en_cours_nomme_trois_taches_ouvertes_au_plus_puis_compte_les_autres(self):
-+        def lot(ouvertes: int) -> suite.Suite:
-+            return suite.calculer(memoire_de(
-+                entree("B-0001"), entree("T-0009", "fait", meta="besoin : B-0001"),
-+                *(entree(f"T-000{n}", meta="besoin : B-0001") for n in range(1, ouvertes + 1)),
-+                entree("L-0001", "en cours", meta="après : T-0009, "
-+                       + ", ".join(f"T-000{n}" for n in range(1, ouvertes + 1)))))
-+
-+        self.assertEqual(suite.texte(lot(5)).splitlines()[3:8], [
-+            " ▶ L'entrée L-0001 (L-0001)",
-+            "   reste : L'entrée T-0001 (T-0001)",
-+            "           L'entrée T-0002 (T-0002)",
-+            "           L'entrée T-0003 (T-0003)",
-+            "           et 2 autres"])
-+        self.assertIn("  - reste : L'entrée T-0001, L'entrée T-0002, L'entrée T-0003, et 2 autres\n",
-+                      suite.markdown(lot(5)))
-+        self.assertEqual(suite.texte(lot(4)).splitlines()[7], "           et 1 autre")
-+        self.assertNotIn("autre", suite.texte(lot(3)))
-+
-+    def test_le_terminal_ne_nomme_aucune_demande_le_markdown_donne_le_lien_de_chacune(self):
-+        """Collé dans le récap de la clôture d'un lot, le rendu du terminal ne
-+        cite pas une demande en attente sans son lien, que le hook de fin de
-+        tour refuserait."""
-         s = suite.calculer(backlog_d_essai())
-+        for tout in (False, True):
-+            self.assertNotIn("D-0001", suite.texte(s, tout))
-+            self.assertIn("Une demande", suite.texte(s, tout))
-+        maquette = suite.calculer(backlog_de_la_maquette())
-+        self.assertNotRegex(suite.markdown(maquette, liens=liens_factices(maquette)), r"(?<!/)\b[A-Z]{1,2}-\d{4}\b")
-+        self.assertEqual([e.id for e in suite.montrees(suite.forme(s))],
-+                         ["L-0001", "T-0001", "JA-0001", "B-0001", "B-0002", "JA-0002", "T-0005", "D-0001", "B-0006"])
-         url = "https://github.com/o/r/blob/abc/{}"
-+        entrees = suite.montrees(suite.forme(s))
-         with mock.patch("socle.links.lien", side_effect=lambda projet, chemin: (url.format(chemin), "")):
--            liens = suite.liens_pour_l_humain(types.SimpleNamespace(), s)
--        self.assertEqual(liens, {"T-0005": url.format("memory/backlog/T-0005-essai.md"),
--                                 "D-0001": url.format("memory/requests/D-0001-essai.md")})
--        lignes = suite.markdown(s, liens=liens).splitlines()
--        self.assertIn(f"| ⏳ | [D-0001]({url.format('memory/requests/D-0001-essai.md')}) | Une demande |", lignes)
--        self.assertIn(f"| ○ | [T-0005]({url.format('memory/backlog/T-0005-essai.md')}) | L'entrée T-0005 |", lignes)
-+            liens = suite.liens_de(types.SimpleNamespace(), entrees)
-+        self.assertEqual(liens["D-0001"], url.format("memory/requests/D-0001-essai.md"))
-+        self.assertEqual(len(liens), len(entrees))
-+        self.assertIn(f"- [Une demande]({url.format('memory/requests/D-0001-essai.md')})",
-+                      suite.markdown(s, liens=liens).splitlines())
-+        # Une entrée que la version poussée n'a pas reste en texte ; rien de poussé, aucun lien.
-+        with mock.patch("socle.links.lien", side_effect=lambda projet, chemin: (None, "pousser d'abord")):
-+            self.assertEqual(suite.liens_de(types.SimpleNamespace(), entrees), {})
-         with mock.patch("socle.links.lien", side_effect=RuntimeError("hors ligne")):
--            self.assertEqual(suite.liens_pour_l_humain(types.SimpleNamespace(), s), {})
--
--    def test_un_backlog_sans_lot_ni_jalon(self):
-+            self.assertEqual(suite.liens_de(types.SimpleNamespace(), entrees), {})
-+        self.assertIn("- Une demande", suite.markdown(s).splitlines())
-+
-+    def test_aucune_ligne_vide_de_pour_toi_ni_de_la_reserve(self):
-+        s = suite.calculer(memoire_de(entree("B-0001"), entree("JA-0001", meta="après : B-0001")))
-+        for sortie in (suite.texte(s), suite.markdown(s)):
-+            self.assertNotIn("Pour toi", sortie)
-+            self.assertNotIn("En réserve", sortie)
-+            self.assertNotIn("Attention", sortie)
-+            self.assertNotIn("\n\n\n", sortie)
-+        self.assertEqual(suite.texte(s).splitlines()[-1], "         · L'entrée B-0001 (B-0001)")
-+        un = suite.calculer(memoire_de(entree("B-0001"), entree("B-0002", meta="priorité : haute"),
-+                                       entree("JA-0001", meta="après : B-0001")))
-+        self.assertEqual(suite.texte(un).splitlines()[-1], "En réserve : 1 besoin, dont 1 prioritaire")
-+
-+    def test_ni_tableau_ni_legende_ni_ancien_format(self):
-+        sorties = []
-+        for mem in (backlog_d_essai(), backlog_de_la_maquette(), backlog_de_la_maquette("en")):
-+            s = suite.calculer(mem)
-+            for lg in ("fr", "en"):
-+                for tout in (False, True):
-+                    with messages.dans(lg):
-+                        sorties += [suite.texte(s, tout), suite.markdown(s, tout, liens_factices(s, tout))]
-+        for sortie in sorties:
-+            self.assertFalse([l for l in sortie.splitlines() if l.lstrip().startswith("|")], sortie)
-+            for ancien in ("Légende", "Key:", "Hors lot", "Outside the batches", "besoins clos", "needs closed",
-+                           "⏳", "○", "###"):
-+                self.assertNotIn(ancien, sortie)
-+        self.assertEqual(suite.FORMATS, ("text", "markdown"))
-+        self.assertFalse(hasattr(suite, "LECTURES"))
-+
-+    def test_une_ligne_longue_passe_a_la_suivante_sous_sa_colonne(self):
-+        long = "Un titre sans deux-points qui dépasse la largeur de la ligne lue sur un téléphone"
-+        mem = memoire_de(entree("B-0001"), titree("B-0002", long),
-+                         titree("T-0001", long, "en cours", meta="besoin : B-0001"),
-+                         titree("L-0001", long, "en cours", meta="après : T-0001"),
-+                         titree("JA-0001", long, meta="après : B-0002"))
-+        lignes = suite.texte(suite.calculer(mem)).splitlines()
-+        self.assertTrue(all(len(l) <= suite.LARGEUR for l in lignes), lignes)
-+        # La tête du titre se coupe à `TITRE` caractères ; l'identifiant
-+        # reste collé au dernier mot.
-+        self.assertEqual(lignes[3:5], [" ▶ Un titre sans deux-points qui dépasse la",
-+                                       "   largeur de la ligne lue sur un… (L-0001)"])
-+        self.assertTrue(lignes[5].startswith("   reste : Un titre"))
-+        self.assertTrue(lignes[6].startswith("           ") and lignes[6][11] != " ")
-+        etape = next(k for k, l in enumerate(lignes) if l.startswith("1. [0/1] "))
-+        self.assertTrue(lignes[etape + 1].startswith("         ") and lignes[etape + 1][9] != " ")
-+        besoin = next(k for k, l in enumerate(lignes) if l.startswith("         · "))
-+        self.assertTrue(lignes[besoin + 1].startswith("           ") and lignes[besoin + 1][11] != " ")
-+        self.assertEqual(" ".join(l.strip() for l in lignes[besoin:]), f"· {suite.court(long)} (B-0002)")
-+
-+    def test_l_en_tete_nomme_le_projet_et_le_jour(self):
-         s = suite.calculer(memoire_de(entree("B-0001")))
--        self.assertIn("ni jalon ni lot au backlog", suite.texte(s))
--        self.assertIn("Ni jalon ni lot au backlog.", suite.markdown(s))
--        self.assertEqual(s.sans_jalon, [])
--
--    def test_en_anglais(self):
--        s = suite.calculer(backlog_d_essai())
-+        self.assertEqual(suite.entete("calc", JOUR), "La suite de calc — 27 novembre")
-+        self.assertEqual(suite.entete("atelier", datetime.date(2026, 2, 1)), "La suite d'atelier — 1 février")
-+        self.assertEqual(suite.entete("", JOUR), "La suite — 27 novembre")
-         with messages.dans("en"):
+-        with messages.dans("en"):
 -            lignes = suite.texte(s).splitlines()
 -            detail = suite.markdown(s, "need")
 -        self.assertEqual(lignes[0], "JA-0001  L'entrée JA-0001   0/2 needs closed")
@@ -2269,7 +1980,27 @@ index 407e5b89..7a862328 100644
 -
 -    def test_le_format_compact_aligne_en_colonnes_comme_l_exemple_valide(self):
 -        s = suite.calculer(backlog_de_l_exemple())
--        lignes = suite.texte(s).splitlines()
++        self.assertEqual(suite.texte(s, nom="calc", jour=JOUR).splitlines(), [
++            "La suite de calc — 27 novembre", "",
++            "Maintenant",
++            " ▶ L'entrée L-0001 (L-0001)",
++            "   reste : L'entrée T-0001 (T-0001)", "",
++            "Ensuite",
++            "1. [0/2] L'entrée JA-0001 (JA-0001)",
++            "         ▶ L'entrée B-0001 (B-0001)",
++            "         · L'entrée B-0002 (B-0002)",
++            "2. [0/1] L'entrée JA-0002 (JA-0002)", "",
++            "Pour toi : L'entrée T-0005 (T-0005)",
++            "           Une demande",
++            "En réserve : 4 besoins",
++            "Attention : bloqué : L'entrée B-0006 (B-0006)"])
++
++    def test_les_crochets_ont_la_meme_largeur_et_les_titres_s_alignent_un_total_a_deux_chiffres_compris(self):
++        mem = memoire_de(*(entree(f"B-{n:04d}", "fait" if n == 3 else "ouvert") for n in range(1, 13)),
++                         entree("JA-0001", meta="après : B-0012"),
++                         entree("JA-0002", meta="après : JA-0001, " + ", ".join(f"B-{n:04d}" for n in range(1, 12))))
++        s = suite.calculer(mem)
+         lignes = suite.texte(s).splitlines()
 -        self.assertEqual(lignes, [
 -            "JA-0005  Fini avant les nouvelles fonctions        1/11 besoins clos",
 -            " ▶ L-0013  Structure du backlog, chantier en rond  2/3   en cours",
@@ -2292,7 +2023,25 @@ index 407e5b89..7a862328 100644
 -        self.assertEqual([j.entree.id for j in suite.ensuite(s, rangs)], ["JA-0002"])
 -        self.assertEqual(suite.besoins_du_jalon(s.jalons[0]), ["B-0126"])
 -        # `--all` : chaque lot en sa ligne, aucun résumé.
--        tout = suite.texte(s, tout=True).splitlines()
++        self.assertIn("1. [ 0/1 ] L'entrée JA-0001 (JA-0001)", lignes)
++        self.assertIn("2. [ 1/11] L'entrée JA-0002 (JA-0002)", lignes)
++        self.assertIn("           · L'entrée B-0012 (B-0012)", lignes)
++        # Dix étapes et plus : les numéros s'alignent à droite, les titres
++        # commencent tous à la même colonne.
++        dix = memoire_de(*(entree(f"B-{n:04d}") for n in range(1, 11)),
++                         *(entree(f"JA-{n:04d}", meta="après : " + (f"JA-{n - 1:04d}, " if n > 1 else "")
++                                  + f"B-{n:04d}") for n in range(1, 11)))
++        etapes = [l for l in suite.texte(suite.calculer(dix)).splitlines() if re.match(r"^ ?\d+\. ", l)]
++        self.assertEqual(len(etapes), 10)
++        self.assertEqual((etapes[0], etapes[-1]), (" 1. [0/1] L'entrée JA-0001 (JA-0001)",
++                                                   "10. [0/1] L'entrée JA-0010 (JA-0010)"))
++        self.assertEqual({l.index("L'entrée") for l in etapes}, {10})
++
++    def test_seul_le_premier_jalon_est_deplie_all_les_deplie_tous(self):
++        s = suite.calculer(backlog_d_essai())
++        self.assertNotIn("B-0003", suite.texte(s))
++        self.assertNotIn("B-0003", suite.markdown(s))
+         tout = suite.texte(s, tout=True).splitlines()
 -        self.assertIn("   L-0010  L'entrée L-0010                         0/2", tout)
 -        self.assertFalse(any("…  " in l for l in tout))
 -        self.assertEqual(len(tout), 11)
@@ -2314,7 +2063,33 @@ index 407e5b89..7a862328 100644
 -                         entree("T-0001", meta="besoin : B-0001"), entree("T-0002", meta="besoin : B-0002"),
 -                         entree("L-0001", "en cours", meta="après : T-0002"),
 -                         entree("L-0002", meta="après : L-0001, T-0001"), entree("JA-0001", meta="après : B-0001"))
--        s = suite.calculer(mem)
++        jalon = tout.index("2. [0/1] L'entrée JA-0002 (JA-0002)")
++        self.assertEqual(tout[jalon + 1], "         · L'entrée B-0003 (B-0003)")
++        self.assertIn("2. [0/1] L'entrée JA-0002 (JA-0002)\n         · L'entrée B-0003 (B-0003)\n",
++                      suite.markdown(s, tout=True))
++
++    def test_les_trois_marques_d_un_besoin_dans_l_ordre_de_l_apres_du_jalon(self):
++        """✓ clos, ▶ servi par une tâche d'un lot en cours, · autre ; une tâche
++        en cours hors d'un lot en cours ne fait pas ▶."""
++        mem = memoire_de(entree("B-0001", "fait"), entree("B-0002"), entree("B-0003"), entree("B-0004"),
++                         entree("T-0001", "en cours", meta="besoin : B-0002"),
++                         entree("T-0002", "en cours", meta="besoin : B-0004"),
++                         entree("L-0001", "en cours", meta="après : T-0001"),
++                         entree("JA-0001", meta="après : B-0003, B-0001, B-0002, B-0004"))
++        s = suite.calculer(mem)
++        self.assertEqual(suite.besoins_du_jalon(s.jalons[0]), ["B-0003", "B-0001", "B-0002", "B-0004"])
++        self.assertEqual(suite.texte(s).splitlines()[7:12], [
++            "1. [1/4] L'entrée JA-0001 (JA-0001)",
++            "         · L'entrée B-0003 (B-0003)",
++            "         ✓ L'entrée B-0001 (B-0001)",
++            "         ▶ L'entrée B-0002 (B-0002)",
++            "         · L'entrée B-0004 (B-0004)"])
++
++    def test_le_travail_hors_jalon_est_sous_maintenant_et_nulle_part_ailleurs(self):
++        mem = memoire_de(entree("B-0001"), entree("B-0002"), entree("B-0003"),
++                         entree("T-0001", "en cours", meta="besoin : B-0002"), entree("T-0002", meta="besoin : B-0001"),
++                         entree("L-0001", "en cours", meta="après : T-0001"), entree("JA-0001", meta="après : B-0001"))
+         s = suite.calculer(mem)
 -        self.assertEqual(suite.texte(s).splitlines(), [
 -            "Hors des jalons",
 -            " ▶ L-0001  L'entrée L-0001  0/1  en cours",
@@ -2328,10 +2103,117 @@ index 407e5b89..7a862328 100644
 -            "### JA-0001 — L'entrée JA-0001 · 0/1 besoins clos",
 -            "**2. L-0002 — L'entrée L-0002** · 0/1"])
 -        # Sans aucun jalon, ni groupe ni « Ensuite ».
--        sans = suite.calculer(memoire_de(entree("B-0001"), entree("T-0001", meta="besoin : B-0001"),
--                                         entree("L-0001", "en cours", meta="après : T-0001")))
++        texte, md = suite.texte(s), suite.markdown(s)
++        self.assertEqual(texte.splitlines()[2:5], ["Maintenant", " ▶ L'entrée L-0001 (L-0001)",
++                                                    "   reste : L'entrée T-0001 (T-0001)"])
++        self.assertEqual(texte.count("(L-0001)"), 1)
++        self.assertNotIn("B-0002", texte)
++        self.assertNotIn("L'entrée B-0002", md)
++        # B-0003, d'aucun jalon et que rien ne mène, reste seul en réserve.
++        self.assertEqual(texte.splitlines()[-1], "En réserve : 1 besoin")
++        # Sans aucun jalon, il n'y a pas d'« Ensuite ».
+         sans = suite.calculer(memoire_de(entree("B-0001"), entree("T-0001", meta="besoin : B-0001"),
+                                          entree("L-0001", "en cours", meta="après : T-0001")))
 -        self.assertEqual(suite.texte(sans).splitlines(), [" ▶ L-0001  L'entrée L-0001  0/1  en cours", "Hors lot : rien"])
 -        self.assertIn("### Lots, dans leur ordre d'exécution", suite.markdown(sans).splitlines())
++        self.assertEqual(suite.texte(sans, nom="calc", jour=JOUR).splitlines(), [
++            "La suite de calc — 27 novembre", "", "Maintenant", " ▶ L'entrée L-0001 (L-0001)",
++            "   reste : L'entrée T-0001 (T-0001)"])
++        self.assertNotIn("Ensuite", suite.markdown(sans))
++
++    def test_sans_lot_en_cours_la_premiere_tache_prete_sinon_rien_en_cours(self):
++        prete = suite.calculer(memoire_de(entree("B-0001"), entree("T-0002", meta="besoin : B-0001"),
++                                          entree("T-0001", meta="besoin : B-0001 · après : T-0002"),
++                                          entree("L-0001", meta="après : T-0001")))
++        self.assertEqual(suite.texte(prete).splitlines()[2:4], ["Maintenant", "   prête : L'entrée T-0002 (T-0002)"])
++        self.assertIn("\nMaintenant\n   prête : L'entrée T-0002 (T-0002)\n", suite.markdown(prete))
++        rien = suite.calculer(memoire_de(entree("B-0001")))
++        self.assertEqual(suite.texte(rien, nom="calc", jour=JOUR).splitlines(),
++                         ["La suite de calc — 27 novembre", "", "Maintenant : rien en cours"])
++        self.assertEqual(suite.markdown(rien, nom="calc", jour=JOUR),
++                         "```text\nLa suite de calc — 27 novembre\n\nMaintenant : rien en cours\n```\n")
++
++    def test_un_lot_en_cours_nomme_trois_taches_ouvertes_au_plus_puis_compte_les_autres(self):
++        def lot(ouvertes: int) -> suite.Suite:
++            return suite.calculer(memoire_de(
++                entree("B-0001"), entree("T-0009", "fait", meta="besoin : B-0001"),
++                *(entree(f"T-000{n}", meta="besoin : B-0001") for n in range(1, ouvertes + 1)),
++                entree("L-0001", "en cours", meta="après : T-0009, "
++                       + ", ".join(f"T-000{n}" for n in range(1, ouvertes + 1)))))
++
++        self.assertEqual(suite.texte(lot(5)).splitlines()[3:8], [
++            " ▶ L'entrée L-0001 (L-0001)",
++            "   reste : L'entrée T-0001 (T-0001)",
++            "           L'entrée T-0002 (T-0002)",
++            "           L'entrée T-0003 (T-0003)",
++            "           et 2 autres"])
++        self.assertEqual(suite.texte(lot(4)).splitlines()[7], "           et 1 autre")
++        self.assertNotIn("autre", suite.texte(lot(3)))
++
++    def test_aucun_rendu_ne_nomme_une_demande_par_son_identifiant(self):
++        """Collé dans le récap de la clôture d'un lot ou dans une réponse, le
++        texte ne cite pas une demande en attente sans son lien, que le hook
++        de fin de tour refuserait : il la dit par son titre."""
++        s = suite.calculer(backlog_d_essai())
++        for tout in (False, True):
++            for sortie in (suite.texte(s, tout), suite.markdown(s, tout)):
++                self.assertNotIn("D-0001", sortie)
++                self.assertIn("           Une demande\n", sortie + "\n")
++
++    def test_aucune_ligne_vide_de_pour_toi_ni_de_la_reserve(self):
++        s = suite.calculer(memoire_de(entree("B-0001"), entree("JA-0001", meta="après : B-0001")))
++        for sortie in (suite.texte(s), suite.markdown(s)):
++            self.assertNotIn("Pour toi", sortie)
++            self.assertNotIn("En réserve", sortie)
++            self.assertNotIn("Attention", sortie)
++            self.assertNotIn("\n\n\n", sortie)
++        self.assertEqual(suite.texte(s).splitlines()[-1], "         · L'entrée B-0001 (B-0001)")
++        un = suite.calculer(memoire_de(entree("B-0001"), entree("B-0002", meta="priorité : haute"),
++                                       entree("JA-0001", meta="après : B-0001")))
++        self.assertEqual(suite.texte(un).splitlines()[-1], "En réserve : 1 besoin, dont 1 prioritaire")
++
++    def test_ni_tableau_ni_legende_ni_ancien_format(self):
++        sorties = []
++        for mem in (backlog_d_essai(), backlog_de_la_maquette(), backlog_de_la_maquette("en")):
++            s = suite.calculer(mem)
++            for lg in ("fr", "en"):
++                for tout in (False, True):
++                    with messages.dans(lg):
++                        sorties += [suite.texte(s, tout), suite.markdown(s, tout)]
++        for sortie in sorties:
++            self.assertFalse([l for l in sortie.splitlines() if l.lstrip().startswith("|")], sortie)
++            for ancien in ("Légende", "Key:", "Hors lot", "Outside the batches", "besoins clos", "needs closed",
++                           "⏳", "○", "###"):
++                self.assertNotIn(ancien, sortie)
++        self.assertEqual(suite.FORMATS, ("text", "markdown"))
++        self.assertFalse(hasattr(suite, "LECTURES"))
++
++    def test_une_ligne_longue_passe_a_la_suivante_sous_sa_colonne(self):
++        long = "Un titre sans deux-points qui dépasse la largeur de la ligne lue sur un téléphone"
++        mem = memoire_de(entree("B-0001"), titree("B-0002", long),
++                         titree("T-0001", long, "en cours", meta="besoin : B-0001"),
++                         titree("L-0001", long, "en cours", meta="après : T-0001"),
++                         titree("JA-0001", long, meta="après : B-0002"))
++        lignes = suite.texte(suite.calculer(mem)).splitlines()
++        self.assertTrue(all(len(l) <= suite.LARGEUR for l in lignes), lignes)
++        # La tête du titre se coupe à `TITRE` caractères ; l'identifiant
++        # reste collé au dernier mot.
++        self.assertEqual(lignes[3:5], [" ▶ Un titre sans deux-points qui dépasse la",
++                                       "   largeur de la ligne lue sur un… (L-0001)"])
++        self.assertTrue(lignes[5].startswith("   reste : Un titre"))
++        self.assertTrue(lignes[6].startswith("           ") and lignes[6][11] != " ")
++        etape = next(k for k, l in enumerate(lignes) if l.startswith("1. [0/1] "))
++        self.assertTrue(lignes[etape + 1].startswith("         ") and lignes[etape + 1][9] != " ")
++        besoin = next(k for k, l in enumerate(lignes) if l.startswith("         · "))
++        self.assertTrue(lignes[besoin + 1].startswith("           ") and lignes[besoin + 1][11] != " ")
++        self.assertEqual(" ".join(l.strip() for l in lignes[besoin:]), f"· {suite.court(long)} (B-0002)")
++
++    def test_l_en_tete_nomme_le_projet_et_le_jour(self):
++        s = suite.calculer(memoire_de(entree("B-0001")))
++        self.assertEqual(suite.entete("calc", JOUR), "La suite de calc — 27 novembre")
++        self.assertEqual(suite.entete("atelier", datetime.date(2026, 2, 1)), "La suite d'atelier — 1 février")
++        self.assertEqual(suite.entete("", JOUR), "La suite — 27 novembre")
++        with messages.dans("en"):
 +            self.assertEqual(suite.entete("atelier", datetime.date(2026, 8, 3)), "The roadmap of atelier — 3 August")
 +        aujourd_hui = datetime.date.today()
 +        self.assertEqual(suite.texte(s, nom="calc").splitlines()[0], suite.entete("calc", aujourd_hui))
@@ -2339,7 +2221,7 @@ index 407e5b89..7a862328 100644
  
      def test_un_titre_se_lit_jusqu_a_son_premier_deux_points_et_se_coupe_a_sa_colonne(self):
          self.assertEqual(suite.court("Fini avant les nouvelles fonctions : les lots qui restent", 46),
-@@ -567,177 +491,29 @@ class TestLesFormatsValides(unittest.TestCase):
+@@ -567,177 +443,29 @@ class TestLesFormatsValides(unittest.TestCase):
          self.assertEqual(len(suite.court("é" * 80, 46)), 46)
          self.assertEqual(suite.court(" : rien avant", 46), ": rien avant")
  
@@ -2375,10 +2257,10 @@ index 407e5b89..7a862328 100644
 -        self.assertIn("Key: ✓ done · ▶ in progress · ○ ready · ⏳ waiting · ✗ blocked · ⊘ abandoned · ↑ high priority "
 -                      "· ↓ low priority", sorties[3])
 +            for tout in (False, True):
-+                sorties += [suite.texte(maquette, tout, "Fou", JOUR), suite.markdown(maquette, tout, None, "Fou", JOUR),
++                sorties += [suite.texte(maquette, tout, "Fou", JOUR), suite.markdown(maquette, tout, "Fou", JOUR),
 +                            *(x.replace("L'entrée", "").replace("Une demande", "")
 +                              for x in (suite.texte(essai, tout, "calc", JOUR),
-+                                        suite.markdown(essai, tout, liens_factices(essai, tout), "calc", JOUR)))]
++                                        suite.markdown(essai, tout, "calc", JOUR)))]
 +            sorties.append(suite.texte(suite.calculer(memoire_de(entree("B-0001")))))
 +        self.assertIn("Warning: blocked:  B-0006 (B-0006)", sorties[2])
          for sortie in sorties:
@@ -2536,7 +2418,7 @@ index 407e5b89..7a862328 100644
  
  
  class TestCommande(Projet):
-@@ -749,39 +525,30 @@ class TestCommande(Projet):
+@@ -749,39 +477,32 @@ class TestCommande(Projet):
          self.commiter("backlog")
          code, sortie = self.socle("roadmap")
          self.assertEqual(code, 0, sortie)
@@ -2552,8 +2434,10 @@ index 407e5b89..7a862328 100644
          self.assertEqual(code, 0, sortie)
 -        self.assertIn("**B-0001 — Ajouter triple** · 0/1 · L-0001\n", sortie)
 -        self.assertIn("| ○ | T-0001 | L-0001 | Écrire triple |\n", sortie)
-+        self.assertTrue(sortie.startswith(f"**{suite.entete(self.racine.name, datetime.date.today())}**\n"), sortie)
-+        self.assertRegex(sortie, r"\n1\. `\[0/1\]` \[?Le premier jalon")
++        self.assertTrue(sortie.startswith(f"```text\n{suite.entete(self.racine.name, datetime.date.today())}\n"),
++                        sortie)
++        self.assertIn("\n         ▶ Ajouter triple (B-0001)\n", sortie)
++        self.assertTrue(sortie.rstrip("\n").endswith("\n```"), sortie)
          with contextlib.redirect_stdout(io.StringIO()) as flux:
 -            self.assertEqual(cli.cmd_roadmap(argparse.Namespace(root=str(self.racine), format="text", by="need",
 -                                                                all=False)), 0)
@@ -2595,7 +2479,7 @@ index 407e5b89..7a862328 100644
  
      def projet(self):
          from socle import config
-@@ -795,7 +562,7 @@ ETAPE_DE_LA_CI = 'run: python3 .socle/socle roadmap --format markdown >> "$GITHU
+@@ -795,7 +516,7 @@ ETAPE_DE_LA_CI = 'run: python3 .socle/socle roadmap --format markdown >> "$GITHU
  class TestDeclencheurs(Projet):
      """T-0058 : le guide, les instructions du socle, la clôture d'un lot, le
      résumé de la CI, une ligne de l'état, et le skill de l'atelier qui mène
@@ -2604,7 +2488,7 @@ index 407e5b89..7a862328 100644
  
      def test_l_etat_a_une_ligne_qui_renvoie_a_la_commande(self):
          from socle import state as etat
-@@ -803,17 +570,16 @@ class TestDeclencheurs(Projet):
+@@ -803,17 +524,16 @@ class TestDeclencheurs(Projet):
          mem = backlog_d_essai()
          bloc = etat._backlog(mem)[0][1]
          self.assertTrue(bloc[0].startswith("backlog  : "))
@@ -2626,7 +2510,7 @@ index 407e5b89..7a862328 100644
          import os
          import subprocess
          from socle.templates import gabarit
-@@ -826,7 +592,7 @@ class TestDeclencheurs(Projet):
+@@ -826,7 +546,7 @@ class TestDeclencheurs(Projet):
              # Avant la mémoire privée : rien de privé n'entre dans le résumé.
              self.assertLess(etape, ci.index("private recover"), lg)
              self.assertLess(etape, ci.index("socle ci --base"), lg)
@@ -2635,39 +2519,42 @@ index 407e5b89..7a862328 100644
          posee = (self.racine / ".github/workflows/socle.yml").read_text(encoding="utf-8")
          self.assertIn(ETAPE_DE_LA_CI, posee)
          self.poser("B-0001", titre="Ajouter triple")
-@@ -841,9 +607,10 @@ class TestDeclencheurs(Projet):
+@@ -841,9 +561,10 @@ class TestDeclencheurs(Projet):
                                  env={**env, "GITHUB_STEP_SUMMARY": str(resume)})
          self.assertEqual(sortie.returncode, 0, sortie.stderr)
          texte = resume.read_text(encoding="utf-8")
 -        self.assertTrue(texte.startswith("## La suite du projet\n"), texte)
 -        self.assertIn("**1. L-0001 — Le premier lot** · en cours · 0/1", texte)
 -        self.assertIn("| ○ | T-0001 | B-0001 | Écrire triple |", texte)
-+        self.assertTrue(texte.startswith(f"**{suite.entete(self.racine.name, datetime.date.today())}**\n"), texte)
-+        self.assertRegex(texte, r"\n- ▶ \[?Le premier lot")
-+        self.assertRegex(texte, r"\n  - reste : \[?Écrire triple")
++        self.assertTrue(texte.startswith(f"```text\n{suite.entete(self.racine.name, datetime.date.today())}\n"),
++                        texte)
++        self.assertIn("\n ▶ Le premier lot (L-0001)\n   reste : Écrire triple (T-0001)\n", texte)
 +        self.assertFalse([l for l in texte.splitlines() if l.startswith("|")], texte)
  
      def test_le_skill_socle_batch_colle_le_format_compact_au_recap_de_la_cloture(self):
          from socle import installer as installeur
-@@ -880,6 +647,42 @@ class TestDeclencheurs(Projet):
+@@ -880,6 +601,45 @@ class TestDeclencheurs(Projet):
              self.assertIn(phrase, " ".join(guide.split()), nom)
              self.assertIn("| `roadmap` |", guide, nom)
  
-+    def test_le_guide_montre_la_forme_en_ses_deux_rendus_et_une_note_de_version_le_dit(self):
-+        """Le guide, en français et en anglais, montre les deux rendus de la
-+        maquette, ses identifiants écrits `X-NNNN`, et ne parle plus de deux
++    def test_le_guide_montre_la_forme_et_une_note_de_version_le_dit(self):
++        """Le guide, en français et en anglais, montre la forme sur la
++        maquette, ses identifiants écrits `X-NNNN`, dit que `--format
++        markdown` la met dans un bloc de code, et ne parle plus de deux
 +        formats ; la note de version du changement, 2026-11-27-b, le dit, et
 +        que `--by` n'existe plus."""
 +        paquet = Path(suite.__file__).parent
++        phrases = {"fr": "Avec `--format markdown`, le même texte vient dans un bloc de code",
++                   "en": "With `--format markdown`, the same text comes in a code block"}
 +        for lg, nom in (("fr", "HELP.md"), ("en", "HELP.en.md")):
 +            guide = (paquet / nom).read_text(encoding="utf-8")
 +            s = suite.calculer(backlog_de_la_maquette(lg))
 +            with messages.dans(lg):
 +                terminal = suite.texte(s, nom="Fou", jour=JOUR)
-+                md = suite.markdown(s, liens={i: "https://…" for i in liens_factices(s)}, nom="Fou", jour=JOUR)
 +            with self.subTest(lg):
 +                self.assertIn(f"```text\n{sans_numeros(terminal)}\n```", guide)
-+                self.assertIn(f"```markdown\n{md}```", guide)
++                self.assertIn(phrases[lg], " ".join(guide.split()))
++                self.assertNotIn("```markdown", guide)
 +                for ancien in ("--by need", "--by batch", "format compact", "format détaillé", "compact format",
 +                               "detailed format", "Légende", "Key:"):
 +                    self.assertNotIn(ancien, guide)

@@ -7,8 +7,10 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 L-0050, B-0364 (D-0212, D-0214, D-0226) : le rendu A2-d de
 `engine/socle/roadmap.py`, ses tests et ce qui le dit (T-0207, T-0208)
-sont écrits dans l'arbre, non commités ; D-0227 nomme les 28 tests
-supprimés ou changés et attend Théo (J-2026-11-27-G). Enchaîner dans la
+sont écrits, gardés en correctif dans `docs/fabrication/passation-l-0050/`
+jusqu'à la réponse de Théo à D-0227, qui nomme les 28 tests supprimés ou
+changés (J-2026-11-27-G) ; le texte se donne dans un bloc de code
+(D-0228, J-2026-11-27-H). Enchaîner dans la
 même session, c'est avancer la nuit (C-0027@269a5917).
 
 ## Prochaines étapes

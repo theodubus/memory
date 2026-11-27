@@ -84,23 +84,19 @@ terminal, une ligne passe à la suivante à 48 caractères, la largeur d'un
 bloc de code sur un téléphone, sous sa propre colonne ; l'identifiant
 reste collé au dernier mot du titre.
 
-## Deux rendus d'une même forme
+## Un texte, et son bloc de code
 
 - **Le terminal** (`socle roadmap`, `--format text`, par défaut) : du
   texte brut, aligné, chaque titre suivi de son identifiant entre
   parenthèses. Une demande en attente se dit par son titre seul, sans
-  identifiant : collé dans une réponse, ce rendu ne cite aucune demande
-  sans son lien. C'est le rendu que le skill `socle-batch` colle, dans un
+  identifiant : collé dans une réponse, ce texte ne cite aucune demande
+  sans son lien. C'est le texte que le skill `socle-batch` colle, dans un
   bloc de code, au récap de la clôture d'un lot.
-- **La conversation et le résumé de la CI** (`--format markdown`) : les
-  mêmes lignes en Markdown, sans identifiant affiché. Chaque titre est un
-  lien vers son entrée (le permalien de `socle url`) ; le compte `[K/N]`
-  est dans un code en ligne, en police fixe, ce qui garde les titres
-  alignés ; les besoins dépliés sont une liste imbriquée. Chaque demande
-  en attente est un lien.
-
-Les deux rendus disent la même chose dans le même ordre : seul le moyen
-de désigner une entrée change.
+- **La conversation et le résumé de la CI** (`--format markdown`) : le
+  même texte, dans un bloc de code, où il garde son alignement. Une
+  première version le rendait en Markdown, chaque titre un lien, en
+  listes imbriquées ; sur le téléphone, ce rendu n'était pas lisible, et
+  Théo l'a écarté pour le bloc de texte (D-0228).
 
 ## Ce qui disparaît
 
@@ -120,9 +116,9 @@ une option inconnue.
   court ne la contredit plus (le second critère de B-0364).
 - **`FORMAT.md`** prend pour exemple de consigne un autre sujet que le
   format de la feuille de route.
-- **Le guide** montre la forme, en ses deux rendus.
-- **La CI posée** écrit le rendu Markdown dans le résumé de son
-  exécution, comme aujourd'hui.
+- **Le guide** montre la forme, et dit son bloc de code.
+- **La CI posée** écrit le bloc de code dans le résumé de son
+  exécution, par la même commande qu'aujourd'hui.
 - **Une note de version**, française et anglaise, et son point au prompt
   de la mise à jour de chess.
 
@@ -142,6 +138,6 @@ Les tests nouveaux prouvent, en français et en anglais : l'ordre des
 quatre parties ; l'alignement des crochets et des titres, un total à deux
 chiffres compris ; le seul premier jalon déplié, et `--all` ; les trois
 marques d'un besoin ; le travail hors jalon sous « Maintenant » et nulle
-part ailleurs ; aucun identifiant de demande dans le rendu du terminal,
-un lien pour chaque demande dans le rendu Markdown ; aucune ligne vide de
-« Pour toi » ou de « En réserve » ; aucun tableau.
+part ailleurs ; aucun identifiant de demande, ni dans le texte ni dans
+son bloc de code ; aucune ligne vide de « Pour toi » ou de « En
+réserve » ; aucun tableau.
