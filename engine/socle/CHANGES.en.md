@@ -14,6 +14,20 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-27-f — The state says at its top that a new session is behind the handoff waiting for it
+
+A new session that starts on a commit older than the waiting handoff's
+(the default branch when the handoff is on a work branch, a stale copy)
+read its earlier instructions, skills, hooks and memory, with nothing to
+say so before the guard. When the local head is a strict ancestor of the
+branch that carries the handoff, `socle state` now says so at its top,
+before everything else, with the instructions, skills and hooks files
+(`AGENTS.md`, `CLAUDE.md`, `.claude/`) that change between the two and
+the `git diff` command that shows them. The `socle-handoff` skill has the
+session read what changes, once placed, before any other work.
+
+To do: nothing.
+
 ## 2026-11-27-e — A fix that touches only the documentation and the memory is no longer judged by `tests.regression`
 
 A commit whose subject follows the fix pattern ("Correction: …",

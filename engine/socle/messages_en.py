@@ -2819,6 +2819,8 @@ MESSAGES: dict[str, str] = {
         "fast steps longer than their one-second threshold, run by the pre-push hook",
     "correctif sans test de régression":
         "fix without a regression test",
+    "correctif de la documentation qui touche aussi un fichier qu'aucun adaptateur ne juge, sans test":
+        "fix of the documentation that also touches a file no adapter judges, without a test",
     "correctif dont le `Corrige:` est hors du dernier paragraphe du message, sans test de régression":
         "fix whose `Corrige:` is outside the last paragraph of the message, without a regression test",
     "test de régression qui échoue sur le parent faute de s'y charger":
@@ -3177,6 +3179,8 @@ MESSAGES: dict[str, str] = {
         "a complete change passes the end of turn, the commit and the CI",
     "un correctif avec son test de régression passe la CI":
         "a fix with its regression test passes the CI",
+    "un correctif de la seule documentation, avec la mémoire, passe la CI sans test":
+        "a fix of the documentation alone, with the memory, passes the CI without a test",
     "un correctif dont le `Corrige:` est hors du dernier paragraphe du message, avec son test de régression, passe la CI":
         "a fix whose `Corrige:` is outside the last paragraph of the message, with its regression test, passes the CI",
     "un commit sans hooks dans un dépôt jetable, hors du projet, passe le hook de l'agent":
@@ -4231,6 +4235,20 @@ MESSAGES: dict[str, str] = {
         "{distant}` first",
     "passation : en attente sur {ref}, écrite à {heure} — une demande de reprendre (« reprends ») la reprend":
         "handoff: waiting on {ref}, written at {heure} — a request to resume (\"resume\") resumes it",
+    "!! passation : retard de la tête locale incalculable ({erreur})":
+        "!! handoff: lag of the local head cannot be computed ({erreur})",
+    "les instructions, les skills et les hooks chargés au démarrage sont ceux d'avant, et changent dans {liste} : "
+    "avant tout travail, lire ce qui change (`git diff {tete} {ref} -- {chemins}`)":
+        "the instructions, skills and hooks loaded at startup are the earlier ones, and change in {liste}: before "
+        "any work, read what changes (`git diff {tete} {ref} -- {chemins}`)",
+    "aucun fichier d'instructions, de skills ni de hooks ne change entre les deux":
+        "no instructions, skills or hooks file changes between the two",
+    "!! LA TÊTE LOCALE ({tete}) EST EN RETARD SUR {ref}, qui porte la passation en attente : la mémoire lue ici est "
+    "celle d'avant ; {lus}. La reprise se place sur la référence que la garde nomme (`socle handoff check`, après "
+    "`git fetch`).":
+        "!! THE LOCAL HEAD ({tete}) IS BEHIND {ref}, which carries the waiting handoff: the memory read here is the "
+        "earlier one; {lus}. The resumption moves onto the reference the guard names (`socle handoff check`, after "
+        "`git fetch`).",
     "passation : illisible ({erreur})":
         "handoff: unreadable ({erreur})",
     "--head {tete} est introuvable dans ce clone : `git fetch {distant}` d'abord ; sinon, la branche a été réécrite "

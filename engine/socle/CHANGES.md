@@ -15,6 +15,21 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-27-f — L'état dit en tête qu'une session neuve est en retard sur la passation qui l'attend
+
+Une session neuve qui démarre sur un commit plus ancien que celui de la
+passation en attente (la branche par défaut quand la passation est sur
+une branche de travail, une copie périmée) lisait ses instructions, ses
+skills, ses hooks et sa mémoire d'avant, sans rien qui le dise avant la
+garde. Quand la tête locale est un ancêtre strict de la branche qui porte
+la passation, `socle state` le dit désormais en tête, avant tout le
+reste, avec les fichiers d'instructions, de skills et de hooks
+(`AGENTS.md`, `CLAUDE.md`, `.claude/`) qui changent entre les deux et la
+commande `git diff` qui les montre. Le skill `socle-handoff` fait lire ce
+qui change, une fois la session placée, avant tout autre travail.
+
+À faire : rien.
+
 ## 2026-11-27-e — Un correctif qui ne touche que la documentation et la mémoire n'est plus jugé par `tests.regression`
 
 Un commit dont le sujet suit le motif d'un correctif (« Correction : … »,

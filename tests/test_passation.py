@@ -394,6 +394,51 @@ class TestTrouver(Depots):
                       f"memory/ (le dernier : {sha[:10]} une autre session) : une autre session a travaillé sur le "
                       "projet depuis la passation", refus[0])
 
+    def test_une_tete_en_retard_sur_la_passation_le_dit_en_tete_de_l_etat(self):
+        """B-0374 : la session neuve part de `main` quand la passation porte
+        des instructions et un skill plus récents ; l'état le dit avant tout,
+        avec les fichiers qui changent et la commande qui les montre."""
+        commiter(self.partante, "les instructions", {"AGENTS.md": "# Projet\n\nUne règle nouvelle.\n",
+                                                      ".claude/skills/lire/SKILL.md": "---\nname: lire\n---\n",
+                                                      "app.py": "print('nouveau')\n"}, date=AVANT)
+        self.passer()
+        self.trouver()
+        projet = self.projet(self.dossier / "neuve")
+        main = git(self.dossier / "neuve", "rev-parse", "HEAD").strip()
+        self.assertEqual(passation.retard(projet),
+                         ("origin/travail", main, [".claude/skills/lire/SKILL.md", "AGENTS.md"]))
+        sortie = etat.calculer(projet, contenus=False)
+        alerte = (f"!! LA TÊTE LOCALE ({main[:10]}) EST EN RETARD SUR origin/travail, qui porte la passation en "
+                  "attente : la mémoire lue ici est celle d'avant ; les instructions, les skills et les hooks chargés "
+                  "au démarrage sont ceux d'avant, et changent dans `.claude/skills/lire/SKILL.md`, `AGENTS.md` : "
+                  f"avant tout travail, lire ce qui change (`git diff {main[:10]} origin/travail -- AGENTS.md "
+                  "CLAUDE.md .claude/`). La reprise se place sur la référence que la garde nomme (`socle handoff "
+                  "check`, après `git fetch`).")
+        self.assertTrue(sortie.startswith(alerte), sortie[:600])
+        self.assertLess(sortie.index(alerte), sortie.index("== neuve — état dérivé"))
+
+    def test_sans_instructions_changees_l_alerte_le_dit(self):
+        self.passer()
+        self.trouver()
+        projet = self.projet(self.dossier / "neuve")
+        self.assertEqual(passation.retard(projet)[2], [])
+        self.assertIn("aucun fichier d'instructions, de skills ni de hooks ne change entre les deux",
+                      passation.alerte_retard(projet))
+
+    def test_sans_retard_l_etat_n_en_dit_rien(self):
+        """Placée sur la passation, ou sur une branche par défaut qui la
+        contient après la fusion, la tête n'est pas en retard."""
+        self.passer()
+        neuve = self.clone("neuve")
+        git(neuve, "checkout", "-q", "-B", "travail", "origin/travail")
+        self.assertIsNone(passation.retard(self.projet(neuve)))
+        self.assertNotIn("EST EN RETARD SUR", etat.calculer(self.projet(neuve), contenus=False))
+        self.fusionner()
+        git(neuve, "fetch", "-q", "origin")
+        git(neuve, "checkout", "-q", "-B", "main", "origin/main")
+        self.assertIsNone(passation.retard(self.projet(neuve)))
+        self.assertIsNone(passation.alerte_retard(self.projet(neuve)))
+
     def test_la_ligne_de_l_etat(self):
         self.passer()
         self.trouver()

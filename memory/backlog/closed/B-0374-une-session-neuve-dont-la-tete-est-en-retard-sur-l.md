@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0374 — Une session neuve dont la tête est en retard sur la passation qui l'attend ne le sait pas : l'état injecté ne le dit pas
 
-> statut : ouvert · origine : J-2026-11-27-U · ref : D-0235 · lu : backlog@4d53be09
+> statut : fait · origine : J-2026-11-27-U · ref : D-0235, T-0213, J-2026-11-27-W · lu : backlog@4d53be09
 
 Chez chess (`docs/fabrication/chess/cout-et-frictions-2026-11-26.md`, §7), le 26 au soir, une session programmée a
 démarré sur un commit vieux de trois heures, ses instructions, ses skills
@@ -18,6 +18,6 @@ diff avant tout travail. L'état n'écrit rien.
 
 ## Satisfait quand
 
-- [ ] quand une passation attend sur une référence dont la tête locale est un ancêtre strict, l'état le dit en tête, avec les fichiers d'instructions, de skills et de hooks qui changent entre les deux
-- [ ] sans écart, l'état n'en dit rien
-- [ ] le skill de passation fait lire ce diff avant tout travail
+- [x] quand une passation attend sur une référence dont la tête locale est un ancêtre strict, l'état le dit en tête, avec les fichiers d'instructions, de skills et de hooks qui changent entre les deux
+- [x] sans écart, l'état n'en dit rien
+- [x] le skill de passation fait lire ce diff avant tout travail
