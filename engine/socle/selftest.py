@@ -2899,6 +2899,18 @@ def _cas() -> list[Cas]:
                 f"\n## {a.journal[:-1]}B — Constat\n\nSelon C-0001@{perimee}, rien à ajouter au module.\n")
         return etage_git(a, c)
 
+    @defaut("consigne-d-avant-la-plage-citee-sans-empreinte", "consigne d'avant la plage citée sans son empreinte "
+            "dans le commit qui en pose une autre", "git", "memoire.lectures")
+    def _(a, c):
+        # B-0372 : seule la consigne née dans la plage s'y cite sans
+        # empreinte ; celle de la base reste exigée avec la sienne.
+        _consigne_en_base(a, c)
+        ajouter(c, "memory/directives.md", _consigne(a, "C-0002").replace("reste sans dépendance",
+                                                                          "reste en un seul fichier"))
+        ajouter(c, "memory/journal/" + a.journal[2:9] + ".md",
+                f"\n## {a.journal[:-1]}B — Constat\n\nThéo pose C-0002, qui s'ajoute à C-0001.\n")
+        return etage_git(a, c)
+
     @defaut("consigne-resume-trop-long", "consigne dont la ligne de résumé dépasse 120 octets", "git", "memoire.format")
     def _(a, c):
         ajouter(c, "memory/directives.md", _consigne(a).replace(
@@ -4109,6 +4121,14 @@ def _temoins() -> list[tuple[str, Callable]]:
                 f"\n## {a.journal[:-1]}B — Constat\n\nSelon C-0001@{empreinte(a, c, 'C-0001')}, rien à ajouter "
                 "au module.\n")
         return etage_git(a, c)
+
+    @temoin("une consigne posée dans la plage, citée sans son empreinte dans le journal du même commit, passe le "
+            "commit et la CI (B-0372)")
+    def _(a, c):
+        ajouter(c, "memory/directives.md", _consigne(a))
+        ajouter(c, "memory/journal/" + a.journal[2:9] + ".md",
+                f"\n## {a.journal[:-1]}B — Constat\n\nThéo pose C-0001 : rien à ajouter au module.\n")
+        return etage_git(a, c) or etage_ci(a, c)
 
     @temoin("une consigne levée par la parole de l'humain, consignée en séance, puis rangée par `socle archive`, "
             "passe la CI")

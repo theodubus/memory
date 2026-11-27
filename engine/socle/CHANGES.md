@@ -41,6 +41,26 @@ correction d'un texte : `tests.regression` l'avertit désormais,
 « correctif qui ne touche que la documentation et la mémoire : non
 jugé », comme un correctif qui ne touche que la mémoire. Un correctif qui
 touche aussi un autre fichier reste jugé comme avant.
+
+
+À faire : rien.
+
+## 2026-11-27-d — Une consigne née dans la plage s'y cite sans empreinte, et trois refus disent leur correction
+
+Une consigne de l'humain citée sans son empreinte était refusée par
+`memoire.lectures`, même dans le commit qui la crée, et le refus
+renvoyait à `socle show` sans donner l'empreinte qu'il connaît. Une
+consigne née dans la plage jugée (absente de sa base) s'y cite désormais
+sans empreinte ; une consigne d'avant la plage reste exigée avec la
+sienne, et son refus donne l'empreinte de sa version actuelle à citer.
+Le hook de l'agent juge comme avant, et deux de ses refus en disent
+plus : l'écriture d'un fichier protégé par le shell dit que `rm <chemin>`
+ne vaut que pour un fichier que git ne suit pas ; un écrivain qu'il ne
+sait pas lire (un script de python dans un heredoc) qui cite un chemin
+protégé dit qu'un tel texte s'écrit par l'outil d'écriture.
+
+À faire : rien.
+
 ## 2026-11-27-c — Le refus des liens donne le chemin complet d'un nom nu, et le message qui ne corrige que les liens d'un récap refusé n'a plus à le redire
 
 Un nom entre accents graves qui n'est pas un chemin du dépôt faisait

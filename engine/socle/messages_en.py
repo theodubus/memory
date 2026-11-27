@@ -181,9 +181,11 @@ MESSAGES: dict[str, str] = {
     "{chemin}, que git trouve par la fin de son chemin, `{mot}`":
         "{chemin}, which git finds by the end of its path, `{mot}`",
     "{chemin}, cité par `{qui}`, un écrivain que le hook ne sait pas lire : il peut l'écrire ; un fichier protégé "
-    "se lit par `cat` ou par l'outil de lecture":
+    "se lit par `cat` ou par l'outil de lecture, et un texte qui cite un chemin protégé s'écrit par l'outil "
+    "d'écriture":
         "{chemin}, cited by `{qui}`, a writer the hook cannot read: it may write it; a protected file is read with "
-        "`cat` or the file-reading tool",
+        "`cat` or the file-reading tool, and a text that cites a protected path is written with the file-writing "
+        "tool",
     "`{mot}`, dont {parts}":
         "`{mot}`, including {parts}",
     "`{mot}`, dans le dossier `{dossier}`":
@@ -225,10 +227,11 @@ MESSAGES: dict[str, str] = {
         "{n} parentheses or braces open at once, beyond {max}",
     "écriture d'un fichier protégé ({cible}) par le shell : seul l'humain modifie la politique, les hooks, la CI et "
     "le moteur (relance de l'installeur). Un fichier protégé changé par erreur, hors des réglages de Claude Code, se "
-    "remet à son état du dernier commit : {formes} (D-0098).":
+    "remet à son état du dernier commit : {formes}, ce dernier pour un fichier que git ne suit pas (D-0098).":
         "write to a protected file ({cible}) through the shell: only the human changes the policy, the hooks, the CI "
         "and the engine (by running the installer again). A protected file changed by mistake, except Claude Code's "
-        "settings, is put back as it was at the last commit: {formes} (D-0098).",
+        "settings, is put back as it was at the last commit: {formes}, the last one for a file git does not track "
+        "(D-0098).",
     "remise en état d'un fichier protégé refusée ({pourquoi}). Seule passe la remise d'un fichier protégé changé par "
     "erreur, hors des réglages de Claude Code, à son état du dernier commit, chaque chemin écrit en toutes lettres : "
     "{formes}, ce dernier pour un fichier que git ne suit pas (D-0098). Le reste revient à l'humain.":
@@ -4409,9 +4412,10 @@ MESSAGES: dict[str, str] = {
         "`{id}` without the human's exact text: the body quotes it word for word, on a `>` line separated from the "
         "metadata line by a blank line",
     "`{ident}`, une consigne de l'humain, cité sans son empreinte : son texte exact se lit avant de s'appuyer sur "
-    "elle, `python3 .socle/socle show {ident}`, et se cite `{ident}@<empreinte>`, l'empreinte affichée":
+    "elle, `python3 .socle/socle show {ident}`, et se cite `{ident}@{h}`, l'empreinte de sa version actuelle":
         "`{ident}`, a directive of the human, cited without its fingerprint: its exact text is read before relying "
-        "on it, `python3 .socle/socle show {ident}`, and it is cited `{ident}@<fingerprint>`, the fingerprint shown",
+        "on it, `python3 .socle/socle show {ident}`, and it is cited `{ident}@{h}`, the fingerprint of its current "
+        "version",
     "`{id}` levée sans `levée-par : D-NNNN` — une consigne ne se lève que par la parole de l'humain : une demande "
     "qu'il a validée, en séance comme en file":
         "`{id}` lifted without `lifted-by : D-NNNN` — a directive is only lifted by the human's word: a request they "
@@ -4442,6 +4446,8 @@ MESSAGES: dict[str, str] = {
     # L'auto-test de la couche des consignes (B-0161).
     "consigne de l'humain citée dans le journal sans son empreinte":
         "human's directive cited in the journal without its fingerprint",
+    "consigne d'avant la plage citée sans son empreinte dans le commit qui en pose une autre":
+        "directive from before the range cited without its fingerprint in the commit that adds another one",
     "consigne de l'humain citée dans le journal sous une empreinte périmée":
         "human's directive cited in the journal under a stale fingerprint",
     "consigne dont la ligne de résumé dépasse 120 octets": "directive whose summary line exceeds 120 bytes",
@@ -4460,6 +4466,10 @@ MESSAGES: dict[str, str] = {
     "le commit":
         "a directive cited in the journal under the fingerprint of its current version, its summary line rewritten, "
         "passes the commit",
+    "une consigne posée dans la plage, citée sans son empreinte dans le journal du même commit, passe le commit et la "
+    "CI (B-0372)":
+        "a directive added in the range, cited without its fingerprint in the journal of the same commit, passes the "
+        "commit and the CI (B-0372)",
     "une consigne levée par la parole de l'humain, consignée en séance, puis rangée par `socle archive`, passe la CI":
         "a directive lifted by the human's word, recorded in session, then moved by `socle archive`, passes the CI",
     "une consigne nouvelle posée par `socle new directive`, sa source et le texte exact écrits, passe le commit, et "

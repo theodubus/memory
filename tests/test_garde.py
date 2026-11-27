@@ -783,6 +783,19 @@ class TestGarde(unittest.TestCase):
             with self.subTest(cmd):
                 self.assertIsNone(hooks.refus_bash(self.projet, cmd))
 
+    def test_les_refus_d_un_fichier_protege_disent_leur_correction(self):
+        """B-0372 : chez chess, une faute coûtait trois refus, le premier ne
+        disant pas que `rm` ne vaut que pour un fichier que git ne suit pas ;
+        et un heredoc de python qui cite `.socle/socle` dans un texte restait
+        refusé sans dire comment écrire ce texte. Le hook juge comme avant."""
+        raison = hooks.refus_bash(self.projet, "echo x > .socle/policy.toml") or ""
+        self.assertIn("écriture d'un fichier protégé", raison)
+        self.assertIn("`rm <chemin>`, ce dernier pour un fichier que git ne suit pas (D-0098)", raison)
+        cite = "python3 - <<'EOF'\nTEXTE = 'lancer python3 .socle/socle state'\nprint(TEXTE)\nEOF"
+        raison = hooks.refus_bash(self.projet, cite) or ""
+        self.assertIn(".socle/socle, cité par `python3 <<`, un écrivain que le hook ne sait pas lire", raison)
+        self.assertIn("et un texte qui cite un chemin protégé s'écrit par l'outil d'écriture", raison)
+
     def test_cp_t_find_xargs_bash_ec_sort_o_et_python_c(self):
         """B-0206 : ces écritures d'un fichier protégé passaient le hook ;
         `python -c` et `xargs` se jugent par les chemins protégés qu'ils

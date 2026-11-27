@@ -38,6 +38,26 @@ admitted it. No test can prove the correction of a text:
 `tests.regression` now warns, "fix that touches only the documentation
 and the memory: not judged", as for a fix that touches only the memory.
 A fix that also touches another file is judged as before.
+
+
+To do: nothing.
+
+## 2026-11-27-d — A directive created in the range is cited there without a fingerprint, and three refusals give their fix
+
+A human's directive cited without its fingerprint was refused by
+`memoire.lectures`, even in the commit that creates it, and the refusal
+pointed to `socle show` without giving the fingerprint it knows. A
+directive created in the judged range (absent from its base) is now
+cited there without a fingerprint; a directive from before the range is
+still required with its own, and its refusal gives the fingerprint of
+its current version to cite. The agent's hook judges as before, and two
+of its refusals say more: a shell write to a protected file says that
+`rm <path>` only holds for a file git does not track; a writer it cannot
+read (a python script in a heredoc) that cites a protected path says
+that such a text is written with the file-writing tool.
+
+To do: nothing.
+
 ## 2026-11-27-c — The links refusal gives the full path of a bare name, and the message that only fixes the links of a refused recap no longer has to repeat it
 
 A name between backticks that is not a path of the repository made the

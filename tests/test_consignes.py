@@ -274,6 +274,37 @@ class TestLecturesProuvees(Depot):
         self.assertIn("`C-0002`, une consigne de l'humain, cité sans son empreinte", erreurs[0])
         self.assertIn("`python3 .socle/socle show C-0002`", erreurs[0])
 
+    def test_le_refus_donne_l_empreinte_a_citer(self):
+        """B-0372 : le refus renvoyait à `socle show` sans donner l'empreinte
+        qu'il connaît."""
+        self.entree_de_journal("Selon C-0002, la roadmap est courte.")
+        erreurs = self.lectures()
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertIn(f"se cite `C-0002@{self.empreinte('C-0002')}`, l'empreinte de sa version actuelle", erreurs[0])
+
+    def test_une_consigne_nee_dans_la_plage_s_y_cite_sans_empreinte(self):
+        """B-0372 : chez chess, une consigne citée sans empreinte dans le
+        commit qui la crée était refusée deux fois ; l'agent venait de
+        l'écrire. Une consigne d'avant la plage reste exigée avec elle."""
+        self.directives.write_text(self.directives.read_text() + consigne(3, "Les messages en français"))
+        self.entree_de_journal("Théo pose C-0003.")
+        self.assertEqual(self.lectures(), [])
+        # Commitée après la base, elle est encore dans la plage jugée.
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "la consigne C-0003")
+        self.entree_de_journal("Théo pose C-0003, qui suit C-0002.")
+        erreurs = self.lectures()
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertIn("`C-0002`, une consigne de l'humain, cité sans son empreinte", erreurs[0])
+        # Dans la plage suivante, elle est d'avant : son empreinte est exigée.
+        self.base = git(self.racine, "rev-parse", "HEAD").strip()
+        git(self.racine, "checkout", "-q", "--", "memory/journal")
+        self.journal.write_text(self.journal.read_text()
+                                + "\n## J-2026-11-21-A — Suite\n\nSelon C-0003, les messages sont en français.\n")
+        erreurs = self.lectures()
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertIn("`C-0003`, une consigne de l'humain, cité sans son empreinte", erreurs[0])
+
     def test_une_consigne_citee_avec_son_empreinte_actuelle_passe(self):
         self.entree_de_journal(f"Selon C-0002@{self.empreinte('C-0002')}, la roadmap est courte.")
         self.assertEqual(self.lectures(), [])

@@ -1424,7 +1424,8 @@ def _cites(projet: config.Projet, c: commandes.Commande, texte: str, qui: str, c
         if cible:
             res.append(("protege", trad("{chemin}, cité par `{qui}`, un écrivain que le hook ne sait pas lire : il "
                                         "peut l'écrire ; un fichier protégé se lit par `cat` ou par l'outil de "
-                                        "lecture", chemin=cible, qui=qui)))
+                                        "lecture, et un texte qui cite un chemin protégé s'écrit par l'outil "
+                                        "d'écriture", chemin=cible, qui=qui)))
         if REGLAGES_AGENT.search(plein):
             res.append(("reglage", rel))
     return res
@@ -2439,7 +2440,7 @@ def refus_bash(projet: config.Projet, cmd: str, cwd: str | None = None) -> str |
         return trad("écriture d'un fichier protégé ({cible}) par le shell : seul l'humain modifie la "
                     "politique, les hooks, la CI et le moteur (relance de l'installeur). Un fichier protégé "
                     "changé par erreur, hors des réglages de Claude Code, se remet à son état du dernier "
-                    "commit : {formes} (D-0098).", cible=cible,
+                    "commit : {formes}, ce dernier pour un fichier que git ne suit pas (D-0098).", cible=cible,
                     formes=", ".join(REMISE_FORMES))
     return None
 
