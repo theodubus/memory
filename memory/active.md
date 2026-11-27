@@ -8,9 +8,8 @@ Réécrit et borné ; ce qui en sort va au journal.
 L-0050, B-0364 (D-0212, D-0214, D-0225) : la spécification écrite,
 `docs/fabrication/feuille-de-route-specification.md` ; T-0207, le rendu
 A2-d de `engine/socle/roadmap.py` et ses tests, puis T-0208, ce qui dit
-la feuille de route. Rangé avant le code : la semaine à 83 %, le contexte
-au-delà de 240 000 jetons (J-2026-11-27-E). Théo choisit quand reprendre,
-dans cette session.
+la feuille de route. Repris après le compactage, sur D-0226 : enchaîner
+dans la même session, c'est avancer la nuit (C-0027@269a5917, J-2026-11-27-F).
 
 ## Prochaines étapes
 

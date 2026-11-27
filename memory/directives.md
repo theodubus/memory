@@ -308,3 +308,11 @@ Les consignes durables de Théo, chacune avec son texte exact relu à sa source 
 > Valider D120
 
 — D-0210, la seule demande alors en attente : le seuil de contexte baissé de 300 000 à 150 000 jetons, sur les mesures de l'usage.
+
+## C-0027 — Enchaîner dans la même session, c'est pour gagner du temps la nuit
+
+> statut : en vigueur · source : D-0226, J-2026-11-27-F · date : 2026-11-27
+
+> Dommage, quand j'ai dit que je voulais que tu fasses le format roadmap dans cette session c'était pour gagner du temps dans la nuit pas grave fais le maintenant
+
+— D-0226 : la session avait rangé avant le code de B-0364, sur D-0225 (« Enchaine avec B0364 dans la meme session »), en lui laissant le choix de reprendre après un compactage ou lundi.
