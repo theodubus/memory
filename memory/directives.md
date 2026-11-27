@@ -323,3 +323,17 @@ Les consignes durables de Théo, chacune avec son texte exact relu à sa source 
 > C'est quand on est en mode manuel sur les enchaînements de sessions mais que ponctuellement j'ai envie que ça avance sans mon intervention si possible
 
 — D-0229 : sa correction de C-0027@269a5917, dont la ligne de résumé disait « pour gagner du temps la nuit ».
+
+## C-0029 — Le jalon de chess prend ses retours, revus de façon critique ; surveiller la convergence
+
+> statut : en vigueur · source : D-0238 · date : 2026-11-27
+
+> 1. Le jalon continue de les prendre, 
+> C'est normal qu'on ait des retours imprévus, on a que travaillé côté socle pendant un long moment sans l'appliquer, avoir un certain nombre de correctifs à faire lors d'une adoption réelle est attendu 
+> Mais tu as raison sur le fait qu'il faut surveiller la convergence
+>
+> Pour l'instant on continue tel quel, on termine les corrections et besoins du jalon, on met a jour chess et on prend les éventuels retours (revus de facon critique)
+>
+> Si on se rend compte a terme que c'est infini on prendra des mesures a ce moment là 
+
+— D-0238 : sa réponse au point 1 de la revue de cap 11, qui proposait de clore JA-0006 au retour de la mise à jour de chess.

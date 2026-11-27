@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0238-point-1-de-la-revue-de-cap-11-dire-avant-le-prompt.md, dont l'empreinte suit.
+reponse = "refuser"
+texte = ""
+par = "Théo"
+date = "2026-11-27"
+canal = "conversation"
+citation = "1. Le jalon continue de les prendre, \nC'est normal qu'on ait des retours imprévus, on a que travaillé côté socle pendant un long moment sans l'appliquer, avoir un certain nombre de correctifs à faire lors d'une adoption réelle est attendu \nMais tu as raison sur le fait qu'il faut surveiller la convergence\n\nPour l'instant on continue tel quel, on termine les corrections et besoins du jalon, on met a jour chess et on prend les éventuels retours (revus de facon critique)\n\nSi on se rend compte a terme que c'est infini on prendra des mesures a ce moment là"
+empreinte = "sha256:1153d9869157463b96e2cfd27d6d12ca4d56405e1790c60efc63ed162522504e"

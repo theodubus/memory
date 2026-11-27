@@ -5,11 +5,10 @@ Réécrit et borné ; ce qui en sort va au journal.
 
 ## En cours
 
-La revue de cap 11 est faite (J-2026-11-27-AH) : deux suggestions
-posées à Théo, dire où s'arrête JA-0006 avant le prompt de chess, et
-demander à chess dans ce prompt la mesure d'après que D-0233 a retenue.
-Sa réponse se consigne en séance ; T-0218 se mène en attendant, ni l'une
-ni l'autre ne la touchant. Le mode est le prompt à copier (D-0173).
+La revue de cap 11 est faite (J-2026-11-27-AH) et répondue
+(J-2026-11-27-AI) : la suggestion 1 écartée (D-0238), la 2 retenue
+(D-0239). L-0054, T-0218 seule, est en cours. Le mode est le prompt à
+copier (D-0173).
 
 ## Prochaines étapes
 
@@ -25,5 +24,7 @@ point 12, que les `après` tiennent :
    quelques octets de sa marge exigée.
 3. B-0365 à découper, sous sa condition ; B-0368 ; puis le prompt de
    mise à jour de chess (`docs/fabrication/chess/prompt-mise-a-jour.md`),
-   qui reçoit les notes 2026-11-27-c à -g.
+   qui reçoit les notes 2026-11-27-c à -g, et T-0219 : le relevé
+   d'après demandé à chess (B-0383, D-0239). Ses retours, JA-0006 les
+   prend, revus de façon critique (C-0029@4ec7bc8f).
 4. Après JA-0006 : B-0101, JA-0003, B-0104, B-0158, B-0188, B-0369.
