@@ -1,6 +1,6 @@
 <!-- socle: couche=passation zone=publique -->
 # Passation
 
-> écrite : 2026-11-27T16:41:35Z · branche : ccr-b405cb9a-9akpxq · chaîne : 0
+> écrite : 2026-11-27T17:35:04Z · branche : ccr-186270ae-urq0bo · chaîne : 0
 
-Ce qui attend : la fusion de la pull request de L-0054 par la session d'avant, après sa CI ; puis le lot des textes, T-0215 à T-0217 (étape 1 du chantier actif).
+Ce qui attend : la fusion de la pull request de L-0055 par la session d'avant, après sa CI ; puis B-0365 à découper sous sa condition, et B-0368 (étape 1 du chantier actif).

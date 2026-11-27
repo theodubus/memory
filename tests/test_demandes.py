@@ -416,6 +416,28 @@ class TestLignesDEmpreinte(unittest.TestCase):
         self.assertTrue(lignes[questions + 1].startswith("- « Éléments cités »"))
         self.assertIn("la réponse libre du gabarit, `reponses`", suite)
 
+    def test_le_contrat_dit_de_nommer_la_cle_ou_le_test_que_la_demande_couvre(self):
+        """T-0217 (B-0370, D-0235, point 9) : une demande validée n'autorise
+        que la clé des garde-fous ou le test qu'elle nomme ; le contrat que
+        `socle new request` imprime le dit, en une ligne, dans les deux
+        langues, et sa clé d'exemple a la forme que lit `gestes_nommes`."""
+        from socle import checks_ratchet as cliquet, cli, messages
+
+        sortie = io.StringIO()
+        with contextlib.redirect_stdout(sortie):
+            self.assertEqual(cli.main(["--root", str(self.racine), "new", "request", "Relever un plafond"]), 0)
+        lignes = [l for l in sortie.getvalue().splitlines() if "assouplit un garde-fou" in l]
+        self.assertEqual(lignes, ["- une demande qui assouplit un garde-fou ou change une valeur attendue nomme, "
+                                  "dans son texte, chaque clé des garde-fous (`budgets.\"<fichier>\".max_bytes`) "
+                                  "ou fonction de test qu'elle couvre : sa validation n'autorise que ce qu'elle "
+                                  "nomme ;"])
+        self.assertEqual(cliquet._cle(("budgets", "<fichier>", "max_bytes")), 'budgets."<fichier>".max_bytes')
+        with messages.dans("en"):
+            anglais = str(demandes.contrat(self.projet, "memory/requests/D-0001-x.md"))
+        self.assertIn("- a request that relaxes a guardrail or changes an expected value names, in its text, each "
+                      "guardrail key (`budgets.\"<file>\".max_bytes`) or test function it covers: its approval "
+                      "authorizes only what it names;", anglais)
+
 
 class TestUneDemandeQuiAutorise(unittest.TestCase):
     """D-0040 (B-0081) : une demande aux réponses `tout`, `compatibilite-seule`

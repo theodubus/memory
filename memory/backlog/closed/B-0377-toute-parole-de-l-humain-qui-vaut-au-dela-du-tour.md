@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0377 — Toute parole de l'humain qui vaut au-delà du tour devient une consigne, même une décision de projet ou une attente
 
-> statut : ouvert · origine : J-2026-11-27-U · ref : D-0235 · après : B-0375 · lu : backlog@4d53be09
+> statut : fait · origine : J-2026-11-27-U · ref : D-0235, ce commit · après : B-0375 · lu : backlog@4d53be09
 
 Chez chess (`docs/fabrication/chess/cout-et-frictions-2026-11-26.md`, §8), deux paroles rangées en consignes le 26
 novembre : une décision de projet et une attente. Une consigne s'injecte
@@ -15,4 +15,4 @@ attente en besoin bloqué.
 
 ## Satisfait quand
 
-- [ ] la section installée et le skill `socle-request` rangent la parole de l'humain selon sa nature : une règle de travail en consigne, une décision en décision, une attente en besoin bloqué
+- [x] la section installée et le skill `socle-request` rangent la parole de l'humain selon sa nature : une règle de travail en consigne, une décision en décision, une attente en besoin bloqué
