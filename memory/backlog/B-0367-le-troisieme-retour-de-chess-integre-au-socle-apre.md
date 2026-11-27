@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0367 — Le troisième retour de chess, intégré au socle après les retours précédents, le format de la feuille de route et le tri du backlog
 
-> statut : ouvert · origine : J-2026-11-26-AJ · ref : D-0216, D-0217 · après : B-0357, B-0358, B-0359, B-0360, B-0361, B-0362, B-0363, B-0364, B-0365, B-0366 · lu : backlog@0f548814
+> statut : ouvert · origine : J-2026-11-26-AJ · ref : D-0216, D-0217, D-0232, D-0233, D-0234 · après : B-0357, B-0358, B-0359, B-0360, B-0361, B-0362, B-0363, B-0364, B-0366 · lu : backlog@0f548814
 
 Sur la décision de Théo du 26 novembre (D-0216), mot pour mot :
 
@@ -27,6 +27,14 @@ critique, gêne par gêne, ce qu'elle coûte à chess et ce que la
 corriger coûterait, par `docs/fabrication/but-et-tri.md` ; puis Théo
 arbitre ce qui entre dans JA-0006, ce qui va à la réserve avec sa
 raison, et ce qui s'écarte.
+
+Sur la revue de cap 10 (J-2026-11-27-O), Théo retient ses trois
+suggestions le 27 novembre : la relecture et l'arbitrage passent
+maintenant, avant le code de B-0365, que l'arbitrage juge lui-même face
+au coût mesuré du socle chez chess (D-0232) ; le compte des appels par
+nature (§1.1 du retour) et les 56 refus classés (§3) vont à JA-0003,
+dont ils sont le contenu et la mesure avant et après des corrections
+(D-0233) ; B-0370 entre dans le même arbitrage (D-0234).
 
 ## Satisfait quand
 
