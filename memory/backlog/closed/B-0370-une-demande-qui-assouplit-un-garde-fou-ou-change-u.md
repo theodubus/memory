@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0370 — Une demande qui assouplit un garde-fou ou change une valeur attendue sans nommer la clé ni le test ne couvre rien une fois validée : l'humain répond deux fois
 
-> statut : ouvert · origine : J-2026-11-26-BA · ref : D-0220, D-0221, T-0205, D-0234, D-0235 · après : B-0375 · lu : backlog@c0fe16c8
+> statut : fait · origine : J-2026-11-26-BA · ref : D-0220, D-0221, T-0205, D-0234, D-0235, ce commit · après : B-0375 · lu : backlog@c0fe16c8
 
 Vu le 26 novembre (J-2026-11-26-BA) : D-0220, validée par Théo, devait
 couvrir le relèvement du plafond de `memory/directives.md` et la valeur
@@ -25,4 +25,4 @@ sert ; le signal avant le push s'écarte. Ses critères sont récrits ainsi.
 
 ## Satisfait quand
 
-- [ ] le contrat que `socle new request` imprime dit, en une ligne, qu'une demande qui assouplit un garde-fou ou change une valeur attendue nomme la clé des garde-fous ou la fonction de test qu'elle couvre
+- [x] le contrat que `socle new request` imprime dit, en une ligne, qu'une demande qui assouplit un garde-fou ou change une valeur attendue nomme la clé des garde-fous ou la fonction de test qu'elle couvre

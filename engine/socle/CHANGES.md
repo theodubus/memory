@@ -15,6 +15,17 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-27-j — Le contrat des demandes dit de nommer la clé ou le test qu'une demande couvre
+
+Une demande validée n'autorise que la clé des garde-fous ou la fonction de
+test qu'elle nomme dans son texte : une demande qui assouplissait un
+plafond en ne citant que le fichier des garde-fous ne couvrait rien, et
+l'humain répondait deux fois. Le contrat que `socle new request` imprime à
+l'écriture d'une demande le dit désormais, en une ligne, avec la forme
+d'une clé (`budgets."<fichier>".max_bytes`).
+
+À faire : rien.
+
 ## 2026-11-27-i — La parole de l'humain se range selon sa nature : une règle en consigne, une décision en décision, une attente en besoin bloqué
 
 La section installée d'`AGENTS.md` envoyait toute parole de l'humain qui
