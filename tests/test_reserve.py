@@ -6,7 +6,7 @@ sorti d'un jalon, quand un jalon est ouvert."""
 
 import unittest
 
-from socle import config, context as contexte, memory as memoire, messages
+from socle import config, context as contexte, memory as memoire, messages, roadmap as suite, state as etat
 from tests.test_bascule import P
 from tests.test_structure import Projet, entree, memoire_de
 
@@ -212,6 +212,130 @@ class TestLaDefinition(unittest.TestCase):
         mem = memoire_de(entree("L-0003", "fait"), entree("L-0007"), entree("L-0002"))
         self.assertEqual((memoire.plus_haut_lot(mem), memoire.tri_a_ecrire(mem)), (7, "L-0007"))
         self.assertIsNone(memoire.tri_a_ecrire(memoire_de(entree("B-0001"))))
+
+    def test_champs_de_reserve_avec_le_tri_s_il_y_a_un_lot(self):
+        self.assertEqual(memoire.champs_de_reserve(memoire_de(entree("L-0009", "fait"))),
+                         "`réserve : <raison> · trié : L-0009`")
+        self.assertEqual(memoire.champs_de_reserve(memoire_de(entree("B-0001"))), "`réserve : <raison>`")
+        with messages.dans("en"):
+            self.assertEqual(memoire.champs_de_reserve(memoire_de(entree("L-0009"))),
+                             "`reserve : <reason> · sorted : L-0009`")
+
+
+def backlog_trie(clos: int, tri: str = "trié : L-0001", jalon: str = "ouvert") -> memoire.Memoire:
+    """Un jalon, B-0001 qu'il attend, B-0002 en réserve avec sa raison et
+    `tri` ; L-0001, puis `clos` lots clos après lui, et un lot ouvert."""
+    lots = [entree(f"L-{n:04d}", "fait") for n in range(1, clos + 2)]
+    return memoire_de(entree("B-0001"), entree("B-0002", meta=f"réserve : après la mesure · {tri}"),
+                      entree("JA-0001", jalon, meta="après : B-0001"), *lots, entree(f"L-{clos + 2:04d}"))
+
+
+def ligne_a_placer(mem: memoire.Memoire) -> list[str]:
+    return [l for _, b in etat._backlog(mem, borne=True) for l in b if "besoins à placer" in l]
+
+
+class TestLeSignal(unittest.TestCase):
+    """T-0221 : un besoin en réserve sans tri depuis quinze lots clos remonte
+    à placer, dans l'état et la feuille de route ; le compte repart à chaque
+    tri."""
+
+    def test_quinze_lots_clos_depuis_son_tri_le_signalent_quatorze_non(self):
+        self.assertEqual(memoire.LOTS_SANS_TRI, 15)
+        quinze = backlog_trie(15)
+        self.assertEqual([e.id for e in memoire.a_placer(memoire.Graphe(quinze))], ["B-0002"])
+        self.assertEqual(ligne_a_placer(quinze), [
+            "  besoins à placer (en réserve, sans raison ou sans tri depuis 15 lots clos) : B-0002 ; à la clôture "
+            "du lot, chacun dans un jalon, ou `réserve : <raison> · trié : L-0017`"])
+        self.assertEqual(suite.texte(suite.calculer(quinze)).splitlines()[-1], "En réserve : 1 besoin, 1 à placer")
+        quatorze = backlog_trie(14)
+        self.assertEqual(memoire.a_placer(memoire.Graphe(quatorze)), [])
+        self.assertEqual(ligne_a_placer(quatorze), [])
+        self.assertEqual(suite.texte(suite.calculer(quatorze)).splitlines()[-1], "En réserve : 1 besoin")
+
+    def test_le_compte_repart_au_tri(self):
+        self.assertEqual(memoire.a_placer(memoire.Graphe(backlog_trie(15, "trié : L-0016"))), [])
+        # Sans `trié`, tous les lots clos comptent : seize ici.
+        self.assertEqual([e.id for e in memoire.a_placer(memoire.Graphe(backlog_trie(15, "priorité : haute")))],
+                         ["B-0002"])
+
+    def test_sans_raison_un_besoin_est_a_placer_aussitot(self):
+        mem = memoire_de(entree("B-0001"), entree("B-0002"), entree("B-0003", meta="pour : humain"),
+                         entree("JA-0001", meta="après : B-0001"))
+        self.assertEqual([e.id for e in memoire.a_placer(memoire.Graphe(mem))], ["B-0002"])
+        self.assertEqual(ligne_a_placer(mem), [
+            "  besoins à placer (en réserve, sans raison ou sans tri depuis 15 lots clos) : B-0002 ; à la clôture "
+            "du lot, chacun dans un jalon, ou `réserve : <raison>`"])
+
+    def test_sans_jalon_ouvert_rien_n_est_a_placer(self):
+        mem = backlog_trie(20, jalon="fait")
+        self.assertEqual(memoire.a_placer(memoire.Graphe(mem)), [])
+        self.assertEqual(ligne_a_placer(mem), [])
+        self.assertEqual(suite.texte(suite.calculer(mem)).splitlines()[-1], "En réserve : 2 besoins")
+
+    def test_la_ligne_est_bornee_et_parle_anglais(self):
+        mem = memoire_de(*(entree(f"B-{n:04d}") for n in range(2, 14)), entree("JA-0001"))
+        ligne = ligne_a_placer(mem)[0]
+        self.assertIn(": B-0002, B-0003, B-0004, B-0005, B-0006, B-0007, B-0008, B-0009, B-0010, B-0011 … et 2 "
+                      "autre(s) ;", ligne)
+        with messages.dans("en"):
+            self.assertIn("In reserve: 12 needs, 12 to place", suite.texte(suite.calculer(mem)).splitlines())
+            lignes = [l for _, b in etat._backlog(mem) for l in b if "needs to place" in l]
+        self.assertIn("needs to place (in reserve, without a reason or unsorted for 15 closed batches): B-0002, ",
+                      lignes[0])
+
+
+class TestLaClotureDUnJalon(Projet):
+    """T-0221 : un jalon ouvert à la base et clos à la tête exige la réserve
+    triée, chaque besoin avec sa raison et un `trié` au moins égal au plus
+    haut lot de la base ; `socle close` le refuse avec le contrôle."""
+
+    def setUp(self):
+        super().setUp()
+        self.poser("B-0001", "ref : fichier:calc.py", "fait")
+        self.poser("B-0002")
+        self.poser("B-0003", "pour : humain")
+        self.poser("JA-0001", "après : B-0001")
+        self.poser("L-0001", "ref : fichier:calc.py", "fait")
+        self.poser("L-0002")
+        self.base = self.commiter("la base")
+        self.ouvert = self.racine / "memory/backlog/JA-0001-essai.md"
+
+    def test_refusee_sur_une_reserve_non_triee_puis_passant_une_fois_triee(self):
+        avant = self.ouvert.read_text()
+        code, sortie = self.socle("close", "JA-0001")
+        self.assertEqual(code, 1, sortie)
+        self.assertIn("`JA-0001` ne se clôt pas, rien n'est changé", sortie)
+        self.assertIn("`JA-0001` se clôt sur une réserve non triée : B-0002 ; avant de clore un jalon, chaque "
+                      "besoin de la réserve rejoint un jalon à venir, reste en réserve, sa raison et son tri récrits "
+                      "(`réserve : <raison> · trié : L-0002`), ou se propose à l'humain pour abandon, par une "
+                      "demande que sa raison nomme", sortie)
+        self.assertEqual(self.ouvert.read_text(), avant)
+        # Une raison et un tri d'avant le plus haut lot de la base : encore refusé.
+        self.poser("B-0002", "réserve : après la mesure · trié : L-0001")
+        self.assertEqual(self.socle("close", "JA-0001")[0], 1)
+        self.poser("B-0002", "réserve : après la mesure · trié : L-0002")
+        code, sortie = self.socle("close", "JA-0001")
+        self.assertEqual(code, 0, sortie)
+        self.assertFalse(self.ouvert.exists())
+
+    def erreurs(self) -> list[str]:
+        ctx = contexte.Contexte(config.Projet.charger(self.racine), etage="git", base=self.base)
+        return [c.message for c in contexte.executer(ctx, ["memoire.reserve"]).erreurs()]
+
+    def test_le_controle_juge_le_jalon_clos_contre_la_base(self):
+        self.poser("B-0002", "réserve : après la mesure · trié : L-0002")
+        self.assertEqual(self.socle("close", "JA-0001")[0], 0)
+        self.assertEqual(self.erreurs(), [])
+        # Un lot clos ensuite sur la branche ne fait rien refuser.
+        self.poser("L-0002", "ref : fichier:calc.py", "fait")
+        (self.racine / "memory/backlog/L-0002-essai.md").unlink()
+        self.poser("L-0003")
+        self.assertEqual(self.erreurs(), [])
+        # Sans raison, un besoin d'avant fait refuser la clôture.
+        self.poser("B-0002")
+        erreurs = self.erreurs()
+        self.assertEqual(len(erreurs), 1, erreurs)
+        self.assertTrue(erreurs[0].startswith("`JA-0001` se clôt sur une réserve non triée : B-0002 ;"), erreurs)
 
 
 if __name__ == "__main__":

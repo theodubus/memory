@@ -3779,10 +3779,24 @@ MESSAGES: dict[str, str] = {
         '`reserve : <reason>`',
     "l'ajouter à l'`après` d'un jalon ouvert{jalons}, ou écrire sur sa ligne de métadonnées {champs}":
         'add it to the `after` of an open milestone{jalons}, or write on its metadata line {champs}',
-    "Quand un jalon est ouvert, un besoin ouvert nouveau dans la plage, ou sorti d'un jalon ouvert à la base, "
-    "qu'aucun jalon ouvert n'attend, porte sa raison de réserve.":
-        'When a milestone is open, an open need new in the range, or taken out of a milestone open at the base, '
-        'that no open milestone waits on, carries its reserve reason.',
+    'Un besoin de la réserve a sa raison quand il y entre, et la réserve est triée quand un jalon se clôt.':
+        'A need of the reserve has its reason when it enters it, and the reserve is sorted when a milestone closes.',
+    "`{jalon}` se clôt sur une réserve non triée : {ids} ; avant de clore un jalon, chaque besoin de la réserve "
+    "rejoint un jalon à venir, reste en réserve, sa raison et son tri récrits ({champs}), ou se propose à l'humain "
+    "pour abandon, par une demande que sa raison nomme":
+        '`{jalon}` closes over an unsorted reserve: {ids}; before closing a milestone, each need of the reserve joins '
+        'a milestone to come, stays in reserve, its reason and its sorting rewritten ({champs}), or is proposed to '
+        'the human for abandonment, by a request that its reason names',
+    ' et {n} de la mémoire privée':
+        ' and {n} of the private memory',
+    '{n} de la mémoire privée':
+        '{n} of the private memory',
+    "besoins à placer (en réserve, sans raison ou sans tri depuis {n} lots clos) : {ids} ; à la clôture du lot, "
+    "chacun dans un jalon, ou {champs}":
+        'needs to place (in reserve, without a reason or unsorted for {n} closed batches): {ids}; at the closing of '
+        'the batch, each in a milestone, or {champs}',
+    '{n} à placer':
+        '{n} to place',
     'un besoin nouveau':
         'a new need',
     "un besoin sorti d'un jalon ouvert":
@@ -3887,6 +3901,12 @@ MESSAGES: dict[str, str] = {
     "par `--reserve`, passent le commit et la CI (ADR-0118)":
         'a new need placed in the open milestone by `socle new need --milestone`, and another kept in reserve by '
         '`--reserve`, pass the commit and the CI (ADR-0118)',
+    "jalon clos alors qu'un besoin de la réserve n'a pas sa raison (ADR-0118)":
+        'milestone closed while a need of the reserve has no reason (ADR-0118)',
+    "un jalon clos par `socle close` sur une réserve triée, chaque besoin avec sa raison, passe le commit et la CI "
+    "(ADR-0118)":
+        'a milestone closed by `socle close` over a sorted reserve, each need with its reason, passes the commit and '
+        'the CI (ADR-0118)',
     'lot':
         'batch',
     'lot qui attend un besoin, et non sa tâche':

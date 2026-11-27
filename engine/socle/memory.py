@@ -1115,6 +1115,10 @@ def ordre_de(g: Graphe) -> Ordre:
 # du backlog à son dernier tri (`trié`) ; récrire `trié`, c'est le trier.
 # --------------------------------------------------------------------------
 
+# Les lots clos depuis son dernier tri à partir desquels un besoin de la
+# réserve est à placer (D-0213).
+LOTS_SANS_TRI = 15
+
 
 def jalons_ouverts(g: Graphe) -> list[str]:
     """Les jalons ouverts, dans leur ordre d'exécution."""
@@ -1177,15 +1181,34 @@ def tri_a_ecrire(mem: "Memoire", prive: bool = False) -> str | None:
     return f"{'P' if prive else ''}L-{n:04d}" if n else None
 
 
+def a_placer(g: Graphe) -> list[Entree]:
+    """Les besoins de la réserve à trier, quand un jalon est ouvert : sans
+    raison, ou avec `LOTS_SANS_TRI` lots clos ou plus d'un numéro supérieur
+    à leur `trié` (sans lui, tous les lots clos de leur zone comptent). Un
+    besoin pour l'humain ne se trie pas : « Pour toi » le montre."""
+    if not jalons_ouverts(g):
+        return []
+    clos = {p: [n for n, e in _lots(g.mem, p).items() if e.statut in BACKLOG_CLOS and not e.basculee]
+            for p in (False, True)}
+    return [e for e in reserve(g) if not pour_l_humain(e)
+            and (not raison_de_reserve(e) or sum(n > (tri_de(e) or 0) for n in clos[e.prive]) >= LOTS_SANS_TRI)]
+
+
 def comment_ranger(g: Graphe, prive: bool = False) -> str:
     """Les deux façons de ranger un besoin de la zone `prive` : dans un jalon
     ouvert, qu'un besoin public ne nomme que public, ou en réserve, avec sa
     raison et le `trié` à écrire."""
     jalons = [j for j in jalons_ouverts(g) if prive or not g.entrees[j].prive]
-    tri = tri_a_ecrire(g.mem, prive)
-    champs = trad("`réserve : <raison> · trié : {tri}`", tri=tri) if tri else trad("`réserve : <raison>`")
     return trad("l'ajouter à l'`après` d'un jalon ouvert{jalons}, ou écrire sur sa ligne de métadonnées {champs}",
-                jalons=f" ({', '.join(jalons[:3])})" if jalons else "", champs=champs)
+                jalons=f" ({', '.join(jalons[:3])})" if jalons else "", champs=champs_de_reserve(g.mem, prive))
+
+
+def champs_de_reserve(mem: "Memoire", prive: bool = False) -> str:
+    """Ce qu'un tri écrit maintenant sur la ligne d'un besoin de la zone
+    `prive` gardé en réserve : sa raison, et le `trié` du plus haut lot,
+    s'il en est un."""
+    tri = tri_a_ecrire(mem, prive)
+    return trad("`réserve : <raison> · trié : {tri}`", tri=tri) if tri else trad("`réserve : <raison>`")
 
 
 # Où en est ce qu'un lot attend, tel que l'état le dit ; une tâche close ou

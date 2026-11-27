@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0221 — Le signal de la réserve : un besoin sans tri depuis quinze lots clos remonte à placer dans l'état, et la clôture d'un jalon exige la réserve retriée
 
-> statut : ouvert · origine : J-2026-11-27-AO · besoin : B-0365 · lu : backlog@c0e72dd2 · après : T-0220
+> statut : fait · origine : J-2026-11-27-AO · besoin : B-0365 · lu : backlog@c0e72dd2 · après : T-0220 · ref : ce commit
 
 Les deux autres moments de la règle de B-0365, sur le champ `trié` que
 pose T-0220.
@@ -25,7 +25,7 @@ pose T-0220.
 
 ## Fait quand
 
-- [ ] un test montre un besoin à quinze lots clos depuis son tri signalé par l'état, et le même non signalé à quatorze, puis après un tri
-- [ ] un test montre la clôture d'un jalon refusée sur une réserve non retriée, et passant une fois la réserve retriée
-- [ ] le défaut injecté et le témoin sain de la clôture d'un jalon sont dans `engine/socle/selftest.py`
-- [ ] la note de version, française et anglaise, dit les trois moments
+- [x] un test montre un besoin à quinze lots clos depuis son tri signalé par l'état, et le même non signalé à quatorze, puis après un tri
+- [x] un test montre la clôture d'un jalon refusée sur une réserve non retriée, et passant une fois la réserve retriée
+- [x] le défaut injecté et le témoin sain de la clôture d'un jalon sont dans `engine/socle/selftest.py`
+- [x] la note de version, française et anglaise, dit les trois moments

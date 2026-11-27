@@ -877,14 +877,26 @@ def _consigne_en_base(a: Atelier, c: Path):
     a.git(c, "update-ref", "refs/remotes/origin/main", "HEAD")
 
 
-def _jalon_en_base(a: Atelier, c: Path, apres: str = "B-0001"):
-    """Le jalon ouvert JA-0001, qui attend `apres`, dans la base : commité,
-    et la branche par défaut avancée jusqu'à lui, dans ce clone seulement."""
+def _jalon_en_base(a: Atelier, c: Path, apres: str | None = "B-0001"):
+    """Le jalon ouvert JA-0001, qui attend `apres` (rien : `None`), dans la
+    base : commité, et la branche par défaut avancée jusqu'à lui, dans ce
+    clone seulement."""
     ajouter_sujet(c, "\n## JA-0001 — Le module complet\n\n"
-                     f"> statut : ouvert · origine : {a.journal} · après : {apres} · "
-                     f"lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n")
+                     f"> statut : ouvert · origine : {a.journal} · " + (f"après : {apres} · " if apres else "")
+                     + f"lu : backlog@{empreinte(a, c, 'backlog')}\n\nPour l'essai.\n")
     a.commit(c, "un jalon ouvert")
     a.git(c, "update-ref", "refs/remotes/origin/main", "HEAD")
+
+
+def _clore_le_jalon(c: Path):
+    """Clôt JA-0001 à la main, avec sa référence, rangé parmi les clos."""
+    from socle import memory as memoire
+
+    p = c / _sujet(c, "JA-0001")
+    clos = p.parent / memoire.DOSSIER_CLOS / p.name
+    clos.parent.mkdir(parents=True, exist_ok=True)
+    clos.write_text(p.read_text().replace("> statut : ouvert", "> statut : fait · ref : fichier:calc.py", 1))
+    p.unlink()
 
 
 def _renumeroter_en_lot(c: Path, ident: str) -> str:
@@ -1727,6 +1739,13 @@ def _cas() -> list[Cas]:
         ajouter_sujet(c, "\n## B-0002 — Ajouter une fonction quadruple\n\n"
                          f"> statut : ouvert · origine : {a.journal} · lu : backlog@{empreinte(a, c, 'backlog')}\n\n"
                          f"Pour l'essai.\n{SATISFAIT_ESSAI}")
+        return etage_git(a, c)
+
+    @defaut("jalon-clos-sur-reserve-non-triee", "jalon clos alors qu'un besoin de la réserve n'a pas sa raison "
+            "(ADR-0118)", "git", "memoire.reserve")
+    def _(a, c):
+        _jalon_en_base(a, c, None)
+        _clore_le_jalon(c)
         return etage_git(a, c)
 
     @defaut("cas-change", "cas existant d'un fichier de cas changé sans validation humaine", "git", "tests.attendus")
@@ -3474,6 +3493,17 @@ def _temoins() -> list[tuple[str, Callable]]:
             p.write_text(re.sub(r"<J-…[^>]*>", a.journal, re.sub(r"- \[ \] <[^>]*>", "- [ ] elle existe",
                                                                      p.read_text())))
         maj_memoire(c, "Deux besoins rangés.")
+        return etage_git(a, c) or etage_ci(a, c)
+
+    @temoin("un jalon clos par `socle close` sur une réserve triée, chaque besoin avec sa raison, passe le commit et "
+            "la CI (ADR-0118)")
+    def _(a, c):
+        _jalon_en_base(a, c, None)
+        remplacer(c, _sujet(c, "B-0001"), "> statut : ouvert", "> statut : ouvert · réserve : après la multiplication")
+        r = a.socle(c, "close", "JA-0001")
+        if r.returncode != 0:
+            return r.stdout + r.stderr
+        maj_memoire(c, "Le jalon clos, la réserve triée.")
         return etage_git(a, c) or etage_ci(a, c)
 
     # L'historique des revues d'un lot (ADR-0084, ADR-0100) : des passes au-delà

@@ -86,9 +86,14 @@ part qu'après la correction de ses bloquants.
    dernier commit de la pull request, avec la clôture du lot : ses tâches
    closes, il se clôt, chacun d'un geste, `python3 .socle/socle close
    <ID>`, qui pose son statut, sa référence et son rangement, puis
-   `python3 .socle/socle archive` range les consignes levées ; une tâche
-   que sa revue ouvre rejoint le prochain lot dont la règle s'applique,
-   sinon un lot neuf dans le jalon de son besoin ; le récap
+   `python3 .socle/socle archive` range les consignes levées ; les
+   besoins que l'état dit à placer se trient, chacun dans un jalon à
+   venir, ou gardé en réserve, sa raison et son `trié` récrits ; avant de
+   clore un jalon, toute la réserve se trie ainsi, ou un besoin se
+   propose à l'humain pour abandon, par une demande que sa raison nomme ;
+   une tâche que sa revue ouvre rejoint le prochain lot dont la règle
+   s'applique, sinon un lot neuf dans le jalon de son besoin ; un besoin
+   naît rangé (`socle new need --milestone` ou `--reserve`) ; le récap
    de la clôture colle la sortie de `python3 .socle/socle roadmap` dans un
    bloc de code. Après la fusion, `python3 .socle/socle prune-branches`
    supprime les branches de l'agent contenues ; la branche locale repart

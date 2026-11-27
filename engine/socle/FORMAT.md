@@ -310,6 +310,19 @@ un besoin nouveau, ou sorti d'un jalon ouvert, qu'aucun jalon ouvert
 n'attend et qui n'a pas de raison ; un besoin d'avant sans raison ne se
 refuse pas, ni un besoin `pour : humain`, que l'humain mène.
 
+La réserve se trie à deux moments, et récrire `trié`, c'est trier : le
+compte repart. Quand un jalon est ouvert, l'état et la feuille de route
+disent « à placer » un besoin de la réserve sans raison, ou que quinze
+lots clos ou plus, d'un numéro supérieur à son `trié`, ont suivi (sans
+`trié`, tous les lots clos de sa zone comptent) : la clôture du lot
+suivant le trie. Un jalon ouvert à la base et clos à la tête, et `socle
+close` qui le clôt, sont refusés tant qu'un besoin de la réserve n'a pas
+sa raison et un `trié` au moins égal au plus haut lot de la base : avant
+de clore un jalon, chaque besoin de la réserve rejoint un jalon à venir,
+reste en réserve, sa raison et son tri récrits, ou se propose à l'humain
+pour abandon par une demande que sa raison nomme, et reste en réserve
+jusqu'à sa réponse.
+
 Chaque entrée a son plafond (`"memory/backlog/*.md"` dans `[budgets]`).
 Une entrée close garde son fichier, rangé à l'écart des ouvertes dans le
 sous-dossier `closed` du backlog : `socle archive` y range
@@ -348,7 +361,8 @@ tâches sont closes, l'une au moins faite ; les besoins à découper, sans
 tâche ouverte ni rien d'ouvert qu'ils attendent, hors ceux `pour : humain` ; et le nombre d'entrées
 qui attendent encore, selon ce qu'elles attendent : une entrée du backlog,
 une demande sans réponse, ou les deux. Le rappel de fin de tour le redonne.
-Un lot ouvert qui attend encore plus de tâches ouvertes, en cours ou
+L'état seul dit encore les besoins de la réserve à placer, et le `trié` à
+écrire. Un lot ouvert qui attend encore plus de tâches ouvertes, en cours ou
 bloquées que `[batches] max_tasks` des garde-fous (9 par défaut), l'état
 et le rappel le signalent, sans rien refuser : il ne se mène pas en une
 session.
@@ -361,7 +375,7 @@ premières tâches ouvertes, ou à défaut la première tâche prête ; les jalo
 chacun avec ses besoins clos sur le total, seul le premier déplié en ses
 besoins (clos, servi par un lot en cours, autre) ; les entrées `pour :
 humain` et les demandes en attente ; les besoins ouverts qu'aucun jalon
-n'attend, comptés. Une entrée bloquée y est signalée, et deux lots qui
+n'attend, comptés, et combien sont à placer. Une entrée bloquée y est signalée, et deux lots qui
 attendent un même lot sans que l'un attende l'autre : leur ordre n'est
 pas déduit, il est choisi par leur identifiant. Les besoins à découper et
 à fermer restent à l'état.

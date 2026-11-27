@@ -889,6 +889,17 @@ def _backlog(mem: memoire.Memoire, borne: bool = False) -> list[tuple[int, list[
                                              PRETS_MONTRES if borne else None)]
     res += [(RELU, [f"  {l}"]) for l in memoire.lignes_ordre(mem, plafond=PRETS_MONTRES if borne else None,
                                                              titre=titre, basses=BASSES_MONTREES if borne else None)]
+    # Les besoins de la réserve à trier (ADR-0118), zone par zone : chacune
+    # son `trié` à écrire.
+    places = memoire.a_placer(memoire.Graphe(mem))
+    for prive in (False, True):
+        siens = [e for e in places if e.prive == prive]
+        if siens:
+            res.append((RELU, ["  " + trad("besoins à placer (en réserve, sans raison ou sans tri depuis {n} lots "
+                                           "clos) : {ids} ; à la clôture du lot, chacun dans un jalon, ou {champs}",
+                                           n=memoire.LOTS_SANS_TRI,
+                                           ids=memoire._ids(siens, BASSES_MONTREES if borne else None),
+                                           champs=memoire.champs_de_reserve(mem, prive))]))
     return res
 
 

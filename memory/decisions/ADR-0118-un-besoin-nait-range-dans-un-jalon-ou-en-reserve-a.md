@@ -13,7 +13,7 @@ jalon ; un besoin en réserve sans tri depuis quinze lots clos est signalé
 par l'état, et le compte repart à chaque tri. Il l'a gardée sous une
 condition (D-0235@2eec26f8, point 8) : ni appel ni refus de plus. La raison
 se donne donc à la création, le contrôle ne fait que rattraper un oubli,
-et le signal se calcule. Les tâches T-0220@9f06815a et T-0221@24571269 la
+et le signal se calcule. Les tâches T-0220@9f06815a et T-0221@90965c23 la
 mettent en œuvre, sur le mécanisme de clôture de l'ADR-0117@287f443f.
 
 ## Décision

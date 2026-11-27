@@ -14,6 +14,44 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-27-k — The reserve is sorted at three moments: a need is born placed, the state flags the need to place, and a milestone closes only over a sorted reserve
+
+The needs in no milestone waited without a deadline: nothing placed them
+in a step, nor sorted them. A need now carries, on its metadata line,
+`reserve : <reason>` (`réserve` in French) and `sorted : L-NNNN`
+(`trié`), the highest batch of the backlog at its last sorting; the
+reserve is the open needs that no open milestone names in its `after`.
+A `for : human` need is not sorted.
+
+- At its birth: `socle new need "…" --milestone JA-NNNN` adds it at the
+  end of the `after` of an open milestone, and `--reserve "<reason>"`
+  writes its reason and its sorting; with neither, when a milestone is
+  open, one line says how to place it. When a milestone is open, the new
+  check `memoire.reserve` refuses a new need, or one taken out of an open
+  milestone, that no open milestone waits on and that has no reason; a
+  need from before is not refused.
+- The signal: when a milestone is open, `socle state` names “to place”
+  the needs of the reserve without a reason, or that fifteen closed
+  batches have followed since their sorting, with the `sorted` to write,
+  and the “In reserve” line of `socle roadmap` says how many. The closing
+  of the next batch sorts them; rewriting `sorted` restarts the count.
+- The closing of a milestone: `socle close JA-NNNN`, and the check,
+  refuse a milestone open at the base and closed at the head as long as
+  a need of the reserve lacks its reason and a `sorted` at least equal to
+  the highest batch of the base. Before closing a milestone, each need of
+  the reserve joins a milestone to come, stays in reserve, its reason and
+  its sorting rewritten, or is proposed to the human for abandonment, by
+  a request that its reason names.
+
+The `socle-batch` skill says the two sortings; `FORMAT.md`, the fields.
+
+To do: if the project has an open milestone, `socle state` calls to place
+the needs of the reserve that have no reason; at the closing of the next
+batch, put each in a milestone (its `after`) or write on its line
+`reserve : <reason> · sorted : L-NNNN`, the `sorted` the state gives.
+From now on, create a need with `socle new need "…" --milestone JA-NNNN`
+or `--reserve "<reason>"`.
+
 ## 2026-11-27-j — The request contract says to name the key or the test a request covers
 
 An approved request authorizes only the guardrail key or the test function

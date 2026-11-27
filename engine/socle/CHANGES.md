@@ -15,6 +15,44 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-27-k — La réserve se trie à trois moments : un besoin naît rangé, l'état signale le besoin à placer, et un jalon ne se clôt que sur une réserve triée
+
+Les besoins d'aucun jalon attendaient sans échéance : rien ne les plaçait
+dans une étape, ni ne les triait. Un besoin porte désormais, sur sa ligne
+de métadonnées, `réserve : <raison>` (`reserve` en anglais) et
+`trié : L-NNNN` (`sorted`), le plus haut lot du backlog à son dernier
+tri ; la réserve, ce sont les besoins ouverts qu'aucun jalon ouvert ne
+nomme dans son `après`. Un besoin `pour : humain` ne se trie pas.
+
+- À sa naissance : `socle new need "…" --milestone JA-NNNN` l'ajoute à
+  la fin de l'`après` d'un jalon ouvert, et `--reserve "<raison>"` écrit
+  sa raison et son tri ; sans l'un ni l'autre, quand un jalon est ouvert,
+  une ligne dit comment le ranger. Quand un jalon est ouvert, le contrôle
+  nouveau `memoire.reserve` refuse un besoin nouveau, ou sorti d'un jalon
+  ouvert, qu'aucun jalon ouvert n'attend et qui n'a pas de raison ; un
+  besoin d'avant ne se refuse pas.
+- Le signal : quand un jalon est ouvert, `socle state` nomme « à placer »
+  les besoins de la réserve sans raison, ou que quinze lots clos ont
+  suivis depuis leur tri, avec le `trié` à écrire, et la ligne « En
+  réserve » de `socle roadmap` dit combien. La clôture du lot suivant les
+  trie ; récrire `trié` fait repartir le compte.
+- La clôture d'un jalon : `socle close JA-NNNN`, et le contrôle, refusent
+  un jalon ouvert à la base et clos à la tête tant qu'un besoin de la
+  réserve n'a pas sa raison et un `trié` au moins égal au plus haut lot
+  de la base. Avant de clore un jalon, chaque besoin de la réserve
+  rejoint un jalon à venir, reste en réserve, sa raison et son tri
+  récrits, ou se propose à l'humain pour abandon, par une demande que sa
+  raison nomme.
+
+Le skill `socle-batch` dit les deux tris ; `FORMAT.md`, les champs.
+
+À faire : si le projet a un jalon ouvert, `socle state` dit à placer les
+besoins de la réserve qui n'ont pas de raison ; à la clôture du prochain
+lot, range chacun dans un jalon (son `après`) ou écris sur sa ligne
+`réserve : <raison> · trié : L-NNNN`, le `trié` que l'état donne. Crée
+désormais un besoin par `socle new need "…" --milestone JA-NNNN` ou
+`--reserve "<raison>"`.
+
 ## 2026-11-27-j — Le contrat des demandes dit de nommer la clé ou le test qu'une demande couvre
 
 Une demande validée n'autorise que la clé des garde-fous ou la fonction de
