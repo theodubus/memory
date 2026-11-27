@@ -14,3 +14,9 @@ d'`AGENTS.md`, déplacées mot pour mot. Toutes deux changent ce que
 reçoit un projet : une note de version française et anglaise chacune,
 et leur point au prompt de la prochaine mise à jour de chess. T-0206
 change plus de 150 lignes de textes du produit : revue adversariale.
+
+## Revues
+
+### Passe 1 — 2026-11-27
+
+Commits : 7d8d9681..95f30786
