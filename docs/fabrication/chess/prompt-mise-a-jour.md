@@ -52,6 +52,8 @@ Ta version date du 26 novembre. L'installeur t'imprimera les notes de version qu
 
 9. Les raisons des règles, au guide. Les skills socle-batch, socle-resume, socle-request et socle-handoff, et la section du socle d'AGENTS.md, ne disent plus pourquoi une règle existe : ce qui la justifiait sans la dire (le pourquoi, ce qu'un hook refuse) est passé, mot pour mot, au guide, sous « Pourquoi ces règles », à la fin de sa Référence ; chaque règle reste dans son texte. L'installeur pose les skills et la section changés : n'y touche pas. Si une règle que tu suivais te semble manquer dans un skill ou dans AGENTS.md, rapporte-la mot pour mot. (2026-11-26-l)
 
+10. Le plafond des skills. Le gabarit des garde-fous pose désormais 10 000 octets pour .claude/skills/*/SKILL.md, au lieu de 8 000 : les skills du socle, chargés en entier, n'avaient plus la place d'une règle de plus. La mise à jour garde tes garde-fous, donc ta valeur, et les skills qu'elle pose tiennent encore sous 8 000 octets : n'y touche pas. Si un skill approche de ton plafond, pose-moi la demande de reprendre 10 000 octets dans .socle/guardrails.toml, qui assouplit un garde-fou, en nommant la clé budgets.".claude/skills/*/SKILL.md".max_bytes. (2026-11-27-a)
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.

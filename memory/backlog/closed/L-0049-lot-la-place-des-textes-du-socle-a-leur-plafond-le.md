@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0049 — Lot — la place des textes du socle à leur plafond : les consignes à 24 000 octets, les justifications des skills et d'AGENTS.md vers le guide (T-0205, T-0206)
 
-> statut : en cours · origine : J-2026-11-26-AZ · lu : backlog@34d28079 · après : L-0048, T-0205, T-0206
+> statut : fait · ref : J-2026-11-27-D · origine : J-2026-11-26-AZ · lu : backlog@34d28079 · après : L-0048, T-0205, T-0206
 
 Les deux tâches de B-0354 (D-0218, JA-0006) : donner aux textes du
 socle arrivés à leur plafond la place des règles suivantes. T-0205

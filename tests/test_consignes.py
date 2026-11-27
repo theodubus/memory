@@ -540,7 +540,7 @@ class TestCeQueRecoitUnProjet(unittest.TestCase):
                                   "in session, then the directive becomes `lifted`, with `lifted-by : D-NNNN`")):
             texte = gabarit("skills/socle-request/SKILL.md", lg)
             self.assertIn(phrase, " ".join(texte.split()), lg)
-            self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
+            self.assertLessEqual(len(texte.encode("utf-8")), 10000, lg)
 
     def test_la_note_de_version_dit_le_changement_et_la_migration_dans_les_deux_langues(self):
         for nom, titre, migration in (

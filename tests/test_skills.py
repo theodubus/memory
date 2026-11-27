@@ -163,7 +163,7 @@ class TestLesDemandes(unittest.TestCase):
     def texte(self, lg: str) -> str:
         installeur.poser_skills(self.racine, lg)
         texte = (self.racine / installeur.SKILLS / "socle-request" / "SKILL.md").read_text(encoding="utf-8")
-        self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
+        self.assertLessEqual(len(texte.encode("utf-8")), 10000, lg)
         return " ".join(texte.split())
 
     def test_un_contenu_valide_en_seance_s_ecrit_d_abord_dans_le_depot(self):
@@ -552,7 +552,7 @@ class TestLaReprise(unittest.TestCase):
             self.assertNotIn(avant, texte, lg)
             section = " ".join(texte.split(debut, 1)[1].split("\n## ", 1)[0].split())
             self.assertIn(attente, section, lg)
-            self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
+            self.assertLessEqual(len(texte.encode("utf-8")), 10000, lg)
 
 
 class TestLaConduiteDUnLot(unittest.TestCase):
@@ -581,7 +581,7 @@ class TestLaConduiteDUnLot(unittest.TestCase):
             texte = self.texte(lg)
             self.assertTrue(texte.startswith("---\nname: socle-batch\n"), lg)
             # Le plafond des garde-fous d'un projet neuf.
-            self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
+            self.assertLessEqual(len(texte.encode("utf-8")), 10000, lg)
             self.assertEqual(juger(self.racine), {"skills.contrat": [], "skills.commandes": []}, lg)
 
     def test_il_ne_renvoie_pas_a_l_atelier(self):
@@ -879,7 +879,7 @@ class TestLaPassation(unittest.TestCase):
         for lg in ("fr", "en"):
             texte = self.texte(lg)
             self.assertTrue(texte.startswith("---\nname: socle-handoff\n"), lg)
-            self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
+            self.assertLessEqual(len(texte.encode("utf-8")), 10000, lg)
             # Ses commandes, dans des blocs de code, jugées comme le hook.
             self.assertEqual(len(controles.commandes(texte)), 2, lg)
             self.assertEqual(juger(self.racine), {"skills.contrat": [], "skills.commandes": []}, lg)
@@ -1111,7 +1111,7 @@ class TestLaRevue(unittest.TestCase):
         for lg in ("fr", "en"):
             texte = self.texte(lg)
             self.assertTrue(texte.startswith("---\nname: socle-review\n"), lg)
-            self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
+            self.assertLessEqual(len(texte.encode("utf-8")), 10000, lg)
             self.assertEqual(juger(self.racine), {"skills.contrat": [], "skills.commandes": []}, lg)
 
     def test_le_relecteur_recoit_le_modele_le_plus_capable_a_son_lancement(self):
@@ -1383,14 +1383,14 @@ class TestLaPlaceDesReglesSuivantes(unittest.TestCase):
     d'`AGENTS.md`, chargés en entier à chaque usage, gardent leur plafond et
     une marge pour une règle de plus ; ce qui justifiait une règle sans la
     dire est passé au guide, « Pourquoi ces règles », et n'est plus dans le
-    texte qu'il justifiait."""
+    texte qu'il justifiait. Le plafond des skills relevé à 10 000 octets
+    (D-0223, D-0224), chacun a sa marge."""
 
     MARGE = 600
-    # Les skills qui n'ont pas encore leur marge une fois leurs
-    # justifications sorties : T-0206 reste ouverte pour eux. L'ensemble ne
-    # fait que rétrécir : un skill qui atteint sa marge en sort, le test le
-    # dit.
-    PAS_ENCORE = {("fr", "socle-batch"), ("en", "socle-batch"), ("fr", "socle-request"), ("fr", "socle-resume")}
+    # Les skills qui n'ont pas encore leur marge : aucun depuis D-0224.
+    # L'ensemble ne fait que rétrécir : un skill qui atteint sa marge en
+    # sort, le test le dit.
+    PAS_ENCORE: set[tuple[str, str]] = set()
     # Mot pour mot, d'où chacun est sorti ; la règle qu'il justifiait reste.
     SORTIS = {
         "fr": {

@@ -14,6 +14,21 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-27-a — The skills cap goes from 8,000 to 10,000 bytes in the guardrails template
+
+A skill is loaded whole at every use. With what justified their rules
+moved to the guide (2026-11-26-l), `socle-batch`, `socle-request` and
+`socle-resume` remained less than 600 bytes under their cap of 8,000: the
+next rule of one of them would have had the file refused. The guardrails
+template now sets `".claude/skills/*/SKILL.md" = { max_bytes = 10000 }`.
+An update keeps the project's guardrails, hence its value; the skills
+the installer lays down still hold under 8,000 bytes.
+
+To do: nothing while the project's skills stay under its cap; if one gets
+close, ask the human, in a request, to take up 10,000 bytes in
+`.socle/guardrails.toml`, which loosens a guardrail, naming the key
+`budgets.".claude/skills/*/SKILL.md".max_bytes`.
+
 ## 2026-11-26-l — What justified a rule of the skills and of the socle section of AGENTS.md without stating it moves to the guide, "Why these rules"
 
 The socle's skills and the socle section of `AGENTS.md` are loaded whole

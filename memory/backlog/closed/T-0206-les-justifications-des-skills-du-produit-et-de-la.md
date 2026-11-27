@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # T-0206 — Les justifications des skills du produit et de la section du socle d'AGENTS.md sorties vers le guide, déplacées et non coupées
 
-> statut : ouvert · origine : J-2026-11-26-AU · besoin : B-0354 · ref : D-0223, D-0224 · lu : backlog@6ba8e676
+> statut : fait · origine : J-2026-11-26-AU · besoin : B-0354 · ref : D-0223, D-0224, J-2026-11-27-B, J-2026-11-27-D · lu : backlog@6ba8e676
 
 Sur D-0218, les skills du produit et la section du socle d'`AGENTS.md`,
 chargés en entier à chaque usage, gardent leur plafond : ce qui y
@@ -21,8 +21,8 @@ validation qui nomme la clé et les tests qu'il touche.
 
 ## Fait quand
 
-- [ ] chaque skill du produit, en français et en anglais, laisse au moins 600 octets sous son plafond, relevé à 10 000 sur D-0223, et un test le mesure
-- [ ] la clé du plafond des skills vaut 10 000 dans `.socle/guardrails.toml` et les deux gabarits des garde-fous, sur une validation de Théo qui nomme la clé et les tests touchés ; la note de version, française et anglaise, le dit
+- [x] chaque skill du produit, en français et en anglais, laisse au moins 600 octets sous son plafond, relevé à 10 000 sur D-0223, et un test le mesure
+- [x] la clé du plafond des skills vaut 10 000 dans `.socle/guardrails.toml` et les deux gabarits des garde-fous, sur une validation de Théo qui nomme la clé et les tests touchés ; la note de version, française et anglaise, le dit
 - [x] la section du socle d'`AGENTS.md` laisse au moins 600 octets sous le plafond de 16 000 de ce dépôt, en français et en anglais
 - [x] chaque passage sorti se retrouve dans le guide, français et anglais, et aucune règle n'est perdue : la revue compare les règles avant et après
 - [x] la note de version, française et anglaise, le dit

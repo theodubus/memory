@@ -15,6 +15,22 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-27-a — Le plafond des skills passe de 8 000 à 10 000 octets dans le gabarit des garde-fous
+
+Un skill se charge en entier à chaque usage. Ce qui justifiait leurs
+règles sorti vers le guide (2026-11-26-l), `socle-batch`, `socle-request`
+et `socle-resume` restaient à moins de 600 octets de leur plafond de
+8 000 : la règle suivante de l'un d'eux aurait fait refuser le fichier.
+Le gabarit des garde-fous pose désormais
+`".claude/skills/*/SKILL.md" = { max_bytes = 10000 }`. Une mise à jour
+garde les garde-fous du projet, donc sa valeur ; les skills que pose
+l'installeur tiennent encore sous 8 000 octets.
+
+À faire : rien tant que les skills du projet tiennent sous son plafond ;
+si l'un l'approche, poser à l'humain la demande de reprendre 10 000
+octets dans `.socle/guardrails.toml`, qui assouplit un garde-fou, en
+nommant la clé `budgets.".claude/skills/*/SKILL.md".max_bytes`.
+
 ## 2026-11-26-l — Ce qui justifiait une règle des skills et de la section du socle d'AGENTS.md sans la dire passe au guide, « Pourquoi ces règles »
 
 Les skills du socle et la section du socle d'`AGENTS.md` se chargent en
