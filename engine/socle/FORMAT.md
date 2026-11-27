@@ -269,8 +269,10 @@ l'entrée, que l'historique de son fichier retrouve et que `socle show`
 donne, ou le commit à venir tant qu'il n'est pas fait. `socle close
 <ID>` clôt « fait » une entrée ouverte : il pose le statut, ajoute la
 référence (`ce commit`, ou celle de `--ref`) et range l'entrée ; il ne
-coche rien, et refuse l'entrée que les contrôles du backlog refuseraient
-close, avec leurs messages (ADR-0117). Une action que seul
+coche rien, et refuse, sans rien changer, l'entrée que les contrôles du
+backlog refuseraient close, avec leurs messages, comme celle dont un
+fichier occupe déjà la place où elle se range (ADR-0117) ; `socle
+archive` range toujours les consignes levées. Une action que seul
 l'humain peut faire porte `pour : humain` : elle figure dans « ce qui revient
 à l'humain », dans l'état et dans le récap de fin d'intervention, avec le
 lien de son entrée, où vit son mode d'emploi (commandes, résultats attendus),

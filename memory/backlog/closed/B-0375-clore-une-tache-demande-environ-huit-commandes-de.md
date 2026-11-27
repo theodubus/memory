@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0375 — Clore une tâche demande environ huit commandes de mémoire, pour une tâche de deux lignes
 
-> statut : ouvert · origine : J-2026-11-27-U · ref : D-0235 · après : B-0371, B-0372, B-0373, B-0374 · lu : backlog@4d53be09
+> statut : fait · origine : J-2026-11-27-U · ref : D-0235, ce commit · après : B-0371, B-0372, B-0373, B-0374 · lu : backlog@4d53be09
 
 Chez chess (`docs/fabrication/chess/cout-et-frictions-2026-11-26.md`, §2) : environ huit gestes de mémoire pour deux
 lignes de travail, et un commit refusé de plus pour une entrée close non
@@ -18,5 +18,5 @@ code.
 
 ## Satisfait quand
 
-- [ ] une tâche dont les critères sont cochés se clôt, statut, référence et rangement, en une commande
-- [ ] une tâche dont un critère reste vide ne se clôt pas, et la commande le dit
+- [x] une tâche dont les critères sont cochés se clôt, statut, référence et rangement, en une commande
+- [x] une tâche dont un critère reste vide ne se clôt pas, et la commande le dit

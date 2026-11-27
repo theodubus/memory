@@ -138,6 +138,36 @@ class TestUneCaseVide(Cloture):
         self.assertEqual(git(self.racine, "status", "--porcelain"), "")
 
 
+class TestUnFichierDejaALaPlace(Cloture):
+    criteres = "- [x] triple existe\n- [ ] le guide le dit"
+
+    def test_ni_ecrase_ni_perdu(self):
+        """La revue de L-0053 : un fichier non suivi déjà à la place où
+        l'entrée se range (une copie, une fusion) n'est ni écrasé, ni
+        effacé par la remise d'un refus."""
+        self.close.parent.mkdir(parents=True, exist_ok=True)
+        self.close.write_text("une copie que git ne suit pas\n")
+        avant = self.ouverte.read_text()
+        code, sortie = self.socle("close", "T-0001")
+        self.assertEqual(code, 1)
+        self.assertIn("`T-0001` ne se clôt pas : `memory/backlog/closed/T-0001-ecrire-triple-et-son-test.md` existe "
+                      "déjà, à la place où elle se range", sortie)
+        self.assertEqual(self.close.read_text(), "une copie que git ne suit pas\n")
+        self.assertEqual(self.ouverte.read_text(), avant)
+
+
+class TestLeSkillDuLot(unittest.TestCase):
+    def test_la_cloture_du_lot_range_encore_les_consignes_levees(self):
+        """La revue de L-0053 : `socle close` ne range pas les consignes
+        levées ; la clôture du lot garde `socle archive`, qui les range."""
+        from socle.templates import DOSSIER
+
+        for lg, attendu in (("SKILL.md", "`python3 .socle/socle archive` range les consignes levées"),
+                            ("SKILL.en.md", "`python3 .socle/socle archive` files the lifted directives")):
+            texte = (DOSSIER / "skills/socle-batch" / lg).read_text(encoding="utf-8")
+            self.assertIn(attendu, " ".join(texte.split()), lg)
+
+
 class TestLesRefus(Cloture):
     def test_un_besoin_dont_une_tache_reste_ouverte(self):
         code, sortie = self.socle("close", "B-0001")

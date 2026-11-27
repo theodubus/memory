@@ -4512,4 +4512,6 @@ MESSAGES: dict[str, str] = {
         "task done whose `ref` is only prose, neither a reference nor “this commit”",
     "une tâche cochée close par `socle close`, sa référence « ce commit », passe le commit et la CI (ADR-0117)":
         "a checked task closed by `socle close`, its reference “this commit”, passes the commit and CI (ADR-0117)",
+    "`{id}` ne se clôt pas : `{chemin}` existe déjà, à la place où elle se range":
+        "`{id}` does not close: `{chemin}` already exists, where it would be filed",
 }

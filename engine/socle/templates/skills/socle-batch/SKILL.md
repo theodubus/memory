@@ -85,7 +85,8 @@ part qu'après la correction de ses bloquants.
 5. Le chantier actif et le journal s'écrivent avant la fusion, dans le
    dernier commit de la pull request, avec la clôture du lot : ses tâches
    closes, il se clôt, chacun d'un geste, `python3 .socle/socle close
-   <ID>`, qui pose son statut, sa référence et son rangement ; une tâche
+   <ID>`, qui pose son statut, sa référence et son rangement, puis
+   `python3 .socle/socle archive` range les consignes levées ; une tâche
    que sa revue ouvre rejoint le prochain lot dont la règle s'applique,
    sinon un lot neuf dans le jalon de son besoin ; le récap
    de la clôture colle la sortie de `python3 .socle/socle roadmap` dans un

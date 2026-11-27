@@ -86,7 +86,8 @@ agent. A batch leaves only once its blocking findings are fixed.
 5. The active work and the journal are written before the merge, in the
    last commit of the pull request, with the batch's closure: its tasks
    closed, it closes, each in one step, `python3 .socle/socle close
-   <ID>`, which sets its status, its reference and its filing; a task
+   <ID>`, which sets its status, its reference and its filing, then
+   `python3 .socle/socle archive` files the lifted directives; a task
    its review opens joins the next batch whose rule applies, otherwise a
    new batch in its need's milestone; the closing recap pastes the output of `python3
    .socle/socle roadmap` in a code block. After the merge,

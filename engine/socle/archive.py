@@ -167,6 +167,11 @@ def clore(projet: config.Projet, ident: str, ref: str | None = None) -> tuple[st
     dossier, nom = e.fichier.rsplit("/", 1)
     relatif = e.fichier if memoire.parmi_les_clos(e.fichier) else f"{dossier}/{memoire.DOSSIER_CLOS}/{nom}"
     cible = racine / relatif
+    # Un fichier déjà à la place de l'entrée close (une copie, une fusion) :
+    # ni écrasé, ni perdu au refus.
+    if cible != source and cible.exists():
+        raise ClotureRefusee(trad("`{id}` ne se clôt pas : `{chemin}` existe déjà, à la place où elle se range",
+                                  id=e.id, chemin=relatif))
     cree = not cible.parent.is_dir()
     cible.parent.mkdir(parents=True, exist_ok=True)
     cible.write_text(nouveau, encoding="utf-8")
