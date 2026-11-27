@@ -4508,4 +4508,8 @@ MESSAGES: dict[str, str] = {
         "\n--- ref “{mot}”: {commit} ---",
     "pas encore commité, le commit à venir":
         "not committed yet, the commit to come",
+    "tâche faite dont la `ref` n'est que de la prose, ni une référence ni « ce commit »":
+        "task done whose `ref` is only prose, neither a reference nor “this commit”",
+    "une tâche cochée close par `socle close`, sa référence « ce commit », passe le commit et la CI (ADR-0117)":
+        "a checked task closed by `socle close`, its reference “this commit”, passes the commit and CI (ADR-0117)",
 }
