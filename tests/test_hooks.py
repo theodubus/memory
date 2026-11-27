@@ -10,14 +10,20 @@ import unittest
 import unittest.mock
 from pathlib import Path
 
-from socle import cli, config, hooks, installer as installeur
+from socle import cli, config, hooks, installer as installeur, verification
 from tests.test_bascule import Projet, git
+
+# L'un des plus longs modules de la suite (120 s de calcul mesurées le
+# 27 novembre) : il se met de côté pendant les étapes rapides (T-0218,
+# D-0237), et la CI, qui le lance sans `SOCLE_RAPIDE`, le joue à chaque push.
+ETAPES_RAPIDES = bool(os.environ.get(verification.RAPIDE))
 
 MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 
 LANCEUR = ".socle/" + "socle"  # en morceaux : ce fichier ne lance rien
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestCiblesEcrites(unittest.TestCase):
     def test_redirections(self):
         self.assertEqual(hooks.cibles_ecrites("echo x > a.txt; cat b >> c.txt 2>&1"), ["a.txt", "c.txt"])
@@ -36,6 +42,7 @@ class TestCiblesEcrites(unittest.TestCase):
         self.assertEqual(hooks.cibles_ecrites("sed -n '1,5p' x.toml"), [])
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestCommandesHumaines(unittest.TestCase):
     def test_invocation_refusee(self):
         self.assertTrue(hooks.COMMANDES_HUMAINES.search(f"python3 {LANCEUR} answer D-0001 valider"))
@@ -84,6 +91,7 @@ class TestCommandesHumaines(unittest.TestCase):
             self.assertIsNone(hooks.refus_bash(projet, cmd), cmd)
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestInstalleurHorsMode(unittest.TestCase):
     """B-0141 : un relecteur sans contexte a lancé l'installeur, en mode
     projet, sur ce dépôt en mode amont ; le hook refuse désormais
@@ -179,6 +187,7 @@ class TestInstalleurHorsMode(unittest.TestCase):
         self.assertIsNone(hooks.arguments_socle(hooks.commandes.analyser("ls -la")[0]))
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestTrailer(unittest.TestCase):
     def test_compte_de_la_session_la_plus_recente(self):
         import tempfile
@@ -233,6 +242,7 @@ class TestTrailer(unittest.TestCase):
 
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestPrepareCommitMsg(unittest.TestCase):
     """Les trailers d'un commit d'agent : au bon endroit, avec la trace de la
     session qui commite, et sans remonter le diff de `git commit -v`."""
@@ -283,6 +293,7 @@ class TestPrepareCommitMsg(unittest.TestCase):
                       second.read_text())
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestHooksNonCharges(unittest.TestCase):
     """B-0060 : une session de Claude Code démarrée hors de la racine du
     projet n'a pas ses hooks ; l'état le dit, le hook avant commit refuse."""
@@ -452,6 +463,7 @@ class TestHooksNonCharges(unittest.TestCase):
         self.assertIn("relancer la session depuis la racine du projet", sortie.getvalue())
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestCommitMsg(unittest.TestCase):
     def test_le_diff_de_commit_v_n_est_pas_lu_comme_le_message(self):
         """Une dispense écrite dans le message reste lue quand `git commit -v`
@@ -478,6 +490,7 @@ class TestCommitMsg(unittest.TestCase):
         self.assertIn("Dispense-test", vus[0])
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestHooksAbsents(unittest.TestCase):
     """B-0050 : un commit d'agent dont aucun hook de l'agent n'a tiré n'était
     vu qu'en CI ; le hook commit-msg le dit dès le commit, sans refuser."""
@@ -525,6 +538,7 @@ class TestHooksAbsents(unittest.TestCase):
         self.assertIsNone(hooks.hooks_absents(projet, self.message(session)))
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestHooksGitAuDemarrage(unittest.TestCase):
     """B-0252 : après le redémarrage d'un conteneur cloud, `core.hooksPath`
     valait le chemin absolu de `<racine>/.socle/git-hooks`, et le démarrage
@@ -571,6 +585,7 @@ class TestHooksGitAuDemarrage(unittest.TestCase):
         self.assertTrue(hooks.installer_hooks_git(self.autre))
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestCorrectifSansTest(Projet):
     """B-0024 : un correctif sans test de régression n'était vu qu'en CI ; le
     hook commit-msg le dit dès le commit, quand l'amender suffit encore."""
@@ -649,6 +664,7 @@ class TestCorrectifSansTest(Projet):
         self.assertEqual(lancer("commit", "-m", "x"), "False")
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestSousUnAgent(unittest.TestCase):
     def test_sous_un_agent(self):
         import contextlib
@@ -663,6 +679,7 @@ class TestSousUnAgent(unittest.TestCase):
             self.assertFalse(hooks.sous_un_agent("`socle approve`"))
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestTraceDesRefus(unittest.TestCase):
     """Chaque refus d'un hook laisse dans la trace son étage et ce qui a
     refusé : le banc d'évaluation y compte les défauts attrapés par étage."""
@@ -692,6 +709,7 @@ class TestTraceDesRefus(unittest.TestCase):
         self.assertEqual(hooks.compter_session(racine), "SessionStart=0 PreToolUse=1 Stop=0")
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestTraceDesRefusDeFinDeTourEtDeGit(unittest.TestCase):
     """`stop`, `exiger_recap` et `git_pre_commit` notent leur refus, avec
     ce qui a échoué, dans un projet où le socle est installé."""
@@ -944,6 +962,7 @@ if __name__ == "__main__":
     unittest.main()
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestFinDeTourSurLesSeulsTests(unittest.TestCase):
     """B-0182 : la fin de tour ne lançait les étapes rapides que si un
     fichier des `sources` de l'adaptateur avait changé ; un fichier de tests
@@ -996,6 +1015,7 @@ class TestFinDeTourSurLesSeulsTests(unittest.TestCase):
         self.assertFalse(self.lancees())
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestFinDeTourApresUneMiseAJour(unittest.TestCase):
     """B-0196 : entre une mise à jour du socle et le push de sa demande, la
     fin de tour refusait l'arbre par une ligne et une commande de remise par
@@ -1177,6 +1197,7 @@ class TestFinDeTourApresUneMiseAJour(unittest.TestCase):
         self.assertIn("git restore --source=HEAD --staged --worktree -- .socle/engine/socle/report.py", raison)
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestHooksGitPendantUneMiseAJour(unittest.TestCase):
     """B-0357, ADR-0115 : chez chess, le 26 novembre, la mise à jour a migré
     le backlog dans l'arbre ; le hook avant commit, qui juge l'index avec le
@@ -1316,6 +1337,7 @@ class TestHooksGitPendantUneMiseAJour(unittest.TestCase):
         self.assertEqual(len(rapport.constats), 2)
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestOutilsEnSessionCloud(unittest.TestCase):
     """D-0048 : en session cloud, le conteneur repart de zéro, et le pilote
     n'avait pas pytest ; le hook de démarrage installe les outils de
@@ -1418,6 +1440,7 @@ class TestOutilsEnSessionCloud(unittest.TestCase):
         self.assertLessEqual(hooks.DELAI_DEMARRAGE + 30, borne)
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestHistoriqueEnSessionCloud(unittest.TestCase):
     """B-0202 : le clone d'une session cloud était superficiel, et
     `memoire.references` refusait le premier commit, faute des commits que
@@ -1630,6 +1653,7 @@ Le travail se fait dans un worktree.
 """
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestArbreJuge(Projet):
     """B-0164 : un hook de l'agent juge l'arbre où l'action a lieu. Une
     entrée créée dans un worktree du même dépôt, que la copie principale

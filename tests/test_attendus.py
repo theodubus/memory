@@ -13,8 +13,13 @@ import unittest
 from collections import Counter
 from pathlib import Path
 
-from socle import config, context as contexte, checks_tests as controles_tests, installer as installeur
+from socle import config, context as contexte, checks_tests as controles_tests, installer as installeur, verification
 from socle.report import Rapport
+
+# L'un des plus longs modules de la suite (56 s de calcul mesurées le
+# 27 novembre) : il se met de côté pendant les étapes rapides (T-0218,
+# D-0237), et la CI, qui le lance sans `SOCLE_RAPIDE`, le joue à chaque push.
+ETAPES_RAPIDES = bool(os.environ.get(verification.RAPIDE))
 
 MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 TEST = "import unittest\n\nfrom calc import double\n\n\nclass T(unittest.TestCase):\n" \
@@ -31,6 +36,7 @@ def git(cwd, *args):
     return subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True, env=env).stdout
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestValeurAttendue(unittest.TestCase):
     def setUp(self):
         self.racine = Path(tempfile.mkdtemp(prefix="socle-attendus-"))
@@ -125,6 +131,7 @@ class TestValeurAttendue(unittest.TestCase):
 
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestValeursHorsDesAssertions(unittest.TestCase):
     """ADR-0024 : une valeur attendue placée hors de la ligne d'assertion
     (une variable, une constante, une aide) changeait sans bruit. Rien ne la
@@ -180,6 +187,7 @@ class TestValeursHorsDesAssertions(unittest.TestCase):
                          Counter({"4": 1, '"a b"': 1, "2.5": 1, "True": 1}))
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestEnAttenteDeLHumain(TestValeurAttendue):
     """B-0033 : une valeur attendue changée, que nomme une demande en attente
     poussée telle quelle, ne bloque pas la fin du tour ; le commit et la CI
@@ -301,6 +309,7 @@ CAS = """[
 """
 
 
+@unittest.skipIf(ETAPES_RAPIDES, "trop long pour une étape rapide : la CI le joue à chaque push")
 class TestFichiersDeCas(TestValeurAttendue):
     """D-0066 : des tests lisent leurs résultats attendus dans des fichiers
     de cas, que le projet déclare. Ajouter un cas est libre ; en changer ou

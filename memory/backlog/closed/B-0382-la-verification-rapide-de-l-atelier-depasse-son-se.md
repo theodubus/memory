@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0382 — La vérification rapide de l'atelier dépasse son seuil de 300 secondes : chaque push attend sa suite de tests entière
 
-> statut : ouvert · origine : J-2026-11-27-AF · ref : D-0237 · lu : backlog@e5be70ef
+> statut : fait · origine : J-2026-11-27-AF · ref : D-0237, ce commit · lu : backlog@e5be70ef
 
 Mesuré le 27 novembre (J-2026-11-27-AF) : la suite de l'atelier, que
 l'étape rapide des tests lance en entier avant chaque push, prend 339
@@ -16,5 +16,5 @@ ni l'adaptateur, ni le lanceur ne changent ; aucun test n'est supprimé.
 
 ## Satisfait quand
 
-- [ ] la vérification rapide de l'atelier tient sous son seuil de 300 secondes, seule sur la machine
-- [ ] la CI joue toujours la suite entière
+- [x] la vérification rapide de l'atelier tient sous son seuil de 300 secondes, seule sur la machine
+- [x] la CI joue toujours la suite entière
