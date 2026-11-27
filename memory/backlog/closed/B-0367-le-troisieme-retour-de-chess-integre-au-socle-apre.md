@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0367 — Le troisième retour de chess, intégré au socle après les retours précédents, le format de la feuille de route et le tri du backlog
 
-> statut : ouvert · origine : J-2026-11-26-AJ · ref : D-0216, D-0217, D-0232, D-0233, D-0234 · après : B-0357, B-0358, B-0359, B-0360, B-0361, B-0362, B-0363, B-0364, B-0366 · lu : backlog@0f548814
+> statut : fait · origine : J-2026-11-26-AJ · ref : D-0216, D-0217, D-0232, D-0233, D-0234, D-0235, J-2026-11-27-U · après : B-0357, B-0358, B-0359, B-0360, B-0361, B-0362, B-0363, B-0364, B-0366 · lu : backlog@0f548814
 
 Sur la décision de Théo du 26 novembre (D-0216), mot pour mot :
 
@@ -38,4 +38,4 @@ dont ils sont le contenu et la mesure avant et après des corrections
 
 ## Satisfait quand
 
-- [ ] le troisième retour de chess est versé tel quel sous `docs/fabrication/chess/`, relu de façon critique, et chacune de ses gênes a l'arbitrage de Théo : un besoin de JA-0006, un besoin en réserve avec sa raison, ou écartée d'une raison au journal
+- [x] le troisième retour de chess est versé tel quel sous `docs/fabrication/chess/`, relu de façon critique, et chacune de ses gênes a l'arbitrage de Théo : un besoin de JA-0006, un besoin en réserve avec sa raison, ou écartée d'une raison au journal
