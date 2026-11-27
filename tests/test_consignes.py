@@ -432,7 +432,7 @@ class TestInstallation(Installe):
         self.assertEqual(memoire.analyser("memory/directives.md", (
             MOTEUR / "socle/templates/memory/directives.en.md").read_text()).couche, "consignes")
         gf = (self.racine / ".socle/guardrails.toml").read_text()
-        self.assertIn('"memory/directives.md" = { max_bytes = 16000 }', gf)
+        self.assertIn('"memory/directives.md" = { max_bytes = 24000 }', gf)
         self.assertIn('"memory/active.md" = { max_bytes = 1600 }', gf)
         directives.unlink()
         self.installer()
@@ -540,7 +540,7 @@ class TestCeQueRecoitUnProjet(unittest.TestCase):
                                   "in session, then the directive becomes `lifted`, with `lifted-by : D-NNNN`")):
             texte = gabarit("skills/socle-request/SKILL.md", lg)
             self.assertIn(phrase, " ".join(texte.split()), lg)
-            self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
+            self.assertLessEqual(len(texte.encode("utf-8")), 10000, lg)
 
     def test_la_note_de_version_dit_le_changement_et_la_migration_dans_les_deux_langues(self):
         for nom, titre, migration in (

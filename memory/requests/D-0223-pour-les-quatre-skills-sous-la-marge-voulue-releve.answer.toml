@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0223-pour-les-quatre-skills-sous-la-marge-voulue-releve.md, dont l'empreinte suit.
+reponse = "A"
+texte = ""
+par = "Théo"
+date = "2026-11-26"
+canal = "conversation"
+citation = "A\n\nEt on garde de côté le besoin du travail parallèle, mais non prioritaire\n\nEnregistre mes réponses et je chance de session"
+empreinte = "sha256:091ee875267f6c0e8aef027a0235c5b834c2e07d57b06e8e53d9490778b7fb5e"

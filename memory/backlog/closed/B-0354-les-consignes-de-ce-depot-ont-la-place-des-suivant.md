@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0354 — Les textes à leur plafond ont la place des règles suivantes : les consignes de ce dépôt, les skills du produit et la section du socle d'AGENTS.md
 
-> statut : ouvert · origine : J-2026-11-25-AL · lu : backlog@20ebd4a0 · ref : B-0161, D-0209, D-0218
+> statut : fait · origine : J-2026-11-25-AL · lu : backlog@20ebd4a0 · ref : B-0161, D-0209, D-0218, D-0221, D-0224, L-0049, J-2026-11-27-D
 
 Après la migration de L-0042, `memory/directives.md` fait 15 030 octets
 pour un budget de 16 000, et le groupe des consignes au démarrage
@@ -36,5 +36,5 @@ garder ceux des skills du produit et d'`AGENTS.md`, chargés en entier
 
 ## Satisfait quand
 
-- [ ] trois consignes de plus, de la taille moyenne d'aujourd'hui, tiennent dans le budget de `memory/directives.md` de ce dépôt
-- [ ] une règle de plus, de la taille d'un paragraphe, tient dans chaque skill du produit et dans la section du socle d'`AGENTS.md`, sans en raccourcir une autre
+- [x] trois consignes de plus, de la taille moyenne d'aujourd'hui, tiennent dans le budget de `memory/directives.md` de ce dépôt
+- [x] une règle de plus, de la taille d'un paragraphe, tient dans chaque skill du produit et dans la section du socle d'`AGENTS.md`, sans en raccourcir une autre

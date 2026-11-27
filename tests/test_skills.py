@@ -163,7 +163,7 @@ class TestLesDemandes(unittest.TestCase):
     def texte(self, lg: str) -> str:
         installeur.poser_skills(self.racine, lg)
         texte = (self.racine / installeur.SKILLS / "socle-request" / "SKILL.md").read_text(encoding="utf-8")
-        self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
+        self.assertLessEqual(len(texte.encode("utf-8")), 10000, lg)
         return " ".join(texte.split())
 
     def test_un_contenu_valide_en_seance_s_ecrit_d_abord_dans_le_depot(self):
@@ -429,23 +429,30 @@ class TestLaReprise(unittest.TestCase):
         garde ses réveils, repoussés après son heure, et un tour refusé
         pendant elle se reprend ; au réveil qui ne reprend pas, un contrôle
         de fin de tour en échec ne fait pas finir le travail interrompu."""
-        for lg, fin, non, apres, attente, reveil in (
+        from socle import cli
+
+        # T-0206 (D-0218) : les règles restent dans le skill, leurs raisons
+        # passent au guide, « Pourquoi ces règles ».
+        for lg, fin, non, apres, attente, reveil, guide, raisons in (
                 ("fr", "## À la fin de chaque tour", "Ne pas reprendre", "\n3. ",
                  ("sauf pendant un sous-agent, jusqu'au tour qui reçoit son résultat, ou une attente à heure bornée "
                   "(un rappel, une commande en arrière-plan, une CI), jusqu'au tour de l'événement, chacun repoussé "
-                  "après cette heure s'il tombait avant : refusé, ce tour se reprend à la levée.",
+                  "après cette heure s'il tombait avant.",
                   "Un tour coupé ou refusé ne retire rien"),
                  "Si l'humain avait interrompu le travail et que le contrôle de fin de tour refuse sur des contrôles "
-                 "en échec, le dire en une ligne, sans y toucher ni réarmer : relancé sur le même arbre, il laisse "
-                 "conclure."),
+                 "en échec, le dire en une ligne, sans y toucher ni réarmer.", "HELP.md",
+                 ("chacun repoussé après cette heure s'il tombait avant : refusé, ce tour se reprend à la levée.",
+                  "sans y toucher ni réarmer : relancé sur le même arbre, il laisse conclure.")),
                 ("en", "## At the end of every turn", "Do not resume", "\n3. ",
                  ("except during a subagent, until the turn that receives its result, or a wait with a bounded time "
                   "(a reminder, a background command, a CI), until the event's turn, each pushed back after that "
-                  "time if it fell before: refused, that turn resumes when the limit lifts.",
+                  "time if it fell before.",
                   "A turn cut off or refused removes nothing"),
                  "If the human had interrupted the work and the end-of-turn check refuses on failing checks, say so "
-                 "in one line, without touching it or re-arming: relaunched on the same tree, it lets the turn "
-                 "conclude.")):
+                 "in one line, without touching it or re-arming.", "HELP.en.md",
+                 ("each pushed back after that time if it fell before: refused, that turn resumes when the limit "
+                  "lifts.",
+                  "without touching it or re-arming: relaunched on the same tree, it lets the turn conclude."))):
             texte = self.lire(lg)
             section = " ".join(texte.split(fin, 1)[1].split("\n## ", 1)[0].split())
             for attendu in attente:
@@ -453,6 +460,9 @@ class TestLaReprise(unittest.TestCase):
             # La règle de la réponse d'une ligne est un cas où l'agent ne reprend pas.
             cas = " ".join(texte.split(non, 1)[1].split(apres, 1)[0].split())
             self.assertIn(reveil, cas, lg)
+            texte_guide = " ".join((Path(cli.__file__).parent / guide).read_text(encoding="utf-8").split())
+            for raison in raisons:
+                self.assertIn(raison, texte_guide, lg)
 
     def test_le_message_qui_provoque_la_coupure_compte_et_le_reveil_qui_a_tire_manque(self):
         """Passe 2 de la revue de L-0023 (J-2026-11-23-U) : avec les réveils
@@ -487,20 +497,25 @@ class TestLaReprise(unittest.TestCase):
 
     def test_les_reveils_d_une_session_archivee_se_disent_a_l_humain(self):
         """T-0127 (B-0301) : ils ne se désactivent qu'à sa demande, et il
-        sait où les retrouver lui-même."""
-        for lg, debut, jamais, attendus, retrouver in (
+        sait où les retrouver lui-même : le skill le dit, et le guide le lui
+        dit (T-0206)."""
+        from socle import cli
+
+        for lg, debut, jamais, attendus, retrouver, guide, ou in (
                 ("fr", "## Au début de chaque tour", "## Ce que l'agent ne fait jamais",
                  ("Au premier tour de la session, ou perdus par un compactage : `list_triggers`",
                   "Ceux d'une session archivée (`get_session` : `SESSION_STATUS_ARCHIVED`) se disent à l'humain "
                   "avec leurs heures, et ne se désactivent (`update_trigger`, `enabled: false`) qu'à sa demande."),
                  ("toucher au réveil d'une autre session sans que l'humain le demande",
-                  "la liste des tâches programmées de son compte (claude.ai/code/routines)")),
+                  "la liste des tâches programmées de son compte (claude.ai/code/routines)"), "HELP.md",
+                 "la liste des tâches programmées de son compte (claude.ai/code/routines)"),
                 ("en", "## At the start of every turn", "## What the agent never does",
                  ("At the session's first turn, or lost to a compaction: `list_triggers`",
                   "Those of an archived session (`get_session`: `SESSION_STATUS_ARCHIVED`) are told to the human "
                   "with their times, and are disabled (`update_trigger`, `enabled: false`) only at their request."),
                  ("touch another session's wake-up without the human asking",
-                  "the list of scheduled tasks of their account (claude.ai/code/routines)"))):
+                  "the list of scheduled tasks of their account (claude.ai/code/routines)"), "HELP.en.md",
+                 "the list of scheduled tasks of their account (claude.ai/code/routines)")):
             texte = self.lire(lg)
             section = " ".join(texte.split(debut, 1)[1].split("\n## ", 1)[0].split())
             for attendu in attendus:
@@ -508,6 +523,7 @@ class TestLaReprise(unittest.TestCase):
             section = " ".join(texte.split(jamais, 1)[1].split())
             for attendu in retrouver:
                 self.assertIn(attendu, section, lg)
+            self.assertIn(ou, " ".join((Path(cli.__file__).parent / guide).read_text(encoding="utf-8").split()), lg)
 
     def test_un_sous_agent_ne_touche_a_aucun_reveil(self):
         for lg, regle in (("fr", "Un sous-agent ne touche à aucun réveil"), ("en", "A subagent\ntouches no wake-up")):
@@ -536,7 +552,7 @@ class TestLaReprise(unittest.TestCase):
             self.assertNotIn(avant, texte, lg)
             section = " ".join(texte.split(debut, 1)[1].split("\n## ", 1)[0].split())
             self.assertIn(attente, section, lg)
-            self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
+            self.assertLessEqual(len(texte.encode("utf-8")), 10000, lg)
 
 
 class TestLaConduiteDUnLot(unittest.TestCase):
@@ -565,7 +581,7 @@ class TestLaConduiteDUnLot(unittest.TestCase):
             texte = self.texte(lg)
             self.assertTrue(texte.startswith("---\nname: socle-batch\n"), lg)
             # Le plafond des garde-fous d'un projet neuf.
-            self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
+            self.assertLessEqual(len(texte.encode("utf-8")), 10000, lg)
             self.assertEqual(juger(self.racine), {"skills.contrat": [], "skills.commandes": []}, lg)
 
     def test_il_ne_renvoie_pas_a_l_atelier(self):
@@ -863,7 +879,7 @@ class TestLaPassation(unittest.TestCase):
         for lg in ("fr", "en"):
             texte = self.texte(lg)
             self.assertTrue(texte.startswith("---\nname: socle-handoff\n"), lg)
-            self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
+            self.assertLessEqual(len(texte.encode("utf-8")), 10000, lg)
             # Ses commandes, dans des blocs de code, jugées comme le hook.
             self.assertEqual(len(controles.commandes(texte)), 2, lg)
             self.assertEqual(juger(self.racine), {"skills.contrat": [], "skills.commandes": []}, lg)
@@ -1095,7 +1111,7 @@ class TestLaRevue(unittest.TestCase):
         for lg in ("fr", "en"):
             texte = self.texte(lg)
             self.assertTrue(texte.startswith("---\nname: socle-review\n"), lg)
-            self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
+            self.assertLessEqual(len(texte.encode("utf-8")), 10000, lg)
             self.assertEqual(juger(self.racine), {"skills.contrat": [], "skills.commandes": []}, lg)
 
     def test_le_relecteur_recoit_le_modele_le_plus_capable_a_son_lancement(self):
@@ -1360,6 +1376,141 @@ class TestLOrganisationProportionnee(unittest.TestCase):
             for phrase in phrases:
                 self.assertIn(phrase, texte, nom)
             self.assertNotIn("un lot par session" if nom == "HELP.md" else "one batch per session", texte.lower())
+
+
+class TestLaPlaceDesReglesSuivantes(unittest.TestCase):
+    """T-0206 (B-0354, D-0218) : les skills du produit et la section du socle
+    d'`AGENTS.md`, chargés en entier à chaque usage, gardent leur plafond et
+    une marge pour une règle de plus ; ce qui justifiait une règle sans la
+    dire est passé au guide, « Pourquoi ces règles », et n'est plus dans le
+    texte qu'il justifiait. Le plafond des skills relevé à 10 000 octets
+    (D-0223, D-0224), chacun a sa marge."""
+
+    MARGE = 600
+    # Les skills qui n'ont pas encore leur marge : aucun depuis D-0224.
+    # L'ensemble ne fait que rétrécir : un skill qui atteint sa marge en
+    # sort, le test le dit.
+    PAS_ENCORE: set[tuple[str, str]] = set()
+    # Mot pour mot, d'où chacun est sorti ; la règle qu'il justifiait reste.
+    SORTIS = {
+        "fr": {
+            "AGENTS.md": ["(la session a démarré hors de la racine du projet ; `socle state` le dit en tête, et le "
+                          "hook avant commit refuse alors le commit)", "un compactage peut la perdre",
+                          "où l'humain lit un texte brut sans liens à suivre (le hook le refuse)",
+                          "la CI ne la juge pas aux envois", "(le hook `Stop` le vérifie)",
+                          "le hook `Stop` refuse de conclure sans les deux lignes",
+                          "l'humain lit dans la conversation ou sur GitHub, pas dans le conteneur de l'agent",
+                          "le hook les refuse", "le hook de l'agent le refuse sur le dépôt du projet, et la CI "
+                          "exécute tout", "de l'agent : le hook le refuse"],
+            "socle-batch": ["une fois poussées, une décision et une entrée de journal ne se réécrivent plus",
+                            "la ligne « CI » de l'état suit la tête"],
+            "socle-resume": ["Une limite d'usage, sur cinq heures ou sept jours, coupe la session jusqu'au message "
+                             "suivant de l'humain", "il tirerait aussitôt", "date d'une fenêtre close",
+                             "refusé, ce tour se reprend à la levée", "c'est ce qui le fait reprendre",
+                             "relancé sur le même arbre, il laisse conclure",
+                             "L'humain arrête tout en écrivant « arrête » dans la session, ou supprime les réveils "
+                             "de la liste des tâches programmées de son compte (claude.ai/code/routines)."],
+            "socle-request": ["Une demande est lue quand le contexte est perdu : elle se suffit à elle-même.",
+                              "ne comptent pas dans le budget de la demande", "l'humain ne la voit plus en attente",
+                              "l'humain doit avoir pu la lire", "l'état ne la dit plus alors à réécrire",
+                              "sans lui, la décision ne garde que la question et la réponse, et le contenu se perd"],
+            "socle-handoff": ["d'un compte comme d'un autre",
+                              "le mode de qui a plusieurs comptes ou veut garder la main",
+                              "sans quoi la session neuve n'a pas où pousser",
+                              "La session créée paraît aussitôt dans la liste des sessions de l'humain, sous son "
+                              "titre, prête à relire tant qu'elle attend son réveil.",
+                              "une session coupée avant d'avoir rangé reprend à la levée"],
+        },
+        "en": {
+            "AGENTS.md": ["(the session started outside the project root; `socle state` says so at the top, and "
+                          "the pre-commit hook then refuses the commit)", "a compaction may lose it",
+                          "where the human reads raw text with no links to follow (the hook refuses it)",
+                          "the CI does not judge it on push", "(the `Stop` hook checks it)",
+                          "the `Stop` hook refuses to conclude without the two lines",
+                          "the human reads in the conversation or on GitHub, not in the agent's container",
+                          "the hook refuses them", "the agent's hook refuses it on the project's repository, and "
+                          "the CI runs everything", "question widget: the hook refuses it"],
+            "socle-batch": ["once pushed, a decision and a journal entry are no longer rewritten",
+                            "the \"CI\" line of the state follows the head"],
+            "socle-resume": ["A usage limit of the account, over five hours or seven days, cuts the session off; "
+                             "the agent then resumes only at the human's next message", "it would fire at once",
+                             "belongs to a closed window", "refused, that turn resumes when the limit lifts",
+                             "that is what makes it resume", "relaunched on the same tree, it lets the turn conclude",
+                             "The human stops everything by writing \"stop\" in the session, or deletes the "
+                             "wake-ups from the list of scheduled tasks of their account (claude.ai/code/routines)."],
+            "socle-request": ["A request is read once the context is lost: it stands on its own.",
+                              "do not count in the request's budget", "the human no longer sees it pending",
+                              "the human must have been able to read it", "the state then no longer says to rewrite it",
+                              "without it, the decision keeps only the question and the answer, and the content is "
+                              "lost"],
+            "socle-handoff": ["from one account or another",
+                              "the mode of whoever has several accounts or wants to keep control",
+                              "without which the new session has nowhere to push",
+                              "The created session appears at once in the human's list of sessions, under its "
+                              "title, ready for review while it waits for its wake-up.",
+                              "a session cut off before tidying up resumes when the limit lifts"],
+        },
+    }
+
+    def setUp(self):
+        self.racine = depot({"app.py": "print('ok')\n"})
+        self.atelier = Path(__file__).resolve().parent.parent
+        self.budgets = config.Projet.charger(self.atelier).gf("budgets", defaut={})
+
+    def tearDown(self):
+        shutil.rmtree(self.racine, ignore_errors=True)
+
+    def section(self, lg: str) -> str:
+        """L'`AGENTS.md` de ce dépôt, sa partie propre gardée, la section du
+        socle telle que la pose l'installeur dans cette langue."""
+        (self.racine / "AGENTS.md").write_text((self.atelier / "AGENTS.md").read_text(encoding="utf-8"),
+                                               encoding="utf-8")
+        (self.racine / "CLAUDE.md").write_text("@AGENTS.md\n", encoding="utf-8")
+        with redirect_stdout(io.StringIO()):
+            installeur._instructions(self.racine, "engine", lg)
+        return (self.racine / "AGENTS.md").read_text(encoding="utf-8")
+
+    def test_chaque_skill_du_produit_laisse_sa_marge_sous_son_plafond(self):
+        plafond = self.budgets[".claude/skills/*/SKILL.md"]["max_bytes"]
+        for lg in ("fr", "en"):
+            installeur.poser_skills(self.racine, lg)
+            skills = sorted((self.racine / installeur.SKILLS).glob("socle-*/SKILL.md"))
+            self.assertEqual(len(skills), 6, lg)
+            for f in skills:
+                marge = plafond - len(f.read_bytes())
+                with self.subTest(langue=lg, skill=f.parent.name, marge=marge):
+                    if (lg, f.parent.name) in self.PAS_ENCORE:
+                        self.assertLess(marge, self.MARGE, "il a sa marge : le retirer de PAS_ENCORE")
+                        self.assertGreaterEqual(marge, 0)
+                    else:
+                        self.assertGreaterEqual(marge, self.MARGE)
+
+    def test_la_section_du_socle_laisse_sa_marge_sous_le_plafond_de_ce_depot(self):
+        plafond = self.budgets["AGENTS.md"]["max_bytes"]
+        for lg in ("fr", "en"):
+            texte = self.section(lg)
+            self.assertIn(config.DEBUT_SOCLE, texte, lg)
+            self.assertTrue(texte.startswith("# memory"), lg)
+            marge = plafond - len(texte.encode("utf-8"))
+            self.assertGreaterEqual(marge, self.MARGE, (lg, marge))
+
+    def test_chaque_passage_sorti_se_lit_au_guide_et_plus_dans_son_texte(self):
+        from socle import cli
+        from socle.templates import gabarit
+
+        for lg, textes in self.SORTIS.items():
+            guide = " ".join((Path(cli.__file__).parent / ("HELP.md" if lg == "fr" else "HELP.en.md")).read_text(
+                encoding="utf-8").split())
+            installeur.poser_skills(self.racine, lg)
+            for nom, passages in textes.items():
+                source = (gabarit(nom, lg) if nom == "AGENTS.md" else
+                          (self.racine / installeur.SKILLS / nom / "SKILL.md").read_text(encoding="utf-8"))
+                source = " ".join(source.split()).lower()
+                for passage in passages:
+                    p = " ".join(passage.split()).lower()
+                    with self.subTest(langue=lg, texte=nom, passage=passage):
+                        self.assertTrue(p in guide.lower(), "absent du guide")
+                        self.assertFalse(p in source, "encore dans le texte qu'il justifiait")
 
 
 class TestRefusBash(unittest.TestCase):

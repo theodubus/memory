@@ -854,7 +854,7 @@ class TestDeclencheurs(Projet):
             installeur.poser_skills(self.racine, lg)
             texte = (self.racine / installeur.SKILLS / "socle-batch" / "SKILL.md").read_text(encoding="utf-8")
             self.assertIn(phrase, " ".join(texte.split()), lg)
-            self.assertLessEqual(len(texte.encode("utf-8")), 8000, lg)
+            self.assertLessEqual(len(texte.encode("utf-8")), 10000, lg)
             self.assertNotIn("--format markdown", texte, lg)
 
     def test_les_instructions_disent_de_coller_le_format_detaille_quand_l_humain_demande_la_suite(self):

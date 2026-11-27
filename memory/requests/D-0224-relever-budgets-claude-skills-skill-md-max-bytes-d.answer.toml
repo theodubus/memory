@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0224-relever-budgets-claude-skills-skill-md-max-bytes-d.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-27"
+canal = "conversation"
+citation = "Je valide\n\nEnchaine avec B0364 dans la meme session, puis B0365 si la fenêtre 5h et semaine le permettent"
+empreinte = "sha256:1cb020feee3c404ac9ccb16baa907e4ddbe4aa6e34bde56419fb987610e12e4d"
