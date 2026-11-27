@@ -22,6 +22,7 @@ from socle.report import Rapport
 MOTEUR = Path(__file__).resolve().parent.parent / "engine"
 # Un identifiant privé ne s'écrit pas en clair dans un fichier public.
 PC = "P" + "C"
+PJ = "P" + "J"
 
 
 def git(cwd, *args):
@@ -350,6 +351,77 @@ class TestLecturesProuvees(Depot):
         self.assertEqual(self.lectures(), [])
         self.entree_de_journal("Théo lève C-0002 (D-0007).")
         self.assertEqual(len(self.lectures()), 1)
+
+
+FILTRE_ESSAI = """import base64, sys
+donnees = sys.stdin.buffer.read()
+if sys.argv[1] == "clean":
+    sys.stdout.buffer.write(donnees if donnees.startswith(b"ESSAI:") else b"ESSAI:" + base64.b64encode(donnees))
+else:
+    sys.stdout.buffer.write(base64.b64decode(donnees[6:]) if donnees.startswith(b"ESSAI:") else donnees)
+"""
+
+
+class TestConsignePriveeDansLaPlage(unittest.TestCase):
+    """Revue de L-0052 : la base publique ne lit pas la zone privée à une
+    révision ; une consigne privée d'avant la plage passait pour née dans
+    elle, et sa mention nue n'était plus refusée, en mode compagnon comme
+    en mode chiffré. Elle se juge contre la base privée."""
+
+    def preparer(self, mode: str) -> tuple[Path, Path, str]:
+        dossier = Path(tempfile.mkdtemp(prefix="socle-consigne-privee-"))
+        self.addCleanup(shutil.rmtree, dossier, ignore_errors=True)
+        racine = dossier / "public"
+        (racine / ".socle").mkdir(parents=True)
+        (racine / "memory").mkdir()
+        (racine / ".socle/policy.toml").write_text(f'[private]\nmode = "{mode}"\n')
+        git(racine, "init", "-q", "-b", "main")
+        prive_dir = racine / "memory/private"
+        prive_dir.mkdir()
+        (prive_dir / "directives.md").write_text(
+            "<!-- socle: couche=consignes zone=privee -->\n# Consignes privées\n"
+            + consigne(1, "Une consigne privée ancienne", source=f"{PJ}-2026-11-12-A", ident=PC))
+        (prive_dir / "journal.md").write_text("<!-- socle: couche=journal zone=privee -->\n# Journal privé\n\n"
+                                              f"## {PJ}-2026-11-12-A — Théo, en privé\n\nIl écrit : « y ».\n")
+        if mode == "compagnon":
+            (racine / ".gitignore").write_text("memory/private/\n")
+            git(prive_dir, "init", "-q", "-b", "main")
+            git(prive_dir, "add", "-A")
+            git(prive_dir, "commit", "-qm", "privé")
+            prive.ecrire_verrou(racine, git(prive_dir, "rev-parse", "HEAD").strip())
+        else:
+            (dossier / "filtre.py").write_text(FILTRE_ESSAI)
+            git(racine, "config", "filter.essai.clean", f"python3 {dossier / 'filtre.py'} clean")
+            git(racine, "config", "filter.essai.smudge", f"python3 {dossier / 'filtre.py'} smudge")
+            (racine / ".gitattributes").write_text("memory/private/** filter=essai\n")
+        git(racine, "add", "-A")
+        git(racine, "commit", "-qm", "base")
+        return racine, prive_dir, git(racine, "rev-parse", "HEAD").strip()
+
+    def refus(self, racine: Path, base: str) -> list[str]:
+        ctx = contexte.Contexte(config.Projet.charger(racine), etage="agent", base=base, tete=None)
+        r = Rapport()
+        controles_memoire.lectures(ctx, r)
+        return [c.message for c in r.erreurs("memoire.lectures")]
+
+    def test_une_consigne_privee_d_avant_la_plage_reste_exigee_avec_son_empreinte(self):
+        for mode in ("compagnon", "chiffre"):
+            with self.subTest(mode=mode):
+                racine, prive_dir, base = self.preparer(mode)
+                journal = prive_dir / "journal.md"
+                journal.write_text(journal.read_text() + f"\n## {PJ}-2026-11-27-A — Suite\n\nSelon {PC}-0001, rien.\n")
+                refus = self.refus(racine, base)
+                self.assertTrue(any(f"`{PC}-0001`, une consigne de l'humain, cité sans son empreinte" in m
+                                    for m in refus), refus)
+
+    def test_une_consigne_privee_nee_dans_la_plage_s_y_cite_sans_empreinte(self):
+        racine, prive_dir, base = self.preparer("compagnon")
+        directives = prive_dir / "directives.md"
+        directives.write_text(directives.read_text() + consigne(2, "Une consigne privée neuve",
+                                                                source=f"{PJ}-2026-11-27-A", ident=PC))
+        journal = prive_dir / "journal.md"
+        journal.write_text(journal.read_text() + f"\n## {PJ}-2026-11-27-A — Suite\n\nIl écrit : « z », {PC}-0002.\n")
+        self.assertEqual([m for m in self.refus(racine, base) if f"{PC}-0002" in m], [])
 
 
 class TestArchive(Depot):

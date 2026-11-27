@@ -37,7 +37,9 @@ was refused as a fix outside every adapter: only a validated request
 admitted it. No test can prove the correction of a text:
 `tests.regression` now warns, "fix that touches only the documentation
 and the memory: not judged", as for a fix that touches only the memory.
-A fix that also touches another file is judged as before.
+A fix that also touches another file is judged as before. The
+`commit-msg` hook no longer announces a refusal for these fixes, nor for
+those of the memory alone.
 
 
 To do: nothing.

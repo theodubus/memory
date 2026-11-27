@@ -3240,6 +3240,11 @@ def correctif_sans_test(projet: config.Projet, message: str, amendement: bool | 
     principal = projet.pour(projet.adaptateurs[0]) if projet.plusieurs_adaptateurs else projet
     rejoue = "command" in principal.adaptateur.get("capabilities", {}).get("regression", {})
     hors = controles_tests.hors_de_tout_adaptateur(projet, projet.hors_tiers(touches)) if rejoue else []
+    memoire = projet.chemins.memoire.rstrip("/") + "/"
+    if hors and all(f.startswith(memoire) or controles_tests.est_documentation(f) for f in hors):
+        # La mémoire et la documentation seules : la CI ne le juge pas, elle
+        # l'avertit (B-0359, B-0373) ; rien à annoncer ici.
+        return None
     if hors:
         # Aucun adaptateur ne juge ses fichiers : un test n'y peut rien
         # (D-0088).

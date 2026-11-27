@@ -367,6 +367,33 @@ class TestCorrectifHorsDeToutAdaptateur(unittest.TestCase):
                                             amendement=False)
         self.assertIn("ce correctif ne touche aucun fichier qu'un adaptateur juge (app/main.dart)", message)
 
+    def test_le_hook_se_tait_sur_la_documentation_et_la_memoire_que_la_ci_ne_juge_pas(self):
+        """Revue de L-0052 : le hook annonçait « la CI le refusera » pour un
+        correctif de la seule documentation (B-0373) ou de la seule mémoire
+        (B-0359), que la CI ne fait plus qu'avertir ; avec un autre fichier,
+        il le dit encore."""
+        from socle import hooks
+
+        for chemins in (["docs/guide.md"], ["memory/journal/2026-11-27.md"], ["README.md", "memory/active.md"]):
+            with self.subTest(chemins=chemins):
+                try:
+                    for c in chemins:
+                        (self.racine / c).parent.mkdir(parents=True, exist_ok=True)
+                        (self.racine / c).write_text(f"Le mot juste, {c}.\n")
+                        git(self.racine, "add", c)
+                    self.assertIsNone(hooks.correctif_sans_test(config.Projet.charger(self.racine),
+                                                                "Correction : le mot juste", amendement=False))
+                finally:
+                    git(self.racine, "reset", "-q", "--hard")
+        (self.racine / "docs").mkdir(exist_ok=True)
+        (self.racine / "docs/guide.md").write_text("Le mot juste.\n")
+        (self.racine / "app/main.dart").write_text("int doubler(int x) => x + x;\n")
+        git(self.racine, "add", "docs/guide.md", "app/main.dart")
+        message = hooks.correctif_sans_test(config.Projet.charger(self.racine), "Correction : le mot juste",
+                                            amendement=False)
+        self.assertIn("ce correctif ne touche aucun fichier qu'un adaptateur juge (app/main.dart, docs/guide.md)",
+                      message)
+
 
 class TestChargement(unittest.TestCase):
     """Relevé de la passe de recul, D : un test de régression qui échoue sur

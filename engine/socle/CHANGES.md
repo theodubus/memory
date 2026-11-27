@@ -40,7 +40,9 @@ seule une demande validée l'admettait. Aucun test ne peut prouver la
 correction d'un texte : `tests.regression` l'avertit désormais,
 « correctif qui ne touche que la documentation et la mémoire : non
 jugé », comme un correctif qui ne touche que la mémoire. Un correctif qui
-touche aussi un autre fichier reste jugé comme avant.
+touche aussi un autre fichier reste jugé comme avant. Le hook `commit-msg`
+n'annonce plus de refus pour ces correctifs, ni pour ceux de la seule
+mémoire.
 
 
 À faire : rien.

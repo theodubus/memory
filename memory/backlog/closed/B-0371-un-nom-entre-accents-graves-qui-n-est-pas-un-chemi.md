@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0371 — Un nom entre accents graves qui n'est pas un chemin du dépôt fait refuser la fin du tour sans son chemin complet, et le message qui corrige doit redire tout le récap
 
-> statut : ouvert · origine : J-2026-11-27-U · ref : D-0235 · lu : backlog@4d53be09
+> statut : fait · origine : J-2026-11-27-U · ref : D-0235, T-0210, J-2026-11-27-X, J-2026-11-27-Z · lu : backlog@4d53be09
 
 Le premier poste des refus chez chess : 20 sur 56, du 12 au 26
 novembre (`docs/fabrication/chess/cout-et-frictions-2026-11-26.md`, §3.1), chacun un tour et un message de plus ; Théo
@@ -26,6 +26,6 @@ chemin juste vers le mauvais fichier.
 
 ## Satisfait quand
 
-- [ ] le refus d'un nom nu qui désigne un seul fichier suivi donne son chemin complet ; sinon, il dit de l'écrire sans accents graves
-- [ ] un message qui ne fait que corriger les liens d'un récap refusé pour eux seuls passe sans redire le récap
-- [ ] la section installée dit la règle des liens en une phrase positive
+- [x] le refus d'un nom nu qui désigne un seul fichier suivi donne son chemin complet ; sinon, il dit de l'écrire sans accents graves
+- [x] un message qui ne fait que corriger les liens d'un récap refusé pour eux seuls passe sans redire le récap
+- [x] la section installée dit la règle des liens en une phrase positive

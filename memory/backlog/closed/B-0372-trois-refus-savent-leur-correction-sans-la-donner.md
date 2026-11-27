@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0372 — Trois refus savent leur correction sans la donner : l'empreinte d'une consigne citée sans elle, le fichier non suivi à retirer, le texte qui cite un chemin protégé
 
-> statut : ouvert · origine : J-2026-11-27-U · ref : D-0235 · lu : backlog@4d53be09
+> statut : fait · origine : J-2026-11-27-U · ref : D-0235, T-0211, J-2026-11-27-Y, J-2026-11-27-Z · lu : backlog@4d53be09
 
 Chez chess, quatre refus (`docs/fabrication/chess/cout-et-frictions-2026-11-26.md`, §3.2, §3.5 et §3.8), confirmés
 dans le code (`docs/fabrication/chess/relecture-cout-et-frictions-2026-11-27.md`) :
@@ -30,6 +30,6 @@ avec son empreinte. Les deux autres refus ne changent que leur message.
 
 ## Satisfait quand
 
-- [ ] le refus d'une consigne citée sans empreinte donne l'empreinte à citer
-- [ ] une consigne née dans la plage jugée s'y cite sans empreinte
-- [ ] le refus d'un fichier protégé dit que `rm` vaut pour un fichier que git ne suit pas, et celui d'un écrivain qui cite un chemin protégé dit d'écrire ce texte par l'outil d'écriture
+- [x] le refus d'une consigne citée sans empreinte donne l'empreinte à citer
+- [x] une consigne née dans la plage jugée s'y cite sans empreinte
+- [x] le refus d'un fichier protégé dit que `rm` vaut pour un fichier que git ne suit pas, et celui d'un écrivain qui cite un chemin protégé dit d'écrire ce texte par l'outil d'écriture
