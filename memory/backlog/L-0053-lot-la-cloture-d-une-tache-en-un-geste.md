@@ -9,3 +9,9 @@ tâche en un geste, T-0214 seule. Elle touche le contrôle du backlog
 (`engine/socle/archive.py`), la commande (`engine/socle/cli.py`), le
 format, le guide, le skill `socle-batch` et le gabarit d'`AGENTS.md`.
 Environ 150 lignes de code et de tests : une revue adversariale.
+
+## Revues
+
+### Passe 1 — 2026-11-27
+
+Commits : 67546e33..1ab291d3
