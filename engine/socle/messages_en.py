@@ -3750,6 +3750,47 @@ MESSAGES: dict[str, str] = {
         '`--need {besoin}`: no open need of that name; a task names the open need it serves',
     '`--task` ne vaut que pour un besoin (`need`) : il crée le besoin et sa tâche':
         '`--task` only applies to a need (`need`): it creates the need and its task',
+    # Un besoin naît rangé (ADR-0118).
+    '`--milestone` et `--reserve` ne valent que pour un besoin (`need`) : ils le rangent':
+        '`--milestone` and `--reserve` only apply to a need (`need`): they place it',
+    '`--milestone {jalon}` : aucun jalon ouvert de ce nom ; un besoin rejoint un jalon ouvert':
+        '`--milestone {jalon}`: no open milestone of that name; a need joins an open milestone',
+    '`--reserve` : une raison, non vide et sans « · », qui dit pourquoi le besoin attend hors des jalons':
+        '`--reserve`: a reason, not empty and without “·”, which says why the need waits outside the milestones',
+    "`--milestone {jalon}` : un jalon public ne nomme pas un besoin privé ; `--public` si le besoin peut l'être":
+        '`--milestone {jalon}`: a public milestone does not name a private need; `--public` if the need can be',
+    '`{id}` rangé dans le jalon `{jalon}`, à la fin de son `après`':
+        '`{id}` placed in the milestone `{jalon}`, at the end of its `after`',
+    '`{id}` en réserve : {champs}':
+        '`{id}` in reserve: {champs}',
+    "`{id}` n'a pas de place, que le commit exige : {ranger} ; à la création, `--milestone JA-NNNN` ou "
+    "`--reserve \"<raison>\"` le font":
+        '`{id}` has no place, which the commit requires: {ranger}; at creation, `--milestone JA-NNNN` or '
+        '`--reserve "<reason>"` do it',
+    'avec `need` : le range dans ce jalon ouvert, à la fin de son `après`':
+        'with `need`: places it in this open milestone, at the end of its `after`',
+    'avec `need` : le garde en réserve, hors des jalons, avec sa raison et son tri':
+        'with `need`: keeps it in reserve, outside the milestones, with its reason and its sorting',
+    'RAISON':
+        'REASON',
+    '`réserve : <raison> · trié : {tri}`':
+        '`reserve : <reason> · sorted : {tri}`',
+    '`réserve : <raison>`':
+        '`reserve : <reason>`',
+    "l'ajouter à l'`après` d'un jalon ouvert{jalons}, ou écrire sur sa ligne de métadonnées {champs}":
+        'add it to the `after` of an open milestone{jalons}, or write on its metadata line {champs}',
+    "Quand un jalon est ouvert, un besoin ouvert nouveau dans la plage, ou sorti d'un jalon ouvert à la base, "
+    "qu'aucun jalon ouvert n'attend, porte sa raison de réserve.":
+        'When a milestone is open, an open need new in the range, or taken out of a milestone open at the base, '
+        'that no open milestone waits on, carries its reserve reason.',
+    'un besoin nouveau':
+        'a new need',
+    "un besoin sorti d'un jalon ouvert":
+        'a need taken out of an open milestone',
+    "`{id}`, {quoi}, n'a pas de place : {ranger} ; à sa création, `socle new need \"…\" --milestone JA-NNNN` ou "
+    "`--reserve \"<raison>\"`":
+        '`{id}`, {quoi}, has no place: {ranger}; at its creation, `socle new need "…" --milestone JA-NNNN` or '
+        '`--reserve "<reason>"`',
     "`après` qui nomme l'ancien numéro d'une entrée renumérotée":
         '`after` naming the former number of a renumbered entry',
     "`{ancien}` est l'ancien numéro de `{id}` : il ne se réattribue jamais, `socle renumber {ancien}` donne à l'entrée qui le prend le prochain libre":
@@ -3840,6 +3881,12 @@ MESSAGES: dict[str, str] = {
         'milestone',
     "jalon fait alors que le besoin qu'il attend est ouvert":
         'milestone done while the need it waits on is open',
+    "besoin nouveau qu'aucun jalon ouvert n'attend, sans raison de réserve, quand un jalon est ouvert (ADR-0118)":
+        'new need that no open milestone waits on, without a reserve reason, when a milestone is open (ADR-0118)',
+    "un besoin nouveau rangé dans le jalon ouvert par `socle new need --milestone`, et un autre gardé en réserve "
+    "par `--reserve`, passent le commit et la CI (ADR-0118)":
+        'a new need placed in the open milestone by `socle new need --milestone`, and another kept in reserve by '
+        '`--reserve`, pass the commit and the CI (ADR-0118)',
     'lot':
         'batch',
     'lot qui attend un besoin, et non sa tâche':

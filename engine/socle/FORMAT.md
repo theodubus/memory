@@ -297,6 +297,19 @@ Son corps, libre, avec ses sous-titres (`## Les commandes`…).
 - [ ] un résultat que l'utilisateur constate
 ```
 
+Un besoin naît rangé (ADR-0118) : dans un jalon ouvert, que `socle new
+need "…" --milestone JA-NNNN` lui fait attendre, à la fin de son
+`après` ; ou en réserve, avec sa raison et son tri, que `--reserve
+"<raison>"` écrit sur sa ligne de métadonnées : `réserve : <raison> ·
+trié : L-NNNN`, le plus haut identifiant de lot du backlog, ouvert ou
+clos, de sa zone. Les deux s'excluent ; sans l'un ni l'autre, quand un
+jalon est ouvert, la commande dit en une ligne comment le ranger. La
+réserve, ce sont les besoins ouverts qu'aucun jalon ouvert ne nomme dans
+son `après`. Quand un jalon est ouvert, le contrôle de la réserve refuse
+un besoin nouveau, ou sorti d'un jalon ouvert, qu'aucun jalon ouvert
+n'attend et qui n'a pas de raison ; un besoin d'avant sans raison ne se
+refuse pas, ni un besoin `pour : humain`, que l'humain mène.
+
 Chaque entrée a son plafond (`"memory/backlog/*.md"` dans `[budgets]`).
 Une entrée close garde son fichier, rangé à l'écart des ouvertes dans le
 sous-dossier `closed` du backlog : `socle archive` y range
@@ -735,6 +748,8 @@ interne, que `socle show` dit dans la langue du projet.
 | champ `priorite` | priorité | priority |
 | champ `besoin` | besoin | need |
 | champ `ancien` | ancien | former |
+| champ `reserve` | réserve | reserve |
+| champ `trie` | trié | sorted |
 | champ `ecrite` | écrite | written |
 | champ `branche` | branche | branch |
 | champ `chaine` | chaîne | chain |

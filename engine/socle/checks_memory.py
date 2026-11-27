@@ -1092,6 +1092,37 @@ def formes(ctx, r):
                                                 id=e.id), e.fichier, e.ligne)
 
 
+# Ce qu'est un besoin que le contrôle de la réserve refuse sans place.
+SANS_PLACE = {"nouveau": a_traduire("un besoin nouveau"), "sorti": a_traduire("un besoin sorti d'un jalon ouvert")}
+
+
+@controle("memoire.reserve", base=True)
+def reserve(ctx, r):
+    """Quand un jalon est ouvert, un besoin ouvert nouveau dans la plage, ou
+    sorti d'un jalon ouvert à la base, qu'aucun jalon ouvert n'attend, porte
+    sa raison de réserve. Il naît rangé (ADR-0118), et le contrôle ne fait
+    que rattraper l'oubli ; un besoin d'avant sans raison ne se refuse pas,
+    un besoin pour l'humain ne se trie pas."""
+    mem, base = ctx.memoire, ctx.memoire_base
+    g = memoire.Graphe(mem)
+    if not memoire.jalons_ouverts(g):
+        return
+    defs, defs_base = mem.definitions(), base.definitions()
+    sortis = memoire.attendus_des_jalons(memoire.Graphe(base))
+    for e in memoire.reserve(g):
+        if memoire.pour_l_humain(e) or memoire.raison_de_reserve(e):
+            continue
+        # Une entrée renumérotée (ADR-0083), ou la copie privée d'une entrée
+        # basculée, n'est pas nouvelle : son autre numéro était à la base.
+        nouveau = e.id not in defs_base and not any(a in defs_base for a in e.anciens) \
+            and not (e.depuis and all(d in defs and defs[d][0].basculee for d in e.depuis))
+        if nouveau or e.id in sortis or any(d in sortis for d in e.depuis):
+            r.erreur("memoire.reserve", trad("`{id}`, {quoi}, n'a pas de place : {ranger} ; à sa création, `socle new "
+                                             "need \"…\" --milestone JA-NNNN` ou `--reserve \"<raison>\"`", id=e.id,
+                                             quoi=trad(SANS_PLACE["nouveau" if nouveau else "sorti"]),
+                                             ranger=memoire.comment_ranger(g, e.prive)), e.fichier, e.ligne)
+
+
 # --------------------------------------------------------------------------
 # Budgets, péremption, retard
 # --------------------------------------------------------------------------
