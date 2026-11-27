@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0104 — Le pilote neuf : un dépôt installé sans BMAD, sa planification faite à la main
 
-> statut : en cours · origine : D-0051 · ref : D-0198 · lu : backlog@7d1ef046 · après : B-0323
+> statut : en cours · origine : D-0051 · ref : D-0198 · lu : backlog@7d1ef046 · après : B-0323 · réserve : le pilote neuf, repris après JA-0006 dans l'ordre du chantier actif (D-0198) · trié : L-0056
 
 Le pilote repart d'un dépôt neuf, installé depuis `main` sans BMAD, avec
 le cadrage de Théo (D-0051) ; sa planification se fait d'abord à la main,

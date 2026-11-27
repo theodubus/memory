@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0369 — Plusieurs lots menés en parallèle, par plusieurs sessions d'un humain à plusieurs comptes ou par plusieurs humains, sans collision d'identifiants ni conflit de mémoire
 
-> statut : ouvert · origine : J-2026-11-26-BC · ref : D-0222 · priorité : basse · lu : backlog@0a5e410f
+> statut : ouvert · origine : J-2026-11-26-BC · ref : D-0222 · priorité : basse · lu : backlog@0a5e410f · réserve : une nouveauté, après JA-0006 et chess (D-0222) · trié : L-0056
 
 Théo, le 26 novembre, qui a plusieurs comptes : un lot est long, et il
 demande s'il serait compliqué, ou une mauvaise idée, de mener des lots en

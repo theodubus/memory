@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0158 — L'architecture en document court : un paragraphe par module, une taille maximale
 
-> statut : ouvert · origine : J-2026-11-10-N · ref : D-0198 · lu : backlog@9bf101f2 · après : B-0323
+> statut : ouvert · origine : J-2026-11-10-N · ref : D-0198 · lu : backlog@9bf101f2 · après : B-0323 · réserve : après JA-0006, dans l'ordre du chantier actif (D-0198) · trié : L-0056
 
 `docs/fabrication/architecture.md` pèse 41,7 Ko, avec des cellules de
 plusieurs milliers de caractères : la correspondance code ↔ doc y ajoute
