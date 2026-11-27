@@ -311,8 +311,23 @@ Les consignes durables de Théo, chacune avec son texte exact relu à sa source 
 
 ## C-0027 — Enchaîner dans la même session, c'est pour gagner du temps la nuit
 
-> statut : en vigueur · source : D-0226, J-2026-11-27-F · date : 2026-11-27
+> statut : levée · levée-par : D-0229 · source : D-0226, J-2026-11-27-F · date : 2026-11-27
 
 > Dommage, quand j'ai dit que je voulais que tu fasses le format roadmap dans cette session c'était pour gagner du temps dans la nuit pas grave fais le maintenant
 
 — D-0226 : la session avait rangé avant le code de B-0364, sur D-0225 (« Enchaine avec B0364 dans la meme session »), en lui laissant le choix de reprendre après un compactage ou lundi.
+
+## C-0028 — En mode manuel, enchaîner dans la même session quand Théo le demande : avancer sans lui si possible
+
+> statut : en vigueur · source : D-0226, D-0229, J-2026-11-27-I · date : 2026-11-27
+
+> Dommage, quand j'ai dit que je voulais que tu fasses le format roadmap dans cette session c'était pour gagner du temps dans la nuit pas grave fais le maintenant
+
+— D-0226 : la session avait rangé avant le code de B-0364, qu'il voulait dans la même session (D-0225).
+
+> Pour que ça avance la nuit*
+> Pas exactement
+>
+> C'est quand on est en mode manuel sur les enchaînements de sessions mais que ponctuellement j'ai envie que ça avance sans mon intervention si possible
+
+— D-0229 : sa correction de C-0027@269a5917, dont la ligne de résumé disait « pour gagner du temps la nuit ».

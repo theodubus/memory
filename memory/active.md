@@ -10,8 +10,9 @@ L-0050, B-0364 (D-0212, D-0214, D-0226) : le rendu A2-d de
 sont écrits, gardés en correctif dans `docs/fabrication/passation-l-0050/`
 jusqu'à la réponse de Théo à D-0227, qui nomme les 28 tests supprimés ou
 changés (J-2026-11-27-G) ; le texte se donne dans un bloc de code
-(D-0228, J-2026-11-27-H). Enchaîner dans la
-même session, c'est avancer la nuit (C-0027@269a5917).
+(D-0228, J-2026-11-27-H). En mode manuel, enchaîner dans la même session
+quand Théo le demande, c'est avancer sans lui si possible
+(C-0028@850e9c4c).
 
 ## Prochaines étapes
 
