@@ -13,7 +13,7 @@ Pendant la vérification rapide de ce dépôt, mettre de côté ses modules de t
 
 **Le chantier.** Le jalon en cours met chess à jour puis corrige ce que la mise à jour montre. Chaque lot se pousse plusieurs fois, et chaque push lance d'abord la vérification rapide, `verify --fast`, qui lance ici toute la suite de tests de l'atelier. Le 27 novembre, tu as demandé si son dépassement valait d'être traité, puis de poser cette demande.
 
-**La question.** La vérification rapide a pris 574 à 580 secondes à chaque passage de cette session, pour un seuil de 300 ; le journal relevait 263 à 362 secondes avant. Faut-il en sortir les modules les plus longs ?
+**La question.** La vérification rapide dépasse son seuil de 300 secondes : 339 secondes mesurées seule le 27 novembre, 263 à 362 au journal avant, et 574 à 580 quand d'autres travaux chargent la machine, comme trois fois dans cette session. Faut-il en sortir les modules les plus longs ?
 
 Le moteur prévoit déjà ce cas : pendant les étapes rapides, il pose la variable `SOCLE_RAPIDE`, pour qu'un test trop long s'y mette de côté avec sa raison écrite ; la CI, qui lance toutes les étapes sans elle, le joue toujours. Le changement se ferait dans le lanceur de tests de l'atelier, `tests/parallele.py`, qui n'est pas un fichier protégé : il ne lancerait pas, quand la variable est posée, les modules d'une liste écrite, chacun avec sa durée mesurée. Ni l'adaptateur, ni le moteur, ni un test ne changent ; aucun test n'est supprimé.
 
@@ -33,18 +33,18 @@ Le coût d'aujourd'hui : chaque push attend une dizaine de minutes, et un refus 
 ## Options
 
 - **A. Mettre de côté les modules les plus longs, par la variable.** Une liste dans le lanceur, chaque module avec sa durée mesurée, choisie pour tenir sous 300 secondes ; le lanceur dit, à chaque passage, combien il en a mis de côté. Effort : une tâche, une trentaine de lignes et leurs tests. Risque : une régression dans un module mis de côté n'est vue qu'à la CI, après le push, jamais après la fusion, que la CI garde. Réversible : la liste se vide.
-- **B. Relever le seuil.** Une clé des garde-fous, par une demande de plus. Effort nul ; le push reste à dix minutes.
+- **B. Relever le seuil.** Une clé des garde-fous, par une demande de plus. Effort nul ; le push garde son attente, six à dix minutes.
 - **C. Ne rien changer.** L'avertissement continue à chaque push ; rien ne bloque.
 
 ## Conséquences
 
-- **Si tu valides** : une tâche ouvre la liste et ses tests, dans le prochain lot ; le push gagne la moitié de son attente ou plus ; la CI reste inchangée.
+- **Si tu valides** : une tâche ouvre la liste et ses tests, dans le prochain lot ; avec les cinq modules les plus longs sortis, la vérification rapide passerait d'environ 340 à environ 220 secondes, seule, le tiers de son attente ; la CI reste inchangée.
 - **Si tu refuses** : rien ne change ; l'avertissement reste.
 - **Sans réponse** : rien ne change ; le reste du jalon avance sans elle.
 
 ## Recommandation
 
-Valider A. Vérifié : les durées de cette session, 574 à 580 secondes sur 4 fils ; les cinq modules les plus longs, `test_hooks` 242 s, `test_installeur` 161 s, `test_adaptateurs_multiples` 153 s, `test_attendus` 137 s, `test_adoption` 134 s ; la CI de GitHub stable, 9 à 11 minutes, avant et après le dernier lot ; la variable et sa règle dans le moteur. Supposé : le gain exact, que la liste mesurée donnera ; la cause du doublement, probablement la machine de cette session plutôt que le code.
+Valider A. Vérifié : la suite seule, 339 secondes au mur sur 4 fils, 1 347 secondes de calcul en 66 modules ; ses cinq plus longs, `test_hooks` 148 s, `test_installeur` 96 s, `test_adaptateurs_multiples` 91 s, `test_adoption` 74 s, `test_attendus` 72 s, 481 secondes à eux cinq ; chargée, 574 à 580 secondes ; la CI de GitHub stable, 9 à 11 minutes, avant et après le dernier lot ; la variable et sa règle dans le moteur. Supposé : le gain au mur, calculé sur ces durées, que la tâche mesurera.
 
 ## Réponses possibles
 
