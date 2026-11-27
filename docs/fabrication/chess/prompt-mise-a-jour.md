@@ -48,6 +48,10 @@ Ta version date du 26 novembre. L'installeur t'imprimera les notes de version qu
 
 8. Le plafond des consignes. Le gabarit des garde-fous pose désormais 24 000 octets pour memory/directives.md, au lieu de 16 000 : une consigne ne se lève que sur ma parole, et le fichier ne fait que croître. La mise à jour garde tes garde-fous, donc ta valeur. Mesure memory/directives.md : s'il approche de ton plafond, pose-moi la demande de reprendre 24 000 octets dans .socle/guardrails.toml, qui assouplit un garde-fou ; sinon, n'y touche pas. (2026-11-26-k)
 
+### Les skills et la section du socle d'AGENTS.md
+
+9. Les raisons des règles, au guide. Les skills socle-batch, socle-resume, socle-request et socle-handoff, et la section du socle d'AGENTS.md, ne disent plus pourquoi une règle existe : ce qui la justifiait sans la dire (le pourquoi, ce qu'un hook refuse) est passé, mot pour mot, au guide, sous « Pourquoi ces règles », à la fin de sa Référence ; chaque règle reste dans son texte. L'installeur pose les skills et la section changés : n'y touche pas. Si une règle que tu suivais te semble manquer dans un skill ou dans AGENTS.md, rapporte-la mot pour mot. (2026-11-26-l)
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.

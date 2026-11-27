@@ -497,7 +497,8 @@ class TestLaReprise(unittest.TestCase):
 
     def test_les_reveils_d_une_session_archivee_se_disent_a_l_humain(self):
         """T-0127 (B-0301) : ils ne se désactivent qu'à sa demande, et il
-        sait où les retrouver lui-même : le guide le lui dit (T-0206)."""
+        sait où les retrouver lui-même : le skill le dit, et le guide le lui
+        dit (T-0206)."""
         from socle import cli
 
         for lg, debut, jamais, attendus, retrouver, guide, ou in (
@@ -505,13 +506,15 @@ class TestLaReprise(unittest.TestCase):
                  ("Au premier tour de la session, ou perdus par un compactage : `list_triggers`",
                   "Ceux d'une session archivée (`get_session` : `SESSION_STATUS_ARCHIVED`) se disent à l'humain "
                   "avec leurs heures, et ne se désactivent (`update_trigger`, `enabled: false`) qu'à sa demande."),
-                 ("toucher au réveil d'une autre session sans que l'humain le demande",), "HELP.md",
+                 ("toucher au réveil d'une autre session sans que l'humain le demande",
+                  "la liste des tâches programmées de son compte (claude.ai/code/routines)"), "HELP.md",
                  "la liste des tâches programmées de son compte (claude.ai/code/routines)"),
                 ("en", "## At the start of every turn", "## What the agent never does",
                  ("At the session's first turn, or lost to a compaction: `list_triggers`",
                   "Those of an archived session (`get_session`: `SESSION_STATUS_ARCHIVED`) are told to the human "
                   "with their times, and are disabled (`update_trigger`, `enabled: false`) only at their request."),
-                 ("touch another session's wake-up without the human asking",), "HELP.en.md",
+                 ("touch another session's wake-up without the human asking",
+                  "the list of scheduled tasks of their account (claude.ai/code/routines)"), "HELP.en.md",
                  "the list of scheduled tasks of their account (claude.ai/code/routines)")):
             texte = self.lire(lg)
             section = " ".join(texte.split(debut, 1)[1].split("\n## ", 1)[0].split())

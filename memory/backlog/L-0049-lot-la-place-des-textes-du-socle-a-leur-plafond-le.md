@@ -20,3 +20,7 @@ change plus de 150 lignes de textes du produit : revue adversariale.
 ### Passe 1 — 2026-11-27
 
 Commits : 7d8d9681..95f30786
+
+- Bloquant : l'adresse où l'humain retrouve les réveils (claude.ai/code/routines) sortie du skill socle-resume, contre T-0127
+- Bloquant : la note 2026-11-26-l sans point au prompt de mise à jour de chess
+- Ouvre : rien

@@ -24,5 +24,5 @@ validation qui nomme la clé et les tests qu'il touche.
 - [ ] chaque skill du produit, en français et en anglais, laisse au moins 600 octets sous son plafond, relevé à 10 000 sur D-0223, et un test le mesure
 - [ ] la clé du plafond des skills vaut 10 000 dans `.socle/guardrails.toml` et les deux gabarits des garde-fous, sur une validation de Théo qui nomme la clé et les tests touchés ; la note de version, française et anglaise, le dit
 - [x] la section du socle d'`AGENTS.md` laisse au moins 600 octets sous le plafond de 16 000 de ce dépôt, en français et en anglais
-- [ ] chaque passage sorti se retrouve dans le guide, français et anglais, et aucune règle n'est perdue : la revue compare les règles avant et après
+- [x] chaque passage sorti se retrouve dans le guide, français et anglais, et aucune règle n'est perdue : la revue compare les règles avant et après
 - [x] la note de version, française et anglaise, le dit

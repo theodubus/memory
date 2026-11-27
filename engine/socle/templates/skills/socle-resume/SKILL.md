@@ -143,4 +143,6 @@ Un message qui commence par « Reprise après limite » :
 ## Ce que l'agent ne fait jamais
 
 Armer un réveil récurrent ; récrire un réveil à chaque étape ; toucher au
-réveil d'une autre session sans que l'humain le demande.
+réveil d'une autre session sans que l'humain le demande ; l'humain
+retrouve les réveils dans la liste des tâches programmées de son compte
+(claude.ai/code/routines).

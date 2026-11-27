@@ -139,4 +139,6 @@ A message that starts with "Resume after limit":
 ## What the agent never does
 
 Arm a recurring wake-up; rewrite a wake-up at every step; touch another
-session's wake-up without the human asking.
+session's wake-up without the human asking; the human finds the
+wake-ups in the list of scheduled tasks of their account
+(claude.ai/code/routines).
