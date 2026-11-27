@@ -50,7 +50,7 @@ A `for : human` need is not sorted.
   refuse a milestone open at the base and closed at the head as long as
   a need of the reserve lacks its reason and a `sorted` at least equal to
   the highest batch of the base. As soon as all the needs of an open
-  milestone are closed, `socle state` announces it: before closing it,
+  milestone are closed, `socle state`, and `socle close` closing the last one, announce it: before closing it,
   each need of the reserve joins a milestone to come, stays in reserve,
   its reason and its sorting rewritten, or is proposed to the human for
   abandonment, by a request.

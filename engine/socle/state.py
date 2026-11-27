@@ -902,22 +902,27 @@ def _backlog(mem: memoire.Memoire, borne: bool = False) -> list[tuple[int, list[
                                            n=memoire.LOTS_SANS_TRI,
                                            ids=memoire._ids(siens, BASSES_MONTREES if borne else None),
                                            champs=memoire.champs_de_reserve(mem, prive))]))
-    # Un jalon ouvert dont tous les besoins sont clos va se clore : sa clôture
-    # exige la réserve retriée (ADR-0118). Le dire avant évite son refus.
+    ligne = jalons_a_clore(mem)
+    if ligne:
+        res.append((INFO, ["  " + ligne]))
+    return res
+
+
+def jalons_a_clore(mem: memoire.Memoire) -> str | None:
+    """Les jalons ouverts dont tous les besoins sont clos, quand la réserve
+    n'est pas vide : leur clôture exige la réserve retriée (ADR-0118), que
+    l'état, et `socle close` qui clôt leur dernier besoin, disent avant le
+    refus. Un jalon qui ne nomme encore aucun besoin attend les siens."""
     g = memoire.Graphe(mem)
     en_reserve = [e for e in memoire.reserve(g) if not memoire.pour_l_humain(e)]
-    # Un jalon qui ne nomme encore aucun besoin attend les siens : il n'est
-    # pas à clore.
     besoins = {j: [d for d in memoire.dependances(g.entrees[j]) if memoire.type_d_id(d) == "B"]
                for j in memoire.jalons_ouverts(g)}
     a_clore = [j for j, siens in besoins.items() if siens and not any(g.ouvert(d) for d in siens)]
-    if a_clore and en_reserve:
-        res.append((INFO, ["  " + trad("jalons à clore, leurs besoins clos : {jalons} ; avant, la réserve se retrie "
-                                       "({n} besoin(s)) : chacun dans un jalon à venir, ou {champs}, ou son "
-                                       "abandon proposé à l'humain par une demande",
-                                       jalons=", ".join(a_clore), n=len(en_reserve),
-                                       champs=memoire.champs_de_reserve(mem, False))]))
-    return res
+    if not (a_clore and en_reserve):
+        return None
+    return trad("jalons à clore, leurs besoins clos : {jalons} ; avant, la réserve se retrie ({n} besoin(s)) : "
+                "chacun dans un jalon à venir, ou {champs}, ou son abandon proposé à l'humain par une demande",
+                jalons=", ".join(a_clore), n=len(en_reserve), champs=memoire.champs_de_reserve(mem, False))
 
 
 def _demandes(projet: config.Projet, plafond: int | None = None, dites: bool = True) -> list[list[str]]:

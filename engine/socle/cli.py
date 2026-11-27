@@ -914,9 +914,17 @@ def cmd_archive(args) -> int:
 def cmd_close(args) -> int:
     """Clôt « fait » une entrée ouverte du backlog en un geste : statut,
     référence et rangement (ADR-0117)."""
-    from socle import archive as archivage
+    from socle import archive as archivage, memory as memoire, state as etat
 
-    return archivage.cloturer(_projet(args), args.id, args.ref)
+    projet = _projet(args)
+    code = archivage.cloturer(projet, args.id, args.ref)
+    if code == 0 and args.id.lstrip("P").startswith("B-"):
+        # Le dernier besoin d'un jalon clos, sa clôture exige la réserve
+        # retriée : le dire maintenant, avant le refus (revue de L-0056).
+        ligne = etat.jalons_a_clore(memoire.Memoire.charger(projet.racine))
+        if ligne:
+            print(ligne)
+    return code
 
 
 def cmd_handoff(args) -> int:

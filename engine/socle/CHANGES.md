@@ -51,7 +51,7 @@ nomme dans son `après`. Un besoin `pour : humain` ne se trie pas.
   un jalon ouvert à la base et clos à la tête tant qu'un besoin de la
   réserve n'a pas sa raison et un `trié` au moins égal au plus haut lot
   de la base. Dès que tous les besoins d'un jalon ouvert sont clos,
-  `socle state` l'annonce : avant de le clore, chaque besoin de la
+  `socle state`, et `socle close` qui clôt le dernier, l'annoncent : avant de le clore, chaque besoin de la
   réserve rejoint un jalon à venir, reste en réserve, sa raison et son
   tri récrits, ou se propose à l'humain pour abandon, par une demande.
 

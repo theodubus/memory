@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0384 — Les skills socle-batch et socle-request que pose l'installeur dépassent le plafond de 8 000 octets que garde un projet installé avant le 27 novembre
 
-> statut : fait · origine : J-2026-11-27-AP · ref : B-0368, ce commit · lu : backlog@c0e72dd2
+> statut : fait · origine : J-2026-11-27-AP · ref : B-0368, ce commit · lu : backlog@6bab526e
 
 Le test de T-0223, qui rejoue la mise à jour de chess, trouve le commit
 des fichiers de la mise à jour refusé par `memoire.budgets` :

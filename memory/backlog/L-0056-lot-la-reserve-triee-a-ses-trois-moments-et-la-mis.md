@@ -16,3 +16,7 @@ test neuf dans `tests/`. Le lot pose un garde-fou : revue adversariale.
 ### Passe 1 — 2026-11-27
 
 Commits : c198fba7..7b52c2d3
+
+- Bloquant : clore un jalon dans la séance de son dernier besoin coûtait un refus, la ligne « jalons à clore » ne se lisant qu'au démarrage
+- Bloquant : en mémoire privée, memoire.reserve prenait un besoin privé d'avant pour nouveau, la base publique ne lisant pas la zone privée
+- Ouvre : rien

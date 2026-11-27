@@ -325,6 +325,20 @@ class TestLaClotureDUnJalon(Projet):
         self.base = self.commiter("la base")
         self.ouvert = self.racine / "memory/backlog/JA-0001-essai.md"
 
+    def test_clore_le_dernier_besoin_d_un_jalon_annonce_le_tri_de_la_reserve(self):
+        """Revue de L-0056 : le jalon se clôt souvent dans la séance de son
+        dernier besoin, sans état recalculé ; `socle close` le dit, avant le
+        refus que la clôture du jalon rencontrerait."""
+        self.poser("B-0004", corps="Pour l'essai.\n\n## Satisfait quand\n\n- [x] le module le fait")
+        self.poser("T-0001", "besoin : B-0004 · ref : fichier:calc.py", "fait",
+                   corps="Pour l'essai.\n\n## Fait quand\n\n- [x] le test passe")
+        self.poser("JA-0001", "après : B-0001, B-0004")
+        self.commiter("un besoin de plus au jalon")
+        code, sortie = self.socle("close", "B-0004")
+        self.assertEqual(code, 0, sortie)
+        self.assertIn("jalons à clore, leurs besoins clos : JA-0001 ; avant, la réserve se retrie (1 besoin(s))",
+                      sortie)
+
     def test_refusee_sur_une_reserve_non_triee_puis_passant_une_fois_triee(self):
         avant = self.ouvert.read_text()
         code, sortie = self.socle("close", "JA-0001")
@@ -361,6 +375,75 @@ class TestLaClotureDUnJalon(Projet):
         erreurs = self.erreurs()
         self.assertEqual(len(erreurs), 1, erreurs)
         self.assertTrue(erreurs[0].startswith("`JA-0001` se clôt sur une réserve non triée : B-0002 ;"), erreurs)
+
+
+class TestLaReserveEnMemoirePrivee(unittest.TestCase):
+    """Revue de L-0056 : la base publique ne lit pas la zone privée à une
+    révision ; un besoin privé d'avant, sans raison, passait pour nouveau,
+    en mode compagnon comme en mode chiffré. Il se juge contre la base
+    privée ; un besoin privé nouveau sans place reste refusé."""
+
+    @staticmethod
+    def besoin(ident: str, zone: str, meta: str = "", criteres: bool = True) -> str:
+        return (f"<!-- socle: couche=backlog zone={zone} -->\n# {ident} — Le besoin {ident}\n\n"
+                f"> statut : ouvert · origine : commit:abc{(' · ' + meta) if meta else ''}\n\nPour l'essai.\n"
+                + ("\n## Satisfait quand\n\n- [ ] un résultat\n" if criteres else ""))
+
+    def refus(self, mode: str, nouveau: bool) -> list[str]:
+        import shutil
+        import tempfile
+        from pathlib import Path
+
+        from socle import checks_memory as controles, private as prive
+        from socle.report import Rapport
+        from tests.test_bascule import git
+        from tests.test_consignes import FILTRE_ESSAI
+
+        dossier = Path(tempfile.mkdtemp(prefix="socle-reserve-privee-"))
+        self.addCleanup(shutil.rmtree, dossier, ignore_errors=True)
+        racine = dossier / "public"
+        (racine / ".socle").mkdir(parents=True)
+        (racine / "memory/backlog").mkdir(parents=True)
+        (racine / ".socle/policy.toml").write_text(f'[private]\nmode = "{mode}"\n')
+        git(racine, "init", "-q", "-b", "main")
+        (racine / "memory/backlog/B-0001-essai.md").write_text(self.besoin("B-0001", "publique"))
+        (racine / "memory/backlog/JA-0001-essai.md").write_text(
+            self.besoin("JA-0001", "publique", "après : B-0001", criteres=False))
+        lieu = racine / "memory/private/backlog"
+        lieu.mkdir(parents=True)
+        (lieu / f"{P}B-0001-essai.md").write_text(self.besoin(f"{P}B-0001", "privee"))
+        if mode == "compagnon":
+            (racine / ".gitignore").write_text("memory/private/\n")
+            git(lieu.parent, "init", "-q", "-b", "main")
+            git(lieu.parent, "add", "-A")
+            git(lieu.parent, "commit", "-qm", "privé")
+            prive.ecrire_verrou(racine, git(lieu.parent, "rev-parse", "HEAD").strip())
+        else:
+            (dossier / "filtre.py").write_text(FILTRE_ESSAI)
+            git(racine, "config", "filter.essai.clean", f"python3 {dossier / 'filtre.py'} clean")
+            git(racine, "config", "filter.essai.smudge", f"python3 {dossier / 'filtre.py'} smudge")
+            (racine / ".gitattributes").write_text("memory/private/** filter=essai\n")
+        git(racine, "add", "-A")
+        git(racine, "commit", "-qm", "base")
+        base = git(racine, "rev-parse", "HEAD").strip()
+        if nouveau:
+            (lieu / f"{P}B-0002-essai.md").write_text(self.besoin(f"{P}B-0002", "privee"))
+        ctx = contexte.Contexte(config.Projet.charger(racine), etage="git", base=base, tete=None)
+        r = Rapport()
+        controles.reserve(ctx, r)
+        return [c.message for c in r.erreurs()]
+
+    def test_un_besoin_prive_d_avant_sans_raison_passe(self):
+        for mode in ("compagnon", "chiffre"):
+            with self.subTest(mode=mode):
+                self.assertEqual(self.refus(mode, nouveau=False), [])
+
+    def test_un_besoin_prive_nouveau_sans_place_reste_refuse(self):
+        for mode in ("compagnon", "chiffre"):
+            with self.subTest(mode=mode):
+                erreurs = self.refus(mode, nouveau=True)
+                self.assertEqual(len(erreurs), 1, erreurs)
+                self.assertTrue(erreurs[0].startswith(f"`{P}B-0002`, un besoin nouveau, n'a pas de place"), erreurs)
 
 
 if __name__ == "__main__":
