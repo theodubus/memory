@@ -1322,6 +1322,16 @@ def _cas() -> list[Cas]:
         maj_memoire(c, "Correctif de `double` sur les chaînes.")
         return etage_ci(a, c, "fix: double accepte une chaîne")
 
+    @defaut("correctif-de-la-doc-et-d-un-autre-fichier", "correctif de la documentation qui touche aussi un "
+            "fichier qu'aucun adaptateur ne juge, sans test", "ci", "tests.regression")
+    def _(a, c):
+        # B-0373 : la documentation seule n'est pas jugée ; avec un autre
+        # fichier, le correctif l'est encore.
+        remplacer(c, "docs/calc.md", "la\nconstante", "la constante\nentière")
+        ajouter(c, "outils/lancer.sh", "#!/bin/sh\npython3 calc.py\n")
+        maj_memoire(c, "Correction de la doc de `double` et du lanceur.")
+        return etage_ci(a, c, "Correction : la doc de double et le lanceur")
+
     @defaut("dispense-d-un-autre-commit", "code sans sa doc, couvert par la dispense d'un autre commit", "ci",
             "docs.correspondance")
     def _(a, c):
@@ -2983,6 +2993,12 @@ def _temoins() -> list[tuple[str, Callable]]:
         (c / "tests/test_regression.py").write_text(TEST_REGRESSION)
         maj_memoire(c, "Correctif de `double` sur les chaînes, avec son test.")
         return etage_ci(a, c, "fix: double accepte une chaîne")
+
+    @temoin("un correctif de la seule documentation, avec la mémoire, passe la CI sans test")
+    def _(a, c):
+        remplacer(c, "docs/calc.md", "la\nconstante", "la constante\nentière")
+        maj_memoire(c, "Correction de la doc de `double`.")
+        return etage_ci(a, c, "Correction : la doc de double")
 
     @temoin("un correctif dont le `Corrige:` est hors du dernier paragraphe du message, avec son test de "
             "régression, passe la CI")

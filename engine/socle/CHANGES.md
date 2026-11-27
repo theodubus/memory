@@ -15,6 +15,20 @@ titre, sous une ligne qui nomme ce fichier. Toute autre forme (« rien,
 sauf si … », « rien dans le projet … », une action) s'imprime en entier,
 avant elles.
 
+## 2026-11-27-e — Un correctif qui ne touche que la documentation et la mémoire n'est plus jugé par `tests.regression`
+
+Un commit dont le sujet suit le motif d'un correctif (« Correction : … »,
+`[regression] fix_subject`) et qui ne change que des fichiers de
+documentation (des textes Markdown hors du dossier du socle), avec ou sans
+la mémoire, était refusé comme un correctif hors de tout adaptateur :
+seule une demande validée l'admettait. Aucun test ne peut prouver la
+correction d'un texte : `tests.regression` l'avertit désormais,
+« correctif qui ne touche que la documentation et la mémoire : non
+jugé », comme un correctif qui ne touche que la mémoire. Un correctif qui
+touche aussi un autre fichier reste jugé comme avant.
+
+À faire : rien.
+
 ## 2026-11-27-b — La feuille de route en une seule forme : ce qui se fait maintenant, les étapes qui suivent, ce qui revient à l'humain
 
 `socle roadmap` n'a plus qu'une forme, faite pour que l'humain pilote le

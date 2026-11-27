@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0373 — Un correctif qui ne touche que la documentation est refusé faute d'un test qu'aucun test ne peut donner
 
-> statut : ouvert · origine : J-2026-11-27-U · ref : D-0235 · lu : backlog@4d53be09
+> statut : fait · origine : J-2026-11-27-U · ref : D-0235, T-0212, J-2026-11-27-V · lu : backlog@4d53be09
 
 Chez chess (`docs/fabrication/chess/cout-et-frictions-2026-11-26.md`, §4), un commit de documentation titré
 « Correction : … » a dû passer sur une autre branche. Confirmé
@@ -24,5 +24,5 @@ Un correctif qui touche aussi un autre fichier reste jugé comme avant.
 
 ## Satisfait quand
 
-- [ ] un correctif qui ne touche que la documentation et la mémoire passe `tests.regression`, avec un avertissement
-- [ ] un correctif qui touche aussi un autre fichier reste jugé comme avant
+- [x] un correctif qui ne touche que la documentation et la mémoire passe `tests.regression`, avec un avertissement
+- [x] un correctif qui touche aussi un autre fichier reste jugé comme avant

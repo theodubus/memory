@@ -14,6 +14,19 @@ asks nothing: of such an entry, the installer prints only the title,
 under a line that names this file. Any other form (“nothing, unless …”,
 “nothing in the project …”, an action) is printed in full, before them.
 
+## 2026-11-27-e — A fix that touches only the documentation and the memory is no longer judged by `tests.regression`
+
+A commit whose subject follows the fix pattern ("Correction: …",
+`[regression] fix_subject`) and that changes only documentation files
+(Markdown texts outside the socle folder), with or without the memory,
+was refused as a fix outside every adapter: only a validated request
+admitted it. No test can prove the correction of a text:
+`tests.regression` now warns, "fix that touches only the documentation
+and the memory: not judged", as for a fix that touches only the memory.
+A fix that also touches another file is judged as before.
+
+To do: nothing.
+
 ## 2026-11-27-b — The roadmap in a single form: what is being done now, the steps that follow, what is up to the human
 
 `socle roadmap` now has a single form, made for the human to steer the

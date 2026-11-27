@@ -3656,6 +3656,8 @@ MESSAGES: dict[str, str] = {
         "{sha} “{sujet}”: fix that touches only third-party files: not judged",
     "{sha} « {sujet} » : correctif qui ne touche que la mémoire : non jugé":
         "{sha} “{sujet}”: fix that touches only the memory: not judged",
+    "{sha} « {sujet} » : correctif qui ne touche que la documentation et la mémoire : non jugé":
+        "{sha} “{sujet}”: fix that touches only the documentation and the memory: not judged",
     "{sha} « {sujet} » : correctif hors de tout adaptateur, admis sans test par {id}, une demande validée qui nomme "
     "ce commit":
         "{sha} “{sujet}”: fix outside every adapter, admitted without a test by {id}, an approved request that "
