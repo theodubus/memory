@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0231-les-besoins-clos-de-l-etape-depliee-de-la-feuille.md, dont l'empreinte suit.
+reponse = "une-ligne"
+texte = ""
+par = "Théo"
+date = "2026-11-27"
+canal = "conversation"
+citation = "Tiennent sur une ligne"
+empreinte = "sha256:9ae39a63eb1b6d672a59805f63066a0120e73b82923928b0e9feb25e2472ff5b"

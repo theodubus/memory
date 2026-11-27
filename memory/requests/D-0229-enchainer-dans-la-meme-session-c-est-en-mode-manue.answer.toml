@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0229-enchainer-dans-la-meme-session-c-est-en-mode-manue.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-27"
+canal = "conversation"
+citation = "Pour que ça avance la nuit* \nPas exactement \n\nC'est quand on est en mode manuel sur les enchaînements de sessions mais que ponctuellement j'ai envie que ça avance sans mon intervention si possible"
+empreinte = "sha256:2ab03b927db1178dfabea2369f7c50d6c97e27e43684ba08fa16b877aa2ca0b5"

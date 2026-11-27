@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0228-la-feuille-de-route-se-donne-dans-un-bloc-de-texte.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-27"
+canal = "conversation"
+citation = "C'est pas lisible, ça l'etait quand tu le faisais dans un bloc de texte plutôt"
+empreinte = "sha256:a935ca9570eccee2fd5041cd51d1f2d942cbe86d6c7e98b67935e3eb41b6fb2f"

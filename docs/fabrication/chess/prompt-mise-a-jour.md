@@ -54,6 +54,10 @@ Ta version date du 26 novembre. L'installeur t'imprimera les notes de version qu
 
 10. Le plafond des skills. Le gabarit des garde-fous pose désormais 10 000 octets pour .claude/skills/*/SKILL.md, au lieu de 8 000 : les skills du socle, chargés en entier, n'avaient plus la place d'une règle de plus. La mise à jour garde tes garde-fous, donc ta valeur, et les skills qu'elle pose tiennent encore sous 8 000 octets : n'y touche pas. Si un skill approche de ton plafond, pose-moi la demande de reprendre 10 000 octets dans .socle/guardrails.toml, qui assouplit un garde-fou, en nommant la clé budgets.".claude/skills/*/SKILL.md".max_bytes. (2026-11-27-a)
 
+### La feuille de route
+
+11. Une seule forme. socle roadmap n'a plus qu'une forme, faite pour que je pilote le projet sur mon téléphone : « Maintenant », chaque lot en cours, puis les besoins qu'il mène et leurs tâches ; « Ensuite », tes jalons ouverts numérotés en [K/N], seul le premier déplié en ses besoins ; « Pour toi » ; « En réserve », les besoins d'aucun jalon, comptés. C'est un texte aligné, chaque titre suivi de son identifiant ; --format markdown le met dans un bloc de code : c'est celui que tu colles quand je demande la suite. Les formats compact et détaillé et l'option --by n'existent plus : retire --by de tout appel que le projet écrit. Ta consigne qui choisit le format court de la feuille de route n'a plus d'objet : dis-le-moi, je la garde ou je la lève (le point 3 de ton retour d'usage du 26 novembre). (2026-11-27-b)
+
 ## La mise à jour
 
 1. Si le clone est superficiel (git rev-parse --is-shallow-repository répond true), complète son historique : git fetch --unshallow.
