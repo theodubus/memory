@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # L-0056 — Lot — la réserve triée à ses trois moments, et la mise à jour de chess rejouée
 
-> statut : en cours · origine : J-2026-11-27-AO · lu : backlog@c0e72dd2 · après : L-0055, T-0220, T-0221, T-0222, T-0223, T-0224
+> statut : fait · origine : J-2026-11-27-AO · lu : backlog@c0e72dd2 · après : L-0055, T-0220, T-0221, T-0222, T-0223, T-0224 · ref : ce commit
 
 Le cinquième lot de JA-0006 dans l'ordre de D-0235, point 12 : le tri de
 la réserve (B-0365, sous la condition du point 8 : ni appel ni refus de
