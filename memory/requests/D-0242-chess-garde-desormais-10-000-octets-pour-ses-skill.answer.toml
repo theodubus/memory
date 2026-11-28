@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0242-chess-garde-desormais-10-000-octets-pour-ses-skill.md, dont l'empreinte suit.
+reponse = "valider"
+texte = ""
+par = "Théo"
+date = "2026-11-28"
+canal = "conversation"
+citation = "- Valider D0424"
+empreinte = "sha256:f5719f2a518929ddd76fdd6d7cf89ca2e05d4926101f897b58bf3516807b5c7e"

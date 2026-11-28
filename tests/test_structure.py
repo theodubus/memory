@@ -109,6 +109,30 @@ class TestOrdre(unittest.TestCase):
         self.assertEqual([e.id for e in o.a_fermer], ["B-0001"])
         self.assertEqual([e.id for e in o.a_decouper], ["B-0002"])
 
+    def test_a_fermer_seulement_ce_que_socle_close_accepterait(self):
+        """ADR-0119 : sans tâche, un besoin est à fermer sur ses cases
+        cochées ; une case vide l'en écarte, tâche faite ou non ; un besoin
+        bloqué aux tâches closes, sa case vide, n'est ni à fermer ni à
+        découper."""
+        coche = SATISFAIT.replace("- [ ]", "- [x]")
+        mem = memoire_de(
+            entree("B-0001", meta="pour : humain", corps=coche),
+            entree("B-0002", "bloqué", corps=coche),
+            entree("B-0003", corps=SATISFAIT), entree("T-0003", "fait", meta="besoin : B-0003", corps=FAIT),
+            entree("B-0004", "bloqué", corps=SATISFAIT), entree("T-0004", "fait", meta="besoin : B-0004", corps=FAIT),
+            entree("B-0005"),
+            entree("B-0006", corps=coche, meta="après : B-0005"),
+        )
+        o = memoire.ordre(mem)
+        self.assertEqual([e.id for e in o.a_fermer], ["B-0001", "B-0002"])
+        self.assertEqual([e.id for e in o.a_decouper], ["B-0003", "B-0005"])
+        self.assertEqual(o.attendent_une_entree, 1)
+        e = {i: mem.entree(i) for i in ("B-0001", "B-0003", "B-0005", "T-0003")}
+        self.assertTrue(memoire.se_ferme(e["B-0001"], []))
+        self.assertFalse(memoire.se_ferme(e["B-0003"], [e["T-0003"]]))
+        # Sans tâche ni case, rien ne dit ce qui est satisfait.
+        self.assertFalse(memoire.se_ferme(e["B-0005"], []))
+
     def test_les_messages_de_l_etat_disent_besoin_tache_lot_et_jalon_jamais_sujet(self):
         """B-0265 : l'état n'appelle plus « sujet » un lot ni un jalon, ni
         « tâche » un sujet, en français comme en anglais."""

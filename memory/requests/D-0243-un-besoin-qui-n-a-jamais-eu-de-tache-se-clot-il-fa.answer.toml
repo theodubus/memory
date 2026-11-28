@@ -1,0 +1,10 @@
+# Réponse humaine donnée dans la conversation, consignée par l'agent avec
+# le texte exact de l'humain (`citation`). Relue avec le diff.
+# Elle porte sur le texte exact de D-0243-un-besoin-qui-n-a-jamais-eu-de-tache-se-clot-il-fa.md, dont l'empreinte suit.
+reponse = "A"
+texte = ""
+par = "Théo"
+date = "2026-11-28"
+canal = "conversation"
+citation = "- A pour B386"
+empreinte = "sha256:e8f6122122a80708045a274e08bf6dc555f5ef26b9c43aaaf35295c1fa23aa29"

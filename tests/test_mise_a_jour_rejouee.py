@@ -25,11 +25,12 @@ from socle.selftest import DEMANDE_BONNE
 RACINE = Path(__file__).resolve().parent.parent
 
 # Le commit de ce dépôt dont le moteur est celui qu'a chess : la fusion de
-# la PR #101, la dernière qui a changé `engine/` et que la distribution a
-# publiée avant la mise à jour de chess du 26 novembre (J-2026-11-26-Z,
-# docs/fabrication/chess/mise-a-jour-2026-11-26.md). La mise à jour suivante
-# de chess l'avance au commit dont elle aura reçu le moteur.
-MOTEUR_DE_CHESS = "da13e0578e610975409f0116b27813f97ec4f245"
+# la PR #118, la dernière qui a changé `engine/` et que la distribution a
+# publiée avant la mise à jour de chess du 28 novembre (J-2026-11-28-A,
+# docs/fabrication/chess/mise-a-jour-2026-11-28.md). La mise à jour suivante
+# de chess l'avance au commit dont elle aura reçu le moteur, dans le premier
+# lot qui change ensuite `engine/`.
+MOTEUR_DE_CHESS = "d188f9ac51f7dcd134bdd7c2741fe6c2c8fd7d85"
 
 ETAPES_RAPIDES = bool(os.environ.get(verification.RAPIDE))
 

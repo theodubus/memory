@@ -21,3 +21,11 @@ cloud clone le dépôt public `theodubus/socle` sans l'ajouter.
 
 Le 25 novembre, Théo le garde pour plus tard, après la mise à jour de
 chess (D-0198) : il ne se clôt pas avec elle.
+
+Le 28 novembre, sur D-0242 : le test qui gardait les skills du produit
+sous 8 000 octets est retiré. JustCook, installé le 31 octobre, garde ce
+plafond, que sa mise à jour ne touche pas : son prompt de mise à jour lui
+fait poser la demande de passer à 10 000 octets la clé
+`budgets.".claude/skills/*/SKILL.md".max_bytes` de ses garde-fous, et la
+voir validée, avant d'en commiter les fichiers, comme chess l'a fait le
+28 novembre ; sinon son hook avant commit refuse le skill trop long.

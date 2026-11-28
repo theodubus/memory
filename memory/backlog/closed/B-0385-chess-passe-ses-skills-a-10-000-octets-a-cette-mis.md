@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0385 — Chess passe ses skills à 10 000 octets à cette mise à jour, comme l'annonçait l'option A de D-0223
 
-> statut : ouvert · origine : J-2026-11-27-AY · ref : D-0241, D-0223 · lu : backlog@08d230c4
+> statut : fait · origine : J-2026-11-27-AY · ref : D-0241, D-0223, D-0242 · lu : backlog@08d230c4
 
 Théo a choisi, le 26 novembre (D-0223, option A), de relever le plafond
 des skills de 8 000 à 10 000 octets, ici et dans le gabarit des
@@ -18,4 +18,4 @@ cette mise à jour ; chess à 10 000, Théo dit ce que devient
 ## Satisfait quand
 
 - [x] le prompt de mise à jour de chess lui fait poser à Théo la demande de reprendre 10 000 octets pour ses skills, en nommant la clé
-- [ ] chess à 10 000, Théo a dit ce que devient le test qui garde les skills du produit sous 8 000 octets
+- [x] chess à 10 000, Théo a dit ce que devient le test qui garde les skills du produit sous 8 000 octets
