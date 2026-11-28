@@ -18,3 +18,7 @@ contrôle : revue adversariale.
 ### Passe 1 — 2026-11-28
 
 Commits : 543aead8..1fa6e291
+
+- Bloquant : le catalogue anglais sans les défauts et le témoin nouveaux de l'auto-test, la suite rouge (corrigé par 363021ba)
+- Bloquant : FORMAT.md disait encore refusé le besoin fait sans tâche faite, dans le paragraphe des contrôles
+- Ouvre : rien

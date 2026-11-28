@@ -403,8 +403,8 @@ une tâche sans besoin ou dans deux lots, un `après` que sa forme n'attend
 pas ou qui nomme un ancien numéro, « Fait quand » dans un besoin et
 « Satisfait quand » dans une tâche ; sur une entrée nouvelle, un besoin ou
 une tâche sans sa section ; sur une clôture nouvelle, un besoin clos avec
-une tâche ouverte, ou fait sans tâche faite. Ce qui est clos avant la
-migration reste tel quel.
+une tâche ouverte, ou fait, ses tâches toutes abandonnées, ou sans tâche
+ni case (ADR-0119). Ce qui est clos avant la migration reste tel quel.
 
 Une entrée renumérotée garde son ancien numéro (`ancien : B-0235`) :
 `socle show`, `socle url`, les contrôles des références et la lecture
