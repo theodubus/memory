@@ -91,7 +91,9 @@ contournement qu'il trouve s'écarte d'office, sans entrée au backlog.
   prompt ne fait pas écrire un même texte dans deux entrées, que
   `docs.copie` refuse : il dit laquelle le porte, l'autre y renvoyant ;
   il ne fait pas vérifier sur un clone fabriqué ce qu'un test joue déjà
-  (J-2026-11-28-A).
+  (J-2026-11-28-A) ; il fait nommer un fichier que git ne suit pas, le
+  journal local des hooks par exemple, sans accents graves, que le
+  contrôle de fin de tour refuserait (J-2026-11-28-D).
 - Le prompt de mise à jour de chess ne se donne que sur une CI où
   `tests/test_mise_a_jour_rejouee.py` passe ; après la mise à jour de
   chess, sa constante `MOTEUR_DE_CHESS` avance au commit dont chess a reçu

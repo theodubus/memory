@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0383 — Le relevé d'après des corrections du troisième retour de chess : ses appels par nature et ses refus par contrôle, remesurés après sa première séance sur la nouvelle version
 
-> statut : bloqué · origine : J-2026-11-27-AI · ref : D-0239, D-0233 · lu : backlog@76a2afcd
+> statut : fait · origine : J-2026-11-27-AI · ref : D-0239, D-0233, J-2026-11-28-D · lu : backlog@76a2afcd
 
 Théo a retenu (D-0233) la mesure que chess a faite à la main, le compte
 de ses appels d'outil par nature (§1.1 de
@@ -21,4 +21,4 @@ sur sa première séance de travail ordinaire après sa mise à jour du
 ## Satisfait quand
 
 - [x] le prompt de mise à jour de chess demande le relevé d'après, par la même méthode que celui d'avant
-- [ ] le relevé reçu est versé à JA-0003, à côté de celui d'avant
+- [x] le relevé reçu est versé à JA-0003, à côté de celui d'avant

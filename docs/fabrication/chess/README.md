@@ -25,6 +25,9 @@ un clone jetable.
 - `docs/fabrication/chess/cout-et-frictions-2026-11-26.md` — le troisième retour
   d'usage, du 12 au 26 novembre : le coût du socle compté en appels, les
   refus des hooks classés, et des propositions (B-0367).
+- `docs/fabrication/chess/cout-et-frictions-2026-11-28.md` — le relevé d'après, sur
+  une séance ordinaire après la mise à jour du 28 novembre, ses neuf
+  constats et leur tri (B-0383).
 - `docs/fabrication/chess/prompt-mise-a-jour.md` — le prompt de la mise à jour du socle sur
   chess, qui dit aussi ce qui a été ajouté et corrigé depuis l'installation.
 - `docs/fabrication/chess/prompt-installation.md` — les deux prompts de l'installation, à
