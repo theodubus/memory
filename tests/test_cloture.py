@@ -184,6 +184,53 @@ class TestLesRefus(Cloture):
             self.assertIn(attendu, sortie)
 
 
+class TestUnBesoinSansTache(Format3):
+    """ADR-0119 (T-0227) : un besoin qui n'a jamais eu de tâche, une attente
+    levée ou un besoin pour l'humain, se clôt « fait » en un geste sur sa
+    section « Satisfait quand » cochée ; sans case, une case vide, ou ses
+    tâches toutes abandonnées, il reste refusé."""
+
+    def besoin(self, meta: str = "", section: str = ""):
+        """B-0001 du projet du format 3, sans tâche, commité."""
+        b = next((self.racine / "memory/backlog").glob("B-0001-*.md"))
+        b.write_text(b.read_text().replace("> statut : ouvert", "> statut : " + (meta or "ouvert"), 1) + section)
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "le besoin", "--no-verify")
+
+    def refus(self, attendu: str):
+        code, sortie = self.socle("close", "B-0001")
+        self.assertEqual(code, 1, sortie)
+        self.assertIn(attendu, sortie)
+        self.assertEqual(git(self.racine, "status", "--porcelain"), "")
+
+    def test_pour_l_humain_ses_cases_cochees_se_clot_en_un_geste(self):
+        self.besoin("ouvert · pour : humain", "\n## Satisfait quand\n\n- [x] le contrat est signé\n")
+        code, sortie = self.socle("close", "B-0001")
+        self.assertEqual(code, 0, sortie)
+        self.assertIn("`B-0001` clos « fait », ref : ce commit", sortie)
+        self.assertTrue(list((self.racine / "memory/backlog/closed").glob("B-0001-*.md")))
+
+    def test_une_attente_bloquee_ses_cases_cochees_se_clot_de_meme(self):
+        self.besoin("bloqué", "\n## Satisfait quand\n\n- [x] le contrat est signé\n")
+        code, sortie = self.socle("close", "B-0001")
+        self.assertEqual(code, 0, sortie)
+
+    def test_sans_case_il_est_refuse(self):
+        self.refus("`B-0001` est fait sans tâche ni case")
+
+    def test_une_case_vide_est_refusee(self):
+        self.besoin(section="\n## Satisfait quand\n\n- [x] le contrat est signé\n- [ ] il est payé\n")
+        self.refus("non coché : il est payé")
+
+    def test_ses_taches_toutes_abandonnees_il_est_refuse(self):
+        self.besoin(section="\n## Satisfait quand\n\n- [x] le contrat est signé\n")
+        autotest.ajouter_sujet(self.racine, TACHE.format(criteres="- [ ] triple existe", champs="")
+                               .replace("> statut : en cours", "> statut : abandonné · ref : fichier:calc.py"))
+        git(self.racine, "add", "-A")
+        git(self.racine, "commit", "-qm", "la tâche abandonnée", "--no-verify")
+        self.refus("`B-0001` est fait sans tâche faite : un besoin qui a eu des tâches")
+
+
 class TestCeCommit(unittest.TestCase):
     def entree(self, ref: str) -> memoire.Entree:
         texte = f"<!-- socle: couche=backlog zone=publique -->\n# T-0001 — Essai\n\n> statut : fait · ref : {ref}\n"

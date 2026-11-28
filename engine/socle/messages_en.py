@@ -3837,8 +3837,10 @@ MESSAGES: dict[str, str] = {
         '`{id}` is closed “done” with an unchecked “{section}” criterion: {criteres}',
     '`{id}` est dans {n} lots ({lots}) : une tâche est dans un lot au plus':
         '`{id}` is in {n} batches ({lots}): a task is in one batch at most',
-    "`{id}` est fait sans tâche faite : un besoin se ferme quand ses tâches sont closes, l'une au moins faite ; sinon il s'abandonne":
-        '`{id}` is done without a done task: a need closes when its tasks are closed, at least one of them done; otherwise it is abandoned',
+    "`{id}` est fait sans tâche faite : un besoin qui a eu des tâches se ferme quand elles sont closes, l'une au moins faite ; toutes abandonnées, il s'abandonne":
+        '`{id}` is done without a done task: a need that had tasks closes when they are closed, at least one of them done; all abandoned, it is abandoned',
+    "`{id}` est fait sans tâche ni case : un besoin sans tâche se ferme sur sa section « Satisfait quand », cochée ; sinon il s'abandonne":
+        '`{id}` is done without a task or a box: a need without tasks closes on its “Satisfied when” section, checked; otherwise it is abandoned',
     "`{id}` est rangé parmi les entrées closes alors qu'il est « {statut} » : `python3 .socle/socle archive` le remet parmi les ouvertes":
         '`{id}` is filed among the closed entries while it is “{statut}”: `python3 .socle/socle archive` puts it back among the open ones',
     "`{id}` est un besoin : sa section est « Satisfait quand », un résultat ; « Fait quand » est celle d'une tâche":
