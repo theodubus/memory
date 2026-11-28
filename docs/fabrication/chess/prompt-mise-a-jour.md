@@ -19,6 +19,12 @@ branche. Le prompt reste cumulatif : d'ici la mise à jour, chaque lot qui
 change ce que chess reçoit ajoute sa note au point de son thème
 (J-2026-11-13-L).
 
+Le 27 novembre, L-0057 y ajoute deux demandes de Théo. Sa dernière
+section demande à chess le relevé d'après des corrections de son
+troisième retour (B-0383, sur D-0239 et D-0240), à verser à JA-0003
+à côté de celui d'avant. Le point 13 et l'étape 6 lui font poser la
+demande des 10 000 octets des skills (B-0385, sur D-0241).
+
 ````text
 Mets à jour le socle de ce dépôt depuis son dépôt public, sans ajouter ce dépôt à la session. Lis d'abord ce qui change, puis fais la mise à jour.
 
@@ -58,7 +64,7 @@ Ta version date du 26 novembre. L'installeur t'imprimera les notes de version qu
 
 12. Les raisons des règles, au guide. Les skills socle-batch, socle-resume, socle-request et socle-handoff, et la section du socle d'AGENTS.md, ne disent plus pourquoi une règle existe : ce qui la justifiait sans la dire (le pourquoi, ce qu'un hook refuse) est passé, mot pour mot, au guide, sous « Pourquoi ces règles », à la fin de sa Référence ; chaque règle reste dans son texte. L'installeur pose les skills et la section changés : n'y touche pas. Si une règle que tu suivais te semble manquer dans un skill ou dans AGENTS.md, rapporte-la mot pour mot. (2026-11-26-l)
 
-13. Le plafond des skills. Le gabarit des garde-fous pose désormais 10 000 octets pour .claude/skills/*/SKILL.md, au lieu de 8 000 : les skills du socle, chargés en entier, n'avaient plus la place d'une règle de plus. La mise à jour garde tes garde-fous, donc ta valeur, et les skills qu'elle pose tiennent sous 8 000 octets, de nouveau depuis 2026-11-27-l : n'y touche pas. Si un skill approche de ton plafond, pose-moi la demande de reprendre 10 000 octets dans .socle/guardrails.toml, qui assouplit un garde-fou, en nommant la clé budgets.".claude/skills/*/SKILL.md".max_bytes. (2026-11-27-a, 2026-11-27-l)
+13. Le plafond des skills. Le gabarit des garde-fous pose désormais 10 000 octets pour .claude/skills/*/SKILL.md, au lieu de 8 000 : les skills du socle, chargés en entier, n'avaient plus la place d'une règle de plus. La mise à jour garde tes garde-fous, donc ta valeur, et les skills qu'elle pose tiennent encore sous 8 000 octets depuis 2026-11-27-l, mais à moins de cent octets près pour trois d'entre eux. J'ai choisi de reprendre 10 000 octets dans chaque projet installé : dans la pull request de la mise à jour, pose-moi la demande de passer à 10 000 octets dans .socle/guardrails.toml, qui assouplit un garde-fou, en nommant la clé budgets.".claude/skills/*/SKILL.md".max_bytes. Ne change la valeur que sur ma validation, dans cette même pull request. (2026-11-27-a, 2026-11-27-l)
 
 14. Les réveils de reprise gardés. Le skill socle-resume ne te fait plus armer les deux réveils au début de chaque tour qui agit, ni les retirer à sa fin (environ un appel sur dix de ta séance, le §5 de ton retour du 26 novembre sur le coût du socle) : un tour qui les trouve à la bonne heure n'appelle aucun outil de réveil, et ils ne se retirent qu'au rangement d'une session qui passe la main, ou quand je dis d'arrêter. Un réveil qui tire sans objet se vérifie et se dit en une ligne, sans reprendre le travail. Sans list_events, l'heure de la fenêtre que nomme rateLimitType se lit dans get_session, quand il la donne ; l'autre réveil reste à sa borne, sans s'y repousser à chaque tour. Si un tour te fait encore appeler un outil de réveil sans que leur heure ait changé, rapporte-le. (2026-11-27-h)
 
@@ -88,9 +94,22 @@ Ta version date du 26 novembre. L'installeur t'imprimera les notes de version qu
    - sa ligne sur CODEOWNERS (point 1) ;
    - python3 .socle/socle state : sa taille (python3 .socle/socle state | wc -c, sous 9 500), et s'il finit par une ligne « !! coupé » ;
    - rien de changé dans ta politique ni dans ton adaptateur ; ta liste [adoption.tolerated] inchangée.
-5. Suis les étapes « Et maintenant » de l'installeur, dans son ordre : la demande qui cite chaque fichier protégé changé avec son empreinte, poussée seule, puis les fichiers commités et poussés, pour que je les lise dans la pull request avant de répondre. Donne-moi son lien, et attends ma réponse.
-6. La porte, avant de me demander de fusionner : python3 .socle/socle verify --fast --redo, python3 .socle/socle ci et tools/verify.sh --rapide passent. Donne-moi les durées.
-7. Ouvre la pull request, et dis-moi ce qui me revient. Ne la fusionne pas : je la fusionne après avoir lu ton compte rendu.
+5. Suis les étapes « Et maintenant » de l'installeur, dans son ordre : la demande qui cite chaque fichier protégé changé avec son empreinte, poussée seule, puis les fichiers commités et poussés, pour que je les lise dans la pull request avant de répondre.
+6. Dans la même pull request, pose-moi la demande des 10 000 octets des skills (point 13), et ouvre le besoin du relevé d'après et sa tâche (la section qui suit) ; pousse-les. Donne-moi le lien de chacune des deux demandes, et attends mes réponses ; sur ma validation de la seconde, passe la valeur à 10 000 octets.
+7. La porte, avant de me demander de fusionner : python3 .socle/socle verify --fast --redo, python3 .socle/socle ci et tools/verify.sh --rapide passent. Donne-moi les durées.
+8. Ouvre la pull request, et dis-moi ce qui me revient. Ne la fusionne pas : je la fusionne après avoir lu ton compte rendu.
 
-Rends-moi compte, court : les identifiants des notes de version qu'il t'a données en entier, et ce que tu en as fait ; sa ligne sur CODEOWNERS, mot pour mot ; la taille de l'état avant et après, et s'il est coupé ; les fichiers protégés changés ; chaque refus du hook pendant la mise à jour, avec sa commande ; les lignes « CI » et « branche » de l'état après le push, et si l'état me donne une action ; tout ce qui t'a gêné.
+Rends-moi compte, court : les identifiants des notes de version qu'il t'a données en entier, et ce que tu en as fait ; sa ligne sur CODEOWNERS, mot pour mot ; la taille de l'état avant et après, et s'il est coupé ; les fichiers protégés changés ; le lien de la demande des 10 000 octets, et la valeur posée ; l'identifiant du besoin du relevé d'après ; chaque refus du hook pendant la mise à jour, avec sa commande ; les lignes « CI » et « branche » de l'état après le push, et si l'état me donne une action ; tout ce qui t'a gêné.
+
+## Le relevé d'après, sur ta première séance de travail ordinaire
+
+Ton retour du 26 novembre sur le coût du socle a compté tes appels d'outil par nature, du compactage à la passation d'une séance qui menait un lot ordinaire de deux tâches (son §1 : 118 appels, dont 36 qui lancent une commande du socle et 12 pour les réveils et les tâches programmées), et il a classé par contrôle tes 56 refus du 12 au 26 novembre, sur 4 905 déclenchements des hooks (son §3). C'est la mesure d'avant des corrections qu'il a demandées, que la nouvelle version porte presque toutes. Je veux la mesure d'après, par la même méthode, sur ta première séance de travail qui mène un lot ordinaire une fois cette mise à jour fusionnée. La transcription de la séance et le journal des hooks se perdent avec son conteneur : le relevé se fait dans la séance même, avant sa passation.
+
+Pour que cette séance le sache, le besoin et la tâche de l'étape 6 recopient cette section jusqu'à sa fin. Le relevé tient en trois parties :
+
+1. Les appels d'outil par nature, sur la transcription de la séance, de son début ou de son dernier compactage à sa passation : chaque appel classé par le nom de son outil et, pour le shell, selon que sa commande appelle le socle. Les natures : une commande du socle, en séparant les contrôles et le rangement du travail utile qu'elle accompagne (un commit, un push) ; un réveil de reprise ou une tâche programmée ; une correction après un refus ; le reste. Un appel mixte compte entier, comme la première fois. Les gestes uniques de cette mise à jour qui tombent dans la séance se comptent à part, comme une nature à eux : le tri de la réserve (point 18), le rangement de tes consignes (points 15 et 17), les demandes des points 9 et 13. Donne le total, puis le compte et la part de chaque nature, les gestes uniques compris, et ce qu'a fait la séance (ses lots, ses tâches, ses échanges avec moi).
+2. Les refus par contrôle, dans le journal local des hooks, .git/socle/hooks.log, sur la même période : chaque ligne dont le deuxième champ est Refus, classée par son quatrième champ (l'étage et le contrôle, Stop:liens par exemple), avec la commande ou le message refusé, et dite fondée (une vraie faute, bien attrapée) ou à tort (rien de faux). Donne aussi le nombre de déclenchements de la période (toutes les lignes du journal) et la part des refus. Mets en regard les postes de ton §3 : les liens du dernier message (20), l'écriture supposée d'un fichier protégé (2), les opérations jugées externes (3), l'installeur (3), la remise en état d'un fichier protégé (3), la consigne citée sans empreinte (2). Si le journal manque ou ne couvre pas toute la séance, dis-le.
+3. L'alerte de retard de l'état (point 19) : si une session de la séance a démarré sur une tête en retard sur sa passation, dis si socle state l'a dit en tête, sa ligne mot pour mot, et ce que tu as fait ensuite ; sinon, dis qu'aucune session n'a démarré en retard.
+
+Rends-moi le relevé dans le récap de cette séance, et clos la tâche et son besoin avec sa passation.
 ````
