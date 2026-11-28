@@ -1,7 +1,7 @@
 <!-- socle: couche=backlog zone=publique -->
 # B-0386 — Un besoin qui n'a jamais eu de tâche, une attente levée ou un besoin pour l'humain, ne se clôt pas « fait » ; l'état dit « à fermer » un besoin qu'une case vide empêche de clore
 
-> statut : ouvert · origine : J-2026-11-28-A · ref : ADR-0083, ADR-0117 · lu : backlog@6bf9de12
+> statut : fait · origine : J-2026-11-28-A · ref : ADR-0083, ADR-0117, ce commit · lu : backlog@6bf9de12
 
 La gêne 1 du retour de chess sur sa mise à jour du 28 novembre
 (`docs/fabrication/chess/mise-a-jour-2026-11-28.md`). Le produit fait
@@ -44,5 +44,5 @@ voie qui n'existait pas. Cocher une case fausse est hors du modèle.
 
 ## Satisfait quand
 
-- [ ] une attente levée et un besoin pour l'humain, sans tâche et leurs cases cochées, se closent par `socle close`, en un geste
-- [ ] l'état ne dit « à fermer » qu'un besoin que `socle close` accepterait
+- [x] une attente levée et un besoin pour l'humain, sans tâche et leurs cases cochées, se closent par `socle close`, en un geste
+- [x] l'état ne dit « à fermer » qu'un besoin que `socle close` accepterait
