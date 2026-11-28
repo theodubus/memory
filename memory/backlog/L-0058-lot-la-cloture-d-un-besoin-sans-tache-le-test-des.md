@@ -12,3 +12,9 @@ version), le test des 8 000 octets de `tests/test_skills.py` que D-0242
 retire, et le prompt de mise à jour de chess avec la constante du test
 qui la rejoue, que ce changement du moteur permet d'avancer. Il change un
 contrôle : revue adversariale.
+
+## Revues
+
+### Passe 1 — 2026-11-28
+
+Commits : 543aead8..1fa6e291
